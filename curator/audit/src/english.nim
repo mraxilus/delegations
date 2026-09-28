@@ -235,7 +235,7 @@ func isGoverned*(path: string): bool =
   if parts[^1] == README_FILE:
     if parts.len == 2 and parts[0] in ROOTS: return true
     if parts.len == 3 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome: return true
-  let directory = parts.projectDir
+  let directory = parts.projectDirectory
   if directory.len == 0: return false
   for file in PROJECT_FILES:
     if path == directory & "/" & file: return true

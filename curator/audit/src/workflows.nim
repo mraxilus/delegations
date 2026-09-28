@@ -20,7 +20,7 @@ import ./findings
 
 
 const
-  WORKFLOW_DIR* = ".github/workflows/"
+  WORKFLOW_DIRECTORY* = ".github/workflows/"
     ## Directory every workflow lives in.
   PERMISSIONS_KEY* = "permissions:"
     ## Line opening grant, at column zero; job-level block is indented and left to its job.

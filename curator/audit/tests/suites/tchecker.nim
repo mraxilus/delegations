@@ -70,7 +70,7 @@ suite "Checker":
     check dispatchVerbs("proc run() = discard\n").len == 0
 
   test "one parser reads project driver too, since both drivers hold one shape":
-    # koch learns which verbs project carries by reading its driver (`plan.nim`, `verbDirs`),
+    # koch learns which verbs project carries by reading its driver (`plan.nim`, `verbDirectories`),
     #   so line opening dispatch is given rather than fixed. Project cases over its first
     #   argument where koch cases over parsed options.
     const DRIVER = """

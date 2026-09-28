@@ -20,7 +20,8 @@ func messages(tree: Tree): seq[string] =
 suite "Layout":
   test "good tree passes and lists projects under both roots":
     check goodTree().checkLayout.len == 0  # fixture is smallest passing tree
-    check goodTree().projectDirs == @[ALPHA_DIR, AUDIT_DIR]  # sorted project directories
+    check goodTree().projectDirectories ==
+      @[ALPHA_DIRECTORY, AUDIT_DIRECTORY]  # sorted project directories
 
   test "root holds only listed entries":
     check (goodTree() & @[entry("NOTES.md", "x\n")]).paths == @["NOTES.md"]  # root file
@@ -37,7 +38,8 @@ suite "Layout":
   test "unregistered domain is reported and never becomes project":
     let tree = goodTree() & @[entry("contributor/nowhere/alpha/README.md", "# x\n")]
     check tree.messages == @["Domain folder outside registry; got `nowhere`."]  # named
-    check tree.projectDirs == @[ALPHA_DIR, AUDIT_DIR]  # silent skip would hide project
+    check tree.projectDirectories ==
+      @[ALPHA_DIRECTORY, AUDIT_DIRECTORY]  # silent skip would hide project
 
   test "unregistered kind is finding naming registry, under curator too":
     let found = (goodTree() & @[entry("curator/audit/data.csv", "")]).checkLayout
@@ -50,7 +52,7 @@ suite "Layout":
       check found.len == 5 and found.allIt("`Beta`" in it.message)  # every file flagged
 
   test "project shape is complete under both roots":
-    for directory in [ALPHA_DIR, AUDIT_DIR]:  # both roots, exhaustive
+    for directory in [ALPHA_DIRECTORY, AUDIT_DIRECTORY]:  # both roots, exhaustive
       for file in PROJECT_FILES:  # 3 files
         let path = directory & "/" & file
         check goodTree().without(path).paths == @[path]  # each missing file is one finding
@@ -61,37 +63,39 @@ suite "Layout":
 
   test "project may nest source directories to any depth":
     let deep = goodTree() & @[
-      entry(ALPHA_DIR & "/app/app.nim", "## Drive app.\n\ndiscard\n"),
-      entry(ALPHA_DIR & "/design/rules.nim", "## Hold rules.\n\ndiscard\n"),
-      entry(ALPHA_DIR & "/src/alpha/draw/body.nim", "## Draw body.\n\ndiscard\n"),
-      entry(ALPHA_DIR & "/tools/build.nim", "## Build pages.\n\ndiscard\n"),
+      entry(ALPHA_DIRECTORY & "/app/app.nim", "## Drive app.\n\ndiscard\n"),
+      entry(ALPHA_DIRECTORY & "/design/rules.nim", "## Hold rules.\n\ndiscard\n"),
+      entry(ALPHA_DIRECTORY & "/src/alpha/draw/body.nim", "## Draw body.\n\ndiscard\n"),
+      entry(ALPHA_DIRECTORY & "/tools/build.nim", "## Build pages.\n\ndiscard\n"),
     ]
     check deep.checkLayout.len == 0  # depth inside project is project's own business
-    check deep.projectDirs == @[ALPHA_DIR, AUDIT_DIR]  # nesting adds no project
+    check deep.projectDirectories == @[ALPHA_DIRECTORY, AUDIT_DIRECTORY]  # nesting adds no project
 
   test "nimble file is named after project and packages demand lock":
-    let other = ALPHA_DIR & "/other.nimble"
+    let other = ALPHA_DIRECTORY & "/other.nimble"
     check (goodTree() & @[entry(other, NIMBLE_TEXT)]).messages ==
-      @["Nimble file not named after project; expected `" & ALPHA_DIR & "/alpha.nimble`."]  # one
+      @["Nimble file not named after project; expected `" & ALPHA_DIRECTORY & "/alpha.nimble`."]
     let
-      nimble = ALPHA_DIR & "/alpha.nimble"
+      nimble = ALPHA_DIRECTORY & "/alpha.nimble"
       requiring = goodTree().replaced(nimble, NIMBLE_TEXT & "requires \"malebolgia\"\n")
-    check requiring.paths == @[ALPHA_DIR & "/atlas.lock"]  # lock demanded
+    check requiring.paths == @[ALPHA_DIRECTORY & "/atlas.lock"]  # lock demanded
     check requiring.messages[0].endsWith("got `malebolgia`.")  # package named
-    check (requiring & @[entry(ALPHA_DIR & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
+    check (requiring & @[entry(ALPHA_DIRECTORY & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
 
   test "top-level glossary is required":
     check goodTree().without("GLOSSARY.md").paths == @["GLOSSARY.md"]  # required at root
     check goodTree().without("GLOSSARY.md").messages == @["Top-level glossary missing."]  # named
 
   test "committed pages live in page directories only":
-    for page_directory in PAGE_DIRS:  # 2 directories, exhaustive
+    for page_directory in PAGE_DIRECTORIES:  # 2 directories, exhaustive
       let inside = goodTree() & @[
-        entry(ALPHA_DIR & "/" & page_directory & "/index.html", "<!doctype html>\n<p>x</p>\n"),
-        entry(AUDIT_DIR & "/" & page_directory & "/deep/frame.svg", "<svg></svg>\n"),
+        entry(
+          ALPHA_DIRECTORY & "/" & page_directory & "/index.html", "<!doctype html>\n<p>x</p>\n"
+        ),
+        entry(AUDIT_DIRECTORY & "/" & page_directory & "/deep/frame.svg", "<svg></svg>\n"),
       ]
       check inside.checkLayout.len == 0  # page in its place, at any depth
-    let stray = goodTree() & @[entry(ALPHA_DIR & "/design/stray.html", "<p>x</p>\n")]
+    let stray = goodTree() & @[entry(ALPHA_DIRECTORY & "/design/stray.html", "<p>x</p>\n")]
     check stray.checkLayout.len == 1  # page elsewhere inside project
     check "`pages/` or `mockups/`" in stray.checkLayout[0].message  # names both
     let orphan = goodTree() & @[entry(CONTRIBUTOR & "/ronri/README.html", "<p>x</p>\n")]

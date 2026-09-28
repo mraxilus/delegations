@@ -51,7 +51,7 @@ import ./[compilers, findings]
 const
   ASSETS_KEY* = "KOCH_ASSETS_DIR"
     ## Environment name overriding where assets are stored.
-  ASSETS_DIR* = ".cache/koch/assets"
+  ASSETS_DIRECTORY* = ".cache/koch/assets"
     ## Default store, under home and beside `~/.cache/koch/nim`.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
     ## Host serving `woff2` packaged by `@fontsource`, which is what page embeds.
@@ -119,7 +119,7 @@ const
 
 func storeRoot*(override: string): string =
   ## Read directory assets are stored under, override winning when set.
-  if override.len > 0: override else: getHomeDir() / ASSETS_DIR
+  if override.len > 0: override else: getHomeDir() / ASSETS_DIRECTORY
 
 
 func addressOf*(file: string): string =

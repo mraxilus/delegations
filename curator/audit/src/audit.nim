@@ -22,7 +22,7 @@ import ./[
   workflows,
 ]
 
-export layout.Tree, layout.Entry, layout.projectDirs
+export layout.Tree, layout.Entry, layout.projectDirectories
 
 
 func rulesStamp*(tree: Tree): string =
@@ -41,7 +41,7 @@ proc writeRulesRows*(root: string, tree: Tree): seq[string] =
   ##   Record is read from tree, as checks read it, and written back only when row moves, so
   ##   diff is that row alone and duty 1's hand step is one verb.
   let stamp_now = tree.rulesStamp
-  for directory in tree.projectDirs:
+  for directory in tree.projectDirectories:
     let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
@@ -57,7 +57,7 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
   ##   existence of commit is git's; koch runs both under `check-files` and `check`.
   ##   Needs full log: shallow clone reports true row as missing, so `check-files` job fetches
   ##   depth 0.
-  for directory in tree.projectDirs:
+  for directory in tree.projectDirectories:
     let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
@@ -103,24 +103,25 @@ proc auditTree*(tree: Tree): seq[Finding] =
 
   # Driver version is derived from driver project's pin, so it is never stated twice. Every
   #   workflow installing compiler, not driver's alone: second one drifts unwatched otherwise.
-  let driver = tree.pinOf(DRIVER_DIR)
+  let driver = tree.pinOf(DRIVER_DIRECTORY)
   if driver.isSome:
     for e in tree:
-      if e.path.startsWith(WORKFLOW_DIR): result.add checkDriver(e.path, e.content, driver.get)
+      if e.path.startsWith(WORKFLOW_DIRECTORY):
+        result.add checkDriver(e.path, e.content, driver.get)
 
   # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
   #   readable here.
   for e in tree:
-    if e.path.startsWith(WORKFLOW_DIR): result.add checkScopes(e.path, e.content)
+    if e.path.startsWith(WORKFLOW_DIRECTORY): result.add checkScopes(e.path, e.content)
 
   # Checker holds itself to rules it holds everything else to, from tree as git shows it.
   var check_paths, check_sources, suite_sources: seq[string]
   var koch_source, curator_source: string
   for e in tree:
-    if e.path.startsWith(CHECK_DIR) or e.path == KOCH_PATH:
+    if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
       check_paths.add e.path
       check_sources.add e.content
-    if e.path.startsWith(SUITE_DIR): suite_sources.add e.content
+    if e.path.startsWith(SUITE_DIRECTORY): suite_sources.add e.content
     if e.path == KOCH_PATH: koch_source = e.content
     if e.path == CURATOR_PATH: curator_source = e.content
   result.add checkDeadExports(check_paths, check_sources, suite_sources)
@@ -130,12 +131,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
   let verbs = koch_source.dispatchVerbs
   if verbs.len > 0:
     for e in tree:
-      if e.kind.isSome and not e.path.isContributorCode(tree.projectDirs):
+      if e.kind.isSome and not e.path.isContributorCode(tree.projectDirectories):
         result.add checkMentions(e.path, e.content, verbs)
 
   let
     stamp_now = tree.rulesStamp
-    directories = tree.projectDirs
+    directories = tree.projectDirectories
   result.add tree.lockFindings(directories)
   var paths = initHashSet[string]()
   for e in tree: paths.incl e.path
@@ -158,12 +159,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if e.path in PROMPT_PATHS: result.add checkPrompt(e.path, e.content)
     # Checker's own project names these families as data and carries fixture pages, so it
     #   would report itself; it holds no presentation target of its own to check.
-    if not e.path.startsWith(DRIVER_DIR & "/"):
+    if not e.path.startsWith(DRIVER_DIRECTORY & "/"):
       result.add checkFaces(e.path, e.content)
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
-        result.add checkCitations(e.path, e.content, directory & "/" & TESTS_DIR & "/", paths)
+        result.add checkCitations(e.path, e.content, directory & "/" & TESTS_DIRECTORY & "/", paths)
         result.add checkRecord(e.path, e.content)
       if e.path == directory & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)
   result.add checkDuplicates(documents)

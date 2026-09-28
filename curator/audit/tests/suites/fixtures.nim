@@ -44,9 +44,9 @@ const
     "# Examples\n\nCases.\n", "# Guide\n\nSteps.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
-  ALPHA_DIR* = CONTRIBUTOR & "/ronri/alpha"
+  ALPHA_DIRECTORY* = CONTRIBUTOR & "/ronri/alpha"
     ## Contributor project in fixture tree.
-  AUDIT_DIR* = CURATOR & "/audit"
+  AUDIT_DIRECTORY* = CURATOR & "/audit"
     ## Curator project in fixture tree.
 
 
@@ -98,8 +98,8 @@ func goodTree*(): Tree =
     result.add entry(
       CONTRIBUTOR & "/" & d.folder & "/README.md", "# " & d.name & "\n\n" & d.theme & "\n"
     )
-  result.add projectEntries(AUDIT_DIR, stamp_now)
-  result.add projectEntries(ALPHA_DIR, stamp_now)
+  result.add projectEntries(AUDIT_DIRECTORY, stamp_now)
+  result.add projectEntries(ALPHA_DIRECTORY, stamp_now)
 
 
 func with*(tree: Tree, entries: varargs[Entry]): Tree =

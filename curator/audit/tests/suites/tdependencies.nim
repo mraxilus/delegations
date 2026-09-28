@@ -23,9 +23,9 @@ suite "Dependencies":
     check requirements("when defined(windows):\n  requires \"winim\"\n") == @["winim"]  # cost
 
   test "lock names its checkout directories, deps placeholder resolved":
-    check LOCK_TEXT.lockDirs == @["deps/replications.example.invalid"]  # one item
-    check lockDirs("{}").len == 0  # no items table
-    check lockDirs("{\"items\": {}}").len == 0  # empty items
+    check LOCK_TEXT.lockDirectories == @["deps/replications.example.invalid"]  # one item
+    check lockDirectories("{}").len == 0  # no items table
+    check lockDirectories("{\"items\": {}}").len == 0  # empty items
 
   test "checkout absent after restore is finding":
     # `atlas changed` exits 0 while warning `repo missing!`, so restore fetching nothing

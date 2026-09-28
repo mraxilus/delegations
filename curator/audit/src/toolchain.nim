@@ -41,7 +41,7 @@ const
     ## Requirement name pin carries.
   EXACT* = "=="
     ## Operator pin must use; ranges are rejected.
-  DRIVER_DIR* = "curator/audit"
+  DRIVER_DIRECTORY* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
   WORKFLOW_PATH* = ".github/workflows/check.yml"
     ## Driver's own workflow, which must name driver version; others must agree where they do.
@@ -123,7 +123,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
   if pin.isCommit:
     if path != WORKFLOW_PATH: return
     return @[finding(
-      DRIVER_DIR & "/" & DRIVER_DIR.split('/')[^1] & ".nimble", 0,
+      DRIVER_DIRECTORY & "/" & DRIVER_DIRECTORY.split('/')[^1] & ".nimble", 0,
       "Driver project pins version, never commit: setup action installs releases only, and " &
         "every job waits on it; got `" & pin & "`.",
     )]
@@ -137,7 +137,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
   elif stated.get != pin:
     result.add finding(
       path, 0,
-      "Driver version must equal `" & DRIVER_DIR & "` pin `" & pin & "`; got `" & stated.get &
+      "Driver version must equal `" & DRIVER_DIRECTORY & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
     )
 

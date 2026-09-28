@@ -1026,7 +1026,7 @@ rebuilds a suite whose source module changed, with a warm `nimcache`. Verified b
 configuration, and it stops before anything that needs a browser. Koch names the verb and
 nothing else, because what a check needs differs for each project, while the name need not.
 
-- **Enrolment is derived, and never listed.** `nodeDirs` selects the projects that hold
+- **Enrolment is derived, and never listed.** `nodeDirectories` selects the projects that hold
   `package.json` beside `package-lock.json`. So a project enrols by carrying them, and no
   second list can drift. The lock is demanded because `npm ci` needs one, and unpinned tools
   would be the one thing here that nothing pins.
@@ -1055,9 +1055,9 @@ slide does to the pivot, and nothing in it presses a key. So a rule wired to the
 a defect that no suite here can see. A driven check that the runner never runs is evidence only
 that its writer ran it (Article IX.6).
 
-**Enrolment is the verb, read from the driver of the project itself.** `verbDirs` reads the
+**Enrolment is the verb, read from the driver of the project itself.** `verbDirectories` reads the
 dispatch of `tools/build.nim` and selects the projects that name `drive`, the derivation that
-`nodeDirs` uses one step earlier. `dispatchVerbs` reads the dispatch of koch and of a project
+`nodeDirectories` uses one step earlier. `dispatchVerbs` reads the dispatch of koch and of a project
 driver alike, with the opening line as an argument. Koch cases over parsed options, and a
 project driver over its first argument. Cost: a project that spells the verb otherwise is
 passed by in silence, which is why CONTRIBUTOR.md names `drive` and `system` outright.

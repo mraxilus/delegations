@@ -35,7 +35,7 @@ import ./[findings, projects]
 const
   NIMBLE_EXT* = ".nimble"   ## Extension of package description file.
   LOCK_FILE* = "atlas.lock" ## Atlas lock file name.
-  DEPS_DIR* = "deps"        ## Directory Atlas restores checkouts into, never committed.
+  DEPS_DIRECTORY* = "deps"        ## Directory Atlas restores checkouts into, never committed.
   NODE_MANIFEST* = "package.json"    ## Node manifest, naming tools project type-checks with.
   NODE_LOCK* = "package-lock.json"   ## Node lock, pinning every one of those to exact version.
   UNREADABLE = "Lock unreadable as JSON; got `"
@@ -76,13 +76,13 @@ func requirements*(nimble: string): seq[string] =
     if requirement.packageName.toLowerAscii != "nim": result.add requirement
 
 
-proc lockDirs*(lock: string): seq[string] =
+proc lockDirectories*(lock: string): seq[string] =
   ## Read checkout directories lock names, `$deps` resolved to project-relative `deps`.
   let node = parseJson(lock)
   if "items" notin node: return
   for _, item in node["items"]:
     if "dir" notin item: continue
-    result.add item["dir"].getStr.replace("$deps", DEPS_DIR)
+    result.add item["dir"].getStr.replace("$deps", DEPS_DIRECTORY)
 
 
 proc lockNimble*(lock: string): Option[string] =
@@ -138,7 +138,7 @@ proc checkCheckouts*(root, directory: string): seq[Finding] =
   let lock_path = directory & "/" & LOCK_FILE
   var directories: seq[string]
   try:
-    directories = readFile(root / lock_path).lockDirs
+    directories = readFile(root / lock_path).lockDirectories
   except CatchableError as e:
     return @[finding(lock_path, 0, UNREADABLE & e.msg & "`.")]
   for checkout in directories:

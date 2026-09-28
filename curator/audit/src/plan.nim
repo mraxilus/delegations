@@ -35,7 +35,7 @@ const
   RECENT_DAYS* = 7
     ## Window `--recent` looks back over, matching weekly cron in `check.yml`. Both are named
     ## once; changing one means changing other, which CURATOR.md duty 9 says.
-  CHECKER_DIR* = DRIVER_DIR & "/src"
+  CHECKER_DIRECTORY* = DRIVER_DIRECTORY & "/src"
     ## Check sources driving every project; same folder as driver project, by coincidence
     ## of koch compiling exactly what it drives.
 
@@ -53,7 +53,7 @@ func kind*(job: Job): string =
 
 func isChecker*(path: string): bool =
   ## Decide whether path drives how every project is checked.
-  path in CHECKER_FILES or path.startsWith(CHECKER_DIR & "/")
+  path in CHECKER_FILES or path.startsWith(CHECKER_DIRECTORY & "/")
 
 
 func isCode(directory, path: string): bool =
@@ -69,7 +69,7 @@ func testSet*(directories, paths: openArray[string]): seq[string] =
   ##   driver's project when driver's root files did, since its suites read them.
   for directory in directories:
     for path in paths:
-      if isCode(directory, path) or (directory == DRIVER_DIR and path in CHECKER_FILES):
+      if isCode(directory, path) or (directory == DRIVER_DIRECTORY and path in CHECKER_FILES):
         result.add directory
         break
   result.sort
@@ -82,7 +82,7 @@ func holds(tree: Tree, directory, name: string): bool =
     if e.path == path: return true
 
 
-func nodeDirs*(tree: Tree, directories: openArray[string]): seq[string] =
+func nodeDirectories*(tree: Tree, directories: openArray[string]): seq[string] =
   ## Select projects type-checker reaches, i.e. those carrying node manifest and its lock.
   ##   Derived from tree rather than listed anywhere: project gains type check by carrying
   ##   manifest, and `check.yml` names no project, as it names none for compiler matrix.
@@ -101,9 +101,9 @@ func driverOf(tree: Tree, directory: string): string =
   ""
 
 
-func verbDirs*(tree: Tree, directories: openArray[string], verb: string): seq[string] =
+func verbDirectories*(tree: Tree, directories: openArray[string], verb: string): seq[string] =
   ## Select projects whose build driver dispatches that verb.
-  ##   Derived from driver rather than listed anywhere, same reasoning as `nodeDirs`: project
+  ##   Derived from driver rather than listed anywhere, same reasoning as `nodeDirectories`: project
   ##   gains driven checks by carrying verb, and `check.yml` names no project. Driver is read
   ##   by same parser `checker.nim` reads koch's own dispatch with, since both hold one shape.
   for directory in directories:
@@ -115,7 +115,8 @@ proc systemPackages*(root: string, tree: Tree, directories: openArray[string]): 
   ##   Sorted so output is stable between runs: caller pipes it into installer, and list
   ##   reordering itself would read as change where nothing changed.
   var targets: seq[Target]
-  for directory in tree.verbDirs(directories, SYSTEM_VERB): targets.add Target(directory: directory)
+  for directory in tree.verbDirectories(directories, SYSTEM_VERB):
+    targets.add Target(directory: directory)
   systemOf(root, targets).sorted
 
 
@@ -143,7 +144,7 @@ proc typeJobs*(root: string, tree: Tree, directories: openArray[string]): seq[Fi
   ##   Restore failing short-circuits, since type check without installed tools fails again
   ##   for second reason and reports neither clearly.
   var targets: seq[Target]
-  for directory in tree.nodeDirs(directories): targets.add Target(directory: directory)
+  for directory in tree.nodeDirectories(directories): targets.add Target(directory: directory)
   if targets.len == 0: return
   for target in targets: result.add restoreNode(root, target)
   if result.len > 0: return
@@ -173,12 +174,12 @@ func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
 
 func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
   ## Build jobs for projects one change asks to compile.
-  tree.jobsFor(testSet(tree.projectDirs, paths))
+  tree.jobsFor(testSet(tree.projectDirectories, paths))
 
 
 func allJobs*(tree: Tree): seq[Job] =
   ## Build jobs for every project, for `--all` rather than for one change.
-  tree.jobsFor(tree.projectDirs)
+  tree.jobsFor(tree.projectDirectories)
 
 
 proc recentFor*(root: string, tree: Tree, days: int): seq[Job] =
@@ -239,7 +240,7 @@ func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
   ##   own, so driven set inherits scoping, `--all` and `--recent` without restating any of it.
   var directories: seq[string]
   for job in jobs: directories.add job.directory
-  let driven = tree.verbDirs(directories, DRIVEN_VERB)
+  let driven = tree.verbDirectories(directories, DRIVEN_VERB)
   for job in jobs:
     if job.directory in driven: result.add job
 
@@ -259,7 +260,7 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   result = found
   result.add restoreAll(root, targets)
   for target in targets:
-    if tree.nodeDirs([target.directory]).len > 0: result.add restoreNode(root, target)
+    if tree.nodeDirectories([target.directory]).len > 0: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runDriven(root, targets)
 
@@ -282,6 +283,6 @@ proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   if driven.len == 0 or found.len > 0 or restored.len > 0: return
   var node_found: seq[Finding]
   for target in driven:
-    if tree.nodeDirs([target.directory]).len > 0: node_found.add restoreNode(root, target)
+    if tree.nodeDirectories([target.directory]).len > 0: node_found.add restoreNode(root, target)
   result.add node_found
   if node_found.len == 0: result.add runDriven(root, driven)

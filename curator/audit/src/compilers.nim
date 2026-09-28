@@ -33,7 +33,7 @@ import ./[findings, projects, toolchain]
 const
   CACHE_KEY* = "KOCH_NIM_DIR"
     ## Environment name overriding where toolchains are cached.
-  CACHE_DIR* = ".cache/koch/nim"
+  CACHE_DIRECTORY* = ".cache/koch/nim"
     ## Default cache, under home and beside Nim's own `~/.cache/nim`.
   DOWNLOAD* = "https://nim-lang.org/download/nim-"
     ## Prefix of published release tarball.
@@ -93,7 +93,7 @@ func pinnedDigest*(published: string): string =
 
 func cacheRoot*(override: string): string =
   ## Read cache directory toolchains live under, override winning when set.
-  if override.len > 0: override else: getHomeDir() / CACHE_DIR
+  if override.len > 0: override else: getHomeDir() / CACHE_DIRECTORY
 
 
 func binOf*(root, pin: string): string =
