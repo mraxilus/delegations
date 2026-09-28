@@ -34,13 +34,13 @@ type
     z0*, z1*: float ## Band, widened by limb's radius each way.
 
   BodyShape* = object ## One body as contact test sees it.
-    ax*: Axes
+    axes*: Axes
     parts*: array[Part, PartShape]
 
 
-func shapeOf*(rig: Rig; st: Stance): BodyShape =
+func shapeOf*(rig: Rig; stance: Stance): BodyShape =
   ## Body's shape at stance.
-  result.ax = axesOf(st)
+  result.axes = axesOf(stance)
   for part in Part:
     result.parts[part] = PartShape(
       hb: halfBreadth(rig, part),
@@ -50,7 +50,7 @@ func shapeOf*(rig: Rig; st: Stance): BodyShape =
     )
 
 
-func partGap*(ax: Axes; p: PartShape; a, b: Vec): float =
+func partGap*(axes: Axes; p: PartShape; a, b: Vec): float =
   ## Clearance of link `a`-`b` from one part of body whose axes these
   ## are, before any pad; infinite where link is not at its height.
   ##   Section is ellipse, so link is taken into body's own
@@ -64,14 +64,14 @@ func partGap*(ax: Axes; p: PartShape; a, b: Vec): float =
   if max(a.z, b.z) < p.z0 or min(a.z, b.z) > p.z1:
     return Inf
   let
-    dax = a.x - ax.origin.x
-    day = a.y - ax.origin.y
-    dbx = b.x - ax.origin.x
-    dby = b.y - ax.origin.y
-    la: Vec = (dax * ax.right.x + day * ax.right.y,
-               (dax * ax.fore.x + day * ax.fore.y) / p.q, a.z)
-    lb: Vec = (dbx * ax.right.x + dby * ax.right.y,
-               (dbx * ax.fore.x + dby * ax.fore.y) / p.q, b.z)
+    dax = a.x - axes.origin.x
+    day = a.y - axes.origin.y
+    dbx = b.x - axes.origin.x
+    dby = b.y - axes.origin.y
+    la: Vec = (dax * axes.right.x + day * axes.right.y,
+               (dax * axes.fore.x + day * axes.fore.y) / p.q, a.z)
+    lb: Vec = (dbx * axes.right.x + dby * axes.right.y,
+               (dbx * axes.fore.x + dby * axes.fore.y) / p.q, b.z)
     near = axisNear(la, lb, p.z0, p.z1)
   if near.d == Inf:
     return Inf
@@ -79,7 +79,7 @@ func partGap*(ax: Axes; p: PartShape; a, b: Vec): float =
           else: sqrt(near.nx * near.nx + p.q * p.q * near.ny * near.ny) / near.d
   (near.d - p.hb) * k
 
-func partGap*(rig: Rig; ax: Axes; part: Part; a, b: Vec): float =
+func partGap*(rig: Rig; axes: Axes; part: Part; a, b: Vec): float =
   ## Same, with part's shape worked out here.
   let shape = PartShape(
     hb: halfBreadth(rig, part),
@@ -87,23 +87,23 @@ func partGap*(rig: Rig; ax: Axes; part: Part; a, b: Vec): float =
     z0: bottom(rig, part) - rig.limb,
     z1: rig.top[part] + rig.limb,
   )
-  partGap(ax, shape, a, b)
+  partGap(axes, shape, a, b)
 
 
-func bodyGap*(rig: Rig; sh: BodyShape; a, b: Vec; own: bool): Touch =
+func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vec; own: bool): Touch =
   ## Least clearance of link `a`-`b` from one body's three parts.
   result = Touch(part: Part.Torso, gap: Inf)
   let pad = if own: 0.0 else: rig.limb
   for part in Part:
-    let d = partGap(sh.ax, sh.parts[part], a, b)
+    let d = partGap(shape.axes, shape.parts[part], a, b)
     if d < Inf:
       let gap = d - pad
       if gap < result.gap:
         result = Touch(part: part, gap: gap)
 
-func bodyGap*(rig: Rig; st: Stance; a, b: Vec; own: bool): Touch =
+func bodyGap*(rig: Rig; stance: Stance; a, b: Vec; own: bool): Touch =
   ## Same, from stance.
-  bodyGap(rig, shapeOf(rig, st), a, b, own)
+  bodyGap(rig, shapeOf(rig, stance), a, b, own)
 
 
 func armGap*(rig: Rig; a, b, c, d: Vec; meet: Vec; excuse: float): float =
@@ -115,20 +115,20 @@ func armGap*(rig: Rig; a, b, c, d: Vec; meet: Vec; excuse: float): float =
     let
       p = a + (b - a) * near.t
       q = c + (d - c) * near.u
-    if dist(p, meet) < excuse and dist(q, meet) < excuse:
+    if distance(p, meet) < excuse and distance(q, meet) < excuse:
       return Inf
   near.gap - 2.0 * rig.limb
 
 
-func pressing*(rig: Rig; st: Stance; pose: tuple[e, w, g: Vec]): bool =
+func pressing*(rig: Rig; stance: Stance; pose: tuple[e, w, g: Vec]): bool =
   ## Whether forearm or hand lies on its own torso or neck.
   ##   Upper arm always hangs against flank, so it is not asked;
   ##     what says arm is wound rather than merely led there is part
   ##     of it past elbow.
   const NEAR = 0.01
-  let sh = shapeOf(rig, st)
+  let shape = shapeOf(rig, stance)
   for (a, b) in [(pose.e, pose.w), (pose.w, pose.g)]:
     for part in [Part.Torso, Part.Neck]:
-      if partGap(sh.ax, sh.parts[part], a, b) < NEAR:
+      if partGap(shape.axes, shape.parts[part], a, b) < NEAR:
         return true
   false

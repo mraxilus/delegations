@@ -67,8 +67,8 @@ type
     Up    ## Girdle swung about trunk's fore: elevation positive, depression negative.
 
   Range* = object ## How far one freedom goes, and where it starts to strain.
-    lo*, hi*: float     ## Ends, radians.  Past either is refused.
-    easeLo*, easeHi*: float ## How far short of each end strain begins;
+    lower*, upper*: float     ## Ends, radians.  Past either is refused.
+    ease_lower*, ease_upper*: float ## How far short of each end strain begins;
                         ## nought where end is stop that can be leant on.
     neutral*: float     ## Where joint rests; solver prefers it.
 
@@ -91,10 +91,10 @@ type
     band*: array[Band, tuple[lo, hi: float]] ## Hand heights offered per band.
 
 
-func deg(d: float): float = d * PI / 180.0
+func toRadians(d: float): float = d * PI / 180.0
 
 const
-  ACROSS_HI = deg(130)
+  ACROSS_UPPER = toRadians(130)
     ## Adduction at clinical *horizontal* adduction, not hanging arm's.  Forty
     ## five is how far arm goes across with arm hanging, and what stops it there
     ## is belly; raised, arm passes in front of chest to about hundred and
@@ -104,7 +104,7 @@ const
     ##   Measured: every chain jammed on old cap with arm raised.  Freed, chains
     ##     go from 18 to 47 of 56 questions and reference from 193 to 223 of 231,
     ##     with nothing lost; every law holds, and mirror law was corrected on way.
-  WRIST_HI = deg(60)
+  WRIST_UPPER = toRadians(60)
     ## Cone under clinical flexion and extension, which are seventy to eighty.
     ## Widened to seventy five and measured: chains carry 47 of 56 questions
     ## either way, gaining one manner and losing another, so it is not what
@@ -123,16 +123,58 @@ const HUMAN* = Rig(
   hand: 0.08,
   limb: 0.045,
   range: [
-    Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
-    Range(lo: deg(-90), hi: ACROSS_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
-    Range(lo: deg(-90), hi: deg(105), easeLo: deg(25), easeHi: deg(25), neutral: 0.0),
-    Range(lo: 0.0, hi: deg(140), easeLo: 0.0, easeHi: deg(35), neutral: deg(30)),
-    Range(lo: 0.0, hi: WRIST_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
+    Range(
+      lower: toRadians(-90),
+      upper: toRadians(45),
+      ease_lower: 0.0,
+      ease_upper: toRadians(20),
+      neutral: 0.0,
+    ),
+    Range(
+      lower: toRadians(-90),
+      upper: ACROSS_UPPER,
+      ease_lower: 0.0,
+      ease_upper: toRadians(20),
+      neutral: 0.0,
+    ),
+    Range(
+      lower: toRadians(-90),
+      upper: toRadians(105),
+      ease_lower: toRadians(25),
+      ease_upper: toRadians(25),
+      neutral: 0.0,
+    ),
+    Range(
+      lower: 0.0,
+      upper: toRadians(140),
+      ease_lower: 0.0,
+      ease_upper: toRadians(35),
+      neutral: toRadians(30),
+    ),
+    Range(lower: 0.0, upper: WRIST_UPPER, ease_lower: 0.0, ease_upper: toRadians(20), neutral: 0.0),
   ],
-  waist: Range(lo: deg(-40), hi: deg(40), easeLo: deg(15), easeHi: deg(15), neutral: 0.0),
+  waist: Range(
+    lower: toRadians(-40),
+    upper: toRadians(40),
+    ease_lower: toRadians(15),
+    ease_upper: toRadians(15),
+    neutral: 0.0,
+  ),
   collar: [
-    Range(lo: deg(-25), hi: deg(25), easeLo: deg(10), easeHi: deg(10), neutral: 0.0),
-    Range(lo: deg(-10), hi: deg(40), easeLo: deg(5), easeHi: deg(10), neutral: 0.0),
+    Range(
+      lower: toRadians(-25),
+      upper: toRadians(25),
+      ease_lower: toRadians(10),
+      ease_upper: toRadians(10),
+      neutral: 0.0,
+    ),
+    Range(
+      lower: toRadians(-10),
+      upper: toRadians(40),
+      ease_lower: toRadians(5),
+      ease_upper: toRadians(10),
+      neutral: 0.0,
+    ),
   ],
   band: [(1.00, 1.35), (1.40, 1.50), (1.735, 2.00)],
 )
@@ -176,7 +218,7 @@ func reach*(rig: Rig): float = rig.upper + rig.fore + rig.hand
 func touching*(rig: Rig): float = 2.0 * halfDepth(rig, Part.Torso)
   ## Closest two bodies stand: chest to chest.
 
-const SLACK* = deg(0.5)
+const SLACK* = toRadians(0.5)
   ## Past stop that has no ease by less than this is at that stop: engine solves
   ## its limits rather than clamping them, so joint leant on its stop reads hair
   ## past it.
@@ -186,16 +228,16 @@ func strainOf*(range: Range; value: float): float =
   ## ease, one at end, more past it.  Stop with no ease costs nothing to lean
   ## on, and counts only once value is past it by more than `SLACK`, in units of
   ## whole range.
-  let span = range.hi - range.lo
+  let span = range.upper - range.lower
   var worst = 0.0
-  if range.easeHi > 0.0:
-    worst = max(worst, 1.0 - (range.hi - value) / range.easeHi)
-  elif value > range.hi + SLACK:
-    worst = max(worst, 1.0 + (value - range.hi) / span)
-  if range.easeLo > 0.0:
-    worst = max(worst, 1.0 - (value - range.lo) / range.easeLo)
-  elif value < range.lo - SLACK:
-    worst = max(worst, 1.0 + (range.lo - value) / span)
+  if range.ease_upper > 0.0:
+    worst = max(worst, 1.0 - (range.upper - value) / range.ease_upper)
+  elif value > range.upper + SLACK:
+    worst = max(worst, 1.0 + (value - range.upper) / span)
+  if range.ease_lower > 0.0:
+    worst = max(worst, 1.0 - (value - range.lower) / range.ease_lower)
+  elif value < range.lower - SLACK:
+    worst = max(worst, 1.0 + (range.lower - value) / span)
   max(0.0, worst)
 
 func margin*(range: Range; value: float): float =
@@ -205,21 +247,21 @@ func margin*(range: Range; value: float): float =
   ##     margin there is counted in other end's ease and is only ever
   ##     negative when value is past stop.
   let
-    fromLo = value - range.lo
-    fromHi = range.hi - value
-    unitLo = if range.easeLo > 0.0: range.easeLo else: range.easeHi
-    unitHi = if range.easeHi > 0.0: range.easeHi else: range.easeLo
+    from_lower = value - range.lower
+    from_upper = range.upper - value
+    unit_lower = if range.ease_lower > 0.0: range.ease_lower else: range.ease_upper
+    unit_upper = if range.ease_upper > 0.0: range.ease_upper else: range.ease_lower
   var
-    mLo = if range.easeLo > 0.0: fromLo / unitLo
-          elif fromLo < 0.0: fromLo / unitLo
+    margin_lower = if range.ease_lower > 0.0: from_lower / unit_lower
+          elif from_lower < 0.0: from_lower / unit_lower
           else: Inf
-    mHi = if range.easeHi > 0.0: fromHi / unitHi
-          elif fromHi < 0.0: fromHi / unitHi
+    margin_upper = if range.ease_upper > 0.0: from_upper / unit_upper
+          elif from_upper < 0.0: from_upper / unit_upper
           else: Inf
-  min(mLo, mHi)
+  min(margin_lower, margin_upper)
 
 func eased*(range: Range; value: float): float =
   ## Distance from joint's neutral, as fraction of way to
   ## farther end: smooth cost solver minimises.
-  let span = max(range.hi - range.neutral, range.neutral - range.lo)
+  let span = max(range.upper - range.neutral, range.neutral - range.lower)
   (value - range.neutral) / span

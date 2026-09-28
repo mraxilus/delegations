@@ -135,7 +135,7 @@ suite "two hands":
       # In from below, along p for four vertices, out to above: one crossing.
       t: array[7, Vec] = [(0.05, -0.05, 1.5), (0.3, 0.0, 1.5), (0.5, 0.0, 1.5), (0.7, 0.0, 1.5),
                           (0.9, 0.0, 1.5), (1.1, 0.1, 1.5), (1.3, 0.2, 1.5)]
-    var rng = initRand(7)
+    var random = initRand(7)
     for (name, other) in [("at vertex", q), ("along", t)]:
       let exact = crossings(armsOf(p, other)).len
       var counts: CountTable[int]
@@ -143,9 +143,9 @@ suite "two hands":
         var pp = p
         var oo = other
         for i in 0 .. 6:
-          pp[i] = (pp[i].x + rng.rand(-1e-13 .. 1e-13), pp[i].y + rng.rand(-1e-13 .. 1e-13),
+          pp[i] = (pp[i].x + random.rand(-1e-13 .. 1e-13), pp[i].y + random.rand(-1e-13 .. 1e-13),
                    pp[i].z)
-          oo[i] = (oo[i].x + rng.rand(-1e-13 .. 1e-13), oo[i].y + rng.rand(-1e-13 .. 1e-13),
+          oo[i] = (oo[i].x + random.rand(-1e-13 .. 1e-13), oo[i].y + random.rand(-1e-13 .. 1e-13),
                    oo[i].z)
         counts.inc crossings(armsOf(pp, oo)).len
       echo &"    {name}: exact {exact}, jittered {counts}"

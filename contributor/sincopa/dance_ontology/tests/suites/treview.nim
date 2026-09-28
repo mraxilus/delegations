@@ -78,20 +78,20 @@ suite "the review page":
     writeReview(OUT)
     check readFile(OUT / PAGE_NAME) == renderReview()  # bytes re-read (IX.5)
     for target in FRAMES:
-      let path = OUT / FRAMES_DIR / (target.slug & ".svg")
+      let path = OUT / DIRECTORY_FRAMES / (target.slug & ".svg")
       check fileExists(path)
       check readFile(path) == renderFrame(target)  # one picture per frame
 
   test "and there are no pictures of anything else":
     # `writeReview` clears directory first, so frame that is renamed cannot leave its
     # old picture behind under old name, naming frame model no longer has.
-    writeFile(OUT / FRAMES_DIR / "stale.svg", "<svg/>")
+    writeFile(OUT / DIRECTORY_FRAMES / "stale.svg", "<svg/>")
     writeReview(OUT)
     var want: seq[string] = @[]
     for target in FRAMES:
       want.add target.slug & ".svg"
     var found: seq[string] = @[]
-    for path in walkFiles(OUT / FRAMES_DIR / "*.svg"):
+    for path in walkFiles(OUT / DIRECTORY_FRAMES / "*.svg"):
       found.add extractFilename(path)
     for name in found:
       check name in want

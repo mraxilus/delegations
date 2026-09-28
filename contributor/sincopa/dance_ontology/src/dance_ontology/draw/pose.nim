@@ -117,7 +117,7 @@ func orbit*(pose: Pose; who: Dancer; degrees: float; locked = true): Pose =
   result = pose
   result.place[who] = turn(pose.place[who], pivot, degrees)
   result.facing[who] = pose.facing[who] + (if locked: degrees else: 0.0)
-  result.ring = some (pivot, dist(pose.place[who], pivot))
+  result.ring = some (pivot, distance(pose.place[who], pivot))
 
 
 func couple*(pose: Pose; degrees: float): Pose =
@@ -125,7 +125,7 @@ func couple*(pose: Pose; degrees: float): Pose =
   let mid = ((pose.place[Dancer.Lead].x + pose.place[Dancer.Follow].x) / 2,
              (pose.place[Dancer.Lead].y + pose.place[Dancer.Follow].y) / 2)
   result = movedPose(pose, mid, degrees, 0.0)
-  result.ring = some (mid, dist(pose.place[Dancer.Lead], mid))
+  result.ring = some (mid, distance(pose.place[Dancer.Lead], mid))
 
 
 func relative*(pose: Pose): tuple[axis, facing: float] =

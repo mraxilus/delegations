@@ -29,17 +29,17 @@ type
   Seen* = tuple[x, y, d: float] ## On screen: across, down, and depth toward eye.
   Drawn* = enum ## What one capsule is put on canvas as.
     Stroke, Disc
-  Piece* = tuple[cap: int, a, z: Spot] ## Part of capsule `cap` put down as one stroke.
+  Piece* = tuple[capsule: int, a, z: Spot] ## Part of capsule `capsule` put down as one stroke.
 
 
-func seen*(p: Spot; az, el: float; f: Framing): Seen =
+func seen*(p: Spot; azimuth, elevation: float; f: Framing): Seen =
   ## Project one world point: screen across, screen down, and depth toward eye.
   ##   Screen's down is world's up negated: canvas counts y downward, so point
   ##     higher off floor has to come out smaller.  Signed other way, floor grid
   ##     draws above dancers standing on it.
   let
-    (ca, sa) = (cos(az), sin(az))
-    (ce, se) = (cos(el), sin(el))
+    (ca, sa) = (cos(azimuth), sin(azimuth))
+    (ce, se) = (cos(elevation), sin(elevation))
     (x, y, z) = (p.x - f.mid[0], p.y - f.mid[1], p.z - f.mid[2])
   (x: -sa * x + ca * y,
    y: ca * se * x + sa * se * y - ce * z,
@@ -52,7 +52,7 @@ func drawnAs*(a, z: Spot): Drawn =
 func along(a, z: Spot; t: float): Spot =
   (a.x + (z.x - a.x) * t, a.y + (z.y - a.y) * t, a.z + (z.z - a.z) * t)
 
-func drawOrder*(caps: openArray[tuple[a, z: Spot]]; az, el: float;
+func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: float;
                 f: Framing): seq[Piece] =
   ## Every capsule in pieces no longer than `DAB`, painter's order: furthest
   ## first, by depth of each piece's middle, equal depths in engine's order.
@@ -63,7 +63,7 @@ func drawOrder*(caps: openArray[tuple[a, z: Spot]]; az, el: float;
   ##     through one another can still come out wrong way round within one
   ##     piece, and bodies are filtered not to.
   var keyed: seq[(float, Piece)]
-  for i, c in caps:
+  for i, c in capsules:
     let
       long = sqrt((c.z.x - c.a.x) ^ 2 + (c.z.y - c.a.y) ^ 2 + (c.z.z - c.a.z) ^ 2)
       n = max(1, int(ceil(long / DAB)))
@@ -72,7 +72,7 @@ func drawOrder*(caps: openArray[tuple[a, z: Spot]]; az, el: float;
         a = along(c.a, c.z, float(k) / float(n))
         z = along(c.a, c.z, float(k + 1) / float(n))
         mid = along(c.a, c.z, (float(k) + 0.5) / float(n))
-      keyed.add (seen(mid, az, el, f).d, (cap: i, a: a, z: z))
+      keyed.add (seen(mid, azimuth, elevation, f).d, (capsule: i, a: a, z: z))
   keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
   for k in keyed: result.add k[1]
 

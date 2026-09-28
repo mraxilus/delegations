@@ -104,7 +104,7 @@ func pip*(dancer: Dancer; ax, ay, dxs, dys: float; arm: Arm;
     fill = fillOf(level, arm, leads)
     cx = ax + PIP / 2 + dxs / 2
     cy = ay + dys / 2
-    pts: seq[Point] = @[(ax, ay), (ax + PIP, ay), (ax + PIP + dxs, ay + dys),
+    points: seq[Point] = @[(ax, ay), (ax + PIP, ay), (ax + PIP + dxs, ay + dys),
                         (ax + dxs, ay + dys)]
     perimeter = if leads: 2 * PIP + 2 * hypot(dxs, dys)
                 else: 2 * PI * (PIP / 2)
@@ -112,7 +112,7 @@ func pip*(dancer: Dancer; ax, ay, dxs, dys: float; arm: Arm;
   func shape(inset: float; style: string): string =
     ## One outline or fill, as dancer's own mark: path or circle.
     if leads:
-      let d = if inset == 1.0: poly(pts) else: poly(scaled(pts, inset))
+      let d = if inset == 1.0: poly(points) else: poly(scaled(points, inset))
       &"""<path d="{d}" {style}/>"""
     else:
       &"""<circle cx="{n(cx)}" cy="{n(cy)}" r="{n(PIP / 2 * inset)}" {style}/>"""

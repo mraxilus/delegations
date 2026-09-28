@@ -40,21 +40,21 @@ func facing*(rig: Rig; apart: float): array[Body, Stance] =
   [Stance(centre: (0.0, 0.0), facing: PI / 2.0),
    Stance(centre: (0.0, apart), facing: -PI / 2.0)]
 
-func axesOf*(st: Stance): Axes =
+func axesOf*(stance: Stance): Axes =
   ## Body's own right and forward, in world.
   let
-    c = cos(st.facing)
-    s = sin(st.facing)
-  Axes(origin: (st.centre.x, st.centre.y, 0.0), right: (s, -c, 0.0), fore: (c, s, 0.0))
+    c = cos(stance.facing)
+    s = sin(stance.facing)
+  Axes(origin: (stance.centre.x, stance.centre.y, 0.0), right: (s, -c, 0.0), fore: (c, s, 0.0))
 
-func toBody*(ax: Axes; p: Vec): Vec =
+func toBody*(axes: Axes; p: Vec): Vec =
   ## World point in body's own terms: x to its right, y forward, z up.
-  let d = p - ax.origin
-  (dot(d, ax.right), dot(d, ax.fore), d.z)
+  let d = p - axes.origin
+  (dot(d, axes.right), dot(d, axes.fore), d.z)
 
-func toWorld*(ax: Axes; p: Vec): Vec =
+func toWorld*(axes: Axes; p: Vec): Vec =
   ## Body's own terms back in world.
-  ax.origin + ax.right * p.x + ax.fore * p.y + (0.0, 0.0, p.z)
+  axes.origin + axes.right * p.x + axes.fore * p.y + (0.0, 0.0, p.z)
 
 func mirrored*(p: Vec): Vec = (-p.x, p.y, p.z)
   ## Body's own terms seen in mirror: left arm is right arm here.
@@ -62,28 +62,28 @@ func mirrored*(p: Vec): Vec = (-p.x, p.y, p.z)
 func side*(arm: Arm): float = (if arm == Arm.Right: 1.0 else: -1.0)
   ## Which way along body's right each arm's shoulder lies.
 
-func shoulder*(rig: Rig; st: Stance; arm: Arm): Vec =
+func shoulder*(rig: Rig; stance: Stance; arm: Arm): Vec =
   ## Joint's centre in world.
-  toWorld(axesOf(st), (side(arm) * rig.shoulderOut, 0.0, rig.shoulderUp))
+  toWorld(axesOf(stance), (side(arm) * rig.shoulderOut, 0.0, rig.shoulderUp))
 
-func twist*(st: array[Body, Stance]): float =
+func twist*(stance: array[Body, Stance]): float =
   ## How far Two has turned relative to One, radians, from face-to-face.
-  st[Body.Two].facing - st[Body.One].facing + PI
+  stance[Body.Two].facing - stance[Body.One].facing + PI
 
-func turned*(st: array[Body, Stance]; who: Body; turns: float): array[Body, Stance] =
+func turned*(stance: array[Body, Stance]; who: Body; turns: float): array[Body, Stance] =
   ## Stances with one body turned on its spot by `turns` whole turns,
   ## anticlockwise seen from above.
-  result = st
+  result = stance
   result[who].facing = result[who].facing + turns * 2.0 * PI
 
-func quartersTo*(st: array[Body, Stance]; who: Body): Option[int] =
+func quartersTo*(stance: array[Body, Stance]; who: Body): Option[int] =
   ## Where this body sees other, in whole quarter turns clockwise from its own
   ## front: nought ahead, one at its right, two behind, three at its left.
   ##   Clockwise, so turning on spot to right steps through them in order.
   ##   None between quarters: body there sees other at no one side.
   let
-    here = st[who]
-    there = st[if who == Body.One: Body.Two else: Body.One]
+    here = stance[who]
+    there = stance[if who == Body.One: Body.Two else: Body.One]
     bearing = arctan2(there.centre.y - here.centre.y, there.centre.x - here.centre.x)
     quarters = floorMod(here.facing - bearing, 2.0 * PI) / (PI / 2.0)
   if abs(quarters - round(quarters)) < 1e-6: some(int(round(quarters)) mod 4)

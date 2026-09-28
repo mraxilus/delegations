@@ -195,8 +195,8 @@ suite "pages speak of the lead and the follow":
     for word in words: gendered.add word
 
   test "no string a page shows says a gendered word":
-    for dir in SAID_IN:
-      for path in walkDirRec(root / dir):
+    for directory in SAID_IN:
+      for path in walkDirRec(root / directory):
         if path.splitFile.ext != ".nim": continue
         for (said, next) in readFile(path).literals:
           if next == ':': continue  # key of object, read back by that name
@@ -211,8 +211,8 @@ suite "pages speak of the lead and the follow":
     ##     which no page shows.
     let names = source.replaced(FACING_TERM)
     check names.len > 0
-    for dir in SAID_IN:
-      for path in walkDirRec(root / dir):
+    for directory in SAID_IN:
+      for path in walkDirRec(root / directory):
         if path.splitFile.ext != ".nim": continue
         for (said, _) in readFile(path).literals:
           for word in names:

@@ -108,11 +108,11 @@ func said*(way: Option[Way]; arm = Arm.L): Ways =
   result[arm] = way
 
 
-func replaceFirst*(s, sub, by: string): string =
+func replaceFirst*(s, pattern, by: string): string =
   ## Replace only first occurrence, as figure post-passes need.
-  let at = s.find(sub)
+  let at = s.find(pattern)
   if at < 0: s
-  else: s[0 ..< at] & by & s[at + sub.len .. ^1]
+  else: s[0 ..< at] & by & s[at + pattern.len .. ^1]
 
 
 func slotChart*(arm = Arm.L): string =
@@ -311,41 +311,41 @@ func frameParts*(): Parts =
     "The compound lands on the axis turn, so the two are not two moves."
 
   # And same four moves, running.
-  const MOVE_PX = 1.3  ## Pixels one unit takes in frame page's moving cells.
+  const MOVE_PIXELS = 1.3  ## Pixels one unit takes in frame page's moving cells.
   for m in MOVES:
     let
       tag = m.name.replace(" ", "_").replace(",", "")
       half = cycle(m.apply).poses.mapIt(extent(it, captions = false)).max
-      style = &"""class="mv" style="width: {n(2 * half * MOVE_PX)}px;""" &
-        &""" height: {n(2 * half * MOVE_PX)}px""""
+      style = &"""class="mv" style="width: {n(2 * half * MOVE_PIXELS)}px;""" &
+        &""" height: {n(2 * half * MOVE_PIXELS)}px""""
     result[&"mv_{tag}"] = animated("mv", HOLD, m.apply, some half)
       .replaceFirst("class=\"mv\"", style)
     result[&"mv_{tag}_still"] = renderFigure("mv still", HOLD, captions = false,
                                       half = some half)
       .replaceFirst("class=\"mv still\"",
-        &"""class="mv still" style="width: {n(2 * half * MOVE_PX)}px;""" &
-          &""" height: {n(2 * half * MOVE_PX)}px"""")
+        &"""class="mv still" style="width: {n(2 * half * MOVE_PIXELS)}px;""" &
+          &""" height: {n(2 * half * MOVE_PIXELS)}px"""")
 
 
 
 #[ Single-Hand Turns Page ]#
 
 const
-  PX = 1.0        ## Pixels one unit takes in turn page's moving cell.
-  STILL_PX = 0.72 ## And in still one, where figures are smaller.
+  PIXELS = 1.0        ## Pixels one unit takes in turn page's moving cell.
+  STILL_PIXELS = 0.72 ## And in still one, where figures are smaller.
   WALK_SECONDS = 5.4 ## Clock one edge of state graph takes, out and back.
     ## Walk of several edges takes multiple of it, so every animation on
     ##   these pages runs at one pace and length of loop says how far it
     ##   goes rather than how fast.
 
 
-func sized(svg, cls: string; half, px: float): string =
+func sized(svg, classes: string; half, pixels: float): string =
   ## Give cell room its row's box needs at its row's own scale.
   ##   Shared by both turn pages -- it was defined twice, byte for byte,
   ##     inside each builder before pages were read side by side.
-  svg.replaceFirst(&"class=\"{cls}\"",
-    &"""class="{cls}" style="width: {n(2 * half * px)}px;""" &
-      &""" height: {n(2 * half * px)}px"""")
+  svg.replaceFirst(&"class=\"{classes}\"",
+    &"""class="{classes}" style="width: {n(2 * half * pixels)}px;""" &
+      &""" height: {n(2 * half * pixels)}px"""")
 
 
 const SINGLES*: array[4, tuple[holds: Holds, name: string]] = [
@@ -528,7 +528,7 @@ func singleTurnParts*(): Parts =
         result[&"st_{w.tag}_{c}_{quarter}"] = sized(renderFigure("tiny",
           single.holds, levels, captions = false,
           pose = some quarterPose(manner, quarter), half = some still_half,
-          clear_marks = true), "tiny", still_half, STILL_PX)
+          clear_marks = true), "tiny", still_half, STILL_PIXELS)
 
       # And every edge, walked in stages rule 18 asks for.
       for quarter in 0 ..< QUARTERS_ROUND:
@@ -536,7 +536,7 @@ func singleTurnParts*(): Parts =
         result[&"tr_{w.tag}_{c}_{quarter}_{to}"] = sized(animatedPoses("mv",
           single.holds, walks[manner][quarter].poses, some walk_half[manner],
           levels, dur = WALK_SECONDS, times = walks[manner][quarter].times),
-          "mv", walk_half[manner], PX)
+          "mv", walk_half[manner], PIXELS)
         # Still stands in where motion is turned off, so it is settled
         # picture and bends by rule 22; moving figure it replaces is
         # rule's own exemption and stays straight.
@@ -544,19 +544,19 @@ func singleTurnParts*(): Parts =
           renderFigure("mv still", single.holds, levels, captions = false,
                 pose = some quarterPose(manner, quarter),
                 half = some walk_half[manner], clear_marks = true),
-          "mv still", walk_half[manner], PX)
+          "mv still", walk_half[manner], PIXELS)
 
       # And whole round in one figure, at pace its own quarters run at:
       # four legs where edge has two, so twice their clock.
       result[&"rd_{w.tag}_{c}"] = sized(animatedPoses("mv",
         single.holds, rounds[manner].poses, some walk_half[manner],
         levels, dur = 2 * WALK_SECONDS, times = rounds[manner].times),
-        "mv", walk_half[manner], PX)
+        "mv", walk_half[manner], PIXELS)
       result[&"rd_{w.tag}_{c}_still"] = sized(
         renderFigure("mv still", single.holds, levels, captions = false,
               pose = some quarterPose(manner, 0),
               half = some walk_half[manner], clear_marks = true),
-        "mv still", walk_half[manner], PX)
+        "mv still", walk_half[manner], PIXELS)
 
   result["g_quarter"] = turnGlyph("&#188; turn")
 
@@ -829,7 +829,7 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
     result[&"{key}h_{i}"] = sized(renderFigure("tiny", holds, ABOVE_BOTH,
       captions = false, pose = some posedAt(position.wind, phase),
       half = some still_half, twist = windTwist(position.wind),
-      clear_marks = true), "tiny", still_half, STILL_PX)
+      clear_marks = true), "tiny", still_half, STILL_PIXELS)
 
   # And every edge of it, walked by every manner of turn.
   for manner in Manner:
@@ -839,26 +839,26 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
         walks[manner][i].poses, some walk_half[manner], ABOVE_BOTH,
         dur = WALK_SECONDS,
         times = walks[manner][i].times, wound = chain[i].wind),
-        "mv", walk_half[manner], PX)
+        "mv", walk_half[manner], PIXELS)
       # Still stands in where motion is turned off, so it is
       # picture move sets off from (rule 22's exemption again).
       result[&"{key}w_{w.tag}_{i}_still"] = sized(renderFigure("mv still",
         holds, ABOVE_BOTH, captions = false,
         pose = some posedAt(chain[i].wind, phase), half = some walk_half[manner],
         twist = windTwist(chain[i].wind), clear_marks = true),
-        "mv still", walk_half[manner], PX)
+        "mv still", walk_half[manner], PIXELS)
 
     # And whole chain in one figure, at pace its own edges run at: six legs
     # out and six back where edge has one of each.
     result[&"{key}c_{w.tag}"] = sized(animatedPoses("mv", holds,
       chains[manner].poses, some walk_half[manner], ABOVE_BOTH,
       dur = float(chain.len - 1) * WALK_SECONDS, times = chains[manner].times,
-      wound = chain[0].wind), "mv", walk_half[manner], PX)
+      wound = chain[0].wind), "mv", walk_half[manner], PIXELS)
     result[&"{key}c_{w.tag}_still"] = sized(renderFigure("mv still",
       holds, ABOVE_BOTH, captions = false,
       pose = some posedAt(chain[0].wind, phase), half = some walk_half[manner],
       twist = windTwist(chain[0].wind), clear_marks = true),
-      "mv still", walk_half[manner], PX)
+      "mv still", walk_half[manner], PIXELS)
 
   # Narrow, because chain is seven long now and glyph stands
   # between every pair of them (rule 31).

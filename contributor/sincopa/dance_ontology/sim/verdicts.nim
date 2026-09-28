@@ -69,9 +69,9 @@ func blockLine(w: WayRead; sign: string; apart = true): string =
     return &"{sign}: free to {turns(MOST)} turns{stood}"
   &"{sign}{turns(w.at)}{stood}: {whyOf(w)}"
 
-func blocks(sw: SweepRead): string =
+func blocks(sweep: SweepRead): string =
   ## Say both blocks of sweep as one wrapped paragraph.
-  prose(&"Blocks: {blockLine(sw.neg, \"-\")}; {blockLine(sw.pos, \"+\")}.")
+  prose(&"Blocks: {blockLine(sweep.negative, \"-\")}; {blockLine(sweep.positive, \"+\")}.")
 
 func restName(away: bool): string =
   ## Name facing couple rest at, read off stance sim stands them in.
@@ -108,7 +108,7 @@ proc rungOf(band: Band; turn: float): RungRead =
   if key in READINGS_KEPT.rungs: return READINGS_KEPT.rungs[key]
   if ask notin RUNGS_WANTED: RUNGS_WANTED.add ask
 
-func glanceAt(sw: SweepRead; t: float): Glance = sw.glances[int(round(t * 2.0)) + 4]
+func glanceAt(sweep: SweepRead; t: float): Glance = sweep.glances[int(round(t * 2.0)) + 4]
   ## Moment report reads at `t` turns, which is half turn from -2 to 2.
 
 
@@ -132,14 +132,14 @@ proc rigTable(): string =
   result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, wrist to grip {HUMAN.hand}: " &
     &"reach {turns(reach(HUMAN))} m; limb radius {HUMAN.limb} |\n"
   let
-    behind = int(round(HUMAN.range[Dof.Extend].hi * 180.0 / PI))
-    twIn = int(round(-HUMAN.range[Dof.Twist].lo * 180.0 / PI))
-    twOut = int(round(HUMAN.range[Dof.Twist].hi * 180.0 / PI))
-    bend = int(round(HUMAN.range[Dof.Bend].hi * 180.0 / PI))
-    wrist = int(round(HUMAN.range[Dof.Wrist].hi * 180.0 / PI))
-    waist = int(round(HUMAN.waist.hi * 180.0 / PI))
+    behind = int(round(HUMAN.range[Dof.Extend].upper * 180.0 / PI))
+    twist_in = int(round(-HUMAN.range[Dof.Twist].lower * 180.0 / PI))
+    twist_out = int(round(HUMAN.range[Dof.Twist].upper * 180.0 / PI))
+    bend = int(round(HUMAN.range[Dof.Bend].upper * 180.0 / PI))
+    wrist = int(round(HUMAN.range[Dof.Wrist].upper * 180.0 / PI))
+    waist = int(round(HUMAN.waist.upper * 180.0 / PI))
   result.add &"| shoulder | {behind} degrees behind the frontal plane; across, trunk stops " &
-    &"it; twist {twIn} in to {twOut} out |\n"
+    &"it; twist {twist_in} in to {twist_out} out |\n"
   result.add &"| elbow | 0 to {bend} degrees |\n"
   result.add &"| wrist | a {wrist} degree cone |\n"
   result.add &"| waist | {waist} degrees each way, sprung to square |\n"
@@ -159,16 +159,16 @@ proc singleHolds(): string =
                        (Arm.Left, Arm.Right, "L-r"), (Arm.Right, Arm.Left, "R-l")]:
     let links = oneLink(a, b)
     for (word, band) in BANDS:
-      let sw = sweepOf(band, links)
+      let sweep = sweepOf(band, links)
       result.add &"### {name}, {word}\n\n"
-      if not sw.restHolds:
+      if not sweep.restHolds:
         result.add "No pose holds at the rest.\n\n"
         continue
-      result.add blocks(sw)
+      result.add blocks(sweep)
       result.add "| turn | follow's arm | lead's arm | strain | hands at |\n" &
         "|---|---|---|---|---|\n"
       for i, h in HALVES:
-        let g = sw.glances[i]
+        let g = sweep.glances[i]
         if not g.got:
           result.add &"| {half(h)} | blocked | | | |\n"
           continue
@@ -189,9 +189,9 @@ proc floorClaim(): string =
   for (a, b, name, lockSign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
                                  (Arm.Left, Arm.Right, "L-r", 1.0)]:
     for (word, band) in BANDS:
-      let sw = sweepOf(band, oneLink(a, b))
+      let sweep = sweepOf(band, oneLink(a, b))
       for (way, sign) in [("lock way", lockSign), ("wrap way", -lockSign)]:
-        let w = if sign < 0: sw.neg else: sw.pos
+        let w = if sign < 0: sweep.negative else: sweep.positive
         let floor = if band == Band.Crown: "no block"
                     elif band == Band.Torso and way == "wrap way": "half a turn"
                     else: "a whole turn"
@@ -212,16 +212,16 @@ proc pairHolds(): string =
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right), true,
        "L-l.R-r, from " & restName(true))]:
     for (word, band) in BANDS:
-      let sw = sweepOf(band, links, away = away)
+      let sweep = sweepOf(band, links, away = away)
       result.add &"### {name}, {word}\n\n"
-      if not sw.restHolds:
+      if not sweep.restHolds:
         result.add "No pose holds at the rest.\n\n"
         continue
-      result.add blocks(sw)
+      result.add blocks(sweep)
       result.add "| turn | follow's first arm | follow's second arm | crossings | strain |\n" &
         "|---|---|---|---|---|\n"
       for i, h in HALVES:
-        let g = sw.glances[i]
+        let g = sweep.glances[i]
         if not g.got:
           result.add &"| {half(h)} | blocked | | | |\n"
           continue
@@ -301,14 +301,15 @@ proc standing(): string =
   result.add "| apart | lock way | wrap way |\n|---|---|---|\n"
   let links = oneLink(Arm.Left, Arm.Left)
   let chosen = sweepOf(Band.Torso, links)
-  result.add &"| chosen | {blockLine(chosen.neg, \"-\")} | {blockLine(chosen.pos, \"+\")} |\n"
+  result.add &"| chosen | {blockLine(chosen.negative, \"-\")} | " &
+    &"{blockLine(chosen.positive, \"+\")} |\n"
   for apart in [0.36, 0.50, 0.70]:
-    let sw = sweepOf(Band.Torso, links, apart = apart)
-    if not sw.restHolds:
+    let sweep = sweepOf(Band.Torso, links, apart = apart)
+    if not sweep.restHolds:
       result.add &"| {apart} m | no rest | |\n"
       continue
-    result.add &"| {apart} m | {blockLine(sw.neg, \"-\", apart = false)} | " &
-      &"{blockLine(sw.pos, \"+\", apart = false)} |\n"
+    result.add &"| {apart} m | {blockLine(sweep.negative, \"-\", apart = false)} | " &
+      &"{blockLine(sweep.positive, \"+\", apart = false)} |\n"
   result.add "\n"
 
 

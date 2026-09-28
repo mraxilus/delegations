@@ -30,7 +30,7 @@ const
     ## Committed page holding prose and one marker per derived number or picture.
   PAGE_NAME* = "review.html"
     ## File page is written as, under output directory.
-  FRAMES_DIR* = "frames"
+  DIRECTORY_FRAMES* = "frames"
     ## Directory under output holding one SVG per frame, for anything that is not HTML.
   DISAGREEMENTS = {
     FindingKind.EdgeAbsent,
@@ -315,18 +315,18 @@ proc renderReview*(): string =
   inkTerms(page)
 
 
-proc writeReview*(out_dir: string) =
-  ## Write page and one picture per frame under `out_dir`, clearing stale pictures first.
+proc writeReview*(directory_out: string) =
+  ## Write page and one picture per frame under `directory_out`, clearing stale pictures first.
   ##   Cleared because frame renamed would otherwise leave its old picture behind under
   ##     old name, naming frame model no longer has.
-  createDir(out_dir / FRAMES_DIR)
-  for path in walkFiles(out_dir / FRAMES_DIR / "*.svg"):
+  createDir(directory_out / DIRECTORY_FRAMES)
+  for path in walkFiles(directory_out / DIRECTORY_FRAMES / "*.svg"):
     removeFile(path)
-  writeFile(out_dir / PAGE_NAME, renderReview())
+  writeFile(directory_out / PAGE_NAME, renderReview())
   for target in FRAMES:
-    writeFile(out_dir / FRAMES_DIR / (target.slug & ".svg"), renderFrame(target))
-  echo "wrote ", out_dir / PAGE_NAME, " and ", FRAMES.len, " pictures in ",
-    out_dir / FRAMES_DIR
+    writeFile(directory_out / DIRECTORY_FRAMES / (target.slug & ".svg"), renderFrame(target))
+  echo "wrote ", directory_out / PAGE_NAME, " and ", FRAMES.len, " pictures in ",
+    directory_out / DIRECTORY_FRAMES
 
 
 when isMainModule:

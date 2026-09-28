@@ -32,7 +32,7 @@ type
     who*: Body
     arm*: Arm
     read*: array[Dof, float]  ## What joint reads.
-    lo*, hi*: array[Dof, float] ## And ends it is held between.
+    lower*, upper*: array[Dof, float] ## And ends it is held between.
 
   Faces* = object ## Where one dancer stands and which way they look.
     at*: Vec   ## Axis at floor.
@@ -65,22 +65,22 @@ proc acheOf(c: Couple; who: Body; arm: Arm): Ache =
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
   let
-    (j, tw, bd, wr) = c.jointsOf(who, arm)
-    (twLo, twHi) = twistEnds(c.rig, arm)
+    (swings, twist_angle, bend_angle, wrist_angle) = c.jointsOf(who, arm)
+    (twist_lower, twist_upper) = twistEnds(c.rig, arm)
   result = Ache(who: who, arm: arm)
-  result.read = [j.extend, j.across, tw, bd, wr]
+  result.read = [swings.extend, swings.across, twist_angle, bend_angle, wrist_angle]
   for d in Dof:
-    result.lo[d] = c.rig.range[d].lo
-    result.hi[d] = c.rig.range[d].hi
-  result.lo[Dof.Twist] = twLo
-  result.hi[Dof.Twist] = twHi
+    result.lower[d] = c.rig.range[d].lower
+    result.upper[d] = c.rig.range[d].upper
+  result.lower[Dof.Twist] = twist_lower
+  result.upper[Dof.Twist] = twist_upper
 
 proc stillOf(c: Couple; at: float): Still =
   ## Everything page draws of couple as they stand this moment.
   result.at = at
   for who in Body:
-    let ax = axesOf(c.chestStance(who))
-    result.faces[who] = Faces(at: ax.origin, fore: ax.fore)
+    let axes = axesOf(c.chestStance(who))
+    result.faces[who] = Faces(at: axes.origin, fore: axes.fore)
   for s in c.shapes:
     let (a, z) = c.endsOf(s)
     result.bars.add Bar(who: s.who, arm: s.arm, mark: s.mark, a: a, z: z, r: s.r)
@@ -117,9 +117,9 @@ proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
   let
-    sw = swept(rig, band, links, who = who, most = MOST, step = step,
+    sweep = swept(rig, band, links, who = who, most = MOST, step = step,
                away = away, head = head)
-    best = (if step >= 0.0: sw.pos else: sw.neg)
+    best = (if step >= 0.0: sweep.positive else: sweep.negative)
   result = Shown(
     hold: name,
     band: band,

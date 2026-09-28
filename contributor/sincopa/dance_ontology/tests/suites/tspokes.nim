@@ -218,12 +218,12 @@ suite "the moving":
         let
           leaving = renderSpokes(here, Motion.Leaving, some(spoke.to))
           resting = renderSpokes(spoke.to)
-          (_, _, tw, th) = windowOf(spoke.to)
+          (_, _, width, th) = windowOf(spoke.to)
           (tx, ty) = panOf(windowOf(spoke.to))
           (ex, ey) = endOf(spoke)
         # Window it ends in is window frame reached is given.
-        check leaving.contains("--to-w: " & $tw & "; --to-h: " & $th)
-        check resting.contains("--w: " & $tw & "; --h: " & $th)
+        check leaving.contains("--to-w: " & $width & "; --to-h: " & $th)
+        check resting.contains("--w: " & $width & "; --h: " & $th)
         # And it ends panned so that frame reached, which is standing out
         # where its way out put it, is left exactly where middle will be.
         check leaving.contains("--to-px: " & $(tx + MIDDLE[0] - ex) &

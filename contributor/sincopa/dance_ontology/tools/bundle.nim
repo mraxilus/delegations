@@ -19,20 +19,20 @@ const TITLE_PREFIX = WORK & " — "
   ##   Bundling is only ever page project stands behind, so plain form, never mockup form.
 
 
-proc bundle(dir, name: string) =
+proc bundle(directory, name: string) =
   ## Write `<dir>/artifact.html` from markup and script beside it.
   let
-    markup = readFile(dir / "index.html")
-    script = readFile(dir / (name & ".js"))
+    markup = readFile(directory / "index.html")
+    script = readFile(directory / (name & ".js"))
     tag = "<script src=\"" & name & ".js\"></script>"
   var head = markup[markup.find("<title>") .. markup.find("</style>") + 7]
   head = head.replace("<title>", "<title>" & TITLE_PREFIX)
   var body = markup[markup.find("<body>") + 6 ..< markup.find("</body>")]
   doAssert body.contains(tag),
-    "Markup should load its script as bundle expects; got `" & dir / "index.html" & "`."
+    "Markup should load its script as bundle expects; got `" & directory / "index.html" & "`."
   body = body.replace(tag, "<script>\n" & script & "\n</script>")
-  writeFile(dir / "artifact.html", head & body)
-  echo "wrote ", dir / "artifact.html"
+  writeFile(directory / "artifact.html", head & body)
+  echo "wrote ", directory / "artifact.html"
 
 
 when isMainModule:

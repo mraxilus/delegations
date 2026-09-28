@@ -38,12 +38,12 @@ const VERDICTS* = [
 
 
 func rig(): JsObject {.importjs: "RIG@".}
-func ctxOf(id: cstring): JsObject {.importjs:
+func contextOf(id: cstring): JsObject {.importjs:
   "document.getElementById(#).getContext('2d')".}
 func canvasOf(id: cstring): JsObject {.importjs: "document.getElementById(#)".}
-func contextOf(cv: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
+func contextOf(canvas: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
 func toFixed(x: float; places: int): cstring {.importjs: "(#).toFixed(#)".}
-func num(x: JsObject): float {.importjs: "(#)".}
+func toFloat(x: JsObject): float {.importjs: "(#)".}
 func count(x: JsObject): int {.importjs: "(#).length".}
 func text(x: JsObject): cstring {.importjs: "(#)".}
 func truth(x: JsObject): bool {.importjs: "(#)".}
@@ -105,27 +105,27 @@ proc ends(e: JsObject; i, at: int): tuple[a, z: Spot] =
   let
     row = e.p[at]
     k = i * 6
-  ((x: num(row[k]), y: num(row[k + 1]), z: num(row[k + 2])),
-   (x: num(row[k + 3]), y: num(row[k + 4]), z: num(row[k + 5])))
+  ((x: toFloat(row[k]), y: toFloat(row[k + 1]), z: toFloat(row[k + 2])),
+   (x: toFloat(row[k + 3]), y: toFloat(row[k + 4]), z: toFloat(row[k + 5])))
 
 
-proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
+proc paintOn(canvas: JsObject; e: JsObject; at: int; azimuth, elevation, zoom: float;
              f: Framing) =
   ## Draw one moment of one entry on one canvas, seen from one place.
   let
-    ctx = contextOf(cv)
-    w = num(cv.width)
-    h = num(cv.height)
+    context = contextOf(canvas)
+    w = toFloat(canvas.width)
+    h = toFloat(canvas.height)
     scale = min(w, h) / (2.2 * f.reach) * zoom
     cx = w / 2.0
     cy = h / 2.0
-  discard ctx.clearRect(0, 0, w, h)
+  discard context.clearRect(0, 0, w, h)
   if momentsOf(e) == 0:
     return
 
   # Floor, so height and distance have something to be read against.
-  ctx.lineWidth = 1.0.toJs
-  ctx.strokeStyle = styleOf("--rule").toJs
+  context.lineWidth = 1.0.toJs
+  context.strokeStyle = styleOf("--rule").toJs
   let span = 1.5
   var g = -span
   while g <= span + 0.001:
@@ -135,12 +135,12 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
                    else: (f.mid[0] - span, f.mid[1] + g, 0.0))
         b: Spot = (if way == 0: (f.mid[0] + g, f.mid[1] + span, 0.0)
                    else: (f.mid[0] + span, f.mid[1] + g, 0.0))
-        pa = seen(a, az, el, f)
-        pb = seen(b, az, el, f)
-      discard ctx.beginPath()
-      discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
-      discard ctx.lineTo(cx + pb.x * scale, cy + pb.y * scale)
-      discard ctx.stroke()
+        pa = seen(a, azimuth, elevation, f)
+        pb = seen(b, azimuth, elevation, f)
+      discard context.beginPath()
+      discard context.moveTo(cx + pa.x * scale, cy + pa.y * scale)
+      discard context.lineTo(cx + pb.x * scale, cy + pb.y * scale)
+      discard context.stroke()
     g += 0.5
 
   # Where each dancer faces, on screen: body is lit from its own front, since
@@ -152,35 +152,35 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
   for who in 0 .. 1:
     let
       k = who * 4
-      here: Spot = (num(look[k]), num(look[k + 1]), 0.0)
-      ahead: Spot = (here.x + num(look[k + 2]), here.y + num(look[k + 3]), 0.0)
-      (ph, pf) = (seen(here, az, el, f), seen(ahead, az, el, f))
+      here: Spot = (toFloat(look[k]), toFloat(look[k + 1]), 0.0)
+      ahead: Spot = (here.x + toFloat(look[k + 2]), here.y + toFloat(look[k + 3]), 0.0)
+      (ph, pf) = (seen(here, azimuth, elevation, f), seen(ahead, azimuth, elevation, f))
     facing[who] = (x: pf.x - ph.x, y: pf.y - ph.y, d: pf.d - ph.d)
   let
     shade = $styleOf("--body-shade")
     lit = $styleOf("--body-lit")
 
   # Capsules, furthest first, in order `drawn` gives.
-  var caps: seq[tuple[a, z: Spot]]
+  var capsules: seq[tuple[a, z: Spot]]
   for i in 0 ..< count(e.rad):
-    caps.add ends(e, i, at)
-  ctx.lineCap = cstring("round").toJs
-  for piece in drawOrder(caps, az, el, f):
+    capsules.add ends(e, i, at)
+  context.lineCap = cstring("round").toJs
+  for piece in drawOrder(capsules, azimuth, elevation, f):
     let
-      i = piece.cap
+      i = piece.capsule
       tag = e.tag[i]
-      mark = int(num(tag[2]))
+      mark = int(toFloat(tag[2]))
       (a, z) = (piece.a, piece.z)
-      pa = seen(a, az, el, f)
-      pz = seen(z, az, el, f)
-      r = num(e.rad[i])
+      pa = seen(a, azimuth, elevation, f)
+      pz = seen(z, azimuth, elevation, f)
+      r = toFloat(e.rad[i])
     var ink: JsObject
     if mark == 0 or mark == 4:
       # Trunk and girdle: light across from back edge to front edge, along
       # facing's image on screen, through piece's middle.
       let
         axis: Seen = (x: pz.x - pa.x, y: pz.y - pa.y, d: 0.0)
-        fore = lightAcross(facing[int(num(tag[0]))], axis)
+        fore = lightAcross(facing[int(toFloat(tag[0]))], axis)
         across = sqrt(fore.x * fore.x + fore.y * fore.y)
         (mx, my) = (cx + (pa.x + pz.x) / 2.0 * scale, cy + (pa.y + pz.y) / 2.0 * scale)
       if across < 0.02:
@@ -188,35 +188,35 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       else:
         let
           (ux, uy) = (fore.x / across * r * scale, fore.y / across * r * scale)
-          grad = ctx.createLinearGradient(mx - ux, my - uy, mx + ux, my + uy)
+          grad = context.createLinearGradient(mx - ux, my - uy, mx + ux, my + uy)
         for (stop, s) in [(0.0, -1.0), (0.5, 0.0), (1.0, 1.0)]:
           discard grad.addColorStop(stop, cstring(mixHex(shade, lit, litAt(fore, s))))
         ink = grad
     else:
-      ink = inkOf(int(num(tag[1])), int(num(tag[0]))).toJs
+      ink = inkOf(int(toFloat(tag[1])), int(toFloat(tag[0]))).toJs
     case drawnAs(a, z)
     of Drawn.Stroke:
-      ctx.lineWidth = (2.0 * r * scale).toJs
-      ctx.strokeStyle = ink
-      discard ctx.beginPath()
-      discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
-      discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
-      discard ctx.stroke()
+      context.lineWidth = (2.0 * r * scale).toJs
+      context.strokeStyle = ink
+      discard context.beginPath()
+      discard context.moveTo(cx + pa.x * scale, cy + pa.y * scale)
+      discard context.lineTo(cx + pz.x * scale, cy + pz.y * scale)
+      discard context.stroke()
     of Drawn.Disc:
-      ctx.fillStyle = ink
-      discard ctx.beginPath()
-      discard ctx.arc(cx + pa.x * scale, cy + pa.y * scale, r * scale, 0.0, 2.0 * PI)
-      discard ctx.fill()
+      context.fillStyle = ink
+      discard context.beginPath()
+      discard context.arc(cx + pa.x * scale, cy + pa.y * scale, r * scale, 0.0, 2.0 * PI)
+      discard context.fill()
 
   # Where hands are joined, and how far engine has pulled them apart.
   let grip = e.g[at]
   for k in 0 ..< count(grip) div 3:
-    let p = seen((x: num(grip[k * 3]), y: num(grip[k * 3 + 1]),
-                  z: num(grip[k * 3 + 2])), az, el, f)
-    ctx.fillStyle = styleOf("--ink").toJs
-    discard ctx.beginPath()
-    discard ctx.arc(cx + p.x * scale, cy + p.y * scale, 3.0, 0.0, 2.0 * PI)
-    discard ctx.fill()
+    let p = seen((x: toFloat(grip[k * 3]), y: toFloat(grip[k * 3 + 1]),
+                  z: toFloat(grip[k * 3 + 2])), azimuth, elevation, f)
+    context.fillStyle = styleOf("--ink").toJs
+    discard context.beginPath()
+    discard context.arc(cx + p.x * scale, cy + p.y * scale, 3.0, 0.0, 2.0 * PI)
+    discard context.fill()
 
 
 proc paint() =
@@ -225,14 +225,14 @@ proc paint() =
 
 proc readout() =
   ## Every joint of every arm, beside range it is held between.
-  let sw = sweep()
+  let sweep_shown = sweep()
   var html = cstring""
   if moments() > 0:
-    let js = sw.j[MOMENT_SHOWN]
-    for a in 0 ..< count(sw.arm):
+    let js = sweep_shown.j[MOMENT_SHOWN]
+    for a in 0 ..< count(sweep_shown.arm):
       let
-        who = int(num(sw.arm[a][0]))
-        side = int(num(sw.arm[a][1]))
+        who = int(toFloat(sweep_shown.arm[a][0]))
+        side = int(toFloat(sweep_shown.arm[a][1]))
       # Label, not heading: heading would take serif face (Article X.8).
       html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
         inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
@@ -240,43 +240,44 @@ proc readout() =
       for d in 0 ..< DOFS.len:
         let
           k = a * DOFS.len + d
-          v = num(js[k])
-          lo = num(sw.lo[k])
-          hi = num(sw.hi[k])
-          span = (if hi - lo > 1e-9: hi - lo else: 1.0)
-          at = (v - lo) / span
-          spent = v <= lo + NEAR or v >= hi - NEAR
+          v = toFloat(js[k])
+          lower = toFloat(sweep_shown.lo[k])
+          upper = toFloat(sweep_shown.hi[k])
+          span = (if upper - lower > 1e-9: upper - lower else: 1.0)
+          at = (v - lower) / span
+          spent = v <= lower + NEAR or v >= upper - NEAR
         html = html & cstring"<div class='dof" &
           (if spent: cstring" spent" else: cstring"") & cstring"'><span>" &
           DOFS[d] & cstring"</span><div class='track'><b style='left:" &
           toFixed(max(0.0, min(1.0, at)) * 100.0, 1) & cstring"%'></b></div><em>" &
           toFixed(v * 180.0 / PI, 0) & cstring"°</em><u>" &
-          toFixed(lo * 180.0 / PI, 0) & cstring"…" &
-          toFixed(hi * 180.0 / PI, 0) & cstring"</u></div>"
+          toFixed(lower * 180.0 / PI, 0) & cstring"…" &
+          toFixed(upper * 180.0 / PI, 0) & cstring"</u></div>"
       html = html & cstring"</div>"
   document.getElementById("reads").innerHTML = html
 
 
 proc caption() =
-  let sw = sweep()
-  if isStill(sw):
+  let sweep_shown = sweep()
+  if isStill(sweep_shown):
     document.getElementById("where").innerHTML =
       (if moments() > 0:
-         cstring"<b>" & toFixed(num(sw.turns), 2) & cstring"</b> turns · stood <b>" &
-           toFixed(num(sw.apart), 2) & cstring"</b> m apart"
+         cstring"<b>" & toFixed(toFloat(sweep_shown.turns), 2) & cstring"</b> turns · stood <b>" &
+           toFixed(toFloat(sweep_shown.apart), 2) & cstring"</b> m apart"
        else:
-         cstring"<b>" & toFixed(num(sw.turns), 2) & cstring"</b> turns · no pose holds")
+         cstring"<b>" & toFixed(toFloat(sweep_shown.turns), 2) &
+           cstring"</b> turns · no pose holds")
     document.getElementById("verdict").innerHTML =
       (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
   else:
-    let turned = num(sw.at[MOMENT_SHOWN])
+    let turned = toFloat(sweep_shown.at[MOMENT_SHOWN])
     document.getElementById("where").innerHTML =
       cstring"<b>" & toFixed(turned, 2) & cstring"</b> turns · stood <b>" &
-      toFixed(num(sw.apart), 2) & cstring"</b> m apart"
+      toFixed(toFloat(sweep_shown.apart), 2) & cstring"</b> m apart"
     document.getElementById("verdict").innerHTML =
-      (if truth(sw.stopped):
-         cstring"Stops at <b>" & toFixed(num(sw.turns), 2) & cstring"</b> turns: " &
-           text(sw.says)
+      (if truth(sweep_shown.stopped):
+         cstring"Stops at <b>" & toFixed(toFloat(sweep_shown.turns), 2) & cstring"</b> turns: " &
+           text(sweep_shown.says)
        else:
          cstring(VERDICTS[2]))
 
@@ -284,21 +285,22 @@ proc caption() =
 proc framingOf(e: JsObject): Framing =
   ## Frame one entry to what it holds, over every moment of it, so view does
   ## not jump as couple turn and nothing wanders off edge part way through.
-  var lo = [1e9, 1e9, 1e9]
-  var hi = [-1e9, -1e9, -1e9]
+  var lower = [1e9, 1e9, 1e9]
+  var upper = [-1e9, -1e9, -1e9]
   for t in 0 ..< momentsOf(e):
     let row = e.p[t]
     for k in 0 ..< count(row) div 3:
       for d in 0 .. 2:
-        let v = num(row[k * 3 + d])
-        lo[d] = min(lo[d], v)
-        hi[d] = max(hi[d], v)
+        let v = toFloat(row[k * 3 + d])
+        lower[d] = min(lower[d], v)
+        upper[d] = max(upper[d], v)
   ## Framed to capsules, not to floor.  Rig is trunk upward and has no legs, so
   ## forcing floor into frame spends half of it on gap where legs would be;
   ## grid is still drawn at nought and comes into view on zooming out.
   for d in 0 .. 2:
-    result.mid[d] = (lo[d] + hi[d]) / 2.0
-  result.reach = max(max(hi[0] - lo[0], hi[1] - lo[1]), hi[2] - lo[2]) / 2.0 + 0.15
+    result.mid[d] = (lower[d] + upper[d]) / 2.0
+  let spread = max(max(upper[0] - lower[0], upper[1] - lower[1]), upper[2] - lower[2])
+  result.reach = spread / 2.0 + 0.15
 
 proc fit() =
   if moments() > 0:
@@ -317,9 +319,9 @@ proc reference() =
   cell.classList.add(cstring"picked")
   let
     art = cell.querySelector(".art")
-    cap = cell.querySelector("figcaption")
+    caption = cell.querySelector("figcaption")
   document.getElementById("ref").innerHTML =
-    cstring"<div class='art'>" & art.innerHTML & cstring"</div>" & cap.outerHTML
+    cstring"<div class='art'>" & art.innerHTML & cstring"</div>" & caption.outerHTML
 
 proc show() =
   paint()
@@ -330,9 +332,9 @@ proc show() =
 
 
 proc size() =
-  let cv = canvasOf("view")
-  cv.width = (num(cv.clientWidth) * 2.0).toJs
-  cv.height = (num(cv.clientHeight) * 2.0).toJs
+  let canvas = canvasOf("view")
+  canvas.width = (toFloat(canvas.clientWidth) * 2.0).toJs
+  canvas.height = (toFloat(canvas.clientHeight) * 2.0).toJs
   show()
 
 
@@ -340,14 +342,14 @@ proc thumbs() =
   ## Every still drawn small beside its own cell, from one fixed place.
   for node in document.querySelectorAll("canvas.thumb"):
     let
-      cv = node.toJs
+      canvas = node.toJs
       k = parseInt($node.getAttribute("data-entry"))
       e = entry(k)
-      w = num(cv.clientWidth) * 2.0
-    cv.width = w.toJs
-    cv.height = w.toJs
+      w = toFloat(canvas.clientWidth) * 2.0
+    canvas.width = w.toJs
+    canvas.height = w.toJs
     if momentsOf(e) > 0:
-      paintOn(cv, e, 0, AZIMUTH_START, ELEVATION_START, 1.0, framingOf(e))
+      paintOn(canvas, e, 0, AZIMUTH_START, ELEVATION_START, 1.0, framingOf(e))
 
 
 proc tick() =
@@ -386,14 +388,14 @@ proc start() =
         window.scrollTo(0, 0))
 
   # Picker, stills by cell and question, sweeps by hold and band.
-  var opts = cstring""
+  var option_list = cstring""
   for i in 0 ..< count(ENTRIES_ALL):
     let e = entry(i)
     let name = (if isStill(e): LUT_CARD_BY_ENTRY[i] & cstring" · " & text(e.key)
                 else: text(e.hold) & cstring" · " & text(e.band))
-    opts = opts & cstring"<option value='" & toFixed(float(i), 0) &
+    option_list = option_list & cstring"<option value='" & toFixed(float(i), 0) &
       cstring"'>" & name & cstring"</option>"
-  document.getElementById("pick").innerHTML = opts
+  document.getElementById("pick").innerHTML = option_list
 
   document.getElementById("pick").addEventListener("change", proc (e: Event) =
     choose(parseInt($text(canvasOf("pick").value))))
@@ -414,28 +416,28 @@ proc start() =
   document.getElementById("scrub").addEventListener("input", proc (e: Event) =
     IS_PLAYING = false
     document.getElementById("play").innerHTML = cstring"Play"
-    MOMENT_SHOWN = int(num(canvasOf("scrub").value))
+    MOMENT_SHOWN = int(toFloat(canvasOf("scrub").value))
     show())
 
-  let cv = canvasOf("view")
-  cv.addEventListener(cstring"pointerdown", proc (e: Event) =
+  let canvas = canvasOf("view")
+  canvas.addEventListener(cstring"pointerdown", proc (e: Event) =
     IS_DRAGGING = true
-    X_PREV = num(e.toJs.clientX)
-    Y_PREV = num(e.toJs.clientY))
+    X_PREV = toFloat(e.toJs.clientX)
+    Y_PREV = toFloat(e.toJs.clientY))
   document.addEventListener("pointerup", proc (e: Event) = IS_DRAGGING = false)
   document.addEventListener("pointermove", proc (e: Event) =
     if IS_DRAGGING:
       let
-        x = num(e.toJs.clientX)
-        y = num(e.toJs.clientY)
+        x = toFloat(e.toJs.clientX)
+        y = toFloat(e.toJs.clientY)
       AZIMUTH += (x - X_PREV) * 0.01
       ELEVATION = max(-1.4, min(1.4, ELEVATION + (y - Y_PREV) * 0.01))
       X_PREV = x
       Y_PREV = y
       paint())
-  cv.addEventListener(cstring"wheel", proc (e: Event) =
+  canvas.addEventListener(cstring"wheel", proc (e: Event) =
     e.preventDefault()
-    ZOOM = max(0.35, min(4.0, ZOOM * (if num(e.toJs.deltaY) > 0.0: 0.92 else: 1.08)))
+    ZOOM = max(0.35, min(4.0, ZOOM * (if toFloat(e.toJs.deltaY) > 0.0: 0.92 else: 1.08)))
     paint())
 
   window.addEventListener("resize", proc (e: Event) =

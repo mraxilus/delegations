@@ -310,7 +310,7 @@ func sheetOf(P: Parts): string =
   body.add "</div></section>"
 
   # `B`. Single-hand turns: what animated page walks through.
-  let st = P
+  let stills = P
   body.add """<section id="single"><h2>B &middot; Single-hand turn positions</h2>
   <p class="lede">These are the positions that the single-hand turns page walks between. Two
   manners of one family stand at the same four positions, and manners of two families meet
@@ -328,8 +328,8 @@ func sheetOf(P: Parts): string =
     for manner in Manner:
       for q in 0 ..< QUARTERS_ROUND:
         let key = &"st_{MANNERS[manner].tag}_{c}_{q}"
-        if key notin st: continue
-        let svg = st[key]
+        if key notin stills: continue
+        let svg = stills[key]
         if svg notin seen:
           inc n
           seen[svg] = &"B{n}"
@@ -436,21 +436,21 @@ func sheetOf(P: Parts): string =
       let
         tag = MANNERS[manner].tag
         said = &"{MANNER_SAID[tag]} {QUARTER_WAY}"
-      if &"rd_{tag}_{c}" in st:
+      if &"rd_{tag}_{c}" in stills:
         inc m
         body.add card(&"E{m}", said, "the whole round, four quarters in one",
-                      st[&"rd_{tag}_{c}"], asks = @[&"rd_{tag}_{c}"])
+                      stills[&"rd_{tag}_{c}"], asks = @[&"rd_{tag}_{c}"])
       var
         steps: seq[tuple[pick, note, svg: string]]
         asksE: seq[string]
       for q in 0 ..< QUARTERS_ROUND:
         let key = &"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
-        if key notin st: continue
+        if key notin stills: continue
         asksE.add key
         steps.add ($(q + 1),
           &"quarter {q + 1} of 4: from {QUARTER_FROM[q]} to " &
             &"{QUARTER_FROM[(q + 1) mod QUARTERS_ROUND]}",
-          st[key])
+          stills[key])
       if steps.len > 0:
         inc m
         body.add card(&"E{m}", said, "one quarter at a time", steps,

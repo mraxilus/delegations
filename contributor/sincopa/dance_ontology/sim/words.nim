@@ -67,10 +67,10 @@ func bandName*(band: Band): string =
   raise newException(Defect, "No word names band; got `" & $band & "`.")
 
 
-func facingName*(st: array[Body, Stance]): Option[string] =
+func facingName*(stance: array[Body, Stance]): Option[string] =
   ## Name state two stand in to one another, as dance names it (`FACINGS`).
   ##   None between quarters, where body sees other at no one side.
-  let (lead, follow) = (quartersTo(st, Body.One), quartersTo(st, Body.Two))
+  let (lead, follow) = (quartersTo(stance, Body.One), quartersTo(stance, Body.Two))
   if lead.isSome and follow.isSome:
     for (seen, name) in FACINGS:
       if seen == (lead.get, follow.get):

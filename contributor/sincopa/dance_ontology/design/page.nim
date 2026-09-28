@@ -209,6 +209,6 @@ func swatch*(kind: Swatch): string =
   bits.join("") & "</svg>"
 
 
-func fig*(svg, cap: string): string =
+func fig*(svg, caption: string): string =
   ## Set one figure beside its caption.
-  &"<figure>{svg}<figcaption>{cap}</figcaption></figure>"
+  &"<figure>{svg}<figcaption>{caption}</figcaption></figure>"

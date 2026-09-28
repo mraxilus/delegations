@@ -74,18 +74,18 @@ proc checkFrame*() =
   for d in countup(0, 359, 7):
     doAssert abs(outlineR(float(d)) - BODY_R) < 1e-9,
       &"The boundary is not a circle; got `{outlineR(float(d))}` at {d}."
-  for (wl, wr) in [(0.0, 0.0), (45.0, 0.0), (0.0, 90.0)]:
+  for (swing_left, swing_right) in [(0.0, 0.0), (45.0, 0.0), (0.0, 90.0)]:
     let
-      right = ARM_REST + wr
-      left = ARM_REST + wl
+      right = ARM_REST + swing_right
+      left = ARM_REST + swing_left
       edges = [right + HAND_GAP, 360 - left - HAND_GAP,
                360 - left + HAND_GAP, 360 + right - HAND_GAP]
     for i in 0 ..< edges.high:
       doAssert edges[i + 1] >= edges[i],
-        &"The rim's stretches overlap; got `{edges}` at winding {wl}, {wr}."
+        &"The rim's stretches overlap; got `{edges}` at winding {swing_left}, {swing_right}."
     let drawn = (edges[1] - edges[0]) + (edges[3] - edges[2])
     doAssert abs(drawn + 4 * HAND_GAP - 360) < 1e-9,
-      &"The rim does not tile; got `{drawn}` drawn at winding {wl}, {wr}."
+      &"The rim does not tile; got `{drawn}` drawn at winding {swing_left}, {swing_right}."
   # Extreme winding squeezes back stretch away entirely; border skips
   # reversed stretch rather than drawing it backwards.
   var squeezed_wind: Winds
@@ -114,12 +114,12 @@ proc checkFrame*() =
       turned_hands[Dancer.Lead][Arm.L], turned_hands[Dancer.Follow][Arm.L],
       (turned_pose.place[Dancer.Lead], turned_pose.facing[Dancer.Lead]),
       (turned_pose.place[Dancer.Follow], turned_pose.facing[Dancer.Follow]))
-    pts = routed(ends).get.pts
-    (near, far) = splitAt(@[pts], pts[pts.len div 2])
+    points = routed(ends).get.points
+    (near, far) = splitAt(@[points], points[points.len div 2])
     lengths = (polylineLen(near[0]), polylineLen(far[0]))
   doAssert abs(lengths[0] - lengths[1]) < 0.05,
     &"The two shades are uneven; got `{lengths}`."
-  doAssert near[0][0] == pts[0] and far[0][^1] == pts[^1],
+  doAssert near[0][0] == points[0] and far[0][^1] == points[^1],
     "The halves are out of order."
   doAssert near[0][^1] == far[0][0], "The halves do not meet."
 
@@ -150,29 +150,29 @@ proc checkFrame*() =
           pose = canonicalise(spinAbout(
             spinAbout(rest(), Dancer.Lead, lead_turn),
             Dancer.Follow, follow_turn))
-          pts_all = handsOf(pose)
+          points_all = handsOf(pose)
         for arm in Arm:
           if holds[arm].isNone:
             continue
           let
-            a = pts_all[Dancer.Lead][arm]
-            b = pts_all[Dancer.Follow][holds[arm].get]
+            a = points_all[Dancer.Lead][arm]
+            b = points_all[Dancer.Follow][holds[arm].get]
             span: route.Ends = (a, b,
               (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
               (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-            run = routed(span).get.pts
+            run = routed(span).get.points
           doAssert run.len == ROUTE_N,
             &"A route has the wrong shape; got `{run.len}` points."
-          if dist(a, b) > 2 * (HAND_R + CAP) + 3:
+          if distance(a, b) > 2 * (HAND_R + CAP) + 3:
             ends_off = max(ends_off, max(
-              abs(dist(run[0], a) - (HAND_R + CAP)),
-              abs(dist(run[^1], b) - (HAND_R + CAP))))
+              abs(distance(run[0], a) - (HAND_R + CAP)),
+              abs(distance(run[^1], b) - (HAND_R + CAP))))
           for q in run:
             for who in Dancer:
               let
                 c = pose.place[who]
                 f = pose.facing[who]
-                depth = dist(q, c) - outlineR(
+                depth = distance(q, c) - outlineR(
                   bearing(q.x - c.x, q.y - c.y) - f)
               worst = min(worst, depth)
   doAssert worst > -0.4, &"A reach enters a body; got `{worst}`."
@@ -217,7 +217,7 @@ proc checkRules*() =
                    poses[i].facing[Dancer.Follow]))
     let
       way = oneWayRound(frames)
-      runs = frames.mapIt(routed(it, some way).get.pts)
+      runs = frames.mapIt(routed(it, some way).get.points)
     for k in 0 ..< runs.high:
       let
         qa = poses[k]
@@ -237,11 +237,11 @@ proc checkRules*() =
             for j in 0 .. 8:
               let
                 t = j / 8
-                pt: Point = (
+                point: Point = (
                   drawn[i].x + (drawn[i + 1].x - drawn[i].x) * t,
                   drawn[i].y + (drawn[i + 1].y - drawn[i].y) * t)
-                deep = dist(pt, c) - outlineR(
-                  bearing(pt.x - c.x, pt.y - c.y) - f)
+                deep = distance(point, c) - outlineR(
+                  bearing(point.x - c.x, point.y - c.y) - f)
               swept = min(swept, deep)
   doAssert swept > -0.3,
     &"A blended frame sweeps a line through a body; got `{decimal(swept, 2)}`."
@@ -505,14 +505,14 @@ proc checkSingleTurns*(built: Parts) =
       leaned = max(leaned, abs(wrap180(put.facing[Dancer.Lead])))
       for dancer in Dancer:
         let settled_place = canonicalise(put, on = Anchor.Lead).place[dancer]
-        strayed = max(strayed, dist(put.place[dancer], settled_place))
+        strayed = max(strayed, distance(put.place[dancer], settled_place))
     let re_framed = w.who == Dancer.Lead
     if re_framed:
       doAssert leaned > 45 or strayed > 1,
         &"A turn never left the canonical framing; got {manner}."
       doAssert abs(wrap180(walk.poses[^1].facing[Dancer.Lead])) < 1e-9,
         &"A turn ended off upright; got {manner}."
-      doAssert dist(walk.poses[^1].place[Dancer.Lead],
+      doAssert distance(walk.poses[^1].place[Dancer.Lead],
                     canonicalise(walk.poses[^1], on = Anchor.Lead)
                       .place[Dancer.Lead]) < 1e-9,
         &"A turn ended off centre; got {manner}."
@@ -665,7 +665,7 @@ proc checkSingleTurns*(built: Parts) =
           let
             head = runs[^1][0]
             tail = runs[^1][^1]
-            reach = dist(head, tail)
+            reach = distance(head, tail)
           for q in runs[^1]:
             bowed = max(bowed, abs((tail.x - head.x) * (head.y - q.y) -
                                    (head.x - q.x) * (tail.y - head.y)) / reach)
@@ -675,7 +675,7 @@ proc checkSingleTurns*(built: Parts) =
             for i, a in runs[k]:
               let b = runs[k + 1][i]
               drawn.add (a.x + (b.x - a.x) * part, a.y + (b.y - a.y) * part)
-            let span = dist(drawn[0], drawn[^1])
+            let span = distance(drawn[0], drawn[^1])
             for q in drawn:
               bowed = max(bowed,
                 abs((drawn[^1].x - drawn[0].x) * (drawn[0].y - q.y) -
@@ -805,12 +805,12 @@ proc checkSingleTurns*(built: Parts) =
     var moved = 0.0
     for quarter in 0 ..< QUARTERS_ROUND:
       let start = quarterPose(manner, quarter)
-      doAssert dist(start.place[Dancer.Lead],
+      doAssert distance(start.place[Dancer.Lead],
                     quarterPose(manner, 0).place[Dancer.Lead]) < 1e-9,
         &"The lead stands somewhere else in this position; got {manner}."
       for put in turnWalk(start, w.who, w.about, QUARTER,
                           on = Anchor.Lead).poses:
-        moved = max(moved, dist(put.place[Dancer.Lead],
+        moved = max(moved, distance(put.place[Dancer.Lead],
                                 start.place[Dancer.Lead]))
     # Only lead's own orbit may move them, and it must: walking round
     # somebody and staying put are not same act.
@@ -949,7 +949,7 @@ func inkOf(figure, ink: string): float =
         anchors.add (parseFloat(says[0]), parseFloat(says[1]))
       for here in anchors:
         if last.isSome:
-          result += dist(last.get, here)
+          result += distance(last.get, here)
         last = some here
 
 
@@ -1017,19 +1017,19 @@ proc checkHandTurns*(built: Parts) =
     let
       put = settled(handPose(position.wind), HAND_TO_HAND, ABOVE_BOTH,
                     default(Ways))
-      by_lead = dist(meetings[0], put.place[Dancer.Lead]) <
-                dist(meetings[1], put.place[Dancer.Lead])
-      by_follow = dist(meetings[0], put.place[Dancer.Follow]) <
-                  dist(meetings[1], put.place[Dancer.Follow])
+      by_lead = distance(meetings[0], put.place[Dancer.Lead]) <
+                distance(meetings[1], put.place[Dancer.Lead])
+      by_follow = distance(meetings[0], put.place[Dancer.Follow]) <
+                  distance(meetings[1], put.place[Dancer.Follow])
     doAssert by_lead != by_follow,
       &"Both crossovers fell on one dancer; got `{position.name}`."
-    apart = min(apart, dist(meetings[0], meetings[1]))
+    apart = min(apart, distance(meetings[0], meetings[1]))
     # What both reaches enclose between crossings: diamond.
     var ring: seq[Point]
     for run in [pair[Arm.L], reversed(pair[Arm.R])]:
       for q in run:
-        if dist(q, meetings[0]) + dist(q, meetings[1]) <
-            dist(meetings[0], meetings[1]) + DIAMOND_ROOM:
+        if distance(q, meetings[0]) + distance(q, meetings[1]) <
+            distance(meetings[0], meetings[1]) + DIAMOND_ROOM:
           ring.add q
     var twice = 0.0
     for k in 0 ..< ring.high:
@@ -1159,7 +1159,7 @@ proc checkHandTurns*(built: Parts) =
     let
       put = settled(posedAt(position.wind, HAND_PHASE), HAND_TO_HAND,
                     ABOVE_BOTH, default(Ways))
-      apart = dist(put.place[Dancer.Lead], put.place[Dancer.Follow])
+      apart = distance(put.place[Dancer.Lead], put.place[Dancer.Follow])
     doAssert bowed[snake] > DIAMOND_ROOM / 2,
       &"A swan's snake does not go round anything; got " &
         &"`{decimal(bowed[snake], 1)}` of bow in `{position.name}`."
@@ -1578,19 +1578,19 @@ proc checkSign*() =
           (PIP - PIP * LEAN_COS) / 2
         left = PAD + (y_bot - top) * TAN
         ax = left + GAP_X
-        pts: array[4, Point] = [
+        points: array[4, Point] = [
           (ax, top), (ax + PIP, top),
           (ax + PIP - PIP * LEAN_SIN, top + PIP * LEAN_COS),
           (ax - PIP * LEAN_SIN, top + PIP * LEAN_COS)]
       for i in 0 .. 3:
         let
-          p = pts[i]
-          q = pts[(i + 1) mod 4]
+          p = points[i]
+          q = points[(i + 1) mod 4]
         sides.incl round(hypot(q.x - p.x, q.y - p.y), 3)
       let bottom_left = PAD + (y_bot - (top + PIP * LEAN_COS)) * TAN
-      margins.incl round(pts[0].x - left, 3)
-      margins.incl round(pts[3].x - bottom_left, 3)
-      margins.incl round(left + SIGN_BODY - (pts[1].x + PIP + GAP_X), 3)
+      margins.incl round(points[0].x - left, 3)
+      margins.incl round(points[3].x - bottom_left, 3)
+      margins.incl round(left + SIGN_BODY - (points[1].x + PIP + GAP_X), 3)
       # Circle has no corners to tuck under lean, so its clearance is
       # measured square to edge rather than across page.
       for col in [0.0, 1.0]:

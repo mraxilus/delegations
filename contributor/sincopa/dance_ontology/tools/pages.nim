@@ -20,10 +20,10 @@ const PAGES = "pages"
 proc copyShells(build: string) =
   ## Copy every committed page shell under `build`, creating directories.
   ##   One today: body sim's shell went with its live solver, as header says.
-  for dir in ["app"]:
-    createDir(build / dir)
-    copyFile(PAGES / dir / "index.html", build / dir / "index.html")
-    echo "wrote ", build / dir / "index.html"
+  for directory in ["app"]:
+    createDir(build / directory)
+    copyFile(PAGES / directory / "index.html", build / directory / "index.html")
+    echo "wrote ", build / directory / "index.html"
 
 
 when isMainModule:

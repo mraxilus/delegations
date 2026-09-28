@@ -50,14 +50,14 @@ proc main() =
   ## Read markup and both scripts, splice them in, write page, and say so.
   doAssert paramCount() == 1, "Usage: wholecloth <dir>; got `" & $paramCount() & "` arguments."
   let
-    dir = paramStr(1)
-    data = readFile(dir / "turns.js")
-    program = readFile(dir / "wholecloth_turns.js")
+    directory = paramStr(1)
+    data = readFile(directory / "turns.js")
+    program = readFile(directory / "wholecloth_turns.js")
     page = readFile(MARKUP_PATH)
       .spliced(MARK_DATA, "<script id=\"turns-sim\">\n" & data & "</script>")
       .spliced(MARK_SCRIPT, "<script>\n" & program & "</script>")
       .spliced(MARK_TITLE, MOCKUP & " — Whole Cloth")
-    path = dir / "wholecloth.html"
+    path = directory / "wholecloth.html"
   writeFile(path, page)
   echo "wrote ", path, ": ", page.runeLen, " characters"
 

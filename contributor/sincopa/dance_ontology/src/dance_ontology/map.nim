@@ -310,8 +310,8 @@ func gapAt(ax, ay, bx, by: int; box: Box): Option[(int, int)] =
   if length < 1:
     return none((int, int))
   var
-    lo = 0.0
-    hi = 1.0
+    lower = 0.0
+    upper = 1.0
   for (start, delta, near, far) in [
       (float(ax), run, float(box.x), float(box.x + box.w)),
       (float(ay), rise, float(box.y), float(box.y + box.h))]:
@@ -324,13 +324,13 @@ func gapAt(ax, ay, bx, by: int; box: Box): Option[(int, int)] =
         t1 = (far - start) / delta
       if t0 > t1:
         swap t0, t1
-      lo = max(lo, t0)
-      hi = min(hi, t1)
-  if hi <= lo:
+      lower = max(lower, t0)
+      upper = min(upper, t1)
+  if upper <= lower:
     return none((int, int))            # name is not on this line at all
   let
-    opens = max(lo * length - float(LABEL_AIR), 1.0)
-    shuts = min(hi * length + float(LABEL_AIR), length)
+    opens = max(lower * length - float(LABEL_AIR), 1.0)
+    shuts = min(upper * length + float(LABEL_AIR), length)
   if shuts <= opens or int(shuts - opens) <= 0:
     return none((int, int))
   some((int(opens), int(shuts - opens)))

@@ -141,7 +141,7 @@ func clearingMarks*(put: Pose; a, b: Point): seq[Mark] =
                     CHEVRON_CLEAR)
     for side in Arm:
       let q = p[who][side]
-      if min(dist(q, a), dist(q, b)) > 0.01:
+      if min(distance(q, a), distance(q, b)) > 0.01:
         result.add (q, (if who == Dancer.Lead: LEAD_CLEAR else: FOLLOW_CLEAR))
 
 
@@ -151,7 +151,7 @@ func axisOf*(put: Pose): tuple[along, across: Point, bearing: float] =
   let
     lead = put.place[Dancer.Lead]
     follow = put.place[Dancer.Follow]
-    span = max(dist(lead, follow), 1e-9)
+    span = max(distance(lead, follow), 1e-9)
     along: Point = ((follow.x - lead.x) / span, (follow.y - lead.y) / span)
   (along, (-along.y, along.x), bearing(follow.x - lead.x, follow.y - lead.y))
 
@@ -268,7 +268,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
           straightReach(ends.a, ends.b)
     else:
       # What hold says, if it says anything; short way if not.
-      routes[arm] = routed(ends, wayFor(ends, levels[arm], ways[arm])).get.pts
+      routes[arm] = routed(ends, wayFor(ends, levels[arm], ways[arm])).get.points
   # Wound pair meets more than once, and rope alternates: each strand
   # dives under at every second crossing.  So crossings are found once,
   # in order along line, and shared out between two arms.
@@ -280,12 +280,12 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   for arm in order:
     if holds[arm].isSome:
       let
-        pts = routes[arm]
+        points = routes[arm]
         runs =
-          if winding: cutGapsAt(pts, routes[other(arm)], dives[arm])
-          elif on_top == some(other(arm)): cutGap(pts, routes[other(arm)])
-          else: @[pts]
-      bits.add twoTone(runs, pts[pts.len div 2], arm, holds[arm].get)
+          if winding: cutGapsAt(points, routes[other(arm)], dives[arm])
+          elif on_top == some(other(arm)): cutGap(points, routes[other(arm)])
+          else: @[points]
+      bits.add twoTone(runs, points[points.len div 2], arm, holds[arm].get)
   for arm in Arm:
     let q = p[Dancer.Lead][arm]
     bits.add hand(q.x, q.y, leads = true, arm = arm,
@@ -391,12 +391,12 @@ func keyed*(times: seq[float]; count: int): string =
   ""
 
 
-func animate*(attr: string; steps: seq[float]; dur: float;
+func animate*(attribute: string; steps: seq[float]; duration: float;
     times: seq[float] = @[]): string =
   ## Animate one attribute over cycle.
-  &"""<animate attributeName="{attr}" values="{series(steps)}"""" &
+  &"""<animate attributeName="{attribute}" values="{series(steps)}"""" &
     keyed(times, steps.len) &
-    &""" dur="{dur}s" repeatCount="indefinite"/>"""
+    &""" dur="{duration}s" repeatCount="indefinite"/>"""
 
 
 func paired*(markup, inner: string): string =
@@ -415,7 +415,7 @@ const GAPS_DRAWN = 2
   ##     number of them, which is what lets pattern be animated at all.
 
 
-func dashedAt*(pts: seq[Point]; dives: seq[tuple[opens, shuts: float]];
+func dashedAt*(points: seq[Point]; dives: seq[tuple[opens, shuts: float]];
     starts = 0.0):
     tuple[pattern, offset: string] =
   ## Say moving reach's break as dash pattern: how far it runs, how long
@@ -444,8 +444,8 @@ func dashedAt*(pts: seq[Point]; dives: seq[tuple[opens, shuts: float]];
   ##     one connection (rule 31), while frame has none at all, and
   ##     markup has to say same number of things either way.
   var runs = @[0.0]
-  for i in 0 ..< pts.high:
-    runs.add runs[^1] + dist(pts[i], pts[i + 1])
+  for i in 0 ..< points.high:
+    runs.add runs[^1] + distance(points[i], points[i + 1])
   # Where along this half each break falls, in order, so pattern reads
   # from one end to other.  Gap is centred on crossing and
   # clipped to this half's own ends, which is what lets it cross join
@@ -633,7 +633,7 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
       let
         said = wayFor(frames[0], levels[arm], ways[arm])
         way = if said.isSome: said.get else: oneWayRound(frames)
-      routes[arm] = frames.mapIt(routed(it, some(way)).get.pts)
+      routes[arm] = frames.mapIt(routed(it, some(way)).get.points)
 
   # Where pair crosses, one of them dives, and it is same one
   # still figure breaks: crossings in order along reach, diving
@@ -669,17 +669,17 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
     let
       site = holds[arm].get
       middle = routes[arm][0].len div 2
-    for (ink, lo, hi) in [(DEEP[arm], 0, middle), (INK[site], middle,
+    for (ink, lower, upper) in [(DEEP[arm], 0, middle), (INK[site], middle,
                           routes[arm][0].high)]:
       var
         paths: seq[string]
         dashes, offsets: seq[string]
-      for i, pts in routes[arm]:
-        let part = pts[lo .. hi]
+      for i, points in routes[arm]:
+        let part = points[lower .. upper]
         paths.add smoothed(part)
         if dives[arm].len == poses.len:
           let dashed = dashedAt(part, dives[arm][i],
-                                starts = polylineLen(pts[0 .. lo]))
+                                starts = polylineLen(points[0 .. lower]))
           dashes.add dashed.pattern
           offsets.add dashed.offset
       bits.add paired(
@@ -711,11 +711,11 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
   #   It also lets mark keep its own dot rather than having one
   #     animated alongside it: group can hold two elements where
   #     `paired` reopens one.
-  func carried(mark: string; pts: seq[Point]): string =
-    let places = pts.mapIt(xy(it))
+  func carried(mark: string; points: seq[Point]): string =
+    let places = points.mapIt(xy(it))
     "<g>" &
       """<animateTransform attributeName="transform" type="translate"""" &
-      &""" values="{series(places)}"""" & keyed(times, pts.len) &
+      &""" values="{series(places)}"""" & keyed(times, points.len) &
       &""" dur="{dur}s" repeatCount="indefinite"/>""" & mark & "</g>"
 
   for arm in Arm:

@@ -68,7 +68,7 @@ type Went = object ## One walk walked live, reduced to numbers laws read of it.
   peak: float      ## Furthest first connection's arms extend, radians.
   atEnd: int       ## Arm-moments of first connection at their swing's end.
 
-proc live(key: string; pos: bool): Went
+proc live(key: string; positive: bool): Went
   ## Sweep of `SWEEPS` walked live one way, from distance its kept answer chose.
 
 proc standOf(q: StillAsked): tuple[holds: bool, c: Couple] =
@@ -103,7 +103,7 @@ suite "two dancers in rigid body engine":
       p = c.poseOf(0)
     for k in 0 .. 1:
       let h = c.links[0].ends[k]
-      check dist(p.arms[k].s, shoulder(HUMAN, c.chestStance(h.body), h.arm)) < GIVE_REST
+      check distance(p.arms[k].s, shoulder(HUMAN, c.chestStance(h.body), h.arm)) < GIVE_REST
     check abs(p.arms[0].s.z - HUMAN.shoulderUp) < GIVE_REST
     c.free()
 
@@ -161,12 +161,12 @@ suite "two dancers in rigid body engine":
         if p.apart < PARTED:
           inc checked
           for k in 0 .. 1:
-            let (lo, hi) = twistEnds(HUMAN, c.links[0].ends[k].arm)
-            check p.twist[k] >= lo - SLACK
-            check p.twist[k] <= hi + SLACK
-            check p.bend[k] >= HUMAN.range[Dof.Bend].lo - SLACK
-            check p.bend[k] <= HUMAN.range[Dof.Bend].hi + SLACK
-            check p.wrist[k] <= HUMAN.range[Dof.Wrist].hi + SLACK
+            let (lower, upper) = twistEnds(HUMAN, c.links[0].ends[k].arm)
+            check p.twist[k] >= lower - SLACK
+            check p.twist[k] <= upper + SLACK
+            check p.bend[k] >= HUMAN.range[Dof.Bend].lower - SLACK
+            check p.bend[k] <= HUMAN.range[Dof.Bend].upper + SLACK
+            check p.wrist[k] <= HUMAN.range[Dof.Wrist].upper + SLACK
         c.turn(Body.Two, 0.25, 600)
       c.free()
     check checked >= 2 * 3
@@ -198,8 +198,8 @@ suite "two dancers in rigid body engine":
     ##   Both sides are kept answers: search's choice, and walk from every distance
     ##     (`sim/answers.nim`), each answered by sim at stamp suite "answers" holds.
     let sweep = answered().sweepOf("shake at torso")
-    for (chose, every) in [(sweep.neg, "shake at torso, negative"),
-                           (sweep.pos, "shake at torso, positive")]:
+    for (chose, every) in [(sweep.negative, "shake at torso, negative"),
+                           (sweep.positive, "shake at torso, positive")]:
       check chose.holds
       let got = answered().walksOf(every)
       check got.len > 1
@@ -225,7 +225,7 @@ suite "two dancers in rigid body engine":
     ## straight elbow reads perfectly comfortable and every moment page draws
     ## reports room it does not have.
     let sweep = answered().sweepOf("shake at torso")
-    for way in [sweep.neg, sweep.pos]:
+    for way in [sweep.negative, sweep.positive]:
       let c = rest(Band.Torso, way.apart)
       check roomAt(c, c.poseOf(0), 0) > 0.0
       c.free()
@@ -242,9 +242,9 @@ suite "two dancers in rigid body engine":
     ##   stays within it.  Slackening this figure to make suite pass would be
     ##   weakening test; it is here because model now says arm may lean on its end,
     ##   and it still fails outright if that lean is not held.
-    let sw = swept(HUMAN, Band.Torso, SHAKE, most = 1.5, apart = APART)
-    check sw.restHolds
-    for w in [sw.pos, sw.neg]:
+    let sweep = swept(HUMAN, Band.Torso, SHAKE, most = 1.5, apart = APART)
+    check sweep.restHolds
+    for w in [sweep.positive, sweep.negative]:
       for m in w.moments:
         for k in 0 .. 1:
           let
@@ -285,7 +285,7 @@ suite "two dancers in rigid body engine":
             run.add c.endsOf(s)
         check run.len == 3
         for i in 0 ..< run.len - 1:
-          check dist(run[i].z, run[i + 1].a) < 2.0 * HUMAN.limb + 0.01
+          check distance(run[i].z, run[i + 1].a) < 2.0 * HUMAN.limb + 0.01
     c.free()
 
   test "capsules move where couple move":
@@ -302,7 +302,7 @@ suite "two dancers in rigid body engine":
       if s.mark != Mark.Trunk and s.who == Body.Two: nowArm.add c.endsOf(s)
     var moved = 0.0
     for i in 0 ..< wasArm.len:
-      moved = max(moved, dist(wasArm[i].a, nowArm[i].a))
+      moved = max(moved, distance(wasArm[i].a, nowArm[i].a))
     check moved > 0.05
     ## Other dancer's trunk may yaw on hips as hold pulls, and nothing else:
     ## each capsule end keeps its distance from hip axis and its height.  That
@@ -330,8 +330,10 @@ suite "two dancers in rigid body engine":
     let
       a = answered().sweepOf("left to left at torso")
       b = answered().sweepOf("right to right at torso")
-      (aPos, aNeg) = (live("left to left at torso", true), live("left to left at torso", false))
-      (bPos, bNeg) = (live("right to right at torso", true), live("right to right at torso", false))
+      a_positive = live("left to left at torso", true)
+      a_negative = live("left to left at torso", false)
+      b_positive = live("right to right at torso", true)
+      b_negative = live("right to right at torso", false)
     ## Standing distance is chosen per way, so it is compared per way, as every
     ## other figure here is.  `Swept.apart` is whichever way went furthest, and
     ## when both run free they tie and it takes positive way for both -- which
@@ -345,18 +347,18 @@ suite "two dancers in rigid body engine":
     ## equally far then tie one way for one hold and other way for its mirror.
     ## Turn reached and what stopped it are still held exact below, which is
     ## what caught torque mirrored as vector.
-    check abs(a.pos.apart - b.neg.apart) < SEEK + 1e-9
-    check abs(a.neg.apart - b.pos.apart) < SEEK + 1e-9
-    check aPos.stopped == bNeg.stopped
-    check aNeg.stopped == bPos.stopped
+    check abs(a.positive.apart - b.negative.apart) < SEEK + 1e-9
+    check abs(a.negative.apart - b.positive.apart) < SEEK + 1e-9
+    check a_positive.stopped == b_negative.stopped
+    check a_negative.stopped == b_positive.stopped
     ## Turn reached within one step, not exact, since bodies became solid:
     ## contact is where stop is decided now, and engine's contact is not mirror
     ## symmetric to step -- mirror-image holds stop one step apart from same
     ## distance, 0.02, measured 2026-09-13.  What stopped them is still exact.
-    check abs(aPos.at - bNeg.at) < STEP + 1e-9
-    check abs(aNeg.at - bPos.at) < STEP + 1e-9
-    check aPos.why == bNeg.why
-    check aNeg.why == bPos.why
+    check abs(a_positive.at - b_negative.at) < STEP + 1e-9
+    check abs(a_negative.at - b_positive.at) < STEP + 1e-9
+    check a_positive.why == b_negative.why
+    check a_negative.why == b_positive.why
 
   test "over crown nothing stops single hold turning":
     ## Architect, who dances it: above is level that blocks by twist alone, and
@@ -379,13 +381,13 @@ suite "two dancers in rigid body engine":
     ##   in its ease for fifty five, where going over top costs nothing: engine's
     ##   limits are walls and nothing preferred middle of range.
     for key in ["left to left over crown", "left to right over crown"]:
-      let (pos, neg) = (live(key, true), live(key, false))
-      check pos.holds or neg.holds
-      check not pos.stopped
-      check not neg.stopped
+      let (positive, negative) = (live(key, true), live(key, false))
+      check positive.holds or negative.holds
+      check not positive.stopped
+      check not negative.stopped
       let
-        peak = max(pos.peak, neg.peak)
-        atEnd = pos.atEnd + neg.atEnd
+        peak = max(positive.peak, negative.peak)
+        atEnd = positive.atEnd + negative.atEnd
       echo &"    {key}: extension peaks {peak * 180.0 / PI:.1f} degrees, " &
         &"{atEnd} arm-moments at swing's end"
       check atEnd == 0
@@ -403,15 +405,15 @@ suite "couple stand for sweep":
     ## most and their largest leaps, measured 2026-09-18.  L-l turning her
     ## positive way and R-r her negative are one hold seen in mirror.  Nearer
     ## distances carry 0.46 at most, and 0.52 on carries 0.66.
-    LL_POS: seq[Carry] = @[(0.44, 0.72, 0.125), (0.46, 0.72, 0.171),
+    LL_POSITIVE: seq[Carry] = @[(0.44, 0.72, 0.125), (0.46, 0.72, 0.171),
                            (0.48, 0.72, 0.126), (0.50, 0.68, 0.121)]
-    RR_NEG: seq[Carry] = @[(0.44, 0.72, 0.135), (0.46, 0.72, 0.174),
+    RR_NEGATIVE: seq[Carry] = @[(0.44, 0.72, 0.135), (0.46, 0.72, 0.174),
                            (0.48, 0.72, 0.106), (0.50, 0.72, 0.121)]
     ## Same walks from same source, built into another binary: leaps differ by
     ## up to thirty five per cent, and at 0.50 L-l carries 0.68 either way.
-    LL_POS_ELSE: seq[Carry] = @[(0.44, 0.72, 0.114), (0.46, 0.72, 0.169),
+    LL_POSITIVE_ELSE: seq[Carry] = @[(0.44, 0.72, 0.114), (0.46, 0.72, 0.169),
                                 (0.48, 0.72, 0.133), (0.50, 0.68, 0.163)]
-    RR_NEG_ELSE: seq[Carry] = @[(0.44, 0.72, 0.116), (0.46, 0.72, 0.155),
+    RR_NEGATIVE_ELSE: seq[Carry] = @[(0.44, 0.72, 0.116), (0.46, 0.72, 0.155),
                                 (0.48, 0.72, 0.124), (0.50, 0.68, 0.159)]
     ## Same hold at neck, walked whole sweep: L-l carries 1.00 from 0.42 and
     ## 0.98 from 0.38, and R-r 0.98 from both -- one step, which is how exactly
@@ -436,8 +438,9 @@ suite "couple stand for sweep":
     ## and 106, and held it for L-l, 125 and 126: stances two steps apart for
     ## one hold in mirror, and `rig is same seen in mirror` failed on this tree
     ## and not on last, nothing about rig having changed.
-    for (a, b) in [(LL_POS, RR_NEG), (LL_POS, LL_POS_ELSE), (RR_NEG, RR_NEG_ELSE),
-                   (LL_POS_ELSE, RR_NEG_ELSE), (LL_HIGH, RR_HIGH)]:
+    for (a, b) in [(LL_POSITIVE, RR_NEGATIVE), (LL_POSITIVE, LL_POSITIVE_ELSE),
+                   (RR_NEGATIVE, RR_NEGATIVE_ELSE), (LL_POSITIVE_ELSE, RR_NEGATIVE_ELSE),
+                   (LL_HIGH, RR_HIGH)]:
       check abs(standAt(a) - standAt(b)) < SEEK + 1e-9
 
   test "stance steps out from hands pinned between torsos":
@@ -483,15 +486,15 @@ func between(a, b, c, d: Vec): float =
   elif t > 1.0:
     t = 1.0
     s = clamp((uv - uw) / max(uu, 1e-12), 0.0, 1.0)
-  dist(a + u * s, c + v * t)
+  distance(a + u * s, c + v * t)
 
 func linkCapsules(rig: Rig; a: ArmPose): seq[tuple[p, q: Vec, r: float]] =
   ## Arm's three links as engine holds them: capsule set in from each joint by
   ## its radius, and hand too short for that as ball at its middle.
   for (s, e, long) in [(a.s, a.e, rig.upper), (a.e, a.w, rig.fore), (a.w, a.g, rig.hand)]:
-    let dir = unit(e - s)
+    let direction = unit(e - s)
     if long > 2.0 * rig.limb:
-      result.add (s + dir * rig.limb, e - dir * rig.limb, rig.limb)
+      result.add (s + direction * rig.limb, e - direction * rig.limb, rig.limb)
     else:
       result.add ((s + e) * 0.5, (s + e) * 0.5, long / 2.0)
 
@@ -524,10 +527,10 @@ func leapIn(w: Walk; links: seq[Link]): tuple[most, at: float] =
           a = w.moments[j - 1].arms[i][k]
           b = w.moments[j].arms[i][k]
         for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
-          if dist(p, q) > result.most:
-            result = (dist(p, q), w.moments[j].at)
+          if distance(p, q) > result.most:
+            result = (distance(p, q), w.moments[j].at)
 
-const SWING_END = HUMAN.range[Dof.Extend].hi - 5.0 * PI / 180.0
+const SWING_END = HUMAN.range[Dof.Extend].upper - 5.0 * PI / 180.0
   ## Extension within five degrees of swing's end.
 
 func extensionOf(w: Walk; links: seq[Link]): tuple[peak: float, atEnd: int] =
@@ -604,8 +607,8 @@ proc walkEveryWay() =
   let a = answered()
   for i, q in SWEEPS:
     let sweep = a.sweepOf(q.key)
-    for (pos, way) in [(true, sweep.pos), (false, sweep.neg)]:
-      if way.holds: GOES.add (true, i, pos, way.apart)
+    for (positive, way) in [(true, sweep.positive), (false, sweep.negative)]:
+      if way.holds: GOES.add (true, i, positive, way.apart)
   var every: seq[tuple[index: int, kept: Walked]]
   for i, q in WALKS:
     for w in a.walksOf(q.key): every.add (i, w)
@@ -621,7 +624,7 @@ proc walkEveryWay() =
   for w in 0 ..< cores: createThread(workers[w], going, w)
   joinThreads(workers)
 
-proc live(key: string; pos: bool): Went =
+proc live(key: string; positive: bool): Went =
   ## Walk is sim's own, on this build: only where couple stand comes from
   ##   answers.  `walked` builds its own world, so it walks exactly what search
   ##   walked from that distance.
@@ -631,7 +634,7 @@ proc live(key: string; pos: bool): Went =
   for i, q in SWEEPS:
     if q.key == key:
       for k, g in GOES:
-        if g.sweep and g.index == i and g.pos == pos: return WENTS[k]
+        if g.sweep and g.index == i and g.pos == positive: return WENTS[k]
       return Went(holds: false)
   raiseAssert "No sweep asked by that key; got `" & key & "`."
 
@@ -689,10 +692,10 @@ suite "arms move as arms do":
       for arm in Arm:
         let s = c.armPoseOf(who, arm).s
         var gap = Inf
-        for sh in c.shapes:
-          if sh.who != who or sh.mark in {Mark.Upper, Mark.Fore, Mark.Palm}: continue
-          let ends = c.endsOf(sh)
-          gap = min(gap, between(s, s, ends.a, ends.z) - sh.r)
+        for shape in c.shapes:
+          if shape.who != who or shape.mark in {Mark.Upper, Mark.Fore, Mark.Palm}: continue
+          let ends = c.endsOf(shape)
+          gap = min(gap, between(s, s, ends.a, ends.z) - shape.r)
         echo &"    {who} {arm}: shoulder joint {gap * 1000:.0f} mm outside own body"
         check gap <= 0.0
     c.free()
@@ -754,7 +757,7 @@ const
   SLOP = 0.005 ## Engine's own linear slop, metres: overlap it never resolves.
   AT_EASE = 0.1 ## Strain no dancer feels: two degrees of twenty into ease that is
                 ## assumed to begin there, under what its own start is known to.
-  RAD = PI / 180.0 ## One degree.
+  DEGREE = PI / 180.0 ## One degree.
   JOINED = 0.005 ## Metres joined hands may sit apart and still be joined: slop.
   PART = 0.002 ## Metres any joint of any arm may be pulled apart: dislocation past this.
 
@@ -846,17 +849,17 @@ suite "every still stands at ease":
     for who in Body:
       for arm in Arm:
         let
-          (j, tw, bd, wr) = c.jointsOf(who, arm)
+          (swings, twist_angle, bend_angle, wrist_angle) = c.jointsOf(who, arm)
           p = c.armPoseOf(who, arm)
           hang = p.g - p.s
-        echo &"    {who} {arm}: extend {j.extend * 180.0 / PI:.1f}, across " &
-          &"{j.across * 180.0 / PI:.1f}, twist {tw * 180.0 / PI:.1f}, bend " &
-          &"{bd * 180.0 / PI:.1f}, wrist {wr * 180.0 / PI:.1f}, hand " &
+        echo &"    {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, across " &
+          &"{swings.across * 180.0 / PI:.1f}, twist {twist_angle * 180.0 / PI:.1f}, bend " &
+          &"{bend_angle * 180.0 / PI:.1f}, wrist {wrist_angle * 180.0 / PI:.1f}, hand " &
           &"{sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
-        check abs(j.extend) <= 10.0 * RAD
-        check abs(tw) <= 15.0 * RAD
-        check bd <= 20.0 * RAD
-        check wr <= 10.0 * RAD
+        check abs(swings.extend) <= 10.0 * DEGREE
+        check abs(twist_angle) <= 15.0 * DEGREE
+        check bend_angle <= 20.0 * DEGREE
+        check wrist_angle <= 10.0 * DEGREE
         check sqrt(hang.x * hang.x + hang.y * hang.y) <= 0.2
     for a in c.shapes:
       for b in c.shapes:
@@ -881,12 +884,12 @@ suite "every still stands at ease":
       for who in Body:
         for arm in Arm:
           let
-            j = c.jointsOf(who, arm).j
+            swings = c.jointsOf(who, arm).swings
             p = c.armPoseOf(who, arm)
             hang = p.g - p.s
-          echo &"    wound {turns:+.1f} {who} {arm}: extend {j.extend * 180.0 / PI:.1f}, " &
+          echo &"    wound {turns:+.1f} {who} {arm}: extend {swings.extend * 180.0 / PI:.1f}, " &
             &"hand {sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
-          check abs(j.extend) <= 10.0 * RAD
+          check abs(swings.extend) <= 10.0 * DEGREE
           check sqrt(hang.x * hang.x + hang.y * hang.y) <= 0.2
       c.free()
 
@@ -1030,7 +1033,7 @@ suite "answers":
     check a.stills.len == STILLS.len
     for q in SWEEPS:
       let sweep = a.sweepOf(q.key)
-      for way in [sweep.neg, sweep.pos]:
+      for way in [sweep.negative, sweep.positive]:
         if way.holds: check way.apart in fars
     for q in WALKS:
       let got = a.walksOf(q.key)
@@ -1049,9 +1052,9 @@ suite "answers":
     let a = answered()
     for q in SWEEPS:
       let sweep = a.sweepOf(q.key)
-      for (pos, kept) in [(true, sweep.pos), (false, sweep.neg)]:
+      for (positive, kept) in [(true, sweep.positive), (false, sweep.negative)]:
         if not kept.holds: continue
-        let w = live(q.key, pos)
+        let w = live(q.key, positive)
         check w.holds
         check w.stopped == kept.stopped
         check w.at == kept.at

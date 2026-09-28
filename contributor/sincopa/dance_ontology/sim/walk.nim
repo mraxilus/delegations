@@ -64,7 +64,7 @@ type
   Swept* = object ## Both ways from one rest.
     apart*: float
     restHolds*: bool
-    neg*, pos*: Walk
+    negative*, positive*: Walk
 
   Carry* = tuple[apart, got, leap: float]
     ## One walked distance summed up: metres apart couple stood, turns carried
@@ -240,7 +240,7 @@ func leapOf*(w: Walk): float =
           a = w.moments[j - 1].arms[i][k]
           b = w.moments[j].arms[i][k]
         for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
-          result = max(result, dist(p, q))
+          result = max(result, distance(p, q))
 
 func chosen*(walks: openArray[Carry]): int =
   ## Which of walked distances couple stand at, -1 for none: nearest carrying
@@ -296,13 +296,13 @@ proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
   ##     Turning one way and turning other are two turns, and couple about to
   ##     take either stand for that one.
   if apart > 0.0:
-    result.pos = walked(rig, band, links, who, apart, most, step, away, head)
-    result.neg = walked(rig, band, links, who, apart, most, -step, away, head)
+    result.positive = walked(rig, band, links, who, apart, most, step, away, head)
+    result.negative = walked(rig, band, links, who, apart, most, -step, away, head)
   else:
-    result.pos = furthest(rig, band, links, who, most, step, away, head)
-    result.neg = furthest(rig, band, links, who, most, -step, away, head)
-  result.restHolds = result.pos.restHolds or result.neg.restHolds
-  result.apart = (if result.pos.at >= result.neg.at: result.pos.apart
-                  else: result.neg.apart)
+    result.positive = furthest(rig, band, links, who, most, step, away, head)
+    result.negative = furthest(rig, band, links, who, most, -step, away, head)
+  result.restHolds = result.positive.restHolds or result.negative.restHolds
+  result.apart = (if result.positive.at >= result.negative.at: result.positive.apart
+                  else: result.negative.apart)
   if not result.restHolds:
     result = Swept(apart: result.apart)

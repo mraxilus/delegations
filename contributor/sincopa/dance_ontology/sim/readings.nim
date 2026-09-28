@@ -49,7 +49,7 @@ type
 
   SweepRead* = object ## Sweep of one hold, as report reads it.
     restHolds*: bool
-    neg*, pos*: WayRead
+    negative*, positive*: WayRead
     glances*: array[HALVES.len, Glance]
 
   RungRead* = object ## One rung of chain asked still, as report reads it.
@@ -102,9 +102,9 @@ func keyOf*(a: RungAsk): string = $ord(a.band) & "|" & $a.turn
 
 #[ Reading one ]#
 
-func momentAt*(sw: Swept; t: float): Option[Moment] =
+func momentAt*(sweep: Swept; t: float): Option[Moment] =
   ## Moment nearest `t` turns, from whichever way reaches it; none where neither does.
-  let way = (if t < 0.0: sw.neg else: sw.pos)
+  let way = (if t < 0.0: sweep.negative else: sweep.positive)
   var best: Option[Moment]
   for m in way.moments:
     if abs(m.at - t) < 0.011 and (best.isNone or abs(m.at - t) < abs(best.get.at - t)):
@@ -130,13 +130,13 @@ proc readSweep*(a: SweepAsk): SweepRead =
   ## Sweep hold, and read it as report reads it.
   let
     links = a.linksOf
-    sw = swept(HUMAN, a.band, links, who = a.who, most = MOST, away = a.away,
+    sweep = swept(HUMAN, a.band, links, who = a.who, most = MOST, away = a.away,
                apart = a.apart)
-  result.restHolds = sw.restHolds
-  result.neg = wayOf(sw.neg)
-  result.pos = wayOf(sw.pos)
+  result.restHolds = sweep.restHolds
+  result.negative = wayOf(sweep.negative)
+  result.positive = wayOf(sweep.positive)
   for i, h in HALVES:
-    let m = momentAt(sw, float(h) / 2.0)
+    let m = momentAt(sweep, float(h) / 2.0)
     if m.isSome: result.glances[i] = glanceOf(a.band, links, m.get)
 
 proc readRung*(a: RungAsk): RungRead =
@@ -194,7 +194,7 @@ proc readAll*(sweeps: seq[SweepAsk]; rungs: seq[RungAsk]): tuple[sweeps: seq[Swe
 
 #[ Keeping ]#
 
-proc physics*(dir = HERE): string = stamp(dir, LEAVING)
+proc physics*(directory = HERE): string = stamp(directory, LEAVING)
   ## Stamp of what readings depend on.
 
 proc keptReadings*(path = KEPT_READINGS): Readings =

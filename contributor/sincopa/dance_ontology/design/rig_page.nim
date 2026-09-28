@@ -276,10 +276,10 @@ func unstamped*(text: string): string =
 
 when isMainModule:
   let
-    dir = if paramCount() >= 1: paramStr(1) else: "."
+    directory = if paramCount() >= 1: paramStr(1) else: "."
     data = "design" / "rig.json"
-    view = dir / "rig_view.js"
-    review = dir / "review.html"
+    view = directory / "rig_view.js"
+    review = directory / "review.html"
   if not fileExists(data):
     quit(&"Viewer page has no sweeps; run `nim r tools/build.nim rig`: got `{data}`.", 1)
   if not fileExists(view):
@@ -294,5 +294,5 @@ when isMainModule:
                     cellsBody(reviewHtml, parseJson(dataText)) &
                     "<script>var RIG = " & dataText & ";</script>\n" &
                     "<script>" & readFile(view) & "</script>\n")
-  writeFile(dir / "rig.html", withFaces(html))
-  echo "wrote ", dir / "rig.html"
+  writeFile(directory / "rig.html", withFaces(html))
+  echo "wrote ", directory / "rig.html"

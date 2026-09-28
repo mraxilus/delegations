@@ -187,9 +187,9 @@ func chevronPoints*(centre: Point; facing: float): array[3, Point] =
   ##   One source for shape, so drawing and anything that has to
   ##     keep off it read same V (rule 22).
   let
-    rad = degToRad(facing)
-    fwd = (x: sin(rad), y: -cos(rad))
-    across = (x: cos(rad), y: sin(rad))
+    radians = degToRad(facing)
+    fwd = (x: sin(radians), y: -cos(radians))
+    across = (x: cos(radians), y: sin(radians))
   [(centre.x - fwd.x * CHEV_BACK - across.x * CHEV_HALF,
     centre.y - fwd.y * CHEV_BACK - across.y * CHEV_HALF),
    (centre.x + fwd.x * CHEV_OUT, centre.y + fwd.y * CHEV_OUT),

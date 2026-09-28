@@ -70,16 +70,16 @@ suite "prose off Markdown":
   ## nine documents of repository, 1158 blocks and 2746 sentences, every one same.
 
   test "fenced code is not read, however long its lines":
-    let doc = "Before.\n\n```\n" & "word ".repeat(WORDS + 10) & "\n```\n\nAfter."
-    check doc.markdownProse == @["Before.", "After."]
+    let document = "Before.\n\n```\n" & "word ".repeat(WORDS + 10) & "\n```\n\nAfter."
+    check document.markdownProse == @["Before.", "After."]
 
   test "quotation, table row, heading and rule carry no prose":
-    let doc = "# Heading\n\n> Quoted words of somebody else.\n\n| a | b |\n\n---\n\nProse."
-    check doc.markdownProse == @["Prose."]
+    let document = "# Heading\n\n> Quoted words of somebody else.\n\n| a | b |\n\n---\n\nProse."
+    check document.markdownProse == @["Prose."]
 
   test "each list item is its own block, and blank line ends one":
-    let doc = "- First item.\n- Second item,\n  wrapped.\n\nPlain line one.\nPlain line two."
-    check doc.markdownProse ==
+    let document = "- First item.\n- Second item,\n  wrapped.\n\nPlain line one.\nPlain line two."
+    check document.markdownProse ==
       @["First item.", "Second item, wrapped.", "Plain line one. Plain line two."]
 
   test "numbered item loses its number and keeps its words":

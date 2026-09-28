@@ -56,7 +56,7 @@ const
     ## Options of browser scripts shipped with pages.
   QUIET = @["--hints:off"]
     ## Options of runs whose output is their product.
-  DIR_FONTS = BUILD / "fonts"
+  DIRECTORY_FONTS = BUILD / "fonts"
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
@@ -98,29 +98,29 @@ const
     ##   stands where checksum stands for fetched file (CONTRIBUTOR.md, "System
     ##   dependencies"). Never vendored: `deps/` is ignored at repository root, and
     ##   `engine` clones there.
-  DIR_DEPS = "deps"
+  DIRECTORY_DEPENDENCIES = "deps"
     ## Directory source clones land in. Never committed, as Atlas checkouts are not.
   ENGINE_LIB = BIN / "libbox3d.a"
     ## Engine archived into one library, which `sim/engine.nim` links.
 
 
-proc run(program: string; args: openArray[string]) =
+proc run(program: string; arguments: openArray[string]) =
   ## Run program with args from project directory; raise on non-zero exit.
   ##   Named rather than shelled through string, so no argument needs quoting and no
   ##     path with space in it can split.
-  let process = startProcess(program, args = args, options = {poUsePath, poParentStreams})
+  let process = startProcess(program, args = arguments, options = {poUsePath, poParentStreams})
   let code = process.waitForExit
   process.close
   if code != 0:
     raise newException(OSError, program & " failed; got exit `" & $code & "`.")
 
-proc nim(args: openArray[string]) =
+proc nim(arguments: openArray[string]) =
   ## Run compiler with args from project directory; raise on non-zero exit.
-  run("nim", args)
+  run("nim", arguments)
 
-proc compileRun(args: openArray[string]) =
+proc compileRun(arguments: openArray[string]) =
   ## Compile and run program with args, quietly, binary into `bin/`.
-  nim(@["c", "-r"] & QUIET & @["--outdir:" & BIN] & @args)
+  nim(@["c", "-r"] & QUIET & @["--outdir:" & BIN] & @arguments)
 
 
 
@@ -146,7 +146,7 @@ proc assets() =
   ##     and neither writes what other holds.
   ##   Store keys entries by digest, so name is restored here: rest of build reads faces
   ##     by name, and page embedding one wants to say which it embedded.
-  createDir(DIR_FONTS)
+  createDir(DIRECTORY_FONTS)
   var wanted: seq[string]
   for (file, _, _, _) in FACES:
     wanted.add file
@@ -164,8 +164,8 @@ proc assets() =
       "Store answered with `" & $paths.len & "` paths for `" & $wanted.len &
         "` faces asked for, so which is which cannot be told; got:\n" & written)
   for i, file in wanted:
-    copyFile(paths[i], DIR_FONTS / file)
-  echo "Faces in ", DIR_FONTS, ": ", wanted.len, ", every one from repository store."
+    copyFile(paths[i], DIRECTORY_FONTS / file)
+  echo "Faces in ", DIRECTORY_FONTS, ": ", wanted.len, ", every one from repository store."
 
 
 proc engine() =
@@ -180,9 +180,9 @@ proc engine() =
   ##     clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
   ##     commit alone, with no tag beside it, and that is measurement rather than taste.
   for (name, url, commit, _, _) in SOURCES:
-    let into = DIR_DEPS / name
+    let into = DIRECTORY_DEPENDENCIES / name
     if not dirExists(into):
-      createDir(DIR_DEPS)
+      createDir(DIRECTORY_DEPENDENCIES)
       run("git", ["clone", "--quiet", url, into])
       run("git", ["-C", into, "checkout", "--quiet", commit])
     let (written, code) = execCmdEx("git -C " & quoteShell(into) & " rev-parse HEAD")
@@ -197,18 +197,18 @@ proc engine() =
     echo "Engine already archived: ", ENGINE_LIB
     return
   createDir(BIN)
-  let src = DIR_DEPS / "box3d" / "src"
+  let src = DIRECTORY_DEPENDENCIES / "box3d" / "src"
   var objects: seq[string]
   for path in walkFiles(src / "*.c"):
-    let obj = BIN / path.extractFilename.changeFileExt("o")
-    run("cc", ["-O2", "-std=c17", "-I" & DIR_DEPS / "box3d" / "include", "-I" & src,
-               "-c", path, "-o", obj])
-    objects.add obj
+    let object_file = BIN / path.extractFilename.changeFileExt("o")
+    run("cc", ["-O2", "-std=c17", "-I" & DIRECTORY_DEPENDENCIES / "box3d" / "include", "-I" & src,
+               "-c", path, "-o", object_file])
+    objects.add object_file
   if objects.len == 0:
     raise newException(OSError, "Engine's source holds no `.c` file; got `" & src & "`.")
   run("ar", @["rcs", ENGINE_LIB] & objects)
-  for obj in objects:
-    removeFile(obj)
+  for object_file in objects:
+    removeFile(object_file)
   echo "Engine archived: ", ENGINE_LIB, ", from ", objects.len, " files."
 
 
@@ -247,7 +247,7 @@ proc pages() =
   ##   Faces first: every page embeds them, and check that wants verb run by hand
   ##     first is check runner will not run.
   assets()
-  for dir in ["app", "review", "design"]: createDir(BUILD / dir)
+  for directory in ["app", "review", "design"]: createDir(BUILD / directory)
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
@@ -342,7 +342,7 @@ proc system() =
 proc clean() =
   ## Remove build products, caches and testament binaries.
   # `deps/` survives clean, as Atlas checkouts do: it is fetched source, not product.
-  for dir in [BIN, BUILD, "nimcache", "testresults"]: removeDir(dir)
+  for directory in [BIN, BUILD, "nimcache", "testresults"]: removeDir(directory)
   for path in walkFiles("tests" / "*"):
     if not path.endsWith(".nim"): removeFile(path)
 

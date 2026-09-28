@@ -36,8 +36,8 @@ func xy*(p: Point): string = n(p.x) & " " & n(p.y)
 
 func polar*(cx, cy, radius, degrees: float): Point =
   ## Get point at bearing, measured clockwise from straight up page.
-  let rad = degToRad(degrees)
-  (cx + radius * sin(rad), cy - radius * cos(rad))
+  let radians = degToRad(degrees)
+  (cx + radius * sin(radians), cy - radius * cos(radians))
 
 
 func bearing*(dx, dy: float): float =
@@ -45,7 +45,7 @@ func bearing*(dx, dy: float): float =
   radToDeg(arctan2(dx, -dy))
 
 
-func dist*(a, b: Point): float =
+func distance*(a, b: Point): float =
   ## Get straight distance between two points.
   sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y))
 
@@ -70,7 +70,7 @@ func continuous*(angles: seq[float]): seq[float] =
 func turn*(point, about: Point; degrees: float): Point =
   ## Rotate point about another, clockwise on page.
   let
-    rad = degToRad(degrees)
+    radians = degToRad(degrees)
     (dx, dy) = (point.x - about.x, point.y - about.y)
-  (about.x + dx * cos(rad) - dy * sin(rad),
-   about.y + dx * sin(rad) + dy * cos(rad))
+  (about.x + dx * cos(radians) - dy * sin(radians),
+   about.y + dx * sin(radians) + dy * cos(radians))

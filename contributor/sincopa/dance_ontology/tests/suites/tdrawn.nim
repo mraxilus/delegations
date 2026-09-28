@@ -31,11 +31,11 @@ suite "capsule on canvas":
       trunk = (a: (0.0, 0.0, 0.925), z: (0.0, 0.0, 1.235))
       arm = (a: (0.0, 0.15, 1.35), z: (0.0, 0.15, 1.05))
       order = drawOrder([trunk, arm], 0.0, 1.2, f)
-    proc place(cap: int; height: float): int =
-      ## Where in order piece of `cap` nearest `height` is painted.
+    proc place(capsule: int; height: float): int =
+      ## Where in order piece of `capsule` nearest `height` is painted.
       var best = Inf
       for i, p in order:
-        if p.cap != cap: continue
+        if p.capsule != capsule: continue
         let off = abs((p.a.z + p.z.z) / 2.0 - height)
         if off < best:
           best = off

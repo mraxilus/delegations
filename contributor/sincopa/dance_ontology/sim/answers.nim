@@ -121,7 +121,7 @@ type
     why*: Stop
 
   Ways* = object ## Both ways of one sweep.
-    neg*, pos*: Way
+    negative*, positive*: Way
 
   Walked* = object ## One walk from one distance, in numbers alone.
     apart*: float
@@ -165,18 +165,18 @@ func engineCommit*(build: string): string =
     if quoted.len == 40 and quoted.allCharsInSet(HexDigits): return quoted
     opens = build.find('"', shut + 1)
 
-proc stamp*(dir = HERE; leaving: openArray[string] = []): string =
+proc stamp*(directory = HERE; leaving: openArray[string] = []): string =
   ## Digest of what answers depend on: every `sim/*.nim` by name, in name order, and
   ## engine's pinned commit.  `leaving` names files it passes over.
   var files: seq[string]
-  for f in walkFiles(dir / "sim" / "*.nim"):
+  for f in walkFiles(directory / "sim" / "*.nim"):
     if f.extractFilename notin leaving: files.add f
   files.sort
   var h = FNV_OFFSET
   for f in files:
     h.feed f.extractFilename
     h.feed readFile(f)
-  h.feed engineCommit(readFile(dir / "tools" / "build.nim"))
+  h.feed engineCommit(readFile(directory / "tools" / "build.nim"))
   h.toHex(16).toLowerAscii
 
 
@@ -247,8 +247,8 @@ proc working(id: int) {.thread.} =
       case t.job
       of Sweep:
         let q = SWEEPS[t.index]
-        let sw = swept(HUMAN, q.band, q.links, most = q.most)
-        SWEPTS[t.index] = Ways(neg: wayOf(sw.neg), pos: wayOf(sw.pos))
+        let sweep = swept(HUMAN, q.band, q.links, most = q.most)
+        SWEPTS[t.index] = Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive))
       of WalkFrom:
         let q = WALKS[t.index]
         let w = walked(HUMAN, q.band, q.links, Body.Two, FARS[t.far], q.most, q.step,

@@ -22,38 +22,38 @@ import ../sim/engine
 
 proc world(): WorldId =
   ## World with no gravity and nothing asleep: every question here is about contact.
-  var def = defaultWorld()
-  def.gravity = vec(0, 0, 0)
-  def.enableSleep = false
-  createWorld(addr def)
+  var definition = defaultWorld()
+  definition.gravity = vec(0, 0, 0)
+  definition.enableSleep = false
+  createWorld(addr definition)
 
 proc capsule(w: WorldId; x: float): BodyId =
   ## Upright limb-thick capsule, standing where told.
-  var bd = defaultBody()
-  bd.kind = BODY_DYNAMIC
-  bd.position = Pos(x: x, y: 0.0, z: 0.0)
-  result = createBody(w, addr bd)
-  var sd = defaultShape()
-  var cap = Capsule(center1: vec(0, -0.15, 0), center2: vec(0, 0.15, 0), radius: 0.045)
-  discard createCapsule(result, addr sd, addr cap)
+  var body_definition = defaultBody()
+  body_definition.kind = BODY_DYNAMIC
+  body_definition.position = Pos(x: x, y: 0.0, z: 0.0)
+  result = createBody(w, addr body_definition)
+  var shape_definition = defaultShape()
+  var capsule = Capsule(center1: vec(0, -0.15, 0), center2: vec(0, 0.15, 0), radius: 0.045)
+  discard createCapsule(result, addr shape_definition, addr capsule)
 
 
 suite "the engine this project turns couples with":
   test "engine runs, and a body falls as far as gravity says":
     ## Cheapest proof binding is right: struct laid out wrong gives wrong figure here
     ##   rather than failing to link.
-    var def = defaultWorld()
-    def.enableSleep = false
-    let w = createWorld(addr def)
-    let g = abs(float(def.gravity.y))
+    var definition = defaultWorld()
+    definition.enableSleep = false
+    let w = createWorld(addr definition)
+    let g = abs(float(definition.gravity.y))
     check g > 9.0     # Engine's own, not this project's; only its order matters.
-    var bd = defaultBody()
-    bd.kind = BODY_DYNAMIC
-    bd.position = Pos(x: 0.0, y: 10.0, z: 0.0)
-    let body = createBody(w, addr bd)
-    var sd = defaultShape()
-    var cap = Capsule(center1: vec(0, -0.1, 0), center2: vec(0, 0.1, 0), radius: 0.05)
-    discard createCapsule(body, addr sd, addr cap)
+    var body_definition = defaultBody()
+    body_definition.kind = BODY_DYNAMIC
+    body_definition.position = Pos(x: 0.0, y: 10.0, z: 0.0)
+    let body = createBody(w, addr body_definition)
+    var shape_definition = defaultShape()
+    var capsule = Capsule(center1: vec(0, -0.1, 0), center2: vec(0, 0.1, 0), radius: 0.05)
+    discard createCapsule(body, addr shape_definition, addr capsule)
     for i in 1 .. 240:
       step(w, cfloat(1.0 / 240.0), 8)
     let fell = 10.0 - positionOf(body).at.y
@@ -82,13 +82,13 @@ suite "the engine this project turns couples with":
     ##   with nothing said.  Engine says how much room body needs, and that is what
     ##   is asked for.
     let w = world()
-    var bd = defaultBody()
-    bd.kind = BODY_DYNAMIC
-    bd.position = Pos(x: 0.0, y: 0.0, z: 0.0)
-    let centre = createBody(w, addr bd)
-    var sd = defaultShape()
+    var body_definition = defaultBody()
+    body_definition.kind = BODY_DYNAMIC
+    body_definition.position = Pos(x: 0.0, y: 0.0, z: 0.0)
+    let centre = createBody(w, addr body_definition)
+    var shape_definition = defaultShape()
     var big = Capsule(center1: vec(0, -0.3, 0), center2: vec(0, 0.3, 0), radius: 0.2)
-    discard createCapsule(centre, addr sd, addr big)
+    discard createCapsule(centre, addr shape_definition, addr big)
     const AROUND = 10
     var around: seq[BodyId]
     for i in 0 ..< AROUND:
@@ -99,7 +99,7 @@ suite "the engine this project turns couples with":
       od.position = Pos(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
       let b = createBody(w, addr od)
       var thin = Capsule(center1: vec(0, -0.02, 0), center2: vec(0, 0.02, 0), radius: 0.02)
-      discard createCapsule(b, addr sd, addr thin)
+      discard createCapsule(b, addr shape_definition, addr thin)
       around.add b
     step(w, cfloat(1.0 / 240.0), 8)
     let room = touchRoom(centre)

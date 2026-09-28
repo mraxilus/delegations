@@ -74,23 +74,23 @@ const PAGES* = [
 ] ## Each page: its file, its figures, its checks, its layout.
 
 
-proc buildPage*(i: int; out_dir: string) =
-  ## Check page `i` of `PAGES`, then write it into `out_dir`.
+proc buildPage*(i: int; directory_out: string) =
+  ## Check page `i` of `PAGES`, then write it into `directory_out`.
   let page = PAGES[i]
   let built = page.parts_of()
   echo &"{page.name}: {built.len} pieces"
   page.check(built)
   let
     html = page.render(built)
-    path = out_dir / page.name
+    path = directory_out / page.name
   writeFile(path, html)
   echo &"  written {html.runeLen} characters to {path}"
 
 
-proc buildPages*(out_dir: string) =
-  ## Check and rebuild every page into `out_dir`.
+proc buildPages*(directory_out: string) =
+  ## Check and rebuild every page into `directory_out`.
   for i in 0 ..< PAGES.len:
-    buildPage(i, out_dir)
+    buildPage(i, directory_out)
 
 
 when isMainModule:

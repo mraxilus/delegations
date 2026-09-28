@@ -54,10 +54,10 @@ func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance
     k = armOf(links, i, who)
     hand = links[i].ends[k]
     pose = arms[i][k]
-    st = stance[who]
-    ax = axesOf(st)
-    g = toBody(ax, pose.g)
-    e = toBody(ax, pose.e)
+    stance = stance[who]
+    axes = axesOf(stance)
+    g = toBody(axes, pose.g)
+    e = toBody(axes, pose.e)
     ownSide = side(hand.arm)
   var aspect: Aspect
   if g.y < -0.01:
@@ -69,7 +69,7 @@ func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance
   some(Lying(
     aspect: aspect,
     band: band,
-    pressing: pressing(rig, st, (pose.e, pose.w, pose.g)),
+    pressing: pressing(rig, stance, (pose.e, pose.w, pose.g)),
     elbowFore: e.y > 0.0,
   ))
 
@@ -173,9 +173,14 @@ func tightest*(rig: Rig; stance: array[Body, Stance]; links: seq[Link];
       let
         h = links[i].ends[k]
         j = joints(stance[h.body], h.arm, arms[i][k])
-        tw = rig.range[Dof.Twist]
-        twist = (if h.arm == Arm.Right: tw
-                 else: Range(lo: -tw.hi, hi: -tw.lo, easeLo: tw.easeHi, easeHi: tw.easeLo))
+        twist_range = rig.range[Dof.Twist]
+        twist = (if h.arm == Arm.Right: twist_range
+                 else: Range(
+                   lower: -twist_range.upper,
+                   upper: -twist_range.lower,
+                   ease_lower: twist_range.ease_upper,
+                   ease_upper: twist_range.ease_lower,
+                 ))
       for (dof, r, v) in [(Dof.Extend, rig.range[Dof.Extend], j.extend),
                           (Dof.Across, rig.range[Dof.Across], j.across),
                           (Dof.Twist, twist, j.twist),

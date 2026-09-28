@@ -23,17 +23,17 @@ const
     ## Repository's declaration of every file fetched at build time, from project directory.
 
 
-proc stub(dir: string) =
+proc stub(directory: string) =
   ## Write one byte per face, so shape can be checked without fetching any.
-  createDir(dir)
+  createDir(directory)
   for (file, _, _, _) in faces.FACES:
-    writeFile(dir / file, "x")
+    writeFile(directory / file, "x")
 
 
 suite "faces":
-  let dir = getTempDir() / "dance_faces_test"
-  removeDir(dir)
-  stub(dir)
+  let directory = getTempDir() / "dance_faces_test"
+  removeDir(directory)
+  stub(directory)
 
   test "every face named here is one repository's store declares":
     ## Store holds digest and address, this project holds choice (repository issue 116),
@@ -49,13 +49,13 @@ suite "faces":
       check ("\"" & file & "\"") in declared
 
   test "each face is inlined once, as bytes rather than as link":
-    let style = faceStyle(dir)
+    let style = faceStyle(directory)
     check style.count("@font-face") == faces.FACES.len
     check style.count("data:font/woff2;base64,") == faces.FACES.len
     check "http" notin style  # names no host page would have to reach (X.8)
 
   test "all three families are named, and ligatures are kept on":
-    let style = faceStyle(dir)
+    let style = faceStyle(directory)
     for family in ["Noto Serif", "Noto Sans", "Commit Mono"]:
       check ("font-family:\"" & family & "\"") in style
     # Commit Mono carries its ligatures in `calt`, on by default until something
@@ -64,21 +64,21 @@ suite "faces":
 
   test "absent face is refused, never quietly left out":
     expect IOError:
-      discard faceStyle(dir / "nowhere")
+      discard faceStyle(directory / "nowhere")
 
   test "whole page takes faces inside its head":
-    let dressed = withFaces(DOCUMENT, dir)
+    let dressed = withFaces(DOCUMENT, directory)
     check dressed.find("@font-face") < dressed.find("</head>")
     check dressed.count("<title>") == 1
 
   test "headless page takes faces after its title":
-    let dressed = withFaces(FRAGMENT, dir)
+    let dressed = withFaces(FRAGMENT, directory)
     check dressed.find("</title>") < dressed.find("@font-face")
     check dressed.count("<main>") == 1
 
   test "page with neither head nor title is refused":
     expect ValueError:
-      discard withFaces("<p>no head here</p>", dir)
+      discard withFaces("<p>no head here</p>", directory)
 
   test "dressing is not doubled where it runs twice":
     ## Build dresses every page under `build/`, and not only pages this run wrote,
@@ -88,8 +88,8 @@ suite "faces":
     ## 10.9 MB toward limit published page has to stay under.
     for page in [DOCUMENT, FRAGMENT]:
       let
-        once = withFaces(page, dir)
-        twice = withFaces(once, dir)
+        once = withFaces(page, directory)
+        twice = withFaces(once, directory)
       check once.count("data:font/woff2;base64,") == faces.FACES.len
       check twice.count("data:font/woff2;base64,") == faces.FACES.len
       check twice == once

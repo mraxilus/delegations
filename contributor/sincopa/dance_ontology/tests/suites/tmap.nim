@@ -26,7 +26,7 @@ func spoken(picture: string): string =
   result = result.replace("</tspan>", "")
 
 
-func attr(chunk, name: string): int =
+func attribute(chunk, name: string): int =
   ## Read one number out of drawn element, for measuring what was drawn.
   let key = name & "=\""
   let at = chunk.find(key)
@@ -203,8 +203,8 @@ suite "the drawing":
         if not (chunk.startsWith("edge-plate") or chunk.startsWith("arc-plate")):
           continue
         let own = chunk[0 ..< chunk.find("/>")]
-        boxes.add (own.attr("x"), own.attr("y"), own.attr("width"),
-          own.attr("height"))
+        boxes.add (own.attribute("x"), own.attribute("y"), own.attribute("width"),
+          own.attribute("height"))
       check boxes.len == moved div 2 + joined div 2
       for index, box in boxes:
         for other in boxes[index + 1 .. ^1]:

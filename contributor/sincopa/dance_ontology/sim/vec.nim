@@ -26,7 +26,7 @@ func dot*(a, b: Vec): float = a.x * b.x + a.y * b.y + a.z * b.z
 func cross*(a, b: Vec): Vec =
   (a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
 func norm*(a: Vec): float = sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
-func dist*(a, b: Vec): float =
+func distance*(a, b: Vec): float =
   let
     dx = a.x - b.x
     dy = a.y - b.y
@@ -55,22 +55,22 @@ func spun*(v, axis: Vec; by: float): Vec =
   ## Turn `v` about unit `axis` by `by` radians.
   spunBy(v, axis, cos(by), sin(by))
 
-func carried*(v, fromDir, toDir: Vec): Vec =
-  ## Move `v` by least rotation that takes unit `fromDir` to unit
-  ## `toDir`: swing of joint, with no twist in it.
+func carried*(v, from_direction, to_direction: Vec): Vec =
+  ## Move `v` by least rotation that takes unit `from_direction` to unit
+  ## `to_direction`: swing of joint, with no twist in it.
   ##   Singular only where two are opposite, where "least" is not one
   ##     rotation; any axis across them is taken, and law keeps model
   ##     off that line.
   let
-    axis = cross(fromDir, toDir)
+    axis = cross(from_direction, to_direction)
     s = norm(axis)
-    c = dot(fromDir, toDir)
+    c = dot(from_direction, to_direction)
   if s < 1e-9:
     if c > 0.0:
       return v
-    var across = cross(fromDir, (1.0, 0.0, 0.0))
+    var across = cross(from_direction, (1.0, 0.0, 0.0))
     if norm(across) < 1e-6:
-      across = cross(fromDir, (0.0, 1.0, 0.0))
+      across = cross(from_direction, (0.0, 1.0, 0.0))
     return spun(v, unit(across), PI)
   # Angle is atan2(s, c); its cosine and sine are c and s over their
   # hypotenuse, which is one for unit directions and is divided out anyway.
@@ -144,26 +144,26 @@ func axisNear*(a, b: Vec; z0, z1: float): tuple[d, nx, ny: float] =
   ##   This is whole of cylinder test: caller has already widened
   ##     height band by limb's radius, so caps are covered too.
   let dz = b.z - a.z
-  var lo, hi: float
+  var lower, upper: float
   if abs(dz) < 1e-12:
     if a.z < z0 or a.z > z1:
       return (Inf, 0.0, 0.0)
-    lo = 0.0
-    hi = 1.0
+    lower = 0.0
+    upper = 1.0
   else:
-    lo = (z0 - a.z) / dz
-    hi = (z1 - a.z) / dz
-    if lo > hi:
-      swap lo, hi
-    lo = max(lo, 0.0)
-    hi = min(hi, 1.0)
-    if lo > hi:
+    lower = (z0 - a.z) / dz
+    upper = (z1 - a.z) / dz
+    if lower > upper:
+      swap lower, upper
+    lower = max(lower, 0.0)
+    upper = min(upper, 1.0)
+    if lower > upper:
       return (Inf, 0.0, 0.0)
   let
-    px = a.x + (b.x - a.x) * lo
-    py = a.y + (b.y - a.y) * lo
-    qx = a.x + (b.x - a.x) * hi
-    qy = a.y + (b.y - a.y) * hi
+    px = a.x + (b.x - a.x) * lower
+    py = a.y + (b.y - a.y) * lower
+    qx = a.x + (b.x - a.x) * upper
+    qy = a.y + (b.y - a.y) * upper
     ex = qx - px
     ey = qy - py
     ee = ex * ex + ey * ey

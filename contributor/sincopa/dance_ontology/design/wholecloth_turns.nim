@@ -89,9 +89,9 @@ type
 
   Limits = object
     ## Define where one sweep runs out each way, and why.
-    neg, pos: float                       ## Turns reached each way, at most `MOST`.
-    why_neg, why_pos: cstring             ## What refused, each way.
-    is_stopped_neg, is_stopped_pos: bool  ## Blocked within `MOST`, not merely ended.
+    negative, positive: float                       ## Turns reached each way, at most `MOST`.
+    why_negative, why_positive: cstring             ## What refused, each way.
+    is_stopped_negative, is_stopped_positive: bool  ## Blocked within `MOST`, not merely ended.
     found_rest: bool                  ## Whether rest pose exists at all.
 
   Sweep = object
@@ -193,17 +193,17 @@ func readSweep(sweep: var Sweep, hold: Hold, level: Level) =
   ## Read one sweep's limits into `sweep`, keeping its moments as reference.
   ##   Fills table's own slot: constructor returned or assigned would deep copy.
   let
-    sw = turns().sweeps[HOLDS[hold].key & "|" & LEVEL_NAMES[level]]
-    neg = sw.neg.to(float)
-    pos = sw.pos.to(float)
-  sweep.limits.neg = min(MOST, neg)
-  sweep.limits.pos = min(MOST, pos)
-  sweep.limits.why_neg = sw.whyNeg.to(cstring)
-  sweep.limits.why_pos = sw.why.to(cstring)
-  sweep.limits.is_stopped_neg = sw.stoppedNeg.to(bool) and neg < MOST
-  sweep.limits.is_stopped_pos = sw.stoppedPos.to(bool) and pos < MOST
-  sweep.limits.found_rest = sw.restHolds.to(bool)
-  sweep.frames = sw.frames
+    sweep_data = turns().sweeps[HOLDS[hold].key & "|" & LEVEL_NAMES[level]]
+    negative = sweep_data.neg.to(float)
+    positive = sweep_data.pos.to(float)
+  sweep.limits.negative = min(MOST, negative)
+  sweep.limits.positive = min(MOST, positive)
+  sweep.limits.why_negative = sweep_data.whyNeg.to(cstring)
+  sweep.limits.why_positive = sweep_data.why.to(cstring)
+  sweep.limits.is_stopped_negative = sweep_data.stoppedNeg.to(bool) and negative < MOST
+  sweep.limits.is_stopped_positive = sweep_data.stoppedPos.to(bool) and positive < MOST
+  sweep.limits.found_rest = sweep_data.restHolds.to(bool)
+  sweep.frames = sweep_data.frames
 
 
 func sweepTable(): array[Hold, array[Level, Sweep]] =
@@ -243,7 +243,7 @@ func partExtent(rig: JsObject, part: Part): PartExtent =
 func toFixed(x: float, digits: int): cstring {.importjs: "(#).toFixed(#)".}
   ## Write number to `digits` decimals exactly as JavaScript does.
 
-func jsStr(x: float): cstring {.importjs: "String(#)".}
+func toText(x: float): cstring {.importjs: "String(#)".}
   ## Write number as JavaScript's `String` does: `2`, not `2.0`.
 
 func parseFloat(text: cstring): float {.importjs: "parseFloat(#)".}
@@ -270,7 +270,7 @@ func facingVec(a: float): Vec2 =
   result[0] = cos(a)
   result[1] = -sin(a)
 
-func fmt(p: Vec2): cstring =
+func pointText(p: Vec2): cstring =
   ## Write page point to one decimal, i.e. `x,y`.
   p[0].toFixed(1) & "," & p[1].toFixed(1)
 
@@ -279,7 +279,7 @@ func pathOf(joints: array[4, Vec3], view: static View): cstring =
   result = "M "
   for k in 0 ..< 4:
     if k > 0: result.add " L "
-    result.add fmt(project(joints[k], view))
+    result.add pointText(project(joints[k], view))
 
 func lerp[N: static int](dest: var array[N, float]; a, b: JsObject; u: float) =
   ## Interpolate one vector between two moments into `dest`, reading both in place.
@@ -335,8 +335,8 @@ func bodySvg(c: Vec2, f: Vec2): cstring =
       py = CHEVRON[i][1]
       q = [px * cos(a) - py * sin(a), px * sin(a) + py * cos(a)]
     if i > 0: points.add " "
-    points.add fmt([c[0] + q[0], c[1] + q[1]])
-  "<circle cx=\"" & c[0].toFixed(1) & "\" cy=\"" & c[1].toFixed(1) & "\" r=\"" & jsStr(RIM) &
+    points.add pointText([c[0] + q[0], c[1] + q[1]])
+  "<circle cx=\"" & c[0].toFixed(1) & "\" cy=\"" & c[1].toFixed(1) & "\" r=\"" & toText(RIM) &
     "\" class=\"rim\"/><polyline points=\"" & points & "\" class=\"chev\"/>"
 
 func shoulderOf(centre: Vec2, facing: float, arm: Arm): Vec2 =
@@ -384,16 +384,16 @@ func sceneOf(scene: var Scene, frames: JsObject, turn: float): bool =
 
   # Find moments either side of `turn` by bisection on their turns.
   var
-    lo = 0
-    hi = count - 1
-  while hi - lo > 1:
-    let mid = (lo + hi) shr 1
-    if frames[mid].t.to(float) <= turn: lo = mid else: hi = mid
+    lower = 0
+    upper = count - 1
+  while upper - lower > 1:
+    let mid = (lower + upper) shr 1
+    if frames[mid].t.to(float) <= turn: lower = mid else: upper = mid
 
   # Weigh later moment by where `turn` falls between; exact equality only guards division.
   let
-    a = frames[lo]
-    b = frames[hi]
+    a = frames[lower]
+    b = frames[upper]
     t_a = a.t.to(float)
     t_b = b.t.to(float)
     u = if t_b == t_a: 0.0 else: max(0.0, min(1.0, (turn - t_a) / (t_b - t_a)))
@@ -432,7 +432,7 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   ## Draw scene: bodies, ropes and marks from above, then same moment from side.
   ##   Hot path: once per animated frame, and once per figure of strip.
   result = ""
-  let cls: cstring = if scene.is_ok: "cn" else: "cn no"
+  let classes: cstring = if scene.is_ok: "cn" else: "cn no"
 
   # Bodies from above.
   for who in Dancer:
@@ -449,9 +449,9 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
     let
       deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
       plain = INKS[HOLDS[hold].ropes[i].follow]
-    result.add "<path d=\"" & pathOf(c.lead, View.Above) & "\" class=\"" & cls &
+    result.add "<path d=\"" & pathOf(c.lead, View.Above) & "\" class=\"" & classes &
       "\" style=\"stroke:var(--" & deep & ")\"/>"
-    result.add "<path d=\"" & pathOf(c.follow, View.Above) & "\" class=\"" & cls &
+    result.add "<path d=\"" & pathOf(c.follow, View.Above) & "\" class=\"" & classes &
       "\" style=\"stroke:var(--" & plain & ")\"/>"
     for k in 1 .. 2:
       let q = page(c.lead[k][0], c.lead[k][1])
@@ -489,9 +489,9 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
     let
       deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
       plain = INKS[HOLDS[hold].ropes[i].follow]
-    result.add "<path d=\"" & pathOf(c.lead, View.Side) & "\" class=\"" & cls &
+    result.add "<path d=\"" & pathOf(c.lead, View.Side) & "\" class=\"" & classes &
       "\" style=\"stroke:var(--" & deep & ")\"/>"
-    result.add "<path d=\"" & pathOf(c.follow, View.Side) & "\" class=\"" & cls &
+    result.add "<path d=\"" & pathOf(c.follow, View.Side) & "\" class=\"" & classes &
       "\" style=\"stroke:var(--" & plain & ")\"/>"
   result.add "</g>"
 
@@ -503,12 +503,12 @@ func turnWord(turn: float): cstring =
     sign: cstring = if h < 0: "−" elif h > 0: "+" else: ""
     a = abs(h)
     word =
-      if a mod 2 == 0: jsStr(float(a div 2))
-      elif a > 1: jsStr(float(a div 2)) & "½"
+      if a mod 2 == 0: toText(float(a div 2))
+      elif a > 1: toText(float(a div 2)) & "½"
       else: cstring("½")
   sign & word
 
-func turnNum(turn: float): cstring =
+func turnFigure(turn: float): cstring =
   ## Write turn to two decimals with its sign, i.e. `+0.31`, `−1.12`.
   (if turn < 0.0: cstring("−") else: "+") & abs(turn).toFixed(2)
 
@@ -536,7 +536,7 @@ var
   TURN_DRAWN = -0.5               ## Turn drawn now.
   TURN_TARGET = -0.5             ## Turn eased toward while not playing.
   IS_PLAYING = false        ## Sweeping between blocks.
-  DIRECTION_PLAY = 1.0           ## Way play sweeps: `+1` toward `pos` block, `-1` toward `neg`.
+  DIRECTION_PLAY = 1.0      ## Way play sweeps: `+1` toward `positive` block, `-1` other way.
   NOW_PREV = 0.0            ## Timestamp of previous frame; seeded by `start`.
   SCENE_STORAGE: Scene              ## One scene's storage, refilled per draw; never reallocated.
 
@@ -558,7 +558,7 @@ let
 proc clampT(t: float): float =
   ## Keep turn within blocks of hold and level on show.
   template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
-  max(-limits.neg, min(limits.pos, t))
+  max(-limits.negative, min(limits.positive, t))
 
 
 proc renderStage() =
@@ -570,17 +570,17 @@ proc renderStage() =
   let found_scene = sceneOf(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
   STAGE_ELEMENT.innerHTML =
     if found_scene: sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) else: ""
-  SLIDER_ELEMENT.value = jsStr(TURN_DRAWN)
+  SLIDER_ELEMENT.value = toText(TURN_DRAWN)
   let head = "<b>" & HOLDS[HOLD_SHOWN].name & "</b> · " & LEVEL_NAMES[LEVEL_SHOWN] & " · @ " &
-    turnNum(TURN_DRAWN) & " from " & HOLDS[HOLD_SHOWN].from_rest
+    turnFigure(TURN_DRAWN) & " from " & HOLDS[HOLD_SHOWN].from_rest
   if not found_scene or not limits.found_rest:
     READOUT_ELEMENT.innerHTML = head & "<br>no pose holds at the rest"
     return
 
   # One line per rope: follow's arm word, lead's where not open, crossings where any.
   let
-    is_at_neg = TURN_DRAWN <= -limits.neg + 1e-6 and limits.is_stopped_neg
-    is_at_pos = TURN_DRAWN >= limits.pos - 1e-6 and limits.is_stopped_pos
+    is_at_negative = TURN_DRAWN <= -limits.negative + 1e-6 and limits.is_stopped_negative
+    is_at_positive = TURN_DRAWN >= limits.positive - 1e-6 and limits.is_stopped_positive
   var lines: cstring = ""
   for i in 0 ..< SCENE_STORAGE.cn_count:
     template c: untyped = SCENE_STORAGE.cn[i]
@@ -608,13 +608,13 @@ proc renderStage() =
      else: "")
   const UNSTOPPED: cstring = " (not within two turns)"
     ## Block's word where sweep ran out of range before any joint refused.
-  var blocks = "blocks at " & turnNum(-limits.neg) &
-    (if limits.is_stopped_neg: " (" & limits.why_neg & ")" else: UNSTOPPED) &
-    " and " & turnNum(limits.pos) &
-    (if limits.is_stopped_pos: " (" & limits.why_pos & ")" else: UNSTOPPED)
-  if is_at_neg or is_at_pos:
+  var blocks = "blocks at " & turnFigure(-limits.negative) &
+    (if limits.is_stopped_negative: " (" & limits.why_negative & ")" else: UNSTOPPED) &
+    " and " & turnFigure(limits.positive) &
+    (if limits.is_stopped_positive: " (" & limits.why_positive & ")" else: UNSTOPPED)
+  if is_at_negative or is_at_positive:
     blocks = "<b class=\"bad\">blocked here</b> — " &
-      (if is_at_neg: limits.why_neg else: limits.why_pos) & "; " & blocks
+      (if is_at_negative: limits.why_negative else: limits.why_positive) & "; " & blocks
   lines.add "<br>" & blocks
   READOUT_ELEMENT.innerHTML = head & lines
 
@@ -628,11 +628,11 @@ proc renderStrip() =
   for h in -4 .. 4:
     shown[count] = float(h) / 2.0
     inc count
-  if sweep.limits.is_stopped_neg:
-    shown[count] = -sweep.limits.neg
+  if sweep.limits.is_stopped_negative:
+    shown[count] = -sweep.limits.negative
     inc count
-  if sweep.limits.is_stopped_pos:
-    shown[count] = sweep.limits.pos
+  if sweep.limits.is_stopped_positive:
+    shown[count] = sweep.limits.positive
     inc count
 
   # Sort ascending; insertion suits eleven values and keeps equal ones in order.
@@ -648,12 +648,12 @@ proc renderStrip() =
     let
       t = shown[i]
       is_half = abs(t * 2.0 - floor(t * 2.0 + 0.5)) < 1e-6
-    if t < -sweep.limits.neg - 1e-6 or t > sweep.limits.pos + 1e-6 or
+    if t < -sweep.limits.negative - 1e-6 or t > sweep.limits.positive + 1e-6 or
         not sweep.limits.found_rest:
-      html.add "<figure class=\"mini blocked\" data-t=\"" & jsStr(t) &
+      html.add "<figure class=\"mini blocked\" data-t=\"" & toText(t) &
         "\"><div class=\"x\">&#10005;</div><figcaption><b>@ " & turnWord(t) &
         "</b><br><span class=\"say\">blocked — " &
-        (if t < 0.0: sweep.limits.why_neg else: sweep.limits.why_pos) &
+        (if t < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
         "</span></figcaption></figure>"
       continue
     doAssert sceneOf(SCENE_STORAGE, sweep.frames, t), "Sweep within its blocks must have moments."
@@ -665,9 +665,9 @@ proc renderStrip() =
       is_rest = abs(t - HOLDS[HOLD_SHOWN].rest) < 1e-6
       is_limit = not is_half
     html.add "<figure class=\"mini" & (if is_limit: cstring(" limit") else: "") &
-      "\" data-t=\"" & jsStr(t) & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
+      "\" data-t=\"" & toText(t) & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
       sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) & "</svg>" & "<figcaption><b>@ " &
-      (if is_half: turnWord(t) else: turnNum(t)) & "</b>" &
+      (if is_half: turnWord(t) else: turnFigure(t)) & "</b>" &
       (if is_rest: cstring(" rest") else: "") & (if is_limit: cstring(" the block") else: "") &
       "<br><span class=\"say\">" & words & "</span></figcaption></figure>"
   STRIP_ELEMENT.innerHTML = html
@@ -715,11 +715,11 @@ proc tick(now: float) =
   if IS_PLAYING:
     template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
     TURN_DRAWN += DIRECTION_PLAY * dt * 0.35
-    if TURN_DRAWN >= limits.pos:
-      TURN_DRAWN = limits.pos
+    if TURN_DRAWN >= limits.positive:
+      TURN_DRAWN = limits.positive
       DIRECTION_PLAY = -1.0
-    elif TURN_DRAWN <= -limits.neg:
-      TURN_DRAWN = -limits.neg
+    elif TURN_DRAWN <= -limits.negative:
+      TURN_DRAWN = -limits.negative
       DIRECTION_PLAY = 1.0
     TURN_TARGET = TURN_DRAWN
     renderStage()

@@ -49,15 +49,15 @@ func quoted(document: string): seq[tuple[rule: int, words: string]] =
 suite "this project's own Markdown":
   test "every README held keeps each sentence and each paragraph to its bound":
     ## Failure names file and sentence, so it says what to split.
-    for doc in WRITTEN:
-      for said in readFile(currentSourcePath.parentDir / ".." / ".." / doc).markdownProse:
+    for document in WRITTEN:
+      for said in readFile(currentSourcePath.parentDir / ".." / ".." / document).markdownProse:
         let found = said.markdownSentences
         if found.len > SENTENCES:
-          echo "    ", doc, ": paragraph of ", found.len, " sentences, from: ", found[0]
+          echo "    ", document, ": paragraph of ", found.len, " sentences, from: ", found[0]
         check found.len <= SENTENCES
         for s in found:
           if s.splitWhitespace.len > WORDS:
-            echo "    ", doc, ": sentence of ", s.splitWhitespace.len, " words: ", s
+            echo "    ", document, ": sentence of ", s.splitWhitespace.len, " words: ", s
           check s.splitWhitespace.len <= WORDS
 
   test "design README quotes every rule of ledger once, in order, word for word":

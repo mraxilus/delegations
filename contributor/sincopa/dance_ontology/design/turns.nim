@@ -60,7 +60,7 @@ func restsAway(hold: string): bool =
   hold.contains('.') and sameName(hold)
 
 
-func mm(p: Vec): JsonNode =
+func toMillimetres(p: Vec): JsonNode =
   %*[int(round(p.x * 1000.0)), int(round(p.y * 1000.0)), int(round(p.z * 1000.0))]
 
 func frame(m: Moment; band: Band; links: seq[Link]): JsonNode =
@@ -85,8 +85,10 @@ func frame(m: Moment; band: Band; links: seq[Link]): JsonNode =
       lead = m.arms[i][armOf(links, i, Body.One)]
       follow = m.arms[i][armOf(links, i, Body.Two)]
     var cj = %*{
-      "lead": [mm(lead.s), mm(lead.e), mm(lead.w), mm(lead.g)],
-      "follow": [mm(follow.g), mm(follow.w), mm(follow.e), mm(follow.s)],
+      "lead": [toMillimetres(lead.s), toMillimetres(lead.e),
+               toMillimetres(lead.w), toMillimetres(lead.g)],
+      "follow": [toMillimetres(follow.g), toMillimetres(follow.w),
+                 toMillimetres(follow.e), toMillimetres(follow.s)],
       "leadSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.One), band),
       "followSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.Two), band)}
     if i == 0 and cross.len > 0:
@@ -98,13 +100,13 @@ func frame(m: Moment; band: Band; links: seq[Link]): JsonNode =
     result["cn"].add cj
 
 
-func frames(sw: Swept; band: Band; links: seq[Link]): JsonNode =
+func frames(sweep: Swept; band: Band; links: seq[Link]): JsonNode =
   ## Every moment of both ways, in order of turn, rest once.
   ##   Negative way was walked outward from rest, so it is read back to front.
   result = newJArray()
-  for i in countdown(sw.neg.moments.high, 1):
-    result.add frame(sw.neg.moments[i], band, links)
-  for m in sw.pos.moments:
+  for i in countdown(sweep.negative.moments.high, 1):
+    result.add frame(sweep.negative.moments[i], band, links)
+  for m in sweep.positive.moments:
     result.add frame(m, band, links)
 
 func went(w: Walk): float =
@@ -119,22 +121,23 @@ func went(w: Walk): float =
 proc sweepJson(hold, word: string; band: Band): JsonNode =
   let
     links = linksOf(hold)
-    sw = swept(HUMAN, band, links, most = MOST, away = restsAway(hold))
+    sweep = swept(HUMAN, band, links, most = MOST, away = restsAway(hold))
   result = %*{
-    "restHolds": sw.restHolds,
-    "neg": round(went(sw.neg) * 1000.0) / 1000.0,
-    "pos": round(went(sw.pos) * 1000.0) / 1000.0,
-    "stoppedNeg": sw.neg.stopped,
-    "stoppedPos": sw.pos.stopped,
-    "whyNeg": why(sw.neg),
-    "why": why(sw.pos),
+    "restHolds": sweep.restHolds,
+    "neg": round(went(sweep.negative) * 1000.0) / 1000.0,
+    "pos": round(went(sweep.positive) * 1000.0) / 1000.0,
+    "stoppedNeg": sweep.negative.stopped,
+    "stoppedPos": sweep.positive.stopped,
+    "whyNeg": why(sweep.negative),
+    "why": why(sweep.positive),
     "foundNeg": false,
     "foundPos": false,
-    "apartNeg": round(sw.neg.apart * 1000.0) / 1000.0,
-    "apartPos": round(sw.pos.apart * 1000.0) / 1000.0,
-    "frames": (if sw.restHolds: frames(sw, band, links) else: newJArray())}
-  stderr.writeLine hold & " " & word & ": -" & $went(sw.neg) & " +" & $went(sw.pos) &
-    " (" & $(sw.neg.moments.len + sw.pos.moments.len) & " moments)"
+    "apartNeg": round(sweep.negative.apart * 1000.0) / 1000.0,
+    "apartPos": round(sweep.positive.apart * 1000.0) / 1000.0,
+    "frames": (if sweep.restHolds: frames(sweep, band, links) else: newJArray())}
+  stderr.writeLine hold & " " & word & ": -" & $went(sweep.negative) &
+    " +" & $went(sweep.positive) &
+    " (" & $(sweep.negative.moments.len + sweep.positive.moments.len) & " moments)"
 
 
 proc bridge(): JsonNode =
