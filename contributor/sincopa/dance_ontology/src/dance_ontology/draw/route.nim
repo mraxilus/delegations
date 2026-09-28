@@ -20,7 +20,7 @@ import std/[algorithm, math, options, sequtils, strformat, strutils]
 import ./[body, geometry, style, terms]
 
 
-const ROUTE_N* = 33   ## Points in every emitted reach, so frames can morph.
+const ROUTE_COUNT* = 33   ## Points in every emitted reach, so frames can morph.
 
 type
   Body* = tuple ## One dancer, as routing sees them.
@@ -46,7 +46,7 @@ const WAYS*: array[4, WayRound] = [
 const BREAK* = 11.0   ## Length of gap cut in under reach at crossing.
 
 const SAME_SPOT* = 0.1 ## Apart from which two meetings are one meeting.
-  ## Point is written to one decimal (`geometry.n`), so two meetings this
+  ## Point is written to one decimal (`geometry.numeral`), so two meetings this
   ##   close emit as one place and no picture can tell them apart.
   ## Duplicate this drops is exact: vertex of one reach lying on other is
   ##   met by both segments sharing it, at that vertex both times.
@@ -131,7 +131,7 @@ const
 func overArm*(turns: float): Arm =
   ## Get which of lead's arms wound pair keeps on top at first
   ## crossing, from sign of wind (rules 27, 29).
-  if turns >= 0: Arm.L else: Arm.R
+  if turns >= 0: Arm.Left else: Arm.Right
 
 
 func straightArm*(turns: float): Arm =
@@ -204,13 +204,13 @@ const
 
 const
   BEND_MIN = 12.0      ## Degrees turn must add up to before it is bend.
-    ## Under this is wander of curve drawn as `ROUTE_N` straight bits,
+    ## Under this is wander of curve drawn as `ROUTE_COUNT` straight bits,
     ##   which nobody reads as change of direction.
   BEND_COST* = 14.0     ## Line second bend must save to be worth making.
     ## About width of hand mark: turn reader has to follow should
     ##   buy at least as much as thing it is going round.
   SHARP_MAX* = 15.0     ## Degrees at one corner past which bend is break.
-    ## Curve sampled at `ROUTE_N` turns few degrees per corner however far
+    ## Curve sampled at `ROUTE_COUNT` turns few degrees per corner however far
     ##   round it goes, so anything this sharp is change of direction made
     ##   at one point -- which is what rule 24 rules out.
 
@@ -218,15 +218,15 @@ const
 
 #[ Taut Routes ]#
 
-func segHits*(p, q: Point; body: Body): bool =
+func segmentHits*(p, q: Point; body: Body): bool =
   ## Test whether this straight stretch passes inside body's outline.
   const steps = 32
   for i in 0 .. steps:
     let
       t = i / steps
       point: Point = (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t)
-      off = bearing(point.x - body.centre.x, point.y - body.centre.y) - body.facing
-    if distance(point, body.centre) < outlineR(off) - 0.05:
+      offset = bearing(point.x - body.centre.x, point.y - body.centre.y) - body.facing
+    if distance(point, body.centre) < outlineRadius(offset) - 0.05:
       return true
   false
 
@@ -239,34 +239,34 @@ func taut*(ends: Ends; way: WayRound; cap = 90): Option[tuple[points: seq[Point]
   ##     so reach hugs rim exactly as far as it has to, and where
   ##     straight way is already clear it never hugs at all.
   var
-    ta = bearing(ends.a.x - ends.body_a.centre.x, ends.a.y - ends.body_a.centre.y)
-    tb = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
+    bearing_a = bearing(ends.a.x - ends.body_a.centre.x, ends.a.y - ends.body_a.centre.y)
+    bearing_b = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
     arc_a = @[ends.a]
     arc_b = @[ends.b]
   for _ in 0 ..< cap:
     let
-      pa = arc_a[^1]
-      pb = arc_b[^1]
-      ha = segHits(pa, pb, ends.body_a)
-      hb = segHits(pa, pb, ends.body_b)
-    if not ha and not hb:
+      free_a = arc_a[^1]
+      free_b = arc_b[^1]
+      hits_a = segmentHits(free_a, free_b, ends.body_a)
+      hits_b = segmentHits(free_a, free_b, ends.body_b)
+    if not hits_a and not hits_b:
       let
-        step = degToRad(RIM_STEP) * BODY_R
-        length = step * float(arc_a.len + arc_b.len - 2) + distance(pa, pb)
+        step = degToRad(RIM_STEP) * BODY_RADIUS
+        length = step * float(arc_a.len + arc_b.len - 2) + distance(free_a, free_b)
       var points = arc_a
       for i in countdown(arc_b.high, 0):
         points.add arc_b[i]
       return some (points, length)
-    if ha:
-      ta += way.a * RIM_STEP
-      arc_a.add outlinePoint(ends.body_a.centre, ends.body_a.facing, ta)
-    if hb:
-      tb += way.b * RIM_STEP
-      arc_b.add outlinePoint(ends.body_b.centre, ends.body_b.facing, tb)
+    if hits_a:
+      bearing_a += way.a * RIM_STEP
+      arc_a.add outlinePoint(ends.body_a.centre, ends.body_a.facing, bearing_a)
+    if hits_b:
+      bearing_b += way.b * RIM_STEP
+      arc_b.add outlinePoint(ends.body_b.centre, ends.body_b.facing, bearing_b)
   none(tuple[points: seq[Point], length: float])
 
 
-func polylineLen*(points: seq[Point]): float =
+func polylineLength*(points: seq[Point]): float =
   ## Get drawn length of run.
   ##   `result` is given nought before it is added to, which reads redundant
   ##     and is not: scene table is `const`, so this runs in compiler's
@@ -281,17 +281,19 @@ func polylineLen*(points: seq[Point]): float =
 func trimEnd(points: seq[Point]; centre: Point; reach: float): seq[Point] =
   ## Cut path where it leaves hand's own mark, so ink starts on
   ## mark's border rather than under its middle.
-  for i, q in points:
-    let d = distance(q, centre)
-    if d >= reach:
+  for i, point in points:
+    let curr_distance = distance(point, centre)
+    if curr_distance >= reach:
       if i == 0:
         return points
       let
         prev = points[i - 1]
-        pd = distance(prev, centre)
-        t = if d > pd: (reach - pd) / (d - pd) else: 0.0
-        crossing: Point = (prev.x + (q.x - prev.x) * t,
-                           prev.y + (q.y - prev.y) * t)
+        prev_distance = distance(prev, centre)
+        t = if curr_distance > prev_distance:
+              (reach - prev_distance) / (curr_distance - prev_distance)
+            else: 0.0
+        crossing: Point = (prev.x + (point.x - prev.x) * t,
+                           prev.y + (point.y - prev.y) * t)
       return @[crossing] & points[i .. ^1]
   @[points[^1]]
 
@@ -305,19 +307,19 @@ func reversed(points: seq[Point]): seq[Point] =
 func resample*(points: seq[Point]; count: int): seq[Point] =
   ## Say same path as `count` evenly spaced points -- one shape for every
   ## frame of animation, so route can morph instead of jumping.
-  var cum = @[0.0]
+  var cumulative = @[0.0]
   for i in 0 ..< points.high:
-    cum.add cum[^1] + distance(points[i], points[i + 1])
-  let total = if cum[^1] > 0: cum[^1] else: 1.0
+    cumulative.add cumulative[^1] + distance(points[i], points[i + 1])
+  let total = if cumulative[^1] > 0: cumulative[^1] else: 1.0
   var j = 0
   for k in 0 ..< count:
     let target = total * float(k) / float(count - 1)
-    while j < points.len - 2 and cum[j + 1] < target:
+    while j < points.len - 2 and cumulative[j + 1] < target:
       inc j
     let
-      gap = cum[j + 1] - cum[j]
+      gap = cumulative[j + 1] - cumulative[j]
       span = if gap > 0: gap else: 1.0
-      t = (target - cum[j]) / span
+      t = (target - cumulative[j]) / span
       p = points[j]
       q = points[j + 1]
     result.add (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t)
@@ -334,11 +336,11 @@ func frontOf*(hand: Point; body: Body): Option[float] =
   ##   Nothing where hand is dead ahead or dead behind and neither way
   ##     is more frontward than other -- typed absence, not zero
   ##     caller must know to test for.
-  let off = wrap180(
+  let offset = wrap180(
     bearing(hand.x - body.centre.x, hand.y - body.centre.y) - body.facing)
-  if abs(off) < 1e-9 or abs(abs(off) - 180) < 1e-9:
+  if abs(offset) < 1e-9 or abs(abs(offset) - 180) < 1e-9:
     return none(float)
-  some(if off > 0: -1.0 else: 1.0)
+  some(if offset > 0: -1.0 else: 1.0)
 
 
 func wayFor*(ends: Ends; level: Option[Level]; way: Option[Way]):
@@ -366,26 +368,26 @@ func wrapArc*(ends: Ends; way: WayRound): Option[tuple[a, b: float]] =
   ##     it, because wrap that does not wrap is not wrap (rule 7) and
   ##     only way to know is to measure what was drawn.
   var
-    ta = bearing(ends.a.x - ends.body_a.centre.x, ends.a.y - ends.body_a.centre.y)
-    tb = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
-    pa = ends.a
-    pb = ends.b
-    na = 0
-    nb = 0
+    bearing_a = bearing(ends.a.x - ends.body_a.centre.x, ends.a.y - ends.body_a.centre.y)
+    bearing_b = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
+    free_a = ends.a
+    free_b = ends.b
+    steps_a = 0
+    steps_b = 0
   for _ in 0 ..< 240:
     let
-      ha = segHits(pa, pb, ends.body_a)
-      hb = segHits(pa, pb, ends.body_b)
-    if not ha and not hb:
-      return some (float(na) * RIM_STEP, float(nb) * RIM_STEP)
-    if ha:
-      ta += way.a * RIM_STEP
-      pa = outlinePoint(ends.body_a.centre, ends.body_a.facing, ta)
-      inc na
-    if hb:
-      tb += way.b * RIM_STEP
-      pb = outlinePoint(ends.body_b.centre, ends.body_b.facing, tb)
-      inc nb
+      hits_a = segmentHits(free_a, free_b, ends.body_a)
+      hits_b = segmentHits(free_a, free_b, ends.body_b)
+    if not hits_a and not hits_b:
+      return some (float(steps_a) * RIM_STEP, float(steps_b) * RIM_STEP)
+    if hits_a:
+      bearing_a += way.a * RIM_STEP
+      free_a = outlinePoint(ends.body_a.centre, ends.body_a.facing, bearing_a)
+      inc steps_a
+    if hits_b:
+      bearing_b += way.b * RIM_STEP
+      free_b = outlinePoint(ends.body_b.centre, ends.body_b.facing, bearing_b)
+      inc steps_b
   none(tuple[a, b: float])
 
 
@@ -406,10 +408,10 @@ func straightReach*(a, b: Point): seq[Point] =
   ##     across whatever it crosses (rule 1's one exception).
   ##   Trimmed and resampled like any other reach, so it has same shape
   ##     and animation can morph between it and wrapping one.
-  let reach = min(HAND_R + CAP, distance(a, b) / 3)
+  let reach = min(HAND_RADIUS + CAP, distance(a, b) / 3)
   var points = trimEnd(@[a, b], a, reach)
   points = reversed(trimEnd(reversed(points), b, reach))
-  resample(points, ROUTE_N)
+  resample(points, ROUTE_COUNT)
 
 
 
@@ -423,13 +425,13 @@ func alongAt*(points: seq[Point]; q: Point): float =
   ##     reach does (rule 31).
   var
     along = 0.0
-    nearest = (d: Inf, at: 0.0)
-  for i, p in points:
-    let d = distance(p, q)
-    if d < nearest.d:
+    nearest = (distance: Inf, at: 0.0)
+  for i, point in points:
+    let d = distance(point, q)
+    if d < nearest.distance:
       nearest = (d, along)
     if i < points.high:
-      along += distance(p, points[i + 1])
+      along += distance(point, points[i + 1])
   nearest.at
 
 
@@ -496,7 +498,7 @@ func bendsIn*(points: seq[Point]): int =
 func sharpestIn*(points: seq[Point]): float =
   ## Measure worst break in drawn line: most it turns at any one
   ## of its corners (rule 24).
-  ##   Curve drawn as `ROUTE_N` straight bits turns slightly at every one
+  ##   Curve drawn as `ROUTE_COUNT` straight bits turns slightly at every one
   ##     of them; corner turns much at one.  So sharpest corner, and
   ##     not total turning, is what tells break from bend.
   for i in 1 ..< points.high:
@@ -508,10 +510,10 @@ func sharpestIn*(points: seq[Point]): float =
     result = max(result, abs(radToDeg(arctan2(cross, dot))))
 
 
-func crestOf*(points: seq[Point]): tuple[at, off: float] =
+func crestOf*(points: seq[Point]): tuple[at, offset: float] =
   ## Say where drawn reach stands furthest off its own chord, and how far
   ## (rule 24).
-  ##   `at` is fraction of chord that happens at, `off` is how far off it
+  ##   `at` is fraction of chord that happens at, `offset` is how far off it
   ##     reach has got there.
   ##   Sharpest corner says how hard reach turns at one place.  This says
   ##     where turning has put it, which is shape reader sees: same offset
@@ -526,20 +528,20 @@ func crestOf*(points: seq[Point]): tuple[at, off: float] =
   if span < 1e-9:
     return
   let along = ((b.x - a.x) / span, (b.y - a.y) / span)
-  for p in points:
+  for point in points:
     let
-      dx = p.x - a.x
-      dy = p.y - a.y
-      off = abs(dy * along[0] - dx * along[1])
-    if off > result.off:
-      result = ((dx * along[0] + dy * along[1]) / span, off)
+      delta_x = point.x - a.x
+      delta_y = point.y - a.y
+      offset = abs(delta_y * along[0] - delta_x * along[1])
+    if offset > result.offset:
+      result = ((delta_x * along[0] + delta_y * along[1]) / span, offset)
 
 
 func readingCost*(points: seq[Point]): float =
   ## Measure what drawn reach asks of reader: its length, and its turns.
   ##   Turn is worth `BEND_COST` of line: taking one has to save at least
   ##     that much to be worth following (rule 23).
-  polylineLen(points) + BEND_COST * float(bendsIn(points))
+  polylineLength(points) + BEND_COST * float(bendsIn(points))
 
 
 func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
@@ -564,7 +566,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
   ##     way round each mark it settles: `0` starts it on straight line,
   ##     `1` and `-1` start it bowed clear over everything on one side or
   ##     other.  `clearedReach` is what chooses between them.
-  ##   Reach is drawn as `ROUTE_N` points joined by straight segments, and
+  ##   Reach is drawn as `ROUTE_COUNT` points joined by straight segments, and
   ##     segment is chord across whatever band is bending round --
   ##     which falls inside curve it stands on.  So each mark is asked
   ##     for slightly more than it needs, by exactly that depth, and
@@ -580,10 +582,10 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     ## One way past marks, cut back to hands' own edges and sampled
     ## as every reach is, so any two of them can be compared -- and so
     ## animation can morph between one and wrapping reach.
-    let reach = min(HAND_R + CAP, span / 3)
+    let reach = min(HAND_RADIUS + CAP, span / 3)
     var cut = trimEnd(points, a, reach)
     cut = reversed(trimEnd(reversed(cut), b, reach))
-    resample(cut, ROUTE_N)
+    resample(cut, ROUTE_COUNT)
 
   func placed(x, y: float): Point =
     ## Put point back where it belongs: so far along chord, so far off
@@ -614,11 +616,11 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
       for mark in asked:
         let
           to_mark = (mark.centre.x - a.x, mark.centre.y - a.y)
-          xc = to_mark[0] * along[0] + to_mark[1] * along[1]
-          yc = side * (to_mark[0] * across[0] + to_mark[1] * across[1])
-          reach = mark.clear * mark.clear - (x - xc) * (x - xc)
+          centre_x = to_mark[0] * along[0] + to_mark[1] * along[1]
+          centre_y = side * (to_mark[0] * across[0] + to_mark[1] * across[1])
+          reach = mark.clear * mark.clear - (x - centre_x) * (x - centre_x)
         if reach > 0:
-          pushed = max(pushed, yc + sqrt(reach))
+          pushed = max(pushed, centre_y + sqrt(reach))
       sky.add pushed
     sky.add 0.0                        # and at hand it ends on
     # Upper hull of sky-line, walked left to right: point stays
@@ -628,10 +630,10 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
       let x = span * float(i) / float(BAND_STEPS)
       while hull.len >= 2:
         let
-          (p, q) = (hull[^2], hull[^1])
-          (px, qx) = (span * float(p) / float(BAND_STEPS),
-                      span * float(q) / float(BAND_STEPS))
-        if (qx - px) * (sky[i] - sky[p]) - (sky[q] - sky[p]) * (x - px) <= 0:
+          (prev, last) = (hull[^2], hull[^1])
+          (prev_x, last_x) = (span * float(prev) / float(BAND_STEPS),
+                      span * float(last) / float(BAND_STEPS))
+        if (last_x - prev_x) * (sky[i] - sky[prev]) - (sky[last] - sky[prev]) * (x - prev_x) <= 0:
           break
         discard hull.pop()
       hull.add i
@@ -663,9 +665,9 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     # Bezier sags inside its control point, so it is swelled until it
     # really is clear of everything, and hull is kept for case --
     # mark sitting almost on hand -- where no swelling does it.
-    for try_no in 0 .. BOW_TRIES:
+    for try_number in 0 .. BOW_TRIES:
       let
-        curve = curveWith(BOW_SWELL + BOW_MORE * float(try_no))
+        curve = curveWith(BOW_SWELL + BOW_MORE * float(try_number))
         clear = asked.allIt(nearestOn(curve, it.centre) >= it.clear)
       if clear:
         return curve
@@ -678,7 +680,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
       band.add placed(span * float(step) / float(BAND_STEPS), 0.0)
     # One loop for each axis of data: pass, point of band, shove, mark.
     # Split would hide its shape.
-    for pass_no in 1 .. BAND_PASSES:
+    for pass_number in 1 .. BAND_PASSES:
       for i in 1 ..< band.high:
         let
           pull: Point = ((band[i - 1].x + band[i + 1].x) / 2,
@@ -717,7 +719,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
 
   func sagged(asked: seq[Mark]; length: float): seq[Mark] =
     ## Same marks, each grown by how deep drawn chord across it cuts.
-    let step = length / float(ROUTE_N - 1)
+    let step = length / float(ROUTE_COUNT - 1)
     for mark in asked:
       result.add (mark.centre, mark.clear + step * step / (8 * mark.clear))
 
@@ -730,7 +732,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     let grown = sagged(asked, length)
     result = asDrawn(
       if side == 0: drawnOver(grown) else: bowedPast(grown, side))
-    length = polylineLen(result)
+    length = polylineLength(result)
     var lost = 0.0
     for i, mark in marks:
       let short = mark.clear - nearestOn(result, mark.centre)
@@ -749,7 +751,7 @@ const SIDES* = [0.0, 1.0, -1.0]
 #[ Winding And Crossings ]#
 
 func wound*(a, b: Point; across: Point; phi_a, sweep: float;
-    radius = BODY_R; share = 1.0): seq[Point] =
+    radius = BODY_RADIUS; share = 1.0): seq[Point] =
   ## Route one reach of wound pair: shadow wound arm casts from
   ## above (rules 27 and 28).
   ##   Two held hands sit on their own bodies' rims, one body's radius off
@@ -775,8 +777,8 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
   var points: seq[Point]
   let
     swing = radius * share
-    off_a = swing * sin(phi_a)
-    off_b = swing * sin(phi_a + sweep)
+    offset_a = swing * sin(phi_a)
+    offset_b = swing * sin(phi_a + sweep)
     # Wound strands pull in on each other where they are wound, and are
     # held apart only where they are held: at hands.
     turns = sweep / (2 * PI)
@@ -789,13 +791,13 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
       # Chord's own offset taken out and swung one put in, so
       # two ends are hands however far middle has gone round.
       swung = drawn_in * sin(phi_a + sweep * t) -
-              (off_a + (off_b - off_a) * t)
+              (offset_a + (offset_b - offset_a) * t)
     points.add (a.x + (b.x - a.x) * t + across.x * swung,
              a.y + (b.y - a.y) * t + across.y * swung)
-  let reach = min(HAND_R + CAP, distance(a, b) / 3)
+  let reach = min(HAND_RADIUS + CAP, distance(a, b) / 3)
   var cut = trimEnd(points, a, reach)
   cut = reversed(trimEnd(reversed(cut), b, reach))
-  resample(cut, ROUTE_N)
+  resample(cut, ROUTE_COUNT)
 
 
 func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
@@ -871,7 +873,7 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
 
 
 const
-  DAYLIGHT = LINK_W * 2 / 5 ## Space left between cut end and what it
+  DAYLIGHT = LINK_WIDTH * 2 / 5 ## Space left between cut end and what it
                             ## passes under.
     ## Two fifths of stroke either side.  At none, cut ends sit against
     ##   thing they pass beneath and break reads as touch rather than as
@@ -887,14 +889,14 @@ const
 
 func headingAt(points: seq[Point]; at: Point): float =
   ## Say which way reach is going where it passes nearest this point.
-  var near = (d: Inf, i: 0)
-  for i, q in points:
-    let d = distance(q, at)
-    if d < near.d:
+  var near = (distance: Inf, index: 0)
+  for i, point in points:
+    let d = distance(point, at)
+    if d < near.distance:
       near = (d, i)
   let
-    a = points[max(near.i - 1, 0)]
-    b = points[min(near.i + 1, points.high)]
+    a = points[max(near.index - 1, 0)]
+    b = points[min(near.index + 1, points.high)]
   arctan2(b.y - a.y, b.x - a.x)
 
 
@@ -913,7 +915,7 @@ func hidesAt*(under, over: seq[Point]; at: Point): float =
     between = 2 * PI - between
   if between > PI / 2:
     between = PI - between
-  LINK_W / max(sin(between), GRAZING) + LINK_W + 2 * DAYLIGHT
+  LINK_WIDTH / max(sin(between), GRAZING) + LINK_WIDTH + 2 * DAYLIGHT
 
 
 func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
@@ -943,7 +945,7 @@ func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
   let
     room = min(at, span - at) - SEEN_RUN
     half = min(wide / 2, room)
-  if 2 * half < LINK_W:
+  if 2 * half < LINK_WIDTH:
     return (at, at)
   (at - half, at + half)
 
@@ -996,9 +998,9 @@ func runsOutside(points: seq[Point]; along: seq[float];
     if stretch.to_there <= stretch.from_here:
       continue
     var run = @[atAlong(points, along, stretch.from_here)]
-    for i, q in points:
+    for i, point in points:
       if along[i] > stretch.from_here and along[i] < stretch.to_there:
-        run.add q
+        run.add point
     run.add atAlong(points, along, stretch.to_there)
     if run.len > 1:
       result.add run
@@ -1013,10 +1015,10 @@ func cutGapsAt*(points, over: seq[Point]; centres: seq[Point]): seq[Run] =
   let along = alongOf(points)
   var gaps: seq[tuple[opens, shuts: float]]
   for centre in centres:
-    var nearest = (d: Inf, at: 0.0)
-    for i, p in points:
-      let d = distance(p, centre)
-      if d < nearest.d:
+    var nearest = (distance: Inf, at: 0.0)
+    for i, point in points:
+      let d = distance(point, centre)
+      if d < nearest.distance:
         nearest = (d, along[i])
     gaps.add gapFor(nearest.at, along[^1], hidesAt(points, over, centre))
   runsOutside(points, along, gaps)
@@ -1032,16 +1034,16 @@ func routed*(ends: Ends; way = none(WayRound)):
   ##     and it takes that one instead, whatever length -- which is how
   ##     whole move keeps to one side of body from first frame to last.
   var best = none(tuple[points: seq[Point], length: float, way: WayRound])
-  for combo in (if way.isSome: @[way.get] else: @WAYS):
-    let pulled = taut(ends, combo)
+  for combination in (if way.isSome: @[way.get] else: @WAYS):
+    let pulled = taut(ends, combination)
     if pulled.isSome and (best.isNone or pulled.get.length < best.get.length):
-      best = some (pulled.get.points, pulled.get.length, combo)
+      best = some (pulled.get.points, pulled.get.length, combination)
   if best.isNone:
     return none(tuple[points: seq[Point], way: WayRound])
-  let reach = min(HAND_R + CAP, polylineLen(best.get.points) / 3)
+  let reach = min(HAND_RADIUS + CAP, polylineLength(best.get.points) / 3)
   var points = trimEnd(best.get.points, ends.a, reach)
   points = reversed(trimEnd(reversed(points), ends.b, reach))
-  some (resample(points, ROUTE_N), best.get.way)
+  some (resample(points, ROUTE_COUNT), best.get.way)
 
 
 func oneWayRound*(frames: seq[Ends]): WayRound =
@@ -1054,38 +1056,38 @@ func oneWayRound*(frames: seq[Ends]): WayRound =
   ##   It has to be way every frame can actually be routed, so ones
   ##     that fail anywhere are dropped and shortest of rest wins.
   var best = none(tuple[way: WayRound, total: float])
-  for combo in WAYS:
+  for combination in WAYS:
     var
       total = 0.0
       served = true
     for ends in frames:
-      let pulled = taut(ends, combo)
+      let pulled = taut(ends, combination)
       if pulled.isNone:
         served = false
         break
-      total += polylineLen(pulled.get.points)
+      total += polylineLength(pulled.get.points)
     if served and (best.isNone or total < best.get.total):
-      best = some (combo, total)
+      best = some (combination, total)
   doAssert best.isSome,
     &"No way round serves every frame of this move; got `{frames.len}` frames."
   best.get.way
 
 
-func splitAt*(runs: seq[Run]; mid: Point): tuple[near, far: seq[Run]] =
-  ## Cut reach in two at point nearest `mid`, so it can be drawn in two
+func splitAt*(runs: seq[Run]; midpoint: Point): tuple[near, far: seq[Run]] =
+  ## Cut reach in two at point nearest `midpoint`, so it can be drawn in two
   ## shades that meet there.
   ##   Two halves share that point, so join is join and not gap;
   ##     and any break over-and-under crossing has already cut stays cut,
   ##     because runs are split rather than rebuilt.
-  var best = (d: Inf, i: 0, j: 0)
+  var best = (distance: Inf, run_index: 0, point_index: 0)
   for i, run in runs:
-    for j, q in run:
-      let d = distance(q, mid)
-      if d < best.d:
+    for j, point in run:
+      let d = distance(point, midpoint)
+      if d < best.distance:
         best = (d, i, j)
   var
-    near = runs[0 ..< best.i] & @[runs[best.i][0 .. best.j]]
-    far = @[runs[best.i][best.j .. ^1]] & runs[best.i + 1 .. ^1]
+    near = runs[0 ..< best.run_index] & @[runs[best.run_index][0 .. best.point_index]]
+    far = @[runs[best.run_index][best.point_index .. ^1]] & runs[best.run_index + 1 .. ^1]
   for run in near:
     if run.len > 1:
       result.near.add run
@@ -1097,7 +1099,7 @@ func splitAt*(runs: seq[Run]; mid: Point): tuple[near, far: seq[Run]] =
 func smoothed*(run: Run): string =
   ## Say run of points as one smooth curve instead of chain of straight
   ## bits (rule 35).
-  ##   Reach is stored as `ROUTE_N` points because that is what lets it
+  ##   Reach is stored as `ROUTE_COUNT` points because that is what lets it
   ##     morph, and drawn between them it is polygon.  Where it hardly
   ##     turns nobody can tell; where it turns hard -- swan's lobes, which
   ##     double back inside handful of points -- polygon is exactly
@@ -1109,12 +1111,12 @@ func smoothed*(run: Run): string =
   ##     moves by fraction of its own width.
   ##   Command count follows point count, which is fixed, so
   ##     smoothed reach morphs exactly as straight-sided one did.
-  result = "M" & xy(run[0])
+  result = "M" & coordinates(run[0])
   for i in 1 ..< run.high:
-    let mid: Point = ((run[i].x + run[i + 1].x) / 2,
+    let midpoint: Point = ((run[i].x + run[i + 1].x) / 2,
                       (run[i].y + run[i + 1].y) / 2)
-    result.add " Q" & xy(run[i]) & " " & xy(mid)
-  result.add " L" & xy(run[^1])
+    result.add " Q" & coordinates(run[i]) & " " & coordinates(midpoint)
+  result.add " L" & coordinates(run[^1])
 
 
 func reachMarkup*(runs: seq[Run]; ink: string): string =
@@ -1123,9 +1125,9 @@ func reachMarkup*(runs: seq[Run]; ink: string): string =
   for run in runs:
     if run.len > 1:
       pieces.add smoothed(run)
-  let d = pieces.join(" ")
-  &"""<path d="{d}" fill="none" stroke="{ink}"""" &
-    &""" stroke-width="{LINK_W}" stroke-linecap="round"""" &
+  let path_data = pieces.join(" ")
+  &"""<path d="{path_data}" fill="none" stroke="{ink}"""" &
+    &""" stroke-width="{LINK_WIDTH}" stroke-linecap="round"""" &
     """ stroke-linejoin="round"/>"""
 
 

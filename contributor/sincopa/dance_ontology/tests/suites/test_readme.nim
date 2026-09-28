@@ -55,10 +55,11 @@ suite "this project's own Markdown":
         if found.len > SENTENCES:
           echo "    ", document, ": paragraph of ", found.len, " sentences, from: ", found[0]
         check found.len <= SENTENCES
-        for s in found:
-          if s.splitWhitespace.len > WORDS:
-            echo "    ", document, ": sentence of ", s.splitWhitespace.len, " words: ", s
-          check s.splitWhitespace.len <= WORDS
+        for sentence in found:
+          if sentence.splitWhitespace.len > WORDS:
+            echo "    ", document, ": sentence of ", sentence.splitWhitespace.len,
+              " words: ", sentence
+          check sentence.splitWhitespace.len <= WORDS
 
   test "design README quotes every rule of ledger once, in order, word for word":
     ## Failure names rule and both wordings, so it says which copy moved.

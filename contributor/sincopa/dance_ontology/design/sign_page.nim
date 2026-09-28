@@ -273,14 +273,14 @@ const BODY = """
 """
 
 
-func render*(P: Parts): string =
+func render*(parts: Parts): string =
   ## Lay turn-sign page out around given figures.
   var fills = @[
     ("sw_none", swatch(Swatch.Unsaid)), ("sw_low", swatch(Swatch.Low)),
     ("sw_high", swatch(Swatch.High)), ("sw_above", swatch(Swatch.Above)),
     # Comparison plate re-places two of packed quarters, and each
     # marker can be filled once, so seconds ride under their own names.
-    ("q_lead_1_again", P["q_lead_1"]), ("q_lead_3_again", P["q_lead_3"]),
+    ("q_lead_1_again", parts["q_lead_1"]), ("q_lead_3_again", parts["q_lead_3"]),
   ]
   for key in ["q_lead_1", "q_lead_2", "q_lead_3", "q_lead_4",
               "q_foll_1", "q_foll_2", "q_foll_3", "q_foll_4",
@@ -296,5 +296,5 @@ func render*(P: Parts): string =
               "any_loop", "any_loop_foll", "any_loop_small",
               "o_axis", "o_orbit", "o_orbit_acw", "o_axis_small",
               "o_orbit_small", "p_split", "p_split_small"]:
-    fills.add (key, P[key])
+    fills.add (key, parts[key])
   document(TITLE, BODY.filled(fills))

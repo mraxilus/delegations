@@ -401,7 +401,7 @@ const RULES* = [
   ##   Rule 35 finds what was actually wrong with both swans, and it was
   ##     never width: *`"they both have the same issue ... it looks`
   ##     `jagged/sharp."`*
-  ##     Reach is held as `ROUTE_N` points because that is what lets it
+  ##     Reach is held as `ROUTE_COUNT` points because that is what lets it
   ##       morph, and it was **drawn** between them with straight bits.
   ##       Everywhere else on every page that is invisible -- rule 24 keeps
   ##       settled reach turning few degrees per corner -- but swan's

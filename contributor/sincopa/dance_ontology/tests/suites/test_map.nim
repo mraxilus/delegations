@@ -278,9 +278,9 @@ suite "the drawing":
     check renderSpokes(FRAMES[0]).count("class=\"name-plate\"") ==
       spokesOf(FRAMES[0]).len + 1
     for here in FRAMES:
-      let (x, y, w, h) = nameBox(here, centreOf(here)[0], centreOf(here)[1], 74)
+      let (x, y, width, height) = nameBox(here, centreOf(here)[0], centreOf(here)[1], 74)
       check picture.contains("class=\"name-plate\" x=\"" & $x & "\" y=\"" & $y &
-        "\" width=\"" & $w & "\" height=\"" & $h & "\"")
+        "\" width=\"" & $width & "\" height=\"" & $height & "\"")
 
   test "the ink of a line is the acting arm, in the lead's own shade":
     # Once line is unlit two arms are told apart by colour alone, so every

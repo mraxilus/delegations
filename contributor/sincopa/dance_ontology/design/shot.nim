@@ -26,12 +26,12 @@ import std/[asyncjs, jsffi]
 const
   PLAYWRIGHT = "playwright"
     ## Module node resolves for itself, where environment names none.
-  ENV_PLAYWRIGHT = "DANCE_PLAYWRIGHT"
+  VARIABLE_PLAYWRIGHT = "DANCE_PLAYWRIGHT"
     ## Names playwright outright, for install node cannot resolve -- global
     ##   one, which is where package manager puts it.
-  ENV_CHROMIUM = "DANCE_CHROMIUM"
+  VARIABLE_CHROMIUM = "DANCE_CHROMIUM"
     ## Names browser outright, for chromium other than playwright's own.
-  ENV_BROWSERS = "PLAYWRIGHT_BROWSERS_PATH"
+  VARIABLE_BROWSERS = "PLAYWRIGHT_BROWSERS_PATH"
     ## Playwright's own store, which usually holds `chromium` beside its
     ##   numbered builds.  Where it does not, playwright resolves its own
     ##   from that same variable, so nothing here knows its layout.
@@ -47,13 +47,13 @@ var PROCESS_NODE {.importjs: "process", nodecl.}: JsObject
 proc resolve(path: cstring): cstring {.importjs: "require('path').resolve(#)".}
   ## Make path absolute, as file url needs.
 
-proc jsString(s: JsObject): cstring {.importjs: "String(#)".}
+proc jsString(value: JsObject): cstring {.importjs: "String(#)".}
   ## Read javascript value as string it already is.
 
 proc gotoUrl(page: JsObject; url: cstring): JsObject {.importjs: "#.goto(#)".}
   ## Navigate page; `goto` is reserved word that bridge would mangle.
 
-proc envNamed(name: cstring): cstring {.importjs: "(process.env[#] || '')".}
+proc variableNamed(name: cstring): cstring {.importjs: "(process.env[#] || '')".}
   ## Read environment variable, empty where it is unset.
 
 proc isThere(path: cstring): bool {.importjs: "require('fs').existsSync(#)".}
@@ -72,7 +72,7 @@ proc stop(code: int) {.importjs: "process.exit(#)".}
 
 proc playwrightFrom(): cstring =
   ## Get where playwright is loaded from.
-  let named = envNamed(ENV_PLAYWRIGHT)
+  let named = variableNamed(VARIABLE_PLAYWRIGHT)
   if named.len > 0: named else: cstring(PLAYWRIGHT)
 
 
@@ -81,9 +81,9 @@ proc chromiumFrom(): cstring =
   ##   Environment names one outright; failing that, playwright's own store
   ##     usually holds `chromium` beside its numbered builds.  Absent both,
   ##     playwright is left to find what it installed.
-  let named = envNamed(ENV_CHROMIUM)
+  let named = variableNamed(VARIABLE_CHROMIUM)
   if named.len > 0: return named
-  let store = envNamed(ENV_BROWSERS)
+  let store = variableNamed(VARIABLE_BROWSERS)
   if store.len == 0: return cstring("")
   let beside = joined(store, cstring("chromium"))
   if isThere(beside): beside else: cstring("")
@@ -96,7 +96,7 @@ proc playwright(): JsObject =
     result = require(at)
   except:
     report(cstring("Cannot load playwright from `" & $at & "`; install what " &
-      "`nim r tools/build.nim shot` names, or point `" & ENV_PLAYWRIGHT &
+      "`nim r tools/build.nim shot` names, or point `" & VARIABLE_PLAYWRIGHT &
       "` at it."))
     stop(1)
 

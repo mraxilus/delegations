@@ -70,12 +70,12 @@ func rest*(wind: Winds = default(Winds)): Pose =
   )
 
 
-func movedPose*(pose: Pose; mid: Point; spin, amount: float): Pose =
-  ## Turn whole pose about `mid`, then pull it `amount` of way home.
-  func moved(p: Point): Point =
-    ## Turn point about `mid` by `spin`, then pull it `amount` of way home.
-    let q = turn(p, mid, spin)
-    (q.x - amount * mid.x, q.y - amount * mid.y)
+func movedPose*(pose: Pose; middle: Point; spin, amount: float): Pose =
+  ## Turn whole pose about `middle`, then pull it `amount` of way home.
+  func moved(point: Point): Point =
+    ## Turn point about `middle` by `spin`, then pull it `amount` of way home.
+    let rotated = turn(point, middle, spin)
+    (rotated.x - amount * middle.x, rotated.y - amount * middle.y)
 
   result = pose
   for who in Dancer:
@@ -135,10 +135,10 @@ func orbit*(pose: Pose; who: Dancer; degrees: float; locked = true): Pose =
 
 func couple*(pose: Pose; degrees: float): Pose =
   ## Turn both round each other: pair rotates rigidly about midpoint.
-  let mid = ((pose.place[Dancer.Lead].x + pose.place[Dancer.Follow].x) / 2,
+  let midpoint = ((pose.place[Dancer.Lead].x + pose.place[Dancer.Follow].x) / 2,
              (pose.place[Dancer.Lead].y + pose.place[Dancer.Follow].y) / 2)
-  result = movedPose(pose, mid, degrees, 0.0)
-  result.ring = some (mid, distance(pose.place[Dancer.Lead], mid))
+  result = movedPose(pose, midpoint, degrees, 0.0)
+  result.ring = some (midpoint, distance(pose.place[Dancer.Lead], midpoint))
 
 
 func relative*(pose: Pose): tuple[axis, facing: float] =
@@ -309,8 +309,8 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
       break
     for step in 1 .. steps:
       let one = legs(standing, by)
-      for i, p in one.poses:
-        result.poses.add p
+      for i, pose in one.poses:
+        result.poses.add pose
         result.times.add (
           if result.poses.len == 1: 0.0
           elif i == 0: ARRIVAL_HOLD

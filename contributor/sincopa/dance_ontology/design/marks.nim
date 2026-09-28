@@ -76,10 +76,10 @@ const PAGES* = [
 ] ## Each page: its file, its figures, its checks, its layout.
 
 
-proc buildPage*(i: int; directory_out: string) =
-  ## Check page `i` of `PAGES`, then write it into `directory_out`.
+proc buildPage*(page_index: int; directory_out: string) =
+  ## Check page `page_index` of `PAGES`, then write it into `directory_out`.
   let
-    page = PAGES[i]
+    page = PAGES[page_index]
     built = page.parts_of()
   echo &"{page.name}: {built.len} pieces"
   page.check(built)

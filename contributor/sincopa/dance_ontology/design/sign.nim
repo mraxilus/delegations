@@ -24,10 +24,10 @@ export About
 
 
 const
-  TAN* = 0.25                    ## Sign's lean, across per down.
-  THETA = arctan(TAN)
-  LEAN_SIN* = sin(THETA)         ## Lean, as sine every corner uses.
-  LEAN_COS* = cos(THETA)         ## And its cosine: leaning height's drop.
+  TANGENT* = 0.25                    ## Sign's lean, across per down.
+  THETA = arctan(TANGENT)
+  LEAN_SINE* = sin(THETA)         ## Lean, as sine every corner uses.
+  LEAN_COSINE* = cos(THETA)         ## And its cosine: leaning height's drop.
   PAD* = 5.0                     ## Margin sign keeps inside its viewBox.
 
 const
@@ -48,7 +48,7 @@ type
     Ellipsis,          ## Row that counts nothing: count runs on across.
     Repeat             ## Likewise, said as music's repeat colon.
   Lean* {.pure.} = enum ## Which way sign leans: way turn goes.
-    Cw, Acw
+    Clockwise, Anticlockwise
   Ending* {.pure.} = enum ## How sign for unfixed amount ends.
     Open, Spill, EllipsisEnd, RepeatEnd, Loop
   SignArm* = tuple ## One column of sign: whether drawn, and its level.
@@ -63,31 +63,31 @@ const BOTH_UNSAID: SignArms = [(true, none(Level)), (true, none(Level))]
 func dashes*(perimeter: float; count: int; duty = 0.58): string =
   ## Get dash pattern that closes on itself, so no stub shows at join.
   let period = perimeter / float(count)
-  &"{n(period * duty)} {n(period * (1 - duty))}"
+  &"{numeral(period * duty)} {numeral(period * (1 - duty))}"
 
 
 func scaled*(points: seq[Point]; factor: float): seq[Point] =
   ## Pull polygon in towards its own centre.
-  var cx, cy = 0.0
-  for p in points:
-    cx += p.x
-    cy += p.y
-  cx = cx / float(points.len)
-  cy = cy / float(points.len)
-  for p in points:
-    result.add (cx + (p.x - cx) * factor, cy + (p.y - cy) * factor)
+  var centre_x, centre_y = 0.0
+  for point in points:
+    centre_x += point.x
+    centre_y += point.y
+  centre_x = centre_x / float(points.len)
+  centre_y = centre_y / float(points.len)
+  for point in points:
+    result.add (centre_x + (point.x - centre_x) * factor, centre_y + (point.y - centre_y) * factor)
 
 
-func poly(points: seq[Point]; close = true): string =
+func polygon(points: seq[Point]; close = true): string =
   ## Write polygon as path data.
   var joined: seq[string]
-  for p in points:
-    joined.add &"{n(p.x)} {n(p.y)}"
-  let d = "M" & joined.join(" L")
-  if close: d & " Z" else: d
+  for point in points:
+    joined.add &"{numeral(point.x)} {numeral(point.y)}"
+  let path = "M" & joined.join(" L")
+  if close: path & " Z" else: path
 
 
-func pip*(dancer: Dancer; ax, ay, dxs, dys: float; arm: Arm;
+func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
     level: Option[Level]; about = none(About)): string =
   ## Draw one quarter turn: shape says whose, column and ink which arm, fill
   ## its level.
@@ -102,20 +102,25 @@ func pip*(dancer: Dancer; ax, ay, dxs, dys: float; arm: Arm;
     leads = dancer == Dancer.Lead
     ink = if leads: DEEP[arm] else: INK[arm]
     fill = fillOf(level, arm, leads)
-    cx = ax + PIP / 2 + dxs / 2
-    cy = ay + dys / 2
-    points: seq[Point] = @[(ax, ay), (ax + PIP, ay), (ax + PIP + dxs, ay + dys),
-                        (ax + dxs, ay + dys)]
-    perimeter = if leads: 2 * PIP + 2 * hypot(dxs, dys)
+    centre_x = corner_x + PIP / 2 + side_x / 2
+    centre_y = corner_y + side_y / 2
+    points: seq[Point] = @[
+      (corner_x, corner_y),
+      (corner_x + PIP, corner_y),
+      (corner_x + PIP + side_x, corner_y + side_y),
+      (corner_x + side_x, corner_y + side_y),
+    ]
+    perimeter = if leads: 2 * PIP + 2 * hypot(side_x, side_y)
                 else: 2 * PI * (PIP / 2)
 
   func shape(inset: float; style: string): string =
     ## One outline or fill, as dancer's own mark: path or circle.
     if leads:
-      let d = if inset == 1.0: poly(points) else: poly(scaled(points, inset))
-      &"""<path d="{d}" {style}/>"""
+      let path = if inset == 1.0: polygon(points) else: polygon(scaled(points, inset))
+      &"""<path d="{path}" {style}/>"""
     else:
-      &"""<circle cx="{n(cx)}" cy="{n(cy)}" r="{n(PIP / 2 * inset)}" {style}/>"""
+      &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
+        &""" r="{numeral(PIP / 2 * inset)}" {style}/>"""
 
   var bits: seq[string]
   if about.isNone:
@@ -132,29 +137,29 @@ func pip*(dancer: Dancer; ax, ay, dxs, dys: float; arm: Arm;
       &"""fill="none" stroke="{ink}" stroke-width="1.4"""" &
         &""" stroke-linejoin="round"{dash}""")
   if level == some(Level.High):
-    bits.add &"""<circle cx="{n(cx)}" cy="{n(cy)}" r="2.5" fill="{ink}"/>"""
+    bits.add &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}" r="2.5" fill="{ink}"/>"""
   bits.join("")
 
 
-func marker*(kind: Row; ax, ay, dxs, dys: float; arm: Arm): string =
+func marker*(kind: Row; corner_x, corner_y, side_x, side_y: float; arm: Arm): string =
   ## Draw row that counts nothing: it says count does not end.
   let
     ink = INK[arm]
-    cx = ax + PIP / 2 + dxs / 2
-    cy = ay + dys / 2
+    centre_x = corner_x + PIP / 2 + side_x / 2
+    centre_y = corner_y + side_y / 2
   if kind == Row.Ellipsis:               # and so on, across
-    for d in [-3.7, 0.0, 3.7]:
-      result.add &"""<circle cx="{n(cx + d)}" cy="{n(cy)}" r="1.7"""" &
+    for offset in [-3.7, 0.0, 3.7]:
+      result.add &"""<circle cx="{numeral(centre_x + offset)}" cy="{numeral(centre_y)}" r="1.7"""" &
         &""" fill="{ink}"/>"""
   else:
-    for d in [-3.1, 3.1]:
-      result.add &"""<circle cx="{n(cx)}" cy="{n(cy + d)}" r="1.9"""" &
+    for offset in [-3.1, 3.1]:
+      result.add &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y + offset)}" r="1.9"""" &
         &""" fill="{ink}"/>"""
 
 
-func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x0, y_foot: float;
+func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float;
     about: Option[About]; pip_about: seq[About]; ending: Option[Ending];
-    packed = true): tuple[markup: string, box: tuple[x0, y0, x1, y1: float]] =
+    packed = true): tuple[markup: string, box: tuple[left, top, right, bottom: float]] =
   ## Draw sign at given place, returning markup and box it fills.
   ##   `slots` reads downwards, one entry per quarter turn, follow's
   ##     first, so mixed sign has one picture rather than two.
@@ -162,24 +167,24 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x0, y_foot: float;
   ##     how full it is is how far it goes, and count is check on
   ##     reading rather than whole of it.
   let
-    y_bot = y_foot + HEIGHT
+    y_bottom = y_foot + HEIGHT
     y_top = y_foot
-    slope = HEIGHT * TAN
+    slope = HEIGHT * TANGENT
     over = if ending in [some(Ending.Open), some(Ending.Spill)]: OVER else: 0.0
-    slant = if lean == Lean.Cw: -LEAN_SIN else: LEAN_SIN
+    slant = if lean == Lean.Clockwise: -LEAN_SINE else: LEAN_SINE
 
   func leftAt(y: float): float =
     ## Slanting left edge, at given height.
-    if lean == Lean.Cw: x0 + (y_bot - y) * TAN    # leans right going up
-    else: x0 + (y - y_top) * TAN
+    if lean == Lean.Clockwise: x_left + (y_bottom - y) * TANGENT    # leans right going up
+    else: x_left + (y - y_top) * TANGENT
 
   func slotTop(place: int): float =
     ## Top of slot `place` rows up from foot.
-    y_bot - GAP_X - float(place) * (PIP + GAP_X) - PIP
+    y_bottom - GAP_X - float(place) * (PIP + GAP_X) - PIP
 
   let
-    foot: seq[Point] = @[(leftAt(y_bot), y_bot),
-                         (leftAt(y_bot) + SIGN_BODY, y_bot)]
+    foot: seq[Point] = @[(leftAt(y_bottom), y_bottom),
+                         (leftAt(y_bottom) + SIGN_BODY, y_bottom)]
     head: seq[Point] = @[(leftAt(y_top), y_top),
                          (leftAt(y_top) + SIGN_BODY, y_top)]
     perimeter = 2 * SIGN_BODY + 2 * hypot(slope, HEIGHT)
@@ -197,23 +202,26 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x0, y_foot: float;
         let tips: seq[Point] = @[(leftAt(y_top - over), y_top - over),
                                  (leftAt(y_top - over) + SIGN_BODY,
                                   y_top - over)]
-        poly(@[tips[0], foot[0], foot[1], tips[1]], close = false)
+        polygon(@[tips[0], foot[0], foot[1], tips[1]], close = false)
       else:
-        poly(@[foot[0], head[0], head[1], foot[1]])
+        polygon(@[foot[0], head[0], head[1], foot[1]])
   var bits = @[&"""<path d="{outline}" {style}/>"""]
 
   if ending == some(Ending.Loop):
     # Graph's own loop edge, drawn on its label.
     let
-      (ax0, ay0) = head[0]
-      (bx0, by0) = foot[0]
+      (top_left_x, top_left_y) = head[0]
+      (bottom_left_x, bottom_left_y) = foot[0]
       reach = 15.0
-    bits.add &"""<path d="M{n(ax0 - 2)} {n(ay0 + 5)} C{n(ax0 - reach)}""" &
-      &""" {n(ay0 + 6)} {n(bx0 - reach)} {n(by0 - 6)} {n(bx0 - 3)}""" &
-      &""" {n(by0 - 5)}" fill="none" stroke="var(--ink)"""" &
+    bits.add &"""<path d="M{numeral(top_left_x - 2)} {numeral(top_left_y + 5)}""" &
+      &""" C{numeral(top_left_x - reach)} {numeral(top_left_y + 6)}""" &
+      &""" {numeral(bottom_left_x - reach)} {numeral(bottom_left_y - 6)}""" &
+      &""" {numeral(bottom_left_x - 3)}""" &
+      &""" {numeral(bottom_left_y - 5)}" fill="none" stroke="var(--ink)"""" &
       """ stroke-width="1.6" stroke-linecap="round"/>"""
-    bits.add &"""<path d="M{n(bx0 - 8)} {n(by0 - 8.5)} L{n(bx0 - 3)}""" &
-      &""" {n(by0 - 5)} L{n(bx0 - 8.5)} {n(by0 - 2.5)}" fill="none"""" &
+    bits.add &"""<path d="M{numeral(bottom_left_x - 8)} {numeral(bottom_left_y - 8.5)}""" &
+      &""" L{numeral(bottom_left_x - 3)} {numeral(bottom_left_y - 5)}""" &
+      &""" L{numeral(bottom_left_x - 8.5)} {numeral(bottom_left_y - 2.5)}" fill="none"""" &
       """ stroke="var(--ink)" stroke-width="1.6"""" &
       """ stroke-linecap="round" stroke-linejoin="round"/>"""
 
@@ -223,34 +231,34 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x0, y_foot: float;
   for i, what in slots:
     var top = if packed: slotTop(total - 1 - i)
               else: y_top + spread + float(i) * (PIP + spread)
-    top += (PIP - PIP * LEAN_COS) / 2
-    for col, arm in [Arm.L, Arm.R]:
+    top += (PIP - PIP * LEAN_COSINE) / 2
+    for column, arm in [Arm.Left, Arm.Right]:
       if not arms[arm].shown:
         continue
-      let ax = leftAt(top) + GAP_X + float(col) * (PIP + GAP_X)
+      let corner_x = leftAt(top) + GAP_X + float(column) * (PIP + GAP_X)
       if what in [Row.Lead, Row.Follow]:
         let row_about = if pip_about.len > 0: some(pip_about[i])
                         else: none(About)
         bits.add pip(
           (if what == Row.Lead: Dancer.Lead else: Dancer.Follow),
-          ax, top, PIP * slant, PIP * LEAN_COS, arm, arms[arm].level,
+          corner_x, top, PIP * slant, PIP * LEAN_COSINE, arm, arms[arm].level,
           row_about)
       else:
-        bits.add marker(what, ax, top, PIP * slant, PIP * LEAN_COS, arm)
+        bits.add marker(what, corner_x, top, PIP * slant, PIP * LEAN_COSINE, arm)
 
   var
-    xs: seq[float]
-    ys = @[y_bot, y_top - over]
-  for y in ys:
-    xs.add leftAt(y)
-  for y in ys:
-    xs.add leftAt(y) + SIGN_BODY
+    x_values: seq[float]
+    y_values = @[y_bottom, y_top - over]
+  for y in y_values:
+    x_values.add leftAt(y)
+  for y in y_values:
+    x_values.add leftAt(y) + SIGN_BODY
   if ending == some(Ending.Loop):
-    xs.add min(foot[0].x, head[0].x) - 16
-  (bits.join("\n        "), (min(xs), y_top - over, max(xs), y_bot))
+    x_values.add min(foot[0].x, head[0].x) - 16
+  (bits.join("\n        "), (min(x_values), y_top - over, max(x_values), y_bottom))
 
 
-func sign*(slots: seq[Row]; lean = Lean.Cw; arms = BOTH_UNSAID;
+func sign*(slots: seq[Row]; lean = Lean.Clockwise; arms = BOTH_UNSAID;
     about = none(About); pip_about: seq[About] = @[];
     ending = none(Ending); scale = 1.2; packed = true): string =
   ## Draw one turn sign: quarter turns up from foot, arms across, one
@@ -267,15 +275,16 @@ func sign*(slots: seq[Row]; lean = Lean.Cw; arms = BOTH_UNSAID;
       rows,
       lean,
       arms,
-      x0 = PAD,
+      x_left = PAD,
       y_foot = PAD + OVER,
       about = about,
       pip_about = pip_about,
       ending = ending,
       packed = packed,
     )
-    w = box.x1 - box.x0 + 2 * PAD
-    h = box.y1 - box.y0 + 2 * PAD
-  &"""<svg viewBox="{n(box.x0 - PAD)} {n(box.y0 - PAD)} {n(w)} {n(h)}"""" &
-    &""" width="{n(w * scale)}" height="{n(h * scale)}">""" &
+    view_width = box.right - box.left + 2 * PAD
+    view_height = box.bottom - box.top + 2 * PAD
+  &"""<svg viewBox="{numeral(box.left - PAD)} {numeral(box.top - PAD)}""" &
+    &""" {numeral(view_width)} {numeral(view_height)}"""" &
+    &""" width="{numeral(view_width * scale)}" height="{numeral(view_height * scale)}">""" &
     &"\n        {markup}\n      </svg>"

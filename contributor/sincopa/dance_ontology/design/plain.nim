@@ -40,12 +40,12 @@ func plain(markup: string): string =
   var
     out_text = newStringOfCap(markup.len)
     inside = false
-  for ch in markup:
-    case ch
+  for character in markup:
+    case character
     of '<': inside = true
     of '>': inside = false; out_text.add ' '
     else:
-      if not inside: out_text.add ch
+      if not inside: out_text.add character
   out_text.multiReplace(
     ("&mdash;", "-"), ("&nbsp;", " "), ("&middot;", "-"), ("&amp;", "and"),
     ("&frac12;", "half"), ("&#189;", "half"), ("&#188;", "quarter"), ("&frac14;", "quarter"),
@@ -119,7 +119,7 @@ func closes(word: string): bool =
   if i < 1 or word[i] notin {'.', '!', '?'}: return false
   word[i - 1] in Letters + Digits or word[i - 1] in {')', ']', '"', '%', '*', '_'}
 
-func markerLen(line: string): int =
+func markerLength(line: string): int =
   ## Length of list marker line opens with; nought where it opens none.
   if line.len > 1 and line[0] in {'-', '*', '+'} and line[1] == ' ': return 2
   var i = 0
@@ -133,11 +133,11 @@ func gathered(fragments: openArray[string]): string =
   var
     inSpan = false
     text = ""
-  for c in fragments.join(" "):
-    if c == '`':
+  for character in fragments.join(" "):
+    if character == '`':
       if not inSpan: text.add "name"
       inSpan = not inSpan
-    elif not inSpan: text.add c
+    elif not inSpan: text.add character
   text.splitWhitespace.join(" ")
 
 func markdownProse*(document: string): seq[string] =
@@ -162,7 +162,7 @@ func markdownProse*(document: string): seq[string] =
       carries = not fence and not fenced and line.len > 0 and
                 not line.startsWith("|") and not line.startsWith("#") and
                 not line.startsWith("---") and not line.startsWith(">")
-      marker = (if carries: line.markerLen else: 0)
+      marker = (if carries: line.markerLength else: 0)
     if carried.len > 0 and (not carries or marker > 0):
       result.add carried.gathered
       carried = @[]

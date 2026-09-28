@@ -29,10 +29,10 @@ import ./[body, rig, vector]
 
 type
   ArmPose* = object ## Four points of one arm, in world.
-    s*, e*, w*, g*: Vec ## Shoulder, elbow, wrist, grip.
+    shoulder*, elbow*, wrist*, grip*: Vector ## Shoulder, elbow, wrist, grip.
 
   Joints* = object ## What each joint reads, radians, in body's own terms.
-    extend*, across*, elev*: float ## Upper arm: behind, across, up.
+    extend*, across*, elevation*: float ## Upper arm: behind, across, up.
     twist*, bend*, wrist*: float
 
   Chain* = object ## What laying out arm to grip found.
@@ -42,15 +42,15 @@ type
   Circle* = object ## Circle elbow can sit on for one grip and hand.
     ##   Everything `posed` works out that does not depend on swivel, kept
     ##     so seed can try every swivel round it for price of one.
-    s*, w*: Vec ## Shoulder and wrist.
+    shoulder*, wrist*: Vector ## Shoulder and wrist.
     stretch*: float ## Shoulder to wrist.
-    u*: Vec ## Unit, shoulder towards wrist; zero where two coincide.
-    along*, radius*: float ## Circle's centre along `u`, and its radius.
-    down*, side*: Vec ## Its basis: lowest point's direction, and across.
+    axis*: Vector ## Unit, shoulder towards wrist; zero where two coincide.
+    along*, radius*: float ## Circle's centre along `axis`, and its radius.
+    down*, side*: Vector ## Its basis: lowest point's direction, and across.
 
   Swing* = object ## Joints read before twist, and what twist needs.
     joints*: Joints ## Everything but `twist`, which is nought here.
-    u*, f*: Vec ## Unit: upper arm and forearm, in body's mirrored terms.
+    upper*, fore*: Vector ## Unit: upper arm and forearm, in body's mirrored terms.
 
 const
   REST_DOWN = (0.0, 0.0, -1.0) ## Upper arm hanging: swing's rest.
@@ -60,112 +60,135 @@ const
                                ## no twist is read off it.
 
 
-func shoulderLocal*(rig: Rig): Vec = (rig.shoulderOut, 0.0, rig.shoulderUp)
+func shoulderLocal*(rig: Rig): Vector = (rig.shoulderOut, 0.0, rig.shoulderUp)
   ## Shoulder in body's mirrored terms: always right arm here.
 
 
-func circleOf*(rig: Rig; s, g, h: Vec): Circle =
-  ## Elbow's circle for arm from shoulder `s` to grip `g` with
-  ## hand pointing along unit `h`.
-  result.s = s
-  result.w = g - h * rig.hand
-  result.stretch = distance(result.w, s)
+func circleOf*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector): Circle =
+  ## Elbow's circle for arm from shoulder `shoulder_point` to grip `grip_point` with
+  ## hand pointing along unit `hand_direction`.
+  result.shoulder = shoulder_point
+  result.wrist = grip_point - hand_direction * rig.hand
+  result.stretch = distance(result.wrist, shoulder_point)
   if result.stretch < 1e-9:
     return
   let d = result.stretch
-  result.u = (result.w - s) * (1.0 / d)
+  result.axis = (result.wrist - shoulder_point) * (1.0 / d)
   result.along = clamp((rig.upper * rig.upper - rig.fore * rig.fore + d * d) / (2.0 * d),
                        -rig.upper, rig.upper)
   result.radius = sqrt(max(0.0, rig.upper * rig.upper - result.along * result.along))
-  var down = REST_DOWN - result.u * dot(REST_DOWN, result.u)
+  var down = REST_DOWN - result.axis * dot(REST_DOWN, result.axis)
   if norm(down) < 1e-6:
-    down = perp(result.u)
+    down = perpendicular(result.axis)
   else:
     down = unit(down)
   result.down = down
-  result.side = cross(result.u, down)
+  result.side = cross(result.axis, down)
 
-func posedOn*(rig: Rig; c: Circle; g: Vec; c_swivel, s_swivel: float): Chain =
+func posedOn*(rig: Rig; circle: Circle; grip_point: Vector;
+              cosine_swivel, sine_swivel: float): Chain =
   ## Lay arm with its elbow on circle at swivel whose cosine and
   ## sine these are.
-  result.stretch = c.stretch
-  if c.stretch < 1e-9:
-    result.pose = ArmPose(s: c.s, e: c.s + (0.0, 0.0, -rig.upper), w: c.w, g: g)
+  result.stretch = circle.stretch
+  if circle.stretch < 1e-9:
+    result.pose = ArmPose(
+      shoulder: circle.shoulder,
+      elbow: circle.shoulder + (0.0, 0.0, -rig.upper),
+      wrist: circle.wrist,
+      grip: grip_point,
+    )
     return
-  let e = c.s + c.u * c.along + c.down * (c.radius * c_swivel) + c.side * (c.radius * s_swivel)
-  result.pose = ArmPose(s: c.s, e: e, w: c.w, g: g)
+  let elbow_point = circle.shoulder + circle.axis * circle.along +
+    circle.down * (circle.radius * cosine_swivel) + circle.side * (circle.radius * sine_swivel)
+  result.pose = ArmPose(
+    shoulder: circle.shoulder,
+    elbow: elbow_point,
+    wrist: circle.wrist,
+    grip: grip_point,
+  )
 
-func posed*(rig: Rig; s, g, h: Vec; swivel: float): Chain =
-  ## Lay arm from shoulder `s` to grip `g` with hand pointing along
-  ## unit `h` and elbow at `swivel` round its circle, nought being
+func posed*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector; swivel: float): Chain =
+  ## Lay arm from shoulder `shoulder_point` to grip `grip_point` with hand pointing along
+  ## unit `hand_direction` and elbow at `swivel` round its circle, nought being
   ## lowest elbow can hang.
   ##   Out of reach is not refused here: elbow goes as far as it can and
   ##     forearm is left too long, so that searcher minimising
   ##     overshoot has something smooth to descend.
-  posedOn(rig, circleOf(rig, s, g, h), g, cos(swivel), sin(swivel))
+  posedOn(
+    rig,
+    circleOf(rig, shoulder_point, grip_point, hand_direction),
+    grip_point,
+    cos(swivel),
+    sin(swivel),
+  )
 
 
-func placed*(rig: Rig; stance: Stance; arm: Arm; u: Vec;
+func placed*(rig: Rig; stance: Stance; arm: Arm; upper_direction: Vector;
              twist, bend, wrist, roll: float): ArmPose =
-  ## Build arm from its joints: upper arm along unit `u` in
+  ## Build arm from its joints: upper arm along unit `upper_direction` in
   ## body's mirrored terms, twisted, bent at elbow, hand off
   ## forearm by `wrist` in direction `roll` turns it to.
   ##   Forward kinematics, for laws: what `joints` reads must be what
   ##     was set here.
   let
-    plane = spun(carried(REST_PLANE, REST_DOWN, u), u, twist)
-    f = u * cos(bend) + cross(plane, u) * sin(bend)
-    m = spun(plane, f, roll)
-    h = f * cos(wrist) + m * sin(wrist)
-    s = shoulderLocal(rig)
-    e = s + u * rig.upper
-    w = e + f * rig.fore
-    g = w + h * rig.hand
+    plane = spun(carried(REST_PLANE, REST_DOWN, upper_direction), upper_direction, twist)
+    fore_direction = upper_direction * cos(bend) + cross(plane, upper_direction) * sin(bend)
+    tip_direction = spun(plane, fore_direction, roll)
+    hand_direction = fore_direction * cos(wrist) + tip_direction * sin(wrist)
+    shoulder_point = shoulderLocal(rig)
+    elbow_point = shoulder_point + upper_direction * rig.upper
+    wrist_point = elbow_point + fore_direction * rig.fore
+    grip_point = wrist_point + hand_direction * rig.hand
     axes = axesOf(stance)
   if arm == Arm.Left:
     ArmPose(
-      s: toWorld(axes, mirrored(s)),
-      e: toWorld(axes, mirrored(e)),
-      w: toWorld(axes, mirrored(w)),
-      g: toWorld(axes, mirrored(g)),
+      shoulder: toWorld(axes, mirrored(shoulder_point)),
+      elbow: toWorld(axes, mirrored(elbow_point)),
+      wrist: toWorld(axes, mirrored(wrist_point)),
+      grip: toWorld(axes, mirrored(grip_point)),
     )
   else:
-    ArmPose(s: toWorld(axes, s), e: toWorld(axes, e), w: toWorld(axes, w), g: toWorld(axes, g))
+    ArmPose(
+      shoulder: toWorld(axes, shoulder_point),
+      elbow: toWorld(axes, elbow_point),
+      wrist: toWorld(axes, wrist_point),
+      grip: toWorld(axes, grip_point),
+    )
 
 
-func ownTerms*(axes: Axes; arm: Arm; p: Vec): Vec =
+func ownTerms*(axes: Axes; arm: Arm; point: Vector): Vector =
   ## World point in body's mirrored terms: right arm's, always.
-  let q = toBody(axes, p)
-  if arm == Arm.Left: mirrored(q) else: q
+  let body_point = toBody(axes, point)
+  if arm == Arm.Left: mirrored(body_point) else: body_point
 
 func swing*(axes: Axes; arm: Arm; pose: ArmPose): Swing =
   ## Read every joint but twist off pose, in body's own terms.
   ##   Twist is dear one to read, and one each seed asks for last,
   ##     so it is read apart.
   let
-    s = ownTerms(axes, arm, pose.s)
-    e = ownTerms(axes, arm, pose.e)
-    w = ownTerms(axes, arm, pose.w)
-    g = ownTerms(axes, arm, pose.g)
-    u = unit(e - s)
-    f = unit(w - e)
-    h = unit(g - w)
-  result.u = u
-  result.f = f
-  result.joints.extend = arcsin(clamp(-u.y, -1.0, 1.0))
-  result.joints.across = arcsin(clamp(-u.x, -1.0, 1.0))
-  result.joints.elev = arcsin(clamp(u.z, -1.0, 1.0))
-  result.joints.bend = angleBetween(u, f)
-  result.joints.wrist = angleBetween(f, h)
+    shoulder_point = ownTerms(axes, arm, pose.shoulder)
+    elbow_point = ownTerms(axes, arm, pose.elbow)
+    wrist_point = ownTerms(axes, arm, pose.wrist)
+    grip_point = ownTerms(axes, arm, pose.grip)
+    upper_direction = unit(elbow_point - shoulder_point)
+    fore_direction = unit(wrist_point - elbow_point)
+    hand_direction = unit(grip_point - wrist_point)
+  result.upper = upper_direction
+  result.fore = fore_direction
+  result.joints.extend = arcsin(clamp(-upper_direction.y, -1.0, 1.0))
+  result.joints.across = arcsin(clamp(-upper_direction.x, -1.0, 1.0))
+  result.joints.elevation = arcsin(clamp(upper_direction.z, -1.0, 1.0))
+  result.joints.bend = angleBetween(upper_direction, fore_direction)
+  result.joints.wrist = angleBetween(fore_direction, hand_direction)
 
 func twistOf*(arm_swing: Swing): float =
   ## Shoulder's twist, read off elbow's plane; nought where
   ## elbow is too straight to have one.
   if arm_swing.joints.bend > STRAIGHT:
     let
-      rest = carried(REST_PLANE, REST_DOWN, arm_swing.u)
-      plane = unit(cross(arm_swing.u, arm_swing.f))
-    signedAngle(rest, plane, arm_swing.u)
+      rest = carried(REST_PLANE, REST_DOWN, arm_swing.upper)
+      plane = unit(cross(arm_swing.upper, arm_swing.fore))
+    signedAngle(rest, plane, arm_swing.upper)
   else:
     0.0
 
@@ -181,33 +204,33 @@ func joints*(stance: Stance; arm: Arm; pose: ArmPose): Joints =
   joints(axesOf(stance), arm, pose)
 
 
-func reading*(j: Joints; dof: Dof): float =
+func reading*(arm_joints: Joints; dof: Dof): float =
   ## One value of joints that range applies to.
   case dof
-  of Dof.Extend: j.extend
-  of Dof.Across: j.across
-  of Dof.Twist: j.twist
-  of Dof.Bend: j.bend
-  of Dof.Wrist: j.wrist
+  of Dof.Extend: arm_joints.extend
+  of Dof.Across: arm_joints.across
+  of Dof.Twist: arm_joints.twist
+  of Dof.Bend: arm_joints.bend
+  of Dof.Wrist: arm_joints.wrist
 
-func margins*(rig: Rig; j: Joints): array[Dof, float] =
+func margins*(rig: Rig; arm_joints: Joints): array[Dof, float] =
   ## Each freedom's distance inside its range, in its ease.
   for dof in Dof:
-    result[dof] = margin(rig.range[dof], reading(j, dof))
+    result[dof] = margin(rig.range[dof], reading(arm_joints, dof))
 
-func strain*(rig: Rig; j: Joints): tuple[most: float, dof: Dof] =
+func strain*(rig: Rig; arm_joints: Joints): tuple[most: float, dof: Dof] =
   ## How far into last stretch before edge arm is: nought well
   ## inside, one at edge, more past it; and which joint that is.
   result = (0.0, Dof.Extend)
   var least = Inf
   for dof in Dof:
-    let m = margin(rig.range[dof], reading(j, dof))
-    if m < least:
-      least = m
+    let joint_margin = margin(rig.range[dof], reading(arm_joints, dof))
+    if joint_margin < least:
+      least = joint_margin
       result.dof = dof
   result.most = max(0.0, 1.0 - least)
 
-func room*(rig: Rig; j: Joints): float =
+func room*(rig: Rig; arm_joints: Joints): float =
   ## How far nearest joint is from *either* end of its range, in that
   ## end's ease: freedom arm has to move any way at all.
   ##   Unlike `margin`, stop with no ease counts as end here --
@@ -217,22 +240,24 @@ func room*(rig: Rig; j: Joints): float =
   result = Inf
   for dof in Dof:
     let
-      r = rig.range[dof]
-      value = reading(j, dof)
-      unit_lower = if r.ease_lower > 0.0: r.ease_lower else: r.ease_upper
-      unit_upper = if r.ease_upper > 0.0: r.ease_upper else: r.ease_lower
-    result = min(result, (r.upper - value) / unit_upper)
+      joint_range = rig.range[dof]
+      value = reading(arm_joints, dof)
+      unit_lower = if joint_range.ease_lower > 0.0: joint_range.ease_lower
+                   else: joint_range.ease_upper
+      unit_upper = if joint_range.ease_upper > 0.0: joint_range.ease_upper
+                   else: joint_range.ease_lower
+    result = min(result, (joint_range.upper - value) / unit_upper)
     if dof != Dof.Wrist:
-      result = min(result, (value - r.lower) / unit_lower)
+      result = min(result, (value - joint_range.lower) / unit_lower)
 
-func comfort*(rig: Rig; j: Joints): float =
+func comfort*(rig: Rig; arm_joints: Joints): float =
   ## Smooth cost of pose: how far every joint sits from its rest,
   ## squared and summed, with arm's lift counted too.
   ##   Minimised by solver among poses that hold, so that neighbouring
   ##     turns get neighbouring poses and hanging arm is preferred to
   ##     raised one where both would do.
   for dof in Dof:
-    let d = eased(rig.range[dof], reading(j, dof))
-    result += d * d
-  let lift = (j.elev + PI / 2.0) / PI
+    let from_neutral = eased(rig.range[dof], reading(arm_joints, dof))
+    result += from_neutral * from_neutral
+  let lift = (arm_joints.elevation + PI / 2.0) / PI
   result += lift * lift

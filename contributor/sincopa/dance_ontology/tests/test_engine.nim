@@ -23,19 +23,23 @@ import ../simulation/engine
 proc world(): WorldId =
   ## World with no gravity and nothing asleep: every question here is about contact.
   var definition = defaultWorld()
-  definition.gravity = vec(0, 0, 0)
+  definition.gravity = initVector(0, 0, 0)
   definition.enableSleep = false
   createWorld(addr definition)
 
-proc capsule(w: WorldId; x: float): BodyId =
+proc capsule(world_id: WorldId; x: float): BodyId =
   ## Upright limb-thick capsule, standing where told.
   var body_definition = defaultBody()
   body_definition.kind = BODY_DYNAMIC
-  body_definition.position = Pos(x: x, y: 0.0, z: 0.0)
-  result = createBody(w, addr body_definition)
+  body_definition.position = Position(x: x, y: 0.0, z: 0.0)
+  result = createBody(world_id, addr body_definition)
   var
     shape_definition = defaultShape()
-    capsule = Capsule(center1: vec(0, -0.15, 0), center2: vec(0, 0.15, 0), radius: 0.045)
+    capsule = Capsule(
+      center1: initVector(0, -0.15, 0),
+      center2: initVector(0, 0.15, 0),
+      radius: 0.045,
+    )
   discard createCapsule(result, addr shape_definition, addr capsule)
 
 
@@ -46,35 +50,39 @@ suite "the engine this project turns couples with":
     var definition = defaultWorld()
     definition.enableSleep = false
     let
-      w = createWorld(addr definition)
-      g = abs(float(definition.gravity.y))
-    check g > 9.0     # Engine's own, not this project's; only its order matters.
+      world_id = createWorld(addr definition)
+      gravity = abs(float(definition.gravity.y))
+    check gravity > 9.0     # Engine's own, not this project's; only its order matters.
     var body_definition = defaultBody()
     body_definition.kind = BODY_DYNAMIC
-    body_definition.position = Pos(x: 0.0, y: 10.0, z: 0.0)
-    let body = createBody(w, addr body_definition)
+    body_definition.position = Position(x: 0.0, y: 10.0, z: 0.0)
+    let body = createBody(world_id, addr body_definition)
     var
       shape_definition = defaultShape()
-      capsule = Capsule(center1: vec(0, -0.1, 0), center2: vec(0, 0.1, 0), radius: 0.05)
+      capsule = Capsule(
+        center1: initVector(0, -0.1, 0),
+        center2: initVector(0, 0.1, 0),
+        radius: 0.05,
+      )
     discard createCapsule(body, addr shape_definition, addr capsule)
     for i in 1 .. 240:
-      step(w, cfloat(1.0 / 240.0), 8)
+      step(world_id, cfloat(1.0 / 240.0), 8)
     let fell = 10.0 - positionOf(body).at.y
     # Half g t squared, with one second walked.
-    check abs(fell - 0.5 * g) < 0.05
+    check abs(fell - 0.5 * gravity) < 0.05
 
   test "two arms cannot stand inside one another":
     ## Reason engine is here at all.  Two capsules are started deep inside each other
     ##   and must part: arms of this project are capsules of this thickness, and pose
     ##   search that came before let them lie through one another unremarked.
     let
-      w = world()
-      a = capsule(w, -0.01)
-      b = capsule(w, 0.01)
-    check abs(positionOf(b).at.x - positionOf(a).at.x) < 0.03
+      world_id = world()
+      body_a = capsule(world_id, -0.01)
+      body_b = capsule(world_id, 0.01)
+    check abs(positionOf(body_b).at.x - positionOf(body_a).at.x) < 0.03
     for i in 1 .. 240:
-      step(w, cfloat(1.0 / 240.0), 8)
-    let apart = abs(positionOf(b).at.x - positionOf(a).at.x)
+      step(world_id, cfloat(1.0 / 240.0), 8)
+    let apart = abs(positionOf(body_b).at.x - positionOf(body_a).at.x)
     checkpoint("centres ended " & $apart & " m apart")
     # Two radii is where they touch; anything less is one standing inside other.
     check apart >= 2.0 * 0.045
@@ -85,33 +93,37 @@ suite "the engine this project turns couples with":
     ##   for eight it lost its deepest: two forearms stood 22 mm through each other
     ##   with nothing said.  Engine says how much room body needs, and that is what
     ##   is asked for.
-    let w = world()
+    let world_id = world()
     var body_definition = defaultBody()
     body_definition.kind = BODY_DYNAMIC
-    body_definition.position = Pos(x: 0.0, y: 0.0, z: 0.0)
-    let centre = createBody(w, addr body_definition)
+    body_definition.position = Position(x: 0.0, y: 0.0, z: 0.0)
+    let centre = createBody(world_id, addr body_definition)
     var
       shape_definition = defaultShape()
-      big = Capsule(center1: vec(0, -0.3, 0), center2: vec(0, 0.3, 0), radius: 0.2)
+      big = Capsule(center1: initVector(0, -0.3, 0), center2: initVector(0, 0.3, 0), radius: 0.2)
     discard createCapsule(centre, addr shape_definition, addr big)
     const AROUND = 10
     var around: seq[BodyId]
     for i in 0 ..< AROUND:
       # Ring of thin capsules, each poking into big one from its own side.
       let angle = 2.0 * PI * float(i) / float(AROUND)
-      var od = defaultBody()
-      od.kind = BODY_DYNAMIC
-      od.position = Pos(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
-      let b = createBody(w, addr od)
-      var thin = Capsule(center1: vec(0, -0.02, 0), center2: vec(0, 0.02, 0), radius: 0.02)
-      discard createCapsule(b, addr shape_definition, addr thin)
-      around.add b
-    step(w, cfloat(1.0 / 240.0), 8)
+      var thin_definition = defaultBody()
+      thin_definition.kind = BODY_DYNAMIC
+      thin_definition.position = Position(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
+      let thin_body = createBody(world_id, addr thin_definition)
+      var thin = Capsule(
+        center1: initVector(0, -0.02, 0),
+        center2: initVector(0, 0.02, 0),
+        radius: 0.02,
+      )
+      discard createCapsule(thin_body, addr shape_definition, addr thin)
+      around.add thin_body
+    step(world_id, cfloat(1.0 / 240.0), 8)
     let room = touchRoom(centre)
     check room >= AROUND
     var seen = newSeq[Touch](max(1, int(room)))
-    let n = touches(centre, addr seen[0], cint(seen.len))
-    checkpoint("room " & $room & ", contacts reported " & $n)
-    check n == AROUND
+    let reported = touches(centre, addr seen[0], cint(seen.len))
+    checkpoint("room " & $room & ", contacts reported " & $reported)
+    check reported == AROUND
     var eight: array[8, Touch]
     check touches(centre, addr eight[0], 8) == 8

@@ -17,22 +17,22 @@ import ../simulation/readings
 
 
 const
-  FNV_OFFSET = 0xcbf29ce484222325'u64
-  FNV_PRIME = 0x100000001b3'u64
+  HASH_OFFSET = 0xcbf29ce484222325'u64
+  HASH_PRIME = 0x100000001b3'u64
 
 
 func digest(parts: openArray[string]): string =
   ## FNV-1a over every part, with NUL after each so no two run together.
-  var h = FNV_OFFSET
+  var hash = HASH_OFFSET
   for part in parts:
-    for c in part:
-      h = (h xor uint64(ord(c))) * FNV_PRIME
-    h = h * FNV_PRIME
-  h.toHex(16).toLowerAscii
+    for character in part:
+      hash = (hash xor uint64(ord(character))) * HASH_PRIME
+    hash = hash * HASH_PRIME
+  hash.toHex(16).toLowerAscii
 
 proc stampOf*(verb: string; questions: openArray[string]): string =
   ## Stamp of recording `verb` makes of `questions`: physics, verb's source, then each
   ## question.
   var parts = @[physics(), readFile(verb)]
-  for q in questions: parts.add q
+  for question in questions: parts.add question
   digest(parts)

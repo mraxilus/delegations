@@ -47,7 +47,7 @@ const
     ##   element set by browser, or row of `simulation/verdicts.md`.
   DOCUMENTS = ["mockups" / "wholecloth.html", "pages" / "review" / "review.html"]
     ## Pages this project writes by hand rather than from Nim.
-  HOLDS = [HAND_TO_HAND, [some Arm.L, some Arm.R]]
+  HOLDS = [HAND_TO_HAND, [some Arm.Left, some Arm.Right]]
     ## Both holds workbench walks: app's own frame, and its dual (rule 31).
 
 
@@ -61,8 +61,8 @@ func replaced(source, term: string): seq[string] =
       inside = bare[2 ..< bare.len - 3] == term
     elif bare.startsWith("_Avoid_:") and inside:
       for word in bare["_Avoid_:".len .. ^1].split(','):
-        let w = word.strip
-        if w.len > 0 and w[0].isUpperAscii: result.add w.toLowerAscii
+        let trimmed = word.strip
+        if trimmed.len > 0 and trimmed[0].isUpperAscii: result.add trimmed.toLowerAscii
 
 
 func avoided(source: string; terms: openArray[string]): Table[string, seq[string]] =

@@ -78,9 +78,9 @@ func facingName*(stance: array[Body, Stance]): Option[string] =
   none(string)
 
 
-func whose*(h: Hand): string =
+func whose*(hand: Hand): string =
   ## Name dancer whose arm reading is about.
-  if h.body == Body.One: "lead's" else: "follow's"
+  if hand.body == Body.One: "lead's" else: "follow's"
 
 
 func said*(lying: Option[Lying]; band: Band): string =
@@ -112,17 +112,17 @@ func dofName*(dof: Dof): string =
   of Dof.Wrist: "wrist"
 
 
-func why*(w: Walk): string =
+func why*(walk: Walk): string =
   ## Say what refuses, in few words that table cell or page can show.
   ##   Short register.  `hold.says` answers same question in whole sentence,
   ##     for viewer that has room for one.
-  if not w.stopped: return "no block"
-  case w.why
+  if not walk.stopped: return "no block"
+  case walk.why
   of Stop.None: "holds"
-  of Stop.Reach: whose(w.whose) & " reach"
-  of Stop.Twist: whose(w.whose) & " shoulder, twist"
-  of Stop.Elbow: whose(w.whose) & " elbow"
-  of Stop.Wrist: whose(w.whose) & " wrist"
-  of Stop.Swing: whose(w.whose) & " shoulder, swing"
-  of Stop.Through: whose(w.whose) & " arm through a body"
+  of Stop.Reach: whose(walk.whose) & " reach"
+  of Stop.Twist: whose(walk.whose) & " shoulder, twist"
+  of Stop.Elbow: whose(walk.whose) & " elbow"
+  of Stop.Wrist: whose(walk.whose) & " wrist"
+  of Stop.Swing: whose(walk.whose) & " shoulder, swing"
+  of Stop.Through: whose(walk.whose) & " arm through a body"
   of Stop.Arms: "arm through arm"

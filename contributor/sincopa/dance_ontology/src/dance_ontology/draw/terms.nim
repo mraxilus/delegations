@@ -25,7 +25,7 @@ type
   Dancer* {.pure.} = enum ## Name one of couple.
     Lead, Follow
   Arm* {.pure.} = enum ## Name side of body, and so one hand of dancer.
-    L, R               ## Letter is markup's own key.
+    Left = "L", Right = "R" ## Letter is markup's own key: `$` gives it.
   Level* {.pure.} = enum ## Name height connection is held at.
     ## Every level is height (rule 36); which arm passes over which is
     ##   wrap's business, not level's (rule 38).
@@ -92,7 +92,7 @@ const WRAP_MIN* = 170 ## Least degrees line must hug body for lock or
 
 func other*(arm: Arm): Arm =
   ## Get opposite side.
-  if arm == Arm.L: Arm.R else: Arm.L
+  if arm == Arm.Left: Arm.Right else: Arm.Left
 
 
 func word*(level: Level): string =
@@ -120,4 +120,4 @@ func handName*(arm: Arm): string =
   ## Write follow's hand as hold names it.
   ##   Lower case, because case carries meaning across whole project:
   ##     lead's hands are `Left` and `Right`, follow's `left` and `right`.
-  if arm == Arm.L: "left" else: "right"
+  if arm == Arm.Left: "left" else: "right"

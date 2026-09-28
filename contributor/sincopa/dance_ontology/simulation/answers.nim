@@ -37,8 +37,8 @@ const
     ## Project directory, which every path below is relative to.
   KEPT* = HERE / "simulation" / "answers.json"
     ## Where answers are kept.
-  FNV_OFFSET = 0xcbf29ce484222325'u64
-  FNV_PRIME = 0x100000001b3'u64
+  HASH_OFFSET = 0xcbf29ce484222325'u64
+  HASH_PRIME = 0x100000001b3'u64
 
   SHAKE* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Plainest hold there is: one hand each, face to face.
@@ -59,13 +59,13 @@ const
              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name chain, whose stills reference draws wound to turn and half.
   FREE*: seq[Link] = @[] ## No hands joined.
-  ONE_L* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
+  LEFT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
     ## Single hold, left to left.
-  ONE_R* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
+  RIGHT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Single hold, right to left: standard diagram's A4 wound half.
-  L_R* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
+  LEFT_TO_RIGHT* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
     ## Single hold, left to right.
-  R_R* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
+  RIGHT_TO_RIGHT* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
     ## Single hold, right to right: left to left seen in mirror.
 
 
@@ -113,11 +113,11 @@ type
 const
   SWEEPS*: array[6, SweepAsked] = [
     ("shake at torso", Band.Torso, SHAKE, 1.6),
-    ("left to left at torso", Band.Torso, ONE_L, 0.8),
-    ("right to right at torso", Band.Torso, R_R, 0.8),
-    ("left to left over crown", Band.Crown, ONE_L, 1.0),
-    ("left to right over crown", Band.Crown, L_R, 1.0),
-    ("left to right at torso", Band.Torso, L_R, 1.0),
+    ("left to left at torso", Band.Torso, LEFT_TO_LEFT, 0.8),
+    ("right to right at torso", Band.Torso, RIGHT_TO_RIGHT, 0.8),
+    ("left to left over crown", Band.Crown, LEFT_TO_LEFT, 1.0),
+    ("left to right over crown", Band.Crown, LEFT_TO_RIGHT, 1.0),
+    ("left to right at torso", Band.Torso, LEFT_TO_RIGHT, 1.0),
   ] ## Every sweep laws stand couple for.
   WALKS*: array[3, WalkAsked] = [
     ("shake at torso, negative", Band.Torso, SHAKE, 1.6, -STEP),
@@ -135,11 +135,11 @@ const
     ("same-name at rest", CHAIN, 0.0, true, false),
     ("same-name at half, either way", CHAIN, -0.5, true, true),
     ("free, Face-to-back", FREE, 0.5, false, false),
-    ("left to left at quarter", ONE_L, 0.25, false, false),
-    ("left to left at half", ONE_L, 0.5, false, false),
+    ("left to left at quarter", LEFT_TO_LEFT, 0.25, false, false),
+    ("left to left at half", LEFT_TO_LEFT, 0.5, false, false),
     ("same-name at half", CHAIN, -0.5, true, false),
-    ("right to left at half", ONE_R, 0.5, false, false),
-    ("right to left at half, either way", ONE_R, 0.5, false, true),
+    ("right to left at half", RIGHT_TO_LEFT, 0.5, false, false),
+    ("right to left at half, either way", RIGHT_TO_LEFT, 0.5, false, true),
   ] ## Every still laws stand couple for.
   CORPUS* = 8
     ## First stills of `STILLS`, which every still law reads; rest answer one law each.
@@ -148,11 +148,11 @@ const
 
 #[ Stamp ]#
 
-func feed(h: var uint64; s: string) =
+func feed(digest: var uint64; text: string) =
   ## Feed bytes to FNV-1a digest, with NUL after them so no two feeds run together.
-  for c in s:
-    h = (h xor uint64(ord(c))) * FNV_PRIME
-  h = h * FNV_PRIME
+  for character in text:
+    digest = (digest xor uint64(ord(character))) * HASH_PRIME
+  digest = digest * HASH_PRIME
 
 func engineCommit*(build: string): string =
   ## Engine's pinned commit, read from `tools/build.nim` as text: first quoted forty
@@ -173,15 +173,15 @@ proc stamp*(directory = HERE; leaving: openArray[string] = []): string =
   ## Digest of what answers depend on: every `simulation/*.nim` by name, in name order, and
   ## engine's pinned commit.  `leaving` names files it passes over.
   var files: seq[string]
-  for f in walkFiles(directory / "simulation" / "*.nim"):
-    if f.extractFilename notin leaving: files.add f
+  for path in walkFiles(directory / "simulation" / "*.nim"):
+    if path.extractFilename notin leaving: files.add path
   files.sort
-  var h = FNV_OFFSET
-  for f in files:
-    h.feed f.extractFilename
-    h.feed readFile(f)
-  h.feed engineCommit(readFile(directory / "tools" / "build.nim"))
-  h.toHex(16).toLowerAscii
+  var digest = HASH_OFFSET
+  for path in files:
+    digest.feed path.extractFilename
+    digest.feed readFile(path)
+  digest.feed engineCommit(readFile(directory / "tools" / "build.nim"))
+  digest.toHex(16).toLowerAscii
 
 
 
@@ -192,37 +192,37 @@ proc kept*(path = KEPT): Answers =
   let node = parseFile(path)
   node.to(Answers)
 
-proc sweepOf*(a: Answers; key: string): Ways =
+proc sweepOf*(answers: Answers; key: string): Ways =
   ## Kept sweep, or failure naming verb that answers it.
-  doAssert key in a.sweeps, "No sweep answered; run `nim r tools/build.nim answers`: got `" &
+  doAssert key in answers.sweeps, "No sweep answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
-  a.sweeps[key]
+  answers.sweeps[key]
 
-proc walksOf*(a: Answers; key: string): seq[Walked] =
+proc walksOf*(answers: Answers; key: string): seq[Walked] =
   ## Kept walks from every distance, nearest first.
-  doAssert key in a.walks, "No walks answered; run `nim r tools/build.nim answers`: got `" &
+  doAssert key in answers.walks, "No walks answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
-  a.walks[key]
+  answers.walks[key]
 
-proc reachOf*(a: Answers; key: string): bool =
+proc reachOf*(answers: Answers; key: string): bool =
   ## Kept answer of `reaches`.
-  doAssert key in a.reaches, "No reach answered; run `nim r tools/build.nim answers`: got `" &
+  doAssert key in answers.reaches, "No reach answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
-  a.reaches[key]
+  answers.reaches[key]
 
-proc stillOf*(a: Answers; key: string): Stand =
+proc stillOf*(answers: Answers; key: string): Stand =
   ## Kept distance couple stand at for still.
-  doAssert key in a.stills, "No still answered; run `nim r tools/build.nim answers`: got `" &
+  doAssert key in answers.stills, "No still answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
-  a.stills[key]
+  answers.stills[key]
 
 
 
 #[ Parallel Answers ]#
 
-func wayOf(w: Walk): Way =
+func wayOf(walk: Walk): Way =
   ## Strip walk to numbers laws read.
-  Way(holds: w.restHolds, apart: w.apart, stopped: w.stopped, at: w.at, why: w.why)
+  Way(holds: walk.restHolds, apart: walk.apart, stopped: walk.stopped, at: walk.at, why: walk.why)
 
 
 # Mutable and global: thread takes one argument, so workers read tasks and write answers
@@ -246,32 +246,55 @@ proc working(id: int) {.thread.} =
     while true:
       let i = TASK_NEXT.fetchAdd(1)
       if i >= TASKS.len: return
-      let t = TASKS[i]
-      case t.job
+      let task = TASKS[i]
+      case task.job
       of Sweep:
         let
-          q = SWEEPS[t.index]
-          sweep = swept(HUMAN, q.band, q.links, most = q.most)
-        SWEPTS[t.index] = Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive))
+          question = SWEEPS[task.index]
+          sweep = swept(HUMAN, question.band, question.links, most = question.most)
+        SWEPTS[task.index] = Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive))
       of WalkFrom:
         let
-          q = WALKS[t.index]
-          w = walked(HUMAN, q.band, q.links, Body.Two, FARS[t.far], q.most, q.step,
-                     false, Body.Two)
-        WALKEDS[t.index][t.far] = Walked(
-          apart: FARS[t.far],
-          holds: w.restHolds,
-          stopped: w.stopped,
-          at: w.at,
+          question = WALKS[task.index]
+          walk = walked(
+            HUMAN,
+            question.band,
+            question.links,
+            Body.Two,
+            FARS[task.far],
+            question.most,
+            question.step,
+            false,
+            Body.Two,
+          )
+        WALKEDS[task.index][task.far] = Walked(
+          apart: FARS[task.far],
+          holds: walk.restHolds,
+          stopped: walk.stopped,
+          at: walk.at,
         )
       of Reach:
-        let q = REACHES[t.index]
-        REACHED[t.index] = reaches(HUMAN, q.band, q.links, q.turns, q.away)
+        let question = REACHES[task.index]
+        REACHED[task.index] = reaches(
+          HUMAN,
+          question.band,
+          question.links,
+          question.turns,
+          question.away,
+        )
       of Still:
         let
-          q = STILLS[t.index]
-          got = standing(HUMAN, Band.Crown, q.links, q.turns, q.away, Body.Two, q.either)
-        STOODS[t.index] = Stand(holds: got.holds, apart: got.apart, turns: got.turns)
+          question = STILLS[task.index]
+          got = standing(
+            HUMAN,
+            Band.Crown,
+            question.links,
+            question.turns,
+            question.away,
+            Body.Two,
+            question.either,
+          )
+        STOODS[task.index] = Stand(holds: got.holds, apart: got.apart, turns: got.turns)
 
 proc answer*(): Answers =
   ## Answer every question, on every core at once.
@@ -288,13 +311,13 @@ proc answer*(): Answers =
   TASK_NEXT.store(0)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[int]](cores)
-  for w in 0 ..< cores: createThread(workers[w], working, w)
+  for worker in 0 ..< cores: createThread(workers[worker], working, worker)
   joinThreads(workers)
   result.stamp = stamp()
-  for i, q in SWEEPS: result.sweeps[q.key] = SWEPTS[i]
-  for i, q in WALKS: result.walks[q.key] = WALKEDS[i]
-  for i, q in REACHES: result.reaches[q.key] = REACHED[i]
-  for i, q in STILLS: result.stills[q.key] = STOODS[i]
+  for i, question in SWEEPS: result.sweeps[question.key] = SWEPTS[i]
+  for i, question in WALKS: result.walks[question.key] = WALKEDS[i]
+  for i, question in REACHES: result.reaches[question.key] = REACHED[i]
+  for i, question in STILLS: result.stills[question.key] = STOODS[i]
 
 
 when isMainModule:

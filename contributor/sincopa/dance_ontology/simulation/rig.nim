@@ -88,10 +88,10 @@ type
     waist*: Range              ## Thoracic rotation: shoulders yawing on hips.
     collar*: array[Collar, Range] ## Girdle's two swings about where collarbone
                                ## meets breastbone, each with its ease.
-    band*: array[Band, tuple[lo, hi: float]] ## Hand heights offered per band.
+    band*: array[Band, tuple[lower, upper: float]] ## Hand heights offered per band.
 
 
-func toRadians(d: float): float = d * PI / 180.0
+func toRadians(degrees: float): float = degrees * PI / 180.0
   ## Convert degrees to radians.
 
 const
@@ -196,8 +196,9 @@ const HUMAN* = Rig(
 func halfBreadth*(rig: Rig; part: Part): float =
   ## Side to side, from axis: what tape's round makes ellipse of
   ## part's flatness (Ramanujan's perimeter, inverted).
-  let q = rig.flat[part]
-  rig.round[part] / (PI * (3.0 * (1.0 + q) - sqrt((3.0 + q) * (1.0 + 3.0 * q))))
+  let flatness = rig.flat[part]
+  rig.round[part] / (PI * (3.0 * (1.0 + flatness) -
+                           sqrt((3.0 + flatness) * (1.0 + 3.0 * flatness))))
 
 func halfDepth*(rig: Rig; part: Part): float =
   ## Front to back, from axis.

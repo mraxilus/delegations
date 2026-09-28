@@ -59,44 +59,44 @@ suite "the space and the window":
   test "every frame is drawn inside the one space":
     # Space is what lets node travel: coordinate has to mean same
     # place in frame arrived at as it did in frame left behind.
-    let (bx, by, bw, bh) = SPOKES_BOX
+    let (box_x, box_y, box_width, box_height) = SPOKES_BOX
     for here in FRAMES:
-      let (x, y, w, h) = windowOf(here)
-      check x >= bx
-      check y >= by
-      check x + w <= bx + bw
-      check y + h <= by + bh
+      let (x, y, width, height) = windowOf(here)
+      check x >= box_x
+      check y >= box_y
+      check x + width <= box_x + box_width
+      check y + height <= box_y + box_height
 
   test "a window holds the whole of the frame it is cut for":
     for here in FRAMES:
-      let (x, y, w, h) = windowOf(here)
+      let (x, y, width, height) = windowOf(here)
       for spoke in spokesOf(here):
-        let (sx, sy) = endOf(spoke)
-        check sx > x and sx < x + w
-        check sy > y and sy < y + h
-        let (lx, ly) = labelAt(spoke)
-        check lx > x and lx < x + w
-        check ly > y and ly < y + h
+        let (end_x, end_y) = endOf(spoke)
+        check end_x > x and end_x < x + width
+        check end_y > y and end_y < y + height
+        let (label_x, label_y) = labelAt(spoke)
+        check label_x > x and label_x < x + width
+        check label_y > y and label_y < y + height
 
   test "a window is cut to its frame rather than to the widest one":
     # Every frame in one box would leave frames with ways out one way only
     # mostly empty, which is whole reason window moves at all.
     var sizes: seq[(int, int)] = @[]
     for here in FRAMES:
-      let (_, _, w, h) = windowOf(here)
-      if (w, h) notin sizes:
-        sizes.add (w, h)
+      let (_, _, width, height) = windowOf(here)
+      if (width, height) notin sizes:
+        sizes.add (width, height)
     check sizes.len > 1
     for here in FRAMES:
-      let (_, _, w, h) = windowOf(here)
-      check w <= SPOKES_BOX[2]
-      check h <= SPOKES_BOX[3]
+      let (_, _, width, height) = windowOf(here)
+      check width <= SPOKES_BOX[2]
+      check height <= SPOKES_BOX[3]
 
   test "the middle is inside every window, with the drawing around it":
     for here in FRAMES:
-      let (x, y, w, h) = windowOf(here)
-      check MIDDLE[0] > x and MIDDLE[0] < x + w
-      check MIDDLE[1] > y and MIDDLE[1] < y + h
+      let (x, y, width, height) = windowOf(here)
+      check MIDDLE[0] > x and MIDDLE[0] < x + width
+      check MIDDLE[1] > y and MIDDLE[1] < y + height
 
 
 suite "the moving":
@@ -140,9 +140,9 @@ suite "the moving":
     for here in FRAMES:
       let
         picture = renderSpokes(here)
-        (_, _, w, h) = windowOf(here)
-      check picture.contains("--w: " & $w & "; --h: " & $h & ";")
-      check not picture.contains("--w: " & $w & "px")
+        (_, _, width, height) = windowOf(here)
+      check picture.contains("--w: " & $width & "; --h: " & $height & ";")
+      check not picture.contains("--w: " & $width & "px")
       check picture.contains("--bw: " & $SPOKES_BOX[2] & "; --bh: " &
         $SPOKES_BOX[3])
     # What is read inside picture stays length: those are its own units,
@@ -220,26 +220,26 @@ suite "the moving":
         let
           leaving = renderSpokes(here, Motion.Leaving, some(spoke.to))
           resting = renderSpokes(spoke.to)
-          (_, _, width, th) = windowOf(spoke.to)
-          (tx, ty) = panOf(windowOf(spoke.to))
-          (ex, ey) = endOf(spoke)
+          (_, _, width, height) = windowOf(spoke.to)
+          (pan_x, pan_y) = panOf(windowOf(spoke.to))
+          (end_x, end_y) = endOf(spoke)
         # Window it ends in is window frame reached is given.
-        check leaving.contains("--to-w: " & $width & "; --to-h: " & $th)
-        check resting.contains("--w: " & $width & "; --h: " & $th)
+        check leaving.contains("--to-w: " & $width & "; --to-h: " & $height)
+        check resting.contains("--w: " & $width & "; --h: " & $height)
         # And it ends panned so that frame reached, which is standing out
         # where its way out put it, is left exactly where middle will be.
-        check leaving.contains("--to-px: " & $(tx + MIDDLE[0] - ex) &
-          "; --to-py: " & $(ty + MIDDLE[1] - ey))
-        check resting.contains("--px: " & $tx & "; --py: " & $ty)
+        check leaving.contains("--to-px: " & $(pan_x + MIDDLE[0] - end_x) &
+          "; --to-py: " & $(pan_y + MIDDLE[1] - end_y))
+        check resting.contains("--px: " & $pan_x & "; --py: " & $pan_y)
 
   test "the mark carries the distance from the frame held to the one chosen":
     for here in FRAMES:
       for spoke in spokesOf(here):
         let
           picture = renderSpokes(here, Motion.Leaving, some(spoke.to))
-          (ex, ey) = endOf(spoke)
-        check picture.contains("--mx: " & $(ex - MIDDLE[0]) & "px; --my: " &
-          $(ey - MIDDLE[1]) & "px")
+          (end_x, end_y) = endOf(spoke)
+        check picture.contains("--mx: " & $(end_x - MIDDLE[0]) & "px; --my: " &
+          $(end_y - MIDDLE[1]) & "px")
     # Standing still it goes nowhere.
     check renderSpokes(FRAMES[0]).contains("--mx: 0px; --my: 0px")
 

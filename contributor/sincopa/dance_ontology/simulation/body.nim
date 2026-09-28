@@ -30,8 +30,8 @@ type
     facing*: float ## Radians anticlockwise from x axis, laps and all.
 
   Axes* = object ## Body's own directions, in world terms.
-    origin*: Vec ## Axis at floor level.
-    right*, fore*: Vec ## Unit, horizontal.  Up is up.
+    origin*: Vector ## Axis at floor level.
+    right*, fore*: Vector ## Unit, horizontal.  Up is up.
 
 
 func facing*(rig: Rig; apart: float): array[Body, Stance] =
@@ -47,22 +47,22 @@ func axesOf*(stance: Stance): Axes =
     s = sin(stance.facing)
   Axes(origin: (stance.centre.x, stance.centre.y, 0.0), right: (s, -c, 0.0), fore: (c, s, 0.0))
 
-func toBody*(axes: Axes; p: Vec): Vec =
+func toBody*(axes: Axes; point: Vector): Vector =
   ## World point in body's own terms: x to its right, y forward, z up.
-  let d = p - axes.origin
+  let d = point - axes.origin
   (dot(d, axes.right), dot(d, axes.fore), d.z)
 
-func toWorld*(axes: Axes; p: Vec): Vec =
+func toWorld*(axes: Axes; point: Vector): Vector =
   ## Body's own terms back in world.
-  axes.origin + axes.right * p.x + axes.fore * p.y + (0.0, 0.0, p.z)
+  axes.origin + axes.right * point.x + axes.fore * point.y + (0.0, 0.0, point.z)
 
-func mirrored*(p: Vec): Vec = (-p.x, p.y, p.z)
+func mirrored*(point: Vector): Vector = (-point.x, point.y, point.z)
   ## Body's own terms seen in mirror: left arm is right arm here.
 
 func side*(arm: Arm): float = (if arm == Arm.Right: 1.0 else: -1.0)
   ## Which way along body's right each arm's shoulder lies.
 
-func shoulder*(rig: Rig; stance: Stance; arm: Arm): Vec =
+func shoulder*(rig: Rig; stance: Stance; arm: Arm): Vector =
   ## Joint's centre in world.
   toWorld(axesOf(stance), (side(arm) * rig.shoulderOut, 0.0, rig.shoulderUp))
 
@@ -89,5 +89,5 @@ func quartersTo*(stance: array[Body, Stance]; who: Body): Option[int] =
   if abs(quarters - round(quarters)) < 1e-6: some(int(round(quarters)) mod 4)
   else: none(int)
 
-func lifted*(p: Vec; dz: float): Vec = (p.x, p.y, p.z + dz)
-  ## Raise point by `dz`.
+func lifted*(point: Vector; delta_z: float): Vector = (point.x, point.y, point.z + delta_z)
+  ## Raise point by `delta_z`.

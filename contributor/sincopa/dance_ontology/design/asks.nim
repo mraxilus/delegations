@@ -38,9 +38,9 @@ func otherThan*(who: Body): Body =
   ## Name other dancer of two.
   if ord(who) == ord(Body.One): Body.Two else: Body.One
 
-func armOf*(a: terms.Arm): body.Arm =
+func armOf*(arm: terms.Arm): body.Arm =
   ## Translate drawing's arm into simulation's.
-  if ord(a) == ord(terms.Arm.L): body.Arm.Left else: body.Arm.Right
+  if ord(arm) == ord(terms.Arm.Left): body.Arm.Left else: body.Arm.Right
 
 func linksOf*(holds: Holds): seq[Link] =
   ## Read `parts`'s hold table: index is lead's arm, value is follow's it joins.
@@ -53,9 +53,9 @@ func holdsOf*(target: Frame): Holds =
   for side in Side:
     if target.hold[side].isSome:
       let
-        lead = (if ord(side) == ord(Side.Left): terms.Arm.L else: terms.Arm.R)
-        follow = (if ord(target.hold[side].get) == ord(Site.LeftHand): terms.Arm.L
-                  else: terms.Arm.R)
+        lead = (if ord(side) == ord(Side.Left): terms.Arm.Left else: terms.Arm.Right)
+        follow = (if ord(target.hold[side].get) == ord(Site.LeftHand): terms.Arm.Left
+                  else: terms.Arm.Right)
       result[lead] = some follow
 
 func asked*(wind: float): float = -wind
@@ -78,7 +78,7 @@ func awayFor*(rest: Facing): bool =
   of Facing.FaceToBack: true
   else: raise newException(Defect, &"Simulation rests couple at no `{rest.name}`.")
 
-func away*(a: StillAsk): bool = awayFor(a.rest)
+func away*(ask: StillAsk): bool = awayFor(ask.rest)
   ## Say card's rest as simulation is told it.
 
 
@@ -124,24 +124,24 @@ func stillAsks*(): seq[StillAsk] =
     )
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
   # crown of dancer who walks under, which follows manner.
-  for c, single in SINGLES:
+  for single_index, single in SINGLES:
     for manner in Manner:
       let sense = windSense(manner)
-      for q in 0 ..< QUARTERS_ROUND:
+      for quarter in 0 ..< QUARTERS_ROUND:
         result.add StillAsk(
-          key: &"st_{MANNERS[manner].tag}_{c}_{q}",
+          key: &"st_{MANNERS[manner].tag}_{single_index}_{quarter}",
           links: linksOf(single.holds),
-          turns: asked(sense * float(q) / float(QUARTERS_ROUND)),
+          turns: asked(sense * float(quarter) / float(QUARTERS_ROUND)),
           rest: restOf(single.holds),
           head: bodyOf(MANNERS[manner].who),
         )
   # `C` and `D`: two chains, seven positions each, half turn apart.
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
-    for i, w in STEPS:
+    for i, wind in STEPS:
       result.add StillAsk(
         key: tag & $(i + 1),
         links: linksOf(arms),
-        turns: asked(w),
+        turns: asked(wind),
         rest: restOf(arms),
         head: Body.Two,
       )

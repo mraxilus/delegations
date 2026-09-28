@@ -14,18 +14,18 @@ import ../../src/dance_ontology/rotation
 
 suite "what each card asks of simulation":
   var byKey = initTable[string, StillAsk]()
-  for a in stillAsks(): byKey[a.key] = a
+  for ask in stillAsks(): byKey[ask.key] = ask
 
   test "one picture is one question, whichever section draws it":
     ## Standard diagram's A16 is hand to hand wound half turn clockwise, which
     ## is chain's C5, and A17 is C3.  Asked with opposite signs, simulation stood A16 in
     ## C3's pose and A17 in C5's, mirror of what each card draws.
     for (frame, chain) in [("A16", "C5"), ("A17", "C3")]:
-      let (a, c) = (byKey[frame], byKey[chain])
-      check a.links == c.links
-      check a.rest == c.rest
-      check a.head == c.head
-      check a.turns == c.turns
+      let (frame_ask, chain_ask) = (byKey[frame], byKey[chain])
+      check frame_ask.links == chain_ask.links
+      check frame_ask.rest == chain_ask.rest
+      check frame_ask.head == chain_ask.head
+      check frame_ask.turns == chain_ask.turns
 
   test "page counts clockwise seen from above, and simulation anticlockwise":
     ## Chain's C5 is wound half turn clockwise, and simulation turns anticlockwise for
@@ -56,9 +56,9 @@ suite "each hold rests at named facing":
     ## Card names its rest from model (`parts.restOf`), and simulation is told only
     ##   `away`.  Stance simulation then stands couple in, read by simulation's own words, is
     ##   what card named.  Distance puts no one at other side of other.
-    for a in stillAsks():
-      checkpoint a.key
-      check facingName(restStance(HUMAN, 1.0, a.away)) == some(a.rest.name)
+    for ask in stillAsks():
+      checkpoint ask.key
+      check facingName(restStance(HUMAN, 1.0, ask.away)) == some(ask.rest.name)
 
   test "simulation is asked no rest it cannot stand":
     ## Simulation stands couple Face-to-face or follow turned half, and no other rest.

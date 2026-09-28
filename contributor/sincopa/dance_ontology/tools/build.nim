@@ -52,7 +52,7 @@ import ../design/review_page
 const
   BUILD = "build"
     ## Directory every page, picture and script lands in.
-  BIN = "binaries"
+  BINARIES = "binaries"
     ## Directory tool binaries land in.
   DANGER = @["-d:danger", "--hints:off"]
     ## Options of runs whose speed is point, i.e. sweeps.
@@ -104,7 +104,7 @@ const
     ##   and `engine` clones there.
   DIRECTORY_DEPENDENCIES = "dependencies"
     ## Directory source clones land in. Never committed, as Atlas checkouts are not.
-  ENGINE_LIB = BIN / "libbox3d.a"
+  ENGINE_LIBRARY = BINARIES / "libbox3d.a"
     ## Engine archived into one library, which `simulation/engine.nim` links.
 
 
@@ -125,7 +125,7 @@ proc nim(arguments: openArray[string]) =
 
 proc compileRun(arguments: openArray[string]) =
   ## Compile and run program with args, quietly, binary into `binaries/`.
-  nim(@["c", "-r"] & QUIET & @["--outdir:" & BIN] & @arguments)
+  nim(@["c", "-r"] & QUIET & @["--outdir:" & BINARIES] & @arguments)
 
 
 
@@ -198,23 +198,23 @@ proc engine() =
     if got != commit:
       raise newException(OSError,
         "Clone of `" & name & "` stands at `" & got & "`, not pinned `" & commit & "`.")
-  if fileExists(ENGINE_LIB):
-    echo "Engine already archived: ", ENGINE_LIB
+  if fileExists(ENGINE_LIBRARY):
+    echo "Engine already archived: ", ENGINE_LIBRARY
     return
-  createDir(BIN)
+  createDir(BINARIES)
   let src = DIRECTORY_DEPENDENCIES / "box3d" / "src"
   var objects: seq[string]
   for path in walkFiles(src / "*.c"):
-    let object_file = BIN / path.extractFilename.changeFileExt("o")
+    let object_file = BINARIES / path.extractFilename.changeFileExt("o")
     run("cc", ["-O2", "-std=c17", "-I" & DIRECTORY_DEPENDENCIES / "box3d" / "include", "-I" & src,
                "-c", path, "-o", object_file])
     objects.add object_file
   if objects.len == 0:
     raise newException(OSError, "Engine's source holds no `.c` file; got `" & src & "`.")
-  run("ar", @["rcs", ENGINE_LIB] & objects)
+  run("ar", @["rcs", ENGINE_LIBRARY] & objects)
   for object_file in objects:
     removeFile(object_file)
-  echo "Engine archived: ", ENGINE_LIB, ", from ", objects.len, " files."
+  echo "Engine archived: ", ENGINE_LIBRARY, ", from ", objects.len, " files."
 
 
 proc dress() =
@@ -245,7 +245,7 @@ proc turnsJs() =
 
 proc turns() =
   ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/turns.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/turns.nim"])
 
 proc pages() =
   ## Write every page, picture and script under `build/`.
@@ -288,7 +288,7 @@ proc modelled() =
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
   ##   Verb asks nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/modelled.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/modelled.nim"])
 
 
 proc rig() =
@@ -298,12 +298,12 @@ proc rig() =
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.
   ##   Verb records nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/rig.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/rig.nim"])
 
 
 proc verdicts() =
   ## Rewrite `simulation/verdicts.md` from model; instrument run, not build.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "simulation/verdicts.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/verdicts.nim"])
 
 
 proc answers() =
@@ -313,7 +313,7 @@ proc answers() =
   ##     that read them from here would otherwise pay for them on every run.  Run
   ##     whenever any `simulation/*.nim` changes, since law refuses answers whose stamp is
   ##     not that of tree.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "simulation/answers.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/answers.nim"])
 
 
 func helpers(): seq[string] =
@@ -347,7 +347,7 @@ proc system() =
 proc clean() =
   ## Remove build products, caches and testament binaries.
   # `dependencies/` survives clean, as Atlas checkouts do: it is fetched source, not product.
-  for directory in [BIN, BUILD, "nimcache", "testresults"]: removeDir(directory)
+  for directory in [BINARIES, BUILD, "nimcache", "testresults"]: removeDir(directory)
   for path in walkFiles("tests" / "*"):
     if not path.endsWith(".nim"): removeFile(path)
 

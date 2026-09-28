@@ -111,19 +111,19 @@ suite "the sixteen facings, drawn":
         let shuts = page.find("</div>", at)
         var
           captions: seq[string]
-          c = page.find("<figcaption>", at)
-        while c >= 0 and c < shuts:
-          let start = c + "<figcaption>".len
+          caption_at = page.find("<figcaption>", at)
+        while caption_at >= 0 and caption_at < shuts:
+          let start = caption_at + "<figcaption>".len
           captions.add page[start ..< page.find("</figcaption>", start)]
-          c = page.find("<figcaption>", start)
+          caption_at = page.find("<figcaption>", start)
         check captions.len == 4
         for caption in captions:
           check caption.startsWith(side & "-to-")
         at = shuts
 
   test "each drawn facing reads back as the facing it is named for":
-    for named, o in ORIENTATIONS:
-      check turnedFacing(o.lead_turn, o.follow_turn) == some(named)
+    for named, orientation in ORIENTATIONS:
+      check turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named)
 
   test "every quarter the single-hand page draws names its facing, in its own place":
     # Read within each manner's section, in order: manners share names, so name found

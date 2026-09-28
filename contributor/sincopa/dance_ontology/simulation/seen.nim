@@ -25,8 +25,8 @@ type
     who*: Body
     arm*: Arm   ## Which arm, where `mark` is not `Trunk`.
     mark*: Mark
-    a*, z*: Vec ## Segment's two ends, in world.
-    r*: float   ## And radius round it.
+    a*, z*: Vector ## Segment's two ends, in world.
+    radius*: float   ## And radius round it.
 
   Ache* = object ## One arm's joints, each beside range it has to stay inside.
     who*: Body
@@ -35,15 +35,15 @@ type
     lower*, upper*: array[Dof, float] ## And ends it is held between.
 
   Faces* = object ## Where one dancer stands and which way they look.
-    at*: Vec   ## Axis at floor.
-    fore*: Vec ## Unit, horizontal, out of their chest.
+    at*: Vector   ## Axis at floor.
+    fore*: Vector ## Unit, horizontal, out of their chest.
 
   Still* = object ## One moment, everything page draws of it.
     at*: float          ## Turns from rest, signed.
     faces*: array[Body, Faces]
     bars*: seq[Bar]
     arms*: seq[Ache]
-    grips*: seq[Vec]    ## Where each pair of joined hands has got to.
+    grips*: seq[Vector]    ## Where each pair of joined hands has got to.
     apart*: seq[float]  ## And how far engine has pulled each pair apart.
 
   Shown* = object ## Whole sweep, and what came of it.
@@ -57,41 +57,48 @@ type
     stills*: seq[Still]
 
 
-func degrees*(r: float): float = r * 180.0 / PI
+func degrees*(radians: float): float = radians * 180.0 / PI
   ## Convert radians to degrees.
 
 
-proc acheOf(c: Couple; who: Body; arm: Arm): Ache =
+proc acheOf(couple: Couple; who: Body; arm: Arm): Ache =
   ## Read one arm's six joints, each against its own two ends.
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
   let
-    (swings, twist_angle, bend_angle, wrist_angle) = c.jointsOf(who, arm)
-    (twist_lower, twist_upper) = twistEnds(c.rig, arm)
+    (swings, twist_angle, bend_angle, wrist_angle) = couple.jointsOf(who, arm)
+    (twist_lower, twist_upper) = twistEnds(couple.rig, arm)
   result = Ache(who: who, arm: arm)
   result.read = [swings.extend, swings.across, twist_angle, bend_angle, wrist_angle]
-  for d in Dof:
-    result.lower[d] = c.rig.range[d].lower
-    result.upper[d] = c.rig.range[d].upper
+  for dof in Dof:
+    result.lower[dof] = couple.rig.range[dof].lower
+    result.upper[dof] = couple.rig.range[dof].upper
   result.lower[Dof.Twist] = twist_lower
   result.upper[Dof.Twist] = twist_upper
 
-proc stillOf(c: Couple; at: float): Still =
+proc stillOf(couple: Couple; at: float): Still =
   ## Everything page draws of couple as they stand this moment.
   result.at = at
   for who in Body:
-    let axes = axesOf(c.chestStance(who))
+    let axes = axesOf(couple.chestStance(who))
     result.faces[who] = Faces(at: axes.origin, fore: axes.fore)
-  for s in c.shapes:
-    let (a, z) = c.endsOf(s)
-    result.bars.add Bar(who: s.who, arm: s.arm, mark: s.mark, a: a, z: z, r: s.r)
+  for shape in couple.shapes:
+    let (a, z) = couple.endsOf(shape)
+    result.bars.add Bar(
+      who: shape.who,
+      arm: shape.arm,
+      mark: shape.mark,
+      a: a,
+      z: z,
+      radius: shape.radius,
+    )
   for who in Body:
     for arm in Arm:
-      result.arms.add c.acheOf(who, arm)
-  for i in 0 ..< c.links.len:
-    let p = c.poseOf(i)
-    result.grips.add (p.arms[0].g + p.arms[1].g) * 0.5
-    result.apart.add p.apart
+      result.arms.add couple.acheOf(who, arm)
+  for i in 0 ..< couple.links.len:
+    let pose = couple.poseOf(i)
+    result.grips.add (pose.arms[0].grip + pose.arms[1].grip) * 0.5
+    result.apart.add pose.apart
 
 proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
             turns: float; away = false; head = Body.Two; either = false): Shown =
@@ -103,13 +110,13 @@ proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
   result = Shown(hold: name, band: band, turns: turns, stopped: true, why: Stop.None)
   let where = standing(rig, band, links, turns, away, head, either)
   if not where.holds: return
-  let (holds, c) = stood(rig, band, links, where.turns, away, head, where.apart)
+  let (holds, couple) = stood(rig, band, links, where.turns, away, head, where.apart)
   if holds:
     result.apart = where.apart
     result.turns = where.turns
     result.stopped = false
-    result.stills.add stillOf(c, where.turns)
-  c.free()
+    result.stills.add stillOf(couple, where.turns)
+  couple.free()
 
 proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
             who = Body.Two; step = STEP; away = false;
@@ -132,13 +139,13 @@ proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
   )
   if not best.restHolds:
     return
-  var c = build(rig, restStance(rig, best.apart, away), band, links, head, away)
-  c.settle()
+  var couple = build(rig, restStance(rig, best.apart, away), band, links, head, away)
+  couple.settle()
   var at = 0.0
-  result.stills.add stillOf(c, at)
+  result.stills.add stillOf(couple, at)
   let most = (if best.stopped: best.at else: MOST)
   while abs(at) < most:
-    c.turn(who, step, BEATS)
+    couple.turn(who, step, BEATS)
     at += step
-    result.stills.add stillOf(c, at)
-  c.free()
+    result.stills.add stillOf(couple, at)
+  couple.free()

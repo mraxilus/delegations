@@ -47,9 +47,9 @@ func facingOf*(pose: Pose): Option[Facing] =
   ##     lead back across that axis: half turn round, less follow's own facing.
   ##   None between quarters, where dancer sees other at no one side.
   let
-    r = relative(pose)
-    lead = onQuarter(r.axis)
-    follow = onQuarter(r.axis + 180.0 - r.facing)
+    relation = relative(pose)
+    lead = onQuarter(relation.axis)
+    follow = onQuarter(relation.axis + 180.0 - relation.facing)
   if lead.isNone or follow.isNone: none(Facing)
   else: some(facing([Seen(lead.get), Seen(follow.get)]))
 
@@ -79,7 +79,7 @@ const ORIENTATIONS*: array[Facing, tuple[name: string; lead_turn, follow_turn: f
   ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
   ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
 
-const HOLD*: Holds = [some Arm.L, none Arm]
+const HOLD*: Holds = [some Arm.Left, none Arm]
   ## Workhorse hold: lead's Left to follow's left.
 
 const SETTLINGS* = [
@@ -109,23 +109,23 @@ const CHART_FACING* = 40.0
   ## follow chevron and not page.
 
 
-func said*(level: Option[Level]; arm = Arm.L): Levels =
+func said*(level: Option[Level]; arm = Arm.Left): Levels =
   ## Say one arm's level, or nothing at all where nothing was said.
   result[arm] = level
 
-func said*(way: Option[Way]; arm = Arm.L): Ways =
+func said*(way: Option[Way]; arm = Arm.Left): Ways =
   ## Say one arm's way, or nothing at all where nothing was said.
   result[arm] = way
 
 
-func replaceFirst*(s, pattern, by: string): string =
+func replaceFirst*(text, pattern, by: string): string =
   ## Replace only first occurrence, as figure post-passes need.
-  let at = s.find(pattern)
-  if at < 0: s
-  else: s[0 ..< at] & by & s[at + pattern.len .. ^1]
+  let at = text.find(pattern)
+  if at < 0: text
+  else: text[0 ..< at] & by & text[at + pattern.len .. ^1]
 
 
-func slotChart*(arm = Arm.L): string =
+func slotChart*(arm = Arm.Left): string =
   ## Draw one body with all six spots on it, and this hand's four marked.
   ##   Drawn rather than tabulated because table is thing most likely
   ##     to be wrong -- and drawn on body turned off vertical, because
@@ -141,26 +141,26 @@ func slotChart*(arm = Arm.L): string =
   bits.add border(chart, Dancer.Lead)
   bits.add chevron((0.0, 0.0), CHART_FACING)
   var lands: seq[tuple[arm: Arm, slot: Slot]]
-  for s in SETTLINGS:
-    let landed = slotOf(arm, s.level, s.way)
+  for settling in SETTLINGS:
+    let landed = slotOf(arm, settling.level, settling.way)
     if landed notin lands:
       lands.add landed
   for place in Arm:
     for slot in Slot:
       let
         aim = CHART_FACING + slotBearing(place, slot)
-        p = polar(0.0, 0.0, BODY_R, aim)
+        hand_centre = polar(0.0, 0.0, BODY_RADIUS, aim)
         # In this hand's own ink wherever it sits, because that is
         # whole point: Left hand carried to right side is still Left.
         used = (place, slot) in lands
-      bits.add hand(p.x, p.y, leads = true, arm = arm, held = used,
+      bits.add hand(hand_centre.x, hand_centre.y, leads = true, arm = arm, held = used,
                     level = none(Level),
                     free = (if used: Free.Fade else: Free.Grey))
       let
-        label = polar(0.0, 0.0, BODY_R + HAND_R + 13, aim)
+        label = polar(0.0, 0.0, BODY_RADIUS + HAND_RADIUS + 13, aim)
         anchor = if label.x < 0: "end" else: "start"
         text = if slot == Slot.Default: "side" else: word(slot)
-      bits.add &"""<text x="{n(label.x)}" y="{n(label.y + 3)}"""" &
+      bits.add &"""<text x="{numeral(label.x)}" y="{numeral(label.y + 3)}"""" &
         &""" text-anchor="{anchor}"""" &
         " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui," &
         &""" sans-serif; fill: {FAINT}">{text}</text>"""
@@ -176,25 +176,25 @@ func frameParts*(): Parts =
   result["f_low"] = renderFigure("f", HOLD, said(some Level.Low))
   result["f_high"] = renderFigure("f", HOLD, said(some Level.High))
   result["f_above"] = renderFigure("f", HOLD, said(some Level.Above))
-  result["f_over"] = renderFigure("f", [some Arm.L, some Arm.R],
+  result["f_over"] = renderFigure("f", [some Arm.Left, some Arm.Right],
                            [some Level.High, some Level.Low],
-                           over = some Arm.L)
+                           over = some Arm.Left)
 
   # Sixteen orientations, twice: with nothing held, where only colours
   # and chevrons can say it, and holding, where line is there too.  Each
   # drawn pose must read back as facing it is named for.
   var seen: HashSet[string]
-  for named, o in ORIENTATIONS:
-    doAssert turnedFacing(o.lead_turn, o.follow_turn) == some(named),
-      &"Orientation `{o.name}` draws another facing."
+  for named, orientation in ORIENTATIONS:
+    doAssert turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named),
+      &"Orientation `{orientation.name}` draws another facing."
     let i = ord(named)
     result[&"or_free_{i}"] = renderFigure("f", default(Holds),
-                                   lead_turn = o.lead_turn,
-                                   follow_turn = o.follow_turn)
-    result[&"or_held_{i}"] = renderFigure("f", HOLD, lead_turn = o.lead_turn,
-                                   follow_turn = o.follow_turn)
-    result[&"or_tiny_{i}"] = renderFigure("tiny", HOLD, lead_turn = o.lead_turn,
-                                   follow_turn = o.follow_turn,
+                                   lead_turn = orientation.lead_turn,
+                                   follow_turn = orientation.follow_turn)
+    result[&"or_held_{i}"] = renderFigure("f", HOLD, lead_turn = orientation.lead_turn,
+                                   follow_turn = orientation.follow_turn)
+    result[&"or_tiny_{i}"] = renderFigure("tiny", HOLD, lead_turn = orientation.lead_turn,
+                                   follow_turn = orientation.follow_turn,
                                    captions = false)
     seen.incl result[&"or_free_{i}"]
   doAssert seen.len == ORIENTATIONS.len,
@@ -211,24 +211,24 @@ func frameParts*(): Parts =
   # What pair of colours at two ends says.
   result["pair_ll"] = renderFigure("f", HOLD)
   result["pair_ll_turned"] = renderFigure("f", HOLD, follow_turn = 180)
-  result["pair_lr"] = renderFigure("f", [some Arm.R, none Arm])
-  result["pair_lr_turned"] = renderFigure("f", [some Arm.R, none Arm],
+  result["pair_lr"] = renderFigure("f", [some Arm.Right, none Arm])
+  result["pair_lr_turned"] = renderFigure("f", [some Arm.Right, none Arm],
                                    follow_turn = 180)
 
   # Six spots, and five settlings that reach four of them.
-  result["slot_chart"] = slotChart(Arm.L)
+  result["slot_chart"] = slotChart(Arm.Left)
   var reached: seq[tuple[arm: Arm, slot: Slot]]
-  for k, s in SETTLINGS:
-    result[&"settle_{k}"] = renderFigure("f", HOLD, said(s.level),
-                                  ways = said(s.way),
-                                  follow_turn = s.follow_turn,
+  for k, settling in SETTLINGS:
+    result[&"settle_{k}"] = renderFigure("f", HOLD, said(settling.level),
+                                  ways = said(settling.way),
+                                  follow_turn = settling.follow_turn,
                                   captions = false)
-    let landed = slotOf(Arm.L, s.level, s.way)
+    let landed = slotOf(Arm.Left, settling.level, settling.way)
     if landed notin reached:
       reached.add landed
   # Left hand reaches four of six; other two belong to Right.
-  doAssert reached.sorted == @[(Arm.L, Slot.Default), (Arm.L, Slot.Back),
-                               (Arm.R, Slot.Front), (Arm.R, Slot.Back)].sorted,
+  doAssert reached.sorted == @[(Arm.Left, Slot.Default), (Arm.Left, Slot.Back),
+                               (Arm.Right, Slot.Front), (Arm.Right, Slot.Back)].sorted,
     &"The settlings reach the wrong spots; got `{reached.sorted}`."
   # Both wraps share spot and are told apart by their fill alone.
   doAssert result["settle_3"] != result["settle_4"],
@@ -248,14 +248,14 @@ func frameParts*(): Parts =
   # And grid wrap rule implies: most states do not exist most of
   # time, which is worth drawing rather than asserting on its own.
   var drawn = 0
-  for s in GRID_STATES:
+  for state in GRID_STATES:
     for turn in GRID_TURNS:
       let
-        key = &"grid_{word(s.level)}_{word(s.way)}_{int(turn)}"
+        key = &"grid_{word(state.level)}_{word(state.way)}_{int(turn)}"
         pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
-      if danceable(pose, HOLD, said(some s.level), said(some s.way)):
-        result[key] = renderFigure("tiny", HOLD, said(some s.level),
-                            ways = said(some s.way), follow_turn = turn,
+      if danceable(pose, HOLD, said(some state.level), said(some state.way)):
+        result[key] = renderFigure("tiny", HOLD, said(some state.level),
+                            ways = said(some state.way), follow_turn = turn,
                             captions = false)
         inc drawn
       else:
@@ -281,13 +281,13 @@ func frameParts*(): Parts =
     stage_one[0].ring = none(Ring)     # nothing is travelling yet
     let landed = stage_one[^1]
     var stage_two = [0.5, 1.0].mapIt(canonicalise(landed, it))
-    for q in stage_two.mitems:
-      q.ring = none(Ring)
+    for pose in stage_two.mitems:
+      pose.ring = none(Ring)
     let
       walk = stage_one & stage_two
       half = walk.mapIt(extent(it, captions = false)).max
-    for k, q in walk:
-      result[&"walk_{tag}_{k}"] = renderFigure("wide", HOLD, pose = some q,
+    for k, pose in walk:
+      result[&"walk_{tag}_{k}"] = renderFigure("wide", HOLD, pose = some pose,
                                         captions = false, half = some half)
 
   # What collapses, and what does not.  Compound -- orbit walked
@@ -323,19 +323,19 @@ func frameParts*(): Parts =
 
   # And same four moves, running.
   const MOVE_PIXELS = 1.3  ## Pixels one unit takes in frame page's moving cells.
-  for m in MOVES:
+  for named_move in MOVES:
     let
-      tag = m.name.replace(" ", "_").replace(",", "")
-      half = cycle(m.apply).poses.mapIt(extent(it, captions = false)).max
-      style = &"""class="mv" style="width: {n(2 * half * MOVE_PIXELS)}px;""" &
-        &""" height: {n(2 * half * MOVE_PIXELS)}px""""
-    result[&"mv_{tag}"] = animated("mv", HOLD, m.apply, some half)
+      tag = named_move.name.replace(" ", "_").replace(",", "")
+      half = cycle(named_move.apply).poses.mapIt(extent(it, captions = false)).max
+      style = &"""class="mv" style="width: {numeral(2 * half * MOVE_PIXELS)}px;""" &
+        &""" height: {numeral(2 * half * MOVE_PIXELS)}px""""
+    result[&"mv_{tag}"] = animated("mv", HOLD, named_move.apply, some half)
       .replaceFirst("class=\"mv\"", style)
     result[&"mv_{tag}_still"] = renderFigure("mv still", HOLD, captions = false,
                                       half = some half)
       .replaceFirst("class=\"mv still\"",
-        &"""class="mv still" style="width: {n(2 * half * MOVE_PIXELS)}px;""" &
-          &""" height: {n(2 * half * MOVE_PIXELS)}px"""")
+        &"""class="mv still" style="width: {numeral(2 * half * MOVE_PIXELS)}px;""" &
+          &""" height: {numeral(2 * half * MOVE_PIXELS)}px"""")
 
 
 
@@ -355,15 +355,15 @@ func sized(svg, classes: string; half, pixels: float): string =
   ##   Shared by both turn pages -- it was defined twice, byte for byte,
   ##     inside each builder before pages were read side by side.
   svg.replaceFirst(&"class=\"{classes}\"",
-    &"""class="{classes}" style="width: {n(2 * half * pixels)}px;""" &
-      &""" height: {n(2 * half * pixels)}px"""")
+    &"""class="{classes}" style="width: {numeral(2 * half * pixels)}px;""" &
+      &""" height: {numeral(2 * half * pixels)}px"""")
 
 
 const SINGLES*: array[4, tuple[holds: Holds, name: string]] = [
-  ([some Arm.L, none Arm], "Left to left"),
-  ([some Arm.R, none Arm], "Left to right"),
-  ([none Arm, some Arm.L], "Right to left"),
-  ([none Arm, some Arm.R], "Right to right"),
+  ([some Arm.Left, none Arm], "Left to left"),
+  ([some Arm.Right, none Arm], "Left to right"),
+  ([none Arm, some Arm.Left], "Right to left"),
+  ([none Arm, some Arm.Right], "Right to right"),
 ] ## App's four single-hand frames, named as workbook names them.
 
 const
@@ -431,7 +431,7 @@ const FAMILY_OF*: array[Manner, Family] = [
 
 func levelsFor*(holds: Holds): Levels =
   ## Say above on whichever single arm is holding.
-  if holds[Arm.L].isSome: ABOVE_ONE else: ABOVE_OTHER
+  if holds[Arm.Left].isSome: ABOVE_ONE else: ABOVE_OTHER
 
 
 func quarterPose*(manner: Manner; quarter: int): Pose =
@@ -443,8 +443,8 @@ func quarterPose*(manner: Manner; quarter: int): Pose =
   ##     stand.  It is why orbit rounds draw as their axis partners do.
   ##   Framed on lead (rule 25), so they stand in same spot in
   ##     every cell of row and it is follow who is seen to move.
-  let w = MANNERS[manner]
-  result = canonicalise(turned(rest(), w.who, w.about,
+  let description = MANNERS[manner]
+  result = canonicalise(turned(rest(), description.who, description.about,
                                QUARTER * float(quarter)), on = Anchor.Lead)
   result.ring = none(Ring)
 
@@ -454,8 +454,8 @@ func placeOf*(pose: Pose): tuple[axis, facing: float] =
   ##   `relative` can hand back 360 where another hands back 0, and
   ##     negative zero where another hands back positive one, so both are
   ##     brought into round before anything is compared.
-  let r = relative(pose)
-  (floorMod(r.axis, 360.0), floorMod(r.facing, 360.0))
+  let relation = relative(pose)
+  (floorMod(relation.axis, 360.0), floorMod(relation.facing, 360.0))
 
 
 func turnGlyph*(label: string; width = 44.0): string =
@@ -463,16 +463,17 @@ func turnGlyph*(label: string; width = 44.0): string =
   ##   Arrow keeps its length whatever box; `width` is room for
   ##     label above it, which longer name needs more of.
   let
-    mid = width / 2
-    (tail, head) = (mid - 15, mid + 15)
-  &"""<svg viewBox="0 0 {n(width)} 30" width="{n(width)}" height="30"""" &
+    middle = width / 2
+    (tail, head) = (middle - 15, middle + 15)
+  &"""<svg viewBox="0 0 {numeral(width)} 30" width="{numeral(width)}" height="30"""" &
     " aria-hidden=\"true\">" &
-    &"""<text x="{n(mid)}" y="9" text-anchor="middle" style="font: 8px""" &
+    &"""<text x="{numeral(middle)}" y="9" text-anchor="middle" style="font: 8px""" &
     &""" ui-sans-serif, system-ui, sans-serif; fill: {FAINT}">{label}""" &
     "</text>" &
-    &"""<path d="M{n(tail)} 20 L{n(head)} 20 M{n(tail + 5)} 15""" &
-    &""" L{n(tail)} 20 L{n(tail + 5)} 25 M{n(head - 5)} 15 L{n(head)} 20""" &
-    &""" L{n(head - 5)} 25" fill="none" stroke="{QUIET}"""" &
+    &"""<path d="M{numeral(tail)} 20 L{numeral(head)} 20 M{numeral(tail + 5)} 15""" &
+    &""" L{numeral(tail)} 20 L{numeral(tail + 5)} 25""" &
+    &""" M{numeral(head - 5)} 15 L{numeral(head)} 20""" &
+    &""" L{numeral(head - 5)} 25" fill="none" stroke="{QUIET}"""" &
     """ stroke-width="1.6" stroke-linecap="round"""" &
     """ stroke-linejoin="round"/></svg>"""
 
@@ -501,12 +502,12 @@ func singleTurnParts*(): Parts =
     still_half = 0.0
     walk_half: array[Manner, float]
   for manner in Manner:
-    let w = MANNERS[manner]
+    let description = MANNERS[manner]
     for quarter in 0 ..< QUARTERS_ROUND:
       still_half = max(still_half,
                        extent(quarterPose(manner, quarter), captions = false))
-      walks[manner][quarter] = turnWalk(quarterPose(manner, quarter), w.who,
-                                     w.about, QUARTER, on = Anchor.Lead)
+      walks[manner][quarter] = turnWalk(quarterPose(manner, quarter), description.who,
+                                     description.about, QUARTER, on = Anchor.Lead)
       for put in walks[manner][quarter].poses:
         walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
@@ -516,21 +517,21 @@ func singleTurnParts*(): Parts =
   #     nothing new -- which is measured here rather than assumed.
   var rounds: array[Manner, Walk]
   for manner in Manner:
-    let w = MANNERS[manner]
-    rounds[manner] = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+    let description = MANNERS[manner]
+    rounds[manner] = turnWalk(quarterPose(manner, 0), description.who, description.about, QUARTER,
                               on = Anchor.Lead, steps = QUARTERS_ROUND,
                               back = false)
     for put in rounds[manner].poses:
       walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
   for manner in Manner:
-    let w = MANNERS[manner]
-    for c, single in SINGLES:
+    let description = MANNERS[manner]
+    for single_index, single in SINGLES:
       let levels = levelsFor(single.holds)
 
       # Every derived position of this manner.
       for quarter in 0 ..< QUARTERS_ROUND:
-        result[&"st_{w.tag}_{c}_{quarter}"] = sized(renderFigure("tiny",
+        result[&"st_{description.tag}_{single_index}_{quarter}"] = sized(renderFigure("tiny",
           single.holds, levels, captions = false,
           pose = some quarterPose(manner, quarter), half = some still_half,
           clear_marks = true), "tiny", still_half, STILL_PIXELS)
@@ -538,14 +539,14 @@ func singleTurnParts*(): Parts =
       # And every edge, walked in stages rule 18 asks for.
       for quarter in 0 ..< QUARTERS_ROUND:
         let to = (quarter + 1) mod QUARTERS_ROUND
-        result[&"tr_{w.tag}_{c}_{quarter}_{to}"] = sized(animatedPoses("mv",
+        result[&"tr_{description.tag}_{single_index}_{quarter}_{to}"] = sized(animatedPoses("mv",
           single.holds, walks[manner][quarter].poses, some walk_half[manner],
-          levels, dur = WALK_SECONDS, times = walks[manner][quarter].times),
+          levels, duration = WALK_SECONDS, times = walks[manner][quarter].times),
           "mv", walk_half[manner], PIXELS)
         # Still stands in where motion is turned off, so it is settled
         # picture and bends by rule 22; moving figure it replaces is
         # rule's own exemption and stays straight.
-        result[&"tr_{w.tag}_{c}_{quarter}_{to}_still"] = sized(
+        result[&"tr_{description.tag}_{single_index}_{quarter}_{to}_still"] = sized(
           renderFigure("mv still", single.holds, levels, captions = false,
                 pose = some quarterPose(manner, quarter),
                 half = some walk_half[manner], clear_marks = true),
@@ -553,11 +554,11 @@ func singleTurnParts*(): Parts =
 
       # And whole round in one figure, at pace its own quarters run at:
       # four legs where edge has two, so twice their clock.
-      result[&"rd_{w.tag}_{c}"] = sized(animatedPoses("mv",
+      result[&"rd_{description.tag}_{single_index}"] = sized(animatedPoses("mv",
         single.holds, rounds[manner].poses, some walk_half[manner],
-        levels, dur = 2 * WALK_SECONDS, times = rounds[manner].times),
+        levels, duration = 2 * WALK_SECONDS, times = rounds[manner].times),
         "mv", walk_half[manner], PIXELS)
-      result[&"rd_{w.tag}_{c}_still"] = sized(
+      result[&"rd_{description.tag}_{single_index}_still"] = sized(
         renderFigure("mv still", single.holds, levels, captions = false,
               pose = some quarterPose(manner, 0),
               half = some walk_half[manner], clear_marks = true),
@@ -567,12 +568,12 @@ func singleTurnParts*(): Parts =
 
   # Every position of round draws differently, or position it is not.
   for manner in Manner:
-    for c in 0 ..< SINGLES.len:
+    for single_index in 0 ..< SINGLES.len:
       var seen: seq[string]
       for quarter in 0 ..< QUARTERS_ROUND:
-        let figure = result[&"st_{MANNERS[manner].tag}_{c}_{quarter}"]
+        let figure = result[&"st_{MANNERS[manner].tag}_{single_index}_{quarter}"]
         doAssert figure notin seen,
-          &"Two quarters draw alike; got `{quarter}` of {manner} on {c}."
+          &"Two quarters draw alike; got `{quarter}` of {manner} on {single_index}."
         seen.add figure
 
   # Manners of one family walk one round of positions, and manners of different
@@ -595,7 +596,7 @@ func singleTurnParts*(): Parts =
     if not (key.startsWith("st_") or key.startsWith("tr_")):
       continue
     for piece in figure.split("<path "):
-      if &"stroke-width=\"{LINK_W}\"" in piece:
+      if &"stroke-width=\"{LINK_WIDTH}\"" in piece:
         doAssert " A" notin piece,
           &"A reach walks round a body; got an arc in `{key}`."
 
@@ -604,7 +605,7 @@ func singleTurnParts*(): Parts =
 #[ Hand-to-Hand Turns Page ]#
 
 const
-  HAND_TO_HAND*: Holds = [some Arm.R, some Arm.L]
+  HAND_TO_HAND*: Holds = [some Arm.Right, some Arm.Left]
     ## App's own two-hand frame: lead's Left in follow's right
     ## and lead's Right in follow's left, uncrossed.
   ABOVE_BOTH*: Levels = [some Level.Above, some Level.Above]
@@ -651,7 +652,7 @@ func phaseOf*(holds: Holds): float =
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
     let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
-    if abs(windOf(put, holds, Arm.L).spread) < 1e-6:
+    if abs(windOf(put, holds, Arm.Left).spread) < 1e-6:
       return phase
   raise newException(Defect, &"A hold runs parallel at neither phase; got `{holds}`.")
 
@@ -689,8 +690,8 @@ func chainFor*(holds: Holds): seq[Position] =
   for wind in STEPS:
     let
       shape = case int(abs(wind) * 2)
-              of 0: &"Left-to-{handName(holds[Arm.L].get)} and " &
-                    &"Right-to-{handName(holds[Arm.R].get)}"
+              of 0: &"Left-to-{handName(holds[Arm.Left].get)} and " &
+                    &"Right-to-{handName(holds[Arm.Right].get)}"
               of 1: "cross"
               of 2: "diamond"
               else: "swan"
@@ -730,9 +731,9 @@ func pairAt*(holds: Holds; wind, phase: float): array[Arm, seq[Point]] =
   ## Two reaches position draws, made as drawing makes them.
   let
     put = settled(posedAt(wind, phase), holds, ABOVE_BOTH, default(Ways))
-    p = handsOf(put)
+    hands = handsOf(put)
   for arm in Arm:
-    result[arm] = wound(p[Dancer.Lead][arm], p[Dancer.Follow][holds[arm].get],
+    result[arm] = wound(hands[Dancer.Lead][arm], hands[Dancer.Follow][holds[arm].get],
                         axisOf(put).across,
                         degToRad(windOf(put, holds, arm).phi),
                         2 * PI * wind, share = windShare(wind, arm))
@@ -751,18 +752,18 @@ func windSense*(manner: Manner): float =
   ##     no end to walk off side of.  Since rule 32 there is no such
   ##     manner -- every one of four winds -- and fallback stands only
   ##     so manner that stopped winding could not silently freeze.
-  let w = MANNERS[manner]
+  let description = MANNERS[manner]
   var turned_by = 0.0
-  for put in turnWalk(handPose(), w.who, w.about, HALF / 2,
+  for put in turnWalk(handPose(), description.who, description.about, HALF / 2,
                       on = Anchor.Lead).poses:
     let spread = windOf(settled(put, HAND_TO_HAND, ABOVE_BOTH, default(Ways)),
-                        HAND_TO_HAND, Arm.L).spread
+                        HAND_TO_HAND, Arm.Left).spread
     if abs(spread) > abs(turned_by):
       turned_by = spread
   if turned_by < -1e-9: -1.0 else: 1.0
 
 
-const PAIRED*: Holds = [some Arm.L, some Arm.R]
+const PAIRED*: Holds = [some Arm.Left, some Arm.Right]
   ## Same-name chain: lead's left to follow's left, right to right.  Index is
   ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
   ##   Rests Face-to-back rather than Face-to-face, since Face-to-face its two
@@ -796,7 +797,7 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
                                         captions = false))
   for manner in Manner:
     let
-      w = MANNERS[manner]
+      description = MANNERS[manner]
       sense = windSense(manner)
     walks[manner] = newSeq[Walk](chain.len - 1)
     for i in 0 ..< chain.len - 1:
@@ -808,7 +809,7 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
       #     turn by lead unwinds what positive turn by follow
       #     winds, so turning both same way sent lead's edges off
       #     end into second diamond.
-      walks[manner][i] = turnWalk(posedAt(chain[i].wind, phase), w.who, w.about,
+      walks[manner][i] = turnWalk(posedAt(chain[i].wind, phase), description.who, description.about,
                                HALF * sense, on = Anchor.Lead)
       for put in walks[manner][i].poses:
         walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
@@ -818,8 +819,8 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
   # close and takes return leg.
   var chains: array[Manner, Walk]
   for manner in Manner:
-    let w = MANNERS[manner]
-    chains[manner] = turnWalk(posedAt(chain[0].wind, phase), w.who, w.about,
+    let description = MANNERS[manner]
+    chains[manner] = turnWalk(posedAt(chain[0].wind, phase), description.who, description.about,
                               HALF * windSense(manner), on = Anchor.Lead,
                               steps = chain.len - 1)
     for put in chains[manner].poses:
@@ -835,16 +836,16 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
 
   # And every edge of it, walked by every manner of turn.
   for manner in Manner:
-    let w = MANNERS[manner]
+    let description = MANNERS[manner]
     for i in 0 ..< chain.len - 1:
-      result[&"{key}w_{w.tag}_{i}"] = sized(animatedPoses("mv", holds,
+      result[&"{key}w_{description.tag}_{i}"] = sized(animatedPoses("mv", holds,
         walks[manner][i].poses, some walk_half[manner], ABOVE_BOTH,
-        dur = WALK_SECONDS,
+        duration = WALK_SECONDS,
         times = walks[manner][i].times, wound = chain[i].wind),
         "mv", walk_half[manner], PIXELS)
       # Still stands in where motion is turned off, so it is
       # picture move sets off from (rule 22's exemption again).
-      result[&"{key}w_{w.tag}_{i}_still"] = sized(renderFigure("mv still",
+      result[&"{key}w_{description.tag}_{i}_still"] = sized(renderFigure("mv still",
         holds, ABOVE_BOTH, captions = false,
         pose = some posedAt(chain[i].wind, phase), half = some walk_half[manner],
         twist = windTwist(chain[i].wind), clear_marks = true),
@@ -852,11 +853,11 @@ func chainTurnParts*(holds: Holds; key: string): Parts =
 
     # And whole chain in one figure, at pace its own edges run at: six legs
     # out and six back where edge has one of each.
-    result[&"{key}c_{w.tag}"] = sized(animatedPoses("mv", holds,
+    result[&"{key}c_{description.tag}"] = sized(animatedPoses("mv", holds,
       chains[manner].poses, some walk_half[manner], ABOVE_BOTH,
-      dur = float(chain.len - 1) * WALK_SECONDS, times = chains[manner].times,
+      duration = float(chain.len - 1) * WALK_SECONDS, times = chains[manner].times,
       wound = chain[0].wind), "mv", walk_half[manner], PIXELS)
-    result[&"{key}c_{w.tag}_still"] = sized(renderFigure("mv still",
+    result[&"{key}c_{description.tag}_still"] = sized(renderFigure("mv still",
       holds, ABOVE_BOTH, captions = false,
       pose = some posedAt(chain[0].wind, phase), half = some walk_half[manner],
       twist = windTwist(chain[0].wind), clear_marks = true),
@@ -900,7 +901,7 @@ func signParts*(): Parts =
 
   # Whose quarter, and arms inside.
   result["s_split"] = sign(@[Row.Lead, Row.Lead], arms = split_arms)
-  result["s_acw"] = sign(newSeqWith(3, Row.Lead), Lean.Acw, low_arms)
+  result["s_acw"] = sign(newSeqWith(3, Row.Lead), Lean.Anticlockwise, low_arms)
   result["s_one_hand"] = sign(@[Row.Follow, Row.Follow],
                               arms = [(true, some Level.Low),
                                       (false, none Level)])
@@ -931,7 +932,7 @@ func signParts*(): Parts =
                           about = some About.Axis)
   result["o_orbit"] = sign(@[Row.Lead, Row.Lead], arms = split_arms,
                            about = some About.Orbit)
-  result["o_orbit_acw"] = sign(newSeqWith(3, Row.Follow), Lean.Acw,
+  result["o_orbit_acw"] = sign(newSeqWith(3, Row.Follow), Lean.Anticlockwise,
                                split_arms, about = some About.Orbit)
   result["o_axis_small"] = sign(@[Row.Lead, Row.Lead], arms = split_arms,
                                 about = some About.Axis, scale = 0.72)
@@ -951,9 +952,9 @@ func signParts*(): Parts =
     let
       count = if ending in [Ending.EllipsisEnd, Ending.RepeatEnd]: 3 else: 4
       base = newSeqWith(count, Row.Lead)
-      foll = newSeqWith(count, Row.Follow)
+      follow = newSeqWith(count, Row.Follow)
     result[&"any_{name}"] = sign(base, arms = low_arms, ending = some ending)
     result[&"any_{name}_small"] = sign(base, arms = low_arms,
                                        ending = some ending, scale = 0.72)
-    result[&"any_{name}_foll"] = sign(foll, arms = low_arms,
+    result[&"any_{name}_foll"] = sign(follow, arms = low_arms,
                                       ending = some ending)

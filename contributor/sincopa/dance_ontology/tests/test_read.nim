@@ -28,8 +28,8 @@ const
     ## Both two-hand holds, and whether each rests with follow turned away.
   TURNS = [0.0, 0.25, 0.5, 0.75, 1.0] ## Turns each hold is settled at.
 
-func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
-  ## How far `p` lies off polyline in plan, and how high polyline is there.
+func nearestOn(line: array[7, Vector]; point: Vector): tuple[offset, z: float] =
+  ## How far `point` lies off polyline in plan, and how high polyline is there.
   ##   Rebuilt here rather than borrowed from reader, which keeps its own copy
   ##     private: borrowing it would check reader against itself (Article II.9).
   result = (1e9, 0.0)
@@ -37,16 +37,16 @@ func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
     let
       a = line[i]
       b = line[i + 1]
-      dx = b.x - a.x
-      dy = b.y - a.y
-      run = dx * dx + dy * dy
+      delta_x = b.x - a.x
+      delta_y = b.y - a.y
+      run = delta_x * delta_x + delta_y * delta_y
     if run < 1e-18:
       continue
     let
-      u = clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / run, 0.0, 1.0)
-      off = sqrt((p.x - a.x - dx * u) ^ 2 + (p.y - a.y - dy * u) ^ 2)
-    if off < result.off:
-      result = (off, a.z + (b.z - a.z) * u)
+      u = clamp(((point.x - a.x) * delta_x + (point.y - a.y) * delta_y) / run, 0.0, 1.0)
+      offset = sqrt((point.x - a.x - delta_x * u) ^ 2 + (point.y - a.y - delta_y * u) ^ 2)
+    if offset < result.offset:
+      result = (offset, a.z + (b.z - a.z) * u)
 
 
 
@@ -69,14 +69,14 @@ proc settling(id: int) {.thread.} =
       let i = SETTLE_NEXT.fetchAdd(1)
       if i >= SETTLES.len: return
       let
-        s = SETTLES[i]
-        links = @(PAIRS[s.pair][0])
-        away = PAIRS[s.pair][1]
-      var c = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, s.turn),
-                    s.band, links, away = away)
-      c.settle()
-      for k in 0 ..< links.len: SETTLED_ARMS[i][k] = c.poseOf(k).arms
-      c.free()
+        task = SETTLES[i]
+        links = @(PAIRS[task.pair][0])
+        away = PAIRS[task.pair][1]
+      var couple = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, task.turn),
+                    task.band, links, away = away)
+      couple.settle()
+      for k in 0 ..< links.len: SETTLED_ARMS[i][k] = couple.poseOf(k).arms
+      couple.free()
 
 proc settleAll() =
   ## Settle both holds at every band and turn, on every core at once.
@@ -88,7 +88,7 @@ proc settleAll() =
   SETTLED_ARMS = newSeq[array[2, array[2, ArmPose]]](SETTLES.len)
   SETTLE_NEXT.store(0)
   var workers = newSeq[Thread[int]](max(1, countProcessors()))
-  for w in 0 ..< workers.len: createThread(workers[w], settling, w)
+  for worker in 0 ..< workers.len: createThread(workers[worker], settling, worker)
   joinThreads(workers)
 
 
@@ -99,17 +99,17 @@ suite "two hands":
     for i in 0 ..< SETTLES.len:
       let
         arms: Arms = @[SETTLED_ARMS[i][0], SETTLED_ARMS[i][1]]
-        p = polyline(arms, 0)
-        q = polyline(arms, 1)
-      for x in crossings(arms):
+        first_line = polyline(arms, 0)
+        second_line = polyline(arms, 1)
+      for crossing in crossings(arms):
         inc seen
         let
-          k = int(x.along)
-          on = p[k] + (p[k + 1] - p[k]) * (x.along - float(k))
-          other = nearestOn(q, x.at)
-        check abs(x.at.x - on.x) < 1e-9 and abs(x.at.y - on.y) < 1e-9
-        check other.off < 1e-9
-        check (x.over == 0) == (x.at.z >= other.z)
+          k = int(crossing.along)
+          on = first_line[k] + (first_line[k + 1] - first_line[k]) * (crossing.along - float(k))
+          other = nearestOn(second_line, crossing.at)
+        check abs(crossing.at.x - on.x) < 1e-9 and abs(crossing.at.y - on.y) < 1e-9
+        check other.offset < 1e-9
+        check (crossing.over == 0) == (crossing.at.z >= other.z)
     echo &"    {seen} crossings read off two holds, three bands, five turns"
     check seen > 0
 
@@ -121,36 +121,51 @@ suite "two hands":
     ## as four crossings and as one (repository issue 88).  Same count for exact
     ## figures and for thousand poses jittered by 1e-13, which is below anything
     ## pose carries, and count in exact terms is one in both.
-    func armsOf(p, q: array[7, Vec]): Arms =
+    func armsOf(first, second: array[7, Vector]): Arms =
       ## Two connections from their seven points each, grip in middle.
-      func pose(s, e, w, g: Vec): ArmPose = ArmPose(s: s, e: e, w: w, g: g)
+      func pose(shoulder_point, elbow_point, wrist_point, grip_point: Vector): ArmPose =
         ## Build arm pose from its four joints.
-      @[[pose(p[0], p[1], p[2], p[3]), pose(p[6], p[5], p[4], p[3])],
-        [pose(q[0], q[1], q[2], q[3]), pose(q[6], q[5], q[4], q[3])]]
+        ArmPose(shoulder: shoulder_point, elbow: elbow_point, wrist: wrist_point, grip: grip_point)
+      @[
+        [
+          pose(first[0], first[1], first[2], first[3]),
+          pose(first[6], first[5], first[4], first[3]),
+        ],
+        [
+          pose(second[0], second[1], second[2], second[3]),
+          pose(second[6], second[5], second[4], second[3]),
+        ],
+      ]
     let
       # Along x at y nought; vertex two at (0.4, 0).
-      p: array[7, Vec] = [(0.0, 0.0, 1.0), (0.2, 0.0, 1.1), (0.4, 0.0, 1.2), (0.6, 0.0, 1.3),
+      base: array[7, Vector] = [(0.0, 0.0, 1.0), (0.2, 0.0, 1.1), (0.4, 0.0, 1.2), (0.6, 0.0, 1.3),
                           (0.8, 0.0, 1.3), (1.0, 0.0, 1.2), (1.2, 0.0, 1.1)]
       # Up y at x 0.4; vertex three at (0.4, 0): crossing at vertex of both.
-      q: array[7, Vec] = [(0.4, -0.6, 1.5), (0.4, -0.4, 1.5), (0.4, -0.2, 1.5), (0.4, 0.0, 1.5),
-                          (0.4, 0.2, 1.5), (0.4, 0.4, 1.5), (0.4, 0.6, 1.5)]
+      at_vertex: array[7, Vector] = [(0.4, -0.6, 1.5), (0.4, -0.4, 1.5), (0.4, -0.2, 1.5),
+                          (0.4, 0.0, 1.5), (0.4, 0.2, 1.5), (0.4, 0.4, 1.5), (0.4, 0.6, 1.5)]
       # In from below, along p for four vertices, out to above: one crossing.
-      t: array[7, Vec] = [(0.05, -0.05, 1.5), (0.3, 0.0, 1.5), (0.5, 0.0, 1.5), (0.7, 0.0, 1.5),
-                          (0.9, 0.0, 1.5), (1.1, 0.1, 1.5), (1.3, 0.2, 1.5)]
+      along_base: array[7, Vector] = [(0.05, -0.05, 1.5), (0.3, 0.0, 1.5), (0.5, 0.0, 1.5),
+                          (0.7, 0.0, 1.5), (0.9, 0.0, 1.5), (1.1, 0.1, 1.5), (1.3, 0.2, 1.5)]
     var random = initRand(7)
-    for (name, other) in [("at vertex", q), ("along", t)]:
-      let exact = crossings(armsOf(p, other)).len
+    for (name, other) in [("at vertex", at_vertex), ("along", along_base)]:
+      let exact = crossings(armsOf(base, other)).len
       var counts: CountTable[int]
       for trial in 0 ..< 1000:
         var
-          pp = p
-          oo = other
+          base_jittered = base
+          other_jittered = other
         for i in 0 .. 6:
-          pp[i] = (pp[i].x + random.rand(-1e-13 .. 1e-13), pp[i].y + random.rand(-1e-13 .. 1e-13),
-                   pp[i].z)
-          oo[i] = (oo[i].x + random.rand(-1e-13 .. 1e-13), oo[i].y + random.rand(-1e-13 .. 1e-13),
-                   oo[i].z)
-        counts.inc crossings(armsOf(pp, oo)).len
+          base_jittered[i] = (
+            base_jittered[i].x + random.rand(-1e-13 .. 1e-13),
+            base_jittered[i].y + random.rand(-1e-13 .. 1e-13),
+            base_jittered[i].z,
+          )
+          other_jittered[i] = (
+            other_jittered[i].x + random.rand(-1e-13 .. 1e-13),
+            other_jittered[i].y + random.rand(-1e-13 .. 1e-13),
+            other_jittered[i].z,
+          )
+        counts.inc crossings(armsOf(base_jittered, other_jittered)).len
       echo &"    {name}: exact {exact}, jittered {counts}"
       check exact == 1
       check counts.len == 1
@@ -160,12 +175,12 @@ suite "two hands":
     ## Read off same poses: whichever joint `tightest` names, no other joint of
     ## any held arm has less margin, and joint at its edge reads strain of one.
     let links = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
-    var c = build(HUMAN, restStance(HUMAN, APART), Band.Torso, links)
-    c.settle()
-    var arms: Arms = @[c.poseOf(0).arms]
-    let t = tightest(HUMAN, c.stance, links, arms)
-    check t.room < Inf
-    check t.strain >= 0.0 and t.strain <= 1.0
+    var couple = build(HUMAN, restStance(HUMAN, APART), Band.Torso, links)
+    couple.settle()
+    var arms: Arms = @[couple.poseOf(0).arms]
+    let tight = tightest(HUMAN, couple.stance, links, arms)
+    check tight.room < Inf
+    check tight.strain >= 0.0 and tight.strain <= 1.0
     check abs(strain(Tight(room: 0.0)) - 1.0) < 1e-9
     check abs(strain(Tight(room: 1.0)) - 0.0) < 1e-9
-    c.free()
+    couple.free()

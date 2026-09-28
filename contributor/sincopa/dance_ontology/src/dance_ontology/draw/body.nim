@@ -1,7 +1,7 @@
 ## Draw one dancer: circle, with small chevron at its centre for
 ## facing.
 ##
-##   Boundary is one polar function, `outlineR`, shared by drawing,
+##   Boundary is one polar function, `outlineRadius`, shared by drawing,
 ##     hands and routing -- so "on border" is true by
 ##     construction rather than by two pieces of code agreeing.
 ##     Cost of one polar boundary: every shape dancer could take must be
@@ -32,20 +32,20 @@ import ./[geometry, pose, style, terms]
 
 
 const
-  BODY_R* = 20.0     ## Dancer, seen from above; their hands sit on it.
-  RIM_W* = 2.2       ## One width for whole boundary.
+  BODY_RADIUS* = 20.0     ## Dancer, seen from above; their hands sit on it.
+  RIM_WIDTH* = 2.2       ## One width for whole boundary.
 
 const
-  CHEV_OUT* = 7.0    ## How far centred chevron reaches forward.
-  CHEV_BACK = 1.0   ## And how little it reaches back.
-  CHEV_HALF = 5.0   ## Half its width, well inside rim.
-  CHEV_W = 1.6      ## Width its two legs are drawn at.
+  CHEVRON_OUT* = 7.0    ## How far centred chevron reaches forward.
+  CHEVRON_BACK = 1.0   ## And how little it reaches back.
+  CHEVRON_HALF = 5.0   ## Half its width, well inside rim.
+  CHEVRON_WIDTH = 1.6      ## Width its two legs are drawn at.
 
 const
   RIM_STEP* = 3.0    ## Degrees between samples when route walks rim.
   ARM_REST* = 90.0   ## Resting hand, one quarter of rim from front.
-  HAND_R* = 6.0      ## Hand mark's radius, or half its side.
-  CAPTION_R* = BODY_R + HAND_R + 2   ## Just past hand that caption names.
+  HAND_RADIUS* = 6.0      ## Hand mark's radius, or half its side.
+  CAPTION_RADIUS* = BODY_RADIUS + HAND_RADIUS + 2   ## Just past hand that caption names.
   FREE_FADE* = 0.5   ## How far hand nobody holds fades, keeping its hue.
 
 const SLOT_OFFSET* = 44.0
@@ -55,7 +55,7 @@ const SLOT_OFFSET* = 44.0
   ##     side.  Drawn convention, not something dance says;
   ##     `PROVENANCE.md` keeps it on open list.
 
-const HAND_GAP* = radToDeg(arcsin((HAND_R + CAP) / BODY_R))
+const HAND_GAP* = radToDeg(arcsin((HAND_RADIUS + CAP) / BODY_RADIUS))
   ## Rim's clearance around hand mark: same reach connection
   ## keeps, turned into arc, so boundary and reach stop at one border.
 
@@ -66,12 +66,12 @@ const
                        ## clear as shape it is.
 
 const
-  LEAD_CLEAR* = HAND_R * sqrt(2.0) + MARK_STROKE / 2 + CAP + SEEN_GAP
+  LEAD_CLEAR* = HAND_RADIUS * sqrt(2.0) + MARK_STROKE / 2 + CAP + SEEN_GAP
     ## How far settled reach stays off lead's hand: their mark is
     ## square, so its corner is far part of it (rule 22).
-  FOLLOW_CLEAR* = HAND_R + MARK_STROKE / 2 + CAP + SEEN_GAP
+  FOLLOW_CLEAR* = HAND_RADIUS + MARK_STROKE / 2 + CAP + SEEN_GAP
     ## And off follow's, whose mark is circle.
-  CHEVRON_CLEAR* = CHEV_W / 2 + CAP + SEEN_GAP
+  CHEVRON_CLEAR* = CHEVRON_WIDTH / 2 + CAP + SEEN_GAP
     ## And off chevron's stroke.
     ##   Chevron is kept clear along its own two legs rather than as one
     ##     disc over whole of it: it is thin V pointing forward, and
@@ -94,8 +94,8 @@ func slotBearing*(arm: Arm; slot: Slot): float =
   ##     slightly towards dancer's front and one slightly towards their
   ##     back -- rule 3's six, named for what they are.
   let
-    base = if arm == Arm.L: -ARM_REST else: ARM_REST
-    forward = if arm == Arm.L: SLOT_OFFSET else: -SLOT_OFFSET
+    base = if arm == Arm.Left: -ARM_REST else: ARM_REST
+    forward = if arm == Arm.Left: SLOT_OFFSET else: -SLOT_OFFSET
   base + (case slot
           of Slot.Front: forward
           of Slot.Back: -forward
@@ -123,7 +123,7 @@ func roundOf*(level: Option[Level]; way: Option[Way]): Option[Sends] =
 func handBearing*(facing: float; arm: Arm; wind = 0.0): float =
   ## Get bearing hand sits at: round from front, past rest spot
   ## by however far arm has been carried.
-  facing + (if arm == Arm.L: -1.0 else: 1.0) * (ARM_REST + wind)
+  facing + (if arm == Arm.Left: -1.0 else: 1.0) * (ARM_REST + wind)
 
 
 func settledWind*(arm: Arm; level: Option[Level]; way: Option[Way]): float =
@@ -134,12 +134,12 @@ func settledWind*(arm: Arm; level: Option[Level]; way: Option[Way]): float =
   let
     landed = slotOf(arm, level, way)
     aim = slotBearing(landed.arm, landed.slot)
-  if arm == Arm.L: -ARM_REST - aim else: aim - ARM_REST
+  if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
 
 
 func handPoint*(centre: Point; facing: float; arm: Arm; wind = 0.0): Point =
   ## Get where one hand is on rim.
-  polar(centre.x, centre.y, BODY_R, handBearing(facing, arm, wind))
+  polar(centre.x, centre.y, BODY_RADIUS, handBearing(facing, arm, wind))
 
 
 func handsOf*(pose: Pose): array[Dancer, array[Arm, Point]] =
@@ -153,31 +153,32 @@ func handsOf*(pose: Pose): array[Dancer, array[Arm, Point]] =
 
 #[ Boundary ]#
 
-func outlineR*(delta: float): float =
+func outlineRadius*(delta: float): float =
   ## Get how far boundary is from centre at this bearing off
   ## front.
   ##   One function, used by drawing and by anything that has to stay
   ##     outside body -- so "on border" is true by construction.
   ##     Body is plain circle now; function stays because routing
   ##     reads boundary through it.
-  BODY_R
+  BODY_RADIUS
 
 
 func outlinePoint*(centre: Point; facing, theta: float): Point =
   ## Get boundary point at world bearing.
-  polar(centre.x, centre.y, outlineR(theta - facing), theta)
+  polar(centre.x, centre.y, outlineRadius(theta - facing), theta)
 
 
-func rim*(centre: Point; facing, a, b: float; width = RIM_W): string =
+func rim*(centre: Point; facing, bearing_start, bearing_stop: float; width = RIM_WIDTH): string =
   ## Draw one stretch of boundary, once and by one owner.
   let
-    span = b - a
-    start = outlinePoint(centre, facing, a)
-    stop = outlinePoint(centre, facing, b)
+    span = bearing_stop - bearing_start
+    start = outlinePoint(centre, facing, bearing_start)
+    stop = outlinePoint(centre, facing, bearing_stop)
     large = if abs(span) > 180: 1 else: 0
     sweep = if span > 0: 1 else: 0
-    d = &"M{xy(start)} A{n(BODY_R)} {n(BODY_R)} 0 {large} {sweep} {xy(stop)}"
-  &"""<path d="{d}" fill="none" stroke="{QUIET}" stroke-width="{width}"""" &
+    path_data = &"M{coordinates(start)} A{numeral(BODY_RADIUS)} {numeral(BODY_RADIUS)}" &
+      &" 0 {large} {sweep} {coordinates(stop)}"
+  &"""<path d="{path_data}" fill="none" stroke="{QUIET}" stroke-width="{width}"""" &
     " stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
 
 
@@ -188,13 +189,13 @@ func chevronPoints*(centre: Point; facing: float): array[3, Point] =
   ##     keep off it read same V (rule 22).
   let
     radians = degToRad(facing)
-    fwd = (x: sin(radians), y: -cos(radians))
+    forward = (x: sin(radians), y: -cos(radians))
     across = (x: cos(radians), y: sin(radians))
-  [(centre.x - fwd.x * CHEV_BACK - across.x * CHEV_HALF,
-    centre.y - fwd.y * CHEV_BACK - across.y * CHEV_HALF),
-   (centre.x + fwd.x * CHEV_OUT, centre.y + fwd.y * CHEV_OUT),
-   (centre.x - fwd.x * CHEV_BACK + across.x * CHEV_HALF,
-    centre.y - fwd.y * CHEV_BACK + across.y * CHEV_HALF)]
+  [(centre.x - forward.x * CHEVRON_BACK - across.x * CHEVRON_HALF,
+    centre.y - forward.y * CHEVRON_BACK - across.y * CHEVRON_HALF),
+   (centre.x + forward.x * CHEVRON_OUT, centre.y + forward.y * CHEVRON_OUT),
+   (centre.x - forward.x * CHEVRON_BACK + across.x * CHEVRON_HALF,
+    centre.y - forward.y * CHEVRON_BACK + across.y * CHEVRON_HALF)]
 
 
 func chevron*(centre: Point; facing: float): string =
@@ -204,10 +205,11 @@ func chevron*(centre: Point; facing: float): string =
   ##     dancer nothing else uses.
   let
     drawn = chevronPoints(centre, facing)
-    (a, apex, b) = (drawn[0], drawn[1], drawn[2])
-  &"""<polyline points="{n(a.x)},{n(a.y)} {n(apex.x)},{n(apex.y)}""" &
-    &""" {n(b.x)},{n(b.y)}" fill="none" stroke="{QUIET}"""" &
-    &" stroke-width=\"{n(CHEV_W)}\" stroke-linecap=\"round\"" &
+    (wing_a, apex, wing_b) = (drawn[0], drawn[1], drawn[2])
+  &"""<polyline points="{numeral(wing_a.x)},{numeral(wing_a.y)}""" &
+    &""" {numeral(apex.x)},{numeral(apex.y)}""" &
+    &""" {numeral(wing_b.x)},{numeral(wing_b.y)}" fill="none" stroke="{QUIET}"""" &
+    &" stroke-width=\"{numeral(CHEVRON_WIDTH)}\" stroke-linecap=\"round\"" &
     " stroke-linejoin=\"round\"/>"
 
 
@@ -221,8 +223,8 @@ func border*(pose: Pose; who: Dancer): string =
     centre = pose.place[who]
     facing = pose.facing[who]
     wind = pose.wind[who]
-    right = ARM_REST + wind[Arm.R]
-    left = ARM_REST + wind[Arm.L]
+    right = ARM_REST + wind[Arm.Right]
+    left = ARM_REST + wind[Arm.Left]
     # Every stretch stops one hand-gap short of hand, so boundary never
     # runs through mark -- and stretch that extreme winding has squeezed
     # away is simply not drawn.
@@ -230,9 +232,9 @@ func border*(pose: Pose; who: Dancer): string =
       (right + HAND_GAP, 360 - left - HAND_GAP),        # behind
       (360 - left + HAND_GAP, 360 + right - HAND_GAP),  # across front
     ]
-  for (a, b) in stretches:
-    if b - a > 0.01:
-      result.add rim(centre, facing, facing + a, facing + b)
+  for (start, stop) in stretches:
+    if stop - start > 0.01:
+      result.add rim(centre, facing, facing + start, facing + stop)
 
 
 
@@ -248,7 +250,7 @@ func fillOf*(level: Option[Level]; arm: Arm; deep = false): string =
   "none"
 
 
-func hand*(cx, cy: float; leads: bool; arm: Arm; held = true;
+func hand*(centre_x, centre_y: float; leads: bool; arm: Arm; held = true;
     level = none(Level); free = Free.Fade): string =
   ## Draw one hand, in its own side's ink: lead's deep, follow's
   ## plain.
@@ -259,16 +261,18 @@ func hand*(cx, cy: float; leads: bool; arm: Arm; held = true;
     faded = if held or free != Free.Fade: ""
             else: &" opacity=\"{FREE_FADE}\""
     dot = if level == some(Level.High):
-            &"""<circle cx="{n(cx)}" cy="{n(cy)}" r="2.7" fill="{stroke}"/>"""
+            &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
+              &""" r="2.7" fill="{stroke}"/>"""
           else: ""
     style = &"fill: {fill}; stroke: {stroke}; stroke-width: 1.5"
     shape =
       if leads:
-        &"""<rect x="{n(cx - HAND_R)}" y="{n(cy - HAND_R)}"""" &
-          &""" width="{n(2 * HAND_R)}"""" &
-          &""" height="{n(2 * HAND_R)}" rx="1.5" style="{style}"{faded}/>"""
+        &"""<rect x="{numeral(centre_x - HAND_RADIUS)}" y="{numeral(centre_y - HAND_RADIUS)}"""" &
+          &""" width="{numeral(2 * HAND_RADIUS)}"""" &
+          &""" height="{numeral(2 * HAND_RADIUS)}" rx="1.5" style="{style}"{faded}/>"""
       else:
-        &"""<circle cx="{n(cx)}" cy="{n(cy)}" r="{n(HAND_R)}" style="{style}"""" &
+        &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
+          &""" r="{numeral(HAND_RADIUS)}" style="{style}"""" &
           &"{faded}/>"
   shape & dot
 
@@ -281,7 +285,7 @@ func ringOf*(pose: Pose): string =
   if pose.ring.isNone:
     return ""
   let (centre, radius) = pose.ring.get
-  &"""<circle cx="{n(centre.x)}" cy="{n(centre.y)}" r="{n(radius)}"""" &
+  &"""<circle cx="{numeral(centre.x)}" cy="{numeral(centre.y)}" r="{numeral(radius)}"""" &
     &""" fill="none" stroke="{QUIET}" stroke-width="1"""" &
     """ stroke-dasharray="3 4"/>"""
 
@@ -296,12 +300,12 @@ func caption*(centre: Point; facing: float; arm: Arm; text: string;
   ##   Lead's captions take deep shade and follow's plain,
   ##     as marks below them do.
   let
-    p = polar(centre.x, centre.y, CAPTION_R, handBearing(facing, arm, wind))
-    dx = p.x - centre.x
-    (anchor, dy) =
-      if dx < -2: ("end", 3.0)
-      elif dx > 2: ("start", 3.0)
-      else: ("middle", if p.y < centre.y: -3.0 else: 8.0)
-  &"""<text x="{n(p.x)}" y="{n(p.y + dy)}" text-anchor="{anchor}"""" &
+    point = polar(centre.x, centre.y, CAPTION_RADIUS, handBearing(facing, arm, wind))
+    delta_x = point.x - centre.x
+    (anchor, shift_y) =
+      if delta_x < -2: ("end", 3.0)
+      elif delta_x > 2: ("start", 3.0)
+      else: ("middle", if point.y < centre.y: -3.0 else: 8.0)
+  &"""<text x="{numeral(point.x)}" y="{numeral(point.y + shift_y)}" text-anchor="{anchor}"""" &
     " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui, sans-serif;" &
     &""" fill: {ink}">{text}</text>"""

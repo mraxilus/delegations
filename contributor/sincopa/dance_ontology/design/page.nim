@@ -195,7 +195,7 @@ func swatch*(kind: Swatch): string =
     faint = if kind == Swatch.Free: &" opacity=\"{FREE_FADE}\"" else: ""
   var bits =
     @["""<svg viewBox="0 0 36 16" width="36" height="16" aria-hidden="true">"""]
-  for (leads, arm, cx) in [(true, Arm.L, 7.0), (false, Arm.R, 28.0)]:
+  for (leads, arm, centre_x) in [(true, Arm.Left, 7.0), (false, Arm.Right, 28.0)]:
     let
       ink = if leads: DEEP[arm] else: INK[arm]
       fill = fillOf(level, arm, leads)
@@ -206,10 +206,10 @@ func swatch*(kind: Swatch): string =
       bits.add &"""<circle cx="28" cy="8" r="6" fill="{fill}"""" &
         &""" stroke="{ink}" stroke-width="1.5"{faint}/>"""
     if kind == Swatch.High:
-      bits.add &"""<circle cx="{n(cx)}" cy="8" r="2.7" fill="{ink}"/>"""
+      bits.add &"""<circle cx="{numeral(centre_x)}" cy="8" r="2.7" fill="{ink}"/>"""
   bits.join("") & "</svg>"
 
 
-func fig*(svg, caption: string): string =
+func figure*(svg, caption: string): string =
   ## Set one figure beside its caption.
   &"<figure>{svg}<figcaption>{caption}</figcaption></figure>"

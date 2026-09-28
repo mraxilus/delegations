@@ -81,82 +81,82 @@ const CHAIN* = [Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
   ## Cross-name chain, L-r.R-l, whose rungs report asks still.
 
 
-func linksOf*(a: SweepAsk): seq[Link] =
+func linksOf*(ask: SweepAsk): seq[Link] =
   ## Connections sweep asks for.
-  for i in 0 ..< a.count: result.add a.links[i]
+  for i in 0 ..< ask.count: result.add ask.links[i]
 
 func askOf*(band: Band; links: seq[Link]; who: Body; away: bool; apart: float): SweepAsk =
   ## Sweep ask as plain values.
   result = SweepAsk(band: band, count: links.len, who: who, away: away, apart: apart)
   for i, link in links: result.links[i] = link
 
-func keyOf*(a: SweepAsk): string =
+func keyOf*(ask: SweepAsk): string =
   ## Name sweep by all it is of.
-  result = $ord(a.who) & "|" & $ord(a.band) & "|" & $a.away & "|" & $a.apart
-  for link in a.linksOf:
+  result = $ord(ask.who) & "|" & $ord(ask.band) & "|" & $ask.away & "|" & $ask.apart
+  for link in ask.linksOf:
     result.add "|" & $ord(link.ends[0].arm) & $ord(link.ends[1].arm)
 
-func keyOf*(a: RungAsk): string = $ord(a.band) & "|" & $a.turn
+func keyOf*(ask: RungAsk): string = $ord(ask.band) & "|" & $ask.turn
   ## Name rung by band and turn.
 
 
 
 #[ Single Reading ]#
 
-func momentAt*(sweep: Swept; t: float): Option[Moment] =
-  ## Moment nearest `t` turns, from whichever way reaches it; none where neither does.
-  let way = (if t < 0.0: sweep.negative else: sweep.positive)
+func momentAt*(sweep: Swept; at: float): Option[Moment] =
+  ## Moment nearest `at` turns, from whichever way reaches it; none where neither does.
+  let way = (if at < 0.0: sweep.negative else: sweep.positive)
   var best: Option[Moment]
-  for m in way.moments:
-    if abs(m.at - t) < 0.011 and (best.isNone or abs(m.at - t) < abs(best.get.at - t)):
-      best = some m
+  for moment in way.moments:
+    if abs(moment.at - at) < 0.011 and (best.isNone or abs(moment.at - at) < abs(best.get.at - at)):
+      best = some moment
   best
 
-func glanceOf(band: Band; links: seq[Link]; mo: Moment): Glance =
+func glanceOf(band: Band; links: seq[Link]; moment: Moment): Glance =
   ## Read one moment as report reads it.
   result.got = true
   for k in 0 ..< links.len:
     for who in Body:
-      result.lies[k][who] = lyingOn(HUMAN, band, links, mo.stance, mo.arms, k, who)
-  result.strain = tightest(HUMAN, mo.stance, links, mo.arms).strain
-  result.handZ = mo.arms[0][0].g.z
-  for c in crossings(mo.arms):
-    if result.crossed < CROSSED: result.over[result.crossed] = c.over
+      result.lies[k][who] = lyingOn(HUMAN, band, links, moment.stance, moment.arms, k, who)
+  result.strain = tightest(HUMAN, moment.stance, links, moment.arms).strain
+  result.handZ = moment.arms[0][0].grip.z
+  for crossing in crossings(moment.arms):
+    if result.crossed < CROSSED: result.over[result.crossed] = crossing.over
     inc result.crossed
 
-func wayOf(w: Walk): WayRead =
+func wayOf(walk: Walk): WayRead =
   ## Read one way of sweep as report reads it.
-  WayRead(stopped: w.stopped, at: w.at, apart: w.apart, why: w.why, whose: w.whose)
+  WayRead(stopped: walk.stopped, at: walk.at, apart: walk.apart, why: walk.why, whose: walk.whose)
 
-proc readSweep*(a: SweepAsk): SweepRead =
+proc readSweep*(ask: SweepAsk): SweepRead =
   ## Sweep hold, and read it as report reads it.
   let
-    links = a.linksOf
-    sweep = swept(HUMAN, a.band, links, who = a.who, most = MOST, away = a.away,
-               apart = a.apart)
+    links = ask.linksOf
+    sweep = swept(HUMAN, ask.band, links, who = ask.who, most = MOST, away = ask.away,
+               apart = ask.apart)
   result.restHolds = sweep.restHolds
   result.negative = wayOf(sweep.negative)
   result.positive = wayOf(sweep.positive)
-  for i, h in HALVES:
-    let m = momentAt(sweep, float(h) / 2.0)
-    if m.isSome: result.glances[i] = glanceOf(a.band, links, m.get)
+  for i, half_turns in HALVES:
+    let moment = momentAt(sweep, float(half_turns) / 2.0)
+    if moment.isSome: result.glances[i] = glanceOf(ask.band, links, moment.get)
 
-proc readRung*(a: RungAsk): RungRead =
+proc readRung*(ask: RungAsk): RungRead =
   ## Wind cross-name chain to rung and ask whether pose holds there standing, from
   ## every distance, and read first that holds.
   let links = @CHAIN
   for apart in stands(HUMAN):
-    let (holds, c) = stood(HUMAN, a.band, links, a.turn, false, Body.Two, apart)
+    let (holds, couple) = stood(HUMAN, ask.band, links, ask.turn, false, Body.Two, apart)
     if holds:
       var arms: Arms
-      for i in 0 ..< links.len: arms.add c.poseOf(i).arms
+      for i in 0 ..< links.len: arms.add couple.poseOf(i).arms
       result = RungRead(
         found: true,
         apart: apart,
-        strain: tightest(HUMAN, c.stance, links, arms).strain,
+        strain: tightest(HUMAN, couple.stance, links, arms).strain,
         crossed: crossings(arms).len,
       )
-    c.free()
+    couple.free()
     if result.found: return
 
 
@@ -190,7 +190,7 @@ proc readAll*(sweeps: seq[SweepAsk]; rungs: seq[RungAsk]): tuple[sweeps: seq[Swe
   RUNG_READS = newSeq[RungRead](rungs.len)
   ASK_NEXT.store(0)
   var workers = newSeq[Thread[int]](max(1, countProcessors()))
-  for w in 0 ..< workers.len: createThread(workers[w], working, w)
+  for worker in 0 ..< workers.len: createThread(workers[worker], working, worker)
   joinThreads(workers)
   (SWEEP_READS, RUNG_READS)
 
@@ -207,14 +207,14 @@ proc keptReadings*(path = KEPT_READINGS): Readings =
   let got = parseFile(path).jsonTo(Readings)
   if got.stamp == physics(): got else: Readings()
 
-proc keep*(r: Readings; path = KEPT_READINGS) =
+proc keep*(readings: Readings; path = KEPT_READINGS) =
   ## Write readings, sorted by key so file changes only where readings do.
   var
-    sorted = Readings(stamp: r.stamp)
-    keys = toSeq(r.sweeps.keys)
+    sorted = Readings(stamp: readings.stamp)
+    keys = toSeq(readings.sweeps.keys)
   keys.sort
-  for k in keys: sorted.sweeps[k] = r.sweeps[k]
-  keys = toSeq(r.rungs.keys)
+  for key in keys: sorted.sweeps[key] = readings.sweeps[key]
+  keys = toSeq(readings.rungs.keys)
   keys.sort
-  for k in keys: sorted.rungs[k] = r.rungs[k]
+  for key in keys: sorted.rungs[key] = readings.rungs[key]
   writeFile(path, pretty(sorted.toJson) & "\n")

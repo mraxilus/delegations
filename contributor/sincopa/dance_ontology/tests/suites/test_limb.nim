@@ -32,9 +32,9 @@ suite "the rig":
 
   test "the reach is the three links, and the bands are ordered":
     check abs(reach(HUMAN) - 0.64) < 1e-9
-    check HUMAN.band[Band.Torso].hi < HUMAN.band[Band.Neck].lo
-    check HUMAN.band[Band.Neck].hi <= HUMAN.band[Band.Crown].lo
-    check HUMAN.band[Band.Crown].lo >= HUMAN.top[Part.Head] + HUMAN.limb - 1e-9
+    check HUMAN.band[Band.Torso].upper < HUMAN.band[Band.Neck].lower
+    check HUMAN.band[Band.Neck].upper <= HUMAN.band[Band.Crown].lower
+    check HUMAN.band[Band.Crown].lower >= HUMAN.top[Part.Head] + HUMAN.limb - 1e-9
     for part in Part:
       check rig.bottom(HUMAN, part) < HUMAN.top[part]
 
@@ -42,8 +42,14 @@ suite "the rig":
     check HUMAN.shoulderOut > halfBreadth(HUMAN, Part.Torso)
     let stance = facing(HUMAN, APART)[Body.One]
     for arm in Arm:
-      let s = shoulder(HUMAN, stance, arm)
-      check bodyGap(HUMAN, stance, s, lifted(s, -HUMAN.upper), own = true).gap >= 0.0
+      let shoulder_point = shoulder(HUMAN, stance, arm)
+      check bodyGap(
+        HUMAN,
+        stance,
+        shoulder_point,
+        lifted(shoulder_point, -HUMAN.upper),
+        own = true,
+      ).gap >= 0.0
 
   test "two bodies cannot stand closer than their chests":
     check abs(touching(HUMAN) - 2.0 * halfDepth(HUMAN, Part.Torso)) < 1e-9
@@ -51,11 +57,12 @@ suite "the rig":
   test "a hand is a quarter turn off the way its body faces":
     let
       stance = facing(HUMAN, APART)
-      l1 = shoulder(HUMAN, stance[Body.One], LEFT)
-      l2 = shoulder(HUMAN, stance[Body.Two], LEFT)
-    check abs(l1.x + HUMAN.shoulderOut) < 1e-9 and abs(l1.y) < 1e-9
-    check abs(l2.x - HUMAN.shoulderOut) < 1e-9 and abs(l2.y - APART) < 1e-9
-    check abs(l1.z - HUMAN.shoulderUp) < 1e-9
+      left_shoulder_one = shoulder(HUMAN, stance[Body.One], LEFT)
+      left_shoulder_two = shoulder(HUMAN, stance[Body.Two], LEFT)
+    check abs(left_shoulder_one.x + HUMAN.shoulderOut) < 1e-9 and abs(left_shoulder_one.y) < 1e-9
+    check abs(left_shoulder_two.x - HUMAN.shoulderOut) < 1e-9 and
+      abs(left_shoulder_two.y - APART) < 1e-9
+    check abs(left_shoulder_one.z - HUMAN.shoulderUp) < 1e-9
 
 
 
@@ -68,14 +75,23 @@ suite "one arm, forward and back":
     var random = initRand(7)
     for _ in 0 ..< 200:
       let
-        s = shoulder(HUMAN, stance, LEFT)
-        g = s + (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.3))
-        h = unit((random.rand(-1.0 .. 1.0), random.rand(-1.0 .. 1.0), random.rand(-1.0 .. 1.0)))
-        c = posed(HUMAN, s, g, h, random.rand(0.0 .. 2.0 * PI))
-      if c.stretch <= HUMAN.upper + HUMAN.fore and c.stretch >= abs(HUMAN.upper - HUMAN.fore):
-        check abs(distance(c.pose.s, c.pose.e) - HUMAN.upper) < 1e-9
-        check abs(distance(c.pose.e, c.pose.w) - HUMAN.fore) < 1e-9
-      check abs(distance(c.pose.w, c.pose.g) - HUMAN.hand) < 1e-9
+        shoulder_point = shoulder(HUMAN, stance, LEFT)
+        grip = shoulder_point + (
+          random.rand(-0.5 .. 0.5),
+          random.rand(-0.5 .. 0.5),
+          random.rand(-0.5 .. 0.3),
+        )
+        hand_direction = unit((
+          random.rand(-1.0 .. 1.0),
+          random.rand(-1.0 .. 1.0),
+          random.rand(-1.0 .. 1.0),
+        ))
+        chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0 .. 2.0 * PI))
+      if chain.stretch <= HUMAN.upper + HUMAN.fore and
+         chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
+        check abs(distance(chain.pose.shoulder, chain.pose.elbow) - HUMAN.upper) < 1e-9
+        check abs(distance(chain.pose.elbow, chain.pose.wrist) - HUMAN.fore) < 1e-9
+      check abs(distance(chain.pose.wrist, chain.pose.grip) - HUMAN.hand) < 1e-9
 
   test "the joints read back what they were set to":
     var worst = 0.0
@@ -86,18 +102,26 @@ suite "one arm, forward and back":
             for bend in [20.0, 70.0, 120.0]:
               for wrist in [0.0, 30.0]:
                 let
-                  u = unit((cos(elevation * PI / 180.0) * sin(azimuth * PI / 180.0),
+                  upper_direction = unit((cos(elevation * PI / 180.0) * sin(azimuth * PI / 180.0),
                             cos(elevation * PI / 180.0) * cos(azimuth * PI / 180.0),
                             sin(elevation * PI / 180.0)))
-                  p = placed(HUMAN, stance, arm, u, twist * PI / 180.0, bend * PI / 180.0,
-                             wrist * PI / 180.0, 0.7)
-                  j = joints(stance, arm, p)
-                worst = max(worst, abs(j.twist - twist * PI / 180.0))
-                worst = max(worst, abs(j.bend - bend * PI / 180.0))
-                worst = max(worst, abs(j.wrist - wrist * PI / 180.0))
-                worst = max(worst, abs(sin(j.elev) - u.z))
-                worst = max(worst, abs(-sin(j.extend) - u.y))
-                worst = max(worst, abs(-sin(j.across) - u.x))
+                  pose = placed(
+                    HUMAN,
+                    stance,
+                    arm,
+                    upper_direction,
+                    twist * PI / 180.0,
+                    bend * PI / 180.0,
+                    wrist * PI / 180.0,
+                    0.7,
+                  )
+                  joint_angles = joints(stance, arm, pose)
+                worst = max(worst, abs(joint_angles.twist - twist * PI / 180.0))
+                worst = max(worst, abs(joint_angles.bend - bend * PI / 180.0))
+                worst = max(worst, abs(joint_angles.wrist - wrist * PI / 180.0))
+                worst = max(worst, abs(sin(joint_angles.elevation) - upper_direction.z))
+                worst = max(worst, abs(-sin(joint_angles.extend) - upper_direction.y))
+                worst = max(worst, abs(-sin(joint_angles.across) - upper_direction.x))
     check worst < 1e-6
 
   test "the twist reads the same across the arm pointing forward":
@@ -105,27 +129,37 @@ suite "one arm, forward and back":
       let
         above = placed(HUMAN, stance, arm, unit((0.0, 1.0, 0.02)), 0.3, 1.2, 0.2, 0.0)
         below = placed(HUMAN, stance, arm, unit((0.0, 1.0, -0.02)), 0.3, 1.2, 0.2, 0.0)
-        a = joints(stance, arm, above)
-        b = joints(stance, arm, below)
-      check abs(a.twist - b.twist) < 0.05
+        above_angles = joints(stance, arm, above)
+        below_angles = joints(stance, arm, below)
+      check abs(above_angles.twist - below_angles.twist) < 0.05
 
   test "the left arm is the right arm in a mirror":
     let
-      u = unit((0.4, 0.6, -0.3))
-      r = joints(stance, RIGHT, placed(HUMAN, stance, RIGHT, u, -0.5, 1.4, 0.4, 0.3))
-      l = joints(stance, LEFT, placed(HUMAN, stance, LEFT, u, -0.5, 1.4, 0.4, 0.3))
-    check abs(r.twist - l.twist) < 1e-9 and abs(r.across - l.across) < 1e-9
-    check abs(r.extend - l.extend) < 1e-9 and abs(r.bend - l.bend) < 1e-9
+      upper_direction = unit((0.4, 0.6, -0.3))
+      right_arm_angles = joints(
+        stance,
+        RIGHT,
+        placed(HUMAN, stance, RIGHT, upper_direction, -0.5, 1.4, 0.4, 0.3),
+      )
+      left_arm_angles = joints(
+        stance,
+        LEFT,
+        placed(HUMAN, stance, LEFT, upper_direction, -0.5, 1.4, 0.4, 0.3),
+      )
+    check abs(right_arm_angles.twist - left_arm_angles.twist) < 1e-9 and
+      abs(right_arm_angles.across - left_arm_angles.across) < 1e-9
+    check abs(right_arm_angles.extend - left_arm_angles.extend) < 1e-9 and
+      abs(right_arm_angles.bend - left_arm_angles.bend) < 1e-9
 
   test "a range's margin is an ease in, nought at the edge, negative past it":
-    let r = HUMAN.range[Dof.Twist]
-    check abs(margin(r, r.upper) - 0.0) < 1e-9
-    check abs(margin(r, r.upper - r.ease_upper) - 1.0) < 1e-9
-    check margin(r, r.upper + 0.1) < 0.0
-    check abs(margin(r, r.lower) - 0.0) < 1e-9
-    let e = HUMAN.range[Dof.Bend]
-    check margin(e, 0.0) > 1.0   # stop leant on costs nothing
-    check margin(e, -0.1) < 0.0  # past stop refuses
+    let twist_range = HUMAN.range[Dof.Twist]
+    check abs(margin(twist_range, twist_range.upper) - 0.0) < 1e-9
+    check abs(margin(twist_range, twist_range.upper - twist_range.ease_upper) - 1.0) < 1e-9
+    check margin(twist_range, twist_range.upper + 0.1) < 0.0
+    check abs(margin(twist_range, twist_range.lower) - 0.0) < 1e-9
+    let bend_range = HUMAN.range[Dof.Bend]
+    check margin(bend_range, 0.0) > 1.0   # stop leant on costs nothing
+    check margin(bend_range, -0.1) < 0.0  # past stop refuses
 
 
 
@@ -133,21 +167,21 @@ suite "one arm, forward and back":
 
 suite "nothing passes through anybody":
   ## Two laws kept from `tlaws.nim` that asked solver nothing: they hold
-  ## `contact` and `vec` alone, which engine's own contact does not replace,
+  ## `contact` and `vector` alone, which engine's own contact does not replace,
   ## since reader still asks them whether arm presses body.
   test "the clipped test agrees with a sampled truth, and errs only wide":
     var random = initRand(11)
     for _ in 0 ..< 300:
       let
-        a: Vec = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
-        b: Vec = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
-        z0 = 0.8
-        z1 = 1.36
-        got = axisNear(a, b, z0, z1).d
+        a: Vector = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
+        b: Vector = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
+        lower = 0.8
+        upper = 1.36
+        got = axisNear(a, b, lower, upper).distance
       var truth = Inf
       for i in 0 .. 400:
         let p = a + (b - a) * (float(i) / 400.0)
-        if p.z >= z0 and p.z <= z1:
+        if p.z >= lower and p.z <= upper:
           truth = min(truth, sqrt(p.x * p.x + p.y * p.y))
       if truth == Inf:
         check got == Inf

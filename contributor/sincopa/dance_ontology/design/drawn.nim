@@ -24,26 +24,30 @@ const DAB* = 0.04 ## Longest dab one capsule is painted in, metres: torso in
 
 type
   Spot* = tuple[x, y, z: float] ## One point in world, metres, z up.
-  Framing* = tuple[mid: array[3, float], reach: float]
+  Framing* = tuple[middle: array[3, float], reach: float]
     ## Middle of what one entry covers, and half of how far it spreads.
-  Seen* = tuple[x, y, d: float] ## On screen: across, down, and depth toward eye.
+  Seen* = tuple[x, y, depth: float] ## On screen: across, down, and depth toward eye.
   Drawn* = enum ## What one capsule is put on canvas as.
     Stroke, Disc
   Piece* = tuple[capsule: int, a, z: Spot] ## Part of capsule `capsule` put down as one stroke.
 
 
-func seen*(p: Spot; azimuth, elevation: float; f: Framing): Seen =
+func seen*(point: Spot; azimuth, elevation: float; framing: Framing): Seen =
   ## Project one world point: screen across, screen down, and depth toward eye.
   ##   Screen's down is world's up negated: canvas counts y downward, so point
   ##     higher off floor has to come out smaller.  Signed other way, floor grid
   ##     draws above dancers standing on it.
   let
-    (ca, sa) = (cos(azimuth), sin(azimuth))
-    (ce, se) = (cos(elevation), sin(elevation))
-    (x, y, z) = (p.x - f.mid[0], p.y - f.mid[1], p.z - f.mid[2])
-  (x: -sa * x + ca * y,
-   y: ca * se * x + sa * se * y - ce * z,
-   d: ca * ce * x + sa * ce * y + se * z)
+    (cosine_azimuth, sine_azimuth) = (cos(azimuth), sin(azimuth))
+    (cosine_elevation, sine_elevation) = (cos(elevation), sin(elevation))
+    x = point.x - framing.middle[0]
+    y = point.y - framing.middle[1]
+    z = point.z - framing.middle[2]
+  (x: -sine_azimuth * x + cosine_azimuth * y,
+   y: cosine_azimuth * sine_elevation * x + sine_azimuth * sine_elevation * y -
+     cosine_elevation * z,
+   depth: cosine_azimuth * cosine_elevation * x + sine_azimuth * cosine_elevation * y +
+     sine_elevation * z)
 
 func drawnAs*(a, z: Spot): Drawn =
   ## Stroke between its two ends, and disc where they are one point.
@@ -54,7 +58,7 @@ func along(a, z: Spot; t: float): Spot =
   (a.x + (z.x - a.x) * t, a.y + (z.y - a.y) * t, a.z + (z.z - a.z) * t)
 
 func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: float;
-                f: Framing): seq[Piece] =
+                framing: Framing): seq[Piece] =
   ## Every capsule in pieces no longer than `DAB`, painter's order: furthest
   ## first, by depth of each piece's middle, equal depths in engine's order.
   ##   Whole capsule by depth of its nearer end painted upper arm hanging from
@@ -64,18 +68,19 @@ func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: floa
   ##     through one another can still come out wrong way round within one
   ##     piece, and bodies are filtered not to.
   var keyed: seq[(float, Piece)]
-  for i, c in capsules:
+  for i, capsule in capsules:
     let
-      long = sqrt((c.z.x - c.a.x) ^ 2 + (c.z.y - c.a.y) ^ 2 + (c.z.z - c.a.z) ^ 2)
+      long = sqrt((capsule.z.x - capsule.a.x) ^ 2 + (capsule.z.y - capsule.a.y) ^ 2 +
+                  (capsule.z.z - capsule.a.z) ^ 2)
       n = max(1, int(ceil(long / DAB)))
     for k in 0 ..< n:
       let
-        a = along(c.a, c.z, float(k) / float(n))
-        z = along(c.a, c.z, float(k + 1) / float(n))
-        mid = along(c.a, c.z, (float(k) + 0.5) / float(n))
-      keyed.add (seen(mid, azimuth, elevation, f).d, (capsule: i, a: a, z: z))
+        a = along(capsule.a, capsule.z, float(k) / float(n))
+        z = along(capsule.a, capsule.z, float(k + 1) / float(n))
+        middle = along(capsule.a, capsule.z, (float(k) + 0.5) / float(n))
+      keyed.add (seen(middle, azimuth, elevation, framing).depth, (capsule: i, a: a, z: z))
   keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
-  for k in keyed: result.add k[1]
+  for entry in keyed: result.add entry[1]
 
 func litAt*(fore: Seen; s: float): float =
   ## How lit one body's side is at offset `s` across it, -1 at its back edge to
@@ -87,7 +92,7 @@ func litAt*(fore: Seen; s: float): float =
   ##     screen and rest toward eye.  Architect: see facing without chevrons on
   ##     floor and lines at shoulder height, which were noise.
   let across = sqrt(fore.x * fore.x + fore.y * fore.y)
-  clamp(0.5 + 0.5 * (s * across + sqrt(max(0.0, 1.0 - s * s)) * fore.d), 0.0, 1.0)
+  clamp(0.5 + 0.5 * (s * across + sqrt(max(0.0, 1.0 - s * s)) * fore.depth), 0.0, 1.0)
 
 func lightAcross*(fore, axis: Seen): Seen =
   ## Facing's image on screen as light runs across one piece whose screen
@@ -98,9 +103,9 @@ func lightAcross*(fore, axis: Seen): Seen =
   let long = axis.x * axis.x + axis.y * axis.y
   if long < 1e-12: return fore
   let t = (fore.x * axis.x + fore.y * axis.y) / long
-  (x: fore.x - axis.x * t, y: fore.y - axis.y * t, d: fore.d)
+  (x: fore.x - axis.x * t, y: fore.y - axis.y * t, depth: fore.depth)
 
-func mixHex*(dark, light: string; t: float): string =
+func mixColours*(dark, light: string; t: float): string =
   ## Colour `t` of way from `dark` to `light`, each `#rrggbb`, as `rgb(r, g, b)`.
   var parts: seq[string]
   for k in 0 .. 2:

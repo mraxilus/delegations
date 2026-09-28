@@ -39,10 +39,10 @@ const
     ## Deep shade of each side's hue: lead's.
 
 const
-  LINK_W* = 3.4          ## Connection's stroke width.
-  SEEN_RUN* = LINK_W     ## Least piece of connection that reads as line.
+  LINK_WIDTH* = 3.4          ## Connection's stroke width.
+  SEEN_RUN* = LINK_WIDTH     ## Least piece of connection that reads as line.
     ## Stroke is drawn with round cap, so piece of no length at all is
     ##   still drawn -- as disc as wide as line.  Piece shorter than line
     ##   is wide reads as dot rather than as line, and dot sitting in
     ##   middle of break reads as connection coming through it.
-  CAP* = LINK_W / 2      ## How far round cap reaches past endpoint.
+  CAP* = LINK_WIDTH / 2      ## How far round cap reaches past endpoint.

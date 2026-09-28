@@ -20,10 +20,10 @@ import ../../src/dance_ontology/draw/route
 
 const
   STEP = 2.0    ## Spacing of sampled line, close to what reach uses.
-  N = 33        ## Points in it, which is `ROUTE_N`.
+  POINT_COUNT = 33        ## Points in it, which is `ROUTE_COUNT`.
 
 let
-  LINE_SAMPLED = (0 ..< N).mapIt((x: float(it) * STEP, y: 0.0))
+  LINE_SAMPLED = (0 ..< POINT_COUNT).mapIt((x: float(it) * STEP, y: 0.0))
     ## Straight sampled line standing in for reach: laws below are about
     ## where gap falls along line, and shape of line does not enter them.
   REACH_SQUARE = @[(x: 0.0, y: -20.0), (x: 0.0, y: 20.0)]
@@ -36,8 +36,8 @@ proc crossingAt(where: float): seq[Point] =
 
 
 const
-  WAVE_H = 8.0        ## How far waved reach swings either side of `LINE_SAMPLED`.
-  SPAN = float(N - 1) * STEP  ## Length `LINE_SAMPLED` runs over.
+  WAVE_HEIGHT = 8.0        ## How far waved reach swings either side of `LINE_SAMPLED`.
+  SPAN = float(POINT_COUNT - 1) * STEP  ## Length `LINE_SAMPLED` runs over.
   ON_ZEROS = 4 * STEP ## Wavelength whose zeros land on sampled points.
     ## Cosine of this wavelength is nought at every second sample, so each
     ##   crossing sits on vertex and is met by both segments sharing it --
@@ -49,8 +49,8 @@ const
 
 func crossedBy(wavelength: float): seq[Point] =
   ## Get reach waving across `LINE_SAMPLED`, crossing at every zero of its cosine.
-  (0 ..< N).mapIt((x: float(it) * STEP,
-                   y: WAVE_H * cos(float(it) * STEP * 2 * PI / wavelength)))
+  (0 ..< POINT_COUNT).mapIt((x: float(it) * STEP,
+                   y: WAVE_HEIGHT * cos(float(it) * STEP * 2 * PI / wavelength)))
 
 func zerosOf(wavelength: float): int =
   ## Count places cosine of this wavelength crosses nought over sampled span.
@@ -65,7 +65,7 @@ func zerosOf(wavelength: float): int =
 suite "reach breaks":
 
   test "a break never eats either end of a reach":
-    for i in 0 ..< N:
+    for i in 0 ..< POINT_COUNT:
       let runs = cutGapsAt(LINE_SAMPLED, crossingAt(float(i) * STEP), @[LINE_SAMPLED[i]])
       check runs.len > 0
       check runs[0][0] == LINE_SAMPLED[0]
@@ -74,15 +74,15 @@ suite "reach breaks":
   test "a break falls where the lines cross":
     # Crossing nearer than half break to either hand cannot be covered
     # and still leave reach whole; every other one is covered.
-    let span = float(N - 1) * STEP
-    for i in 0 ..< N:
+    let span = float(POINT_COUNT - 1) * STEP
+    for i in 0 ..< POINT_COUNT:
       let at = float(i) * STEP
       if at < BREAK / 2 or at > span - BREAK / 2:
         continue
       let
         runs = cutGapsAt(LINE_SAMPLED, crossingAt(float(i) * STEP), @[LINE_SAMPLED[i]])
         gap = gapFor(at, span, hidesAt(LINE_SAMPLED, crossingAt(at), LINE_SAMPLED[i]))
-        drawn = runs.mapIt(polylineLen(it)).foldl(a + b, 0.0)
+        drawn = runs.mapIt(polylineLength(it)).foldl(a + b, 0.0)
       check runs.len == 2
       # Reach loses exactly its gap, no more and no less.  Bare test that
       # crossing sits in no run passed while gap was cut to whole samples
@@ -108,8 +108,8 @@ suite "reach breaks":
     # Break says this line passes under that one, and it says it where
     # they cross.  Gap pushed off to one side leaves crossing drawn whole
     # and puts hole in line where nothing happens.
-    let span = float(N - 1) * STEP
-    for i in 0 ..< N:
+    let span = float(POINT_COUNT - 1) * STEP
+    for i in 0 ..< POINT_COUNT:
       let
         at = float(i) * STEP
         gap = gapFor(at, span, hidesAt(LINE_SAMPLED, crossingAt(at), LINE_SAMPLED[i]))
@@ -128,7 +128,7 @@ suite "crossings found":
   test "crossings close together are still separate crossings":
     # Crossing is where two reaches swap which side of one another they lie,
     # so how many there are is how many times that happens -- and every one
-    # of them earns break, whatever its spacing.  Reach held as `ROUTE_N`
+    # of them earns break, whatever its spacing.  Reach held as `ROUTE_COUNT`
     # points doubles back inside handful of them, which puts two crossings
     # within stroke of each other; picture merging them states one
     # over-under where there are two, which is opposite of what rule 14 asks.
@@ -159,7 +159,7 @@ suite "crossings found":
 const
   SQUARE: seq[Point] = @[(0.0, 0.0), (3.0, 0.0), (3.0, 4.0)]
     ## Three corners: three-four-five triangle's two short sides.
-  WALKED = polylineLen(SQUARE)
+  WALKED = polylineLength(SQUARE)
     ## Taken in compiler's virtual machine, which is what this suite is for.
     ##   Scene table is built as `const` (`draw/scene.nim`), so length runs there;
     ##     Nim 2.2.8 onward gives float `result` int register where nothing assigns
@@ -172,10 +172,10 @@ suite "drawn run":
     check abs(WALKED - 7.0) < 1e-9
 
   test "length of run is same taken at run time":
-    check abs(polylineLen(SQUARE) - WALKED) < 1e-9
+    check abs(polylineLength(SQUARE) - WALKED) < 1e-9
 
   test "run of one point, or none, is no length at all":
-    check polylineLen(@[]) == 0.0
-    check polylineLen(@[(1.0, 2.0)]) == 0.0
-    const NOTHING = polylineLen(@[])
+    check polylineLength(@[]) == 0.0
+    check polylineLength(@[(1.0, 2.0)]) == 0.0
+    const NOTHING = polylineLength(@[])
     check NOTHING == 0.0

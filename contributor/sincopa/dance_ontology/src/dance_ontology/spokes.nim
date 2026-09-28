@@ -154,18 +154,23 @@ func spokesOf*(here: Frame): seq[Spoke] =
   ##   Collects, then drops, then compounds: order eye reads them
   ##     in, up page and then down it and then out to side.
   for helper in [Helper.Collect, Helper.Drop]:
-    var kin: seq[Spoke] = @[]
+    var same_kind: seq[Spoke] = @[]
     for move in moves(here):
       if move.helper != helper:
         continue
-      kin.add Spoke(to: move.to, side: move.side, lines: label(here, move), is_compound: false)
+      same_kind.add Spoke(
+        to: move.to,
+        side: move.side,
+        lines: label(here, move),
+        is_compound: false,
+      )
     # Crowded fan reaches further out, so that its spokes end up as far apart
     # as pair of them would be.
     let base = if helper == Helper.Collect: UP else: DOWN
-    for index, spoke in kin:
+    for index, spoke in same_kind:
       var placed = spoke
-      placed.angle = base + (float(index) - float(kin.len - 1) / 2) * SPOKE_STEP
-      placed.radius = SPOKE_RADIUS + (kin.len - 1) * 30
+      placed.angle = base + (float(index) - float(same_kind.len - 1) / 2) * SPOKE_STEP
+      placed.radius = SPOKE_RADIUS + (same_kind.len - 1) * 30
       result.add placed
 
   var named: seq[Spoke] = @[]
@@ -253,7 +258,7 @@ func extentOf(here: Frame): (int, int, int, int) =
   for spoke in spokesOf(here):
     let
       (x, y) = endOf(spoke)
-      (_, ly) = labelAt(spoke)
+      (_, label_y) = labelAt(spoke)
       # Measured at size way out grows to when it is one taken, since
       # it grows where it stands and window cut any tighter would clip it.
       half = max(max(widest(spoke.lines), spoke.to.describe.len) * 3 + 7,
@@ -261,7 +266,7 @@ func extentOf(here: Frame): (int, int, int, int) =
     left = min(left, x - half)
     right = max(right, x + half)
     top = min(top, y - frameHeight(NODE_WIDTH) div 2 - NAME_ROOM)
-    bottom = max(bottom, max(ly + plateSpan(spoke.lines)[1] div 2,
+    bottom = max(bottom, max(label_y + plateSpan(spoke.lines)[1] div 2,
       y + frameHeight(NODE_WIDTH) div 2))
   (left - PAD, top - PAD, right - left + 2 * PAD, bottom - top + 2 * PAD)
 
@@ -275,11 +280,11 @@ func spokesBox(): (int, int, int, int) {.compileTime.} =
   ##     fitting instead.
   var (left, top, right, bottom) = (CENTRE_X, CENTRE_Y, CENTRE_X, CENTRE_Y)
   for here in FRAMES:
-    let (x, y, w, h) = extentOf(here)
+    let (x, y, width, height) = extentOf(here)
     left = min(left, x)
     top = min(top, y)
-    right = max(right, x + w)
-    bottom = max(bottom, y + h)
+    right = max(right, x + width)
+    bottom = max(bottom, y + height)
   (left, top, right - left, bottom - top)
 
 
@@ -331,26 +336,29 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
   ##     is why page can replace one with other there and no
   ##     reader can tell.
   let
-    (bx, by, bw, bh) = SPOKES_BOX
+    (box_x, box_y, box_width, box_height) = SPOKES_BOX
     leaving = motion == Motion.Leaving and taken.isSome
     window = windowOf(here)
-    (px, py) = panOf(window)
+    (pan_x, pan_y) = panOf(window)
   # Where drawing has to end up for frame reached to be sitting where
   # frame it is holding sits: its own window, shifted by distance from
   # middle out to wherever along drawing that frame is standing now.
   var
     reached = window
-    (qx, qy) = (px, py)
-    (mx, my) = (0, 0)
+    (landing_pan_x, landing_pan_y) = (pan_x, pan_y)
+    (shift_x, shift_y) = (0, 0)
   if leaving:
     for spoke in spokesOf(here):
       if spoke.to != taken.get:
         continue
-      let (ex, ey) = endOf(spoke)
+      let (end_x, end_y) = endOf(spoke)
       reached = windowOf(taken.get)
-      let (rx, ry) = panOf(reached)
-      (qx, qy) = (rx + CENTRE_X - ex, ry + CENTRE_Y - ey)
-      (mx, my) = (ex - CENTRE_X, ey - CENTRE_Y)
+      let (reached_pan_x, reached_pan_y) = panOf(reached)
+      (landing_pan_x, landing_pan_y) = (
+        reached_pan_x + CENTRE_X - end_x,
+        reached_pan_y + CENTRE_Y - end_y,
+      )
+      (shift_x, shift_y) = (end_x - CENTRE_X, end_y - CENTRE_Y)
 
   # Every number animation spends is written here, so that stylesheet
   # holds shape of movement and this holds its size.
@@ -363,15 +371,16 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
   # `--mx`, `--my`, `--ox` and `--oy` stay lengths: they are read inside
   # picture, in its own units, and scale with it already.
   result = "<div class=\"viewport " & phase(motion) & "\" style=\"" &
-    closeStyle() & "; --bw: " & $bw & "; --bh: " & $bh &
+    closeStyle() & "; --bw: " & $box_width & "; --bh: " & $box_height &
     "; --w: " & $window[2] & "; --h: " & $window[3] &
-    "; --px: " & $px & "; --py: " & $py &
+    "; --px: " & $pan_x & "; --py: " & $pan_y &
     "; --to-w: " & $reached[2] & "; --to-h: " & $reached[3] &
-    "; --to-px: " & $qx & "; --to-py: " & $qy &
-    "; --mx: " & $mx & "px; --my: " & $my &
+    "; --to-px: " & $landing_pan_x & "; --to-py: " & $landing_pan_y &
+    "; --mx: " & $shift_x & "px; --my: " & $shift_y &
     "px; --ox: " & $CENTRE_X & "px; --oy: " & $CENTRE_Y & "px\">"
-  result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $bx & " " &
-    $by & " " & $bw & " " & $bh & "\" width=\"" & $bw & "\" height=\"" & $bh &
+  result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $box_x & " " &
+    $box_y & " " & $box_width & " " & $box_height & "\" width=\"" & $box_width &
+    "\" height=\"" & $box_height &
     "\" class=\"spokes\" role=\"img\">" &
     "<title>" & here.describe & ", and every move away from it</title>"
 
@@ -381,7 +390,7 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
   for spoke in ways:
     let
       (x, y) = endOf(spoke)
-      (lx, ly) = labelAt(spoke)
+      (label_x, label_y) = labelAt(spoke)
       colour = armColour(spoke.side)
       # Stagger is share of one budget rather than step of its own, so
       # last way out finishes when phase does however many there are.
@@ -397,11 +406,11 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
     if spoke.back.isSome and spoke.back.get != spoke.side:
       # Two moves, two arms: inked from middle out in arm that acts
       # coming back, and from halfway out in arm that acts going.
-      let (hx, hy) = ((CENTRE_X + x) div 2, (CENTRE_Y + y) div 2)
+      let (halfway_x, halfway_y) = ((CENTRE_X + x) div 2, (CENTRE_Y + y) div 2)
       result.add "<line class=\"spoke-line\" x1=\"" & $CENTRE_X & "\" y1=\"" &
-        $CENTRE_Y & "\" x2=\"" & $hx & "\" y2=\"" & $hy & "\" style=\"stroke: " &
+        $CENTRE_Y & "\" x2=\"" & $halfway_x & "\" y2=\"" & $halfway_y & "\" style=\"stroke: " &
         armColour(spoke.back.get) & "\"/>"
-      result.add "<line class=\"spoke-line\" x1=\"" & $hx & "\" y1=\"" & $hy &
+      result.add "<line class=\"spoke-line\" x1=\"" & $halfway_x & "\" y1=\"" & $halfway_y &
         "\" x2=\"" & $x & "\" y2=\"" & $y & "\" style=\"stroke: " & colour &
         "\"/>"
     else:
@@ -412,7 +421,7 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
     result.add "<g class=\"leaf\">"
     result.add "<g class=\"bud\">" & nodeAt(spoke.to, x, y, NODE_WIDTH,
       (if spoke.is_compound: "two" else: "reachable")) & "</g>"
-    result.add "<g class=\"tag\">" & naming(lx, ly, spoke.lines,
+    result.add "<g class=\"tag\">" & naming(label_x, label_y, spoke.lines,
       (if spoke.is_compound: COLOUR_QUIET else: colour)) & "</g>"
     result.add "</g></g>"
 

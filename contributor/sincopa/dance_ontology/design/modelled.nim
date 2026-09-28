@@ -74,30 +74,34 @@ func questions*(): seq[Question] =
   ## page's own order.
   # Every still, as `asks` lists them: wound to its facing and asked whether
   # pose holds there.
-  for a in stillAsks():
+  for ask in stillAsks():
     result.add Question(
-      key: a.key,
-      links: a.links,
-      away: a.away,
+      key: ask.key,
+      links: ask.links,
+      away: ask.away,
       still: true,
-      turns: a.turns,
-      either: a.either,
+      turns: ask.turns,
+      either: ask.either,
       who: Body.Two,
-      head: a.head,
+      head: ask.head,
     )
 
   # `B` and `E`: four single-hand holds, four manners, four quarters, moving.
-  for c, single in SINGLES:
+  for connection, single in SINGLES:
     let links = linksOf(single.holds)
     for manner in Manner:
       let
         tag = MANNERS[manner].tag
         sense = windSense(manner)
-      for q in 0 ..< QUARTERS_ROUND:
-        result.add moving(&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}", links,
-                          awayFor(restOf(single.holds)), manner,
-                          asked(sense * float(q + 1) / float(QUARTERS_ROUND)))
-      result.add moving(&"rd_{tag}_{c}", links, awayFor(restOf(single.holds)), manner,
+      for quarter in 0 ..< QUARTERS_ROUND:
+        result.add moving(
+          &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}",
+          links,
+          awayFor(restOf(single.holds)),
+          manner,
+          asked(sense * float(quarter + 1) / float(QUARTERS_ROUND)),
+        )
+      result.add moving(&"rd_{tag}_{connection}", links, awayFor(restOf(single.holds)), manner,
                         asked(sense))
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
@@ -137,11 +141,29 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     let asked = questions()
     var i = slice.first
     while i < asked.len:
-      let q = asked[i]
-      TOLD[i] = (if q.still: holdsAt(HUMAN, CROWN, q.links, q.turns, q.away, q.head,
-                                     either = q.either)
-                 else: reaches(HUMAN, CROWN, q.links, q.turns, away = q.away,
-                               who = q.who, head = q.head))
+      let question = asked[i]
+      TOLD[i] = (
+        if question.still:
+          holdsAt(
+            HUMAN,
+            CROWN,
+            question.links,
+            question.turns,
+            question.away,
+            question.head,
+            either = question.either,
+          )
+        else:
+          reaches(
+            HUMAN,
+            CROWN,
+            question.links,
+            question.turns,
+            away = question.away,
+            who = question.who,
+            head = question.head,
+          )
+      )
       i += slice.every
 
 proc answers(): OrderedTable[string, bool] =
@@ -154,12 +176,12 @@ proc answers(): OrderedTable[string, bool] =
   TOLD = newSeq[bool](asked.len)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for w in 0 ..< cores:
-    createThread(workers[w], work, (w, cores))
+  for worker in 0 ..< cores:
+    createThread(workers[worker], work, (worker, cores))
   joinThreads(workers)
   result = initOrderedTable[string, bool]()
-  for i, q in asked:
-    result[q.key] = TOLD[i]
+  for i, question in asked:
+    result[question.key] = TOLD[i]
 
 
 proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($it))

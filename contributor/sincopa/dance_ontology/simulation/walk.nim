@@ -41,7 +41,7 @@ const
 
 
 type
-  Capsule* = tuple[a, z: Vec, r: float] ## Segment's two ends in world, and radius.
+  Capsule* = tuple[a, z: Vector, radius: float] ## Segment's two ends in world, and radius.
 
   Moment* = object ## One moment of turn, all page needs to draw it.
     at*: float ## Turns from rest, signed.
@@ -90,45 +90,45 @@ iterator stands*(rig: Rig): float =
     apart += SEEK
 
 
-proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int,
+proc momentOf(couple: Couple; at: float): tuple[moment: Moment, why: Stop, which: int,
                                            whose: Hand] =
   ## Read every connection at this moment, and say what gave, if anything.
-  result.m = Moment(at: at, stance: c.chestStances, room: Inf)
-  for s in c.shapes:
-    if s.mark == Mark.Trunk:
-      let ends = c.endsOf(s)
-      result.m.trunks[s.who].add (ends.a, ends.z, s.r)
-    elif s.mark == Mark.Girdle:
-      let ends = c.endsOf(s)
-      result.m.girdles[s.who][s.arm] = (ends.a, ends.z, s.r)
+  result.moment = Moment(at: at, stance: couple.chestStances, room: Inf)
+  for shape in couple.shapes:
+    if shape.mark == Mark.Trunk:
+      let ends = couple.endsOf(shape)
+      result.moment.trunks[shape.who].add (ends.a, ends.z, shape.radius)
+    elif shape.mark == Mark.Girdle:
+      let ends = couple.endsOf(shape)
+      result.moment.girdles[shape.who][shape.arm] = (ends.a, ends.z, shape.radius)
   result.why = Stop.None
   result.which = -1
-  for i in 0 ..< c.links.len:
-    let p = c.poseOf(i)
-    result.m.arms.add p.arms
-    result.m.room = min(result.m.room, roomAt(c, p, i))
+  for i in 0 ..< couple.links.len:
+    let pose = couple.poseOf(i)
+    result.moment.arms.add pose.arms
+    result.moment.room = min(result.moment.room, roomAt(couple, pose, i))
     if result.why == Stop.None:
-      let (gave, k) = c.stoppedBy(i)
+      let (gave, end_index) = couple.stoppedBy(i)
       if gave != Stop.None:
         result.why = gave
         result.which = i
-        result.whose = c.links[i].ends[k]
+        result.whose = couple.links[i].ends[end_index]
 
 proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
              apart, most, step: float; away: bool; head: Body): Walk =
   ## Turn one way from one standing distance until something gives, or until
   ## `most` is reached.
-  var c = build(rig, restStance(rig, apart, away), band, links, head, away)
-  c.settle()
+  var couple = build(rig, restStance(rig, apart, away), band, links, head, away)
+  couple.settle()
   result.apart = apart
   var at = 0.0
-  let first = momentOf(c, at)
+  let first = momentOf(couple, at)
   result.restHolds = first.why == Stop.None
-  result.moments.add first.m
+  result.moments.add first.moment
   while abs(at) < abs(most):
-    c.turn(who, step, BEATS)
+    couple.turn(who, step, BEATS)
     at += step
-    let now = momentOf(c, at)
+    let now = momentOf(couple, at)
     if now.why != Stop.None:
       result.stopped = true
       result.at = abs(at)
@@ -136,11 +136,11 @@ proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
       result.which = now.which
       result.whose = now.whose
       break
-    result.moments.add now.m
-  c.free()
+    result.moments.add now.moment
+  couple.free()
 
 proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-            away: bool; head: Body; apart: float): tuple[holds: bool, c: Couple] =
+            away: bool; head: Body; apart: float): tuple[holds: bool, couple: Couple] =
   ## Couple wound to this facing from rest at this one distance and left
   ## standing there, and whether pose holds.  Caller frees couple, holding or not.
   ##   Wound, not built there.  Winding is path, not facing: couple built at
@@ -153,30 +153,30 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##   Way in is walk's own, at walk's own pace, from this one distance: still
   ##     card claims position exists, and position that is winding of arms
   ##     exists only where some winding gets there.
-  result.c = build(rig, restStance(rig, apart, away), band, links, head, away)
-  result.c.settle()
-  result.holds = result.c.gives == Stop.None
+  result.couple = build(rig, restStance(rig, apart, away), band, links, head, away)
+  result.couple.settle()
+  result.holds = result.couple.gives == Stop.None
   if not result.holds:
     return
   let step = (if turns >= 0.0: STEP else: -STEP)
   var at = 0.0
   while abs(at) + 1e-9 < abs(turns):
-    result.c.turn(Body.Two, step, BEATS)
+    result.couple.turn(Body.Two, step, BEATS)
     at += step
-    if result.c.gives != Stop.None:
+    if result.couple.gives != Stop.None:
       result.holds = false
       return
   # Left to stand: turn has stopped, and hold is asked of couple at rest there.
-  result.c.advance(SETTLE)
-  result.holds = result.c.gives == Stop.None
+  result.couple.advance(SETTLE)
+  result.holds = result.couple.gives == Stop.None
 
 
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away: bool; head: Body; apart: float): Stood =
   ## Whether pose holds at this facing from this one distance, and how it sits.
-  let (holds, c) = stood(rig, band, links, turns, away, head, apart)
-  result = Stood(holds: holds, apart: apart, turns: turns, strain: c.strainOf)
-  c.free()
+  let (holds, couple) = stood(rig, band, links, turns, away, head, apart)
+  result = Stood(holds: holds, apart: apart, turns: turns, strain: couple.strainOf)
+  couple.free()
 
 proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
                away = false; head = Body.Two; either = false): Stood =
@@ -227,20 +227,25 @@ proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   if turns == 0.0: return true
   let step = (if turns >= 0.0: STEP else: -STEP)
   for far in stands(rig):
-    let w = walked(rig, band, links, who, far, abs(turns), step, away, head)
-    if w.restHolds and not w.stopped:
+    let walk = walked(rig, band, links, who, far, abs(turns), step, away, head)
+    if walk.restHolds and not walk.stopped:
       return true
   false
 
-func leapOf*(w: Walk): float =
+func leapOf*(walk: Walk): float =
   ## Furthest any point of any held arm moves between two moments of walk.
-  for j in 1 ..< w.moments.len:
-    for i in 0 ..< w.moments[j].arms.len:
+  for j in 1 ..< walk.moments.len:
+    for i in 0 ..< walk.moments[j].arms.len:
       for k in 0 .. 1:
         let
-          a = w.moments[j - 1].arms[i][k]
-          b = w.moments[j].arms[i][k]
-        for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
+          before = walk.moments[j - 1].arms[i][k]
+          after = walk.moments[j].arms[i][k]
+        for (p, q) in [
+          (before.shoulder, after.shoulder),
+          (before.elbow, after.elbow),
+          (before.wrist, after.wrist),
+          (before.grip, after.grip),
+        ]:
           result = max(result, distance(p, q))
 
 func chosen*(walks: openArray[Carry]): int =
@@ -252,10 +257,10 @@ func chosen*(walks: openArray[Carry]): int =
   ##     stood L-l at 0.42 for 1.00 and R-r at 0.38 for 0.98, two steps apart.
   result = -1
   var far = -Inf
-  for c in walks: far = max(far, c.got)
-  for i, c in walks:
-    if c.got != far and far - c.got > STEP + 1e-9: continue
-    if result < 0 or c.leap * SMOOTHER < walks[result].leap: result = i
+  for carry in walks: far = max(far, carry.got)
+  for i, carry in walks:
+    if carry.got != far and far - carry.got > STEP + 1e-9: continue
+    if result < 0 or carry.leap * SMOOTHER < walks[result].leap: result = i
 
 proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
               most, step: float; away: bool; head: Body): Walk =
@@ -277,10 +282,10 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
     free = Inf ## First distance turn ran free from.
   for apart in stands(rig):
     if apart > free + LOOK + SEEK / 2.0: break
-    let w = walked(rig, band, links, who, apart, most, step, away, head)
-    if not w.restHolds: continue
-    walks.add w
-    carries.add (apart, (if w.stopped: w.at else: Inf), leapOf(w))
+    let walk = walked(rig, band, links, who, apart, most, step, away, head)
+    if not walk.restHolds: continue
+    walks.add walk
+    carries.add (apart, (if walk.stopped: walk.at else: Inf), leapOf(walk))
     if carries[^1].got == Inf: free = min(free, apart)
   if carries.len > 0: result = walks[chosen(carries)]
 

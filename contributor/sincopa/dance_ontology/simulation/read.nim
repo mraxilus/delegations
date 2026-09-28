@@ -27,7 +27,7 @@ type
     elbowFore*: bool  ## Elbow in front of body: arm folded forward.
 
   Crossing* = object ## Where two connections cross in plan.
-    at*: Vec
+    at*: Vector
     along*: float ## How far along first connection, nought to six.
     across*: float ## Same along second, which says whether crossing sits
                    ## where it can slide off that one's end.
@@ -56,35 +56,35 @@ func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance
   if band == Band.Crown:
     return none(Lying)
   let
-    k = armOf(links, i, who)
-    hand = links[i].ends[k]
-    pose = arms[i][k]
+    end_index = armOf(links, i, who)
+    hand = links[i].ends[end_index]
+    pose = arms[i][end_index]
     stance = stance[who]
     axes = axesOf(stance)
-    g = toBody(axes, pose.g)
-    e = toBody(axes, pose.e)
+    grip = toBody(axes, pose.grip)
+    elbow = toBody(axes, pose.elbow)
     ownSide = side(hand.arm)
   var aspect: Aspect
-  if g.y < -0.01:
+  if grip.y < -0.01:
     aspect = Aspect.Aft
-  elif g.x * ownSide < -0.01 and g.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
+  elif grip.x * ownSide < -0.01 and grip.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
     aspect = Aspect.Fore
   else:
     return none(Lying)
   some(Lying(
     aspect: aspect,
     band: band,
-    pressing: pressing(rig, stance, (pose.e, pose.w, pose.g)),
-    elbowFore: e.y > 0.0,
+    pressing: pressing(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
+    elbowFore: elbow.y > 0.0,
   ))
 
 
-func polyline*(arms: Arms; i: int): array[7, Vec] =
+func polyline*(arms: Arms; i: int): array[7, Vector] =
   ## One connection as seven points: shoulder to shoulder through grip.
   let
-    a = arms[i][0]
-    b = arms[i][1]
-  [a.s, a.e, a.w, a.g, b.w, b.e, b.s]
+    arm_a = arms[i][0]
+    arm_b = arms[i][1]
+  [arm_a.shoulder, arm_a.elbow, arm_a.wrist, arm_a.grip, arm_b.wrist, arm_b.elbow, arm_b.shoulder]
 
 
 const ON_LINE = 1e-9
@@ -92,17 +92,17 @@ const ON_LINE = 1e-9
   ## anything pose carries, above float noise, so answer is same for two poses
   ## that differ by less than float carries.
 
-func sideOf(a, b, p: Vec): int =
+func sideOf(a, b, p: Vector): int =
   ## Which side of line through `a` and `b` point `p` lies on in plan: one either
   ## way, nought within `ON_LINE`, nought for segment too short to have line.
   let
-    dx = b.x - a.x
-    dy = b.y - a.y
-    run = sqrt(dx * dx + dy * dy)
+    delta_x = b.x - a.x
+    delta_y = b.y - a.y
+    run = sqrt(delta_x * delta_x + delta_y * delta_y)
   if run < 1e-18:
     return 0
-  let off = (dx * (p.y - a.y) - dy * (p.x - a.x)) / run
-  if off > ON_LINE: 1 elif off < -ON_LINE: -1 else: 0
+  let offset = (delta_x * (p.y - a.y) - delta_y * (p.x - a.x)) / run
+  if offset > ON_LINE: 1 elif offset < -ON_LINE: -1 else: 0
 
 func lifted(side: int): int =
   ## Point on line counts as on its positive side.  One rule for every tie, so
@@ -121,44 +121,48 @@ func crossings*(arms: Arms): seq[Crossing] =
   if arms.len < 2:
     return
   let
-    p = polyline(arms, 0)
-    q = polyline(arms, 1)
+    first = polyline(arms, 0)
+    second = polyline(arms, 1)
   for i in 0 ..< 6:
     for j in 0 ..< 6:
       let
-        a = p[i]
-        b = p[i + 1]
-        c = q[j]
-        d = q[j + 1]
+        a = first[i]
+        b = first[i + 1]
+        c = second[j]
+        d = second[j + 1]
       if lifted(sideOf(a, b, c)) == lifted(sideOf(a, b, d)):
         continue
       if lifted(sideOf(c, d, a)) == lifted(sideOf(c, d, b)):
         continue
-      let den = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+      let denominator = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
       var t, u: float
-      if abs(den) < 1e-18:
+      if abs(denominator) < 1e-18:
         # Sides differ only by tie: segments run along one another and one end
         # sits on other's line.  Crossing is that end.
         if sideOf(a, b, c) == 0: u = 0.0 else: u = 1.0
         let
-          e = (if u == 0.0: c else: d)
-          dx = b.x - a.x
-          dy = b.y - a.y
-          run = dx * dx + dy * dy
+          end_point = (if u == 0.0: c else: d)
+          delta_x = b.x - a.x
+          delta_y = b.y - a.y
+          run = delta_x * delta_x + delta_y * delta_y
         t = (if run < 1e-18: 0.0
-             else: clamp(((e.x - a.x) * dx + (e.y - a.y) * dy) / run, 0.0, 1.0))
+             else: clamp(
+               ((end_point.x - a.x) * delta_x + (end_point.y - a.y) * delta_y) / run,
+               0.0,
+               1.0,
+             ))
       else:
-        t = clamp(((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / den, 0.0, 1.0)
-        u = clamp(((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / den, 0.0, 1.0)
+        t = clamp(((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denominator, 0.0, 1.0)
+        u = clamp(((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denominator, 0.0, 1.0)
       let
-        zp = a.z + (b.z - a.z) * t
-        zq = c.z + (d.z - c.z) * u
+        first_z = a.z + (b.z - a.z) * t
+        second_z = c.z + (d.z - c.z) * u
       result.add Crossing(
-        at: (a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, zp),
+        at: (a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, first_z),
         along: float(i) + t,
         across: float(j) + u,
-        over: (if zp >= zq: 0 else: 1),
-        sense: (if den > 0.0: 1 else: -1),
+        over: (if first_z >= second_z: 0 else: 1),
+        sense: (if denominator > 0.0: 1 else: -1),
       )
 
 
@@ -171,25 +175,25 @@ func tightest*(rig: Rig; stance: array[Body, Stance]; links: seq[Link];
   for i in 0 ..< links.len:
     for k in 0 .. 1:
       let
-        h = links[i].ends[k]
-        j = joints(stance[h.body], h.arm, arms[i][k])
+        hand = links[i].ends[k]
+        arm_joints = joints(stance[hand.body], hand.arm, arms[i][k])
         twist_range = rig.range[Dof.Twist]
-        twist = (if h.arm == Arm.Right: twist_range
+        twist = (if hand.arm == Arm.Right: twist_range
                  else: Range(
                    lower: -twist_range.upper,
                    upper: -twist_range.lower,
                    ease_lower: twist_range.ease_upper,
                    ease_upper: twist_range.ease_lower,
                  ))
-      for (dof, r, v) in [(Dof.Extend, rig.range[Dof.Extend], j.extend),
-                          (Dof.Across, rig.range[Dof.Across], j.across),
-                          (Dof.Twist, twist, j.twist),
-                          (Dof.Bend, rig.range[Dof.Bend], j.bend),
-                          (Dof.Wrist, rig.range[Dof.Wrist], j.wrist)]:
-        let m = margin(r, v)
-        if m < result.room:
-          result = Tight(room: m, dof: dof, whose: h)
+      for (dof, joint_range, value) in [(Dof.Extend, rig.range[Dof.Extend], arm_joints.extend),
+                          (Dof.Across, rig.range[Dof.Across], arm_joints.across),
+                          (Dof.Twist, twist, arm_joints.twist),
+                          (Dof.Bend, rig.range[Dof.Bend], arm_joints.bend),
+                          (Dof.Wrist, rig.range[Dof.Wrist], arm_joints.wrist)]:
+        let joint_margin = margin(joint_range, value)
+        if joint_margin < result.room:
+          result = Tight(room: joint_margin, dof: dof, whose: hand)
 
-func strain*(t: Tight): float =
+func strain*(tight: Tight): float =
   ## How far into last stretch before edge tightest joint is: one is edge.
-  clamp(1.0 - t.room, 0.0, 1.0)
+  clamp(1.0 - tight.room, 0.0, 1.0)

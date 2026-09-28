@@ -44,9 +44,9 @@ const
     ##     what lets dressing take old one out before it puts new one in.
   SERIF* = "\"Noto Serif\", Georgia, \"Times New Roman\", serif"
     ## Titles.  Fallback is only for face that failed to load, never for one absent.
-  SANS* = "\"Noto Sans\", ui-sans-serif, system-ui, sans-serif"
+  SANS_SERIF* = "\"Noto Sans\", ui-sans-serif, system-ui, sans-serif"
     ## Body text.
-  MONO* = "\"Commit Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
+  MONOSPACE* = "\"Commit Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
     ## Code, data and figures.
 
 

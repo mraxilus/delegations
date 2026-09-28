@@ -162,22 +162,22 @@ type
     caption: string    ## Its caption, whole.
 
 
-func esc(s: string): string =
+func escaped(text: string): string =
   ## Escape text for markup: ampersand and angle brackets.
-  s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
+  text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
-func between(s, opener, closer: string; start: int): tuple[at, stop: int] =
+func between(text, opener, closer: string; start: int): tuple[at, stop: int] =
   ## Where text between one opener and closer after it lies; `at` is -1 if none.
-  let a = s.find(opener, start)
-  if a < 0: return (-1, -1)
-  let b = s.find(closer, a + opener.len)
-  if b < 0: return (-1, -1)
-  (a + opener.len, b)
+  let opener_at = text.find(opener, start)
+  if opener_at < 0: return (-1, -1)
+  let closer_at = text.find(closer, opener_at + opener.len)
+  if closer_at < 0: return (-1, -1)
+  (opener_at + opener.len, closer_at)
 
 func attribute(tag, name: string): string =
   ## One attribute's value off one opening tag.
-  let (a, b) = between(tag, name & "=\"", "\"", 0)
-  if a < 0: "" else: tag[a ..< b]
+  let (start, stop) = between(tag, name & "=\"", "\"", 0)
+  if start < 0: "" else: tag[start ..< stop]
 
 
 func cellsOf(html: string): Table[string, seq[Cell]] =
@@ -188,16 +188,16 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
     at = 0
   while true:
     let
-      h2 = html.find("<h2>", at)
-      fig = html.find("<figure class=\"pic", at)
-    if fig < 0: break
-    if h2 >= 0 and h2 < fig:
-      section = $html[h2 + 4]
-      at = h2 + 4
+      heading_start = html.find("<h2>", at)
+      figure_start = html.find("<figure class=\"pic", at)
+    if figure_start < 0: break
+    if heading_start >= 0 and heading_start < figure_start:
+      section = $html[heading_start + 4]
+      at = heading_start + 4
       continue
-    let shut = html.find("</figure>", fig)
-    doAssert shut > fig, "A cell on reference page never closes."
-    let whole = html[fig ..< shut + "</figure>".len]
+    let shut = html.find("</figure>", figure_start)
+    doAssert shut > figure_start, "A cell on reference page never closes."
+    let whole = html[figure_start ..< shut + "</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
     let
@@ -206,28 +206,28 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
     var cell = Cell(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: cell.asks = asks.split(' ')
-    let (a, b) = between(whole, "<code>", "</code>", 0)
-    doAssert a > 0, "A cell on reference page carries no identifier."
-    cell.id = whole[a ..< b]
+    let (id_start, id_stop) = between(whole, "<code>", "</code>", 0)
+    doAssert id_start > 0, "A cell on reference page carries no identifier."
+    cell.id = whole[id_start ..< id_stop]
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A cell carries no drawing; got `{cell.id}`."
     let
       artOpen = whole.find('>', art) + 1
       artShut = whole.find("</div>", artOpen)
     cell.art = whole[artOpen ..< artShut]
-    let (c, d) = between(whole, "<figcaption>", "</figcaption>", 0)
-    cell.caption = "<figcaption>" & whole[c ..< d] & "</figcaption>"
+    let (caption_start, caption_stop) = between(whole, "<figcaption>", "</figcaption>", 0)
+    cell.caption = "<figcaption>" & whole[caption_start ..< caption_stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add cell
 
 func sheetOf(html: string): string =
   ## Reference page's own style, so its cells look here as they do there.
   var at = 0
   while true:
-    let (a, b) = between(html, "<style>", "</style>", at)
-    doAssert a >= 0, "Reference page carries no style block for its cells."
-    let sheet = html[a ..< b]
+    let (start, stop) = between(html, "<style>", "</style>", at)
+    doAssert start >= 0, "Reference page carries no style block for its cells."
+    let sheet = html[start ..< stop]
     if ".pic {" in sheet: return "<style>" & sheet & "</style>"
-    at = b
+    at = stop
 
 
 proc cellsBody(review: string; data: JsonNode): string =
@@ -269,7 +269,7 @@ proc cellsBody(review: string; data: JsonNode): string =
         &"""<div class="art">{cell.art}</div><div class="simulation">"""
       if entries.len > 0:
         result.add &"""<canvas class="thumb" data-entry="{entries[0]}"></canvas>""" &
-          &"""<p class="held">{esc(held[cell.asks[0]])}</p>"""
+          &"""<p class="held">{escaped(held[cell.asks[0]])}</p>"""
       else:
         result.add """<p class="held">not asked of simulation</p>"""
       result.add &"""</div></div>{cell.caption}</figure>"""

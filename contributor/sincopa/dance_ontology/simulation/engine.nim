@@ -23,18 +23,18 @@ import std/os
 const
   HERE = currentSourcePath().parentDir.parentDir
     ## Project directory, which every path below is relative to.
-  LIB = HERE / "binaries" / "libbox3d.a"
+  LIBRARY = HERE / "binaries" / "libbox3d.a"
   INCLUDE = HERE / "dependencies" / "box3d" / "include"
 
 static:
   # Verb is cheap where library already stands, so this costs one process, not build.
   let made = staticExec("cd " & HERE & " && nim r --hints:off tools/build.nim engine")
-  if not fileExists(LIB):
+  if not fileExists(LIBRARY):
     raise newException(IOError,
       "Engine's library did not build, so nothing here can link; got:\n" & made)
 
 {.passC: "-I" & INCLUDE.}
-{.passL: LIB & " -lm -lpthread".}
+{.passL: LIBRARY & " -lm -lpthread".}
 
 {.push header: "box3d/box3d.h".}
 type
@@ -47,33 +47,33 @@ type
     world0*, generation*: uint16
   JointId* {.importc: "b3JointId", bycopy.} = object
 
-  Vec* {.importc: "b3Vec3", bycopy.} = object ## Direction or offset, in metres.
+  Vector* {.importc: "b3Vec3", bycopy.} = object ## Direction or offset, in metres.
     x*, y*, z*: cfloat
-  Pos* {.importc: "b3Pos", bycopy.} = object ## Place, which engine keeps wider.
+  Position* {.importc: "b3Pos", bycopy.} = object ## Place, which engine keeps wider.
     x*, y*, z*: cdouble
-  Quat* {.importc: "b3Quat", bycopy.} = object
-    v*: Vec
-    s*: cfloat
+  Quaternion* {.importc: "b3Quat", bycopy.} = object
+    vector* {.importc: "v".}: Vector
+    scalar* {.importc: "s".}: cfloat
   Frame* {.importc: "b3Transform", bycopy.} = object ## Joint's own axes on one body.
-    p*: Vec
-    q*: Quat
+    origin* {.importc: "p".}: Vector
+    rotation* {.importc: "q".}: Quaternion
 
-  WorldDef* {.importc: "b3WorldDef", bycopy.} = object
-    gravity* {.importc.}: Vec
+  WorldDefinition* {.importc: "b3WorldDef", bycopy.} = object
+    gravity* {.importc.}: Vector
     contactHertz* {.importc.}: cfloat ## How stiffly overlap is pushed apart.
     enableSleep* {.importc.}: bool
     enableContinuous* {.importc.}: bool
-  BodyDef* {.importc: "b3BodyDef", bycopy.} = object
+  BodyDefinition* {.importc: "b3BodyDef", bycopy.} = object
     kind* {.importc: "type".}: cint
-    position* {.importc.}: Pos
-    rotation* {.importc.}: Quat
+    position* {.importc.}: Position
+    rotation* {.importc.}: Quaternion
     linearDamping* {.importc.}: cfloat
     angularDamping* {.importc.}: cfloat
     gravityScale* {.importc.}: cfloat
     enableSleep* {.importc.}: bool
   Material* {.importc: "b3SurfaceMaterial", bycopy.} = object
     friction* {.importc.}: cfloat
-  ShapeDef* {.importc: "b3ShapeDef", bycopy.} = object
+  ShapeDefinition* {.importc: "b3ShapeDef", bycopy.} = object
     density* {.importc.}: cfloat
     material* {.importc: "baseMaterial".}: Material
     filter* {.importc.}: Filter
@@ -86,9 +86,9 @@ type
     maskBits* {.importc.}: uint64
     groupIndex* {.importc.}: cint
   Capsule* {.importc: "b3Capsule", bycopy.} = object ## Segment with radius round it.
-    center1*, center2*: Vec
+    center1*, center2*: Vector
     radius*: cfloat
-  JointDef* {.importc: "b3JointDef", bycopy.} = object
+  JointDefinition* {.importc: "b3JointDef", bycopy.} = object
     bodyIdA* {.importc.}: BodyId
     bodyIdB* {.importc.}: BodyId
     localFrameA* {.importc.}: Frame
@@ -96,20 +96,20 @@ type
     constraintHertz* {.importc.}: cfloat ## How stiffly joint holds its bodies together.
     constraintDampingRatio* {.importc.}: cfloat
     collideConnected* {.importc.}: bool
-  BallDef* {.importc: "b3SphericalJointDef", bycopy.} = object
-    base* {.importc.}: JointDef
+  BallDefinition* {.importc: "b3SphericalJointDef", bycopy.} = object
+    base* {.importc.}: JointDefinition
     enableSpring* {.importc.}: bool
     hertz* {.importc.}: cfloat
     dampingRatio* {.importc.}: cfloat
-    targetRotation* {.importc.}: Quat
+    targetRotation* {.importc.}: Quaternion
     enableConeLimit* {.importc.}: bool
     coneAngle* {.importc.}: cfloat
     enableTwistLimit* {.importc.}: bool
     lowerTwistAngle* {.importc.}: cfloat
     upperTwistAngle* {.importc.}: cfloat
-  HingeDef* {.importc: "b3RevoluteJointDef", bycopy.} = object
+  HingeDefinition* {.importc: "b3RevoluteJointDef", bycopy.} = object
     ## Joint with one axis: elbow.
-    base* {.importc.}: JointDef
+    base* {.importc.}: JointDefinition
     targetAngle* {.importc.}: cfloat
     enableSpring* {.importc.}: bool
     hertz* {.importc.}: cfloat
@@ -124,16 +124,16 @@ type
     ## Contact points of one touching pair, one to four of them.
     points* {.importc.}: array[4, TouchPoint]
     pointCount* {.importc.}: cint
-  WeldDef* {.importc: "b3WeldJointDef", bycopy.} = object
+  WeldDefinition* {.importc: "b3WeldJointDef", bycopy.} = object
     ## Joint holding two bodies as one, or as one on spring: shoulder girdle.
-    base* {.importc.}: JointDef
+    base* {.importc.}: JointDefinition
     linearHertz* {.importc.}: cfloat ## Nought is rigid.
     angularHertz* {.importc.}: cfloat
     linearDampingRatio* {.importc.}: cfloat
     angularDampingRatio* {.importc.}: cfloat
-  DistanceDef* {.importc: "b3DistanceJointDef", bycopy.} = object
+  DistanceDefinition* {.importc: "b3DistanceJointDef", bycopy.} = object
     ## Joint holding two points within some distance of each other: girdle's rope.
-    base* {.importc.}: JointDef
+    base* {.importc.}: JointDefinition
     length* {.importc.}: cfloat
     enableSpring* {.importc.}: bool ## Off, joint is rigid rod and limit is ignored.
     hertz* {.importc.}: cfloat ## Nought with spring on is rope: free to its limit.
@@ -150,55 +150,59 @@ type
 
 
 # Engine's entry points, each bound on one line to its C name.
-proc defaultWorld*(): WorldDef {.importc: "b3DefaultWorldDef".}
-proc defaultBody*(): BodyDef {.importc: "b3DefaultBodyDef".}
-proc defaultShape*(): ShapeDef {.importc: "b3DefaultShapeDef".}
-proc defaultBall*(): BallDef {.importc: "b3DefaultSphericalJointDef".}
-proc createWorld*(def: ptr WorldDef): WorldId {.importc: "b3CreateWorld".}
-proc createBody*(w: WorldId; def: ptr BodyDef): BodyId {.importc: "b3CreateBody".}
-proc createCapsule*(b: BodyId; def: ptr ShapeDef;
-                    cap: ptr Capsule): ShapeId {.importc: "b3CreateCapsuleShape".}
+proc defaultWorld*(): WorldDefinition {.importc: "b3DefaultWorldDef".}
+proc defaultBody*(): BodyDefinition {.importc: "b3DefaultBodyDef".}
+proc defaultShape*(): ShapeDefinition {.importc: "b3DefaultShapeDef".}
+proc defaultBall*(): BallDefinition {.importc: "b3DefaultSphericalJointDef".}
+proc createWorld*(definition: ptr WorldDefinition): WorldId {.importc: "b3CreateWorld".}
+proc createBody*(world: WorldId; definition: ptr BodyDefinition): BodyId {.importc: "b3CreateBody".}
+proc createCapsule*(body: BodyId; definition: ptr ShapeDefinition;
+                    capsule: ptr Capsule): ShapeId {.importc: "b3CreateCapsuleShape".}
   ## Hang capsule on body; engine copies both definitions.
-proc createBall*(w: WorldId; def: ptr BallDef): JointId {.importc: "b3CreateSphericalJoint".}
-proc step*(w: WorldId; seconds: cfloat; substeps: cint) {.importc: "b3World_Step".}
-proc positionOf*(b: BodyId): Pos {.importc: "b3Body_GetPosition".}
-proc pointOf*(b: BodyId; local: Vec): Pos {.importc: "b3Body_GetWorldPoint".}
-proc setSpin*(b: BodyId; spin: Vec) {.importc: "b3Body_SetAngularVelocity".}
-proc defaultHinge*(): HingeDef {.importc: "b3DefaultRevoluteJointDef".}
-proc createHinge*(w: WorldId; def: ptr HingeDef): JointId {.importc: "b3CreateRevoluteJoint".}
-proc defaultWeld*(): WeldDef {.importc: "b3DefaultWeldJointDef".}
-proc defaultDistance*(): DistanceDef {.importc: "b3DefaultDistanceJointDef".}
-proc createDistance*(w: WorldId; def: ptr DistanceDef): JointId {.importc: "b3CreateDistanceJoint".}
-proc createWeld*(w: WorldId; def: ptr WeldDef): JointId {.importc: "b3CreateWeldJoint".}
-proc angleOf*(j: JointId): cfloat {.importc: "b3RevoluteJoint_GetAngle".}
-proc destroyWorld*(w: WorldId) {.importc: "b3DestroyWorld".}
-proc turnOf*(b: BodyId): Quat {.importc: "b3Body_GetRotation".}
-proc place*(b: BodyId; at: Pos; turn: Quat) {.importc: "b3Body_SetTransform".}
-proc setDrift*(b: BodyId; drift: Vec) {.importc: "b3Body_SetLinearVelocity".}
-proc driftOf*(b: BodyId): Vec {.importc: "b3Body_GetLinearVelocity".}
-proc bodyOf*(s: ShapeId): BodyId {.importc: "b3Shape_GetBody".}
-proc touchRoom*(b: BodyId): cint {.importc: "b3Body_GetContactCapacity".}
+proc createBall*(world: WorldId;
+                 definition: ptr BallDefinition): JointId {.importc: "b3CreateSphericalJoint".}
+proc step*(world: WorldId; seconds: cfloat; substeps: cint) {.importc: "b3World_Step".}
+proc positionOf*(body: BodyId): Position {.importc: "b3Body_GetPosition".}
+proc pointOf*(body: BodyId; local: Vector): Position {.importc: "b3Body_GetWorldPoint".}
+proc setSpin*(body: BodyId; spin: Vector) {.importc: "b3Body_SetAngularVelocity".}
+proc defaultHinge*(): HingeDefinition {.importc: "b3DefaultRevoluteJointDef".}
+proc createHinge*(world: WorldId;
+                  definition: ptr HingeDefinition): JointId {.importc: "b3CreateRevoluteJoint".}
+proc defaultWeld*(): WeldDefinition {.importc: "b3DefaultWeldJointDef".}
+proc defaultDistance*(): DistanceDefinition {.importc: "b3DefaultDistanceJointDef".}
+proc createDistance*(world: WorldId;
+    definition: ptr DistanceDefinition): JointId {.importc: "b3CreateDistanceJoint".}
+proc createWeld*(world: WorldId;
+                 definition: ptr WeldDefinition): JointId {.importc: "b3CreateWeldJoint".}
+proc angleOf*(joint: JointId): cfloat {.importc: "b3RevoluteJoint_GetAngle".}
+proc destroyWorld*(world: WorldId) {.importc: "b3DestroyWorld".}
+proc turnOf*(body: BodyId): Quaternion {.importc: "b3Body_GetRotation".}
+proc place*(body: BodyId; at: Position; turn: Quaternion) {.importc: "b3Body_SetTransform".}
+proc setDrift*(body: BodyId; drift: Vector) {.importc: "b3Body_SetLinearVelocity".}
+proc driftOf*(body: BodyId): Vector {.importc: "b3Body_GetLinearVelocity".}
+proc bodyOf*(shape: ShapeId): BodyId {.importc: "b3Shape_GetBody".}
+proc touchRoom*(body: BodyId): cint {.importc: "b3Body_GetContactCapacity".}
   ## How many contacts body may have now: room `touches` needs to report all.
-proc touches*(b: BodyId; into: ptr Touch;
+proc touches*(body: BodyId; into: ptr Touch;
               room: cint): cint {.importc: "b3Body_GetContactData".}
   ## Copy up to `room` of body's contacts into `into`, and count them.
-proc partedBy*(j: JointId): cfloat {.importc: "b3Joint_GetLinearSeparation".}
-proc coneAngleOf*(j: JointId): cfloat {.importc: "b3SphericalJoint_GetConeAngle".}
-proc twistAngleOf*(j: JointId): cfloat {.importc: "b3SphericalJoint_GetTwistAngle".}
-proc push*(b: BodyId; force: Vec; wake: bool) {.importc: "b3Body_ApplyForceToCenter".}
-proc twistBy*(b: BodyId; torque: Vec; wake: bool) {.importc: "b3Body_ApplyTorque".}
+proc partedBy*(joint: JointId): cfloat {.importc: "b3Joint_GetLinearSeparation".}
+proc coneAngleOf*(joint: JointId): cfloat {.importc: "b3SphericalJoint_GetConeAngle".}
+proc twistAngleOf*(joint: JointId): cfloat {.importc: "b3SphericalJoint_GetTwistAngle".}
+proc push*(body: BodyId; force: Vector; wake: bool) {.importc: "b3Body_ApplyForceToCenter".}
+proc twistBy*(body: BodyId; torque: Vector; wake: bool) {.importc: "b3Body_ApplyTorque".}
 {.pop.}
 
 const
   BODY_STATIC* = cint(0)    ## No mass, no motion, moved by hand alone.
   BODY_KINEMATIC* = cint(1) ## No mass, motion set by caller; what turns dancer.
   BODY_DYNAMIC* = cint(2)   ## Mass from its shapes, motion from forces; what arms are.
-  IDENTITY* = Quat(v: Vec(x: 0, y: 0, z: 0), s: 1.0)
+  IDENTITY* = Quaternion(vector: Vector(x: 0, y: 0, z: 0), scalar: 1.0)
 
-func vec*(x, y, z: float): Vec =
+func initVector*(x, y, z: float): Vector =
   ## Build engine's vector from plain numbers.
-  Vec(x: cfloat(x), y: cfloat(y), z: cfloat(z))
+  Vector(x: cfloat(x), y: cfloat(y), z: cfloat(z))
 
-func at*(p: Pos): tuple[x, y, z: float] =
+func at*(position: Position): tuple[x, y, z: float] =
   ## Read place as plain numbers, which is what everything above this works in.
-  (float(p.x), float(p.y), float(p.z))
+  (float(position.x), float(position.y), float(position.z))

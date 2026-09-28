@@ -30,47 +30,49 @@ const
     ## Say where one has other, by quarters clockwise (`body.quartersTo`).
 
 
-func oneLink(a, b: Arm): seq[Link] =
-  ## One connection, One's `a` to Two's `b`.
-  @[Link(ends: [(Body.One, a), (Body.Two, b)])]
+func oneLink(lead_arm, follow_arm: Arm): seq[Link] =
+  ## One connection, One's `lead_arm` to Two's `follow_arm`.
+  @[Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])]
 
-func twoLinks(a, b, c, d: Arm): seq[Link] =
-  ## Both hands held: One's `a` to Two's `b`, One's `c` to Two's `d`.
-  @[Link(ends: [(Body.One, a), (Body.Two, b)]),
-    Link(ends: [(Body.One, c), (Body.Two, d)])]
+func twoLinks(lead_first, follow_first, lead_second, follow_second: Arm): seq[Link] =
+  ## Both hands held: One's `lead_first` to Two's `follow_first`, One's `lead_second` to
+  ## Two's `follow_second`.
+  @[Link(ends: [(Body.One, lead_first), (Body.Two, follow_first)]),
+    Link(ends: [(Body.One, lead_second), (Body.Two, follow_second)])]
 
 
 func prose(text: string): string =
   ## Wrap paragraph at `WIDTH` columns, closing it with blank line.
   wrapWords(text, WIDTH, splitLongWords = false) & "\n\n"
 
-func turns(x: float): string = formatFloat(x, ffDecimal, 2)
+func turns(value: float): string = formatFloat(value, ffDecimal, 2)
   ## Render turns to two places.
 
-func half(h: int): string =
+func half(half_turns: int): string =
   ## Render count of half turns as signed turns, e.g. `+1 1/2`.
   let
-    sign = if h < 0: "-" elif h > 0: "+" else: ""
-    a = abs(h)
-  sign & (if a mod 2 == 0: $(a div 2) else: (if a > 1: $(a div 2) & " 1/2" else: "1/2"))
+    sign = if half_turns < 0: "-" elif half_turns > 0: "+" else: ""
+    magnitude = abs(half_turns)
+  sign & (if magnitude mod 2 == 0: $(magnitude div 2)
+          else: (if magnitude > 1: $(magnitude div 2) & " 1/2" else: "1/2"))
 
 func strainWord(strain: float): string =
   ## Render strain with its nearness to edge.
-  let s = formatFloat(strain, ffDecimal, 2)
-  if strain >= 1.0: s & " (at edge)" elif strain >= 0.7: s & " (near it)" else: s
+  let text = formatFloat(strain, ffDecimal, 2)
+  if strain >= 1.0: text & " (at edge)" elif strain >= 0.7: text & " (near it)" else: text
 
-func whyOf(w: WayRead): string =
+func whyOf(way: WayRead): string =
   ## Say what refuses, as `words.why` says it of walk.
-  why(Walk(stopped: w.stopped, at: w.at, why: w.why, whose: w.whose))
+  why(Walk(stopped: way.stopped, at: way.at, why: way.why, whose: way.whose))
 
-func blockLine(w: WayRead; sign: string; apart = true): string =
+func blockLine(way: WayRead; sign: string; apart = true): string =
   ## Say where sweep blocks one way and why, and how far apart couple stood for it.
   ##   Kept short: two of these sit in one table row under audit's hundred columns.
   ##   Stance is dropped where row names it, since repeating it there says nothing.
-  let stood = if apart: &", {turns(w.apart)} m apart" else: ""
-  if not w.stopped:
+  let stood = if apart: &", {turns(way.apart)} m apart" else: ""
+  if not way.stopped:
     return &"{sign}: free to {turns(MOST)} turns{stood}"
-  &"{sign}{turns(w.at)}{stood}: {whyOf(w)}"
+  &"{sign}{turns(way.at)}{stood}: {whyOf(way)}"
 
 func blocks(sweep: SweepRead): string =
   ## Say both blocks of sweep as one wrapped paragraph.
@@ -112,8 +114,8 @@ proc rungOf(band: Band; turn: float): RungRead =
   if key in READINGS_KEPT.rungs: return READINGS_KEPT.rungs[key]
   if ask notin RUNGS_WANTED: RUNGS_WANTED.add ask
 
-func glanceAt(sweep: SweepRead; t: float): Glance = sweep.glances[int(round(t * 2.0)) + 4]
-  ## Moment report reads at `t` turns, which is half turn from -2 to 2.
+func glanceAt(sweep: SweepRead; at: float): Glance = sweep.glances[int(round(at * 2.0)) + 4]
+  ## Moment report reads at `at` turns, which is half turn from -2 to 2.
 
 
 
@@ -148,9 +150,9 @@ proc rigTable(): string =
   result.add &"| elbow | 0 to {bend} degrees |\n"
   result.add &"| wrist | a {wrist} degree cone |\n"
   result.add &"| waist | {waist} degrees each way, sprung to square |\n"
-  result.add &"| hands | low {HUMAN.band[Band.Torso].lo}-{HUMAN.band[Band.Torso].hi}, " &
-    &"high {HUMAN.band[Band.Neck].lo}-{HUMAN.band[Band.Neck].hi}, " &
-    &"above {HUMAN.band[Band.Crown].lo}-{HUMAN.band[Band.Crown].hi} m |\n"
+  result.add &"| hands | low {HUMAN.band[Band.Torso].lower}-{HUMAN.band[Band.Torso].upper}, " &
+    &"high {HUMAN.band[Band.Neck].lower}-{HUMAN.band[Band.Neck].upper}, " &
+    &"above {HUMAN.band[Band.Crown].lower}-{HUMAN.band[Band.Crown].upper} m |\n"
   result.add "| stance | chosen for each turn, from clear of each other outward |\n\n"
 
 
@@ -160,9 +162,9 @@ proc singleHolds(): string =
   result.add prose(&"Counted from {restName(false)}, in turns, anticlockwise seen from above " &
     "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
     "into the last stretch before a joint's edge the worst joint is (1 is the edge).")
-  for (a, b, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
+  for (lead_arm, follow_arm, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
                        (Arm.Left, Arm.Right, "L-r"), (Arm.Right, Arm.Left, "R-l")]:
-    let links = oneLink(a, b)
+    let links = oneLink(lead_arm, follow_arm)
     for (word, band) in BANDS:
       let sweep = sweepOf(band, links)
       result.add &"### {name}, {word}\n\n"
@@ -172,13 +174,14 @@ proc singleHolds(): string =
       result.add blocks(sweep)
       result.add "| turn | follow's arm | lead's arm | strain | hands at |\n" &
         "|---|---|---|---|---|\n"
-      for i, h in HALVES:
-        let g = sweep.glances[i]
-        if not g.got:
-          result.add &"| {half(h)} | blocked | | | |\n"
+      for i, half_turns in HALVES:
+        let glance = sweep.glances[i]
+        if not glance.got:
+          result.add &"| {half(half_turns)} | blocked | | | |\n"
           continue
-        result.add &"| {half(h)} | {said(g.lies[0][Body.Two], band)} | " &
-          &"{said(g.lies[0][Body.One], band)} | {strainWord(g.strain)} | {turns(g.handZ)} m |\n"
+        result.add &"| {half(half_turns)} | {said(glance.lies[0][Body.Two], band)} | " &
+          &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} | " &
+          &"{turns(glance.handZ)} m |\n"
       result.add "\n"
 
 
@@ -191,18 +194,18 @@ proc floorClaim(): string =
     "and the lock way positive.")
   result.add "| hold | level | way | floor says | simulation says | the simulation names |\n" &
     "|---|---|---|---|---|---|\n"
-  for (a, b, name, lockSign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
+  for (lead_arm, follow_arm, name, lockSign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
                                  (Arm.Left, Arm.Right, "L-r", 1.0)]:
     for (word, band) in BANDS:
-      let sweep = sweepOf(band, oneLink(a, b))
+      let sweep = sweepOf(band, oneLink(lead_arm, follow_arm))
       for (way, sign) in [("lock way", lockSign), ("wrap way", -lockSign)]:
         let
-          w = if sign < 0: sweep.negative else: sweep.positive
+          way_read = if sign < 0: sweep.negative else: sweep.positive
           floor = if band == Band.Crown: "no block"
                   elif band == Band.Torso and way == "wrap way": "half a turn"
                   else: "a whole turn"
-          says = if w.stopped: &"blocks at {turns(w.at)}" else: "no block"
-          names = if w.stopped: whyOf(w) else: ""
+          says = if way_read.stopped: &"blocks at {turns(way_read.at)}" else: "no block"
+          names = if way_read.stopped: whyOf(way_read) else: ""
         result.add &"| {name} | {word} | {way} | {floor} | {says} | {names} |\n"
   result.add "\n"
 
@@ -226,18 +229,18 @@ proc pairHolds(): string =
       result.add blocks(sweep)
       result.add "| turn | follow's first arm | follow's second arm | crossings | strain |\n" &
         "|---|---|---|---|---|\n"
-      for i, h in HALVES:
-        let g = sweep.glances[i]
-        if not g.got:
-          result.add &"| {half(h)} | blocked | | | |\n"
+      for i, half_turns in HALVES:
+        let glance = sweep.glances[i]
+        if not glance.got:
+          result.add &"| {half(half_turns)} | blocked | | | |\n"
           continue
         var cross = ""
-        for c in 0 ..< min(g.crossed, g.over.len):
+        for crossing in 0 ..< min(glance.crossed, glance.over.len):
           cross.add (if cross.len > 0: ", " else: "") &
-            (if g.over[c] == 0: "first over" else: "second over")
+            (if glance.over[crossing] == 0: "first over" else: "second over")
         if cross.len == 0: cross = "none"
-        result.add &"| {half(h)} | {said(g.lies[0][Body.Two], band)} | " &
-          &"{said(g.lies[1][Body.Two], band)} | {cross} | {strainWord(g.strain)} |\n"
+        result.add &"| {half(half_turns)} | {said(glance.lies[0][Body.Two], band)} | " &
+          &"{said(glance.lies[1][Body.Two], band)} | {cross} | {strainWord(glance.strain)} |\n"
       result.add "\n"
 
 
@@ -256,10 +259,10 @@ proc chain(): string =
       # Read off stance rung winds couple to, whether pose holds there or not.
       let
         facing = facingName(turned(restStance(HUMAN, 1.0), Body.Two, turn)).get
-        r = rungOf(band, turn)
-      if r.found:
+        rung_read = rungOf(band, turn)
+      if rung_read.found:
         result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | yes | " &
-          &"{strainWord(r.strain)} | {r.crossed} | {turns(r.apart)} m |\n"
+          &"{strainWord(rung_read.strain)} | {rung_read.crossed} | {turns(rung_read.apart)} m |\n"
       else:
         result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | no | | | no pose holds |\n"
   result.add "\n"
@@ -267,11 +270,11 @@ proc chain(): string =
 
 proc drawnRow(drawn: string; links: seq[Link]; who: Body; turn: float; band: Band): string =
   ## Tabulate one state whole-cloth page draws, asked of simulation.
-  let g = glanceAt(sweepOf(band, links, who = who), turn)
-  if not g.got:
+  let glance = glanceAt(sweepOf(band, links, who = who), turn)
+  if not glance.got:
     return &"| {drawn} | {turns(turn)} | blocked before it | | | |\n"
-  &"| {drawn} | {turns(turn)} | yes | {said(g.lies[0][Body.Two], band)} | " &
-    &"{said(g.lies[0][Body.One], band)} | {strainWord(g.strain)} |\n"
+  &"| {drawn} | {turns(turn)} | yes | {said(glance.lies[0][Body.Two], band)} | " &
+    &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} |\n"
 
 
 proc drawnStates(): string =
@@ -374,16 +377,16 @@ when isMainModule:
     echo "reading ", SWEEPS_WANTED.len, " sweeps and ", RUNGS_WANTED.len, " rungs"
     let got = readAll(SWEEPS_WANTED, RUNGS_WANTED)
     READINGS_KEPT.stamp = physics()
-    for i, a in SWEEPS_WANTED: READINGS_KEPT.sweeps[keyOf(a)] = got.sweeps[i]
-    for i, a in RUNGS_WANTED: READINGS_KEPT.rungs[keyOf(a)] = got.rungs[i]
+    for i, ask in SWEEPS_WANTED: READINGS_KEPT.sweeps[keyOf(ask)] = got.sweeps[i]
+    for i, ask in RUNGS_WANTED: READINGS_KEPT.rungs[keyOf(ask)] = got.rungs[i]
     text = render()
     doAssert lacking() == 0, "Report still lacks readings once all are read."
   # Keep only what report reads, so file holds no reading nothing renders.
   var keeping = Readings(stamp: READINGS_KEPT.stamp)
-  for k, v in READINGS_KEPT.sweeps:
-    if k in KEYS_USED: keeping.sweeps[k] = v
-  for k, v in READINGS_KEPT.rungs:
-    if k in KEYS_USED: keeping.rungs[k] = v
+  for key, reading in READINGS_KEPT.sweeps:
+    if key in KEYS_USED: keeping.sweeps[key] = reading
+  for key, reading in READINGS_KEPT.rungs:
+    if key in KEYS_USED: keeping.rungs[key] = reading
   keep(keeping)
   writeFile("simulation/verdicts.md", text)
   echo "wrote simulation/verdicts.md"

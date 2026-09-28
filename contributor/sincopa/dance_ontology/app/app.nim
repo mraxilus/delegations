@@ -159,7 +159,7 @@ proc roomForMap(): bool =
     .getPropertyValue("--wide")).strip() == "1"
 
 
-proc setScrollLeft(e: Node; value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
+proc setScrollLeft(box: Node; value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
   ## Set how far scrolling box is scrolled; `std/dom` only reads it.
 
 
@@ -180,8 +180,8 @@ proc centreOnHeld() =
   let
     room = scroller.getBoundingClientRect()
     on = held.getBoundingClientRect()
-    off = (on.left + on.width / 2) - (room.left + room.width / 2)
-  setScrollLeft(scroller, scroller.scrollLeft + int(off))
+    offset = (on.left + on.width / 2) - (room.left + room.width / 2)
+  setScrollLeft(scroller, scroller.scrollLeft + int(offset))
 
 
 proc suitDrawing() =
@@ -198,7 +198,7 @@ proc suitDrawing() =
 
 #[ Markup ]#
 
-func esc(text: string): string =
+func escaped(text: string): string =
   ## Escape text for placement in markup, quotes included.
   ##   Stricter than review page's `escape`: this one also feeds
   ##     attribute values, where bare quote ends attribute.
@@ -227,17 +227,17 @@ func inked(said: string): string =
   ##     second reading of them rather than change to what they are.
   for run in named(said):
     if run.lead.isNone and run.follow.isNone:
-      result.add esc(run.text)
+      result.add escaped(run.text)
       continue
     let ink = if run.lead.isSome: armColour(run.lead.get)
               else: followColour(run.follow.get)
-    result.add tag("span", "style=\"color: " & ink & "\"", esc(run.text))
+    result.add tag("span", "style=\"color: " & ink & "\"", escaped(run.text))
 
 
 func button(action, value, classes, body: string): string =
   ## Form button carrying action page should take when it is clicked.
   tag("button", "class=\"" & classes & "\" data-action=\"" & action &
-    "\" data-value=\"" & esc(value) & "\"", body)
+    "\" data-value=\"" & escaped(value) & "\"", body)
 
 
 
@@ -257,8 +257,8 @@ func renderMoves(source: Frame): string =
   for move in available:
     let helper = $move.helper
     if helper != previous:
-      rows.add tag("h4", "", esc(helper.toLowerAscii) & " &middot; " &
-        esc(manner(move.helper)))
+      rows.add tag("h4", "", escaped(helper.toLowerAscii) & " &middot; " &
+        escaped(manner(move.helper)))
       previous = helper
     rows.add button("move", move.to.key, "move",
       tag("span", "class=\"phrase\"", inked(phrase(source, move))) &
@@ -273,7 +273,7 @@ func renderMoves(source: Frame): string =
     for step in steps:
       if spelled.len > 0:
         spelled.add " &rarr; "
-      spelled.add esc(step.helper.name)
+      spelled.add escaped(step.helper.name)
     shortcuts.add button("compound", target.key, "move two",
       tag("span", "class=\"phrase\"", inked(compoundPhrase(source, target))) &
       tag("span", "class=\"target\"", inked(target.describe) & " &middot; " &
@@ -346,7 +346,7 @@ func renderDrawingSwitch(drawing: Drawing): string =
   var tabs = ""
   for candidate in Drawing:
     let classes = if candidate == drawing: "tab on" else: "tab"
-    tabs.add button("drawing", $candidate, classes, esc($candidate))
+    tabs.add button("drawing", $candidate, classes, escaped($candidate))
   tag("div", "class=\"tabs small\"", tabs)
 
 
@@ -477,7 +477,7 @@ func admits(narrowing: Filter; target: Frame): bool =
 
 func chip(action, value, label: string; chosen: bool): string =
   ## Offer one answer to one question, marked when it is one in force.
-  button(action, value, (if chosen: "chip on" else: "chip"), esc(label))
+  button(action, value, (if chosen: "chip on" else: "chip"), escaped(label))
 
 
 func renderFilters(narrowing: Filter): string =
@@ -566,7 +566,7 @@ func cell(classes, tone, told, body: string): string =
   ##     cell varies by is which arm dances it, and that is one value, not
   ##     set of states stylesheet has to enumerate.
   tag("td", "class=\"" & classes & "\" style=\"--tone: " & tone & "\"" &
-    (if told.len > 0: " title=\"" & esc(told) & "\"" else: ""), body)
+    (if told.len > 0: " title=\"" & escaped(told) & "\"" else: ""), body)
 
 
 func renderMark(kind, tone, glyph: string): string =
@@ -649,7 +649,7 @@ func renderMatrix(): string =
     tag("span", "class=\"axis\"", "from &darr;"))
   for index, target in order:
     head.add tag("th", "class=\"head" & (if opens[index]: " gap" else: "") &
-      "\" title=\"" & esc(target.describe) & "\"",
+      "\" title=\"" & escaped(target.describe) & "\"",
       renderFrame(target) & tag("span", "class=\"who\"", inked(target.brief)))
   var body = ""
   for down, source in order:
@@ -660,7 +660,7 @@ func renderMatrix(): string =
     # that size now that lead's hands are squares: whose row is whose is in
     # marks, where before it was only in captions too small to read.
     var row = tag("th", "class=\"row" & step & "\" title=\"" &
-      esc(source.describe) & "\"",
+      escaped(source.describe) & "\"",
       tag("span", "class=\"who\"", inked(source.brief)) & renderFrame(source))
     for across, target in order:
       let
@@ -708,7 +708,7 @@ func renderControls(view: View): string =
   var views = ""
   for candidate in View:
     let classes = if candidate == view: "tab on" else: "tab"
-    views.add button("view", $candidate, classes, esc($candidate))
+    views.add button("view", $candidate, classes, escaped($candidate))
   tag("header", "", tag("h1", "", "dance ontology") & tag("div", "class=\"tabs\"", views))
 
 

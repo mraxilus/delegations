@@ -89,7 +89,7 @@ proc countLaws(): int =
 
 func escape(text: string): string =
   ## Escape text for placement in markup.
-  ##   Looser than app's `esc`: nothing here writes user text into attribute, so quotes
+  ##   Looser than app's `escaped`: nothing here writes user text into attribute, so quotes
   ##     pass through.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
@@ -113,21 +113,21 @@ func inked(said: string; escaping = true): string =
     result.add "<span style=\"color: " & ink & "\">" & text & "</span>"
 
 
-func statCard(number: int; caption: string; is_good = false): string =
+func statisticCard(number: int; caption: string; is_good = false): string =
   ## Draw one figure in strip at head of page.
   "<div class=\"stat" & (if is_good: " good" else: "") & "\"><b>" & $number &
     "</b><span>" & caption & "</span></div>"
 
 
-proc renderStats(): string =
+proc renderStatistics(): string =
   ## Draw figures page opens with.
   "<div class=\"stats\">" &
-    statCard(FRAMES.len, "frames the model derives") &
-    statCard(countMoves(), "moves between them") &
-    statCard(CELLS.len - countDeferredCells(), "cells checkable today") &
-    statCard(countDisagreements(), "cells that disagree", is_good = true) &
-    statCard(countDeferredCells(), "cells waiting on the body") &
-    statCard(countLaws(), "laws under test") &
+    statisticCard(FRAMES.len, "frames the model derives") &
+    statisticCard(countMoves(), "moves between them") &
+    statisticCard(CELLS.len - countDeferredCells(), "cells checkable today") &
+    statisticCard(countDisagreements(), "cells that disagree", is_good = true) &
+    statisticCard(countDeferredCells(), "cells waiting on the body") &
+    statisticCard(countLaws(), "laws under test") &
     "</div>"
 
 
@@ -284,7 +284,7 @@ proc renderReview*(): string =
   var page = readFile(TEMPLATE_PATH)
   let fills = {
     "title": MOCKUP & " — The Review Page",
-    "stats": renderStats(),
+    "stats": renderStatistics(),
     "gallery": renderGallery(),
     "matrix": renderMatrix(),
     "map": renderMap(none(Frame)),
