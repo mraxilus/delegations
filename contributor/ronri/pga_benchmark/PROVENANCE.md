@@ -232,8 +232,12 @@ can share work between steps, or reach the same answer by a shorter route, so th
 minimum sits below it. `gaps.md` names the steps in the shape column, so every chain bound
 reads as one. Every other bound in those tables follows from the axioms alone.
 
-The dual product rule needs a degenerate vector, so a conformal algebra carries no such bound. The
-bound spends no zero fill, no intermediate, no error check and no allocation, because a
+Under a rigid metric a dual product thins out by grade. One dual drops the blade that carries
+the null vector, and the other keeps only that blade. Under a conformal metric each dual is a
+signed permutation of every blade. A product against it then keeps every cell of the wedge,
+243 at five dimensions. The tables the library emits carry that count, and the bound follows.
+
+The bound spends no zero fill, no intermediate, no error check and no allocation, because a
 dense operation needs none of them to be correct. It moves its operands read once plus its
 result written once. `gaps.md` carries one row for each operation of each algebra, since the
 bound rests on the operation and never on the operand kinds.
@@ -244,9 +248,9 @@ geometric product. They reproduce 8 for the bilinear form, and 54 and 27 for the
 contractions. They reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a
 unitize.
 
-The conformal metric is held to 1024 and to 32, and to carrying no bound for the four dual
-products. A chain of an expansion and an exterior product is held to their
-sum. It is also held to dropping the expansion where the metric carries no rule for it.
+The conformal metric is held to 1024 and to 32, and to 243 for each of the four dual
+products. A chain of an expansion and an exterior product is held to their sum, 486 at five
+dimensions.
 
 The supports are held to 54 at four dimensions, and the centre and the container to 162 at
 five. The partner chain is held to 324, and to its mark as an estimate.
@@ -256,8 +260,8 @@ on the same operation. That law reads every measurand of the build's own nimcach
 **What it found.** Every primitive product spends what the algebra demands, and the
 operations built on top of them do not. At four dimensions the library stands at the bound
 on multiplies for 101 of the 107 operations that carry one. The two supports are what stand
-above it, at 162 against 54. At five dimensions it stands at the bound for 102 of 126. The
-cocarrier, the centre, the container, the partner and the four projections stand above it.
+above it, at 162 against 54. At five dimensions it stands at the bound for 110 of the 130
+that carry one. The cocarrier, the centre, the container and the partner stand above it.
 
 The attitude and the carrier are generated from a Cayley table, so each spends no multiply,
 as the algebra demands. The centre spends 486 against 162, the container 243 against 162,
@@ -265,7 +269,7 @@ and the partner 518 against 324. The cocarrier still wedges against a constant t
 one unit component. So it spends 243 multiplies where the algebra demands none.
 
 On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
-and for 77 of 126 at five. Those are the operations that one generated function serves,
+and for 81 of 130 at five. Those are the operations that one generated function serves,
 since that function writes every slot and fills nothing. An operation that the library
 composes from several functions still fills its intermediates, and stands above the bound.
 
@@ -486,9 +490,9 @@ this project's suites pass, 105 and 118. The 6D front end builds in 6.37 s again
 | `⊛` partner, cga5d | 518 → 437 | 30 720 → 28 672 | 170 → 128 ns, ×0.75 |
 
 Against the bounds above, the draft stands at the multiply bound for 107 of 107 operations
-at four dimensions. At five it stands there for 117 of 126. The nine left are the four
-projections, whose conformal contraction step carries no rule, and the partner, which still
-scans its grade. On bytes it stands at the bound for 61 of 107 and 92 of 126. Above the byte
+at four dimensions. At five it stands there for 125 of 130, and the five left are the
+partner and its typed forms, which still scan the grade. On bytes it stands at the bound for
+61 of 107 and 96 of 130. Above the byte
 bound remain the scalar-valued products, the norms and the unitizes, which each hand back a
 whole multivector. The chains with intermediates and the two hand-written sums remain too.
 
