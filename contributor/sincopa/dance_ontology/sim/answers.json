@@ -1,15 +1,15 @@
 {
-  "stamp": "a999b914d9e479ba",
+  "stamp": "4f5faeb9df4c97ef",
   "sweeps": {
     "shake at torso": {
-      "neg": {
+      "negative": {
         "holds": true,
         "apart": 0.43787780744861193,
         "stopped": true,
         "at": 1.3600000000000008,
         "why": "Wrist"
       },
-      "pos": {
+      "positive": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": true,
@@ -18,14 +18,14 @@
       }
     },
     "left to left at torso": {
-      "neg": {
+      "negative": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": false,
         "at": 0.0,
         "why": "None"
       },
-      "pos": {
+      "positive": {
         "holds": true,
         "apart": 0.43787780744861193,
         "stopped": true,
@@ -34,14 +34,14 @@
       }
     },
     "right to right at torso": {
-      "neg": {
+      "negative": {
         "holds": true,
         "apart": 0.43787780744861193,
         "stopped": true,
         "at": 0.7200000000000003,
         "why": "Twist"
       },
-      "pos": {
+      "positive": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": false,
@@ -50,14 +50,14 @@
       }
     },
     "left to left over crown": {
-      "neg": {
+      "negative": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": false,
         "at": 0.0,
         "why": "None"
       },
-      "pos": {
+      "positive": {
         "holds": true,
         "apart": 0.3978778074486119,
         "stopped": false,
@@ -66,14 +66,14 @@
       }
     },
     "left to right over crown": {
-      "neg": {
+      "negative": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": false,
         "at": 0.0,
         "why": "None"
       },
-      "pos": {
+      "positive": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": false,
@@ -82,14 +82,14 @@
       }
     },
     "left to right at torso": {
-      "neg": {
+      "negative": {
         "holds": true,
         "apart": 0.35787780744861186,
         "stopped": true,
         "at": 0.8600000000000004,
         "why": "Through"
       },
-      "pos": {
+      "positive": {
         "holds": true,
         "apart": 0.3778778074486119,
         "stopped": false,

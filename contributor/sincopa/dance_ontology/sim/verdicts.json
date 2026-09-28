@@ -1,9 +1,9 @@
 {
-  "stamp": "e32683df5baa998e",
+  "stamp": "91c480f1b51e693f",
   "sweeps": {
     "0|0|false|0.0|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.580000000000001,
         "apart": 0.35787780744861186,
@@ -13,7 +13,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.7200000000000003,
         "apart": 0.43787780744861193,
@@ -282,7 +282,7 @@
     },
     "1|0|false|0.0|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.580000000000001,
         "apart": 0.35787780744861186,
@@ -292,7 +292,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.7200000000000003,
         "apart": 0.43787780744861193,
@@ -561,7 +561,7 @@
     },
     "1|0|false|0.0|01": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.8600000000000004,
         "apart": 0.35787780744861186,
@@ -571,7 +571,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.3400000000000007,
         "apart": 0.43787780744861193,
@@ -840,7 +840,7 @@
     },
     "1|0|false|0.0|01|10": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.9000000000000005,
         "apart": 0.3778778074486119,
@@ -850,7 +850,7 @@
           "arm": 1
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.9000000000000005,
         "apart": 0.3778778074486119,
@@ -1119,7 +1119,7 @@
     },
     "1|0|false|0.0|10": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.3600000000000008,
         "apart": 0.43787780744861193,
@@ -1129,7 +1129,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.8600000000000004,
         "apart": 0.35787780744861186,
@@ -1398,7 +1398,7 @@
     },
     "1|0|false|0.0|11": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.7200000000000003,
         "apart": 0.43787780744861193,
@@ -1408,7 +1408,7 @@
           "arm": 1
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.580000000000001,
         "apart": 0.35787780744861186,
@@ -1677,7 +1677,7 @@
     },
     "1|0|false|0.36|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.580000000000001,
         "apart": 0.36,
@@ -1687,7 +1687,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.23999999999999996,
         "apart": 0.36,
@@ -1951,7 +1951,7 @@
     },
     "1|0|false|0.5|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.3400000000000007,
         "apart": 0.5,
@@ -1961,7 +1961,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.7200000000000003,
         "apart": 0.5,
@@ -2225,7 +2225,7 @@
     },
     "1|0|false|0.7|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.2400000000000007,
         "apart": 0.7,
@@ -2235,7 +2235,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.6000000000000002,
         "apart": 0.7,
@@ -2499,7 +2499,7 @@
     },
     "1|0|true|0.0|00|11": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.9400000000000005,
         "apart": 0.4178778074486119,
@@ -2509,7 +2509,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.9400000000000005,
         "apart": 0.4178778074486119,
@@ -2778,7 +2778,7 @@
     },
     "1|1|false|0.0|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.620000000000001,
         "apart": 0.3778778074486119,
@@ -2788,7 +2788,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.9800000000000005,
         "apart": 0.3778778074486119,
@@ -3077,7 +3077,7 @@
     },
     "1|1|false|0.0|01": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.1200000000000006,
         "apart": 0.3778778074486119,
@@ -3087,7 +3087,7 @@
           "arm": 1
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.1000000000000005,
         "apart": 0.8978778074486123,
@@ -3356,7 +3356,7 @@
     },
     "1|1|false|0.0|01|10": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.9000000000000005,
         "apart": 0.3978778074486119,
@@ -3366,7 +3366,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.9000000000000005,
         "apart": 0.3978778074486119,
@@ -3635,7 +3635,7 @@
     },
     "1|1|false|0.0|10": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.1000000000000005,
         "apart": 0.8978778074486123,
@@ -3645,7 +3645,7 @@
           "arm": 1
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.1400000000000006,
         "apart": 0.3778778074486119,
@@ -3914,7 +3914,7 @@
     },
     "1|1|false|0.0|11": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.9800000000000005,
         "apart": 0.3778778074486119,
@@ -3924,7 +3924,7 @@
           "arm": 1
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.640000000000001,
         "apart": 0.3778778074486119,
@@ -4213,7 +4213,7 @@
     },
     "1|1|true|0.0|00|11": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 0.02,
         "apart": 0.4178778074486119,
@@ -4223,7 +4223,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 0.7000000000000003,
         "apart": 0.7978778074486123,
@@ -4487,7 +4487,7 @@
     },
     "1|2|false|0.0|00": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.35787780744861186,
@@ -4497,7 +4497,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.4178778074486119,
@@ -4746,7 +4746,7 @@
     },
     "1|2|false|0.0|01": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.43787780744861193,
@@ -4756,7 +4756,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.4178778074486119,
@@ -5005,7 +5005,7 @@
     },
     "1|2|false|0.0|01|10": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.0600000000000005,
         "apart": 0.3778778074486119,
@@ -5015,7 +5015,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.3400000000000007,
         "apart": 0.43787780744861193,
@@ -5264,7 +5264,7 @@
     },
     "1|2|false|0.0|10": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.4178778074486119,
@@ -5274,7 +5274,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.35787780744861186,
@@ -5523,7 +5523,7 @@
     },
     "1|2|false|0.0|11": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.3978778074486119,
@@ -5533,7 +5533,7 @@
           "arm": 0
         }
       },
-      "pos": {
+      "positive": {
         "stopped": false,
         "at": 0.0,
         "apart": 0.3978778074486119,
@@ -5782,7 +5782,7 @@
     },
     "1|2|true|0.0|00|11": {
       "restHolds": true,
-      "neg": {
+      "negative": {
         "stopped": true,
         "at": 1.2200000000000006,
         "apart": 0.45787780744861195,
@@ -5792,7 +5792,7 @@
           "arm": 1
         }
       },
-      "pos": {
+      "positive": {
         "stopped": true,
         "at": 1.2000000000000006,
         "apart": 0.4178778074486119,
