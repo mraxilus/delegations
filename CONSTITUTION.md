@@ -51,8 +51,8 @@ use the mechanism is cargo cult.
    Export only what a caller needs, and reach an internal of a sibling deliberately, never by
    a wider export. The internal says so, and names the sibling that reaches it. **Façade
    gate.** Where the surface is symbolic or generated, the umbrella is a façade of documented
-   one-line forwarders. It is the API reference that is also
-   source, and the source of truth for the public names.
+   one-line forwarders. It is the API reference that is also source, and the source of truth
+   for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
    an old figure and a fixed bug go to the log (XI) and to the provenance file (VIII.6). A
    live trap earns one line, and a test that trips on it. Where no test can reach the trap,
@@ -173,13 +173,12 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    case still carries a meaningful value, return that value beside a named flag. A message
    ends by echoing the value: ``"…; got `{value}`."`` An expensive check runs under the
    assertions flag.
-5. Decide the policy for each special case, and express it in the return type: zero, empty,
-   NaN, overflow, and a zero norm. Where the result stays valid, return it beside a named flag,
-   and otherwise return a typed Option. Where no invalid value is possible, return the plain
-   value. Compare computed floats only through a relative tolerance with an absolute floor, and
-   poison exact equality on those types. Derive the tolerance from a build-configurable count
-   of decimal places. Compare against zero at the scale of what you test, and exactly only
-   where no scale is in hand.
+5. Decide the policy for each special case: zero, empty, NaN, overflow, and a zero norm. Express it
+   in the return type, as IV.4 has it. Where no invalid value is possible, return the plain value.
+   Compare computed floats only through a relative tolerance with an absolute floor, and poison
+   exact equality on those types. Derive the tolerance from a build-configurable count of decimal
+   places. Compare against zero at the scale of what you test, and exactly only where no scale is
+   in hand.
 6. **Storage gate.** A small, closed, statically known domain gets fixed enum-indexed storage
    that carries a live bound. At runtime, use no growing heap structure: dynamic data takes an
    arena that owns its lifetime, and a temporary takes a scratch arena. Every walk runs to
@@ -210,23 +209,28 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
 
 ## Article V: Names form an ordered system
 
-1. Casing encodes the kind of symbol, one convention for each kind, with no exception.
-   Visibility never changes the case. Types are `PascalCase`, callables are `lowerCamelCase`,
-   and a local, a parameter and a field are `snake_case`. A global, which is a binding at
-   module level of any kind, is `SCREAMING_SNAKE_CASE`, because the case marks reach and not
-   mutability. So keep globals rare and prefer `const`, and give a mutable global a comment
-   that says why. Adopt this even where the community of the host language differs, because
-   a mixed scheme destroys the signal.
+1. Casing encodes the kind of symbol, one convention for each kind, with one exception, which III.5
+   states. Visibility never changes the case. Types are `PascalCase`, callables are
+   `lowerCamelCase`, and a local, a parameter and a field are `snake_case`. A global, which is a
+   binding at module level of any kind, is `SCREAMING_SNAKE_CASE`, because the case marks reach and
+   not mutability. So keep globals rare and prefer `const`, and give a mutable global a comment
+   that says why. Adopt this even where the community of the host language differs, because a mixed
+   scheme destroys the signal.
 2. Compose a name head first, with the qualifiers last, from general to specific, so that
    families sort and align: `wedge`/`wedgeAnti`, `norm`/`normBulk`/`normWeight`,
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
    domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
    domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
-   recurring kind of action keeps one verb. `define…` names a macro that declares from data,
-   and `construct…` a table built and returned. `emit…` names a function that returns AST,
-   and `init…` a constructor of a value. `to<Target>` names a change of representation, and
-   takes its subject first.
+   recurring kind of action keeps one verb:
+   - `define…` names a macro that declares from data, and a template that declares a fixed
+     family is named for its act (`borrowGradeOperations`);
+   - `construct…` names a table that is built and returned, and `emit…` a function that
+     returns AST;
+   - `init…` names a constructor of a value, and `new…` never appears, because nothing is a
+     reference (IV.6);
+   - `to<Target>` names a change of representation, and takes its subject first. A
+     transformation inside the domain keeps its domain name.
 4. A boolean is a proposition or a mode. Write `is_` for state, `as_` for interpretation,
    `should_` for policy, `found_` for a search outcome, and `has_` for possession.
    A mode boolean passes as a named argument (`as_weight = true`). A predicate callable is

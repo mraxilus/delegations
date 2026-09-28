@@ -63,7 +63,7 @@ Every rule below serves it:
 | `GLOSSARY.md` | The words of the repository itself | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
-| `GUIDE.md` | How-to that both roles share, stamped into nothing | curator |
+| `GUIDE.md` | How-to that both roles share, and the rules the constitution points here | curator |
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
@@ -121,9 +121,10 @@ This section adds only what differs for a curator.
 
 ## Duties
 
-1. **Rules change.** `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md` form the
-   charter, which is stamped into the `PROVENANCE.md` of every project, in the `Rules` row.
-   Change one, and the audit fails on every project until you re-stamp.
+1. **Rules change.** `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md`, `GUIDE.md` and
+   `CONTRIBUTOR.md` form the charter, which is stamped into the `PROVENANCE.md` of every
+   project, in the `Rules` row. Change one, and the audit fails on every project until you
+   re-stamp.
 
    Do all of this in the same pull request. Read the diff, and re-audit every project
    against each changed rule. Apply what the rule now demands in the records, which duty 11

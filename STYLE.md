@@ -125,9 +125,9 @@ Escalate only on need.
   (`bound`), and every walk is `for slot in 0 ..< pool.bound`.
 - Give a distinct type whose domain you walk an `items` iterator over its typedesc, so that
   `for k in Order:` reads as the domain.
-- Define `=~` as `abs(a - b) <= TOL * max(1, abs(a), abs(b))`, with `TOL` derived from the
-  count of places. Near zero, that form falls to its absolute floor, so a zero test takes the
-  scale of what it tests (Article IV.5).
+- Define `=~` as `abs(a - b) <= TOLERANCE_ABS * max(1, abs(a), abs(b))`, and derive
+  `TOLERANCE_ABS` from the count of places. Near zero, that form falls to its absolute floor,
+  so a zero test takes the scale of what it tests (Article IV.5).
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).

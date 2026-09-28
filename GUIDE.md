@@ -1,10 +1,9 @@
 # Guide
 
 How-to for every delegate, curator or contributor. Nothing here binds on its own. What binds is
-in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, which the stamp covers,
-and in `CURATOR.md`. A section here binds where one of those documents points at it. This file
-is stamped into nothing, so a change of wording here re-audits no project. That is why it is a
-file of its own.
+in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, and in `CURATOR.md`. A
+section here binds where one of those documents points at it. The stamp covers this file too,
+so a change here re-audits every project, as a change to the rules it carries should.
 
 ## Simplified Technical English
 
