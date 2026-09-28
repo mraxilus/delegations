@@ -45,7 +45,7 @@ const
   CHECK_DIRECTORY* = "curator/audit/src/"
     ## Modules these rules cover.
   SUITE_DIRECTORY* = "curator/audit/tests/suites/"
-    ## Where each module's suite lives; `tests/tsuites.nim` runs them as one program.
+    ## Where each module's suite lives; `tests/test_suites.nim` runs them as one program.
   NIM_EXT* = ".nim"
     ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
@@ -139,7 +139,7 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
   for path in paths:
     let module = path.moduleOf
     if module.len == 0: continue
-    let suite = SUITE_DIRECTORY & "t" & module & NIM_EXT
+    let suite = SUITE_DIRECTORY & "test_" & module & NIM_EXT
     if suite notin present:
       result.add finding(
         path, 0,

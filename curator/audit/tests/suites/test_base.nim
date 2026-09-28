@@ -17,7 +17,7 @@ suite "Base":
     check not "contributor/ronri/alpha/PROVENANCE.md".isGoverning
     check not "CURATOR.md".isGoverning  # curator-only, never stamped
     check not "README.md".isGoverning
-    check not (CHECKER_DIRECTORY.replace("/src", "") & "/tests/tlayout.nim").isGoverning
+    check not (CHECKER_DIRECTORY.replace("/src", "") & "/tests/test_layout.nim").isGoverning
 
   test "branch predating rules or checker is one finding naming what it lacks":
     check checkBase(newSeq[string]()).len == 0  # base gained nothing
