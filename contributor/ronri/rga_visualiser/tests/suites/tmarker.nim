@@ -1,5 +1,7 @@
 ## Run `Marker` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 # Opened with `{.all.}`, so suite checks private helper directly: `directionAcross` is whole of
 #   why line's rails converge, worth asserting on its own terms rather than only through

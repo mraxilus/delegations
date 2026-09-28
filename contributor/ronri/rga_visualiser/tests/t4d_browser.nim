@@ -14,4 +14,7 @@ matrix: "-d:nimUnittestAbortOnError:on -d:visualiser.history_capacity=4"
 ##   default. Orrery's cases need shipped object capacity, and run here on page's own backend.
 ## Cases needing C entry point (`snprintf`, PNG and GIF export, arena) guard themselves
 ## with `when not defined(js)` and are skipped here.
+
+{.experimental: "strictFuncs".}
+
 include "./suites.nim"

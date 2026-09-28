@@ -1,5 +1,7 @@
 ## Run `Picking` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 # Opened with `{.all.}`, so suite checks private helper directly: `isBeyondDisc` is broad phase
 #   whose only property worth pinning, never rejecting hit meet would accept, is stated against

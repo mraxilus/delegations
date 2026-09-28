@@ -1,5 +1,7 @@
 ## Run `Orrery` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 

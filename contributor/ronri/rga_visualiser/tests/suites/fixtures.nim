@@ -2,6 +2,8 @@
 ##   Drawn once from seeded generator, before any suite runs, so failure reproduces from
 ##   test name alone; see `../suites.nim` for why suites are modules of their own.
 
+{.experimental: "strictFuncs".}
+
 import std/[
   math, options, os, random, sets, strformat, strutils, tables, unicode, unittest,
 ]
