@@ -206,7 +206,8 @@ row that the tick writes, or the wait would assert what the check goes on to ask
 **Settle on what moves, and not on what has stopped changing.** Two polls of an unmoving stance
 agree before an ease has begun. So `settleCamera` asks the ease: `nimCameraCarrying` reports
 `goal.isSome and not is_arrived`. It waits one draw first, because that draw arms it (repository
-issue 73). Verified by a break on purpose: return at once, and every loss is framing.
+issue 73). Verified by a break on purpose: return at once, and every loss is framing. The horizon
+label check places only stances that the frame rule holds, and asserts that the eye stays.
 
 **Pixels are read through the compositor, and a reading that carries no picture is refused.** The
 context keeps no drawing buffer, and `gl.ts` says why. So `readPixels` is sound only from inside the
@@ -387,17 +388,14 @@ onto it, makes one picture where there should be two. Width cannot part them.
 interface faces, because those rows carry wedges. Commit Mono comes from the repository of its
 author, because `@fontsource` ships no TrueType.
 
-**Ligatures cannot reach the desktop at all**, because Dear ImGui shapes no text, so no GSUB feature
-fires.
+**Ligatures cannot reach the desktop**, because Dear ImGui shapes no text, so no GSUB feature fires.
 
 **The chip row floats over the canvas, and its width budget is measured rather than assumed.** Six
-controls ride it, and the row is flex. So where it stops fitting, what gives is the controls inside
-it.
+controls ride it, and the row is flex. So where it stops fitting, the controls inside it give.
 
-There are two breakpoints, each one swept a pixel at a time. Below **497 px** the brand draws
+There are two breakpoints, each swept a pixel at a time. Below **497 px** the brand draws
 `NameChipDrawer` in place of its name, at 123 px wide at 497, and 34 at 496. Below **395 px**
-`.toggles` moves into the menu popover, under its own `show` heading, at 1 px over at 394, and 75 at
-320.
+`.toggles` moves into the menu popover, under its own `show` heading: 1 px over at 394, 75 at 320.
 
 It is moved rather than copied. A second pair of buttons would be a second `on` state to keep in
 step with the scene's own. `#top-menu-show[hidden]` spells out `display: none`, because an author
@@ -1746,7 +1744,9 @@ the outline. Each front-end centres its own text.
 
   It is not the highest point, which on a level horizon hopped between the two side crossings,
   within a pixel in height. That was 46 swaps of 1,070 px in 97 frames at elevation 0.2. It is not
-  flush against the edge, where the name read as cut off.
+  flush against the edge, where the name read as cut off. Its driven check orbits at rises of 0.15
+  and -0.15, 8.5° off the horizon, inside the frame rule's 10.7° at 393 by 560 px. A label read
+  during the ease back from 0.2 depended on frame time (repository issue 297).
 
   **The label of the frame of the sky stands inside the bottom-left corner.** It stands
   `MARGIN_LABEL_HORIZON` in from the left edge of the frame, and `MARGIN_LABEL_FOOT` 40 px plus
@@ -1863,7 +1863,7 @@ swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are 
 Verified by driven check:
 
 - 402 frames with 0 label hops;
-- 48 frames at phone width with 0 side swaps, and none on the right;
+- 96 frames at phone width, the eye still where it was placed, with 0 side swaps and none right;
 - the label of the horizon line whole in its first frame at phone width, at four bearings;
 - the label box of the frame in its corner above the scale bar;
 - a 720-step orbit with the rail gap changing at most 0.103 px between frames;

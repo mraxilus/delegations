@@ -7,7 +7,7 @@
 
 import type { Page } from '@playwright/test';
 import {
-  eyeAround, outToward, placeCamera, readPlaced, settleCamera, type Placed,
+  eyeAround, outToward, placeCamera, readPlaced, settleCamera, spanOf, type Placed,
 } from './camera';
 import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
@@ -16,6 +16,19 @@ import { report } from './report';
 
 /** How many steps each orbit is walked in, and how many of those two together make. */
 const STEPS_ORBIT = 200, FRAMES_WANTED = 400;
+
+/** Rises of two orbits horizon label check walks: one looking down, one up.
+ *
+ *  Inside frame rule's bound for selected horizon line at phone width, so camera stands
+ *  where placed; see `framing.isBounded`. Stance outside it eases back toward one facing.
+ */
+const RISES_HORIZON_HELD = [0.15, -0.15];
+
+/** How far eye may stand off where it was placed and still count as standing there.
+ *
+ *  Over eye's own round trip through bridge, and under what one eased frame moves it.
+ */
+const SPAN_EYE_HELD = 1e-4;
 
 /** Label's own place this step, and window it must stay inside. */
 interface Standing {
@@ -140,10 +153,13 @@ async function labelBox(page: Page): Promise<Box | null> {
  *
  *  Horizon line's label stood above its band's topmost point wherever that fell: on narrow
  *  page it fell at right edge, name cut, and on level horizon it hopped between two side
- *  edges frame to frame. It now rides band's crossing of left edge. Two heights, since
- *  band's crossing wanders down whole height as camera rises. Runs over demo, whose
- *  ecliptic gives horizon line; whole camera is put back after, as far-sky check does,
- *  since zoom check following reads its opening distance off wherever camera stands.
+ *  edges frame to frame. It now rides band's crossing of left edge. Two heights, horizon
+ *  above middle on one orbit and below it on other, so crossing stands high, then low.
+ *  Every step is read where camera stands still, and asserted so: stance frame rule
+ *  refuses eases back, and label read mid-ease hung on frame time, verdict with it
+ *  (repository issue 297). Runs over demo, whose ecliptic gives horizon line; whole camera
+ *  is put back after, as far-sky check does, since zoom check following reads its opening
+ *  distance off wherever camera stands.
  */
 export async function driveLabelHeldInView(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -159,12 +175,14 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
   await page.setViewportSize({ width: 393, height: 560 });
   await page.evaluate((one) => selectOnly(one, null), line);
   await settleCamera(page);
-  let frames = 0, cut = 0, worst = 0, swaps = 0, right = 0;
-  for (const rise of [0.2, 1.26]) {
+  let frames = 0, cut = 0, worst = 0, swaps = 0, right = 0, moved = 0;
+  for (const rise of RISES_HORIZON_HELD) {
     let centre_before: number | null = null;
     for (let i = 0; i < 48; i += 1) {
-      await placeCamera(page, placedAround((i / 48) * 2 * Math.PI, rise));
+      const placed = placedAround((i / 48) * 2 * Math.PI, rise);
+      await placeCamera(page, placed);
       await waitFrames(page, 2);
+      if (spanOf((await readPlaced(page)).eye, placed.eye) > SPAN_EYE_HELD) moved += 1;
       const box = await labelBox(page);
       if (box === null) {
         centre_before = null;
@@ -185,12 +203,14 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
       centre_before = centre;
     }
   }
+  const steps = 48 * RISES_HORIZON_HELD.length;
   report(
     "a horizon line's label stays whole inside a phone-width page, on its left, through" +
-      " two orbits without swapping sides",
-    frames >= 48 && cut === 0 && swaps === 0 && right === 0,
-    `${frames} frames with a label, ${cut} with its box past an edge, worst ` +
-      `${worst.toFixed(1)} px over, ${swaps} side swaps, ${right} on the right`,
+      " two orbits the camera holds, without swapping sides",
+    moved === 0 && frames === steps && cut === 0 && swaps === 0 && right === 0,
+    `${moved} of ${steps} steps eased off where placed, ${frames} frames with a label, ` +
+      `${cut} with its box past an edge, worst ${worst.toFixed(1)} px over, ${swaps} side ` +
+      `swaps, ${right} on the right`,
   );
   await page.evaluate(() => clearSelection());
   await page.setViewportSize({ width: 1200, height: 900 });
