@@ -154,7 +154,7 @@ type
 
 #[ Operation Catalogue ]#
 
-const lut_operation_to_arity*: array[Operation, Arity] = [
+const lut_arity_by_operation*: array[Operation, Arity] = [
   Operation.Attitude: Arity.One,
   Operation.Support: Arity.One,
   Operation.SupportAnti: Arity.One,
@@ -185,7 +185,7 @@ const lut_operation_to_arity*: array[Operation, Arity] = [
 ] ## Map operation to number of operands it consumes.
 
 
-const lut_operation_to_notation* = [
+const lut_notation_by_operation* = [
   Operation.Attitude: "𝐦⊖  attitude",
   Operation.Support: "𝐦∩  support",
   Operation.SupportAnti: "𝐦∪  antisupport",
@@ -227,12 +227,12 @@ const lut_operation_to_notation* = [
   ##     program runs; addresses derive from text, never text from addresses.
 
 
-let lut_operation_to_notation_c* = block:
+let lut_notation_cstring_by_operation* = block:
   ## Map operation to same entries as `cstring`, what picker offers.
   ##   Dear ImGui takes address of first and reads them for life of combo.
   ##   Built from table above rather than written beside it.
   var lut: array[Operation, cstring]
-  for operation in Operation: lut[operation] = cstring(lut_operation_to_notation[operation])
+  for operation in Operation: lut[operation] = cstring(lut_notation_by_operation[operation])
   lut
 
 
@@ -248,7 +248,7 @@ const
     var lut: array[Operation, tuple[symbols, name: string]]
     for operation in Operation:
       let
-        full = lut_operation_to_notation[operation]
+        full = lut_notation_by_operation[operation]
         cutoff = full.find("  ")
       lut[operation] =
         if cutoff >= 0: (symbols: full[0 ..< cutoff], name: full[cutoff + 2 .. ^1].strip())
@@ -426,7 +426,7 @@ func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[P
 
 #[ Multivector Formatting ]#
 
-const lut_basis_to_name* = block:
+const lut_name_by_basis* = block:
   ## Name each basis element as library's `$` names it.
   ##   `𝟏` for scalar, `𝟙` for antiscalar, bold `𝐞` carrying subscript digits for rest.
   ##   Exported so both GUIs label coefficient with its basis element, reading same as
@@ -479,11 +479,11 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
     elif wrote_any: appendChars(storage, cursor, " + ")
     appendMagnitude(storage, cursor, abs(m[b]))
     appendChars(storage, cursor, " ")
-    appendChars(storage, cursor, lut_basis_to_name[b])
+    appendChars(storage, cursor, lut_name_by_basis[b])
     wrote_any = true
   if not wrote_any:
     appendChars(storage, cursor, "0 ")
-    appendChars(storage, cursor, lut_basis_to_name[Basis.scalar])
+    appendChars(storage, cursor, lut_name_by_basis[Basis.scalar])
 
 
 const WIDTH_KIND_WORD* = 32
@@ -1433,5 +1433,5 @@ func remember*(memory: var OperationMemory, operation: Operation) =
     memory.unary = OPERATION_FIRST_UNARY
     memory.binary = OPERATION_FIRST_BINARY
     memory.is_started = true
-  if lut_operation_to_arity[operation] == Arity.One: memory.unary = operation
+  if lut_arity_by_operation[operation] == Arity.One: memory.unary = operation
   else: memory.binary = operation

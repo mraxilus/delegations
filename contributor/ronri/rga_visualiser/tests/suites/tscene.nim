@@ -90,7 +90,7 @@ suite "Scene":
 
   test "unary operations ignore their second operand":
     for operation in Operation:
-      if lut_operation_to_arity[operation] != Arity.One: continue
+      if lut_arity_by_operation[operation] != Arity.One: continue
       for i in 0 ..< SAMPLES:
         let (m, n, o) = (POINTS[i], LINES[i], PLANES[i])
         check applyOperation(operation, m, n) =~ applyOperation(operation, m, o)
@@ -99,7 +99,7 @@ suite "Scene":
   test "every operation names itself and is offered once":
     var seen: array[Operation, int]
     for operation in Operation:
-      check len(lut_operation_to_notation[operation]) > 0
+      check len(lut_notation_by_operation[operation]) > 0
       inc seen[operation]
     for operation in Operation:
       check seen[operation] == 1
@@ -333,7 +333,7 @@ suite "Scene":
     #   Never trusted to table transcribed by hand.
     for b in Basis:
       let named = ($initElement(b, 1.0)).strip()
-      check lut_basis_to_name[b] == named
+      check lut_name_by_basis[b] == named
     for i in 0 ..< SAMPLES:
       check kindText(POINTS[i]) == "point"
       check kindText(LINES[i]) == "line"

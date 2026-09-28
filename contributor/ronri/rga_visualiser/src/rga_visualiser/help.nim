@@ -9,7 +9,7 @@
 ##   Words are `wording`'s: every cell, title and line is key there, and this module holds
 ##   which cell sits in which row. Cell naming button or key composes through `wording`'s
 ##   own funcs, so no word reader sees is written here.
-##   Binding derived from rule stated elsewhere is read from there: `lut_help_entries`
+##   Binding derived from rule stated elsewhere is read from there: `HELP_ENTRIES`
 ##   builds construct rows out of `interaction.armingOf`, so rebinding button rewrites help.
 ## Every row has to make sense with rows above it covered up.
 ##   Reader opens one tab, finds line they need, leaves.
@@ -139,7 +139,7 @@ func nameOf(button: PointerButton): string =
   toLowerAscii($button)
 
 
-const lut_help_entries* = block:
+const HELP_ENTRIES* = block:
   ## Hold every entry two UIs render, grouped by path and in order reader meets them.
   ##   Fixed array with `count` asserted against length at compile time, so adding entry
   ##   without resizing fails build rather than leaving blank row.
@@ -279,7 +279,7 @@ const lut_help_entries* = block:
 
 func countOf*(path: HelpPath): int =
   ## Count entries one tab holds, for caller sizing or checking one.
-  for entry in lut_help_entries:
+  for entry in HELP_ENTRIES:
     if entry.path == path: inc result
 
 
@@ -288,7 +288,7 @@ static:
   var
     seen: set[HelpPath]
     path_last = none(HelpPath)
-  for entry in lut_help_entries:
+  for entry in HELP_ENTRIES:
     if path_last != some(entry.path):
       doAssert entry.path notin seen,
         &"Entries of one help path must be written together, or it renders as two tabs; " &

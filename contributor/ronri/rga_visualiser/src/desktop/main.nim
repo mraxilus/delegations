@@ -1350,7 +1350,7 @@ proc driveDrag(
     sdl3.pushEvent(addr press)
 
 
-type KeyStep = object ## Define one frame of scripted keyboard run; see `lut_keys_driven`.
+type KeyStep = object ## Define one frame of scripted keyboard run; see `KEYS_DRIVEN`.
   ## Frame carrying no key is point of `Option`.
   ##   Held key moves camera on frames between press and release, and script sending
   ##   event every frame could never leave it held.
@@ -1374,7 +1374,7 @@ const
     ## Name SDL's keycodes for three non-ASCII keys script sends.
     ##   See `driveKeys` on why synthesised event needs one.
 
-const lut_keys_driven = [
+const KEYS_DRIVEN = [
   # Walk focus on twice and select what it lands on.
   stepKey(Scancode.BracketRight, uint32(ord(']'))),
   stepKey(Scancode.BracketRight, uint32(ord(']')), is_down = false),
@@ -1415,8 +1415,8 @@ proc driveKeys(count_drawn: int) =
   ##   Posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
   const FRAME_FIRST = 3 # Past startup, so first frame's layout has settled.
   let step = count_drawn - FRAME_FIRST
-  if step notin 0 ..< len(lut_keys_driven): return
-  let scripted = lut_keys_driven[step]
+  if step notin 0 ..< len(KEYS_DRIVEN): return
+  let scripted = KEYS_DRIVEN[step]
   if scripted.pressed.isNone: return
   var event = Event(kind: uint32(if scripted.is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scripted.pressed.get.scancode)
@@ -1448,13 +1448,13 @@ proc driveSelect(
   const
     FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
     STEPS_CLICK = 6 # Three clicks, each frame to reach and frame to press.
-    lut_step_to_handle = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
+    lut_handle_by_step = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
       ## Name which object each step aims at.
       ##   Three clicks on 0, 1 and 2, then drag from 2 (one menu follows) onto 0.
   let step = count_drawn - FRAME_FIRST
-  if step notin 0 ..< len(lut_step_to_handle): return
+  if step notin 0 ..< len(lut_handle_by_step): return
   let
-    handle = lut_step_to_handle[step]
+    handle = lut_handle_by_step[step]
     is_acting = (step mod 2) == 1
   if not scene.isAlive(handle): return
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
@@ -1490,7 +1490,7 @@ proc driveSelect(
     sdl3.pushEvent(addr release)
 
 
-const lut_keys_undo_driven = [
+const KEYS_UNDO_DRIVEN = [
   (Scancode.Right, uint32(1073741903), 0'u16, true), # SDLK_RIGHT, no modifier: orbit.
   (Scancode.Right, uint32(1073741903), 0'u16, false),
   (Scancode.Up, uint32(1073741906), 0'u16, true), # SDLK_UP: rise.
@@ -1518,12 +1518,12 @@ proc driveUndo(
   const
     FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
     STEPS_DRAG = 4 # Reach source, press, reach target, release.
-    lut_step_to_handle = [0, 0, 1, 1]
+    lut_handle_by_step = [0, 0, 1, 1]
   let step = count_drawn - FRAME_FIRST
   if step < 0: return
 
   if step < STEPS_DRAG:
-    let handle = lut_step_to_handle[step]
+    let handle = lut_handle_by_step[step]
     if not scene.isAlive(handle): return
     let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
     if anchor.isNone: return
@@ -1553,8 +1553,8 @@ proc driveUndo(
   #   Construction is then committed and its camera aim armed before orbit that overrides
   #   it starts.
   let index = step - STEPS_DRAG - 1
-  if index notin 0 ..< len(lut_keys_undo_driven): return
-  let (scancode, keycode, modifiers, is_down) = lut_keys_undo_driven[index]
+  if index notin 0 ..< len(KEYS_UNDO_DRIVEN): return
+  let (scancode, keycode, modifiers, is_down) = KEYS_UNDO_DRIVEN[index]
   var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scancode)
   event.key.keycode = keycode
@@ -1597,10 +1597,10 @@ proc driveSky(
   #   No sky in opening scene, so scan would find nothing and drive would silently do
   #   nothing.
   if count_drawn == FRAME_FIRST - 1:
-    var has_sky = false
+    var found_sky = false
     for handle in 0 ..< scene.bound:
-      if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: has_sky = true
-    if not has_sky:
+      if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: found_sky = true
+    if not found_sky:
       discard scene.addObject(
         toMultivector(Direction(x: 1, y: 0, z: 0)) ∧
           toMultivector(Direction(x: 0, y: 1, z: 0)) ∧
@@ -2064,7 +2064,7 @@ proc runStoryboard(
     var are_operative: array[OBJECTS_MAX, bool]
     are_operative[step.index_first] = true
     are_operative[count_seeds + index] = true
-    if lut_operation_to_arity[step.operation] == Arity.Two:
+    if lut_arity_by_operation[step.operation] == Arity.Two:
       are_operative[step.index_second] = true
     for handle, _ in scene.pairs:
       are_dimmed[handle] =

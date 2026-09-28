@@ -814,13 +814,13 @@ proc nimOperationNotation(index: cint): cstring {.exportc.} =
 proc nimOperationArity(index: cint): cint {.exportc.} =
   ## Report 0 for operation reading one operand, 1 for one reading two.
   ##   Matches `panel.layoutOperation`'s disabling of second operand picker.
-  cint(lut_operation_to_arity[Operation(index)])
+  cint(lut_arity_by_operation[Operation(index)])
 
 
 proc nimBasisCount(): cint {.exportc.} = cint(ord(Basis.high) + 1)
   ## Report how many basis coefficients multivector carries in this build's dimension.
 
-proc nimBasisName(index: cint): cstring {.exportc.} = cstring(lut_basis_to_name[Basis(index)])
+proc nimBasisName(index: cint): cstring {.exportc.} = cstring(lut_name_by_basis[Basis(index)])
   ## Report Nth basis element's name.
 
 proc nimBasisGrade(index: cint): cint {.exportc.} = cint(ord(Basis(index).grade))
@@ -834,7 +834,7 @@ proc nimInkChoosableSlots(): seq[int] {.exportc.} =
   for index in 0 ..< COUNT_INK_CATEGORICAL: result.add(ord(inkCategorical(index)))
 
 
-proc nimInkName(index: cint): cstring {.exportc.} = lut_ink_to_name[Ink(index)]
+proc nimInkName(index: cint): cstring {.exportc.} = lut_name_by_ink[Ink(index)]
 
 
 proc nimInkCount(): cint {.exportc.} = cint(ord(Ink.high) + 1)
@@ -1461,8 +1461,8 @@ proc nimHelpEntries(): seq[cstring] {.exportc.} =
   ##   Tab, action, outcome, and `"touch"` or `""`.
   ##   Flat rather than array of records, as `nimSelectionMarker` is: object crossing this
   ##   boundary is second shape to keep in step.
-  ##   Entries are `help.lut_help_entries`, which desktop panel renders too.
-  for entry in lut_help_entries:
+  ##   Entries are `help.HELP_ENTRIES`, which desktop panel renders too.
+  for entry in HELP_ENTRIES:
     result.add([
       cstring(titleOf(entry.path)), cstring(entry.action), cstring(entry.outcome),
       cstring(if entry.is_touch: "touch" else: ""),

@@ -1172,7 +1172,7 @@ suite "Mesh":
 
   test "the categorical run is contiguous, so a picker can walk it as one block":
     # Colour picker offers `COUNT_INK_CATEGORICAL` entries starting at.
-    #   `lut_ink_to_name[INK_CATEGORICAL_FIRST]`, which is only correct while every
+    #   `lut_name_by_ink[INK_CATEGORICAL_FIRST]`, which is only correct while every
     #   categorical slot follows every structural one, with no gaps.
     check COUNT_INK_CATEGORICAL == 5
     check inkCategorical(0) == INK_CATEGORICAL_FIRST

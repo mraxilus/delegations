@@ -44,7 +44,7 @@
 ##   Walk passes over system too large for room left rather than stopping on it.
 ##   Only Sol's block and four in horizon are fixed; everything between is however many
 ##   real stars fit.
-## Colour says what thing is, not which system it belongs to; see `lut_role_to_ink`.
+## Colour says what thing is, not which system it belongs to; see `lut_ink_by_role`.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
@@ -254,7 +254,7 @@ const
     ##   Four, not three: two points in horizon, because one cannot make plane. See
     ##   horizon block in `constructOrrery`.
 
-const lut_role_to_ink*: array[Role, Ink] = [
+const lut_ink_by_role*: array[Role, Ink] = [
   Role.Sun: Ink.Copper,
   Role.Planet: Ink.Cobalt,
   Role.Moon: Ink.Rose,
@@ -441,7 +441,7 @@ func addHorizon(
   doAssert kindOf(geometry) == some(expected) and isHorizon(geometry),
     &"Orrery's `{label}` must be {expected} in horizon, its operands genuinely apart; got " &
       &"`{kindOf(geometry)}`."
-  scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now)
+  scene.addObject(geometry, label, lut_ink_by_role[Role.Derived], now)
 
 
 func addPlane(
@@ -457,7 +457,7 @@ func addPlane(
   doAssert kindOf(geometry) == some(Kind.Plane),
     &"Orrery must derive `{label}` from a point and two directions spanning a plane; got " &
       &"`{kindOf(geometry)}`."
-  scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now, some(anchor))
+  scene.addObject(geometry, label, lut_ink_by_role[Role.Derived], now, some(anchor))
 
 
 func objectsOf*(star: Star): int =
@@ -588,7 +588,7 @@ func constructSol(
     places[index] = place
     placed[index] = toMultivector(place)
     scene.addObject(
-      placed[index], body.name, lut_role_to_ink[body.role], now,
+      placed[index], body.name, lut_ink_by_role[body.role], now,
       radius = radiusDrawnOf(body.kilometres_radius),
     )
   # Ring every moon about planet it really rings, in plane it really rings in.
@@ -603,7 +603,7 @@ func constructSol(
         SYSTEM_SOL.spin + 2.4*float(index))
     placement_moons[index] = toMultivector(place)
     scene.addObject(
-      placement_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,
+      placement_moons[index], moon.name, lut_ink_by_role[Role.Moon], now,
       radius = radiusDrawnOf(moon.kilometres_radius),
     )
   # Span ecliptic by Sol and two directions planets ring along; see `addPlane`.
@@ -613,8 +613,8 @@ func constructSol(
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
   #   makes horizon plane constructible.
   tether = placed[INDEX_SOL_EARTH] ∧ placement_moons[INDEX_MOON_LUNA]
-  scene.addObject(orbit, "sol ∧ earth", lut_role_to_ink[Role.Derived], now)
-  scene.addObject(tether, "earth ∧ luna", lut_role_to_ink[Role.Derived], now)
+  scene.addObject(orbit, "sol ∧ earth", lut_ink_by_role[Role.Derived], now)
+  scene.addObject(tether, "earth ∧ luna", lut_ink_by_role[Role.Derived], now)
   addPlane(scene, ecliptic, "ecliptic sol", now, place_sol)
 
 
@@ -655,7 +655,7 @@ func constructOrrery*(
       count_placed = placedOf(star)
     # No radius on record for any star or planet but our own; see `mesh.RADIUS_OBJECT_LEAST`.
     scene.addObject(
-      sun, star.name, lut_role_to_ink[Role.Sun], now, radius = RADIUS_OBJECT_LEAST,
+      sun, star.name, lut_ink_by_role[Role.Sun], now, radius = RADIUS_OBJECT_LEAST,
     )
     if count_placed == 0: continue
 
@@ -670,7 +670,7 @@ func constructOrrery*(
           angleRing(system.spin, which_placed, count_placed))
         inc which_placed
         scene.addObject(
-          toMultivector(place), planet.name, lut_role_to_ink[Role.Planet], now,
+          toMultivector(place), planet.name, lut_ink_by_role[Role.Planet], now,
           radius = RADIUS_OBJECT_LEAST,
         )
 
