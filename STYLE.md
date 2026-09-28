@@ -8,8 +8,8 @@ wins. `EXAMPLES.md` holds longer worked examples, which both documents point int
 
 ## 1. Construct selection
 
-Map the callable ladder of the constitution onto `func → proc → iterator → template → macro`.
-Escalate only on need.
+Map the callable ladder of the constitution onto `func → proc → iterator → template → macro`,
+and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
@@ -59,9 +59,12 @@ Escalate only on need.
   incidental const evaluation where the staging is part of the contract.
 - `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor. Inline a larger body
   only where a measurement shows the gain.
-- `{.noinit.}`: only on a routine that writes every field of `result` by construction, such
-  as an emitted kernel or a loop over the whole domain. A partial write under it leaves
-  memory undefined.
+- `{.noinit.}`: only on a routine that writes every element of `result` on every path (VII.8).
+  An emitted kernel and a loop over the whole domain qualify. Otherwise Nim zeroes `result`
+  first, and a partial write under the pragma leaves memory undefined. On the JS backend an
+  array `result` is always a new array of zeros, so the pragma changes nothing there.
+- A pragma that the compiler checks is the annotation that VI.7 names, such as
+  `{.raises: [].}` for no exceptions.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
   that is not obvious at the use site (`{.borrow, compileTime, used.} # Used in cayleys.nim.`).
   Define a repeated mechanical borrow family once, through a documented template:
@@ -133,6 +136,8 @@ Escalate only on need.
 
 ## 5. Signatures, imports, calls
 
+- A doc comment is `##`, so an empty slot is `## TODO: Document.` (VI.1).
+- Group related bindings under one `const`, `let` or `var` section (X.5).
 - Write bracket imports, grouped and consolidated, each group alphabetised:
   `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
   A single module takes no bracket (`import std/math`). Use `{.all.}` only for deliberate
@@ -239,6 +244,8 @@ Escalate only on need.
         check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
   ```
 
+- A citation comment is `#`, two spaces after the assertion: `check 𝐮 ∧ 𝐯 =~ -(𝐯 ∧ 𝐮)  # 2.4`
+  (IX.1).
 - Compare floats through `=~`, with the build-configurable tolerance. `==` on those types is
   poisoned, and must not compile.
 
@@ -250,6 +257,15 @@ the lowered output. A `let` of a scalar is free on both backends. What to look f
 - **C and C++ backends.** A `let` of an object copies the struct. `lent` and `var` are
   pointers. An `array[N, T]` of objects is contiguous. The emitted C sits in the nimcache
   directory, so grep there for the name of the proc.
+- **Fills on C and C++ backends (VII.8).** gcc turns a loop of constant stores into `memset`,
+  and the default fill of `result` is a `memset` too. Above a size that depends on `-march`,
+  gcc emits that `memset` as `rep stos`, which costs more than straight stores. Generate such a
+  function from its semantic source where one exists (II.4). Otherwise unroll the loop with a
+  macro that emits one copy of the body for each value, or keep the fill and record its cost.
+  `{.unroll.}` is parsed and then ignored.
+- **Timing one function (VII.9).** Call an `{.inline.}` function through a `{.volatile.}`
+  variable of its procedure type. The C compiler then emits its body out of line, and cannot
+  inline it into the caller.
 - **JS backend.** Every object and array is a JS object, every copy is deep, and a
   `let x = y` of an object emits `nimCopy`. A by-value parameter copies at the call, and a
   by-value return copies on the way out. `lent` and `var` avoid the copy only where the

@@ -165,9 +165,9 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    each type the minimal enumerated set of delegated operations, and annotate each one with
    its reason. Write no wrapper that prevents no realistic mistake.
 3. Take the weakest construct that does the job, and escalate only on need. Bindings run
-   `const → let → var`. Callables run `pure function → effectful procedure → lazy iterator →
-   syntactic substitution → generation`. Declare purity with the strictest mechanism
-   available, enabled globally.
+   `build-time constant → immutable → mutable`. Callables run `pure function → effectful
+   procedure → lazy iterator → syntactic substitution → generation`. Declare purity with the
+   strictest mechanism available, enabled globally.
 4. Detect each error at its earliest boundary, and by distinct mechanisms. An invalid
    configuration fails statically, and an internal impossibility is an assertion. Expected
    absence is a typed Option or an empty value, and never an in-range sentinel. Where a failed
@@ -210,13 +210,13 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
 
 ## Article V: Names form an ordered system
 
-1. Casing encodes the kind of symbol, one convention for each kind, with one exception, which III.5
-   states. Visibility never changes the case. Types are `PascalCase`, callables are
+1. Casing encodes the kind of symbol, one convention for each kind, with one exception, which
+   III.5 states. Visibility never changes the case. Types are `PascalCase`, callables are
    `lowerCamelCase`, and a local, a parameter and a field are `snake_case`. A global, which is a
-   binding at module level of any kind, is `SCREAMING_SNAKE_CASE`, because the case marks reach and
-   not mutability. So keep globals rare and prefer `const`, and give a mutable global a comment
-   that says why. Adopt this even where the community of the host language differs, because a mixed
-   scheme destroys the signal.
+   binding at module level of any kind, is `SCREAMING_SNAKE_CASE`, because the case marks reach
+   and not mutability. So keep globals rare and prefer a build-time constant, and give a mutable
+   global a comment that says why. Adopt this even where the community of the host language
+   differs, because a mixed scheme destroys the signal.
 2. Compose a name head first, with the qualifiers last, from general to specific, so that
    families sort and align: `wedge`/`wedgeAnti`, `norm`/`normBulk`/`normWeight`,
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
@@ -264,13 +264,13 @@ CAYLEYS_WEDGE               # module constant
 
 ## Article VI: Documentation is an outline
 
-1. Every declaration gets a doc comment, public or not. The one exception is a one-line mechanical
-   delegation (a borrow, a forward) that stands in a stack under one group comment. A doc is
-   imperative and opens with a verb, and a type opens with "Define …". It holds one summary line
-   that ends in a period, and it cites formal notation inline with `i.e.`. Where you cannot write
-   honest text yet, write `## TODO: Document.`, and never leave the slot empty. A generator carries
-   its docs through a required parameter of the emitting helper, so that an undocumented emission
-   cannot compile.
+1. Every declaration gets a doc comment, public or not. The one exception is a one-line
+   mechanical delegation (a borrow, a forward) that stands in a stack under one group comment. A
+   doc is imperative and opens with a verb, and a type opens with "Define …". It holds one
+   summary line that ends in a period, and it cites formal notation inline with `i.e.`. Where you
+   cannot write honest text yet, write the doc `TODO: Document.`, and never leave the slot empty.
+   A generator carries its docs through a required parameter of the emitting helper, so that an
+   undocumented emission cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
 3. Length follows weight. Where a façade exists, it carries the full explanation, and the
@@ -284,10 +284,10 @@ CAYLEYS_WEDGE               # module constant
    A checker enforces it. A file kind that the checker does not read is a file kind that does
    not exist yet.
 6. Say why, and at what cost. Vagueness is not telegraphic.
-7. A doc that asserts a global property names what enforces it: a test, a pragma, or the
-   generated output. Such a property is no allocation, no exceptions, a complexity, or "runs
-   once for each save". Where nothing enforces it, the doc names its register from VIII.1:
-   measured, expected or intended.
+7. A doc that asserts a global property names what enforces it: a test, an annotation that the
+   compiler checks, or the generated output. Such a property is no allocation, no exceptions, a
+   complexity, or "runs once for each save". Where nothing enforces it, the doc names its
+   register from VIII.1: measured, expected or intended.
 8. Prose outside comments is Simplified Technical English, and `GUIDE.md` gives its rules. A
    comment in code keeps the telegraphic register of VI.5 instead.
 
@@ -316,7 +316,9 @@ func multiplyExterior(a, b: BasisSigned): ... =
    is constant, what is linear, and what allocates. A change to the path derives that
    statement again.
 3. Work for nobody is a bug. Nothing is derived for a view that is closed, off screen or
-   unchanged. II.6 gives the key that says so.
+   unchanged. II.6 gives the key that says so. A function on a hot path computes only what its
+   caller reads. To read one element, call the smallest operation that produces it, and never
+   build a whole value to read one part of it.
 4. An instrument is code with a cost. It runs only while something reads it. Take every
    figure at least once with the instrument compiled out.
 5. An optimisation is a pair of measurements: the same probe before and after. Take it on the
@@ -326,6 +328,17 @@ func multiplyExterior(a, b: BasisSigned): ... =
    measure it again or demote it to unmeasured.
 7. Compile time is a cost, and it can reject a design, because it makes each loop of change
    and feedback longer.
+8. A function on a hot path writes each element of its result once, with its final value. Where
+   the language fills new storage by default, skip the fill only where every path writes every
+   element. Article IV comes before this article, so keep the fill where one path can miss an
+   element. A compiler can turn a loop of constant stores into a bulk fill. Where the count is
+   fixed at build time and the output shows that fill, generate the function (II.4). Where no
+   rule can generate it, unroll the loop at build time, or keep the fill and record its cost.
+9. Choose the form of a function on a hot path by timing that function alone. Call it across a
+   boundary that the optimiser cannot see through. The optimiser then sees neither the caller nor
+   the memory that the function writes. A benchmark whose memory the optimiser can see measures
+   the benchmark. Take each pair twice, and keep a change only where both pairs show it beyond
+   the spread of unchanged functions. Then confirm it on the whole (VII.5).
 
 ```nim
 template r: untyped = records[i]  # alias; `let r = records[i]` deep-copies on JS backend
@@ -373,10 +386,10 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
 ## Article IX: Tests replicate the authority
 
 1. Where an authoritative source exists, the suite mirrors it. Suites are named after its
-   chapters, and tests after its equations or claims. A test that covers several equations
-   names the range (`Equation 2.2-4`). Every assertion carries a trailing citation comment to
-   its line, with two spaces before the `#`. A failing test names the page to reopen. Without
-   an authority, name suites and tests by the behaviour that they hold.
+   chapters, and tests after its equations or claims. A test that covers several equations names
+   the range (`Equation 2.2-4`). Every assertion carries a trailing citation comment to its line,
+   with two spaces before the comment marker. A failing test names the page to reopen. Without an
+   authority, name suites and tests by the behaviour that they hold.
 2. Test laws, and not examples. Those laws are antisymmetry, round trips, inverses, ordering,
    conservation, idempotence, intended non-commutativity, degenerate cases, and the
    equivalence of an optimised implementation against a reference one.
@@ -399,9 +412,9 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
    stub fails by name and runs alone.
 8. A checker is tested against the fixtures that it writes itself, and its own cost is
    bounded. A check slow enough to be skipped is a check that does not run.
-9. A gap in the coverage is a placeholder test that calls `skip()`, so that the run reports
-   it. A test that cannot run under a configuration stays in the run, and calls `skip()`
-   there with its reason. Never remove such a test with a bare `when`.
+9. A gap in the coverage is a placeholder test that reports itself as skipped, so that the run
+   shows it. A test that cannot run under a configuration stays in the run, and skips there with
+   its reason. Never remove such a test with a bare build-time gate.
 10. Code that the authority does not cover is tested in a suite named `Internal`, and its
     tests are named by behaviour. Where the authority states a law without a number, name the
     test by its behaviour, and cite the section or the page. Never invent a number.
@@ -441,11 +454,11 @@ suite "Chapter 2":
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
    signal, and not a forced split. Keep a unified derivation intact where a split would hide
    the shape of the data, and say so in a comment.
-5. Group related constants and bindings under one keyword, dependent bindings included. Two or more
-   consecutive single bindings always share one keyword. Destructure where one expression yields
-   the values together, or where a parallel pair fits one line. Otherwise group them under one
-   keyword. Consolidate the imports: the standard library grouped and alphabetised, then the local
-   modules, also alphabetised.
+5. Group related constants and bindings under one keyword, dependent bindings included, where the
+   language allows it. Two or more consecutive single bindings always share one keyword.
+   Destructure where one expression yields the values together, or where a parallel pair fits one
+   line. Otherwise group them under one keyword. Consolidate the imports: the standard library
+   grouped and alphabetised, then the local modules, also alphabetised.
 6. Module anatomy runs in one order. It is header docs, active design notes and TODOs,
    compiler directives, conditional instrumentation, external imports, local imports,
    re-exports, then the body in conceptual reading order. The body puts its types before any
