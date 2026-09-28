@@ -4,6 +4,8 @@
 ##   root branch accepts any valid scope, because rules propagation commits carry each
 ##   project's scope.
 ##   Merge commits are excluded upstream (`git log --no-merges`); reverts use type `revert`.
+##   Subject is at most `SUBJECT_MAX` runes, same limit as line of source (XI.1). Branch
+##     commits carry no ` (#N)` of squash merge, so check counts subject as author wrote it.
 ##   Regression rule is enforced here, not hoped for (CONTRIBUTOR.md, Tests are paramount):
 ##     commit immediately before every `fix` is `test` of same scope, one test to one fix with
 ##     nothing between them, since mistake earns test that fails before fix and passes after,
@@ -18,11 +20,14 @@
 ##   Cost: fix of mistake whose test already sits on `main` still needs test here, or another
 ##     type; check reads one branch, never whole history.
 ##   Cost: `!` breaking marker accepted after scope; body and footers pass unchecked.
+##   Cost: subjects on `main` from before cap run to 136 runes; check reads one branch, so
+##     history stays.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils]
-import ./[findings, domains]
+from std/unicode import runeLen
+import ./[domains, findings, form]
 
 
 type Subject* = object
@@ -32,25 +37,31 @@ type Subject* = object
   summary*: string  ## Lowercase imperative summary without final period.
 
 
-const TYPES* = [
-  "build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test",
-]
-  ## Commit types accepted, alphabetical.
+const
+  TYPES* = [
+    "build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test",
+  ]
+    ## Commit types accepted, alphabetical.
+  SUBJECT_MAX* = LINE_MAX
+    ## Widest commit subject allowed, in runes: same limit as line of source (Article XI.1).
 
 
 func parseSubject*(subject: string): Option[Subject] =
   ## Parse `type(scope)!?: summary`; `none` when any part breaks grammar.
-  let open = subject.find('(')
-  let close = subject.find(')')
+  let
+    open = subject.find('(')
+    close = subject.find(')')
   if open <= 0 or close < open: return none(Subject)
-  let kind = subject[0 ..< open]
-  let scope = subject[open + 1 ..< close]
+  let
+    kind = subject[0 ..< open]
+    scope = subject[open + 1 ..< close]
   var rest = subject[close + 1 .. ^1]
   if rest.startsWith("!"): rest = rest[1 .. ^1]
   if not rest.startsWith(": "): return none(Subject)
-  let summary = rest[2 .. ^1]
-  let is_summary = summary.len > 0 and summary[0] in {'a'..'z', '0'..'9'} and
-    not summary.endsWith(".")
+  let
+    summary = rest[2 .. ^1]
+    is_summary = summary.len > 0 and summary[0] in {'a'..'z', '0'..'9'} and
+      not summary.endsWith(".")
   if kind notin TYPES or not (scope == CURATOR or scope.isProjectName) or not is_summary:
     return none(Subject)
   some(Subject(kind: kind, scope: scope, summary: summary))
@@ -68,9 +79,10 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
   for i in countdown(subjects.high, 0):
     let parsed = subjects[i].parseSubject
     if parsed.isNone or parsed.get.kind != "fix": continue
-    let before = if i < subjects.high: subjects[i + 1].parseSubject else: none(Subject)
-    let is_paired = before.isSome and before.get.kind == "test" and
-      before.get.scope == parsed.get.scope
+    let
+      before = if i < subjects.high: subjects[i + 1].parseSubject else: none(Subject)
+      is_paired = before.isSome and before.get.kind == "test" and
+        before.get.scope == parsed.get.scope
     if not is_paired:
       result.add finding(
         "", 0,
@@ -90,4 +102,9 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
     elif expected.isSome and parsed.get.scope != expected.get:
       result.add finding(
         "", 0, "Commit scope must be `" & expected.get & "`; got `" & s & "`."
+      )
+    if s.runeLen > SUBJECT_MAX:
+      result.add finding(
+        "", 0,
+        "Commit subject exceeds " & $SUBJECT_MAX & " characters; got `" & $s.runeLen & "`.",
       )

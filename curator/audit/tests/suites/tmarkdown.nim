@@ -2,6 +2,8 @@
 ##   Layout, provenance and glossary all read documents through these three, so each is held
 ##   here directly, not only through those checks.
 
+{.experimental: "strictFuncs".}
+
 import std/unittest
 import ../../src/markdown
 

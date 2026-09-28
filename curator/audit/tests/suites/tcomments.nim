@@ -1,5 +1,7 @@
 ## Replicate comment extraction claims of `comments.nim` header, per syntax.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, unittest]
 import ../../src/[kinds, comments]
 

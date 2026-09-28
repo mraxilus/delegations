@@ -30,8 +30,9 @@ proc gitFields*(root: string, args: openArray[string]): seq[string] =
   ##     fills while other is read.
   let process = startProcess("git", args = @["-C", root] & @args, options = {poUsePath})
   defer: process.close
-  let output = process.outputStream.readAll
-  let failure = process.errorStream.readAll
+  let
+    output = process.outputStream.readAll
+    failure = process.errorStream.readAll
   if process.waitForExit != 0:
     raise newException(IOError, "git failed; got `" & failure.strip & "`.")
   output.split('\0').filterIt(it.len > 0)
@@ -48,8 +49,9 @@ proc listPaths*(root: string): seq[string] =
 proc readTree*(root: string): Tree =
   ## Read every listed file whose kind is registered; unregistered entries carry no content.
   for path in root.listPaths:
-    let kind = path.kindOf
-    let content = if kind.isSome: readFile(root / path) else: ""
+    let
+      kind = path.kindOf
+      content = if kind.isSome: readFile(root / path) else: ""
     result.add Entry(path: path, kind: kind, content: content)
 
 

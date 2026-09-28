@@ -29,7 +29,7 @@ import ./[findings, markdown]
 
 
 const
-  RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md"]
+  RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md", "EXAMPLES.md", "GUIDE.md"]
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
   FIELDS* = ["Harness", "Author", "Date", "Style", "Rules", "Review"]
     ## Header rows every PROVENANCE.md carries.
@@ -94,8 +94,9 @@ func citations*(source: string): seq[string] =
   while true:
     let at = lower.find(CITATION, i)
     if at < 0: break
-    let open = at + CITATION.len
-    let close = source.find('`', open)
+    let
+      open = at + CITATION.len
+      close = source.find('`', open)
     if close < 0: break
     let name = source[open ..< close]
     if name.endsWith(NIM_EXT): result.add name

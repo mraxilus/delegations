@@ -7,6 +7,11 @@ joinable: true
 """
 ## Replicate ring laws of `probe.nim` header table, in two ring sizes.
 
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"):
+  import std/nimprof
+
 import std/unittest
 import ../src/probe
 

@@ -22,7 +22,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sets, strutils]
-import ./[findings, domains, layout]
+import ./[domains, findings, layout]
 
 
 func checkPropagation(path: string): seq[Finding] =
@@ -52,9 +52,10 @@ func checkScope*(
       "Branch must match `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` " &
         "or `curator/<name>`; got `" & branch & "`.",
     )]
-  let prefix = parsed.get.prefix
-  let is_curator_root = parsed.get.role == Role.Curator
-  let is_moved = moved.toHashSet
+  let
+    prefix = parsed.get.prefix
+    is_curator_root = parsed.get.role == Role.Curator
+    is_moved = moved.toHashSet
   for p in paths:
     if not p.startsWith(prefix):
       result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.")

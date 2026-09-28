@@ -54,10 +54,11 @@ func addText(scan: var Scan, text: string) =
 func scanNim(source: string): seq[Comment] =
   ## Scan Nim: line comments, nesting block comments, string and char literals.
   type State {.pure.} = enum Code, Str, StrTriple, StrRaw, Line, Block
-  var scan = Scan(line: 1)
-  var state = State.Code
-  var depth = 0
-  var i = 0
+  var
+    scan = Scan(line: 1)
+    state = State.Code
+    depth = 0
+    i = 0
   let n = source.len
   template at(k: int): char = (if k < n: source[k] else: '\0')
   while i < n:
@@ -159,8 +160,9 @@ func scanHashSpaced(source: string): seq[Comment] =
   ## Scan YAML: `#` opens comment at line start or after whitespace, outside quotes.
   var scan = Scan(line: 1)
   for line in source.splitLines:
-    var is_single = false
-    var is_double = false
+    var
+      is_single = false
+      is_double = false
     for i, c in line:
       if c == '"' and not is_single: is_double = not is_double
       elif c == '\'' and not is_double: is_single = not is_single
@@ -188,10 +190,11 @@ func scanHashLeading(source: string): seq[Comment] =
 func scanSlash(source: string): seq[Comment] =
   ## Scan TypeScript: `//` line, `/* */` block, string and template literals.
   type State {.pure.} = enum Code, StrDouble, StrSingle, StrTemplate, Line, Block
-  var scan = Scan(line: 1)
-  var state = State.Code
-  var is_line_start = false
-  var i = 0
+  var
+    scan = Scan(line: 1)
+    state = State.Code
+    is_line_start = false
+    i = 0
   let n = source.len
   template at(k: int): char = (if k < n: source[k] else: '\0')
   while i < n:
@@ -261,9 +264,10 @@ func scanSlash(source: string): seq[Comment] =
 
 func scanXml(source: string): seq[Comment] =
   ## Scan HTML and SVG: `<!-- -->` block, spanning lines, several per line.
-  var scan = Scan(line: 1)
-  var is_comment = false
-  var i = 0
+  var
+    scan = Scan(line: 1)
+    is_comment = false
+    i = 0
   let n = source.len
   template at(k: int): char = (if k < n: source[k] else: '\0')
   while i < n:

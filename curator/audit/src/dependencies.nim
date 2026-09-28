@@ -35,7 +35,7 @@ import ./[findings, projects]
 const
   NIMBLE_EXT* = ".nimble"   ## Extension of package description file.
   LOCK_FILE* = "atlas.lock" ## Atlas lock file name.
-  DEPS_DIR* = "deps"        ## Directory Atlas restores checkouts into, never committed.
+  DEPS_DIRECTORY* = "deps"        ## Directory Atlas restores checkouts into, never committed.
   NODE_MANIFEST* = "package.json"    ## Node manifest, naming tools project type-checks with.
   NODE_LOCK* = "package-lock.json"   ## Node lock, pinning every one of those to exact version.
   UNREADABLE = "Lock unreadable as JSON; got `"
@@ -76,13 +76,13 @@ func requirements*(nimble: string): seq[string] =
     if requirement.packageName.toLowerAscii != "nim": result.add requirement
 
 
-proc lockDirs*(lock: string): seq[string] =
+proc lockDirectories*(lock: string): seq[string] =
   ## Read checkout directories lock names, `$deps` resolved to project-relative `deps`.
   let node = parseJson(lock)
   if "items" notin node: return
   for _, item in node["items"]:
     if "dir" notin item: continue
-    result.add item["dir"].getStr.replace("$deps", DEPS_DIR)
+    result.add item["dir"].getStr.replace("$deps", DEPS_DIRECTORY)
 
 
 proc lockNimble*(lock: string): Option[string] =
@@ -100,11 +100,13 @@ proc lockNimble*(lock: string): Option[string] =
 
 func firstDifference(stored, nimble: string): int =
   ## Read one-based line where two texts first differ; `0` when they are identical.
-  let held = stored.split('\n')
-  let committed = nimble.split('\n')
+  let
+    held = stored.split('\n')
+    committed = nimble.split('\n')
   for i in 0 ..< max(held.len, committed.len):
-    let a = if i < held.len: held[i] else: ""
-    let b = if i < committed.len: committed[i] else: ""
+    let
+      a = if i < held.len: held[i] else: ""
+      b = if i < committed.len: committed[i] else: ""
     if a != b: return i + 1
   0
 
@@ -121,8 +123,9 @@ proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding
   if stored.isNone: return
   let line = firstDifference(stored.get, nimble)
   if line == 0: return
-  let committed = nimble.split('\n')
-  let held = if line <= committed.len: committed[line - 1] else: ""
+  let
+    committed = nimble.split('\n')
+    held = if line <= committed.len: committed[line - 1] else: ""
   result.add finding(
     nimble_path, line,
     "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; " &
@@ -130,16 +133,16 @@ proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding
   )
 
 
-proc checkCheckouts*(root, dir: string): seq[Finding] =
+proc checkCheckouts*(root, directory: string): seq[Finding] =
   ## Report checkout lock names that is absent on disk, and lock that will not parse.
-  let lock_path = dir & "/" & LOCK_FILE
-  var dirs: seq[string]
+  let lock_path = directory & "/" & LOCK_FILE
+  var directories: seq[string]
   try:
-    dirs = readFile(root / lock_path).lockDirs
+    directories = readFile(root / lock_path).lockDirectories
   except CatchableError as e:
     return @[finding(lock_path, 0, UNREADABLE & e.msg & "`.")]
-  for checkout in dirs:
-    if not dirExists(root / dir / checkout):
+  for checkout in directories:
+    if not dirExists(root / directory / checkout):
       result.add finding(lock_path, 0, "Checkout absent after restore; got `" & checkout & "`.")
 
 
@@ -147,21 +150,21 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
   ## Restore project's checkouts from lock through Atlas, judged by presence then `changed`.
   ##   Atlas comes from same toolchain as compiler, since it records compiler it ran under
   ##   and warns of environment mismatch when lock was written by another.
-  echo "== " & target.dir
+  echo "== " & target.directory
   let atlas = target.bin.toolIn("atlas")
-  discard runIn(root / target.dir, atlas, ["--noexec", "rep"], target.bin)
-  result = checkCheckouts(root, target.dir)
-  let code = runIn(root / target.dir, atlas, ["changed"], target.bin)
+  discard runIn(root / target.directory, atlas, ["--noexec", "rep"], target.bin)
+  result = checkCheckouts(root, target.directory)
+  let code = runIn(root / target.directory, atlas, ["changed"], target.bin)
   if code != 0:
     result.add finding(
-      target.dir & "/" & LOCK_FILE, 0, "Checkouts differ from lock; got exit `" & $code & "`."
+      target.directory & "/" & LOCK_FILE, 0, "Checkouts differ from lock; got exit `" & $code & "`."
     )
 
 
 proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Restore every project holding lock file; projects without one need no network.
   for target in targets:
-    if fileExists(root / target.dir / LOCK_FILE):
+    if fileExists(root / target.directory / LOCK_FILE):
       result.add restoreDependencies(root, target)
 
 
@@ -171,15 +174,15 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
   ##   manifest and lock disagree, which is same contract `atlas changed` holds Nim side to.
   ##   koch resolves Nim compiler it lacks and will not fetch node, so absent npm is finding
   ##   naming it rather than skip: check nobody notices doing nothing is worse than none.
-  echo "== " & target.dir
+  echo "== " & target.directory
   if findExe("npm").len == 0:
     return @[finding(
-      target.dir & "/" & NODE_MANIFEST, 0,
+      target.directory & "/" & NODE_MANIFEST, 0,
       "Type check needs npm on `PATH`; install node, or drop this project's manifest; " &
         "got nothing.",
     )]
-  let code = runIn(root / target.dir, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)
+  let code = runIn(root / target.directory, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)
   if code != 0:
     result.add finding(
-      target.dir & "/" & NODE_LOCK, 0, "Node restore failed; got exit `" & $code & "`."
+      target.directory & "/" & NODE_LOCK, 0, "Node restore failed; got exit `" & $code & "`."
     )

@@ -1,5 +1,7 @@
 ## Replicate compiler acquisition of `compilers.nim` header: what is fetched, what is built.
 
+{.experimental: "strictFuncs".}
+
 import std/[os, strutils, tempfiles, unittest]
 import ../../src/compilers
 import ./fixtures

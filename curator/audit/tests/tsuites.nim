@@ -17,19 +17,24 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $opt
 
 {.warning[UnusedImport]: off.}  # suite runs for effect and exports nothing
 
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"):
+  import std/nimprof
+
 import std/[algorithm, macros, os, strutils]
 
 
 macro importSuites(): untyped =
   ## Import each `suites/t*.nim`, sorted, by absolute path; relative path resolves against
   ##   `macros.nim` rather than this file.
-  let dir = currentSourcePath().parentDir / "suites"
+  let directory = currentSourcePath().parentDir / "suites"
   var names: seq[string]
-  for kind, name in walkDir(dir, relative = true):
+  for kind, name in walkDir(directory, relative = true):
     if kind == pcFile and name.startsWith("t") and name.endsWith(".nim"): names.add name
   names.sort
   result = newStmtList()
-  for name in names: result.add nnkImportStmt.newTree(newLit(dir / name))
+  for name in names: result.add nnkImportStmt.newTree(newLit(directory / name))
 
 
 importSuites()

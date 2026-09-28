@@ -1,5 +1,7 @@
 ## Replicate Article VI.5: comments are telegraphic, i.e. hold no articles.
 
+{.experimental: "strictFuncs".}
+
 import std/[random, sequtils, strutils, unittest]
 import ../../src/[kinds, prose]
 

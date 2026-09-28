@@ -42,9 +42,9 @@ const
     ## Driver whose dispatch names every verb.
   CURATOR_PATH* = "CURATOR.md"
     ## Document tabling verbs for curator sessions.
-  CHECK_DIR* = "curator/audit/src/"
+  CHECK_DIRECTORY* = "curator/audit/src/"
     ## Modules these rules cover.
-  SUITE_DIR* = "curator/audit/tests/suites/"
+  SUITE_DIRECTORY* = "curator/audit/tests/suites/"
     ## Where each module's suite lives; `tests/tsuites.nim` runs them as one program.
   NIM_EXT* = ".nim"
     ## Extension of module and suite alike.
@@ -62,7 +62,7 @@ const
     ## workflow rather than reading whole file.
   DRIVER_CASE* = "case paramStr(1)"
     ## Line opening project driver's own dispatch. Same shape one level down, and koch reads
-    ## it to learn which verbs that project carries (`plan.nim`, `verbDirs`).
+    ## it to learn which verbs that project carries (`plan.nim`, `verbDirectories`).
   CASE_END* = "else:"
     ## Line closing dispatch, after which branches belong to something else.
   OPTION_CASE* = "case key"
@@ -129,8 +129,8 @@ func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] 
 
 func moduleOf*(path: string): string =
   ## Read module name of check source; empty when path is not one.
-  if not (path.startsWith(CHECK_DIR) and path.endsWith(NIM_EXT)): return ""
-  path[CHECK_DIR.len ..< path.len - NIM_EXT.len]
+  if not (path.startsWith(CHECK_DIRECTORY) and path.endsWith(NIM_EXT)): return ""
+  path[CHECK_DIRECTORY.len ..< path.len - NIM_EXT.len]
 
 
 func checkSuites*(paths: openArray[string]): seq[Finding] =
@@ -139,7 +139,7 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
   for path in paths:
     let module = path.moduleOf
     if module.len == 0: continue
-    let suite = SUITE_DIR & "t" & module & NIM_EXT
+    let suite = SUITE_DIRECTORY & "t" & module & NIM_EXT
     if suite notin present:
       result.add finding(
         path, 0,
@@ -151,8 +151,9 @@ func between(line, opening, closing: string): string =
   ## Read text between first opening and next closing mark; empty when either is absent.
   let start = line.find(opening)
   if start < 0: return ""
-  let rest = line[start + opening.len .. ^1]
-  let stop = rest.find(closing)
+  let
+    rest = line[start + opening.len .. ^1]
+    stop = rest.find(closing)
   if stop < 0: "" else: rest[0 ..< stop]
 
 
@@ -175,7 +176,7 @@ func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
   ##   Line opening dispatch is given rather than fixed, since koch and project driver hold
   ##   same shape under different case: koch cases over parsed options, project driver over
   ##   its first argument. One parser reads both, so koch learns what verbs project carries
-  ##   by reading it (`plan.nim`, `verbDirs`).
+  ##   by reading it (`plan.nim`, `verbDirectories`).
   var is_inside = false
   for line in source.splitLines:
     let s = line.strip

@@ -1,5 +1,7 @@
 ## Replicate kind registry of `kinds.nim` header table, read from header rather than restated.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, sequtils, strutils, unittest]
 import ../../src/kinds
 import ./fixtures

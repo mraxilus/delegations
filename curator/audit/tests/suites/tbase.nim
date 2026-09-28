@@ -1,5 +1,7 @@
 ## Replicate staleness rule of `base.nim` header and CURATOR.md settings section.
 
+{.experimental: "strictFuncs".}
+
 import std/[strutils, unittest]
 import ../../src/[base, plan, provenance]
 
@@ -9,13 +11,13 @@ suite "Base":
     for rule in RULES: check rule.isGoverning  # constitution, style, contributor
     check "koch.nim".isGoverning
     check "koch.nim.cfg".isGoverning
-    check (CHECKER_DIR & "/layout.nim").isGoverning
+    check (CHECKER_DIRECTORY & "/layout.nim").isGoverning
     # Project's own code, records and suites do not.
     check not "contributor/ronri/alpha/src/alpha.nim".isGoverning
     check not "contributor/ronri/alpha/PROVENANCE.md".isGoverning
     check not "CURATOR.md".isGoverning  # curator-only, never stamped
     check not "README.md".isGoverning
-    check not (CHECKER_DIR.replace("/src", "") & "/tests/tlayout.nim").isGoverning
+    check not (CHECKER_DIRECTORY.replace("/src", "") & "/tests/tlayout.nim").isGoverning
 
   test "branch predating rules or checker is one finding naming what it lacks":
     check checkBase(newSeq[string]()).len == 0  # base gained nothing

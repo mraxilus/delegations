@@ -233,8 +233,9 @@ func checkFaces*(path, content: string): seq[Finding] =
     if families.len > 0: stacks.add (line, families)
 
   for (line, value) in stacks:
-    let stack = value.resolved(properties)
-    let first = stack.firstFamily
+    let
+      stack = value.resolved(properties)
+      first = stack.firstFamily
     if first.len == 0 or first.toLowerAscii in DEFERS: continue
     # Source building font string by concatenation leaves operators in what reads as family.
     #   Check reads declarations, never expressions, and says so rather than reporting `&`
@@ -251,8 +252,9 @@ func checkFaces*(path, content: string): seq[Finding] =
   #   first: every other stack reads same whichever family it names.
   for (line, value) in stacks:
     if line == 0: continue
-    let before = lines[line - 1]
-    let selector = before[0 ..< before.find(SHORTHAND)]
+    let
+      before = lines[line - 1]
+      selector = before[0 ..< before.find(SHORTHAND)]
     if not selector.isHeading: continue
     let first = value.resolved(properties).firstFamily
     if first.len > 0 and first.toLowerAscii notin DEFERS and not first.startsWith(SERIF):

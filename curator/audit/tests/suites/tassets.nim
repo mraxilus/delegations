@@ -1,17 +1,19 @@
 ## Replicate shared store of `assets.nim` header, i.e. one declaration, keyed by digest.
 
+{.experimental: "strictFuncs".}
+
 import std/[os, strutils, unittest]
 import ../../src/assets
-from ../../src/compilers import CACHE_DIR
+from ../../src/compilers import CACHE_DIRECTORY
 
 
 suite "Assets":
   test "store lies outside repository, and override wins":
     check storeRoot("/tmp/assets") == "/tmp/assets"
-    check storeRoot("").endsWith(ASSETS_DIR)
+    check storeRoot("").endsWith(ASSETS_DIRECTORY)
     # Audit reads untracked files, so store inside checkout would be audited.
     check not storeRoot("").startsWith(".")
-    check ASSETS_DIR.parentDir == CACHE_DIR.parentDir  # beside `~/.cache/koch/nim`
+    check ASSETS_DIRECTORY.parentDir == CACHE_DIRECTORY.parentDir  # beside `~/.cache/koch/nim`
 
   test "asset is stored under its digest, never under its name":
     # Two projects asking for one face share one entry by construction, and moved pin is
