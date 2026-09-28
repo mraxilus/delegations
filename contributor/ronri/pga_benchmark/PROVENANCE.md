@@ -6,7 +6,7 @@
 | Author  | Claude Fable 5.1 |
 | Date    | 2026-09-22 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | ad816f422f58dbc1 |
+| Rules   | 694040cd506bba7d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this project.
