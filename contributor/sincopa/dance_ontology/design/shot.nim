@@ -38,7 +38,8 @@ const
 proc require(module: cstring): JsObject {.importjs: "require(#)".}
   ## Load node module; compiler has no reason to know what is inside.
 
-var process {.importjs: "process", nodecl.}: JsObject
+# Declared `var` because `importjs` binds node's own global object; nothing here writes it.
+var PROCESS_NODE {.importjs: "process", nodecl.}: JsObject
   ## Node process, for its command line.
 
 proc resolve(path: cstring): cstring {.importjs: "require('path').resolve(#)".}
@@ -101,8 +102,8 @@ proc playwright(): JsObject =
 proc shoot() {.async.} =
   ## Open page in each theme and write one full-length screenshot.
   let
-    page_file = jsString(process.argv[2])
-    prefix = jsString(process.argv[3])
+    page_file = jsString(PROCESS_NODE.argv[2])
+    prefix = jsString(PROCESS_NODE.argv[3])
     url = cstring("file://" & $resolve(page_file))
     chromium = playwright().chromium
     named = chromiumFrom()

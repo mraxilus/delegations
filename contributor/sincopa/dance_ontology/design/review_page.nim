@@ -37,13 +37,13 @@ const MODELLED = staticRead("modelled.json")
   ##   Card sim has not been asked about is absent, and gets no tag: unasked
   ##     reads as unasked rather than as disagreement.
 
-const pinned = block:
+const LUT_PIN_BY_CARD = block:
   var held: Table[string, string]
   for pair in PINS.parseJson.pairs:
     held[pair.key] = pair.val.getStr
   held
 
-const modelled = block:
+const LUT_MODELLED_BY_CARD = block:
   var said: Table[string, bool]
   for pair in MODELLED.parseJson["answers"].pairs:
     said[pair.key] = pair.val.getBool
@@ -119,10 +119,10 @@ proc checkReview*() =
   ##   Verdict without pin is verdict nothing guards, which is how ruled
   ##     card came to move under one in first place.
   for id in KEPT:
-    doAssert id in pinned,
+    doAssert id in LUT_PIN_BY_CARD,
       &"A kept card carries no pin; run `tools/build.nim pins`: got `{id}`."
   for id in DROPPED:
-    doAssert id in pinned,
+    doAssert id in LUT_PIN_BY_CARD,
       &"A dropped card carries no pin; run `tools/build.nim pins`: got `{id}`."
 
 
@@ -161,8 +161,9 @@ func sheetOf(P: Parts): string =
       let at = &"{id}-{i + 1}"
       picks.add &"""<input type="radio" name="{id}" id="{at}""" &
         (if i == 0: "\" checked>" else: "\">")
-      let says = if i >= asks.len or asks[i] notin modelled: ""
-                 elif not modelled[asks[i]]: """<em class="tag nomodel">not modelled</em>"""
+      let says = if i >= asks.len or asks[i] notin LUT_MODELLED_BY_CARD: ""
+                 elif not LUT_MODELLED_BY_CARD[asks[i]]:
+                   """<em class="tag nomodel">not modelled</em>"""
                  elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
                  else: """<em class="tag unsure">unconfirmed</em>"""
       frames.add &"""<div>{unpinned(step.svg)}{says}""" &
@@ -192,15 +193,15 @@ func sheetOf(P: Parts): string =
       # is reached only where sim reaches every one of them.  Card nothing has
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
-      known = put.filterIt(it in modelled)
-      reached = known.len > 0 and known.allIt(modelled[it])
+      known = put.filterIt(it in LUT_MODELLED_BY_CARD)
+      reached = known.len > 0 and known.allIt(LUT_MODELLED_BY_CARD[it])
       # Cell's own colour says how far it has got: green only where it is kept,
       # wholly reached and confirmed; amber where sim reaches all or part of it
       # and Architect has not yet confirmed; red where sim reaches none of it.
       # Badges keep saying which of two tags each is.
       stand = if known.len == 0: ""
               elif reached and id in CONFIRMED: " met"
-              elif reached or known.anyIt(modelled[it]): " part"
+              elif reached or known.anyIt(LUT_MODELLED_BY_CARD[it]): " part"
               else: " unmet"
       says = if switching or known.len == 0: ""
              elif not reached: """<em class="tag nomodel">not modelled</em>"""
@@ -214,7 +215,7 @@ func sheetOf(P: Parts): string =
     # stops here rather than shipping.  Cell holding several drawings is
     # held to all of them, since verdict on it is verdict on all.
     if kept or dropped:
-      doAssert $hash(drawings.join("")) == pinned.getOrDefault(id),
+      doAssert $hash(drawings.join("")) == LUT_PIN_BY_CARD.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &

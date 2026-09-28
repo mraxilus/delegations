@@ -160,34 +160,36 @@ proc readRung*(a: RungAsk): RungRead =
 
 #[ Reading all, every core at once ]#
 
+# Mutable and global: thread takes one argument, so workers read asks and write readings
+# into slots allotted here before any thread starts.
 var
-  sweepAsks: seq[SweepAsk]  ## Set before any thread starts, then only read.
-  rungAsks: seq[RungAsk]
-  sweepReads: seq[SweepRead] ## Each worker writes its own into place allotted.
-  rungReads: seq[RungRead]
-  next: Atomic[int]
+  SWEEP_ASKS: seq[SweepAsk]  ## Set before any thread starts, then only read.
+  RUNG_ASKS: seq[RungAsk]
+  SWEEP_READS: seq[SweepRead] ## Each worker writes its own into place allotted.
+  RUNG_READS: seq[RungRead]
+  ASK_NEXT: Atomic[int]
 
 proc working(id: int) {.thread.} =
   ## Take asks until none is left.  Rungs first: rung no distance holds walks every one.
   {.cast(gcsafe).}:
     while true:
-      let i = next.fetchAdd(1)
-      if i >= rungAsks.len + sweepAsks.len: return
-      if i < rungAsks.len: rungReads[i] = readRung(rungAsks[i])
-      else: sweepReads[i - rungAsks.len] = readSweep(sweepAsks[i - rungAsks.len])
+      let i = ASK_NEXT.fetchAdd(1)
+      if i >= RUNG_ASKS.len + SWEEP_ASKS.len: return
+      if i < RUNG_ASKS.len: RUNG_READS[i] = readRung(RUNG_ASKS[i])
+      else: SWEEP_READS[i - RUNG_ASKS.len] = readSweep(SWEEP_ASKS[i - RUNG_ASKS.len])
 
 proc readAll*(sweeps: seq[SweepAsk]; rungs: seq[RungAsk]): tuple[sweeps: seq[SweepRead],
     rungs: seq[RungRead]] =
   ## Read every ask, on every core at once, in order asked.
-  sweepAsks = sweeps
-  rungAsks = rungs
-  sweepReads = newSeq[SweepRead](sweeps.len)
-  rungReads = newSeq[RungRead](rungs.len)
-  next.store(0)
+  SWEEP_ASKS = sweeps
+  RUNG_ASKS = rungs
+  SWEEP_READS = newSeq[SweepRead](sweeps.len)
+  RUNG_READS = newSeq[RungRead](rungs.len)
+  ASK_NEXT.store(0)
   var workers = newSeq[Thread[int]](max(1, countProcessors()))
   for w in 0 ..< workers.len: createThread(workers[w], working, w)
   joinThreads(workers)
-  (sweepReads, rungReads)
+  (SWEEP_READS, RUNG_READS)
 
 
 #[ Keeping ]#

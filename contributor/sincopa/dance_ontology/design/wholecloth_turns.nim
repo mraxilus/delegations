@@ -10,7 +10,7 @@
 ##     Only scene at one moment is built as Nim value, interpolated afresh.
 ##   Holds and levels are closed domains (six by three), so both are enums and
 ##     every table over them is enum-indexed array (Article IV.6): sweep limits
-##     and frame references are read once at load into `lut_hold_sweep`, which
+##     and frame references are read once at load into `LUT_SWEEP_BY_HOLD`, which
 ##     replaces original's lazy string-keyed cache.
 ##     Cost: eighteen reads at load instead of on demand; negligible.
 ##     Rig's dozen measures are read in place per call instead, as original
@@ -211,7 +211,7 @@ func sweepTable(): array[Hold, array[Level, Sweep]] =
   for hold in Hold:
     for level in Level: readSweep(result[hold][level], hold, level)
 
-let lut_hold_sweep = sweepTable()
+let LUT_SWEEP_BY_HOLD = sweepTable()
   ## Every sweep by hold and level, read once at load.
 
 
@@ -528,61 +528,65 @@ func levelOfName(name: cstring): Level =
 
 #[ Panel ]#
 
+# Mutable: panel's state, which every handler reads and changes.  Browser calls
+# handlers with nothing of their own, so state lives here.
 var
-  hold = Hold.LtoL          ## Hold on show.
-  level = Level.Low         ## Height on show.
-  turn = -0.5               ## Turn drawn now.
-  target = -0.5             ## Turn eased toward while not playing.
-  is_playing = false        ## Sweeping between blocks.
-  direction = 1.0           ## Way play sweeps: `+1` toward `pos` block, `-1` toward `neg`.
-  last_now = 0.0            ## Timestamp of previous frame; seeded by `start`.
-  scene: Scene              ## One scene's storage, refilled per draw; never reallocated.
+  HOLD_SHOWN = Hold.LtoL          ## Hold on show.
+  LEVEL_SHOWN = Level.Low         ## Height on show.
+  TURN_DRAWN = -0.5               ## Turn drawn now.
+  TURN_TARGET = -0.5             ## Turn eased toward while not playing.
+  IS_PLAYING = false        ## Sweeping between blocks.
+  DIRECTION_PLAY = 1.0           ## Way play sweeps: `+1` toward `pos` block, `-1` toward `neg`.
+  NOW_PREV = 0.0            ## Timestamp of previous frame; seeded by `start`.
+  SCENE_STORAGE: Scene              ## One scene's storage, refilled per draw; never reallocated.
 
 let
-  stage = document.getElementById("stage")
-    ## Drawing of hold at `turn`, from above and from side.
-  readout = document.getElementById("readout")
+  STAGE_ELEMENT = document.getElementById("stage")
+    ## Drawing of hold at `TURN_DRAWN`, from above and from side.
+  READOUT_ELEMENT = document.getElementById("readout")
     ## Words beside stage: hold, turn, sim's verdicts, blocks.
-  strip = document.getElementById("strip")
+  STRIP_ELEMENT = document.getElementById("strip")
     ## Row of small figures, every half turn and both blocks.
-  slider = InputElement(document.getElementById("turn"))
+  SLIDER_ELEMENT = InputElement(document.getElementById("turn"))
     ## Turn control, `-2` to `2` by `0.005`.
-  hold_box = document.getElementById("hold-buttons")
+  HOLD_BOX = document.getElementById("hold-buttons")
     ## Holder of one button per hold.
-  level_box = document.getElementById("level-buttons")
+  LEVEL_BOX = document.getElementById("level-buttons")
     ## Holder of one button per level.
 
 
 proc clampT(t: float): float =
   ## Keep turn within blocks of hold and level on show.
-  template limits: untyped = lut_hold_sweep[hold][level].limits
+  template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
   max(-limits.neg, min(limits.pos, t))
 
 
 proc renderStage() =
-  ## Redraw stage and readout at `turn`, and move slider there.
+  ## Redraw stage and readout at `TURN_DRAWN`, and move slider there.
   ##   Hot path: once per animated frame.  Constant: one scene refilled in place.
   ##     Allocates markup strings only; browser's parse of stage and readout dominates.
-  template limits: untyped = lut_hold_sweep[hold][level].limits
-  let found_scene = sceneOf(scene, lut_hold_sweep[hold][level].frames, turn)
-  stage.innerHTML = if found_scene: sceneSvg(hold, level, scene) else: ""
-  slider.value = jsStr(turn)
-  let head = "<b>" & HOLDS[hold].name & "</b> · " & LEVEL_NAMES[level] & " · @ " &
-    turnNum(turn) & " from " & HOLDS[hold].from_rest
+  template sweep: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN]
+  template limits: untyped = sweep.limits
+  let found_scene = sceneOf(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
+  STAGE_ELEMENT.innerHTML =
+    if found_scene: sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) else: ""
+  SLIDER_ELEMENT.value = jsStr(TURN_DRAWN)
+  let head = "<b>" & HOLDS[HOLD_SHOWN].name & "</b> · " & LEVEL_NAMES[LEVEL_SHOWN] & " · @ " &
+    turnNum(TURN_DRAWN) & " from " & HOLDS[HOLD_SHOWN].from_rest
   if not found_scene or not limits.found_rest:
-    readout.innerHTML = head & "<br>no pose holds at the rest"
+    READOUT_ELEMENT.innerHTML = head & "<br>no pose holds at the rest"
     return
 
   # One line per rope: follow's arm word, lead's where not open, crossings where any.
   let
-    is_at_neg = turn <= -limits.neg + 1e-6 and limits.is_stopped_neg
-    is_at_pos = turn >= limits.pos - 1e-6 and limits.is_stopped_pos
+    is_at_neg = TURN_DRAWN <= -limits.neg + 1e-6 and limits.is_stopped_neg
+    is_at_pos = TURN_DRAWN >= limits.pos - 1e-6 and limits.is_stopped_pos
   var lines: cstring = ""
-  for i in 0 ..< scene.cn_count:
-    template c: untyped = scene.cn[i]
-    template rope: untyped = HOLDS[hold].ropes[i]
+  for i in 0 ..< SCENE_STORAGE.cn_count:
+    template c: untyped = SCENE_STORAGE.cn[i]
+    template rope: untyped = HOLDS[HOLD_SHOWN].ropes[i]
     let name =
-      if HOLDS[hold].is_pair: ARM_WORDS[rope.lead] & " to " & INKS[rope.follow] & ": "
+      if HOLDS[HOLD_SHOWN].is_pair: ARM_WORDS[rope.lead] & " to " & INKS[rope.follow] & ": "
       else: cstring("")
     var crossing: cstring = ""
     if not c.cross.isUndefined:
@@ -598,9 +602,10 @@ proc renderStage() =
       crossing
 
   # Then strain, then both blocks, flagged where turn stands on one.
-  lines.add "<br>strain <b>" & scene.strain.toFixed(2) & "</b>" &
-    (if scene.worst.len > 0: " at " & scene.worst else: cstring("")) &
-    (if scene.is_reseed: cstring(" <span class=\"say\">(the arms re-posed here)</span>") else: "")
+  lines.add "<br>strain <b>" & SCENE_STORAGE.strain.toFixed(2) & "</b>" &
+    (if SCENE_STORAGE.worst.len > 0: " at " & SCENE_STORAGE.worst else: cstring("")) &
+    (if SCENE_STORAGE.is_reseed: cstring(" <span class=\"say\">(the arms re-posed here)</span>")
+     else: "")
   const UNSTOPPED: cstring = " (not within two turns)"
     ## Block's word where sweep ran out of range before any joint refused.
   var blocks = "blocks at " & turnNum(-limits.neg) &
@@ -611,12 +616,12 @@ proc renderStage() =
     blocks = "<b class=\"bad\">blocked here</b> — " &
       (if is_at_neg: limits.why_neg else: limits.why_pos) & "; " & blocks
   lines.add "<br>" & blocks
-  readout.innerHTML = head & lines
+  READOUT_ELEMENT.innerHTML = head & lines
 
 
 proc renderStrip() =
   ## Redraw strip of small figures: every half turn and both blocks, in order.
-  template sweep: untyped = lut_hold_sweep[hold][level]
+  template sweep: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN]
   var
     shown: array[STRIP_SLOTS, float]
     count = 0
@@ -651,96 +656,96 @@ proc renderStrip() =
         (if t < 0.0: sweep.limits.why_neg else: sweep.limits.why_pos) &
         "</span></figcaption></figure>"
       continue
-    doAssert sceneOf(scene, sweep.frames, t), "Sweep within its blocks must have moments."
+    doAssert sceneOf(SCENE_STORAGE, sweep.frames, t), "Sweep within its blocks must have moments."
     var words: cstring = ""
-    for k in 0 ..< scene.cn_count:
+    for k in 0 ..< SCENE_STORAGE.cn_count:
       if k > 0: words.add " · "
-      words.add scene.cn[k].follow_says
+      words.add SCENE_STORAGE.cn[k].follow_says
     let
-      is_rest = abs(t - HOLDS[hold].rest) < 1e-6
+      is_rest = abs(t - HOLDS[HOLD_SHOWN].rest) < 1e-6
       is_limit = not is_half
     html.add "<figure class=\"mini" & (if is_limit: cstring(" limit") else: "") &
       "\" data-t=\"" & jsStr(t) & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
-      sceneSvg(hold, level, scene) & "</svg>" & "<figcaption><b>@ " &
+      sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) & "</svg>" & "<figcaption><b>@ " &
       (if is_half: turnWord(t) else: turnNum(t)) & "</b>" &
       (if is_rest: cstring(" rest") else: "") & (if is_limit: cstring(" the block") else: "") &
       "<br><span class=\"say\">" & words & "</span></figcaption></figure>"
-  strip.innerHTML = html
-  for figure in strip.querySelectorAll(".mini:not(.blocked)"):
+  STRIP_ELEMENT.innerHTML = html
+  for figure in STRIP_ELEMENT.querySelectorAll(".mini:not(.blocked)"):
     figure.addEventListener("click", proc (ev: Event) =
-      is_playing = false
-      target = parseFloat(ev.currentTarget.getAttribute("data-t")))
+      IS_PLAYING = false
+      TURN_TARGET = parseFloat(ev.currentTarget.getAttribute("data-t")))
 
 
 proc renderButtons() =
   ## Redraw hold and level buttons, marking those on show, and wire their clicks.
   var html: cstring = ""
   for h in Hold:
-    html.add "<button class=\"" & (if h == hold: cstring("on") else: "") & "\" data-k=\"" &
+    html.add "<button class=\"" & (if h == HOLD_SHOWN: cstring("on") else: "") & "\" data-k=\"" &
       HOLDS[h].key & "\">" & HOLDS[h].name & "</button>"
-  hold_box.innerHTML = html
+  HOLD_BOX.innerHTML = html
   html = ""
   for l in Level:
-    html.add "<button class=\"" & (if l == level: cstring("on") else: "") & "\" data-l=\"" &
+    html.add "<button class=\"" & (if l == LEVEL_SHOWN: cstring("on") else: "") & "\" data-l=\"" &
       LEVEL_NAMES[l] & "\">" & LEVEL_NAMES[l] & "</button>"
-  level_box.innerHTML = html
-  for button in hold_box.querySelectorAll("button"):
+  LEVEL_BOX.innerHTML = html
+  for button in HOLD_BOX.querySelectorAll("button"):
     button.addEventListener("click", proc (ev: Event) =
-      hold = holdOfKey(ev.currentTarget.getAttribute("data-k"))
-      turn = clampT(HOLDS[hold].rest)
-      target = turn
+      HOLD_SHOWN = holdOfKey(ev.currentTarget.getAttribute("data-k"))
+      TURN_DRAWN = clampT(HOLDS[HOLD_SHOWN].rest)
+      TURN_TARGET = TURN_DRAWN
       renderButtons()
       renderStrip()
       renderStage())
-  for button in level_box.querySelectorAll("button"):
+  for button in LEVEL_BOX.querySelectorAll("button"):
     button.addEventListener("click", proc (ev: Event) =
-      level = levelOfName(ev.currentTarget.getAttribute("data-l"))
-      turn = clampT(turn)
-      target = turn
+      LEVEL_SHOWN = levelOfName(ev.currentTarget.getAttribute("data-l"))
+      TURN_DRAWN = clampT(TURN_DRAWN)
+      TURN_TARGET = TURN_DRAWN
       renderButtons()
       renderStrip()
       renderStage())
 
 
 proc tick(now: float) =
-  ## Advance one frame: sweep between blocks while playing, else ease toward `target`.
-  ##   Redraws only when `turn` moved (Article VII.3); frame time capped at 50 ms.
-  let dt = min(0.05, (now - last_now) / 1000.0)
-  last_now = now
-  if is_playing:
-    template limits: untyped = lut_hold_sweep[hold][level].limits
-    turn += direction * dt * 0.35
-    if turn >= limits.pos:
-      turn = limits.pos
-      direction = -1.0
-    elif turn <= -limits.neg:
-      turn = -limits.neg
-      direction = 1.0
-    target = turn
+  ## Advance one frame: sweep between blocks while playing, else ease toward `TURN_TARGET`.
+  ##   Redraws only when `TURN_DRAWN` moved (Article VII.3); frame time capped at 50 ms.
+  let dt = min(0.05, (now - NOW_PREV) / 1000.0)
+  NOW_PREV = now
+  if IS_PLAYING:
+    template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
+    TURN_DRAWN += DIRECTION_PLAY * dt * 0.35
+    if TURN_DRAWN >= limits.pos:
+      TURN_DRAWN = limits.pos
+      DIRECTION_PLAY = -1.0
+    elif TURN_DRAWN <= -limits.neg:
+      TURN_DRAWN = -limits.neg
+      DIRECTION_PLAY = 1.0
+    TURN_TARGET = TURN_DRAWN
     renderStage()
-  elif abs(target - turn) > 0.002:
-    let away = target - turn
-    turn += (if away < 0.0: -1.0 else: 1.0) * min(abs(away), dt * 0.9)
+  elif abs(TURN_TARGET - TURN_DRAWN) > 0.002:
+    let away = TURN_TARGET - TURN_DRAWN
+    TURN_DRAWN += (if away < 0.0: -1.0 else: 1.0) * min(abs(away), dt * 0.9)
     renderStage()
   discard window.requestAnimationFrame(tick)
 
 proc start(now: float) =
   ## Seed frame clock on first frame, then tick: first `dt` is nought, as original's was.
   ##   Replaces original's `null` clock, sparing `Option[float]` and its copy per frame.
-  last_now = now
+  NOW_PREV = now
   tick(now)
 
 
-slider.addEventListener("input", proc (ev: Event) =
-  is_playing = false
-  turn = clampT(parseFloat(slider.value))
-  target = turn
+SLIDER_ELEMENT.addEventListener("input", proc (ev: Event) =
+  IS_PLAYING = false
+  TURN_DRAWN = clampT(parseFloat(SLIDER_ELEMENT.value))
+  TURN_TARGET = TURN_DRAWN
   renderStage())
 document.getElementById("play").addEventListener("click", proc (ev: Event) =
-  is_playing = not is_playing)
+  IS_PLAYING = not IS_PLAYING)
 document.getElementById("to-rest").addEventListener("click", proc (ev: Event) =
-  is_playing = false
-  target = clampT(HOLDS[hold].rest))
+  IS_PLAYING = false
+  TURN_TARGET = clampT(HOLDS[HOLD_SHOWN].rest))
 
 renderButtons()
 renderStrip()

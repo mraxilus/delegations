@@ -73,26 +73,28 @@ const
           cstring"bend", cstring"wrist"]
   SIDES = [cstring"left", cstring"right"]
   WHOSE = [cstring"lead", cstring"follow"]
-  AZ = 0.6      ## Camera round world's up at start, radians.
-  EL = 0.18     ## And tilt above floor.
+  AZIMUTH_START = 0.6      ## Camera round world's up at start, radians.
+  ELEVATION_START = 0.18     ## And tilt above floor.
 
+# Mutable: viewer's state, which every handler reads and changes.  Browser calls
+# handlers with nothing of their own, so state lives here.
 var
-  az = AZ
-  el = EL
-  zoom = 1.0
-  framing: Framing = ([0.0, 0.0, 0.95], 1.2)
-  entries: JsObject ## Every still, then every sweep.
-  pick = 0      ## Which entry.
-  frame = 0     ## Which moment of it.
-  playing = true
-  dragging = false
-  lastX, lastY = 0.0
-  cardOf: seq[cstring]  ## Reference cell each entry belongs to, or empty.
-  cellOf: seq[Element]  ## And cell itself, or nil.
+  AZIMUTH = AZIMUTH_START
+  ELEVATION = ELEVATION_START
+  ZOOM = 1.0
+  FRAMING_SHOWN: Framing = ([0.0, 0.0, 0.95], 1.2)
+  ENTRIES_ALL: JsObject ## Every still, then every sweep.
+  PICK = 0      ## Which entry.
+  MOMENT_SHOWN = 0     ## Which moment of it.
+  IS_PLAYING = true
+  IS_DRAGGING = false
+  X_PREV, Y_PREV = 0.0
+  LUT_CARD_BY_ENTRY: seq[cstring]  ## Reference cell each entry belongs to, or empty.
+  LUT_CELL_BY_ENTRY: seq[Element]  ## And cell itself, or nil.
 
 
-proc entry(i: int): JsObject = entries[i]
-proc sweep(): JsObject = entry(pick)
+proc entry(i: int): JsObject = ENTRIES_ALL[i]
+proc sweep(): JsObject = entry(PICK)
 proc momentsOf(e: JsObject): int = (if has(e, "at"): count(e.at) else: 0)
 proc moments(): int = momentsOf(sweep())
 proc isStill(e: JsObject): bool = has(e, "key")
@@ -218,7 +220,7 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
 
 
 proc paint() =
-  paintOn(canvasOf("view"), sweep(), frame, az, el, zoom, framing)
+  paintOn(canvasOf("view"), sweep(), MOMENT_SHOWN, AZIMUTH, ELEVATION, ZOOM, FRAMING_SHOWN)
 
 
 proc readout() =
@@ -226,7 +228,7 @@ proc readout() =
   let sw = sweep()
   var html = cstring""
   if moments() > 0:
-    let js = sw.j[frame]
+    let js = sw.j[MOMENT_SHOWN]
     for a in 0 ..< count(sw.arm):
       let
         who = int(num(sw.arm[a][0]))
@@ -267,7 +269,7 @@ proc caption() =
     document.getElementById("verdict").innerHTML =
       (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
   else:
-    let turned = num(sw.at[frame])
+    let turned = num(sw.at[MOMENT_SHOWN])
     document.getElementById("where").innerHTML =
       cstring"<b>" & toFixed(turned, 2) & cstring"</b> turns · stood <b>" &
       toFixed(num(sw.apart), 2) & cstring"</b> m apart"
@@ -300,15 +302,15 @@ proc framingOf(e: JsObject): Framing =
 
 proc fit() =
   if moments() > 0:
-    framing = framingOf(sweep())
+    FRAMING_SHOWN = framingOf(sweep())
 
 
 proc reference() =
   ## Reference's own drawing of this entry's cell beside stage, and cell marked.
-  for i, cell in cellOf:
+  for i, cell in LUT_CELL_BY_ENTRY:
     if cell != nil:
       cell.classList.remove(cstring"picked")
-  let cell = cellOf[pick]
+  let cell = LUT_CELL_BY_ENTRY[PICK]
   if cell == nil:
     document.getElementById("ref").innerHTML = cstring""
     return
@@ -324,7 +326,7 @@ proc show() =
   readout()
   caption()
   let bar = canvasOf("scrub")
-  bar.value = frame.toJs
+  bar.value = MOMENT_SHOWN.toJs
 
 
 proc size() =
@@ -345,19 +347,19 @@ proc thumbs() =
     cv.width = w.toJs
     cv.height = w.toJs
     if momentsOf(e) > 0:
-      paintOn(cv, e, 0, AZ, EL, 1.0, framingOf(e))
+      paintOn(cv, e, 0, AZIMUTH_START, ELEVATION_START, 1.0, framingOf(e))
 
 
 proc tick() =
-  if playing and moments() > 1:
-    frame = (frame + 1) mod moments()
+  if IS_PLAYING and moments() > 1:
+    MOMENT_SHOWN = (MOMENT_SHOWN + 1) mod moments()
     show()
 
 proc choose(i: int) =
-  pick = ((i mod count(entries)) + count(entries)) mod count(entries)
-  frame = 0
+  PICK = ((i mod count(ENTRIES_ALL)) + count(ENTRIES_ALL)) mod count(ENTRIES_ALL)
+  MOMENT_SHOWN = 0
   fit()
-  canvasOf("pick").value = toFixed(float(pick), 0).toJs
+  canvasOf("pick").value = toFixed(float(PICK), 0).toJs
   canvasOf("scrub").max = (max(0, moments() - 1)).toJs
   document.getElementById("transport").toJs.hidden = (moments() <= 1).toJs
   reference()
@@ -365,18 +367,18 @@ proc choose(i: int) =
 
 
 proc start() =
-  entries = joined(rig().stills, rig().sweeps)
+  ENTRIES_ALL = joined(rig().stills, rig().sweeps)
   # Which cell of reference each entry belongs to, read off page itself.
-  for i in 0 ..< count(entries):
-    cardOf.add cstring""
-    cellOf.add nil
+  for i in 0 ..< count(ENTRIES_ALL):
+    LUT_CARD_BY_ENTRY.add cstring""
+    LUT_CELL_BY_ENTRY.add nil
   for node in document.querySelectorAll("figure[data-entries]"):
     let cell = Element(node)
     for word in ($cell.getAttribute("data-entries")).split(' '):
       if word.len == 0: continue
       let k = parseInt(word)
-      cardOf[k] = cell.getAttribute("data-id")
-      cellOf[k] = cell
+      LUT_CARD_BY_ENTRY[k] = cell.getAttribute("data-id")
+      LUT_CELL_BY_ENTRY[k] = cell
     cell.addEventListener("click", proc (e: Event) =
       let first = ($entriesOn(e)).split(' ')
       if first.len > 0 and first[0].len > 0:
@@ -385,9 +387,9 @@ proc start() =
 
   # Picker, stills by cell and question, sweeps by hold and band.
   var opts = cstring""
-  for i in 0 ..< count(entries):
+  for i in 0 ..< count(ENTRIES_ALL):
     let e = entry(i)
-    let name = (if isStill(e): cardOf[i] & cstring" · " & text(e.key)
+    let name = (if isStill(e): LUT_CARD_BY_ENTRY[i] & cstring" · " & text(e.key)
                 else: text(e.hold) & cstring" · " & text(e.band))
     opts = opts & cstring"<option value='" & toFixed(float(i), 0) &
       cstring"'>" & name & cstring"</option>"
@@ -396,44 +398,44 @@ proc start() =
   document.getElementById("pick").addEventListener("change", proc (e: Event) =
     choose(parseInt($text(canvasOf("pick").value))))
   document.getElementById("prev").addEventListener("click", proc (e: Event) =
-    choose(pick - 1))
+    choose(PICK - 1))
   document.getElementById("next").addEventListener("click", proc (e: Event) =
-    choose(pick + 1))
+    choose(PICK + 1))
   document.addEventListener("keydown", proc (e: Event) =
     let tag = $text(e.target.toJs.tagName)
     if tag == "SELECT" or tag == "INPUT": return
     let key = $text(e.toJs.key)
-    if key == "ArrowLeft": choose(pick - 1)
-    elif key == "ArrowRight": choose(pick + 1))
+    if key == "ArrowLeft": choose(PICK - 1)
+    elif key == "ArrowRight": choose(PICK + 1))
   document.getElementById("play").addEventListener("click", proc (e: Event) =
-    playing = not playing
+    IS_PLAYING = not IS_PLAYING
     document.getElementById("play").innerHTML =
-      (if playing: cstring"Pause" else: cstring"Play"))
+      (if IS_PLAYING: cstring"Pause" else: cstring"Play"))
   document.getElementById("scrub").addEventListener("input", proc (e: Event) =
-    playing = false
+    IS_PLAYING = false
     document.getElementById("play").innerHTML = cstring"Play"
-    frame = int(num(canvasOf("scrub").value))
+    MOMENT_SHOWN = int(num(canvasOf("scrub").value))
     show())
 
   let cv = canvasOf("view")
   cv.addEventListener(cstring"pointerdown", proc (e: Event) =
-    dragging = true
-    lastX = num(e.toJs.clientX)
-    lastY = num(e.toJs.clientY))
-  document.addEventListener("pointerup", proc (e: Event) = dragging = false)
+    IS_DRAGGING = true
+    X_PREV = num(e.toJs.clientX)
+    Y_PREV = num(e.toJs.clientY))
+  document.addEventListener("pointerup", proc (e: Event) = IS_DRAGGING = false)
   document.addEventListener("pointermove", proc (e: Event) =
-    if dragging:
+    if IS_DRAGGING:
       let
         x = num(e.toJs.clientX)
         y = num(e.toJs.clientY)
-      az += (x - lastX) * 0.01
-      el = max(-1.4, min(1.4, el + (y - lastY) * 0.01))
-      lastX = x
-      lastY = y
+      AZIMUTH += (x - X_PREV) * 0.01
+      ELEVATION = max(-1.4, min(1.4, ELEVATION + (y - Y_PREV) * 0.01))
+      X_PREV = x
+      Y_PREV = y
       paint())
   cv.addEventListener(cstring"wheel", proc (e: Event) =
     e.preventDefault()
-    zoom = max(0.35, min(4.0, zoom * (if num(e.toJs.deltaY) > 0.0: 0.92 else: 1.08)))
+    ZOOM = max(0.35, min(4.0, ZOOM * (if num(e.toJs.deltaY) > 0.0: 0.92 else: 1.08)))
     paint())
 
   window.addEventListener("resize", proc (e: Event) =

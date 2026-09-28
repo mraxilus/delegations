@@ -183,9 +183,10 @@ func jobs*(): seq[Job] =
   for i in 0 ..< SHOWN.len: result.add Job(cut: i, still: false)
   for a in stillAsks(): result.add Job(ask: a, still: true)
 
+# Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
-  bodies: seq[string] ## Each recording's text, written by whichever worker did it.
-  notes: seq[string]  ## And one line saying what it found.
+  RECORDING_TEXTS: seq[string] ## Each recording's text, written by whichever worker did it.
+  NOTES: seq[string]  ## And one line saying what it found.
 
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Record every `every`th job from `first` on.  Each worker lists jobs for
@@ -200,18 +201,18 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
         let a = j.ask
         let sh = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
                        head = a.head, either = a.either)
-        notes[i] = (if sh.stills.len > 0: &"{a.key}: {sh.turns:+.2f} turns, stood {sh.apart:.2f}"
+        NOTES[i] = (if sh.stills.len > 0: &"{a.key}: {sh.turns:+.2f} turns, stood {sh.apart:.2f}"
                     else: &"{a.key}: {a.turns:+.2f} turns, no pose holds")
-        bodies[i] = bodyOfSweep(sh, a.key)
+        RECORDING_TEXTS[i] = bodyOfSweep(sh, a.key)
       else:
         let cut = SHOWN[j.cut]
         var links: seq[Link] = @[]
         for (a, b) in cut.arms:
           links.add Link(ends: [(Body.One, a), (Body.Two, b)])
         let sh = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
-        notes[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
+        NOTES[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
                    &"{sh.stills.len} moments, {sh.turns:.2f} {sh.why}"
-        bodies[i] = bodyOfSweep(sh)
+        RECORDING_TEXTS[i] = bodyOfSweep(sh)
       i += slice.every
 
 
@@ -229,20 +230,20 @@ when isMainModule:
   # Recorded on every core at once: sweeps and stills each build their own
   # worlds and share nothing but their two slots.
   let count = jobs().len
-  bodies = newSeq[string](count)
-  notes = newSeq[string](count)
+  RECORDING_TEXTS = newSeq[string](count)
+  NOTES = newSeq[string](count)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[tuple[first, every: int]]](cores)
   for w in 0 ..< cores:
     createThread(workers[w], work, (w, cores))
   joinThreads(workers)
-  for n in notes: echo n
+  for n in NOTES: echo n
   # Every still card, wound to its facing from distance that sits easiest.
   #   Recorded whole, one moment each, so viewer can lay sim's answer beside
   #   each cell of reference; card no distance holds is recorded with no moment.
   let
-    cuts = bodies[0 ..< SHOWN.len]
-    stills = bodies[SHOWN.len ..< count]
+    cuts = RECORDING_TEXTS[0 ..< SHOWN.len]
+    stills = RECORDING_TEXTS[SHOWN.len ..< count]
   var head: seq[string]
   head.add "\"stamp\":\"" & stamp & "\""
   head.add "\"upper\":" & num(HUMAN.upper)

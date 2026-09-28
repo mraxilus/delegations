@@ -10,8 +10,8 @@
 ##     Every one is mock-up rather than page project stands behind, and its title says so.
 ##   `tests/suites/tmarks.nim` drives `buildPage` for every page, so every gate runs under
 ##     `nim r koch test` (Article IX.6).
-##   Every page's parts are built once in process and kept (`made`).  Page's checks read
-##     what page placed, and review page places both walked pages' figures again, so
+##   Every page's parts are built once in process and kept (`LUT_PARTS_BY_PAGE`).  Page's checks
+##     read what page placed, and review page places both walked pages' figures again, so
 ##     full build routed single-hand turns three times and hand-to-hand turns three.
 ##     Routing is most of what build costs.
 
@@ -29,14 +29,15 @@ proc checkFrameAndRules() =
   checkRules()
 
 
-var made: Table[string, Parts]
+# Mutable: filled as pages build, one run long.
+var LUT_PARTS_BY_PAGE: Table[string, Parts]
   ## Parts of every page built so far, by page, so none is routed twice.
 
 proc once(name: string; build: proc (): Parts {.nimcall.}): Parts =
   ## Parts of page `name`, built on first asking and kept.
-  if name notin made:
-    made[name] = build()
-  made[name]
+  if name notin LUT_PARTS_BY_PAGE:
+    LUT_PARTS_BY_PAGE[name] = build()
+  LUT_PARTS_BY_PAGE[name]
 
 proc singleParts(): Parts = once("turns-single.html", singleTurnParts)
   ## Single-hand turns page's parts, built once.

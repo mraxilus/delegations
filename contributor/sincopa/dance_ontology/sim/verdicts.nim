@@ -81,11 +81,13 @@ func restName(away: bool): string =
 
 #[ Readings, asked for by rendering ]#
 
+# Mutable: render reads kept readings and gathers asks it lacks, and report renders
+# through many routines, so each would carry them otherwise.
 var
-  kept*: Readings ## Readings report renders from.
-  wanted: seq[SweepAsk] ## Sweeps render asked for and `kept` lacks, in order asked.
-  wantedRungs: seq[RungAsk]
-  used: HashSet[string] ## Keys render read, so file keeps nothing no render reads.
+  READINGS_KEPT*: Readings ## Readings report renders from.
+  SWEEPS_WANTED: seq[SweepAsk] ## Sweeps render asked for and `READINGS_KEPT` lacks, in order asked.
+  RUNGS_WANTED: seq[RungAsk]
+  KEYS_USED: HashSet[string] ## Keys render read, so file keeps nothing no render reads.
 
 proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; away = false;
              apart = 0.0): SweepRead =
@@ -93,18 +95,18 @@ proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; away = false;
   let
     ask = askOf(band, links, who, away, apart)
     key = keyOf(ask)
-  used.incl key
-  if key in kept.sweeps: return kept.sweeps[key]
-  if ask notin wanted: wanted.add ask
+  KEYS_USED.incl key
+  if key in READINGS_KEPT.sweeps: return READINGS_KEPT.sweeps[key]
+  if ask notin SWEEPS_WANTED: SWEEPS_WANTED.add ask
 
 proc rungOf(band: Band; turn: float): RungRead =
   ## Kept reading of rung; lacking it, ask for it and render blank for now.
   let
     ask = RungAsk(band: band, turn: turn)
     key = keyOf(ask)
-  used.incl key
-  if key in kept.rungs: return kept.rungs[key]
-  if ask notin wantedRungs: wantedRungs.add ask
+  KEYS_USED.incl key
+  if key in READINGS_KEPT.rungs: return READINGS_KEPT.rungs[key]
+  if ask notin RUNGS_WANTED: RUNGS_WANTED.add ask
 
 func glanceAt(sw: SweepRead; t: float): Glance = sw.glances[int(round(t * 2.0)) + 4]
   ## Moment report reads at `t` turns, which is half turn from -2 to 2.
@@ -346,34 +348,34 @@ proc report(): string =
 
 
 proc render*(): string =
-  ## Write whole report from `kept`.  Reading it lacks is asked for (`lacking`), and
+  ## Write whole report from `READINGS_KEPT`.  Reading it lacks is asked for (`lacking`), and
   ## rendered blank.
-  wanted.setLen 0
-  wantedRungs.setLen 0
-  used.clear
+  SWEEPS_WANTED.setLen 0
+  RUNGS_WANTED.setLen 0
+  KEYS_USED.clear
   report().strip(leading = false) & "\n"
 
-proc lacking*(): int = wanted.len + wantedRungs.len
+proc lacking*(): int = SWEEPS_WANTED.len + RUNGS_WANTED.len
   ## How many readings last render lacked.
 
 
 when isMainModule:
-  kept = keptReadings()
+  READINGS_KEPT = keptReadings()
   var text = render()
   if lacking() > 0:
-    echo "reading ", wanted.len, " sweeps and ", wantedRungs.len, " rungs"
-    let got = readAll(wanted, wantedRungs)
-    kept.stamp = physics()
-    for i, a in wanted: kept.sweeps[keyOf(a)] = got.sweeps[i]
-    for i, a in wantedRungs: kept.rungs[keyOf(a)] = got.rungs[i]
+    echo "reading ", SWEEPS_WANTED.len, " sweeps and ", RUNGS_WANTED.len, " rungs"
+    let got = readAll(SWEEPS_WANTED, RUNGS_WANTED)
+    READINGS_KEPT.stamp = physics()
+    for i, a in SWEEPS_WANTED: READINGS_KEPT.sweeps[keyOf(a)] = got.sweeps[i]
+    for i, a in RUNGS_WANTED: READINGS_KEPT.rungs[keyOf(a)] = got.rungs[i]
     text = render()
     doAssert lacking() == 0, "Report still lacks readings once all are read."
   # Keep only what report reads, so file holds no reading nothing renders.
-  var keeping = Readings(stamp: kept.stamp)
-  for k, v in kept.sweeps:
-    if k in used: keeping.sweeps[k] = v
-  for k, v in kept.rungs:
-    if k in used: keeping.rungs[k] = v
+  var keeping = Readings(stamp: READINGS_KEPT.stamp)
+  for k, v in READINGS_KEPT.sweeps:
+    if k in KEYS_USED: keeping.sweeps[k] = v
+  for k, v in READINGS_KEPT.rungs:
+    if k in KEYS_USED: keeping.rungs[k] = v
   keep(keeping)
   writeFile("sim/verdicts.md", text)
   echo "wrote sim/verdicts.md"

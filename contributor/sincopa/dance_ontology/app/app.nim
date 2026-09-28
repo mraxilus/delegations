@@ -64,18 +64,20 @@ func startFrame(): Frame =
   fromKey("--.").get
 
 
+# Mutable: page's state, which every handler reads and changes.  Browser calls
+# handlers with nothing of their own, so state lives here.
 var
-  origin = startFrame()
-  current = startFrame()
-  view = View.Atlas
-  drawing = Drawing.Dynamic
-  drawing_chosen = false        ## Whether reader has picked drawing themselves.
-  filter = Filter()
-  history: seq[Step] = @[]
-  motion = Motion.Still     ## What drawings are doing at this instant.
-  taken = none(Frame)       ## Frame being moved to, while couple are leaving.
-  queued = none(Frame)      ## Second move of compound, waiting for first.
-  generation = 0            ## Which move is in flight, so older one can be dropped.
+  ORIGIN = startFrame()
+  CURRENT = startFrame()
+  VIEW_SHOWN = View.Atlas
+  DRAWING_SHOWN = Drawing.Dynamic
+  IS_DRAWING_CHOSEN = false        ## Whether reader has picked drawing themselves.
+  FILTER_APPLIED = Filter()
+  HISTORY: seq[Step] = @[]
+  MOTION_NOW = Motion.Still     ## What drawings are doing at this instant.
+  FRAME_TAKEN = none(Frame)       ## Frame being moved to, while couple are leaving.
+  FRAME_QUEUED = none(Frame)      ## Second move of compound, waiting for first.
+  GENERATION = 0            ## Which move is in flight, so older one can be dropped.
 
 
 func tempoOf(drawing: Drawing): Tempo =
@@ -187,8 +189,8 @@ proc suitDrawing() =
   ##   So page follows screen -- and stops once reader picks
   ##     drawing, because choice made is worth more than default, and
   ##     window dragged narrower should not take it back.
-  if not drawing_chosen:
-    drawing = if roomForMap(): Drawing.Overview else: Drawing.Dynamic
+  if not IS_DRAWING_CHOSEN:
+    DRAWING_SHOWN = if roomForMap(): Drawing.Overview else: Drawing.Dynamic
 
 
 
@@ -715,7 +717,7 @@ proc paintStage() =
   if stage == nil:
     return
   let held = holding()
-  stage.innerHTML = cstring(renderStageBody(current, drawing, motion, taken))
+  stage.innerHTML = cstring(renderStageBody(CURRENT, DRAWING_SHOWN, MOTION_NOW, FRAME_TAKEN))
   standAgain(held)
   centreOnHeld()
 
@@ -723,25 +725,25 @@ proc paintStage() =
 proc render() =
   ## Draw whole page from session state.
   let body =
-    case view
-    of View.Dance: renderDance(current, drawing, motion, taken, history)
-    of View.Atlas: renderGallery(filter)
+    case VIEW_SHOWN
+    of View.Dance: renderDance(CURRENT, DRAWING_SHOWN, MOTION_NOW, FRAME_TAKEN, HISTORY)
+    of View.Atlas: renderGallery(FILTER_APPLIED)
     of View.Matrix: renderMatrix()
   let held = holding()
-  document.getElementById("app").innerHTML = cstring(renderControls(view) & body)
+  document.getElementById("app").innerHTML = cstring(renderControls(VIEW_SHOWN) & body)
   standAgain(held)
   centreOnHeld()
 
 
 proc arrive(target: Frame) =
   ## Stand in frame move reached, and remember way there.
-  for move in moves(current):
+  for move in moves(CURRENT):
     if move.to != target:
       continue
-    history.add Step(phrase: phrase(current, move), to: move.to)
-    current = move.to
-    say(history[^1].phrase & ". Now " & current.describe & ", with " &
-      $moves(current).len & " moves out of it.")
+    HISTORY.add Step(phrase: phrase(CURRENT, move), to: move.to)
+    CURRENT = move.to
+    say(HISTORY[^1].phrase & ". Now " & CURRENT.describe & ", with " &
+      $moves(CURRENT).len & " moves out of it.")
     return
 
 
@@ -750,8 +752,8 @@ proc dance(key: string)
 
 proc leadOn() =
   ## Take second move of compound, if one is waiting on first.
-  let next = queued
-  queued = none(Frame)
+  let next = FRAME_QUEUED
+  FRAME_QUEUED = none(Frame)
   if next.isSome:
     dance(next.get.key)
 
@@ -773,9 +775,9 @@ proc dance(key: string) =
   ##       phases, and is same guard that stops compound finishing itself
   ##       after something else has been asked for.
   let target = fromKey(key)
-  if target.isNone or classify(current, target.get).isNone:
+  if target.isNone or classify(CURRENT, target.get).isNone:
     return
-  if motion == Motion.Leaving and taken == target:
+  if MOTION_NOW == Motion.Leaving and FRAME_TAKEN == target:
     return # Asked twice for same move, which is once.
   if atOnce():
     # Every phase collapses into change of state it was spelling out.  But
@@ -788,31 +790,31 @@ proc dance(key: string) =
     render()
     return
 
-  inc generation
+  inc GENERATION
   let
-    mine = generation
-    tempo = tempoOf(drawing)
-  motion = Motion.Leaving
-  taken = target
+    mine = GENERATION
+    tempo = tempoOf(DRAWING_SHOWN)
+  MOTION_NOW = Motion.Leaving
+  FRAME_TAKEN = target
   paintStage()
 
   discard setTimeout(proc () =
-    if generation != mine:
+    if GENERATION != mine:
       return
     arrive(target.get)
-    motion = Motion.Arriving
-    taken = none(Frame)
+    MOTION_NOW = Motion.Arriving
+    FRAME_TAKEN = none(Frame)
     render(), tempo.leaveTime)
 
   discard setTimeout(proc () =
-    if generation != mine:
+    if GENERATION != mine:
       return
     leadOn(), tempo.leadOnTime)
 
   discard setTimeout(proc () =
-    if generation != mine:
+    if GENERATION != mine:
       return
-    motion = Motion.Still, tempo.moveTime)
+    MOTION_NOW = Motion.Still, tempo.moveTime)
 
 
 proc danceCompound(key: string) =
@@ -823,24 +825,24 @@ proc danceCompound(key: string) =
   ##   Anything else dancer does in meantime is newer move, and drops
   ##     queue.
   let target = fromKey(key)
-  if target.isNone or compound(current, target.get).isNone:
+  if target.isNone or compound(CURRENT, target.get).isNone:
     return
   # Way vocabulary means, not any shortest way: cut can be led with
   # either arm and only one of those is one phrase on this very button
   # describes.  Dancing other would be doing one thing while saying another.
-  let steps = compoundWay(current, target.get)
+  let steps = compoundWay(CURRENT, target.get)
   if steps.len != 2:
     return
-  queued = some(target.get)
+  FRAME_QUEUED = some(target.get)
   dance(steps[0].to.key)
 
 
 proc rest() =
   ## Stop whatever was moving, for change of state that is not move.
-  inc generation
-  motion = Motion.Still
-  taken = none(Frame)
-  queued = none(Frame)
+  inc GENERATION
+  MOTION_NOW = Motion.Still
+  FRAME_TAKEN = none(Frame)
+  FRAME_QUEUED = none(Frame)
 
 
 proc start(key: string) =
@@ -849,10 +851,10 @@ proc start(key: string) =
   if target.isNone:
     return
   rest()
-  origin = target.get
-  current = origin
-  history = @[]
-  view = View.Dance
+  ORIGIN = target.get
+  CURRENT = ORIGIN
+  HISTORY = @[]
+  VIEW_SHOWN = View.Dance
 
 
 proc handle(event: Event) =
@@ -881,36 +883,36 @@ proc handle(event: Event) =
   of "view":
     for candidate in View:
       if $candidate == value:
-        view = candidate
+        VIEW_SHOWN = candidate
   of "drawing":
     for candidate in Drawing:
       if $candidate == value:
-        drawing = candidate
-        drawing_chosen = true
+        DRAWING_SHOWN = candidate
+        IS_DRAWING_CHOSEN = true
   of "holds":
-    filter.holds = none(int)
+    FILTER_APPLIED.holds = none(int)
     for count in 0 .. 2:
       if $count == value:
-        filter.holds = some(count)
+        FILTER_APPLIED.holds = some(count)
   of "lead":
-    filter.lead = none(Side)
+    FILTER_APPLIED.lead = none(Side)
     for candidate in Side:
       if $candidate == value:
-        filter.lead = some(candidate)
+        FILTER_APPLIED.lead = some(candidate)
   of "follow":
-    filter.follow = none(Site)
+    FILTER_APPLIED.follow = none(Site)
     for candidate in Site:
       if $candidate == value:
-        filter.follow = some(candidate)
+        FILTER_APPLIED.follow = some(candidate)
   of "undo":
-    if history.len > 0:
+    if HISTORY.len > 0:
       rest()
-      discard history.pop()
-      current = if history.len > 0: history[^1].to else: origin
+      discard HISTORY.pop()
+      CURRENT = if HISTORY.len > 0: HISTORY[^1].to else: ORIGIN
   of "reset":
     rest()
-    current = origin
-    history = @[]
+    CURRENT = ORIGIN
+    HISTORY = @[]
   else: return
   render()
 
@@ -921,9 +923,9 @@ proc reflow(event: Event) =
   ##     Event arrives on every pixel of drag, and rebuilding page on
   ##       each one would take focus ring off whatever reader was
   ##       standing on and tear any move that was halfway through being told.
-  let showing = drawing
+  let showing = DRAWING_SHOWN
   suitDrawing()
-  if drawing != showing:
+  if DRAWING_SHOWN != showing:
     rest()
     render()
 

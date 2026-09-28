@@ -51,11 +51,12 @@ func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
 
 #[ Settled couples, every core at once ]#
 
+# Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
-  settles: seq[tuple[pair: int, band: Band, turn: float]]
+  SETTLES: seq[tuple[pair: int, band: Band, turn: float]]
     ## Every couple to settle, set before any thread starts.
-  nextSettle: Atomic[int] ## Next couple not yet taken.
-  settledArms: seq[array[2, array[2, ArmPose]]] ## Each couple's arms, at its own index.
+  SETTLE_NEXT: Atomic[int] ## Next couple not yet taken.
+  SETTLED_ARMS: seq[array[2, array[2, ArmPose]]] ## Each couple's arms, at its own index.
 
 proc settling(id: int) {.thread.} =
   ## Take couples until none is left, and give back arm poses alone.
@@ -64,16 +65,16 @@ proc settling(id: int) {.thread.} =
   ##     allotted before any thread starts.
   {.cast(gcsafe).}:
     while true:
-      let i = nextSettle.fetchAdd(1)
-      if i >= settles.len: return
+      let i = SETTLE_NEXT.fetchAdd(1)
+      if i >= SETTLES.len: return
       let
-        s = settles[i]
+        s = SETTLES[i]
         links = @(PAIRS[s.pair][0])
         away = PAIRS[s.pair][1]
       var c = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, s.turn),
                     s.band, links, away = away)
       c.settle()
-      for k in 0 ..< links.len: settledArms[i][k] = c.poseOf(k).arms
+      for k in 0 ..< links.len: SETTLED_ARMS[i][k] = c.poseOf(k).arms
       c.free()
 
 proc settleAll() =
@@ -82,9 +83,9 @@ proc settleAll() =
   ##     2026-09-26 on four cores.
   for pair in 0 ..< PAIRS.len:
     for band in Band:
-      for turn in TURNS: settles.add (pair, band, turn)
-  settledArms = newSeq[array[2, array[2, ArmPose]]](settles.len)
-  nextSettle.store(0)
+      for turn in TURNS: SETTLES.add (pair, band, turn)
+  SETTLED_ARMS = newSeq[array[2, array[2, ArmPose]]](SETTLES.len)
+  SETTLE_NEXT.store(0)
   var workers = newSeq[Thread[int]](max(1, countProcessors()))
   for w in 0 ..< workers.len: createThread(workers[w], settling, w)
   joinThreads(workers)
@@ -94,9 +95,9 @@ suite "two hands":
   test "crossings are counted off drawn arms, not assumed":
     settleAll()
     var seen = 0
-    for i in 0 ..< settles.len:
+    for i in 0 ..< SETTLES.len:
       let
-        arms: Arms = @[settledArms[i][0], settledArms[i][1]]
+        arms: Arms = @[SETTLED_ARMS[i][0], SETTLED_ARMS[i][1]]
         p = polyline(arms, 0)
         q = polyline(arms, 1)
       for x in crossings(arms):

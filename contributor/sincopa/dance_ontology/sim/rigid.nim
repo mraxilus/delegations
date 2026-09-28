@@ -36,12 +36,14 @@ import ./[body, hold, limb, rig, vec]
 from ./engine as eng import nil
 
 
-var worlds: Lock
+# Mutable: lock is state by nature.  Global, because every couple on every thread shares
+# engine's one table of worlds.
+var LOCK_WORLDS: Lock
   ## Engine keeps its worlds in one table and makes and destroys them without
   ## locking, so two threads building couples at once took one slot for two
   ## worlds and died of illegal instruction inside engine.  Stepping is each
   ## world's own and needs no lock.
-initLock(worlds)
+initLock(LOCK_WORLDS)
 
 
 const
@@ -354,13 +356,13 @@ proc trunkOf(c: var Couple; who: Body): tuple[hips, chest: eng.BodyId,
     st = c.stance[who]
     ax = axesOf(st)
   var bd = eng.defaultBody()
-  bd.kind = eng.Kinematic
+  bd.kind = eng.BODY_KINEMATIC
   bd.position = asPlace(ax.origin)
   bd.rotation = standing(ax)
   bd.enableSleep = false
   result.hips = eng.createBody(c.world, addr bd)
   var cd = eng.defaultBody()
-  cd.kind = eng.Dynamic
+  cd.kind = eng.BODY_DYNAMIC
   cd.position = asPlace(ax.origin)
   cd.rotation = standing(ax)
   cd.linearDamping = cfloat(DAMP)
@@ -432,7 +434,7 @@ proc limbOf(c: var Couple; who: Body; arm: Arm; mark: Mark; at: Vec;
             turn: eng.Quat; long: float; group: cint): eng.BodyId =
   ## One link: its own length along its local z, hung from `at`.
   var bd = eng.defaultBody()
-  bd.kind = eng.Dynamic
+  bd.kind = eng.BODY_DYNAMIC
   bd.position = asPlace(at)
   bd.rotation = turn
   bd.linearDamping = cfloat(DAMP)
@@ -477,7 +479,7 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
     inner: Vec = (side(arm) * (halfBreadth(c.rig, Part.Neck) - c.rig.shoulderOut), 0.0,
                   c.rig.top[Part.Torso] - c.rig.shoulderUp)
   var kd = eng.defaultBody()
-  kd.kind = eng.Dynamic
+  kd.kind = eng.BODY_DYNAMIC
   kd.position = asPlace(toWorld(ax, root))
   kd.rotation = trunkQ
   kd.linearDamping = cfloat(DAMP)
@@ -493,7 +495,7 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   bd.filter.maskBits = 0'u64
   discard eng.createCapsule(result.collar, addr bd, addr bone)
   var gd = eng.defaultBody()
-  gd.kind = eng.Dynamic
+  gd.kind = eng.BODY_DYNAMIC
   gd.position = asPlace(top)
   gd.rotation = trunkQ
   gd.linearDamping = cfloat(DAMP)
@@ -601,7 +603,7 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
   wd.contactHertz = cfloat(CONTACT)
   wd.enableSleep = false
   wd.enableContinuous = true
-  withLock worlds:
+  withLock LOCK_WORLDS:
     result.world = eng.createWorld(addr wd)
   result.rig = rig
   result.stance = stance
@@ -651,7 +653,7 @@ proc chestStances*(c: Couple): array[Body, Stance] =
 
 proc free*(c: Couple) =
   ## Give engine its world back.
-  withLock worlds:
+  withLock LOCK_WORLDS:
     eng.destroyWorld(c.world)
 
 

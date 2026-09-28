@@ -44,16 +44,17 @@ proc rest(band = Band.Torso; apart = APART): Couple =
   result = build(HUMAN, facing(HUMAN, apart), band, SHAKE)
   result.settle()
 
+# Mutable: answers are read on first law that wants them, then kept for rest.
 var
-  given: Answers   ## Answers as kept, read on first law that wants them.
-  given_read = false
+  ANSWERS_GIVEN: Answers   ## Answers as kept, read on first law that wants them.
+  IS_GIVEN_READ = false
 
 proc answered(): Answers =
   ## Every search's answer as kept (`sim/answers.json`), read once.
-  if not given_read:
-    given = kept()
-    given_read = true
-  given
+  if not IS_GIVEN_READ:
+    ANSWERS_GIVEN = kept()
+    IS_GIVEN_READ = true
+  ANSWERS_GIVEN
 
 type Went = object ## One walk walked live, reduced to numbers laws read of it.
   holds: bool      ## Whether hold stood at rest there.
@@ -565,11 +566,12 @@ type Go = tuple[sweep: bool, index: int, pos: bool, apart: float]
   ## One walk to walk live: way of sweep of `SWEEPS`, or walk of `WALKS` from one
   ## distance, from `apart`.  Plain numbers, so threads share nothing but this list.
 
+# Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
-  goes: seq[Go]        ## Every walk, set before any thread starts.
-  nextGo: Atomic[int]  ## Next walk not yet taken.
-  wents: seq[Went]     ## Each walk's numbers, at its own index.
-  drawn: seq[tuple[index: int, kept: Walked]] ## Walks drawn to walk again.
+  GOES: seq[Go]        ## Every walk, set before any thread starts.
+  GO_NEXT: Atomic[int]  ## Next walk not yet taken.
+  WENTS: seq[Went]     ## Each walk's numbers, at its own index.
+  WALKS_DRAWN: seq[tuple[index: int, kept: Walked]] ## Walks drawn to walk again.
 
 proc going(id: int) {.thread.} =
   ## Take walks until none is left.
@@ -578,19 +580,19 @@ proc going(id: int) {.thread.} =
   ##     read by four threads is what `design/modelled.nim` records dying of.
   {.cast(gcsafe).}:
     while true:
-      let i = nextGo.fetchAdd(1)
-      if i >= goes.len: return
-      let g = goes[i]
+      let i = GO_NEXT.fetchAdd(1)
+      if i >= GOES.len: return
+      let g = GOES[i]
       if g.sweep:
         let q = SWEEPS[g.index]
         let w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most,
                        (if g.pos: STEP else: -STEP), false, Body.Two)
-        wents[i] = wentOf(w, q.links)
+        WENTS[i] = wentOf(w, q.links)
       else:
         let q = WALKS[g.index]
         let w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most, q.step,
                        false, Body.Two)
-        wents[i] = wentOf(w, q.links)
+        WENTS[i] = wentOf(w, q.links)
 
 proc walkEveryWay() =
   ## Walk, on every core at once, every way of every sweep from its kept distance,
@@ -598,22 +600,22 @@ proc walkEveryWay() =
   ##   Laws read ten of those twelve ways between them, and law of answers reads
   ##     all twelve; walked one after another they cost 14.5 s of one law's time,
   ##     measured 2026-09-24.  Way whose search found no distance is not walked.
-  if goes.len > 0: return
+  if GOES.len > 0: return
   let a = answered()
   for i, q in SWEEPS:
     let sweep = a.sweepOf(q.key)
     for (pos, way) in [(true, sweep.pos), (false, sweep.neg)]:
-      if way.holds: goes.add (true, i, pos, way.apart)
+      if way.holds: GOES.add (true, i, pos, way.apart)
   var every: seq[tuple[index: int, kept: Walked]]
   for i, q in WALKS:
     for w in a.walksOf(q.key): every.add (i, w)
   var draw = initRand(fromHex[int](a.stamp[0 ..< 12]))
   for _ in 0 .. 1:
     let got = every[draw.rand(every.high)]
-    drawn.add got
-    goes.add (false, got.index, true, got.kept.apart)
-  wents = newSeq[Went](goes.len)
-  nextGo.store(0)
+    WALKS_DRAWN.add got
+    GOES.add (false, got.index, true, got.kept.apart)
+  WENTS = newSeq[Went](GOES.len)
+  GO_NEXT.store(0)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[int]](cores)
   for w in 0 ..< cores: createThread(workers[w], going, w)
@@ -628,17 +630,17 @@ proc live(key: string; pos: bool): Went =
   walkEveryWay()
   for i, q in SWEEPS:
     if q.key == key:
-      for k, g in goes:
-        if g.sweep and g.index == i and g.pos == pos: return wents[k]
+      for k, g in GOES:
+        if g.sweep and g.index == i and g.pos == pos: return WENTS[k]
       return Went(holds: false)
   raiseAssert "No sweep asked by that key; got `" & key & "`."
 
 proc replayed(): seq[tuple[q: WalkAsked, kept: Walked, w: Went]] =
   ## Two walks of `WALKS` drawn by stamp, as kept and as walked again live.
   walkEveryWay()
-  for k, g in goes:
+  for k, g in GOES:
     if not g.sweep:
-      result.add (WALKS[g.index], drawn[result.len].kept, wents[k])
+      result.add (WALKS[g.index], WALKS_DRAWN[result.len].kept, WENTS[k])
 
 type Seen = tuple[name: string, band: Band, links: seq[Link], w: Went]
 
@@ -791,13 +793,14 @@ type Posed = tuple[key: string, holds: bool, strain: Strain, depth: float, pair:
                    apart, parted: float]
   ## One still of corpus stood live once, and every measure two laws read of it.
 
-var posed: seq[Posed] ## Corpus of stills, stood once.
+# Mutable: corpus is stood on first law that wants it, then kept for rest.
+var STILLS_POSED: seq[Posed] ## Corpus of stills, stood once.
 
 proc poses(): seq[Posed] =
   ## Every still of corpus stood live at its kept answer, once: strain for one
   ## law; overlap, joined hands and parted joints for other.
   ##   Two laws stood same eight poses each, 6.2 s apiece, measured 2026-09-24.
-  if posed.len == 0:
+  if STILLS_POSED.len == 0:
     for q in STILLS[0 ..< CORPUS]:
       let (holds, c) = standOf(q)
       var p: Posed = (q.key, holds, Strain(), 0.0, "", 0.0, 0.0)
@@ -808,8 +811,8 @@ proc poses(): seq[Posed] =
         for who in Body:
           for arm in Arm: p.parted = max(p.parted, max(c.partedAt(who, arm)))
       c.free()
-      posed.add p
-  posed
+      STILLS_POSED.add p
+  STILLS_POSED
 
 suite "every still stands at ease":
   ## Architect: every state is easily doable in reality without any strain,

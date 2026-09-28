@@ -30,7 +30,7 @@ proc world(): WorldId =
 proc capsule(w: WorldId; x: float): BodyId =
   ## Upright limb-thick capsule, standing where told.
   var bd = defaultBody()
-  bd.kind = Dynamic
+  bd.kind = BODY_DYNAMIC
   bd.position = Pos(x: x, y: 0.0, z: 0.0)
   result = createBody(w, addr bd)
   var sd = defaultShape()
@@ -48,7 +48,7 @@ suite "the engine this project turns couples with":
     let g = abs(float(def.gravity.y))
     check g > 9.0     # Engine's own, not this project's; only its order matters.
     var bd = defaultBody()
-    bd.kind = Dynamic
+    bd.kind = BODY_DYNAMIC
     bd.position = Pos(x: 0.0, y: 10.0, z: 0.0)
     let body = createBody(w, addr bd)
     var sd = defaultShape()
@@ -83,7 +83,7 @@ suite "the engine this project turns couples with":
     ##   is asked for.
     let w = world()
     var bd = defaultBody()
-    bd.kind = Dynamic
+    bd.kind = BODY_DYNAMIC
     bd.position = Pos(x: 0.0, y: 0.0, z: 0.0)
     let centre = createBody(w, addr bd)
     var sd = defaultShape()
@@ -95,7 +95,7 @@ suite "the engine this project turns couples with":
       # Ring of thin capsules, each poking into big one from its own side.
       let angle = 2.0 * PI * float(i) / float(AROUND)
       var od = defaultBody()
-      od.kind = Dynamic
+      od.kind = BODY_DYNAMIC
       od.position = Pos(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
       let b = createBody(w, addr od)
       var thin = Capsule(center1: vec(0, -0.02, 0), center2: vec(0, 0.02, 0), radius: 0.02)

@@ -116,7 +116,7 @@ suite "the report renders from its kept readings":
   ##   read here: readings of older physics still render report they gave.
 
   test "the report is what its kept readings render":
-    kept = parseFile(KEPT_READINGS).jsonTo(Readings)
+    READINGS_KEPT = parseFile(KEPT_READINGS).jsonTo(Readings)
     let text = render()
     check lacking() == 0
     check text == readFile(REPORT)

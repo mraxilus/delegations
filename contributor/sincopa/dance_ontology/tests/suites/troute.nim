@@ -23,21 +23,21 @@ const
   N = 33        ## Points in it, which is `ROUTE_N`.
 
 let
-  line = (0 ..< N).mapIt((x: float(it) * STEP, y: 0.0))
+  LINE_SAMPLED = (0 ..< N).mapIt((x: float(it) * STEP, y: 0.0))
     ## Straight sampled line standing in for reach: laws below are about
     ## where gap falls along line, and shape of line does not enter them.
-  square = @[(x: 0.0, y: -20.0), (x: 0.0, y: 20.0)]
+  REACH_SQUARE = @[(x: 0.0, y: -20.0), (x: 0.0, y: 20.0)]
     ## Reach crossing it square on, so gap it asks for is plain shadow.
 
 proc crossingAt(where: float): seq[Point] =
   ## Get reach crossing line square on, this far along it.
-  ##   `proc` rather than `func` only because it reads module's own `square`.
-  square.mapIt((x: where, y: it.y))
+  ##   `proc` rather than `func` only because it reads module's own `REACH_SQUARE`.
+  REACH_SQUARE.mapIt((x: where, y: it.y))
 
 
 const
-  WAVE_H = 8.0        ## How far waved reach swings either side of `line`.
-  SPAN = float(N - 1) * STEP  ## Length `line` runs over.
+  WAVE_H = 8.0        ## How far waved reach swings either side of `LINE_SAMPLED`.
+  SPAN = float(N - 1) * STEP  ## Length `LINE_SAMPLED` runs over.
   ON_ZEROS = 4 * STEP ## Wavelength whose zeros land on sampled points.
     ## Cosine of this wavelength is nought at every second sample, so each
     ##   crossing sits on vertex and is met by both segments sharing it --
@@ -48,7 +48,7 @@ const
     ##   width to well over `BREAK`.
 
 func crossedBy(wavelength: float): seq[Point] =
-  ## Get reach waving across `line`, crossing at every zero of its cosine.
+  ## Get reach waving across `LINE_SAMPLED`, crossing at every zero of its cosine.
   (0 ..< N).mapIt((x: float(it) * STEP,
                    y: WAVE_H * cos(float(it) * STEP * 2 * PI / wavelength)))
 
@@ -66,10 +66,10 @@ suite "reach breaks":
 
   test "a break never eats either end of a reach":
     for i in 0 ..< N:
-      let runs = cutGapsAt(line, crossingAt(float(i) * STEP), @[line[i]])
+      let runs = cutGapsAt(LINE_SAMPLED, crossingAt(float(i) * STEP), @[LINE_SAMPLED[i]])
       check runs.len > 0
-      check runs[0][0] == line[0]
-      check runs[^1][^1] == line[^1]
+      check runs[0][0] == LINE_SAMPLED[0]
+      check runs[^1][^1] == LINE_SAMPLED[^1]
 
   test "a break falls where the lines cross":
     # Crossing nearer than half break to either hand cannot be covered
@@ -80,8 +80,8 @@ suite "reach breaks":
       if at < BREAK / 2 or at > span - BREAK / 2:
         continue
       let
-        runs = cutGapsAt(line, crossingAt(float(i) * STEP), @[line[i]])
-        gap = gapFor(at, span, hidesAt(line, crossingAt(at), line[i]))
+        runs = cutGapsAt(LINE_SAMPLED, crossingAt(float(i) * STEP), @[LINE_SAMPLED[i]])
+        gap = gapFor(at, span, hidesAt(LINE_SAMPLED, crossingAt(at), LINE_SAMPLED[i]))
         drawn = runs.mapIt(polylineLen(it)).foldl(a + b, 0.0)
       check runs.len == 2
       # Reach loses exactly its gap, no more and no less.  Bare test that
@@ -93,15 +93,15 @@ suite "reach breaks":
     # Break says this line passes under that one.  Where there is no
     # crossing there is nothing to pass under, so break there states
     # something no picture means.
-    let beside = line.mapIt((x: it.x, y: 20.0))
-    check cutGap(line, beside) == @[line]
+    let beside = LINE_SAMPLED.mapIt((x: it.x, y: 20.0))
+    check cutGap(LINE_SAMPLED, beside) == @[LINE_SAMPLED]
 
   test "a reach that is crossed is broken where it is crossed":
     let across = @[(x: 30.0, y: -20.0), (x: 30.0, y: 20.0)]
-    let runs = cutGap(line, across)
+    let runs = cutGap(LINE_SAMPLED, across)
     check runs.len == 2
-    check runs[0][0] == line[0]
-    check runs[^1][^1] == line[^1]
+    check runs[0][0] == LINE_SAMPLED[0]
+    check runs[^1][^1] == LINE_SAMPLED[^1]
 
   test "a break sits on its crossing, not beside it":
     # Break says this line passes under that one, and it says it where
@@ -111,15 +111,15 @@ suite "reach breaks":
     for i in 0 ..< N:
       let
         at = float(i) * STEP
-        gap = gapFor(at, span, hidesAt(line, crossingAt(at), line[i]))
+        gap = gapFor(at, span, hidesAt(LINE_SAMPLED, crossingAt(at), LINE_SAMPLED[i]))
       if gap.shuts <= gap.opens:
         continue
       check abs((gap.opens + gap.shuts) / 2 - at) < 1e-9
 
   test "an uncrossed reach is drawn whole":
-    let runs = cutGapsAt(line, square, @[])
+    let runs = cutGapsAt(LINE_SAMPLED, REACH_SQUARE, @[])
     check runs.len == 1
-    check runs[0] == line
+    check runs[0] == LINE_SAMPLED
 
 
 suite "crossings found":
@@ -132,7 +132,7 @@ suite "crossings found":
     # within stroke of each other; picture merging them states one
     # over-under where there are two, which is opposite of what rule 14 asks.
     for wavelength in WAVELENGTHS:
-      let met = crossingsOf(line, crossedBy(wavelength))
+      let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
       check met.len == zerosOf(wavelength)  # rule 14
 
   test "one crossing met twice at one spot is reported once":
@@ -140,14 +140,14 @@ suite "crossings found":
     # that share it, at same point twice.  That, and only that, is duplicate
     # fold exists to drop, so wave sampled on its own zeros must still count
     # its crossings and no more.
-    let met = crossingsOf(line, crossedBy(ON_ZEROS))
+    let met = crossingsOf(LINE_SAMPLED, crossedBy(ON_ZEROS))
     check met.len == zerosOf(ON_ZEROS)  # rule 14
 
   test "crossings come out in order along first reach":
     # Which arm dives is alternated from first crossing to last (rule 27),
     # so order is load-bearing and not incidental.
     for wavelength in WAVELENGTHS:
-      let met = crossingsOf(line, crossedBy(wavelength))
+      let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
       for i in 1 ..< met.len:
         check met[i - 1].x < met[i].x  # rule 27
 

@@ -121,11 +121,12 @@ func questions*(): seq[Question] =
                    else: STEPS[i + 1])
         result.add moving(&"{key}w_{tag}_{i}", links, away, manner, asked(sense * far))
 
-var told: seq[bool] ## Each worker writes its own questions' answers here.
+# Mutable and global: thread takes one argument, so workers write into slots allotted here.
+var TOLD: seq[bool] ## Each worker writes its own questions' answers here.
 
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Answer every `every`th question from `first` on: worlds are engine's own
-  ## and independent, so workers share nothing but `told`.
+  ## and independent, so workers share nothing but `TOLD`.
   ##   Each worker lists questions for itself: list holds strings and
   ##     sequences, whose counts one list read by four threads raced on, and
   ##     verb died of illegal instruction inside engine every other run.
@@ -134,7 +135,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     var i = slice.first
     while i < asked.len:
       let q = asked[i]
-      told[i] = (if q.still: holdsAt(HUMAN, CROWN, q.links, q.turns, q.away, q.head,
+      TOLD[i] = (if q.still: holdsAt(HUMAN, CROWN, q.links, q.turns, q.away, q.head,
                                      either = q.either)
                  else: reaches(HUMAN, CROWN, q.links, q.turns, away = q.away,
                                who = q.who, head = q.head))
@@ -147,7 +148,7 @@ proc answers(): OrderedTable[string, bool] =
   ##     four cores cost four minutes.  Order of answers is page's own, whatever
   ##     order they were found in.
   let asked = questions()
-  told = newSeq[bool](asked.len)
+  TOLD = newSeq[bool](asked.len)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[tuple[first, every: int]]](cores)
   for w in 0 ..< cores:
@@ -155,7 +156,7 @@ proc answers(): OrderedTable[string, bool] =
   joinThreads(workers)
   result = initOrderedTable[string, bool]()
   for i, q in asked:
-    result[q.key] = told[i]
+    result[q.key] = TOLD[i]
 
 
 proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($it))

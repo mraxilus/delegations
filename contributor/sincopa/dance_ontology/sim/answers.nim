@@ -222,14 +222,16 @@ type
   Job = enum Sweep, WalkFrom, Reach, Still
   Task = tuple[job: Job, index, far: int] ## One search, or one walk from one distance.
 
+# Mutable and global: thread takes one argument, so workers read tasks and write answers
+# into slots allotted here before any thread starts.
 var
-  tasks: seq[Task]     ## Every task, longest first, set before any thread starts.
-  next: Atomic[int]    ## Next task not yet taken.
-  fars: seq[float]     ## Every distance couple may stand at.
-  swepts: array[SWEEPS.len, Ways]
-  walkeds: array[WALKS.len, seq[Walked]]
-  reached: array[REACHES.len, bool]
-  stoods: array[STILLS.len, Stand]
+  TASKS: seq[Task]     ## Every task, longest first, set before any thread starts.
+  TASK_NEXT: Atomic[int]    ## Next task not yet taken.
+  FARS: seq[float]     ## Every distance couple may stand at.
+  SWEPTS: array[SWEEPS.len, Ways]
+  WALKEDS: array[WALKS.len, seq[Walked]]
+  REACHED: array[REACHES.len, bool]
+  STOODS: array[STILLS.len, Stand]
 
 proc working(id: int) {.thread.} =
   ## Take tasks until none is left, and put each answer where it belongs.
@@ -239,54 +241,54 @@ proc working(id: int) {.thread.} =
   ##     allotted before any thread starts.
   {.cast(gcsafe).}:
     while true:
-      let i = next.fetchAdd(1)
-      if i >= tasks.len: return
-      let t = tasks[i]
+      let i = TASK_NEXT.fetchAdd(1)
+      if i >= TASKS.len: return
+      let t = TASKS[i]
       case t.job
       of Sweep:
         let q = SWEEPS[t.index]
         let sw = swept(HUMAN, q.band, q.links, most = q.most)
-        swepts[t.index] = Ways(neg: wayOf(sw.neg), pos: wayOf(sw.pos))
+        SWEPTS[t.index] = Ways(neg: wayOf(sw.neg), pos: wayOf(sw.pos))
       of WalkFrom:
         let q = WALKS[t.index]
-        let w = walked(HUMAN, q.band, q.links, Body.Two, fars[t.far], q.most, q.step,
+        let w = walked(HUMAN, q.band, q.links, Body.Two, FARS[t.far], q.most, q.step,
                        false, Body.Two)
-        walkeds[t.index][t.far] = Walked(
-          apart: fars[t.far],
+        WALKEDS[t.index][t.far] = Walked(
+          apart: FARS[t.far],
           holds: w.restHolds,
           stopped: w.stopped,
           at: w.at,
         )
       of Reach:
         let q = REACHES[t.index]
-        reached[t.index] = reaches(HUMAN, q.band, q.links, q.turns, q.away)
+        REACHED[t.index] = reaches(HUMAN, q.band, q.links, q.turns, q.away)
       of Still:
         let q = STILLS[t.index]
         let got = standing(HUMAN, Band.Crown, q.links, q.turns, q.away, Body.Two, q.either)
-        stoods[t.index] = Stand(holds: got.holds, apart: got.apart, turns: got.turns)
+        STOODS[t.index] = Stand(holds: got.holds, apart: got.apart, turns: got.turns)
 
 proc answer*(): Answers =
   ## Answer every question, on every core at once.
   ##   Searches are taken first and single walks last, so walks fill cores that
   ##     searches leave idle at end.  `reaches` of hold no distance carries walks
   ##     every distance, so it is taken first of all.
-  for far in stands(HUMAN): fars.add far
-  for i in 0 ..< REACHES.len: tasks.add (Reach, i, 0)
-  for i in 0 ..< SWEEPS.len: tasks.add (Sweep, i, 0)
-  for i in 0 ..< STILLS.len: tasks.add (Still, i, 0)
+  for far in stands(HUMAN): FARS.add far
+  for i in 0 ..< REACHES.len: TASKS.add (Reach, i, 0)
+  for i in 0 ..< SWEEPS.len: TASKS.add (Sweep, i, 0)
+  for i in 0 ..< STILLS.len: TASKS.add (Still, i, 0)
   for i in 0 ..< WALKS.len:
-    walkeds[i] = newSeq[Walked](fars.len)
-    for k in 0 ..< fars.len: tasks.add (WalkFrom, i, k)
-  next.store(0)
+    WALKEDS[i] = newSeq[Walked](FARS.len)
+    for k in 0 ..< FARS.len: TASKS.add (WalkFrom, i, k)
+  TASK_NEXT.store(0)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[int]](cores)
   for w in 0 ..< cores: createThread(workers[w], working, w)
   joinThreads(workers)
   result.stamp = stamp()
-  for i, q in SWEEPS: result.sweeps[q.key] = swepts[i]
-  for i, q in WALKS: result.walks[q.key] = walkeds[i]
-  for i, q in REACHES: result.reaches[q.key] = reached[i]
-  for i, q in STILLS: result.stills[q.key] = stoods[i]
+  for i, q in SWEEPS: result.sweeps[q.key] = SWEPTS[i]
+  for i, q in WALKS: result.walks[q.key] = WALKEDS[i]
+  for i, q in REACHES: result.reaches[q.key] = REACHED[i]
+  for i, q in STILLS: result.stills[q.key] = STOODS[i]
 
 
 when isMainModule:
