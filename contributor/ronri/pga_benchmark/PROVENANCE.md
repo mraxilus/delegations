@@ -81,7 +81,7 @@ and the form here is `f = gw² - v·v - g·m`, which the law suite confirms agai
 
 Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library,
 and the same reader counts it. Object construction goes through the `zero3` and `read3`
-templates, rather than `Vec3()` defaults and whole-object field copies. On the pinned commit
+templates, rather than `Vector3()` defaults and whole-object field copies. On the pinned commit
 the former costs about 4 ns and the latter about 20 ns, through the `=dup` hook. That hook
 would have hidden the cost of the library. Unitize forms take one reciprocal and multiply, as
 Terathon does, where the library divides each component. The divide column shows both.
@@ -475,6 +475,14 @@ back cell for cell at `cga3d`, `rga4d`, `cga4d` and `cga5d`, 136 tables in all. 
 compound products `∩ ∪ ⊞ ⊙ ⊡` are then one generated table each. The draft is in the hands of
 the Architect, and no pin holds it.
 
+The draft also derives all four dual products from the transwedge, whose dual is free of the
+wedge orientation. The antiwedge outside gives `∨★` with the bulk dual and `∨☆` with the
+weight dual, and the wedge outside gives `∧☆` and `∧★`. Each table equals its map form cell
+for cell at five algebras, `rga3d` to `cga5d`, and no emitted count changes. The left
+chirality is redundant: at the same algebras it gives the same dot, geometric and dual
+products as the right. The two added families cost 6D compile time, 6.91 s against 6.17 s
+for `bd6b23c`, ×1.12 over five alternating rounds. The dropped left chirality gives ×0.85.
+
 The pristine bench of `bd6b23c` and the bench of the draft ran alternately, nine times each,
 on this container on 2026-09-28. The library suites pass, 33 at rga4d and 28 at cga5d, and
 this project's suites pass, 105 and 118. The 6D front end builds in 6.37 s against 6.11 s,
@@ -599,7 +607,7 @@ these measurements.
   tables, or a runtime grade mask. The first keeps every body derived, and the second keeps
   one body for each operator.
 - The reference is not yet optimal on the Nim side. `rotate` and `transform` still zero-fill
-  a `Vec3` result, and pay a branch for each helper call under the default flags. To write
+  a `Vector3` result, and pay a branch for each helper call under the default flags. To write
   their components directly would lower the reference figures further.
 - Whether the 2D references (rga3d, cga4d) are worth a derivation. Their gaps carry library
   counts and absolute verdicts only.
