@@ -70,6 +70,7 @@ func cameraAround*(pivot: Position; distance: float; out_to: Direction): Camera 
 
 
 proc randPosition*(): Position =
+  ## Draw position from cube reaching `EXTENT_SAMPLE` out from origin along every axis.
   Position(
     x: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),
     y: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),

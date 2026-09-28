@@ -835,19 +835,19 @@ proc nimInkChoosableSlots(): seq[int] {.exportc.} =
 
 
 proc nimInkName(index: cint): cstring {.exportc.} = lut_name_by_ink[Ink(index)]
+  ## Report Nth palette entry's name.
 
 
 proc nimInkCount(): cint {.exportc.} = cint(ord(Ink.high) + 1)
   ## Report how many inks palette holds, structural and assignable alike.
   ##   Glue reads every ink's colour once at start-up, indexed by ordinal.
-  ## Report Nth palette entry's name.
 
 proc nimInkColor(index: cint): seq[float32] {.exportc.} = toRgbSeq(Ink(index).colour)
+  ## Report Nth palette entry's colour, as `[r, g, b]` triple.
 
 
 proc nimInkBackdrop(): cint {.exportc.} = cint(ord(Ink.Backdrop))
   ## Report backdrop's palette slot, for label halo drawn in scene's own ground colour.
-  ## Report Nth palette entry's colour, as `[r, g, b]` triple.
 
 proc nimBackdropColor(): seq[float32] {.exportc.} = toRgbSeq(Ink.Backdrop.colour)
   ## Report canvas backdrop's colour, as `[r, g, b]` triple.
