@@ -35,7 +35,8 @@ import ./[findings, projects]
 const
   NIMBLE_EXT* = ".nimble"   ## Extension of package description file.
   LOCK_FILE* = "atlas.lock" ## Atlas lock file name.
-  DEPS_DIRECTORY* = "deps"        ## Directory Atlas restores checkouts into, never committed.
+  DEPS_DIRECTORY* = "deps"        ## Directory Atlas restores into when `atlas.config` names none.
+  ATLAS_CONFIG* = "atlas.config"  ## Where project names its checkout directory, under `deps`.
   NODE_MANIFEST* = "package.json"    ## Node manifest, naming tools project type-checks with.
   NODE_LOCK* = "package-lock.json"   ## Node lock, pinning every one of those to exact version.
   UNREADABLE = "Lock unreadable as JSON; got `"
@@ -76,13 +77,22 @@ func requirements*(nimble: string): seq[string] =
     if requirement.packageName.toLowerAscii != "nim": result.add requirement
 
 
-proc lockDirectories*(lock: string): seq[string] =
-  ## Read checkout directories lock names, `$deps` resolved to project-relative `deps`.
+proc lockDirectories*(lock: string, deps_directory = DEPS_DIRECTORY): seq[string] =
+  ## Read checkout directories lock names, `$deps` resolved to project-relative directory.
   let node = parseJson(lock)
   if "items" notin node: return
   for _, item in node["items"]:
     if "dir" notin item: continue
-    result.add item["dir"].getStr.replace("$deps", DEPS_DIRECTORY)
+    result.add item["dir"].getStr.replace("$deps", deps_directory)
+
+
+proc depsDirectoryOf*(config: string): string =
+  ## Read directory `atlas.config` restores into, i.e. its `deps` key; default when absent.
+  ##   Project names it in full (`dependencies`, Article V.9) or keeps Atlas default `deps`.
+  let node = parseJson(config)
+  if "deps" notin node: return DEPS_DIRECTORY
+  let named = node["deps"].getStr
+  if named.len == 0: DEPS_DIRECTORY else: named
 
 
 proc lockNimble*(lock: string): Option[string] =
@@ -135,10 +145,14 @@ proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding
 
 proc checkCheckouts*(root, directory: string): seq[Finding] =
   ## Report checkout lock names that is absent on disk, and lock that will not parse.
-  let lock_path = directory & "/" & LOCK_FILE
+  let
+    lock_path = directory & "/" & LOCK_FILE
+    config_path = root / directory / ATLAS_CONFIG
+    deps_directory =
+      if fileExists(config_path): readFile(config_path).depsDirectoryOf else: DEPS_DIRECTORY
   var directories: seq[string]
   try:
-    directories = readFile(root / lock_path).lockDirectories
+    directories = readFile(root / lock_path).lockDirectories(deps_directory)
   except CatchableError as e:
     return @[finding(lock_path, 0, UNREADABLE & e.msg & "`.")]
   for checkout in directories:
