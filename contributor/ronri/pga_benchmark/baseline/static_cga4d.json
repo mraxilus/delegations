@@ -3168,15 +3168,11 @@
       "reference": "",
       "cite": "wiki:Center",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "Center",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256
@@ -3191,15 +3187,11 @@
       "reference": "",
       "cite": "wiki:Container",
       "bound": {
-        "shape": "ConstantProduct + Permutation + Wedge",
-        "is_composed": true,
-        "steps": [
-          "ConstantProduct",
-          "Permutation",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "Container",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256

@@ -2536,15 +2536,11 @@
       "reference": "",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 27,
-        "adds": 19,
+        "shape": "Support",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 18,
+        "adds": 10,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 128
@@ -2559,15 +2555,11 @@
       "reference": "",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 27,
-        "adds": 19,
+        "shape": "SupportAnti",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 18,
+        "adds": 10,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 128

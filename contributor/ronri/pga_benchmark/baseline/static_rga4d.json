@@ -6134,15 +6134,11 @@
       "reference": "",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "Support",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256
@@ -6157,15 +6153,11 @@
       "reference": "",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "SupportAnti",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256
@@ -6600,15 +6592,11 @@
       "reference": "support(Line)",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "Support",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256
@@ -6623,15 +6611,11 @@
       "reference": "support(Plane)",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "Support",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256
@@ -6646,15 +6630,11 @@
       "reference": "supportAnti(Point)",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "SupportAnti",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256
@@ -6669,15 +6649,11 @@
       "reference": "supportAnti(Line)",
       "cite": "wiki:Support",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 81,
-        "adds": 65,
+        "shape": "SupportAnti",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256

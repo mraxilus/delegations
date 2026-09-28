@@ -6931,15 +6931,11 @@
       "reference": "",
       "cite": "wiki:Center",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Center",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -6954,15 +6950,11 @@
       "reference": "",
       "cite": "wiki:Container",
       "bound": {
-        "shape": "ConstantProduct + Permutation + Wedge",
-        "is_composed": true,
-        "steps": [
-          "ConstantProduct",
-          "Permutation",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Container",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -7631,15 +7623,11 @@
       "reference": "center(RoundPoint)",
       "cite": "wiki:Center",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Center",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -7654,15 +7642,11 @@
       "reference": "container(RoundPoint)",
       "cite": "wiki:Container",
       "bound": {
-        "shape": "ConstantProduct + Permutation + Wedge",
-        "is_composed": true,
-        "steps": [
-          "ConstantProduct",
-          "Permutation",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Container",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -7951,15 +7935,11 @@
       "reference": "center(Dipole)",
       "cite": "wiki:Center",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Center",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -7974,15 +7954,11 @@
       "reference": "container(Dipole)",
       "cite": "wiki:Container",
       "bound": {
-        "shape": "ConstantProduct + Permutation + Wedge",
-        "is_composed": true,
-        "steps": [
-          "ConstantProduct",
-          "Permutation",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Container",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -8271,15 +8247,11 @@
       "reference": "center(Circle)",
       "cite": "wiki:Center",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Center",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -8294,15 +8266,11 @@
       "reference": "container(Circle)",
       "cite": "wiki:Container",
       "bound": {
-        "shape": "ConstantProduct + Permutation + Wedge",
-        "is_composed": true,
-        "steps": [
-          "ConstantProduct",
-          "Permutation",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Container",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -8591,15 +8559,11 @@
       "reference": "center(Sphere)",
       "cite": "wiki:Center",
       "bound": {
-        "shape": "Permutation + ConstantProduct + Wedge",
-        "is_composed": true,
-        "steps": [
-          "Permutation",
-          "ConstantProduct",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Center",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -8614,15 +8578,11 @@
       "reference": "container(Sphere)",
       "cite": "wiki:Container",
       "bound": {
-        "shape": "ConstantProduct + Permutation + Wedge",
-        "is_composed": true,
-        "steps": [
-          "ConstantProduct",
-          "Permutation",
-          "Wedge"
-        ],
-        "multiplies": 243,
-        "adds": 211,
+        "shape": "Container",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 162,
+        "adds": 130,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512

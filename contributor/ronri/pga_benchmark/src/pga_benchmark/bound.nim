@@ -22,6 +22,8 @@
 
 {.experimental: "strictFuncs".}
 
+import std/options
+
 
 type
   Blade* = uint32
@@ -64,6 +66,17 @@ type
       ## Wedge against bulk dual of second operand.
     ExpandWeight
       ## Wedge against weight dual of second operand.
+    Support
+      ## Antiwedge of operand with wedge of origin against its weight dual, i.e.
+      ##   `m ∨ (𝐞ₙ ∧ m☆)`, counted from one folded table rather than as sum of steps.
+    SupportAnti
+      ## Wedge of operand with antiwedge of horizon against its bulk dual, i.e.
+      ##   `m ∧ (𝐞̄ₙ ∨ m★)`, counted from one folded table.
+    Center
+      ## Antiwedge of cocarrier with operand, i.e. `(m☆ ∧ 𝐞∞) ∨ m`, counted from one table.
+    Container
+      ## Wedge of operand with weight dual of its carrier, i.e. `m ∧ (m ∧ 𝐞∞)☆`, counted
+      ##   from one folded table.
   LowerBound* = object
     ## Define multivector lower bound of one operation, i.e. what algebra demands.
     is_derived*: bool
@@ -129,6 +142,86 @@ func popcount(b: Blade): int =
   while v != 0:
     result += int(v and 1)
     v = v shr 1
+
+
+func fullBlade(m: Metric): Blade =
+  ## Read blade carrying every factor, i.e. antiscalar.
+  Blade((1 shl m.dimensions) - 1)
+
+
+func origin(m: Metric): Blade =
+  ## Read blade of origin vector: last in rigid algebra, second last in conformal.
+  Blade(1) shl (if m.is_conformal: m.dimensions - 2 else: m.dimensions - 1)
+
+
+func infinity(m: Metric): Blade =
+  ## Read blade of vector at infinity, last in conformal algebra.
+  Blade(1) shl (m.dimensions - 1)
+
+
+func dualBlade(m: Metric; b: Blade; as_weight: bool): Option[Blade] =
+  ## Read blade dual of `b` lands on, sign aside, i.e. complement of its metric image.
+  ##   Rigid metric keeps blade without null vector for bulk and blade with it for weight,
+  ##   and drops other. Conformal metric swaps origin and infinity and drops nothing.
+  if m.is_conformal:
+    let (o, i) = (m.origin, m.infinity)
+    var swapped = b and not (o or i)
+    if (b and o) != 0: swapped = swapped or i
+    if (b and i) != 0: swapped = swapped or o
+    return some(m.fullBlade xor swapped)
+  if m.hasImage(b) == as_weight: return none(Blade)
+  some(m.fullBlade xor b)
+
+
+func wedges(a, b: Blade): bool =
+  ## Read whether wedge of two blades survives, i.e. no shared factor.
+  (a and b) == 0
+
+
+func wedgesAnti(m: Metric; a, b: Blade): bool =
+  ## Read whether antiwedge of two blades survives, i.e. factors cover every dimension.
+  (a or b) == m.fullBlade
+
+
+func imageOf(m: Metric; shape: Shape; s: Blade): Option[Blade] =
+  ## Read blade maps of compound definition send `s` to, or nothing where product dies.
+  case shape
+  of Shape.Support: # 𝐞ₙ ∧ s☆
+    let t = m.dualBlade(s, as_weight = true)
+    if t.isNone or not wedges(m.origin, t.get): return none(Blade)
+    some(m.origin or t.get)
+  of Shape.SupportAnti: # 𝐞̄ₙ ∨ s★
+    let t = m.dualBlade(s, as_weight = false)
+    let horizon = m.fullBlade xor m.origin
+    if t.isNone or not m.wedgesAnti(horizon, t.get): return none(Blade)
+    some(horizon and t.get)
+  of Shape.Center: # s☆ ∧ 𝐞∞
+    let t = m.dualBlade(s, as_weight = true)
+    if t.isNone or not wedges(t.get, m.infinity): return none(Blade)
+    some(t.get or m.infinity)
+  of Shape.Container: # (s ∧ 𝐞∞)☆
+    if not wedges(s, m.infinity): return none(Blade)
+    m.dualBlade(s or m.infinity, as_weight = true)
+  else:
+    none(Blade)
+
+
+func compoundTerms*(m: Metric; shape: Shape): int =
+  ## Count terms compound product spends once its maps fold into one table.
+  ##   Map step (dual, constant product) is signed read, so table of product against mapped
+  ##   operand holds one term for each pair of blades whose product survives, and no more.
+  ##   Pairs give distinct products of two components, so count holds under same assumption
+  ##   as primitives: no subexpression shared between slots.
+  for raw in 0 ..< m.slots:
+    let image = m.imageOf(shape, Blade(raw))
+    if image.isNone: continue
+    for other in 0 ..< m.slots:
+      let a = Blade(other)
+      let survives = case shape
+        of Shape.Support, Shape.Center: m.wedgesAnti(a, image.get)
+        of Shape.SupportAnti, Shape.Container: wedges(a, image.get)
+        else: false
+      if survives: inc result
 
 
 func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
@@ -200,6 +293,10 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
       let as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
       result.multiplies = m.dualProductTerms(as_weight, as_expand)
       result.adds = max(0, result.multiplies - m.slots)
+  of Shape.Support, Shape.SupportAnti, Shape.Center, Shape.Container:
+    # Maps of definition fold into one table read against operand twice; count its cells.
+    result.multiplies = m.compoundTerms(shape)
+    result.adds = max(0, result.multiplies - m.slots)
 
 
 func lowerBoundOfChain*(parts: openArray[Shape]; m: Metric; arity: range[1 .. 2]): LowerBound =

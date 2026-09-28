@@ -226,8 +226,8 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
-| `∩` | Permutation + ConstantProduct + Wedge | 81 | 0 | 0 | 256 | 162/1280 |
-| `∪` | Permutation + ConstantProduct + Wedge | 81 | 0 | 0 | 256 | 162/1792 |
+| `∩` | Support | 54 | 0 | 0 | 256 | 162/1280 |
+| `∪` | SupportAnti | 54 | 0 | 0 | 256 | 162/1792 |
 | `((n ⟇ m) ⟇ (~∘ n))` | Permutation + 2 Geometric | 384 | 0 | 0 | 384 | – |
 
 ## cga5d
@@ -415,8 +415,8 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `|□` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
 | `⊟` | ConstantProduct | 0 | 0 | 0 | 512 | 0/512 |
 | `⊞` | ConstantProduct | 0 | 0 | 0 | 512 | 243/2048 |
-| `⊙` | Permutation + ConstantProduct + Wedge | 243 | 0 | 0 | 512 | 486/3584 |
-| `⊡` | ConstantProduct + Permutation + Wedge | 243 | 0 | 0 | 512 | 243/2560 |
+| `⊙` | Center | 162 | 0 | 0 | 512 | 486/3584 |
+| `⊡` | Container | 162 | 0 | 0 | 512 | 243/2560 |
 | `⊛` | 2 Permutation + 2 ConstantProduct + 2 Wedge + Scale | 518 | 0 | 0 | 512 | 518/30720 |
 
 ## rga3d
@@ -511,8 +511,8 @@ Gaps: 40. Over 17, met 23, unmeasured 0.
 | `⊖` | ConstantProduct | 0 | 0 | 0 | 128 | 0/128 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
-| `∩` | Permutation + ConstantProduct + Wedge | 27 | 0 | 0 | 128 | 54/640 |
-| `∪` | Permutation + ConstantProduct + Wedge | 27 | 0 | 0 | 128 | 54/896 |
+| `∩` | Support | 18 | 0 | 0 | 128 | 54/640 |
+| `∪` | SupportAnti | 18 | 0 | 0 | 128 | 54/896 |
 
 ## cga4d
 
@@ -615,6 +615,6 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `|□` | Norm | 16 | 0 | 1 | 136 | 16/640 |
 | `⊟` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
 | `⊞` | ConstantProduct | 0 | 0 | 0 | 256 | 81/1024 |
-| `⊙` | Permutation + ConstantProduct + Wedge | 81 | 0 | 0 | 256 | 162/1792 |
-| `⊡` | ConstantProduct + Permutation + Wedge | 81 | 0 | 0 | 256 | 81/1280 |
+| `⊙` | Center | 54 | 0 | 0 | 256 | 162/1792 |
+| `⊡` | Container | 54 | 0 | 0 | 256 | 81/1280 |
 | `⊛` | 2 Permutation + 2 ConstantProduct + 2 Wedge + Scale | 178 | 0 | 0 | 256 | 178/9216 |

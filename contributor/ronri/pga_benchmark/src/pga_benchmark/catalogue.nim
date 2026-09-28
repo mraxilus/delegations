@@ -486,6 +486,8 @@ const SHAPES* = [
   ("^∙", Shape.Unitize), ("^∘", Shape.Unitize), ("^", Shape.Unitize),
   ("⊖", Shape.ConstantProduct),
   ("⊟", Shape.ConstantProduct), ("⊞", Shape.ConstantProduct),
+  ("∩", Shape.Support), ("∪", Shape.SupportAnti),
+  ("⊙", Shape.Center), ("⊡", Shape.Container),
   ("/", Shape.Permutation), ("\\", Shape.Permutation),
   ("~", Shape.Permutation), ("~∘", Shape.Permutation),
   ("★", Shape.Permutation), ("☆", Shape.Permutation),
@@ -501,12 +503,8 @@ const SHAPES* = [
 const CHAINS* = [
   # Norm reads two slots, each one root over bilinear form, i.e. `‖m‖∙` then `‖m‖∘`.
   ("(| m)", @[Shape.Norm, Shape.Norm]),
-  # Support wedges against constant, then takes full product, i.e. `m ∨ (𝐞ₙ ∧ m☆)`.
-  ("(∩ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Wedge]),
-  ("(∪ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Wedge]),
-  # Center, container and partner each wedge against constant, then take full product.
-  ("(⊙ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Wedge]),
-  ("(⊡ m)", @[Shape.ConstantProduct, Shape.Permutation, Shape.Wedge]),
+  # Support, center and container fold their maps into one table (`Shape.Support` and
+  #   siblings), so only partner, cubic in its operand, stays chain.
   ("(⊛ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Permutation, Shape.Wedge,
               Shape.ConstantProduct, Shape.Wedge, Shape.Scale]),
   # Projection takes dual product, then full product, i.e. `n ∨ (m ∧☆ n)`.
