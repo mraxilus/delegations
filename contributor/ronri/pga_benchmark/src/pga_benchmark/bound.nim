@@ -290,10 +290,12 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
     # Constant carries one unit component, so every surviving term is signed read.
     discard
   of Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk, Shape.ExpandWeight:
-    # Bulk and weight split on degenerate vector, which only rigid metric carries. Conformal
-    #   metric is non-singular, so this rule says nothing there and bound stays absent.
+    # Rigid metric drops blade carrying null vector under one dual and keeps only it under
+    #   other, so pairs thin out by grade. Conformal metric is non-singular, so each dual is
+    #   signed permutation of every blade and product keeps every cell of wedge.
     if m.is_conformal:
-      result = LowerBound()
+      result.multiplies = m.wedgeTerms
+      result.adds = m.wedgeTerms - m.slots
     else:
       let as_weight = shape in {Shape.ContractWeight, Shape.ExpandWeight}
       let as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}

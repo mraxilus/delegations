@@ -6242,7 +6242,17 @@
       "expression": "(m ∨★ n)",
       "library": "∨★(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.119"
+      "cite": "2.119",
+      "bound": {
+        "shape": "ContractBulk",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "contract_weight": {
       "symbol": "∨☆",
@@ -6251,7 +6261,17 @@
       "expression": "(m ∨☆ n)",
       "library": "∨☆(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.120"
+      "cite": "2.120",
+      "bound": {
+        "shape": "ContractWeight",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "expand_bulk": {
       "symbol": "∧★",
@@ -6260,7 +6280,17 @@
       "expression": "(m ∧★ n)",
       "library": "∧★(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Expansions"
+      "cite": "wiki:Expansions",
+      "bound": {
+        "shape": "ExpandBulk",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "expand_weight": {
       "symbol": "∧☆",
@@ -6269,7 +6299,17 @@
       "expression": "(m ∧☆ n)",
       "library": "∧☆(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Expansions"
+      "cite": "wiki:Expansions",
+      "bound": {
+        "shape": "ExpandWeight",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "add": {
       "symbol": "+",
@@ -6324,8 +6364,8 @@
           "ExpandBulk",
           "Wedge"
         ],
-        "multiplies": 243,
-        "adds": 211,
+        "multiplies": 486,
+        "adds": 422,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 768
@@ -6346,8 +6386,8 @@
           "ContractBulk",
           "Wedge"
         ],
-        "multiplies": 243,
-        "adds": 211,
+        "multiplies": 486,
+        "adds": 422,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 768
@@ -6368,8 +6408,8 @@
           "ExpandWeight",
           "Wedge"
         ],
-        "multiplies": 243,
-        "adds": 211,
+        "multiplies": 486,
+        "adds": 422,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 768
@@ -6390,8 +6430,8 @@
           "ContractWeight",
           "Wedge"
         ],
-        "multiplies": 243,
-        "adds": 211,
+        "multiplies": 486,
+        "adds": 422,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 768

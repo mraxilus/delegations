@@ -382,12 +382,16 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `⟇` | Geometric | 1024 | 0 | 0 | 768 | 1024/768 |
 | `∙` | ScalarForm | 32 | 0 | 0 | 520 | 32/768 |
 | `∘` | ScalarForm | 32 | 0 | 0 | 520 | 32/768 |
+| `∨★` | ContractBulk | 243 | 0 | 0 | 768 | 243/768 |
+| `∨☆` | ContractWeight | 243 | 0 | 0 | 768 | 243/768 |
+| `∧★` | ExpandBulk | 243 | 0 | 0 | 768 | 243/768 |
+| `∧☆` | ExpandWeight | 243 | 0 | 0 | 768 | 243/768 |
 | `+` | Componentwise | 0 | 0 | 0 | 768 | 0/1024 |
 | `-` | Componentwise | 0 | 0 | 0 | 768 | 0/1024 |
-| `projectCentral` | ExpandBulk + Wedge | 243 | 0 | 0 | 768 | 486/2304 |
-| `projectCentralAnti` | ContractBulk + Wedge | 243 | 0 | 0 | 768 | 486/2304 |
-| `projectOrthogonal` | ExpandWeight + Wedge | 243 | 0 | 0 | 768 | 486/2304 |
-| `projectOrthogonalAnti` | ContractWeight + Wedge | 243 | 0 | 0 | 768 | 486/2304 |
+| `projectCentral` | ExpandBulk + Wedge | 486 | 0 | 0 | 768 | 486/2304 |
+| `projectCentralAnti` | ContractBulk + Wedge | 486 | 0 | 0 | 768 | 486/2304 |
+| `projectOrthogonal` | ExpandWeight + Wedge | 486 | 0 | 0 | 768 | 486/2304 |
+| `projectOrthogonalAnti` | ContractWeight + Wedge | 486 | 0 | 0 | 768 | 486/2304 |
 | `∧` | Scale | 32 | 0 | 0 | 520 | 32/520 |
 | `∙` | Permutation | 0 | 0 | 0 | 512 | 0/512 |
 | `∘` | Permutation | 0 | 0 | 0 | 512 | 0/512 |
@@ -582,12 +586,16 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `⟇` | Geometric | 256 | 0 | 0 | 384 | 256/384 |
 | `∙` | ScalarForm | 16 | 0 | 0 | 264 | 16/384 |
 | `∘` | ScalarForm | 16 | 0 | 0 | 264 | 16/384 |
+| `∨★` | ContractBulk | 81 | 0 | 0 | 384 | 81/384 |
+| `∨☆` | ContractWeight | 81 | 0 | 0 | 384 | 81/384 |
+| `∧★` | ExpandBulk | 81 | 0 | 0 | 384 | 81/384 |
+| `∧☆` | ExpandWeight | 81 | 0 | 0 | 384 | 81/384 |
 | `+` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
 | `-` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
-| `projectCentral` | ExpandBulk + Wedge | 81 | 0 | 0 | 384 | 162/1152 |
-| `projectCentralAnti` | ContractBulk + Wedge | 81 | 0 | 0 | 384 | 162/1152 |
-| `projectOrthogonal` | ExpandWeight + Wedge | 81 | 0 | 0 | 384 | 162/1152 |
-| `projectOrthogonalAnti` | ContractWeight + Wedge | 81 | 0 | 0 | 384 | 162/1152 |
+| `projectCentral` | ExpandBulk + Wedge | 162 | 0 | 0 | 384 | 162/1152 |
+| `projectCentralAnti` | ContractBulk + Wedge | 162 | 0 | 0 | 384 | 162/1152 |
+| `projectOrthogonal` | ExpandWeight + Wedge | 162 | 0 | 0 | 384 | 162/1152 |
+| `projectOrthogonalAnti` | ContractWeight + Wedge | 162 | 0 | 0 | 384 | 162/1152 |
 | `∧` | Scale | 16 | 0 | 0 | 264 | 16/264 |
 | `∙` | Permutation | 0 | 0 | 0 | 256 | 0/256 |
 | `∘` | Permutation | 0 | 0 | 0 | 256 | 0/256 |
