@@ -2064,7 +2064,7 @@ proc runStoryboard(
     var are_operative: array[OBJECTS_MAX, bool]
     are_operative[step.index_first] = true
     are_operative[count_seeds + index] = true
-    if lut_arity_by_operation[step.operation] == Arity.Two:
+    if LUT_ARITY_BY_OPERATION[step.operation] == Arity.Two:
       are_operative[step.index_second] = true
     for handle, _ in scene.pairs:
       are_dimmed[handle] =
