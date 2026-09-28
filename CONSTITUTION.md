@@ -5,7 +5,9 @@ rule below is a decision already made. Apply it. Where a task forces you to brea
 and write down the cost.
 
 The examples are Nim, taken from a reference library for geometric algebra. Transfer the
-decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim.
+decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim. `EXAMPLES.md`
+holds longer worked examples, named by the rule that each one shows. Read one where a rule
+alone does not settle a case.
 
 ## Precedence
 
@@ -13,8 +15,12 @@ decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim.
 2. The public contracts of a codebase that already exists. Apply this document in full to new
    code, and to code you materially change. Never churn code that you were not asked to
    touch.
-3. Between articles: IV (safety) over VII (cost) over III (notation) over I (exposition) over
-   X (form).
+3. Between articles, correctness goes over performance, then elegance, then exposition. The
+   first article named wins within each tier:
+   - correctness: IV (safety), VIII (honesty), IX (tests);
+   - performance: VII (cost);
+   - elegance: II (derivation), III (notation), V (names), X (form);
+   - exposition: I (exposition), VI (documentation), XI (record).
 4. Where this document is silent, choose what a careful reader of the finished file would
    prefer. Record the choice with its cost.
 
@@ -44,8 +50,8 @@ use the mechanism is cargo cult.
 6. A library of several modules presents one umbrella module, which re-exports its surface.
    Export only what a caller needs, and reach an internal of a sibling deliberately, never by
    a wider export. The internal says so, and names the sibling that reaches it. **Façade
-   gate.** Where the surface is symbolic or generated, the umbrella
-   is a façade of documented one-line forwarders. It is the API reference that is also
+   gate.** Where the surface is symbolic or generated, the umbrella is a façade of documented
+   one-line forwarders. It is the API reference that is also
    source, and the source of truth for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
    an old figure and a fixed bug go to the log (XI) and to the provenance file (VIII.6). A
@@ -55,13 +61,12 @@ use the mechanism is cargo cult.
 ```nim
 ## Construct specific PGA's `Basis` enum and related types/procedures.
 ##
-##   |-------|------------------|-----|
-##   | Basis | Base Space       |Coef.|
-##   |-------|------------------|-----|
-##   | E1    | point position x | pˣ  |
+## Example resulting interpretation of 4D RGA (3D Euclidean):
 ##
-##   Cost of deviation from lexicographical ordering:
-##     Exterior product must round-trip bases through lexicographical order.
+##   |---------|-------------------|-----|------------------------|-----|
+##   | Basis   | Base Space        |Coef.| Anti Space             |Coef.|
+##   |---------|-------------------|-----|------------------------|-----|
+##   | E1      | point position  x | pˣ  | anti-plane normal    x | gˣ  |
 
 ## Order of compile-time type bootstrapping:
 ##   [Algebra, BasisDigits, BasisFlags] -> Basis
@@ -119,12 +124,6 @@ const DIMENSIONS* {.define: "pga.dimensions".} = 4  # whole-module static config
 
 # primitive laws -> Cayley table (plain compile-time funcs) -> emitted straight-line kernel
 defineOperator(symbols = "∧", docs = "...", cayley = CAYLEYS_WEDGE.base)
-
-proc restoreFrom*(scene: var Scene; snapshot: Scene) =
-  ## Replace scene with snapshot under revision newer than any issued.
-  let revision_live = scene.count_edits
-  scene = snapshot
-  scene.count_edits = max(revision_live, snapshot.count_edits) + 1
 ```
 
 ## Article III: Notation is the surface
@@ -174,10 +173,10 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    case still carries a meaningful value, return that value beside a named flag. A message
    ends by echoing the value: ``"…; got `{value}`."`` An expensive check runs under the
    assertions flag.
-5. Decide the boundary policy and the numeric policy in writing: zero, empty, NaN, overflow,
-   and the normalisation of a zero norm. To return the input unchanged on degenerate input
-   wears the type of success. Where you choose that, the doc says so and a caller can detect
-   it. Compare computed floats only through a relative tolerance with an absolute floor, and
+5. Decide the policy for each special case, and express it in the return type: zero, empty,
+   NaN, overflow, and a zero norm. Where the result stays valid, return it beside a named flag,
+   and otherwise return a typed Option. Where no invalid value is possible, return the plain
+   value. Compare computed floats only through a relative tolerance with an absolute floor, and
    poison exact equality on those types. Derive the tolerance from a build-configurable count
    of decimal places. Compare against zero at the scale of what you test, and exactly only
    where no scale is in hand.
@@ -199,7 +198,9 @@ func `==`*(m, n: Multivector): bool {.error:
 func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙ m".}
   ## Get center norm of multivector.
 
-# Up to 9D encodable, one digit per basis; past 6D, compile and run times grow too slow.
+# Validate configuration options are within library scope.
+#   Library allows up to 9D PGAs, however, after 6D, compile/run times are increasingly slow.
+#   9D limit is implementation restriction as bases are encoded as single decimal digits.
 static:
   doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
@@ -227,7 +228,7 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
    and `init…` a constructor of a value. `to<Target>` names a change of representation, and
    takes its subject first.
 4. A boolean is a proposition or a mode. Write `is_` for state, `as_` for interpretation,
-   `should_` for policy, and `found_` for a search outcome. `has_` and `can_` cover the rest.
+   `should_` for policy, `found_` for a search outcome, and `has_` for possession.
    A mode boolean passes as a named argument (`as_weight = true`). A predicate callable is
    `is…` in camel case (`isMixed`), the callable twin of `is_`.
 5. A lookup table is `lut_<value>_by_<key>`, so that it reads as the access it does:
@@ -279,28 +280,24 @@ CAYLEYS_WEDGE               # module constant
 6. Say why, and at what cost. Vagueness is not telegraphic.
 7. A doc that asserts a global property names what enforces it: a test, a pragma, or the
    generated output. Such a property is no allocation, no exceptions, a complexity, or "runs
-   once for each save". Where nothing enforces it, the doc says unverified.
-8. Prose outside comments is Simplified Technical English, which the ASD-STE100 specification
-   defines. Use the approved word, one meaning for each word, the active voice, and the
-   simple tenses. Write one instruction in one sentence, and keep it to 20 words; a
-   description may hold 25, and a paragraph 6 sentences. `GUIDE.md` gives the rules, and a
-   checker holds the three that a machine can read. The rule binds every Markdown file, issue,
-   pull request, GitHub comment, and message to the Architect. It does not bind a comment in
-   code, which keeps VI.5's telegraphic register, the same English with the articles removed.
+   once for each save". Where nothing enforces it, the doc names its register from VIII.1:
+   measured, expected or intended.
+8. Prose outside comments is Simplified Technical English, and `GUIDE.md` gives its rules. A
+   comment in code keeps the telegraphic register of VI.5 instead.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
   ## Normalize multivector so weight norm has unit antiscalar magnitude, i.e. 𝐦̂ = 𝐦 / ‖𝐦‖∘.
   ##   Shorthand for weight normalization, i.e. weight has magnitude of one.
-  ##   Projects higher-dimensional representation of object into Euclidean space.
+  ##   Projects higher-dimensional representations of objects into Euclidean space.
   ##     By scaling weight of 𝐦 to unit magnitude.
 
 func multiplyExterior(a, b: BasisSigned): ... =
-  ## Perform exterior product of two bases, reducing to standard basis form.
+  ## Perform exterior product of two bases, reducing to its standard basis form.
 
   # Degenerate in presence of duplicate vectors.
   ...
-  # Determine parity in parts.
+  # Determine parity in parts (equivalent to counting inversions and anti-commuting).
   ...
 ```
 
@@ -354,14 +351,12 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
 5. Honesty is about knowledge, and not about sloppiness. Leave no typo, no debug output, no
    trailing whitespace and no stale summary. Do not imitate the accidents of a reference
    snapshot.
-6. The provenance file (`PROVENANCE.md`) states who made this, from what, and how far it has
-   been checked. It then gives the current design by subsystem, with what was chosen, what
-   was rejected and what it costs. Each claim is marked verified or assumed, and each figure
-   carries its pair. It is never a diary, so prune it whenever it narrates.
+6. Every project keeps a provenance file (`PROVENANCE.md`), and `GUIDE.md` gives what it
+   holds. It is never a diary, so prune it whenever it narrates.
 
 ```nim
 ## Heap usage avoided completely so user can fully control memory management.
-##   (Is this actually true? Need to verify and fix.)
+##   NOTE: Partially true in current implementation, but should be at end state.
 
 # TODO: Represent multivector primitives using more compact data types.
 #   At cost of additional meta-programming, this affords:
@@ -457,9 +452,7 @@ suite "Chapter 2":
    Commit Mono wherever the renderer shapes text, because a glyph atlas that does no shaping
    needs none. The split is a preference of the Architect rather than a finding, so taste
    decides, and the record says so. Merge faces by codepoint range where none covers
-   everything, then render each codepoint against `.notdef` to verify the coverage. Use one
-   animation duration and one easing curve, named once and read across every boundary; a
-   hand-picked duration is a claim that needs a comment.
+   everything, then render each codepoint against `.notdef` to verify the coverage.
 
 ```nim
 defineOperator(
@@ -468,7 +461,7 @@ defineOperator(
   cayley = CAYLEYS_WEDGE.base,
 )
 
-let (a_flags, b_flags) = (a.toFlags, b.toFlags)
+let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
 if product.is_degenerate: continue
 ```
 
@@ -497,7 +490,4 @@ docs(pga): add operator documentation and conformal aliases
 
 ## Output contract
 
-Return the implementation first. Report only what is material: an assumption, a choice of
-representation or staging, or a trade-off that is not obvious. Report a question left open,
-and the verification you did, which is what ran and on which build. Write the answer in
-Simplified Technical English (VI.8).
+Return the implementation first. `GUIDE.md` gives what else to report, and in which English.

@@ -59,6 +59,7 @@ Every rule below serves it:
 | `LICENSE.md` | Prosperity Public License 3.0.0 | Architect |
 | `CONSTITUTION.md` | Language-independent coding constitution | Architect decides, curator writes |
 | `STYLE.md` | Nim expression guide | Architect decides, curator writes |
+| `EXAMPLES.md` | Worked examples both guides point into | Architect decides, curator writes |
 | `GLOSSARY.md` | The words of the repository itself | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
@@ -120,9 +121,9 @@ This section adds only what differs for a curator.
 
 ## Duties
 
-1. **Rules change.** `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md` form the charter,
-   which is stamped into the `PROVENANCE.md` of every project, in the `Rules` row. Change
-   one, and the audit fails on every project until you re-stamp.
+1. **Rules change.** `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md` form the
+   charter, which is stamped into the `PROVENANCE.md` of every project, in the `Rules` row.
+   Change one, and the audit fails on every project until you re-stamp.
 
    Do all of this in the same pull request. Read the diff, and re-audit every project
    against each changed rule. Apply what the rule now demands in the records, which duty 11

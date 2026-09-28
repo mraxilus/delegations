@@ -1,9 +1,9 @@
 # Guide
 
-How-to for every delegate, curator or contributor. Nothing here binds on its own. What binds
-is in `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md`, which the stamp covers, and in
-`CURATOR.md`. A section here binds where one of those documents points at it. This file is
-stamped into nothing, so a change of wording here re-audits no project. That is why it is a
+How-to for every delegate, curator or contributor. Nothing here binds on its own. What binds is
+in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, which the stamp covers,
+and in `CURATOR.md`. A section here binds where one of those documents points at it. This file
+is stamped into nothing, so a change of wording here re-audits no project. That is why it is a
 file of its own.
 
 ## Simplified Technical English
@@ -149,6 +149,8 @@ Every later delegate:
    own.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
    and prune what the change replaced.
+5. Before you merge several states or paths into one, list every behaviour that the old design
+   carried for each state (`CONSTITUTION.md`, IV.7). Read the old code to do it.
 
 ## Glossary process
 
@@ -203,7 +205,10 @@ writes the decision into `PROVENANCE.md`, under its subsystem (Article VIII.6). 
 
 ## Output contract
 
-The output contract of `CONSTITUTION.md` binds every delegate. What follows adds to it.
+This contract binds every delegate. Return the implementation first. Then report only what
+is material: an assumption, a choice of representation or staging, or a trade-off that is not
+obvious. Report a question left open, and the verification you did: what ran, and on which
+build.
 
 **Put the URL of a published page in the message itself, and not only in the pull request.**
 The same URL belongs in both places. The pull request is the record, and the message is what

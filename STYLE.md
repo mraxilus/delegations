@@ -4,7 +4,7 @@ Use this guide beside the Coding Constitution where the output language is Nim. 
 constitution owns the policy for design, naming, documentation, cost, layout and tests. This
 guide owns only what is specific to Nim: the choice of construct, pragma discipline, the
 idioms, and what each backend does with a value. Where the two overlap, the constitution
-wins.
+wins. `EXAMPLES.md` holds longer worked examples, which both documents point into.
 
 ## 1. Construct selection
 
@@ -15,7 +15,8 @@ Escalate only on need.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
   `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
 - Where both mutable and immutable access matter, define an overload pair. Raw access into
-  storage is a `template` pair, and an accessor that does work is a `proc` and `func` pair:
+  storage is a `template` pair. An accessor that does work is a `func` pair, because a `func`
+  may take a `var` parameter:
 
   ```nim
   template `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
@@ -30,7 +31,10 @@ Escalate only on need.
   would copy (§7):
 
   ```nim
-  template `+`*(m: Multivector, s: float): Multivector = s + m
+  template `+`*(m: Multivector, s: float): Multivector =
+    ## Add multivector and scalar, i.e. 𝐦 + 𝐬.
+    s + m
+
   template scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low
   template r: untyped = records[i]  # alias, never `let r = records[i]` in a hot loop
   ```
@@ -78,7 +82,9 @@ Escalate only on need.
   yet.
 - `{.used.}` with a trailing comment that names the consumer, for a private symbol that
   another module uses.
-- No `{.push.}`. No pragma scattered as superstition.
+- No `{.push.}` of an ordinary pragma, so that the pragmas of a routine stay visible where it
+  is defined. A push that `{.pop.}` closes over one block of foreign bindings (`header:`,
+  `importc`) is allowed. No pragma scattered as superstition.
 
 ## 3. Compile-time and gated idioms
 

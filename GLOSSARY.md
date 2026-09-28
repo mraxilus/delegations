@@ -39,7 +39,7 @@ A file that a build writes under `build/`, and that git never keeps.
 _Avoid_: build product, output
 
 **Charter**:
-The three documents that every delegate follows: CONSTITUTION.md, STYLE.md and
+The four documents that every delegate follows: CONSTITUTION.md, STYLE.md, EXAMPLES.md and
 CONTRIBUTOR.md.
 _Avoid_: rules, law, guidelines, policy
 
