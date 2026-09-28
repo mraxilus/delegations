@@ -469,11 +469,9 @@ pristine bench of `bd6b23c` alone timed it between 9.1 and 11.4 ns. That range h
 9.4 ns of `6a91c3f`.
 
 **A candidate library, measured.** A draft of `cayleys.nim` on `bd6b23c` makes each
-`Cayley1D` cell a `seq`, and adds three map operations in place of five special cases. They
-are `applyConstant`, `applyMap` and `constructAnti`. Every table the library holds comes
-back cell for cell at `cga3d`, `rga4d`, `cga4d` and `cga5d`, 136 tables in all. The five
-compound products `∩ ∪ ⊞ ⊙ ⊡` are then one generated table each. The draft is in the hands of
-the Architect, and no pin holds it.
+`Cayley1D` cell a `seq`, and adds `applyConstant`, `applyMap` and `constructAnti` in place of
+five special cases. Every table comes back cell for cell at four algebras, 136 tables, and
+`∩ ∪ ⊞ ⊙ ⊡` are one generated table each. No pin holds the draft.
 
 Three tables stay hard coded in the draft: the metric, the exterior product of bases and
 the complement. Every anti-variant is `constructAnti` of its base, the antiproduct included.
@@ -481,6 +479,10 @@ The four dual products are one dual fed into a wedge or antiwedge. The dot is th
 of the bulk contraction, and the transwedge keeps one family, for ⟑ alone. Every table is
 unchanged at five algebras, and a suite holds the order gr 𝐚 identity. The 6D front end
 builds in 4.56 s against 6.62 s for `bd6b23c`, ×0.69 over five alternating rounds.
+
+Grade restriction lives in the emission, by decision of the Architect: a typed operand names
+its slots, and the tables stay whole. The front end peaks at 161 MB against 288 MB at 6D. A
+restricted copy of one 2D table costs 0.9 MB there, so a table for each typed pair would not scale.
 
 The pristine bench of `bd6b23c` and the bench of the draft ran alternately, nine times each,
 on this container on 2026-09-28. The library suites pass, 33 at rga4d and 28 at cga5d, and
@@ -602,9 +604,6 @@ these measurements.
 - Whether `--panics:on` is a build that the library will stand behind. The other way to drop
   the checks is to make the operators call nothing. One way is to read the components
   directly, rather than through `[]`.
-- Whether sparse-by-grade generation should be grade-pair bodies derived from the Cayley
-  tables, or a runtime grade mask. The first keeps every body derived, and the second keeps
-  one body for each operator.
 - The reference is not yet optimal on the Nim side. `rotate` and `transform` still zero-fill
   a `Vector3` result, and pay a branch for each helper call under the default flags. To write
   their components directly would lower the reference figures further.
