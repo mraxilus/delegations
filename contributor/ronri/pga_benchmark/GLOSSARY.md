@@ -119,6 +119,11 @@ _Avoid_: ledger, register, index, roll, numbering
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
 
+**PGA**:
+Projective geometric algebra: the algebra that Lengyel's book builds, and that the library
+`pga` replicates. RGA and CGA name its two metrics.
+_Avoid_: projective algebra, plane-based algebra
+
 **RGA**:
 Rigid geometric algebra: the projective algebra whose metric degenerates its last vector, so
 that the vector squares to zero. An algebra name joins it to a dimension count, as `rga4d`.
