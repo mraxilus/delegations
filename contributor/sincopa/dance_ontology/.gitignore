@@ -1,5 +1,0 @@
-# Build products of this project named in full; root ignore file knows short names.
-#   `binaries/`: tool binaries and engine's archive. `dependencies/`: engine's pinned clone,
-#   never vendored (Article XI.3).
-binaries/
-dependencies/
