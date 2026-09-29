@@ -16,6 +16,7 @@ import ../src/pga_benchmark/[
   report,
 ]
 import ../src/pga_benchmark/pages/[shell, trial]
+import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/trials import editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
@@ -954,6 +955,15 @@ suite "Trials":
     check editsDigest([one], claims, @[]) == editsDigest([reworded], claims, @[])  # prose
     check editsDigest([one], claims, @[]) != editsDigest([one], %*[], @[])  # claims
     check editsDigest([one], claims, @["a"]) != editsDigest([one], claims, @["b"])  # program
+
+
+suite "Cells":
+  test "table reads cell for cell, sign included, in both cell shapes":
+    let wedge = cells(CAYLEYS_WEDGE.base)
+    check wedge["E1,E2"] == %*[{"to": "E12", "neg": false}]  # 𝐞₁ ∧ 𝐞₂ = 𝐞₁₂
+    check wedge["E2,E1"] == %*[{"to": "E12", "neg": true}]  # antisymmetric
+    check not wedge.hasKey("E1,E1")  # vector wedge itself vanishes
+    check cells(CAYLEY_ATTITUDE).len > 0  # 1D table of `Option` cells reads too
 
 
 suite "Pages":
