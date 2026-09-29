@@ -251,12 +251,12 @@ func clipToEyeSide*(
 func distanceToSegment(point, tail, head: ScreenPosition): float =
   ## Measure pixel distance from `point` to nearest point of segment `tail`-`head`.
   let
-    (dx, dy) = (head.x - tail.x, head.y - tail.y)
-    length_squared = dx*dx + dy*dy
+    (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
+    length_squared = offset_x*offset_x + offset_y*offset_y
   if length_squared <= 1.0e-9: return hypot(point.x - tail.x, point.y - tail.y)
   let t =
-    clamp(((point.x - tail.x)*dx + (point.y - tail.y)*dy) / length_squared, 0.0, 1.0)
-  hypot(point.x - (tail.x + t*dx), point.y - (tail.y + t*dy))
+    clamp(((point.x - tail.x)*offset_x + (point.y - tail.y)*offset_y) / length_squared, 0.0, 1.0)
+  hypot(point.x - (tail.x + t*offset_x), point.y - (tail.y + t*offset_y))
 
 
 
@@ -808,14 +808,14 @@ func isCrossingCentre(tail, head: ScreenPosition; width, height: int): bool =
   # Use no inset: line and plane have only to cross box, never fit inside it.
   let
     (margin_x, margin_y) = marginCentred(width, height, 0.0)
-    (dx, dy) = (head.x - tail.x, head.y - tail.y)
+    (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
   var (enter, leave) = (0.0, 1.0)
   # Cut back run that could still be inside against each edge, Liang-Barsky.
   #   Entering where segment heads into edge, leaving where it heads out; parallel edge
   #   admits or rejects outright.
   for (rate, room) in [
-    (-dx, tail.x - margin_x), (dx, float(width) - margin_x - tail.x),
-    (-dy, tail.y - margin_y), (dy, float(height) - margin_y - tail.y),
+    (-offset_x, tail.x - margin_x), (offset_x, float(width) - margin_x - tail.x),
+    (-offset_y, tail.y - margin_y), (offset_y, float(height) - margin_y - tail.y),
   ]:
     if rate == 0.0:
       if room < 0.0: return false

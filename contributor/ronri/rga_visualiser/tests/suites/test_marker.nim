@@ -736,15 +736,15 @@ suite "Marker":
     const (WIDTH_PAGE, HEIGHT_PAGE, HALF) = (393.0, 560.0, 40.0)
     let
       half_height = 0.5*HEIGHT_MARKER_LABEL
-      (lo_x, hi_x) = (MARGIN_LABEL_EDGE + HALF, WIDTH_PAGE - MARGIN_LABEL_EDGE - HALF)
-      (lo_y, hi_y) =
+      (min_x, max_x) = (MARGIN_LABEL_EDGE + HALF, WIDTH_PAGE - MARGIN_LABEL_EDGE - HALF)
+      (min_y, max_y) =
         (MARGIN_LABEL_EDGE + half_height, HEIGHT_PAGE - MARGIN_LABEL_EDGE - half_height)
-    check labelInView(390.0, 505.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (hi_x, 505.0)
-    check labelInView(100.0, 3.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, lo_y)
-    check labelInView(-20.0, 700.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (lo_x, hi_y)
+    check labelInView(390.0, 505.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (max_x, 505.0)
+    check labelInView(100.0, 3.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, min_y)
+    check labelInView(-20.0, 700.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (min_x, max_y)
     check labelInView(100.0, 100.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, 100.0)
     # Held box's edges: halo's stroke and one pixel of air stay inside.
-    check hi_x + HALF == WIDTH_PAGE - MARGIN_LABEL_EDGE
+    check max_x + HALF == WIDTH_PAGE - MARGIN_LABEL_EDGE
     check MARGIN_LABEL_EDGE > WIDTH_MARKER_LABEL_HALO
     # Wider than view, or taller: centred on that axis.
     check labelInView(100.0, 100.0, 300.0, WIDTH_PAGE, HEIGHT_PAGE) == (0.5*WIDTH_PAGE, 100.0)
@@ -944,11 +944,12 @@ suite "Marker":
       for i in 0 ..< marker.count_point:
         let
           (first, second) = (marker.points[i], marker.points[(i + 1) mod marker.count_point])
-          (dx, dy) = (second.x - first.x, second.y - first.y)
-          span = dx*dx + dy*dy
+          (offset_x, offset_y) = (second.x - first.x, second.y - first.y)
+          span = offset_x*offset_x + offset_y*offset_y
           along =
             if span <= 0.0: 0.0
-            else: clamp(((point.x - first.x)*dx + (point.y - first.y)*dy)/span, 0.0, 1.0)
+            else:
+              clamp(((point.x - first.x)*offset_x + (point.y - first.y)*offset_y)/span, 0.0, 1.0)
           on = first.towards(second, along)
         result = min(result, hypot(point.x - on.x, point.y - on.y))
     for run in 0 ..< marker.count_run_pulse:
@@ -1121,10 +1122,10 @@ suite "Marker":
 
   test "the drag band swells into its head, whichever way it runs":
     const SPANS = SEGMENTS_MARKER_PULSE
-    for (dx, dy) in [(120.0, 0.0), (-120.0, 0.0), (0.0, 90.0), (-70.0, -70.0)]:
+    for (offset_x, offset_y) in [(120.0, 0.0), (-120.0, 0.0), (0.0, 90.0), (-70.0, -70.0)]:
       let
         tail = ScreenPosition(x: 200.0, y: 150.0)
-        head = ScreenPosition(x: tail.x + dx, y: tail.y + dy)
+        head = ScreenPosition(x: tail.x + offset_x, y: tail.y + offset_y)
         drawn = cometFor(tail, head).get
       # Widest across point aimed at, thinning to band's own width behind it, so.
       #   swell itself is what says which end answer lands at.
@@ -1138,10 +1139,10 @@ suite "Marker":
           x: 0.5*(drawn[i].x + drawn[2*SPANS - 1 - i].x),
           y: 0.5*(drawn[i].y + drawn[2*SPANS - 1 - i].y),
         )
-        check abs((middle.x - head.x)*dy - (middle.y - head.y)*dx) < TOLERANCE_SINGLE
+        check abs((middle.x - head.x)*offset_y - (middle.y - head.y)*offset_x) < TOLERANCE_SINGLE
       # Lying behind point aimed at, never past it, apart from head's own cap.
       for i in 0 ..< 2*SPANS:
-        check (drawn[i].x - head.x)*dx + (drawn[i].y - head.y)*dy <= TOLERANCE_SINGLE
+        check (drawn[i].x - head.x)*offset_x + (drawn[i].y - head.y)*offset_y <= TOLERANCE_SINGLE
 
   test "a drag band shorter than the comet lights all of itself, and no more":
     # Otherwise head would reach back past very object drag started on.

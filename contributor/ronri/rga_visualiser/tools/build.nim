@@ -35,7 +35,7 @@
 ##   Cost: `web` needs node and npm alongside Nim; `assets` and `browser`, and `drive`
 ##     through both, need network on cold tree and none on warm one.
 ##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
-##   Cost: `desktop` needs system libraries `SYSTEM` names, and network on cold tree: it
+##   Cost: `desktop` needs system libraries `PACKAGES_SYSTEM` names, and network on cold tree: it
 ##     fetches SDL3 and Dear ImGui itself, and refuses to build against wrong version of either.
 ##   Cost: `driven` needs display; it borrows Xvfb where environment names none.
 
@@ -195,7 +195,7 @@ const
     ##   Separate list rather than one: page embeds `woff2` and cannot read TrueType, binary
     ##   reads outlines and cannot read `woff2`, so what each front-end wants is not what
     ##   other does even where family is same.
-  SYSTEM = [
+  PACKAGES_SYSTEM = [
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
@@ -534,9 +534,9 @@ proc system() =
   ##   and varies by distribution, while list is this project's. Caller pipes it --
   ##   `nim r tools/build.nim system | xargs sudo apt-get install -y` -- so CI installs from
   ##   this declaration rather than from names written into workflow.
-  ##   Reason each carries stays in `SYSTEM` above, where reader looks; keeping it out of this
-  ##   output is what makes output machine-readable.
-  for (package, _) in SYSTEM: echo package
+  ##   Reason each carries stays in `PACKAGES_SYSTEM` above, where reader looks; keeping it out
+  ##   of this output is what makes output machine-readable.
+  for (package, _) in PACKAGES_SYSTEM: echo package
 
 
 proc facesFromStore(names: openArray[string]): seq[string] =

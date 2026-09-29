@@ -201,13 +201,13 @@ function appendMarker(
       // Sweep clockwise from twelve o'clock, measuring angle from top.
       //   Sweep then reads way every other progress dial does; with y downward, SVG's
       //   positive sweep direction (flag 1) is that same clockwise sense.
-      const [cx, cy] = pointAt(points, 0);
+      const [centre_x, centre_y] = pointAt(points, 0);
       const turn = fraction * 2 * Math.PI;
-      const ex = cx + radius * Math.sin(turn), ey = cy - radius * Math.cos(turn);
+      const end_x = centre_x + radius * Math.sin(turn), end_y = centre_y - radius * Math.cos(turn);
       stageEl('path', {
-        d: 'M ' + cx + ',' + (cy - radius) +
+        d: 'M ' + centre_x + ',' + (centre_y - radius) +
            ' A ' + radius + ',' + radius + ' 0 ' + (fraction > 0.5 ? 1 : 0) + ',1 ' +
-           ex + ',' + ey,
+           end_x + ',' + end_y,
         fill: 'none', stroke: stroke, 'stroke-width': WIDTH_OVERLAY_LINE,
       });
     }
