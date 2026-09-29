@@ -110,10 +110,20 @@ The factor that a runtime measurement may exceed its reference by, before a gap 
 time.
 _Avoid_: time band, slack, margin, noise band
 
+**Spread**:
+The range that holds 90% of the time ratios in trials that change no library function. A time
+ratio outside it counts as moved.
+_Avoid_: noise band, noise floor, jitter
+
 **Docket**:
 The committed map from the key of a gap to its number. It allots the next number to a new
 key, and reuses none.
 _Avoid_: ledger, register, index, roll, numbering
+
+**Publication**:
+The URL of one published page, with the digest of that page as built when it was published.
+`pages/published.json` holds one publication for each page.
+_Avoid_: register, ledger, listing
 
 **Algebra**:
 One measured setting, a dimension count and a metric, such as `rga4d`.
