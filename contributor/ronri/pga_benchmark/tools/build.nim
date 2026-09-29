@@ -2,39 +2,52 @@
 ##   Koch runs suites and holds no verb for instruments, so project carries its own driver
 ##   (CONTRIBUTOR.md, "Directories inside your project are yours"), one level down from koch.
 ##
-##   |----------|-----------------------------------------------------------------------|
-##   | Command  | Effect                                                                |
-##   |----------|-----------------------------------------------------------------------|
-##   | inspect  | compile bench entry per algebra to C, read it, write static           |
-##   |          | measurements as `build/static_<algebra>.json`                         |
-##   | bench    | compile and run bench per algebra, plain then instrumented, record    |
-##   |          | runtime measurements as `baseline/runtime_<algebra>.json`             |
-##   | baseline | inspect, then record static measurements as                           |
-##   |          | `baseline/static_<algebra>.json`                                      |
-##   | guard    | compare last inspect against baseline; any count grown is finding     |
-##   | drive    | inspect, guard, and hold committed `gaps.md` to regeneration          |
-##   | gaps     | regenerate `gaps.md` and docket from committed baselines              |
-##   | show     | print one function's emitted C, its counts, its movement and its      |
-##   |          | machine code, e.g. `show ∧` or `show ⟇ cga5d`                         |
-##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI  |
-##   | system   | print system packages build needs, one per line, for caller          |
-##   | clean    | remove `build`                                                        |
-##   |----------|-----------------------------------------------------------------------|
+##   |-----------|----------------------------------------------------------------------|
+##   | Command   | Effect                                                               |
+##   |-----------|----------------------------------------------------------------------|
+##   | inspect   | compile bench entry per algebra to C, read it, write static          |
+##   |           | measurements as `build/static_<algebra>.json`                        |
+##   | bench     | compile and run bench per algebra, plain then instrumented, record   |
+##   |           | runtime measurements as `baseline/runtime_<algebra>.json`            |
+##   | baseline  | inspect, then record static measurements as                          |
+##   |           | `baseline/static_<algebra>.json`                                     |
+##   | guard     | compare last inspect against baseline; any count grown is finding    |
+##   | trial     | try one change or design at pin, or `all`, and record what it        |
+##   |           | measured as `trials/<name>.json`                                     |
+##   | pages     | build every page from committed files into `build/<name>.html`       |
+##   | published | record URL and digest of page just published, e.g.                   |
+##   |           | `published docket <url>`, in `pages/published.json`                  |
+##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
+##   |           | measurement, trial, file and page to library head (`head.nim`)       |
+##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
+##   | show      | print one function's emitted C, its counts, its movement and its     |
+##   |           | machine code, e.g. `show ∧` or `show ⟇ cga5d`                        |
+##   | sweep     | time general measurands at two to six dimensions, rigid; never in CI |
+##   | system    | print system packages build needs, one per line, for caller         |
+##   | clean     | remove `build`                                                       |
+##   |-----------|----------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or finding, 2 usage error.
 ##   Runs from project directory, on compiler nimble file pins, since every path is
-##     relative and every build compiles library. `drive` is deterministic: static counts
-##     only, no timing, so runner's verdict is same as local one.
+##     relative and every build compiles library. `drive` compares static counts only, no
+##     timing, so runner's verdict on measurements is same as local one.
+##   `drive` also reads library head over network, as Architect chose: pin that lags head is
+##     finding on every push until pin follows, so pages always show library as it stands.
 ##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
-##   Cost: `bench` measurements name machine they were taken on; committing them records that
-##     run and nothing more, as `PROVENANCE.md` says of every pair.
+##   Cost: `bench` and `trial` measurements name machine they were taken on; committing them
+##     records that run and nothing more, as `PROVENANCE.md` says of every pair.
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[json, os, osproc, strutils]
+import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
 
-import ../src/pga_benchmark/[gaps, guard, inspector, model]
+import ../src/pga_benchmark/[changes, designs, gaps, guard, head, inspector, model, notes]
+import ../src/pga_benchmark/pages/[docket, marginalia, shell]
+import ../src/pga_benchmark/pages/design as design_page
+import ../src/pga_benchmark/pages/trial as trial_page
+from ../src/pga_benchmark/trials import
+  Candidate, Toolchain, editsDigest, pristineBinary, pristineSuites, readLibrary, runTrial
 
 
 const
@@ -58,13 +71,46 @@ const
     ## Algebras driven, typed ones first: name, dimensions, conformal.
   SWEEP = 2 .. 6
     ## Dimensions swept, rigid metric, general measurands only.
-  SYSTEM: seq[(string, string)] = @[]
-    ## System packages build needs beyond compiler: none. Compiler is toolchain, pinned in
-    ## nimble file; library is Atlas checkout, pinned in lock; nothing else is fetched.
+  SYSTEM = [
+    ("git", "read library head and trees `drive` holds pin to"),
+    ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("coreutils", "`sha256sum` store checks those faces with"),
+  ]
+    ## System packages build needs beyond compiler. Compiler is toolchain, pinned in nimble
+    ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|drive|gaps|show|sweep|system|clean>" &
-    " [symbol] [algebra]\n"
-    ## Text printed on usage error; trailing words serve `show` alone.
+    "<inspect|bench|baseline|guard|trial|pages|published|drive|gaps|show|sweep|system|clean>" &
+    " [name|symbol] [url|algebra]\n"
+    ## Text printed on usage error; trailing words serve `trial`, `published` and `show`.
+  CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
+    ## Atlas checkout of library's repository.
+  LIBRARY_DIRECTORY = "lengyel/projective_geometric_algebra_illuminated"
+    ## Library's directory inside its repository, as git names trees.
+  LIBRARY = CHECKOUT / LIBRARY_DIRECTORY
+    ## Library at pin, as `nim.cfg` names it.
+  DIR_CHANGES = "changes"
+    ## Changes, one Markdown file each (`changes.nim`).
+  DIR_DESIGNS = "designs"
+    ## Design explorations, one directory each (`designs.nim`).
+  DIR_TRIALS = "trials"
+    ## Trial documents, one per change or design, committed.
+  PATH_NOTES = "marginalia" / "notes.md"
+    ## Notes on library source (`notes.nim`).
+  PATH_SHELL = "pages" / "shell.html"
+    ## Shell every page is assembled in.
+  PATH_REGISTER = "pages" / "published.json"
+    ## Register: page name to URL and digest at its last publish.
+  PATH_README = "README.md"
+    ## File that must name every published URL.
+  PATH_KOCH = ".." / ".." / ".." / "koch.nim"
+    ## Repository driver, asked for faces.
+  TRIALED = ["rga4d", "cga5d"]
+    ## Algebras trial measures: typed ones, which both lower bounds cover.
+  TRIAL_RUNS = 5
+    ## Timed runs of each binary per trial, alternating.
+  TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
+    "cga4d": "Conformal 4D"}.toTable
+    ## Tab title of each algebra on docket.
   SHOWN_LINES = 40
     ## Lines of one function this driver prints before naming file rest sits in.
   SHOWN_WIDTH = 150
@@ -242,33 +288,370 @@ proc algebras(): seq[Algebra] =
 proc generated(): (string, string) =
   ## Generate list and docket text from committed documents.
   let
-    docket =
+    ids =
       if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
-    (text, grown) = generate(algebras(), docket)
+    (text, grown) = generate(algebras(), ids)
   (text, pretty(grown.toJson) & "\n")
 
 
 proc gaps() =
   ## Regenerate list and docket.
-  let (text, docket) = generated()
+  let (text, ids) = generated()
   createDir BASELINE
   writeFile(PATH_GAPS, text)
-  writeFile(PATH_DOCKET, docket)
+  writeFile(PATH_DOCKET, ids)
   echo "Wrote ", PATH_GAPS, " and ", PATH_DOCKET
 
 
+#[ Changes And Designs ]#
+
+proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
+  ## Read every change file, in name order; malformed ones add findings.
+  var paths = toSeq(walkFiles(DIR_CHANGES / "*.md"))
+  paths.sort
+  for path in paths:
+    let (change, why) = parseChange(path, readFile(path))
+    findings.add why
+    result.add (path.splitFile.name, change)
+
+
+proc readDesigns(findings: var seq[Finding]): seq[Design] =
+  ## Read every design directory, in name order; malformed ones add findings.
+  var directories: seq[string]
+  for kind, path in walkDir(DIR_DESIGNS):
+    if kind == pcDir: directories.add path
+  directories.sort
+  for directory in directories:
+    let
+      argument = directory / "design.md"
+      change = directory / "change.md"
+      claims = directory / "claims.json"
+    var parsed: JsonNode = nil
+    if fileExists(claims):
+      try: parsed = parseJson(readFile(claims))
+      except JsonParsingError: parsed = nil
+    let (design, why) = parseDesign(
+      directory.lastPathPart,
+      if fileExists(argument): readFile(argument) else: "",
+      if fileExists(change): readFile(change) else: "",
+      parsed,
+      directory,
+    )
+    findings.add why
+    result.add design
+
+
+proc candidatesOf(
+  changes: seq[(string, Change)], designs: seq[Design], findings: var seq[Finding]
+): seq[Candidate] =
+  ## Shape one trial candidate per change and per design; design carries its base chain first.
+  ##   Candidate's programs are program texts, so digest moves when program does.
+  for (name, change) in changes:
+    result.add Candidate(
+      name: name,
+      path: DIR_CHANGES / name & ".md",
+      changes: @[change],
+      claims: newJArray(),
+    )
+  for design in designs:
+    let directory = DIR_DESIGNS / design.name
+    if changes.anyIt(it[0] == design.name):
+      findings.add Finding(path: directory, message: "Design shares name with change; got `" &
+        design.name & "`.")
+    var
+      chain = @[design.change]
+      seen = @[design.name]
+      base = design.builds_on
+    while base.len > 0:
+      if base in seen:
+        findings.add Finding(path: directory, message: "Designs build on each other in cycle; " &
+          "got `" & base & "`.")
+        break
+      let found = designs.filterIt(it.name == base)
+      if found.len == 0:
+        findings.add Finding(path: directory, message: "Design builds on no design here; got `" &
+          base & "`.")
+        break
+      chain.insert(found[0].change, 0)
+      seen.add base
+      base = found[0].builds_on
+    var programs: seq[string]
+    for path in programsOf(design):
+      if fileExists(path): programs.add readFile(path)
+      else: findings.add Finding(path: directory, message: "Claim runs no such program; got `" &
+        path & "`.")
+    result.add Candidate(
+      name: design.name,
+      path: directory,
+      changes: chain,
+      programs: programs,
+      claims: design.claims,
+    )
+
+
+proc readTrials(): Table[string, JsonNode] =
+  ## Read every committed trial, keyed by name.
+  for path in walkFiles(DIR_TRIALS / "*.json"):
+    result[path.splitFile.name] = readDocument(path)
+
+
+
+#[ Library Head ]#
+
+proc git(args: openArray[string]): (string, int) =
+  ## Run git in library checkout with args; output and exit code.
+  execCmdEx("git -C " & quoteShell(CHECKOUT) & " " & args.mapIt(quoteShell(it)).join(" "))
+
+
+proc libraryHead(pin: string): (string, string, string) =
+  ## Read tree of library directory at pin, and head commit of library repository with its
+  ##   tree; empty where git cannot read one. Fetches only when head is not pin.
+  let (pin_out, pin_code) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
+  let pin_tree = if pin_code == 0: pin_out.strip.splitLines[^1] else: ""
+  let (remote, remote_code) = git(["ls-remote", "origin", "HEAD"])
+  if remote_code != 0: return (pin_tree, "", "")
+  var head_commit = ""
+  for line in remote.splitLines:
+    if line.endsWith("\tHEAD"): head_commit = line.split('\t')[0]
+  if head_commit.len == 0: return (pin_tree, "", "")
+  if head_commit == pin: return (pin_tree, head_commit, pin_tree)
+  let (_, fetch_code) = git(["fetch", "--quiet", "origin", "HEAD"])
+  if fetch_code != 0: return (pin_tree, head_commit, "")
+  let (head_out, head_code) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
+  (pin_tree, head_commit, if head_code == 0: head_out.strip.splitLines[^1] else: "")
+
+
+proc headChecked(pin: string): seq[Finding] =
+  ## Hold pin to library head, and checkout to pin: no local edit under library directory.
+  let (pin_tree, head_commit, head_tree) = libraryHead(pin)
+  result.add checkHead(pin, pin_tree, head_commit, head_tree, PATH_LOCK)
+  let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
+  if code != 0 or edited.strip.len > 0:
+    result.add Finding(
+      path: LIBRARY,
+      message: "Library checkout differs from pin; restore it with `git -C " & CHECKOUT &
+        " checkout -- .`; got `" & edited.strip.splitLines[0] & "`.",
+    )
+
+
+
+#[ Pages ]#
+
+proc facesFromStore(): Table[string, string] =
+  ## Ask `koch fetch-assets` for each face shell draws with, and read bytes of each.
+  ##   Store checks digest; count of paths is asserted, since verb prints nothing for face
+  ##   it could not serve, and short list would pair wrong bytes with right name.
+  let (written, code) = execCmdEx(
+    "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
+      FACES.quoteShellCommand
+  )
+  if code != 0:
+    raise newException(OSError,
+      "`koch fetch-assets` would not serve every face; got exit `" & $code & "`.")
+  var paths: seq[string]
+  for line in written.strip.splitLines:
+    if line.strip.len > 0 and fileExists(line.strip): paths.add line.strip
+  if paths.len != FACES.len:
+    raise newException(OSError,
+      "`koch fetch-assets` named " & $paths.len & " paths for " & $FACES.len & " faces.")
+  for i, face in FACES: result[face] = readFile(paths[i])
+
+
+proc register(): JsonNode =
+  ## Read register of published pages; empty where none.
+  if fileExists(PATH_REGISTER): readDocument(PATH_REGISTER) else: newJObject()
+
+
+func linksHtml(names: openArray[string], published: JsonNode, self: string): string =
+  ## Link every other published page, in page order, led by separator; empty where none.
+  var links: seq[string]
+  for name in names:
+    let url = published{name, "url"}.getStr
+    if name == self or url.len == 0: continue
+    links.add "<a href=\"" & url & "\">" & name & "</a>"
+  if links.len == 0: "" else: " · " & links.join(" · ")
+
+
+func titled(name: string): string =
+  ## Title design page by its name, e.g. `Cayley Derivation`.
+  name.split('-').mapIt(it.capitalizeAscii).join(" ")
+
+
+proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
+  ## Build every page from committed files: docket, marginalia, then one per design.
+  var ignored: seq[Finding]
+  let
+    pin = pgaCommit()
+    published = register()
+    shell_text = readFile(PATH_SHELL)
+    changes = readChanges(ignored)
+    designs = readDesigns(ignored)
+    trials = readTrials()
+    files = readLibrary(LIBRARY)
+    (notes, _) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
+    names = @["docket", "marginalia"] & designs.mapIt(it.name)
+  var
+    sheets: seq[Sheet]
+    baselines: Table[string, JsonNode]
+    overlays: seq[Overlay]
+    documents: seq[JsonNode]
+  for (name, dimensions, _) in CONFIGS:
+    let path = BASELINE / "static_" & name & ".json"
+    if not fileExists(path): continue
+    baselines[name] = readDocument(path)
+    sheets.add Sheet(
+      name: name,
+      title: TITLES[name],
+      dimensions: dimensions,
+      static_measurements: baselines[name],
+      runtime_measurements: readDocument(BASELINE / "runtime_" & name & ".json"),
+    )
+  for _, document in trials.pairs: documents.add document
+  let band = bandOf(documents)
+  for design in designs:
+    if design.name notin trials: continue
+    var overlay = Overlay(name: design.name, title: design.title,
+      url: published{design.name, "url"}.getStr)
+    for algebra, a in trials[design.name]{"algebras"}.pairs:
+      overlay.functions[algebra] = a{"functions"}
+    overlays.add overlay
+  result["docket"] = assemble(shell_text, "PGA Gap Docket",
+    docketBody(sheets, readDocument(PATH_DOCKET), overlays, pin,
+      linksHtml(names, published, "docket")), faces)
+  var proposals: seq[Proposal]
+  for (name, change) in changes:
+    proposals.add Proposal(name: name, change: change, trial: trials.getOrDefault(name))
+  result["marginalia"] = assemble(shell_text, "PGA Marginalia",
+    marginaliaBody(proposals, notes, files, baselines, band, pin,
+      linksHtml(names, published, "marginalia")), faces)
+  for design in designs:
+    result[design.name] = assemble(shell_text, titled(design.name),
+      designBody(design, trials.getOrDefault(design.name), files, baselines, band, pin,
+        linksHtml(names, published, design.name)), faces)
+
+
+proc pages() =
+  ## Build every page into `build/`, and print each with its digest.
+  createDir BUILD
+  for name, page in builtPages(facesFromStore()).pairs:
+    writeFile(BUILD / name & ".html", page)
+    echo "Built ", BUILD / name & ".html", "  ", pageDigest(page), "  ", page.len div 1024,
+      " KiB"
+
+
+proc publishedAt(name, url: string) =
+  ## Record page just published: its URL, and digest of page as built now.
+  let built = builtPages(facesFromStore())
+  if name notin built:
+    raise newException(ValueError, "No page named `" & name & "`.")
+  var entries = register()
+  entries[name] = %*{"url": url, "digest": pageDigest(built[name])}
+  writeFile(PATH_REGISTER, pretty(entries) & "\n")
+  echo "Recorded ", name, " at ", url
+  for other, page in built.pairs:
+    if other != name and entries{other, "digest"}.getStr != pageDigest(page):
+      echo "notice: ", other, " differs from register; publish it and record it too."
+
+
+
+#[ Trials ]#
+
+func machine(): string =
+  ## Describe machine trial ran on, as bench documents do.
+  hostOS & " " & hostCPU & ", " & $countProcessors() & " cores"
+
+
+proc trialOf(which: string) =
+  ## Try one change or design at pin, or every one for `all`; write its trial document.
+  var findings: seq[Finding]
+  let
+    changes = readChanges(findings)
+    designs = readDesigns(findings)
+    candidates = candidatesOf(changes, designs, findings)
+  if findings.len > 0: report(findings)
+  let selected = if which == "all": candidates else: candidates.filterIt(it.name == which)
+  if selected.len == 0: raise newException(ValueError, "No change or design named `" & which &
+    "`.")
+  let chain = Toolchain(library: LIBRARY, work: BUILD / "trials", nim: nimCommit(),
+    pga: pgaCommit(), flags: FLAGS, runs: TRIAL_RUNS)
+  var
+    algebras: seq[trials.Algebra]
+    baselines: Table[string, JsonNode]
+    pristine: Table[string, string]
+  for (name, dimensions, is_conformal) in CONFIGS:
+    if name notin TRIALED: continue
+    let a = trials.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
+    algebras.add a
+    baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
+    pristine[name] = pristineBinary(chain, a)
+  let
+    pin_suites = pristineSuites(chain, algebras)
+    taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": chain.nim,
+      "pga": chain.pga, "flags": FLAGS, "runs": TRIAL_RUNS}
+  createDir DIR_TRIALS
+  for candidate in selected:
+    echo "Trying ", candidate.name
+    let (document, why) = runTrial(chain, candidate, algebras, baselines, pristine, pin_suites,
+      taken)
+    removeDir chain.work / candidate.name
+    if document.isNil:
+      findings.add why
+      continue
+    writeFile(DIR_TRIALS / candidate.name & ".json", pretty(document) & "\n")
+    echo "Recorded ", DIR_TRIALS / candidate.name & ".json"
+  report(findings)
+
+
+proc pinnedChecked(pin: string): seq[Finding] =
+  ## Hold everything to pin: stamps, trials, changes, designs, notes, pages and register.
+  for (name, _, _) in CONFIGS:
+    for kind in ["static", "runtime"]:
+      let path = BASELINE / kind & "_" & name & ".json"
+      if fileExists(path): result.add checkStamp(readDocument(path), pin, path)
+  let
+    changes = readChanges(result)
+    designs = readDesigns(result)
+    candidates = candidatesOf(changes, designs, result)
+    files = readLibrary(LIBRARY)
+    trials = readTrials()
+  for candidate in candidates:
+    var copy = files
+    for change in candidate.changes: result.add applyChange(copy, change, candidate.path)
+    let path = DIR_TRIALS / candidate.name & ".json"
+    if candidate.name notin trials:
+      result.add Finding(path: path, message: "No trial yet; run `trial " &
+        candidate.name & "`.")
+      continue
+    let digest = editsDigest(candidate.changes, candidate.claims, candidate.programs)
+    result.add checkTrial(trials[candidate.name], pin, digest, path)
+  for name in trials.keys:
+    if not candidates.anyIt(it.name == name):
+      result.add Finding(path: DIR_TRIALS / name & ".json", message: "Trial names no change " &
+        "or design; got `" & name & "`.")
+  let (notes, why) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
+  result.add why
+  result.add checkAnchors(notes, files, PATH_NOTES)
+  var digests: Table[string, string]
+  for name, page in builtPages(facesFromStore()).pairs: digests[name] = pageDigest(page)
+  result.add checkPublished(digests, register(), readFile(PATH_README), PATH_REGISTER)
+
+
 proc drive() =
-  ## Inspect, check against baselines, and hold committed list and docket to regeneration.
+  ## Inspect, check against baselines, hold committed list and docket to regeneration, and
+  ##   hold pin to library head and every measurement, trial, file and page to pin.
+  let pin = pgaCommit()
+  var findings = headChecked(pin)
   inspect()
-  var findings = guarded()
-  let (text, docket) = generated()
+  findings.add guarded()
+  let (text, ids) = generated()
   if not fileExists(PATH_GAPS) or readFile(PATH_GAPS) != text:
     findings.add Finding(path: PATH_GAPS, message: "List differs from regeneration; run `gaps`.")
-  if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != docket:
+  if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != ids:
     findings.add Finding(
       path: PATH_DOCKET,
       message: "Docket differs from regeneration; run `gaps`.",
     )
+  findings.add pinnedChecked(pin)
   report(findings)
 
 
@@ -441,10 +824,15 @@ proc clean() =
 #[ Entry Point ]#
 
 when isMainModule:
-  if paramCount() notin 1 .. 3 or (paramStr(1) == "show" and paramCount() < 2):
-    stderr.write USAGE
-    quit 2
-  if paramStr(1) != "show" and paramCount() != 1:
+  let
+    verb = if paramCount() > 0: paramStr(1) else: ""
+    arguments =
+      case verb
+      of "show": 2 .. 3
+      of "trial": 2 .. 2
+      of "published": 3 .. 3
+      else: 1 .. 1
+  if paramCount() notin arguments:
     stderr.write USAGE
     quit 2
   try:
@@ -455,6 +843,9 @@ when isMainModule:
     of "bench": bench()
     of "baseline": baseline()
     of "guard": guard()
+    of "trial": trialOf(paramStr(2))
+    of "pages": pages()
+    of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
     of "gaps": gaps()
     of "sweep": sweep()
