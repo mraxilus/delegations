@@ -89,7 +89,7 @@ suite "Scene":
 
 
   test "unary operations ignore their second operand":
-    const OPERATIONS_UNARY_FLOOR = 13
+    const operations_unary_floor = 13
       ## Bound below how many operations law runs over: all thirteen unary ones catalogue holds.
       ##   Guard that lets fewer through leaves law held over part of catalogue only.
     var passed = 0
@@ -99,7 +99,7 @@ suite "Scene":
       for i in 0 ..< SAMPLES:
         let (m, n, o) = (POINTS[i], LINES[i], PLANES[i])
         check applyOperation(operation, m, n) =~ applyOperation(operation, m, o)
-    check passed >= OPERATIONS_UNARY_FLOOR
+    check passed >= operations_unary_floor
 
 
   test "every operation names itself and is offered once":
@@ -290,7 +290,7 @@ suite "Scene":
   #   which user can simply type. C rounds tie to even and JavaScript rounds it away
   #   from zero, so formatter that delegates to runtime disagrees with itself across
   #   backends. Measured before rule was stated here: 330 of 7000 values differed.
-  const MAGNITUDES = [
+  const magnitudes = [
     0.0, 1.0, -1.0, 3.5, -2.0, 0.25, 1664.0, 1234567.0, 0.00012345, 1e-7, 1e7,
     99999.0, 0.099999, 123.456, -0.0001, 1e-5, 9.9999e-5, 1000.0, 999.95, 6.02e23,
     10.125, 12345.0, 0.125, 1.0005, 9999.6, -10.125, 2.5, 0.5, 1.5, 1012.5,
@@ -316,7 +316,7 @@ suite "Scene":
     #   Skipped on JS backend, which has no `snprintf` to compare against; test
     #   above is what runs there, and it pins text rather than second mechanism.
     when not defined(js):
-      for value in MAGNITUDES:
+      for value in magnitudes:
         if value == 0.0: continue  # C signs zero, this does not; pinned above.
         var
           storage: array[64, char]
@@ -446,8 +446,8 @@ suite "Scene":
 
   # Where versions 2 to 5 wrote `Rose`: one past today's, palette then holding retired.
   #   structural slot `Algebra` at ordinal 7 before every hue; see `scene.upgradedFrom5`.
-  const ORDINAL_INK_ROSE_V5 = ord(Ink.Rose) + 1
-  const ORDINAL_INK_ALGEBRA_V5 = 7
+  const ordinal_ink_rose_v5 = ord(Ink.Rose) + 1
+  const ordinal_ink_algebra_v5 = 7
 
   proc savedWith(ordinal: int, radius = RADIUS_OBJECT_DEFAULT): ObjectSaved =
     ## Build object differing from its neighbours only in palette slot and radius.
@@ -483,15 +483,15 @@ suite "Scene":
     # Version 3 wrote no radius, so whatever reader had in field is overwritten, not.
     #   trusted: parser passing garbage or zero there must still land on default.
     for stale in [0.0, -1.0, 7.0, NaN]:
-      let carried = objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5, stale), 3'u8)
+      let carried = objectUpgraded(savedWith(ordinal_ink_rose_v5, stale), 3'u8)
       check carried.isSome
       check carried.get.radius == RADIUS_OBJECT_DEFAULT
       check carried.get.ink_ordinal == ord(Ink.Rose)
     # Same for every older version: radius joins chain at its boundary, once.
     for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_RADIUS:
       check not hasRadius(version)
-      # First hue in each version's own palette; see `ORDINAL_INK_ROSE_V5`.
-      let ordinal = if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1 else: ORDINAL_INK_ROSE_V5
+      # First hue in each version's own palette; see `ordinal_ink_rose_v5`.
+      let ordinal = if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1 else: ordinal_ink_rose_v5
       check objectUpgraded(savedWith(ordinal, 0.0), version).get.radius == RADIUS_OBJECT_DEFAULT
     check hasRadius(VERSION_SCENE)
 
@@ -503,7 +503,7 @@ suite "Scene":
       check not hasShine(version)
     for version in VERSION_SCENE_SHINE .. VERSION_SCENE_SHINE_LAST:
       check hasShine(version)
-      check objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5), version).isSome
+      check objectUpgraded(savedWith(ordinal_ink_rose_v5), version).isSome
     check not hasShine(VERSION_SCENE)
     check VERSION_SCENE > VERSION_SCENE_SHINE_LAST
 
@@ -511,12 +511,12 @@ suite "Scene":
   test "a version-5 hue past the retired debug slot moves one down, and the slot is refused":
     # Version 6 dropped structural `Algebra` from palette; ordinals past it shift, ones.
     #   before it stand, and byte naming slot no build ever assigned is corrupt.
-    for ordinal in 0 ..< ORDINAL_INK_ALGEBRA_V5:
+    for ordinal in 0 ..< ordinal_ink_algebra_v5:
       check objectUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal
-    check objectUpgraded(savedWith(ORDINAL_INK_ALGEBRA_V5), 5'u8).isNone
-    for ordinal in ORDINAL_INK_ALGEBRA_V5 + 1 .. ord(Ink.high) + 1:
+    check objectUpgraded(savedWith(ordinal_ink_algebra_v5), 5'u8).isNone
+    for ordinal in ordinal_ink_algebra_v5 + 1 .. ord(Ink.high) + 1:
       check objectUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal - 1
-    check objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5), 5'u8).get.ink_ordinal == ord(Ink.Rose)
+    check objectUpgraded(savedWith(ordinal_ink_rose_v5), 5'u8).get.ink_ordinal == ord(Ink.Rose)
     # Past what version 5 could name is refused, as ever.
     check objectUpgraded(savedWith(ord(Ink.high) + 2), 5'u8).isNone
 
@@ -529,9 +529,9 @@ suite "Scene":
     # Palette ordinals are version 5's, one past today's beyond retired slot, so.
     #   both walks land on same hue only where they start from what each wrote.
     for ordinal in ord(Ink.low) .. ord(Ink.high) + 1:
-      if ordinal == ORDINAL_INK_ALGEBRA_V5: continue
+      if ordinal == ordinal_ink_algebra_v5: continue
       let
-        today = if ordinal > ORDINAL_INK_ALGEBRA_V5: ordinal - 1 else: ordinal
+        today = if ordinal > ordinal_ink_algebra_v5: ordinal - 1 else: ordinal
         from_two = objectUpgraded(savedWith(ordinal), 2'u8)
         from_three = objectUpgraded(savedWith(today), VERSION_SCENE)
       check from_two.isSome
@@ -580,33 +580,33 @@ suite "Scene":
     check objectUpgraded(savedWith(ord(Ink.Rose)), VERSION_SCENE + 1'u8).isNone
     for version in VERSION_SCENE_LEAST .. VERSION_SCENE:
       check readsSceneVersion(version)
-      # First hue in each version's own palette; see `ORDINAL_INK_ROSE_V5`.
+      # First hue in each version's own palette; see `ordinal_ink_rose_v5`.
       let ordinal =
         if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1
-        elif version < VERSION_SCENE: ORDINAL_INK_ROSE_V5
+        elif version < VERSION_SCENE: ordinal_ink_rose_v5
         else: ord(Ink.Rose)
       check objectUpgraded(savedWith(ordinal), version).isSome
 
 
   test "bornReplaying staggers an arrival in order and never runs past the cap":
-    const CLOCK = 12.5
+    const clock = 12.5
     # Handful of objects get full beat: legible, and short enough to still overlap.
-    check bornReplaying(0, 4, CLOCK) =~ CLOCK
+    check bornReplaying(0, 4, clock) =~ clock
     for index in 1 ..< 4:
-      check bornReplaying(index, 4, CLOCK) =~ CLOCK + float(index)*SECONDS_REPLAY_STEP
+      check bornReplaying(index, 4, clock) =~ clock + float(index)*SECONDS_REPLAY_STEP
     # Single object arriving alone has nothing to stagger against.
-    check bornReplaying(0, 1, CLOCK) =~ CLOCK
+    check bornReplaying(0, 1, clock) =~ clock
     # However many arrive, last of them lands within cap -- and in order.
     for count in 1 .. OBJECTS_MAX:
       var previous = low(float)
       for index in 0 ..< count:
-        let born = bornReplaying(index, count, CLOCK)
+        let born = bornReplaying(index, count, clock)
         check born > previous
-        check born >= CLOCK
+        check born >= clock
         previous = born
-      check previous - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
+      check previous - clock <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
     # And beat only ever shortens to make that fit, never lengthens.
-    check bornReplaying(1, OBJECTS_MAX, CLOCK) - CLOCK < SECONDS_REPLAY_STEP
+    check bornReplaying(1, OBJECTS_MAX, clock) - clock < SECONDS_REPLAY_STEP
 
 
   test "replayFrom restamps a whole scene into an arrival, in creation order":
@@ -620,23 +620,23 @@ suite "Scene":
     let handle_late = scene.addObject(POINTS[5], "late", Ink.Rose, 99.0)
     check handle_late == 1
 
-    const CLOCK = 7.5
-    scene.replayFrom(CLOCK)
+    const clock = 7.5
+    scene.replayFrom(clock)
     var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
     check count == 5
-    check scene.bornAt(handles[0]) =~ CLOCK
+    check scene.bornAt(handles[0]) =~ clock
     for position in 1 ..< count:
       check scene.bornAt(handles[position]) > scene.bornAt(handles[position - 1])
     check toText(scene.labelAt(handles[count - 1])) == "late"
-    check scene.bornAt(handles[count - 1]) - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
+    check scene.bornAt(handles[count - 1]) - clock <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
     # Same beat file of this size would arrive on -- one rule, not two.
     for position in 0 ..< count:
-      check scene.bornAt(handles[position]) =~ bornReplaying(position, count, CLOCK)
+      check scene.bornAt(handles[position]) =~ bornReplaying(position, count, clock)
 
     # Empty scene has nothing to restamp and must not fall over reaching for handle zero.
     var empty = initScene()
-    empty.replayFrom(CLOCK)
+    empty.replayFrom(clock)
     check empty.len == 0
 
 
@@ -644,33 +644,33 @@ suite "Scene":
     # Startup seeds are construction somebody else made, exactly as loaded file.
     #   is, so both front-ends stagger them. `constructSeeds` itself deliberately does
     #   not: `runStoryboard` calls it too and sweeps each step on clock of its own.
-    const CLOCK = 4.0
+    const clock = 4.0
     var placed = initScene()
-    constructSeeds(placed, CLOCK)
+    constructSeeds(placed, clock)
     for handle in 0 ..< placed.len:
-      check placed.bornAt(handle) == CLOCK # Untouched by constructor itself.
+      check placed.bornAt(handle) == clock # Untouched by constructor itself.
 
     var opened = initScene()
-    constructSeeds(opened, CLOCK)
-    opened.replayFrom(CLOCK)
+    constructSeeds(opened, clock)
+    opened.replayFrom(clock)
     check opened.len >= 2
     for handle in 1 ..< opened.len:
       check opened.bornAt(handle) > opened.bornAt(handle - 1)
     # Still on screen quickly: opening scene reader waits through is worse opening.
     #   scene than one that simply appeared.
-    check opened.bornAt(opened.len - 1) - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
+    check opened.bornAt(opened.len - 1) - clock <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
 
 
   test "a replay stamp in the future draws its object at no size yet":
     # What makes stagger visible rather than merely recorded: `mesh.animationProgress`.
     #   reads born clock has not reached as zero progress, so object waiting its
     #   turn is drawn at nothing and grows in when its beat arrives.
-    const CLOCK = 3.0
-    let born_second = bornReplaying(1, 4, CLOCK)
-    check animationProgress(CLOCK, born_second) == 0.0
+    const clock = 3.0
+    let born_second = bornReplaying(1, 4, clock)
+    check animationProgress(clock, born_second) == 0.0
     check animationProgress(born_second, born_second) == 0.0
     check animationProgress(born_second + ANIMATION_SECONDS, born_second) == 1.0
-    check animationProgress(CLOCK, bornReplaying(0, 4, CLOCK)) == 0.0
+    check animationProgress(clock, bornReplaying(0, 4, clock)) == 0.0
 
 
   # Saving and loading name filesystem, which browser has none of: `scene.nim`.
@@ -978,10 +978,10 @@ suite "Scene":
       check saveScene(original, path).contains("Saved 5")
       defer: removeFile(path)
 
-      const CLOCK = 40.0
+      const clock = 40.0
       var loaded = initScene()
-      check loadScene(loaded, path, CLOCK).contains("Loaded 5")
-      check loaded[0].born =~ CLOCK
+      check loadScene(loaded, path, clock).contains("Loaded 5")
+      check loaded[0].born =~ clock
       for handle in 1 ..< 5:
         check loaded[handle].born > loaded[handle - 1].born
         # Still growing in as next one lands, rather than queue of separate pop-ins.

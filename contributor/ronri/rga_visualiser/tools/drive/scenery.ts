@@ -271,8 +271,10 @@ export async function driveHold(page: Page): Promise<void> {
     const first = once();
     const second = once();
     return {
-      first: { is_held: first.is_furniture_held, floats: first.furn_ribbon_verts.length },
-      second: { is_held: second.is_furniture_held, floats: second.furn_ribbon_verts.length },
+      first: { is_held: first.is_furniture_held, floats: first.furniture_ribbon_vertices.length },
+      second: {
+        is_held: second.is_furniture_held, floats: second.furniture_ribbon_vertices.length,
+      },
     };
   });
   report(
@@ -290,7 +292,7 @@ export async function driveHold(page: Page): Promise<void> {
     nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
     nimCameraOrbit(0.3, 0);
     const after = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
-    return { is_held: after.is_furniture_held, floats: after.furn_ribbon_verts.length };
+    return { is_held: after.is_furniture_held, floats: after.furniture_ribbon_vertices.length };
   });
   report(
     'and a camera that has moved builds them again',

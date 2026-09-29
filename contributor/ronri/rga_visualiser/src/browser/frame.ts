@@ -115,7 +115,7 @@ function renderFrame(now_seconds: number) {
   //   widening runs in its vertex shader now, fed by exactly DrawScale fields mesh.expandRibbon
   //   reads.
   gl.useProgram(program_ribbon);
-  gl.uniformMatrix4fv(ribbon_uniforms.mvp, false, data.view_projection);
+  gl.uniformMatrix4fv(ribbon_uniforms.model_view_projection, false, data.view_projection);
   gl.uniform3f(ribbon_uniforms.eye, data.camera_eye_x, data.camera_eye_y, data.camera_eye_z);
   gl.uniform3f(ribbon_uniforms.forward,
     data.camera_forward_x, data.camera_forward_y, data.camera_forward_z);
@@ -137,9 +137,10 @@ function renderFrame(now_seconds: number) {
   //   unchanged, since grid and axes are function of camera alone.
   //   Mirrors renderer.nim's own drawMeshes(MESHES_FURNITURE, ...) call exactly.
   if (!data.is_furniture_held) {
-    count_furniture_held = uploadBuffer(data.furn_ribbon_verts, vbo.ribbon_furniture, 16);
+    count_furniture_held =
+      uploadBuffer(data.furniture_ribbon_vertices, buffers.ribbon_furniture, 16);
   }
-  drawRibbons(vbo.ribbon_furniture, count_furniture_held, 0, false);
+  drawRibbons(buffers.ribbon_furniture, count_furniture_held, 0, false);
 
   // Draw scene objects last, opaque kinds before translucent veils.
   //   Depth writes off for veils, so translucent plane never occludes line or point
@@ -150,14 +151,16 @@ function renderFrame(now_seconds: number) {
   //   Held frame's buffers already hold this frame's records, and re-uploading
   //   identical bytes is copy hold exists to skip.
   //   Draws below still run; framebuffer is cleared every frame.
-  if (!data.is_scene_held) count_ribbon_held = uploadBuffer(data.ribbon_verts, vbo.ribbon, 16);
+  if (!data.is_scene_held) {
+    count_ribbon_held = uploadBuffer(data.ribbon_vertices, buffers.ribbon, 16);
+  }
   const count_ribbon = count_ribbon_held;
-  drawRibbons(vbo.ribbon, count_ribbon, data.ribbon_over, false);
+  drawRibbons(buffers.ribbon, count_ribbon, data.ribbon_over, false);
   // Draw plane rims, one record each, straight after lines they are drawn like.
   //   Widening is ribbon program's own, so this program takes same six camera uniforms
   //   and same pass.
   gl.useProgram(program_ring);
-  gl.uniformMatrix4fv(ring_uniforms.mvp, false, data.view_projection);
+  gl.uniformMatrix4fv(ring_uniforms.model_view_projection, false, data.view_projection);
   gl.uniform3f(ring_uniforms.eye, data.camera_eye_x, data.camera_eye_y, data.camera_eye_z);
   gl.uniform3f(ring_uniforms.forward,
     data.camera_forward_x, data.camera_forward_y, data.camera_forward_z);
@@ -168,13 +171,13 @@ function renderFrame(now_seconds: number) {
   gl.uniform3f(ring_uniforms.right, data.camera_right_x, data.camera_right_y, data.camera_right_z);
   gl.uniform3f(ring_uniforms.up, data.camera_up_x, data.camera_up_y, data.camera_up_z);
   gl.uniform1f(ring_uniforms.factor_guard, FACTOR_GUARD);
-  if (!data.is_scene_held) count_ring_held = uploadBuffer(data.ring_records, vbo.ring, 14);
+  if (!data.is_scene_held) count_ring_held = uploadBuffer(data.ring_records, buffers.ring, 14);
   const count_ring = count_ring_held;
   drawRings(count_ring, data.ring_over, false);
   // Point program's camera, once per frame, with both screen axes disc spans.
   //   Least diameter scaled by device pixel ratio, since `uHeightPixels` is framebuffer's.
   gl.useProgram(program);
-  gl.uniformMatrix4fv(point_uniforms.mvp, false, data.view_projection);
+  gl.uniformMatrix4fv(point_uniforms.model_view_projection, false, data.view_projection);
   gl.uniform3f(point_uniforms.eye, data.camera_eye_x, data.camera_eye_y, data.camera_eye_z);
   gl.uniform3f(point_uniforms.forward,
     data.camera_forward_x, data.camera_forward_y, data.camera_forward_z);
@@ -187,7 +190,7 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(point_uniforms.diameter_least, DIAMETER_POINT_LEAST * ratio_pixel);
   gl.uniform1f(point_uniforms.ambient, AMBIENT_SHADE);
   gl.uniform1f(point_uniforms.depth_log, data.camera_depth_log);
-  if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_verts, vbo.point, 8);
+  if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_vertices, buffers.point, 8);
   const count_point = count_point_held;
   drawPoints(count_point, data.point_over, false);
   // Veils:
@@ -207,12 +210,12 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(uniform_disc_tangent, data.camera_tangent_half_view);
   gl.uniform1f(uniform_disc_aspect, aspect);
   gl.useProgram(program_dome);
-  gl.uniformMatrix4fv(uniform_dome_mvp, false, data.view_projection);
+  gl.uniformMatrix4fv(uniform_dome_model_view_projection, false, data.view_projection);
   gl.uniform1f(uniform_dome_depth_near, data.camera_depth_near);
   gl.uniform1f(uniform_dome_depth_log, data.camera_depth_log);
   if (!data.is_scene_held) {
-    uploadBuffer(data.disc_records, vbo.disc, 13);
-    uploadBuffer(data.dome_records, vbo.dome, 8);
+    uploadBuffer(data.disc_records, buffers.disc, 13);
+    uploadBuffer(data.dome_records, buffers.dome, 8);
   }
   gl.depthMask(false);
   drawVeilRuns(data.veil_runs, data.veil_run_over, false);
@@ -231,7 +234,7 @@ function renderFrame(now_seconds: number) {
   if (data.ribbon_over + data.ring_over + data.point_over + data.veil_run_over > 0) {
     gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program_ribbon);
-    drawRibbons(vbo.ribbon, count_ribbon, data.ribbon_over, true);
+    drawRibbons(buffers.ribbon, count_ribbon, data.ribbon_over, true);
     gl.useProgram(program_ring);
     drawRings(count_ring, data.ring_over, true);
     gl.useProgram(program);

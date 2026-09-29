@@ -81,8 +81,8 @@ export async function driveUndoDrawn(page: Page): Promise<void> {
       nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, true);
     const sleep = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
-    const stateOf = (data: FrameData): { verts: number; is_held: boolean } =>
-      ({ verts: data.point_verts.length / 11, is_held: data.is_scene_held });
+    const stateOf = (data: FrameData): { vertices: number; is_held: boolean } =>
+      ({ vertices: data.point_vertices.length / 11, is_held: data.is_scene_held });
 
     const model = nimObjectCoefficients(nimSceneHandles()[0] ?? 0);
     const before = stateOf(build());
@@ -102,10 +102,10 @@ export async function driveUndoDrawn(page: Page): Promise<void> {
   });
   report(
     'an undo made while the frame is held is drawn',
-    undone.is_held && undone.added.verts > undone.before.verts &&
-      undone.after.verts === undone.before.verts && !undone.after.is_held,
-    `held ${undone.is_held}; ${undone.before.verts} verts, ${undone.added.verts} after the ` +
-      `add, ${undone.after.verts} after the undo`,
+    undone.is_held && undone.added.vertices > undone.before.vertices &&
+      undone.after.vertices === undone.before.vertices && !undone.after.is_held,
+    `held ${undone.is_held}; ${undone.before.vertices} vertices, ` +
+      `${undone.added.vertices} after the add, ${undone.after.vertices} after the undo`,
   );
 }
 

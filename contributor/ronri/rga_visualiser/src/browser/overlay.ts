@@ -65,14 +65,14 @@ const FLOATS_MENU_WEDGE = 3;
 // `refreshOverlay` used to clear layer with innerHTML and create every marker,
 // pulse and wedge afresh -- element construction plus garbage per frame, roughly half
 // overlay row's cost while anything was selected. Now each frame *stages* what it
-// wants drawn: `stageEl` takes recycled element of right tag (stripping whatever
+// wants drawn: `stageElement` takes recycled element of right tag (stripping whatever
 // attributes last use left on it), and one `replaceChildren` at end swaps
 // layer's children in staged order -- so z-order still reads straight down staging
 // calls, and element unused this frame simply comes off DOM into pool.
 // Elements taken off layer this frame, by tag, ready for next frame's staging.
 const pool_overlay = new Map<string, SVGElement[]>();
 let staged_overlay: SVGElement[] = [];
-function stageEl(tag: string, attrs: Record<string, string | number>): SVGElement {
+function stageElement(tag: string, attrs: Record<string, string | number>): SVGElement {
   const bin = pool_overlay.get(tag);
   const element = bin !== undefined && bin.length > 0
     ? bin.pop() as SVGElement
@@ -130,7 +130,7 @@ function appendMarkerPulse(
       points.push(flatAt(flat, at + 2 * i) + ',' + flatAt(flat, at + 2 * i + 1));
     }
     at += 2 * count;
-    stageEl('polygon', {
+    stageElement('polygon', {
       points: points.join(' '), fill: fill, stroke: 'none',
     });
   }
@@ -140,7 +140,7 @@ function appendMarkerPulse(
 //   Filled in object's own ink and haloed in backdrop's colour, so letters read against
 //   whatever they stand over. Where it sits is `marker.Marker.label_at`'s decision,
 //   centred here on both axes; face is `svg#overlay text`'s in shell.html.
-//   Text set on element rather than through attributes: `stageEl` strips and sets
+//   Text set on element rather than through attributes: `stageElement` strips and sets
 //   attributes only, and recycled <text> keeps last content unless overwritten.
 //   Line's label comes as anchor on line plus direction to push it: text is measured
 //   here, where its face is, and pushed by `nimLabelClearance` so its own box clears
@@ -153,7 +153,7 @@ function appendLabel(handle: number) {
   const width = canvas.clientWidth, height = canvas.clientHeight;
   const at = nimSelectionLabelAt(handle, width, height);
   if (flatAt(at, 2) < 0.5) return;
-  const element = stageEl('text', {
+  const element = stageElement('text', {
     x: flatAt(at, 0), y: flatAt(at, 1), 'text-anchor': 'middle', 'dominant-baseline': 'central',
     fill: COLOUR_INK_CSS[nimObjectInk(handle)] ?? '',
     stroke: COLOUR_LABEL_HALO, 'stroke-width': WIDTH_LABEL_HALO,
@@ -193,7 +193,7 @@ function appendMarker(
     // Keep whole ring as <circle>; only partial one becomes arc path.
     //   Marker that is not filling draws exactly as plain ring.
     if (fraction >= 1) {
-      stageEl('circle', {
+      stageElement('circle', {
         cx: pointAt(points, 0)[0], cy: pointAt(points, 0)[1], r: radius,
         fill: 'none', stroke: stroke, 'stroke-width': WIDTH_OVERLAY_LINE,
       });
@@ -204,7 +204,7 @@ function appendMarker(
       const [centre_x, centre_y] = pointAt(points, 0);
       const turn = fraction * 2 * Math.PI;
       const end_x = centre_x + radius * Math.sin(turn), end_y = centre_y - radius * Math.cos(turn);
-      stageEl('path', {
+      stageElement('path', {
         d: 'M ' + centre_x + ',' + (centre_y - radius) +
            ' A ' + radius + ',' + radius + ' 0 ' + (fraction > 0.5 ? 1 : 0) + ',1 ' +
            end_x + ',' + end_y,
@@ -213,7 +213,7 @@ function appendMarker(
     }
   } else if (kind === MARKER_RAILS) {
     for (let i = 0; i < points.length; i += 2) {
-      stageEl('line', {
+      stageElement('line', {
         x1: pointAt(points, i)[0], y1: pointAt(points, i)[1],
         x2: pointAt(points, i + 1)[0], y2: pointAt(points, i + 1)[1],
         stroke: stroke, 'stroke-width': WIDTH_OVERLAY_LINE,
@@ -224,7 +224,7 @@ function appendMarker(
     //   Circle while it expands, screen's own rectangle once it arrives.
     //   One path for every closed outline rather than <rect> of its own, and nothing to
     //   keep in step when one of them changes.
-    stageEl(is_closed ? 'polygon' : 'polyline', {
+    stageElement(is_closed ? 'polygon' : 'polyline', {
       points: points.map((p) => p[0] + ',' + p[1]).join(' '),
       fill: 'none', stroke: stroke, 'stroke-width': WIDTH_OVERLAY_LINE,
     });
@@ -239,7 +239,7 @@ function appendMarker(
     ];
     for (const band of bands) {
       if (band.run.length === 0) continue;
-      stageEl(band.closed ? 'polygon' : 'polyline', {
+      stageElement(band.closed ? 'polygon' : 'polyline', {
         points: band.run.map((p) => p[0] + ',' + p[1]).join(' '),
         fill: 'none', stroke: stroke, 'stroke-width': WIDTH_OVERLAY_LINE,
       });
@@ -306,7 +306,7 @@ function refreshOverlay(cursor: PointLocal | null) {
       const tint = nimDragTint();
       const stroke = 'rgba(' + Math.round(flatAt(tint, 0) * 255) + ',' +
         Math.round(flatAt(tint, 1) * 255) + ',' + Math.round(flatAt(tint, 2) * 255) + ',0.85)';
-      stageEl('line', {
+      stageElement('line', {
         x1: sx, y1: sy, x2: cursor.x, y2: cursor.y,
         stroke: stroke, 'stroke-width': WIDTH_OVERLAY_LINE,
       });
@@ -319,7 +319,7 @@ function refreshOverlay(cursor: PointLocal | null) {
       if (comet.length) {
         const points = [];
         for (let i = 0; i + 1 < comet.length; i += 2) points.push(comet[i] + ',' + comet[i + 1]);
-        stageEl('polygon', {
+        stageElement('polygon', {
           points: points.join(' '), fill: stroke, stroke: 'none',
         });
       }
@@ -373,14 +373,14 @@ function appendChoiceMenu(w: number, h: number) {
     const x = flatAt(layout, at), y = flatAt(layout, at + 1);
     const is_offered = flatAt(layout, at + 2) > 0.5;
     const width = widthMenuLabel(labels[i] ?? '') + PADDING_MENU_WEDGE;
-    stageEl('rect', {
+    stageElement('rect', {
       x: x - width / 2, y: y - HEIGHT_MENU_WEDGE / 2,
       width: width, height: HEIGHT_MENU_WEDGE, rx: ROUNDING_MENU_WEDGE,
       'fill-opacity': is_offered ? ALPHA_MENU_WEDGE : ALPHA_MENU_UNOFFERED,
       'stroke-width': WIDTH_MENU_WEDGE_BORDER,
       class: i === highlighted ? 'menu-wedge on' : 'menu-wedge',
     });
-    const text = stageEl('text', {
+    const text = stageElement('text', {
       x: x, y: y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
       // Unoffered wedge is dimmed rather than dropped:
       //   gap where wedge should be is unreadable, and point of fixed compass is that choice never
@@ -391,7 +391,7 @@ function appendChoiceMenu(w: number, h: number) {
     text.textContent = labels[i] ?? '';
   }
   // Middle is where nothing is chosen, and way out of menu that opened unasked.
-  stageEl('circle', {
+  stageElement('circle', {
     cx: flatAt(centre, 0), cy: flatAt(centre, 1),
     r: RADIUS_MENU_CENTRE,
     fill: 'none', class: 'menu-centre', 'stroke-width': WIDTH_OVERLAY_LINE,

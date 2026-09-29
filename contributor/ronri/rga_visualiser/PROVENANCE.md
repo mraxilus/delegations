@@ -489,7 +489,7 @@ prompt already open, ends the save; any other refusal falls through to the page'
 The host saves only the extensions on its list, and `.rgascene` is not one. Loading opens the first
 `.rgascene` entry of a zip, stored or deflated. Rejected: a JSON scene, a second format to read.
 
-*Checked.* Verified by a cold run. `clean` removes `build`, `bin` and `nimcache`. Then `drive`
+*Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
 fetches every face, builds both front-ends, and drives them with no step run by hand, which is the
 case of the runner itself. A second run fetches nothing.
 
@@ -813,10 +813,10 @@ remains is a flat reservation. The lever is linear, at about 1.15 MiB of address
 of JS heap for each step. `BYTES_MEMORY_TOTAL` counts it, because a figure that leaves out its
 own largest term is worse than no figure.
 
-The LZW dictionary of GIF is a fixed open-addressed hash table, with `CAPACITY_DICT` at 8192 and
-multiplicative hashing after Knuth. It is not a third arena, because it probes at random within a
-frame rather than appends by bump alone. **LZW early change**: the format widens the code size
-one symbol earlier on a decode than on an encode. A decoder written from scratch in the suite
+The LZW dictionary of GIF is a fixed open-addressed hash table, with `CAPACITY_DICTIONARY` at 8192
+and multiplicative hashing after Knuth. It is not a third arena, because it probes at random within
+a frame rather than appends by bump alone. **LZW early change**: the format widens the code size one
+symbol earlier on a decode than on an encode. A decoder written from scratch in the suite
 round-trips a real frame past the point of growth.
 
 *Checked.* Verified by `suites.nim`: the swap pair keeps the bytes of the last frame, and the GIF
@@ -2367,10 +2367,11 @@ slope. 60, 360 and 5038 objects cost 1.3, 1.7 and 3.0 s to build. A frame build 
 12.8 ms, and an edit costs 9.1, 8.5 and 8.0 ms under SwiftShader. **Each size lands on its count
 exactly**: the star walk passes over a system too large for the room left, and keeps walking.
 
-**To scale: one world unit is one astronomical unit.** `KILOMETRES_PER_AU` is 149,597,870.7, and a
-parsec is `AU_PER_PARSEC` 206,264.806 of them. Every distance is the real one, and every drawn
-radius is the real radius. `radiusDrawnOf` divides kilometres by the unit and does nothing else,
-so Sol is 0.00465 units wide, Earth 0.0000426, and Phobos 0.000000074.
+**To scale: one world unit is one astronomical unit.** `KILOMETRES_PER_ASTRONOMICAL_UNIT` is
+149,597,870.7, and a parsec is `ASTRONOMICAL_UNITS_PER_PARSEC` 206,264.806 of them. Every distance
+is the real one, and every drawn radius is the real radius. `radiusDrawnOf` divides kilometres by
+the unit and does nothing else, so Sol is 0.00465 units wide, Earth 0.0000426, and Phobos
+0.000000074.
 
 Sol stands at the origin, with its ecliptic flat in the plane `z = 0`. `sol` is
 `1 𝐞₄`, every planet has z exactly 0, Neptune is 30.05 units out, and Proxima is 268,000.
@@ -2837,12 +2838,17 @@ layout compiles as a `func`. The mark is on all 130-odd bindings in `gui`, `open
 `image` and the `importjs` lines of the bridge. Under it, 51 funcs failed to compile and went back
 to `proc`. A `func` in this tree means the compiler checked that it reaches no effect.
 
+**A layman knows these acronyms, so they stay in names (V.9).** They are UI, RGB and RGBA, GIF and
+PNG, FOV, GL, GUI, DOM and fps, beside those the Architect kept on repository issue 305. The unit
+symbols ms, px, kb and mb join the jargon list of V.6. The Architect ruled both on pull request 322.
+Every other acronym that a field or a library coined is spelled out in its name. So are the
+astronomical unit, the cyclic redundancy check, Lempel–Ziv–Welch and model-view-projection.
+
 **Deliberately left as they are**, each against a rule that the reader might expect to see applied:
 
 - the binding names in `opengl.nim` and `sdl3.nim` keep the own verbs of the foreign API. A reader
   greps the SDL and GL references by those names, and the bare-noun rule of V.3 is for this
   project's own properties;
-- lookup tables at module scope stay lowercase `lut_…`, under V.5;
 - `nimCameraPivot`, `nimOverlayMetrics`, `nimInkColor` and the scene-listing exports return
   sequences, because something asks them on the UI tick or once, rather than for each frame;
 - the FFI-boundary cases of the bridge translate through one `SLOT_NONE` at the return of each

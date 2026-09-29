@@ -562,9 +562,9 @@ void guiPlotLines(const char* label, const float* values, int count, int offset,
 //   handles are occupied or which palette live one is drawn in.
 void guiPoolBar(const float* colours, int count, float cell_size) {
   const float spacing = 2.0f;
-  const float avail = ImGui::GetContentRegionAvail().x;
-  const int fitted = (int)((avail + spacing) / (cell_size + spacing));
-  const int per_row = avail > cell_size ? (fitted < 1 ? 1 : fitted) : count;
+  const float available = ImGui::GetContentRegionAvail().x;
+  const int fitted = (int)((available + spacing) / (cell_size + spacing));
+  const int per_row = available > cell_size ? (fitted < 1 ? 1 : fitted) : count;
   const int rows = (count + per_row - 1) / per_row;
 
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -579,7 +579,7 @@ void guiPoolBar(const float* colours, int count, float cell_size) {
         ImVec4(colours[i * 3], colours[i * 3 + 1], colours[i * 3 + 2], 1.0f));
     draw_list->AddRectFilled(top_left, bottom_right, colour, 2.0f);
   }
-  ImGui::Dummy(ImVec2(avail, rows * (cell_size + spacing)));
+  ImGui::Dummy(ImVec2(available, rows * (cell_size + spacing)));
 }
 
 // Choose which layer overlay draw lands on.

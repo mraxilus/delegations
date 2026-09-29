@@ -35,7 +35,7 @@ function populateOperations() {
   }
   // Fall back to new list's first option where previous selection's index is absent.
   //   Switching arity can leave it absent from new, filtered option list, and
-  //   opSelect.value must not point at now-nonexistent <option>.
+  //   picker_operation.value must not point at now-nonexistent <option>.
   if (picker_operation.querySelector('option[value="' + value_previous + '"]')) {
     picker_operation.value = value_previous;
   } else {

@@ -196,7 +196,7 @@ func spanPerpendicular*(anchor: Position, normal: Direction): Option[(Direction,
   ##   None only where library's antiduals fail to resolve, which no unit `normal` causes.
 
   # Pick world axis least aligned with normal, so joins below stay well conditioned.
-  const AXES_WORLD = [
+  const axes_world = [
     Direction(x: 1, y: 0, z: 0),
     Direction(x: 0, y: 1, z: 0),
     Direction(x: 0, y: 0, z: 1),
@@ -205,7 +205,7 @@ func spanPerpendicular*(anchor: Position, normal: Direction): Option[(Direction,
   var index_least = 0
   for i in 1 .. 2:
     if alignments[i] < alignments[index_least]: index_least = i
-  let axis_world = AXES_WORLD[index_least]
+  let axis_world = axes_world[index_least]
 
   # Span plane through anchor holding both helper axis and normal.
   #   Its own normal is perpendicular to both, so it lies inside plane `normal` spans.

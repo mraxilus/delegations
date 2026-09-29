@@ -514,7 +514,7 @@ function populateSelectionMenuOptions(arity: number) {
   }
 }
 
-function openSelectionMenuOp() {
+function openSelectionMenuOperation() {
   // "apply" itself never moves -- it stays leftmost element of one single row.
   //   throughout; this only animates picker+back group open immediately to its
   //   right (see .selection-menu-reveal's own max-width transition). hide/delete step
@@ -541,7 +541,7 @@ function previewSelectionMenuOperation() {
   nimPreviewOperation(parseInt(menu_selection_select.value, 10), first, second);
 }
 
-function closeSelectionMenuOp() {
+function closeSelectionMenuOperation() {
   // Nothing is being chosen any more, so nothing is being previewed.
   //   Drawer's own section may still be open behind this menu, so ask it to speak up again rather
   //   than leaving view blank while control that has something to say is on screen.
@@ -564,7 +564,7 @@ function refreshSelectionMenu(position_local: PointLocal | null) {
   menu_selection_hide.textContent = visibilityLabel(
     !nimSelectionAllHidden(), Wording.NamePickHide, Wording.NamePickShow,
   );
-  closeSelectionMenuOp(); // Any fresh selection change resets picker closed.
+  closeSelectionMenuOperation(); // Any fresh selection change resets picker closed.
   if (position_local) {
     positionSelectionMenuAt(position_local);
   } else {
@@ -582,7 +582,7 @@ function isSelectionMenuShown() {
 
 function hideSelectionMenu() {
   menu_selection.classList.remove('show');
-  closeSelectionMenuOp();
+  closeSelectionMenuOperation();
   arity_menu_last = -1;
   offset_menu_selection = null;
 }
@@ -655,7 +655,7 @@ menu_selection_apply.addEventListener('click', () => {
   //   Second press commits with whatever operation is currently selected, instead of
   //   separate "go" button appearing once picker opens.
   if (!menu_selection_reveal.classList.contains('open')) {
-    openSelectionMenuOp();
+    openSelectionMenuOperation();
     return;
   }
   const n = handles_selection.length;
@@ -677,7 +677,7 @@ menu_selection_edit.addEventListener('click', () => {
   hideSelectionMenu(); // Panel owns interaction now; pick itself stays.
 });
 
-menu_selection_back.addEventListener('click', closeSelectionMenuOp);
+menu_selection_back.addEventListener('click', closeSelectionMenuOperation);
 
 menu_selection_hide.addEventListener('click', () => {
   // Whichever way button reads is what it does, so objects it hid can be brought.

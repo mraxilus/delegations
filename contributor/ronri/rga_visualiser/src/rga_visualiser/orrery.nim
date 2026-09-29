@@ -8,8 +8,8 @@
 ##   `ScaleOrrery.Nearest` (60), `Neighbourhood` (360, default) and `Catalogue` (5038,
 ##   two handles short of pool). Every one is same construction truncated at different depth.
 ## Also claim about world, made to scale.
-##   One world unit is one astronomical unit (`KILOMETRES_PER_AU`). Every distance is real
-##   distance and every drawn radius real radius: Sol 0.00465 units wide, Earth one unit
+##   One world unit is one astronomical unit (`KILOMETRES_PER_ASTRONOMICAL_UNIT`). Every distance
+##   is real distance and every drawn radius real radius: Sol 0.00465 units wide, Earth one unit
 ##   out, Proxima 268,000 units out. Nothing is compressed to preference.
 ##   Every system but ours is real star known to carry planets, at real distance in real
 ##   direction, carrying planets it really has at real semi-major axes.
@@ -111,12 +111,12 @@ const
     ##   Not lifted to keep southern systems above ground; they stand below it, where they
     ##   are.
 
-  KILOMETRES_PER_AU* = 149_597_870.7
+  KILOMETRES_PER_ASTRONOMICAL_UNIT* = 149_597_870.7
     ## Fix how many kilometres one astronomical unit is, IAU 2012 definition.
     ##   One world unit is one astronomical unit: every radius in kilometres and every
     ##   orbit in kilometres is divided by this and nothing else.
 
-  AU_PER_PARSEC* = 206_264.806
+  ASTRONOMICAL_UNITS_PER_PARSEC* = 206_264.806
     ## Fix how many astronomical units one parsec is, 648,000 over pi.
     ##   Every star's distance in parsecs is multiplied by this and nothing else.
 
@@ -399,13 +399,13 @@ func radiusDrawnOf*(kilometres: float): float =
   ##   Earth 0.0000426, Phobos 0.000000074. Every body is under least dot until reader
   ##   dollies close enough to resolve it, and then it is its real size.
   ##   Exported so suite pins bodies against it.
-  kilometres/KILOMETRES_PER_AU
+  kilometres/KILOMETRES_PER_ASTRONOMICAL_UNIT
 
 
 func radiusOfMoon(moon: SolMoon): float =
   ## Report how far moon of `MOONS` rings its planet's centre in scene, in world units.
   ##   Real semi-major axis in astronomical units, from parent's centre, as it is measured.
-  moon.kilometres_orbit/KILOMETRES_PER_AU
+  moon.kilometres_orbit/KILOMETRES_PER_ASTRONOMICAL_UNIT
 
 
 func placedOf*(star: Star): int =
@@ -415,7 +415,7 @@ func placedOf*(star: Star): int =
   ##   Exported so suite can count what is left out.
   result = 0
   for which in star.first ..< star.first + star.planets:
-    if PLANETS[which].au > 0.0: inc result
+    if PLANETS[which].axis_semi_major > 0.0: inc result
 
 
 static:
@@ -492,7 +492,7 @@ func systemAt(star: Star): System =
   ##     stated as arbitrary.
   let toward = toEcliptic(directionEquatorial(star.ascension, star.declination))
   System(
-    reach: star.parsecs*AU_PER_PARSEC,
+    reach: star.parsecs*ASTRONOMICAL_UNITS_PER_PARSEC,
     bearing: arctan2(toward.y, toward.x),
     rise: arcsin(clamp(toward.z, -1.0, 1.0)),
     spin: star.declination,
@@ -664,8 +664,8 @@ func constructOrrery*(
     var which_placed = 0
     for which in 0 ..< star.planets:
       let planet = PLANETS[star.first + which]
-      if planet.au > 0.0:
-        let place = ringed(place_sun, along, across, planet.au,
+      if planet.axis_semi_major > 0.0:
+        let place = ringed(place_sun, along, across, planet.axis_semi_major,
           angleRing(system.spin, which_placed, count_placed))
         inc which_placed
         scene.addObject(

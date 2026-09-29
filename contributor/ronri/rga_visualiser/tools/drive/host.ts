@@ -20,7 +20,7 @@ interface HostStandIn {
 }
 
 /** CRC-32 as zip computes it, written out here so page's own is not what checks itself. */
-function crcOf(bytes: Uint8Array): number {
+function cyclicRedundancyCheckOf(bytes: Uint8Array): number {
   let crc = 0xFFFFFFFF;
   for (const byte of bytes) {
     crc ^= byte;
@@ -38,7 +38,9 @@ function entryOnly(bytes: Uint8Array): { name: string; data: Uint8Array } | stri
   const length_name = view.getUint16(26, true);
   const start = 30 + length_name + view.getUint16(28, true);
   const data = bytes.subarray(start, start + size);
-  if (crcOf(data) !== view.getUint32(14, true)) return 'checksum does not match contents';
+  if (cyclicRedundancyCheckOf(data) !== view.getUint32(14, true)) {
+    return 'checksum does not match contents';
+  }
   const end = bytes.length - 22;
   if (end < 0 || view.getUint32(end, true) !== 0x06054B50) return 'no end record';
   if (view.getUint16(end + 10, true) !== 1) return 'more than one entry';

@@ -12,21 +12,21 @@ when not defined(js):
     var buffer_arena: array[1024*1024, byte]
 
     test "written file is a PNG carrying the size it was given":
-      const (WIDTH, HEIGHT) = (37, 21)
-      var pixels = newSeq[uint8](WIDTH*HEIGHT*3)
+      const (width, height) = (37, 21)
+      var pixels = newSeq[uint8](width*height*3)
       for i in 0 ..< len(pixels): pixels[i] = uint8((i*7) mod 256)
 
       var test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite.png"
-      writePng(test_arena, path, WIDTH, HEIGHT, pixels)
+      writePng(test_arena, path, width, height, pixels)
       defer: removeFile(path)
       let document = readFile(path)
 
       check len(document) > 8
       check document[0 .. 7] == "\x89PNG\r\n\x1A\n"
       check document[12 .. 15] == "IHDR"
-      check document[16 .. 19] == "\0\0\0" & char(WIDTH)
-      check document[20 .. 23] == "\0\0\0" & char(HEIGHT)
+      check document[16 .. 19] == "\0\0\0" & char(width)
+      check document[20 .. 23] == "\0\0\0" & char(height)
       check document[24] == char(8) # Bit depth.
       check document[25] == char(2) # Colour type: truecolour.
       check document.find("IDAT") > 0
@@ -34,12 +34,12 @@ when not defined(js):
 
 
     test "chunk lengths and checksums agree end to end":
-      const (WIDTH, HEIGHT) = (16, 9)
+      const (width, height) = (16, 9)
       var
-        pixels = newSeq[uint8](WIDTH*HEIGHT*3)
+        pixels = newSeq[uint8](width*height*3)
         test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite_chunks.png"
-      writePng(test_arena, path, WIDTH, HEIGHT, pixels)
+      writePng(test_arena, path, width, height, pixels)
       defer: removeFile(path)
       let document = readFile(path)
 
@@ -61,26 +61,26 @@ when not defined(js):
     var buffer_arena: array[1024*1024, byte]
 
     test "written file carries the size and frame count it was given":
-      const (WIDTH, HEIGHT) = (12, 8)
+      const (width, height) = (12, 8)
       var
-        frames = newSeq[uint8](3*WIDTH*HEIGHT*3)
+        frames = newSeq[uint8](3*width*height*3)
         test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite.gif"
-      writeGif(test_arena, path, WIDTH, HEIGHT, frames, 3, 8)
+      writeGif(test_arena, path, width, height, frames, 3, 8)
       defer: removeFile(path)
       let document = readFile(path)
 
       check document[0 .. 5] == "GIF89a"
-      check uint8(document[6]) == uint8(WIDTH) and uint8(document[7]) == 0
-      check uint8(document[8]) == uint8(HEIGHT) and uint8(document[9]) == 0
+      check uint8(document[6]) == uint8(width) and uint8(document[7]) == 0
+      check uint8(document[8]) == uint8(height) and uint8(document[9]) == 0
       check document[^1] == char(0x3B)
 
       # Walk every frame's own blocks by their own lengths, landing exactly on.
       #   trailer proves each frame's sub-blocks are sound, exactly as PNG test does.
       # Signature, logical screen, colour table, application extension.
-      const HEADER_LENGTH = 6 + 7 + 256*3 + 19
+      const header_length = 6 + 7 + 256*3 + 19
       var
-        offset = HEADER_LENGTH
+        offset = header_length
         count_frames = 0
       while document[offset] == '\x21':
         offset += 8 # Graphic Control Extension is fixed length.
@@ -107,16 +107,16 @@ when not defined(js):
       ##     dictionary always trails encoder's by one entry it has not yet been told
       ##     about.
       const
-        BITS_CODE = 8
-        COUNT_TABLE = 1 shl BITS_CODE
-        CODE_CLEAR = COUNT_TABLE
-        CODE_END = CODE_CLEAR + 1
-        CODE_MAX = 4096
+        bits_code = 8
+        count_table = 1 shl bits_code
+        code_clear = count_table
+        code_end = code_clear + 1
+        code_max = 4096
       var
         position_bit = 0
-        dict: Table[int, seq[uint8]]
-        next_code = CODE_END + 1
-        width = BITS_CODE + 1
+        dictionary: Table[int, seq[uint8]]
+        next_code = code_end + 1
+        width = bits_code + 1
         prev: seq[uint8]
         has_prev = false
 
@@ -129,22 +129,22 @@ when not defined(js):
 
       while true:
         let code = readCode(width)
-        if code == CODE_CLEAR:
-          dict.clear()
-          next_code = CODE_END + 1
-          width = BITS_CODE + 1
+        if code == code_clear:
+          dictionary.clear()
+          next_code = code_end + 1
+          width = bits_code + 1
           has_prev = false
           continue
-        if code == CODE_END: break
+        if code == code_end: break
 
         var entry: seq[uint8]
-        if code < COUNT_TABLE: entry = @[uint8(code)]
-        elif dict.hasKey(code): entry = dict[code]
+        if code < count_table: entry = @[uint8(code)]
+        elif dictionary.hasKey(code): entry = dictionary[code]
         elif code == next_code and has_prev: entry = prev & @[prev[0]]
         else: doAssert false, &"Bad LZW code {code}."
         result.add(entry)
-        if has_prev and next_code < CODE_MAX:
-          dict[next_code] = prev & @[entry[0]]
+        if has_prev and next_code < code_max:
+          dictionary[next_code] = prev & @[entry[0]]
           inc next_code
           if next_code >= (1 shl width) and width < 12: inc width
         prev = entry
@@ -156,9 +156,9 @@ when not defined(js):
       ##   Packs bits real reader disagrees with, corrupting every code from there on.
       ##   Flat or small image never reaches dictionary sizes where that bites, so this
       ##   drives enough distinct colour pairs to grow code width at least once.
-      const (WIDTH, HEIGHT) = (64, 64)
-      var frame = newSeq[uint8](WIDTH*HEIGHT*3)
-      for i in 0 ..< WIDTH*HEIGHT:
+      const (width, height) = (64, 64)
+      var frame = newSeq[uint8](width*height*3)
+      for i in 0 ..< width*height:
         frame[i*3] = uint8((i*173) mod 256)
         frame[i*3 + 1] = uint8((i*97) mod 256)
         frame[i*3 + 2] = uint8((i*211) mod 256)
@@ -166,20 +166,20 @@ when not defined(js):
       # `writeGif` takes rows bottom-up and writes them top-down, exactly as `writePng`.
       #   does; build expected indices in that same written order, not source's.
       var expected: seq[uint8]
-      for row_top in 0 ..< HEIGHT:
-        let row_source = HEIGHT - 1 - row_top
-        for column in 0 ..< WIDTH:
-          let at = (row_source*WIDTH + column)*3
+      for row_top in 0 ..< height:
+        let row_source = height - 1 - row_top
+        for column in 0 ..< width:
+          let at = (row_source*width + column)*3
           expected.add(paletteIndex(frame[at], frame[at + 1], frame[at + 2]))
 
       var test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite_growth.gif"
-      writeGif(test_arena, path, WIDTH, HEIGHT, frame, 1, 8)
+      writeGif(test_arena, path, width, height, frame, 1, 8)
       defer: removeFile(path)
       let document = readFile(path)
 
-      const HEADER_LENGTH = 6 + 7 + 256*3 + 19
-      var offset = HEADER_LENGTH + 8 + 10 # Past Graphic Control Extension and Image Descriptor.
+      const header_length = 6 + 7 + 256*3 + 19
+      var offset = header_length + 8 + 10 # Past Graphic Control Extension and Image Descriptor.
       let width_code = uint8(document[offset])
       check width_code == 8
       offset += 1
@@ -193,5 +193,5 @@ when not defined(js):
         offset += length
 
       let decoded = decodeGifFrame(sub_blocks)
-      check len(decoded) == WIDTH*HEIGHT
+      check len(decoded) == width*height
       check decoded == expected

@@ -73,7 +73,8 @@ type Wording* = enum
   TipRowVisible, TipRowRemove, TipRowRadius,
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
-  TipDiagFrames, TipDiagVsync, TipDiagPermanent, TipDiagFrame, TipDiagPool, TipDiagScene,
+  TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsPermanent, TipDiagnosticsFrame,
+  TipDiagnosticsPool, TipDiagnosticsScene,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
   TipMenuSceneFile, TipMenuImageFile, TipMenuSaveScene, TipMenuSaveImage, TipMenuLoadScene,
@@ -86,8 +87,8 @@ type Wording* = enum
   NameApplySecond, NameApplyAct,
   NameViewMotor, NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewSpeed,
   NameViewLens,
-  NameDiagFrame, NameDiagVsync, NameDiagMemory, NameDiagPermanent, NameDiagFrameArena,
-  NameDiagPool, NameDiagTotal,
+  NameDiagnosticsFrame, NameDiagnosticsVsync, NameDiagnosticsMemory, NameDiagnosticsPermanent,
+  NameDiagnosticsFrameArena, NameDiagnosticsPool, NameDiagnosticsTotal,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
@@ -155,22 +156,22 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipViewLens: "Lens angle; smaller looks through a telephoto, larger through a wide angle.",
 
   # Diagnostics: what this frame cost and what storage it stands in.
-  TipDiagFrames:
+  TipDiagnosticsFrames:
     "Milliseconds per drawn frame, oldest at the left and most recent at the right. An fps " &
     "average can hide an occasional slow frame; a spike here cannot hide.",
-  TipDiagVsync:
+  TipDiagnosticsVsync:
     "Uncheck to see this build's own uncapped cost rather than the display's own refresh " &
     "rate; the reading below settles over about a second after any change.",
-  TipDiagPermanent:
+  TipDiagnosticsPermanent:
     "Never freed until the process exits: the pixel-export buffer, sized for the largest " &
     "frame this build allows, and every frame of a storyboard's own GIF.",
-  TipDiagFrame:
+  TipDiagnosticsFrame:
     "Reset after every PNG or GIF frame it backs, so it reads empty almost any time you " &
     "would look here; the bar instead holds the largest single expansion it has served.",
-  TipDiagPool:
+  TipDiagnosticsPool:
     "One cell per object handle, in the colour of whatever object holds it; dark means it's " &
     "free and will be handed to the next one you add, most recently freed first.",
-  TipDiagScene:
+  TipDiagnosticsScene:
     "Scene is one fixed block sized for every handle up front, not allocated one object at a " &
     "time: `allocated` is that whole block, `used` is however much of it carries an object.",
 
@@ -238,13 +239,13 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameViewLens: "field of view",
 
   # Diagnostics.
-  NameDiagFrame: "frame time",
-  NameDiagVsync: "vsync",
-  NameDiagMemory: "memory",
-  NameDiagPermanent: "permanent arena",
-  NameDiagFrameArena: "frame arena",
-  NameDiagPool: "object pool",
-  NameDiagTotal: "total",
+  NameDiagnosticsFrame: "frame time",
+  NameDiagnosticsVsync: "vsync",
+  NameDiagnosticsMemory: "memory",
+  NameDiagnosticsPermanent: "permanent arena",
+  NameDiagnosticsFrameArena: "frame arena",
+  NameDiagnosticsPool: "object pool",
+  NameDiagnosticsTotal: "total",
 
   # Menu that opens over whatever is picked.
   NamePickApply: "apply",

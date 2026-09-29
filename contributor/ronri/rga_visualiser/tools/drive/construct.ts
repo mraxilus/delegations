@@ -21,7 +21,7 @@ async function fromHome(page: Page): Promise<void> {
 }
 
 /** Drive two fingers moving together, which is pan and only pan. */
-export async function driveTwoFingerPan(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveTwoFingerPan(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   // Gesture before this ends in tap; finger it left standing would make three pointers of
@@ -32,7 +32,7 @@ export async function driveTwoFingerPan(page: Page, cdp: CDPSession): Promise<vo
     down.length === 0, `ids ${down.join(', ') || 'none'}`,
   );
   const before = await readCamera(page);
-  await pinch(page, cdp, { x: 400, y: 400 }, { x: 700, y: 500 }, 80, 80);
+  await pinch(page, devtools, { x: 400, y: 400 }, { x: 700, y: 500 }, 80, 80);
   const after = await readCamera(page);
 
   report(
@@ -54,7 +54,7 @@ export async function driveTwoFingerPan(page: Page, cdp: CDPSession): Promise<vo
 }
 
 /** Drive finger dragging one object onto another, which builds third. */
-export async function driveTouchConstruct(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveTouchConstruct(page: Page, devtools: CDPSession): Promise<void> {
   await fromHome(page);
   const handles = await page.evaluate(() => nimSceneHandles());
   const first = handles[1];
@@ -71,7 +71,7 @@ export async function driveTouchConstruct(page: Page, cdp: CDPSession): Promise<
     report('both objects stand on screen', false, 'one had no pixel');
     return;
   }
-  await dragFinger(page, cdp, from, onto);
+  await dragFinger(page, devtools, from, onto);
   const after = await page.evaluate(() => nimSceneCount());
   report(
     'a finger dragging one object onto another builds a third',
@@ -85,7 +85,7 @@ export async function driveTouchConstruct(page: Page, cdp: CDPSession): Promise<
  *  drag then orbits and builds nothing, and reader zooms in to separate them. Long press
  *  over same crowd still selects, since still finger competes with nothing.
  */
-export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveCrowd(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   const handles = await page.evaluate(() => nimSceneHandles());
@@ -108,7 +108,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
   const from = await pixelOf(page, first);
   const onto = await pixelOf(page, second);
   if (from !== null && onto !== null) {
-    await dragFinger(page, cdp, from, onto);
+    await dragFinger(page, devtools, from, onto);
     const count_after = await page.evaluate(() => nimSceneCount());
     const azimuth_after = await page.evaluate(() => nimCameraAzimuth());
     report(
@@ -124,7 +124,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
   await settleCamera(page);
   const still = await pixelOf(page, first);
   if (still !== null) {
-    await tapAt(page, cdp, still[0] ?? 0, still[1] ?? 0, 1400);
+    await tapAt(page, devtools, still[0] ?? 0, still[1] ?? 0, 1400);
     const count = await page.evaluate(() => nimSelectionCount());
     report(
       'a long press over a crowd still selects what it is over',
@@ -148,7 +148,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
  *  may not veto release. Check holds wheel really did open, so slower dwell cannot turn
  *  this into second copy of quick-lift check.
  */
-export async function drivePausedDrag(page: Page, cdp: CDPSession): Promise<void> {
+export async function drivePausedDrag(page: Page, devtools: CDPSession): Promise<void> {
   await fromHome(page);
   const handles = await page.evaluate(() => nimSceneHandles());
   const first = handles[1];
@@ -160,12 +160,12 @@ export async function drivePausedDrag(page: Page, cdp: CDPSession): Promise<void
   const onto = await pixelOf(page, second);
   if (from === null || onto === null) return;
 
-  await dragFinger(page, cdp, from, onto, { lift: false });
+  await dragFinger(page, devtools, from, onto, { lift: false });
   // Wall time, deliberately: how long finger rests is gesture under test, and waiting on
   //   wheel instead would assert what check below is asking.
   await page.waitForTimeout(1100);
   const is_wheel_open = await page.evaluate(() => nimDragMenuOpen());
-  await dragFinger(page, cdp, onto, onto, { press: false });
+  await dragFinger(page, devtools, onto, onto, { press: false });
   await waitFrames(page, 2);
 
   const after = await page.evaluate(() => nimSceneCount());

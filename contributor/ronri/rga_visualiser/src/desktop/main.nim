@@ -132,7 +132,7 @@ const
   DIRECTORY_FACES* {.define: "visualiser.directory_faces".} = "../build/fonts"
     ## Directory shipped faces sit in, relative to binary rather than to any machine.
     ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
-    ##   `bin/` sits beside `build/` -- so binary and faces move together and neither is
+    ##   `binaries/` sits beside `build/` -- so binary and faces move together and neither is
     ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
   FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
@@ -1413,8 +1413,8 @@ const KEYS_DRIVEN = [
 proc driveKeys(count_drawn: int) =
   ## Push one scripted keyboard step per frame onto SDL's queue, for `--drive-keys`.
   ##   Posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
-  const FRAME_FIRST = 3 # Past startup, so first frame's layout has settled.
-  let step = count_drawn - FRAME_FIRST
+  const frame_first = 3 # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
   if step notin 0 ..< len(KEYS_DRIVEN): return
   let scripted = KEYS_DRIVEN[step]
   if scripted.pressed.isNone: return
