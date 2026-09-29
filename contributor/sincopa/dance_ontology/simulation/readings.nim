@@ -203,9 +203,10 @@ proc physics*(directory = HERE): string = stamp(directory, LEAVING)
 
 proc keptReadings*(path = KEPT_READINGS): Readings =
   ## Readings as kept, or none where file is missing or stamp is other.
+  ##   Stamp is read before shape: readings of other physics may be of other shape.
   if not fileExists(path): return
-  let got = parseFile(path).jsonTo(Readings)
-  if got.stamp == physics(): got else: Readings()
+  let node = parseFile(path)
+  if node{"stamp"}.getStr == physics(): node.jsonTo(Readings) else: Readings()
 
 proc keep*(readings: Readings; path = KEPT_READINGS) =
   ## Write readings, sorted by key so file changes only where readings do.

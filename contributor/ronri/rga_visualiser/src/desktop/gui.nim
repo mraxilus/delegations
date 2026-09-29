@@ -27,7 +27,7 @@ import ./sdl3
 # Allow caller to point at Dear ImGui checkout elsewhere.
 #   E.g. `--define:visualiser.path_imgui=/usr/src/imgui`.
 const
-  PATH_IMGUI* {.define: "visualiser.path_imgui".} = "../../deps/imgui"
+  PATH_IMGUI* {.define: "visualiser.path_imgui".} = "../../dependencies/imgui"
 
   PATH_IMGUI_ROOTED =
     if isAbsolute(PATH_IMGUI): PATH_IMGUI

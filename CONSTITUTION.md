@@ -4,8 +4,8 @@ You write code in the style of one programmer: a reference document that also ru
 rule below is a decision already made. Apply it. Where a task forces you to break one, say so
 and write down the cost.
 
-The examples are Nim, taken from a reference library for geometric algebra. Transfer the
-decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim. `EXAMPLES.md`
+The examples are Nim, in the vocabulary of a reference library for geometric algebra. Transfer
+the decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim. `EXAMPLES.md`
 holds longer worked examples, named by the rule that each one shows. Read one where a rule
 alone does not settle a case.
 
@@ -25,9 +25,8 @@ alone does not settle a case.
    prefer. Record the choice with its cost.
 
 Five mechanisms are gated: the bootstrap diagram (I.5), the façade (I.6), generation (II.4),
-notation (III.1) and fixed storage (IV.6).
-Where the condition of a gate holds, the mechanism is mandatory. Where it does not hold, to
-use the mechanism is cargo cult.
+notation (III.1) and fixed storage (IV.6). Where the condition of a gate holds, the mechanism
+is mandatory. Where it does not hold, to use the mechanism is cargo cult.
 
 ## Article I: Code is the reference document
 
@@ -205,7 +204,7 @@ static:
   doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
+for slot in 0 ..< pool.bound:  # bound, never HANDLES_MAX
 ```
 
 ## Article V: Names form an ordered system
@@ -252,21 +251,21 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
 8. Name every landmark index of a domain as an alias on its type (`Basis.origin`,
    `Grade.high`), and never write a bare index. Where the landmark depends on the
    configuration, the alias resolves it, so that no caller branches.
-
 9. A name that joins symbols is an abbreviation too (`aa`, `xy`). An acronym stays only where a
    layman knows it; one that a field or a library coined is spelled out. A path is a name, and
    follows this article: a directory and a file spell their words in full, a test file among
    them.
 10. A binding inside the block where a module runs as a program is a local of that block, and
     takes the local case. A global never shares its word with a type, because a reader, or a host
-    that compares names loosely, reads `DRAWING` and `Drawing` as one. A qualifier keeps them
-    apart (`DRAWING_SHOWN`).
+    that compares names loosely, reads `ALGEBRA` and `Algebra` as one. A qualifier keeps them
+    apart (`ALGEBRA_DEFAULT`).
+
 ```nim
 BasisDigits                 # type
 constructMetricExomorphism  # callable
 metric_exomorphism          # local
 is_degenerate               # boolean proposition
-LUT_GRADE_BY_BASIS          # lookup table, and a module constant
+LUT_GRADE_BY_BASIS          # lookup table, and module constant
 CAYLEYS_WEDGE               # module constant
 ```
 
@@ -349,14 +348,16 @@ func multiplyExterior(a, b: BasisSigned): ... =
    the spread of unchanged functions. Then confirm it on the whole (VII.5).
 
 ```nim
-template r: untyped = records[i]  # alias; `let r = records[i]` deep-copies on JS backend
+template m: untyped = MULTIVECTORS[i]  # alias; `let m = MULTIVECTORS[i]` deep-copies on JS backend
 
-func colour*(ink: Ink): lent Rgba = LUT_RGBA_BY_INK[ink]
-  ## Read ink's display colour.
-  ##   `lent` saves copy only when read inline; `let c = ink.colour` copies again (read
-  ##   in emitted JS).
+func elements*(m: Multivector): lent array[Basis, float] = m.elements
+  ## Read elements of multivector.
+  ##   `lent` saves copy only when read inline; `let e = m.elements` copies again (read in
+  ##   emitted JS).
 
-if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel reads it
+func `∧`*(s: float; m: Multivector): Multivector {.inline, noinit.} =  # every element written
+
+if is_tallying: cost.mark = cpuTime()  # instrument runs only while report reads it
 ```
 
 ## Article VIII: The notebook is honest
