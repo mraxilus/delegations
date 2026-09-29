@@ -14,11 +14,11 @@
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
 ##   | drive    | fetch faces and browser, build page, drive it, report every check      |
-##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `bin/`       |
+##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `binaries/`  |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
 ##   | system   | print system packages build needs, one per line, for caller to install |
-##   | clean    | remove `build`, `bin` and `nimcache`                                   |
+##   | clean    | remove `build`, `binaries` and `nimcache`                              |
 ##   |----------|-----------------------------------------------------------------------|
 ##   Everything lands under `build/`, which root `.gitignore` covers at any depth.
 ##   Exit: 0 done, 1 command failed, 2 usage error.
@@ -52,7 +52,7 @@ import ../src/rga_visualiser/wording
 const
   BUILD = "build"
     ## Directory every product lands in.
-  BIN = "bin"
+  BINARIES = "binaries"
     ## Directory compiled binaries land in.
   BUILD_BROWSER = BUILD / "browser"
     ## Directory browser products land in.
@@ -89,8 +89,8 @@ const
     ##   listed again, so `help.HelpPath` stays their one home (Article I.4).
   PATH_DESKTOP_NIM = "src" / "desktop" / "main.nim"
     ## Desktop entry point `desktop` compiles.
-  PATH_DESKTOP_BIN = BIN / "rga_visualiser"
-    ## Desktop binary that verb writes; never committed, since `.gitignore` covers `bin/`.
+  PATH_DESKTOP_BINARY = BINARIES / "rga_visualiser"
+    ## Desktop binary that verb writes; never committed, since `.gitignore` covers `binaries/`.
   ENV_FONT = "RGA_FONT"
     ## Environment name overriding face front-end sets its interface in.
     ##   Declared by `src/desktop/main.nim`, which says what all four are for; named again
@@ -834,7 +834,7 @@ proc checkSdl3() =
 
 
 proc desktop() =
-  ## Compile desktop front-end into `bin/`, through backend Dear ImGui needs.
+  ## Compile desktop front-end into `binaries/`, through backend Dear ImGui needs.
   ##   `cpp` rather than `c`: shim over Dear ImGui is C++, for reason its own header gives.
   ##   Flags live here rather than in `.nim.cfg` beside entry point: this driver owns every
   ##   compiler invocation, so reader finds them where builds are run rather than in file
@@ -854,8 +854,8 @@ proc desktop() =
   checkSdl3()
   imgui()
   checkImgui()
-  createDir BIN
-  var arguments = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN]
+  createDir BINARIES
+  var arguments = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BINARY]
   if dirExists(DIRECTORY_SDL3_PREFIX):
     let prefix = getCurrentDir() / DIRECTORY_SDL3_PREFIX
     arguments.add "--passC:-I" & prefix / "include"
@@ -863,15 +863,15 @@ proc desktop() =
     arguments.add "--passL:-Wl,-rpath," & prefix / "lib"
   arguments.add PATH_DESKTOP_NIM
   run("nim", arguments)
-  echo "Wrote ", PATH_DESKTOP_BIN, "."
+  echo "Wrote ", PATH_DESKTOP_BINARY, "."
 
 
 proc under(flags: openArray[string]): (string, seq[string]) =
   ## Name command and arguments that run desktop binary, borrowing display where none is set.
   ##   Checks are headless by nature, and machine running them may have no screen at all.
   ##   `xvfb-run -a` picks free display number rather than colliding with one in use.
-  if getEnv("DISPLAY").len > 0: (PATH_DESKTOP_BIN, @flags)
-  else: ("xvfb-run", @["-a", PATH_DESKTOP_BIN] & @flags)
+  if getEnv("DISPLAY").len > 0: (PATH_DESKTOP_BINARY, @flags)
+  else: ("xvfb-run", @["-a", PATH_DESKTOP_BINARY] & @flags)
 
 
 proc reported(flags: openArray[string]): bool =
@@ -967,7 +967,7 @@ proc drive() =
 
 proc clean() =
   ## Remove every product, leaving only what git holds.
-  for directory in [BUILD, BIN, "nimcache"]:
+  for directory in [BUILD, BINARIES, "nimcache"]:
     removeDir directory
     echo "Removed ", directory
 

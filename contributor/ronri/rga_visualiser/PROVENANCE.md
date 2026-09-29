@@ -476,7 +476,7 @@ prompt already open, ends the save; any other refusal falls through to the page'
 The host saves only the extensions on its list, and `.rgascene` is not one. Loading opens the first
 `.rgascene` entry of a zip, stored or deflated. Rejected: a JSON scene, a second format to read.
 
-*Checked.* Verified by a cold run. `clean` removes `build`, `bin` and `nimcache`. Then `drive`
+*Checked.* Verified by a cold run. `clean` removes `build`, `binaries` and `nimcache`. Then `drive`
 fetches every face, builds both front-ends, and drives them with no step run by hand, which is the
 case of the runner itself. A second run fetches nothing.
 

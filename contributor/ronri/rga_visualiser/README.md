@@ -28,7 +28,7 @@ nim r koch test contributor/ronri/rga_visualiser  # this project alone, three co
 nim r tools/build.nim assets                     # this project: fetch every face, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
-nim r tools/build.nim desktop                    # this project: bin/rga_visualiser
+nim r tools/build.nim desktop                    # this project: binaries/rga_visualiser
 nim r tools/build.nim driven                     # this project: drive the desktop alone
 nim r tools/build.nim system                     # this project: what to install first
 ```

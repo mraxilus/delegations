@@ -132,7 +132,7 @@ const
   DIRECTORY_FACES* {.define: "visualiser.directory_faces".} = "../build/fonts"
     ## Directory shipped faces sit in, relative to binary rather than to any machine.
     ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
-    ##   `bin/` sits beside `build/` -- so binary and faces move together and neither is
+    ##   `binaries/` sits beside `build/` -- so binary and faces move together and neither is
     ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
   FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
