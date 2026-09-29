@@ -26,7 +26,7 @@ The signatures stay generic for cost. One emitted procedure for each pair of kin
 conformal is some 6 000 bodies, and most are never called. A generic instantiates only the
 pairs that a program uses.
 
-## What the typing buys
+## What the types buy
 
 The terms that a motor sandwich on a point emits at 4D:
 

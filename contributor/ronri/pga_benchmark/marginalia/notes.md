@@ -136,8 +136,8 @@ defineOperator(
 tables of `pga.nim`. `²` is not an operator character, so a caller must spell each in
 backticks.
 
-If they are public, they need aliases and table rows. If they are scaffolding, make them
-private.
+If they are public, they need aliases and table rows. If they only serve other operators,
+make them private.
 
 ## Projections chain full products through intermediates
 
