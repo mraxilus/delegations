@@ -14,7 +14,7 @@ merge, never touch `main`, and never write outside your project.
 3. `GLOSSARY.md` at the root: the words of the repository itself, which this file uses.
 4. This file to the end, then `GUIDE.md`. The guide covers the English, the queue, the
    toolchain, dependencies, the glossary, the record, and what to report. Both roles read it,
-   and the stamp does not cover it.
+   and the stamp covers it.
 5. `contributor/<domain>/README.md` for the theme of the domain. Then your project's
    `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, where they exist. `PROVENANCE.md`
    describes the design as it is now, so read it before the code, and correct it where the
@@ -141,8 +141,8 @@ and that reader is the enforcement.
   concern may be a dependency. Justify each one where you import it, declare it in your
   nimble file, and pin it with Atlas. The audit demands `atlas.lock` whenever the nimble file
   requires a package, and `GUIDE.md` gives the steps. Vendored source stays out of the
-  repository (Article XI.3): `deps/` is ignored, and `PROVENANCE.md` records the origin and
-  licence of each dependency.
+  repository (Article XI.3): `dependencies/` is ignored, and `PROVENANCE.md` records the
+  origin and licence of each dependency.
 - **Code comments are telegraphic** in every file kind, with no `a`, `an` or `the` in any.
   The audit reads comments in Nim, NimScript, nimble files, cfg files, YAML, `.gitignore`,
   `.gitattributes`, TypeScript, C++, C, HTML and SVG. Markdown is prose and keeps its
@@ -334,9 +334,8 @@ them.
   That cause is a browser, a runner image or a driver. Where you cannot make the check
   deterministic, say what varies and how often, measured. The Architect then decides whether
   the check earns its place.
-- `koch` runs testament over `tests/test_<name>.nim` in your project directory, and there is no
-  build
-  file for each project. `nim r koch check-files` is the static audit alone.
+- `koch` runs testament over `tests/test_<name>.nim` in your project directory, and there is
+  no build file for each project. `nim r koch check-files` is the static audit alone.
   `nim r koch test contributor/<domain>/<project>` fetches the dependencies of one project
   and runs its suites. `./koch` alone lists every verb with its effect.
   `nim r koch check` is the one to run before a push.

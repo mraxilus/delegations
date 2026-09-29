@@ -118,10 +118,11 @@ pin is served, installed and moved.
 
 Use Atlas, once for each project, inside your project directory.
 
-1. Run `atlas init` once. It writes `deps/atlas.config`. Move that file to the project root
-   so that it is committed. `deps/` never is.
-2. Run `atlas use <package>`. It clones into `deps/`, appends `requires "<package>"` to your
-   nimble file, and writes `--path` lines into `nim.cfg` between marker comments.
+1. Run `atlas init --deps=dependencies` once. It writes `dependencies/atlas.config`, which
+   names that directory in its `deps` key (Article V.9). Move the file to the project root so
+   that it is committed. `dependencies/` never is.
+2. Run `atlas use <package>`. It clones into `dependencies/`, appends `requires "<package>"`
+   to your nimble file, and writes `--path` lines into `nim.cfg` between marker comments.
 3. Run `atlas pin`. It writes `atlas.lock` with exact commits. The audit demands this file
    whenever the nimble file requires a package.
 4. Commit `<project>.nimble`, `atlas.config`, `atlas.lock` and `nim.cfg`. Justify the import
@@ -277,7 +278,7 @@ document.
 - **Verify by a run.** A claim about behaviour, cost or appearance goes in the file only
   after you ran the code, rendered the output, or read the bytes back.
 - **A claim that somebody else can repeat cites the test that repeats it**, written as
-  ``Verified by `tfoo.nim` ``. The audit resolves that name against your `tests/` directory,
+  ``Verified by `test_foo.nim` ``. The audit resolves that name against your `tests/` directory,
   and fails where it does not exist. It checks only that the file exists. Whether that test
   makes the claim beside it is read, and never checked.
 - **A claim verified in any other way names the tool and the date.** Write "Verified by hand

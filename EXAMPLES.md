@@ -4,26 +4,36 @@ Worked examples that `CONSTITUTION.md` and `STYLE.md` point into. Each section n
 that it shows. Read an example where a rule alone does not settle a case. Transfer the
 decision, and not the syntax.
 
-The pga excerpts come from `lengyel/projective_geometric_algebra_illuminated` in the
-replications repository, at commit `16dbc17`. The other excerpts come from this repository, at
-commit `aaa84c8` of `main`. An excerpt is verbatim, except where its note says what changed.
+The excerpts come from `lengyel/projective_geometric_algebra_illuminated` in the replications
+repository, at commit `16dbc17`. An excerpt is verbatim, except where its note says what
+changed. Where the reference holds nothing for a rule, the section carries an example
+constructed in its vocabulary, and its note opens with "Constructed".
+
+## I.6: An internal that a sibling reaches
+
+```nim
+func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
+```
+
+From `algebra.nim`. The function stays private, and `cayleys.nim` reaches it through `{.all.}`.
+The pragma silences the unused warning, and the comment names the sibling that uses it.
 
 ## II.6: A restore issues a new revision
 
 ```nim
-func restoreFrom*(scene: var Scene, snapshot: Scene) =
-  ## Replace scene's whole content with snapshot, at revision no earlier state carried.
-  ##   Every whole-scene replacement, i.e. undo, redo, clear, load, comes through here.
-  ##     Revision only ever rises and no two states front-end has drawn share one.
-  let revision_live = scene.count_edits
-  scene = snapshot
-  scene.count_edits = max(revision_live, snapshot.count_edits) + 1
+func restoreFrom*(frame: var Frame, snapshot: Frame) =
+  ## Replace frame's whole content with snapshot, at revision no earlier state carried.
+  ##   Every whole-frame replacement, i.e. undo, redo, clear, load, comes through here.
+  ##     Revision only ever rises, so no two states any cache derived from share one.
+  let revision_live = frame.count_edits
+  frame = snapshot
+  frame.count_edits = max(revision_live, snapshot.count_edits) + 1
 ```
 
-From `rga_visualiser/src/rga_visualiser/scene.nim`, with the loop that stamps each handle, and
-its doc line, left out. The snapshot carries an old revision. A cache keyed on that revision
-would serve the meshes of the undone state. So the restore issues a revision newer than any
-other.
+Constructed. A `Frame` holds the multivectors that a page draws, and a cache of their unitized
+forms is keyed on `count_edits`. The snapshot carries an old revision. A cache keyed on that
+revision would serve the forms of the undone state. So the restore issues a revision newer
+than any other.
 
 ## II.7: A retreat records its cost
 
@@ -37,12 +47,13 @@ review the decision when that cost changes.
 ## II.9: A copy names its sibling
 
 ```ts
-/* View panel: camera numeric fields, mirroring panel.layoutView exactly. */
+/* Basis names of 3D RGA as union type, mirroring Basis in algebra.nim exactly. */
+type Basis = 'S' | 'E1' | 'E2' | 'E3' | 'E23' | 'E31' | 'E12' | 'E321'
 ```
 
-From `rga_visualiser/src/browser/view_section.ts`. The browser panel copies a desktop panel,
-because the browser cannot share its dependencies. The comment names the sibling, so that a
-fix to one reaches the other.
+Constructed. A page in TypeScript cannot import the enum. A union type is a check that its
+compiler makes over the whole file, and an exported array of names gives no such check. So the
+names are copied, and the comment names the sibling, so that a fix to one reaches the other.
 
 ## III.3: Related glyphs show their relation
 
@@ -83,46 +94,42 @@ grade, so the third returns an `Option`.
 ## IV.6: Arenas, a scratch arena, and handles
 
 ```nim
-Scene* = object ## Define fixed-capacity arena of objects, addressed by stable handle.
-  geometries: array[OBJECTS_MAX, Multivector] ## Per-handle geometry.
-  labels: array[OBJECTS_MAX, Label] ## Per-handle display label.
-  inks: array[OBJECTS_MAX, Ink] ## Per-handle palette entry.
+Pool* = object ## Define fixed-capacity arena of multivectors, addressed by stable handle.
+  elements: array[HANDLES_MAX, Multivector] ## Per-handle geometry.
+  grades: array[HANDLES_MAX, Option[Grade]] ## Per-handle grade, derived once per revision.
+  bound: int ## Live extent; every walk stops here, never at HANDLES_MAX.
 ```
 
 ```nim
-## Three lifetimes cover everything this project still allocates dynamically:
+## Two lifetimes cover everything this program allocates at runtime:
 ##
-##   |-----------|---------------------------------|--------------------------------------|
-##   | Arena     | Reset                           | Backs                                |
-##   |-----------|---------------------------------|--------------------------------------|
-##   | Permanent | Never; lives until process exit | Pixel readback buffer, sized once    |
-##   |           |                                 | and reused for every export.         |
-##   | Export    | After each throwaway unit of    | PNG's filtered/compressed scanlines, |
-##   |           | work: one PNG write, one GIF    | GIF's quantized indices and LZW      |
-##   |           | sub-frame.                      | output; built once, read once.       |
-##   | Frame     | On next frame's swap, so last   | Draw loop's scratch: points          |
-##   | swap pair | frame's bytes survive this one. | tessellation step assembles before   |
-##   |           | See `ArenaSwap`.                | emitting them.                       |
-##   |-----------|---------------------------------|--------------------------------------|
+##   |--------|--------------------------------|-------------------------------------|
+##   | Arena  | Reset                          | Backs                               |
+##   |--------|--------------------------------|-------------------------------------|
+##   | Frame  | On next frame's swap, so last  | Draw loop's scratch: coefficients   |
+##   |        | frame's bytes survive this one | one projection step assembles       |
+##   |        |                                | before emitting them.               |
+##   | Export | After each unit of work, i.e.  | One rendered table of products,     |
+##   |        | one table written              | built once, read once.              |
+##   |--------|--------------------------------|-------------------------------------|
 ```
 
-From `rga_visualiser`: the first is `src/rga_visualiser/scene.nim`, and the second is the
-header of `src/desktop/arena.nim`. The scene is a fixed arena, and a caller holds a handle
-into it and never a reference. Each dynamic buffer has one arena, and the arena owns its
-lifetime. A step that needs a temporary takes it from a scratch arena that is reset as a whole.
+Constructed. The pool is a fixed arena, and a caller holds a handle into it and never a
+reference. Each dynamic buffer has one arena, and the arena owns its lifetime. A step that
+needs a temporary takes it from a scratch arena that is reset as a whole.
 
 ## V.9: Acronyms a layman knows, and paths in full
 
 ```text
-SVG  HTML  CSS  JSON  JS  URL  ID  DoF      stay
-FNV                                        spelled out
-simulation/  dependencies/  binaries/  test_<name>.nim
+3D  ID  JSON  URL                                          stay
+PGA  RGA  CGA                                              spelled out
+projective_geometric_algebra/  tests/rigid/  test_rigid_3d.nim
 ```
 
-From `contributor/sincopa/dance_ontology` at `327fdf6` of `main`, as the Architect ruled on #305.
-The first row holds acronyms a layman meets on the web and in data. A hash function's name is
-one that only its field knows, so it is spelled out. The paths spell their words in full, and
-the test file carries its word before its name.
+Constructed. The first row holds acronyms that a layman meets at school, on the web and in
+data. Only the field knows the names of the algebras, so a path spells them out, as the
+directory of the reference does. The reference keeps `pga.nim` and `tests/rga/`, which this
+rule postdates. The test file carries its word before its name.
 
 ## VI.7 and VIII.1: A claim names its register
 
@@ -158,15 +165,6 @@ func constructAlgebra(dimensions: int): Algebra {.compileTime.} =
 From `algebra.nim`, with the list of differences left out, and from `multiplyExterior` in
 `cayleys.nim`. The definition gives the choice, the reason and the cost. The place where the
 cost falls names the convention again.
-
-## I.6: An internal that a sibling reaches
-
-```nim
-func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
-```
-
-From `algebra.nim`. The function stays private, and `cayleys.nim` reaches it through `{.all.}`.
-The pragma silences the unused warning, and the comment names the sibling that uses it.
 
 ## IX.3: A guard, and a floor on what passed
 
@@ -204,14 +202,15 @@ lines.
 ## STYLE, section 2: A push over foreign bindings
 
 ```nim
-{.push header: "box3d/box3d.h".}
+{.push header: "reference/cayley.h".}
 type
-  WorldId* {.importc: "b3WorldId", bycopy.} = object
+  CayleyEntry* {.importc: "cayley_entry", bycopy.} = object
 ...
-proc twistBy*(b: BodyId; torque: Vec; wake: bool) {.importc: "b3Body_ApplyTorque".}
+proc wedgeReference*(a, b: cint): CayleyEntry {.importc: "cayley_wedge".}
 {.pop.}
 ```
 
-From `dance_ontology/sim/engine.nim`, with the middle of the block left out. One header binds
-every foreign declaration in the block, and `{.pop.}` closes it. An ordinary pragma is never
-pushed, so that the pragmas of a routine stay visible where it is defined.
+Constructed. The reference binds no foreign code, so this oracle for the tests, a C table of
+the wedge product, is invented. One header binds every foreign declaration in the block, and
+`{.pop.}` closes it. An ordinary pragma is never pushed, so that the pragmas of a routine stay
+visible where it is defined.
