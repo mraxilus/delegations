@@ -1866,12 +1866,33 @@ SCREAMING_SNAKE_CASE, as V.1 says, and not in the lower case of the example in S
 letter exactly, and by the rest with no case and no underscore. So `DRAWING` is `Drawing`, and each
 such global takes a qualifier, such as `DRAWING_SHOWN`. The compiler says so as a redefinition.
 
+**Each local, parameter and field is in snake_case, and each boolean says what it is.** The
+Architect ruled so on #308, by V.1 and V.4. A boolean value takes `is_`, `as_`, `should_`, `found_`
+or `has_`. A routine that answers yes or no takes `is...`, or `has...` as the twin of `has_`. One
+concept keeps one name in each module, such as `is_away`, `is_holding`, `is_stopped` and
+`found_rest`.
+
+**A predicate never takes the word of a value that it meets.** Nim reads `is_away` and `isAway` as
+one name, as it reads `DRAWING` and `Drawing`. So the routine that says whether a rest is
+Face-to-back is `isRestAway`, and the field is `is_away`. `isPressingBody` and `isLeavingCrown`
+follow the same rule.
+
+**A name that another program reads stays as that program spells it.** Playwright reads
+`colorScheme`, `fullPage` and `executablePath`. The whole-cloth page reads its JSON keys by name,
+such as `restHolds` and `whyNegative`. Each is a key of data, and not a name that this source
+declares.
+
 **The compiler checks each rename, and each gap of `nimsuggest` has a check of its own.**
 `nimsuggest` gives most uses at their exact place. It gives a use inside a format string at the
 start of the string, and an enum value after its type one column early. It gives a dynamic field of
 a browser object as a use of the local with that name, and it misses some fields in constructors.
 So a pass scoped to each declaration renamed format strings, and no new name of a local went after
 a dot. Each compile error that named an old name then took the new name for that scope.
+
+`nimsuggest` sees no local inside the `suite` and `test` templates of `unittest`. So a scan of the
+text listed those, and each took its new name within its block. A rename that changes only the case
+is the same name to Nim, so the compiler cannot find a use that was missed. A pass over the text
+renamed each such name, in code, in comments and in format strings.
 
 **The change leaves behaviour as it was, and that is measured.** Each page built natively is the
 same, byte for byte, except where its prose says "simulation" for "sim". Chromium loaded each page

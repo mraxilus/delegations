@@ -39,22 +39,27 @@ iterator phrases(): string =
   for band in Band:
     yield said(none(Lying), band)
     for aspect in Aspect:
-      for pressing in [false, true]:
-        for elbow_fore in [false, true]:
-          let lying = Lying(aspect: aspect, band: band, pressing: pressing, elbowFore: elbow_fore)
+      for is_pressing in [false, true]:
+        for is_elbow_fore in [false, true]:
+          let lying = Lying(
+            aspect: aspect,
+            band: band,
+            is_pressing: is_pressing,
+            is_elbow_fore: is_elbow_fore,
+          )
           yield said(some(lying), band)
 
 
 func shown(report: string): seq[string] =
   ## Read right-hand column of table report prints, longest term first.
   ##   Longest first so striking out never leaves tail of longer term.
-  var inside = false
+  var is_inside = false
   for line in report.splitLines:
     let bare = line.strip
     if bare.startsWith("| the simulation says |"):
-      inside = true
+      is_inside = true
       continue
-    if not inside: continue
+    if not is_inside: continue
     if not bare.startsWith("|"): break
     if bare.startsWith("|---"): continue
     let cells = bare.strip(chars = {'|', ' '}).split('|')
@@ -135,15 +140,15 @@ suite "kept readings of other physics are read again":
   func sample(stamp: string): Readings =
     ## One sweep and one rung, under `stamp`.
     result = Readings(stamp: stamp)
-    result.sweeps["sweep"] = SweepRead(restHolds: true)
-    result.rungs["rung"] = RungRead(found: true, apart: 0.5)
+    result.sweeps["sweep"] = SweepRead(found_rest: true)
+    result.rungs["rung"] = RungRead(found_pose: true, apart: 0.5)
 
   test "readings of this physics are read as kept":
     let path = directory / "this.json"
     keep(sample(physics()), path)
     let got = keptReadings(path)
     check got.stamp == physics()
-    check got.sweeps["sweep"].restHolds
+    check got.sweeps["sweep"].found_rest
     check got.rungs["rung"].apart == 0.5
 
   test "readings of other physics are none":
@@ -155,8 +160,8 @@ suite "kept readings of other physics are read again":
     let
       path = directory / "shape.json"
       node = sample("other").toJson
-    node["sweeps"]["sweep"]["rest_holds"] = node["sweeps"]["sweep"]["restHolds"]
-    node["sweeps"]["sweep"].delete("restHolds")
+    node["sweeps"]["sweep"]["restHolds"] = node["sweeps"]["sweep"]["found_rest"]
+    node["sweeps"]["sweep"].delete("found_rest")
     writeFile(path, $node)
     check keptReadings(path) == Readings()
 

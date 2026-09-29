@@ -74,15 +74,15 @@ type
     ## Hold swept both ways, each from distance that carries it furthest.
   WalkAsked* = tuple[key: string, band: Band, links: seq[Link], most, step: float]
     ## Hold walked one way from every distance, to hold search to argument maximum.
-  ReachAsked* = tuple[key: string, band: Band, links: seq[Link], turns: float, away: bool]
+  ReachAsked* = tuple[key: string, band: Band, links: seq[Link], turns: float, is_away: bool]
     ## Whether any distance carries hold that far.
-  StillAsked* = tuple[key: string, links: seq[Link], turns: float, away, either: bool]
+  StillAsked* = tuple[key: string, links: seq[Link], turns: float, is_away, is_either_way: bool]
     ## Still over crown, and distance couple stand at for it.
 
   Way* = object ## One way of sweep, from distance search chose.
-    holds*: bool  ## Whether hold stood at rest from any distance.
+    is_holding*: bool  ## Whether hold stood at rest from any distance.
     apart*: float ## Distance chosen, metres axis to axis.
-    stopped*: bool
+    is_stopped*: bool
     at*: float    ## Turns reached when something gave.
     why*: Stop
 
@@ -91,12 +91,12 @@ type
 
   Walked* = object ## One walk from one distance, in numbers alone.
     apart*: float
-    holds*: bool ## Whether hold stood at rest there.
-    stopped*: bool
+    is_holding*: bool ## Whether hold stood at rest there.
+    is_stopped*: bool
     at*: float
 
   Stand* = object ## Where couple stand for one still.
-    holds*: bool
+    is_holding*: bool
     apart*: float
     turns*: float ## Way couple were wound there, signed.
 
@@ -204,7 +204,7 @@ proc walksOf*(answers: Answers; key: string): seq[Walked] =
     key & "`."
   answers.walks[key]
 
-proc reachOf*(answers: Answers; key: string): bool =
+proc isReaching*(answers: Answers; key: string): bool =
   ## Kept answer of `reaches`.
   doAssert key in answers.reaches, "No reach answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
@@ -222,7 +222,13 @@ proc stillOf*(answers: Answers; key: string): Stand =
 
 func wayOf(walk: Walk): Way =
   ## Strip walk to numbers laws read.
-  Way(holds: walk.restHolds, apart: walk.apart, stopped: walk.stopped, at: walk.at, why: walk.why)
+  Way(
+    is_holding: walk.found_rest,
+    apart: walk.apart,
+    is_stopped: walk.is_stopped,
+    at: walk.at,
+    why: walk.why,
+  )
 
 
 # Mutable and global: thread takes one argument, so workers read tasks and write answers
@@ -269,18 +275,18 @@ proc working(id: int) {.thread.} =
           )
         WALKEDS[task.index][task.far] = Walked(
           apart: FARS[task.far],
-          holds: walk.restHolds,
-          stopped: walk.stopped,
+          is_holding: walk.found_rest,
+          is_stopped: walk.is_stopped,
           at: walk.at,
         )
       of Reach:
         let question = REACHES[task.index]
-        REACHED[task.index] = reaches(
+        REACHED[task.index] = isReaching(
           HUMAN,
           question.band,
           question.links,
           question.turns,
-          question.away,
+          question.is_away,
         )
       of Still:
         let
@@ -290,11 +296,11 @@ proc working(id: int) {.thread.} =
             Band.Crown,
             question.links,
             question.turns,
-            question.away,
+            question.is_away,
             Body.Two,
-            question.either,
+            question.is_either_way,
           )
-        STOODS[task.index] = Stand(holds: got.holds, apart: got.apart, turns: got.turns)
+        STOODS[task.index] = Stand(is_holding: got.is_holding, apart: got.apart, turns: got.turns)
 
 proc answer*(): Answers =
   ## Answer every question, on every core at once.

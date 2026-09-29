@@ -58,13 +58,13 @@ proc printAudit() =
   echo "\naudit of the base sheet (", findings.len, " findings, ",
     CELLS.len - countDeferredCells(), " of ", CELLS.len, " cells checkable):"
   for kind in FindingKind:
-    var shown = false
+    var is_shown = false
     for finding in findings:
       if finding.kind != kind:
         continue
-      if not shown:
+      if not is_shown:
         echo "\n  ", kind, ":"
-        shown = true
+        is_shown = true
       echo "    ", finding.subject
       echo "      ", finding.detail
 

@@ -13,15 +13,15 @@ import ../../src/dance_ontology/rotation
 
 
 suite "what each card asks of simulation":
-  var byKey = initTable[string, StillAsk]()
-  for ask in stillAsks(): byKey[ask.key] = ask
+  var ask_by_key = initTable[string, StillAsk]()
+  for ask in stillAsks(): ask_by_key[ask.key] = ask
 
   test "one picture is one question, whichever section draws it":
     ## Standard diagram's A16 is hand to hand wound half turn clockwise, which
     ## is chain's C5, and A17 is C3.  Asked with opposite signs, simulation stood A16 in
     ## C3's pose and A17 in C5's, mirror of what each card draws.
     for (frame, chain) in [("A16", "C5"), ("A17", "C3")]:
-      let (frame_ask, chain_ask) = (byKey[frame], byKey[chain])
+      let (frame_ask, chain_ask) = (ask_by_key[frame], ask_by_key[chain])
       check frame_ask.links == chain_ask.links
       check frame_ask.rest == chain_ask.rest
       check frame_ask.head == chain_ask.head
@@ -31,12 +31,12 @@ suite "what each card asks of simulation":
     ## Chain's C5 is wound half turn clockwise, and simulation turns anticlockwise for
     ## positive turns, so C5 is asked negative, and every single-hand card is
     ## asked against its manner's own sense.
-    check byKey["C5"].turns == -0.5
-    check byKey["C3"].turns == 0.5
+    check ask_by_key["C5"].turns == -0.5
+    check ask_by_key["C3"].turns == 0.5
     check wayOf(HalfTurns(1)) == Way.Clockwise
     for manner in Manner:
       let tag = MANNERS[manner].tag
-      check byKey["st_" & tag & "_0_1"].turns == -windSense(manner) * 0.25
+      check ask_by_key["st_" & tag & "_0_1"].turns == -windSense(manner) * 0.25
 
 
 suite "each hold rests at named facing":
@@ -49,8 +49,8 @@ suite "each hold rests at named facing":
                                  (PAIRED, Facing.FaceToBack, Facing.FaceToFace)]:
       check restOf(holds) == rest
       for wind in STEPS:
-        let whole = abs(wind - round(wind)) < 1e-9
-        check facingAt(holds, wind) == some(if whole: rest else: other)
+        let is_whole = abs(wind - round(wind)) < 1e-9
+        check facingAt(holds, wind) == some(if is_whole: rest else: other)
 
   test "simulation is told each card's rest where it stands couple":
     ## Card names its rest from model (`parts.restOf`), and simulation is told only
@@ -58,15 +58,15 @@ suite "each hold rests at named facing":
     ##   what card named.  Distance puts no one at other side of other.
     for ask in stillAsks():
       checkpoint ask.key
-      check facingName(restStance(HUMAN, 1.0, ask.away)) == some(ask.rest.name)
+      check facingName(restStance(HUMAN, 1.0, ask.isRestAway)) == some(ask.rest.name)
 
   test "simulation is asked no rest it cannot stand":
     ## Simulation stands couple Face-to-face or follow turned half, and no other rest.
     for rest in Facing:
       if rest in {Facing.FaceToFace, Facing.FaceToBack}:
-        discard awayFor(rest)
+        discard isRestAway(rest)
       else:
-        expect Defect: discard awayFor(rest)
+        expect Defect: discard isRestAway(rest)
 
 
 suite "each recording is of tree it is kept in":

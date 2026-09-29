@@ -116,7 +116,7 @@ func countHolds*(frame: Frame): int =
       inc result
 
 
-func usesHand*(frame: Frame; side: Side): bool = frame.hold[side].isSome
+func isUsingHand*(frame: Frame; side: Side): bool = frame.hold[side].isSome
   ## Test whether one hand of lead is holding anything.
 
 

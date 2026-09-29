@@ -52,9 +52,9 @@ type
     room*: float ## Least room any joint had here.
 
   Walk* = object ## One sweep, one way.
-    restHolds*: bool ## Whether hold stood at all where this was walked from.
+    found_rest*: bool ## Whether hold stood at all where this was walked from.
     apart*: float ## And how far apart couple stood to walk it.
-    stopped*: bool
+    is_stopped*: bool
     at*: float  ## Turns reached when something gave.
     why*: Stop
     which*: int ## Which connection gave.
@@ -63,7 +63,7 @@ type
 
   Swept* = object ## Both ways from one rest.
     apart*: float
-    restHolds*: bool
+    found_rest*: bool
     negative*, positive*: Walk
 
   Carry* = tuple[apart, got, leap: float]
@@ -72,7 +72,7 @@ type
     ## two moments.
 
   Stood* = object ## Where couple stand for one still, and how it sits.
-    holds*: bool
+    is_holding*: bool
     apart*: float  ## Distance chosen, metres axis to axis.
     turns*: float  ## Way couple were wound there, signed: their own where still
                    ## fixes neither.
@@ -115,22 +115,22 @@ proc momentOf(couple: Couple; at: float): tuple[moment: Moment, why: Stop, which
         result.whose = couple.links[i].ends[end_index]
 
 proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
-             apart, most, step: float; away: bool; head: Body): Walk =
+             apart, most, step: float; is_away: bool; head: Body): Walk =
   ## Turn one way from one standing distance until something gives, or until
   ## `most` is reached.
-  var couple = build(rig, restStance(rig, apart, away), band, links, head, away)
+  var couple = build(rig, restStance(rig, apart, is_away), band, links, head, is_away)
   couple.settle()
   result.apart = apart
   var at = 0.0
   let first = momentOf(couple, at)
-  result.restHolds = first.why == Stop.None
+  result.found_rest = first.why == Stop.None
   result.moments.add first.moment
   while abs(at) < abs(most):
     couple.turn(who, step, BEATS)
     at += step
     let now = momentOf(couple, at)
     if now.why != Stop.None:
-      result.stopped = true
+      result.is_stopped = true
       result.at = abs(at)
       result.why = now.why
       result.which = now.which
@@ -140,7 +140,7 @@ proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
   couple.free()
 
 proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-            away: bool; head: Body; apart: float): tuple[holds: bool, couple: Couple] =
+            is_away: bool; head: Body; apart: float): tuple[is_holding: bool, couple: Couple] =
   ## Couple wound to this facing from rest at this one distance and left
   ## standing there, and whether pose holds.  Caller frees couple, holding or not.
   ##   Wound, not built there.  Winding is path, not facing: couple built at
@@ -153,10 +153,10 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##   Way in is walk's own, at walk's own pace, from this one distance: still
   ##     card claims position exists, and position that is winding of arms
   ##     exists only where some winding gets there.
-  result.couple = build(rig, restStance(rig, apart, away), band, links, head, away)
+  result.couple = build(rig, restStance(rig, apart, is_away), band, links, head, is_away)
   result.couple.settle()
-  result.holds = result.couple.gives == Stop.None
-  if not result.holds:
+  result.is_holding = result.couple.gives == Stop.None
+  if not result.is_holding:
     return
   let step = (if turns >= 0.0: STEP else: -STEP)
   var at = 0.0
@@ -164,22 +164,22 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
     result.couple.turn(Body.Two, step, BEATS)
     at += step
     if result.couple.gives != Stop.None:
-      result.holds = false
+      result.is_holding = false
       return
   # Left to stand: turn has stopped, and hold is asked of couple at rest there.
   result.couple.advance(SETTLE)
-  result.holds = result.couple.gives == Stop.None
+  result.is_holding = result.couple.gives == Stop.None
 
 
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away: bool; head: Body; apart: float): Stood =
+              is_away: bool; head: Body; apart: float): Stood =
   ## Whether pose holds at this facing from this one distance, and how it sits.
-  let (holds, couple) = stood(rig, band, links, turns, away, head, apart)
-  result = Stood(holds: holds, apart: apart, turns: turns, strain: couple.strainOf)
+  let (is_holding, couple) = stood(rig, band, links, turns, is_away, head, apart)
+  result = Stood(is_holding: is_holding, apart: apart, turns: turns, strain: couple.strainOf)
   couple.free()
 
 proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-               away = false; head = Body.Two; either = false): Stood =
+               is_away = false; head = Body.Two; is_either_way = false): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
@@ -199,24 +199,24 @@ proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##   Still that fixes no way about (`either`) is wound either way at every
   ##     distance, and way asked keeps tie: card claims position, and couple
   ##     take whichever way there sits easier.
-  result = Stood(holds: false, strain: Strain(most: Inf))
+  result = Stood(is_holding: false, strain: Strain(most: Inf))
   for far in stands(rig):
-    for way in (if either: @[turns, -turns] else: @[turns]):
-      let got = standsAt(rig, band, links, way, away, head, far)
-      if not got.holds: continue
-      if not result.holds or got.strain.most < result.strain.most:
+    for way in (if is_either_way: @[turns, -turns] else: @[turns]):
+      let got = standsAt(rig, band, links, way, is_away, head, far)
+      if not got.is_holding: continue
+      if not result.is_holding or got.strain.most < result.strain.most:
         result = got
       if result.strain.most <= 0.0: return
 
-proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away = false; head = Body.Two; apart = 0.0; either = false): bool =
+proc isHoldingAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+              is_away = false; head = Body.Two; apart = 0.0; is_either_way = false): bool =
   ## Whether any pose holds at this facing, from any distance couple may stand at.
   if apart > 0.0:
-    return standsAt(rig, band, links, turns, away, head, apart).holds
-  standing(rig, band, links, turns, away, head, either).holds
+    return standsAt(rig, band, links, turns, is_away, head, apart).is_holding
+  standing(rig, band, links, turns, is_away, head, is_either_way).is_holding
 
-proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away = false; who = Body.Two; head = Body.Two): bool =
+proc isReaching*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+              is_away = false; who = Body.Two; head = Body.Two): bool =
   ## Whether couple carry this hold that far from any distance they may stand at.
   ##   Card asks whether couple can do this, and couple choose where to stand for
   ##     it.  So one distance carrying it is enough, and answer comes as soon as
@@ -227,8 +227,8 @@ proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   if turns == 0.0: return true
   let step = (if turns >= 0.0: STEP else: -STEP)
   for far in stands(rig):
-    let walk = walked(rig, band, links, who, far, abs(turns), step, away, head)
-    if walk.restHolds and not walk.stopped:
+    let walk = walked(rig, band, links, who, far, abs(turns), step, is_away, head)
+    if walk.found_rest and not walk.is_stopped:
       return true
   false
 
@@ -263,7 +263,7 @@ func chosen*(walks: openArray[Carry]): int =
     if result < 0 or carry.leap * SMOOTHER < walks[result].leap: result = i
 
 proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
-              most, step: float; away: bool; head: Body): Walk =
+              most, step: float; is_away: bool; head: Body): Walk =
   ## Walk one way from whichever distance carries it furthest, and among
   ## distances carrying it as far, from one where arms move least between
   ## moments.
@@ -282,15 +282,15 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
     free = Inf ## First distance turn ran free from.
   for apart in stands(rig):
     if apart > free + LOOK + SEEK / 2.0: break
-    let walk = walked(rig, band, links, who, apart, most, step, away, head)
-    if not walk.restHolds: continue
+    let walk = walked(rig, band, links, who, apart, most, step, is_away, head)
+    if not walk.found_rest: continue
     walks.add walk
-    carries.add (apart, (if walk.stopped: walk.at else: Inf), leapOf(walk))
+    carries.add (apart, (if walk.is_stopped: walk.at else: Inf), leapOf(walk))
     if carries[^1].got == Inf: free = min(free, apart)
   if carries.len > 0: result = walks[chosen(carries)]
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
-            most = MOST; step = STEP; apart = 0.0; away = false;
+            most = MOST; step = STEP; apart = 0.0; is_away = false;
             head = Body.Two): Swept =
   ## Sweep both ways, each from wherever that way carries furthest.
   ##   `who` turns; `head` is whose crown joined hands are carried over.  They
@@ -302,13 +302,13 @@ proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
   ##     Turning one way and turning other are two turns, and couple about to
   ##     take either stand for that one.
   if apart > 0.0:
-    result.positive = walked(rig, band, links, who, apart, most, step, away, head)
-    result.negative = walked(rig, band, links, who, apart, most, -step, away, head)
+    result.positive = walked(rig, band, links, who, apart, most, step, is_away, head)
+    result.negative = walked(rig, band, links, who, apart, most, -step, is_away, head)
   else:
-    result.positive = furthest(rig, band, links, who, most, step, away, head)
-    result.negative = furthest(rig, band, links, who, most, -step, away, head)
-  result.restHolds = result.positive.restHolds or result.negative.restHolds
+    result.positive = furthest(rig, band, links, who, most, step, is_away, head)
+    result.negative = furthest(rig, band, links, who, most, -step, is_away, head)
+  result.found_rest = result.positive.found_rest or result.negative.found_rest
   result.apart = (if result.positive.at >= result.negative.at: result.positive.apart
                   else: result.negative.apart)
-  if not result.restHolds:
+  if not result.found_rest:
     result = Swept(apart: result.apart)

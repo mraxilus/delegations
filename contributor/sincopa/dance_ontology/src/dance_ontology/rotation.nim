@@ -367,7 +367,7 @@ func stored*(posture: Posture; motion: Turn): HalfTurns =
   posture.twist + motion.turns[Dancer.Follow] - motion.turns[Dancer.Lead]
 
 
-func holds*(posture: Posture; twist: HalfTurns): bool =
+func isHolding*(posture: Posture; twist: HalfTurns): bool =
   ## Test whether posture can stand at given twist.
   ##   Two ceilings, and posture has to be under both: what joins couple can
   ##     only give away so much turn, and arm can only carry so much wherever
@@ -387,7 +387,7 @@ func turn*(posture: Posture; motion: Turn): Option[Posture] =
   ## couple can do, it is turn plus change of frame, and change of frame has
   ## to be led.
   let reached = posture.stored(motion)
-  if not posture.holds(reached):
+  if not posture.isHolding(reached):
     return none(Posture)
   var turned = posture
   turned.twist = reached
@@ -440,7 +440,7 @@ func postures*(): seq[Posture] =
         if held.level != [left, right]:
           continue
         for twist in -MOST_TURN .. MOST_TURN:
-          if not held.holds(twist):
+          if not held.isHolding(twist):
             continue
           var stood = held
           stood.twist = twist
@@ -591,7 +591,7 @@ func fromPostureKey*(key: string): Option[Posture] =
   except ValueError:
     return none(Posture)
   stood = normalised(stood)
-  if not stood.holds(twist):
+  if not stood.isHolding(twist):
     return none(Posture)
   stood.twist = twist
   some(stood)

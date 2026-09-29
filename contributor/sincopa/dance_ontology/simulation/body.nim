@@ -64,7 +64,7 @@ func side*(arm: Arm): float = (if arm == Arm.Right: 1.0 else: -1.0)
 
 func shoulder*(rig: Rig; stance: Stance; arm: Arm): Vector =
   ## Joint's centre in world.
-  toWorld(axesOf(stance), (side(arm) * rig.shoulderOut, 0.0, rig.shoulderUp))
+  toWorld(axesOf(stance), (side(arm) * rig.shoulder_out, 0.0, rig.shoulder_up))
 
 func twist*(stance: array[Body, Stance]): float =
   ## How far Two has turned relative to One, radians, from face-to-face.

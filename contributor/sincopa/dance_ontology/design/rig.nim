@@ -37,12 +37,12 @@ const KEPT_RIG* = currentSourcePath().parentDir / "rig.json"
 
 
 type
-  Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
+  Cut = tuple[name: string, arms: seq[(Arm, Arm)], is_away: bool, band: Band]
 
   Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
     cut: int
     ask: StillAsk
-    still: bool
+    is_still: bool
 
 const SHOWN: seq[Cut] = @[
   ("One hand, same name", @[(Arm.Left, Arm.Left)], false, Band.Crown),
@@ -141,7 +141,7 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
   bits.add &"\"band\":\"{BANDS[ord(recording.band)]}\""
   bits.add &"\"apart\":{figure(recording.apart)}"
   bits.add &"\"turns\":{figure(recording.turns)}"
-  bits.add &"\"stopped\":" & (if recording.stopped: "true" else: "false")
+  bits.add &"\"stopped\":" & (if recording.is_stopped: "true" else: "false")
   bits.add &"\"why\":\"{recording.why}\""
   bits.add "\"says\":\"" & (if key.len > 0 and recording.stills.len == 0:
                              "no pose holds at any distance"
@@ -185,8 +185,8 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
 
 func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.
-  for i in 0 ..< SHOWN.len: result.add Job(cut: i, still: false)
-  for ask in stillAsks(): result.add Job(ask: ask, still: true)
+  for i in 0 ..< SHOWN.len: result.add Job(cut: i, is_still: false)
+  for ask in stillAsks(): result.add Job(ask: ask, is_still: true)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
@@ -202,11 +202,12 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     var i = slice.first
     while i < all.len:
       let job = all[i]
-      if job.still:
+      if job.is_still:
         let
           ask = job.ask
-          recording = still(HUMAN, Band.Crown, ask.links, ask.key, ask.turns, away = ask.away,
-                     head = ask.head, either = ask.either)
+          recording = still(HUMAN, Band.Crown, ask.links, ask.key, ask.turns,
+                            is_away = ask.isRestAway, head = ask.head,
+                            is_either_way = ask.is_either_way)
         NOTES[i] =
           if recording.stills.len > 0:
             &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"
@@ -217,7 +218,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
         var links: seq[Link] = @[]
         for (lead_arm, follow_arm) in cut.arms:
           links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
-        let recording = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
+        let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
         NOTES[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
                    &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
         RECORDING_TEXTS[i] = bodyOfSweep(recording)

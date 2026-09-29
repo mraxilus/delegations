@@ -52,7 +52,7 @@ type
   Ending* {.pure.} = enum ## How sign for unfixed amount ends.
     Open, Spill, EllipsisEnd, RepeatEnd, Loop
   SignArm* = tuple ## One column of sign: whether drawn, and its level.
-    shown: bool
+    is_shown: bool
     level: Option[Level]
   SignArms* = array[Arm, SignArm]
 
@@ -78,13 +78,13 @@ func scaled*(points: seq[Point]; factor: float): seq[Point] =
     result.add (centre_x + (point.x - centre_x) * factor, centre_y + (point.y - centre_y) * factor)
 
 
-func polygon(points: seq[Point]; close = true): string =
+func polygon(points: seq[Point]; should_close = true): string =
   ## Write polygon as path data.
   var joined: seq[string]
   for point in points:
     joined.add &"{numeral(point.x)} {numeral(point.y)}"
   let path = "M" & joined.join(" L")
-  if close: path & " Z" else: path
+  if should_close: path & " Z" else: path
 
 
 func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
@@ -99,9 +99,9 @@ func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
   ##     follow's plain, so sign and frame picture read same way
   ##     round.
   let
-    leads = dancer == Dancer.Lead
-    ink = if leads: DEEP[arm] else: INK[arm]
-    fill = fillOf(level, arm, leads)
+    is_leading = dancer == Dancer.Lead
+    ink = if is_leading: DEEP[arm] else: INK[arm]
+    fill = fillOf(level, arm, is_leading)
     centre_x = corner_x + PIP / 2 + side_x / 2
     centre_y = corner_y + side_y / 2
     points: seq[Point] = @[
@@ -110,12 +110,12 @@ func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
       (corner_x + PIP + side_x, corner_y + side_y),
       (corner_x + side_x, corner_y + side_y),
     ]
-    perimeter = if leads: 2 * PIP + 2 * hypot(side_x, side_y)
+    perimeter = if is_leading: 2 * PIP + 2 * hypot(side_x, side_y)
                 else: 2 * PI * (PIP / 2)
 
   func shape(inset: float; style: string): string =
     ## One outline or fill, as dancer's own mark: path or circle.
-    if leads:
+    if is_leading:
       let path = if inset == 1.0: polygon(points) else: polygon(scaled(points, inset))
       &"""<path d="{path}" {style}/>"""
     else:
@@ -159,7 +159,7 @@ func marker*(kind: Row; corner_x, corner_y, side_x, side_y: float; arm: Arm): st
 
 func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float;
     about: Option[About]; pip_about: seq[About]; ending: Option[Ending];
-    packed = true): tuple[markup: string, box: tuple[left, top, right, bottom: float]] =
+    is_packed = true): tuple[markup: string, box: tuple[left, top, right, bottom: float]] =
   ## Draw sign at given place, returning markup and box it fills.
   ##   `slots` reads downwards, one entry per quarter turn, follow's
   ##     first, so mixed sign has one picture rather than two.
@@ -202,7 +202,7 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float
         let tips: seq[Point] = @[(leftAt(y_top - over), y_top - over),
                                  (leftAt(y_top - over) + SIGN_BODY,
                                   y_top - over)]
-        polygon(@[tips[0], foot[0], foot[1], tips[1]], close = false)
+        polygon(@[tips[0], foot[0], foot[1], tips[1]], should_close = false)
       else:
         polygon(@[foot[0], head[0], head[1], foot[1]])
   var bits = @[&"""<path d="{outline}" {style}/>"""]
@@ -229,11 +229,11 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float
     total = slots.len
     spread = (HEIGHT - float(total) * PIP) / float(total + 1)
   for i, what in slots:
-    var top = if packed: slotTop(total - 1 - i)
+    var top = if is_packed: slotTop(total - 1 - i)
               else: y_top + spread + float(i) * (PIP + spread)
     top += (PIP - PIP * LEAN_COSINE) / 2
     for column, arm in [Arm.Left, Arm.Right]:
-      if not arms[arm].shown:
+      if not arms[arm].is_shown:
         continue
       let corner_x = leftAt(top) + GAP_X + float(column) * (PIP + GAP_X)
       if what in [Row.Lead, Row.Follow]:
@@ -260,7 +260,7 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float
 
 func sign*(slots: seq[Row]; lean = Lean.Clockwise; arms = BOTH_UNSAID;
     about = none(About); pip_about: seq[About] = @[];
-    ending = none(Ending); scale = 1.2; packed = true): string =
+    ending = none(Ending); scale = 1.2; is_packed = true): string =
   ## Draw one turn sign: quarter turns up from foot, arms across, one
   ## height for every sign.
   let
@@ -280,7 +280,7 @@ func sign*(slots: seq[Row]; lean = Lean.Clockwise; arms = BOTH_UNSAID;
       about = about,
       pip_about = pip_about,
       ending = ending,
-      packed = packed,
+      is_packed = is_packed,
     )
     view_width = box.right - box.left + 2 * PAD
     view_height = box.bottom - box.top + 2 * PAD

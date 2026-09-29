@@ -274,9 +274,9 @@ proc readout() =
           upper = toFloat(sweep_shown.upper[k])
           span = (if upper - lower > 1e-9: upper - lower else: 1.0)
           at = (angle - lower) / span
-          spent = angle <= lower + NEAR or angle >= upper - NEAR
+          is_spent = angle <= lower + NEAR or angle >= upper - NEAR
         html = html & cstring"<div class='dof" &
-          (if spent: cstring" spent" else: cstring"") & cstring"'><span>" &
+          (if is_spent: cstring" spent" else: cstring"") & cstring"'><span>" &
           DOFS[dof] & cstring"</span><div class='track'><b style='left:" &
           toFixed(max(0.0, min(1.0, at)) * 100.0, 1) & cstring"%'></b></div><em>" &
           toFixed(angle * 180.0 / PI, 0) & cstring"°</em><u>" &

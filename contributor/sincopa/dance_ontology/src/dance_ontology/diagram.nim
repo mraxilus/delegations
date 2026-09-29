@@ -77,7 +77,7 @@ func frameBody(target: Frame; twist: HalfTurns): string =
   ##   Arithmetic is done here because `scene` may not have `rotation`'s
   ##     words; it takes two plain flags.
   "<title>" & target.describe & "</title>" &
-    sceneFor(target, isFacing(twist), clockwise = twist > 0)
+    sceneFor(target, isFacing(twist), is_clockwise = twist > 0)
 
 
 func frameHeight*(width: int): int =

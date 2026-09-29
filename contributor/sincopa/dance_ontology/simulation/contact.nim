@@ -91,10 +91,10 @@ func partGap*(rig: Rig; axes: Axes; part: Part; a, b: Vector): float =
   partGap(axes, shape, a, b)
 
 
-func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vector; own: bool): Touch =
+func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vector; is_own: bool): Touch =
   ## Least clearance of link `a`-`b` from one body's three parts.
   result = Touch(part: Part.Torso, gap: Inf)
-  let pad = if own: 0.0 else: rig.limb
+  let pad = if is_own: 0.0 else: rig.limb
   for part in Part:
     let clearance = partGap(shape.axes, shape.parts[part], a, b)
     if clearance < Inf:
@@ -102,9 +102,9 @@ func bodyGap*(rig: Rig; shape: BodyShape; a, b: Vector; own: bool): Touch =
       if gap < result.gap:
         result = Touch(part: part, gap: gap)
 
-func bodyGap*(rig: Rig; stance: Stance; a, b: Vector; own: bool): Touch =
+func bodyGap*(rig: Rig; stance: Stance; a, b: Vector; is_own: bool): Touch =
   ## Same, from stance.
-  bodyGap(rig, shapeOf(rig, stance), a, b, own)
+  bodyGap(rig, shapeOf(rig, stance), a, b, is_own)
 
 
 func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
@@ -121,7 +121,7 @@ func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
   near.gap - 2.0 * rig.limb
 
 
-func pressing*(rig: Rig; stance: Stance; pose: tuple[elbow, wrist, grip: Vector]): bool =
+func isPressingBody*(rig: Rig; stance: Stance; pose: tuple[elbow, wrist, grip: Vector]): bool =
   ## Whether forearm or hand lies on its own torso or neck.
   ##   Upper arm always hangs against flank, so it is not asked;
   ##     what says arm is wound rather than merely led there is part

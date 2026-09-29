@@ -93,7 +93,7 @@ func bodiesOf(pose: Pose): tuple[lead, follow: route.Body] =
    (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
 
 
-func danceable*(pose: Pose; holds: Holds;
+func isDanceable*(pose: Pose; holds: Holds;
     levels: Levels = default(Levels); ways: Ways = default(Ways)): bool =
   ## Test whether every lock and wrap in this hold really is one (rule 7).
   ##   Lock or wrap position may only be used when line goes round no
@@ -113,7 +113,7 @@ func danceable*(pose: Pose; holds: Holds;
     let ends: route.Ends = (hands[Dancer.Lead][arm],
                             hands[Dancer.Follow][holds[arm].get],
                             lead_body, follow_body)
-    if not wrapsEnough(ends, levels[arm], ways[arm]):
+    if not isWrappingEnough(ends, levels[arm], ways[arm]):
       return false
   true
 
@@ -203,9 +203,9 @@ func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
 
 
 func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
-    over = none(Arm); free = Free.Fade; captions = true;
+    over = none(Arm); free = Free.Fade; has_captions = true;
     ways: Ways = default(Ways); twist: Twists = NO_TWIST;
-    clear_marks = false): seq[string] =
+    should_clear_marks = false): seq[string] =
   ## Draw every element of one pose, in order picture is read from.
   ##   `clear_marks` asks straight reach to bend round marks it does
   ##     not join (rule 22).  It is off by default so that only pages
@@ -215,7 +215,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   # Lock or wrap that does not go round body is not one, and state
   # that cannot be danced is edge that is not drawn -- so this refuses
   # rather than drawing something rules say does not exist.
-  doAssert danceable(pose, holds, levels, ways),
+  doAssert isDanceable(pose, holds, levels, ways),
     &"Undanceable state asked for; got `{holds}` at `{levels}`, `{ways}`."
   # Every drawing path comes through here, so this is where hands are
   # put: pose handed in ready-made is settled exactly like one built below.
@@ -234,15 +234,15 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   # hand still at home has no ghost to confuse it with.
   for (who, arm) in ghosts(holds, levels, ways):
     let home = handPoint(put.place[who], put.facing[who], arm)
-    bits.add hand(home.x, home.y, who == Dancer.Lead, arm, held = false,
+    bits.add hand(home.x, home.y, who == Dancer.Lead, arm, is_held = false,
                   free = Free.Grey)
   # Wound pair crosses: once by half turn, twice by whole one, with
   # cross or diamond that makes (rules 27, 28).
-  let winding = holds[Arm.Left].isSome and holds[Arm.Right].isSome and
+  let is_winding = holds[Arm.Left].isSome and holds[Arm.Right].isSome and
     abs(twist[Arm.Left]) > 1e-9
   # And wound pair says which way it wound by which arm it keeps on top,
   # so wind names over-arm rather than caller saying it twice.
-  let on_top = if not winding: over else: some(overArm(twist[Arm.Left]))
+  let on_top = if not is_winding: over else: some(overArm(twist[Arm.Left]))
   var routes: array[Arm, seq[Point]]
   for arm in Arm:
     if holds[arm].isNone:
@@ -254,7 +254,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
       # Over head: nothing is in way from above, and wind is
       # said by crossing rather than by hugging (rules 1 and 14).
       routes[arm] =
-        if winding:
+        if is_winding:
           # Pose says where hands are and which way arm went
           # round; wind says how far.  Half turn's sweep is pose's
           # own -- hands really have swapped sides -- and whole turn's
@@ -262,7 +262,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
           wound(ends.a, ends.b, axisOf(put).across,
                 degToRad(windOf(put, holds, arm).phi),
                 2 * PI * twist[arm], share = windShare(twist[arm], arm))
-        elif clear_marks:
+        elif should_clear_marks:
           clearedReach(ends.a, ends.b, clearingMarks(put, ends.a, ends.b))
         else:
           straightReach(ends.a, ends.b)
@@ -273,7 +273,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   # dives under at every second crossing.  So crossings are found once,
   # in order along line, and shared out between two arms.
   var dives: array[Arm, seq[Point]]
-  if winding:
+  if is_winding:
     dives = divesOf(routes[Arm.Left], routes[Arm.Right], twist[Arm.Left])
 
   let order = if on_top == some(Arm.Left): [Arm.Right, Arm.Left] else: [Arm.Left, Arm.Right]
@@ -282,22 +282,22 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
       let
         points = routes[arm]
         runs =
-          if winding: cutGapsAt(points, routes[other(arm)], dives[arm])
+          if is_winding: cutGapsAt(points, routes[other(arm)], dives[arm])
           elif on_top == some(other(arm)): cutGap(points, routes[other(arm)])
           else: @[points]
       bits.add twoTone(runs, points[points.len div 2], arm, holds[arm].get)
   for arm in Arm:
     let hand_centre = hands[Dancer.Lead][arm]
-    bits.add hand(hand_centre.x, hand_centre.y, leads = true, arm = arm,
-                  held = holds[arm].isSome, level = levels[arm], free = free)
+    bits.add hand(hand_centre.x, hand_centre.y, is_leading = true, arm = arm,
+                  is_held = holds[arm].isSome, level = levels[arm], free = free)
   for own in [Arm.Right, Arm.Left]:
     let
       hand_centre = hands[Dancer.Follow][own]
       by = Arm.toSeq.filterIt(holds[it] == some(own))
       level = if by.len > 0: levels[by[0]] else: none(Level)
-    bits.add hand(hand_centre.x, hand_centre.y, leads = false, arm = own, held = by.len > 0,
+    bits.add hand(hand_centre.x, hand_centre.y, is_leading = false, arm = own, is_held = by.len > 0,
                   level = level, free = free)
-  if captions:
+  if has_captions:
     for arm in Arm:
       bits.add caption(put.place[Dancer.Lead], put.facing[Dancer.Lead], arm,
                        (if arm == Arm.Left: "Left" else: "Right"),
@@ -309,10 +309,10 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   bits.filterIt(it.len > 0)
 
 
-func extent*(pose: Pose; captions = true): float =
+func extent*(pose: Pose; has_captions = true): float =
   ## Measure how far this pose reaches from origin, ring and captions
   ## included.
-  let edge = if captions: CAPTION_RADIUS + 20 else: BODY_RADIUS + HAND_RADIUS + 2
+  let edge = if has_captions: CAPTION_RADIUS + 20 else: BODY_RADIUS + HAND_RADIUS + 2
   for who in Dancer:
     result = max(result, hypot(pose.place[who].x, pose.place[who].y) + edge)
   if pose.ring.isSome:
@@ -327,9 +327,9 @@ func view*(half: float): string =
 
 func renderFigure*(classes: string; holds: Holds;
     levels: Levels = default(Levels); over = none(Arm); lead_turn = 0.0;
-    follow_turn = 0.0; free = Free.Fade; captions = true; pose = none(Pose);
+    follow_turn = 0.0; free = Free.Fade; has_captions = true; pose = none(Pose);
     half = none(float); ways: Ways = default(Ways); twist: Twists = NO_TWIST;
-    clear_marks = false): string =
+    should_clear_marks = false): string =
   ## Draw one picture, canonical unless pose is handed in already turned.
   let
     drawn = if pose.isSome: pose.get
@@ -337,17 +337,17 @@ func renderFigure*(classes: string; holds: Holds;
               spinAbout(rest(), Dancer.Lead, lead_turn),
               Dancer.Follow, follow_turn))
     box = if half.isSome: half.get
-          else: (if captions: WIDE else: SIZE) / 2
+          else: (if has_captions: WIDE else: SIZE) / 2
     bits = partsOf(
       drawn,
       holds,
       levels = levels,
       over = over,
       free = free,
-      captions = captions,
+      has_captions = has_captions,
       ways = ways,
       twist = twist,
-      clear_marks = clear_marks,
+      should_clear_marks = should_clear_marks,
     )
   &"""<svg class="{classes}" {view(box)}>""" & "\n        " &
     bits.join("\n        ") & "\n      </svg>"
@@ -537,7 +537,7 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
   let
     poses = walk.mapIt(settled(it, holds, levels, ways))
     box = if half.isSome: half.get
-          else: poses.mapIt(extent(it, captions = false)).max
+          else: poses.mapIt(extent(it, has_captions = false)).max
     hands = poses.mapIt(handsOf(it))
 
   var bits: seq[string]
@@ -721,16 +721,16 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
       &""" dur="{duration}s" repeatCount="indefinite"/>""" & mark & "</g>"
 
   for arm in Arm:
-    bits.add carried(hand(0, 0, leads = true, arm = arm,
-                          held = holds[arm].isSome, level = levels[arm]),
+    bits.add carried(hand(0, 0, is_leading = true, arm = arm,
+                          is_held = holds[arm].isSome, level = levels[arm]),
                      hands.mapIt(it[Dancer.Lead][arm]))
   for own in [Arm.Right, Arm.Left]:
     let
       by = Arm.toSeq.filterIt(holds[it] == some(own))
-      held = by.len > 0
+      is_held = by.len > 0
     bits.add carried(
-      hand(0, 0, leads = false, arm = own, held = held,
-           level = (if held: levels[by[0]] else: none(Level))),
+      hand(0, 0, is_leading = false, arm = own, is_held = is_held,
+           level = (if is_held: levels[by[0]] else: none(Level))),
       hands.mapIt(it[Dancer.Follow][own]))
   &"""<svg class="{classes}" {view(box)}>""" & "\n        " &
     bits.join("\n        ") & "\n      </svg>"

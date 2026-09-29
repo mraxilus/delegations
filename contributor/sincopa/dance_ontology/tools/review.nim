@@ -94,7 +94,7 @@ func escape(text: string): string =
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 
-func inked(said: string; escaping = true): string =
+func inked(said: string; should_escape = true): string =
   ## Say name with each hand it names written in that dancer's own ink.
   ##   Page's drawings ink their words this way, and name in prose beside them is same
   ##     name; reader who has learnt two shades from map should not have to learn them
@@ -104,7 +104,7 @@ func inked(said: string; escaping = true): string =
   ##   `escaping` is off for words already lifted out of page, which are markup-ready and
   ##     would be escaped second time.
   for run in named(said):
-    let text = if escaping: escape(run.text) else: run.text
+    let text = if should_escape: escape(run.text) else: run.text
     if run.lead.isNone and run.follow.isNone:
       result.add text
       continue
@@ -135,12 +135,12 @@ func renderGallery(): string =
   ## Draw every frame, marking ones workbook has no row for.
   result = "<div class=\"gallery\">"
   for target in FRAMES:
-    let absent = workbookName(target).isNone
-    result.add "<div class=\"card" & (if absent: " absent" else: "") & "\">" &
+    let is_absent = workbookName(target).isNone
+    result.add "<div class=\"card" & (if is_absent: " absent" else: "") & "\">" &
       renderFrame(target) & "<div><div class=\"name\">" &
       inked(target.describe) & "</div><div class=\"meta\">" &
       $moves(target).len & " moves" &
-      (if absent: " &middot; no row in the sheet" else: "") & "</div></div></div>"
+      (if is_absent: " &middot; no row in the sheet" else: "") & "</div></div></div>"
   result.add "</div>"
 
 
@@ -273,7 +273,7 @@ func inkTerms(page: string): string =
     let
       inner = start + opens.len
       stop = result.find(shuts, inner)
-      said = inked(result[inner ..< stop], escaping = false)
+      said = inked(result[inner ..< stop], should_escape = false)
     result = result[0 ..< inner] & said & result[stop .. ^1]
     at = inner + said.len + shuts.len
 

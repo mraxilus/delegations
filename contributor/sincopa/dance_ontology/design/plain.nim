@@ -39,13 +39,13 @@ func plain(markup: string): string =
   ## Text of markup: tags out, entities said as what they stand for.
   var
     out_text = newStringOfCap(markup.len)
-    inside = false
+    is_inside = false
   for character in markup:
     case character
-    of '<': inside = true
-    of '>': inside = false; out_text.add ' '
+    of '<': is_inside = true
+    of '>': is_inside = false; out_text.add ' '
     else:
-      if not inside: out_text.add character
+      if not is_inside: out_text.add character
   out_text.multiReplace(
     ("&mdash;", "-"), ("&nbsp;", " "), ("&middot;", "-"), ("&amp;", "and"),
     ("&frac12;", "half"), ("&#189;", "half"), ("&#188;", "quarter"), ("&frac14;", "quarter"),
@@ -108,7 +108,7 @@ func longParagraphs*(markup: string): seq[string] =
 
 #[ Markdown ]#
 
-func closes(word: string): bool =
+func isClosing(word: string): bool =
   ## Whether word closes sentence of Markdown: stop after letter, digit, bracket or mark,
   ## with closing quote and emphasis stepped over first.
   ##   Test repository's `english` check makes (`isSentenceEnd`), so `**"Stop."**` closes
@@ -131,13 +131,13 @@ func gathered(fragments: openArray[string]): string =
   ## Lines of one block as one text, each backticked span one word, since reader takes
   ## `nim r koch check` as one name.
   var
-    inSpan = false
+    is_in_span = false
     text = ""
   for character in fragments.join(" "):
     if character == '`':
-      if not inSpan: text.add "name"
-      inSpan = not inSpan
-    elif not inSpan: text.add character
+      if not is_in_span: text.add "name"
+      is_in_span = not is_in_span
+    elif not is_in_span: text.add character
   text.splitWhitespace.join(" ")
 
 func markdownProse*(document: string): seq[string] =
@@ -152,21 +152,21 @@ func markdownProse*(document: string): seq[string] =
   ##     project.  Cost is two copies to keep agreeing, and `test_plain.nim` pins this one.
   var
     carried: seq[string]
-    fenced = false
+    is_fenced = false
   for raw in document.splitLines:
     let
       line = raw.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
-      fence = raw.strip.startsWith("```")
-    if fence: fenced = not fenced
+      is_fence = raw.strip.startsWith("```")
+    if is_fence: is_fenced = not is_fenced
     let
-      carries = not fence and not fenced and line.len > 0 and
+      is_prose = not is_fence and not is_fenced and line.len > 0 and
                 not line.startsWith("|") and not line.startsWith("#") and
                 not line.startsWith("---") and not line.startsWith(">")
-      marker = (if carries: line.markerLength else: 0)
-    if carried.len > 0 and (not carries or marker > 0):
+      marker = (if is_prose: line.markerLength else: 0)
+    if carried.len > 0 and (not is_prose or marker > 0):
       result.add carried.gathered
       carried = @[]
-    if carries: carried.add line[marker .. ^1]
+    if is_prose: carried.add line[marker .. ^1]
   if carried.len > 0: result.add carried.gathered
 
 func markdownSentences*(text: string): seq[string] =
@@ -174,7 +174,7 @@ func markdownSentences*(text: string): seq[string] =
   var words: seq[string]
   for word in text.splitWhitespace:
     words.add word
-    if word.closes:
+    if word.isClosing:
       result.add words.join(" ")
       words = @[]
   if words.len > 0: result.add words.join(" ")

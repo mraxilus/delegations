@@ -134,14 +134,14 @@ func classify*(a, b: Frame): Option[Helper] =
   if a == b or not a.isValid or not b.isValid:
     return none(Helper)
   let
-    moved_left = a.hold[Side.Left] != b.hold[Side.Left]
-    moved_right = a.hold[Side.Right] != b.hold[Side.Right]
-  if not moved_left and not moved_right:
+    is_moved_left = a.hold[Side.Left] != b.hold[Side.Left]
+    is_moved_right = a.hold[Side.Right] != b.hold[Side.Right]
+  if not is_moved_left and not is_moved_right:
     # Same connections, so only arm order differs, which is `cut`: arm
     # underneath has to be released and re-taken over other one.
     return none(Helper)
-  if moved_left != moved_right:
-    let side = if moved_left: Side.Left else: Side.Right
+  if is_moved_left != is_moved_right:
+    let side = if is_moved_left: Side.Left else: Side.Right
     if a.hold[side].isNone:
       return some(Helper.Collect)
     if b.hold[side].isNone:
