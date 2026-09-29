@@ -111,6 +111,19 @@ header of `src/desktop/arena.nim`. The scene is a fixed arena, and a caller hold
 into it and never a reference. Each dynamic buffer has one arena, and the arena owns its
 lifetime. A step that needs a temporary takes it from a scratch arena that is reset as a whole.
 
+## V.9: Acronyms a layman knows, and paths in full
+
+```text
+SVG  HTML  CSS  JSON  JS  URL  ID  DoF      stay
+FNV                                        spelled out
+simulation/  dependencies/  binaries/  test_<name>.nim
+```
+
+From `contributor/sincopa/dance_ontology` at `327fdf6` of `main`, as the Architect ruled on #305.
+The first row holds acronyms a layman meets on the web and in data. A hash function's name is
+one that only its field knows, so it is spelled out. The paths spell their words in full, and
+the test file carries its word before its name.
+
 ## VI.7 and VIII.1: A claim names its register
 
 ```nim

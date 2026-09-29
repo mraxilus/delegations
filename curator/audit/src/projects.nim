@@ -172,6 +172,8 @@ proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
 
 proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Run testament over `tests/t*.nim` in each project, each on toolchain its pin names.
+  ##   Pattern covers `test_<name>.nim` (Article V.9) and older `t<name>.nim` alike, until
+  ##     every project carries full form.
   for target in targets:
     echo "== " & target.directory
     let code = runIn(
