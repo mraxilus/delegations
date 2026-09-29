@@ -5,6 +5,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[algorithm, compilesettings, json, macros, options, sequtils, strutils, tables, unittest]
 from std/unicode import runeLen
 

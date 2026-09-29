@@ -30,6 +30,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[json, os, osproc, strutils]
 
 import ../src/pga_benchmark/[gaps, guard, inspector, model]
