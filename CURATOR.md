@@ -63,7 +63,7 @@ Every rule below serves it:
 | `GLOSSARY.md` | The words of the repository itself | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
-| `GUIDE.md` | How-to that both roles share, and the rules the constitution points here | curator |
+| `GUIDE.md` | Shared how-to, and the rules the constitution points here, stamped | curator |
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
@@ -169,14 +169,14 @@ This section adds only what differs for a curator.
 
 5. **New file kind.** Register it in `curator/audit/src/kinds.nim` with its comment syntax,
    extend `comments.nim` where the syntax is new, update the header table, and add fixtures.
-   `tkinds.nim` holds the header table to the registry. Until then the kind does not exist
+   `test_kinds.nim` holds the header table to the registry. Until then the kind does not exist
    (Article VI.5), and the audit rejects it.
 
 6. **New domain.** This is the decision of the Architect alone. Add it to `DOMAINS` in
    `curator/audit/src/domains.nim`, to its header table, and to the table in the root
    `README.md`. Create `contributor/<domain>/README.md`, with the name as the heading and the
    theme as a line. The layout check verifies that `DOMAINS`, the table and the domain README
-   agree. `tdomains.nim` holds the header table to `DOMAINS`.
+   agree. `test_domains.nim` holds the header table to `DOMAINS`.
 
 7. **New curator project.** Any name matching `[a-z][a-z0-9_]*`, on branch
    `curator/<project>/<name>`, with the full project shape from `CONTRIBUTOR.md`.
@@ -316,8 +316,8 @@ alone.
 | `check-commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `check-drift` | paths base gained | branch carries base's charter and checker |
 | `check-role` | a pull request's body and labels | opening line and label are the branch's role |
-| `test` | changed projects, or one | fetch deps, then testament, on that project's pin |
-| `drive` | changed projects with a `drive` verb | fetch deps, then that verb, on project's pin |
+| `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
+| `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
 | `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
@@ -342,7 +342,7 @@ The checker holds itself to rules of its own, in `checker.nim`, because it check
 project and nothing checked it:
 
 - A routine exported and named by no other module and no suite is a finding.
-- A check module without `tests/suites/t<module>.nim` is a finding.
+- A check module without `tests/suites/test_<module>.nim` is a finding.
 - The verbs that koch dispatches, the verbs that its usage text lists, and the rows of the
   table above are one set named three times. Any two that differ are a finding.
 - The options that koch parses and the options that its usage text prints are one set named

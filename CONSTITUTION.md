@@ -25,9 +25,8 @@ alone does not settle a case.
    prefer. Record the choice with its cost.
 
 Five mechanisms are gated: the bootstrap diagram (I.5), the façade (I.6), generation (II.4),
-notation (III.1) and fixed storage (IV.6).
-Where the condition of a gate holds, the mechanism is mandatory. Where it does not hold, to
-use the mechanism is cargo cult.
+notation (III.1) and fixed storage (IV.6). Where the condition of a gate holds, the mechanism
+is mandatory. Where it does not hold, to use the mechanism is cargo cult.
 
 ## Article I: Code is the reference document
 
@@ -252,7 +251,6 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
 8. Name every landmark index of a domain as an alias on its type (`Basis.origin`,
    `Grade.high`), and never write a bare index. Where the landmark depends on the
    configuration, the alias resolves it, so that no caller branches.
-
 9. A name that joins symbols is an abbreviation too (`aa`, `xy`). An acronym stays only where a
    layman knows it; one that a field or a library coined is spelled out. A path is a name, and
    follows this article: a directory and a file spell their words in full, a test file among
@@ -261,6 +259,7 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
     takes the local case. A global never shares its word with a type, because a reader, or a host
     that compares names loosely, reads `DRAWING` and `Drawing` as one. A qualifier keeps them
     apart (`DRAWING_SHOWN`).
+
 ```nim
 BasisDigits                 # type
 constructMetricExomorphism  # callable

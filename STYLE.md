@@ -216,10 +216,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ```nim
   discard """
   action: run
-  cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
+  cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
   matrix: "-d:pga.dimensions=3 -d:pga.is_conformal=false"
   """
-  include "../suites.nim"
+  include "suites.nim"
   ```
 
 - A test file is `tests/test_<name>.nim` (V.9), and koch runs testament over those files. A

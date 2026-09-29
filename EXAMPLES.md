@@ -8,6 +8,15 @@ The pga excerpts come from `lengyel/projective_geometric_algebra_illuminated` in
 replications repository, at commit `16dbc17`. The other excerpts come from this repository, at
 commit `aaa84c8` of `main`. An excerpt is verbatim, except where its note says what changed.
 
+## I.6: An internal that a sibling reaches
+
+```nim
+func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
+```
+
+From `algebra.nim`. The function stays private, and `cayleys.nim` reaches it through `{.all.}`.
+The pragma silences the unused warning, and the comment names the sibling that uses it.
+
 ## II.6: A restore issues a new revision
 
 ```nim
@@ -158,15 +167,6 @@ func constructAlgebra(dimensions: int): Algebra {.compileTime.} =
 From `algebra.nim`, with the list of differences left out, and from `multiplyExterior` in
 `cayleys.nim`. The definition gives the choice, the reason and the cost. The place where the
 cost falls names the convention again.
-
-## I.6: An internal that a sibling reaches
-
-```nim
-func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
-```
-
-From `algebra.nim`. The function stays private, and `cayleys.nim` reaches it through `{.all.}`.
-The pragma silences the unused warning, and the comment names the sibling that uses it.
 
 ## IX.3: A guard, and a floor on what passed
 
