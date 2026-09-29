@@ -1290,7 +1290,7 @@ proc ringCorners*(): seq[float32] =
   ##     only *where* on circle each sits.
   ##   Angles come off `UNIT_CIRCLE_RIM`, so drawn circle is unchanged.
   ##   One source for both front-ends, as `discCorners` is.
-  const WINDING = [(0.0'f32, -1.0'f32), (1.0'f32, -1.0'f32), (1.0'f32, 1.0'f32),
+  const winding = [(0.0'f32, -1.0'f32), (1.0'f32, -1.0'f32), (1.0'f32, 1.0'f32),
     (0.0'f32, -1.0'f32), (1.0'f32, 1.0'f32), (0.0'f32, 1.0'f32)]
   result = newSeq[float32](6*6*SEGMENTS_CIRCLE_HORIZON)
   var at = 0
@@ -1298,7 +1298,7 @@ proc ringCorners*(): seq[float32] =
     let
       tail = UNIT_CIRCLE_RIM[segment]
       head = UNIT_CIRCLE_RIM[segment + 1]
-    for (which_end, side) in WINDING:
+    for (which_end, side) in winding:
       result[at + 0] = float32(tail.cos_angle)
       result[at + 1] = float32(tail.sin_angle)
       result[at + 2] = float32(head.cos_angle)

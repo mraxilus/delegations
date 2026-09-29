@@ -1413,8 +1413,8 @@ const KEYS_DRIVEN = [
 proc driveKeys(count_drawn: int) =
   ## Push one scripted keyboard step per frame onto SDL's queue, for `--drive-keys`.
   ##   Posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
-  const FRAME_FIRST = 3 # Past startup, so first frame's layout has settled.
-  let step = count_drawn - FRAME_FIRST
+  const frame_first = 3 # Past startup, so first frame's layout has settled.
+  let step = count_drawn - frame_first
   if step notin 0 ..< len(KEYS_DRIVEN): return
   let scripted = KEYS_DRIVEN[step]
   if scripted.pressed.isNone: return

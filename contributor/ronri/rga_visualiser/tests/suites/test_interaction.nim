@@ -1037,7 +1037,7 @@ suite "Interaction":
     # Turning about camera's own axes carries roll round by solid angle drag encloses.
     #   That is geometry rather than mistake, and touch asks for none of it: finger
     #   wanders in curves, and has no roll key beside it.
-    const LOOP = [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]
+    const loop = [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]
     # Stance these figures are read at: 19 units off pivot one unit above origin, 24 degrees up.
     let stance = cameraAround(
       Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 0.4543, y: 0.792, z: 0.4078)
@@ -1045,19 +1045,19 @@ suite "Interaction":
     for picked in [false, true]:
       # One loop leaves solid angle it encloses, which is what says this is geometry.
       var once = stance
-      for (turn, rise) in LOOP: once.turnAcross(turn, rise, has_selection = picked)
+      for (turn, rise) in loop: once.turnAcross(turn, rise, has_selection = picked)
       check once.rollHeld.isSome
       let enclosed = 0.3*0.3*cos(stance.elevation)
       check abs(once.rollHeld.get - enclosed) < 0.02*enclosed
       # Four of them leave four times as much: 0.324 radians, 18.6 degrees of tilt.
       var carried = stance
       for round in 1 .. 4:
-        for (turn, rise) in LOOP:
+        for (turn, rise) in loop:
           carried.turnAcross(turn, rise, has_selection = picked)
       check abs(carried.rollHeld.get - 0.3242) < 1.0e-3
     # Finger's loop of pixels leaves none in either state, keeps roll reader set by twist,
     #   and brings camera back where it began.
-    const (WIDE, TALL) = (390, 844)
+    const (wide, tall) = (390, 844)
     let corners = [
       ScreenPosition(x: 160.0, y: 390.0), ScreenPosition(x: 230.0, y: 390.0),
       ScreenPosition(x: 230.0, y: 460.0), ScreenPosition(x: 160.0, y: 460.0),
@@ -1069,7 +1069,7 @@ suite "Interaction":
         var held = opening
         for round in 1 .. 4:
           for corner in 0 ..< 4:
-            held.turnFollowing(corners[corner], corners[(corner + 1) mod 4], WIDE, TALL,
+            held.turnFollowing(corners[corner], corners[(corner + 1) mod 4], wide, tall,
               has_selection = picked)
         check held.rollHeld.get =~ opening.rollHeld.get
         check held.eye =~ opening.eye
@@ -1081,10 +1081,10 @@ suite "Interaction":
     # Rate turned orbit by angle that moved nothing under finger at its own pace: only
     #   what stood at one depth in front of pivot kept up. Point held on sphere about
     #   pivot is carried from pixel finger left to pixel it reached instead.
-    const (WIDE, TALL) = (390, 844)
+    const (wide, tall) = (390, 844)
     proc heldUnder(camera: Camera; at: ScreenPosition; radius: float): Position =
       # Place point finger holds under pixel.
-      pointHeld(camera.eye, camera.pivot, camera.headingThrough(camera.frame, WIDE, TALL, at),
+      pointHeld(camera.eye, camera.pivot, camera.headingThrough(camera.frame, wide, tall, at),
         radius)
     var rolled = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     rolled.roll(0.5)
@@ -1092,7 +1092,7 @@ suite "Interaction":
     for opening in [initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED), rolled, steep]:
       # Single point, held by least sphere; and wide selection, held by its own reach.
       for reach_selection in [0.0, 6.0]:
-        let radius = opening.radiusHeld(WIDE, TALL, reach_selection)
+        let radius = opening.radiusHeld(wide, tall, reach_selection)
         for (start, finish) in [
           (ScreenPosition(x: 195.0, y: 422.0), ScreenPosition(x: 250.0, y: 422.0)),
           (ScreenPosition(x: 170.0, y: 380.0), ScreenPosition(x: 220.0, y: 470.0)),
@@ -1110,7 +1110,7 @@ suite "Interaction":
                   x: start.x + reached*(finish.x - start.x),
                   y: start.y + reached*(finish.y - start.y),
                 )
-              carried.turnFollowing(at, next, WIDE, TALL, has_selection = true,
+              carried.turnFollowing(at, next, wide, tall, has_selection = true,
                 reach_selection = reach_selection)
               at = next
             check carried.heldUnder(finish, radius) =~ taken
@@ -1119,26 +1119,26 @@ suite "Interaction":
             check carried.rollHeld.get =~ opening.rollHeld.get
           # Drag that comes back brings camera back.
           var back = opening
-          back.turnFollowing(start, finish, WIDE, TALL, has_selection = true,
+          back.turnFollowing(start, finish, wide, tall, has_selection = true,
             reach_selection = reach_selection)
-          back.turnFollowing(finish, start, WIDE, TALL, has_selection = true,
+          back.turnFollowing(finish, start, wide, tall, has_selection = true,
             reach_selection = reach_selection)
           check back.eye =~ opening.eye
           check back.frame.axis_up =~ opening.frame.axis_up
     # Least sphere spans third of short side on screen; eye stays outside every one.
     let
       opened = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-      least = opened.radiusHeld(WIDE, TALL, 0.0)
+      least = opened.radiusHeld(wide, tall, 0.0)
       rim = projectToScreen(
-        opened.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+        opened.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
         opened.pivot + least*opened.frame.axis_right,
       )
-    check abs((rim.x - float(WIDE)/2.0) - float(WIDE)/3.0) < 1.0
-    check opened.radiusHeld(WIDE, TALL, 100.0) < opened.distance
+    check abs((rim.x - float(wide)/2.0) - float(wide)/3.0) < 1.0
+    check opened.radiusHeld(wide, tall, 100.0) < opened.distance
     # Finger off sphere still turns view, with pivot standing.
     var outside = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     outside.turnFollowing(ScreenPosition(x: 20.0, y: 100.0), ScreenPosition(x: 60.0, y: 140.0),
-      WIDE, TALL, has_selection = true)
+      wide, tall, has_selection = true)
     check not (outside.eye =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).eye)
     check outside.pivot =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).pivot
 
@@ -1146,10 +1146,10 @@ suite "Interaction":
   test "a finger's free aim keeps what it took hold of under it, pixel for pixel":
     # Rate turned sight by angle screen does not show: 3.6 times as far as finger on 1200
     #   by 900 page. Carrying sky under one pixel to other keeps it under finger instead.
-    const (WIDE, TALL) = (390, 844)
+    const (wide, tall) = (390, 844)
     proc seenThrough(camera: Camera; at: ScreenPosition): Direction =
       # Read unit sight through pixel.
-      let heading = camera.headingThrough(camera.frame, WIDE, TALL, at)
+      let heading = camera.headingThrough(camera.frame, wide, tall, at)
       (1.0/norm(heading))*heading
     var rolled = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     rolled.roll(0.5)
@@ -1172,15 +1172,15 @@ suite "Interaction":
                 x: start.x + reached*(finish.x - start.x),
                 y: start.y + reached*(finish.y - start.y),
               )
-            carried.turnFollowing(at, next, WIDE, TALL, has_selection = false)
+            carried.turnFollowing(at, next, wide, tall, has_selection = false)
             at = next
           check carried.seenThrough(finish) =~ taken
           check carried.eye =~ opening.eye
           check carried.rollHeld.get =~ opening.rollHeld.get
         # Drag that comes back brings camera back.
         var back = opening
-        back.turnFollowing(start, finish, WIDE, TALL, has_selection = false)
-        back.turnFollowing(finish, start, WIDE, TALL, has_selection = false)
+        back.turnFollowing(start, finish, wide, tall, has_selection = false)
+        back.turnFollowing(finish, start, wide, tall, has_selection = false)
         check back.frame.forward =~ opening.frame.forward
         check back.frame.axis_up =~ opening.frame.axis_up
 
@@ -1188,21 +1188,21 @@ suite "Interaction":
   test "a finger's drag passes over the pole, and the picture follows the finger past it":
     # Across axis stays level through pole, so sight turns in its own upright plane and
     #   camera comes down far side upside down, keeping its across.
-    const (WIDE, TALL) = (390, 844)
+    const (wide, tall) = (390, 844)
     proc dragged(camera: Camera; picked: bool; across, down: float): Camera =
       # Drag finger from middle of canvas by these pixels, in one step.
-      let middle = ScreenPosition(x: float(WIDE)/2.0, y: float(TALL)/2.0)
+      let middle = ScreenPosition(x: float(wide)/2.0, y: float(tall)/2.0)
       result = camera
       result.turnFollowing(middle, ScreenPosition(x: middle.x + across, y: middle.y + down),
-        WIDE, TALL, has_selection = picked)
+        wide, tall, has_selection = picked)
     proc sweptBy(camera: Camera; across, down: float): (float, float) =
       # Read how far orbit's drag carries near side, between eye and pivot, across screen.
       let
         near_side = camera.eye + 0.4*camera.distance*camera.frame.forward
-        aspect = float(WIDE)/float(TALL)
-        was = projectToScreen(camera.initMatrixViewProjection(aspect), WIDE, TALL, near_side)
+        aspect = float(wide)/float(tall)
+        was = projectToScreen(camera.initMatrixViewProjection(aspect), wide, tall, near_side)
         swung = camera.dragged(true, across, down)
-        now_at = projectToScreen(swung.initMatrixViewProjection(aspect), WIDE, TALL, near_side)
+        now_at = projectToScreen(swung.initMatrixViewProjection(aspect), wide, tall, near_side)
       (now_at.x - was.x, now_at.y - was.y)
     let opening = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     # Orbit climbs past straight down in drags down from middle, and near side follows
@@ -1219,7 +1219,7 @@ suite "Interaction":
     var under = opening
     for step in 1 .. 3:
       under.turnFollowing(ScreenPosition(x: 195.0, y: 800.0), ScreenPosition(x: 195.0, y: 44.0),
-        WIDE, TALL, has_selection = false)
+        wide, tall, has_selection = false)
     check dot(under.frame.axis_up, UP_WORLD) < 0.0
     check under.frame.axis_right =~ opening.frame.axis_right
     check under.eye =~ opening.eye
@@ -1243,15 +1243,15 @@ suite "Interaction":
     # Sign is about what reader sees, so it is read off screen rather than off axes.
     #   Twist sent its screen angle through unturned, and picture rolled against
     #   fingers.
-    const (WIDE, TALL) = (1200, 900)
+    const (wide, tall) = (1200, 900)
     var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let above = camera.pivot + 3.0*camera.frame.axis_up
     proc seenAt(c: Camera): float =
       projectToScreen(
-        c.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, above
+        c.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, above
       ).x
     let before = seenAt(camera)
-    check before =~ float(WIDE)/2.0 # Straight above middle, so any swing is roll's.
+    check before =~ float(wide)/2.0 # Straight above middle, so any swing is roll's.
     camera.roll(0.2)
     # Point above middle swings left, which reads anticlockwise: positive roll is
     #   anticlockwise, and pointer negates its clockwise screen angle to match.
@@ -1717,11 +1717,11 @@ suite "Interaction":
     check not isHoldMature(interaction, 1000.0)
     interaction.beginHold(3, 1000.0)
     # Measured past grow, which fill starts after; see `swellHold`.
-    const FULL = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
-    check progressHold(interaction, FULL) == 1.0
+    const full = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
+    check progressHold(interaction, full) == 1.0
     interaction.cancelHold()
-    check progressHold(interaction, FULL) == 0.0
-    check not isHoldMature(interaction, FULL)
+    check progressHold(interaction, full) == 0.0
+    check not isHoldMature(interaction, full)
 
 
   test "a hold fills linearly, is clamped at both ends, and is due exactly when full":
@@ -1729,28 +1729,28 @@ suite "Interaction":
     interaction.beginHold(0, 1000.0)
     # Fill starts once marker has grown clear of finger, so every time below is.
     #   measured from end of that grow rather than from press.
-    const FILLING = 1000.0 + SECONDS_SWELL_GROW
+    const filling = 1000.0 + SECONDS_SWELL_GROW
     # Linear, not eased: half wait is half fill. This is property that makes.
     #   marker clock reader can judge remaining time from, and it is what
     #   `easeOutCubic` here would break -- see `progressHold`'s own doc comment.
-    check progressHold(interaction, FILLING + 0.5*SECONDS_LONG_PRESS) =~ 0.5
-    check progressHold(interaction, FILLING + 0.25*SECONDS_LONG_PRESS) =~ 0.25
+    check progressHold(interaction, filling + 0.5*SECONDS_LONG_PRESS) =~ 0.5
+    check progressHold(interaction, filling + 0.25*SECONDS_LONG_PRESS) =~ 0.25
     # Nothing fills while marker is still getting out of way.
     check progressHold(interaction, 1000.0 + 0.5*SECONDS_SWELL_GROW) == 0.0
     var previous = 0.0
     for step in 0 .. 20:
       let progress = progressHold(
-        interaction, FILLING + float(step)/20.0*SECONDS_LONG_PRESS
+        interaction, filling + float(step)/20.0*SECONDS_LONG_PRESS
       )
       check progress >= previous
       previous = progress
     # Clamped below, so clock that steps backward cannot un-fill marker, and above, so.
     #   frame arriving late still draws whole one rather than overshooting past it.
     check progressHold(interaction, 900.0) == 0.0
-    check progressHold(interaction, FILLING + 10.0*SECONDS_LONG_PRESS) == 1.0
+    check progressHold(interaction, filling + 10.0*SECONDS_LONG_PRESS) == 1.0
     # Maturity lands exactly where fill completes, never frame either side of it.
-    check not isHoldMature(interaction, FILLING + 0.999*SECONDS_LONG_PRESS)
-    check isHoldMature(interaction, FILLING + SECONDS_LONG_PRESS)
+    check not isHoldMature(interaction, filling + 0.999*SECONDS_LONG_PRESS)
+    check isHoldMature(interaction, filling + SECONDS_LONG_PRESS)
 
 
   test "the swell grows, waits out the whole hold, and settles only once the finger lifts":
@@ -1767,23 +1767,23 @@ suite "Interaction":
 
     # Check swell stays out for whole fill, past maturity, and while finger stays down.
     #   Unreleased hold never settles, however long it is held.
-    const MATURED = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
-    for now in [MATURED - 0.5*SECONDS_LONG_PRESS, MATURED, MATURED + 60.0]:
+    const matured = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
+    for now in [matured - 0.5*SECONDS_LONG_PRESS, matured, matured + 60.0]:
       check swellHold(interaction, now) =~ 1.0
       check not isHoldSpent(interaction, now)
 
     # And settles exactly one shrink after lift, not before and not later.
-    interaction.releaseHold(MATURED + 5.0)
-    check swellHold(interaction, MATURED + 5.0) =~ 1.0
-    check swellHold(interaction, MATURED + 5.0 + SECONDS_SWELL_SHRINK) =~ 0.0
-    check not isHoldSpent(interaction, MATURED + 5.0 + 0.5*SECONDS_SWELL_SHRINK)
+    interaction.releaseHold(matured + 5.0)
+    check swellHold(interaction, matured + 5.0) =~ 1.0
+    check swellHold(interaction, matured + 5.0 + SECONDS_SWELL_SHRINK) =~ 0.0
+    check not isHoldSpent(interaction, matured + 5.0 + 0.5*SECONDS_SWELL_SHRINK)
     # Frame past shrink rather than exactly on it: subtracting two large timestamps.
     #   does not land on boundary exactly, and no caller asks at exact instant --
     #   they ask once frame. What matters is that it is not spent early and is spent.
-    check isHoldSpent(interaction, MATURED + 5.0 + 1.1*SECONDS_SWELL_SHRINK)
+    check isHoldSpent(interaction, matured + 5.0 + 1.1*SECONDS_SWELL_SHRINK)
     # Second lift is not second settle: first one owns clock.
-    interaction.releaseHold(MATURED + 900.0)
-    check isHoldSpent(interaction, MATURED + 5.0 + 1.1*SECONDS_SWELL_SHRINK)
+    interaction.releaseHold(matured + 900.0)
+    check isHoldSpent(interaction, matured + 5.0 + 1.1*SECONDS_SWELL_SHRINK)
 
 
   test "a matured hold is taken once, and never again however long it is held":
@@ -1793,20 +1793,20 @@ suite "Interaction":
     #   still mature -- hold selected second time and toggled it straight back off.
     var interaction = Interaction(is_enabled: true)
     interaction.beginHold(4, 1000.0)
-    const MATURED = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
+    const matured = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
     # Nothing to take while it is still filling.
-    check takeHold(interaction, MATURED - 0.01).isNone
-    check takeHold(interaction, MATURED) == some(4)
+    check takeHold(interaction, matured - 0.01).isNone
+    check takeHold(interaction, matured) == some(4)
     # Not second time, at any later moment of hold...
-    for now in [MATURED, MATURED + 0.001, MATURED + 5.0, MATURED + 600.0]:
+    for now in [matured, matured + 0.001, matured + 5.0, matured + 600.0]:
       check takeHold(interaction, now).isNone
     # ...nor across release and its whole settle, which is exactly where it fired.
-    interaction.releaseHold(MATURED + 5.0)
-    for now in [MATURED + 5.0, MATURED + 5.0 + 0.5*SECONDS_SWELL_SHRINK,
-                MATURED + 5.0 + 2.0*SECONDS_SWELL_SHRINK]:
+    interaction.releaseHold(matured + 5.0)
+    for now in [matured + 5.0, matured + 5.0 + 0.5*SECONDS_SWELL_SHRINK,
+                matured + 5.0 + 2.0*SECONDS_SWELL_SHRINK]:
       check takeHold(interaction, now).isNone
     # Taking it does not end it: swell still has settle to run out.
-    check swellHold(interaction, MATURED + 5.0) =~ 1.0
+    check swellHold(interaction, matured + 5.0) =~ 1.0
 
     # And fresh press is fresh hold, takeable on its own terms.
     #   Asked frame past boundary rather than exactly on it: summing large base

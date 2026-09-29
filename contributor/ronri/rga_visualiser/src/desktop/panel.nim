@@ -1080,15 +1080,15 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
   gui.monoPop()
 
   const
-    BYTES_SCENE = sizeof(Scene)
-    BYTES_PER_HANDLE = BYTES_SCENE div OBJECTS_MAX
+    bytes_scene = sizeof(Scene)
+    bytes_per_handle = bytes_scene div OBJECTS_MAX
   var pool_memory: array[WIDTH_OBJECT_LINE, char]
   let text_pool = buildChars(pool_memory):
-    appendFixed(pool_memory, cursor, float(BYTES_SCENE) / 1024.0, 1)
+    appendFixed(pool_memory, cursor, float(bytes_scene) / 1024.0, 1)
     appendChars(pool_memory, cursor, " KB allocated, ")
-    appendFixed(pool_memory, cursor, float(scene.len * BYTES_PER_HANDLE) / 1024.0, 1)
+    appendFixed(pool_memory, cursor, float(scene.len * bytes_per_handle) / 1024.0, 1)
     appendChars(pool_memory, cursor, " KB used, ")
-    appendInt(pool_memory, cursor, BYTES_PER_HANDLE)
+    appendInt(pool_memory, cursor, bytes_per_handle)
     appendChars(pool_memory, cursor, " B/handle")
   gui.monoPush()
   gui.text(text_pool)
@@ -1109,14 +1109,14 @@ proc layoutDiagnosticsTotal(panel: Panel) =
   # Fold to one literal.
   #   Depth is read from `CAPACITY_HISTORY` and tooltip is still `cstring` pointing at
   #   static text.
-  const TEXT_TOTAL =
+  const tooltip_total =
     "Every fixed reservation this binary makes for itself, added up: both arenas at " &
     "their full capacity (committed whether or not they're ever filled), the object " &
     "pool above, the undo timeline -- which is " & $CAPACITY_HISTORY & " more whole " &
     "copies of that pool, and the largest single entry here -- tessellation storage, " &
     "and the panel's own state. Excludes whatever Dear ImGui, SDL, or the graphics " &
     "driver allocate on their own account, which this process cannot see or account for."
-  gui.tooltip(TEXT_TOTAL)
+  gui.tooltip(tooltip_total)
 
 
 proc layoutDiagnostics*(panel: var Panel, scene: Scene) =

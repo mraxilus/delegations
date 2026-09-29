@@ -246,14 +246,14 @@ func placeAxes(scratch: var DrawScratch, extent: float, scale: DrawExtent): int 
   ##     neighbourhood around *reader*.
   ##   Each axis is drawn only over stretch inside fog: chord of sphere of radius
   ##   `radius_gone` about eye. Axis eye has flown clear of contributes nothing.
-  const AXES_WORLD = [
+  const axes_world = [
     (Direction(x: 1, y: 0, z: 0), Ink.AxisX),
     (Direction(x: 0, y: 1, z: 0), Ink.AxisY),
     (Direction(x: 0, y: 0, z: 1), Ink.AxisZ),
   ]
   let fog = fogFurnitureFor(extent)
   var count_assembled = 0
-  for (axis, ink) in AXES_WORLD:
+  for (axis, ink) in axes_world:
     # Solve chord of fog sphere along this axis, about eye's perpendicular foot on it.
     #   Foot is algebra's orthogonal projection of eye onto axis line.
     #   Chord half-length stays scalar solve, since sphere has no representative in rigid

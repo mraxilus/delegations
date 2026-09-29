@@ -369,15 +369,15 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
   ##   its own binding, `nameInContext`: postfix symbol right after it or negation right
   ##   before it is unary; otherwise binary operator token beside it binds it.
   const
-    OPERAND_FIRST = "𝐦"
-    OPERAND_SECOND = "𝐧"
+    operand_first = "𝐦"
+    operand_second = "𝐧"
   var tokens = notationSymbolic(operation).split(' ')
   for i in 0 ..< tokens.len:
     let
       token = tokens[i]
       (placeholder, name) =
-        if OPERAND_FIRST in token: (OPERAND_FIRST, name_first)
-        elif OPERAND_SECOND in token: (OPERAND_SECOND, name_second)
+        if operand_first in token: (operand_first, name_first)
+        elif operand_second in token: (operand_second, name_second)
         else: continue
     let
       at = token.find(placeholder)
@@ -470,21 +470,21 @@ const LUT_NAME_BY_BASIS* = block:
   ##     Rule is second copy of one inside `pga/multivectors.nim`'s `$`, which does not
   ##     expose it; check that one whenever this is touched.
   const
-    NAME_SCALAR = "\u{1D7CF}" # Mathematical bold digit one.
-    NAME_SCALAR_ANTI = "\u{1D7D9}" # Mathematical double-struck digit one.
-    NAME_VECTOR = "\u{1D41E}" # Mathematical bold small e.
-    CODEPOINT_SUBSCRIPT_ZERO = 0x2080
+    name_scalar = "\u{1D7CF}" # Mathematical bold digit one.
+    name_scalar_anti = "\u{1D7D9}" # Mathematical double-struck digit one.
+    name_vector = "\u{1D41E}" # Mathematical bold small e.
+    codepoint_subscript_zero = 0x2080
   var lut: array[Basis, string]
   for b in Basis:
     lut[b] =
       case b
-      of Basis.scalar: NAME_SCALAR
-      of Basis.scalarAnti: NAME_SCALAR_ANTI
+      of Basis.scalar: name_scalar
+      of Basis.scalarAnti: name_scalar_anti
       else:
         # Read index list behind `E` in enum's name, one digit per factor.
-        var name = NAME_VECTOR
+        var name = name_vector
         for digit in ($b)[1 .. ^1]:
-          name &= $Rune(CODEPOINT_SUBSCRIPT_ZERO + ord(digit) - ord('0'))
+          name &= $Rune(codepoint_subscript_zero + ord(digit) - ord('0'))
         name
   lut
 

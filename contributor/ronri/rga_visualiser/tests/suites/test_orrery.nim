@@ -16,7 +16,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
     ##   That claim needs checking as much as counting does, and it is one thing no
     ##   amount of looking at picture would catch.
 
-    const SCALES_HELD = block:
+    const scales_held = block:
       ## Name which sizes this build's pool can actually hold.
       ##   Every size at shipped capacity; at reduced one suite is skipped whole by guard
       ##   above, so this only ever narrows for capacity between two.
@@ -47,7 +47,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   Handles above largest size are deliberate headroom -- reader can still
       #   build on top of loaded demo rather than meeting refusal, and two is
       #   shortest construction there is: add point, then join it to something.
-      for scale in SCALES_HELD:
+      for scale in scales_held:
         var scene = initScene()
         constructOrrery(scene, scale)
         checkpoint(&"{scale}: {scene.len} objects, {OBJECTS_MAX - scene.len} free")
@@ -74,7 +74,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   objects and `addHorizon` refuses pair spanning nothing, so size too small to
       #   carry arrangement fails here rather than quietly drawing less.
       var counted: array[ScaleOrrery, tuple[points, planes: int]]
-      for scale in SCALES_HELD:
+      for scale in scales_held:
         var scene = initScene()
         constructOrrery(scene, scale)
         var
@@ -107,8 +107,8 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   further into catalogue reaches more stars and more of systems that earn
       #   plane. Discs are expensive kind, so second half is where stress in
       #   stress case lives.
-      for index in 1 ..< len(SCALES_HELD):
-        let (smaller, larger) = (SCALES_HELD[index - 1], SCALES_HELD[index])
+      for index in 1 ..< len(scales_held):
+        let (smaller, larger) = (scales_held[index - 1], scales_held[index])
         check counted[larger].points > counted[smaller].points
         check counted[larger].planes > counted[smaller].planes
 
@@ -124,7 +124,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   Turn is redone here from its definition rather than through module's own.
       #   Run at largest size this build holds, which is only one that reaches far
       #   enough into catalogue for claim to be worth much.
-      let scale = SCALES_HELD[^1]
+      let scale = scales_held[^1]
       var scene = initScene()
       constructOrrery(scene, scale)
       let
@@ -340,7 +340,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   than placed by order among siblings, since distance is whole of claim. Counted
       #   from table, so figure is catalogue's own.
       #   Neighbour's plane is flat, stated: every placed planet shares its star's height.
-      let scale = SCALES_HELD[^1]
+      let scale = scales_held[^1]
       var scene = initScene()
       constructOrrery(scene, scale)
       let placed = placesOf(scene)
