@@ -16,7 +16,7 @@ import ../src/pga_benchmark/[
   report,
 ]
 import ../src/pga_benchmark/pages/[shell, trial]
-from ../src/pga_benchmark/trials import editsDigest, nanOf, successOf, timesOf
+from ../src/pga_benchmark/trials import editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
 const
@@ -934,6 +934,16 @@ suite "Trials":
       "out: a.json [SuccessX]\n"
     check successOf(output) == (0.213, 38.008)  # both read
     check successOf("Error: type mismatch\n") == (0.0, 0.0)  # failed build reads nothing
+
+  test "function on one side only is null on other, so document prints":
+    let
+      counts = %*{"total": {"multiplies": 3}, "movement": {"bytes_moved": 8}}
+      before = %*{"functions": {"f(M)": counts}}
+      after = %*{"functions": {"f(M)": counts, "g(M)": counts}}
+      moved = functionsChanged(before, after)
+    check moved.len == 1 and moved["g(M)"]["before"].kind == JNull  # new function
+    check functionsChanged(after, before)["g(M)"]["after"].kind == JNull  # gone function
+    check pretty(moved).len > 0  # prints, where nil node crashed
 
   test "digest moves with edits, claims and programs, and never with prose":
     let
