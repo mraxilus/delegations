@@ -109,5 +109,5 @@ checked against.
 [replications]: https://gitlab.com/mraxilus/replications
 [docket]: https://claude.ai/artifact/XyT583x9RnTKixers2q4gT
 [marginalia]: https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM
-[cayley-derivation]: PENDING
-[typed-multivectors]: PENDING
+[cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q
+[typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX

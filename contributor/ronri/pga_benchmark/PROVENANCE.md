@@ -363,7 +363,13 @@ typed algebras, rga4d and cga5d, which both lower bounds cover.
 
 **The noise band comes from the trials themselves.** A trial that changes no library function
 moves no count, so the spread of its time ratios is the spread of the machine. The pages state
-the band beside the figures it qualifies.
+the band beside the figures it qualifies. On 2026-09-29, in this container (linux amd64, 4
+cores), 12 such trials gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
+
+Measured variance: `typed-multivectors` applies the same library edits as `cayley-derivation`.
+Its first trial gave a median ratio of ×1.16 over every rga4d measurand, and a second, same
+day, gave ×1.00. Alternation does not cancel all drift of a shared machine, so one trial's
+time is weak evidence alone. Counts are exact, and carry the verdicts.
 
 The 14 changes come from edits measured at `bd6b23c` by line range. Converted to
 quotes, each one applied at pin gives files byte-identical to the measured edits, 14 of 14.
