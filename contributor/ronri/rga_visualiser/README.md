@@ -51,12 +51,12 @@ Two of its dependencies arrive as no package. So the build fetches both itself, 
 one when its pin misses.
 
 **SDL3** has no `libsdl3-dev` on Ubuntu 24.04, because that release carries SDL2 only. So `desktop`
-clones `release-3.2.30` into `deps/sdl3`, and holds it at the commit that the tag names. It builds
-it into `build/sdl3`, which is a prefix inside the tree that needs no root.
+clones `release-3.2.30` into `dependencies/sdl3`, and holds it at the commit that the tag names. It
+builds it into `build/sdl3`, which is a prefix inside the tree that needs no root.
 
 **Dear ImGui** is compiled from source into the binary, rather than linked. It is cloned to
-`deps/imgui` at its pinned commit. Both are held at a commit rather than at a name that could move.
-Both are kept locally and never committed, as the Atlas checkouts are.
+`dependencies/imgui` at its pinned commit. Both are held at a commit rather than at a name that
+could move. Both are kept locally and never committed, as the Atlas checkouts are.
 
 Nothing has to be run by hand for either one. Where a machine already carries SDL3 at the pinned
 version, that one is used and nothing is built:
@@ -65,9 +65,9 @@ version, that one is used and nothing is built:
 nim r tools/build.nim desktop
 ```
 
-Atlas restores the `pga` library from `atlas.lock` into `deps/`, and it is never committed.
-`nim r koch fetch-deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at
-`295bafc`, which is the head of that library.
+Atlas restores the `pga` library from `atlas.lock` into `dependencies/`, and it is never
+committed. `nim r koch fetch-deps contributor/ronri/rga_visualiser` restores it alone. It is
+pinned at `295bafc`, which is the head of that library.
 
 Four projection operations are withdrawn at head while the library rebuilds them.
 `src/rga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
@@ -97,10 +97,10 @@ Commit Mono splits its ligatures. Most ride on `calt` and draw unasked. The arro
 come from `ss01` and `ss02`, which the page asks for by name. The desktop draws none of them,
 because Dear ImGui shapes no text. See Browser front-end in `PROVENANCE.md`.
 
-Tests run as three configurations of one shared suite. `t4d` runs at shipped capacities on the C
-backend. `t4d_small` runs at capacities small enough that the tests of the suite reach them.
-`t4d_browser` runs on the JS backend, and it is the one that holds the formatting of the two
-backends to the same rule.
+Tests run as three configurations of one shared suite. `test_4d` runs at shipped capacities on
+the C backend. `test_4d_small` runs at capacities small enough that the tests of the suite reach
+them. `test_4d_browser` runs on the JS backend, and it is the one that holds the formatting of the
+two backends to the same rule.
 
 ## Layout
 
@@ -127,9 +127,10 @@ tools/build.nim               the build driver: declare, types, web, drive, desk
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/suites/                 one module for each suite, and the pool they share
-tests/t4d.nim t4d_small.nim   C backend, shipped and small capacities
-tests/t4d_browser.nim         JS backend, same suite
-deps/                         PGA library, restored by Atlas; never committed
+tests/test_4d.nim             C backend, shipped capacities
+tests/test_4d_small.nim       C backend, small capacities
+tests/test_4d_browser.nim     JS backend, same suite
+dependencies/                 PGA library, restored by Atlas; never committed
 ```
 
 ## Published
