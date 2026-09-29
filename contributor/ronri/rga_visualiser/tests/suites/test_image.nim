@@ -78,9 +78,9 @@ when not defined(js):
       # Walk every frame's own blocks by their own lengths, landing exactly on.
       #   trailer proves each frame's sub-blocks are sound, exactly as PNG test does.
       # Signature, logical screen, colour table, application extension.
-      const HEADER_LEN = 6 + 7 + 256*3 + 19
+      const HEADER_LENGTH = 6 + 7 + 256*3 + 19
       var
-        offset = HEADER_LEN
+        offset = HEADER_LENGTH
         count_frames = 0
       while document[offset] == '\x21':
         offset += 8 # Graphic Control Extension is fixed length.
@@ -178,8 +178,8 @@ when not defined(js):
       defer: removeFile(path)
       let document = readFile(path)
 
-      const HEADER_LEN = 6 + 7 + 256*3 + 19
-      var offset = HEADER_LEN + 8 + 10 # Past Graphic Control Extension and Image Descriptor.
+      const HEADER_LENGTH = 6 + 7 + 256*3 + 19
+      var offset = HEADER_LENGTH + 8 + 10 # Past Graphic Control Extension and Image Descriptor.
       let width_code = uint8(document[offset])
       check width_code == 8
       offset += 1

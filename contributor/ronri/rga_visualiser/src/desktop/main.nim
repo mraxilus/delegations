@@ -129,7 +129,7 @@ const
     ##   this thin.
   PIXELS_WIDTH* {.define: "visualiser.pixels_width".} = 1440
   PIXELS_HEIGHT* {.define: "visualiser.pixels_height".} = 900
-  DIR_FACES* {.define: "visualiser.dir_faces".} = "../build/fonts"
+  DIRECTORY_FACES* {.define: "visualiser.directory_faces".} = "../build/fonts"
     ## Directory shipped faces sit in, relative to binary rather than to any machine.
     ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
     ##   `bin/` sits beside `build/` -- so binary and faces move together and neither is
@@ -445,7 +445,7 @@ proc faceAt(name_environment, face: string): string =
   ##   on.
   let
     named = getEnv(name_environment)
-    path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
+    path = if named.len > 0: named else: getAppDir() / DIRECTORY_FACES / face
   if fileExists(path): return path
   echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
   ""

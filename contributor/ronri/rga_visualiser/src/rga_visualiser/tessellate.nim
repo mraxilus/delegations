@@ -487,26 +487,26 @@ func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool 
   ##   progress, inside clip either way.
   ##   Components rather than `Direction` difference: object per point per frame on JS
   ##   backend (Art. VII.1). Parameters are read in place, never bound (read in emitted JS).
-  var rx, ry, rz: float
+  var offset_x, offset_y, offset_z: float
   case placed.kind
   of Case.PointAt:
-    rx = placed.at.x - bounds.eye.x
-    ry = placed.at.y - bounds.eye.y
-    rz = placed.at.z - bounds.eye.z
+    offset_x = placed.at.x - bounds.eye.x
+    offset_y = placed.at.y - bounds.eye.y
+    offset_z = placed.at.z - bounds.eye.z
   of Case.PointToward:
-    rx = placed.toward.x
-    ry = placed.toward.y
-    rz = placed.toward.z
+    offset_x = placed.toward.x
+    offset_y = placed.toward.y
+    offset_z = placed.toward.z
   else:
     return true
-  let depth = rx*bounds.forward.x + ry*bounds.forward.y + rz*bounds.forward.z
+  let depth = offset_x*bounds.forward.x + offset_y*bounds.forward.y + offset_z*bounds.forward.z
   if depth <= 0.0: return false
   if placed.kind == Case.PointAt and
       (depth < bounds.depth_near or depth > bounds.depth_far):
     return false
-  let across = rx*bounds.right.x + ry*bounds.right.y + rz*bounds.right.z
+  let across = offset_x*bounds.right.x + offset_y*bounds.right.y + offset_z*bounds.right.z
   if abs(across) > depth*bounds.bound_width + radius: return false
-  let above = rx*bounds.up.x + ry*bounds.up.y + rz*bounds.up.z
+  let above = offset_x*bounds.up.x + offset_y*bounds.up.y + offset_z*bounds.up.z
   abs(above) <= depth*bounds.bound_height + radius
 
 

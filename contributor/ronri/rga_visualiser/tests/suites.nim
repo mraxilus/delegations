@@ -18,7 +18,7 @@
 ##   one C file each, compiled in parallel (PROVENANCE.md, Testing).
 ##   Imported in fixed order, never read from directory: seeded generator then serves every
 ##   test same draws, and order is order suites ran in as one file.
-##   Each module also runs alone, e.g. `nim r -d:testing tests/suites/tmotors.nim`.
+##   Each module also runs alone, e.g. `nim r -d:testing tests/suites/test_motors.nim`.
 
 {.experimental: "strictFuncs".}
 {.warning[UnusedImport]: off.}  # suite modules run for effect and export nothing
@@ -27,21 +27,21 @@ when compileOption("profiler"):
   import std/nimprof
 
 import ./suites/[
-  tobjects,
-  tmotors,
-  tcamera,
-  tmesh,
-  tscene,
-  thistory,
-  tcamera_aim,
-  tselection,
-  tarena_swap,
-  timage,
-  thelp,
-  tpicking,
-  tinteraction,
-  tmarker,
-  torrery,
-  tmessage,
-  twording,
+  test_objects,
+  test_motors,
+  test_camera,
+  test_mesh,
+  test_scene,
+  test_history,
+  test_camera_aim,
+  test_selection,
+  test_arena_swap,
+  test_image,
+  test_help,
+  test_picking,
+  test_interaction,
+  test_marker,
+  test_orrery,
+  test_message,
+  test_wording,
 ]
