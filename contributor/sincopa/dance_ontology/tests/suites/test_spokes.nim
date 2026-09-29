@@ -250,10 +250,10 @@ suite "the drawing":
       let picture = renderSpokes(here)
       for target in FRAMES:
         let
-          drawn = picture.contains("data-frame=\"" & target.key & "\"")
-          reachable = target == here or classify(here, target).isSome or
+          is_drawn = picture.contains("data-frame=\"" & target.key & "\"")
+          is_reachable = target == here or classify(here, target).isSome or
             compound(here, target).isSome
-        check drawn == reachable
+        check is_drawn == is_reachable
 
   test "the frame held is the one in the middle":
     for here in FRAMES:

@@ -19,15 +19,15 @@ const OUT = "build/review"
 
 func importsOf(source: string): seq[string] =
   ## Each `import` statement of source, with lines that continue it.
-  var going = false
+  var is_going = false
   for line in source.splitLines:
     if line.startsWith("import"):
       result.add line
-      going = true
-    elif going and line.startsWith(" "):
+      is_going = true
+    elif is_going and line.startsWith(" "):
       result[^1].add line
     else:
-      going = false
+      is_going = false
 
 
 func suitesOf(stub: string): seq[string] =

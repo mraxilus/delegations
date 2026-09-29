@@ -195,11 +195,11 @@ func swatch*(kind: Swatch): string =
     faint = if kind == Swatch.Free: &" opacity=\"{FREE_FADE}\"" else: ""
   var bits =
     @["""<svg viewBox="0 0 36 16" width="36" height="16" aria-hidden="true">"""]
-  for (leads, arm, centre_x) in [(true, Arm.Left, 7.0), (false, Arm.Right, 28.0)]:
+  for (is_leading, arm, centre_x) in [(true, Arm.Left, 7.0), (false, Arm.Right, 28.0)]:
     let
-      ink = if leads: DEEP[arm] else: INK[arm]
-      fill = fillOf(level, arm, leads)
-    if leads:
+      ink = if is_leading: DEEP[arm] else: INK[arm]
+      fill = fillOf(level, arm, is_leading)
+    if is_leading:
       bits.add &"""<rect x="1" y="2" width="12" height="12" rx="1.5"""" &
         &""" fill="{fill}" stroke="{ink}" stroke-width="1.5"{faint}/>"""
     else:

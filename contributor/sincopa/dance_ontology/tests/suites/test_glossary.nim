@@ -54,12 +54,12 @@ const
 func replaced(source, term: string): seq[string] =
   ## Collect capitalised words entry `term` rejects, in lower case: names that
   ## thing once carried, and not common words it also rejects.
-  var inside = false
+  var is_inside = false
   for line in source.splitLines:
     let bare = line.strip
     if bare.startsWith("**") and bare.endsWith("**:"):
-      inside = bare[2 ..< bare.len - 3] == term
-    elif bare.startsWith("_Avoid_:") and inside:
+      is_inside = bare[2 ..< bare.len - 3] == term
+    elif bare.startsWith("_Avoid_:") and is_inside:
       for word in bare["_Avoid_:".len .. ^1].split(','):
         let trimmed = word.strip
         if trimmed.len > 0 and trimmed[0].isUpperAscii: result.add trimmed.toLowerAscii
@@ -112,13 +112,13 @@ func rungsOf(report: string): seq[tuple[turns: int, said, facing: string]] =
   ## that rung, and facing it stands at.
   ##   Rung cell reads `<word> (<turns>)`, under header that names its columns,
   ##     and facing cell follows it.
-  var inside = false
+  var is_inside = false
   for line in report.splitLines:
     let bare = line.strip
     if bare.startsWith("| level | rung |"):
-      inside = true
+      is_inside = true
       continue
-    if not inside: continue
+    if not is_inside: continue
     if not bare.startsWith("|"): break
     if bare.startsWith("|---"): continue
     let cells = bare.strip(chars = {'|', ' '}).split('|')
@@ -136,7 +136,7 @@ func rungsOf(report: string): seq[tuple[turns: int, said, facing: string]] =
     result.add (int(round(wound * 100.0)), cell[0 ..< opens].strip, cells[2].strip)
 
 
-func says(text, phrase: string): bool =
+func isSaying(text, phrase: string): bool =
   ## Decide whether text speaks phrase as whole words, not inside longer one.
   var from_here = 0
   while true:
@@ -166,14 +166,14 @@ suite "chain speaks glossary":
         let name = position.name.toLowerAscii
         for _, words in rejected:
           for word in words:
-            check not name.says(word)
+            check not name.isSaying(word)
 
   test "every position carries glossary's own word":
     for holds in HOLDS:
       for position in chainFor(holds):
         let tenths = int(abs(position.wind) * 10)
         if tenths in SHAPE_AT:
-          check position.name.toLowerAscii.says(SHAPE_AT[tenths].toLowerAscii)
+          check position.name.toLowerAscii.isSaying(SHAPE_AT[tenths].toLowerAscii)
 
 
 suite "pages speak of the lead and the follow":
@@ -201,7 +201,7 @@ suite "pages speak of the lead and the follow":
         for (said, next) in readFile(path).literals:
           if next == ':': continue  # key of object, read back by that name
           for word in gendered:
-            if said.toLowerAscii.says(word):
+            if said.toLowerAscii.isSaying(word):
               checkpoint path.extractFilename & " says `" & word & "`: " & said
               fail()
 
@@ -216,12 +216,12 @@ suite "pages speak of the lead and the follow":
         if path.splitFile.ext != ".nim": continue
         for (said, _) in readFile(path).literals:
           for word in names:
-            if said.toLowerAscii.says(word):
+            if said.toLowerAscii.isSaying(word):
               checkpoint path.extractFilename & " says `" & word & "`: " & said
               fail()
     for name in DOCUMENTS:
       for word in names:
-        if readFile(root / name).toLowerAscii.says(word):
+        if readFile(root / name).toLowerAscii.isSaying(word):
           checkpoint name & " says `" & word & "`"
           fail()
 
@@ -229,7 +229,7 @@ suite "pages speak of the lead and the follow":
     for name in DOCUMENTS:
       let said = readFile(root / name).toLowerAscii
       for word in gendered:
-        if said.says(word):
+        if said.isSaying(word):
           checkpoint name & " says `" & word & "`"
           fail()
 
@@ -257,13 +257,13 @@ suite "the report speaks glossary":
     for (wound, said, _) in rungs:
       for _, words in rejected:
         for word in words:
-          if said.toLowerAscii.says(word):
+          if said.toLowerAscii.isSaying(word):
             checkpoint "rung at " & $wound & " says `" & word & "`: " & said
             fail()
 
   test "every rung of report carries glossary's own word":
     for (wound, said, _) in rungs:
-      check said.toLowerAscii.says(RUNG_AT[wound])
+      check said.toLowerAscii.isSaying(RUNG_AT[wound])
 
   test "every rung of report stands at facing model gives its turn":
     ## Report reads facing off stance simulation winds couple to (`words.facingName`),
@@ -282,6 +282,6 @@ suite "the report speaks glossary":
     let names = source.replaced(FACING_TERM)
     check names.len > 0
     for word in names:
-      if report.toLowerAscii.says(word):
+      if report.toLowerAscii.isSaying(word):
         checkpoint "report says `" & word & "`"
         fail()

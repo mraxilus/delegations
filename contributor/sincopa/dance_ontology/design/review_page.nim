@@ -174,18 +174,18 @@ func sheetOf(parts: Parts): string =
       &"""<div class="picks">{buttons}</div>"""
 
   func card(id, label, note, art: string; drawings: seq[string];
-            switching = false; asks: seq[string] = @[]): string =
+            is_switching = false; asks: seq[string] = @[]): string =
     ## Set one cell beside its identifier, carrying whatever has been ruled
     ## on it.  Unmarked is unreviewed, not approved.
     let
-      flawed = id in FLAWED
-      kept = id in KEPT
-      dropped = id in DROPPED
-      mark = if flawed: " flawed" elif kept: " kept"
-             elif dropped: " dropped" else: ""
-      badge = if flawed: """<em class="tag mend">mend</em>"""
-              elif kept: """<em class="tag keep">kept</em>"""
-              elif dropped: """<em class="tag drop">drop</em>"""
+      is_flawed = id in FLAWED
+      is_kept = id in KEPT
+      is_dropped = id in DROPPED
+      mark = if is_flawed: " flawed" elif is_kept: " kept"
+             elif is_dropped: " dropped" else: ""
+      badge = if is_flawed: """<em class="tag mend">mend</em>"""
+              elif is_kept: """<em class="tag keep">kept</em>"""
+              elif is_dropped: """<em class="tag drop">drop</em>"""
               else: ""
       # Simulation's own tag, drawn outlined where Architect's is solid, so ruling by
       # eye and reading by engine are never taken for one another.  It sits in
@@ -195,17 +195,17 @@ func sheetOf(parts: Parts): string =
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
       known = put.filterIt(it in LUT_MODELLED_BY_CARD)
-      reached = known.len > 0 and known.allIt(LUT_MODELLED_BY_CARD[it])
+      is_reached = known.len > 0 and known.allIt(LUT_MODELLED_BY_CARD[it])
       # Cell's own colour says how far it has got: green only where it is kept,
       # wholly reached and confirmed; amber where simulation reaches all or part of it
       # and Architect has not yet confirmed; red where simulation reaches none of it.
       # Badges keep saying which of two tags each is.
       stand = if known.len == 0: ""
-              elif reached and id in CONFIRMED: " met"
-              elif reached or known.anyIt(LUT_MODELLED_BY_CARD[it]): " part"
+              elif is_reached and id in CONFIRMED: " met"
+              elif is_reached or known.anyIt(LUT_MODELLED_BY_CARD[it]): " part"
               else: " unmet"
-      says = if switching or known.len == 0: ""
-             elif not reached: """<em class="tag nomodel">not modelled</em>"""
+      says = if is_switching or known.len == 0: ""
+             elif not is_reached: """<em class="tag nomodel">not modelled</em>"""
              elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
              else: """<em class="tag unsure">unconfirmed</em>"""
     # Questions cell stands for are written on it, so viewer page laying simulation
@@ -215,15 +215,15 @@ func sheetOf(parts: Parts): string =
     # as when it was ruled on, and mend reaching further than it meant to
     # stops here rather than shipping.  Cell holding several drawings is
     # held to all of them, since verdict on it is verdict on all.
-    if kept or dropped:
+    if is_kept or is_dropped:
       doAssert $hash(drawings.join("")) == LUT_PIN_BY_CARD.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
-    (if switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
+    (if is_switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{escaped(id)}</code><b>{escaped(label)}</b>""" &
     (if note.len > 0: &"""<span>{escaped(note)}</span>""" else: "") &
-    (if flawed: &"""<span class="fix">{escaped(FLAWED[id])}</span>""" else: "") &
+    (if is_flawed: &"""<span class="fix">{escaped(FLAWED[id])}</span>""" else: "") &
     "</figcaption></figure>"
 
   func card(id, label, note, svg: string; asks: seq[string] = @[]): string =
@@ -235,12 +235,12 @@ func sheetOf(parts: Parts): string =
             asks: seq[string] = @[]): string =
     ## Set several drawings in one cell, switched between by button.
     card(id, label, note, stepped(id, steps, asks),
-         steps.mapIt(unpinned(it.svg)), switching = true, asks = asks)
+         steps.mapIt(unpinned(it.svg)), is_switching = true, asks = asks)
 
   var body = ""
 
   # `A`. Standard diagram: eight frames, two twist parities, and that is all of it.
-  let aRest = restOf(PAIRED).name  # Same-name pair's rest, read through model.
+  let same_name_rest = restOf(PAIRED).name  # Same-name pair's rest, read through model.
   body.add &"""<section id="standard"><h2>A &middot; The standard diagram</h2>
   <p class="lede">Every drawing in this project is one of these, and a table built at compile
   time holds them all. The drawing reads the frame hold, the parity of the twist, and the way
@@ -251,9 +251,10 @@ func sheetOf(parts: Parts): string =
   follow, and never the lead. Every card below names the facing it draws, and not the facing the
   model knows.</p>
   <p class="how"><b>Each frame counts from its own rest.</b> Rest is the facing where the
-  connections of that hold run parallel and cross nothing. A same-name pair rests <b>{aRest}</b>
-  rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A9 and A11 read <i>half a turn
-  from {aRest}</i>. A card names a way round only where the other way
+  connections of that hold run parallel and cross nothing. A same-name pair rests
+  <b>{same_name_rest}</b> rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A9
+  and A11 read <i>half a turn
+  from {same_name_rest}</i>. A card names a way round only where the other way
   round draws a different picture, which is A16 and A17 alone.</p>
   <p class="how"><b>A crossing breaks at the arm that goes under.</b> The drawing cuts that
   arm at the middle, and the <code>over</code> field of the frame says which arm it is. A16
@@ -287,13 +288,13 @@ func sheetOf(parts: Parts): string =
     elif way.len > 0: &"{drawn}, half a turn {way} from {rest}"
     else: &"{drawn}, half a turn from {rest}"
 
-  func turnShows(target: Frame): bool =
+  func isTurnShown(target: Frame): bool =
     ## Say whether turning one way draws anything other way does not.
     renderFrame(target, HalfTurns(1)) != renderFrame(target, HalfTurns(-1))
 
   for i, target in FRAMES:
     for twist in [0, 1]:
-      let way = if twist == 1 and turnShows(target): "clockwise" else: ""
+      let way = if twist == 1 and isTurnShown(target): "clockwise" else: ""
       body.add card(&"A{i * 2 + twist + 1}", describe(target),
                     facingNote(target, twist, way),
                     renderFrame(target, HalfTurns(twist)))
@@ -362,21 +363,21 @@ func sheetOf(parts: Parts): string =
   let chains = parts
   const PAIRED: Holds = [some Arm.Left, some Arm.Right]
   let
-    dualPhase = phaseOf(PAIRED)
-    dualChain = chainFor(PAIRED)
+    dual_phase = phaseOf(PAIRED)
+    dual_chain = chainFor(PAIRED)
   # One scale for both chains, so section `C` and section `D` compare directly.
   var half = 0.0
   for position in CHAIN:
-    half = max(half, extent(handPose(position.wind), captions = false))
-  for position in dualChain:
-    half = max(half, extent(posedAt(position.wind, dualPhase), captions = false))
+    half = max(half, extent(handPose(position.wind), has_captions = false))
+  for position in dual_chain:
+    half = max(half, extent(posedAt(position.wind, dual_phase), has_captions = false))
 
   # Each facing named here is read off pose through model, never written down.
   let
-    handRest = restOf(HAND_TO_HAND).name
+    hand_rest = restOf(HAND_TO_HAND).name
     whole = facingAt(HAND_TO_HAND, 1.0).get.name
     halves = facingAt(HAND_TO_HAND, 0.5).get.name
-  body.add &"""<section id="chain"><h2>C &middot; The cross-name chain, {handRest} at rest</h2>
+  body.add &"""<section id="chain"><h2>C &middot; The cross-name chain, {hand_rest} at rest</h2>
   <p class="lede">The chain stands in seven places, half a turn apart, and the hand-to-hand page
   walks along it. Each place carries a twist as a real number rather than a count of half turns,
   which the standard diagram cannot hold. The facing alternates along the chain: {whole} at
@@ -386,9 +387,9 @@ func sheetOf(parts: Parts): string =
   the two chains stand against each other.</p><div class="grid wide">"""
   for i, position in CHAIN:
     body.add card(&"C{i + 1}", position.name, windNote(position.note, position.wind),
-      renderFigure("tiny", HAND_TO_HAND, ABOVE_BOTH, captions = false,
+      renderFigure("tiny", HAND_TO_HAND, ABOVE_BOTH, has_captions = false,
         pose = some handPose(position.wind), half = some half,
-        twist = windTwist(position.wind), clear_marks = true))
+        twist = windTwist(position.wind), should_clear_marks = true))
   body.add "</div></section>"
 
 
@@ -400,18 +401,18 @@ func sheetOf(parts: Parts): string =
   body.add &"""<section id="paired"><h2>D &middot; The same-name chain, {paired_rest} at rest</h2>
   <p class="lede">This hold joins the left of the lead to the left of the follow, and right to
   right. It walks the chain of section C, read half a turn along. So it runs parallel
-  <b>{paired_rest}</b> rather than {handRest}, and its phase measures {dualPhase} where the phase of
-  the other chain measures {HAND_PHASE}. """ &
+  <b>{paired_rest}</b> rather than {hand_rest}, and its phase measures {dual_phase} where the phase
+  of the other chain measures {HAND_PHASE}. """ &
     &"""Its facing alternates the other way about: {paired_whole} at the
   whole turns, and {paired_half} at the halves. No page in this project walks this
   chain.</p><div class="grid wide">"""
-  for i, position in dualChain:
+  for i, position in dual_chain:
     body.add card(&"D{i + 1}", position.name,
       windNote(position.note, position.wind,
              zero = "this hold's own parallel state"),
-      renderFigure("tiny", PAIRED, ABOVE_BOTH, captions = false,
-        pose = some posedAt(position.wind, dualPhase), half = some half,
-        twist = windTwist(position.wind), clear_marks = true))
+      renderFigure("tiny", PAIRED, ABOVE_BOTH, has_captions = false,
+        pose = some posedAt(position.wind, dual_phase), half = some half,
+        twist = windTwist(position.wind), should_clear_marks = true))
   body.add "</div></section>"
 
   # `E`. Every single-hand turn animated, edge by edge.
@@ -445,11 +446,11 @@ func sheetOf(parts: Parts): string =
                       stills[&"rd_{tag}_{connection}"], asks = @[&"rd_{tag}_{connection}"])
       var
         steps: seq[tuple[pick, note, svg: string]]
-        asksE: seq[string]
+        asks_e: seq[string]
       for quarter in 0 ..< QUARTERS_ROUND:
         let key = &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}"
         if key notin stills: continue
-        asksE.add key
+        asks_e.add key
         steps.add ($(quarter + 1),
           &"quarter {quarter + 1} of 4: from {QUARTER_FROM[quarter]} to " &
             &"{QUARTER_FROM[(quarter + 1) mod QUARTERS_ROUND]}",
@@ -457,7 +458,7 @@ func sheetOf(parts: Parts): string =
       if steps.len > 0:
         inc e_count
         body.add card(&"E{e_count}", said, "one quarter at a time", steps,
-                      asks = asksE)
+                      asks = asks_e)
     body.add "</div>"
   body.add "</section>"
 
@@ -493,15 +494,15 @@ func sheetOf(parts: Parts): string =
                     chains[&"hc_{tag}"], asks = @[&"hc_{tag}"])
     var
       steps: seq[tuple[pick, note, svg: string]]
-      asksF: seq[string]
+      asks_f: seq[string]
     for i in 0 ..< CHAIN.len - 1:
       let key = &"hw_{tag}_{i}"
       if key notin chains: continue
-      asksF.add key
+      asks_f.add key
       steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, chains[key])
     if steps.len > 0:
       inc f_count
-      body.add card(&"F{f_count}", said, "one edge at a time", steps, asks = asksF)
+      body.add card(&"F{f_count}", said, "one edge at a time", steps, asks = asks_f)
   body.add "</div></section>"
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
@@ -509,9 +510,9 @@ func sheetOf(parts: Parts): string =
   <h2>G &middot; Hand-to-hand chain, {paired_rest}, moving</h2>
   <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
   turn. Each manner takes the same two cells that section F uses, and the way each manner walks
-  is read the same. This chain rests <b>{paired_rest}</b> rather than {handRest}, because {handRest}
-  its two connections lie through each other (rule 31). Its phase measures
-  {dualPhase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
+  is read the same. This chain rests <b>{paired_rest}</b> rather than {hand_rest}, because
+  {hand_rest} its two connections lie through each other (rule 31). Its phase measures
+  {dual_phase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
   <div class="grid wide">"""
   var g_count = 0
   for manner in Manner:
@@ -521,20 +522,20 @@ func sheetOf(parts: Parts): string =
     if &"pc_{tag}" in chains:
       inc g_count
       body.add card(&"G{g_count}", said,
-                    &"the whole chain, {dualChain.len - 1} halves out and back",
+                    &"the whole chain, {dual_chain.len - 1} halves out and back",
                     chains[&"pc_{tag}"], asks = @[&"pc_{tag}"])
     var
       steps: seq[tuple[pick, note, svg: string]]
-      asksG: seq[string]
-    for i in 0 ..< dualChain.len - 1:
+      asks_g: seq[string]
+    for i in 0 ..< dual_chain.len - 1:
       let key = &"pw_{tag}_{i}"
       if key notin chains: continue
-      asksG.add key
+      asks_g.add key
       steps.add ($(i + 1),
-                 dualChain[i].name & " to " & dualChain[i + 1].name, chains[key])
+                 dual_chain[i].name & " to " & dual_chain[i + 1].name, chains[key])
     if steps.len > 0:
       inc g_count
-      body.add card(&"G{g_count}", said, "one edge at a time", steps, asks = asksG)
+      body.add card(&"G{g_count}", said, "one edge at a time", steps, asks = asks_g)
   body.add "</div></section>"
 
   const SWITCHING = block:

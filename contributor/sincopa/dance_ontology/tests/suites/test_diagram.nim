@@ -74,8 +74,8 @@ suite "the picture":
       # saying nothing about over and under is one case they cannot:
       # turning makes its two connections cross, and which of them ends
       # up over is exactly what direction of that turn leaves behind.
-      let undecided = target.countHolds == 2 and target.over.isNone
-      check (renderFrame(target, 1) != renderFrame(target, -1)) == undecided
+      let is_undecided = target.countHolds == 2 and target.over.isNone
+      check (renderFrame(target, 1) != renderFrame(target, -1)) == is_undecided
 
   test "a connection is drawn in its two hands' own colours":
     # So line itself says which named hands are joined -- `Left to right`

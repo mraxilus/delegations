@@ -51,7 +51,7 @@ type
     band*: Band
     apart*: float       ## Where couple stood for it.
     turns*: float       ## How far it got.
-    stopped*: bool
+    is_stopped*: bool
     why*: Stop
     whose*: Hand        ## Whose hand it gave at.
     stills*: seq[Still]
@@ -101,49 +101,49 @@ proc stillOf(couple: Couple; at: float): Still =
     result.apart.add pose.apart
 
 proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
-            turns: float; away = false; head = Body.Two; either = false): Shown =
+            turns: float; is_away = false; head = Body.Two; is_either_way = false): Shown =
   ## One still, from distance couple stand for it, or none if no distance holds.
   ##   Still is wound to its facing and left standing, as `walk.stood` has it,
   ##     and distance is `walk.standing`'s choice, as is way about where still
   ##     fixes none, so what page draws of it is what `modelled` answered about
   ##     it, where model has couple stand.
-  result = Shown(hold: name, band: band, turns: turns, stopped: true, why: Stop.None)
-  let where = standing(rig, band, links, turns, away, head, either)
-  if not where.holds: return
-  let (holds, couple) = stood(rig, band, links, where.turns, away, head, where.apart)
-  if holds:
+  result = Shown(hold: name, band: band, turns: turns, is_stopped: true, why: Stop.None)
+  let where = standing(rig, band, links, turns, is_away, head, is_either_way)
+  if not where.is_holding: return
+  let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart)
+  if is_holding:
     result.apart = where.apart
     result.turns = where.turns
-    result.stopped = false
+    result.is_stopped = false
     result.stills.add stillOf(couple, where.turns)
   couple.free()
 
 proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
-            who = Body.Two; step = STEP; away = false;
+            who = Body.Two; step = STEP; is_away = false;
             head = Body.Two): Shown =
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
   let
     sweep = swept(rig, band, links, who = who, most = MOST, step = step,
-               away = away, head = head)
+               is_away = is_away, head = head)
     best = (if step >= 0.0: sweep.positive else: sweep.negative)
   result = Shown(
     hold: name,
     band: band,
     apart: best.apart,
     turns: best.at,
-    stopped: best.stopped,
+    is_stopped: best.is_stopped,
     why: best.why,
     whose: best.whose,
   )
-  if not best.restHolds:
+  if not best.found_rest:
     return
-  var couple = build(rig, restStance(rig, best.apart, away), band, links, head, away)
+  var couple = build(rig, restStance(rig, best.apart, is_away), band, links, head, is_away)
   couple.settle()
   var at = 0.0
   result.stills.add stillOf(couple, at)
-  let most = (if best.stopped: best.at else: MOST)
+  let most = (if best.is_stopped: best.at else: MOST)
   while abs(at) < most:
     couple.turn(who, step, BEATS)
     at += step

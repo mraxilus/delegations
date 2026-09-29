@@ -234,7 +234,7 @@ func waking(is_standing, is_standing_prev, is_moving: bool): string =
   else: " dozing"
 
 
-func overlaps*(a, b: Box): bool =
+func isOverlapping*(a, b: Box): bool =
   ## Test whether two things in drawing would be drawn over each other.
   a.x < b.x + b.width and b.x < a.x + a.width and a.y < b.y + b.height and b.y < a.y + a.height
 
@@ -340,7 +340,7 @@ func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
 func isClear(box: Box; used: seq[Box]): bool =
   ## Test whether something can be drawn here without landing on anything else.
   for other in used:
-    if overlaps(box, other):
+    if isOverlapping(box, other):
       return false
   true
 
@@ -576,11 +576,11 @@ func node(target: Frame; standing, was: Option[Frame]): string =
     (centre_x, centre_y) = centreOf(target)
     (is_here, is_reachable, is_compound) = standingOf(target, standing)
     (is_here_prev, is_reachable_prev, is_compound_prev) = standingOf(target, was)
-    within = is_here or is_reachable or is_compound
+    is_within = is_here or is_reachable or is_compound
   nodeAt(target, centre_x, centre_y, NODE_WIDTH,
     (if is_here: "here " else: "") & (if is_reachable: "reachable " else: "") &
     (if is_compound: "two" else: "") &
-    waking(within, is_here_prev or is_reachable_prev or is_compound_prev, was.isSome))
+    waking(is_within, is_here_prev or is_reachable_prev or is_compound_prev, was.isSome))
 
 
 
@@ -611,12 +611,12 @@ func renderMap*(here: Option[Frame]; motion = Motion.Still;
   ##     is move itself.  So what drawing settles into is already
   ##     drawing for where mark lands.
   let
-    leaving = motion == Motion.Leaving and taken.isSome
-    standing = if leaving: taken else: here
-    was = if leaving: here else: none(Frame)
+    is_leaving = motion == Motion.Leaving and taken.isSome
+    standing = if is_leaving: taken else: here
+    was = if is_leaving: here else: none(Frame)
   result = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " &
     $MAP_WIDTH & " " & $MAP_HEIGHT & "\" class=\"map" &
-    (if leaving: " leaving" else: "") &
+    (if is_leaving: " leaving" else: "") &
     (if here.isNone: " unread" else: "") & "\" style=\"" &
     passStyle(WIDE_TEMPO) & "\" role=\"img\">" &
     "<title>Every frame, and every move between them</title>"
@@ -672,7 +672,7 @@ func renderMap*(here: Option[Frame]; motion = Motion.Still;
     # line between them, which is same thing close drawing says.
     let
       (here_x, here_y) = centreOf(here.get)
-      (taken_x, taken_y) = if leaving: centreOf(taken.get) else: (here_x, here_y)
+      (taken_x, taken_y) = if is_leaving: centreOf(taken.get) else: (here_x, here_y)
     # Placed by where it is rather than moved to it, so that distance it
     # carries is distance to travel and not place to jump to.
     result.add markAt(here_x, here_y, NODE_WIDTH, " style=\"--mx: " & $(taken_x - here_x) &

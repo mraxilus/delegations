@@ -39,7 +39,7 @@ suite "the rig":
       check rig.bottom(HUMAN, part) < HUMAN.top[part]
 
   test "the shoulder stands outside its own torso, and a hanging arm clears it":
-    check HUMAN.shoulderOut > halfBreadth(HUMAN, Part.Torso)
+    check HUMAN.shoulder_out > halfBreadth(HUMAN, Part.Torso)
     let stance = facing(HUMAN, APART)[Body.One]
     for arm in Arm:
       let shoulder_point = shoulder(HUMAN, stance, arm)
@@ -48,7 +48,7 @@ suite "the rig":
         stance,
         shoulder_point,
         lifted(shoulder_point, -HUMAN.upper),
-        own = true,
+        is_own = true,
       ).gap >= 0.0
 
   test "two bodies cannot stand closer than their chests":
@@ -59,10 +59,10 @@ suite "the rig":
       stance = facing(HUMAN, APART)
       left_shoulder_one = shoulder(HUMAN, stance[Body.One], LEFT)
       left_shoulder_two = shoulder(HUMAN, stance[Body.Two], LEFT)
-    check abs(left_shoulder_one.x + HUMAN.shoulderOut) < 1e-9 and abs(left_shoulder_one.y) < 1e-9
-    check abs(left_shoulder_two.x - HUMAN.shoulderOut) < 1e-9 and
+    check abs(left_shoulder_one.x + HUMAN.shoulder_out) < 1e-9 and abs(left_shoulder_one.y) < 1e-9
+    check abs(left_shoulder_two.x - HUMAN.shoulder_out) < 1e-9 and
       abs(left_shoulder_two.y - APART) < 1e-9
-    check abs(left_shoulder_one.z - HUMAN.shoulderUp) < 1e-9
+    check abs(left_shoulder_one.z - HUMAN.shoulder_up) < 1e-9
 
 
 
@@ -193,4 +193,4 @@ suite "nothing passes through anybody":
     let
       stance = facing(HUMAN, APART)[Body.Two]
       top = HUMAN.top[Part.Head] + HUMAN.limb + 0.001
-    check bodyGap(HUMAN, stance, (0.0, 0.0, top), (0.0, 0.8, top), own = false).gap == Inf
+    check bodyGap(HUMAN, stance, (0.0, 0.0, top), (0.0, 0.8, top), is_own = false).gap == Inf

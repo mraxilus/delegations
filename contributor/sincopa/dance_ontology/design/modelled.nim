@@ -44,14 +44,14 @@ const CROWN = Band.Crown
 type Question* = object ## One card's question, as data, so threads may share it.
   key: string
   links: seq[Link]
-  away: bool
-  still: bool    ## Still card: whether pose holds; else whether couple carry.
+  is_away: bool
+  is_still: bool    ## Still card: whether pose holds; else whether couple carry.
   turns: float   ## Facing for still; how far to carry, in manner's own sense.
-  either: bool   ## Still that fixes no way about: wound either way.
+  is_either_way: bool   ## Still that fixes no way about: wound either way.
   who, head: Body ## Who turns, and whose crown hands go over, for moving card.
 
 
-func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
+func moving(key: string; links: seq[Link]; is_away: bool; manner: Manner;
             turns: float): Question =
   ## Whether this hold carries this far under this manner, `turns` being already
   ## in simulation's own sense (`asks.asked`).
@@ -65,9 +65,17 @@ func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
     turner = if ord(MANNERS[manner].about) == ord(About.Axis): walks
              else: otherThan(walks)
     # Orbit is other dancer turned other way about, so its sense is flipped.
-    flip = ord(MANNERS[manner].about) != ord(About.Axis)
-    way = (if flip: -turns else: turns)
-  Question(key: key, links: links, away: away, still: false, turns: way, who: turner, head: walks)
+    should_flip = ord(MANNERS[manner].about) != ord(About.Axis)
+    way = (if should_flip: -turns else: turns)
+  Question(
+    key: key,
+    links: links,
+    is_away: is_away,
+    is_still: false,
+    turns: way,
+    who: turner,
+    head: walks,
+  )
 
 func questions*(): seq[Question] =
   ## Every card simulation can be asked about, keyed as page keys its own pictures, in
@@ -78,10 +86,10 @@ func questions*(): seq[Question] =
     result.add Question(
       key: ask.key,
       links: ask.links,
-      away: ask.away,
-      still: true,
+      is_away: ask.isRestAway,
+      is_still: true,
       turns: ask.turns,
-      either: ask.either,
+      is_either_way: ask.is_either_way,
       who: Body.Two,
       head: ask.head,
     )
@@ -97,11 +105,11 @@ func questions*(): seq[Question] =
         result.add moving(
           &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}",
           links,
-          awayFor(restOf(single.holds)),
+          isRestAway(restOf(single.holds)),
           manner,
           asked(sense * float(quarter + 1) / float(QUARTERS_ROUND)),
         )
-      result.add moving(&"rd_{tag}_{connection}", links, awayFor(restOf(single.holds)), manner,
+      result.add moving(&"rd_{tag}_{connection}", links, isRestAway(restOf(single.holds)), manner,
                         asked(sense))
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
@@ -110,12 +118,12 @@ func questions*(): seq[Question] =
   for (key, arms) in [("h", HAND_TO_HAND), ("p", PAIRED)]:
     let
       links = linksOf(arms)
-      away = awayFor(restOf(arms))
+      is_away = isRestAway(restOf(arms))
     for manner in Manner:
       let
         tag = MANNERS[manner].tag
         sense = windSense(manner)
-      result.add moving(&"{key}c_{tag}", links, away, manner, asked(sense * STEPS[^1]))
+      result.add moving(&"{key}c_{tag}", links, is_away, manner, asked(sense * STEPS[^1]))
       for i in 0 ..< STEPS.len - 1:
         # Edge is walked entire, so what it asks of couple is its *furthest*
         # wound end, kept with its own sign, and not where it happens to
@@ -126,7 +134,7 @@ func questions*(): seq[Question] =
         # saw it at once -- they are same edge mirrored.
         let far = (if abs(STEPS[i]) > abs(STEPS[i + 1]): STEPS[i]
                    else: STEPS[i + 1])
-        result.add moving(&"{key}w_{tag}_{i}", links, away, manner, asked(sense * far))
+        result.add moving(&"{key}w_{tag}_{i}", links, is_away, manner, asked(sense * far))
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var TOLD: seq[bool] ## Each worker writes its own questions' answers here.
@@ -143,23 +151,23 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     while i < asked.len:
       let question = asked[i]
       TOLD[i] = (
-        if question.still:
-          holdsAt(
+        if question.is_still:
+          isHoldingAt(
             HUMAN,
             CROWN,
             question.links,
             question.turns,
-            question.away,
+            question.is_away,
             question.head,
-            either = question.either,
+            is_either_way = question.is_either_way,
           )
         else:
-          reaches(
+          isReaching(
             HUMAN,
             CROWN,
             question.links,
             question.turns,
-            away = question.away,
+            is_away = question.is_away,
             who = question.who,
             head = question.head,
           )
@@ -194,7 +202,7 @@ when isMainModule:
     echo "design/modelled.json is up to date: ", stamp
     quit(0)
   var said = newJObject()
-  for id, got in answers():
-    said[id] = %got
+  for id, is_modelled in answers():
+    said[id] = %is_modelled
   writeFile(KEPT_MODELLED, pretty(%*{"stamp": stamp, "answers": said}) & "\n")
   echo "wrote design/modelled.json: ", said.len, " answers"

@@ -30,20 +30,20 @@ func quoted(document: string): seq[tuple[rule: int, words: string]] =
   ## Each rule heading with quotation under it, its lines joined by one space.
   ##   Quotation is first run of `>` lines below heading; heading with none gives empty
   ##     words, so missing quotation fails as wrong one does.
-  var quoting, closed = false
+  var is_quoting, is_closed = false
   for raw in document.splitLines:
     let line = raw.strip
     if line.startsWith(HEADING):
       result.add (line[HEADING.len .. ^1].parseInt, "")
-      quoting = false
-      closed = false
-    elif result.len > 0 and not closed:
+      is_quoting = false
+      is_closed = false
+    elif result.len > 0 and not is_closed:
       if line.startsWith(">"):
         let words = line[1 .. ^1].strip
-        result[^1].words = (if quoting: result[^1].words & " " & words else: words)
-        quoting = true
-      elif quoting:
-        closed = true
+        result[^1].words = (if is_quoting: result[^1].words & " " & words else: words)
+        is_quoting = true
+      elif is_quoting:
+        is_closed = true
 
 
 suite "this project's own Markdown":

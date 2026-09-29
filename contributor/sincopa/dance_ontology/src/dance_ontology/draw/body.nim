@@ -240,25 +240,25 @@ func border*(pose: Pose; who: Dancer): string =
 
 #[ Hands And Furniture ]#
 
-func fillOf*(level: Option[Level]; arm: Arm; deep = false): string =
+func fillOf*(level: Option[Level]; arm: Arm; is_deep = false): string =
   ## Get fill that level draws as -- only place level becomes fill,
   ## so hands and pips cannot drift.
   if level == some(Level.Low):
-    return if deep: DEEP[arm] else: INK[arm]
+    return if is_deep: DEEP[arm] else: INK[arm]
   if level == some(Level.Above):
-    return &"url(#h{arm}{(if deep: \"d\" else: \"\")})"
+    return &"url(#h{arm}{(if is_deep: \"d\" else: \"\")})"
   "none"
 
 
-func hand*(centre_x, centre_y: float; leads: bool; arm: Arm; held = true;
+func hand*(centre_x, centre_y: float; is_leading: bool; arm: Arm; is_held = true;
     level = none(Level); free = Free.Fade): string =
   ## Draw one hand, in its own side's ink: lead's deep, follow's
   ## plain.
   let
-    ink = if leads: DEEP[arm] else: INK[arm]
-    stroke = if held or free == Free.Fade: ink else: QUIET
-    fill = if held: fillOf(level, arm, leads) else: "none"
-    faded = if held or free != Free.Fade: ""
+    ink = if is_leading: DEEP[arm] else: INK[arm]
+    stroke = if is_held or free == Free.Fade: ink else: QUIET
+    fill = if is_held: fillOf(level, arm, is_leading) else: "none"
+    faded = if is_held or free != Free.Fade: ""
             else: &" opacity=\"{FREE_FADE}\""
     dot = if level == some(Level.High):
             &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
@@ -266,7 +266,7 @@ func hand*(centre_x, centre_y: float; leads: bool; arm: Arm; held = true;
           else: ""
     style = &"fill: {fill}; stroke: {stroke}; stroke-width: 1.5"
     shape =
-      if leads:
+      if is_leading:
         &"""<rect x="{numeral(centre_x - HAND_RADIUS)}" y="{numeral(centre_y - HAND_RADIUS)}"""" &
           &""" width="{numeral(2 * HAND_RADIUS)}"""" &
           &""" height="{numeral(2 * HAND_RADIUS)}" rx="1.5" style="{style}"{faded}/>"""

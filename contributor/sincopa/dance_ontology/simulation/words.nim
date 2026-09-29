@@ -96,9 +96,9 @@ func said*(lying: Option[Lying]; band: Band): string =
   let
     way = if lying.get.aspect == Aspect.Fore: "wrap" else: "lock"
     at = bandName(lying.get.band)
-    held = if lying.get.pressing: "" else: " (led)"
+    held = if lying.get.is_pressing: "" else: " (led)"
     elbow =
-      if lying.get.elbowFore and lying.get.aspect == Aspect.Aft: ", elbow forward" else: ""
+      if lying.get.is_elbow_fore and lying.get.aspect == Aspect.Aft: ", elbow forward" else: ""
   way & " " & at & held & elbow
 
 
@@ -116,7 +116,7 @@ func why*(walk: Walk): string =
   ## Say what refuses, in few words that table cell or page can show.
   ##   Short register.  `hold.says` answers same question in whole sentence,
   ##     for viewer that has room for one.
-  if not walk.stopped: return "no block"
+  if not walk.is_stopped: return "no block"
   case walk.why
   of Stop.None: "holds"
   of Stop.Reach: whose(walk.whose) & " reach"

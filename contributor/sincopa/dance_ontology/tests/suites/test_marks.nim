@@ -18,7 +18,7 @@ const SMALL = ["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "
                "nor", "of", "on", "or", "over", "so", "the", "to", "up", "with", "yet"]
   ## Words title case leaves lowercase where they fall inside title.
 
-func titleCased(title: string): bool =
+func isTitleCased(title: string): bool =
   ## Whether title reads in title case: every word capitalised but small ones inside it.
   ##   Read off words rather than off whole, so hyphenated word passes on its first letter
   ##     as `Hand-to-Hand` does, and punctuation decides nothing.
@@ -53,7 +53,7 @@ suite "mark workbench":
       # Every published title reads in title case, so published set is one consistent
       # form.  Nothing checked it until viewer page shipped with sentence for title
       # while every page beside it was cased.
-      check titleCased(titleOf(written))
+      check isTitleCased(titleOf(written))
       # Rule 26 ranks move's stages, and markup can only rank them through
       # `keyTimes`: without it browser spreads frames evenly, so turn, settle and
       # reset all read at one speed.  Every animated element carries its own
@@ -74,7 +74,7 @@ suite "every page this project publishes":
   test "viewer's title reads in title case, as every other does":
     ## Viewer is written by its own module rather than by workbench above, so its title is
     ## held here against same reading rather than left as only one nothing checks.
-    check titleCased(TITLE)
+    check isTitleCased(TITLE)
 
   test "committed markup says its prose plainly too":
     ## Whole-cloth mock-up is hand-authored file rather than page workbench renders, so its

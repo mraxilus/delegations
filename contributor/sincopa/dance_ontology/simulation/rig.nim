@@ -80,8 +80,8 @@ type
                                ## stops under shoulder joints by slope
                                ## of shoulders, so raised arm clears it.
     hip*: float                ## Where torso starts.
-    shoulderOut*: float        ## Each shoulder joint from axis, sideways.
-    shoulderUp*: float         ## And its height.
+    shoulder_out*: float        ## Each shoulder joint from axis, sideways.
+    shoulder_up*: float         ## And its height.
     upper*, fore*, hand*: float ## Shoulder to elbow, elbow to wrist, wrist to grip.
     limb*: float               ## Half of arm's thickness.
     range*: array[Dof, Range]
@@ -117,8 +117,8 @@ const HUMAN* = Rig(
   flat: [0.75, 1.0, 1.0],
   top: [1.36, 1.50, 1.69],
   hip: 0.80,
-  shoulderOut: 0.18,
-  shoulderUp: 1.40,
+  shoulder_out: 0.18,
+  shoulder_up: 1.40,
   upper: 0.31,
   fore: 0.25,
   hand: 0.08,

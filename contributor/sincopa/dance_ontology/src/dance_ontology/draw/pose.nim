@@ -116,7 +116,7 @@ func spinAbout*(pose: Pose; who: Dancer; degrees: float): Pose =
   result.ring = none(Ring)
 
 
-func orbit*(pose: Pose; who: Dancer; degrees: float; locked = true): Pose =
+func orbit*(pose: Pose; who: Dancer; degrees: float; is_locked = true): Pose =
   ## Walk one dancer round other, who stands still.
   ##   `locked` is what orbit is (rule 32): **whatever side of walker
   ##     faced centre goes on facing it**, so their facing swings with
@@ -129,7 +129,7 @@ func orbit*(pose: Pose; who: Dancer; degrees: float; locked = true): Pose =
   let pivot = pose.place[if who == Dancer.Lead: Dancer.Follow else: Dancer.Lead]
   result = pose
   result.place[who] = turn(pose.place[who], pivot, degrees)
-  result.facing[who] = pose.facing[who] + (if locked: degrees else: 0.0)
+  result.facing[who] = pose.facing[who] + (if is_locked: degrees else: 0.0)
   result.ring = some (pivot, distance(pose.place[who], pivot))
 
 
@@ -200,9 +200,9 @@ func cycle*(move: MoveApply; samples = 14): Walk =
   ##     which is what this had before times were carried.
   for sign in [1.0, -1.0]:
     let
-      first = result.poses.len == 0
-      base = if first: rest() else: result.poses[^1]
-      pace = if first: 1.0 else: RESET_PACE
+      is_first = result.poses.len == 0
+      base = if is_first: rest() else: result.poses[^1]
+      pace = if is_first: 1.0 else: RESET_PACE
     for i in 0 .. samples:
       result.poses.add move(base, sign * ease(i / samples))
       # Clock starts at first pose of all; first pose of second leg stands
@@ -210,7 +210,7 @@ func cycle*(move: MoveApply; samples = 14): Walk =
       # other landing.
       result.times.add (
         if i > 0: pace / float(samples)
-        elif first: 0.0
+        elif is_first: 0.0
         else: ARRIVAL_HOLD)
     let landed = result.poses[^1]
     for i in 0 .. samples:
@@ -242,11 +242,11 @@ func turned*(base: Pose; who: Dancer; about: About; degrees: float): Pose =
   ##       wherever it is still wanted.
   case about
   of About.Axis: spinAbout(base, who, degrees)
-  of About.Orbit: orbit(base, who, degrees, locked = true)
+  of About.Orbit: orbit(base, who, degrees, is_locked = true)
 
 
 func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
-    samples = 12; on = Anchor.Pair; steps = 1; back = true): Walk =
+    samples = 12; on = Anchor.Pair; steps = 1; has_return = true): Walk =
   ## Sample turn and its return, in stages dance has.
   ##   Stage one is turn itself, **with world held still**:
   ##     dancer turns where they are and picture does not follow them.
@@ -305,7 +305,7 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
   # return is not what figure is of either.
   var standing = base
   for (by, pace) in [(degrees, 1.0), (-degrees, RESET_PACE)]:
-    if pace != 1.0 and not back:
+    if pace != 1.0 and not has_return:
       break
     for step in 1 .. steps:
       let one = legs(standing, by)
@@ -325,11 +325,11 @@ func moveLeadAxis(pose: Pose; scalar: float): Pose =
 
 func moveFollowOrbits(pose: Pose; scalar: float): Pose =
   ## Orbit follow round lead by `scalar` quarter turns.
-  orbit(pose, Dancer.Follow, 90 * scalar, locked = true)
+  orbit(pose, Dancer.Follow, 90 * scalar, is_locked = true)
 
 func moveLeadOrbits(pose: Pose; scalar: float): Pose =
   ## Orbit lead round follow by `scalar` quarter turns.
-  orbit(pose, Dancer.Lead, 90 * scalar, locked = true)
+  orbit(pose, Dancer.Lead, 90 * scalar, is_locked = true)
 
 func moveCouple(pose: Pose; scalar: float): Pose =
   ## Turn couple together by `scalar` quarter turns.

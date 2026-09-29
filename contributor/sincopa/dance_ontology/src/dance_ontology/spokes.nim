@@ -337,7 +337,7 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
   ##     reader can tell.
   let
     (box_x, box_y, box_width, box_height) = SPOKES_BOX
-    leaving = motion == Motion.Leaving and taken.isSome
+    is_leaving = motion == Motion.Leaving and taken.isSome
     window = windowOf(here)
     (pan_x, pan_y) = panOf(window)
   # Where drawing has to end up for frame reached to be sitting where
@@ -347,7 +347,7 @@ func renderSpokes*(here: Frame; motion = Motion.Still;
     reached = window
     (landing_pan_x, landing_pan_y) = (pan_x, pan_y)
     (shift_x, shift_y) = (0, 0)
-  if leaving:
+  if is_leaving:
     for spoke in spokesOf(here):
       if spoke.to != taken.get:
         continue

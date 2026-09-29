@@ -25,7 +25,7 @@ type StillAsk* = object ## One still card, as simulation is asked it.
   turns*: float   ## Facing, in turns from where hold rests.
   rest*: Facing   ## Facing hold rests at (`parts.restOf`).
   head*: Body     ## Whose crown joined hands go over.
-  either*: bool   ## Whether couple may be wound to this facing either way about:
+  is_either_way*: bool   ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
 
 
@@ -69,7 +69,7 @@ func restOf*(target: Frame): Facing = restOf(holdsOf(target))
   ## Name facing frame rests at.  Same reading `review_page` makes, by
   ## `parts.restOf`, and never written down.
 
-func awayFor*(rest: Facing): bool =
+func isRestAway*(rest: Facing): bool =
   ## Say rest as simulation is told it: Face-to-face, or follow turned half, which is
   ## Face-to-back and which simulation calls `away`.
   ##   Simulation stands couple at no other rest, and no card asks one.
@@ -78,7 +78,7 @@ func awayFor*(rest: Facing): bool =
   of Facing.FaceToBack: true
   else: raise newException(Defect, &"Simulation rests couple at no `{rest.name}`.")
 
-func away*(ask: StillAsk): bool = awayFor(ask.rest)
+func isRestAway*(ask: StillAsk): bool = isRestAway(ask.rest)
   ## Say card's rest as simulation is told it.
 
 
@@ -99,7 +99,7 @@ func stillAsks*(): seq[StillAsk] =
   func amountFor(target: Frame; twist: int): float =
     ## Say how far frame winds from its rest to facing `twist` draws: nought or half turn.
     if turnedFacing(0.0, 180.0 * float(twist)) == some(restOf(target)): 0.0 else: 0.5
-  func eitherWay(target: Frame): bool =
+  func isDrawnEitherWay(target: Frame): bool =
     ## Decide whether frame draws same picture wound either way about.
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
@@ -111,7 +111,7 @@ func stillAsks*(): seq[StillAsk] =
         turns: asked(amount),
         rest: restOf(target),
         head: Body.Two,
-        either: amount != 0.0 and eitherWay(target),
+        is_either_way: amount != 0.0 and isDrawnEitherWay(target),
       )
   block:
     let target = FRAMES[^1]

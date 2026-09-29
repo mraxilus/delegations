@@ -48,7 +48,7 @@ func armsOf(hold: string): seq[(Arm, Arm)] =
       follow_arm = if part[2] == 'l': Arm.Left else: Arm.Right
     result.add (lead_arm, follow_arm)
 
-func sameName(hold: string): bool =
+func isSameName(hold: string): bool =
   ## Decide whether hold joins each arm to arm of same name.
   for (lead_arm, follow_arm) in armsOf(hold):
     if lead_arm != follow_arm: return false
@@ -59,9 +59,9 @@ func linksOf(hold: string): seq[Link] =
   for (lead_arm, follow_arm) in armsOf(hold):
     result.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
 
-func restsAway(hold: string): bool =
+func isRestingAway(hold: string): bool =
   ## Same-name pair is built Face-to-back; every other hold Face-to-face.
-  hold.contains('.') and sameName(hold)
+  hold.contains('.') and isSameName(hold)
 
 
 func toMillimetres(point: Vector): JsonNode =
@@ -123,7 +123,7 @@ func went(way: Walk): float =
   ##   `Walk.at` is set only where something gave.  Page reads this as edge of
   ##     what it may draw, so free way written as nought would be drawn not at
   ##     all; old solver wrote `MOST` there and page still expects that.
-  if way.stopped: way.at
+  if way.is_stopped: way.at
   elif way.moments.len > 0: abs(way.moments[^1].at)
   else: 0.0
 
@@ -131,20 +131,20 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
   ## Sweep one hold at one band, and record every moment and where each way ran out.
   let
     links = linksOf(hold)
-    sweep = swept(HUMAN, band, links, most = MOST, away = restsAway(hold))
+    sweep = swept(HUMAN, band, links, most = MOST, is_away = isRestingAway(hold))
   result = %*{
-    "restHolds": sweep.restHolds,
+    "restHolds": sweep.found_rest,
     "negative": round(went(sweep.negative) * 1000.0) / 1000.0,
     "positive": round(went(sweep.positive) * 1000.0) / 1000.0,
-    "stoppedNegative": sweep.negative.stopped,
-    "stoppedPositive": sweep.positive.stopped,
+    "stoppedNegative": sweep.negative.is_stopped,
+    "stoppedPositive": sweep.positive.is_stopped,
     "whyNegative": why(sweep.negative),
     "why": why(sweep.positive),
     "foundNegative": false,
     "foundPositive": false,
     "apartNegative": round(sweep.negative.apart * 1000.0) / 1000.0,
     "apartPositive": round(sweep.positive.apart * 1000.0) / 1000.0,
-    "frames": (if sweep.restHolds: frames(sweep, band, links) else: newJArray())}
+    "frames": (if sweep.found_rest: frames(sweep, band, links) else: newJArray())}
   stderr.writeLine hold & " " & word & ": -" & $went(sweep.negative) &
     " +" & $went(sweep.positive) &
     " (" & $(sweep.negative.moments.len + sweep.positive.moments.len) & " moments)"
@@ -160,13 +160,13 @@ proc bridge(): JsonNode =
       "torsoDeep": int(round(halfDepth(HUMAN, Part.Torso) * 1000.0)),
       "neck": int(round(halfBreadth(HUMAN, Part.Neck) * 1000.0)),
       "head": int(round(halfBreadth(HUMAN, Part.Head) * 1000.0)),
-      "shoulder": int(round(HUMAN.shoulderOut * 1000.0)),
+      "shoulder": int(round(HUMAN.shoulder_out * 1000.0)),
       "limb": int(round(HUMAN.limb * 1000.0)),
       "heights": {"hip": int(round(HUMAN.hip * 1000.0)),
             "torso": int(round(HUMAN.top[Part.Torso] * 1000.0)),
             "neck": int(round(HUMAN.top[Part.Neck] * 1000.0)),
             "head": int(round(HUMAN.top[Part.Head] * 1000.0)),
-            "shoulder": int(round(HUMAN.shoulderUp * 1000.0))}},
+            "shoulder": int(round(HUMAN.shoulder_up * 1000.0))}},
     "sweeps": {}}
   for hold in HOLDS:
     for (word, band) in BANDS:

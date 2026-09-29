@@ -68,8 +68,8 @@ suite "the layout":
     # up knows which primitive line is without reading its name.
     for source in FRAMES:
       for move in moves(source):
-        let rising = move.helper == Helper.Collect
-        check (centreOf(move.to)[1] < centreOf(source)[1]) == rising
+        let is_rising = move.helper == Helper.Collect
+        check (centreOf(move.to)[1] < centreOf(source)[1]) == is_rising
 
   test "free is at the foot of the tower and the fullest frames at its head":
     for target in FRAMES:
@@ -209,9 +209,9 @@ suite "the drawing":
       check boxes.len == moved div 2 + joined div 2
       for index, box in boxes:
         for other in boxes[index + 1 .. ^1]:
-          check not overlaps(box, other)
+          check not isOverlapping(box, other)
         for frame in frameBoxes():
-          check not overlaps(box, frame)
+          check not isOverlapping(box, frame)
 
   test "a line is named for the move away from where the couple stand":
     # Line is two moves, one each way.  Named for collect either way,

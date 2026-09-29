@@ -71,9 +71,9 @@ proc settling(id: int) {.thread.} =
       let
         task = SETTLES[i]
         links = @(PAIRS[task.pair][0])
-        away = PAIRS[task.pair][1]
-      var couple = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, task.turn),
-                    task.band, links, away = away)
+        is_away = PAIRS[task.pair][1]
+      var couple = build(HUMAN, turned(restStance(HUMAN, APART, is_away), Body.Two, task.turn),
+                    task.band, links, is_away = is_away)
       couple.settle()
       for k in 0 ..< links.len: SETTLED_ARMS[i][k] = couple.poseOf(k).arms
       couple.free()
