@@ -191,13 +191,19 @@ proc staticOf(chain: Toolchain, library, directory: string, a: Algebra): (JsonNo
 
 func countsOf(f: JsonNode): JsonNode =
   ## Shape totals and movement trial reports for one function.
+  ##   Count document lacks is JSON null, never nil.
   result = newJObject()
-  for key in COUNTED: result[key] = f{"total", key}
-  for key in MOVED: result[key] = f{"movement", key}
+  for key in COUNTED:
+    let node = f{"total", key}
+    result[key] = if node.isNil: newJNull() else: node
+  for key in MOVED:
+    let node = f{"movement", key}
+    result[key] = if node.isNil: newJNull() else: node
 
 
 func functionsChanged*(before, after: JsonNode): JsonNode =
   ## Compare static documents function by function; keep those whose counts differ.
+  ##   Function on one side only is JSON null on other, never nil, so document prints.
   result = newJObject()
   let
     was = before{"functions"}
@@ -209,10 +215,9 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   keys.sort
   for key in keys:
     let
-      a = if was.hasKey(key): countsOf(was[key]) else: nil
-      b = if now.hasKey(key): countsOf(now[key]) else: nil
-    if a.isNil or b.isNil or a != b:
-      result[key] = %*{"before": a, "after": b}
+      a = if was.hasKey(key): countsOf(was[key]) else: newJNull()
+      b = if now.hasKey(key): countsOf(now[key]) else: newJNull()
+    if a != b: result[key] = %*{"before": a, "after": b}
 
 
 func median(values: seq[float]): float =
