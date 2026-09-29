@@ -345,35 +345,36 @@ proc overlayLine*(x1, y1, x2, y2, red, green, blue, alpha, thickness: cfloat)
   ## Draw line onto overlay layer, for feedback belonging to 3D view.
 
 proc overlayCircle*(
-  cx, cy, radius, red, green, blue, alpha, thickness: cfloat; is_over_windows: cint
+  centre_x, centre_y, radius, red, green, blue, alpha, thickness: cfloat; is_over_windows: cint
 ) {.importc: "guiOverlayCircle", sideEffect.}
   ## Stroke whole circle.
   ##   `is_over_windows` picks layer: zero for mark on object, which panels cover; one for
   ##   drag menu's centre dot, part of control being steered; see shim's `overlayList`.
 
 proc overlayArc*(
-  cx, cy, radius, fraction, red, green, blue, alpha, thickness: cfloat
+  centre_x, centre_y, radius, fraction, red, green, blue, alpha, thickness: cfloat
 ) {.importc: "guiOverlayArc", sideEffect.}
   ## Stroke `fraction` of circle, clockwise from twelve o'clock; whole one at 1.
 
 proc overlayChip*(
-  cx, cy, width, height, red, green, blue, alpha, rounding: cfloat
+  centre_x, centre_y, width, height, red, green, blue, alpha, rounding: cfloat
 ) {.importc: "guiOverlayChip", sideEffect.}
-  ## Fill rounded rectangle centred on `cx`/`cy`, for one wedge of drag menu.
+  ## Fill rounded rectangle centred on `centre_x`/`centre_y`, for one wedge of drag menu.
 
-proc overlayText*(cx, cy, red, green, blue, alpha: cfloat; text: cstring)
+proc overlayText*(centre_x, centre_y, red, green, blue, alpha: cfloat; text: cstring)
   {.importc: "guiOverlayText", sideEffect.}
-  ## Write text centred on `cx`/`cy`, measured against font loaded.
+  ## Write text centred on `centre_x`/`centre_y`, measured against font loaded.
 
 proc labelWidth*(text: cstring): cfloat {.importc: "guiLabelWidth", sideEffect.}
   ## Measure name label as `overlayLabel` draws it, in label's face.
   ##   For pushing it beside line by its own box.
 
 proc overlayLabel*(
-  cx, cy, fill_red, fill_green, fill_blue, stroke_red, stroke_green, stroke_blue,
+  centre_x, centre_y, fill_red, fill_green, fill_blue, stroke_red, stroke_green, stroke_blue,
   alpha: cfloat; text: cstring
 ) {.importc: "guiOverlayLabel", sideEffect.}
-  ## Write text centred on `cx`/`cy` in fill colour, outlined in stroke colour at `alpha`.
+  ## Write text centred on `centre_x`/`centre_y` in fill colour, outlined in stroke colour at
+  ##   `alpha`.
   ##   Selected object's name above its marker; on background list, as markers are.
 
 proc overlayPolyline*(

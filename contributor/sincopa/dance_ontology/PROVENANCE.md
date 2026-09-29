@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58e23c24139472bc |
+| Rules   | 8c8a0bd7dfbb0c7a |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -970,8 +970,8 @@ from the `LICENSE` of the repository itself rather than assumed. `engine` clones
 them into `binaries/libbox3d.a`. The commit is what stands where a checksum stands for a fetched
 file.
 
-Nothing of it is committed. The `.gitignore` of this project ignores `dependencies/`, as the root
-ignores Atlas checkouts. Rejected: its own CMake. That would be a third build driver in a project
+Nothing of it is committed, because the root ignore file ignores `dependencies/`, where Atlas
+checkouts sit too. Rejected: its own CMake. That would be a third build driver in a project
 whose registry admits no second. Nothing in its sources needs one, because none is generated.
 
 Cost, stated: the build flags are this project's rather than those of upstream, and `-O2 -std=c17`
@@ -1527,8 +1527,8 @@ review with `tools/review.nim`, and splices the two scripts of the mock-up with
 `design/wholecloth.nim`. Generated pages stay uncommittable, because their lines run to thousands of
 characters.
 
-Tool binaries land in `binaries/`, which the `.gitignore` of this project covers. Pages land under
-`build/`, and test binaries beside their sources, and the root ignore file covers both at any depth.
+Tool binaries land in `binaries/`, and pages land under `build/`. Test binaries land beside their
+sources. The root ignore file covers all three at any depth.
 
 The 213 lines of inline JavaScript of the whole-cloth page were ported to the JS backend of Nim.
 Rejected: to host markup in Nim string constants. That was forced while the repository read no
@@ -1849,9 +1849,10 @@ spelled out, as `delta_x` for `dx`. An acronym stays only where a junior program
 HTML, CSS, JSON, JS, URL, ID and DoF stay, and FNV does not.
 
 **A path is a name too.** The simulation is in `simulation/`, and the build folders are
-`dependencies/` and `binaries/`. The root ignore file knows only the short names, so the
-`.gitignore` of this project ignores the long ones. Each test file is `test_<name>.nim`. That is a
-full word, and it still matches the `tests/t*.nim` that the runner and the root ignore file read.
+`dependencies/` and `binaries/`. The root ignore file ignores both, so this project has no ignore
+file of its own. Verified by `git check-ignore` in git 2.43.0, 2026-09-29. Each test file is
+`test_<name>.nim`. That is a full word, and it still matches the `tests/t*.nim` that the runner and
+the root ignore file read.
 
 **A one-letter name follows V.6.** A field, an enum value, a parameter and a local that stand for a
 word take the word. A symbol of a formula and the index of a short loop stay, such as `a`, `b`, `t`

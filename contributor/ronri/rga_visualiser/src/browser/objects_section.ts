@@ -247,25 +247,27 @@ function renderObjectWindow() {
 
   // Walk to window's edges. Numbers, not map: five thousand adds is microseconds.
   const count = keys_list.length;
-  let lo = 0;
-  let y_lo = 0;
-  while (lo < count && y_lo + (heights_list[lo] ?? PIXELS_ROW_ESTIMATE) <= from) {
-    y_lo += heights_list[lo] ?? PIXELS_ROW_ESTIMATE;
-    lo += 1;
+  let row_first = 0;
+  let top_first = 0;
+  while (
+    row_first < count && top_first + (heights_list[row_first] ?? PIXELS_ROW_ESTIMATE) <= from
+  ) {
+    top_first += heights_list[row_first] ?? PIXELS_ROW_ESTIMATE;
+    row_first += 1;
   }
-  let hi = lo;
-  let y_hi = y_lo;
-  while (hi < count && y_hi < until) {
-    y_hi += heights_list[hi] ?? PIXELS_ROW_ESTIMATE;
-    hi += 1;
+  let row_after = row_first;
+  let top_after = top_first;
+  while (row_after < count && top_after < until) {
+    top_after += heights_list[row_after] ?? PIXELS_ROW_ESTIMATE;
+    row_after += 1;
   }
-  let y_end = y_hi;
-  for (let at = hi; at < count; at += 1) y_end += heights_list[at] ?? PIXELS_ROW_ESTIMATE;
+  let top_end = top_after;
+  for (let at = row_after; at < count; at += 1) top_end += heights_list[at] ?? PIXELS_ROW_ESTIMATE;
 
   // Rows outside window, or for keys scene no longer has, go; signatures with them.
   //   Snapshotted, not walked live: loop below inserts into this very collection.
   const wanted = new Set<string>();
-  for (let at = lo; at < hi; at += 1) wanted.add(keys_list[at] ?? '');
+  for (let at = row_first; at < row_after; at += 1) wanted.add(keys_list[at] ?? '');
   const standing = new Map<string, HTMLElement>();
   for (const node of Array.from(list_objects.children) as HTMLElement[]) {
     if (node === spacer_top || node === spacer_bottom) continue;
@@ -279,7 +281,7 @@ function renderObjectWindow() {
   //   that changes nothing writes nothing, and tap on `hide` stays immediate. Built as diff
   //   rather than by making tap-driven callers call something narrower: list of `the cheap
   //   callers` is contract thirteenth caller breaks silently.
-  for (let at = lo; at < hi; at += 1) {
+  for (let at = row_first; at < row_after; at += 1) {
     const key = keys_list[at] ?? '';
     const signature = signatureOfObjectRow(key);
     let node = standing.get(key);
@@ -293,13 +295,13 @@ function renderObjectWindow() {
     index_of_row.set(node, at);
     node.classList.toggle('first', at === 0);
     // Already in right place is common case; otherwise this moves it there.
-    const place = 1 + (at - lo);
+    const place = 1 + (at - row_first);
     if (list_objects.children[place] !== node) {
       list_objects.insertBefore(node, list_objects.children[place] ?? null);
     }
   }
-  const above = y_lo + 'px';
-  const below = (y_end - y_hi) + 'px';
+  const above = top_first + 'px';
+  const below = (top_end - top_after) + 'px';
   if (spacer_top.style.height !== above) spacer_top.style.height = above;
   if (spacer_bottom.style.height !== below) spacer_bottom.style.height = below;
 }
@@ -510,7 +512,7 @@ function buildObjectRow(handle: number | null) {
     field_label.appendChild(labelElement(Wording.NameRowLabel));
     // Write every field below into session, never scene.
     //   Row's own swatch, label and coefficient line preview change, preview previews
-    //   geometry, and only `save` above reaches `SCENE`.
+    //   geometry, and only `save` above reaches `SCENE_PAGE`.
     const input_label = document.createElement('input');
     input_label.type = 'text';
     input_label.value = labelOf();

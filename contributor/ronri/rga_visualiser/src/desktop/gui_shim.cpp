@@ -612,10 +612,10 @@ void guiOverlayLine(float x1, float y1, float x2, float y2, float red, float gre
 //   menu).
 //   Only overlay call with foot in both, so choice is parameter here and settled by what
 //   each of others draws everywhere else.
-void guiOverlayCircle(float cx, float cy, float radius, float red, float green, float blue,
-                       float alpha, float thickness, int is_over_windows) {
+void guiOverlayCircle(float centre_x, float centre_y, float radius, float red, float green,
+                       float blue, float alpha, float thickness, int is_over_windows) {
   overlayList(is_over_windows != 0)->AddCircle(
-      ImVec2(cx, cy), radius,
+      ImVec2(centre_x, centre_y), radius,
       ImGui::ColorConvertFloat4ToU32(ImVec4(red, green, blue, alpha)), 0, thickness);
 }
 
@@ -626,17 +626,17 @@ void guiOverlayCircle(float cx, float cy, float radius, float red, float green, 
 //   not animating lands on exactly same pixels as plain ring.
 //   Clockwise in screen terms, which is why angle subtracts: y runs downward here, so
 //   sense that reads as clockwise to viewer is one that decreases angle.
-void guiOverlayArc(float cx, float cy, float radius, float fraction, float red, float green,
-                   float blue, float alpha, float thickness) {
+void guiOverlayArc(float centre_x, float centre_y, float radius, float fraction, float red,
+                   float green, float blue, float alpha, float thickness) {
   if (fraction <= 0.0f) return;
   if (fraction >= 1.0f) {
-    guiOverlayCircle(cx, cy, radius, red, green, blue, alpha, thickness, 0);
+    guiOverlayCircle(centre_x, centre_y, radius, red, green, blue, alpha, thickness, 0);
     return;
   }
   const float TURN = 6.28318530717958647692f;
   const float START = -TURN * 0.25f; // Twelve o'clock, with y downward.
   ImDrawList *list = overlayList(false);
-  list->PathArcTo(ImVec2(cx, cy), radius, START, START - TURN * fraction, 0);
+  list->PathArcTo(ImVec2(centre_x, centre_y), radius, START, START - TURN * fraction, 0);
   list->PathStroke(ImGui::ColorConvertFloat4ToU32(ImVec4(red, green, blue, alpha)),
                    ImDrawFlags_None, thickness);
 }
@@ -664,8 +664,8 @@ void guiOverlayPolyline(const float *points, int count, float red, float green, 
 //   straight, and convex fill would bridge that bend with chord across marker.
 //   Wound to fixed handedness here rather than by caller, because it is Dear ImGui that
 //   cares and no one else.
-//     Its antialiased fill offsets each edge by normal `(dy, -dx)`, which points out of
-//     shape for one winding and into it for other.
+//     Its antialiased fill offsets each edge along normal `(offset_y, -offset_x)`, from
+//     edge's own offset; normal points out of shape for one winding and into it for other.
 //     Handed ribbon wound wrong way it pushes whole transparent fringe inward, under
 //     fill, and mark comes out with hard aliased edges; figures in `PROVENANCE.md`.
 //     Pulse's own winding flips with orientation it reports, so this cannot be settled
@@ -685,33 +685,33 @@ void guiOverlayRibbon(const float *points, int count, float red, float green, fl
   list->PathFillConcave(ImGui::ColorConvertFloat4ToU32(ImVec4(red, green, blue, alpha)));
 }
 
-// Fill rounded rectangle centred on `cx`/`cy` onto layer above every window.
+// Fill rounded rectangle centred on `centre_x`/`centre_y` onto layer above every window.
 //   For one wedge of drag menu; see `overlayList` for why menu alone draws there.
 //   Centred rather than placed from corner because every caller of it knows where
 //   wedge's middle goes and nothing else about its size, which comes from label it has
 //   to hold.
-void guiOverlayChip(float cx, float cy, float width, float height, float red, float green,
-                    float blue, float alpha, float rounding) {
+void guiOverlayChip(float centre_x, float centre_y, float width, float height, float red,
+                    float green, float blue, float alpha, float rounding) {
   overlayList(true)->AddRectFilled(
-      ImVec2(cx - 0.5f * width, cy - 0.5f * height),
-      ImVec2(cx + 0.5f * width, cy + 0.5f * height),
+      ImVec2(centre_x - 0.5f * width, centre_y - 0.5f * height),
+      ImVec2(centre_x + 0.5f * width, centre_y + 0.5f * height),
       ImGui::ColorConvertFloat4ToU32(ImVec4(red, green, blue, alpha)), rounding);
 }
 
-// Write text centred on `cx`/`cy` onto drag menu's own layer, above every window.
+// Write text centred on `centre_x`/`centre_y` onto drag menu's own layer, above every window.
 //   In font already loaded.
 //   Centred here rather than by caller so measurement and placement use same font
 //   metrics; caller offsetting by its own guess drifts as soon as face loaded is not one
 //   it guessed against.
-void guiOverlayText(float cx, float cy, float red, float green, float blue, float alpha,
+void guiOverlayText(float centre_x, float centre_y, float red, float green, float blue, float alpha,
                     const char *text) {
   const ImVec2 size = ImGui::CalcTextSize(text);
   overlayList(true)->AddText(
-      ImVec2(cx - 0.5f * size.x, cy - 0.5f * size.y),
+      ImVec2(centre_x - 0.5f * size.x, centre_y - 0.5f * size.y),
       ImGui::ColorConvertFloat4ToU32(ImVec4(red, green, blue, alpha)), text);
 }
 
-// Write text centred on `cx`/`cy` in fill colour, outlined in stroke colour.
+// Write text centred on `centre_x`/`centre_y` in fill colour, outlined in stroke colour.
 //   Outline is text drawn again at eight one-pixel offsets beneath fill: draw list has
 //   no stroked text, and eight copies read as round outline at this size.
 //   Background list rather than menu's own, as markers are: beneath panels, over scene.
@@ -722,21 +722,22 @@ float guiLabelWidth(const char *text) {
   return font->CalcTextSizeA(size, FLT_MAX, 0.0f, text).x;
 }
 
-void guiOverlayLabel(float cx, float cy, float fill_red, float fill_green, float fill_blue,
-                     float stroke_red, float stroke_green, float stroke_blue, float alpha,
-                     const char *text) {
+void guiOverlayLabel(float centre_x, float centre_y, float fill_red, float fill_green,
+                     float fill_blue, float stroke_red, float stroke_green, float stroke_blue,
+                     float alpha, const char *text) {
   // Set in label face at its own size; UI face where label face was not loaded.
   ImFont *font = font_label != nullptr ? font_label : ImGui::GetFont();
   const float size = size_font_label > 0.0f ? size_font_label : ImGui::GetFontSize();
   const ImVec2 extent = font->CalcTextSizeA(size, FLT_MAX, 0.0f, text);
-  const ImVec2 at(cx - 0.5f * extent.x, cy - 0.5f * extent.y);
+  const ImVec2 at(centre_x - 0.5f * extent.x, centre_y - 0.5f * extent.y);
   ImDrawList *list = overlayList(false);
   const ImU32 stroke =
       ImGui::ColorConvertFloat4ToU32(ImVec4(stroke_red, stroke_green, stroke_blue, alpha));
-  for (int dx = -1; dx <= 1; dx += 1) {
-    for (int dy = -1; dy <= 1; dy += 1) {
-      if (dx == 0 && dy == 0) continue;
-      list->AddText(font, size, ImVec2(at.x + (float)dx, at.y + (float)dy), stroke, text);
+  for (int offset_x = -1; offset_x <= 1; offset_x += 1) {
+    for (int offset_y = -1; offset_y <= 1; offset_y += 1) {
+      if (offset_x == 0 && offset_y == 0) continue;
+      list->AddText(
+          font, size, ImVec2(at.x + (float)offset_x, at.y + (float)offset_y), stroke, text);
     }
   }
   list->AddText(

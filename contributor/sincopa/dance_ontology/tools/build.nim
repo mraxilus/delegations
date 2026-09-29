@@ -26,8 +26,8 @@
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
-##   Tool binaries land in `binaries/`, which project's `.gitignore` covers; pages land under
-##     `build/`, which root `.gitignore` covers at any depth.
+##   Tool binaries land in `binaries/`, and pages under `build/`; root `.gitignore` covers both
+##     at any depth.
 ##   Exit: 0 done, 1 command failed, 2 usage error.
 ##
 ##   Faces are fetched by repository's shared store rather than by this driver, since two
@@ -100,7 +100,7 @@ const
   ]
     ## Source clones no package manager carries, each pinned by its commit, which is what
     ##   stands where checksum stands for fetched file (CONTRIBUTOR.md, "System
-    ##   dependencies"). Never vendored: project's `.gitignore` ignores `dependencies/`,
+    ##   dependencies"). Never vendored: root `.gitignore` ignores `dependencies/`,
     ##   and `engine` clones there.
   DIRECTORY_DEPENDENCIES = "dependencies"
     ## Directory source clones land in. Never committed, as Atlas checkouts are not.

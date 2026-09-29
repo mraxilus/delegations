@@ -302,8 +302,8 @@ void main() {
   float depth = dot(to_centre, forward);
   float reach_across = length(vec2(across, depth));
   float reach_up = length(vec2(up, depth));
-  vec2 lo = vec2(-1.0);
-  vec2 hi = vec2(1.0);
+  vec2 corner_min = vec2(-1.0);
+  vec2 corner_max = vec2(1.0);
   if (min(reach_across, reach_up) > radius) {
     float bearing_across = atan(across, depth);
     float spread_across = asin(radius/reach_across);
@@ -311,12 +311,12 @@ void main() {
     float spread_up = asin(radius/reach_up);
     float wide = tangent_half_view*aspect;
     float tall = tangent_half_view;
-    lo = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
+    corner_min = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
       tanBounded(bearing_up - spread_up)/tall), -1.0, 1.0);
-    hi = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
+    corner_max = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
       tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
   }
-  vertex_view = 0.5*(lo + hi) + 1.41421356*in_corner*0.5*(hi - lo);
+  vertex_view = 0.5*(corner_min + corner_max) + 1.41421356*in_corner*0.5*(corner_max - corner_min);
   float centre_depth = clamp(log2(max(depth, depth_near)/depth_near)*depth_log - 1.0,
     -1.0, 1.0);
   gl_Position = vec4(vertex_view, centre_depth, 1.0);

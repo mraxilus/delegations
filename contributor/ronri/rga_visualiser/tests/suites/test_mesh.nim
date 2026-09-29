@@ -417,7 +417,7 @@ suite "Mesh":
     check hitDiscAlong(record, eye, forward).isNone
     # Sphere holds eye, so box is whole view.
     let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
-    check box.lo == (-1.0, -1.0) and box.hi == (1.0, 1.0)
+    check box.corner_min == (-1.0, -1.0) and box.corner_max == (1.0, 1.0)
     # From ten units above, disc of radius one subtends 5.74 degrees each way: box is its
     #   tangent over view's, aspect widening across; rim is hit just inside and missed just
     #   outside, at depth ten.
@@ -428,20 +428,21 @@ suite "Mesh":
         (Direction(x: 1, y: 0, z: 0), Direction(x: 0, y: 1, z: 0), Direction(x: 0, y: 0, z: -1))
       box_small = viewBoxOfDisc(small, above, right_down, up_down, forward_down, 0.5, 2.0)
       limb = tan(arcsin(0.1))
-    check isNear(box_small.hi[0], limb/(0.5*2.0)) and isNear(box_small.lo[0], -limb/(0.5*2.0))
-    check isNear(box_small.hi[1], limb/0.5) and isNear(box_small.lo[1], -limb/0.5)
+    check isNear(box_small.corner_max[0], limb/(0.5*2.0)) and
+      isNear(box_small.corner_min[0], -limb/(0.5*2.0))
+    check isNear(box_small.corner_max[1], limb/0.5) and isNear(box_small.corner_min[1], -limb/0.5)
     let inside = hitDiscAlong(small, above, Direction(x: 0.099, y: 0.0, z: -1.0))
     check inside.isSome and isNear(inside.get, 10.0)
     check hitDiscAlong(small, above, Direction(x: 0.101, y: 0.0, z: -1.0)).isNone
     # Corner lands on box's middle at `(0, 0)` and root two out at rim corner.
     let corner = expandDiscCorner(box_small, 1.0, 0.0)
-    check isNear(corner[0], sqrt(2.0)*box_small.hi[0]) and isNear(corner[1], 0.0)
+    check isNear(corner[0], sqrt(2.0)*box_small.corner_max[0]) and isNear(corner[1], 0.0)
     check expandDiscCorner(box_small, 0.0, 0.0) == (0.0, 0.0)
     # Disc behind eye: box is empty.
     let box_behind = viewBoxOfDisc(
       small, Position(x: 0.0, y: 0.0, z: -10.0), right_down, up_down, forward_down, 0.5, 2.0
     )
-    check box_behind.lo == box_behind.hi
+    check box_behind.corner_min == box_behind.corner_max
 
 
   test "plane becomes a flat filled disc and a rim, every vertex on it":
@@ -492,8 +493,8 @@ suite "Mesh":
         let
           across = clamp(dot(on_rim, right)/(depth*tangent), -1.0, 1.0)
           rise = clamp(dot(on_rim, up)/(depth*tangent), -1.0, 1.0)
-        check across >= box.lo[0] - 1.0e-9 and across <= box.hi[0] + 1.0e-9
-        check rise >= box.lo[1] - 1.0e-9 and rise <= box.hi[1] + 1.0e-9
+        check across >= box.corner_min[0] - 1.0e-9 and across <= box.corner_max[0] + 1.0e-9
+        check rise >= box.corner_min[1] - 1.0e-9 and rise <= box.corner_max[1] + 1.0e-9
       let
         to_centre = anchor.get - eye
         depth_centre = dot(to_centre, forward)

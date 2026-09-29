@@ -1103,7 +1103,7 @@ func tanBounded(angle: float): float =
 func viewBoxOfDisc*(
   record: DiscRecord; eye: Position; axis_right, axis_up, forward: Direction;
   tangent_half_view, aspect: float
-): tuple[lo, hi: (float, float)] =
+): tuple[corner_min, corner_max: (float, float)] =
   ## Bound disc's picture on view, in view fractions -1 .. 1 across and up.
   ##   Reference disc vertex shaders are held to, beside `expandRibbon`.
   ##     Change to it, GLSL in `renderer.nim` or WebGL source in `gl.ts` is not
@@ -1133,7 +1133,8 @@ func viewBoxOfDisc*(
     depth = dot(to_centre, forward)
     reach_across = hypot(across, depth)
     reach_up = hypot(up, depth)
-  if min(reach_across, reach_up) <= radius: return (lo: (-1.0, -1.0), hi: (1.0, 1.0))
+  if min(reach_across, reach_up) <= radius:
+    return (corner_min: (-1.0, -1.0), corner_max: (1.0, 1.0))
   let
     bearing_across = arctan2(across, depth)
     spread_across = arcsin(radius/reach_across)
@@ -1142,11 +1143,11 @@ func viewBoxOfDisc*(
     wide = tangent_half_view*aspect
     tall = tangent_half_view
   (
-    lo: (
+    corner_min: (
       clamp(tanBounded(bearing_across - spread_across)/wide, -1.0, 1.0),
       clamp(tanBounded(bearing_up - spread_up)/tall, -1.0, 1.0),
     ),
-    hi: (
+    corner_max: (
       clamp(tanBounded(bearing_across + spread_across)/wide, -1.0, 1.0),
       clamp(tanBounded(bearing_up + spread_up)/tall, -1.0, 1.0),
     ),
@@ -1154,15 +1155,19 @@ func viewBoxOfDisc*(
 
 
 func expandDiscCorner*(
-  box: tuple[lo, hi: (float, float)]; cos_angle, sin_angle: float
+  box: tuple[corner_min, corner_max: (float, float)]; cos_angle, sin_angle: float
 ): (float, float) =
   ## Place one static corner on box `viewBoxOfDisc` gave, in view fractions.
   ##   Ellipse through box's corners: box's middle plus corner scaled by root two of its
   ##   half extents, so fan of unit-circle corners covers whole box; centre corner
   ##   `(0, 0)` lands on middle.
   let
-    middle = (0.5*(box.lo[0] + box.hi[0]), 0.5*(box.lo[1] + box.hi[1]))
-    half = (0.5*(box.hi[0] - box.lo[0]), 0.5*(box.hi[1] - box.lo[1]))
+    middle = (
+      0.5*(box.corner_min[0] + box.corner_max[0]), 0.5*(box.corner_min[1] + box.corner_max[1]),
+    )
+    half = (
+      0.5*(box.corner_max[0] - box.corner_min[0]), 0.5*(box.corner_max[1] - box.corner_min[1]),
+    )
   (middle[0] + sqrt(2.0)*cos_angle*half[0], middle[1] + sqrt(2.0)*sin_angle*half[1])
 
 

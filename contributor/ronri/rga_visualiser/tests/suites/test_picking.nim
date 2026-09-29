@@ -447,11 +447,11 @@ suite "Picking":
       scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
-    for (label, cx, cy) in [
+    for (label, corner_x, corner_y) in [
       ("top-left corner", 0.0, 0.0),
       ("bottom-right corner", float(WIDTH_PICK), float(HEIGHT_PICK)),
     ]:
-      let cursor = ScreenPosition(x: cx, y: cy, depth: 0.0)
+      let cursor = ScreenPosition(x: corner_x, y: corner_y, depth: 0.0)
       check pickNearest(
         scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
         WIDTH_PICK, HEIGHT_PICK, cursor
