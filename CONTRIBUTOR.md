@@ -190,7 +190,7 @@ Before any code:
    Copy `curator/probe/probe.nimble`. The audit demands exactly one nimble file, named after
    the folder, with an exact pin (see Toolchain).
 6. Create `src/` and `tests/`, with at least one test, in the testament stub shape of
-   `STYLE.md` §6. `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
+   `STYLE.md` §6. `curator/probe/tests/test_probe.nim` is a worked example with a matrix.
    `nim r koch test contributor/<domain>/<project>` runs your tests alone.
 
 The directories inside your project are yours. Nest `src/`, `app/`, `design/` or anything
@@ -334,7 +334,8 @@ them.
   That cause is a browser, a runner image or a driver. Where you cannot make the check
   deterministic, say what varies and how often, measured. The Architect then decides whether
   the check earns its place.
-- `koch` runs testament over `tests/t*.nim` in your project directory, and there is no build
+- `koch` runs testament over `tests/test_<name>.nim` in your project directory, and there is no
+  build
   file for each project. `nim r koch check-files` is the static audit alone.
   `nim r koch test contributor/<domain>/<project>` fetches the dependencies of one project
   and runs its suites. `./koch` alone lists every verb with its effect.

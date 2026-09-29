@@ -1,6 +1,9 @@
-# Nim build products: compiler cache, testament results, built binaries, koch itself.
+# Nim build products: compiler cache, testament results, built binaries, koch itself. Path is
+# name (Article V.9), so binaries sit in `binaries/`; `bin/` stays until both projects still
+# using it move.
 nimcache/
 testresults/
+binaries/
 bin/
 /koch
 
@@ -10,7 +13,7 @@ bin/
 
 # Testament test binaries sit beside their sources, in every project; leading `**/` keeps
 # pattern with inner slash unanchored. Suites one entry joins sit in `suites/`, and binary of
-# one built alone lands beside it.
+# one built alone lands beside it. `t*` covers `test_<name>` and older `t<name>` alike.
 **/tests/t*
 !**/tests/*.nim
 **/tests/suites/t*
@@ -20,7 +23,9 @@ bin/
 build/
 
 # Atlas checkouts and caches; nimble file, atlas.config, atlas.lock and nim.cfg are
-# committed, clones never (Article XI.3).
+# committed, clones never (Article XI.3). Checkouts sit in `dependencies/` (Article V.9);
+# `deps/` stays until both projects still using it move.
+**/dependencies/
 **/deps/
 *.nimble-link
 deps.dot
