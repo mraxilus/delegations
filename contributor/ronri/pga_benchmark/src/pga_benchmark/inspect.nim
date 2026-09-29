@@ -15,6 +15,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[algorithm, json, os, strutils, tables]
 
 import pga

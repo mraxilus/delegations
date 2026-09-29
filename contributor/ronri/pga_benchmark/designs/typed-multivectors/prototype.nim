@@ -10,6 +10,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[macros, random]
 
 import pga
@@ -31,37 +33,38 @@ const
 
 #[ Kinds ]#
 
-func basesOfGrade(g: Grade): set[Basis] {.compileTime.} =
+func basesOfGrade(grade: Grade): set[Basis] {.compileTime.} =
   ## Get bases of one grade.
-  for b in Basis:
-    if b.grade == g: result.incl b
+  for basis in Basis:
+    if basis.grade == grade: result.incl basis
 
 
 func basesOfParity(parity: Parity): set[Basis] {.compileTime.} =
-  ## Get bases of one parity, i.e. even or odd subalgebra at any dimension.
-  for b in Basis:
-    if (int(b.grade) mod 2 == 0) == (parity == Parity.Even): result.incl b
+  ## Get bases of one parity: even or odd subalgebra at any dimension.
+  for basis in Basis:
+    if (int(basis.grade) mod 2 == 0) == (parity == Parity.Even): result.incl basis
 
 
 func kinds(): seq[(string, set[Basis])] {.compileTime.} =
   ## List every generated kind with its bases, smallest first: grades, then parities.
-  for g in Grade.low .. Grade.high: result.add(("Kvector" & $int(g), basesOfGrade(g)))
+  for grade in Grade.low .. Grade.high:
+    result.add(("Kvector" & $int(grade), basesOfGrade(grade)))
   result.add(("MultivectorEven", basesOfParity(Parity.Even)))
   result.add(("MultivectorOdd", basesOfParity(Parity.Odd)))
 
 
-func slotOf(listed: set[Basis], b: Basis): int =
-  ## Get dense slot of basis among listed bases, i.e. count of listed bases below it.
+func slotOf(listed: set[Basis], basis: Basis): int =
+  ## Get dense slot of basis among listed bases: count of listed bases below it.
   ##   Plain function rather than compile-time one, so runtime bodies can call it too.
-  for x in Basis:
-    if x == b: return
-    if x in listed: inc result
+  for other in Basis:
+    if other == basis: return
+    if other in listed: inc result
 
 
 func literal(listed: set[Basis]): NimNode {.compileTime.} =
   ## Spell set of bases as literal, since `quote` cannot embed set value.
   result = nnkCurly.newTree()
-  for b in listed: result.add nnkDotExpr.newTree(ident"Basis", ident($b))
+  for basis in listed: result.add nnkDotExpr.newTree(ident"Basis", ident($basis))
 
 
 macro defineMultivectors(): untyped =
@@ -70,14 +73,14 @@ macro defineMultivectors(): untyped =
   result = newStmtList()
   var names: seq[NimNode]
   for (name, listed) in kinds():
-    let (t, spelled) = (ident(name), literal(listed))
-    names.add t
+    let (kind, spelled) = (ident(name), literal(listed))
+    names.add kind
     result.add quote do:
-      type `t`* = object
+      type `kind`* = object
         elements*: array[card(`spelled`), float]
-      func bases*(T: typedesc[`t`]): set[Basis] = `spelled`
+      func bases*(T: typedesc[`kind`]): set[Basis] = `spelled`
   var class = names[0]
-  for t in names[1 .. ^1]: class = infix(class, "|", t)
+  for kind in names[1 .. ^1]: class = infix(class, "|", kind)
   result.add nnkTypeSection.newTree(
     nnkTypeDef.newTree(postfix(ident"SomeMultivector", "*"), newEmptyNode(), class)
   )
@@ -86,14 +89,14 @@ macro defineMultivectors(): untyped =
 defineMultivectors()
 
 
-template `[]`*(m: SomeMultivector, b: static Basis): float =
+template `[]`*(m: SomeMultivector, basis: static Basis): float =
   ## Read coefficient of basis from its dense slot.
-  m.elements[static(slotOf(bases(typeof(m)), b))]
+  m.elements[static(slotOf(bases(typeof(m)), basis))]
 
 
-template `[]=`*(m: var SomeMultivector, b: static Basis, value: float) =
+template `[]=`*(m: var SomeMultivector, basis: static Basis, value: float) =
   ## Write coefficient of basis into its dense slot.
-  m.elements[static(slotOf(bases(typeof(m)), b))] = value
+  m.elements[static(slotOf(bases(typeof(m)), basis))] = value
 
 
 
@@ -114,24 +117,24 @@ macro emitProduct(
   var
     reach: set[Basis]
     sums: array[Basis, seq[NimNode]]
-  for a in bases_m:
-    for b in bases_n:
-      for term in cayley[a][b]:
+  for left in bases_m:
+    for right in bases_n:
+      for term in cayley[left][right]:
         reach.incl term.basis
         let product = infix(
-          nnkBracketExpr.newTree(m, nnkDotExpr.newTree(ident"Basis", ident($a))),
+          nnkBracketExpr.newTree(m, nnkDotExpr.newTree(ident"Basis", ident($left))),
           "*",
-          nnkBracketExpr.newTree(n, nnkDotExpr.newTree(ident"Basis", ident($b))),
+          nnkBracketExpr.newTree(n, nnkDotExpr.newTree(ident"Basis", ident($right))),
         )
         sums[term.basis].add(if term.is_negated: prefix(product, "-") else: product)
   let product = genSym(nskVar, "product")
   var body = newStmtList(newVarStmt(product, newCall("default", ident(kindOf(reach)))))
-  for o in Basis:
-    if sums[o].len == 0: continue
-    var sum = sums[o][0]
-    for term in sums[o][1 .. ^1]: sum = infix(sum, "+", term)
+  for basis in Basis:
+    if sums[basis].len == 0: continue
+    var sum = sums[basis][0]
+    for term in sums[basis][1 .. ^1]: sum = infix(sum, "+", term)
     body.add newAssignment(
-      nnkBracketExpr.newTree(product, nnkDotExpr.newTree(ident"Basis", ident($o))), sum
+      nnkBracketExpr.newTree(product, nnkDotExpr.newTree(ident"Basis", ident($basis))), sum
     )
   body.add product
   result = newBlockStmt(body)
@@ -149,7 +152,7 @@ func `⟇`*[M, N: SomeMultivector](m: M, n: N): auto =
 
 func toMultivector*[T: SomeMultivector](m: T): Multivector =
   ## Widen generated kind to library's multivector, same coefficients.
-  for b in bases(T): result[b] = m.elements[slotOf(bases(T), b)]
+  for basis in bases(T): result[basis] = m.elements[slotOf(bases(T), basis)]
 
 
 
@@ -157,7 +160,7 @@ func toMultivector*[T: SomeMultivector](m: T): Multivector =
 
 proc sample[T: SomeMultivector](): T =
   ## Draw one kind with every slot uniform in [-1, 1].
-  for i in 0 ..< result.elements.len: result.elements[i] = rand(-1.0 .. 1.0)
+  for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
 
 
 when isMainModule:
