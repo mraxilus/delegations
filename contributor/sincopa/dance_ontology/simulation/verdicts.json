@@ -1,0 +1,6099 @@
+{
+  "stamp": "eba89fc5fadf1e2d",
+  "sweeps": {
+    "0|0|false|0.0|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.580000000000001,
+        "apart": 0.35787780744861186,
+        "why": 4,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.7200000000000003,
+        "apart": 0.43787780744861193,
+        "why": 2,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": true,
+                "elbowFore": false
+              },
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7035592321154365,
+          "handZ": 1.3084630966186523,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              },
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.09084155555522322,
+          "handZ": 1.1990127563476562,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              },
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7424927882807122,
+          "handZ": 1.0731239318847656,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.0113462209701538,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              },
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.2754966020584106,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.0|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.580000000000001,
+        "apart": 0.35787780744861186,
+        "why": 4,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.7200000000000003,
+        "apart": 0.43787780744861193,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": true,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7137794524169598,
+          "handZ": 1.3151930570602417,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.09071201753755864,
+          "handZ": 1.1969417333602905,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7467630371878058,
+          "handZ": 1.0730211734771729,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.0113462209701538,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.2681854963302612,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.0|01": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.8600000000000004,
+        "apart": 0.35787780744861186,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.3400000000000007,
+        "apart": 0.43787780744861193,
+        "why": 4,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.014874031396111875,
+          "handZ": 1.1797049045562744,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.9994597434997559,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.4286372916264556,
+          "handZ": 0.9621059894561768,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.3135466658484165,
+          "handZ": 1.2531564235687256,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.0|01|10": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.9000000000000005,
+        "apart": 0.3778778074486119,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.9000000000000005,
+        "apart": 0.3778778074486119,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ]
+          ],
+          "strain": 0.5149018454474035,
+          "handZ": 1.19907546043396,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.9994503259658813,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ]
+          ],
+          "strain": 0.5144196327250721,
+          "handZ": 0.9789196252822876,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.0|10": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.3600000000000008,
+        "apart": 0.43787780744861193,
+        "why": 4,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.8600000000000004,
+        "apart": 0.35787780744861186,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.3148259083834185,
+          "handZ": 1.2530220746994019,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.4295676108613029,
+          "handZ": 0.962162435054779,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.999447762966156,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.01249056010479166,
+          "handZ": 1.1816726922988892,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.0|11": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.7200000000000003,
+        "apart": 0.43787780744861193,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.580000000000001,
+        "apart": 0.35787780744861186,
+        "why": 4,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.2551528215408325,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.06471866800299642,
+          "handZ": 1.0064033269882202,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.1392605087649763,
+          "handZ": 1.0730725526809692,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.08932231312409578,
+          "handZ": 1.196802020072937,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": true,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7046289332956104,
+          "handZ": 1.3157023191452026,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.36|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.580000000000001,
+        "apart": 0.36,
+        "why": 4,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.23999999999999996,
+        "apart": 0.36,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": true,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7100545831569371,
+          "handZ": 1.3153367042541504,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.09180372329457276,
+          "handZ": 1.1977342367172241,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.5810001041267758,
+          "handZ": 0.992097795009613,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.06308030603026471,
+          "handZ": 1.0075228214263916,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.5|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.3400000000000007,
+        "apart": 0.5,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.7200000000000003,
+        "apart": 0.5,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.044591700767471876,
+          "handZ": 1.255354404449463,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.5037455827237656,
+          "handZ": 0.9653624296188354,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.0354479551315308,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.7588633977191042,
+          "handZ": 1.2836886644363403,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|false|0.7|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.2400000000000007,
+        "apart": 0.7,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.6000000000000002,
+        "apart": 0.7,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.05006038157361681,
+          "handZ": 1.2671571969985962,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.5320522999514249,
+          "handZ": 0.9779243469238281,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.104895830154419,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.3876885175704956,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|0|true|0.0|00|11": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.9400000000000005,
+        "apart": 0.4178778074486119,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.9400000000000005,
+        "apart": 0.4178778074486119,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0529078170940851,
+          "handZ": 1.118477702140808,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ]
+          ],
+          "strain": 0.4733310055995723,
+          "handZ": 0.9591861963272095,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 0,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ]
+          ],
+          "strain": 0.08679906861733944,
+          "handZ": 0.9970390200614929,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|1|false|0.0|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.620000000000001,
+        "apart": 0.3778778074486119,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.9800000000000005,
+        "apart": 0.3778778074486119,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.3582996072221899,
+          "handZ": 1.5091668367385864,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.1342482996126091,
+          "handZ": 1.4999463558197021,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.2144114140299318,
+          "handZ": 1.3998665809631348,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.22345798563569974,
+          "handZ": 1.4928269386291504,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.4158984422683716,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|1|false|0.0|01": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.1200000000000006,
+        "apart": 0.3778778074486119,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.1000000000000005,
+        "apart": 0.8978778074486123,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": true,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.4938435554504395,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.17739886156871765,
+          "handZ": 1.5111504793167114,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.3992314338684082,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.3558909893035889,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.09386886934136196,
+          "handZ": 1.398549199104309,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|1|false|0.0|01|10": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.9000000000000005,
+        "apart": 0.3978778074486119,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.9000000000000005,
+        "apart": 0.3978778074486119,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ]
+          ],
+          "strain": 0.5562183858805078,
+          "handZ": 1.5066357851028442,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.12064853650358198,
+          "handZ": 1.398935079574585,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ]
+          ],
+          "strain": 0.41106010068312027,
+          "handZ": 1.5064549446105957,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|1|false|0.0|10": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.1000000000000005,
+        "apart": 0.8978778074486123,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.1400000000000006,
+        "apart": 0.3778778074486119,
+        "why": 4,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.08778835812282815,
+          "handZ": 1.3964507579803467,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.3524484634399414,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.13719737885587924,
+          "handZ": 1.3989367485046387,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.1772380634275348,
+          "handZ": 1.5111197233200073,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": true,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.8550673287020362,
+          "handZ": 1.492598295211792,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|1|false|0.0|11": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.9800000000000005,
+        "apart": 0.3778778074486119,
+        "why": 6,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.640000000000001,
+        "apart": 0.3778778074486119,
+        "why": 4,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.4175902605056763,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.22491094283575308,
+          "handZ": 1.4998672008514404,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": true
+              },
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.2129428262270412,
+          "handZ": 1.3991749286651611,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.10985703063428587,
+          "handZ": 1.5009654760360718,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.34811399527008535,
+          "handZ": 1.509321928024292,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|1|true|0.0|00|11": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 0.02,
+        "apart": 0.4178778074486119,
+        "why": 4,
+        "whose": {
+          "body": 1,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 0.7000000000000003,
+        "apart": 0.7978778074486123,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ],
+            [
+              null,
+              {
+                "aspect": 1,
+                "band": 1,
+                "pressing": false,
+                "elbowFore": false
+              }
+            ]
+          ],
+          "strain": 0.5871157271708155,
+          "handZ": 1.405526876449585,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "pressing": true,
+                "elbowFore": false
+              }
+            ]
+          ],
+          "strain": 0.0005742768832891487,
+          "handZ": 1.5033856630325317,
+          "crossed": 2,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|false|0.0|00": {
+      "restHolds": true,
+      "negative": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.35787780744861186,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.4178778074486119,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.4705489873886108,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.8656870126724243,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.4710005521774292,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.865569829940796,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.14563834532761188,
+          "handZ": 0.9990279674530029,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.7334963083267212,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.10569560513580534,
+          "handZ": 1.3676505088806152,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.73285973072052,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.4442448247508257,
+          "handZ": 1.4266579151153564,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|false|0.0|01": {
+      "restHolds": true,
+      "negative": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.43787780744861193,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.4178778074486119,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.4730684757232666,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.00664926421888834,
+          "handZ": 1.7370667457580566,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.9995374511871756,
+          "handZ": 1.417432427406311,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.04800149204188575,
+          "handZ": 1.7373554706573486,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.9994605183601379,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.9012879133224487,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.2943663413899489,
+          "handZ": 1.3673659563064575,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.7866344451904297,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.29912777413236613,
+          "handZ": 1.3673430681228638,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|false|0.0|01|10": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.0600000000000005,
+        "apart": 0.3778778074486119,
+        "why": 4,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.3400000000000007,
+        "apart": 0.43787780744861193,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "handZ": 1.529800534248352,
+          "crossed": 4,
+          "over": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.2689351669848852,
+          "handZ": 1.7326780557632446,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.9994557499885559,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.021709713020672816,
+          "handZ": 1.935831904411316,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.5900114921980367,
+          "handZ": 1.40619957447052,
+          "crossed": 2,
+          "over": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|false|0.0|10": {
+      "restHolds": true,
+      "negative": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.4178778074486119,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.35787780744861186,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.3191638508153126,
+          "handZ": 1.3671848773956299,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.785987377166748,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.31441585180728493,
+          "handZ": 1.36762273311615,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.5702751437772233,
+          "handZ": 1.873821496963501,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.999447762966156,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.754374384880066,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.6332670964843883,
+          "handZ": 1.542100429534912,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.7339589595794678,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.6311431325480932,
+          "handZ": 1.542301893234253,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|false|0.0|11": {
+      "restHolds": true,
+      "negative": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.3978778074486119,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "stopped": false,
+        "at": 0.0,
+        "apart": 0.3978778074486119,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.8859122184022501,
+          "handZ": 1.3819375038146973,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.16030544471809327,
+          "handZ": 1.732820749282837,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.697084186325991,
+          "handZ": 1.3741999864578247,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.13392857765170896,
+          "handZ": 1.7359565496444702,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.12329745957014882,
+          "handZ": 0.9987950921058655,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.8249101638793945,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.6999565356022506,
+          "handZ": 1.3786953687667847,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.7957210540771484,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.6902081646252656,
+          "handZ": 1.3782168626785278,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|true|0.0|00|11": {
+      "restHolds": true,
+      "negative": {
+        "stopped": true,
+        "at": 1.2200000000000006,
+        "apart": 0.45787780744861195,
+        "why": 7,
+        "whose": {
+          "body": 0,
+          "arm": 1
+        }
+      },
+      "positive": {
+        "stopped": true,
+        "at": 1.2000000000000006,
+        "apart": 0.4178778074486119,
+        "why": 2,
+        "whose": {
+          "body": 1,
+          "arm": 1
+        }
+      },
+      "glances": [
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.43078875453054066,
+          "handZ": 1.817130208015442,
+          "crossed": 4,
+          "over": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.4483302805017234,
+          "handZ": 1.4157975912094116,
+          "crossed": 1,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 1.927667260169983,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.9883080038911322,
+          "handZ": 1.3873016834259033,
+          "crossed": 1,
+          "over": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.23163979729816786,
+          "handZ": 1.7223010063171387,
+          "crossed": 1,
+          "over": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "got": false,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "handZ": 0.0,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "rungs": {
+    "0|0.5": {
+      "found": true,
+      "apart": 0.7378778074486122,
+      "strain": 1.0,
+      "crossed": 0
+    },
+    "0|1.0": {
+      "found": false,
+      "apart": 0.0,
+      "strain": 0.0,
+      "crossed": 0
+    },
+    "0|1.5": {
+      "found": false,
+      "apart": 0.0,
+      "strain": 0.0,
+      "crossed": 0
+    },
+    "1|0.5": {
+      "found": true,
+      "apart": 0.35787780744861186,
+      "strain": 1.0,
+      "crossed": 0
+    },
+    "1|1.0": {
+      "found": false,
+      "apart": 0.0,
+      "strain": 0.0,
+      "crossed": 0
+    },
+    "1|1.5": {
+      "found": false,
+      "apart": 0.0,
+      "strain": 0.0,
+      "crossed": 0
+    },
+    "2|0.5": {
+      "found": true,
+      "apart": 0.35787780744861186,
+      "strain": 0.0,
+      "crossed": 1
+    },
+    "2|1.0": {
+      "found": false,
+      "apart": 0.0,
+      "strain": 0.0,
+      "crossed": 0
+    },
+    "2|1.5": {
+      "found": false,
+      "apart": 0.0,
+      "strain": 0.0,
+      "crossed": 0
+    }
+  }
+}

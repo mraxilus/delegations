@@ -66,7 +66,7 @@ type
     is_gated*: bool   ## Language admitted only where Nim cannot serve, so header must argue.
 
 
-const lut_kind_rule*: array[Kind, KindRule] = [
+const LUT_RULE_BY_KIND*: array[Kind, KindRule] = [
   Kind.Nim: KindRule(syntax: Syntax.Nim, is_prose: true),
   Kind.NimScript: KindRule(syntax: Syntax.Nim, is_prose: true),
   Kind.Nimble: KindRule(syntax: Syntax.Nim, is_prose: true),
@@ -111,4 +111,4 @@ func kindOf*(path: string): Option[Kind] =
 
 func rule*(kind: Kind): lent KindRule =
   ## Read rule of kind.
-  lut_kind_rule[kind]
+  LUT_RULE_BY_KIND[kind]

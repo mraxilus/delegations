@@ -1,4 +1,4 @@
-## Splice sim's data and panel program into whole-cloth page, and write it.
+## Splice simulation's data and panel program into whole-cloth page, and write it.
 ##
 ##   Page's markup lives in `mockups/wholecloth.html` (its own comment says why
 ##     it is mock-up rather than page project stands behind); its two scripts
@@ -9,7 +9,7 @@
 ##       wholecloth <dir>   reads <dir>/turns.js and <dir>/wholecloth_turns.js,
 ##                          writes <dir>/wholecloth.html
 ##   Each marker line is replaced by whole `<script>` element, data one keeping
-##     `id="turns-sim"` page always had, so anything reading script by id still
+##     `id="turns-simulation"` page always had, so anything reading script by id still
 ##     finds it.
 ##   Markup was Nim string constant while repository read no markup kind; `Html`
 ##     is registered now, so mock-up is committed file read at run time.
@@ -23,6 +23,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[os, strutils, unicode]
 
 import ../tools/title
@@ -30,9 +32,9 @@ import ../tools/title
 
 const
   MARKUP_PATH = "mockups" / "wholecloth.html"
-    ## Committed mock-up this splices sim's data and panel program into.
+    ## Committed mock-up this splices simulation's data and panel program into.
   MARK_DATA = "{{turns_data}}"
-    ## Marker line standing where sim's data script goes.
+    ## Marker line standing where simulation's data script goes.
   MARK_SCRIPT = "{{turns_script}}"
     ## Marker line standing where panel program goes.
   MARK_TITLE = "{{title}}"
@@ -50,14 +52,14 @@ proc main() =
   ## Read markup and both scripts, splice them in, write page, and say so.
   doAssert paramCount() == 1, "Usage: wholecloth <dir>; got `" & $paramCount() & "` arguments."
   let
-    dir = paramStr(1)
-    data = readFile(dir / "turns.js")
-    program = readFile(dir / "wholecloth_turns.js")
+    directory = paramStr(1)
+    data = readFile(directory / "turns.js")
+    program = readFile(directory / "wholecloth_turns.js")
     page = readFile(MARKUP_PATH)
-      .spliced(MARK_DATA, "<script id=\"turns-sim\">\n" & data & "</script>")
+      .spliced(MARK_DATA, "<script id=\"turns-simulation\">\n" & data & "</script>")
       .spliced(MARK_SCRIPT, "<script>\n" & program & "</script>")
       .spliced(MARK_TITLE, MOCKUP & " — Whole Cloth")
-    path = dir / "wholecloth.html"
+    path = directory / "wholecloth.html"
   writeFile(path, page)
   echo "wrote ", path, ": ", page.runeLen, " characters"
 

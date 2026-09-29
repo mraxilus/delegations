@@ -8,14 +8,16 @@
 ##     registered file kinds.  Each is published at fixed URL listed in `../README.md`;
 ##     republishing rebuilt files to those URLs is whole release step.
 ##     Every one is mock-up rather than page project stands behind, and its title says so.
-##   `tests/suites/tmarks.nim` drives `buildPage` for every page, so every gate runs under
+##   `tests/suites/test_marks.nim` drives `buildPage` for every page, so every gate runs under
 ##     `nim r koch test` (Article IX.6).
-##   Every page's parts are built once in process and kept (`made`).  Page's checks read
-##     what page placed, and review page places both walked pages' figures again, so
+##   Every page's parts are built once in process and kept (`LUT_PARTS_BY_PAGE`).  Page's checks
+##     read what page placed, and review page places both walked pages' figures again, so
 ##     full build routed single-hand turns three times and hand-to-hand turns three.
 ##     Routing is most of what build costs.
 
 {.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
 
 import std/[os, strformat, tables, unicode]
 
@@ -29,14 +31,15 @@ proc checkFrameAndRules() =
   checkRules()
 
 
-var made: Table[string, Parts]
+# Mutable: filled as pages build, one run long.
+var LUT_PARTS_BY_PAGE: Table[string, Parts]
   ## Parts of every page built so far, by page, so none is routed twice.
 
 proc once(name: string; build: proc (): Parts {.nimcall.}): Parts =
   ## Parts of page `name`, built on first asking and kept.
-  if name notin made:
-    made[name] = build()
-  made[name]
+  if name notin LUT_PARTS_BY_PAGE:
+    LUT_PARTS_BY_PAGE[name] = build()
+  LUT_PARTS_BY_PAGE[name]
 
 proc singleParts(): Parts = once("turns-single.html", singleTurnParts)
   ## Single-hand turns page's parts, built once.
@@ -73,23 +76,24 @@ const PAGES* = [
 ] ## Each page: its file, its figures, its checks, its layout.
 
 
-proc buildPage*(i: int; out_dir: string) =
-  ## Check page `i` of `PAGES`, then write it into `out_dir`.
-  let page = PAGES[i]
-  let built = page.parts_of()
+proc buildPage*(page_index: int; directory_out: string) =
+  ## Check page `page_index` of `PAGES`, then write it into `directory_out`.
+  let
+    page = PAGES[page_index]
+    built = page.parts_of()
   echo &"{page.name}: {built.len} pieces"
   page.check(built)
   let
     html = page.render(built)
-    path = out_dir / page.name
+    path = directory_out / page.name
   writeFile(path, html)
   echo &"  written {html.runeLen} characters to {path}"
 
 
-proc buildPages*(out_dir: string) =
-  ## Check and rebuild every page into `out_dir`.
+proc buildPages*(directory_out: string) =
+  ## Check and rebuild every page into `directory_out`.
   for i in 0 ..< PAGES.len:
-    buildPage(i, out_dir)
+    buildPage(i, directory_out)
 
 
 when isMainModule:

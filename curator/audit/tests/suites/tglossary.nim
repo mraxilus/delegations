@@ -1,5 +1,7 @@
 ## Replicate glossary shape: Matt Pocock's CONTEXT.md format, checked structurally.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/glossary
 import ./fixtures

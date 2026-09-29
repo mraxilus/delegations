@@ -1,5 +1,7 @@
 ## Replicate provenance guide's body shape and Article VIII.6: record describes what is.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/record
 import ./fixtures
@@ -20,8 +22,9 @@ suite "Article VIII":
     check messages(provenanceText("deadbeefdeadbeef") & "\n## Design\n\nWhat is.\n").len == 0
 
   test "VIII.6 no section is headed by date":
-    let dated = provenanceText("d") & "\n## Design\n\n## Re-audit, 2026-09-06\n\nDone.\n"
-    let found = checkRecord("p", dated)
+    let
+      dated = provenanceText("d") & "\n## Design\n\n## Re-audit, 2026-09-06\n\nDone.\n"
+      found = checkRecord("p", dated)
     check found.len == 1 and found[0].line == 14  # line of heading named
     check found[0].message.endsWith("got `## Re-audit, 2026-09-06`.")
     check messages(provenanceText("d") & "\n## Design\n\nDone 2026-09-06.\n").len == 0  # prose
@@ -29,24 +32,27 @@ suite "Article VIII":
     check not "2026-9-6".hasIsoDate and not "".hasIsoDate
 
   test "VIII.6 open questions is last section":
-    let early = provenanceText("d") & "\n## Open questions\n\nOne.\n\n## Design\n\nWhat is.\n"
-    let found = checkRecord("p", early)
+    let
+      early = provenanceText("d") & "\n## Open questions\n\nOne.\n\n## Design\n\nWhat is.\n"
+      found = checkRecord("p", early)
     check found.len == 1 and found[0].line == 12  # open questions' own line
     check found[0].message.endsWith("got section at line 16 after it.")
     check messages(provenanceText("d") & BODY & "\n### Deeper\n\nStill inside.\n").len == 0
     check messages(provenanceText("d") & "\n## OPEN QUESTIONS\n\n## Design\n").len == 1  # case
 
   test "VIII.6 no heading appears twice":
-    let twice = provenanceText("d") & "\n## Design\n\n## Design\n"
-    let found = checkRecord("p", twice)
+    let
+      twice = provenanceText("d") & "\n## Design\n\n## Design\n"
+      found = checkRecord("p", twice)
     check found.len == 1 and found[0].line == 14  # second occurrence named
     check found[0].message == "Heading appears twice; got `## Design`."
     let fenced = provenanceText("d") & "\n## Design\n\n```nim\n## Design\n```\n"
     check messages(fenced).len == 0  # heading inside fence is example
 
   test "VIII.6 heading is ATX, never underlined":
-    let setext = provenanceText("d") & "\nDesign\n---\n\nWhat is.\n"
-    let found = checkRecord("p", setext)
+    let
+      setext = provenanceText("d") & "\nDesign\n---\n\nWhat is.\n"
+      found = checkRecord("p", setext)
     check found.len == 1 and found[0].line == 12
     check found[0].message.endsWith("write `## Design`.")
     let title = provenanceText("d") & "\nProvenance\n===\n\nWhat is.\n"
@@ -60,16 +66,18 @@ suite "Article VIII":
     var body = ""
     for i in 0 ..< RECORD_LINES div SECTION_LINES + 1:
       body.add "\n## Design " & $i & "\n" & "line\n".repeat(SECTION_LINES - 1)
-    let long = provenanceText("d") & body
-    let found = checkRecord("p", long)
+    let
+      long = provenanceText("d") & body
+      found = checkRecord("p", long)
     check found.len == 1
     check found[0].message.startsWith("Record over " & $RECORD_LINES & " lines; prune to log")
     check found[0].message.endsWith("got " & $(long.count('\n')) & ".")  # as wc -l counts
     check messages(provenanceText("d") & "line\n".repeat(SECTION_LINES - 10)).len == 0
 
   test "VIII.6 section over ceiling asks for prune or split":
-    let wide = provenanceText("d") & "\n## Body sim\n" & "line\n".repeat(SECTION_LINES + 1)
-    let found = checkSections("p", wide)
+    let
+      wide = provenanceText("d") & "\n## Body sim\n" & "line\n".repeat(SECTION_LINES + 1)
+      found = checkSections("p", wide)
     check found.len == 1
     check found[0].message ==
       "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &

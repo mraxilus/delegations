@@ -9,7 +9,7 @@
 {.experimental: "strictFuncs".}
 
 import std/strutils
-import ./[findings, kinds, comments]
+import ./[comments, findings, kinds]
 
 
 const

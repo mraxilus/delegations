@@ -42,8 +42,8 @@ const HOW_MANY = FRAMES.len * 3
 func armOf(side: Side): Arm {.compileTime.} =
   ## Read hand of lead as side of body.
   case side
-  of Side.Left: Arm.L
-  of Side.Right: Arm.R
+  of Side.Left: Arm.Left
+  of Side.Right: Arm.Right
 
 func armOf(site: Site): Arm {.compileTime.} =
   ## Read hand of follow same way.
@@ -51,8 +51,8 @@ func armOf(site: Site): Arm {.compileTime.} =
   ##     where it means other; here they land on one word, because
   ##     drawing puts them on same two sides of two bodies.
   case site
-  of Site.LeftHand: Arm.L
-  of Site.RightHand: Arm.R
+  of Site.LeftHand: Arm.Left
+  of Site.RightHand: Arm.Right
 
 
 func holdsOf(target: Frame): Holds {.compileTime.} =

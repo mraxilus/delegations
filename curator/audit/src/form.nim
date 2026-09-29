@@ -2,7 +2,9 @@
 ##   Per line: no CR; no tab; no trailing whitespace; at most `LINE_MAX` characters counted
 ##   as Unicode runes, not bytes.
 ##   Per file: non-empty; ends with exactly one newline.
-##   Per Nim banner `#[ Title ]#`: two blank lines before, exactly one after (X.2).
+##   Per Nim banner, first tier `#[ Title ]#` or second tier `#[[ Title ]]#`: two blank lines
+##     before, exactly one after (X.2). First-tier banner followed at once by second-tier
+##     banner leaves spacing between them to child's own two-before check.
 ##
 ##   Line over width passes only when breaking cannot fix it: one whitespace-free token with
 ##     its indent already exceeds limit, that token is no longer than `TOKEN_MAX`, and rest of
@@ -10,8 +12,9 @@
 ##     machine output is one run far past `TOKEN_MAX`.
 ##
 ##   Cost: two-space indent unverified; indent width depends on syntax and stays with review.
-##   Cost: banner tier is unmarked in syntax, so check demands second-tier minimum (two
-##     blank lines before) of every banner and cannot tell tiers apart.
+##   Cost: first tier takes three blank lines before (X.2), yet check demands two of every
+##     banner. Tightening reddens contributor banners still spaced at two, so it waits on
+##     their fixes (CURATOR.md, duty 3).
 ##   Cost: `LICENSE.md` exempt from width; third-party text stays verbatim (XI.3 spirit).
 
 {.experimental: "strictFuncs".}
@@ -31,15 +34,24 @@ const
     ## Root paths whose width goes unchecked: third-party text kept verbatim.
 
 
-func isBanner(line: string): bool =
-  ## Decide whether line is section banner, i.e. `#[ Title ]#` alone on line.
-  line.len > 6 and line.startsWith("#[ ") and line.endsWith(" ]#")
+func tierOfBanner(line: string): int =
+  ## Read tier of section banner alone on line: 1 for `#[ Title ]#`, 2 for `#[[ Title ]]#`.
+  ##   Zero for any other line.
+  if line.len > 8 and line.startsWith("#[[ ") and line.endsWith(" ]]#"): 2
+  elif line.len > 6 and line.startsWith("#[ ") and line.endsWith(" ]#"): 1
+  else: 0
 
 
 func checkBanner(path: string, lines: seq[string], i: int): seq[Finding] =
   ## Report banner at index `i` lacking two blank lines before or exactly one after.
-  let is_spaced_before = i >= 2 and lines[i - 1].len == 0 and lines[i - 2].len == 0
-  let is_spaced_after = i + 2 < lines.len and lines[i + 1].len == 0 and lines[i + 2].len > 0
+  var blanks = 0
+  while i + blanks + 1 < lines.len and lines[i + blanks + 1].len == 0: inc blanks
+  let
+    next = i + blanks + 1
+    is_child_next = lines[i].tierOfBanner == 1 and next < lines.len and
+      lines[next].tierOfBanner == 2
+    is_spaced_before = i >= 2 and lines[i - 1].len == 0 and lines[i - 2].len == 0
+    is_spaced_after = is_child_next or (blanks == 1 and next < lines.len)
   if not is_spaced_before:
     result.add finding(path, i + 1, "Banner lacks two blank lines before it.")
   if not is_spaced_after:
@@ -80,5 +92,5 @@ func checkForm*(path, source: string, rule: KindRule): seq[Finding] =
       result.add finding(
         path, number, "Line exceeds " & $LINE_MAX & " characters; got `" & $width & "`."
       )
-    if rule.syntax == Syntax.Nim and line.isBanner:
+    if rule.syntax == Syntax.Nim and line.tierOfBanner > 0:
       result.add checkBanner(path, lines, i)

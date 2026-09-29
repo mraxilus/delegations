@@ -23,7 +23,7 @@ import std/[base64, os, strutils]
 
 
 const
-  DIR_FONTS* = "build" / "fonts"
+  DIRECTORY_FONTS* = "build" / "fonts"
     ## Directory `assets` writes faces into, read from project directory.
   FACES* = [
     ("noto-serif-latin-400-normal.woff2", "Noto Serif", "400", "normal"),
@@ -44,19 +44,19 @@ const
     ##     what lets dressing take old one out before it puts new one in.
   SERIF* = "\"Noto Serif\", Georgia, \"Times New Roman\", serif"
     ## Titles.  Fallback is only for face that failed to load, never for one absent.
-  SANS* = "\"Noto Sans\", ui-sans-serif, system-ui, sans-serif"
+  SANS_SERIF* = "\"Noto Sans\", ui-sans-serif, system-ui, sans-serif"
     ## Body text.
-  MONO* = "\"Commit Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
+  MONOSPACE* = "\"Commit Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
     ## Code, data and figures.
 
 
-proc faceStyle*(dir = DIR_FONTS): string =
+proc faceStyle*(directory = DIRECTORY_FONTS): string =
   ## Build `<style>` holding every face inlined, and root that keeps ligatures on.
   ##   Raises where face is missing, rather than writing page that silently falls
   ##     back to whatever machine building it happens to carry.
   var rules: seq[string]
   for (file, family, weight, style) in FACES:
-    let path = dir / file
+    let path = directory / file
     if not fileExists(path):
       raise newException(IOError,
         "Face is absent, so page would name one reader may lack; run " &
@@ -86,7 +86,7 @@ func withoutFaces*(html: string): string =
     result = result[0 ..< opens] & result[cut_to .. ^1]
 
 
-proc withFaces*(raw: string; dir = DIR_FONTS): string =
+proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
   ## Put face style sheet last in page's head, so page ships what it draws with.
   ##   Last rather than first for two reasons: root rule keeping ligatures on then
   ##     wins over any page rule that would turn them off, and `bundle` folds head
@@ -101,13 +101,14 @@ proc withFaces*(raw: string; dir = DIR_FONTS): string =
   const
     SHUT = "</head>"
     TITLE = "</title>"
-  let html = withoutFaces(raw)
-  let shuts = html.find(SHUT)
+  let
+    html = withoutFaces(raw)
+    shuts = html.find(SHUT)
   if shuts >= 0:
-    return html[0 ..< shuts] & faceStyle(dir) & "\n" & html[shuts .. ^1]
+    return html[0 ..< shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
   let titled = html.find(TITLE)
   if titled < 0:
     raise newException(ValueError,
       "Page carries neither head nor title to put faces by; got first 40 " &
         "characters `" & html[0 ..< min(40, html.len)] & "`.")
-  html[0 ..< titled + TITLE.len] & "\n" & faceStyle(dir) & html[titled + TITLE.len .. ^1]
+  html[0 ..< titled + TITLE.len] & "\n" & faceStyle(directory) & html[titled + TITLE.len .. ^1]

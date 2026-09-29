@@ -47,8 +47,9 @@ func diaryReference*(line: string): string =
   for word in DIARY_WORDS:
     var at = lower.find(word & " ")
     while at >= 0:
-      let after = at + word.len + 1
-      let is_bounded = at == 0 or lower[at - 1] notin Letters
+      let
+        after = at + word.len + 1
+        is_bounded = at == 0 or lower[at - 1] notin Letters
       if is_bounded and after < text.len and text[after] in Digits:
         var j = after
         while j < text.len and text[j] in Digits: inc j

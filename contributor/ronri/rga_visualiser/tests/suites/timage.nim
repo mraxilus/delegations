@@ -1,5 +1,7 @@
 ## Run `Image` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -33,8 +35,9 @@ when not defined(js):
 
     test "chunk lengths and checksums agree end to end":
       const (WIDTH, HEIGHT) = (16, 9)
-      var pixels = newSeq[uint8](WIDTH*HEIGHT*3)
-      var test_arena = initArena(buffer_arena)
+      var
+        pixels = newSeq[uint8](WIDTH*HEIGHT*3)
+        test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite_chunks.png"
       writePng(test_arena, path, WIDTH, HEIGHT, pixels)
       defer: removeFile(path)
@@ -59,8 +62,9 @@ when not defined(js):
 
     test "written file carries the size and frame count it was given":
       const (WIDTH, HEIGHT) = (12, 8)
-      var frames = newSeq[uint8](3*WIDTH*HEIGHT*3)
-      var test_arena = initArena(buffer_arena)
+      var
+        frames = newSeq[uint8](3*WIDTH*HEIGHT*3)
+        test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite.gif"
       writeGif(test_arena, path, WIDTH, HEIGHT, frames, 3, 8)
       defer: removeFile(path)
@@ -109,7 +113,7 @@ when not defined(js):
         CODE_END = CODE_CLEAR + 1
         CODE_MAX = 4096
       var
-        pos_bit = 0
+        position_bit = 0
         dict: Table[int, seq[uint8]]
         next_code = CODE_END + 1
         width = BITS_CODE + 1
@@ -118,10 +122,10 @@ when not defined(js):
 
       proc readCode(width: int): int =
         for i in 0 ..< width:
-          let (byte_index, bit_index) = ((pos_bit + i) div 8, (pos_bit + i) mod 8)
+          let (byte_index, bit_index) = ((position_bit + i) div 8, (position_bit + i) mod 8)
           if byte_index < len(data):
             result = result or (int((data[byte_index].int shr bit_index) and 1) shl i)
-        pos_bit += width
+        position_bit += width
 
       while true:
         let code = readCode(width)

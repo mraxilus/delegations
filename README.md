@@ -23,8 +23,8 @@ Overarching theme: methods of communication.
 ## Layout
 
 ```text
-README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  CURATOR.md  CONTRIBUTOR.md  GUIDE.md
-CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore  .gitattributes  .github/
+README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  EXAMPLES.md  CURATOR.md  CONTRIBUTOR.md
+GUIDE.md  CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore  .gitattributes  .github/
 curator/README.md                        curator projects: audit, probe, any other
 curator/<project>/                       README.md  PROVENANCE.md  GLOSSARY.md  <project>.nimble
                                          src/  tests/  [tools/build.nim  pages/  mockups/

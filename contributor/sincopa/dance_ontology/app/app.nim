@@ -24,6 +24,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[options, strutils]
 import std/dom except Frame ## Exclude browser's own `Frame`, which is window.
 
@@ -64,18 +66,20 @@ func startFrame(): Frame =
   fromKey("--.").get
 
 
+# Mutable: page's state, which every handler reads and changes.  Browser calls
+# handlers with nothing of their own, so state lives here.
 var
-  origin = startFrame()
-  current = startFrame()
-  view = View.Atlas
-  drawing = Drawing.Dynamic
-  drawing_chosen = false        ## Whether reader has picked drawing themselves.
-  filter = Filter()
-  history: seq[Step] = @[]
-  motion = Motion.Still     ## What drawings are doing at this instant.
-  taken = none(Frame)       ## Frame being moved to, while couple are leaving.
-  queued = none(Frame)      ## Second move of compound, waiting for first.
-  generation = 0            ## Which move is in flight, so older one can be dropped.
+  ORIGIN = startFrame()
+  CURRENT = startFrame()
+  VIEW_SHOWN = View.Atlas
+  DRAWING_SHOWN = Drawing.Dynamic
+  IS_DRAWING_CHOSEN = false        ## Whether reader has picked drawing themselves.
+  FILTER_APPLIED = Filter()
+  HISTORY: seq[Step] = @[]
+  MOTION_NOW = Motion.Still     ## What drawings are doing at this instant.
+  FRAME_TAKEN = none(Frame)       ## Frame being moved to, while couple are leaving.
+  FRAME_QUEUED = none(Frame)      ## Second move of compound, waiting for first.
+  GENERATION = 0            ## Which move is in flight, so older one can be dropped.
 
 
 func tempoOf(drawing: Drawing): Tempo =
@@ -155,7 +159,7 @@ proc roomForMap(): bool =
     .getPropertyValue("--wide")).strip() == "1"
 
 
-proc setScrollLeft(e: Node; value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
+proc setScrollLeft(box: Node; value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
   ## Set how far scrolling box is scrolled; `std/dom` only reads it.
 
 
@@ -176,8 +180,8 @@ proc centreOnHeld() =
   let
     room = scroller.getBoundingClientRect()
     on = held.getBoundingClientRect()
-    off = (on.left + on.width / 2) - (room.left + room.width / 2)
-  setScrollLeft(scroller, scroller.scrollLeft + int(off))
+    offset = (on.left + on.width / 2) - (room.left + room.width / 2)
+  setScrollLeft(scroller, scroller.scrollLeft + int(offset))
 
 
 proc suitDrawing() =
@@ -187,14 +191,14 @@ proc suitDrawing() =
   ##   So page follows screen -- and stops once reader picks
   ##     drawing, because choice made is worth more than default, and
   ##     window dragged narrower should not take it back.
-  if not drawing_chosen:
-    drawing = if roomForMap(): Drawing.Overview else: Drawing.Dynamic
+  if not IS_DRAWING_CHOSEN:
+    DRAWING_SHOWN = if roomForMap(): Drawing.Overview else: Drawing.Dynamic
 
 
 
 #[ Markup ]#
 
-func esc(text: string): string =
+func escaped(text: string): string =
   ## Escape text for placement in markup, quotes included.
   ##   Stricter than review page's `escape`: this one also feeds
   ##     attribute values, where bare quote ends attribute.
@@ -223,17 +227,17 @@ func inked(said: string): string =
   ##     second reading of them rather than change to what they are.
   for run in named(said):
     if run.lead.isNone and run.follow.isNone:
-      result.add esc(run.text)
+      result.add escaped(run.text)
       continue
     let ink = if run.lead.isSome: armColour(run.lead.get)
               else: followColour(run.follow.get)
-    result.add tag("span", "style=\"color: " & ink & "\"", esc(run.text))
+    result.add tag("span", "style=\"color: " & ink & "\"", escaped(run.text))
 
 
 func button(action, value, classes, body: string): string =
   ## Form button carrying action page should take when it is clicked.
   tag("button", "class=\"" & classes & "\" data-action=\"" & action &
-    "\" data-value=\"" & esc(value) & "\"", body)
+    "\" data-value=\"" & escaped(value) & "\"", body)
 
 
 
@@ -247,13 +251,14 @@ func renderMoves(source: Frame): string =
   ##   It is grouped and counted apart from moves so that page never
   ##     says two things are one.
   let available = moves(source)
-  var rows = ""
-  var previous = ""
+  var
+    rows = ""
+    previous = ""
   for move in available:
     let helper = $move.helper
     if helper != previous:
-      rows.add tag("h4", "", esc(helper.toLowerAscii) & " &middot; " &
-        esc(manner(move.helper)))
+      rows.add tag("h4", "", escaped(helper.toLowerAscii) & " &middot; " &
+        escaped(manner(move.helper)))
       previous = helper
     rows.add button("move", move.to.key, "move",
       tag("span", "class=\"phrase\"", inked(phrase(source, move))) &
@@ -268,7 +273,7 @@ func renderMoves(source: Frame): string =
     for step in steps:
       if spelled.len > 0:
         spelled.add " &rarr; "
-      spelled.add esc(step.helper.name)
+      spelled.add escaped(step.helper.name)
     shortcuts.add button("compound", target.key, "move two",
       tag("span", "class=\"phrase\"", inked(compoundPhrase(source, target))) &
       tag("span", "class=\"target\"", inked(target.describe) & " &middot; " &
@@ -294,8 +299,9 @@ func renderElsewhere(source: Frame): string =
   ##       it.
   ##     Route always knew which two; it was throwing answer away and
   ##       printing only its shape.
-  var rows = ""
-  var count = 0
+  var
+    rows = ""
+    count = 0
   for target in FRAMES:
     if target == source or classify(source, target).isSome or
         compound(source, target).isSome:
@@ -306,7 +312,7 @@ func renderElsewhere(source: Frame): string =
     # frame it is move out of.  It happens to read same named from here --
     # drop is only phrase that looks at frame it leaves, and no
     # shortest route drops hand it collected, so hand route drops was held
-    # before route began.  `tests/suites/ttransition.nim` holds both of those, so
+    # before route began.  `tests/suites/test_transition.nim` holds both of those, so
     # this is written way it is true rather than way it is convenient.
     var standing = source
     for step in route(source, target):
@@ -340,7 +346,7 @@ func renderDrawingSwitch(drawing: Drawing): string =
   var tabs = ""
   for candidate in Drawing:
     let classes = if candidate == drawing: "tab on" else: "tab"
-    tabs.add button("drawing", $candidate, classes, esc($candidate))
+    tabs.add button("drawing", $candidate, classes, escaped($candidate))
   tag("div", "class=\"tabs small\"", tabs)
 
 
@@ -471,7 +477,7 @@ func admits(narrowing: Filter; target: Frame): bool =
 
 func chip(action, value, label: string; chosen: bool): string =
   ## Offer one answer to one question, marked when it is one in force.
-  button(action, value, (if chosen: "chip on" else: "chip"), esc(label))
+  button(action, value, (if chosen: "chip on" else: "chip"), escaped(label))
 
 
 func renderFilters(narrowing: Filter): string =
@@ -500,8 +506,9 @@ func renderGallery(narrowing: Filter): string =
   ##   Showing both means vocabulary can be read off drawing rather
   ##     than trusted, which is same reason review page carries
   ##     pictures too.
-  var cards = ""
-  var shown = 0
+  var
+    cards = ""
+    shown = 0
   for target in FRAMES:
     if not narrowing.admits(target):
       continue
@@ -559,7 +566,7 @@ func cell(classes, tone, told, body: string): string =
   ##     cell varies by is which arm dances it, and that is one value, not
   ##     set of states stylesheet has to enumerate.
   tag("td", "class=\"" & classes & "\" style=\"--tone: " & tone & "\"" &
-    (if told.len > 0: " title=\"" & esc(told) & "\"" else: ""), body)
+    (if told.len > 0: " title=\"" & escaped(told) & "\"" else: ""), body)
 
 
 func renderMark(kind, tone, glyph: string): string =
@@ -642,7 +649,7 @@ func renderMatrix(): string =
     tag("span", "class=\"axis\"", "from &darr;"))
   for index, target in order:
     head.add tag("th", "class=\"head" & (if opens[index]: " gap" else: "") &
-      "\" title=\"" & esc(target.describe) & "\"",
+      "\" title=\"" & escaped(target.describe) & "\"",
       renderFrame(target) & tag("span", "class=\"who\"", inked(target.brief)))
   var body = ""
   for down, source in order:
@@ -653,7 +660,7 @@ func renderMatrix(): string =
     # that size now that lead's hands are squares: whose row is whose is in
     # marks, where before it was only in captions too small to read.
     var row = tag("th", "class=\"row" & step & "\" title=\"" &
-      esc(source.describe) & "\"",
+      escaped(source.describe) & "\"",
       tag("span", "class=\"who\"", inked(source.brief)) & renderFrame(source))
     for across, target in order:
       let
@@ -664,8 +671,7 @@ func renderMatrix(): string =
         row.add cell("self" & edge, "var(--rule-strong)", source.describe,
           tag("span", "class=\"tile here\"", ""))
       elif helper.isSome:
-        let move = Move(helper: helper.get, to: target,
-          side: actingSide(source, target))
+        let move = Move(helper: helper.get, to: target, side: actingSide(source, target))
         row.add cell("one" & edge, toneOf(move.side), phrase(source, move),
           tag("span", "class=\"tile one\"", HELPER_GLYPHS[move.helper]))
       elif named.isSome:
@@ -702,7 +708,7 @@ func renderControls(view: View): string =
   var views = ""
   for candidate in View:
     let classes = if candidate == view: "tab on" else: "tab"
-    views.add button("view", $candidate, classes, esc($candidate))
+    views.add button("view", $candidate, classes, escaped($candidate))
   tag("header", "", tag("h1", "", "dance ontology") & tag("div", "class=\"tabs\"", views))
 
 
@@ -716,43 +722,45 @@ proc paintStage() =
   if stage == nil:
     return
   let held = holding()
-  stage.innerHTML = cstring(renderStageBody(current, drawing, motion, taken))
+  stage.innerHTML = cstring(renderStageBody(CURRENT, DRAWING_SHOWN, MOTION_NOW, FRAME_TAKEN))
   standAgain(held)
   centreOnHeld()
 
 
 proc render() =
   ## Draw whole page from session state.
-  let body =
-    case view
-    of View.Dance: renderDance(current, drawing, motion, taken, history)
-    of View.Atlas: renderGallery(filter)
-    of View.Matrix: renderMatrix()
-  let held = holding()
-  document.getElementById("app").innerHTML = cstring(renderControls(view) & body)
+  let
+    body =
+      case VIEW_SHOWN
+      of View.Dance: renderDance(CURRENT, DRAWING_SHOWN, MOTION_NOW, FRAME_TAKEN, HISTORY)
+      of View.Atlas: renderGallery(FILTER_APPLIED)
+      of View.Matrix: renderMatrix()
+    held = holding()
+  document.getElementById("app").innerHTML = cstring(renderControls(VIEW_SHOWN) & body)
   standAgain(held)
   centreOnHeld()
 
 
 proc arrive(target: Frame) =
   ## Stand in frame move reached, and remember way there.
-  for move in moves(current):
+  for move in moves(CURRENT):
     if move.to != target:
       continue
-    history.add Step(phrase: phrase(current, move), to: move.to)
-    current = move.to
-    say(history[^1].phrase & ". Now " & current.describe & ", with " &
-      $moves(current).len & " moves out of it.")
+    HISTORY.add Step(phrase: phrase(CURRENT, move), to: move.to)
+    CURRENT = move.to
+    say(HISTORY[^1].phrase & ". Now " & CURRENT.describe & ", with " &
+      $moves(CURRENT).len & " moves out of it.")
     return
 
 
+# Forward: `dance` and `leadOn` call each other.
 proc dance(key: string)
 
 
 proc leadOn() =
   ## Take second move of compound, if one is waiting on first.
-  let next = queued
-  queued = none(Frame)
+  let next = FRAME_QUEUED
+  FRAME_QUEUED = none(Frame)
   if next.isSome:
     dance(next.get.key)
 
@@ -774,9 +782,9 @@ proc dance(key: string) =
   ##       phases, and is same guard that stops compound finishing itself
   ##       after something else has been asked for.
   let target = fromKey(key)
-  if target.isNone or classify(current, target.get).isNone:
+  if target.isNone or classify(CURRENT, target.get).isNone:
     return
-  if motion == Motion.Leaving and taken == target:
+  if MOTION_NOW == Motion.Leaving and FRAME_TAKEN == target:
     return # Asked twice for same move, which is once.
   if atOnce():
     # Every phase collapses into change of state it was spelling out.  But
@@ -789,31 +797,31 @@ proc dance(key: string) =
     render()
     return
 
-  inc generation
+  inc GENERATION
   let
-    mine = generation
-    tempo = tempoOf(drawing)
-  motion = Motion.Leaving
-  taken = target
+    mine = GENERATION
+    tempo = tempoOf(DRAWING_SHOWN)
+  MOTION_NOW = Motion.Leaving
+  FRAME_TAKEN = target
   paintStage()
 
   discard setTimeout(proc () =
-    if generation != mine:
+    if GENERATION != mine:
       return
     arrive(target.get)
-    motion = Motion.Arriving
-    taken = none(Frame)
+    MOTION_NOW = Motion.Arriving
+    FRAME_TAKEN = none(Frame)
     render(), tempo.leaveTime)
 
   discard setTimeout(proc () =
-    if generation != mine:
+    if GENERATION != mine:
       return
     leadOn(), tempo.leadOnTime)
 
   discard setTimeout(proc () =
-    if generation != mine:
+    if GENERATION != mine:
       return
-    motion = Motion.Still, tempo.moveTime)
+    MOTION_NOW = Motion.Still, tempo.moveTime)
 
 
 proc danceCompound(key: string) =
@@ -824,24 +832,24 @@ proc danceCompound(key: string) =
   ##   Anything else dancer does in meantime is newer move, and drops
   ##     queue.
   let target = fromKey(key)
-  if target.isNone or compound(current, target.get).isNone:
+  if target.isNone or compound(CURRENT, target.get).isNone:
     return
   # Way vocabulary means, not any shortest way: cut can be led with
   # either arm and only one of those is one phrase on this very button
   # describes.  Dancing other would be doing one thing while saying another.
-  let steps = compoundWay(current, target.get)
+  let steps = compoundWay(CURRENT, target.get)
   if steps.len != 2:
     return
-  queued = some(target.get)
+  FRAME_QUEUED = some(target.get)
   dance(steps[0].to.key)
 
 
 proc rest() =
   ## Stop whatever was moving, for change of state that is not move.
-  inc generation
-  motion = Motion.Still
-  taken = none(Frame)
-  queued = none(Frame)
+  inc GENERATION
+  MOTION_NOW = Motion.Still
+  FRAME_TAKEN = none(Frame)
+  FRAME_QUEUED = none(Frame)
 
 
 proc start(key: string) =
@@ -850,10 +858,10 @@ proc start(key: string) =
   if target.isNone:
     return
   rest()
-  origin = target.get
-  current = origin
-  history = @[]
-  view = View.Dance
+  ORIGIN = target.get
+  CURRENT = ORIGIN
+  HISTORY = @[]
+  VIEW_SHOWN = View.Dance
 
 
 proc handle(event: Event) =
@@ -869,8 +877,9 @@ proc handle(event: Event) =
   let node = event.target.closest("button")
   if node == nil:
     return
-  let action = $node.getAttribute("data-action")
-  let value = $node.getAttribute("data-value")
+  let
+    action = $node.getAttribute("data-action")
+    value = $node.getAttribute("data-value")
   case action
   of "move":
     dance(value)
@@ -882,36 +891,36 @@ proc handle(event: Event) =
   of "view":
     for candidate in View:
       if $candidate == value:
-        view = candidate
+        VIEW_SHOWN = candidate
   of "drawing":
     for candidate in Drawing:
       if $candidate == value:
-        drawing = candidate
-        drawing_chosen = true
+        DRAWING_SHOWN = candidate
+        IS_DRAWING_CHOSEN = true
   of "holds":
-    filter.holds = none(int)
+    FILTER_APPLIED.holds = none(int)
     for count in 0 .. 2:
       if $count == value:
-        filter.holds = some(count)
+        FILTER_APPLIED.holds = some(count)
   of "lead":
-    filter.lead = none(Side)
+    FILTER_APPLIED.lead = none(Side)
     for candidate in Side:
       if $candidate == value:
-        filter.lead = some(candidate)
+        FILTER_APPLIED.lead = some(candidate)
   of "follow":
-    filter.follow = none(Site)
+    FILTER_APPLIED.follow = none(Site)
     for candidate in Site:
       if $candidate == value:
-        filter.follow = some(candidate)
+        FILTER_APPLIED.follow = some(candidate)
   of "undo":
-    if history.len > 0:
+    if HISTORY.len > 0:
       rest()
-      discard history.pop()
-      current = if history.len > 0: history[^1].to else: origin
+      discard HISTORY.pop()
+      CURRENT = if HISTORY.len > 0: HISTORY[^1].to else: ORIGIN
   of "reset":
     rest()
-    current = origin
-    history = @[]
+    CURRENT = ORIGIN
+    HISTORY = @[]
   else: return
   render()
 
@@ -922,9 +931,9 @@ proc reflow(event: Event) =
   ##     Event arrives on every pixel of drag, and rebuilding page on
   ##       each one would take focus ring off whatever reader was
   ##       standing on and tear any move that was halfway through being told.
-  let showing = drawing
+  let showing = DRAWING_SHOWN
   suitDrawing()
-  if drawing != showing:
+  if DRAWING_SHOWN != showing:
     rest()
     render()
 

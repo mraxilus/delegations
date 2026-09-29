@@ -19,7 +19,7 @@
 {.experimental: "strictFuncs".}
 
 import std/strutils
-import ./[findings, provenance, plan]
+import ./[findings, plan, provenance]
 
 
 func isGoverning*(path: string): bool =

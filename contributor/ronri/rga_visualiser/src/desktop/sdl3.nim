@@ -224,7 +224,7 @@ proc pushEvent*(event: ptr Event): bool
 
 #[ Binding Validation ]#
 
-const lut_mirror_to_symbol = [
+const LUT_SYMBOL_BY_MIRROR = [
   (int(EventKind.Quit), "SDL_EVENT_QUIT"),
   (int(EventKind.WindowResized), "SDL_EVENT_WINDOW_RESIZED"),
   (int(EventKind.WindowFocusLost), "SDL_EVENT_WINDOW_FOCUS_LOST"),
@@ -288,7 +288,7 @@ const CHECKS_MIRROR = block:
   ##   Assertions are C++ because only C++ compiler sees header's values; they cost
   ##   nothing at run time.
   var text = "#include " & HEADER & "\n"
-  for (mirrored, symbol) in lut_mirror_to_symbol:
+  for (mirrored, symbol) in LUT_SYMBOL_BY_MIRROR:
     text &= "static_assert((long long)(" & symbol & ") == " & $mirrored &
       ", \"SDL3 binding is stale: " & symbol & " was renumbered.\");\n"
   text

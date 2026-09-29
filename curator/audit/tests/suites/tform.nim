@@ -1,5 +1,7 @@
 ## Replicate Article X.1, X.2 and VIII.5: form of source.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/[kinds, form]
 
@@ -19,8 +21,9 @@ suite "Article X":
     check messages("LICENSE.md", "x".repeat(400) & "\n", Kind.Markdown).len == 0  # exempt
 
   test "X.1 line over limit passes only when breaking cannot fix it":
-    let url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
-    let link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
+    let
+      url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
+      link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
     check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
     check messages("pages/x.html", link & "\n", Kind.Html).len == 0  # URL has no whitespace
     check messages("pages/x.html", "<p>" & "word ".repeat(40) & "</p>\n", Kind.Html) ==
@@ -46,6 +49,19 @@ suite "Article X":
     check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks exactly one blank line after it."]  # two after
     check messages("nim.cfg", "#[ Section ]#\n", Kind.Cfg).len == 0  # Nim only
+
+  test "X.2 banner tiers":
+    let nested = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n"
+    check messages("a.nim", nested, Kind.Nim).len == 0  # child follows parent at once
+    check messages("a.nim", "x = 1\n\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim).len == 0  # two before
+    check messages("a.nim", "x = 1\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks two blank lines before it."]  # second tier checked too
+    check messages("a.nim", "x = 1\n\n\n#[[ Child ]]#\n\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks exactly one blank line after it."]  # two after, no child
+    check messages("a.nim", "x = 1\n\n\n\n#[ Parent ]#\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks two blank lines before it."]  # child keeps its own two
+    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks exactly one blank line after it."]  # only second tier defers
 
 
 suite "Article VIII":

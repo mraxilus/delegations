@@ -1,5 +1,7 @@
 ## Replicate face rules of `faces.nim` header, i.e. Article X.8 over sources declaring stacks.
 
+{.experimental: "strictFuncs".}
+
 import std/[strutils, unittest]
 import ../../src/faces
 

@@ -1,5 +1,7 @@
 ## Replicate CURATOR.md duty 10: rule written once, so no copy drifts.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/duplicates
 

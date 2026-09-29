@@ -107,7 +107,7 @@ elementById('toggle-grid').addEventListener('click', (e) => {
 //   asked does not need to explain itself unasked. Five gestures that dismissed
 //   pill now dismiss nothing, which is why no call replaced them.
 
-// Built from `help.lut_help_entries` across bridge, so this panel and desktop's.
+// Built from `help.HELP_ENTRIES` across bridge, so this panel and desktop's.
 //   own say same thing by construction. Four strings per entry; see nimHelpEntries.
 //   One tab per path, because reader opens this in middle of one way of working and
 //   only that way's rows are any use to them right then. Tab row belongs to is

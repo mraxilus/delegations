@@ -31,31 +31,31 @@ Hands only. A hand that rests on the body of a partner is real, and deliberately
 adds no frame, it takes a turn away, and it is where a wound arm lands. So it belongs with
 rotation rather than here.
 
-Beside the ontology stands a body simulator (`sim/`). It is two bodies of the measurements of
+Beside the ontology stands a body simulator (`simulation/`). It is two bodies of the measurements of
 the average adult, with jointed arms, and it shares no code with the ontology on purpose. The
 notation is a shorthand for two people with arms of a length, and a shorthand cannot check
-itself. So the sim is the thing that the notation is a shorthand *for*. It is kept apart in
+itself. So the simulation is the thing that the notation is a shorthand *for*. It is kept apart in
 code, so that what it says is evidence rather than an echo.
 
 It is not kept apart in concepts. It reuses the agreed words of this project wherever one
 fits, and coins its own only where none does. To share a word costs the witness nothing,
-where to share an assumption would cost it everything. The sim is a witness, and never an
-authority. Where its answers meet the words of the ontology (`sim/verdicts.md`), the
+where to share an assumption would cost it everything. The simulation is a witness, and never an
+authority. Where its answers meet the words of the ontology (`simulation/verdicts.md`), the
 translation is printed in one table, and nothing is tuned to make them agree.
 
 ## Authority replicated
 
 - The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and
   `vocabulary`. It is held as data in `src/dance_ontology/workbook.nim`, and audited against
-  the derived model by `tests/suites/tworkbook.nim`. **Superseded.** The Architect has replaced it
-  with a newer sheet that this project has not been given. So what the audit reports, and the
+  the derived model by `tests/suites/test_workbook.nim`. **Superseded.** The Architect has replaced
+  it with a newer sheet that this project has not been given. So what the audit reports, and the
   sheet-facing half of the review page, are findings about a document no longer in use. Both
   stay running until the new sheet arrives and replaces the transcription.
 - The forty drawing rules of the Architect as given, held as data in `design/rules.nim`, and
   mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the pages to them.
-- For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
-  one is in `sim/rig.nim` with its derivation, and `tests/trigid.nim`, `tests/tread.nim` and
-  `tests/suites/tlimb.nim` hold the sim to them.
+- For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
+  one is in `simulation/rig.nim` with its derivation, and `tests/test_rigid.nim`,
+  `tests/test_read.nim` and `tests/suites/test_limb.nim` hold the simulation to them.
 
 ## Build and test
 
@@ -64,7 +64,7 @@ nim r koch check                                   # root: every check a pull re
 nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
 nim r tools/build.nim assets                           # faces every page ships, into build/fonts
 nim r tools/build.nim pages                            # every page, picture and script, into build/
-nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md from the model
+nim r tools/build.nim verdicts                         # rewrite simulation/verdicts.md
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
@@ -127,21 +127,21 @@ src/dance_ontology/draw/           the shared drawing chain: geometry, style, po
                                    body, figure, route, scene, and its own terms
 app/app.nim                        the browser validator's script
 design/                            the mock-up workbench: rules first, pages after
-sim/                               the body sim, standalone on purpose
+simulation/                               the body simulation, standalone on purpose
 tools/audit.nim                    the same audit, printed
 pages/                             hand-written pages this project stands behind:
-                                   app and sim shells, review page's prose
+                                   app and simulation shells, review page's prose
 mockups/                           wholecloth.html, hand-drawn proposal to react to
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, modelled, rig, turns,
                                    verdicts, shot, clean
-tests/                             the sim's laws (trigid, tread) and the engine's
-                                   (tengine); tsaid, in JavaScript; tsuites, which runs
+tests/                             the simulation's laws (test_rigid, test_read) and the engine's
+                                   (test_engine); test_said, in JavaScript; test_suites, which runs
                                    every other suite as one binary from suites/: the laws
-                                   over every pair of frames, the tape's (tlimb), the
-                                   workbench's gates (tmarks) and the review page
-                                   rendered whole (treview)
+                                   over every pair of frames, the tape's (test_limb), the
+                                   workbench's gates (test_marks) and the review page
+                                   rendered whole (test_review)
 build/                             every page, picture and script; ignored by git
 ```
 
@@ -162,8 +162,8 @@ What the model has to say about the spreadsheet is not in the app. It is a findi
 document, and it lives in the review page (`build/review/review.html`) and in
 `tools/audit.nim`.
 
-The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/trotation.nim`) is on the bench, and
-not in the app. 148 postures render as 16 distinct pictures. Level, contact and twist beyond
+The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
+and not in the app. 148 postures render as 16 distinct pictures. Level, contact and twist beyond
 its parity have no marks yet. The workbench pages (`design/`) are where those marks get
 worked out, and the views wait until they are decided.
 
@@ -189,7 +189,7 @@ review page, along with the four cells worth dancing to settle the rest.
 
 Every law is under test through testament, on the compiler that this project pins. Those are
 the frame and transition laws over every pair of frames, the workbook audit cell by cell, and
-the drawings against the model. They are also the laws of the sim over every moment of every
+the drawings against the model. They are also the laws of the simulation over every moment of every
 sweep, and the gates of the workbench on every page.
 
 Unreviewed by a human. The design decisions, what was rejected and what each one costs are in

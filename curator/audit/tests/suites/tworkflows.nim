@@ -1,5 +1,7 @@
 ## Replicate grant `permissions` block makes: scope left out is `none`, never left alone.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, strutils, unittest]
 import ../../src/workflows
 

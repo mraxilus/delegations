@@ -1,5 +1,7 @@
 ## Run `Scene` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -87,17 +89,23 @@ suite "Scene":
 
 
   test "unary operations ignore their second operand":
+    const OPERATIONS_UNARY_FLOOR = 13
+      ## Bound below how many operations law runs over: all thirteen unary ones catalogue holds.
+      ##   Guard that lets fewer through leaves law held over part of catalogue only.
+    var passed = 0
     for operation in Operation:
-      if lut_operation_to_arity[operation] != Arity.One: continue
+      if LUT_ARITY_BY_OPERATION[operation] != Arity.One: continue
+      inc passed
       for i in 0 ..< SAMPLES:
         let (m, n, o) = (POINTS[i], LINES[i], PLANES[i])
         check applyOperation(operation, m, n) =~ applyOperation(operation, m, o)
+    check passed >= OPERATIONS_UNARY_FLOOR
 
 
   test "every operation names itself and is offered once":
     var seen: array[Operation, int]
     for operation in Operation:
-      check len(lut_operation_to_notation[operation]) > 0
+      check len(LUT_NOTATION_BY_OPERATION[operation]) > 0
       inc seen[operation]
     for operation in Operation:
       check seen[operation] == 1
@@ -331,7 +339,7 @@ suite "Scene":
     #   Never trusted to table transcribed by hand.
     for b in Basis:
       let named = ($initElement(b, 1.0)).strip()
-      check lut_basis_to_name[b] == named
+      check LUT_NAME_BY_BASIS[b] == named
     for i in 0 ..< SAMPLES:
       check kindText(POINTS[i]) == "point"
       check kindText(LINES[i]) == "line"
@@ -351,8 +359,9 @@ suite "Scene":
       discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeObject(4)
     scene.removeObject(1)
-    let handle_first = scene.addObject(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
-    let handle_second = scene.addObject(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
+    let
+      handle_first = scene.addObject(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
+      handle_second = scene.addObject(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
     check handle_first == 1
     check handle_second == 4
 
@@ -713,8 +722,9 @@ suite "Scene":
       #   format is browser scripts, which hands `DataView` explicit `true` at every call and
       #   cannot be asked what desktop felt like doing. Pinning layout here is what
       #   keeps two from drifting apart on host that is not little-endian.
-      var scene = initScene()
-      var geometry: Multivector
+      var
+        scene = initScene()
+        geometry: Multivector
       geometry[Basis.low] = 2.0 # 0x4000000000000000, whose bytes are unambiguous either way
       discard scene.addObject(geometry, "e", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_endian.rgascene"
@@ -738,8 +748,9 @@ suite "Scene":
 
 
     test "empty scene round-trips":
-      let original = initScene()
-      let path = getTempDir() / "visualiser_suite_scene_empty.rgascene"
+      let
+        original = initScene()
+        path = getTempDir() / "visualiser_suite_scene_empty.rgascene"
       check saveScene(original, path).contains("Saved 0")
       defer: removeFile(path)
 
@@ -780,8 +791,9 @@ suite "Scene":
       ##   its own writing spelled backwards. Ink is taken as raw ordinal for same
       ##   reason -- old file's ordinals name enum that is gone.
       result = MAGIC_SCENE & char(version) & char(ord(Basis.high) + 1)
-      var count = uint32(len(saved))
-      var count_bytes = newString(4)
+      var
+        count = uint32(len(saved))
+        count_bytes = newString(4)
       littleEndian32(addr count_bytes[0], addr count)
       result &= count_bytes
       for (ordinal, is_visible, label, geometry) in saved:

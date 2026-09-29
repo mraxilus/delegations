@@ -55,20 +55,20 @@ const WINDING: array[Manner, string] = [
   ##     coming round, and here orientation is exactly what returns.
 
 
-func plates(P: Parts): string =
+func plates(parts: Parts): string =
   ## Lay out four manners of turn, each walking every edge of chain.
   for manner in Manner:
-    let w = MANNERS[manner]
-    result.add &"""<div class="plate"><h3>{w.title}</h3>"""
+    let description = MANNERS[manner]
+    result.add &"""<div class="plate"><h3>{description.title}</h3>"""
     result.add &"<p>{WINDING[manner]}</p>"
     result.add """<p>Every edge of the chain. Each one rocks between its two
       ends, so the half turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
     for i in 0 ..< CHAIN.len - 1:
       let
-        moving = P[&"hw_{w.tag}_{i}"].replaceFirst(
+        moving = parts[&"hw_{description.tag}_{i}"].replaceFirst(
           "class=\"mv\"", "class=\"mv moving\"")
-        still = P[&"hw_{w.tag}_{i}_still"]
+        still = parts[&"hw_{description.tag}_{i}_still"]
       # Every manner walks chain now, orbits included (rule 32), so every
       # cell says position it lands on.
       result.add &"<figure>{moving}{still}<figcaption>{CHAIN[i].name}" &
@@ -201,15 +201,15 @@ const BODY = """
 """
 
 
-func render*(P: Parts): string =
+func render*(parts: Parts): string =
   ## Lay hand-to-hand turns page out around given figures.
   var chain: string
   for i, position in CHAIN:
     if i > 0:
-      chain.add P["g_half"]
-    chain.add fig(P[&"hh_{i}"], &"<b>{position.name}</b><br>{position.note}")
+      chain.add parts["g_half"]
+    chain.add figure(parts[&"hh_{i}"], &"<b>{position.name}</b><br>{position.note}")
   # Chain's two facings are read off pose through model, never written down.
-  document(TITLE, BODY.filled(@[("chain", chain), ("plates", plates(P)),
+  document(TITLE, BODY.filled(@[("chain", chain), ("plates", plates(parts)),
     ("whole", facingAt(HAND_TO_HAND, 1.0).get.name),
     ("half", facingAt(HAND_TO_HAND, 0.5).get.name),
     ("handRest", restOf(HAND_TO_HAND).name), ("pairRest", restOf(PAIRED).name)]))

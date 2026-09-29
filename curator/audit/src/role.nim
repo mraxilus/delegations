@@ -22,7 +22,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils, unicode]
-import ./[findings, domains]
+import ./[domains, findings]
 
 
 const
@@ -56,8 +56,9 @@ func checkRole*(branch, body: string, labels: openArray[string]): seq[Finding] =
   ## Report pull request whose opening line or labels do not name role its branch names.
   let parsed = branch.parseBranch
   if parsed.isNone: return
-  let expected = parsed.get.roleName
-  let opening = body.roleLine
+  let
+    expected = parsed.get.roleName
+    opening = body.roleLine
   if opening != ROLE_KEY & " " & expected:
     result.add finding(
       "", 0,

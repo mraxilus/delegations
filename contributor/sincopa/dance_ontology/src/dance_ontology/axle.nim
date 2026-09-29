@@ -14,7 +14,7 @@
 ##       it can show turn and refuse it in same breath.
 ##   Nothing places this drawing yet.  App's Dance view is graph-first
 ##     and rotation exploration moved to design workbench, so
-##     axle waits for page that stands postures in links.  `taxle`
+##     axle waits for page that stands postures in links.  `test_axle`
 ##     holds its laws green in meantime, so wait cannot rot.
 
 {.experimental: "strictFuncs".}
@@ -77,23 +77,23 @@ func arc(stood: Posture; twist: HalfTurns; refused: bool): string =
   ##     same thing.  Which dancer takes it is in list beside
   ##     drawing, where there is room to say it.
   let
-    (ax, ay) = centreOf(stood, stood.twist)
-    (bx, by) = centreOf(stood, twist)
+    (start_x, start_y) = centreOf(stood, stood.twist)
+    (end_x, end_y) = centreOf(stood, twist)
     reach = abs(twist - stood.twist)
     # Stacked by how far turn goes, so long arc clears short one rather
     # than crossing it twice.
     lift = ARC_RISE + reach * 30
-    (mx, my) = ((ax + bx) div 2, ay - lift)
+    (control_x, control_y) = ((start_x + end_x) div 2, start_y - lift)
     told = TURN_NAMES[min(reach, TURN_NAMES.high)] &
       (if twist > stood.twist: " right" else: " left")
   result = "<g class=\"turn" & (if refused: " refused" else: "") & "\">" &
-    "<path class=\"turn-line\" d=\"M" & $ax & " " & $(ay - 58) & "Q" & $mx &
-    " " & $my & " " & $bx & " " & $(by - 58) & "\"/>"
-  let (nx, ny) = (mx, ay - lift * 3 div 4)
-  result.add "<rect class=\"turn-plate\" x=\"" & $(nx - told.len * 3 - 5) &
-    "\" y=\"" & $(ny - 9) & "\" width=\"" & $(told.len * 6 + 10) &
+    "<path class=\"turn-line\" d=\"M" & $start_x & " " & $(start_y - 58) & "Q" & $control_x &
+    " " & $control_y & " " & $end_x & " " & $(end_y - 58) & "\"/>"
+  let (label_x, label_y) = (control_x, start_y - lift * 3 div 4)
+  result.add "<rect class=\"turn-plate\" x=\"" & $(label_x - told.len * 3 - 5) &
+    "\" y=\"" & $(label_y - 9) & "\" width=\"" & $(told.len * 6 + 10) &
     "\" height=\"15\" rx=\"3\"/>"
-  result.add "<text class=\"turn-name\" x=\"" & $nx & "\" y=\"" & $(ny + 3) &
+  result.add "<text class=\"turn-name\" x=\"" & $label_x & "\" y=\"" & $(label_y + 3) &
     "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & told & "</text>"
   result.add "</g>"
 
@@ -130,26 +130,26 @@ func renderAxle*(stood: Posture; motion = Motion.Still;
     var landing = stood
     landing.twist = twist
     let
-      (cx, cy) = centreOf(stood, twist)
+      (centre_x, centre_y) = centreOf(stood, twist)
       reachable = twist != stood.twist
       classes = "node" & (if twist == here: " here" else: "") &
         (if reachable: " reachable" else: "")
     result.add "<g class=\"" & classes & "\" data-posture=\"" & landing.key &
       "\">"
-    result.add "<rect class=\"node-plate\" x=\"" & $(cx - NODE_WIDTH div 2 - 5) &
-      "\" y=\"" & $(cy - frameHeight(NODE_WIDTH) div 2 - 5) & "\" width=\"" &
+    result.add "<rect class=\"node-plate\" x=\"" & $(centre_x - NODE_WIDTH div 2 - 5) &
+      "\" y=\"" & $(centre_y - frameHeight(NODE_WIDTH) div 2 - 5) & "\" width=\"" &
       $(NODE_WIDTH + 10) & "\" height=\"" & $(frameHeight(NODE_WIDTH) + 10) &
       "\" rx=\"6\"/>"
-    result.add renderFramePlaced(landing.frame, cx - NODE_WIDTH div 2,
-      cy - frameHeight(NODE_WIDTH) div 2, NODE_WIDTH, twist)
+    result.add renderFramePlaced(landing.frame, centre_x - NODE_WIDTH div 2,
+      centre_y - frameHeight(NODE_WIDTH) div 2, NODE_WIDTH, twist)
     let name = turnName(twist)
-    result.add "<text class=\"node-name\" x=\"" & $cx & "\" y=\"" &
-      $(cy - frameHeight(NODE_WIDTH) div 2 - NAME_RISE) &
+    result.add "<text class=\"node-name\" x=\"" & $centre_x & "\" y=\"" &
+      $(centre_y - frameHeight(NODE_WIDTH) div 2 - NAME_RISE) &
       "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & name & "</text>"
     let arms = landing.armName
     if arms.len > 0:
-      result.add "<text class=\"node-arms\" x=\"" & $cx & "\" y=\"" &
-        $(cy + frameHeight(NODE_WIDTH) div 2 + 18) &
+      result.add "<text class=\"node-arms\" x=\"" & $centre_x & "\" y=\"" &
+        $(centre_y + frameHeight(NODE_WIDTH) div 2 + 18) &
         "\" text-anchor=\"middle\" style=\"" & LABEL_FONT & "\">" & arms &
         "</text>"
     result.add "</g>"
@@ -157,8 +157,8 @@ func renderAxle*(stood: Posture; motion = Motion.Still;
   # Mark carries distance to where it is going, so taking turn is
   # mark travelling along axle, which is what move is.
   let
-    (hx, hy) = centreOf(stood, stood.twist)
-    (tx, _) = centreOf(stood, here)
-  result.add markAt(hx, hy, NODE_WIDTH, " style=\"--mx: " & $(tx - hx) &
+    (stood_x, stood_y) = centreOf(stood, stood.twist)
+    (here_x, _) = centreOf(stood, here)
+  result.add markAt(stood_x, stood_y, NODE_WIDTH, " style=\"--mx: " & $(here_x - stood_x) &
     "px; --my: 0px\"")
   result.add "</svg>"

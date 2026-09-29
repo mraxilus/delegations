@@ -150,11 +150,46 @@ type
     ExpandBulk, ExpandWeight, ContractBulk, ContractWeight,
     ProjectCentral, ProjectOrthogonal,
 
+  Preview* = object ## Define what applying operation would build, ready to draw and frame.
+    ## One statement of uncommitted construction, shared by every path offering one.
+    ##   Drag's rubber-band answer and both apply pickers.
+    geometry*: Multivector ## What operation makes of its operands.
+    anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
+      ## None for every other kind.
+      ## Carried so previewed plane is drawn exactly where commit will put it.
+    operands*: Option[(int, int)] ## Handles this was derived from.
+      ## For camera framing preview to keep in view beside it.
+      ## None where there are none to name: staged edit replaces very object it would be
+      ## framed against.
+    radius*: float ## Drawn radius preview takes, where it is point; see `radiusAt`.
+      ## Staged session's own, so editing moon previews moon-sized; derived preview takes
+      ## `RADIUS_OBJECT_DEFAULT`, what commit gives it.
+
+  ObjectSaved* = object
+    ## Define one object exactly as scene file holds it, at whatever version wrote file.
+    ##   Kind reading works in, and thing `upgradedFrom<n>` carries between versions.
+    ##   Distinct from `Object`: value read off bytes that may not describe anything this
+    ##   build can make yet.
+    ink_ordinal*: int ## Palette slot, as writing version's `Ink` numbered it.
+    is_visible*: bool ## Whether object was hidden when saved.
+    label*: string ## Display label, decoded from file's UTF-8 bytes.
+    geometry*: Multivector ## Object itself, one coefficient per basis term.
+    radius*: float ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
+
+  OperationMemory* = object ## Define memory of operation last applied, one per arity.
+    ## Picker opens on what reader last reached for.
+    ##   Reader applying five wedges in row picks operation once.
+    ## Per arity because two pickers offer disjoint lists.
+    ## Plain value type with no refs, like `Selection`, so GUI holds one by value.
+    unary: Operation
+    binary: Operation
+    is_started: bool ## Whether two above have been set; false leaves defaults below.
+
 
 
 #[ Operation Catalogue ]#
 
-const lut_operation_to_arity*: array[Operation, Arity] = [
+const LUT_ARITY_BY_OPERATION*: array[Operation, Arity] = [
   Operation.Attitude: Arity.One,
   Operation.Support: Arity.One,
   Operation.SupportAnti: Arity.One,
@@ -185,7 +220,7 @@ const lut_operation_to_arity*: array[Operation, Arity] = [
 ] ## Map operation to number of operands it consumes.
 
 
-const lut_operation_to_notation* = [
+const LUT_NOTATION_BY_OPERATION* = [
   Operation.Attitude: "𝐦⊖  attitude",
   Operation.Support: "𝐦∩  support",
   Operation.SupportAnti: "𝐦∪  antisupport",
@@ -227,12 +262,12 @@ const lut_operation_to_notation* = [
   ##     program runs; addresses derive from text, never text from addresses.
 
 
-let lut_operation_to_notation_c* = block:
+let LUT_NOTATION_CSTRING_BY_OPERATION* = block:
   ## Map operation to same entries as `cstring`, what picker offers.
   ##   Dear ImGui takes address of first and reads them for life of combo.
   ##   Built from table above rather than written beside it.
   var lut: array[Operation, cstring]
-  for operation in Operation: lut[operation] = cstring(lut_operation_to_notation[operation])
+  for operation in Operation: lut[operation] = cstring(LUT_NOTATION_BY_OPERATION[operation])
   lut
 
 
@@ -240,15 +275,16 @@ const
   COUNT_OPERATION* = ord(Operation.high) + 1
     ## Count operations, for handing whole catalogue to picker.
 
-  lut_operation_split* = block:
+  LUT_SPLIT_BY_OPERATION* = block:
     ## Map operation to its two halves: symbols it is written with, and English name after.
     ##   One split, at one place, i.e. double space between them, so no caller cuts at
     ##   second place that drifts.
     ##   `const`, so `help.nim` can build catalogue tab from it at compile time.
     var lut: array[Operation, tuple[symbols, name: string]]
     for operation in Operation:
-      let full = lut_operation_to_notation[operation]
-      let cutoff = full.find("  ")
+      let
+        full = LUT_NOTATION_BY_OPERATION[operation]
+        cutoff = full.find("  ")
       lut[operation] =
         if cutoff >= 0: (symbols: full[0 ..< cutoff], name: full[cutoff + 2 .. ^1].strip())
         else: (symbols: full, name: "")
@@ -260,14 +296,14 @@ func notationSymbolic*(operation: Operation): string =
   ##   `𝐦 ∧ 𝐧`, not `𝐦 ∧ 𝐧  wedge (join)`.
   ##   What picker offers on both front-ends: full entry is several times wider, and
   ##   pushes selection menu's popover past what hand can reach on phone.
-  lut_operation_split[operation].symbols
+  LUT_SPLIT_BY_OPERATION[operation].symbols
 
 
 func notationNamed*(operation: Operation): string =
   ## Report English name operation is offered under, other half of `notationSymbolic`.
   ##   `wedge (join)`, not `𝐦 ∧ 𝐧`.
   ##   What help's catalogue tab reads, so tab says exactly what every picker offers.
-  lut_operation_split[operation].name
+  LUT_SPLIT_BY_OPERATION[operation].name
 
 
 const
@@ -337,11 +373,12 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
     OPERAND_SECOND = "𝐧"
   var tokens = notationSymbolic(operation).split(' ')
   for i in 0 ..< tokens.len:
-    let token = tokens[i]
-    let (placeholder, name) =
-      if OPERAND_FIRST in token: (OPERAND_FIRST, name_first)
-      elif OPERAND_SECOND in token: (OPERAND_SECOND, name_second)
-      else: continue
+    let
+      token = tokens[i]
+      (placeholder, name) =
+        if OPERAND_FIRST in token: (OPERAND_FIRST, name_first)
+        elif OPERAND_SECOND in token: (OPERAND_SECOND, name_second)
+        else: continue
     let
       at = token.find(placeholder)
       before = token[0 ..< at]
@@ -424,7 +461,7 @@ func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[P
 
 #[ Multivector Formatting ]#
 
-const lut_basis_to_name* = block:
+const LUT_NAME_BY_BASIS* = block:
   ## Name each basis element as library's `$` names it.
   ##   `𝟏` for scalar, `𝟙` for antiscalar, bold `𝐞` carrying subscript digits for rest.
   ##   Exported so both GUIs label coefficient with its basis element, reading same as
@@ -477,11 +514,11 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
     elif wrote_any: appendChars(storage, cursor, " + ")
     appendMagnitude(storage, cursor, abs(m[b]))
     appendChars(storage, cursor, " ")
-    appendChars(storage, cursor, lut_basis_to_name[b])
+    appendChars(storage, cursor, LUT_NAME_BY_BASIS[b])
     wrote_any = true
   if not wrote_any:
     appendChars(storage, cursor, "0 ")
-    appendChars(storage, cursor, lut_basis_to_name[Basis.scalar])
+    appendChars(storage, cursor, LUT_NAME_BY_BASIS[Basis.scalar])
 
 
 const WIDTH_KIND_WORD* = 32
@@ -815,22 +852,6 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
 
 #[ Previewing Construction ]#
 
-type Preview* = object ## Define what applying operation would build, ready to draw and frame.
-  ## One statement of uncommitted construction, shared by every path offering one.
-  ##   Drag's rubber-band answer and both apply pickers.
-  geometry*: Multivector ## What operation makes of its operands.
-  anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
-    ## None for every other kind.
-    ## Carried so previewed plane is drawn exactly where commit will put it.
-  operands*: Option[(int, int)] ## Handles this was derived from.
-    ## For camera framing preview to keep in view beside it.
-    ## None where there are none to name: staged edit replaces very object it would be
-    ## framed against.
-  radius*: float ## Drawn radius preview takes, where it is point; see `radiusAt`.
-    ## Staged session's own, so editing moon previews moon-sized; derived preview takes
-    ## `RADIUS_OBJECT_DEFAULT`, what commit gives it.
-
-
 func previewApplying*(
   scene: Scene; operation: Operation; first, second: int
 ): Option[Preview] =
@@ -861,9 +882,7 @@ func previewStaging*(geometry: Multivector, radius: float): Preview =
   ##   and object it would be framed against is one it replaces; see `Preview`.
   ##   Radius is staged one, or preview of moon under edit was drawn at default and read as
   ##   grey disc three times its size.
-  Preview(
-    geometry: geometry, anchor: none(Position), operands: none((int, int)), radius: radius
-  )
+  Preview(geometry: geometry, anchor: none(Position), operands: none((int, int)), radius: radius)
 
 
 func setInk*(scene: var Scene, handle: int, ink: Ink) =
@@ -1092,18 +1111,6 @@ func hasShine*(version: uint8): bool =
   ##   Reader skips it: no build reads it into anything since version 7.
   ##   Asked as `hasRadius` is; see `nimSceneHasShine`.
   version >= VERSION_SCENE_SHINE and version <= VERSION_SCENE_SHINE_LAST
-
-
-type ObjectSaved* = object
-  ## Define one object exactly as scene file holds it, at whatever version wrote file.
-  ##   Kind reading works in, and thing `upgradedFrom<n>` carries between versions.
-  ##   Distinct from `Object`: value read off bytes that may not describe anything this
-  ##   build can make yet.
-  ink_ordinal*: int ## Palette slot, as writing version's `Ink` numbered it.
-  is_visible*: bool ## Whether object was hidden when saved.
-  label*: string ## Display label, decoded from file's UTF-8 bytes.
-  geometry*: Multivector ## Object itself, one coefficient per basis term.
-  radius*: float ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
 
 
 const ORDINAL_INK_ALGEBRA_V5 = 7
@@ -1398,16 +1405,6 @@ when not defined(js):
     &"Loaded {count} object(s) from `{path}`."
 
 
-type OperationMemory* = object ## Define memory of operation last applied, one per arity.
-  ## Picker opens on what reader last reached for.
-  ##   Reader applying five wedges in row picks operation once.
-  ## Per arity because two pickers offer disjoint lists.
-  ## Plain value type with no refs, like `Selection`, so GUI holds one by value.
-  unary: Operation
-  binary: Operation
-  is_started: bool ## Whether two above have been set; false leaves defaults below.
-
-
 const
   OPERATION_FIRST_UNARY* = Operation.Attitude
     ## Open one-operand picker on this until something else is applied.
@@ -1433,5 +1430,5 @@ func remember*(memory: var OperationMemory, operation: Operation) =
     memory.unary = OPERATION_FIRST_UNARY
     memory.binary = OPERATION_FIRST_BINARY
     memory.is_started = true
-  if lut_operation_to_arity[operation] == Arity.One: memory.unary = operation
+  if LUT_ARITY_BY_OPERATION[operation] == Arity.One: memory.unary = operation
   else: memory.binary = operation

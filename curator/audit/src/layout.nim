@@ -1,5 +1,5 @@
 ## Enforce repository layout: root entries, two project roots, project shape, README views.
-##   Layout is data (Article II.1): `ROOT_FILES`, `ROOT_DIRS`, `PROJECT_FILES` here plus
+##   Layout is data (Article II.1): `ROOT_FILES`, `ROOT_DIRECTORIES`, `PROJECT_FILES` here plus
 ##   `ROOTS` and `DOMAINS`; check derives every rule from those lists and paths git reports.
 ##
 ##   Project is `curator/<project>` or `contributor/<domain>/<project>`; both keep one
@@ -26,7 +26,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, sequtils, strutils, tables]
-import ./[findings, domains, kinds, markdown, dependencies, toolchain]
+import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 
 
 type
@@ -44,40 +44,40 @@ const
   README_FILE* = "README.md"
     ## Index every root, every domain and every project carries, named once for all three.
   ROOT_FILES* = [
-    README_FILE, "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "CURATOR.md", "CONTRIBUTOR.md",
-    "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg", ".gitignore",
-    ".gitattributes",
+    README_FILE, "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "EXAMPLES.md", "CURATOR.md",
+    "CONTRIBUTOR.md", "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg",
+    ".gitignore", ".gitattributes",
   ]
     ## Files allowed directly at root.
-  ROOT_DIRS* = [".github"]
+  ROOT_DIRECTORIES* = [".github"]
     ## Root directories unchecked inside; project roots are `ROOTS`.
   PROJECT_FILES* = [README_FILE, "PROVENANCE.md", "GLOSSARY.md"]
     ## Files every project directory must hold, besides its nimble file.
-  TESTS_DIR* = "tests"
+  TESTS_DIRECTORY* = "tests"
     ## Directory every project must populate.
-  PAGE_DIRS* = ["pages", "mockups"]
+  PAGE_DIRECTORIES* = ["pages", "mockups"]
     ## Directories committed pages live in: kept pages, then one-off mock-ups.
   KINDS_PATH = "curator/audit/src/kinds.nim"
     ## Registry named in finding for unregistered kind.
 
 
-func projectName*(dir: string): string =
+func projectName*(directory: string): string =
   ## Read project folder name, i.e. last segment of project directory.
-  dir.split('/')[^1]
+  directory.split('/')[^1]
 
 
-func nimblePath*(dir: string): string =
+func nimblePath*(directory: string): string =
   ## Read path of project's nimble file, which is named after its folder.
-  dir & "/" & dir.projectName & NIMBLE_EXT
+  directory & "/" & directory.projectName & NIMBLE_EXT
 
 
-func dirOf(path: string): string =
+func directoryOf(path: string): string =
   ## Read directory part of path, empty at root.
   let cut = path.rfind('/')
   if cut < 0: "" else: path[0 ..< cut]
 
 
-func projectDir*(parts: seq[string]): string =
+func projectDirectory*(parts: seq[string]): string =
   ## Read project directory of path parts; empty when path lies inside no project.
   if parts[0] == CURATOR and parts.len >= 3:
     CURATOR & "/" & parts[1]
@@ -87,11 +87,11 @@ func projectDir*(parts: seq[string]): string =
     ""
 
 
-func projectDirs*(tree: Tree): seq[string] =
+func projectDirectories*(tree: Tree): seq[string] =
   ## Collect project directories present, sorted.
   for e in tree:
-    let dir = e.path.split('/').projectDir
-    if dir.len > 0 and dir notin result: result.add dir
+    let directory = e.path.split('/').projectDirectory
+    if directory.len > 0 and directory notin result: result.add directory
   result.sort
 
 
@@ -116,12 +116,12 @@ func checkProjectName(path, name: string): seq[Finding] =
 
 func checkPage(path: string, parts: seq[string]): seq[Finding] =
   ## Report page outside project's page directories.
-  let dir = parts.projectDir
-  for page_dir in PAGE_DIRS:
-    if dir.len > 0 and path.startsWith(dir & "/" & page_dir & "/"): return
+  let directory = parts.projectDirectory
+  for page_directory in PAGE_DIRECTORIES:
+    if directory.len > 0 and path.startsWith(directory & "/" & page_directory & "/"): return
   result.add finding(
     path, 0,
-    "Page outside `" & PAGE_DIRS.join("/` or `") & "/`; generated markup belongs under " &
+    "Page outside `" & PAGE_DIRECTORIES.join("/` or `") & "/`; generated markup belongs under " &
       "`build/`; got `" & path & "`.",
   )
 
@@ -143,7 +143,7 @@ func checkEntry(e: Entry): seq[Finding] =
       result.add finding(e.path, 0, "Root file outside layout; got `" & parts[0] & "`.")
     return
   let head = parts[0]
-  if head in ROOT_DIRS: return
+  if head in ROOT_DIRECTORIES: return
   if head == CURATOR:
     if parts.len == 2: result.add checkIndexEntry(e.path, parts[1], "Curator root", "project")
     else: result.add checkProjectName(e.path, parts[1])
@@ -161,29 +161,32 @@ func checkEntry(e: Entry): seq[Finding] =
   result.add finding(e.path, 0, "Root directory outside layout; got `" & head & "`.")
 
 
-func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Finding] =
+func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq[Finding] =
   ## Report missing project files, missing tests, nimble file faults, missing lock.
   for file in PROJECT_FILES:
-    let path = dir & "/" & file
+    let path = directory & "/" & file
     if path notin paths: result.add finding(path, 0, "Project file missing.")
-  let tests_prefix = dir & "/" & TESTS_DIR & "/"
+  let tests_prefix = directory & "/" & TESTS_DIRECTORY & "/"
   if not tree.anyIt(it.path.startsWith(tests_prefix)):
     result.add finding(
-      dir & "/" & TESTS_DIR, 0, "Project tests missing; add at least one file under `tests/`."
+      directory & "/" & TESTS_DIRECTORY,
+      0,
+      "Project tests missing; add at least one file under `tests/`.",
     )
 
   # Demand exactly one nimble file, named after project, and lock when it requires packages.
-  let nimble = dir.nimblePath
+  let nimble = directory.nimblePath
   if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
   for e in tree:
-    if e.path.dirOf == dir and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
+    if e.path.directoryOf == directory and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
       result.add finding(
         e.path, 0, "Nimble file not named after project; expected `" & nimble & "`."
       )
   if nimble in paths:
     result.add checkPin(nimble, tree[paths[nimble]].content)
-    let required = tree[paths[nimble]].content.requirements
-    let lock = dir & "/" & LOCK_FILE
+    let
+      required = tree[paths[nimble]].content.requirements
+      lock = directory & "/" & LOCK_FILE
     if required.len > 0 and lock notin paths:
       result.add finding(
         lock, 0,
@@ -231,6 +234,6 @@ func checkLayout*(tree: Tree): seq[Finding] =
   ## Report every layout violation in tree.
   let paths = tree.index
   for e in tree: result.add e.checkEntry
-  for dir in tree.projectDirs: result.add checkProject(tree, paths, dir)
+  for directory in tree.projectDirectories: result.add checkProject(tree, paths, directory)
   result.add checkRootViews(tree, paths)
   result.add checkDomainViews(tree, paths)

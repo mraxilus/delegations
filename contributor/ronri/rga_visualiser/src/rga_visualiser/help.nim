@@ -9,7 +9,7 @@
 ##   Words are `wording`'s: every cell, title and line is key there, and this module holds
 ##   which cell sits in which row. Cell naming button or key composes through `wording`'s
 ##   own funcs, so no word reader sees is written here.
-##   Binding derived from rule stated elsewhere is read from there: `lut_help_entries`
+##   Binding derived from rule stated elsewhere is read from there: `HELP_ENTRIES`
 ##   builds construct rows out of `interaction.armingOf`, so rebinding button rewrites help.
 ## Every row has to make sense with rows above it covered up.
 ##   Reader opens one tab, finds line they need, leaves.
@@ -139,7 +139,7 @@ func nameOf(button: PointerButton): string =
   toLowerAscii($button)
 
 
-const lut_help_entries* = block:
+const HELP_ENTRIES* = block:
   ## Hold every entry two UIs render, grouped by path and in order reader meets them.
   ##   Fixed array with `count` asserted against length at compile time, so adding entry
   ##   without resizing fails build rather than leaving blank row.
@@ -148,8 +148,9 @@ const lut_help_entries* = block:
   ##   once in order, so split path renders as two tabs of same name.
   ##   Every cell is `wording`'s key, or composed by `wording`'s func from one; row whose
   ##   action names button or key composes it, so button's name is `interaction`'s alone.
-  var lut: array[41 + COUNT_OPERATION, HelpEntry]
-  var count = 0
+  var
+    lut: array[41 + COUNT_OPERATION, HelpEntry]
+    count = 0
   proc add(path: HelpPath; action: string; outcome: Wording; is_touch = false) =
     lut[count] = HelpEntry(
       path: path,
@@ -278,15 +279,16 @@ const lut_help_entries* = block:
 
 func countOf*(path: HelpPath): int =
   ## Count entries one tab holds, for caller sizing or checking one.
-  for entry in lut_help_entries:
+  for entry in HELP_ENTRIES:
     if entry.path == path: inc result
 
 
 static:
   # Check two properties front-ends rely on and neither can check for itself.
-  var seen: set[HelpPath]
-  var path_last = none(HelpPath)
-  for entry in lut_help_entries:
+  var
+    seen: set[HelpPath]
+    path_last = none(HelpPath)
+  for entry in HELP_ENTRIES:
     if path_last != some(entry.path):
       doAssert entry.path notin seen,
         &"Entries of one help path must be written together, or it renders as two tabs; " &

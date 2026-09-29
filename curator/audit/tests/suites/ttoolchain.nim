@@ -1,5 +1,7 @@
 ## Replicate per-project pin and driver version rules of CURATOR.md duty 8.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, strutils, unittest]
 import ../../src/toolchain
 import ./fixtures

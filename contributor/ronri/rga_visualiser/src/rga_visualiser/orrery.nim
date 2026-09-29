@@ -44,7 +44,7 @@
 ##   Walk passes over system too large for room left rather than stopping on it.
 ##   Only Sol's block and four in horizon are fixed; everything between is however many
 ##   real stars fit.
-## Colour says what thing is, not which system it belongs to; see `lut_role_to_ink`.
+## Colour says what thing is, not which system it belongs to; see `LUT_INK_BY_ROLE`.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
@@ -88,6 +88,16 @@ type
     bearing*: float ## Which way it lies from that centre, in radians about vertical.
     rise*: float ## How far it stands above or below centre's level, in radians.
     spin*: float ## Where first planet stands on its ring, in radians.
+
+  ScaleOrrery* {.pure.} = enum
+    ## Name how deep into catalogue one build of arrangement reaches.
+    ##   Three sizes of same scene, not three scenes: Sol entire, then real stars outward,
+    ##   then four objects in horizon, truncated at different depth.
+    ##   They exist to be *benchmarked against each other*, so cost of change reads as
+    ##   slope.
+    Nearest       ## Sol entire, and about dozen of its nearest real neighbours.
+    Neighbourhood ## Default everywhere: scene worth looking at, quick to build.
+    Catalogue     ## Load case, two handles short of pool.
 
 
 
@@ -254,7 +264,7 @@ const
     ##   Four, not three: two points in horizon, because one cannot make plane. See
     ##   horizon block in `constructOrrery`.
 
-const lut_role_to_ink*: array[Role, Ink] = [
+const LUT_INK_BY_ROLE*: array[Role, Ink] = [
   Role.Sun: Ink.Copper,
   Role.Planet: Ink.Cobalt,
   Role.Moon: Ink.Rose,
@@ -331,8 +341,9 @@ func spanOfNormal(normal: Direction): (Direction, Direction) =
   ##   First lies along plane's ascending node on ecliptic, where plane climbs through
   ##   ground; second is normal turned onto it, so pair is right-handed about normal.
   ##   Plane lying flat has no node, and takes x axis.
-  let node = normalize(cross(Direction(x: 0, y: 0, z: 1), normal))
-  let first = node.get(Direction(x: 1, y: 0, z: 0))
+  let
+    node = normalize(cross(Direction(x: 0, y: 0, z: 1), normal))
+    first = node.get(Direction(x: 1, y: 0, z: 0))
   (first, cross(normal, first))
 
 
@@ -440,7 +451,7 @@ func addHorizon(
   doAssert kindOf(geometry) == some(expected) and isHorizon(geometry),
     &"Orrery's `{label}` must be {expected} in horizon, its operands genuinely apart; got " &
       &"`{kindOf(geometry)}`."
-  scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now)
+  scene.addObject(geometry, label, LUT_INK_BY_ROLE[Role.Derived], now)
 
 
 func addPlane(
@@ -456,7 +467,7 @@ func addPlane(
   doAssert kindOf(geometry) == some(Kind.Plane),
     &"Orrery must derive `{label}` from a point and two directions spanning a plane; got " &
       &"`{kindOf(geometry)}`."
-  scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now, some(anchor))
+  scene.addObject(geometry, label, LUT_INK_BY_ROLE[Role.Derived], now, some(anchor))
 
 
 func objectsOf*(star: Star): int =
@@ -492,17 +503,6 @@ const OBJECTS_SOL* = len(SOL) + len(MOONS) + 3
   ## Count scene objects Sol comes to.
   ##   Star and planets, moons, ecliptic, and two lines that are only finite lines in
   ##   whole arrangement.
-
-
-type ScaleOrrery* {.pure.} = enum
-  ## Name how deep into catalogue one build of arrangement reaches.
-  ##   Three sizes of same scene, not three scenes: Sol entire, then real stars outward,
-  ##   then four objects in horizon, truncated at different depth.
-  ##   They exist to be *benchmarked against each other*, so cost of change reads as
-  ##   slope.
-  Nearest       ## Sol entire, and about dozen of its nearest real neighbours.
-  Neighbourhood ## Default everywhere: scene worth looking at, quick to build.
-  Catalogue     ## Load case, two handles short of pool.
 
 
 func objectsOf*(scale: ScaleOrrery): int =
@@ -571,21 +571,23 @@ func constructSol(
     place_sol = sunOf(SYSTEM_SOL)
     (along, across) = spanOf(SYSTEM_SOL)
     sol = toMultivector(place_sol)
-  var placed: array[len(SOL), Multivector]
-  var places: array[len(SOL), Position]
+  var
+    placed: array[len(SOL), Multivector]
+    places: array[len(SOL), Position]
   for index, body in SOL:
     # Step phases by golden angle, so no two planets line up from opening camera.
     #   Earth's line then passes through none.
-    let angle = SYSTEM_SOL.spin + 2.4*float(index)
-    let place =
-      case body.role
-      of Role.Sun: place_sol
-      of Role.Planet: ringed(place_sol, along, across, body.distance, angle)
-      of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
+    let
+      angle = SYSTEM_SOL.spin + 2.4*float(index)
+      place =
+        case body.role
+        of Role.Sun: place_sol
+        of Role.Planet: ringed(place_sol, along, across, body.distance, angle)
+        of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
     places[index] = place
     placed[index] = toMultivector(place)
     scene.addObject(
-      placed[index], body.name, lut_role_to_ink[body.role], now,
+      placed[index], body.name, LUT_INK_BY_ROLE[body.role], now,
       radius = radiusDrawnOf(body.kilometres_radius),
     )
   # Ring every moon about planet it really rings, in plane it really rings in.
@@ -594,12 +596,13 @@ func constructSol(
   #   node, where its direction from its planet would lie in ecliptic.
   var placement_moons: array[len(MOONS), Multivector]
   for index, moon in MOONS:
-    let (node, across_moon) = spanOfNormal(normalOfMoon(moon))
-    let place = ringed(places[moon.parent], node, across_moon, radiusOfMoon(moon),
-      SYSTEM_SOL.spin + 2.4*float(index))
+    let
+      (node, across_moon) = spanOfNormal(normalOfMoon(moon))
+      place = ringed(places[moon.parent], node, across_moon, radiusOfMoon(moon),
+        SYSTEM_SOL.spin + 2.4*float(index))
     placement_moons[index] = toMultivector(place)
     scene.addObject(
-      placement_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,
+      placement_moons[index], moon.name, LUT_INK_BY_ROLE[Role.Moon], now,
       radius = radiusDrawnOf(moon.kilometres_radius),
     )
   # Span ecliptic by Sol and two directions planets ring along; see `addPlane`.
@@ -609,8 +612,8 @@ func constructSol(
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
   #   makes horizon plane constructible.
   tether = placed[INDEX_SOL_EARTH] ∧ placement_moons[INDEX_MOON_LUNA]
-  scene.addObject(orbit, "sol ∧ earth", lut_role_to_ink[Role.Derived], now)
-  scene.addObject(tether, "earth ∧ luna", lut_role_to_ink[Role.Derived], now)
+  scene.addObject(orbit, "sol ∧ earth", LUT_INK_BY_ROLE[Role.Derived], now)
+  scene.addObject(tether, "earth ∧ luna", LUT_INK_BY_ROLE[Role.Derived], now)
   addPlane(scene, ecliptic, "ecliptic sol", now, place_sol)
 
 
@@ -651,7 +654,7 @@ func constructOrrery*(
       count_placed = placedOf(star)
     # No radius on record for any star or planet but our own; see `mesh.RADIUS_OBJECT_LEAST`.
     scene.addObject(
-      sun, star.name, lut_role_to_ink[Role.Sun], now, radius = RADIUS_OBJECT_LEAST,
+      sun, star.name, LUT_INK_BY_ROLE[Role.Sun], now, radius = RADIUS_OBJECT_LEAST,
     )
     if count_placed == 0: continue
 
@@ -666,7 +669,7 @@ func constructOrrery*(
           angleRing(system.spin, which_placed, count_placed))
         inc which_placed
         scene.addObject(
-          toMultivector(place), planet.name, lut_role_to_ink[Role.Planet], now,
+          toMultivector(place), planet.name, LUT_INK_BY_ROLE[Role.Planet], now,
           radius = RADIUS_OBJECT_LEAST,
         )
 

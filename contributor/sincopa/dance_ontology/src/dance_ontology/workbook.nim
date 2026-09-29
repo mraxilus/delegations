@@ -53,6 +53,20 @@ type
     source*, destination*: string ## Workbook names of row and column.
     text*: string                 ## Helpers that cell names, in cell's words.
 
+  FindingKind* {.pure.} = enum ## Name way workbook and model relate.
+    StateDeferred,    ## State that rests hand on body, outside this model.
+    FrameAbsent,      ## Frame that model derives and workbook has no row for.
+    EdgeAbsent,       ## Single primitive between two checkable states, cell empty.
+    ReverseAbsent,    ## Filled cell whose mirror cell is empty, though moves reverse.
+    EdgeCompound,     ## Cell naming sequence, so route rather than move.
+    HelperDiffers,    ## Cell naming primitive other than derived one.
+    EdgeUnsupported   ## Filled cell that model gives no single primitive for.
+
+  Finding* = object ## Hold one thing audit has to say about workbook.
+    kind*: FindingKind
+    subject*: string ## Frame, state or pair of states finding concerns.
+    detail*: string  ## What model says, in ontology's vocabulary.
+
 
 const WORKBOOK_STATES*: array[9, string] = [
   "closed",
@@ -75,46 +89,43 @@ const CELLS*: array[27, Cell] = [
   Cell(source: "half-closed", destination: "Right to left", text: "slide"),
   Cell(source: "Left to left", destination: "half-closed", text: "place, collect"),
   Cell(source: "Left to left", destination: "Right to left", text: "pass"),
-  Cell(source: "Left to left", destination: "Left-to-left over Right-to-right",
-    text: "collect"),
-  Cell(source: "Left to left", destination: "Right-to-right over Left-to-left",
-    text: "collect"),
+  Cell(source: "Left to left", destination: "Left-to-left over Right-to-right", text: "collect"),
+  Cell(source: "Left to left", destination: "Right-to-right over Left-to-left", text: "collect"),
   Cell(source: "Left to right", destination: "closed", text: "collect"),
   Cell(source: "Left to right", destination: "Right to right", text: "pass"),
-  Cell(source: "Left to right", destination: "Left-to-right and Right-to-left",
-    text: "collect"),
+  Cell(source: "Left to right", destination: "Left-to-right and Right-to-left", text: "collect"),
   Cell(source: "Right to left", destination: "Left to left", text: "pass"),
-  Cell(source: "Right to left", destination: "Left-to-right and Right-to-left",
-    text: "collect"),
+  Cell(source: "Right to left", destination: "Left-to-right and Right-to-left", text: "collect"),
   Cell(source: "Right to right", destination: "Left to right", text: "pass"),
-  Cell(source: "Right to right", destination: "Left-to-left over Right-to-right",
-    text: "collect"),
-  Cell(source: "Right to right", destination: "Right-to-right over Left-to-left",
-    text: "collect"),
-  Cell(source: "Left-to-left over Right-to-right", destination: "half-closed",
-    text: "place, drop, collect"),
-  Cell(source: "Left-to-left over Right-to-right", destination: "Left to left",
-    text: "drop"),
-  Cell(source: "Left-to-left over Right-to-right", destination: "Right to right",
-    text: "drop"),
-  Cell(source: "Left-to-left over Right-to-right",
-    destination: "Right-to-right over Left-to-left", text: "cut"),
+  Cell(source: "Right to right", destination: "Left-to-left over Right-to-right", text: "collect"),
+  Cell(source: "Right to right", destination: "Right-to-right over Left-to-left", text: "collect"),
+  Cell(
+    source: "Left-to-left over Right-to-right",
+    destination: "half-closed",
+    text: "place, drop, collect",
+  ),
+  Cell(source: "Left-to-left over Right-to-right", destination: "Left to left", text: "drop"),
+  Cell(source: "Left-to-left over Right-to-right", destination: "Right to right", text: "drop"),
+  Cell(
+    source: "Left-to-left over Right-to-right",
+    destination: "Right-to-right over Left-to-left",
+    text: "cut",
+  ),
   Cell(source: "Left-to-right and Right-to-left", destination: "closed", text: "slide"),
-  Cell(source: "Left-to-right and Right-to-left", destination: "Left to right",
-    text: "drop"),
-  Cell(source: "Left-to-right and Right-to-left", destination: "Right to left",
-    text: "drop"),
-  Cell(source: "Right-to-right over Left-to-left", destination: "Left to left",
-    text: "drop"),
-  Cell(source: "Right-to-right over Left-to-left", destination: "Right to right",
-    text: "drop"),
-  Cell(source: "Right-to-right over Left-to-left",
-    destination: "Left-to-left over Right-to-right", text: "cut"),
+  Cell(source: "Left-to-right and Right-to-left", destination: "Left to right", text: "drop"),
+  Cell(source: "Left-to-right and Right-to-left", destination: "Right to left", text: "drop"),
+  Cell(source: "Right-to-right over Left-to-left", destination: "Left to left", text: "drop"),
+  Cell(source: "Right-to-right over Left-to-left", destination: "Right to right", text: "drop"),
+  Cell(
+    source: "Right-to-right over Left-to-left",
+    destination: "Left-to-left over Right-to-right",
+    text: "cut",
+  ),
 ] ## Hold every filled cell of `base` sheet, read row by row.
 
 
 
-#[ Reading Workbook ]#
+#[ Workbook Reading ]#
 
 const DEFERRED_STATES* = ["closed", "half-closed"]
   ## Name states that rest lead hand on follow's body.
@@ -216,22 +227,6 @@ func countDeferredCells*(): int =
 
 
 #[ Audit ]#
-
-type
-  FindingKind* {.pure.} = enum ## Name way workbook and model relate.
-    StateDeferred,    ## State that rests hand on body, outside this model.
-    FrameAbsent,      ## Frame that model derives and workbook has no row for.
-    EdgeAbsent,       ## Single primitive between two checkable states, cell empty.
-    ReverseAbsent,    ## Filled cell whose mirror cell is empty, though moves reverse.
-    EdgeCompound,     ## Cell naming sequence, so route rather than move.
-    HelperDiffers,    ## Cell naming primitive other than derived one.
-    EdgeUnsupported   ## Filled cell that model gives no single primitive for.
-
-  Finding* = object ## Hold one thing audit has to say about workbook.
-    kind*: FindingKind
-    subject*: string ## Frame, state or pair of states finding concerns.
-    detail*: string  ## What model says, in ontology's vocabulary.
-
 
 func auditStates(): seq[Finding] =
   ## Report states held back for want of place on body.
@@ -335,11 +330,12 @@ func auditEdges(): seq[Finding] =
         reversed = cellText(destination_name, source_name)
         derived =
           if helper.isSome:
-            manner(helper.get) & ": " & phrase(source, Move(
+            let move = Move(
               helper: helper.get,
               side: actingSide(source, destination),
               to: destination,
-            ))
+            )
+            manner(helper.get) & ": " & phrase(source, move)
           else:
             ($named.get).toLowerAscii & ": " & compoundPhrase(source, destination)
       if reversed.isSome:

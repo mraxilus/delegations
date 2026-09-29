@@ -10,7 +10,7 @@
 ##       Cost: template path is relative to project directory, so renderer runs from there,
 ##         as testament and build driver both do.
 ##   Page and pictures are build products under `build/review/`, never committed:
-##     repository reads only registered file kinds.  `tests/suites/treview.nim` renders page,
+##     repository reads only registered file kinds.  `tests/suites/test_review.nim` renders page,
 ##     writes it and reads it back, so model change that breaks page fails suite.
 ##     Cost of build product: nothing in tree shows page's history, and published copy is
 ##       not record either, since it can be deleted -- log is.  Page is republished from
@@ -18,6 +18,8 @@
 ##   Usage: `review <dir>` writes `<dir>/review.html` and `<dir>/frames/<slug>.svg`.
 
 {.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
 
 import std/[options, os, strutils]
 
@@ -30,7 +32,7 @@ const
     ## Committed page holding prose and one marker per derived number or picture.
   PAGE_NAME* = "review.html"
     ## File page is written as, under output directory.
-  FRAMES_DIR* = "frames"
+  DIRECTORY_FRAMES* = "frames"
     ## Directory under output holding one SVG per frame, for anything that is not HTML.
   DISAGREEMENTS = {
     FindingKind.EdgeAbsent,
@@ -87,7 +89,7 @@ proc countLaws(): int =
 
 func escape(text: string): string =
   ## Escape text for placement in markup.
-  ##   Looser than app's `esc`: nothing here writes user text into attribute, so quotes
+  ##   Looser than app's `escaped`: nothing here writes user text into attribute, so quotes
   ##     pass through.
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
@@ -111,21 +113,21 @@ func inked(said: string; escaping = true): string =
     result.add "<span style=\"color: " & ink & "\">" & text & "</span>"
 
 
-func statCard(number: int; caption: string; is_good = false): string =
+func statisticCard(number: int; caption: string; is_good = false): string =
   ## Draw one figure in strip at head of page.
   "<div class=\"stat" & (if is_good: " good" else: "") & "\"><b>" & $number &
     "</b><span>" & caption & "</span></div>"
 
 
-proc renderStats(): string =
+proc renderStatistics(): string =
   ## Draw figures page opens with.
   "<div class=\"stats\">" &
-    statCard(FRAMES.len, "frames the model derives") &
-    statCard(countMoves(), "moves between them") &
-    statCard(CELLS.len - countDeferredCells(), "cells checkable today") &
-    statCard(countDisagreements(), "cells that disagree", is_good = true) &
-    statCard(countDeferredCells(), "cells waiting on the body") &
-    statCard(countLaws(), "laws under test") &
+    statisticCard(FRAMES.len, "frames the model derives") &
+    statisticCard(countMoves(), "moves between them") &
+    statisticCard(CELLS.len - countDeferredCells(), "cells checkable today") &
+    statisticCard(countDisagreements(), "cells that disagree", is_good = true) &
+    statisticCard(countDeferredCells(), "cells waiting on the body") &
+    statisticCard(countLaws(), "laws under test") &
     "</div>"
 
 
@@ -271,7 +273,7 @@ func inkTerms(page: string): string =
     let
       inner = start + opens.len
       stop = result.find(shuts, inner)
-    let said = inked(result[inner ..< stop], escaping = false)
+      said = inked(result[inner ..< stop], escaping = false)
     result = result[0 ..< inner] & said & result[stop .. ^1]
     at = inner + said.len + shuts.len
 
@@ -282,7 +284,7 @@ proc renderReview*(): string =
   var page = readFile(TEMPLATE_PATH)
   let fills = {
     "title": MOCKUP & " — The Review Page",
-    "stats": renderStats(),
+    "stats": renderStatistics(),
     "gallery": renderGallery(),
     "matrix": renderMatrix(),
     "map": renderMap(none(Frame)),
@@ -315,18 +317,18 @@ proc renderReview*(): string =
   inkTerms(page)
 
 
-proc writeReview*(out_dir: string) =
-  ## Write page and one picture per frame under `out_dir`, clearing stale pictures first.
+proc writeReview*(directory_out: string) =
+  ## Write page and one picture per frame under `directory_out`, clearing stale pictures first.
   ##   Cleared because frame renamed would otherwise leave its old picture behind under
   ##     old name, naming frame model no longer has.
-  createDir(out_dir / FRAMES_DIR)
-  for path in walkFiles(out_dir / FRAMES_DIR / "*.svg"):
+  createDir(directory_out / DIRECTORY_FRAMES)
+  for path in walkFiles(directory_out / DIRECTORY_FRAMES / "*.svg"):
     removeFile(path)
-  writeFile(out_dir / PAGE_NAME, renderReview())
+  writeFile(directory_out / PAGE_NAME, renderReview())
   for target in FRAMES:
-    writeFile(out_dir / FRAMES_DIR / (target.slug & ".svg"), renderFrame(target))
-  echo "wrote ", out_dir / PAGE_NAME, " and ", FRAMES.len, " pictures in ",
-    out_dir / FRAMES_DIR
+    writeFile(directory_out / DIRECTORY_FRAMES / (target.slug & ".svg"), renderFrame(target))
+  echo "wrote ", directory_out / PAGE_NAME, " and ", FRAMES.len, " pictures in ",
+    directory_out / DIRECTORY_FRAMES
 
 
 when isMainModule:

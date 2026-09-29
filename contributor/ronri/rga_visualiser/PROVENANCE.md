@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | be54792c5171ff9d |
+| Rules   | a1cbabc2e16bdb4a |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -193,6 +193,15 @@ which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does n
 `drawExceedance`, which the axis switch and the gliding axis reach too. That gave 138 of 138 on one
 run, and 137 on the next, from identical code. Verified by a break on purpose: four axis presses in
 the window.
+
+**The tick check of the diagnostics tree counts the writes that repeat a row's text.** `writeText`
+exists to skip those writes, so a correct tick makes none, whatever the load. The check wants none,
+wants the same row elements after the ticks as before, and wants one write at least. Verified by a
+break on purpose: a `writeText` that writes on every call fails, with 153 of 210 writes repeated.
+
+**The same check does not bound how many rows move in one tick.** That counts the timing figures
+that changed in 200 ms, which moves with load and with what the page does. A bound of 20 on it read
+21 once, from code equal to `main` (repository issue 304).
 
 **Waits are conditions that the page reports, and not spans of clock.** Camera ease and settling
 after a click are `waitForFunction` over what the page says: `settleCamera`, `settleCount`,
@@ -805,7 +814,7 @@ without stamps.
 ## Colour palette
 
 Five hues are assignable — `Rose, Copper, Olive, Jade, Cobalt` — beside `Backdrop`, `AxisX/Y/Z`,
-`Grid`, `Guide`, `Outline` and `Invalid`. One `Ink` enum holds them all (`mesh.lut_ink_to_rgba`).
+`Grid`, `Guide`, `Outline` and `Invalid`. One `Ink` enum holds them all (`mesh.LUT_RGBA_BY_INK`).
 
 **`Invalid` is a reserved magenta**, so a reader who sees it knows that an object is wrong. The
 drag band wears it over a pair that makes nothing (see Interaction model), and nothing else does.
@@ -2416,7 +2425,7 @@ on the reader's own bearing, `RISE_ORRERY_SHOWN` 1.4 over its run, about 54 degr
 opening's 18 degrees every ring collapses to a line. It is not the nearest neighbour: Proxima
 stands nine thousand opening radii out, and a frame that held it shows one dot.
 
-**Colour says what a thing is, and not which system it belongs to.** `lut_role_to_ink` maps a
+**Colour says what a thing is, and not which system it belongs to.** `LUT_INK_BY_ROLE` maps a
 `Role` to an `Ink`: four kinds of body on four handles, and everything derived on the fifth,
 `Olive`, the darkest.
 
@@ -2442,7 +2451,7 @@ table is checked against its source by any tool.**
 
 ## Operation notation
 
-**One table, `scene.lut_operation_to_notation`, is read by both builds.** Each entry is the bold
+**One table, `scene.LUT_NOTATION_BY_OPERATION`, is read by both builds.** Each entry is the bold
 notation of Lengyel, two spaces, then the English name (`𝐦⊖  attitude`). `notationSymbolic` and
 `notationNamed` are its two halves.
 
@@ -2478,7 +2487,7 @@ re-checks that every glyph is in the atlas.
 ## Naming and number formatting
 
 Basis elements are named exactly as the `$` of the library names them: `𝟏`, `𝟙`, and a bold `𝐞`
-with subscript digits. `lut_basis_to_name` **derives** them from the enum, and a suite case holds
+with subscript digits. `LUT_NAME_BY_BASIS` **derives** them from the enum, and a suite case holds
 each entry equal to what the library prints.
 
 Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The desktop uses
@@ -2714,7 +2723,7 @@ Progress is **linear, and never eased**. It is a clock being shown, and an eased
 stall just before it fires.
 
 Both front-ends carry a `?` in the bottom-right corner, at least 44 px, which opens the same table
-`help.lut_help_entries`. Both render that table. Construct rows derive from `armingOf` and
+`help.HELP_ENTRIES`. Both render that table. Construct rows derive from `armingOf` and
 `revealsMenuOn`, and keyboard rows from `motionFor` and `actionFor`. The `operations` tab is
 generated from the catalogue, so it cannot fall behind.
 

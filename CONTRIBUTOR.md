@@ -314,13 +314,15 @@ them.
   chapters, and every assertion cites it in a trailing comment.
 - **Regression rule.** Every mistake found, by anyone, earns a test that fails before the fix
   and passes after it, committed first: `test(<project>): cover <mistake>`, then
-  `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The
+  `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. A `skip()` that
+  names its reason (Article IX.9) is a gap made visible, and not that. The
   `check-commits` job enforces it: the commit immediately before every `fix` is a `test` of the
   same scope. One test answers one fix, with nothing between them, or the `fix` is a finding.
 - **A change that needs no new test is not a `fix`.** It is a `refactor`, a `chore` or a
   `docs`, and to say so is honest rather than evasive.
 - Test laws, and not examples. Enumerate a small domain exhaustively, and sample a large one
-  with a few hundred seeded random cases. Record the count beside the claim.
+  with seeded random cases. Name the count as a constant beside the claim, and where a guard
+  skips a sample, check the count that passed against a named floor.
 - Test where the mechanism runs: real wiring, output read back, bytes read again.
 - **A check gives the same verdict on the same code. Where it does not, the check is what is
   wrong.** A check whose answer varies is evidence about the run rather than about the code.

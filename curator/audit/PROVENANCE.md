@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | be54792c5171ff9d |
+| Rules   | a1cbabc2e16bdb4a |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -85,7 +85,7 @@ where one fills while the other is read.
 
 **An allow-list of kinds is the registry, and an unregistered kind is a finding.** `kinds.nim`
 maps a basename or an extension to a comment syntax, and to whether prose is checked. Its
-header table is a derived view of `lut_kind_rule`. Nimble files and NimScript read as Nim, and
+header table is a derived view of `LUT_RULE_BY_KIND`. Nimble files and NimScript read as Nim, and
 cfg files as hash comments. `atlas.config` and `atlas.lock` read as JSON, by basename. Markdown
 is prose rather than comment, so articles pass while the form rules still apply.
 
@@ -212,8 +212,11 @@ whitespace-free token, with the indent of the line, already overruns. That token
 break at, prose always does, and minified markup is one run far past the bound.
 
 Lines split on LF only, so a CR survives. Nim banners need two blank lines before and one
-after. The tiers are unmarked in syntax, so the second-tier minimum is demanded of every
-banner.
+after. The syntax marks the tier: `#[ Title ]#` is the first tier, and `#[[ Title ]]#` is the
+second. Where a second-tier banner follows its parent at once, the child's own check governs
+the space between them. The first tier takes three blank lines before it (X.2), but the check
+demands two of every banner. A check of three would redden the contributor banners that are
+still spaced at two, so it waits on their fixes (CURATOR.md, duty 3).
 
 - Rejected: an exemption for URLs by pattern, which guesses at intent. Rejected: an exemption
   for any single-token line, which admits machine output of any length. Rejected:
@@ -277,9 +280,9 @@ citation that points at nothing.
 
 ## Provenance stamp
 
-**FNV-1a 64-bit over CONSTITUTION.md, STYLE.md and CONTRIBUTOR.md**, with CR stripped, NUL
-between files, and 16 lowercase hex digits. CURATOR.md is excluded, so a curator-only edit
-touches no project.
+**FNV-1a 64-bit over CONSTITUTION.md, STYLE.md, CONTRIBUTOR.md, EXAMPLES.md and GUIDE.md**, with CR
+stripped, NUL between files, and 16 lowercase hex digits. CURATOR.md is excluded, so a
+curator-only edit touches no project.
 
 - Rejected: `std/sha1`, deprecated in Nim 2, which warns on every build. Rejected: the
   `checksums` package, a nimble install in CI for one digest. Rejected: `std/hashes`, unstable
@@ -487,6 +490,12 @@ the project.** The curator root accepts any valid scope, because a rules change 
 scope of each project. A branch outside the grammar still gets format checking. Cost: the imperative
 mood is unverified. Verified by `suites/tcommits.nim`: every type with several scopes, the breaking
 marker, rejected forms, and scope enforcement on both project branch forms.
+
+**A subject is at most `SUBJECT_MAX` runes, which is `LINE_MAX`, the limit of a line of source
+(XI.1).** Branch commits carry no ` (#N)` from a squash merge, so the check counts the subject as
+the delegate wrote it. Cost: subjects on `main` from before the cap run to 136 runes. They stay,
+because the check reads one branch. Verified by `suites/tcommits.nim`: a subject at the limit, one
+over it, and a subject counted in runes and not in bytes.
 
 **The regression rule is enforced, and not hoped for.** `check-commits` reads the subjects
 newest first. It demands that the commit immediately before every `fix` is a `test` of the same
@@ -1017,7 +1026,7 @@ rebuilds a suite whose source module changed, with a warm `nimcache`. Verified b
 configuration, and it stops before anything that needs a browser. Koch names the verb and
 nothing else, because what a check needs differs for each project, while the name need not.
 
-- **Enrolment is derived, and never listed.** `nodeDirs` selects the projects that hold
+- **Enrolment is derived, and never listed.** `nodeDirectories` selects the projects that hold
   `package.json` beside `package-lock.json`. So a project enrols by carrying them, and no
   second list can drift. The lock is demanded because `npm ci` needs one, and unpinned tools
   would be the one thing here that nothing pins.
@@ -1046,9 +1055,9 @@ slide does to the pivot, and nothing in it presses a key. So a rule wired to the
 a defect that no suite here can see. A driven check that the runner never runs is evidence only
 that its writer ran it (Article IX.6).
 
-**Enrolment is the verb, read from the driver of the project itself.** `verbDirs` reads the
+**Enrolment is the verb, read from the driver of the project itself.** `verbDirectories` reads the
 dispatch of `tools/build.nim` and selects the projects that name `drive`, the derivation that
-`nodeDirs` uses one step earlier. `dispatchVerbs` reads the dispatch of koch and of a project
+`nodeDirectories` uses one step earlier. `dispatchVerbs` reads the dispatch of koch and of a project
 driver alike, with the opening line as an argument. Koch cases over parsed options, and a
 project driver over its first argument. Cost: a project that spells the verb otherwise is
 passed by in silence, which is why CONTRIBUTOR.md names `drive` and `system` outright.

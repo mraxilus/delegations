@@ -410,10 +410,10 @@ proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
       gui.widthPush(width_cell)
       # Let name recede and number read, as browser's `--ink-faint` label does.
       gui.textTinted(
-        cstring(lut_basis_to_name[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
+        cstring(LUT_NAME_BY_BASIS[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
       )
       if gui.dragFloat(
-        cstring("##" & lut_basis_to_name[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0
+        cstring("##" & LUT_NAME_BY_BASIS[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0
       ):
         result = some(b)
       gui.widthPop()
@@ -454,7 +454,7 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   fieldLabel(wordingText(NameRowInk))
   if gui.combo(
     "##colour", addr index_categorical,
-    addr lut_ink_to_name[INK_CATEGORICAL_FIRST], cint(COUNT_INK_CATEGORICAL),
+    addr LUT_NAME_BY_INK[INK_CATEGORICAL_FIRST], cint(COUNT_INK_CATEGORICAL),
   ):
     panel.session.get.index_ink = cint(ord(inkCategorical(int(index_categorical))))
   # Size reads for point alone; line and plane take theirs from camera and horizon.
@@ -472,7 +472,7 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   gui.sameLine()
   gui.helpMarker(
     if is_pending: wordingText(NoteCoefficientsNew)
-    else: wordingText(NoteCoefficientsEdit)
+    else: wordingText(NoteCoefficientsEdit),
   )
   discard layoutCoefficientGrid(panel.session.get.coefficients)
 
@@ -534,8 +534,9 @@ proc layoutObjectButtons(
     if not row.is_open:
       beginSession(panel, scene, row.handle)
     else:
-      let session = panel.session.get
-      let geometry = session.geometry
+      let
+        session = panel.session.get
+        geometry = session.geometry
       if row.isPending:
         let handle_added = scene.addObject(
           geometry, toText(session.label), Ink(session.index_ink), now,
@@ -715,7 +716,7 @@ func offerOperationsOfArity*(
   ##   `cstring`s point into this build's storage rather than `const` table: combo keeps
   ##   address of first entry while list is open.
   for operation in Operation:
-    if lut_operation_to_arity[operation] != arity: continue
+    if LUT_ARITY_BY_OPERATION[operation] != arity: continue
     result[0][result[2]] = cstring(notationSymbolic(operation))
     result[1][result[2]] = operation
     inc result[2]
@@ -823,27 +824,29 @@ proc layoutApply*(
 
   adoptSelectionAsOperands(panel, handles, count)
 
-  let arity_wanted = Arity(panel.index_arity)
-  let (notations, operations, count_offered) = offerOperationsOfArity(arity_wanted)
+  let
+    arity_wanted = Arity(panel.index_arity)
+    (notations, operations, count_offered) = offerOperationsOfArity(arity_wanted)
 
   # Offer arity as segmented control rather than dropdown.
   #   Exactly two choices, both worth seeing, one click to switch; matches browser's
   #   `.toggles` pill.
-  let lut_arity_to_name =
+  let lut_name_by_arity =
     [Arity.One: wordingText(NameApplyUnary), Arity.Two: wordingText(NameApplyBinary)]
   fieldLabel(wordingText(NameApplyArity))
   let width_segment = (gui.contentWidth() - SPACING_SEGMENT)/2.0'f32
   for arity in Arity:
     if arity != Arity.low: gui.sameLine()
     if gui.buttonToggle(
-      lut_arity_to_name[arity], panel.index_arity == cint(ord(arity)), width_segment
+      lut_name_by_arity[arity], panel.index_arity == cint(ord(arity)), width_segment
     ):
       panel.index_arity = cint(ord(arity))
       # Land on whatever was last applied at arity switched to, rather than head of list.
       #   Filtered list is indexed per arity.
       panel.index_operation = 0
-      let (_, offered, count) = offerOperationsOfArity(arity)
-      let wanted = panel.operations.lastOf(arity)
+      let
+        (_, offered, count) = offerOperationsOfArity(arity)
+        wanted = panel.operations.lastOf(arity)
       for position in 0 ..< count:
         if offered[position] == wanted:
           panel.index_operation = cint(position)
@@ -909,8 +912,9 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   gui.tooltip(wordingText(TipViewMotor))
   # Changed coefficient alone is written into live motor: fields hold `cfloat`, and
   #   writing all sixteen back would round fifteen nobody touched.
-  var typed = toMultivector(camera.motor)
-  var staged: array[Basis, cfloat]
+  var
+    typed = toMultivector(camera.motor)
+    staged: array[Basis, cfloat]
   for b in Basis: staged[b] = cfloat(typed[b])
   let changed = layoutCoefficientGrid(staged)
   if changed.isSome:
@@ -1264,9 +1268,10 @@ proc layoutSelectionMenu*(
     ]
   # Hang pointer-placed menu from its top-left corner, anchored one from bottom middle.
   #   Anchored menu stands above object; pointer-placed one beside pointer.
-  let is_by_pointer = panel.offset_menu_selection.isSome or panel.corner_menu_pointer.isSome
-  let (pivot_x, pivot_y) = if is_by_pointer: (0.0'f32, 0.0'f32) else: (0.5'f32, 1.0'f32)
-  let count = panel.selection.len
+  let
+    is_by_pointer = panel.offset_menu_selection.isSome or panel.corner_menu_pointer.isSome
+    (pivot_x, pivot_y) = if is_by_pointer: (0.0'f32, 0.0'f32) else: (0.5'f32, 1.0'f32)
+    count = panel.selection.len
   var is_line_started = false # Whether anything is on row yet; first button placed then
     # does not ask for `sameLine` with nothing to continue.
   if gui.windowBeginPinned(
@@ -1363,7 +1368,7 @@ proc layoutHelpTab(
   #   Fixed height for largest leaves `menu`'s five rows floating in blank.
   let height_rows = min(gui.childHeightForRows(cint(countOf(path))), height_available)
   if gui.childBegin(cstring("##help_rows"), width_rows, height_rows):
-    for entry in lut_help_entries:
+    for entry in HELP_ENTRIES:
       if entry.path != path: continue
       # Mark touch rows in word rather than only tint.
       #   Survives reader who cannot tell two greys apart.
@@ -1393,7 +1398,7 @@ proc layoutHelp*(panel: var Panel, path_forced: Option[HelpPath] = none(HelpPath
   #   Hand-tuned number runs long entry into its outcome.
   #   Measured only while panel is open, so closed panel pays nothing for table's metrics.
   var offset_outcome, width_outcome = 0.0'f32
-  for entry in lut_help_entries:
+  for entry in HELP_ENTRIES:
     offset_outcome = max(offset_outcome, gui.textWidth(cstring(helpActionOf(entry))))
     width_outcome = max(width_outcome, gui.textWidth(cstring(entry.outcome)))
   offset_outcome += GAP_HELP_COLUMN

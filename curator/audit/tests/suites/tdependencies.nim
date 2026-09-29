@@ -1,5 +1,7 @@
 ## Replicate nimble requirement reading of `dependencies.nim` header and CONTRIBUTOR.md.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, os, strutils, tempfiles, unittest]
 import ../../src/[projects, dependencies]
 import ./fixtures
@@ -21,9 +23,9 @@ suite "Dependencies":
     check requirements("when defined(windows):\n  requires \"winim\"\n") == @["winim"]  # cost
 
   test "lock names its checkout directories, deps placeholder resolved":
-    check LOCK_TEXT.lockDirs == @["deps/replications.example.invalid"]  # one item
-    check lockDirs("{}").len == 0  # no items table
-    check lockDirs("{\"items\": {}}").len == 0  # empty items
+    check LOCK_TEXT.lockDirectories == @["deps/replications.example.invalid"]  # one item
+    check lockDirectories("{}").len == 0  # no items table
+    check lockDirectories("{\"items\": {}}").len == 0  # empty items
 
   test "checkout absent after restore is finding":
     # `atlas changed` exits 0 while warning `repo missing!`, so restore fetching nothing
@@ -47,7 +49,7 @@ suite "Dependencies":
     defer: removeDir(root)
     root.writeInto("curator/probe/probe.nimble", NIMBLE_TEXT)
     # Empty `bin` names PATH; project without lock runs no atlas either way.
-    check restoreAll(root, [Target(dir: "curator/probe")]).len == 0
+    check restoreAll(root, [Target(directory: "curator/probe")]).len == 0
 
   test "lock stores copy of nimble, read back whole":
     check lockNimble(lockWith(NIMBLE_TEXT)) == some(NIMBLE_TEXT)  # round trip
@@ -57,8 +59,9 @@ suite "Dependencies":
     # `atlas rep` writes lock's copy back over nimble file, so pin edited without
     #   regenerating lock is reverted silently; failure then surfaces as later finding on file
     #   contributor never touched.
-    let stale = NIMBLE_TEXT.replace("nim == " & PIN, "nim >= " & PIN)
-    let found = checkLockNimble("p/p.nimble", "p/atlas.lock", lockWith(stale), NIMBLE_TEXT)
+    let
+      stale = NIMBLE_TEXT.replace("nim == " & PIN, "nim >= " & PIN)
+      found = checkLockNimble("p/p.nimble", "p/atlas.lock", lockWith(stale), NIMBLE_TEXT)
     check found.len == 1
     check found[0].path == "p/p.nimble"  # file about to be overwritten, never lock
     check found[0].line == 6  # `requires` line of fixture

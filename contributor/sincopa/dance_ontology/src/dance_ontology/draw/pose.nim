@@ -39,9 +39,26 @@ type
     wind*: Winds                  ## How far each arm is carried round.
     ring*: Option[Ring]           ## Orbit ring, where one is happening.
 
+  Anchor* {.pure.} = enum ## Say what picture is framed on.
+    Pair,                      ## Couple's midpoint: they sit in middle.
+    Lead                       ## Lead's own place: they are still point.
+
+  MoveApply* = proc (pose: Pose; scalar: float): Pose {.nimcall, noSideEffect.}
+    ## One animated move, as pose it reaches at `scalar` of its full turn.
+
+  Walk* = tuple ## Move sampled for animation, and its own timing.
+    poses: seq[Pose]
+    times: seq[float] ## How far through move each pose is due, 0 to 1.
+      ## Frames are not evenly spread: what move spends its time on is part
+      ##   of what it says (rule 26).
+
+  About* {.pure.} = enum ## What dancer's turn goes round.
+    Axis,                     ## Their own centre: they turn on spot.
+    Orbit                     ## Their partner: they walk ring round them.
 
 
-#[ Standing and Turning ]#
+
+#[ Standing And Turning ]#
 
 func rest*(wind: Winds = default(Winds)): Pose =
   ## Get pose every picture is measured from: lead facing up page.
@@ -53,11 +70,12 @@ func rest*(wind: Winds = default(Winds)): Pose =
   )
 
 
-func movedPose*(pose: Pose; mid: Point; spin, amount: float): Pose =
-  ## Turn whole pose about `mid`, then pull it `amount` of way home.
-  func moved(p: Point): Point =
-    let q = turn(p, mid, spin)
-    (q.x - amount * mid.x, q.y - amount * mid.y)
+func movedPose*(pose: Pose; middle: Point; spin, amount: float): Pose =
+  ## Turn whole pose about `middle`, then pull it `amount` of way home.
+  func moved(point: Point): Point =
+    ## Turn point about `middle` by `spin`, then pull it `amount` of way home.
+    let rotated = turn(point, middle, spin)
+    (rotated.x - amount * middle.x, rotated.y - amount * middle.y)
 
   result = pose
   for who in Dancer:
@@ -65,11 +83,6 @@ func movedPose*(pose: Pose; mid: Point; spin, amount: float): Pose =
     result.facing[who] = pose.facing[who] + spin
   if pose.ring.isSome:
     result.ring = some (moved(pose.ring.get.centre), pose.ring.get.radius)
-
-
-type Anchor* {.pure.} = enum ## Say what picture is framed on.
-  Pair,                      ## Couple's midpoint: they sit in middle.
-  Lead                       ## Lead's own place: they are still point.
 
 
 func canonicalise*(pose: Pose; amount = 1.0; on = Anchor.Pair): Pose =
@@ -117,15 +130,15 @@ func orbit*(pose: Pose; who: Dancer; degrees: float; locked = true): Pose =
   result = pose
   result.place[who] = turn(pose.place[who], pivot, degrees)
   result.facing[who] = pose.facing[who] + (if locked: degrees else: 0.0)
-  result.ring = some (pivot, dist(pose.place[who], pivot))
+  result.ring = some (pivot, distance(pose.place[who], pivot))
 
 
 func couple*(pose: Pose; degrees: float): Pose =
   ## Turn both round each other: pair rotates rigidly about midpoint.
-  let mid = ((pose.place[Dancer.Lead].x + pose.place[Dancer.Follow].x) / 2,
+  let midpoint = ((pose.place[Dancer.Lead].x + pose.place[Dancer.Follow].x) / 2,
              (pose.place[Dancer.Lead].y + pose.place[Dancer.Follow].y) / 2)
-  result = movedPose(pose, mid, degrees, 0.0)
-  result.ring = some (mid, dist(pose.place[Dancer.Lead], mid))
+  result = movedPose(pose, midpoint, degrees, 0.0)
+  result.ring = some (midpoint, distance(pose.place[Dancer.Lead], midpoint))
 
 
 func relative*(pose: Pose): tuple[axis, facing: float] =
@@ -142,22 +155,11 @@ func relative*(pose: Pose): tuple[axis, facing: float] =
 
 
 
-#[ Moving on One Clock ]#
+#[ Moves On One Clock ]#
 
 func ease*(t: float): float =
   ## Slow both ends, so two stages read as stages rather than as blur.
   (1 - cos(PI * t)) / 2
-
-
-type MoveApply* = proc (pose: Pose; scalar: float): Pose {.nimcall, noSideEffect.}
-  ## One animated move, as pose it reaches at `scalar` of its full turn.
-
-
-type Walk* = tuple ## Move sampled for animation, and its own timing.
-  poses: seq[Pose]
-  times: seq[float] ## How far through move each pose is due, 0 to 1.
-    ## Frames are not evenly spread: what move spends its time on is part
-    ##   of what it says (rule 26).
 
 
 const
@@ -223,12 +225,7 @@ func cycle*(move: MoveApply; samples = 14): Walk =
 
 
 
-#[ Ways of Turning ]#
-
-type About* {.pure.} = enum ## What dancer's turn goes round.
-  Axis,                     ## Their own centre: they turn on spot.
-  Orbit                     ## Their partner: they walk ring round them.
-
+#[ Ways Of Turning ]#
 
 func turned*(base: Pose; who: Dancer; about: About; degrees: float): Pose =
   ## Turn one dancer, on their own axis or round their partner.
@@ -275,6 +272,7 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
   ##     and wind is what drawing measures for itself (rule 28).
   ##     Only turn of nothing at all is skipped.
   func legs(from_pose: Pose; by: float): Walk =
+    ## Walk pose `by` turns: turn as room sees it, then picture re-framed.
     let landed = turned(from_pose, who, about, by)
     if abs(by) < 1e-9:
       return (@[from_pose], @[0.0])
@@ -291,7 +289,7 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
     if settled_home.place == landed.place and
         settled_home.facing == landed.facing:
       result.poses[^1] = settled_home
-      return result
+      return
     # Beat on landing first: same pose twice, which is one still.
     result.poses.add result.poses[^1]
     result.times.add ARRIVAL_HOLD
@@ -311,8 +309,8 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
       break
     for step in 1 .. steps:
       let one = legs(standing, by)
-      for i, p in one.poses:
-        result.poses.add p
+      for i, pose in one.poses:
+        result.poses.add pose
         result.times.add (
           if result.poses.len == 1: 0.0
           elif i == 0: ARRIVAL_HOLD
@@ -322,15 +320,19 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
 
 
 func moveLeadAxis(pose: Pose; scalar: float): Pose =
+  ## Turn lead on own axis by `scalar` quarter turns.
   spinAbout(pose, Dancer.Lead, 90 * scalar)
 
 func moveFollowOrbits(pose: Pose; scalar: float): Pose =
+  ## Orbit follow round lead by `scalar` quarter turns.
   orbit(pose, Dancer.Follow, 90 * scalar, locked = true)
 
 func moveLeadOrbits(pose: Pose; scalar: float): Pose =
+  ## Orbit lead round follow by `scalar` quarter turns.
   orbit(pose, Dancer.Lead, 90 * scalar, locked = true)
 
 func moveCouple(pose: Pose; scalar: float): Pose =
+  ## Turn couple together by `scalar` quarter turns.
   couple(pose, 90 * scalar)
 
 const MOVES*: array[4, tuple[name: string, apply: MoveApply]] = [

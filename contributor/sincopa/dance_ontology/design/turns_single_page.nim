@@ -28,11 +28,11 @@ const QUARTER_NAMES = ["none", "&#188;", "&#189;", "&#190;"]
   ## How far round from app's own frame, in quarters.
 
 
-func plates(P: Parts; manner: Manner): string =
+func plates(parts: Parts; manner: Manner): string =
   ## Lay out one manner of turn: one plate per connection, positions then
   ## edges.
   let tag = MANNERS[manner].tag
-  for c, single in SINGLES:
+  for connection, single in SINGLES:
     result.add &"""<div class="plate"><h3>{single.name}</h3>"""
     result.add """<p>Every position this manner reaches, a quarter turn """ &
       """apart. The fourth quarter comes back to the first, so the round """ &
@@ -40,14 +40,14 @@ func plates(P: Parts; manner: Manner): string =
     result.add """<div class="row mid">"""
     for quarter in 0 ..< QUARTERS_ROUND:
       if quarter > 0:
-        result.add P["g_quarter"]
+        result.add parts["g_quarter"]
       let caption =
         if quarter == 0: "<b>none</b><br>the app's frame"
         else: &"<b>{QUARTER_NAMES[quarter]}</b> turn<br>" &
           facingOf(quarterPose(manner, quarter)).get.name
-      result.add fig(P[&"st_{tag}_{c}_{quarter}"], caption)
-    result.add P["g_quarter"]
-    result.add fig(P[&"st_{tag}_{c}_0"], "<b>none</b><br>round again")
+      result.add figure(parts[&"st_{tag}_{connection}_{quarter}"], caption)
+    result.add parts["g_quarter"]
+    result.add figure(parts[&"st_{tag}_{connection}_0"], "<b>none</b><br>round again")
     result.add "</div>"
     result.add """<p>And every transition between them. Each one rocks """ &
       """between its two positions, so the turn reads both ways:</p>"""
@@ -55,9 +55,9 @@ func plates(P: Parts; manner: Manner): string =
     for quarter in 0 ..< QUARTERS_ROUND:
       let
         to = (quarter + 1) mod QUARTERS_ROUND
-        moving = P[&"tr_{tag}_{c}_{quarter}_{to}"].replaceFirst(
+        moving = parts[&"tr_{tag}_{connection}_{quarter}_{to}"].replaceFirst(
           "class=\"mv\"", "class=\"mv moving\"")
-        still = P[&"tr_{tag}_{c}_{quarter}_{to}_still"]
+        still = parts[&"tr_{tag}_{connection}_{quarter}_{to}_still"]
         caption = &"{QUARTER_NAMES[quarter]} &rarr; {QUARTER_NAMES[to]}"
       result.add &"<figure>{moving}{still}" &
         &"<figcaption>{caption}</figcaption></figure>"
@@ -196,12 +196,12 @@ const BODY = """
 """
 
 
-func render*(P: Parts): string =
+func render*(parts: Parts): string =
   ## Lay single-hand turns page out around given figures.
   var fills: seq[tuple[marker, value: string]]
   for manner in Manner:
-    let w = MANNERS[manner]
-    fills.add (&"{w.tag}_title", w.title)
-    fills.add (&"{w.tag}_blurb", w.blurb)
-    fills.add (&"{w.tag}_plates", plates(P, manner))
+    let description = MANNERS[manner]
+    fills.add (&"{description.tag}_title", description.title)
+    fills.add (&"{description.tag}_blurb", description.blurb)
+    fills.add (&"{description.tag}_plates", plates(parts, manner))
   document(TITLE, BODY.filled(fills))

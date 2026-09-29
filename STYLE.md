@@ -4,30 +4,36 @@ Use this guide beside the Coding Constitution where the output language is Nim. 
 constitution owns the policy for design, naming, documentation, cost, layout and tests. This
 guide owns only what is specific to Nim: the choice of construct, pragma discipline, the
 idioms, and what each backend does with a value. Where the two overlap, the constitution
-wins.
+wins. `EXAMPLES.md` holds longer worked examples, which both documents point into.
 
 ## 1. Construct selection
 
-Map the callable ladder of the constitution onto `func → proc → iterator → template → macro`.
-Escalate only on need.
+Map the callable ladder of the constitution onto `func → proc → iterator → template → macro`,
+and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - `func` is the default for a deterministic transformation of a value.
-- `proc` only for an effect, for randomness, or for `var` access. Where both mutable and
-  immutable access matter, define the overload pair:
+- `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
+  `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
+- Where both mutable and immutable access matter, define an overload pair of `func`s, because
+  a `func` may take a `var` parameter. Raw access into storage becomes a `template` pair only
+  where the project measured the cost of the call and recorded it:
 
   ```nim
-  proc `[]`*(m: var Multivector, b: Basis): var float {.inline.} = m.elements[b]
-  func `[]`*(m: Multivector, b: Basis): float {.inline.} = m.elements[b]
+  func `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
+  func `[]`*(m: Multivector, b: Basis): float = m.elements[b]
   ```
 
 - `iterator` only where lazy enumeration is the concept you expose. Yield `lent` from a
   stored pool, so that the walk never copies.
-- `template` only for a zero-cost substitution that a function cannot express. That covers
-  operand reversal, a typedesc alias, and an alias to an element inside a loop where a `let`
-  would copy (§7):
+- `template` only for a zero-cost substitution that a function cannot express, or where the
+  measured cost of a call is too high. That covers operand reversal and a typedesc alias. It
+  also covers an alias to an element inside a loop, where a `let` would copy (§7):
 
   ```nim
-  template `+`*(m: Multivector, s: float): Multivector = s + m
+  template `+`*(m: Multivector, s: float): Multivector =
+    ## Add multivector and scalar, i.e. 𝐦 + 𝐬.
+    s + m
+
   template scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low
   template r: untyped = records[i]  # alias, never `let r = records[i]` in a hot loop
   ```
@@ -45,13 +51,20 @@ Escalate only on need.
 
 ## 2. Pragma discipline
 
-- `{.experimental: "strictFuncs".}`: this exact form, before the imports, in every production
-  module. Never as a pushed ordinary pragma.
-- `{.experimental: "codeReordering".}`: only where the reading order of a human should beat
-  the declaration order. Const initialisation stays in dependency order in either case.
+- `{.experimental: "strictFuncs".}`: this exact form, before the imports, in every module, a
+  test suite included. Never as a pushed ordinary pragma.
+- `{.experimental: "codeReordering".}`: the mechanism that lets Nim follow the reading order
+  of Article I.1. Use it wherever that order puts a use before its definition.
 - `{.compileTime.}`: applied the same way across a whole compile-time family. Never rely on
   incidental const evaluation where the staging is part of the contract.
-- `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor only.
+- `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor. Inline a larger body
+  only where a measurement shows the gain.
+- `{.noinit.}`: only on a routine that writes every element of `result` on every path (VII.8).
+  An emitted kernel and a loop over the whole domain qualify. Otherwise Nim zeroes `result`
+  first, and a partial write under the pragma leaves memory undefined. On the JS backend an
+  array `result` is always a new array of zeros, so the pragma changes nothing there.
+- A pragma that the compiler checks is the annotation that VI.7 names, such as
+  `{.raises: [].}` for no exceptions.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
   that is not obvious at the use site (`{.borrow, compileTime, used.} # Used in cayleys.nim.`).
   Define a repeated mechanical borrow family once, through a documented template:
@@ -71,7 +84,9 @@ Escalate only on need.
   yet.
 - `{.used.}` with a trailing comment that names the consumer, for a private symbol that
   another module uses.
-- No `{.push.}`. No pragma scattered as superstition.
+- No `{.push.}` of an ordinary pragma, so that the pragmas of a routine stay visible where it
+  is defined. A push that `{.pop.}` closes over one block of foreign bindings (`header:`,
+  `importc`) is allowed. No pragma scattered as superstition.
 
 ## 3. Compile-time and gated idioms
 
@@ -79,15 +94,19 @@ Escalate only on need.
   result:
 
   ```nim
-  const lut_basis_to_grade = block:
+  const LUT_GRADE_BY_BASIS = block:
     var lut: array[Basis, Grade]
     for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
     lut
   ```
 
 - Validate a static configuration in `static: doAssert`, with ``&"…; got `{X}`."``.
+- Write `{x=}` in a message where the value alone would not say which binding it is
+  (`{digits=}`).
 - Put an expensive check under `when compileOption("assertions"):`. Put the profiler import
-  under `when compileOption("profiler"): import std/nimprof`, in an entry module.
+  under `when compileOption("profiler"): import std/nimprof` in every entry module, library
+  umbrella and test entry alike, right after the pragmas. Then `--profiler:on` works with no
+  edit.
 - Use `when` for a configuration branch and a typedesc branch
   (`let g = when G is Grade: b.grade else: b.gradeAnti`). Never take a runtime branch on a
   distinction that is known statically.
@@ -106,34 +125,79 @@ Escalate only on need.
 - Use an enum-indexed fixed array for a closed static domain (`array[Basis, float]`), and a
   `range` type for a bounded index. A fixed pool carries its live extent as a field
   (`bound`), and every walk is `for slot in 0 ..< pool.bound`.
+- Give a distinct type whose domain you walk an `items` iterator over its typedesc, so that
+  `for k in Order:` reads as the domain.
+- Define `=~` as `abs(a - b) <= TOLERANCE_ABS * max(1, abs(a), abs(b))`, and derive
+  `TOLERANCE_ABS` from the count of places. Near zero, that form falls to its absolute floor,
+  so a zero test takes the scale of what it tests (Article IV.5).
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).
 
 ## 5. Signatures, imports, calls
 
-- Write bracket imports, grouped and consolidated: `import std/[bitops, options]`, then
-  `import ./[algebra {.all.}, helpers]`. Use `{.all.}` only for deliberate access to
-  internals, from a sibling or a test.
+- A doc comment is `##`, so an empty slot is `## TODO: Document.` (VI.1).
+- Group related bindings under one `const`, `let` or `var` section (X.5).
+- Write bracket imports, grouped and consolidated, each group alphabetised:
+  `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
+  A single module takes no bracket (`import std/math`). Use `{.all.}` only for deliberate
+  access to internals, from a sibling or a test. A private symbol that a sibling reaches that
+  way carries `{.used.}`, and a comment that names the sibling:
+
+  ```nim
+  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
+  ```
+
 - Put commas between parameters while every type appears once (`m: Multivector, b: Basis`).
   Escalate to semicolons between groups only where one group holds several parameters of one
-  type (`a, b: X; c: Y`). A formatter that promotes every comma to a semicolon is wrong here,
-  so configure it or ignore it. Put the return type and the pragmas on the closing line of a
-  multi-line signature:
+  type (`a, b: X; c: Y`). The rule holds on one line and across several. A formatter that
+  promotes every comma to a semicolon is wrong here, so configure it or ignore it.
+- A signature that does not fit on its line wraps its parameters onto one line of their own.
+  Where that line does not fit either, put one parameter, or one group of a shared type, on
+  each line, each with a trailing separator. Put the return type and the pragmas on the
+  closing line:
 
   ```nim
   func filterFactors(
-    cayley: Cayley1D; factors, exclusions: seq[Basis]; as_exclusions = false
-  ): Cayley1D {.compileTime.} =
+    cayley: var Cayley1D, factors: seq[Basis], as_exclusions = false
+  ) {.compileTime.} =
+
+  func constructProductsTransitional(
+    complement, dual: Cayley1D;
+    wedges: Spatial[Cayley2D];
+    chirality: Chirality;
+    space: Space;
+  ): array[Order, Cayley2D] {.compileTime.} =
+  ```
+
+- A call that does not fit on its line puts one argument on each line, with a trailing comma.
+  It never wraps its arguments onto one line of their own. A generator call and a constructor
+  name their arguments, and a positional call stays positional:
+
+  ```nim
+  CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(
+    CAYLEYS_DUAL.base.right,
+    CAYLEYS_WEDGE.base,
+    Chirality.Right,
+  )
   ```
 
 - Use the implicit `result` for a structured accumulation. Use a bare final expression for a
-  simple computed value. Use an explicit `return` mostly for a guard exit. Never end with
+  simple computed value. Use an explicit `return` only for an early exit. Never end with
   `return result`.
-- Bind a `case` or `if` expression that produces a value to a `let`.
-- Use UFCS for a unary semantic chain (`b.toDigits.toFlags`), and backticks for an operator
-  definition. Use a raw string (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the
-  tokeniser demands one.
+- Bind a `case` or `if` expression that produces a value to a `let`, or to a `const` where
+  the value is known at compile time.
+- Use UFCS where the first argument is plainly the subject: a query, an accessor, or a
+  `to<Target>` conversion, chained where it reads (`b.toDigits.toFlags`). An `init…` call may
+  take its subject the same way (`b.initElement(1)`). Use a prefix call for `construct…`,
+  `define…` and `emit…`, for a type conversion (`Grade(x)`, never `x.Grade`), and wherever no
+  argument plainly dominates. Use backticks for an operator definition. Use a raw string
+  (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the tokeniser demands one.
+- A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
+  Each one stands alone on its line, and is never indented.
+- The formatter is nimpretty. Where it would destroy a hand-shaped block, fence the block with
+  `#!nimpretty off` and `#!nimpretty on`. It reads no other marker, so `# fmt: off` does
+  nothing. It leaves the indent of a multi-line call alone, so the fence is rarely needed.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
 - Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write
@@ -168,6 +232,20 @@ Escalate only on need.
       (lent Multivector, lent Multivector, lent Multivector) = ...
   ```
 
+- A placeholder test calls `skip()`, and never `discard`, so that the run prints `[SKIPPED]`.
+  `skip()` does not stop the body. A test that cannot run under a configuration therefore
+  puts its body in the other branch of `when`:
+
+  ```nim
+  test "Equation 2.87-89":
+    when IS_CONFORMAL: skip()  # TODO: Enable when conformal dot product fixed.
+    else:
+      for 𝐦, _, _ in randMultivectors():
+        check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
+  ```
+
+- A citation comment is `#`, two spaces after the assertion: `check 𝐮 ∧ 𝐯 =~ -(𝐯 ∧ 𝐮)  # 2.4`
+  (IX.1).
 - Compare floats through `=~`, with the build-configurable tolerance. `==` on those types is
   poisoned, and must not compile.
 
@@ -179,6 +257,15 @@ the lowered output. A `let` of a scalar is free on both backends. What to look f
 - **C and C++ backends.** A `let` of an object copies the struct. `lent` and `var` are
   pointers. An `array[N, T]` of objects is contiguous. The emitted C sits in the nimcache
   directory, so grep there for the name of the proc.
+- **Fills on C and C++ backends (VII.8).** gcc turns a loop of constant stores into `memset`,
+  and the default fill of `result` is a `memset` too. Above a size that depends on `-march`,
+  gcc emits that `memset` as `rep stos`, which costs more than straight stores. Generate such a
+  function from its semantic source where one exists (II.4). Otherwise unroll the loop with a
+  macro that emits one copy of the body for each value, or keep the fill and record its cost.
+  `{.unroll.}` is parsed and then ignored.
+- **Timing one function (VII.9).** Call an `{.inline.}` function through a `{.volatile.}`
+  variable of its procedure type. The C compiler then emits its body out of line, and cannot
+  inline it into the caller.
 - **JS backend.** Every object and array is a JS object, every copy is deep, and a
   `let x = y` of an object emits `nimCopy`. A by-value parameter copies at the call, and a
   by-value return copies on the way out. `lent` and `var` avoid the copy only where the

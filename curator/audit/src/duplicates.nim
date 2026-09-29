@@ -30,8 +30,9 @@ func paragraphs*(markdown: string): seq[Paragraph] =
   var opened = 0
   let lines = markdown.fencedOut.splitLines
   for i, line in lines:
-    let s = line.strip
-    let is_prose = s.len > 0 and not s.startsWith("|") and not s.startsWith("#")
+    let
+      s = line.strip
+      is_prose = s.len > 0 and not s.startsWith("|") and not s.startsWith("#")
     if is_prose:
       if words.len == 0: opened = i + 1
       words.add s.splitWhitespace

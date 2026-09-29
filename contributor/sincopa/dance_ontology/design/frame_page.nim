@@ -131,10 +131,10 @@ const BODY = """
 
   <div class="plate">
     <h3>A settled hand is in one of six places</h3>
-    <p><b>This chart asks the sim nothing, and it solves nothing.</b> A hand at rest sits where
-      the arm hangs. It may also sit round toward the front of that dancer, or round toward their
-      back. That gives three places on each side of the body. The hand's own side, the level of
-      the hold, and its lock or wrap decide which place it takes.</p>
+    <p><b>This chart asks the simulation nothing, and it solves nothing.</b> A hand at rest sits
+      where the arm hangs. It may also sit round toward the front of that dancer, or round toward
+      their back. That gives three places on each side of the body. The hand's own side, the level
+      of the hold, and its lock or wrap decide which place it takes.</p>
     <p>Each place is measured from the way that dancer faces, and never from the page. That is
     what <em>front</em> and <em>back</em> name. The chart is drawn on a body turned off the
     vertical, so you can see that rather than take it on trust.</p>
@@ -377,11 +377,11 @@ const BODY = """
 """
 
 
-func render*(P: Parts): string =
+func render*(parts: Parts): string =
   ## Lay frame page out around given figures.
   var settlings: string
-  for k, s in SETTLINGS:
-    settlings.add fig(P[&"settle_{k}"], s.caption)
+  for k, settling in SETTLINGS:
+    settlings.add figure(parts[&"settle_{k}"], settling.caption)
 
   # Which locks and wraps exist in which orientation: cells left empty
   # by wrap rule are states that cannot be danced.
@@ -389,14 +389,14 @@ func render*(P: Parts): string =
   for turn in GRID_TURNS:
     turned.add turnedFacing(0.0, turn).get.name
   var grid = """<table class="grid"><tr><th></th>"""
-  for s in GRID_STATES:
-    grid.add &"<th><em>{word(s.level)}</em> {word(s.way)}</th>"
+  for state in GRID_STATES:
+    grid.add &"<th><em>{word(state.level)}</em> {word(state.way)}</th>"
   grid.add "</tr>"
   for i, turn in GRID_TURNS:
     # Facing's name capitalises lead's side alone, so header keeps its case.
     grid.add &"<tr><th style=\"text-transform: none\">{turned[i]}</th>"
-    for s in GRID_STATES:
-      let cell = P[&"grid_{word(s.level)}_{word(s.way)}_{int(turn)}"]
+    for state in GRID_STATES:
+      let cell = parts[&"grid_{word(state.level)}_{word(state.way)}_{int(turn)}"]
       grid.add "<td>" & (if cell.len > 0: cell else: "&mdash;") & "</td>"
     grid.add "</tr>"
   grid.add "</table>"
@@ -404,8 +404,8 @@ func render*(P: Parts): string =
   # Sixteen facings in four rows, one for each side lead turns to follow, each
   # named by model.  `Facing` runs lead's side slowest, four to each side.
   var rows: array[4, string]
-  for named, o in ORIENTATIONS:
-    rows[ord(named) div 4].add fig(P[&"or_free_{ord(named)}"], o.name)
+  for named, orientation in ORIENTATIONS:
+    rows[ord(named) div 4].add figure(parts[&"or_free_{ord(named)}"], orientation.name)
   let facings = rows.join("\n    </div>\n    <div class=\"row\">\n      ")
 
   var fills = @[
@@ -417,11 +417,11 @@ func render*(P: Parts): string =
   ]
   # Turning figures swap in `moving` class so reduced motion can swap
   # them out; their stills ride along under their own markers.
-  for m in ["lead_axis", "follow_orbits_the_lead",
+  for motion in ["lead_axis", "follow_orbits_the_lead",
             "the_lead_orbits_the_follow", "both_round_each_other"]:
-    fills.add (&"mv_{m}", P[&"mv_{m}"].replaceFirst(
+    fills.add (&"mv_{motion}", parts[&"mv_{motion}"].replaceFirst(
       "class=\"mv\"", "class=\"mv moving\""))
-    fills.add (&"mv_{m}_still", P[&"mv_{m}_still"])
+    fills.add (&"mv_{motion}_still", parts[&"mv_{motion}_still"])
   for key in ["f_none", "f_low", "f_high", "f_above", "f_over",
               "or_held_0", "or_tiny_1", "slot_chart",
               "route_wrap", "route_low", "route_high",
@@ -434,5 +434,5 @@ func render*(P: Parts): string =
               "collapse_orbit", "collapse_axis",
               "pair_ll", "pair_ll_turned", "pair_lr", "pair_lr_turned",
               "free_fade", "free_grey", "free_fade_tiny", "free_grey_tiny"]:
-    fills.add (key, P[key])
+    fills.add (key, parts[key])
   document(TITLE, BODY.filled(fills))

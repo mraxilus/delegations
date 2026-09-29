@@ -66,9 +66,13 @@ const NODE_ORDER* = ["--.", "-r.", "l-.", "-l.", "r-.", "lrL", "lrR", "rl."]
   ## Order frames along their rows, left to right.
   ##   Drawing decision rather than fact about dancing: order is
   ##     one that leaves fewest lines crossing.
-  ##   `tests/suites/tmap.nim` holds it to naming every frame exactly once, so
+  ##   `tests/suites/test_map.nim` holds it to naming every frame exactly once, so
   ##     frame cannot be added to ontology and quietly left out of
   ##     picture.
+
+
+type
+  Box* = tuple[x, y, width, height: int] ## Room something takes up in drawing.
 
 
 func rowOf(target: Frame): int = target.countHolds
@@ -138,7 +142,7 @@ func armColour*(side: Side): string =
   ##   Asked of shared palette rather than kept here.  This module and
   ##     `spokes` each had their own copy, and copies had already drifted
   ##     from frame pictures' by whole hue.
-  DEEP[if side == Side.Left: Arm.L else: Arm.R]
+  DEEP[if side == Side.Left: Arm.Left else: Arm.Right]
 
 
 func followColour*(site: Site): string =
@@ -146,7 +150,7 @@ func followColour*(site: Site): string =
   ##   Plain shade, which is theirs wherever two dancers are told
   ##     apart -- same ink that hand's own mark carries in every frame
   ##     picture on page.
-  INK[if site == Site.LeftHand: Arm.L else: Arm.R]
+  INK[if site == Site.LeftHand: Arm.Left else: Arm.Right]
 
 
 func labelled*(line: string): string =
@@ -218,33 +222,30 @@ func stack*(x, y: int; lines: seq[string]; style, plate_class: string): string =
     result.add text(x, top + LINE_HEIGHT * (index + 1) - 1, line, style)
 
 
-func waking(is_standing, was_standing, is_moving: bool): string =
+func waking(is_standing, is_standing_prev, is_moving: bool): string =
   ## Say how something's standing is changing while mark is on its way.
   ##   Map is drawn as frame being reached will have it, and whatever
   ##     that changes is faded from how frame being left had it.  What is
   ##     left when mark lands is then already drawing for where it
   ##     landed, so page can replace one with other and nothing
   ##     moves.
-  if not is_moving or is_standing == was_standing: ""
+  if not is_moving or is_standing == is_standing_prev: ""
   elif is_standing: " waking"
   else: " dozing"
 
 
-type Box* = tuple[x, y, w, h: int] ## Room something takes up in drawing.
-
-
 func overlaps*(a, b: Box): bool =
   ## Test whether two things in drawing would be drawn over each other.
-  a.x < b.x + b.w and b.x < a.x + a.w and a.y < b.y + b.h and b.y < a.y + a.h
+  a.x < b.x + b.width and b.x < a.x + a.width and a.y < b.y + b.height and b.y < a.y + a.height
 
 
 func labelBox(x, y: int; lines: seq[string]): Box =
   ## Get room name takes up, centred on point.
-  let (w, h) = plateSpan(lines)
-  (x - w div 2, y - h div 2, w, h)
+  let (width, height) = plateSpan(lines)
+  (x - width div 2, y - height div 2, width, height)
 
 
-func nameBox*(target: Frame; cx, cy, width: int): Box =
+func nameBox*(target: Frame; centre_x, centre_y, width: int): Box =
   ## Get room frame's name takes up, above frame it names.
   ##   One answer, used both to draw plate that keeps lines off
   ##     words and to keep other names away from them, so two cannot
@@ -252,7 +253,7 @@ func nameBox*(target: Frame; cx, cy, width: int): Box =
   let
     height = frameHeight(width)
     named = target.describe.len * 6 + 10
-  (cx - named div 2, cy - height div 2 - NAME_RISE - 11, named, 15)
+  (centre_x - named div 2, centre_y - height div 2 - NAME_RISE - 11, named, 15)
 
 
 func frameBoxes*(): seq[Box] =
@@ -264,11 +265,11 @@ func frameBoxes*(): seq[Box] =
   ##     as it is.
   for target in FRAMES:
     let
-      (cx, cy) = centreOf(target)
-      h = frameHeight(NODE_WIDTH)
-    result.add (cx - NODE_WIDTH div 2 - 8, cy - h div 2 - 6,
-      NODE_WIDTH + 16, h + 12)
-    result.add nameBox(target, cx, cy, NODE_WIDTH)
+      (centre_x, centre_y) = centreOf(target)
+      height = frameHeight(NODE_WIDTH)
+    result.add (centre_x - NODE_WIDTH div 2 - 8, centre_y - height div 2 - 6,
+      NODE_WIDTH + 16, height + 12)
+    result.add nameBox(target, centre_x, centre_y, NODE_WIDTH)
 
 
 const
@@ -293,7 +294,7 @@ const
     ## Dash longer than any line on map, for stretch after gap.
 
 
-func gapAt(ax, ay, bx, by: int; box: Box): Option[(int, int)] =
+func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
   ## Get where name's box crosses its own line: how far line runs before
   ## break, and how long break is.
   ##   Nothing, where name sits clear of line -- which is what
@@ -304,33 +305,33 @@ func gapAt(ax, ay, bx, by: int; box: Box): Option[(int, int)] =
   ##     line really crosses it.  Name met corner-on cuts less than one met
   ##     square, which is what eye expects.
   let
-    run = float(bx - ax)
-    rise = float(by - ay)
+    run = float(end_x - start_x)
+    rise = float(end_y - start_y)
     length = sqrt(run * run + rise * rise)
   if length < 1:
     return none((int, int))
   var
-    lo = 0.0
-    hi = 1.0
+    lower = 0.0
+    upper = 1.0
   for (start, delta, near, far) in [
-      (float(ax), run, float(box.x), float(box.x + box.w)),
-      (float(ay), rise, float(box.y), float(box.y + box.h))]:
+      (float(start_x), run, float(box.x), float(box.x + box.width)),
+      (float(start_y), rise, float(box.y), float(box.y + box.height))]:
     if abs(delta) < 1e-9:
       if start < near or start > far:
         return none((int, int))        # runs parallel to box and outside it
     else:
       var
-        t0 = (near - start) / delta
-        t1 = (far - start) / delta
-      if t0 > t1:
-        swap t0, t1
-      lo = max(lo, t0)
-      hi = min(hi, t1)
-  if hi <= lo:
+        entry = (near - start) / delta
+        exit = (far - start) / delta
+      if entry > exit:
+        swap entry, exit
+      lower = max(lower, entry)
+      upper = min(upper, exit)
+  if upper <= lower:
     return none((int, int))            # name is not on this line at all
   let
-    opens = max(lo * length - float(LABEL_AIR), 1.0)
-    shuts = min(hi * length + float(LABEL_AIR), length)
+    opens = max(lower * length - float(LABEL_AIR), 1.0)
+    shuts = min(upper * length + float(LABEL_AIR), length)
   if shuts <= opens or int(shuts - opens) <= 0:
     return none((int, int))
   some((int(opens), int(shuts - opens)))
@@ -355,18 +356,18 @@ func placeBelow(x, y: int; lines: seq[string]; used: var seq[Box]): (int, int) =
   (x, y)
 
 
-func placeLabel(ax, ay, bx, by: int; lines: seq[string];
+func placeLabel(start_x, start_y, end_x, end_y: int; lines: seq[string];
     used: var seq[Box]): (int, int) =
   ## Get where name can sit near its line without landing on anything else.
   let
-    run = bx - ax
-    rise = by - ay
+    run = end_x - start_x
+    rise = end_y - start_y
     length = max(1, int(sqrt(float(run * run + rise * rise))))
   for aside in LABEL_ASIDES:
     for along in LABEL_ALONGS:
       let
-        x = ax + run * along div 100 - rise * aside div length
-        y = ay + rise * along div 100 + run * aside div length
+        x = start_x + run * along div 100 - rise * aside div length
+        y = start_y + rise * along div 100 + run * aside div length
         box = labelBox(x, y, lines)
       if box.isClear(used):
         used.add box
@@ -374,8 +375,8 @@ func placeLabel(ax, ay, bx, by: int; lines: seq[string];
   # Nowhere is clear, so take place it would have had and let it crowd:
   # name in wrong place still says more than no name at all.
   let
-    x = ax + run * LABEL_ALONGS[0] div 100
-    y = ay + rise * LABEL_ALONGS[0] div 100
+    x = start_x + run * LABEL_ALONGS[0] div 100
+    y = start_y + rise * LABEL_ALONGS[0] div 100
   used.add labelBox(x, y, lines)
   (x, y)
 
@@ -398,15 +399,15 @@ func edge(a, b: Frame; side: Side; standing, was, taken: Option[Frame];
   ##     that runs up page.  Naming those too is what lets map be
   ##     read as map rather than only from where you happen to be.
   let
-    (ax, ay) = centreOf(a)
-    (bx, by) = centreOf(b)
+    (start_x, start_y) = centreOf(a)
+    (end_x, end_y) = centreOf(b)
     is_lit = standing == some(a) or standing == some(b)
-    was_lit = was == some(a) or was == some(b)
+    is_lit_prev = was == some(a) or was == some(b)
     # Line mark is travelling along, while it is travelling along it.
     is_taken = (was == some(a) and taken == some(b)) or
       (was == some(b) and taken == some(a))
     marks = (if is_lit: " lit" else: "") & (if is_taken: " taking" else: "") &
-      waking(is_lit, was_lit, was.isSome)
+      waking(is_lit, is_lit_prev, was.isSome)
   # Two ends, asked for two different reasons, and since tower was turned up
   # right way they are no longer same end: what line is *called* is
   # read from frame holding less, and where name is *written* is
@@ -426,10 +427,10 @@ func edge(a, b: Frame; side: Side; standing, was, taken: Option[Frame];
     # under reader, where it is written should not.
     top = if centreOf(a)[1] <= centreOf(b)[1]: a else: b
     bottom = if top == a: b else: a
-    (sx, sy) = centreOf(top)
-    (dx, dy) = centreOf(bottom)
+    (top_x, top_y) = centreOf(top)
+    (bottom_x, bottom_y) = centreOf(bottom)
   # Name sits along line, wherever along it there is room.
-  let (nx, ny) = placeLabel(sx, sy, dx, dy, naming, used)
+  let (label_x, label_y) = placeLabel(top_x, top_y, bottom_x, bottom_y, naming, used)
   # And where it lands on line, line is *cut* for it rather than
   # painted over.  Plate hides what is under it and leaves hole with square
   # ends, which since frame pictures learned to break connection is
@@ -438,7 +439,7 @@ func edge(a, b: Frame; side: Side; standing, was, taken: Option[Frame];
   # pattern, because element cut into pieces is different number of
   # pieces -- and round cap on each side says ending was meant.
   let
-    cut = gapAt(ax, ay, bx, by, labelBox(nx, ny, naming))
+    cut = gapAt(start_x, start_y, end_x, end_y, labelBox(label_x, label_y, naming))
     broken = if cut.isNone: ""
              else: "; stroke-dasharray: " & $cut.get[0] & " " & $cut.get[1] &
                " " & $LONG_ENOUGH
@@ -446,11 +447,11 @@ func edge(a, b: Frame; side: Side; standing, was, taken: Option[Frame];
   # one: name without its line to belong to says nothing.  So two are put
   # in two groups wearing same marks rather than in one group.
   let ink = "<g class=\"way" & marks & "\">" &
-    "<line class=\"edge\" x1=\"" & $ax & "\" y1=\"" & $ay &
-    "\" x2=\"" & $bx & "\" y2=\"" & $by & "\" style=\"stroke: " &
+    "<line class=\"edge\" x1=\"" & $start_x & "\" y1=\"" & $start_y &
+    "\" x2=\"" & $end_x & "\" y2=\"" & $end_y & "\" style=\"stroke: " &
     armColour(side) & "; stroke-linecap: round" & broken & "\"/></g>"
   (ink, "<g class=\"way naming" & marks & "\">" &
-    stack(nx, ny, naming, LABEL_FONT & "; fill: " & armColour(side),
+    stack(label_x, label_y, naming, LABEL_FONT & "; fill: " & armColour(side),
       "edge-plate") & "</g>")
 
 
@@ -481,13 +482,13 @@ func arc(a, b: Frame; name: string; standing, was: Option[Frame];
   ## Draw compound as curve, since no single move joins two frames.
   ##   Ink and name apart, for reason `edge` parts them.
   let
-    (ax, ay) = centreOf(a)
-    (bx, by) = centreOf(b)
-    mx = (ax + bx) div 2
-    dip = ARC_DIP + (abs(ax - bx) div 5)
+    (start_x, start_y) = centreOf(a)
+    (end_x, end_y) = centreOf(b)
+    middle_x = (start_x + end_x) div 2
+    dip = ARC_DIP + (abs(start_x - end_x) div 5)
     is_lit = standing == some(a) or standing == some(b)
-    was_lit = was == some(a) or was == some(b)
-    lit = (if is_lit: " lit" else: "") & waking(is_lit, was_lit, was.isSome)
+    is_lit_prev = was == some(a) or was == some(b)
+    lit = (if is_lit: " lit" else: "") & waking(is_lit, is_lit_prev, was.isSome)
   # Drawn as two halves, each in ink of arm that acts as you travel into
   # it.  Ordinary line has one ink because same arm acts whichever way it
   # is read; compound has two because it hands follow's hand from one of
@@ -495,29 +496,32 @@ func arc(a, b: Frame; name: string; standing, was: Option[Frame];
   # are going.  Splitting curve is what lets it say both without lying about
   # either, and it stays dashed, because it is still two moves.
   let
-    (px, py) = (mx, max(ay, by) + dip)
-    (fx, fy) = ((ax + px) div 2, (ay + py) div 2)
-    (gx, gy) = ((px + bx) div 2, (py + by) div 2)
-    (hx, hy) = ((fx + gx) div 2, (fy + gy) div 2)
+    (control_x, control_y) = (middle_x, max(start_y, end_y) + dip)
+    (first_control_x, first_control_y) = ((start_x + control_x) div 2, (start_y + control_y) div 2)
+    (second_control_x, second_control_y) = ((control_x + end_x) div 2, (control_y + end_y) div 2)
+    halfway_x = (first_control_x + second_control_x) div 2
+    halfway_y = (first_control_y + second_control_y) div 2
   func ink(side: Option[Side]): string =
     ## Half's own arm's ink, or quiet ink where no arm acts.
     if side.isSome: armColour(side.get) else: COLOUR_DIM
   var curve = "<g class=\"join" & lit & "\">" &
-    "<path class=\"arc\" d=\"M" & $ax & " " & $ay & "Q" & $fx & " " & $fy &
-    " " & $hx & " " & $hy & "\" style=\"stroke: " & ink(compoundSide(b, a)) &
+    "<path class=\"arc\" d=\"M" & $start_x & " " & $start_y &
+    "Q" & $first_control_x & " " & $first_control_y &
+    " " & $halfway_x & " " & $halfway_y & "\" style=\"stroke: " & ink(compoundSide(b, a)) &
     "\"/>" &
-    "<path class=\"arc\" d=\"M" & $hx & " " & $hy & "Q" & $gx & " " & $gy &
-    " " & $bx & " " & $by & "\" style=\"stroke: " & ink(compoundSide(a, b)) &
+    "<path class=\"arc\" d=\"M" & $halfway_x & " " & $halfway_y &
+    "Q" & $second_control_x & " " & $second_control_y &
+    " " & $end_x & " " & $end_y & "\" style=\"stroke: " & ink(compoundSide(a, b)) &
     "\"/>"
   curve.add "</g>"
   # Curve is at its lowest halfway along, which is half dip below row.
-  let (nx, ny) = placeBelow(mx, max(ay, by) + dip div 2 + 4, @[name], used)
+  let (label_x, label_y) = placeBelow(middle_x, max(start_y, end_y) + dip div 2 + 4, @[name], used)
   (curve, "<g class=\"join naming" & lit & "\">" &
-    stack(nx, ny, @[name], LABEL_FONT & "; fill: " & COLOUR_DIM, "arc-plate") &
+    stack(label_x, label_y, @[name], LABEL_FONT & "; fill: " & COLOUR_DIM, "arc-plate") &
     "</g>")
 
 
-func nodeAt*(target: Frame; cx, cy, width: int; classes: string;
+func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string;
     extra = ""): string =
   ## Draw one frame at place, with its name above it.
   ##   Both drawings put frames somewhere; only they know where.  Keeping
@@ -526,18 +530,18 @@ func nodeAt*(target: Frame; cx, cy, width: int; classes: string;
   let height = frameHeight(width)
   result = "<g class=\"node " & classes & "\" data-frame=\"" & target.key &
     "\"" & extra & ">"
-  result.add "<rect class=\"node-plate\" x=\"" & $(cx - width div 2 - 8) &
-    "\" y=\"" & $(cy - height div 2 - 6) & "\" width=\"" & $(width + 16) &
+  result.add "<rect class=\"node-plate\" x=\"" & $(centre_x - width div 2 - 8) &
+    "\" y=\"" & $(centre_y - height div 2 - 6) & "\" width=\"" & $(width + 16) &
     "\" height=\"" & $(height + 12) & "\" rx=\"8\"/>"
-  result.add renderFramePlaced(target, cx - width div 2, cy - height div 2, width)
+  result.add renderFramePlaced(target, centre_x - width div 2, centre_y - height div 2, width)
   # Name goes above picture, leaving space below for curves, and
   # gets plate of its own as every other name in drawing has: lines leave
   # frame from its middle, so they run out through words above it, and word
   # with line drawn through it is not word.
-  let (nx, ny, nw, nh) = nameBox(target, cx, cy, width)
-  result.add "<rect class=\"name-plate\" x=\"" & $nx & "\" y=\"" & $ny &
-    "\" width=\"" & $nw & "\" height=\"" & $nh & "\" rx=\"3\"/>"
-  result.add text(cx, cy - height div 2 - NAME_RISE, target.describe,
+  let (name_x, name_y, name_width, name_height) = nameBox(target, centre_x, centre_y, width)
+  result.add "<rect class=\"name-plate\" x=\"" & $name_x & "\" y=\"" & $name_y &
+    "\" width=\"" & $name_width & "\" height=\"" & $name_height & "\" rx=\"3\"/>"
+  result.add text(centre_x, centre_y - height div 2 - NAME_RISE, target.describe,
     NAME_FONT & "; fill: " & COLOUR_INK, "node-name")
   result.add "</g>"
 
@@ -550,7 +554,7 @@ func standingOf(target: Frame; where: Option[Frame]): (bool, bool, bool) =
     compound(where.get, target).isSome)
 
 
-func markAt*(cx, cy, width: int; extra = ""): string =
+func markAt*(centre_x, centre_y, width: int; extra = ""): string =
   ## Draw mark that says which frame is being held.
   ##   Its own element rather than heavier line on frame's own plate,
   ##     because it has to be able to leave one frame and arrive at another:
@@ -561,22 +565,22 @@ func markAt*(cx, cy, width: int; extra = ""): string =
   ##     Drawing that also thickened plate underneath would be saying it
   ##     twice.
   let height = frameHeight(width)
-  "<rect class=\"mark\" x=\"" & $(cx - width div 2 - 8) & "\" y=\"" &
-    $(cy - height div 2 - 6) & "\" width=\"" & $(width + 16) & "\" height=\"" &
+  "<rect class=\"mark\" x=\"" & $(centre_x - width div 2 - 8) & "\" y=\"" &
+    $(centre_y - height div 2 - 6) & "\" width=\"" & $(width + 16) & "\" height=\"" &
     $(height + 12) & "\" rx=\"8\"" & extra & "/>"
 
 
 func node(target: Frame; standing, was: Option[Frame]): string =
   ## Draw one frame in its row, on map of everything.
   let
-    (cx, cy) = centreOf(target)
+    (centre_x, centre_y) = centreOf(target)
     (is_here, is_reachable, is_compound) = standingOf(target, standing)
-    (was_here, was_reachable, was_compound) = standingOf(target, was)
+    (is_here_prev, is_reachable_prev, is_compound_prev) = standingOf(target, was)
     within = is_here or is_reachable or is_compound
-  nodeAt(target, cx, cy, NODE_WIDTH,
+  nodeAt(target, centre_x, centre_y, NODE_WIDTH,
     (if is_here: "here " else: "") & (if is_reachable: "reachable " else: "") &
     (if is_compound: "two" else: "") &
-    waking(within, was_here or was_reachable or was_compound, was.isSome))
+    waking(within, is_here_prev or is_reachable_prev or is_compound_prev, was.isSome))
 
 
 
@@ -625,10 +629,11 @@ func renderMap*(here: Option[Frame]; motion = Motion.Still;
   # Names are *placed* in other order.  Curves are placed first because
   # each has only one place it can be named, and every name after has to
   # keep clear of ones already put down.
-  var used = frameBoxes()
-  var ink, names = ""
-  var curve_ink, curve_names = ""
-  var drawn: seq[string] = @[]
+  var
+    used = frameBoxes()
+    ink, names = ""
+    curve_ink, curve_names = ""
+    drawn: seq[string] = @[]
   for source in FRAMES:
     for target in FRAMES:
       let helper = compound(source, target)
@@ -666,10 +671,10 @@ func renderMap*(here: Option[Frame]; motion = Motion.Still;
     # distance to frame chosen: taking move is mark passing along
     # line between them, which is same thing close drawing says.
     let
-      (hx, hy) = centreOf(here.get)
-      (tx, ty) = if leaving: centreOf(taken.get) else: (hx, hy)
+      (here_x, here_y) = centreOf(here.get)
+      (taken_x, taken_y) = if leaving: centreOf(taken.get) else: (here_x, here_y)
     # Placed by where it is rather than moved to it, so that distance it
     # carries is distance to travel and not place to jump to.
-    result.add markAt(hx, hy, NODE_WIDTH, " style=\"--mx: " & $(tx - hx) &
-      "px; --my: " & $(ty - hy) & "px\"")
+    result.add markAt(here_x, here_y, NODE_WIDTH, " style=\"--mx: " & $(taken_x - here_x) &
+      "px; --my: " & $(taken_y - here_y) & "px\"")
   result.add "</svg>"

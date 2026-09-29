@@ -37,6 +37,8 @@
 ##     apart between them.
 ##   Distance is not used to match, because distance is what they disagree about.
 
+{.experimental: "strictFuncs".}
+
 type
   Star* = object ## Define one real star in neighbourhood.
     name*: string ## What SIMBAD calls it.

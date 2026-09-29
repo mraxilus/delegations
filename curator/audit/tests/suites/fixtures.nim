@@ -5,6 +5,8 @@
 ##   Cost: `goodTree` repeats layout rules as data; when layout grows, fixture grows with it,
 ##     and `taudit` proves they still agree.
 
+{.experimental: "strictFuncs".}
+
 import std/[json, os, osproc, strutils, tempfiles]
 import ../../src/[domains, kinds, markdown, layout, provenance, dependencies]
 
@@ -39,11 +41,12 @@ const
     ## Minimal Atlas lock naming one checkout directory.
   RULES_TEXT* = [
     "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
+    "# Examples\n\nCases.\n", "# Guide\n\nSteps.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
-  ALPHA_DIR* = CONTRIBUTOR & "/ronri/alpha"
+  ALPHA_DIRECTORY* = CONTRIBUTOR & "/ronri/alpha"
     ## Contributor project in fixture tree.
-  AUDIT_DIR* = CURATOR & "/audit"
+  AUDIT_DIRECTORY* = CURATOR & "/audit"
     ## Curator project in fixture tree.
 
 
@@ -63,14 +66,14 @@ func readmeText*(): string =
   for d in DOMAINS: result.add "| " & d.folder & " | " & d.name & " | " & d.theme & " |\n"
 
 
-func projectEntries*(dir: string, stamp: string): seq[Entry] =
+func projectEntries*(directory: string, stamp: string): seq[Entry] =
   ## Build entries of one complete project directory.
   @[
-    entry(dir & "/README.md", "# Project\n\nPurpose.\n"),
-    entry(dir & "/PROVENANCE.md", provenanceText(stamp)),
-    entry(dir & "/GLOSSARY.md", GLOSSARY_TEXT),
-    entry(dir & "/" & dir.projectName & NIMBLE_EXT, NIMBLE_TEXT),
-    entry(dir & "/tests/tall.nim", "## Test everything.\n\ndiscard\n"),
+    entry(directory & "/README.md", "# Project\n\nPurpose.\n"),
+    entry(directory & "/PROVENANCE.md", provenanceText(stamp)),
+    entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
+    entry(directory & "/" & directory.projectName & NIMBLE_EXT, NIMBLE_TEXT),
+    entry(directory & "/tests/tall.nim", "## Test everything.\n\ndiscard\n"),
   ]
 
 
@@ -95,8 +98,8 @@ func goodTree*(): Tree =
     result.add entry(
       CONTRIBUTOR & "/" & d.folder & "/README.md", "# " & d.name & "\n\n" & d.theme & "\n"
     )
-  result.add projectEntries(AUDIT_DIR, stamp_now)
-  result.add projectEntries(ALPHA_DIR, stamp_now)
+  result.add projectEntries(AUDIT_DIRECTORY, stamp_now)
+  result.add projectEntries(ALPHA_DIRECTORY, stamp_now)
 
 
 func with*(tree: Tree, entries: varargs[Entry]): Tree =
