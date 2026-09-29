@@ -40,7 +40,7 @@ type
   Sheet* = object
     ## Define one algebra's documents docket reads.
     name*, title*: string
-      ## Short name and title, e.g. `rga4d`, `Rigid 4D`.
+      ## Short name and title, as `rga4d` and `Rigid 4D`.
     dimensions*: int
       ## Vector space dimensions.
     static_measurements*, runtime_measurements*: JsonNode
@@ -56,83 +56,85 @@ type
 
 #[ Reading ]#
 
-func figuresOf(f: JsonNode): Option[Figures] =
-  ## Read counts and movement of one function; none where function is absent.
-  if f.isNil or f.kind != JObject: return none(Figures)
-  let
-    t = f{"total"}
-    m = f{"movement"}
-  some(Figures(
-    multiplies: t{"multiplies"}.getInt,
-    divides: t{"divides"}.getInt,
-    bytes: m{"bytes_moved"}.getInt,
-    read: m{"bytes_read"}.getInt,
-    written: m{"bytes_written"}.getInt,
-    zeroed: m{"bytes_zeroed"}.getInt,
-    intermediates: m{"bytes_intermediates"}.getInt,
-    copied: m{"bytes_copied"}.getInt,
-    fills: t{"zero_fills"}.getInt,
-    intermediate_count: t{"intermediates"}.getInt,
-    copies: t{"copies"}.getInt,
-    checks: t{"checks"}.getInt,
-    is_inline: f{"inline"}.getBool,
-  ))
-
-
-func boundOf(b: JsonNode, width: int): Option[BoundFigures] =
-  ## Read bound with read and written bytes split out; none where no rule derived.
-  ##   Scalar-valued shapes write one double; scale reads operand and one scalar.
-  if b.isNil or b.kind != JObject: return none(BoundFigures)
-  let
-    steps = b{"steps"}.getElems.mapIt(it.getStr)
-    shape = b{"shape"}.getStr
-    last = if steps.len > 0: steps[^1] else: shape
-    is_composed = b{"is_composed"}.getBool
-    bytes = b{"bytes_moved"}.getInt
-    (read, written) =
-      if last == "Scale" and not is_composed: (width + 8, width)
-      elif last in ["ScalarForm", "SquaredNorm", "Norm"]: (bytes - 8, 8)
-      else: (bytes - width, width)
-  some(BoundFigures(
-    multiplies: b{"multiplies"}.getInt,
-    divides: b{"divides"}.getInt,
-    bytes: bytes,
-    read: read,
-    written: written,
-    shape: shape,
-    steps: steps,
-    is_composed: is_composed,
-  ))
-
-
 func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
   ## Read one row per catalogued measurand, docket order; `ids` is docket file whole.
+
+  func figuresOf(function: JsonNode): Option[Figures] =
+    ## Read counts and movement of one function; none where function is absent.
+    if function.isNil or function.kind != JObject: return none(Figures)
+    let
+      totals = function{"total"}
+      movement = function{"movement"}
+    some(Figures(
+      multiplies: totals{"multiplies"}.getInt,
+      divides: totals{"divides"}.getInt,
+      bytes: movement{"bytes_moved"}.getInt,
+      read: movement{"bytes_read"}.getInt,
+      written: movement{"bytes_written"}.getInt,
+      zeroed: movement{"bytes_zeroed"}.getInt,
+      intermediates: movement{"bytes_intermediates"}.getInt,
+      copied: movement{"bytes_copied"}.getInt,
+      fills: totals{"zero_fills"}.getInt,
+      intermediate_count: totals{"intermediates"}.getInt,
+      copies: totals{"copies"}.getInt,
+      checks: totals{"checks"}.getInt,
+      is_inline: function{"inline"}.getBool,
+    ))
+
+  func boundOf(bound: JsonNode, width: int): Option[BoundFigures] =
+    ## Read bound with read and written bytes split out; none where no rule derived.
+    ##   Scalar-valued shapes write one double; scale reads operand and one scalar.
+    if bound.isNil or bound.kind != JObject: return none(BoundFigures)
+    let
+      steps = bound{"steps"}.getElems.mapIt(it.getStr)
+      shape = bound{"shape"}.getStr
+      last = if steps.len > 0: steps[^1] else: shape
+      is_composed = bound{"is_composed"}.getBool
+      bytes = bound{"bytes_moved"}.getInt
+      (read, written) =
+        if last == "Scale" and not is_composed: (width + 8, width)
+        elif last in ["ScalarForm", "SquaredNorm", "Norm"]: (bytes - 8, 8)
+        else: (bytes - width, width)
+    some(BoundFigures(
+      multiplies: bound{"multiplies"}.getInt,
+      divides: bound{"divides"}.getInt,
+      bytes: bytes,
+      read: read,
+      written: written,
+      shape: shape,
+      steps: steps,
+      is_composed: is_composed,
+    ))
+
   let
     width = 8 shl sheet.dimensions
     functions = sheet.static_measurements{"functions"}
     timings = sheet.runtime_measurements{"measurands"}
-  for id, m in sheet.static_measurements{"measurands"}.pairs:
+  for id, measurand in sheet.static_measurements{"measurands"}.pairs:
     let
-      library_key = m{"library"}.getStr
-      reference_key = m{"reference"}.getStr
+      library_key = measurand{"library"}.getStr
+      reference_key = measurand{"reference"}.getStr
       timing = timings{id}
-      lt = if timing.isNil: nil else: timing{"library"}
-      rt = if timing.isNil: nil else: timing{"reference"}
+      timing_library = if timing.isNil: nil else: timing{"library"}
+      timing_reference = if timing.isNil: nil else: timing{"reference"}
+      is_timed_library = not timing_library.isNil and timing_library.kind == JObject
+      is_timed_reference = not timing_reference.isNil and timing_reference.kind == JObject
     result.add Row(
       id: ids{"ids", sheet.name & "/" & id}.getStr,
       measurand: id,
-      symbol: m{"symbol"}.getStr,
-      expression: m{"expression"}.getStr,
-      cite: m{"cite"}.getStr,
+      symbol: measurand{"symbol"}.getStr,
+      expression: measurand{"expression"}.getStr,
+      cite: measurand{"cite"}.getStr,
       is_general: reference_key.len == 0,
       library: figuresOf(functions{library_key}),
-      reference: if reference_key.len == 0: none(Figures) else: figuresOf(functions{reference_key}),
-      bound: boundOf(m{"bound"}, width),
-      ns_library: if lt.isNil or lt.kind != JObject: 0.0 else: lt{"ns_median"}.getFloat,
-      ns_reference: if rt.isNil or rt.kind != JObject: 0.0 else: rt{"ns_median"}.getFloat,
-      nan_share: if lt.isNil or lt.kind != JObject: 0.0 else: lt{"nan_share"}.getFloat,
+      reference:
+        if reference_key.len == 0: none(Figures) else: figuresOf(functions{reference_key}),
+      bound: boundOf(measurand{"bound"}, width),
+      ns_library: if is_timed_library: timing_library{"ns_median"}.getFloat else: 0.0,
+      ns_reference: if is_timed_reference: timing_reference{"ns_median"}.getFloat else: 0.0,
+      nan_share: if is_timed_library: timing_library{"nan_share"}.getFloat else: 0.0,
     )
-  result.sort(proc (a, b: Row): int = cmp(a.id, b.id))
+  result.sort(proc (left, right: Row): int = cmp(left.id, right.id))
 
 
 
@@ -145,155 +147,61 @@ type Tally = object
   full: int
 
 
-func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
-  ## Count rows at bound and sum their spending; typed population counts rows with all three.
-  for r in rows:
-    if not is_typed and not r.is_general: continue
-    if r.library.isNone or r.bound.isNone: continue
-    let (l, b) = (r.library.get, r.bound.get)
-    inc result.bounded
-    if l.multiplies <= b.multiplies: inc result.at_multiplies
-    if l.bytes <= b.bytes: inc result.at_bytes
-    if b.is_composed: inc result.composed
-    if is_typed and r.reference.isNone: continue
-    inc result.full
-    result.sums_library[0] += l.multiplies
-    result.sums_library[1] += l.bytes
-    result.sums_bound[0] += b.multiplies
-    result.sums_bound[1] += b.bytes
-    if r.reference.isSome:
-      result.sums_reference[0] += r.reference.get.multiplies
-      result.sums_reference[1] += r.reference.get.bytes
-
-
-func fillShare(sheet: Sheet): int =
-  ## Read share of library's modelled bytes that are zero fill, in percent.
-  var total, zeroed: int
-  for _, f in sheet.static_measurements{"functions"}.pairs:
-    if f{"module"}.getStr.startsWith("reference"): continue
-    total += f{"movement", "bytes_moved"}.getInt
-    zeroed += f{"movement", "bytes_zeroed"}.getInt
-  if total == 0: 0 else: int(round(100.0 * zeroed.float / total.float))
-
-
-func timeRatios(rows: openArray[Row]): seq[float] =
-  ## Read library over reference time, per measurand timed on both.
-  for r in rows:
-    if r.ns_library > 0 and r.ns_reference > 0: result.add r.ns_library / r.ns_reference
-
-
-
-#[ Rendering ]#
-
-func bar(kind: string, value: Option[int], row_max, log_max: int, tip: string): string =
+func bar(kind: string; value: Option[int]; row_max, log_max: int; tip: string): string =
   ## Render one bar: width against row and against algebra, value, tip.
   if value.isNone:
     return "<div class=\"bar " & kind & " none\" title=\"" & escapeHtml(tip) &
       "\"><div class=\"track\"><i></i></div><span class=\"v\">none</span></div>"
   let
-    v = value.get
-    row_width = if row_max > 0: max(if v > 0: 0.8 else: 0.0, 100.0 * v.float / row_max.float)
+    amount = value.get
+    row_width =
+      if row_max > 0: max(if amount > 0: 0.8 else: 0.0, 100.0 * amount.float / row_max.float)
       else: 0.0
-    log_width = if log_max > 0: 100.0 * ln(1.0 + v.float) / ln(1.0 + log_max.float) else: 0.0
+    log_width =
+      if log_max > 0: 100.0 * ln(1.0 + amount.float) / ln(1.0 + log_max.float) else: 0.0
   "<div class=\"bar " & kind & "\" title=\"" & escapeHtml(tip) &
     "\"><div class=\"track\"><i style=\"--w-row:" & row_width.fixed & "%;--w-log:" &
-    log_width.fixed & "%\"></i></div><span class=\"v\">" & grouped(v) & "</span></div>"
-
-
-func metricOf(f: Option[Figures], is_bytes: bool): Option[int] =
-  ## Read bytes or multiplies of figures; none where figures are absent.
-  if f.isNone: none(int) elif is_bytes: some(f.get.bytes) else: some(f.get.multiplies)
-
-
-func metricOf(b: Option[BoundFigures], is_bytes: bool): Option[int] =
-  ## Read bytes or multiplies of bound; none where no rule derived.
-  if b.isNone: none(int) elif is_bytes: some(b.get.bytes) else: some(b.get.multiplies)
-
-
-func panel(r: Row, is_bytes: bool, log_max: int): string =
-  ## Render one metric's three bars for row: library, multivector bound, typed reference.
-  let
-    library = metricOf(r.library, is_bytes)
-    reference = metricOf(r.reference, is_bytes)
-    bound =
-      if r.bound.isNone: none(int)
-      elif is_bytes: some(r.bound.get.bytes)
-      else: some(r.bound.get.multiplies)
-    row_max = max([library.get(0), bound.get(0), reference.get(0)])
-    unit = if is_bytes: " bytes" else: " multiplies"
-    shape = if r.bound.isSome: r.bound.get.shape else: ""
-  result = "<div class=\"panel bars\">" &
-    bar("library", library, row_max, log_max, "library, " & $library.get(0) & unit) &
-    bar("bound", bound, row_max, log_max, "multivector lower bound, " & shape)
-  if not r.is_general:
-    result.add "<div class=\"typed-only\">" &
-      bar("reference", reference, row_max, log_max, "type optimised lower bound") & "</div>"
-  result.add "</div>"
-
-
-func detail(r: Row): string =
-  ## Render row's breakdown: expression, citation, shape, and bytes by cause.
-  let shape =
-    if r.bound.isNone: "no derived shape"
-    elif r.bound.get.is_composed: "composed: " & r.bound.get.steps.join(" → ")
-    else: r.bound.get.shape
-  result = "<div class=\"detail\"><p>" & code(r.expression) & " · " & escapeHtml(r.cite) &
-    " · " & escapeHtml(shape) & "</p>"
-  if r.library.isSome:
-    let l = r.library.get
-    result.add "<p>Library: " & $l.fills & " zero fills, " & $l.intermediate_count &
-      " intermediates, " & $l.copies & " copies, " & $l.checks & " error checks, " &
-      $l.divides & " divides, " & (if l.is_inline: "inline" else: "not inline") & ".</p>"
-  result.add "<div class=\"table\"><table><tr><th>bytes</th><th>read</th><th>written</th>" &
-    "<th>zero fill</th><th>intermediates</th><th>copies</th><th>total</th></tr>"
-  for (name, figures, class_name) in [("library", r.library, ""),
-      ("typed form", r.reference, " class=\"typed-only\"")]:
-    if figures.isNone: continue
-    let f = figures.get
-    result.add "<tr" & class_name & "><td>" & name & "</td><td>" & grouped(f.read) & "</td><td>" &
-      grouped(f.written) & "</td><td>" & grouped(f.zeroed) & "</td><td>" &
-      grouped(f.intermediates) & "</td><td>" & grouped(f.copied) & "</td><td>" &
-      grouped(f.bytes) & "</td></tr>"
-  if r.bound.isSome:
-    let b = r.bound.get
-    result.add "<tr><td>multivector bound</td><td>" & grouped(b.read) & "</td><td>" &
-      grouped(b.written) & "</td><td>0</td><td>0</td><td>0</td><td>" & grouped(b.bytes) &
-      "</td></tr>"
-  result.add "</table></div></div>"
-
-
-func ranks(rows: openArray[Row], keys: openArray[float]): Table[string, int] =
-  ## Rank rows by key, largest first; ties, and rows keyed below zero, in docket order.
-  var keyed: seq[(float, string)]
-  for i, r in rows: keyed.add (keys[i], r.id)
-  keyed.sort(proc (a, b: (float, string)): int =
-    if a[0] == b[0]: cmp(a[1], b[1]) else: cmp(b[0], a[0]))
-  for i, (_, id) in keyed: result[id] = i
-
-
-func rowHtml(r: Row, log_max: array[2, int], order: array[4, int]): string =
-  ## Render one row as details: summary cells, then breakdown.
-  var classes = @["row"]
-  if not r.is_general: classes.add "typed"
-  if r.library.isSome and r.bound.isSome and r.library.get.multiplies > r.bound.get.multiplies:
-    classes.add "above"
-  if r.bound.isSome and r.bound.get.is_composed: classes.add "chain"
-  if r.nan_share > 0: classes.add "nan"
-  var time = if r.ns_library > 0: "<b>" & r.ns_library.fixed(1) & "</b>" else: "–"
-  if r.ns_library > 0 and r.ns_reference > 0:
-    time.add "<span class=\"typed-only\"> / " & r.ns_reference.fixed(1) & "<br>" &
-      ratioText(r.ns_library / r.ns_reference) & "</span>"
-  if r.nan_share > 0: time.add chip("NaN " & $int(round(100 * r.nan_share)) & "%", "fail")
-  "<details class=\"" & classes.join(" ") & "\" style=\"--o-bytes:" & $order[0] &
-    ";--o-multiplies:" & $order[1] & ";--o-typed:" & $order[2] & ";--o-time:" & $order[3] &
-    "\"><summary><span class=\"op\"><span class=\"n\">" & escapeHtml(r.measurand) &
-    "</span><span class=\"sub\">" & escapeHtml(r.id) & " · " & escapeHtml(r.symbol) &
-    "</span></span>" & panel(r, false, log_max[0]) & panel(r, true, log_max[1]) &
-    "<span class=\"time\">" & time & "</span></summary>" & detail(r) & "</details>"
+    log_width.fixed & "%\"></i></div><span class=\"v\">" & grouped(amount) & "</span></div>"
 
 
 func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
   ## Render facts for both populations; typed toggle shows one.
+
+  func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
+    ## Count rows at bound and sum their spending; typed population counts rows with all three.
+    for row in rows:
+      if not is_typed and not row.is_general: continue
+      if row.library.isNone or row.bound.isNone: continue
+      let (library, bound) = (row.library.get, row.bound.get)
+      inc result.bounded
+      if library.multiplies <= bound.multiplies: inc result.at_multiplies
+      if library.bytes <= bound.bytes: inc result.at_bytes
+      if bound.is_composed: inc result.composed
+      if is_typed and row.reference.isNone: continue
+      inc result.full
+      result.sums_library[0] += library.multiplies
+      result.sums_library[1] += library.bytes
+      result.sums_bound[0] += bound.multiplies
+      result.sums_bound[1] += bound.bytes
+      if row.reference.isSome:
+        result.sums_reference[0] += row.reference.get.multiplies
+        result.sums_reference[1] += row.reference.get.bytes
+
+  func fillShare(sheet: Sheet): int =
+    ## Read share of library's modelled bytes that are zero fill, in percent.
+    var total, zeroed: int
+    for _, function in sheet.static_measurements{"functions"}.pairs:
+      if function{"module"}.getStr.startsWith("reference"): continue
+      total += function{"movement", "bytes_moved"}.getInt
+      zeroed += function{"movement", "bytes_zeroed"}.getInt
+    if total == 0: 0 else: int(round(100.0 * zeroed.float / total.float))
+
+  func timeRatios(rows: openArray[Row]): seq[float] =
+    ## Read library over reference time, per measurand timed on both.
+    for row in rows:
+      if row.ns_library > 0 and row.ns_reference > 0:
+        result.add row.ns_library / row.ns_reference
+
   let
     general = tallyOf(rows, false)
     typed = tallyOf(rows, true)
@@ -329,42 +237,135 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
   result.add "</div>"
 
 
-func parity(sheet: Sheet, overlay: JsonNode, is_typed: bool): (int, int, int) =
-  ## Count rows at bound on multiplies and on bytes, with overlay's functions in place.
-  var n, at_multiplies, at_bytes: int
-  let functions = sheet.static_measurements{"functions"}
-  for id, m in sheet.static_measurements{"measurands"}.pairs:
-    if not is_typed and m{"reference"}.getStr.len > 0: continue
-    let
-      key = m{"library"}.getStr
-      b = m{"bound"}
-    if b.isNil or key.len == 0 or not functions.hasKey(key): continue
-    var f = functions[key]
-    if not overlay.isNil and overlay.hasKey(key):
-      let after = overlay[key]{"after"}
-      if after.isNil or after.kind != JObject: continue
-      f = %*{"total": after, "movement": after}
-    inc n
-    if f{"total", "multiplies"}.getInt <= b{"multiplies"}.getInt: inc at_multiplies
-    if f{"movement", "bytes_moved"}.getInt <= b{"bytes_moved"}.getInt: inc at_bytes
-  (n, at_multiplies, at_bytes)
 
+#[ Rows ]#
+
+func metricOf(figures: Option[Figures], is_bytes: bool): Option[int] =
+  ## Read bytes or multiplies of figures; none where figures are absent.
+  if figures.isNone: none(int)
+  elif is_bytes: some(figures.get.bytes)
+  else: some(figures.get.multiplies)
+
+
+func metricOf(bound: Option[BoundFigures], is_bytes: bool): Option[int] =
+  ## Read bytes or multiplies of bound; none where no rule derived.
+  if bound.isNone: none(int)
+  elif is_bytes: some(bound.get.bytes)
+  else: some(bound.get.multiplies)
+
+
+func rowHtml(row: Row; log_max: array[2, int]; order: array[4, int]): string =
+  ## Render one row as details: summary cells, then breakdown.
+
+  func panel(row: Row; is_bytes: bool; log_max: int): string =
+    ## Render one metric's three bars for row: library, multivector bound, typed reference.
+    let
+      library = metricOf(row.library, is_bytes)
+      reference = metricOf(row.reference, is_bytes)
+      bound = metricOf(row.bound, is_bytes)
+      row_max = max([library.get(0), bound.get(0), reference.get(0)])
+      unit = if is_bytes: " bytes" else: " multiplies"
+      shape = if row.bound.isSome: row.bound.get.shape else: ""
+    result = "<div class=\"panel bars\">" &
+      bar("library", library, row_max, log_max, "library, " & $library.get(0) & unit) &
+      bar("bound", bound, row_max, log_max, "multivector lower bound, " & shape)
+    if not row.is_general:
+      result.add "<div class=\"typed-only\">" &
+        bar("reference", reference, row_max, log_max, "type optimised lower bound") & "</div>"
+    result.add "</div>"
+
+  func detail(row: Row): string =
+    ## Render row's breakdown: expression, citation, shape, and bytes by cause.
+    let shape =
+      if row.bound.isNone: "no derived shape"
+      elif row.bound.get.is_composed: "composed: " & row.bound.get.steps.join(" → ")
+      else: row.bound.get.shape
+    result = "<div class=\"detail\"><p>" & code(row.expression) & " · " & escapeHtml(row.cite) &
+      " · " & escapeHtml(shape) & "</p>"
+    if row.library.isSome:
+      let library = row.library.get
+      result.add "<p>Library: " & $library.fills & " zero fills, " &
+        $library.intermediate_count & " intermediates, " & $library.copies & " copies, " &
+        $library.checks & " error checks, " & $library.divides & " divides, " &
+        (if library.is_inline: "inline" else: "not inline") & ".</p>"
+    result.add "<div class=\"table\"><table><tr><th>bytes</th><th>read</th><th>written</th>" &
+      "<th>zero fill</th><th>intermediates</th><th>copies</th><th>total</th></tr>"
+    for (name, side, class_name) in [("library", row.library, ""),
+        ("typed form", row.reference, " class=\"typed-only\"")]:
+      if side.isNone: continue
+      let figures = side.get
+      result.add "<tr" & class_name & "><td>" & name & "</td><td>" & grouped(figures.read) &
+        "</td><td>" & grouped(figures.written) & "</td><td>" & grouped(figures.zeroed) &
+        "</td><td>" & grouped(figures.intermediates) & "</td><td>" & grouped(figures.copied) &
+        "</td><td>" & grouped(figures.bytes) & "</td></tr>"
+    if row.bound.isSome:
+      let bound = row.bound.get
+      result.add "<tr><td>multivector bound</td><td>" & grouped(bound.read) & "</td><td>" &
+        grouped(bound.written) & "</td><td>0</td><td>0</td><td>0</td><td>" &
+        grouped(bound.bytes) & "</td></tr>"
+    result.add "</table></div></div>"
+
+  var classes = @["row"]
+  if not row.is_general: classes.add "typed"
+  if row.library.isSome and row.bound.isSome and
+      row.library.get.multiplies > row.bound.get.multiplies:
+    classes.add "above"
+  if row.bound.isSome and row.bound.get.is_composed: classes.add "chain"
+  if row.nan_share > 0: classes.add "nan"
+  var time = if row.ns_library > 0: "<b>" & row.ns_library.fixed(1) & "</b>" else: "–"
+  if row.ns_library > 0 and row.ns_reference > 0:
+    time.add "<span class=\"typed-only\"> / " & row.ns_reference.fixed(1) & "<br>" &
+      ratioText(row.ns_library / row.ns_reference) & "</span>"
+  if row.nan_share > 0: time.add chip("NaN " & $int(round(100 * row.nan_share)) & "%", "fail")
+  "<details class=\"" & classes.join(" ") & "\" style=\"--o-bytes:" & $order[0] &
+    ";--o-multiplies:" & $order[1] & ";--o-typed:" & $order[2] & ";--o-time:" & $order[3] &
+    "\"><summary><span class=\"op\"><span class=\"n\">" & escapeHtml(row.measurand) &
+    "</span><span class=\"sub\">" & escapeHtml(row.id) & " · " & escapeHtml(row.symbol) &
+    "</span></span>" & panel(row, false, log_max[0]) & panel(row, true, log_max[1]) &
+    "<span class=\"time\">" & time & "</span></summary>" & detail(row) & "</details>"
+
+
+
+#[ Page ]#
 
 func designsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
   ## Render how far each design moves parity with multivector bound.
+
+  func parity(sheet: Sheet; overlay: JsonNode; is_typed: bool): (int, int, int) =
+    ## Count rows at bound on multiplies and on bytes, with overlay's functions in place.
+    var bounded, at_multiplies, at_bytes: int
+    let functions = sheet.static_measurements{"functions"}
+    for id, measurand in sheet.static_measurements{"measurands"}.pairs:
+      if not is_typed and measurand{"reference"}.getStr.len > 0: continue
+      let
+        key = measurand{"library"}.getStr
+        bound = measurand{"bound"}
+      if bound.isNil or key.len == 0 or not functions.hasKey(key): continue
+      var function = functions[key]
+      if not overlay.isNil and overlay.hasKey(key):
+        let after = overlay[key]{"after"}
+        if after.isNil or after.kind != JObject: continue
+        function = %*{"total": after, "movement": after}
+      inc bounded
+      if function{"total", "multiplies"}.getInt <= bound{"multiplies"}.getInt: inc at_multiplies
+      if function{"movement", "bytes_moved"}.getInt <= bound{"bytes_moved"}.getInt: inc at_bytes
+    (bounded, at_multiplies, at_bytes)
+
   if overlays.len == 0: return ""
   result = "<section class=\"block\"><h2>Designs against the bound</h2><p class=\"note\">" &
     "Each design's trial replaces the functions it changes; the rest stay as baselines hold " &
     "them.</p><div class=\"table\"><table><tr><th>Design</th><th>Algebra</th>" &
     "<th>At bound on multiplies, now → design</th><th>At bound on bytes</th></tr>"
-  for o in overlays:
+  for overlay in overlays:
     for sheet in sheets:
-      if sheet.name notin o.functions: continue
+      if sheet.name notin overlay.functions: continue
       let
         now = parity(sheet, nil, false)
-        after = parity(sheet, o.functions[sheet.name], false)
-        title = if o.url.len > 0: "<a href=\"" & escapeHtml(o.url) & "\">" & escapeHtml(o.title) &
-          "</a>" else: escapeHtml(o.title)
+        after = parity(sheet, overlay.functions[sheet.name], false)
+        title =
+          if overlay.url.len > 0:
+            "<a href=\"" & escapeHtml(overlay.url) & "\">" & escapeHtml(overlay.title) & "</a>"
+          else: escapeHtml(overlay.title)
       result.add "<tr><td>" & title & "</td><td>" & sheet.title & "</td><td>" &
         $now[1] & "/" & $now[0] & " → " & $after[1] & "/" & $after[0] & "</td><td>" & $now[2] &
         "/" & $now[0] & " → " & $after[2] & "/" & $after[0] & "</td></tr>"
@@ -415,25 +416,36 @@ operation, and do not predict time across different operations. Inspect one your
     ## Method, same for every algebra.
 
 
-func above(a, b: Option[int]): float =
-  ## Read how far first value stands above second, as ratio of both plus one; below zero
-  ##   where either is absent, so such row sorts last.
-  if a.isNone or b.isNone: -1.0 else: (a.get + 1).float / (b.get + 1).float
-
-
 func docketBody*(
-  sheets: openArray[Sheet], ids: JsonNode, overlays: openArray[Overlay], pin, links: string
+  sheets: openArray[Sheet];
+  ids: JsonNode;
+  overlays: openArray[Overlay];
+  pin, links: string;
 ): string =
   ## Render docket body: header, one tab per algebra, designs against bound, method.
+
+  func above(value, base: Option[int]): float =
+    ## Read how far value stands above base, as ratio of both plus one; below zero where
+    ##   either is absent, so such row sorts last.
+    if value.isNone or base.isNone: -1.0 else: (value.get + 1).float / (base.get + 1).float
+
+  func ranks(rows: openArray[Row], keys: openArray[float]): Table[string, int] =
+    ## Rank rows by key, largest first; ties, and rows keyed below zero, in docket order.
+    var keyed: seq[(float, string)]
+    for index, row in rows: keyed.add (keys[index], row.id)
+    keyed.sort(proc (left, right: (float, string)): int =
+      if left[0] == right[0]: cmp(left[1], right[1]) else: cmp(right[0], left[0]))
+    for rank, (_, id) in keyed: result[id] = rank
+
   let taken = sheets[0].runtime_measurements{"taken"}
   result = "<div class=\"page\"><header><h1>PGA Gap Docket</h1><p class=\"meta\">pga " &
     code(pin[0 ..< 7]) & " · time " & escapeHtml(taken{"date"}.getStr) & ", " &
     escapeHtml(taken{"machine"}.getStr) & " · counts read from emitted C, exact" & links &
     "</p><label class=\"toggle\"><input type=\"checkbox\" id=\"typed\"> typed target</label>" &
     "</header><nav class=\"tabs\" aria-label=\"Algebra\">"
-  for i, sheet in sheets:
+  for index, sheet in sheets:
     result.add "<label><input type=\"radio\" name=\"algebra\" id=\"algebra-" & sheet.name & "\"" &
-      (if i == 0: " checked" else: "") & "> " & sheet.title & "</label>"
+      (if index == 0: " checked" else: "") & "> " & sheet.title & "</label>"
   result.add "</nav>"
   var rules = "<style>"
   for sheet in sheets:
@@ -447,24 +459,24 @@ func docketBody*(
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"summary\">" &
       factsHtml(sheet, rows) & "</div></section>"
   result.add CONTROLS
-  for s, sheet in sheets:
-    let rows = every[s]
+  for index, sheet in sheets:
+    let rows = every[index]
     var
       log_max: array[2, int]
       by_bytes, by_multiplies, by_typed, by_time: seq[float]
-    for r in rows:
-      for index, is_bytes in [false, true]:
-        log_max[index] = max([log_max[index], metricOf(r.library, is_bytes).get(0),
-          metricOf(r.bound, is_bytes).get(0)])
-      by_bytes.add above(metricOf(r.library, true), metricOf(r.bound, true))
-      by_multiplies.add above(metricOf(r.library, false), metricOf(r.bound, false))
-      by_typed.add above(metricOf(r.library, true), metricOf(r.reference, true))
-      by_time.add(if r.ns_reference > 0: r.ns_library / r.ns_reference else: -1.0)
+    for row in rows:
+      for side, is_bytes in [false, true]:
+        log_max[side] = max([log_max[side], metricOf(row.library, is_bytes).get(0),
+          metricOf(row.bound, is_bytes).get(0)])
+      by_bytes.add above(metricOf(row.library, true), metricOf(row.bound, true))
+      by_multiplies.add above(metricOf(row.library, false), metricOf(row.bound, false))
+      by_typed.add above(metricOf(row.library, true), metricOf(row.reference, true))
+      by_time.add(if row.ns_reference > 0: row.ns_library / row.ns_reference else: -1.0)
     let order = [ranks(rows, by_bytes), ranks(rows, by_multiplies), ranks(rows, by_typed),
       ranks(rows, by_time)]
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"
-    for r in rows:
-      result.add rowHtml(r, log_max, [order[0][r.id], order[1][r.id], order[2][r.id],
-        order[3][r.id]])
+    for row in rows:
+      result.add rowHtml(row, log_max, [order[0][row.id], order[1][row.id], order[2][row.id],
+        order[3][row.id]])
     result.add "</div></section>"
   result.add designsHtml(sheets, overlays) & METHOD & "</div>"

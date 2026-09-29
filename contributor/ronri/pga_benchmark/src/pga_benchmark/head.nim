@@ -47,14 +47,14 @@ func checkHead*(pin, pin_tree, head, head_tree, lock: string): seq[Finding] =
 
 #[ Measurements At Pin ]#
 
-func takenPga(document: JsonNode): string =
-  ## Read library commit document was taken at; empty where it names none.
-  let node = document{"taken", "pga"}
-  if node.isNil or node.kind != JString: "" else: node.getStr
-
-
-func checkStamp*(document: JsonNode, pin, path: string): seq[Finding] =
+func checkStamp*(document: JsonNode; pin, path: string): seq[Finding] =
   ## Hold one measurement document to pin: it must be taken at pin's commit.
+
+  func takenPga(document: JsonNode): string =
+    ## Read library commit document was taken at; empty where it names none.
+    let node = document{"taken", "pga"}
+    if node.isNil or node.kind != JString: "" else: node.getStr
+
   let taken = document.takenPga
   if taken != pin:
     result.add Finding(
@@ -64,7 +64,7 @@ func checkStamp*(document: JsonNode, pin, path: string): seq[Finding] =
     )
 
 
-func checkTrial*(trial: JsonNode, pin, digest, path: string): seq[Finding] =
+func checkTrial*(trial: JsonNode; pin, digest, path: string): seq[Finding] =
   ## Hold one trial to pin and to its edits: same commit, same digest of edits.
   result = checkStamp(trial, pin, path)
   let recorded = trial{"edits_digest"}
@@ -80,13 +80,13 @@ func checkTrial*(trial: JsonNode, pin, digest, path: string): seq[Finding] =
 #[ Published Pages ]#
 
 func checkPublished*(
-  built: Table[string, string], register: JsonNode, readme, path: string
+  built: Table[string, string]; publications: JsonNode; readme, path: string
 ): seq[Finding] =
-  ## Hold every built page to digest register holds from its last publish, and README to URLs.
-  ##   Register maps page name to `url` and `digest`; README must name every URL, so reader of
-  ##   repository finds each page and two copies of one URL cannot drift apart.
+  ## Hold every built page to digest of its publication, and README to every URL.
+  ##   Publications map page name to `url` and `digest`; README must name every URL, so reader
+  ##   of repository finds each page and two copies of one URL cannot drift apart.
   for name, digest in built.pairs:
-    let recorded = register{name, "digest"}
+    let recorded = publications{name, "digest"}
     if recorded.isNil or recorded.getStr != digest:
       result.add Finding(
         path: path,
@@ -94,11 +94,11 @@ func checkPublished*(
           "`build/" & name & ".html`, then run `published " & name & " <url>`; got `" & digest &
           "`.",
       )
-  for name, entry in register.pairs:
+  for name, entry in publications.pairs:
     if name notin built:
       result.add Finding(
         path: path,
-        message: "Register names page build makes no more; got `" & name & "`.",
+        message: "Publication names page build makes no more; got `" & name & "`.",
       )
     let url = entry{"url"}.getStr
     if url.len > 0 and url notin readme:

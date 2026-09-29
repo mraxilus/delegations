@@ -29,8 +29,8 @@ type
       ## Heading level, one to six; zero for other kinds.
     lines*: seq[string]
       ## Text lines: heading text, paragraph lines, list items, table rows, or fence body.
-    info*: string
-      ## Fence info string, e.g. `nim`; empty for other kinds.
+    language*: string
+      ## Language fence names after its opening run, as `nim`; empty for other kinds.
     line*: int
       ## Line block opens on, counted from one.
 
@@ -77,14 +77,14 @@ func numberedText(line: string): int =
   if i > 0 and i + 1 < line.len and line[i] == '.' and line[i + 1] == ' ': i + 2 else: 0
 
 
-func isBlockStart(line: string): bool =
-  ## Tell whether line opens block of its own, so ends paragraph before it.
-  line.headingOf > 0 or line.fenceOf > 0 or line.isBullet or line.numberedText > 0 or
-    line.startsWith("|")
-
-
 func parseBlocks*(source: string): seq[Block] =
   ## Split file into blocks, in order.
+
+  func isBlockStart(line: string): bool =
+    ## Tell whether line opens block of its own, so ends paragraph before it.
+    line.headingOf > 0 or line.fenceOf > 0 or line.isBullet or line.numberedText > 0 or
+      line.startsWith("|")
+
   let lines = source.splitLines
   var i = 0
   while i < lines.len:
@@ -107,7 +107,7 @@ func parseBlocks*(source: string): seq[Block] =
       result.add Block(
         kind: BlockKind.Fence,
         lines: body,
-        info: line[fence .. ^1].strip,
+        language: line[fence .. ^1].strip,
         line: opening,
       )
       inc i
@@ -249,51 +249,52 @@ func cellsOf(row: string): seq[string] =
   for cell in inner.split('|'): result.add cell.strip
 
 
-func isDivider(row: string): bool =
-  ## Tell whether table row divides header from body, i.e. dashes and colons only.
-  for cell in row.cellsOf:
-    if cell.len == 0 or not cell.allCharsInSet({'-', ':', ' '}): return false
-  true
-
-
-func renderTable(rows: seq[string]): string =
-  ## Render pipe table; first row is header when second divides.
-  let has_header = rows.len > 1 and rows[1].isDivider
-  result = "<div class=\"table\"><table>"
-  for i, row in rows:
-    if has_header and i == 1: continue
-    let tag = if has_header and i == 0: "th" else: "td"
-    result.add "<tr>"
-    for cell in row.cellsOf: result.add "<" & tag & ">" & renderInline(cell) & "</" & tag & ">"
-    result.add "</tr>"
-  result.add "</table></div>"
-
-
-func renderFence*(lines: seq[string], info: string, first = 0): string =
+func renderFence*(lines: seq[string], language: string, first = 0): string =
   ## Render fenced code, numbering lines from `first` where positive.
-  result = "<pre class=\"code\" data-lang=\"" & escapeHtml(info) & "\"><code>"
+  result = "<pre class=\"code\" data-lang=\"" & escapeHtml(language) & "\"><code>"
   for i, line in lines:
     let number = if first > 0: "<span class=\"ln\">" & $(first + i) & "</span>" else: ""
     result.add "<span class=\"cl\">" & number & escapeHtml(line) & "</span>\n"
   result.add "</code></pre>"
 
 
-func renderBlock*(b: Block, offset = 1): string =
+func renderBlock*(node: Block, offset = 1): string =
   ## Render one block; `offset` lowers heading levels so file nests under page heading.
-  case b.kind
+
+  func renderTable(rows: seq[string]): string =
+    ## Render pipe table; first row is header when second divides.
+
+    func isDivider(row: string): bool =
+      ## Tell whether table row divides header from body: dashes and colons only.
+      for cell in row.cellsOf:
+        if cell.len == 0 or not cell.allCharsInSet({'-', ':', ' '}): return false
+      true
+
+    let has_header = rows.len > 1 and rows[1].isDivider
+    result = "<div class=\"table\"><table>"
+    for i, row in rows:
+      if has_header and i == 1: continue
+      let tag = if has_header and i == 0: "th" else: "td"
+      result.add "<tr>"
+      for cell in row.cellsOf:
+        result.add "<" & tag & ">" & renderInline(cell) & "</" & tag & ">"
+      result.add "</tr>"
+    result.add "</table></div>"
+
+  case node.kind
   of BlockKind.Heading:
-    let tag = "h" & $min(b.level + offset, 6)
-    "<" & tag & ">" & renderInline(b.lines[0]) & "</" & tag & ">"
+    let tag = "h" & $min(node.level + offset, 6)
+    "<" & tag & ">" & renderInline(node.lines[0]) & "</" & tag & ">"
   of BlockKind.Paragraph:
-    "<p>" & renderInline(b.lines.join(" ")) & "</p>"
+    "<p>" & renderInline(node.lines.join(" ")) & "</p>"
   of BlockKind.Bullets, BlockKind.Numbers:
-    let tag = if b.kind == BlockKind.Numbers: "ol" else: "ul"
+    let tag = if node.kind == BlockKind.Numbers: "ol" else: "ul"
     var html = "<" & tag & ">"
-    for item in b.lines: html.add "<li>" & renderInline(item) & "</li>"
+    for item in node.lines: html.add "<li>" & renderInline(item) & "</li>"
     html & "</" & tag & ">"
   of BlockKind.Tasks:
     var html = "<ul class=\"tasks\">"
-    for item in b.lines:
+    for item in node.lines:
       let (mark, text) =
         if item.startsWith(TASK_DONE): ("done", item[TASK_DONE.len .. ^1])
         elif item.startsWith(TASK_OPEN): ("open", item[TASK_OPEN.len .. ^1])
@@ -301,9 +302,9 @@ func renderBlock*(b: Block, offset = 1): string =
       html.add "<li class=\"" & mark & "\">" & renderInline(text) & "</li>"
     html & "</ul>"
   of BlockKind.Table:
-    renderTable(b.lines)
+    renderTable(node.lines)
   of BlockKind.Fence:
-    renderFence(b.lines, b.info)
+    renderFence(node.lines, node.language)
 
 
 func renderBlocks*(blocks: openArray[Block], offset = 1): string =

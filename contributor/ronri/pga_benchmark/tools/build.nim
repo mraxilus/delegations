@@ -15,13 +15,13 @@
 ##   | trial     | try one change or design at pin, `stale` ones, or `all`, and record  |
 ##   |           | what each measured as `trials/<name>.json`                           |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
-##   | published | record URL and digest of page just published, e.g.                   |
+##   | published | record URL and digest of page just published, as                     |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
 ##   |           | measurement, trial, file and page to library head (`head.nim`)       |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
-##   |           | machine code, e.g. `show ∧` or `show ⟇ cga5d`                        |
+##   |           | machine code, as `show ∧` or `show ⟇ cga5d`                          |
 ##   | sweep     | time general measurands at two to six dimensions, rigid; never in CI |
 ##   | system    | print system packages build needs, one per line, for caller         |
 ##   | clean     | remove `build`                                                       |
@@ -88,18 +88,18 @@ const
     ## Library's directory inside its repository, as git names trees.
   LIBRARY = CHECKOUT / LIBRARY_DIRECTORY
     ## Library at pin, as `nim.cfg` names it.
-  DIR_CHANGES = "changes"
+  DIRECTORY_CHANGES = "changes"
     ## Changes, one Markdown file each (`changes.nim`).
-  DIR_DESIGNS = "designs"
+  DIRECTORY_DESIGNS = "designs"
     ## Design explorations, one directory each (`designs.nim`).
-  DIR_TRIALS = "trials"
+  DIRECTORY_TRIALS = "trials"
     ## Trial documents, one per change or design, committed.
   PATH_NOTES = "marginalia" / "notes.md"
     ## Notes on library source (`notes.nim`).
   PATH_SHELL = "pages" / "shell.html"
     ## Shell every page is assembled in.
-  PATH_REGISTER = "pages" / "published.json"
-    ## Register: page name to URL and digest at its last publish.
+  PATH_PUBLICATIONS = "pages" / "published.json"
+    ## Publications: page name to URL and digest at its last publish.
   PATH_README = "README.md"
     ## File that must name every published URL.
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
@@ -307,7 +307,7 @@ proc gaps() =
 
 proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
   ## Read every change file, in name order; malformed ones add findings.
-  var paths = toSeq(walkFiles(DIR_CHANGES / "*.md"))
+  var paths = toSeq(walkFiles(DIRECTORY_CHANGES / "*.md"))
   paths.sort
   for path in paths:
     let (change, why) = parseChange(path, readFile(path))
@@ -318,7 +318,7 @@ proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
 proc readDesigns(findings: var seq[Finding]): seq[Design] =
   ## Read every design directory, in name order; malformed ones add findings.
   var directories: seq[string]
-  for kind, path in walkDir(DIR_DESIGNS):
+  for kind, path in walkDir(DIRECTORY_DESIGNS):
     if kind == pcDir: directories.add path
   directories.sort
   for directory in directories:
@@ -349,12 +349,12 @@ proc candidatesOf(
   for (name, change) in changes:
     result.add Candidate(
       name: name,
-      path: DIR_CHANGES / name & ".md",
+      path: DIRECTORY_CHANGES / name & ".md",
       changes: @[change],
       claims: newJArray(),
     )
   for design in designs:
-    let directory = DIR_DESIGNS / design.name
+    let directory = DIRECTORY_DESIGNS / design.name
     if changes.anyIt(it[0] == design.name):
       findings.add Finding(path: directory, message: "Design shares name with change; got `" &
         design.name & "`.")
@@ -391,38 +391,39 @@ proc candidatesOf(
 
 proc readTrials(): Table[string, JsonNode] =
   ## Read every committed trial, keyed by name.
-  for path in walkFiles(DIR_TRIALS / "*.json"):
+  for path in walkFiles(DIRECTORY_TRIALS / "*.json"):
     result[path.splitFile.name] = readDocument(path)
 
 
 
 #[ Library Head ]#
 
-proc git(args: openArray[string]): (string, int) =
-  ## Run git in library checkout with args; output and exit code.
-  execCmdEx("git -C " & quoteShell(CHECKOUT) & " " & args.mapIt(quoteShell(it)).join(" "))
-
-
-proc libraryHead(pin: string): (string, string, string) =
-  ## Read tree of library directory at pin, and head commit of library repository with its
-  ##   tree; empty where git cannot read one. Fetches only when head is not pin.
-  let (pin_out, pin_code) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
-  let pin_tree = if pin_code == 0: pin_out.strip.splitLines[^1] else: ""
-  let (remote, remote_code) = git(["ls-remote", "origin", "HEAD"])
-  if remote_code != 0: return (pin_tree, "", "")
-  var head_commit = ""
-  for line in remote.splitLines:
-    if line.endsWith("\tHEAD"): head_commit = line.split('\t')[0]
-  if head_commit.len == 0: return (pin_tree, "", "")
-  if head_commit == pin: return (pin_tree, head_commit, pin_tree)
-  let (_, fetch_code) = git(["fetch", "--quiet", "origin", "HEAD"])
-  if fetch_code != 0: return (pin_tree, head_commit, "")
-  let (head_out, head_code) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
-  (pin_tree, head_commit, if head_code == 0: head_out.strip.splitLines[^1] else: "")
+proc git(arguments: openArray[string]): (string, int) =
+  ## Run git in library checkout with arguments; output and exit code.
+  execCmdEx("git -C " & quoteShell(CHECKOUT) & " " & arguments.mapIt(quoteShell(it)).join(" "))
 
 
 proc headChecked(pin: string): seq[Finding] =
   ## Hold pin to library head, and checkout to pin: no local edit under library directory.
+
+  proc libraryHead(pin: string): (string, string, string) =
+    ## Read tree of library directory at pin, and head commit of library repository with its
+    ##   tree; empty where git cannot read one. Fetches only when head is not pin.
+    let
+      (pin_out, pin_code) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
+      pin_tree = if pin_code == 0: pin_out.strip.splitLines[^1] else: ""
+      (remote, remote_code) = git(["ls-remote", "origin", "HEAD"])
+    if remote_code != 0: return (pin_tree, "", "")
+    var head_commit = ""
+    for line in remote.splitLines:
+      if line.endsWith("\tHEAD"): head_commit = line.split('\t')[0]
+    if head_commit.len == 0: return (pin_tree, "", "")
+    if head_commit == pin: return (pin_tree, head_commit, pin_tree)
+    let (_, fetch_code) = git(["fetch", "--quiet", "origin", "HEAD"])
+    if fetch_code != 0: return (pin_tree, head_commit, "")
+    let (head_out, head_code) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
+    (pin_tree, head_commit, if head_code == 0: head_out.strip.splitLines[^1] else: "")
+
   let (pin_tree, head_commit, head_tree) = libraryHead(pin)
   result.add checkHead(pin, pin_tree, head_commit, head_tree, PATH_LOCK)
   let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
@@ -454,35 +455,34 @@ proc facesFromStore(): Table[string, string] =
   if paths.len != FACES.len:
     raise newException(OSError,
       "`koch fetch-assets` named " & $paths.len & " paths for " & $FACES.len & " faces.")
-  for i, face in FACES: result[face] = readFile(paths[i])
+  for index, face in FACES: result[face] = readFile(paths[index])
 
 
-proc register(): JsonNode =
-  ## Read register of published pages; empty where none.
-  if fileExists(PATH_REGISTER): readDocument(PATH_REGISTER) else: newJObject()
-
-
-func linksHtml(names: openArray[string], published: JsonNode, self: string): string =
-  ## Link every other published page, in page order, led by separator; empty where none.
-  var links: seq[string]
-  for name in names:
-    let url = published{name, "url"}.getStr
-    if name == self or url.len == 0: continue
-    links.add "<a href=\"" & url & "\">" & name & "</a>"
-  if links.len == 0: "" else: " · " & links.join(" · ")
-
-
-func titled(name: string): string =
-  ## Title design page by its name, e.g. `Cayley Derivation`.
-  name.split('-').mapIt(it.capitalizeAscii).join(" ")
+proc publications(): JsonNode =
+  ## Read publication of every published page; empty where none.
+  if fileExists(PATH_PUBLICATIONS): readDocument(PATH_PUBLICATIONS) else: newJObject()
 
 
 proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: docket, marginalia, then one per design.
+
+  func linksHtml(names: openArray[string]; published: JsonNode; self: string): string =
+    ## Link every other published page, in page order, led by separator; empty where none.
+    var links: seq[string]
+    for name in names:
+      let url = published{name, "url"}.getStr
+      if name == self or url.len == 0: continue
+      links.add "<a href=\"" & url & "\">" & name & "</a>"
+    if links.len == 0: "" else: " · " & links.join(" · ")
+
+  func titled(name: string): string =
+    ## Title design page by its name, as `Cayley Derivation`.
+    name.split('-').mapIt(it.capitalizeAscii).join(" ")
+
   var ignored: seq[Finding]
   let
     pin = pgaCommit()
-    published = register()
+    published = publications()
     shell_text = readFile(PATH_SHELL)
     changes = readChanges(ignored)
     designs = readDesigns(ignored)
@@ -507,13 +507,13 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
       runtime_measurements: readDocument(BASELINE / "runtime_" & name & ".json"),
     )
   for _, document in trials.pairs: documents.add document
-  let band = bandOf(documents)
+  let spread = spreadOf(documents)
   for design in designs:
     if design.name notin trials: continue
     var overlay = Overlay(name: design.name, title: design.title,
       url: published{design.name, "url"}.getStr)
-    for algebra, a in trials[design.name]{"algebras"}.pairs:
-      overlay.functions[algebra] = a{"functions"}
+    for algebra, measured in trials[design.name]{"algebras"}.pairs:
+      overlay.functions[algebra] = measured{"functions"}
     overlays.add overlay
   result["docket"] = assemble(shell_text, "PGA Gap Docket",
     docketBody(sheets, readDocument(PATH_DOCKET), overlays, pin,
@@ -522,11 +522,11 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   for (name, change) in changes:
     proposals.add Proposal(name: name, change: change, trial: trials.getOrDefault(name))
   result["marginalia"] = assemble(shell_text, "PGA Marginalia",
-    marginaliaBody(proposals, notes, files, baselines, band, pin,
+    marginaliaBody(proposals, notes, files, baselines, spread, pin,
       linksHtml(names, published, "marginalia")), faces)
   for design in designs:
     result[design.name] = assemble(shell_text, titled(design.name),
-      designBody(design, trials.getOrDefault(design.name), files, baselines, band, pin,
+      designBody(design, trials.getOrDefault(design.name), files, baselines, spread, pin,
         linksHtml(names, published, design.name)), faces)
 
 
@@ -544,26 +544,26 @@ proc publishedAt(name, url: string) =
   let built = builtPages(facesFromStore())
   if name notin built:
     raise newException(ValueError, "No page named `" & name & "`.")
-  var entries = register()
+  var entries = publications()
   entries[name] = %*{"url": url, "digest": pageDigest(built[name])}
-  writeFile(PATH_REGISTER, pretty(entries) & "\n")
+  writeFile(PATH_PUBLICATIONS, pretty(entries) & "\n")
   echo "Recorded ", name, " at ", url
   for other, page in built.pairs:
     if other != name and entries{other, "digest"}.getStr != pageDigest(page):
-      echo "notice: ", other, " differs from register; publish it and record it too."
+      echo "notice: ", other, " differs from its publication; publish it and record it too."
 
 
 
 #[ Trials ]#
 
-func machine(): string =
-  ## Describe machine trial ran on, as bench documents do.
-  hostOS & " " & hostCPU & ", " & $countProcessors() & " cores"
-
-
 proc trialOf(which: string) =
   ## Try one change or design at pin, every one for `all`, or those `drive` would name for
   ##   `stale`; write each trial document.
+
+  func machine(): string =
+    ## Describe machine trial ran on, as bench documents do.
+    hostOS & " " & hostCPU & ", " & $countProcessors() & " cores"
+
   var findings: seq[Finding]
   let
     changes = readChanges(findings)
@@ -591,15 +591,15 @@ proc trialOf(which: string) =
     pristine: Table[string, string]
   for (name, dimensions, is_conformal) in CONFIGS:
     if name notin TRIALED: continue
-    let a = trials.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
-    algebras.add a
+    let algebra = trials.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
+    algebras.add algebra
     baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
-    pristine[name] = pristineBinary(chain, a)
+    pristine[name] = pristineBinary(chain, algebra)
   let
     pin_suites = pristineSuites(chain, algebras)
     taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": chain.nim,
       "pga": chain.pga, "flags": FLAGS, "runs": TRIAL_RUNS}
-  createDir DIR_TRIALS
+  createDir DIRECTORY_TRIALS
   for candidate in selected:
     echo "Trying ", candidate.name
     let (document, why) = runTrial(chain, candidate, algebras, baselines, pristine, pin_suites,
@@ -608,13 +608,13 @@ proc trialOf(which: string) =
     if document.isNil:
       findings.add why
       continue
-    writeFile(DIR_TRIALS / candidate.name & ".json", pretty(document) & "\n")
-    echo "Recorded ", DIR_TRIALS / candidate.name & ".json"
+    writeFile(DIRECTORY_TRIALS / candidate.name & ".json", pretty(document) & "\n")
+    echo "Recorded ", DIRECTORY_TRIALS / candidate.name & ".json"
   report(findings)
 
 
 proc pinnedChecked(pin: string): seq[Finding] =
-  ## Hold everything to pin: stamps, trials, changes, designs, notes, pages and register.
+  ## Hold everything to pin: stamps, trials, changes, designs, notes, pages and publications.
   for (name, _, _) in CONFIGS:
     for kind in ["static", "runtime"]:
       let path = BASELINE / kind & "_" & name & ".json"
@@ -628,7 +628,7 @@ proc pinnedChecked(pin: string): seq[Finding] =
   for candidate in candidates:
     var copy = files
     for change in candidate.changes: result.add applyChange(copy, change, candidate.path)
-    let path = DIR_TRIALS / candidate.name & ".json"
+    let path = DIRECTORY_TRIALS / candidate.name & ".json"
     if candidate.name notin trials:
       result.add Finding(path: path, message: "No trial yet; run `trial " &
         candidate.name & "`.")
@@ -637,14 +637,14 @@ proc pinnedChecked(pin: string): seq[Finding] =
     result.add checkTrial(trials[candidate.name], pin, digest, path)
   for name in trials.keys:
     if not candidates.anyIt(it.name == name):
-      result.add Finding(path: DIR_TRIALS / name & ".json", message: "Trial names no change " &
-        "or design; got `" & name & "`.")
+      result.add Finding(path: DIRECTORY_TRIALS / name & ".json",
+        message: "Trial names no change or design; got `" & name & "`.")
   let (notes, why) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
   result.add why
   result.add checkAnchors(notes, files, PATH_NOTES)
   var digests: Table[string, string]
   for name, page in builtPages(facesFromStore()).pairs: digests[name] = pageDigest(page)
-  result.add checkPublished(digests, register(), readFile(PATH_README), PATH_REGISTER)
+  result.add checkPublished(digests, publications(), readFile(PATH_README), PATH_PUBLICATIONS)
 
 
 proc drive() =

@@ -15,6 +15,9 @@
 ##   Cost: every trial compiles library four times per algebra (suites, counts, two timed
 ##     binaries); pristine binaries are built once per run of driver and shared.
 ##   Cost: timings are machine's, as every runtime measurement is; trial names machine.
+##   Cost: stages of trial (`prepareCopy`, `staticOf`, `checkClaims`, `tablesOf`, `buildCost`)
+##     each serve one caller, yet stay at module scope; nested, `runTrial` and `checkClaims`
+##     would run past two hundred lines, which X.4 asks to split.
 
 {.experimental: "strictFuncs".}
 
@@ -27,7 +30,7 @@ type
   Algebra* = object
     ## Define algebra trial measures: name, dimensions, metric.
     name*: string
-      ## Short name, e.g. `rga4d`.
+      ## Short name, as `rga4d`.
     dimensions*: int
       ## Vector space dimensions.
     is_conformal*: bool
@@ -41,7 +44,7 @@ type
     nim*: string
       ## Compiler commit.
     pga*: string
-      ## Library commit, i.e. pin.
+      ## Library commit: pin.
     flags*: string
       ## Build flags every measured build carries.
     runs*: int
@@ -114,15 +117,15 @@ proc prepareCopy(chain: Toolchain, candidate: Candidate): (string, seq[Finding])
 
 #[ Builds ]#
 
-proc runCompiler(args: openArray[string]): (string, int) =
-  ## Run compiler with args, capturing output; output and exit code.
-  let command = "nim " & args.mapIt(quoteShell(it)).join(" ")
+proc runCompiler(arguments: openArray[string]): (string, int) =
+  ## Run compiler with arguments, capturing output; output and exit code.
+  let command = "nim " & arguments.mapIt(quoteShell(it)).join(" ")
   execCmdEx(command)
 
 
-func algebraDefines(a: Algebra): seq[string] =
+func algebraDefines(algebra: Algebra): seq[string] =
   ## Spell defines selecting algebra.
-  @["-d:pga.dimensions=" & $a.dimensions, "-d:pga.is_conformal=" & $a.is_conformal]
+  @["-d:pga.dimensions=" & $algebra.dimensions, "-d:pga.is_conformal=" & $algebra.is_conformal]
 
 
 func buildDefines(chain: Toolchain, pga: string): seq[string] =
@@ -137,28 +140,28 @@ func buildDefines(chain: Toolchain, pga: string): seq[string] =
 proc compileAgainst(
   chain: Toolchain;
   library, entry, binary, cache: string;
-  a: Algebra;
+  algebra: Algebra;
   compile_only: bool;
 ): (string, int) =
   ## Compile project entry against library copy, skipping project `nim.cfg` that names pin's.
-  var args = @["c", "--hints:off", "--warnings:off", chain.flags, "--skipParentCfg:on",
+  var arguments = @["c", "--hints:off", "--warnings:off", chain.flags, "--skipParentCfg:on",
     "--noNimblePath", "--path:" & library, "--nimcache:" & cache, "-o:" & binary]
-  args.add algebraDefines(a) & buildDefines(chain, chain.pga)
-  if compile_only: args.add "--compileOnly"
-  args.add entry
-  runCompiler(args)
+  arguments.add algebraDefines(algebra) & buildDefines(chain, chain.pga)
+  if compile_only: arguments.add "--compileOnly"
+  arguments.add entry
+  runCompiler(arguments)
 
 
-proc suites(library, cache: string, a: Algebra): JsonNode =
+proc suites(library, cache: string; algebra: Algebra): JsonNode =
   ## Compile and run library's own suites on copy; count passed and failed tests.
-  let stub = library / SUITE_STUB % a.name
+  let stub = library / SUITE_STUB % algebra.name
   if not fileExists(stub): return %*{"ok": 0, "failed": 0, "built": false}
-  var args = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on", "--noNimblePath",
+  var arguments = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on", "--noNimblePath",
     "-d:testing", "-d:nimUnittestAbortOnError:off", "--nimcache:" & cache,
     "-o:" & cache / "suites", "-r"]
-  args.add algebraDefines(a)
-  args.add stub
-  let (output, code) = runCompiler(args)
+  arguments.add algebraDefines(algebra)
+  arguments.add stub
+  let (output, code) = runCompiler(arguments)
   %*{
     "ok": output.count("[OK]"),
     "failed": output.count("[FAILED]"),
@@ -166,18 +169,20 @@ proc suites(library, cache: string, a: Algebra): JsonNode =
   }
 
 
-proc staticOf(chain: Toolchain, library, directory: string, a: Algebra): (JsonNode, string) =
+proc staticOf(
+  chain: Toolchain; library, directory: string; algebra: Algebra
+): (JsonNode, string) =
   ## Inspect emitted C of bench entry built against library; document and failure text.
   let
-    cache = directory / "cache_bench_" & a.name
-    inspector = directory / "inspect_" & a.name
-    output = directory / "static_" & a.name & ".json"
+    cache = directory / "cache_bench_" & algebra.name
+    inspector = directory / "inspect_" & algebra.name
+    output = directory / "static_" & algebra.name & ".json"
   removeDir cache
-  var (log, code) = compileAgainst(chain, library, ENTRY_BENCH, directory / "bench_c_" & a.name,
-    cache, a, compile_only = true)
+  var (log, code) = compileAgainst(chain, library, ENTRY_BENCH,
+    directory / "bench_c_" & algebra.name, cache, algebra, compile_only = true)
   if code != 0: return (nil, log)
   (log, code) = compileAgainst(chain, library, ENTRY_INSPECT, inspector,
-    directory / "cache_inspect_" & a.name, a, compile_only = false)
+    directory / "cache_inspect_" & algebra.name, algebra, compile_only = false)
   if code != 0: return (nil, log)
   (log, code) = execCmdEx(quoteShell(inspector) & " " & quoteShell(cache) & " " &
     quoteShell(output) & " " & quoteShell(chain.nim) & " " & quoteShell(chain.pga) & " " &
@@ -189,21 +194,21 @@ proc staticOf(chain: Toolchain, library, directory: string, a: Algebra): (JsonNo
 
 #[ Comparisons ]#
 
-func countsOf(f: JsonNode): JsonNode =
-  ## Shape totals and movement trial reports for one function.
-  ##   Count document lacks is JSON null, never nil.
-  result = newJObject()
-  for key in COUNTED:
-    let node = f{"total", key}
-    result[key] = if node.isNil: newJNull() else: node
-  for key in MOVED:
-    let node = f{"movement", key}
-    result[key] = if node.isNil: newJNull() else: node
-
-
 func functionsChanged*(before, after: JsonNode): JsonNode =
   ## Compare static documents function by function; keep those whose counts differ.
   ##   Function on one side only is JSON null on other, never nil, so document prints.
+
+  func countsOf(function: JsonNode): JsonNode =
+    ## Shape totals and movement trial reports for one function.
+    ##   Count document lacks is JSON null, never nil.
+    result = newJObject()
+    for key in COUNTED:
+      let node = function{"total", key}
+      result[key] = if node.isNil: newJNull() else: node
+    for key in MOVED:
+      let node = function{"movement", key}
+      result[key] = if node.isNil: newJNull() else: node
+
   result = newJObject()
   let
     was = before{"functions"}
@@ -215,33 +220,36 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   keys.sort
   for key in keys:
     let
-      a = if was.hasKey(key): countsOf(was[key]) else: newJNull()
-      b = if now.hasKey(key): countsOf(now[key]) else: newJNull()
-    if a != b: result[key] = %*{"before": a, "after": b}
-
-
-func median(values: seq[float]): float =
-  ## Read median of values; zero for none.
-  if values.len == 0: return 0.0
-  let sorted = values.sorted
-  let middle = sorted.len div 2
-  if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
+      counts_before = if was.hasKey(key): countsOf(was[key]) else: newJNull()
+      counts_after = if now.hasKey(key): countsOf(now[key]) else: newJNull()
+    if counts_before != counts_after:
+      result[key] = %*{"before": counts_before, "after": counts_after}
 
 
 func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
   ## Pair runs of both binaries by measurand; median ns of each and median of per-run ratios.
+
+  func median(values: seq[float]): float =
+    ## Read median of values; zero for none.
+    if values.len == 0: return 0.0
+    let
+      sorted = values.sorted
+      middle = sorted.len div 2
+    if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
+
   result = newJObject()
   if pristine.len == 0 or candidate.len == 0: return
   for id, _ in pristine[0]{"measurands"}.pairs:
     var ns_before, ns_after, ratios: seq[float]
     for i in 0 ..< min(pristine.len, candidate.len):
       let
-        a = pristine[i]{"measurands", id, "library", "ns_median"}
-        b = candidate[i]{"measurands", id, "library", "ns_median"}
-      if a.isNil or b.isNil or a.kind != JFloat or b.kind != JFloat: continue
-      ns_before.add a.getFloat
-      ns_after.add b.getFloat
-      if a.getFloat > 0: ratios.add b.getFloat / a.getFloat
+        ns_pristine = pristine[i]{"measurands", id, "library", "ns_median"}
+        ns_changed = candidate[i]{"measurands", id, "library", "ns_median"}
+      if ns_pristine.isNil or ns_changed.isNil: continue
+      if ns_pristine.kind != JFloat or ns_changed.kind != JFloat: continue
+      ns_before.add ns_pristine.getFloat
+      ns_after.add ns_changed.getFloat
+      if ns_pristine.getFloat > 0: ratios.add ns_changed.getFloat / ns_pristine.getFloat
     if ratios.len == 0: continue
     result[id] = %*[ns_before.median.round(2), ns_after.median.round(2), ratios.median.round(4)]
 
@@ -253,10 +261,12 @@ func nanOf*(pristine, candidate: seq[JsonNode]): JsonNode =
   if pristine.len == 0 or candidate.len == 0: return
   for id, _ in pristine[0]{"measurands"}.pairs:
     let
-      a = pristine[0]{"measurands", id, "library", "nan_share"}
-      b = candidate[0]{"measurands", id, "library", "nan_share"}
-    if a.isNil or b.isNil or a.kind != JFloat or b.kind != JFloat: continue
-    if a.getFloat != b.getFloat: result[id] = %*[a.getFloat, b.getFloat]
+      share_pristine = pristine[0]{"measurands", id, "library", "nan_share"}
+      share_changed = candidate[0]{"measurands", id, "library", "nan_share"}
+    if share_pristine.isNil or share_changed.isNil: continue
+    if share_pristine.kind != JFloat or share_changed.kind != JFloat: continue
+    if share_pristine.getFloat != share_changed.getFloat:
+      result[id] = %*[share_pristine.getFloat, share_changed.getFloat]
 
 
 func successOf*(output: string): (float, float) =
@@ -273,22 +283,24 @@ func successOf*(output: string): (float, float) =
     return (seconds, peak)
 
 
-proc timedRun(binary, output: string): JsonNode =
-  ## Run one timed binary into output; its document, nil where run failed.
-  let (_, code) = execCmdEx(quoteShell(binary) & " " & quoteShell(output))
-  if code == 0: parseJson(readFile(output)) else: nil
-
-
-proc timed(chain: Toolchain, pristine, candidate, directory: string): (JsonNode, JsonNode) =
+proc timed(
+  chain: Toolchain; pristine, candidate, directory: string
+): (JsonNode, JsonNode) =
   ## Run both binaries alternately `runs` times each; times and NaN shares per measurand.
+
+  proc timedRun(binary, output: string): JsonNode =
+    ## Run one timed binary into output; its document, nil where run failed.
+    let (_, code) = execCmdEx(quoteShell(binary) & " " & quoteShell(output))
+    if code == 0: parseJson(readFile(output)) else: nil
+
   var before, after: seq[JsonNode]
   for run in 1 .. chain.runs:
     let
-      a = timedRun(pristine, directory / "pristine_" & $run & ".json")
-      b = timedRun(candidate, directory / "changed_" & $run & ".json")
-    if a.isNil or b.isNil: continue
-    before.add a
-    after.add b
+      run_pristine = timedRun(pristine, directory / "pristine_" & $run & ".json")
+      run_changed = timedRun(candidate, directory / "changed_" & $run & ".json")
+    if run_pristine.isNil or run_changed.isNil: continue
+    before.add run_pristine
+    after.add run_changed
   (timesOf(before, after), nanOf(before, after))
 
 
@@ -310,47 +322,40 @@ echo tables
 
 
 proc tablesOf(
-  library, directory, side: string, expressions: seq[string], a: Algebra
+  library, directory, side: string; expressions: seq[string]; algebra: Algebra
 ): (JsonNode, string) =
   ## Compile and run table program against library; tables in order and failure text.
   let
-    source = directory / "tables_" & side & "_" & a.name & ".nim"
+    source = directory / "tables_" & side & "_" & algebra.name & ".nim"
     lines = expressions.mapIt("tables.add cells(" & it & ")").join("\n")
   writeFile(source, TABLES_PROGRAM.replace("$1", lines))
-  var args = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on", "--noNimblePath",
+  var arguments = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on", "--noNimblePath",
     "-d:release", "--path:" & library, "--path:" & getCurrentDir() / "src",
-    "--nimcache:" & directory / "cache_" & side & "_" & a.name,
-    "-o:" & directory / "tables_" & side & "_" & a.name, "-r"]
-  args.add algebraDefines(a)
-  args.add source
-  let (output, code) = runCompiler(args)
+    "--nimcache:" & directory / "cache_" & side & "_" & algebra.name,
+    "-o:" & directory / "tables_" & side & "_" & algebra.name, "-r"]
+  arguments.add algebraDefines(algebra)
+  arguments.add source
+  let (output, code) = runCompiler(arguments)
   if code != 0: return (nil, output)
   let last = output.strip.splitLines[^1]
   (parseJson(last), "")
 
 
 proc buildCost(
-  chain: Toolchain, library, directory, side: string, a: Algebra
+  chain: Toolchain; library, directory, side: string; algebra: Algebra
 ): (float, float, string) =
   ## Compile bench entry to C from empty cache; seconds and peak MiB compiler reports.
-  let cache = directory / "cache_build_" & side & "_" & a.name
+  let cache = directory / "cache_build_" & side & "_" & algebra.name
   removeDir cache
-  var args = @["c", "--hints:on", "--warnings:off", chain.flags, "--skipParentCfg:on",
+  var arguments = @["c", "--hints:on", "--warnings:off", chain.flags, "--skipParentCfg:on",
     "--noNimblePath", "--path:" & library, "--nimcache:" & cache, "--compileOnly",
-    "-o:" & directory / "build_" & side & "_" & a.name]
-  args.add algebraDefines(a) & buildDefines(chain, chain.pga)
-  args.add ENTRY_BENCH
-  let (output, code) = runCompiler(args)
+    "-o:" & directory / "build_" & side & "_" & algebra.name]
+  arguments.add algebraDefines(algebra) & buildDefines(chain, chain.pga)
+  arguments.add ENTRY_BENCH
+  let (output, code) = runCompiler(arguments)
   if code != 0: return (0.0, 0.0, output.strip.splitLines[^1])
   let (seconds, peak) = successOf(output)
   (seconds, peak, "")
-
-
-func algebraNamed(name: string, algebras: openArray[Algebra]): Algebra =
-  ## Find algebra by name, rigid 4D where name is unknown.
-  for a in algebras:
-    if a.name == name: return a
-  Algebra(name: name, dimensions: parseInt(name[3 .. ^2]), is_conformal: name.startsWith("cga"))
 
 
 proc checkClaims(
@@ -361,6 +366,17 @@ proc checkClaims(
   algebras: openArray[Algebra];
 ): JsonNode =
   ## Check each claim design makes; one verdict per claim, with detail.
+
+  func algebraNamed(name: string, algebras: openArray[Algebra]): Algebra =
+    ## Find algebra by name; one no trial measures is read from name, as `rga6d`.
+    for algebra in algebras:
+      if algebra.name == name: return algebra
+    Algebra(
+      name: name,
+      dimensions: parseInt(name[3 .. ^2]),
+      is_conformal: name.startsWith("cga"),
+    )
+
   result = newJArray()
   for claim in candidate.claims:
     let kind = claim{"kind"}.getStr
@@ -380,63 +396,64 @@ proc checkClaims(
         pristine_side.add pair[0].getStr
         changed_side.add pair[1].getStr
       for name in claim{"algebras"}:
-        let a = algebraNamed(name.getStr, algebras)
+        let algebra = algebraNamed(name.getStr, algebras)
         let
           (before, why_before) =
-            tablesOf(chain.library, directory, "pristine", pristine_side, a)
-          (after, why_after) = tablesOf(copy, directory, "changed", changed_side, a)
+            tablesOf(chain.library, directory, "pristine", pristine_side, algebra)
+          (after, why_after) = tablesOf(copy, directory, "changed", changed_side, algebra)
         if before.isNil or after.isNil:
           let why = (why_before & why_after).strip.splitLines
           passed = false
-          detail.add a.name & " did not build: " & (if why.len > 0: why[^1] else: "")
+          detail.add algebra.name & " did not build: " & (if why.len > 0: why[^1] else: "")
           continue
         for i in 0 ..< pairs.len:
           if before[i] != after[i]:
             passed = false
-            detail.add a.name & " " & changed_side[i] & " differs"
+            detail.add algebra.name & " " & changed_side[i] & " differs"
     of "program":
       let program = claim{"path"}.getStr
       for name in claim{"algebras"}:
-        let a = algebraNamed(name.getStr, algebras)
-        var args = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on",
+        let algebra = algebraNamed(name.getStr, algebras)
+        var arguments = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on",
           "--noNimblePath", "-d:release", "--path:" & copy,
-          "--nimcache:" & directory / "cache_program_" & a.name,
-          "-o:" & directory / "program_" & a.name, "-r"]
-        args.add algebraDefines(a)
-        args.add program
-        let (output, code) = runCompiler(args)
+          "--nimcache:" & directory / "cache_program_" & algebra.name,
+          "-o:" & directory / "program_" & algebra.name, "-r"]
+        arguments.add algebraDefines(algebra)
+        arguments.add program
+        let (output, code) = runCompiler(arguments)
         if code != 0:
           passed = false
-          detail.add a.name & " exit " & $code & ": " & output.strip.splitLines[^1]
+          detail.add algebra.name & " exit " & $code & ": " & output.strip.splitLines[^1]
     of "build":
       let
-        a = algebraNamed(claim{"algebra"}.getStr, algebras)
+        algebra = algebraNamed(claim{"algebra"}.getStr, algebras)
         (seconds_before, peak_before, why_before) =
-          buildCost(chain, chain.library, directory, "pristine", a)
-        (seconds_after, peak_after, why_after) = buildCost(chain, copy, directory, "changed", a)
+          buildCost(chain, chain.library, directory, "pristine", algebra)
+        (seconds_after, peak_after, why_after) =
+          buildCost(chain, copy, directory, "changed", algebra)
       if why_before.len > 0 or why_after.len > 0 or peak_before <= 0 or seconds_before <= 0:
         passed = false
-        detail.add a.name & " did not build: " & why_before & why_after
+        detail.add algebra.name & " did not build: " & why_before & why_after
       else:
         let
           ratio = case claim{"metric"}.getStr
             of "seconds": seconds_after / seconds_before
             else: peak_after / peak_before
         passed = ratio <= claim{"at_most"}.getFloat
-        detail.add a.name & " peak " & formatFloat(peak_before, ffDecimal, 1) & " → " &
+        detail.add algebra.name & " peak " & formatFloat(peak_before, ffDecimal, 1) & " → " &
           formatFloat(peak_after, ffDecimal, 1) & " MiB, " & formatFloat(seconds_before,
           ffDecimal, 2) & " → " & formatFloat(seconds_after, ffDecimal, 2) & " s, ×" &
           formatFloat(ratio, ffDecimal, 2)
     of "count":
       let
-        a = claim{"algebra"}.getStr
-        document = counted{a}
+        algebra_name = claim{"algebra"}.getStr
+        document = counted{algebra_name}
         key = document{"measurands", claim{"measurand"}.getStr, "library"}
         got = if key.isNil: nil else: document{"functions", key.getStr, "total",
           claim{"metric"}.getStr}
       if got.isNil or got.getInt != claim{"value"}.getInt:
         passed = false
-        detail.add a & " got " & (if got.isNil: "none" else: $got.getInt)
+        detail.add algebra_name & " got " & (if got.isNil: "none" else: $got.getInt)
     else:
       passed = false
       detail.add "unknown claim kind " & kind
@@ -475,24 +492,24 @@ proc runTrial*(
     }
     counted = newJObject()
     suited = newJObject()
-  for a in algebras:
-    let suite = suites(copy, directory / "cache_suites_" & a.name, a)
-    suited[a.name] = suite
-    let (after, why) = staticOf(chain, copy, directory, a)
+  for algebra in algebras:
+    let suite = suites(copy, directory / "cache_suites_" & algebra.name, algebra)
+    suited[algebra.name] = suite
+    let (after, why) = staticOf(chain, copy, directory, algebra)
     if after.isNil:
       return (nil, @[Finding(path: candidate.path, message: "Changed library does not " &
-        "build at " & a.name & "; got `" & why.strip.splitLines[^1] & "`.")])
-    counted[a.name] = after
-    let binary = directory / "bench_" & a.name
+        "build at " & algebra.name & "; got `" & why.strip.splitLines[^1] & "`.")])
+    counted[algebra.name] = after
+    let binary = directory / "bench_" & algebra.name
     let (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
-      directory / "cache_timed_" & a.name, a, compile_only = false)
+      directory / "cache_timed_" & algebra.name, algebra, compile_only = false)
     if code != 0:
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
-        a.name & "; got `" & log.strip.splitLines[^1] & "`.")])
-    let (times, nan) = timed(chain, pristine[a.name], binary, directory)
-    trial["algebras"][a.name] = %*{
+        algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])
+    let (times, nan) = timed(chain, pristine[algebra.name], binary, directory)
+    trial["algebras"][algebra.name] = %*{
       "suites": suite,
-      "functions": functionsChanged(baselines[a.name], after),
+      "functions": functionsChanged(baselines[algebra.name], after),
       "times": times,
       "nan": nan,
     }
@@ -503,15 +520,16 @@ proc runTrial*(
 proc pristineSuites*(chain: Toolchain, algebras: openArray[Algebra]): JsonNode =
   ## Count library's own suites at pin, so trial's counts read against them.
   result = newJObject()
-  for a in algebras:
-    result[a.name] = suites(chain.library, chain.work / "pristine" / "cache_suites_" & a.name, a)
+  for algebra in algebras:
+    result[algebra.name] =
+      suites(chain.library, chain.work / "pristine" / "cache_suites_" & algebra.name, algebra)
 
 
-proc pristineBinary*(chain: Toolchain, a: Algebra): string =
+proc pristineBinary*(chain: Toolchain, algebra: Algebra): string =
   ## Build timed bench against library at pin; path of binary.
   let directory = chain.work / "pristine"
   createDir directory
-  result = directory / "bench_" & a.name
+  result = directory / "bench_" & algebra.name
   let (log, code) = compileAgainst(chain, chain.library, ENTRY_BENCH, result,
-    directory / "cache_timed_" & a.name, a, compile_only = false)
+    directory / "cache_timed_" & algebra.name, algebra, compile_only = false)
   if code != 0: raise newException(OSError, "Pristine bench failed; got `" & log & "`.")

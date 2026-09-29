@@ -54,7 +54,7 @@ func facesAsked*(shell: string): seq[string] =
     at = shell.find(TOKEN_EMBED, close + 1)
 
 
-func assemble*(shell, title, body: string, faces: Table[string, string]): string =
+func assemble*(shell, title, body: string; faces: Table[string, string]): string =
   ## Fill shell: title escaped, body as rendered, each face as base64 data of its bytes.
   result = shell.replace(TOKEN_TITLE, escapeHtml(title)).replace(TOKEN_BODY, body)
   for face, bytes in faces.pairs:
@@ -62,30 +62,30 @@ func assemble*(shell, title, body: string, faces: Table[string, string]): string
 
 
 func pageDigest*(page: string): string =
-  ## Digest built page, as register holds it once page is published.
+  ## Digest built page, as publications hold it once page is published.
   digestOf(page)
 
 
 
 #[ Formatting ]#
 
-func grouped*(n: int): string =
-  ## Format integer with thin groups of three digits, e.g. `2 125`.
-  let digits = $abs(n)
-  for i, c in digits:
-    if i > 0 and (digits.len - i) mod 3 == 0: result.add ' '
-    result.add c
-  if n < 0: result = "−" & result
+func grouped*(number: int): string =
+  ## Format integer with thin groups of three digits, as `2 125`.
+  let digits = $abs(number)
+  for index, digit in digits:
+    if index > 0 and (digits.len - index) mod 3 == 0: result.add ' '
+    result.add digit
+  if number < 0: result = "−" & result
 
 
-func fixed*(x: float, places = 2): string =
+func fixed*(value: float, places = 2): string =
   ## Format float to fixed places.
-  formatFloat(x, ffDecimal, places)
+  formatFloat(value, ffDecimal, places)
 
 
-func ratioText*(x: float): string =
+func ratioText*(ratio: float): string =
   ## Format ratio of times as `×0.72`.
-  "×" & x.fixed
+  "×" & ratio.fixed
 
 
 func code*(text: string): string =
@@ -94,5 +94,5 @@ func code*(text: string): string =
 
 
 func chip*(text, kind: string): string =
-  ## Render short verdict as chip of kind, e.g. `pass`, `fail`, `status`.
+  ## Render short verdict as chip of kind: `pass`, `fail` or `status`.
   "<span class=\"chip " & kind & "\">" & escapeHtml(text) & "</span>"

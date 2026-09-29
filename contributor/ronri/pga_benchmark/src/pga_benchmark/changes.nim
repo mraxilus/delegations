@@ -30,7 +30,7 @@ type
   Edit* = object
     ## Define one edit to one library file.
     path*: string
-      ## Library-relative path, e.g. `pga/operators.nim`.
+      ## Library-relative path, as `pga/operators.nim`.
     quote*: string
       ## Text at pin edit replaces; empty for whole-file replacement.
     replacement*: string

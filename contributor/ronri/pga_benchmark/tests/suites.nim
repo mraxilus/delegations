@@ -770,7 +770,7 @@ suite "Markdown":
 
   test "fence keeps its lines verbatim and closes on run at least as long":
     let blocks = parseBlocks("````nim\nlet a = 1\n```\n  indented\n````\nafter\n")
-    check blocks[0].kind == BlockKind.Fence and blocks[0].info == "nim"  # info string
+    check blocks[0].kind == BlockKind.Fence and blocks[0].language == "nim"  # after opening run
     check blocks[0].lines == @["let a = 1", "```", "  indented"]  # shorter run stays inside
     check blocks[1].kind == BlockKind.Paragraph  # fence closed
 
@@ -975,10 +975,10 @@ suite "Pages":
     check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
     check "data:font/woff2;base64,eHl6" in page  # bytes inlined
 
-  test "noise band is assumed until quiet trials give enough ratios":
+  test "spread is assumed until quiet trials give enough ratios":
     let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
-    check bandOf([quiet]).count == 0  # too few ratios: band assumed
-    check bandOf([quiet]).low < 1.0 and bandOf([quiet]).high > 1.0  # around no change
+    check spreadOf([quiet]).count == 0  # too few ratios: spread assumed
+    check spreadOf([quiet]).low < 1.0 and spreadOf([quiet]).high > 1.0  # around no change
 
   test "every grid in shell bounds its columns, so wide content scrolls in place":
     const SHELL = staticRead("../pages/shell.html")
@@ -1005,9 +1005,9 @@ suite "Pages":
       trial_document = %*{"pin_suites": {"rga4d": {"ok": 1, "failed": 0}}, "algebras": {"rga4d": {
         "suites": {"ok": 1, "failed": 0}, "functions": {}, "times": {},
         "nan": {"norm": [0.5, 0.0]}}}}
-      chips = verdictChips(trial_document, baselines, Band(low: 0.9, high: 1.1))
+      chips = verdictChips(trial_document, baselines, Spread(low: 0.9, high: 1.1))
     check "NaN gone in 1" in chips and "chip pass" in chips  # gain named, suites held
-    check "no trial" in verdictChips(nil, baselines, Band())  # absent trial is said
+    check "no trial" in verdictChips(nil, baselines, Spread())  # absent trial is said
 
 
 suite "Driver":

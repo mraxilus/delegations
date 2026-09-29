@@ -28,9 +28,9 @@ type
     title*: string
       ## Heading of section.
     path*: string
-      ## Library-relative file quoted, e.g. `pga/multivectors.nim`.
+      ## Library-relative file quoted, as `pga/multivectors.nim`.
     status*: string
-      ## Short verdict after file, e.g. `decide`; empty where file gives none.
+      ## Short verdict after file, as `decide`; empty where file gives none.
     quote*: string
       ## Lines of library note is about, verbatim at pin.
     body*: seq[Block]

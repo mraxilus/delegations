@@ -29,7 +29,7 @@ import ./[changes, guard, markdown]
 type Design* = object
   ## Define one design exploration as read from its directory.
   name*: string
-    ## Directory name, e.g. `typed-multivectors`.
+    ## Directory name, as `typed-multivectors`.
   title*: string
     ## Heading of `design.md`.
   body*: seq[Block]
@@ -47,7 +47,9 @@ const CLAIM_KINDS* = ["suites", "tables", "program", "count", "build"]
 
 
 func parseDesign*(
-  name, argument, change: string, claims: JsonNode, directory: string
+  name, argument, change: string;
+  claims: JsonNode;
+  directory: string;
 ): (Design, seq[Finding]) =
   ## Read design from argument and change texts and parsed claims; `change` empty where design
   ##   carries none, `claims` nil where file is not JSON.
