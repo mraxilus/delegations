@@ -1483,7 +1483,7 @@ proc checkHandTurns*(built: Parts) =
     reach = 0.0
   for manner in Manner:
     let description = MANNERS[manner]
-    var winds_at_all = false
+    var is_winding_at_all = false
     for edge in 0 ..< CHAIN.len - 1:
       let
         walk = turnWalk(handPose(CHAIN[edge].wind), description.who, description.about,
@@ -1509,7 +1509,7 @@ proc checkHandTurns*(built: Parts) =
             &"{manner} edge {edge}."
         let far = spun[spun.mapIt(abs(it)).maxIndex]
         if abs(abs(far) - abs(360 * CHAIN[edge].wind)) > 1e-6:
-          winds_at_all = true
+          is_winding_at_all = true
           doAssert abs(far - 360 * CHAIN[edge + 1].wind) < 1e-6,
             &"An edge turns away from the next position instead of " &
               &"towards it; got `{decimal(far / 360, 2)}` for " &
@@ -1521,7 +1521,7 @@ proc checkHandTurns*(built: Parts) =
           it.place[Dancer.Follow] != walk.poses[0].place[Dancer.Follow] or
           it.facing[Dancer.Follow] != walk.poses[0].facing[Dancer.Follow]),
         &"A transition does not move at all; got {manner} edge {edge}."
-    if winds_at_all:
+    if is_winding_at_all:
       inc winding
   told.add &"the chain has ends and they hold: {winding} of " &
     &"{Manner.toSeq.len} manners wind, every edge rocks out to the next " &
