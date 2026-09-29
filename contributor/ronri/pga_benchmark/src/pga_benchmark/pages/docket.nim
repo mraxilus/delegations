@@ -106,7 +106,7 @@ func boundOf(b: JsonNode, width: int): Option[BoundFigures] =
 
 
 func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
-  ## Read one row per catalogued measurand, docket order.
+  ## Read one row per catalogued measurand, docket order; `ids` is docket file whole.
   let
     width = 8 shl sheet.dimensions
     functions = sheet.static_measurements{"functions"}
@@ -119,7 +119,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       lt = if timing.isNil: nil else: timing{"library"}
       rt = if timing.isNil: nil else: timing{"reference"}
     result.add Row(
-      id: ids{sheet.name & "/" & id}.getStr,
+      id: ids{"ids", sheet.name & "/" & id}.getStr,
       measurand: id,
       symbol: m{"symbol"}.getStr,
       expression: m{"expression"}.getStr,
