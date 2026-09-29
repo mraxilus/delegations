@@ -366,7 +366,8 @@ suite "Inspector":
     check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
-    check functions[1].symbol == "dot" and functions[1].params == @["Vector3", "Vector3"]
+    check functions[1].symbol == "dot"  # second declaration
+    check functions[1].params == @["Vector3", "Vector3"]  # both parameters
     check functions[1].result_stem == "float" and functions[1].is_inline  # via return type
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
@@ -493,7 +494,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     )
     let m = movement(f, Counts(zero_fills: 1, intermediates: 2, copies: 1), 128)
     check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
-    check m.bytes_zeroed == 128 and m.bytes_copied == 128 and m.bytes_intermediates == 256
+    check m.bytes_zeroed == 128 and m.bytes_copied == 128  # one width each
+    check m.bytes_intermediates == 256  # two locals, one width each
     check m.bytes_moved == 896  # sum of every cause
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
@@ -729,8 +731,8 @@ suite "Gaps":
     check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
       "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
     check decidedOf(Rule.ZeroFills, ALGEBRAS, gaps).evidence.startsWith("2 of 3")  # ∧ and ~
-    check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence ==
-      "1 gaps. The widest is rga4d/wedge_point_point, which spends 81 multiplies against 12."
+    check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence == "1 gaps. The widest is " &
+      "rga4d/wedge_point_point, which spends 81 multiplies against 12."  # widest gap named
     check decidedOf(Rule.Time, ALGEBRAS, gaps).evidence ==
       "2 gaps. The worst is rga4d/wedge_point_point, at 24.1 ns against 1.3 ns."  # worst ratio
     check decidedOf(Rule.Nan, ALGEBRAS, gaps).status == Status.Met  # every share zero
@@ -797,7 +799,8 @@ suite "Changes":
     check findings.len == 0  # well formed
     check change.title == "Sign" and change.why.len == 1  # title and why
     check change.edits.len == 1 and change.edits[0].path == "pga/a.nim"  # one edit
-    check change.edits[0].quote == "let y = 2" and change.edits[0].replacement == "let y = 3"
+    check change.edits[0].quote == "let y = 2"  # first fence quotes
+    check change.edits[0].replacement == "let y = 3"  # second fence replaces
 
   test "quote found once is replaced; found twice or nowhere is finding":
     var files = {"pga/a.nim": LIBRARY}.toTable
@@ -837,7 +840,8 @@ suite "Notes":
     let (notes, findings) = parseNotes(RECORD, SOURCE.replace("FENCE", "```"))
     check findings.len == 0 and notes.lead.len == 1 and notes.items.len == 1  # one note
     let note = notes.items[0]
-    check note.title == "Odd grade" and note.path == "pga/a.nim" and note.status == "decide"
+    check note.title == "Odd grade" and note.path == "pga/a.nim"  # heading, then file
+    check note.status == "decide"  # verdict after file
     check note.quote == "let y = 2" and note.body.len == 1  # anchor and body
 
   test "anchor is located at pin, and stale anchor is finding":
@@ -845,7 +849,8 @@ suite "Notes":
       (notes, _) = parseNotes(RECORD, SOURCE.replace("FENCE", "```"))
       files = {"pga/a.nim": "let x = 1\nlet y = 2\n"}.toTable
       moved = {"pga/a.nim": "let y = 3\n"}.toTable
-    check checkAnchors(notes, files, RECORD).len == 0 and notes.items[0].lineAt(files) == 2
+    check checkAnchors(notes, files, RECORD).len == 0  # quote found once
+    check notes.items[0].lineAt(files) == 2  # located where it stands
     check checkAnchors(notes, moved, RECORD).len == 1  # quote gone from library
 
 
@@ -870,16 +875,17 @@ suite "Head":
   test "built page must match digest it was published at, and README its URL":
     let
       built = {"docket": "a1", "marginalia": "b2"}.toTable
-      register = %*{
+      publications = %*{
         "docket": {"url": "https://x/1", "digest": "a1"},
         "marginalia": {"url": "https://x/2", "digest": "b0"},
         "retired": {"url": "https://x/3", "digest": "c3"},
       }
       readme = "Pages: https://x/1 and https://x/2 and https://x/3."
-      findings = checkPublished(built, register, readme, "pages/published.json")
-    check findings.len == 2  # marginalia changed, retired page left in register
-    check "`marginalia`" in findings[0].message or "`marginalia`" in findings[1].message
-    check checkPublished(built, register, "Pages: https://x/1.", "p").len == 4  # two URLs unnamed
+      findings = checkPublished(built, publications, readme, "pages/published.json")
+    check findings.len == 2  # marginalia changed, retired page left in publications
+    check "`marginalia`" in findings[0].message or
+      "`marginalia`" in findings[1].message  # changed page named
+    check checkPublished(built, publications, "Pages: https://x/1.", "p").len == 4  # URLs unnamed
 
 suite "Designs":
   const
@@ -987,8 +993,8 @@ suite "Pages":
       let body = rule.split('{')
       if body.len < 2 or "display: grid" notin body[^1]: continue
       if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
+    checkpoint "unbounded: " & unbounded.join(", ")
     check unbounded.len == 0  # grid child of auto width widens page at phone width
-    if unbounded.len > 0: echo "unbounded: ", unbounded.join(", ")
 
   test "docket rows carry identifiers docket file allots":
     let
