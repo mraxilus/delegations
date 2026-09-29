@@ -53,11 +53,12 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(
 h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; line-height: 1.25; margin: 0;
   text-wrap: balance; }
 h1 { font-size: 1.8rem; } h2 { font-size: 1.25rem; } h3 { font-size: 1.05rem; }
-h4 { font-size: 0.8rem; font-family: var(--sans); text-transform: uppercase;
+h4 { font-size: 0.8rem; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--muted); }
 p { margin: 0; max-width: 78ch; }
 a { color: var(--bound); text-underline-offset: 2px; }
-code, .mono, pre { font-family: var(--mono); font-size: 0.88em; }
+code, .mono, pre { font-family: var(--mono); font-size: 0.88em;
+  font-variant-ligatures: common-ligatures contextual; }
 code { background: var(--code); padding: 0.05em 0.3em; border-radius: 3px; }
 :focus-visible { outline: 2px solid var(--bound); outline-offset: 2px; }
 

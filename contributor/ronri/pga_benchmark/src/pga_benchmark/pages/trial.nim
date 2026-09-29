@@ -20,7 +20,7 @@ import ./shell
 type Band* = object
   ## Define spread of times in trials that change no library function.
   low*, high*: float
-    ## Fifth and ninety-fifth percentile of ratio, one measurand at a time.
+    ## Fifth and ninety-fifth percentile of ratio, each measurand alone.
   count*: int
     ## Ratios band is read from.
 

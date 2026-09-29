@@ -8,7 +8,7 @@
 ##     and per bar width, so shell's `:has()` rules sort, filter and rescale.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
-##     algebras stay under a megabyte.
+##     algebras stay under one megabyte.
 
 {.experimental: "strictFuncs".}
 
