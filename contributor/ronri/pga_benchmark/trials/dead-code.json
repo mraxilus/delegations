@@ -1,0 +1,1262 @@
+{
+  "schema": 1,
+  "kind": "trial",
+  "name": "dead-code",
+  "path": "changes/dead-code.md",
+  "edits_digest": "a5527a4e565192f2",
+  "taken": {
+    "date": "2026-09-29",
+    "machine": "linux amd64, 4 cores",
+    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "pga": "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315",
+    "flags": "-d:release",
+    "runs": 5
+  },
+  "pin_suites": {
+    "rga4d": {
+      "ok": 33,
+      "failed": 0,
+      "built": true
+    },
+    "cga5d": {
+      "ok": 28,
+      "failed": 0,
+      "built": true
+    }
+  },
+  "algebras": {
+    "rga4d": {
+      "suites": {
+        "ok": 33,
+        "failed": 0,
+        "built": true
+      },
+      "functions": {},
+      "times": {
+        "wedge": [
+          17.63,
+          17.62,
+          0.9987
+        ],
+        "wedge_anti": [
+          20.92,
+          20.9,
+          0.9982
+        ],
+        "wedge_dot": [
+          54.17,
+          54.06,
+          0.9988
+        ],
+        "wedge_dot_anti": [
+          50.33,
+          54.58,
+          1.0101
+        ],
+        "dot": [
+          5.73,
+          5.75,
+          1.0031
+        ],
+        "dot_anti": [
+          6.74,
+          6.71,
+          0.9818
+        ],
+        "contract_bulk": [
+          18.8,
+          18.78,
+          0.9986
+        ],
+        "contract_weight": [
+          9.73,
+          9.7,
+          0.9965
+        ],
+        "expand_bulk": [
+          9.64,
+          9.61,
+          0.9965
+        ],
+        "expand_weight": [
+          19.17,
+          19.15,
+          0.9995
+        ],
+        "add": [
+          14.22,
+          14.23,
+          0.9988
+        ],
+        "subtract": [
+          14.36,
+          14.14,
+          0.9816
+        ],
+        "project_central": [
+          40.33,
+          40.42,
+          1.0022
+        ],
+        "project_central_anti": [
+          44.76,
+          44.78,
+          1.0018
+        ],
+        "project_orthogonal": [
+          46.08,
+          46.03,
+          0.9998
+        ],
+        "project_orthogonal_anti": [
+          42.76,
+          43.03,
+          1.0068
+        ],
+        "scale": [
+          10.33,
+          11.84,
+          1.0001
+        ],
+        "bulk": [
+          3.43,
+          3.36,
+          0.9842
+        ],
+        "weight": [
+          3.68,
+          3.66,
+          0.9965
+        ],
+        "complement_right": [
+          5.3,
+          5.21,
+          0.9543
+        ],
+        "complement_left": [
+          5.25,
+          5.24,
+          0.9768
+        ],
+        "reverse": [
+          5.47,
+          5.44,
+          1.0004
+        ],
+        "reverse_anti": [
+          5.51,
+          5.5,
+          1.0035
+        ],
+        "dual_bulk": [
+          3.71,
+          3.61,
+          0.9875
+        ],
+        "dual_weight": [
+          3.99,
+          3.9,
+          1.0018
+        ],
+        "negate": [
+          12.93,
+          13.21,
+          1.0303
+        ],
+        "norm_bulk": [
+          11.94,
+          11.93,
+          1.0
+        ],
+        "norm_weight": [
+          11.86,
+          11.87,
+          1.0005
+        ],
+        "norm_bulk_squared": [
+          4.31,
+          4.3,
+          0.9998
+        ],
+        "norm_weight_squared": [
+          4.72,
+          4.64,
+          1.0315
+        ],
+        "norm": [
+          13.96,
+          13.74,
+          0.9931
+        ],
+        "normalize_bulk": [
+          10.96,
+          11.26,
+          1.0568
+        ],
+        "normalize_weight": [
+          4.91,
+          4.9,
+          0.9993
+        ],
+        "unitize": [
+          4.9,
+          4.89,
+          0.9999
+        ],
+        "attitude": [
+          3.44,
+          3.43,
+          1.0029
+        ],
+        "select_grade": [
+          12.8,
+          12.77,
+          0.9979
+        ],
+        "select_grade_anti": [
+          13.88,
+          13.9,
+          0.9997
+        ],
+        "select_part": [
+          0.79,
+          0.79,
+          0.9994
+        ],
+        "support": [
+          55.86,
+          55.82,
+          0.9985
+        ],
+        "support_anti": [
+          67.33,
+          67.37,
+          1.0018
+        ],
+        "wedge_point_point": [
+          24.41,
+          24.39,
+          0.9988
+        ],
+        "wedge_line_point": [
+          24.54,
+          24.64,
+          1.0052
+        ],
+        "wedge_point_line": [
+          24.51,
+          24.54,
+          1.0008
+        ],
+        "wedge_anti_plane_plane": [
+          25.31,
+          25.29,
+          1.0019
+        ],
+        "wedge_anti_plane_line": [
+          25.81,
+          25.85,
+          1.0036
+        ],
+        "wedge_anti_line_plane": [
+          25.78,
+          25.8,
+          1.0008
+        ],
+        "wedge_anti_line_line": [
+          25.29,
+          25.32,
+          1.0009
+        ],
+        "wedge_anti_point_plane": [
+          25.78,
+          25.8,
+          0.999
+        ],
+        "dot_point_point": [
+          5.89,
+          5.76,
+          1.0031
+        ],
+        "dot_line_line": [
+          5.88,
+          5.77,
+          1.0009
+        ],
+        "dot_plane_plane": [
+          5.87,
+          5.77,
+          1.0003
+        ],
+        "dot_anti_point_point": [
+          6.53,
+          6.32,
+          0.9675
+        ],
+        "dot_anti_line_line": [
+          6.52,
+          6.28,
+          0.9696
+        ],
+        "dot_anti_plane_plane": [
+          6.52,
+          6.41,
+          0.9933
+        ],
+        "wedge_dot_anti_motor_motor": [
+          50.25,
+          49.85,
+          1.0014
+        ],
+        "transform_point_motor": [
+          137.93,
+          134.41,
+          0.9714
+        ],
+        "transform_line_motor": [
+          139.05,
+          134.84,
+          0.9572
+        ],
+        "transform_plane_motor": [
+          138.81,
+          138.43,
+          0.9817
+        ],
+        "project_orthogonal_point_plane": [
+          46.7,
+          46.49,
+          0.9964
+        ],
+        "project_orthogonal_point_line": [
+          46.51,
+          46.75,
+          0.9888
+        ],
+        "project_orthogonal_line_plane": [
+          46.64,
+          46.93,
+          0.9991
+        ],
+        "support_line": [
+          56.49,
+          56.39,
+          1.0006
+        ],
+        "support_plane": [
+          62.13,
+          62.08,
+          0.9975
+        ],
+        "support_anti_point": [
+          72.97,
+          71.64,
+          0.9277
+        ],
+        "support_anti_line": [
+          74.65,
+          74.57,
+          0.9962
+        ],
+        "reverse_anti_motor": [
+          5.94,
+          6.01,
+          0.9892
+        ],
+        "unitize_motor": [
+          5.1,
+          5.41,
+          1.0087
+        ],
+        "norm_weight_motor": [
+          11.96,
+          11.93,
+          0.9967
+        ],
+        "norm_bulk_motor": [
+          11.98,
+          12.0,
+          0.9938
+        ],
+        "complement_right_point": [
+          5.3,
+          5.27,
+          0.9524
+        ],
+        "complement_left_point": [
+          5.39,
+          5.3,
+          0.9723
+        ],
+        "reverse_point": [
+          5.42,
+          5.45,
+          0.9675
+        ],
+        "reverse_anti_point": [
+          5.44,
+          5.47,
+          0.968
+        ],
+        "dual_bulk_point": [
+          3.67,
+          3.61,
+          0.9763
+        ],
+        "dual_weight_point": [
+          4.06,
+          3.95,
+          0.9662
+        ],
+        "bulk_point": [
+          3.4,
+          3.33,
+          0.9802
+        ],
+        "weight_point": [
+          3.69,
+          3.65,
+          0.9892
+        ],
+        "norm_bulk_point": [
+          11.95,
+          11.76,
+          0.9836
+        ],
+        "norm_weight_point": [
+          12.06,
+          12.06,
+          0.9999
+        ],
+        "norm_bulk_squared_point": [
+          4.31,
+          4.3,
+          1.0005
+        ],
+        "norm_weight_squared_point": [
+          4.62,
+          4.47,
+          0.9776
+        ],
+        "unitize_point": [
+          5.22,
+          5.16,
+          0.9911
+        ],
+        "attitude_point": [
+          3.43,
+          3.35,
+          0.9905
+        ],
+        "complement_right_line": [
+          5.65,
+          5.07,
+          0.9256
+        ],
+        "complement_left_line": [
+          5.37,
+          5.17,
+          0.9356
+        ],
+        "reverse_line": [
+          5.44,
+          5.33,
+          0.9741
+        ],
+        "reverse_anti_line": [
+          5.45,
+          5.3,
+          0.9667
+        ],
+        "dual_bulk_line": [
+          3.9,
+          3.6,
+          0.9643
+        ],
+        "dual_weight_line": [
+          4.05,
+          3.95,
+          0.9715
+        ],
+        "bulk_line": [
+          3.38,
+          3.35,
+          0.9915
+        ],
+        "weight_line": [
+          3.68,
+          3.65,
+          0.9907
+        ],
+        "norm_bulk_line": [
+          11.9,
+          11.92,
+          0.9985
+        ],
+        "norm_weight_line": [
+          11.92,
+          11.96,
+          0.9907
+        ],
+        "norm_bulk_squared_line": [
+          4.31,
+          4.3,
+          0.9978
+        ],
+        "norm_weight_squared_line": [
+          5.08,
+          4.98,
+          1.0201
+        ],
+        "unitize_line": [
+          5.68,
+          5.69,
+          1.0122
+        ],
+        "attitude_line": [
+          3.78,
+          3.7,
+          0.9807
+        ],
+        "complement_right_plane": [
+          5.83,
+          5.57,
+          0.9566
+        ],
+        "complement_left_plane": [
+          5.87,
+          5.66,
+          0.9482
+        ],
+        "reverse_plane": [
+          5.96,
+          5.84,
+          0.9705
+        ],
+        "reverse_anti_plane": [
+          6.01,
+          5.99,
+          0.996
+        ],
+        "dual_bulk_plane": [
+          4.07,
+          3.96,
+          0.9661
+        ],
+        "dual_weight_plane": [
+          4.46,
+          4.37,
+          0.9848
+        ],
+        "bulk_plane": [
+          3.63,
+          3.71,
+          1.0289
+        ],
+        "weight_plane": [
+          3.99,
+          4.0,
+          0.9995
+        ],
+        "norm_bulk_plane": [
+          13.3,
+          13.16,
+          0.9885
+        ],
+        "norm_weight_plane": [
+          12.03,
+          12.1,
+          0.9963
+        ],
+        "norm_bulk_squared_plane": [
+          4.31,
+          4.3,
+          0.9998
+        ],
+        "norm_weight_squared_plane": [
+          4.54,
+          4.45,
+          0.98
+        ],
+        "unitize_plane": [
+          5.17,
+          5.05,
+          0.9767
+        ],
+        "attitude_plane": [
+          3.44,
+          3.36,
+          0.9872
+        ]
+      },
+      "nan": {}
+    },
+    "cga5d": {
+      "suites": {
+        "ok": 28,
+        "failed": 0,
+        "built": true
+      },
+      "functions": {},
+      "times": {
+        "wedge": [
+          58.56,
+          58.71,
+          1.0025
+        ],
+        "wedge_anti": [
+          61.2,
+          61.26,
+          1.0011
+        ],
+        "wedge_dot": [
+          280.49,
+          281.99,
+          1.0001
+        ],
+        "wedge_dot_anti": [
+          292.38,
+          306.83,
+          1.0043
+        ],
+        "dot": [
+          12.78,
+          12.82,
+          1.0074
+        ],
+        "dot_anti": [
+          11.71,
+          11.85,
+          1.0093
+        ],
+        "contract_bulk": [
+          66.07,
+          65.85,
+          0.9936
+        ],
+        "contract_weight": [
+          67.38,
+          67.97,
+          1.0415
+        ],
+        "expand_bulk": [
+          60.48,
+          61.57,
+          1.0852
+        ],
+        "expand_weight": [
+          61.12,
+          62.35,
+          1.0812
+        ],
+        "add": [
+          15.79,
+          16.19,
+          1.0336
+        ],
+        "subtract": [
+          15.81,
+          16.27,
+          1.0188
+        ],
+        "project_central": [
+          142.61,
+          141.57,
+          0.9839
+        ],
+        "project_central_anti": [
+          128.56,
+          129.61,
+          0.993
+        ],
+        "project_orthogonal": [
+          139.66,
+          140.27,
+          0.9878
+        ],
+        "project_orthogonal_anti": [
+          130.64,
+          129.18,
+          0.9841
+        ],
+        "scale": [
+          14.3,
+          14.23,
+          0.9953
+        ],
+        "bulk": [
+          7.97,
+          7.67,
+          0.9203
+        ],
+        "weight": [
+          7.65,
+          7.66,
+          1.0015
+        ],
+        "complement_right": [
+          8.77,
+          8.5,
+          0.9517
+        ],
+        "complement_left": [
+          8.78,
+          8.47,
+          0.956
+        ],
+        "reverse": [
+          8.82,
+          8.28,
+          0.8712
+        ],
+        "reverse_anti": [
+          8.79,
+          8.32,
+          0.927
+        ],
+        "dual_bulk": [
+          8.41,
+          8.32,
+          0.965
+        ],
+        "dual_weight": [
+          8.52,
+          8.41,
+          0.96
+        ],
+        "negate": [
+          13.64,
+          13.58,
+          0.9679
+        ],
+        "norm_bulk": [
+          20.16,
+          19.04,
+          0.8397
+        ],
+        "norm_weight": [
+          17.33,
+          17.55,
+          1.0242
+        ],
+        "norm_bulk_squared": [
+          10.74,
+          10.68,
+          0.9931
+        ],
+        "norm_weight_squared": [
+          9.8,
+          9.53,
+          1.0105
+        ],
+        "norm": [
+          38.93,
+          39.22,
+          1.0074
+        ],
+        "normalize_bulk": [
+          33.47,
+          33.79,
+          1.0097
+        ],
+        "normalize_weight": [
+          18.35,
+          17.86,
+          0.9583
+        ],
+        "unitize": [
+          18.3,
+          17.86,
+          0.9772
+        ],
+        "attitude": [
+          8.37,
+          8.27,
+          0.976
+        ],
+        "select_grade": [
+          13.36,
+          13.21,
+          0.9332
+        ],
+        "select_grade_anti": [
+          14.15,
+          14.2,
+          1.0014
+        ],
+        "select_part": [
+          1.04,
+          1.04,
+          1.0057
+        ],
+        "bulk_flat": [
+          8.26,
+          8.29,
+          1.0027
+        ],
+        "weight_flat": [
+          7.33,
+          7.36,
+          1.0027
+        ],
+        "norm_bulk_flat": [
+          18.43,
+          18.53,
+          1.0265
+        ],
+        "norm_weight_flat": [
+          17.38,
+          18.16,
+          1.0469
+        ],
+        "carrier": [
+          7.66,
+          8.04,
+          1.0271
+        ],
+        "carrier_co": [
+          45.97,
+          46.2,
+          1.006
+        ],
+        "center": [
+          122.26,
+          121.3,
+          0.9921
+        ],
+        "container": [
+          71.25,
+          70.93,
+          0.9946
+        ],
+        "partner": [
+          178.1,
+          180.36,
+          1.0091
+        ],
+        "wedge_round_point_round_point": [
+          60.02,
+          59.68,
+          0.9919
+        ],
+        "wedge_dipole_round_point": [
+          60.6,
+          60.0,
+          0.9901
+        ],
+        "wedge_round_point_dipole": [
+          60.72,
+          59.96,
+          0.9886
+        ],
+        "wedge_circle_round_point": [
+          60.78,
+          60.0,
+          0.9845
+        ],
+        "wedge_round_point_circle": [
+          60.54,
+          60.05,
+          0.9783
+        ],
+        "wedge_dipole_dipole": [
+          60.21,
+          59.83,
+          0.9933
+        ],
+        "wedge_anti_sphere_sphere": [
+          68.47,
+          68.28,
+          0.9906
+        ],
+        "wedge_anti_sphere_circle": [
+          67.55,
+          67.64,
+          0.9838
+        ],
+        "wedge_anti_circle_sphere": [
+          67.91,
+          67.61,
+          0.9951
+        ],
+        "wedge_anti_circle_circle": [
+          68.03,
+          67.3,
+          0.9861
+        ],
+        "wedge_anti_sphere_dipole": [
+          67.91,
+          67.62,
+          0.9824
+        ],
+        "wedge_anti_dipole_sphere": [
+          67.95,
+          67.6,
+          0.9863
+        ],
+        "dot_round_point_round_point": [
+          12.55,
+          12.54,
+          0.9676
+        ],
+        "dot_dipole_dipole": [
+          12.55,
+          12.54,
+          0.9698
+        ],
+        "dot_circle_circle": [
+          12.54,
+          12.55,
+          0.9731
+        ],
+        "dot_sphere_sphere": [
+          12.53,
+          12.51,
+          0.9709
+        ],
+        "dot_anti_round_point_round_point": [
+          11.46,
+          11.47,
+          0.9913
+        ],
+        "dot_anti_dipole_dipole": [
+          11.44,
+          11.44,
+          0.9966
+        ],
+        "dot_anti_circle_circle": [
+          11.46,
+          11.38,
+          0.9907
+        ],
+        "dot_anti_sphere_sphere": [
+          11.43,
+          11.43,
+          0.9943
+        ],
+        "complement_right_round_point": [
+          8.73,
+          8.54,
+          0.9919
+        ],
+        "complement_left_round_point": [
+          8.73,
+          8.53,
+          0.9729
+        ],
+        "reverse_round_point": [
+          8.7,
+          8.2,
+          0.9425
+        ],
+        "reverse_anti_round_point": [
+          8.7,
+          8.24,
+          0.9472
+        ],
+        "dual_bulk_round_point": [
+          8.62,
+          8.4,
+          0.9745
+        ],
+        "dual_weight_round_point": [
+          8.75,
+          8.46,
+          0.957
+        ],
+        "bulk_round_point": [
+          7.96,
+          7.66,
+          0.9405
+        ],
+        "weight_round_point": [
+          7.64,
+          7.65,
+          0.9962
+        ],
+        "bulk_flat_round_point": [
+          8.27,
+          8.29,
+          0.983
+        ],
+        "weight_flat_round_point": [
+          7.34,
+          7.3,
+          0.9953
+        ],
+        "attitude_round_point": [
+          8.44,
+          8.26,
+          0.9796
+        ],
+        "carrier_round_point": [
+          7.72,
+          7.7,
+          0.977
+        ],
+        "carrier_co_round_point": [
+          47.12,
+          46.56,
+          0.9607
+        ],
+        "center_round_point": [
+          121.54,
+          120.11,
+          0.9502
+        ],
+        "container_round_point": [
+          71.35,
+          71.31,
+          0.9944
+        ],
+        "partner_round_point": [
+          194.13,
+          192.41,
+          0.9726
+        ],
+        "complement_right_dipole": [
+          9.54,
+          9.35,
+          0.9973
+        ],
+        "complement_left_dipole": [
+          9.53,
+          9.35,
+          0.9926
+        ],
+        "reverse_dipole": [
+          9.23,
+          9.01,
+          0.9908
+        ],
+        "reverse_anti_dipole": [
+          9.22,
+          9.02,
+          0.9913
+        ],
+        "dual_bulk_dipole": [
+          9.29,
+          9.23,
+          0.9935
+        ],
+        "dual_weight_dipole": [
+          9.36,
+          9.83,
+          1.0504
+        ],
+        "bulk_dipole": [
+          8.4,
+          8.43,
+          1.0398
+        ],
+        "weight_dipole": [
+          7.65,
+          7.63,
+          1.0001
+        ],
+        "bulk_flat_dipole": [
+          8.27,
+          8.29,
+          1.0013
+        ],
+        "weight_flat_dipole": [
+          6.98,
+          7.09,
+          1.043
+        ],
+        "attitude_dipole": [
+          8.26,
+          8.26,
+          1.0002
+        ],
+        "carrier_dipole": [
+          7.68,
+          7.68,
+          0.9989
+        ],
+        "carrier_co_dipole": [
+          46.01,
+          46.79,
+          0.9944
+        ],
+        "center_dipole": [
+          120.3,
+          118.32,
+          0.994
+        ],
+        "container_dipole": [
+          71.28,
+          70.37,
+          0.9899
+        ],
+        "partner_dipole": [
+          175.8,
+          177.33,
+          1.0
+        ],
+        "complement_right_circle": [
+          8.61,
+          8.56,
+          0.9919
+        ],
+        "complement_left_circle": [
+          8.59,
+          8.52,
+          0.9928
+        ],
+        "reverse_circle": [
+          8.7,
+          8.2,
+          0.9431
+        ],
+        "reverse_anti_circle": [
+          8.38,
+          8.2,
+          0.9946
+        ],
+        "dual_bulk_circle": [
+          8.63,
+          8.42,
+          0.9752
+        ],
+        "dual_weight_circle": [
+          8.74,
+          8.47,
+          0.9677
+        ],
+        "bulk_circle": [
+          7.97,
+          7.66,
+          0.9433
+        ],
+        "weight_circle": [
+          7.64,
+          7.64,
+          1.001
+        ],
+        "bulk_flat_circle": [
+          8.25,
+          8.28,
+          1.0039
+        ],
+        "weight_flat_circle": [
+          6.78,
+          7.37,
+          1.0399
+        ],
+        "attitude_circle": [
+          8.26,
+          8.26,
+          1.0007
+        ],
+        "carrier_circle": [
+          7.66,
+          7.68,
+          1.0048
+        ],
+        "carrier_co_circle": [
+          45.75,
+          46.78,
+          1.0094
+        ],
+        "center_circle": [
+          118.3,
+          119.95,
+          1.0408
+        ],
+        "container_circle": [
+          70.8,
+          71.37,
+          1.1283
+        ],
+        "partner_circle": [
+          174.35,
+          174.13,
+          1.1044
+        ],
+        "complement_right_sphere": [
+          8.73,
+          10.79,
+          1.2544
+        ],
+        "complement_left_sphere": [
+          8.73,
+          9.62,
+          1.1324
+        ],
+        "reverse_sphere": [
+          8.76,
+          9.78,
+          1.1161
+        ],
+        "reverse_anti_sphere": [
+          8.75,
+          10.1,
+          1.1498
+        ],
+        "dual_bulk_sphere": [
+          8.71,
+          8.83,
+          1.0471
+        ],
+        "dual_weight_sphere": [
+          8.73,
+          8.83,
+          1.0386
+        ],
+        "bulk_sphere": [
+          7.67,
+          7.66,
+          1.0396
+        ],
+        "weight_sphere": [
+          7.65,
+          7.66,
+          1.0033
+        ],
+        "bulk_flat_sphere": [
+          8.25,
+          8.28,
+          1.0034
+        ],
+        "weight_flat_sphere": [
+          6.98,
+          7.38,
+          1.056
+        ],
+        "attitude_sphere": [
+          8.25,
+          8.28,
+          1.0403
+        ],
+        "carrier_sphere": [
+          7.66,
+          7.7,
+          1.0059
+        ],
+        "carrier_co_sphere": [
+          46.01,
+          48.01,
+          1.0435
+        ],
+        "center_sphere": [
+          120.03,
+          121.1,
+          1.2013
+        ],
+        "container_sphere": [
+          71.15,
+          83.66,
+          1.1759
+        ],
+        "partner_sphere": [
+          174.53,
+          182.6,
+          1.0462
+        ]
+      },
+      "nan": {}
+    }
+  },
+  "claims": []
+}
