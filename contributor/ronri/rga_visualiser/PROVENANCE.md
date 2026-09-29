@@ -2825,12 +2825,17 @@ layout compiles as a `func`. The mark is on all 130-odd bindings in `gui`, `open
 `image` and the `importjs` lines of the bridge. Under it, 51 funcs failed to compile and went back
 to `proc`. A `func` in this tree means the compiler checked that it reaches no effect.
 
+**A layman knows these acronyms, so they stay in names (V.9).** They are UI, RGB and RGBA, GIF and
+PNG, FOV, GL, GUI, DOM and fps, beside those the Architect kept on repository issue 305. The unit
+symbols ms, px, kb and mb join the jargon list of V.6. The Architect ruled both on pull request 322.
+Every other acronym that a field or a library coined is spelled out in its name. So are the
+astronomical unit, the cyclic redundancy check, Lempel–Ziv–Welch and model-view-projection.
+
 **Deliberately left as they are**, each against a rule that the reader might expect to see applied:
 
 - the binding names in `opengl.nim` and `sdl3.nim` keep the own verbs of the foreign API. A reader
   greps the SDL and GL references by those names, and the bare-noun rule of V.3 is for this
   project's own properties;
-- lookup tables at module scope stay lowercase `lut_…`, under V.5;
 - `nimCameraPivot`, `nimOverlayMetrics`, `nimInkColor` and the scene-listing exports return
   sequences, because something asks them on the UI tick or once, rather than for each frame;
 - the FFI-boundary cases of the bridge translate through one `SLOT_NONE` at the return of each
