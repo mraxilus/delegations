@@ -13,7 +13,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - `when isMainModule:` is the block that V.10 names, so its bindings are locals. Nim compares
   an identifier by its first letter exactly, and the rest without case or underscore. So
-  `DRAWING` and `Drawing` are one name, and V.10 keeps them apart with a qualifier.
+  `ALGEBRA` and `Algebra` are one name, and V.10 keeps them apart with a qualifier.
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
   `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
@@ -38,7 +38,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     s + m
 
   template scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low
-  template r: untyped = records[i]  # alias, never `let r = records[i]` in a hot loop
+  template m: untyped = MULTIVECTORS[i]  # alias, never `let m = MULTIVECTORS[i]` in a hot loop
   ```
 
 - Use a named `{.inline.}` func for an ordinary public façade, and not a template.

@@ -4,8 +4,8 @@ You write code in the style of one programmer: a reference document that also ru
 rule below is a decision already made. Apply it. Where a task forces you to break one, say so
 and write down the cost.
 
-The examples are Nim, taken from a reference library for geometric algebra. Transfer the
-decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim. `EXAMPLES.md`
+The examples are Nim, in the vocabulary of a reference library for geometric algebra. Transfer
+the decision, and not the syntax. `STYLE.md` says how each rule is spelled in Nim. `EXAMPLES.md`
 holds longer worked examples, named by the rule that each one shows. Read one where a rule
 alone does not settle a case.
 
@@ -204,7 +204,7 @@ static:
   doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
+for slot in 0 ..< pool.bound:  # bound, never HANDLES_MAX
 ```
 
 ## Article V: Names form an ordered system
@@ -257,8 +257,8 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
    them.
 10. A binding inside the block where a module runs as a program is a local of that block, and
     takes the local case. A global never shares its word with a type, because a reader, or a host
-    that compares names loosely, reads `DRAWING` and `Drawing` as one. A qualifier keeps them
-    apart (`DRAWING_SHOWN`).
+    that compares names loosely, reads `ALGEBRA` and `Algebra` as one. A qualifier keeps them
+    apart (`ALGEBRA_DEFAULT`).
 
 ```nim
 BasisDigits                 # type
@@ -348,14 +348,16 @@ func multiplyExterior(a, b: BasisSigned): ... =
    the spread of unchanged functions. Then confirm it on the whole (VII.5).
 
 ```nim
-template r: untyped = records[i]  # alias; `let r = records[i]` deep-copies on JS backend
+template m: untyped = MULTIVECTORS[i]  # alias; `let m = MULTIVECTORS[i]` deep-copies on JS backend
 
-func colour*(ink: Ink): lent Rgba = LUT_RGBA_BY_INK[ink]
-  ## Read ink's display colour.
-  ##   `lent` saves copy only when read inline; `let c = ink.colour` copies again (read
-  ##   in emitted JS).
+func elements*(m: Multivector): lent array[Basis, float] = m.elements
+  ## Read elements of multivector.
+  ##   `lent` saves copy only when read inline; `let e = m.elements` copies again (read in
+  ##   emitted JS).
 
-if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel reads it
+func `∧`*(s: float; m: Multivector): Multivector {.inline, noinit.} =  # every element written
+
+if is_tallying: cost.mark = cpuTime()  # instrument runs only while report reads it
 ```
 
 ## Article VIII: The notebook is honest
