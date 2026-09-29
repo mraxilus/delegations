@@ -47,7 +47,7 @@ review the decision when that cost changes.
 ## II.9: A copy names its sibling
 
 ```ts
-/* Basis names of 3D RGA as a union type, mirroring Basis in algebra.nim exactly. */
+/* Basis names of 3D RGA as union type, mirroring Basis in algebra.nim exactly. */
 type Basis = 'S' | 'E1' | 'E2' | 'E3' | 'E23' | 'E31' | 'E12' | 'E321'
 ```
 

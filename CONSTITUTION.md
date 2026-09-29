@@ -265,7 +265,7 @@ BasisDigits                 # type
 constructMetricExomorphism  # callable
 metric_exomorphism          # local
 is_degenerate               # boolean proposition
-LUT_GRADE_BY_BASIS          # lookup table, and a module constant
+LUT_GRADE_BY_BASIS          # lookup table, and module constant
 CAYLEYS_WEDGE               # module constant
 ```
 
