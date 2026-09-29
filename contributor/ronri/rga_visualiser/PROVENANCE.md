@@ -512,7 +512,7 @@ the widgets used. Cost: to add a widget touches two files. The kind is registere
 
 **Dear ImGui is compiled into the binary rather than linked, and pinned by commit.** That is
 `fd13a1e8923a0a7077b404fc36fd063b25a0c0b5` of the `docking` branch of `ocornut/imgui`, MIT
-licence, cloned into `deps/imgui` and never committed.
+licence, cloned into `dependencies/imgui` and never committed.
 
 `IMGUI_USE_WCHAR32` is set by a compiler flag, rather than by an edit to the `imconfig.h` of the
 checkout. The notation carries bold operands past what a 16-bit `ImWchar` expresses, and an edit
@@ -2913,7 +2913,7 @@ checked rather than trusted.
 C backend, on JS, and at reduced capacities, at the same case counts that the previous pin
 produced. That is what says the stand-ins behave as the own ones of the library did.
 
-Verified: `deps/` was deleted, `atlas --noexec rep` clones and checks out `295bafc`,
+Verified: `dependencies/` was deleted, `atlas --noexec rep` clones and checks out `295bafc`,
 `atlas changed` exits 0, and the nimble file is byte-identical afterwards.
 
 Verified by a run that the guard fires. `pga.nim` patched to give `projectOrthogonal` a body

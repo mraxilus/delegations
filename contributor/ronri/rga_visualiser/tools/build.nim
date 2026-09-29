@@ -97,13 +97,13 @@ const
     ##   here rather than imported, since driver compiles no project code.
   PATH_FONT_ABSENT = "/nonexistent/no-such-face.ttf"
     ## Path no machine carries, so faceless run asks same question everywhere.
-  DIR_IMGUI = "deps" / "imgui"
+  DIR_IMGUI = "dependencies" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
   URL_IMGUI = "https://github.com/ocornut/imgui.git"
     ## Origin `imgui` clones from; PROVENANCE.md records it with licence.
   BRANCH_IMGUI = "docking"
     ## Branch carrying `COMMIT_IMGUI`; master lacks docking `gui` asks for.
-  DIR_SDL3 = "deps" / "sdl3"
+  DIR_SDL3 = "dependencies" / "sdl3"
     ## SDL3 checkout `sdl3` builds, beside Dear ImGui's and never committed (Article XI.3).
   DIR_SDL3_BUILD = BUILD / "sdl3-build"
     ## Directory cmake configures SDL3 into.
