@@ -80,7 +80,7 @@ export async function watchFrames(page: Page): Promise<void> {
         count_preview: data.count_preview, count_selected: data.count_selected,
         // Count what crossed wire, by record kind. Plane's rim is one ring record, and
         //   demo check below is what would notice it silently becoming many ribbons.
-        records_ribbon: data.ribbon_verts.length / 16,
+        records_ribbon: data.ribbon_vertices.length / 16,
         records_ring: data.ring_records.length / 14,
         records_disc: data.disc_records.length / 13,
         is_held: data.is_furniture_held, wall,

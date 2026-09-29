@@ -144,7 +144,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         let
           apart = placed[star.name] - sol
           drawn = norm(apart)
-          wanted = star.parsecs*AU_PER_PARSEC
+          wanted = star.parsecs*ASTRONOMICAL_UNITS_PER_PARSEC
           off = abs(drawn - wanted)/wanted
         if off > worst:
           worst = off
@@ -349,18 +349,18 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         if star.name notin placed or star.planets == 0: continue
         for which in star.first ..< star.first + star.planets:
           let planet = PLANETS[which]
-          if planet.au <= 0.0:
+          if planet.axis_semi_major <= 0.0:
             check planet.name notin placed
             inc left_out
             continue
           check planet.name in placed
           let apart = placed[planet.name] - placed[star.name]
-          check abs(norm(apart) - planet.au) <= 1.0e-7
+          check abs(norm(apart) - planet.axis_semi_major) <= 1.0e-7
           check abs(apart.z) <= 1.0e-7
           inc checked
       var without = 0
       for planet in PLANETS:
-        if planet.au <= 0.0: inc without
+        if planet.axis_semi_major <= 0.0: inc without
       checkpoint(&"{checked} planets placed at their axes, {left_out} of {without} " &
         &"without one left out")
       check checked > 0
@@ -473,13 +473,13 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   else comes near it: nearest star stands thousands of that radius out, so frame
       #   fitted to our system shows one system and crossing neighbourhood is journey.
       check RADIUS_ORRERY =~ 30.05
-      var nearest = STARS[0].parsecs*AU_PER_PARSEC
-      for star in STARS: nearest = min(nearest, star.parsecs*AU_PER_PARSEC)
+      var nearest = STARS[0].parsecs*ASTRONOMICAL_UNITS_PER_PARSEC
+      for star in STARS: nearest = min(nearest, star.parsecs*ASTRONOMICAL_UNITS_PER_PARSEC)
       checkpoint(&"nearest star at {nearest:.0f} units, {nearest/RADIUS_ORRERY:.0f} " &
         &"opening radii out")
       check nearest > 1000.0*RADIUS_ORRERY
-      check AU_PER_PARSEC =~ 206_264.806
-      check KILOMETRES_PER_AU =~ 149_597_870.7
+      check ASTRONOMICAL_UNITS_PER_PARSEC =~ 206_264.806
+      check KILOMETRES_PER_ASTRONOMICAL_UNIT =~ 149_597_870.7
 
     test "the preset both front-ends open on is one preset":
       # `showOrrery` is whole thing demo button loads -- arrangement, its replayed.

@@ -51,7 +51,7 @@ const
   CODE_END = CODE_CLEAR + 1
   CODE_MAX = 4096
     ## Bound LZW dictionary size to what 12-bit code can name, as GIF's spec fixes.
-  CAPACITY_DICT = 8192
+  CAPACITY_DICTIONARY = 8192
     ## Set fixed hash table's handle count.
     ##   Power of two, comfortably above `CODE_MAX`, so linear probing stays cheap at load
     ##   factor that ever occurs.
@@ -62,23 +62,23 @@ static:
     &"`{LEVELS_PER_CHANNEL}`."
   doAssert COUNT_PALETTE <= COUNT_TABLE,
     &"Colour cube must fit the global colour table; {COUNT_PALETTE} used of {COUNT_TABLE}."
-  doAssert (CAPACITY_DICT and (CAPACITY_DICT - 1)) == 0,
-    &"Dictionary capacity must be a power of two; got `{CAPACITY_DICT}`."
-  doAssert CAPACITY_DICT > CODE_MAX,
-    &"Dictionary capacity must exceed {CODE_MAX} live entries; got `{CAPACITY_DICT}`."
+  doAssert (CAPACITY_DICTIONARY and (CAPACITY_DICTIONARY - 1)) == 0,
+    &"Dictionary capacity must be a power of two; got `{CAPACITY_DICTIONARY}`."
+  doAssert CAPACITY_DICTIONARY > CODE_MAX,
+    &"Dictionary capacity must exceed {CODE_MAX} live entries; got `{CAPACITY_DICTIONARY}`."
 
 
 
 #[ Type Definitions ]#
 
 type
-  LzwDict = object ## Define map from (prefix code, next byte) to code.
+  DictionaryLempelZivWelch = object ## Define map from (prefix code, next byte) to code.
     ## Fixed open-addressed table rather than heap-backed `Table`.
     ##   Capacity is `CODE_MAX` at format's limit, known at compile time, so nothing grows.
-    keys_prefix: array[CAPACITY_DICT, int]
-    keys_byte: array[CAPACITY_DICT, uint8]
-    values: array[CAPACITY_DICT, int]
-    are_used: array[CAPACITY_DICT, bool]
+    keys_prefix: array[CAPACITY_DICTIONARY, int]
+    keys_byte: array[CAPACITY_DICTIONARY, uint8]
+    values: array[CAPACITY_DICTIONARY, int]
+    are_used: array[CAPACITY_DICTIONARY, bool]
 
   BitWriter = object ## Define packer of variable-width codes into caller-owned storage.
     ## Least significant bit first, tracking only how much is in use.
@@ -136,32 +136,32 @@ func hashKey(prefix: int, value: uint8): int =
   ##   Multiplier is Knuth's constant for multiplicative hashing, folded through `uint64`
   ##   so it never overflows.
   let combined = uint64(prefix)*2654435761'u64 xor uint64(value)
-  int(combined and uint64(CAPACITY_DICT - 1))
+  int(combined and uint64(CAPACITY_DICTIONARY - 1))
 
 
-func clear(dict: var LzwDict) =
+func clear(dictionary: var DictionaryLempelZivWelch) =
   ## Empty every handle, in place; table itself is never reallocated.
-  for i in 0 ..< CAPACITY_DICT: dict.are_used[i] = false
+  for i in 0 ..< CAPACITY_DICTIONARY: dictionary.are_used[i] = false
 
 
-func find(dict: LzwDict, prefix: int, value: uint8): Option[int] =
+func find(dictionary: DictionaryLempelZivWelch, prefix: int, value: uint8): Option[int] =
   ## Look up code (prefix, value) was assigned; none where it has none yet.
   var index = hashKey(prefix, value)
-  while dict.are_used[index]:
-    if dict.keys_prefix[index] == prefix and dict.keys_byte[index] == value:
-      return some(dict.values[index])
-    index = (index + 1) and (CAPACITY_DICT - 1)
+  while dictionary.are_used[index]:
+    if dictionary.keys_prefix[index] == prefix and dictionary.keys_byte[index] == value:
+      return some(dictionary.values[index])
+    index = (index + 1) and (CAPACITY_DICTIONARY - 1)
   none(int)
 
 
-func insert(dict: var LzwDict, prefix: int, value: uint8, code: int) =
+func insert(dictionary: var DictionaryLempelZivWelch, prefix: int, value: uint8, code: int) =
   ## Assign (prefix, value) fresh code; caller has confirmed it has none.
   var index = hashKey(prefix, value)
-  while dict.are_used[index]: index = (index + 1) and (CAPACITY_DICT - 1)
-  dict.are_used[index] = true
-  dict.keys_prefix[index] = prefix
-  dict.keys_byte[index] = value
-  dict.values[index] = code
+  while dictionary.are_used[index]: index = (index + 1) and (CAPACITY_DICTIONARY - 1)
+  dictionary.are_used[index] = true
+  dictionary.keys_prefix[index] = prefix
+  dictionary.keys_byte[index] = value
+  dictionary.values[index] = code
 
 
 
@@ -191,15 +191,15 @@ proc flushBits(writer: var BitWriter) =
     writer.count_pending = 0
 
 
-proc lzwEncode(
-  arena: var Arena, dict: var LzwDict, indices: openArray[uint8]
+proc encodeLempelZivWelch(
+  arena: var Arena, dictionary: var DictionaryLempelZivWelch, indices: openArray[uint8]
 ): BitWriter =
   ## Compress quantized pixel indices with GIF's variable-width LZW.
   ##   Root codes 0 ..< `COUNT_TABLE` are palette indices; clear and end codes follow, and
   ##   every invented code follows those.
   ##   Output is reserved at double input plus slack: LZW never expands data this
   ##   repetitive by more than occasional wider code.
-  dict.clear()
+  dictionary.clear()
   let capacity_output = 2*len(indices) + 256
   var
     writer = BitWriter(buffer: push[uint8](arena, capacity_output), capacity: capacity_output)
@@ -212,14 +212,14 @@ proc lzwEncode(
     if code_current.isNone:
       code_current = some(int(value))
       continue
-    let existing = dict.find(code_current.get, value)
+    let existing = dictionary.find(code_current.get, value)
     if existing.isSome:
       code_current = existing
       continue
 
     writer.packCode(code_current.get, width_code)
     if next_code < CODE_MAX:
-      dict.insert(code_current.get, value, next_code)
+      dictionary.insert(code_current.get, value, next_code)
       inc next_code
       # Widen one step later than naive "table is now full" reading.
       #   Code 2^width_code still fits current width, so only code after that forces
@@ -227,7 +227,7 @@ proc lzwEncode(
       if next_code > (1 shl width_code) and width_code < 12: inc width_code
     else:
       writer.packCode(CODE_CLEAR, width_code)
-      dict.clear()
+      dictionary.clear()
       next_code = CODE_END + 1
       width_code = BITS_CODE + 1
     code_current = some(int(value))
@@ -259,7 +259,7 @@ proc writeSubBlocks(file: File, data: openArray[uint8]) =
 
 
 proc writeFrame(
-  file: File; arena: var Arena; dict: var LzwDict;
+  file: File; arena: var Arena; dictionary: var DictionaryLempelZivWelch;
   width, height: int; row_bottom_up: openArray[uint8]; centiseconds_delay: int
 ) =
   ## Write one frame's Graphic Control Extension and Image Descriptor.
@@ -281,7 +281,7 @@ proc writeFrame(
       indices[destination + column] =
         paletteIndex(row_bottom_up[at], row_bottom_up[at + 1], row_bottom_up[at + 2])
 
-  let compressed = lzwEncode(arena, dict, indices.toOpenArray(0, width*height - 1))
+  let compressed = encodeLempelZivWelch(arena, dictionary, indices.toOpenArray(0, width*height - 1))
   file.write(char(BITS_CODE))
   file.writeSubBlocks(compressed.buffer.toOpenArray(0, compressed.count - 1))
 
@@ -318,10 +318,10 @@ proc writeGif*(
   # Loop forever through Application Extension, as still storyboard is poor animated one.
   discard file.writeChars("!\xFF\x0BNETSCAPE2.0\x03\x01\x00\x00\x00", 0, 19)
 
-  var dict: LzwDict
+  var dictionary: DictionaryLempelZivWelch
   for index in 0 ..< count_frames:
     file.writeFrame(
-      arena, dict, width, height,
+      arena, dictionary, width, height,
       frames_bottom_up.toOpenArray(index*frame_size, (index + 1)*frame_size - 1),
       centiseconds_delay,
     )

@@ -114,7 +114,7 @@ when not defined(js):
         code_max = 4096
       var
         position_bit = 0
-        dict: Table[int, seq[uint8]]
+        dictionary: Table[int, seq[uint8]]
         next_code = code_end + 1
         width = bits_code + 1
         prev: seq[uint8]
@@ -130,7 +130,7 @@ when not defined(js):
       while true:
         let code = readCode(width)
         if code == code_clear:
-          dict.clear()
+          dictionary.clear()
           next_code = code_end + 1
           width = bits_code + 1
           has_prev = false
@@ -139,12 +139,12 @@ when not defined(js):
 
         var entry: seq[uint8]
         if code < count_table: entry = @[uint8(code)]
-        elif dict.hasKey(code): entry = dict[code]
+        elif dictionary.hasKey(code): entry = dictionary[code]
         elif code == next_code and has_prev: entry = prev & @[prev[0]]
         else: doAssert false, &"Bad LZW code {code}."
         result.add(entry)
         if has_prev and next_code < code_max:
-          dict[next_code] = prev & @[entry[0]]
+          dictionary[next_code] = prev & @[entry[0]]
           inc next_code
           if next_code >= (1 shl width) and width < 12: inc width
         prev = entry

@@ -128,7 +128,7 @@ type
   FrameData = object
     ## Define one frame's vertex data plus transform it is drawn through.
     ##   Everything caller needs to issue this frame's `gl.drawArrays` calls.
-    ribbon_verts, point_verts: FlatBuffer
+    ribbon_vertices, point_vertices: FlatBuffer
     ring_records: FlatBuffer ## Fourteen floats per ring, `mesh.RingRecord`'s field order.
       ## One record per rim, where ribbon records per segment were most of all ribbon
       ## traffic; figures in `PROVENANCE.md`.
@@ -141,7 +141,7 @@ type
       ## Walked in sequence so two veils blend in order scene emitted them; see
       ## `mesh.VeilRuns`.
     view_projection: seq[float32]
-    furn_ribbon_verts: FlatBuffer ## Lattices and world axes alone, drawn first.
+    furniture_ribbon_vertices: FlatBuffer ## Lattices and world axes alone, drawn first.
       ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
       ## width as geometry.
       ## Empty where `is_furniture_held`, meaning "furniture you already have".
@@ -149,7 +149,7 @@ type
       ## Every buffer below then already holds what it should and none needs re-uploading.
       ## See `SettingsScene` for what has to match and three states refusing hold.
     is_furniture_held: bool ## Whether furniture is unchanged from last frame.
-      ## Caller then keeps buffer it uploaded rather than reading empty `furn_ribbon_verts`
+      ## Caller then keeps buffer it uploaded rather than reading empty `furniture_ribbon_vertices`
       ## as empty world.
       ## Furniture is function of camera alone, and camera is still for most frames of
       ## ordinary session.
@@ -451,98 +451,98 @@ var
     ##   edit's `REACH_SCENE`.
 
 
-proc flattenRibbonsInto(ribbons: RibbonMesh, dest: var FlatFloats) =
+proc flattenRibbonsInto(ribbons: RibbonMesh, destination: var FlatFloats) =
   ## Interleave one frame's ribbon records for instanced upload, sixteen floats each.
   ##   Tail xyz, head xyz, width, fog, tail rgba, head rgba: `RibbonRecord`'s field order,
   ##   which attribute setup in browser scripts reads back apart.
-  dest.used = ribbons.count * 16
+  destination.used = ribbons.count * 16
   for i in 0 ..< ribbons.count:
     template r: untyped = ribbons.records[i]
-    dest[16*i + 0] = r.tail_x
-    dest[16*i + 1] = r.tail_y
-    dest[16*i + 2] = r.tail_z
-    dest[16*i + 3] = r.head_x
-    dest[16*i + 4] = r.head_y
-    dest[16*i + 5] = r.head_z
-    dest[16*i + 6] = r.width
-    dest[16*i + 7] = r.fog
-    dest[16*i + 8] = r.tail_red
-    dest[16*i + 9] = r.tail_green
-    dest[16*i + 10] = r.tail_blue
-    dest[16*i + 11] = r.tail_alpha
-    dest[16*i + 12] = r.head_red
-    dest[16*i + 13] = r.head_green
-    dest[16*i + 14] = r.head_blue
-    dest[16*i + 15] = r.head_alpha
+    destination[16*i + 0] = r.tail_x
+    destination[16*i + 1] = r.tail_y
+    destination[16*i + 2] = r.tail_z
+    destination[16*i + 3] = r.head_x
+    destination[16*i + 4] = r.head_y
+    destination[16*i + 5] = r.head_z
+    destination[16*i + 6] = r.width
+    destination[16*i + 7] = r.fog
+    destination[16*i + 8] = r.tail_red
+    destination[16*i + 9] = r.tail_green
+    destination[16*i + 10] = r.tail_blue
+    destination[16*i + 11] = r.tail_alpha
+    destination[16*i + 12] = r.head_red
+    destination[16*i + 13] = r.head_green
+    destination[16*i + 14] = r.head_blue
+    destination[16*i + 15] = r.head_alpha
 
 
-proc flattenDiscsInto(discs: DiscMesh, dest: var FlatFloats) =
+proc flattenDiscsInto(discs: DiscMesh, destination: var FlatFloats) =
   ## Interleave one frame's disc records for instanced upload, thirteen floats each.
   ##   Centre xyz, first arm xyz, second arm xyz, fill rgba: `DiscRecord`'s field order.
-  dest.used = discs.count * 13
+  destination.used = discs.count * 13
   for i in 0 ..< discs.count:
     template r: untyped = discs.records[i]
-    dest[13*i + 0] = r.centre_x
-    dest[13*i + 1] = r.centre_y
-    dest[13*i + 2] = r.centre_z
-    dest[13*i + 3] = r.arm_first_x
-    dest[13*i + 4] = r.arm_first_y
-    dest[13*i + 5] = r.arm_first_z
-    dest[13*i + 6] = r.arm_second_x
-    dest[13*i + 7] = r.arm_second_y
-    dest[13*i + 8] = r.arm_second_z
-    dest[13*i + 9] = r.fill_red
-    dest[13*i + 10] = r.fill_green
-    dest[13*i + 11] = r.fill_blue
-    dest[13*i + 12] = r.fill_alpha
+    destination[13*i + 0] = r.centre_x
+    destination[13*i + 1] = r.centre_y
+    destination[13*i + 2] = r.centre_z
+    destination[13*i + 3] = r.arm_first_x
+    destination[13*i + 4] = r.arm_first_y
+    destination[13*i + 5] = r.arm_first_z
+    destination[13*i + 6] = r.arm_second_x
+    destination[13*i + 7] = r.arm_second_y
+    destination[13*i + 8] = r.arm_second_z
+    destination[13*i + 9] = r.fill_red
+    destination[13*i + 10] = r.fill_green
+    destination[13*i + 11] = r.fill_blue
+    destination[13*i + 12] = r.fill_alpha
 
 
-proc flattenRingsInto(rings: RingMesh, dest: var FlatFloats) =
+proc flattenRingsInto(rings: RingMesh, destination: var FlatFloats) =
   ## Interleave one frame's ring records for instanced upload, fourteen floats each.
   ##   `DiscRecord`'s thirteen in same order, then width, so ring and disc attribute
   ##   setups in browser scripts differ by one trailing attribute.
-  dest.used = rings.count * 14
+  destination.used = rings.count * 14
   for i in 0 ..< rings.count:
     template r: untyped = rings.records[i]
-    dest[14*i + 0] = r.centre_x
-    dest[14*i + 1] = r.centre_y
-    dest[14*i + 2] = r.centre_z
-    dest[14*i + 3] = r.arm_first_x
-    dest[14*i + 4] = r.arm_first_y
-    dest[14*i + 5] = r.arm_first_z
-    dest[14*i + 6] = r.arm_second_x
-    dest[14*i + 7] = r.arm_second_y
-    dest[14*i + 8] = r.arm_second_z
-    dest[14*i + 9] = r.red
-    dest[14*i + 10] = r.green
-    dest[14*i + 11] = r.blue
-    dest[14*i + 12] = r.alpha
-    dest[14*i + 13] = r.width
+    destination[14*i + 0] = r.centre_x
+    destination[14*i + 1] = r.centre_y
+    destination[14*i + 2] = r.centre_z
+    destination[14*i + 3] = r.arm_first_x
+    destination[14*i + 4] = r.arm_first_y
+    destination[14*i + 5] = r.arm_first_z
+    destination[14*i + 6] = r.arm_second_x
+    destination[14*i + 7] = r.arm_second_y
+    destination[14*i + 8] = r.arm_second_z
+    destination[14*i + 9] = r.red
+    destination[14*i + 10] = r.green
+    destination[14*i + 11] = r.blue
+    destination[14*i + 12] = r.alpha
+    destination[14*i + 13] = r.width
 
 
-proc flattenDomesInto(domes: DomeMesh, dest: var FlatFloats) =
+proc flattenDomesInto(domes: DomeMesh, destination: var FlatFloats) =
   ## Interleave one frame's dome records for instanced upload, eight floats each.
   ##   Centre xyz, radius, rgba: `DomeRecord`'s field order.
-  dest.used = domes.count * 8
+  destination.used = domes.count * 8
   for i in 0 ..< domes.count:
     template r: untyped = domes.records[i]
-    dest[8*i + 0] = r.centre_x
-    dest[8*i + 1] = r.centre_y
-    dest[8*i + 2] = r.centre_z
-    dest[8*i + 3] = r.radius
-    dest[8*i + 4] = r.red
-    dest[8*i + 5] = r.green
-    dest[8*i + 6] = r.blue
-    dest[8*i + 7] = r.alpha
+    destination[8*i + 0] = r.centre_x
+    destination[8*i + 1] = r.centre_y
+    destination[8*i + 2] = r.centre_z
+    destination[8*i + 3] = r.radius
+    destination[8*i + 4] = r.red
+    destination[8*i + 5] = r.green
+    destination[8*i + 6] = r.blue
+    destination[8*i + 7] = r.alpha
 
 
-proc flattenVeilRunsInto(veils: VeilRuns, dest: var FlatFloats) =
+proc flattenVeilRunsInto(veils: VeilRuns, destination: var FlatFloats) =
   ## Interleave veil draw order, three floats per run: kind ordinal, first, count.
-  dest.used = veils.count * 3
+  destination.used = veils.count * 3
   for i in 0 ..< veils.count:
-    dest[3*i + 0] = float32(ord(veils.runs[i].kind))
-    dest[3*i + 1] = float32(veils.runs[i].first)
-    dest[3*i + 2] = float32(veils.runs[i].count)
+    destination[3*i + 0] = float32(ord(veils.runs[i].kind))
+    destination[3*i + 1] = float32(veils.runs[i].first)
+    destination[3*i + 2] = float32(veils.runs[i].count)
 
 
 proc stampBorn(handle: int, born: float) =
@@ -553,20 +553,20 @@ proc stampBorn(handle: int, born: float) =
   BORN_LAST = max(BORN_LAST, born)
 
 
-proc flattenInto(mesh: Mesh, dest: var FlatFloats) =
-  ## Interleave point records as `x, y, z, radius, r, g, b, a, ...` into `dest`.
+proc flattenInto(mesh: Mesh, destination: var FlatFloats) =
+  ## Interleave point records as `x, y, z, radius, r, g, b, a, ...` into `destination`.
   ##   Ready for `gl.bufferData`; `mesh.Vertex`'s field order.
-  dest.used = mesh.count_vertices * 8
+  destination.used = mesh.count_vertices * 8
   for i in 0 ..< mesh.count_vertices:
     template v: untyped = mesh.vertices[i]
-    dest[8*i + 0] = v.x
-    dest[8*i + 1] = v.y
-    dest[8*i + 2] = v.z
-    dest[8*i + 3] = v.radius
-    dest[8*i + 4] = v.red
-    dest[8*i + 5] = v.green
-    dest[8*i + 6] = v.blue
-    dest[8*i + 7] = v.alpha
+    destination[8*i + 0] = v.x
+    destination[8*i + 1] = v.y
+    destination[8*i + 2] = v.z
+    destination[8*i + 3] = v.radius
+    destination[8*i + 4] = v.red
+    destination[8*i + 5] = v.green
+    destination[8*i + 6] = v.blue
+    destination[8*i + 7] = v.alpha
 
 
 
@@ -2589,10 +2589,10 @@ proc nimBuildFrame(
     disc_records: FLAT_DISC.view,
     dome_records: FLAT_DOME.view,
     veil_runs: FLAT_RUNS.view,
-    ribbon_verts: FLAT_RIBBON.view,
-    point_verts: FLAT_POINT.view,
+    ribbon_vertices: FLAT_RIBBON.view,
+    point_vertices: FLAT_POINT.view,
     view_projection: FLAT_VIEW,
-    furn_ribbon_verts: FLAT_FURNITURE.view,
+    furniture_ribbon_vertices: FLAT_FURNITURE.view,
     is_scene_held: is_scene_held,
     is_furniture_held: is_furniture_held,
     # Eye about records' origin, frame shaders measure depth in.

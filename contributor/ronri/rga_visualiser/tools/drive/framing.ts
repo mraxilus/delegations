@@ -330,7 +330,7 @@ export async function drivePlanePick(page: Page): Promise<void> {
  *  aimed. Reported as touch bug, and neither touch- nor browser-specific. Glass is cleared
  *  first, since pinch starts at drawer's own right edge.
  */
-export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promise<void> {
+export async function drivePanWhileSelected(page: Page, devtools: CDPSession): Promise<void> {
   await clearTheGlass(page);
   await page.keyboard.press('Home');
   await settleCamera(page);
@@ -340,7 +340,7 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
   const before = await readCamera(page);
   // Two fingers zoom while selection stands, so read eye rather than pivot: pivot
   //   sits on what is picked and stays there by design.
-  await pinch(page, cdp, { x: 400, y: 400 }, { x: 400, y: 400 }, 160, 60);
+  await pinch(page, devtools, { x: 400, y: 400 }, { x: 400, y: 400 }, 160, 60);
   const at = await readCamera(page);
   await settleCamera(page);
   const after = await readCamera(page);
@@ -366,7 +366,7 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
  *  Two points of check's own, undone after rather than removed: removal is edit of its own,
  *  and would stand on timeline where next check's undo expects edit that check made.
  */
-export async function driveGroupTurnedAtOnce(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveGroupTurnedAtOnce(page: Page, devtools: CDPSession): Promise<void> {
   await clearTheGlass(page);
   await page.keyboard.press('Home');
   await settleCamera(page);
@@ -389,12 +389,12 @@ export async function driveGroupTurnedAtOnce(page: Page, cdp: CDPSession): Promi
 
   // Hold past hold-to-select on first, then settle, as reader does before adding more.
   const at_one = await pixelOn(one);
-  await tapAt(page, cdp, at_one[0] ?? 0, at_one[1] ?? 0, 1400);
+  await tapAt(page, devtools, at_one[0] ?? 0, at_one[1] ?? 0, 1400);
   await settleCamera(page);
   // Tap second, and let one frame arm ease toward their middle.
   const at_two = await pixelOn(two);
-  await touchAt(cdp, 'touchStart', [{ x: at_two[0] ?? 0, y: at_two[1] ?? 0 }]);
-  await touchAt(cdp, 'touchEnd', []);
+  await touchAt(devtools, 'touchStart', [{ x: at_two[0] ?? 0, y: at_two[1] ?? 0 }]);
+  await touchAt(devtools, 'touchEnd', []);
   await waitFrames(page, 1);
   const count = await page.evaluate(() => nimSelectionCount());
   const held = await readCamera(page);

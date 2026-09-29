@@ -82,8 +82,8 @@ function loadSceneFile(file: File) {
       const outcome = parseAndLoadScene(isZip(read) ? await sceneInZip(read) : read);
       toast(outcome);
       adoptConstructionSelection(); // nimSceneClear() inside already cleared hover.
-    } catch (err) {
-      toast(String(err instanceof Error ? err.message : err));
+    } catch (error) {
+      toast(String(error instanceof Error ? error.message : error));
     }
   };
   reader.onerror = () => toast('Could not read `' + file.name + '`.');

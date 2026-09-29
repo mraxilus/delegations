@@ -144,14 +144,14 @@ async function main(): Promise<void> {
   await driveAim(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   // Two fingers go through Chrome's own protocol, so channel opens once here.
-  const cdp = await openTouch(page);
-  await drivePinch(page, cdp);
-  await driveFingerTurntable(page, cdp);
-  await driveTouchSelect(page, cdp);
-  await driveTwoFingerPan(page, cdp);
-  await driveTouchConstruct(page, cdp);
-  await driveCrowd(page, cdp);
-  await drivePausedDrag(page, cdp);
+  const devtools = await openTouch(page);
+  await drivePinch(page, devtools);
+  await driveFingerTurntable(page, devtools);
+  await driveTouchSelect(page, devtools);
+  await driveTwoFingerPan(page, devtools);
+  await driveTouchConstruct(page, devtools);
+  await driveCrowd(page, devtools);
+  await drivePausedDrag(page, devtools);
   await driveEmptyRelease(page, SIZE_VIEW.width, SIZE_VIEW.height);
   // Beside it, and its opposite: what *is* said goes away again by itself.
   await driveMessageGoes(page);
@@ -163,8 +163,8 @@ async function main(): Promise<void> {
   await driveLabelGlide(page);
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
-  await drivePanWhileSelected(page, cdp);
-  await driveGroupTurnedAtOnce(page, cdp);
+  await drivePanWhileSelected(page, devtools);
+  await driveGroupTurnedAtOnce(page, devtools);
   await driveUndo(page);
   await driveReachable(page);
   await driveViewSection(page);
@@ -203,8 +203,8 @@ async function main(): Promise<void> {
   await drivePinGrid(page);
   await drivePinPool(page);
 
-  await driveCreep(page, cdp);
-  await drivePlaneBuilt(page, cdp);
+  await driveCreep(page, devtools);
+  await drivePlaneBuilt(page, devtools);
   await driveRuler(page);
   await driveHoldScene(page);
   await driveDrawerCost(page);

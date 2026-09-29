@@ -27,7 +27,7 @@ async function pointsLive(page: Page): Promise<number[]> {
  *  built. Driven here in sub-slop steps, which is what real finger does and what no
  *  flick-speed check could reach.
  */
-export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveCreep(page: Page, devtools: CDPSession): Promise<void> {
   await clearTheGlass(page);
   await page.keyboard.press('Home');
   await settleCamera(page);
@@ -51,12 +51,12 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
   //   crossing it, which is exactly frames that used to orbit.
   const step_creep = (await page.evaluate(() => nimTapSlop())) / 3;
   const start = { x: from[0] ?? 0, y: from[1] ?? 0 };
-  await touchAt(cdp, 'touchStart', [start]);
+  await touchAt(devtools, 'touchStart', [start]);
   await waitFrames(page, 2);
   const away = Math.hypot((onto[0] ?? 0) - start.x, (onto[1] ?? 0) - start.y);
   for (let step = 1; step <= 4; step += 1) {
     const reach = (step * step_creep) / away;
-    await touchAt(cdp, 'touchMove', [{
+    await touchAt(devtools, 'touchMove', [{
       x: start.x + ((onto[0] ?? 0) - start.x) * reach,
       y: start.y + ((onto[1] ?? 0) - start.y) * reach,
     }]);
@@ -70,7 +70,7 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
   for (let step = 1; step <= 8; step += 1) {
     const live = await pixelOf(page, second);
     if (live === null) break;
-    await touchAt(cdp, 'touchMove', [{
+    await touchAt(devtools, 'touchMove', [{
       x: start.x + (((live[0] ?? 0) - start.x) * step) / 8,
       y: start.y + (((live[1] ?? 0) - start.y) * step) / 8,
     }]);
@@ -80,13 +80,13 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
   //   picking rather than about how far tween happened to get.
   const settled = await pixelOf(page, second);
   if (settled !== null) {
-    await touchAt(cdp, 'touchMove', [{ x: settled[0] ?? 0, y: settled[1] ?? 0 }]);
+    await touchAt(devtools, 'touchMove', [{ x: settled[0] ?? 0, y: settled[1] ?? 0 }]);
   }
   await waitFrames(page, 2);
   const mid = await page.evaluate(
     () => ({ hover: nimHoverHandle(), is_dragging: nimDragActive() }),
   );
-  await touchAt(cdp, 'touchEnd', []);
+  await touchAt(devtools, 'touchEnd', []);
   await settleCamera(page);
   const camera_after = await page.evaluate(
     () => ({ azimuth: nimCameraAzimuth(), elevation: nimCameraElevation() }),
@@ -130,7 +130,7 @@ async function pixelsPicking(page: Page, handle: number): Promise<number> {
  *  met from behind its normal read as standing behind eye and could not be picked anywhere at
  *  all -- while ground plane, whose normal happens to face eye, picked fine and hid it.
  */
-export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void> {
+export async function drivePlaneBuilt(page: Page, devtools: CDPSession): Promise<void> {
   await clearTheGlass(page);
   // Drop lines earlier gestures left: each built same join again, and coincident lines under
   //   one finger are crowd touch refuses to drag from. Line built below is then alone.
@@ -168,15 +168,15 @@ export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void
   const third = await pixelOf(page, spanning[2] ?? 0);
   if (from === null || onto === null || third === null) return;
 
-  await touchAt(cdp, 'touchStart', [{ x: from[0] ?? 0, y: from[1] ?? 0 }]);
+  await touchAt(devtools, 'touchStart', [{ x: from[0] ?? 0, y: from[1] ?? 0 }]);
   for (let step = 1; step <= 8; step += 1) {
-    await touchAt(cdp, 'touchMove', [{
+    await touchAt(devtools, 'touchMove', [{
       x: (from[0] ?? 0) + (((onto[0] ?? 0) - (from[0] ?? 0)) * step) / 8,
       y: (from[1] ?? 0) + (((onto[1] ?? 0) - (from[1] ?? 0)) * step) / 8,
     }]);
     await waitFrames(page, 2);
   }
-  await touchAt(cdp, 'touchEnd', []);
+  await touchAt(devtools, 'touchEnd', []);
   await settleCamera(page);
 
   const line = await page.evaluate(

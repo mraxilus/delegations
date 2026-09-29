@@ -43,7 +43,7 @@ async function ruledAt(page: Page, distance: number): Promise<Ruled> {
     );
     // Read distance frame came out at, not one asked for: camera can be mid-tween toward
     //   framing of what is picked, and count against distance it never stood at says nothing.
-    return { distance: nimCameraDistance(), count: data.furn_ribbon_verts.length };
+    return { distance: nimCameraDistance(), count: data.furniture_ribbon_vertices.length };
   }, distance);
 }
 

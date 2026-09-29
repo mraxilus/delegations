@@ -58,7 +58,7 @@ func stanceAround*(pivot: Position; distance: float; out_to: Direction): CameraS
   stanceFacing(pivot + (distance/norm(out_to))*out_to, pivot)
 
 
-proc randOutTo*(): Direction =
+proc randomOutTo*(): Direction =
   ## Draw direction from pivot out to eye, from every side, never too short to name one.
   while result.norm < 0.1:
     result = Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
@@ -69,7 +69,7 @@ func cameraAround*(pivot: Position; distance: float; out_to: Direction): Camera 
   initCamera(eye = pivot + (distance/norm(out_to))*out_to, pivot = pivot)
 
 
-proc randPosition*(): Position =
+proc randomPosition*(): Position =
   ## Draw position from cube reaching `EXTENT_SAMPLE` out from origin along every axis.
   Position(
     x: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),
@@ -83,7 +83,7 @@ var
   LINES*: array[SAMPLES, Multivector]
   PLANES*: array[SAMPLES, Multivector]
 for i in 0 ..< SAMPLES:
-  PLACES[i] = randPosition()
+  PLACES[i] = randomPosition()
   POINTS[i] = toMultivector(PLACES[i])
 for i in 0 ..< SAMPLES:
   let (j, k) = ((i + 1) mod SAMPLES, (i + 2) mod SAMPLES)

@@ -226,10 +226,10 @@ const
     ## Text printed on usage error.
 
 
-proc run(command: string, args: openArray[string]) =
-  ## Run command with args from project directory; raise on non-zero exit.
+proc run(command: string, arguments: openArray[string]) =
+  ## Run command with arguments from project directory; raise on non-zero exit.
   let
-    process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
+    process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
     code = process.waitForExit
   process.close
   if code != 0:
@@ -717,15 +717,15 @@ proc web() =
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
 
 
-proc checkCommit(dir, commit, what: string) =
+proc checkCommit(directory, commit, what: string) =
   ## Raise unless checkout in directory stands at commit pinned for it.
   ##   Shared by both sources build fetches: each is compiled into binary reader runs, so
   ##   wrong commit is wrong binary, and one reading holds both rather than two that could
   ##   part (Article II.9).
-  let (written, code) = execCmdEx("git -C " & quoteShell(dir) & " rev-parse HEAD")
+  let (written, code) = execCmdEx("git -C " & quoteShell(directory) & " rev-parse HEAD")
   if code != 0:
     raise newException(OSError,
-      "Cannot read commit of `" & dir & "`; got exit `" & $code & "`.")
+      "Cannot read commit of `" & directory & "`; got exit `" & $code & "`.")
   let got = written.strip
   if got != commit:
     raise newException(OSError,
@@ -855,31 +855,31 @@ proc desktop() =
   imgui()
   checkImgui()
   createDir BIN
-  var args = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN]
+  var arguments = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN]
   if dirExists(DIRECTORY_SDL3_PREFIX):
     let prefix = getCurrentDir() / DIRECTORY_SDL3_PREFIX
-    args.add "--passC:-I" & prefix / "include"
-    args.add "--passL:-L" & prefix / "lib"
-    args.add "--passL:-Wl,-rpath," & prefix / "lib"
-  args.add PATH_DESKTOP_NIM
-  run("nim", args)
+    arguments.add "--passC:-I" & prefix / "include"
+    arguments.add "--passL:-L" & prefix / "lib"
+    arguments.add "--passL:-Wl,-rpath," & prefix / "lib"
+  arguments.add PATH_DESKTOP_NIM
+  run("nim", arguments)
   echo "Wrote ", PATH_DESKTOP_BIN, "."
 
 
-proc under(args: openArray[string]): (string, seq[string]) =
+proc under(flags: openArray[string]): (string, seq[string]) =
   ## Name command and arguments that run desktop binary, borrowing display where none is set.
   ##   Checks are headless by nature, and machine running them may have no screen at all.
   ##   `xvfb-run -a` picks free display number rather than colliding with one in use.
-  if getEnv("DISPLAY").len > 0: (PATH_DESKTOP_BIN, @args)
-  else: ("xvfb-run", @["-a", PATH_DESKTOP_BIN] & @args)
+  if getEnv("DISPLAY").len > 0: (PATH_DESKTOP_BIN, @flags)
+  else: ("xvfb-run", @["-a", PATH_DESKTOP_BIN] & @flags)
 
 
-proc reported(args: openArray[string]): bool =
-  ## Run desktop binary with args, streaming what it says; report whether it passed.
+proc reported(flags: openArray[string]): bool =
+  ## Run desktop binary with flags, streaming what it says; report whether it passed.
   ##   Does not raise on failure, unlike `run`: caller drives every scripted run and reports
   ##   all of them, and first failure must not hide rest.
   let
-    (command, arguments) = under(args)
+    (command, arguments) = under(flags)
     process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
     code = process.waitForExit
   process.close
@@ -967,9 +967,9 @@ proc drive() =
 
 proc clean() =
   ## Remove every product, leaving only what git holds.
-  for dir in [BUILD, BIN, "nimcache"]:
-    removeDir dir
-    echo "Removed ", dir
+  for directory in [BUILD, BIN, "nimcache"]:
+    removeDir directory
+    echo "Removed ", directory
 
 
 

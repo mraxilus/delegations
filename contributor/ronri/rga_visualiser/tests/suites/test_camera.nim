@@ -428,7 +428,7 @@ suite "Camera":
   test "frame is orthonormal and perpendicular to sight axis":
     for i in 0 ..< SAMPLES:
       let
-        camera = cameraAround(PLACES[i], 2.0 + rand(20.0), randOutTo())
+        camera = cameraAround(PLACES[i], 2.0 + rand(20.0), randomOutTo())
         axes = camera.frame
       check norm(axes.axis_right) =~ 1.0
       check norm(axes.axis_up) =~ 1.0
@@ -441,7 +441,7 @@ suite "Camera":
 
   test "eye stands at orbit distance from pivot, and looks back at it":
     for i in 0 ..< SAMPLES:
-      let camera = cameraAround(PLACES[i], 7.0, randOutTo())
+      let camera = cameraAround(PLACES[i], 7.0, randomOutTo())
       check norm(camera.eye - camera.pivot) =~ camera.distance
       let heading = normalize(camera.pivot - camera.eye)
       check heading.isSome
@@ -507,7 +507,7 @@ suite "Camera":
   test "whole transform carries pivot to centre of view":
     for i in 0 ..< SAMPLES:
       let
-        camera = cameraAround(PLACES[i], 11.0, randOutTo())
+        camera = cameraAround(PLACES[i], 11.0, randomOutTo())
         clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
       check clipped[3] > 0
       check isNear(clipped[0]/clipped[3], 0)
@@ -520,7 +520,7 @@ suite "Camera":
     #   world position: storing relative to pivot is invisible on screen.
     for i in 0 ..< SAMPLES:
       let
-        camera = cameraAround(PLACES[i], 3.0, randOutTo())
+        camera = cameraAround(PLACES[i], 3.0, randomOutTo())
         place = camera.pivot +
           Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
         about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)

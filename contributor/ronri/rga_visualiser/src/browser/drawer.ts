@@ -217,7 +217,7 @@ function openApplyPickerOnOperands(position_local: PointLocal | null) {
   refreshSelectionSnapshot();
   refreshObjectsUI();
   refreshSelectionMenu(position_local);
-  if (menu_selection_apply.style.display !== 'none') openSelectionMenuOp();
+  if (menu_selection_apply.style.display !== 'none') openSelectionMenuOperation();
 }
 
 function openPanelTo(handle: number | null) {

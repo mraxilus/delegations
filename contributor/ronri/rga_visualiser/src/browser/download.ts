@@ -61,13 +61,13 @@ async function shareFile(file: File, filename: string): Promise<boolean> {
     await navigator.share({ files: [file], title: filename });
     report_delivery.push('share: opened');
     return true;
-  } catch (err) {
+  } catch (error) {
     // Cancelling sheet is decision, not failure -- report it and stop trying.
-    if (err instanceof Error && err.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       report_delivery.push('share: cancelled');
       return true;
     }
-    report_delivery.push('share: ' + (err instanceof Error ? err.name : 'failed'));
+    report_delivery.push('share: ' + (error instanceof Error ? error.name : 'failed'));
     return false;
   }
 }
@@ -111,20 +111,24 @@ const EXTENSIONS_HOST = new Set([
 ]);
 
 // CRC-32 of zip format, one entry for each byte value, built once.
-const TABLE_CRC = (() => {
+const TABLE_CYCLIC_REDUNDANCY_CHECK = (() => {
   const table = new Uint32Array(256);
   for (let value = 0; value < 256; value += 1) {
-    let crc = value;
-    for (let bit = 0; bit < 8; bit += 1) crc = crc & 1 ? 0xEDB88320 ^ (crc >>> 1) : crc >>> 1;
-    table[value] = crc >>> 0;
+    let remainder = value;
+    for (let bit = 0; bit < 8; bit += 1) {
+      remainder = remainder & 1 ? 0xEDB88320 ^ (remainder >>> 1) : remainder >>> 1;
+    }
+    table[value] = remainder >>> 0;
   }
   return table;
 })();
 
-function crcOf(bytes: Uint8Array): number {
-  let crc = 0xFFFFFFFF;
-  for (const byte of bytes) crc = (TABLE_CRC[(crc ^ byte) & 0xFF] ?? 0) ^ (crc >>> 8);
-  return (crc ^ 0xFFFFFFFF) >>> 0;
+function cyclicRedundancyCheckOf(bytes: Uint8Array): number {
+  let remainder = 0xFFFFFFFF;
+  for (const byte of bytes) {
+    remainder = (TABLE_CYCLIC_REDUNDANCY_CHECK[(remainder ^ byte) & 0xFF] ?? 0) ^ (remainder >>> 8);
+  }
+  return (remainder ^ 0xFFFFFFFF) >>> 0;
 }
 
 async function zipOne(filename: string, blob: Blob): Promise<Blob> {
@@ -132,13 +136,13 @@ async function zipOne(filename: string, blob: Blob): Promise<Blob> {
   //   Stored: scene is small, and no deflate stream means nothing to get wrong here.
   const data = new Uint8Array(await blob.arrayBuffer());
   const name = new TextEncoder().encode(filename);
-  const crc = crcOf(data);
+  const remainder = cyclicRedundancyCheckOf(data);
   const local = new DataView(new ArrayBuffer(30));
   local.setUint32(0, 0x04034B50, true);
   local.setUint16(4, 20, true);
   local.setUint16(6, 0x0800, true); // Name is UTF-8.
   local.setUint16(12, 0x21, true); // 1980-01-01, zip's own zero date.
-  local.setUint32(14, crc, true);
+  local.setUint32(14, remainder, true);
   local.setUint32(18, data.length, true);
   local.setUint32(22, data.length, true);
   local.setUint16(26, name.length, true);
@@ -148,7 +152,7 @@ async function zipOne(filename: string, blob: Blob): Promise<Blob> {
   central.setUint16(6, 20, true);
   central.setUint16(8, 0x0800, true);
   central.setUint16(14, 0x21, true);
-  central.setUint32(16, crc, true);
+  central.setUint32(16, remainder, true);
   central.setUint32(20, data.length, true);
   central.setUint32(24, data.length, true);
   central.setUint16(28, name.length, true);
@@ -176,8 +180,8 @@ async function saveThroughHost(
     report_delivery.push('host: saved');
     toast('Saved `' + name + '`.');
     return true;
-  } catch (err) {
-    const code = (err as { code?: unknown } | null)?.code;
+  } catch (error) {
+    const code = (error as { code?: unknown } | null)?.code;
     report_delivery.push('host: ' + (typeof code === 'string' ? code : 'failed'));
     if (code === 'declined') {
       toast('Not saved.');

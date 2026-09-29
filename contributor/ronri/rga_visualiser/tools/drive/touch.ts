@@ -78,7 +78,7 @@ let id_touch_next = 1;
 
 /** Dispatch one touch event, however many fingers are down. */
 export async function touchAt(
-  cdp: CDPSession, kind: TouchKind, points: Finger[],
+  devtools: CDPSession, kind: TouchKind, points: Finger[],
 ): Promise<void> {
   if (kind === 'touchStart') {
     ids_down = points.map(() => { id_touch_next += 1; return id_touch_next; });
@@ -87,7 +87,7 @@ export async function touchAt(
       `a touchMove must move every finger down; got ${points.length} of ${ids_down.length}`,
     );
   }
-  await cdp.send('Input.dispatchTouchEvent', {
+  await devtools.send('Input.dispatchTouchEvent', {
     type: kind,
     touchPoints: points.map((point, index) => ({
       x: point.x, y: point.y, id: ids_down[index] ?? 0,
@@ -98,11 +98,11 @@ export async function touchAt(
 
 /** Put two fingers down and draw them apart or together, moving their midpoint. */
 export async function pinch(
-  page: Page, cdp: CDPSession, mid_from: Finger, mid_to: Finger,
+  page: Page, devtools: CDPSession, mid_from: Finger, mid_to: Finger,
   spread_from: number, spread_to: number,
 ): Promise<void> {
   await ensureLifted(page, 'a pinch');
-  await touchAt(cdp, 'touchStart', [
+  await touchAt(devtools, 'touchStart', [
     { x: mid_from.x - spread_from, y: mid_from.y },
     { x: mid_from.x + spread_from, y: mid_from.y },
   ]);
@@ -112,43 +112,43 @@ export async function pinch(
       x: mid_from.x + ((mid_to.x - mid_from.x) * step) / 8,
       y: mid_from.y + ((mid_to.y - mid_from.y) * step) / 8,
     };
-    await touchAt(cdp, 'touchMove', [
+    await touchAt(devtools, 'touchMove', [
       { x: mid.x - spread, y: mid.y }, { x: mid.x + spread, y: mid.y },
     ]);
     await waitFrames(page, 2);
   }
-  await touchAt(cdp, 'touchEnd', []);
+  await touchAt(devtools, 'touchEnd', []);
   await settleCamera(page);
 }
 
 /** Turn two fingers about their own midpoint, holding their separation. */
 export async function twist(
-  page: Page, cdp: CDPSession, mid: Finger, spread: number, radians: number,
+  page: Page, devtools: CDPSession, mid: Finger, spread: number, radians: number,
 ): Promise<void> {
   await ensureLifted(page, 'a twist');
   const at = (turn: number) => [
     { x: mid.x - spread*Math.cos(turn), y: mid.y - spread*Math.sin(turn) },
     { x: mid.x + spread*Math.cos(turn), y: mid.y + spread*Math.sin(turn) },
   ];
-  await touchAt(cdp, 'touchStart', at(0));
+  await touchAt(devtools, 'touchStart', at(0));
   for (let step = 1; step <= 8; step += 1) {
-    await touchAt(cdp, 'touchMove', at((radians*step)/8));
+    await touchAt(devtools, 'touchMove', at((radians*step)/8));
     await waitFrames(page, 2);
   }
-  await touchAt(cdp, 'touchEnd', []);
+  await touchAt(devtools, 'touchEnd', []);
   await settleCamera(page);
 }
 
 /** Put one finger down for however long, then lift it. */
 export async function tapAt(
-  page: Page, cdp: CDPSession, x: number, y: number, milliseconds = 60,
+  page: Page, devtools: CDPSession, x: number, y: number, milliseconds = 60,
 ): Promise<void> {
   await ensureLifted(page, 'a tap');
-  await touchAt(cdp, 'touchStart', [{ x, y }]);
+  await touchAt(devtools, 'touchStart', [{ x, y }]);
   // Wall time, deliberately: how long finger stays down is what caller asked for, and long
   //   press is decided by that duration rather than by anything page reports.
   await page.waitForTimeout(milliseconds);
-  await touchAt(cdp, 'touchEnd', []);
+  await touchAt(devtools, 'touchEnd', []);
   await settleCamera(page);
 }
 
@@ -164,16 +164,16 @@ export interface DragParts {
  *  finger before letting go.
  */
 export async function dragFinger(
-  page: Page, cdp: CDPSession, from: number[], onto: number[], parts: DragParts = {},
+  page: Page, devtools: CDPSession, from: number[], onto: number[], parts: DragParts = {},
 ): Promise<void> {
   const { press = true, lift = true } = parts;
   const start = { x: from[0] ?? 0, y: from[1] ?? 0 };
   const end = { x: onto[0] ?? 0, y: onto[1] ?? 0 };
   if (press) {
     await ensureLifted(page, 'a finger drag');
-    await touchAt(cdp, 'touchStart', [start]);
+    await touchAt(devtools, 'touchStart', [start]);
     for (let step = 1; step <= 10; step += 1) {
-      await touchAt(cdp, 'touchMove', [{
+      await touchAt(devtools, 'touchMove', [{
         x: start.x + ((end.x - start.x) * step) / 10,
         y: start.y + ((end.y - start.y) * step) / 10,
       }]);
@@ -181,13 +181,13 @@ export async function dragFinger(
     }
   }
   if (lift) {
-    await touchAt(cdp, 'touchEnd', []);
+    await touchAt(devtools, 'touchEnd', []);
     await settleCamera(page);
   }
 }
 
 /** Drive pinch zoom, which is what finger has instead of wheel. */
-export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
+export async function drivePinch(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
 
@@ -195,7 +195,7 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
   //   so pinch that also translated view would drag it toward that corner.
   const mid = { x: 300, y: 300 };
   const before = await readCamera(page);
-  await pinch(page, cdp, mid, mid, 40, 160);
+  await pinch(page, devtools, mid, mid, 40, 160);
   const after = await readCamera(page);
 
   report(
@@ -214,7 +214,7 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   const upright = await readCamera(page);
-  await twist(page, cdp, { x: 400, y: 400 }, 120, 0.9);
+  await twist(page, devtools, { x: 400, y: 400 }, 120, 0.9);
   const rolled = await readCamera(page);
   const across = slideOf(upright, rolled);
   report(
@@ -242,7 +242,7 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
   );
   const start = await seen();
   // Fingers turned clockwise on screen, since y grows down and this angle grows.
-  await twist(page, cdp, { x: 400, y: 400 }, 120, 0.9);
+  await twist(page, devtools, { x: 400, y: 400 }, 120, 0.9);
   const swung = await seen();
   const angleOf = (at: number[]): number => Math.atan2(
     (at[1] ?? 0) - (centre[1] ?? 0), (at[0] ?? 0) - (centre[0] ?? 0),
@@ -278,7 +278,7 @@ async function isOpenSky(page: Page, at: Finger): Promise<boolean> {
  *  Downward drag with object picked climbs past straight down onto far side, which is
  *  what bounded turntable refused.
  */
-export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveFingerTurntable(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
@@ -293,9 +293,9 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
   //   Rate turned sight by angle screen does not show, and drift of its steps stayed.
   const standing = await readCamera(page);
   const level = await page.evaluate(() => nimCameraElevation());
-  await dragFinger(page, cdp, [sky.x, sky.y], [sky.x + 600, sky.y]);
+  await dragFinger(page, devtools, [sky.x, sky.y], [sky.x + 600, sky.y]);
   const swung = await readCamera(page);
-  await dragFinger(page, cdp, [sky.x + 600, sky.y], [sky.x, sky.y]);
+  await dragFinger(page, devtools, [sky.x + 600, sky.y], [sky.x, sky.y]);
   const back = await readCamera(page);
   const level_back = await page.evaluate(() => nimCameraElevation());
   report(
@@ -323,7 +323,7 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
     report('a finger lands on open sky beside an object', false, 'no sky 40 px left of it');
     return;
   }
-  await dragFinger(page, cdp, [landing.x, landing.y], [landing.x + 60, landing.y + 40]);
+  await dragFinger(page, devtools, [landing.x, landing.y], [landing.x + 60, landing.y + 40]);
   const seen_after = await seenBeside();
   const across = (seen_after[0] ?? 0) - (seen_before[0] ?? 0);
   const down = (seen_after[1] ?? 0) - (seen_before[1] ?? 0);
@@ -357,7 +357,7 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
       await page.evaluate(() => nimSelectClear());
       return;
     }
-    await dragFinger(page, cdp, [above.x, above.y], [above.x, above.y + 240]);
+    await dragFinger(page, devtools, [above.x, above.y], [above.x, above.y + 240]);
   }
   const after = await readCamera(page);
   const outward = (camera: typeof before): number[] => [
@@ -378,7 +378,7 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
 }
 
 /** Drive long press and tap, which is how finger selects. */
-export async function driveTouchSelect(page: Page, cdp: CDPSession): Promise<void> {
+export async function driveTouchSelect(page: Page, devtools: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
@@ -397,7 +397,7 @@ export async function driveTouchSelect(page: Page, cdp: CDPSession): Promise<voi
   }
 
   // Hold well past hold-to-select, only way finger has to start selection.
-  await tapAt(page, cdp, pixel_first[0] ?? 0, pixel_first[1] ?? 0, 1400);
+  await tapAt(page, devtools, pixel_first[0] ?? 0, pixel_first[1] ?? 0, 1400);
   const count_held = await page.evaluate(() => nimSelectionCount());
   report('a long press selects what it is over', count_held === 1, `${count_held} selected`);
 
@@ -409,7 +409,7 @@ export async function driveTouchSelect(page: Page, cdp: CDPSession): Promise<voi
   if (second === undefined) return;
   const pixel_second = await pixelOf(page, second);
   if (pixel_second === null) return;
-  await tapAt(page, cdp, pixel_second[0] ?? 0, pixel_second[1] ?? 0);
+  await tapAt(page, devtools, pixel_second[0] ?? 0, pixel_second[1] ?? 0);
   const count_tapped = await page.evaluate(() => nimSelectionCount());
   report(
     'a tap toggles a second object into the selection',
@@ -432,7 +432,7 @@ export async function driveTouchSelect(page: Page, cdp: CDPSession): Promise<voi
     }
     return candidates[0] ?? [40, 40];
   }, { width: 1200, height: 900 });
-  await tapAt(page, cdp, empty[0] ?? 0, empty[1] ?? 0);
+  await tapAt(page, devtools, empty[0] ?? 0, empty[1] ?? 0);
   const count_empty = await page.evaluate(() => nimSelectionCount());
   report(
     'a tap on empty space clears the selection', count_empty === 0, `${count_empty} selected`,

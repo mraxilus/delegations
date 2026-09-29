@@ -664,7 +664,7 @@ func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, 
   ## Clip screen segment to viewport, as fractions along it; none where it misses.
   ##   Liang–Barsky, both ends free, where `fractionLeavingView` clips outward from tail
   ##   already inside.
-  var (f0, f1) = (0.0, 1.0)
+  var (fraction_enter, fraction_leave) = (0.0, 1.0)
   let (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
   for (rate, room) in [
     (-offset_x, tail.x), (offset_x, float(width) - tail.x),
@@ -675,12 +675,12 @@ func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, 
       continue
     let f = room/rate
     if rate < 0.0:
-      if f > f1: return
-      if f > f0: f0 = f
+      if f > fraction_leave: return
+      if f > fraction_enter: fraction_enter = f
     else:
-      if f < f0: return
-      if f < f1: f1 = f
-  some((f0, f1))
+      if f < fraction_enter: return
+      if f < fraction_leave: fraction_leave = f
+  some((fraction_enter, fraction_leave))
 
 
 func placeLabelBesideLine(

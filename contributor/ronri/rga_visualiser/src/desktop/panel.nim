@@ -960,7 +960,7 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
 proc layoutDiagnosticsFrameTime(panel: var Panel) =
   ## Lay out "frame time" section.
   ##   Rolling frame-time plot, vsync toggle, current rate, tessellation cost.
-  gui.separatorText(wordingText(NameDiagFrame))
+  gui.separatorText(wordingText(NameDiagnosticsFrame))
   var highest = 16.6'f32 # Floor range at 60 fps, so smooth run does not zoom in on noise.
   for value in panel.milliseconds_history:
     if value > highest: highest = value
@@ -974,10 +974,10 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
     "##frame_time", addr panel.milliseconds_history[0], cint(FRAMES_HISTORY),
     cint(panel.index_history), text_now, 0.0, highest, gui.contentWidth(), 60.0,
   )
-  gui.tooltip(wordingText(TipDiagFrames))
+  gui.tooltip(wordingText(TipDiagnosticsFrames))
 
-  discard gui.checkbox(wordingText(NameDiagVsync), addr panel.is_vsync_enabled)
-  gui.tooltip(wordingText(TipDiagVsync))
+  discard gui.checkbox(wordingText(NameDiagnosticsVsync), addr panel.is_vsync_enabled)
+  gui.tooltip(wordingText(TipDiagnosticsVsync))
   var line: array[WIDTH_OBJECT_LINE, char]
   let text_rate = buildChars(line):
     appendInt(line, cursor, int(gui.framerate()))
@@ -1000,7 +1000,7 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
 
 proc layoutDiagnosticsMemory(panel: Panel) =
   ## Lay out "memory" section: permanent and per-frame arena usage bars.
-  gui.separatorText(wordingText(NameDiagMemory))
+  gui.separatorText(wordingText(NameDiagnosticsMemory))
   block:
     let
       mb_used = float(panel.bytes_arena_permanent_used) / (1024.0*1024.0)
@@ -1012,13 +1012,13 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       appendFixed(text, cursor, mb_capacity, 0)
       appendChars(text, cursor, " MB")
     gui.textTinted(
-      wordingText(NameDiagPermanent), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
+      wordingText(NameDiagnosticsPermanent), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     gui.progressBar(
       cfloat(mb_used / max(mb_capacity, 1.0)), overlay_text, gui.contentWidth(), 0.0,
       0.298, 0.482, 0.929, 0.15, 0.15, 0.18,
     )
-    gui.tooltip(wordingText(TipDiagPermanent))
+    gui.tooltip(wordingText(TipDiagnosticsPermanent))
 
   block:
     let
@@ -1032,7 +1032,7 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       appendFixed(text, cursor, mb_capacity, 0)
       appendChars(text, cursor, " MB")
     gui.textTinted(
-      wordingText(NameDiagFrameArena), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
+      wordingText(NameDiagnosticsFrameArena), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     let fraction =
       float(panel.bytes_arena_frame_peak) /
@@ -1041,7 +1041,7 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       cfloat(fraction), overlay_text, gui.contentWidth(), 0.0,
       0.561, 0.737, 0.353, 0.15, 0.15, 0.18,
     )
-    gui.tooltip(wordingText(TipDiagFrame))
+    gui.tooltip(wordingText(TipDiagnosticsFrame))
 
 
 func sizePoolCell(width: cfloat): cfloat =
@@ -1058,7 +1058,7 @@ func sizePoolCell(width: cfloat): cfloat =
 
 proc layoutDiagnosticsObjectPool(scene: Scene) =
   ## Lay out "object pool" section: live/free handle strip and byte accounting.
-  gui.separatorText(wordingText(NameDiagPool))
+  gui.separatorText(wordingText(NameDiagnosticsPool))
   # Colour occupied cell with its object's ink, so strip reads as scene.
   #   Which handle object sits in, and how `inkCycled` has spread palette.
   var cells: array[OBJECTS_MAX * CHANNELS_POOL_CELL, cfloat]
@@ -1068,7 +1068,7 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
     cells[handle*CHANNELS_POOL_CELL + 1] = cfloat(colour.green)
     cells[handle*CHANNELS_POOL_CELL + 2] = cfloat(colour.blue)
   gui.poolBar(addr cells[0], cint(OBJECTS_MAX), sizePoolCell(gui.contentWidth()))
-  gui.tooltip(wordingText(TipDiagPool))
+  gui.tooltip(wordingText(TipDiagnosticsPool))
   var summary: array[WIDTH_OBJECT_LINE, char]
   let text_summary = buildChars(summary):
     appendInt(summary, cursor, scene.len)
@@ -1093,12 +1093,12 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
   gui.monoPush()
   gui.text(text_pool)
   gui.monoPop()
-  gui.tooltip(wordingText(TipDiagScene))
+  gui.tooltip(wordingText(TipDiagnosticsScene))
 
 
 proc layoutDiagnosticsTotal(panel: Panel) =
   ## Lay out "total" section: every fixed reservation this binary makes, added up.
-  gui.separatorText(wordingText(NameDiagTotal))
+  gui.separatorText(wordingText(NameDiagnosticsTotal))
   var total: array[WIDTH_OVERLAY_TEXT, char]
   let text_total = buildChars(total):
     appendFixed(total, cursor, float(panel.bytes_memory_total) / (1024.0*1024.0), 1)

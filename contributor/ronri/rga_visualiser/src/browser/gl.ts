@@ -36,7 +36,7 @@ const SOURCE_VERTEX_POINT = `
   attribute vec3 aCentre;
   attribute float aRadius;
   attribute vec4 aColor;
-  uniform mat4 uMVP;
+  uniform mat4 uModelViewProjection;
   uniform vec3 uEye;
   uniform vec3 uForward;
   uniform vec3 uRight;
@@ -65,7 +65,7 @@ const SOURCE_VERTEX_POINT = `
     float world_per_pixel = 2.0*depth*uTangentHalfView/uHeightPixels;
     float radius = max(aRadius, 0.5*uDiameterLeast*world_per_pixel);
     vec3 at = aCentre + aCorner.x*radius*uRight + aCorner.y*radius*uUp;
-    gl_Position = uMVP*vec4(at, 1.0);
+    gl_Position = uModelViewProjection*vec4(at, 1.0);
     vDepth = gl_Position.w;
     vColor = aColor;
     vCorner = aCorner;
@@ -158,14 +158,14 @@ if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
 }
 gl.useProgram(program);
 
-const point_attribs = {
+const point_attributes = {
   corner: gl.getAttribLocation(program, 'aCorner'),
   centre: gl.getAttribLocation(program, 'aCentre'),
   radius: gl.getAttribLocation(program, 'aRadius'),
   colour: gl.getAttribLocation(program, 'aColor'),
 };
 const point_uniforms = {
-  mvp: gl.getUniformLocation(program, 'uMVP'),
+  model_view_projection: gl.getUniformLocation(program, 'uModelViewProjection'),
   eye: gl.getUniformLocation(program, 'uEye'),
   forward: gl.getUniformLocation(program, 'uForward'),
   right: gl.getUniformLocation(program, 'uRight'),
@@ -207,7 +207,7 @@ const SOURCE_VERTEX_RIBBON = `
   attribute float aFog;
   attribute vec4 aTintTail;
   attribute vec4 aTintHead;
-  uniform mat4 uMVP;
+  uniform mat4 uModelViewProjection;
   uniform vec3 uEye;
   uniform vec3 uForward;
   uniform float uDepthNear;
@@ -286,7 +286,7 @@ const SOURCE_VERTEX_RIBBON = `
     float depth_at = max(dot(at - uEye, uForward), uDepthNear);
     float world_per_pixel = 2.0*depth_at*uTangentHalfView/uHeightPixels;
     at += aCorner.y*0.5*aWidth*world_per_pixel*across;
-    gl_Position = uMVP*vec4(at, 1.0);
+    gl_Position = uModelViewProjection*vec4(at, 1.0);
     vDepth = gl_Position.w;
     vWorld = at;
     vColor = mix(tint_near, tint_far, aCorner.x);
@@ -336,7 +336,7 @@ if (extension_instanced === null) {
   throw new Error('ANGLE_instanced_arrays is unavailable');
 }
 const instanced: ANGLE_instanced_arrays = extension_instanced;
-const ribbon_attribs = {
+const ribbon_attributes = {
   corner: gl.getAttribLocation(program_ribbon, 'aCorner'),
   tail: gl.getAttribLocation(program_ribbon, 'aTail'),
   head: gl.getAttribLocation(program_ribbon, 'aHead'),
@@ -346,7 +346,7 @@ const ribbon_attribs = {
   tint_head: gl.getAttribLocation(program_ribbon, 'aTintHead'),
 };
 const ribbon_uniforms = {
-  mvp: gl.getUniformLocation(program_ribbon, 'uMVP'),
+  model_view_projection: gl.getUniformLocation(program_ribbon, 'uModelViewProjection'),
   eye: gl.getUniformLocation(program_ribbon, 'uEye'),
   forward: gl.getUniformLocation(program_ribbon, 'uForward'),
   depth_near: gl.getUniformLocation(program_ribbon, 'uDepthNear'),
@@ -480,14 +480,14 @@ const SOURCE_VERTEX_DOME = `
   attribute vec3 aUnit;
   attribute vec4 aCentreRadius;
   attribute vec4 aTint;
-  uniform mat4 uMVP;
+  uniform mat4 uModelViewProjection;
   uniform float uDepthNear;
   uniform float uDepthLog;
   varying vec4 vColor;
   varying float vDepth;
   void main() {
     vec3 at = aCentreRadius.xyz + aCentreRadius.w*aUnit;
-    gl_Position = uMVP*vec4(at, 1.0);
+    gl_Position = uModelViewProjection*vec4(at, 1.0);
     vDepth = gl_Position.w;
     vColor = aTint;
   }
@@ -514,7 +514,7 @@ const SOURCE_VERTEX_RING = `
   attribute vec3 aArmSecond;
   attribute vec4 aFill;
   attribute float aWidth;
-  uniform mat4 uMVP;
+  uniform mat4 uModelViewProjection;
   uniform vec3 uEye;
   uniform vec3 uForward;
   uniform float uDepthNear;
@@ -583,7 +583,7 @@ const SOURCE_VERTEX_RING = `
     float depth_at = max(dot(at - uEye, uForward), uDepthNear);
     float world_per_pixel = 2.0*depth_at*uTangentHalfView/uHeightPixels;
     at += aCorner.y*0.5*aWidth*world_per_pixel*across;
-    gl_Position = uMVP*vec4(at, 1.0);
+    gl_Position = uModelViewProjection*vec4(at, 1.0);
     vDepth = gl_Position.w;
     vColor = aFill;
   }
@@ -602,20 +602,20 @@ function linkVeilProgram(
 }
 const program_disc = linkVeilProgram(SOURCE_VERTEX_DISC, SOURCE_FRAGMENT_DISC);
 const program_dome = linkVeilProgram(SOURCE_VERTEX_DOME);
-const disc_attribs = {
+const disc_attributes = {
   corner: gl.getAttribLocation(program_disc, 'aCorner'),
   centre: gl.getAttribLocation(program_disc, 'aCentre'),
   arm_first: gl.getAttribLocation(program_disc, 'aArmFirst'),
   arm_second: gl.getAttribLocation(program_disc, 'aArmSecond'),
   fill: gl.getAttribLocation(program_disc, 'aFill'),
 };
-const dome_attribs = {
+const dome_attributes = {
   unit: gl.getAttribLocation(program_dome, 'aUnit'),
   centre_radius: gl.getAttribLocation(program_dome, 'aCentreRadius'),
   tint: gl.getAttribLocation(program_dome, 'aTint'),
 };
 const program_ring = linkVeilProgram(SOURCE_VERTEX_RING);
-const ring_attribs = {
+const ring_attributes = {
   arc: gl.getAttribLocation(program_ring, 'aArc'),
   corner: gl.getAttribLocation(program_ring, 'aCorner'),
   centre: gl.getAttribLocation(program_ring, 'aCentre'),
@@ -626,7 +626,7 @@ const ring_attribs = {
 };
 // Very six ribbon program takes, since widening is ribbon's own.
 const ring_uniforms = {
-  mvp: gl.getUniformLocation(program_ring, 'uMVP'),
+  model_view_projection: gl.getUniformLocation(program_ring, 'uModelViewProjection'),
   eye: gl.getUniformLocation(program_ring, 'uEye'),
   forward: gl.getUniformLocation(program_ring, 'uForward'),
   depth_near: gl.getUniformLocation(program_ring, 'uDepthNear'),
@@ -637,7 +637,8 @@ const ring_uniforms = {
   up: gl.getUniformLocation(program_ring, 'uUp'),
   factor_guard: gl.getUniformLocation(program_ring, 'uFactorGuard'),
 };
-const uniform_dome_mvp = gl.getUniformLocation(program_dome, 'uMVP');
+const uniform_dome_model_view_projection =
+  gl.getUniformLocation(program_dome, 'uModelViewProjection');
 // Veil programs take depth mapping too, having no camera of their own otherwise.
 const uniform_disc_depth_near = gl.getUniformLocation(program_disc, 'uDepthNear');
 const uniform_disc_depth_log = gl.getUniformLocation(program_disc, 'uDepthLog');
@@ -675,7 +676,7 @@ const buffer_point_corners = createdBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, buffer_point_corners);
 gl.bufferData(gl.ARRAY_BUFFER, CORNERS_POINT, gl.STATIC_DRAW);
 
-const vbo = {
+const buffers = {
   disc: createdBuffer(), dome: createdBuffer(), ring: createdBuffer(),
   ribbon: createdBuffer(), point: createdBuffer(),
   ribbon_furniture: createdBuffer(),
@@ -740,27 +741,27 @@ function drawRibbons(
   const span = is_overlay ? count - split : split;
   if (span === 0) return;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer_ribbon_corners);
-  gl.enableVertexAttribArray(ribbon_attribs.corner);
-  gl.vertexAttribPointer(ribbon_attribs.corner, 2, gl.FLOAT, false, 8, 0);
-  instanced.vertexAttribDivisorANGLE(ribbon_attribs.corner, 0);
+  gl.enableVertexAttribArray(ribbon_attributes.corner);
+  gl.vertexAttribPointer(ribbon_attributes.corner, 2, gl.FLOAT, false, 8, 0);
+  instanced.vertexAttribDivisorANGLE(ribbon_attributes.corner, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, handle_buffer);
   const base = first * STRIDE_RIBBON;
-  for (const [attrib, floats, offset] of ATTRIBUTE_LAYOUT([
-    [ribbon_attribs.tail, 3, 0], [ribbon_attribs.head, 3, 12], [ribbon_attribs.width, 1, 24],
-    [ribbon_attribs.fog, 1, 28],
-    [ribbon_attribs.tint_tail, 4, 32], [ribbon_attribs.tint_head, 4, 48],
+  for (const [attribute, floats, offset] of ATTRIBUTE_LAYOUT([
+    [ribbon_attributes.tail, 3, 0], [ribbon_attributes.head, 3, 12],
+    [ribbon_attributes.width, 1, 24], [ribbon_attributes.fog, 1, 28],
+    [ribbon_attributes.tint_tail, 4, 32], [ribbon_attributes.tint_head, 4, 48],
   ])) {
-    gl.enableVertexAttribArray(attrib);
-    gl.vertexAttribPointer(attrib, floats, gl.FLOAT, false, STRIDE_RIBBON, base + offset);
-    instanced.vertexAttribDivisorANGLE(attrib, 1);
+    gl.enableVertexAttribArray(attribute);
+    gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, STRIDE_RIBBON, base + offset);
+    instanced.vertexAttribDivisorANGLE(attribute, 1);
   }
   instanced.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, span);
   // Divisors are context state, not program state: left at one they would corrupt.
   //   plain program's reads of these same attribute indices next draw.
-  for (const attrib of [ribbon_attribs.tail, ribbon_attribs.head, ribbon_attribs.width,
-    ribbon_attribs.fog, ribbon_attribs.tint_tail, ribbon_attribs.tint_head]) {
-    instanced.vertexAttribDivisorANGLE(attrib, 0);
-    gl.disableVertexAttribArray(attrib);
+  for (const attribute of [ribbon_attributes.tail, ribbon_attributes.head, ribbon_attributes.width,
+    ribbon_attributes.fog, ribbon_attributes.tint_tail, ribbon_attributes.tint_head]) {
+    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    gl.disableVertexAttribArray(attribute);
   }
 }
 
@@ -776,63 +777,63 @@ function drawRings(count: number, count_over: number, is_overlay: boolean) {
   const span = is_overlay ? count - split : split;
   if (span === 0) return;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer_ring_corners);
-  for (const [attrib, floats, offset] of ATTRIBUTE_LAYOUT([
-    [ring_attribs.arc, 4, 0], [ring_attribs.corner, 2, 16],
+  for (const [attribute, floats, offset] of ATTRIBUTE_LAYOUT([
+    [ring_attributes.arc, 4, 0], [ring_attributes.corner, 2, 16],
   ])) {
-    gl.enableVertexAttribArray(attrib);
-    gl.vertexAttribPointer(attrib, floats, gl.FLOAT, false, 24, offset);
-    instanced.vertexAttribDivisorANGLE(attrib, 0);
+    gl.enableVertexAttribArray(attribute);
+    gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, 24, offset);
+    instanced.vertexAttribDivisorANGLE(attribute, 0);
   }
-  gl.bindBuffer(gl.ARRAY_BUFFER, vbo.ring);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.ring);
   const base = first * STRIDE_RING;
   const records: Array<[number, number, number]> = [
-    [ring_attribs.centre, 3, 0], [ring_attribs.arm_first, 3, 12],
-    [ring_attribs.arm_second, 3, 24], [ring_attribs.fill, 4, 36],
-    [ring_attribs.width, 1, 52],
+    [ring_attributes.centre, 3, 0], [ring_attributes.arm_first, 3, 12],
+    [ring_attributes.arm_second, 3, 24], [ring_attributes.fill, 4, 36],
+    [ring_attributes.width, 1, 52],
   ];
-  for (const [attrib, floats, offset] of records) {
-    gl.enableVertexAttribArray(attrib);
-    gl.vertexAttribPointer(attrib, floats, gl.FLOAT, false, STRIDE_RING, base + offset);
-    instanced.vertexAttribDivisorANGLE(attrib, 1);
+  for (const [attribute, floats, offset] of records) {
+    gl.enableVertexAttribArray(attribute);
+    gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, STRIDE_RING, base + offset);
+    instanced.vertexAttribDivisorANGLE(attribute, 1);
   }
   instanced.drawArraysInstancedANGLE(gl.TRIANGLES, 0, COUNT_CORNERS_RING, span);
   // Divisors are context state, not program state: left at one they would corrupt.
   //   plain program's reads of these same attribute indices next draw.
-  for (const [attrib] of records) {
-    instanced.vertexAttribDivisorANGLE(attrib, 0);
-    gl.disableVertexAttribArray(attrib);
+  for (const [attribute] of records) {
+    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    gl.disableVertexAttribArray(attribute);
   }
-  for (const attrib of [ring_attribs.arc, ring_attribs.corner]) {
-    gl.disableVertexAttribArray(attrib);
+  for (const attribute of [ring_attributes.arc, ring_attributes.corner]) {
+    gl.disableVertexAttribArray(attribute);
   }
 }
 
 // One instanced veil draw:
-//   `record_attribs` re-pointed at run's first record (WebGL1 has no base instance), corner attrib
-//   from static buffer, divisors reset after -- they are context state, and left at one they would
-//   corrupt plain program's reads of same attribute indices.
+//   `record_attributes` re-pointed at run's first record (WebGL1 has no base instance), corner
+//   attribute from static buffer, divisors reset after -- they are context state, and left at one
+//   they would corrupt plain program's reads of same attribute indices.
 //   Shared by disc and dome runs below.
 function drawVeilInstances(
   buffer_corners: WebGLBuffer, floats_corner: number, count_corners: number,
-  corner_attrib: number, handle_records: WebGLBuffer, stride: number,
-  record_attribs: Array<[number, number, number]>, first: number, count: number,
+  corner_attribute: number, handle_records: WebGLBuffer, stride: number,
+  record_attributes: Array<[number, number, number]>, first: number, count: number,
 ) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer_corners);
-  gl.enableVertexAttribArray(corner_attrib);
-  gl.vertexAttribPointer(corner_attrib, floats_corner, gl.FLOAT, false,
+  gl.enableVertexAttribArray(corner_attribute);
+  gl.vertexAttribPointer(corner_attribute, floats_corner, gl.FLOAT, false,
     floats_corner * 4, 0);
-  instanced.vertexAttribDivisorANGLE(corner_attrib, 0);
+  instanced.vertexAttribDivisorANGLE(corner_attribute, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, handle_records);
   const base = first * stride;
-  for (const [attrib, floats, offset] of record_attribs) {
-    gl.enableVertexAttribArray(attrib);
-    gl.vertexAttribPointer(attrib, floats, gl.FLOAT, false, stride, base + offset);
-    instanced.vertexAttribDivisorANGLE(attrib, 1);
+  for (const [attribute, floats, offset] of record_attributes) {
+    gl.enableVertexAttribArray(attribute);
+    gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, stride, base + offset);
+    instanced.vertexAttribDivisorANGLE(attribute, 1);
   }
   instanced.drawArraysInstancedANGLE(gl.TRIANGLES, 0, count_corners, count);
-  for (const [attrib] of record_attribs) {
-    instanced.vertexAttribDivisorANGLE(attrib, 0);
-    gl.disableVertexAttribArray(attrib);
+  for (const [attribute] of record_attributes) {
+    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    gl.disableVertexAttribArray(attribute);
   }
 }
 
@@ -854,16 +855,16 @@ function drawVeilRuns(
     const count = veil_runs[3 * i + 2] ?? 0;
     if (kind === 0) {
       gl.useProgram(program_disc);
-      drawVeilInstances(buffer_disc_corners, 2, COUNT_CORNERS_DISC, disc_attribs.corner,
-        vbo.disc, STRIDE_DISC, ATTRIBUTE_LAYOUT([
-          [disc_attribs.centre, 3, 0], [disc_attribs.arm_first, 3, 12],
-          [disc_attribs.arm_second, 3, 24], [disc_attribs.fill, 4, 36],
+      drawVeilInstances(buffer_disc_corners, 2, COUNT_CORNERS_DISC, disc_attributes.corner,
+        buffers.disc, STRIDE_DISC, ATTRIBUTE_LAYOUT([
+          [disc_attributes.centre, 3, 0], [disc_attributes.arm_first, 3, 12],
+          [disc_attributes.arm_second, 3, 24], [disc_attributes.fill, 4, 36],
         ]), first, count);
     } else {
       gl.useProgram(program_dome);
-      drawVeilInstances(buffer_dome_corners, 3, COUNT_CORNERS_DOME, dome_attribs.unit,
-        vbo.dome, STRIDE_DOME, ATTRIBUTE_LAYOUT([
-          [dome_attribs.centre_radius, 4, 0], [dome_attribs.tint, 4, 16],
+      drawVeilInstances(buffer_dome_corners, 3, COUNT_CORNERS_DOME, dome_attributes.unit,
+        buffers.dome, STRIDE_DOME, ATTRIBUTE_LAYOUT([
+          [dome_attributes.centre_radius, 4, 0], [dome_attributes.tint, 4, 16],
         ]), first, count);
     }
   }
@@ -881,26 +882,26 @@ function drawPoints(count: number, count_over: number, is_overlay: boolean) {
   const span = is_overlay ? count - split : split;
   if (span === 0) return;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer_point_corners);
-  gl.enableVertexAttribArray(point_attribs.corner);
-  gl.vertexAttribPointer(point_attribs.corner, 2, gl.FLOAT, false, 8, 0);
-  instanced.vertexAttribDivisorANGLE(point_attribs.corner, 0);
-  gl.bindBuffer(gl.ARRAY_BUFFER, vbo.point);
+  gl.enableVertexAttribArray(point_attributes.corner);
+  gl.vertexAttribPointer(point_attributes.corner, 2, gl.FLOAT, false, 8, 0);
+  instanced.vertexAttribDivisorANGLE(point_attributes.corner, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.point);
   const base = first * STRIDE_POINT;
   const records: Array<[number, number, number]> = [
-    [point_attribs.centre, 3, 0], [point_attribs.radius, 1, 12],
-    [point_attribs.colour, 4, 16],
+    [point_attributes.centre, 3, 0], [point_attributes.radius, 1, 12],
+    [point_attributes.colour, 4, 16],
   ];
-  for (const [attrib, floats, offset] of records) {
-    gl.enableVertexAttribArray(attrib);
-    gl.vertexAttribPointer(attrib, floats, gl.FLOAT, false, STRIDE_POINT, base + offset);
-    instanced.vertexAttribDivisorANGLE(attrib, 1);
+  for (const [attribute, floats, offset] of records) {
+    gl.enableVertexAttribArray(attribute);
+    gl.vertexAttribPointer(attribute, floats, gl.FLOAT, false, STRIDE_POINT, base + offset);
+    instanced.vertexAttribDivisorANGLE(attribute, 1);
   }
   instanced.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP, 0, COUNT_CORNERS_POINT, span);
-  for (const [attrib] of records) {
-    instanced.vertexAttribDivisorANGLE(attrib, 0);
-    gl.disableVertexAttribArray(attrib);
+  for (const [attribute] of records) {
+    instanced.vertexAttribDivisorANGLE(attribute, 0);
+    gl.disableVertexAttribArray(attribute);
   }
-  gl.disableVertexAttribArray(point_attribs.corner);
+  gl.disableVertexAttribArray(point_attributes.corner);
 }
 
 function rgbToCss(rgb: number[]) {
