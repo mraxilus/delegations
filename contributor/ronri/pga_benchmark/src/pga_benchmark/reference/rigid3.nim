@@ -450,10 +450,10 @@ func projectOrthogonal*(l: Line; g: Plane): Line {.inline.} =
   let
     n = Vector3(x: g.x, y: g.y, z: g.z)
     s = dot(n, n)
-    dv = dot(n, l.v)
-    dm = dot(n, l.m)
+    dot_direction = dot(n, l.v)
+    dot_moment = dot(n, l.m)
     c = cross(n, l.v)
-  Line(v: l.v * s - n * dv, m: n * dm - c * g.w)
+  Line(v: l.v * s - n * dot_direction, m: n * dot_moment - c * g.w)
 
 
 

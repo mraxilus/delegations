@@ -1,5 +1,5 @@
 ## Measure pga against Lengyel's hand-rolled reference, and keep list of gaps between them.
-##   Library under measurement is pinned dependency restored into `deps/`; every module here
+##   Library under measurement is pinned dependency restored into `dependencies/`; every module here
 ##   that imports it takes its algebra from `-d:pga.dimensions` and `-d:pga.is_conformal`,
 ##   so one source serves every configuration and stubs pick which.
 ##

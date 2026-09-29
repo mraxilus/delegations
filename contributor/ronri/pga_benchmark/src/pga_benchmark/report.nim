@@ -91,7 +91,7 @@ func movementNode*(m: Movement): JsonNode =
 
 func moduleTail*(module: string): string =
   ## Read last two segments of mangled module path, `pga/operators` out of
-  ## `OOZdepsZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
+  ## `OOZdependenciesZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
   ##   Compiler spells `/` as `Z` and `_` as `95`; only those two are undone.
   let
     parts = module.split('Z')

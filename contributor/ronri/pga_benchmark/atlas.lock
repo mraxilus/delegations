@@ -9,7 +9,7 @@
   },
   "nimcfg": [
     "# Configure every build of this project: where PGA library sits, and which algebra is",
-    "#   default. Library is restored under `deps/` by Atlas and never committed (Article",
+    "#   default. Library is restored under `dependencies/` by Atlas and never committed (Article",
     "#   XI.3). It sits three directories inside replications repository, and Atlas clones",
     "#   whole repositories, so path names subdirectory rather than checkout root;",
     "#   `atlas.lock` records directory name, which Atlas derives from clone URL.",
@@ -18,7 +18,7 @@
     "#   `-d:pga.is_conformal` themselves; command line wins over this file, since compiler",
     "#   reads configs first.",
     "",
-    "--path:\"deps/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated\"",
+    "--path:\"dependencies/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated\"",
     "--define:\"pga.dimensions=4\"",
     "--define:\"pga.is_conformal=false\"",
     "",

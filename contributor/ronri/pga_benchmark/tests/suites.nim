@@ -14,7 +14,7 @@ import ../src/pga_benchmark/[bound, gaps, guard, inspector, measurements, model,
 
 const
   LIBRARY =
-    "../deps/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated"
+    "../dependencies/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated"
     ## Library checkout Atlas restores, relative to this file.
   SOURCE_UMBRELLA = staticRead(LIBRARY & "/pga.nim")
     ## Library umbrella, holding named aliases.
@@ -296,7 +296,7 @@ let INSPECTED = inspectCache(CACHE)
 
 suite "Inspector":
   test "mangled names demangle to symbols":
-    check demangle("XE2X88XA7__u0__OOZdepsZpgaZoperators") == "∧"  # non-ASCII bytes
+    check demangle("XE2X88XA7__u0__OOZdependenciesZpgaZoperators") == "∧"  # non-ASCII bytes
     check demangle("barXE2X88X99__u0__pgaZoperators") == "|∙"  # special word then bytes
     check demangle("roofXE2X88X98__u0__pgaZoperators") == "^∘"  # roof is `^`
     check demangle("tildeXE2X88X98__u0__pgaZoperators") == "~∘"  # tilde is `~`
@@ -312,17 +312,18 @@ suite "Inspector":
     check overloadOf("wedge_u0__referenceZrigid3") == 0 and overloadOf("nimZeroMem") == -1  # none
 
   test "functions are split and counted from fixture C":
-    const MV = "tyObject_Multivector__h"
+    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
     const FIXTURE = [
-      "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" & MV & "* m_p0, " &
-        MV & "* n_p1, " & MV & "* Result) {",
+      "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
+        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* n_p1, " &
+        MULTIVECTOR_MANGLED & "* Result) {",
       "\tNF* T1_;",
       "NF T2_;",
-      MV & " T3_;",
+      MULTIVECTOR_MANGLED & " T3_;",
       "NIM_BOOL* nimErr_;",
       "{",
       "\t\tnimErr_ = nimErrorFlag();",
-      "nimZeroMem(((void*) Result), sizeof(" & MV & "));",
+      "nimZeroMem(((void*) Result), sizeof(" & MULTIVECTOR_MANGLED & "));",
       "T2_ = X5BX5D__u1__OOZpgaZmultivectors(m_p0, ((tyEnum_Basis__h) 1));",
       "if (NIM_UNLIKELY((*nimErr_))) {",
       "\tgoto BeforeRet_;",
@@ -344,7 +345,8 @@ suite "Inspector":
       "\treturn result;",
       "}",
       "",
-      "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" & MV & "* m_p0, " & MV & "* Result);",
+      "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
+        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result);",
     ].join("\n") & "\n"
     let functions = functionsIn(FIXTURE)
     check functions.len == 2  # declaration ending in `;` skipped
@@ -362,10 +364,10 @@ suite "Inspector":
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
 
   test "terms inside loops of constant bound count once per trip":
-    const MV = "tyObject_Multivector__h"
+    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
     const LOOP = [
-      "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " & MV & "* m_p1, " & MV &
-        "* Result) {",
+      "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
+        MULTIVECTOR_MANGLED & "* m_p1, " & MULTIVECTOR_MANGLED & "* Result) {",
       "NI i_1;",
       "NI res_1;",
       "i_1 = ((NI) 0);",
@@ -430,9 +432,10 @@ suite "Inspector":
     check totals(functions)["scale__u0__OOZpgaZops"].multiplies == 17 + 16  # callee per trip
 
   test "divisions count as terms, once per trip, and fold from callees":
-    const MV = "tyObject_Multivector__h"
+    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
     const DIVIDE = [
-      "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" & MV & "* m_p0, " & MV & "* Result) {",
+      "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
+        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result) {",
       "NF n_1;",
       "NI i_1;",
       "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
