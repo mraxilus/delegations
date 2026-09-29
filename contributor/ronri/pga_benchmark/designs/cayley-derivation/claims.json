@@ -1,0 +1,67 @@
+{
+  "builds_on": "",
+  "claims": [
+    {
+      "kind": "suites"
+    },
+    {
+      "kind": "tables",
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"],
+      "pairs": [
+        ["CAYLEYS_COMPLEMENT.left", "CAYLEYS_COMPLEMENT.left"],
+        ["CAYLEYS_COMPLEMENT.right", "CAYLEYS_COMPLEMENT.right"],
+        ["CAYLEYS_REVERSE.base", "CAYLEYS_REVERSE.base"],
+        ["CAYLEYS_REVERSE.anti", "CAYLEYS_REVERSE.anti"],
+        ["CAYLEY_METRIC", "CAYLEY_METRIC"],
+        ["CAYLEYS_METRIC_EXOMORPHISM.base", "CAYLEYS_METRIC_EXOMORPHISM.base"],
+        ["CAYLEYS_METRIC_EXOMORPHISM.anti", "CAYLEYS_METRIC_EXOMORPHISM.anti"],
+        ["CAYLEYS_PARTS.bulk.round", "CAYLEYS_PARTS.bulk.round"],
+        ["CAYLEYS_PARTS.weight.round", "CAYLEYS_PARTS.weight.round"],
+        ["CAYLEYS_DUAL.base.right", "CAYLEYS_DUAL.base"],
+        ["CAYLEYS_DUAL.anti.right", "CAYLEYS_DUAL.anti"],
+        ["CAYLEYS_WEDGE.base", "CAYLEYS_WEDGE.base"],
+        ["CAYLEYS_WEDGE.anti", "CAYLEYS_WEDGE.anti"],
+        ["CAYLEYS_DOT.base", "CAYLEYS_DOT.base"],
+        ["CAYLEYS_DOT.anti", "CAYLEYS_DOT.anti"],
+        ["CAYLEYS_NORM_SQUARED.base", "CAYLEYS_DOT.base"],
+        ["CAYLEYS_NORM_SQUARED.anti", "CAYLEYS_DOT.anti"],
+        ["CAYLEYS_CONTRACT.right", "CAYLEYS_CONTRACT.bulk"],
+        ["CAYLEY_CONTRACT_WEIGHT_RIGHT", "CAYLEYS_CONTRACT.weight"],
+        ["CAYLEYS_EXPAND.right", "CAYLEYS_EXPAND.weight"],
+        ["CAYLEY_EXPAND_BULK_RIGHT", "CAYLEYS_EXPAND.bulk"],
+        ["CAYLEYS_WEDGE_DOT.base.right", "CAYLEYS_WEDGE_DOT.base"],
+        ["CAYLEYS_WEDGE_DOT.anti.right", "CAYLEYS_WEDGE_DOT.anti"],
+        ["CAYLEY_ATTITUDE", "CAYLEY_ATTITUDE"]
+      ]
+    },
+    {
+      "kind": "tables",
+      "algebras": ["cga4d", "cga5d"],
+      "pairs": [
+        ["CAYLEYS_PARTS.bulk.flat", "CAYLEYS_PARTS.bulk.flat"],
+        ["CAYLEYS_PARTS.weight.flat", "CAYLEYS_PARTS.weight.flat"],
+        ["CAYLEY_CARRIER", "CAYLEY_CARRIER"]
+      ]
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "support",
+      "metric": "multiplies",
+      "value": 54
+    },
+    {
+      "kind": "count",
+      "algebra": "rga4d",
+      "measurand": "support_anti",
+      "metric": "multiplies",
+      "value": 54
+    },
+    {
+      "kind": "build",
+      "algebra": "rga6d",
+      "metric": "peakmem",
+      "at_most": 0.7
+    }
+  ]
+}
