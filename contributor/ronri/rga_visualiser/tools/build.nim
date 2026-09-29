@@ -56,14 +56,14 @@ const
     ## Directory compiled binaries land in.
   BUILD_BROWSER = BUILD / "browser"
     ## Directory browser products land in.
-  DIR_FONTS = BUILD / "fonts"
+  DIRECTORY_FONTS = BUILD / "fonts"
     ## Directory vendored faces land in; never committed (Article XI.3).
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## Repository's own driver, which `assets` asks for faces through.
     ##   Relative to this project rather than absolute: derived from where project sits in
     ##   repository, which is what CONTRIBUTOR.md allows and what naming one machine's layout
     ##   is not.
-  PATH_FACES_FROM = DIR_FONTS / "store.list"
+  PATH_FACES_FROM = DIRECTORY_FONTS / "store.list"
     ## Which store entry each face was copied from, written by `assets` and read by `web`.
     ##   Under `build/` because it is derived rather than declared, and because it holds paths
     ##   into one machine's own store.
@@ -97,17 +97,17 @@ const
     ##   here rather than imported, since driver compiles no project code.
   PATH_FONT_ABSENT = "/nonexistent/no-such-face.ttf"
     ## Path no machine carries, so faceless run asks same question everywhere.
-  DIR_IMGUI = "dependencies" / "imgui"
+  DIRECTORY_IMGUI = "dependencies" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
   URL_IMGUI = "https://github.com/ocornut/imgui.git"
     ## Origin `imgui` clones from; PROVENANCE.md records it with licence.
   BRANCH_IMGUI = "docking"
     ## Branch carrying `COMMIT_IMGUI`; master lacks docking `gui` asks for.
-  DIR_SDL3 = "dependencies" / "sdl3"
+  DIRECTORY_SDL3 = "dependencies" / "sdl3"
     ## SDL3 checkout `sdl3` builds, beside Dear ImGui's and never committed (Article XI.3).
-  DIR_SDL3_BUILD = BUILD / "sdl3-build"
+  DIRECTORY_SDL3_BUILD = BUILD / "sdl3-build"
     ## Directory cmake configures SDL3 into.
-  DIR_SDL3_PREFIX = BUILD / "sdl3"
+  DIRECTORY_SDL3_PREFIX = BUILD / "sdl3"
     ## Prefix SDL3 installs into, so build needs no root and writes nothing outside tree.
   URL_SDL3 = "https://github.com/libsdl-org/SDL.git"
     ## Origin `sdl3` clones from; PROVENANCE.md records it with licence.
@@ -577,7 +577,7 @@ proc assets() =
   ##   itself, and page's build reads them from one directory whether store is warm or cold.
   ##   Face already identical to its store entry is left alone, so verb stays idempotent and
   ##   second run copies nothing.
-  createDir DIR_FONTS
+  createDir DIRECTORY_FONTS
   let
     names = @FACES & @FACES_DESKTOP
     paths = facesFromStore(names)
@@ -585,7 +585,7 @@ proc assets() =
     manifest: seq[string]
     copied = 0
   for i, face in names:
-    let (source, destination) = (paths[i], DIR_FONTS / face)
+    let (source, destination) = (paths[i], DIRECTORY_FONTS / face)
     manifest.add face & " " & source
     if fileExists(destination) and sameFileContent(source, destination):
       echo "Kept ", face, ", already what the store holds"
@@ -594,7 +594,7 @@ proc assets() =
     copied += 1
     echo "Copied ", face, " from store"
   writeFile(PATH_FACES_FROM, manifest.join("\n") & "\n")
-  echo "Wrote ", DIR_FONTS, " (", names.len, " faces, ", copied, " copied)."
+  echo "Wrote ", DIRECTORY_FONTS, " (", names.len, " faces, ", copied, " copied)."
 
 
 proc storePathsCopied(): Table[string, string] =
@@ -614,7 +614,7 @@ proc checkFace(face: string, copied: Table[string, string]) =
   ##   Compared against store's own file rather than against digest written down here, which
   ##   is what adopting store means -- there is one declaration of these bytes and it is not
   ##   this file.
-  let path = DIR_FONTS / face
+  let path = DIRECTORY_FONTS / face
   if face notin copied:
     raise newException(OSError,
       "Face `" & face & "` names no store entry; run `assets` first.")
@@ -697,7 +697,7 @@ proc web() =
   for face in FACES:
     let token = TOKEN_EMBED & face & "@"
     if token notin page: continue
-    let path = DIR_FONTS / face
+    let path = DIRECTORY_FONTS / face
     if not fileExists(path):
       raise newException(OSError, "Missing face `" & path & "`; run `assets` first.")
     # Read again here, not only where copied: `assets` may have run long ago, and what this
@@ -742,9 +742,9 @@ proc imgui() =
   ##   clone is told rather than overwritten.
   ##   `--filter=blob:none` rather than `--depth`: pinned commit is not branch head, and
   ##   shallow clone cannot reach it. Partial clone fetches blobs that checkout needs alone.
-  if dirExists(DIR_IMGUI): return
-  run("git", ["clone", "--filter=blob:none", "--branch", BRANCH_IMGUI, URL_IMGUI, DIR_IMGUI])
-  run("git", ["-C", DIR_IMGUI, "checkout", "--detach", COMMIT_IMGUI])
+  if dirExists(DIRECTORY_IMGUI): return
+  run("git", ["clone", "--filter=blob:none", "--branch", BRANCH_IMGUI, URL_IMGUI, DIRECTORY_IMGUI])
+  run("git", ["-C", DIRECTORY_IMGUI, "checkout", "--detach", COMMIT_IMGUI])
 
 
 proc checkImgui() =
@@ -752,12 +752,12 @@ proc checkImgui() =
   ##   Refuses by name rather than compiling whatever is there, for reason `checkFace` gives:
   ##   these sources are compiled into binary reader runs, so wrong commit is wrong binary,
   ##   and C++ differing by one release fails far from here with no word of why.
-  if not dirExists(DIR_IMGUI):
+  if not dirExists(DIRECTORY_IMGUI):
     raise newException(OSError,
-      "Missing Dear ImGui at `" & DIR_IMGUI & "`; clone it with `git clone --branch docking" &
-      " https://github.com/ocornut/imgui.git " & DIR_IMGUI & " && git -C " & DIR_IMGUI &
+      "Missing Dear ImGui at `" & DIRECTORY_IMGUI & "`; clone it with `git clone --branch docking" &
+      " https://github.com/ocornut/imgui.git " & DIRECTORY_IMGUI & " && git -C " & DIRECTORY_IMGUI &
       " checkout " & COMMIT_IMGUI & "`.")
-  checkCommit(DIR_IMGUI, COMMIT_IMGUI, "Dear ImGui")
+  checkCommit(DIRECTORY_IMGUI, COMMIT_IMGUI, "Dear ImGui")
 
 
 proc versionSdl3(): string =
@@ -768,7 +768,7 @@ proc versionSdl3(): string =
   ##   Machine already carrying pinned version is served by it, which is what keeps `sdl3`
   ##   from rebuilding what contributor installed.
   let
-    path_config = getCurrentDir() / DIR_SDL3_PREFIX / "lib" / "pkgconfig"
+    path_config = getCurrentDir() / DIRECTORY_SDL3_PREFIX / "lib" / "pkgconfig"
     (written, code) = execCmdEx(
       "PKG_CONFIG_PATH=" & quoteShell(path_config) &
         ":$PKG_CONFIG_PATH pkg-config --modversion sdl3",
@@ -792,17 +792,19 @@ proc sdl3() =
   if got == VERSION_SDL3:
     echo "Kept SDL3 ", VERSION_SDL3, ", already reported by pkg-config"
     return
-  if not dirExists(DIR_SDL3):
+  if not dirExists(DIRECTORY_SDL3):
     run("git", [
-      "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIR_SDL3,
+      "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIRECTORY_SDL3,
     ])
   # Held before cmake rather than after: build is minutes, and sources this refuses are
   #   sources none of those minutes should be spent on.
-  checkCommit(DIR_SDL3, COMMIT_SDL3, "SDL3")
-  run("cmake", ["-S", DIR_SDL3, "-B", DIR_SDL3_BUILD, "-DCMAKE_BUILD_TYPE=Release"])
-  run("cmake", ["--build", DIR_SDL3_BUILD, "-j", $countProcessors()])
-  run("cmake", ["--install", DIR_SDL3_BUILD, "--prefix", getCurrentDir() / DIR_SDL3_PREFIX])
-  echo "Built SDL3 ", VERSION_SDL3, " into ", DIR_SDL3_PREFIX
+  checkCommit(DIRECTORY_SDL3, COMMIT_SDL3, "SDL3")
+  run("cmake", ["-S", DIRECTORY_SDL3, "-B", DIRECTORY_SDL3_BUILD, "-DCMAKE_BUILD_TYPE=Release"])
+  run("cmake", ["--build", DIRECTORY_SDL3_BUILD, "-j", $countProcessors()])
+  run("cmake", [
+    "--install", DIRECTORY_SDL3_BUILD, "--prefix", getCurrentDir() / DIRECTORY_SDL3_PREFIX,
+  ])
+  echo "Built SDL3 ", VERSION_SDL3, " into ", DIRECTORY_SDL3_PREFIX
 
 
 proc checkSdl3() =
@@ -825,10 +827,10 @@ proc checkSdl3() =
   if got != VERSION_SDL3:
     raise newException(OSError,
       "SDL3 is not version pinned for it; wanted `" & VERSION_SDL3 & "`, got `" & got & "`.")
-  if not dirExists(DIR_SDL3):
+  if not dirExists(DIRECTORY_SDL3):
     echo "Kept SDL3 ", VERSION_SDL3, " from machine; no clone here to read commit of"
     return
-  checkCommit(DIR_SDL3, COMMIT_SDL3, "SDL3")
+  checkCommit(DIRECTORY_SDL3, COMMIT_SDL3, "SDL3")
 
 
 proc desktop() =
@@ -854,8 +856,8 @@ proc desktop() =
   checkImgui()
   createDir BIN
   var args = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN]
-  if dirExists(DIR_SDL3_PREFIX):
-    let prefix = getCurrentDir() / DIR_SDL3_PREFIX
+  if dirExists(DIRECTORY_SDL3_PREFIX):
+    let prefix = getCurrentDir() / DIRECTORY_SDL3_PREFIX
     args.add "--passC:-I" & prefix / "include"
     args.add "--passL:-L" & prefix / "lib"
     args.add "--passL:-Wl,-rpath," & prefix / "lib"

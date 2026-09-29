@@ -634,10 +634,10 @@ environment names none, they fall back to the faces that this build ships. That 
 lets `driven` drive the case: it runs `--drive-keys` once with `RGA_FONT` naming a path that no
 machine carries.
 
-**This half ships the faces that it draws with** (Article X.8; repository issue 93). `DIR_FACES`
-is relative to the binary through `getAppDir()`, so no source names the layout of any machine.
-The faces come from the release repository of the Noto project. A tag and a digest pin each
-family — `NotoSans-v2.013`, `NotoSansMath-v2.539`, `NotoSansSymbols2-v2.006` — because three
+**This half ships the faces that it draws with** (Article X.8; repository issue 93).
+`DIRECTORY_FACES` is relative to the binary through `getAppDir()`, so no source names the layout of
+any machine. The faces come from the release repository of the Noto project. A tag and a digest pin
+each family — `NotoSans-v2.013`, `NotoSansMath-v2.539`, `NotoSansSymbols2-v2.006` — because three
 families move on their own.
 
 A read of each font's `cmap` against the ranges that `gui_shim.cpp` declares gives the coverage:
