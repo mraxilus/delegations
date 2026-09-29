@@ -60,14 +60,14 @@ func centreOf*(stood: Posture; twist: HalfTurns): (int, int) =
 func standing*(stood: Posture): seq[HalfTurns] =
   ## Get every twist this frame, held at these heights, can stand at.
   for twist in -MOST_TURN .. MOST_TURN:
-    if stood.holds(twist):
+    if stood.isHolding(twist):
       result.add twist
 
 
 
 #[ Drawing ]#
 
-func arc(stood: Posture; twist: HalfTurns; refused: bool): string =
+func arc(stood: Posture; twist: HalfTurns; is_refused: bool): string =
   ## Draw one landing as arc from where couple are to where it puts
   ## them.
   ##   One arc per place turn lands, not one per turn.  Twelve turns land
@@ -86,7 +86,7 @@ func arc(stood: Posture; twist: HalfTurns; refused: bool): string =
     (control_x, control_y) = ((start_x + end_x) div 2, start_y - lift)
     told = TURN_NAMES[min(reach, TURN_NAMES.high)] &
       (if twist > stood.twist: " right" else: " left")
-  result = "<g class=\"turn" & (if refused: " refused" else: "") & "\">" &
+  result = "<g class=\"turn" & (if is_refused: " refused" else: "") & "\">" &
     "<path class=\"turn-line\" d=\"M" & $start_x & " " & $(start_y - 58) & "Q" & $control_x &
     " " & $control_y & " " & $end_x & " " & $(end_y - 58) & "\"/>"
   let (label_x, label_y) = (control_x, start_y - lift * 3 div 4)
@@ -103,10 +103,10 @@ func renderAxle*(stood: Posture; motion = Motion.Still;
   ## Draw twist axis, postures on it, and every turn out of one held.
   let
     width = axleWidth()
-    leaving = motion == Motion.Leaving and taken.isSome
-    here = if leaving: taken.get else: stood.twist
+    is_leaving = motion == Motion.Leaving and taken.isSome
+    here = if is_leaving: taken.get else: stood.twist
   result = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " & $width &
-    " " & $AXLE_HEIGHT & "\" class=\"axle" & (if leaving: " leaving" else: "") &
+    " " & $AXLE_HEIGHT & "\" class=\"axle" & (if is_leaving: " leaving" else: "") &
     "\" style=\"" & passStyle(WIDE_TEMPO) & "\" role=\"img\">" &
     "<title>" & stood.describe & ", and every turn out of it</title>"
 
@@ -131,9 +131,9 @@ func renderAxle*(stood: Posture; motion = Motion.Still;
     landing.twist = twist
     let
       (centre_x, centre_y) = centreOf(stood, twist)
-      reachable = twist != stood.twist
+      is_reachable = twist != stood.twist
       classes = "node" & (if twist == here: " here" else: "") &
-        (if reachable: " reachable" else: "")
+        (if is_reachable: " reachable" else: "")
     result.add "<g class=\"" & classes & "\" data-posture=\"" & landing.key &
       "\">"
     result.add "<rect class=\"node-plate\" x=\"" & $(centre_x - NODE_WIDTH div 2 - 5) &

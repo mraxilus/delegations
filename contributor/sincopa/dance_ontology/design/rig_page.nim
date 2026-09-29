@@ -201,8 +201,8 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
     let
-      tagEnd = whole.find('>')
-      opening = whole[0 .. tagEnd]
+      tag_end = whole.find('>')
+      opening = whole[0 .. tag_end]
     var cell = Cell(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: cell.asks = asks.split(' ')
@@ -212,9 +212,9 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A cell carries no drawing; got `{cell.id}`."
     let
-      artOpen = whole.find('>', art) + 1
-      artShut = whole.find("</div>", artOpen)
-    cell.art = whole[artOpen ..< artShut]
+      art_open = whole.find('>', art) + 1
+      art_shut = whole.find("</div>", art_open)
+    cell.art = whole[art_open ..< art_shut]
     let (caption_start, caption_stop) = between(whole, "<figcaption>", "</figcaption>", 0)
     cell.caption = "<figcaption>" & whole[caption_start ..< caption_stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add cell
@@ -233,11 +233,11 @@ func sheetOf(html: string): string =
 proc cellsBody(review: string; data: JsonNode): string =
   ## Lay every still cell out as reference page does, simulation's still beside it.
   var
-    entryOf: Table[string, int]
+    entry_of: Table[string, int]
     held: Table[string, string]
   for i, still in data["stills"].getElems:
     let key = still["key"].getStr
-    entryOf[key] = i
+    entry_of[key] = i
     let apart = still["apart"].getFloat
     held[key] = (if still.hasKey("at") and still["at"].len > 0:
                    &"holds, {apart:.2f} m apart"
@@ -263,7 +263,7 @@ proc cellsBody(review: string; data: JsonNode): string =
     for cell in cells.getOrDefault(letter):
       var entries: seq[string]
       for key in cell.asks:
-        if key in entryOf: entries.add $entryOf[key]
+        if key in entry_of: entries.add $entry_of[key]
       result.add &"""<figure class="{cell.classes}" data-id="{cell.id}" """ &
         &"""data-entries="{entries.join(" ")}"><div class="pair">""" &
         &"""<div class="art">{cell.art}</div><div class="simulation">"""
@@ -297,12 +297,12 @@ when isMainModule:
   if not fileExists(review):
     quit(&"Viewer page has no reference to lay beside; run `pages` first: got `{review}`.", 1)
   let
-    reviewHtml = readFile(review)
-    dataText = readFile(data).strip().unstamped
+    review_html = readFile(review)
+    data_text = readFile(data).strip().unstamped
     html = document(TITLE,
-                    sheetOf(reviewHtml) & SHEET & HEAD_BODY &
-                    cellsBody(reviewHtml, parseJson(dataText)) &
-                    "<script>var RIG = " & dataText & ";</script>\n" &
+                    sheetOf(review_html) & SHEET & HEAD_BODY &
+                    cellsBody(review_html, parseJson(data_text)) &
+                    "<script>var RIG = " & data_text & ";</script>\n" &
                     "<script>" & readFile(view) & "</script>\n")
   writeFile(directory / "rig.html", withFaces(html))
   echo "wrote ", directory / "rig.html"

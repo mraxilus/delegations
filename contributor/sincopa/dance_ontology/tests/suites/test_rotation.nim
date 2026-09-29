@@ -117,9 +117,9 @@ suite "what the arm can carry":
         var posture = target.rest
         posture.level = [level, level]
         for twist in -4 .. 4:
-          let both = abs(twist) <= posture.capacity and
+          let is_within_both = abs(twist) <= posture.capacity and
             abs(twist) <= posture.armsCapacity(twist)
-          check posture.holds(twist) == both
+          check posture.isHolding(twist) == is_within_both
 
   test "only an arm that is holding can be the one that runs out":
     # Free arm carries nothing, so height it happens to be at cannot stop
@@ -133,13 +133,13 @@ suite "what the arm can carry":
           raised = target.rest
         raised.level[side] = Level.High
         for twist in -4 .. 4:
-          check lowered.holds(twist) == raised.holds(twist)
+          check lowered.isHolding(twist) == raised.isHolding(twist)
 
   test "with nobody holding, nothing limits the turn":
     # Two people who are not touching can each face wherever they like.
     let apart = fromKey("--.").get.rest
     for twist in -6 .. 6:
-      check apart.holds(twist)
+      check apart.isHolding(twist)
 
 
 suite "modifiers":
@@ -177,7 +177,7 @@ suite "what there is":
   test "every posture stands, and no posture is counted twice":
     var seen: seq[Posture] = @[]
     for stood in postures():
-      check stood.holds(stood.twist)
+      check stood.isHolding(stood.twist)
       check stood notin seen
       seen.add stood
     check postures().len > FRAMES.len

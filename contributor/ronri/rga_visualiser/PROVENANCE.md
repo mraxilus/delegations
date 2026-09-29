@@ -218,6 +218,19 @@ agree before an ease has begun. So `settleCamera` asks the ease: `nimCameraCarry
 issue 73). Verified by a break on purpose: return at once, and every loss is framing. The horizon
 label check places only stances that the frame rule holds, and asserts that the eye stays.
 
+**A step that has to land inside an ease is taken by the page, and not across the protocol.** Each
+round trip of the protocol takes a share of the 0.35 s ease, and that share moves with load. So the
+group-turn check arms a watcher before the tap goes out, and the watcher turns in the first frame
+whose ease carries. Its frame callback follows that of the page, so it reads the build that armed
+the ease, before `advance` moves the pivot.
+
+**No round trip stands between the arming and the turn.** Rejected: four round trips there, which
+left the pivot 0.042 to 0.609 short on equal code, against a floor of 0.05 (repository issue 315).
+At three times the CPU cost, that form passed 1 of 10 runs, and the watcher passed 10 of 10. At six
+times, 2 of 10 taps read as holds, because the page times a tap on its own clock. The check then
+fails by name. Verified by a break on purpose: an `abandon` that stops the ease outright fails, with
+the pivot 1.5000 from the middle.
+
 **Pixels are read through the compositor, and a reading that carries no picture is refused.** The
 context keeps no drawing buffer, and `gl.ts` says why. So `readPixels` is sound only from inside the
 frame that drew. Checks that compare one such reading against another pass on a canvas that reads
@@ -2713,7 +2726,7 @@ Verified by driven check:
   depth wanted for 0.40;
 - the preview framed with its operands;
 - a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
-- a finger adds a second point and turns one frame in, with the pivot 0.27 to 0.35 short; it ends
+- a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
   0.0000 from their middle;
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
 

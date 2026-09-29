@@ -24,7 +24,7 @@ proc world(): WorldId =
   ## World with no gravity and nothing asleep: every question here is about contact.
   var definition = defaultWorld()
   definition.gravity = initVector(0, 0, 0)
-  definition.enableSleep = false
+  definition.should_sleep = false
   createWorld(addr definition)
 
 proc capsule(world_id: WorldId; x: float): BodyId =
@@ -48,7 +48,7 @@ suite "the engine this project turns couples with":
     ## Cheapest proof binding is right: struct laid out wrong gives wrong figure here
     ##   rather than failing to link.
     var definition = defaultWorld()
-    definition.enableSleep = false
+    definition.should_sleep = false
     let
       world_id = createWorld(addr definition)
       gravity = abs(float(definition.gravity.y))

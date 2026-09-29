@@ -218,7 +218,7 @@ const
 
 #[ Taut Routes ]#
 
-func segmentHits*(p, q: Point; body: Body): bool =
+func isSegmentHitting*(p, q: Point; body: Body): bool =
   ## Test whether this straight stretch passes inside body's outline.
   const steps = 32
   for i in 0 .. steps:
@@ -247,9 +247,9 @@ func taut*(ends: Ends; way: WayRound; cap = 90): Option[tuple[points: seq[Point]
     let
       free_a = arc_a[^1]
       free_b = arc_b[^1]
-      hits_a = segmentHits(free_a, free_b, ends.body_a)
-      hits_b = segmentHits(free_a, free_b, ends.body_b)
-    if not hits_a and not hits_b:
+      is_hitting_a = isSegmentHitting(free_a, free_b, ends.body_a)
+      is_hitting_b = isSegmentHitting(free_a, free_b, ends.body_b)
+    if not is_hitting_a and not is_hitting_b:
       let
         step = degToRad(RIM_STEP) * BODY_RADIUS
         length = step * float(arc_a.len + arc_b.len - 2) + distance(free_a, free_b)
@@ -257,10 +257,10 @@ func taut*(ends: Ends; way: WayRound; cap = 90): Option[tuple[points: seq[Point]
       for i in countdown(arc_b.high, 0):
         points.add arc_b[i]
       return some (points, length)
-    if hits_a:
+    if is_hitting_a:
       bearing_a += way.a * RIM_STEP
       arc_a.add outlinePoint(ends.body_a.centre, ends.body_a.facing, bearing_a)
-    if hits_b:
+    if is_hitting_b:
       bearing_b += way.b * RIM_STEP
       arc_b.add outlinePoint(ends.body_b.centre, ends.body_b.facing, bearing_b)
   none(tuple[points: seq[Point], length: float])
@@ -376,22 +376,22 @@ func wrapArc*(ends: Ends; way: WayRound): Option[tuple[a, b: float]] =
     steps_b = 0
   for _ in 0 ..< 240:
     let
-      hits_a = segmentHits(free_a, free_b, ends.body_a)
-      hits_b = segmentHits(free_a, free_b, ends.body_b)
-    if not hits_a and not hits_b:
+      is_hitting_a = isSegmentHitting(free_a, free_b, ends.body_a)
+      is_hitting_b = isSegmentHitting(free_a, free_b, ends.body_b)
+    if not is_hitting_a and not is_hitting_b:
       return some (float(steps_a) * RIM_STEP, float(steps_b) * RIM_STEP)
-    if hits_a:
+    if is_hitting_a:
       bearing_a += way.a * RIM_STEP
       free_a = outlinePoint(ends.body_a.centre, ends.body_a.facing, bearing_a)
       inc steps_a
-    if hits_b:
+    if is_hitting_b:
       bearing_b += way.b * RIM_STEP
       free_b = outlinePoint(ends.body_b.centre, ends.body_b.facing, bearing_b)
       inc steps_b
   none(tuple[a, b: float])
 
 
-func wrapsEnough*(ends: Ends; level: Option[Level]; way: Option[Way]): bool =
+func isWrappingEnough*(ends: Ends; level: Option[Level]; way: Option[Way]): bool =
   ## Test whether this hold's line really does go round body far enough to
   ## be lock or wrap it claims to be (rule 7).
   let asked = wayFor(ends, level, way)
@@ -466,7 +466,7 @@ func bendsIn*(points: seq[Point]): int =
     way = 0.0
     turned = 0.0
     against = 0.0
-    counted = false
+    is_counted = false
   for i in 1 ..< points.high:
     let
       into = (x: points[i].x - points[i - 1].x, y: points[i].y - points[i - 1].y)
@@ -488,10 +488,10 @@ func bendsIn*(points: seq[Point]): int =
       way = -way
       turned = against
       against = 0.0
-      counted = false
-    if not counted and turned >= BEND_MIN:
+      is_counted = false
+    if not is_counted and turned >= BEND_MIN:
       inc result
-      counted = true
+      is_counted = true
   result
 
 
@@ -668,8 +668,8 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     for try_number in 0 .. BOW_TRIES:
       let
         curve = curveWith(BOW_SWELL + BOW_MORE * float(try_number))
-        clear = asked.allIt(nearestOn(curve, it.centre) >= it.clear)
-      if clear:
+        is_clear = asked.allIt(nearestOn(curve, it.centre) >= it.clear)
+      if is_clear:
         return curve
 
   func drawnOver(asked: seq[Mark]): seq[Point] =
@@ -1059,14 +1059,14 @@ func oneWayRound*(frames: seq[Ends]): WayRound =
   for combination in WAYS:
     var
       total = 0.0
-      served = true
+      is_served = true
     for ends in frames:
       let pulled = taut(ends, combination)
       if pulled.isNone:
-        served = false
+        is_served = false
         break
       total += polylineLength(pulled.get.points)
-    if served and (best.isNone or total < best.get.total):
+    if is_served and (best.isNone or total < best.get.total):
       best = some (combination, total)
   doAssert best.isSome,
     &"No way round serves every frame of this move; got `{frames.len}` frames."

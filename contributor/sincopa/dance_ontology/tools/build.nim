@@ -318,8 +318,8 @@ proc answers() =
 
 func helpers(): seq[string] =
   ## Packages only hand-run helper needs, which runner is never asked to install.
-  for (package, installed, _) in SYSTEM:
-    if not installed: result.add package
+  for (package, is_installed, _) in SYSTEM:
+    if not is_installed: result.add package
 
 
 proc shot() =
@@ -340,8 +340,8 @@ proc system() =
   ##   and varies by distribution, while list is this project's. Caller pipes it, so reason
   ##   each carries stays in `SYSTEM` above and out of this output, which is what makes
   ##   output machine-readable.
-  for (package, installed, _) in SYSTEM:
-    if installed: echo package
+  for (package, is_installed, _) in SYSTEM:
+    if is_installed: echo package
 
 
 proc clean() =

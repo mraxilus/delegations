@@ -53,7 +53,7 @@ proc checkFrame*() =
   # state lead reaches by turning quarter on spot.
   let
     walked = relative(canonicalise(
-      orbit(rest(), Dancer.Follow, 90, locked = true)))
+      orbit(rest(), Dancer.Follow, 90, is_locked = true)))
     turned = relative(spinAbout(rest(), Dancer.Lead, -90))
   doAssert walked == turned,
     &"The orbit misses the axis turn; got `{walked}` against `{turned}`."
@@ -255,13 +255,13 @@ proc checkRules*() =
   # RULE 2.  `"the hands can only move from their positions at the side of`
   # `the body only if a level is specified"`, and level alone is not enough:
   # way has to be said too, or there is no knowing which side it went to.
-  for (level, way, moves) in [
+  for (level, way, is_moving) in [
       (none Level, none Way, false), (some Level.Low, none Way, false),
       (none Level, some Way.Wrap, false),
       (some Level.Low, some Way.Lock, true)]:
     let put = handsOf(settled(rest(), HOLD, said(level),
                               said(way)))[Dancer.Lead][Arm.Left]
-    doAssert (put != handsOf(rest())[Dancer.Lead][Arm.Left]) == moves,
+    doAssert (put != handsOf(rest())[Dancer.Lead][Arm.Left]) == is_moving,
       &"A hand moved on half a say; got level `{level}`, way `{way}`."
   told.add "a hand moves only when a level *and* a way are named"
 
@@ -353,8 +353,8 @@ proc checkRules*() =
         asked = wayFor(ends, some landing.level, some landing.way)
         arcs = if asked.isSome: wrapArc(ends, asked.get)
                else: none(tuple[a, b: float])
-        ok = danceable(pose, HOLD, said(some landing.level), said(some landing.way))
-      doAssert ok == (arcs.isSome and
+        is_legal = isDanceable(pose, HOLD, said(some landing.level), said(some landing.way))
+      doAssert is_legal == (arcs.isSome and
                       max(arcs.get.a, arcs.get.b) >= float(WRAP_MIN)),
         &"Danceable and the measured arc disagree for {landing.level} {landing.way}."
       if arcs.isSome:
@@ -461,8 +461,8 @@ proc checkSingleTurns*(built: Parts) =
   for manner in Manner:
     let description = MANNERS[manner]
     if description.about == About.Axis: inc axis_manners else: inc orbit_manners
-    let ringed = built[&"tr_{description.tag}_0_0_1"].contains("stroke-dasharray")
-    doAssert ringed == (description.about == About.Orbit),
+    let is_ringed = built[&"tr_{description.tag}_0_0_1"].contains("stroke-dasharray")
+    doAssert is_ringed == (description.about == About.Orbit),
       &"An orbit's ring is missing or an axis turn has one; got {manner}."
   doAssert axis_manners == 2 and orbit_manners == 2,
     &"Four manners expected; got `{axis_manners}` axis and `{orbit_manners}` orbit."
@@ -478,8 +478,8 @@ proc checkSingleTurns*(built: Parts) =
     # Table's claim about this manner holds: it shares its round with
     # every manner of its family, and with no other.
     for mate in Manner:
-      let shares = roundOfManner(mate) == walked
-      doAssert shares == (FAMILY_OF[mate] == FAMILY_OF[manner]),
+      let is_sharing = roundOfManner(mate) == walked
+      doAssert is_sharing == (FAMILY_OF[mate] == FAMILY_OF[manner]),
         &"A manner left its family; got {manner} against {mate}."
     if walked notin rounds:
       rounds.add walked
@@ -510,8 +510,8 @@ proc checkSingleTurns*(built: Parts) =
       for dancer in Dancer:
         let settled_place = canonicalise(put, on = Anchor.Lead).place[dancer]
         strayed = max(strayed, distance(put.place[dancer], settled_place))
-    let re_framed = description.who == Dancer.Lead
-    if re_framed:
+    let is_re_framed = description.who == Dancer.Lead
+    if is_re_framed:
       doAssert leaned > 45 or strayed > 1,
         &"A turn never left the canonical framing; got {manner}."
       doAssert abs(wrap180(walk.poses[^1].facing[Dancer.Lead])) < 1e-9,
@@ -552,7 +552,7 @@ proc checkSingleTurns*(built: Parts) =
     let
       description = MANNERS[manner]
       walk = turnWalk(quarterPose(manner, 0), description.who, description.about, QUARTER,
-                      on = Anchor.Lead, steps = QUARTERS_ROUND, back = false)
+                      on = Anchor.Lead, steps = QUARTERS_ROUND, has_return = false)
     doAssert placeOf(walk.poses[^1]) == placeOf(walk.poses[0]),
       &"A whole round did not close where it set off; got {manner}."
   for manner in Manner:
@@ -757,14 +757,14 @@ proc checkSingleTurns*(built: Parts) =
               if bendsIn(other) < bendsIn(settled_reach):
                 bought = max(bought,
                              polylineLength(other) - polylineLength(settled_reach))
-          for (drawn, moving) in [(settled_reach, false),
+          for (drawn, is_moving) in [(settled_reach, false),
                                   (straightReach(a, b), true)]:
             for mark in marks:
               # Measured as plain daylight: what is left between drawn
               # stroke and drawn mark once both their widths are taken
               # off, which is what reader actually sees.
               let gap = nearestOn(drawn, mark.centre) - mark.clear + SEEN_GAP
-              if moving:
+              if is_moving:
                 fouled = max(fouled, -gap)
               else:
                 daylight = min(daylight, gap)
@@ -820,11 +820,11 @@ proc checkSingleTurns*(built: Parts) =
                                 start.place[Dancer.Lead]))
     # Only lead's own orbit may move them, and it must: walking round
     # somebody and staying put are not same act.
-    let walks_off = description.who == Dancer.Lead and description.about == About.Orbit
-    doAssert (moved > 1) == walks_off,
+    let is_walking_off = description.who == Dancer.Lead and description.about == About.Orbit
+    doAssert (moved > 1) == is_walking_off,
       &"The lead moved where they should not, or held where they " &
         &"cannot; got `{decimal(moved, 1)}` for {manner}."
-    if walks_off:
+    if is_walking_off:
       re_entered.add description.title.toLowerAscii
   # RULE 26.  `"make the second animation stage quicker ... so it has less`
   # `emphasis."`  Measured on clock that markup actually carries:
@@ -1023,11 +1023,11 @@ proc checkHandTurns*(built: Parts) =
     let
       put = settled(handPose(position.wind), HAND_TO_HAND, ABOVE_BOTH,
                     default(Ways))
-      by_lead = distance(meetings[0], put.place[Dancer.Lead]) <
+      is_by_lead = distance(meetings[0], put.place[Dancer.Lead]) <
                 distance(meetings[1], put.place[Dancer.Lead])
-      by_follow = distance(meetings[0], put.place[Dancer.Follow]) <
+      is_by_follow = distance(meetings[0], put.place[Dancer.Follow]) <
                   distance(meetings[1], put.place[Dancer.Follow])
-    doAssert by_lead != by_follow,
+    doAssert is_by_lead != is_by_follow,
       &"Both crossovers fell on one dancer; got `{position.name}`."
     apart = min(apart, distance(meetings[0], meetings[1]))
     # What both reaches enclose between crossings: diamond.
@@ -1483,7 +1483,7 @@ proc checkHandTurns*(built: Parts) =
     reach = 0.0
   for manner in Manner:
     let description = MANNERS[manner]
-    var winds_at_all = false
+    var is_winding_at_all = false
     for edge in 0 ..< CHAIN.len - 1:
       let
         walk = turnWalk(handPose(CHAIN[edge].wind), description.who, description.about,
@@ -1509,7 +1509,7 @@ proc checkHandTurns*(built: Parts) =
             &"{manner} edge {edge}."
         let far = spun[spun.mapIt(abs(it)).maxIndex]
         if abs(abs(far) - abs(360 * CHAIN[edge].wind)) > 1e-6:
-          winds_at_all = true
+          is_winding_at_all = true
           doAssert abs(far - 360 * CHAIN[edge + 1].wind) < 1e-6,
             &"An edge turns away from the next position instead of " &
               &"towards it; got `{decimal(far / 360, 2)}` for " &
@@ -1521,7 +1521,7 @@ proc checkHandTurns*(built: Parts) =
           it.place[Dancer.Follow] != walk.poses[0].place[Dancer.Follow] or
           it.facing[Dancer.Follow] != walk.poses[0].facing[Dancer.Follow]),
         &"A transition does not move at all; got {manner} edge {edge}."
-    if winds_at_all:
+    if is_winding_at_all:
       inc winding
   told.add &"the chain has ends and they hold: {winding} of " &
     &"{Manner.toSeq.len} manners wind, every edge rocks out to the next " &

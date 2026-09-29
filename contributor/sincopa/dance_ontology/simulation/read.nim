@@ -23,8 +23,8 @@ type
   Lying* = object ## Where one held arm lies on its own body.
     aspect*: Aspect
     band*: Band
-    pressing*: bool   ## Forearm or hand on torso or neck.
-    elbowFore*: bool  ## Elbow in front of body: arm folded forward.
+    is_pressing*: bool   ## Forearm or hand on torso or neck.
+    is_elbow_fore*: bool  ## Elbow in front of body: arm folded forward.
 
   Crossing* = object ## Where two connections cross in plan.
     at*: Vector
@@ -63,19 +63,19 @@ func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance
     axes = axesOf(stance)
     grip = toBody(axes, pose.grip)
     elbow = toBody(axes, pose.elbow)
-    ownSide = side(hand.arm)
+    own_side = side(hand.arm)
   var aspect: Aspect
   if grip.y < -0.01:
     aspect = Aspect.Aft
-  elif grip.x * ownSide < -0.01 and grip.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
+  elif grip.x * own_side < -0.01 and grip.y < halfDepth(rig, Part.Torso) + 4.0 * rig.limb:
     aspect = Aspect.Fore
   else:
     return none(Lying)
   some(Lying(
     aspect: aspect,
     band: band,
-    pressing: pressing(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
-    elbowFore: elbow.y > 0.0,
+    is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
+    is_elbow_fore: elbow.y > 0.0,
   ))
 
 

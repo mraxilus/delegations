@@ -62,16 +62,16 @@ func holdsOf(target: Frame): Holds {.compileTime.} =
       result[armOf(side)] = some armOf(target.hold[side].get)
 
 
-func poseFor(facing: bool): Pose {.compileTime.} =
+func poseFor(is_facing: bool): Pose {.compileTime.} =
   ## Stand couple up: lead facing up page, follow facing them
   ## or facing away.
   ##   Canonicalised like every other pose, though at rest it changes nothing,
   ##     because that is what makes two poses of same configuration
   ##     same picture and this should not be one place it is skipped.
-  canonicalise(spinAbout(rest(), Dancer.Follow, if facing: 0.0 else: 180.0))
+  canonicalise(spinAbout(rest(), Dancer.Follow, if is_facing: 0.0 else: 180.0))
 
 
-func sceneOf(target: Frame; facing, clockwise: bool): string {.compileTime.} =
+func sceneOf(target: Frame; is_facing, is_clockwise: bool): string {.compileTime.} =
   ## Draw one frame: two bodies, their hands, and what joins them.
   ##   No level is said, because `Frame` does not carry one -- levels live
   ##     in `rotation.Posture` and nothing hands them here yet.  So every
@@ -87,10 +87,10 @@ func sceneOf(target: Frame; facing, clockwise: bool): string {.compileTime.} =
   ##     same rule wound pair is drawn by (rules 27, 29).
   ##     Facing, nothing crosses, so there is nothing for way round to
   ##       decide and none is asked for.
-  partsOf(poseFor(facing), holdsOf(target), captions = false,
+  partsOf(poseFor(is_facing), holdsOf(target), has_captions = false,
           over = (if target.over.isSome: some armOf(target.over.get)
-                  elif facing: none(Arm)
-                  else: some overArm(if clockwise: 1.0 else: -1.0))).join("")
+                  elif is_facing: none(Arm)
+                  else: some overArm(if is_clockwise: 1.0 else: -1.0))).join("")
 
 
 func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
@@ -102,16 +102,16 @@ func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
   ##     apart; other way is one frame drawn with its crossing unbroken,
   ##     and rule 14 has no exception in it.
   for i, target in FRAMES:
-    result[i * 3] = sceneOf(target, facing = true, clockwise = true)
-    result[i * 3 + 1] = sceneOf(target, facing = false, clockwise = true)
-    result[i * 3 + 2] = sceneOf(target, facing = false, clockwise = false)
+    result[i * 3] = sceneOf(target, is_facing = true, is_clockwise = true)
+    result[i * 3 + 1] = sceneOf(target, is_facing = false, is_clockwise = true)
+    result[i * 3 + 2] = sceneOf(target, is_facing = false, is_clockwise = false)
 
 
 const SCENES = buildScenes()
   ## Every frame picture, drawn in compiler and shipped as text.
 
 
-func sceneFor*(target: Frame; facing, clockwise: bool): string =
+func sceneFor*(target: Frame; is_facing, is_clockwise: bool): string =
   ## Get picture of this frame, seen with follow facing or turned one way.
   ##   Invalid frame has no picture rather than blank one: it is not
   ##     state, so there is nothing to draw and nothing to make up.
@@ -121,4 +121,4 @@ func sceneFor*(target: Frame; facing, clockwise: bool): string =
   let at = frameIndex(target)
   if at.isNone:
     return ""
-  SCENES[at.get * 3 + (if facing: 0 elif clockwise: 1 else: 2)]
+  SCENES[at.get * 3 + (if is_facing: 0 elif is_clockwise: 1 else: 2)]

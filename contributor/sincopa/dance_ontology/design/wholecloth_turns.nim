@@ -405,7 +405,7 @@ func sideBodies(scene: Scene): cstring =
 
 #[ Scene ]#
 
-func sceneOf(scene: var Scene, frames: JsObject, turn: float): bool =
+func fillScene(scene: var Scene, frames: JsObject, turn: float): bool =
   ## Fill `scene` at `turn`: joints interpolated between moments either side, words from nearer.
   ##   False, and `scene` untouched, for empty sweep: rest pose that never held draws nothing.
   ##   Fills caller's storage rather than returning `Option[Scene]`, which deep copied
@@ -603,7 +603,7 @@ proc renderStage() =
   template sweep: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN]
   # Alias into storage, never copy.
   template limits: untyped = sweep.limits
-  let found_scene = sceneOf(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
+  let found_scene = fillScene(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
   STAGE_ELEMENT.innerHTML =
     if found_scene: sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) else: ""
   SLIDER_ELEMENT.value = toText(TURN_DRAWN)
@@ -695,7 +695,7 @@ proc renderStrip() =
         (if turn < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
         "</span></figcaption></figure>"
       continue
-    doAssert sceneOf(SCENE_STORAGE, sweep.frames, turn),
+    doAssert fillScene(SCENE_STORAGE, sweep.frames, turn),
       "Sweep within its blocks must have moments."
     var words: cstring = ""
     for k in 0 ..< SCENE_STORAGE.connection_count:

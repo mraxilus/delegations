@@ -137,7 +137,7 @@ proc say(sentence: string) =
     voice.textContent = cstring(sentence)
 
 
-proc atOnce(): bool =
+proc isMotionReduced(): bool =
   ## Test whether reader has asked for no movement.
   ##   Reader who has turned animation off should not be made to wait out
   ##     animation that is not running: every phase collapses into one
@@ -145,7 +145,7 @@ proc atOnce(): bool =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
 
-proc roomForMap(): bool =
+proc hasRoomForMap(): bool =
   ## Test whether screen has room to draw map at legible size.
   ##   Asked of stylesheet rather than answered here.
   ##     Which widths are wide is question about layout, and layout
@@ -192,7 +192,7 @@ proc suitDrawing() =
   ##     drawing, because choice made is worth more than default, and
   ##     window dragged narrower should not take it back.
   if not IS_DRAWING_CHOSEN:
-    DRAWING_SHOWN = if roomForMap(): Drawing.Overview else: Drawing.Dynamic
+    DRAWING_SHOWN = if hasRoomForMap(): Drawing.Overview else: Drawing.Dynamic
 
 
 
@@ -460,7 +460,7 @@ func renderDance(current: Frame; drawing: Drawing; motion: Motion;
 
 #[ Atlas View ]#
 
-func admits(narrowing: Filter; target: Frame): bool =
+func isAdmitting(narrowing: Filter; target: Frame): bool =
   ## Test whether frame answers everything dancer has asked to see.
   ##
   ## Every question left unasked admits everything, and asked ones are read
@@ -468,30 +468,30 @@ func admits(narrowing: Filter; target: Frame): bool =
   ## wants both to be true of same frame.
   if narrowing.holds.isSome and target.countHolds != narrowing.holds.get:
     return false
-  if narrowing.lead.isSome and not target.usesHand(narrowing.lead.get):
+  if narrowing.lead.isSome and not target.isUsingHand(narrowing.lead.get):
     return false
   if narrowing.follow.isSome and not target.isHeld(narrowing.follow.get):
     return false
   true
 
 
-func chip(action, value, label: string; chosen: bool): string =
+func chip(action, value, label: string; is_chosen: bool): string =
   ## Offer one answer to one question, marked when it is one in force.
-  button(action, value, (if chosen: "chip on" else: "chip"), escaped(label))
+  button(action, value, (if is_chosen: "chip on" else: "chip"), escaped(label))
 
 
 func renderFilters(narrowing: Filter): string =
   ## Ask three questions that narrow gallery: how many, whose, which.
-  var holds = chip("holds", "any", "any", chosen = narrowing.holds.isNone)
+  var holds = chip("holds", "any", "any", is_chosen = narrowing.holds.isNone)
   for count in 0 .. 2:
     holds.add chip("holds", $count, $count & (if count == 1: " hand" else: " hands"),
       narrowing.holds == some(count))
-  var lead = chip("lead", "any", "either", chosen = narrowing.lead.isNone)
+  var lead = chip("lead", "any", "either", is_chosen = narrowing.lead.isNone)
   for side in Side:
-    lead.add chip("lead", $side, leadName(side), chosen = narrowing.lead == some(side))
-  var follow = chip("follow", "any", "either", chosen = narrowing.follow.isNone)
+    lead.add chip("lead", $side, leadName(side), is_chosen = narrowing.lead == some(side))
+  var follow = chip("follow", "any", "either", is_chosen = narrowing.follow.isNone)
   for site in Site:
-    follow.add chip("follow", $site, followName(site), chosen = narrowing.follow == some(site))
+    follow.add chip("follow", $site, followName(site), is_chosen = narrowing.follow == some(site))
   tag("div", "class=\"filters\"",
     tag("div", "class=\"question\"", tag("span", "class=\"asks\"", "connections") & holds) &
     tag("div", "class=\"question\"",
@@ -510,7 +510,7 @@ func renderGallery(narrowing: Filter): string =
     cards = ""
     shown = 0
   for target in FRAMES:
-    if not narrowing.admits(target):
+    if not narrowing.isAdmitting(target):
       continue
     inc shown
     let ways = moves(target).len
@@ -786,7 +786,7 @@ proc dance(key: string) =
     return
   if MOTION_NOW == Motion.Leaving and FRAME_TAKEN == target:
     return # Asked twice for same move, which is once.
-  if atOnce():
+  if isMotionReduced():
     # Every phase collapses into change of state it was spelling out.  But
     # compound is two changes of state, and phase that would have taken its
     # second half has collapsed along with rest, so it is taken here instead

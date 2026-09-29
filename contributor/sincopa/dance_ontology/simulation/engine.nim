@@ -60,93 +60,95 @@ type
 
   WorldDefinition* {.importc: "b3WorldDef", bycopy.} = object
     gravity* {.importc.}: Vector
-    contactHertz* {.importc.}: cfloat ## How stiffly overlap is pushed apart.
-    enableSleep* {.importc.}: bool
-    enableContinuous* {.importc.}: bool
+    contact_hertz* {.importc: "contactHertz".}: cfloat ## How stiffly overlap is pushed apart.
+    should_sleep* {.importc: "enableSleep".}: bool
+    should_collide_continuously* {.importc: "enableContinuous".}: bool
   BodyDefinition* {.importc: "b3BodyDef", bycopy.} = object
     kind* {.importc: "type".}: cint
     position* {.importc.}: Position
     rotation* {.importc.}: Quaternion
-    linearDamping* {.importc.}: cfloat
-    angularDamping* {.importc.}: cfloat
-    gravityScale* {.importc.}: cfloat
-    enableSleep* {.importc.}: bool
+    linear_damping* {.importc: "linearDamping".}: cfloat
+    angular_damping* {.importc: "angularDamping".}: cfloat
+    gravity_scale* {.importc: "gravityScale".}: cfloat
+    should_sleep* {.importc: "enableSleep".}: bool
   Material* {.importc: "b3SurfaceMaterial", bycopy.} = object
     friction* {.importc.}: cfloat
   ShapeDefinition* {.importc: "b3ShapeDef", bycopy.} = object
     density* {.importc.}: cfloat
     material* {.importc: "baseMaterial".}: Material
     filter* {.importc.}: Filter
-    enableContactEvents* {.importc.}: bool
+    should_report_contacts* {.importc: "enableContactEvents".}: bool
   Filter* {.importc: "b3Filter", bycopy.} = object
-    ## Which shapes meet which.  Negative `groupIndex` shared by two shapes
+    ## Which shapes meet which.  Negative `group_index` shared by two shapes
     ## keeps them apart whatever bits say: how neighbouring links of one arm
     ## are stopped from colliding at joint they share.
-    categoryBits* {.importc.}: uint64
-    maskBits* {.importc.}: uint64
-    groupIndex* {.importc.}: cint
+    category_bits* {.importc: "categoryBits".}: uint64
+    mask_bits* {.importc: "maskBits".}: uint64
+    group_index* {.importc: "groupIndex".}: cint
   Capsule* {.importc: "b3Capsule", bycopy.} = object ## Segment with radius round it.
     center1*, center2*: Vector
     radius*: cfloat
   JointDefinition* {.importc: "b3JointDef", bycopy.} = object
-    bodyIdA* {.importc.}: BodyId
-    bodyIdB* {.importc.}: BodyId
-    localFrameA* {.importc.}: Frame
-    localFrameB* {.importc.}: Frame
-    constraintHertz* {.importc.}: cfloat ## How stiffly joint holds its bodies together.
-    constraintDampingRatio* {.importc.}: cfloat
-    collideConnected* {.importc.}: bool
+    body_id_a* {.importc: "bodyIdA".}: BodyId
+    body_id_b* {.importc: "bodyIdB".}: BodyId
+    local_frame_a* {.importc: "localFrameA".}: Frame
+    local_frame_b* {.importc: "localFrameB".}: Frame
+    constraint_hertz* {.importc: "constraintHertz".}: cfloat
+      ## How stiffly joint holds its bodies together.
+    constraint_damping_ratio* {.importc: "constraintDampingRatio".}: cfloat
+    should_collide_connected* {.importc: "collideConnected".}: bool
   BallDefinition* {.importc: "b3SphericalJointDef", bycopy.} = object
     base* {.importc.}: JointDefinition
-    enableSpring* {.importc.}: bool
+    should_spring* {.importc: "enableSpring".}: bool
     hertz* {.importc.}: cfloat
-    dampingRatio* {.importc.}: cfloat
-    targetRotation* {.importc.}: Quaternion
-    enableConeLimit* {.importc.}: bool
-    coneAngle* {.importc.}: cfloat
-    enableTwistLimit* {.importc.}: bool
-    lowerTwistAngle* {.importc.}: cfloat
-    upperTwistAngle* {.importc.}: cfloat
+    damping_ratio* {.importc: "dampingRatio".}: cfloat
+    target_rotation* {.importc: "targetRotation".}: Quaternion
+    should_limit_cone* {.importc: "enableConeLimit".}: bool
+    cone_angle* {.importc: "coneAngle".}: cfloat
+    should_limit_twist* {.importc: "enableTwistLimit".}: bool
+    lower_twist_angle* {.importc: "lowerTwistAngle".}: cfloat
+    upper_twist_angle* {.importc: "upperTwistAngle".}: cfloat
   HingeDefinition* {.importc: "b3RevoluteJointDef", bycopy.} = object
     ## Joint with one axis: elbow.
     base* {.importc.}: JointDefinition
-    targetAngle* {.importc.}: cfloat
-    enableSpring* {.importc.}: bool
+    target_angle* {.importc: "targetAngle".}: cfloat
+    should_spring* {.importc: "enableSpring".}: bool
     hertz* {.importc.}: cfloat
-    dampingRatio* {.importc.}: cfloat
-    enableLimit* {.importc.}: bool
-    lowerAngle* {.importc.}: cfloat
-    upperAngle* {.importc.}: cfloat
+    damping_ratio* {.importc: "dampingRatio".}: cfloat
+    should_limit* {.importc: "enableLimit".}: bool
+    lower_angle* {.importc: "lowerAngle".}: cfloat
+    upper_angle* {.importc: "upperAngle".}: cfloat
   TouchPoint* {.importc: "b3ManifoldPoint", bycopy.} = object
     ## One contact point: how deep, negative where shapes overlap.
     separation* {.importc.}: cfloat
   Manifold* {.importc: "b3Manifold", bycopy.} = object
     ## Contact points of one touching pair, one to four of them.
     points* {.importc.}: array[4, TouchPoint]
-    pointCount* {.importc.}: cint
+    point_count* {.importc: "pointCount".}: cint
   WeldDefinition* {.importc: "b3WeldJointDef", bycopy.} = object
     ## Joint holding two bodies as one, or as one on spring: shoulder girdle.
     base* {.importc.}: JointDefinition
-    linearHertz* {.importc.}: cfloat ## Nought is rigid.
-    angularHertz* {.importc.}: cfloat
-    linearDampingRatio* {.importc.}: cfloat
-    angularDampingRatio* {.importc.}: cfloat
+    linear_hertz* {.importc: "linearHertz".}: cfloat ## Nought is rigid.
+    angular_hertz* {.importc: "angularHertz".}: cfloat
+    linear_damping_ratio* {.importc: "linearDampingRatio".}: cfloat
+    angular_damping_ratio* {.importc: "angularDampingRatio".}: cfloat
   DistanceDefinition* {.importc: "b3DistanceJointDef", bycopy.} = object
     ## Joint holding two points within some distance of each other: girdle's rope.
     base* {.importc.}: JointDefinition
     length* {.importc.}: cfloat
-    enableSpring* {.importc.}: bool ## Off, joint is rigid rod and limit is ignored.
+    should_spring* {.importc: "enableSpring".}: bool
+      ## Off, joint is rigid rod and limit is ignored.
     hertz* {.importc.}: cfloat ## Nought with spring on is rope: free to its limit.
-    dampingRatio* {.importc.}: cfloat
-    enableLimit* {.importc.}: bool
-    minLength* {.importc.}: cfloat
-    maxLength* {.importc.}: cfloat
+    damping_ratio* {.importc: "dampingRatio".}: cfloat
+    should_limit* {.importc: "enableLimit".}: bool
+    min_length* {.importc: "minLength".}: cfloat
+    max_length* {.importc: "maxLength".}: cfloat
   Touch* {.importc: "b3ContactData", bycopy.} = object
     ## One pair of shapes engine found touching.
-    shapeIdA* {.importc.}: ShapeId
-    shapeIdB* {.importc.}: ShapeId
+    shape_id_a* {.importc: "shapeIdA".}: ShapeId
+    shape_id_b* {.importc: "shapeIdB".}: ShapeId
     manifolds* {.importc.}: ptr Manifold ## Engine's own, valid until next step.
-    manifoldCount* {.importc.}: cint
+    manifold_count* {.importc: "manifoldCount".}: cint
 
 
 # Engine's entry points, each bound on one line to its C name.

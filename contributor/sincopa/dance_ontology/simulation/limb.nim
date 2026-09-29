@@ -60,7 +60,7 @@ const
                                ## no twist is read off it.
 
 
-func shoulderLocal*(rig: Rig): Vector = (rig.shoulderOut, 0.0, rig.shoulderUp)
+func shoulderLocal*(rig: Rig): Vector = (rig.shoulder_out, 0.0, rig.shoulder_up)
   ## Shoulder in body's mirrored terms: always right arm here.
 
 

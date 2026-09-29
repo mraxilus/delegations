@@ -63,14 +63,14 @@ func strainWord(strain: float): string =
 
 func whyOf(way: WayRead): string =
   ## Say what refuses, as `words.why` says it of walk.
-  why(Walk(stopped: way.stopped, at: way.at, why: way.why, whose: way.whose))
+  why(Walk(is_stopped: way.is_stopped, at: way.at, why: way.why, whose: way.whose))
 
-func blockLine(way: WayRead; sign: string; apart = true): string =
+func blockLine(way: WayRead; sign: string; should_say_apart = true): string =
   ## Say where sweep blocks one way and why, and how far apart couple stood for it.
   ##   Kept short: two of these sit in one table row under audit's hundred columns.
   ##   Stance is dropped where row names it, since repeating it there says nothing.
-  let stood = if apart: &", {turns(way.apart)} m apart" else: ""
-  if not way.stopped:
+  let stood = if should_say_apart: &", {turns(way.apart)} m apart" else: ""
+  if not way.is_stopped:
     return &"{sign}: free to {turns(MOST)} turns{stood}"
   &"{sign}{turns(way.at)}{stood}: {whyOf(way)}"
 
@@ -78,10 +78,10 @@ func blocks(sweep: SweepRead): string =
   ## Say both blocks of sweep as one wrapped paragraph.
   prose(&"Blocks: {blockLine(sweep.negative, \"-\")}; {blockLine(sweep.positive, \"+\")}.")
 
-func restName(away: bool): string =
+func restName(is_away: bool): string =
   ## Name facing couple rest at, read off stance simulation stands them in.
   ##   Distance puts no one at other side of other, so any distance names it.
-  facingName(restStance(HUMAN, 1.0, away)).get
+  facingName(restStance(HUMAN, 1.0, is_away)).get
 
 
 
@@ -95,11 +95,11 @@ var
   RUNGS_WANTED: seq[RungAsk]
   KEYS_USED: HashSet[string] ## Keys render read, so file keeps nothing no render reads.
 
-proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; away = false;
+proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; is_away = false;
              apart = 0.0): SweepRead =
   ## Kept reading of sweep; lacking it, ask for it and render blank for now.
   let
-    ask = askOf(band, links, who, away, apart)
+    ask = askOf(band, links, who, is_away, apart)
     key = keyOf(ask)
   KEYS_USED.incl key
   if key in READINGS_KEPT.sweeps: return READINGS_KEPT.sweeps[key]
@@ -135,7 +135,7 @@ proc rigTable(): string =
     &"{formatFloat(halfBreadth(HUMAN, Part.Neck), ffDecimal, 3)}, to {HUMAN.top[Part.Neck]} m |\n"
   result.add &"| head round | {HUMAN.round[Part.Head]} m, radius " &
     &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
-  result.add &"| shoulders | {HUMAN.shoulderOut} m out, {HUMAN.shoulderUp} m up |\n"
+  result.add &"| shoulders | {HUMAN.shoulder_out} m out, {HUMAN.shoulder_up} m up |\n"
   result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, wrist to grip {HUMAN.hand}: " &
     &"reach {turns(reach(HUMAN))} m; limb radius {HUMAN.limb} |\n"
   let
@@ -168,7 +168,7 @@ proc singleHolds(): string =
     for (word, band) in BANDS:
       let sweep = sweepOf(band, links)
       result.add &"### {name}, {word}\n\n"
-      if not sweep.restHolds:
+      if not sweep.found_rest:
         result.add "No pose holds at the rest.\n\n"
         continue
       result.add blocks(sweep)
@@ -176,12 +176,12 @@ proc singleHolds(): string =
         "|---|---|---|---|---|\n"
       for i, half_turns in HALVES:
         let glance = sweep.glances[i]
-        if not glance.got:
+        if not glance.is_reached:
           result.add &"| {half(half_turns)} | blocked | | | |\n"
           continue
         result.add &"| {half(half_turns)} | {said(glance.lies[0][Body.Two], band)} | " &
           &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} | " &
-          &"{turns(glance.handZ)} m |\n"
+          &"{turns(glance.hand_height)} m |\n"
       result.add "\n"
 
 
@@ -194,18 +194,18 @@ proc floorClaim(): string =
     "and the lock way positive.")
   result.add "| hold | level | way | floor says | simulation says | the simulation names |\n" &
     "|---|---|---|---|---|---|\n"
-  for (lead_arm, follow_arm, name, lockSign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
+  for (lead_arm, follow_arm, name, lock_sign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
                                  (Arm.Left, Arm.Right, "L-r", 1.0)]:
     for (word, band) in BANDS:
       let sweep = sweepOf(band, oneLink(lead_arm, follow_arm))
-      for (way, sign) in [("lock way", lockSign), ("wrap way", -lockSign)]:
+      for (way, sign) in [("lock way", lock_sign), ("wrap way", -lock_sign)]:
         let
           way_read = if sign < 0: sweep.negative else: sweep.positive
           floor = if band == Band.Crown: "no block"
                   elif band == Band.Torso and way == "wrap way": "half a turn"
                   else: "a whole turn"
-          says = if way_read.stopped: &"blocks at {turns(way_read.at)}" else: "no block"
-          names = if way_read.stopped: whyOf(way_read) else: ""
+          says = if way_read.is_stopped: &"blocks at {turns(way_read.at)}" else: "no block"
+          names = if way_read.is_stopped: whyOf(way_read) else: ""
         result.add &"| {name} | {word} | {way} | {floor} | {says} | {names} |\n"
   result.add "\n"
 
@@ -216,14 +216,14 @@ proc pairHolds(): string =
   result.add prose(&"L-r.R-l rests {restName(false)}; L-l.R-r rests {restName(true)} " &
     &"({restName(false)} its two connections lie through each other), and its turns count " &
     "from there.")
-  for (links, away, name) in [
+  for (links, is_away, name) in [
       (twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left), false, "L-r.R-l"),
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right), true,
        "L-l.R-r, from " & restName(true))]:
     for (word, band) in BANDS:
-      let sweep = sweepOf(band, links, away = away)
+      let sweep = sweepOf(band, links, is_away = is_away)
       result.add &"### {name}, {word}\n\n"
-      if not sweep.restHolds:
+      if not sweep.found_rest:
         result.add "No pose holds at the rest.\n\n"
         continue
       result.add blocks(sweep)
@@ -231,7 +231,7 @@ proc pairHolds(): string =
         "|---|---|---|---|---|\n"
       for i, half_turns in HALVES:
         let glance = sweep.glances[i]
-        if not glance.got:
+        if not glance.is_reached:
           result.add &"| {half(half_turns)} | blocked | | | |\n"
           continue
         var cross = ""
@@ -260,7 +260,7 @@ proc chain(): string =
       let
         facing = facingName(turned(restStance(HUMAN, 1.0), Body.Two, turn)).get
         rung_read = rungOf(band, turn)
-      if rung_read.found:
+      if rung_read.found_pose:
         result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | yes | " &
           &"{strainWord(rung_read.strain)} | {rung_read.crossed} | {turns(rung_read.apart)} m |\n"
       else:
@@ -271,7 +271,7 @@ proc chain(): string =
 proc drawnRow(drawn: string; links: seq[Link]; who: Body; turn: float; band: Band): string =
   ## Tabulate one state whole-cloth page draws, asked of simulation.
   let glance = glanceAt(sweepOf(band, links, who = who), turn)
-  if not glance.got:
+  if not glance.is_reached:
     return &"| {drawn} | {turns(turn)} | blocked before it | | | |\n"
   &"| {drawn} | {turns(turn)} | yes | {said(glance.lies[0][Body.Two], band)} | " &
     &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} |\n"
@@ -315,11 +315,11 @@ proc standing(): string =
     &"{blockLine(chosen.positive, \"+\")} |\n"
   for apart in [0.36, 0.50, 0.70]:
     let sweep = sweepOf(Band.Torso, links, apart = apart)
-    if not sweep.restHolds:
+    if not sweep.found_rest:
       result.add &"| {apart} m | no rest | |\n"
       continue
-    result.add &"| {apart} m | {blockLine(sweep.negative, \"-\", apart = false)} | " &
-      &"{blockLine(sweep.positive, \"+\", apart = false)} |\n"
+    result.add &"| {apart} m | {blockLine(sweep.negative, \"-\", should_say_apart = false)} | " &
+      &"{blockLine(sweep.positive, \"+\", should_say_apart = false)} |\n"
   result.add "\n"
 
 

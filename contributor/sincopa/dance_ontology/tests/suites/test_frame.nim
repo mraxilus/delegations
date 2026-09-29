@@ -75,8 +75,8 @@ suite "hands":
           check target.hold[target.holder(site).get] == some(site)
       var reaching = 0
       for side in Side:
-        check target.usesHand(side) == target.hold[side].isSome
-        if target.usesHand(side):
+        check target.isUsingHand(side) == target.hold[side].isSome
+        if target.isUsingHand(side):
           inc reaching
       # Connection is one hand of each, so counting either end counts it.
       check held == target.countHolds
@@ -85,7 +85,7 @@ suite "hands":
   test "reflection swaps which hand is asked about":
     for target in FRAMES:
       for side in Side:
-        check target.usesHand(side) == target.reflect.usesHand(other(side))
+        check target.isUsingHand(side) == target.reflect.isUsingHand(other(side))
       check target.isHeld(Site.LeftHand) == target.reflect.isHeld(Site.RightHand)
 
   test "a hand of the follow is held by at most one hand of the lead":
@@ -96,7 +96,7 @@ suite "hands":
     for site in Site:
       check free_frame.holder(site).isNone
     for side in Side:
-      check not free_frame.usesHand(side)
+      check not free_frame.isUsingHand(side)
 
 
 suite "naming":
