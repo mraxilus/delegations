@@ -60,7 +60,7 @@ equation that defines the norm. The squared quantity is what stands under its ro
 suites of the library cite none. The reference returns the weight squared norm as an
 `Antiscalar`, so that widening puts it in the antiscalar slot where the library writes it.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suite `Catalogue`. Ids are unique. Every
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Catalogue`. Ids are unique. Every
 expression compiles against the library. The set of symbols equals the set of exported
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella.
@@ -86,7 +86,7 @@ the former costs about 4 ns and the latter about 20 ns, through the `=dup` hook.
 would have hidden the cost of the library. Unitize forms take one reciprocal and multiply, as
 Terathon does, where the library divides each component. The divide column shows both.
 
-Verified by `trga4d.nim`, suite `Chapter 2`, and by `tcga5d.nim`, suite `Chapter 3`. For
+Verified by `test_rga4d.nim`, suite `Chapter 2`, and by `test_cga5d.nim`, suite `Chapter 3`. For
 every typed measurand and every seeded sample, the reference widened into the dense
 multivector equals the library within `=~`. Each check cites its equation or wiki page. Suite
 `Inspector` reads the nimcache of the test binary itself, and finds `wedge(Point,Point)`
@@ -100,8 +100,8 @@ from `randomize(0)`: dense multivectors of every grade, typed objects in general
 lines and planes joined from points, and motors unitized. Every typed pool has a widened
 image, so the two implementations read equivalent operands.
 
-Verified by `trga4d.nim` and `tcga5d.nim`. Suites `Chapter 2` and `Chapter 3` run through the
-widening, and suite `Measurements` runs every measurand over the pools.
+Verified by `test_rga4d.nim` and `test_cga5d.nim`. Suites `Chapter 2` and `Chapter 3` run
+through the widening, and suite `Measurements` runs every measurand over the pools.
 
 ## Measurements
 
@@ -118,7 +118,7 @@ control raised the counter first. A zero then means zero, and never an inert ins
 (Article VII.4). The plain build reports the gauge as off, and that is the measurement taken
 once compiled out.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suites `Measurements` and `Allocation`.
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Measurements` and `Allocation`.
 `summarise` runs on fixture rounds. A short run gives finite positive nanoseconds and a
 non-zero sink. The positive control raises the counter, and then no measurand allocates over
 a preallocated loop.
@@ -156,7 +156,7 @@ exceptions, in both implementations. `{.raises: [].}` on the callee does not rem
 only `--panics:on` does (see Figures). Counts are taken with the flags that the documents
 name, `-d:release`, which is what a user of the library gets by default.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suite `Inspector`. It covers:
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Inspector`. It covers:
 
 - a demangling table with overload indices;
 - a fixture C source with known counts;
@@ -178,7 +178,7 @@ Date and machine are ignored, because static measurements owe them nothing. `dri
 verb that koch and CI run: inspect every algebra, guard, and hold the committed `gaps.md` and
 docket to regeneration. It is deterministic because it times nothing.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suite `Guard`. Equal documents pass silently. One
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Guard`. Equal documents pass silently. One
 grown count is one finding, which names function, metric and both values. A shrink is an
 improvement only. Bytes moved are gated. A function absent in either document is a finding,
 and another build or schema is refused.
@@ -242,7 +242,7 @@ dense operation needs none of them to be correct. It moves its operands read onc
 result written once. `gaps.md` carries one row for each operation of each algebra, since the
 bound rests on the operation and never on the operand kinds.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suite `Lower bound`. At four dimensions with a
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Lower bound`. At four dimensions with a
 rigid metric the derived counts reproduce 81 for the exterior product and 192 for the
 geometric product. They reproduce 8 for the bilinear form, and 54 and 27 for the
 contractions. They reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a
@@ -311,7 +311,7 @@ its evidence and the condition that closes it. The list then closes by measureme
 by an edit. The renderer refuses any line beyond 100 runes, because the product is committed
 and form-checked.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suite `Gaps`. It covers the gap verdicts on
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Gaps`. It covers the gap verdicts on
 fixture documents, an unmeasured gap, and docket stability across a reorder and a new key. It
 also covers the verdict and evidence of every cause, the rendered width, and rune-counted
 wrap.
@@ -361,7 +361,7 @@ fail.
 The library then exported the table in `9f9019b`. The suites of the library did not
 catch this, because they import each module with `{.all.}` and never read the umbrella. The
 library also gained two operators, `|∙²` and `|∘²`, so the catalogue gained a measurand for
-each one. Verified by `trga4d.nim` and `tcga5d.nim`, suite `Catalogue`, which holds the
+each one. Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Catalogue`, which holds the
 catalogue to the exported surface of the library.
 
 **The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
