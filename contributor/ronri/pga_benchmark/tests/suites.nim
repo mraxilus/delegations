@@ -15,7 +15,7 @@ import ../src/pga_benchmark/[
   bound, changes, designs, gaps, guard, head, inspector, markdown, measurements, model, notes,
   report,
 ]
-import ../src/pga_benchmark/pages/[shell, trial]
+import ../src/pga_benchmark/pages/[docket, shell, trial]
 import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/trials import editsDigest, functionsChanged, nanOf, successOf, timesOf
 
@@ -979,6 +979,15 @@ suite "Pages":
     let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
     check bandOf([quiet]).count == 0  # too few ratios: band assumed
     check bandOf([quiet]).low < 1.0 and bandOf([quiet]).high > 1.0  # around no change
+
+  test "docket rows carry identifiers docket file allots":
+    let
+      sheet = Sheet(name: "rga4d", title: "Rigid 4D", dimensions: 4,
+        static_measurements: %*{"measurands": {"wedge": {"library": "∧(M,M)", "symbol": "∧"}},
+          "functions": {"∧(M,M)": {"total": {"multiplies": 81}}}},
+        runtime_measurements: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
+      ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
+    check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
 
   test "verdict chips say when trial removes NaN results":
     let
