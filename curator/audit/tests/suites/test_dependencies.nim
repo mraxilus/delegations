@@ -26,6 +26,11 @@ suite "Dependencies":
     check LOCK_TEXT.lockDirectories == @["deps/replications.example.invalid"]  # one item
     check lockDirectories("{}").len == 0  # no items table
     check lockDirectories("{\"items\": {}}").len == 0  # empty items
+    check LOCK_TEXT.lockDirectories("dependencies") ==
+      @["dependencies/replications.example.invalid"]
+    check depsDirectoryOf("{\"deps\": \"dependencies\"}") == "dependencies"  # V.9 name
+    check depsDirectoryOf("{\"deps\": \"\"}") == "deps"  # empty name takes default
+    check depsDirectoryOf("{}") == "deps"  # no key takes default
 
   test "checkout absent after restore is finding":
     # `atlas changed` exits 0 while warning `repo missing!`, so restore fetching nothing
