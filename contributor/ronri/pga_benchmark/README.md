@@ -35,7 +35,7 @@ so the next exploration starts from the same frame.
 | `designs/<name>/` | `design.md`, optional `change.md`, `claims.json`, and programs | design page |
 | `trials/` | what each change or design measured when tried at pin | marginalia, designs |
 | `marginalia/notes.md` | notes on library source, each quoting the lines it is about | marginalia |
-| `pages/` | shell every page is built in, and register of published pages | every page |
+| `pages/` | shell every page is built in, and publication of each published page | every page |
 
 A change, a design and a note quote the library, and never give a line number. A quote that
 does not occur once at pin is a finding, so no file points at lines that say something else.

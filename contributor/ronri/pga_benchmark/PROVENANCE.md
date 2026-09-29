@@ -363,18 +363,19 @@ tried: every edit, every claim and every program, and never the prose. So a tria
 exactly while its edits are. Trials measure the two
 typed algebras, rga4d and cga5d, which both lower bounds cover.
 
-**The noise band comes from the trials themselves.** A trial that changes no library function
-moves no count, so the spread of its time ratios is the spread of the machine. The pages state
-the band beside the figures it qualifies. On 2026-09-29, in this container (linux amd64, 4
-cores), 12 such trials gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
+**The spread comes from the trials themselves.** A trial that changes no library function
+moves no count, so the range of its time ratios is the range of the machine. The pages state
+the spread beside the figures it qualifies. On 2026-09-29, in this container (linux amd64, 4
+cores), those trials gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
 
 Measured variance: `typed-multivectors` applies the same library edits as `cayley-derivation`.
-Its first trial gave a median ratio of ×1.16 over every rga4d measurand, and a second, same
-day, gave ×1.00. Alternation does not cancel all drift of a shared machine, so one trial's
-time is weak evidence alone. Counts are exact, and carry the verdicts.
+Its trials on 2026-09-29 gave median ratios over every rga4d measurand of ×1.16, ×1.00 and
+×1.00. Over every cga5d measurand, the last two gave ×0.99 and ×1.07. Alternation does not
+cancel all drift of a shared machine, so one trial's time is weak evidence alone. Counts are
+exact, and carry the verdicts.
 
-The 14 changes come from edits measured at `bd6b23c` by line range. Converted to
-quotes, each one applied at pin gives files byte-identical to the measured edits, 14 of 14.
+The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
+one applied at pin gives files byte-identical to the measured edits.
 The change of `cayley-derivation` reproduces its draft byte for byte, and
 `designs/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
 and cga5d.
@@ -388,7 +389,7 @@ A digest moves with edits, and never with prose.
 
 `marginalia/notes.md` holds the notes on library source. Each note quotes the lines it is
 about, and the page computes the line number at build from where the quote stands at pin. A
-quote that no longer occurs once is a finding. 19 notes, each quote once at pin.
+quote that no longer occurs once is a finding.
 
 Verified by suite `Notes`: parse, location at pin, and a stale anchor.
 
@@ -401,13 +402,13 @@ files say. The faces are the six that `rga_visualiser` embeds, fetched through
 scale are inputs that `:has()` rules read. The page runs no script, so the build is
 deterministic and the digest of a page is the digest of what those files say.
 
-**The register holds each published page to its build.** `pages/published.json` maps each page to
-its URL and to the digest of the page as built when it was published. `drive` builds every
-page again, and any page whose digest differs is a finding. `README.md` must name every URL
-in the register, so the two copies of a URL cannot drift apart. Rejected: a page written by
+**A publication holds each published page to its build.** `pages/published.json` maps each
+page to its URL and to the digest of the page as built when it was published. `drive` builds
+every page again, and any page whose digest differs is a finding. `README.md` must name the URL
+of every publication, so the two copies of a URL cannot drift apart. Rejected: a page written by
 hand, or by a script outside this project, because nothing held it to the files.
 
-Verified by suite `Pages`: assembly fills every token, the noise band until trials give enough
+Verified by suite `Pages`: assembly fills every token, the spread until trials give enough
 ratios, and the chip that names removed NaN results.
 
 ## Library head
@@ -431,8 +432,8 @@ Cost: the verdict of `drive` depends on the library repository as well as on thi
 The same commit here can pass today and fail after the library moves. That is the purpose of
 the check, and it departs from the rule that a check gives the same verdict on the same code.
 
-Verified by suite `Head`: tree against commit, stamps, digests of edits, the register and the
-README.
+Verified by suite `Head`: tree against commit, stamps, digests of edits, the publications and
+the README.
 
 ## Dependencies
 
