@@ -980,6 +980,16 @@ suite "Pages":
     check bandOf([quiet]).count == 0  # too few ratios: band assumed
     check bandOf([quiet]).low < 1.0 and bandOf([quiet]).high > 1.0  # around no change
 
+  test "every grid in shell bounds its columns, so wide content scrolls in place":
+    const SHELL = staticRead("../pages/shell.html")
+    var unbounded: seq[string]
+    for rule in SHELL.split('}'):
+      let body = rule.split('{')
+      if body.len < 2 or "display: grid" notin body[^1]: continue
+      if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
+    check unbounded.len == 0  # grid child of auto width widens page at phone width
+    if unbounded.len > 0: echo "unbounded: ", unbounded.join(", ")
+
   test "docket rows carry identifiers docket file allots":
     let
       sheet = Sheet(name: "rga4d", title: "Rigid 4D", dimensions: 4,
