@@ -9,7 +9,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, strutils]
+import std/json
 
 import ./report
 
