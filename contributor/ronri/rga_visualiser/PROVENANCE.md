@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58e23c24139472bc |
+| Rules   | 8c8a0bd7dfbb0c7a |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -512,7 +512,7 @@ the widgets used. Cost: to add a widget touches two files. The kind is registere
 
 **Dear ImGui is compiled into the binary rather than linked, and pinned by commit.** That is
 `fd13a1e8923a0a7077b404fc36fd063b25a0c0b5` of the `docking` branch of `ocornut/imgui`, MIT
-licence, cloned into `deps/imgui` and never committed.
+licence, cloned into `dependencies/imgui` and never committed.
 
 `IMGUI_USE_WCHAR32` is set by a compiler flag, rather than by an edit to the `imconfig.h` of the
 checkout. The notation carries bold operands past what a 16-bit `ImWchar` expresses, and an edit
@@ -634,10 +634,10 @@ environment names none, they fall back to the faces that this build ships. That 
 lets `driven` drive the case: it runs `--drive-keys` once with `RGA_FONT` naming a path that no
 machine carries.
 
-**This half ships the faces that it draws with** (Article X.8; repository issue 93). `DIR_FACES`
-is relative to the binary through `getAppDir()`, so no source names the layout of any machine.
-The faces come from the release repository of the Noto project. A tag and a digest pin each
-family — `NotoSans-v2.013`, `NotoSansMath-v2.539`, `NotoSansSymbols2-v2.006` — because three
+**This half ships the faces that it draws with** (Article X.8; repository issue 93).
+`DIRECTORY_FACES` is relative to the binary through `getAppDir()`, so no source names the layout of
+any machine. The faces come from the release repository of the Noto project. A tag and a digest pin
+each family — `NotoSans-v2.013`, `NotoSansMath-v2.539`, `NotoSansSymbols2-v2.006` — because three
 families move on their own.
 
 A read of each font's `cmap` against the ranges that `gui_shim.cpp` declares gives the coverage:
@@ -2913,7 +2913,7 @@ checked rather than trusted.
 C backend, on JS, and at reduced capacities, at the same case counts that the previous pin
 produced. That is what says the stand-ins behave as the own ones of the library did.
 
-Verified: `deps/` was deleted, `atlas --noexec rep` clones and checks out `295bafc`,
+Verified: `dependencies/` was deleted, `atlas --noexec rep` clones and checks out `295bafc`,
 `atlas changed` exits 0, and the nimble file is byte-identical afterwards.
 
 Verified by a run that the guard fires. `pga.nim` patched to give `projectOrthogonal` a body
@@ -2930,9 +2930,9 @@ One suite is run from three thin entry points that `koch` runs through testament
 
 | Entry point | Backend | Capacities | Why |
 |-------------|---------|-----------|-----|
-| `t4d.nim` | C | Default | The desktop build, as shipped |
-| `t4d_browser.nim` | JS | Default, 4 history steps | The browser build's own backend |
-| `t4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
+| `test_4d.nim` | C | Default | The desktop build, as shipped |
+| `test_4d_browser.nim` | JS | Default, 4 history steps | The browser build's own backend |
+| `test_4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
 
 The JS row is not a formality: a rule reached through two mechanisms is held together only where
 both run. It keeps 4 history steps, because the History laws say nothing of the backend. Measured
@@ -2946,7 +2946,7 @@ suite gathers the joiners once instead. The JS entry point declares `targets: "j
 of its own. So `koch test` compiles it with the JS backend and runs the result through node. Its
 file, `tests/suites.nim`, imports one module for each suite from `tests/suites/`. Top-level tests
 compile into the init function of their module, so one module made the suite one C function. Cold on
-four cores, `gcc` took 122 s on it, and the split `t4d` compiles in 12.6 s (2026-09-24).
+four cores, `gcc` took 122 s on it, and the split `test_4d` compiles in 12.6 s (2026-09-24).
 
 **The suites test rules, and a second layer drives events.** A rule bug earns a suite case, and a
 wiring bug earns a driven check, at the layer that the bug lived at. That is `tools/drive/` for

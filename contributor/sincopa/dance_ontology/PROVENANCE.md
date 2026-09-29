@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58e23c24139472bc |
+| Rules   | 8c8a0bd7dfbb0c7a |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -1702,6 +1702,19 @@ Verified by `suites/test_words.nim`: the report is what its kept readings render
 three breaks made on purpose. One changed a word of the renderer, one deleted a reading, and one
 changed a number that the report prints. The law does not read the stamp, so readings of older
 physics still render the report they gave.
+
+**The stamp of the kept readings is read before their fields.** A rename in `simulation/` changes
+the names of the fields and the stamp. So a kept file of other physics can have other fields.
+`keptReadings` reads the stamp from the parsed file, and it converts only a file of this physics. A
+file with another stamp gives no readings, whatever its fields, and `verdicts` reads each reading
+again. A file with this stamp and other fields still stops the verb, because its stamp says that it
+is current.
+
+Rejected: a conversion that allows missing and extra fields. It would also accept a broken file of
+this stamp, with zeros for the readings that it lacks.
+
+Verified by `suites/test_words.nim`, suite "kept readings of other physics are read again". Its law
+of other fields failed with `ValueError` where the file was converted before the stamp was read.
 
 **The two recordings that pages read are kept with a stamp too.** `design/modelled.json` and
 `design/rig.json` each carry one (`design/stamps.nim`). It is a digest of the physics of the
