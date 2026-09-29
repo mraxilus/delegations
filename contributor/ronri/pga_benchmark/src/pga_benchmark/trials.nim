@@ -298,34 +298,15 @@ proc timed(chain: Toolchain, pristine, candidate, directory: string): (JsonNode,
 const TABLES_PROGRAM = """
 import std/json
 import pga/[algebra {.all.}, cayleys {.all.}, multivectors]
-
-proc term(b: BasisSigned): JsonNode = %*{"to": $b.basis, "neg": b.is_negated}
-
-proc cell(c: auto): JsonNode =
-  result = newJArray()
-  when c is seq:
-    for b in c: result.add term(b)
-  else:
-    if c.isSome: result.add term(c.get)
-
-proc cells(table: auto): JsonNode =
-  result = newJObject()
-  for a in Basis:
-    when table[a] is array:
-      for b in Basis:
-        let terms = cell(table[a][b])
-        if terms.len > 0: result[$a & "," & $b] = terms
-    else:
-      let terms = cell(table[a])
-      if terms.len > 0: result[$a] = terms
+import pga_benchmark/cells
 
 var tables = newJArray()
 $1
 echo tables
 """
   ## Program printing tables as JSON, one `tables.add cells(<expression>)` line per table.
-  ##   Serializer reads both cell shapes, `Option` and `seq`, so one program serves pristine
-  ##   library and changed one alike.
+  ##   Serialiser is `cells.nim`, which suites run against pin, so it reads both cell shapes
+  ##   and program itself holds nothing to test.
 
 
 proc tablesOf(
@@ -337,7 +318,8 @@ proc tablesOf(
     lines = expressions.mapIt("tables.add cells(" & it & ")").join("\n")
   writeFile(source, TABLES_PROGRAM.replace("$1", lines))
   var args = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on", "--noNimblePath",
-    "-d:release", "--path:" & library, "--nimcache:" & directory / "cache_" & side & "_" & a.name,
+    "-d:release", "--path:" & library, "--path:" & getCurrentDir() / "src",
+    "--nimcache:" & directory / "cache_" & side & "_" & a.name,
     "-o:" & directory / "tables_" & side & "_" & a.name, "-r"]
   args.add algebraDefines(a)
   args.add source
