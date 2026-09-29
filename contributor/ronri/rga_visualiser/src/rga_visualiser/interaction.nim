@@ -561,12 +561,13 @@ func choiceAt*(centre, cursor: ScreenPosition): Option[DragChoice] =
   ##   Distance is unbounded, so overshooting wedge still picks it, which makes fast
   ##   confident throw work.
   let
-    dx = cursor.x - centre.x
-    dy = cursor.y - centre.y
-  if dx*dx + dy*dy < PIXELS_MENU_DEADZONE*PIXELS_MENU_DEADZONE: return none(DragChoice)
+    offset_x = cursor.x - centre.x
+    offset_y = cursor.y - centre.y
+  if offset_x*offset_x + offset_y*offset_y < PIXELS_MENU_DEADZONE*PIXELS_MENU_DEADZONE:
+    return none(DragChoice)
   let compass =
-    if abs(dx) > abs(dy): (if dx > 0.0: Compass.East else: Compass.West)
-    else: (if dy > 0.0: Compass.South else: Compass.North)
+    if abs(offset_x) > abs(offset_y): (if offset_x > 0.0: Compass.East else: Compass.West)
+    else: (if offset_y > 0.0: Compass.South else: Compass.North)
   for choice in DragChoice:
     if compassOf(choice) == compass: return some(choice)
   none(DragChoice)
@@ -661,9 +662,9 @@ func updateCursor*(interaction: var Interaction; x, y: float) =
   interaction.cursor = ScreenPosition(x: x, y: y, depth: 0.0)
   if interaction.is_press_still:
     let
-      dx = interaction.cursor.x - interaction.pressed.x
-      dy = interaction.cursor.y - interaction.pressed.y
-    if dx*dx + dy*dy > PIXELS_CLICK_SLOP*PIXELS_CLICK_SLOP:
+      offset_x = interaction.cursor.x - interaction.pressed.x
+      offset_y = interaction.cursor.y - interaction.pressed.y
+    if offset_x*offset_x + offset_y*offset_y > PIXELS_CLICK_SLOP*PIXELS_CLICK_SLOP:
       interaction.is_press_still = false
 
 
@@ -1248,9 +1249,9 @@ func updateDrag*(
   #   `index_source` is never touched; see `PIXELS_MENU_DISENGAGE`.
   if interaction.menu.isSome:
     let
-      dx_menu = interaction.cursor.x - interaction.menu.get.x
-      dy_menu = interaction.cursor.y - interaction.menu.get.y
-    if dx_menu*dx_menu + dy_menu*dy_menu >
+      offset_x_menu = interaction.cursor.x - interaction.menu.get.x
+      offset_y_menu = interaction.cursor.y - interaction.menu.get.y
+    if offset_x_menu*offset_x_menu + offset_y_menu*offset_y_menu >
         PIXELS_MENU_DISENGAGE*PIXELS_MENU_DISENGAGE:
       interaction.menu = none(ScreenPosition)
       interaction.index_disengaged = interaction.index_destination
@@ -1281,9 +1282,9 @@ func updateDrag*(
   #   On presence alone, slow drag over plane's disc spanning phone screen opened menu
   #   mid-gesture and built nothing.
   let
-    dx = interaction.cursor.x - interaction.settled.x
-    dy = interaction.cursor.y - interaction.settled.y
-  if dx*dx + dy*dy > PIXELS_TAP_SLOP*PIXELS_TAP_SLOP:
+    offset_x = interaction.cursor.x - interaction.settled.x
+    offset_y = interaction.cursor.y - interaction.settled.y
+  if offset_x*offset_x + offset_y*offset_y > PIXELS_TAP_SLOP*PIXELS_TAP_SLOP:
     interaction.entered = now
     interaction.settled = interaction.cursor
 

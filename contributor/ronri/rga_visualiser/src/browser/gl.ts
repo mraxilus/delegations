@@ -409,8 +409,8 @@ const SOURCE_VERTEX_DISC = `
     float depth = dot(to_centre, uForward);
     float reach_across = length(vec2(across, depth));
     float reach_up = length(vec2(up, depth));
-    vec2 lo = vec2(-1.0);
-    vec2 hi = vec2(1.0);
+    vec2 corner_min = vec2(-1.0);
+    vec2 corner_max = vec2(1.0);
     if (min(reach_across, reach_up) > radius) {
       float bearing_across = atan(across, depth);
       float spread_across = asin(radius/reach_across);
@@ -418,12 +418,12 @@ const SOURCE_VERTEX_DISC = `
       float spread_up = asin(radius/reach_up);
       float wide = uTangentHalfView*uAspect;
       float tall = uTangentHalfView;
-      lo = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
+      corner_min = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
         tanBounded(bearing_up - spread_up)/tall), -1.0, 1.0);
-      hi = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
+      corner_max = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
         tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
     }
-    vView = 0.5*(lo + hi) + 1.41421356*aCorner*0.5*(hi - lo);
+    vView = 0.5*(corner_min + corner_max) + 1.41421356*aCorner*0.5*(corner_max - corner_min);
     float centre_depth = clamp(log2(max(depth, uDepthNear)/uDepthNear)*uDepthLog - 1.0,
       -1.0, 1.0);
     gl_Position = vec4(vView, centre_depth, 1.0);

@@ -443,12 +443,12 @@ func ribbonAlong(
     let
       before = spine[max(0, i - 1)]
       after = spine[min(count - 1, i + 1)]
-      dx = after.x - before.x
-      dy = after.y - before.y
-      span = hypot(dx, dy)
+      offset_x = after.x - before.x
+      offset_y = after.y - before.y
+      span = hypot(offset_x, offset_y)
     if span > 0.0:
-      normal_x = -dy/span
-      normal_y = dx/span
+      normal_x = -offset_y/span
+      normal_y = offset_x/span
     let
       falling = pow(1.0 - float(i)/float(count - 1), FALLOFF_MARKER_COMET)
       half = 0.5*(width_tail + (width_head - width_tail)*falling)
@@ -468,15 +468,15 @@ func ribbonAlong(
 
   # Round head, sweeping from far side through straight ahead to near one.
   let
-    dx = spine[0].x - spine[1].x
-    dy = spine[0].y - spine[1].y
-    ahead = hypot(dx, dy)
+    offset_x = spine[0].x - spine[1].x
+    offset_y = spine[0].y - spine[1].y
+    ahead = hypot(offset_x, offset_y)
   var
     forward_x = 0.0
     forward_y = 0.0
   if ahead > 0.0:
-    forward_x = dx/ahead
-    forward_y = dy/ahead
+    forward_x = offset_x/ahead
+    forward_y = offset_y/ahead
   let half_head = 0.5*width_head
   # Recover head normal from outline's first point rather than variable kept across walk.
   let
@@ -590,9 +590,9 @@ func cometFor*(
   ##   same `ribbonAlong`, so reader meets one vocabulary for direction.
   ##   None where two coincide: cursor resting on own source, ordinary moment.
   let
-    dx = head.x - tail.x
-    dy = head.y - tail.y
-    length = hypot(dx, dy)
+    offset_x = head.x - tail.x
+    offset_y = head.y - tail.y
+    length = hypot(offset_x, offset_y)
   if length <= 0.0: return
   # Light all of band shorter than comet, rather than reaching past its source.
   let reach = min(LENGTH_MARKER_COMET, length)
@@ -600,8 +600,8 @@ func cometFor*(
   for i in 0 ..< SEGMENTS_MARKER_PULSE:
     let back = reach*float(i)/float(SEGMENTS_MARKER_PULSE - 1)
     spine[i] = ScreenPosition(
-      x: head.x - dx/length*back,
-      y: head.y - dy/length*back,
+      x: head.x - offset_x/length*back,
+      y: head.y - offset_y/length*back,
       depth: head.depth,
     )
   var outline: array[POINTS_MARKER_PULSE, ScreenPosition]
@@ -653,10 +653,10 @@ func labelInView*(x, y, half_width, width, height: float): (float, float) =
   ##   past edge: bands' label is centred on view's left edge itself.
   let
     half_height = 0.5*HEIGHT_MARKER_LABEL
-    (lo_x, hi_x) = (MARGIN_LABEL_EDGE + half_width, width - MARGIN_LABEL_EDGE - half_width)
-    (lo_y, hi_y) = (MARGIN_LABEL_EDGE + half_height, height - MARGIN_LABEL_EDGE - half_height)
-    held_x = if lo_x > hi_x: 0.5*width else: clamp(x, lo_x, hi_x)
-    held_y = if lo_y > hi_y: 0.5*height else: clamp(y, lo_y, hi_y)
+    (min_x, max_x) = (MARGIN_LABEL_EDGE + half_width, width - MARGIN_LABEL_EDGE - half_width)
+    (min_y, max_y) = (MARGIN_LABEL_EDGE + half_height, height - MARGIN_LABEL_EDGE - half_height)
+    held_x = if min_x > max_x: 0.5*width else: clamp(x, min_x, max_x)
+    held_y = if min_y > max_y: 0.5*height else: clamp(y, min_y, max_y)
   (held_x, held_y)
 
 
@@ -665,9 +665,10 @@ func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, 
   ##   Liang–Barsky, both ends free, where `fractionLeavingView` clips outward from tail
   ##   already inside.
   var (f0, f1) = (0.0, 1.0)
-  let (dx, dy) = (head.x - tail.x, head.y - tail.y)
+  let (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
   for (rate, room) in [
-    (-dx, tail.x), (dx, float(width) - tail.x), (-dy, tail.y), (dy, float(height) - tail.y)
+    (-offset_x, tail.x), (offset_x, float(width) - tail.x),
+    (-offset_y, tail.y), (offset_y, float(height) - tail.y),
   ]:
     if rate == 0.0:
       if room < 0.0: return
@@ -720,20 +721,20 @@ func placeLabelBesideLine(
   elif ends[1].isSome: (a, b, at_support) = (ends[1].get[0], ends[1].get[1], ends[1].get[0])
   else: (a, b, at_support) = (ends[0].get[1], ends[0].get[0], ends[0].get[0])
   let
-    (dx, dy) = (b.x - a.x, b.y - a.y)
-    length = sqrt(dx*dx + dy*dy)
+    (offset_x, offset_y) = (b.x - a.x, b.y - a.y)
+    length = sqrt(offset_x*offset_x + offset_y*offset_y)
   if length < 1.0e-6: return
   let clipped = clipToView(a, b, width, height)
   if clipped.isNone: return
   let
     (f0, f1) = clipped.get
     inset = min(MARGIN_LABEL_VIEW/length, 0.5*(f1 - f0))
-    f_support = ((at_support.x - a.x)*dx + (at_support.y - a.y)*dy)/(length*length)
+    f_support = ((at_support.x - a.x)*offset_x + (at_support.y - a.y)*offset_y)/(length*length)
     f = clamp(f_support, f0 + inset, f1 - inset)
   marker.has_label = true
   marker.is_label_beside = true
-  marker.label_at = ScreenPosition(x: a.x + f*dx, y: a.y + f*dy, depth: 1.0)
-  (marker.label_away_x, marker.label_away_y) = (dy/length, -dx/length)
+  marker.label_at = ScreenPosition(x: a.x + f*offset_x, y: a.y + f*offset_y, depth: 1.0)
+  (marker.label_away_x, marker.label_away_y) = (offset_y/length, -offset_x/length)
 
 
 func placeLabelAboveTopmost(
@@ -861,10 +862,10 @@ func awayFromScreen*(point, first, second: ScreenPosition): float =
   ##   Never distance between two rails' drawn endpoints: `fractionLeavingView` cuts each
   ##   at own fraction, so those measure nothing.
   let
-    (dx, dy) = (second.x - first.x, second.y - first.y)
-    length = hypot(dx, dy)
+    (offset_x, offset_y) = (second.x - first.x, second.y - first.y)
+    length = hypot(offset_x, offset_y)
   if length <= 0.0: return hypot(point.x - first.x, point.y - first.y)
-  abs((point.x - first.x)*dy - (point.y - first.y)*dx)/length
+  abs((point.x - first.x)*offset_y - (point.y - first.y)*offset_x)/length
 
 
 func fractionLeavingView*(tail, head: ScreenPosition; width, height: int): float =
@@ -877,14 +878,14 @@ func fractionLeavingView*(tail, head: ScreenPosition; width, height: int): float
   ##     Bounding reach at edge makes halves comparable and whole growth visible.
   ##   Zero where segment heads away from viewport it already left.
   result = 1.0
-  let (dx, dy) = (head.x - tail.x, head.y - tail.y)
+  let (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
   # Bound parameter at each edge only where segment crosses it *outward*.
   template limit(rate, room: float) =
     if rate > 0.0: result = min(result, room/rate)
-  limit(-dx, tail.x)
-  limit(dx, float(width) - tail.x)
-  limit(-dy, tail.y)
-  limit(dy, float(height) - tail.y)
+  limit(-offset_x, tail.x)
+  limit(offset_x, float(width) - tail.x)
+  limit(-offset_y, tail.y)
+  limit(offset_y, float(height) - tail.y)
   result = max(result, 0.0)
 
 
