@@ -2930,9 +2930,9 @@ One suite is run from three thin entry points that `koch` runs through testament
 
 | Entry point | Backend | Capacities | Why |
 |-------------|---------|-----------|-----|
-| `t4d.nim` | C | Default | The desktop build, as shipped |
-| `t4d_browser.nim` | JS | Default, 4 history steps | The browser build's own backend |
-| `t4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
+| `test_4d.nim` | C | Default | The desktop build, as shipped |
+| `test_4d_browser.nim` | JS | Default, 4 history steps | The browser build's own backend |
+| `test_4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
 
 The JS row is not a formality: a rule reached through two mechanisms is held together only where
 both run. It keeps 4 history steps, because the History laws say nothing of the backend. Measured
@@ -2946,7 +2946,7 @@ suite gathers the joiners once instead. The JS entry point declares `targets: "j
 of its own. So `koch test` compiles it with the JS backend and runs the result through node. Its
 file, `tests/suites.nim`, imports one module for each suite from `tests/suites/`. Top-level tests
 compile into the init function of their module, so one module made the suite one C function. Cold on
-four cores, `gcc` took 122 s on it, and the split `t4d` compiles in 12.6 s (2026-09-24).
+four cores, `gcc` took 122 s on it, and the split `test_4d` compiles in 12.6 s (2026-09-24).
 
 **The suites test rules, and a second layer drives events.** A rule bug earns a suite case, and a
 wiring bug earns a driven check, at the layer that the bug lived at. That is `tools/drive/` for

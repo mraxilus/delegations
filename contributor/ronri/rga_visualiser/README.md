@@ -97,10 +97,10 @@ Commit Mono splits its ligatures. Most ride on `calt` and draw unasked. The arro
 come from `ss01` and `ss02`, which the page asks for by name. The desktop draws none of them,
 because Dear ImGui shapes no text. See Browser front-end in `PROVENANCE.md`.
 
-Tests run as three configurations of one shared suite. `t4d` runs at shipped capacities on the C
-backend. `t4d_small` runs at capacities small enough that the tests of the suite reach them.
-`t4d_browser` runs on the JS backend, and it is the one that holds the formatting of the two
-backends to the same rule.
+Tests run as three configurations of one shared suite. `test_4d` runs at shipped capacities on
+the C backend. `test_4d_small` runs at capacities small enough that the tests of the suite reach
+them. `test_4d_browser` runs on the JS backend, and it is the one that holds the formatting of the
+two backends to the same rule.
 
 ## Layout
 
@@ -127,8 +127,9 @@ tools/build.nim               the build driver: declare, types, web, drive, desk
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/suites/                 one module for each suite, and the pool they share
-tests/t4d.nim t4d_small.nim   C backend, shipped and small capacities
-tests/t4d_browser.nim         JS backend, same suite
+tests/test_4d.nim             C backend, shipped capacities
+tests/test_4d_small.nim       C backend, small capacities
+tests/test_4d_browser.nim     JS backend, same suite
 deps/                         PGA library, restored by Atlas; never committed
 ```
 
