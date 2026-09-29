@@ -4,8 +4,8 @@ The benchmark and standing gap list for `pga`. That library is projective geomet
 replicated from *Projective Geometric Algebra Illuminated* by Eric Lengyel, and developed in
 [replications][replications].
 
-The goal is one question, kept answered at library head: how far is each operation from what
-it could spend, and which change closes the distance? Every operation that the library exports
+The goal is one question, kept answered at library head. How far is each operation from what it
+could spend, and which change closes the distance? Every operation that the library exports
 is a measurand. Each one carries two lower bounds. The multivector lower bound is what the
 algebra demands of any dense implementation. The type optimised lower bound is what a
 hand-rolled typed reference spends, derived from Lengyel's own forms.
@@ -47,7 +47,7 @@ The words are in [`GLOSSARY.md`](GLOSSARY.md).
 `drive` fails while the pin lags library head. To follow head:
 
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
-   `nim r koch deps`.
+   `nim r koch fetch-deps`.
 2. Re-take every measurement: `baseline`, then `bench`, then `gaps`.
 3. Re-quote each change, design and note that `drive` names, then run `trial all`.
 4. Run `pages`, publish each page that `drive` names, and record each one with

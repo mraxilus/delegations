@@ -356,7 +356,9 @@ alone, because nothing could then say whether it still holds at head.
 (the base design first), and measures the copy against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
-lands on both. It then checks the claims. The document names the pin and a digest of what it
+lands on both.
+
+The trial then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So a trial is current
 exactly while its edits are. Trials measure the two
 typed algebras, rga4d and cga5d, which both lower bounds cover.
@@ -377,9 +379,10 @@ The change of `cayley-derivation` reproduces its draft byte for byte, and
 `designs/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
 and cga5d.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`, `Designs` and
-`Trials`: parse, quote and digest rules, claim kinds, pairing of runs, NaN shares, the success
-line of the compiler, and a digest that moves with edits and never with prose.
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`, `Designs`,
+`Trials` and `Cells`. They cover parse, quote and digest rules, and claim kinds. They also cover
+pairing of runs, NaN shares, the success line of the compiler, and the table serialiser at pin.
+A digest moves with edits, and never with prose.
 
 ## Notes
 
