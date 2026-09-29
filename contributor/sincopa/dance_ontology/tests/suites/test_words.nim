@@ -10,7 +10,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, options, os, strformat, strutils, unittest]
+import std/[algorithm, options, os, strformat, strutils, tables, unittest]
 
 import std/[json, jsonutils]
 import ../../simulation/[body, read, readings, rig, verdicts, words]
@@ -120,3 +120,45 @@ suite "the report renders from its kept readings":
     let text = render()
     check lacking() == 0
     check text == readFile(REPORT)
+
+
+suite "kept readings of other physics are read again":
+  ## `keptReadings` gives readings only where their stamp is tree's (`physics`), and none
+  ##   otherwise, so verb reads them again.
+  ##   Stamp is read before shape.  Rename in `simulation/` renames readings' fields and
+  ##     changes stamp, so file of other stamp may be of other shape.  Read by shape
+  ##     first, such file stops verb, and nothing reads again.
+  let directory = getTempDir() / "dance_readings_test"
+  removeDir(directory)
+  createDir(directory)
+
+  func sample(stamp: string): Readings =
+    ## One sweep and one rung, under `stamp`.
+    result = Readings(stamp: stamp)
+    result.sweeps["sweep"] = SweepRead(restHolds: true)
+    result.rungs["rung"] = RungRead(found: true, apart: 0.5)
+
+  test "readings of this physics are read as kept":
+    let path = directory / "this.json"
+    keep(sample(physics()), path)
+    let got = keptReadings(path)
+    check got.stamp == physics()
+    check got.sweeps["sweep"].restHolds
+    check got.rungs["rung"].apart == 0.5
+
+  test "readings of other physics are none":
+    let path = directory / "other.json"
+    keep(sample("other"), path)
+    check keptReadings(path) == Readings()
+
+  test "readings of other physics and other shape are none":
+    let
+      path = directory / "shape.json"
+      node = sample("other").toJson
+    node["sweeps"]["sweep"]["rest_holds"] = node["sweeps"]["sweep"]["restHolds"]
+    node["sweeps"]["sweep"].delete("restHolds")
+    writeFile(path, $node)
+    check keptReadings(path) == Readings()
+
+  test "missing readings are none":
+    check keptReadings(directory / "missing.json") == Readings()

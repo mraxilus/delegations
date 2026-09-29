@@ -1703,6 +1703,19 @@ three breaks made on purpose. One changed a word of the renderer, one deleted a 
 changed a number that the report prints. The law does not read the stamp, so readings of older
 physics still render the report they gave.
 
+**The stamp of the kept readings is read before their fields.** A rename in `simulation/` changes
+the names of the fields and the stamp. So a kept file of other physics can have other fields.
+`keptReadings` reads the stamp from the parsed file, and it converts only a file of this physics. A
+file with another stamp gives no readings, whatever its fields, and `verdicts` reads each reading
+again. A file with this stamp and other fields still stops the verb, because its stamp says that it
+is current.
+
+Rejected: a conversion that allows missing and extra fields. It would also accept a broken file of
+this stamp, with zeros for the readings that it lacks.
+
+Verified by `suites/test_words.nim`, suite "kept readings of other physics are read again". Its law
+of other fields failed with `ValueError` where the file was converted before the stamp was read.
+
 **The two recordings that pages read are kept with a stamp too.** `design/modelled.json` and
 `design/rig.json` each carry one (`design/stamps.nim`). It is a digest of the physics of the
 readings of the report, and of the source of the verb. A verb whose stamp is the same records
