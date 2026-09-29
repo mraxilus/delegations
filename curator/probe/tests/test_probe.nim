@@ -2,8 +2,6 @@ discard """
 action: run
 cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
 matrix: "-d:probe.modulus=4; -d:probe.modulus=5"
-batchable: true
-joinable: true
 """
 ## Replicate ring laws of `probe.nim` header table, in two ring sizes.
 
