@@ -17,4 +17,4 @@ matrix: "-d:nimUnittestAbortOnError:on -d:visualiser.history_capacity=4"
 
 {.experimental: "strictFuncs".}
 
-include "./suites.nim"
+include "suites.nim"

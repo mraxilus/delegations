@@ -1,6 +1,6 @@
 discard """
 action: run
-cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
+cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
 """
 ## Run shared suite at shipped capacities, on C backend desktop entry point uses.
 ##
@@ -8,4 +8,4 @@ cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
 
 {.experimental: "strictFuncs".}
 
-include "./suites.nim"
+include "suites.nim"
