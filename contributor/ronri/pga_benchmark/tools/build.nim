@@ -12,8 +12,8 @@
 ##   | baseline  | inspect, then record static measurements as                          |
 ##   |           | `baseline/static_<algebra>.json`                                     |
 ##   | guard     | compare last inspect against baseline; any count grown is finding    |
-##   | trial     | try one change or design at pin, or `all`, and record what it        |
-##   |           | measured as `trials/<name>.json`                                     |
+##   | trial     | try one change or design at pin, `stale` ones, or `all`, and record  |
+##   |           | what each measured as `trials/<name>.json`                           |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
 ##   | published | record URL and digest of page just published, e.g.                   |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
@@ -562,14 +562,25 @@ func machine(): string =
 
 
 proc trialOf(which: string) =
-  ## Try one change or design at pin, or every one for `all`; write its trial document.
+  ## Try one change or design at pin, every one for `all`, or those `drive` would name for
+  ##   `stale`; write each trial document.
   var findings: seq[Finding]
   let
     changes = readChanges(findings)
     designs = readDesigns(findings)
     candidates = candidatesOf(changes, designs, findings)
   if findings.len > 0: report(findings)
-  let selected = if which == "all": candidates else: candidates.filterIt(it.name == which)
+  let
+    pin = pgaCommit()
+    tried = readTrials()
+    selected = case which
+      of "all": candidates
+      of "stale": candidates.filterIt(it.name notin tried or checkTrial(tried[it.name], pin,
+        editsDigest(it.changes, it.claims, it.programs), "").len > 0)
+      else: candidates.filterIt(it.name == which)
+  if selected.len == 0 and which == "stale":
+    echo "Every trial is current."
+    return
   if selected.len == 0: raise newException(ValueError, "No change or design named `" & which &
     "`.")
   let chain = Toolchain(library: LIBRARY, work: BUILD / "trials", nim: nimCommit(),
