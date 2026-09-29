@@ -255,8 +255,8 @@ var
     ## ordering needs pass.
   CLOCK_PULSE: PulseClock ## Each selected object's orientation-pulse phase, held across
     ## frames.
-    ## Module scope as `HISTORY` is: too large for stack, outlives frames.
-  HISTORY: History ## Undo/redo timeline of scene-content edits.
+    ## Module scope as `HISTORY_DESKTOP` is: too large for stack, outlives frames.
+  HISTORY_DESKTOP: History ## Undo/redo timeline of scene-content edits.
     ## Too large for stack (`history.CAPACITY_HISTORY * sizeof(Scene)`).
     ## Zeroed placeholder until `main` seeds it via `initHistory` once startup scene is
     ## built.
@@ -273,7 +273,7 @@ var
   #   What one frame assembled is still readable through next; see `arena.ArenaSwap`.
   BUFFER_ARENA_SWAP_FIRST: array[CAPACITY_ARENA_SWAP, byte]
   BUFFER_ARENA_SWAP_SECOND: array[CAPACITY_ARENA_SWAP, byte]
-  ARENA_SWAP = initArenaSwap(BUFFER_ARENA_SWAP_FIRST, BUFFER_ARENA_SWAP_SECOND)
+  ARENA_SWAP_DRAW = initArenaSwap(BUFFER_ARENA_SWAP_FIRST, BUFFER_ARENA_SWAP_SECOND)
 
 # Carve pixel readback every export reuses, once, from permanent arena.
 var PIXELS_READBACK = push[uint8](ARENA_PERMANENT, WIDTH_EXPORT_MAX*HEIGHT_EXPORT_MAX*3)
@@ -486,7 +486,7 @@ proc assembleMeshes(
   # Carve where grid assembles pieces before emitting, from frame pair.
   #   Per-frame scratch that arena was waiting for, handed back clean at top of every
   #   frame.
-  let scratch = ARENA_SWAP.current.push[:DrawScratch](1)
+  let scratch = ARENA_SWAP_DRAW.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
   let bounds = some(
     camera.viewBoundsFor(scale, float(width)/float(max(height, 1)), REACH_SCENE)
@@ -920,11 +920,11 @@ proc renderFrame(
     # Step that lands says nothing, as page's own does: scene and view both move, and
     #   that is answer. Only refusal earns sentence, and only key can reach one --
     #   either button greys out where its side of timeline is empty.
-    if not stepHistory(panel, scene, camera, HISTORY, is_undo):
+    if not stepHistory(panel, scene, camera, HISTORY_DESKTOP, is_undo):
       panel.say(stepMessage(is_undo), now)
-  layoutPanel(panel, scene, camera, HISTORY, interaction.speedFlying(camera), now)
+  layoutPanel(panel, scene, camera, HISTORY_DESKTOP, interaction.speedFlying(camera), now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
-  layoutChipRow(panel, scene, camera, HISTORY, now)
+  layoutChipRow(panel, scene, camera, HISTORY_DESKTOP, now)
   layoutHelp(panel, path_help)
   # Outcome floats over scene last of all, so nothing drawn this frame covers it.
   layoutMessage(panel, now)
@@ -959,7 +959,7 @@ proc renderFrame(
   # Place floating menu here, with this frame's transform and before meshes are assembled.
   #   Delete pressed on it then leaves scene this frame draws.
   layoutSelectionMenu(
-    panel, scene, camera, HISTORY,
+    panel, scene, camera, HISTORY_DESKTOP,
     anchorOfSelection(panel, scene, view_projection, int(width), int(height), scale),
     now,
   )
@@ -1203,7 +1203,7 @@ proc handleEvent(
       elif outcome.index_created.isSome:
         panel.selection.selectOnly(outcome.index_created.get)
         panel.hideSelectionMenu()
-        HISTORY.record(scene, camera)
+        HISTORY_DESKTOP.record(scene, camera)
       elif outcome.choice == some(DragChoice.More) and outcome.operands.isSome:
         # Hand pair to apply picker, way out of three operations into other twenty-four.
         #   Both operands selected in drag order (m then n), picker opened where wheel was.
@@ -1845,7 +1845,7 @@ proc runInteractive(
     # Turn frame pair over.
     #   This frame carves into block reclaimed here, while previous frame's block stays
     #   readable until next swap.
-    ARENA_SWAP.swap()
+    ARENA_SWAP_DRAW.swap()
     # Turn frame's measurements over with it, on same two-frame lifetime; see `timings`.
     openFrameTimings()
 
@@ -2000,7 +2000,7 @@ proc runStoryboard(
     # Turn frame pair over here as interactive loop turns it.
     #   Each render carves its own `DrawScratch`, and capture run that never swaps
     #   overflows arena within few sub-frames.
-    ARENA_SWAP.swap()
+    ARENA_SWAP_DRAW.swap()
     renderFrame(window, renderer, panel, scene, camera, interaction_disabled, now, are_dimmed)
 
   template captureGif(now: float) =
@@ -2227,7 +2227,7 @@ proc main() =
     constructSeeds(scene, now_startup)
     scene.replayFrom(now_startup)
   if options.is_filled: fillSceneForBenchmark(scene, now_startup)
-  HISTORY.initHistory(scene, camera)
+  HISTORY_DESKTOP.initHistory(scene, camera)
 
   if len(options.path_storyboard) > 0:
     runStoryboard(window, renderer, options.path_storyboard, panel, scene, camera)

@@ -301,8 +301,8 @@ template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
 #[ Panel State ]#
 
 var
-  SCENE: Scene
-  CAMERA: Camera
+  SCENE_PAGE: Scene
+  CAMERA_PAGE: Camera
   MESHES_FURNITURE, MESHES: MeshSet ## Hold meshes at module scope, reused every frame.
     ## Cleared through `clearMeshes` rather than declared per frame.
     ## `clearMeshes` resets each mesh's `count_vertices`, not storage, mirroring
@@ -338,7 +338,7 @@ var
     ## synchronous pass, and marker call always shapes fresh and overwrites this.
     ##   Key carries every non-scene input, so pulse asked at other settings shapes for
     ##   itself.
-  INTERACTION = Interaction(is_enabled: true) ## Picking and drag, always live here.
+  INTERACTION_PAGE = Interaction(is_enabled: true) ## Picking and drag, always live here.
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick] ## Pick made by pointer since camera was last offered.
     ## Consumed by `framing.offerAim` in `nimBuildFrame`; see `nimPickByPointer`.
@@ -360,7 +360,7 @@ var
     ## Watermark rather than scan of all `OBJECTS_MAX` stamps per frame; only rises.
   BORNS: array[OBJECTS_MAX, float] ## Birth stamps, one per handle, moment object is added.
     ## Read by `nimBuildFrame` so it animates in as desktop's newly-added object does.
-  SELECTION: Selection ## Objects picked right now, in pick order.
+  SELECTION_PAGE: Selection ## Objects picked right now, in pick order.
     ## Each ringed by presentation layer's `refreshOverlay`.
     ## Replaced by every construction path, driven by touch/click gestures through
     ## `nimSelectOnly`/`nimSelectToggle`/`nimSelectClear`.
@@ -377,13 +377,13 @@ var
   TWEEN_CAMERA: CameraTween ## Carries camera toward whatever is being built or edited.
     ## See `camera.CameraTween`; aimed and advanced inside `nimBuildFrame`, from same rule
     ## desktop uses.
-  HISTORY: History ## Undo/redo timeline of scene-content edits.
-    ## Scoped as `visualiser.HISTORY` is; see `history.nim`.
-    ## Seeded via `initHistory` wherever `SCENE` is replaced (`nimInit`, `nimLoadDemo`,
+  HISTORY_PAGE: History ## Undo/redo timeline of scene-content edits.
+    ## Scoped as `main.HISTORY_DESKTOP` is; see `history.nim`.
+    ## Seeded via `initHistory` wherever `SCENE_PAGE` is replaced (`nimInit`, `nimLoadDemo`,
     ## `nimSceneClear`).
   PREVIEW_EDIT = none(Multivector) ## Multivector open edit session is staging.
   RADIUS_PREVIEW_EDIT = RADIUS_OBJECT_DEFAULT ## Radius that session stages beside it.
-    ## Rendered every frame like live object but never added to `SCENE`:
+    ## Rendered every frame like live object but never added to `SCENE_PAGE`:
     ## `nimSceneHandles`, undo, save, picking never see it.
     ## Serves both session modes, composing and editing.
     ## None where no session is open, or last committed or was abandoned.
@@ -577,19 +577,19 @@ proc placeSeeds(now: float) =
   ##   Five seeds, nothing derived; mirrors `visualiser.main`'s startup.
   ##   Arrives as replay, like demo and loaded file: watching it build states that these
   ##   were placed one at time and everything else is derived from them.
-  SCENE.restoreFrom(initScene())
-  constructSeeds(SCENE, now)
-  SCENE.replayFrom(now)
-  for handle in 0 ..< SCENE.len: stampBorn(handle, SCENE.bornAt(handle))
+  SCENE_PAGE.restoreFrom(initScene())
+  constructSeeds(SCENE_PAGE, now)
+  SCENE_PAGE.replayFrom(now)
+  for handle in 0 ..< SCENE_PAGE.len: stampBorn(handle, SCENE_PAGE.bornAt(handle))
 
 
 proc nimInit(now: cfloat; width, height: cint) {.exportc.} =
   ## Build default interactive scene and place camera at default orbit desktop opens on.
   ##   `width` x `height` is canvas's frame, which opening fits seed scene across.
   placeSeeds(float(now))
-  CAMERA = initCameraDefault(int(width), int(height))
-  SELECTION.clear()
-  HISTORY.initHistory(SCENE, CAMERA)
+  CAMERA_PAGE = initCameraDefault(int(width), int(height))
+  SELECTION_PAGE.clear()
+  HISTORY_PAGE.initHistory(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimSetCulling(is_on: bool) {.exportc.} =
@@ -611,10 +611,10 @@ proc nimLoadDemo(scale_ordinal: cint; now: cfloat; width, height: cint) {.export
   ##     keeps of its own about scene.
   ##   `scale_ordinal` names one of `orrery.ScaleOrrery`'s three sizes; see `nimDemoObjects`.
   let clock = float(now)
-  showOrrery(SCENE, CAMERA, int(width), int(height), ScaleOrrery(scale_ordinal), clock)
-  for handle in 0 ..< SCENE.len: stampBorn(handle, SCENE.bornAt(handle))
-  SELECTION.clear()
-  HISTORY.initHistory(SCENE, CAMERA)
+  showOrrery(SCENE_PAGE, CAMERA_PAGE, int(width), int(height), ScaleOrrery(scale_ordinal), clock)
+  for handle in 0 ..< SCENE_PAGE.len: stampBorn(handle, SCENE_PAGE.bornAt(handle))
+  SELECTION_PAGE.clear()
+  HISTORY_PAGE.initHistory(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimDemoScales(): seq[cint] {.exportc.} =
@@ -635,7 +635,7 @@ proc nimDemoScaleDefault(): cint {.exportc.} = cint(ord(SCALE_ORRERY_DEFAULT))
 
 #[ Scene Inspection ]#
 
-proc nimSceneCount(): cint {.exportc.} = cint(SCENE.len)
+proc nimSceneCount(): cint {.exportc.} = cint(SCENE_PAGE.len)
   ## Report how many objects are alive in scene.
 
 proc nimSceneCapacity(): cint {.exportc.} = cint(OBJECTS_MAX)
@@ -645,7 +645,7 @@ proc nimSceneRevision(): cint {.exportc.} =
   ## Report how many times scene's drawn content has changed; see `scene.revision`.
   ##   For presentation layer holding something derived from scene: object-pool strip
   ##   redraws its cells when this moves and at no other time.
-  cint(SCENE.revision)
+  cint(SCENE_PAGE.revision)
 
 
 proc nimSceneHandles(): seq[cint] {.exportc.} =
@@ -653,8 +653,8 @@ proc nimSceneHandles(): seq[cint] {.exportc.} =
   ##   Same dense-position-to-handle mapping `panel.layoutOperation`'s combo boxes rely on.
   ##   Walks handles directly rather than through `pairs`: that iterator yields `Object` per
   ##   live handle, and under JS backend constructing `Object` copies whole `Scene` by value.
-  for handle in 0 ..< SCENE.bound:
-    if SCENE.isAlive(handle): result.add(cint(handle))
+  for handle in 0 ..< SCENE_PAGE.bound:
+    if SCENE_PAGE.isAlive(handle): result.add(cint(handle))
 
 
 proc nimSceneHandlesCreated(): seq[cint] {.exportc.} =
@@ -664,25 +664,25 @@ proc nimSceneHandlesCreated(): seq[cint] {.exportc.} =
   ##   Own export rather than reordering `nimSceneHandles`, whose callers want dense
   ##   positions their combo boxes index.
   var handles: array[OBJECTS_MAX, int]
-  let count = SCENE.handlesCreated(handles)
+  let count = SCENE_PAGE.handlesCreated(handles)
   for position in 0 ..< count: result.add(cint(handles[position]))
 
 
-proc nimIsAlive(handle: cint): bool {.exportc.} = SCENE.isAlive(int(handle))
+proc nimIsAlive(handle: cint): bool {.exportc.} = SCENE_PAGE.isAlive(int(handle))
   ## Report whether handle holds live object.
 
 proc nimObjectLabel(handle: cint): cstring {.exportc.} =
   ## Report object's display label, by handle.
-  cstring(toText(SCENE.labelAt(int(handle))))
+  cstring(toText(SCENE_PAGE.labelAt(int(handle))))
 
 
-proc nimObjectInk(handle: cint): cint {.exportc.} = cint(SCENE.inkAt(int(handle)))
+proc nimObjectInk(handle: cint): cint {.exportc.} = cint(SCENE_PAGE.inkAt(int(handle)))
   ## Report object's palette slot, by handle.
 
-proc nimObjectVisible(handle: cint): bool {.exportc.} = SCENE.isVisible(int(handle))
+proc nimObjectVisible(handle: cint): bool {.exportc.} = SCENE_PAGE.isVisible(int(handle))
   ## Report object's visibility, by handle.
 
-proc nimObjectRadius(handle: cint): cfloat {.exportc.} = cfloat(SCENE.radiusAt(int(handle)))
+proc nimObjectRadius(handle: cint): cfloat {.exportc.} = cfloat(SCENE_PAGE.radiusAt(int(handle)))
   ## Report object's drawn radius, in world units, by handle.
 
 proc nimDefaultRadius(): cfloat {.exportc.} = cfloat(RADIUS_OBJECT_DEFAULT)
@@ -698,13 +698,13 @@ proc nimObjectBorn(handle: cint): cfloat {.exportc.} = cfloat(BORNS[int(handle)]
 proc nimObjectKindWord(handle: cint): cstring {.exportc.} =
   ## Report object's kind, by handle, in words `scene.kindText` names it.
   ##   Same words desktop status line uses, same call.
-  cstring(kindText(SCENE.geometryOf(int(handle))))
+  cstring(kindText(SCENE_PAGE.geometryOf(int(handle))))
 
 
 proc nimObjectCoefficients(handle: cint): seq[float] {.exportc.} =
   ## Report all sixteen basis coefficients of object's multivector, in library's `Basis` order.
   ##   Same order `scene.saveScene`/`loadScene` and `panel.layoutCoefficients` use.
-  let geometry = SCENE.geometryOf(int(handle))
+  let geometry = SCENE_PAGE.geometryOf(int(handle))
   result = newSeq[float](ord(Basis.high) + 1)
   for b in Basis: result[ord(b)] = geometry[b]
 
@@ -724,17 +724,17 @@ proc nimFormatMultivector(handle: cint): cstring {.exportc.} =
   ## Format object's multivector for display, by handle, through `scene.multivectorText`.
   ##   Same writer desktop panel's object line uses; library's `$` writes at library's `%G`,
   ##   not this project's four significant digits.
-  cstring(multivectorText(SCENE.geometryOf(int(handle))))
+  cstring(multivectorText(SCENE_PAGE.geometryOf(int(handle))))
 
 
 
 #[ Scene Mutation ]#
 
-proc nimDefaultLabel(): cstring {.exportc.} = cstring(&"m{SCENE.len}")
+proc nimDefaultLabel(): cstring {.exportc.} = cstring(&"m{SCENE_PAGE.len}")
   ## Report label freshly composed object starts out carrying.
   ##   For pre-filling edit session.
 
-proc nimDefaultInk(): cint {.exportc.} = cint(SCENE.inkNext)
+proc nimDefaultInk(): cint {.exportc.} = cint(SCENE_PAGE.inkNext)
   ## Report palette slot freshly composed object starts out carrying.
   ##   Cycled as every construction path cycles it.
 
@@ -745,16 +745,16 @@ proc nimAddObject(
   ##   Takes label, palette slot and radius session staged; all are editable before
   ##   commit, unlike every other construction path.
   ##   Builds `geometry` coefficient by coefficient rather than reusing `nimSceneAddRaw`.
-  ##     That one skips `HISTORY.record`, stamps `BORNS` to 0.0 and never touches
-  ##     `SELECTION`, all three of which user-driven add must do.
+  ##     That one skips `HISTORY_PAGE.record`, stamps `BORNS` to 0.0 and never touches
+  ##     `SELECTION_PAGE`, all three of which user-driven add must do.
   var geometry: Multivector
   for b in Basis: geometry[b] = coefficients[ord(b)]
-  result = cint(SCENE.addObject(
+  result = cint(SCENE_PAGE.addObject(
     geometry, $label, Ink(ink_ordinal), float(now), radius = float(radius)
   ))
   stampBorn(int(result), float(now))
-  SELECTION.selectOnly(int(result))
-  HISTORY.record(SCENE, CAMERA)
+  SELECTION_PAGE.selectOnly(int(result))
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimCommitObject(
@@ -765,13 +765,13 @@ proc nimCommitObject(
   ##   "Edit committed" boundary `history.nim` asks of continuous widgets: timeline gains
   ##   one entry per save rather than one per frame of input.
   let index = int(handle)
-  var geometry = SCENE.geometryOf(index)
+  var geometry = SCENE_PAGE.geometryOf(index)
   for b in Basis: geometry[b] = coefficients[ord(b)]
-  SCENE.setGeometryAt(index, geometry)
-  toChars($label, SCENE.labelAt(index))
-  SCENE.setInk(index, Ink(ink_ordinal))
-  SCENE.setRadius(index, float(radius))
-  HISTORY.record(SCENE, CAMERA)
+  SCENE_PAGE.setGeometryAt(index, geometry)
+  toChars($label, SCENE_PAGE.labelAt(index))
+  SCENE_PAGE.setInk(index, Ink(ink_ordinal))
+  SCENE_PAGE.setRadius(index, float(radius))
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimApplyOperation(
@@ -781,20 +781,20 @@ proc nimApplyOperation(
   ##   As `panel.layoutOperation`'s apply button does.
   let
     operation = Operation(operation_ordinal)
-    operand_first = SCENE.geometryOf(int(handle_first))
-    operand_second = SCENE.geometryOf(int(handle_second))
+    operand_first = SCENE_PAGE.geometryOf(int(handle_first))
+    operand_second = SCENE_PAGE.geometryOf(int(handle_second))
     derived = applyOperation(operation, operand_first, operand_second)
     anchor = creationAnchor(operation, operand_first, operand_second, derived)
-    name_first = toText(SCENE.labelAt(int(handle_first)))
-    name_second = toText(SCENE.labelAt(int(handle_second)))
+    name_first = toText(SCENE_PAGE.labelAt(int(handle_first)))
+    name_second = toText(SCENE_PAGE.labelAt(int(handle_second)))
     label = notationSubstituted(operation, name_first, name_second)
     handle_created =
-      SCENE.addObject(derived, label, SCENE.takeInk(), float(now), anchor)
+      SCENE_PAGE.addObject(derived, label, SCENE_PAGE.takeInk(), float(now), anchor)
   OPERATIONS.remember(operation)
   CLOCK_PULSE.forget(handle_created) # Fresh object starts its comet at head.
   stampBorn(handle_created, float(now))
-  SELECTION.selectOnly(handle_created)
-  HISTORY.record(SCENE, CAMERA)
+  SELECTION_PAGE.selectOnly(handle_created)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
   let kind_word = kindText(derived)
   OperationResult(
     created_handle: cint(handle_created),
@@ -817,7 +817,7 @@ proc nimPreviewOperation(operation_ordinal, handle_first, handle_second: cint): 
   ##   Through `scene.previewApplying`, so preview carries anchor and operands camera keeps
   ##   in view, same construction drag offers.
   ##   False, and no preview, where either operand is gone or pair makes nothing drawable.
-  PREVIEW_APPLY = SCENE.previewApplying(
+  PREVIEW_APPLY = SCENE_PAGE.previewApplying(
     Operation(operation_ordinal), int(handle_first), int(handle_second)
   )
   PREVIEW_APPLY.isSome
@@ -842,41 +842,41 @@ proc staged(): Option[Preview] =
 
 proc nimSetVisible(handle: cint, is_visible: bool) {.exportc.} =
   ## Rewrite object's visibility, by handle.
-  SCENE.setVisible(int(handle), is_visible)
-  HISTORY.record(SCENE, CAMERA)
+  SCENE_PAGE.setVisible(int(handle), is_visible)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimSetLabel(handle: cint, text: cstring) {.exportc.} =
   ## Rewrite object's display label, by handle.
-  toChars($text, SCENE.labelAt(int(handle)))
+  toChars($text, SCENE_PAGE.labelAt(int(handle)))
 
 
 proc nimSetInk(handle: cint, ink_ordinal: cint) {.exportc.} =
   ## Rewrite object's palette slot, by handle.
-  SCENE.setInk(int(handle), Ink(ink_ordinal))
-  HISTORY.record(SCENE, CAMERA)
+  SCENE_PAGE.setInk(int(handle), Ink(ink_ordinal))
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimSetRadius(handle: cint, radius: cfloat) {.exportc.} =
   ## Rewrite object's drawn radius, by handle.
-  SCENE.setRadius(int(handle), float(radius))
-  HISTORY.record(SCENE, CAMERA)
+  SCENE_PAGE.setRadius(int(handle), float(radius))
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimSetCoefficient(handle, basis_index: cint; value: cfloat) {.exportc.} =
   ## Rewrite one basis coefficient of object's multivector, by handle.
-  var geometry = SCENE.geometryOf(int(handle))
+  var geometry = SCENE_PAGE.geometryOf(int(handle))
   geometry[Basis(basis_index)] = float(value)
-  SCENE.setGeometryAt(int(handle), geometry)
+  SCENE_PAGE.setGeometryAt(int(handle), geometry)
 
 
 proc nimRemoveObject(handle: cint) {.exportc.} =
   ## Drop object from scene, freeing its handle for reuse.
   ##   Drops handle from selection too: freed handle goes straight to next add, so pick left
   ##   behind would reattach to unrelated new object.
-  SCENE.removeObject(int(handle))
-  SELECTION.pruneDead(SCENE)
-  HISTORY.record(SCENE, CAMERA)
+  SCENE_PAGE.removeObject(int(handle))
+  SELECTION_PAGE.pruneDead(SCENE_PAGE)
+  HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
 
 
 
@@ -981,7 +981,7 @@ proc nimPoolCellColors(): seq[float32] {.exportc.} =
   ##   refresh.
   for handle in 0 ..< OBJECTS_MAX:
     let colour =
-      if SCENE.isAlive(handle): SCENE.inkAt(handle).colour else: INK_POOL_FREE.colour
+      if SCENE_PAGE.isAlive(handle): SCENE_PAGE.inkAt(handle).colour else: INK_POOL_FREE.colour
     FLAT_POOL[3*handle] = colour.red
     FLAT_POOL[3*handle + 1] = colour.green
     FLAT_POOL[3*handle + 2] = colour.blue
@@ -1151,22 +1151,22 @@ proc ensurePlacement() =
   ##   Placing side reads no camera, so camera move never reaches this; only edit does.
   ##   Called by frame build and by hover pick, which can run before build on frame where
   ##   scene has just changed, so whichever comes first fills it.
-  if REVISION_PLACEMENT == some(SCENE.revision): return
+  if REVISION_PLACEMENT == some(SCENE_PAGE.revision): return
   # Re-place only handles stamped since last fill: one per edit, all after restore.
   #   Re-placing every handle per edit is whole frame at capacity; figures in
   #   `PROVENANCE.md`.
-  for handle in 0 ..< SCENE.bound:
+  for handle in 0 ..< SCENE_PAGE.bound:
     let is_stale = REVISION_PLACEMENT.isNone or
-      SCENE.revisionPlacingAt(handle) > REVISION_PLACEMENT.get
-    if SCENE.isAlive(handle) and is_stale:
+      SCENE_PAGE.revisionPlacingAt(handle) > REVISION_PLACEMENT.get
+    if SCENE_PAGE.isAlive(handle) and is_stale:
       PLACEMENTS[handle] = placeObject(
-        SCENE.geometryOf(handle), SCENE.anchorOverrideAt(handle),
+        SCENE_PAGE.geometryOf(handle), SCENE_PAGE.anchorOverrideAt(handle),
       )
   # Scene's reach moves with same edits, so far clip follows; see `camera.distanceFar`.
   #   Held here and passed to each extent, never kept in camera: `home` and every path
   #   replacing camera value would drop it.
-  REACH_SCENE = reachOf(PLACEMENTS, SCENE)
-  REVISION_PLACEMENT = some(SCENE.revision)
+  REACH_SCENE = reachOf(PLACEMENTS, SCENE_PAGE)
+  REVISION_PLACEMENT = some(SCENE_PAGE.revision)
 
 
 proc ensureViewOverlay(width, height: int) =
@@ -1178,15 +1178,15 @@ proc ensureViewOverlay(width, height: int) =
   ##     which is what key holds.
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
-  CAMERA.reach_near = REACH_NEAR
+  CAMERA_PAGE.reach_near = REACH_NEAR
   let settings: SettingsOverlay = (
-    CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_near,
-    REACH_SCENE, width, height,
+    CAMERA_PAGE.motor, CAMERA_PAGE.distance, CAMERA_PAGE.degrees_field_of_view,
+    CAMERA_PAGE.reach_near, REACH_SCENE, width, height,
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
-    SCALE_OVERLAY = CAMERA.drawExtentFor(height, REACH_SCENE)
-    VIEW_PROJECTION_OVERLAY = CAMERA.initMatrixViewProjection(float(width)/float(height))
+    SCALE_OVERLAY = CAMERA_PAGE.drawExtentFor(height, REACH_SCENE)
+    VIEW_PROJECTION_OVERLAY = CAMERA_PAGE.initMatrixViewProjection(float(width)/float(height))
 
 
 
@@ -1204,12 +1204,12 @@ proc nimCameraTurnAt(
   let reach_selection =
     if TWEEN_CAMERA.goal.isSome and TWEEN_CAMERA.goal.get.sphere.isSome:
       let bound = TWEEN_CAMERA.goal.get.sphere.get
-      norm(bound.centre - CAMERA.pivot) + bound.radius
+      norm(bound.centre - CAMERA_PAGE.pivot) + bound.radius
     else: 0.0
   turnFollowing(
-    CAMERA, ScreenPosition(x: float(before_x), y: float(before_y)),
+    CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
-    SELECTION.len > 0, reach_selection,
+    SELECTION_PAGE.len > 0, reach_selection,
   )
 
 
@@ -1218,7 +1218,7 @@ proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
   ##   Motion outright, not drag's rule, which looks where nothing is picked; see
   ##   `camera.orbit`. For checks that move view and ask what it rebuilt.
   TWEEN_CAMERA.abandon()
-  camera.orbit(CAMERA, float(turn), float(rise))
+  camera.orbit(CAMERA_PAGE, float(turn), float(rise))
 
 
 proc nimCameraRoll(radians: cfloat) {.exportc.} =
@@ -1226,13 +1226,13 @@ proc nimCameraRoll(radians: cfloat) {.exportc.} =
   ##   Twist of two fingers, which has no keyboard beside it on touch; see
   ##   `camera.roll`.
   TWEEN_CAMERA.abandon()
-  camera.roll(CAMERA, float(radians))
+  camera.roll(CAMERA_PAGE, float(radians))
 
 
 proc nimCameraDolly(factor: cfloat) {.exportc.} =
   ## Scale camera's distance from pivot by factor.
   TWEEN_CAMERA.abandon()
-  camera.dolly(CAMERA, float(factor))
+  camera.dolly(CAMERA_PAGE, float(factor))
 
 
 proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
@@ -1242,8 +1242,8 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
   ensureViewOverlay(int(width), int(height))
   ensurePlacement()
   dollyAtCentre(
-    CAMERA, SCENE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
-    int(width), int(height), SELECTION.len > 0, PLACEMENTS,
+    CAMERA_PAGE, SCENE_PAGE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
+    int(width), int(height), SELECTION_PAGE.len > 0, PLACEMENTS,
   )
 
 
@@ -1261,9 +1261,9 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   # Read through frame's placements.
   #   `dollyAtCursor` asks `anchorZoomAt` what cursor is over, which is full pick.
   ensurePlacement()
-  INTERACTION.dollyAtCursor(
-    CAMERA, SCENE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
-    int(width), int(height), SELECTION.len > 0, PLACEMENTS,
+  INTERACTION_PAGE.dollyAtCursor(
+    CAMERA_PAGE, SCENE_PAGE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
+    int(width), int(height), SELECTION_PAGE.len > 0, PLACEMENTS,
   )
 
 
@@ -1275,27 +1275,27 @@ proc nimCameraPanAt(
   ##   Both ends of pointer's step rather than its length, as every rate here takes.
   TWEEN_CAMERA.halt()
   panAcross(
-    CAMERA, ScreenPosition(x: float(before_x), y: float(before_y)),
+    CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
-    SELECTION.len > 0,
+    SELECTION_PAGE.len > 0,
   )
 
 
-proc nimCameraAzimuth(): cfloat {.exportc.} = cfloat(CAMERA.azimuth)
+proc nimCameraAzimuth(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.azimuth)
   ## Report angle about world up, in radians.
 
-proc nimCameraElevation(): cfloat {.exportc.} = cfloat(CAMERA.elevation)
+proc nimCameraElevation(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.elevation)
   ## Report angle above horizontal plane, in radians.
 
-proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA.distance)
+proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.distance)
   ## Report distance from pivot, in world units.
 
-proc nimCameraScaleLocal(): cfloat {.exportc.} = cfloat(CAMERA.scaleLocal)
+proc nimCameraScaleLocal(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.scaleLocal)
   ## Report distance frustum and furniture take their scale from, in world units.
   ##   Reach to nearest drawn object ahead of eye, or separation where nothing is drawn
   ##   there; see `camera.scaleLocal`.
 
-proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA.degrees_field_of_view)
+proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA_PAGE.degrees_field_of_view)
   ## Report vertical field of view, in degrees.
 
 proc nimCameraCarrying(): bool {.exportc.} =
@@ -1312,21 +1312,23 @@ proc nimCameraPivot(): FlatBuffer {.exportc.} =
   ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_PIVOT`.
   ##   Refilled per call; camera fields' tick asks five times second and compares before
   ##   writing, so fresh sequence here was allocation per tick.
-  FLAT_PIVOT.fill3(cfloat(CAMERA.pivot.x), cfloat(CAMERA.pivot.y), cfloat(CAMERA.pivot.z))
+  FLAT_PIVOT.fill3(
+    cfloat(CAMERA_PAGE.pivot.x), cfloat(CAMERA_PAGE.pivot.y), cfloat(CAMERA_PAGE.pivot.z),
+  )
 
 
 proc nimCameraEye(): FlatBuffer {.exportc.} =
   ## Report where eye stands, as `[x, y, z]` view over `FLAT_EYE`.
   ##   Driven checks read sight line off eye and pivot, to tell zoom along it from
   ##   slide across it; nothing on page asks.
-  let eye = CAMERA.eye
+  let eye = CAMERA_PAGE.eye
   FLAT_EYE.fill3(cfloat(eye.x), cfloat(eye.y), cfloat(eye.z))
 
 
 proc nimCameraMotor(): FlatBuffer {.exportc.} =
   ## Report camera's motor as every basis coefficient in basis order, over `FLAT_MOTOR`.
   ##   Whole multivector, odd grades and all, since view shows it in grid objects use.
-  let m = toMultivector(CAMERA.motor)
+  let m = toMultivector(CAMERA_PAGE.motor)
   for b in Basis: FLAT_MOTOR[ord(b)] = cfloat(m[b])
   FLAT_MOTOR.used = ord(Basis.high) + 1
   FLAT_MOTOR.view
@@ -1337,12 +1339,12 @@ proc nimSetCameraMotorAt(basis: cint, value: cfloat): bool {.exportc.} =
   ##   One coefficient into live motor, not all sixteen from fields: field shows four
   ##   digits, and writing all back would round fifteen nobody touched.
   ##   Reports whether coefficients name motion; where not, camera stands.
-  var typed = toMultivector(CAMERA.motor)
+  var typed = toMultivector(CAMERA_PAGE.motor)
   typed[Basis(basis)] = float(value)
   let settled = motorRigid(typed)
   if settled.isNone: return false
   TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtMotor(settled.get)
+  CAMERA_PAGE = CAMERA_PAGE.placedAtMotor(settled.get)
   true
 
 
@@ -1359,26 +1361,26 @@ proc readingText(write: proc(line: var openArray[char], cursor: var int)): cstri
 proc nimCameraAzimuthReading(): cstring {.exportc.} =
   ## Report angle about world up, in degrees with its unit, as view section reads it.
   readingText(proc(line: var openArray[char], cursor: var int) =
-    appendDegrees(line, cursor, CAMERA.azimuth))
+    appendDegrees(line, cursor, CAMERA_PAGE.azimuth))
 
 
 proc nimCameraElevationReading(): cstring {.exportc.} =
   ## Report angle above level, in degrees with its unit, as view section reads it.
   readingText(proc(line: var openArray[char], cursor: var int) =
-    appendDegrees(line, cursor, CAMERA.elevation))
+    appendDegrees(line, cursor, CAMERA_PAGE.elevation))
 
 
 proc nimCameraSpeedReading(): cstring {.exportc.} =
   ## Report free flight's speed right now, as multiple of speed of light with its unit.
   readingText(proc(line: var openArray[char], cursor: var int) =
-    appendSpeedLight(line, cursor, INTERACTION.speedFlying(CAMERA)/SPEED_LIGHT))
+    appendSpeedLight(line, cursor, INTERACTION_PAGE.speedFlying(CAMERA_PAGE)/SPEED_LIGHT))
 
 
 proc nimPlaceCamera(eye_x, eye_y, eye_z, pivot_x, pivot_y, pivot_z: cfloat) {.exportc.} =
   ## Stand camera at eye, facing pivot, level; lens untouched. See `camera.stanceFacing`.
   ##   One place names stance whole, since angles name none and pivot alone names half.
   TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placed(stanceFacing(
+  CAMERA_PAGE = CAMERA_PAGE.placed(stanceFacing(
     Position(x: float(eye_x), y: float(eye_y), z: float(eye_z)),
     Position(x: float(pivot_x), y: float(pivot_y), z: float(pivot_z)),
   ))
@@ -1388,10 +1390,10 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
   ## Rewrite distance from pivot, in world units.
   ##   Held off one bound orbit distance has; see `camera.distanceHeld`.
   TWEEN_CAMERA.halt()
-  CAMERA.dollyTo(float(v))
+  CAMERA_PAGE.dollyTo(float(v))
 
 
-proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = float(v)
+proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA_PAGE.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
 
 
@@ -1406,14 +1408,14 @@ const SLOT_NONE = -1'i32
 
 proc nimUpdateCursor(x, y: cfloat) {.exportc.} =
   ## Forward to `interaction.updateCursor`.
-  interaction.updateCursor(INTERACTION, float(x), float(y))
+  interaction.updateCursor(INTERACTION_PAGE, float(x), float(y))
 
 
 proc nimSetCameraDragging(is_dragging: bool) {.exportc.} =
   ## Say whether pointer gesture is moving camera right now.
   ##   Orbit or pan drag, or two fingers on canvas.
   ##   What that means for hover is `interaction.updateHover`'s to say.
-  INTERACTION.is_dragging_camera = is_dragging
+  INTERACTION_PAGE.is_dragging_camera = is_dragging
 
 
 proc nimUpdateHover(width, height: cint) {.exportc.} =
@@ -1430,7 +1432,7 @@ proc nimUpdateHover(width, height: cint) {.exportc.} =
   #   `ensurePlacement` first, since pick can be first of two to run after edit.
   ensurePlacement()
   interaction.updateHover(
-    INTERACTION, SCENE, CAMERA, SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
+    INTERACTION_PAGE, SCENE_PAGE, CAMERA_PAGE, SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
     int(width), int(height), PLACEMENTS,
   )
   recordThisFrame().ms_hover_pick += nowMilliseconds() - ms_entered_hover
@@ -1438,17 +1440,17 @@ proc nimUpdateHover(width, height: cint) {.exportc.} =
 
 proc nimHoverHandle(): cint {.exportc.} =
   ## Report handle hovered, or `SLOT_NONE` where nothing is.
-  if INTERACTION.index_hover.isSome: cint(INTERACTION.index_hover.get) else: SLOT_NONE
+  if INTERACTION_PAGE.index_hover.isSome: cint(INTERACTION_PAGE.index_hover.get) else: SLOT_NONE
 
 
-proc nimIsHoverBackdrop(): bool {.exportc.} = INTERACTION.is_hover_backdrop
+proc nimIsHoverBackdrop(): bool {.exportc.} = INTERACTION_PAGE.is_hover_backdrop
   ## Report whether hovered object is horizon plane.
 
-proc nimCanTouchConstruct(): bool {.exportc.} = INTERACTION.canConstructByTouch
+proc nimCanTouchConstruct(): bool {.exportc.} = INTERACTION_PAGE.canConstructByTouch
   ## Report whether finger's press where it stands may become construction drag.
   ##   Same answer `beginDrag` gives touch at slop; see `interaction.canConstructByTouch`.
 
-proc nimHoverRivals(): cint {.exportc.} = cint(INTERACTION.count_hover_rivals)
+proc nimHoverRivals(): cint {.exportc.} = cint(INTERACTION_PAGE.count_hover_rivals)
   ## Report how many objects of hovered object's rank stood in reach; for driven checks.
   ## Report whether finger's press where it stands may become construction drag.
   ##   Same answer `beginDrag` gives touch at slop; see `interaction.canConstructByTouch`.
@@ -1462,43 +1464,43 @@ proc nimClearHover() {.exportc.} =
   ##   Touch has no continuous pointer position: `nimUpdateHover` runs only at touch-down
   ##   point, so once finger lifts last reading would sit stale and hover ring would keep
   ##   drawing, reading as second selected object.
-  INTERACTION.index_hover = none(int)
+  INTERACTION_PAGE.index_hover = none(int)
 
 
 proc nimSelectionHandles(): seq[int] {.exportc.} =
   ## List picked handles in pick order.
   ##   `refreshOverlay` rings each, object rows tick their checkboxes.
-  for position in 0 ..< SELECTION.len: result.add(SELECTION.at(position))
+  for position in 0 ..< SELECTION_PAGE.len: result.add(SELECTION_PAGE.at(position))
 
 
-proc nimSelectionCount(): cint {.exportc.} = cint(SELECTION.len)
+proc nimSelectionCount(): cint {.exportc.} = cint(SELECTION_PAGE.len)
   ## Count picked objects.
 
-proc nimSelectionArity(): cint {.exportc.} = cint(ord(SELECTION.impliedArity))
+proc nimSelectionArity(): cint {.exportc.} = cint(ord(SELECTION_PAGE.impliedArity))
   ## Report arity current selection implies; see `selection.impliedArity`.
   ##   Matches `nimOperationArity`'s convention: 0 unary, 1 binary.
 
-proc nimSelectOnly(handle: cint) {.exportc.} = SELECTION.selectOnly(int(handle))
+proc nimSelectOnly(handle: cint) {.exportc.} = SELECTION_PAGE.selectOnly(int(handle))
   ## Replace whole selection with one handle.
 
-proc nimSelectToggle(handle: cint) {.exportc.} = SELECTION.toggle(int(handle))
+proc nimSelectToggle(handle: cint) {.exportc.} = SELECTION_PAGE.toggle(int(handle))
   ## Add handle to end of selection, or drop it where already picked.
   ##   Pick order names operands m and n.
 
 proc nimPickByPointer(handle: cint) {.exportc.} =
-  ## Note that `handle` was just picked by pointer standing at `INTERACTION.cursor`.
+  ## Note that `handle` was just picked by pointer standing at `INTERACTION_PAGE.cursor`.
   ##   Camera then centres it as it comes in; see `framing.PointerPick`.
   ##   Beside `nimSelectOnly`/`nimSelectToggle` rather than folded into them: list and
   ##   keyboard pick through those too, with no pointer to hold.
   POINTER_PICK = some(PointerPick(handle: int(handle)))
 
 
-proc nimSelectClear() {.exportc.} = SELECTION.clear()
+proc nimSelectClear() {.exportc.} = SELECTION_PAGE.clear()
   ## Drop every pick.
 
 proc nimSelectionAllHidden(): bool {.exportc.} =
   ## Forward to `selection.isAllHidden`.
-  SELECTION.isAllHidden(SCENE)
+  SELECTION_PAGE.isAllHidden(SCENE_PAGE)
 
 
 proc nimAnimationMilliseconds(): cint {.exportc.} = cint(ANIMATION_MILLISECONDS)
@@ -1512,25 +1514,25 @@ proc nimUndo(): bool {.exportc.} =
   ##   Keeps every pick that still names its object, and tween adopts next aim as
   ##   delivered, or aim it carried drags view off placement just restored; same pairing
   ##   `panel.stepHistory` makes.
-  result = HISTORY.undo(SCENE, CAMERA, SELECTION)
+  result = HISTORY_PAGE.undo(SCENE_PAGE, CAMERA_PAGE, SELECTION_PAGE)
   if result: TWEEN_CAMERA.adoptNext()
 
 
 proc nimRedo(): bool {.exportc.} =
   ## Move scene forward one step on its edit timeline; report whether there was later step.
   ##   View and all; keeps selection and adopts next aim as `nimUndo` does.
-  result = HISTORY.redo(SCENE, CAMERA, SELECTION)
+  result = HISTORY_PAGE.redo(SCENE_PAGE, CAMERA_PAGE, SELECTION_PAGE)
   if result: TWEEN_CAMERA.adoptNext()
 
 
 proc nimCanUndo(): bool {.exportc.} =
   ## Report whether `nimUndo` would move anywhere, so UI can disable its undo button.
-  HISTORY.canUndo
+  HISTORY_PAGE.canUndo
 
 
 proc nimCanRedo(): bool {.exportc.} =
   ## Report whether `nimRedo` would move anywhere, mirroring `nimCanUndo`.
-  HISTORY.canRedo
+  HISTORY_PAGE.canRedo
 
 
 proc nimDragKindForButton(dom_button: cint): cint {.exportc.} =
@@ -1591,17 +1593,17 @@ proc nimHelpDescriptions(): seq[cstring] {.exportc.} =
 
 proc nimBeginHold(handle: cint, now: cfloat) {.exportc.} =
   ## Forward to `interaction.beginHold`.
-  interaction.beginHold(INTERACTION, int(handle), float(now))
+  interaction.beginHold(INTERACTION_PAGE, int(handle), float(now))
 
 
 proc nimCancelHold() {.exportc.} =
   ## Forward to `interaction.cancelHold`.
-  interaction.cancelHold(INTERACTION)
+  interaction.cancelHold(INTERACTION_PAGE)
 
 
 proc nimHoldHandle(): cint {.exportc.} =
   ## Report which object press in progress is filling, or `SLOT_NONE` where none is.
-  if INTERACTION.hold.isSome: cint(INTERACTION.hold.get.handle) else: SLOT_NONE
+  if INTERACTION_PAGE.hold.isSome: cint(INTERACTION_PAGE.hold.get.handle) else: SLOT_NONE
 
 
 proc nimTakeMaturedHold(now: cfloat): cint {.exportc.} =
@@ -1609,35 +1611,35 @@ proc nimTakeMaturedHold(now: cfloat): cint {.exportc.} =
   ##   Handle matured hold selects, reported exactly once, or `SLOT_NONE` where nothing to
   ##   take.
   ##   One question rather than "is it mature" beside caller's flag; see `takeHold`.
-  let taken = interaction.takeHold(INTERACTION, float(now))
+  let taken = interaction.takeHold(INTERACTION_PAGE, float(now))
   if taken.isNone: SLOT_NONE else: cint(taken.get)
 
 
 proc nimReleaseHold(now: cfloat) {.exportc.} =
   ## Forward to `interaction.releaseHold`.
-  interaction.releaseHold(INTERACTION, float(now))
+  interaction.releaseHold(INTERACTION_PAGE, float(now))
 
 
 proc nimSwellHold(now: cfloat): cfloat {.exportc.} =
   ## Forward to `interaction.swellHold`.
-  cfloat(interaction.swellHold(INTERACTION, float(now)))
+  cfloat(interaction.swellHold(INTERACTION_PAGE, float(now)))
 
 
 proc nimIsHoldSpent(now: cfloat): bool {.exportc.} =
   ## Forward to `interaction.isHoldSpent`.
-  interaction.isHoldSpent(INTERACTION, float(now))
+  interaction.isHoldSpent(INTERACTION_PAGE, float(now))
 
 
 proc nimHoldProgress(now: cfloat): cfloat {.exportc.} =
   ## Forward to `interaction.progressHold`.
   ##   Exported rather than left to subtraction in presentation layer: how long hold takes
   ##   is rule about gesture.
-  cfloat(progressHold(INTERACTION, float(now)))
+  cfloat(progressHold(INTERACTION_PAGE, float(now)))
 
 
 proc nimHoldMature(now: cfloat): bool {.exportc.} =
   ## Forward to `interaction.isHoldMature`.
-  isHoldMature(INTERACTION, float(now))
+  isHoldMature(INTERACTION_PAGE, float(now))
 
 
 func keyFor(code: string): Option[Key] =
@@ -1690,13 +1692,15 @@ proc nimKeyDown(code: cstring; width, height: cint): cint {.exportc.} =
   ##   harmless for all four.
   let key = keyFor($code)
   if key.isNone: return SLOT_NONE
-  INTERACTION.holdKey(key.get)
+  INTERACTION_PAGE.holdKey(key.get)
   let action = actionFor(key.get)
   if action.isNone:
     # Abandon tween: key moving camera is camera move like any other.
     TWEEN_CAMERA.abandon()
     return SLOT_NONE
-  let handle = applyAction(INTERACTION, CAMERA, SCENE, action.get, int(width), int(height))
+  let handle = applyAction(
+    INTERACTION_PAGE, CAMERA_PAGE, SCENE_PAGE, action.get, int(width), int(height),
+  )
   # Let go of goal standing offer holds, so next frame aims afresh.
   #   Framing is standing offer's job (`framing.offerAim`).
   if action.get == KeyAction.FrameSelection: TWEEN_CAMERA.release()
@@ -1707,13 +1711,13 @@ proc nimKeyDown(code: cstring; width, height: cint): cint {.exportc.} =
 proc nimKeyUp(code: cstring) {.exportc.} =
   ## Take one key release, so whatever it was moving stops.
   let key = keyFor($code)
-  if key.isSome: INTERACTION.releaseKey(key.get)
+  if key.isSome: INTERACTION_PAGE.releaseKey(key.get)
 
 
 proc nimReleaseKeysAll() {.exportc.} =
   ## Let go of every held key, for page that has stopped being told about releases.
   ##   Window losing focus, tab going to background; without it camera moves forever.
-  INTERACTION.releaseKeysAll()
+  INTERACTION_PAGE.releaseKeysAll()
 
 
 proc nimDriveHeld(seconds: cfloat) {.exportc.} =
@@ -1721,14 +1725,14 @@ proc nimDriveHeld(seconds: cfloat) {.exportc.} =
   ##   See `interaction.driveHeld`.
   ##   Abandons tween only when something is held, so frame with no key down leaves ease
   ##   alone.
-  if INTERACTION.keys_held.len == 0: return
-  INTERACTION.driveHeld(CAMERA, float(seconds), SELECTION.len > 0)
+  if INTERACTION_PAGE.keys_held.len == 0: return
+  INTERACTION_PAGE.driveHeld(CAMERA_PAGE, float(seconds), SELECTION_PAGE.len > 0)
   TWEEN_CAMERA.abandon()
 
 
 proc nimFocusHandle(): cint {.exportc.} =
   ## Report which object keyboard stands on, or `SLOT_NONE`.
-  if INTERACTION.index_focus.isSome: cint(INTERACTION.index_focus.get) else: SLOT_NONE
+  if INTERACTION_PAGE.index_focus.isSome: cint(INTERACTION_PAGE.index_focus.get) else: SLOT_NONE
 
 
 proc nimTapSlop(): cfloat {.exportc.} = cfloat(PIXELS_TAP_SLOP)
@@ -1736,14 +1740,14 @@ proc nimTapSlop(): cfloat {.exportc.} = cfloat(PIXELS_TAP_SLOP)
 
 proc nimBeginPress(now: cfloat) {.exportc.} =
   ## Forward to `interaction.beginPress`; every press goes through it, camera ones too.
-  interaction.beginPress(INTERACTION, float(now))
+  interaction.beginPress(INTERACTION_PAGE, float(now))
 
 
 proc nimIsClick(now: cfloat): bool {.exportc.} =
   ## Forward to `interaction.isClick`.
   ##   Reached directly only for press over empty space, which begins no drag and has no
   ##   `nimEndDrag` to report through.
-  isClick(INTERACTION, float(now))
+  isClick(INTERACTION_PAGE, float(now))
 
 
 proc nimBeginDrag(arming_ordinal: cint, now: cfloat): bool {.exportc.} =
@@ -1751,7 +1755,7 @@ proc nimBeginDrag(arming_ordinal: cint, now: cfloat): bool {.exportc.} =
   ##   Arming as ordinal rather than flag: three of them, two reachable from mouse.
   ##   `nimDragArmingOnDwell` names one touch uses.
   let arming = MenuArming(clamp(int(arming_ordinal), ord(low(MenuArming)), ord(high(MenuArming))))
-  interaction.beginDrag(INTERACTION, arming, float(now))
+  interaction.beginDrag(INTERACTION_PAGE, arming, float(now))
 
 
 proc nimDragArmingOnDwell(): cint {.exportc.} =
@@ -1765,18 +1769,18 @@ proc nimUpdateDrag(now: cfloat) {.exportc.} =
   ## Forward to `interaction.updateDrag`.
   ##   Once per frame, after `nimUpdateHover`, before frame reading preview is built,
   ##   order `visualiser.renderFrame` runs them in.
-  interaction.updateDrag(INTERACTION, SCENE, float(now))
+  interaction.updateDrag(INTERACTION_PAGE, SCENE_PAGE, float(now))
 
 
 proc nimCancelDrag() {.exportc.} =
   ## Forward to `interaction.cancelDrag`.
-  interaction.cancelDrag(INTERACTION)
+  interaction.cancelDrag(INTERACTION_PAGE)
 
 
-proc nimDragActive(): bool {.exportc.} = INTERACTION.is_dragging
+proc nimDragActive(): bool {.exportc.} = INTERACTION_PAGE.is_dragging
   ## Report whether drag is in progress.
 
-proc nimDragSourceHandle(): cint {.exportc.} = cint(INTERACTION.index_source)
+proc nimDragSourceHandle(): cint {.exportc.} = cint(INTERACTION_PAGE.index_source)
   ## Report object drag started from; meaningful only while `nimDragActive()`.
   ##   Mirrors `interaction.index_source`, field already paired with that guard.
 
@@ -1786,7 +1790,7 @@ proc nimDragTint(): FlatBuffer {.exportc.} =
   ##   View over `FLAT_TINT`, refilled per frame of drag.
   # Bind ink, not colour: `colour` is `lent`, and bound to `let` it copies (read in emitted
   #   JS); read inline three times instead.
-  let ink = inkOfDrag(INTERACTION, SCENE.inkNext)
+  let ink = inkOfDrag(INTERACTION_PAGE, SCENE_PAGE.inkNext)
   FLAT_TINT.fill3(ink.colour.red, ink.colour.green, ink.colour.blue)
 
 
@@ -1799,19 +1803,19 @@ proc nimDragComet(width, height: cint): FlatBuffer {.exportc.} =
   ##     Geometry belongs on side owning gesture.
   ##   Empty where no drag is in flight, source's anchor is behind eye, or cursor rests on
   ##   anchor.
-  if not INTERACTION.is_dragging: return FLAT_COMET.emptied
+  if not INTERACTION_PAGE.is_dragging: return FLAT_COMET.emptied
   # Read through overlay cache and by-handle readers.
   #   Runs per frame of every drag; fresh extent and matrix plus whole-scene copy through
-  #   `SCENE[handle]` would be paid each time.
+  #   `SCENE_PAGE[handle]` would be paid each time.
   ensureViewOverlay(int(width), int(height))
   let anchor = anchorFor(
-    SCENE.geometryOf(INTERACTION.index_source),
-    SCENE.anchorOverrideAt(INTERACTION.index_source), SCALE_OVERLAY,
+    SCENE_PAGE.geometryOf(INTERACTION_PAGE.index_source),
+    SCENE_PAGE.anchorOverrideAt(INTERACTION_PAGE.index_source), SCALE_OVERLAY,
   )
   if anchor.isNone: return FLAT_COMET.emptied
   let screen = projectToScreen(VIEW_PROJECTION_OVERLAY, int(width), int(height), anchor.get)
   if not screen.isInFront: return FLAT_COMET.emptied
-  let comet = cometFor(screen, INTERACTION.cursor)
+  let comet = cometFor(screen, INTERACTION_PAGE.cursor)
   if comet.isNone: return FLAT_COMET.emptied
   for i, point in comet.get:
     FLAT_COMET[2*i] = float32(point.x)
@@ -1833,14 +1837,14 @@ proc nimMenuMetrics(): seq[float32] {.exportc.} =
   ]
 
 
-proc nimDragMenuOpen(): bool {.exportc.} = INTERACTION.menu.isSome
+proc nimDragMenuOpen(): bool {.exportc.} = INTERACTION_PAGE.menu.isSome
   ## Report whether choice menu is open on drag in progress.
 
 proc nimDragMenuCentre(): FlatBuffer {.exportc.} =
   ## Report where open menu is centred, in canvas pixels, or empty where none is.
   ##   View over `FLAT_MENU_CENTRE`, refilled per frame menu is open.
-  if INTERACTION.menu.isNone: return FLAT_MENU_CENTRE.emptied
-  FLAT_MENU_CENTRE.fill2(float32(INTERACTION.menu.get.x), float32(INTERACTION.menu.get.y))
+  if INTERACTION_PAGE.menu.isNone: return FLAT_MENU_CENTRE.emptied
+  FLAT_MENU_CENTRE.fill2(float32(INTERACTION_PAGE.menu.get.x), float32(INTERACTION_PAGE.menu.get.y))
 
 
 proc nimDragMenuLabels(): seq[cstring] {.exportc.} =
@@ -1856,21 +1860,21 @@ proc nimDragMenuLayout(): FlatBuffer {.exportc.} =
   ##   No hue: label wears `--ink`; `interaction.inkOf` answers for rubber-band and
   ##   drawer's legend.
   ##   Empty where no menu is open.
-  if INTERACTION.menu.isNone: return FLAT_MENU.emptied
+  if INTERACTION_PAGE.menu.isNone: return FLAT_MENU.emptied
   let
-    centre = INTERACTION.menu.get
-    over = destinationOf(INTERACTION)
+    centre = INTERACTION_PAGE.menu.get
+    over = destinationOf(INTERACTION_PAGE)
     is_pair_live =
-      over.isSome and over.get != INTERACTION.index_source and
-      SCENE.isAlive(over.get) and SCENE.isAlive(INTERACTION.index_source)
+      over.isSome and over.get != INTERACTION_PAGE.index_source and
+      SCENE_PAGE.isAlive(over.get) and SCENE_PAGE.isAlive(INTERACTION_PAGE.index_source)
   for choice in DragChoice:
     let
       at = anchorOf(centre, choice)
       is_offered =
         choice == DragChoice.More or
         (is_pair_live and isOffered(
-          choice, SCENE.geometryOf(INTERACTION.index_source),
-          SCENE.geometryOf(over.get),
+          choice, SCENE_PAGE.geometryOf(INTERACTION_PAGE.index_source),
+          SCENE_PAGE.geometryOf(over.get),
         ))
     let base = 3*ord(choice)
     FLAT_MENU[base] = float32(at.x)
@@ -1884,7 +1888,7 @@ proc nimDragMenuHighlighted(): cint {.exportc.} =
   ## Report which wedge cursor stands in as `DragChoice` ordinal, or `SLOT_NONE` at centre.
   ##   From `interaction.choosing`, same call release resolves through and preview is shaped
   ##   from.
-  let choice = INTERACTION.choosing
+  let choice = INTERACTION_PAGE.choosing
   if choice.isNone: SLOT_NONE else: cint(ord(choice.get))
 
 
@@ -1893,7 +1897,7 @@ proc nimEndDrag(now: cfloat): DragResult {.exportc.} =
   ##   Straight into `interaction.endDrag` for everything it reports, adding only this
   ##   build's business: birth clock, selection, history entry.
   ##   `scene.toText` reads labels same on both backends; `$toCstring` is empty under JS.
-  let outcome = interaction.endDrag(INTERACTION, SCENE, float(now))
+  let outcome = interaction.endDrag(INTERACTION_PAGE, SCENE_PAGE, float(now))
   if outcome.index_clicked.isSome:
     # Report press that never moved rather than act on it.
     #   Replace or join selection is shift key's to say, and caller reads that.
@@ -1904,8 +1908,8 @@ proc nimEndDrag(now: cfloat): DragResult {.exportc.} =
   if outcome.index_created.isSome:
     let handle = outcome.index_created.get
     stampBorn(handle, float(now))
-    SELECTION.selectOnly(handle)
-    HISTORY.record(SCENE, CAMERA)
+    SELECTION_PAGE.selectOnly(handle)
+    HISTORY_PAGE.record(SCENE_PAGE, CAMERA_PAGE)
     return DragResult(
       created_handle: cint(handle),
       message: cstring(outcome.message),
@@ -1914,8 +1918,8 @@ proc nimEndDrag(now: cfloat): DragResult {.exportc.} =
   if outcome.choice == some(DragChoice.More) and outcome.operands.isSome:
     # Select both operands in drag order, which apply section reads as m then n.
     #   Way out of gesture's three operations into rest of catalogue.
-    SELECTION.selectOnly(outcome.operands.get.source)
-    SELECTION.toggle(outcome.operands.get.destination)
+    SELECTION_PAGE.selectOnly(outcome.operands.get.source)
+    SELECTION_PAGE.toggle(outcome.operands.get.destination)
     return DragResult(
       created_handle: SLOT_NONE,
       message: cstring(outcome.message),
@@ -1935,7 +1939,7 @@ proc nimRuler(width, height: cint): FlatBuffer {.exportc.} =
   ##   Through `ensureViewOverlay`, so extent is overlay's own, built at CSS height:
   ##   bar is drawn in pixels pointer works in; see browser scripts.
   ensureViewOverlay(int(width), int(height))
-  let (span, pixels) = CAMERA.rulerFor(SCALE_OVERLAY)
+  let (span, pixels) = CAMERA_PAGE.rulerFor(SCALE_OVERLAY)
   FLAT_RULER.fill2(float32(span), float32(pixels))
 
 
@@ -1961,14 +1965,14 @@ proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##   Horizon plane reports middle of view: it has no place in scene, so menu goes to
   ##   centre of frame `marker.markerFrame` draws around it.
   ##   Duplicated by constraint in `visualiser.anchorOfSelection`; fix both or neither.
-  if not SCENE.isAlive(int(handle)): return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
-  if SCENE.geometryOf(int(handle)).isHorizonPlane:
+  if not SCENE_PAGE.isAlive(int(handle)): return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  if SCENE_PAGE.geometryOf(int(handle)).isHorizonPlane:
     return FLAT_ANCHOR.fill3(0.5'f32*float32(width), 0.5'f32*float32(height), 1.0'f32)
   ensureViewOverlay(int(width), int(height))
-  # Read by handle, never `SCENE[handle]`.
+  # Read by handle, never `SCENE_PAGE[handle]`.
   #   `Object` holds `Scene` by value on JS backend, so constructing one copies whole scene.
   let anchor = anchorFor(
-    SCENE.geometryOf(int(handle)), SCENE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
+    SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
   )
   if anchor.isNone: return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   let screen = projectToScreen(VIEW_PROJECTION_OVERLAY, int(width), int(height), anchor.get)
@@ -1982,11 +1986,11 @@ proc nimAnchorWorld(handle: cint): FlatBuffer {.exportc.} =
   ##   Same point `nimAnchorScreen` projects, before projection; driven checks read
   ##   depth of zoomed-onto object off it. `is_placed` 0 for dead handle and for plane at
   ##   horizon, which stands nowhere.
-  if not SCENE.isAlive(int(handle)) or SCENE.geometryOf(int(handle)).isHorizonPlane:
+  if not SCENE_PAGE.isAlive(int(handle)) or SCENE_PAGE.geometryOf(int(handle)).isHorizonPlane:
     return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   ensurePlacement()
   let anchor = anchorFor(
-    SCENE.geometryOf(int(handle)), SCENE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
+    SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
   )
   if anchor.isNone: return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   FLAT_ANCHOR_WORLD.fill3(float32(anchor.get.x), float32(anchor.get.y), float32(anchor.get.z))
@@ -2017,7 +2021,7 @@ proc nimSelectionMarker(
   ##     What partial marker looks like is `marker.markerFor`'s decision.
   ##   Empty where nothing to draw: dead handle, or geometry with no shape.
   ##     Callers read handle carried across frames, so any can go stale when object is removed.
-  if not SCENE.isAlive(int(handle)): return
+  if not SCENE_PAGE.isAlive(int(handle)): return
   ensureViewOverlay(int(width), int(height))
   # Kind with handle's current travel, though this call reports no pulse.
   #   Outline is identical either way, and shaping whole marker once lets
@@ -2027,9 +2031,10 @@ proc nimSelectionMarker(
   # Kind straight into shared box pulse call reads back.
   #   Nothing allocates or copies `Marker`.
   if not markerFor(
-    SCENE.geometryOf(int(handle)), SCENE.anchorOverrideAt(int(handle)), SCENE.radiusAt(int(handle)),
-    SCALE_OVERLAY, CAMERA, VIEW_PROJECTION_OVERLAY, int(width), int(height), BOX_MARKER[],
-    float(progress), is_touch, travel = some(travel), swell = float(swell),
+    SCENE_PAGE.geometryOf(int(handle)), SCENE_PAGE.anchorOverrideAt(int(handle)),
+    SCENE_PAGE.radiusAt(int(handle)), SCALE_OVERLAY, CAMERA_PAGE, VIEW_PROJECTION_OVERLAY,
+    int(width), int(height), BOX_MARKER[], float(progress), is_touch, travel = some(travel),
+    swell = float(swell),
   ):
     MARKER_SHAPED = none(ShapedMarker)
     return
@@ -2086,7 +2091,7 @@ proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##   `is_beside` 1 where `x, y` is anchor on line and glue pushes label off it along
   ##   `away` by `nimLabelClearance`, measured with its own text; see
   ##   `marker.Marker.is_label_beside`.
-  if not SCENE.isAlive(int(handle)):
+  if not SCENE_PAGE.isAlive(int(handle)):
     return FLAT_LABEL.fill6(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
   ensureViewOverlay(int(width), int(height))
   let at = int(handle) ## Handle as scene indexes it, read once for every reader below.
@@ -2100,8 +2105,8 @@ proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
     MARKER_SHAPED = none(ShapedMarker)
     held = BOX_MARKER
     if not markerFor(
-      SCENE.geometryOf(at), SCENE.anchorOverrideAt(at), SCENE.radiusAt(at),
-      SCALE_OVERLAY, CAMERA, VIEW_PROJECTION_OVERLAY, int(width), int(height), held[],
+      SCENE_PAGE.geometryOf(at), SCENE_PAGE.anchorOverrideAt(at), SCENE_PAGE.radiusAt(at),
+      SCALE_OVERLAY, CAMERA_PAGE, VIEW_PROJECTION_OVERLAY, int(width), int(height), held[],
     ): return FLAT_LABEL.fill6(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
   template marker: Marker = held[]
   if not marker.has_label:
@@ -2148,7 +2153,7 @@ proc nimSelectionPulse(
   ##     would skip advance, for ever.
   ##     Plane's loop is closed and wraps, so only lines would stall.
   ##   Mirrors `visualiser.drawSelectionMarker`.
-  if not SCENE.isAlive(int(handle)): return
+  if not SCENE_PAGE.isAlive(int(handle)): return
   ensureViewOverlay(int(width), int(height))
   let
     travel = CLOCK_PULSE.travelAt(int(handle))
@@ -2166,8 +2171,8 @@ proc nimSelectionPulse(
     MARKER_SHAPED = none(ShapedMarker)
     held = BOX_MARKER
     if not markerFor(
-      SCENE.geometryOf(at), SCENE.anchorOverrideAt(at), SCENE.radiusAt(at),
-      SCALE_OVERLAY, CAMERA, VIEW_PROJECTION_OVERLAY, int(width), int(height), held[],
+      SCENE_PAGE.geometryOf(at), SCENE_PAGE.anchorOverrideAt(at), SCENE_PAGE.radiusAt(at),
+      SCALE_OVERLAY, CAMERA_PAGE, VIEW_PROJECTION_OVERLAY, int(width), int(height), held[],
       float(progress), is_touch, travel = some(travel), swell = float(swell),
     ): return
 
@@ -2212,9 +2217,9 @@ proc nimSceneHasShine(version: cint): bool {.exportc.} =
 
 proc nimSceneClear() {.exportc.} =
   ## Discard live scene and start fresh empty one.
-  SCENE.restoreFrom(initScene())
-  SELECTION.clear()
-  HISTORY.initHistory(SCENE, CAMERA)
+  SCENE_PAGE.restoreFrom(initScene())
+  SELECTION_PAGE.clear()
+  HISTORY_PAGE.initHistory(SCENE_PAGE, CAMERA_PAGE)
 
 
 proc nimSceneAddRaw(
@@ -2247,12 +2252,12 @@ proc nimSceneAddRaw(
   # Take how many scene holds as this object's position in file.
   #   Scene was cleared before first of these.
   let
-    born = bornReplaying(SCENE.len, int(count_total), float(now))
-    handle = SCENE.addObject(
+    born = bornReplaying(SCENE_PAGE.len, int(count_total), float(now))
+    handle = SCENE_PAGE.addObject(
       carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal), born,
       radius = carried.get.radius,
     )
-  SCENE.setVisible(handle, carried.get.is_visible)
+  SCENE_PAGE.setVisible(handle, carried.get.is_visible)
   # Stamp rather than leave alone: handle could hold stale reading from earlier occupant.
   stampBorn(handle, born)
   cint(handle)
@@ -2346,13 +2351,13 @@ proc nimBuildFrame(
   #   reports it.
   openFrameTimings()
   # Guard focus as selection is guarded: handle carried across frames may have died.
-  INTERACTION.pruneFocus(SCENE)
+  INTERACTION_PAGE.pruneFocus(SCENE_PAGE)
 
   # Carry camera one frame further toward whatever is being worked on, then aim it again.
   #   From what this frame holds, same rule `visualiser.assembleMeshes` applies.
   #   Advancing before `scale` is read keeps furniture extent consistent with where camera
   #   is.
-  TWEEN_CAMERA.advance(CAMERA, float(now), easeOutCubic)
+  TWEEN_CAMERA.advance(CAMERA_PAGE, float(now), easeOutCubic)
   # Take framebuffer's height, not window's.
   #   Ribbon's width is measured in pixels drawn, and this build renders at
   #   device-pixel-ratio multiple.
@@ -2360,20 +2365,20 @@ proc nimBuildFrame(
   ensurePlacement()
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE, CAMERA.eye, CAMERA.frame.forward)
-  CAMERA.reach_near = REACH_NEAR
+  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, CAMERA_PAGE.eye, CAMERA_PAGE.frame.forward)
+  CAMERA_PAGE.reach_near = REACH_NEAR
   # Decide records' origin after scale, since bound is read off near clip.
   #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
-  ORIGIN_RECORDS = CAMERA.originHeld(ORIGIN_RECORDS)
-  let scale = CAMERA.drawExtentFor(int(height_pixels), REACH_SCENE)
+  ORIGIN_RECORDS = CAMERA_PAGE.originHeld(ORIGIN_RECORDS)
+  let scale = CAMERA_PAGE.drawExtentFor(int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA.viewBoundsFor(scale, float(aspect), REACH_SCENE)
+  let bounds = CAMERA_PAGE.viewBoundsFor(scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
   let preview = staged()
   TWEEN_CAMERA.offerAim(
-    CAMERA, SCENE, SELECTION, preview, scale, int(float(aspect)*float(height_pixels)),
-    int(height_pixels), float(now), ANIMATION_SECONDS, POINTER_PICK,
-    INTERACTION.isMovingCamera,
+    CAMERA_PAGE, SCENE_PAGE, SELECTION_PAGE, preview, scale,
+    int(float(aspect)*float(height_pixels)), int(height_pixels), float(now), ANIMATION_SECONDS,
+    POINTER_PICK, INTERACTION_PAGE.isMovingCamera,
   )
 
   # Hold furniture where settings match last frame's.
@@ -2382,8 +2387,8 @@ proc nimBuildFrame(
   #   Compared exactly: question is "did anything move at all".
   let
     settings_furniture = settingsFurnitureFor(
-      CAMERA, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown, SCENE.revision,
-      SELECTION.revision,
+      CAMERA_PAGE, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown,
+      SCENE_PAGE.revision, SELECTION_PAGE.revision,
     )
     is_furniture_held =
       SETTINGS_FURNITURE_HELD.isSome and SETTINGS_FURNITURE_HELD.get == settings_furniture
@@ -2399,7 +2404,7 @@ proc nimBuildFrame(
     #   reaches on each plane picked.
     let ms_before_grid = performanceNow()
     if is_grid_shown:
-      addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE, SELECTION)
+      addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE_PAGE, SELECTION_PAGE)
     # Count between two, so figure is lattice's own; see `mesh.addSegmentAcross`.
     COUNT_GRID_SEGMENTS = MESHES_FURNITURE.ribbons.count
     let ms_before_axes = performanceNow()
@@ -2418,12 +2423,12 @@ proc nimBuildFrame(
   let settings_scene: SettingsScene = (
     furniture: settings_furniture,
     aspect: float(aspect),
-    revision: SCENE.revision,
-    revision_selection: SELECTION.revision,
+    revision: SCENE_PAGE.revision,
+    revision_selection: SELECTION_PAGE.revision,
     is_culling: IS_CULLING,
   )
   let is_scene_settled =
-    preview.isNone and INTERACTION.preview.isNone and
+    preview.isNone and INTERACTION_PAGE.preview.isNone and
       float(now) >= BORN_LAST + ANIMATION_SECONDS
   let is_scene_held =
     is_scene_settled and SETTINGS_SCENE_HELD.isSome and SETTINGS_SCENE_HELD.get == settings_scene
@@ -2459,9 +2464,9 @@ proc nimBuildFrame(
     #   sibling walk below takes same bound.
     #   Placement once, emitted every frame: placement already answered sky or not, so walks
     #   sort on `PLACEMENTS[handle].kind` rather than reading multivector per handle per walk.
-    for handle in 0 ..< SCENE.bound:
-      if not SCENE.isAlive(handle) or handle in SELECTION: continue
-      if SCENE.isVisible(handle):
+    for handle in 0 ..< SCENE_PAGE.bound:
+      if not SCENE_PAGE.isAlive(handle) or handle in SELECTION_PAGE: continue
+      if SCENE_PAGE.isVisible(handle):
         # Index in place, never bind to local; see `emitObject`.
         #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
         #   per frame.
@@ -2470,7 +2475,7 @@ proc nimBuildFrame(
           discard emitObject(
             MESHES,
             PLACEMENTS[handle],
-            SCENE.inkAt(handle).colour,
+            SCENE_PAGE.inkAt(handle).colour,
             scale,
             progress,
           )
@@ -2478,22 +2483,23 @@ proc nimBuildFrame(
             PLACEMENTS[handle].kind, is_sky = true, is_preview = false, is_selected = false,
           )
 
-    for handle in 0 ..< SCENE.bound:
-      if not SCENE.isAlive(handle) or handle in SELECTION: continue
-      if SCENE.isVisible(handle):
+    for handle in 0 ..< SCENE_PAGE.bound:
+      if not SCENE_PAGE.isAlive(handle) or handle in SELECTION_PAGE: continue
+      if SCENE_PAGE.isVisible(handle):
         if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
           # Skip point outside view before it costs emitting, flatten and upload.
-          if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE.radiusAt(handle), bounds):
+          if IS_CULLING and
+              not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
             cost.chargeCulled()
             continue
           let progress = animationProgress(float(now), BORNS[handle])
           discard emitObject(
             MESHES,
             PLACEMENTS[handle],
-            SCENE.inkAt(handle).colour,
+            SCENE_PAGE.inkAt(handle).colour,
             scale,
             progress,
-            SCENE.radiusAt(handle),
+            SCENE_PAGE.radiusAt(handle),
           )
           cost.chargeTally(
             PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = false,
@@ -2520,9 +2526,9 @@ proc nimBuildFrame(
     # Emit what drag in progress would build, in same preview ink.
     #   Reader learns one "not committed yet" appearance; mirrors
     #   `visualiser.assembleMeshes`.
-    if INTERACTION.preview.isSome:
+    if INTERACTION_PAGE.preview.isSome:
       var placement_derived = placeObject(
-        INTERACTION.preview.get.geometry, INTERACTION.preview.get.anchor,
+        INTERACTION_PAGE.preview.get.geometry, INTERACTION_PAGE.preview.get.anchor,
       )
       discard emitObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
       cost.chargeTally(
@@ -2533,20 +2539,20 @@ proc nimBuildFrame(
     #   Picked object is then never buried.
     #   Mirrors `visualiser.assembleMeshes`.
     markOverlay(MESHES)
-    for position in 0 ..< SELECTION.len:
-      let handle = SELECTION.at(position)
-      if not SCENE.isAlive(handle) or not SCENE.isVisible(handle): continue
-      if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE.radiusAt(handle), bounds):
+    for position in 0 ..< SELECTION_PAGE.len:
+      let handle = SELECTION_PAGE.at(position)
+      if not SCENE_PAGE.isAlive(handle) or not SCENE_PAGE.isVisible(handle): continue
+      if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE_PAGE.radiusAt(handle), bounds):
         cost.chargeCulled()
         continue
       let progress = animationProgress(float(now), BORNS[handle])
       discard emitObject(
         MESHES,
         PLACEMENTS[handle],
-        SCENE.inkAt(handle).colour,
+        SCENE_PAGE.inkAt(handle).colour,
         scale,
         progress,
-        SCENE.radiusAt(handle),
+        SCENE_PAGE.radiusAt(handle),
       )
       cost.chargeTally(
         PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true
@@ -2556,7 +2562,7 @@ proc nimBuildFrame(
     COUNTS_SCENE = cost
 
   # About records' own origin; overlay's matrix stays about world, for picking.
-  let flat_view = CAMERA.initMatrixViewProjection(float(aspect), MESHES.origin).flattened
+  let flat_view = CAMERA_PAGE.initMatrixViewProjection(float(aspect), MESHES.origin).flattened
   for index in 0 .. 15: FLAT_VIEW[index] = flat_view[index]
 
   # Flatten into locals rather than in constructor.

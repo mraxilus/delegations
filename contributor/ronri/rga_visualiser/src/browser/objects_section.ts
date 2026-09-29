@@ -512,7 +512,7 @@ function buildObjectRow(handle: number | null) {
     field_label.appendChild(labelElement(Wording.NameRowLabel));
     // Write every field below into session, never scene.
     //   Row's own swatch, label and coefficient line preview change, preview previews
-    //   geometry, and only `save` above reaches `SCENE`.
+    //   geometry, and only `save` above reaches `SCENE_PAGE`.
     const input_label = document.createElement('input');
     input_label.type = 'text';
     input_label.value = labelOf();

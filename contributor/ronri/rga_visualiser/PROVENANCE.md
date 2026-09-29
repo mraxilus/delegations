@@ -344,9 +344,9 @@ reports absence for an optional one.
 DefinitelyTyped's, MIT, and it types the Node surface that `tools/build.nim` and the harness reach.
 Each licence is read off the package rather than assumed.
 
-**System packages are declared as data in the build driver.** `SYSTEM` in `tools/build.nim` pairs
-each package with what it is for. `system` prints those names for the caller to install (repository
-issue 60). No package version is pinned or invented.
+**System packages are declared as data in the build driver.** `PACKAGES_SYSTEM` in `tools/build.nim`
+pairs each package with what it is for. `system` prints those names for the caller to install
+(repository issue 60). No package version is pinned or invented.
 
 **`drive` fetches faces, and `web` refuses without them.** A caller who reaches for `web` directly
 is building, rather than being given.
@@ -523,8 +523,8 @@ and refuses by name.
 Ubuntu 24.04 carries no SDL3 at all. SDL3 is cloned at its tag, and built into `build/sdl3`,
 which is a prefix inside the tree. No step then needs root, and `clean` removes it.
 
-`checkSdl3` reads what `pkg-config` reports there, and the commit that the clone stands at,
-before anything is compiled: `3.2.30`, zlib licence. Neither library is in `SYSTEM`. `cmake`,
+`checkSdl3` reads what `pkg-config` reports there, and the commit that the clone stands at, before
+anything is compiled: `3.2.30`, zlib licence. Neither library is in `PACKAGES_SYSTEM`. `cmake`,
 `pkg-config` and `git` stay there for their sake.
 
 **The pin is a release tag, and the commit that the tag resolves to is what binds the bytes.**
@@ -2096,7 +2096,8 @@ camera. Two fingers pinch, strafe and twist, and cancel any construction. A long
 
 Once a selection exists, a tap (`TAP_MAX_MS` 350) toggles another in or out, and a tap on empty
 space clears. `nimClearHover` runs once the last finger lifts, or the last reading sits stale
-forever. `SELECTION` in Nim is the sole source of truth, and the browser keeps a render snapshot.
+forever. `SELECTION_PAGE` in Nim is the sole source of truth, and the browser keeps a render
+snapshot.
 
 **Selection menu.** It is one row on both builds, and follows its anchor in every frame. `apply` is
 leftmost and never moves, and opens a picker to its right through a `max-width` transition, because
