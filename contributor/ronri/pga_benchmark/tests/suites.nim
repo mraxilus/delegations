@@ -548,6 +548,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     let totals = totals(functionsIn(FIXTURE))
     check totals["inner__u0__m"].multiplies == 1  # own
     check totals["outer__u0__m"].multiplies == 2 and totals["outer__u0__m"].calls == 2  # twice
+    let rooted = totals(functionsIn(FIXTURE), ["outer__u0__m"])
+    check rooted["outer__u0__m"] == totals["outer__u0__m"]  # fold from root agrees with whole
+    check "inner__u0__m" notin rooted  # callee counted, never reported unasked
 
   test "movement models bytes from stems and counts":
     let f = CFunction(

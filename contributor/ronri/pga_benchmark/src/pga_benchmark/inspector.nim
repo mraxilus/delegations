@@ -437,7 +437,25 @@ func totals*(functions: seq[CFunction]; roots: openArray[string]): Table[string,
   ##   Folding one root walks its whole call graph, so cost of folding every function of
   ##   cache grows past what suite can spend (Article IX.8). Reader wanting few functions
   ##   asks for those, and gets same counts whole-cache fold would give.
-  let (own, sites) = folded(functions)
+  ##   Only functions roots reach are counted: test build's own bodies are megabytes of C that
+  ##   no root calls, and counting them cost minutes.
+  var
+    positions: Table[string, int]
+    own: Table[string, Counts]
+    sites: Table[string, seq[string]]
+    pending: seq[string]
+  for position, f in functions:
+    if f.name notin positions: positions[f.name] = position
+  for name in roots:
+    if name in positions: pending.add name
+  while pending.len > 0:
+    let name = pending.pop
+    if name in own: continue
+    let body = functions[positions[name]].body
+    own[name] = count(body)
+    sites[name] = callSites(body)
+    for callee in sites[name]:
+      if callee in positions and callee notin own: pending.add callee
   for name in roots:
     if name in own: result[name] = totalOf(name, own, sites, 0)
 
