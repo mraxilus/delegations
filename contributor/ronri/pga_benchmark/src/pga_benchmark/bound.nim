@@ -176,12 +176,12 @@ func dualBlade(m: Metric; b: Blade; as_weight: bool): Option[Blade] =
   some(m.fullBlade xor b)
 
 
-func wedges(a, b: Blade): bool =
+func isWedgeNonzero(a, b: Blade): bool =
   ## Read whether wedge of two blades survives, i.e. no shared factor.
   (a and b) == 0
 
 
-func wedgesAnti(m: Metric; a, b: Blade): bool =
+func isWedgeAntiNonzero(m: Metric; a, b: Blade): bool =
   ## Read whether antiwedge of two blades survives, i.e. factors cover every dimension.
   (a or b) == m.fullBlade
 
@@ -191,23 +191,23 @@ func imageOf(m: Metric; shape: Shape; s: Blade): Option[Blade] =
   case shape
   of Shape.Support: # 𝐞ₙ ∧ s☆
     let t = m.dualBlade(s, as_weight = true)
-    if t.isNone or not wedges(m.origin, t.get): return none(Blade)
+    if t.isNone or not isWedgeNonzero(m.origin, t.get): return none(Blade)
     some(m.origin or t.get)
   of Shape.SupportAnti: # 𝐞̄ₙ ∨ s★
     let
       t = m.dualBlade(s, as_weight = false)
       horizon = m.fullBlade xor m.origin
-    if t.isNone or not m.wedgesAnti(horizon, t.get): return none(Blade)
+    if t.isNone or not m.isWedgeAntiNonzero(horizon, t.get): return none(Blade)
     some(horizon and t.get)
   of Shape.Center: # s☆ ∧ 𝐞∞
     let t = m.dualBlade(s, as_weight = true)
-    if t.isNone or not wedges(t.get, m.infinity): return none(Blade)
+    if t.isNone or not isWedgeNonzero(t.get, m.infinity): return none(Blade)
     some(t.get or m.infinity)
   of Shape.Container: # (s ∧ 𝐞∞)☆
-    if not wedges(s, m.infinity): return none(Blade)
+    if not isWedgeNonzero(s, m.infinity): return none(Blade)
     m.dualBlade(s or m.infinity, as_weight = true)
   of Shape.JoinCarrier: # s ∧ 𝐞∞
-    if not wedges(s, m.infinity): return none(Blade)
+    if not isWedgeNonzero(s, m.infinity): return none(Blade)
     some(s or m.infinity)
   else:
     none(Blade)
@@ -226,8 +226,8 @@ func compoundTerms*(m: Metric; shape: Shape): int =
       let
         a = Blade(other)
         survives = case shape
-          of Shape.Support, Shape.Center, Shape.JoinCarrier: m.wedgesAnti(a, image.get)
-          of Shape.SupportAnti, Shape.Container: wedges(a, image.get)
+          of Shape.Support, Shape.Center, Shape.JoinCarrier: m.isWedgeAntiNonzero(a, image.get)
+          of Shape.SupportAnti, Shape.Container: isWedgeNonzero(a, image.get)
           else: false
       if survives: inc result
 
@@ -241,8 +241,8 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
   for raw in 0 ..< m.slots:
     let
       n = Blade(raw)
-      carries_null = not m.hasImage(n)
-    if carries_null != as_weight: continue
+      has_null = not m.hasImage(n)
+    if has_null != as_weight: continue
     let grade = n.popcount
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 

@@ -48,7 +48,7 @@ func flipped(gate: Gate): Gate =
   of Gate.Any: Gate.Any
 
 
-func admits(frames: seq[Frame]; is_conformal: bool): bool =
+func isAdmitted(frames: seq[Frame]; is_conformal: bool): bool =
   ## Decide whether innermost named gate admits algebra.
   for i in countdown(frames.high, 0):
     case frames[i].gate
@@ -87,7 +87,7 @@ iterator admitted(source: string; is_conformal: bool): string =
     if stripped.startsWith("when ") and stripped.endsWith(":"):
       frames.add Frame(indent: indent, gate: stripped.gateOf)
       continue
-    if frames.admits(is_conformal): yield stripped
+    if frames.isAdmitted(is_conformal): yield stripped
 
 
 

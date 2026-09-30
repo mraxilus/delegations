@@ -279,9 +279,9 @@ proc algebras(): seq[Algebra] =
   for (name, _, _) in CONFIGS:
     let path = BASELINE / "static_" & name & ".json"
     if not fileExists(path): continue
-    var a = Algebra(name: name, static_measurements: readDocument(path))
-    let bench_path = BASELINE / "runtime_" & name & ".json"
-    if fileExists(bench_path): a.runtime_measurements = readDocument(bench_path)
+    var a = Algebra(name: name, measurements_static: readDocument(path))
+    let path_runtime = BASELINE / "runtime_" & name & ".json"
+    if fileExists(path_runtime): a.measurements_runtime = readDocument(path_runtime)
     result.add a
 
 
@@ -739,10 +739,10 @@ proc disassembled(cache, name: string): seq[string] =
   for path in walkFiles(cache / "*.o"):
     let (text, code) = execCmdEx("objdump -d --no-show-raw-insn " & quoteShell(path))
     if code != 0: continue
-    var inside = false
+    var is_inside = false
     for line in text.splitLines:
-      if line.contains("<" & name & ">:"): inside = true
-      if not inside: continue
+      if line.contains("<" & name & ">:"): is_inside = true
+      if not is_inside: continue
       result.add line
       if line.contains("\tret"): return
     if result.len > 0: return
@@ -753,10 +753,10 @@ proc showFunction(symbol, algebra: string) =
   ##   Compiles bench entry whole rather than to C alone, so cache holds object file and
   ##   machine code can be read beside C. Reads that cache with same inspector every
   ##   measurement uses, so figures here and figures in `gaps.md` come from one reading.
-  var found = false
+  var found_algebra = false
   for (name, dimensions, is_conformal) in CONFIGS:
     if name != algebra: continue
-    found = true
+    found_algebra = true
     let
       nim = nimCommit()
       pga = pgaCommit()
@@ -772,7 +772,7 @@ proc showFunction(symbol, algebra: string) =
         c = f.body.count
         m = movement(f, c, size)
       echo ""
-      echo "── ", f.symbol, "(", f.params.join(","), ") → ", f.result_stem,
+      echo "── ", f.symbol, "(", f.parameters.join(","), ") → ", f.stem_result,
         "   ", algebra, ", ", size, "-byte multivector"
       echo "   emitted as ", (if f.is_inline: "static N_INLINE" else: "N_NIMCALL"),
         " `", f.name, "`"
@@ -816,7 +816,7 @@ proc showFunction(symbol, algebra: string) =
         echo "     ", line
     if seen == 0:
       echo "No function spells `", symbol, "` in ", algebra, "."
-  if not found:
+  if not found_algebra:
     raise newException(ValueError, "No algebra named `" & algebra & "`.")
 
 

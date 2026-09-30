@@ -54,8 +54,8 @@ func sizeOfStem*(stem: string; size_multivector: int): int =
 func movement*(f: CFunction; c: Counts; size_multivector: int): Movement =
   ## Model bytes one call of function moves, given its counts.
   var read = 0
-  for stem in f.params: read += sizeOfStem(stem, size_multivector)
-  let written = sizeOfStem(f.result_stem, size_multivector)
+  for stem in f.parameters: read += sizeOfStem(stem, size_multivector)
+  let written = sizeOfStem(f.stem_result, size_multivector)
   result = Movement(
     bytes_read: read,
     bytes_written: written,

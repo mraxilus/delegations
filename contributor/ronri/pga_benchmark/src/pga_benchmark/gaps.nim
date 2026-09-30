@@ -59,9 +59,9 @@ type
     ## Define one algebra's documents as read from `baseline/`.
     name*: string
       ## Algebra name, e.g. `rga4d`.
-    static_measurements*: JsonNode
+    measurements_static*: JsonNode
       ## Static measurements document.
-    runtime_measurements*: JsonNode
+    measurements_runtime*: JsonNode
       ## Runtime measurements document; nil where none is recorded.
   Docket* = object
     ## Define identifier docket: next number and every key allotted so far.
@@ -224,14 +224,14 @@ func boundValuesOf(node: JsonNode): Values =
 
 func gapsOf*(a: Algebra): seq[Gap] =
   ## Read one gap per catalogued measurand of algebra, decided.
-  let measurands = a.static_measurements.at("measurands")
+  let measurands = a.measurements_static.at("measurands")
   if measurands.isNil: return
   let
-    functions = a.static_measurements.at("functions")
-    measured = a.runtime_measurements.at("taken").at("is_allocation_measured").getBool
+    functions = a.measurements_static.at("functions")
+    measured = a.measurements_runtime.at("taken").at("is_allocation_measured").getBool
   for id, p in measurands.pairs:
     var gap = Gap(key: a.name & "/" & id, algebra: a.name, measurand: id)
-    let measurement = a.runtime_measurements.at("measurands").at(id)
+    let measurement = a.measurements_runtime.at("measurands").at(id)
     gap.library = valuesOf(functions, measurement.at("library"), p{"library"}.getStr, measured)
     gap.reference = valuesOf(
       functions, measurement.at("reference"), p{"reference"}.getStr, measured
@@ -301,9 +301,9 @@ func countFunctions(
 ): (int, int, string, int) =
   ## Count library functions exceeding zero on metric, or light operators not inline; return
   ## count, total, worst key and its value.
-  var worst_value = -1
+  var value_worst = -1
   for a in algebras:
-    let functions = a.static_measurements.at("functions")
+    let functions = a.measurements_static.at("functions")
     if functions.isNil: continue
     for key, f in functions.pairs:
       if not f.isLibrary or (is_inline_rule and not f.isOperator): continue
@@ -313,8 +313,8 @@ func countFunctions(
         else: f{"total", metric}.getInt
       if value <= 0: continue
       inc result[0]
-      if value > worst_value:
-        worst_value = value
+      if value > value_worst:
+        value_worst = value
         result[2] = a.name & " `" & key & "`"
         result[3] = value
 
@@ -338,11 +338,11 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
     let open = gaps.overGaps("multiplies")
     var
       worst: Gap
-      worst_excess = 0
+      excess_worst = 0
     for gap in open:
       let excess = gap.library.multiplies.get - gap.reference.multiplies.get
-      if excess > worst_excess:
-        worst_excess = excess
+      if excess > excess_worst:
+        excess_worst = excess
         worst = gap
     result.status = if open.len > 0: Status.Over else: Status.Met
     result.evidence =
@@ -354,7 +354,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
   of Rule.Time:
     var is_any_measured = false
     for a in algebras:
-      if not a.runtime_measurements.isNil: is_any_measured = true
+      if not a.measurements_runtime.isNil: is_any_measured = true
     if not is_any_measured:
       result.status = Status.Unmeasured
       result.evidence = "no bench recorded."
@@ -362,11 +362,11 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
     let open = gaps.overGaps("time")
     var
       worst: Gap
-      worst_ratio = 0.0
+      ratio_worst = 0.0
     for gap in open:
       let q = ratio(gap.library.ns.get, gap.reference.ns.get)
-      if q > worst_ratio:
-        worst_ratio = q
+      if q > ratio_worst:
+        ratio_worst = q
         worst = gap
     result.status = if open.len > 0: Status.Over else: Status.Met
     result.evidence =
@@ -410,7 +410,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
   of Rule.Compound:
     var names: seq[string]
     for a in algebras:
-      let measurands = a.static_measurements.at("measurands")
+      let measurands = a.measurements_static.at("measurands")
       if measurands.isNil: continue
       for id, p in measurands.pairs:
         if p{"library"}.getStr.len == 0: names.add a.name & "/" & id
@@ -420,7 +420,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
   of Rule.Missing:
     var names: seq[string]
     for a in algebras:
-      let missing = a.static_measurements.at("missing")
+      let missing = a.measurements_static.at("missing")
       if missing.isNil: continue
       for id, p in missing.pairs: names.add a.name & "/" & id & " `" & p{"symbol"}.getStr & "`"
     result.status = if names.len > 0: Status.Over else: Status.Met
@@ -459,8 +459,8 @@ func lowerBoundRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
   ##   that operation's general measurand, so distance reads across. Shape of several steps
   ##   names chain, whose bound sums those steps.
   let
-    measurands = a.static_measurements.at("measurands")
-    functions = a.static_measurements.at("functions")
+    measurands = a.measurements_static.at("measurands")
+    functions = a.measurements_static.at("functions")
   if measurands.isNil: return
   var seen: seq[string]
   for id, p in measurands.pairs:
@@ -500,17 +500,17 @@ func word(s: Status): string =
 func headerOf(a: Algebra): string =
   ## Render one paragraph naming what algebra's documents measured, on what, and when.
   let
-    c = a.static_measurements.at("algebra")
-    t = a.static_measurements.at("taken")
+    c = a.measurements_static.at("algebra")
+    t = a.measurements_static.at("taken")
   result = "This algebra has " & $c{"dimensions"}.getInt & " dimensions, a " &
     (if c{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric and a " &
     $c{"sizeof_multivector"}.getInt & "-byte multivector. The inspector took the counts on " &
     t{"date"}.getStr & ", on " & t{"machine"}.getStr & ", with nim `" & t{"nim"}.getStr &
     "`, pga `" & t{"pga"}.getStr & "` and flags `" & t{"flags"}.getStr & "`."
-  if a.runtime_measurements.isNil:
+  if a.measurements_runtime.isNil:
     result.add " Nobody measured the times, because no bench ran."
   else:
-    let b = a.runtime_measurements.at("taken")
+    let b = a.measurements_runtime.at("taken")
     result.add " The bench ran on " & b{"date"}.getStr & ", on " & b{"machine"}.getStr &
       ", over " & $b{"rounds"}.getInt & " rounds of " & $b{"objects"}.getInt &
       " objects. The allocation gauge was " &

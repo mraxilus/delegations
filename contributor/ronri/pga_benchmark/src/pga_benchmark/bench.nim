@@ -53,7 +53,7 @@ proc benchDocument(): JsonNode =
   result["measurands"] = measurands
 
 
-proc controlAllocation(): bool =
+proc isAllocationCounted(): bool =
   ## Prove allocation counter moves, so zero counts below mean zero and not inert gauge.
   let before = getAllocStats()
   var control = newSeq[float](8)
@@ -69,7 +69,7 @@ proc main(): int =
     stderr.write "Usage: bench <output.json>\n"
     return 2
   fillPools(0)
-  if isAllocationMeasured() and not controlAllocation():
+  if isAllocationMeasured() and not isAllocationCounted():
     stderr.write "Allocation counter inert under -d:nimAllocStats; refusing to report.\n"
     return 1
   measureCatalogue()
