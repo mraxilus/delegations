@@ -347,28 +347,29 @@ spans of time. Their size is then the same on every machine, and only the figure
 Runners and delegates meet it, and each fault that a bound pins reads over it. Delegate readings are
 from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to 2026-09-30, alone and in the
 gate. The anchor and the marker take a new figure, so theirs are from 11 runs of the measured page
-up to its pins, on 2026-09-30. Runner readings are from one run. A fault reads as `pins.ts`
-recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+up to its pins, on 2026-09-30. Runner readings are from one CI run of this change. A fault reads as
+`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then.
 
 | Check | Bound | Runner | Delegates | Fault |
 |-------|-------|--------|-----------|-------|
-| Still frame, median | 1.5 ms | 0.5 | 0.4 to 1.0 | |
-| Still frame, slowest tenth | 2.9 ms | 0.6 | 0.6 to 1.9 | |
-| Moving frame, median | 3 ms | 1.0 | 0.7 to 2.0 | |
-| Hover pick | 2.6 ms | 0.4 | 0.2 to 1.7 | 7.1 |
-| Anchor lookup | 15 µs | | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.7 ms | | 0.68 to 1.12 | 3.2 |
-| Moving grid, median | 26 ms | 5.1 | 6.3 to 17.1 | 26.1 |
-| CPU emit, median | 2 ms | 0.2 | 0.3 to 1.3 | 6.3 |
-| Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.8 | 1.7 to 6.4 | |
-| Frame after an edit, at 5,038 | 15 ms | 2.4 | 3.1 to 9.5 | |
-| Hover pick, at 5,038 | 7.2 ms | 0.9 | 1.2 to 4.8 | |
+| Still frame, median | 1.5 ms | 0.6 | 0.4 to 1.0 | |
+| Still frame, slowest tenth | 2.9 ms | 0.9 | 0.6 to 1.9 | |
+| Moving frame, median | 3 ms | 0.8 | 0.7 to 2.0 | |
+| Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
+| Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
+| Marker and its pulse, worst kind | 1.7 ms | 0.60 | 0.68 to 1.12 | 3.2 |
+| Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
+| CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
+| Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
+| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | |
+| Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the repair. On the new
 figure that is 1.8 ms at least, over the bound. The moving grid fault reads over its bound by 0.1 ms
 only. A check with no fault reading pins a budget rather than a repair.
 
-The slowest delegate reads 2 to 6.5 times the runner, by a factor that changes with the check. A
+The slowest delegate reads 1.7 to 4.3 times the runner, by a factor that changes with the check. The
+hover pick reads 17 times, because its runner reading is one 100 µs tick of the clock of the page. A
 regression that stays under a bound on the runner shows first on a delegate, which runs the gate
 before every push. Rejected: bounds scaled by a reference workload timed in the same run. The checks
 scale unlike each other between machines, so no one reference normalises them all.
