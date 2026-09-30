@@ -494,9 +494,9 @@ Verified by suite `Notes`: parse, location at pin, and a stale anchor.
 **Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
 hand-written. The body is rendered in Nim from committed files, so a page says only what those
 files say. The faces are the six that `rga_visualiser` embeds, fetched through
-`koch fetch-assets` and inlined as base64. Interaction is CSS alone: tabs, filters and sort
-are inputs that `:has()` rules read. The page runs no script, so the build is
-deterministic and the digest of a page is the digest of what those files say.
+`koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
+inputs that `:has()` rules read. The one script is the search box of the docket, and its text
+is constant, so the digest of each page still follows those files.
 
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
@@ -527,8 +527,9 @@ so `bulk_flat_round_point` is `bulk_flat` over `round_point`.
 
 One list in `docket.nim` spells each option and the rule that reads it, so the two cannot
 drift apart. An option of Operation or Operand hides on an algebra with no row for it. A CSS
-counter above the rows says how many show. Rejected: a text search, because it needs a script
-and the page runs none. The Operation dropdown finds an operation by name in its place.
+counter above the rows says how many show. A search box finds rows by words, as the Architect
+chose at the cost of a script. A row shows while its name, identifier, symbol, operation,
+expression and operand kinds hold every word typed.
 
 **A publication holds each published page to its build.** `pages/published.json` maps each
 page to its URL and to the digest of the page as built when it was published. `drive` builds
@@ -540,7 +541,8 @@ Verified by suite `Pages`: assembly fills every token, the spread until evaluati
 ratios, and the chip that names removed NaN results. It covers the lower bound each docket row
 is measured against, and a general row timed against its dense form. It covers the median of
 run ratios with one tick for each run, and a reference that spends none. It covers the rule
-that reads each dropdown option, the classes of each row, and the split of a typed id.
+that reads each dropdown option, the classes of each row, and the split of a typed id. It
+covers the words each row is found by, and the shell rule that hides a row not found.
 
 ## Library head
 
