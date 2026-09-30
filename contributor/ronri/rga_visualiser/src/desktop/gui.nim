@@ -206,6 +206,17 @@ proc inputText*(label: cstring, buffer: cstring, capacity: cint): bool
   {.importc: "guiInputText", sideEffect.}
   ## Draw text field editing `buffer` in place, reporting whether it changed.
 
+proc inputSearch*(label, hint, buffer: cstring; capacity: cint): bool
+  {.importc: "guiInputSearch", sideEffect.}
+  ## Draw search field editing `buffer` in place, `hint` showing while empty; report change.
+  ##   Escape clears it, then leaves it, as page's field does.
+
+proc focusNext*() {.importc: "guiFocusNext", sideEffect.}
+  ## Hand keyboard to next widget drawn.
+
+proc openNext*() {.importc: "guiOpenNext", sideEffect.}
+  ## Open next collapsing header drawn, whatever reader left it at.
+
 proc combo*(
   label: cstring, index: ptr cint, entries: ptr cstring, count: cint
 ): bool {.importc: "guiCombo", sideEffect.}

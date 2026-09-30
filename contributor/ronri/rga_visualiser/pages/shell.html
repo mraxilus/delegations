@@ -824,7 +824,7 @@
   }
   .field-row { display: flex; gap: 7px; }
   .field-row .field { flex: 1; margin-bottom: 0; }
-  input[type="text"], input[type="number"], select {
+  input[type="text"], input[type="number"], input[type="search"], select {
     width: 100%;
     background: var(--surface-solid);
     border: 1px solid var(--border);
@@ -834,7 +834,8 @@
     border-radius: 8px;
     padding: 7px 8px;
   }
-  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+  input[type="text"]:focus, input[type="number"]:focus, input[type="search"]:focus,
+  select:focus {
     outline: 2px solid var(--accent);
     outline-offset: -1px;
   }
@@ -895,6 +896,27 @@
      of its own: it was one, carrying inline width, purely to place mark that now leads. */
   .objects-count { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
     font-variant-numeric: tabular-nums; margin-left: auto; }
+  /* Search over list, pinned under heading while rows scroll past, as window keeps its own
+     field above its scrolling region (`panel.layoutObjects`): one rule, two mechanisms, as
+     heading itself has. `--clearance-heading` is heading's measured height, written by
+     `objects_section.ts`, so row pins where heading ends rather than at guessed offset.
+     Fill is heading's own and bleeds into gutters as heading does, so rows passing under it
+     are hidden whole. */
+  .objects-search {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    position: sticky;
+    top: var(--clearance-heading, 37px);
+    z-index: 1;
+    margin: 0 -10px;
+    padding: 0 10px 8px;
+    background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
+  }
+  .objects-search input { flex: 1; min-width: 0; width: auto; }
+  .objects-shown { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
+    font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .objects-select { font-size: 10.5px; padding: 4px 8px; white-space: nowrap; }
   .object-row {
     border-top: 1px solid var(--border);
     padding: 9px 0;
@@ -1559,6 +1581,13 @@
         ><span class="chev">&#9654;</span><span>@WORD:NameHeadObjects@</span><span
           class="objects-count" id="objects-count">&mdash;</span></button>
       <div class="section-body">
+        <div class="objects-search" id="objects-search">
+          <input type="search" id="objects-search-field" placeholder="@WORD:NameListSearch@"
+            aria-label="@WORD:NameListSearch@" autocomplete="off" spellcheck="false">
+          <span class="objects-shown" id="objects-shown" hidden></span>
+          <button class="button objects-select" id="objects-select" type="button"
+            hidden>@WORD:NameListSelect@</button>
+        </div>
         <div id="objects-list"></div>
       </div>
     </div>

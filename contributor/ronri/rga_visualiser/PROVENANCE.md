@@ -2730,6 +2730,78 @@ Verified by driven check:
   0.0000 from their middle;
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
 
+## Objects search
+
+**A search narrows the objects list to the objects that answer every word typed.** A word answers
+where it stands in the label or in the kind word, with ASCII case folded. So `jup` finds `jupiter`,
+and `horizon` finds each horizon object, whatever its label. `scene.matchesSearch` holds the rule
+once, and `scene.handlesMatching` filters creation order by it. The page reaches both through
+`nimSceneHandlesMatching`, and the window calls them itself.
+
+**The selection and the row open for edit stay listed, whatever the search says.** A reader never
+loses what they picked, or the row that they type into. A kept row stands in creation order among
+the matches, where it stands with no search. Both are kept only while a word is typed, since a blank
+search lists everything. `scene.isSearching` says which, on both front-ends.
+
+`scene.handlesMatching` counts the matches apart from the rows that it keeps. Where nothing matches,
+the note heads the list, above the kept rows, so no kept row reads as a match. It marks each kept
+handle once. A scan of the whole selection for each handle costs 25 million comparisons at capacity.
+While a word is typed, a change to the selection filters the list again, on both front-ends.
+
+**The search stays reachable while the list scrolls.** The page pins `.objects-search` under the
+pinned heading, at the height that the heading measures. The window draws its field above the
+scrolling region of its list. That is one rule by two mechanisms, as the heading itself has. While
+a search narrows the list, the field shows a count, such as `12 of 5038 shown`, and `select all`.
+`wording.appendShownCounted` writes that count for both, so `format.appendInt` has a branch for each
+backend.
+
+**`select all` adds the rows shown to the selection, after the picks already made.** The rows shown
+include the picks, so a replacement would reorder them, and operands `m` and `n` would move. New
+rows join in the order shown, newest first. So two searches, each followed by `select all`, pick
+both sets. `selection.addAll` makes one change however many rows it adds, and nothing new changes
+nothing.
+
+**`/` reaches the search from anywhere.** It opens the list and gives the field the keyboard. It is
+an accelerator of the panel and not a key that the view answers, so it stands beside `ctrl+z` and
+not in `interaction.Key`. Both front-ends read the character printed: the page reads `e.key`, and
+the window reads the SDL keycode. Escape clears the field, and on an empty field it leaves it. The
+window gets this from `ImGuiInputTextFlags_EscapeClearsAll`.
+
+**Cost.** On the page at 5,038 objects, one filter costs 14 to 18 ms, against 5 ms for a blank
+search. Most of it is the kind word of each object whose label misses the word. The handler, with
+the reconcile of rows, measured 13 to 32 ms for each keystroke.
+
+The window filters only when the scene, the search, the kept row or, while a word is typed, the
+selection moves. One cache holds the result in creation order, so the window keeps no second order
+cache. The fold is ASCII alone, so `é` does not find `É`. A search stays in force
+after an add. A new object that does not answer it is not listed, and the count shows that a search
+narrows the list.
+
+Rejected: a second copy of the kind vocabulary, to skip the kind word where no kind word could
+answer. It would save most of the cost on the page, and it is a second home for the words that
+`describeKind` holds.
+
+*Checked.* Verified by `suites.nim`, on both backends:
+
+- each word in either place, folded, and a blank search that answers everything;
+- creation order kept, each kept row where it stands, and the matches counted apart;
+- `addAll` keeping earlier picks where they stand, and adding each new handle once, in order;
+- the count reading the same on both builds.
+
+Verified by browser drive (`driveListSearched`, at 5,038 objects):
+
+- `/` with the drawer shut opens the list and focuses the field;
+- a deep label that no other label holds leaves its row alone;
+- `horizon` lists the 4 that the check counts again, and keeps the pick that it does not match;
+- `select all` adds the rows shown after that pick, in the order shown;
+- a search with no match shows its note, above the picks that it keeps;
+- escape clears the field, and a second escape leaves it.
+
+Verified by `--drive-search`: `/` and a typed label, posted as SDL events, narrow the list of the
+window to the 1 match of 5. A pick made first stays listed, so 2 rows show. A break on purpose,
+with `/` wired to nothing, fails it: nothing typed, 5 listed. A second, with the selection not kept,
+fails it too: 1 row, and the pick is not listed.
+
 ## Hold feedback, help and keys
 
 **A touch hold shows itself.** `interaction` owns `SECONDS_LONG_PRESS`, a `Hold`, and
@@ -2743,13 +2815,13 @@ Both front-ends carry a `?` in the bottom-right corner, at least 44 px, which op
 generated from the catalogue, so it cannot fall behind.
 
 **Tabbed by how the reader is working**: `drag`, `select`, `menu`, `panel`, `camera`, `keys` and
-`operations`. `ENTRIES_MAX_PATH` is 8 for each tab, with `ENTRIES_MAX_PATH_KEYS` at 12 and
+`operations`. `ENTRIES_MAX_PATH` is 8 for each tab, with `ENTRIES_MAX_PATH_KEYS` at 13 and
 `ENTRIES_MAX_PATH_CATALOGUE` at the operation count. It is asserted at compile time and in the
 suite, and it is a **proxy, named as one**.
 
 The real constraint is the rendered height, measured as the overflow of `.help-rows` for each tab.
-In Chromium at 320×568 on 2026-09-25, `drag` is 94 px over, `select` 104, `panel` 11, `camera` 103
-and `keys` 419. Those tabs are left to scroll deliberately, on the one screen with no keyboard.
+In Chromium at 320×568 on 2026-09-30, `drag` is 94 px over, `select` 86, `panel` 11, `camera` 103
+and `keys` 459. Those tabs are left to scroll deliberately, on the one screen with no keyboard.
 `camera` carries a row for the twist of two fingers, which rolls the view, and that row is 41 of
 its 103. Rows say what an input does with a selection in one clause, to hold that cost down.
 
@@ -2784,6 +2856,7 @@ rebound**, because that would trap the reader (WCAG 2.1.2). Traversal is on the 
 | `enter` | select it, or add it where shift is held | press |
 | `f` | frame whatever is selected | press |
 | `home` | put the camera back where it started | press |
+| `/` | search the objects list, opening it where shut | press |
 
 `motionFor` and `actionFor` split by **kind**. A motion runs in every frame that its key is down
 (`driveHeld`), and an action runs once at the press. The bindings follow Unity, Unreal, Godot and

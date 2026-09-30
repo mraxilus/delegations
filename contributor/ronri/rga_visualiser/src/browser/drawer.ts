@@ -220,19 +220,33 @@ function openApplyPickerOnOperands(position_local: PointLocal | null) {
   if (menu_selection_apply.style.display !== 'none') openSelectionMenuOperation();
 }
 
-function openPanelTo(handle: number | null) {
-  // Open edit session on `handle` (or composing one where null) and bring drawer.
-  //   and Objects section far enough open to see it -- shared by top bar's `add`
-  //   and selection menu's `edit`, which differ only in what they open onto.
-  beginEditSession(handle);
+function openObjectsSection() {
+  // Bring drawer and Objects section open, and rows current -- shared by every control that.
+  //   lands reader in list: `add`, selection menu's `edit`, and `/` to search.
   const section_objects = document.querySelector('.section[data-section="objects"]');
   if (section_objects === null) throw new Error('Missing objects section.');
   section_objects.classList.add('open');
   drawer.classList.add('open');
   button_drawer.classList.add('on');
   refreshObjectsUI();
+}
+
+function openPanelTo(handle: number | null) {
+  // Open edit session on `handle` (or composing one where null) and bring drawer.
+  //   and Objects section far enough open to see it -- shared by top bar's `add`
+  //   and selection menu's `edit`, which differ only in what they open onto.
+  beginEditSession(handle);
+  openObjectsSection();
   // Row stands before refresh above returns, wherever in list it is; see `revealObjectRow`.
   revealObjectRow(handle === null ? KEY_ROW_PENDING : String(handle));
+}
+
+function focusObjectsSearch() {
+  // Open list and hand caret to its search, text selected so typing replaces it.
+  //   `focus` scrolls field into view itself; it is pinned under heading once list moves.
+  openObjectsSection();
+  field_search.focus();
+  field_search.select();
 }
 
 button_add.addEventListener('click', () => {

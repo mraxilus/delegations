@@ -384,6 +384,20 @@ bool guiInputText(const char* label, char* buffer, int capacity) {
   return ImGui::InputText(label, buffer, (size_t)capacity);
 }
 
+// Search field: placeholder says what it matches, and escape clears it, then leaves it.
+//   Same two presses page's own field answers (`objects_section.ts`), which is
+//   `EscapeClearsAll` exactly, rather than default escape that reverts edit.
+bool guiInputSearch(const char* label, const char* hint, char* buffer, int capacity) {
+  return ImGui::InputTextWithHint(
+      label, hint, buffer, (size_t)capacity, ImGuiInputTextFlags_EscapeClearsAll);
+}
+
+// Hand keyboard to next widget drawn, as `/` does to objects search.
+void guiFocusNext() { ImGui::SetKeyboardFocusHere(0); }
+
+// Open next collapsing header drawn, whatever reader left it at.
+void guiOpenNext() { ImGui::SetNextItemOpen(true); }
+
 bool guiCombo(const char* label, int* index, const char* const items[], int count) {
   return ImGui::Combo(label, index, items, count);
 }

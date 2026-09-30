@@ -36,6 +36,16 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  // `/` searches objects list from anywhere, as it searches on most pages that have search.
+  //   Panel accelerator rather than view key, so it sits beside ctrl+z rather than in
+  //   `interaction.Key`, though its help row is `help`'s. `e.key` rather than `e.code`,
+  //   since it names character printed, which is what reader looks for.
+  if (e.key === '/' && !(e.ctrlKey || e.metaKey || e.altKey)) {
+    e.preventDefault();
+    focusObjectsSearch();
+    return;
+  }
+
   // 3D view answers its own keys, but only while it actually has focus -- it is one.
   //   ordinary tab stop (see its `tabindex` in markup), so reader tabs into it,
   //   drives it, and tabs onward. Tab itself is never intercepted: rebinding it inside

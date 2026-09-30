@@ -342,6 +342,8 @@ type
       ## Headless run then shows where undo leaves view; see `driveUndo`.
     is_sky_driven: bool ## Whether to script drag and click on bare sky.
       ## Headless run then shows press on it still reaches camera; see `driveSky`.
+    is_search_driven: bool ## Whether to script `/` and typed label.
+      ## Headless run then shows search reaches objects list; see `driveSearch`.
     is_menu_driven: bool ## Whether to open top menu at startup, with no click.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
@@ -388,6 +390,7 @@ proc applyOption(options: var Options, key, value: string) =
   of "drive-select": options.is_select_driven = true
   of "drive-undo": options.is_undo_driven = true
   of "drive-sky": options.is_sky_driven = true
+  of "drive-search": options.is_search_driven = true
   of "drive-menu": options.is_menu_driven = true
   of "drive-help":
     for path in HelpPath:
@@ -398,14 +401,15 @@ proc applyOption(options: var Options, key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      &"drive-select, drive-undo, drive-sky, drive-menu or drive-help; got `--{key}`."
+      "drive-select, drive-undo, drive-sky, drive-search, drive-menu or drive-help; " &
+      &"got `--{key}`."
 
 
 func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
-    options.is_undo_driven or options.is_sky_driven or options.is_menu_driven or
-    options.path_help_driven.isSome
+    options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
+    options.is_menu_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -1128,6 +1132,11 @@ proc handleEvent(
         (event.key.scancode == uint32(Scancode.Y) or
          (event.key.scancode == uint32(Scancode.Z) and is_shifted)):
       panel.is_redo_requested = true
+    elif not is_accelerator and event.key.keycode == uint32(ord('/')):
+      # Search objects list from anywhere, as page's `/` does (`keyboard.ts`).
+      #   Keycode rather than scancode: it names character printed, which is what reader
+      #   looks for, as page reads `e.key` for it.
+      panel.is_search_focus_wanted = true
     elif not is_accelerator:
       # Answer keys 3D view binds, what makes canvas reachable without pointer.
       #   Chord that missed every branch above falls through rather than orbiting by
@@ -1428,6 +1437,42 @@ proc driveKeys(count_drawn: int) =
   sdl3.pushEvent(addr event)
 
 
+const TEXT_SEARCH_DRIVEN = "ground"
+  ## Label `--drive-search` types, which opening scene holds once and no kind word holds.
+
+
+proc driveSearch(window: Window, panel: var Panel, scene: Scene, count_drawn: int) =
+  ## Pick object search will not match, press `/`, then type label, one step per frame, for
+  ## `--drive-search`.
+  ##   Pick is made through panel rather than by click: claim is that search keeps it listed,
+  ##   and `--drive-select` holds clicks.
+  ##   Keys posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
+  ##   Typed as text event, which is what Dear ImGui reads into focused field, stamped with
+  ##   this window, since its backend drops event naming none of its own.
+  ##   Frame between `/` and text lets field take keyboard `/` handed it.
+  const frame_first = 3 # Past startup, so first frame's layout has settled.
+  if count_drawn == frame_first - 1:
+    var handles: array[OBJECTS_MAX, int]
+    for position in 0 ..< scene.handlesCreated(handles):
+      if TEXT_SEARCH_DRIVEN notin toLowerAscii(toText(scene[handles[position]].label)):
+        panel.selection.selectOnly(handles[position])
+        return
+  var event: Event
+  case count_drawn - frame_first
+  of 0, 1:
+    let is_down = count_drawn == frame_first
+    event.kind = uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp)
+    event.key.scancode = uint32(Scancode.Slash)
+    event.key.keycode = uint32(ord('/'))
+    event.key.is_down = is_down
+  of 3:
+    event.kind = uint32(EventKind.TextInput)
+    event.text.window_id = sdl3.windowId(window)
+    event.text.text = cstring(TEXT_SEARCH_DRIVEN)
+  else: return
+  sdl3.pushEvent(addr event)
+
+
 proc driveSelect(
   scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent
 ) =
@@ -1662,6 +1707,31 @@ proc verdictDriven(
       &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
     )
 
+  if options.is_search_driven:
+    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list.
+    #   is held to something other than rule it runs. Label typed is in no kind word, so
+    #   labels alone are whole count; pick made first is labelled otherwise, so it adds one.
+    var
+      handles: array[OBJECTS_MAX, int]
+      labelled = 0
+    for position in 0 ..< scene.handlesCreated(handles):
+      if TEXT_SEARCH_DRIVEN in toLowerAscii(toText(scene[handles[position]].label)):
+        inc labelled
+    let
+      typed = toText(panel.search)
+      is_pick_listed = panel.selection.len == 1 and
+        panel.selection.at(0) in panel.handles_shown.toOpenArray(0, panel.count_shown - 1)
+    report(
+      "pressing / and typing narrows the objects list to the objects that answer it",
+      typed == TEXT_SEARCH_DRIVEN and labelled >= 1 and panel.count_matched == labelled,
+      &"typed `{typed}`, matched {panel.count_matched}, labelled {labelled} of {scene.len}",
+    )
+    report(
+      "an object picked before the search stays listed, though the search does not match it",
+      is_pick_listed and panel.count_shown == labelled + 1,
+      &"picked {panel.selection.len}, listed {is_pick_listed}, {panel.count_shown} rows",
+    )
+
   # Scene filled to capacity is its own verdict, and fires only in run driven with one.
   #   Claim is that longest list this build can hold leaves what sits under it on window:
   #   list used to run window's whole length, so `view` and message line were reached by
@@ -1874,6 +1944,7 @@ proc runInteractive(
     ticks_previous_frame = ticks_frame_start
 
     if options.is_key_driven: driveKeys(count_drawn)
+    if options.is_search_driven: driveSearch(window, panel, scene, count_drawn)
     if options.is_sky_driven:
       driveSky(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, now)
     if options.is_drag_driven or options.is_select_driven or options.is_undo_driven:

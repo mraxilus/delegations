@@ -11,6 +11,19 @@
 
 const list_objects = elementById('objects-list');
 const count_objects = elementById('objects-count');
+
+// Search over list: what reader typed, and handles it leaves listed.
+//   Rule is Nim's (`scene.handlesMatching`), asked once per change of query, scene or, while
+//   searching, selection, rather than once per row: one call across FFI per handle is what
+//   `nimSceneHandlesCreated` exists to avoid.
+const row_search = elementById('objects-search');
+const field_search = elementById<HTMLInputElement>('objects-search-field');
+const shown_search = elementById('objects-shown');
+const button_select_search = elementById<HTMLButtonElement>('objects-select');
+field_search.title = nimWording(Wording.TipListSearch);
+button_select_search.title = nimWording(Wording.TipListSelect);
+// Handles listed as of last refresh, oldest first; what `select all` adds.
+let handles_shown: number[] = [];
 /* ---------------------------------------------------------------------- */
 /* Edit session: one at time, in one of two modes -- composing brand-      */
 /* new object (`handle` null, nothing backing it in scene yet) or            */
@@ -73,6 +86,7 @@ function endEditSession() {
 //   composing session heads it with. Keys rather than positions, so reconcile below can
 //   talk about every row same way.
 const KEY_ROW_EMPTY = 'empty';
+const KEY_ROW_UNMATCHED = 'unmatched';
 const KEY_ROW_PENDING = 'pending';
 // What each standing row was picture of when it was built. Compared, never ordered; row that
 //   leaves window takes its entry with it, so map is exactly rows standing.
@@ -109,7 +123,7 @@ function geometryTextFor(handle: number) {
 function signatureOfObjectRow(key: string) {
   // **Everything row draws, and nothing else.** Two equal signatures mean same.
   //   picture, so element standing there is already right and is left alone.
-  if (key === KEY_ROW_EMPTY || key === KEY_ROW_PENDING) return key;
+  if (key === KEY_ROW_EMPTY || key === KEY_ROW_UNMATCHED || key === KEY_ROW_PENDING) return key;
   const handle = parseInt(key, 10);
   // Open row is keyed by being open rather than described. Its fields preview.
   //   `session_edit` and its own handlers keep them current as reader types; rebuilding
@@ -122,11 +136,12 @@ function signatureOfObjectRow(key: string) {
 }
 
 function buildRowFor(key: string) {
-  if (key === KEY_ROW_EMPTY) {
+  if (key === KEY_ROW_EMPTY || key === KEY_ROW_UNMATCHED) {
     const p = document.createElement('div');
     p.className = 'help-text';
     p.style.margin = '8px 0 0';
-    p.textContent = nimWording(Wording.NoteListEmpty);
+    p.textContent =
+      nimWording(key === KEY_ROW_EMPTY ? Wording.NoteListEmpty : Wording.NoteListUnmatched);
     return p;
   }
   return buildObjectRow(key === KEY_ROW_PENDING ? null : parseInt(key, 10));
@@ -214,12 +229,29 @@ function refreshObjectsUI() {
   //   creation ordinal, and replayed load stamps `born` in creation order, so reversing it is
   //   "most recently added first" for one pass and no comparator at all -- sorting by
   //   `nimObjectBorn` was two calls across FFI per comparison, 124,000 over 5,038 handles.
-  const stamp = nimSceneRevision() + ':' + nimSceneCount() + ':' + (isComposing() ? 'p' : '');
+  // **Search narrows keys, and joins stamp.** Selection and row open for edit are kept.
+  //   whatever query says, so reader never loses what they picked or type into; both join
+  //   stamp only while something is typed, since blank query lists everything anyway.
+  const query = field_search.value;
+  const is_searching = nimIsSearching(query);
+  const kept = is_searching && session_edit !== null && session_edit.handle !== null
+    ? [session_edit.handle] : [];
+  const stamp = nimSceneRevision() + ':' + nimSceneCount() + ':' + (isComposing() ? 'p' : '') +
+    ':' + kept.join() + ':' + (is_searching ? nimSelectionRevision() : '') + ':' + query;
   if (stamp !== stamp_keys_list) {
     stamp_keys_list = stamp;
-    const handles = Array.from(nimSceneHandlesCreated()).reverse();
+    // First entry counts matches, and handles shown follow it; see bridge.
+    const matching = Array.from(nimSceneHandlesMatching(query, kept));
+    const count_matched = matching[0] ?? 0;
+    handles_shown = matching.slice(1);
+    const handles = handles_shown.slice().reverse();
     keys_list = [];
-    if (handles.length === 0 && !isComposing()) keys_list.push(KEY_ROW_EMPTY);
+    // Note heads list where nothing matched, above any picks kept, so kept rows never read as.
+    //   matches.
+    if (!isComposing()) {
+      if (nimSceneCount() === 0) keys_list.push(KEY_ROW_EMPTY);
+      else if (count_matched === 0) keys_list.push(KEY_ROW_UNMATCHED);
+    }
     // Composing session heads list: it is newest thing here, and it has no.
     //   `born` reading to sort by since nothing backs it in scene yet.
     if (isComposing()) keys_list.push(KEY_ROW_PENDING);
@@ -227,9 +259,67 @@ function refreshObjectsUI() {
     heights_list = keys_list.map(heightOf);
     // What list stands for, for harness that cannot count rows it does not build.
     list_objects.dataset.count = String(handles.length);
+    // Count and `select all` speak only while search narrows; blank query shows everything,
+    //   and heading already counts that.
+    shown_search.hidden = !is_searching;
+    button_select_search.hidden = !is_searching;
+    if (is_searching) {
+      shown_search.textContent = nimShownCounted(handles_shown.length, nimSceneCount());
+    }
+    writeDisabled(button_select_search, handles_shown.length === 0);
   }
   renderObjectWindow();
 }
+
+function revealListTop() {
+  // Bring list's first row under pinned heading and search, where reader was scrolled past it.
+  //   Narrowed list is shorter than one it replaced, and offset into longer one names nothing.
+  if (scroller === null) return;
+  const top_list = list_objects.getBoundingClientRect().top
+    - scroller.getBoundingClientRect().top + scroller.scrollTop;
+  const top_wanted = top_list - clearancePinned();
+  if (scroller.scrollTop > top_wanted) scroller.scrollTop = Math.max(0, top_wanted);
+}
+
+function clearancePinned(): number {
+  // Height pinned heading and pinned search stand at, which row scrolled to must clear.
+  const heading = document.querySelector('.section[data-section="objects"] .section-header');
+  return (heading === null ? 0 : heading.getBoundingClientRect().height)
+    + row_search.getBoundingClientRect().height;
+}
+
+// Pin search where heading ends, measured rather than guessed: heading's height follows its font,
+//   which arrives after first paint.
+const heading_objects = document.querySelector('.section[data-section="objects"] .section-header');
+if (heading_objects !== null) {
+  const section_objects_pinned = heading_objects.parentElement;
+  const pinSearch = () => {
+    const height = heading_objects.getBoundingClientRect().height;
+    if (height > 0) section_objects_pinned?.style.setProperty('--clearance-heading', height + 'px');
+  };
+  pinSearch();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(pinSearch).observe(heading_objects);
+}
+
+field_search.addEventListener('input', () => {
+  refreshObjectsUI();
+  revealListTop();
+});
+field_search.addEventListener('keydown', (e) => {
+  // Escape clears search, and on empty field hands keyboard back to page.
+  //   Handled here, since page's own escape skips any field (`keyboard.ts`).
+  if (e.key !== 'Escape') return;
+  e.preventDefault();
+  if (field_search.value === '') { field_search.blur(); return; }
+  field_search.value = '';
+  refreshObjectsUI();
+});
+button_select_search.addEventListener('click', () => {
+  // Rows in order shown, newest first, after picks already made, so operands reader picked.
+  //   stay first.
+  nimSelectAddAll(handles_shown.slice().reverse());
+  onSelectionChanged(null);
+});
 
 function renderObjectWindow() {
   // Rows around viewport, reconciled against rows already standing; see `keys_list`.
@@ -324,15 +414,15 @@ function settleObjectWindow(): boolean {
 function revealObjectRow(key: string) {
   // Scroll list to this key's row and render window there, in one call. Offset is sum of.
   //   heights above it, estimate where row has never stood, so row lands inside window and
-  //   one reading of where it actually stands corrects rest. Placed under pinned heading rather
-  //   than at scroller's own edge, which heading covers; see `.section-header`.
+  //   one reading of where it actually stands corrects rest. Placed under pinned heading and
+  //   search rather than at scroller's own edge, which they cover; see `.section-header` and
+  //   `.objects-search`.
   if (scroller === null) return;
   const at = keys_list.indexOf(key);
   if (at < 0) return;
   let offset = 0;
   for (let i = 0; i < at; i += 1) offset += heights_list[i] ?? PIXELS_ROW_ESTIMATE;
-  const heading = document.querySelector('.section[data-section="objects"] .section-header');
-  const clearance = heading === null ? 0 : heading.getBoundingClientRect().height;
+  const clearance = clearancePinned();
   const box_scroller = scroller.getBoundingClientRect();
   const top_list = list_objects.getBoundingClientRect().top - box_scroller.top
     + scroller.scrollTop;

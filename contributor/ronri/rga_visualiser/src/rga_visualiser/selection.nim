@@ -125,6 +125,25 @@ func selectOnly*(selection: var Selection, handle: int) =
   inc selection.count_changes
 
 
+func addAll*(selection: var Selection, handles: openArray[int]) =
+  ## Add each of `handles` not yet picked to end of selection, in order given.
+  ##   Earlier picks keep their places, so operands `m` and `n` stay where reader picked them.
+  ##     Objects list hands over every row its search shows, and rows it keeps include
+  ##     selection itself, so replacing selection would reorder picks reader made.
+  ##   One change however many handles, so front-end redraws once rather than once per pick.
+  ##   Handle already picked, or given twice, is picked once, where it first stands.
+  ##   Nothing new to add changes nothing, so revision stands, as `selectOnly`'s does.
+  var is_picked: array[OBJECTS_MAX, bool]
+  for position in 0 ..< selection.count: is_picked[selection.handles[position]] = true
+  let count_before = selection.count
+  for handle in handles:
+    if is_picked[handle]: continue
+    is_picked[handle] = true
+    selection.handles[selection.count] = handle
+    inc selection.count
+  if selection.count != count_before: inc selection.count_changes
+
+
 func toggle*(selection: var Selection, handle: int) =
   ## Add handle to end of selection, or drop it where already picked.
   ##   Appending is what makes order meaningful: two objects picked become `m` and `n` in
