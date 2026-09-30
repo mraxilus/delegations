@@ -357,6 +357,16 @@ claims that its evaluation checks. A claim is data, so the page shows each verdi
 kinds are `suites`, `tables`, `program`, `count` and `build`. Rejected: a proposal as prose
 alone, because nothing could then say whether it still holds at head.
 
+**A proposal keeps its number for good.** Its directory opens with the number, as
+`01-cayley-derivation`, and its title with the citation, as `P01`. `drive` holds the numbers
+unique and without a gap, so no number goes to a second proposal. A proposal that the library
+implements stays, with status `implemented` and the library commit, and a withdrawn one stays
+too. `drive` no longer applies either at pin, and each page keeps its last evaluation. So a
+citation still leads to what was proposed and measured.
+
+A program claim names its program relative to its proposal, so a new directory name moves no
+digest.
+
 **An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
 (the base proposal first), and measures the copy against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
@@ -375,9 +385,9 @@ cores), those evaluations gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
 
 Measured variance: `typed-multivectors` applies the same library edits as `cayley-derivation`.
 Its evaluations on 2026-09-29 and 2026-09-30 gave median ratios over every rga4d measurand of
-×1.16, ×1.00, ×1.00 and ×1.00. Over every cga5d measurand, the last three gave ×0.99, ×1.07 and
-×0.99. Alternation does not cancel all drift of a shared machine, so one evaluation's time is
-weak evidence alone. Counts are exact, and carry the verdicts.
+×1.16, ×1.00, ×1.00, ×1.00 and ×1.01. Over every cga5d measurand, the last four gave ×0.99,
+×1.07, ×0.99 and ×1.01. Alternation does not cancel all drift of a shared machine, so one
+evaluation's time is weak evidence alone. Counts are exact, and carry the verdicts.
 
 The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
 one applied at pin gives files byte-identical to the measured edits.
@@ -387,8 +397,9 @@ and cga5d.
 
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`,
 `Proposals`, `Evaluations` and `Cells`. They cover parse, quote and digest rules, and claim
-kinds. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
-table serialiser at pin.
+kinds. They cover proposal numbers taken twice or skipped, and the status that freezes a
+proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and
+the table serialiser at pin.
 A digest moves with edits, and never with prose.
 
 ## Notes

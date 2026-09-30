@@ -19,8 +19,8 @@ Three kinds of page answer the question. Each one is built from committed files 
 |------|------|---------------|
 | [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
-| [Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
-| [Typed multivectors][typed-multivectors] | proposal | concrete k-vector types for any dimension |
+| [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
+| [P02 Typed multivectors][typed-multivectors] | proposal | concrete k-vector types, any dimension |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -32,7 +32,7 @@ same shape, so the next exploration starts from the same frame.
 |-----------|---------------|---------|
 | `baseline/` | measurements at pin, and the docket of identifiers | docket, `gaps.md` |
 | `changes/` | one small change to the library for each file: why, then quoted edits | marginalia |
-| `proposals/<name>/` | `proposal.md`, optional `change.md`, `claims.json`, programs | its page |
+| `proposals/<NN>-<name>/` | `proposal.md`, `change.md` if any, `claims.json`, programs | its page |
 | `evaluations/` | what each change or proposal measured when tried at pin | marginalia, proposals |
 | `marginalia/notes.md` | notes on library source, each quoting the lines it is about | marginalia |
 | `pages/` | shell every page is built in, and publication of each published page | every page |
