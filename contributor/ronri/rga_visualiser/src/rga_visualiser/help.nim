@@ -45,11 +45,13 @@ const
     ##   checking is that it holds every one.
     ##   Scrolls on any screen; reference list read by lookup.
 
-  ENTRIES_MAX_PATH_KEYS* = 12
+  ENTRIES_MAX_PATH_KEYS* = 13
     ## Bound how many entries `keys` path may hold, checked at compile time.
     ##   Larger than other paths': keyboard tab describes what phone-sized viewport lacks, so
     ##   fitting it there is wrong trade; measurement in `PROVENANCE.md`.
     ##   Bound stays so tab cannot grow unnoticed; raising it is deliberate.
+    ##     Thirteenth is `/`, which reaches objects search: key belongs on keys tab, and tab
+    ##     already scrolls on phone.
 
   ENTRIES_MAX_PATH* = 8
     ## Bound how many entries any other path may hold, checked at compile time.
@@ -149,7 +151,7 @@ const HELP_ENTRIES* = block:
   ##   Every cell is `wording`'s key, or composed by `wording`'s func from one; row whose
   ##   action names button or key composes it, so button's name is `interaction`'s alone.
   var
-    lut: array[41 + COUNT_OPERATION, HelpEntry]
+    lut: array[42 + COUNT_OPERATION, HelpEntry]
     count = 0
   proc add(path: HelpPath; action: string; outcome: Wording; is_touch = false) =
     lut[count] = HelpEntry(
@@ -237,6 +239,7 @@ const HELP_ENTRIES* = block:
   add(HelpPath.Keys, HelpEscape, HelpBackOut)
   add(HelpPath.Keys, HelpUndoRedoKeys, HelpUndoRedo)
   add(HelpPath.Keys, HelpTab, HelpMoveFocus)
+  add(HelpPath.Keys, HelpSearchKey, HelpSearchObjects)
   # Name keys out of `interaction.nameOf`, so key renamed is renamed in its row.
   #   Grouped by job, since reader looks for job first.
   add(

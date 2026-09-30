@@ -1487,6 +1487,14 @@ proc nimSelectToggle(handle: cint) {.exportc.} = SELECTION_PAGE.toggle(int(handl
   ## Add handle to end of selection, or drop it where already picked.
   ##   Pick order names operands m and n.
 
+proc nimSelectAll(handles: seq[cint]) {.exportc.} =
+  ## Replace whole selection with `handles`, picked in order given; see `selection.selectAll`.
+  ##   Objects list hands over every row its search shows, in order shown.
+  var picked = newSeq[int](handles.len)
+  for position, handle in handles: picked[position] = int(handle)
+  SELECTION_PAGE.selectAll(picked)
+
+
 proc nimPickByPointer(handle: cint) {.exportc.} =
   ## Note that `handle` was just picked by pointer standing at `INTERACTION_PAGE.cursor`.
   ##   Camera then centres it as it comes in; see `framing.PointerPick`.
@@ -2186,6 +2194,29 @@ proc nimSelectionPulse(
     result.add(cfloat(marker.counts_pulse[run]))
     for i in 0 ..< marker.counts_pulse[run]:
       result.add([cfloat(marker.pulses[run][i].x), cfloat(marker.pulses[run][i].y)])
+
+
+
+#[ Objects Search ]#
+
+proc nimSceneHandlesMatching(query: cstring, kept: seq[cint]): seq[cint] {.exportc.} =
+  ## Report every live handle `query` matches, oldest creation first, for objects list.
+  ##   `kept` holds handle of row open for edit, where one is open; it stays listed whatever
+  ##   query says. List rather than sentinel, so page carries no copy of `SLOT_NONE`.
+  ##   Rule is `scene.handlesMatching`'s, so window and page list one set.
+  doAssert kept.len <= 1, &"At most one row is open for edit; got `{kept.len}`."
+  var handles: array[OBJECTS_MAX, int]
+  let
+    handle_kept = if kept.len == 0: none(int) else: some(int(kept[0]))
+    count = SCENE_PAGE.handlesMatching($query, handles, handle_kept)
+  for position in 0 ..< count: result.add(cint(handles[position]))
+
+
+proc nimShownCounted(shown, total: cint): cstring {.exportc.} =
+  ## Say how many objects search leaves listed, of how many scene holds.
+  ##   See `wording.appendShownCounted`, which window writes through too.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendShownCounted(line, cursor, int(shown), int(total)))
 
 
 
