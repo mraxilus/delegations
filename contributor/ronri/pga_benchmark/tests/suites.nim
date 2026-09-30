@@ -353,15 +353,15 @@ suite "Inspector":
     let functions = functionsIn(FIXTURE)
     check functions.len == 2  # declaration ending in `;` skipped
     check functions[0].symbol == "∧"  # head demangled
-    check functions[0].params == @["Multivector", "Multivector"]  # stems in order
-    check functions[0].result_stem == "Multivector" and not functions[0].is_inline  # via Result
+    check functions[0].parameters == @["Multivector", "Multivector"]  # stems in order
+    check functions[0].stem_result == "Multivector" and not functions[0].is_inline  # via Result
     check functions[0].module == "OOZpgaZoperators"  # suffix after last `__`
     let c = count(functions[0].body)
     check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
-    check functions[1].symbol == "dot" and functions[1].params == @["Vector3", "Vector3"]
-    check functions[1].result_stem == "float" and functions[1].is_inline  # via return type
+    check functions[1].symbol == "dot" and functions[1].parameters == @["Vector3", "Vector3"]
+    check functions[1].stem_result == "float" and functions[1].is_inline  # via return type
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
 
@@ -482,8 +482,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
   test "movement models bytes from stems and counts":
     let f = CFunction(
       symbol: "∧",
-      params: @["Multivector", "Multivector"],
-      result_stem: "Multivector",
+      parameters: @["Multivector", "Multivector"],
+      stem_result: "Multivector",
     )
     let m = movement(f, Counts(zero_fills: 1, intermediates: 2, copies: 1), 128)
     check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
@@ -509,15 +509,15 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       if not b.is_derived: continue
       # Operator carrying scalar overload spells same symbol at same arity, so stems of
       #   parameters are what tells two apart.
-      var wants_dense, wants_scalar = 0
+      var operands_dense, operands_scalar = 0
       for i in 0 ..< int(p.arity):
-        if p.operands[i] == Kind.Scalar: inc wants_scalar else: inc wants_dense
+        if p.operands[i] == Kind.Scalar: inc operands_scalar else: inc operands_dense
       for f in INSPECTED:
         if f.symbol != head: continue
         var dense, scalar = 0
-        for stem in f.params:
+        for stem in f.parameters:
           if stem == "Multivector": inc dense elif stem == "float": inc scalar
-        if dense != wants_dense or scalar != wants_scalar: continue
+        if dense != operands_dense or scalar != operands_scalar: continue
         # Bound is what algebra demands, so library meets it and never beats it. Totals
         #   fold callees, since bound of chain counts arithmetic wherever it is spent.
         check b.multiplies <= total[f.name].multiplies  # derivation is sound
@@ -535,7 +535,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in functions:
         if f.symbol != p.emitted: continue
         var arity = 0
-        for stem in f.params:
+        for stem in f.parameters:
           if stem == "Multivector" or stem == "float": inc arity
         if arity == int(p.arity): is_found = true
       check is_found  # every spelled operator is emitted at its arity
@@ -673,7 +673,7 @@ suite "Gaps":
     }
 
   let ALGEBRAS = @[
-    Algebra(name: "rga4d", static_measurements: staticDoc(), runtime_measurements: runtimeDoc())
+    Algebra(name: "rga4d", measurements_static: staticDoc(), measurements_runtime: runtimeDoc())
   ]
 
   func decidedOf(rule: Rule; algebras: seq[Algebra]; gaps: seq[Gap]): Decision =
@@ -694,7 +694,7 @@ suite "Gaps":
 
   test "gap without counts or timing is unmeasured":
     let gaps = gapsOf(
-      Algebra(name: "rga4d", static_measurements: staticDoc(), runtime_measurements: nil)
+      Algebra(name: "rga4d", measurements_static: staticDoc(), measurements_runtime: nil)
     )
     let by = gaps.mapIt((it.measurand, it)).toTable
     check by["transform_point_motor"].status == Status.Unmeasured  # nothing to decide on

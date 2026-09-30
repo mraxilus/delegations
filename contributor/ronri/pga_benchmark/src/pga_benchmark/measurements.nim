@@ -123,24 +123,29 @@ template timeRounds(rounds: var array[ROUNDS, int64]; loop: untyped) =
 
 
 macro emitMeasurand(
-  index: static int, it: static Implementation, measurand: static Measurand
+  index: static int, implementation: static Implementation, measurand: static Measurand
 ): untyped =
-  ## Emit timed run of one measurand in one implementation into `MEASUREMENTS[it][index]`.
-  let expression = if it == Implementation.Library: measurand.expression else: measurand.reference
+  ## Emit timed run of one measurand in one implementation into
+  ##   `MEASUREMENTS[implementation][index]`.
+  let expression =
+    if implementation == Implementation.Library: measurand.expression
+    else: measurand.reference
   if expression.len == 0:
-    let it_lit = newCall(ident"Implementation", newLit(ord(it)))
+    let implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     return quote do:
-      MEASUREMENTS[`it_lit`][`index`] = Measurement(is_measured: false)
+      MEASUREMENTS[`implementation_literal`][`index`] = Measurement(is_measured: false)
   let
     body = parseExpr(expression)
     (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
-    it_lit = newCall(ident"Implementation", newLit(ord(it)))
+    implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     pool_m = parseExpr(
-      if it == Implementation.Library: libraryPoolName(measurand.operands[0], measurand.grade)
+      if implementation == Implementation.Library:
+        libraryPoolName(measurand.operands[0], measurand.grade)
       else: referencePoolName(measurand.operands[0]),
     )
     pool_n = parseExpr(
-      if it == Implementation.Library: libraryPoolName(measurand.operands[1], measurand.grade)
+      if implementation == Implementation.Library:
+        libraryPoolName(measurand.operands[1], measurand.grade)
       else: referencePoolName(measurand.operands[1]),
     )
   quote do:
@@ -151,25 +156,25 @@ macro emitMeasurand(
           let `n` {.used.} = `pool_n`[0]
           `body`)]
         rounds: array[ROUNDS, int64]
-      let stats_before = getAllocStats()
+      let statistics_before = getAllocStats()
       timeRounds(rounds):
         for i in 0 ..< OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template `m`(): untyped {.used.} = `pool_m`[i]
           template `n`(): untyped {.used.} = `pool_n`[j]
           results[i] = `body`
-      let stats_after = getAllocStats()
-      var nan_count = 0
+      let statistics_after = getAllocStats()
+      var count_nan = 0
       for i in 0 ..< OBJECTS:
-        if hasNan(results[i]): inc nan_count
+        if hasNan(results[i]): inc count_nan
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
-      MEASUREMENTS[`it_lit`][`index`] = Measurement(
+      MEASUREMENTS[`implementation_literal`][`index`] = Measurement(
         is_measured: true,
         ns_median: median,
         ns_min: minimum,
-        allocations: allocationsOf(stats_after - stats_before),
-        nan_share: float(nan_count) / float(OBJECTS),
+        allocations: allocationsOf(statistics_after - statistics_before),
+        nan_share: float(count_nan) / float(OBJECTS),
       )
 
 
@@ -177,11 +182,11 @@ macro emitCatalogue(): untyped =
   ## Emit every measurand in both implementations, in catalogue order.
   result = newStmtList()
   for index in 0 ..< CATALOGUE.len:
-    for it in [Implementation.Library, Implementation.Reference]:
+    for implementation in [Implementation.Library, Implementation.Reference]:
       result.add newCall(
         bindSym"emitMeasurand",
         newLit(index),
-        newCall(ident"Implementation", newLit(ord(it))),
+        newCall(ident"Implementation", newLit(ord(implementation))),
         newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
       )
 

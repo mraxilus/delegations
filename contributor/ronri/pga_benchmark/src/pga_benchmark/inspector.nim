@@ -35,9 +35,9 @@ type
       ## Module suffix after last `__`, e.g. `referenceZrigid3`; empty where name has none.
     overload*: int
       ## Overload index `_u<n>`, `-1` where name carries none.
-    params*: seq[string]
+    parameters*: seq[string]
       ## Parameter type stems in order, e.g. `Multivector`, `Point`, `float`; `Result` excluded.
-    result_stem*: string
+    stem_result*: string
       ## Type stem of what call writes: `Result` parameter's, else return type's; `void` if none.
     is_inline*: bool
       ## True for `static N_INLINE`, false for `N_NIMCALL`.
@@ -174,24 +174,24 @@ func functionsIn*(source: string): seq[CFunction] =
       is_call = line.startsWith("N_NIMCALL(") or line.startsWith("N_LIB_PRIVATE N_NIMCALL(")
     if not (is_inline or is_call) or not line.endsWith("{"): continue
     let
-      open_paren = line.find('(')
-      comma = line.find(',', open_paren)
-      close_name = line.find(')', comma)
-    if comma < 0 or close_name < 0: continue
+      parenthesis_open = line.find('(')
+      comma = line.find(',', parenthesis_open)
+      name_stop = line.find(')', comma)
+    if comma < 0 or name_stop < 0: continue
     let
-      name = line[comma + 1 ..< close_name].strip
-      returns = line[open_paren + 1 ..< comma].stemOf
-      params_start = line.find('(', close_name)
-      params_stop = line.rfind(')')
-    if params_start < 0 or params_stop <= params_start: continue
+      name = line[comma + 1 ..< name_stop].strip
+      returns = line[parenthesis_open + 1 ..< comma].stemOf
+      parameters_start = line.find('(', name_stop)
+      parameters_stop = line.rfind(')')
+    if parameters_start < 0 or parameters_stop <= parameters_start: continue
     var
-      params: seq[string]
-      result_stem = returns
-    for parameter in line[params_start + 1 ..< params_stop].split(','):
+      parameters: seq[string]
+      stem_result = returns
+    for parameter in line[parameters_start + 1 ..< parameters_stop].split(','):
       let stem = parameter.stemOf
       if stem.len == 0: continue
-      if parameter.strip.endsWith(" Result"): result_stem = stem
-      else: params.add stem
+      if parameter.strip.endsWith(" Result"): stem_result = stem
+      else: parameters.add stem
     var
       depth = 1
       i = position
@@ -204,8 +204,8 @@ func functionsIn*(source: string): seq[CFunction] =
       symbol: name.demangle,
       module: name.moduleOf,
       overload: name.overloadOf,
-      params: params,
-      result_stem: result_stem,
+      parameters: parameters,
+      stem_result: stem_result,
       is_inline: is_inline,
       body: source[position ..< i],
     )
@@ -250,10 +250,10 @@ func startOf(context: string; counter: string): int =
   ## Read value counter was last set to before loop, `<counter> = ((NI) <n>);`; zero else.
   let at = context.rfind(counter & " = ((NI) ")
   if at < 0: return 0
-  let from_digits = at + counter.len + " = ((NI) ".len
-  var stop = from_digits
+  let digits_start = at + counter.len + " = ((NI) ".len
+  var stop = digits_start
   while stop < context.len and context[stop] in Digits: inc stop
-  if stop == from_digits: 0 else: parseInt(context[from_digits ..< stop])
+  if stop == digits_start: 0 else: parseInt(context[digits_start ..< stop])
 
 
 func tripsOf(inner, context: string): int =
@@ -401,7 +401,7 @@ func count*(body: string): Counts =
 
 func key*(f: CFunction): string =
   ## Key function by symbol and parameter stems, e.g. `∧(Multivector,Multivector)`.
-  f.symbol & "(" & f.params.join(",") & ")"
+  f.symbol & "(" & f.parameters.join(",") & ")"
 
 
 func totalOf(

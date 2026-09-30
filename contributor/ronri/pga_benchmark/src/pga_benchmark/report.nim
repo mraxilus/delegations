@@ -106,8 +106,8 @@ func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): Jso
   %*{
     "symbol": f.symbol,
     "module": moduleTail(f.module),
-    "params": f.params,
-    "returns": f.result_stem,
+    "params": f.parameters,
+    "returns": f.stem_result,
     "inline": f.is_inline,
     "own": countsNode(own),
     "total": countsNode(total),
