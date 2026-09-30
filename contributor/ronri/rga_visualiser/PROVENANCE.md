@@ -410,7 +410,7 @@ in 3 runs of 3. The pinch then read 7.62 in 15 fresh pages of 15, 5 of them with
 `Math.random`, so the reach of the curve and the extent of the axis moved between runs. Mulberry32
 from `SEED_WINDOW` gives the same durations on every run.
 
-*Checked.* Verified by a run: two drives side by side on one delegate print the same 161 lines for
+*Checked.* Verified by a run: two drives side by side on one delegate print the same 167 lines for
 the simulated page. Each loads the other, and the lines agree in every figure. Without the rendering
 step, the touch wait and the seed, two runs of the same code differ in 7 of those lines. Their
 verdicts agree.
