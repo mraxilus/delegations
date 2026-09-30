@@ -1,18 +1,18 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "8a35753b78e6d34d"
+    "digest": "0059511d34ef1ee4"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
-    "digest": "06893221c11719e0"
+    "digest": "6bece1b51b358265"
   },
   "cayley-derivation": {
     "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
-    "digest": "70f54331ce31a73e"
+    "digest": "61979e28b553bf0f"
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "c858a1397977d38f"
+    "digest": "1eeeb65b30713bd5"
   }
 }
