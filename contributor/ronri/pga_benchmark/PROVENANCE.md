@@ -118,6 +118,11 @@ control raised the counter first. A zero then means zero, and never an inert ins
 (Article VII.4). The plain build reports the gauge as off, and that is the measurement taken
 once compiled out.
 
+**`ns` stays in names as a unit symbol.** The Architect ruled so for this project, as for `ms`,
+`px`, `kb` and `mb` on pull request 322. So `ns_median` and `ns_library` keep it. A single
+letter stays only where an equation or a small index scope gives it meaning (V.6). Examples
+are `i` in a scan and `a + b` in the sum of counts.
+
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Measurements` and `Allocation`.
 `summarise` runs on fixture rounds. A short run gives finite positive nanoseconds and a
 non-zero sink. The positive control raises the counter, and then no measurand allocates over

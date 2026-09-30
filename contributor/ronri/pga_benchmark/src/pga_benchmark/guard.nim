@@ -134,11 +134,11 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
         continue
       for metric in BOUNDED:
         let
-          a = was{metric}.getInt
-          b = now{metric}.getInt
-        if a != b:
+          value_was = was{metric}.getInt
+          value_now = now{metric}.getInt
+        if value_was != value_now:
           result.findings.add Finding(
             path: path,
-            message: "Lower bound `" & metric & "` of `" & id & "` moved; got `" & $b &
-              "`, baseline `" & $a & "`.",
+            message: "Lower bound `" & metric & "` of `" & id & "` moved; got `" & $value_now &
+              "`, baseline `" & $value_was & "`.",
           )
