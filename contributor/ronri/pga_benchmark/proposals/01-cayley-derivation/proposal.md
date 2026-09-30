@@ -1,4 +1,4 @@
-# Derive every Cayley table from three
+# P01: Derive every Cayley table from three
 
 The library writes three tables by hand: the metric on vectors, the exterior product of bases,
 and the complement permutation. Four rules derive every other table, and each rule is used the
@@ -62,8 +62,8 @@ suite, so the build and the transwedge cannot drift apart.
 ## Grade restriction
 
 A typed operand names its bases, and the emitter reads only those cells of the whole table.
-The tables stay whole, so the table count does not grow with the number of types. Proposal
-`typed-multivectors` builds on this.
+The tables stay whole, so the table count does not grow with the number of types. Proposal P02,
+`typed-multivectors`, builds on this.
 
 The alternative filters a copy of each table for each pair of operand types. One copy of a 2D
 table costs 0.1 MB at 4D, 0.35 MB at 5D and 0.9 MB at 6D. About eight types and thirty binary

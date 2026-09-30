@@ -4,6 +4,8 @@
 ##     last one did:
 ##     claims first, since they say whether proposal holds; then argument; then what it changes and
 ##     what that measured at pin.
+##   Header cites number and status. Frozen proposal shows pin its last evaluation was taken at,
+##     since library has moved past it, and edits whose quote is gone show file alone.
 ##
 ##   Cost: whole-file replacement renders collapsed, since hundreds of lines would bury claims.
 
@@ -56,8 +58,18 @@ func proposalBody*(
         "</td><td>" & detail.join("<br>") & "</td></tr>"
     result.add "</table></div>"
 
-  result = "<div class=\"page\"><header><h1>" & renderInline(proposal.title) &
-    "</h1><p class=\"meta\">proposal " & code(proposal.name) & " · pga " & code(pin[0 ..< 7])
+  let
+    pga_shown =
+      if proposal.isFrozen and not evaluation.isNil: evaluation{"taken", "pga"}.getStr else: pin
+    standing =
+      if proposal.isImplemented: "implemented in " & code(proposal.implemented_in[
+        0 ..< min(7, proposal.implemented_in.len)])
+      elif proposal.isFrozen: "withdrawn"
+      else: "proposed"
+  result = "<div class=\"page\"><header><h1>" & escapeHtml(proposal.citation) & ": " &
+    renderInline(proposal.title) & "</h1><p class=\"meta\">" & escapeHtml(proposal.citation) &
+    " " & code(proposal.name) & " · " & standing & " · pga " &
+    code(pga_shown[0 ..< min(7, pga_shown.len)])
   if proposal.builds_on.len > 0: result.add " · builds on " & code(proposal.builds_on)
   if not evaluation.isNil:
     result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) & ", " &

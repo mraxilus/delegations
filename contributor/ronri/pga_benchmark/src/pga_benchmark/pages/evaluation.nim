@@ -198,7 +198,8 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
         renderFence(edit.replacement.strip(leading = false).splitLines, "nim", 1) & "</details>"
       continue
     let at = if edit.path in files: files[edit.path].lineOf(edit.quote) else: 0
-    result.add "<div class=\"edit\"><p class=\"where\">" & code(edit.path & ":" & $at) &
+    let where = if at > 0: edit.path & ":" & $at else: edit.path  # quote gone from pin
+    result.add "<div class=\"edit\"><p class=\"where\">" & code(where) &
       "</p><div class=\"pair\"><div><p class=\"label\">at pin</p>" &
       renderFence(edit.quote.splitLines, "nim", at) & "</div><div><p class=\"label\">" &
       "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></div>"

@@ -1,11 +1,11 @@
-# Generate concrete k-vector types for any dimension
+# P02: Generate concrete k-vector types for any dimension
 
 One macro call generates a concrete object type for each grade and for both parities, from
 `DIMENSIONS` alone. Each type stores only its own bases, densely. Products are generic over the
 closed set of these types, and return the smallest type that holds what the product can reach.
 An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
 
-This proposal builds on `cayley-derivation`. Grade restriction lives in the emission, so the
+This proposal builds on P01, `cayley-derivation`. Grade restriction lives in the emission, so the
 tables stay whole, and the prototype reads the derived tables by their names in that proposal.
 
 ## What it is

@@ -3,11 +3,18 @@
 ##     directory each, one shape for all, so next exploration starts from same frame:
 ##
 ##     ```
-##     proposals/<name>/proposal.md    argument: what, why, alternatives weighed, open decisions
-##     proposals/<name>/change.md    candidate edits to library at pin (`changes.nim` format)
-##     proposals/<name>/claims.json  proposal it builds on, and claims evaluation checks
-##     proposals/<name>/*.nim        programs claim runs against changed library
+##     proposals/<NN>-<name>/proposal.md  argument, opening `# P<NN>: <title>`
+##     proposals/<NN>-<name>/change.md    candidate edits to library at pin (`changes.nim`)
+##     proposals/<NN>-<name>/claims.json  status, proposal it builds on, claims evaluation checks
+##     proposals/<NN>-<name>/*.nim        programs claim runs, named relative to directory
 ##     ```
+##
+##   Number is proposal's for good, as RFC's is: allotted in order, never reused, and cited as
+##     `P01`. Path and title both carry it, and `checkNumbers` holds them unique and gapless,
+##     so no number is freed for another proposal.
+##   Status is `proposed`, `implemented` (with library commit) or `withdrawn`. Proposal that is
+##     not proposed is frozen: it stays, with its last evaluation, so its citation still leads
+##     to what was proposed and measured, and it is no longer applied at pin.
 ##
 ##   Change is optional: proposal that only adds programs above library carries none. Claims
 ##     are data rather than prose, so evaluation checks them and page shows verdicts beside them.
@@ -21,50 +28,104 @@
 
 {.experimental: "strictFuncs".}
 
-import std/json
+import std/[json, strutils]
 
 import ./[changes, guard, markdown]
 
 
-type Proposal* = object
-  ## Define one proposal exploration as read from its directory.
-  name*: string
-    ## Directory name, as `typed-multivectors`.
-  title*: string
-    ## Heading of `proposal.md`.
-  body*: seq[Block]
-    ## Blocks of `proposal.md` after title.
-  change*: Change
-    ## Candidate edits; none where proposal carries no `change.md`.
-  builds_on*: string
-    ## Proposal whose change applies first; empty where none.
-  claims*: JsonNode
-    ## Claims evaluation checks, in order.
+type
+  StatusProposal* {.pure.} = enum
+    ## Define where proposal stands.
+    Proposed, Implemented, Withdrawn
+  Proposal* = object
+    ## Define one proposal exploration as read from its directory.
+    number*: int
+      ## Number path and title carry, as `2`; zero where path gives none.
+    name*: string
+      ## Directory name after number, as `typed-multivectors`.
+    directory*: string
+      ## Project-relative directory, as `proposals/02-typed-multivectors`.
+    title*: string
+      ## Heading of `proposal.md` after its citation.
+    status*: StatusProposal
+      ## Where proposal stands.
+    implemented_in*: string
+      ## Library commit that implements proposal; empty unless implemented.
+    body*: seq[Block]
+      ## Blocks of `proposal.md` after title.
+    change*: Change
+      ## Candidate edits; none where proposal carries no `change.md`.
+    builds_on*: string
+      ## Name of proposal whose change applies first; empty where none.
+    claims*: JsonNode
+      ## Claims evaluation checks, in order.
 
 
-const CLAIM_KINDS* = ["suites", "tables", "program", "count", "build"]
-  ## Claim kinds evaluation knows how to check.
+const
+  CLAIM_KINDS* = ["suites", "tables", "program", "count", "build"]
+    ## Claim kinds evaluation knows how to check.
+  NUMBER_WIDTH = 2
+    ## Digits number is written with, zero-padded, in path and citation.
+  STATUS_WORDS = ["proposed", "implemented", "withdrawn"]
+    ## Status as `claims.json` spells it, in `StatusProposal` order.
+
+
+func citation*(proposal: Proposal): string =
+  ## Cite proposal by its number, as `P02`.
+  "P" & align($proposal.number, NUMBER_WIDTH, '0')
+
+
+func isImplemented*(proposal: Proposal): bool =
+  ## Tell whether library implements proposal, at commit proposal names.
+  proposal.status == StatusProposal.Implemented
+
+
+func isFrozen*(proposal: Proposal): bool =
+  ## Tell whether proposal is implemented or withdrawn, so no longer applied at pin.
+  proposal.status != StatusProposal.Proposed
 
 
 func parseProposal*(
-  name, argument, change: string;
+  argument, change: string;
   claims: JsonNode;
   directory: string;
 ): (Proposal, seq[Finding]) =
-  ## Read proposal from argument and change texts and parsed claims; `change` empty where proposal
-  ##   carries none, `claims` nil where file is not JSON.
+  ## Read proposal from its directory, argument and change texts and parsed claims; `change`
+  ##   empty where proposal carries none, `claims` nil where file is not JSON.
   var
-    proposal = Proposal(name: name, claims: newJArray())
+    proposal = Proposal(directory: directory, claims: newJArray())
     findings: seq[Finding]
+  let
+    base = directory.rsplit('/', 1)[^1]
+    dash = base.find('-')
+  if dash == NUMBER_WIDTH and base[0 ..< dash].allCharsInSet(Digits):
+    proposal.number = parseInt(base[0 ..< dash])
+    proposal.name = base[dash + 1 .. ^1]
+  else:
+    proposal.name = base
+    findings.add Finding(
+      path: directory,
+      message: "Proposal directory needs its number, as `01-" & base & "`; got `" & base & "`.",
+    )
   let blocks = parseBlocks(argument)
   if blocks.len == 0 or blocks[0].kind != BlockKind.Heading or blocks[0].level != 1:
     findings.add Finding(
       path: directory & "/proposal.md",
       line: 1,
-      message: "Proposal needs `# Title`; got none.",
+      message: "Proposal needs `# " & proposal.citation & ": Title`; got none.",
     )
   else:
-    proposal.title = blocks[0].lines[0]
+    let heading = blocks[0].lines[0]
+    if heading.startsWith(proposal.citation & ": "):
+      proposal.title = heading[proposal.citation.len + 2 .. ^1]
+    else:
+      proposal.title = heading
+      findings.add Finding(
+        path: directory & "/proposal.md",
+        line: 1,
+        message: "Title must open with its citation, as `" & proposal.citation & ": `; got `" &
+          heading & "`.",
+      )
     proposal.body = blocks[1 .. ^1]
   if change.len > 0:
     let (parsed, why) = parseChange(directory & "/change.md", change)
@@ -77,6 +138,20 @@ func parseProposal*(
     )
     return (proposal, findings)
   proposal.builds_on = claims{"builds_on"}.getStr
+  let status = claims{"status"}.getStr
+  if status notin STATUS_WORDS:
+    findings.add Finding(
+      path: directory & "/claims.json",
+      message: "Status must be proposed, implemented or withdrawn; got `" & status & "`.",
+    )
+  else:
+    proposal.status = StatusProposal(STATUS_WORDS.find(status))
+  proposal.implemented_in = claims{"implemented_in"}.getStr
+  if proposal.status == StatusProposal.Implemented and proposal.implemented_in.len == 0:
+    findings.add Finding(
+      path: directory & "/claims.json",
+      message: "Implemented proposal needs `implemented_in`, library commit; got none.",
+    )
   let listed = claims{"claims"}
   if listed.isNil or listed.kind != JArray:
     findings.add Finding(
@@ -99,4 +174,25 @@ func parseProposal*(
 func programsOf*(proposal: Proposal): seq[string] =
   ## List program paths proposal's claims run, project-relative, in order.
   for claim in proposal.claims:
-    if claim{"kind"}.getStr == "program": result.add claim{"path"}.getStr
+    if claim{"kind"}.getStr == "program":
+      result.add proposal.directory & "/" & claim{"path"}.getStr
+
+
+func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
+  ## Hold numbers unique and gapless from one, so none is freed or taken twice.
+  var seen: seq[int]
+  for proposal in proposals:
+    if proposal.number == 0: continue
+    if proposal.number in seen:
+      result.add Finding(
+        path: proposal.directory,
+        message: "Proposal number is taken; got `" & proposal.citation & "`.",
+      )
+    seen.add proposal.number
+  for number in 1 .. max(seen & @[0]):
+    if number notin seen:
+      result.add Finding(
+        path: "proposals",
+        message: "Proposal numbers skip one, so it was freed; got `P" &
+          align($number, NUMBER_WIDTH, '0') & "` missing.",
+      )

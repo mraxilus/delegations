@@ -316,7 +316,8 @@ proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
 
 
 proc readProposals(findings: var seq[Finding]): seq[Proposal] =
-  ## Read every proposal directory, in name order; malformed ones add findings.
+  ## Read every proposal directory, in number order; malformed ones and numbers taken twice or
+  ##   skipped add findings.
   var directories: seq[string]
   for kind, path in walkDir(DIRECTORY_PROPOSALS):
     if kind == pcDir: directories.add path
@@ -331,7 +332,6 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
       try: parsed = parseJson(readFile(claims))
       except JsonParsingError: parsed = nil
     let (proposal, why) = parseProposal(
-      directory.lastPathPart,
       if fileExists(argument): readFile(argument) else: "",
       if fileExists(change): readFile(change) else: "",
       parsed,
@@ -339,14 +339,16 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
     )
     findings.add why
     result.add proposal
+  findings.add checkNumbers(result)
 
 
 proc candidatesOf(
   changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
 ): seq[Candidate] =
-  ## Shape one evaluation candidate per change and per proposal; proposal carries its base chain
-  ##   first.
-  ##   Candidate's programs are program texts, so digest moves when program does.
+  ## Shape one evaluation candidate per change and per proposed proposal; proposal carries its
+  ##   base chain first, less any base library already implements.
+  ##   Candidate's programs are program texts, so digest moves when program does. Frozen
+  ##   proposal shapes none: library holds or dropped its edits, so they no longer apply.
   for (name, change) in changes:
     result.add Candidate(
       name: name,
@@ -355,10 +357,11 @@ proc candidatesOf(
       claims: newJArray(),
     )
   for proposal in proposals:
-    let directory = DIRECTORY_PROPOSALS / proposal.name
+    let directory = proposal.directory
     if changes.anyIt(it[0] == proposal.name):
       findings.add Finding(path: directory, message: "Proposal shares name with change; got `" &
         proposal.name & "`.")
+    if proposal.isFrozen: continue
     var
       chain = @[proposal.change]
       seen = @[proposal.name]
@@ -372,6 +375,11 @@ proc candidatesOf(
       if found.len == 0:
         findings.add Finding(path: directory,
           message: "Proposal builds on no proposal here; got `" & base & "`.")
+        break
+      if found[0].isImplemented: break  # library holds its edits
+      if found[0].isFrozen:
+        findings.add Finding(path: directory,
+          message: "Proposal builds on withdrawn proposal; got `" & found[0].citation & "`.")
         break
       chain.insert(found[0].change, 0)
       seen.add base
@@ -510,8 +518,8 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   for _, document in evaluations.pairs: documents.add document
   let spread = spreadOf(documents)
   for proposal in proposals:
-    if proposal.name notin evaluations: continue
-    var overlay = Overlay(name: proposal.name, title: proposal.title,
+    if proposal.isFrozen or proposal.name notin evaluations: continue
+    var overlay = Overlay(name: proposal.name, title: proposal.citation & ": " & proposal.title,
       url: published{proposal.name, "url"}.getStr)
     for algebra, measured in evaluations[proposal.name]{"algebras"}.pairs:
       overlay.functions[algebra] = measured{"functions"}
@@ -527,7 +535,8 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
     marginaliaBody(changes_evaluated, notes, files, baselines, spread, pin,
       linksHtml(names, published, "marginalia")), faces)
   for proposal in proposals:
-    result[proposal.name] = assemble(text_shell, titled(proposal.name),
+    result[proposal.name] = assemble(text_shell,
+      proposal.citation & " " & titled(proposal.name),
       proposalBody(proposal, evaluations.getOrDefault(proposal.name), files, baselines, spread, pin,
         linksHtml(names, published, proposal.name)), faces)
 
@@ -639,7 +648,7 @@ proc pinnedChecked(pin: string): seq[Finding] =
     let digest = editsDigest(candidate.changes, candidate.claims, candidate.programs)
     result.add checkEvaluation(evaluations[candidate.name], pin, digest, path)
   for name in evaluations.keys:
-    if not candidates.anyIt(it.name == name):
+    if not candidates.anyIt(it.name == name) and not proposals.anyIt(it.name == name):
       result.add Finding(path: DIRECTORY_EVALUATIONS / name & ".json",
         message: "Evaluation names no change or proposal; got `" & name & "`.")
   let (notes, why) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))

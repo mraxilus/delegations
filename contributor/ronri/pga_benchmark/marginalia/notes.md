@@ -19,8 +19,8 @@ type
 A point carries all 2^D slots, and each product reads every slot. Of the measurands with a
 typed reference, most spend more multiplies than the reference, and this is why.
 
-Grade restriction lives in the emission, and the tables stay whole. Proposal
-`typed-multivectors` explores concrete k-vector types that name their slots.
+Grade restriction lives in the emission, and the tables stay whole. Proposal P02,
+`typed-multivectors`, explores concrete k-vector types that name their slots.
 
 ## What an out-of-range grade does
 
@@ -68,8 +68,8 @@ func `|∙`*(m: Multivector): Multivector {.inline.} =
 For those operations, the result alone puts them above the byte bound.
 
 An emitter that returns `float`, for a table whose products all land in one slot, closes that.
-Proposal `typed-multivectors` returns the smallest kind that holds the result, which here is one
-slot.
+Proposal P02, `typed-multivectors`, returns the smallest kind that holds the result, which here
+is one slot.
 
 ## What the flat norms compute
 
@@ -240,8 +240,8 @@ func norm*(m: Multivector): Multivector {.inline.} = |m
 ```
 
 The book writes ‖𝐦‖ = s𝟏 + t𝟙, and a `Multivector` result mirrors that exactly. The cost is
-movement: `|` fills and writes all 2^D slots to hand back two. Proposal `typed-multivectors`
-gives this result the kind that holds the scalar and the antiscalar.
+movement: `|` fills and writes all 2^D slots to hand back two. Proposal P02,
+`typed-multivectors`, gives this result the kind that holds the scalar and the antiscalar.
 
 ## Support is three dense products
 
@@ -256,8 +256,8 @@ gives this result the kind that holds the scalar and the antiscalar.
 ```
 
 `∩` is `m ∨ (𝐞ₙ ∧ ☆ m)`: a dual, a wedge with a constant basis element, and an antiwedge.
-The wedge with one basis element is a signed selection, not a full product. Proposal
-`cayley-derivation` generates `∩` and `∪` as one table each, through map operators.
+The wedge with one basis element is a signed selection, not a full product. Proposal P01,
+`cayley-derivation`, generates `∩` and `∪` as one table each, through map operators.
 
 ## Addition fills before it writes
 

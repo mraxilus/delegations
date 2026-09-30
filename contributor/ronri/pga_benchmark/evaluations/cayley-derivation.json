@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "evaluation",
   "name": "cayley-derivation",
-  "path": "proposals/cayley-derivation",
+  "path": "proposals/01-cayley-derivation",
   "edits_digest": "c743a507a43a5e6c",
   "taken": {
     "date": "2026-09-29",

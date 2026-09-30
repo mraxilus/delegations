@@ -890,28 +890,65 @@ suite "Head":
 
 suite "Proposals":
   const
-    DIRECTORY = "proposals/sign"
-    RECORD = "# Sign\n\nWhy.\n"
+    DIRECTORY = "proposals/01-sign"
+    RECORD = "# P01: Sign\n\nWhy.\n"
 
-  test "proposal reads title, base proposal and claims of every known kind":
+  func numbered(number: int; status = "proposed"): Proposal =
+    ## Read well-formed proposal at number, with status.
     let
-      claims = %*{"builds_on": "base", "claims": [{"kind": "suites"},
+      directory = "proposals/" & align($number, 2, '0') & "-p" & $number
+      heading = "# P" & align($number, 2, '0') & ": P\n"
+    parseProposal(heading, "", %*{"status": status, "implemented_in": "abc", "claims": []},
+      directory)[0]
+
+  test "proposal reads number, title, status, base proposal and claims of every known kind":
+    let
+      claims = %*{"status": "proposed", "builds_on": "base", "claims": [{"kind": "suites"},
         {"kind": "build", "algebra": "rga6d", "metric": "peakmem", "at_most": 0.7},
-        {"kind": "program", "path": "proposals/sign/p.nim", "algebras": ["rga4d"]}]}
-      (proposal, findings) = parseProposal("sign", RECORD, "", claims, DIRECTORY)
-    check findings.len == 0 and proposal.title == "Sign"  # well formed
+        {"kind": "program", "path": "p.nim", "algebras": ["rga4d"]}]}
+      (proposal, findings) = parseProposal(RECORD, "", claims, DIRECTORY)
+    check findings.len == 0 and proposal.title == "Sign"  # well formed, citation read off
+    check proposal.number == 1 and proposal.name == "sign"  # number, then name, from path
+    check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
     check proposal.builds_on == "base" and proposal.claims.len == 3  # chain and claims
-    check proposal.programsOf == @["proposals/sign/p.nim"]  # programs claims run
+    check proposal.programsOf == @["proposals/01-sign/p.nim"]  # program beside its proposal
 
   test "unknown claim, missing title and claims that are not JSON are findings":
     let
-      odd = %*{"claims": [{"kind": "vibes"}]}
-      (_, unknown) = parseProposal("sign", RECORD, "", odd, DIRECTORY)
-      (_, untitled) = parseProposal("sign", "Why.\n", "", %*{"claims": []}, DIRECTORY)
-      (_, broken) = parseProposal("sign", RECORD, "", nil, DIRECTORY)
+      odd = %*{"status": "proposed", "claims": [{"kind": "vibes"}]}
+      (_, unknown) = parseProposal(RECORD, "", odd, DIRECTORY)
+      (_, untitled) = parseProposal("Why.\n", "", %*{"status": "proposed", "claims": []},
+        DIRECTORY)
+      (_, broken) = parseProposal(RECORD, "", nil, DIRECTORY)
     check unknown.len == 1 and "`vibes`" in unknown[0].message  # never skipped in silence
     check untitled.len == 1 and untitled[0].path == DIRECTORY & "/proposal.md"  # needs title
     check broken.len == 1 and broken[0].path == DIRECTORY & "/claims.json"  # needs object
+
+  test "path without number, title without citation and unknown status are findings":
+    let
+      claims = %*{"status": "proposed", "claims": []}
+      (_, unnumbered) = parseProposal(RECORD, "", claims, "proposals/sign")
+      (_, uncited) = parseProposal("# Sign\n", "", claims, DIRECTORY)
+      (_, unplaced) = parseProposal(RECORD, "", %*{"status": "dreamt", "claims": []}, DIRECTORY)
+    check unnumbered.len == 2  # path lacks number, so title cites none it could match
+    check "`01-sign`" in unnumbered[0].message  # names form path needs
+    check uncited.len == 1 and "`P01: `" in uncited[0].message  # title opens with citation
+    check unplaced.len == 1 and "`dreamt`" in unplaced[0].message  # three statuses only
+
+  test "implemented proposal needs its commit, and implemented or withdrawn is frozen":
+    let
+      (bare, why) = parseProposal(RECORD, "",
+        %*{"status": "implemented", "claims": []}, DIRECTORY)
+    check why.len == 1 and "`implemented_in`" in why[0].message  # commit it landed in
+    check bare.isImplemented and bare.isFrozen  # frozen as well
+    check numbered(1, "withdrawn").isFrozen and not numbered(1, "withdrawn").isImplemented
+    check numbered(1, "implemented").implemented_in == "abc"  # commit read from claims
+
+  test "numbers are unique and gapless, so none is freed or taken twice":
+    check checkNumbers([numbered(1), numbered(2)]).len == 0  # one, then two
+    check checkNumbers([numbered(1), numbered(1)]).len == 1  # taken twice
+    let skipped = checkNumbers([numbered(1), numbered(3)])
+    check skipped.len == 1 and "`P02`" in skipped[0].message  # two was freed
 
 
 suite "Evaluations":

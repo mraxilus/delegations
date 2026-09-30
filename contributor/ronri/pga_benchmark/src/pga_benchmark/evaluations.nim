@@ -412,7 +412,7 @@ proc checkClaims(
             is_holding = false
             detail.add algebra.name & " " & side_changed[i] & " differs"
     of "program":
-      let program = claim{"path"}.getStr
+      let program = candidate.path & "/" & claim{"path"}.getStr  # relative to proposal
       for name in claim{"algebras"}:
         let algebra = algebraNamed(name.getStr, algebras)
         var arguments = @["c", "--hints:off", "--warnings:off", "--skipParentCfg:on",
