@@ -454,7 +454,7 @@ const CATALOGUE* = block:
 
 
 const MISSING* = block:
-  ## Operations reference carries and library lacks, each one gap; ids of same shape.
+  ## Operations reference carries and library lacks, each one gap; ids spelled alike.
   var s: seq[Measurand]
   when IS_CONFORMAL:
     s.add Measurand(
@@ -570,6 +570,12 @@ func shapeNameOf*(p: Measurand): string =
   for i, step in steps:
     if result.len > 0: result.add " + "
     result.add (if counts[i] > 1: $counts[i] & " " else: "") & step
+
+
+func denseNameOf*(p: Measurand): string =
+  ## Name dense form of general measurand, as `denseWedgeAnti` for `wedge_anti`.
+  result = "dense"
+  for word in p.id.split('_'): result.add word.capitalizeAscii
 
 
 func stepsOf*(p: Measurand): seq[string] =

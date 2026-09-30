@@ -2,7 +2,8 @@
 ##   Evaluation is how change or proposal earns figures page shows. It copies library checkout,
 ##     applies edits (base proposal first where proposal builds on one), then measures copy
 ##     against pin:
-##     - library's own suites, both typed algebras, pristine counts beside;
+##     - library's own suites, both typed algebras or all four when thorough, pristine counts
+##       beside;
 ##     - static measurements of every function change touches, pin's baseline as before;
 ##     - runtime of every measurand, pristine and changed binaries run alternately, so drift
 ##       of machine lands on both alike, and ratio per measurand is median over runs;
@@ -24,7 +25,7 @@
 
 import std/[algorithm, json, math, os, osproc, sequtils, strutils, tables]
 
-import ./[changes, guard]
+import ./[changes, guard, report]
 
 
 type
@@ -76,6 +77,16 @@ const
     ## Movement evaluation reports where it differs from pin.
   SUITE_STUB = "tests" / "$1" / "test_$1.nim"
     ## Library's own stub per algebra, relative to checkout.
+  EVALUATED* = ["rga4d", "cga5d"]
+    ## Algebras every evaluation measures: typed ones, which both lower bounds cover.
+  EVALUATED_THOROUGH* = ["rga3d", "cga4d"]
+    ## Algebras thorough evaluation adds: untyped ones, which multivector lower bound alone covers.
+
+
+func algebrasEvaluated*(is_thorough: bool): seq[string] =
+  ## Name algebras one evaluation measures: typed ones, and untyped ones too when thorough.
+  result = @EVALUATED
+  if is_thorough: result.add EVALUATED_THOROUGH
 
 
 
@@ -200,7 +211,7 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   ##   Function on one side only is JSON null on other, never nil, so document prints.
 
   func countsOf(function: JsonNode): JsonNode =
-    ## Shape totals and movement evaluation reports for one function.
+    ## Build totals and movement evaluation reports for one function.
     ##   Count document lacks is JSON null, never nil.
     result = newJObject()
     for key in COUNTED:
@@ -229,15 +240,6 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
 
 func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
   ## Pair runs of both binaries by measurand; median ns of each and median of per-run ratios.
-
-  func median(values: seq[float]): float =
-    ## Read median of values; zero for none.
-    if values.len == 0: return 0.0
-    let
-      sorted = values.sorted
-      middle = sorted.len div 2
-    if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
-
   result = newJObject()
   if pristine.len == 0 or candidate.len == 0: return
   for id, _ in pristine[0]{"measurands"}.pairs:
@@ -318,7 +320,7 @@ $1
 echo tables
 """
   ## Program printing tables as JSON, one `tables.add cells(<expression>)` line per table.
-  ##   Serialiser is `cells.nim`, which suites run against pin, so it reads both cell shapes
+  ##   Serialiser is `cells.nim`, which suites run against pin, so it reads both cell types
   ##   and program itself holds nothing to test.
 
 

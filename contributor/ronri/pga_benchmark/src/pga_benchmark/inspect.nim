@@ -1,9 +1,9 @@
-## Read nimcache of one build and write counts of library and reference functions as JSON.
+## Read nimcache of one build and write counts of library, reference and dense functions as JSON.
 ##   `inspect <cache> <output.json> <nim> <pga> <flags>`
 ##   Compiled once per algebra, as `bench` is, since it carries catalogue: document names
 ##   every measurand with key of library function its expression calls and key of reference's,
 ##   so gap list joins measurands to counts without reading any Nim. Functions kept: library's
-##   own, whose module names its checkout, and typed reference's.
+##   own, whose module names its checkout, typed reference's, and dense forms.
 ##
 ##   Cost: reads every C file of cache, megabytes at six dimensions; seconds.
 ##   Cost: functions sharing stems share key; later ones are numbered by overload index,
@@ -33,6 +33,9 @@ const
     ## Substring of module suffix of every library module, from its checkout path.
   REFERENCE_MARK = "referenceZ"
     ## Prefix of module suffix of every typed reference module.
+  DENSE_MODULE = "dense"
+    ## Module suffix of dense form module, as bench entry beside it names it; build from
+    ##   elsewhere spells path before it, ending `Zdense`.
   KEY_SELECT = "{}(Multivector,int)"
     ## Key both grade selections share; antigrade's instantiation, second declared, takes
     ## key numbered by its overload index.
@@ -41,8 +44,9 @@ const
 
 
 func isKept(f: CFunction): bool =
-  ## Decide whether function belongs to library or reference, i.e. to gap list.
-  LIBRARY_MARK in f.module or f.module.startsWith(REFERENCE_MARK)
+  ## Decide whether function belongs to library, reference or dense forms, i.e. to gap list.
+  LIBRARY_MARK in f.module or f.module.startsWith(REFERENCE_MARK) or
+    f.module == DENSE_MODULE or f.module.endsWith("Z" & DENSE_MODULE)
 
 
 func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
@@ -100,8 +104,16 @@ func referenceKey(p: Measurand): string =
   p.reference[0 ..< open] & "(" & stems.join(",") & ")"
 
 
+func denseKey(p: Measurand): string =
+  ## Key of dense form of general measurand; empty on typed one, which has none.
+  if p.reference.len > 0: return ""
+  var stems: seq[string]
+  for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
+  p.denseNameOf & "(" & stems.join(",") & ")"
+
+
 func measurandsNode(): JsonNode =
-  ## Shape catalogue: one object per measurand naming both keys, expression and citation.
+  ## Build catalogue: one object per measurand naming its keys, expression and citation.
   result = newJObject()
   for p in CATALOGUE:
     result[p.id] = %*{
@@ -111,13 +123,14 @@ func measurandsNode(): JsonNode =
       "expression": p.expression,
       "library": p.libraryKey,
       "reference": p.referenceKey,
+      "dense": p.denseKey,
       "cite": p.cite,
     }
     let b = p.boundOf(METRIC)
     if b.is_derived:
       result[p.id]["bound"] = %*{
         "shape": p.shapeNameOf,
-        "is_composed": b.is_composed,
+        "is_chain": b.is_chain,
         "steps": p.stepsOf,
         "multiplies": b.multiplies,
         "adds": b.adds,
@@ -128,7 +141,7 @@ func measurandsNode(): JsonNode =
 
 
 func missingNode(): JsonNode =
-  ## Shape operations reference carries and library lacks.
+  ## Build operations reference carries and library lacks.
   result = newJObject()
   for p in MISSING:
     result[p.id] = %*{"symbol": p.symbol, "alias": p.alias, "cite": p.cite}

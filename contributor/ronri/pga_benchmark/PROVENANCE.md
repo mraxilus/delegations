@@ -118,15 +118,39 @@ control raised the counter first. A zero then means zero, and never an inert ins
 (Article VII.4). The plain build reports the gauge as off, and that is the measurement taken
 once compiled out.
 
+**The bench runs five times, and each time is the median of those runs.** `bench` runs the
+plain binary of each algebra in turn, algebra after algebra, `BENCH_RUNS = 5` times. So drift
+of the machine lands on every algebra alike. For each implementation the runtime baseline
+keeps the median of each run as `ns_runs`, in run order. `ns_median` is the median of those,
+and `ns_min` is the least minimum.
+
+One run times both implementations, so the runs pair by index, and each run gives one time
+ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
+one run, because it misses drift between runs. That drift is the larger part on this machine.
+
+**The runtime baselines were taken again on 2026-09-30**, in another container of the same
+description, five runs each. Their medians run ×1.7 to ×2.3 those of 2026-09-28 across the
+four algebras. So times from two containers never compare, and ratios within one run do.
+
+Even those ratios moved against the single run of 2026-09-28. From the 5th to the 95th
+percentile, the typed time ratios moved between ×0.50 and ×1.54 at rga4d. At cga5d they moved
+between ×0.75 and ×2.07. Within the new baselines, the least and greatest run ratios of the
+median measurand are ×1.36 apart at rga4d and ×1.35 at cga5d. One run of cga4d ran ×2.5
+slower than its median, and the machine reported steal time.
+
+So one run's time ratio is weak evidence, and the ticks on the docket say how weak. The
+figures below stay as taken on 2026-09-28.
+
 **`ns` stays in names as a unit symbol.** The Architect ruled so for this project, as for `ms`,
 `px`, `kb` and `mb` on pull request 322. So `ns_median` and `ns_library` keep it. A single
 letter stays only where an equation or a small index scope gives it meaning (V.6). Examples
 are `i` in a scan and `a + b` in the sum of counts.
 
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Measurements` and `Allocation`.
-`summarise` runs on fixture rounds. A short run gives finite positive nanoseconds and a
-non-zero sink. The positive control raises the counter, and then no measurand allocates over
-a preallocated loop.
+`summarise` runs on fixture rounds, and fixture runs combine to the median of their medians,
+the least minimum, and each run's median in order. A short run gives finite positive
+nanoseconds and a non-zero sink. The positive control raises the counter, and then no
+measurand allocates over a preallocated loop.
 
 ## Inspector and movement
 
@@ -275,8 +299,8 @@ one unit component. So it spends 243 multiplies where the algebra demands none.
 
 On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
 and for 81 of 130 at five. Those are the operations that one generated function serves,
-since that function writes every slot and fills nothing. An operation that the library
-composes from several functions still fills its intermediates, and stands above the bound.
+since that function writes every slot and fills nothing. A chain still fills its
+intermediates, and stands above the bound.
 
 At four dimensions the exterior product spends the bound's 81 multiplies and moves the
 bound's 384 bytes. The bulk norm spends the bound's 8 multiplies, and moves 640 bytes
@@ -285,8 +309,8 @@ against the bound's 136.
 At four dimensions 65 operations carry a library function, a bound and a reference. Over
 those, reaching the bound closes 58 per cent of the byte distance to the reference. It
 closes 24 per cent of the multiply distance. At five dimensions 84 operations carry all
-three, and reaching the bound closes 83 per cent and 39 per cent. Without the composed
-operations, the byte shares are 55 and 49 per cent. Those shares rest on one population, so
+three, and reaching the bound closes 83 per cent and 39 per cent. Without the chains, the
+byte shares are 55 and 49 per cent. Those shares rest on one population, so
 the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
@@ -297,6 +321,58 @@ factoring helps.
 Cost: a chain bound sums the steps of the library's own definition, so it is an estimate
 rather than a proved minimum. The record marks every such bound, and `gaps.md` names the
 steps.
+
+## Dense form
+
+**A general row is timed against its dense form**, as the Architect chose. A general row has
+no reference, so nothing measured stood for what a dense multivector could spend. The dense
+form is that measure. It assigns each slot once as the sum of its terms, with no fill, no
+intermediate multivector and no call.
+
+`dense.nim` generates one dense form for each general measurand at build time. It evaluates
+the operation symbolically over the library's own Cayley tables. Each slot is a polynomial
+over the components of the operands. A sign map composes for free, a product multiplies
+polynomials, and like terms combine. An operand that is already a product binds scalar
+temporaries first, so a chain spends the sum of its steps.
+
+An operand that is only a map of another folds into the product. So the support, the
+antisupport, the centre and the container each spend one folded table. The partner carries
+the sign of the grade of its operand, as the library's does. Its scan of the grade is
+unrolled at build time, since a loop over `Basis` guards its counter against overflow even
+in a release build.
+
+**What the dense forms spend.** At rga4d and cga5d every dense form that one rule covers
+spends exactly the multivector lower bound. The support and the antisupport spend 54 where
+the library spends 162. The centre spends 162 where the library spends 486, and the partner
+324 where the library spends 518. No dense form fills, copies, calls, checks or declares an
+intermediate.
+
+Two chains in each rigid algebra spend less than their bound. The central projection and the
+orthogonal antiprojection spend 81 against 108 at rga4d, and 27 against 36 at rga3d. Their
+first step leaves whole grades at zero, and the second step reads none of them. That is new
+evidence that a chain bound is an estimate.
+
+**What the library spends in time against them.** The runtime baselines of 2026-09-30 time
+each dense form beside the library, five alternating runs. The median general measurand runs
+×1.00 to ×1.04 its dense form, since most library operators are already one generated table.
+The compound operations are not. They run ×2.1 to ×6.1 their dense forms, from the
+container at cga5d to the support at rga4d.
+
+Negation and the antigrade selection run ×1.9 to ×2.9, and the norms ×1.3 to ×3.4. The
+weight unitizes run faster than their dense forms, ×0.68 to ×0.98, and the bulk unitize
+slower, ×1.4 to ×2.3. So a dense form is a measure, and never a lower bound on time.
+
+Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
+each of four algebras, and forms by hand would drift from the library as it moves. The
+tables are the library's, so a dense form shares any sign that the library gets wrong. The
+chapter suites hold the library to the reference, and the suite below holds the dense form to
+the library.
+
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Dense forms` and `Inspector`. Every
+dense form equals the library on the seeded pools, NaN included. The same suite, compiled by
+hand at rga3d and cga4d on 2026-09-30, passes there too. The inspector holds each dense form
+at the multivector lower bound, or at or below it for a chain. It also holds each one free of
+fill, intermediate, copy, call and check.
 
 ## Gap list
 
@@ -376,7 +452,9 @@ lands on both.
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
 exactly while its edits are. Evaluations measure the two
-typed algebras, rga4d and cga5d, which both lower bounds cover.
+typed algebras, rga4d and cga5d, which both lower bounds cover. After `--thorough`, as
+`evaluate all --thorough`, they measure rga3d and cga4d as well, as the Architect chose. Those
+two carry no reference, so only the multivector lower bound covers them there.
 
 **The spread comes from the evaluations themselves.** An evaluation that changes no library function
 moves no count, so the range of its time ratios is the range of the machine. The pages state
@@ -392,14 +470,15 @@ evaluation's time is weak evidence alone. Counts are exact, and carry the verdic
 The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
 one applied at pin gives files byte-identical to the measured edits.
 The change of `cayley-derivation` reproduces its draft byte for byte, and
-`proposals/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
+`proposals/02-typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
 and cga5d.
 
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`,
 `Proposals`, `Evaluations` and `Cells`. They cover parse, quote and digest rules, and claim
 kinds. They cover proposal numbers taken twice or skipped, and the status that freezes a
 proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and
-the table serialiser at pin.
+the table serialiser at pin. They cover the algebras that an evaluation measures, with the
+flag and without it.
 A digest moves with edits, and never with prose.
 
 ## Notes
@@ -415,9 +494,42 @@ Verified by suite `Notes`: parse, location at pin, and a stale anchor.
 **Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
 hand-written. The body is rendered in Nim from committed files, so a page says only what those
 files say. The faces are the six that `rga_visualiser` embeds, fetched through
-`koch fetch-assets` and inlined as base64. Interaction is CSS alone: tabs, filters, sort and
-scale are inputs that `:has()` rules read. The page runs no script, so the build is
-deterministic and the digest of a page is the digest of what those files say.
+`koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
+inputs that `:has()` rules read. The one script is the search box of the docket, and its text
+is constant, so the digest of each page still follows those files.
+
+**The docket draws each measure as one bar off its lower bound**, as the Architect chose.
+Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
+bound that the row is measured against. A typed row is measured against its reference, and a
+tick on its count bars marks the multivector lower bound. A general row counts against the
+multivector lower bound, and times against its dense form.
+
+The time bar ends at the median of the run ratios, and each run is one tick on it, as the
+Architect chose. So one slow run shows as one tick apart, and not as a wide span.
+Every bar on the page shares one log axis in whole powers of two, so a length reads as a
+factor. A count whose reference spends none has no ratio. It reads as its excess, such as
+`8 over 0`, and its bar runs to the end of the axis.
+
+Rejected: three bars of absolute values for each measure. The eye then compares three lengths
+to read one factor, and a time carries no place for its variance.
+
+**The docket sorts and filters through dropdowns**, as the Architect asked. Sort ranks rows by
+how far bytes moved, multiplies or time stand over what they are measured against. It also
+ranks them by the spread of their run ratios, by divides, by error checks, or in docket order.
+A row with no figure for a key sorts last.
+
+Show keeps the rows over their lower bound on any measure, or on one measure. It also keeps
+the rows at that bound on both counts, the chains, and the rows with error checks, zero fills or
+NaN results. A time is over when its ratio is more than `TOLERANCE`, the band that `gaps.md`
+uses. Operation keeps the rows of one operation, and Operand keeps the typed rows over
+one operand kind. A typed id splits into its operation and its kinds at the longest kind name,
+so `bulk_flat_round_point` is `bulk_flat` over `round_point`.
+
+One list in `docket.nim` spells each option and the rule that reads it, so the two cannot
+drift apart. An option of Operation or Operand hides on an algebra with no row for it. A CSS
+counter above the rows says how many show. A search box finds rows by words, as the Architect
+chose at the cost of a script. A row shows while its name, identifier, symbol, operation,
+expression and operand kinds hold every word typed.
 
 **A publication holds each published page to its build.** `pages/published.json` maps each
 page to its URL and to the digest of the page as built when it was published. `drive` builds
@@ -426,7 +538,11 @@ of every publication, so the two copies of a URL cannot drift apart. Rejected: a
 hand, or by a script outside this project, because nothing held it to the files.
 
 Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
-ratios, and the chip that names removed NaN results.
+ratios, and the chip that names removed NaN results. It covers the lower bound each docket row
+is measured against, and a general row timed against its dense form. It covers the median of
+run ratios with one tick for each run, and a reference that spends none. It covers the rule
+that reads each dropdown option, the classes of each row, and the split of a typed id. It
+covers the words each row is found by, and the shell rule that hides a row not found.
 
 ## Library head
 
@@ -550,7 +666,7 @@ at rga4d and 141 at cga5d.
 
 The attitude and the carrier are now generated, so they spend no multiply. The container
 and the partner read the carrier, so they lose half of theirs. The unitizes read the squared
-norm, and make one call where they made two. The composed operators are no longer inline.
+norm, and make one call where they made two. The chains are no longer inline.
 `∪` builds its constant `𝐞̄ₙ` with a `let`, so at runtime it calls `initElement` and moves
 512 more bytes. A `const`, as `∩` already uses, would fold that constant at build time.
 
@@ -577,7 +693,7 @@ suites, 33 at rga4d and 28 at cga5d.
 
 The attitude and the carrier now run as maps of moves and signs. The cocarrier, the centre,
 the container and the partner are no longer inline. At `6a91c3f` that pragma made the
-composed operators slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
+chains slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
 because of its runtime constant.
 
 The other slower measurands run under 14 ns, and their counts did not grow, so they read as
@@ -698,8 +814,8 @@ these measurements.
 
 ## Known limitations
 
-- Evaluations time the two typed algebras only; rga3d and cga4d carry static counts and suites
-  from `drive`, and no evaluation.
+- Evaluations time the two typed algebras unless `--thorough` asks for rga3d and cga4d too.
+  The evaluations committed now measure the typed algebras only.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself.
   It compares two builds on one machine, and is no measurement of the machine.
 
@@ -740,6 +856,9 @@ these measurements.
 - Whether the sign of the partner folds into its first table by the grade of each term.
   That is exact under the homogeneity the partner already asserts. It would take the partner
   from 437 multiplies and 104 fills to its chain bound of 324. Unmeasured.
+- Why the weight unitizes of the library run faster than their dense forms, ×0.68 to ×0.98,
+  while the bulk unitize runs slower, ×1.4 to ×2.3. The library scales every slot in a loop,
+  which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
 - Whether a product whose terms all land in one slot should return a `float` from the
   emitter. At four dimensions 26 measurands stand above the byte bound for that reason
   alone.

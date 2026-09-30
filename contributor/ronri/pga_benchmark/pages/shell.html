@@ -1,7 +1,8 @@
 <!-- Shell every page of pga_benchmark shares: title, faces, styles, body filled by build.
      Tokens: title, body, one embed per face; `src/pga_benchmark/pages/shell.nim` fills them.
      No doctype, html, head or body tags: host wraps page in its own document at publish.
-     Interaction is CSS alone: inputs read by `:has()` rules, rows open as `details`. -->
+     Interaction is CSS: inputs read by `:has()` rules, rows open as `details`. Docket's
+     search box alone runs script, constant text in `docket.nim`. -->
 <title>@TITLE@</title>
 <style>
 @font-face { font-family: "Noto Sans"; font-weight: 400;
@@ -86,13 +87,13 @@ section.block { padding-block: 28px 0; display: grid; gap: 12px;
 .facts dd { margin: 0; color: var(--ink-2); }
 .aggregate { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
 .aggregate .track { height: 12px; }
+.aggregate .legend { grid-column: 1 / -1; }
 .caption { color: var(--muted); font-size: 0.8rem; margin-top: 6px; }
 
 .bars { display: grid; gap: 2px; grid-template-columns: minmax(0, 1fr); }
 .bar { display: grid; grid-template-columns: minmax(0, 1fr) 4.8rem; gap: 8px; align-items: center; }
 .track { height: 7px; background: var(--track); border-radius: 0 4px 4px 0; position: relative; }
-.track i { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0;
-  width: var(--w-row); }
+.track i { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; }
 .bar.library i { background: var(--library); } .bar.bound i { background: var(--bound); }
 .bar.reference i { background: var(--reference); }
 .bar .v { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-2); white-space: nowrap;
@@ -104,25 +105,64 @@ section.block { padding-block: 28px 0; display: grid; gap: 12px;
 .legend .library::before { background: var(--library); }
 .legend .bound::before { background: var(--bound); }
 .legend .reference::before { background: var(--reference); }
+.legend .mark-bar::before { background: var(--library); }
+.legend .mark-origin::before, .legend .mark-tick::before { width: 2px; height: 12px;
+  border-radius: 0; vertical-align: -2px; background: var(--ink-2); }
+.legend .mark-tick::before { background: var(--bound); }
+.legend .mark-runs::before { width: 2px; height: 10px; border-radius: 0; vertical-align: -2px;
+  background: var(--ink); }
+
+.deviation { display: grid; grid-template-columns: minmax(0, 1fr) 5.2rem; gap: 8px;
+  align-items: center; }
+.deviation .k { display: none; }
+.deviation .v { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-2);
+  white-space: nowrap; font-variant-numeric: tabular-nums; }
+.axis { position: relative; height: 16px; background: repeating-linear-gradient(90deg,
+  var(--rule) 0 1px, transparent 1px calc(100% / var(--octaves))); }
+.axis::before { content: ""; position: absolute; top: 0; bottom: 0; left: var(--origin);
+  width: 2px; margin-left: -1px; background: var(--ink-2); }
+.axis i { position: absolute; top: 5px; height: 6px; min-width: 2px; background: var(--library);
+  border-radius: 0 3px 3px 0; }
+.axis i.below { border-radius: 3px 0 0 3px; }
+.axis i.open { border-radius: 0;
+  background: linear-gradient(90deg, var(--library) 55%, transparent); }
+.axis b { position: absolute; top: 1px; height: 14px; width: 2px; margin-left: -1px;
+  background: var(--bound); }
+.axis s { position: absolute; top: 3px; height: 10px; width: 2px; margin-left: -1px;
+  background: var(--ink); opacity: 0.75; }
+.deviation.bare .axis { visibility: hidden; }
+.deviation-head { display: grid; grid-template-columns: minmax(0, 1fr) 5.2rem; gap: 2px 8px; }
+.deviation-head .name { grid-column: 1 / -1; }
+.scale { position: relative; height: 1.4em; font-family: var(--mono); text-transform: none;
+  letter-spacing: 0; }
+.scale i { position: absolute; font-style: normal; white-space: nowrap;
+  transform: translateX(-50%); }
+.scale i:first-child { transform: none; } .scale i:last-child { transform: translateX(-100%); }
 
 .controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
   display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding-block: 10px;
   border-bottom: 1px solid var(--rule-strong); }
-fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px 10px;
-  font-size: 0.82rem; color: var(--ink-2); }
-legend { float: left; margin-right: 6px; color: var(--muted); }
+.control { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%;
+  font-size: 0.82rem; color: var(--muted); }
+.control :is(select, input) { font: inherit; color: var(--ink); background: var(--surface);
+  min-width: 0; max-width: 100%; border: 1px solid var(--rule-strong); border-radius: 4px;
+  padding: 3px 6px; }
+.control input { width: 11rem; }
+.control :is(select, input):focus-visible { outline: 2px solid var(--bound); outline-offset: 1px; }
 .head, details.row > summary { display: grid; gap: 6px 22px; align-items: center;
-  grid-template-columns: 13.5rem minmax(0, 1fr) minmax(0, 1fr) 8.5rem; padding: 8px 6px; }
+  grid-template-columns: 13.5rem minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); padding: 8px 6px; }
 .head { color: var(--muted); font-size: 0.74rem; text-transform: uppercase;
   letter-spacing: 0.06em; border-bottom: 1px solid var(--rule); }
-.rows { display: flex; flex-direction: column; }
-details.row { border-bottom: 1px solid var(--rule); }
+.rows { display: flex; flex-direction: column; counter-reset: shown; }
+.rows::after { content: counter(shown) " shown"; order: -1; padding: 6px; color: var(--muted);
+  font-size: 0.8rem; font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--rule); }
+details.row { border-bottom: 1px solid var(--rule); counter-increment: shown; }
+details.row.unfound { display: none; }
 details.row > summary { cursor: pointer; list-style: none; }
 details.row > summary::-webkit-details-marker { display: none; }
 details.row > summary:hover, details.row[open] > summary { background: var(--hover); }
 .op .n { display: block; font-weight: 600; overflow-wrap: anywhere; }
 .op .sub { color: var(--muted); font-size: 0.8rem; font-family: var(--mono); }
-.time { font-family: var(--mono); font-size: 0.8rem; text-align: right; color: var(--ink-2); }
 .detail { padding: 6px 6px 14px; display: grid; gap: 8px; font-size: 0.86rem;
   grid-template-columns: minmax(0, 1fr); }
 
@@ -167,20 +207,17 @@ pre.formula { background: var(--code); border-radius: 6px; padding: 12px 14px; o
 body:not(:has(#typed:checked)) .typed-only { display: none; }
 body:has(#typed:checked) .typed-off { display: none; }
 body:not(:has(#typed:checked)) details.row.typed { display: none; }
-body:has(#show-above:checked) details.row:not(.above) { display: none; }
-body:has(#show-chain:checked) details.row:not(.chain) { display: none; }
-body:has(#show-nan:checked) details.row:not(.nan) { display: none; }
-body:has(#sort-bytes:checked) details.row { order: var(--o-bytes); }
-body:has(#sort-multiplies:checked) details.row { order: var(--o-multiplies); }
-body:has(#sort-typed:checked) details.row { order: var(--o-typed); }
-body:has(#sort-time:checked) details.row { order: var(--o-time); }
-body:has(#scale-log:checked) .track i { width: var(--w-log); }
 
 @media (max-width: 860px) {
+  .controls { position: static; }
   .summary, .aggregate, .pair { grid-template-columns: minmax(0, 1fr); }
-  .head { display: none; }
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .head > span:not(:nth-child(2)), .head .name { display: none; }
   details.row > summary { grid-template-columns: minmax(0, 1fr); }
-  .time { text-align: left; }
+  .deviation, .deviation-head { grid-template-columns: 6.4rem minmax(0, 1fr) 5.2rem; }
+  .deviation-head::before { content: "scale"; }
+  .deviation .k { display: block; color: var(--muted); font-size: 0.8rem; }
+  .scale i.minor { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>

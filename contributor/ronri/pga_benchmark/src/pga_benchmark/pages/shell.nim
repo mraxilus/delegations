@@ -7,9 +7,9 @@
 ##     with. Faces are named here and fetched by `koch fetch-assets`, which checks each digest
 ##     against repository's store (`curator/audit/src/assets.nim`); bytes are inlined, so page
 ##     names no face viewer may lack (Article X.8).
-##   Interaction is CSS alone: tabs, filters and toggles are inputs read by `:has()` rules, rows
-##     open as `details`. Page runs no script, so build is deterministic and digest of page is
-##     digest of what those files say.
+##   Interaction is CSS: tabs, filters and toggles are inputs read by `:has()` rules, rows open
+##     as `details`. Docket's search box alone runs script, constant text in `docket.nim`, so
+##     build stays deterministic and digest of page is digest of what those files say.
 ##
 ##   Cost: faces inlined as base64 make each page some hundreds of kilobytes; published page
 ##     may hold sixteen megabytes.

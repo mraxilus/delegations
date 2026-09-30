@@ -8,7 +8,7 @@
     "sizeof_multivector": 256
   },
   "taken": {
-    "date": "2026-09-28",
+    "date": "2026-09-30",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
     "pga": "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315",
@@ -41,6 +41,50 @@
         "multiplies": 243,
         "adds": 211,
         "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseWedge(Multivector,Multivector)": {
+      "symbol": "denseWedge",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 243,
+        "adds": 119,
+        "subs": 92,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 119,
+        "subs": 92,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
@@ -103,6 +147,50 @@
         "bytes_moved": 768
       }
     },
+    "denseWedgeAnti(Multivector,Multivector)": {
+      "symbol": "denseWedgeAnti",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 243,
+        "adds": 123,
+        "subs": 88,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 123,
+        "subs": 88,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "⟑(Multivector,Multivector)": {
       "symbol": "⟑",
       "module": "pga/operators",
@@ -129,6 +217,50 @@
         "multiplies": 1024,
         "adds": 992,
         "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseWedgeDot(Multivector,Multivector)": {
+      "symbol": "denseWedgeDot",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 1024,
+        "adds": 512,
+        "subs": 480,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 1024,
+        "adds": 512,
+        "subs": 480,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
@@ -191,6 +323,50 @@
         "bytes_moved": 768
       }
     },
+    "denseWedgeDotAnti(Multivector,Multivector)": {
+      "symbol": "denseWedgeDotAnti",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 1024,
+        "adds": 528,
+        "subs": 464,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 1024,
+        "adds": 528,
+        "subs": 464,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "∙(Multivector,Multivector)": {
       "symbol": "∙",
       "module": "pga/operators",
@@ -217,6 +393,50 @@
         "multiplies": 32,
         "adds": 31,
         "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseDot(Multivector,Multivector)": {
+      "symbol": "denseDot",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 15,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 15,
+        "subs": 16,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
@@ -279,6 +499,50 @@
         "bytes_moved": 768
       }
     },
+    "denseDotAnti(Multivector,Multivector)": {
+      "symbol": "denseDotAnti",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 16,
+        "subs": 15,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 16,
+        "subs": 15,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "∨★(Multivector,Multivector)": {
       "symbol": "∨★",
       "module": "pga/operators",
@@ -305,6 +569,50 @@
         "multiplies": 243,
         "adds": 211,
         "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseContractBulk(Multivector,Multivector)": {
+      "symbol": "denseContractBulk",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 243,
+        "adds": 100,
+        "subs": 111,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 100,
+        "subs": 111,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
@@ -367,6 +675,50 @@
         "bytes_moved": 768
       }
     },
+    "denseContractWeight(Multivector,Multivector)": {
+      "symbol": "denseContractWeight",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 243,
+        "adds": 111,
+        "subs": 100,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 111,
+        "subs": 100,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "∧★(Multivector,Multivector)": {
       "symbol": "∧★",
       "module": "pga/operators",
@@ -393,6 +745,50 @@
         "multiplies": 243,
         "adds": 211,
         "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseExpandBulk(Multivector,Multivector)": {
+      "symbol": "denseExpandBulk",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 243,
+        "adds": 99,
+        "subs": 112,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 99,
+        "subs": 112,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
@@ -455,6 +851,138 @@
         "bytes_moved": 768
       }
     },
+    "denseExpandWeight(Multivector,Multivector)": {
+      "symbol": "denseExpandWeight",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 243,
+        "adds": 112,
+        "subs": 99,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 112,
+        "subs": 99,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseAdd(Multivector,Multivector)": {
+      "symbol": "denseAdd",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 32,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 32,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "denseSubtract(Multivector,Multivector)": {
+      "symbol": "denseSubtract",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 32,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 32,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "projectCentral(Multivector,Multivector)": {
       "symbol": "projectCentral",
       "module": "projective_geometric_algebra_illuminated/pga",
@@ -497,6 +1025,50 @@
         "bytes_copied": 256,
         "bytes_intermediates": 512,
         "bytes_moved": 2304
+      }
+    },
+    "denseProjectCentral(Multivector,Multivector)": {
+      "symbol": "denseProjectCentral",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 486,
+        "adds": 222,
+        "subs": 200,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 222,
+        "subs": 200,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
       }
     },
     "projectCentralAnti(Multivector,Multivector)": {
@@ -543,6 +1115,50 @@
         "bytes_moved": 2304
       }
     },
+    "denseProjectCentralAnti(Multivector,Multivector)": {
+      "symbol": "denseProjectCentralAnti",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 486,
+        "adds": 219,
+        "subs": 203,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 219,
+        "subs": 203,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "projectOrthogonal(Multivector,Multivector)": {
       "symbol": "projectOrthogonal",
       "module": "projective_geometric_algebra_illuminated/pga",
@@ -585,6 +1201,50 @@
         "bytes_copied": 256,
         "bytes_intermediates": 512,
         "bytes_moved": 2304
+      }
+    },
+    "denseProjectOrthogonal(Multivector,Multivector)": {
+      "symbol": "denseProjectOrthogonal",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 486,
+        "adds": 235,
+        "subs": 187,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 235,
+        "subs": 187,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
       }
     },
     "projectOrthogonalAnti(Multivector,Multivector)": {
@@ -631,6 +1291,50 @@
         "bytes_moved": 2304
       }
     },
+    "denseProjectOrthogonalAnti(Multivector,Multivector)": {
+      "symbol": "denseProjectOrthogonalAnti",
+      "module": "dense",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 486,
+        "adds": 230,
+        "subs": 192,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 230,
+        "subs": 192,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 96
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
     "∧(float,Multivector)": {
       "symbol": "∧",
       "module": "pga/operators",
@@ -675,9 +1379,96 @@
         "bytes_moved": 520
       }
     },
+    "denseScale(float,Multivector)": {
+      "symbol": "denseScale",
+      "module": "dense",
+      "params": [
+        "float",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 264,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 520
+      }
+    },
     "∙(Multivector)": {
       "symbol": "∙",
       "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseBulk(Multivector)": {
+      "symbol": "denseBulk",
+      "module": "dense",
       "params": [
         "Multivector"
       ],
@@ -761,9 +1552,95 @@
         "bytes_moved": 512
       }
     },
+    "denseWeight(Multivector)": {
+      "symbol": "denseWeight",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "/(Multivector)": {
       "symbol": "/",
       "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseComplementRight(Multivector)": {
+      "symbol": "denseComplementRight",
+      "module": "dense",
       "params": [
         "Multivector"
       ],
@@ -847,9 +1724,95 @@
         "bytes_moved": 512
       }
     },
+    "denseComplementLeft(Multivector)": {
+      "symbol": "denseComplementLeft",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "~(Multivector)": {
       "symbol": "~",
       "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseReverse(Multivector)": {
+      "symbol": "denseReverse",
+      "module": "dense",
       "params": [
         "Multivector"
       ],
@@ -933,6 +1896,49 @@
         "bytes_moved": 512
       }
     },
+    "denseReverseAnti(Multivector)": {
+      "symbol": "denseReverseAnti",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "★(Multivector)": {
       "symbol": "★",
       "module": "pga/operators",
@@ -976,9 +1982,138 @@
         "bytes_moved": 512
       }
     },
+    "denseDualBulk(Multivector)": {
+      "symbol": "denseDualBulk",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "☆(Multivector)": {
       "symbol": "☆",
       "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseDualWeight(Multivector)": {
+      "symbol": "denseDualWeight",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNegate(Multivector)": {
+      "symbol": "denseNegate",
+      "module": "dense",
       "params": [
         "Multivector"
       ],
@@ -1105,6 +2240,49 @@
         "bytes_moved": 1280
       }
     },
+    "denseNormBulk(Multivector)": {
+      "symbol": "denseNormBulk",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 11,
+        "subs": 12,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 11,
+        "subs": 12,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "|∘²(Multivector)": {
       "symbol": "|∘²",
       "module": "pga/operators",
@@ -1189,6 +2367,135 @@
         "bytes_copied": 0,
         "bytes_intermediates": 256,
         "bytes_moved": 1280
+      }
+    },
+    "denseNormWeight(Multivector)": {
+      "symbol": "denseNormWeight",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 12,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 12,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormBulkSquared(Multivector)": {
+      "symbol": "denseNormBulkSquared",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 11,
+        "subs": 12,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 11,
+        "subs": 12,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormWeightSquared(Multivector)": {
+      "symbol": "denseNormWeightSquared",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 12,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 12,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
       }
     },
     "|■(Multivector)": {
@@ -1320,6 +2627,49 @@
         "bytes_moved": 3328
       }
     },
+    "denseNorm(Multivector)": {
+      "symbol": "denseNorm",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 64,
+        "adds": 23,
+        "subs": 23,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 36
+      },
+      "total": {
+        "multiplies": 64,
+        "adds": 23,
+        "subs": 23,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 36
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "^∙(Multivector)": {
       "symbol": "^∙",
       "module": "pga/operators",
@@ -1361,6 +2711,49 @@
         "bytes_copied": 0,
         "bytes_intermediates": 256,
         "bytes_moved": 1024
+      }
+    },
+    "denseNormalizeBulk(Multivector)": {
+      "symbol": "denseNormalizeBulk",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 64,
+        "adds": 11,
+        "subs": 12,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 53
+      },
+      "total": {
+        "multiplies": 64,
+        "adds": 11,
+        "subs": 12,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 53
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
       }
     },
     "^∘(Multivector)": {
@@ -1406,6 +2799,92 @@
         "bytes_moved": 1024
       }
     },
+    "denseNormalizeWeight(Multivector)": {
+      "symbol": "denseNormalizeWeight",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 64,
+        "adds": 12,
+        "subs": 11,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 53
+      },
+      "total": {
+        "multiplies": 64,
+        "adds": 12,
+        "subs": 11,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 53
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseUnitize(Multivector)": {
+      "symbol": "denseUnitize",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 64,
+        "adds": 12,
+        "subs": 11,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 53
+      },
+      "total": {
+        "multiplies": 64,
+        "adds": 12,
+        "subs": 11,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 53
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "⊖(Multivector)": {
       "symbol": "⊖",
       "module": "pga/operators",
@@ -1449,9 +2928,224 @@
         "bytes_moved": 512
       }
     },
+    "denseAttitude(Multivector)": {
+      "symbol": "denseAttitude",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseSelectGrade(Multivector)": {
+      "symbol": "denseSelectGrade",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseSelectGradeAnti(Multivector)": {
+      "symbol": "denseSelectGradeAnti",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseSelectPart(Multivector)": {
+      "symbol": "denseSelectPart",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 264
+      }
+    },
     "■(Multivector)": {
       "symbol": "■",
       "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseBulkFlat(Multivector)": {
+      "symbol": "denseBulkFlat",
+      "module": "dense",
       "params": [
         "Multivector"
       ],
@@ -1535,6 +3229,135 @@
         "bytes_moved": 512
       }
     },
+    "denseWeightFlat(Multivector)": {
+      "symbol": "denseWeightFlat",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormBulkFlat(Multivector)": {
+      "symbol": "denseNormBulkFlat",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 11,
+        "subs": 12,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 11,
+        "subs": 12,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseNormWeightFlat(Multivector)": {
+      "symbol": "denseNormWeightFlat",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 32,
+        "adds": 12,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 12,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
     "⊟(Multivector)": {
       "symbol": "⊟",
       "module": "pga/operators",
@@ -1568,6 +3391,221 @@
         "calls": 0,
         "allocations": 0,
         "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseCarrier(Multivector)": {
+      "symbol": "denseCarrier",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseCarrierCo(Multivector)": {
+      "symbol": "denseCarrierCo",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseCenter(Multivector)": {
+      "symbol": "denseCenter",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 162,
+        "adds": 80,
+        "subs": 50,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 162,
+        "adds": 80,
+        "subs": 50,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "denseContainer(Multivector)": {
+      "symbol": "denseContainer",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 162,
+        "adds": 71,
+        "subs": 59,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 162,
+        "adds": 71,
+        "subs": 59,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "densePartner(Multivector)": {
+      "symbol": "densePartner",
+      "module": "dense",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 324,
+        "adds": 150,
+        "subs": 110,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1192
+      },
+      "total": {
+        "multiplies": 324,
+        "adds": 150,
+        "subs": 110,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1192
       },
       "movement": {
         "bytes_read": 256,
@@ -6128,10 +8166,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseWedge(Multivector,Multivector)",
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -6147,10 +8186,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseWedgeAnti(Multivector,Multivector)",
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -6166,10 +8206,11 @@
       "expression": "(m ⟑ n)",
       "library": "⟑(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseWedgeDot(Multivector,Multivector)",
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 1024,
         "adds": 992,
@@ -6185,10 +8226,11 @@
       "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseWedgeDotAnti(Multivector,Multivector)",
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 1024,
         "adds": 992,
@@ -6204,10 +8246,11 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseDot(Multivector,Multivector)",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6223,10 +8266,11 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseDotAnti(Multivector,Multivector)",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6242,10 +8286,11 @@
       "expression": "(m ∨★ n)",
       "library": "∨★(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseContractBulk(Multivector,Multivector)",
       "cite": "2.119",
       "bound": {
         "shape": "ContractBulk",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -6261,10 +8306,11 @@
       "expression": "(m ∨☆ n)",
       "library": "∨☆(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseContractWeight(Multivector,Multivector)",
       "cite": "2.120",
       "bound": {
         "shape": "ContractWeight",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -6280,10 +8326,11 @@
       "expression": "(m ∧★ n)",
       "library": "∧★(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseExpandBulk(Multivector,Multivector)",
       "cite": "wiki:Expansions",
       "bound": {
         "shape": "ExpandBulk",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -6299,10 +8346,11 @@
       "expression": "(m ∧☆ n)",
       "library": "∧☆(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseExpandWeight(Multivector,Multivector)",
       "cite": "wiki:Expansions",
       "bound": {
         "shape": "ExpandWeight",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -6318,10 +8366,11 @@
       "expression": "(m + n)",
       "library": "+(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseAdd(Multivector,Multivector)",
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 32,
@@ -6337,10 +8386,11 @@
       "expression": "(m - n)",
       "library": "-(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseSubtract(Multivector,Multivector)",
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 32,
@@ -6356,10 +8406,11 @@
       "expression": "projectCentral(m, n)",
       "library": "projectCentral(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseProjectCentral(Multivector,Multivector)",
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ExpandBulk + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ExpandBulk",
           "Wedge"
@@ -6378,10 +8429,11 @@
       "expression": "projectCentralAnti(m, n)",
       "library": "projectCentralAnti(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseProjectCentralAnti(Multivector,Multivector)",
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ContractBulk + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ContractBulk",
           "Wedge"
@@ -6400,10 +8452,11 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseProjectOrthogonal(Multivector,Multivector)",
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ExpandWeight + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ExpandWeight",
           "Wedge"
@@ -6422,10 +8475,11 @@
       "expression": "projectOrthogonalAnti(m, n)",
       "library": "projectOrthogonalAnti(Multivector,Multivector)",
       "reference": "",
+      "dense": "denseProjectOrthogonalAnti(Multivector,Multivector)",
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ContractWeight + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ContractWeight",
           "Wedge"
@@ -6444,10 +8498,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(float,Multivector)",
       "reference": "",
+      "dense": "denseScale(float,Multivector)",
       "cite": "2.24",
       "bound": {
         "shape": "Scale",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 0,
@@ -6463,10 +8518,11 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "",
+      "dense": "denseBulk(Multivector)",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6482,10 +8538,11 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "",
+      "dense": "denseWeight(Multivector)",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6501,10 +8558,11 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "",
+      "dense": "denseComplementRight(Multivector)",
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6520,10 +8578,11 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "",
+      "dense": "denseComplementLeft(Multivector)",
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6539,10 +8598,11 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "",
+      "dense": "denseReverse(Multivector)",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6558,10 +8618,11 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "",
+      "dense": "denseReverseAnti(Multivector)",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6577,10 +8638,11 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "",
+      "dense": "denseDualBulk(Multivector)",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6596,10 +8658,11 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "",
+      "dense": "denseDualWeight(Multivector)",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6615,10 +8678,11 @@
       "expression": "(- m)",
       "library": "-(Multivector)",
       "reference": "",
+      "dense": "denseNegate(Multivector)",
       "cite": "2.24",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6634,10 +8698,11 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "",
+      "dense": "denseNormBulk(Multivector)",
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6653,10 +8718,11 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "",
+      "dense": "denseNormWeight(Multivector)",
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6672,10 +8738,11 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "",
+      "dense": "denseNormBulkSquared(Multivector)",
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6691,10 +8758,11 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "",
+      "dense": "denseNormWeightSquared(Multivector)",
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6710,10 +8778,11 @@
       "expression": "(| m)",
       "library": "|(Multivector)",
       "reference": "",
+      "dense": "denseNorm(Multivector)",
       "cite": "2.90",
       "bound": {
         "shape": "2 Norm",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Norm",
           "Norm"
@@ -6732,10 +8801,11 @@
       "expression": "(^∙ m)",
       "library": "^∙(Multivector)",
       "reference": "",
+      "dense": "denseNormalizeBulk(Multivector)",
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 64,
         "adds": 31,
@@ -6751,10 +8821,11 @@
       "expression": "(^∘ m)",
       "library": "^∘(Multivector)",
       "reference": "",
+      "dense": "denseNormalizeWeight(Multivector)",
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 64,
         "adds": 31,
@@ -6770,10 +8841,11 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "",
+      "dense": "denseUnitize(Multivector)",
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 64,
         "adds": 31,
@@ -6789,10 +8861,11 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "",
+      "dense": "denseAttitude(Multivector)",
       "cite": "2.73",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6808,10 +8881,11 @@
       "expression": "(m{Grade(1)})",
       "library": "{}(Multivector,int)",
       "reference": "",
+      "dense": "denseSelectGrade(Multivector)",
       "cite": "2.17",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6827,10 +8901,11 @@
       "expression": "(m{GradeAnti(1)})",
       "library": "{}(Multivector,int)#u1",
       "reference": "",
+      "dense": "denseSelectGradeAnti(Multivector)",
       "cite": "2.29",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6846,6 +8921,7 @@
       "expression": "(m[Basis.E1])",
       "library": "[](Multivector,Basis)",
       "reference": "",
+      "dense": "denseSelectPart(Multivector)",
       "cite": "2.24"
     },
     "bulk_flat": {
@@ -6855,10 +8931,11 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "",
+      "dense": "denseBulkFlat(Multivector)",
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6874,10 +8951,11 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "",
+      "dense": "denseWeightFlat(Multivector)",
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6893,10 +8971,11 @@
       "expression": "(|■ m)",
       "library": "|■(Multivector)",
       "reference": "",
+      "dense": "denseNormBulkFlat(Multivector)",
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6912,10 +8991,11 @@
       "expression": "(|□ m)",
       "library": "|□(Multivector)",
       "reference": "",
+      "dense": "denseNormWeightFlat(Multivector)",
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -6931,10 +9011,11 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "",
+      "dense": "denseCarrier(Multivector)",
       "cite": "wiki:Carrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6950,10 +9031,11 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "",
+      "dense": "denseCarrierCo(Multivector)",
       "cite": "wiki:Cocarrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -6969,10 +9051,11 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "",
+      "dense": "denseCenter(Multivector)",
       "cite": "wiki:Center",
       "bound": {
         "shape": "Center",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -6988,10 +9071,11 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "",
+      "dense": "denseContainer(Multivector)",
       "cite": "wiki:Container",
       "bound": {
         "shape": "Container",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -7007,10 +9091,11 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "",
+      "dense": "densePartner(Multivector)",
       "cite": "wiki:Partner",
       "bound": {
         "shape": "Permutation + Container + JoinCarrier",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Permutation",
           "Container",
@@ -7030,10 +9115,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(RoundPoint,RoundPoint)",
+      "dense": "",
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7049,10 +9135,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Dipole,RoundPoint)",
+      "dense": "",
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7068,10 +9155,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(RoundPoint,Dipole)",
+      "dense": "",
       "cite": "2.18",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7087,10 +9175,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Circle,RoundPoint)",
+      "dense": "",
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7106,10 +9195,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(RoundPoint,Circle)",
+      "dense": "",
       "cite": "2.18",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7125,10 +9215,11 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Dipole,Dipole)",
+      "dense": "",
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7144,10 +9235,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Sphere,Sphere)",
+      "dense": "",
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7163,10 +9255,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Sphere,Circle)",
+      "dense": "",
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7182,10 +9275,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Circle,Sphere)",
+      "dense": "",
       "cite": "2.32",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7201,10 +9295,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Circle,Circle)",
+      "dense": "",
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7220,10 +9315,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Sphere,Dipole)",
+      "dense": "",
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7239,10 +9335,11 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Dipole,Sphere)",
+      "dense": "",
       "cite": "2.32",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 243,
         "adds": 211,
@@ -7258,10 +9355,11 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(RoundPoint,RoundPoint)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7277,10 +9375,11 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Dipole,Dipole)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7296,10 +9395,11 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Circle,Circle)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7315,10 +9415,11 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Sphere,Sphere)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7334,10 +9435,11 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(RoundPoint,RoundPoint)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7353,10 +9455,11 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Dipole,Dipole)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7372,10 +9475,11 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Circle,Circle)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7391,10 +9495,11 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Sphere,Sphere)",
+      "dense": "",
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 31,
@@ -7410,10 +9515,11 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(RoundPoint)",
+      "dense": "",
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7429,10 +9535,11 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(RoundPoint)",
+      "dense": "",
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7448,10 +9555,11 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7467,10 +9575,11 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7486,10 +9595,11 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(RoundPoint)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7505,10 +9615,11 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(RoundPoint)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7524,10 +9635,11 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(RoundPoint)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7543,10 +9655,11 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(RoundPoint)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7562,10 +9675,11 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7581,10 +9695,11 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7600,10 +9715,11 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(RoundPoint)",
+      "dense": "",
       "cite": "2.73",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7619,10 +9735,11 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Carrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7638,10 +9755,11 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Cocarrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7657,10 +9775,11 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Center",
       "bound": {
         "shape": "Center",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -7676,10 +9795,11 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Container",
       "bound": {
         "shape": "Container",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -7695,10 +9815,11 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(RoundPoint)",
+      "dense": "",
       "cite": "wiki:Partner",
       "bound": {
         "shape": "Permutation + Container + JoinCarrier",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Permutation",
           "Container",
@@ -7718,10 +9839,11 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Dipole)",
+      "dense": "",
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7737,10 +9859,11 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Dipole)",
+      "dense": "",
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7756,10 +9879,11 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Dipole)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7775,10 +9899,11 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Dipole)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7794,10 +9919,11 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Dipole)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7813,10 +9939,11 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Dipole)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7832,10 +9959,11 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Dipole)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7851,10 +9979,11 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Dipole)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7870,10 +9999,11 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(Dipole)",
+      "dense": "",
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7889,10 +10019,11 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(Dipole)",
+      "dense": "",
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7908,10 +10039,11 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Dipole)",
+      "dense": "",
       "cite": "2.73",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7927,10 +10059,11 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(Dipole)",
+      "dense": "",
       "cite": "wiki:Carrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7946,10 +10079,11 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(Dipole)",
+      "dense": "",
       "cite": "wiki:Cocarrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -7965,10 +10099,11 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(Dipole)",
+      "dense": "",
       "cite": "wiki:Center",
       "bound": {
         "shape": "Center",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -7984,10 +10119,11 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(Dipole)",
+      "dense": "",
       "cite": "wiki:Container",
       "bound": {
         "shape": "Container",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -8003,10 +10139,11 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(Dipole)",
+      "dense": "",
       "cite": "wiki:Partner",
       "bound": {
         "shape": "Permutation + Container + JoinCarrier",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Permutation",
           "Container",
@@ -8026,10 +10163,11 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Circle)",
+      "dense": "",
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8045,10 +10183,11 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Circle)",
+      "dense": "",
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8064,10 +10203,11 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Circle)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8083,10 +10223,11 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Circle)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8102,10 +10243,11 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Circle)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8121,10 +10263,11 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Circle)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8140,10 +10283,11 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Circle)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8159,10 +10303,11 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Circle)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8178,10 +10323,11 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(Circle)",
+      "dense": "",
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8197,10 +10343,11 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(Circle)",
+      "dense": "",
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8216,10 +10363,11 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Circle)",
+      "dense": "",
       "cite": "2.73",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8235,10 +10383,11 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(Circle)",
+      "dense": "",
       "cite": "wiki:Carrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8254,10 +10403,11 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(Circle)",
+      "dense": "",
       "cite": "wiki:Cocarrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8273,10 +10423,11 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(Circle)",
+      "dense": "",
       "cite": "wiki:Center",
       "bound": {
         "shape": "Center",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -8292,10 +10443,11 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(Circle)",
+      "dense": "",
       "cite": "wiki:Container",
       "bound": {
         "shape": "Container",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -8311,10 +10463,11 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(Circle)",
+      "dense": "",
       "cite": "wiki:Partner",
       "bound": {
         "shape": "Permutation + Container + JoinCarrier",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Permutation",
           "Container",
@@ -8334,10 +10487,11 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Sphere)",
+      "dense": "",
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8353,10 +10507,11 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Sphere)",
+      "dense": "",
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8372,10 +10527,11 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Sphere)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8391,10 +10547,11 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Sphere)",
+      "dense": "",
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8410,10 +10567,11 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Sphere)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8429,10 +10587,11 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Sphere)",
+      "dense": "",
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8448,10 +10607,11 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Sphere)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8467,10 +10627,11 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Sphere)",
+      "dense": "",
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8486,10 +10647,11 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(Sphere)",
+      "dense": "",
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8505,10 +10667,11 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(Sphere)",
+      "dense": "",
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8524,10 +10687,11 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Sphere)",
+      "dense": "",
       "cite": "2.73",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8543,10 +10707,11 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(Sphere)",
+      "dense": "",
       "cite": "wiki:Carrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8562,10 +10727,11 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(Sphere)",
+      "dense": "",
       "cite": "wiki:Cocarrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -8581,10 +10747,11 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(Sphere)",
+      "dense": "",
       "cite": "wiki:Center",
       "bound": {
         "shape": "Center",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -8600,10 +10767,11 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(Sphere)",
+      "dense": "",
       "cite": "wiki:Container",
       "bound": {
         "shape": "Container",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 162,
         "adds": 130,
@@ -8619,10 +10787,11 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(Sphere)",
+      "dense": "",
       "cite": "wiki:Partner",
       "bound": {
         "shape": "Permutation + Container + JoinCarrier",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Permutation",
           "Container",

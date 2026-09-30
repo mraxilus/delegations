@@ -12,13 +12,14 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, changes, proposals, gaps, guard, head, inspector, markdown, measurements, model, notes,
+  bound, changes, dense, proposals, gaps, guard, head, inspector, markdown, measurements, model,
+  notes,
   report,
 ]
 import ../src/pga_benchmark/pages/[docket, shell, evaluation]
 import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
-  editsDigest, functionsChanged, nanOf, successOf, timesOf
+  algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
 const
@@ -90,6 +91,45 @@ macro checkReferences(measurands: static seq[Measurand]; chapter: static string)
               `expression`
           check got =~ expected  # library on images equals reference embedded
   if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
+
+
+func isNear(got, expected: Multivector): bool =
+  ## Decide whether two multivectors agree, as library's own comparison decides.
+  got =~ expected
+
+
+func isNear(got, expected: float): bool =
+  ## Decide whether two scalars agree within library's tolerance.
+  abs(got - expected) <= TOLERANCE_ABS * max(1.0, max(abs(got), abs(expected)))
+
+
+macro checkDenseForms(measurands: static seq[Measurand]): untyped =
+  ## Emit one test per general measurand holding its dense form to library expression.
+  ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, as chapters do; NaN
+  ##   where library returns NaN is equality too, since conformal norms return it.
+  result = newStmtList()
+  let (m, n) = (ident"m", ident"n")  # plain idents, so expression and dense form bind them
+  for p in measurands:
+    if p.reference.len > 0: continue
+    let
+      expression = parseExpr(p.expression)
+      dense =
+        if p.arity == 2: newCall(ident(p.denseNameOf), m, n)
+        else: newCall(ident(p.denseNameOf), m)
+      pool_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
+      pool_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
+      name = newLit(p.id)
+    result.add quote do:
+      test `name`:
+        for i in 0 ..< OBJECTS:
+          let
+            j = (i * 7 + 3) mod OBJECTS
+            (expected, got) = block:
+              let `m` {.used.} = `pool_m`[i]
+              let `n` {.used.} = `pool_n`[j]
+              (`expression`, `dense`)
+          check hasNan(got) == hasNan(expected)  # NaN exactly where library returns it
+          if not hasNan(expected): check isNear(got, expected)  # dense form equals library
 
 
 fillPools(0)
@@ -188,6 +228,10 @@ suite "Chapter 3":
   checkReferences(CATALOGUE, "3")
 
 
+suite "Dense forms":
+  checkDenseForms(CATALOGUE)
+
+
 suite "Measurements":
   test "summarise reads median and minimum per object":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
@@ -204,6 +248,24 @@ suite "Measurements":
       check measurement.ns_min <= measurement.ns_median  # minimum bounds median
       check MEASUREMENTS[Implementation.Reference][index].is_measured ==
         (measurand.reference.len > 0)  # reference implementation present where written
+      check MEASUREMENTS[Implementation.Dense][index].is_measured ==
+        (measurand.reference.len == 0)  # dense form present on every general measurand
+
+
+  test "runs combine to median of run medians, least minimum, and each run's median":
+    func run(library, reference: float): JsonNode =
+      ## Build one run's document: one measurand, both implementations.
+      %*{"taken": {"date": "2026-09-30"}, "measurands": {"wedge": {
+        "library": {"ns_median": library, "ns_min": library - 1.0, "nan_share": 0.0},
+        "reference": {"ns_median": reference, "ns_min": reference - 1.0, "nan_share": 0.0}}}}
+    let
+      combined = runsCombined([run(12.0, 4.0), run(10.0, 5.0), run(11.0, 3.0)])
+      library = combined{"measurands", "wedge", "library"}
+    check combined{"taken", "runs"}.getInt == 3  # run count recorded
+    check library{"ns_median"}.getFloat == 11.0 and library{"ns_min"}.getFloat == 9.0  # combined
+    check library{"ns_runs"} == %*[12.0, 10.0, 11.0]  # run order kept, pairs with reference
+    check combined{"measurands", "wedge", "reference", "ns_runs"} == %*[4.0, 5.0, 3.0]  # paired
+    check median([4.0, 1.0, 3.0, 2.0]) == 2.5  # even count, mean of middle two
 
 
 suite "Allocation":
@@ -215,10 +277,10 @@ suite "Allocation":
     check allocationsOf(after - before) > 0  # positive control: counter moved
     check control[0] == 1.0  # control kept alive
 
-  test "no measurand allocates in either implementation":
+  test "no measurand allocates in any implementation":
     measureCatalogue()
     for index, measurand in CATALOGUE:
-      for it in [Implementation.Library, Implementation.Reference]:
+      for it in Implementation:
         let measurement = MEASUREMENTS[it][index]
         if measurement.is_measured:
           check measurement.allocations == 0  # heap untouched over every round
@@ -254,12 +316,12 @@ suite "Lower bound":
     check lowerBoundOf(Shape.SupportAnti, rigid, 1).multiplies == 54  # wiki:Support
     check lowerBoundOf(Shape.Center, conformal, 1).multiplies == 162  # wiki:Conformal
     check lowerBoundOf(Shape.Container, conformal, 1).multiplies == 162  # wiki:Conformal
-    check not lowerBoundOf(Shape.Support, rigid, 1).is_composed  # one table, not step sum
+    check not lowerBoundOf(Shape.Support, rigid, 1).is_chain  # one table, not step sum
     check lowerBoundOf(Shape.Support, rigid, 1).bytesMoved == 256  # operand read, result written
     check lowerBoundOf(Shape.JoinCarrier, conformal, 2).multiplies == 162  # wiki:Conformal
     let partner = [Shape.Permutation, Shape.Container, Shape.JoinCarrier]
     check lowerBoundOfChain(partner, conformal, 1).multiplies == 324  # two folded tables
-    check lowerBoundOfChain(partner, conformal, 1).is_composed  # sum of steps stays estimate
+    check lowerBoundOfChain(partner, conformal, 1).is_chain  # sum of steps stays estimate
 
   test "conformal metric is not singular, so every blade carries image":
     let
@@ -284,7 +346,7 @@ suite "Lower bound":
       projection = @[Shape.ExpandWeight, Shape.Wedge]
       b = lowerBoundOfChain(projection, rigid, 2)
     check b.multiplies == 54 + 81  # dual product, then full product
-    check b.is_composed and b.is_derived  # record marks estimate as estimate
+    check b.is_chain and b.is_derived  # record marks estimate as estimate
     check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
     # Conformal dual product keeps every cell of wedge, so chain is two full products.
     check lowerBoundOfChain(projection, conformal, 2).multiplies == 486  # wiki:Expansions
@@ -486,6 +548,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     let totals = totals(functionsIn(FIXTURE))
     check totals["inner__u0__m"].multiplies == 1  # own
     check totals["outer__u0__m"].multiplies == 2 and totals["outer__u0__m"].calls == 2  # twice
+    let rooted = totals(functionsIn(FIXTURE), ["outer__u0__m"])
+    check rooted["outer__u0__m"] == totals["outer__u0__m"]  # fold from root agrees with whole
+    check "inner__u0__m" notin rooted  # callee counted, never reported unasked
 
   test "movement models bytes from stems and counts":
     let f = CFunction(
@@ -533,6 +598,32 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         inc compared
     check compared > 0  # law is vacuous where nothing is compared
 
+  test "dense form spends multivector lower bound, and moves only operands and result":
+    let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    var roots: seq[string]
+    for f in INSPECTED:
+      if f.symbol.startsWith("dense"): roots.add f.name
+    let total = totals(INSPECTED, roots)
+    var compared = 0
+    for p in CATALOGUE:
+      if p.reference.len > 0: continue
+      let b = p.boundOf(metric)
+      for f in INSPECTED:
+        if f.symbol != p.denseNameOf: continue
+        let counts = total[f.name]
+        checkpoint p.id & " spends " & $counts.multiplies & " against " & $b.multiplies
+        if b.is_derived and b.is_chain:
+          # Chain bound sums steps over dense operands; step reading zeros of one before it
+          #   spends less, so dense form may stand below estimate and never above it.
+          check counts.multiplies <= b.multiplies  # chain at or below its estimate
+        elif b.is_derived:
+          check counts.multiplies == b.multiplies  # one rule, met exactly
+        check counts.zero_fills == 0 and counts.intermediates == 0  # no fill, no local
+        check counts.copies == 0 and counts.calls == 0 and counts.checks == 0  # straight line
+        inc compared
+        break
+    check compared == CATALOGUE.countIt(it.reference.len == 0)  # every general row has one
+
   test "own nimcache holds every catalogued symbol at its arity":
     let functions = INSPECTED
     var keys: seq[string]
@@ -561,7 +652,7 @@ suite "Guard":
     KEY = "∧(Multivector,Multivector)"
 
   func node(multiplies, checks, zero_fills, bytes: int): JsonNode =
-    ## Shape one function as inspect does, from counts and bytes moved.
+    ## Build one function as inspect does, from counts and bytes moved.
     let c = Counts(multiplies: multiplies, checks: checks, zero_fills: zero_fills)
     %*{
       "symbol": "∧", "module": "pga/operators", "params": ["Multivector", "Multivector"],
@@ -570,7 +661,7 @@ suite "Guard":
     }
 
   func doc(functions: JsonNode; flags = "-d:release"; dimensions = 4): JsonNode =
-    ## Shape static measurements document around functions.
+    ## Build static measurements document around functions.
     result = document(
       "static", algebraNode("rga4d", dimensions, false, 128),
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": flags},
@@ -578,7 +669,7 @@ suite "Guard":
     result["functions"] = functions
 
   func one(key: string; f: JsonNode): JsonNode =
-    ## Shape functions object holding one function.
+    ## Build functions object holding one function.
     result = newJObject()
     result[key] = f
 
@@ -629,7 +720,7 @@ suite "Gaps":
   func functionNode(
     symbol, module: string; is_inline: bool; multiplies, checks, zero_fills, bytes: int
   ): JsonNode =
-    ## Shape one inspected function.
+    ## Build one inspected function.
     let c = Counts(multiplies: multiplies, checks: checks, zero_fills: zero_fills)
     %*{
       "symbol": symbol, "module": module, "params": [], "returns": "", "inline": is_inline,
@@ -638,7 +729,7 @@ suite "Gaps":
     }
 
   func staticDoc(): JsonNode =
-    ## Shape static measurements document: two library operators, accessor, reference form.
+    ## Build static measurements document: two library operators, accessor, reference form.
     result = document(
       "static", algebraNode("rga4d", 4, false, 128),
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
@@ -662,11 +753,11 @@ suite "Gaps":
     result["missing"] = newJObject()
 
   func measurement(ns: float): JsonNode =
-    ## Shape one bench measurement.
+    ## Build one bench measurement.
     %*{"ns_median": ns, "ns_min": ns, "allocations": 0, "nan_share": 0.0}
 
   func runtimeDoc(): JsonNode =
-    ## Shape runtime measurements document over same measurands.
+    ## Build runtime measurements document over same measurands.
     result = document(
       "runtime", algebraNode("rga4d", 4, false, 128),
       %*{
@@ -741,6 +832,12 @@ suite "Gaps":
       "rga4d/transform_point_motor."  # composed expression named
     check decidedOf(Rule.Missing, ALGEBRAS, gaps).status == Status.Met  # nothing missing
     check decidedOf(Rule.Cayley, ALGEBRAS, gaps).status == Status.Unmeasured  # not readable here
+
+  test "causes count library functions, never reference or dense form":
+    check isLibraryModule("pga/operators")  # library's own
+    check not isLibraryModule("reference/rigid3")  # typed reference
+    check not isLibraryModule("dense")  # dense form, as bench build names it
+    check not isLibraryModule("pga_benchmark/dense")  # dense form, as test build names it
 
   test "rendered list fits width and names every gap":
     let (text, docket) = generate(ALGEBRAS, docketOf(nil))
@@ -953,10 +1050,14 @@ suite "Proposals":
 
 suite "Evaluations":
   func run(ns: openArray[(string, float, float)]): JsonNode =
-    ## Shape one bench run: library median and NaN share per measurand.
+    ## Build one bench run: library median and NaN share per measurand.
     result = %*{"measurands": {}}
     for (id, time, nan) in ns:
       result["measurands"][id] = %*{"library": {"ns_median": time, "nan_share": nan}}
+
+  test "evaluation measures typed algebras, and all four only when thorough":
+    check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, both lower bounds cover
+    check algebrasEvaluated(true) == @["rga4d", "cga5d", "rga3d", "cga4d"]  # thorough adds
 
   test "times pair runs by measurand, median of ratios, rounded":
     let
@@ -1011,6 +1112,33 @@ suite "Cells":
 
 
 suite "Pages":
+  let ids_docket = %*{"ids": {"rga4d/wedge": "G001", "rga4d/wedge_point_point": "G002"}}
+    ## Docket file allotting both rows of `sheetDocket`.
+
+  func sheetDocket(multiplies_library, multiplies_reference: int; runtime: JsonNode): Sheet =
+    ## Build one algebra: general and typed wedge over one library function, bound of 54.
+    let bound = %*{"multiplies": 54, "bytes_moved": 384, "shape": "Wedge", "is_chain": false}
+    Sheet(
+      name: "rga4d",
+      title: "Rigid 4D",
+      dimensions: 4,
+      measurements_static: %*{
+        "measurands": {
+          "wedge": {"library": "∧(M,M)", "dense": "denseWedge(M,M)", "symbol": "∧",
+            "bound": bound},
+          "wedge_point_point": {"library": "∧(M,M)", "reference": "wedge(P,P)", "symbol": "∧",
+            "bound": bound},
+        },
+        "functions": {
+          "∧(M,M)": {"total": {"multiplies": multiplies_library},
+            "movement": {"bytes_moved": 512}},
+          "wedge(P,P)": {"total": {"multiplies": multiplies_reference},
+            "movement": {"bytes_moved": 112}},
+        },
+      },
+      measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": runtime},
+    )
+
   test "shell names faces it embeds, and assembly fills every token":
     let
       text_shell = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
@@ -1042,6 +1170,91 @@ suite "Pages":
         measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
       ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
     check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
+
+  test "docket measures typed row against reference, general row against multivector bound":
+    let
+      body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    check "library 81 multiplies, reference 12, multivector lower bound 54\"" in body  # typed
+    check "library 81 multiplies, multivector lower bound 54\"" in body  # general, no tick
+    check ">×6.75<" in body and ">×1.50<" in body  # each over what it is measured against
+    check body.count("<b style=") == 2  # tick at multivector bound, typed row only, both counts
+
+  test "time bar is median of run ratios, and each run is one tick":
+    let
+      runs = %*{"wedge_point_point": {
+        "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
+        "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+    check ">×3.00<" in body  # median of 3.00, 2.00 and 3.67; ratio of medians reads 2.75
+    check "runs ×3.00 ×2.00 ×3.67" in body  # each run named, in run order
+    check body.count("<s style=") == 3  # one tick for each run
+
+  test "general row times against its dense form":
+    let
+      runs = %*{"wedge": {
+        "library": {"ns_median": 8.5, "nan_share": 0.0, "ns_runs": [8.0, 9.0]},
+        "dense": {"ns_median": 3.5, "nan_share": 0.0, "ns_runs": [4.0, 3.0]}}}
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+    check "library 8.5 ns, dense form 3.5 ns" in body  # general row names what it times against
+    check ">×2.50<" in body and body.count("<s style=") == 2  # median of 2.00 and 3.00, two ticks
+
+  test "each dropdown option has rule that reads it, and each row class that rule wants":
+    let
+      runs = %*{"wedge_point_point": {
+        "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
+        "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+
+    func tagOf(body, measurand: string): string =
+      ## Read opening tag of row naming measurand.
+      let
+        at = body.find("<span class=\"n\">" & measurand & "</span>")
+        start = body.rfind("<details ", last = at)
+      body[start .. body.find('>', start)]
+
+    let (typed, general) = (tagOf(body, "wedge_point_point"), tagOf(body, "wedge"))
+    for select in ["sort", "show", "operation", "operand"]:
+      check "<select id=\"" & select & "\">" in body  # dropdown, never radio
+    check "type=\"radio\" name=\"sort\"" notin body and "name=\"show\"" notin body  # none left
+    for key in ["bytes", "multiplies", "time", "spread", "divides", "checks"]:
+      check "--o-" & key & ":" in typed  # rank under every sort
+      check "option[value=\"" & key & "\"]:checked) details.row { order: var(--o-" & key in body
+    for name_class in ["over-multiplies", "over-bytes", "over-time", "over", "typed"]:
+      check " " & name_class & " " in typed or " " & name_class & "\"" in typed  # 81>12, ×3
+      check "value=\"" & name_class & "\"]:checked) details.row:not(." & name_class & ")" in body
+    check "over-time" notin general and "at-bound" notin general  # untimed; 512 bytes > 384
+    check "--o-spread:0" in typed and "--o-spread:1" in general  # runs spread; none sorts last
+    check "operation-wedge operand-point" in typed and "operand-" notin general  # id split
+    check ":not(.operation-wedge)" in body and ":not(.operand-point)" in body  # one rule each
+    check "<option value=\"wedge\" class=\"in-rga4d\">wedge ∧</option>" in body  # symbol beside
+
+  test "search box finds row by its words, and shell hides row script marks unfound":
+    const SHELL = staticRead("../pages/shell.html")
+    let body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    check "<input type=\"search\" id=\"find\"" in body and body.count("<script>") == 1  # one
+    check "data-find=\"wedge_point_point g002 ∧ wedge point point\"" in body  # id, kinds, lower
+    check "data-find=\"wedge g001 ∧ wedge\"" in body  # general row: no operand kind
+    check "classList.toggle(\"unfound\"" in body and "details.row.unfound { display: none; }" in
+      SHELL  # script marks, shell hides
+
+  test "typed id splits at longest operand kind, one kind per operand":
+    let
+      sheet = Sheet(name: "cga5d", title: "Conformal 5D", dimensions: 5,
+        measurements_static: %*{"measurands": {
+          "bulk_flat_round_point": {"library": "■(M)", "reference": "bulkFlat(R)", "arity": 1},
+          "wedge_round_point_dipole": {"library": "∧(M,M)", "reference": "wedge(R,D)",
+            "arity": 2}},
+          "functions": {}},
+        measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
+      body = docketBody([sheet], %*{"ids": {}}, [], "bd6b23c590d7", "")
+    check "operation-bulk_flat operand-round_point" in body  # round point, never point
+    check "operation-wedge operand-round_point operand-dipole" in body  # both, in id order
+    check "operand-point" notin body and "operation-bulk_flat_round" notin body  # no half kind
+
+  test "count over reference that spends none reads its excess, never infinite ratio":
+    let body = docketBody([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    check ">81 over 0<" in body and "class=\"open\"" in body  # bar runs to axis end
+    check "×inf" notin body and "×nan" notin body  # no ratio divides by zero
 
   test "verdict chips say when evaluation removes NaN results":
     let

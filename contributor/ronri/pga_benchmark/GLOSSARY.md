@@ -40,14 +40,32 @@ What the typed reference spends, which needs a representation that a dense multi
 cannot reach. It is measured rather than derived.
 _Avoid_: typed floor, sparse bound, reference bound
 
+**Shape**:
+The arithmetic form of one operation, such as Wedge, Geometric or Norm. Each shape carries the
+rule that derives its multivector lower bound.
+_Avoid_: form, pattern, product type
+
+**Chain**:
+An operation that the library composes from several operators, as a projection is a dual
+product and then a full product. Its multivector lower bound sums what each step demands, so
+it is an estimate and never a proved minimum.
+_Avoid_: composed operation, compound operation, composite, pipeline
+
 **Kind**:
 What the operand of a measurand is: General (dense, mixed grade), Scalar, or one typed
 object such as Point.
-_Avoid_: type, shape, class
+_Avoid_: type, class
 
 **Implementation**:
-Which of the two is measured: the dense operator of the library, or the reference.
+Which of the three is measured: the dense operator of the library, the reference, or the dense
+form.
 _Avoid_: side, party, subject, control
+
+**Dense form**:
+The straight-line implementation of a general measurand, generated from the tables of the
+library. It assigns each slot once as the sum of its terms, with no fill, no intermediate and no
+call. A general row is timed against it, as a typed row is timed against its reference.
+_Avoid_: dense reference, bound form, oracle
 
 **Widen / narrow**:
 To put a typed object into the basis slots of the dense multivector, and to read it back

@@ -7,13 +7,15 @@
 ##   |-----------|----------------------------------------------------------------------|
 ##   | inspect   | compile bench entry per algebra to C, read it, write static          |
 ##   |           | measurements as `build/static_<algebra>.json`                        |
-##   | bench     | compile and run bench per algebra, plain then instrumented, record   |
-##   |           | runtime measurements as `baseline/runtime_<algebra>.json`            |
+##   | bench     | compile and run bench per algebra, plain ones five times alternating |
+##   |           | then instrumented, record runtime measurements as                    |
+##   |           | `baseline/runtime_<algebra>.json`                                    |
 ##   | baseline  | inspect, then record static measurements as                          |
 ##   |           | `baseline/static_<algebra>.json`                                     |
 ##   | guard     | compare last inspect against baseline; any count grown is finding    |
 ##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
-##   |           | record what each measured as `evaluations/<name>.json`               |
+##   |           | record what each measured as `evaluations/<name>.json`; typed        |
+##   |           | algebras alone, or all four after `--thorough`                       |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
 ##   | published | record URL and digest of page just published, as                     |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
@@ -43,11 +45,13 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, proposals, gaps, guard, head, inspector, model, notes]
+from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
-  Candidate, Toolchain, editsDigest, pristineBinary, pristineSuites, readLibrary, runEvaluation
+  Candidate, Toolchain, algebrasEvaluated, editsDigest, pristineBinary, pristineSuites,
+  readLibrary, runEvaluation
 
 
 const
@@ -80,8 +84,10 @@ const
     ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
     "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
-    " [name|symbol] [url|algebra]\n"
+    " [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
+  FLAG_THOROUGH = "--thorough"
+    ## Flag after `evaluate <name>` that measures untyped algebras too.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
     ## Atlas checkout of library's repository.
   LIBRARY_DIRECTORY = "lengyel/projective_geometric_algebra_illuminated"
@@ -104,10 +110,10 @@ const
     ## File that must name every published URL.
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## Repository driver, asked for faces.
-  EVALUATED = ["rga4d", "cga5d"]
-    ## Algebras evaluation measures: typed ones, which both lower bounds cover.
   EVALUATION_RUNS = 5
     ## Timed runs of each binary per evaluation, alternating.
+  BENCH_RUNS = 5
+    ## Timed runs of each algebra's bench, alternating algebras, so drift lands on all alike.
   TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
     "cga4d": "Conformal 4D"}.toTable
     ## Tab title of each algebra on docket.
@@ -202,7 +208,7 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
   result = plain
   result["taken"]["is_allocation_measured"] = instrumented{"taken", "is_allocation_measured"}
   for id, measurand in instrumented{"measurands"}.pairs:
-    for implementation in ["library", "reference"]:
+    for implementation in IMPLEMENTATIONS:
       let measurement = measurand{implementation}
       if measurement.isNil or measurement.kind != JObject: continue
       if not result["measurands"].hasKey(id): continue
@@ -212,27 +218,32 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
 
 
 proc bench() =
-  ## Compile and run bench per algebra, plain for timings and instrumented for allocations,
-  ## and record merged measurements into `baseline/`.
+  ## Compile bench per algebra, plain for timings and instrumented for allocations; run plain
+  ##   ones in turn, algebra after algebra, `BENCH_RUNS` times, so drift of machine lands on
+  ##   every algebra alike; record combined measurements into `baseline/`.
   let
     nim = nimCommit()
     pga = pgaCommit()
   createDir BUILD
   createDir BASELINE
   for (name, dimensions, is_conformal) in CONFIGS:
-    let plain = BUILD / "bench_" & name
-    compile(ENTRY_BENCH, plain, BUILD / "cache_" & name, dimensions, is_conformal, nim, pga)
-    run(plain, [plain & ".json"])
+    compile(ENTRY_BENCH, BUILD / "bench_" & name, BUILD / "cache_" & name, dimensions,
+      is_conformal, nim, pga)
+    compile(ENTRY_BENCH, BUILD / "bench_alloc_" & name, BUILD / "cache_alloc_" & name,
+      dimensions, is_conformal, nim, pga, ["-d:nimAllocStats"])
+  var runs: Table[string, seq[JsonNode]]
+  for index in 1 .. BENCH_RUNS:
+    for (name, _, _) in CONFIGS:
+      let output = BUILD / "bench_" & name & "_" & $index & ".json"
+      run(BUILD / "bench_" & name, [output])
+      runs.mgetOrPut(name, @[]).add readDocument(output)
+  for (name, _, _) in CONFIGS:
     let instrumented = BUILD / "bench_alloc_" & name
-    compile(
-      ENTRY_BENCH, instrumented, BUILD / "cache_alloc_" & name, dimensions, is_conformal, nim,
-      pga, ["-d:nimAllocStats"],
-    )
     run(instrumented, [instrumented & ".json"])
     let
-      doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
+      measurements = merged(runsCombined(runs[name]), readDocument(instrumented & ".json"))
       recorded = BASELINE / "runtime_" & name & ".json"
-    writeFile(recorded, pretty(doc) & "\n")
+    writeFile(recorded, pretty(measurements) & "\n")
     echo "Recorded ", recorded
 
 
@@ -567,9 +578,9 @@ proc publishedAt(name, url: string) =
 
 #[ Evaluations ]#
 
-proc evaluate(which: string) =
+proc evaluate(which: string; is_thorough: bool) =
   ## Try one change or proposal at pin, every one for `all`, or those `drive` would name for
-  ##   `stale`; write each evaluation document.
+  ##   `stale`; write each evaluation document. Typed algebras alone, or all four when thorough.
 
   func machine(): string =
     ## Describe machine evaluation ran on, as bench documents do.
@@ -600,8 +611,9 @@ proc evaluate(which: string) =
     algebras: seq[evaluations.Algebra]
     baselines: Table[string, JsonNode]
     pristine: Table[string, string]
+  let evaluated = algebrasEvaluated(is_thorough)
   for (name, dimensions, is_conformal) in CONFIGS:
-    if name notin EVALUATED: continue
+    if name notin evaluated: continue
     let algebra =
       evaluations.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
     algebras.add algebra
@@ -852,10 +864,11 @@ when isMainModule:
     arguments =
       case verb
       of "show": 2 .. 3
-      of "evaluate": 2 .. 2
+      of "evaluate": 2 .. 3
       of "published": 3 .. 3
       else: 1 .. 1
-  if paramCount() notin arguments:
+  if paramCount() notin arguments or verb == "evaluate" and paramCount() == 3 and
+      paramStr(3) != FLAG_THOROUGH:
     stderr.write USAGE
     quit 2
   try:
@@ -866,7 +879,7 @@ when isMainModule:
     of "bench": bench()
     of "baseline": baseline()
     of "guard": guard()
-    of "evaluate": evaluate(paramStr(2))
+    of "evaluate": evaluate(paramStr(2), paramCount() == 3)
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
