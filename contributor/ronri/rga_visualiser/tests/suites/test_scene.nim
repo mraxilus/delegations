@@ -439,9 +439,9 @@ suite "Scene":
     check not isSearching(typed)
 
 
-  test "handlesMatching keeps creation order, and keeps the row open for edit listed":
+  test "handlesMatching keeps creation order, and keeps the selection and edit row listed":
     # Handle order parts from creation order once anything is removed, and list reads in.
-    #   creation order; row being edited stays under reader typing into it.
+    #   creation order; selection and row being edited stay under reader searching past them.
     var scene = initScene()
     for i in 0 ..< 6:
       let parity = if i mod 2 == 0: "even" else: "odd"
@@ -452,12 +452,23 @@ suite "Scene":
     proc labelled(scene: var Scene, handles: openArray[int], count: int): seq[string] =
       ## Read labels of first `count` handles filled, in order filled.
       for position in 0 ..< count: result.add(toText(scene.labelAt(handles[position])))
-    var count = scene.handlesMatching("EVEN", handles)
-    check scene.labelled(handles, count) == @["even0", "even4", "even6"]
-    count = scene.handlesMatching("even", handles, kept = some(1))
-    check scene.labelled(handles, count) == @["even0", "odd1", "even4", "even6"]
-    check scene.handlesMatching("", handles) == scene.len
-    check scene.handlesMatching("nothing here", handles) == 0
+    var counts = scene.handlesMatching("EVEN", handles, [])
+    check scene.labelled(handles, counts.count_shown) == @["even0", "even4", "even6"]
+    check counts.count_matched == 3
+    # Kept rows sit where they sit without search, whatever order they were picked in; kept
+    #   row that matches anyway is counted once, as match.
+    counts = scene.handlesMatching("even", handles, [5, 1, 4, 1])
+    check scene.labelled(handles, counts.count_shown) ==
+      @["even0", "odd1", "even4", "odd5", "even6"]
+    check counts.count_matched == 3
+    # Nothing matched, and kept rows still stand: count matched is what says so.
+    counts = scene.handlesMatching("nothing here", handles, [3])
+    check scene.labelled(handles, counts.count_shown) == @["odd3"]
+    check counts.count_matched == 0
+    check scene.handlesMatching("", handles, []) ==
+      (count_shown: scene.len, count_matched: scene.len)
+    check scene.handlesMatching("nothing here", handles, []) ==
+      (count_shown: 0, count_matched: 0)
 
 
   test "revisionPlacingAt stamps the handle an edit touched, and every handle after a restore":

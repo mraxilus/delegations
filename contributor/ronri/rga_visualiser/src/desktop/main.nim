@@ -1441,13 +1441,22 @@ const TEXT_SEARCH_DRIVEN = "ground"
   ## Label `--drive-search` types, which opening scene holds once and no kind word holds.
 
 
-proc driveSearch(window: Window, count_drawn: int) =
-  ## Press `/`, then type label, one step per frame, for `--drive-search`.
-  ##   Posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
+proc driveSearch(window: Window, panel: var Panel, scene: Scene, count_drawn: int) =
+  ## Pick object search will not match, press `/`, then type label, one step per frame, for
+  ## `--drive-search`.
+  ##   Pick is made through panel rather than by click: claim is that search keeps it listed,
+  ##   and `--drive-select` holds clicks.
+  ##   Keys posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
   ##   Typed as text event, which is what Dear ImGui reads into focused field, stamped with
   ##   this window, since its backend drops event naming none of its own.
   ##   Frame between `/` and text lets field take keyboard `/` handed it.
   const frame_first = 3 # Past startup, so first frame's layout has settled.
+  if count_drawn == frame_first - 1:
+    var handles: array[OBJECTS_MAX, int]
+    for position in 0 ..< scene.handlesCreated(handles):
+      if TEXT_SEARCH_DRIVEN notin toLowerAscii(toText(scene[handles[position]].label)):
+        panel.selection.selectOnly(handles[position])
+        return
   var event: Event
   case count_drawn - frame_first
   of 0, 1:
@@ -1701,18 +1710,26 @@ proc verdictDriven(
   if options.is_search_driven:
     # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list.
     #   is held to something other than rule it runs. Label typed is in no kind word, so
-    #   labels alone are whole count.
+    #   labels alone are whole count; pick made first is labelled otherwise, so it adds one.
     var
       handles: array[OBJECTS_MAX, int]
       labelled = 0
     for position in 0 ..< scene.handlesCreated(handles):
       if TEXT_SEARCH_DRIVEN in toLowerAscii(toText(scene[handles[position]].label)):
         inc labelled
-    let typed = toText(panel.search)
+    let
+      typed = toText(panel.search)
+      is_pick_listed = panel.selection.len == 1 and
+        panel.selection.at(0) in panel.handles_shown.toOpenArray(0, panel.count_shown - 1)
     report(
       "pressing / and typing narrows the objects list to the objects that answer it",
-      typed == TEXT_SEARCH_DRIVEN and labelled >= 1 and panel.count_shown == labelled,
-      &"typed `{typed}`, listed {panel.count_shown}, labelled {labelled} of {scene.len}",
+      typed == TEXT_SEARCH_DRIVEN and labelled >= 1 and panel.count_matched == labelled,
+      &"typed `{typed}`, matched {panel.count_matched}, labelled {labelled} of {scene.len}",
+    )
+    report(
+      "an object picked before the search stays listed, though the search does not match it",
+      is_pick_listed and panel.count_shown == labelled + 1,
+      &"picked {panel.selection.len}, listed {is_pick_listed}, {panel.count_shown} rows",
     )
 
   # Scene filled to capacity is its own verdict, and fires only in run driven with one.
@@ -1927,7 +1944,7 @@ proc runInteractive(
     ticks_previous_frame = ticks_frame_start
 
     if options.is_key_driven: driveKeys(count_drawn)
-    if options.is_search_driven: driveSearch(window, count_drawn)
+    if options.is_search_driven: driveSearch(window, panel, scene, count_drawn)
     if options.is_sky_driven:
       driveSky(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, now)
     if options.is_drag_driven or options.is_select_driven or options.is_undo_driven:

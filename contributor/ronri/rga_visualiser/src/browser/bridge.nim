@@ -1476,6 +1476,10 @@ proc nimSelectionHandles(): seq[int] {.exportc.} =
 proc nimSelectionCount(): cint {.exportc.} = cint(SELECTION_PAGE.len)
   ## Count picked objects.
 
+proc nimSelectionRevision(): cint {.exportc.} = cint(SELECTION_PAGE.revision)
+  ## Report how many times selection has changed; see `selection.revision`.
+  ##   Objects list stamps it while searching, since search keeps selection listed.
+
 proc nimSelectionArity(): cint {.exportc.} = cint(ord(SELECTION_PAGE.impliedArity))
   ## Report arity current selection implies; see `selection.impliedArity`.
   ##   Matches `nimOperationArity`'s convention: 0 unary, 1 binary.
@@ -1487,12 +1491,12 @@ proc nimSelectToggle(handle: cint) {.exportc.} = SELECTION_PAGE.toggle(int(handl
   ## Add handle to end of selection, or drop it where already picked.
   ##   Pick order names operands m and n.
 
-proc nimSelectAll(handles: seq[cint]) {.exportc.} =
-  ## Replace whole selection with `handles`, picked in order given; see `selection.selectAll`.
+proc nimSelectAddAll(handles: seq[cint]) {.exportc.} =
+  ## Add each of `handles` not yet picked, in order given; see `selection.addAll`.
   ##   Objects list hands over every row its search shows, in order shown.
   var picked = newSeq[int](handles.len)
   for position, handle in handles: picked[position] = int(handle)
-  SELECTION_PAGE.selectAll(picked)
+  SELECTION_PAGE.addAll(picked)
 
 
 proc nimPickByPointer(handle: cint) {.exportc.} =
@@ -2200,16 +2204,22 @@ proc nimSelectionPulse(
 #[ Objects Search ]#
 
 proc nimSceneHandlesMatching(query: cstring, kept: seq[cint]): seq[cint] {.exportc.} =
-  ## Report every live handle `query` matches, oldest creation first, for objects list.
-  ##   `kept` holds handle of row open for edit, where one is open; it stays listed whatever
-  ##   query says. List rather than sentinel, so page carries no copy of `SLOT_NONE`.
+  ## Report how many objects `query` matches, then every handle objects list shows for it,
+  ## oldest creation first.
+  ##   Flat, as `nimSelectionMarker` is: first entry counts matches, and handles follow it.
+  ##   List shows what `query` matches, every pick, and `kept`, whatever query says.
+  ##     `kept` holds handle of row open for edit, where one is open. List rather than
+  ##     sentinel, so page carries no copy of `SLOT_NONE`.
   ##   Rule is `scene.handlesMatching`'s, so window and page list one set.
   doAssert kept.len <= 1, &"At most one row is open for edit; got `{kept.len}`."
-  var handles: array[OBJECTS_MAX, int]
-  let
-    handle_kept = if kept.len == 0: none(int) else: some(int(kept[0]))
-    count = SCENE_PAGE.handlesMatching($query, handles, handle_kept)
-  for position in 0 ..< count: result.add(cint(handles[position]))
+  var
+    handles: array[OBJECTS_MAX, int]
+    handles_kept: seq[int]
+  for position in 0 ..< SELECTION_PAGE.len: handles_kept.add(SELECTION_PAGE.at(position))
+  for handle in kept: handles_kept.add(int(handle))
+  let counts = SCENE_PAGE.handlesMatching($query, handles, handles_kept)
+  result.add(cint(counts.count_matched))
+  for position in 0 ..< counts.count_shown: result.add(cint(handles[position]))
 
 
 proc nimIsSearching(query: cstring): bool {.exportc.} = isSearching($query)

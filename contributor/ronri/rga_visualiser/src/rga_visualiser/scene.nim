@@ -919,19 +919,31 @@ func matchesSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
 
 func handlesMatching*(
   scene: Scene, query: openArray[char], handles: var array[OBJECTS_MAX, int],
-  kept = none(int)
-): int =
-  ## Fill `handles` with every live handle `query` matches, oldest creation first; report how
-  ## many were filled.
-  ##   `kept` stays whatever query says: row open for edit never leaves list under reader
-  ##   typing into it.
-  ##   Filters `handlesCreated` in place, so order is creation order and nothing allocates.
+  kept: openArray[int]
+): tuple[count_shown, count_matched: int] =
+  ## Fill `handles` with every live handle `query` matches or `kept` names, oldest creation
+  ## first; report how many were filled, and how many of those `query` matches.
+  ##   `kept` stays whatever query says: selection, and row open for edit, never leave list
+  ##   under reader searching past them.
+  ##   Kept handle sits in creation order among matches, where it sits without search.
+  ##   Count matched is what query alone lists, so front-end can say that nothing matched
+  ##   while kept rows still stand.
+  ##   Filters `handlesCreated` in place, so order is creation order.
+  ##     Marks kept handles once, rather than scanning `kept` per handle: whole selection can
+  ##     be kept, and scan per handle costs 25 million comparisons at capacity.
+  var is_kept: array[OBJECTS_MAX, bool]
+  for handle in kept:
+    doAssert handle in 0 ..< OBJECTS_MAX, &"Kept handle must be in range; got `{handle}`."
+    is_kept[handle] = true
   let count = scene.handlesCreated(handles)
   for position in 0 ..< count:
-    let handle = handles[position]
-    if kept == some(handle) or scene.matchesSearch(handle, query):
-      handles[result] = handle
-      inc result
+    let
+      handle = handles[position]
+      is_matched = scene.matchesSearch(handle, query)
+    if is_matched: inc result.count_matched
+    if is_matched or is_kept[handle]:
+      handles[result.count_shown] = handle
+      inc result.count_shown
 
 
 

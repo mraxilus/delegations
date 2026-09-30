@@ -197,9 +197,15 @@ type
     handles_shown*: array[OBJECTS_MAX, int] ## Handles search leaves listed, oldest first.
       ## As `scene.handlesMatching` fills them; valid to `count_shown`.
     count_shown*: int ## How many of `handles_shown` are filled.
-    stamp_shown*: Option[tuple[revision: int, search: array[LABEL_MAX, char], kept: Option[int]]]
-      ## What list was last filtered against: scene's revision, search and row kept open.
-      ## None before first layout. Filtered again only when one of three moves, never per
+    count_matched*: int ## How many of `handles_shown` search matches, rather than keeps.
+      ## Zero while picks still stand is what list's note answers.
+    stamp_shown*: Option[tuple[
+      revision: int, search: array[LABEL_MAX, char], kept: Option[int],
+      revision_selection: Option[int]
+    ]]
+      ## What list was last filtered against: scene's revision, search, row kept open and,
+      ## while searching, selection's revision.
+      ## None before first layout. Filtered again only when one of four moves, never per
       ## frame: sorting and matching per frame is most of desktop's frame at capacity.
     index_operand_first*: cint ## Object picked as left operand.
     index_operand_second*: cint ## Object picked as right operand.
@@ -643,16 +649,36 @@ proc layoutObject(
 
 
 proc refreshShown(panel: var Panel, scene: Scene) =
-  ## Filter list against search again, where scene, search or row kept open has moved.
-  ##   Row open for edit stays whatever search says, as on page, and only while something is
-  ##   typed, since blank search lists everything anyway.
+  ## Filter list against search again, where scene, search, selection or row kept open has
+  ## moved.
+  ##   Selection and row open for edit stay whatever search says, as on page, and count only
+  ##   while something is typed, since blank search lists everything anyway.
   let
+    is_searching = isSearching(panel.search)
     kept =
-      if panel.session.isSome and isSearching(panel.search): panel.session.get.handle
+      if panel.session.isSome and is_searching: panel.session.get.handle
       else: none(int)
-    stamp = (revision: scene.revision, search: panel.search, kept: kept)
+    revision_selection = if is_searching: some(panel.selection.revision) else: none(int)
+    stamp = (
+      revision: scene.revision, search: panel.search, kept: kept,
+      revision_selection: revision_selection,
+    )
   if panel.stamp_shown == some(stamp): return
-  panel.count_shown = scene.handlesMatching(panel.search, panel.handles_shown, kept)
+  var
+    handles_kept: array[OBJECTS_MAX + 1, int]
+    count_kept = 0
+  if is_searching:
+    for position in 0 ..< panel.selection.len:
+      handles_kept[count_kept] = panel.selection.at(position)
+      inc count_kept
+  if kept.isSome:
+    handles_kept[count_kept] = kept.get
+    inc count_kept
+  let counts = scene.handlesMatching(
+    panel.search, panel.handles_shown, handles_kept.toOpenArray(0, count_kept - 1)
+  )
+  panel.count_shown = counts.count_shown
+  panel.count_matched = counts.count_matched
   panel.stamp_shown = some(stamp)
 
 
@@ -692,11 +718,12 @@ proc layoutSearch(panel: var Panel, scene: var Scene) =
   gui.sameLine()
   gui.disabledPush(panel.count_shown == 0)
   if gui.buttonSmall(wordingText(NameListSelect)):
-    # Rows in order shown, newest first, so first row reader sees is operand `m`.
+    # Rows in order shown, newest first, after picks already made, so operands reader picked.
+    #   stay first.
     var picked: array[OBJECTS_MAX, int]
     for position in 0 ..< panel.count_shown:
       picked[position] = panel.handles_shown[panel.count_shown - 1 - position]
-    panel.selection.selectAll(picked.toOpenArray(0, panel.count_shown - 1))
+    panel.selection.addAll(picked.toOpenArray(0, panel.count_shown - 1))
     panel.showSelectionMenu() # Picking from list is picking.
   gui.disabledPop()
   gui.tooltip(wordingText(TipListSelect))
@@ -706,7 +733,7 @@ proc layoutObjects*(
   panel: var Panel, scene: var Scene, camera: Camera, history: var History,
   now: float
 ) =
-  ## Lay out every item search leaves, plus row being composed if there is one.
+  ## Lay out every item search leaves or keeps, plus row being composed if there is one.
   ##   At most one removal per frame, since click lands on one button.
   ##   `now` is forwarded to whichever row commits fresh object, so it animates in.
   var header: array[32, char]
@@ -746,7 +773,9 @@ proc layoutObjects*(
 
   # Head list with composing row: newest thing here, with no `born` to sort by.
   if is_composing: discard layoutObject(panel, scene, camera, history, none(int), now)
-  if panel.count_shown == 0 and not is_composing:
+  # Note heads list where nothing matched, above any picks kept, so kept rows never read as.
+  #   matches.
+  if panel.count_matched == 0 and not is_composing:
     gui.textWrapped(wordingText(NoteListUnmatched))
 
   # Order newest first, as browser lists them.

@@ -159,22 +159,22 @@ suite "Selection":
     check not selection.contains(2)
 
 
-  test "selectAll picks in the order given, once each, and a repeat changes nothing":
-    # Order given is pick order, so search that selects its matches names `m` and `n` by.
-    #   rows reader sees first.
+  test "addAll keeps earlier picks where they stand, and adds each new handle once, in order":
+    # Search keeps selection listed, so `select all` hands back rows already picked: adding.
+    #   rather than replacing keeps operands `m` and `n` where reader picked them.
     var selection: Selection
     selection.toggle(9)
-    selection.selectAll([4, 1, 7, 1, 4])
-    check ordered(selection) == @[4, 1, 7]
-    check selection.at(0) == 4 # Operand m.
+    selection.addAll([4, 1, 9, 7, 1, 4])
+    check ordered(selection) == @[9, 4, 1, 7]
+    check selection.at(0) == 9 # Operand m, picked first.
     let last = selection.revision
-    selection.selectAll([4, 1, 7])
+    selection.addAll([7, 9]) # Nothing new.
     check selection.revision == last
-    selection.selectAll([4, 1])
-    check ordered(selection) == @[4, 1]
-    check selection.revision > last
-    selection.selectAll(newSeq[int]())
-    check selection.len == 0
+    selection.addAll(newSeq[int]())
+    check selection.revision == last
+    selection.addAll([2, 2])
+    check ordered(selection) == @[9, 4, 1, 7, 2]
+    check selection.revision == last + 1 # One change, however many handles.
 
 
   test "every change to a selection advances its revision, and nothing else does":

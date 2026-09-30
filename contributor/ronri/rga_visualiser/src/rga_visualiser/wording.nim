@@ -139,9 +139,9 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
 
   # Objects list around its rows: search over it, and what search leaves.
   TipListSearch:
-    "Show only the objects whose label or kind holds every word typed here; press / to come " &
-    "here from anywhere.",
-  TipListSelect: "Select every object the search shows, in the order shown.",
+    "Show only the objects whose label or kind holds every word typed here, and those " &
+    "selected; press / to come here from anywhere.",
+  TipListSelect: "Add every object the search shows to the selection, after those picked.",
 
   # Apply section: operation over one or two operands.
   TipApplyArity: "Whether to list operations reading one operand or two.",

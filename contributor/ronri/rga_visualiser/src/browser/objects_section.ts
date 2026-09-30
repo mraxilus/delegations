@@ -13,16 +13,16 @@ const list_objects = elementById('objects-list');
 const count_objects = elementById('objects-count');
 
 // Search over list: what reader typed, and handles it leaves listed.
-//   Rule is Nim's (`scene.handlesMatching`), asked once per change of query or scene rather
-//   than once per row: one call across FFI per handle is what `nimSceneHandlesCreated` exists
-//   to avoid.
+//   Rule is Nim's (`scene.handlesMatching`), asked once per change of query, scene or, while
+//   searching, selection, rather than once per row: one call across FFI per handle is what
+//   `nimSceneHandlesCreated` exists to avoid.
 const row_search = elementById('objects-search');
 const field_search = elementById<HTMLInputElement>('objects-search-field');
 const shown_search = elementById('objects-shown');
 const button_select_search = elementById<HTMLButtonElement>('objects-select');
 field_search.title = nimWording(Wording.TipListSearch);
 button_select_search.title = nimWording(Wording.TipListSelect);
-// Handles listed as of last refresh, oldest first; what `select all` picks.
+// Handles listed as of last refresh, oldest first; what `select all` adds.
 let handles_shown: number[] = [];
 /* ---------------------------------------------------------------------- */
 /* Edit session: one at time, in one of two modes -- composing brand-      */
@@ -229,22 +229,28 @@ function refreshObjectsUI() {
   //   creation ordinal, and replayed load stamps `born` in creation order, so reversing it is
   //   "most recently added first" for one pass and no comparator at all -- sorting by
   //   `nimObjectBorn` was two calls across FFI per comparison, 124,000 over 5,038 handles.
-  // **Search narrows keys, and joins stamp.** Row open for edit is kept whatever query says,.
-  //   so reader typing into it never loses it; that row counts only while something is typed,
-  //   since blank query lists everything anyway.
+  // **Search narrows keys, and joins stamp.** Selection and row open for edit are kept.
+  //   whatever query says, so reader never loses what they picked or type into; both join
+  //   stamp only while something is typed, since blank query lists everything anyway.
   const query = field_search.value;
   const is_searching = nimIsSearching(query);
   const kept = is_searching && session_edit !== null && session_edit.handle !== null
     ? [session_edit.handle] : [];
   const stamp = nimSceneRevision() + ':' + nimSceneCount() + ':' + (isComposing() ? 'p' : '') +
-    ':' + kept.join() + ':' + query;
+    ':' + kept.join() + ':' + (is_searching ? nimSelectionRevision() : '') + ':' + query;
   if (stamp !== stamp_keys_list) {
     stamp_keys_list = stamp;
-    handles_shown = Array.from(nimSceneHandlesMatching(query, kept));
+    // First entry counts matches, and handles shown follow it; see bridge.
+    const matching = Array.from(nimSceneHandlesMatching(query, kept));
+    const count_matched = matching[0] ?? 0;
+    handles_shown = matching.slice(1);
     const handles = handles_shown.slice().reverse();
     keys_list = [];
-    if (handles.length === 0 && !isComposing()) {
-      keys_list.push(nimSceneCount() === 0 ? KEY_ROW_EMPTY : KEY_ROW_UNMATCHED);
+    // Note heads list where nothing matched, above any picks kept, so kept rows never read as.
+    //   matches.
+    if (!isComposing()) {
+      if (nimSceneCount() === 0) keys_list.push(KEY_ROW_EMPTY);
+      else if (count_matched === 0) keys_list.push(KEY_ROW_UNMATCHED);
     }
     // Composing session heads list: it is newest thing here, and it has no.
     //   `born` reading to sort by since nothing backs it in scene yet.
@@ -309,8 +315,9 @@ field_search.addEventListener('keydown', (e) => {
   refreshObjectsUI();
 });
 button_select_search.addEventListener('click', () => {
-  // Rows in order shown, newest first, so first row reader sees is operand `m`.
-  nimSelectAll(handles_shown.slice().reverse());
+  // Rows in order shown, newest first, after picks already made, so operands reader picked.
+  //   stay first.
+  nimSelectAddAll(handles_shown.slice().reverse());
   onSelectionChanged(null);
 });
 
