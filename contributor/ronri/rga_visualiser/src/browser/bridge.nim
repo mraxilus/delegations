@@ -2212,6 +2212,9 @@ proc nimSceneHandlesMatching(query: cstring, kept: seq[cint]): seq[cint] {.expor
   for position in 0 ..< count: result.add(cint(handles[position]))
 
 
+proc nimIsSearching(query: cstring): bool {.exportc.} = isSearching($query)
+  ## Report whether `query` holds any word; see `scene.isSearching`.
+
 proc nimShownCounted(shown, total: cint): cstring {.exportc.} =
   ## Say how many objects search leaves listed, of how many scene holds.
   ##   See `wording.appendShownCounted`, which window writes through too.

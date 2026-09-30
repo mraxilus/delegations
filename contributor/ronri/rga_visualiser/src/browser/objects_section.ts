@@ -233,7 +233,7 @@ function refreshObjectsUI() {
   //   so reader typing into it never loses it; that row counts only while something is typed,
   //   since blank query lists everything anyway.
   const query = field_search.value;
-  const is_searching = query.trim() !== '';
+  const is_searching = nimIsSearching(query);
   const kept = is_searching && session_edit !== null && session_edit.handle !== null
     ? [session_edit.handle] : [];
   const stamp = nimSceneRevision() + ':' + nimSceneCount() + ':' + (isComposing() ? 'p' : '') +

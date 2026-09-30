@@ -189,11 +189,18 @@ type
       ## not match.
     tween_camera*: CameraTween ## Carries camera toward whatever is being built or edited.
       ## See `camera.CameraTween`; advanced once per frame by `visualiser.renderFrame`.
-    handles_ordered*: array[OBJECTS_MAX, int] ## Live handles in creation order.
-      ## As `scene.handlesCreated` fills them; valid to `count_ordered`.
-    count_ordered*: int ## How many of `handles_ordered` are filled.
-    revision_ordered*: Option[int] ## `scene.revision` order was sorted at.
-      ## None before first layout.
+    search*: array[LABEL_MAX, char] ## What reader typed into objects search.
+      ## Buffer `gui.inputSearch` writes straight through, read to its terminator.
+    is_search_focus_wanted*: bool ## Whether `/` asked for objects search since last layout.
+      ## Set by key handler, consumed by `layoutObjects`, which opens section and hands
+      ## field keyboard.
+    handles_shown*: array[OBJECTS_MAX, int] ## Handles search leaves listed, oldest first.
+      ## As `scene.handlesMatching` fills them; valid to `count_shown`.
+    count_shown*: int ## How many of `handles_shown` are filled.
+    stamp_shown*: Option[tuple[revision: int, search: array[LABEL_MAX, char], kept: Option[int]]]
+      ## What list was last filtered against: scene's revision, search and row kept open.
+      ## None before first layout. Filtered again only when one of three moves, never per
+      ## frame: sorting and matching per frame is most of desktop's frame at capacity.
     index_operand_first*: cint ## Object picked as left operand.
     index_operand_second*: cint ## Object picked as right operand.
     revision_selection_synced*: int ## `selection.revision` apply controls were defaulted
@@ -635,11 +642,71 @@ proc layoutObject(
   gui.separator()
 
 
+proc refreshShown(panel: var Panel, scene: Scene) =
+  ## Filter list against search again, where scene, search or row kept open has moved.
+  ##   Row open for edit stays whatever search says, as on page, and only while something is
+  ##   typed, since blank search lists everything anyway.
+  let
+    kept =
+      if panel.session.isSome and isSearching(panel.search): panel.session.get.handle
+      else: none(int)
+    stamp = (revision: scene.revision, search: panel.search, kept: kept)
+  if panel.stamp_shown == some(stamp): return
+  panel.count_shown = scene.handlesMatching(panel.search, panel.handles_shown, kept)
+  panel.stamp_shown = some(stamp)
+
+
+proc layoutSearch(panel: var Panel, scene: var Scene) =
+  ## Lay out search over objects list, then what it leaves: count, and `select all`.
+  ##   Above list's scrolling region, so it stays put however far list runs, as page pins its
+  ##   own under heading: two mechanisms, one rule, as heading itself has.
+  ##   Count and `select all` show only while search narrows, as on page.
+  ##   List is filtered between field and count, so both read what was typed this frame.
+  ##   Field leaves room for widest count there can be, so it never jumps as count changes.
+  var widest: array[32, char]
+  let
+    text_widest = buildChars(widest):
+      appendShownCounted(widest, cursor, OBJECTS_MAX, OBJECTS_MAX)
+    width_rest =
+      if isSearching(panel.search):
+        gui.textWidth(text_widest) + gui.buttonSmallWidth(wordingText(NameListSelect)) +
+          2.0'f32*SPACING_SEGMENT
+      else: 0.0'f32
+  if panel.is_search_focus_wanted:
+    gui.focusNext()
+    panel.is_search_focus_wanted = false
+  gui.widthPush(gui.contentWidth() - width_rest)
+  discard gui.inputSearch(
+    "##search", wordingText(NameListSearch), toCstring(panel.search), cint(LABEL_MAX)
+  )
+  gui.widthPop()
+  gui.tooltip(wordingText(TipListSearch))
+  panel.refreshShown(scene)
+  if not isSearching(panel.search): return
+
+  var line: array[32, char]
+  let shown = buildChars(line):
+    appendShownCounted(line, cursor, panel.count_shown, scene.len)
+  gui.sameLine()
+  gui.textTinted(shown, INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
+  gui.sameLine()
+  gui.disabledPush(panel.count_shown == 0)
+  if gui.buttonSmall(wordingText(NameListSelect)):
+    # Rows in order shown, newest first, so first row reader sees is operand `m`.
+    var picked: array[OBJECTS_MAX, int]
+    for position in 0 ..< panel.count_shown:
+      picked[position] = panel.handles_shown[panel.count_shown - 1 - position]
+    panel.selection.selectAll(picked.toOpenArray(0, panel.count_shown - 1))
+    panel.showSelectionMenu() # Picking from list is picking.
+  gui.disabledPop()
+  gui.tooltip(wordingText(TipListSelect))
+
+
 proc layoutObjects*(
   panel: var Panel, scene: var Scene, camera: Camera, history: var History,
   now: float
 ) =
-  ## Lay out every live item's controls, plus row being composed if there is one.
+  ## Lay out every item search leaves, plus row being composed if there is one.
   ##   At most one removal per frame, since click lands on one button.
   ##   `now` is forwarded to whichever row commits fresh object, so it animates in.
   var header: array[32, char]
@@ -650,13 +717,17 @@ proc layoutObjects*(
     appendChars(header, cursor, " of ")
     appendInt(header, cursor, OBJECTS_MAX)
     appendChars(header, cursor, ")")
+  # `/` opens section whatever reader left it at, since it asks for field inside.
+  if panel.is_search_focus_wanted: gui.openNext()
   if not gui.header(label, is_open_first = true): return
 
   let is_composing =
     panel.session.isSome and panel.session.get.handle.isNone
   if scene.len == 0 and not is_composing:
     gui.text(wordingText(NoteListEmpty))
+    panel.is_search_focus_wanted = false # Nothing to search.
     return
+  layoutSearch(panel, scene)
 
   # Scroll list inside its own region rather than scrolling whole window.
   #   Reader scrolling long list had to scroll all way back up to reach this header and
@@ -675,17 +746,15 @@ proc layoutObjects*(
 
   # Head list with composing row: newest thing here, with no `born` to sort by.
   if is_composing: discard layoutObject(panel, scene, camera, history, none(int), now)
+  if panel.count_shown == 0 and not is_composing:
+    gui.textWrapped(wordingText(NoteListUnmatched))
 
   # Order newest first, as browser lists them.
-  #   Sorted once per edit, never per frame: sorting per frame is most of desktop's CPU
-  #   frame at capacity; figures in `PROVENANCE.md`.
-  if panel.revision_ordered != some(scene.revision):
-    panel.count_ordered = scene.handlesCreated(panel.handles_ordered)
-    panel.revision_ordered = some(scene.revision)
-
+  #   Filtered once per edit or keystroke, never per frame: sorting per frame is most of
+  #   desktop's CPU frame at capacity; figures in `PROVENANCE.md`.
   var handle_removed = none(int)
-  for position in countdown(panel.count_ordered - 1, 0):
-    let handle = panel.handles_ordered[position]
+  for position in countdown(panel.count_shown - 1, 0):
+    let handle = panel.handles_shown[position]
     if layoutObject(panel, scene, camera, history, some(handle), now):
       handle_removed = some(handle)
   gui.childEnd()

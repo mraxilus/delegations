@@ -856,6 +856,16 @@ const BLANKS_SEARCH = {' ', '\t'}
   ## Name characters parting one word of search from next.
 
 
+func isSearching*(query: openArray[char]): bool =
+  ## Report whether `query` holds any word, rather than nothing or blanks alone.
+  ##   Blank query narrows nothing, so front-end shows no count and no `select all` for it.
+  ##   Reads to terminator or to end, as `matchesSearch` does.
+  for ch in query:
+    if ch == '\0': return false
+    if ch notin BLANKS_SEARCH: return true
+  false
+
+
 func matchesSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
   ## Report whether object answers `query`: each word of it stands in label or kind word.
   ##   Word matches anywhere, ASCII case folded, so `jup` finds `Jupiter` and `horizon` finds

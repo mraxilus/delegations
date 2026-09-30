@@ -430,6 +430,13 @@ suite "Scene":
     toChars("io", typed)
     check scene.matchesSearch(moon, typed)
     check not scene.matchesSearch(jupiter, typed)
+    # Search of blanks alone narrows nothing, so front-end shows no count for it.
+    check isSearching(typed)
+    check isSearching(" io ")
+    check not isSearching("")
+    check not isSearching(" \t ")
+    toChars("  ", typed)
+    check not isSearching(typed)
 
 
   test "handlesMatching keeps creation order, and keeps the row open for edit listed":

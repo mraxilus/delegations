@@ -41,6 +41,9 @@ type
       ##   camera forever.
     KeyDown = 0x300,
     KeyUp = 0x301,
+    TextInput = 0x303,
+      ## Characters typed, as layout composes them; Dear ImGui reads these into its field.
+      ##   Mirrored so `--drive-search` can post one: key event alone types nothing.
     MouseMotion = 0x400,
     MouseButtonDown = 0x401,
     MouseButtonUp = 0x402,
@@ -71,6 +74,9 @@ type
     Equals = 46,
     BracketLeft = 47,
     BracketRight = 48,
+    Slash = 56,
+      ## Declared so `--drive-search` can post one.
+      ##   `/` is read by keycode instead, which names character printed; see `keycode`.
     Home = 74,
     Right = 79,
     Left = 80,
@@ -96,7 +102,8 @@ type
   KeyboardEvent* {.importc: "SDL_KeyboardEvent", header: HEADER, bycopy.} = object
     scancode* {.importc.}: uint32 ## Physical key, independent of layout.
     keycode* {.importc: "key".}: uint32 ## Key as layout names it.
-      ## Never read by this application.
+      ## Read for `/` alone, which reaches objects search: it names character printed,
+      ## as page's `e.key` does. Every key view binds is read by scancode instead.
       ## Dear ImGui's SDL3 backend reads it, so synthesised event leaving it zero is one
       ## Dear ImGui does not recognise; `--drive-keys` must fill it to prove anything.
     is_down* {.importc: "down".}: bool ## Whether key is pressed rather than released.
@@ -108,6 +115,11 @@ type
     xrel* {.importc.}: cfloat ## Motion since previous event, in pixels.
     yrel* {.importc.}: cfloat ## Motion since previous event, in pixels.
 
+  TextInputEvent* {.importc: "SDL_TextInputEvent", header: HEADER, bycopy.} = object
+    window_id* {.importc: "windowID".}: uint32 ## Window typed into.
+      ## Dear ImGui's SDL3 backend drops event naming no window of its own.
+    text* {.importc.}: cstring ## Characters typed, in UTF-8.
+
   MouseButtonEvent* {.importc: "SDL_MouseButtonEvent", header: HEADER, bycopy.} = object
     button* {.importc.}: uint8 ## Which button changed state.
 
@@ -117,6 +129,7 @@ type
   Event* {.importc: "SDL_Event", header: HEADER, union, bycopy.} = object
     kind* {.importc: "type".}: uint32 ## Discriminates union; compare against `EventKind`.
     key* {.importc.}: KeyboardEvent
+    text* {.importc.}: TextInputEvent
     motion* {.importc.}: MouseMotionEvent
     button* {.importc.}: MouseButtonEvent
     wheel* {.importc.}: MouseWheelEvent
@@ -197,6 +210,10 @@ proc glSetSwapInterval*(interval: cint): bool
   {.importc: "SDL_GL_SetSwapInterval", header: HEADER, discardable, sideEffect.}
   ## Set vertical sync: 1 waits for display, 0 does not.
 
+proc windowId*(window: Window): uint32
+  {.importc: "SDL_GetWindowID", header: HEADER, sideEffect.}
+  ## Report number events name this window by.
+
 proc glSwapWindow*(window: Window): bool
   {.importc: "SDL_GL_SwapWindow", header: HEADER, discardable, sideEffect.}
   ## Present back buffer.
@@ -230,6 +247,7 @@ const LUT_SYMBOL_BY_MIRROR = [
   (int(EventKind.WindowFocusLost), "SDL_EVENT_WINDOW_FOCUS_LOST"),
   (int(EventKind.KeyDown), "SDL_EVENT_KEY_DOWN"),
   (int(EventKind.KeyUp), "SDL_EVENT_KEY_UP"),
+  (int(EventKind.TextInput), "SDL_EVENT_TEXT_INPUT"),
   (int(EventKind.MouseMotion), "SDL_EVENT_MOUSE_MOTION"),
   (int(EventKind.MouseButtonDown), "SDL_EVENT_MOUSE_BUTTON_DOWN"),
   (int(EventKind.MouseButtonUp), "SDL_EVENT_MOUSE_BUTTON_UP"),
@@ -255,6 +273,7 @@ const LUT_SYMBOL_BY_MIRROR = [
   (int(Scancode.Equals), "SDL_SCANCODE_EQUALS"),
   (int(Scancode.BracketLeft), "SDL_SCANCODE_LEFTBRACKET"),
   (int(Scancode.BracketRight), "SDL_SCANCODE_RIGHTBRACKET"),
+  (int(Scancode.Slash), "SDL_SCANCODE_SLASH"),
   (int(Scancode.Home), "SDL_SCANCODE_HOME"),
   (int(Scancode.Right), "SDL_SCANCODE_RIGHT"),
   (int(Scancode.Left), "SDL_SCANCODE_LEFT"),
