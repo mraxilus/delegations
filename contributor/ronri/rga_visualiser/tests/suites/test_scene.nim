@@ -401,6 +401,58 @@ suite "Scene":
       check scene.orderOf(handles[position]) > scene.orderOf(handles[position - 1])
 
 
+  test "a search finds each word in label or kind word, whatever its case":
+    # List of five thousand is searched for one body by part of its name, and for one.
+    #   kind by kind word; every word of search has to stand, each in either place.
+    var scene = initScene()
+    let
+      jupiter = scene.addObject(POINTS[0], "Jupiter", Ink.Rose)
+      moon = scene.addObject(POINTS[1], "Io", Ink.Rose)
+      axis = scene.addObject(LINES[0], "m1", Ink.Rose)
+      far = scene.addObject(⊖ LINES[1], "m12", Ink.Rose) # Horizon point.
+      wall = scene.addObject(PLANES[0], "wall", Ink.Rose)
+    check scene.matchesSearch(jupiter, "jup")
+    check scene.matchesSearch(jupiter, "PITER")
+    check not scene.matchesSearch(moon, "jup")
+    check scene.matchesSearch(axis, "line")
+    check scene.matchesSearch(wall, "Plane")
+    check scene.matchesSearch(far, "horizon")
+    check not scene.matchesSearch(jupiter, "horizon")
+    check scene.matchesSearch(far, "horizon m1")
+    check scene.matchesSearch(far, "  m12 \t point ")
+    check not scene.matchesSearch(axis, "horizon m1")
+    # Blank search answers every object, since list with nothing typed is whole list.
+    for handle in [jupiter, moon, axis, far, wall]:
+      check scene.matchesSearch(handle, "")
+      check scene.matchesSearch(handle, "  ")
+    # Fixed buffer desktop types into reads to its terminator, as string does to its end.
+    var typed: array[LABEL_MAX, char]
+    toChars("io", typed)
+    check scene.matchesSearch(moon, typed)
+    check not scene.matchesSearch(jupiter, typed)
+
+
+  test "handlesMatching keeps creation order, and keeps the row open for edit listed":
+    # Handle order parts from creation order once anything is removed, and list reads in.
+    #   creation order; row being edited stays under reader typing into it.
+    var scene = initScene()
+    for i in 0 ..< 6:
+      let parity = if i mod 2 == 0: "even" else: "odd"
+      discard scene.addObject(POINTS[i], parity & $i, inkCycled(i))
+    scene.removeObject(2)
+    check scene.addObject(POINTS[6], "even6", Ink.Rose) == 2
+    var handles: array[OBJECTS_MAX, int]
+    proc labelled(scene: var Scene, handles: openArray[int], count: int): seq[string] =
+      ## Read labels of first `count` handles filled, in order filled.
+      for position in 0 ..< count: result.add(toText(scene.labelAt(handles[position])))
+    var count = scene.handlesMatching("EVEN", handles)
+    check scene.labelled(handles, count) == @["even0", "even4", "even6"]
+    count = scene.handlesMatching("even", handles, kept = some(1))
+    check scene.labelled(handles, count) == @["even0", "odd1", "even4", "even6"]
+    check scene.handlesMatching("", handles) == scene.len
+    check scene.handlesMatching("nothing here", handles) == 0
+
+
   test "revisionPlacingAt stamps the handle an edit touched, and every handle after a restore":
     # Front-end re-places only handles stamped past what it holds, so stamp must move for.
     #   exactly handles whose placing inputs did.

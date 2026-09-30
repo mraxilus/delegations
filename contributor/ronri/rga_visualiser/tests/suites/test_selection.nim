@@ -159,6 +159,24 @@ suite "Selection":
     check not selection.contains(2)
 
 
+  test "selectAll picks in the order given, once each, and a repeat changes nothing":
+    # Order given is pick order, so search that selects its matches names `m` and `n` by.
+    #   rows reader sees first.
+    var selection: Selection
+    selection.toggle(9)
+    selection.selectAll([4, 1, 7, 1, 4])
+    check ordered(selection) == @[4, 1, 7]
+    check selection.at(0) == 4 # Operand m.
+    let last = selection.revision
+    selection.selectAll([4, 1, 7])
+    check selection.revision == last
+    selection.selectAll([4, 1])
+    check ordered(selection) == @[4, 1]
+    check selection.revision > last
+    selection.selectAll(newSeq[int]())
+    check selection.len == 0
+
+
   test "every change to a selection advances its revision, and nothing else does":
     var selection: Selection
     let

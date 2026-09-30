@@ -850,6 +850,81 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
 
 
 
+#[ Searching Objects ]#
+
+const BLANKS_SEARCH = {' ', '\t'}
+  ## Name characters parting one word of search from next.
+
+
+func matchesSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
+  ## Report whether object answers `query`: each word of it stands in label or kind word.
+  ##   Word matches anywhere, ASCII case folded, so `jup` finds `Jupiter` and `horizon` finds
+  ##   every horizon object, whatever it is called.
+  ##   Every word must stand, each in either place: `horizon m1` is horizon object whose label
+  ##   holds `m1`.
+  ##   Blank query answers every object, since list with nothing typed is whole list.
+  ##   Reads to terminator or to end, so fixed buffer desktop types into and string page sends
+  ##   read same.
+  ##   Kind word is described only where label misses word, since it is dearer of two reads.
+  ##   Cost: fold is ASCII alone, so non-ASCII byte matches only itself; `é` does not find `É`.
+  func lengthOf(text: openArray[char]): int =
+    ## Count characters ahead of terminator, or all of them where none stands.
+    while result < text.len and text[result] != '\0': inc result
+
+  func holdsWord(text, query: openArray[char]; start, stop: int): bool =
+    ## Report whether `query[start ..< stop]` stands in `text` ahead of its terminator, folded.
+    let
+      length_text = lengthOf(text)
+      length_word = stop - start
+    for at in 0 .. length_text - length_word:
+      var offset = 0
+      while offset < length_word and
+          toLowerAscii(text[at + offset]) == toLowerAscii(query[start + offset]):
+        inc offset
+      if offset == length_word: return true
+    false
+
+  doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
+  var
+    kind: array[WIDTH_KIND_WORD, char]
+    is_kind_described = false
+    start = 0
+  let length_query = lengthOf(query)
+  while start < length_query:
+    if query[start] in BLANKS_SEARCH:
+      inc start
+      continue
+    var stop = start
+    while stop < length_query and query[stop] notin BLANKS_SEARCH: inc stop
+    if not holdsWord(scene.labels[handle], query, start, stop):
+      if not is_kind_described:
+        var cursor = 0
+        describeKind(scene.geometries[handle], kind, cursor)
+        finishChars(kind, cursor)
+        is_kind_described = true
+      if not holdsWord(kind, query, start, stop): return false
+    start = stop
+  true
+
+
+func handlesMatching*(
+  scene: Scene, query: openArray[char], handles: var array[OBJECTS_MAX, int],
+  kept = none(int)
+): int =
+  ## Fill `handles` with every live handle `query` matches, oldest creation first; report how
+  ## many were filled.
+  ##   `kept` stays whatever query says: row open for edit never leaves list under reader
+  ##   typing into it.
+  ##   Filters `handlesCreated` in place, so order is creation order and nothing allocates.
+  let count = scene.handlesCreated(handles)
+  for position in 0 ..< count:
+    let handle = handles[position]
+    if kept == some(handle) or scene.matchesSearch(handle, query):
+      handles[result] = handle
+      inc result
+
+
+
 #[ Previewing Construction ]#
 
 func previewApplying*(

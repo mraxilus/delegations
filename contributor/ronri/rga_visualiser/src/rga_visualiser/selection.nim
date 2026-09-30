@@ -125,6 +125,30 @@ func selectOnly*(selection: var Selection, handle: int) =
   inc selection.count_changes
 
 
+func selectAll*(selection: var Selection, handles: openArray[int]) =
+  ## Replace whole selection with `handles`, picked in order given.
+  ##   One change however many handles, so front-end redraws once rather than once per pick.
+  ##   Order given is pick order, so first two name operands `m` and `n`.
+  ##   Handle given twice is picked once, where it first stands: no selection holds one handle
+  ##   twice.
+  ##   Same picks in same order change nothing, so revision stands, as `selectOnly`'s does.
+  ##     Each position is compared before it is written, and only positions after it are
+  ##     still to compare, so one pass does both.
+  var
+    is_picked: array[OBJECTS_MAX, bool]
+    count = 0
+    is_changed = false
+  for handle in handles:
+    if is_picked[handle]: continue
+    is_picked[handle] = true
+    if count >= selection.count or selection.handles[count] != handle: is_changed = true
+    selection.handles[count] = handle
+    inc count
+  if count != selection.count: is_changed = true
+  selection.count = count
+  if is_changed: inc selection.count_changes
+
+
 func toggle*(selection: var Selection, handle: int) =
   ## Add handle to end of selection, or drop it where already picked.
   ##   Appending is what makes order meaningful: two objects picked become `m` and `n` in
