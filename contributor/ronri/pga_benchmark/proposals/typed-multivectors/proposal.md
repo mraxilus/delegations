@@ -5,8 +5,8 @@ One macro call generates a concrete object type for each grade and for both pari
 closed set of these types, and return the smallest type that holds what the product can reach.
 An importer writes `p ∧ q` and reads `Kvector2`, never a generic.
 
-This design builds on `cayley-derivation`. Grade restriction lives in the emission, so the
-tables stay whole, and the prototype reads the derived tables by their names in that design.
+This proposal builds on `cayley-derivation`. Grade restriction lives in the emission, so the
+tables stay whole, and the prototype reads the derived tables by their names in that proposal.
 
 ## What it is
 

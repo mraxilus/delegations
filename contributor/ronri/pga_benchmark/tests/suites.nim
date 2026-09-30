@@ -12,12 +12,13 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, changes, designs, gaps, guard, head, inspector, markdown, measurements, model, notes,
+  bound, changes, proposals, gaps, guard, head, inspector, markdown, measurements, model, notes,
   report,
 ]
-import ../src/pga_benchmark/pages/[docket, shell, trial]
+import ../src/pga_benchmark/pages/[docket, shell, evaluation]
 import ../src/pga_benchmark/cells
-from ../src/pga_benchmark/trials import editsDigest, functionsChanged, nanOf, successOf, timesOf
+from ../src/pga_benchmark/evaluations import
+  editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
 const
@@ -750,7 +751,7 @@ suite "Gaps":
       text  # cells read library/reference
     check "| G004 | transform_point_motor | – | – | – | – | – | 60.0/5.0 | over |" in
       text  # composed expression has no counts
-    check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
+    check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # proposal verdicts
     check "Gaps: 4. Over 3, met 1, unmeasured 0." in text  # summary
     check docket.next == 5  # docket grew with gaps
 
@@ -863,14 +864,14 @@ suite "Head":
     check lag.len == 1 and "Pin lags library head" in lag[0].message  # library moved
     check checkHead(PIN, "tree1", "", "", "atlas.lock").len == 1  # head unread is finding
 
-  test "measurement and trial must be taken at pin":
+  test "measurement and evaluation must be taken at pin":
     let
       fresh = %*{"taken": {"pga": PIN}, "edits_digest": "d1"}
       stale = %*{"taken": {"pga": "0bc4655"}, "edits_digest": "d1"}
     check checkStamp(fresh, PIN, "baseline/runtime_rga4d.json").len == 0  # at pin
     check checkStamp(stale, PIN, "baseline/runtime_rga4d.json").len == 1  # re-take
-    check checkTrial(fresh, PIN, "d1", "trials/sign.json").len == 0  # current
-    check checkTrial(fresh, PIN, "d2", "trials/sign.json").len == 1  # edits changed since
+    check checkEvaluation(fresh, PIN, "d1", "evaluations/sign.json").len == 0  # current
+    check checkEvaluation(fresh, PIN, "d2", "evaluations/sign.json").len == 1  # edits changed since
 
   test "built page must match digest it was published at, and README its URL":
     let
@@ -887,33 +888,33 @@ suite "Head":
       "`marginalia`" in findings[1].message  # changed page named
     check checkPublished(built, publications, "Pages: https://x/1.", "p").len == 4  # URLs unnamed
 
-suite "Designs":
+suite "Proposals":
   const
-    DIRECTORY = "designs/sign"
+    DIRECTORY = "proposals/sign"
     RECORD = "# Sign\n\nWhy.\n"
 
-  test "design reads title, base design and claims of every known kind":
+  test "proposal reads title, base proposal and claims of every known kind":
     let
       claims = %*{"builds_on": "base", "claims": [{"kind": "suites"},
         {"kind": "build", "algebra": "rga6d", "metric": "peakmem", "at_most": 0.7},
-        {"kind": "program", "path": "designs/sign/p.nim", "algebras": ["rga4d"]}]}
-      (design, findings) = parseDesign("sign", RECORD, "", claims, DIRECTORY)
-    check findings.len == 0 and design.title == "Sign"  # well formed
-    check design.builds_on == "base" and design.claims.len == 3  # chain and claims
-    check design.programsOf == @["designs/sign/p.nim"]  # programs claims run
+        {"kind": "program", "path": "proposals/sign/p.nim", "algebras": ["rga4d"]}]}
+      (proposal, findings) = parseProposal("sign", RECORD, "", claims, DIRECTORY)
+    check findings.len == 0 and proposal.title == "Sign"  # well formed
+    check proposal.builds_on == "base" and proposal.claims.len == 3  # chain and claims
+    check proposal.programsOf == @["proposals/sign/p.nim"]  # programs claims run
 
   test "unknown claim, missing title and claims that are not JSON are findings":
     let
       odd = %*{"claims": [{"kind": "vibes"}]}
-      (_, unknown) = parseDesign("sign", RECORD, "", odd, DIRECTORY)
-      (_, untitled) = parseDesign("sign", "Why.\n", "", %*{"claims": []}, DIRECTORY)
-      (_, broken) = parseDesign("sign", RECORD, "", nil, DIRECTORY)
+      (_, unknown) = parseProposal("sign", RECORD, "", odd, DIRECTORY)
+      (_, untitled) = parseProposal("sign", "Why.\n", "", %*{"claims": []}, DIRECTORY)
+      (_, broken) = parseProposal("sign", RECORD, "", nil, DIRECTORY)
     check unknown.len == 1 and "`vibes`" in unknown[0].message  # never skipped in silence
-    check untitled.len == 1 and untitled[0].path == DIRECTORY & "/design.md"  # needs title
+    check untitled.len == 1 and untitled[0].path == DIRECTORY & "/proposal.md"  # needs title
     check broken.len == 1 and broken[0].path == DIRECTORY & "/claims.json"  # needs object
 
 
-suite "Trials":
+suite "Evaluations":
   func run(ns: openArray[(string, float, float)]): JsonNode =
     ## Shape one bench run: library median and NaN share per measurand.
     result = %*{"measurands": {}}
@@ -981,7 +982,7 @@ suite "Pages":
     check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
     check "data:font/woff2;base64,eHl6" in page  # bytes inlined
 
-  test "spread is assumed until quiet trials give enough ratios":
+  test "spread is assumed until quiet evaluations give enough ratios":
     let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
     check spreadOf([quiet]).count == 0  # too few ratios: spread assumed
     check spreadOf([quiet]).low < 1.0 and spreadOf([quiet]).high > 1.0  # around no change
@@ -1005,15 +1006,16 @@ suite "Pages":
       ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
     check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
 
-  test "verdict chips say when trial removes NaN results":
+  test "verdict chips say when evaluation removes NaN results":
     let
       baselines = {"rga4d": %*{"measurands": {}}}.toTable
-      document_trial = %*{"pin_suites": {"rga4d": {"ok": 1, "failed": 0}}, "algebras": {"rga4d": {
+      document_evaluation = %*{
+        "pin_suites": {"rga4d": {"ok": 1, "failed": 0}}, "algebras": {"rga4d": {
         "suites": {"ok": 1, "failed": 0}, "functions": {}, "times": {},
         "nan": {"norm": [0.5, 0.0]}}}}
-      chips = verdictChips(document_trial, baselines, Spread(low: 0.9, high: 1.1))
+      chips = verdictChips(document_evaluation, baselines, Spread(low: 0.9, high: 1.1))
     check "NaN gone in 1" in chips and "chip pass" in chips  # gain named, suites held
-    check "no trial" in verdictChips(nil, baselines, Spread())  # absent trial is said
+    check "no evaluation" in verdictChips(nil, baselines, Spread())  # absent evaluation is said
 
 
 suite "Driver":
@@ -1050,4 +1052,5 @@ suite "Driver":
     check "`baseline/runtime_<algebra>.json`" in DRIVER  # what `bench` records
     check "`baseline/static_<algebra>.json`" in DRIVER  # what `baseline` records
     check "| drive     | inspect, guard," in DRIVER  # drive runs guard, not retired check
-    check "`trials/<name>.json`" in DRIVER and "`pages/published.json`" in DRIVER  # what they write
+    check "`evaluations/<name>.json`" in DRIVER  # what evaluate writes
+    check "`pages/published.json`" in DRIVER  # what published writes

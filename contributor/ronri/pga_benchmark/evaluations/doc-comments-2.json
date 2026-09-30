@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "doc-comments-2",
   "path": "changes/doc-comments-2.md",
   "edits_digest": "bc98ce3a532b05c8",

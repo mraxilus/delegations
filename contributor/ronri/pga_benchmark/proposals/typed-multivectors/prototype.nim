@@ -1,5 +1,5 @@
 ## Prototype generated k-vector types over library's derived tables (`typed-multivectors`).
-##   Trial compiles this against changed library at each algebra its claim names, and exit code
+##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
 ##   One macro call generates one concrete object per grade and per parity from `DIMENSIONS`
 ##     alone. Each stores only its own bases, densely; slot of basis is count of kind's bases

@@ -2,8 +2,8 @@
 ##   Docket is monitoring page: what library spends now, read from committed baselines, and how
 ##     far each measurand sits from multivector lower bound and type optimised lower bound. It
 ##     shows nothing baselines do not hold, so it is current exactly when they are.
-##   Designs close on it: each design's trial overlays its changed functions, and docket counts
-##     how many measurands would then stand at bound.
+##   Proposals close on it: each proposal's evaluation overlays its changed functions, and docket
+##     counts how many measurands would then stand at bound.
 ##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key
 ##     and per bar width, so shell's `:has()` rules sort, filter and rescale.
 ##
@@ -46,11 +46,11 @@ type
     measurements_static*, measurements_runtime*: JsonNode
       ## Committed baselines at pin.
   Overlay* = object
-    ## Define one design's changed functions per algebra, and where its page is.
+    ## Define one proposal's changed functions per algebra, and where its page is.
     name*, title*, url*: string
-      ## Design name, title and published URL; empty URL where unpublished.
+      ## Proposal name, title and published URL; empty URL where unpublished.
     functions*: Table[string, JsonNode]
-      ## Algebra name to changed functions, as trial records them.
+      ## Algebra name to changed functions, as evaluation records them.
 
 
 
@@ -328,8 +328,8 @@ func rowHtml(row: Row; max_log: array[2, int]; order: array[4, int]): string =
 
 #[ Page ]#
 
-func designsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
-  ## Render how far each design moves parity with multivector bound.
+func proposalsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
+  ## Render how far each proposal moves parity with multivector bound.
 
   func parity(sheet: Sheet; overlay: JsonNode; is_typed: bool): (int, int, int) =
     ## Count rows at bound on multiplies and on bytes, with overlay's functions in place.
@@ -352,10 +352,10 @@ func designsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string
     (bounded, at_multiplies, at_bytes)
 
   if overlays.len == 0: return ""
-  result = "<section class=\"block\"><h2>Designs against the bound</h2><p class=\"note\">" &
-    "Each design's trial replaces the functions it changes; the rest stay as baselines hold " &
-    "them.</p><div class=\"table\"><table><tr><th>Design</th><th>Algebra</th>" &
-    "<th>At bound on multiplies, now → design</th><th>At bound on bytes</th></tr>"
+  result = "<section class=\"block\"><h2>Proposals against the bound</h2><p class=\"note\">" &
+    "Each proposal's evaluation replaces the functions it changes; the rest stay as baselines " &
+    "hold them.</p><div class=\"table\"><table><tr><th>Proposal</th><th>Algebra</th>" &
+    "<th>At bound on multiplies, now → proposal</th><th>At bound on bytes</th></tr>"
   for overlay in overlays:
     for sheet in sheets:
       if sheet.name notin overlay.functions: continue
@@ -422,7 +422,7 @@ func docketBody*(
   overlays: openArray[Overlay];
   pin, links: string;
 ): string =
-  ## Render docket body: header, one tab per algebra, designs against bound, method.
+  ## Render docket body: header, one tab per algebra, proposals against bound, method.
 
   func above(value, base: Option[int]): float =
     ## Read how far value stands above base, as ratio of both plus one; below zero where
@@ -479,4 +479,4 @@ func docketBody*(
       result.add rowHtml(row, max_log, [order[0][row.id], order[1][row.id], order[2][row.id],
         order[3][row.id]])
     result.add "</div></section>"
-  result.add designsHtml(sheets, overlays) & METHOD & "</div>"
+  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "code-reordering-drop",
   "path": "changes/code-reordering-drop.md",
   "edits_digest": "1011b392392e1f2e",

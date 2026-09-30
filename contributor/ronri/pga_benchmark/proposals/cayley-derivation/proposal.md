@@ -2,7 +2,7 @@
 
 The library writes three tables by hand: the metric on vectors, the exterior product of bases,
 and the complement permutation. Four rules derive every other table, and each rule is used the
-same way everywhere. This design is that end state of `pga/cayleys.nim`, with the operators and
+same way everywhere. This proposal is that end state of `pga/cayleys.nim`, with the operators and
 suites that read it.
 
 ## Four rules
@@ -62,7 +62,7 @@ suite, so the build and the transwedge cannot drift apart.
 ## Grade restriction
 
 A typed operand names its bases, and the emitter reads only those cells of the whole table.
-The tables stay whole, so the table count does not grow with the number of types. Design
+The tables stay whole, so the table count does not grow with the number of types. Proposal
 `typed-multivectors` builds on this.
 
 The alternative filters a copy of each table for each pair of operand types. One copy of a 2D

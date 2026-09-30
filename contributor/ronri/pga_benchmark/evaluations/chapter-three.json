@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "chapter-three",
   "path": "changes/chapter-three.md",
   "edits_digest": "b52559193391cd36",

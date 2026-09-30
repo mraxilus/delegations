@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "imports-narrow",
   "path": "changes/imports-narrow.md",
   "edits_digest": "03e6ce03db366a57",

@@ -1,5 +1,5 @@
 ## Read Markdown files into blocks, and render blocks as HTML for pages.
-##   Files this project keeps for pages (changes, notes, designs) are Markdown, since audit reads
+##   Files this project keeps for pages (changes, notes, proposals) are Markdown, since audit reads
 ##   it and reader edits it; pages render them rather than restate them, so file stays only home.
 ##   Subset is what those files use: headings, paragraphs, bullet, numbered and task lists, pipe
 ##     tables, fenced code, and inline code, bold, italic and links. Anything else renders as

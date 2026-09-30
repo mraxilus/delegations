@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "algebra-hygiene",
   "path": "changes/algebra-hygiene.md",
   "edits_digest": "43d433410c7d95c7",

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "cayleys-hygiene",
   "path": "changes/cayleys-hygiene.md",
   "edits_digest": "b22d48e7a148e2a4",

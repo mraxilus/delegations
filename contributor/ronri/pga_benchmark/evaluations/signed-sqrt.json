@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "signed-sqrt",
   "path": "changes/signed-sqrt.md",
   "edits_digest": "3598620bff9b9675",

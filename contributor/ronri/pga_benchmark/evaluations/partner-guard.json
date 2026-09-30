@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "partner-guard",
   "path": "changes/partner-guard.md",
   "edits_digest": "238755a83c55be99",

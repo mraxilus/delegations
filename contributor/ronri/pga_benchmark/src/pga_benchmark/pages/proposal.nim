@@ -1,7 +1,8 @@
-## Render one design exploration: claims and their verdicts, argument, candidate, measurements.
-##   Design page is future state of library, argued in `design.md` and checked by its trial.
-##     Every design renders through this one shape, so next exploration reads as last one did:
-##     claims first, since they say whether design holds; then argument; then what it changes and
+## Render one proposal: claims and their verdicts, argument, candidate, measurements.
+##   Proposal page is future state of library, argued in `proposal.md` and checked by its
+##     evaluation. Every proposal renders through this one shape, so next exploration reads as
+##     last one did:
+##     claims first, since they say whether proposal holds; then argument; then what it changes and
 ##     what that measured at pin.
 ##
 ##   Cost: whole-file replacement renders collapsed, since hundreds of lines would bury claims.
@@ -10,22 +11,22 @@
 
 import std/[json, strutils, tables]
 
-import ../[designs, markdown]
-import ./[shell, trial]
+import ../[proposals, markdown]
+import ./[shell, evaluation]
 
 
-func designBody*(
-  design: Design;
-  trial: JsonNode;
+func proposalBody*(
+  proposal: Proposal;
+  evaluation: JsonNode;
   files: Table[string, string];
   baselines: Table[string, JsonNode];
   spread: Spread;
   pin, links: string;
 ): string =
-  ## Render design page body.
+  ## Render proposal page body.
 
-  func claimsHtml(trial: JsonNode): string =
-    ## Render claims trial checked, each with its verdict and detail.
+  func claimsHtml(evaluation: JsonNode): string =
+    ## Render claims evaluation checked, each with its verdict and detail.
 
     func claimText(claim: JsonNode): string =
       ## Render what one claim asserts, in words.
@@ -44,9 +45,9 @@ func designBody*(
         " at " & claim{"algebra"}.getStr
       else: escapeHtml(claim{"kind"}.getStr)
 
-    if trial.isNil: return "<p class=\"note\">No trial yet; claims are unchecked.</p>"
+    if evaluation.isNil: return "<p class=\"note\">No evaluation yet; claims are unchecked.</p>"
     result = "<div class=\"table\"><table><tr><th>Claim</th><th>Verdict</th><th>Detail</th></tr>"
-    for claim in trial{"claims"}:
+    for claim in evaluation{"claims"}:
       let is_holding = claim{"passed"}.getBool
       var detail: seq[string]
       for line in claim{"detail"}.getElems: detail.add escapeHtml(line.getStr)
@@ -55,22 +56,22 @@ func designBody*(
         "</td><td>" & detail.join("<br>") & "</td></tr>"
     result.add "</table></div>"
 
-  result = "<div class=\"page\"><header><h1>" & renderInline(design.title) &
-    "</h1><p class=\"meta\">design " & code(design.name) & " · pga " & code(pin[0 ..< 7])
-  if design.builds_on.len > 0: result.add " · builds on " & code(design.builds_on)
-  if not trial.isNil:
-    result.add " · tried " & escapeHtml(trial{"taken", "date"}.getStr) & ", " &
-      escapeHtml(trial{"taken", "machine"}.getStr)
+  result = "<div class=\"page\"><header><h1>" & renderInline(proposal.title) &
+    "</h1><p class=\"meta\">proposal " & code(proposal.name) & " · pga " & code(pin[0 ..< 7])
+  if proposal.builds_on.len > 0: result.add " · builds on " & code(proposal.builds_on)
+  if not evaluation.isNil:
+    result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) & ", " &
+      escapeHtml(evaluation{"taken", "machine"}.getStr)
   result.add links & "</p><div class=\"chips\">" &
-    verdictChips(trial, baselines, spread) & "</div></header>"
-  result.add "<section class=\"block\"><h2>Claims</h2>" & claimsHtml(trial) & "</section>"
-  result.add "<section class=\"block prose\">" & renderBlocks(design.body, 1) & "</section>"
-  if design.change.edits.len > 0:
+    verdictChips(evaluation, baselines, spread) & "</div></header>"
+  result.add "<section class=\"block\"><h2>Claims</h2>" & claimsHtml(evaluation) & "</section>"
+  result.add "<section class=\"block prose\">" & renderBlocks(proposal.body, 1) & "</section>"
+  if proposal.change.edits.len > 0:
     result.add "<section class=\"block\"><h2>What it changes</h2>" &
-      editsHtml(design.change, files) & "</section>"
-  if not trial.isNil:
+      editsHtml(proposal.change, files) & "</section>"
+  if not evaluation.isNil:
     result.add "<section class=\"block\"><h2>What it measured at pin</h2><p class=\"note\">" &
-      spreadText(spread) & "</p>" & functionsTable(trial) & nanTable(trial) &
-      timesTable(trial, baselines, spread) &
+      spreadText(spread) & "</p>" & functionsTable(evaluation) & nanTable(evaluation) &
+      timesTable(evaluation, baselines, spread) &
       "</section>"
   result.add "</div>"

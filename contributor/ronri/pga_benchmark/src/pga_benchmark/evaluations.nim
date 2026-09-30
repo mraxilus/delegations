@@ -1,22 +1,23 @@
-## Try proposed change on copy of library at pin: its suites, its counts, its timings, its claims.
-##   Trial is how change or design earns figures page shows. It copies library checkout, applies
-##     edits (base design first where design builds on one), then measures copy against pin:
+## Try proposed change on copy of library at pin: its suites, counts, timings and claims.
+##   Evaluation is how change or proposal earns figures page shows. It copies library checkout,
+##     applies edits (base proposal first where proposal builds on one), then measures copy
+##     against pin:
 ##     - library's own suites, both typed algebras, pristine counts beside;
 ##     - static measurements of every function change touches, pin's baseline as before;
 ##     - runtime of every measurand, pristine and changed binaries run alternately, so drift
 ##       of machine lands on both alike, and ratio per measurand is median over runs;
-##     - design claims: suites pass, tables equal pristine ones, programs run, counts hold,
+##     - proposal claims: suites pass, tables equal pristine ones, programs run, counts hold,
 ##       and build of bench entry costs no more than stated share of pristine build.
-##   Result is one document in `trials/`, taken at pin and naming digest of edits it tried,
-##     so `drive` refuses trial of another commit or of edits since changed (`head.nim`).
+##   Result is one document in `evaluations/`, taken at pin and naming digest of edits it tried,
+##     so `drive` refuses evaluation of another commit or of edits since changed (`head.nim`).
 ##   Working copy keeps checkout's directory name, since function keys and module tails are
 ##     read from path and must match baseline's.
 ##
-##   Cost: every trial compiles library four times per algebra (suites, counts, two timed
+##   Cost: every evaluation compiles library four times per algebra (suites, counts, two timed
 ##     binaries); pristine binaries are built once per run of driver and shared.
-##   Cost: timings are machine's, as every runtime measurement is; trial names machine.
-##   Cost: stages of trial (`prepareCopy`, `staticOf`, `checkClaims`, `tablesOf`, `buildCost`)
-##     each serve one caller, yet stay at module scope; nested, `runTrial` and `checkClaims`
+##   Cost: timings are machine's, as every runtime measurement is; evaluation names machine.
+##   Cost: stages of evaluation (`prepareCopy`, `staticOf`, `checkClaims`, `tablesOf`, `buildCost`)
+##     each serve one caller, yet stay at module scope; nested, `runEvaluation` and `checkClaims`
 ##     would run past two hundred lines, which X.4 asks to split.
 
 {.experimental: "strictFuncs".}
@@ -28,7 +29,7 @@ import ./[changes, guard]
 
 type
   Algebra* = object
-    ## Define algebra trial measures: name, dimensions, metric.
+    ## Define algebra evaluation measures: name, dimensions, metric.
     name*: string
       ## Short name, as `rga4d`.
     dimensions*: int
@@ -36,11 +37,11 @@ type
     is_conformal*: bool
       ## Metric: conformal where true, rigid else.
   Toolchain* = object
-    ## Define where trial reads and writes, and what build it names.
+    ## Define where evaluation reads and writes, and what build it names.
     library*: string
       ## Library checkout at pin.
     work*: string
-      ## Directory trials build under.
+      ## Directory evaluations build under.
     nim*: string
       ## Compiler commit.
     pga*: string
@@ -50,17 +51,17 @@ type
     runs*: int
       ## Timed runs of each binary, alternating.
   Candidate* = object
-    ## Define what one trial tries: edits in order, programs and claims.
+    ## Define what one evaluation tries: edits in order, programs and claims.
     name*: string
-      ## Trial name, file name of its document.
+      ## Evaluation name, file name of its document.
     path*: string
-      ## Change file or design directory findings name.
+      ## Change file or proposal directory findings name.
     changes*: seq[Change]
-      ## Changes applied in order, base design first.
+      ## Changes applied in order, base proposal first.
     programs*: seq[string]
-      ## Text of programs design's claims run, so digest moves when program does.
+      ## Text of programs proposal's claims run, so digest moves when program does.
     claims*: JsonNode
-      ## Claims design makes; empty array for change.
+      ## Claims proposal makes; empty array for change.
 
 
 const
@@ -70,9 +71,9 @@ const
     ## Entry reading cache into static measurements.
   COUNTED = ["multiplies", "adds", "subs", "divides", "zero_fills", "intermediates", "copies",
     "checks", "calls", "lines"]
-    ## Totals trial reports where they differ from pin.
+    ## Totals evaluation reports where they differ from pin.
   MOVED = ["bytes_moved", "bytes_zeroed", "bytes_intermediates"]
-    ## Movement trial reports where it differs from pin.
+    ## Movement evaluation reports where it differs from pin.
   SUITE_STUB = "tests" / "$1" / "test_$1.nim"
     ## Library's own stub per algebra, relative to checkout.
 
@@ -81,7 +82,7 @@ const
 #[ Edits Digest ]#
 
 func editsDigest*(changes: openArray[Change], claims: JsonNode, programs: seq[string]): string =
-  ## Digest what trial tries: every edit, claims and program text; prose is left out.
+  ## Digest what evaluation tries: every edit, claims and program text; prose is left out.
   var text = $claims
   for change in changes:
     for edit in change.edits:
@@ -199,7 +200,7 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   ##   Function on one side only is JSON null on other, never nil, so document prints.
 
   func countsOf(function: JsonNode): JsonNode =
-    ## Shape totals and movement trial reports for one function.
+    ## Shape totals and movement evaluation reports for one function.
     ##   Count document lacks is JSON null, never nil.
     result = newJObject()
     for key in COUNTED:
@@ -365,10 +366,10 @@ proc checkClaims(
   counted, suited: JsonNode;
   algebras: openArray[Algebra];
 ): JsonNode =
-  ## Check each claim design makes; one verdict per claim, with detail.
+  ## Check each claim proposal makes; one verdict per claim, with detail.
 
   func algebraNamed(name: string, algebras: openArray[Algebra]): Algebra =
-    ## Find algebra by name; one no trial measures is read from name, as `rga6d`.
+    ## Find algebra by name; one no evaluation measures is read from name, as `rga6d`.
     for algebra in algebras:
       if algebra.name == name: return algebra
     Algebra(
@@ -464,9 +465,9 @@ proc checkClaims(
 
 
 
-#[ Trial ]#
+#[ Evaluation ]#
 
-proc runTrial*(
+proc runEvaluation*(
   chain: Toolchain;
   candidate: Candidate;
   algebras: openArray[Algebra];
@@ -474,15 +475,15 @@ proc runTrial*(
   pristine: Table[string, string];
   suites_pin, taken: JsonNode;
 ): (JsonNode, seq[Finding]) =
-  ## Try candidate on every algebra; trial document and findings that stopped it.
+  ## Try candidate on every algebra; evaluation document and findings that stopped it.
   let directory = chain.work / candidate.name
   createDir directory
   let (copy, findings) = prepareCopy(chain, candidate)
   if findings.len > 0: return (nil, findings)
   var
-    trial = %*{
+    evaluation = %*{
       "schema": 1,
-      "kind": "trial",
+      "kind": "evaluation",
       "name": candidate.name,
       "path": candidate.path,
       "edits_digest": editsDigest(candidate.changes, candidate.claims, candidate.programs),
@@ -507,18 +508,18 @@ proc runTrial*(
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
         algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])
     let (times, nan) = timed(chain, pristine[algebra.name], binary, directory)
-    trial["algebras"][algebra.name] = %*{
+    evaluation["algebras"][algebra.name] = %*{
       "suites": suite,
       "functions": functionsChanged(baselines[algebra.name], after),
       "times": times,
       "nan": nan,
     }
-  trial["claims"] = checkClaims(chain, copy, directory, candidate, counted, suited, algebras)
-  (trial, @[])
+  evaluation["claims"] = checkClaims(chain, copy, directory, candidate, counted, suited, algebras)
+  (evaluation, @[])
 
 
 proc pristineSuites*(chain: Toolchain, algebras: openArray[Algebra]): JsonNode =
-  ## Count library's own suites at pin, so trial's counts read against them.
+  ## Count library's own suites at pin, so evaluation's counts read against them.
   result = newJObject()
   for algebra in algebras:
     result[algebra.name] =

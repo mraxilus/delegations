@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "dead-code",
   "path": "changes/dead-code.md",
   "edits_digest": "a5527a4e565192f2",

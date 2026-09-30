@@ -13,7 +13,7 @@
 ##     what it meant. Quote found nowhere, or twice, is finding, never guess.
 ##   Digest guards whole-file replacement, which carries no quote: file that changed at head
 ##     makes replacement stale, and staleness is finding rather than silent overwrite.
-##   Application is pure over map of path to text, so tests feed synthetic library and trial
+##   Application is pure over map of path to text, so tests feed synthetic library and evaluation
 ##     runner feeds checkout.
 ##
 ##   Cost: digest is `std/hashes` of file text, not cryptographic; it detects change, which is

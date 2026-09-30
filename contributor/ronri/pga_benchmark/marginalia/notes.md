@@ -2,14 +2,14 @@
 
 Each note quotes lines of the library at pin, and says what a reader finds there. Status
 `open` is work that nobody has proposed yet. Status `decide` is a choice for the Architect.
-Status `design` names a design that explores the note.
+Status `proposal` names a proposal that explores the note.
 
 `drive` holds each quote to the pin. A quote that does not occur once at pin is a finding, so
 a note never points at lines that say something else.
 
 ## Every operand is dense
 
-`pga/multivectors.nim` · design
+`pga/multivectors.nim` · proposal
 
 ```nim
 type
@@ -19,7 +19,7 @@ type
 A point carries all 2^D slots, and each product reads every slot. Of the measurands with a
 typed reference, most spend more multiplies than the reference, and this is why.
 
-Grade restriction lives in the emission, and the tables stay whole. Design
+Grade restriction lives in the emission, and the tables stay whole. Proposal
 `typed-multivectors` explores concrete k-vector types that name their slots.
 
 ## What an out-of-range grade does
@@ -55,7 +55,7 @@ with the other grade predicates, or let the suites define their own.
 
 ## Scalar-valued products return a whole multivector
 
-`pga/operators.nim` · design
+`pga/operators.nim` · proposal
 
 ```nim
 func `|∙`*(m: Multivector): Multivector {.inline.} =
@@ -68,7 +68,7 @@ func `|∙`*(m: Multivector): Multivector {.inline.} =
 For those operations, the result alone puts them above the byte bound.
 
 An emitter that returns `float`, for a table whose products all land in one slot, closes that.
-Design `typed-multivectors` returns the smallest kind that holds the result, which here is one
+Proposal `typed-multivectors` returns the smallest kind that holds the result, which here is one
 slot.
 
 ## What the flat norms compute
@@ -232,7 +232,7 @@ dimensions are unchecked.
 
 ## Norm returns a multivector for two doubles
 
-`pga.nim` · design
+`pga.nim` · proposal
 
 ```nim
 func norm*(m: Multivector): Multivector {.inline.} = |m
@@ -240,12 +240,12 @@ func norm*(m: Multivector): Multivector {.inline.} = |m
 ```
 
 The book writes ‖𝐦‖ = s𝟏 + t𝟙, and a `Multivector` result mirrors that exactly. The cost is
-movement: `|` fills and writes all 2^D slots to hand back two. Design `typed-multivectors`
+movement: `|` fills and writes all 2^D slots to hand back two. Proposal `typed-multivectors`
 gives this result the kind that holds the scalar and the antiscalar.
 
 ## Support is three dense products
 
-`pga.nim` · design
+`pga.nim` · proposal
 
 ```nim
   func support*(m: Multivector): Multivector {.inline.} = ∩ m
@@ -256,7 +256,7 @@ gives this result the kind that holds the scalar and the antiscalar.
 ```
 
 `∩` is `m ∨ (𝐞ₙ ∧ ☆ m)`: a dual, a wedge with a constant basis element, and an antiwedge.
-The wedge with one basis element is a signed selection, not a full product. Design
+The wedge with one basis element is a signed selection, not a full product. Proposal
 `cayley-derivation` generates `∩` and `∪` as one table each, through map operators.
 
 ## Addition fills before it writes

@@ -1,9 +1,10 @@
-## Hold what this project keeps to library head: pin, measurements, trials and pages.
+## Hold what this project keeps to library head: pin, measurements, evaluations and pages.
 ##   Pages show library at pin, and pin must be library head, so what reader sees is library
 ##     as it stands. Four checks, each finding when it fails, none of them warnings:
 ##     - pin is head: library's directory at pin is same tree as at head of its repository;
-##     - every measurement names pin: static and runtime baselines, every trial;
-##     - every trial names digest of its edits, so edited change or design needs new trial;
+##     - every measurement names pin: static and runtime baselines, every evaluation;
+##     - every evaluation names digest of its edits, so edited change or proposal needs new
+##       evaluation;
 ##     - every built page matches digest recorded when it was published.
 ##   Head is compared by tree of library's directory, never by commit: library lives in
 ##     directory of larger repository, and commit elsewhere in it changes nothing measured.
@@ -39,7 +40,7 @@ func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =
   if tree_pin != tree_head:
     result.add Finding(
       path: lock,
-      message: "Pin lags library head; follow head, re-baseline and re-run every trial; " &
+      message: "Pin lags library head; follow head, re-baseline and re-run every evaluation; " &
         "got head `" & head.short & "`, pin `" & pin.short & "`.",
     )
 
@@ -64,14 +65,14 @@ func checkStamp*(document: JsonNode; pin, path: string): seq[Finding] =
     )
 
 
-func checkTrial*(trial: JsonNode; pin, digest, path: string): seq[Finding] =
-  ## Hold one trial to pin and to its edits: same commit, same digest of edits.
-  result = checkStamp(trial, pin, path)
-  let recorded = trial{"edits_digest"}
+func checkEvaluation*(evaluation: JsonNode; pin, digest, path: string): seq[Finding] =
+  ## Hold one evaluation to pin and to its edits: same commit, same digest of edits.
+  result = checkStamp(evaluation, pin, path)
+  let recorded = evaluation{"edits_digest"}
   if recorded.isNil or recorded.getStr != digest:
     result.add Finding(
       path: path,
-      message: "Edits changed since trial; run `trial` again; got digest `" &
+      message: "Edits changed since evaluation; run `evaluate` again; got digest `" &
         (if recorded.isNil: "" else: recorded.getStr) & "`.",
     )
 

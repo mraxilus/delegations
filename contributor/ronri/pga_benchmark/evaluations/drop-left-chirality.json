@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "drop-left-chirality",
   "path": "changes/drop-left-chirality.md",
   "edits_digest": "7d7d09ce25ef5eeb",

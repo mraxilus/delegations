@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "tests-pool",
   "path": "changes/tests-pool.md",
   "edits_digest": "3bcc5814e49360d3",

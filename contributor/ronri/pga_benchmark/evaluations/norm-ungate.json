@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "norm-ungate",
   "path": "changes/norm-ungate.md",
   "edits_digest": "262e75893362e325",

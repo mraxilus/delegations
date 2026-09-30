@@ -3,7 +3,7 @@
   "claims": [
     {
       "kind": "program",
-      "path": "designs/typed-multivectors/prototype.nim",
+      "path": "proposals/typed-multivectors/prototype.nim",
       "algebras": ["rga3d", "rga4d", "cga5d"]
     }
   ]

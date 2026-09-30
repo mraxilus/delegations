@@ -1,7 +1,7 @@
-## Read Cayley table as JSON, cell by cell, so trial compares tables across library versions.
-##   Trial's `tables` claim compiles one program against library at pin and one against changed
+## Read Cayley table as JSON, cell by cell, so evaluation compares tables across library versions.
+##   Evaluation's `tables` claim compiles one program against library at pin and one against changed
 ##     copy; each prints tables through this module, and equal JSON is equal table, signs
-##     included. Suites run same module against pin, so serialiser trial relies on is tested.
+##     included. Suites run same module against pin, so serialiser evaluation relies on is tested.
 ##   Cell shape differs between versions: `Option[BasisSigned]` in 1D tables at pin, `seq` in
 ##     2D ones and in every derived table. `cellOf` reads both, so one module serves each side.
 ##

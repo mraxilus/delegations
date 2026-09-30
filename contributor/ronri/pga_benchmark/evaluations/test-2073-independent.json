@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "trial",
+  "kind": "evaluation",
   "name": "test-2073-independent",
   "path": "changes/test-2073-independent.md",
   "edits_digest": "4ae2151e4e136598",
