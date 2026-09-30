@@ -130,3 +130,14 @@ suite "Wording":
       appendRuler(line, cursor, span)
       finishChars(line, cursor)
       check toText(line) == text
+
+
+  test "a search says how many objects it shows, of how many the scene holds":
+    # Same line on both builds: window writes it every frame and page reads it through bridge,.
+    #   so integer formatting has branch per backend and this holds them to one answer.
+    var
+      line: array[32, char]
+      cursor = 0
+    appendShownCounted(line, cursor, 12, 5038)
+    finishChars(line, cursor)
+    check toText(line) == "12 of 5038 shown"

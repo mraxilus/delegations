@@ -193,25 +193,30 @@ func appendMagnitude*(storage: var openArray[char], cursor: var int, value: floa
     appendChars(storage, cursor, buffer.toOpenArray(0, int(count) - 1))
 
 
-when not defined(js):
-  func appendInt*(storage: var openArray[char], cursor: var int, value: int) =
-    ## Format `value` as plain decimal integer straight into `storage`.
-    ##   Every caller counts something small and bounded, so narrowing to `cint` never
-    ##   truncates real value.
-    ##   Desktop-only, with `appendFixed`: both serve diagnostics panel, which has no
-    ##   browser counterpart.
+func appendInt*(storage: var openArray[char], cursor: var int, value: int) =
+  ## Format `value` as plain decimal integer straight into `storage`.
+  ##   Every caller counts something small and bounded, so narrowing to `cint` never
+  ##   truncates real value.
+  ##   Shared, as `appendMagnitude` is: objects list says how many search shows on both
+  ##   render paths, through `wording.appendShownCounted`.
+  ##     Desktop formats through C, touching no heap; browser has no C runtime and pays one
+  ##     string.
+  when defined(js):
+    appendChars(storage, cursor, $value)
+  else:
     var buffer: array[24, char]
     let count =
       snprintf(cast[cstring](addr buffer[0]), csize_t(len(buffer)), "%d", cint(value))
     appendChars(storage, cursor, buffer.toOpenArray(0, int(count) - 1))
 
 
+when not defined(js):
   func appendFixed*(
     storage: var openArray[char], cursor: var int, value: float, digits: int
   ) =
     ## Format `value` to fixed digits after point straight into `storage`.
     ##   Matches `strformat`'s `:.Nf`.
-    ##   Desktop-only, with `appendInt`; see its doc comment.
+    ##   Desktop-only: it serves diagnostics panel, which has no browser counterpart.
     var buffer: array[32, char]
     let count = snprintf(
       cast[cstring](addr buffer[0]), csize_t(len(buffer)), "%.*f", cint(digits), value

@@ -471,6 +471,156 @@ export async function driveEditFromMenu(page: Page): Promise<void> {
   });
 }
 
+/** Assert search narrows long list to what reader typed, and hands matches over as selection.
+ *
+ *  List of five thousand could only be scrolled, and one body in it was not findable. Search
+ *  keeps objects whose label or kind word holds every word typed, by rule `scene` states once
+ *  for both front-ends; this counts same rule again here, in page's own strings, and holds
+ *  list to that count, so neither can drift without other noticing.
+ *  Driven through keys as reader presses them: `/` from page with drawer shut, then typing,
+ *  then escape, so field's own handlers are what is exercised and not function they call.
+ */
+export async function driveListSearched(page: Page): Promise<void> {
+  // Deep object whose label no other label holds, so typing it leaves its row alone.
+  const wanted = await page.evaluate(() => {
+    clearSelection();
+    document.querySelector('.section[data-section="objects"]')?.classList.remove('open');
+    drawer.classList.remove('open');
+    (document.activeElement as HTMLElement | null)?.blur();
+    const created = Array.from(nimSceneHandlesCreated());
+    const labels = created.map((handle) => nimObjectLabel(handle).toLowerCase());
+    for (let at = 40; at < created.length; at += 1) {
+      const label = labels[at] ?? '';
+      if (label.trim() === '' || /\s/.test(label)) continue;
+      if (labels.filter((other) => other.includes(label)).length !== 1) continue;
+      if (nimObjectKindWord(created[at] ?? 0).includes(label)) continue;
+      return { handle: created[at] ?? -1, label: nimObjectLabel(created[at] ?? 0) };
+    }
+    return null;
+  });
+
+  await page.keyboard.press('/');
+  const reached = await page.evaluate(() => ({
+    is_focused: document.activeElement?.id === 'objects-search-field',
+    is_open: drawer.classList.contains('open') && (document
+      .querySelector('.section[data-section="objects"]')?.classList.contains('open') ?? false),
+  }));
+  report(
+    'pressing / with the drawer shut opens the objects list and puts the caret in its search',
+    reached.is_focused && reached.is_open,
+    `focused ${reached.is_focused}, list open ${reached.is_open}`,
+  );
+
+  // Count every object this query names, by labels and kind words page reads itself, and every
+  //   row list shows for it: those, and every pick.
+  const expected = (query: string) => page.evaluate((typed) => {
+    const words = typed.toLowerCase().split(/\s+/).filter((word) => word !== '');
+    const picked = Array.from(nimSelectionHandles());
+    const created = Array.from(nimSceneHandlesCreated());
+    const isMatched = (handle: number) => {
+      const label = nimObjectLabel(handle).toLowerCase();
+      const kind = nimObjectKindWord(handle).toLowerCase();
+      return words.every((word) => label.includes(word) || kind.includes(word));
+    };
+    return {
+      matched: created.filter(isMatched).length,
+      shown: created.filter((handle) => isMatched(handle) || picked.includes(handle)).length,
+    };
+  }, query);
+  const listed = () => page.evaluate(() => ({
+    count: Number(list_objects.dataset['count'] ?? '-1'),
+    shown: document.getElementById('objects-shown')?.textContent ?? '',
+    handles: Array.from(list_objects.querySelectorAll('.object-row'))
+      .map((row) => Number((row as HTMLElement).dataset['handle'] ?? '-1')),
+    labels: Array.from(list_objects.querySelectorAll('.object-label'))
+      .map((node) => node.textContent ?? ''),
+    note: list_objects.querySelector('.help-text')?.textContent ?? '',
+    is_note_first: list_objects.querySelector('.help-text, .object-row')
+      ?.classList.contains('help-text') ?? false,
+  }));
+  const typeQuery = async (query: string) => {
+    await page.fill('#objects-search-field', '');
+    const started = Date.now();
+    await page.keyboard.type(query);
+    const want = await expected(query);
+    await page.waitForFunction(
+      (count) => list_objects.dataset['count'] === String(count), want.shown, { timeout: 8000 },
+    ).catch(() => undefined);
+    return { milliseconds: Date.now() - started, want, got: await listed() };
+  };
+
+  const one = await typeQuery(wanted?.label ?? '');
+  report(
+    'typing part of a deep object\'s label leaves its row alone in the list, counted as shown',
+    wanted !== null && one.want.matched === 1 && one.got.count === 1
+      && one.got.labels.length === 1 && one.got.labels[0] === wanted.label
+      && one.got.shown.startsWith('1 of '),
+    wanted === null ? 'no object with a label of its own to search for'
+      : `"${wanted.label}" left ${one.got.count} row (${one.got.labels.join(', ')}), ` +
+        `"${one.got.shown}", ${one.milliseconds} ms from first key to settled list`,
+  );
+
+  // Pick that row by its own box, as reader does, then search for something it is not.
+  await page.evaluate((handle) => {
+    const row = list_objects.querySelector(`.object-row[data-handle="${handle}"]`);
+    (row?.querySelector('input[type="checkbox"]') as HTMLElement | null)?.click();
+  }, wanted?.handle ?? -1);
+  const kinds = await typeQuery('horizon');
+  const handle_picked = wanted?.handle ?? -1;
+  report(
+    'a kind word lists every object of that kind, and keeps the pick it does not match',
+    kinds.want.matched > 0 && kinds.got.count === kinds.want.matched + 1
+      && kinds.got.handles.includes(handle_picked)
+      && kinds.got.shown.startsWith(`${kinds.want.matched + 1} of `),
+    `"horizon" listed ${kinds.got.count}: ${kinds.want.matched} the rule counts, and pick ` +
+      `${handle_picked} listed ${kinds.got.handles.includes(handle_picked)}; ` +
+      `"${kinds.got.shown}"`,
+  );
+
+  const picked = await page.evaluate(() => {
+    const shown = Array.from(list_objects.querySelectorAll('.object-row'))
+      .map((row) => Number((row as HTMLElement).dataset['handle'] ?? '-1'));
+    (document.getElementById('objects-select') as HTMLElement | null)?.click();
+    return { shown, selected: Array.from(nimSelectionHandles()) };
+  });
+  const order_wanted = [handle_picked, ...picked.shown.filter((h) => h !== handle_picked)];
+  report(
+    'select all adds every row the search shows after the pick already made, in the order shown',
+    picked.shown.length === kinds.want.matched + 1
+      && picked.selected.join() === order_wanted.join(),
+    `rows ${picked.shown.join(', ')}; selection ${picked.selected.join(', ')}`,
+  );
+
+  const none = await typeQuery('qqzzqq');
+  report(
+    'a search nothing answers says so, above the picks it keeps listed',
+    none.want.matched === 0 && none.got.count === picked.selected.length
+      && none.got.is_note_first && none.got.note === (await page.evaluate(
+        () => nimWording(Wording.NoteListUnmatched),
+      )),
+    `${none.got.count} rows for ${picked.selected.length} picks; note first ` +
+      `${none.got.is_note_first}, "${none.got.note}"`,
+  );
+
+  await page.keyboard.press('Escape');
+  const cleared = await page.evaluate(() => ({
+    value: (document.getElementById('objects-search-field') as HTMLInputElement | null)?.value,
+    count: Number(list_objects.dataset['count'] ?? '-1'), want: nimSceneCount(),
+    is_count_hidden: document.getElementById('objects-shown')?.hidden ?? false,
+  }));
+  await page.keyboard.press('Escape');
+  const is_left = await page.evaluate(
+    () => document.activeElement?.id !== 'objects-search-field',
+  );
+  report(
+    'escape clears the search and lists everything again, and a second escape leaves the field',
+    cleared.value === '' && cleared.count === cleared.want && cleared.is_count_hidden && is_left,
+    `value "${cleared.value}", ${cleared.count} of ${cleared.want} listed, count hidden ` +
+      `${cleared.is_count_hidden}, field left ${is_left}`,
+  );
+  await page.evaluate(() => { clearSelection(); });
+}
+
 /** Assert list reconciles against what is standing rather than rebuilding.
  *
  *  Two properties, and first is what makes second safe to rely on: refresh that changes

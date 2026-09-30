@@ -62,15 +62,16 @@ type Wording* = enum
   ##   First word is kind: `Tip` for tooltip, `Name` for words control itself wears, `Note`
   ##   for sentence shown in place, `Help` for cell of help table, which is fragment reader
   ##   reads across row rather than sentence or label.
-  ##   Second is panel area: `Head` for section heading, `Row` for object row, `Apply`, `View`,
-  ##   `Diag` for diagnostics, `Pick` for menu over selection, `Menu` for top menu, `Chip` for
-  ##   row of constant controls.
+  ##   Second is panel area: `Head` for section heading, `Row` for object row, `List` for
+  ##   objects list around its rows, `Apply`, `View`, `Diag` for diagnostics, `Pick` for menu
+  ##   over selection, `Menu` for top menu, `Chip` for row of constant controls.
   ##   One key per control, not per word: two controls may honestly wear same word, and
   ##   translator may still need them apart. `NameRowHide` and `NamePickHide` both read "hide"
   ##   today and are not one key.
   ##   Adding value here without row below does not compile, which is whole point of enum key.
   TipRowSelect, TipRowCommit, TipRowEdit, TipRowDiscardNew, TipRowDiscardEdit,
   TipRowVisible, TipRowRemove, TipRowRadius,
+  TipListSearch, TipListSelect,
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
   TipDiagnosticsFrames, TipDiagnosticsVsync, TipDiagnosticsPermanent, TipDiagnosticsFrame,
@@ -83,6 +84,7 @@ type Wording* = enum
   NameHeadObjects, NameHeadApply, NameHeadView, NameHeadDiagnostics,
   NameRowCommit, NameRowEdit, NameRowDiscard, NameRowHide, NameRowShow, NameRowRemove,
   NameRowLabel, NameRowInk, NameRowSize, NameRowCoefficients,
+  NameListSearch, NameListSelect,
   NameApplyArity, NameApplyUnary, NameApplyBinary, NameApplyOperation, NameApplyFirst,
   NameApplySecond, NameApplyAct,
   NameViewMotor, NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewSpeed,
@@ -97,7 +99,7 @@ type Wording* = enum
   NameChipMenu, NameChipDrawer,
   NameTitle,
 
-  NoteListEmpty, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
+  NoteListEmpty, NoteListUnmatched, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
   NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss,
 
   NameTabDrag, NameTabSelect, NameTabMenu, NameTabPanel, NameTabCamera, NameTabKeys,
@@ -117,7 +119,7 @@ type Wording* = enum
   HelpDragEmptyOrCrowd, HelpPinch, HelpMoveCloser, HelpDragTwoFingers, HelpTwistTwoFingers,
   HelpEscape, HelpBackOut, HelpUndoRedoKeys, HelpUndoRedo, HelpTab, HelpMoveFocus,
   HelpTravel, HelpRoll, HelpRaiseLower, HelpFurtherCloser, HelpBackIntoView,
-  HelpHighlightPrevNext, HelpSelectHighlighted, HelpCameraHome
+  HelpHighlightPrevNext, HelpSelectHighlighted, HelpCameraHome, HelpSearchKey, HelpSearchObjects
 
 
 
@@ -134,6 +136,12 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   TipRowRemove: "Delete this object; its handle is reused by the next one you add.",
   # Page read better than window here, so page's sentence is one both now say.
   TipRowRadius: "Radius the point is drawn at, in world units; it shrinks with distance.",
+
+  # Objects list around its rows: search over it, and what search leaves.
+  TipListSearch:
+    "Show only the objects whose label or kind holds every word typed here, and those " &
+    "selected; press / to come here from anywhere.",
+  TipListSelect: "Add every object the search shows to the selection, after those picked.",
 
   # Apply section: operation over one or two operands.
   TipApplyArity: "Whether to list operations reading one operand or two.",
@@ -221,6 +229,10 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NameRowSize: "size",
   NameRowCoefficients: "coefficients",
 
+  # Objects list around its rows.
+  NameListSearch: "search by label or kind",
+  NameListSelect: "select all",
+
   # Apply section.
   NameApplyArity: "arity",
   NameApplyUnary: "unary",
@@ -285,6 +297,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
 
   # Sentences shown in place, where control has nothing to hover.
   NoteListEmpty: "Nothing here yet -- press `add` above, or drag between two objects.",
+  NoteListUnmatched: "No object matches this search; change it or clear it above.",
   # Window said more than page here: both draw graded grid, so both may say so.
   NoteCoefficientsNew:
     "The 16 numbers of the new multivector, in the library's basis order, stacked one row " &
@@ -383,6 +396,8 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   HelpHighlightPrevNext: "move the highlight to the previous or next object",
   HelpSelectHighlighted: "select the highlighted object; hold shift to add it",
   HelpCameraHome: "put the camera back where it started",
+  HelpSearchKey: "/",
+  HelpSearchObjects: "search the objects list, opening it where shut",
 ]
   ## Hold text for every key, written with its key rather than by position.
   ##   Named form is deliberate: `[TipRowSelect: "...", ...]` cannot be knocked out of step by
@@ -503,6 +518,16 @@ func objectsCounted*(count: int): string =
   ##   "1 object", never "1 object(s)": parenthesis is what writing says when it holds
   ##   count and will not spend word on it.
   if count == 1: "1 object" else: $count & " objects"
+
+
+func appendShownCounted*(storage: var openArray[char], cursor: var int, shown, total: int) =
+  ## Write how many objects search leaves listed, of how many scene holds: `12 of 5038 shown`.
+  ##   Straight into `storage`, since window redraws it every frame; page reads same through
+  ##   bridge, so glue between two counts is written once.
+  appendInt(storage, cursor, shown)
+  appendChars(storage, cursor, " of ")
+  appendInt(storage, cursor, total)
+  appendChars(storage, cursor, " shown")
 
 
 func deletedMessage*(count: int): string =
