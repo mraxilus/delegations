@@ -125,7 +125,7 @@ keeps the median of each run as `ns_runs`, in run order. `ns_median` is the medi
 and `ns_min` is the least minimum.
 
 One run times both implementations, so the runs pair by index, and each run gives one time
-ratio. The docket reads its whisker from those ratios. Rejected: the spread of rounds inside
+ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
 **The runtime baselines were taken again on 2026-09-30**, in another container of the same
@@ -138,7 +138,7 @@ between ×0.75 and ×2.07. Within the new baselines, the least and greatest run 
 median measurand are ×1.36 apart at rga4d and ×1.35 at cga5d. One run of cga4d ran ×2.5
 slower than its median, and the machine reported steal time.
 
-So one run's time ratio is weak evidence, and the whisker on the docket says how weak. The
+So one run's time ratio is weak evidence, and the ticks on the docket say how weak. The
 figures below stay as taken on 2026-09-28.
 
 **`ns` stays in names as a unit symbol.** The Architect ruled so for this project, as for `ms`,
@@ -322,6 +322,58 @@ Cost: a chain bound sums the steps of the library's own definition, so it is an 
 rather than a proved minimum. The record marks every such bound, and `gaps.md` names the
 steps.
 
+## Dense form
+
+**A general row is timed against its dense form**, as the Architect chose. A general row has
+no reference, so nothing measured stood for what a dense multivector could spend. The dense
+form is that measure. It assigns each slot once as the sum of its terms, with no fill, no
+intermediate multivector and no call.
+
+`dense.nim` generates one dense form for each general measurand at build time. It evaluates
+the operation symbolically over the library's own Cayley tables. Each slot is a polynomial
+over the components of the operands. A sign map composes for free, a product multiplies
+polynomials, and like terms combine. An operand that is already a product binds scalar
+temporaries first, so a chain spends the sum of its steps.
+
+An operand that is only a map of another folds into the product. So the support, the
+antisupport, the centre and the container each spend one folded table. The partner carries
+the sign of the grade of its operand, as the library's does. Its scan of the grade is
+unrolled at build time, since a loop over `Basis` guards its counter against overflow even
+in a release build.
+
+**What the dense forms spend.** At rga4d and cga5d every dense form that one rule covers
+spends exactly the multivector lower bound. The support and the antisupport spend 54 where
+the library spends 162. The centre spends 162 where the library spends 486, and the partner
+324 where the library spends 518. No dense form fills, copies, calls, checks or declares an
+intermediate.
+
+Two chains in each rigid algebra spend less than their bound. The central projection and the
+orthogonal antiprojection spend 81 against 108 at rga4d, and 27 against 36 at rga3d. Their
+first step leaves whole grades at zero, and the second step reads none of them. That is new
+evidence that a chain bound is an estimate.
+
+**What the library spends in time against them.** The runtime baselines of 2026-09-30 time
+each dense form beside the library, five alternating runs. The median general measurand runs
+×1.00 to ×1.04 its dense form, since most library operators are already one generated table.
+The compound operations are not. They run ×2.1 to ×6.1 their dense forms, from the
+container at cga5d to the support at rga4d.
+
+Negation and the antigrade selection run ×1.9 to ×2.9, and the norms ×1.3 to ×3.4. The
+weight unitizes run faster than their dense forms, ×0.68 to ×0.98, and the bulk unitize
+slower, ×1.4 to ×2.3. So a dense form is a measure, and never a lower bound on time.
+
+Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
+each of four algebras, and forms by hand would drift from the library as it moves. The
+tables are the library's, so a dense form shares any sign that the library gets wrong. The
+chapter suites hold the library to the reference, and the suite below holds the dense form to
+the library.
+
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Dense forms` and `Inspector`. Every
+dense form equals the library on the seeded pools, NaN included. The same suite, compiled by
+hand at rga3d and cga4d on 2026-09-30, passes there too. The inspector holds each dense form
+at the multivector lower bound, or at or below it for a chain. It also holds each one free of
+fill, intermediate, copy, call and check.
+
 ## Gap list
 
 One gap for each measurand of each algebra. A gap is over where the library exceeds its
@@ -449,10 +501,11 @@ deterministic and the digest of a page is the digest of what those files say.
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
 bound that the row is measured against. A typed row is measured against its reference, and a
-tick on its count bars marks the multivector lower bound. A general row is measured against
-the multivector lower bound. It has no reference, so its time shows nanoseconds alone.
+tick on its count bars marks the multivector lower bound. A general row counts against the
+multivector lower bound, and times against its dense form.
 
-The time bar sits at the median of the run ratios, and a whisker spans the least and greatest.
+The time bar ends at the median of the run ratios, and each run is one tick on it, as the
+Architect chose. So one slow run shows as one tick apart, and not as a wide span.
 Every bar on the page shares one log axis in whole powers of two, so a length reads as a
 factor. A count whose reference spends none has no ratio. It reads as its excess, such as
 `8 over 0`, and its bar runs to the end of the axis.
@@ -468,8 +521,8 @@ hand, or by a script outside this project, because nothing held it to the files.
 
 Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
 ratios, and the chip that names removed NaN results. It covers the lower bound each docket row
-is measured against, the median of run ratios with its whisker, and a reference that spends
-none.
+is measured against, and a general row timed against its dense form. It covers the median of
+run ratios with one tick for each run, and a reference that spends none.
 
 ## Library head
 
@@ -783,6 +836,9 @@ these measurements.
 - Whether the sign of the partner folds into its first table by the grade of each term.
   That is exact under the homogeneity the partner already asserts. It would take the partner
   from 437 multiplies and 104 fills to its chain bound of 324. Unmeasured.
+- Why the weight unitizes of the library run faster than their dense forms, ×0.68 to ×0.98,
+  while the bulk unitize runs slower, ×1.4 to ×2.3. The library scales every slot in a loop,
+  which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
 - Whether a product whose terms all land in one slot should return a `float` from the
   emitter. At four dimensions 26 measurands stand above the byte bound for that reason
   alone.
