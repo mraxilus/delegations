@@ -80,12 +80,13 @@ src/pga_benchmark.nim              umbrella: algebra name and re-exports
 src/pga_benchmark/catalogue.nim    every measurand as data, per algebra
 src/pga_benchmark/reference/       Lengyel's typed objects and forms, rigid 4D and conformal 5D
 src/pga_benchmark/widening.nim     typed objects into and out of the dense multivector
-src/pga_benchmark/pools.nim        seeded operand pools, both implementations
+src/pga_benchmark/pools.nim        seeded operand pools, every implementation
 src/pga_benchmark/measurements.nim timed loops emitted from the catalogue
 src/pga_benchmark/bench.nim        entry: runtime measurements of every measurand
 src/pga_benchmark/inspector.nim    static measurements read out of emitted C
 src/pga_benchmark/model.nim        movement from counts and sizes
 src/pga_benchmark/bound.nim        multivector lower bound, derived from the algebra
+src/pga_benchmark/dense.nim        dense form of each general measurand, from library's tables
 src/pga_benchmark/inspect.nim      entry: static measurements of one nimcache
 src/pga_benchmark/guard.nim        compare static measurements against the baseline
 src/pga_benchmark/gaps.nim         gaps, causes, docket, rendering
