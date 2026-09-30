@@ -2738,9 +2738,15 @@ and `horizon` finds each horizon object, whatever its label. `scene.matchesSearc
 once, and `scene.handlesMatching` filters creation order by it. The page reaches both through
 `nimSceneHandlesMatching`, and the window calls them itself.
 
-**The row open for edit stays listed, whatever the search says.** A reader who types into that row
-never loses it. It is kept only while a word is typed, since a blank search lists everything.
-`scene.isSearching` says which, on both front-ends.
+**The selection and the row open for edit stay listed, whatever the search says.** A reader never
+loses what they picked, or the row that they type into. A kept row stands in creation order among
+the matches, where it stands with no search. Both are kept only while a word is typed, since a blank
+search lists everything. `scene.isSearching` says which, on both front-ends.
+
+`scene.handlesMatching` counts the matches apart from the rows that it keeps. Where nothing matches,
+the note heads the list, above the kept rows, so no kept row reads as a match. It marks each kept
+handle once. A scan of the whole selection for each handle costs 25 million comparisons at capacity.
+While a word is typed, a change to the selection filters the list again, on both front-ends.
 
 **The search stays reachable while the list scrolls.** The page pins `.objects-search` under the
 pinned heading, at the height that the heading measures. The window draws its field above the
@@ -2749,9 +2755,11 @@ a search narrows the list, the field shows a count, such as `12 of 5038 shown`, 
 `wording.appendShownCounted` writes that count for both, so `format.appendInt` has a branch for each
 backend.
 
-**`select all` picks the rows in the order shown, newest first.** The first row that the reader sees
-is then operand `m`. `selection.selectAll` makes one change however many rows it picks, and the same
-set picked again changes nothing.
+**`select all` adds the rows shown to the selection, after the picks already made.** The rows shown
+include the picks, so a replacement would reorder them, and operands `m` and `n` would move. New
+rows join in the order shown, newest first. So two searches, each followed by `select all`, pick
+both sets. `selection.addAll` makes one change however many rows it adds, and nothing new changes
+nothing.
 
 **`/` reaches the search from anywhere.** It opens the list and gives the field the keyboard. It is
 an accelerator of the panel and not a key that the view answers, so it stands beside `ctrl+z` and
@@ -2763,8 +2771,9 @@ window gets this from `ImGuiInputTextFlags_EscapeClearsAll`.
 search. Most of it is the kind word of each object whose label misses the word. The handler, with
 the reconcile of rows, measured 13 to 32 ms for each keystroke.
 
-The window filters only when the scene, the search or the kept row moves, in one cache that
-replaced its order cache. The fold is ASCII alone, so `é` does not find `É`. A search stays in force
+The window filters only when the scene, the search, the kept row or, while a word is typed, the
+selection moves. One cache holds the result in creation order, so the window keeps no second order
+cache. The fold is ASCII alone, so `é` does not find `É`. A search stays in force
 after an add. A new object that does not answer it is not listed, and the count shows that a search
 narrows the list.
 
@@ -2775,21 +2784,23 @@ answer. It would save most of the cost on the page, and it is a second home for 
 *Checked.* Verified by `suites.nim`, on both backends:
 
 - each word in either place, folded, and a blank search that answers everything;
-- creation order kept, and the row open for edit listed;
-- `selectAll` picking in the order given, once each, where a repeat changes nothing;
+- creation order kept, each kept row where it stands, and the matches counted apart;
+- `addAll` keeping earlier picks where they stand, and adding each new handle once, in order;
 - the count reading the same on both builds.
 
 Verified by browser drive (`driveListSearched`, at 5,038 objects):
 
 - `/` with the drawer shut opens the list and focuses the field;
 - a deep label that no other label holds leaves its row alone;
-- `horizon` lists 4 of the 4 that the check counts again from labels and kind words;
-- `select all` picks the rows in the order shown;
-- a search with no match shows its note;
+- `horizon` lists the 4 that the check counts again, and keeps the pick that it does not match;
+- `select all` adds the rows shown after that pick, in the order shown;
+- a search with no match shows its note, above the picks that it keeps;
 - escape clears the field, and a second escape leaves it.
 
 Verified by `--drive-search`: `/` and a typed label, posted as SDL events, narrow the list of the
-window to 1 of 5. A break on purpose, with `/` wired to nothing, fails it: nothing typed, 5 listed.
+window to the 1 match of 5. A pick made first stays listed, so 2 rows show. A break on purpose,
+with `/` wired to nothing, fails it: nothing typed, 5 listed. A second, with the selection not kept,
+fails it too: 1 row, and the pick is not listed.
 
 ## Hold feedback, help and keys
 
