@@ -22,6 +22,8 @@ const
     ## Library commit driver reads from `atlas.lock` at build.
   FLAGS* {.strdefine: "pga_benchmark.flags".} = "unrecorded"
     ## Build flags driver passes, so measurements name their build.
+  IMPLEMENTATIONS* = ["library", "reference", "dense"]
+    ## Keys runtime document gives each implementation of measurand.
 
 
 proc takenNow*(): JsonNode =
@@ -133,7 +135,7 @@ func runsCombined*(runs: openArray[JsonNode]): JsonNode =
   result = runs[0].copy
   result["taken"]["runs"] = %runs.len
   for id, measurand in result{"measurands"}.pairs:
-    for implementation in ["library", "reference"]:
+    for implementation in IMPLEMENTATIONS:
       let measurement = measurand{implementation}
       if measurement.isNil or measurement.kind != JObject: continue
       var medians, minimums: seq[float]

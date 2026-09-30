@@ -12,7 +12,8 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, changes, proposals, gaps, guard, head, inspector, markdown, measurements, model, notes,
+  bound, changes, dense, proposals, gaps, guard, head, inspector, markdown, measurements, model,
+  notes,
   report,
 ]
 import ../src/pga_benchmark/pages/[docket, shell, evaluation]
@@ -90,6 +91,45 @@ macro checkReferences(measurands: static seq[Measurand]; chapter: static string)
               `expression`
           check got =~ expected  # library on images equals reference embedded
   if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
+
+
+func isNear(got, expected: Multivector): bool =
+  ## Decide whether two multivectors agree, as library's own comparison decides.
+  got =~ expected
+
+
+func isNear(got, expected: float): bool =
+  ## Decide whether two scalars agree within library's tolerance.
+  abs(got - expected) <= TOLERANCE_ABS * max(1.0, max(abs(got), abs(expected)))
+
+
+macro checkDenseForms(measurands: static seq[Measurand]): untyped =
+  ## Emit one test per general measurand holding its dense form to library expression.
+  ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, as chapters do; NaN
+  ##   where library returns NaN is equality too, since conformal norms return it.
+  result = newStmtList()
+  let (m, n) = (ident"m", ident"n")  # plain idents, so expression and dense form bind them
+  for p in measurands:
+    if p.reference.len > 0: continue
+    let
+      expression = parseExpr(p.expression)
+      dense =
+        if p.arity == 2: newCall(ident(p.denseNameOf), m, n)
+        else: newCall(ident(p.denseNameOf), m)
+      pool_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
+      pool_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
+      name = newLit(p.id)
+    result.add quote do:
+      test `name`:
+        for i in 0 ..< OBJECTS:
+          let
+            j = (i * 7 + 3) mod OBJECTS
+            (expected, got) = block:
+              let `m` {.used.} = `pool_m`[i]
+              let `n` {.used.} = `pool_n`[j]
+              (`expression`, `dense`)
+          check hasNan(got) == hasNan(expected)  # NaN exactly where library returns it
+          if not hasNan(expected): check isNear(got, expected)  # dense form equals library
 
 
 fillPools(0)
@@ -188,6 +228,10 @@ suite "Chapter 3":
   checkReferences(CATALOGUE, "3")
 
 
+suite "Dense forms":
+  checkDenseForms(CATALOGUE)
+
+
 suite "Measurements":
   test "summarise reads median and minimum per object":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
@@ -204,6 +248,8 @@ suite "Measurements":
       check measurement.ns_min <= measurement.ns_median  # minimum bounds median
       check MEASUREMENTS[Implementation.Reference][index].is_measured ==
         (measurand.reference.len > 0)  # reference implementation present where written
+      check MEASUREMENTS[Implementation.Dense][index].is_measured ==
+        (measurand.reference.len == 0)  # dense form present on every general measurand
 
 
   test "runs combine to median of run medians, least minimum, and each run's median":
@@ -231,10 +277,10 @@ suite "Allocation":
     check allocationsOf(after - before) > 0  # positive control: counter moved
     check control[0] == 1.0  # control kept alive
 
-  test "no measurand allocates in either implementation":
+  test "no measurand allocates in any implementation":
     measureCatalogue()
     for index, measurand in CATALOGUE:
-      for it in [Implementation.Library, Implementation.Reference]:
+      for it in Implementation:
         let measurement = MEASUREMENTS[it][index]
         if measurement.is_measured:
           check measurement.allocations == 0  # heap untouched over every round
@@ -548,6 +594,32 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         check b.multiplies <= total[f.name].multiplies  # derivation is sound
         inc compared
     check compared > 0  # law is vacuous where nothing is compared
+
+  test "dense form spends multivector lower bound, and moves only operands and result":
+    let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    var roots: seq[string]
+    for f in INSPECTED:
+      if f.symbol.startsWith("dense"): roots.add f.name
+    let total = totals(INSPECTED, roots)
+    var compared = 0
+    for p in CATALOGUE:
+      if p.reference.len > 0: continue
+      let b = p.boundOf(metric)
+      for f in INSPECTED:
+        if f.symbol != p.denseNameOf: continue
+        let counts = total[f.name]
+        checkpoint p.id & " spends " & $counts.multiplies & " against " & $b.multiplies
+        if b.is_derived and b.is_chain:
+          # Chain bound sums steps over dense operands; step reading zeros of one before it
+          #   spends less, so dense form may stand below estimate and never above it.
+          check counts.multiplies <= b.multiplies  # chain at or below its estimate
+        elif b.is_derived:
+          check counts.multiplies == b.multiplies  # one rule, met exactly
+        check counts.zero_fills == 0 and counts.intermediates == 0  # no fill, no local
+        check counts.copies == 0 and counts.calls == 0 and counts.checks == 0  # straight line
+        inc compared
+        break
+    check compared == CATALOGUE.countIt(it.reference.len == 0)  # every general row has one
 
   test "own nimcache holds every catalogued symbol at its arity":
     let functions = INSPECTED

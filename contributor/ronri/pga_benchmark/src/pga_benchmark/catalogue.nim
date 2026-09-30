@@ -572,6 +572,12 @@ func shapeNameOf*(p: Measurand): string =
     result.add (if counts[i] > 1: $counts[i] & " " else: "") & step
 
 
+func denseNameOf*(p: Measurand): string =
+  ## Name dense form of general measurand, as `denseWedgeAnti` for `wedge_anti`.
+  result = "dense"
+  for word in p.id.split('_'): result.add word.capitalizeAscii
+
+
 func stepsOf*(p: Measurand): seq[string] =
   ## Name every step of measurand's chain in order, empty where it carries none.
   for part in p.chainOf: result.add $part

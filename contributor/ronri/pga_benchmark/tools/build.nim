@@ -45,7 +45,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, proposals, gaps, guard, head, inspector, model, notes]
-from ../src/pga_benchmark/report import runsCombined
+from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
@@ -208,7 +208,7 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
   result = plain
   result["taken"]["is_allocation_measured"] = instrumented{"taken", "is_allocation_measured"}
   for id, measurand in instrumented{"measurands"}.pairs:
-    for implementation in ["library", "reference"]:
+    for implementation in IMPLEMENTATIONS:
       let measurement = measurand{implementation}
       if measurement.isNil or measurement.kind != JObject: continue
       if not result["measurands"].hasKey(id): continue

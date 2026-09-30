@@ -49,6 +49,7 @@ proc benchDocument(): JsonNode =
       "arity": int(measurand.arity),
       "library": measurementNode(MEASUREMENTS[Implementation.Library][index]),
       "reference": measurementNode(MEASUREMENTS[Implementation.Reference][index]),
+      "dense": measurementNode(MEASUREMENTS[Implementation.Dense][index]),
     }
   result["measurands"] = measurands
 
@@ -79,9 +80,12 @@ proc main(): int =
     let
       l = MEASUREMENTS[Implementation.Library][index]
       r = MEASUREMENTS[Implementation.Reference][index]
+      d = MEASUREMENTS[Implementation.Dense][index]
     var line = measurand.id.alignLeft(34) & formatFloat(l.ns_median, ffDecimal, 2).align(9) & " ns"
     if r.is_measured:
       line.add "  reference " & formatFloat(r.ns_median, ffDecimal, 2).align(8) & " ns"
+    if d.is_measured:
+      line.add "  dense " & formatFloat(d.ns_median, ffDecimal, 2).align(8) & " ns"
     if l.allocations > 0: line.add "  allocations " & $l.allocations
     if l.nan_share > 0.0: line.add "  nan " & formatFloat(l.nan_share, ffDecimal, 2)
     echo line

@@ -1,4 +1,4 @@
-## Time and count every catalogued measurand in both implementations, from one entry.
+## Time and count every catalogued measurand in every implementation, from one entry.
 ##   Each measurand becomes one timed loop over its pool, `ROUNDS` times, median and minimum
 ##   nanoseconds per object reported. Around every timed run, allocation counters are read
 ##   so any heap use shows as count, and every result is folded into one sink after timing
@@ -10,6 +10,9 @@
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
 ##     (Article VII.4); driver runs plain build for timings and instrumented one for counts.
+##   Dense form runs beside library on general measurand, from same pools, and never on typed
+##     one; reference runs on typed measurand alone.
+##
 ##   Cost: measurements arrays hold one entry per measurand per implementation; sink is float.
 ##   Cost: pairing slot i with slot (7i + 3) mod OBJECTS costs integer ops in both.
 
@@ -19,17 +22,18 @@ import std/[algorithm, macros, math, monotimes, strutils, times]
 
 import pga
 
-import ./[catalogue, kinds, pools, widening]
+import ./[catalogue, dense, kinds, pools, widening]
 
 
 type
   Implementation* {.pure.} = enum
     ## Define which implementation measurement belongs to.
-    Library, Reference
+    Library, Reference, Dense
   Measurement* = object
     ## Define measurements of one measurand in one implementation.
     is_measured*: bool
-      ## False where implementation has no expression, i.e. reference absent.
+      ## False where implementation has no expression: reference on general measurand, dense
+      ##   form on typed one.
     ns_median*, ns_min*: float
       ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
@@ -128,8 +132,13 @@ macro emitMeasurand(
   ## Emit timed run of one measurand in one implementation into
   ##   `MEASUREMENTS[implementation][index]`.
   let expression =
-    if implementation == Implementation.Library: measurand.expression
-    else: measurand.reference
+    case implementation
+    of Implementation.Library: measurand.expression
+    of Implementation.Reference: measurand.reference
+    of Implementation.Dense:
+      if measurand.reference.len > 0: ""
+      elif measurand.arity == 2: measurand.denseNameOf & "(m, n)"
+      else: measurand.denseNameOf & "(m)"
   if expression.len == 0:
     let implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     return quote do:
@@ -139,14 +148,12 @@ macro emitMeasurand(
     (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
     implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     pool_m = parseExpr(
-      if implementation == Implementation.Library:
-        libraryPoolName(measurand.operands[0], measurand.grade)
-      else: referencePoolName(measurand.operands[0]),
+      if implementation == Implementation.Reference: referencePoolName(measurand.operands[0])
+      else: libraryPoolName(measurand.operands[0], measurand.grade),
     )
     pool_n = parseExpr(
-      if implementation == Implementation.Library:
-        libraryPoolName(measurand.operands[1], measurand.grade)
-      else: referencePoolName(measurand.operands[1]),
+      if implementation == Implementation.Reference: referencePoolName(measurand.operands[1])
+      else: libraryPoolName(measurand.operands[1], measurand.grade),
     )
   quote do:
     block:
@@ -179,10 +186,11 @@ macro emitMeasurand(
 
 
 macro emitCatalogue(): untyped =
-  ## Emit every measurand in both implementations, in catalogue order.
+  ## Emit every measurand in every implementation, in catalogue order, so implementations of
+  ##   one measurand run one after another and drift of machine lands on each alike.
   result = newStmtList()
   for index in 0 ..< CATALOGUE.len:
-    for implementation in [Implementation.Library, Implementation.Reference]:
+    for implementation in Implementation:
       result.add newCall(
         bindSym"emitMeasurand",
         newLit(index),
@@ -192,7 +200,7 @@ macro emitCatalogue(): untyped =
 
 
 proc measureCatalogue*() =
-  ## Time and count every measurand in both implementations; pools must be filled first.
+  ## Time and count every measurand in every implementation; pools must be filled first.
   ##   First recorded round warms caches; median over rounds discounts it, minimum shows
   ##   warmed cost.
   emitCatalogue()
