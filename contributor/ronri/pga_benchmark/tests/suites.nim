@@ -830,6 +830,12 @@ suite "Gaps":
     check decidedOf(Rule.Missing, ALGEBRAS, gaps).status == Status.Met  # nothing missing
     check decidedOf(Rule.Cayley, ALGEBRAS, gaps).status == Status.Unmeasured  # not readable here
 
+  test "causes count library functions, never reference or dense form":
+    check isLibraryModule("pga/operators")  # library's own
+    check not isLibraryModule("reference/rigid3")  # typed reference
+    check not isLibraryModule("dense")  # dense form, as bench build names it
+    check not isLibraryModule("pga_benchmark/dense")  # dense form, as test build names it
+
   test "rendered list fits width and names every gap":
     let (text, docket) = generate(ALGEBRAS, docketOf(nil))
     var widest = 0
@@ -1115,7 +1121,8 @@ suite "Pages":
       dimensions: 4,
       measurements_static: %*{
         "measurands": {
-          "wedge": {"library": "∧(M,M)", "symbol": "∧", "bound": bound},
+          "wedge": {"library": "∧(M,M)", "dense": "denseWedge(M,M)", "symbol": "∧",
+            "bound": bound},
           "wedge_point_point": {"library": "∧(M,M)", "reference": "wedge(P,P)", "symbol": "∧",
             "bound": bound},
         },
@@ -1169,14 +1176,24 @@ suite "Pages":
     check ">×6.75<" in body and ">×1.50<" in body  # each over what it is measured against
     check body.count("<b style=") == 2  # tick at multivector bound, typed row only, both counts
 
-  test "time bar is median of run ratios, spanning least and greatest run":
+  test "time bar is median of run ratios, and each run is one tick":
     let
       runs = %*{"wedge_point_point": {
         "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
         "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
       body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
     check ">×3.00<" in body  # median of 3.00, 2.00 and 3.67; ratio of medians reads 2.75
-    check "3 runs, ×2.00 to ×3.67" in body and "<s style=" in body  # whisker over runs
+    check "runs ×3.00 ×2.00 ×3.67" in body  # each run named, in run order
+    check body.count("<s style=") == 3  # one tick for each run
+
+  test "general row times against its dense form":
+    let
+      runs = %*{"wedge": {
+        "library": {"ns_median": 8.5, "nan_share": 0.0, "ns_runs": [8.0, 9.0]},
+        "dense": {"ns_median": 3.5, "nan_share": 0.0, "ns_runs": [4.0, 3.0]}}}
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+    check "library 8.5 ns, dense form 3.5 ns" in body  # general row names what it times against
+    check ">×2.50<" in body and body.count("<s style=") == 2  # median of 2.00 and 3.00, two ticks
 
   test "count over reference that spends none reads its excess, never infinite ratio":
     let body = docketBody([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")

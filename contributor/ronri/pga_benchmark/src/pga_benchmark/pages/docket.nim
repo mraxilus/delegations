@@ -2,10 +2,11 @@
 ##   Docket is monitoring page: what library spends now, read from committed baselines, and how
 ##     far each measurand sits from multivector lower bound and type optimised lower bound. It
 ##     shows nothing baselines do not hold, so it is current exactly when they are.
-##   Each measure of row is one deviation bar: library over lower bound it is measured against,
-##     on one log axis whole page shares, so ×1 is at bound and length reads as factor. Typed
-##     row is measured against reference and ticks multivector lower bound; general row is
-##     measured against multivector lower bound. Time bar spans least and greatest run.
+##   Each measure of row is one deviation bar: library over what it is measured against, on one
+##     log axis whole page shares, so ×1 is at that and length reads as factor. Typed row is
+##     measured against reference, and its count bars tick multivector lower bound. General row
+##     counts against multivector lower bound, and times against dense form (`dense.nim`).
+##     Time bar ends at median of run ratios, and each run is one tick on it.
 ##   Proposals close on it: each proposal's evaluation overlays its changed functions, and docket
 ##     counts how many measurands would then stand at bound.
 ##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key,
@@ -13,7 +14,6 @@
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
-##   Cost: general row has no reference, so its time shows nanoseconds and no bar.
 
 {.experimental: "strictFuncs".}
 
@@ -21,7 +21,7 @@ import std/[algorithm, json, math, options, sequtils, strutils, tables]
 
 import ../markdown
 import ./shell
-from ../report import median
+from ../report import isLibraryModule, median
 
 
 type
@@ -40,10 +40,13 @@ type
     ## Define one measurand as docket shows it.
     id, measurand, symbol, expression, cite: string
     is_general: bool
-    library, reference: Option[Figures]
+    library, reference, dense: Option[Figures]
     bound: Option[BoundFigures]
-    ns_library, ns_reference, share_nan: float
-    ns_runs_library, ns_runs_reference: seq[float]
+    ns_library, ns_against, share_nan: float
+      ## Library time, and time of what row is timed against: reference on typed row, dense
+      ##   form on general row.
+    ns_runs_library, ns_runs_against: seq[float]
+      ## Median of each run, in run order, paired by index.
   Axis = object
     ## Define log axis every deviation bar on page shares: whole powers of two, low to high.
     exponent_low, exponent_high: int
@@ -57,8 +60,8 @@ type
       ## Lower bound is zero and library spends above it, so bar runs to axis end.
     tick: float
       ## Where multivector lower bound stands, as ratio; zero where none is marked.
-    runs_low, runs_high: float
-      ## Least and greatest run ratio; zero where runs are not recorded.
+    runs: seq[float]
+      ## Ratio of each run, in run order; empty where runs are not recorded.
     label, tip: string
       ## Text beside bar, and text on hover.
   Tally = object
@@ -147,11 +150,15 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     let
       key_library = measurand{"library"}.getStr
       key_reference = measurand{"reference"}.getStr
+      key_dense = measurand{"dense"}.getStr
       timing = timings{id}
       timing_library = if timing.isNil: nil else: timing{"library"}
-      timing_reference = if timing.isNil: nil else: timing{"reference"}
+      timing_against =
+        if timing.isNil: nil
+        elif key_reference.len > 0: timing{"reference"}
+        else: timing{"dense"}
       is_timed_library = not timing_library.isNil and timing_library.kind == JObject
-      is_timed_reference = not timing_reference.isNil and timing_reference.kind == JObject
+      is_timed_against = not timing_against.isNil and timing_against.kind == JObject
     result.add Row(
       id: ids{"ids", sheet.name & "/" & id}.getStr,
       measurand: id,
@@ -162,12 +169,13 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       library: figuresOf(functions{key_library}),
       reference:
         if key_reference.len == 0: none(Figures) else: figuresOf(functions{key_reference}),
+      dense: if key_dense.len == 0: none(Figures) else: figuresOf(functions{key_dense}),
       bound: boundOf(measurand{"bound"}, width),
       ns_library: if is_timed_library: timing_library{"ns_median"}.getFloat else: 0.0,
-      ns_reference: if is_timed_reference: timing_reference{"ns_median"}.getFloat else: 0.0,
+      ns_against: if is_timed_against: timing_against{"ns_median"}.getFloat else: 0.0,
       share_nan: if is_timed_library: timing_library{"nan_share"}.getFloat else: 0.0,
       ns_runs_library: if is_timed_library: runsOf(timing_library) else: @[],
-      ns_runs_reference: if is_timed_reference: runsOf(timing_reference) else: @[],
+      ns_runs_against: if is_timed_against: runsOf(timing_against) else: @[],
     )
   result.sort(proc (left, right: Row): int = cmp(left.id, right.id))
 
@@ -211,19 +219,19 @@ func ratioCount(row: Row; is_bytes: bool): float =
 
 
 func ratiosRuns(row: Row): seq[float] =
-  ## Read library over reference time of each run, paired by index, since one run times both;
-  ##   empty where runs are not recorded on both.
-  if row.ns_runs_library.len != row.ns_runs_reference.len: return
+  ## Read library time over what row is timed against, run by run, paired by index since one
+  ##   run times both; empty where runs are not recorded on both.
+  if row.ns_runs_library.len != row.ns_runs_against.len: return
   for index, ns in row.ns_runs_library:
-    if ns > 0 and row.ns_runs_reference[index] > 0: result.add ns / row.ns_runs_reference[index]
+    if ns > 0 and row.ns_runs_against[index] > 0: result.add ns / row.ns_runs_against[index]
 
 
 func ratioTime(row: Row): float =
-  ## Read library over reference time: median of run ratios, or ratio of medians where runs are
-  ##   not recorded; zero on general row and where either is untimed.
-  if row.is_general or row.ns_library <= 0 or row.ns_reference <= 0: return 0.0
+  ## Read library time over what row is timed against: median of run ratios, or ratio of
+  ##   medians where runs are not recorded; zero where either is untimed.
+  if row.ns_library <= 0 or row.ns_against <= 0: return 0.0
   let ratios = row.ratiosRuns
-  if ratios.len > 0: median(ratios) else: row.ns_library / row.ns_reference
+  if ratios.len > 0: median(ratios) else: row.ns_library / row.ns_against
 
 
 func positionOf(axis: Axis; ratio: float): float =
@@ -262,7 +270,7 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
     ## Read share of library's modelled bytes that are zero fill, in percent.
     var total, zeroed: int
     for _, function in sheet.measurements_static{"functions"}.pairs:
-      if function{"module"}.getStr.startsWith("reference"): continue
+      if not function{"module"}.getStr.isLibraryModule: continue
       total += function{"movement", "bytes_moved"}.getInt
       zeroed += function{"movement", "bytes_zeroed"}.getInt
     if total == 0: 0 else: int(round(100.0 * zeroed.float / total.float))
@@ -278,7 +286,8 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
   let
     general = tallyOf(rows, false)
     typed = tallyOf(rows, true)
-    ratios = rows.mapIt(it.ratioTime).filterIt(it > 0).sorted
+    ratios_general = rows.filterIt(it.is_general).mapIt(it.ratioTime).filterIt(it > 0).sorted
+    ratios_typed = rows.filterIt(not it.is_general).mapIt(it.ratioTime).filterIt(it > 0).sorted
     fill = fillShare(sheet)
   result = "<dl class=\"facts\">"
   for (tally, name_class, noun) in [(general, "typed-off", "operations"),
@@ -288,9 +297,11 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
       "<div class=\"" & name_class & "\"><dt>" & $tally.at_bytes & "/" & $tally.bounded &
       "</dt><dd>at it on bytes moved</dd></div>"
   result.add "<div><dt>" & $fill & "%</dt><dd>of library's modelled bytes are zero fill</dd></div>"
-  if ratios.len > 0:
-    result.add "<div class=\"typed-only\"><dt>" & ratioText(ratios[ratios.len div 2]) &
-      "</dt><dd>median time over reference, worst " & ratioText(ratios[^1]) & "</dd></div>"
+  for (ratios, name_class, against) in [(ratios_general, "typed-off", "dense form"),
+      (ratios_typed, "typed-only", "reference")]:
+    if ratios.len == 0: continue
+    result.add "<div class=\"" & name_class & "\"><dt>" & ratioText(ratios[ratios.len div 2]) &
+      "</dt><dd>median time over " & against & ", worst " & ratioText(ratios[^1]) & "</dd></div>"
   result.add "</dl>"
   let sums = [(general, "typed-off"), (typed, "typed-only")]
   result.add "<div class=\"aggregate\"><div class=\"legend\"><span class=\"library\">library " &
@@ -347,8 +358,8 @@ func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
       result.label = ratioText(result.ratio)
 
   func timeDeviation(row: Row): Deviation =
-    ## Read deviation of time: median run ratio over reference, spanning least and greatest
-    ##   run; nanoseconds alone where no reference is timed.
+    ## Read deviation of time: median run ratio over reference on typed row and over dense
+    ##   form on general row, with each run's ratio; nanoseconds alone where nothing else is timed.
     result.name_measure = "time"
     if row.ns_library <= 0:
       result.label = "untimed"
@@ -357,25 +368,20 @@ func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
     result.tip = "library " & row.ns_library.fixed(1) & " ns"
     let ratio = row.ratioTime
     if ratio == 0:
-      let runs = row.ns_runs_library
       result.label = row.ns_library.fixed(1) & " ns"
-      if runs.len > 1:
-        result.tip.add ", " & $runs.len & " runs, " & runs.min.fixed(1) & " to " &
-          runs.max.fixed(1) & " ns"
       return
     let ratios = row.ratiosRuns
     result.ratio = ratio
     result.label = ratioText(ratio)
-    result.tip.add ", reference " & row.ns_reference.fixed(1) & " ns"
+    result.tip.add ", " & (if row.is_general: "dense form " else: "reference ") &
+      row.ns_against.fixed(1) & " ns"
     if ratios.len > 1:
-      result.runs_low = ratios.min
-      result.runs_high = ratios.max
-      result.tip.add ", " & $ratios.len & " runs, " & ratioText(result.runs_low) & " to " &
-        ratioText(result.runs_high)
+      result.runs = ratios
+      result.tip.add ", runs " & ratios.mapIt(ratioText(it)).join(" ")
 
   func deviationHtml(deviation: Deviation; axis: Axis): string =
     ## Render one deviation bar on shared axis: bar from ×1, tick at multivector lower bound,
-    ##   whisker over least and greatest run; bare label where no ratio reads.
+    ##   one tick for each run; bare label where no ratio reads.
     let origin = axis.positionOf(1.0)
     var marks: string
     if deviation.is_over_zero:
@@ -387,11 +393,8 @@ func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
         min(origin, at).fixed & "%;width:" & abs(at - origin).fixed & "%\"></i>"
     if deviation.tick > 0:
       marks.add "<b style=\"left:" & axis.positionOf(deviation.tick).fixed & "%\"></b>"
-    if deviation.runs_high > 0:
-      let
-        low = axis.positionOf(deviation.runs_low)
-        high = axis.positionOf(deviation.runs_high)
-      marks.add "<s style=\"left:" & low.fixed & "%;width:" & (high - low).fixed & "%\"></s>"
+    for run in deviation.runs:
+      marks.add "<s style=\"left:" & axis.positionOf(run).fixed & "%\"></s>"
     let
       is_bare = deviation.ratio == 0 and not deviation.is_over_zero
       name = if deviation.name_measure == "bytes": "bytes moved" else: deviation.name_measure
@@ -402,6 +405,7 @@ func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
 
   func detail(row: Row): string =
     ## Render row's breakdown: expression, citation, shape, time, and counts by cause.
+    ##   Dense form stands beside library on general row, as reference does on typed one.
     let shape =
       if row.bound.isNone: "no derived shape"
       elif row.bound.get.is_chain: "chain: " & row.bound.get.steps.join(" → ")
@@ -417,14 +421,15 @@ func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
     if row.ns_library > 0:
       result.add "<p>Time, median of " & $max(1, row.ns_runs_library.len) & " runs: library " &
         row.ns_library.fixed(1) & " ns"
-      if not row.is_general and row.ns_reference > 0:
-        result.add ", reference " & row.ns_reference.fixed(1) & " ns"
+      if row.ns_against > 0:
+        result.add (if row.is_general: ", dense form " else: ", reference ") &
+          row.ns_against.fixed(1) & " ns"
       result.add ".</p>"
     result.add "<div class=\"table\"><table><tr><th></th><th>multiplies</th><th>bytes read</th>" &
       "<th>written</th><th>zero fill</th><th>intermediates</th><th>copies</th>" &
       "<th>bytes moved</th></tr>"
     for (name, side, name_class) in [("library", row.library, ""),
-        ("reference", row.reference, " class=\"typed-only\"")]:
+        ("reference", row.reference, " class=\"typed-only\""), ("dense form", row.dense, "")]:
       if side.isNone: continue
       let figures = side.get
       result.add "<tr" & name_class & "><td>" & name & "</td><td>" & grouped(figures.multiplies) &
@@ -505,15 +510,15 @@ func proposalsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
 
 const
   CONTROLS = """<div class="controls"><div class="legend"><span class="mark-bar">library over
-its lower bound, log scale</span><span class="mark-origin typed-off">×1: multivector lower
-bound</span><span class="mark-origin typed-only">×1: reference on typed rows, multivector lower
-bound on general ones</span><span class="mark-tick typed-only">multivector lower bound</span>
-<span class="mark-runs typed-only">least and greatest run</span></div>
+what it is measured against, log scale</span><span class="mark-origin typed-off">×1: multivector
+lower bound for counts, dense form for time</span><span class="mark-origin typed-only">×1:
+reference on typed rows; multivector lower bound and dense form on general ones</span><span
+class="mark-tick typed-only">multivector lower bound</span><span class="mark-runs">each run</span>
+</div>
 <fieldset><legend>Sort</legend>
 <label><input type="radio" name="sort" id="sort-bytes" checked> bytes over lower bound</label>
 <label><input type="radio" name="sort" id="sort-multiplies"> multiplies over lower bound</label>
-<label class="typed-only"><input type="radio" name="sort" id="sort-time"> time over
-reference</label>
+<label><input type="radio" name="sort" id="sort-time"> time ratio</label>
 <label><input type="radio" name="sort" id="sort-docket"> docket order</label></fieldset>
 <fieldset><legend>Show</legend>
 <label><input type="radio" name="show" id="show-all" checked> all</label>
@@ -539,11 +544,14 @@ multiplies    = terms metric keeps                 wedge 3^D; geometric 4 per di
                                                    3 per null one
 chain: multiplies sum steps of its definition, an estimate
 
-bar           = library ÷ lower bound, log scale   typed row: reference, tick at
-                                                   multivector lower bound;
-                                                   general row: multivector lower bound
-time          = median over runs of library ÷ reference within each run
-                whisker from least to greatest of those run ratios</pre>
+bar           = library ÷ what row is measured against, log scale
+                typed row: reference, tick at multivector lower bound
+                general row: multivector lower bound, and dense form for time
+time          = median over runs of library ÷ that, within each run
+                one tick at each run's ratio
+
+dense form    = each slot once, as sum of terms library's tables keep: no fill,
+                no intermediate, no call; operand already a product binds scalars</pre>
 <p class="note">Bytes are modelled from the C, not measured. They rank two versions of one
 operation, and do not predict time across different operations. Inspect one yourself with
 <code>nim r tools/build.nim show ∧</code>.</p></details></section>"""
@@ -605,9 +613,8 @@ func docketBody*(
     "<div class=\"head\" aria-hidden=\"true\"><span>Operation</span>" &
       "<span class=\"deviation-head\"><span class=\"name\">Multiplies</span>" & scale(axis, "") &
       "</span><span class=\"deviation-head\"><span class=\"name\">Bytes moved</span>" &
-      scale(axis, "") & "</span><span class=\"deviation-head\"><span class=\"name\">Time" &
-      "<span class=\"typed-off\">, ns</span><span class=\"typed-only\"> over reference</span>" &
-      "</span>" & scale(axis, " typed-only") & "</span></div>"
+      scale(axis, "") & "</span><span class=\"deviation-head\"><span class=\"name\">Time</span>" &
+      scale(axis, "") & "</span></div>"
 
   var every: seq[seq[Row]]
   for sheet in sheets: every.add rowsOf(sheet, ids)

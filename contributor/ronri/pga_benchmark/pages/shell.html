@@ -108,8 +108,8 @@ section.block { padding-block: 28px 0; display: grid; gap: 12px;
 .legend .mark-origin::before, .legend .mark-tick::before { width: 2px; height: 12px;
   border-radius: 0; vertical-align: -2px; background: var(--ink-2); }
 .legend .mark-tick::before { background: var(--bound); }
-.legend .mark-runs::before { height: 8px; border-radius: 0; border-inline: 2px solid var(--ink);
-  background: linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat; }
+.legend .mark-runs::before { width: 2px; height: 10px; border-radius: 0; vertical-align: -2px;
+  background: var(--ink); }
 
 .deviation { display: grid; grid-template-columns: minmax(0, 1fr) 5.2rem; gap: 8px;
   align-items: center; }
@@ -127,8 +127,8 @@ section.block { padding-block: 28px 0; display: grid; gap: 12px;
   background: linear-gradient(90deg, var(--library) 55%, transparent); }
 .axis b { position: absolute; top: 1px; height: 14px; width: 2px; margin-left: -1px;
   background: var(--bound); }
-.axis s { position: absolute; top: 4px; height: 8px; border-inline: 2px solid var(--ink);
-  background: linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat; }
+.axis s { position: absolute; top: 3px; height: 10px; width: 2px; margin-left: -1px;
+  background: var(--ink); opacity: 0.75; }
 .deviation.bare .axis { visibility: hidden; }
 .deviation-head { display: grid; grid-template-columns: minmax(0, 1fr) 5.2rem; gap: 2px 8px; }
 .deviation-head .name { grid-column: 1 / -1; }
