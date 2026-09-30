@@ -5,7 +5,7 @@
 ##   build are not comparable; date and machine are ignored, as counts are theirs to vary
 ##   by nothing.
 ##
-##   Cost: findings render as `path:0: message; got value`, so `check` reads as koch does.
+##   Cost: findings render as `path:line: message; got value`, so `check` reads as koch does.
 
 {.experimental: "strictFuncs".}
 
@@ -21,9 +21,11 @@ const BOUNDED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
 
 type
   Finding* = object
-    ## Define one gate failure, located at baseline file.
+    ## Define one gate failure, located at file and line.
     path*: string
-      ## Baseline file, project-relative.
+      ## File failing, project-relative.
+    line*: int
+      ## Line failing, counted from one; zero where whole document fails.
     message*: string
       ## Statement ending with value got.
   Verdict* = object
@@ -42,8 +44,8 @@ const
 
 
 func render*(f: Finding): string =
-  ## Render finding as `path:0: message`, line `0` since document is one measurement.
-  f.path & ":0: " & f.message
+  ## Render finding as `path:line: message`, line `0` where whole document fails.
+  f.path & ":" & $f.line & ": " & f.message
 
 
 func text(node: JsonNode; keys: varargs[string]): string =

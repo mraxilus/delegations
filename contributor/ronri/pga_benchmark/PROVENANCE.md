@@ -3,8 +3,8 @@
 | Field   | Value |
 |---------|-------|
 | Harness | Claude Code |
-| Author  | Claude Fable 5.1 |
-| Date    | 2026-09-28 |
+| Author  | Claude |
+| Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 8c8a0bd7dfbb0c7a |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
@@ -323,12 +323,12 @@ wrap.
 
 ## Driver
 
-`tools/build.nim` carries `inspect`, `bench`, `baseline`, `guard`, `drive`, `gaps`, `sweep`,
-`system` and `clean`, dispatched from `case paramStr(1)`, so koch reads the verbs itself.
-`system` prints nothing: the compiler is the toolchain and the library is an Atlas checkout,
-both pinned, and nothing else is fetched. `sweep` compiles the bench at two to six
-dimensions, rigid metric, and prints the medians of the general measurands. It never runs in
-CI.
+`tools/build.nim` carries `inspect`, `bench`, `baseline`, `guard`, `evaluate`, `pages`,
+`published`, `drive`, `gaps`, `show`, `sweep`, `system` and `clean`, dispatched from
+`case paramStr(1)`, so koch reads the verbs itself. `system` prints `git`, `curl` and
+`coreutils`: git reads the library head, and the other two serve `koch fetch-assets`, which
+fetches and checks the faces. `sweep` compiles the bench at two to six dimensions, rigid
+metric, and prints the medians of the general measurands. It never runs in CI.
 
 Verified by hand on 2026-09-13. `nim r tools/build.nim drive` exits 0 on the recorded
 baselines. Lower the total multiplies of `∧(Multivector,Multivector)` in
@@ -339,6 +339,118 @@ Restore it, and the guard returns 0 findings.
 baseline/static_rga4d.json:0: Total `multiplies` of `∧(Multivector,Multivector)` grew;
 got `81`, baseline `80`.
 ```
+
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Driver`: the dispatch, the usage
+string and the header table name the same verbs.
+
+## Changes, proposals and evaluations
+
+**A change is Markdown, and quotes what it edits.** Each file in `changes/` holds a title,
+why, and one section for each edit: a quote of the library at pin, then its replacement. A
+whole-file replacement carries the digest of the file it replaces instead. A quote must occur
+once at pin. A line number moves with every library commit, and a quote moves only when its
+own lines do. So a change that still applies at head still says what it meant.
+
+**A proposal is one directory, with one shape.** `proposal.md` argues the future state,
+`change.md` holds its candidate edits, and `claims.json` names the proposal it builds on and the
+claims that its evaluation checks. A claim is data, so the page shows each verdict beside it. The
+kinds are `suites`, `tables`, `program`, `count` and `build`. Rejected: a proposal as prose
+alone, because nothing could then say whether it still holds at head.
+
+**A proposal keeps its number for good.** Its directory opens with the number, as
+`01-cayley-derivation`, and its title with the citation, as `P01`. `drive` holds the numbers
+unique and without a gap, so no number goes to a second proposal. A proposal that the library
+implements stays, with status `implemented` and the library commit, and a withdrawn one stays
+too. `drive` no longer applies either at pin, and each page keeps its last evaluation. So a
+citation still leads to what was proposed and measured.
+
+A program claim names its program relative to its proposal, so a new directory name moves no
+digest.
+
+**An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
+(the base proposal first), and measures the copy against the pin. It runs the suites of the
+library, reads the static measurements of every function, and times each measurand. The
+binaries of the pin and of the copy run alternately, five times each, so drift of the machine
+lands on both.
+
+The evaluation then checks the claims. The document names the pin and a digest of what it
+tried: every edit, every claim and every program, and never the prose. So an evaluation is current
+exactly while its edits are. Evaluations measure the two
+typed algebras, rga4d and cga5d, which both lower bounds cover.
+
+**The spread comes from the evaluations themselves.** An evaluation that changes no library function
+moves no count, so the range of its time ratios is the range of the machine. The pages state
+the spread beside the figures it qualifies. On 2026-09-29, in this container (linux amd64, 4
+cores), those evaluations gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
+
+Measured variance: `typed-multivectors` applies the same library edits as `cayley-derivation`.
+Its evaluations on 2026-09-29 and 2026-09-30 gave median ratios over every rga4d measurand of
+×1.16, ×1.00, ×1.00, ×1.00 and ×1.01. Over every cga5d measurand, the last four gave ×0.99,
+×1.07, ×0.99 and ×1.01. Alternation does not cancel all drift of a shared machine, so one
+evaluation's time is weak evidence alone. Counts are exact, and carry the verdicts.
+
+The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
+one applied at pin gives files byte-identical to the measured edits.
+The change of `cayley-derivation` reproduces its draft byte for byte, and
+`proposals/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
+and cga5d.
+
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`,
+`Proposals`, `Evaluations` and `Cells`. They cover parse, quote and digest rules, and claim
+kinds. They cover proposal numbers taken twice or skipped, and the status that freezes a
+proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and
+the table serialiser at pin.
+A digest moves with edits, and never with prose.
+
+## Notes
+
+`marginalia/notes.md` holds the notes on library source. Each note quotes the lines it is
+about, and the page computes the line number at build from where the quote stands at pin. A
+quote that no longer occurs once is a finding.
+
+Verified by suite `Notes`: parse, location at pin, and a stale anchor.
+
+## Pages
+
+**Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
+hand-written. The body is rendered in Nim from committed files, so a page says only what those
+files say. The faces are the six that `rga_visualiser` embeds, fetched through
+`koch fetch-assets` and inlined as base64. Interaction is CSS alone: tabs, filters, sort and
+scale are inputs that `:has()` rules read. The page runs no script, so the build is
+deterministic and the digest of a page is the digest of what those files say.
+
+**A publication holds each published page to its build.** `pages/published.json` maps each
+page to its URL and to the digest of the page as built when it was published. `drive` builds
+every page again, and any page whose digest differs is a finding. `README.md` must name the URL
+of every publication, so the two copies of a URL cannot drift apart. Rejected: a page written by
+hand, or by a script outside this project, because nothing held it to the files.
+
+Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
+ratios, and the chip that names removed NaN results.
+
+## Library head
+
+**`drive` holds the pin to library head.** It reads the head of the library repository with
+`git ls-remote`, and compares the tree of the library directory at head with its tree at pin.
+A commit elsewhere in the repository changes nothing measured, so the check compares trees, not
+commits. A pin that lags head is a finding on every push until the pin follows, as the
+Architect chose. So each page shows the library as it stands.
+
+**`drive` holds every measurement and file to the pin.** Each baseline and each evaluation must be
+taken at the pin. Each evaluation must carry the digest of its edits as they are now. Each change
+and proposal must apply at pin, and each note must find its quote.
+
+**`drive` holds the checkout to the pin.** Any edit under the library directory of the
+checkout is a finding. The checkout is under `dependencies/`, which git ignores, so a tool
+that runs over this project reaches it too. A quote would then match text that the pin does
+not hold.
+
+Cost: the verdict of `drive` depends on the library repository as well as on this project.
+The same commit here can pass today and fail after the library moves. That is the purpose of
+the check, and it departs from the rule that a check gives the same verdict on the same code.
+
+Verified by suite `Head`: tree against commit, stamps, digests of edits, the publications and
+the README.
 
 ## Dependencies
 
@@ -585,6 +697,11 @@ ran at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes a rule for Ar
 these measurements.
 
 ## Known limitations
+
+- Evaluations time the two typed algebras only; rga3d and cga4d carry static counts and suites
+  from `drive`, and no evaluation.
+- The `build` claim reads the peak memory and seconds that the compiler reports of itself.
+  It compares two builds on one machine, and is no measurement of the machine.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.

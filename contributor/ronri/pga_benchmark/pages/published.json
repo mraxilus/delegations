@@ -1,0 +1,18 @@
+{
+  "docket": {
+    "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
+    "digest": "f5034cf516a74c9b"
+  },
+  "marginalia": {
+    "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
+    "digest": "a54b4f1fe329aba0"
+  },
+  "cayley-derivation": {
+    "url": "https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q",
+    "digest": "860465ae757b1274"
+  },
+  "typed-multivectors": {
+    "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
+    "digest": "3f8a0a1323f5f6ea"
+  }
+}

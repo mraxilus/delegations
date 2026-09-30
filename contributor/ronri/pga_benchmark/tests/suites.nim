@@ -11,7 +11,14 @@ import std/[algorithm, compilesettings, json, macros, options, sequtils, strutil
 from std/unicode import runeLen
 
 import ../src/pga_benchmark
-import ../src/pga_benchmark/[bound, gaps, guard, inspector, measurements, model, report]
+import ../src/pga_benchmark/[
+  bound, changes, proposals, gaps, guard, head, inspector, markdown, measurements, model, notes,
+  report,
+]
+import ../src/pga_benchmark/pages/[docket, shell, evaluation]
+import ../src/pga_benchmark/cells
+from ../src/pga_benchmark/evaluations import
+  editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
 const
@@ -360,7 +367,8 @@ suite "Inspector":
     check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
-    check functions[1].symbol == "dot" and functions[1].parameters == @["Vector3", "Vector3"]
+    check functions[1].symbol == "dot"  # second declaration
+    check functions[1].parameters == @["Vector3", "Vector3"]  # both parameters
     check functions[1].stem_result == "float" and functions[1].is_inline  # via return type
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
@@ -487,7 +495,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     )
     let m = movement(f, Counts(zero_fills: 1, intermediates: 2, copies: 1), 128)
     check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
-    check m.bytes_zeroed == 128 and m.bytes_copied == 128 and m.bytes_intermediates == 256
+    check m.bytes_zeroed == 128 and m.bytes_copied == 128  # one width each
+    check m.bytes_intermediates == 256  # two locals, one width each
     check m.bytes_moved == 896  # sum of every cause
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
@@ -723,8 +732,8 @@ suite "Gaps":
     check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
       "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
     check decidedOf(Rule.ZeroFills, ALGEBRAS, gaps).evidence.startsWith("2 of 3")  # ∧ and ~
-    check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence ==
-      "1 gaps. The widest is rga4d/wedge_point_point, which spends 81 multiplies against 12."
+    check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence == "1 gaps. The widest is " &
+      "rga4d/wedge_point_point, which spends 81 multiplies against 12."  # widest gap named
     check decidedOf(Rule.Time, ALGEBRAS, gaps).evidence ==
       "2 gaps. The worst is rga4d/wedge_point_point, at 24.1 ns against 1.3 ns."  # worst ratio
     check decidedOf(Rule.Nan, ALGEBRAS, gaps).status == Status.Met  # every share zero
@@ -742,7 +751,7 @@ suite "Gaps":
       text  # cells read library/reference
     check "| G004 | transform_point_motor | – | – | – | – | – | 60.0/5.0 | over |" in
       text  # composed expression has no counts
-    check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
+    check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # proposal verdicts
     check "Gaps: 4. Over 3, met 1, unmeasured 0." in text  # summary
     check docket.next == 5  # docket grew with gaps
 
@@ -750,6 +759,300 @@ suite "Gaps":
     check wrap("aa bb cc", 5) == @["aa bb", "cc"]  # fits, then breaks
     check wrap("aa bb cc", 5, "  ") == @["aa bb", "  cc"]  # continuation indented
     check wrap("∧∧∧ ∧∧∧", 3) == @["∧∧∧", "∧∧∧"]  # runes, not bytes
+
+
+suite "Markdown":
+  test "blocks keep kind, level and line they open on":
+    let blocks = parseBlocks("# Title\n\nWhy it is.\nStill why.\n\n- one\n- two\n\n" &
+      "| a | b |\n|---|---|\n| 1 | 2 |\n")
+    check blocks.len == 4  # heading, paragraph, bullets, table
+    check blocks[0].kind == BlockKind.Heading and blocks[0].level == 1  # title
+    check blocks[1].lines == @["Why it is.", "Still why."] and blocks[1].line == 3  # paragraph
+    check blocks[2].kind == BlockKind.Bullets and blocks[2].lines == @["one", "two"]  # list
+    check blocks[3].kind == BlockKind.Table and blocks[3].lines.len == 3  # rows kept
+
+  test "fence keeps its lines verbatim and closes on run at least as long":
+    let blocks = parseBlocks("````nim\nlet a = 1\n```\n  indented\n````\nafter\n")
+    check blocks[0].kind == BlockKind.Fence and blocks[0].language == "nim"  # after opening run
+    check blocks[0].lines == @["let a = 1", "```", "  indented"]  # shorter run stays inside
+    check blocks[1].kind == BlockKind.Paragraph  # fence closed
+
+  test "inline markup renders, and everything else is escaped":
+    check renderInline("`a < b` and **b** and _c_") ==
+      "<code>a &lt; b</code> and <strong>b</strong> and <em>c</em>"  # three markers
+    check renderInline("[site](https://x.y/z?a=1&b=2)") ==
+      "<a href=\"https://x.y/z?a=1&amp;b=2\">site</a>"  # link escaped once
+    check renderInline("snake_case_name <b>") == "snake_case_name &lt;b&gt;"  # no false italic
+
+  test "table renders header row when second row divides":
+    let html = renderBlocks(parseBlocks("| a | b |\n|---|---|\n| 1 | 2 |\n"))
+    check "<th>a</th>" in html and "<td>1</td>" in html and "---" notin html  # header split
+
+
+suite "Changes":
+  const
+    RECORD = "changes/sign.md"
+    LIBRARY = "let x = 1\nlet y = 2\nlet z = 1\n"
+
+  test "change reads title, why and edits in order":
+    let (change, findings) = parseChange(RECORD, "# Sign\n\nWhy.\n\n## Edit `pga/a.nim`\n\n" &
+      "FENCEnim\nlet y = 2\nFENCE\n\nFENCEnim\nlet y = 3\nFENCE\n".replace("FENCE", "```"))
+    check findings.len == 0  # well formed
+    check change.title == "Sign" and change.why.len == 1  # title and why
+    check change.edits.len == 1 and change.edits[0].path == "pga/a.nim"  # one edit
+    check change.edits[0].quote == "let y = 2"  # first fence quotes
+    check change.edits[0].replacement == "let y = 3"  # second fence replaces
+
+  test "quote found once is replaced; found twice or nowhere is finding":
+    var files = {"pga/a.nim": LIBRARY}.toTable
+    let
+      once = Change(edits: @[Edit(path: "pga/a.nim", quote: "let y = 2", replacement: "let y = 3")])
+      twice = Change(edits: @[Edit(path: "pga/a.nim", quote: " = 1", replacement: " = 4", line: 5)])
+      nowhere = Change(edits: @[Edit(path: "pga/a.nim", quote: "let w", replacement: "")])
+    check applyChange(files, once, RECORD).len == 0  # applies
+    check files["pga/a.nim"] == "let x = 1\nlet y = 3\nlet z = 1\n"  # replaced in place
+    let ambiguous = applyChange(files, twice, RECORD)
+    check ambiguous.len == 1 and ambiguous[0].render ==
+      RECORD & ":5: Quote must occur once in `pga/a.nim`; got `2`."  # never guess
+    check applyChange(files, nowhere, RECORD).len == 1  # stale quote
+
+  test "whole-file replacement holds to digest of file at pin":
+    var files = {"pga/a.nim": LIBRARY}.toTable
+    let
+      fresh = Change(edits: @[
+        Edit(path: "pga/a.nim", replacement: "new\n", digest: digestOf(LIBRARY))
+      ])
+      stale = Change(edits: @[Edit(path: "pga/a.nim", replacement: "new\n", digest: "0")])
+    check applyChange(files, stale, RECORD).len == 1  # file moved on at head
+    check applyChange(files, fresh, RECORD).len == 0 and files["pga/a.nim"] == "new\n"  # replaced
+
+  test "section that is neither edit nor replace is finding":
+    let (_, findings) = parseChange(RECORD, "# Sign\n\n## Rename things\n")
+    check findings.len == 1 and "neither Edit nor Replace" in findings[0].message  # malformed
+
+
+suite "Notes":
+  const
+    RECORD = "marginalia/notes.md"
+    SOURCE = "Notes.\n\n## Odd grade\n\n`pga/a.nim` · decide\n\n" &
+      "FENCEnim\nlet y = 2\nFENCE\n\nSay why.\n"
+
+  test "note reads title, file, status, quote and body":
+    let (notes, findings) = parseNotes(RECORD, SOURCE.replace("FENCE", "```"))
+    check findings.len == 0 and notes.lead.len == 1 and notes.items.len == 1  # one note
+    let note = notes.items[0]
+    check note.title == "Odd grade" and note.path == "pga/a.nim"  # heading, then file
+    check note.status == "decide"  # verdict after file
+    check note.quote == "let y = 2" and note.body.len == 1  # anchor and body
+
+  test "anchor is located at pin, and stale anchor is finding":
+    let
+      (notes, _) = parseNotes(RECORD, SOURCE.replace("FENCE", "```"))
+      files = {"pga/a.nim": "let x = 1\nlet y = 2\n"}.toTable
+      moved = {"pga/a.nim": "let y = 3\n"}.toTable
+    check checkAnchors(notes, files, RECORD).len == 0  # quote found once
+    check notes.items[0].lineAt(files) == 2  # located where it stands
+    check checkAnchors(notes, moved, RECORD).len == 1  # quote gone from library
+
+
+suite "Head":
+  const PIN = "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315"
+
+  test "pin passes when library tree is head's, whatever repository commit":
+    check checkHead(PIN, "tree1", "ffffffff", "tree1", "atlas.lock").len == 0  # same tree
+    let lag = checkHead(PIN, "tree1", "ffffffff", "tree2", "atlas.lock")
+    check lag.len == 1 and "Pin lags library head" in lag[0].message  # library moved
+    check checkHead(PIN, "tree1", "", "", "atlas.lock").len == 1  # head unread is finding
+
+  test "measurement and evaluation must be taken at pin":
+    let
+      fresh = %*{"taken": {"pga": PIN}, "edits_digest": "d1"}
+      stale = %*{"taken": {"pga": "0bc4655"}, "edits_digest": "d1"}
+    check checkStamp(fresh, PIN, "baseline/runtime_rga4d.json").len == 0  # at pin
+    check checkStamp(stale, PIN, "baseline/runtime_rga4d.json").len == 1  # re-take
+    check checkEvaluation(fresh, PIN, "d1", "evaluations/sign.json").len == 0  # current
+    check checkEvaluation(fresh, PIN, "d2", "evaluations/sign.json").len == 1  # edits changed since
+
+  test "built page must match digest it was published at, and README its URL":
+    let
+      built = {"docket": "a1", "marginalia": "b2"}.toTable
+      publications = %*{
+        "docket": {"url": "https://x/1", "digest": "a1"},
+        "marginalia": {"url": "https://x/2", "digest": "b0"},
+        "retired": {"url": "https://x/3", "digest": "c3"},
+      }
+      readme = "Pages: https://x/1 and https://x/2 and https://x/3."
+      findings = checkPublished(built, publications, readme, "pages/published.json")
+    check findings.len == 2  # marginalia changed, retired page left in publications
+    check "`marginalia`" in findings[0].message or
+      "`marginalia`" in findings[1].message  # changed page named
+    check checkPublished(built, publications, "Pages: https://x/1.", "p").len == 4  # URLs unnamed
+
+suite "Proposals":
+  const
+    DIRECTORY = "proposals/01-sign"
+    RECORD = "# P01: Sign\n\nWhy.\n"
+
+  func numbered(number: int; status = "proposed"): Proposal =
+    ## Read well-formed proposal at number, with status.
+    let
+      directory = "proposals/" & align($number, 2, '0') & "-p" & $number
+      heading = "# P" & align($number, 2, '0') & ": P\n"
+    parseProposal(heading, "", %*{"status": status, "implemented_in": "abc", "claims": []},
+      directory)[0]
+
+  test "proposal reads number, title, status, base proposal and claims of every known kind":
+    let
+      claims = %*{"status": "proposed", "builds_on": "base", "claims": [{"kind": "suites"},
+        {"kind": "build", "algebra": "rga6d", "metric": "peakmem", "at_most": 0.7},
+        {"kind": "program", "path": "p.nim", "algebras": ["rga4d"]}]}
+      (proposal, findings) = parseProposal(RECORD, "", claims, DIRECTORY)
+    check findings.len == 0 and proposal.title == "Sign"  # well formed, citation read off
+    check proposal.number == 1 and proposal.name == "sign"  # number, then name, from path
+    check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
+    check proposal.builds_on == "base" and proposal.claims.len == 3  # chain and claims
+    check proposal.programsOf == @["proposals/01-sign/p.nim"]  # program beside its proposal
+
+  test "unknown claim, missing title and claims that are not JSON are findings":
+    let
+      odd = %*{"status": "proposed", "claims": [{"kind": "vibes"}]}
+      (_, unknown) = parseProposal(RECORD, "", odd, DIRECTORY)
+      (_, untitled) = parseProposal("Why.\n", "", %*{"status": "proposed", "claims": []},
+        DIRECTORY)
+      (_, broken) = parseProposal(RECORD, "", nil, DIRECTORY)
+    check unknown.len == 1 and "`vibes`" in unknown[0].message  # never skipped in silence
+    check untitled.len == 1 and untitled[0].path == DIRECTORY & "/proposal.md"  # needs title
+    check broken.len == 1 and broken[0].path == DIRECTORY & "/claims.json"  # needs object
+
+  test "path without number, title without citation and unknown status are findings":
+    let
+      claims = %*{"status": "proposed", "claims": []}
+      (_, unnumbered) = parseProposal(RECORD, "", claims, "proposals/sign")
+      (_, uncited) = parseProposal("# Sign\n", "", claims, DIRECTORY)
+      (_, unplaced) = parseProposal(RECORD, "", %*{"status": "dreamt", "claims": []}, DIRECTORY)
+    check unnumbered.len == 2  # path lacks number, so title cites none it could match
+    check "`01-sign`" in unnumbered[0].message  # names form path needs
+    check uncited.len == 1 and "`P01: `" in uncited[0].message  # title opens with citation
+    check unplaced.len == 1 and "`dreamt`" in unplaced[0].message  # three statuses only
+
+  test "implemented proposal needs its commit, and implemented or withdrawn is frozen":
+    let
+      (bare, why) = parseProposal(RECORD, "",
+        %*{"status": "implemented", "claims": []}, DIRECTORY)
+    check why.len == 1 and "`implemented_in`" in why[0].message  # commit it landed in
+    check bare.isImplemented and bare.isFrozen  # frozen as well
+    check numbered(1, "withdrawn").isFrozen and not numbered(1, "withdrawn").isImplemented
+    check numbered(1, "implemented").implemented_in == "abc"  # commit read from claims
+
+  test "numbers are unique and gapless, so none is freed or taken twice":
+    check checkNumbers([numbered(1), numbered(2)]).len == 0  # one, then two
+    check checkNumbers([numbered(1), numbered(1)]).len == 1  # taken twice
+    let skipped = checkNumbers([numbered(1), numbered(3)])
+    check skipped.len == 1 and "`P02`" in skipped[0].message  # two was freed
+
+
+suite "Evaluations":
+  func run(ns: openArray[(string, float, float)]): JsonNode =
+    ## Shape one bench run: library median and NaN share per measurand.
+    result = %*{"measurands": {}}
+    for (id, time, nan) in ns:
+      result["measurands"][id] = %*{"library": {"ns_median": time, "nan_share": nan}}
+
+  test "times pair runs by measurand, median of ratios, rounded":
+    let
+      before = @[run([("a", 10.0, 0.0)]), run([("a", 12.0, 0.0)]), run([("a", 11.0, 0.0)])]
+      after = @[run([("a", 5.0, 0.0)]), run([("a", 6.0, 0.0)]), run([("a", 5.5, 0.0)])]
+      times = timesOf(before, after)
+    check times["a"][0].getFloat == 11.0 and times["a"][1].getFloat == 5.5  # medians
+    check times["a"][2].getFloat == 0.5  # ratio of each run, then median
+
+  test "NaN shares that moved are kept, and only those":
+    let
+      before = @[run([("norm", 1.0, 0.5), ("wedge", 1.0, 0.0)])]
+      after = @[run([("norm", 1.0, 0.0), ("wedge", 1.0, 0.0)])]
+      moved = nanOf(before, after)
+    check moved.len == 1 and moved["norm"][0].getFloat == 0.5  # signed root clears NaN
+    check not moved.hasKey("wedge")  # unmoved measurand left out
+
+  test "compiler success line gives seconds and peak memory":
+    let output = "......\nHint: mm: orc\n29867 lines; 0.213s; 38.008MiB peakmem; proj: a.nim; " &
+      "out: a.json [SuccessX]\n"
+    check successOf(output) == (0.213, 38.008)  # both read
+    check successOf("Error: type mismatch\n") == (0.0, 0.0)  # failed build reads nothing
+
+  test "function on one side only is null on other, so document prints":
+    let
+      counts = %*{"total": {"multiplies": 3}, "movement": {"bytes_moved": 8}}
+      before = %*{"functions": {"f(M)": counts}}
+      after = %*{"functions": {"f(M)": counts, "g(M)": counts}}
+      moved = functionsChanged(before, after)
+    check moved.len == 1 and moved["g(M)"]["before"].kind == JNull  # new function
+    check functionsChanged(after, before)["g(M)"]["after"].kind == JNull  # gone function
+    check pretty(moved).len > 0  # prints, where nil node crashed
+
+  test "digest moves with edits, claims and programs, and never with prose":
+    let
+      edit = Edit(path: "pga/a.nim", quote: "x", replacement: "y")
+      one = Change(title: "One", edits: @[edit])
+      reworded = Change(title: "Other words", edits: @[edit])
+      claims = %*[{"kind": "suites"}]
+    check editsDigest([one], claims, @[]) == editsDigest([reworded], claims, @[])  # prose
+    check editsDigest([one], claims, @[]) != editsDigest([one], %*[], @[])  # claims
+    check editsDigest([one], claims, @["a"]) != editsDigest([one], claims, @["b"])  # program
+
+
+suite "Cells":
+  test "table reads cell for cell, sign included, in both cell shapes":
+    let wedge = cells(CAYLEYS_WEDGE.base)
+    check wedge["E1,E2"] == %*[{"to": "E12", "neg": false}]  # 𝐞₁ ∧ 𝐞₂ = 𝐞₁₂
+    check wedge["E2,E1"] == %*[{"to": "E12", "neg": true}]  # antisymmetric
+    check not wedge.hasKey("E1,E1")  # vector wedge itself vanishes
+    check cells(CAYLEY_ATTITUDE).len > 0  # 1D table of `Option` cells reads too
+
+
+suite "Pages":
+  test "shell names faces it embeds, and assembly fills every token":
+    let
+      text_shell = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
+      page = assemble(text_shell, "A & B", "<p>body</p>", {"a.woff2": "xyz"}.toTable)
+    check facesAsked(text_shell) == @["a.woff2"]  # one face asked
+    check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
+    check "data:font/woff2;base64,eHl6" in page  # bytes inlined
+
+  test "spread is assumed until quiet evaluations give enough ratios":
+    let quiet = %*{"algebras": {"rga4d": {"functions": {}, "times": {"a": [1.0, 1.0, 1.0]}}}}
+    check spreadOf([quiet]).count == 0  # too few ratios: spread assumed
+    check spreadOf([quiet]).low < 1.0 and spreadOf([quiet]).high > 1.0  # around no change
+
+  test "every grid in shell bounds its columns, so wide content scrolls in place":
+    const SHELL = staticRead("../pages/shell.html")
+    var unbounded: seq[string]
+    for rule in SHELL.split('}'):
+      let body = rule.split('{')
+      if body.len < 2 or "display: grid" notin body[^1]: continue
+      if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
+    checkpoint "unbounded: " & unbounded.join(", ")
+    check unbounded.len == 0  # grid child of auto width widens page at phone width
+
+  test "docket rows carry identifiers docket file allots":
+    let
+      sheet = Sheet(name: "rga4d", title: "Rigid 4D", dimensions: 4,
+        measurements_static: %*{"measurands": {"wedge": {"library": "∧(M,M)", "symbol": "∧"}},
+          "functions": {"∧(M,M)": {"total": {"multiplies": 81}}}},
+        measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
+      ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
+    check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
+
+  test "verdict chips say when evaluation removes NaN results":
+    let
+      baselines = {"rga4d": %*{"measurands": {}}}.toTable
+      document_evaluation = %*{
+        "pin_suites": {"rga4d": {"ok": 1, "failed": 0}}, "algebras": {"rga4d": {
+        "suites": {"ok": 1, "failed": 0}, "functions": {}, "times": {},
+        "nan": {"norm": [0.5, 0.0]}}}}
+      chips = verdictChips(document_evaluation, baselines, Spread(low: 0.9, high: 1.1))
+    check "NaN gone in 1" in chips and "chip pass" in chips  # gain named, suites held
+    check "no evaluation" in verdictChips(nil, baselines, Spread())  # absent evaluation is said
 
 
 suite "Driver":
@@ -785,4 +1088,6 @@ suite "Driver":
   test "header table names files verbs write":
     check "`baseline/runtime_<algebra>.json`" in DRIVER  # what `bench` records
     check "`baseline/static_<algebra>.json`" in DRIVER  # what `baseline` records
-    check "| drive    | inspect, guard," in DRIVER  # drive runs guard, not retired check
+    check "| drive     | inspect, guard," in DRIVER  # drive runs guard, not retired check
+    check "`evaluations/<name>.json`" in DRIVER  # what evaluate writes
+    check "`pages/published.json`" in DRIVER  # what published writes

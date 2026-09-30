@@ -110,10 +110,57 @@ The factor that a runtime measurement may exceed its reference by, before a gap 
 time.
 _Avoid_: time band, slack, margin, noise band
 
+**Spread**:
+The range that holds 90% of the time ratios in evaluations that change no library function. A
+time ratio outside it counts as moved.
+_Avoid_: noise band, noise floor, jitter
+
 **Docket**:
 The committed map from the key of a gap to its number. It allots the next number to a new
 key, and reuses none.
 _Avoid_: ledger, register, index, roll, numbering
+
+**Publication**:
+The URL of one published page, with the digest of that page as built when it was published.
+`pages/published.json` holds one publication for each page.
+_Avoid_: register, ledger, listing
+
+**Shell**:
+The hand-written HTML that every page is built in, `pages/shell.html`.
+_Avoid_: template, layout
+
+**Change**:
+A small proposed edit to the library: one Markdown file in `changes/` that says why, then quotes
+each edit with its replacement.
+_Avoid_: patch, fix, diff, case
+
+**Proposal**:
+A future state of the library, explored before the Architect adopts it. One directory in
+`proposals/` holds its argument, its candidate change and its claims. Its number stays its own,
+cited as `P01`, and its status is proposed, implemented or withdrawn.
+_Avoid_: design, plan, RFC
+
+**Evaluation**:
+What a change or a proposal measured when tried on a copy of the library at pin. One document
+in `evaluations/` holds it.
+_Avoid_: trial, experiment, validation, run
+
+**Claim**:
+One statement of a proposal that its evaluation checks, such as "tables equal".
+_Avoid_: assertion, promise
+
+**Note**:
+A remark on library source, anchored by a quote. `marginalia/notes.md` holds every note.
+_Avoid_: annotation, comment
+
+**Quote**:
+Lines of the library at pin that a change edits or a note is about. A quote never gives a line
+number, since a line number moves with every library commit.
+_Avoid_: anchor, snippet, hunk
+
+**Library head**:
+The newest commit of the library repository. The pin must hold the same library tree.
+_Avoid_: reference head, latest
 
 **Algebra**:
 One measured setting, a dimension count and a metric, such as `rga4d`.

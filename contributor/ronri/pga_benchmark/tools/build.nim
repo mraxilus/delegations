@@ -2,39 +2,52 @@
 ##   Koch runs suites and holds no verb for instruments, so project carries its own driver
 ##   (CONTRIBUTOR.md, "Directories inside your project are yours"), one level down from koch.
 ##
-##   |----------|-----------------------------------------------------------------------|
-##   | Command  | Effect                                                                |
-##   |----------|-----------------------------------------------------------------------|
-##   | inspect  | compile bench entry per algebra to C, read it, write static           |
-##   |          | measurements as `build/static_<algebra>.json`                         |
-##   | bench    | compile and run bench per algebra, plain then instrumented, record    |
-##   |          | runtime measurements as `baseline/runtime_<algebra>.json`             |
-##   | baseline | inspect, then record static measurements as                           |
-##   |          | `baseline/static_<algebra>.json`                                      |
-##   | guard    | compare last inspect against baseline; any count grown is finding     |
-##   | drive    | inspect, guard, and hold committed `gaps.md` to regeneration          |
-##   | gaps     | regenerate `gaps.md` and docket from committed baselines              |
-##   | show     | print one function's emitted C, its counts, its movement and its      |
-##   |          | machine code, e.g. `show ∧` or `show ⟇ cga5d`                         |
-##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI  |
-##   | system   | print system packages build needs, one per line, for caller          |
-##   | clean    | remove `build`                                                        |
-##   |----------|-----------------------------------------------------------------------|
+##   |-----------|----------------------------------------------------------------------|
+##   | Command   | Effect                                                               |
+##   |-----------|----------------------------------------------------------------------|
+##   | inspect   | compile bench entry per algebra to C, read it, write static          |
+##   |           | measurements as `build/static_<algebra>.json`                        |
+##   | bench     | compile and run bench per algebra, plain then instrumented, record   |
+##   |           | runtime measurements as `baseline/runtime_<algebra>.json`            |
+##   | baseline  | inspect, then record static measurements as                          |
+##   |           | `baseline/static_<algebra>.json`                                     |
+##   | guard     | compare last inspect against baseline; any count grown is finding    |
+##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
+##   |           | record what each measured as `evaluations/<name>.json`               |
+##   | pages     | build every page from committed files into `build/<name>.html`       |
+##   | published | record URL and digest of page just published, as                     |
+##   |           | `published docket <url>`, in `pages/published.json`                  |
+##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
+##   |           | measurement, evaluation, file and page to library head (`head.nim`)  |
+##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
+##   | show      | print one function's emitted C, its counts, its movement and its     |
+##   |           | machine code, as `show ∧` or `show ⟇ cga5d`                          |
+##   | sweep     | time general measurands at two to six dimensions, rigid; never in CI |
+##   | system    | print system packages build needs, one per line, for caller         |
+##   | clean     | remove `build`                                                       |
+##   |-----------|----------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or finding, 2 usage error.
 ##   Runs from project directory, on compiler nimble file pins, since every path is
-##     relative and every build compiles library. `drive` is deterministic: static counts
-##     only, no timing, so runner's verdict is same as local one.
+##     relative and every build compiles library. `drive` compares static counts only, no
+##     timing, so runner's verdict on measurements is same as local one.
+##   `drive` also reads library head over network, as Architect chose: pin that lags head is
+##     finding on every push until pin follows, so pages always show library as it stands.
 ##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
-##   Cost: `bench` measurements name machine they were taken on; committing them records that
-##     run and nothing more, as `PROVENANCE.md` says of every pair.
+##   Cost: `bench` and `evaluate` measurements name machine they were taken on; committing them
+##     records that run and nothing more, as `PROVENANCE.md` says of every pair.
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[json, os, osproc, strutils]
+import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
 
-import ../src/pga_benchmark/[gaps, guard, inspector, model]
+import ../src/pga_benchmark/[changes, proposals, gaps, guard, head, inspector, model, notes]
+import ../src/pga_benchmark/pages/[docket, marginalia, shell]
+import ../src/pga_benchmark/pages/proposal as page_proposal
+import ../src/pga_benchmark/pages/evaluation as page_evaluation
+from ../src/pga_benchmark/evaluations import
+  Candidate, Toolchain, editsDigest, pristineBinary, pristineSuites, readLibrary, runEvaluation
 
 
 const
@@ -58,13 +71,46 @@ const
     ## Algebras driven, typed ones first: name, dimensions, conformal.
   SWEEP = 2 .. 6
     ## Dimensions swept, rigid metric, general measurands only.
-  SYSTEM: seq[(string, string)] = @[]
-    ## System packages build needs beyond compiler: none. Compiler is toolchain, pinned in
-    ## nimble file; library is Atlas checkout, pinned in lock; nothing else is fetched.
+  SYSTEM = [
+    ("git", "read library head and trees `drive` holds pin to"),
+    ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("coreutils", "`sha256sum` store checks those faces with"),
+  ]
+    ## System packages build needs beyond compiler. Compiler is toolchain, pinned in nimble
+    ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|drive|gaps|show|sweep|system|clean>" &
-    " [symbol] [algebra]\n"
-    ## Text printed on usage error; trailing words serve `show` alone.
+    "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
+    " [name|symbol] [url|algebra]\n"
+    ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
+  CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
+    ## Atlas checkout of library's repository.
+  LIBRARY_DIRECTORY = "lengyel/projective_geometric_algebra_illuminated"
+    ## Library's directory inside its repository, as git names trees.
+  LIBRARY = CHECKOUT / LIBRARY_DIRECTORY
+    ## Library at pin, as `nim.cfg` names it.
+  DIRECTORY_CHANGES = "changes"
+    ## Changes, one Markdown file each (`changes.nim`).
+  DIRECTORY_PROPOSALS = "proposals"
+    ## Proposal explorations, one directory each (`proposals.nim`).
+  DIRECTORY_EVALUATIONS = "evaluations"
+    ## Evaluation documents, one per change or proposal, committed.
+  PATH_NOTES = "marginalia" / "notes.md"
+    ## Notes on library source (`notes.nim`).
+  PATH_SHELL = "pages" / "shell.html"
+    ## Shell every page is assembled in.
+  PATH_PUBLICATIONS = "pages" / "published.json"
+    ## Publications: page name to URL and digest at its last publish.
+  PATH_README = "README.md"
+    ## File that must name every published URL.
+  PATH_KOCH = ".." / ".." / ".." / "koch.nim"
+    ## Repository driver, asked for faces.
+  EVALUATED = ["rga4d", "cga5d"]
+    ## Algebras evaluation measures: typed ones, which both lower bounds cover.
+  EVALUATION_RUNS = 5
+    ## Timed runs of each binary per evaluation, alternating.
+  TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
+    "cga4d": "Conformal 4D"}.toTable
+    ## Tab title of each algebra on docket.
   SHOWN_LINES = 40
     ## Lines of one function this driver prints before naming file rest sits in.
   SHOWN_WIDTH = 150
@@ -242,33 +288,393 @@ proc algebras(): seq[Algebra] =
 proc generated(): (string, string) =
   ## Generate list and docket text from committed documents.
   let
-    docket =
+    ids =
       if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
-    (text, grown) = generate(algebras(), docket)
+    (text, grown) = generate(algebras(), ids)
   (text, pretty(grown.toJson) & "\n")
 
 
 proc gaps() =
   ## Regenerate list and docket.
-  let (text, docket) = generated()
+  let (text, ids) = generated()
   createDir BASELINE
   writeFile(PATH_GAPS, text)
-  writeFile(PATH_DOCKET, docket)
+  writeFile(PATH_DOCKET, ids)
   echo "Wrote ", PATH_GAPS, " and ", PATH_DOCKET
 
 
+#[ Changes And Proposals ]#
+
+proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
+  ## Read every change file, in name order; malformed ones add findings.
+  var paths = toSeq(walkFiles(DIRECTORY_CHANGES / "*.md"))
+  paths.sort
+  for path in paths:
+    let (change, why) = parseChange(path, readFile(path))
+    findings.add why
+    result.add (path.splitFile.name, change)
+
+
+proc readProposals(findings: var seq[Finding]): seq[Proposal] =
+  ## Read every proposal directory, in number order; malformed ones and numbers taken twice or
+  ##   skipped add findings.
+  var directories: seq[string]
+  for kind, path in walkDir(DIRECTORY_PROPOSALS):
+    if kind == pcDir: directories.add path
+  directories.sort
+  for directory in directories:
+    let
+      argument = directory / "proposal.md"
+      change = directory / "change.md"
+      claims = directory / "claims.json"
+    var parsed: JsonNode = nil
+    if fileExists(claims):
+      try: parsed = parseJson(readFile(claims))
+      except JsonParsingError: parsed = nil
+    let (proposal, why) = parseProposal(
+      if fileExists(argument): readFile(argument) else: "",
+      if fileExists(change): readFile(change) else: "",
+      parsed,
+      directory,
+    )
+    findings.add why
+    result.add proposal
+  findings.add checkNumbers(result)
+
+
+proc candidatesOf(
+  changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
+): seq[Candidate] =
+  ## Shape one evaluation candidate per change and per proposed proposal; proposal carries its
+  ##   base chain first, less any base library already implements.
+  ##   Candidate's programs are program texts, so digest moves when program does. Frozen
+  ##   proposal shapes none: library holds or dropped its edits, so they no longer apply.
+  for (name, change) in changes:
+    result.add Candidate(
+      name: name,
+      path: DIRECTORY_CHANGES / name & ".md",
+      changes: @[change],
+      claims: newJArray(),
+    )
+  for proposal in proposals:
+    let directory = proposal.directory
+    if changes.anyIt(it[0] == proposal.name):
+      findings.add Finding(path: directory, message: "Proposal shares name with change; got `" &
+        proposal.name & "`.")
+    if proposal.isFrozen: continue
+    var
+      chain = @[proposal.change]
+      seen = @[proposal.name]
+      base = proposal.builds_on
+    while base.len > 0:
+      if base in seen:
+        findings.add Finding(path: directory, message: "Proposals build on each other in cycle; " &
+          "got `" & base & "`.")
+        break
+      let found = proposals.filterIt(it.name == base)
+      if found.len == 0:
+        findings.add Finding(path: directory,
+          message: "Proposal builds on no proposal here; got `" & base & "`.")
+        break
+      if found[0].isImplemented: break  # library holds its edits
+      if found[0].isFrozen:
+        findings.add Finding(path: directory,
+          message: "Proposal builds on withdrawn proposal; got `" & found[0].citation & "`.")
+        break
+      chain.insert(found[0].change, 0)
+      seen.add base
+      base = found[0].builds_on
+    var programs: seq[string]
+    for path in programsOf(proposal):
+      if fileExists(path): programs.add readFile(path)
+      else: findings.add Finding(path: directory, message: "Claim runs no such program; got `" &
+        path & "`.")
+    result.add Candidate(
+      name: proposal.name,
+      path: directory,
+      changes: chain,
+      programs: programs,
+      claims: proposal.claims,
+    )
+
+
+proc readEvaluations(): Table[string, JsonNode] =
+  ## Read every committed evaluation, keyed by name.
+  for path in walkFiles(DIRECTORY_EVALUATIONS / "*.json"):
+    result[path.splitFile.name] = readDocument(path)
+
+
+
+#[ Library Head ]#
+
+proc git(arguments: openArray[string]): (string, int) =
+  ## Run git in library checkout with arguments; output and exit code.
+  execCmdEx("git -C " & quoteShell(CHECKOUT) & " " & arguments.mapIt(quoteShell(it)).join(" "))
+
+
+proc headChecked(pin: string): seq[Finding] =
+  ## Hold pin to library head, and checkout to pin: no local edit under library directory.
+
+  proc libraryHead(pin: string): (string, string, string) =
+    ## Read tree of library directory at pin, and head commit of library repository with its
+    ##   tree; empty where git cannot read one. Fetches only when head is not pin.
+    let
+      (output_pin, code_pin) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
+      tree_pin = if code_pin == 0: output_pin.strip.splitLines[^1] else: ""
+      (remote, code_remote) = git(["ls-remote", "origin", "HEAD"])
+    if code_remote != 0: return (tree_pin, "", "")
+    var commit_head = ""
+    for line in remote.splitLines:
+      if line.endsWith("\tHEAD"): commit_head = line.split('\t')[0]
+    if commit_head.len == 0: return (tree_pin, "", "")
+    if commit_head == pin: return (tree_pin, commit_head, tree_pin)
+    let (_, code_fetch) = git(["fetch", "--quiet", "origin", "HEAD"])
+    if code_fetch != 0: return (tree_pin, commit_head, "")
+    let (output_head, code_head) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
+    (tree_pin, commit_head, if code_head == 0: output_head.strip.splitLines[^1] else: "")
+
+  let (tree_pin, commit_head, tree_head) = libraryHead(pin)
+  result.add checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
+  let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
+  if code != 0 or edited.strip.len > 0:
+    result.add Finding(
+      path: LIBRARY,
+      message: "Library checkout differs from pin; restore it with `git -C " & CHECKOUT &
+        " checkout -- .`; got `" & edited.strip.splitLines[0] & "`.",
+    )
+
+
+
+#[ Pages ]#
+
+proc facesFromStore(): Table[string, string] =
+  ## Ask `koch fetch-assets` for each face shell draws with, and read bytes of each.
+  ##   Store checks digest; count of paths is asserted, since verb prints nothing for face
+  ##   it could not serve, and short list would pair wrong bytes with right name.
+  let (written, code) = execCmdEx(
+    "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
+      FACES.quoteShellCommand
+  )
+  if code != 0:
+    raise newException(OSError,
+      "`koch fetch-assets` would not serve every face; got exit `" & $code & "`.")
+  var paths: seq[string]
+  for line in written.strip.splitLines:
+    if line.strip.len > 0 and fileExists(line.strip): paths.add line.strip
+  if paths.len != FACES.len:
+    raise newException(OSError,
+      "`koch fetch-assets` named " & $paths.len & " paths for " & $FACES.len & " faces.")
+  for index, face in FACES: result[face] = readFile(paths[index])
+
+
+proc publications(): JsonNode =
+  ## Read publication of every published page; empty where none.
+  if fileExists(PATH_PUBLICATIONS): readDocument(PATH_PUBLICATIONS) else: newJObject()
+
+
+proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
+  ## Build every page from committed files: docket, marginalia, then one per proposal.
+
+  func linksHtml(names: openArray[string]; published: JsonNode; self: string): string =
+    ## Link every other published page, in page order, led by separator; empty where none.
+    var links: seq[string]
+    for name in names:
+      let url = published{name, "url"}.getStr
+      if name == self or url.len == 0: continue
+      links.add "<a href=\"" & url & "\">" & name & "</a>"
+    if links.len == 0: "" else: " · " & links.join(" · ")
+
+  func titled(name: string): string =
+    ## Title proposal page by its name, as `Cayley Derivation`.
+    name.split('-').mapIt(it.capitalizeAscii).join(" ")
+
+  var ignored: seq[Finding]
+  let
+    pin = pgaCommit()
+    published = publications()
+    text_shell = readFile(PATH_SHELL)
+    changes = readChanges(ignored)
+    proposals = readProposals(ignored)
+    evaluations = readEvaluations()
+    files = readLibrary(LIBRARY)
+    (notes, _) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
+    names = @["docket", "marginalia"] & proposals.mapIt(it.name)
+  var
+    sheets: seq[Sheet]
+    baselines: Table[string, JsonNode]
+    overlays: seq[Overlay]
+    documents: seq[JsonNode]
+  for (name, dimensions, _) in CONFIGS:
+    let path = BASELINE / "static_" & name & ".json"
+    if not fileExists(path): continue
+    baselines[name] = readDocument(path)
+    sheets.add Sheet(
+      name: name,
+      title: TITLES[name],
+      dimensions: dimensions,
+      measurements_static: baselines[name],
+      measurements_runtime: readDocument(BASELINE / "runtime_" & name & ".json"),
+    )
+  for _, document in evaluations.pairs: documents.add document
+  let spread = spreadOf(documents)
+  for proposal in proposals:
+    if proposal.isFrozen or proposal.name notin evaluations: continue
+    var overlay = Overlay(name: proposal.name, title: proposal.citation & ": " & proposal.title,
+      url: published{proposal.name, "url"}.getStr)
+    for algebra, measured in evaluations[proposal.name]{"algebras"}.pairs:
+      overlay.functions[algebra] = measured{"functions"}
+    overlays.add overlay
+  result["docket"] = assemble(text_shell, "PGA Gap Docket",
+    docketBody(sheets, readDocument(PATH_DOCKET), overlays, pin,
+      linksHtml(names, published, "docket")), faces)
+  var changes_evaluated: seq[ChangeEvaluated]
+  for (name, change) in changes:
+    changes_evaluated.add ChangeEvaluated(name: name, change: change,
+      evaluation: evaluations.getOrDefault(name))
+  result["marginalia"] = assemble(text_shell, "PGA Marginalia",
+    marginaliaBody(changes_evaluated, notes, files, baselines, spread, pin,
+      linksHtml(names, published, "marginalia")), faces)
+  for proposal in proposals:
+    result[proposal.name] = assemble(text_shell,
+      proposal.citation & " " & titled(proposal.name),
+      proposalBody(proposal, evaluations.getOrDefault(proposal.name), files, baselines, spread, pin,
+        linksHtml(names, published, proposal.name)), faces)
+
+
+proc pages() =
+  ## Build every page into `build/`, and print each with its digest.
+  createDir BUILD
+  for name, page in builtPages(facesFromStore()).pairs:
+    writeFile(BUILD / name & ".html", page)
+    echo "Built ", BUILD / name & ".html", "  ", pageDigest(page), "  ", page.len div 1024,
+      " KiB"
+
+
+proc publishedAt(name, url: string) =
+  ## Record page just published: its URL, and digest of page as built now.
+  let built = builtPages(facesFromStore())
+  if name notin built:
+    raise newException(ValueError, "No page named `" & name & "`.")
+  var entries = publications()
+  entries[name] = %*{"url": url, "digest": pageDigest(built[name])}
+  writeFile(PATH_PUBLICATIONS, pretty(entries) & "\n")
+  echo "Recorded ", name, " at ", url
+  for other, page in built.pairs:
+    if other != name and entries{other, "digest"}.getStr != pageDigest(page):
+      echo "notice: ", other, " differs from its publication; publish it and record it too."
+
+
+
+#[ Evaluations ]#
+
+proc evaluate(which: string) =
+  ## Try one change or proposal at pin, every one for `all`, or those `drive` would name for
+  ##   `stale`; write each evaluation document.
+
+  func machine(): string =
+    ## Describe machine evaluation ran on, as bench documents do.
+    hostOS & " " & hostCPU & ", " & $countProcessors() & " cores"
+
+  var findings: seq[Finding]
+  let
+    changes = readChanges(findings)
+    proposals = readProposals(findings)
+    candidates = candidatesOf(changes, proposals, findings)
+  if findings.len > 0: report(findings)
+  let
+    pin = pgaCommit()
+    tried = readEvaluations()
+    selected = case which
+      of "all": candidates
+      of "stale": candidates.filterIt(it.name notin tried or checkEvaluation(tried[it.name], pin,
+        editsDigest(it.changes, it.claims, it.programs), "").len > 0)
+      else: candidates.filterIt(it.name == which)
+  if selected.len == 0 and which == "stale":
+    echo "Every evaluation is current."
+    return
+  if selected.len == 0: raise newException(ValueError, "No change or proposal named `" & which &
+    "`.")
+  let chain = Toolchain(library: LIBRARY, work: BUILD / "evaluations", nim: nimCommit(),
+    pga: pgaCommit(), flags: FLAGS, runs: EVALUATION_RUNS)
+  var
+    algebras: seq[evaluations.Algebra]
+    baselines: Table[string, JsonNode]
+    pristine: Table[string, string]
+  for (name, dimensions, is_conformal) in CONFIGS:
+    if name notin EVALUATED: continue
+    let algebra =
+      evaluations.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
+    algebras.add algebra
+    baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
+    pristine[name] = pristineBinary(chain, algebra)
+  let
+    suites_pin = pristineSuites(chain, algebras)
+    taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": chain.nim,
+      "pga": chain.pga, "flags": FLAGS, "runs": EVALUATION_RUNS}
+  createDir DIRECTORY_EVALUATIONS
+  for candidate in selected:
+    echo "Trying ", candidate.name
+    let (document, why) = runEvaluation(chain, candidate, algebras, baselines, pristine, suites_pin,
+      taken)
+    removeDir chain.work / candidate.name
+    if document.isNil:
+      findings.add why
+      continue
+    writeFile(DIRECTORY_EVALUATIONS / candidate.name & ".json", pretty(document) & "\n")
+    echo "Recorded ", DIRECTORY_EVALUATIONS / candidate.name & ".json"
+  report(findings)
+
+
+proc pinnedChecked(pin: string): seq[Finding] =
+  ## Hold everything to pin: stamps, evaluations, changes, proposals, notes, pages and publications.
+  for (name, _, _) in CONFIGS:
+    for kind in ["static", "runtime"]:
+      let path = BASELINE / kind & "_" & name & ".json"
+      if fileExists(path): result.add checkStamp(readDocument(path), pin, path)
+  let
+    changes = readChanges(result)
+    proposals = readProposals(result)
+    candidates = candidatesOf(changes, proposals, result)
+    files = readLibrary(LIBRARY)
+    evaluations = readEvaluations()
+  for candidate in candidates:
+    var copy = files
+    for change in candidate.changes: result.add applyChange(copy, change, candidate.path)
+    let path = DIRECTORY_EVALUATIONS / candidate.name & ".json"
+    if candidate.name notin evaluations:
+      result.add Finding(path: path, message: "No evaluation yet; run `evaluate " &
+        candidate.name & "`.")
+      continue
+    let digest = editsDigest(candidate.changes, candidate.claims, candidate.programs)
+    result.add checkEvaluation(evaluations[candidate.name], pin, digest, path)
+  for name in evaluations.keys:
+    if not candidates.anyIt(it.name == name) and not proposals.anyIt(it.name == name):
+      result.add Finding(path: DIRECTORY_EVALUATIONS / name & ".json",
+        message: "Evaluation names no change or proposal; got `" & name & "`.")
+  let (notes, why) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
+  result.add why
+  result.add checkAnchors(notes, files, PATH_NOTES)
+  var digests: Table[string, string]
+  for name, page in builtPages(facesFromStore()).pairs: digests[name] = pageDigest(page)
+  result.add checkPublished(digests, publications(), readFile(PATH_README), PATH_PUBLICATIONS)
+
+
 proc drive() =
-  ## Inspect, check against baselines, and hold committed list and docket to regeneration.
+  ## Inspect, check against baselines, hold committed list and docket to regeneration, and
+  ##   hold pin to library head and every measurement, evaluation, file and page to pin.
+  let pin = pgaCommit()
+  var findings = headChecked(pin)
   inspect()
-  var findings = guarded()
-  let (text, docket) = generated()
+  findings.add guarded()
+  let (text, ids) = generated()
   if not fileExists(PATH_GAPS) or readFile(PATH_GAPS) != text:
     findings.add Finding(path: PATH_GAPS, message: "List differs from regeneration; run `gaps`.")
-  if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != docket:
+  if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != ids:
     findings.add Finding(
       path: PATH_DOCKET,
       message: "Docket differs from regeneration; run `gaps`.",
     )
+  findings.add pinnedChecked(pin)
   report(findings)
 
 
@@ -441,10 +847,15 @@ proc clean() =
 #[ Entry Point ]#
 
 when isMainModule:
-  if paramCount() notin 1 .. 3 or (paramStr(1) == "show" and paramCount() < 2):
-    stderr.write USAGE
-    quit 2
-  if paramStr(1) != "show" and paramCount() != 1:
+  let
+    verb = if paramCount() > 0: paramStr(1) else: ""
+    arguments =
+      case verb
+      of "show": 2 .. 3
+      of "evaluate": 2 .. 2
+      of "published": 3 .. 3
+      else: 1 .. 1
+  if paramCount() notin arguments:
     stderr.write USAGE
     quit 2
   try:
@@ -455,6 +866,9 @@ when isMainModule:
     of "bench": bench()
     of "baseline": baseline()
     of "guard": guard()
+    of "evaluate": evaluate(paramStr(2))
+    of "pages": pages()
+    of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
     of "gaps": gaps()
     of "sweep": sweep()
