@@ -32,11 +32,11 @@ func short(commit: string): string =
   if commit.len > SHORT: commit[0 ..< SHORT] else: commit
 
 
-func checkHead*(pin, pin_tree, head, head_tree, lock: string): seq[Finding] =
+func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =
   ## Hold pin to head: library directory's tree at pin must equal its tree at head.
-  if head.len == 0 or head_tree.len == 0:
+  if head.len == 0 or tree_head.len == 0:
     return @[Finding(path: lock, message: "Library head unread; got `" & head & "`.")]
-  if pin_tree != head_tree:
+  if tree_pin != tree_head:
     result.add Finding(
       path: lock,
       message: "Pin lags library head; follow head, re-baseline and re-run every trial; " &

@@ -22,7 +22,7 @@ type
   Figures = object
     ## Define one implementation's counts and movement for one measurand.
     multiplies, divides, bytes, read, written, zeroed, intermediates, copied: int
-    fills, intermediate_count, copies, checks: int
+    fills, count_intermediates, copies, checks: int
     is_inline: bool
   BoundFigures = object
     ## Define multivector lower bound of one measurand, read and written split.
@@ -36,14 +36,14 @@ type
     is_general: bool
     library, reference: Option[Figures]
     bound: Option[BoundFigures]
-    ns_library, ns_reference, nan_share: float
+    ns_library, ns_reference, share_nan: float
   Sheet* = object
     ## Define one algebra's documents docket reads.
     name*, title*: string
       ## Short name and title, as `rga4d` and `Rigid 4D`.
     dimensions*: int
       ## Vector space dimensions.
-    static_measurements*, runtime_measurements*: JsonNode
+    measurements_static*, measurements_runtime*: JsonNode
       ## Committed baselines at pin.
   Overlay* = object
     ## Define one design's changed functions per algebra, and where its page is.
@@ -75,7 +75,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       intermediates: movement{"bytes_intermediates"}.getInt,
       copied: movement{"bytes_copied"}.getInt,
       fills: totals{"zero_fills"}.getInt,
-      intermediate_count: totals{"intermediates"}.getInt,
+      count_intermediates: totals{"intermediates"}.getInt,
       copies: totals{"copies"}.getInt,
       checks: totals{"checks"}.getInt,
       is_inline: function{"inline"}.getBool,
@@ -108,12 +108,12 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
 
   let
     width = 8 shl sheet.dimensions
-    functions = sheet.static_measurements{"functions"}
-    timings = sheet.runtime_measurements{"measurands"}
-  for id, measurand in sheet.static_measurements{"measurands"}.pairs:
+    functions = sheet.measurements_static{"functions"}
+    timings = sheet.measurements_runtime{"measurands"}
+  for id, measurand in sheet.measurements_static{"measurands"}.pairs:
     let
-      library_key = measurand{"library"}.getStr
-      reference_key = measurand{"reference"}.getStr
+      key_library = measurand{"library"}.getStr
+      key_reference = measurand{"reference"}.getStr
       timing = timings{id}
       timing_library = if timing.isNil: nil else: timing{"library"}
       timing_reference = if timing.isNil: nil else: timing{"reference"}
@@ -125,14 +125,14 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       symbol: measurand{"symbol"}.getStr,
       expression: measurand{"expression"}.getStr,
       cite: measurand{"cite"}.getStr,
-      is_general: reference_key.len == 0,
-      library: figuresOf(functions{library_key}),
+      is_general: key_reference.len == 0,
+      library: figuresOf(functions{key_library}),
       reference:
-        if reference_key.len == 0: none(Figures) else: figuresOf(functions{reference_key}),
+        if key_reference.len == 0: none(Figures) else: figuresOf(functions{key_reference}),
       bound: boundOf(measurand{"bound"}, width),
       ns_library: if is_timed_library: timing_library{"ns_median"}.getFloat else: 0.0,
       ns_reference: if is_timed_reference: timing_reference{"ns_median"}.getFloat else: 0.0,
-      nan_share: if is_timed_library: timing_library{"nan_share"}.getFloat else: 0.0,
+      share_nan: if is_timed_library: timing_library{"nan_share"}.getFloat else: 0.0,
     )
   result.sort(proc (left, right: Row): int = cmp(left.id, right.id))
 
@@ -147,21 +147,21 @@ type Tally = object
   full: int
 
 
-func bar(kind: string; value: Option[int]; row_max, log_max: int; tip: string): string =
+func bar(kind: string; value: Option[int]; max_row, max_log: int; tip: string): string =
   ## Render one bar: width against row and against algebra, value, tip.
   if value.isNone:
     return "<div class=\"bar " & kind & " none\" title=\"" & escapeHtml(tip) &
       "\"><div class=\"track\"><i></i></div><span class=\"v\">none</span></div>"
   let
     amount = value.get
-    row_width =
-      if row_max > 0: max(if amount > 0: 0.8 else: 0.0, 100.0 * amount.float / row_max.float)
+    width_row =
+      if max_row > 0: max(if amount > 0: 0.8 else: 0.0, 100.0 * amount.float / max_row.float)
       else: 0.0
-    log_width =
-      if log_max > 0: 100.0 * ln(1.0 + amount.float) / ln(1.0 + log_max.float) else: 0.0
+    width_log =
+      if max_log > 0: 100.0 * ln(1.0 + amount.float) / ln(1.0 + max_log.float) else: 0.0
   "<div class=\"bar " & kind & "\" title=\"" & escapeHtml(tip) &
-    "\"><div class=\"track\"><i style=\"--w-row:" & row_width.fixed & "%;--w-log:" &
-    log_width.fixed & "%\"></i></div><span class=\"v\">" & grouped(amount) & "</span></div>"
+    "\"><div class=\"track\"><i style=\"--w-row:" & width_row.fixed & "%;--w-log:" &
+    width_log.fixed & "%\"></i></div><span class=\"v\">" & grouped(amount) & "</span></div>"
 
 
 func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
@@ -190,7 +190,7 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
   func fillShare(sheet: Sheet): int =
     ## Read share of library's modelled bytes that are zero fill, in percent.
     var total, zeroed: int
-    for _, function in sheet.static_measurements{"functions"}.pairs:
+    for _, function in sheet.measurements_static{"functions"}.pairs:
       if function{"module"}.getStr.startsWith("reference"): continue
       total += function{"movement", "bytes_moved"}.getInt
       zeroed += function{"movement", "bytes_zeroed"}.getInt
@@ -208,11 +208,11 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
     ratios = timeRatios(rows).sorted
     fill = fillShare(sheet)
   result = "<dl class=\"facts\">"
-  for (tally, class_name, noun) in [(general, "typed-off", "operations"),
+  for (tally, name_class, noun) in [(general, "typed-off", "operations"),
       (typed, "typed-only", "measurands")]:
-    result.add "<div class=\"" & class_name & "\"><dt>" & $tally.at_multiplies & "/" &
+    result.add "<div class=\"" & name_class & "\"><dt>" & $tally.at_multiplies & "/" &
       $tally.bounded & "</dt><dd>" & noun & " at multivector bound on multiplies</dd></div>" &
-      "<div class=\"" & class_name & "\"><dt>" & $tally.at_bytes & "/" & $tally.bounded &
+      "<div class=\"" & name_class & "\"><dt>" & $tally.at_bytes & "/" & $tally.bounded &
       "</dt><dd>at it on bytes moved</dd></div>"
   result.add "<div><dt>" & $fill & "%</dt><dd>of library's modelled bytes are zero fill</dd></div>"
   if ratios.len > 0:
@@ -222,17 +222,17 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
   let sums = [(general, "typed-off"), (typed, "typed-only")]
   result.add "<div class=\"aggregate\">"
   for (label, index) in [("Multiplies, summed", 0), ("Bytes moved, summed", 1)]:
-    for (tally, class_name) in sums:
+    for (tally, name_class) in sums:
       let top = max([tally.sums_library[index], tally.sums_bound[index],
         tally.sums_reference[index]])
-      result.add "<div class=\"" & class_name & "\"><h4>" & label & "</h4><div class=\"bars\">" &
+      result.add "<div class=\"" & name_class & "\"><h4>" & label & "</h4><div class=\"bars\">" &
         bar("library", some(tally.sums_library[index]), top, top, "library") &
         bar("bound", some(tally.sums_bound[index]), top, top, "multivector lower bound")
-      if class_name == "typed-only":
+      if name_class == "typed-only":
         result.add bar("reference", some(tally.sums_reference[index]), top, top,
           "type optimised lower bound")
       result.add "</div><p class=\"caption\">" & $tally.full & " " &
-        (if class_name == "typed-only": "measurands with all three" else: "operations") &
+        (if name_class == "typed-only": "measurands with all three" else: "operations") &
         ".</p></div>"
   result.add "</div>"
 
@@ -254,24 +254,24 @@ func metricOf(bound: Option[BoundFigures], is_bytes: bool): Option[int] =
   else: some(bound.get.multiplies)
 
 
-func rowHtml(row: Row; log_max: array[2, int]; order: array[4, int]): string =
+func rowHtml(row: Row; max_log: array[2, int]; order: array[4, int]): string =
   ## Render one row as details: summary cells, then breakdown.
 
-  func panel(row: Row; is_bytes: bool; log_max: int): string =
+  func panel(row: Row; is_bytes: bool; max_log: int): string =
     ## Render one metric's three bars for row: library, multivector bound, typed reference.
     let
       library = metricOf(row.library, is_bytes)
       reference = metricOf(row.reference, is_bytes)
       bound = metricOf(row.bound, is_bytes)
-      row_max = max([library.get(0), bound.get(0), reference.get(0)])
+      max_row = max([library.get(0), bound.get(0), reference.get(0)])
       unit = if is_bytes: " bytes" else: " multiplies"
       shape = if row.bound.isSome: row.bound.get.shape else: ""
     result = "<div class=\"panel bars\">" &
-      bar("library", library, row_max, log_max, "library, " & $library.get(0) & unit) &
-      bar("bound", bound, row_max, log_max, "multivector lower bound, " & shape)
+      bar("library", library, max_row, max_log, "library, " & $library.get(0) & unit) &
+      bar("bound", bound, max_row, max_log, "multivector lower bound, " & shape)
     if not row.is_general:
       result.add "<div class=\"typed-only\">" &
-        bar("reference", reference, row_max, log_max, "type optimised lower bound") & "</div>"
+        bar("reference", reference, max_row, max_log, "type optimised lower bound") & "</div>"
     result.add "</div>"
 
   func detail(row: Row): string =
@@ -285,16 +285,16 @@ func rowHtml(row: Row; log_max: array[2, int]; order: array[4, int]): string =
     if row.library.isSome:
       let library = row.library.get
       result.add "<p>Library: " & $library.fills & " zero fills, " &
-        $library.intermediate_count & " intermediates, " & $library.copies & " copies, " &
+        $library.count_intermediates & " intermediates, " & $library.copies & " copies, " &
         $library.checks & " error checks, " & $library.divides & " divides, " &
         (if library.is_inline: "inline" else: "not inline") & ".</p>"
     result.add "<div class=\"table\"><table><tr><th>bytes</th><th>read</th><th>written</th>" &
       "<th>zero fill</th><th>intermediates</th><th>copies</th><th>total</th></tr>"
-    for (name, side, class_name) in [("library", row.library, ""),
+    for (name, side, name_class) in [("library", row.library, ""),
         ("typed form", row.reference, " class=\"typed-only\"")]:
       if side.isNone: continue
       let figures = side.get
-      result.add "<tr" & class_name & "><td>" & name & "</td><td>" & grouped(figures.read) &
+      result.add "<tr" & name_class & "><td>" & name & "</td><td>" & grouped(figures.read) &
         "</td><td>" & grouped(figures.written) & "</td><td>" & grouped(figures.zeroed) &
         "</td><td>" & grouped(figures.intermediates) & "</td><td>" & grouped(figures.copied) &
         "</td><td>" & grouped(figures.bytes) & "</td></tr>"
@@ -311,17 +311,17 @@ func rowHtml(row: Row; log_max: array[2, int]; order: array[4, int]): string =
       row.library.get.multiplies > row.bound.get.multiplies:
     classes.add "above"
   if row.bound.isSome and row.bound.get.is_composed: classes.add "chain"
-  if row.nan_share > 0: classes.add "nan"
+  if row.share_nan > 0: classes.add "nan"
   var time = if row.ns_library > 0: "<b>" & row.ns_library.fixed(1) & "</b>" else: "–"
   if row.ns_library > 0 and row.ns_reference > 0:
     time.add "<span class=\"typed-only\"> / " & row.ns_reference.fixed(1) & "<br>" &
       ratioText(row.ns_library / row.ns_reference) & "</span>"
-  if row.nan_share > 0: time.add chip("NaN " & $int(round(100 * row.nan_share)) & "%", "fail")
+  if row.share_nan > 0: time.add chip("NaN " & $int(round(100 * row.share_nan)) & "%", "fail")
   "<details class=\"" & classes.join(" ") & "\" style=\"--o-bytes:" & $order[0] &
     ";--o-multiplies:" & $order[1] & ";--o-typed:" & $order[2] & ";--o-time:" & $order[3] &
     "\"><summary><span class=\"op\"><span class=\"n\">" & escapeHtml(row.measurand) &
     "</span><span class=\"sub\">" & escapeHtml(row.id) & " · " & escapeHtml(row.symbol) &
-    "</span></span>" & panel(row, false, log_max[0]) & panel(row, true, log_max[1]) &
+    "</span></span>" & panel(row, false, max_log[0]) & panel(row, true, max_log[1]) &
     "<span class=\"time\">" & time & "</span></summary>" & detail(row) & "</details>"
 
 
@@ -334,8 +334,8 @@ func designsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string
   func parity(sheet: Sheet; overlay: JsonNode; is_typed: bool): (int, int, int) =
     ## Count rows at bound on multiplies and on bytes, with overlay's functions in place.
     var bounded, at_multiplies, at_bytes: int
-    let functions = sheet.static_measurements{"functions"}
-    for id, measurand in sheet.static_measurements{"measurands"}.pairs:
+    let functions = sheet.measurements_static{"functions"}
+    for id, measurand in sheet.measurements_static{"measurands"}.pairs:
       if not is_typed and measurand{"reference"}.getStr.len > 0: continue
       let
         key = measurand{"library"}.getStr
@@ -437,7 +437,7 @@ func docketBody*(
       if left[0] == right[0]: cmp(left[1], right[1]) else: cmp(right[0], left[0]))
     for rank, (_, id) in keyed: result[id] = rank
 
-  let taken = sheets[0].runtime_measurements{"taken"}
+  let taken = sheets[0].measurements_runtime{"taken"}
   result = "<div class=\"page\"><header><h1>PGA Gap Docket</h1><p class=\"meta\">pga " &
     code(pin[0 ..< 7]) & " · time " & escapeHtml(taken{"date"}.getStr) & ", " &
     escapeHtml(taken{"machine"}.getStr) & " · counts read from emitted C, exact" & links &
@@ -462,11 +462,11 @@ func docketBody*(
   for index, sheet in sheets:
     let rows = every[index]
     var
-      log_max: array[2, int]
+      max_log: array[2, int]
       by_bytes, by_multiplies, by_typed, by_time: seq[float]
     for row in rows:
       for side, is_bytes in [false, true]:
-        log_max[side] = max([log_max[side], metricOf(row.library, is_bytes).get(0),
+        max_log[side] = max([max_log[side], metricOf(row.library, is_bytes).get(0),
           metricOf(row.bound, is_bytes).get(0)])
       by_bytes.add above(metricOf(row.library, true), metricOf(row.bound, true))
       by_multiplies.add above(metricOf(row.library, false), metricOf(row.bound, false))
@@ -476,7 +476,7 @@ func docketBody*(
       ranks(rows, by_time)]
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"
     for row in rows:
-      result.add rowHtml(row, log_max, [order[0][row.id], order[1][row.id], order[2][row.id],
+      result.add rowHtml(row, max_log, [order[0][row.id], order[1][row.id], order[2][row.id],
         order[3][row.id]])
     result.add "</div></section>"
   result.add designsHtml(sheets, overlays) & METHOD & "</div>"

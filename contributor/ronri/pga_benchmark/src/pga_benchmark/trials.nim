@@ -141,13 +141,13 @@ proc compileAgainst(
   chain: Toolchain;
   library, entry, binary, cache: string;
   algebra: Algebra;
-  compile_only: bool;
+  should_stop_at_c: bool;
 ): (string, int) =
   ## Compile project entry against library copy, skipping project `nim.cfg` that names pin's.
   var arguments = @["c", "--hints:off", "--warnings:off", chain.flags, "--skipParentCfg:on",
     "--noNimblePath", "--path:" & library, "--nimcache:" & cache, "-o:" & binary]
   arguments.add algebraDefines(algebra) & buildDefines(chain, chain.pga)
-  if compile_only: arguments.add "--compileOnly"
+  if should_stop_at_c: arguments.add "--compileOnly"
   arguments.add entry
   runCompiler(arguments)
 
@@ -179,10 +179,10 @@ proc staticOf(
     output = directory / "static_" & algebra.name & ".json"
   removeDir cache
   var (log, code) = compileAgainst(chain, library, ENTRY_BENCH,
-    directory / "bench_c_" & algebra.name, cache, algebra, compile_only = true)
+    directory / "bench_c_" & algebra.name, cache, algebra, should_stop_at_c = true)
   if code != 0: return (nil, log)
   (log, code) = compileAgainst(chain, library, ENTRY_INSPECT, inspector,
-    directory / "cache_inspect_" & algebra.name, algebra, compile_only = false)
+    directory / "cache_inspect_" & algebra.name, algebra, should_stop_at_c = false)
   if code != 0: return (nil, log)
   (log, code) = execCmdEx(quoteShell(inspector) & " " & quoteShell(cache) & " " &
     quoteShell(output) & " " & quoteShell(chain.nim) & " " & quoteShell(chain.pga) & " " &
@@ -381,35 +381,35 @@ proc checkClaims(
   for claim in candidate.claims:
     let kind = claim{"kind"}.getStr
     var
-      passed = true
+      is_holding = true
       detail: seq[string]
     case kind
     of "suites":
       for name, node in suited.pairs:
         if node{"failed"}.getInt > 0 or not node{"built"}.getBool:
-          passed = false
+          is_holding = false
           detail.add name & " failed " & $node{"failed"}.getInt
     of "tables":
       let pairs = claim{"pairs"}
-      var pristine_side, changed_side: seq[string]
+      var side_pristine, side_changed: seq[string]
       for pair in pairs:
-        pristine_side.add pair[0].getStr
-        changed_side.add pair[1].getStr
+        side_pristine.add pair[0].getStr
+        side_changed.add pair[1].getStr
       for name in claim{"algebras"}:
         let algebra = algebraNamed(name.getStr, algebras)
         let
           (before, why_before) =
-            tablesOf(chain.library, directory, "pristine", pristine_side, algebra)
-          (after, why_after) = tablesOf(copy, directory, "changed", changed_side, algebra)
+            tablesOf(chain.library, directory, "pristine", side_pristine, algebra)
+          (after, why_after) = tablesOf(copy, directory, "changed", side_changed, algebra)
         if before.isNil or after.isNil:
           let why = (why_before & why_after).strip.splitLines
-          passed = false
+          is_holding = false
           detail.add algebra.name & " did not build: " & (if why.len > 0: why[^1] else: "")
           continue
         for i in 0 ..< pairs.len:
           if before[i] != after[i]:
-            passed = false
-            detail.add algebra.name & " " & changed_side[i] & " differs"
+            is_holding = false
+            detail.add algebra.name & " " & side_changed[i] & " differs"
     of "program":
       let program = claim{"path"}.getStr
       for name in claim{"algebras"}:
@@ -422,7 +422,7 @@ proc checkClaims(
         arguments.add program
         let (output, code) = runCompiler(arguments)
         if code != 0:
-          passed = false
+          is_holding = false
           detail.add algebra.name & " exit " & $code & ": " & output.strip.splitLines[^1]
     of "build":
       let
@@ -432,33 +432,33 @@ proc checkClaims(
         (seconds_after, peak_after, why_after) =
           buildCost(chain, copy, directory, "changed", algebra)
       if why_before.len > 0 or why_after.len > 0 or peak_before <= 0 or seconds_before <= 0:
-        passed = false
+        is_holding = false
         detail.add algebra.name & " did not build: " & why_before & why_after
       else:
         let
           ratio = case claim{"metric"}.getStr
             of "seconds": seconds_after / seconds_before
             else: peak_after / peak_before
-        passed = ratio <= claim{"at_most"}.getFloat
+        is_holding = ratio <= claim{"at_most"}.getFloat
         detail.add algebra.name & " peak " & formatFloat(peak_before, ffDecimal, 1) & " → " &
           formatFloat(peak_after, ffDecimal, 1) & " MiB, " & formatFloat(seconds_before,
           ffDecimal, 2) & " → " & formatFloat(seconds_after, ffDecimal, 2) & " s, ×" &
           formatFloat(ratio, ffDecimal, 2)
     of "count":
       let
-        algebra_name = claim{"algebra"}.getStr
-        document = counted{algebra_name}
+        name_algebra = claim{"algebra"}.getStr
+        document = counted{name_algebra}
         key = document{"measurands", claim{"measurand"}.getStr, "library"}
         got = if key.isNil: nil else: document{"functions", key.getStr, "total",
           claim{"metric"}.getStr}
       if got.isNil or got.getInt != claim{"value"}.getInt:
-        passed = false
-        detail.add algebra_name & " got " & (if got.isNil: "none" else: $got.getInt)
+        is_holding = false
+        detail.add name_algebra & " got " & (if got.isNil: "none" else: $got.getInt)
     else:
-      passed = false
+      is_holding = false
       detail.add "unknown claim kind " & kind
     var verdict = claim.copy
-    verdict["passed"] = %passed
+    verdict["passed"] = %is_holding
     verdict["detail"] = %detail
     result.add verdict
 
@@ -472,7 +472,7 @@ proc runTrial*(
   algebras: openArray[Algebra];
   baselines: Table[string, JsonNode];
   pristine: Table[string, string];
-  pin_suites, taken: JsonNode;
+  suites_pin, taken: JsonNode;
 ): (JsonNode, seq[Finding]) =
   ## Try candidate on every algebra; trial document and findings that stopped it.
   let directory = chain.work / candidate.name
@@ -487,7 +487,7 @@ proc runTrial*(
       "path": candidate.path,
       "edits_digest": editsDigest(candidate.changes, candidate.claims, candidate.programs),
       "taken": taken,
-      "pin_suites": pin_suites,
+      "pin_suites": suites_pin,
       "algebras": {},
     }
     counted = newJObject()
@@ -502,7 +502,7 @@ proc runTrial*(
     counted[algebra.name] = after
     let binary = directory / "bench_" & algebra.name
     let (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
-      directory / "cache_timed_" & algebra.name, algebra, compile_only = false)
+      directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
     if code != 0:
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
         algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])
@@ -531,5 +531,5 @@ proc pristineBinary*(chain: Toolchain, algebra: Algebra): string =
   createDir directory
   result = directory / "bench_" & algebra.name
   let (log, code) = compileAgainst(chain, chain.library, ENTRY_BENCH, result,
-    directory / "cache_timed_" & algebra.name, algebra, compile_only = false)
+    directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
   if code != 0: raise newException(OSError, "Pristine bench failed; got `" & log & "`.")

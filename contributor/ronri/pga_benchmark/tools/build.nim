@@ -44,8 +44,8 @@ import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, designs, gaps, guard, head, inspector, model, notes]
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
-import ../src/pga_benchmark/pages/design as design_page
-import ../src/pga_benchmark/pages/trial as trial_page
+import ../src/pga_benchmark/pages/design as page_design
+import ../src/pga_benchmark/pages/trial as page_trial
 from ../src/pga_benchmark/trials import
   Candidate, Toolchain, editsDigest, pristineBinary, pristineSuites, readLibrary, runTrial
 
@@ -410,22 +410,22 @@ proc headChecked(pin: string): seq[Finding] =
     ## Read tree of library directory at pin, and head commit of library repository with its
     ##   tree; empty where git cannot read one. Fetches only when head is not pin.
     let
-      (pin_out, pin_code) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
-      pin_tree = if pin_code == 0: pin_out.strip.splitLines[^1] else: ""
-      (remote, remote_code) = git(["ls-remote", "origin", "HEAD"])
-    if remote_code != 0: return (pin_tree, "", "")
-    var head_commit = ""
+      (output_pin, code_pin) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
+      tree_pin = if code_pin == 0: output_pin.strip.splitLines[^1] else: ""
+      (remote, code_remote) = git(["ls-remote", "origin", "HEAD"])
+    if code_remote != 0: return (tree_pin, "", "")
+    var commit_head = ""
     for line in remote.splitLines:
-      if line.endsWith("\tHEAD"): head_commit = line.split('\t')[0]
-    if head_commit.len == 0: return (pin_tree, "", "")
-    if head_commit == pin: return (pin_tree, head_commit, pin_tree)
-    let (_, fetch_code) = git(["fetch", "--quiet", "origin", "HEAD"])
-    if fetch_code != 0: return (pin_tree, head_commit, "")
-    let (head_out, head_code) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
-    (pin_tree, head_commit, if head_code == 0: head_out.strip.splitLines[^1] else: "")
+      if line.endsWith("\tHEAD"): commit_head = line.split('\t')[0]
+    if commit_head.len == 0: return (tree_pin, "", "")
+    if commit_head == pin: return (tree_pin, commit_head, tree_pin)
+    let (_, code_fetch) = git(["fetch", "--quiet", "origin", "HEAD"])
+    if code_fetch != 0: return (tree_pin, commit_head, "")
+    let (output_head, code_head) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
+    (tree_pin, commit_head, if code_head == 0: output_head.strip.splitLines[^1] else: "")
 
-  let (pin_tree, head_commit, head_tree) = libraryHead(pin)
-  result.add checkHead(pin, pin_tree, head_commit, head_tree, PATH_LOCK)
+  let (tree_pin, commit_head, tree_head) = libraryHead(pin)
+  result.add checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
   let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
   if code != 0 or edited.strip.len > 0:
     result.add Finding(
@@ -483,7 +483,7 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   let
     pin = pgaCommit()
     published = publications()
-    shell_text = readFile(PATH_SHELL)
+    text_shell = readFile(PATH_SHELL)
     changes = readChanges(ignored)
     designs = readDesigns(ignored)
     trials = readTrials()
@@ -503,8 +503,8 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
       name: name,
       title: TITLES[name],
       dimensions: dimensions,
-      static_measurements: baselines[name],
-      runtime_measurements: readDocument(BASELINE / "runtime_" & name & ".json"),
+      measurements_static: baselines[name],
+      measurements_runtime: readDocument(BASELINE / "runtime_" & name & ".json"),
     )
   for _, document in trials.pairs: documents.add document
   let spread = spreadOf(documents)
@@ -515,17 +515,17 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
     for algebra, measured in trials[design.name]{"algebras"}.pairs:
       overlay.functions[algebra] = measured{"functions"}
     overlays.add overlay
-  result["docket"] = assemble(shell_text, "PGA Gap Docket",
+  result["docket"] = assemble(text_shell, "PGA Gap Docket",
     docketBody(sheets, readDocument(PATH_DOCKET), overlays, pin,
       linksHtml(names, published, "docket")), faces)
   var proposals: seq[Proposal]
   for (name, change) in changes:
     proposals.add Proposal(name: name, change: change, trial: trials.getOrDefault(name))
-  result["marginalia"] = assemble(shell_text, "PGA Marginalia",
+  result["marginalia"] = assemble(text_shell, "PGA Marginalia",
     marginaliaBody(proposals, notes, files, baselines, spread, pin,
       linksHtml(names, published, "marginalia")), faces)
   for design in designs:
-    result[design.name] = assemble(shell_text, titled(design.name),
+    result[design.name] = assemble(text_shell, titled(design.name),
       designBody(design, trials.getOrDefault(design.name), files, baselines, spread, pin,
         linksHtml(names, published, design.name)), faces)
 
@@ -596,13 +596,13 @@ proc trialOf(which: string) =
     baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
     pristine[name] = pristineBinary(chain, algebra)
   let
-    pin_suites = pristineSuites(chain, algebras)
+    suites_pin = pristineSuites(chain, algebras)
     taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": chain.nim,
       "pga": chain.pga, "flags": FLAGS, "runs": TRIAL_RUNS}
   createDir DIRECTORY_TRIALS
   for candidate in selected:
     echo "Trying ", candidate.name
-    let (document, why) = runTrial(chain, candidate, algebras, baselines, pristine, pin_suites,
+    let (document, why) = runTrial(chain, candidate, algebras, baselines, pristine, suites_pin,
       taken)
     removeDir chain.work / candidate.name
     if document.isNil:

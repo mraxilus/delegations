@@ -106,9 +106,9 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
       inc i
     let
       text = heading.lines[0]
-      edit_path = text.pathBetween(EDIT_HEAD)
-      replace_path = text.pathBetween(REPLACE_HEAD)
-    if edit_path.len > 0:
+      path_edit = text.pathBetween(EDIT_HEAD)
+      path_replace = text.pathBetween(REPLACE_HEAD)
+    if path_edit.len > 0:
       if fences.len != 2:
         findings.add Finding(
           path: path,
@@ -117,14 +117,14 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
         )
         continue
       change.edits.add Edit(
-        path: edit_path,
+        path: path_edit,
         quote: fences[0].lines.join("\n"),
         replacement: fences[1].lines.join("\n"),
         line: heading.line,
       )
-    elif replace_path.len > 0:
+    elif path_replace.len > 0:
       let
-        opening = REPLACE_HEAD & replace_path & DIGEST_JOIN
+        opening = REPLACE_HEAD & path_replace & DIGEST_JOIN
         digest = if text.startsWith(opening): text[opening.len .. ^1].strip(chars = {'`'}) else: ""
       if digest.len == 0 or fences.len != 1:
         findings.add Finding(
@@ -134,7 +134,7 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
         )
         continue
       change.edits.add Edit(
-        path: replace_path,
+        path: path_replace,
         replacement: fences[0].lines.join("\n") & "\n",
         digest: digest,
         line: heading.line,

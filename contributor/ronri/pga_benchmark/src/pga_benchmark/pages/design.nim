@@ -47,12 +47,12 @@ func designBody*(
     if trial.isNil: return "<p class=\"note\">No trial yet; claims are unchecked.</p>"
     result = "<div class=\"table\"><table><tr><th>Claim</th><th>Verdict</th><th>Detail</th></tr>"
     for claim in trial{"claims"}:
-      let passed = claim{"passed"}.getBool
+      let is_holding = claim{"passed"}.getBool
       var detail: seq[string]
       for line in claim{"detail"}.getElems: detail.add escapeHtml(line.getStr)
       result.add "<tr><td>" & claimText(claim) & "</td><td>" &
-        chip(if passed: "holds" else: "fails", if passed: "pass" else: "fail") & "</td><td>" &
-        detail.join("<br>") & "</td></tr>"
+        chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") &
+        "</td><td>" & detail.join("<br>") & "</td></tr>"
     result.add "</table></div>"
 
   result = "<div class=\"page\"><header><h1>" & renderInline(design.title) &

@@ -102,9 +102,9 @@ func verdictChips*(trial: JsonNode, baselines: Table[string, JsonNode], spread: 
   for algebra, measured in trial{"algebras"}.pairs:
     let
       failed = measured{"suites", "failed"}.getInt
-      pin_failed = trial{"pin_suites", algebra, "failed"}.getInt
+      failed_pin = trial{"pin_suites", algebra, "failed"}.getInt
       (gone, came) = nanMoved(measured)
-      kind = if failed > pin_failed or came > 0: "fail" else: "pass"
+      kind = if failed > failed_pin or came > 0: "fail" else: "pass"
       median = touchedMedian(trial, baselines, algebra)
     var text = algebra & " suites " & suitesText(trial, algebra)
     if measured{"functions"}.len > 0:

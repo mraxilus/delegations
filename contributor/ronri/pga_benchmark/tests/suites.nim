@@ -975,9 +975,9 @@ suite "Cells":
 suite "Pages":
   test "shell names faces it embeds, and assembly fills every token":
     let
-      shell_text = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
-      page = assemble(shell_text, "A & B", "<p>body</p>", {"a.woff2": "xyz"}.toTable)
-    check facesAsked(shell_text) == @["a.woff2"]  # one face asked
+      text_shell = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
+      page = assemble(text_shell, "A & B", "<p>body</p>", {"a.woff2": "xyz"}.toTable)
+    check facesAsked(text_shell) == @["a.woff2"]  # one face asked
     check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
     check "data:font/woff2;base64,eHl6" in page  # bytes inlined
 
@@ -999,19 +999,19 @@ suite "Pages":
   test "docket rows carry identifiers docket file allots":
     let
       sheet = Sheet(name: "rga4d", title: "Rigid 4D", dimensions: 4,
-        static_measurements: %*{"measurands": {"wedge": {"library": "∧(M,M)", "symbol": "∧"}},
+        measurements_static: %*{"measurands": {"wedge": {"library": "∧(M,M)", "symbol": "∧"}},
           "functions": {"∧(M,M)": {"total": {"multiplies": 81}}}},
-        runtime_measurements: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
+        measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
       ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
     check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
 
   test "verdict chips say when trial removes NaN results":
     let
       baselines = {"rga4d": %*{"measurands": {}}}.toTable
-      trial_document = %*{"pin_suites": {"rga4d": {"ok": 1, "failed": 0}}, "algebras": {"rga4d": {
+      document_trial = %*{"pin_suites": {"rga4d": {"ok": 1, "failed": 0}}, "algebras": {"rga4d": {
         "suites": {"ok": 1, "failed": 0}, "functions": {}, "times": {},
         "nan": {"norm": [0.5, 0.0]}}}}
-      chips = verdictChips(trial_document, baselines, Spread(low: 0.9, high: 1.1))
+      chips = verdictChips(document_trial, baselines, Spread(low: 0.9, high: 1.1))
     check "NaN gone in 1" in chips and "chip pass" in chips  # gain named, suites held
     check "no trial" in verdictChips(nil, baselines, Spread())  # absent trial is said
 
