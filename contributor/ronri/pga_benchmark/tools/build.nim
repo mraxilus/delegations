@@ -13,7 +13,8 @@
 ##   |           | `baseline/static_<algebra>.json`                                     |
 ##   | guard     | compare last inspect against baseline; any count grown is finding    |
 ##   | evaluate  | try one change or proposal at pin, `stale` ones, or `all`, and       |
-##   |           | record what each measured as `evaluations/<name>.json`               |
+##   |           | record what each measured as `evaluations/<name>.json`; typed        |
+##   |           | algebras alone, or all four after `--thorough`                       |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
 ##   | published | record URL and digest of page just published, as                     |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
@@ -47,7 +48,8 @@ import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
-  Candidate, Toolchain, editsDigest, pristineBinary, pristineSuites, readLibrary, runEvaluation
+  Candidate, Toolchain, algebrasEvaluated, editsDigest, pristineBinary, pristineSuites,
+  readLibrary, runEvaluation
 
 
 const
@@ -80,8 +82,10 @@ const
     ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
     "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
-    " [name|symbol] [url|algebra]\n"
+    " [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
+  FLAG_THOROUGH = "--thorough"
+    ## Flag after `evaluate <name>` that measures untyped algebras too.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
     ## Atlas checkout of library's repository.
   LIBRARY_DIRECTORY = "lengyel/projective_geometric_algebra_illuminated"
@@ -104,8 +108,6 @@ const
     ## File that must name every published URL.
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"
     ## Repository driver, asked for faces.
-  EVALUATED = ["rga4d", "cga5d"]
-    ## Algebras evaluation measures: typed ones, which both lower bounds cover.
   EVALUATION_RUNS = 5
     ## Timed runs of each binary per evaluation, alternating.
   TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
@@ -567,9 +569,9 @@ proc publishedAt(name, url: string) =
 
 #[ Evaluations ]#
 
-proc evaluate(which: string) =
+proc evaluate(which: string; is_thorough: bool) =
   ## Try one change or proposal at pin, every one for `all`, or those `drive` would name for
-  ##   `stale`; write each evaluation document.
+  ##   `stale`; write each evaluation document. Typed algebras alone, or all four when thorough.
 
   func machine(): string =
     ## Describe machine evaluation ran on, as bench documents do.
@@ -600,8 +602,9 @@ proc evaluate(which: string) =
     algebras: seq[evaluations.Algebra]
     baselines: Table[string, JsonNode]
     pristine: Table[string, string]
+  let evaluated = algebrasEvaluated(is_thorough)
   for (name, dimensions, is_conformal) in CONFIGS:
-    if name notin EVALUATED: continue
+    if name notin evaluated: continue
     let algebra =
       evaluations.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
     algebras.add algebra
@@ -852,10 +855,11 @@ when isMainModule:
     arguments =
       case verb
       of "show": 2 .. 3
-      of "evaluate": 2 .. 2
+      of "evaluate": 2 .. 3
       of "published": 3 .. 3
       else: 1 .. 1
-  if paramCount() notin arguments:
+  if paramCount() notin arguments or verb == "evaluate" and paramCount() == 3 and
+      paramStr(3) != FLAG_THOROUGH:
     stderr.write USAGE
     quit 2
   try:
@@ -866,7 +870,7 @@ when isMainModule:
     of "bench": bench()
     of "baseline": baseline()
     of "guard": guard()
-    of "evaluate": evaluate(paramStr(2))
+    of "evaluate": evaluate(paramStr(2), paramCount() == 3)
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()

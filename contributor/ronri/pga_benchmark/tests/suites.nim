@@ -18,7 +18,7 @@ import ../src/pga_benchmark/[
 import ../src/pga_benchmark/pages/[docket, shell, evaluation]
 import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
-  editsDigest, functionsChanged, nanOf, successOf, timesOf
+  algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
 const
@@ -957,6 +957,10 @@ suite "Evaluations":
     result = %*{"measurands": {}}
     for (id, time, nan) in ns:
       result["measurands"][id] = %*{"library": {"ns_median": time, "nan_share": nan}}
+
+  test "evaluation measures typed algebras, and all four only when thorough":
+    check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, both lower bounds cover
+    check algebrasEvaluated(true) == @["rga4d", "cga5d", "rga3d", "cga4d"]  # thorough adds
 
   test "times pair runs by measurand, median of ratios, rounded":
     let
