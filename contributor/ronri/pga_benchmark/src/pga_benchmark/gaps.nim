@@ -276,8 +276,8 @@ func assign*(gaps: var seq[Gap]; docket: var Docket) =
 #[ Cause ]#
 
 func isLibrary(f: JsonNode): bool =
-  ## Decide whether inspected function is library's rather than reference's.
-  not f{"module"}.getStr.startsWith("reference/")
+  ## Decide whether inspected function is library's, rather than reference's or dense form.
+  f{"module"}.getStr.isLibraryModule
 
 
 func isOperator(f: JsonNode): bool =

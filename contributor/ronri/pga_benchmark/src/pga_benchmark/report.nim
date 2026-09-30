@@ -101,6 +101,12 @@ func moduleTail*(module: string): string =
   tail.join("/").replace("95", "_")
 
 
+func isLibraryModule*(module: string): bool =
+  ## Decide whether module tail names library's module, rather than reference's or dense
+  ##   forms'; dense module's tail is `dense` in bench build, and path ends so elsewhere.
+  not module.startsWith("reference/") and module != "dense" and not module.endsWith("/dense")
+
+
 func functionNode*(function: CFunction; own, total: Counts; size_multivector: int): JsonNode =
   ## Build object of one inspected function: key parts, module tail, inline flag, own and total
   ## counts, movement modelled on total counts. Mangled name is left out: it spells

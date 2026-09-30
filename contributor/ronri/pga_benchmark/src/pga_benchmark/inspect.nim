@@ -33,8 +33,9 @@ const
     ## Substring of module suffix of every library module, from its checkout path.
   REFERENCE_MARK = "referenceZ"
     ## Prefix of module suffix of every typed reference module.
-  DENSE_MARK = "Zdense"
-    ## Suffix of module suffix of dense form module.
+  DENSE_MODULE = "dense"
+    ## Module suffix of dense form module, as bench entry beside it names it; build from
+    ##   elsewhere spells path before it, ending `Zdense`.
   KEY_SELECT = "{}(Multivector,int)"
     ## Key both grade selections share; antigrade's instantiation, second declared, takes
     ## key numbered by its overload index.
@@ -45,7 +46,7 @@ const
 func isKept(f: CFunction): bool =
   ## Decide whether function belongs to library, reference or dense forms, i.e. to gap list.
   LIBRARY_MARK in f.module or f.module.startsWith(REFERENCE_MARK) or
-    f.module.endsWith(DENSE_MARK)
+    f.module == DENSE_MODULE or f.module.endsWith("Z" & DENSE_MODULE)
 
 
 func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
