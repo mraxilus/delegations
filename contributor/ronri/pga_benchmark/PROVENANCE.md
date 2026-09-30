@@ -323,7 +323,7 @@ wrap.
 
 ## Driver
 
-`tools/build.nim` carries `inspect`, `bench`, `baseline`, `guard`, `trial`, `pages`,
+`tools/build.nim` carries `inspect`, `bench`, `baseline`, `guard`, `evaluate`, `pages`,
 `published`, `drive`, `gaps`, `show`, `sweep`, `system` and `clean`, dispatched from
 `case paramStr(1)`, so koch reads the verbs itself. `system` prints `git`, `curl` and
 `coreutils`: git reads the library head, and the other two serve `koch fetch-assets`, which
@@ -343,7 +343,7 @@ got `81`, baseline `80`.
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Driver`: the dispatch, the usage
 string and the header table name the same verbs.
 
-## Changes, designs and trials
+## Changes, proposals and evaluations
 
 **A change is Markdown, and quotes what it edits.** Each file in `changes/` holds a title,
 why, and one section for each edit: a quote of the library at pin, then its replacement. A
@@ -351,43 +351,44 @@ whole-file replacement carries the digest of the file it replaces instead. A quo
 once at pin. A line number moves with every library commit, and a quote moves only when its
 own lines do. So a change that still applies at head still says what it meant.
 
-**A design is one directory, with one shape.** `design.md` argues the future state,
-`change.md` holds its candidate edits, and `claims.json` names the design it builds on and the
-claims that its trial checks. A claim is data, so the page shows each verdict beside it. The
-kinds are `suites`, `tables`, `program`, `count` and `build`. Rejected: a design as prose
+**A proposal is one directory, with one shape.** `proposal.md` argues the future state,
+`change.md` holds its candidate edits, and `claims.json` names the proposal it builds on and the
+claims that its evaluation checks. A claim is data, so the page shows each verdict beside it. The
+kinds are `suites`, `tables`, `program`, `count` and `build`. Rejected: a proposal as prose
 alone, because nothing could then say whether it still holds at head.
 
-**A trial measures a copy of the library at pin.** It copies the checkout, applies the edits
-(the base design first), and measures the copy against the pin. It runs the suites of the
+**An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
+(the base proposal first), and measures the copy against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
 lands on both.
 
-The trial then checks the claims. The document names the pin and a digest of what it
-tried: every edit, every claim and every program, and never the prose. So a trial is current
-exactly while its edits are. Trials measure the two
+The evaluation then checks the claims. The document names the pin and a digest of what it
+tried: every edit, every claim and every program, and never the prose. So an evaluation is current
+exactly while its edits are. Evaluations measure the two
 typed algebras, rga4d and cga5d, which both lower bounds cover.
 
-**The spread comes from the trials themselves.** A trial that changes no library function
+**The spread comes from the evaluations themselves.** An evaluation that changes no library function
 moves no count, so the range of its time ratios is the range of the machine. The pages state
 the spread beside the figures it qualifies. On 2026-09-29, in this container (linux amd64, 4
-cores), those trials gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
+cores), those evaluations gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
 
 Measured variance: `typed-multivectors` applies the same library edits as `cayley-derivation`.
-Its trials on 2026-09-29 gave median ratios over every rga4d measurand of ×1.16, ×1.00 and
-×1.00. Over every cga5d measurand, the last two gave ×0.99 and ×1.07. Alternation does not
-cancel all drift of a shared machine, so one trial's time is weak evidence alone. Counts are
-exact, and carry the verdicts.
+Its evaluations on 2026-09-29 and 2026-09-30 gave median ratios over every rga4d measurand of
+×1.16, ×1.00, ×1.00 and ×1.00. Over every cga5d measurand, the last three gave ×0.99, ×1.07 and
+×0.99. Alternation does not cancel all drift of a shared machine, so one evaluation's time is
+weak evidence alone. Counts are exact, and carry the verdicts.
 
 The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
 one applied at pin gives files byte-identical to the measured edits.
 The change of `cayley-derivation` reproduces its draft byte for byte, and
-`designs/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
+`proposals/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
 and cga5d.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`, `Designs`,
-`Trials` and `Cells`. They cover parse, quote and digest rules, and claim kinds. They also cover
-pairing of runs, NaN shares, the success line of the compiler, and the table serialiser at pin.
+Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`,
+`Proposals`, `Evaluations` and `Cells`. They cover parse, quote and digest rules, and claim
+kinds. They also cover pairing of runs, NaN shares, the success line of the compiler, and the
+table serialiser at pin.
 A digest moves with edits, and never with prose.
 
 ## Notes
@@ -413,7 +414,7 @@ every page again, and any page whose digest differs is a finding. `README.md` mu
 of every publication, so the two copies of a URL cannot drift apart. Rejected: a page written by
 hand, or by a script outside this project, because nothing held it to the files.
 
-Verified by suite `Pages`: assembly fills every token, the spread until trials give enough
+Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
 ratios, and the chip that names removed NaN results.
 
 ## Library head
@@ -424,9 +425,9 @@ A commit elsewhere in the repository changes nothing measured, so the check comp
 commits. A pin that lags head is a finding on every push until the pin follows, as the
 Architect chose. So each page shows the library as it stands.
 
-**`drive` holds every measurement and file to the pin.** Each baseline and each trial must be
-taken at the pin. Each trial must carry the digest of its edits as they are now. Each change
-and design must apply at pin, and each note must find its quote.
+**`drive` holds every measurement and file to the pin.** Each baseline and each evaluation must be
+taken at the pin. Each evaluation must carry the digest of its edits as they are now. Each change
+and proposal must apply at pin, and each note must find its quote.
 
 **`drive` holds the checkout to the pin.** Any edit under the library directory of the
 checkout is a finding. The checkout is under `dependencies/`, which git ignores, so a tool
@@ -686,8 +687,8 @@ these measurements.
 
 ## Known limitations
 
-- Trials time the two typed algebras only; rga3d and cga4d carry static counts and suites
-  from `drive`, and no trial.
+- Evaluations time the two typed algebras only; rga3d and cga4d carry static counts and suites
+  from `drive`, and no evaluation.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself.
   It compares two builds on one machine, and is no measurement of the machine.
 

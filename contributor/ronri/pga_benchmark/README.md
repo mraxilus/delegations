@@ -19,12 +19,12 @@ Three kinds of page answer the question. Each one is built from committed files 
 |------|------|---------------|
 | [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
-| [Cayley derivation][cayley-derivation] | design | every Cayley table derived from three |
-| [Typed multivectors][typed-multivectors] | design | concrete k-vector types for any dimension |
+| [Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
+| [Typed multivectors][typed-multivectors] | proposal | concrete k-vector types for any dimension |
 
-A **monitoring** page shows the library as it is. A **design** page shows a future state of
-the library, argued in its `design.md` and checked by its trial. Each design has the same shape,
-so the next exploration starts from the same frame.
+A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
+the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
+same shape, so the next exploration starts from the same frame.
 
 ## What pages are built from
 
@@ -32,12 +32,12 @@ so the next exploration starts from the same frame.
 |-----------|---------------|---------|
 | `baseline/` | measurements at pin, and the docket of identifiers | docket, `gaps.md` |
 | `changes/` | one small change to the library for each file: why, then quoted edits | marginalia |
-| `designs/<name>/` | `design.md`, optional `change.md`, `claims.json`, and programs | design page |
-| `trials/` | what each change or design measured when tried at pin | marginalia, designs |
+| `proposals/<name>/` | `proposal.md`, optional `change.md`, `claims.json`, programs | its page |
+| `evaluations/` | what each change or proposal measured when tried at pin | marginalia, proposals |
 | `marginalia/notes.md` | notes on library source, each quoting the lines it is about | marginalia |
 | `pages/` | shell every page is built in, and publication of each published page | every page |
 
-A change, a design and a note quote the library, and never give a line number. A quote that
+A change, a proposal and a note quote the library, and never give a line number. A quote that
 does not occur once at pin is a finding, so no file points at lines that say something else.
 The list of gaps is [`gaps.md`](gaps.md), generated from `baseline/` and never edited by hand.
 The words are in [`GLOSSARY.md`](GLOSSARY.md).
@@ -49,7 +49,7 @@ The words are in [`GLOSSARY.md`](GLOSSARY.md).
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
    `nim r koch fetch-deps`.
 2. Re-take every measurement: `baseline`, then `bench`, then `gaps`.
-3. Re-quote each change, design and note that `drive` names, then run `trial all`.
+3. Re-quote each change, proposal and note that `drive` names, then run `evaluate all`.
 4. Run `pages`, publish each page that `drive` names, and record each one with
    `published <name> <url>`.
 
@@ -58,14 +58,14 @@ The words are in [`GLOSSARY.md`](GLOSSARY.md).
 ```sh
 nim r koch check                                # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
-nim r tools/build.nim drive      # project directory: every check CI runs, head included
-nim r tools/build.nim bench      # runtime measurements into baseline/runtime_<algebra>.json
-nim r tools/build.nim baseline   # re-record static measurements after an intended change
-nim r tools/build.nim guard      # compare the last inspection against the baseline
-nim r tools/build.nim gaps       # regenerate gaps.md and the docket from baseline/
-nim r tools/build.nim trial all  # try every change and design at pin, into trials/
-nim r tools/build.nim pages      # build every page into build/<name>.html
-nim r tools/build.nim sweep      # dense timings at two to six dimensions, never in CI
+nim r tools/build.nim drive         # project directory: every check CI runs, head included
+nim r tools/build.nim bench         # runtime measurements into baseline/runtime_<algebra>.json
+nim r tools/build.nim baseline      # re-record static measurements after an intended change
+nim r tools/build.nim guard         # compare the last inspection against the baseline
+nim r tools/build.nim gaps          # regenerate gaps.md and the docket from baseline/
+nim r tools/build.nim evaluate all  # try every change and proposal at pin, into evaluations/
+nim r tools/build.nim pages         # build every page into build/<name>.html
+nim r tools/build.nim sweep         # dense timings at two to six dimensions, never in CI
 ```
 
 The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
@@ -91,8 +91,8 @@ src/pga_benchmark/gaps.nim         gaps, causes, docket, rendering
 src/pga_benchmark/markdown.nim     records read as blocks, and rendered for pages
 src/pga_benchmark/changes.nim      changes: quoted edits, applied at pin
 src/pga_benchmark/notes.nim        notes on library source, anchored by quote
-src/pga_benchmark/designs.nim      design directories: record, change, claims
-src/pga_benchmark/trials.nim       try change or design on copy of library at pin
+src/pga_benchmark/proposals.nim    proposal directories: record, change, claims
+src/pga_benchmark/evaluations.nim  try change or proposal on copy of library at pin
 src/pga_benchmark/head.nim         hold pin to head, and every file and page to pin
 src/pga_benchmark/pages/           shell assembly, and one renderer per page kind
 tools/build.nim                    driver verbs
