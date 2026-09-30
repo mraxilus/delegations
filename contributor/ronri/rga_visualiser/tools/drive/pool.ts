@@ -9,6 +9,7 @@
 //   hold had taken down to about one. That is what stutter is made of.
 
 import type { Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, advance, evaluateOver } from './clock';
 import { settleCamera } from './camera';
 import { readCanvas } from './canvas';
 import { waitFrames } from './frame';
@@ -43,9 +44,9 @@ export async function driveDrawerCost(page: Page): Promise<void> {
     }
   });
   await watchCells(page);
-  // Wall time, deliberately: figure reported is rebuilds over span of real time, so span is
+  // Simulated span: figure reported is rebuilds over span of page's own time, so span is
   //   measurement rather than race.
-  await page.waitForTimeout(1500);
+  await advance(page, 1500);
   const shut = await page.evaluate(() => window.__cells ?? -1);
   report(
     'a shut drawer costs nothing to keep up to date',
@@ -59,7 +60,7 @@ export async function driveDrawerCost(page: Page): Promise<void> {
     document.querySelector('.section[data-section="diagnostics"]')?.classList.add('open');
     window.__cells = 0;
   });
-  await page.waitForTimeout(1500); // Same window as above, and same reason.
+  await advance(page, 1500); // Same window as above, and same reason.
   const open = await page.evaluate(() => window.__cells ?? -1);
   report(
     'and an open one draws the pool grid on a scene change, not on a clock',
@@ -67,7 +68,7 @@ export async function driveDrawerCost(page: Page): Promise<void> {
   );
 
   // Other half of same gate, and half "costs nothing" check can never fail on its own.
-  const edited = await page.evaluate(async () => {
+  const edited = await evaluateOver(page, 600 + 2 * MILLISECONDS_FRAME, async () => {
     window.__cells = 0;
     nimRemoveObject(nimSceneHandles()[0] ?? 0);
     await new Promise((done) => setTimeout(done, 600));

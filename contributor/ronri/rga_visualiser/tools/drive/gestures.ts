@@ -6,6 +6,7 @@
 import type { Page } from '@playwright/test';
 import { readCamera, type Stance } from './camera';
 import { waitFrames } from './frame';
+import { advance, waitUntil } from './clock';
 
 /** What one gesture did to camera: stance either side of it. */
 export interface Moved {
@@ -29,12 +30,12 @@ export async function clearTheGlass(page: Page): Promise<void> {
   });
   // Wait on what was asked for rather than on clock: drawer's own transition decides when it
   //   stops taking pointer events, and loaded runner runs that slower than any fixed wait.
-  await page.waitForFunction(() => {
+  await waitUntil(page, () => {
     const drawer = document.querySelector('.drawer');
     const menu = document.getElementById('selection-menu');
     return !(drawer?.classList.contains('open') ?? false) &&
       !(menu?.classList.contains('show') ?? false) && nimSelectionCount() === 0;
-  }, null, { timeout: 8000, polling: 'raf' });
+  }, null);
 }
 
 /** Hold keys for however long, and report what camera did across it. */
@@ -43,10 +44,11 @@ export async function holdKeys(
 ): Promise<Moved> {
   const before = await readCamera(page);
   for (const code of codes) await page.keyboard.down(code);
-  await page.waitForTimeout(milliseconds);
+  // Simulated time: how long key is down is what caller asked for, and page moves camera by
+  //   each frame's own elapsed time, so same hold travels same distance on every machine.
+  await advance(page, milliseconds);
   for (const code of codes) await page.keyboard.up(code);
-  // Two frames, not fixed wait: release has to reach frame loop, and that is measured in
-  //   frames. Hold above stays wall time, since how long key is down is what caller asked for.
+  // Two frames: release has to reach frame loop, and that is measured in frames.
   await waitFrames(page, 2);
   return { before, after: await readCamera(page) };
 }
@@ -68,9 +70,7 @@ export async function focusCanvas(page: Page): Promise<void> {
  *  page did, never on how fast machine ran.
  */
 export async function settleCount(page: Page, wanted: number): Promise<void> {
-  await page.waitForFunction(
-    (given) => nimSceneCount() === given, wanted, { timeout: 8000, polling: 'raf' },
-  );
+  await waitUntil(page, (given) => nimSceneCount() === given, wanted);
 }
 
 
@@ -80,16 +80,15 @@ export async function settleCount(page: Page, wanted: number): Promise<void> {
  *  Waiting on class rather than on clock leaves slow machine slow rather than wrong.
  */
 export async function settleDrawer(page: Page, is_open: boolean): Promise<void> {
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     (given) => (document.getElementById('drawer')?.classList.contains('open') ?? false) === given,
-    is_open, { timeout: 8000, polling: 'raf' },
+    is_open,
   );
 }
 
 
 /** Wait until this many objects stand selected. */
 export async function settleSelection(page: Page, wanted: number): Promise<void> {
-  await page.waitForFunction(
-    (given) => nimSelectionCount() === given, wanted, { timeout: 8000, polling: 'raf' },
-  );
+  await waitUntil(page, (given) => nimSelectionCount() === given, wanted);
 }

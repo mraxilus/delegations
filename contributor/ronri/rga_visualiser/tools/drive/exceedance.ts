@@ -10,6 +10,7 @@
 //   loop makes, which exercises drawing without pretending machine is faster than it is.
 
 import type { Page } from '@playwright/test';
+import { advance, waitUntil } from './clock';
 import { report } from './report';
 
 /** How deep band at each end to look in for mark's own labels.
@@ -49,15 +50,30 @@ async function releaseExceedance(page: Page): Promise<void> {
   });
 }
 
-/** Feed window this many durations, drawn from what caller rolls. */
+/** Seed of every window fed, so each run feeds same durations. */
+const SEED_WINDOW = 0x5eed;
+
+/** Feed window this many durations, drawn from what caller rolls.
+ *
+ *  Rolled by seeded generator rather than `Math.random`: curve's reach and axis's extent are
+ *  then same figures on every run, and not only same verdicts.
+ */
 async function feedWindow(page: Page, count: number, rolls: number[][]): Promise<void> {
   await page.evaluate((given) => {
+    // Mulberry32: whole state is one 32-bit word, so seed alone fixes every draw.
+    let state = given.seed >>> 0;
+    const draw = (): number => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+      mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed);
+      return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+    };
     for (let i = 0; i < given.count; i += 1) {
-      const roll = Math.random();
+      const roll = draw();
       const band = given.rolls.find((one) => roll < (one[0] ?? 1)) ?? given.rolls[0];
-      window.__record_kept?.((band?.[1] ?? 0) + Math.random() * (band?.[2] ?? 1));
+      window.__record_kept?.((band?.[1] ?? 0) + draw() * (band?.[2] ?? 1));
     }
-  }, { count, rolls });
+  }, { count, rolls, seed: SEED_WINDOW });
 }
 
 /** Wait until axis has stopped travelling, since it waits and then glides.
@@ -66,10 +82,10 @@ async function feedWindow(page: Page, count: number, rolls: number[][]): Promise
  *  therefore always answers restless, and no count of rounds is needed to step over wait.
  */
 async function settleAxis(page: Page): Promise<void> {
-  await page.waitForFunction(() => {
+  await waitUntil(page, () => {
     drawExceedance();
     return ms_axis_restless === 0;
-  }, null, { timeout: 20000, polling: 'raf' });
+  }, null);
 }
 
 /** Drive curve as distribution: monotone, accounting for its window, agreeing with samples.
@@ -377,9 +393,9 @@ export async function driveAxisGlide(page: Page): Promise<void> {
   // One frame three times slower than anything else in window, and nothing else changed.
   await page.evaluate(() => window.__record_kept?.(126));
   const at_once = await axisReading(page);
-  // Wall time, deliberately: reading taken is mid-flight one, and check is that second later
-  //   axis is under way but not yet arrived.
-  await page.waitForTimeout(1000);
+  // Simulated span: reading taken is mid-flight one, and check is that second later axis is
+  //   under way but not yet arrived.
+  await advance(page, 1000);
   const midway = await axisReading(page);
   await settleAxis(page);
   const arrived = await axisReading(page);

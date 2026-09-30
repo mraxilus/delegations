@@ -220,6 +220,11 @@ const
     ##   and ease settle before verdict reads camera.
     ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
     ##   set of nineteen checks runs in about twenty seconds under software GL.
+  SECONDS_FRAME_DRIVEN* = 1.0/60.0
+    ## Advance scripted run's clock by this much for each frame drawn, whatever machine takes.
+    ##   Animations, held keys and camera ease all read that clock, so what scripted frame shows
+    ##   is same on every machine, and verdict with it: slow machine takes longer to draw same
+    ##   frames. Speed is measured by `--timings`, which keeps real clock.
   FRAMES_TIMING_MAX* {.define: "visualiser.frames_timing_max".} = 20_000
     ## Bound how many per-frame timings `--timings` can record.
     ##   Independent of arenas, since benchmark run is not interactive draw loop.
@@ -1920,8 +1925,10 @@ proc runInteractive(
     openFrameTimings()
 
     # Take one reading per frame, shared by every drag completing this frame and by render.
-    #   Both then agree on "now".
-    let now = secondsNow()
+    #   Both then agree on "now". Scripted run reads its own clock; see `SECONDS_FRAME_DRIVEN`.
+    let now =
+      if options.isDriven: float(count_drawn)*SECONDS_FRAME_DRIVEN
+      else: secondsNow()
 
     # Measure against previous iteration's start.
     #   Covers everything real frame pays for: events, tessellation, render, swap that
@@ -1941,6 +1948,8 @@ proc runInteractive(
           &"Timing run must stay within its {FRAMES_TIMING_MAX}-frame bound, raise " &
           &"`--define:visualiser.frames_timing_max` or shorten `--frames`; got `{count_drawn}`."
         TIMINGS_FRAME_MILLISECONDS[count_drawn - 1] = delta_milliseconds
+      # Held key moves by scripted clock's step, as everything else in scripted run does.
+      if options.isDriven: seconds_frame = SECONDS_FRAME_DRIVEN
     ticks_previous_frame = ticks_frame_start
 
     if options.is_key_driven: driveKeys(count_drawn)
@@ -2282,7 +2291,8 @@ proc main() =
 
   # Open on storyboard's seeds alone, unless saved scene or demo was asked for instead.
   #   Window and script then agree on where construction starts.
-  let now_startup = secondsNow()
+  # Scripted run starts its own clock at zero, so opening scene is born at frame zero.
+  let now_startup = if options.isDriven: 0.0 else: secondsNow()
   doAssert not (options.scale_demo.isSome and len(options.path_load_scene) > 0),
     &"`--demo` and `--load-scene` each replace the opening scene, ask for one; got " &
       &"`{options.scale_demo}` with `{options.path_load_scene}`."

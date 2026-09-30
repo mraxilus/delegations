@@ -1,27 +1,43 @@
 // Pins for every repaired performance fault; not Nim because crossing forfeits check compiler
 //   makes over bodies timing bridge calls by name -- `nimUpdateHover`, `nimAnchorScreen`,
 //   `nimSelectionMarker` -- each checked against signature `declare` derived.
-//   Bands are generous enough to survive loaded shared runner, tight enough to catch fault
-//   class returning, since every fault below was large multiplier while it was alive.
-//   Faults themselves, their causes and their measurements live in PROVENANCE.md.
-//   Raising band is sign-off: band is changed only with justification recorded beside ledger
-//   entry it pins, never adjusted to quiet failure unexamined. Failure just past band on slow
+//   Speed checks, and only kind that reads real clock. Each bound is 1.5 times slowest reading
+//   delegate container gave, rounded up: runner and delegate meet it, and fault it pins, every
+//   one large multiplier while it was alive, does not. Readings each bound is set from, and
+//   reading of fault it pins, live in PROVENANCE.md.
+//   Raising bound is sign-off: bound is changed only with justification recorded beside readings
+//   it is set from, never adjusted to quiet failure unexamined. Failure just past bound on slow
 //   run says re-measure against previous commit first; failure at multiples of it is fault
 //   this exists for.
+//   Figure is median of batches, frame apart, wherever one call is too short to time alone:
+//   single mean of few hundred calls moves with one collection or one preemption.
 
 import type { Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, evaluateOver } from './clock';
 import { settleCamera } from './camera';
 import { waitFrames } from './frame';
 import { pickPlane } from './ground';
 import { report, reportWithin } from './report';
 import { pixelOf } from './wheel';
 
-/** Ceiling each repaired fault is pinned under, with cost it was repaired to. */
-export const MILLISECONDS_PICK_HOVER = 5; // Repaired 1.5 ms; scene-copy-per-handle fault was 7.1.
-const MICROSECONDS_ANCHOR = 100; // Repaired 8 us; extent-tuple and object-copy fault was 280.
-const MILLISECONDS_MARKER_PAIR = 4; // Worst live kind; repaired ~1.2 ms, per-sample sums ~3.2.
-const MILLISECONDS_GRID_MOVING = 20; // Repaired 8.7 ms; per-boundary fade sampling was 26.1.
-const MILLISECONDS_EMITTING_MOVING = 4.5; // Repaired ~1.2 ms; CPU ribbon expansion was 6.3.
+/** Ceiling each repaired fault is pinned under: 1.5 times slowest delegate reading.
+ *
+ *  Readings each is set from, and reading of fault it pins, are in `PROVENANCE.md`.
+ */
+export const MILLISECONDS_PICK_HOVER = 2.6; // Fault: scene copied for each handle.
+export const MILLISECONDS_PICK_HOVER_LOADED = 7.2; // Same pick, at 5,038 objects.
+const MICROSECONDS_ANCHOR = 15; // Fault: extent tuple and object copied for each lookup.
+const MILLISECONDS_MARKER_PAIR = 1.7; // Fault: outline summed sample by sample.
+const MILLISECONDS_GRID_MOVING = 26; // Fault: fade sampled at each boundary.
+const MILLISECONDS_EMITTING_MOVING = 2; // Fault: ribbon expanded on CPU.
+
+/** Batches each pin times, frame apart; odd, so median is one batch's figure. */
+const BATCHES_ANCHOR = 15;
+const BATCHES_MARKER = 9;
+
+/** Calls in one timed batch: enough to span many ticks of page's coarsened clock. */
+const CALLS_ANCHOR = 200;
+const PAIRS_MARKER = 5;
 
 /** Time hover pick, which must stay off copy paths.
  *
@@ -51,19 +67,31 @@ export async function drivePinPick(page: Page): Promise<void> {
 /** Time anchor lookup, which must stay projection rather than copy.
  *
  *  Overlay view cache hands out no extent-and-matrix value pair, and object is read by handle.
+ *  Warm batch first and untimed: first batch on page read dearest of all, every time.
  */
 export async function drivePinAnchor(page: Page): Promise<void> {
-  const mean = await page.evaluate(() => {
+  const median = await page.evaluate(async (given) => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const handle = nimSceneHandles()[0] ?? 0;
-    const started = performance.now();
-    for (let i = 0; i < 400; i += 1) {
-      nimAnchorScreen(handle, canvas.clientWidth, canvas.clientHeight);
+    const meanOf = (calls: number): number => {
+      const started = performance.now();
+      for (let i = 0; i < calls; i += 1) {
+        nimAnchorScreen(handle, canvas.clientWidth, canvas.clientHeight);
+      }
+      return (1000 * (performance.now() - started)) / calls;
+    };
+    meanOf(given.calls);
+    const means: number[] = [];
+    for (let batch = 0; batch < given.batches; batch += 1) {
+      await new Promise((done) => requestAnimationFrame(done));
+      means.push(meanOf(given.calls));
     }
-    return (1000 * (performance.now() - started)) / 400;
-  });
+    means.sort((a, b) => a - b);
+    return means[Math.floor(means.length / 2)] ?? -1;
+  }, { batches: BATCHES_ANCHOR, calls: CALLS_ANCHOR });
   reportWithin(
-    'an anchor lookup stays a projection, not a copy', mean, 0, MICROSECONDS_ANCHOR, 'us mean',
+    'an anchor lookup stays a projection, not a copy', median, 0, MICROSECONDS_ANCHOR,
+    'us, median of batch means',
   );
 }
 
@@ -75,25 +103,34 @@ export async function drivePinAnchor(page: Page): Promise<void> {
  *  stayed hidden until it was decomposed.
  */
 export async function drivePinMarker(page: Page): Promise<void> {
-  const worst = await page.evaluate(() => {
+  const worst = await page.evaluate(async (given) => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
-    let worst_at = { milliseconds: 0, word: 'none' };
-    for (const handle of nimSceneHandles()) {
+    const meanOf = (handle: number): number => {
       const started = performance.now();
-      for (let i = 0; i < 30; i += 1) {
+      for (let i = 0; i < given.pairs; i += 1) {
         nimSelectionMarker(handle, canvas.clientWidth, canvas.clientHeight, 1, false, 0);
         nimSelectionPulse(handle, canvas.clientWidth, canvas.clientHeight, 1, false);
       }
-      const milliseconds = (performance.now() - started) / 30;
+      return (performance.now() - started) / given.pairs;
+    };
+    let worst_at = { milliseconds: 0, word: 'none' };
+    for (const handle of nimSceneHandles()) {
+      const means: number[] = [];
+      for (let batch = 0; batch < given.batches; batch += 1) {
+        await new Promise((done) => requestAnimationFrame(done));
+        means.push(meanOf(handle));
+      }
+      means.sort((a, b) => a - b);
+      const milliseconds = means[Math.floor(means.length / 2)] ?? 0;
       if (milliseconds > worst_at.milliseconds) {
         worst_at = { milliseconds, word: nimObjectKindWord(handle) };
       }
     }
     return worst_at;
-  });
+  }, { batches: BATCHES_MARKER, pairs: PAIRS_MARKER });
   reportWithin(
     `a marker and its pulse shape without copying (worst: ${worst.word})`,
-    worst.milliseconds, 0, MILLISECONDS_MARKER_PAIR, 'ms mean',
+    worst.milliseconds, 0, MILLISECONDS_MARKER_PAIR, 'ms, median of batch means',
   );
 }
 
@@ -153,7 +190,7 @@ export async function drivePinPool(page: Page): Promise<void> {
   await page.mouse.move(pixel[0] ?? 0, pixel[1] ?? 0);
   await waitFrames(page, 2);
 
-  const pooled = await page.evaluate(async () => {
+  const pooled = await evaluateOver(page, 150 + 2 * MILLISECONDS_FRAME, async () => {
     const layer = document.getElementById('overlay');
     if (layer === null) return { before: 0, after: 0, kept: 0 };
     const marked = (element: Element): { __probe_pool?: boolean } =>

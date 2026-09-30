@@ -4,6 +4,7 @@
 //   in them catches rule wired to wrong key.
 
 import type { Page } from '@playwright/test';
+import { advance } from './clock';
 import { readCamera, slideOf, spanOf } from './camera';
 import { holdKeys } from './gestures';
 import { report, reportWithin } from './report';
@@ -51,9 +52,9 @@ export async function driveKeys(page: Page): Promise<void> {
 
   // Release, which key handling must see: held key whose release is missed keeps moving.
   const after_release = await readCamera(page);
-  // Wall time, deliberately: check is that camera stopped, and stopping has no event to wait
-  //   on -- waiting until it stopped would assert exactly what is being asked.
-  await page.waitForTimeout(200);
+  // Simulated span: check is that camera stopped, and stopping has no event to wait on --
+  //   waiting until it stopped would assert exactly what is being asked.
+  await advance(page, 200);
   const later = await readCamera(page);
   const drifted = spanOf(after_release.eye, later.eye);
   report(

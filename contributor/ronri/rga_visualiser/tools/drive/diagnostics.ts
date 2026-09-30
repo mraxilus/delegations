@@ -8,6 +8,7 @@
 //   transform answers `none` whatever rule says. So these reach panel way reader does.
 
 import type { Page } from '@playwright/test';
+import { waitUntil } from './clock';
 import { readPhases, settleReading } from './frame';
 import { report } from './report';
 
@@ -17,22 +18,23 @@ import { report } from './report';
  *  `settleReading` is what "section is showing its numbers" means.
  */
 async function settleGlass(page: Page, wanted: Glass): Promise<void> {
-  await page.waitForFunction((given) => {
+  await waitUntil(page, (given) => {
     const drawer = document.querySelector('.drawer');
     const section = document.querySelector('.section[data-section="diagnostics"]');
     return (drawer?.classList.contains('open') ?? false) === given.drawer &&
       (section?.classList.contains('open') ?? false) === given.section;
-  }, wanted, { timeout: 8000, polling: 'raf' });
+  }, wanted);
   if (wanted.drawer && wanted.section) await settleReading(page);
 }
 
 
 /** Wait until this branch of tree stands open, and its rows have been written. */
 export async function settleBranch(page: Page, node: string): Promise<void> {
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     (given) => document.querySelector(`.diagnostic-node[data-node="${given}"]`)
       ?.classList.contains('open') ?? false,
-    node, { timeout: 8000, polling: 'raf' },
+    node,
   );
   await settleReading(page);
 }

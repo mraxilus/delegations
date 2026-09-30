@@ -8,6 +8,7 @@
 //   returned.
 
 import type { Page } from '@playwright/test';
+import { advanceFrames } from './clock';
 import { report } from './report';
 
 /** Spot on canvas, in CSS pixels from top left, as `nimAnchorScreen` reports them. */
@@ -48,8 +49,8 @@ async function canvasAlone(page: Page, selector: string): Promise<Buffer> {
     style.id = 'reading-canvas-alone';
     style.textContent = `body > *:not(${given}) { opacity: 0 !important; }`;
     document.head.appendChild(style);
-    return new Promise<void>((done) => { requestAnimationFrame(() => { done(); }); });
   }, selector);
+  await advanceFrames(page, 1);
   try {
     return await page.locator(selector).screenshot();
   } finally {
@@ -76,9 +77,7 @@ export async function readCanvas(
   //   white where this machine returned scene, and every comparison over it agreed with every
   //   other. Settle on what has arrived rather than on clock (Article IX.5).
   for (let i = 0; i < TRIES_ALONE && reading.is_one_colour; i += 1) {
-    await page.evaluate(() => new Promise<void>((done) => {
-      requestAnimationFrame(() => { requestAnimationFrame(() => { done(); }); });
-    }));
+    await advanceFrames(page, 2);
     reading = await readOnce(page, spots, selector);
   }
   if (reading.is_one_colour) {

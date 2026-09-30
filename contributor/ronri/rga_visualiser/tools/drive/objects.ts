@@ -7,6 +7,7 @@
 //   then every row without its form, in slices, which was seconds of list filling instead.
 
 import type { Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, advanceFrames, evaluateOver, waitUntil } from './clock';
 import { report } from './report';
 
 /** Elements one collapsed row may cost, with slack for rest of page.
@@ -30,9 +31,10 @@ async function openObjects(page: Page): Promise<void> {
       (section?.querySelector('.section-header') as HTMLElement | null)?.click();
     }
   });
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     () => document.getElementById('objects-list')?.dataset['count'] === String(nimSceneCount()),
-    null, { timeout: 120000 },
+    null,
   );
 }
 
@@ -69,7 +71,7 @@ function rowsMost(height_scroller: number): number {
  */
 export async function driveHeaderPinned(page: Page): Promise<void> {
   await openObjects(page);
-  const pinned = await page.evaluate(async () => {
+  const pinned = await evaluateOver(page, 3 * MILLISECONDS_FRAME, async () => {
     const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
     const heading = document.querySelector(
       '.section[data-section="objects"] .section-header',
@@ -191,7 +193,7 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
       if (scroller === null) return;
       scroller.scrollTop = edge === 'top' ? 0 : scroller.scrollHeight - scroller.clientHeight;
     }, where);
-    await page.evaluate(() => new Promise((done) => { requestAnimationFrame(() => done(null)); }));
+    await advanceFrames(page, 1);
     return page.evaluate(() => ({
       fills: Array.from(document.querySelectorAll('.section-header'))
         .map((each) => getComputedStyle(each).backgroundColor),
@@ -236,7 +238,7 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
  */
 export async function driveHeaderStyled(page: Page): Promise<void> {
   await openObjects(page);
-  const worn = await page.evaluate(async () => {
+  const worn = await evaluateOver(page, 2 * MILLISECONDS_FRAME, async () => {
     const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
     const heading = document.querySelector(
       '.section[data-section="objects"] .section-header',
@@ -299,7 +301,7 @@ export async function driveHeaderStyled(page: Page): Promise<void> {
  */
 export async function driveListWindowed(page: Page): Promise<void> {
   await openObjects(page);
-  const stood = await page.evaluate(async () => {
+  const stood = await evaluateOver(page, 8 * MILLISECONDS_FRAME, async () => {
     const section = document.querySelector('.section[data-section="objects"]');
     const header = section?.querySelector('.section-header') as HTMLElement | null;
     const list = document.getElementById('objects-list');
@@ -407,9 +409,8 @@ export async function driveObjectsList(page: Page, objects: number): Promise<voi
   await page.evaluate(() => {
     (document.querySelector('#objects-list .object-edit-cancel') as HTMLElement | null)?.click();
   });
-  await page.waitForFunction(
-    () => document.querySelectorAll('#objects-list .object-edit').length === 0,
-    null, { timeout: 8000, polling: 'raf' },
+  await waitUntil(
+    page, () => document.querySelectorAll('#objects-list .object-edit').length === 0, null,
   );
 }
 
@@ -423,7 +424,7 @@ export async function driveObjectsList(page: Page, objects: number): Promise<voi
  *  scroller's own top edge, with whole form above scroller's floor.
  */
 export async function driveEditFromMenu(page: Page): Promise<void> {
-  const reached = await page.evaluate(async () => {
+  const reached = await evaluateOver(page, 500 + 2 * MILLISECONDS_FRAME, async () => {
     // Shut section and drawer, state load with section shut leaves them in.
     document.querySelector('.section[data-section="objects"]')?.classList.remove('open');
     drawer.classList.remove('open');
@@ -537,15 +538,17 @@ export async function driveListSearched(page: Page): Promise<void> {
     is_note_first: list_objects.querySelector('.help-text, .object-row')
       ?.classList.contains('help-text') ?? false,
   }));
+  // Time read off page's own clock, so figure beside verdict is simulated span, same each run.
   const typeQuery = async (query: string) => {
     await page.fill('#objects-search-field', '');
-    const started = Date.now();
+    const started = await page.evaluate(() => performance.now());
     await page.keyboard.type(query);
     const want = await expected(query);
-    await page.waitForFunction(
-      (count) => list_objects.dataset['count'] === String(count), want.shown, { timeout: 8000 },
+    await waitUntil(
+      page, (count) => list_objects.dataset['count'] === String(count), want.shown,
     ).catch(() => undefined);
-    return { milliseconds: Date.now() - started, want, got: await listed() };
+    const milliseconds = Math.round(await page.evaluate(() => performance.now()) - started);
+    return { milliseconds, want, got: await listed() };
   };
 
   const one = await typeQuery(wanted?.label ?? '');
@@ -556,7 +559,7 @@ export async function driveListSearched(page: Page): Promise<void> {
       && one.got.shown.startsWith('1 of '),
     wanted === null ? 'no object with a label of its own to search for'
       : `"${wanted.label}" left ${one.got.count} row (${one.got.labels.join(', ')}), ` +
-        `"${one.got.shown}", ${one.milliseconds} ms from first key to settled list`,
+        `"${one.got.shown}", ${one.milliseconds} simulated ms from first key to settled list`,
   );
 
   // Pick that row by its own box, as reader does, then search for something it is not.
@@ -628,7 +631,7 @@ export async function driveListSearched(page: Page): Promise<void> {
  *  exactly claim, since rebuilt row is different object however fast it was made.
  */
 export async function driveReconcile(page: Page): Promise<void> {
-  const reconciled = await page.evaluate(async () => {
+  const reconciled = await evaluateOver(page, 42 * MILLISECONDS_FRAME, async () => {
     const rowsNow = (): Element[] =>
       Array.from(document.querySelectorAll('#objects-list > .object-row'));
     const isSame = (a: Element[], b: Element[]): boolean =>
@@ -688,13 +691,15 @@ export async function driveReconcile(page: Page): Promise<void> {
  *  second, which is what reader saw as stutter.
  *  Counts writes that set text row already holds, and wants none: `writeText` exists to skip
  *  them, and correct tick makes none whatever machine's load.
- *    Not bounded by how many rows moved: that counts timing figures changed in 200 ms, which
- *    moves with load and with what page was doing.
+ *    Not bounded by how many rows moved: which rows change is page's business, and on real
+ *    clock it moves with load.
  *  Wants same row elements after ticks as before, so tick that rebuilt tree cannot pass by
  *  writing into fresh nodes; and wants some write, so tick that wrote nothing cannot pass.
+ *    Write comes from removal halfway through, undone after: on simulated clock every timing
+ *    row holds still, and pool row's count is one that moves on any clock.
  */
 export async function driveTickWrites(page: Page): Promise<void> {
-  const written = await page.evaluate(async () => {
+  const written = await evaluateOver(page, 2000 + 2 * MILLISECONDS_FRAME, async () => {
     const wait = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
     if (!drawer.classList.contains('open')) document.getElementById('button-drawer')?.click();
@@ -730,11 +735,15 @@ export async function driveTickWrites(page: Page): Promise<void> {
       is_ticking = false;
       per_tick.push(writes - writes_before);
     };
-    await wait(1600);
+    await wait(800);
+    const removed = nimSceneHandles().at(-1);
+    if (removed !== undefined) nimRemoveObject(removed);
+    await wait(800);
     scope.refreshDiagnostics = original;
     if (descriptor !== undefined) {
       Object.defineProperty(Node.prototype, 'textContent', descriptor);
     }
+    if (removed !== undefined) nimUndo();
     let kept = 0;
     for (const [id, row] of rows_before) {
       if (document.getElementById(id) === row) kept += 1;
@@ -764,7 +773,7 @@ export async function driveTickWrites(page: Page): Promise<void> {
  *  only while those two stayed quiet, which is what reddened it.
  */
 export async function driveTickCadence(page: Page): Promise<void> {
-  const cadence = await page.evaluate(async () => {
+  const cadence = await evaluateOver(page, 4480 + 2 * MILLISECONDS_FRAME, async () => {
     const wait = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
     const scope = globalThis as unknown as {
@@ -852,7 +861,7 @@ export async function driveTickCadence(page: Page): Promise<void> {
  *  frames and mouse several moves.
  */
 export async function drivePerFrame(page: Page): Promise<void> {
-  const counted = await page.evaluate(async () => {
+  const counted = await evaluateOver(page, 33 * MILLISECONDS_FRAME, async () => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const rect = canvas.getBoundingClientRect();
     const x = rect.left + rect.width * 0.5, y = rect.top + rect.height * 0.5;

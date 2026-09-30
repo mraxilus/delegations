@@ -1,15 +1,23 @@
 // Checks for what build costs under largest demo; not Nim because crossing forfeits check
 //   compiler makes over bodies naming bridge's derived exports and page's own scope; glue
 //   would leave every one of them source string nothing reads.
-//   Band that only ever runs at default size cannot see regression that shows under load, so
-//   these reload at largest and measure there. Every band is far above what it measures and
-//   far below fault it catches, so slow container never decides it.
+//   Bound that only ever runs at default size cannot see regression that shows under load, so
+//   these reload at largest and measure there. Each speed bound is 1.5 times slowest delegate
+//   reading, and far below fault it catches; see `pins`.
 
 import type { Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, advance, evaluateOver, waitUntil } from './clock';
 import { settleCamera } from './camera';
 import { readPhases, waitFrames } from './frame';
 import { report } from './report';
 import { MISSES_ACCOUNT_MAX } from './scenery';
+
+/** Bounds on edits at largest demo, 1.5 times slowest delegate reading; see `pins`.
+ *
+ *  Readings each is set from are in `PROVENANCE.md`.
+ */
+const MILLISECONDS_EDIT_TIMELINE = 9.6;
+const MILLISECONDS_FRAME_PLACING = 15;
 
 /** Assert edit past timeline capacity copies one scene, not whole timeline.
  *
@@ -32,7 +40,9 @@ export async function driveTimelineCost(page: Page, objects: number): Promise<vo
   });
   report(
     'an edit past the timeline capacity copies one scene, not the whole timeline',
-    each < 40, `${each.toFixed(1)} ms an edit over ${objects} objects`,
+    each < MILLISECONDS_EDIT_TIMELINE,
+    `${each.toFixed(1)} ms an edit over ${objects} objects, wanted under ` +
+      `${MILLISECONDS_EDIT_TIMELINE}`,
   );
 }
 
@@ -63,7 +73,8 @@ export async function drivePlacingCost(page: Page, objects: number): Promise<voi
   });
   report(
     'the frame after an edit re-places one handle, not every handle',
-    median < 15, `${median.toFixed(1)} ms over ${objects} objects`,
+    median < MILLISECONDS_FRAME_PLACING,
+    `${median.toFixed(1)} ms over ${objects} objects, wanted under ${MILLISECONDS_FRAME_PLACING}`,
   );
 }
 
@@ -74,7 +85,8 @@ export async function drivePlacingCost(page: Page, objects: number): Promise<voi
  *  camera moved. Hold is engaged first, on purpose -- fault only shows once it has.
  */
 export async function driveUndoDrawn(page: Page): Promise<void> {
-  const undone = await page.evaluate(async () => {
+  // Span covers every sleep loop below may take; it stops at first held frame.
+  const undone = await evaluateOver(page, 60 * 50 + 2 * MILLISECONDS_FRAME, async () => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
     const build = (): FrameData =>
@@ -152,30 +164,17 @@ async function fillScene(page: Page): Promise<void> {
   await waitFrames(page, 2);
 }
 
-/** Drive gesture on full scene, then orbit, and assert refusal and accounting under load.
- *
- *  Breakdown only exists while it is being read, so check that it adds up has to run in that
- *  state: bridge times placing and emitting halves of every object, which at this size is real
- *  share of frame, so it is gathered only where drawer and diagnostics section are both open.
- */
-export async function driveLoadedAccounting(page: Page, errors: string[]): Promise<void> {
-  await fillScene(page);
-  await page.evaluate(() => {
-    const section = document.querySelector('.section[data-section="diagnostics"]');
-    if (!drawer.classList.contains('open')) document.getElementById('button-drawer')?.click();
-    if (!(section?.classList.contains('open') ?? false)) {
-      (section?.querySelector('.section-header') as HTMLElement | null)?.click();
-    }
-  });
-  await page.waitForFunction(() => {
-    const drawer = document.getElementById('drawer');
-    const section = document.querySelector('.section[data-section="diagnostics"]');
-    return (drawer?.classList.contains('open') ?? false) &&
-      (section?.classList.contains('open') ?? false);
-  }, null, { timeout: 8000, polling: 'raf' });
+/** How long arrow key orbits full scene for, in simulated time. */
+const MILLISECONDS_ORBIT_FULL = 800;
 
-  // Window accounting reads starts only now: fill is many committed edits back to back, which
-  //   is not ordinary picture this measures.
+/** Drive gesture on full scene, then orbit, and assert refusal and records crossing wire.
+ *
+ *  On simulated clock: refusal and record counts are what gesture and scene decide, so they
+ *  are same on every machine. Orbit is there because still camera over still scene is held
+ *  frame, which crosses no records at all.
+ */
+export async function driveFullRefused(page: Page, errors: string[]): Promise<void> {
+  await fillScene(page);
   await page.evaluate(() => { window.__phase_frame = []; });
   const capacity = await page.evaluate(() => nimSceneCapacity());
   await page.mouse.move(720, 450);
@@ -184,21 +183,9 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
   await page.mouse.up();
   await settleCamera(page);
 
-  // Then orbit, because still camera over still scene is now held frame: hold skips
-  //   tessellation, flatten and uploads together where nothing has moved, so idle window
-  //   records frames whose scene phase is legitimately zero and there is nothing to divide.
-  //   What this is about is cost of drawing while view moves, which is case reader waits on.
-  //   Orbited until sample is big enough, not for fixed time: fixed window kept finding fewer
-  //   heavy frames as thing it guards got faster, which is sample size, not accounting.
   await page.evaluate(() => document.getElementById('gl')?.focus());
   await page.keyboard.down('ArrowRight');
-  let heavy_seen = 0;
-  for (let round = 0; round < 40 && heavy_seen < 25; round += 1) {
-    // Wall time, deliberately: each round is sampling window, and loop ends on sample size
-    //   rather than on clock.
-    await page.waitForTimeout(400);
-    heavy_seen = (await readPhases(page)).filter((one) => one.scene >= 2.0).length;
-  }
+  await advance(page, MILLISECONDS_ORBIT_FULL);
   await page.keyboard.up('ArrowRight');
   await waitFrames(page, 2);
 
@@ -208,6 +195,56 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
     errors.length === 0 && after_drag === capacity,
     `${after_drag} objects after the drag, ${errors.length} page error(s)`,
   );
+  await driveRimRecords(page, await readPhases(page));
+}
+
+
+/** How many frames with scene phase big enough to divide accounting is asked over. */
+const FRAMES_HEAVY_WANTED = 25;
+
+/** Orbit full scene on real clock, and assert its breakdown still accounts for it.
+ *
+ *  Breakdown only exists while it is being read, so check that it adds up has to run in that
+ *  state: bridge times placing and emitting halves of every object, which at this size is real
+ *  share of frame, so it is gathered only where drawer and diagnostics section are both open.
+ *  Sampled by count of heavy frames, not by span of time: slow machine takes longer to reach
+ *  that count and still reaches it, so sample size is same on every machine.
+ */
+export async function driveLoadedAccounting(page: Page): Promise<void> {
+  await fillScene(page);
+  await page.evaluate(() => {
+    const section = document.querySelector('.section[data-section="diagnostics"]');
+    if (!drawer.classList.contains('open')) document.getElementById('button-drawer')?.click();
+    if (!(section?.classList.contains('open') ?? false)) {
+      (section?.querySelector('.section-header') as HTMLElement | null)?.click();
+    }
+  });
+  await waitUntil(page, () => {
+    const drawer = document.getElementById('drawer');
+    const section = document.querySelector('.section[data-section="diagnostics"]');
+    return (drawer?.classList.contains('open') ?? false) &&
+      (section?.classList.contains('open') ?? false);
+  }, null);
+
+  // Window accounting reads starts only now: fill is many committed edits back to back, which
+  //   is not ordinary picture this measures.
+  await page.evaluate(() => { window.__phase_frame = []; });
+  // Orbit, because still camera over still scene is held frame: hold skips tessellation,
+  //   flatten and uploads together where nothing has moved, so idle window records frames whose
+  //   scene phase is legitimately zero and there is nothing to divide.
+  await page.evaluate(() => document.getElementById('gl')?.focus());
+  await page.keyboard.down('ArrowRight');
+  try {
+    await waitUntil(
+      page,
+      (wanted) => (window.__phase_frame ?? []).filter((one) => one.scene >= 2.0).length >= wanted,
+      FRAMES_HEAVY_WANTED,
+    );
+  } catch {
+    // Too few heavy frames is verdict below, which says how many came.
+  }
+  await page.keyboard.up('ArrowRight');
+  await waitFrames(page, 2);
 
   // Same accounting as still scene, asked where numbers mean something: on fast container
   //   opening scene's whole phase is under millisecond and every reading is quantised, so
@@ -225,7 +262,6 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
     `${sane.length} of ${heavy.length} frames over 2 ms account, worst scene phase ` +
       `${Math.max(0, ...heavy.map((one) => one.scene)).toFixed(2)} ms`,
   );
-  await driveRimRecords(page, phases);
 }
 
 /** Assert plane's rim crosses wire as one ring record, not many ribbons.

@@ -8,6 +8,7 @@
 
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
+import { advanceFrames, waitUntil } from './clock';
 import { report, reportWithin } from './report';
 
 /** One frame's clocks and counts, as harness's own wrapper caught them. */
@@ -35,6 +36,7 @@ export interface Phase {
   records_ring: number;
   records_disc: number;
   is_held: boolean;
+  is_scene_held: boolean;
   wall: number;
 }
 
@@ -83,7 +85,7 @@ export async function watchFrames(page: Page): Promise<void> {
         records_ribbon: data.ribbon_vertices.length / 16,
         records_ring: data.ring_records.length / 14,
         records_disc: data.disc_records.length / 13,
-        is_held: data.is_furniture_held, wall,
+        is_held: data.is_furniture_held, is_scene_held: data.is_scene_held, wall,
       });
       return data;
     };
@@ -125,19 +127,11 @@ export async function countFrames(page: Page): Promise<number> {
 
 /** Wait until page has drawn this many more frames.
  *
- *  Gesture paced by clock assumes frame rate; paced by frames it asks for exactly what it
- *  needs, and slow machine takes longer rather than dropping steps. Reads `requestAnimationFrame`
- *  rather than harness's own counter, so it works before `watchFrames` is installed.
+ *  Gesture paced by frames asks for exactly what it needs, and slow machine takes longer
+ *  rather than dropping steps. Simulated page moves its clock that far; see `clock`.
  */
 export async function waitFrames(page: Page, frames: number): Promise<void> {
-  await page.evaluate((given) => new Promise<void>((done) => {
-    let seen = 0;
-    const step = (): void => {
-      seen += 1;
-      if (seen >= given) done(); else requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }), frames);
+  await advanceFrames(page, frames);
 }
 
 
@@ -149,13 +143,44 @@ export async function waitFrames(page: Page, frames: number): Promise<void> {
  */
 export async function settleReading(page: Page): Promise<void> {
   const at = await page.evaluate(() => ms_refresh_ui);
-  await page.waitForFunction(
-    (given) => ms_refresh_ui > given, at, { timeout: 8000, polling: 'raf' },
+  await waitUntil(page, (given) => ms_refresh_ui > given, at);
+}
+
+
+/** How many frames loop is asked to build, on simulated clock. */
+const FRAMES_LOOP = 60;
+
+/** Assert draw loop builds one frame for each frame of time that passes.
+ *
+ *  On simulated clock, so count is exact: loop that stalled, or built two frames for one,
+ *  misses it on every machine alike.
+ */
+export async function driveLoopRuns(page: Page): Promise<void> {
+  const from = await countFrames(page);
+  await advanceFrames(page, FRAMES_LOOP);
+  const built = (await countFrames(page)) - from;
+  report(
+    'the draw loop keeps building frames', built === FRAMES_LOOP,
+    `${built} of ${FRAMES_LOOP} simulated frames built`,
   );
 }
 
 
-/** Drive still scene for few seconds, and assert its frames fit inside their own budget. */
+/** How many real frames still scene's cost is sampled over. */
+const FRAMES_SAMPLE_STILL = 60;
+
+/** Bounds on still frame's build, 1.5 times slowest delegate reading; see `pins`.
+ *
+ *  Readings each is set from are in `PROVENANCE.md`.
+ */
+const MILLISECONDS_STILL_MEDIAN = 1.5;
+const MILLISECONDS_STILL_P90 = 2.9;
+
+/** Sample still scene, and assert its frames fit inside their own budget.
+ *
+ *  Speed check, so on real clock. Sample is count of frames rather than span of time, so its
+ *  size is same on every machine, and only figures sampled move with speed.
+ */
 export async function driveFrameWork(page: Page): Promise<void> {
   await page.evaluate(() => {
     nimSelectClear();
@@ -164,24 +189,19 @@ export async function driveFrameWork(page: Page): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   await watchFrames(page);
-  // Wall time, deliberately: window sampled is measurement itself, not race -- figures below
-  //   are about how many frames fit in fixed span of real time.
-  await page.waitForTimeout(2500);
+  await waitUntil(
+    page, (given) => (window.__work_frame ?? []).length >= given, FRAMES_SAMPLE_STILL,
+  );
 
   const work = await readWork(page);
-  report(
-    'the draw loop keeps building frames', work !== null && work.n > 30,
-    `${work === null ? 0 : work.n} frames sampled`,
-  );
-  // Bands rather than figures: this is real machine's real clock. Figures that matter are
+  // Bounds rather than figures: this is real machine's real clock. Figures that matter are
   //   measurements recorded in PROVENANCE.md, taken on this same software renderer.
-  //   Bands catch collapse class reader felt, over scene assembling every point through
-  //   algebra, which is stress project exists to apply.
   reportWithin(
     'a frame is assembled in a fraction of its own budget',
-    work === null ? -1 : work.median, 0, 18, 'ms',
+    work === null ? -1 : work.median, 0, MILLISECONDS_STILL_MEDIAN, 'ms',
   );
   reportWithin(
-    'and its slowest tenth stays inside one', work === null ? -1 : work.p90, 0, 30, 'ms',
+    'and its slowest tenth stays inside it', work === null ? -1 : work.p90, 0,
+    MILLISECONDS_STILL_P90, 'ms',
   );
 }

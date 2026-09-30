@@ -146,7 +146,11 @@ export async function driveHostSave(
     () => (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.saves.length > 2,
     null, { timeout: 10000 },
   ).catch(() => undefined);
-  await page.waitForTimeout(200);
+  // Wait on what decline says, not for fixed span: toast is written once host's answer lands.
+  await page.waitForFunction(
+    () => document.getElementById('toast')?.textContent === 'Not saved.', null,
+    { timeout: 10000 },
+  ).catch(() => undefined);
   const said = await toastSays();
   report(
     'a save the reader declines on the host is not offered again by another route',

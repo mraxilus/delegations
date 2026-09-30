@@ -4,6 +4,7 @@
 //   in them catches field wired to wrong coefficient, or row shown in wrong state.
 
 import type { Page } from '@playwright/test';
+import { advance } from './clock';
 import { report } from './report';
 
 /** What view section shows, read in one crossing. */
@@ -32,7 +33,7 @@ async function readShown(page: Page): Promise<Shown> {
 
 /** Wait out two refresh ticks of drawer's own low cadence. */
 async function waitTicks(page: Page): Promise<void> {
-  await page.waitForTimeout(450);
+  await advance(page, 450);
 }
 
 /** Drive view section: motor as value, readings off it, rows by selection. */

@@ -6,7 +6,7 @@
 //   `PATH`; `chromiumChosen` says why that order. Software rendering is forced, so figures
 //   here are not this machine's GPU.
 
-import { chromium } from '@playwright/test';
+import { chromium, type Browser, type Page } from '@playwright/test';
 import { accessSync, constants, existsSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
@@ -39,8 +39,8 @@ import {
   driveZoomLoaded, loadDemo, objectsDefault, objectsLargest,
 } from './demo';
 import {
-  driveLoadedAccounting, drivePinPickLoaded, drivePlacingCost, driveTimelineCost,
-  driveUndoDrawn,
+  driveFullRefused, driveLoadedAccounting, drivePinPickLoaded, drivePlacingCost,
+  driveTimelineCost, driveUndoDrawn,
 } from './loaded';
 import {
   driveEditFromMenu, driveHeaderBanded, driveHeaderPinned, driveHeaderStyled,
@@ -53,20 +53,24 @@ import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
-import { driveSums, driveTint } from './ramp';
+import { driveSums, driveTint, openEveryBranch } from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
-  MILLISECONDS_PICK_HOVER,
+  MILLISECONDS_PICK_HOVER_LOADED,
 } from './pins';
-import { driveRings } from './rings';
+import { driveRings, driveRingsTimed } from './rings';
 import {
   driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
 } from './scenery';
 import { driveGround } from './ground';
 import { driveBlankRefused } from './canvas';
-import { driveFrameWork } from './frame';
+import { driveFrameWork, driveLoopRuns, watchFrames } from './frame';
 import { driveHostSave } from './host';
 import { driveViewSection } from './view';
+import { advance, hastenTransitions, simulateClock, waitUntil } from './clock';
+
+/** Simulated span tree stands open for before curve and rows are read: five of its ticks. */
+const MILLISECONDS_TREE_TICKS = 1000;
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -111,25 +115,35 @@ function chromiumOnPath(): string | undefined {
   return undefined;
 }
 
-async function main(): Promise<void> {
-  const executable = chromiumChosen();
-  const browser = await chromium.launch({
-    ...(executable === undefined ? {} : { executablePath: executable }),
-    args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'],
-  });
-  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
+/** Wait until page's own scene stands, not for fixed time.
+ *
+ *  Build carries whole compiled module inline, and how long that takes to run is machine's
+ *  business rather than check's.
+ */
+async function waitScene(page: Page): Promise<void> {
+  await waitUntil(page, () => typeof nimSceneCount === 'function' && nimSceneCount() > 0, null);
+}
 
+/** Drive every correctness check, on page whose time moves only when check moves it.
+ *
+ *  Verdicts here are same on every machine: slow one takes longer to reach them. Page's own
+ *  timing readouts all read zero on this clock, so checks of them run in `driveMeasured`.
+ */
+async function driveSimulated(browser: Browser): Promise<void> {
+  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
   const errors_page: string[] = [];
   page.on('pageerror', (error) => errors_page.push(error.message));
 
+  await simulateClock(page);
   await page.goto(`file://${PATH_PAGE}`);
-  // Page is up when its own scene stands, not after fixed wait: build carries whole compiled
-  //   module inline, and how long that takes to run is machine's business rather than check's.
-  await page.waitForFunction(
-    () => typeof nimSceneCount === 'function' && nimSceneCount() > 0,
-    null, { timeout: 60000, polling: 'raf' },
-  );
+  await waitScene(page);
+  // Two fingers go through Chrome's own protocol, and so does style engine's timeline, so
+  //   channel opens once here.
+  const devtools = await openTouch(page);
+  await hastenTransitions(devtools);
   await focusCanvas(page);
+  // Counts and flags each frame carries, for hold and rim checks; times on this page read zero.
+  await watchFrames(page);
 
   // Stylesheet first, before anything reads what it drew: declaration browser dropped is
   //   layout nobody wrote, and every check below is against page it styled.
@@ -143,8 +157,6 @@ async function main(): Promise<void> {
   await driveLook(page);
   await driveAim(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
-  // Two fingers go through Chrome's own protocol, so channel opens once here.
-  const devtools = await openTouch(page);
   await drivePinch(page, devtools);
   await driveFingerTurntable(page, devtools);
   await driveTouchSelect(page, devtools);
@@ -181,26 +193,18 @@ async function main(): Promise<void> {
   await driveShadedFromAbove(page);
   await driveComet(page);
   await driveGround(page);
-  await driveFrameWork(page);
-  await drivePhaseSums(page);
-  await driveTree(page);
+  await driveLoopRuns(page);
+  // Curve, rows and rings below are what tree shows, so tree is open while they are read, and
+  //   long enough for its tick to have asked curve and rows of it at least once.
+  await openEveryBranch(page);
+  await advance(page, MILLISECONDS_TREE_TICKS);
   await driveCurve(page);
   await driveAxis(page);
-  await driveTint(page);
-  await driveSums(page);
   await driveAxisGlide(page);
   await driveScaleSwitch(page);
   await driveRings(page);
   driveAllowance();
-  await driveKinds(page);
-  await driveSceneryBound(page);
-  await driveMoving(page, SIZE_VIEW.width);
   await driveHold(page);
-
-  await drivePinPick(page);
-  await drivePinAnchor(page);
-  await drivePinMarker(page);
-  await drivePinGrid(page);
   await drivePinPool(page);
 
   await driveCreep(page, devtools);
@@ -226,11 +230,8 @@ async function main(): Promise<void> {
   await driveLabelFirstFrame(page);
   await driveFrameLabelCorner(page);
   await driveZoomLoaded(page);
-  await driveTimelineCost(page, objects_largest);
-  await drivePlacingCost(page, objects_largest);
   await driveUndoDrawn(page);
-  await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER);
-  await driveLoadedAccounting(page, errors_page);
+  await driveFullRefused(page, errors_page);
   await driveObjectsList(page, objects_largest);
   await driveHeaderPinned(page);
   await driveHeaderBanded(page);
@@ -244,11 +245,65 @@ async function main(): Promise<void> {
   await driveTickWrites(page);
   await driveTickCadence(page);
   await drivePerFrame(page);
-  // Page of its own, since host it stands in has to be there before page's script runs.
-  await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
+  await page.close();
+}
+
+/** Drive speed checks, and checks of page's own timing readouts, on real clock.
+ *
+ *  Speed check is only kind that may read real clock, and its bound is upper limit runner and
+ *  delegate meet with measured margin; see `PROVENANCE.md`. Readout checks need real clock to
+ *  read anything, and sample fixed count of frames, so their verdict does not move with speed.
+ */
+async function driveMeasured(browser: Browser): Promise<void> {
+  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
+  const errors_page: string[] = [];
+  page.on('pageerror', (error) => errors_page.push(error.message));
+
+  await page.goto(`file://${PATH_PAGE}`);
+  await waitScene(page);
+  await focusCanvas(page);
+
+  await driveFrameWork(page);
+  await drivePhaseSums(page);
+  await driveTree(page);
+  await driveTint(page);
+  await driveSums(page);
+  await driveRingsTimed(page);
+  await driveKinds(page);
+  await driveSceneryBound(page);
+  await driveMoving(page, SIZE_VIEW.width);
+  await drivePinPick(page);
+  await drivePinAnchor(page);
+  await drivePinMarker(page);
+  await drivePinGrid(page);
+
+  const objects_largest = await objectsLargest(page);
+  await loadDemo(page, objects_largest);
+  await driveTimelineCost(page, objects_largest);
+  await drivePlacingCost(page, objects_largest);
+  await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER_LOADED);
+  await driveLoadedAccounting(page);
+
+  report(
+    'the measured page raised no error', errors_page.length === 0, errors_page.join(' | '),
+  );
+  await page.close();
+}
+
+async function main(): Promise<void> {
+  const executable = chromiumChosen();
+  const browser = await chromium.launch({
+    ...(executable === undefined ? {} : { executablePath: executable }),
+    args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'],
+  });
+
+  await driveSimulated(browser);
+  await driveMeasured(browser);
+  // Page of its own, since host it stands in has to be there before page's script runs.
+  await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
   await browser.close();
   console.log(`\n${countRun() - countFailed()} of ${countRun()} checks passed.`);

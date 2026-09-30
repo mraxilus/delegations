@@ -7,6 +7,7 @@
 //   what page asks for, and what reader gets, measured.
 
 import type { Page } from '@playwright/test';
+import { waitUntil } from './clock';
 import { report } from './report';
 
 /** Two rows of sequences, one per switch Commit Mono splits its ligatures across.
@@ -47,7 +48,7 @@ async function openDrawer(page: Page): Promise<void> {
   await page.evaluate(() => {
     if (!drawer.classList.contains('open')) document.getElementById('button-drawer')?.click();
   });
-  await page.waitForFunction(() => drawer.classList.contains('open'), null, { timeout: 10000 });
+  await waitUntil(page, () => drawer.classList.contains('open'), null);
 }
 
 /** Assert every embedded face loaded, and that each of three roles resolves to its own.

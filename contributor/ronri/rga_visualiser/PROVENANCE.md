@@ -178,15 +178,15 @@ and this file does not:
 | `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
-
-**A timing-dependent quantity is asserted as a band, and never as a figure.** How far a held key
-travels depends on the frames drawn while it was down. A band that will not settle is widened, with
-its reason recorded. It is never deleted, and never narrowed to fit one lucky run.
+| `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
 `ceil(0.995n)` equals `n` for every `n` under 200. So a share demanded every frame at the 49-frame
 sample of `loaded`. There is now one definition, exported from `scenery` (repository issue 47).
 Per-frame tolerances are untouched, because a real accounting fault misses on every frame.
+
+**The scenery check takes the same allowance.** Preemption inside its bracket and outside both
+halves missed one frame of 109, of 126 and of 127. A fault misses every frame.
 
 **Count the mechanism that the claim names.** The cadence check of the panel counts `askSlowPass`,
 which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does not count calls to
@@ -196,21 +196,27 @@ the window.
 
 **The tick check of the diagnostics tree counts the writes that repeat a row's text.** `writeText`
 exists to skip those writes, so a correct tick makes none, whatever the load. The check wants none,
-wants the same row elements after the ticks as before, and wants one write at least. Verified by a
-break on purpose: a `writeText` that writes on every call fails, with 153 of 210 writes repeated.
+wants the same row elements after the ticks as before, and wants one write at least. On the
+simulated clock no timing row moves, so the check removes an object halfway through and undoes it
+after. The count of the pool row then moves. Verified by a break on purpose: a `writeText` that
+writes on every call fails, with 153 of 210 writes repeated.
 
-**The same check does not bound how many rows move in one tick.** That counts the timing figures
-that changed in 200 ms, which moves with load and with what the page does. A bound of 20 on it read
-21 once, from code equal to `main` (repository issue 304).
+**The same check does not bound how many rows move in one tick.** On the real clock that counts the
+timing figures that changed in 200 ms, which moves with load and with what the page does. A bound of
+20 on it read 21 once, from code equal to `main` (repository issue 304).
 
 **Waits are conditions that the page reports, and not spans of clock.** Camera ease and settling
-after a click are `waitForFunction` over what the page says: `settleCamera`, `settleCount`,
+after a click are `waitUntil` over what the page says: `settleCamera`, `settleCount`,
 `settleSelection`, `settleDrawer`, `settleHelp`, `settleBranch` and `settleReading`. Pacing inside a
-drag loop is `waitFrames`.
+drag loop is `waitFrames`. A span that is itself the measurement is `advance`, in the time of the
+page, and it says so at its site. How long a finger rests is one, and how long an absence is watched
+is another.
 
-The 16 fixed waits that remain are measurement windows, and each one says so at its site.
 `settleReading` waits on `ms_refresh_ui`, which is the clock of the tick itself. It never waits on a
 row that the tick writes, or the wait would assert what the check goes on to ask.
+
+A demo that loads is settled when a frame holds its scene. The load staggers the births of its
+objects, so no fixed span is sure to cover them.
 
 **Settle on what moves, and not on what has stopped changing.** Two polls of an unmoving stance
 agree before an ease has begun. So `settleCamera` asks the ease: `nimCameraCarrying` reports
@@ -218,18 +224,11 @@ agree before an ease has begun. So `settleCamera` asks the ease: `nimCameraCarry
 issue 73). Verified by a break on purpose: return at once, and every loss is framing. The horizon
 label check places only stances that the frame rule holds, and asserts that the eye stays.
 
-**A step that has to land inside an ease is taken by the page, and not across the protocol.** Each
-round trip of the protocol takes a share of the 0.35 s ease, and that share moves with load. So the
+**A step that has to land inside an ease is taken by the page, and not across the protocol.** The
 group-turn check arms a watcher before the tap goes out, and the watcher turns in the first frame
 whose ease carries. Its frame callback follows that of the page, so it reads the build that armed
-the ease, before `advance` moves the pivot.
-
-**No round trip stands between the arming and the turn.** Rejected: four round trips there, which
-left the pivot 0.042 to 0.609 short on equal code, against a floor of 0.05 (repository issue 315).
-At three times the CPU cost, that form passed 1 of 10 runs, and the watcher passed 10 of 10. At six
-times, 2 of 10 taps read as holds, because the page times a tap on its own clock. The check then
-fails by name. Verified by a break on purpose: an `abandon` that stops the ease outright fails, with
-the pivot 1.5000 from the middle.
+the ease, before `advance` moves the pivot. Verified by a break on purpose: an `abandon` that stops
+the ease outright fails, with the pivot 1.5000 from the middle (repository issue 315).
 
 **Pixels are read through the compositor, and a reading that carries no picture is refused.** The
 context keeps no drawing buffer, and `gl.ts` says why. So `readPixels` is sound only from inside the
@@ -287,8 +286,8 @@ It then scrolls to either end, and finds the row of that end on screen within th
 bound is stated in the check as well as in the page. A check that reads the window out of the page
 passes whatever the page does.
 
-Time is reported and never asserted: 3 ms here, with 27 rows standing for 5,040 objects. How long
-tens of rows take is the business of the runner, and the count holds on every runner.
+Time is never asserted, and on the simulated clock it reads 0 ms. The count of rows standing, 27
+for 5,040 objects, holds on every machine.
 
 `driveEditFromMenu` opens the panel onto the 41st object created, near the far end of the list. It
 reads that row as standing before the call returns. It also reads it as lying under the pinned
@@ -317,8 +316,105 @@ passes every sweep that never lands on it.
 front-ends, software-rendered, here and on the runner. `drive` gates `summarize`, so a green
 push run is the word of the runner itself (repository issues 47 and 91).
 
-**Unmeasured**: the figures are this container's, and say more about SwiftShader than about any GPU.
-Bands are what the checks assert.
+**Unmeasured**: the speed readings are those of SwiftShader on these machines, and say nothing of
+any GPU.
+
+## Clocks of the driven checks
+
+**Correctness checks run on a simulated clock, and only speed checks read the real one.**
+`clock.ts` installs the clock of Playwright, paused, before the page loads. Timers, animation
+frames, idle callbacks and `performance.now` then move only when a check moves them. `advance`
+moves a span, `advanceFrames` moves frames, and `waitUntil` steps one frame at a time until a
+condition holds. A slow machine takes longer in real time to reach a verdict, and never reaches
+another one (repository issue 329).
+
+Three things that the clock does not reach are set on the simulated page:
+
+- The style engine runs CSS transitions on real time. `hastenTransitions` runs its timeline 10,000
+  times fast, so no check waits on real time to see a transition end.
+- The idle callback of Playwright grants no time, and the slow pass of the diagnostics tree then
+  waited for ever. The page is granted 50 ms, the longest idle period that a browser grants.
+- A page function that waits on its own timers runs through `evaluateOver`. The clock moves a fixed
+  span that covers its waits, and yields to the page between timers, so each await resolves in
+  order.
+
+**Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
+clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
+`driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than
+spans of time. Their size is then the same on every machine, and only the figures move with speed.
+
+**A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.**
+Runners and delegates meet it, and each fault that a bound pins reads over it. Delegate readings are
+from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to 2026-09-30, alone and in the
+gate. The anchor and the marker take a new figure, so theirs are from 11 runs of the measured page
+up to its pins, on 2026-09-30. Runner readings are from one CI run of this change. A fault reads as
+`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+
+| Check | Bound | Runner | Delegates | Fault |
+|-------|-------|--------|-----------|-------|
+| Still frame, median | 1.5 ms | 0.6 | 0.4 to 1.0 | |
+| Still frame, slowest tenth | 2.9 ms | 0.9 | 0.6 to 1.9 | |
+| Moving frame, median | 3 ms | 0.8 | 0.7 to 2.0 | |
+| Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
+| Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
+| Marker and its pulse, worst kind | 1.7 ms | 0.60 | 0.68 to 1.12 | 3.2 |
+| Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
+| CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
+| Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
+| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | |
+| Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
+
+The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the repair. On the new
+figure that is 1.8 ms at least, over the bound. The moving grid fault reads over its bound by 0.1 ms
+only. A check with no fault reading pins a budget rather than a repair.
+
+The slowest delegate reads 1.7 to 4.3 times the runner, by a factor that changes with the check. The
+hover pick reads 17 times, because its runner reading is one 100 µs tick of the clock of the page. A
+regression that stays under a bound on the runner shows first on a delegate, which runs the gate
+before every push. Rejected: bounds scaled by a reference workload timed in the same run. The checks
+scale unlike each other between machines, so no one reference normalises them all.
+
+**A pin that times a call too short to time alone takes the median of batches, a frame apart.** The
+clock of the page ticks in steps of 100 µs, so a call of a few microseconds is timed in hundreds.
+One mean of 400 anchor lookups read 5.75 to 32 µs on one fresh page, and the first was dearest each
+time. After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µs in 12 trials. A
+collection or a preemption then spoils one batch, and not the figure.
+
+The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
+worst median of 9 batches of 5 read 0.48 to 0.62 ms.
+
+**Sustained load moves a median too.** With three of four cores kept busy, 10 runs of the measured
+page read the anchor at 7.0 to 14.5 µs. The marker read 0.74 to 2.1 ms, over its bound in 4 of
+the 10, and every other speed check stayed inside its bound. The gate runs projects one at a time,
+so no gate run puts that load beside the drive. A delegate that shares its cores with other tenants
+can still.
+
+**The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
+Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
+So a viewport change reached the page at any point of the frames after it. The sweep of the chip
+row read its toggles in the row at 394 px on one run, and in the menu on the next. `runSpan` lets
+one real rendering step run before each simulated frame. What the last action or frame set off then
+reaches the page first, in the same order on every machine.
+
+**A touch is waited on until the page holds the fingers where the harness put them.** The protocol
+answers before the page sees a touch move, which the browser holds for its next real frame. The same
+pinch zoomed to 8.41 in four fresh pages and to 7.62 in the fifth. `touchAt` asks the page where it
+holds each finger, and time moves only when the answer matches. It compares places and not counts,
+because two fingers put down together arrive as two starts. The mouse of Playwright waits already.
+
+**A move inside the touch slop of the browser never arrives, so that wait ends after three real
+rendering steps.** A move of 3, 8 or 14 px from where the finger went down was dropped, and one of
+16 or 30 px arrived. Every move past the slop reached the page at the simulated moment it was sent,
+in 3 runs of 3. The pinch then read 7.62 in 15 fresh pages of 15, 5 of them with three cores busy.
+
+**Every window that the curve checks feed is drawn from a seeded generator.** `feedWindow` rolled
+`Math.random`, so the reach of the curve and the extent of the axis moved between runs. Mulberry32
+from `SEED_WINDOW` gives the same durations on every run.
+
+*Checked.* Verified by a run: two drives side by side on one delegate print the same 167 lines for
+the simulated page. Each loads the other, and the lines agree in every figure. Without the rendering
+step, the touch wait and the seed, two runs of the same code differ in 7 of those lines. Their
+verdicts agree.
 
 ## Browser front-end
 
@@ -657,6 +753,11 @@ A read of each font's `cmap` against the ranges that `gui_shim.cpp` declares giv
 math holds 1,773 of the 1,952 wanted. It costs about 2.5 MB fetched into `build/fonts`, because
 `stb_truetype` reads uncompressed faces.
 
+**A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
+1/60 s, whatever the machine takes, and the opening scene is born at zero. Animations, held keys
+and camera ease read that clock, so a scripted frame shows the same thing on every machine.
+`--timings` keeps the real clock, since speed is what it measures.
+
 **No default favours a silent pass.** A scripted run supplies `FRAMES_DRIVEN` where the caller
 gave no frame bound, because the loop ends only on one. Every scripted run ends in its verdict,
 and there is no second flag to ask for it.
@@ -667,9 +768,10 @@ prefix that already reports the pinned version is kept. On the runner the `drive
 about **3 m 15 s** more with the desktop half than without. That is 215 s against 411 s, one run
 against one run. Repository issue 79 weighs that against the rest of the job.
 
-*Checked.* Verified by a run. Every scripted run passes under Xvfb on software GL, from a tree
-that carries neither checkout and with no SDL3 anywhere on the machine. A second run kept the
-prefix and rebuilt nothing. Verified by a break on purpose: the drag verdict inverted reports
+*Checked.* Verified by a run. Every scripted run passes under Xvfb on software GL, from a tree that
+carries neither checkout and with no SDL3 anywhere on the machine. A second run kept the prefix and
+rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0432, elevation 0.6871 and distance
+18.1420 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb answers
 `Driven runs failed; got 1 -- drive-drag`, with exit 1.
 
@@ -1143,7 +1245,7 @@ angles.
 
 A key built from the pivot and the two angles derives the eye and the frame for each field it reads.
 `ensureViewOverlay` runs for every overlay call, so such a key costs about eighteen sandwiches to
-decide whether to skip four. `drivePinAnchor` allows an anchor lookup 8 µs.
+decide whether to skip four. `drivePinAnchor` allows an anchor lookup 15 µs.
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻⁹ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
@@ -3047,8 +3149,8 @@ the page, and the `--drive-*` runs for the desktop.
 
 A driven check is evidence only for the page just built, so one command rebuilds before it drives
 (Article IX.6). A check that leaves state behind taxes every check after it, and says so.
-Timing-dependent quantities are asserted as **bands**. Identical code has measured 25.0 and 29.8 ms
-hours apart on a shared runner. A flat ±1 ms band failed one frame in a hundred and twenty.
+A driven check runs on a simulated clock, and only a speed check reads the real one; see Driven
+checks.
 
 *Checked.* Verified on the pinned commit through `koch test`: every suite on the C backend, on JS
 and at reduced capacities. The JS count is lower because the C-only cases skip themselves.
@@ -3093,6 +3195,12 @@ stands the eye 30.1 units off its centre at any scale. Within a few degrees of t
 still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
 rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
 leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
+
+**Two speed bounds sit close to what they must tell apart.** The marker reads over its 1.7 ms bound
+in 4 of 10 runs with three of four cores busy. Its fault reads 1.8 ms at least without load. The
+moving grid fault reads 26.1 ms against a bound of 26. On an absolute clock, load and a fault that
+costs 2 or 3 times look alike. The choices are to keep both bounds, or to pin each fault by a count
+that load does not move, such as the samples summed.
 
 **Two sites may still do geometry in vector arithmetic.** `tessellate.placeChord` tests each chord
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with

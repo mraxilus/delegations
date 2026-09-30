@@ -11,8 +11,17 @@
 //   Guard reads events browser delivered, tracked by listener harness installs, never
 //     page's own bookkeeping: page's surface is not widened for test, and what is asserted
 //     is what page received.
+//   Each touch event is waited on until page holds fingers where it put them, before any
+//     simulated time moves. Protocol answers before page sees touch move: browser holds move
+//     for its next real frame, which lands anywhere inside following simulated span, so same
+//     pinch zoomed by different amounts on fresh pages. Playwright's own mouse already waits.
+//     Places, not count of events: two fingers put down together arrive as two starts.
+//     Move inside browser's touch slop, 15 px about where finger went down, never arrives;
+//     wait ends after `FRAMES_TOUCH_MOST` real rendering steps, which is where any other move
+//     has long arrived.
 
 import type { CDPSession, Page } from '@playwright/test';
+import { advance } from './clock';
 import { readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
@@ -27,6 +36,15 @@ interface Finger {
 /** Attribute on document root where harness's listener writes ids of pointers down. */
 const ATTRIBUTE_POINTERS_DOWN = 'pointersDown';
 
+/** Attribute on document root where harness's listener writes where page holds fingers. */
+const ATTRIBUTE_TOUCHES_HELD = 'touchesHeld';
+
+/** Real rendering steps touch is waited on before browser is taken to have dropped it. */
+const FRAMES_TOUCH_MOST = 3;
+
+/** Pixels finger page holds may stand from where harness put it. */
+const PIXELS_TOUCH_SLACK = 1;
+
 /** Open channel two-finger gestures are dispatched down, and start watching pointers.
  *
  *  Listener on window, capturing, so it sees every pointer event page does whatever page
@@ -34,17 +52,25 @@ const ATTRIBUTE_POINTERS_DOWN = 'pointersDown';
  *  them without any global page script would have to declare.
  */
 export async function openTouch(page: Page): Promise<CDPSession> {
-  await page.evaluate((attribute) => {
+  await page.evaluate((given) => {
     const down = new Set<number>();
     const write = (): void => {
-      document.documentElement.dataset[attribute] = [...down].join(',');
+      document.documentElement.dataset[given.down] = [...down].join(',');
     };
     window.addEventListener('pointerdown', (e) => { down.add(e.pointerId); write(); }, true);
     const lift = (e: PointerEvent): void => { down.delete(e.pointerId); write(); };
     window.addEventListener('pointerup', lift, true);
     window.addEventListener('pointercancel', lift, true);
     write();
-  }, ATTRIBUTE_POINTERS_DOWN);
+    const hold = (e: TouchEvent): void => {
+      document.documentElement.dataset[given.held] = JSON.stringify(
+        Array.from(e.touches, (touch) => [touch.clientX, touch.clientY]),
+      );
+    };
+    for (const kind of ['touchstart', 'touchmove', 'touchend', 'touchcancel'] as const) {
+      window.addEventListener(kind, hold, { capture: true, passive: true });
+    }
+  }, { down: ATTRIBUTE_POINTERS_DOWN, held: ATTRIBUTE_TOUCHES_HELD });
   return page.context().newCDPSession(page);
 }
 
@@ -93,7 +119,31 @@ export async function touchAt(
       x: point.x, y: point.y, id: ids_down[index] ?? 0,
     })),
   });
-  if (kind === 'touchEnd' || kind === 'touchCancel') ids_down = [];
+  const lifted = kind === 'touchEnd' || kind === 'touchCancel';
+  if (lifted) ids_down = [];
+  await waitTouchHeld(devtools, lifted ? [] : points);
+}
+
+/** Wait, with simulated time held, until page holds fingers as sent or browser dropped move. */
+async function waitTouchHeld(devtools: CDPSession, points: Finger[]): Promise<void> {
+  const asked = `document.documentElement.dataset.${ATTRIBUTE_TOUCHES_HELD} ?? '[]'`;
+  const frame = 'new Promise((done) => (window.__frame_real ?? requestAnimationFrame)(done))';
+  const order = (a: number[], b: number[]): number =>
+    (a[0] ?? 0) - (b[0] ?? 0) || (a[1] ?? 0) - (b[1] ?? 0);
+  const wanted = points.map((point) => [point.x, point.y]).sort(order);
+  for (let step = 0; step <= FRAMES_TOUCH_MOST; step += 1) {
+    const answer = await devtools.send(
+      'Runtime.evaluate', { expression: asked, returnByValue: true },
+    );
+    const held = (JSON.parse(String(answer.result.value)) as number[][]).sort(order);
+    const is_held = held.length === wanted.length && held.every((one, index) =>
+      Math.abs((one[0] ?? 0) - (wanted[index]?.[0] ?? 0)) <= PIXELS_TOUCH_SLACK &&
+      Math.abs((one[1] ?? 0) - (wanted[index]?.[1] ?? 0)) <= PIXELS_TOUCH_SLACK);
+    if (is_held) return;
+    if (step < FRAMES_TOUCH_MOST) {
+      await devtools.send('Runtime.evaluate', { expression: frame, awaitPromise: true });
+    }
+  }
 }
 
 /** Put two fingers down and draw them apart or together, moving their midpoint. */
@@ -145,9 +195,9 @@ export async function tapAt(
 ): Promise<void> {
   await ensureLifted(page, 'a tap');
   await touchAt(devtools, 'touchStart', [{ x, y }]);
-  // Wall time, deliberately: how long finger stays down is what caller asked for, and long
-  //   press is decided by that duration rather than by anything page reports.
-  await page.waitForTimeout(milliseconds);
+  // Simulated span: how long finger stays down is what caller asked for, and long press is
+  //   decided by that duration rather than by anything page reports.
+  await advance(page, milliseconds);
   await touchAt(devtools, 'touchEnd', []);
   await settleCamera(page);
 }

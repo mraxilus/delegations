@@ -10,6 +10,7 @@
 //   drawing buffer is gone by then, which read as hold never reaching canvas.
 
 import type { Page } from '@playwright/test';
+import { advance } from './clock';
 import { readCanvas } from './canvas';
 import { waitFrames } from './frame';
 import { report } from './report';
@@ -72,8 +73,8 @@ async function runEdit(page: Page, what: string): Promise<void> {
 /** Drive still scene, then every edit, and assert hold engages and releases. */
 export async function driveHoldScene(page: Page): Promise<void> {
   await watchHold(page);
-  // Wall time, deliberately: figure is share of frames that held over span of real time.
-  await page.waitForTimeout(1200);
+  // Simulated span: figure is share of frames that held over span of page's own time.
+  await advance(page, 1200);
   const idle = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
   report(
     'a still camera over a still scene holds its records instead of rebuilding them',
@@ -87,9 +88,9 @@ export async function driveHoldScene(page: Page): Promise<void> {
     const before = (await readCanvas(page)).mark;
     await page.evaluate(() => { window.__hold = { held: 0, built: 0 }; });
     await runEdit(page, what);
-    // Wall time, deliberately: check is that edit released hold and reached canvas, and
-    //   waiting on either would assert what is being asked.
-    await page.waitForTimeout(500);
+    // Simulated span: check is that edit released hold and reached canvas, and waiting on
+    //   either would assert what is being asked.
+    await advance(page, 500);
     const after = (await readCanvas(page)).mark;
     const seen = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
     if (seen.built > 0) released += 1;

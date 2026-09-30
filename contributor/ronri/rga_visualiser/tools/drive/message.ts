@@ -6,6 +6,7 @@
 //   arithmetic, and this holds page to it as it runs.
 
 import type { Page } from '@playwright/test';
+import { advance, waitUntil } from './clock';
 import { report } from './report';
 
 /** Read what page believes outcome's life to be, straight from bridge. */
@@ -41,14 +42,14 @@ export async function driveMessageGoes(page: Page): Promise<void> {
     () => document.getElementById('toast')?.classList.contains('show') ?? false);
   const shown_at_once = await isShown();
   // Half its stand in it is still up. Timer cannot fire early, so this is no race.
-  await page.waitForTimeout(standing*0.5);
+  await advance(page, standing*0.5);
   const shown_halfway = await isShown();
 
   let is_gone = true;
   try {
-    await page.waitForFunction(
-      () => !(document.getElementById('toast')?.classList.contains('show') ?? false),
-      undefined, { timeout: standing + fading + 5000 },
+    await waitUntil(
+      page, () => !(document.getElementById('toast')?.classList.contains('show') ?? false),
+      undefined,
     );
   } catch {
     is_gone = false;
