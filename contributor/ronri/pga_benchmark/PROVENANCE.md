@@ -118,15 +118,39 @@ control raised the counter first. A zero then means zero, and never an inert ins
 (Article VII.4). The plain build reports the gauge as off, and that is the measurement taken
 once compiled out.
 
+**The bench runs five times, and each time is the median of those runs.** `bench` runs the
+plain binary of each algebra in turn, algebra after algebra, `BENCH_RUNS = 5` times. So drift
+of the machine lands on every algebra alike. For each implementation the runtime baseline
+keeps the median of each run as `ns_runs`, in run order. `ns_median` is the median of those,
+and `ns_min` is the least minimum.
+
+One run times both implementations, so the runs pair by index, and each run gives one time
+ratio. The docket reads its whisker from those ratios. Rejected: the spread of rounds inside
+one run, because it misses drift between runs. That drift is the larger part on this machine.
+
+**The runtime baselines were taken again on 2026-09-30**, in another container of the same
+description, five runs each. Their medians run ×1.7 to ×2.3 those of 2026-09-28 across the
+four algebras. So times from two containers never compare, and ratios within one run do.
+
+Even those ratios moved against the single run of 2026-09-28. From the 5th to the 95th
+percentile, the typed time ratios moved between ×0.50 and ×1.54 at rga4d. At cga5d they moved
+between ×0.75 and ×2.07. Within the new baselines, the least and greatest run ratios of the
+median measurand are ×1.36 apart at rga4d and ×1.35 at cga5d. One run of cga4d ran ×2.5
+slower than its median, and the machine reported steal time.
+
+So one run's time ratio is weak evidence, and the whisker on the docket says how weak. The
+figures below stay as taken on 2026-09-28.
+
 **`ns` stays in names as a unit symbol.** The Architect ruled so for this project, as for `ms`,
 `px`, `kb` and `mb` on pull request 322. So `ns_median` and `ns_library` keep it. A single
 letter stays only where an equation or a small index scope gives it meaning (V.6). Examples
 are `i` in a scan and `a + b` in the sum of counts.
 
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Measurements` and `Allocation`.
-`summarise` runs on fixture rounds. A short run gives finite positive nanoseconds and a
-non-zero sink. The positive control raises the counter, and then no measurand allocates over
-a preallocated loop.
+`summarise` runs on fixture rounds, and fixture runs combine to the median of their medians,
+the least minimum, and each run's median in order. A short run gives finite positive
+nanoseconds and a non-zero sink. The positive control raises the counter, and then no
+measurand allocates over a preallocated loop.
 
 ## Inspector and movement
 
@@ -275,8 +299,8 @@ one unit component. So it spends 243 multiplies where the algebra demands none.
 
 On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
 and for 81 of 130 at five. Those are the operations that one generated function serves,
-since that function writes every slot and fills nothing. An operation that the library
-composes from several functions still fills its intermediates, and stands above the bound.
+since that function writes every slot and fills nothing. A chain still fills its
+intermediates, and stands above the bound.
 
 At four dimensions the exterior product spends the bound's 81 multiplies and moves the
 bound's 384 bytes. The bulk norm spends the bound's 8 multiplies, and moves 640 bytes
@@ -285,8 +309,8 @@ against the bound's 136.
 At four dimensions 65 operations carry a library function, a bound and a reference. Over
 those, reaching the bound closes 58 per cent of the byte distance to the reference. It
 closes 24 per cent of the multiply distance. At five dimensions 84 operations carry all
-three, and reaching the bound closes 83 per cent and 39 per cent. Without the composed
-operations, the byte shares are 55 and 49 per cent. Those shares rest on one population, so
+three, and reaching the bound closes 83 per cent and 39 per cent. Without the chains, the
+byte shares are 55 and 49 per cent. Those shares rest on one population, so
 the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
@@ -376,7 +400,9 @@ lands on both.
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
 exactly while its edits are. Evaluations measure the two
-typed algebras, rga4d and cga5d, which both lower bounds cover.
+typed algebras, rga4d and cga5d, which both lower bounds cover. After `--thorough`, as
+`evaluate all --thorough`, they measure rga3d and cga4d as well, as the Architect chose. Those
+two carry no reference, so only the multivector lower bound covers them there.
 
 **The spread comes from the evaluations themselves.** An evaluation that changes no library function
 moves no count, so the range of its time ratios is the range of the machine. The pages state
@@ -392,14 +418,15 @@ evaluation's time is weak evidence alone. Counts are exact, and carry the verdic
 The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
 one applied at pin gives files byte-identical to the measured edits.
 The change of `cayley-derivation` reproduces its draft byte for byte, and
-`proposals/typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
+`proposals/02-typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
 and cga5d.
 
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`,
 `Proposals`, `Evaluations` and `Cells`. They cover parse, quote and digest rules, and claim
 kinds. They cover proposal numbers taken twice or skipped, and the status that freezes a
 proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and
-the table serialiser at pin.
+the table serialiser at pin. They cover the algebras that an evaluation measures, with the
+flag and without it.
 A digest moves with edits, and never with prose.
 
 ## Notes
@@ -415,9 +442,23 @@ Verified by suite `Notes`: parse, location at pin, and a stale anchor.
 **Every page is one shell and one body.** The shell is `pages/shell.html`, committed and
 hand-written. The body is rendered in Nim from committed files, so a page says only what those
 files say. The faces are the six that `rga_visualiser` embeds, fetched through
-`koch fetch-assets` and inlined as base64. Interaction is CSS alone: tabs, filters, sort and
-scale are inputs that `:has()` rules read. The page runs no script, so the build is
+`koch fetch-assets` and inlined as base64. Interaction is CSS alone: tabs, filters and sort
+are inputs that `:has()` rules read. The page runs no script, so the build is
 deterministic and the digest of a page is the digest of what those files say.
+
+**The docket draws each measure as one bar off its lower bound**, as the Architect chose.
+Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
+bound that the row is measured against. A typed row is measured against its reference, and a
+tick on its count bars marks the multivector lower bound. A general row is measured against
+the multivector lower bound. It has no reference, so its time shows nanoseconds alone.
+
+The time bar sits at the median of the run ratios, and a whisker spans the least and greatest.
+Every bar on the page shares one log axis in whole powers of two, so a length reads as a
+factor. A count whose reference spends none has no ratio. It reads as its excess, such as
+`8 over 0`, and its bar runs to the end of the axis.
+
+Rejected: three bars of absolute values for each measure. The eye then compares three lengths
+to read one factor, and a time carries no place for its variance.
 
 **A publication holds each published page to its build.** `pages/published.json` maps each
 page to its URL and to the digest of the page as built when it was published. `drive` builds
@@ -426,7 +467,9 @@ of every publication, so the two copies of a URL cannot drift apart. Rejected: a
 hand, or by a script outside this project, because nothing held it to the files.
 
 Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
-ratios, and the chip that names removed NaN results.
+ratios, and the chip that names removed NaN results. It covers the lower bound each docket row
+is measured against, the median of run ratios with its whisker, and a reference that spends
+none.
 
 ## Library head
 
@@ -550,7 +593,7 @@ at rga4d and 141 at cga5d.
 
 The attitude and the carrier are now generated, so they spend no multiply. The container
 and the partner read the carrier, so they lose half of theirs. The unitizes read the squared
-norm, and make one call where they made two. The composed operators are no longer inline.
+norm, and make one call where they made two. The chains are no longer inline.
 `∪` builds its constant `𝐞̄ₙ` with a `let`, so at runtime it calls `initElement` and moves
 512 more bytes. A `const`, as `∩` already uses, would fold that constant at build time.
 
@@ -577,7 +620,7 @@ suites, 33 at rga4d and 28 at cga5d.
 
 The attitude and the carrier now run as maps of moves and signs. The cocarrier, the centre,
 the container and the partner are no longer inline. At `6a91c3f` that pragma made the
-composed operators slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
+chains slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
 because of its runtime constant.
 
 The other slower measurands run under 14 ns, and their counts did not grow, so they read as
@@ -698,8 +741,8 @@ these measurements.
 
 ## Known limitations
 
-- Evaluations time the two typed algebras only; rga3d and cga4d carry static counts and suites
-  from `drive`, and no evaluation.
+- Evaluations time the two typed algebras unless `--thorough` asks for rga3d and cga4d too.
+  The evaluations committed now measure the typed algebras only.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself.
   It compares two builds on one machine, and is no measurement of the machine.
 
