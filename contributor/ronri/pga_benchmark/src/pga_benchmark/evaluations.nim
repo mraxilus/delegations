@@ -25,7 +25,7 @@
 
 import std/[algorithm, json, math, os, osproc, sequtils, strutils, tables]
 
-import ./[changes, guard]
+import ./[changes, guard, report]
 
 
 type
@@ -240,15 +240,6 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
 
 func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
   ## Pair runs of both binaries by measurand; median ns of each and median of per-run ratios.
-
-  func median(values: seq[float]): float =
-    ## Read median of values; zero for none.
-    if values.len == 0: return 0.0
-    let
-      sorted = values.sorted
-      middle = sorted.len div 2
-    if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
-
   result = newJObject()
   if pristine.len == 0 or candidate.len == 0: return
   for id, _ in pristine[0]{"measurands"}.pairs:

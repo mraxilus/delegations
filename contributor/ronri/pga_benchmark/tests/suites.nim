@@ -206,6 +206,22 @@ suite "Measurements":
         (measurand.reference.len > 0)  # reference implementation present where written
 
 
+  test "runs combine to median of run medians, least minimum, and each run's median":
+    func run(library, reference: float): JsonNode =
+      ## Build one run's document: one measurand, both implementations.
+      %*{"taken": {"date": "2026-09-30"}, "measurands": {"wedge": {
+        "library": {"ns_median": library, "ns_min": library - 1.0, "nan_share": 0.0},
+        "reference": {"ns_median": reference, "ns_min": reference - 1.0, "nan_share": 0.0}}}}
+    let
+      combined = runsCombined([run(12.0, 4.0), run(10.0, 5.0), run(11.0, 3.0)])
+      library = combined{"measurands", "wedge", "library"}
+    check combined{"taken", "runs"}.getInt == 3  # run count recorded
+    check library{"ns_median"}.getFloat == 11.0 and library{"ns_min"}.getFloat == 9.0  # combined
+    check library{"ns_runs"} == %*[12.0, 10.0, 11.0]  # run order kept, pairs with reference
+    check combined{"measurands", "wedge", "reference", "ns_runs"} == %*[4.0, 5.0, 3.0]  # paired
+    check median([4.0, 1.0, 3.0, 2.0]) == 2.5  # even count, mean of middle two
+
+
 suite "Allocation":
   test "allocation gauge is live under this build":
     let before = getAllocStats()

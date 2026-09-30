@@ -7,8 +7,9 @@
 ##   |-----------|----------------------------------------------------------------------|
 ##   | inspect   | compile bench entry per algebra to C, read it, write static          |
 ##   |           | measurements as `build/static_<algebra>.json`                        |
-##   | bench     | compile and run bench per algebra, plain then instrumented, record   |
-##   |           | runtime measurements as `baseline/runtime_<algebra>.json`            |
+##   | bench     | compile and run bench per algebra, plain ones five times alternating |
+##   |           | then instrumented, record runtime measurements as                    |
+##   |           | `baseline/runtime_<algebra>.json`                                    |
 ##   | baseline  | inspect, then record static measurements as                          |
 ##   |           | `baseline/static_<algebra>.json`                                     |
 ##   | guard     | compare last inspect against baseline; any count grown is finding    |
@@ -44,6 +45,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, proposals, gaps, guard, head, inspector, model, notes]
+from ../src/pga_benchmark/report import runsCombined
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
@@ -110,6 +112,8 @@ const
     ## Repository driver, asked for faces.
   EVALUATION_RUNS = 5
     ## Timed runs of each binary per evaluation, alternating.
+  BENCH_RUNS = 5
+    ## Timed runs of each algebra's bench, alternating algebras, so drift lands on all alike.
   TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
     "cga4d": "Conformal 4D"}.toTable
     ## Tab title of each algebra on docket.
@@ -214,27 +218,32 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
 
 
 proc bench() =
-  ## Compile and run bench per algebra, plain for timings and instrumented for allocations,
-  ## and record merged measurements into `baseline/`.
+  ## Compile bench per algebra, plain for timings and instrumented for allocations; run plain
+  ##   ones in turn, algebra after algebra, `BENCH_RUNS` times, so drift of machine lands on
+  ##   every algebra alike; record combined measurements into `baseline/`.
   let
     nim = nimCommit()
     pga = pgaCommit()
   createDir BUILD
   createDir BASELINE
   for (name, dimensions, is_conformal) in CONFIGS:
-    let plain = BUILD / "bench_" & name
-    compile(ENTRY_BENCH, plain, BUILD / "cache_" & name, dimensions, is_conformal, nim, pga)
-    run(plain, [plain & ".json"])
+    compile(ENTRY_BENCH, BUILD / "bench_" & name, BUILD / "cache_" & name, dimensions,
+      is_conformal, nim, pga)
+    compile(ENTRY_BENCH, BUILD / "bench_alloc_" & name, BUILD / "cache_alloc_" & name,
+      dimensions, is_conformal, nim, pga, ["-d:nimAllocStats"])
+  var runs: Table[string, seq[JsonNode]]
+  for index in 1 .. BENCH_RUNS:
+    for (name, _, _) in CONFIGS:
+      let output = BUILD / "bench_" & name & "_" & $index & ".json"
+      run(BUILD / "bench_" & name, [output])
+      runs.mgetOrPut(name, @[]).add readDocument(output)
+  for (name, _, _) in CONFIGS:
     let instrumented = BUILD / "bench_alloc_" & name
-    compile(
-      ENTRY_BENCH, instrumented, BUILD / "cache_alloc_" & name, dimensions, is_conformal, nim,
-      pga, ["-d:nimAllocStats"],
-    )
     run(instrumented, [instrumented & ".json"])
     let
-      doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
+      measurements = merged(runsCombined(runs[name]), readDocument(instrumented & ".json"))
       recorded = BASELINE / "runtime_" & name & ".json"
-    writeFile(recorded, pretty(doc) & "\n")
+    writeFile(recorded, pretty(measurements) & "\n")
     echo "Recorded ", recorded
 
 

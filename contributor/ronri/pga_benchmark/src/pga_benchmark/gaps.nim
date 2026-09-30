@@ -515,11 +515,15 @@ func headerOf(algebra: Algebra): string =
   if algebra.measurements_runtime.isNil:
     result.add " Nobody measured the times, because no bench ran."
   else:
-    let taken_runtime = algebra.measurements_runtime.at("taken")
-    result.add " The bench ran on " & taken_runtime{"date"}.getStr & ", on " &
-      taken_runtime{"machine"}.getStr & ", over " & $taken_runtime{"rounds"}.getInt &
-      " rounds of " & $taken_runtime{"objects"}.getInt &
-      " objects. The allocation gauge was " &
+    let
+      taken_runtime = algebra.measurements_runtime.at("taken")
+      count_runs = taken_runtime{"runs"}.getInt(1)
+    result.add " The bench ran " & (if count_runs > 1: $count_runs & " times " else: "") &
+      "on " & taken_runtime{"date"}.getStr & ", on " & taken_runtime{"machine"}.getStr &
+      ", over " & $taken_runtime{"rounds"}.getInt & " rounds of " &
+      $taken_runtime{"objects"}.getInt & " objects" &
+      (if count_runs > 1: " each. Each time is the median of those runs." else: ".") &
+      " The allocation gauge was " &
       (if taken_runtime{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 
 

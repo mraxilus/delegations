@@ -8,7 +8,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[cpuinfo, json, strutils, times]
+import std/[algorithm, cpuinfo, json, math, sequtils, strutils, times]
 
 import ./[inspector, model]
 
@@ -113,6 +113,38 @@ func functionNode*(function: CFunction; own, total: Counts; size_multivector: in
     "total": countsNode(total),
     "movement": movementNode(movement(function, total, size_multivector)),
   }
+
+
+func median*(values: openArray[float]): float =
+  ## Read median of values, mean of middle two for even count; zero for none.
+  if values.len == 0: return 0.0
+  let
+    sorted = values.sorted
+    middle = sorted.len div 2
+  if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
+
+
+func runsCombined*(runs: openArray[JsonNode]): JsonNode =
+  ## Combine runtime documents of alternating runs of one binary into one: per implementation,
+  ##   median of run medians, least minimum, and each run's median in run order as `ns_runs`.
+  ##   Run medians pair by index across implementations, since one run times both.
+  ##   Header, NaN share and allocations are first run's; every run computes same pools.
+  if runs.len == 0: return newJNull()
+  result = runs[0].copy
+  result["taken"]["runs"] = %runs.len
+  for id, measurand in result{"measurands"}.pairs:
+    for implementation in ["library", "reference"]:
+      let measurement = measurand{implementation}
+      if measurement.isNil or measurement.kind != JObject: continue
+      var medians, minimums: seq[float]
+      for run in runs:
+        let other = run{"measurands", id, implementation}
+        if other.isNil or other.kind != JObject: continue
+        medians.add other{"ns_median"}.getFloat
+        minimums.add other{"ns_min"}.getFloat
+      measurement["ns_median"] = %medians.median.round(2)
+      measurement["ns_min"] = %minimums.min.round(2)
+      measurement["ns_runs"] = %medians.mapIt(it.round(2))
 
 
 const GATED* = [
