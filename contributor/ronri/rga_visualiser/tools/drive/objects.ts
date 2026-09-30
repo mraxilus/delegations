@@ -538,15 +538,17 @@ export async function driveListSearched(page: Page): Promise<void> {
     is_note_first: list_objects.querySelector('.help-text, .object-row')
       ?.classList.contains('help-text') ?? false,
   }));
+  // Time read off page's own clock, so figure beside verdict is simulated span, same each run.
   const typeQuery = async (query: string) => {
     await page.fill('#objects-search-field', '');
-    const started = Date.now();
+    const started = await page.evaluate(() => performance.now());
     await page.keyboard.type(query);
     const want = await expected(query);
-    await page.waitForFunction(
-      (count) => list_objects.dataset['count'] === String(count), want.shown, { timeout: 8000 },
+    await waitUntil(
+      page, (count) => list_objects.dataset['count'] === String(count), want.shown,
     ).catch(() => undefined);
-    return { milliseconds: Date.now() - started, want, got: await listed() };
+    const milliseconds = Math.round(await page.evaluate(() => performance.now()) - started);
+    return { milliseconds, want, got: await listed() };
   };
 
   const one = await typeQuery(wanted?.label ?? '');
@@ -557,7 +559,7 @@ export async function driveListSearched(page: Page): Promise<void> {
       && one.got.shown.startsWith('1 of '),
     wanted === null ? 'no object with a label of its own to search for'
       : `"${wanted.label}" left ${one.got.count} row (${one.got.labels.join(', ')}), ` +
-        `"${one.got.shown}", ${one.milliseconds} ms from first key to settled list`,
+        `"${one.got.shown}", ${one.milliseconds} simulated ms from first key to settled list`,
   );
 
   // Pick that row by its own box, as reader does, then search for something it is not.
