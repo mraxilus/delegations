@@ -513,6 +513,23 @@ factor. A count whose reference spends none has no ratio. It reads as its excess
 Rejected: three bars of absolute values for each measure. The eye then compares three lengths
 to read one factor, and a time carries no place for its variance.
 
+**The docket sorts and filters through dropdowns**, as the Architect asked. Sort ranks rows by
+how far bytes moved, multiplies or time stand over what they are measured against. It also
+ranks them by the spread of their run ratios, by divides, by error checks, or in docket order.
+A row with no figure for a key sorts last.
+
+Show keeps the rows over their lower bound on any measure, or on one measure. It also keeps
+the rows at that bound on both counts, the chains, and the rows with error checks, zero fills or
+NaN results. A time is over when its ratio is more than `TOLERANCE`, the band that `gaps.md`
+uses. Operation keeps the rows of one operation, and Operand keeps the typed rows over
+one operand kind. A typed id splits into its operation and its kinds at the longest kind name,
+so `bulk_flat_round_point` is `bulk_flat` over `round_point`.
+
+One list in `docket.nim` spells each option and the rule that reads it, so the two cannot
+drift apart. An option of Operation or Operand hides on an algebra with no row for it. A CSS
+counter above the rows says how many show. Rejected: a text search, because it needs a script
+and the page runs none. The Operation dropdown finds an operation by name in its place.
+
 **A publication holds each published page to its build.** `pages/published.json` maps each
 page to its URL and to the digest of the page as built when it was published. `drive` builds
 every page again, and any page whose digest differs is a finding. `README.md` must name the URL
@@ -522,7 +539,8 @@ hand, or by a script outside this project, because nothing held it to the files.
 Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
 ratios, and the chip that names removed NaN results. It covers the lower bound each docket row
 is measured against, and a general row timed against its dense form. It covers the median of
-run ratios with one tick for each run, and a reference that spends none.
+run ratios with one tick for each run, and a reference that spends none. It covers the rule
+that reads each dropdown option, the classes of each row, and the split of a typed id.
 
 ## Library head
 
