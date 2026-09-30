@@ -19,12 +19,14 @@ import std/[algorithm, json, os, strutils, tables]
 
 import pga
 
-import ./[catalogue, inspector, kinds, report]
+import ./[bound, catalogue, inspector, kinds, report]
 
 
 const
   ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
+  METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    ## Algebra lower bounds are derived for, spelled from same build definitions library reads.
   LIBRARY_MARK = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
   REFERENCE_MARK = "referenceZ"
@@ -45,8 +47,9 @@ func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
   ## Key kept functions, numbering those sharing stems by overload index so key holds
   ## whatever order compiler emits them in: lowest index keeps bare key, others append
   ## `#u<n>`. `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
-  var groups: Table[string, seq[CFunction]]
-  var order: seq[string]
+  var
+    groups: Table[string, seq[CFunction]]
+    order: seq[string]
   for f in functions:
     if not f.isKept: continue
     if f.key notin groups: order.add f.key
@@ -73,10 +76,8 @@ func libraryKey(p: Measurand): string =
   ## Key of library function measurand's expression calls; empty where it composes several.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
-  let head =
-    if p.symbol.len > 0: p.emitted
-    elif p.alias.len > 0 and p.expression.startsWith(p.alias & "("): p.alias
-    else: return ""
+  let head = p.emittedHead
+  if head.len == 0: return ""
   var stems: seq[string]
   for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
   head & "(" & stems.join(",") & ")"
@@ -84,8 +85,9 @@ func libraryKey(p: Measurand): string =
 
 func referenceKey(p: Measurand): string =
   ## Key of reference function measurand names, operands read off argument names.
-  let open = p.reference.find('(')
-  let close = p.reference.rfind(')')
+  let
+    open = p.reference.find('(')
+    close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
   var stems: seq[string]
   for arg in p.reference[open + 1 ..< close].split(','):
@@ -109,6 +111,18 @@ func measurandsNode(): JsonNode =
       "reference": p.referenceKey,
       "cite": p.cite,
     }
+    let b = p.boundOf(METRIC)
+    if b.is_derived:
+      result[p.id]["bound"] = %*{
+        "shape": p.shapeNameOf,
+        "is_composed": b.is_composed,
+        "steps": p.stepsOf,
+        "multiplies": b.multiplies,
+        "adds": b.adds,
+        "divides": b.divides,
+        "roots": b.roots,
+        "bytes_moved": b.bytesMoved,
+      }
 
 
 func missingNode(): JsonNode =
@@ -123,8 +137,9 @@ proc main(): int =
   if paramCount() != 5:
     stderr.write "Usage: inspect <cache> <output.json> <nim> <pga> <flags>\n"
     return 2
-  let functions = inspectCache(paramStr(1))
-  let total = totals(functions)
+  let
+    functions = inspectCache(paramStr(1))
+    total = totals(functions)
   var taken = takenNow()
   taken["nim"] = %paramStr(3)
   taken["pga"] = %paramStr(4)
@@ -132,8 +147,9 @@ proc main(): int =
   var doc = document(
     "static", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), taken
   )
-  var kept = newJObject()
-  var count = 0
+  var
+    kept = newJObject()
+    count = 0
   for (key, f) in functions.keyed:
     kept[key] = functionNode(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
     inc count

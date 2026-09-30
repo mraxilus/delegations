@@ -14,6 +14,8 @@
 ##   | guard    | compare last inspect against baseline; any count grown is finding     |
 ##   | drive    | inspect, guard, and hold committed `gaps.md` to regeneration          |
 ##   | gaps     | regenerate `gaps.md` and docket from committed baselines              |
+##   | show     | print one function's emitted C, its counts, its movement and its      |
+##   |          | machine code, e.g. `show ∧` or `show ⟇ cga5d`                         |
 ##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI  |
 ##   | system   | print system packages build needs, one per line, for caller          |
 ##   | clean    | remove `build`                                                        |
@@ -28,9 +30,11 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[json, os, osproc, strutils]
 
-import ../src/pga_benchmark/[gaps, guard]
+import ../src/pga_benchmark/[gaps, guard, inspector, model]
 
 
 const
@@ -58,8 +62,13 @@ const
     ## System packages build needs beyond compiler: none. Compiler is toolchain, pinned in
     ## nimble file; library is Atlas checkout, pinned in lock; nothing else is fetched.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|drive|gaps|sweep|system|clean>\n"
-    ## Text printed on usage error.
+    "<inspect|bench|baseline|guard|drive|gaps|show|sweep|system|clean>" &
+    " [symbol] [algebra]\n"
+    ## Text printed on usage error; trailing words serve `show` alone.
+  SHOWN_LINES = 40
+    ## Lines of one function this driver prints before naming file rest sits in.
+  SHOWN_WIDTH = 150
+    ## Characters of one line this driver prints before cutting it.
 
 
 
@@ -67,8 +76,9 @@ const
 
 proc run(command: string; args: openArray[string]) =
   ## Run command with args from project directory; raise on non-zero exit.
-  let process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
-  let code = process.waitForExit
+  let
+    process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
+    code = process.waitForExit
   process.close
   if code != 0:
     raise newException(OSError, command & " failed; got exit `" & $code & "`.")
@@ -122,8 +132,9 @@ proc readDocument(path: string): JsonNode =
 
 proc inspect() =
   ## Compile bench entry per algebra to C only, then read its cache into document.
-  let nim = nimCommit()
-  let pga = pgaCommit()
+  let
+    nim = nimCommit()
+    pga = pgaCommit()
   createDir BUILD
   for (name, dimensions, is_conformal) in CONFIGS:
     let cache = BUILD / "cache_" & name
@@ -157,8 +168,9 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
 proc bench() =
   ## Compile and run bench per algebra, plain for timings and instrumented for allocations,
   ## and record merged measurements into `baseline/`.
-  let nim = nimCommit()
-  let pga = pgaCommit()
+  let
+    nim = nimCommit()
+    pga = pgaCommit()
   createDir BUILD
   createDir BASELINE
   for (name, dimensions, is_conformal) in CONFIGS:
@@ -171,8 +183,9 @@ proc bench() =
       pga, ["-d:nimAllocStats"],
     )
     run(instrumented, [instrumented & ".json"])
-    let doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
-    let recorded = BASELINE / "runtime_" & name & ".json"
+    let
+      doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
+      recorded = BASELINE / "runtime_" & name & ".json"
     writeFile(recorded, pretty(doc) & "\n")
     echo "Recorded ", recorded
 
@@ -189,8 +202,9 @@ proc baseline() =
 proc guarded(): seq[Finding] =
   ## Compare last inspect of every algebra against its baseline; print improvements.
   for (name, _, _) in CONFIGS:
-    let path = BASELINE / "static_" & name & ".json"
-    let fresh = BUILD / "static_" & name & ".json"
+    let
+      path = BASELINE / "static_" & name & ".json"
+      fresh = BUILD / "static_" & name & ".json"
     if not fileExists(path):
       result.add Finding(path: path, message: "No baseline recorded; run `baseline`.")
       continue
@@ -219,17 +233,18 @@ proc algebras(): seq[Algebra] =
   for (name, _, _) in CONFIGS:
     let path = BASELINE / "static_" & name & ".json"
     if not fileExists(path): continue
-    var a = Algebra(name: name, static_measurements: readDocument(path))
-    let bench_path = BASELINE / "runtime_" & name & ".json"
-    if fileExists(bench_path): a.runtime_measurements = readDocument(bench_path)
+    var a = Algebra(name: name, measurements_static: readDocument(path))
+    let path_runtime = BASELINE / "runtime_" & name & ".json"
+    if fileExists(path_runtime): a.measurements_runtime = readDocument(path_runtime)
     result.add a
 
 
 proc generated(): (string, string) =
   ## Generate list and docket text from committed documents.
-  let docket =
-    if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
-  let (text, grown) = generate(algebras(), docket)
+  let
+    docket =
+      if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
+    (text, grown) = generate(algebras(), docket)
   (text, pretty(grown.toJson) & "\n")
 
 
@@ -251,20 +266,23 @@ proc drive() =
     findings.add Finding(path: PATH_GAPS, message: "List differs from regeneration; run `gaps`.")
   if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != docket:
     findings.add Finding(
-      path: PATH_DOCKET, message: "Docket differs from regeneration; run `gaps`."
+      path: PATH_DOCKET,
+      message: "Docket differs from regeneration; run `gaps`.",
     )
   report(findings)
 
 
 proc sweep() =
   ## Time general measurands at every swept dimension, rigid metric, and print medians.
-  let nim = nimCommit()
-  let pga = pgaCommit()
+  let
+    nim = nimCommit()
+    pga = pgaCommit()
   createDir BUILD
   var docs: seq[JsonNode]
   for dimensions in SWEEP:
-    let name = "sweep_" & $dimensions & "d"
-    let binary = BUILD / name
+    let
+      name = "sweep_" & $dimensions & "d"
+      binary = BUILD / name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
     docs.add readDocument(binary & ".json")
@@ -277,9 +295,135 @@ proc sweep() =
       let measurement = doc{"measurands", id, "library"}
       line.add(
         if measurement.isNil or measurement.kind != JObject: "–".align(10)
-        else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10)
+        else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10),
       )
     echo line
+
+
+func shortened(text, stem, plain: string): string =
+  ## Replace mangled type name and its hash with plain one, wherever stem appears.
+  var i = 0
+  while true:
+    let at = text.find(stem & "__", i)
+    if at < 0:
+      result.add text[i .. ^1]
+      break
+    result.add text[i ..< at]
+    result.add plain
+    var j = at + stem.len + 2
+    while j < text.len and (text[j].isAlphaNumeric or text[j] == '_'): inc j
+    i = j
+
+
+func unindexed(text: string): string =
+  ## Replace `(((Basis) n) - 0)` with `n`, which is what compiler spells there.
+  const OPEN = "(((Basis) "
+  const CLOSE = ") - 0)"
+  var i = 0
+  while true:
+    let at = text.find(OPEN, i)
+    if at < 0:
+      result.add text[i .. ^1]
+      break
+    let close = text.find(CLOSE, at)
+    if close < 0:
+      result.add text[i .. ^1]
+      break
+    result.add text[i ..< at]
+    result.add text[at + OPEN.len ..< close]
+    i = close + CLOSE.len
+
+
+func readable(text: string): string =
+  ## Rewrite emitted C so reader sees types and slots rather than hashes.
+  ##   Reading aid alone: cache holds exact text every count is read from.
+  text.shortened(MULTIVECTOR, "Multivector").shortened("tyEnum_Basis", "Basis").unindexed
+
+
+proc disassembled(cache, name: string): seq[string] =
+  ## Read machine code of one function from whichever object file in cache holds it.
+  for path in walkFiles(cache / "*.o"):
+    let (text, code) = execCmdEx("objdump -d --no-show-raw-insn " & quoteShell(path))
+    if code != 0: continue
+    var is_inside = false
+    for line in text.splitLines:
+      if line.contains("<" & name & ">:"): is_inside = true
+      if not is_inside: continue
+      result.add line
+      if line.contains("\tret"): return
+    if result.len > 0: return
+
+
+proc showFunction(symbol, algebra: string) =
+  ## Print one emitted function: what it is, what it spends, what it moves, what it becomes.
+  ##   Compiles bench entry whole rather than to C alone, so cache holds object file and
+  ##   machine code can be read beside C. Reads that cache with same inspector every
+  ##   measurement uses, so figures here and figures in `gaps.md` come from one reading.
+  var found_algebra = false
+  for (name, dimensions, is_conformal) in CONFIGS:
+    if name != algebra: continue
+    found_algebra = true
+    let
+      nim = nimCommit()
+      pga = pgaCommit()
+    createDir BUILD
+    let cache = BUILD / "cache_show_" & name
+    compile(ENTRY_BENCH, BUILD / "show_" & name, cache, dimensions, is_conformal, nim, pga)
+    let size = 8 shl dimensions
+    var seen = 0
+    for function in inspectCache(cache):
+      if function.symbol != symbol: continue
+      inc seen
+      let
+        counts = function.body.count
+        movement_modelled = movement(function, counts, size)
+      echo ""
+      echo "── ", function.symbol, "(", function.parameters.join(","), ") → ", function.stem_result,
+        "   ", algebra, ", ", size, "-byte multivector"
+      echo "   emitted as ", (if function.is_inline: "static N_INLINE" else: "N_NIMCALL"),
+        " `", function.name, "`"
+      echo ""
+      echo "   counts, callees folded in"
+      echo "     multiplies    ", counts.multiplies
+      echo "     divides       ", counts.divides
+      echo "     zero fills    ", counts.zero_fills, "   × ", size, " bytes"
+      echo "     intermediates ", counts.intermediates, "   × ", size, " bytes"
+      echo "     copies        ", counts.copies, "   × ", size, " bytes"
+      echo "     error checks  ", counts.checks
+      echo "     lines of C    ", counts.lines
+      echo ""
+      echo "   bytes moved = operands read + result written"
+      echo "               + (zero fills + intermediates + copies) × width"
+      echo "     operands read     ", movement_modelled.bytes_read
+      echo "     result written    ", movement_modelled.bytes_written
+      echo "     zero fills        ", movement_modelled.bytes_zeroed
+      echo "     intermediates     ", movement_modelled.bytes_intermediates
+      echo "     copies            ", movement_modelled.bytes_copied
+      echo "     ───────────────── ", movement_modelled.bytes_moved
+      echo ""
+      echo "   emitted C"
+      var printed = 0
+      for line in function.body.readable.splitLines:
+        if printed >= SHOWN_LINES:
+          echo "     … ", counts.lines - printed, " more lines; whole body is in ", cache
+          break
+        echo "     ", (if line.len > SHOWN_WIDTH: line[0 ..< SHOWN_WIDTH] & " …" else: line)
+        inc printed
+      echo ""
+      echo "   machine code"
+      let lines = disassembled(cache, function.name)
+      if lines.len == 0:
+        echo "     no symbol of its own, since it is inline; read its caller instead."
+        continue
+      for i, line in lines:
+        if i >= SHOWN_LINES:
+          echo "     … ", lines.len - i, " more instructions."
+          break
+        echo "     ", line
+    if seen == 0:
+      echo "No function spells `", symbol, "` in ", algebra, "."
+  if not found_algebra:
+    raise newException(ValueError, "No algebra named `" & algebra & "`.")
 
 
 proc system() =
@@ -297,11 +441,16 @@ proc clean() =
 #[ Entry Point ]#
 
 when isMainModule:
-  if paramCount() != 1:
+  if paramCount() notin 1 .. 3 or (paramStr(1) == "show" and paramCount() < 2):
+    stderr.write USAGE
+    quit 2
+  if paramStr(1) != "show" and paramCount() != 1:
     stderr.write USAGE
     quit 2
   try:
     case paramStr(1)
+    of "show":
+      showFunction(paramStr(2), if paramCount() >= 3: paramStr(3) else: CONFIGS[0][0])
     of "inspect": inspect()
     of "bench": bench()
     of "baseline": baseline()

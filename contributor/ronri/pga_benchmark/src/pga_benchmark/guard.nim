@@ -9,9 +9,14 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, strutils]
+import std/json
 
 import ./report
+
+
+const BOUNDED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
+  ## Lower bound fields gate holds. Bound is derived rather than measured, so gate holds it
+  ##   to equality: it moves only where derivation moves, which is change to read, not drift.
 
 
 type
@@ -55,24 +60,27 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
       result.findings.add Finding(path: path, message: party & " document unusable; " & why)
   if result.findings.len > 0: return
   for field in HEADER_CONFIG:
-    let before = text(baseline, "algebra", field)
-    let after = text(current, "algebra", field)
+    let
+      before = text(baseline, "algebra", field)
+      after = text(current, "algebra", field)
     if before != after:
       result.findings.add Finding(
         path: path,
         message: "Algebra `" & field & "` differs; got `" & after & "`, baseline `" & before & "`.",
       )
   for field in HEADER_TAKEN:
-    let before = text(baseline, "taken", field)
-    let after = text(current, "taken", field)
+    let
+      before = text(baseline, "taken", field)
+      after = text(current, "taken", field)
     if before != after:
       result.findings.add Finding(
         path: path,
         message: "Build `" & field & "` differs; got `" & after & "`, baseline `" & before & "`.",
       )
   if result.findings.len > 0: return
-  let before = baseline{"functions"}
-  let after = current{"functions"}
+  let
+    before = baseline{"functions"}
+    after = current{"functions"}
   if before.isNil or after.isNil:
     result.findings.add Finding(path: path, message: "Document holds no functions; got none.")
     return
@@ -82,7 +90,8 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
   for key, node in after.pairs:
     if not before.hasKey(key):
       result.findings.add Finding(
-        path: path, message: "Function absent from baseline; got `" & key & "`."
+        path: path,
+        message: "Function absent from baseline; got `" & key & "`.",
       )
       continue
     var metrics: seq[(string, int, int)]
@@ -107,3 +116,27 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
           "Total `" & metric & "` of `" & key & "` shrank; got `" & $now & "`, baseline `" &
             $was & "`."
         )
+  # Bounds are derived, so they never drift: any move means derivation itself changed.
+  let
+    bounds_before = baseline{"measurands"}
+    bounds_after = current{"measurands"}
+  if not bounds_before.isNil and not bounds_after.isNil:
+    for id, node in bounds_before.pairs:
+      let was = node{"bound"}
+      if was.isNil: continue
+      let now = bounds_after{id, "bound"}
+      if now.isNil:
+        result.findings.add Finding(
+          path: path, message: "Lower bound absent now; got `" & id & "`."
+        )
+        continue
+      for metric in BOUNDED:
+        let
+          value_was = was{metric}.getInt
+          value_now = now{metric}.getInt
+        if value_was != value_now:
+          result.findings.add Finding(
+            path: path,
+            message: "Lower bound `" & metric & "` of `" & id & "` moved; got `" & $value_now &
+              "`, baseline `" & $value_was & "`.",
+          )

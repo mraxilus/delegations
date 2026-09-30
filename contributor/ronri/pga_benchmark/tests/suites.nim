@@ -3,16 +3,20 @@
 ##   decides what ran. Library sources are read at compile time from Atlas checkout, so
 ##   catalogue is held to what library exports rather than to what this project remembers.
 
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
+
 import std/[algorithm, compilesettings, json, macros, options, sequtils, strutils, tables, unittest]
 from std/unicode import runeLen
 
 import ../src/pga_benchmark
-import ../src/pga_benchmark/[gaps, guard, inspector, measurements, model, report]
+import ../src/pga_benchmark/[bound, gaps, guard, inspector, measurements, model, report]
 
 
 const
   LIBRARY =
-    "../deps/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated"
+    "../dependencies/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated"
     ## Library checkout Atlas restores, relative to this file.
   SOURCE_UMBRELLA = staticRead(LIBRARY & "/pga.nim")
     ## Library umbrella, holding named aliases.
@@ -32,14 +36,16 @@ macro expressionsCompile(measurands: static seq[Measurand]): untyped =
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression's own `m` and `n` bind
   for p in measurands:
-    let expression = parseExpr(p.expression)
-    let kind_m = if p.operands[0] == Kind.Scalar: ident"float" else: ident"Multivector"
-    let kind_n = if p.operands[1] == Kind.Scalar: ident"float" else: ident"Multivector"
-    let id = newLit(p.id)
+    let
+      expression = parseExpr(p.expression)
+      kind_m = if p.operands[0] == Kind.Scalar: ident"float" else: ident"Multivector"
+      kind_n = if p.operands[1] == Kind.Scalar: ident"float" else: ident"Multivector"
+      id = newLit(p.id)
     result.add quote do:
       block:
-        var `m` {.used.}: `kind_m`
-        var `n` {.used.}: `kind_n`
+        var
+          `m` {.used.}: `kind_m`
+          `n` {.used.}: `kind_n`
         check compiles(`expression`)  # expression of `id` parses and resolves against library
         check `id`.len > 0  # id names gap
 
@@ -54,25 +60,27 @@ macro checkReferences(measurands: static seq[Measurand]; chapter: static string)
   for p in measurands:
     if p.reference.len == 0: continue
     if (chapter == "2") != p.cite.startsWith("2."): continue
-    let expression = parseExpr(p.expression)
-    let reference = parseExpr(p.reference)
-    let library_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
-    let library_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
-    let reference_m = parseExpr(referencePoolName(p.operands[0]))
-    let reference_n = parseExpr(referencePoolName(p.operands[1]))
-    let name = newLit(p.id & "  # " & p.cite)
+    let
+      expression = parseExpr(p.expression)
+      reference = parseExpr(p.reference)
+      library_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
+      library_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
+      reference_m = parseExpr(referencePoolName(p.operands[0]))
+      reference_n = parseExpr(referencePoolName(p.operands[1]))
+      name = newLit(p.id & "  # " & p.cite)
     result.add quote do:
       test `name`:
         for i in 0 ..< OBJECTS:
-          let j = (i * 7 + 3) mod OBJECTS
-          let expected = block:
-            let `m` {.used.} = `reference_m`[i]
-            let `n` {.used.} = `reference_n`[j]
-            widen(`reference`)
-          let got = block:
-            let `m` {.used.} = `library_m`[i]
-            let `n` {.used.} = `library_n`[j]
-            `expression`
+          let
+            j = (i * 7 + 3) mod OBJECTS
+            expected = block:
+              let `m` {.used.} = `reference_m`[i]
+              let `n` {.used.} = `reference_n`[j]
+              widen(`reference`)
+            got = block:
+              let `m` {.used.} = `library_m`[i]
+              let `n` {.used.} = `library_n`[j]
+              `expression`
           check got =~ expected  # library on images equals reference embedded
   if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
 
@@ -159,8 +167,9 @@ suite "Catalogue":
       check line in SOURCE_OPERATORS  # one-line template, target's function is what C holds
 
   test "aliases match every name library's umbrella exports":
-    let exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
-    let catalogued = (aliasesOf(CATALOGUE) & aliasesOf(MISSING)).deduplicate
+    let
+      exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
+      catalogued = (aliasesOf(CATALOGUE) & aliasesOf(MISSING)).deduplicate
     check catalogued.sorted == exported.sorted  # missing ones counted as gaps, not forgotten
 
 
@@ -208,9 +217,88 @@ suite "Allocation":
           check measurement.allocations == 0  # heap untouched over every round
 
 
+suite "Lower bound":
+  test "derived counts reproduce what algebra demands":
+    let m = Metric(dimensions: 4, is_conformal: false)
+    check lowerBoundOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
+    check lowerBoundOf(Shape.Wedge, m, 2).adds == 65  # one add per term past first of each slot
+    check lowerBoundOf(Shape.Geometric, m, 2).multiplies == 192  # null vector drops one state
+    check lowerBoundOf(Shape.ScalarForm, m, 2).multiplies == 8  # blades carrying metric image
+    check lowerBoundOf(Shape.ContractBulk, m, 2).multiplies == 54  # 2.119
+    check lowerBoundOf(Shape.ContractWeight, m, 2).multiplies == 27  # 2.120
+    check lowerBoundOf(Shape.ExpandBulk, m, 2).multiplies == 27  # wiki:Expansions
+    check lowerBoundOf(Shape.ExpandWeight, m, 2).multiplies == 54  # wiki:Expansions
+    check lowerBoundOf(Shape.Scale, m, 2).multiplies == 16  # every slot times one scalar
+    check lowerBoundOf(Shape.Permutation, m, 1).multiplies == 0  # sign and reorder only
+    check lowerBoundOf(Shape.ConstantProduct, m, 1).multiplies == 0  # constant carries unit part
+
+  test "unitize bound is norm, one reciprocal and one scale of each slot":
+    let
+      m = Metric(dimensions: 4, is_conformal: false)
+      b = lowerBoundOf(Shape.Unitize, m, 1)
+    check b.multiplies == 8 + 16  # squared norm, then every slot
+    check b.divides == 1 and b.roots == 1  # one reciprocal over one root
+
+  test "compound product folds its maps into one table, and bound counts that table":
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+    check lowerBoundOf(Shape.Support, rigid, 1).multiplies == 54  # wiki:Support
+    check lowerBoundOf(Shape.SupportAnti, rigid, 1).multiplies == 54  # wiki:Support
+    check lowerBoundOf(Shape.Center, conformal, 1).multiplies == 162  # wiki:Conformal
+    check lowerBoundOf(Shape.Container, conformal, 1).multiplies == 162  # wiki:Conformal
+    check not lowerBoundOf(Shape.Support, rigid, 1).is_composed  # one table, not step sum
+    check lowerBoundOf(Shape.Support, rigid, 1).bytesMoved == 256  # operand read, result written
+    check lowerBoundOf(Shape.JoinCarrier, conformal, 2).multiplies == 162  # wiki:Conformal
+    let partner = [Shape.Permutation, Shape.Container, Shape.JoinCarrier]
+    check lowerBoundOfChain(partner, conformal, 1).multiplies == 324  # two folded tables
+    check lowerBoundOfChain(partner, conformal, 1).is_composed  # sum of steps stays estimate
+
+  test "conformal metric is not singular, so every blade carries image":
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+    check rigid.isNull(3) and not rigid.isNull(0)  # last vector of rigid squares to zero
+    check not conformal.isNull(4)  # conformal pairs last two off diagonal
+    check conformal.scalarFormTerms == 32 and rigid.scalarFormTerms == 8  # every blade
+    check lowerBoundOf(Shape.Geometric, conformal, 2).multiplies == 1024  # four states throughout
+
+  test "conformal dual is signed permutation, so dual product keeps every cell of wedge":
+    let conformal = Metric(dimensions: 5, is_conformal: true)
+    for shape in [Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk,
+                  Shape.ExpandWeight]:
+      check lowerBoundOf(shape, conformal, 2).multiplies == 243  # every blade has image
+      check lowerBoundOf(shape, conformal, 2).is_derived  # rule holds here too
+
+  test "chain sums its steps, and step with no rule adds nothing":
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+      projection = @[Shape.ExpandWeight, Shape.Wedge]
+      b = lowerBoundOfChain(projection, rigid, 2)
+    check b.multiplies == 54 + 81  # dual product, then full product
+    check b.is_composed and b.is_derived  # record marks estimate as estimate
+    check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
+    # Conformal dual product keeps every cell of wedge, so chain is two full products.
+    check lowerBoundOfChain(projection, conformal, 2).multiplies == 486  # wiki:Expansions
+    check lowerBoundOfChain([Shape.Unknown], rigid, 1).is_derived == false  # no step, no claim
+
+  test "bound moves operands read once and result written once":
+    let m = Metric(dimensions: 4, is_conformal: false)
+    check lowerBoundOf(Shape.Wedge, m, 2).bytesMoved == 128 * 3  # two read, one written
+    check lowerBoundOf(Shape.Permutation, m, 1).bytesMoved == 128 * 2  # one read, one written
+    check lowerBoundOf(Shape.Unknown, m, 2).bytesMoved == 0  # no rule, so no claim
+
+
+const CACHE = querySetting(SingleValueSetting.nimcacheDir)
+  ## Nimcache of this test binary, which inspector suites read back.
+let INSPECTED = inspectCache(CACHE)
+  ## Read once: walking cache costs seconds, and two suites read same functions.
+
+
 suite "Inspector":
   test "mangled names demangle to symbols":
-    check demangle("XE2X88XA7__u0__OOZdepsZpgaZoperators") == "∧"  # non-ASCII bytes
+    check demangle("XE2X88XA7__u0__OOZdependenciesZpgaZoperators") == "∧"  # non-ASCII bytes
     check demangle("barXE2X88X99__u0__pgaZoperators") == "|∙"  # special word then bytes
     check demangle("roofXE2X88X98__u0__pgaZoperators") == "^∘"  # roof is `^`
     check demangle("tildeXE2X88X98__u0__pgaZoperators") == "~∘"  # tilde is `~`
@@ -226,17 +314,18 @@ suite "Inspector":
     check overloadOf("wedge_u0__referenceZrigid3") == 0 and overloadOf("nimZeroMem") == -1  # none
 
   test "functions are split and counted from fixture C":
-    const MV = "tyObject_Multivector__h"
+    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
     const FIXTURE = [
-      "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" & MV & "* m_p0, " &
-        MV & "* n_p1, " & MV & "* Result) {",
+      "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
+        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* n_p1, " &
+        MULTIVECTOR_MANGLED & "* Result) {",
       "\tNF* T1_;",
       "NF T2_;",
-      MV & " T3_;",
+      MULTIVECTOR_MANGLED & " T3_;",
       "NIM_BOOL* nimErr_;",
       "{",
       "\t\tnimErr_ = nimErrorFlag();",
-      "nimZeroMem(((void*) Result), sizeof(" & MV & "));",
+      "nimZeroMem(((void*) Result), sizeof(" & MULTIVECTOR_MANGLED & "));",
       "T2_ = X5BX5D__u1__OOZpgaZmultivectors(m_p0, ((tyEnum_Basis__h) 1));",
       "if (NIM_UNLIKELY((*nimErr_))) {",
       "\tgoto BeforeRet_;",
@@ -251,35 +340,36 @@ suite "Inspector":
       "\tBeforeRet_: ;",
       "}",
       "",
-      "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vec3__h* a_p0, " &
-        "tyObject_Vec3__h* b_p1) {",
+      "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vector3__h* a_p0, " &
+        "tyObject_Vector3__h* b_p1) {",
       "\tNF result;",
       "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
       "\treturn result;",
       "}",
       "",
-      "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" & MV & "* m_p0, " & MV & "* Result);",
+      "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
+        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result);",
     ].join("\n") & "\n"
     let functions = functionsIn(FIXTURE)
     check functions.len == 2  # declaration ending in `;` skipped
     check functions[0].symbol == "∧"  # head demangled
-    check functions[0].params == @["Multivector", "Multivector"]  # stems in order
-    check functions[0].result_stem == "Multivector" and not functions[0].is_inline  # via Result
+    check functions[0].parameters == @["Multivector", "Multivector"]  # stems in order
+    check functions[0].stem_result == "Multivector" and not functions[0].is_inline  # via Result
     check functions[0].module == "OOZpgaZoperators"  # suffix after last `__`
     let c = count(functions[0].body)
     check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
-    check functions[1].symbol == "dot" and functions[1].params == @["Vec3", "Vec3"]
-    check functions[1].result_stem == "float" and functions[1].is_inline  # via return type
+    check functions[1].symbol == "dot" and functions[1].parameters == @["Vector3", "Vector3"]
+    check functions[1].stem_result == "float" and functions[1].is_inline  # via return type
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
 
   test "terms inside loops of constant bound count once per trip":
-    const MV = "tyObject_Multivector__h"
+    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
     const LOOP = [
-      "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " & MV & "* m_p1, " & MV &
-        "* Result) {",
+      "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
+        MULTIVECTOR_MANGLED & "* m_p1, " & MULTIVECTOR_MANGLED & "* Result) {",
       "NI i_1;",
       "NI res_1;",
       "i_1 = ((NI) 0);",
@@ -334,8 +424,9 @@ suite "Inspector":
       "(*x_p0) = (((NF) (*x_p0)) * ((NF) 0.5));",
       "}",
     ].join("\n") & "\n"
-    let functions = functionsIn(LOOP)
-    let c = count(functions[0].body)
+    let
+      functions = functionsIn(LOOP)
+      c = count(functions[0].body)
     check c.multiplies == 16 + 1  # 16-trip loop counts its term sixteen times; unknown bound once
     check c.adds == 16  # every term inside loop is weighted
     check c.subs == 4 * 4  # nested loops multiply: `<= 3` from 0 is four trips, `< 4` four
@@ -343,9 +434,10 @@ suite "Inspector":
     check totals(functions)["scale__u0__OOZpgaZops"].multiplies == 17 + 16  # callee per trip
 
   test "divisions count as terms, once per trip, and fold from callees":
-    const MV = "tyObject_Multivector__h"
+    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
     const DIVIDE = [
-      "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" & MV & "* m_p0, " & MV & "* Result) {",
+      "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
+        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result) {",
       "NF n_1;",
       "NI i_1;",
       "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
@@ -389,7 +481,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
   test "movement models bytes from stems and counts":
     let f = CFunction(
-      symbol: "∧", params: @["Multivector", "Multivector"], result_stem: "Multivector"
+      symbol: "∧",
+      parameters: @["Multivector", "Multivector"],
+      stem_result: "Multivector",
     )
     let m = movement(f, Counts(zero_fills: 1, intermediates: 2, copies: 1), 128)
     check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
@@ -398,9 +492,40 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
 
+  test "no lower bound outruns what library spends on same operation":
+    let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    # Fold only functions law reads: folding whole cache walks every call graph of
+    #   unittest itself, which costs minutes (Article IX.8).
+    var roots: seq[string]
+    for f in INSPECTED:
+      for p in CATALOGUE:
+        if f.symbol == p.emittedHead and f.name notin roots: roots.add f.name
+    let total = totals(INSPECTED, roots)
+    var compared = 0
+    for p in CATALOGUE:
+      let head = p.emittedHead
+      if head.len == 0 or head in INLINED: continue
+      let b = p.boundOf(metric)
+      if not b.is_derived: continue
+      # Operator carrying scalar overload spells same symbol at same arity, so stems of
+      #   parameters are what tells two apart.
+      var operands_dense, operands_scalar = 0
+      for i in 0 ..< int(p.arity):
+        if p.operands[i] == Kind.Scalar: inc operands_scalar else: inc operands_dense
+      for f in INSPECTED:
+        if f.symbol != head: continue
+        var dense, scalar = 0
+        for stem in f.parameters:
+          if stem == "Multivector": inc dense elif stem == "float": inc scalar
+        if dense != operands_dense or scalar != operands_scalar: continue
+        # Bound is what algebra demands, so library meets it and never beats it. Totals
+        #   fold callees, since bound of chain counts arithmetic wherever it is spent.
+        check b.multiplies <= total[f.name].multiplies  # derivation is sound
+        inc compared
+    check compared > 0  # law is vacuous where nothing is compared
+
   test "own nimcache holds every catalogued symbol at its arity":
-    const CACHE = querySetting(SingleValueSetting.nimcacheDir)
-    let functions = inspectCache(CACHE)
+    let functions = INSPECTED
     var keys: seq[string]
     for f in functions: keys.add f.key
     for p in CATALOGUE:
@@ -410,7 +535,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in functions:
         if f.symbol != p.emitted: continue
         var arity = 0
-        for stem in f.params:
+        for stem in f.parameters:
           if stem == "Multivector" or stem == "float": inc arity
         if arity == int(p.arity): is_found = true
       check is_found  # every spelled operator is emitted at its arity
@@ -449,8 +574,9 @@ suite "Guard":
     result[key] = f
 
   test "equal documents pass with nothing to say":
-    let same = one(KEY, node(81, 178, 1, 512))
-    let v = compare(doc(same), doc(same), PATH)
+    let
+      same = one(KEY, node(81, 178, 1, 512))
+      v = compare(doc(same), doc(same), PATH)
     check v.findings.len == 0 and v.improvements.len == 0  # gate silent
 
   test "grown count is one finding naming function, metric and both values":
@@ -478,8 +604,9 @@ suite "Guard":
     check after.findings.len == 1 and "absent from baseline" in after.findings[0].message  # new
 
   test "documents of another build are not compared":
-    let same = one(KEY, node(81, 178, 1, 512))
-    let flags = compare(doc(same), doc(same, flags = "-d:danger"), PATH)
+    let
+      same = one(KEY, node(81, 178, 1, 512))
+      flags = compare(doc(same), doc(same, flags = "-d:danger"), PATH)
     check flags.findings.len == 1 and "`flags`" in flags.findings[0].message  # build differs
     let dims = compare(doc(same), doc(same, dimensions = 5), PATH)
     check dims.findings.len == 1 and "`dimensions`" in dims.findings[0].message  # algebra differs
@@ -490,7 +617,7 @@ suite "Guard":
 suite "Gaps":
   const KEY_WEDGE = "∧(Multivector,Multivector)"
 
-  func fn(
+  func functionNode(
     symbol, module: string; is_inline: bool; multiplies, checks, zero_fills, bytes: int
   ): JsonNode =
     ## Shape one inspected function.
@@ -508,10 +635,10 @@ suite "Gaps":
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
     )
     var functions = newJObject()
-    functions[KEY_WEDGE] = fn("∧", "pga/operators", false, 81, 178, 1, 512)
-    functions["wedge(Point,Point)"] = fn("wedge", "reference/rigid3", true, 12, 0, 0, 112)
-    functions["~(Multivector)"] = fn("~", "pga/operators", false, 0, 0, 1, 384)
-    functions["[](Multivector,Basis)"] = fn("[]", "pga/multivectors", true, 0, 0, 0, 136)
+    functions[KEY_WEDGE] = functionNode("∧", "pga/operators", false, 81, 178, 1, 512)
+    functions["wedge(Point,Point)"] = functionNode("wedge", "reference/rigid3", true, 12, 0, 0, 112)
+    functions["~(Multivector)"] = functionNode("~", "pga/operators", false, 0, 0, 1, 384)
+    functions["[](Multivector,Basis)"] = functionNode("[]", "pga/multivectors", true, 0, 0, 0, 136)
     result["functions"] = functions
     result["measurands"] = %*{
       "wedge": {"symbol": "∧", "library": KEY_WEDGE, "reference": ""},
@@ -546,7 +673,7 @@ suite "Gaps":
     }
 
   let ALGEBRAS = @[
-    Algebra(name: "rga4d", static_measurements: staticDoc(), runtime_measurements: runtimeDoc())
+    Algebra(name: "rga4d", measurements_static: staticDoc(), measurements_runtime: runtimeDoc())
   ]
 
   func decidedOf(rule: Rule; algebras: seq[Algebra]; gaps: seq[Gap]): Decision =
@@ -567,15 +694,16 @@ suite "Gaps":
 
   test "gap without counts or timing is unmeasured":
     let gaps = gapsOf(
-      Algebra(name: "rga4d", static_measurements: staticDoc(), runtime_measurements: nil)
+      Algebra(name: "rga4d", measurements_static: staticDoc(), measurements_runtime: nil)
     )
     let by = gaps.mapIt((it.measurand, it)).toTable
     check by["transform_point_motor"].status == Status.Unmeasured  # nothing to decide on
     check "time" notin by["wedge_point_point"].over_on  # no bench, no time verdict
 
   test "docket keeps identifiers across reorder and allots next to new key":
-    var gaps = gapsOf(ALGEBRAS[0])
-    var docket = docketOf(nil)
+    var
+      gaps = gapsOf(ALGEBRAS[0])
+      docket = docketOf(nil)
     gaps.assign(docket)
     check gaps[0].id == "G001" and gaps[3].id == "G004" and docket.next == 5  # in order
     gaps.reverse
@@ -587,8 +715,9 @@ suite "Gaps":
     check gaps[^1].id == "G005" and again.next == 6  # next number, never one reused
 
   test "causes are decided by rule with evidence":
-    let gaps = gapsOf(ALGEBRAS[0])
-    let checks = decidedOf(Rule.Checks, ALGEBRAS, gaps)
+    let
+      gaps = gapsOf(ALGEBRAS[0])
+      checks = decidedOf(Rule.Checks, ALGEBRAS, gaps)
     check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
     check "`" & KEY_WEDGE & "` with 178" in checks.evidence  # most
     check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
@@ -636,8 +765,9 @@ suite "Driver":
 
   func taught(source: string): seq[string] =
     ## Read verbs usage string teaches, between its angle brackets.
-    let open = source.find("\"<")
-    let close = source.find(">", open)
+    let
+      open = source.find("\"<")
+      close = source.find(">", open)
     source[open + 2 ..< close].split('|')
 
   func tabled(source: string): seq[string] =

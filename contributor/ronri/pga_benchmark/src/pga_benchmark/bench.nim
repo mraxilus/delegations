@@ -10,6 +10,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[json, os, strutils]
 
 import pga
@@ -51,7 +53,7 @@ proc benchDocument(): JsonNode =
   result["measurands"] = measurands
 
 
-proc controlAllocation(): bool =
+proc isAllocationCounted(): bool =
   ## Prove allocation counter moves, so zero counts below mean zero and not inert gauge.
   let before = getAllocStats()
   var control = newSeq[float](8)
@@ -67,15 +69,16 @@ proc main(): int =
     stderr.write "Usage: bench <output.json>\n"
     return 2
   fillPools(0)
-  if isAllocationMeasured() and not controlAllocation():
+  if isAllocationMeasured() and not isAllocationCounted():
     stderr.write "Allocation counter inert under -d:nimAllocStats; refusing to report.\n"
     return 1
   measureCatalogue()
   echo "algebra ", ALGEBRA_NAME, " objects ", OBJECTS, " rounds ", ROUNDS, " allocation gauge ",
     (if isAllocationMeasured(): "live" else: "off")
   for index, measurand in CATALOGUE:
-    let l = MEASUREMENTS[Implementation.Library][index]
-    let r = MEASUREMENTS[Implementation.Reference][index]
+    let
+      l = MEASUREMENTS[Implementation.Library][index]
+      r = MEASUREMENTS[Implementation.Reference][index]
     var line = measurand.id.alignLeft(34) & formatFloat(l.ns_median, ffDecimal, 2).align(9) & " ns"
     if r.is_measured:
       line.add "  reference " & formatFloat(r.ns_median, ffDecimal, 2).align(8) & " ns"

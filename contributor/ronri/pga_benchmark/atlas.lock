@@ -3,13 +3,13 @@
     "replications.mraxilus.gitlab.com": {
       "dir": "$deps/replications.mraxilus.gitlab.com",
       "url": "https://gitlab.com/mraxilus/replications",
-      "commit": "9f9019b26b46490f79f383eee693b1abc84a4f63",
+      "commit": "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315",
       "version": ""
     }
   },
   "nimcfg": [
     "# Configure every build of this project: where PGA library sits, and which algebra is",
-    "#   default. Library is restored under `deps/` by Atlas and never committed (Article",
+    "#   default. Library is restored under `dependencies/` by Atlas and never committed (Article",
     "#   XI.3). It sits three directories inside replications repository, and Atlas clones",
     "#   whole repositories, so path names subdirectory rather than checkout root;",
     "#   `atlas.lock` records directory name, which Atlas derives from clone URL.",
@@ -18,7 +18,7 @@
     "#   `-d:pga.is_conformal` themselves; command line wins over this file, since compiler",
     "#   reads configs first.",
     "",
-    "--path:\"deps/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated\"",
+    "--path:\"dependencies/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated\"",
     "--define:\"pga.dimensions=4\"",
     "--define:\"pga.is_conformal=false\"",
     "",
@@ -48,7 +48,7 @@
       "#   with characters no release lexes. Same commit `rga_visualiser` pins, so one cached",
       "#   build serves both projects; see PROVENANCE.md, Dependencies.",
       "requires \"nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d\"",
-      "requires \"https://gitlab.com/mraxilus/replications#9f9019b\"",
+      "requires \"https://gitlab.com/mraxilus/replications#bd6b23c\"",
       ""
     ]
   },

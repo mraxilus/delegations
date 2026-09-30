@@ -60,57 +60,58 @@ func checkSchema*(node: JsonNode; kind: string): string =
   ""
 
 
-func countsNode*(c: Counts): JsonNode =
+func countsNode*(counts: Counts): JsonNode =
   ## Shape counts as object with one field per count.
   %*{
-    "multiplies": c.multiplies,
-    "adds": c.adds,
-    "subs": c.subs,
-    "divides": c.divides,
-    "zero_fills": c.zero_fills,
-    "intermediates": c.intermediates,
-    "copies": c.copies,
-    "checks": c.checks,
-    "calls": c.calls,
-    "allocations": c.allocations,
-    "lines": c.lines,
+    "multiplies": counts.multiplies,
+    "adds": counts.adds,
+    "subs": counts.subs,
+    "divides": counts.divides,
+    "zero_fills": counts.zero_fills,
+    "intermediates": counts.intermediates,
+    "copies": counts.copies,
+    "checks": counts.checks,
+    "calls": counts.calls,
+    "allocations": counts.allocations,
+    "lines": counts.lines,
   }
 
 
-func movementNode*(m: Movement): JsonNode =
+func movementNode*(movement: Movement): JsonNode =
   ## Shape movement model as object with one field per cause.
   %*{
-    "bytes_read": m.bytes_read,
-    "bytes_written": m.bytes_written,
-    "bytes_zeroed": m.bytes_zeroed,
-    "bytes_copied": m.bytes_copied,
-    "bytes_intermediates": m.bytes_intermediates,
-    "bytes_moved": m.bytes_moved,
+    "bytes_read": movement.bytes_read,
+    "bytes_written": movement.bytes_written,
+    "bytes_zeroed": movement.bytes_zeroed,
+    "bytes_copied": movement.bytes_copied,
+    "bytes_intermediates": movement.bytes_intermediates,
+    "bytes_moved": movement.bytes_moved,
   }
 
 
 func moduleTail*(module: string): string =
   ## Read last two segments of mangled module path, `pga/operators` out of
-  ## `OOZdepsZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
+  ## `OOZdependenciesZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
   ##   Compiler spells `/` as `Z` and `_` as `95`; only those two are undone.
-  let parts = module.split('Z')
-  let tail = if parts.len >= 2: parts[^2 .. ^1] else: parts
+  let
+    parts = module.split('Z')
+    tail = if parts.len >= 2: parts[^2 .. ^1] else: parts
   tail.join("/").replace("95", "_")
 
 
-func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): JsonNode =
+func functionNode*(function: CFunction; own, total: Counts; size_multivector: int): JsonNode =
   ## Shape one inspected function: key parts, module tail, inline flag, own and total
   ## counts, movement modelled on total counts. Mangled name is left out: it spells
   ## checkout path and compiler hash, neither of which is measurement.
   %*{
-    "symbol": f.symbol,
-    "module": moduleTail(f.module),
-    "params": f.params,
-    "returns": f.result_stem,
-    "inline": f.is_inline,
+    "symbol": function.symbol,
+    "module": moduleTail(function.module),
+    "params": function.parameters,
+    "returns": function.stem_result,
+    "inline": function.is_inline,
     "own": countsNode(own),
     "total": countsNode(total),
-    "movement": movementNode(movement(f, total, size_multivector)),
+    "movement": movementNode(movement(function, total, size_multivector)),
   }
 
 

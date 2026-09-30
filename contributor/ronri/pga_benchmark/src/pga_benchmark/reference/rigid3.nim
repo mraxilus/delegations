@@ -39,7 +39,7 @@ export scalars
 
 
 type
-  Vec3* = object
+  Vector3* = object
     ## Define three components named as vector; direction, moment or normal.
     x*, y*, z*: float
   Point* = object
@@ -47,55 +47,55 @@ type
     x*, y*, z*, w*: float
   Line* = object
     ## Define line 𝐥 with direction v and moment m; grade 2.
-    v*, m*: Vec3
+    v*, m*: Vector3
   Plane* = object
     ## Define plane 𝐠 with normal (x y z) and position w; grade 3.
     x*, y*, z*, w*: float
   Motor* = object
     ## Define motor 𝐐 with weight (v, vw) and bulk (m, mw); even grades.
-    v*, m*: Vec3
+    v*, m*: Vector3
     vw*, mw*: float
 
 
 
 #[ Vector Helpers ]#
 
-func cross*(a, b: Vec3): Vec3 {.inline.} =
+func cross*(a, b: Vector3): Vector3 {.inline.} =
   ## Cross product, i.e. 𝐚 × 𝐛; 6 mul, 3 sub.
-  Vec3(x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x)
+  Vector3(x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x)
 
-func dot*(a, b: Vec3): float {.inline.} =
+func dot*(a, b: Vector3): float {.inline.} =
   ## Dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
   a.x * b.x + a.y * b.y + a.z * b.z
 
-func `+`*(a, b: Vec3): Vec3 {.inline.} =
+func `+`*(a, b: Vector3): Vector3 {.inline.} =
   ## Sum of vectors; 3 add.
-  Vec3(x: a.x + b.x, y: a.y + b.y, z: a.z + b.z)
+  Vector3(x: a.x + b.x, y: a.y + b.y, z: a.z + b.z)
 
-func `-`*(a, b: Vec3): Vec3 {.inline.} =
+func `-`*(a, b: Vector3): Vector3 {.inline.} =
   ## Difference of vectors; 3 sub.
-  Vec3(x: a.x - b.x, y: a.y - b.y, z: a.z - b.z)
+  Vector3(x: a.x - b.x, y: a.y - b.y, z: a.z - b.z)
 
-func `-`*(a: Vec3): Vec3 {.inline.} =
+func `-`*(a: Vector3): Vector3 {.inline.} =
   ## Negated vector; 0 mul.
-  Vec3(x: -a.x, y: -a.y, z: -a.z)
+  Vector3(x: -a.x, y: -a.y, z: -a.z)
 
-func `*`*(a: Vec3; s: float): Vec3 {.inline.} =
+func `*`*(a: Vector3; s: float): Vector3 {.inline.} =
   ## Vector scaled; 3 mul.
-  Vec3(x: a.x * s, y: a.y * s, z: a.z * s)
+  Vector3(x: a.x * s, y: a.y * s, z: a.z * s)
 
-template zero3(): Vec3 =
-  ## Spell zero vector by components; default constructor `Vec3()` costs zero fill and
+template zero3(): Vector3 =
+  ## Spell zero vector by components; default constructor `Vector3()` costs zero fill and
   ##   hook calls on this compiler, measured at 4 ns against 0 (see PROVENANCE, Reference).
-  Vec3(x: 0.0, y: 0.0, z: 0.0)
+  Vector3(x: 0.0, y: 0.0, z: 0.0)
 
-template read3(v: Vec3): Vec3 =
+template read3(v: Vector3): Vector3 =
   ## Spell copy of vector by components; whole-object copy into constructor goes through
   ##   `=dup` hook call on this compiler, measured at 20 ns against 2 (see PROVENANCE).
-  Vec3(x: v.x, y: v.y, z: v.z)
+  Vector3(x: v.x, y: v.y, z: v.z)
 
 
-func rotate(x: Vec3; v: Vec3; vw: float): Vec3 {.inline.} =
+func rotate(x: Vector3; v: Vector3; vw: float): Vector3 {.inline.} =
   ## Rotate vector by unit quaternion (v, vw), i.e. x + 2(vw v × x + v × (v × x)).
   ##   18 mul, 12 add.
   let c = cross(v, x)
@@ -108,8 +108,8 @@ func rotate(x: Vec3; v: Vec3; vw: float): Vec3 {.inline.} =
 func wedge*(p, q: Point): Line {.inline.} =
   ## Join points into line through both, i.e. 𝐩 ∧ 𝐪; 12 mul, 6 sub.
   Line(
-    v: Vec3(x: p.w * q.x - p.x * q.w, y: p.w * q.y - p.y * q.w, z: p.w * q.z - p.z * q.w),
-    m: Vec3(x: p.y * q.z - p.z * q.y, y: p.z * q.x - p.x * q.z, z: p.x * q.y - p.y * q.x),
+    v: Vector3(x: p.w * q.x - p.x * q.w, y: p.w * q.y - p.y * q.w, z: p.w * q.z - p.z * q.w),
+    m: Vector3(x: p.y * q.z - p.z * q.y, y: p.z * q.x - p.x * q.z, z: p.x * q.y - p.y * q.x),
   )
 
 func wedge*(l: Line; p: Point): Plane {.inline.} =
@@ -128,8 +128,8 @@ func wedge*(p: Point; l: Line): Plane {.inline.} =
 func wedgeAnti*(g, h: Plane): Line {.inline.} =
   ## Meet planes in line, i.e. 𝐠 ∨ 𝐡; 12 mul, 6 sub.
   Line(
-    v: Vec3(x: g.z * h.y - g.y * h.z, y: g.x * h.z - g.z * h.x, z: g.y * h.x - g.x * h.y),
-    m: Vec3(x: g.x * h.w - g.w * h.x, y: g.y * h.w - g.w * h.y, z: g.z * h.w - g.w * h.z),
+    v: Vector3(x: g.z * h.y - g.y * h.z, y: g.x * h.z - g.z * h.x, z: g.y * h.x - g.x * h.y),
+    m: Vector3(x: g.x * h.w - g.w * h.x, y: g.y * h.w - g.w * h.y, z: g.z * h.w - g.w * h.z),
   )
 
 func wedgeAnti*(g: Plane; l: Line): Point {.inline.} =
@@ -183,7 +183,7 @@ func dotAnti*(g, h: Plane): Antiscalar {.inline.} =
 
 
 
-#[ Complements, Reverses, Duals ]#
+#[ Complements ]#
 
 func complementRight*(p: Point): Plane {.inline.} =
   ## Right complement 𝐩̅, i.e. same components read as plane; 0 mul.
@@ -209,6 +209,10 @@ func complementLeft*(g: Plane): Point {.inline.} =
   ## Left complement 𝐠̲, i.e. same components read as point; 0 mul.
   Point(x: g.x, y: g.y, z: g.z, w: g.w)
 
+
+
+#[ Reverses ]#
+
 func reverse*(p: Point): Point {.inline.} =
   ## Reverse 𝐩̃, identity on grade 1; 0 mul.
   p
@@ -232,6 +236,10 @@ func reverseAnti*(l: Line): Line {.inline.} =
 func reverseAnti*(g: Plane): Plane {.inline.} =
   ## Antireverse 𝐠̰, identity on antigrade 1; 0 mul.
   g
+
+
+
+#[ Duals ]#
 
 func dualBulk*(p: Point): Plane {.inline.} =
   ## Bulk dual 𝐩★, i.e. right complement of bulk; 0 mul.
@@ -259,7 +267,7 @@ func dualWeight*(g: Plane): Point {.inline.} =
 
 
 
-#[ Bulk, Weight, Attitude ]#
+#[ Parts ]#
 
 func bulk*(p: Point): Point {.inline.} =
   ## Bulk 𝐩∙, i.e. components without e₄; 0 mul.
@@ -285,6 +293,10 @@ func weight*(g: Plane): Plane {.inline.} =
   ## Weight 𝐠∘, i.e. normal; 0 mul.
   Plane(x: g.x, y: g.y, z: g.z, w: 0.0)
 
+
+
+#[ Attitudes ]#
+
 func attitude*(p: Point): float {.inline.} =
   ## Attitude of point, i.e. 𝐩 ∨ 𝐞̅₄, its weight as scalar; 0 mul.
   p.w
@@ -295,11 +307,11 @@ func attitude*(l: Line): Point {.inline.} =
 
 func attitude*(g: Plane): Line {.inline.} =
   ## Attitude of plane, i.e. its normal as line at infinity; 0 mul.
-  Line(v: zero3, m: Vec3(x: g.x, y: g.y, z: g.z))
+  Line(v: zero3, m: Vector3(x: g.x, y: g.y, z: g.z))
 
 
 
-#[ Norms, Unitize ]#
+#[ Norms ]#
 
 func normBulkSquared*(p: Point): float {.inline.} =
   ## Squared bulk norm 𝐩 ∙ 𝐩; 3 mul, 2 add.
@@ -348,6 +360,10 @@ func normBulk*(g: Plane): float {.inline.} =
 func normWeight*(g: Plane): Antiscalar {.inline.} =
   ## Weight norm ‖𝐠‖∘; 3 mul, 2 add, 1 sqrt.
   Antiscalar(sqrt(g.normWeightSquared))
+
+
+
+#[ Unitizations ]#
 
 func unitize*(p: Point): Point {.inline.} =
   ## Unitize point so w = 1, i.e. 𝐩 / ‖𝐩‖∘; 1 div, 3 mul.
@@ -409,15 +425,17 @@ func supportAnti*(l: Line): Plane {.inline.} =
 func projectOrthogonal*(p: Point; g: Plane): Point {.inline.} =
   ## Project point orthogonally onto plane, homogeneous, i.e. 𝐠 ∨ (𝐩 ∧ 𝐠☆); 12 mul, 8 add.
   ##   Result is (𝐠∘ ∙ 𝐠∘) 𝐩 − 𝐠∘ (𝐩 ∨ 𝐠) on position, weight scaled alike.
-  let s = g.x * g.x + g.y * g.y + g.z * g.z
-  let d = p.x * g.x + p.y * g.y + p.z * g.z + p.w * g.w
+  let
+    s = g.x * g.x + g.y * g.y + g.z * g.z
+    d = p.x * g.x + p.y * g.y + p.z * g.z + p.w * g.w
   Point(x: p.x * s - g.x * d, y: p.y * s - g.y * d, z: p.z * s - g.z * d, w: p.w * s)
 
 func projectOrthogonal*(p: Point; l: Line): Point {.inline.} =
   ## Project point orthogonally onto line, homogeneous, i.e. 𝐥 ∨ (𝐩 ∧ 𝐥☆); 21 mul, 12 add.
   ##   Position is (𝐥∘ ∙ 𝐩) 𝐥ᵛ + w (𝐥ᵛ × 𝐥ᵐ), weight is w (𝐥ᵛ ∙ 𝐥ᵛ).
-  let d = l.v.x * p.x + l.v.y * p.y + l.v.z * p.z
-  let c = cross(l.v, l.m)
+  let
+    d = l.v.x * p.x + l.v.y * p.y + l.v.z * p.z
+    c = cross(l.v, l.m)
   Point(
     x: d * l.v.x + p.w * c.x,
     y: d * l.v.y + p.w * c.y,
@@ -429,12 +447,13 @@ func projectOrthogonal*(l: Line; g: Plane): Line {.inline.} =
   ## Project line orthogonally onto plane, homogeneous, i.e. 𝐠 ∨ (𝐥 ∧ 𝐠☆); 30 mul, 18 add.
   ##   Direction is (𝐠∘ ∙ 𝐠∘) 𝐥ᵛ − 𝐠∘ (𝐠∘ ∙ 𝐥ᵛ); moment is
   ##   𝐠∘ (𝐠∘ ∙ 𝐥ᵐ) − (𝐠∘ × 𝐥ᵛ) gʷ... derived, held to library by suite.
-  let n = Vec3(x: g.x, y: g.y, z: g.z)
-  let s = dot(n, n)
-  let dv = dot(n, l.v)
-  let dm = dot(n, l.m)
-  let c = cross(n, l.v)
-  Line(v: l.v * s - n * dv, m: n * dm - c * g.w)
+  let
+    n = Vector3(x: g.x, y: g.y, z: g.z)
+    s = dot(n, n)
+    dot_direction = dot(n, l.v)
+    dot_moment = dot(n, l.m)
+    c = cross(n, l.v)
+  Line(v: l.v * s - n * dot_direction, m: n * dot_moment - c * g.w)
 
 
 
@@ -443,13 +462,13 @@ func projectOrthogonal*(l: Line; g: Plane): Line {.inline.} =
 func wedgeDotAnti*(a, b: Motor): Motor {.inline.} =
   ## Compose motors through geometric antiproduct, i.e. 𝐚 ⟇ 𝐛; 48 mul, 40 add.
   Motor(
-    v: Vec3(
+    v: Vector3(
       x: a.vw * b.v.x + a.v.x * b.vw + a.v.y * b.v.z - a.v.z * b.v.y,
       y: a.vw * b.v.y + a.v.y * b.vw + a.v.z * b.v.x - a.v.x * b.v.z,
       z: a.vw * b.v.z + a.v.z * b.vw + a.v.x * b.v.y - a.v.y * b.v.x,
     ),
     vw: a.vw * b.vw - a.v.x * b.v.x - a.v.y * b.v.y - a.v.z * b.v.z,
-    m: Vec3(
+    m: Vector3(
       x: a.mw * b.v.x + a.m.x * b.vw + a.m.y * b.v.z - a.m.z * b.v.y +
         b.mw * a.v.x + b.m.x * a.vw - b.m.y * a.v.z + b.m.z * a.v.y,
       y: a.mw * b.v.y - a.m.x * b.v.z + a.m.y * b.vw + a.m.z * b.v.x +
@@ -493,7 +512,7 @@ func unitize*(q: Motor): Motor {.inline.} =
   let n = 1.0 / sqrt(s)
   Motor(v: q.v * n, m: q.m * n, vw: q.vw * n, mw: q.mw * n)
 
-func translation*(q: Motor): Vec3 {.inline.} =
+func translation*(q: Motor): Vector3 {.inline.} =
   ## Translation unit motor carries, i.e. 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ); 12 mul, 9 add.
   (q.m * q.vw - q.v * q.mw + cross(q.v, q.m)) * 2.0
 
@@ -501,29 +520,31 @@ func transform*(p: Point; q: Motor): Point {.inline.} =
   ## Move point by unit motor, i.e. 𝐐 ⟇ 𝐩 ⟇ 𝐐̰; 25 mul, 18 add.
   ##   Rotation and translation in one pass: `a` = Qᵛ × 𝐩 + Qᵐ w,
   ##   𝐩' = 𝐩 + 2(Qᵛ × `a` + `a` Qᵛʷ − Qᵛ Qᵐʷ w).
-  let x = Vec3(x: p.x, y: p.y, z: p.z)
-  let a = cross(q.v, x) + q.m * p.w
-  let u = cross(q.v, a) + a * q.vw - q.v * (q.mw * p.w)
+  let
+    x = Vector3(x: p.x, y: p.y, z: p.z)
+    a = cross(q.v, x) + q.m * p.w
+    u = cross(q.v, a) + a * q.vw - q.v * (q.mw * p.w)
   Point(x: p.x + 2.0 * u.x, y: p.y + 2.0 * u.y, z: p.z + 2.0 * u.z, w: p.w)
 
 func transform*(l: Line; q: Motor): Line {.inline.} =
   ## Move line by unit motor, i.e. 𝐐 ⟇ 𝐥 ⟇ 𝐐̰; 54 mul, 36 add.
   ##   Direction rotates; moment rotates and gains 𝐭 × direction.
-  let v = rotate(l.v, q.v, q.vw)
-  let m = rotate(l.m, q.v, q.vw)
+  let
+    v = rotate(l.v, q.v, q.vw)
+    m = rotate(l.m, q.v, q.vw)
   Line(v: read3(v), m: m + cross(q.translation, v))
 
 func transform*(g: Plane; q: Motor): Plane {.inline.} =
   ## Move plane by unit motor, i.e. 𝐐 ⟇ 𝐠 ⟇ 𝐐̰; 33 mul, 23 add.
   ##   Normal rotates; position loses normal ∙ 𝐭.
-  let n = rotate(Vec3(x: g.x, y: g.y, z: g.z), q.v, q.vw)
+  let n = rotate(Vector3(x: g.x, y: g.y, z: g.z), q.v, q.vw)
   Plane(x: n.x, y: n.y, z: n.z, w: g.w - dot(n, q.translation))
 
-func rotor*(axis: Vec3; angle: float): Motor {.inline.} =
+func rotor*(axis: Vector3; angle: float): Motor {.inline.} =
   ## Construct rotation motor about unit axis through origin; 4 mul, 1 sin, 1 cos.
   let h = angle * 0.5
   Motor(v: axis * sin(h), m: zero3, vw: cos(h), mw: 0.0)
 
-func translator*(t: Vec3): Motor {.inline.} =
+func translator*(t: Vector3): Motor {.inline.} =
   ## Construct translation motor by t, i.e. 𝟙 + (𝐭 / 2); 3 mul.
   Motor(v: zero3, m: t * 0.5, vw: 1.0, mw: 0.0)

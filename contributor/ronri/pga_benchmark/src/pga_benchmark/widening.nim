@@ -83,8 +83,8 @@ when IS_RIGID and DIMENSIONS == 4:
     ## Extract line from grade-2 slots.
     m.only({Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12})
     Line(
-      v: Vec3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
-      m: Vec3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
+      v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
+      m: Vector3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
     )
 
   func widen*(g: Plane): Multivector =
@@ -117,8 +117,8 @@ when IS_RIGID and DIMENSIONS == 4:
       Basis.scalar,
     })
     Motor(
-      v: Vec3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
-      m: Vec3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
+      v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
+      m: Vector3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
       vw: m[Basis.scalarAnti],
       mw: m[Basis.scalar],
     )
@@ -165,8 +165,8 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       Basis.E35, Basis.E45,
     })
     Dipole(
-      v: Vec3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
-      m: Vec3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
+      v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
+      m: Vector3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
       p: FlatPoint(x: m[Basis.E15], y: m[Basis.E25], z: m[Basis.E35], w: m[Basis.E45]),
     )
 
@@ -200,8 +200,8 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     })
     Circle(
       g: CarrierPlane(x: m[Basis.E423], y: m[Basis.E431], z: m[Basis.E412], w: m[Basis.E321]),
-      v: Vec3(x: m[Basis.E415], y: m[Basis.E425], z: m[Basis.E435]),
-      m: Vec3(x: m[Basis.E235], y: m[Basis.E315], z: m[Basis.E125]),
+      v: Vector3(x: m[Basis.E415], y: m[Basis.E425], z: m[Basis.E435]),
+      m: Vector3(x: m[Basis.E235], y: m[Basis.E315], z: m[Basis.E125]),
     )
 
   func widen*(g: FlatPlane): Multivector =

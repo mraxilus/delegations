@@ -16,15 +16,14 @@
 import std/strutils
 
 
-type Gate {.pure.} = enum
-  ## Define which algebras block of source applies to.
-  Any, Rigid, Conformal
-
-
-type Frame = object
-  ## Define one open `when` block: its indent and which algebra it admits.
-  indent: int
-  gate: Gate
+type
+  Gate {.pure.} = enum
+    ## Define which algebras block of source applies to.
+    Any, Rigid, Conformal
+  Frame = object
+    ## Define one open `when` block: its indent and which algebra it admits.
+    indent: int
+    gate: Gate
 
 
 func indentOf(line: string): int =
@@ -49,7 +48,7 @@ func flipped(gate: Gate): Gate =
   of Gate.Any: Gate.Any
 
 
-func admits(frames: seq[Frame]; is_conformal: bool): bool =
+func isAdmitted(frames: seq[Frame]; is_conformal: bool): bool =
   ## Decide whether innermost named gate admits algebra.
   for i in countdown(frames.high, 0):
     case frames[i].gate
@@ -63,8 +62,9 @@ func between(s, opening, closing: string): string =
   ## Read text between first `opening` and next `closing`; empty where either is absent.
   let start = s.find(opening)
   if start < 0: return ""
-  let after = start + opening.len
-  let stop = s.find(closing, after)
+  let
+    after = start + opening.len
+    stop = s.find(closing, after)
   if stop < 0: return ""
   s[after ..< stop]
 
@@ -87,7 +87,7 @@ iterator admitted(source: string; is_conformal: bool): string =
     if stripped.startsWith("when ") and stripped.endsWith(":"):
       frames.add Frame(indent: indent, gate: stripped.gateOf)
       continue
-    if frames.admits(is_conformal): yield stripped
+    if frames.isAdmitted(is_conformal): yield stripped
 
 
 

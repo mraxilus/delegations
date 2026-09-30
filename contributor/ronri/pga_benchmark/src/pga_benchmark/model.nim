@@ -47,21 +47,21 @@ func sizeOfStem*(stem: string; size_multivector: int): int =
   of "FlatLine": sizeof(conformal3.FlatLine)
   of "FlatPlane": sizeof(conformal3.FlatPlane)
   of "CarrierPlane": sizeof(conformal3.CarrierPlane)
-  of "Vec3": sizeof(rigid3.Vec3)
+  of "Vector3": sizeof(rigid3.Vector3)
   else: 0
 
 
-func movement*(f: CFunction; c: Counts; size_multivector: int): Movement =
+func movement*(function: CFunction; counts: Counts; size_multivector: int): Movement =
   ## Model bytes one call of function moves, given its counts.
   var read = 0
-  for stem in f.params: read += sizeOfStem(stem, size_multivector)
-  let written = sizeOfStem(f.result_stem, size_multivector)
+  for stem in function.parameters: read += sizeOfStem(stem, size_multivector)
+  let written = sizeOfStem(function.stem_result, size_multivector)
   result = Movement(
     bytes_read: read,
     bytes_written: written,
-    bytes_zeroed: c.zero_fills * written,
-    bytes_copied: c.copies * written,
-    bytes_intermediates: c.intermediates * size_multivector,
+    bytes_zeroed: counts.zero_fills * written,
+    bytes_copied: counts.copies * written,
+    bytes_intermediates: counts.intermediates * size_multivector,
   )
   result.bytes_moved = result.bytes_read + result.bytes_written + result.bytes_zeroed +
     result.bytes_copied + result.bytes_intermediates

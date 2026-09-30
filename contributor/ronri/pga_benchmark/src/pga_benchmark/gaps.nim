@@ -48,6 +48,9 @@ type
       ## Algebra name and measurand id.
     library*, reference*: Values
       ## Both implementations.
+    bound*: Values
+      ## Multivector lower bound, derived from algebra and never measured.
+      ##   Absent where no rule is derived for measurand's shape.
     over_on*: seq[string]
       ## Metrics library exceeds target on.
     status*: Status
@@ -56,9 +59,9 @@ type
     ## Define one algebra's documents as read from `baseline/`.
     name*: string
       ## Algebra name, e.g. `rga4d`.
-    static_measurements*: JsonNode
+    measurements_static*: JsonNode
       ## Static measurements document.
-    runtime_measurements*: JsonNode
+    measurements_runtime*: JsonNode
       ## Runtime measurements document; nil where none is recorded.
   Docket* = object
     ## Define identifier docket: next number and every key allotted so far.
@@ -81,61 +84,71 @@ type
       ## Condition closing it, in words.
   Decision* = object
     ## Define cause with its verdict and evidence.
-    design*: Cause
+    cause*: Cause
     status*: Status
     evidence*: string
 
 
 const CAUSES* = [
   Cause(
-    id: "D01", rule: Rule.Terms,
+    id: "D01",
+    rule: Rule.Terms,
     title: "Dense products spend every Cayley-table term where typed forms spend few.",
     closes_when: "no typed gap spends more multiplies than its reference.",
   ),
   Cause(
-    id: "D02", rule: Rule.Time,
+    id: "D02",
+    rule: Rule.Time,
     title: "Library calls run slower than typed forms beyond the band.",
     closes_when: "no gap's library median exceeds " & $TOLERANCE & " times its reference's.",
   ),
   Cause(
-    id: "D03", rule: Rule.ZeroFills,
+    id: "D03",
+    rule: Rule.ZeroFills,
     title: "Operators zero-fill their full-width result before they write it.",
     closes_when: "no library function calls `nimZeroMem`.",
   ),
   Cause(
-    id: "D04", rule: Rule.Intermediates,
+    id: "D04",
+    rule: Rule.Intermediates,
     title: "Operator chains build full-width intermediates.",
     closes_when: "no library function declares a local multivector.",
   ),
   Cause(
-    id: "D05", rule: Rule.Checks,
+    id: "D05",
+    rule: Rule.Checks,
     title: "Error-flag checks survive into release builds.",
     closes_when: "no library function branches on `nimErr_`. The pinned compiler with " &
       "`--panics:on` already emits none in either implementation. A user of the library must " &
       "know to pass it.",
   ),
   Cause(
-    id: "D06", rule: Rule.Inline,
+    id: "D06",
+    rule: Rule.Inline,
     title: "Sign and permutation operators cross the module boundary as calls.",
     closes_when: "every library function spending no multiply, add or subtract is inline.",
   ),
   Cause(
-    id: "D07", rule: Rule.Nan,
+    id: "D07",
+    rule: Rule.Nan,
     title: "Conformal norms return NaN on real objects.",
     closes_when: "every bench measurement's NaN share is zero.",
   ),
   Cause(
-    id: "D08", rule: Rule.Compound,
+    id: "D08",
+    rule: Rule.Compound,
     title: "A transform by motor spells three products, because it has no operator of its own.",
     closes_when: "every catalogued measurand spells one library function.",
   ),
   Cause(
-    id: "D09", rule: Rule.Missing,
+    id: "D09",
+    rule: Rule.Missing,
     title: "The library refuses two norms that the reference carries.",
     closes_when: "the catalogue's missing list is empty.",
   ),
   Cause(
-    id: "D10", rule: Rule.Cayley,
+    id: "D10",
+    rule: Rule.Cayley,
     title: "The library builds compile-time Cayley tables and drops some, by the audit's reading.",
     closes_when: "the project measures tables built against tables used. Nothing here " &
       "reads compile time.",
@@ -155,13 +168,13 @@ func at(node: JsonNode; key: string): JsonNode =
 func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measured: bool): Values =
   ## Read one implementation's values: counts of function keyed, runtime measurement's timing.
   if key.len > 0 and not functions.isNil and functions.hasKey(key):
-    let f = functions[key]
-    result.multiplies = some(f{"total", "multiplies"}.getInt)
-    result.divides = some(f{"total", "divides"}.getInt)
-    result.bytes = some(f{"movement", "bytes_moved"}.getInt)
-    result.zero_fills = some(f{"total", "zero_fills"}.getInt)
-    result.intermediates = some(f{"total", "intermediates"}.getInt)
-    result.checks = some(f{"total", "checks"}.getInt)
+    let function = functions[key]
+    result.multiplies = some(function{"total", "multiplies"}.getInt)
+    result.divides = some(function{"total", "divides"}.getInt)
+    result.bytes = some(function{"movement", "bytes_moved"}.getInt)
+    result.zero_fills = some(function{"total", "zero_fills"}.getInt)
+    result.intermediates = some(function{"total", "intermediates"}.getInt)
+    result.checks = some(function{"total", "checks"}.getInt)
   if not measurement.isNil and measurement.kind == JObject:
     result.ns = some(measurement{"ns_median"}.getFloat)
     result.nan_share = some(measurement{"nan_share"}.getFloat)
@@ -195,19 +208,37 @@ func decide*(gap: var Gap) =
     else: Status.Met
 
 
-func gapsOf*(a: Algebra): seq[Gap] =
+func boundValuesOf(node: JsonNode): Values =
+  ## Read multivector lower bound of one measurand; fields absent where document has none.
+  ##   Bound spends no fill, no intermediate, no error check and no allocation by
+  ##   construction, so those stand at zero rather than absent.
+  if node.isNil or node.kind != JObject: return
+  result.multiplies = some(node{"multiplies"}.getInt)
+  result.divides = some(node{"divides"}.getInt)
+  result.bytes = some(node{"bytes_moved"}.getInt)
+  result.zero_fills = some(0)
+  result.intermediates = some(0)
+  result.checks = some(0)
+  result.allocations = some(0)
+
+
+func gapsOf*(algebra: Algebra): seq[Gap] =
   ## Read one gap per catalogued measurand of algebra, decided.
-  let measurands = a.static_measurements.at("measurands")
+  let measurands = algebra.measurements_static.at("measurands")
   if measurands.isNil: return
-  let functions = a.static_measurements.at("functions")
-  let measured = a.runtime_measurements.at("taken").at("is_allocation_measured").getBool
-  for id, p in measurands.pairs:
-    var gap = Gap(key: a.name & "/" & id, algebra: a.name, measurand: id)
-    let measurement = a.runtime_measurements.at("measurands").at(id)
-    gap.library = valuesOf(functions, measurement.at("library"), p{"library"}.getStr, measured)
-    gap.reference = valuesOf(
-      functions, measurement.at("reference"), p{"reference"}.getStr, measured
+  let
+    functions = algebra.measurements_static.at("functions")
+    measured = algebra.measurements_runtime.at("taken").at("is_allocation_measured").getBool
+  for id, measurand in measurands.pairs:
+    var gap = Gap(key: algebra.name & "/" & id, algebra: algebra.name, measurand: id)
+    let measurement = algebra.measurements_runtime.at("measurands").at(id)
+    gap.library = valuesOf(
+      functions, measurement.at("library"), measurand{"library"}.getStr, measured
     )
+    gap.reference = valuesOf(
+      functions, measurement.at("reference"), measurand{"reference"}.getStr, measured
+    )
+    gap.bound = boundValuesOf(measurand.at("bound"))
     gap.decide
     result.add gap
 
@@ -268,25 +299,25 @@ func named(names: openArray[string]; most = 6): string =
 
 
 func countFunctions(
-  algebras: openArray[Algebra]; metric: string; is_inline_rule: bool
+  algebras: openArray[Algebra], metric: string, is_inline_rule: bool
 ): (int, int, string, int) =
   ## Count library functions exceeding zero on metric, or light operators not inline; return
   ## count, total, worst key and its value.
-  var worst_value = -1
-  for a in algebras:
-    let functions = a.static_measurements.at("functions")
+  var value_worst = -1
+  for algebra in algebras:
+    let functions = algebra.measurements_static.at("functions")
     if functions.isNil: continue
-    for key, f in functions.pairs:
-      if not f.isLibrary or (is_inline_rule and not f.isOperator): continue
+    for key, function in functions.pairs:
+      if not function.isLibrary or (is_inline_rule and not function.isOperator): continue
       inc result[1]
       let value =
-        if is_inline_rule: (if f.isLight and not f{"inline"}.getBool: 1 else: 0)
-        else: f{"total", metric}.getInt
+        if is_inline_rule: (if function.isLight and not function{"inline"}.getBool: 1 else: 0)
+        else: function{"total", metric}.getInt
       if value <= 0: continue
       inc result[0]
-      if value > worst_value:
-        worst_value = value
-        result[2] = a.name & " `" & key & "`"
+      if value > value_worst:
+        value_worst = value
+        result[2] = algebra.name & " `" & key & "`"
         result[3] = value
 
 
@@ -301,18 +332,19 @@ func ratio(l, r: float): float =
   if r == 0.0: (if l == 0.0: 1.0 else: 1.0e9) else: l / r
 
 
-func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]): Decision =
+func decideCause*(cause: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]): Decision =
   ## Decide cause by its rule over documents and gaps, with evidence in one sentence.
-  result.design = d
-  case d.rule
+  result.cause = cause
+  case cause.rule
   of Rule.Terms:
     let open = gaps.overGaps("multiplies")
-    var worst: Gap
-    var worst_excess = 0
+    var
+      worst: Gap
+      excess_worst = 0
     for gap in open:
       let excess = gap.library.multiplies.get - gap.reference.multiplies.get
-      if excess > worst_excess:
-        worst_excess = excess
+      if excess > excess_worst:
+        excess_worst = excess
         worst = gap
     result.status = if open.len > 0: Status.Over else: Status.Met
     result.evidence =
@@ -324,18 +356,19 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
   of Rule.Time:
     var is_any_measured = false
     for a in algebras:
-      if not a.runtime_measurements.isNil: is_any_measured = true
+      if not a.measurements_runtime.isNil: is_any_measured = true
     if not is_any_measured:
       result.status = Status.Unmeasured
       result.evidence = "no bench recorded."
       return
     let open = gaps.overGaps("time")
-    var worst: Gap
-    var worst_ratio = 0.0
+    var
+      worst: Gap
+      ratio_worst = 0.0
     for gap in open:
-      let q = ratio(gap.library.ns.get, gap.reference.ns.get)
-      if q > worst_ratio:
-        worst_ratio = q
+      let ratio_gap = ratio(gap.library.ns.get, gap.reference.ns.get)
+      if ratio_gap > ratio_worst:
+        ratio_worst = ratio_gap
         worst = gap
     result.status = if open.len > 0: Status.Over else: Status.Met
     result.evidence =
@@ -345,24 +378,26 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
           formatFloat(worst.library.ns.get, ffDecimal, 1) & " ns against " &
           formatFloat(worst.reference.ns.get, ffDecimal, 1) & " ns."
   of Rule.ZeroFills, Rule.Intermediates, Rule.Checks, Rule.Inline:
-    let metric =
-      case d.rule
-      of Rule.ZeroFills: "zero_fills"
-      of Rule.Intermediates: "intermediates"
-      of Rule.Checks: "checks"
-      else: "inline"
-    let (count, total, worst, value) = countFunctions(algebras, metric, d.rule == Rule.Inline)
+    let
+      metric =
+        case cause.rule
+        of Rule.ZeroFills: "zero_fills"
+        of Rule.Intermediates: "intermediates"
+        of Rule.Checks: "checks"
+        else: "inline"
+      (count, total, worst, value) = countFunctions(algebras, metric, cause.rule == Rule.Inline)
     result.status = if count > 0: Status.Over else: Status.Met
     result.evidence =
       if count == 0: "no library function of " & $total & "."
-      elif d.rule == Rule.Inline:
+      elif cause.rule == Rule.Inline:
         $count & " of " & $total & " library operators, for example " & worst & "."
       else:
         $count & " of " & $total & " library functions. The most is " & worst & " with " &
           $value & "."
   of Rule.Nan:
-    var is_any_measured = false
-    var names: seq[string]
+    var
+      is_any_measured = false
+      names: seq[string]
     for gap in gaps:
       if gap.library.nan_share.isSome: is_any_measured = true
       if gap.library.nan_share.get(0.0) > 0.0: names.add gap.key
@@ -377,7 +412,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
   of Rule.Compound:
     var names: seq[string]
     for a in algebras:
-      let measurands = a.static_measurements.at("measurands")
+      let measurands = a.measurements_static.at("measurands")
       if measurands.isNil: continue
       for id, p in measurands.pairs:
         if p{"library"}.getStr.len == 0: names.add a.name & "/" & id
@@ -387,7 +422,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
   of Rule.Missing:
     var names: seq[string]
     for a in algebras:
-      let missing = a.static_measurements.at("missing")
+      let missing = a.measurements_static.at("missing")
       if missing.isNil: continue
       for id, p in missing.pairs: names.add a.name & "/" & id & " `" & p{"symbol"}.getStr & "`"
     result.status = if names.len > 0: Status.Over else: Status.Met
@@ -419,6 +454,40 @@ func cell(l, r: Option[int]): string =
   (if l.isSome: $l.get else: "–") & "/" & (if r.isSome: $r.get else: "–")
 
 
+func lowerBoundRows*(algebra: Algebra; gaps: openArray[Gap]): seq[string] =
+  ## Render multivector lower bound of each operation once, keyed by spelling and shape.
+  ##   Bound rests on operation and arity, and never on operand kinds, so one row serves
+  ##   every measurand that spells same operation. Row also carries what library spends on
+  ##   that operation's general measurand, so distance reads across. Shape of several steps
+  ##   names chain, whose bound sums those steps.
+  let
+    measurands = algebra.measurements_static.at("measurands")
+    functions = algebra.measurements_static.at("functions")
+  if measurands.isNil: return
+  var seen: seq[string]
+  for id, measurand in measurands.pairs:
+    let bound = measurand.at("bound")
+    if bound.isNil or bound.kind != JObject: continue
+    let
+      symbol = measurand{"symbol"}.getStr
+      alias = measurand{"alias"}.getStr
+      expression = measurand{"expression"}.getStr
+      shape = bound{"shape"}.getStr
+      key = symbol & "|" & alias & "|" & expression & "|" & shape
+    if key in seen: continue
+    seen.add key
+    let spelling =
+      if symbol.len > 0: symbol elif alias.len > 0: alias else: expression
+    var spent = "–"
+    let function_library = functions.at(measurand{"library"}.getStr)
+    if not function_library.isNil:
+      spent = $function_library{"total", "multiplies"}.getInt & "/" &
+        $function_library{"movement", "bytes_moved"}.getInt
+    result.add "| `" & spelling & "` | " & shape & " | " &
+      $bound{"multiplies"}.getInt & " | " & $bound{"divides"}.getInt & " | " &
+      $bound{"roots"}.getInt & " | " & $bound{"bytes_moved"}.getInt & " | " & spent & " |"
+
+
 func cellNs(l, r: Option[float]): string =
   ## Render timing cell to one decimal, dash where absent.
   if l.isNone and r.isNone: return "–"
@@ -431,27 +500,31 @@ func word(s: Status): string =
   toLowerAscii($s)
 
 
-func headerOf(a: Algebra): string =
+func headerOf(algebra: Algebra): string =
   ## Render one paragraph naming what algebra's documents measured, on what, and when.
-  let c = a.static_measurements.at("algebra")
-  let t = a.static_measurements.at("taken")
-  result = "This algebra has " & $c{"dimensions"}.getInt & " dimensions, a " &
-    (if c{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric and a " &
-    $c{"sizeof_multivector"}.getInt & "-byte multivector. The inspector took the counts on " &
-    t{"date"}.getStr & ", on " & t{"machine"}.getStr & ", with nim `" & t{"nim"}.getStr &
-    "`, pga `" & t{"pga"}.getStr & "` and flags `" & t{"flags"}.getStr & "`."
-  if a.runtime_measurements.isNil:
+  let
+    section_algebra = algebra.measurements_static.at("algebra")
+    taken_static = algebra.measurements_static.at("taken")
+  result = "This algebra has " & $section_algebra{"dimensions"}.getInt & " dimensions, a " &
+    (if section_algebra{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric and a " &
+    $section_algebra{"sizeof_multivector"}.getInt &
+    "-byte multivector. The inspector took the counts on " & taken_static{"date"}.getStr &
+    ", on " & taken_static{"machine"}.getStr & ", with nim `" & taken_static{"nim"}.getStr &
+    "`, pga `" & taken_static{"pga"}.getStr & "` and flags `" & taken_static{"flags"}.getStr &
+    "`."
+  if algebra.measurements_runtime.isNil:
     result.add " Nobody measured the times, because no bench ran."
   else:
-    let b = a.runtime_measurements.at("taken")
-    result.add " The bench ran on " & b{"date"}.getStr & ", on " & b{"machine"}.getStr &
-      ", over " & $b{"rounds"}.getInt & " rounds of " & $b{"objects"}.getInt &
+    let taken_runtime = algebra.measurements_runtime.at("taken")
+    result.add " The bench ran on " & taken_runtime{"date"}.getStr & ", on " &
+      taken_runtime{"machine"}.getStr & ", over " & $taken_runtime{"rounds"}.getInt &
+      " rounds of " & $taken_runtime{"objects"}.getInt &
       " objects. The allocation gauge was " &
-      (if b{"is_allocation_measured"}.getBool: "live" else: "off") & "."
+      (if taken_runtime{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 
 
 func render*(
-  algebras: openArray[Algebra]; gaps: openArray[Gap]; decided: openArray[Decision]
+  algebras: openArray[Algebra], gaps: openArray[Gap], decided: openArray[Decision]
 ): string =
   ## Render whole list as markdown; raise where any line outruns width.
   var lines: seq[string]
@@ -473,23 +546,50 @@ func render*(
     "call, and runtime measurements are medians of the last bench that ran by hand."
   )
   lines.add ""
+  lines.add wrap(
+    "Each operation carries two lower bounds, and the library stands above both. The " &
+    "multivector lower bound is what the algebra demands of any implementation over a " &
+    "dense multivector. It is derived from the axioms, and it is never measured. The type " &
+    "optimised lower bound is the typed reference, which is measured rather than derived. " &
+    "Work that reaches the first bound changes no type, and work that reaches the second " &
+    "changes every one."
+  )
+  lines.add ""
+  lines.add wrap(
+    "Each algebra below carries a table of multivector lower bounds. That bound spends no " &
+    "zero fill, no intermediate, no error check and no allocation, and it moves its " &
+    "operands read once plus its result written once. It rests on the operation alone, so " &
+    "one row serves every measurand that spells that operation. The last column is what " &
+    "the library spends there, as multiplies over bytes moved. An operation whose shape " &
+    "carries no rule is absent, rather than present without ground."
+  )
+  lines.add ""
+  lines.add wrap(
+    "A shape of several steps names a chain, which the library composes from several " &
+    "operators. The bound of a chain sums what each step demands, and a step that carries " &
+    "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
+    "minimum, because a special routine can share work between steps. Every other bound in " &
+    "these tables is derived from the axioms alone."
+  )
+  lines.add ""
   lines.add "## Causes"
   lines.add ""
   for d in decided:
     lines.add wrap(
-      "- **" & d.design.id & ", " & d.status.word & ".** " & d.design.title & " Evidence: " &
-      d.evidence & " Closes when " & d.design.closes_when,
+      "- **" & d.cause.id & ", " & d.status.word & ".** " & d.cause.title & " Evidence: " &
+      d.evidence & " Closes when " & d.cause.closes_when,
       indent = "  ",
     )
-  for a in algebras:
+  for algebra in algebras:
     lines.add ""
-    lines.add "## " & a.name
+    lines.add "## " & algebra.name
     lines.add ""
-    lines.add wrap(a.headerOf)
-    var counts: array[Status, int]
-    var own: seq[Gap]
+    lines.add wrap(algebra.headerOf)
+    var
+      counts: array[Status, int]
+      own: seq[Gap]
     for gap in gaps:
-      if gap.algebra == a.name:
+      if gap.algebra == algebra.name:
         inc counts[gap.status]
         own.add gap
     lines.add wrap(
@@ -507,6 +607,14 @@ func render*(
         cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
         cell(gap.library.checks, gap.reference.checks) & " | " &
         cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
+    let bounds = lowerBoundRows(algebra, own)
+    if bounds.len > 0:
+      lines.add ""
+      lines.add "### Multivector lower bound"
+      lines.add ""
+      lines.add "| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |"
+      lines.add "|----|-------|-----|-----|-------|-------|-------------------|"
+      for row in bounds: lines.add row
   for line in lines:
     if line.runeLen > WIDTH:
       raise newException(ValueError, "Rendered line outruns width; got `" & line & "`.")

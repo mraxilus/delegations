@@ -22,8 +22,23 @@ _Avoid_: spell, formula, call, form
 
 **Reference**:
 The hand-rolled typed form of Lengyel that a measurand is measured against, written here in
-Nim from the book.
+Nim from the book. It is the type optimised lower bound.
 _Avoid_: typed form, optimal form, oracle, ground truth
+
+**Lower bound**:
+What a measurand cannot spend less than. Each one carries two, and the library stands above
+both.
+_Avoid_: floor, ceiling, target, minimum, best case
+
+**Multivector lower bound**:
+The arithmetic and movement that the algebra demands of any implementation over a dense
+multivector, derived from the axioms rather than measured.
+_Avoid_: dense floor, dense bound, representation bound
+
+**Type optimised lower bound**:
+What the typed reference spends, which needs a representation that a dense multivector
+cannot reach. It is measured rather than derived.
+_Avoid_: typed floor, sparse bound, reference bound
 
 **Kind**:
 What the operand of a measurand is: General (dense, mixed grade), Scalar, or one typed
@@ -103,3 +118,18 @@ _Avoid_: ledger, register, index, roll, numbering
 **Algebra**:
 One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature
+
+**PGA**:
+Projective geometric algebra: the algebra that Lengyel's book builds, and that the library
+`pga` replicates. RGA and CGA name its two metrics.
+_Avoid_: projective algebra, plane-based algebra
+
+**RGA**:
+Rigid geometric algebra: the projective algebra whose metric degenerates its last vector, so
+that the vector squares to zero. An algebra name joins it to a dimension count, as `rga4d`.
+_Avoid_: rigid PGA, Euclidean PGA
+
+**CGA**:
+Conformal geometric algebra: the projective algebra whose metric pairs its last two vectors
+off the diagonal. An algebra name joins it to a dimension count, as `cga5d`.
+_Avoid_: conformal PGA
