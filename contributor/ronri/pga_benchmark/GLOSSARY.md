@@ -57,8 +57,15 @@ object such as Point.
 _Avoid_: type, class
 
 **Implementation**:
-Which of the two is measured: the dense operator of the library, or the reference.
+Which of the three is measured: the dense operator of the library, the reference, or the dense
+form.
 _Avoid_: side, party, subject, control
+
+**Dense form**:
+The straight-line implementation of a general measurand, generated from the tables of the
+library. It assigns each slot once as the sum of its terms, with no fill, no intermediate and no
+call. A general row is timed against it, as a typed row is timed against its reference.
+_Avoid_: dense reference, bound form, oracle
 
 **Widen / narrow**:
 To put a typed object into the basis slots of the dense multivector, and to read it back
