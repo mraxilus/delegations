@@ -1198,6 +1198,50 @@ suite "Pages":
     check "library 8.5 ns, dense form 3.5 ns" in body  # general row names what it times against
     check ">×2.50<" in body and body.count("<s style=") == 2  # median of 2.00 and 3.00, two ticks
 
+  test "each dropdown option has rule that reads it, and each row class that rule wants":
+    let
+      runs = %*{"wedge_point_point": {
+        "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
+        "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+
+    func tagOf(body, measurand: string): string =
+      ## Read opening tag of row naming measurand.
+      let
+        at = body.find("<span class=\"n\">" & measurand & "</span>")
+        start = body.rfind("<details ", last = at)
+      body[start .. body.find('>', start)]
+
+    let (typed, general) = (tagOf(body, "wedge_point_point"), tagOf(body, "wedge"))
+    for select in ["sort", "show", "operation", "operand"]:
+      check "<select id=\"" & select & "\">" in body  # dropdown, never radio
+    check "type=\"radio\" name=\"sort\"" notin body and "name=\"show\"" notin body  # none left
+    for key in ["bytes", "multiplies", "time", "spread", "divides", "checks"]:
+      check "--o-" & key & ":" in typed  # rank under every sort
+      check "option[value=\"" & key & "\"]:checked) details.row { order: var(--o-" & key in body
+    for name_class in ["over-multiplies", "over-bytes", "over-time", "over", "typed"]:
+      check " " & name_class & " " in typed or " " & name_class & "\"" in typed  # 81>12, ×3
+      check "value=\"" & name_class & "\"]:checked) details.row:not(." & name_class & ")" in body
+    check "over-time" notin general and "at-bound" notin general  # untimed; 512 bytes > 384
+    check "--o-spread:0" in typed and "--o-spread:1" in general  # runs spread; none sorts last
+    check "operation-wedge operand-point" in typed and "operand-" notin general  # id split
+    check ":not(.operation-wedge)" in body and ":not(.operand-point)" in body  # one rule each
+    check "<option value=\"wedge\" class=\"in-rga4d\">wedge ∧</option>" in body  # symbol beside
+
+  test "typed id splits at longest operand kind, one kind per operand":
+    let
+      sheet = Sheet(name: "cga5d", title: "Conformal 5D", dimensions: 5,
+        measurements_static: %*{"measurands": {
+          "bulk_flat_round_point": {"library": "■(M)", "reference": "bulkFlat(R)", "arity": 1},
+          "wedge_round_point_dipole": {"library": "∧(M,M)", "reference": "wedge(R,D)",
+            "arity": 2}},
+          "functions": {}},
+        measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
+      body = docketBody([sheet], %*{"ids": {}}, [], "bd6b23c590d7", "")
+    check "operation-bulk_flat operand-round_point" in body  # round point, never point
+    check "operation-wedge operand-round_point operand-dipole" in body  # both, in id order
+    check "operand-point" notin body and "operation-bulk_flat_round" notin body  # no half kind
+
   test "count over reference that spends none reads its excess, never infinite ratio":
     let body = docketBody([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")
     check ">81 over 0<" in body and "class=\"open\"" in body  # bar runs to axis end

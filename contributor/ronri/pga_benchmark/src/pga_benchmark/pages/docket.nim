@@ -9,8 +9,9 @@
 ##     Time bar ends at median of run ratios, and each run is one tick on it.
 ##   Proposals close on it: each proposal's evaluation overlays its changed functions, and docket
 ##     counts how many measurands would then stand at bound.
-##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key,
-##     so shell's `:has()` rules sort and filter.
+##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key.
+##     Dropdowns name them, and `:has()` rules body generates read chosen option, so one list
+##     here spells option and rule alike.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
@@ -21,6 +22,7 @@ import std/[algorithm, json, math, options, sequtils, strutils, tables]
 
 import ../markdown
 import ./shell
+from ../gaps import TOLERANCE
 from ../report import isLibraryModule, median
 
 
@@ -39,6 +41,10 @@ type
   Row = object
     ## Define one measurand as docket shows it.
     id, measurand, symbol, expression, cite: string
+    operation: string
+      ## Operation measurand applies: own id on general row, id less its operand kinds on typed.
+    operands: seq[string]
+      ## Operand kinds of typed row as id spells them, as `round_point`; empty on general row.
     is_general: bool
     library, reference, dense: Option[Figures]
     bound: Option[BoundFigures]
@@ -83,6 +89,25 @@ type
       ## Proposal name, title and published URL; empty URL where unpublished.
     functions*: Table[string, JsonNode]
       ## Algebra name to changed functions, as evaluation records them.
+
+
+const
+  KINDS = ["point", "line", "plane", "motor", "flector", "round_point", "dipole", "circle",
+    "sphere", "flat_point", "flat_line", "flat_plane", "scalar"]
+    ## Operand kinds as typed measurand's id spells them, in order operand dropdown lists them.
+  SORTS = [("bytes", "bytes moved, furthest over lower bound"),
+    ("multiplies", "multiplies, furthest over lower bound"), ("time", "time ratio, greatest"),
+    ("spread", "spread of run ratios, widest"), ("divides", "divides, most"),
+    ("checks", "error checks, most")]
+    ## Sort key and its option; row's rank under key is custom property `--o-<key>`.
+  SHOWS = [("over", "over on any measure", false),
+    ("over-multiplies", "over lower bound on multiplies", false),
+    ("over-bytes", "over lower bound on bytes moved", false),
+    ("over-time", "time over " & ratioText(TOLERANCE), false),
+    ("at-bound", "at lower bound on both counts", false), ("chain", "chains", false),
+    ("checks", "with error checks", false), ("fills", "with zero fills", false),
+    ("nan", "returns NaN", false), ("typed", "typed measurands only", true)]
+    ## Row class, its option, and whether option shows only beside typed measurands.
 
 
 
@@ -142,6 +167,18 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     ## Read median of each run in run order; empty where runs are not recorded.
     timing{"ns_runs"}.getElems.mapIt(it.getFloat)
 
+  func split(id: string; count_operands: int): (string, seq[string]) =
+    ## Split typed measurand's id into operation and operand kinds, as catalogue joins them:
+    ##   one kind per operand, last first, longest kind where two end id alike.
+    result[0] = id
+    for _ in 1 .. count_operands:
+      var kind = ""
+      for candidate in KINDS:
+        if result[0].endsWith("_" & candidate) and candidate.len > kind.len: kind = candidate
+      if kind.len == 0: break
+      result[0].setLen(result[0].len - kind.len - 1)
+      result[1].insert(kind, 0)
+
   let
     width = 8 shl sheet.dimensions
     functions = sheet.measurements_static{"functions"}
@@ -159,12 +196,17 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
         else: timing{"dense"}
       is_timed_library = not timing_library.isNil and timing_library.kind == JObject
       is_timed_against = not timing_against.isNil and timing_against.kind == JObject
+      (operation, operands) =
+        if key_reference.len == 0: (id, newSeq[string]())
+        else: split(id, measurand{"arity"}.getInt(2))
     result.add Row(
       id: ids{"ids", sheet.name & "/" & id}.getStr,
       measurand: id,
       symbol: measurand{"symbol"}.getStr,
       expression: measurand{"expression"}.getStr,
       cite: measurand{"cite"}.getStr,
+      operation: operation,
+      operands: operands,
       is_general: key_reference.len == 0,
       library: figuresOf(functions{key_library}),
       reference:
@@ -325,8 +367,9 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
 
 #[ Rows ]#
 
-func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
-  ## Render one row as details: one deviation bar per measure, then breakdown.
+func rowHtml(row: Row; axis: Axis; order: array[SORTS.len, int]): string =
+  ## Render one row as details: one deviation bar per measure, then breakdown; classes name
+  ##   every filter row passes, and custom properties its rank under every sort.
 
   func countDeviation(row: Row; is_bytes: bool): Deviation =
     ## Read deviation of one count: ratio, or excess where lower bound is zero; tick at
@@ -443,17 +486,32 @@ func rowHtml(row: Row; axis: Axis; order: array[3, int]): string =
         "</td><td>0</td><td>0</td><td>0</td><td>" & grouped(bound.bytes) & "</td></tr>"
     result.add "</table></div></div>"
 
-  var classes = @["row"]
+  var
+    classes = @["row", "operation-" & row.operation] &
+      row.operands.deduplicate.mapIt("operand-" & it)
+    is_at_bound = true
   if not row.is_general: classes.add "typed"
-  if row.library.isSome and row.bound.isSome and
-      row.library.get.multiplies > row.bound.get.multiplies:
-    classes.add "above"
+  for (is_bytes, name_class) in [(false, "over-multiplies"), (true, "over-bytes")]:
+    let
+      library = metricOf(row.library, is_bytes)
+      target = targetOf(row, is_bytes)[0]
+    if library.isNone or target.isNone: is_at_bound = false
+    elif library.get > target.get:
+      is_at_bound = false
+      classes.add name_class
+  if row.ratioTime > TOLERANCE: classes.add "over-time"
+  if classes.anyIt(it.startsWith("over-")): classes.add "over"
+  if is_at_bound: classes.add "at-bound"
   if row.bound.isSome and row.bound.get.is_chain: classes.add "chain"
+  if row.library.isSome and row.library.get.checks > 0: classes.add "checks"
+  if row.library.isSome and row.library.get.fills > 0: classes.add "fills"
   if row.share_nan > 0: classes.add "nan"
+  var ranks: seq[string]
+  for index, (key, _) in SORTS: ranks.add "--o-" & key & ":" & $order[index]
   let nan =
     if row.share_nan > 0: chip("NaN " & $int(round(100 * row.share_nan)) & "%", "fail") else: ""
-  "<details class=\"" & classes.join(" ") & "\" style=\"--o-multiplies:" & $order[0] &
-    ";--o-bytes:" & $order[1] & ";--o-time:" & $order[2] & "\"><summary><span class=\"op\">" &
+  "<details class=\"" & classes.join(" ") & "\" style=\"" & ranks.join(";") &
+    "\"><summary><span class=\"op\">" &
     "<span class=\"n\">" & escapeHtml(row.measurand) & "</span><span class=\"sub\">" &
     escapeHtml(row.id) & " · " & escapeHtml(row.symbol) & "</span>" & nan & "</span>" &
     deviationHtml(countDeviation(row, false), axis) &
@@ -509,24 +567,12 @@ func proposalsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
 
 
 const
-  CONTROLS = """<div class="controls"><div class="legend"><span class="mark-bar">library over
-what it is measured against, log scale</span><span class="mark-origin typed-off">×1: multivector
-lower bound for counts, dense form for time</span><span class="mark-origin typed-only">×1:
-reference on typed rows; multivector lower bound and dense form on general ones</span><span
-class="mark-tick typed-only">multivector lower bound</span><span class="mark-runs">each run</span>
-</div>
-<fieldset><legend>Sort</legend>
-<label><input type="radio" name="sort" id="sort-bytes" checked> bytes over lower bound</label>
-<label><input type="radio" name="sort" id="sort-multiplies"> multiplies over lower bound</label>
-<label><input type="radio" name="sort" id="sort-time"> time ratio</label>
-<label><input type="radio" name="sort" id="sort-docket"> docket order</label></fieldset>
-<fieldset><legend>Show</legend>
-<label><input type="radio" name="show" id="show-all" checked> all</label>
-<label><input type="radio" name="show" id="show-above"> above bound on multiplies</label>
-<label><input type="radio" name="show" id="show-chain"> chains</label>
-<label><input type="radio" name="show" id="show-nan"> returns NaN</label></fieldset>
-</div>"""
-    ## Controls rendered once for every algebra's rows; inputs are read by shell's rules.
+  LEGEND = """<div class="legend"><span class="mark-bar">library over what it is measured
+against, log scale</span><span class="mark-origin typed-off">×1: multivector lower bound for
+counts, dense form for time</span><span class="mark-origin typed-only">×1: reference on typed
+rows; multivector lower bound and dense form on general ones</span><span class="mark-tick
+typed-only">multivector lower bound</span><span class="mark-runs">each run</span></div>"""
+    ## Legend of deviation bars, same for every algebra.
   METHOD = """<section class="block"><details><summary>How each figure is computed</summary>
 <pre class="formula">W = sizeof(Multivector) = 2^D × 8 bytes
 
@@ -564,12 +610,24 @@ func docketBody*(
   overlays: openArray[Overlay];
   pin, links: string;
 ): string =
-  ## Render docket body: header, one tab per algebra, proposals against bound, method.
+  ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
 
-  func above(value, base: Option[int]): float =
-    ## Read how far value stands above base, as ratio of both plus one; below zero where
-    ##   either is absent, so such row sorts last.
-    if value.isNone or base.isNone: -1.0 else: (value.get + 1).float / (base.get + 1).float
+  func keysOf(row: Row): array[SORTS.len, float] =
+    ## Read row's key under every sort, in order of `SORTS`; below zero where row has none, so
+    ##   such row sorts last.
+
+    func above(value, base: Option[int]): float =
+      ## Read how far value stands above base, as ratio of both plus one; below zero where
+      ##   either is absent.
+      if value.isNone or base.isNone: -1.0 else: (value.get + 1).float / (base.get + 1).float
+
+    let runs = row.ratiosRuns
+    [above(metricOf(row.library, true), targetOf(row, true)[0]),
+      above(metricOf(row.library, false), targetOf(row, false)[0]),
+      (if row.ratioTime > 0: row.ratioTime else: -1.0),
+      (if runs.len > 1: max(runs) / min(runs) else: -1.0),
+      (if row.library.isSome: row.library.get.divides.float else: -1.0),
+      (if row.library.isSome: row.library.get.checks.float else: -1.0)]
 
   func ranks(rows: openArray[Row], keys: openArray[float]): Table[string, int] =
     ## Rank rows by key, largest first; ties, and rows keyed below zero, in docket order.
@@ -590,6 +648,68 @@ func docketBody*(
           low = min(low, log2(ratio))
           high = max(high, log2(ratio))
     Axis(exponent_low: clamp(floor(low).int, -3, -1), exponent_high: clamp(ceil(high).int, 1, 10))
+
+  func controlsOf(sheets: openArray[Sheet]; every: openArray[seq[Row]]): (string, string) =
+    ## Render legend and four dropdowns, with `:has()` rules that read them: sort, show,
+    ##   operation and operand. Option of last two carries class of each algebra it matches, so
+    ##   rule hides it on others; operation no general row applies shows beside typed ones alone.
+    ##   Operand filter holds only while typed measurands show, since its dropdown hides else.
+
+    func option(value, label: string; classes: seq[string]; is_selected = false): string =
+      ## Render one option, with its classes and whether it is chosen at rest.
+      "<option value=\"" & value & "\"" &
+        (if classes.len > 0: " class=\"" & classes.join(" ") & "\"" else: "") &
+        (if is_selected: " selected" else: "") & ">" & escapeHtml(label) & "</option>"
+
+    var
+      operations: Table[string, tuple[symbol: string, algebras: seq[string], is_general: bool]]
+      kinds: Table[string, seq[string]]
+    for index, sheet in sheets:
+      for row in every[index]:
+        let key = row.operation
+        if key notin operations: operations[key] = ("", newSeq[string](), false)
+        if operations[key].symbol.len == 0: operations[key].symbol = row.symbol
+        if row.is_general: operations[key].is_general = true
+        if sheet.name notin operations[key].algebras: operations[key].algebras.add sheet.name
+        for kind in row.operands:
+          if sheet.name notin kinds.mgetOrPut(kind, @[]): kinds[kind].add sheet.name
+    let names_operation = operations.keys.toSeq.sorted
+    var html = "<div class=\"controls\">" & LEGEND &
+      "<label class=\"control\">Sort <select id=\"sort\">"
+    for index, (key, label) in SORTS: html.add option(key, label, @[], index == 0)
+    html.add option("docket", "docket order", @[]) & "</select></label><label " &
+      "class=\"control\">Show <select id=\"show\">" & option("all", "all measurands", @[], true)
+    for (name_class, label, is_typed_only) in SHOWS:
+      html.add option(name_class, label, if is_typed_only: @["typed-only"] else: @[])
+    html.add "</select></label><label class=\"control\">Operation <select id=\"operation\">" &
+      option("all", "every operation", @[], true)
+    for name in names_operation:
+      let entry = operations[name]
+      html.add option(name, strip(name & " " & entry.symbol), entry.algebras.mapIt("in-" & it) &
+        (if entry.is_general: @[] else: @["typed-only"]))
+    html.add "</select></label><label class=\"control typed-only\">Operand <select " &
+      "id=\"operand\">" & option("all", "any operand", @[], true)
+    for kind in KINDS:
+      if kind in kinds: html.add option(kind, kind.replace('_', ' '), kinds[kind].mapIt("in-" & it))
+    html.add "</select></label></div>"
+    var rules: string
+    for (key, _) in SORTS:
+      rules.add "body:has(#sort option[value=\"" & key & "\"]:checked) details.row { order: " &
+        "var(--o-" & key & "); }\n"
+    for (name_class, _, _) in SHOWS:
+      rules.add "body:has(#show option[value=\"" & name_class & "\"]:checked) " &
+        "details.row:not(." & name_class & ") { display: none; }\n"
+    for name in names_operation:
+      rules.add "body:has(#operation option[value=\"" & name & "\"]:checked) " &
+        "details.row:not(.operation-" & name & ") { display: none; }\n"
+    for kind in KINDS:
+      if kind notin kinds: continue
+      rules.add "body:has(#typed:checked):has(#operand option[value=\"" & kind & "\"]:checked) " &
+        "details.row:not(.operand-" & kind & ") { display: none; }\n"
+    for sheet in sheets:
+      rules.add "body:has(#algebra-" & sheet.name & ":checked) :is(#operation, #operand) " &
+        "option:not(.in-" & sheet.name & ", [value=\"all\"]) { display: none; }\n"
+    (html, rules)
 
   func headHtml(axis: Axis): string =
     ## Render column heads: each measure named over labels of shared axis at powers of two.
@@ -634,25 +754,26 @@ func docketBody*(
     result.add "<label><input type=\"radio\" name=\"algebra\" id=\"algebra-" & sheet.name & "\"" &
       (if index == 0: " checked" else: "") & "> " & sheet.title & "</label>"
   result.add "</nav>"
+  let (controls, rules_controls) = controlsOf(sheets, every)
   var rules = "<style>"
   for sheet in sheets:
     rules.add "body:has(#algebra-" & sheet.name & ":checked) .algebra:not(.algebra-" & sheet.name &
       ") { display: none; }\n"
-  result.add rules & "</style>"
+  result.add rules & rules_controls & "</style>"
   for index, sheet in sheets:
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"summary\">" &
       factsHtml(sheet, every[index]) & "</div></section>"
-  result.add CONTROLS & headHtml(axis)
+  result.add controls & headHtml(axis)
   for index, sheet in sheets:
-    let rows = every[index]
-    var by_multiplies, by_bytes, by_time: seq[float]
-    for row in rows:
-      by_multiplies.add above(metricOf(row.library, false), targetOf(row, false)[0])
-      by_bytes.add above(metricOf(row.library, true), targetOf(row, true)[0])
-      by_time.add(if row.ratioTime > 0: row.ratioTime else: -1.0)
-    let order = [ranks(rows, by_multiplies), ranks(rows, by_bytes), ranks(rows, by_time)]
+    let
+      rows = every[index]
+      keys = rows.mapIt(keysOf(it))
+    var order: array[SORTS.len, Table[string, int]]
+    for index_sort in 0 ..< SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"
     for row in rows:
-      result.add rowHtml(row, axis, [order[0][row.id], order[1][row.id], order[2][row.id]])
+      var ranks_row: array[SORTS.len, int]
+      for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
+      result.add rowHtml(row, axis, ranks_row)
     result.add "</div></section>"
   result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"
