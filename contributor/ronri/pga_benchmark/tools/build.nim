@@ -371,47 +371,47 @@ proc showFunction(symbol, algebra: string) =
     compile(ENTRY_BENCH, BUILD / "show_" & name, cache, dimensions, is_conformal, nim, pga)
     let size = 8 shl dimensions
     var seen = 0
-    for f in inspectCache(cache):
-      if f.symbol != symbol: continue
+    for function in inspectCache(cache):
+      if function.symbol != symbol: continue
       inc seen
       let
-        c = f.body.count
-        m = movement(f, c, size)
+        counts = function.body.count
+        movement_modelled = movement(function, counts, size)
       echo ""
-      echo "── ", f.symbol, "(", f.parameters.join(","), ") → ", f.stem_result,
+      echo "── ", function.symbol, "(", function.parameters.join(","), ") → ", function.stem_result,
         "   ", algebra, ", ", size, "-byte multivector"
-      echo "   emitted as ", (if f.is_inline: "static N_INLINE" else: "N_NIMCALL"),
-        " `", f.name, "`"
+      echo "   emitted as ", (if function.is_inline: "static N_INLINE" else: "N_NIMCALL"),
+        " `", function.name, "`"
       echo ""
       echo "   counts, callees folded in"
-      echo "     multiplies    ", c.multiplies
-      echo "     divides       ", c.divides
-      echo "     zero fills    ", c.zero_fills, "   × ", size, " bytes"
-      echo "     intermediates ", c.intermediates, "   × ", size, " bytes"
-      echo "     copies        ", c.copies, "   × ", size, " bytes"
-      echo "     error checks  ", c.checks
-      echo "     lines of C    ", c.lines
+      echo "     multiplies    ", counts.multiplies
+      echo "     divides       ", counts.divides
+      echo "     zero fills    ", counts.zero_fills, "   × ", size, " bytes"
+      echo "     intermediates ", counts.intermediates, "   × ", size, " bytes"
+      echo "     copies        ", counts.copies, "   × ", size, " bytes"
+      echo "     error checks  ", counts.checks
+      echo "     lines of C    ", counts.lines
       echo ""
       echo "   bytes moved = operands read + result written"
       echo "               + (zero fills + intermediates + copies) × width"
-      echo "     operands read     ", m.bytes_read
-      echo "     result written    ", m.bytes_written
-      echo "     zero fills        ", m.bytes_zeroed
-      echo "     intermediates     ", m.bytes_intermediates
-      echo "     copies            ", m.bytes_copied
-      echo "     ───────────────── ", m.bytes_moved
+      echo "     operands read     ", movement_modelled.bytes_read
+      echo "     result written    ", movement_modelled.bytes_written
+      echo "     zero fills        ", movement_modelled.bytes_zeroed
+      echo "     intermediates     ", movement_modelled.bytes_intermediates
+      echo "     copies            ", movement_modelled.bytes_copied
+      echo "     ───────────────── ", movement_modelled.bytes_moved
       echo ""
       echo "   emitted C"
       var printed = 0
-      for line in f.body.readable.splitLines:
+      for line in function.body.readable.splitLines:
         if printed >= SHOWN_LINES:
-          echo "     … ", c.lines - printed, " more lines; whole body is in ", cache
+          echo "     … ", counts.lines - printed, " more lines; whole body is in ", cache
           break
         echo "     ", (if line.len > SHOWN_WIDTH: line[0 ..< SHOWN_WIDTH] & " …" else: line)
         inc printed
       echo ""
       echo "   machine code"
-      let lines = disassembled(cache, f.name)
+      let lines = disassembled(cache, function.name)
       if lines.len == 0:
         echo "     no symbol of its own, since it is inline; read its caller instead."
         continue
