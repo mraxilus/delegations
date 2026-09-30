@@ -2368,7 +2368,7 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 81,
         "adds": 65,
@@ -2387,7 +2387,7 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 81,
         "adds": 65,
@@ -2406,7 +2406,7 @@
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 256,
         "adds": 240,
@@ -2425,7 +2425,7 @@
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 256,
         "adds": 240,
@@ -2444,7 +2444,7 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -2463,7 +2463,7 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -2482,7 +2482,7 @@
       "cite": "2.119",
       "bound": {
         "shape": "ContractBulk",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 81,
         "adds": 65,
@@ -2501,7 +2501,7 @@
       "cite": "2.120",
       "bound": {
         "shape": "ContractWeight",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 81,
         "adds": 65,
@@ -2520,7 +2520,7 @@
       "cite": "wiki:Expansions",
       "bound": {
         "shape": "ExpandBulk",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 81,
         "adds": 65,
@@ -2539,7 +2539,7 @@
       "cite": "wiki:Expansions",
       "bound": {
         "shape": "ExpandWeight",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 81,
         "adds": 65,
@@ -2558,7 +2558,7 @@
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 16,
@@ -2577,7 +2577,7 @@
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 16,
@@ -2596,7 +2596,7 @@
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ExpandBulk + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ExpandBulk",
           "Wedge"
@@ -2618,7 +2618,7 @@
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ContractBulk + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ContractBulk",
           "Wedge"
@@ -2640,7 +2640,7 @@
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ExpandWeight + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ExpandWeight",
           "Wedge"
@@ -2662,7 +2662,7 @@
       "cite": "wiki:Projections",
       "bound": {
         "shape": "ContractWeight + Wedge",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "ContractWeight",
           "Wedge"
@@ -2684,7 +2684,7 @@
       "cite": "2.24",
       "bound": {
         "shape": "Scale",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 0,
@@ -2703,7 +2703,7 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2722,7 +2722,7 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2741,7 +2741,7 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2760,7 +2760,7 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2779,7 +2779,7 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2798,7 +2798,7 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2817,7 +2817,7 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2836,7 +2836,7 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2855,7 +2855,7 @@
       "cite": "2.24",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -2874,7 +2874,7 @@
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -2893,7 +2893,7 @@
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -2912,7 +2912,7 @@
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -2931,7 +2931,7 @@
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -2950,7 +2950,7 @@
       "cite": "2.90",
       "bound": {
         "shape": "2 Norm",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Norm",
           "Norm"
@@ -2972,7 +2972,7 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 15,
@@ -2991,7 +2991,7 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 15,
@@ -3010,7 +3010,7 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 32,
         "adds": 15,
@@ -3029,7 +3029,7 @@
       "cite": "2.73",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3048,7 +3048,7 @@
       "cite": "2.17",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3067,7 +3067,7 @@
       "cite": "2.29",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3095,7 +3095,7 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3114,7 +3114,7 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3133,7 +3133,7 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -3152,7 +3152,7 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Norm",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 16,
         "adds": 15,
@@ -3171,7 +3171,7 @@
       "cite": "wiki:Carrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3190,7 +3190,7 @@
       "cite": "wiki:Cocarrier",
       "bound": {
         "shape": "ConstantProduct",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 0,
         "adds": 0,
@@ -3209,7 +3209,7 @@
       "cite": "wiki:Center",
       "bound": {
         "shape": "Center",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 54,
         "adds": 38,
@@ -3228,7 +3228,7 @@
       "cite": "wiki:Container",
       "bound": {
         "shape": "Container",
-        "is_composed": false,
+        "is_chain": false,
         "steps": [],
         "multiplies": 54,
         "adds": 38,
@@ -3247,7 +3247,7 @@
       "cite": "wiki:Partner",
       "bound": {
         "shape": "Permutation + Container + JoinCarrier",
-        "is_composed": true,
+        "is_chain": true,
         "steps": [
           "Permutation",
           "Container",

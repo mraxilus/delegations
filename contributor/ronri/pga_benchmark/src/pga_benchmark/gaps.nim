@@ -257,7 +257,7 @@ func docketOf*(node: JsonNode): Docket =
 
 
 func toJson*(l: Docket): JsonNode =
-  ## Shape docket as document, keys sorted so file moves only where ids do.
+  ## Write docket as document, keys sorted so file moves only where ids do.
   var ids = newJObject()
   for key in toSeq(l.ids.keys).sorted: ids[key] = %l.ids[key]
   %*{"schema": SCHEMA, "kind": KIND_DOCKET, "next": l.next, "ids": ids}

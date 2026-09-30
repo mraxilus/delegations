@@ -101,7 +101,7 @@ func referenceKey(p: Measurand): string =
 
 
 func measurandsNode(): JsonNode =
-  ## Shape catalogue: one object per measurand naming both keys, expression and citation.
+  ## Build catalogue: one object per measurand naming both keys, expression and citation.
   result = newJObject()
   for p in CATALOGUE:
     result[p.id] = %*{
@@ -117,7 +117,7 @@ func measurandsNode(): JsonNode =
     if b.is_derived:
       result[p.id]["bound"] = %*{
         "shape": p.shapeNameOf,
-        "is_composed": b.is_composed,
+        "is_chain": b.is_chain,
         "steps": p.stepsOf,
         "multiplies": b.multiplies,
         "adds": b.adds,
@@ -128,7 +128,7 @@ func measurandsNode(): JsonNode =
 
 
 func missingNode(): JsonNode =
-  ## Shape operations reference carries and library lacks.
+  ## Build operations reference carries and library lacks.
   result = newJObject()
   for p in MISSING:
     result[p.id] = %*{"symbol": p.symbol, "alias": p.alias, "cite": p.cite}

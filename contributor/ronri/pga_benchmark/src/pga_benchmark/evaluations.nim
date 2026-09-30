@@ -200,7 +200,7 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
   ##   Function on one side only is JSON null on other, never nil, so document prints.
 
   func countsOf(function: JsonNode): JsonNode =
-    ## Shape totals and movement evaluation reports for one function.
+    ## Build totals and movement evaluation reports for one function.
     ##   Count document lacks is JSON null, never nil.
     result = newJObject()
     for key in COUNTED:
@@ -318,7 +318,7 @@ $1
 echo tables
 """
   ## Program printing tables as JSON, one `tables.add cells(<expression>)` line per table.
-  ##   Serialiser is `cells.nim`, which suites run against pin, so it reads both cell shapes
+  ##   Serialiser is `cells.nim`, which suites run against pin, so it reads both cell types
   ##   and program itself holds nothing to test.
 
 

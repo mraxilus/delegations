@@ -1,6 +1,6 @@
 ## Read proposal exploration: argument, candidate change, claims, and proposal it builds on.
 ##   Proposal is future state of library, explored before Architect adopts any of it. One
-##     directory each, one shape for all, so next exploration starts from same frame:
+##     directory each, same files for all, so next exploration starts from same frame:
 ##
 ##     ```
 ##     proposals/<NN>-<name>/proposal.md  argument, opening `# P<NN>: <title>`

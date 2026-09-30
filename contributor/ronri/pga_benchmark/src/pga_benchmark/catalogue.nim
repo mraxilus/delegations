@@ -454,7 +454,7 @@ const CATALOGUE* = block:
 
 
 const MISSING* = block:
-  ## Operations reference carries and library lacks, each one gap; ids of same shape.
+  ## Operations reference carries and library lacks, each one gap; ids spelled alike.
   var s: seq[Measurand]
   when IS_CONFORMAL:
     s.add Measurand(

@@ -254,12 +254,12 @@ suite "Lower bound":
     check lowerBoundOf(Shape.SupportAnti, rigid, 1).multiplies == 54  # wiki:Support
     check lowerBoundOf(Shape.Center, conformal, 1).multiplies == 162  # wiki:Conformal
     check lowerBoundOf(Shape.Container, conformal, 1).multiplies == 162  # wiki:Conformal
-    check not lowerBoundOf(Shape.Support, rigid, 1).is_composed  # one table, not step sum
+    check not lowerBoundOf(Shape.Support, rigid, 1).is_chain  # one table, not step sum
     check lowerBoundOf(Shape.Support, rigid, 1).bytesMoved == 256  # operand read, result written
     check lowerBoundOf(Shape.JoinCarrier, conformal, 2).multiplies == 162  # wiki:Conformal
     let partner = [Shape.Permutation, Shape.Container, Shape.JoinCarrier]
     check lowerBoundOfChain(partner, conformal, 1).multiplies == 324  # two folded tables
-    check lowerBoundOfChain(partner, conformal, 1).is_composed  # sum of steps stays estimate
+    check lowerBoundOfChain(partner, conformal, 1).is_chain  # sum of steps stays estimate
 
   test "conformal metric is not singular, so every blade carries image":
     let
@@ -284,7 +284,7 @@ suite "Lower bound":
       projection = @[Shape.ExpandWeight, Shape.Wedge]
       b = lowerBoundOfChain(projection, rigid, 2)
     check b.multiplies == 54 + 81  # dual product, then full product
-    check b.is_composed and b.is_derived  # record marks estimate as estimate
+    check b.is_chain and b.is_derived  # record marks estimate as estimate
     check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
     # Conformal dual product keeps every cell of wedge, so chain is two full products.
     check lowerBoundOfChain(projection, conformal, 2).multiplies == 486  # wiki:Expansions
@@ -561,7 +561,7 @@ suite "Guard":
     KEY = "∧(Multivector,Multivector)"
 
   func node(multiplies, checks, zero_fills, bytes: int): JsonNode =
-    ## Shape one function as inspect does, from counts and bytes moved.
+    ## Build one function as inspect does, from counts and bytes moved.
     let c = Counts(multiplies: multiplies, checks: checks, zero_fills: zero_fills)
     %*{
       "symbol": "∧", "module": "pga/operators", "params": ["Multivector", "Multivector"],
@@ -570,7 +570,7 @@ suite "Guard":
     }
 
   func doc(functions: JsonNode; flags = "-d:release"; dimensions = 4): JsonNode =
-    ## Shape static measurements document around functions.
+    ## Build static measurements document around functions.
     result = document(
       "static", algebraNode("rga4d", dimensions, false, 128),
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": flags},
@@ -578,7 +578,7 @@ suite "Guard":
     result["functions"] = functions
 
   func one(key: string; f: JsonNode): JsonNode =
-    ## Shape functions object holding one function.
+    ## Build functions object holding one function.
     result = newJObject()
     result[key] = f
 
@@ -629,7 +629,7 @@ suite "Gaps":
   func functionNode(
     symbol, module: string; is_inline: bool; multiplies, checks, zero_fills, bytes: int
   ): JsonNode =
-    ## Shape one inspected function.
+    ## Build one inspected function.
     let c = Counts(multiplies: multiplies, checks: checks, zero_fills: zero_fills)
     %*{
       "symbol": symbol, "module": module, "params": [], "returns": "", "inline": is_inline,
@@ -638,7 +638,7 @@ suite "Gaps":
     }
 
   func staticDoc(): JsonNode =
-    ## Shape static measurements document: two library operators, accessor, reference form.
+    ## Build static measurements document: two library operators, accessor, reference form.
     result = document(
       "static", algebraNode("rga4d", 4, false, 128),
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
@@ -662,11 +662,11 @@ suite "Gaps":
     result["missing"] = newJObject()
 
   func measurement(ns: float): JsonNode =
-    ## Shape one bench measurement.
+    ## Build one bench measurement.
     %*{"ns_median": ns, "ns_min": ns, "allocations": 0, "nan_share": 0.0}
 
   func runtimeDoc(): JsonNode =
-    ## Shape runtime measurements document over same measurands.
+    ## Build runtime measurements document over same measurands.
     result = document(
       "runtime", algebraNode("rga4d", 4, false, 128),
       %*{
@@ -953,7 +953,7 @@ suite "Proposals":
 
 suite "Evaluations":
   func run(ns: openArray[(string, float, float)]): JsonNode =
-    ## Shape one bench run: library median and NaN share per measurand.
+    ## Build one bench run: library median and NaN share per measurand.
     result = %*{"measurands": {}}
     for (id, time, nan) in ns:
       result["measurands"][id] = %*{"library": {"ns_median": time, "nan_share": nan}}

@@ -24,7 +24,7 @@ const ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
 
 
 func measurementNode(f: Measurement): JsonNode =
-  ## Shape one implementation's measurement; absent implementation is `null`.
+  ## Build one implementation's measurement; absent implementation is `null`.
   if not f.is_measured: return newJNull()
   %*{
     "ns_median": f.ns_median,
@@ -35,7 +35,7 @@ func measurementNode(f: Measurement): JsonNode =
 
 
 proc benchDocument(): JsonNode =
-  ## Shape every measurand's measurements into `bench` document.
+  ## Gather every measurand's measurements into `bench` document.
   result = document(
     "runtime", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), takenNow()
   )

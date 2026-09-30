@@ -29,7 +29,7 @@ type
     multiplies, divides, bytes, read, written: int
     shape: string
     steps: seq[string]
-    is_composed: bool
+    is_chain: bool
   Row = object
     ## Define one measurand as docket shows it.
     id, measurand, symbol, expression, cite: string
@@ -89,10 +89,10 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       steps = bound{"steps"}.getElems.mapIt(it.getStr)
       shape = bound{"shape"}.getStr
       last = if steps.len > 0: steps[^1] else: shape
-      is_composed = bound{"is_composed"}.getBool
+      is_chain = bound{"is_chain"}.getBool
       bytes = bound{"bytes_moved"}.getInt
       (read, written) =
-        if last == "Scale" and not is_composed: (width + 8, width)
+        if last == "Scale" and not is_chain: (width + 8, width)
         elif last in ["ScalarForm", "SquaredNorm", "Norm"]: (bytes - 8, 8)
         else: (bytes - width, width)
     some(BoundFigures(
@@ -103,7 +103,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       written: written,
       shape: shape,
       steps: steps,
-      is_composed: is_composed,
+      is_chain: is_chain,
     ))
 
   let
@@ -142,7 +142,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
 
 type Tally = object
   ## Define counts of one population of rows against bound.
-  bounded, at_multiplies, at_bytes, composed: int
+  bounded, at_multiplies, at_bytes, chains: int
   sums_library, sums_bound, sums_reference: array[2, int]
   full: int
 
@@ -176,7 +176,7 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
       inc result.bounded
       if library.multiplies <= bound.multiplies: inc result.at_multiplies
       if library.bytes <= bound.bytes: inc result.at_bytes
-      if bound.is_composed: inc result.composed
+      if bound.is_chain: inc result.chains
       if is_typed and row.reference.isNone: continue
       inc result.full
       result.sums_library[0] += library.multiplies
@@ -278,7 +278,7 @@ func rowHtml(row: Row; max_log: array[2, int]; order: array[4, int]): string =
     ## Render row's breakdown: expression, citation, shape, and bytes by cause.
     let shape =
       if row.bound.isNone: "no derived shape"
-      elif row.bound.get.is_composed: "composed: " & row.bound.get.steps.join(" → ")
+      elif row.bound.get.is_chain: "chain: " & row.bound.get.steps.join(" → ")
       else: row.bound.get.shape
     result = "<div class=\"detail\"><p>" & code(row.expression) & " · " & escapeHtml(row.cite) &
       " · " & escapeHtml(shape) & "</p>"
@@ -310,7 +310,7 @@ func rowHtml(row: Row; max_log: array[2, int]; order: array[4, int]): string =
   if row.library.isSome and row.bound.isSome and
       row.library.get.multiplies > row.bound.get.multiplies:
     classes.add "above"
-  if row.bound.isSome and row.bound.get.is_composed: classes.add "chain"
+  if row.bound.isSome and row.bound.get.is_chain: classes.add "chain"
   if row.share_nan > 0: classes.add "nan"
   var time = if row.ns_library > 0: "<b>" & row.ns_library.fixed(1) & "</b>" else: "–"
   if row.ns_library > 0 and row.ns_reference > 0:
@@ -385,7 +385,7 @@ typed-only">type optimised lower bound</span></div>
 <fieldset><legend>Show</legend>
 <label><input type="radio" name="show" id="show-all" checked> all</label>
 <label><input type="radio" name="show" id="show-above"> above bound on multiplies</label>
-<label><input type="radio" name="show" id="show-chain"> composed</label>
+<label><input type="radio" name="show" id="show-chain"> chains</label>
 <label><input type="radio" name="show" id="show-nan"> returns NaN</label></fieldset>
 <fieldset><legend>Scale</legend>
 <label><input type="radio" name="scale" id="scale-row" checked> each row</label>
@@ -409,7 +409,7 @@ multivector lower bound, derived from axioms:
 bytes         = operands × W + result width        no fill, no intermediate, no copy
 multiplies    = terms metric keeps                 wedge 3^D; geometric 4 per dimension,
                                                    3 per null one
-composed operation: multiplies sum steps of its definition, an estimate</pre>
+chain: multiplies sum steps of its definition, an estimate</pre>
 <p class="note">Bytes are modelled from the C, not measured. They rank two versions of one
 operation, and do not predict time across different operations. Inspect one yourself with
 <code>nim r tools/build.nim show ∧</code>.</p></details></section>"""

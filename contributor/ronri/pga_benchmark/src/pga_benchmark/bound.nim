@@ -84,7 +84,7 @@ type
     ## Define multivector lower bound of one operation, i.e. what algebra demands.
     is_derived*: bool
       ## False where shape carries no rule yet; every count below is then meaningless.
-    is_composed*: bool
+    is_chain*: bool
       ## True where bound sums steps of library's own definition rather than one rule.
     multiplies*, adds*, divides*, roots*: int
       ## Arithmetic that survives.
@@ -332,7 +332,7 @@ func lowerBoundOfChain*(parts: openArray[Shape]; m: Metric; arity: range[1 .. 2]
     result.bytes_written = b.bytes_written
   if not is_any_derived: return LowerBound()
   result.is_derived = true
-  result.is_composed = true
+  result.is_chain = true
   result.bytes_read = m.sizeOfMultivector * arity
 
 

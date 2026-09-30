@@ -1,4 +1,4 @@
-## Shape measurements as JSON, schema 1, and read them back; tool side only.
+## Write measurements as JSON, schema 1, and read them back; tool side only.
 ##   One document per configuration and kind: `bench` holds timing measurements of every measurand
 ##   of both implementations, `static` holds counts read from emitted C. Both open with same
 ##   `algebra` and `taken` objects, so any file says what it measured, on what, and when
@@ -61,7 +61,7 @@ func checkSchema*(node: JsonNode; kind: string): string =
 
 
 func countsNode*(counts: Counts): JsonNode =
-  ## Shape counts as object with one field per count.
+  ## Build counts as object with one field per count.
   %*{
     "multiplies": counts.multiplies,
     "adds": counts.adds,
@@ -78,7 +78,7 @@ func countsNode*(counts: Counts): JsonNode =
 
 
 func movementNode*(movement: Movement): JsonNode =
-  ## Shape movement model as object with one field per cause.
+  ## Build movement model as object with one field per cause.
   %*{
     "bytes_read": movement.bytes_read,
     "bytes_written": movement.bytes_written,
@@ -100,7 +100,7 @@ func moduleTail*(module: string): string =
 
 
 func functionNode*(function: CFunction; own, total: Counts; size_multivector: int): JsonNode =
-  ## Shape one inspected function: key parts, module tail, inline flag, own and total
+  ## Build object of one inspected function: key parts, module tail, inline flag, own and total
   ## counts, movement modelled on total counts. Mangled name is left out: it spells
   ## checkout path and compiler hash, neither of which is measurement.
   %*{
