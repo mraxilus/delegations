@@ -1228,6 +1228,15 @@ suite "Pages":
     check ":not(.operation-wedge)" in body and ":not(.operand-point)" in body  # one rule each
     check "<option value=\"wedge\" class=\"in-rga4d\">wedge ∧</option>" in body  # symbol beside
 
+  test "search box finds row by its words, and shell hides row script marks unfound":
+    const SHELL = staticRead("../pages/shell.html")
+    let body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    check "<input type=\"search\" id=\"find\"" in body and body.count("<script>") == 1  # one
+    check "data-find=\"wedge_point_point g002 ∧ wedge point point\"" in body  # id, kinds, lower
+    check "data-find=\"wedge g001 ∧ wedge\"" in body  # general row: no operand kind
+    check "classList.toggle(\"unfound\"" in body and "details.row.unfound { display: none; }" in
+      SHELL  # script marks, shell hides
+
   test "typed id splits at longest operand kind, one kind per operand":
     let
       sheet = Sheet(name: "cga5d", title: "Conformal 5D", dimensions: 5,

@@ -1,7 +1,8 @@
 <!-- Shell every page of pga_benchmark shares: title, faces, styles, body filled by build.
      Tokens: title, body, one embed per face; `src/pga_benchmark/pages/shell.nim` fills them.
      No doctype, html, head or body tags: host wraps page in its own document at publish.
-     Interaction is CSS alone: inputs read by `:has()` rules, rows open as `details`. -->
+     Interaction is CSS: inputs read by `:has()` rules, rows open as `details`. Docket's
+     search box alone runs script, constant text in `docket.nim`. -->
 <title>@TITLE@</title>
 <style>
 @font-face { font-family: "Noto Sans"; font-weight: 400;
@@ -143,9 +144,11 @@ section.block { padding-block: 28px 0; display: grid; gap: 12px;
   border-bottom: 1px solid var(--rule-strong); }
 .control { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%;
   font-size: 0.82rem; color: var(--muted); }
-.control select { font: inherit; color: var(--ink); background: var(--surface); min-width: 0;
-  max-width: 100%; border: 1px solid var(--rule-strong); border-radius: 4px; padding: 3px 6px; }
-.control select:focus-visible { outline: 2px solid var(--bound); outline-offset: 1px; }
+.control :is(select, input) { font: inherit; color: var(--ink); background: var(--surface);
+  min-width: 0; max-width: 100%; border: 1px solid var(--rule-strong); border-radius: 4px;
+  padding: 3px 6px; }
+.control input { width: 11rem; }
+.control :is(select, input):focus-visible { outline: 2px solid var(--bound); outline-offset: 1px; }
 .head, details.row > summary { display: grid; gap: 6px 22px; align-items: center;
   grid-template-columns: 13.5rem minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); padding: 8px 6px; }
 .head { color: var(--muted); font-size: 0.74rem; text-transform: uppercase;
@@ -154,6 +157,7 @@ section.block { padding-block: 28px 0; display: grid; gap: 12px;
 .rows::after { content: counter(shown) " shown"; order: -1; padding: 6px; color: var(--muted);
   font-size: 0.8rem; font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--rule); }
 details.row { border-bottom: 1px solid var(--rule); counter-increment: shown; }
+details.row.unfound { display: none; }
 details.row > summary { cursor: pointer; list-style: none; }
 details.row > summary::-webkit-details-marker { display: none; }
 details.row > summary:hover, details.row[open] > summary { background: var(--hover); }

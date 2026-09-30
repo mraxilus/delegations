@@ -11,7 +11,8 @@
 ##     counts how many measurands would then stand at bound.
 ##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key.
 ##     Dropdowns name them, and `:has()` rules body generates read chosen option, so one list
-##     here spells option and rule alike.
+##     here spells option and rule alike. Search box is only script: row hides while its words
+##     lack any word typed, as Architect chose at cost of script.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
@@ -508,9 +509,13 @@ func rowHtml(row: Row; axis: Axis; order: array[SORTS.len, int]): string =
   if row.share_nan > 0: classes.add "nan"
   var ranks: seq[string]
   for index, (key, _) in SORTS: ranks.add "--o-" & key & ":" & $order[index]
-  let nan =
-    if row.share_nan > 0: chip("NaN " & $int(round(100 * row.share_nan)) & "%", "fail") else: ""
+  let
+    nan =
+      if row.share_nan > 0: chip("NaN " & $int(round(100 * row.share_nan)) & "%", "fail") else: ""
+    words = (@[row.measurand, row.id, row.symbol, row.operation.replace('_', ' '),
+      row.expression] & row.operands.mapIt(it.replace('_', ' '))).filterIt(it.len > 0)
   "<details class=\"" & classes.join(" ") & "\" style=\"" & ranks.join(";") &
+    "\" data-find=\"" & escapeHtml(words.join(" ").toLowerAscii) &
     "\"><summary><span class=\"op\">" &
     "<span class=\"n\">" & escapeHtml(row.measurand) & "</span><span class=\"sub\">" &
     escapeHtml(row.id) & " · " & escapeHtml(row.symbol) & "</span>" & nan & "</span>" &
@@ -573,6 +578,18 @@ counts, dense form for time</span><span class="mark-origin typed-only">×1: refe
 rows; multivector lower bound and dense form on general ones</span><span class="mark-tick
 typed-only">multivector lower bound</span><span class="mark-runs">each run</span></div>"""
     ## Legend of deviation bars, same for every algebra.
+  FIND = """<script>
+const find = document.getElementById("find");
+const filter = () => {
+  const words = find.value.toLowerCase().split(/\s+/).filter(Boolean);
+  for (const row of document.querySelectorAll("details.row"))
+    row.classList.toggle("unfound", !words.every((word) => row.dataset.find.includes(word)));
+};
+find.addEventListener("input", filter);
+filter();
+</script>"""
+    ## Script of search box, page's only one: row shows while its words hold every word typed.
+    ##   Runs once at load too, since browser may restore typed text.
   METHOD = """<section class="block"><details><summary>How each figure is computed</summary>
 <pre class="formula">W = sizeof(Multivector) = 2^D × 8 bytes
 
@@ -674,8 +691,9 @@ func docketBody*(
         for kind in row.operands:
           if sheet.name notin kinds.mgetOrPut(kind, @[]): kinds[kind].add sheet.name
     let names_operation = operations.keys.toSeq.sorted
-    var html = "<div class=\"controls\">" & LEGEND &
-      "<label class=\"control\">Sort <select id=\"sort\">"
+    var html = "<div class=\"controls\">" & LEGEND & "<label class=\"control\">Find <input " &
+      "type=\"search\" id=\"find\" placeholder=\"wedge, ∧, G060\" autocomplete=\"off\">" &
+      "</label><label class=\"control\">Sort <select id=\"sort\">"
     for index, (key, label) in SORTS: html.add option(key, label, @[], index == 0)
     html.add option("docket", "docket order", @[]) & "</select></label><label " &
       "class=\"control\">Show <select id=\"show\">" & option("all", "all measurands", @[], true)
@@ -776,4 +794,4 @@ func docketBody*(
       for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
       result.add rowHtml(row, axis, ranks_row)
     result.add "</div></section>"
-  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"
+  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>" & FIND
