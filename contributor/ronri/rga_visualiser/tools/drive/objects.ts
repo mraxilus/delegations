@@ -470,6 +470,131 @@ export async function driveEditFromMenu(page: Page): Promise<void> {
   });
 }
 
+/** Assert search narrows long list to what reader typed, and hands matches over as selection.
+ *
+ *  List of five thousand could only be scrolled, and one body in it was not findable. Search
+ *  keeps objects whose label or kind word holds every word typed, by rule `scene` states once
+ *  for both front-ends; this counts same rule again here, in page's own strings, and holds
+ *  list to that count, so neither can drift without other noticing.
+ *  Driven through keys as reader presses them: `/` from page with drawer shut, then typing,
+ *  then escape, so field's own handlers are what is exercised and not function they call.
+ */
+export async function driveListSearched(page: Page): Promise<void> {
+  // Deep object whose label no other label holds, so typing it leaves its row alone.
+  const wanted = await page.evaluate(() => {
+    document.querySelector('.section[data-section="objects"]')?.classList.remove('open');
+    drawer.classList.remove('open');
+    (document.activeElement as HTMLElement | null)?.blur();
+    const created = Array.from(nimSceneHandlesCreated());
+    const labels = created.map((handle) => nimObjectLabel(handle).toLowerCase());
+    for (let at = 40; at < created.length; at += 1) {
+      const label = labels[at] ?? '';
+      if (label.trim() === '' || /\s/.test(label)) continue;
+      if (labels.filter((other) => other.includes(label)).length !== 1) continue;
+      if (nimObjectKindWord(created[at] ?? 0).includes(label)) continue;
+      return { handle: created[at] ?? -1, label: nimObjectLabel(created[at] ?? 0) };
+    }
+    return null;
+  });
+
+  await page.keyboard.press('/');
+  const reached = await page.evaluate(() => ({
+    is_focused: document.activeElement?.id === 'objects-search-field',
+    is_open: drawer.classList.contains('open') && (document
+      .querySelector('.section[data-section="objects"]')?.classList.contains('open') ?? false),
+  }));
+  report(
+    'pressing / with the drawer shut opens the objects list and puts the caret in its search',
+    reached.is_focused && reached.is_open,
+    `focused ${reached.is_focused}, list open ${reached.is_open}`,
+  );
+
+  // Count every object this query names, by labels and kind words page reads itself.
+  const expected = (query: string) => page.evaluate((typed) => {
+    const words = typed.toLowerCase().split(/\s+/).filter((word) => word !== '');
+    return Array.from(nimSceneHandlesCreated()).filter((handle) => {
+      const label = nimObjectLabel(handle).toLowerCase();
+      const kind = nimObjectKindWord(handle).toLowerCase();
+      return words.every((word) => label.includes(word) || kind.includes(word));
+    }).length;
+  }, query);
+  const listed = () => page.evaluate(() => ({
+    count: Number(list_objects.dataset['count'] ?? '-1'),
+    shown: document.getElementById('objects-shown')?.textContent ?? '',
+    labels: Array.from(list_objects.querySelectorAll('.object-label'))
+      .map((node) => node.textContent ?? ''),
+    note: list_objects.querySelector('.help-text')?.textContent ?? '',
+  }));
+  const typeQuery = async (query: string) => {
+    await page.fill('#objects-search-field', '');
+    const started = Date.now();
+    await page.keyboard.type(query);
+    const want = await expected(query);
+    await page.waitForFunction(
+      (count) => list_objects.dataset['count'] === String(count), want, { timeout: 8000 },
+    ).catch(() => undefined);
+    return { milliseconds: Date.now() - started, want, got: await listed() };
+  };
+
+  const one = await typeQuery(wanted?.label ?? '');
+  report(
+    'typing part of a deep object\'s label leaves its row alone in the list, counted as shown',
+    wanted !== null && one.want === 1 && one.got.count === 1
+      && one.got.labels.length === 1 && one.got.labels[0] === wanted.label
+      && one.got.shown.startsWith('1 of '),
+    wanted === null ? 'no object with a label of its own to search for'
+      : `"${wanted.label}" left ${one.got.count} row (${one.got.labels.join(', ')}), ` +
+        `"${one.got.shown}", ${one.milliseconds} ms from first key to settled list`,
+  );
+
+  const kinds = await typeQuery('horizon');
+  report(
+    'a kind word lists every object of that kind, as many as the rule counts',
+    kinds.want > 0 && kinds.got.count === kinds.want,
+    `"horizon" listed ${kinds.got.count} of the ${kinds.want} the rule counts; ` +
+      `"${kinds.got.shown}"`,
+  );
+
+  const picked = await page.evaluate(() => {
+    const shown = Array.from(list_objects.querySelectorAll('.object-row'))
+      .map((row) => Number((row as HTMLElement).dataset['handle'] ?? '-1'));
+    (document.getElementById('objects-select') as HTMLElement | null)?.click();
+    return { shown, selected: Array.from(nimSelectionHandles()) };
+  });
+  report(
+    'select all picks every row the search shows, in the order shown',
+    picked.shown.length === kinds.want && picked.selected.join() === picked.shown.join(),
+    `rows ${picked.shown.join(', ')}; selection ${picked.selected.join(', ')}`,
+  );
+
+  const none = await typeQuery('qqzzqq');
+  report(
+    'a search nothing answers says so, rather than showing an empty list',
+    none.got.count === 0 && none.got.note === (await page.evaluate(
+      () => nimWording(Wording.NoteListUnmatched),
+    )),
+    `${none.got.count} rows; note "${none.got.note}"`,
+  );
+
+  await page.keyboard.press('Escape');
+  const cleared = await page.evaluate(() => ({
+    value: (document.getElementById('objects-search-field') as HTMLInputElement | null)?.value,
+    count: Number(list_objects.dataset['count'] ?? '-1'), want: nimSceneCount(),
+    is_count_hidden: document.getElementById('objects-shown')?.hidden ?? false,
+  }));
+  await page.keyboard.press('Escape');
+  const is_left = await page.evaluate(
+    () => document.activeElement?.id !== 'objects-search-field',
+  );
+  report(
+    'escape clears the search and lists everything again, and a second escape leaves the field',
+    cleared.value === '' && cleared.count === cleared.want && cleared.is_count_hidden && is_left,
+    `value "${cleared.value}", ${cleared.count} of ${cleared.want} listed, count hidden ` +
+      `${cleared.is_count_hidden}, field left ${is_left}`,
+  );
+  await page.evaluate(() => { clearSelection(); });
+}
+
 /** Assert list reconciles against what is standing rather than rebuilding.
  *
  *  Two properties, and first is what makes second safe to rely on: refresh that changes

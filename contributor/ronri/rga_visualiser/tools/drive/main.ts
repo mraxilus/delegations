@@ -44,7 +44,7 @@ import {
 } from './loaded';
 import {
   driveEditFromMenu, driveHeaderBanded, driveHeaderPinned, driveHeaderStyled,
-  driveListWindowed, driveObjectsList, drivePerFrame,
+  driveListSearched, driveListWindowed, driveObjectsList, drivePerFrame,
   driveReconcile,
   driveTickCadence, driveTickWrites,
 } from './objects';
@@ -239,6 +239,7 @@ async function main(): Promise<void> {
   //   either end: one above reads shape heading wears where it stands.
   await driveListWindowed(page);
   await driveEditFromMenu(page);
+  await driveListSearched(page);
   await driveReconcile(page);
   await driveTickWrites(page);
   await driveTickCadence(page);
