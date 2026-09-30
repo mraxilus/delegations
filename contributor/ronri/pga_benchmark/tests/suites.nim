@@ -1031,6 +1031,32 @@ suite "Cells":
 
 
 suite "Pages":
+  let ids_docket = %*{"ids": {"rga4d/wedge": "G001", "rga4d/wedge_point_point": "G002"}}
+    ## Docket file allotting both rows of `sheetDocket`.
+
+  func sheetDocket(multiplies_library, multiplies_reference: int; runtime: JsonNode): Sheet =
+    ## Build one algebra: general and typed wedge over one library function, bound of 54.
+    let bound = %*{"multiplies": 54, "bytes_moved": 384, "shape": "Wedge", "is_chain": false}
+    Sheet(
+      name: "rga4d",
+      title: "Rigid 4D",
+      dimensions: 4,
+      measurements_static: %*{
+        "measurands": {
+          "wedge": {"library": "∧(M,M)", "symbol": "∧", "bound": bound},
+          "wedge_point_point": {"library": "∧(M,M)", "reference": "wedge(P,P)", "symbol": "∧",
+            "bound": bound},
+        },
+        "functions": {
+          "∧(M,M)": {"total": {"multiplies": multiplies_library},
+            "movement": {"bytes_moved": 512}},
+          "wedge(P,P)": {"total": {"multiplies": multiplies_reference},
+            "movement": {"bytes_moved": 112}},
+        },
+      },
+      measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": runtime},
+    )
+
   test "shell names faces it embeds, and assembly fills every token":
     let
       text_shell = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
@@ -1062,6 +1088,28 @@ suite "Pages":
         measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
       ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
     check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
+
+  test "docket measures typed row against reference, general row against multivector bound":
+    let
+      body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    check "library 81 multiplies, reference 12, multivector lower bound 54\"" in body  # typed
+    check "library 81 multiplies, multivector lower bound 54\"" in body  # general, no tick
+    check ">×6.75<" in body and ">×1.50<" in body  # each over what it is measured against
+    check body.count("<b style=") == 2  # tick at multivector bound, typed row only, both counts
+
+  test "time bar is median of run ratios, spanning least and greatest run":
+    let
+      runs = %*{"wedge_point_point": {
+        "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
+        "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+    check ">×3.00<" in body  # median of 3.00, 2.00 and 3.67; ratio of medians reads 2.75
+    check "3 runs, ×2.00 to ×3.67" in body and "<s style=" in body  # whisker over runs
+
+  test "count over reference that spends none reads its excess, never infinite ratio":
+    let body = docketBody([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    check ">81 over 0<" in body and "class=\"open\"" in body  # bar runs to axis end
+    check "×inf" notin body and "×nan" notin body  # no ratio divides by zero
 
   test "verdict chips say when evaluation removes NaN results":
     let
