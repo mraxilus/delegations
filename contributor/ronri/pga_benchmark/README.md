@@ -59,11 +59,12 @@ The words are in [`GLOSSARY.md`](GLOSSARY.md).
 nim r koch check                                # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
 nim r tools/build.nim drive         # project directory: every check CI runs, head included
-nim r tools/build.nim bench         # runtime measurements into baseline/runtime_<algebra>.json
+nim r tools/build.nim bench         # five alternating runs into baseline/runtime_<algebra>.json
 nim r tools/build.nim baseline      # re-record static measurements after an intended change
 nim r tools/build.nim guard         # compare the last inspection against the baseline
 nim r tools/build.nim gaps          # regenerate gaps.md and the docket from baseline/
 nim r tools/build.nim evaluate all  # try every change and proposal at pin, into evaluations/
+nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as well
 nim r tools/build.nim pages         # build every page into build/<name>.html
 nim r tools/build.nim sweep         # dense timings at two to six dimensions, never in CI
 ```
