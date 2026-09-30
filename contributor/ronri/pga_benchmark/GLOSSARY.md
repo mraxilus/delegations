@@ -40,10 +40,21 @@ What the typed reference spends, which needs a representation that a dense multi
 cannot reach. It is measured rather than derived.
 _Avoid_: typed floor, sparse bound, reference bound
 
+**Shape**:
+The arithmetic form of one operation, such as Wedge, Geometric or Norm. Each shape carries the
+rule that derives its multivector lower bound.
+_Avoid_: form, pattern, product type
+
+**Chain**:
+An operation that the library composes from several operators, as a projection is a dual
+product and then a full product. Its multivector lower bound sums what each step demands, so
+it is an estimate and never a proved minimum.
+_Avoid_: composed operation, compound operation, composite, pipeline
+
 **Kind**:
 What the operand of a measurand is: General (dense, mixed grade), Scalar, or one typed
 object such as Point.
-_Avoid_: type, shape, class
+_Avoid_: type, class
 
 **Implementation**:
 Which of the two is measured: the dense operator of the library, or the reference.
