@@ -6,6 +6,7 @@
 //   picked was already on screen, which swung picked object around view instead.
 
 import type { CDPSession, Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, evaluateOver } from './clock';
 import {
   depthOf, readCamera, settleCamera, spanOf, spanPivot, type Stance,
 } from './camera';
@@ -447,7 +448,9 @@ export async function driveGroupTurnedAtOnce(page: Page, devtools: CDPSession): 
   }, [one, two, FRAMES_EASE_WAIT]);
   await touchAt(devtools, 'touchStart', [{ x: at_two[0] ?? 0, y: at_two[1] ?? 0 }]);
   await touchAt(devtools, 'touchEnd', []);
-  const turned = await page.evaluate(() => window.__turn_first);
+  const turned = await evaluateOver(
+    page, (FRAMES_EASE_WAIT + 2) * MILLISECONDS_FRAME, () => window.__turn_first,
+  );
   await page.evaluate(() => { delete window.__turn_first; });
   if (turned === undefined) return;
   for (let step = 1; step < 10; step += 1) {

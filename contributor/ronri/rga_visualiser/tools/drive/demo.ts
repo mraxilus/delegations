@@ -9,6 +9,7 @@
 //   band that only ever runs at default cannot see regression that shows under load.
 
 import type { Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, advance, evaluateOver, isSimulated, waitUntil } from './clock';
 import { placeCamera, readPlaced, settleCamera } from './camera';
 import { readCanvas, settleCanvas, type Spot } from './canvas';
 import { report } from './report';
@@ -37,10 +38,14 @@ export async function loadDemo(page: Page, objects: number): Promise<void> {
   await page.click('#button-menu');
   await page.click(`#button-load-demo-${objects}`);
   await page.click('#button-menu'); // Shut popover again, as reader would.
-  await page.waitForFunction(
-    (given) => nimSceneCount() === given, objects, { timeout: 120000 },
-  );
+  await waitUntil(page, (given) => nimSceneCount() === given, objects);
   await settleCamera(page);
+  // Simulated page: wait until frame holds its scene, which is to say nothing grows in any
+  //   longer, before anything reads canvas. Load staggers births, so fixed span would be guess.
+  //   Real page is read by speed checks alone, which time calls rather than read pixels.
+  if (isSimulated(page)) {
+    await waitUntil(page, () => (window.__phase_frame ?? []).at(-1)?.is_scene_held ?? false, null);
+  }
 }
 
 /** Drive demo button, and assert what it puts on page and where it leaves camera. */
@@ -141,7 +146,7 @@ export async function driveCulling(page: Page): Promise<void> {
  *  depth off buried moon under planet selected after it.
  */
 export async function driveOccluded(page: Page): Promise<void> {
-  const occluded = await page.evaluate(async () => {
+  const occluded = await evaluateOver(page, 500 + 2 * MILLISECONDS_FRAME, async () => {
     const wait = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
     const handleOf = (label: string): number =>
@@ -214,14 +219,14 @@ export async function driveOccluded(page: Page): Promise<void> {
   // Selection pulses, so canvas never settles here: each reading is taken at fixed wait after
   //   its own edit, as this check has always taken them, rather than waited into stillness.
   await page.evaluate((given) => { nimSelectClear(); nimSelectToggle(given); }, occluded.moon);
-  await page.waitForTimeout(400);
+  await advance(page, 400);
   const alone = (await readCanvas(page, [occluded.spot])).spots[0] ?? [];
   await page.evaluate((given) => nimSelectToggle(given), occluded.planet);
-  await page.waitForTimeout(400);
+  await advance(page, 400);
   const both = (await readCanvas(page, [occluded.spot])).spots[0] ?? [];
   await page.evaluate(() => nimSelectClear());
   await placeCamera(page, occluded.before);
-  await page.waitForTimeout(200);
+  await advance(page, 200);
 
   report(
     "nothing behind a planet's disc is hovered through it",
@@ -270,7 +275,7 @@ export async function driveFarSky(page: Page): Promise<void> {
     return;
   }
   await settleCamera(page);
-  await page.waitForTimeout(400);
+  await advance(page, 400);
   const stance = await page.evaluate(() => ({
     distance: nimCameraDistance(), reach: Math.hypot(...Array.from(nimCameraPivot())),
   }));
@@ -309,7 +314,7 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
   await page.evaluate(() => nimSelectClear());
   await placeCamera(page, { eye: [1.433, 0, 0.443], pivot: [0, 0, 0] });
   await settleCamera(page);
-  await page.waitForTimeout(400);
+  await advance(page, 400);
   // One spot past Sol, on disc's far half; three below, where disc runs under camera toward
   //   near plane. All clear of world axes through centre and of demo's dots.
   const spots: [number, number][] = [[500, 400], [450, 650], [350, 800], [750, 750]];
@@ -332,7 +337,7 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
   //   distance off it, where fan's own near cut ended disc one third of way down.
   await placeCamera(page, { eye: [1.5, 0, 0.00045], pivot: [0, 0, 0] });
   await settleCamera(page);
-  await page.waitForTimeout(400);
+  await advance(page, 400);
   const grazing = (await readCanvas(page, spots.slice(1))).spots
     .map((one) => luminance(one ?? []));
   const gap_grazing = Math.max(...grazing.map((one) => Math.abs(one - past)));
@@ -425,7 +430,7 @@ export async function driveLineCrossing(
     for (const distance of [0.01, 0.001]) {
       await page.evaluate((one) => { nimSetCameraDistance(one); }, distance);
       await settleCamera(page);
-      await page.waitForTimeout(400);
+      await advance(page, 400);
       const at = await page.evaluate(
         (given) => Array.from(nimAnchorScreen(given.point, given.width, given.height)),
         { point: joined.point, width, height },

@@ -5,6 +5,7 @@
 //   many, and suite that read only final state would miss string of them lighting up.
 
 import type { Page } from '@playwright/test';
+import { advance, waitUntil } from './clock';
 import { settleCamera } from './camera';
 import { clearTheGlass } from './gestures';
 import { waitFrames } from './frame';
@@ -79,10 +80,11 @@ export async function driveHoverDuringGesture(
 
 /** Wait until help panel stands up, or gone. */
 async function settleHelp(page: Page, is_shown: boolean): Promise<void> {
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     (given) =>
       (document.getElementById('help-panel')?.classList.contains('show') ?? false) === given,
-    is_shown, { timeout: 8000, polling: 'raf' },
+    is_shown,
   );
 }
 
@@ -91,12 +93,12 @@ async function settleHelp(page: Page, is_shown: boolean): Promise<void> {
 export async function driveHelp(page: Page, width: number, height: number): Promise<void> {
   await page.evaluate(() => showHelp(true));
   await settleHelp(page, true);
-  // Wall time either side, deliberately: check is that neither click shut panel, and panel
-  //   staying up has no event to wait on -- window has to be long enough for it to have gone.
+  // Simulated span either side: check is that neither click shut panel, and panel staying up
+  //   has no event to wait on -- span has to be long enough for it to have gone.
   await page.mouse.click(width / 2, height - 80);
-  await page.waitForTimeout(200);
+  await advance(page, 200);
   await page.click('#button-drawer');
-  await page.waitForTimeout(200);
+  await advance(page, 200);
   report(
     'the help stays open while the reader uses what it describes',
     await page.evaluate(

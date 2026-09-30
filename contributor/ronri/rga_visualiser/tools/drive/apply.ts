@@ -7,6 +7,7 @@
 //   nothing has been deleted, so every check here runs after delete.
 
 import type { Page } from '@playwright/test';
+import { waitUntil } from './clock';
 import { settleCount, settleSelection } from './gestures';
 import { report } from './report';
 
@@ -19,10 +20,10 @@ async function toggleSection(page: Page, name: string, is_open: boolean): Promis
       (section.querySelector('.section-header') as HTMLElement | null)?.click();
     }
   }, { name, is_open });
-  await page.waitForFunction((given) => {
+  await waitUntil(page, (given) => {
     const section = document.querySelector(`.section[data-section="${given.name}"]`);
     return (section?.classList.contains('open') ?? false) === given.is_open;
-  }, { name, is_open }, { timeout: 8000, polling: 'raf' });
+  }, { name, is_open });
 }
 
 /** Handle added between two readings, or nothing where none was.
@@ -45,9 +46,7 @@ export async function driveApply(page: Page): Promise<void> {
     refreshSelectionMenu(null);
     document.getElementById('selection-menu-delete')?.click();
   });
-  await page.waitForFunction(
-    () => !nimSceneHandles().includes(0), null, { timeout: 8000, polling: 'raf' },
-  );
+  await waitUntil(page, () => !nimSceneHandles().includes(0), null);
   const handles_now = await page.evaluate(() => nimSceneHandles());
   report(
     'deleting an object leaves the picker positions offset from the scene handles',
@@ -60,10 +59,10 @@ export async function driveApply(page: Page): Promise<void> {
   //   control nobody could have looked at.
   await page.click('#button-drawer');
   await toggleSection(page, 'apply', true);
-  await page.waitForFunction(() => {
+  await waitUntil(page, () => {
     const first = document.getElementById('op-first') as HTMLSelectElement | null;
     return first !== null && first.options.length === nimSceneCount();
-  }, null, { timeout: 8000, polling: 'raf' });
+  }, null);
   const filled = await page.evaluate(() => ({
     options: (document.getElementById('op-first') as HTMLSelectElement | null)?.options.length
       ?? -1,
@@ -260,10 +259,10 @@ export async function driveReachable(page: Page): Promise<void> {
   // Press menu's apply twice, by design: first press opens picker beside it, second commits
   //   whatever that picker names.
   await page.evaluate(() => document.getElementById('selection-menu-apply')?.click());
-  await page.waitForFunction(() => {
+  await waitUntil(page, () => {
     const chosen = document.getElementById('selection-menu-select') as HTMLSelectElement | null;
     return chosen !== null && chosen.options.length > 0;
-  }, null, { timeout: 8000, polling: 'raf' });
+  }, null);
   await page.evaluate(() => {
     const chosen = document.getElementById('selection-menu-select') as HTMLSelectElement | null;
     if (chosen !== null) {

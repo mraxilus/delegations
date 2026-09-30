@@ -4,6 +4,7 @@
 //   Suites reach `applyOperation`, never gesture that calls it.
 
 import type { CDPSession, Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, advance, evaluateOver } from './clock';
 import {
   placeCamera, readCamera, readPlaced, settleCamera, slideOf, spanOf, spanPivot,
 } from './camera';
@@ -161,9 +162,9 @@ export async function drivePausedDrag(page: Page, devtools: CDPSession): Promise
   if (from === null || onto === null) return;
 
   await dragFinger(page, devtools, from, onto, { lift: false });
-  // Wall time, deliberately: how long finger rests is gesture under test, and waiting on
-  //   wheel instead would assert what check below is asking.
-  await page.waitForTimeout(1100);
+  // Simulated span: how long finger rests is gesture under test, and waiting on wheel instead
+  //   would assert what check below is asking.
+  await advance(page, 1100);
   const is_wheel_open = await page.evaluate(() => nimDragMenuOpen());
   await dragFinger(page, devtools, onto, onto, { press: false });
   await waitFrames(page, 2);
@@ -203,11 +204,18 @@ export async function driveEmptyRelease(page: Page, width: number, height: numbe
 
   await page.mouse.move(from[0] ?? 0, from[1] ?? 0);
   await page.mouse.down();
-  await page.mouse.move(width - 30, height - 30, { steps: 8 });
+  // Frame drawn after each step, since drag is tracked by frame loop and not by events alone.
+  for (let step = 1; step <= 8; step += 1) {
+    await page.mouse.move(
+      (from[0] ?? 0) + ((width - 30 - (from[0] ?? 0)) * step) / 8,
+      (from[1] ?? 0) + ((height - 30 - (from[1] ?? 0)) * step) / 8,
+    );
+    await waitFrames(page, 1);
+  }
   await page.mouse.up();
-  // Wall time, deliberately: check is that nothing was said, and absence has no condition to
-  //   wait on -- window has to be long enough for bar to have shown had it been going to.
-  await page.waitForTimeout(300);
+  // Simulated span: check is that nothing was said, and absence has no condition to wait on
+  //   -- span has to be long enough for bar to have shown had it been going to.
+  await advance(page, 300);
 
   const said = await page.evaluate(() => {
     const bar = document.getElementById('toast');
@@ -233,7 +241,7 @@ export async function driveBackdropPlane(
   page: Page, width: number, height: number,
 ): Promise<void> {
   await clearTheGlass(page);
-  const filled = await page.evaluate(async () => {
+  const filled = await evaluateOver(page, 300 + 2 * MILLISECONDS_FRAME, async () => {
     const wait = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
     const ground = nimSceneHandles().find((one) => nimObjectLabel(one) === 'ground') ?? -1;

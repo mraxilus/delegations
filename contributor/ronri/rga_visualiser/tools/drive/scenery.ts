@@ -6,11 +6,18 @@
 //   of, frame by frame, and each part must carry count it is time for.
 
 import type { Page } from '@playwright/test';
+import { advance, advanceFrames } from './clock';
 import { settleCamera } from './camera';
 import { settleBranch } from './diagnostics';
 import { countFrames, readPhases, type Phase } from './frame';
 import { pickPlane } from './ground';
 import { report, reportWithin } from './report';
+
+/** Bound on moving frame's build, 1.5 times slowest delegate reading; see `pins`.
+ *
+ *  Readings it is set from are in `PROVENANCE.md`.
+ */
+const MILLISECONDS_MOVING_MEDIAN = 3;
 
 /** Bound scenery holds itself to: two families of lattice lines, from `mesh.LINES_GRID_MAX`. */
 const RECORDS_GRID_MAX = 2 * (2 * 120 + 1);
@@ -180,10 +187,13 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
   const from = await countFrames(page);
   await page.mouse.move(width / 2, 60);
   await page.mouse.down();
+  // One frame drawn after each move, so sample is at least forty frames on every machine,
+  //   rather than however many fit in time drag took.
   for (let i = 0; i < 40; i += 1) {
     await page.mouse.move(
       width / 2 + 350 * Math.sin(i / 6), 60 + 20 * Math.cos(i / 6), { steps: 3 },
     );
+    await advanceFrames(page, 1);
   }
   await page.mouse.up();
   await page.evaluate(() => nimSelectClear());
@@ -202,13 +212,12 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
     'the camera was really moved for the moving-frame sample',
     moving !== null, `${moving === null ? 0 : moving.n} frames sampled mid-drag`,
   );
-  // Band is what catches collapse class reader felt without timing this container. It is close
-  //   to bone on loaded shared runner: identical code has measured wide apart hours apart.
-  //   Failure just past band says to re-measure against previous commit before believing it;
-  //   failure well past it is collapse this exists for.
+  // Speed check: bound is 1.5 times slowest delegate reading; see `pins`. Failure just past it
+  //   says to re-measure against previous commit before believing it; failure well past it is
+  //   collapse this exists for.
   reportWithin(
     'a frame is still assembled inside its budget while the camera moves',
-    moving === null ? -1 : moving.median, 0, 26, 'ms',
+    moving === null ? -1 : moving.median, 0, MILLISECONDS_MOVING_MEDIAN, 'ms',
   );
 }
 
@@ -218,6 +227,8 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
  *  and its cost *is* its segment count. Slack is proportional: bracket around two halves also
  *  spans mesh clear and loop between them, and on frame scheduler interrupts that gap grows
  *  with frame rather than by fixed amount.
+ *  Up to `MISSES_ACCOUNT_MAX` frames may miss, as every accounting check allows: preemption
+ *  inside bracket and outside both halves misses one frame, and fault misses every frame.
  */
 function reportSceneryAccounts(phases: Phase[]): void {
   const offOf = (one: Phase): number => one.grid + one.axes - one.furniture;
@@ -234,8 +245,9 @@ function reportSceneryAccounts(phases: Phase[]): void {
     : drawn.reduce((a, b) => (Math.abs(offOf(b)) > Math.abs(offOf(a)) ? b : a));
   report(
     'the scenery is accounted for by the grid and the axes it is drawn from',
-    drawn.length > 3 && sane.length === drawn.length,
-    `${sane.length} of ${drawn.length} rebuilt frames account, ` +
+    drawn.length > 3 && sane.length >= drawn.length - MISSES_ACCOUNT_MAX,
+    `${sane.length} of ${drawn.length} rebuilt frames account ` +
+      `(floor ${drawn.length - MISSES_ACCOUNT_MAX}), ` +
       `${phases.length - drawn.length} laid no segment` +
       (worst === undefined ? '' :
         `, worst ${worst.grid.toFixed(1)} + ${worst.axes.toFixed(1)} of ` +
@@ -249,9 +261,9 @@ export async function driveHold(page: Page): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
   const from = await countFrames(page);
-  // Wall time, deliberately: share of frames that held over span of real time is measurement
+  // Simulated span: share of frames that held over span of page's own time is measurement
   //   here, not race waiting to be won.
-  await page.waitForTimeout(1500);
+  await advance(page, 1500);
   const still = await readPhases(page, from);
   const held = still.filter((one) => one.is_held).length;
   report(

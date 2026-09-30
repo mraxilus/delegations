@@ -110,8 +110,6 @@ export async function driveRings(page: Page): Promise<void> {
 
   await driveExperiments(page);
   await restoreRings(page, kept);
-  await driveRendered(page);
-  await driveAccounted(page);
   report(
     'a reading is the mean over the last 200 ms, not whatever the newest frame said',
     // 200 ms of 16.7 ms frames is dozen of them, and dozen alternating 1s and 9s mean 5.
@@ -157,6 +155,15 @@ async function driveExperiments(page: Page): Promise<void> {
       `${pills.width_low} -> ${pills.width_back} at ratio ${pills.ratio}, overlay ` +
       `${pills.is_overlay_off}/${pills.is_overlay_back}`,
   );
+}
+
+/** Drive checks of rings page fills from its own clock, which need real clock to read.
+ *
+ *  On simulated clock every row reads zero, and arithmetic over zeros passes whatever it is.
+ */
+export async function driveRingsTimed(page: Page): Promise<void> {
+  await driveRendered(page);
+  await driveAccounted(page);
 }
 
 /** How many timed frames this check reads, and how long it waits to be handed them.

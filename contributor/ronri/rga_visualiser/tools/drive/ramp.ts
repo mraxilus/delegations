@@ -5,6 +5,7 @@
 //   retuning ramp does not mean rewriting this.
 
 import type { Page } from '@playwright/test';
+import { waitUntil } from './clock';
 import { settleReading } from './frame';
 import { report } from './report';
 
@@ -12,7 +13,7 @@ import { report } from './report';
  *
  *  Refresh skips what is closed, so shut node's rows would be read stale.
  */
-async function openEveryBranch(page: Page): Promise<void> {
+export async function openEveryBranch(page: Page): Promise<void> {
   await page.evaluate(() => {
     const drawer = document.querySelector('.drawer');
     if (!(drawer?.classList.contains('open') ?? false)) {
@@ -27,9 +28,9 @@ async function openEveryBranch(page: Page): Promise<void> {
       (node.querySelector(':scope > .diagnostic-parent') as HTMLElement | null)?.click();
     }
   });
-  await page.waitForFunction(() => Array.from(
+  await waitUntil(page, () => Array.from(
     document.querySelectorAll('.diagnostic-node'),
-  ).every((node) => node.classList.contains('open')), null, { timeout: 8000, polling: 'raf' });
+  ).every((node) => node.classList.contains('open')), null);
   await settleReading(page);
 }
 

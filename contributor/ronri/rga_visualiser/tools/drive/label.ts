@@ -6,6 +6,7 @@
 //   and never tells page, so overlay would carry no label at all to read.
 
 import type { Page } from '@playwright/test';
+import { MILLISECONDS_FRAME, evaluateOver } from './clock';
 import {
   eyeAround, outToward, placeCamera, readPlaced, settleCamera, spanOf, type Placed,
 } from './camera';
@@ -242,7 +243,7 @@ export async function driveLabelFirstFrame(page: Page): Promise<void> {
     await page.evaluate(() => clearSelection());
     await placeCamera(page, placedAround(bearing, 0.2));
     await waitFrames(page, 2);
-    const box = await page.evaluate((one) => {
+    const box = await evaluateOver(page, 2 * MILLISECONDS_FRAME, (one) => {
       selectOnly(one, null);
       return new Promise<{ over: number } | null>((done) => requestAnimationFrame(() => {
         const text = document.querySelector('#overlay text') as SVGTextElement | null;

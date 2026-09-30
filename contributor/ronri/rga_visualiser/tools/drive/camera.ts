@@ -5,6 +5,7 @@
 //   under test is whether gesture reached rule, not whether rule is right. Suites test rule.
 
 import type { Page } from '@playwright/test';
+import { advanceFrames, waitUntil } from './clock';
 
 declare global {
   interface Window {
@@ -105,16 +106,6 @@ export function spanPivot(before: Stance, after: Stance): number {
  *  instead of racing them. Fixed sleep here was harness's commonest flake (repository issue 47).
  *  Raises where camera never stops, which is fault worth failing on rather than sleeping past.
  */
-async function afterOneFrame(page: Page): Promise<void> {
-  // Let one draw run, whatever else is waited on after.
-  //   Same shape as `frame.waitFrames`, kept local rather than imported: `frame` imports this
-  //   module, and cycle between them is worse than these three lines.
-  await page.evaluate(() => new Promise<void>((done) => {
-    requestAnimationFrame(() => { done(); });
-  }));
-}
-
-
 export async function settleCamera(page: Page): Promise<void> {
   // Let one draw run before reading anything, since that draw is what arms ease.
   //   No check moves camera itself: `nimSelectOnly` and its kin only say what is picked, and
@@ -124,9 +115,9 @@ export async function settleCamera(page: Page): Promise<void> {
   //   Without this, poll below reads that stillness as arrival: two equal stances, ease not
   //   begun, check handed camera that never moved. That is repository issue 73, and it is why
   //   `one pick -> 0.00,0.00,1.00` reads as origin rather than as wrong pivot.
-  await afterOneFrame(page);
+  await advanceFrames(page, 1);
   await page.evaluate(() => { delete window.__stance_last; });
-  await page.waitForFunction(() => {
+  await waitUntil(page, () => {
     // Ask ease whether it is still carrying, rather than inferring from stance.
     //   Stance repeating says "not moving now", which is true before ease starts as well as
     //   after it stops; tween's own state tells those two apart.
@@ -136,5 +127,5 @@ export async function settleCamera(page: Page): Promise<void> {
     window.__stance_last = now_at;
     return before !== undefined && before.length === now_at.length &&
       before.every((v, i) => Math.abs(v - (now_at[i] ?? 0)) < 1e-9);
-  }, null, { timeout: 8000, polling: 'raf' });
+  }, null);
 }

@@ -7,6 +7,7 @@
 //   Driven rather than reasoned, since what matters is what page strokes.
 
 import type { Page } from '@playwright/test';
+import { advance } from './clock';
 import { settleCamera } from './camera';
 import { waitFrames } from './frame';
 import { report, reportWithin } from './report';
@@ -93,9 +94,9 @@ export async function driveComet(page: Page): Promise<void> {
     head_first = await headOf(page, horizon);
     if (head_first === null) await waitFrames(page, 2);
   }
-  // Wall time, deliberately: how far head travels over span of real time is measurement, and
+  // Simulated span: how far head travels over span of page's own time is measurement, and
   //   pace it is checked against is pixels second.
-  await page.waitForTimeout(500);
+  await advance(page, 500);
   const head_second = await headOf(page, horizon);
 
   const travelled = head_first === null || head_second === null
