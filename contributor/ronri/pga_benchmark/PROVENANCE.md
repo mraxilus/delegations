@@ -453,6 +453,13 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 `cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
 dense form.
 
+**A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
+else. The bench entry put the harness in the measured build. On 2026-10-01 at rga6d, with the
+library fixed at `bd6b23c`, one change to `inspector.nim` moved the P01 side from 211.7 MiB to
+261.2 MiB. The pristine side stayed at 343.5 MiB, since its derivation peaks higher. At
+`3121342` the library alone peaks at 170.9 MiB against 285.8, ×0.60. Rejected: the bench entry
+with a wider bound, since the next change to the harness moves it again.
+
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
 exactly while its edits are. Evaluations measure the two
@@ -832,8 +839,9 @@ these measurements.
 
 - Evaluations time the two typed algebras unless `--thorough` asks for rga3d and cga4d too.
   The evaluations committed now measure the typed algebras only.
-- The `build` claim reads the peak memory and seconds that the compiler reports of itself.
-  It compares two builds on one machine, and is no measurement of the machine.
+- The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
+  the library alone. It compares two builds on one machine, and is no measurement of the
+  machine.
 
 - Timings come from a shared cloud container, and vary by tens of percent between runs. The
   tolerance absorbs some of that, and the rest is why timing never guards.
@@ -878,11 +886,6 @@ these measurements.
 - Whether a product whose terms all land in one slot should return a `float` from the
   emitter. At four dimensions 26 measurands stand above the byte bound for that reason
   alone.
-- Whether the P01 build claim reads the right build. At rga6d on 2026-10-01, the library
-  alone peaks at 171 MiB against 286, ×0.60. The bench entry peaks at 261 MiB against 342,
-  ×0.76, and the claim asks for ×0.70. The bench entry emits the same C on both sides, 3.0 MB
-  against 3.1 MB. The likely cause is that code generation now sets the peak of the changed
-  build, where derivation hides it on the pristine side. Unmeasured.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
