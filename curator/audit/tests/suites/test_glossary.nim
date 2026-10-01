@@ -14,22 +14,56 @@ func messages(source: string): seq[string] =
 
 suite "Glossary":
   test "minimal glossary passes, with or without terms":
-    check messages(GLOSSARY_TEXT).len == 0  # heading, description, Language, one term
-    check messages("# Empty\n\nNothing resolved yet.\n\n## Language\n").len == 0  # lazy
+    check messages(GLOSSARY_TEXT).len == 0  # heading, description, Standards, Language, term
+    check messages("# Empty\n\nNone yet.\n\n## Standards\n\n## Language\n").len == 0  # lazy
 
-  test "heading and Language section required":
-    check messages("Intro\n\n## Language\n") ==
+  test "heading and both sections required, in order":
+    check messages("Intro\n\n## Standards\n\n## Language\n") ==
       @["Glossary must open with `# <Name>` heading."]  # heading
-    check messages("# Name\n\n## Terms\n") == @["Glossary lacks `## Language` heading."]  # section
+    check messages("# Name\n\n## Terms\n") ==
+      @["Glossary lacks `## Standards` heading.", "Glossary lacks `## Language` heading."]
+    check messages("# Name\n\n## Language\n") == @["Glossary lacks `## Standards` heading."]
+    check messages("# Name\n\n## Language\n\n## Standards\n") ==
+      @["Glossary must put `## Standards` before `## Language`."]  # order
+
+  test "standards entry names standard, owner and edition before its symbols":
+    const
+      HEAD = "# N\n\n## Standards\n\n"
+      TAIL = "\n\n## Language\n"
+      GOOD = HEAD & "- **SI**, BIPM, 9th edition: `s` (Table 2)." & TAIL
+    check messages(GOOD).len == 0
+    check messages(HEAD & "- **SI**: `s`." & TAIL) ==
+      @["Standard must read `- **Name**, owner and edition: symbols`; got `- **SI**: `s`.`."]
+    check messages(HEAD & "- SI, BIPM: `s`." & TAIL).len == 1  # no bold name
+    check messages(HEAD & "None yet." & TAIL & "\n- a list\n").len == 0  # prose and list outside
+    check GOOD.standardsIn == @[(5, "SI")]  # line and name
+    check "- **SI**, BIPM, 9th edition: `s`.".isStandardLine
+    check not "- **SI** BIPM: `s`.".isStandardLine  # comma after name required
+    check not "- **SI**, BIPM".isStandardLine  # colon required
+
+  test "standard shared by projects, or repeated from root, is finding at later place":
+    const
+      SI = "- **SI**, BIPM, 9th: `s`.\n"
+      IAU = "- **IAU**, IAU, 2015: `pc`.\n"
+      ROOT = "# delegations\n\n## Standards\n\n" & SI & "\n## Language\n"
+      A = "# a\n\n## Standards\n\n" & SI & IAU & "\n## Language\n"
+      B = "# b\n\n## Standards\n\n" & IAU & "\n## Language\n"
+    let found = checkStandardsAcross(
+      [("GLOSSARY.md", ROOT), ("x/a/GLOSSARY.md", A), ("x/b/GLOSSARY.md", B)]
+    )
+    check found.mapIt((it.path, it.line)) == @[("x/a/GLOSSARY.md", 5), ("x/b/GLOSSARY.md", 5)]
+    check found[0].message.endsWith("got `SI`.")  # repeated from root
+    check found[1].message.endsWith("got `IAU`, also in `x/a/GLOSSARY.md`.")  # shared
+    check checkStandardsAcross([("GLOSSARY.md", ROOT), ("x/b/GLOSSARY.md", B)]).len == 0
 
   test "every term carries definition on next line":
-    check messages("# N\n\n## Language\n\n**Order**:\n\n**Invoice**:\nA request.\n") ==
+    const L = "# N\n\n## Standards\n\n## Language\n\n"
+    check messages(L & "**Order**:\n\n**Invoice**:\nA request.\n") ==
       @["Term lacks definition on next line; got `Order`."]  # blank after term
-    check messages("# N\n\n## Language\n\n**Order**:\n_Avoid_: Purchase\n") ==
+    check messages(L & "**Order**:\n_Avoid_: Purchase\n") ==
       @["Term lacks definition on next line; got `Order`."]  # avoid before definition
-    check messages("# N\n\n## Language\n\n**Order**:\nA placed request.\n_Avoid_: Purchase\n")
-      .len == 0  # full entry
-    check checkGlossary("g", "# N\n\n## Language\n\n**Order**:\n")[0].line == 5  # line named
+    check messages(L & "**Order**:\nA placed request.\n_Avoid_: Purchase\n").len == 0  # full entry
+    check checkGlossary("g", L & "**Order**:\n")[0].line == 7  # line named
 
   test "term line grammar":
     check "**Order**:".isTermLine and not "**Order**".isTermLine  # colon required

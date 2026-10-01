@@ -140,10 +140,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add tree.lockFindings(directories)
   var paths = initHashSet[string]()
   for e in tree: paths.incl e.path
-  var documents: seq[(string, string)]
+  var documents, glossaries: seq[(string, string)]
   for e in tree:
     if e.kind.isNone: continue
-    if e.path == "GLOSSARY.md": result.add checkGlossary(e.path, e.content)
+    if e.path == ROOT_GLOSSARY:
+      result.add checkGlossary(e.path, e.content)
+      glossaries.add (e.path, e.content)
     let rule = e.kind.get.rule
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
@@ -166,5 +168,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
         result.add checkProvenance(e.path, e.content, stamp_now)
         result.add checkCitations(e.path, e.content, directory & "/" & TESTS_DIRECTORY & "/", paths)
         result.add checkRecord(e.path, e.content)
-      if e.path == directory & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)
+      if e.path == directory & "/" & ROOT_GLOSSARY:
+        result.add checkGlossary(e.path, e.content)
+        glossaries.add (e.path, e.content)
+  result.add checkStandardsAcross(glossaries)
   result.add checkDuplicates(documents)

@@ -24,7 +24,8 @@ func provenanceText*(stamp: string): string =
 
 
 const
-  GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Language\n\n**Term**:\nOne thing.\n"
+  GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Standards\n\n## Language\n\n" &
+    "**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.
   PIN* = "2.2.4"
     ## Compiler version fixture projects pin, and driver version fixture workflow states.
