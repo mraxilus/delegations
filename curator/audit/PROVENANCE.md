@@ -1113,6 +1113,35 @@ driven check passed with 0 findings, in a real Chromium over real gestures, with
 reading its verdict. Verified by a break of it: on the compiler of koch the same command fails
 inside `pga`.
 
+## Names
+
+**Every declared name in Nim is read, and its words are held to the table and the
+glossaries.** A declaration is a binding, a routine, a type, a field or a parameter, read by a
+text scanner after comments and strings are blanked. A word is a run between underscores and
+case changes. The table pairs each coined abbreviation with its one full word, as the English
+check pairs a word with its approved one.
+
+An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
+the root or the project glossary lists it, as a symbol under `## Standards` or as a term. The
+jargon list of V.6 passes. Verified by `suites/test_names.nim`.
+
+**A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
+`importjs` or `dynlib` declares a name the library owns, so it is skipped. Its parameters are
+ours, and they are read. The pragma block may stand on its own line after the signature, and
+the scanner joins it. Found when the first run reported every OpenGL and SDL binding of
+`rga_visualiser` under V.3.
+
+- V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
+  `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
+  is held as a module-level SCREAMING name that equals a type name without case or
+  underscores.
+- A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
+  reading. An enum member is unread, and V.1 is unheld here.
+- Rejected: a parser, which costs a dependency and a compiler version; the scanner reads the
+  line forms this charter prescribes.
+- Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
+  is unread.
+
 ## Hooks
 
 **Each hook of `.claude/settings.json` calls `koch hook <event>` and holds no rule of its own.**
@@ -1153,7 +1182,9 @@ reaches CI unchecked, and CI stays the gate.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
   hook, which recompiles on each source change and costs seconds; the built binary costs
   milliseconds, and `nim r` stays as the fallback.
-- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop.
+- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop. It
+  counts a GitHub write as a post only where the call carried a body, as the `body` hook
+  does. So a label or a draft update ends no turn with a sign-off.
 - Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
   A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
   relative path then fails to open, and every hooked tool is refused, as happened once here.
