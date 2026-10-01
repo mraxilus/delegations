@@ -38,7 +38,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     s + m
 
   template scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low
-  template m: untyped = MULTIVECTORS[i]  # alias, never `let m = MULTIVECTORS[i]` in a hot loop
+  template m: untyped = MULTIVECTORS[i]  # Alias, never `let m = MULTIVECTORS[i]` in a hot loop.
   ```
 
 - Use a named `{.inline.}` func for an ordinary public façade, and not a template.
@@ -46,7 +46,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ordinary compile-time funcs. Route the emission through a shared helper that takes the
   documentation as a parameter. An undocumented generated declaration is then impossible.
 - Nest a helper used once inside the derivation that owns it. Do not promote it to module
-  scope for a reuse that you only expect.
+  scope for a reuse that you only expect. The nested helper comes first in the body of the
+  routine that owns it, after the doc and before the first stage. One blank line stands on
+  each side of it.
 - Hand a stored value out with no copy. Return `lent T` from an accessor into storage. Take
   `var T` where the callee reads a large value in place and nothing writes it. Add a comment
   that says `var` is for the copy and not for a write. A `lent` result saves the copy only
@@ -69,7 +71,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A pragma that the compiler checks is the annotation that VI.7 names, such as
   `{.raises: [].}` for no exceptions.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
-  that is not obvious at the use site (`{.borrow, compileTime, used.} # Used in cayleys.nim.`).
+  that is not obvious at the use site (`{.borrow, compileTime, used.}  # Used in cayleys.nim.`).
   Define a repeated mechanical borrow family once, through a documented template:
 
   ```nim
@@ -139,7 +141,11 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 ## 5. Signatures, imports, calls
 
-- A doc comment is `##`, so an empty slot is `## TODO: Document.` (VI.1).
+- A doc comment is `##`, so an empty slot is `## TODO: Document.` (VI.1). A doc takes one
+  position for each shape of declaration (VI.9). A type and a field take it after them on the
+  same line. A one-line routine takes it on the next line, indented to the body. A longer
+  routine takes it as the first line of the body. A `type` block takes a group doc on the
+  keyword line.
 - Group related bindings under one `const`, `let` or `var` section (X.5).
 - Write bracket imports, grouped and consolidated, each group alphabetised:
   `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
@@ -148,7 +154,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   way carries `{.used.}`, and a comment that names the sibling:
 
   ```nim
-  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
+  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in cayleys.nim.
   ```
 
 - Put commas between parameters while every type appears once (`m: Multivector, b: Basis`).
@@ -185,6 +191,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   )
   ```
 
+- A parameter with a default states its type only where the default does not fix it
+  (`as_exclusions = false`, `count: int = SAMPLES`). A field states its type always. An
+  empty-collection default is written one way in a project.
 - Use the implicit `result` for a structured accumulation. Use a bare final expression for a
   simple computed value. Use an explicit `return` only for an early exit. Never end with
   `return result`.

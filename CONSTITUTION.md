@@ -115,13 +115,13 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
 
 ```nim
 type
-  BasisDigits = distinct string  # readable ordered factors
-  BasisFlags  = distinct uint    # bitwise membership and parity
-  Basis       = enum             # dense runtime index
+  BasisDigits = distinct string  # Readable ordered factors.
+  BasisFlags  = distinct uint    # Bitwise membership and parity.
+  Basis       = enum             # Dense runtime index.
 
-const DIMENSIONS* {.define: "pga.dimensions".} = 4  # whole-module static configuration
+const DIMENSIONS* {.define: "pga.dimensions".} = 4  # Whole-module static configuration.
 
-# primitive laws -> Cayley table (plain compile-time funcs) -> emitted straight-line kernel
+# Primitive laws -> Cayley table (plain compile-time funcs) -> emitted straight-line kernel.
 defineOperator(symbols = "∧", docs = "...", cayley = CAYLEYS_WEDGE.base)
 ```
 
@@ -204,7 +204,7 @@ static:
   doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< pool.bound:  # bound, never HANDLES_MAX
+for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
 ```
 
 ## Article V: Names form an ordered system
@@ -261,6 +261,9 @@ for slot in 0 ..< pool.bound:  # bound, never HANDLES_MAX
     takes the local case. A global never shares its word with a type, because a reader, or a host
     that compares names loosely, reads `ALGEBRA` and `Algebra` as one. A qualifier keeps them
     apart (`ALGEBRA_DEFAULT`).
+11. A member of an enum is `PascalCase`, as its type is.
+12. A type parameter, or any placeholder of a generic or a concept, is one capital letter, the
+    initial of what it ranges over. Where nothing constrains it, the letter is `T`.
 
 ```nim
 BasisDigits                 # type
@@ -299,6 +302,12 @@ CAYLEYS_WEDGE               # module constant
    register from VIII.1: measured, expected or intended.
 8. Prose outside comments is Simplified Technical English, and `GUIDE.md` gives its rules. A
    comment in code keeps the telegraphic register of VI.5 instead.
+9. A doc has one position for each shape of declaration, and the expression guide of the
+   language fixes it. A reader then finds every doc where the last one was.
+10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
+    a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
+    capitalised where they open a line. An identifier, a literal or a path inside a comment
+    takes backticks, so that a reader and the checker take it as a name.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -350,7 +359,7 @@ func multiplyExterior(a, b: BasisSigned): ... =
    the spread of unchanged functions. Then confirm it on the whole (VII.5).
 
 ```nim
-template m: untyped = MULTIVECTORS[i]  # alias; `let m = MULTIVECTORS[i]` deep-copies on JS backend
+template m: untyped = MULTIVECTORS[i]  # Alias; `let m = MULTIVECTORS[i]` deep-copies on JS backend.
 
 func elements*(m: Multivector): lent array[Basis, float] = m.elements
   ## Read elements of multivector.
@@ -359,7 +368,7 @@ func elements*(m: Multivector): lent array[Basis, float] = m.elements
 
 func `∧`*(s: float; m: Multivector): Multivector {.inline, noinit.} =  # every element written
 
-if is_tallying: cost.mark = cpuTime()  # instrument runs only while report reads it
+if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads it.
 ```
 
 ## Article VIII: The notebook is honest
@@ -451,10 +460,14 @@ suite "Chapter 2":
    for one member and plural for several. A first-tier banner takes three blank lines before
    it, and a second-tier banner takes two. Either one takes one blank line after it, but a
    second-tier banner that follows its parent at once keeps its own two.
-   - Undocumented one-line helpers of one group stack with no blank line.
+   - Undocumented one-line helpers of one group stack with no blank line, and so do the
+     declarative calls of one family, whatever their length. One blank line separates two
+     families.
    - Documented one-line definitions take one, and so do siblings inside a second-tier section
      and a declaration block (`type`, `const`) that follows another.
    - Every other definition takes two.
+   - In a test file, a suite is a first tier and a test a second. Each takes the blank lines of
+     its tier: three before a suite, two before a test.
 3. A call stays on its own line where it fits, and otherwise takes one argument to a line. A
    signature may first wrap its parameters onto one line of their own. Otherwise it takes one
    parameter, or one group of a shared type, to a line. One item to a line takes a trailing
@@ -464,7 +477,8 @@ suite "Chapter 2":
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
    signal, and not a forced split. Keep a unified derivation intact where a split would hide
-   the shape of the data, and say so in a comment.
+   the shape of the data, and say so in a comment. A condition that mixes `and` with `or`, or
+   applies `not` to a binary expression, is parenthesised.
 5. Group related constants and bindings under one keyword, dependent bindings included, where the
    language allows it. Two or more consecutive single bindings always share one keyword.
    Destructure where one expression yields the values together, or where a parallel pair fits one
@@ -487,6 +501,17 @@ suite "Chapter 2":
    needs none. The split is a preference of the Architect rather than a finding, so taste
    decides, and the record says so. Merge faces by codepoint range where none covers
    everything, then render each codepoint against `.notdef` to verify the coverage.
+9. A trailing comment takes two spaces before its marker, a citation among them. A binary
+   operator, the range operator included, takes one space on each side. A prefix operator is
+   glued to its operand. A space inside an expression exists only where the tokeniser demands
+   it.
+10. A list that the language gives no order of its own is alphabetised, as the imports are.
+    That covers exports, pragmas and attributes, and a list of flags.
+11. Definitions that exist under one configuration sit together in one conditional block inside
+    their section. The configurations come in one fixed order across the project. Inside a
+    routine, a nested helper comes first, after the doc.
+12. A parameter with a default states its type only where the default does not fix it, and a
+    field states its type always.
 
 ```nim
 defineOperator(
