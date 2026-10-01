@@ -1137,7 +1137,7 @@ lines along the world axes, which coincide with the axes.
 where they run one way, at a sine under 0.001, and stand under 1 unit apart. That is a tenth of the
 least cell. A line cut into pieces faded apart lays several records on one line. That fault read
 26.1 ms of moving grid at 300, against a bound of 26 ms. Cut in two, it lays 482 records on 242
-lines there, under the cap of 482 that `driveSceneryBound` holds.
+lines there, which the cap of 482 in `driveSceneryBound` allows.
 
 **The furniture hold keys on the revisions of the scene and of the selection too**
 (`SettingsFurniture`), so a pick or an edit rebuilds the lattice. Both are plain counters.
