@@ -297,9 +297,9 @@ place, under Settings:
   `fix` ladder into one subject, which is the evidence `check-commits` exists to create.
 - Under Settings, General, delete the head branch after a merge.
 
-The ledger reads the protection of `main` daily and reports drift from this list. It reads only
-where the secret `ADMIN_TOKEN` holds a token with the administration scope, because the token
-of a run lacks it. Store one under Settings, Secrets, or the ledger reads nothing and says so.
+The ledger reads the rulesets of `main` and of every branch daily, with the merge settings, and
+reports drift from this list. It needs no second token, because the rulesets and the settings
+answer the metadata scope that every run carries. A read that fails turns the run red.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
