@@ -166,9 +166,10 @@ This section adds only what differs for a curator.
    Order it this way. Open the pull request of the check as a draft, with the findings it
    reports. Open a review-finding issue on each project that it reddens, and quote them. That
    project fixes on its own branch, and the check merges after. Never grandfather a finding
-   into the check, and never fix the project yourself. Such a branch is red by design, so no
-   green run records a tree for the `pre-push` hook. Push it with `--no-verify`, once, and say
-   so in the pull request.
+   into the check, and never fix the project yourself.
+
+   Such a branch is red by design, so no green run records a tree for the `pre-push` hook.
+   Push it with `--no-verify`, once, and say so in the pull request.
 
 4. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test in
    `curator/audit/tests/`, before the fix. A suite takes the name of the article that it
