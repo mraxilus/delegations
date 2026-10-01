@@ -303,6 +303,37 @@ suite "Marker":
       check UNIT_RING_BANDS[i].sin_angle =~ sin(angle)
 
 
+  test "a marker reads a fixed few points out of the algebra, never one for each sample":
+    # Fault: plane's circle read each of its 64 samples back out of algebra, after two
+    #   wedges and two sums apiece. Its time was 2.7 times repair's, which load can match
+    #   (`PROVENANCE.md`, speed bounds); count reads same on every machine.
+    # Each kind's most is what its shape reads once, whatever its sample count.
+    #   Rails read each rail's base and both far ends, in each of two layouts, and line's
+    #   label reads two ends more. Bands read their two centres. Ring, loop and frame step
+    #   off fixed tables.
+    const lut_reads_most_by_kind: array[MarkerKind, int] = [
+      MarkerKind.Ring: 0, MarkerKind.Rails: 14, MarkerKind.Loop: 0, MarkerKind.Bands: 2,
+      MarkerKind.Frame: 0,
+    ]
+    let (placement, view_projection, scale) = setUp()
+    var kinds_shaped: set[MarkerKind]
+    # Pulse rides outline already shaped, so marker reads same with one and without.
+    for geometry in [point_a, line, plane, line_horizon, plane_horizon]:
+      for travel in [none(float), some(0.3*LENGTH_MARKER_COMET)]:
+        var
+          marker: Marker
+          is_shaped = false
+        let count = countPointsRead:
+          is_shaped = markerFor(
+            geometry, none(Position), RADIUS_OBJECT_DEFAULT, scale, placement,
+            view_projection, width_mark, height_mark, marker, travel = travel,
+          )
+        check is_shaped
+        kinds_shaped.incl marker.kind
+        check count <= lut_reads_most_by_kind[marker.kind]
+    check kinds_shaped == {MarkerKind.low .. MarkerKind.high}
+
+
   test "a plane's marker circle clears the drawn rim by the shared gap":
     let (placement, _, scale) = setUp()
     let

@@ -1086,6 +1086,11 @@ proc nimRenderLineWidths(): seq[float32] {.exportc.} =
 proc nimPointCorners(): seq[float32] {.exportc.} = pointCorners()
   ## Report point quad's static corner buffer; see `mesh.pointCorners`.
 
+proc nimRateFrameLeast(): cfloat {.exportc.} = cfloat(RATE_FRAME_LEAST)
+  ## Report least workable frame rate, per second, which page's plots floor at.
+  ##   Desktop reads same constant, so neither front-end states it twice.
+
+
 proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)
   ## Report lit point's night-side brightness, for point fragment shader's uniform.
 

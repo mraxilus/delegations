@@ -41,7 +41,7 @@ import pga
 import ./gui
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, message, orrery, picking,
-  tessellate, scene, selection, wording,
+  tessellate, scene, selection, timings, wording,
 ]
 
 
@@ -137,9 +137,10 @@ const
     ##   Red, green, blue, no alpha, since every cell is opaque.
   INK_POOL_FREE = Ink.Grid
     ## Draw free object-pool handle in palette's recessive furniture colour.
-  FRAMES_HISTORY* {.define: "visualiser.frames_history".} = 240
+  FRAMES_HISTORY* {.define: "visualiser.frames_history".} = 480
     ## Bound how many recent per-frame timings live diagnostics graph keeps.
-    ##   Few seconds, long enough to see stutter land and scroll off.
+    ##   Four seconds at `timings.RATE_FRAME_LEAST`, long enough to see stutter land and
+    ##   scroll off. Page's sparkline holds same count.
 
 
 
@@ -1059,7 +1060,8 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
   ## Lay out "frame time" section.
   ##   Rolling frame-time plot, vsync toggle, current rate, tessellation cost.
   gui.separatorText(wordingText(NameDiagnosticsFrame))
-  var highest = 16.6'f32 # Floor range at 60 fps, so smooth run does not zoom in on noise.
+  # Floor range at least workable rate, so smooth run does not zoom in on noise.
+  var highest = float32(1000.0/RATE_FRAME_LEAST)
   for value in panel.milliseconds_history:
     if value > highest: highest = value
   var overlay: array[WIDTH_OVERLAY_TEXT, char]

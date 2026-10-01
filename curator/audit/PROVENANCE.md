@@ -669,11 +669,10 @@ daily and writes one issue labelled `curator`. It names these:
 The settings read goes through the rulesets endpoints. The classic protection endpoint answers
 nothing where the rules are rulesets, so the ledger reads the rules per branch with the token of
 a run. That token lacks the administration scope, so GitHub leaves the bypass actors out, and
-the secret `ADMIN_TOKEN` reads them. An anonymous read sees them too, but runners share
-addresses and the anonymous limit is sixty per hour. Both tokens miss the repository merge
-settings, so the ledger reads the merge methods the ruleset allows, and the head branch deletion
-is unread. A read that fails turns the run red, because a silent read is the failure the ledger
-exists to catch.
+the secret `TOKEN_DELEGATE` reads them. An anonymous read sees them too, but runners share
+addresses and the anonymous limit is sixty per hour. The run token and a fine-grained token
+miss the repository merge settings, so `TOKEN_DELEGATE` is a classic token and reads them. A read
+that fails turns the run red, because a silent read is the failure the ledger exists to catch.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
 rather than search, and the label as a hardcoded literal. Its schedule idiom is the one in
@@ -1218,6 +1217,13 @@ steps call, rather than what they might. A workflow that declares no block is le
 because to take the default of the repository is somebody's decision rather than drift. Cost:
 the marks are text, so a step that reaches the same endpoint by another spelling goes unseen.
 That is a floor rather than a ceiling, and the module says so.
+
+A workflow may hand `gh` a token other than the run token, a stored secret or one minted in a
+step. That token reaches by its own grant, which no block sets, so the `gh` marks are skipped
+and a checkout still wants `contents`. The `draft` workflow is the case: GitHub refuses
+`convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a classic
+token converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run
+token.
 
 - Verified by `suites/test_workflows.nim`. Verified by a break of it: delete `actions: read` from
   `watch.yml`, and `koch check-files` reports it by name and by what was granted. Restore it, and 0
