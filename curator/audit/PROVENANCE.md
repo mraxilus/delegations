@@ -664,8 +664,11 @@ daily and writes one issue labelled `curator`. It names these:
 - a `Closes #N` that never fired;
 - an issue or pull request that opens with no role line, or carries no label;
 - an issue whose title takes the form of a commit subject;
-- the protection of `main` drifted from the settings `CURATOR.md` lists, where the secret
-  `ADMIN_TOKEN` holds a token with the administration scope, and nothing otherwise.
+- the rulesets of `main`, the ruleset on every branch, or the merge settings drifted from the
+  list in `CURATOR.md`. The rulesets endpoints answer the metadata scope that every run carries,
+  so no second token is stored. The classic protection endpoint answers nothing where the rules
+  are rulesets, so the ledger reads the rulesets endpoints. A read that fails turns the run red,
+  because a silent read is the failure the ledger exists to catch.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
 rather than search, and the label as a hardcoded literal. Its schedule idiom is the one in
