@@ -130,6 +130,9 @@ suite "Hooks":
   test "push and commit message":
     check checkPush("abc\n", "abc").len == 0
     check checkPush("abc", "def").messages[0].contains("exact commit")
+    check markPath("/repo", ".git") == "/repo/.git/koch-check"
+    check markPath("/repo/wt", "/repo/.git/worktrees/wt") ==
+      "/repo/.git/worktrees/wt/koch-check"  # worktree's own dir, where `.git` is file
     check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", []).len == 0
     check checkMessage(BRANCH, "Add gaps", []).len == 1  # not conventional
     check checkMessage(BRANCH, "Merge branch 'main' into " & BRANCH, []).len == 0  # git's own
