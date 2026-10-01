@@ -195,6 +195,11 @@ proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
   else: testSet(tree.projectDirectories, changedPaths(options.root, options.baseOrDefault))
 
 
+proc markFile(root: string): string =
+  ## Read path of check mark, in git dir git names for this checkout.
+  markPath(root, gitFields(root, ["rev-parse", "--git-dir"])[0].strip)
+
+
 proc refuse(found: seq[Finding], code: int): int =
   ## Print findings to stderr for hook host, and return code; zero findings return 0.
   if found.len == 0: return 0
@@ -261,7 +266,8 @@ proc runHook(root, event, input: string): int =
     )
     0
   of "push":
-    let recorded = if fileExists(root / CHECK_MARK): readFile(root / CHECK_MARK) else: ""
+    let mark = root.markFile
+    let recorded = if fileExists(mark): readFile(mark) else: ""
     var found: seq[Finding]
     for line in input.splitLines:
       let fields = line.splitWhitespace
@@ -307,7 +313,7 @@ proc run(options: Options): int =
     if found.len == 0:
       if gitFields(options.root, ["status", "--porcelain"]).len == 0:
         writeFile(
-          options.root / CHECK_MARK, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0]
+          options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0]
         )
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."

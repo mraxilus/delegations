@@ -19,7 +19,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, sequtils, strutils]
+import std/[json, options, os, sequtils, strutils]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 
 
@@ -55,8 +55,9 @@ const
     ## Opening of subject git writes for merge commit.
   PULL_HEADINGS* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
-  CHECK_MARK* = ".git/koch-check"
-    ## File `koch check` writes tree hash it passed on, which `pre-push` reads.
+  CHECK_MARK* = "koch-check"
+    ## File in git dir where `koch check` writes tree hash it passed on, which `pre-push`
+    ##   reads; `markPath` places it.
   ROLE_WORD = "Role:"
     ## Word after bold marker in sign-off role line.
 
@@ -287,6 +288,14 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       if text.startsWith(label): text = text[label.len .. ^1].strip
     prose.add text
   result.add englishFindings("sign-off", prose.join("\n"))
+
+
+func markPath*(root, git_directory: string): string =
+  ## Place check mark in git directory, as `git rev-parse --git-dir` names it from root.
+  ##   Literal `.git/` fails in worktree, where `.git` is file naming directory under main
+  ##     checkout's `.git/worktrees/`. Git names directory relative in main checkout and
+  ##     absolute in worktree; either way each checkout holds own mark, since each has own HEAD.
+  (if git_directory.isAbsolute: git_directory else: root / git_directory) / CHECK_MARK
 
 
 func checkPush*(recorded, pushed_tree: string): seq[Finding] =
