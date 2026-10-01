@@ -1,6 +1,6 @@
 // Checks for mouse pan and what zoom settles onto; not Nim because they drag real buttons
 //   through Playwright, whose API exists only in node.
-//   Pan grabs level and keeps its height; zoom brings pivot down onto what is under
+//   Pan holds depth it grabbed under pointer; zoom brings pivot down onto what is under
 //   pointer. Suites reach neither: nothing in them has button or wheel.
 
 import type { Page } from '@playwright/test';
@@ -91,7 +91,12 @@ export async function driveLook(page: Page): Promise<void> {
   await settleHome(page);
 }
 
-/** Drive right-button pan, and assert it keeps pivot on its level. */
+/** Drive right-button pan, and assert it slides across sight and holds pivot under cursor.
+ *
+ *  Press comes down on nothing, so pan holds pivot's depth, and pivot slides as far as one
+ *  pixel there spans, for each pixel dragged. Suite holds grab at any depth by projection;
+ *  this holds page's wiring of it: press takes grab, and step reads canvas height.
+ */
 export async function drivePan(page: Page): Promise<void> {
   // Clear glass first, or this measures section swallowing press: drag below starts where
   //   drawer stands once open, and drawer opens on left.
@@ -108,7 +113,6 @@ export async function drivePan(page: Page): Promise<void> {
   const after = await readCamera(page);
 
   // Nothing is selected on opening page, so right drag strafes along camera's own axes.
-  //   Grab of level under pointer went with plane it read.
   const across = slideOf(before, after);
   report(
     'a right-button drag strafes across the sight line, and turns nothing',
@@ -118,6 +122,21 @@ export async function drivePan(page: Page): Promise<void> {
       Math.abs(after.distance - before.distance) < 1e-6,
     `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}, ` +
       `${across.toFixed(3)} of it across the sight line`,
+  );
+  // Fault: rate of fixed share of separation for each pixel ran 1.74 times cursor at 900 px.
+  const lens = await page.evaluate(() => ({
+    degrees: nimCameraFov(),
+    height: document.getElementById('gl')?.clientHeight ?? 0,
+  }));
+  const per_pixel =
+    (2 * before.distance * Math.tan((lens.degrees * Math.PI) / 360)) / lens.height;
+  const dragged = Math.hypot(360 - 160, 470 - 170);
+  const carried = spanOf(before.pivot, after.pivot) / per_pixel;
+  report(
+    'and it carries the pivot with the cursor, one for one',
+    Math.abs(carried / dragged - 1) < 0.01,
+    `pivot carried ${carried.toFixed(1)} px at its own depth, for a cursor moved ` +
+      `${dragged.toFixed(1)} px`,
   );
 }
 

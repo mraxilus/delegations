@@ -998,26 +998,26 @@ suite "Camera":
       check answered.get[1] =~ expected_head
 
 
-  test "a right drag strafes along the camera's own axes in free flight":
-    # Grab of level under pointer stood here, and camera stands on no plane now, so there
-    #   was nothing left to take hold of. Rate was already this verb's fallback wherever
-    #   that ray missed.
+  test "a right drag in free flight carries the point at the pivot's depth under the pointer":
+    # Fault: rate stood here, fraction of separation for each pixel, which matched cursor
+    #   at one canvas height alone and ran 1.74 times it on 900 px at 45 degrees.
     const (wide, tall) = (1440, 900)
     var camera = cameraAround(Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 8, y: 14, z: 7))
-    let (eye_start, axes) = (camera.eye, camera.frame)
     let
+      (eye, axes) = camera.sight
       before = ScreenPosition(x: 700.0, y: 560.0)
       after = ScreenPosition(x: 940.0, y: 660.0)
+      # Heading carries unit depth along sight, so point stands at pivot's depth exactly.
+      held = eye + camera.distance*camera.headingThrough(axes, wide, tall, before)
     camera.panAcross(before, after, wide, tall, has_selection = false)
-    # Step lies wholly in plane of camera's own across and up: sight gains nothing.
-    let step = camera.eye - eye_start
-    check abs(dot(step, axes.forward)) < TOLERANCE_TEST
-    # Drag right carries eye left, so what is under pointer travels with it.
-    check dot(step, axes.axis_right) < 0.0
-    # Drag down carries eye up, on same reading.
-    check dot(step, axes.axis_up) > 0.0
-    # Scaled by separation, and nothing turns.
-    check abs(dot(step, axes.axis_right)) =~ FRACTION_PAN_PIXEL*19.0*240.0
+    let seen = projectToScreen(
+      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
+    )
+    check seen.isInFront
+    check abs(seen.x - after.x) < 0.01
+    check abs(seen.y - after.y) < 0.01
+    # Slide is square to sight, and nothing turns.
+    check abs(dot(camera.eye - eye, axes.forward)) < TOLERANCE_TEST*camera.distance
     check camera.frame.forward =~ axes.forward
     check camera.distance =~ 19.0
 
