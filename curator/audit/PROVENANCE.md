@@ -1222,8 +1222,9 @@ That is a floor rather than a ceiling, and the module says so.
 A workflow may hand `gh` a token other than the run token, a stored secret or one minted in a
 step. That token reaches by its own grant, which no block sets, so the `gh` marks are skipped
 and a checkout still wants `contents`. The `draft` workflow is the case: GitHub refuses
-`convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a GitHub App
-converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run token.
+`convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a classic
+token converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run
+token.
 
 - Verified by `suites/test_workflows.nim`. Verified by a break of it: delete `actions: read` from
   `watch.yml`, and `koch check-files` reports it by name and by what was granted. Restore it, and 0
