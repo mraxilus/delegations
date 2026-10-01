@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 09790e8743064dec |
+| Rules   | 975d13539da58e5f |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this project.
