@@ -1177,13 +1177,15 @@ The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Ve
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
 
 **The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
-writes the tree hash it passed on into `.git/koch-check` when the working tree is clean, and
-`pre-push` refuses a push whose tree differs. `commit-msg` runs the commit check over the new
-subject and the ladder before the commit lands. A merge commit passes it, because git writes
-that subject and the commit check excludes merges. Both are two-line shell wrappers that call
-`hooks.sh`, because git runs a hook as an executable and a binary is never committed. A clone
-reads them once the start hook sets `core.hooksPath`, so any other tool reaches CI unchecked,
-and CI stays the gate.
+writes the tree hash it passed on into `koch-check` in the git directory when the working tree
+is clean. `pre-push` refuses a push whose tree differs. The git directory is the one that
+`git rev-parse --git-dir` names, so a worktree, whose `.git` is a file, keeps its own mark.
+
+`commit-msg` runs the commit check over the new subject and the ladder before the commit
+lands. A merge commit passes it, because git writes that subject and the commit check excludes
+merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs a hook as an
+executable and a binary is never committed. A clone reads them once the start hook sets
+`core.hooksPath`, so any other tool reaches CI unchecked, and CI stays the gate.
 
 - A hook reaches only Claude Code, and only where it holds this repository alone, because a
   checkout of several repositories reads no project settings.
