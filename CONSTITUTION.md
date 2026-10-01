@@ -366,7 +366,7 @@ func elements*(m: Multivector): lent array[Basis, float] = m.elements
   ##   `lent` saves copy only when read inline; `let e = m.elements` copies again (read in
   ##   emitted JS).
 
-func `∧`*(s: float; m: Multivector): Multivector {.inline, noinit.} =  # every element written
+func `∧`*(s: float, m: Multivector): Multivector {.inline, noinit.} =  # Every element written.
 
 if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads it.
 ```

@@ -242,7 +242,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   that `lent` iterators serve:
 
   ```nim
-  iterator randMultivectors(count = SAMPLES):
+  iterator randomMultivectors(count = SAMPLES):
       (lent Multivector, lent Multivector, lent Multivector) = ...
   ```
 
@@ -254,7 +254,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   test "Equation 2.87-89":
     when IS_CONFORMAL: skip()  # TODO: Enable when conformal dot product fixed.
     else:
-      for 𝐦, _, _ in randMultivectors():
+      for 𝐦, _, _ in randomMultivectors():
         check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
   ```
 

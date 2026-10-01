@@ -173,7 +173,7 @@ cost falls names the convention again.
 ```nim
 test "Equation 2.99":
   var passed = 0
-  for 𝐦, 𝐧, _ in randMultivectors():
+  for 𝐦, 𝐧, _ in randomMultivectors():
     if 𝐦.grade.isNone or 𝐧.grade.isNone: continue
     if 𝐦.grade.get + 𝐧.grade.get != Grade.high: continue
     inc passed
@@ -181,10 +181,10 @@ test "Equation 2.99":
   check passed >= SAMPLES_FLOOR
 ```
 
-Changed from `tests/suites.nim`: the counter and the floor are the form that IX.3 asks for, and
-the reference has only the guards. The guards pass between one sample in eight and one in five,
-by dimension. Without the floor, a guard that rejects every sample leaves a test that passes
-with no evidence.
+Changed from `tests/suites.nim`. The iterator takes its full word by V.6. The counter and the
+floor are the form that IX.3 asks for, where the reference has only the guards. The guards pass
+between one sample in eight and one in five, by dimension. Without the floor, a guard that rejects
+every sample leaves a test that passes with no evidence.
 
 ## X.2: Two tiers of banner
 
@@ -194,7 +194,7 @@ with no evidence.
 
 #[[ Wedge ]]#
 
-func `∧`*(s: float; m: Multivector): Multivector {.inline, noinit.} =
+func `∧`*(s: float, m: Multivector): Multivector {.inline, noinit.} =
 ```
 
 Changed from `operators.nim`: the reference writes the second tier as `#[ Wedge ]#`, and X.2
