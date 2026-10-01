@@ -9,8 +9,13 @@
 ##     `Pruned` row naming commit before last prune; its form is checked here and its existence
 ##     by koch against file's own log, since git is outside pure check.
 ##
+##   Count: number before `files`, `suites`, `checks` or `tests` in prose is finding, since
+##     count goes stale by next commit and nothing reads it again (provenance guide). Fenced
+##     code and code spans are skipped, so command and its output may quote count.
+##
 ##   Cost: rules are line forms, never Markdown parse: heading inside HTML comment counts,
 ##     and front matter is not skipped; governed record carries neither.
+##   Cost: count spelled in words passes; reading holds it.
 
 {.experimental: "strictFuncs".}
 
@@ -36,6 +41,8 @@ const
     ##     clear.
     ##   Cost: whole-file prune is asked later, so long record may grow further before anyone
     ##     prunes it; section ceiling still catches narration inside it.
+  COUNTED* = ["checks", "files", "suites", "tests"]
+    ## Plurals whose number in prose is count that goes stale (provenance guide).
   OPEN_QUESTIONS* = "## Open questions"
     ## Heading of section that must come last; matched without case.
   PRUNED* = "Pruned"
@@ -151,9 +158,31 @@ func checkPrunedRow(path, source: string): seq[Finding] =
     )
 
 
+func checkCounts*(path, source: string): seq[Finding] =
+  ## Report number written before counted plural in prose, code spans and fences skipped.
+  let lines = source.fencedOut.splitLines
+  for i, line in lines:
+    var
+      prose = ""
+      is_span = false
+    for c in line:
+      if c == '`': is_span = not is_span
+      elif not is_span: prose.add c
+    let words = prose.splitWhitespace
+    for k in 0 ..< words.len - 1:
+      let next = words[k + 1].strip(chars = {',', '.', ';', ':', ')'})
+      if words[k].allCharsInSet({'0'..'9'}) and next in COUNTED:
+        result.add finding(
+          path, i + 1,
+          "Count is never number in prose; name command that counts (provenance guide); got `" &
+            words[k] & " " & next & "`.",
+        )
+
+
 func checkRecord*(path, source: string): seq[Finding] =
   ## Run every body-shape check over one record.
   result = checkHeadings(path, source)
+  result.add checkCounts(path, source)
   result.add checkLength(path, source)
   result.add checkSections(path, source)
   result.add checkPrunedRow(path, source)
