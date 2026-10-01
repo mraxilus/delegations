@@ -64,6 +64,7 @@ type
     ## Define one tool call of turn, as transcript records it.
     name*: string     ## Tool name, such as `Bash` or `mcp__github__issue_write`.
     command*: string  ## Bash command text; empty for other tools.
+    has_body*: bool   ## Input carried `body`, so GitHub write posted text.
 
   Turn* = object
     ## Define what transcript says about turn since last message of person.
@@ -325,7 +326,7 @@ func startContext*(branch, contributor, carried_heading: string, drift: seq[Find
 func turnWrites*(calls: openArray[Call]): bool =
   ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write tool.
   for c in calls:
-    if c.name in WRITE_TOOLS: return true
+    if isPost(c.name, c.has_body): return true
     if c.name == "Bash" and c.command.gitCommands.anyIt(it.len > 0 and it[0] == "push"):
       return true
   false
@@ -359,7 +360,8 @@ proc parseTurn*(transcript: string): Turn =
       case item{"type"}.getStr
       of "tool_use":
         result.calls.add Call(
-          name: item{"name"}.getStr, command: item{"input", "command"}.getStr
+          name: item{"name"}.getStr, command: item{"input", "command"}.getStr,
+          has_body: item{"input", "body"} != nil,
         )
       of "text": text.add item{"text"}.getStr
       else: discard
