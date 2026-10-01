@@ -12,7 +12,8 @@
 @font-face { font-family: "Noto Serif"; font-weight: 600;
   src: url(@EMBED:noto-serif-latin-600-normal.woff2@) format("woff2"); }
 @font-face { font-family: "Commit Mono"; font-weight: 400;
-  src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
+  src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2");
+  unicode-range: U+0000-2604, U+2606-10FFFF; }
 @font-face { font-family: "Noto Sans Math"; font-weight: 400;
   src: url(@EMBED:noto-sans-math-math-400-normal.woff2@) format("woff2"); }
 @font-face { font-family: "Noto Sans Symbols 2"; font-weight: 400;
@@ -167,6 +168,7 @@ details.row > summary:hover, details.row[open] > summary { background: var(--hov
   grid-template-columns: minmax(0, 1fr); }
 
 .table { overflow-x: auto; }
+.prose td code { white-space: nowrap; }
 table { border-collapse: collapse; font-size: 0.84rem; }
 caption { text-align: left; color: var(--muted); padding-bottom: 6px; }
 th, td { padding: 4px 10px; text-align: left; border-bottom: 1px solid var(--rule);
@@ -203,6 +205,11 @@ pre.code .ln { display: inline-block; width: 3.2em; color: var(--muted); user-se
 ul.tasks { list-style: none; padding-left: 0; }
 ul.tasks li::before { content: "☐ "; } ul.tasks li.done::before { content: "☑ "; }
 pre.formula { background: var(--code); border-radius: 6px; padding: 12px 14px; overflow-x: auto; }
+figure.figure { margin: 0; display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); }
+.figure-art { overflow-x: auto; }
+.figure-art svg { display: block; width: 100%; min-width: 640px; max-width: 880px;
+  height: auto; }
+figure.figure figcaption { color: var(--muted); font-size: 0.86rem; }
 
 body:not(:has(#typed:checked)) .typed-only { display: none; }
 body:has(#typed:checked) .typed-off { display: none; }

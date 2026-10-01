@@ -5,6 +5,9 @@ and the complement permutation. Four rules derive every other table, and each ru
 same way everywhere. This proposal is that end state of `pga/cayleys.nim`, with the operators and
 suites that read it.
 
+![Derivation map. The three accented tables are written by hand, and each arrow is one rule.
+Every anti side is `constructAnti` of its base, by the complement.](../../pages/derivation-map.svg)
+
 ## Four rules
 
 | Rule | Tables it builds |
@@ -33,27 +36,39 @@ only.
 
 ## Transwedge
 
-The build keeps one transwedge family, for ⟑ alone; ⟇ is its conjugate. Order k sums, over the
-bases 𝐜 of grade k, the wedge of 𝐚 and 𝐛 with 𝐜 stripped from each.
+The build keeps one transwedge family, for ⟑ alone; ⟇ is its conjugate. Order k sums one term
+for each basis 𝐜 of grade k. The term strips 𝐜 from 𝐚 by its complement and from 𝐛 by its
+dual, and then joins the two results.
 
 The transwedge has 32 variants. Three choices matter: which product strips, which dual strips
 𝐛, and whether the two complements are on opposed sides. Chirality changes nothing at any of
 five algebras, and grade order against antigrade order is a relabel. So eight families stay at
 even dimension, and four at odd dimension, where the complements are equal.
 
-| # | Strips | Dual | Complements | Order 0 | Equal grades | Order gr 𝐚 | Signed sum |
-|---|--------|------|-------------|---------|--------------|------------|------------|
-| 1 | ∨ | ★ | opposed | ∧ | ∙ | 𝐛 ∨ 𝐚★ | ⟑ |
-| 2 | ∨ | ★ | same side | ∧ | ∙, signs differ | 𝐚★ ∨ 𝐛 | ⟑, antigrade sign |
-| 3 | ∨ | ☆ | opposed | 0 | weight on 𝟏 | 𝐛 ∨ 𝐚☆ | no unit |
-| 4 | ∨ | ☆ | same side | 0 | weight, signs differ | 𝐚☆ ∨ 𝐛 | no unit |
-| 5 | ∧ | ☆ | opposed | ∨ | ∘ | 𝐛 ∧ 𝐚☆ | ⟇ |
-| 6 | ∧ | ☆ | same side | ∨ | ∘, signs differ | 𝐚☆ ∧ 𝐛 | ⟇, grade sign |
-| 7 | ∧ | ★ | opposed | 0 | bulk on 𝟙 | 𝐛 ∧ 𝐚★ | no unit |
-| 8 | ∧ | ★ | same side | 0 | bulk, signs differ | 𝐚★ ∧ 𝐛 | no unit |
+Below, 𝐜̱ is the left complement of 𝐜 and 𝐜̄ is its right complement. The library takes ★ and ☆
+by the right complement, so 𝐜̱ is the opposed side. Each pair of rows differs in that choice
+alone.
 
-Rows 5 to 8 count order by antigrade. Order 0 is zero under the rigid metric only. Under the
-conformal metric 𝔾 = −𝐆, so family 3 is −1 and family 7 is −5.
+**Strip by ∨, join by ∧, order by grade.**
+
+| # | Term for each 𝐜 | Order 0 | Equal grades | Order gr 𝐚 | Signed sum |
+|---|-----------------|---------|--------------|------------|------------|
+| 1 | `(𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)` | ∧ | ∙ | 𝐛 ∨ 𝐚★ | ⟑, built |
+| 2 | `(𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)` | ∧ | ∙, signs differ | 𝐚★ ∨ 𝐛 | ⟑, antigrade sign |
+| 3 | `(𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜☆)` | 0 | weight on 𝟏 | 𝐛 ∨ 𝐚☆ | no unit |
+| 4 | `(𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜☆)` | 0 | weight, signs differ | 𝐚☆ ∨ 𝐛 | no unit |
+
+**Strip by ∧, join by ∨, order by antigrade.**
+
+| # | Term for each 𝐜 | Order 0 | Equal grades | Order antigrade 𝐚 | Signed sum |
+|---|-----------------|---------|--------------|-------------------|------------|
+| 5 | `(𝐜̱ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)` | ∨ | ∘ | 𝐛 ∧ 𝐚☆ | ⟇, by conjugate |
+| 6 | `(𝐜̄ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜☆)` | ∨ | ∘, signs differ | 𝐚☆ ∧ 𝐛 | ⟇, grade sign |
+| 7 | `(𝐜̱ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜★)` | 0 | bulk on 𝟙 | 𝐛 ∧ 𝐚★ | no unit |
+| 8 | `(𝐜̄ ∧ 𝐚) ∨ (𝐛 ∧ 𝐜★)` | 0 | bulk, signs differ | 𝐚★ ∧ 𝐛 | no unit |
+
+Order 0 is zero under the rigid metric only. Under the conformal metric 𝔾 = −𝐆, so family 3 is
+−1 and family 7 is −5.
 
 Family 1 alone gives wedge, dot, geometric product and bulk contraction, so the build keeps it.
 The other products are cheaper as maps or conjugates. The identity at order gr 𝐚 stays as a

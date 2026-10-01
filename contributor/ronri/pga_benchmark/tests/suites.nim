@@ -16,7 +16,7 @@ import ../src/pga_benchmark/[
   notes,
   report,
 ]
-import ../src/pga_benchmark/pages/[docket, shell, evaluation]
+import ../src/pga_benchmark/pages/[docket, shell, evaluation, proposal]
 import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
   algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
@@ -1100,6 +1100,45 @@ suite "Evaluations":
     check editsDigest([one], claims, @[]) == editsDigest([reworded], claims, @[])  # prose
     check editsDigest([one], claims, @[]) != editsDigest([one], %*[], @[])  # claims
     check editsDigest([one], claims, @["a"]) != editsDigest([one], claims, @["b"])  # program
+
+
+suite "Figures":
+  test "figure is one image alone, path resolved against proposal's directory":
+    let
+      node = Block(kind: BlockKind.Paragraph, line: 3,
+        lines: @["![Map. Each arrow is one", "rule.](../../pages/map.svg)"])
+      figure = node.figureOf("proposals/01-cayley-derivation")
+      inline = Block(kind: BlockKind.Paragraph, lines: @["See ![map](map.svg) here."])
+    check figure.isSome and figure.get.path == "pages/map.svg"  # `..` folded
+    check figure.get.caption == "Map. Each arrow is one rule." and figure.get.line == 3  # joined
+    check inline.figureOf("proposals/01-p").isNone  # image inside sentence stays text
+
+  test "proposal page embeds SVG figure names, with caption beneath":
+    let
+      node = Block(kind: BlockKind.Paragraph, lines: @["![Map.](../../pages/map.svg)"])
+      record = Proposal(number: 1, name: "p", directory: "proposals/01-p", title: "P",
+        body: @[node], claims: newJArray())
+      figures = {"pages/map.svg": "<svg id=\"m\"></svg>"}.toTable
+      body = proposalBody(record, nil, initTable[string, string](), figures,
+        initTable[string, JsonNode](), Spread(), "bd6b23c590d7", "")
+      bare = proposalBody(record, nil, initTable[string, string](), initTable[string, string](),
+        initTable[string, JsonNode](), Spread(), "bd6b23c590d7", "")
+    check "<div class=\"figure-art\"><svg id=\"m\"></svg></div><figcaption>Map.</figcaption>" in
+      body  # SVG whole, caption beneath
+    check "<figure" notin bare and "Map." in bare  # absent file renders as text
+
+  test "P01 figure names committed map that shows every rule of P01":
+    const
+      ARGUMENT = staticRead("../proposals/01-cayley-derivation/proposal.md")
+      MAP = staticRead("../pages/derivation-map.svg")
+    let
+      (record, _) = parseProposal(ARGUMENT, "", %*{"status": "proposed", "claims": []},
+        "proposals/01-cayley-derivation")
+      paths = record.body.mapIt(it.figureOf(record.directory)).filterIt(it.isSome).mapIt(
+        it.get.path)
+    check paths == @["pages/derivation-map.svg"]  # one figure, file staticRead found
+    for rule in ["constructAnti", "applyMap", "applyConstant", "filterGrades", "signed sum"]:
+      check rule in MAP  # each of four rules marks its arrow or box
 
 
 suite "Cells":
