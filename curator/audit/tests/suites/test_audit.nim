@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, unittest]
-import ../../src/[audit, provenance]
+import ../../src/[audit, idioms, provenance]
 import ./fixtures
 
 
@@ -36,6 +36,7 @@ suite "Audit":
     check "lacks definition" in undefined.auditTree[0].message  # same check projects get
 
   test "form and prose findings reach umbrella":
-    let messy = goodTree() & @[entry(ALPHA_DIRECTORY & "/src/x.nim", "# the trap \n")]
+    let messy =
+      goodTree() & @[entry(ALPHA_DIRECTORY & "/src/x.nim", "# the trap \n\n" & STRICT_FUNCS & "\n")]
     check messy.auditTree.mapIt(it.message) ==
       @["Line ends with whitespace.", "Comment holds article; got `the`."]  # both checks ran

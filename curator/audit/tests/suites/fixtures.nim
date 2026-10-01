@@ -8,7 +8,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, osproc, strutils, tempfiles]
-import ../../src/[domains, kinds, markdown, layout, provenance, dependencies]
+import ../../src/[dependencies, domains, idioms, kinds, layout, markdown, provenance]
 
 
 func entry*(path, content: string): Entry =
@@ -74,7 +74,9 @@ func projectEntries*(directory: string, stamp: string): seq[Entry] =
     entry(directory & "/PROVENANCE.md", provenanceText(stamp)),
     entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
     entry(directory & "/" & directory.projectName & NIMBLE_EXT, NIMBLE_TEXT),
-    entry(directory & "/tests/tall.nim", "## Test everything.\n\ndiscard\n"),
+    entry(
+      directory & "/tests/tall.nim", "## Test everything.\n\n" & STRICT_FUNCS & "\n\ndiscard\n"
+    ),
   ]
 
 
@@ -89,7 +91,7 @@ func goodTree*(): Tree =
       "GLOSSARY.md", "# Fixture\n\nWords.\n\n## Standards\n\n## Language\n\n**Term**:\nOne thing.\n"
     ),
     entry("CURATOR.md", "# Curator\n\nDuties.\n"),
-    entry("koch.nim", "## Drive checks.\n\ndiscard\n"),
+    entry("koch.nim", "## Drive checks.\n\n" & STRICT_FUNCS & "\n\ndiscard\n"),
     entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),
     entry(".gitignore", "# Build products.\nbin/\n"),
     entry(".gitattributes", "# Endings.\n* text=auto eol=lf\n"),

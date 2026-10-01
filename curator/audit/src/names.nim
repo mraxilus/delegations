@@ -122,7 +122,7 @@ func codeOnly*(source: string): string =
     inc i
 
 
-func indentOf(line: string): int =
+func indentOf*(line: string): int =
   ## Count leading spaces.
   for c in line:
     if c != ' ': return
