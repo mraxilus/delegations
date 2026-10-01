@@ -51,6 +51,7 @@ jobs:
           REPO: ${{ github.repository }}
           MARKER: '<!-- ledger:unchecked -->'
           SINCE_DAYS: '14'
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
           set -euo pipefail
           found=''
@@ -136,13 +137,15 @@ jobs:
           [ -z "$unlabelled_prs" ] || found="$found$unlabelled_prs"$'\n'
 
           # Repository settings Architect applies (CURATOR.md). Repository holds them as rulesets,
-          #   and rulesets endpoints answer metadata scope every run token carries, so no second
-          #   token is stored. Classic protection endpoint answers nothing where rules are
-          #   rulesets. Probe branch need not exist: endpoint answers for name as given. Read
-          #   that fails is red run rather than silence, by `set -e`.
+          #   and classic protection endpoint answers nothing where rules are rulesets. Rules per
+          #   branch answer run token. Bypass actors and merge settings do not: run token is
+          #   installation token without administration scope, and GitHub leaves those fields
+          #   out of its answers. Anonymous read sees them, but runners share addresses and
+          #   anonymous limit is sixty per hour, so `ADMIN_TOKEN` reads them. Probe branch need
+          #   not exist: endpoint answers for name as given. Read that fails is red run rather
+          #   than silence, by `set -e` on each assignment.
           rules="$(gh api "repos/$REPO/rules/branches/main")"
           probe="$(gh api "repos/$REPO/rules/branches/ledger-probe")"
-          settings="$(gh api "repos/$REPO")"
           ids="$(echo "$rules" | jq -r '[.[].ruleset_id] | unique | map(tostring) | join(" ")')"
           echo "Settings read: $(echo "$rules" | jq length) rules on main from rulesets $ids," \
             "$(echo "$probe" | jq length) on probe branch."
@@ -166,15 +169,22 @@ jobs:
           echo "$rules" | jq -e 'all(.[] | select(.type == "pull_request");
               .parameters.required_approving_review_count == 0)' >/dev/null ||
             found="$found- A ruleset requires an approval, which stops every merge"$'\n'
-          for id in $ids; do
-            gh api "repos/$REPO/rulesets/$id" | jq -e '.bypass_actors == []' >/dev/null ||
-              found="$found- Ruleset $id lets someone bypass it"$'\n'
-          done
-          echo "$settings" | jq -e '.allow_merge_commit and (.allow_squash_merge | not)
-              and (.allow_rebase_merge | not)' >/dev/null ||
-            found="$found- Settings allow a merge other than the merge commit"$'\n'
-          echo "$settings" | jq -e '.delete_branch_on_merge' >/dev/null ||
-            found="$found- Settings keep the head branch after a merge"$'\n'
+          if [ -n "${ADMIN_TOKEN:-}" ]; then
+            for id in $ids; do
+              ruleset="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO/rulesets/$id")"
+              echo "$ruleset" | jq -e '.bypass_actors == []' >/dev/null ||
+                found="$found- Ruleset $id lets someone bypass it"$'\n'
+            done
+            settings="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO")"
+            echo "$settings" | jq -e '.allow_merge_commit and (.allow_squash_merge | not)
+                and (.allow_rebase_merge | not)' >/dev/null ||
+              found="$found- Settings allow a merge other than the merge commit"$'\n'
+            echo "$settings" | jq -e '.delete_branch_on_merge' >/dev/null ||
+              found="$found- Settings keep the head branch after a merge"$'\n'
+          else
+            found="$found- No \`ADMIN_TOKEN\` is stored, so bypass actors and merge settings"
+            found="$found are unread"$'\n'
+          fi
 
           if [ -z "$found" ]; then
             echo "Nothing to report."
@@ -189,9 +199,9 @@ jobs:
           note="Closing and readiness rules stay on CONTRIBUTOR.md's carried list: each has half"
           note="$note GitHub does not record, and that half is still carried by hand. Role and"
           note="$note label left it, since the body hook reads each post before it lands; this"
-          note="$note reads what arrived from elsewhere. Settings are read from the rulesets and"
-          note="$note the repository, as the run token sees them. Lines above are only what runner"
-          note="$note can see."
+          note="$note reads what arrived from elsewhere. The run token reads the rules, and"
+          note="$note ADMIN_TOKEN reads the bypass actors and the merge settings. Lines above are"
+          note="$note only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away
