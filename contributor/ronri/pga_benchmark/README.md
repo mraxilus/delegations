@@ -103,7 +103,7 @@ tests/                             suites, and the testament stubs that run them
 
 ## Status
 
-Measured on the pinned compiler and on library head `bd6b23c`, which is the pin. The library
+Measured on the pinned compiler and on library head `3121342`, which is the pin. The library
 stands above both lower bounds; `gaps.md` counts the gaps, and the docket shows each one.
 Unreviewed by a human. See `PROVENANCE.md` for the figures, and for what each subsystem was
 checked against.
