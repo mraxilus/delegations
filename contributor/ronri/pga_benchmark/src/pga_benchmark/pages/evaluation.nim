@@ -2,6 +2,9 @@
 ##   Both pages show proposed change against pin, so both render it one way: suites beside
 ##     pin's own, functions whose counts moved, times of measurands those functions serve, and
 ##     edits as quote and replacement at line quote stands on at pin.
+##   Every edit renders closed: its summary names file and line at pin, then signatures of
+##     routines, tests and suites edit defines, else of one it sits in at pin, so reader sees
+##     what changes before reading how. Body, pragmas and comments leave signature.
 ##   Spread is read from evaluations themselves: evaluation that changes no library function
 ##     moves no count, so range of its time ratios is range of machine, and page states it
 ##     beside figures it qualifies.
@@ -11,7 +14,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, strutils, tables]
+import std/[algorithm, json, options, sequtils, strutils, tables]
 
 import ../[changes, markdown]
 import ./shell
@@ -189,20 +192,149 @@ func nanTable*(evaluation: JsonNode): string =
 
 
 func editsHtml*(change: Change, files: Table[string, string]): string =
-  ## Render each edit: file and line at pin, quote then replacement; whole file collapsed.
+  ## Render each edit closed: summary names where it lands and signatures it defines or sits
+  ##   in; opening it shows quote then replacement, or whole file.
+  const DECLARATIONS = ["func ", "proc ", "iterator ", "template ", "macro ", "method ",
+    "converter ", "suite ", "test "]
+    ## Words opening declaration whose signature summary shows.
+
+  func indentOf(line: string): int =
+    ## Count spaces line opens with.
+    line.len - line.strip(trailing = false).len
+
+  func isDeclaration(line: string): bool =
+    ## Tell whether line opens routine, test or suite.
+    let stripped = line.strip(trailing = false)
+    DECLARATIONS.anyIt(stripped.startsWith(it))
+
+  func signature(lines: openArray[string]; first: int): (string, int) =
+    ## Read declaration opening at `first`, continued while its brackets stay open; drop body,
+    ##   pragmas and comment, and fold whitespace. Return signature and last line read.
+
+    func depthAfter(text: string; depth: int): int =
+      ## Count brackets left open after text, outside strings and backticks.
+      result = depth
+      var quoted, ticked = false
+      for c in text:
+        if c == '"' and not ticked: quoted = not quoted
+        elif c == '`' and not quoted: ticked = not ticked
+        elif quoted or ticked: continue
+        elif c in {'(', '[', '{'}: inc result
+        elif c in {')', ']', '}'}: dec result
+
+    var
+      text = lines[first].strip
+      depth = depthAfter(text, 0)
+      last = first
+    while depth > 0 and last + 1 < lines.len:
+      inc last
+      text.add " " & lines[last].strip
+      depth = depthAfter(lines[last], depth)
+    var
+      cut = text.len
+      level = 0
+      quoted, ticked = false
+    for index, c in text:
+      if c == '"' and not ticked: quoted = not quoted
+      elif c == '`' and not quoted: ticked = not ticked
+      elif quoted or ticked: continue
+      elif c in {'(', '[', '{'}: inc level
+      elif c in {')', ']', '}'}: dec level
+      elif level == 0 and c == '#':
+        cut = index
+        break
+      elif level == 0 and c == '=' and index > 0 and text[index - 1] == ' ' and
+          (index + 1 == text.len or text[index + 1] == ' '):
+        cut = index
+        break
+    var clean = text[0 ..< cut]
+    while "{." in clean and ".}" in clean:
+      let
+        opening = clean.find("{.")
+        closing = clean.find(".}", opening)
+      if closing < 0: break
+      clean = clean[0 ..< opening] & clean[closing + 2 .. ^1]
+    clean = clean.splitWhitespace.join(" ").replace("( ", "(").replace(" )", ")")
+      .replace(";)", ")").replace(",)", ")")
+    (clean.strip(chars = {' ', ':'}), last)
+
+  func declared(text: string): seq[string] =
+    ## Read signature of each declaration text holds, less those nested in another.
+    let lines = text.splitLines
+    var
+      index = 0
+      open_at = -1
+    while index < lines.len:
+      let line = lines[index]
+      if line.strip.len > 0 and open_at >= 0 and line.indentOf <= open_at: open_at = -1
+      if line.isDeclaration and open_at < 0:
+        let (found, last) = signature(lines, index)
+        result.add found
+        open_at = line.indentOf
+        index = last
+      inc index
+
+  func enclosing(source, quote: string; at: int): Option[string] =
+    ## Read signature of declaration that line `at` of source sits in; none at top level.
+    if at <= 0: return none(string)
+    let lines = source.splitLines
+    var level = high(int)
+    for line in quote.splitLines:
+      if line.strip.len > 0:
+        level = line.indentOf
+        break
+    var index = at - 2
+    while index >= 0 and level > 0:
+      let line = lines[index]
+      if line.strip.len > 0 and not line.strip.startsWith("#") and line.indentOf < level:
+        if line.isDeclaration: return some(signature(lines, index)[0])
+        if line.strip[0] in {')', ']', '}'}:
+          # Header closing at its own indent, as `): untyped =`; its opening line is next above
+          #   at same indent.
+          var opening = index - 1
+          while opening >= 0 and
+              (lines[opening].strip.len == 0 or lines[opening].indentOf > line.indentOf):
+            dec opening
+          if opening >= 0 and lines[opening].isDeclaration:
+            return some(signature(lines, opening)[0])
+        level = line.indentOf
+      dec index
+    none(string)
+
+  func signaturesHtml(label: string; signatures: openArray[string]): string =
+    ## Render signatures under label; empty where none.
+    if signatures.len == 0: return ""
+    result = "<span class=\"signatures\"><span class=\"label\">" & label & "</span>"
+    for found in signatures: result.add code(found)
+    result.add "</span>"
+
   for edit in change.edits:
     if edit.digest.len > 0:
       let lines = edit.replacement.count('\n')
-      result.add "<details class=\"edit\"><summary>replaces " & code(edit.path) & " whole, " &
-        $lines & " lines, written against digest " & code(edit.digest) & "</summary>" &
+      result.add "<details class=\"edit\"><summary><span class=\"where\">replaces " &
+        code(edit.path) & " whole, " & $lines & " lines, written against digest " &
+        code(edit.digest) & "</span>" & signaturesHtml("defines", declared(edit.replacement)) &
+        "</summary>" &
         renderFence(edit.replacement.strip(leading = false).splitLines, "nim", 1) & "</details>"
       continue
-    let at = if edit.path in files: files[edit.path].lineOf(edit.quote) else: 0
-    let where = if at > 0: edit.path & ":" & $at else: edit.path  # quote gone from pin
-    result.add "<div class=\"edit\"><p class=\"where\">" & code(where) &
-      "</p><div class=\"pair\"><div><p class=\"label\">at pin</p>" &
+    let
+      source = files.getOrDefault(edit.path)
+      at = if source.len > 0: source.lineOf(edit.quote) else: 0
+      where = if at > 0: edit.path & ":" & $at else: edit.path  # quote gone from pin
+      count_quote = edit.quote.strip(leading = false).splitLines.len
+      count_replacement = edit.replacement.strip(leading = false).splitLines.len
+      defined = declared(edit.replacement)
+      context =
+        if defined.len > 0: signaturesHtml("defines", defined)
+        else:
+          let inside = enclosing(source, edit.quote, at)
+          if inside.isSome: signaturesHtml("inside", [inside.get]) else: ""
+    result.add "<details class=\"edit\"><summary><span class=\"where\">" & code(where) &
+      " · replaces " & $count_quote & (if count_quote == 1: " line" else: " lines") & " with " &
+      $count_replacement & "</span>" & context &
+      "</summary><div class=\"pair\"><div><p class=\"label\">at pin</p>" &
       renderFence(edit.quote.splitLines, "nim", at) & "</div><div><p class=\"label\">" &
-      "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></div>"
+      "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></details>"
 
 
 func spreadText*(spread: Spread): string =
