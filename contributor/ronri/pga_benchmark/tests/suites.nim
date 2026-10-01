@@ -1147,7 +1147,7 @@ suite "Cells":
     check wedge["E1,E2"] == %*[{"to": "E12", "neg": false}]  # 𝐞₁ ∧ 𝐞₂ = 𝐞₁₂
     check wedge["E2,E1"] == %*[{"to": "E12", "neg": true}]  # antisymmetric
     check not wedge.hasKey("E1,E1")  # vector wedge itself vanishes
-    check cells(CAYLEY_ATTITUDE).len > 0  # 1D table of `Option` cells reads too
+    check cells(CAYLEY_ATTITUDE).len > 0  # 1D table reads too
 
 
 suite "Pages":

@@ -220,8 +220,10 @@ const
     ##   and ease settle before verdict reads camera.
     ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
     ##   set of nineteen checks runs in about twenty seconds under software GL.
-  SECONDS_FRAME_DRIVEN* = 1.0/60.0
+  SECONDS_FRAME_DRIVEN* = 1.0/RATE_FRAME_LEAST
     ## Advance scripted run's clock by this much for each frame drawn, whatever machine takes.
+    ##   One frame at `timings.RATE_FRAME_LEAST`, so scripted run shows what reader at that
+    ##   floor sees.
     ##   Animations, held keys and camera ease all read that clock, so what scripted frame shows
     ##   is same on every machine, and verdict with it: slow machine takes longer to draw same
     ##   frames. Speed is measured by `--timings`, which keeps real clock.

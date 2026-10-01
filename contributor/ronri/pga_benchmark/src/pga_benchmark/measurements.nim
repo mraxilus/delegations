@@ -11,7 +11,9 @@
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
 ##     (Article VII.4); driver runs plain build for timings and instrumented one for counts.
 ##   Dense form runs beside library on general measurand, from same pools, and never on typed
-##     one; reference runs on typed measurand alone.
+##     one; reference runs on typed measurand alone. Build under
+##     `-d:pga_benchmark.has_dense_forms=false` neither imports nor times dense forms, since they
+##     read tables by name at pin and change may rename them; evaluation builds so.
 ##
 ##   Cost: measurements arrays hold one entry per measurand per implementation; sink is float.
 ##   Cost: pairing slot i with slot (7i + 3) mod OBJECTS costs integer ops in both.
@@ -22,7 +24,13 @@ import std/[algorithm, macros, math, monotimes, strutils, times]
 
 import pga
 
-import ./[catalogue, dense, kinds, pools, widening]
+import ./[catalogue, kinds, pools, widening]
+
+
+const HAS_DENSE_FORMS* {.booldefine: "pga_benchmark.has_dense_forms".} = true
+  ## Whether build emits and times dense forms; evaluation compares library with pin alone.
+
+when HAS_DENSE_FORMS: import ./dense
 
 
 type
@@ -136,7 +144,7 @@ macro emitMeasurand(
     of Implementation.Library: measurand.expression
     of Implementation.Reference: measurand.reference
     of Implementation.Dense:
-      if measurand.reference.len > 0: ""
+      if not HAS_DENSE_FORMS or measurand.reference.len > 0: ""
       elif measurand.arity == 2: measurand.denseNameOf & "(m, n)"
       else: measurand.denseNameOf & "(m)"
   if expression.len == 0:

@@ -21,9 +21,9 @@ Each anti side is the conjugate of its base side, so the anti side needs no seco
 construction. Two constructors stay direct: `constructReverse`, and `constructParts`. The weight
 part is the conjugate of the bulk part under the rigid metric only.
 
-A cell of `Cayley1D` is `seq[BasisSigned]`, not `Option`. One cell shape then serves both table
-orders, and a map of several terms needs no second path. The cost is heap use at compile time
-only.
+A cell of `Cayley1D` is `seq[BasisSigned]` at pin, and the emitter reads its first term alone.
+This proposal reads every term, so a map of several terms needs no second path. The cost is heap
+use at compile time only.
 
 ## Why
 
@@ -94,7 +94,7 @@ operators give some 1 900 tables, or about 1.7 GB of front-end memory at 6D. So 
 | Dot from equal-grade transwedge cells | Built, equal; needs transwedge for what filter gives |
 | Dot as scalar part of ⟑ | Checked; equal only up to (−1)^(k(k−1)/2) |
 | Blade products by bit operations | Weighed; second generator, against three tables |
-| `Option` cells in `Cayley1D` | Library at pin; two cell shapes, and no sum of terms |
+| `Option` cells in `Cayley1D` | Library before `3121342`; two cell shapes, and no sum of terms |
 | Shared operand as table operation | Built; drops cross cells, since it is binding, `as_unary` |
 | Separate `CAYLEYS_NORM_SQUARED` | Library at pin; equal to dot, cell for cell |
 

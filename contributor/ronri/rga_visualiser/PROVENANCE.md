@@ -343,6 +343,9 @@ clock.** On the simulated clock every timing row reads zero, and arithmetic over
 `driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than
 spans of time. Their size is then the same on every machine, and only the figures move with speed.
 
+**The heap row reads `NaN` on the simulated page**, because the clock stands in for `performance`.
+So `driveHeapUnit` reads that row on the second page too.
+
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.**
 Runners and delegates meet it, and each fault that a bound pins reads over it. Delegate readings are
 from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to 2026-09-30, alone and in the
@@ -368,6 +371,12 @@ The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the 
 figure that is 1.8 ms at least, over the bound. The moving grid fault reads over its bound by 0.1 ms
 only. A check with no fault reading pins a budget rather than a repair.
 
+**A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
+every machine, so load never moves it. The marker suite counts the points that each marker reads
+out of the algebra (Selection and markers). `driveGround` counts the lines that the records of the
+lattice lie on (Geometry and drawing). Each bound stays at 1.5 times, so a slowdown that no count
+names still fails. Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
+
 The slowest delegate reads 1.7 to 4.3 times the runner, by a factor that changes with the check. The
 hover pick reads 17 times, because its runner reading is one 100 µs tick of the clock of the page. A
 regression that stays under a bound on the runner shows first on a delegate, which runs the gate
@@ -388,6 +397,12 @@ page read the anchor at 7.0 to 14.5 µs. The marker read 0.74 to 2.1 ms, over it
 the 10, and every other speed check stayed inside its bound. The gate runs projects one at a time,
 so no gate run puts that load beside the drive. A delegate that shares its cores with other tenants
 can still.
+
+**A delegate can read a speed check over its bound with no fault present.** On 2026-10-01, nine
+measured pages on a fresh delegate read the marker at 0.72 to 2.64 ms and the grid at 6.4 to 22.3.
+Six pages ran the read tally of `boundary`, and three ran the build without it, over the same
+range. The 2.64 ms was the first page after a build. The counts hold each fault whatever the clock
+reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
@@ -754,13 +769,15 @@ math holds 1,773 of the 1,952 wanted. It costs about 2.5 MB fetched into `build/
 `stb_truetype` reads uncompressed faces.
 
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
-1/60 s, whatever the machine takes, and the opening scene is born at zero. Animations, held keys
-and camera ease read that clock, so a scripted frame shows the same thing on every machine.
-`--timings` keeps the real clock, since speed is what it measures.
+1/120 s, whatever the machine takes, and the opening scene is born at zero. That is one frame at
+the least workable rate (Diagnostics). Animations, held keys and camera ease read that clock, so a
+scripted frame shows the same thing on every machine. `--timings` keeps the real clock, since speed
+is what it measures.
 
 **No default favours a silent pass.** A scripted run supplies `FRAMES_DRIVEN` where the caller
 gave no frame bound, because the loop ends only on one. Every scripted run ends in its verdict,
-and there is no second flag to ask for it.
+and there is no second flag to ask for it. Its 400 frames are 3.3 s of the scripted clock, and
+every drive reaches its verdict inside them.
 
 **What `driven` costs, on this container, on 4 cores and software GL.** Cold, with neither
 checkout present and nothing built, it costs **1 m 27 s**. Warm, it costs **29.3 s**, because a
@@ -770,10 +787,42 @@ against one run. Repository issue 79 weighs that against the rest of the job.
 
 *Checked.* Verified by a run. Every scripted run passes under Xvfb on software GL, from a tree that
 carries neither checkout and with no SDL3 anywhere on the machine. A second run kept the prefix and
-rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0432, elevation 0.6871 and distance
-18.1420 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
+rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation 0.5045 and distance
+18.5660 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb answers
 `Driven runs failed; got 1 -- drive-drag`, with exit 1.
+
+## Diagnostics
+
+**The least workable frame rate is 120 per second, and the goal above it is as fast as the
+machine allows.** The Architect sets that floor (repository issue 346). `timings.RATE_FRAME_LEAST`
+states it once, and the page reads it through `nimRateFrameLeast`. A scripted desktop run steps
+its clock one frame at that rate. The frame-time plot of the window and the sparkline of the page
+floor their range at 8.3 ms. A smooth run then does not zoom in on noise.
+
+**The plots and the curve hold spans of time, sized at the floor.** The plot of each front-end
+holds 480 frames, which is four seconds at 120 per second. The exceedance curve holds 2,048, about
+seventeen seconds. A machine faster than the floor fills each in less time.
+
+**The marks of the curve are 240, 120, 60, 30, 15, 10, 5 and 1 per second, and they bound its
+colour bands.** A frame under 4.2 ms is fast, under 8.3 ms good, under 16.7 ms fair, and slower is
+poor. The 120 mark wears good, because a frame inside it meets the floor. The 240 mark names a frame
+twice as fast, and nothing is held to it (`GLOSSARY.md`, Mark). Rejected: 120 as fast and 60 as
+good, which names a rate under the floor good.
+
+**A mark gives way where its labels would cover a slower mark.** The marks are walked slowest first,
+so the one nearer the floor keeps its place. On an axis of 90 ms, the 240 line stood 17 px from the
+120 line, and its labels covered that line. The curve keeps its bands, since the list sets them,
+and not what is drawn.
+
+*Checked.* Verified by driven check:
+
+- four marks on a fast window, each named as a rate and as a duration;
+- on a window of 0 to 88.3 ms, the 15 fps mark drawn, and the 240 mark given way to the 120 mark;
+- three of the four band colours on a mixed window, since its feed holds no frame under 4.2 ms.
+
+Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
+render: the curve of the page and the plot of the window, before and after, in the pull request.
 
 ## Render paths
 
@@ -889,6 +938,12 @@ desktop entry point holds three instances:
 | permanent | `CAPACITY_ARENA_PERMANENT` 160 MiB | pixel readback, every GIF frame | never |
 | frame | `CAPACITY_ARENA_FRAME` 64 MiB | one PNG's scanlines, one GIF frame's scratch | per unit |
 | swap pair | `CAPACITY_ARENA_SWAP` 256 KiB × 2 | the draw loop's `DrawScratch` | per frame |
+
+**Every byte count that a reader sees is in KiB and MiB, as IEC 80000-13 names them.** Each one
+divides by 1024 or by 1048576. That holds for the memory rows and the pool line of the window, and
+for the heap row of the page. A `KB` or `MB` there reads as thousands, which the count is not. The
+pool line puts its figure for each handle on a line of its own. The longer unit then stays inside
+the panel at a full pool.
 
 The storyboard run sizes the permanent capacity from its own `arena.used + bytes_needed`, and
 not from a round number. The **swap pair** reclaims on the way *in*. What one frame assembled
@@ -1112,6 +1167,12 @@ scene ribbons share one buffer. `addLattice` lays one record for each line, insi
 the fog leaves on the plane (`radiusOnPlaneFor`). A lattice through the world origin skips its two
 lines along the world axes, which coincide with the axes.
 
+**`driveGround` counts the lines that the uploaded records lie on.** Two records lie on one line
+where they run one way, at a sine under 0.001, and stand under 1 unit apart. That is a tenth of the
+least cell. A line cut into pieces faded apart lays several records on one line. That fault read
+26.1 ms of moving grid at 300, against a bound of 26 ms. Cut in two, it lays 482 records on 242
+lines there, which the cap of 482 in `driveSceneryBound` allows.
+
 **The furniture hold keys on the revisions of the scene and of the selection too**
 (`SettingsFurniture`), so a pick or an edit rebuilds the lattice. Both are plain counters.
 
@@ -1126,8 +1187,9 @@ family. It is **spent on the cell, and not on the reach**: `sizeCellGridFor` ste
 was measuring against. The first step is at 1,200 units of reach.
 
 To cut the *reach* instead leaves a camera past 1,200 units with the lattice stopping short.
-`driveGround` selects the scene's first plane. In Chromium on 2026-09-26 it counts 6,112, 2,032,
-992, 784 and 2,032 lattice vertices at orbit distance 300, 1,000, 5,000, 40,000 and 10⁶.
+`driveGround` selects the scene's first plane. In Chromium on 2026-10-01 it counts 382 records at
+orbit distance 300, and 127 at 1,000. It counts 62, 49 and 127 at 5,000, 40,000 and 10⁶, each on a
+line of its own.
 
 `addLattice` dims the lattice by `ALPHA_GRID` at 0.75, and 0.55 read as absent. **The world axes
 are reference**: they fade and cut off on the schedule of the lattice itself, so all the furniture
@@ -1162,6 +1224,7 @@ Verified by driven check:
 - the plane pick from either side, with a canvas sweep for a pixel that picks the plane it built;
 - the scale bar's length against its label at 19 and 4,000 units, layered under the open drawer;
 - no lattice with nothing selected, and a selected plane ruled at every distance from 19 to 10⁶;
+- one record for each lattice line at each of those distances, 382 on 382 at 300;
 - forty-eight hover samples across the disc of Jupiter, which find nothing deeper;
 - the upper half of a wide disc brighter than its lower half on the page, which is world-up on
   screen from the opening camera.
@@ -1717,6 +1780,13 @@ two vanishing points of a line. The cut that the panel reports is by kind of wor
 proc. `tessellate` takes its scratch as a parameter. The desktop hands it swap arena memory, and
 the browser hands it a fixed buffer.
 
+**`pointFrom` tallies each read while a reader counts them.** `countPointsRead` opens the gate
+`IS_COUNTING_POINTS_READ`, and only the suite opens it. Closed, a read costs one load and one branch
+in the emitted JS. The tally is a write that `strictFuncs` counts as an effect, so a
+`cast(noSideEffect)` covers that write alone. Rejected: `pointFrom` as a `proc`, which makes every
+`func` that reads a point a `proc` too. Rejected: a build flag, since an instrument is gated on its
+reader (STYLE.md).
+
 **There is no debug layer, and nobody is to reintroduce it without an instruction.** A switch that
 drew every multivector a frame computed, as what it is, never helped to resolve anything.
 
@@ -1843,6 +1913,12 @@ out from the drawn size. A ring of a point then hugs a wide disc and a dot alike
 `OFFSET_MARKER_RAIL` is `WIDTH_LINE_OBJECT`/2 plus the gap, which is 7.25 px. `WIDTH_MARKER` is
 1.5 px, asserted thinner than the line that it marks.
 
+**A marker reads a fixed few points out of the algebra, and never one for each sample.** A loop and
+a band step their samples off `UNIT_RING_LOOP` and `UNIT_RING_BANDS` through `onCircleAt`. The suite
+holds each point of a loop to its multivector sum. Rails read 14 points: the base and both far ends
+of each rail, in each of two layouts, and two ends for the label. Bands read their two centres, and
+a ring, a loop and a frame read none. A loop that sums its 64 samples reads 64, and its count fails.
+
 Each render path strokes the markers in its foreground layer, and never as scene geometry. A loop on
 a plane would z-fight its fill, and a marker that the object can occlude is not a marker. It is not
 an outline in the style of 3D modelling, and nobody is to reintroduce that without an instruction.
@@ -1946,6 +2022,34 @@ over `SECONDS_SWELL_SHRINK` 0.15 s once the finger lifts.
 `isHoldSpent` is stated against `swellHold`, rather than against the duration a second time. A
 subtraction of two large timestamps measured 0.14999999999997 against 0.15.
 
+*Checked.* Verified by `suites.nim`:
+
+- the points of the loop on the plane (1.1e-15 on the antiscalar);
+- each kind reading at most its fixed points out of the algebra, with a pulse and without;
+- the straightness of the rails, and their widest reading over an orientation sweep;
+- the 68 points of the frame at 296.8 px flat at half progress;
+- a matured hold taken once;
+- a line's label over two orbits of 1,257 steps each, with no isolated step;
+- the push of that label turning at most 0.017 in one step, against the 0.05 its law allows;
+- a plane's label over one such orbit, with no hop where its sampled top hops 29 times;
+- two more orbits: the label of the horizon line on the leftmost band point in the left half;
+- the label of the frame on its left edge at its foot;
+- the label of a plane a milliradian either side of the flip, standing under a pixel apart.
+
+Verified by driven check:
+
+- 402 frames with 0 label hops;
+- 96 frames at phone width, the eye still where it was placed, with 0 side swaps and none right;
+- the label of the horizon line whole in its first frame at phone width, at four bearings;
+- the label box of the frame in its corner above the scale bar;
+- a 720-step orbit with the rail gap changing at most 0.103 px between frames;
+- two crossing planes selected changing 15,668 canvas pixels, against a noise floor of 0 pixels.
+
+Verified on the desktop: the pure-ink pixels of the selected line are 2,626 with the second pass,
+against 1,106 with the tail.
+
+## Marker pulse
+
 **Orientation is a pulse that travels round the selection marker.** There is no normal shaft,
 which marked every plane permanently to answer a question that a reader asks about one object.
 `markerFor` runs a lit run of `SEGMENTS_MARKER_PULSE` 16 points, spanning `LENGTH_MARKER_COMET`
@@ -1970,33 +2074,11 @@ ran 156 px/s along a rail against 348 round a circle. A gap longer than `SECONDS
 The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag band
 swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
-*Checked.* Verified by `suites.nim`:
-
-- the points of the loop on the plane (1.1e-15 on the antiscalar);
-- the straightness of the rails, and their widest reading over an orientation sweep;
-- the 68 points of the frame at 296.8 px flat at half progress;
-- the head sitting its carried travel at 45 placements;
-- a matured hold taken once;
-- a line's label over two orbits of 1,257 steps each, with no isolated step;
-- the push of that label turning at most 0.017 in one step, against the 0.05 its law allows;
-- a plane's label over one such orbit, with no hop where its sampled top hops 29 times;
-- two more orbits: the label of the horizon line on the leftmost band point in the left half;
-- the label of the frame on its left edge at its foot;
-- the label of a plane a milliradian either side of the flip, standing under a pixel apart.
-
-Verified by driven check:
-
-- 402 frames with 0 label hops;
-- 96 frames at phone width, the eye still where it was placed, with 0 side swaps and none right;
-- the label of the horizon line whole in its first frame at phone width, at four bearings;
-- the label box of the frame in its corner above the scale bar;
-- a 720-step orbit with the rail gap changing at most 0.103 px between frames;
-- two crossing planes selected changing 15,668 canvas pixels, against a noise floor of 0 pixels.
+*Checked.* Verified by `suites.nim`: the head sitting its carried travel at 45 placements.
 
 Verified on the shipped browser: the advance of the comet at 62.4 to 63.3 px/s across four orbit
 rates. The residual at faster rates is **not explained** to the standard that the medians are. A
-tenth of frames step 236 to 388 px/s at laps and clip transitions. Verified on the desktop: the
-pure-ink pixels of the selected line are 2,626 with the second pass, against 1,106 with the tail.
+tenth of frames step 236 to 388 px/s at laps and clip transitions.
 
 ## Picking
 
@@ -3195,12 +3277,6 @@ stands the eye 30.1 units off its centre at any scale. Within a few degrees of t
 still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
 rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
 leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
-
-**Two speed bounds sit close to what they must tell apart.** The marker reads over its 1.7 ms bound
-in 4 of 10 runs with three of four cores busy. Its fault reads 1.8 ms at least without load. The
-moving grid fault reads 26.1 ms against a bound of 26. On an absolute clock, load and a fault that
-costs 2 or 3 times look alike. The choices are to keep both bounds, or to pin each fault by a count
-that load does not move, such as the samples summed.
 
 **Two sites may still do geometry in vector arithmetic.** `tessellate.placeChord` tests each chord
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with

@@ -11,9 +11,9 @@ changes.
   var mappings: array[Basis, Option[NimNode]]
   for b in Basis:
     if filter_operand.len != 0 and b.grade notin filter_operand: continue
-    if cayley[b].isNone: continue
+    if cayley[b].len == 0: continue
 
-    let destination = cayley[b].get
+    let destination = cayley[b][0]
     if filter_product.len != 0 and destination.basis.grade notin filter_product: continue
 
     let mapping = nnkBracketExpr.newTree(ident"m", ident($b))
@@ -51,7 +51,7 @@ changes.
         some(newFloatLitNode(0.0))
 
     # let mapping = mappings[b]
-    # if mapping.isNone: continue
+    # if mapping.get: continue
     assignments.add(
       newAssignment(nnkBracketExpr.newTree(ident"result", ident($b)), mapping.get)
 ```
@@ -229,7 +229,7 @@ changes.
 
   func `∪`*(m: Multivector): Multivector =
     ## Get right antisupport of multivector, i.e. 𝐦∪ = 𝐦 ∧ (𝐞̄ₙ ∨ 𝐦★).
-    let 𝐞̄ₙ = block:
+    const 𝐞̄ₙ = block:
       let h = Basis.horizon
       h.basis.initElement(if h.is_negated: -1 else: 1)
     m ∧ (𝐞̄ₙ ∨ ★ m)
@@ -322,7 +322,7 @@ suite "Transwedge":
 
 ```
 
-## Replace `pga/cayleys.nim` from `677be54bc12ef779`
+## Replace `pga/cayleys.nim` from `2b71408a1ac3f6d6`
 
 ```nim
 ## Define and construct Cayley tables for any PGA.

@@ -41,7 +41,7 @@ import pga
 import ./gui
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, message, orrery, picking,
-  tessellate, scene, selection, wording,
+  tessellate, scene, selection, timings, wording,
 ]
 
 
@@ -137,9 +137,10 @@ const
     ##   Red, green, blue, no alpha, since every cell is opaque.
   INK_POOL_FREE = Ink.Grid
     ## Draw free object-pool handle in palette's recessive furniture colour.
-  FRAMES_HISTORY* {.define: "visualiser.frames_history".} = 240
+  FRAMES_HISTORY* {.define: "visualiser.frames_history".} = 480
     ## Bound how many recent per-frame timings live diagnostics graph keeps.
-    ##   Few seconds, long enough to see stutter land and scroll off.
+    ##   Four seconds at `timings.RATE_FRAME_LEAST`, long enough to see stutter land and
+    ##   scroll off. Page's sparkline holds same count.
 
 
 
@@ -1059,7 +1060,8 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
   ## Lay out "frame time" section.
   ##   Rolling frame-time plot, vsync toggle, current rate, tessellation cost.
   gui.separatorText(wordingText(NameDiagnosticsFrame))
-  var highest = 16.6'f32 # Floor range at 60 fps, so smooth run does not zoom in on noise.
+  # Floor range at least workable rate, so smooth run does not zoom in on noise.
+  var highest = float32(1000.0/RATE_FRAME_LEAST)
   for value in panel.milliseconds_history:
     if value > highest: highest = value
   var overlay: array[WIDTH_OVERLAY_TEXT, char]
@@ -1101,34 +1103,34 @@ proc layoutDiagnosticsMemory(panel: Panel) =
   gui.separatorText(wordingText(NameDiagnosticsMemory))
   block:
     let
-      mb_used = float(panel.bytes_arena_permanent_used) / (1024.0*1024.0)
-      mb_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0*1024.0)
+      mib_used = float(panel.bytes_arena_permanent_used) / (1024.0*1024.0)
+      mib_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0*1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
-      appendFixed(text, cursor, mb_used, 1)
+      appendFixed(text, cursor, mib_used, 1)
       appendChars(text, cursor, " / ")
-      appendFixed(text, cursor, mb_capacity, 0)
-      appendChars(text, cursor, " MB")
+      appendFixed(text, cursor, mib_capacity, 0)
+      appendChars(text, cursor, " MiB")
     gui.textTinted(
       wordingText(NameDiagnosticsPermanent), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     gui.progressBar(
-      cfloat(mb_used / max(mb_capacity, 1.0)), overlay_text, gui.contentWidth(), 0.0,
+      cfloat(mib_used / max(mib_capacity, 1.0)), overlay_text, gui.contentWidth(), 0.0,
       0.298, 0.482, 0.929, 0.15, 0.15, 0.18,
     )
     gui.tooltip(wordingText(TipDiagnosticsPermanent))
 
   block:
     let
-      kb_peak = float(panel.bytes_arena_frame_peak) / 1024.0
-      mb_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0*1024.0)
+      kib_peak = float(panel.bytes_arena_frame_peak) / 1024.0
+      mib_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0*1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
       appendChars(text, cursor, "peak ")
-      appendFixed(text, cursor, kb_peak, 0)
-      appendChars(text, cursor, " KB / ")
-      appendFixed(text, cursor, mb_capacity, 0)
-      appendChars(text, cursor, " MB")
+      appendFixed(text, cursor, kib_peak, 0)
+      appendChars(text, cursor, " KiB / ")
+      appendFixed(text, cursor, mib_capacity, 0)
+      appendChars(text, cursor, " MiB")
     gui.textTinted(
       wordingText(NameDiagnosticsFrameArena), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
@@ -1180,17 +1182,24 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
   const
     bytes_scene = sizeof(Scene)
     bytes_per_handle = bytes_scene div OBJECTS_MAX
+  # Per-handle figure on line of its own: with `KiB` one line overran panel's width, and
+  #   full pool adds four digits to used figure.
   var pool_memory: array[WIDTH_OBJECT_LINE, char]
   let text_pool = buildChars(pool_memory):
     appendFixed(pool_memory, cursor, float(bytes_scene) / 1024.0, 1)
-    appendChars(pool_memory, cursor, " KB allocated, ")
+    appendChars(pool_memory, cursor, " KiB allocated, ")
     appendFixed(pool_memory, cursor, float(scene.len * bytes_per_handle) / 1024.0, 1)
-    appendChars(pool_memory, cursor, " KB used, ")
-    appendInt(pool_memory, cursor, bytes_per_handle)
-    appendChars(pool_memory, cursor, " B/handle")
+    appendChars(pool_memory, cursor, " KiB used")
+  var handle_memory: array[WIDTH_OBJECT_LINE, char]
+  let text_handle = buildChars(handle_memory):
+    appendInt(handle_memory, cursor, bytes_per_handle)
+    appendChars(handle_memory, cursor, " B/handle")
+  gui.groupBegin()
   gui.monoPush()
   gui.text(text_pool)
+  gui.text(text_handle)
   gui.monoPop()
+  gui.groupEnd()
   gui.tooltip(wordingText(TipDiagnosticsScene))
 
 
@@ -1200,7 +1209,7 @@ proc layoutDiagnosticsTotal(panel: Panel) =
   var total: array[WIDTH_OVERLAY_TEXT, char]
   let text_total = buildChars(total):
     appendFixed(total, cursor, float(panel.bytes_memory_total) / (1024.0*1024.0), 1)
-    appendChars(total, cursor, " MB")
+    appendChars(total, cursor, " MiB")
   gui.monoPush()
   gui.text(text_total)
   gui.monoPop()
