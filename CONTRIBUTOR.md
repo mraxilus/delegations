@@ -75,15 +75,17 @@ sees where you are. This is the only copy, and `CURATOR.md` binds a curator to t
 
 The list is a view of those sections. Where the list and a section disagree, the section wins.
 
-Post it **at the start**, with what applies and what does not. Say so **when an item
-resolves**, where it happens rather than saved up. Post it in full **at handover**, as the
-last thing before the work leaves you.
+Post it **at the start**, with what applies and what does not. After that it lives in the
+Sign-off of every turn that pushed or posted, and of the handover (`GUIDE.md`, Output
+contract, The sign-off). Each item is a row there, in the state it is in, tagged
+`(carried N)`.
 
-- An item that does not apply is **`n/a` with its reason**. Never drop it, and never tick it.
-- A ticked item **names what discharged it**, such as
-  `#140 opened draft, ready after run 238 green`. A bare tick is a claim that carries no
-  evidence (Article VIII.1).
-- **An item may stay unticked at handover.** `[ ] #134, awaiting the Architect` is complete
+- An item that does not apply is **a line in the pull request body under Record**, with its
+  reason. Never drop it, and never tick it.
+- A done row **names what discharged it** in its last cell, such as
+  `#140 opened draft, run 238 green`. A bare tick is a claim that carries no evidence (Article
+  VIII.1).
+- **A row may wait at handover.** A ⏸️ row that reads `#134, the Architect rules` is complete
   and correct. A list that has to come out all ticked is a list that will.
 
 Nothing checks the carrying, and that is the point. You show it to a reader who is present,
@@ -182,7 +184,8 @@ Before any code:
 2. Write `PROVENANCE.md` first. Open it with the header table in `GUIDE.md`. `Rules` is the
    stamp of the charter, which `nim r koch stamp` prints at the repository root.
 3. Write `GLOSSARY.md`: a `# <project>` heading, one sentence on what the project is, then
-   `## Language`. Add a term only after the Architect selects it, and never in advance.
+   `## Standards`, then `## Language`. Add a term or a standard only after the Architect
+   selects it, and never in advance.
 4. Write `README.md`: the purpose, the authority replicated where there is one, the build and
    test commands, where its pages are published, and the status.
 5. Write `<project>.nimble`: `version`, `author`, `description`, `license`,

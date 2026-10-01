@@ -4,6 +4,10 @@ The words that this project uses for itself. The Architect agreed each one befor
 written. The language is proposed one theme at a time, and a term is written here only once
 it is agreed.
 
+## Standards
+
+The root glossary holds the default standards, and this project has selected none of its own.
+
 ## Language
 
 **Lead**:

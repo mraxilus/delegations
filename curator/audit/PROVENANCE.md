@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 8c8a0bd7dfbb0c7a |
+| Rules   | 1ef3bfe1beb43488 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -346,11 +346,19 @@ such log, so the `check-files` job fetches every commit.
 
 ## Glossary
 
-**Shape only: a heading, `## Language`, and a definition line after every `**Term**:`.** The
-content is the contributor's and the Architect's, and a term enters only when the Architect
-selects it. The check cannot know what was agreed, so agreement holds by reading. It runs on
-the top-level `GLOSSARY.md` too. Zero terms pass, because the format creates entries lazily.
-Verified by `suites/test_glossary.nim`.
+**Shape only: a heading, `## Standards`, `## Language`, and a definition line after every
+`**Term**:`.** The content is the contributor's and the Architect's, and a term enters only
+when the Architect selects it. The check cannot know what was agreed, so agreement holds by
+reading. It runs on the top-level `GLOSSARY.md` too. Zero terms and zero standards pass,
+because the format creates entries lazily. Verified by `suites/test_glossary.nim`.
+
+**A standards entry reads `- **Name**, owner and edition: symbols`, and the root holds what two
+projects share.** The check demands the bold name, a comma after it and a colon after that, and
+never reads whether the edition is true. Across glossaries, a standard that a project repeats from
+the root is a finding at the project. So is one that two projects both list, at the later place,
+and the finding names the root as its home. The match is on the bold name, so a standard written
+two ways passes, as a paraphrase passes the duplicates check. Verified by
+`suites/test_glossary.nim`.
 
 **The people words that the glossary avoids are held out of the root Markdown files and the
 Markdown under `curator/`.** `PEOPLE_WORDS` is the avoid list under Architect, Delegate,

@@ -30,6 +30,7 @@ compose it. -->
 - [ ] GLOSSARY.md holds every term that resolved
 - [ ] Every mistake found earned a test that fails without the fix, and not one written to pass
 - [ ] The assumptions, the trade-offs and the open questions are below
+- Carried items that do not apply, each with its reason: <!-- `5 no page` -->
 
 ## Notes
 

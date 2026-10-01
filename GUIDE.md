@@ -54,6 +54,21 @@ The check derives every other path from the layout, so a new project or a new do
 from its first line. A file below a project directory stays outside the set, and so does any
 other file. Every other rule above holds because you read it.
 
+## Names
+
+Every name follows Article V, and `STYLE.md` spells it for Nim. What a name may abbreviate
+comes from outside standards, as the prose comes from ASD-STE100. The root glossary names
+those standards under `## Standards`, and a project glossary names its own. The working subset:
+
+- A word of a name is a full word, or a symbol that a standard in a glossary defines (V.6).
+- An acronym stays where the root glossary lists it as one a layman knows (V.9). It also stays
+  where a glossary defines it, as a term or as a symbol of a standard.
+- A jargon word on the closed list of V.6 stays, and the Architect alone extends that list.
+- A symbol keeps the case of its standard in prose, and takes the case of its kind in a name
+  (`kib_peak`).
+
+No check reads a name, so each rule above holds because you read it.
+
 ## The queue and the shared allowance
 
 Every delegate posts as one GitHub account. One hourly allowance covers every delegate that
@@ -158,12 +173,17 @@ Every later delegate:
 discipline, renamed for this repository. It is the ubiquitous language of the project: the
 words that the Architect, the code and every later delegate share. The words of the
 repository itself are in the top-level `GLOSSARY.md`. Use those, and define here only what is
-specific to this project. The format:
+specific to this project. A standard that two projects use lives in the root glossary, and a
+project glossary never repeats one from the root. The format:
 
 ```md
 # <project>
 
 <One or two sentences on what this project is and why it exists.>
+
+## Standards
+
+- **<Standard>**, <owner>, <edition>: <the symbols taken from it, each with its table or clause>.
 
 ## Language
 
@@ -183,8 +203,13 @@ Rules of the file:
   otherwise.
 - Write a glossary and nothing else. No implementation detail, no specification, no scratch
   note, and no history of what was removed.
+- Name a standard under `## Standards` before you take a symbol from it. An entry names the
+  standard, its publisher and its edition, and each symbol with the table or clause that
+  defines it. A sold standard cites a free source that gives the same symbols, or the Architect
+  supplies the list. The Architect selects a standard once, and a delegate then adds a symbol
+  that it defines with no new ruling.
 
-Five moves throughout the work, and not at its end:
+Six moves throughout the work, and not at its end:
 
 1. **Challenge against the glossary.** Where the Architect or the code uses a term that
    conflicts with an entry, say so at once and ask which meaning holds.
@@ -194,7 +219,11 @@ Five moves throughout the work, and not at its end:
    cases, until the boundaries are exact.
 4. **Cross-reference with the code.** Where a statement about behaviour disagrees with the
    code, show the contradiction rather than choose in silence.
-5. **Propose the term. Never write it on sight.** Set out the concept, offer candidate names
+5. **Look up `## Standards` first.** Read the standards of the root and of the project
+   glossary before you propose a word. A word that a selected standard defines is taken, and
+   not coined. A term of a glossary wins over the word of a standard, and the `_Avoid_` line
+   of the term names that word.
+6. **Propose the term. Never write it on sight.** Set out the concept, offer candidate names
    with what each one would displace, and stop. Only the name that the Architect selects is
    written, and only then. The audit checks the shape of a glossary, and never whether its
    words were chosen. This rule holds by the reading of the Architect, and by nothing else.
@@ -229,6 +258,66 @@ answered, and that is all: what something does, whether a rule reaches a case, w
 red. Read the answer back and stop. The change that the answer implies waits for the words
 that ask for it. Where the line is genuinely unclear, say what you would do, and ask before
 you do it.
+
+### The sign-off
+
+A message that ends a turn which pushed or posted, and the message of a handover, closes with
+one block, `## Sign-off`. Nothing follows it.
+
+It serves three readers. The Architect needs what waits on them and what is ready. The next
+delegate needs where things stand and what is unfinished. The same delegate, after a
+compaction, needs the map of the artifacts and the carried list. Its parts come in one order:
+
+1. **Role.** The role string, and the branch at its short head, `pushed` or `not pushed`. Then
+   the pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
+   `red` or `pending`.
+2. **Context.** Three sentences in the third person: what the branch is for, what the
+   Architect asked last, and the artifacts on entry, with no run result.
+3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`. Rows are
+   numbered from 1 and sorted by state, and a state never returns once the next one begins.
+   - ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
+     names it.
+   - ✅ done this turn, nobody acts. The last cell is never empty.
+   - ⚠️ an issue met, another delegate or an outside party acts. The last cell names who, and
+     on what.
+   - ⏸️ the Architect acts, whatever the cause. The last cell names what.
+   - ⬜ up next, this delegate acts.
+4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
+   by number.
+5. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
+   string. No forecast.
+
+A carried item is a row in the state it is in, tagged `(carried N)`. A carried item that does
+not apply is not a row, and goes in the pull request body under Record. An item is a clause a
+reader can verify. No cell holds a semicolon, and an empty cell says there is nothing to say.
+Twelve rows is the ceiling, four of them ☑️. Third person and active voice throughout, and the
+rules of this guide over every sentence. Reading holds the shape.
+
+```md
+## Sign-off
+
+**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list` at
+`3f2a9c1`, pushed, #331 draft, run 412 green
+
+**Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
+the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
+of each algebra. On entry, #331 was a draft and #310 held the open question on the names.
+
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ☑️ | `rga4d` and `cga5d` stay, by the ruling on V.9 | #320 | the Architect ruled |
+| 2 | ☑️ | Draft since it opened, another commit intended (carried 4) | #331 | |
+| 3 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
+| 4 | ✅ | Draft opened with the role line and the label (carried 1) | #331 | label copied |
+| 5 | ⚠️ | `koch drive` red in the drive of rga_visualiser | run 413, #332 | its contributor |
+| 6 | ⏸️ | V.9 names in the tests: keep `rga4d`, or rename (carried 3) | #310 | the Architect |
+| 7 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate, 16 GB |
+
+**Summary:** The gap list is done and green, and #331 waits only on the Architect. Row 6 waits
+on the Architect. The red run in row 5 belongs to rga_visualiser and blocks nothing here.
+
+**Next step:** Architect: rule on #310 in #331 Notes.
+```
 
 ## Provenance guide
 

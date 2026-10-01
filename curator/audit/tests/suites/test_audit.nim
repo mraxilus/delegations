@@ -26,10 +26,11 @@ suite "Audit":
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 
   test "top-level glossary shape reaches umbrella":
-    let termless = goodTree().replaced("GLOSSARY.md", "# delegations\n\nWords.\n\n## Language\n")
+    let termless =
+      goodTree().replaced("GLOSSARY.md", "# delegations\n\nWords.\n\n## Standards\n\n## Language\n")
     check termless.auditTree.len == 0  # zero terms pass, since terms wait on agreement
     let undefined = goodTree().replaced(
-      "GLOSSARY.md", "# delegations\n\nWords.\n\n## Language\n\n**Stamp**:\n"
+      "GLOSSARY.md", "# delegations\n\nWords.\n\n## Standards\n\n## Language\n\n**Stamp**:\n"
     )
     check undefined.auditTree.mapIt(it.path) == @["GLOSSARY.md"]  # shape checked at root
     check "lacks definition" in undefined.auditTree[0].message  # same check projects get

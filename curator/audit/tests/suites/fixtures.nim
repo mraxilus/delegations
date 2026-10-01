@@ -24,7 +24,8 @@ func provenanceText*(stamp: string): string =
 
 
 const
-  GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Language\n\n**Term**:\nOne thing.\n"
+  GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Standards\n\n## Language\n\n" &
+    "**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.
   PIN* = "2.2.4"
     ## Compiler version fixture projects pin, and driver version fixture workflow states.
@@ -84,7 +85,9 @@ func goodTree*(): Tree =
     entry("README.md", readmeText()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
-    entry("GLOSSARY.md", "# Fixture\n\nWords.\n\n## Language\n\n**Term**:\nOne thing.\n"),
+    entry(
+      "GLOSSARY.md", "# Fixture\n\nWords.\n\n## Standards\n\n## Language\n\n**Term**:\nOne thing.\n"
+    ),
     entry("CURATOR.md", "# Curator\n\nDuties.\n"),
     entry("koch.nim", "## Drive checks.\n\ndiscard\n"),
     entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),

@@ -17,3 +17,5 @@ A model writes every line here, under the direction of the Architect. Before any
    written on sight.
 7. A record describes what is, and never narrates what happened. The reason a design is as
    it is belongs in the record. A list of events does not.
+8. A turn that pushed or posted ends with the sign-off block that `GUIDE.md`, Output
+   contract, gives.

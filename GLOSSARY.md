@@ -1,7 +1,26 @@
 # delegations
 
 The words that this repository uses for itself: who works in it, how it is laid out, what it
-records, and what the audit reports. A term enters only when the Architect selects it.
+records, and what the audit reports. It also names the standards that every name in the
+repository may draw on. A term enters only when the Architect selects it, and so does a
+standard.
+
+## Standards
+
+- **The International System of Units**, BIPM, SI Brochure, 9th edition, 2019: `s` and `m`
+  (Table 2), and the astronomical unit `au` (Table 8). The prefixes `k` and `m` (Table 7) give
+  `km` and `ms`.
+- **IEC 80000-13**, IEC and ISO, edition 2, 2025: `bit`, `B` for the byte, and the binary
+  prefixes `Ki` and `Mi`, so `KiB` and `MiB`. A name takes them in its own case, as `kib` and
+  `mib`. A free source with the same symbols is NIST, Prefixes for binary multiples.
+- **CSS Values and Units Module Level 3**, W3C, Candidate Recommendation Draft, 2024: `px`
+  (section 5.2, absolute lengths).
+- **Projective Geometric Algebra Illuminated**, Eric Lengyel, Terathon Software, 2024: `PGA`,
+  `RGA` and `CGA`. They are the projective, rigid and conformal geometric algebras, as the wikis
+  at `rigidgeometricalgebra.org` and `conformalgeometricalgebra.org` expand them.
+- **Acronyms that a layman knows**, selected by the Architect: `3D`, `ID`, `JSON`, `URL`, `UI`,
+  `RGB`, `RGBA`, `GIF`, `PNG`, `FOV`, `GL`, `GUI`, `DOM` and `fps`. Article V.9 keeps a layman
+  as the test, and this list is the record of what passed it.
 
 ## Language
 

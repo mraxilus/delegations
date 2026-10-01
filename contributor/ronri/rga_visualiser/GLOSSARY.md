@@ -5,6 +5,10 @@ states a pointer can put it in, and the machinery that decides where each mark g
 terms specific to this visualiser belong here. The vocabulary of the algebra itself belongs to
 the `pga` library, and the words of the repository are in the top-level `GLOSSARY.md`.
 
+## Standards
+
+The root glossary holds the default standards, and this project has selected none of its own.
+
 ## Language
 
 ### The scene and what is in it
