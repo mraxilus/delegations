@@ -664,14 +664,16 @@ daily and writes one issue labelled `curator`. It names these:
 - a `Closes #N` that never fired;
 - an issue or pull request that opens with no role line, or carries no label;
 - an issue whose title takes the form of a commit subject;
-- the rulesets of `main`, the ruleset on every branch, or the merge settings drifted from the
-  list in `CURATOR.md`. The classic protection endpoint answers nothing where the rules are
-  rulesets. So the ledger reads the rules per branch, which answer the token of a run. The
-  bypass actors and the merge settings do not, because that token lacks the administration
-  scope and GitHub leaves those fields out. An anonymous read sees them, but runners share
-  addresses and the anonymous limit is sixty per hour, so the secret `ADMIN_TOKEN` reads them.
-  A read that fails turns the run red, because a silent read is the failure the ledger exists
-  to catch.
+- the rulesets of `main` or the ruleset on every branch drifted from the list in `CURATOR.md`.
+
+The settings read goes through the rulesets endpoints. The classic protection endpoint answers
+nothing where the rules are rulesets, so the ledger reads the rules per branch with the token of
+a run. That token lacks the administration scope, so GitHub leaves the bypass actors out, and
+the secret `ADMIN_TOKEN` reads them. An anonymous read sees them too, but runners share
+addresses and the anonymous limit is sixty per hour. Both tokens miss the repository merge
+settings, so the ledger reads the merge methods the ruleset allows, and the head branch deletion
+is unread. A read that fails turns the run red, because a silent read is the failure the ledger
+exists to catch.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
 rather than search, and the label as a hardcoded literal. Its schedule idiom is the one in
