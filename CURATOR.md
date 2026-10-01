@@ -298,8 +298,10 @@ place, under Settings:
 - Under Settings, General, delete the head branch after a merge.
 
 The ledger reads the rulesets of `main` and of every branch daily, with the merge settings, and
-reports drift from this list. It needs no second token, because the rulesets and the settings
-answer the metadata scope that every run carries. A read that fails turns the run red.
+reports drift from this list. The token of a run reads the rules. The secret `ADMIN_TOKEN` reads
+the bypass actors and the merge settings, which GitHub hides from that token. Store a
+fine-grained token with Administration read under Settings, Secrets, or the ledger reports the
+gap. A read that fails turns the run red.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
