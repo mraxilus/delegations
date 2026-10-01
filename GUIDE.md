@@ -54,6 +54,21 @@ The check derives every other path from the layout, so a new project or a new do
 from its first line. A file below a project directory stays outside the set, and so does any
 other file. Every other rule above holds because you read it.
 
+## Names
+
+Every name follows Article V, and `STYLE.md` spells it for Nim. What a name may abbreviate
+comes from outside standards, as the prose comes from ASD-STE100. The root glossary names
+those standards under `## Standards`, and a project glossary names its own. The working subset:
+
+- A word of a name is a full word, or a symbol that a standard in a glossary defines (V.6).
+- An acronym stays where the root glossary lists it as one a layman knows (V.9). It also stays
+  where a glossary defines it, as a term or as a symbol of a standard.
+- A jargon word on the closed list of V.6 stays, and the Architect alone extends that list.
+- A symbol keeps the case of its standard in prose, and takes the case of its kind in a name
+  (`kib_peak`).
+
+No check reads a name, so each rule above holds because you read it.
+
 ## The queue and the shared allowance
 
 Every delegate posts as one GitHub account. One hourly allowance covers every delegate that
@@ -158,12 +173,17 @@ Every later delegate:
 discipline, renamed for this repository. It is the ubiquitous language of the project: the
 words that the Architect, the code and every later delegate share. The words of the
 repository itself are in the top-level `GLOSSARY.md`. Use those, and define here only what is
-specific to this project. The format:
+specific to this project. A standard that two projects use lives in the root glossary, and a
+project glossary never repeats one from the root. The format:
 
 ```md
 # <project>
 
 <One or two sentences on what this project is and why it exists.>
+
+## Standards
+
+- **<Standard>**, <owner>, <edition>: <the symbols taken from it, each with its table or clause>.
 
 ## Language
 
@@ -183,8 +203,13 @@ Rules of the file:
   otherwise.
 - Write a glossary and nothing else. No implementation detail, no specification, no scratch
   note, and no history of what was removed.
+- Name a standard under `## Standards` before you take a symbol from it. An entry names the
+  standard, its publisher and its edition, and each symbol with the table or clause that
+  defines it. A sold standard cites a free source that gives the same symbols, or the Architect
+  supplies the list. The Architect selects a standard once, and a delegate then adds a symbol
+  that it defines with no new ruling.
 
-Five moves throughout the work, and not at its end:
+Six moves throughout the work, and not at its end:
 
 1. **Challenge against the glossary.** Where the Architect or the code uses a term that
    conflicts with an entry, say so at once and ask which meaning holds.
@@ -194,7 +219,11 @@ Five moves throughout the work, and not at its end:
    cases, until the boundaries are exact.
 4. **Cross-reference with the code.** Where a statement about behaviour disagrees with the
    code, show the contradiction rather than choose in silence.
-5. **Propose the term. Never write it on sight.** Set out the concept, offer candidate names
+5. **Look up `## Standards` first.** Read the standards of the root and of the project
+   glossary before you propose a word. A word that a selected standard defines is taken, and
+   not coined. A term of a glossary wins over the word of a standard, and the `_Avoid_` line
+   of the term names that word.
+6. **Propose the term. Never write it on sight.** Set out the concept, offer candidate names
    with what each one would displace, and stop. Only the name that the Architect selects is
    written, and only then. The audit checks the shape of a glossary, and never whether its
    words were chosen. This rule holds by the reading of the Architect, and by nothing else.

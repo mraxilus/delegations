@@ -182,7 +182,8 @@ Before any code:
 2. Write `PROVENANCE.md` first. Open it with the header table in `GUIDE.md`. `Rules` is the
    stamp of the charter, which `nim r koch stamp` prints at the repository root.
 3. Write `GLOSSARY.md`: a `# <project>` heading, one sentence on what the project is, then
-   `## Language`. Add a term only after the Architect selects it, and never in advance.
+   `## Standards`, then `## Language`. Add a term or a standard only after the Architect
+   selects it, and never in advance.
 4. Write `README.md`: the purpose, the authority replicated where there is one, the build and
    test commands, where its pages are published, and the status.
 5. Write `<project>.nimble`: `version`, `author`, `description`, `license`,
