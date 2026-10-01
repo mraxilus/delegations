@@ -298,10 +298,10 @@ place, under Settings:
 - Under Settings, General, delete the head branch after a merge.
 
 The ledger reads the rulesets of `main` and of every branch daily and reports drift from this
-list. The token of a run reads the rules. The secret `ADMIN_TOKEN` reads the bypass actors and
+list. The token of a run reads the rules. The secret `TOKEN_DELEGATE` reads the bypass actors and
 the merge settings, which GitHub hides from that token. A read that fails turns the run red.
 
-`ADMIN_TOKEN` is the one token the workflows hold beyond the token of a run. It is a classic
+`TOKEN_DELEGATE` is the one token the workflows hold beyond the token of a run. It is a classic
 token with the `public_repo` scope alone, stored under Settings, Secrets. The `draft` workflow
 converts with it, because GitHub refuses the conversion to the token of a run and to a
 fine-grained token. It reaches every public repository of the account, which is the cost of one
