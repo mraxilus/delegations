@@ -16,25 +16,41 @@
 ##   Change needing no new test is not `fix`: it is `refactor`, `chore` or `docs`. That is
 ##     escape, and it is honest one, since `fix` claims mistake was found.
 ##
+##   Body (XI.4) is in sentence case, with one sentence to line: each line opens with capital,
+##     digit or code span, ends with `.`, `!`, `?` or `:`, and holds no second sentence.
+##     Trailer block, i.e. last paragraph of `Key: value` lines, is skipped, as is fenced or
+##     indented code. List marker is read past, so list item is held as sentence too.
+##   Record travels in `docs` commit of its own (CONTRIBUTOR.md, Branch): commit touching
+##     `RECORD_FILE` and any file but Markdown together is finding.
+##
 ##   Cost: imperative mood unverified; check sees lowercase first letter and no final period.
+##   Cost: sentence boundary is `.`, `!` or `?` then space then capital outside code span, so
+##     abbreviation such as `No. 3` reads as two sentences; STE writes such words out.
 ##   Cost: fix of mistake whose test already sits on `main` still needs test here, or another
 ##     type; check reads one branch, never whole history.
-##   Cost: `!` breaking marker accepted after scope; body and footers pass unchecked.
+##   Cost: `!` breaking marker accepted after scope; footers pass unchecked.
 ##   Cost: subjects on `main` from before cap run to 136 runes; check reads one branch, so
 ##     history stays.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils]
+import std/[options, sequtils, strutils]
 from std/unicode import runeLen
 import ./[domains, findings, form]
 
 
-type Subject* = object
-  ## Define parsed commit subject.
-  kind*: string     ## Commit type, member of `TYPES`.
-  scope*: string    ## Project name or `curator`.
-  summary*: string  ## Lowercase imperative summary without final period.
+type
+  Subject* = object
+    ## Define parsed commit subject.
+    kind*: string     ## Commit type, member of `TYPES`.
+    scope*: string    ## Project name or `curator`.
+    summary*: string  ## Lowercase imperative summary without final period.
+
+  Commit* = object
+    ## Define one commit of branch as check reads it.
+    subject*: string      ## First line of message.
+    body*: string         ## Message after subject, trailers included.
+    paths*: seq[string]   ## Paths commit touches.
 
 
 const
@@ -44,6 +60,10 @@ const
     ## Commit types accepted, alphabetical.
   SUBJECT_MAX* = LINE_MAX
     ## Widest commit subject allowed, in runes: same limit as line of source (Article XI.1).
+  RECORD_FILE* = "PROVENANCE.md"
+    ## Record that travels in commit of its own.
+  TERMINALS = {'.', '!', '?', ':'}
+    ## Characters body line may end on: sentence end, or colon opening list.
 
 
 func parseSubject*(subject: string): Option[Subject] =
@@ -109,3 +129,85 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
         "", 0,
         "Commit subject exceeds " & $SUBJECT_MAX & " characters; got `" & $s.runeLen & "`.",
       )
+
+
+func isTrailer(line: string): bool =
+  ## Decide whether line is git trailer, i.e. `Key: value` with hyphenated key.
+  let colon = line.find(": ")
+  colon > 0 and line[0] in {'A'..'Z', 'a'..'z'} and
+    line[0 ..< colon].allCharsInSet({'A'..'Z', 'a'..'z', '0'..'9', '-'})
+
+
+func sentenceLines(body: string): seq[string] =
+  ## Read body lines held to XI.4: trailer block, blank, fenced and indented lines dropped.
+  var paragraphs: seq[seq[string]] = @[@[]]
+  for line in body.splitLines:
+    if line.strip.len == 0:
+      if paragraphs[^1].len > 0: paragraphs.add @[]
+    else: paragraphs[^1].add line
+  if paragraphs[^1].len == 0: paragraphs.setLen(paragraphs.len - 1)
+  if paragraphs.len > 0 and paragraphs[^1].allIt(it.isTrailer):
+    paragraphs.setLen(paragraphs.len - 1)
+  var is_fence = false
+  for paragraph in paragraphs:
+    for line in paragraph:
+      if line.strip.startsWith("```"):
+        is_fence = not is_fence
+        continue
+      if is_fence or line.startsWith("    "): continue
+      result.add line
+
+
+func checkBody*(subject, body: string): seq[Finding] =
+  ## Report body line outside sentence case, or holding other than one sentence (XI.4).
+  for line in body.sentenceLines:
+    var text = line.strip
+    for marker in ["- ", "* "]:
+      if text.startsWith(marker): text = text[marker.len .. ^1]
+    var
+      prose = ""
+      is_span = false
+    for c in text:
+      if c == '`': is_span = not is_span
+      elif not is_span: prose.add c
+    let excerpt = (if text.len > 60: text[0 ..< 60] & "…" else: text)
+    if text.len > 0 and text[0] notin {'A'..'Z', '0'..'9', '`', '"'}:
+      result.add finding(
+        "", 0,
+        "Commit body is in sentence case (XI.4); got `" & excerpt & "` in `" & subject & "`.",
+      )
+    if text.len > 0 and text[^1] notin TERMINALS:
+      result.add finding(
+        "", 0,
+        "Commit body holds one sentence to line, and this one runs on (XI.4); got `" & excerpt &
+          "` in `" & subject & "`.",
+      )
+    for k in 0 ..< prose.len - 2:
+      if prose[k] in {'.', '!', '?'} and prose[k + 1] == ' ' and prose[k + 2] in {'A'..'Z'}:
+        result.add finding(
+          "", 0,
+          "Commit body holds one sentence to line (XI.4); got two in `" & excerpt & "` in `" &
+            subject & "`.",
+        )
+        break
+
+
+func checkRecordCommit*(subject: string, paths: openArray[string]): seq[Finding] =
+  ## Report commit touching record and code together (CONTRIBUTOR.md, Branch).
+  let
+    has_record = paths.anyIt(it == RECORD_FILE or it.endsWith("/" & RECORD_FILE))
+    code = paths.filterIt(not it.endsWith(".md"))
+  if has_record and code.len > 0:
+    result.add finding(
+      "", 0,
+      "Record travels in `docs` commit of its own (CONTRIBUTOR.md, Branch); got `" & code[0] &
+        "` beside it in `" & subject & "`.",
+    )
+
+
+func checkHistory*(branch: string, commits: openArray[Commit]): seq[Finding] =
+  ## Run every commit check over branch's commits, newest first: subject, ladder, body, paths.
+  result = checkCommits(branch, commits.mapIt(it.subject))
+  for c in commits:
+    result.add checkBody(c.subject, c.body)
+    result.add checkRecordCommit(c.subject, c.paths)

@@ -66,7 +66,7 @@ Verbs:
   check-files    static checks over every file git lists; compiles nothing
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
-  check-commits  commit subjects since base: form, scope, test before fix
+  check-commits  commits since base: subject form, scope, test before fix, body, record apart
   check-drift    charter or checker that base gained and branch lacks
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
@@ -269,7 +269,10 @@ proc runHook(root, event, input: string): int =
       found.add checkPush(recorded, gitFields(root, ["rev-parse", fields[1] & "^{tree}"])[0])
     refuse(found, 1)
   of "msg":
-    refuse(checkMessage(branch, input, subjects(root, getEnv("BASE", "origin/" & MAIN))), 1)
+    let
+      earlier = subjects(root, getEnv("BASE", "origin/" & MAIN))
+      staged = gitFields(root, ["diff", "--cached", "-z", "--name-only"])
+    refuse(checkMessage(branch, input, earlier, staged), 1)
   else:
     stderr.write "koch hook: unknown event `" & event & "`.\n"
     2
@@ -291,7 +294,7 @@ proc run(options: Options): int =
     found = tree.auditTree
     found.add prunedFindings(options.root, tree)
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
-    found.add checkCommits(branch, subjects(options.root, base))
+    found.add checkHistory(branch, branchCommits(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))
     if found.len > 0:
       found.report
@@ -326,7 +329,8 @@ proc run(options: Options): int =
     )
   of "check-commits":
     if not options.reads({Root, Branch, Base}): return options.refused
-    found = checkCommits(options.branchOrDefault, subjects(options.root, options.baseOrDefault))
+    let commits = branchCommits(options.root, options.baseOrDefault)
+    found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
     if not options.reads({Root, Base}): return options.refused
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))

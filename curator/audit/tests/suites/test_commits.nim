@@ -79,3 +79,30 @@ suite "Article XI":
     check checkCommits(
       "curator/work", ["refactor(audit): tidy it"]
     ).len == 0  # change needing no test is not fix
+
+  test "XI.4 body is in sentence case, one sentence to line, trailers and code skipped":
+    const TRAILERS = "\n\nCo-Authored-By: Name <a@b.c>\nClaude-Session: https://x.y/z\n"
+    let listed = "Reason sits here.\nMechanism sits here:\n- First item.\n" & TRAILERS
+    check checkBody("s", listed).len == 0
+    check "sentence case" in checkBody("s", "reason sits here.")[0].message
+    check "runs on" in checkBody("s", "Reason wraps across\nlines.")[0].message
+    check "got two" in checkBody("s", "One sentence. Second one.")[0].message
+    check checkBody("s", "Call `a. B` once.").len == 0  # code span holds no boundary
+    check checkBody("s", "Version 2.2.12 is pinned.").len == 0  # decimal point, no space
+    check checkBody("s", "Run this:\n\n```text\nkoch check\n```\n").len == 0  # fenced code
+    check checkBody("s", "").len == 0  # subject alone is enough
+
+  test "record travels in commit of its own":
+    check checkRecordCommit("docs(a): record", ["c/d/a/PROVENANCE.md", "c/d/a/README.md"]).len == 0
+    check checkRecordCommit("feat(a): add", ["c/d/a/src/a.nim"]).len == 0
+    let mixed = checkRecordCommit("feat(a): add", ["c/d/a/PROVENANCE.md", "c/d/a/src/a.nim"])
+    check mixed.len == 1 and "got `c/d/a/src/a.nim` beside it" in mixed[0].message
+
+  test "history runs subject, ladder, body and paths over every commit":
+    let commits = @[
+      Commit(subject: "feat(curator): add", body: "reason.", paths: @["CURATOR.md"]),
+      Commit(subject: "docs(curator): record", paths: @["c/PROVENANCE.md", "koch.nim"]),
+    ]
+    let found = checkHistory("curator/x", commits).mapIt(it.message)
+    check found.len == 2
+    check found.anyIt("sentence case" in it) and found.anyIt("of its own" in it)

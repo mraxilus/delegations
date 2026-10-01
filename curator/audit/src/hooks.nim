@@ -299,18 +299,27 @@ func checkPush*(recorded, pushed_tree: string): seq[Finding] =
     )
 
 
-func checkMessage*(branch, message: string, earlier: openArray[string]): seq[Finding] =
-  ## Report commit subject breaking form, scope or ladder, before commit lands.
+func checkMessage*(
+  branch, message: string, earlier: openArray[string], staged: openArray[string]
+): seq[Finding] =
+  ## Report commit breaking subject form, scope, ladder, body or record apart, before it lands.
   ##   Merge commit passes: git writes its subject, and commit check excludes merges upstream
   ##     (`commits.nim`), so duty to merge `main` into branch (CURATOR.md, duty 2) needs no
   ##     bypass of hook.
-  var subject = ""
+  ##   Comment lines git adds, and all below its scissors line, are dropped before body is read.
+  var
+    subject = ""
+    body: seq[string]
   for line in message.splitLines:
-    if line.strip.len > 0 and not line.startsWith("#"):
-      subject = line.strip
-      break
+    if line.startsWith("# ------------------------ >8"): break
+    if line.startsWith("#"): continue
+    if subject.len == 0:
+      if line.strip.len > 0: subject = line.strip
+    else: body.add line
   if subject.startsWith(MERGE_SUBJECT): return
-  checkCommits(branch, @[subject] & @earlier)
+  result = checkCommits(branch, @[subject] & @earlier)
+  result.add checkBody(subject, body.join("\n"))
+  result.add checkRecordCommit(subject, staged)
 
 
 func startContext*(branch, contributor, carried_heading: string, drift: seq[Finding]): string =
