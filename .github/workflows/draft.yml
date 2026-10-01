@@ -9,7 +9,7 @@
 #   GitHub refuses `convertPullRequestToDraft` to run token (`Resource not accessible by
 #   integration`, run 36850319568) and to fine-grained token with pull requests write
 #   (`Resource not accessible by personal access token`, runs 36857266980 and 36893344447).
-#   Classic token works, so `ADMIN_TOKEN` holds one with `public_repo` scope: one token for
+#   Classic token works, so `TOKEN_DELEGATE` holds one with `public_repo` scope: one token for
 #   every need of every workflow, ledger included. It spans every public repository of
 #   account; GitHub App would narrow that to this repository, at cost of App to create and
 #   install. `permissions` is empty since run token does nothing here. Absent secret is red
@@ -38,12 +38,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - env:
-          GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          GH_TOKEN: ${{ secrets.TOKEN_DELEGATE }}
           REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number || inputs.number }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "ADMIN_TOKEN is not stored, so nothing returns #$NUMBER to draft." >&2
+            echo "TOKEN_DELEGATE is not stored, so nothing returns #$NUMBER to draft." >&2
             exit 1
           fi
           gh pr ready "$NUMBER" --repo "$REPO" --undo

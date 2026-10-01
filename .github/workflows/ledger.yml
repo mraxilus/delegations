@@ -51,7 +51,7 @@ jobs:
           REPO: ${{ github.repository }}
           MARKER: '<!-- ledger:unchecked -->'
           SINCE_DAYS: '14'
-          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          TOKEN_DELEGATE: ${{ secrets.TOKEN_DELEGATE }}
         run: |
           set -euo pipefail
           found=''
@@ -141,8 +141,8 @@ jobs:
           #   branch answer run token. Bypass actors do not: run token is installation token
           #   without administration scope, and GitHub leaves that field out. Anonymous read
           #   sees it, but runners share addresses and anonymous limit is sixty per hour, so
-          #   `ADMIN_TOKEN` reads it. Merge settings of repository object are hidden from run
-          #   token and from fine-grained token, so `ADMIN_TOKEN` is classic token, and reads
+          #   `TOKEN_DELEGATE` reads it. Merge settings of repository object are hidden from run
+          #   token and from fine-grained token, so `TOKEN_DELEGATE` is classic token, and reads
           #   them with head branch deletion; merge method ruleset allows is read as well. Probe
           #   branch need not exist: endpoint answers for name as given. Read that fails is red
           #   run rather than silence, by `set -e` on each assignment.
@@ -174,20 +174,20 @@ jobs:
           echo "$rules" | jq -e 'any(.type == "pull_request"
               and .parameters.allowed_merge_methods == ["merge"])' >/dev/null ||
             found="$found- A ruleset on \`main\` allows a merge other than the merge commit"$'\n'
-          if [ -n "${ADMIN_TOKEN:-}" ]; then
+          if [ -n "${TOKEN_DELEGATE:-}" ]; then
             for id in $ids; do
-              ruleset="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO/rulesets/$id")"
+              ruleset="$(GH_TOKEN="$TOKEN_DELEGATE" gh api "repos/$REPO/rulesets/$id")"
               echo "$ruleset" | jq -e '.bypass_actors == []' >/dev/null ||
                 found="$found- Ruleset $id lets someone bypass it"$'\n'
             done
-            settings="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO")"
+            settings="$(GH_TOKEN="$TOKEN_DELEGATE" gh api "repos/$REPO")"
             echo "$settings" | jq -e '.allow_merge_commit and (.allow_squash_merge | not)
                 and (.allow_rebase_merge | not)' >/dev/null ||
               found="$found- Settings allow a merge other than the merge commit"$'\n'
             echo "$settings" | jq -e '.delete_branch_on_merge' >/dev/null ||
               found="$found- Settings keep the head branch after a merge"$'\n'
           else
-            found="$found- No \`ADMIN_TOKEN\` is stored, so bypass actors and merge settings"
+            found="$found- No \`TOKEN_DELEGATE\` is stored, so bypass actors and merge settings"
             found="$found are unread"$'\n'
           fi
 
@@ -205,8 +205,8 @@ jobs:
           note="$note GitHub does not record, and that half is still carried by hand. Role and"
           note="$note label left it, since the body hook reads each post before it lands; this"
           note="$note reads what arrived from elsewhere. The run token reads the rules, and"
-          note="$note ADMIN_TOKEN reads the bypass actors and the merge settings. Lines above are"
-          note="$note only what runner can see."
+          note="$note TOKEN_DELEGATE reads the bypass actors and the merge settings. Lines above"
+          note="$note are only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away
