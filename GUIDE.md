@@ -67,7 +67,11 @@ those standards under `## Standards`, and a project glossary names its own. The 
 - A symbol keeps the case of its standard in prose, and takes the case of its kind in a name
   (`kib_peak`).
 
-No check reads a name, so each rule above holds because you read it.
+The `names` check reads the words of every declared name in Nim. It reports a word from a short
+table of coined abbreviations, each with its one full word. It also reports a run of capitals that
+no glossary lists. It passes what the glossaries list under `## Standards`, their terms, and the
+jargon of V.6. A binding of a library's own name is skipped, because the name is not ours. The
+rest of Article V holds because you read it.
 
 ## The queue and the shared allowance
 
