@@ -343,6 +343,9 @@ clock.** On the simulated clock every timing row reads zero, and arithmetic over
 `driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than
 spans of time. Their size is then the same on every machine, and only the figures move with speed.
 
+**The heap row reads `NaN` on the simulated page**, because the clock stands in for `performance`.
+So `driveHeapUnit` reads that row on the second page too.
+
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.**
 Runners and delegates meet it, and each fault that a bound pins reads over it. Delegate readings are
 from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to 2026-09-30, alone and in the
@@ -889,6 +892,12 @@ desktop entry point holds three instances:
 | permanent | `CAPACITY_ARENA_PERMANENT` 160 MiB | pixel readback, every GIF frame | never |
 | frame | `CAPACITY_ARENA_FRAME` 64 MiB | one PNG's scanlines, one GIF frame's scratch | per unit |
 | swap pair | `CAPACITY_ARENA_SWAP` 256 KiB × 2 | the draw loop's `DrawScratch` | per frame |
+
+**Every byte count that a reader sees is in KiB and MiB, as IEC 80000-13 names them.** Each one
+divides by 1024 or by 1048576. That holds for the memory rows and the pool line of the window, and
+for the heap row of the page. A `KB` or `MB` there reads as thousands, which the count is not. The
+pool line puts its figure for each handle on a line of its own. The longer unit then stays inside
+the panel at a full pool.
 
 The storyboard run sizes the permanent capacity from its own `arena.used + bytes_needed`, and
 not from a round number. The **swap pair** reclaims on the way *in*. What one frame assembled
