@@ -141,11 +141,13 @@ func algebraDefines(algebra: Algebra): seq[string] =
 
 
 func buildDefines(chain: Toolchain, pga: string): seq[string] =
-  ## Spell defines naming build in documents it writes.
+  ## Spell defines naming build in documents it writes, and leaving dense forms out, since they
+  ##   read tables by name at pin and change may rename them.
   @[
     "-d:pga_benchmark.nim_commit=" & chain.nim,
     "-d:pga_benchmark.pga_commit=" & pga,
     "-d:pga_benchmark.flags=" & chain.flags,
+    "-d:pga_benchmark.has_dense_forms=false",
   ]
 
 
@@ -155,12 +157,10 @@ proc compileAgainst(
   algebra: Algebra;
   should_stop_at_c: bool;
 ): (string, int) =
-  ## Compile project entry against library copy, skipping project `nim.cfg` that names pin's;
-  ##   dense forms left out, since they read tables by name at pin and change may rename them.
+  ## Compile project entry against library copy, skipping project `nim.cfg` that names pin's.
   var arguments = @["c", "--hints:off", "--warnings:off", chain.flags, "--skipParentCfg:on",
     "--noNimblePath", "--path:" & library, "--nimcache:" & cache, "-o:" & binary]
   arguments.add algebraDefines(algebra) & buildDefines(chain, chain.pga)
-  arguments.add "-d:pga_benchmark.has_dense_forms=false"
   if should_stop_at_c: arguments.add "--compileOnly"
   arguments.add entry
   runCompiler(arguments)
