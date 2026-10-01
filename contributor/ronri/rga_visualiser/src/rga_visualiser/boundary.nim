@@ -69,6 +69,32 @@ type
 
 
 
+#[ Read Tally ]#
+
+var
+  IS_COUNTING_POINTS_READ = false
+    ## Say whether anyone reads how many points `pointFrom` reads back out of algebra.
+    ##   Mutable global because it is instrument, as `timings.IS_TALLYING` is: gated on its
+    ##   reader, never on build flag (Art. VII.4). Closed, each read pays one load and one
+    ##   branch (read in emitted JS).
+    ##   Suite opens it through `countPointsRead`; no front-end does.
+  COUNT_POINTS_READ = 0
+    ## Count points read since `countPointsRead` opened gate.
+
+
+template countPointsRead*(body: untyped): int =
+  ## Run `body`, and report how many points `pointFrom` read back out of algebra in it.
+  ##   Pins cost where clock cannot: count reads same on every machine, and load never
+  ##   moves it. See marker suite's count case.
+  ##   Never nest two: inner would zero outer's count.
+  COUNT_POINTS_READ = 0
+  IS_COUNTING_POINTS_READ = true
+  body
+  IS_COUNTING_POINTS_READ = false
+  COUNT_POINTS_READ
+
+
+
 #[ Multivector Conversion ]#
 
 func toMultivector*(p: Position): Multivector =
@@ -244,6 +270,10 @@ func pointFrom*(m: Multivector): Position =
   ##   Every caller builds `m` as unit-weight point plus weightless directions, so weight
   ##   is exactly one and read cannot refuse.
   ##   Asserted rather than defaulted: zero weight here means assembly upstream is wrong.
+  ##   Tallied while suite counts; see `countPointsRead`.
   let read = position(m)
   doAssert read.isSome, &"Assembled point must carry weight, its assembly is wrong; got `{m}`."
+  # Cast covers tally alone: instrument's own state, which no caller reads as result.
+  {.cast(noSideEffect).}:
+    if IS_COUNTING_POINTS_READ: inc COUNT_POINTS_READ
   read.get
