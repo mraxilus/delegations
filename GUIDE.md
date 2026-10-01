@@ -259,6 +259,66 @@ red. Read the answer back and stop. The change that the answer implies waits for
 that ask for it. Where the line is genuinely unclear, say what you would do, and ask before
 you do it.
 
+### The sign-off
+
+A message that ends a turn which pushed or posted, and the message of a handover, closes with
+one block, `## Sign-off`. Nothing follows it.
+
+It serves three readers. The Architect needs what waits on them and what is ready. The next
+delegate needs where things stand and what is unfinished. The same delegate, after a
+compaction, needs the map of the artifacts and the carried list. Its parts come in one order:
+
+1. **Role.** The role string, and the branch at its short head, `pushed` or `not pushed`. Then
+   the pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
+   `red` or `pending`.
+2. **Context.** Three sentences in the third person: what the branch is for, what the
+   Architect asked last, and the artifacts on entry, with no run result.
+3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`. Rows are
+   numbered from 1 and sorted by state, and a state never returns once the next one begins.
+   - ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
+     names it.
+   - ✅ done this turn, nobody acts. The last cell is never empty.
+   - ⚠️ an issue met, another delegate or an outside party acts. The last cell names who, and
+     on what.
+   - ⏸️ the Architect acts, whatever the cause. The last cell names what.
+   - ⬜ up next, this delegate acts.
+4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
+   by number.
+5. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
+   string. No forecast.
+
+A carried item is a row in the state it is in, tagged `(carried N)`. A carried item that does
+not apply is not a row, and goes in the pull request body under Record. An item is a clause a
+reader can verify. No cell holds a semicolon, and an empty cell says there is nothing to say.
+Twelve rows is the ceiling, four of them ☑️. Third person and active voice throughout, and the
+rules of this guide over every sentence. Reading holds the shape.
+
+```md
+## Sign-off
+
+**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list` at
+`3f2a9c1`, pushed, #331 draft, run 412 green
+
+**Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
+the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
+of each algebra. On entry, #331 was a draft and #310 held the open question on the names.
+
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ☑️ | `rga4d` and `cga5d` stay, by the ruling on V.9 | #320 | the Architect ruled |
+| 2 | ☑️ | Draft since it opened, another commit intended (carried 4) | #331 | |
+| 3 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
+| 4 | ✅ | Draft opened with the role line and the label (carried 1) | #331 | label copied |
+| 5 | ⚠️ | `koch drive` red in the drive of rga_visualiser | run 413, #332 | its contributor |
+| 6 | ⏸️ | V.9 names in the tests: keep `rga4d`, or rename (carried 3) | #310 | the Architect |
+| 7 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate, 16 GB |
+
+**Summary:** The gap list is done and green, and #331 waits only on the Architect. Row 6 waits
+on the Architect. The red run in row 5 belongs to rga_visualiser and blocks nothing here.
+
+**Next step:** Architect: rule on #310 in #331 Notes.
+```
+
 ## Provenance guide
 
 Instructions for a delegate who works on a project that keeps a `PROVENANCE.md`. The file

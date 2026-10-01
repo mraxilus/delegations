@@ -378,4 +378,4 @@ left there after it became checkable is the one that teaches the skimming.
 ## Output contract
 
 As `GUIDE.md` has it: the implementation first, then only what is material, the URL of the
-page in the message, and the change shown there.
+page in the message, and the change shown there. The sign-off comes last.
