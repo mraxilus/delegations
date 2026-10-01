@@ -4,6 +4,10 @@ Benchmark and gap list that holds `pga` to Lengyel's typed reference: what is me
 what, and how far each measurement sits from its target. The words of the repository itself
 are in the root glossary. Only what is specific to this project is defined here.
 
+## Standards
+
+The root glossary holds the default standards, and this project has selected none of its own.
+
 ## Language
 
 **Measurand**:
