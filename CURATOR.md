@@ -299,14 +299,16 @@ place, under Settings:
 
 The ledger reads the rulesets of `main` and of every branch daily and reports drift from this
 list. The token of a run reads the rules, and the secret `ADMIN_TOKEN` reads the bypass actors,
-which GitHub hides from that token. The ledger reads the merge method from the ruleset. No token
-of a run sees the head branch deletion, so that setting holds by reading. A read that fails
-turns the run red.
+which GitHub hides from that token. Store a fine-grained token that reads this repository under
+Settings, Secrets, or the ledger reports the gap. The ledger reads the merge method from the
+ruleset. No token of a run sees the head branch deletion, so that setting holds by reading. A
+read that fails turns the run red.
 
-The same secret serves the `draft` workflow, because the token of a run cannot return a pull
-request to draft. Store a fine-grained token under Settings, Secrets, with read on this
-repository and write on its pull requests. Without it the ledger reports the gap and the `draft`
-workflow turns red.
+The `draft` workflow converts with the token of a GitHub App. GitHub refuses the conversion to
+the token of a run and to a fine-grained token, and a classic token spans every public
+repository. Create an App with write on pull requests, and install it on this repository alone.
+Store its id as `DRAFT_APP_ID` and its private key as `DRAFT_APP_KEY` under Settings, Secrets.
+Without them the `draft` workflow turns red.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
