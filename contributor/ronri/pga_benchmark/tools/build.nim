@@ -126,10 +126,10 @@ const
 
 #[ Processes ]#
 
-proc run(command: string; args: openArray[string]) =
-  ## Run command with args from project directory; raise on non-zero exit.
+proc run(command: string; arguments: openArray[string]) =
+  ## Run command with arguments from project directory; raise on non-zero exit.
   let
-    process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
+    process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
     code = process.waitForExit
   process.close
   if code != 0:

@@ -128,15 +128,14 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines were taken again on 2026-09-30**, in another container of the same
-description, five runs each. Their medians run ×1.7 to ×2.3 those of 2026-09-28 across the
-four algebras. So times from two containers never compare, and ratios within one run do.
+**The runtime baselines were taken again on 2026-10-01**, at `3121342`, on a machine of the
+same description, five runs each. Their medians run ×0.47 to ×0.59 those of 2026-09-30 across
+the four algebras, and on 2026-09-30 the machine reported steal time. So times taken at
+different hours never compare, and ratios within one run do.
 
-Even those ratios moved against the single run of 2026-09-28. From the 5th to the 95th
-percentile, the typed time ratios moved between ×0.50 and ×1.54 at rga4d. At cga5d they moved
-between ×0.75 and ×2.07. Within the new baselines, the least and greatest run ratios of the
-median measurand are ×1.36 apart at rga4d and ×1.35 at cga5d. One run of cga4d ran ×2.5
-slower than its median, and the machine reported steal time.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.17
+apart at rga4d and ×1.07 at cga5d. They are ×1.05 at rga3d and ×1.04 at cga4d, and the widest
+measurand spreads ×2.27, at rga3d. On 2026-09-30 the median measurand spread ×1.36 at rga4d.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak. The
 figures below stay as taken on 2026-09-28.
@@ -352,15 +351,15 @@ orthogonal antiprojection spend 81 against 108 at rga4d, and 27 against 36 at rg
 first step leaves whole grades at zero, and the second step reads none of them. That is new
 evidence that a chain bound is an estimate.
 
-**What the library spends in time against them.** The runtime baselines of 2026-09-30 time
+**What the library spends in time against them.** The runtime baselines of 2026-10-01 time
 each dense form beside the library, five alternating runs. The median general measurand runs
-×1.00 to ×1.04 its dense form, since most library operators are already one generated table.
-The compound operations are not. They run ×2.1 to ×6.1 their dense forms, from the
+×1.00 to ×1.13 its dense form, since most library operators are already one generated table.
+The compound operations are not. They run ×1.8 to ×5.7 their dense forms, from the
 container at cga5d to the support at rga4d.
 
-Negation and the antigrade selection run ×1.9 to ×2.9, and the norms ×1.3 to ×3.4. The
-weight unitizes run faster than their dense forms, ×0.68 to ×0.98, and the bulk unitize
-slower, ×1.4 to ×2.3. So a dense form is a measure, and never a lower bound on time.
+Negation and the antigrade selection run ×1.6 to ×4.1, and the norms ×2.0 to ×5.4. The
+weight unitizes run faster than their dense forms, ×0.59 to ×0.87, and the bulk unitize
+slower, ×1.2 to ×3.1. So a dense form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -448,6 +447,11 @@ digest.
 library, reads the static measurements of every function, and times each measurand. The
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
 lands on both.
+
+**An evaluation builds without dense forms**, under `-d:pga_benchmark.has_dense_forms=false`.
+A dense form reads tables by their names at pin, and a change may rename them, as
+`cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
+dense form.
 
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
@@ -585,10 +589,10 @@ the README.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `bd6b23c590d7e1da91a1ea288a1a4b94dedbf315`, and `nim.cfg` names
+records the resolved commit `31213421d6699cb44a9a171b75388ef8188e1136`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-09-28, as the standing instruction of the
+That commit is the head of the library on 2026-10-01, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -798,7 +802,7 @@ hand-written function, such as a norm, writes no zero. The Architect decided thi
 library is about PGA and not about micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `bd6b23c` the library works this way, and its attitude and
+unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
 carrier are generated. The cost that stays is what the hand-written norms pay.
 
 The cost was measured at library `181c8d8`, with the sign of `merge` fixed, on 2026-09-25.
@@ -868,12 +872,17 @@ these measurements.
 - Whether the sign of the partner folds into its first table by the grade of each term.
   That is exact under the homogeneity the partner already asserts. It would take the partner
   from 437 multiplies and 104 fills to its chain bound of 324. Unmeasured.
-- Why the weight unitizes of the library run faster than their dense forms, ×0.68 to ×0.98,
-  while the bulk unitize runs slower, ×1.4 to ×2.3. The library scales every slot in a loop,
+- Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.87,
+  while the bulk unitize runs slower, ×1.2 to ×3.1. The library scales every slot in a loop,
   which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
 - Whether a product whose terms all land in one slot should return a `float` from the
   emitter. At four dimensions 26 measurands stand above the byte bound for that reason
   alone.
+- Whether the P01 build claim reads the right build. At rga6d on 2026-10-01, the library
+  alone peaks at 171 MiB against 286, ×0.60. The bench entry peaks at 261 MiB against 342,
+  ×0.76, and the claim asks for ×0.70. The bench entry emits the same C on both sides, 3.0 MB
+  against 3.1 MB. The likely cause is that code generation now sets the peak of the changed
+  build, where derivation hides it on the pristine side. Unmeasured.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
