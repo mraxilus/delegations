@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuse push of tree `koch check` did not pass on; git feeds pushed refs on stdin.
+#   not Nim because git runs hook as executable script, and built binary is never committed.
+exec sh "$(git rev-parse --show-toplevel)/.claude/hooks.sh" push

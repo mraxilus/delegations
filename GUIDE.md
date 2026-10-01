@@ -291,7 +291,8 @@ A carried item is a row in the state it is in, tagged `(carried N)`. A carried i
 not apply is not a row, and goes in the pull request body under Record. An item is a clause a
 reader can verify. No cell holds a semicolon, and an empty cell says there is nothing to say.
 Twelve rows is the ceiling, four of them ☑️. Third person and active voice throughout, and the
-rules of this guide over every sentence. Reading holds the shape.
+rules of this guide over every sentence. The `Stop` hook holds the shape under Claude Code,
+where it holds this repository alone, and reading holds it elsewhere.
 
 ```md
 ## Sign-off
@@ -306,11 +307,11 @@ of each algebra. On entry, #331 was a draft and #310 held the open question on t
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
 | 1 | ☑️ | `rga4d` and `cga5d` stay, by the ruling on V.9 | #320 | the Architect ruled |
-| 2 | ☑️ | Draft since it opened, another commit intended (carried 4) | #331 | |
+| 2 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
 | 3 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 4 | ✅ | Draft opened with the role line and the label (carried 1) | #331 | label copied |
+| 4 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
 | 5 | ⚠️ | `koch drive` red in the drive of rga_visualiser | run 413, #332 | its contributor |
-| 6 | ⏸️ | V.9 names in the tests: keep `rga4d`, or rename (carried 3) | #310 | the Architect |
+| 6 | ⏸️ | V.9 names in the tests: keep `rga4d`, or rename (carried 2) | #310 | the Architect |
 | 7 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate, 16 GB |
 
 **Summary:** The gap list is done and green, and #331 waits only on the Architect. Row 6 waits

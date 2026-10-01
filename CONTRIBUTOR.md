@@ -50,28 +50,27 @@ Two reads before any other work, and one list to carry.
 
 ## Carry the unchecked list in the open
 
-Seven rules in this repository hold by reading and nothing else. Each one is invisible until
+Six rules in this repository hold by reading and nothing else. Each one is invisible until
 after somebody breaks it. So you carry them as a list in the conversation, where the Architect
-sees where you are. This is the only copy, and `CURATOR.md` binds a curator to the same seven.
+sees where you are. This is the only copy, and `CURATOR.md` binds a curator to the same six.
+The role line and the label are not on it. The `body` hook reads every post before it lands,
+`check-role` reads every pull request, and the ledger reads what remains.
 
-1. **Role line on every issue and comment**, and the label on every issue, **copied and never
-   composed** (Boundaries, Say which role you are). The `check-role` job holds a pull request to
-   both, against the role that its branch names. An issue has no branch, so its label is a
-   judgement. `ledger.yml` reads only whether the body opens with a role, and whether the
-   issue or pull request carries any label. No check reads a comment at all.
-2. **An issue you answered in a comment, closed by hand** (Every delegate begins here).
+1. **An issue you answered in a comment, closed by hand** (Every delegate begins here).
    `ledger.yml` catches a `Closes #N` that never fired. An issue that a ruling answered has
    no pull request to find.
-3. **Requests answered on their issue.** To disagree with reasons is complete, and silence is
+2. **Requests answered on their issue.** To disagree with reasons is complete, and silence is
    not (Every delegate begins here).
-4. **Back to draft the moment you intend another commit** (Before you open a pull request).
-   `ledger.yml` catches a pull request left ready without a green run. It cannot see one that
-   is green now and about to move.
-5. **Published page linked in both places**, the pull request and the message (Before you
-   open a pull request; `GUIDE.md`, Output contract).
-6. **Change ends by showing itself**: a picture, a worked example, or one line on why neither
-   one fits (Before you open a pull request).
-7. **Glossary term proposed, and never written on sight** (`GUIDE.md`, Glossary process).
+3. **Back to draft before you push to a ready pull request** (Before you open a pull
+   request). The `draft` workflow returns a ready pull request to draft on a push. What stays
+   yours is the intent before the push, and to mark it ready again after.
+4. **The URL of a published page in the message** (`GUIDE.md`, Output contract). The `body`
+   hook holds the pull request half.
+5. **Change ends by showing itself**: a picture, a worked example, or one line on why neither
+   one fits (Before you open a pull request). The `body` hook holds that the Verification
+   section is not empty, and reading holds what it shows.
+6. **Glossary term or standard proposed, and never written on sight** (`GUIDE.md`, Glossary
+   process).
 
 The list is a view of those sections. Where the list and a section disagree, the section wins.
 
@@ -174,7 +173,8 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
 - Never rewrite pushed history. The log is part of the document (Article XI.2).
 - `nim r koch check` at the repository root passes on the exact commit you are about to push.
   Only then push with `git push -u origin <branch>`, and open a draft pull request from the
-  template. Never merge, and never ask for a merge.
+  template. The `pre-push` hook refuses a push of a tree that no green run recorded. Never
+  merge, and never ask for a merge.
 
 ## How to start a project
 

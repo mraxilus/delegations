@@ -44,7 +44,7 @@
 
 import std/[json, options, os, parseopt, sequtils, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, audit, plan, base, role, assets,
+  findings, domains, scope, commits, tree, audit, plan, base, role, assets, hooks,
 ]
 
 
@@ -59,6 +59,7 @@ Verbs:
   check-commits  commit subjects since base: form, scope, test before fix
   check-drift    charter or checker that base gained and branch lacks
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
+  hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, then project's own `drive` verb, on project's own pin
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
@@ -184,6 +185,84 @@ proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
   else: testSet(tree.projectDirectories, changedPaths(options.root, options.baseOrDefault))
 
 
+proc refuse(found: seq[Finding], code: int): int =
+  ## Print findings to stderr for hook host, and return code; zero findings return 0.
+  if found.len == 0: return 0
+  for f in found: stderr.write f.message & "\n"
+  code
+
+
+proc runHook(root, event, input: string): int =
+  ## Answer one hook event from its stdin facts; dispatch over event name.
+  let branch = gitFields(root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
+  case event
+  of "path", "bash", "body", "edit", "stop":
+    let data = input.parseJson
+    let tool = data{"tool_name"}.getStr
+    case event
+    of "path":
+      if tool notin EDIT_TOOLS: return 0
+      let path = insideRoot(data{"cwd"}.getStr(root), data{"tool_input", "file_path"}.getStr)
+      refuse(checkEditPath(branch, path), 2)
+    of "bash":
+      let is_pushed = gitFields(root, ["branch", "-r", "--contains", "HEAD"]).len > 0
+      refuse(checkBash(branch, data{"tool_input", "command"}.getStr, is_pushed), 2)
+    of "body":
+      if not isPost(tool, data{"tool_input", "body"} != nil): return 0
+      let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
+      refuse(checkBody(
+        tool, branch, data{"tool_input", "title"}.getStr, data{"tool_input", "body"}.getStr,
+        labels, data{"tool_input", "method"}.getStr == "create",
+      ), 2)
+    of "edit":
+      let path = insideRoot(data{"cwd"}.getStr(root), data{"tool_input", "file_path"}.getStr)
+      let tree = root.readTree
+      var found = tree.auditTree
+      found.add prunedFindings(root, tree)
+      let mine = found.filterIt(it.path == path)
+      if mine.len == 0: return 0
+      let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)
+      echo %*{"hookSpecificOutput": {
+        "hookEventName": "PostToolUse",
+        "additionalContext": "koch check-files reports " & $mine.len & " finding(s) in `" &
+          path & "`; fix before push:\n" & lines.join("\n"),
+      }}
+      0
+    else:
+      # Second block after one refusal passes, so blocked turn cannot loop forever.
+      if data{"stop_hook_active"}.getBool: return 0
+      let turn = readFile(data{"transcript_path"}.getStr).parseTurn
+      if not turn.calls.turnWrites: return 0
+      let found = checkSignoff(turn.text, branch)
+      if found.len == 0: return 0
+      echo %*{"decision": "block", "reason": "End this turn with sign-off block (GUIDE.md, " &
+        "Output contract), since it pushed or posted:\n" & found.mapIt(it.message).join("\n")}
+      0
+  of "start":
+    var drift: seq[Finding]
+    try:
+      discard gitFields(root, ["fetch", "-q", "origin", MAIN])
+      drift = checkBase(gainedPaths(root, "origin/" & MAIN))
+    except CatchableError: discard
+    echo startContext(
+      branch, readFile(root / "CONTRIBUTOR.md"), "## Carry the unchecked list in the open", drift
+    )
+    0
+  of "push":
+    let recorded = if fileExists(root / CHECK_MARK): readFile(root / CHECK_MARK) else: ""
+    var found: seq[Finding]
+    for line in input.splitLines:
+      let fields = line.splitWhitespace
+      if fields.len < 2 or fields[1].allCharsInSet({'0'}): continue
+      found.add checkPush(recorded, gitFields(root, ["rev-parse", fields[1] & "^{tree}"])[0])
+    refuse(found, 1)
+  of "msg":
+    refuse(checkMessage(branch, input, subjects(root, getEnv("BASE", "origin/" & MAIN))), 1)
+  else:
+    stderr.write "koch hook: unknown event `" & event & "`.\n"
+    2
+
+
 proc run(options: Options): int =
   ## Execute command, print findings, return exit code.
   var found: seq[Finding]
@@ -207,6 +286,15 @@ proc run(options: Options): int =
       return 1
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
     found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
+    # Green run on clean tree records tree hash, which `pre-push` hook compares against
+    #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
+    if found.len == 0:
+      if gitFields(options.root, ["status", "--porcelain"]).len == 0:
+        writeFile(
+          options.root / CHECK_MARK, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0]
+        )
+        echo "Tree hash recorded for pre-push hook."
+      else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
     if not options.reads({Root}): return options.refused
     let tree = options.root.readTree
@@ -238,6 +326,12 @@ proc run(options: Options): int =
       if named.len == 0: newSeq[string]()
       else: named.parseJson.getElems.mapIt(it.getStr)
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
+  of "hook":
+    # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
+    #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,
+    #   JSON on stdout feeds context or blocks stop, exit 1 refuses git hook.
+    if not options.reads({Root}, has_project = true): return options.refused
+    return runHook(options.root, options.project, stdin.readAll)
   of "test":
     if not options.reads({Root, Base, All, Recent}, has_project = true):
       return options.refused

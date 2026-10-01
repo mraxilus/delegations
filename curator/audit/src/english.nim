@@ -242,9 +242,9 @@ func isGoverned*(path: string): bool =
   false
 
 
-func checkEnglish*(path, source: string): seq[Finding] =
-  ## Report long sentence, long paragraph and word outside approved dictionary.
-  if not path.isGoverned: return
+func englishFindings*(path, source: string): seq[Finding] =
+  ## Report long sentence, long paragraph and word outside approved dictionary, whatever path.
+  ##   Governed files reach it through `checkEnglish`; hook reaches it with body of post.
   for b in source.blocks:
     let found = b.text.sentences
     if found.len > PARAGRAPH_SENTENCES:
@@ -268,3 +268,8 @@ func checkEnglish*(path, source: string): seq[Finding] =
           "Word is outside approved dictionary; write `" & approved &
             "` (ASD-STE100); got `" & word & "`.",
         )
+
+
+func checkEnglish*(path, source: string): seq[Finding] =
+  ## Report English findings of governed document; other paths pass unread.
+  if path.isGoverned: englishFindings(path, source) else: @[]

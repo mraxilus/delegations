@@ -1,0 +1,30 @@
+# Return ready pull request to draft when push lands on it, so ready means what it says.
+#   Carried-list rule "back to draft before another commit" had no reader: intent is
+#   written nowhere, but push is. Push to ready pull request is fact GitHub records, so
+#   this holds half of rule, and intent before push stays carried
+#   (CONTRIBUTOR.md, `Carry the unchecked list in the open`). Delegate marks pull request
+#   ready again once run is green.
+#   `synchronize` fires on push to head branch; draft pull request is left alone, since it
+#   says "not yet" already.
+#   `permissions` block is whole grant: `pull-requests: write` is what `gh pr ready` uses.
+#   Cost: Architect sees pull request go draft on each push after ready, by design.
+
+name: draft
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  draft:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr ready "$NUMBER" --repo "$REPO" --undo
