@@ -1,0 +1,107 @@
+<!-- Derivation map of P01: three generators, four rules, every table operator reads.
+     Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 528" class="map" role="img"
+  aria-labelledby="map-title map-desc">
+<title id="map-title">Derivation map</title>
+<desc id="map-desc">Metric, complement and exterior product are written by hand. Each other
+  table follows from them through four rules, and the emitter reads every table.</desc>
+<style>
+.map text { font-family: var(--sans, sans-serif); font-size: 13px; fill: var(--ink, #16202c); }
+.map .strong { font-weight: 600; }
+.map .small { font-size: 12px; }
+.map .quiet { font-size: 11.5px; fill: var(--muted, #667384); }
+.map .box { fill: var(--surface, #ffffff); stroke: var(--rule-strong, #c6ced8);
+  stroke-width: 1.25; }
+.map .generator { fill: var(--status-wash, #ece9f8); stroke: var(--status, #5a4a9c);
+  stroke-width: 2; }
+.map .direct { stroke-dasharray: 4 3; }
+.map .emission { fill: var(--track, #edf0f4); stroke: var(--rule-strong, #c6ced8);
+  stroke-width: 1.25; }
+.map .edge { fill: none; stroke: var(--muted, #667384); stroke-width: 1.25; }
+.map .head { fill: var(--muted, #667384); }
+</style>
+<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+  markerHeight="6" orient="auto-start-reverse"><path class="head" d="M0 0L10 5L0 10z"/>
+</marker></defs>
+<g>
+<path class="edge" d="M128 72V112" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M380 72V112" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M632 72V112" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M232 148H276" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M380 184V212"/>
+<path class="edge" d="M632 184V212"/>
+<path class="edge" d="M128 212H632"/>
+<path class="edge" d="M128 212V240" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M380 212V240" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M632 212V240" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M128 312V352" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M380 312V352" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M128 424V464" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M380 424V464" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M720 312V464" marker-end="url(#map-arrow)"/>
+<path class="edge" d="M616 424V464" marker-end="url(#map-arrow)"/>
+</g>
+<g><rect class="generator" x="24" y="16" width="208" height="56" rx="8"/>
+  <text class="strong" x="128" y="40" text-anchor="middle">Metric 𝖌</text>
+  <text class="small" x="128" y="56" text-anchor="middle">by hand, on vectors</text>
+</g>
+<g><rect class="generator" x="276" y="16" width="208" height="56" rx="8"/>
+  <text class="strong" x="380" y="40" text-anchor="middle">Complement</text>
+  <text class="small" x="380" y="56" text-anchor="middle">by hand, basis permutation</text>
+</g>
+<g><rect class="generator" x="528" y="16" width="208" height="56" rx="8"/>
+  <text class="strong" x="632" y="40" text-anchor="middle">Exterior product</text>
+  <text class="small" x="632" y="56" text-anchor="middle">by hand, on bases</text>
+</g>
+<g><rect class="box" x="24" y="112" width="208" height="72" rx="8"/>
+  <text class="strong" x="128" y="136" text-anchor="middle">𝐆 · 𝔾</text>
+  <text class="small" x="128" y="152" text-anchor="middle">exomorphism of the metric</text>
+  <text class="small" x="128" y="168" text-anchor="middle">𝔾 = constructAnti(𝐆)</text>
+</g>
+<g><rect class="box" x="276" y="112" width="208" height="72" rx="8"/>
+  <text class="strong" x="380" y="136" text-anchor="middle">★ · ☆</text>
+  <text class="small" x="380" y="152" text-anchor="middle">★ = right complement after 𝐆</text>
+  <text class="small" x="380" y="168" text-anchor="middle">☆ = constructAnti(★)</text>
+</g>
+<g><rect class="box" x="528" y="112" width="208" height="72" rx="8"/>
+  <text class="strong" x="632" y="136" text-anchor="middle">∧ · ∨</text>
+  <text class="small" x="632" y="152" text-anchor="middle">∧ on every basis pair</text>
+  <text class="small" x="632" y="168" text-anchor="middle">∨ = constructAnti(∧)</text>
+</g>
+<text class="quiet" x="136" y="204">every product reads ★ · ☆ and ∧ · ∨</text>
+<g><rect class="box" x="24" y="240" width="208" height="72" rx="8"/>
+  <text class="strong" x="128" y="264" text-anchor="middle">Dual products</text>
+  <text class="small" x="128" y="280" text-anchor="middle">∨★  ∨☆  ∧★  ∧☆</text>
+  <text class="small" x="128" y="296" text-anchor="middle">applyMap of a dual</text>
+</g>
+<g><rect class="box" x="276" y="240" width="208" height="72" rx="8"/>
+  <text class="strong" x="380" y="264" text-anchor="middle">Transwedge</text>
+  <text class="small" x="380" y="280" text-anchor="middle">Σ (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
+  <text class="small" x="380" y="296" text-anchor="middle">over bases 𝐜 of one grade</text>
+</g>
+<g><rect class="box" x="528" y="240" width="208" height="72" rx="8"/>
+  <text class="strong" x="632" y="264" text-anchor="middle">Compound maps</text>
+  <text class="small" x="632" y="280" text-anchor="middle">⊖  ⊟  ⊞  ⊙  ⊡  ∩  ∪</text>
+  <text class="small" x="632" y="296" text-anchor="middle">applyConstant, applyMap</text>
+</g>
+<text class="quiet" x="136" y="334">filterGrades</text>
+<text class="quiet" x="388" y="334">signed sum</text>
+<g><rect class="box" x="24" y="352" width="208" height="72" rx="8"/>
+  <text class="strong" x="128" y="376" text-anchor="middle">∙ · ∘</text>
+  <text class="small" x="128" y="392" text-anchor="middle">∙ = grade 0 of 𝐦 ∨ 𝐧★</text>
+  <text class="small" x="128" y="408" text-anchor="middle">∘ = constructAnti(∙)</text>
+</g>
+<g><rect class="box" x="276" y="352" width="208" height="72" rx="8"/>
+  <text class="strong" x="380" y="376" text-anchor="middle">⟑ · ⟇</text>
+  <text class="small" x="380" y="392" text-anchor="middle">⟑ = sum of orders, signed</text>
+  <text class="small" x="380" y="408" text-anchor="middle">⟇ = constructAnti(⟑)</text>
+</g>
+<g><rect class="box direct" x="528" y="352" width="176" height="72" rx="8"/>
+  <text class="strong" x="616" y="376" text-anchor="middle">~ · ~∘ · parts, direct</text>
+  <text class="small" x="616" y="392" text-anchor="middle">constructReverse</text>
+  <text class="small" x="616" y="408" text-anchor="middle">constructParts</text>
+</g>
+<g><rect class="emission" x="24" y="464" width="712" height="48" rx="8"/>
+  <text x="380" y="493" text-anchor="middle">defineOperator emits each table over the
+  bases of its operands</text></g>
+</svg>

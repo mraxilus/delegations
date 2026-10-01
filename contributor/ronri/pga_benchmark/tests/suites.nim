@@ -1127,6 +1127,19 @@ suite "Figures":
       body  # SVG whole, caption beneath
     check "<figure" notin bare and "Map." in bare  # absent file renders as text
 
+  test "P01 figure names committed map that shows every rule of P01":
+    const
+      ARGUMENT = staticRead("../proposals/01-cayley-derivation/proposal.md")
+      MAP = staticRead("../pages/derivation-map.svg")
+    let
+      (record, _) = parseProposal(ARGUMENT, "", %*{"status": "proposed", "claims": []},
+        "proposals/01-cayley-derivation")
+      paths = record.body.mapIt(it.figureOf(record.directory)).filterIt(it.isSome).mapIt(
+        it.get.path)
+    check paths == @["pages/derivation-map.svg"]  # one figure, file staticRead found
+    for rule in ["constructAnti", "applyMap", "applyConstant", "filterGrades", "signed sum"]:
+      check rule in MAP  # each of four rules marks its arrow or box
+
 
 suite "Cells":
   test "table reads cell for cell, sign included, in both cell shapes":
