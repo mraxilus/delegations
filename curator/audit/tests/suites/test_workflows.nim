@@ -103,8 +103,10 @@ jobs:
           GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: gh pr ready "$NUMBER" --undo
 """
-    check not SECRET.usesRunToken
+    check SECRET.runsAsSecret
     check checkScopes("draft.yml", SECRET).len == 0
     let run_token = SECRET.replace("secrets.ADMIN_TOKEN", "github.token")
-    check run_token.usesRunToken
+    check not run_token.runsAsSecret
     check checkScopes("draft.yml", run_token).len == 1  # same step with run token wants grant
+    # Run token spelled as secret is still run token, so block still binds.
+    check not SECRET.replace("secrets.ADMIN_TOKEN", "secrets.GITHUB_TOKEN").runsAsSecret
