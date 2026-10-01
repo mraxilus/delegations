@@ -298,11 +298,14 @@ place, under Settings:
 - Under Settings, General, delete the head branch after a merge.
 
 The ledger reads the rulesets of `main` and of every branch daily and reports drift from this
-list. The token of a run reads the rules. The secret `ADMIN_TOKEN` reads the bypass actors,
-which GitHub hides from that token. Store a fine-grained token that reads this repository under
-Settings, Secrets, or the ledger reports the gap. It reads the merge method from the ruleset,
-and no token of a run sees the head branch deletion, so that setting holds by reading. A read
-that fails turns the run red.
+list. The token of a run reads the rules. The secret `TOKEN_DELEGATE` reads the bypass actors and
+the merge settings, which GitHub hides from that token. A read that fails turns the run red.
+
+`TOKEN_DELEGATE` is the one token the workflows hold beyond the token of a run. It is a classic
+token with the `public_repo` scope alone, stored under Settings, Secrets. The `draft` workflow
+converts with it, because GitHub refuses the conversion to the token of a run and to a
+fine-grained token. It reaches every public repository of the account, which is the cost of one
+token over an App. Without it the ledger reports the gap and the `draft` workflow turns red.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
