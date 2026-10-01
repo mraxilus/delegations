@@ -18,7 +18,7 @@ import ./[kinds, layout]
 export layout.Entry, layout.Tree
 
 
-proc gitFields*(root: string, args: openArray[string]): seq[string] =
+proc gitFields*(root: string, arguments: openArray[string]): seq[string] =
   ## Run git in root, return NUL-separated stdout fields; raise on non-zero exit.
   ##   Streams are read apart. Git writes warning to stderr, ending it in newline rather
   ##     than in NUL, so stream carrying both would leave warning glued to first field.
@@ -28,7 +28,7 @@ proc gitFields*(root: string, args: openArray[string]): seq[string] =
   ##     carries it.
   ##   Both pipes are drained before exit is waited on, since child blocks where either one
   ##     fills while other is read.
-  let process = startProcess("git", args = @["-C", root] & @args, options = {poUsePath})
+  let process = startProcess("git", args = @["-C", root] & @arguments, options = {poUsePath})
   defer: process.close
   let
     output = process.outputStream.readAll
