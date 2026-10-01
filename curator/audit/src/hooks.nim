@@ -66,6 +66,7 @@ type
     ## Define one tool call of turn, as transcript records it.
     name*: string     ## Tool name, such as `Bash` or `mcp__github__issue_write`.
     command*: string  ## Bash command text; empty for other tools.
+    has_body*: bool   ## Input carried `body`, so GitHub write posted text.
 
   Turn* = object
     ## Define what transcript says about turn since last message of person.
@@ -114,18 +115,19 @@ func gitCommands*(command: string): seq[seq[string]] =
 
 func checkBash*(branch, command: string, is_head_pushed: bool): seq[Finding] =
   ## Report commit or push on `main` or outside grammar, and rewrite of pushed history.
-  for args in command.gitCommands:
-    if args.len == 0: continue
-    let sub = args[0]
+  for arguments in command.gitCommands:
+    if arguments.len == 0: continue
+    let sub = arguments[0]
     if sub in ["commit", "push"] and (branch == MAIN or branch.parseBranch.isNone):
       result.add finding(
         "", 0,
         "Never commit to `main`; push to branch inside grammar (CLAUDE.md); got `" & branch &
           "`.",
       )
-    if sub == "push" and args.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-")):
+    let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
+    if sub == "push" and is_forced:
       result.add finding("", 0, "Never rewrite pushed history (XI.2); got `git push --force`.")
-    if is_head_pushed and ((sub == "commit" and "--amend" in args) or sub == "rebase"):
+    if is_head_pushed and ((sub == "commit" and "--amend" in arguments) or sub == "rebase"):
       result.add finding(
         "", 0, "Never rewrite pushed history (XI.2); HEAD is on remote; got `git " & sub & "`."
       )
@@ -329,9 +331,10 @@ func startContext*(branch, contributor, carried_heading: string, drift: seq[Find
 
 
 func turnWrites*(calls: openArray[Call]): bool =
-  ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write tool.
+  ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write with body.
+  ##   Label or draft update carries no body and is no post, as `body` hook reads it.
   for c in calls:
-    if c.name in WRITE_TOOLS: return true
+    if isPost(c.name, c.has_body): return true
     if c.name == "Bash" and c.command.gitCommands.anyIt(it.len > 0 and it[0] == "push"):
       return true
   false
@@ -365,7 +368,8 @@ proc parseTurn*(transcript: string): Turn =
       case item{"type"}.getStr
       of "tool_use":
         result.calls.add Call(
-          name: item{"name"}.getStr, command: item{"input", "command"}.getStr
+          name: item{"name"}.getStr, command: item{"input", "command"}.getStr,
+          has_body: item{"input", "body"} != nil,
         )
       of "text": text.add item{"text"}.getStr
       else: discard
