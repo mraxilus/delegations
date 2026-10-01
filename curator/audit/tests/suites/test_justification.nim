@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/unittest
-import ../../src/[kinds, comments, justification]
+import ../../src/[comments, justification, kinds]
 
 
 const

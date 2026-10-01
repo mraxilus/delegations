@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[domains, layout, dependencies]
+import ../../src/[dependencies, domains, layout]
 import ./fixtures
 
 

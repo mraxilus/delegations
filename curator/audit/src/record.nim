@@ -65,8 +65,9 @@ func headingText(line: string): string =
 func checkHeadings(path, source: string): seq[Finding] =
   ## Report dated heading, `## Open questions` not last, heading twice, and underlined title.
   let lines = source.fencedOut.splitLines
-  var seen: seq[string]
-  var open_at, last_at = 0
+  var
+    seen: seq[string]
+    open_at, last_at = 0
   for i, line in lines:
     if line.startsWith("#"):
       let text = line.headingText

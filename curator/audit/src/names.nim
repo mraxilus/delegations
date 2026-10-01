@@ -66,8 +66,9 @@ func codeOnly*(source: string): string =
   ##   Nim forms: `#` to end of line, `#[ ]#` nesting, `"..."` with escapes, `"""..."""`,
   ##     raw `r"..."` with `""` escape, and `'c'`.
   result = newString(source.len)
-  var i = 0
-  var depth = 0
+  var
+    i = 0
+    depth = 0
   template blank(n: int) =
     for k in 0 ..< n:
       result[i] = (if source[i] == '\n': '\n' else: ' ')
@@ -144,8 +145,9 @@ func nameOf(piece: string): string =
 
 func splitTop(text: string, separators: set[char]): seq[string] =
   ## Split text at separators outside brackets, so `array[2, int]` stays one piece.
-  var depth = 0
-  var piece = ""
+  var
+    depth = 0
+    piece = ""
   for c in text:
     if c in {'(', '[', '{'}: inc depth
     elif c in {')', ']', '}'}: dec depth
@@ -166,28 +168,32 @@ func parameterNames(signature: string): seq[string] =
 func declarations*(source: string): seq[Declared] =
   ## Read every declared name of Nim source with its line and kind.
   let lines = source.codeOnly.splitLines
-  var block_indent = -1
-  var type_indent = -1
-  var object_indent = -1
-  var i = 0
+  var
+    block_indent = -1
+    type_indent = -1
+    object_indent = -1
+    i = 0
   while i < lines.len:
-    let line = lines[i]
-    let s = line.strip
-    let indent = line.indentOf
-    let one = i + 1
+    let
+      line = lines[i]
+      s = line.strip
+      indent = line.indentOf
+      one = i + 1
     if s.len == 0:
       inc i
       continue
     if block_indent >= 0 and indent <= block_indent: block_indent = -1
     if type_indent >= 0 and indent <= type_indent: type_indent = -1
     if object_indent >= 0 and indent <= object_indent: object_indent = -1
-    let word = s.identifierAt(0)
-    let rest = s[word.len .. ^1]
+    let
+      word = s.identifierAt(0)
+      rest = s[word.len .. ^1]
     if word in ROUTINE_KEYWORDS and rest.len > 0 and rest[0] == ' ':
       let name = rest.identifierAt(0)
       # Signature runs to matching parenthesis, across lines; pragmas follow it on same line.
-      var text = s
-      var j = i
+      var
+        text = s
+        j = i
       while text.count('(') > text.count(')') and j + 1 < lines.len:
         inc j
         text.add lines[j]
@@ -200,8 +206,9 @@ func declarations*(source: string): seq[Declared] =
         result.add Declared(name: name, line: one, kind: NameKind.Routine)
       let open = text.find('(')
       if open >= 0:
-        var depth = 0
-        var close = -1
+        var
+          depth = 0
+          close = -1
         for k in open ..< text.len:
           if text[k] == '(': inc depth
           elif text[k] == ')':
@@ -293,8 +300,9 @@ func acronyms*(name: string): seq[string] =
   var run = ""
   let text = name & " "
   for k in 0 ..< text.len - 1:
-    let c = text[k]
-    let opens_word = c in {'A'..'Z'} and text[k + 1] in {'a'..'z'}
+    let
+      c = text[k]
+      opens_word = c in {'A'..'Z'} and text[k + 1] in {'a'..'z'}
     if (c in {'A'..'Z'} and not opens_word) or (run.len > 0 and c in {'0'..'9'}): run.add c
     else:
       if run.count({'A'..'Z'}) >= 2: result.add run
@@ -323,8 +331,9 @@ func glossaryExemptions*(glossary: string): seq[string] =
 func checkNames*(path, source: string, exempt: openArray[string]): seq[Finding] =
   ## Report declared name that coins abbreviation, carries unlisted acronym, opens routine
   ##   with banned verb, misnames lookup table, or shares its word with type as global.
-  let lower_exempt = exempt.mapIt(it.toLowerAscii)
-  let declared = source.declarations
+  let
+    lower_exempt = exempt.mapIt(it.toLowerAscii)
+    declared = source.declarations
   var type_keys: seq[string]
   for d in declared:
     if d.kind == NameKind.Type: type_keys.add d.name.toLowerAscii.replace("_", "")

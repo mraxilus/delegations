@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, unittest]
-import ../../src/[kinds, comments]
+import ../../src/[comments, kinds]
 
 
 func texts(source: string, syntax: Syntax): seq[string] =

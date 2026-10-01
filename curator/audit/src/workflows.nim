@@ -61,8 +61,9 @@ func permissionScopes*(workflow: string): Option[seq[string]] =
   ## Read scopes workflow's own top-level `permissions` block names; `none` when it has none.
   ##   Absent block and empty block differ: absent takes repository default, empty grants
   ##   nothing, and only first is left alone.
-  var scopes: seq[string]
-  var is_inside = false
+  var
+    scopes: seq[string]
+    is_inside = false
   for line in workflow.splitLines:
     if line.startsWith(PERMISSIONS_KEY):
       is_inside = true

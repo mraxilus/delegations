@@ -103,8 +103,9 @@ func gitCommands*(command: string): seq[seq[string]] =
   var text = command
   for op in ["&&", "||", ";", "|"]: text = text.replace(op, "\n")
   for segment in text.splitLines:
-    let tokens = segment.splitWhitespace
-    let at = tokens.find("git")
+    let
+      tokens = segment.splitWhitespace
+      at = tokens.find("git")
     if at < 0: continue
     var i = at + 1
     while i < tokens.len and tokens[i].startsWith("-"):
@@ -191,9 +192,10 @@ func carriedTags(cell: string): seq[int] =
   ## Read every `(carried N)` of cell as N; `0` where N is not digit.
   var at = cell.find(CARRIED_TAG)
   while at >= 0:
-    let rest = cell[at + CARRIED_TAG.len .. ^1]
-    let close = rest.find(')')
-    let number = if close > 0: rest[0 ..< close].strip else: ""
+    let
+      rest = cell[at + CARRIED_TAG.len .. ^1]
+      close = rest.find(')')
+      number = if close > 0: rest[0 ..< close].strip else: ""
     result.add(if number.len > 0 and number.allCharsInSet(Digits): number.parseInt else: 0)
     at = cell.find(CARRIED_TAG, at + 1)
 
@@ -213,8 +215,9 @@ func checkSignoff*(message, branch: string): seq[Finding] =
   for line in after:
     if line.startsWith("#"):
       result.add finding("", 0, "Nothing follows sign-off; got heading `" & line & "`.")
-  var starts: seq[int]
-  var pos = 0
+  var
+    starts: seq[int]
+    pos = 0
   for label in SIGNOFF_LABELS:
     var found = -1
     for j in pos ..< after.len:
@@ -226,15 +229,17 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     else: pos = found + 1
     starts.add found
   if starts.anyIt(it < 0): return
-  let role_text = after[starts[0]][SIGNOFF_LABELS[0].len .. ^1].strip.split(',')[0].strip
-  let parsed = branch.parseBranch
+  let
+    role_text = after[starts[0]][SIGNOFF_LABELS[0].len .. ^1].strip.split(',')[0].strip
+    parsed = branch.parseBranch
   if parsed.isSome and role_text != parsed.get.roleName:
     result.add finding(
       "", 0, "Sign-off role must be `" & parsed.get.roleName & "`; got `" & role_text & "`."
     )
   let rows = after[starts[2] + 1 ..< starts[3]].join("\n").tableRows
-  var last = 0
-  var seen: seq[int]
+  var
+    last = 0
+    seen: seq[int]
   for i, row in rows:
     if row.len != 5:
       result.add finding("", 0, "Sign-off row must hold five cells; got `" & $row.len & "`.")
@@ -243,8 +248,9 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       result.add finding(
         "", 0, "Sign-off rows are numbered from 1 in order; got `" & row[0] & "`."
       )
-    let marker = row[1].replace(SELECTOR, "")
-    let state = MARKERS.find(marker)
+    let
+      marker = row[1].replace(SELECTOR, "")
+      state = MARKERS.find(marker)
     if state < 0:
       result.add finding(
         "", 0, "Sign-off state must be one of ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "`."

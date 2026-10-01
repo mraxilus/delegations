@@ -87,8 +87,9 @@ proc lockFindings(tree: Tree, directories: openArray[string]): seq[Finding] =
     let
       nimble_path = directory.nimblePath
       lock_path = directory & "/" & LOCK_FILE
-    var nimble, lock: string
-    var found_lock = false
+    var
+      nimble, lock: string
+      found_lock = false
     for e in tree:
       if e.path == nimble_path: nimble = e.content
       elif e.path == lock_path:
@@ -115,8 +116,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if e.path.startsWith(WORKFLOW_DIRECTORY): result.add checkScopes(e.path, e.content)
 
   # Checker holds itself to rules it holds everything else to, from tree as git shows it.
-  var check_paths, check_sources, suite_sources: seq[string]
-  var koch_source, curator_source: string
+  var
+    check_paths, check_sources, suite_sources: seq[string]
+    koch_source, curator_source: string
   for e in tree:
     if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
       check_paths.add e.path
