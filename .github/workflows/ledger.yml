@@ -141,10 +141,11 @@ jobs:
           #   branch answer run token. Bypass actors do not: run token is installation token
           #   without administration scope, and GitHub leaves that field out. Anonymous read
           #   sees it, but runners share addresses and anonymous limit is sixty per hour, so
-          #   `ADMIN_TOKEN` reads it. Merge settings of repository object are hidden from both
-          #   tokens, so merge methods ruleset allows are read instead, and head branch deletion
-          #   is unread. Probe branch need not exist: endpoint answers for name as given. Read
-          #   that fails is red run rather than silence, by `set -e` on each assignment.
+          #   `ADMIN_TOKEN` reads it. Merge settings of repository object are hidden from run
+          #   token and from fine-grained token, so `ADMIN_TOKEN` is classic token, and reads
+          #   them with head branch deletion; merge method ruleset allows is read as well. Probe
+          #   branch need not exist: endpoint answers for name as given. Read that fails is red
+          #   run rather than silence, by `set -e` on each assignment.
           rules="$(gh api "repos/$REPO/rules/branches/main")"
           probe="$(gh api "repos/$REPO/rules/branches/ledger-probe")"
           ids="$(echo "$rules" | jq -r '[.[].ruleset_id] | unique | map(tostring) | join(" ")')"
@@ -179,8 +180,15 @@ jobs:
               echo "$ruleset" | jq -e '.bypass_actors == []' >/dev/null ||
                 found="$found- Ruleset $id lets someone bypass it"$'\n'
             done
+            settings="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO")"
+            echo "$settings" | jq -e '.allow_merge_commit and (.allow_squash_merge | not)
+                and (.allow_rebase_merge | not)' >/dev/null ||
+              found="$found- Settings allow a merge other than the merge commit"$'\n'
+            echo "$settings" | jq -e '.delete_branch_on_merge' >/dev/null ||
+              found="$found- Settings keep the head branch after a merge"$'\n'
           else
-            found="$found- No \`ADMIN_TOKEN\` is stored, so bypass actors are unread"$'\n'
+            found="$found- No \`ADMIN_TOKEN\` is stored, so bypass actors and merge settings"
+            found="$found are unread"$'\n'
           fi
 
           if [ -z "$found" ]; then
@@ -197,8 +205,8 @@ jobs:
           note="$note GitHub does not record, and that half is still carried by hand. Role and"
           note="$note label left it, since the body hook reads each post before it lands; this"
           note="$note reads what arrived from elsewhere. The run token reads the rules, and"
-          note="$note ADMIN_TOKEN reads the bypass actors. Lines above are only what runner can"
-          note="$note see."
+          note="$note ADMIN_TOKEN reads the bypass actors and the merge settings. Lines above are"
+          note="$note only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away

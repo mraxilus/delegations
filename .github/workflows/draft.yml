@@ -9,10 +9,11 @@
 #   GitHub refuses `convertPullRequestToDraft` to run token (`Resource not accessible by
 #   integration`, run 36850319568) and to fine-grained token with pull requests write
 #   (`Resource not accessible by personal access token`, runs 36857266980 and 36893344447).
-#   Classic token works, so `DRAFT_TOKEN` holds one with `public_repo` scope. It spans every
-#   public repository of account; GitHub App would narrow that to this repository, at cost of
-#   App to create and install. `permissions` is empty since run token does nothing here.
-#   Absent secret is red run with reason, never silence.
+#   Classic token works, so `ADMIN_TOKEN` holds one with `public_repo` scope: one token for
+#   every need of every workflow, ledger included. It spans every public repository of
+#   account; GitHub App would narrow that to this repository, at cost of App to create and
+#   install. `permissions` is empty since run token does nothing here. Absent secret is red
+#   run with reason, never silence.
 #   `workflow_dispatch` with number is test of this file: it returns that pull request to
 #   draft.
 #   Cost: Architect sees pull request go draft on each push after ready, by design, and
@@ -37,12 +38,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - env:
-          GH_TOKEN: ${{ secrets.DRAFT_TOKEN }}
+          GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number || inputs.number }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "DRAFT_TOKEN is not stored, so nothing returns #$NUMBER to draft." >&2
+            echo "ADMIN_TOKEN is not stored, so nothing returns #$NUMBER to draft." >&2
             exit 1
           fi
           gh pr ready "$NUMBER" --repo "$REPO" --undo
