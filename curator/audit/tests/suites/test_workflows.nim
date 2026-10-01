@@ -87,3 +87,24 @@ jobs:
     check "actions, issues" in found[0].message  # names what was granted
     let granted = LISTS_PRS.replace("  issues: write\n", "  issues: write\n  pull-requests: read\n")
     check checkScopes(".github/workflows/sweep.yml", granted).len == 0
+
+  test "a step that runs `gh` as a stored secret reaches by that secret, not the block":
+    # Run token cannot convert pull request to draft, so `draft.yml` hands `gh` stored
+    #   secret; block then grants nothing, and that is right rather than drift.
+    const SECRET = """
+name: draft
+
+permissions: {}
+
+jobs:
+  a:
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: gh pr ready "$NUMBER" --undo
+"""
+    check not SECRET.usesRunToken
+    check checkScopes("draft.yml", SECRET).len == 0
+    let run_token = SECRET.replace("secrets.ADMIN_TOKEN", "github.token")
+    check run_token.usesRunToken
+    check checkScopes("draft.yml", run_token).len == 1  # same step with run token wants grant
