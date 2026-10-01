@@ -316,6 +316,7 @@ alone.
 | `check-commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `check-drift` | paths base gained | branch carries base's charter and checker |
 | `check-role` | a pull request's body and labels | opening line and label are the branch's role |
+| `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
