@@ -6,25 +6,40 @@
 #   ready again once run is green.
 #   `synchronize` fires on push to head branch; draft pull request is left alone, since it
 #   says "not yet" already.
-#   `permissions` block is whole grant: `pull-requests: write` is what `gh pr ready` uses.
-#   Cost: Architect sees pull request go draft on each push after ready, by design.
+#   Token of run cannot convert pull request to draft: GitHub answers `Resource not
+#   accessible by integration` to `convertPullRequestToDraft` whatever `permissions` grants.
+#   So `ADMIN_TOKEN` does it, and needs pull requests write. `permissions` is empty since
+#   run token does nothing here. Absent token is red run with reason, never silence.
+#   `workflow_dispatch` with number is test of this file: it returns that pull request to
+#   draft.
+#   Cost: Architect sees pull request go draft on each push after ready, by design, and
+#   conversion is attributed to account of token.
 
 name: draft
 
 on:
   pull_request:
     types: [synchronize]
+  workflow_dispatch:
+    inputs:
+      number:
+        description: Pull request to return to draft
+        required: true
 
-permissions:
-  pull-requests: write
+permissions: {}
 
 jobs:
   draft:
-    if: github.event.pull_request.draft == false
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           REPO: ${{ github.repository }}
-          NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr ready "$NUMBER" --repo "$REPO" --undo
+          NUMBER: ${{ github.event.pull_request.number || inputs.number }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "ADMIN_TOKEN is not stored, so nothing returns #$NUMBER to draft." >&2
+            exit 1
+          fi
+          gh pr ready "$NUMBER" --repo "$REPO" --undo
