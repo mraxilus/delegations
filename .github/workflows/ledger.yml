@@ -136,27 +136,51 @@ jobs:
                   | "- Pull request #\(.number) carries no label, so no role filter finds it"')"
           [ -z "$unlabelled_prs" ] || found="$found$unlabelled_prs"$'\n'
 
-          # Repository settings Architect applies (CURATOR.md). Read only where `ADMIN_TOKEN` is
-          #   stored, since `GITHUB_TOKEN` lacks administration scope; absent token reads nothing
-          #   rather than guessing, and says so once in note below.
+          # Repository settings Architect applies (CURATOR.md). Repository holds them as rulesets,
+          #   and classic protection endpoint answers nothing where rules are rulesets. Rules per
+          #   branch answer run token. Bypass actors do not: run token is installation token
+          #   without administration scope, and GitHub leaves that field out. Anonymous read
+          #   sees it, but runners share addresses and anonymous limit is sixty per hour, so
+          #   `ADMIN_TOKEN` reads it. Merge settings of repository object are hidden from both
+          #   tokens, so merge methods ruleset allows are read instead, and head branch deletion
+          #   is unread. Probe branch need not exist: endpoint answers for name as given. Read
+          #   that fails is red run rather than silence, by `set -e` on each assignment.
+          rules="$(gh api "repos/$REPO/rules/branches/main")"
+          probe="$(gh api "repos/$REPO/rules/branches/ledger-probe")"
+          ids="$(echo "$rules" | jq -r '[.[].ruleset_id] | unique | map(tostring) | join(" ")')"
+          echo "Settings read: $(echo "$rules" | jq length) rules on main from rulesets $ids," \
+            "$(echo "$probe" | jq length) on probe branch."
+          for context in summarize check-scope check-commits check-role; do
+            echo "$rules" | jq -e --arg c "$context" \
+              '[.[] | select(.type == "required_status_checks")
+                | .parameters.required_status_checks[].context] | index($c)' >/dev/null ||
+              found="$found- No ruleset on \`main\` requires \`$context\`"$'\n'
+          done
+          echo "$rules" | jq -e 'any(.type == "non_fast_forward")' >/dev/null ||
+            found="$found- No ruleset blocks a force push on \`main\`"$'\n'
+          echo "$rules" | jq -e 'any(.type == "deletion")' >/dev/null ||
+            found="$found- No ruleset blocks a deletion of \`main\`"$'\n'
+          echo "$probe" | jq -e 'any(.type == "non_fast_forward")' >/dev/null ||
+            found="$found- No ruleset blocks a force push on every branch"$'\n'
+          echo "$rules" | jq -e 'any(.type == "pull_request")' >/dev/null ||
+            found="$found- No ruleset requires a pull request before a merge into \`main\`"$'\n'
+          echo "$rules" | jq -e 'any(.type == "pull_request"
+              and .parameters.required_review_thread_resolution)' >/dev/null ||
+            found="$found- No ruleset requires every conversation resolved"$'\n'
+          echo "$rules" | jq -e 'all(.[] | select(.type == "pull_request");
+              .parameters.required_approving_review_count == 0)' >/dev/null ||
+            found="$found- A ruleset requires an approval, which stops every merge"$'\n'
+          echo "$rules" | jq -e 'any(.type == "pull_request"
+              and .parameters.allowed_merge_methods == ["merge"])' >/dev/null ||
+            found="$found- A ruleset on \`main\` allows a merge other than the merge commit"$'\n'
           if [ -n "${ADMIN_TOKEN:-}" ]; then
-            protection="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO/branches/main/protection" \
-              2>/dev/null || true)"
-            if [ -n "$protection" ]; then
-              for context in summarize check-scope check-commits check-role; do
-                echo "$protection" | jq -e --arg c "$context" \
-                  '.required_status_checks.contexts | index($c)' >/dev/null ||
-                  found="$found- Branch protection does not require \`$context\`"$'\n'
-              done
-              echo "$protection" | jq -e '.allow_force_pushes.enabled == false' >/dev/null ||
-                found="$found- Branch protection allows a force push"$'\n'
-              echo "$protection" | jq -e '.allow_deletions.enabled == false' >/dev/null ||
-                found="$found- Branch protection allows a deletion"$'\n'
-              echo "$protection" | jq -e '.required_conversation_resolution.enabled' >/dev/null ||
-                found="$found- Branch protection does not require every conversation resolved"$'\n'
-              echo "$protection" | jq -e '.enforce_admins.enabled' >/dev/null ||
-                found="$found- Branch protection lets an administrator bypass it"$'\n'
-            fi
+            for id in $ids; do
+              ruleset="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO/rulesets/$id")"
+              echo "$ruleset" | jq -e '.bypass_actors == []' >/dev/null ||
+                found="$found- Ruleset $id lets someone bypass it"$'\n'
+            done
+          else
+            found="$found- No \`ADMIN_TOKEN\` is stored, so bypass actors are unread"$'\n'
           fi
 
           if [ -z "$found" ]; then
@@ -172,8 +196,9 @@ jobs:
           note="Closing and readiness rules stay on CONTRIBUTOR.md's carried list: each has half"
           note="$note GitHub does not record, and that half is still carried by hand. Role and"
           note="$note label left it, since the body hook reads each post before it lands; this"
-          note="$note reads what arrived from elsewhere. Settings are read only where ADMIN_TOKEN"
-          note="$note is stored. Lines above are only what runner can see."
+          note="$note reads what arrived from elsewhere. The run token reads the rules, and"
+          note="$note ADMIN_TOKEN reads the bypass actors. Lines above are only what runner can"
+          note="$note see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away
