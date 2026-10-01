@@ -46,6 +46,15 @@ suite "Layout":
     check found.len == 1 and "curator/audit/src/kinds.nim" in found[0].message  # VI.5
     check found[0].message.endsWith("got `data.csv`.")  # IV.4 echo value
 
+  test "build output and vendored source stay untracked at any depth":
+    for directory in ["build", "dependencies", "node_modules"]:
+      let
+        path = "contributor/ronri/alpha/" & directory & "/x.nim"
+        found = (goodTree() & @[entry(path, "")]).checkLayout
+      check found.anyIt("Article XI.3" in it.message and it.path == path)
+    let module = (goodTree() & @[entry("curator/audit/src/dependencies.nim", "")]).checkLayout
+    check not module.anyIt("XI.3" in it.message)  # file named so is no directory
+
   test "project folder names follow grammar under both roots":
     for directory in ["contributor/ronri/Beta", "curator/Beta"]:  # both roots
       let found = (goodTree() & projectEntries(directory, "x")).checkLayout

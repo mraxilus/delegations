@@ -19,6 +19,8 @@
 ##   Committed page (Html, Svg) lives in project's `pages/`, what project stands behind, or
 ##     `mockups/`, one-off exploration kept for reference; generated markup stays under
 ##     ignored `build/`. Separation is declared by directory, never inferred from content.
+##   No tracked path lies under `UNTRACKED_DIRECTORIES` at any depth (Article XI.3): ignore
+##     file keeps them out, and forced add is what this catches.
 ##
 ##   Cost: rules read path strings, never disk, so tests feed synthetic trees and git
 ##     enumeration lives in `tree.nim`. Empty directories are invisible to git and so here.
@@ -53,6 +55,8 @@ const
     ## Root directories unchecked inside; project roots are `ROOTS`. `.claude` holds hooks,
     ## permissions, skills and agents Claude Code loads; `.githooks` holds git's own hooks.
   PROJECT_FILES* = [README_FILE, "PROVENANCE.md", "GLOSSARY.md"]
+  UNTRACKED_DIRECTORIES* = ["build", "dependencies", "node_modules"]
+    ## Directories holding build output or vendored source, never tracked (Article XI.3).
     ## Files every project directory must hold, besides its nimble file.
   TESTS_DIRECTORY* = "tests"
     ## Directory every project must populate.
@@ -130,6 +134,14 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
 func checkEntry(e: Entry): seq[Finding] =
   ## Report entry outside layout or of unregistered kind.
   let parts = e.path.split('/')
+  for directory in parts[0 ..< parts.high]:
+    if directory in UNTRACKED_DIRECTORIES:
+      result.add finding(
+        e.path, 0,
+        "Build output and vendored source stay untracked (Article XI.3); got `" & directory &
+          "/`.",
+      )
+      break
   if e.kind.isSome and e.kind.get in {Kind.Html, Kind.Svg}:
     result.add checkPage(e.path, parts)
   if e.kind.isNone:
