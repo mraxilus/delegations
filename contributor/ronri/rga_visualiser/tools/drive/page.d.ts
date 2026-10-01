@@ -76,6 +76,9 @@ declare const history_exceedance: Float32Array;
 /** When axis's extent first differed from what is drawn; zero while it is settled. */
 declare let ms_axis_restless: number;
 
+/** Extent axis is drawn to, in milliseconds; its label rounds it. */
+declare let milliseconds_axis: number;
+
 /* Frame-time tree, its ramp and rings, which `src/browser/diagnostics.ts` owns. */
 
 /** Every timing row, as name paired with id of element carrying its reading. */
