@@ -1193,6 +1193,8 @@ proc handleEvent(
       is_dragging_orbit = true
     elif event.button.button == uint8(MouseButton.Right):
       is_dragging_pan = true
+      # Hover reads what press came down on now, and goes off once camera moves.
+      interaction.grabPan(camera)
   of uint32(EventKind.MouseButtonUp):
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
     if button_dragging == some(event.button.button):
@@ -1277,7 +1279,7 @@ proc handleEvent(
     if is_dragging_pan:
       panel.tween_camera.halt() # Pan places pivot itself; see `halt`.
       # Pass where pointer was and is, rather than how far it moved.
-      #   Pan grabs level under it and needs both ends of step; see
+      #   Pan carries point it grabbed between both ends of step; see
       #   `interaction.panAcross`.
       camera.panAcross(
         ScreenPosition(
@@ -1285,7 +1287,7 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        width_frame, height_frame, panel.selection.len > 0,
+        height_frame, panel.selection.len > 0, interaction.depth_pan,
       )
   else: discard
 

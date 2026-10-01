@@ -76,11 +76,6 @@ const
     ##   Slower than grow: grow is getting out of way, this is marker arriving at what it
     ##   stays as, and outline that snaps reads as second marker replacing first.
 
-  FRACTION_PAN_PIXEL* = 0.0016
-    ## Strafe camera this fraction of separation per dragged pixel, in free flight.
-    ##   Was fallback for drag whose sight ray missed level it grabbed; it is whole rule
-    ##   now, since free flight has no level. See `panAcross`.
-
   SPEED_ORBIT_PIXEL* = 0.006
     ## Orbit this many radians per dragged pixel, on right drag with selection.
     ##   Shared by both front-ends, unlike left drag's own rate: right drag is handed
@@ -306,6 +301,9 @@ type
       ##   None where pointer is over nothing, which leaves fixed ceiling alone.
       ## Stamped in `updateHover`, where scene is in hand, and stamped while travel key is
       ## held as well as while camera stands, so cap follows pointer through flight.
+    depth_pan*: float ## Depth right drag holds under pointer, from eye along sight.
+      ## Taken when drag begins, by `grabPan`: hover is off while camera moves, so
+      ## `depth_pointer` is gone by second step.
     seconds_travelling*: float ## How long current travel hold has lasted, in seconds.
       ## Speed climbs with this, and resets to zero on frame no travel key is held; see
       ## `driveHeld`.
@@ -861,20 +859,27 @@ func turnFollowing*(
   )
 
 
+func grabPan*(interaction: var Interaction, camera: Camera) =
+  ## Take depth right drag holds, as it begins: what pointer is over, or pivot over nothing.
+  ##   Pivot's depth is where orbit and zoom already centre, so empty space pans what
+  ##   reader is looking at.
+  interaction.depth_pan = interaction.depth_pointer.get(camera.distance)
+
+
 func panAcross*(
-  camera: var Camera; before, after: ScreenPosition; width, height: int;
-  has_selection: bool
+  camera: var Camera; before, after: ScreenPosition; height: int; has_selection: bool;
+  depth_held: float
 ) =
   ## Move camera by right drag, in whichever way its state reads.
-  ##   Free flight strafes along camera's own across and up. Rate for each pixel, not grab:
-  ##   free space holds no surface to take hold of.
-  ##     Level through pivot was surface this grabbed, and camera no longer stands on any
-  ##     plane, so grab had nothing left to mean. Rate was already this verb's fallback
-  ##     wherever that ray missed.
+  ##   Free flight strafes along camera's own across and up, so point at `depth_held` under
+  ##   pixel drag left comes to stand under pixel it reached, pixel for pixel, as left drag
+  ##   holds its own. See `grabPan`.
+  ##     One pixel at that depth spans `2*depth*tan(half field)/height` of world, so camera
+  ##     slides that far against drag. Slide is square to sight, so depth held stays held.
+  ##     Not rate: fraction of separation for each pixel matched cursor at one canvas height
+  ##     alone, and ran 1.74 times it on 900 px at opening 45 degrees.
   ##   Selection zooms on vertical and orbits on horizontal, so one drag reaches both
   ##   without asking for second button.
-  ##   Scaled by separation, as every drag rate is: one pixel means same apparent step at
-  ##   every reach.
   let
     across = after.x - before.x
     up = after.y - before.y
@@ -882,11 +887,9 @@ func panAcross*(
     camera.orbit(-SPEED_ORBIT_PIXEL*across, 0.0)
     camera.dolly(pow(FACTOR_DOLLY_PIXEL, up))
     return
-  camera.travel(
-    0.0,
-    -FRACTION_PAN_PIXEL*camera.distance*across,
-    FRACTION_PAN_PIXEL*camera.distance*up,
-  )
+  let per_pixel =
+    2.0*depth_held*tan(0.5*degToRad(camera.degrees_field_of_view))/float(height)
+  camera.travel(0.0, -per_pixel*across, per_pixel*up)
 
 
 func holdKey*(interaction: var Interaction, key: Key) =

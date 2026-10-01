@@ -998,37 +998,51 @@ suite "Camera":
       check answered.get[1] =~ expected_head
 
 
-  test "a right drag in free flight carries the point at the pivot's depth under the pointer":
+  test "a right drag in free flight carries the point it holds under the pointer":
     # Fault: rate stood here, fraction of separation for each pixel, which matched cursor
-    #   at one canvas height alone and ran 1.74 times it on 900 px at 45 degrees.
+    #   at one canvas height alone and ran 1.74 times it on 900 px. Held at three depths,
+    #   nearer than pivot, at it and far past it, since grab holds whatever depth it took.
     const (wide, tall) = (1440, 900)
-    var camera = cameraAround(Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 8, y: 14, z: 7))
     let
-      (eye, axes) = camera.sight
       before = ScreenPosition(x: 700.0, y: 560.0)
       after = ScreenPosition(x: 940.0, y: 660.0)
-      # Heading carries unit depth along sight, so point stands at pivot's depth exactly.
-      held = eye + camera.distance*camera.headingThrough(axes, wide, tall, before)
-    camera.panAcross(before, after, wide, tall, has_selection = false)
-    let seen = projectToScreen(
-      camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
-    )
-    check seen.isInFront
-    check abs(seen.x - after.x) < 0.01
-    check abs(seen.y - after.y) < 0.01
-    # Slide is square to sight, and nothing turns.
-    check abs(dot(camera.eye - eye, axes.forward)) < TOLERANCE_TEST*camera.distance
-    check camera.frame.forward =~ axes.forward
-    check camera.distance =~ 19.0
+    for depth in [2.5, 19.0, 4000.0]:
+      var camera =
+        cameraAround(Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 8, y: 14, z: 7))
+      let
+        (eye, axes) = camera.sight
+        # Heading carries unit depth along sight, so point stands at `depth` exactly.
+        held = eye + depth*camera.headingThrough(axes, wide, tall, before)
+      camera.panAcross(before, after, tall, has_selection = false, depth_held = depth)
+      let seen = projectToScreen(
+        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
+      )
+      check seen.isInFront
+      check abs(seen.x - after.x) < 0.01
+      check abs(seen.y - after.y) < 0.01
+      # Slide is square to sight, so held depth stays held, and nothing turns.
+      check abs(dot(camera.eye - eye, axes.forward)) < TOLERANCE_TEST*depth
+      check camera.frame.forward =~ axes.forward
+      check camera.distance =~ 19.0
+
+  test "a right drag holds the depth under the pointer, or the pivot's over nothing":
+    let camera = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+    var interaction = Interaction(is_enabled: true)
+    interaction.depth_pointer = some(7.5)
+    interaction.grabPan(camera)
+    check interaction.depth_pan =~ 7.5
+    interaction.depth_pointer = none(float)
+    interaction.grabPan(camera)
+    check interaction.depth_pan =~ camera.distance
 
   test "a right drag with a selection zooms down the frame and orbits across it":
-    const (wide, tall) = (1440, 900)
+    const tall = 900
     let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     # Vertical alone zooms, and leaves sight where it was.
     var zoomed = opening
     zoomed.panAcross(
       ScreenPosition(x: 700.0, y: 500.0), ScreenPosition(x: 700.0, y: 600.0),
-      wide, tall, has_selection = true,
+      tall, has_selection = true, depth_held = 19.0,
     )
     check zoomed.distance =~ 19.0*pow(FACTOR_DOLLY_PIXEL, 100.0)
     check zoomed.distance > 19.0
@@ -1038,14 +1052,14 @@ suite "Camera":
     var returned = zoomed
     returned.panAcross(
       ScreenPosition(x: 700.0, y: 600.0), ScreenPosition(x: 700.0, y: 500.0),
-      wide, tall, has_selection = true,
+      tall, has_selection = true, depth_held = 19.0,
     )
     check returned.distance =~ 19.0
     # Horizontal alone orbits, leaving pivot and separation alone.
     var orbited = opening
     orbited.panAcross(
       ScreenPosition(x: 700.0, y: 500.0), ScreenPosition(x: 940.0, y: 500.0),
-      wide, tall, has_selection = true,
+      tall, has_selection = true, depth_held = 19.0,
     )
     check orbited.pivot =~ opening.pivot
     check orbited.distance =~ 19.0
