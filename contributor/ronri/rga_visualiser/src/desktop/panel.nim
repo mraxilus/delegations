@@ -1101,33 +1101,33 @@ proc layoutDiagnosticsMemory(panel: Panel) =
   gui.separatorText(wordingText(NameDiagnosticsMemory))
   block:
     let
-      mb_used = float(panel.bytes_arena_permanent_used) / (1024.0*1024.0)
-      mb_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0*1024.0)
+      mib_used = float(panel.bytes_arena_permanent_used) / (1024.0*1024.0)
+      mib_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0*1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
-      appendFixed(text, cursor, mb_used, 1)
+      appendFixed(text, cursor, mib_used, 1)
       appendChars(text, cursor, " / ")
-      appendFixed(text, cursor, mb_capacity, 0)
+      appendFixed(text, cursor, mib_capacity, 0)
       appendChars(text, cursor, " MB")
     gui.textTinted(
       wordingText(NameDiagnosticsPermanent), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     gui.progressBar(
-      cfloat(mb_used / max(mb_capacity, 1.0)), overlay_text, gui.contentWidth(), 0.0,
+      cfloat(mib_used / max(mib_capacity, 1.0)), overlay_text, gui.contentWidth(), 0.0,
       0.298, 0.482, 0.929, 0.15, 0.15, 0.18,
     )
     gui.tooltip(wordingText(TipDiagnosticsPermanent))
 
   block:
     let
-      kb_peak = float(panel.bytes_arena_frame_peak) / 1024.0
-      mb_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0*1024.0)
+      kib_peak = float(panel.bytes_arena_frame_peak) / 1024.0
+      mib_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0*1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
       appendChars(text, cursor, "peak ")
-      appendFixed(text, cursor, kb_peak, 0)
+      appendFixed(text, cursor, kib_peak, 0)
       appendChars(text, cursor, " KB / ")
-      appendFixed(text, cursor, mb_capacity, 0)
+      appendFixed(text, cursor, mib_capacity, 0)
       appendChars(text, cursor, " MB")
     gui.textTinted(
       wordingText(NameDiagnosticsFrameArena), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
