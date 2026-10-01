@@ -769,13 +769,15 @@ math holds 1,773 of the 1,952 wanted. It costs about 2.5 MB fetched into `build/
 `stb_truetype` reads uncompressed faces.
 
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
-1/60 s, whatever the machine takes, and the opening scene is born at zero. Animations, held keys
-and camera ease read that clock, so a scripted frame shows the same thing on every machine.
-`--timings` keeps the real clock, since speed is what it measures.
+1/120 s, whatever the machine takes, and the opening scene is born at zero. That is one frame at
+the least workable rate (Diagnostics). Animations, held keys and camera ease read that clock, so a
+scripted frame shows the same thing on every machine. `--timings` keeps the real clock, since speed
+is what it measures.
 
 **No default favours a silent pass.** A scripted run supplies `FRAMES_DRIVEN` where the caller
 gave no frame bound, because the loop ends only on one. Every scripted run ends in its verdict,
-and there is no second flag to ask for it.
+and there is no second flag to ask for it. Its 400 frames are 3.3 s of the scripted clock, and
+every drive reaches its verdict inside them.
 
 **What `driven` costs, on this container, on 4 cores and software GL.** Cold, with neither
 checkout present and nothing built, it costs **1 m 27 s**. Warm, it costs **29.3 s**, because a
@@ -785,10 +787,42 @@ against one run. Repository issue 79 weighs that against the rest of the job.
 
 *Checked.* Verified by a run. Every scripted run passes under Xvfb on software GL, from a tree that
 carries neither checkout and with no SDL3 anywhere on the machine. A second run kept the prefix and
-rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0432, elevation 0.6871 and distance
-18.1420 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
+rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation 0.5045 and distance
+18.5660 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb answers
 `Driven runs failed; got 1 -- drive-drag`, with exit 1.
+
+## Diagnostics
+
+**The least workable frame rate is 120 per second, and the goal above it is as fast as the
+machine allows.** The Architect sets that floor (repository issue 346). `timings.RATE_FRAME_LEAST`
+states it once, and the page reads it through `nimRateFrameLeast`. A scripted desktop run steps
+its clock one frame at that rate. The frame-time plot of the window and the sparkline of the page
+floor their range at 8.3 ms. A smooth run then does not zoom in on noise.
+
+**The plots and the curve hold spans of time, sized at the floor.** The plot of each front-end
+holds 480 frames, which is four seconds at 120 per second. The exceedance curve holds 2,048, about
+seventeen seconds. A machine faster than the floor fills each in less time.
+
+**The marks of the curve are 240, 120, 60, 30, 15, 10, 5 and 1 per second, and they bound its
+colour bands.** A frame under 4.2 ms is fast, under 8.3 ms good, under 16.7 ms fair, and slower is
+poor. The 120 mark wears good, because a frame inside it meets the floor. The 240 mark names a frame
+twice as fast, and nothing is held to it (`GLOSSARY.md`, Mark). Rejected: 120 as fast and 60 as
+good, which names a rate under the floor good.
+
+**A mark gives way where its labels would cover a slower mark.** The marks are walked slowest first,
+so the one nearer the floor keeps its place. On an axis of 90 ms, the 240 line stood 17 px from the
+120 line, and its labels covered that line. The curve keeps its bands, since the list sets them,
+and not what is drawn.
+
+*Checked.* Verified by driven check:
+
+- four marks on a fast window, each named as a rate and as a duration;
+- on a window of 0 to 88.3 ms, the 15 fps mark drawn, and the 240 mark given way to the 120 mark;
+- three of the four band colours on a mixed window, since its feed holds no frame under 4.2 ms.
+
+Verified by a run: every scripted desktop run passes at 1/120 s, in 400 frames. Verified by a
+render: the curve of the page and the plot of the window, before and after, in the pull request.
 
 ## Render paths
 

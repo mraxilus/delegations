@@ -27,6 +27,12 @@ else:
     float(getMonoTime().ticks) / 1_000_000.0
 
 
+const RATE_FRAME_LEAST* = 120.0
+  ## Hold least workable frame rate, per second, as Architect sets it (repository issue 346).
+  ##   Floor rather than goal: goal is as fast as machine allows, and nothing is held to it.
+  ##   Scripted run steps its clock at it, and both frame-time plots floor their range at it.
+
+
 
 #[ Type Definitions ]#
 
