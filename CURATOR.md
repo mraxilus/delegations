@@ -71,6 +71,11 @@ Every rule below serves it:
 | `.github/workflows/role.yml` | Role line and label of a pull request, on each event | curator |
 | `.github/workflows/watch.yml` | Issue opened when a run goes red on `main` | curator |
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
+| `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
+| `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
+| `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
+| `.claude/skills/`, `.claude/agents/` | The `steward` skill and the `record-reviewer` | curator |
+| `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
 | `.github/pull_request_template.md` | Body that every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body that every process request follows | curator |
 | `.github/ISSUE_TEMPLATE/review-finding.md` | Body that every curator finding follows | curator |
@@ -380,6 +385,12 @@ test for taking one off is that same fact read the other way. When the platform 
 to read what a rule asks about, that rule leaves the list. It becomes a check, in the same
 pull request. So re-read the whole list whenever a check is added or an API is found. A rule
 left there after it became checkable is the one that teaches the skimming.
+
+A Claude Code hook is such a way. `.claude/settings.json` names the events. Each hook calls
+one `koch hook` verb and holds no rule of its own, so the rule lives in the audit once. A hook
+reaches only Claude Code, and only where it holds this repository alone, so CI stays the gate
+and the hook shortens the loop. A hook has a suite, as every check has. The git hooks under
+`.githooks/` are the same mechanism for a push and a commit, from any tool in the checkout.
 
 ## Output contract
 
