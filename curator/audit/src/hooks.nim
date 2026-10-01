@@ -129,6 +129,12 @@ func checkBash*(branch, command: string, is_head_pushed: bool): seq[Finding] =
       )
 
 
+func isPost*(tool: string, has_body: bool): bool =
+  ## Decide whether tool call posts text: GitHub write tool whose input carries body.
+  ##   Update of labels or draft state alone carries none, and has nothing to read.
+  tool in WRITE_TOOLS and has_body
+
+
 func outsideComments(text: string): string =
   ## Blank every HTML comment, so template left unfilled reads as empty.
   var rest = text

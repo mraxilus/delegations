@@ -208,7 +208,7 @@ proc runHook(root, event, input: string): int =
       let is_pushed = gitFields(root, ["branch", "-r", "--contains", "HEAD"]).len > 0
       refuse(checkBash(branch, data{"tool_input", "command"}.getStr, is_pushed), 2)
     of "body":
-      if tool notin WRITE_TOOLS: return 0
+      if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
       refuse(checkBody(
         tool, branch, data{"tool_input", "title"}.getStr, data{"tool_input", "body"}.getStr,
