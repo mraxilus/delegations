@@ -124,7 +124,7 @@ needs a temporary takes it from a scratch arena that is reset as a whole.
 3D  ID  JSON  URL                                          stay, the root glossary lists them
 PGA  RGA  CGA                                              stay, the root glossary defines them
 SoA  AoS                                                   spelled out
-projective_geometric_algebra/  tests/rigid/  test_rigid_3d.nim
+projective_geometric_algebra_illuminated/  tests/rga3d/  test_rga3d.nim
 ```
 
 Constructed. The first row holds acronyms that a layman meets at school, on the web and in
