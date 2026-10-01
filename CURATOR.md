@@ -304,11 +304,11 @@ Settings, Secrets, or the ledger reports the gap. The ledger reads the merge met
 ruleset. No token of a run sees the head branch deletion, so that setting holds by reading. A
 read that fails turns the run red.
 
-The `draft` workflow converts with the token of a GitHub App. GitHub refuses the conversion to
-the token of a run and to a fine-grained token, and a classic token spans every public
-repository. Create an App with write on pull requests, and install it on this repository alone.
-Store its id as `DRAFT_APP_ID` and its private key as `DRAFT_APP_KEY` under Settings, Secrets.
-Without them the `draft` workflow turns red.
+The `draft` workflow converts with the classic token `DRAFT_TOKEN`. GitHub refuses the
+conversion to the token of a run and to a fine-grained token, so a classic token or an App is
+left. Create a classic token with the `public_repo` scope alone and an expiry, and store it
+under Settings, Secrets. It reaches every public repository of the account, which is the cost
+of this route over an App. Without it the `draft` workflow turns red.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
