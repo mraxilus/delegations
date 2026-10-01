@@ -498,6 +498,17 @@ files say. The faces are the six that `rga_visualiser` embeds, fetched through
 inputs that `:has()` rules read. The one script is the search box of the docket, and its text
 is constant, so the digest of each page still follows those files.
 
+**A proposal can carry a figure.** A paragraph of one image alone, as
+`![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
+under `pages/`, since the layout admits hand-written markup there alone. Its colours are shell
+tokens with fallbacks, so it follows the theme of the page and still reads alone. A figure that
+names no file is a finding of `drive`. Rejected: a figure kept outside the repository, because no
+page is built from it.
+
+**Marks render as the faces allow.** The left complement is written 𝐜̱, with U+0331, because
+the faces draw U+0332 after the letter. In code, ★ comes from the math face as ☆ does, because
+the mono face draws ★ smaller.
+
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
 bound that the row is measured against. A typed row is measured against its reference, and a
@@ -542,7 +553,8 @@ ratios, and the chip that names removed NaN results. It covers the lower bound e
 is measured against, and a general row timed against its dense form. It covers the median of
 run ratios with one tick for each run, and a reference that spends none. It covers the rule
 that reads each dropdown option, the classes of each row, and the split of a typed id. It
-covers the words each row is found by, and the shell rule that hides a row not found.
+covers the words each row is found by, and the shell rule that hides a row not found. Suite
+`Figures` covers the path a figure resolves, the SVG a page embeds, and every rule on the map.
 
 ## Library head
 
