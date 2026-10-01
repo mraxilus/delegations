@@ -19,7 +19,7 @@ import std/[options, os, sequtils, sets, strutils]
 import ./[
   checker, dependencies, domains, duplicates, english, faces, findings, form, glossary, names,
   justification, kinds, layout, plan, prompts, prose, provenance, record, toolchain, tree,
-  workflows,
+  waits, workflows,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirectories
@@ -185,3 +185,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if path != ROOT_GLOSSARY and e.path.startsWith(path[0 ..< path.len - ROOT_GLOSSARY.len]):
         exempt.add source.glossaryExemptions
     result.add checkNames(e.path, e.content, exempt)
+
+  # Fixed waits: drive code of every project, checker's own included, since its suite holds
+  #   names as strings, which Nim source is read without.
+  for e in tree:
+    if e.kind.isSome and e.path.isDriveCode(directories):
+      result.add checkWaits(e.path, e.content, e.kind.get)
