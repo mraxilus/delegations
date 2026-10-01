@@ -878,6 +878,11 @@ these measurements.
 - Whether a product whose terms all land in one slot should return a `float` from the
   emitter. At four dimensions 26 measurands stand above the byte bound for that reason
   alone.
+- Whether the P01 build claim reads the right build. At rga6d on 2026-10-01, the library
+  alone peaks at 171 MiB against 286, ×0.60. The bench entry peaks at 261 MiB against 342,
+  ×0.76, and the claim asks for ×0.70. The bench entry emits the same C on both sides, 3.0 MB
+  against 3.1 MB. The likely cause is that code generation now sets the peak of the changed
+  build, where derivation hides it on the pristine side. Unmeasured.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
