@@ -51,6 +51,7 @@ jobs:
           REPO: ${{ github.repository }}
           MARKER: '<!-- ledger:unchecked -->'
           SINCE_DAYS: '14'
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
           set -euo pipefail
           found=''
@@ -135,6 +136,29 @@ jobs:
                   | "- Pull request #\(.number) carries no label, so no role filter finds it"')"
           [ -z "$unlabelled_prs" ] || found="$found$unlabelled_prs"$'\n'
 
+          # Repository settings Architect applies (CURATOR.md). Read only where `ADMIN_TOKEN` is
+          #   stored, since `GITHUB_TOKEN` lacks administration scope; absent token reads nothing
+          #   rather than guessing, and says so once in note below.
+          if [ -n "${ADMIN_TOKEN:-}" ]; then
+            protection="$(GH_TOKEN="$ADMIN_TOKEN" gh api "repos/$REPO/branches/main/protection" \
+              2>/dev/null || true)"
+            if [ -n "$protection" ]; then
+              for context in summarize check-scope check-commits check-role; do
+                echo "$protection" | jq -e --arg c "$context" \
+                  '.required_status_checks.contexts | index($c)' >/dev/null ||
+                  found="$found- Branch protection does not require \`$context\`"$'\n'
+              done
+              echo "$protection" | jq -e '.allow_force_pushes.enabled == false' >/dev/null ||
+                found="$found- Branch protection allows a force push"$'\n'
+              echo "$protection" | jq -e '.allow_deletions.enabled == false' >/dev/null ||
+                found="$found- Branch protection allows a deletion"$'\n'
+              echo "$protection" | jq -e '.required_conversation_resolution.enabled' >/dev/null ||
+                found="$found- Branch protection does not require every conversation resolved"$'\n'
+              echo "$protection" | jq -e '.enforce_admins.enabled' >/dev/null ||
+                found="$found- Branch protection lets an administrator bypass it"$'\n'
+            fi
+          fi
+
           if [ -z "$found" ]; then
             echo "Nothing to report."
             exit 0
@@ -145,9 +169,11 @@ jobs:
           #   as line break, so paragraph wrapped to width here would break mid-sentence there.
           said="Opened by \`ledger\` workflow rather than by delegate, so nothing here has been"
           said="$said read or judged yet. Each line is fact GitHub records, not opinion."
-          note="Role, label, closing and readiness rules stayed on CONTRIBUTOR.md's carried list:"
-          note="$note each has half GitHub does not record, and that half is still carried by"
-          note="$note hand. Title rule never sat there. Lines above are only what runner can see."
+          note="Closing and readiness rules stay on CONTRIBUTOR.md's carried list: each has half"
+          note="$note GitHub does not record, and that half is still carried by hand. Role and"
+          note="$note label left it, since the body hook reads each post before it lands; this"
+          note="$note reads what arrived from elsewhere. Settings are read only where ADMIN_TOKEN"
+          note="$note is stored. Lines above are only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away

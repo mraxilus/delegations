@@ -278,7 +278,8 @@ place, under Settings:
   `check-role`. `summarize` is the gate for the jobs whose names vary with the change, since
   those names can never be required checks themselves. `check-role` is its own workflow,
   because it fires on a label event and the rest do not.
-- Block force pushes and deletions.
+- Block force pushes and deletions on `main`. Block a force push on every branch too, through
+  a ruleset that targets all branches, because XI.2 holds on every branch.
 - Require every conversation to be resolved before a merge. `CONTRIBUTOR.md`, Before you
   open a pull request, asks that every review comment is answered. This setting is the only
   mechanical form of that rule.
@@ -290,6 +291,10 @@ place, under Settings:
 - Under Settings, General, allow the merge commit alone. A squash collapses the `test` before
   `fix` ladder into one subject, which is the evidence `check-commits` exists to create.
 - Under Settings, General, delete the head branch after a merge.
+
+The ledger reads the protection of `main` daily and reports drift from this list. It reads only
+where the secret `ADMIN_TOKEN` holds a token with the administration scope, because the token
+of a run lacks it. Store one under Settings, Secrets, or the ledger reads nothing and says so.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
