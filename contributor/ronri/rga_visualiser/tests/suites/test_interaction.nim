@@ -494,7 +494,7 @@ suite "Interaction":
   test "the proposal for each ordered pair of shapes is the measured one":
     # Table in `PROVENANCE.md`, pinned. Change to library's grades that moved.
     #   any cell would otherwise silently redefine what every plain drag builds.
-    const lut_expected = [
+    const lut_proposal_by_shapes = [
       # point -> point, line, plane.
       some(DragChoice.Join), some(DragChoice.Join), some(DragChoice.Project),
       # line -> point, line, plane.
@@ -505,7 +505,7 @@ suite "Interaction":
     var index = 0
     for m in GENERAL_FIRST:
       for n in GENERAL_SECOND:
-        check proposalFor(m, n) == lut_expected[index]
+        check proposalFor(m, n) == lut_proposal_by_shapes[index]
         inc index
 
 
