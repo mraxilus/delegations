@@ -113,7 +113,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
   # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
   #   readable here.
   for e in tree:
-    if e.path.startsWith(WORKFLOW_DIRECTORY): result.add checkScopes(e.path, e.content)
+    if e.path.startsWith(WORKFLOW_DIRECTORY):
+      result.add checkScopes(e.path, e.content)
+      result.add checkWindow(e.path, e.content, RECENT_DAYS)
 
   # Checker holds itself to rules it holds everything else to, from tree as git shows it.
   var
@@ -166,10 +168,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
     #   one machine it names as fixtures, for same reason.
     if not e.path.startsWith(DRIVER_DIRECTORY & "/"):
       result.add checkFaces(e.path, e.content)
-    for directory in directories:
-      if e.path == directory & "/PROVENANCE.md":
       if e.kind.get != Kind.Markdown: result.add checkMachinePaths(e.path, e.content)
     if e.kind.get == Kind.Nim: result.add checkIdioms(e.path, e.content)
+    for directory in directories:
+      if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
         result.add checkCitations(e.path, e.content, directory & "/" & TESTS_DIRECTORY & "/", paths)
         result.add checkRecord(e.path, e.content)
@@ -179,8 +181,6 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add checkStandardsAcross(glossaries)
   result.add checkDuplicates(documents)
 
-  # Names: every Nim file is held to words glossaries admit, root and its own project.
-  var root_exempt: seq[string]
   # TypeScript: project holding `.ts` carries `tsconfig.json` at its root, with its flags set.
   for directory in directories:
     if not tree.anyIt(it.path.startsWith(directory & "/") and it.path.endsWith(".ts")): continue
@@ -197,6 +197,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
           "TypeScript); got none.",
       )
 
+  # Names: every Nim file is held to words glossaries admit, root and its own project.
+  var root_exempt: seq[string]
   for (path, source) in glossaries:
     if path == ROOT_GLOSSARY: root_exempt = source.glossaryExemptions
   for e in tree:
