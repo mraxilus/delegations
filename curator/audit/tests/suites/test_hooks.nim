@@ -132,6 +132,7 @@ suite "Hooks":
     check checkPush("abc", "def").messages[0].contains("exact commit")
     check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", []).len == 0
     check checkMessage(BRANCH, "Add gaps", []).len == 1  # not conventional
+    check checkMessage(BRANCH, "Merge branch 'main' into " & BRANCH, []).len == 0  # git's own
     check checkMessage(
       BRANCH, "# comment\nfix(pga_benchmark): x", ["feat(pga_benchmark): y"]
     ).len == 1  # fix without test before it

@@ -51,6 +51,8 @@ const
     ## Tag row carries for carried-list item.
   CARRIED_MAX* = 6
     ## Items on carried list (CONTRIBUTOR.md).
+  MERGE_SUBJECT = "Merge "
+    ## Opening of subject git writes for merge commit.
   PULL_HEADINGS* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
   CHECK_MARK* = ".git/koch-check"
@@ -291,11 +293,15 @@ func checkPush*(recorded, pushed_tree: string): seq[Finding] =
 
 func checkMessage*(branch, message: string, earlier: openArray[string]): seq[Finding] =
   ## Report commit subject breaking form, scope or ladder, before commit lands.
+  ##   Merge commit passes: git writes its subject, and commit check excludes merges upstream
+  ##     (`commits.nim`), so duty to merge `main` into branch (CURATOR.md, duty 2) needs no
+  ##     bypass of hook.
   var subject = ""
   for line in message.splitLines:
     if line.strip.len > 0 and not line.startsWith("#"):
       subject = line.strip
       break
+  if subject.startsWith(MERGE_SUBJECT): return
   checkCommits(branch, @[subject] & @earlier)
 
 
