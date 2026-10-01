@@ -35,7 +35,7 @@ same shape, so the next exploration starts from the same frame.
 | `proposals/<NN>-<name>/` | `proposal.md`, `change.md` if any, `claims.json`, programs | its page |
 | `evaluations/` | what each change or proposal measured when tried at pin | marginalia, proposals |
 | `marginalia/notes.md` | notes on library source, each quoting the lines it is about | marginalia |
-| `pages/` | shell every page is built in, and publication of each published page | every page |
+| `pages/` | shell every page is built in, figures that proposals embed, publications | every page |
 
 A change, a proposal and a note quote the library, and never give a line number. A quote that
 does not occur once at pin is a finding, so no file points at lines that say something else.
