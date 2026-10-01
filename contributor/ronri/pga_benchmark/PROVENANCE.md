@@ -585,10 +585,10 @@ the README.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `bd6b23c590d7e1da91a1ea288a1a4b94dedbf315`, and `nim.cfg` names
+records the resolved commit `31213421d6699cb44a9a171b75388ef8188e1136`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-09-28, as the standing instruction of the
+That commit is the head of the library on 2026-10-01, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -798,7 +798,7 @@ hand-written function, such as a norm, writes no zero. The Architect decided thi
 library is about PGA and not about micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `bd6b23c` the library works this way, and its attitude and
+unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
 carrier are generated. The cost that stays is what the hand-written norms pay.
 
 The cost was measured at library `181c8d8`, with the sign of `merge` fixed, on 2026-09-25.
