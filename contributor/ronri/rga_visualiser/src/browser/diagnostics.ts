@@ -1157,7 +1157,7 @@ function refreshDiagnostics() {
   if (memory !== undefined) {
     writeText(diagnostic_heap,
       (memory.usedJSHeapSize / (1024 * 1024)).toFixed(1) + ' / ' +
-      (memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(0) + ' MB');
+      (memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(0) + ' MiB');
   }
 
   writeText(diagnostic_pool, nimSceneCount() + ' / ' + nimSceneCapacity());
