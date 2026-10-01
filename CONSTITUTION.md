@@ -440,6 +440,10 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
     test by its behaviour, and cite the section or the page. Never invent a number.
 11. A test helper that the library does not need lives in the suite, and not in the library.
     Test code follows the same rules as library code.
+12. A test reads the real clock only where speed is what it holds, and its name or its section
+    says so. Every other test moves time itself where time matters, and never waits a span of
+    real time. A slow machine then takes longer to reach the same verdict, and never reaches
+    another one.
 
 ```nim
 suite "Chapter 2":
