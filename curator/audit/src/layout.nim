@@ -49,8 +49,9 @@ const
     ".gitignore", ".gitattributes",
   ]
     ## Files allowed directly at root.
-  ROOT_DIRECTORIES* = [".github"]
-    ## Root directories unchecked inside; project roots are `ROOTS`.
+  ROOT_DIRECTORIES* = [".github", ".claude", ".githooks"]
+    ## Root directories unchecked inside; project roots are `ROOTS`. `.claude` holds hooks,
+    ## permissions, skills and agents Claude Code loads; `.githooks` holds git's own hooks.
   PROJECT_FILES* = [README_FILE, "PROVENANCE.md", "GLOSSARY.md"]
     ## Files every project directory must hold, besides its nimble file.
   TESTS_DIRECTORY* = "tests"

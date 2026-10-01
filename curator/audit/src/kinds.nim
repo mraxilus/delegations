@@ -19,6 +19,7 @@
 ##   | Html          | .html                         | Xml         | yes   | no   |
 ##   | Svg           | .svg                          | Xml         | yes   | no   |
 ##   | Json          | .json atlas.config atlas.lock | None        | no    | no   |
+##   | Shell         | .sh pre-push commit-msg       | Hash        | yes   | yes  |
 ##   |---------------|-------------------------------|-------------|-------|------|
 ##
 ##   Gated kind is one owner admits only where Nim cannot serve; `justification.nim` demands
@@ -32,6 +33,8 @@
 ##   Cpp and C carry binding shim for library no Nim import expresses; `.hpp` is C++ header
 ##     and `.h` is C one, since name alone cannot tell them apart.
 ##   Retired: Makefile, with make itself; registry admits no second build verb.
+##   Shell carries hook glue alone: command Claude Code runs, and script git runs as hook;
+##     both exist before any Nim can run, so each argues for itself in its header.
 ##   Html and Svg carry hand-written pages, which live in project's `pages/` or `mockups/`
 ##     (layout check); generated markup is one long line and fails width, so registry admits
 ##     what hand writes and rejects what build emits.
@@ -57,7 +60,7 @@ type
   Kind* {.pure.} = enum
     ## Define file kinds checker reads.
     Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Cpp,
-    C, Html, Svg, Json
+    C, Html, Svg, Json, Shell
 
   KindRule* = object
     ## Define how one kind is read.
@@ -81,6 +84,7 @@ const LUT_RULE_BY_KIND*: array[Kind, KindRule] = [
   Kind.Html: KindRule(syntax: Syntax.Xml, is_prose: true),
   Kind.Svg: KindRule(syntax: Syntax.Xml, is_prose: true),
   Kind.Json: KindRule(syntax: Syntax.None),
+  Kind.Shell: KindRule(syntax: Syntax.Hash, is_prose: true, is_gated: true),
 ]
   ## Map kind to its rule; header table is derived view of this array.
 
@@ -92,6 +96,7 @@ func kindOf*(path: string): Option[Kind] =
   of ".gitignore": return some(Kind.GitIgnore)
   of ".gitattributes": return some(Kind.GitAttributes)
   of "atlas.config", "atlas.lock": return some(Kind.Json)
+  of "pre-push", "commit-msg": return some(Kind.Shell)
   else: discard
   case ext
   of ".nim": some(Kind.Nim)
@@ -106,6 +111,7 @@ func kindOf*(path: string): Option[Kind] =
   of ".html": some(Kind.Html)
   of ".svg": some(Kind.Svg)
   of ".json": some(Kind.Json)
+  of ".sh": some(Kind.Shell)
   else: none(Kind)
 
 
