@@ -42,7 +42,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, json, os, osproc, sequtils, strutils, tables, times]
+import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, proposals, gaps, guard, head, inspector, model, notes]
 from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
@@ -327,8 +327,8 @@ proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
 
 
 proc readProposals(findings: var seq[Finding]): seq[Proposal] =
-  ## Read every proposal directory, in number order; malformed ones and numbers taken twice or
-  ##   skipped add findings.
+  ## Read every proposal directory, in number order; malformed ones, numbers taken twice or
+  ##   skipped, and figures naming no file add findings.
   var directories: seq[string]
   for kind, path in walkDir(DIRECTORY_PROPOSALS):
     if kind == pcDir: directories.add path
@@ -349,6 +349,11 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
       directory,
     )
     findings.add why
+    for node in proposal.body:
+      let figure = node.figureOf(proposal.directory)
+      if figure.isSome and not fileExists(figure.get.path):
+        findings.add Finding(path: argument, line: figure.get.line,
+          message: "Figure names no file; got `" & figure.get.path & "`.")
     result.add proposal
   findings.add checkNumbers(result)
 
@@ -545,11 +550,17 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   result["marginalia"] = assemble(text_shell, "PGA Marginalia",
     marginaliaBody(changes_evaluated, notes, files, baselines, spread, pin,
       linksHtml(names, published, "marginalia")), faces)
+  var figures: Table[string, string]
+  for proposal in proposals:
+    for node in proposal.body:
+      let figure = node.figureOf(proposal.directory)
+      if figure.isSome and fileExists(figure.get.path):
+        figures[figure.get.path] = readFile(figure.get.path)
   for proposal in proposals:
     result[proposal.name] = assemble(text_shell,
       proposal.citation & " " & titled(proposal.name),
-      proposalBody(proposal, evaluations.getOrDefault(proposal.name), files, baselines, spread, pin,
-        linksHtml(names, published, proposal.name)), faces)
+      proposalBody(proposal, evaluations.getOrDefault(proposal.name), files, figures, baselines,
+        spread, pin, linksHtml(names, published, proposal.name)), faces)
 
 
 proc pages() =

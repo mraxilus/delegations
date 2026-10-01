@@ -7,11 +7,14 @@
 ##   Header cites number and status. Frozen proposal shows pin its last evaluation was taken at,
 ##     since library has moved past it, and edits whose quote is gone show file alone.
 ##
+##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
+##     whose file is absent renders as its text, and `drive` names it.
+##
 ##   Cost: whole-file replacement renders collapsed, since hundreds of lines would bury claims.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, strutils, tables]
+import std/[json, options, strutils, tables]
 
 import ../[proposals, markdown]
 import ./[shell, evaluation]
@@ -21,11 +24,12 @@ func proposalBody*(
   proposal: Proposal;
   evaluation: JsonNode;
   files: Table[string, string];
+  figures: Table[string, string];
   baselines: Table[string, JsonNode];
   spread: Spread;
   pin, links: string;
 ): string =
-  ## Render proposal page body.
+  ## Render proposal page body; `figures` maps project-relative SVG path to its text.
 
   func claimsHtml(evaluation: JsonNode): string =
     ## Render claims evaluation checked, each with its verdict and detail.
@@ -77,7 +81,16 @@ func proposalBody*(
   result.add links & "</p><div class=\"chips\">" &
     verdictChips(evaluation, baselines, spread) & "</div></header>"
   result.add "<section class=\"block\"><h2>Claims</h2>" & claimsHtml(evaluation) & "</section>"
-  result.add "<section class=\"block prose\">" & renderBlocks(proposal.body, 1) & "</section>"
+  result.add "<section class=\"block prose\">"
+  for node in proposal.body:
+    let figure = node.figureOf(proposal.directory)
+    if figure.isSome and figure.get.path in figures:
+      result.add "<figure class=\"figure\"><div class=\"figure-art\">" &
+        figures[figure.get.path] & "</div><figcaption>" & renderInline(figure.get.caption) &
+        "</figcaption></figure>"
+    else:
+      result.add renderBlock(node, 1)
+  result.add "</section>"
   if proposal.change.edits.len > 0:
     result.add "<section class=\"block\"><h2>What it changes</h2>" &
       editsHtml(proposal.change, files) & "</section>"

@@ -24,11 +24,15 @@
 ##     `build` (compiling bench entry costs at most stated share of pristine build, in peak
 ##     memory or seconds compiler reports).
 ##
+##   Figure is paragraph of one image alone, as `![Derivation map](../../pages/map.svg)`: path
+##     resolves against proposal's directory, and page embeds SVG it names. SVG lives under
+##     `pages/`, since layout admits hand-written markup there alone.
+##
 ##   Cost: builds-on chain is read one link deep per proposal; chain of three reads three.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, strutils]
+import std/[json, options, strutils]
 
 import ./[changes, guard, markdown]
 
@@ -59,6 +63,14 @@ type
       ## Name of proposal whose change applies first; empty where none.
     claims*: JsonNode
       ## Claims evaluation checks, in order.
+  Figure* = object
+    ## Define one figure proposal embeds.
+    caption*: string
+      ## Text under figure, as image alternative gives it.
+    path*: string
+      ## Project-relative path of SVG, as `pages/derivation-map.svg`.
+    line*: int
+      ## Line of `proposal.md` figure stands on, for findings.
 
 
 const
@@ -68,6 +80,22 @@ const
     ## Digits number is written with, zero-padded, in path and citation.
   STATUS_WORDS = ["proposed", "implemented", "withdrawn"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
+
+
+func figureOf*(node: Block; directory: string): Option[Figure] =
+  ## Read figure paragraph names: caption, and path resolved against `directory` with `..`
+  ##   folded; none for any block that is not one image alone. Caption may wrap over lines.
+  if node.kind != BlockKind.Paragraph: return none(Figure)
+  let
+    line = node.lines.join(" ").strip
+    middle = line.find("](")
+  if not line.startsWith("![") or not line.endsWith(")") or middle < 0: return none(Figure)
+  var parts: seq[string]
+  for part in (directory & "/" & line[middle + 2 .. ^2]).split('/'):
+    if part == "..":
+      if parts.len > 0: parts.setLen(parts.len - 1)
+    elif part.len > 0 and part != ".": parts.add part
+  some(Figure(caption: line[2 ..< middle], path: parts.join("/"), line: node.line))
 
 
 func citation*(proposal: Proposal): string =
