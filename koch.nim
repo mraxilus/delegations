@@ -266,8 +266,9 @@ proc runHook(root, event, input: string): int =
     )
     0
   of "push":
-    let mark = root.markFile
-    let recorded = if fileExists(mark): readFile(mark) else: ""
+    let
+      mark = root.markFile
+      recorded = if fileExists(mark): readFile(mark) else: ""
     var found: seq[Finding]
     for line in input.splitLines:
       let fields = line.splitWhitespace
