@@ -241,8 +241,9 @@ for slot in 0 ..< pool.bound:  # bound, never HANDLES_MAX
    `a`, `b`, `i`). Use a descriptive name at a representation boundary, and across a derivation
    of several stages. Coin no abbreviation (`ctx`, `tmp`, `buf`, `cfg`). Only a closed list of
    jargon, which the Architect alone extends, is exempt: `lut`, `min`, `max`, `src`, `prev`,
-   `curr`, and `len` as a local. The symbols of the source (`mu`, `sigma`) are exempt too. A
-   plural holds a collection, and its singular holds one member (`for term in terms`).
+   `curr`, and `len` as a local. The symbols of the source (`mu`, `sigma`) are exempt too, and
+   so is the symbol of a unit that a glossary names under `## Standards`. A plural holds a
+   collection, and its singular holds one member (`for term in terms`).
 7. Name each distinction, then choose its form by what the code does with it. An axis that
    code selects between at compile time is a closed enum (`Chirality`). A pair that several
    types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
@@ -252,9 +253,10 @@ for slot in 0 ..< pool.bound:  # bound, never HANDLES_MAX
    `Grade.high`), and never write a bare index. Where the landmark depends on the
    configuration, the alias resolves it, so that no caller branches.
 9. A name that joins symbols is an abbreviation too (`aa`, `xy`). An acronym stays only where a
-   layman knows it; one that a field or a library coined is spelled out. A path is a name, and
-   follows this article: a directory and a file spell their words in full, a test file among
-   them.
+   layman knows it, and the root glossary lists those acronyms. One that a field or a library
+   coined stays only where a glossary defines it, as a term or under `## Standards`. Every
+   other acronym is spelled out. A path is a name, and follows this article: a directory and a
+   file spell their words in full, a test file among them.
 10. A binding inside the block where a module runs as a program is a local of that block, and
     takes the local case. A global never shares its word with a type, because a reader, or a host
     that compares names loosely, reads `ALGEBRA` and `Algebra` as one. A qualifier keeps them

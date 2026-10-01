@@ -121,15 +121,17 @@ needs a temporary takes it from a scratch arena that is reset as a whole.
 ## V.9: Acronyms a layman knows, and paths in full
 
 ```text
-3D  ID  JSON  URL                                          stay
-PGA  RGA  CGA                                              spelled out
+3D  ID  JSON  URL                                          stay, the root glossary lists them
+PGA  RGA  CGA                                              stay, the root glossary defines them
+SoA  AoS                                                   spelled out
 projective_geometric_algebra/  tests/rigid/  test_rigid_3d.nim
 ```
 
 Constructed. The first row holds acronyms that a layman meets at school, on the web and in
-data. Only the field knows the names of the algebras, so a path spells them out, as the
-directory of the reference does. The reference keeps `pga.nim` and `tests/rga/`, which this
-rule postdates. The test file carries its word before its name.
+data, and the root glossary lists them. The second row holds the names of the algebras, which
+the root glossary defines under the conventions of Lengyel. The third row holds acronyms of a
+field that no glossary defines, so a name spells them out. The path line follows the reference
+at its pin, and changes when the pin moves. The test file carries its word before its name.
 
 ## VI.7 and VIII.1: A claim names its register
 
