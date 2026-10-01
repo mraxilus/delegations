@@ -1,0 +1,4 @@
+#!/bin/sh
+# Hold commit subject to form, scope and ladder before commit lands; git names message file.
+#   not Nim because git runs hook as executable script, and built binary is never committed.
+exec sh "$(git rev-parse --show-toplevel)/.claude/hooks.sh" msg < "$1"
