@@ -1150,10 +1150,11 @@ on 2026-10-01, by a fake input to each event, before any delegate ran under the 
 **The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
 writes the tree hash it passed on into `.git/koch-check` when the working tree is clean, and
 `pre-push` refuses a push whose tree differs. `commit-msg` runs the commit check over the new
-subject and the ladder before the commit lands. Both are two-line shell wrappers that call
+subject and the ladder before the commit lands. A merge commit passes it, because git writes
+that subject and the commit check excludes merges. Both are two-line shell wrappers that call
 `hooks.sh`, because git runs a hook as an executable and a binary is never committed. A clone
-reads them only after the start hook sets `core.hooksPath`. So a tool other than Claude Code
-reaches CI unchecked, and CI stays the gate.
+reads them once the start hook sets `core.hooksPath`, so any other tool reaches CI unchecked,
+and CI stays the gate.
 
 - A hook reaches only Claude Code, and only where it holds this repository alone, because a
   checkout of several repositories reads no project settings.
