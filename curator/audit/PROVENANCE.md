@@ -669,9 +669,9 @@ daily and writes one issue labelled `curator`. It names these:
 The settings read goes through the rulesets endpoints. The classic protection endpoint answers
 nothing where the rules are rulesets, so the ledger reads the rules per branch with the token of
 a run. That token lacks the administration scope, so GitHub leaves the bypass actors out, and
-the secret `ADMIN_TOKEN` reads them. An anonymous read sees them too, but runners share
+the secret `TOKEN_DELEGATE` reads them. An anonymous read sees them too, but runners share
 addresses and the anonymous limit is sixty per hour. The run token and a fine-grained token
-miss the repository merge settings, so `ADMIN_TOKEN` is a classic token and reads them. A read
+miss the repository merge settings, so `TOKEN_DELEGATE` is a classic token and reads them. A read
 that fails turns the run red, because a silent read is the failure the ledger exists to catch.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
