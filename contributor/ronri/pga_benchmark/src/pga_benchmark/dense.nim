@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, macros, math, options, sequtils]
+import std/[algorithm, macros, math, sequtils]
 
 import pga
 import pga/[algebra {.all.}, cayleys {.all.}, multivectors]
@@ -101,15 +101,15 @@ func summed(left, right: Slots; is_difference = false): Slots =
 
 
 func mapped(slots: Slots; cayley: Cayley1D): Slots =
-  ## Send each slot where one-dimensional table sends its basis element, signed.
+  ## Send each slot where one-dimensional table sends its basis element, signed; cell of
+  ##   several terms sends slot to each.
   for b in Basis:
-    if cayley[b].isNone: continue
-    let destination = cayley[b].get
-    for term in slots[b]:
-      result[destination.basis].add Term(
-        coefficient: if destination.is_negated: -term.coefficient else: term.coefficient,
-        factors: term.factors,
-      )
+    for destination in cayley[b]:
+      for term in slots[b]:
+        result[destination.basis].add Term(
+          coefficient: if destination.is_negated: -term.coefficient else: term.coefficient,
+          factors: term.factors,
+        )
 
 
 func selected(slots: Slots; grade: Grade): Slots =

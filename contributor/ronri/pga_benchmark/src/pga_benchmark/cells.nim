@@ -2,8 +2,8 @@
 ##   Evaluation's `tables` claim compiles one program against library at pin and one against changed
 ##     copy; each prints tables through this module, and equal JSON is equal table, signs
 ##     included. Suites run same module against pin, so serialiser evaluation relies on is tested.
-##   Cell type differs between versions: `Option[BasisSigned]` in 1D tables at pin, `seq` in
-##     2D ones and in every derived table. `cellOf` reads both, so one module serves each side.
+##   Cell is `seq` in every table at pin; library before `3121342` held `Option[BasisSigned]` in
+##     1D ones. `cellOf` reads both, so one module serves change that restores either shape.
 ##
 ##   Cost: serialiser walks every cell, N² for 2D table; 6D is 4 096 cells, milliseconds.
 
