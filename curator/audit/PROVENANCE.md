@@ -250,7 +250,9 @@ A committed page sits under `pages/`, which is what the project stands behind, o
 nothing is inferred from content.
 
 An unknown root directory, a stray file in a root or domain folder, and an unregistered domain
-are findings, and are never skipped.
+are findings, and are never skipped. `.claude` and `.githooks` are root directories beside
+`.github`, unchecked inside. The hooks, the permission rules, the skill and the
+`record-reviewer` live in the first, and git's own hooks in the second.
 
 - Rejected: an early return under `curator/`, which drops an unknown head in silence, so a
   misplaced project leaves the audit.
@@ -661,7 +663,9 @@ daily and writes one issue labelled `curator`. It names these:
 - a pull request left ready without a green run;
 - a `Closes #N` that never fired;
 - an issue or pull request that opens with no role line, or carries no label;
-- an issue whose title takes the form of a commit subject.
+- an issue whose title takes the form of a commit subject;
+- the protection of `main` drifted from the settings `CURATOR.md` lists, where the secret
+  `ADMIN_TOKEN` holds a token with the administration scope, and nothing otherwise.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
 rather than search, and the label as a hardcoded literal. Its schedule idiom is the one in
@@ -1108,6 +1112,53 @@ Verified on the runner, 2026-09-07, which is the only place the claim means anyt
 driven check passed with 0 findings, in a real Chromium over real gestures, with the gate
 reading its verdict. Verified by a break of it: on the compiler of koch the same command fails
 inside `pga`.
+
+## Hooks
+
+**Each hook of `.claude/settings.json` calls `koch hook <event>` and holds no rule of its own.**
+The rule stays in the audit, once, and the hook reads the fact of its event and names the check
+that holds it. The events, each one a verb argument:
+
+- `path` refuses a write outside the scope of the branch, before the write.
+- `edit` runs the static checks after a write, and returns the findings of that file as
+  context.
+- `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
+  history.
+- `body` refuses a post that lacks the role line or the footer, or breaks the three English
+  counts. It also refuses an issue titled as a commit or carrying no role label, and a pull
+  request body that leaves the template unfilled.
+- `stop` refuses the end of a turn that pushed or posted and did not end with the sign-off.
+- `start` prints the role, the read order, the carried list and the drift state, at the start
+  and after each compaction.
+
+**`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
+before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
+It fetches the release tarball where no compiler serves, and builds koch into `binaries/`. It
+sets `core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
+exists. Every other hook command runs the built koch, and falls back to `nim r`.
+
+The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Verified by hand
+on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
+
+**The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
+writes the tree hash it passed on into `.git/koch-check` when the working tree is clean, and
+`pre-push` refuses a push whose tree differs. `commit-msg` runs the commit check over the new
+subject and the ladder before the commit lands. Both are two-line shell wrappers that call
+`hooks.sh`, because git runs a hook as an executable and a binary is never committed. A clone
+reads them only after the start hook sets `core.hooksPath`. So a tool other than Claude Code
+reaches CI unchecked, and CI stays the gate.
+
+- A hook reaches only Claude Code, and only where it holds this repository alone, because a
+  checkout of several repositories reads no project settings.
+- Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
+  hook, which recompiles on each source change and costs seconds; the built binary costs
+  milliseconds, and `nim r` stays as the fallback.
+- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop.
+- Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
+  A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
+  relative path then fails to open, and every hooked tool is refused, as happened once here.
+- The shape rules of the sign-off, the body and the bash refusals are pure functions.
+  Verified by `suites/test_hooks.nim`.
 
 ## Watching main
 
