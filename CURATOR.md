@@ -332,7 +332,7 @@ alone.
 | `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
 | `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
-| `check-commits` | commit subjects | Conventional Commits; scope equals branch scope |
+| `check-commits` | commits since base | subject and scope; test before fix; body; record apart |
 | `check-drift` | paths base gained | branch carries base's charter and checker |
 | `check-role` | a pull request's body and labels | opening line and label are the branch's role |
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
