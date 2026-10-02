@@ -24,8 +24,7 @@ import ./findings
 
 
 const
-  DRIVER_FILE* = "tools/build.nim"
-    ## Build driver project carries, holding verbs koch has none of.
+  DRIVER_FILE* = "tools/build.nim"  ## Build driver project carries, holding verbs koch has none of.
   TYPES_VERB* = "types"
     ## Verb type-checking project's own scripts, deriving what they read first, and
     ## stopping before anything needing browser. Named here and in CONTRIBUTOR.md.
@@ -54,8 +53,7 @@ const
     ##   koch, and `restoreNode` reports its absence by name.
 
 
-type Target* = object
-  ## Define one project to run, with toolchain serving its pin.
+type Target* = object  ## Define one project to run, with toolchain serving its pin.
   directory*: string  ## Project directory, repository-relative.
   bin*: string  ## Directory holding compiler and its tools; empty names PATH.
 
@@ -91,18 +89,21 @@ proc childEnv(bin: string): StringTableRef =
   result["PATH"] = bin & PathSep & getEnv("PATH")
 
 
-proc runIn*(directory, program: string, arguments: openArray[string], bin = ""): int =
+proc runIn*(directory, program: string; arguments: openArray[string]; bin = ""): int =
   ## Run program with arguments in directory, output streamed; return exit code.
   ##   Toolchain `bin` leads child's PATH, so tools it shells out to are its own.
   let process = startProcess(
-    program, args = arguments, workingDir = directory, env = childEnv(bin),
+    program,
+    args = arguments,
+    workingDir = directory,
+    env = childEnv(bin),
     options = {poUsePath, poParentStreams},
   )
   result = process.waitForExit
   process.close
 
 
-proc linesIn*(directory, program: string, arguments: openArray[string], bin = ""): seq[string] =
+proc linesIn*(directory, program: string; arguments: openArray[string]; bin = ""): seq[string] =
   ## Run program with arguments in directory and read its stdout as lines; empty on non-zero exit.
   ##   Streaming variant above is for checks, whose product is their verdict; this is for
   ##   verb whose product is its output.
@@ -111,7 +112,11 @@ proc linesIn*(directory, program: string, arguments: openArray[string], bin = ""
   ##   before its message. Compiler that complained still fails, since caller installs what
   ##   this returns and absent package names itself.
   let process = startProcess(
-    program, args = arguments, workingDir = directory, env = childEnv(bin), options = {poUsePath},
+    program,
+    args = arguments,
+    workingDir = directory,
+    env = childEnv(bin),
+    options = {poUsePath},
   )
   defer: process.close
   let output = process.outputStream.readAll
@@ -121,7 +126,7 @@ proc linesIn*(directory, program: string, arguments: openArray[string], bin = ""
     if s.len > 0 and not s.contains({' ', '\t'}): result.add s
 
 
-proc runVerb(root: string, targets: openArray[Target], verb, failed: string): seq[Finding] =
+proc runVerb(root: string; targets: openArray[Target]; verb, failed: string): seq[Finding] =
   ## Run one verb of each project's driver, on toolchain its pin names; exit other than 0 is
   ##   finding against driver, carrying that code.
   for target in targets:
@@ -134,7 +139,8 @@ proc runVerb(root: string, targets: openArray[Target], verb, failed: string): se
     )
     if code != 0:
       result.add finding(
-        target.directory & "/" & DRIVER_FILE, 0,
+        target.directory & "/" & DRIVER_FILE,
+        0,
         failed & "; got exit `" & $code & "`.",
       )
 
@@ -169,8 +175,10 @@ proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
   ##   check that runs afterwards is what reports project whose driver will not run.
   for target in targets:
     for package in linesIn(
-      root / target.directory, target.bin.nimOf,
-      ["r", "--hints:off", DRIVER_FILE, SYSTEM_VERB], target.bin,
+      root / target.directory,
+      target.bin.nimOf,
+      ["r", "--hints:off", DRIVER_FILE, SYSTEM_VERB],
+      target.bin,
     ):
       if package notin result: result.add package
 
@@ -189,5 +197,7 @@ proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
     )
     if code != 0:
       result.add finding(
-        target.directory & "/tests", 0, "Testament failed; got exit `" & $code & "`."
+        target.directory & "/tests",
+        0,
+        "Testament failed; got exit `" & $code & "`.",
       )

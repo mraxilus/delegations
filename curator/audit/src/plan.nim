@@ -30,8 +30,7 @@ import ./[checker, compilers, dependencies, findings, layout, projects, toolchai
 
 
 const
-  CHECKER_FILES* = ["koch.nim", "koch.nim.cfg"]
-    ## Root files driving every project's checks.
+  CHECKER_FILES* = ["koch.nim", "koch.nim.cfg"]  ## Root files driving every project's checks.
   RECENT_DAYS* = 7
     ## Window `--recent` looks back over, matching weekly cron in `check.yml`. Both are named
     ## once; changing one means changing other, which CURATOR.md duty 9 says.
@@ -40,8 +39,7 @@ const
     ## of koch compiling exactly what it drives.
 
 
-type Job* = object
-  ## Define one project to compile, with compiler it pins.
+type Job* = object  ## Define one project to compile, with compiler it pins.
   directory*: string  ## Project directory, repository-relative.
   pin*: string  ## Exact Nim version, or commit, from project's nimble file.
 
@@ -75,7 +73,7 @@ func testSet*(directories, paths: openArray[string]): seq[string] =
   result.sort
 
 
-func holds(tree: Tree, directory, name: string): bool =
+func holds(tree: Tree; directory, name: string): bool =
   ## Decide whether project directory holds file of that name.
   let path = directory & "/" & name
   for e in tree:

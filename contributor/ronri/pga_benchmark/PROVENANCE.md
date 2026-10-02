@@ -6,8 +6,9 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 5714afba6fb3aef0 |
+| Rules   | 914ae2b574f73577 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Pruned  | de53b987e9686537ecae415d637952640dafb9ce |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this project.
 The audit measured:
@@ -44,11 +45,10 @@ measurements are emitted. `^` is a template over `^∘` in the library, so the C
 the latter. `TEMPLATES` records the pair, and the suite holds it to the source of the
 library. `MISSING` names the two conformal norms that the library declares as errors.
 
-`INLINED` names the symbols that the library spells as a template over a field read. Head
-made the component accessor `[]` a template, where it was a `func` with `{.inline.}`. The C
-therefore carries no function for it, and the emission suite passes over it. A suite holds
-`INLINED` to the source of the library, as it holds `TEMPLATES`. The gap row for
-`select_part` carries a dash for every count, and its verdict rests on time alone.
+`INLINED` names the symbols that the library spells as a template over a field read. At the pin the
+component accessor `[]` is such a template. So the C carries no function for it, and the emission
+suite passes over it. A suite holds `INLINED` to the source of the library, as it holds `TEMPLATES`.
+The gap row for `select_part` carries a dash for every count, and its verdict rests on time alone.
 
 The squared norms `|∙²` and `|∘²` are spelled in backticks, as `` (`|∙²`(m)) ``. The
 character `²` is no operator character to the lexer, so the prefix form splits it off as an
@@ -92,7 +92,7 @@ neither. So the vector helpers and the rotation are templates, and a form that t
 share is spelled in each. A spelled form carries the terms of the form it repeats, so their
 arithmetic counts are equal.
 
-Five alternating runs on this container on 2026-10-02 time the reference with and without
+Five alternating runs on `linux amd64, 4 cores` on 2026-10-02 time the reference with and without
 those calls, one build each. At rga4d the unitize of a line, a plane and a motor ran ×0.23 to
 ×0.24 of its time with the call. The other changed measurands moved ×0.52 to ×1.35. In the
 same runs, measurands with unchanged code moved ×0.60 to ×1.11. So outside the unitize forms,
@@ -137,7 +137,7 @@ pays.
 Alone, `∙` at rga4d ran at 4.4 ns into slots filled once with zeros, and at 7.0 ns into slots
 left uninitialised. In the bench at `3121342`, the machine code holds 245 stores of zero
 with or without the fill. So there a fill gives no measurand a discount, and the `noinit`
-keeps it so as the catalogue grows. Both figures are from this container on 2026-10-02.
+keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
@@ -156,11 +156,10 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-02**, at `3121342`, five runs each on a machine of
-the same description. On that day the bench of 2026-10-01 ran in turn with them. At rga4d its
-library ran ×1.19 to ×1.22 slower than on
-2026-10-01, its reference ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of
-these baselines ran ×0.99 to ×1.01 of it in the same runs.
+**The runtime baselines are from 2026-10-02**, at `3121342`, five runs each on `linux amd64,
+4 cores`. In turn with them, the bench of 2026-10-01 ran again. At rga4d its library ran at ×1.19 to
+×1.22 of its own times of 2026-10-01, and its reference at ×1.26 to ×1.27. Its dense forms ran at
+×1.00 to ×1.01. The bench of these baselines ran ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
@@ -169,8 +168,7 @@ Within these baselines, the least and greatest run ratios of the median measuran
 apart at rga4d and ×1.17 at cga5d. They are ×1.06 at rga3d and ×1.10 at cga4d, and the widest
 measurand spreads ×2.39, at rga4d.
 
-So one run's time ratio is weak evidence, and the ticks on the docket say how weak. The
-figures below stay as taken on 2026-09-28.
+So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
 **`ns` stays in names as a unit symbol.** The root glossary takes every prefix of SI Table 7
 under `## Standards`, so `ns_median` and `ns_library` keep it (V.6). A single
@@ -208,14 +206,14 @@ once for each trip, because the library chains operators.
 
 Functions that share stems are numbered by overload index: `{}` over grade and antigrade, and
 `[]` beside its `var` twin. The compiler assigns that index in declaration order, so the keys
-hold whatever order the C emits them in. Emission order moved when a module was renamed, and
-swapped two keys, which is how that was found. Movement turns counts and type sizes into
+hold whatever order the C emits them in. Emission order moves when a module is renamed, so a
+key by position would swap. Movement turns counts and type sizes into
 bytes read, written, zeroed, copied and materialised for each call. It names the bytes that
 the code moves, and is not a measurement of cache traffic (Article VIII.1).
 
 On the pinned commit an error-flag branch follows every call of a Nim procedure under goto
-exceptions. `{.raises: [].}` on the callee does not remove it, and only `--panics:on` does
-(see Figures). The library does not stand behind `--panics:on`, as the Architect ruled. So
+exceptions. `{.raises: [].}` on the callee does not remove it, and only `--panics:on` does, which is
+unmeasured at the pin. The library does not stand behind `--panics:on`, as the Architect ruled. So
 counts are taken with the flags that the documents name, `-d:release`, which is
 what a user of the library gets by default.
 
@@ -322,20 +320,20 @@ spends on the same operation. That law reads the build's own nimcache, and every
 with a derived bound meets its library function there. It reads at least `BOUND_ROWS_FLOOR`
 measurands: 107 at rga4d, 130 at cga5d, 39 at rga3d and 46 at cga4d.
 
-**What it found.** Every primitive product spends what the algebra demands, and the
-operations built on top of them do not. At four dimensions the library stands at the bound
+**What the bound finds at the pin.** Every primitive product spends what the algebra demands,
+and the operations built on top of them do not. At four dimensions the library stands at the bound
 on multiplies for 101 of the 107 operations that carry one. The two supports are what stand
 above it, at 162 against 54. At five dimensions it stands at the bound for 110 of the 130
 that carry one. The cocarrier, the centre, the container and the partner stand above it.
 
 The attitude and the carrier are generated from a Cayley table, so each spends no multiply,
 as the algebra demands. The centre spends 486 against 162, the container 243 against 162,
-and the partner 518 against 324. The cocarrier still wedges against a constant that carries
+and the partner 518 against 324. The cocarrier wedges against a constant that carries
 one unit component. So it spends 243 multiplies where the algebra demands none.
 
 On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
 and for 81 of 130 at five. Those are the operations that one generated function serves,
-since that function writes every slot and fills nothing. A chain still fills its
+since that function writes every slot and fills nothing. A chain fills its
 intermediates, and stands above the bound.
 
 At four dimensions the exterior product spends the bound's 81 multiplies and moves the
@@ -343,10 +341,10 @@ bound's 384 bytes. The bulk norm spends the bound's 8 multiplies, and moves 640 
 against the bound's 136.
 
 At four dimensions 65 operations carry a library function, a bound and a reference. Over
-those, reaching the bound closes 58 per cent of the byte distance to the reference. It
+those, reaching the bound closes 54 per cent of the byte distance to the reference. It
 closes 24 per cent of the multiply distance. At five dimensions 84 operations carry all
-three, and reaching the bound closes 83 per cent and 39 per cent. Without the chains, the
-byte shares are 55 and 49 per cent. Those shares rest on one population, so
+three, and reaching the bound closes 82 per cent and 39 per cent. Without the chains, the
+byte shares are 51 and 47 per cent. Those shares rest on one population, so
 the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
@@ -385,18 +383,18 @@ intermediate.
 
 Two chains in each rigid algebra spend less than their bound. The central projection and the
 orthogonal antiprojection spend 81 against 108 at rga4d, and 27 against 36 at rga3d. Their
-first step leaves whole grades at zero, and the second step reads none of them. That is new
-evidence that a chain bound is an estimate.
+first step leaves whole grades at zero, and the second step reads none of them. So a chain
+bound is an estimate.
 
-**What the library spends in time against them.** The runtime baselines of 2026-10-01 time
+**What the library spends in time against them.** The runtime baselines of 2026-10-02 time
 each dense form beside the library, five alternating runs. The median general measurand runs
-×1.00 to ×1.13 its dense form, since most library operators are already one generated table.
-The compound operations are not. They run ×1.8 to ×5.7 their dense forms, from the
-container at cga5d to the support at rga4d.
+×1.00 to ×1.08 its dense form, since most library operators are already one generated table.
+The compound operations are not. They run ×2.1 to ×6.1 their dense forms, from the
+container to the cocarrier, both at cga5d.
 
-Negation and the antigrade selection run ×1.6 to ×4.1, and the norms ×2.0 to ×5.4. The
-weight unitizes run faster than their dense forms, ×0.59 to ×0.87, and the bulk unitize
-slower, ×1.2 to ×3.1. So a dense form is a measure, and never a lower bound on time.
+Negation and the antigrade selection run ×2.0 to ×4.2, and the norms ×2.0 to ×5.1. The
+weight unitizes run faster than their dense forms, ×0.59 to ×0.86, and the bulk unitize
+slower, ×1.7 to ×3.0. So a dense form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -440,14 +438,12 @@ also covers the verdict and evidence of every cause, the rendered width, and run
 fetches and checks the faces. `sweep` compiles the bench at two to six dimensions, rigid
 metric, and prints the medians of the general measurands. It never runs in CI.
 
-Verified by hand on 2026-09-13. `nim r tools/build.nim drive` exits 0 on the recorded
-baselines. Lower the total multiplies of `∧(Multivector,Multivector)` in
-`baseline/static_rga4d.json` from 81 to 80, and `guard` exits 1 with the finding below.
-Restore it, and the guard returns 0 findings.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
+finding. With the fixture path of the suite, it renders so:
 
 ```text
-baseline/static_rga4d.json:0: Total `multiplies` of `∧(Multivector,Multivector)` grew;
-got `81`, baseline `80`.
+baseline/rga4d.json:0: Total `multiplies` of `∧(Multivector,Multivector)` grew; got `90`,
+baseline `81`.
 ```
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Driver`: the dispatch, the usage
@@ -471,7 +467,7 @@ alone, because nothing could then say whether it still holds at head.
 `01-cayley-derivation`, and its title with the citation, as `P01`. `drive` holds the numbers
 unique and without a gap, so no number goes to a second proposal. A proposal that the library
 implements stays, with status `implemented` and the library commit, and a withdrawn one stays
-too. `drive` no longer applies either at pin, and each page keeps its last evaluation. So a
+too. `drive` applies neither at pin, and each page keeps its last evaluation. So a
 citation still leads to what was proposed and measured.
 
 A program claim names its program relative to its proposal, so a new directory name moves no
@@ -489,11 +485,12 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 dense form.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
-else. The bench entry put the harness in the measured build. On 2026-10-01 at rga6d, with the
-library fixed at `bd6b23c`, one change to `inspector.nim` moved the P01 side from 211.7 MiB to
-261.2 MiB. The pristine side stayed at 343.5 MiB, since its derivation peaks higher. At
-`3121342` the library alone peaks at 170.9 MiB against 285.8, ×0.60. Rejected: the bench entry
-with a wider bound, since the next change to the harness moves it again.
+else. At rga6d the library with P01 peaks at 170.9 MiB against 285.8 MiB at the pin, ×0.60
+(`evaluations/cayley-derivation.json`, 2026-10-01, `linux amd64, 4 cores`). Rejected: the bench
+entry, which puts the harness in the measured build. With the library fixed at `bd6b23c`, one
+change to `inspector.nim` alone moved the P01 side from 211.7 MiB to 261.2 MiB at rga6d on
+2026-10-01. A wider bound would not hold either, since the next change to the harness moves it
+again.
 
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
@@ -504,20 +501,14 @@ two carry no reference, so only the multivector lower bound covers them there.
 
 **The spread comes from the evaluations themselves.** An evaluation that changes no library function
 moves no count, so the range of its time ratios is the range of the machine. The pages state
-the spread beside the figures it qualifies. On 2026-09-29, in this container (linux amd64, 4
-cores), those evaluations gave 2 904 ratios, with 90% between ×0.91 and ×1.09.
+the spread beside the figures it qualifies. They compute it from the committed evaluations
+each time they build, so the record states no figure of it.
 
-Measured variance: `typed-multivectors` applies the same library edits as `cayley-derivation`.
-Its evaluations on 2026-09-29 and 2026-09-30 gave median ratios over every rga4d measurand of
-×1.16, ×1.00, ×1.00, ×1.00 and ×1.01. Over every cga5d measurand, the last four gave ×0.99,
-×1.07, ×0.99 and ×1.01. Alternation does not cancel all drift of a shared machine, so one
-evaluation's time is weak evidence alone. Counts are exact, and carry the verdicts.
+Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
+weak evidence alone. Counts are exact, and carry the verdicts.
 
-The changes come from edits measured at `bd6b23c` by line range. Converted to quotes, each
-one applied at pin gives files byte-identical to the measured edits.
-The change of `cayley-derivation` reproduces its draft byte for byte, and
-`proposals/02-typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
-and cga5d.
+`proposals/02-typed-multivectors/prototype.nim` holds its laws against the change of
+`cayley-derivation` at rga3d, rga4d and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations` and `Internal: Cells`. They cover parse, quote and
@@ -662,18 +653,6 @@ That commit is the head of the library on 2026-10-01, as the standing instructio
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
-**The pin is at or after `16dbc17`.** At `181c8d8`, `merge` keeps a term without its
-negation when `as_negated` is set. So `e12 ⟑ e12` gives +1, and 60 of the 384 terms of the
-geometric product at 4D flip. Suite `Wiki: Motor` fails there, through the motor product
-against its reference, and the suites of the library pass.
-
-**The pin is at or after `9f9019b`.** That commit exports the grade table, which the
-umbrella reads through a generic `{}`, so `import pga` compiles. The suites of the library
-import each module with `{.all.}` and never read the umbrella, so they do not hold this. The
-library has `|∙²` and `|∘²`, and the catalogue measures each one. Verified by
-`tests/test_*.nim`, suite `Internal: Catalogue`, which holds the catalogue to the exported
-surface of the library.
-
 **The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
 the same pin that `rga_visualiser` carries. The library spells seven operators with
 characters that no Nim release lexes. One cached build therefore serves both projects. Atlas
@@ -690,169 +669,18 @@ attribution rather than licence.
 
 ## Figures
 
-Every figure below that names no other commit was taken on 2026-09-28, in the container of
-that session: `linux amd64, 4 cores`, a shared cloud machine. It ran on the pinned compiler
-and on library `bd6b23c`, with
-`-d:release`. Runtime measurements are medians over 40 rounds of 1024 objects, from
-`nim r tools/build.nim bench`, in nanoseconds for each object. Static measurements are from
-`nim r tools/build.nim inspect`, and are exact for this compiler commit, with loop trips
-weighted.
+**Every figure at the pin lives in a file that a verb writes, and the record copies none.** The
+static counts are `baseline/static_<algebra>.json`, from `baseline`. They are exact for this
+compiler commit, with loop trips weighted. The runtime medians are
+`baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
+objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
+under `taken`, and at the pin they are from 2026-10-02 on `linux amd64, 4 cores`.
 
-**The reference side is the drift control.** The bump of the pin does not touch the
-reference, because the reference is the code of this project. The baselines of 2026-09-24
-and 2026-09-28 are the pair. Over it the reference medians moved by ×0.94 at rga4d and by
-×0.73 at cga5d. So the machine gave back more than it did four days before.
-
-Over the same pair the library medians moved by ×0.83 and ×0.59. Read the two sides
-together, and never one alone. The interleaved pair below is the figure that the bump
-itself moved.
-
-| Gap (rga4d) | Library ns | Reference ns | Mul | Div | Bytes moved | Checks |
-|---|---|---|---|---|---|---|
-| `wedge_point_point` (`∧`) | 24.4 | 3.4 | 81 / 12 | 0 / 0 | 384 / 112 | 0 / 0 |
-| `wedge_dot_anti_motor_motor` (`⟇`) | 50.6 | 13.8 | 192 / 48 | 0 / 0 | 384 / 256 | 0 / 0 |
-| `transform_point_motor` (three products) | 138.6 | 6.9 | – / 25 | – / 0 | – / 192 | – / 8 |
-| `norm_bulk_point` (`\|∙`) | 11.7 | 1.8 | 8 / 3 | 0 / 0 | 640 / 40 | 1 / 1 |
-| `norm_bulk_squared_point` (`\|∙²`) | 4.3 | 0.7 | 8 / 3 | 0 / 0 | 256 / 40 | 0 / 0 |
-| `unitize_point` (`^`) | 5.2 | 1.2 | 24 / 3 | 1 / 1 | 512 / 128 | 1 / 0 |
-| `support_line` (`∩`) | 56.3 | 2.1 | 162 / 9 | 0 / 0 | 1280 / 112 | 3 / 1 |
-| `attitude_point` (`⊖`) | 4.2 | 0.5 | 0 / 0 | 0 / 0 | 256 / 40 | 0 / 0 |
-| `project_orthogonal_point_plane` | 46.1 | 4.4 | 135 / 14 | 0 / 0 | 1152 / 128 | 2 / 0 |
-
-| Gap (cga5d) | Library ns | Reference ns | Mul | Div | Bytes moved | Checks |
-|---|---|---|---|---|---|---|
-| `wedge_round_point_round_point` (`∧`) | 58.0 | 4.4 | 243 / 20 | 0 / 0 | 768 / 160 | 0 / 0 |
-| `center_dipole` (`⊙`) | 100.2 | 2.4 | 486 / 16 | 0 / 0 | 3584 / 160 | 4 / 1 |
-| `partner_circle` (`⊛`) | 137.4 | 3.4 | 518 / 29 | 0 / 0 | 30720 / 320 | 271 / 2 |
-| `carrier_sphere` (`⊟`) | 6.1 | 0.4 | 0 / 0 | 0 / 0 | 512 / 48 | 0 / 0 |
-
-**What the bump moved in the counts, over the functions that both commits hold.** The pair
-is the static baseline of `6a91c3f` against the static baseline of `bd6b23c`, 123 functions
-at rga4d and 141 at cga5d.
-
-| Count (common functions) | rga4d | cga5d |
-|---|---|---|
-| Zero fills | 74 → 72 | 308 → 294 |
-| Bytes moved | 30832 → 30064 | 100432 → 93776 |
-| Error-flag checks | 141 → 139 | 619 → 612 |
-| Calls | 143 → 141 | 683 → 676 |
-| Lines of C | 3165 → 3163 | 8594 → 8503 |
-| Multiplies | 2204 → 2123 | 9173 → 7958 |
-| Divisions | 6 → 6 | 2 → 2 |
-| Inline functions | 117 → 115 | 134 → 130 |
-
-The attitude and the carrier are now generated, so they spend no multiply. The container
-and the partner read the carrier, so they lose half of theirs. The unitizes read the squared
-norm, and make one call where they made two. The chains are no longer inline.
-`∪` builds its constant `𝐞̄ₙ` with a `let`, so at runtime it calls `initElement` and moves
-512 more bytes. A `const`, as `∩` already uses, would fold that constant at build time.
-
-**What the bump moved in time.** The pristine bench of `6a91c3f` and the patched bench of
-`bd6b23c` ran alternately, nine times each, and each measurand compares on medians. Noise
-puts one measurand between ×0.92 and ×1.08, and a median over a whole run between ×0.98 and
-×1.01. A measurand under 15 ns can move further. In runs whose patch changes no count,
-`normalize_bulk` at rga4d moves between ×0.81 and ×1.20. The patched library passes its own
-suites, 33 at rga4d and 28 at cga5d.
-
-| Measurand | rga4d | cga5d |
-|---|---|---|
-| Median over touched measurands | ×0.35 | ×0.57 |
-| `attitude` (`⊖`) | ×0.11, 29.8 → 3.4 ns | ×0.11, 76.9 → 8.6 ns |
-| `carrier` (`⊟`) | | ×0.10, 79.5 → 8.1 ns |
-| `container` (`⊡`) | | ×0.53 |
-| `partner` (`⊛`) | | ×0.58 |
-| `carrier_co` (`⊞`) | | ×0.58 |
-| `center` (`⊙`) | | ×0.87 |
-| `unitize` (`^`, `^∘`) | ×0.32 | ×0.65 |
-| `normalize_bulk` (`^∙`) | ×1.19, 9.4 → 11.3 ns | ×0.78 |
-| `support_anti` (`∪`) | ×1.23, 54.5 → 67.2 ns | |
-| Measurands slower than ×1.08 | 13 of 111 | 1 of 131 |
-
-The attitude and the carrier now run as maps of moves and signs. The cocarrier, the centre,
-the container and the partner are no longer inline. At `6a91c3f` that pragma made the
-chains slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
-because of its runtime constant.
-
-The other slower measurands run under 14 ns, and their counts did not grow, so they read as
-noise. `^∙` at rga4d is one of them. Over eleven runs whose patch changes no count, the
-pristine bench of `bd6b23c` alone timed it between 9.1 and 11.4 ns. That range holds the
-9.4 ns of `6a91c3f`.
-
-**A candidate library, measured.** A draft of `cayleys.nim` on `bd6b23c` makes each
-`Cayley1D` cell a `seq`, and adds `applyConstant`, `applyMap` and `constructAnti` in place of
-five special cases. Every table comes back cell for cell at four algebras, 136 tables, and
-`∩ ∪ ⊞ ⊙ ⊡` are one generated table each. No pin holds the draft.
-
-The draft hard codes three tables: the metric, the wedge and the complement. Every
-anti-variant is `constructAnti` of its base, the antiproduct included. The four dual products
-are one dual fed into a wedge or antiwedge. The dot is the scalar part of the bulk
-contraction, and the transwedge keeps one family, for ⟑ alone. Every table is unchanged at
-five algebras, and a suite holds the order gr 𝐚 identity. At 6D the front end builds in
-4.56 s against 6.62 s, ×0.69 over five rounds, and peaks at 161 MB against 288 MB.
-
-Grade restriction lives in the emission, by decision of the Architect: a typed operand names
-its slots, and the tables stay whole. One restricted copy of a 2D table costs 0.9 MB at 6D.
-
-The pristine bench of `bd6b23c` and the bench of the draft ran alternately, nine times each,
-on this container on 2026-09-28. The library suites pass, 33 at rga4d and 28 at cga5d, and
-this project's suites pass, 105 and 118. The 6D front end builds in 6.37 s against 6.11 s,
-×1.04 over five rounds whose spreads overlap.
-
-| Measurand | Multiplies | Bytes moved | Time |
-|---|---|---|---|
-| `∩` support, rga4d | 162 → 54 | 1 280 → 256 | 56 → 12 ns, ×0.22 |
-| `∪` antisupport, rga4d | 162 → 54 | 1 792 → 256 | 68 → 12 ns, ×0.18 |
-| `⊞` cocarrier, cga5d | 243 → 0 | 2 048 → 512 | 44 → 8 ns, ×0.18 |
-| `⊙` centre, cga5d | 486 → 162 | 3 584 → 512 | 115 → 38 ns, ×0.33 |
-| `⊡` container, cga5d | 243 → 162 | 2 560 → 512 | 68 → 40 ns, ×0.59 |
-| `⊛` partner, cga5d | 518 → 437 | 30 720 → 28 672 | 170 → 128 ns, ×0.75 |
-
-Against the bounds above, the draft stands at the multiply bound for 107 of 107 operations
-at four dimensions. At five it stands there for 125 of 130, and the five left are the
-partner and its typed forms, which still scan the grade. On bytes it stands at the bound for
-61 of 107 and 96 of 130. Above the byte
-bound remain the scalar-valued products, the norms and the unitizes, which each hand back a
-whole multivector. The chains with intermediates and the two hand-written sums remain too.
-
-The emitted C of the library at 4D:
-
-- `∧` is one inline function of 16 lines, 81 multiplies, no zero fill, no error-flag branch
-  and 384 bytes moved, which is its bound. It held 1090 lines and 178 branches at `0bc4655`;
-- `|∙²` is 16 lines and 8 multiplies, inline, with no zero fill and 256 bytes moved. Its
-  unsquared partner `|∙` is 29 lines, inline, with two zero fills and 640 bytes, because it
-  takes a square root through a call;
-- `^∘` (unitize) spends 24 multiplies and 1 division over 75 lines, with 1 branch left,
-  where the reference takes one reciprocal and 8 multiplies;
-- `⊖` (attitude) is 16 lines, inline, with no multiply, no zero fill and 256 bytes moved,
-  which is its bound;
-- `⊛` at cga5d is the widest function in the tree. It spends 2710 lines, 518 multiplies,
-  108 zero fills, 271 branches and 30720 bytes moved. Its reference spends 29 multiplies;
-- 115 of 124 library functions at rga4d are inline.
-
-Allocation is zero on every measurand, in both implementations, with the gauge live.
-
-Scaling comes from `nim r tools/build.nim sweep`, rigid metric, general measurands. At two to
-six dimensions, `∧` is 2.9, 7.8, 55.0, 73.4, 203.4 ns. `⟑` is 3.8, 14.2, 106.6, 177.1, 1383.4
-ns, and `norm` is 4.1, 7.8, 60.2, 50.5, 92.8 ns. The 4D column of the sweep ran hot against
-the bench, so the shape is the figure, and not the values. These numbers are from library
-`0bc4655` on 2026-09-13. Nobody swept the library again at `bd6b23c`, because the sweep runs
-by hand, so read them as the shape alone.
-
-Error checks under `--panics:on` were measured at library `0bc4655` by a compile of the bench
-entry with `--compileOnly`, and a count in its C. `∧` at 4D fell from 178 branches and 1090
-lines to 0 and 551. That figure is now mostly spent. At `bd6b23c` the default build emits no
-branch in `∧`. It emits 139 branches over the whole of rga4d, where it emitted 4388.
-
-The switch makes defects fatal, and the library does not stand behind it (see Inspector and
-movement). So the guard measures the default build.
-
-A divide against a multiply by a reciprocal was measured on a 16-double array, over 1024
-objects and 40 rounds, as medians. Under `-d:danger` the in-place divide loop ran at 9.7 ns,
-divide-and-write at 12.4 ns, and reciprocal-and-multiply at 12.2 ns. At this width the
-divider overlaps across objects, so the shape moves the figure more than the arithmetic does.
-Under `-d:release` the two write-once forms ran three times slower than the in-place one.
-The reason sits in the emitted C, and is not yet pinned down. The reciprocal pays where a unitize
-sits on a critical path, and not in a throughput loop.
+`gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
+the machine code of one function. The figures of each proposal before and after its edits are
+in `evaluations/<name>.json`, and its page shows them. Allocation is zero on every measurand in
+every implementation, with the gauge live, as the runtime baselines record. Scaling across
+dimensions is unmeasured at the pin, and `sweep` takes it by hand.
 
 **Generated operators write each zero element, and hand-written functions leave theirs to the
 default fill.** A generated operator writes every element as a straight statement, zeros
@@ -865,7 +693,8 @@ Each function that a Cayley table can express moves to generation, and so gets i
 unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
 carrier are generated. The cost that stays is what the hand-written norms pay.
 
-The cost was measured at library `181c8d8`, with the sign of `merge` fixed, on 2026-09-25.
+The cost was measured at library `181c8d8` with the `merge` fix of `16dbc17`, on 2026-09-25.
+The machine is not recorded.
 Each function was called through a volatile procedure pointer, so its body compiled alone and
 wrote to memory that it could not see. Each figure comes from two passes, and each pass is the
 median of nine runs of 41 rounds over 1024 objects. Functions that did not change varied by
@@ -905,9 +734,9 @@ set (VII.3, VII.8 and VII.9).
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared.
-- `sweep` is hand-run only, and the 6D figure was taken once.
+- `sweep` is hand-run only, and no sweep has run at the pin.
 - A change to the bench outside a measurand moves the time of that measurand. Ten alternating
-  runs with and without `noinit`, on this container on 2026-10-02, keep the median ratio of
+  runs with and without `noinit`, on `linux amd64, 4 cores` on 2026-10-02, keep the median ratio of
   each implementation at ×0.99 to ×1.00. Single measurands move steadily from ×0.80 (`scale`)
   to ×1.16 (`wedge_anti`). Code layout is the likely cause. So a time ratio inside about ×0.6
   to ×1.4 between two builds is weak evidence of a change.
@@ -916,17 +745,12 @@ set (VII.3, VII.8 and VII.9).
 
 - Whether the 2D references (rga3d, cga4d) are worth a derivation. Their gaps carry library
   counts and absolute verdicts only.
-- Why the write-once unitize shapes run three times slower than the in-place one under
-  `-d:release`, in the reciprocal experiment above.
-- Whether the losses at `6a91c3f` are more than code layout. When every slot is written, the
-  unary part extractions take ×1.1 to ×1.4 longer at cga5d and ×0.25 as long at rga4d.
-  `contract_bulk` (`∨★`) takes ×1.33 longer at rga4d. The bench fill is not the cause, and
-  layout moves unchanged code as far. So layout is the likely cause.
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
-  zero fills and two error checks. P01 alone spends 437, 104 and 268.
-- Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.87,
-  while the bulk unitize runs slower, ×1.2 to ×3.1. The library scales every slot in a loop,
+  zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
+  after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
+- Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.86,
+  while the bulk unitize runs slower, ×1.7 to ×3.0. The library scales every slot in a loop,
   which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
 - Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
   the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they

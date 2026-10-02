@@ -7,14 +7,17 @@ import ../../src/[audit, idioms, provenance]
 import ./fixtures
 
 
+
 suite "Audit":
   test "good tree is clean under every static check":
     check goodTree().auditTree.len == 0  # layout, form, prose, provenance, glossary
+
 
   test "rules stamp derives from tree contents in RULES order":
     check goodTree().rulesStamp == stamp(RULES_TEXT)  # same digest as fixture
     check goodTree().without("STYLE.md").rulesStamp ==
       stamp([RULES_TEXT[0], "", RULES_TEXT[2], RULES_TEXT[3], RULES_TEXT[4]])  # missing is empty
+
 
   test "one change to any rules document goes stale in every project":
     let
@@ -25,15 +28,18 @@ suite "Audit":
     let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 
+
   test "top-level glossary shape reaches umbrella":
     let termless =
       goodTree().replaced("GLOSSARY.md", "# delegations\n\nWords.\n\n## Standards\n\n## Language\n")
     check termless.auditTree.len == 0  # zero terms pass, since terms wait on agreement
     let undefined = goodTree().replaced(
-      "GLOSSARY.md", "# delegations\n\nWords.\n\n## Standards\n\n## Language\n\n**Stamp**:\n"
+      "GLOSSARY.md",
+      "# delegations\n\nWords.\n\n## Standards\n\n## Language\n\n**Stamp**:\n",
     )
     check undefined.auditTree.mapIt(it.path) == @["GLOSSARY.md"]  # shape checked at root
     check "lacks definition" in undefined.auditTree[0].message  # same check projects get
+
 
   test "form and prose findings reach umbrella":
     let messy =

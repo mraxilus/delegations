@@ -29,7 +29,7 @@
 ##   Reserving block costs one line in binary's data segment, and every arena is exhausted
 ##   by `doAssert` rather than by growing.
 ##
-## Desktop-only; unreachable from browser build. See `visualiser.nim`'s "Render Paths".
+## Desktop-only; unreachable from browser build. See PROVENANCE.md's "Render paths".
 
 {.experimental: "strictFuncs".}
 

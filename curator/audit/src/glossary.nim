@@ -28,8 +28,7 @@ import ./[findings, markdown]
 const
   STANDARDS_HEADING* = "## Standards"
     ## Heading under which glossary names standards its symbols come from.
-  LANGUAGE_HEADING* = "## Language"
-    ## Heading under which glossary defines its terms.
+  LANGUAGE_HEADING* = "## Language"  ## Heading under which glossary defines its terms.
   ROOT_GLOSSARY* = "GLOSSARY.md"
     ## Path of root glossary, home of every standard two projects share.
 
@@ -63,7 +62,7 @@ func standardsIn*(source: string): seq[(int, string)] =
       is_inside = line == STANDARDS_HEADING
       continue
     if is_inside and line.isStandardLine:
-      result.add (i + 1, line[4 ..< line.find("**", 4)])
+      result.add (i + 1, line[4..<line.find("**", 4)])
 
 
 func checkGlossary*(path, source: string): seq[Finding] =
@@ -84,7 +83,8 @@ func checkGlossary*(path, source: string): seq[Finding] =
     if line.startsWith("#"): is_standards = line == STANDARDS_HEADING
     if is_standards and line.startsWith("- ") and not line.isStandardLine:
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Standard must read `- **Name**, owner and edition: symbols`; got `" & line & "`.",
       )
     if not line.isTermLine: continue
@@ -94,7 +94,9 @@ func checkGlossary*(path, source: string): seq[Finding] =
         not next.isTermLine and not next.startsWith("_Avoid_")
     if not is_defined:
       result.add finding(
-        path, i + 1, "Term lacks definition on next line; got `" & line[2 ..< line.len - 3] & "`."
+        path,
+        i + 1,
+        "Term lacks definition on next line; got `" & line[2..<line.len - 3] & "`.",
       )
 
 
@@ -111,13 +113,17 @@ func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding
     for (line, name) in source.standardsIn:
       if name in root_names:
         result.add finding(
-          path, line, "Standard is in root glossary already, so project must not repeat it; got `" &
+          path,
+          line,
+          "Standard is in root glossary already, so project must not repeat it; got `" &
             name & "`.",
           is_propagation = true,
         )
       elif name in first_seen:
         result.add finding(
-          path, line, "Standard two projects list belongs in root glossary; got `" & name &
+          path,
+          line,
+          "Standard two projects list belongs in root glossary; got `" & name &
             "`, also in `" & first_seen[name] & "`.",
           is_propagation = true,
         )
@@ -148,7 +154,7 @@ func peopleWordsIn*(line: string): seq[string] =
     var j = i
     while j < text.len and text[j].isWordChar: inc j
     let
-      word = text[i ..< j]
+      word = text[i..<j]
       bare = word.toLowerAscii.strip(leading = false, chars = {'s'})
     if bare in PEOPLE_WORDS or word.toLowerAscii in PEOPLE_WORDS: result.add word
     i = j
@@ -161,7 +167,8 @@ func checkPeopleWords*(path, source: string): seq[Finding] =
     if line.strip.startsWith("|"): continue
     for word in line.peopleWordsIn:
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Glossary avoids this word for people; write agreed term (GLOSSARY.md); got `" &
           word & "`.",
       )

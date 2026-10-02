@@ -11,10 +11,12 @@ const TABLE = staticRead("../../src/domains.nim").headerTable
   ## Heading row, then one row per domain, as `domains.nim` header holds them.
 
 
+
 suite "Article I":
   test "I.4 header table is derived view of registry":
     check TABLE[0] == @["Folder", "Name", "Theme"]  # columns read below
     check TABLE[1 .. ^1] == DOMAINS.mapIt(@[it.folder, it.name, it.theme])  # row per domain
+
 
 
 suite "Branch grammar":
@@ -30,6 +32,7 @@ suite "Branch grammar":
           check parsed.get.scope == project  # scope is project
           check parsed.get.roleName == "contributor/" & d.folder & "/" & project  # role
 
+
   test "curator project branches are confined, curator root owns tree":
     for project in ["audit", "probe", "a_2"]:
       for tail in ["init", "probe-koch"]:
@@ -44,6 +47,7 @@ suite "Branch grammar":
       check parsed.get.prefix == "" and parsed.get.scope == "curator"  # whole tree
       check parsed.get.roleName == "curator"  # role is named where prefix is empty
 
+
   test "grammar rejects every deviation":
     for branch in [
       "main", "claude/setup", "ronri/alpha/x", "contributor/ronri/alpha",
@@ -54,10 +58,12 @@ suite "Branch grammar":
     ]:  # 18 cases
       check branch.parseBranch.isNone  # mirrors paths, fixed segment counts
 
+
   test "project names are lowercase snake_case":
     for name in ["a", "alpha", "alpha_2", "a1b2"]: check name.isProjectName  # [a-z][a-z0-9_]*
     for name in ["", "1a", "Alpha", "a-b", "a b", "_a", "síncopa"]:
       check not name.isProjectName  # [a-z][a-z0-9_]*
+
 
   test "domain lookup is exact":
     check "sincopa".findDomain.isSome  # slug is ASCII; accent lives in display name

@@ -837,7 +837,7 @@ proc initRenderer*(): Renderer =
   #   Ribbon is ordinary triangle pair, so nothing smooths its edges as `GL_LINE_SMOOTH`
   #   smoothed line's; without this thin grid ribbon rasterises only where it covers pixel
   #   centre, and whole grid reads as dotted.
-  #   Context asks for multisampled framebuffer in `visualiser.main`; this turns it on.
+  #   Context asks for multisampled framebuffer in `main.main`; this turns it on.
   #   Browser asks `antialias: true`.
   gl.enable(gl.MULTISAMPLE)
 

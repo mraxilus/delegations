@@ -172,7 +172,7 @@ type
       ## Closed at startup: reference that opens itself is one returning user closes every
       ## session.
     session*: Option[EditSession] ## Edit in progress, if any.
-      ## Its staged multivector is what `visualiser.assembleMeshes` draws as preview, read
+      ## Its staged multivector is what `main.assembleMeshes` draws as preview, read
       ## later in same frame.
     preview*: Option[Preview] ## What open apply control would build.
       ## Previewed while reader is choosing, as drag's rubber-band does.
@@ -183,13 +183,13 @@ type
       ## Its `Preview.operands` has camera frame result beside its objects; see
       ## `framing.watched`.
     selection*: Selection ## Objects picked right now, in pick order.
-      ## Each ringed by `visualiser.drawSelectionRing`.
+      ## Each marked by `main.drawSelectionMarker`.
       ## Picked through row's checkbox (toggles) or name (picks alone), replaced by every
       ## construction path.
       ## Cleared by successful undo or redo, since restored snapshot's handle numbers may
       ## not match.
     tween_camera*: CameraTween ## Carries camera toward whatever is being built or edited.
-      ## See `camera.CameraTween`; advanced once per frame by `visualiser.renderFrame`.
+      ## See `camera.CameraTween`; advanced once per frame by `main.renderFrame`.
     search*: array[LABEL_MAX, char] ## What reader typed into objects search.
       ## Buffer `gui.inputSearch` writes straight through, read to its terminator.
     is_search_focus_wanted*: bool ## Whether `/` asked for objects search since last layout.
@@ -760,8 +760,8 @@ proc layoutObjects*(
   # Scroll list inside its own region rather than scrolling whole window.
   #   Reader scrolling long list had to scroll all way back up to reach this header and
   #   collapse it; header sits outside region below, so it stays put however far list runs.
-  #   Region is as tall as list until window runs out, then scrolls: fixed height would
-  #   leave five-object scene sitting in blank, which first attempt at this did.
+  #   Region is as tall as list until window runs out, then scrolls.
+  #   Rejected: fixed height, which leaves five-object scene sitting in blank.
   #   Browser answers same rule with `position: sticky` on its own header. Two mechanisms,
   #   one rule: header naming section stays reachable while section's list moves.
   let height_max = max(
@@ -856,7 +856,7 @@ func openSelectionMenuPicker*(panel: var Panel) =
   ##   Shared by that menu's `apply` and by drag wheel's `more…`, which lands here rather
   ##   than in drawer's apply section.
   ##     Sending it to panel buries two objects it just named under every other control;
-  ##     see `visualiser.handleEvent`.
+  ##     see `main.handleEvent`.
   let
     arity = panel.selection.impliedArity
     (_, operations, count_offered) = offerOperationsOfArity(arity)
@@ -877,7 +877,7 @@ func applyPickedOperation(
 ) =
   ## Derive fresh object from picked operation and operands, and say what it gave.
   ##   Leaves result solely selected, which carries camera to it through
-  ##   `visualiser.offerCameraAim`.
+  ##   `main.offerCameraAim`.
   ##   Operands as handles, not picker positions: apply section reads combos, selection
   ##   menu reads selection, and neither learns other's indexing.
   ##   Unary operation names same handle twice.
@@ -1318,7 +1318,7 @@ proc layoutSelectionMenuApply(
   # Preview whatever picker shows, from same two handles and index button commits with.
   #   Only while picker is revealed: previewing behind closed `apply` puts object on
   #   screen nothing names.
-  #   Written after `visualiser.offerCameraAim` has run this frame, so camera takes it up
+  #   Written after `main.offerCameraAim` has run this frame, so camera takes it up
   #   next one; offer is re-made every frame.
   block:
     let

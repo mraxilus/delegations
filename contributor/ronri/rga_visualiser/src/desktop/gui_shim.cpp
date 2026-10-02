@@ -21,10 +21,10 @@
 
 // Build atlas from three faces, merged in order of decreasing generality.
 //   No single face covers what this GUI writes.
-//   Each range list names only what its own face is here to supply, so glyph is never
-//   taken from face that merely happens to have it too.
-//   Verified by rendering every non-ASCII codepoint source actually uses against all
-//   three faces, none missing; re-run that check before narrowing any range below.
+//   Range lists below bind only Dear ImGui's legacy path. Renderer keeping textures of its
+//   own, as OpenGL 3 backend does, loads each glyph on demand from first merged face whose
+//   `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`), so merge order is
+//   precedence. `--drive-faces` asks each role's face for every codepoint build writes.
 static const ImWchar RANGES_TEXT[] = {
   0x0020, 0x00FF, // Latin and supplement.
   0x02B0, 0x02FF, // Spacing modifiers, which notation accents its operands with.
@@ -118,15 +118,19 @@ bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
     //   again would cost atlas two more copies of them for glyphs no heading asks for.
     if (path_font_title != nullptr && path_font_title[0] != '\0')
       font_title = atlas->AddFontFromFileTTF(path_font_title, size_font, nullptr, RANGES_TEXT);
-    // Add mono face last, with both supplementary ranges merged in.
+    // Add mono face last, with both supplementary faces merged in, then interface face.
     //   Unlike headings, text set in it is exactly text carrying notation: coefficient
     //   line reads `horizon plane: 2.038 e321` with wedge and subscripts in it, so absent
     //   merge would draw boxes in very rows this face exists for.
+    //   Interface face comes last, for postfix accents no other face here carries: `ˍ` and
+    //   `˷`. Last, so it supplies only what three before it lack, and Commit Mono keeps
+    //   every glyph it has.
     if (path_font_mono != nullptr && path_font_mono[0] != '\0') {
       font_mono = atlas->AddFontFromFileTTF(path_font_mono, size_font, nullptr, RANGES_TEXT);
       if (font_mono != nullptr) {
         for (auto pair : {std::pair<const char*, const ImWchar*>{path_font_math, RANGES_MATH},
-                          {path_font_symbol, RANGES_SYMBOL}}) {
+                          {path_font_symbol, RANGES_SYMBOL},
+                          {path_font, RANGES_TEXT}}) {
           if (pair.first == nullptr || pair.first[0] == '\0') continue;
           atlas->AddFontFromFileTTF(pair.first, size_font, &merge, pair.second);
         }
@@ -150,6 +154,19 @@ bool guiFontLoaded() { return is_font_loaded; }
 bool guiFontTitleLoaded() { return font_title != nullptr; }
 
 bool guiFontMonoLoaded() { return font_mono != nullptr; }
+
+// Report whether face that role sets text in draws `codepoint` from glyph of its own.
+//   Loads glyph as drawing does, through every face merged into role's, so false is exactly
+//   codepoint that would draw as fallback box.
+//   Role whose face is missing answers for interface face, which role then falls back to.
+//   `role` is ordinal of `gui.FaceRole`.
+bool guiFaceHasGlyph(int role, unsigned int codepoint) {
+  ImFontAtlas* atlas = ImGui::GetIO().Fonts;
+  if (atlas->Fonts.Size == 0) return false;
+  ImFont* font = role == 1 ? font_label : role == 2 ? font_title : role == 3 ? font_mono : nullptr;
+  if (font == nullptr) font = atlas->Fonts[0];
+  return font->GetFontBaked(font->LegacySize)->FindGlyphNoFallback((ImWchar)codepoint) != nullptr;
+}
 
 bool guiProcessEvent(const SDL_Event* event) { return ImGui_ImplSDL3_ProcessEvent(event); }
 
@@ -419,7 +436,7 @@ void guiTabBarEnd() { ImGui::EndTabBar(); }
 
 // Begin one tab; `is_forced` opens it whatever reader last left open.
 //   How headless run reaches tab it cannot click; see
-//   `visualiser.Options.index_help_driven`.
+//   `main.Options.path_help_driven`.
 //   Passed every frame while it is set, so nothing else can take selection back.
 bool guiTabBegin(const char *label, bool is_forced) {
   return ImGui::BeginTabItem(label, nullptr,

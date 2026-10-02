@@ -6,7 +6,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/[findings, form, kinds]
 
 
-func messages(path, source: string, kind: Kind): seq[string] =
+func messages(path, source: string; kind: Kind): seq[string] =
   ## Read finding messages of source under kind.
   checkForm(path, source, kind.rule).mapIt(it.message)
 
@@ -26,6 +26,7 @@ func gapMessages(source: string): seq[string] =
   checkComments("a.nim", source).mapIt(it.message)
 
 
+
 suite "Article X":
   test "X.1 width counts runes, not bytes":
     check messages("a.nim", "é ".repeat(49) & "éé\n", Kind.Nim).len == 0  # 100 runes pass
@@ -34,6 +35,7 @@ suite "Article X":
     check messages("a.nim", "é".repeat(101) & "\n", Kind.Nim).len ==
       0  # one 101-rune token has no whitespace to break at
     check messages("LICENSE.md", "x".repeat(400) & "\n", Kind.Markdown).len == 0  # exempt
+
 
   test "X.1 line over limit passes only when breaking cannot fix it":
     let
@@ -50,9 +52,11 @@ suite "Article X":
     check not ("x".repeat(60) & " " & "y".repeat(45)).isUnbreakable  # both fit once split
     check not ("  " & "x".repeat(90) & " " & "y".repeat(20)).isUnbreakable  # reflow fixes it
 
+
   test "X.1 tabs rejected in every kind":
     check messages("a.nim", "\tx\n", Kind.Nim) == @["Line holds tab."]  # no tabs
     check messages("nim.cfg", "hints:off\t# x\n", Kind.Cfg) == @["Line holds tab."]  # cfg too
+
 
   test "X.2 banner spacing":
     let good = "x = 1\n\n\n\n#[ Section ]#\n\ny = 2\n"
@@ -65,6 +69,7 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # two after
     check messages("nim.cfg", "#[ Section ]#\n", Kind.Cfg).len == 0  # Nim only
 
+
   test "X.2 banner tiers":
     let nested = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n"
     check messages("a.nim", nested, Kind.Nim).len == 0  # child follows parent at once
@@ -75,8 +80,19 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # two after, no child
     check messages("a.nim", "x = 1\n\n\n\n#[ Parent ]#\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks two blank lines before it."]  # child keeps its own two
-    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks exactly one blank line after it."]  # only second tier defers
+    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim).len == 0
+
+
+  test "X.2 lenient check reads no side exact check gives no count, so it accepts every fix":
+    for unread in [
+      "#[ Opening ]#\n\nx = 1\n",  # nothing above
+      "x = 1\n\n\n\n#[ Closing ]#\n",  # nothing below
+      "x = 1\n\n\n\n#[ A ]#\n#[ B ]#\n\ny = 2\n",  # banner beside banner, no parent and child
+      "x = 1\n\n\n#[[ A ]]#\n\n#[ B ]#\n\ny = 2\n",
+    ]:
+      check messages("a.nim", unread, Kind.Nim).len == 0
+      check fixForm("a.nim", unread, Kind.Nim.rule).source == unread  # exact fixer agrees
+
 
   test "X.9 trailing comment takes exactly two spaces before its marker":
     check gapMessages("let a = 1  # Two.\n").len == 0  # two pass
@@ -87,6 +103,7 @@ suite "Article X":
     check checkComments("a.nim", "a = 1\nb = 2 # c\n")[0].line == 2  # line named
     check COMMENT_GAP == 2  # X.9 count, stated once
 
+
   test "X.9 reads code alone: string, whole comment and block hold no trailing comment":
     check gapMessages("let a = \"x # y\"\n").len == 0  # `#` inside string
     check gapMessages("let a = '#'\n").len == 0  # `#` as char
@@ -95,8 +112,28 @@ suite "Article X":
     check gapMessages("let a = \"\"\"\nb # c\n\"\"\"\n").len == 0  # long string
     check gapMessages("{.used.}  # Used in b.nim.\n").len == 0  # pragma
 
+
+  test "X.2 exact: three blank lines before first tier, two before second, one after either":
+    let exact = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
+    check checkBanners("a.nim", exact).len == 0
+    check messages("a.nim", exact, Kind.Nim).len == 0  # lenient check accepts three before
+    check checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n").mapIt(it.message) ==
+      @["First-tier banner takes three blank lines before it (X.2); got `2`."]
+    check checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n")[0].message ==
+      "Second-tier banner takes two blank lines before it (X.2); got `3`."  # exactly two
+    check checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n")[0].message ==
+      "Banner takes one blank line after it (X.2); got `0`."
+    check checkBanners("a.nim", "#[ Opening ]#\n\nx\n").len == 0  # nothing above: no count
+    check checkBanners("a.nim", "x\n\n\n\n#[ A ]#\n\n\n\n#[ B ]#\n\ny\n").len == 0  # no count
+
+
+  test "X.2 exact waits outside static pass until projects clear it through koch fix":
+    check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n", Kind.Nim).len == 0
+
+
   test "X.9 waits outside static pass until projects clear it through koch fix":
     check messages("a.nim", "let a = 1 # One.\n", Kind.Nim).len == 0  # pull request after wires it
+
 
 
 suite "Article VIII":
@@ -110,14 +147,16 @@ suite "Article VIII":
     check checkForm("a.nim", "x\ny \n", Kind.Nim.rule)[0].line == 2  # line numbers one-based
 
 
+
 suite "Fixes":
   test "trailing whitespace is cut, CR of CRLF ending among it, and nothing else":
     let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
     check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
     check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
-    check fix.fixed[0].message == "trailing whitespace (VIII.5) fixed"  # rule named
+    check fix.fixed[0].message == "trailing whitespace (VIII.5)"  # rule named
     check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
     check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
+
 
   test "ending becomes exactly one newline; empty file has no one fix":
     for dirty in ["a = 1\nb = 2", "a = 1\nb = 2\n\n\n"]:  # lacking, then blank lines
@@ -127,6 +166,7 @@ suite "Fixes":
       check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
       check fixed(fix.source).fixed.len == 0  # idempotent
     check fixed("").source == "" and fixed("").fixed.len == 0  # empty stays, finding and all
+
 
   test "X.9 gap becomes two spaces, and code, string and comment text stay":
     let
@@ -141,10 +181,24 @@ suite "Fixes":
     check fixed(fix.source).source == fix.source  # idempotent
     check fixed("a: 1 # b\n", Kind.Yaml).source == "a: 1 # b\n"  # Nim syntax alone
 
+
+  test "X.2 run beside banner takes count exact check reads, and nothing else moves":
+    let
+      dirty = "x = 1\n#[ Parent ]#\n#[[ Child ]]#\n\n\n\ny = 2\n\n\n\n\n#[[ Sibling ]]#\nz\n"
+      fix = fixed(dirty)
+    check fix.source ==
+      "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
+    check fix.fixed.mapIt(it.line) == @[2, 3, 3, 12, 12]  # banner each run stands beside
+    check checkBanners("a.nim", fix.source).len == 0
+    check fixed(fix.source).source == fix.source  # idempotent
+    check fixed("x\n#[ A ]#\ny\n", Kind.Cfg).source == "x\n#[ A ]#\ny\n"  # Nim syntax alone
+
+
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand
     check gapMessages(near) == @[gapMessage(1)]  # finding stays
+
 
   test "clean source passes through unchanged":
     let clean = "## Do.\n\nlet a = \"x # y\"  # Two.\n# Whole line.\n"

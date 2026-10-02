@@ -9,7 +9,7 @@
 ## Every sign and argument order is pinned by suite case against classical closed form.
 ##   Classical form lives in test, algebra lives here.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -57,7 +57,7 @@ func isHorizon*(m: Multivector): bool = abs(( |∘ m)[Basis.scalarAnti]) <= TOLE
 func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)
   ## Report whether object is horizon plane.
   ##   One shape drawn as sky dome (`mesh.addDome`), which frame assembly inserts before
-  ##   anything else sharing translucent veil pass. See `visualiser.assembleMeshes`.
+  ##   anything else sharing translucent veil pass. See `main.assembleMeshes`.
 
 
 

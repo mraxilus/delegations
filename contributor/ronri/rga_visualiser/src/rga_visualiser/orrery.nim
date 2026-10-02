@@ -3,7 +3,7 @@
 ## Orrery exists so build can be looked at under load.
 ##   Every drawable kind present, and objects scattered through volume so large that one
 ##   camera move swings tessellation load by order of magnitude, which flat helix
-##   `visualiser.fillSceneForBenchmark` builds for `--timings` deliberately does not.
+##   `main.fillSceneForBenchmark` builds for `--timings` deliberately does not.
 ## Three sizes of one arrangement, so cost reads as slope rather than single number.
 ##   `ScaleOrrery.Nearest` (60), `Neighbourhood` (360, default) and `Catalogue` (5038,
 ##   two handles short of pool). Every one is same construction truncated at different depth.
@@ -46,7 +46,7 @@
 ##   real stars fit.
 ## Colour says what thing is, not which system it belongs to; see `LUT_INK_BY_ROLE`.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

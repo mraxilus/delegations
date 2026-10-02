@@ -28,7 +28,7 @@
 ##   Not covered: live label editing and coefficient drags, continuous inputs with no
 ##   clean commit boundary; recording every keystroke would flood timeline.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -44,7 +44,7 @@ const CAPACITY_HISTORY* {.define: "visualiser.history_capacity".} = 32
   ## Fix how many steps of timeline are retained.
   ##   Costs `CAPACITY_HISTORY * sizeof(Step)` of fixed reservation, and `Step` is whole
   ##   `Scene`, so this scales with `scene.OBJECTS_MAX`: not cheap.
-  ##     Largest reservation binary makes, counted by `visualiser.BYTES_MEMORY_TOTAL`;
+  ##     Largest reservation binary makes, counted by `main.BYTES_MEMORY_TOTAL`;
   ##     figures in `PROVENANCE.md`.
   ##   Kept at 32: depth costs nothing per edit (see `record`), so what remains is flat
   ##   reservation, linear per step. One lever to pull if page must be lighter.

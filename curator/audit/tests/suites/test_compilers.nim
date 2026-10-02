@@ -7,12 +7,14 @@ import ../../src/compilers
 import ./fixtures
 
 
+
 suite "Compilers":
   test "platform names tarball nim-lang.org publishes, or nothing":
     check platformOf("linux", "amd64") == "linux_x64"  # runner and owner's machine
     check platformOf("macosx", "amd64") == "macosx_x64"
     check platformOf("linux", "arm64").len == 0  # no published build; source instead
     check platformOf("windows", "amd64").len == 0  # zip, not tarball this reads
+
 
   test "release is fetched as tarball, and everything else is built":
     check releaseUrl("2.2.4", "linux_x64") ==
@@ -21,11 +23,13 @@ suite "Compilers":
     check isBuilt("2.2.4", "")  # unpublished platform builds from source
     check not isBuilt("2.2.4", "linux_x64")  # published release is fetched
 
+
   test "digest is published beside tarball, at same address plus suffix":
     check digestUrl("2.2.12", "linux_x64") ==
       "https://nim-lang.org/download/nim-2.2.12-linux_x64.tar.xz.sha256"
     # Digest belongs to tarball, so it is only asked for where tarball is.
     check digestUrl("2.2.12", "linux_x64").startsWith(releaseUrl("2.2.12", "linux_x64"))
+
 
   test "digest is read from sidecar, and anything that is not one reads as nothing":
     # What nim-lang.org serves, verbatim: `sha256sum` output, digest then two spaces.
@@ -44,6 +48,7 @@ suite "Compilers":
     check pinnedDigest("zzz1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638" &
       "  nim.tar.xz").len == 0  # right length, not hex
 
+
   test "digest of file changes when any byte of it does, which is what guard rests on":
     # Proven by breaking it rather than by fetch that happened to succeed: guard compares
     #   digest of what arrived against digest published for it, so what has to hold is that
@@ -61,12 +66,14 @@ suite "Compilers":
     # Absent file is nothing rather than digest, so it reports instead of matching.
     check digestOf(path & ".absent").len == 0
 
+
   test "cache lies outside repository, keyed by pin":
     let root = cacheRoot("/home/x/.cache/koch/nim")
     check root == "/home/x/.cache/koch/nim"
     check binOf(root, PIN) == "/home/x/.cache/koch/nim/2.2.4/bin"
     # Audit reads untracked files, so toolchain inside checkout would be audited.
     check not binOf(root, PIN).startsWith(".")
+
 
   test "unresolved pin is finding naming where koch looked":
     let found = missing("curator/probe", "2.2.6", "/c/2.2.6/bin")

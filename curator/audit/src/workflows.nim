@@ -27,8 +27,7 @@ import ./findings
 
 
 const
-  WORKFLOW_DIRECTORY* = ".github/workflows/"
-    ## Directory every workflow lives in.
+  WORKFLOW_DIRECTORY* = ".github/workflows/"  ## Directory every workflow lives in.
   PERMISSIONS_KEY* = "permissions:"
     ## Line opening grant, at column zero; job-level block is indented and left to its job.
   CHECKOUT_MARK* = "actions/checkout"
@@ -92,7 +91,8 @@ func checkScopes*(path, workflow: string): seq[Finding] =
     if mark != CHECKOUT_MARK and is_other_token: continue  # `gh` reaches by its own token
     reported.add scope
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Steps use `" & mark & "`, so `permissions` must grant `" & scope &
         "`; block is whole grant and scope left out is `none`; got `" &
         granted.get.join(", ") & "`.",
@@ -111,13 +111,14 @@ func cronDays*(workflow: string): int =
     return 0
 
 
-func checkWindow*(path, workflow: string, days: int): seq[Finding] =
+func checkWindow*(path, workflow: string; days: int): seq[Finding] =
   ## Report workflow passing `--recent` whose `cron` interval is not `RECENT_DAYS`.
   if "--recent" notin workflow: return
   let read = workflow.cronDays
   if read != days:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Schedule and `RECENT_DAYS` name one window; change both together (CURATOR.md, duty 9); " &
         "got `" & $read & "` days against `" & $days & "`.",
     )

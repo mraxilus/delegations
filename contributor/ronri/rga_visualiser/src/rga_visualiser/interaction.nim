@@ -22,8 +22,8 @@
 ##   takes and whether one is due are rules about gesture.
 ##   Both drive object's marker drawn part-built, which is what makes wait bearable.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
-## paths; see `visualiser.nim`'s "Render Paths" table.
+## Shared between desktop (`main.nim`) and browser (`bridge.nim`) render paths;
+## see PROVENANCE.md's "Render paths".
 
 {.experimental: "strictFuncs".}
 
