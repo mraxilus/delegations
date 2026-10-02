@@ -146,9 +146,8 @@ const
 
 const
   ## Fix rates held key moves camera at, per second of holding.
-  ##   Shared by both front-ends, unlike per-pixel drag rates: `visualiser.SPEED_ORBIT` is
-  ##   radians per pixel and browser scripts works in fractions of canvas width. Held key has no
-  ##   pixels in it.
+  ##   Shared by both front-ends, unlike drags, which carry what pointer holds pixel for
+  ##   pixel and so have no rate. Held key has no pixels in it.
   ##   Per second, not per press.
   ##     Per-press steps leaned on operating system's auto-repeat: movement began after
   ##     repeat delay and arrived in stutters.

@@ -175,8 +175,6 @@ const
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
 const
-  SPEED_ORBIT = 0.008
-    ## Set how far dragged pixel turns orbit, in radians.
   FACTOR_DOLLY = 1.12
     ## Set how much one wheel notch scales orbit distance.
     ##   Notch is aimed at cursor (`interaction.dollyAtCursor`).
@@ -1274,10 +1272,16 @@ proc handleEvent(
       interaction.is_dragging_camera = true
     if is_dragging_orbit:
       panel.tween_camera.abandon()
-      # Free flight looks and selection orbits; see `interaction.turnAcross`.
-      camera.turnAcross(
-        -SPEED_ORBIT*float(event.motion.xrel), SPEED_ORBIT*float(event.motion.yrel),
-        panel.selection.len > 0,
+      # Hold what is under pointer, as page does: free flight holds sky, and selection
+      #   point on sphere about pivot. See `interaction.turnFollowing`.
+      camera.turnFollowing(
+        ScreenPosition(
+          x: float(event.motion.x - event.motion.xrel),
+          y: float(event.motion.y - event.motion.yrel),
+        ),
+        ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
+        width_frame, height_frame, panel.selection.len > 0,
+        panel.tween_camera.reachAimed(camera.pivot),
       )
     if is_dragging_pan:
       panel.tween_camera.halt() # Pan places pivot itself; see `halt`.

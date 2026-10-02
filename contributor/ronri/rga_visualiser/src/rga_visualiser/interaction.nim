@@ -813,28 +813,17 @@ proc dollyAtCursor*(
     has_selection, placed)
 
 
-func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
-  ## Turn camera by desktop mouse's left drag, in whichever way its state reads.
-  ##   Free flight looks: eye stands where it stands, and only sight turns.
-  ##   Selection orbits about what is picked.
-  ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
-  ##   either verb as selection comes and goes; see `camera.look`.
-  ##   Turning about camera's own axes carries roll round with it, by solid angle drag
-  ##   encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
-  ##   geometry of transport rather than mistake, and no order of two turns escapes it.
-  ##   Desktop keeps it, with Q and E to answer it; page's drags do not, see
-  ##   `turnFollowing`.
-  if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
-
-
 func turnFollowing*(
   camera: var Camera; before, after: ScreenPosition; width, height: int;
   has_selection: bool; reach_selection = 0.0
 ) =
-  ## Turn camera by page's drag, finger's or mouse's, from pixel it left to pixel it reached.
-  ##   Both turn as turntable does, about world up and level across, so neither leaves roll:
-  ##   touch has no roll key beside it, finger wanders in curves, and page's mouse drags as
-  ##   finger does. Roll reader set by twist or by Q and E survives.
+  ## Turn camera by left drag, finger's or either mouse's, from pixel it left to pixel it
+  ## reached.
+  ##   Both states turn as turntable does, about world up and level across, so neither
+  ##   leaves roll: touch has no roll key beside it, finger wanders in curves, and both
+  ##   mice drag as finger does. Roll reader set by twist or by Q and E survives.
+  ##     Not `look` and `orbit` about camera's own axes, which carry roll round by solid
+  ##     angle drag encloses: 0.3 radian loop leaves 4.7 degrees.
   ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
   ##   brings camera back. Not rate: no rate matches field of view at every pixel.
   ##   Free flight holds sky; see `camera.lookCarrying`.
