@@ -1,6 +1,6 @@
-## Hold separators of parameters and wrapping of signatures (Article X.3, STYLE.md §5): each
-##   breach is reported and fixed into its one layout; what rule leaves to hand is neither;
-##   fix changes nothing else, and nothing second time.
+## Hold separators of parameters and wrapping of signatures and calls (Article X.3, STYLE.md
+##   §5): each breach is reported and fixed into its one layout; what rule leaves to hand is
+##   neither; fix changes nothing else, and nothing second time.
 
 {.experimental: "strictFuncs".}
 
@@ -24,6 +24,21 @@ const
     "): array[Order, Cayley2D] {.compileTime.} =\n" &
     "  discard\n"
     ## STYLE.md §5, second signature example, as written there.
+  EXAMPLE_CALL =
+    "const\n" &
+    "  CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(\n" &
+    "    CAYLEYS_DUAL.base.right,\n" &
+    "    CAYLEYS_WEDGE.base,\n" &
+    "    Chirality.Right,\n" &
+    "  )\n"
+    ## STYLE.md §5 call example, as written there.
+  EXAMPLE_DECLARATIVE =
+    "defineOperator(\n" &
+    "  symbols = \"∧\",\n" &
+    "  docs = \"Multiply multivectors through exterior product, i.e. 𝐦 ∧ 𝐧.\",\n" &
+    "  cayley = CAYLEYS_WEDGE.base,\n" &
+    ")\n"
+    ## Article X example of declarative call, as written there.
   LONG_NAME = "constructProductsAcrossEveryOrderOfGradeAndChirality"
     ## Name long enough to push signature or call past `LINE_MAX`.
 
@@ -35,7 +50,8 @@ func fixed(source: string): string =
 
 func messages(source: string): seq[string] =
   ## Collect messages every wrapping check reports over source.
-  (checkSeparators("a.nim", source) & checkSignatures("a.nim", source)).mapIt(it.message)
+  (checkSeparators("a.nim", source) & checkSignatures("a.nim", source) &
+    checkCalls("a.nim", source)).mapIt(it.message)
 
 
 func isSettled(source: string): bool =
@@ -88,6 +104,45 @@ suite "Wrapping":
     check commented.fixed == commented
     let body = "func f(a: int): int = " & "a + ".repeat(20) & "a\n"
     check checkSignatures("a.nim", body).len == 0  # moving body and wrapping are two answers
+
+  test "call that fits joins; one that fits not takes one argument to line, trailing comma":
+    check fixCalls("a.nim", "foo(\n  a,\n  b,\n)\n").source == "foo(a, b)\n"
+    check fixCalls("a.nim", "x\nfoo(\n  a,\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
+    check "if foo(\n  a,\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
+    let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
+      "column one hundred\")\n"
+    check wide.fixed == "  result.add " & LONG_NAME & "(\n    path,\n    line,\n" &
+      "    \"message long enough to cross column one hundred\",\n  )\n"
+    let own_line = "  result.add finding(\n    path, 0, \"" & "x".repeat(84) & "\",\n  )\n"
+    check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
+      "\",\n  )\n"  # never all arguments on one line of their own
+    for example in [EXAMPLE_CALL, EXAMPLE_DECLARATIVE]: check example.isSettled
+
+  test "outermost call crossing column splits first, then each line it leaves":
+    let nested = "let x = outer(first_argument_of_outer, " & LONG_NAME & "(inner_first, " &
+      "inner_second_argument))\n"
+    check nested.fixed == "let x = outer(\n  first_argument_of_outer,\n  " & LONG_NAME &
+      "(inner_first, inner_second_argument),\n)\n"
+    check nested.fixed.isSettled
+
+  test "argument wrapped by hand keeps its breaks, and hand-shaped list keeps its rows":
+    let continued = "  result.add finding(\n    path, 0,\n    \"" & "x".repeat(90) & "\" &\n" &
+      "      name,\n  )\n"
+    check continued.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(90) &
+      "\" &\n      name,\n  )\n"
+    let rows = "check foo(bar, @[\n  1, 2,\n  3, 4,\n])\n"
+    check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ],\n)\n"
+    check rows.fixed.isSettled
+
+  test "call holding comment, long string spanning lines, or block stays":
+    for kept in [
+      "foo(\n  a,  # Why.\n  b\n)\n",
+      "foo(\n  \"\"\"\ntext\n\"\"\",\n)\n",
+      "foo(a,\n  proc () = discard)\n",
+      "test(\"name\"):\n  discard\n",
+      "foo(a) do (x: int):\n  discard\n",
+    ]:
+      check checkCalls("a.nim", kept).len == 0
 
   test "clean source passes through unchanged":
     let clean = "proc f(a: int, b: string): int =\n  foo(a, b)\n\nlet x = @[\n  1,\n  2,\n]\n"
