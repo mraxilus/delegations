@@ -34,20 +34,17 @@ import std/[options, strutils]
 
 
 type
-  Domain* = object
-    ## Define one life area: folder slug, display name, one-line theme.
+  Domain* = object  ## Define one life area: folder slug, display name, one-line theme.
     folder*: string  ## Directory name under `contributor/`; also branch segment.
     name*: string  ## Display name, may hold characters git refs reject.
     theme*: string  ## One sentence naming what projects under it are about.
 
-  Role* {.pure.} = enum
-    ## Define what branch owns, one member per grammar arm.
+  Role* {.pure.} = enum  ## Define what branch owns, one member per grammar arm.
     Curator  ## `curator/<name>`: whole tree, rules and root work.
     CuratorProject  ## `curator/<project>/<name>`: one curator project.
     Contributor  ## `contributor/<domain>/<project>/<name>`: one domain project.
 
-  Branch* = object
-    ## Define parsed branch name.
+  Branch* = object  ## Define parsed branch name.
     role*: Role
     domain*: string  ## Domain folder; empty unless `Role.Contributor`.
     project*: string  ## Project folder; empty for `Role.Curator`.
@@ -81,7 +78,7 @@ func findDomain*(folder: string): Option[Domain] =
 
 func isProjectName*(s: string): bool =
   ## Decide whether `s` is valid project folder, i.e. `[a-z][a-z0-9_]*`.
-  s.len > 0 and s[0] in {'a' .. 'z'} and s.allCharsInSet({'a' .. 'z', '0' .. '9', '_'})
+  s.len > 0 and s[0] in {'a'..'z'} and s.allCharsInSet({'a'..'z', '0'..'9', '_'})
 
 
 static:
@@ -93,8 +90,8 @@ static:
 
 func isBranchTail(s: string): bool =
   ## Decide whether `s` is valid free part of branch, i.e. `[a-z0-9][a-z0-9_-]*`.
-  s.len > 0 and s[0] in {'a' .. 'z', '0' .. '9'} and
-    s.allCharsInSet({'a' .. 'z', '0' .. '9', '_', '-'})
+  s.len > 0 and s[0] in {'a'..'z', '0'..'9'} and
+    s.allCharsInSet({'a'..'z', '0'..'9', '_', '-'})
 
 
 func parseBranch*(branch: string): Option[Branch] =

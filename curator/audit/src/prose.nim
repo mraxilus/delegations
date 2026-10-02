@@ -13,8 +13,7 @@ import ./[comments, findings, kinds]
 
 
 const
-  ARTICLES* = ["a", "an", "the"]
-    ## Words telegraphic prose omits.
+  ARTICLES* = ["a", "an", "the"]  ## Words telegraphic prose omits.
   PUNCTUATION = {
     '.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '"', '\'', '*', '<', '>',
     '/', '-', '_',

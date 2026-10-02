@@ -24,8 +24,7 @@ import ./findings
 
 
 const
-  DRIVER_FILE* = "tools/build.nim"
-    ## Build driver project carries, holding verbs koch has none of.
+  DRIVER_FILE* = "tools/build.nim"  ## Build driver project carries, holding verbs koch has none of.
   TYPES_VERB* = "types"
     ## Verb type-checking project's own scripts, deriving what they read first, and
     ## stopping before anything needing browser. Named here and in CONTRIBUTOR.md.
@@ -54,8 +53,7 @@ const
     ##   koch, and `restoreNode` reports its absence by name.
 
 
-type Target* = object
-  ## Define one project to run, with toolchain serving its pin.
+type Target* = object  ## Define one project to run, with toolchain serving its pin.
   directory*: string  ## Project directory, repository-relative.
   bin*: string  ## Directory holding compiler and its tools; empty names PATH.
 
@@ -128,7 +126,7 @@ proc linesIn*(directory, program: string; arguments: openArray[string]; bin = ""
     if s.len > 0 and not s.contains({' ', '\t'}): result.add s
 
 
-proc runVerb(root: string, targets: openArray[Target], verb, failed: string): seq[Finding] =
+proc runVerb(root: string; targets: openArray[Target]; verb, failed: string): seq[Finding] =
   ## Run one verb of each project's driver, on toolchain its pin names; exit other than 0 is
   ##   finding against driver, carrying that code.
   for target in targets:

@@ -23,8 +23,7 @@ import std/strutils
 
 
 type
-  TokenKind* {.pure.} = enum
-    ## Define what one token is, as layout rules tell tokens apart.
+  TokenKind* {.pure.} = enum  ## Define what one token is, as layout rules tell tokens apart.
     Word  ## Identifier or keyword, e.g. `proc`, `x`.
     Quoted  ## Name in backticks, e.g. `` `+` ``.
     Number  ## Numeric literal, sign and suffix included, e.g. `-1`, `0xFF'u8`.
@@ -37,8 +36,7 @@ type
     Comma  ## Separator `,`.
     Semicolon  ## Separator `;`.
 
-  Token* = object
-    ## Define one token: kind, byte span in source, line it opens on.
+  Token* = object  ## Define one token: kind, byte span in source, line it opens on.
     kind*: TokenKind
     first*: int  ## Byte offset of first character.
     after*: int  ## Byte offset after last character.
@@ -55,7 +53,7 @@ const
     "⊡", "■", "□", "★", "☆", "⟇", "⟑", "⩓", "⩔",
   ]
     ## Unicode glyphs operator is built from (`unicodeOprLen`), commit pin's set.
-  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_', '\x80' .. '\xFF'}
+  IDENTIFIER_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
     ## Characters identifier is built from; glyph opening operator ends it.
   NEGATION_AFTER = {' ', '\t', '\n', '\r', ',', ';', '(', '[', '{'}
     ## Characters before `-` that make `-<digit>` number (`UnaryMinusWhitelist`).
@@ -80,7 +78,7 @@ func glyphLength(source: string, at: int): int =
 
 func isDigit(source: string, at: int): bool =
   ## Decide whether offset holds decimal digit.
-  at < source.len and source[at] in {'0' .. '9'}
+  at < source.len and source[at] in {'0'..'9'}
 
 
 func commentAfter(source: string, at: int): int =
@@ -142,18 +140,18 @@ func numberAfter(source: string, at: int): int =
   if source[k] == '-': inc k
   if source[k] == '0' and k + 1 < source.len and source[k + 1] in {'x', 'X', 'o', 'O', 'b', 'B'}:
     k += 2
-    while k < source.len and source[k] in {'0' .. '9', 'a' .. 'f', 'A' .. 'F', '_'}: inc k
+    while k < source.len and source[k] in {'0'..'9', 'a'..'f', 'A'..'F', '_'}: inc k
   else:
-    while k < source.len and source[k] in {'0' .. '9', '_'}: inc k
+    while k < source.len and source[k] in {'0'..'9', '_'}: inc k
     if k < source.len and source[k] == '.' and source.isDigit(k + 1):
       inc k
-      while k < source.len and source[k] in {'0' .. '9', '_'}: inc k
+      while k < source.len and source[k] in {'0'..'9', '_'}: inc k
     if k < source.len and source[k] in {'e', 'E'}:
       if source.isDigit(k + 1): inc k
       elif k + 1 < source.len and source[k + 1] in {'+', '-'} and source.isDigit(k + 2): k += 2
-      while k < source.len and source[k] in {'0' .. '9', '_'}: inc k
+      while k < source.len and source[k] in {'0'..'9', '_'}: inc k
   if k < source.len and source[k] == '\'': inc k
-  while k < source.len and source[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
+  while k < source.len and source[k] in {'a'..'z', 'A'..'Z', '0'..'9', '_'}: inc k
   k
 
 
@@ -204,7 +202,7 @@ func tokens*(source: string): seq[Token] =
       kind = TokenKind.Quoted
       while after < source.len and source[after] notin {'`', '\n'}: inc after
       if after < source.len and source[after] == '`': inc after
-    of '0' .. '9': (kind, after) = (TokenKind.Number, source.numberAfter(i))
+    of '0'..'9': (kind, after) = (TokenKind.Number, source.numberAfter(i))
     of '(', '[', '{':
       kind = TokenKind.Open
       let is_dotted = next == '.' and (i + 2 >= source.len or source[i + 2] != '.')
@@ -226,7 +224,7 @@ func tokens*(source: string): seq[Token] =
       if c in OPERATOR_CHARS or source.glyphLength(i) > 0: after = source.operatorAfter(i)
       elif c in IDENTIFIER_CHARS: (kind, after) = (TokenKind.Word, source.wordAfter(i))
     result.add Token(kind: kind, first: i, after: after, line: line)
-    for k in i ..< after:
+    for k in i..<after:
       if source[k] == '\n': inc line
     i = after
 
@@ -250,13 +248,13 @@ func partners*(tokens: openArray[Token]): seq[int] =
 func lastLine*(t: Token, source: string): int =
   ## Read zero-based line token closes on; long string and block comment span several.
   result = t.line
-  for k in t.first ..< t.after:
+  for k in t.first..<t.after:
     if source[k] == '\n': inc result
 
 
 func spelling*(t: Token, source: string): string =
   ## Read text of token.
-  source[t.first ..< t.after]
+  source[t.first..<t.after]
 
 
 func isKeyword*(t: Token, source: string): bool =

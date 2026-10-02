@@ -46,8 +46,7 @@ import ./[findings, form, names, tokens]
 
 
 type
-  Placement {.pure.} = enum
-    ## Define which rule of X.9 gap falls under, which decides its spaces.
+  Placement {.pure.} = enum  ## Define which rule of X.9 gap falls under, which decides its spaces.
     Binary  ## Around binary operator: one space each side.
     Range  ## Around range operator: none.
     Prefix  ## After prefix operator: none.
@@ -56,14 +55,12 @@ type
     Colon  ## Before colon none, after it one.
     Inner  ## Inside bracket: none.
 
-  Edit = object
-    ## Define one gap of source to rewrite: byte span and spaces it takes.
+  Edit = object  ## Define one gap of source to rewrite: byte span and spaces it takes.
     first: int  ## Byte offset gap opens at.
     after: int  ## Byte offset after gap.
     spaces: int  ## Spaces gap takes.
 
-  Respacing = object
-    ## Define one breach of rule: line, gaps to rewrite, excerpt to echo.
+  Respacing = object  ## Define one breach of rule: line, gaps to rewrite, excerpt to echo.
     placement: Placement
     line: int  ## Zero-based line of breach.
     edits: seq[Edit]
@@ -75,8 +72,7 @@ const
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keywords lexer reads as binary operators (`isOperator`); `not` and `as` stand otherwise.
-  RANGE_OPERATORS = ["..", "..<", "..^"]
-    ## Range operators, glued on both sides.
+  RANGE_OPERATORS = ["..", "..<", "..^"]  ## Range operators, glued on both sides.
   IGNORED_OPERATORS = ["::", ":", "."]
     ## Operator tokens of type, field and access, never spaced as operators.
   STATEMENT_KEYWORDS = ["export", "from", "import", "include"]
@@ -88,8 +84,7 @@ const
     ## Keywords whose next name declares, so `*` glued after it marks export.
   PLAIN_BRACKETS = ["(", "[", "{"]
     ## Brackets that glue to dot or colon after them into one token, or before them from dot.
-  EXCERPT_RUNES = 12
-    ## Runes of each neighbour echoed beside breach.
+  EXCERPT_RUNES = 12  ## Runes of each neighbour echoed beside breach.
 
 
 func pathTokens(tokens: openArray[Token], partners: openArray[int], source: string): HashSet[int] =
@@ -110,7 +105,7 @@ func pathTokens(tokens: openArray[Token], partners: openArray[int], source: stri
         (tokens[j].line == t.line or indents[tokens[j].line] > indents[t.line]):
       result.incl j
       if tokens[j].kind == TokenKind.Open and partners[j] > j:
-        for m in j .. partners[j]: result.incl m
+        for m in j..partners[j]: result.incl m
         j = partners[j]
       inc j
     k = j
@@ -133,12 +128,12 @@ func isExportMarker(tokens: openArray[Token], k: int, lasts: openArray[int], sou
 func excerpt(source: string; before, after: Token): string =
   ## Echo what stands between two tokens, with few runes of each.
   let
-    left = source[before.first ..< before.after].runeSubStr(-EXCERPT_RUNES)
-    right = source[after.first ..< after.after].runeSubStr(0, EXCERPT_RUNES)
-  left & source[before.after ..< after.first] & right
+    left = source[before.first..<before.after].runeSubStr(-EXCERPT_RUNES)
+    right = source[after.first..<after.after].runeSubStr(0, EXCERPT_RUNES)
+  left & source[before.after..<after.first] & right
 
 
-func around(source: string; tokens: openArray[Token]; k: int; spaces: int): seq[Edit] =
+func around(source: string, tokens: openArray[Token], k: int, spaces: int): seq[Edit] =
   ## Build edits setting gap on each side of token `k` to spaces.
   @[
     Edit(first: tokens[k - 1].after, after: tokens[k].first, spaces: spaces),
@@ -227,7 +222,7 @@ func respacings(source: string): seq[Respacing] =
       if text == "-" and next.kind == TokenKind.Number: continue
       spacing.placement = Placement.Prefix
       spacing.edits = @[Edit(first: t.after, after: next.first, spaces: 0)]
-      spacing.got = source[t.first ..< next.after].runeSubStr(0, 2 * EXCERPT_RUNES)
+      spacing.got = source[t.first..<next.after].runeSubStr(0, 2 * EXCERPT_RUNES)
       result.add spacing
       continue
     if tokens.isExportMarker(k, lasts, source):
@@ -304,10 +299,10 @@ func fixSpacing*(path, source: string): Fix =
       done = -1
     for e in edits.sortedByIt(-it.first):
       if e.first == done: continue
-      shaped = shaped[0 ..< e.first - start] & ' '.repeat(e.spaces) & shaped[e.after - start .. ^1]
+      shaped = shaped[0..<e.first - start] & ' '.repeat(e.spaces) & shaped[e.after - start .. ^1]
       done = e.first
     if not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
-      for m in k ..< j: result.fixed.add finding(path, line + 1, "expression spacing (X.9)")
+      for m in k..<j: result.fixed.add finding(path, line + 1, "expression spacing (X.9)")
     k = j
   result.source = lines.join("\n")

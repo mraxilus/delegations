@@ -7,8 +7,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/[findings, idioms]
 
 
-const HEAD_LINES = 4
-  ## Lines `module` puts before body: doc, blank, pragma, blank.
+const HEAD_LINES = 4  ## Lines `module` puts before body: doc, blank, pragma, blank.
 
 
 func module(body: string): string =
@@ -32,12 +31,14 @@ func isSettled(source: string): bool =
   messages("a.nim", source).len == 0 and again.source == source and again.fixed.len == 0
 
 
+
 suite "Idioms":
   test "module carries strictFuncs pragma before its imports":
     check messages("a.nim", module("import std/os\n")).len == 0
     check "got none" in messages("a.nim", "## Do.\n\nimport std/os\n")[0]
     let late = "## Do.\n\nimport std/os\n\n" & STRICT_FUNCS & "\n"
     check "got it after" in messages("a.nim", late)[0]
+
 
   test "bracket import is alphabetised, standard library first and local modules last":
     check messages("a.nim", module("import std/[os, strutils]\nimport ./[a, b {.all.}]\n")).len == 0
@@ -46,6 +47,7 @@ suite "Idioms":
     check "got `std/os`" in messages("a.nim", local_first)[0]
     # Bracket spanning lines is read whole, as `koch.nim` writes its own.
     check "got `b, a`" in messages("a.nim", module("import ./[\n  b,\n  a,\n]\n"))[0]
+
 
   test "consecutive single bindings of one keyword share it, once per run":
     let run = module("proc f() =\n  let a = 1\n  let b = 2\n  let c = 3\n")
@@ -57,10 +59,12 @@ suite "Idioms":
     # String holding keyword is blanked first, so page template never reads as binding.
     check messages("a.nim", module("const PAGE = \"\"\"\nlet a = 1\nlet b = 2\n\"\"\"\n")).len == 0
 
+
   test "used pragma carries comment naming its consumer":
     check "got none" in messages("a.nim", module("func f() {.used.} = discard\n"))[0]
     check messages("a.nim", module("func f() {.used.} = discard  # Used in b.nim.\n")).len == 0
     check messages("a.nim", module("{.used.}\n")).len == 0  # module pragma, not symbol
+
 
   test "push stands only over foreign bindings":
     let ordinary = module("{.push inline.}\nfunc f() = discard\n{.pop.}\n")
@@ -68,10 +72,12 @@ suite "Idioms":
     let foreign = module("{.push importc, header: \"<x.h>\".}\nproc f()\n{.pop.}\n")
     check messages("a.nim", foreign).len == 0
 
+
   test "return result never appears":
     let redundant = module("func f(): int =\n  return result\n")
     check "got `return result`" in messages("a.nim", redundant)[0]
     check messages("a.nim", module("func f(): int =\n  if true: return\n  result = 1\n")).len == 0
+
 
   test "suite importing std/random seeds it":
     let unseeded = module("import std/[random, unittest]\n\nlet x = rand(1)\n")
@@ -80,6 +86,7 @@ suite "Idioms":
     check messages("tests/suites/test_x.nim", seeded).len == 0
     check messages("tests/suites/test_x.nim", unseeded.replace("rand(1)", "initRand(7)")).len == 0
     check messages("src/x.nim", unseeded).len == 0  # outside `tests/`, rule is silent
+
 
   test "stub carries testament header without -r, batchable or joinable":
     let header = "discard \"\"\"\naction: run\ncmd: \"nim c $options $file\"\n\"\"\"\n"
@@ -91,6 +98,7 @@ suite "Idioms":
     check "got `batchable`" in messages("tests/test_x.nim", batched)[0]
     check messages("tests/suites/test_x.nim", module("")).len == 0  # suite is not stub
 
+
   test "test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
     check "got `echo x`" in messages("tests/suites/test_x.nim", debug)[0]
@@ -99,10 +107,12 @@ suite "Idioms":
     check messages("tests/suites/test_x.nim", diagnostic).len == 0
     check messages("src/x.nim", debug).len == 0  # program may print
 
+
   test "machine path is finding in any kind but Markdown":
     check checkMachinePaths("a.nim", "let p = \"/home/me/data\"\n")[0].line == 1
     check checkMachinePaths("a.yml", "run: cd /Users/me\n").len == 1
     check checkMachinePaths("a.nim", "let p = getEnv(\"HOME\")\n").len == 0
+
 
   test "tsconfig sets every flag to true, read as text":
     let all_set = """{
@@ -116,6 +126,7 @@ suite "Idioms":
     check checkTsconfig("tsconfig.json", "{}").len == TYPESCRIPT_FLAGS.len
 
 
+
 suite "Idiom fixes":
   test "return result inside branch, or with body after it, becomes bare return":
     let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
@@ -126,6 +137,7 @@ suite "Idiom fixes":
     let followed = fixed(module("proc f(): int =\n  return result\n  echo 1\n"))
     check followed.source == module("proc f(): int =\n  return\n  echo 1\n")  # exit before more
     check followed.source.isSettled
+
 
   test "return result ending routine goes, with blank line opening its paragraph":
     let ending = fixed(module("func f(): int =\n  result = 1\n  return result\n"))
@@ -139,6 +151,7 @@ suite "Idiom fixes":
     check fixed(module(wrapped)).source ==
       module("func f(\n  a: int\n): int =\n  result = a\n")  # signature on lines of its own
 
+
   test "return result whose place reads no one fix stays, finding and all":
     for left in [
       "func f(): int =\n  return result\n",  # only statement: body would go empty
@@ -148,10 +161,12 @@ suite "Idiom fixes":
     ]:
       check fixed(module(left)).source == module(left)
 
+
   test "report after deleted line names line of source as given":
     let body = "func f(): int =\n  result = 1\n  return result\n\nlet a = 1\nlet b = 2\n"
     check fixed(module(body)).fixed.mapIt(it.line) ==
       @[HEAD_LINES + 3, HEAD_LINES + 5]  # traced past deleted line
+
 
   test "bracket items are sorted into slots they held, so layout stays":
     let one_line = fixed(module("import std/[strutils, os]\nimport ./[b {.all.}, a]\n"))
@@ -167,6 +182,7 @@ suite "Idiom fixes":
     let commented = module("import ./[\n  b,  # Why.\n  a,\n]\n")
     check fixed(commented).source == commented  # comment belongs to item or slot: left to hand
 
+
   test "adjacent import lines are ordered by rank, and rank split by other lines stays":
     let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
     check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
@@ -174,6 +190,7 @@ suite "Idiom fixes":
     check fix.source.isSettled
     let apart = module("import ./a\n\nimport std/os\n")
     check fixed(apart).source == apart  # where it lands is choice: left to hand
+
 
   test "run of single bindings shares one keyword; comment, doc and continuation move with it":
     let consts = fixed(module("const A = 1  # One.\nconst B = 2\n  ## Doc of B.\n\nlet c = 3\n"))
@@ -194,6 +211,7 @@ suite "Idiom fixes":
     let long_string = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")
     check fixed(long_string).source == long_string  # indent would change string: left to hand
 
+
   test "missing strictFuncs goes where X.6 puts directives":
     let
       strict = "\n" & STRICT_FUNCS & "\n\n"
@@ -212,6 +230,7 @@ suite "Idiom fixes":
     let foreign = "{.push importc.}\nproc f()\n{.pop.}\n"
     check fixed("## Do.\n\n" & foreign).source == "## Do.\n" & strict & foreign  # push opens body
 
+
   test "strictFuncs after imports moves where X.6 puts directives, as check reads it":
     let
       late = "## Do.\n\nimport std/os\n\n" & STRICT_FUNCS & "\n\n\nlet a = 1\n"
@@ -226,6 +245,7 @@ suite "Idiom fixes":
       "## Do.\n\n{.push importc.}\nproc f()\n{.pop.}\nimport std/os\n" & STRICT_FUNCS & "\n"
     check fixed(pushed).source ==
       "## Do.\n\n" & STRICT_FUNCS & "\n\n{.push importc.}\nproc f()\n{.pop.}\nimport std/os\n"
+
 
   test "adjacent imports of one directory share one bracket; bracket of one module drops":
     let
@@ -245,6 +265,7 @@ suite "Idiom fixes":
     check checkImportBrackets("a.nim", module("import std/[math]\n"))[0].message ==
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."
 
+
   test "import with except, as, other pragma, comment, or apart from block stays":
     for kept in [
       "import std/os except getEnv\nimport std/strutils\n",
@@ -258,10 +279,13 @@ suite "Idiom fixes":
       check checkImportBrackets("a.nim", module(kept)).len == 0
       check fixed(module(kept)).source == module(kept)
 
+
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":
     let
-      lists = module("proc f() {.importc: \"f\", header: \"a.h\", bycopy.}\nexport b, a  # Why.\n" &
-        "from std/os import walkDir, getEnv\n")
+      lists = module(
+        "proc f() {.importc: \"f\", header: \"a.h\", bycopy.}\nexport b, a  # Why.\n" &
+          "from std/os import walkDir, getEnv\n",
+      )
       fix = fixed(lists)
     check checkLists("a.nim", lists).mapIt(it.message.split("; ")[1]) == @[
       "got `importc, header, bycopy`.", "got `b, a`.", "got `walkDir, getEnv`.",
@@ -270,11 +294,13 @@ suite "Idiom fixes":
       "export a, b  # Why.\nfrom std/os import getEnv, walkDir\n")  # whole items, comment stays
     check fix.source.isSettled
 
+
   test "pragma list holds bare pragmas first, then pragmas with argument":
     let pragmas = module("proc f() {.raises: [], header: \"a.h\", inline, borrow.}\n")
     check fixed(pragmas).source ==
       module("proc f() {.borrow, inline, header: \"a.h\", raises: [].}\n")
     check checkLists("a.nim", module("proc f() {.inline, header: \"a.h\".}\n")).len == 0
+
 
   test "alphabetised is dictionary order: case and `_` ignored, tie to code point":
     check fixed(module("export isB, is_a, facing, Facing\n")).source ==
@@ -283,6 +309,7 @@ suite "Idiom fixes":
       module("export layout.Entry, layout.Tree\n")
     check "got `b_c, ba`" in messages("a.nim", module("import ./[b_c, ba]\n"))[0]
     check fixed(module("import ./[b_c, ba]\n")).source == module("import ./[ba, b_c]\n")
+
 
   test "list order may mean stays: statement, user pragma, except, list spanning lines":
     for kept in [
@@ -293,6 +320,7 @@ suite "Idiom fixes":
     ]:
       check checkLists("a.nim", module(kept)).len == 0
       check fixed(module(kept)).source == module(kept)
+
 
   test "clean module passes through unchanged":
     let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")

@@ -23,6 +23,7 @@ func isSettled(source: string, path = TEST_PATH): bool =
     fixBlanks(path, source).fixed.len == 0
 
 
+
 suite "Blanks":
   test "suite takes three blank lines before it, test two, first child none":
     let breach = "import std/unittest\n\nsuite \"A\":\n  test \"a\":\n    check true\n\n" &
@@ -37,12 +38,14 @@ suite "Blanks":
     check breach.fixed.isSettled
     check checkBlanks("curator/audit/src/a.nim", breach).len == 0  # tests alone
 
+
   test "suite opening `when` body follows it at once; suite after banner takes banner's one":
     let breach = "x\n\n\n\n#[ Native ]#\n\n\nsuite \"A\":\n  test \"a\":\n    discard\n\n\n\n" &
       "when defined(js):\n\n  suite \"B\":\n    test \"b\":\n      discard\n"
     check breach.fixed == breach.replace("]#\n\n\nsuite", "]#\n\nsuite")
       .replace("(js):\n\n  suite", "(js):\n  suite")
     check breach.fixed.isSettled
+
 
   test "run goes above comment on line before; fixture string and doc never move":
     check "x\n# Why.\nsuite \"A\":\n  discard\n".fixed ==
@@ -52,6 +55,7 @@ suite "Blanks":
       "suite \"A\":\n  ## Doc.\n  test \"a\":\n    discard\n",
     ]:
       check kept.isSettled
+
 
   test "nested helper takes one blank line on each side, right after owner's doc too":
     let one_line = "proc f(): int =\n  ## Doc.\n  func g(x: int): int = x + 1\n  g(1)\n"
@@ -67,6 +71,7 @@ suite "Blanks":
       "  ): int =\n    a\n\n  discard g(1)\n"
     for settled in [one_line.fixed("a.nim"), body.fixed("a.nim"), wrapped.fixed("a.nim")]:
       check settled.isSettled("a.nim")
+
 
   test "never read: side leaving owner, one-line template alias, routine outside routine":
     for kept in [

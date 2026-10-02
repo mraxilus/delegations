@@ -18,19 +18,17 @@ import ./kinds
 
 
 type
-  Comment* = object
-    ## Define comment text found on one line, markers stripped.
+  Comment* = object  ## Define comment text found on one line, markers stripped.
     line*: int  ## One-based line of text.
     text*: string  ## Comment text, markers removed, whitespace collapsed to single spaces.
 
-  Scan = object
-    ## Define scanner accumulator: current line, pending text, emitted comments.
+  Scan = object  ## Define scanner accumulator: current line, pending text, emitted comments.
     line: int
     text: string
     comments: seq[Comment]
 
 
-const IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+const IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
   ## Characters that may precede quote in Nim generalized raw string literal.
 
 

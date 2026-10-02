@@ -34,14 +34,12 @@ import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 
 
 type
-  Entry* = object
-    ## Define one file git reports: path, kind when registered, content when read.
+  Entry* = object  ## Define one file git reports: path, kind when registered, content when read.
     path*: string  ## Repository-relative, `/` separated.
     kind*: Option[Kind]  ## Registered kind; `none` leaves content unread.
     content*: string  ## File text; empty for unregistered kinds.
 
-  Tree* = seq[Entry]
-    ## Define whole repository as git sees it.
+  Tree* = seq[Entry]  ## Define whole repository as git sees it.
 
 
 const
@@ -60,14 +58,12 @@ const
   UNTRACKED_DIRECTORIES* = ["build", "dependencies", "node_modules"]
     ## Directories holding build output or vendored source, never tracked (Article XI.3).
     ## Files every project directory must hold, besides its nimble file.
-  TESTS_DIRECTORY* = "tests"
-    ## Directory every project must populate.
+  TESTS_DIRECTORY* = "tests"  ## Directory every project must populate.
   PAGE_DIRECTORIES* = ["pages", "mockups"]
     ## Directories committed pages live in: kept pages, then one-off mock-ups.
   SHELL_DIRECTORIES* = [".claude", ".githooks"]
     ## Root directories Shell may live in: command Claude Code runs, and hooks git runs.
-  KINDS_PATH = "curator/audit/src/kinds.nim"
-    ## Registry named in finding for unregistered kind.
+  KINDS_PATH = "curator/audit/src/kinds.nim"  ## Registry named in finding for unregistered kind.
 
 
 func projectName*(directory: string): string =
@@ -83,7 +79,7 @@ func nimblePath*(directory: string): string =
 func directoryOf(path: string): string =
   ## Read directory part of path, empty at root.
   let cut = path.rfind('/')
-  if cut < 0: "" else: path[0 ..< cut]
+  if cut < 0: "" else: path[0..<cut]
 
 
 func projectDirectory*(parts: seq[string]): string =
@@ -141,7 +137,7 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
 func checkEntry(e: Entry): seq[Finding] =
   ## Report entry outside layout or of unregistered kind.
   let parts = e.path.split('/')
-  for directory in parts[0 ..< parts.high]:
+  for directory in parts[0..<parts.high]:
     if directory in UNTRACKED_DIRECTORIES:
       result.add finding(
         e.path,
@@ -153,7 +149,8 @@ func checkEntry(e: Entry): seq[Finding] =
     result.add checkPage(e.path, parts)
   if e.kind.isSome and e.kind.get == Kind.Shell and parts[0] notin SHELL_DIRECTORIES:
     result.add finding(
-      e.path, 0,
+      e.path,
+      0,
       "Shell is hook glue of curator, and lives only in `" & SHELL_DIRECTORIES.join("/` or `") &
         "/` (CONTRIBUTOR.md, The language is Nim); got `" & e.path & "`.",
     )

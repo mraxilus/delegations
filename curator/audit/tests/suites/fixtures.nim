@@ -45,10 +45,8 @@ const
     "# Examples\n\nCases.\n", "# Guide\n\nSteps.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
-  ALPHA_DIRECTORY* = CONTRIBUTOR & "/ronri/alpha"
-    ## Contributor project in fixture tree.
-  AUDIT_DIRECTORY* = CURATOR & "/audit"
-    ## Curator project in fixture tree.
+  ALPHA_DIRECTORY* = CONTRIBUTOR & "/ronri/alpha"  ## Contributor project in fixture tree.
+  AUDIT_DIRECTORY* = CURATOR & "/audit"  ## Curator project in fixture tree.
 
 
 func headerTable*(source: string): seq[seq[string]] =

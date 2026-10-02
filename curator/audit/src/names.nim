@@ -28,12 +28,10 @@ import ./[findings, glossary]
 
 
 type
-  NameKind* {.pure.} = enum
-    ## Define what declaration introduces name.
+  NameKind* {.pure.} = enum  ## Define what declaration introduces name.
     Binding, Routine, Type, Field, Parameter
 
-  Declared* = object
-    ## Define one declared name with its place.
+  Declared* = object  ## Define one declared name with its place.
     name*: string
     line*: int
     kind*: NameKind
@@ -49,14 +47,11 @@ const
     ## Coined abbreviation and its one full word (V.6).
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
-  VERBS_BANNED* = ["get", "compute", "new"]
-    ## First words routine never takes (V.3).
+  VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
   ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
-  BINDING_KEYWORDS = ["let", "var", "const"]
-    ## Keywords opening binding, single or block.
-  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
-    ## Characters identifier is built from.
+  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or block.
+  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters identifier is built from.
   FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
     ## Pragmas marking routine as binding of library's own name.
 
@@ -69,16 +64,19 @@ func blanked(source: string, should_keep_comments: bool): string =
   var
     i = 0
     depth = 0
+
   template blank(n: int) =
-    for k in 0 ..< n:
+    for k in 0..<n:
       result[i] = (if source[i] == '\n': '\n' else: ' ')
       inc i
+
   template comment(n: int) =
     if should_keep_comments:
-      for k in 0 ..< n:
+      for k in 0..<n:
         result[i] = source[i]
         inc i
     else: blank(n)
+
   while i < source.len:
     let c = source[i]
     if depth > 0:
@@ -151,7 +149,7 @@ func identifierAt(text: string, start: int): string =
   while i < text.len and text[i] == ' ': inc i
   var j = i
   while j < text.len and text[j] in IDENT_CHARS: inc j
-  text[i ..< j]
+  text[i..<j]
 
 
 func nameOf(piece: string): string =
@@ -225,7 +223,7 @@ func declarations*(source: string): seq[Declared] =
         var
           depth = 0
           close = -1
-        for k in open ..< text.len:
+        for k in open..<text.len:
           if text[k] == '(': inc depth
           elif text[k] == ')':
             dec depth
@@ -233,7 +231,7 @@ func declarations*(source: string): seq[Declared] =
               close = k
               break
         if close > open:
-          for p in text[open + 1 ..< close].parameterNames:
+          for p in text[open + 1..<close].parameterNames:
             result.add Declared(name: p, line: one, kind: NameKind.Parameter)
       i = j + 1
       continue
@@ -281,7 +279,7 @@ func declarations*(source: string): seq[Declared] =
     if word == "for":
       let at = rest.find(" in ")
       if at > 0:
-        for name in rest[0 ..< at].split(','):
+        for name in rest[0..<at].split(','):
           let n = name.nameOf
           if n.len > 0 and n != "_": result.add Declared(name: n, line: one, kind: NameKind.Binding)
     inc i
@@ -293,13 +291,13 @@ func words*(name: string): seq[string] =
     var cur = ""
     for k, c in part:
       let is_boundary = cur.len > 0 and (
-        (c in {'A' .. 'Z'} and cur[^1] in {'a' .. 'z', '0' .. '9'}) or
-        (c in {'a' .. 'z'} and cur.len > 1 and cur[^1] in {'A' .. 'Z'} and cur[^2] in {'A' .. 'Z'})
+        (c in {'A'..'Z'} and cur[^1] in {'a'..'z', '0'..'9'}) or
+        (c in {'a'..'z'} and cur.len > 1 and cur[^1] in {'A'..'Z'} and cur[^2] in {'A'..'Z'})
       )
       if is_boundary:
-        if c in {'a' .. 'z'}:
+        if c in {'a'..'z'}:
           # Capital before lowercase starts new word: `JSONData` is JSON, Data.
-          result.add cur[0 ..< cur.high]
+          result.add cur[0..<cur.high]
           cur = $cur[^1]
         else:
           result.add cur
@@ -310,7 +308,7 @@ func words*(name: string): seq[string] =
 
 func isScreaming(name: string): bool =
   ## Decide whether name is SCREAMING_SNAKE_CASE, i.e. no lowercase letter.
-  name.allCharsInSet({'A' .. 'Z', '0' .. '9', '_'}) and name.anyIt(it in {'A' .. 'Z'})
+  name.allCharsInSet({'A'..'Z', '0'..'9', '_'}) and name.anyIt(it in {'A'..'Z'})
 
 
 func acronyms*(name: string): seq[string] =
@@ -318,15 +316,15 @@ func acronyms*(name: string): seq[string] =
   if name.isScreaming or '_' in name: return
   var run = ""
   let text = name & " "
-  for k in 0 ..< text.len - 1:
+  for k in 0..<text.len - 1:
     let
       c = text[k]
-      opens_word = c in {'A' .. 'Z'} and text[k + 1] in {'a' .. 'z'}
-    if (c in {'A' .. 'Z'} and not opens_word) or (run.len > 0 and c in {'0' .. '9'}): run.add c
+      opens_word = c in {'A'..'Z'} and text[k + 1] in {'a'..'z'}
+    if (c in {'A'..'Z'} and not opens_word) or (run.len > 0 and c in {'0'..'9'}): run.add c
     else:
-      if run.count({'A' .. 'Z'}) >= 2: result.add run
+      if run.count({'A'..'Z'}) >= 2: result.add run
       run = ""
-  if run.count({'A' .. 'Z'}) >= 2: result.add run
+  if run.count({'A'..'Z'}) >= 2: result.add run
 
 
 func glossaryExemptions*(glossary: string): seq[string] =
@@ -341,10 +339,10 @@ func glossaryExemptions*(glossary: string): seq[string] =
         if open < 0: break
         let close = line.find('`', open + 1)
         if close < 0: break
-        for w in line[open + 1 ..< close].split({' ', ','}):
+        for w in line[open + 1..<close].split({' ', ','}):
           if w.len > 0: result.add w
         i = close + 1
-    if line.isTermLine: result.add line[2 ..< line.len - 3]
+    if line.isTermLine: result.add line[2..<line.len - 3]
 
 
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] =

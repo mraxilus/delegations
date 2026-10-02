@@ -52,22 +52,19 @@ import ./[findings, kinds, names]
 
 
 const
-  LINE_MAX* = 100
-    ## Widest line allowed, in runes (Article X.1).
+  LINE_MAX* = 100  ## Widest line allowed, in runes (Article X.1).
   TOKEN_MAX* = 400
     ## Longest unbreakable token exemption covers, in runes.
     ##   Font and data URLs run to few hundred characters; minified markup runs to thousands,
     ##   and belongs under `build/`, never committed.
-  COMMENT_GAP* = 2
-    ## Spaces before trailing comment's marker (Article X.9).
+  COMMENT_GAP* = 2  ## Spaces before trailing comment's marker (Article X.9).
   WIDTH_EXEMPT = ["LICENSE.md"]
     ## Root paths whose width goes unchecked: third-party text kept verbatim.
   TRAILING_WHITESPACE = {' ', '\t', '\r'}
     ## Characters line never ends with (VIII.5); CR among them, so CRLF ending is one.
-  LUT_BLANKS_BY_TIER: array[1 .. 2, int] = [3, 2]
+  LUT_BLANKS_BY_TIER: array[1..2, int] = [3, 2]
     ## Blank lines banner of each tier takes before it (X.2).
-  BLANKS_AFTER_BANNER = 1
-    ## Blank lines either banner takes after it (X.2).
+  BLANKS_AFTER_BANNER = 1  ## Blank lines either banner takes after it (X.2).
 
 
 type
@@ -77,8 +74,7 @@ type
     at: int  ## Index of marker, i.e. first `#` after code.
     spaces: int  ## Spaces between last code character and marker.
 
-  BlankRun = object
-    ## Define run of blank lines beside banner whose count X.2 reads otherwise.
+  BlankRun = object  ## Define run of blank lines beside banner whose count X.2 reads otherwise.
     first: int  ## Zero-based line run opens on, i.e. line after one above it.
     count: int  ## Blank lines run holds.
     wanted: int  ## Blank lines X.2 asks.
@@ -219,7 +215,7 @@ func fixComments(path, source: string): Fix =
     if gap.spaces == COMMENT_GAP: continue
     let
       line = lines[gap.line]
-      spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
+      spaced = line[0..<gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
     if spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
     result.fixed.add finding(path, gap.line + 1, "trailing comment (X.9)")
@@ -265,15 +261,15 @@ func fixBanners(path, source: string): Fix =
   ## Set each run of blank lines check reports to count X.2 asks, last run first.
   var
     lines = source.split('\n')
-    origin = toSeq(1 .. lines.len)
+    origin = toSeq(1..lines.len)
   let runs = lines.blankRuns
   for run in runs.reversed:
     let
       after = run.first + run.count
-      kept = origin[run.first ..< run.first + min(run.count, run.wanted)]
+      kept = origin[run.first..<run.first + min(run.count, run.wanted)]
       inserted = newSeq[int](run.wanted - kept.len)
-    lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
-    origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
+    lines = lines[0..<run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
+    origin = origin[0..<run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in runs: result.fixed.add finding(path, run.banner + 1, "banner spacing (X.2)")
   if runs.len > 0: result.origin = origin

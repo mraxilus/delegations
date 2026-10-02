@@ -20,6 +20,7 @@ func isSettled(source: string): bool =
     source.fixed == source
 
 
+
 suite "Declarations":
   test "one-line doc of type, field, binding and enum member joins its line where it fits":
     let breach = "type\n  Kind {.pure.} = enum\n    ## Kind of thing.\n    A\n      ## First.\n" &
@@ -32,6 +33,7 @@ suite "Declarations":
     check breach.fixed.isSettled
     check fixDocs("a.nim", breach).fixed[0].message == "doc position (STYLE.md §5)"
 
+
   test "doc that cannot join takes next line, one level in; trailing doc too wide moves there":
     let
       value = "  NAME = \"" & "x".repeat(60) & "\""
@@ -40,6 +42,7 @@ suite "Declarations":
     check ("const\n" & value & "\n      " & doc & "\n").fixed == settled  # re-indented
     check ("const\n" & value & "  " & doc & "\n").fixed == settled  # 116 runes split
     check settled.isSettled
+
 
   test "doc of several lines, routine doc, and line that is no declaration stay":
     for kept in [
@@ -54,6 +57,7 @@ suite "Declarations":
     ]:
       check kept.isSettled
 
+
   test "parameter drops type its literal default gives exactly":
     let breach = "proc f(now: float = 0.0, on: bool = false, s: string = \"a\", c: char = 'x', " &
       "n: int = -1) = discard\nproc g(a: Foo = default(Foo), b: Option[int] = none(int), " &
@@ -63,6 +67,7 @@ suite "Declarations":
       "proc g(a = default(Foo), b = none(int), p, q = 0x1F) = discard\n"
     check breach.fixed.isSettled
     check fixDefaults("a.nim", breach).fixed[0].message == "literal default (X.12)"
+
 
   test "default of other type, named constant, template, macro and field stay":
     for kept in [

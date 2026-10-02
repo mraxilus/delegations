@@ -21,14 +21,17 @@ const KEEPING = """
   ## Page keeping every rule: three families, headings serif, ligatures on, no host.
 
 
+
 suite "Faces":
   test "source declaring no stack is no page, and is not reported for lacking one":
     # Most files are not pages. Absence of faces is not violation of how faces are named.
     check checkFaces("koch.nim", "let x = 1\n").len == 0
     check checkFaces("README.md", "# Title\n\nProse about fonts.\n").len == 0
 
+
   test "page keeping X.8 reports nothing":
     check checkFaces("pages/shell.html", KEEPING).len == 0
+
 
   test "linking font host is failing to ship face":
     const LINKED = """
@@ -45,6 +48,7 @@ suite "Faces":
         "a { font-family: \"Noto Sans\"; }\n@import \"https://" & host & "/x\";\n",
       ).len == 1
 
+
   test "stack leading with family X.8 does not name is reported, by that family":
     const OUTSIDE = """
   body { font-family: "Fraunces", Georgia, serif; }
@@ -53,15 +57,18 @@ suite "Faces":
     check found.len >= 1
     check found[0].message.endsWith("got `Fraunces`.")
 
+
   test "system stack is reported too, since keyword resolves to whatever viewer has":
     check checkFaces("p.html", "  body { font-family: ui-sans-serif, system-ui; }\n").len == 1
     check checkFaces("p.html", "  b { font-family: ui-monospace, Menlo; }\n").len == 1
     check checkFaces("p.html", "  i { font-family: serif; }\n").len == 1
 
+
   test "fallbacks after first family are free, since shipped face is what viewer gets":
     # Allow-list of every acceptable fallback is list nobody maintains; first entry decides.
     check checkFaces("p.html",
       "  body { font-family: \"Noto Sans\", Impact, Papyrus, cursive; }\n").len == 0
+
 
   test "subset alias is same family named for its subset":
     check isFamily("Noto Sans UI")
@@ -71,11 +78,13 @@ suite "Faces":
     check not isFamily("Instrument Sans")  # different family, similar words
     check not isFamily("Spline Sans Mono")
 
+
   test "first family is read unquoted, whatever quoting stack uses":
     check firstFamily("\"Noto Sans\", Arial") == "Noto Sans"
     check firstFamily("'Noto Sans', Arial") == "Noto Sans"
     check firstFamily("  Noto Sans , Arial") == "Noto Sans"
     check firstFamily("").len == 0
+
 
   test "heading taking family other than serif is reported":
     const SANS_HEADING = """
@@ -91,6 +100,7 @@ suite "Faces":
       "  :root { --serif: \"Noto Serif\", serif; }\n  h3 { font-family: var(--serif); }\n",
     ).len == 0
 
+
   test "heading rule reads element, never class or word that merely contains one":
     check isHeading("h1")
     check isHeading("h1, h2, h3")
@@ -101,6 +111,7 @@ suite "Faces":
     check not isHeading("#h1")
     check not isHeading("graph1")  # word ending in tag
     check not isHeading("h7")
+
 
   test "selector styling something inside heading is not styling heading":
     # Both are real, from `design/page.nim` and `mockups/wholecloth.html`: what each sets is
@@ -122,12 +133,14 @@ suite "Faces":
     )
     check inside.len == 0
 
+
   test "one level of var() is resolved, and unresolvable var is left alone":
     const PROPS = [("--sans", "\"Noto Sans\", Arial"), ("--x", "var(--y)")]
     check resolved("var(--sans)", PROPS) == "\"Noto Sans\", Arial"
     check resolved("var(--absent)", PROPS) == "var(--absent)"  # named nothing here
     check resolved("\"Noto Sans\"", PROPS) == "\"Noto Sans\""  # literal passes through
     check resolved("var(--x)", PROPS) == "var(--y)"  # one level, never chased
+
 
   test "Commit Mono without its ligatures is face half used":
     const NO_LIGATURES = """
@@ -144,6 +157,7 @@ suite "Faces":
     # Page naming no Commit Mono is never asked for ligatures.
     check checkFaces("p.html", "  body { font-family: \"Noto Sans\", serif; }\n").len == 0
 
+
   test "property that is not stack is not read as one, whatever commas it holds":
     # `--ease` and `--surface` hold commas and name no family. Property is checked where
     #   `var()` reaches it from declaration, never on its own.
@@ -156,6 +170,7 @@ suite "Faces":
   body { font-family: var(--sans); }
 """
     check checkFaces("p.html", PALETTE).len == 0
+
 
   test "line carrying two properties yields both, not first alone":
     # `:root { --sans: ...; --serif: ...; }` is one line and two stacks. Reading first alone
@@ -170,6 +185,7 @@ suite "Faces":
     check held[1][1] == "\"Noto Serif\", serif"
     check resolved("var(--serif)", held) == "\"Noto Serif\", serif"
 
+
   test "value deferring to cascade names no family, so it is not reported":
     # `font-family: inherit` takes whatever parent settled, and parent is checked where set.
     for defers in DEFERS:
@@ -183,6 +199,7 @@ suite "Faces":
       "  :root { --serif: \"Noto Serif\", serif; }\n" &
       "  h1 { font-family: var(--serif); }\n  h2 { font-family: inherit; }\n",
     ).len == 0
+
 
   test "font shorthand names family last, and is read as stack":
     # `design/page.nim` writes every stack this way, so check reading `font-family` alone

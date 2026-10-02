@@ -10,8 +10,7 @@ import ./fixtures
 
 
 const
-  CURATOR_BRANCH = "curator/rules"
-    ## Curator root branch: every path but contributor code.
+  CURATOR_BRANCH = "curator/rules"  ## Curator root branch: every path but contributor code.
   CONTRIBUTOR_BRANCH = "contributor/ronri/alpha/work"
     ## Contributor branch confined to `ALPHA_DIRECTORY`.
   DIRTY = "## Do.\nimport ./[b, a]\nimport std/os \n\nlet x = 1 # One.\nlet y = 2\n\n\n"
@@ -33,6 +32,7 @@ const
     ## Atlas lock holding copy of nimble file `alpha.nimble`.
 
 
+
 suite "Fixes":
   test "named path is file or directory git lists, each once; unknown name is finding":
     let tree = @[
@@ -50,6 +50,7 @@ suite "Fixes":
     let typo = tree.entriesNamed(["curator/audi"]).unknown
     check typo.len == 1 and typo[0].message.endsWith("got `curator/audi`.")  # whole folder only
 
+
   test "after fix, form and idiom checks report nothing, and second fix writes nothing":
     let
       path = "curator/audit/src/a.nim"
@@ -65,6 +66,7 @@ suite "Fixes":
     check fixed.allIt(it.path == path and it.message.endsWith(")"))  # rule alone, cited
     check fixEntries(CURATOR_BRANCH, written).written.len == 0  # idempotent
 
+
   test "curator branch never writes contributor code; one path outside refuses every write":
     let
       inside = entry("curator/audit/src/a.nim", DIRTY)
@@ -78,12 +80,14 @@ suite "Fixes":
     check confined.refused.mapIt(it.path) == @[inside.path]  # contributor confined too
     check fixEntries("claude/setup", [inside]).refused[0].path.len == 0  # branch outside grammar
 
+
   test "clean entries write nothing and meet no scope, wherever they lie":
     let
       clean = entry(ALPHA_DIRECTORY & "/src/a.nim", "## Do.\n\n" & STRICT_FUNCS & "\n")
       plan = fixEntries(CURATOR_BRANCH, [clean])
     check plan.written.len == 0 and plan.fixed.len == 0 and plan.refused.len == 0
     check fixEntries(CURATOR_BRANCH, [entry("a.bin", "x \n")]).written.len == 0  # kind unread
+
 
   test "layout checks wait outside static pass, and fix clears every one in one run":
     let path = "curator/audit/src/a.nim"
@@ -104,13 +108,15 @@ suite "Fixes":
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
       "proc g(a: int) = discard\n" &
       "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
-    check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
+    check fixed.allIt(it.line in 0..LAYOUT.count('\n'))  # each report names line as given
+
 
   test "layout checks read Nim syntax; import and list checks read `.nim` alone":
     let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
     check checkFormatting("a.nims", breach, Kind.NimScript).mapIt(it.message).allIt("X.9" in it)
     check checkFormatting("a.nim", breach, Kind.Nim).len == 2  # brackets too
     check checkFormatting("a.md", breach, Kind.Markdown).len == 0
+
 
   test "fix writes Nim kinds alone, the one language with guide; checks read every kind":
     let
@@ -131,6 +137,7 @@ suite "Fixes":
       check not rule.has_guide  # no guide, so passes through unwritten
       check checkForm(other.path, other.content, rule).len > 0  # check reports it still
 
+
   test "fence keeps lines between its markers; fix and layout checks reach every other line":
     let
       path = "curator/audit/src/a.nim"
@@ -143,6 +150,7 @@ suite "Fixes":
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
     check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0
 
+
   test "fence left open runs to end of file; marker inside string fences nothing":
     let
       path = "curator/audit/a.nims"
@@ -151,6 +159,7 @@ suite "Fixes":
       "let a = 1 + 2\n" & FENCE_OFF & "\nlet b = 1+2\n"
     let quoted = "let s = \"\"\"\n" & FENCE_OFF & "\n\"\"\"\nlet b = 1+2\n"
     check checkFormatting(path, quoted, Kind.NimScript).mapIt(it.line) == @[4]
+
 
   test "fence crossing bracket leaves whole file as written, and is its one finding":
     let
@@ -162,6 +171,7 @@ suite "Fixes":
     let literal = "let a = 1+2\n#!fix fenced\n"  # would be read back as fenced line
     check fixEntries(CURATOR_BRANCH, [entry(path, literal)]).left.mapIt(it.line) == @[2]
 
+
   test "fixer that would move fenced lines is skipped, and its finding stays for hand":
     let
       path = "curator/audit/src/a.nim"
@@ -169,6 +179,7 @@ suite "Fixes":
         "\n  1,  0,\n  " & FENCE_ON & "\n)\n"
     check fixEntries(CURATOR_BRANCH, [entry(path, source)]).written.len == 0  # would re-indent
     check checkIdioms(path, source).len == 1  # bindings finding left
+
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
     let

@@ -12,6 +12,7 @@ const DIRECTORIES = [ALPHA_DIRECTORY, AUDIT_DIRECTORY]
   ## `contributor` sorts before `curator`.
 
 
+
 suite "Plan":
   test "code change selects its project alone":
     check testSet(DIRECTORIES, [ALPHA_DIRECTORY & "/src/alpha.nim"]) == @[ALPHA_DIRECTORY]  # source
@@ -20,6 +21,7 @@ suite "Plan":
       @[ALPHA_DIRECTORY]  # requirements
     check testSet(DIRECTORIES, [ALPHA_DIRECTORY & "/pages/index.html"]) ==
       @[ALPHA_DIRECTORY]  # page
+
 
   test "record change alone selects nothing, so rules propagation compiles nothing":
     check testSet(DIRECTORIES, [ALPHA_DIRECTORY & "/PROVENANCE.md"]).len == 0  # stamp only
@@ -34,6 +36,7 @@ suite "Plan":
     let mixed = [ALPHA_DIRECTORY & "/PROVENANCE.md", ALPHA_DIRECTORY & "/src/a.nim"]
     check testSet(DIRECTORIES, mixed) == @[ALPHA_DIRECTORY]
 
+
   test "project gains type check by carrying node manifest and its lock":
     # Nothing lists which project is type-checked: `check.yml` names no project, exactly as
     #   it names none for compiler matrix, so derivation is only place truth lives.
@@ -46,6 +49,7 @@ suite "Plan":
     let lock_alone = goodTree().with(entry(ALPHA_DIRECTORY & "/package-lock.json", "{}\n"))
     check lock_alone.nodeDirectories(DIRECTORIES).len == 0
 
+
   test "type check is scoped as compiling is":
     let both = goodTree().with(
       entry(ALPHA_DIRECTORY & "/package.json", "{}\n"),
@@ -57,6 +61,7 @@ suite "Plan":
     # Change to other project selects that project alone, and it carries no manifest.
     let given = testSet(DIRECTORIES, [AUDIT_DIRECTORY & "/tests/taudit.nim"])
     check both.nodeDirectories(given).len == 0  # given only
+
 
   test "project gains driven checks by carrying that verb, read from its own driver":
     # Nothing lists which project is driven either: koch reads driver's own dispatch, so
@@ -84,6 +89,7 @@ suite "Plan":
     )
     check after.verbDirectories(DIRECTORIES, "drive").len == 0
 
+
   test "driven set filters what plan already selected, so it inherits every scoping":
     const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
     let
@@ -99,22 +105,29 @@ suite "Plan":
     # Whole-repository run narrows to driven ones too, rather than driving all.
     check tree.drivenOnly(tree.allJobs) == selected
 
+
   test "head set is projects whose driver carries `head`, filtered as driven set is":
     # Daily run asks `--all`, so filter over every project is what selects one; driver
     #   carrying `drive` alone carries no reference to read.
     const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
     let
-      held = goodTree().with(entry(DRIVER,
-        "case paramStr(1)\n" & "of \"drive\": drive()\n" & "of \"head\": head()\n" & "else:\n"))
+      held = goodTree().with(
+        entry(
+          DRIVER,
+          "case paramStr(1)\n" & "of \"drive\": drive()\n" & "of \"head\": head()\n" & "else:\n",
+        ),
+      )
       selected = held.carryingOnly(held.allJobs, HEAD_VERB)
     check selected.mapIt(it.directory) == @[ALPHA_DIRECTORY]
     check selected[0].pin == PIN  # verb compiles project code, so it runs on project's pin
     check held.carryingOnly(held.jobs([AUDIT_DIRECTORY & "/tests/taudit.nim"]),
       HEAD_VERB).len == 0  # filters what plan selected
-    let driven = goodTree().with(entry(DRIVER,
-      "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
+    let driven = goodTree().with(
+      entry(DRIVER, "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"),
+    )
     check driven.carryingOnly(driven.allJobs, HEAD_VERB).len == 0  # `drive` alone
     check driven.carryingOnly(driven.allJobs, DRIVEN_VERB) == driven.drivenOnly(driven.allJobs)
+
 
   test "checker change selects the driver's project alone, never every project":
     check testSet(DIRECTORIES, ["koch.nim"]) == @[AUDIT_DIRECTORY]  # driver's suites read it
@@ -124,10 +137,12 @@ suite "Plan":
     check testSet(DIRECTORIES, ["koch.nim", CHECKER_DIRECTORY & "/plan.nim"]) ==
       @[AUDIT_DIRECTORY]  # once
 
+
   test "path inside no project selects nothing by itself":
     check testSet(DIRECTORIES, ["CONSTITUTION.md"]).len == 0  # rules reach projects by stamp
     check testSet(DIRECTORIES, ["README.md", "LICENSE.md"]).len == 0  # root prose
     check testSet(DIRECTORIES, newSeq[string]()).len == 0  # empty change
+
 
   test "jobs carry each project's own pin, and skip project pinning none":
     let
@@ -140,6 +155,7 @@ suite "Plan":
     let unpinned = tree.replaced(ALPHA_DIRECTORY & "/alpha.nimble", "requires \"nim >= 2.2.4\"\n")
     check unpinned.jobs([ALPHA_DIRECTORY & "/src/alpha.nim"]).len == 0  # nothing to install
 
+
   test "recent window runs what merged in it, or nothing at all":
     let root = tempRepo()
     defer: removeDir(root)
@@ -148,6 +164,7 @@ suite "Plan":
     check recentFor(root, tree, 7) == tree.allJobs  # every project
     # Window holding no merge has nothing to find, so it compiles nothing.
     check recentFor(root, tree, 0).len == 0  # quiet week
+
 
   test "koch declares what it needs, as the rule it enforces asks of every project":
     # No project here declares anything, so what comes back is koch's own alone, which
@@ -159,6 +176,7 @@ suite "Plan":
       check package.len > 0
       check why.len > 0  # reason in field outlives one in comment (CONTRIBUTOR.md)
       check ' ' notin package  # verb prints bare names; reason would arrive as package name
+
 
   test "plan renders as matrix entries CI reads":
     let node = parseJson(goodTree().jobs([ALPHA_DIRECTORY & "/src/alpha.nim"]).render)

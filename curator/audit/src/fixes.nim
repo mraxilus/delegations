@@ -65,16 +65,12 @@ import ./[tokens, wrapping]
 const
   ROUNDS_MAX = 3
     ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
-  FENCE_OFF* = "#!fix off"
-    ## Marker line opening fence (Article X.1).
-  FENCE_ON* = "#!fix on"
-    ## Marker line closing fence.
+  FENCE_OFF* = "#!fix off"  ## Marker line opening fence (Article X.1).
+  FENCE_ON* = "#!fix on"  ## Marker line closing fence.
   FENCED = "#!fix fenced"
     ## Text each fenced line reads as while fixers run: whole-line comment, which no fixer writes.
-  LOCK_FILE = "atlas.lock"
-    ## Lock holding copy of project's nimble file.
-  NIMBLE_KEY = "\"nimbleFile\""
-    ## Key of lock's copy of nimble file, whose `filename` names it.
+  LOCK_FILE = "atlas.lock"  ## Lock holding copy of project's nimble file.
+  NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
 
 type Fence = object
@@ -101,7 +97,7 @@ func fenceOf(source: string): Fence =
     fences = newSeqWith(lines.len, -1)  # Fence each line lies in, by count; `-1` outside.
     opened = 0
     is_open = false
-  for i in 0 ..< count:
+  for i in 0..<count:
     if markers[i] == FENCE_OFF and not is_open:
       is_open = true
       inc opened
@@ -115,7 +111,7 @@ func fenceOf(source: string): Fence =
   for k, t in tokens:
     let crossed =
       if partners[k] > k: fences[tokens[partners[k]].line] != fences[t.line]
-      else: toSeq(t.line .. t.lastLine(source)).anyIt(fences[it] != fences[t.line])
+      else: toSeq(t.line..t.lastLine(source)).anyIt(fences[it] != fences[t.line])
     if crossed:
       result.fault = if result.fault < 0: t.line else: min(result.fault, t.line)
       return
@@ -180,7 +176,7 @@ func lockedNimbles*(tree: Tree): seq[string] =
       open = if key < 0: -1 else: e.content.find('"', e.content.find(':', key) + 1)
       close = if open < 0: -1 else: e.content.find('"', open + 1)
     if close < 0: continue
-    result.add e.path[0 ..< e.path.len - LOCK_FILE.len] & e.content[open + 1 ..< close]
+    result.add e.path[0..<e.path.len - LOCK_FILE.len] & e.content[open + 1..<close]
 
 
 func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
@@ -237,7 +233,7 @@ func fixSource(path, source: string; kind: Kind; fence: Fence): Fix =
   ##   settles; fenced lines read as `FENCED`, and fixer that would move them is skipped.
   let shape = source.masked(fence).fenceShape
   result.source = source.masked(fence)
-  for round in 1 .. ROUNDS_MAX:
+  for round in 1..ROUNDS_MAX:
     var step = Fix(source: result.source)
     for fixer in kind.fixersOf:
       let next = fixer(path, step.source)

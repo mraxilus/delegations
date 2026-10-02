@@ -38,24 +38,18 @@ import ./[findings, markdown]
 
 
 const
-  KOCH_PATH* = "koch.nim"
-    ## Driver whose dispatch names every verb.
-  CURATOR_PATH* = "CURATOR.md"
-    ## Document tabling verbs for curator sessions.
-  CHECK_DIRECTORY* = "curator/audit/src/"
-    ## Modules these rules cover.
+  KOCH_PATH* = "koch.nim"  ## Driver whose dispatch names every verb.
+  CURATOR_PATH* = "CURATOR.md"  ## Document tabling verbs for curator sessions.
+  CHECK_DIRECTORY* = "curator/audit/src/"  ## Modules these rules cover.
   SUITE_DIRECTORY* = "curator/audit/tests/suites/"
     ## Where each module's suite lives; `tests/test_suites.nim` runs them as one program.
-  NIM_EXT* = ".nim"
-    ## Extension of module and suite alike.
+  NIM_EXT* = ".nim"  ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
     ## Keywords opening routine definition; exported one ends its name with asterisk.
-  USAGE_MARK* = "Usage: koch"
-    ## Opening of driver's usage text.
+  USAGE_MARK* = "Usage: koch"  ## Opening of driver's usage text.
   VERBS_MARK* = "Verbs:"
     ## Line opening usage text's verb list: one indented line per verb, verb first.
-  DISPATCH_MARK* = "of \""
-    ## Opening of dispatch branch naming one verb.
+  DISPATCH_MARK* = "of \""  ## Opening of dispatch branch naming one verb.
   COMMAND_CASE* = "case options.command"
     ## Line opening driver's command dispatch. Option parser cases over labels too, so scan
     ## starts here and ends at that dispatch's `else`, as `VERSION_KEY` names one line of
@@ -63,24 +57,19 @@ const
   DRIVER_CASE* = "case paramStr(1)"
     ## Line opening project driver's own dispatch. Same shape one level down, and koch reads
     ## it to learn which verbs that project carries (`plan.nim`, `verbDirectories`).
-  CASE_END* = "else:"
-    ## Line closing dispatch, after which branches belong to something else.
+  CASE_END* = "else:"  ## Line closing dispatch, after which branches belong to something else.
   OPTION_CASE* = "case key"
     ## Line opening driver's option parser, whose branches name one option each, one to line.
   USAGE_END* = "\"\"\""
     ## Line closing driver's usage text, after which `--` names prose rather than usage.
-  OPTION_MARK* = "--"
-    ## Opening of option usage text prints.
-  KOCH_MARK* = "koch "
-    ## Command name as mention writes it, followed by verb.
+  OPTION_MARK* = "--"  ## Opening of option usage text prints.
+  KOCH_MARK* = "koch "  ## Command name as mention writes it, followed by verb.
   RUN_MARK* = "nim r "
     ## Compile-and-run form mention may open with, options between it and `koch`.
-  VERB_CHARS = {'a' .. 'z', '-'}
-    ## Characters verb is spelled with.
+  VERB_CHARS = {'a'..'z', '-'}  ## Characters verb is spelled with.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
-  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
-    ## Characters Nim identifier is built from.
+  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters Nim identifier is built from.
   OPTION_CHARS = IDENT_CHARS + {'-'}
     ## Characters option name is built from, as `--dry-run` spells it.
 
@@ -108,7 +97,7 @@ func identifiers(source: string): CountTable[string] =
       continue
     var j = i
     while j < source.len and source[j] in IDENT_CHARS: inc j
-    result.inc source[i ..< j]
+    result.inc source[i..<j]
     i = j
 
 
@@ -133,7 +122,7 @@ func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] 
 func moduleOf*(path: string): string =
   ## Read module name of check source; empty when path is not one.
   if not (path.startsWith(CHECK_DIRECTORY) and path.endsWith(NIM_EXT)): return ""
-  path[CHECK_DIRECTORY.len ..< path.len - NIM_EXT.len]
+  path[CHECK_DIRECTORY.len..<path.len - NIM_EXT.len]
 
 
 func checkSuites*(paths: openArray[string]): seq[Finding] =
@@ -154,7 +143,7 @@ func between(line, opening, closing: string): string =
   let
     rest = line[start + opening.len .. ^1]
     stop = rest.find(closing)
-  if stop < 0: "" else: rest[0 ..< stop]
+  if stop < 0: "" else: rest[0..<stop]
 
 
 func usageVerbs*(koch: string): seq[string] =
@@ -219,7 +208,7 @@ func usageOptions*(koch: string): seq[string] =
     while i >= 0:
       var j = i + OPTION_MARK.len
       while j < line.len and line[j] in OPTION_CHARS: inc j
-      let option = line[i + OPTION_MARK.len ..< j]
+      let option = line[i + OPTION_MARK.len..<j]
       if option.len > 0 and option notin result: result.add option
       i = line.find(OPTION_MARK, j)
   result.sort
@@ -285,11 +274,11 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
 func runPrefix(text: string, at: int): bool =
   ## Decide whether `koch` at index is run as command: after `./`, after code span's opening
   ##   backtick, or after `nim r` and options only.
-  if at >= 2 and text[at - 2 .. at - 1] == "./": return true
+  if at >= 2 and text[at - 2..at - 1] == "./": return true
   if at >= 1 and text[at - 1] == '`': return true
   let run = text.rfind(RUN_MARK, last = at - 1)
   if run < 0: return false
-  text[run + RUN_MARK.len ..< at].splitWhitespace.allIt(it.startsWith(OPTION_MARK))
+  text[run + RUN_MARK.len..<at].splitWhitespace.allIt(it.startsWith(OPTION_MARK))
 
 
 func mentionedVerbs*(source: string): seq[(int, string)] =
@@ -301,8 +290,8 @@ func mentionedVerbs*(source: string): seq[(int, string)] =
     while at >= 0:
       var j = at + KOCH_MARK.len
       while j < line.len and line[j] in VERB_CHARS: inc j
-      let verb = line[at + KOCH_MARK.len ..< j]
-      if verb.len > 0 and verb[0] in {'a' .. 'z'} and line.runPrefix(at):
+      let verb = line[at + KOCH_MARK.len..<j]
+      if verb.len > 0 and verb[0] in {'a'..'z'} and line.runPrefix(at):
         result.add (number, verb)
       at = line.find(KOCH_MARK, j)
 

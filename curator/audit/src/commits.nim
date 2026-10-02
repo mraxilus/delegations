@@ -40,14 +40,12 @@ import ./[domains, findings, form]
 
 
 type
-  Subject* = object
-    ## Define parsed commit subject.
+  Subject* = object  ## Define parsed commit subject.
     kind*: string  ## Commit type, member of `TYPES`.
     scope*: string  ## Project name or `curator`.
     summary*: string  ## Lowercase imperative summary without final period.
 
-  Commit* = object
-    ## Define one commit of branch as check reads it.
+  Commit* = object  ## Define one commit of branch as check reads it.
     subject*: string  ## First line of message.
     body*: string  ## Message after subject, trailers included.
     paths*: seq[string]  ## Paths commit touches.
@@ -60,8 +58,7 @@ const
     ## Commit types accepted, alphabetical.
   SUBJECT_MAX* = LINE_MAX
     ## Widest commit subject allowed, in runes: same limit as line of source (Article XI.1).
-  RECORD_FILE* = "PROVENANCE.md"
-    ## Record that travels in commit of its own.
+  RECORD_FILE* = "PROVENANCE.md"  ## Record that travels in commit of its own.
   TERMINALS = {'.', '!', '?', ':'}
     ## Characters body line may end on: sentence end, or colon opening list.
 
@@ -73,14 +70,14 @@ func parseSubject*(subject: string): Option[Subject] =
     close = subject.find(')')
   if open <= 0 or close < open: return none(Subject)
   let
-    kind = subject[0 ..< open]
-    scope = subject[open + 1 ..< close]
+    kind = subject[0..<open]
+    scope = subject[open + 1..<close]
   var rest = subject[close + 1 .. ^1]
   if rest.startsWith("!"): rest = rest[1 .. ^1]
   if not rest.startsWith(": "): return none(Subject)
   let
     summary = rest[2 .. ^1]
-    is_summary = summary.len > 0 and summary[0] in {'a' .. 'z', '0' .. '9'} and
+    is_summary = summary.len > 0 and summary[0] in {'a'..'z', '0'..'9'} and
       not summary.endsWith(".")
   if kind notin TYPES or not (scope == CURATOR or scope.isProjectName) or not is_summary:
     return none(Subject)
@@ -135,8 +132,8 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
 func isTrailer(line: string): bool =
   ## Decide whether line is git trailer, i.e. `Key: value` with hyphenated key.
   let colon = line.find(": ")
-  colon > 0 and line[0] in {'A' .. 'Z', 'a' .. 'z'} and
-    line[0 ..< colon].allCharsInSet({'A' .. 'Z', 'a' .. 'z', '0' .. '9', '-'})
+  colon > 0 and line[0] in {'A'..'Z', 'a'..'z'} and
+    line[0..<colon].allCharsInSet({'A'..'Z', 'a'..'z', '0'..'9', '-'})
 
 
 func sentenceLines(body: string): seq[string] =
@@ -171,8 +168,8 @@ func checkBody*(subject, body: string): seq[Finding] =
     for c in text:
       if c == '`': is_span = not is_span
       elif not is_span: prose.add c
-    let excerpt = (if text.len > 60: text[0 ..< 60] & "…" else: text)
-    if text.len > 0 and text[0] notin {'A' .. 'Z', '0' .. '9', '`', '"'}:
+    let excerpt = (if text.len > 60: text[0..<60] & "…" else: text)
+    if text.len > 0 and text[0] notin {'A'..'Z', '0'..'9', '`', '"'}:
       result.add finding(
         "",
         0,
@@ -185,8 +182,8 @@ func checkBody*(subject, body: string): seq[Finding] =
         "Commit body holds one sentence to line, and this one runs on (XI.4); got `" & excerpt &
           "` in `" & subject & "`.",
       )
-    for k in 0 ..< prose.len - 2:
-      if prose[k] in {'.', '!', '?'} and prose[k + 1] == ' ' and prose[k + 2] in {'A' .. 'Z'}:
+    for k in 0..<prose.len - 2:
+      if prose[k] in {'.', '!', '?'} and prose[k + 1] == ' ' and prose[k + 2] in {'A'..'Z'}:
         result.add finding(
           "",
           0,

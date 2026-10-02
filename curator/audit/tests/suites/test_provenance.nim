@@ -7,6 +7,7 @@ import ../../src/provenance
 import ./fixtures
 
 
+
 suite "Article VIII":
   test "VIII.6 stamp is deterministic, sensitive and CR-blind":
     check stamp(["a", "b"]) == stamp(["a", "b"])  # same input, same stamp
@@ -15,12 +16,14 @@ suite "Article VIII":
     check stamp(["a", "b"]) != stamp(["b", "a"])  # order matters
     check stamp(["ab", ""]) != stamp(["a", "b"])  # boundary matters
     check stamp(["x\r\ny"]) == stamp(["x\ny"])  # CRLF checkout stamps same
-    check stamp(["x\r\ny"]).allCharsInSet({'0' .. '9', 'a' .. 'f'})  # lowercase
+    check stamp(["x\r\ny"]).allCharsInSet({'0'..'9', 'a'..'f'})  # lowercase
+
 
   test "VIII.6 header fields parse from first table":
     let fields = provenanceText("deadbeefdeadbeef").headerFields
     check fields.len == 6 and fields["Rules"] == "deadbeefdeadbeef"  # six rows read
     check "# x\n\n| Other | Table |\n|---|---|\n| a | b |\n".headerFields.len == 0  # header row
+
 
   test "VIII.6 missing field, bad date, stale stamp":
     let good = provenanceText("deadbeefdeadbeef")
@@ -38,6 +41,7 @@ suite "Article VIII":
     check stale[0].is_propagation  # curator's in any project, never held
     check not checkProvenance("p", unreviewed, "deadbeefdeadbeef")[0].is_propagation  # project's
 
+
   test "VIII.6 Rules row is rewritten in place, padding and neighbours kept":
     let
       old = provenanceText("deadbeefdeadbeef")
@@ -52,9 +56,11 @@ suite "Article VIII":
     check "| Rules | a |\n| Rules | b |\n".withRulesRow("c") ==
       "| Rules | c |\n| Rules | b |\n"  # first row only, as headerFields reads first
 
+
   test "VIII.6 ISO date grammar":
     check "2026-09-05".isIsoDate and not "2026-9-5".isIsoDate  # zero-padded
     check not "2026/09/05".isIsoDate and not "".isIsoDate  # separators
+
 
   test "VIII.6 claim citing test is checked to cite real one":
     let present = ["p/tests/tfoo.nim", "p/tests/tbar.nim"].toHashSet

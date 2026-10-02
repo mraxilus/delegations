@@ -51,8 +51,7 @@ import std/[options, os]
 
 
 type
-  Syntax* {.pure.} = enum
-    ## Define how comments are found in file kind.
+  Syntax* {.pure.} = enum  ## Define how comments are found in file kind.
     None  ## No comments (JSON), or prose document (Markdown).
     Nim  ## `#` line, `#[ ]#` nesting block, outside string and char literals.
     Hash  ## `#` anywhere unless escaped as `\#` (cfg).
@@ -61,13 +60,11 @@ type
     Slash  ## `//` line and `/* */` block, outside string and template literals.
     Xml  ## `<!-- -->` block, spanning lines (HTML, SVG).
 
-  Kind* {.pure.} = enum
-    ## Define file kinds checker reads.
+  Kind* {.pure.} = enum  ## Define file kinds checker reads.
     Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Cpp,
     C, Html, Svg, Json, Shell
 
-  KindRule* = object
-    ## Define how one kind is read.
+  KindRule* = object  ## Define how one kind is read.
     syntax*: Syntax  ## Comment syntax scanner applies.
     is_prose*: bool  ## Telegraphic check applies to comments.
     is_gated*: bool  ## Language admitted only where Nim cannot serve, so header must argue.

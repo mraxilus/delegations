@@ -27,8 +27,7 @@ import ./[findings, form, names, tokens]
 
 
 type
-  Shape {.pure.} = enum
-    ## Define move doc takes.
+  Shape {.pure.} = enum  ## Define move doc takes.
     Join  ## Next-line doc joins declaration's line.
     Split  ## Trailing doc widening line takes next line.
     Indent  ## Next-line doc that cannot join takes indent one level in.
@@ -59,16 +58,15 @@ const
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keyword operators line may end on, continuing expression on next line.
-  INDENT_STEP = 2
-    ## Spaces one level indents (Article X.1).
+  INDENT_STEP = 2  ## Spaces one level indents (Article X.1).
 
 
 func firstWord(code: string): string =
   ## Read leading identifier of code line.
   let s = code.strip
   var k = 0
-  while k < s.len and s[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
-  s[0 ..< k]
+  while k < s.len and s[k] in {'a'..'z', 'A'..'Z', '0'..'9', '_'}: inc k
+  s[0..<k]
 
 
 func isDoc(code, kept: string): bool =
@@ -96,12 +94,12 @@ func docMoves(source: string): seq[DocMove] =
       firsts[t.line] = k
       depths[t.line] = depth
     if last > t.line:
-      for line in t.line .. last: spanned[line] = true
+      for line in t.line..last: spanned[line] = true
     if t.kind != TokenKind.Comment: lasts[last] = k
     if t.kind == TokenKind.Open: inc depth
     elif t.kind == TokenKind.Close: depth = max(depth - 1, 0)
 
-  for d in 0 ..< lines.len:
+  for d in 0..<lines.len:
     let first = firsts[d]
     if first < 0 or code[d].strip.len == 0 or spanned[d] or depths[d] > 0 or lasts[d] < 0:
       continue
@@ -158,7 +156,7 @@ func docMoves(source: string): seq[DocMove] =
         result.add DocMove(line: d, shape: Shape.Indent, last: d + 1, lines: shaped)
     elif marker >= 0 and docs == 0 and kept[d][marker .. ^1].startsWith("##") and
         lines[d].isWide:
-      let declared = lines[d][0 ..< marker].strip(leading = false)
+      let declared = lines[d][0..<marker].strip(leading = false)
       if declared.isWide: continue
       result.add DocMove(
         line: d,
@@ -190,11 +188,11 @@ func fixDocs*(path, source: string): Fix =
   let moves = source.docMoves
   var
     lines = source.split('\n')
-    origin = toSeq(1 .. lines.len)
+    origin = toSeq(1..lines.len)
   for move in moves.reversed:
-    let traced = toSeq(0 ..< move.lines.len).mapIt(origin[min(move.line + it, move.last)])
-    lines = lines[0 ..< move.line] & move.lines & lines[move.last + 1 .. ^1]
-    origin = origin[0 ..< move.line] & traced & origin[move.last + 1 .. ^1]
+    let traced = toSeq(0..<move.lines.len).mapIt(origin[min(move.line + it, move.last)])
+    lines = lines[0..<move.line] & move.lines & lines[move.last + 1 .. ^1]
+    origin = origin[0..<move.line] & traced & origin[move.last + 1 .. ^1]
   result.source = lines.join("\n")
   for move in moves: result.fixed.add finding(path, move.line + 1, "doc position (STYLE.md §5)")
   if moves.len > 0: result.origin = origin
@@ -246,16 +244,16 @@ func defaults(source: string): seq[Default] =
       let last = k - 1
       inc k
       if colon <= first or equals < colon + 2 or equals >= last: continue
-      if (first .. last).toSeq.anyIt(tokens[it].kind == TokenKind.Comment): continue
+      if (first..last).toSeq.anyIt(tokens[it].kind == TokenKind.Comment): continue
       let
-        declared = source[tokens[colon + 1].first ..< tokens[equals - 1].after]
-        value = source[tokens[equals + 1].first ..< tokens[last].after]
+        declared = source[tokens[colon + 1].first..<tokens[equals - 1].after]
+        value = source[tokens[equals + 1].first..<tokens[last].after]
         literal = literalType(tokens, equals + 1, last, source)
         callee = tokens[equals + 1].spelling(source)
         argument =
           if equals + 2 <= last and tokens[equals + 2].spelling(source) == "(" and
               partners[equals + 2] == last:
-            source[tokens[equals + 3].first ..< tokens[last - 1].after]
+            source[tokens[equals + 3].first..<tokens[last - 1].after]
           else: ""
         is_exact = (literal.len > 0 and declared == literal) or
           (callee == "default" and argument.len > 0 and declared == argument) or
@@ -265,7 +263,7 @@ func defaults(source: string): seq[Default] =
         line: tokens[colon].line,
         first: tokens[colon - 1].after,
         after: tokens[equals].first,
-        got: source[tokens[first].first ..< tokens[last].after],
+        got: source[tokens[first].first..<tokens[last].after],
       )
 
 
@@ -285,5 +283,5 @@ func fixDefaults*(path, source: string): Fix =
   let found = source.defaults
   result.source = source
   for d in found.reversed:
-    result.source = result.source[0 ..< d.first] & " " & result.source[d.after .. ^1]
+    result.source = result.source[0..<d.first] & " " & result.source[d.after .. ^1]
   for d in found: result.fixed.add finding(path, d.line + 1, "literal default (X.12)")

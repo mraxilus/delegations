@@ -28,8 +28,7 @@ import ./[findings, markdown]
 const
   STANDARDS_HEADING* = "## Standards"
     ## Heading under which glossary names standards its symbols come from.
-  LANGUAGE_HEADING* = "## Language"
-    ## Heading under which glossary defines its terms.
+  LANGUAGE_HEADING* = "## Language"  ## Heading under which glossary defines its terms.
   ROOT_GLOSSARY* = "GLOSSARY.md"
     ## Path of root glossary, home of every standard two projects share.
 
@@ -63,7 +62,7 @@ func standardsIn*(source: string): seq[(int, string)] =
       is_inside = line == STANDARDS_HEADING
       continue
     if is_inside and line.isStandardLine:
-      result.add (i + 1, line[4 ..< line.find("**", 4)])
+      result.add (i + 1, line[4..<line.find("**", 4)])
 
 
 func checkGlossary*(path, source: string): seq[Finding] =
@@ -97,7 +96,7 @@ func checkGlossary*(path, source: string): seq[Finding] =
       result.add finding(
         path,
         i + 1,
-        "Term lacks definition on next line; got `" & line[2 ..< line.len - 3] & "`.",
+        "Term lacks definition on next line; got `" & line[2..<line.len - 3] & "`.",
       )
 
 
@@ -155,7 +154,7 @@ func peopleWordsIn*(line: string): seq[string] =
     var j = i
     while j < text.len and text[j].isWordChar: inc j
     let
-      word = text[i ..< j]
+      word = text[i..<j]
       bare = word.toLowerAscii.strip(leading = false, chars = {'s'})
     if bare in PEOPLE_WORDS or word.toLowerAscii in PEOPLE_WORDS: result.add word
     i = j

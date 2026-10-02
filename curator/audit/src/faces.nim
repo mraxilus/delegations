@@ -43,12 +43,9 @@ import ./findings
 
 
 const
-  SERIF* = "Noto Serif"
-    ## Family X.8 gives headings and titles.
-  SANS* = "Noto Sans"
-    ## Family X.8 gives body and interface text.
-  MONO* = "Commit Mono"
-    ## Family X.8 gives code, data and figures.
+  SERIF* = "Noto Serif"  ## Family X.8 gives headings and titles.
+  SANS* = "Noto Sans"  ## Family X.8 gives body and interface text.
+  MONO* = "Commit Mono"  ## Family X.8 gives code, data and figures.
   FAMILIES* = [SERIF, SANS, MONO]
     ## Every family X.8 admits, in role order. Match is by prefix, so target's own
     ## `@font-face` alias -- `Noto Sans UI`, `Noto Sans Math` -- is same family named for
@@ -64,8 +61,7 @@ const
     ## is build's own business and viewer never reaches it (`rga_visualiser`, `assets`).
   LIGATURES* = ["font-variant-ligatures", "font-feature-settings"]
     ## Properties that can enable `calt`; either satisfies ligature rule.
-  MARK = "font-family"
-    ## Declaration naming family list outright.
+  MARK = "font-family"  ## Declaration naming family list outright.
   SHORTHAND = "font"
     ## Declaration naming family list last, after size and line height. `design/page.nim`
     ## writes every stack this way, and check reading `font-family` alone passed it.
@@ -132,7 +128,7 @@ func declarations*(content: string, property: string): seq[(int, string)] =
       if at < 0: break
       var value = rest[at + property.len + 1 .. ^1]
       let stop = value.find(';')
-      if stop >= 0: value = value[0 ..< stop]
+      if stop >= 0: value = value[0..<stop]
       result.add (i + 1, value.strip)
       rest = rest[at + property.len + 1 .. ^1]
 
@@ -150,10 +146,10 @@ func propertyValues*(content: string): seq[(string, string)] =
       if at < 0: break
       let colon = rest.find(':', at)
       if colon < 0: break
-      let name = rest[at ..< colon].strip
+      let name = rest[at..<colon].strip
       var value = rest[colon + 1 .. ^1]
       let stop = value.find(';')
-      if stop >= 0: value = value[0 ..< stop]
+      if stop >= 0: value = value[0..<stop]
       if name.len > 2 and ' ' notin name: result.add (name, value.strip)
       rest = rest[colon + 1 .. ^1]
 
@@ -166,7 +162,7 @@ func resolved*(value: string, properties: openArray[(string, string)]): string =
   if at < 0: return value
   let close = value.find(')', at)
   if close < 0: return value
-  let name = value[at + 4 ..< close].strip
+  let name = value[at + 4..<close].strip
   for (property, held) in properties:
     if property == name: return held
   value
@@ -181,9 +177,9 @@ func isSubjectHeading(compound: string): bool =
     if c in {'.', '#', '[', ':'}:
       stop = i
       break
-  let element = compound[0 ..< stop].strip
+  let element = compound[0..<stop].strip
   if element.len != 2 or element[0] != 'h': return false
-  element[1] in {'1' .. '6'}
+  element[1] in {'1'..'6'}
 
 
 func isHeading*(selector: string): bool =
@@ -256,7 +252,7 @@ func checkFaces*(path, content: string): seq[Finding] =
     if line == 0: continue
     let
       before = lines[line - 1]
-      selector = before[0 ..< before.find(SHORTHAND)]
+      selector = before[0..<before.find(SHORTHAND)]
     if not selector.isHeading: continue
     let first = value.resolved(properties).firstFamily
     if first.len > 0 and first.toLowerAscii notin DEFERS and not first.startsWith(SERIF):

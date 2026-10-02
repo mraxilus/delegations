@@ -28,6 +28,7 @@ proc run(options: Options): int =
   ## Driver shape: option parser cases over labels before dispatch cases over verbs.
 
 
+
 suite "Checker":
   test "exported routines are collected, and operators are left alone":
     check exportedRoutines("func isPin*(s: string): bool =\n").len == 1
@@ -38,6 +39,7 @@ suite "Checker":
     check exportedRoutines("  func guarded*(): int =\n").len == 1
     # Operator is spelled where used, never named, so counting identifiers cannot find it.
     check exportedRoutines("func `<`*(a, b: Finding): bool =\n").len == 0
+
 
   test "routine no other module and no suite names is dead, however it is called":
     let dead = "func gone*(): int = 1\n"
@@ -53,6 +55,7 @@ suite "Checker":
     check found[0].path == "m.nim"
     check found[0].message.endsWith("got `gone`.")
 
+
   test "every check module carries suite named after it":
     let paired = ["curator/audit/src/form.nim", "curator/audit/tests/suites/test_form.nim"]
     check checkSuites(paired).len == 0
@@ -65,9 +68,11 @@ suite "Checker":
     check moduleOf("curator/audit/src/form.nim") == "form"
     check moduleOf("curator/probe/src/probe.nim").len == 0  # other projects group differently
 
+
   test "verbs are read from dispatch, never from option parser above it":
     check KOCH.dispatchVerbs == @["ci", "tree"]  # `root` and `all` are options, not verbs
     check dispatchVerbs("proc run() = discard\n").len == 0
+
 
   test "one parser reads project driver too, since both drivers hold one shape":
     # koch learns which verbs project carries by reading its driver (`plan.nim`, `verbDirectories`),
@@ -86,6 +91,7 @@ when isMainModule:
     check KOCH.dispatchVerbs(DRIVER_CASE).len == 0  # and neither way round
     check dispatchVerbs("", DRIVER_CASE).len == 0  # project carrying no driver at all
 
+
   test "usage text and checks table must name what dispatch names":
     let
       usage = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n  tree  files\n\nOptions:\n"
@@ -98,6 +104,7 @@ when isMainModule:
     let stale = table & "| `audit` | retired |\n"
     check checkVerbs(KOCH & usage, stale).len == 1  # table keeps row for retired verb
     check checkVerbs(KOCH & usage, stale)[0].path == CURATOR_PATH
+
 
   test "usage text must print every option parser takes, and no other":
     let usage = "Usage: koch <verb>\n\nOptions:\n  --root:<dir>  root\n  --all  every\n\"\"\"\n"
@@ -114,6 +121,7 @@ when isMainModule:
     let hyphened = "Usage: koch <verb>\n  --dry-run  print\n\"\"\"\n"
     check hyphened.usageOptions == @["dry-run"]  # hyphen inside name is name
 
+
   test "only checks-reference table is read, since document tables others":
     # Repository map rows open with backticked paths and would otherwise read as verbs.
     let document = "## Repository map\n\n| Path | Who |\n|---|---|\n| `koch.nim` | curator |\n" &
@@ -123,6 +131,7 @@ when isMainModule:
     #   separates verb rows from it.
     check document.section("## Checks reference").tableRows.len == 2
     check document.section("## Absent").len == 0
+
 
   test "mention of koch run as command names verb koch dispatches":
     # Fixture builds each mention from `KOCH_MARK`, so this file writes none it would report.

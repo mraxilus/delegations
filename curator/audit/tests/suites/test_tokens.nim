@@ -28,15 +28,17 @@ func kinds(source: string): seq[TokenKind] =
   source.tokens.mapIt(it.kind)
 
 
+
 suite "Tokens":
   test "each byte outside whitespace lies in one token, and tokens keep source order":
     let found = SAMPLE.tokens
     var covered = newSeq[bool](SAMPLE.len)
     for t in found:
-      for k in t.first ..< t.after: covered[k] = true
+      for k in t.first..<t.after: covered[k] = true
     for k, c in SAMPLE:
       check covered[k] or c in {' ', '\n'}  # whitespace alone lies between tokens
-    for k in 1 ..< found.len: check found[k - 1].after <= found[k].first  # no overlap
+    for k in 1..<found.len: check found[k - 1].after <= found[k].first  # no overlap
+
 
   test "string, character and comment forms read whole, as lexer reads them":
     check "r\"a\"\"b\"".kinds == @[TokenKind.Word, TokenKind.Text]  # `""` escapes raw quote
@@ -47,6 +49,7 @@ suite "Tokens":
     check "##[ a ]## x".spellings == @["##[ a ]##", "x"]  # doc block closes on `]##`
     check "\"\"\"a\"\"\"\" x".spellings == @["\"\"\"a\"\"\"\"", "x"]  # last quote of run closes
 
+
   test "operator characters and glyphs run as one operator":
     check "m ∧☆ n".spellings == @["m", "∧☆", "n"]  # compound glyph operator
     check "a=-1".spellings == @["a", "=-", "1"]  # `=-` is one token, as lexer reads it
@@ -54,11 +57,13 @@ suite "Tokens":
     check "x*: int".spellings == @["x", "*", ":", "int"]  # `*` before lone `:` stands alone
     check "☆m".spellings == @["☆", "m"]  # glyph of commit pin opens operator
 
+
   test "minus before digit opens number after whitespace or opening, never after operand":
     check "f -1".kinds == @[TokenKind.Word, TokenKind.Number]  # command call of literal
     check "(-1, -2)".spellings == @["(", "-1", ",", "-2", ")"]
     check "a-1".spellings == @["a", "-", "1"]  # binary minus
     check "1.5e-3 0x1F'u8".spellings == @["1.5e-3", "0x1F'u8"]  # exponent and suffix
+
 
   test "pragma and dotted brackets pair, and every bracket finds its partner":
     let
@@ -71,6 +76,7 @@ suite "Tokens":
     check partners[7] == 9  # `{.` closes on `.}`
     check partners[0] == -1  # no bracket, no partner
 
+
   test "operand end tells binary place from prefix place":
     let
       source = "return x.type nil (a)"
@@ -81,6 +87,7 @@ suite "Tokens":
     check found.isOperandEnd(3, source)  # keyword naming field after `.`
     check found.isOperandEnd(4, source)  # `nil`
     check found.isOperandEnd(7, source)  # closing bracket
+
 
   test "parameters of routine, routine type and lambda tell apart from call":
     let
@@ -95,6 +102,7 @@ suite "Tokens":
     check found.signatureOf(partners, opens[2], source) >= 0  # lambda `proc (`
     check not found.isCallOpen(partners, opens[3], source)  # `cast[int](` is no call
     check not found.isCallOpen(partners, opens[4], source)  # space before `(`: tuple argument
+
 
   test "token spanning lines reports line it closes on":
     let found = SAMPLE.tokens

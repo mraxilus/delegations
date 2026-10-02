@@ -6,6 +6,7 @@ import std/[strutils, unittest]
 import ../../src/[base, plan, provenance]
 
 
+
 suite "Base":
   test "charter and checker govern what green means; nothing else does":
     for rule in RULES: check rule.isGoverning  # constitution, style, contributor
@@ -19,6 +20,7 @@ suite "Base":
     check not "README.md".isGoverning
     check not (CHECKER_DIRECTORY.replace("/src", "") & "/tests/test_layout.nim").isGoverning
 
+
   test "branch predating rules or checker is one finding naming what it lacks":
     check checkBase(newSeq[string]()).len == 0  # base gained nothing
     check checkBase(["contributor/ronri/alpha/src/alpha.nim"]).len == 0  # other project's code
@@ -28,6 +30,7 @@ suite "Base":
     check found.len == 1  # one finding, however many paths
     check found[0].path.len == 0  # branch-level, no file to open
     check found[0].message.endsWith("got `CONTRIBUTOR.md, koch.nim`.")  # only what governs
+
 
   test "each governing path is named once":
     check checkBase(["koch.nim", "koch.nim.cfg"])[0].message.endsWith(

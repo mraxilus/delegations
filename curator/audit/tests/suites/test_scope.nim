@@ -13,9 +13,11 @@ const OUTSIDE = @[
   ## Paths outside `contributor/<domain>/alpha/` for every domain.
 
 
+
 suite "Scope":
   test "main passes every path":
     check checkScope(MAIN, OUTSIDE).len == 0  # main is merge target
+
 
   test "contributor branch confined to project prefix":
     for d in DOMAINS:  # 5 domains, exhaustive
@@ -29,6 +31,7 @@ suite "Scope":
     check checkScope("contributor/ronri/alpha/work", ["contributor/ronri/alpha_2/x.nim"]).len ==
       1  # prefix is whole folder
 
+
   test "curator project branch confined to its folder":
     let paths = [
       "curator/audit/src/x.nim", "README.md", "curator/probe/README.md",
@@ -38,11 +41,13 @@ suite "Scope":
     check found.mapIt(it.path) == paths[1 .. ^1].toSeq  # everything but its own folder
     check found.allIt(it.message == "Path outside branch scope `curator/audit/`.")  # prefix
 
+
   test "branch outside grammar is one finding naming branch":
     for branch in ["claude/setup", "ronri/alpha/work"]:  # harness name, old form
       let found = checkScope(branch, ["README.md"])
       check found.len == 1 and found[0].path.len == 0  # branch-level
       check found[0].message.endsWith("got `" & branch & "`.")  # IV.4 echo value
+
 
   test "curator writes only records inside contributor project":
     # Rules propagation reaches every project; it does not reach their code.
@@ -76,6 +81,7 @@ suite "Scope":
       "contributor/ronri/alpha/work", [CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"]
     ).len == 0
 
+
   test "content-preserving move is exempt for curator root alone":
     let
       alpha = CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"
@@ -87,6 +93,7 @@ suite "Scope":
     # Move never widens project branch: its prefix decides before exemption is read.
     check checkScope("contributor/ronri/beta/work", [alpha], [alpha]).len == 1  # other project
     check checkScope("curator/audit/work", [alpha], [alpha]).len == 1  # curator project
+
 
   test "curator branch holds finding in contributor project, and blocks on rest":
     # Duty 3: check that reddens project waits for project to fix, and curator never fixes it.

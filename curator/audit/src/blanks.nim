@@ -25,16 +25,14 @@ import ./[findings, names, tokens]
 
 
 type
-  Target {.pure.} = enum
-    ## Define what run stands beside, which decides its count and its message.
+  Target {.pure.} = enum  ## Define what run stands beside, which decides its count and its message.
     Suite  ## Run before suite.
     Test  ## Run before test.
     Child  ## Run before first child of its opener.
     Banner  ## Run after banner, before suite or test.
     Helper  ## Run on either side of nested helper.
 
-  Run = object
-    ## Define run of blank lines whose count rule reads otherwise.
+  Run = object  ## Define run of blank lines whose count rule reads otherwise.
     first: int  ## Zero-based line run opens on.
     count: int  ## Blank lines run holds.
     wanted: int  ## Blank lines rule asks.
@@ -50,8 +48,7 @@ type
 
 
 const
-  LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1]
-    ## Blank lines each target takes.
+  LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1]  ## Blank lines each target takes.
   ROUTINE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine.
 
@@ -65,7 +62,7 @@ func viewOf(source: string): View =
   )
   result.inside = newSeq[bool](result.lines.len)
   for t in source.tokens:
-    for line in t.line + 1 .. t.lastLine(source): result.inside[line] = true
+    for line in t.line + 1..t.lastLine(source): result.inside[line] = true
 
 
 func isText(v: View, i: int): bool =
@@ -96,8 +93,8 @@ func firstWord(code: string): string =
   ## Read leading identifier of code line.
   let s = code.strip
   var k = 0
-  while k < s.len and s[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
-  s[0 ..< k]
+  while k < s.len and s[k] in {'a'..'z', 'A'..'Z', '0'..'9', '_'}: inc k
+  s[0..<k]
 
 
 func runBefore(v: View, i: int): tuple[first, count, upper: int] =
@@ -112,7 +109,7 @@ func runBefore(v: View, i: int): tuple[first, count, upper: int] =
   (upper + 1, anchor - upper - 1, upper)
 
 
-func isOpenerAbove(v: View, upper, i: int): bool =
+func isOpenerAbove(v: View; upper, i: int): bool =
   ## Decide whether nearest code line at or above `upper`, through comments and docs alone,
   ##   opens block holding line `i`.
   var k = upper
@@ -162,7 +159,7 @@ func runs(path, source: string): seq[Run] =
     v = source.viewOf
     is_test_file = "/tests/" in "/" & path
   var found: seq[Run]
-  for i in 0 ..< v.lines.len:
+  for i in 0..<v.lines.len:
     if not v.isCode(i) or v.inside[i]: continue
     let word = v.code[i].firstWord
     var after = v.lines[i].strip[word.len .. ^1].strip(trailing = false)
@@ -189,7 +186,7 @@ func runs(path, source: string): seq[Run] =
   for run in found.mitems: run.wanted = LUT_BLANKS_BY_TARGET[run.target]
   for run in found:
     if run.count == run.wanted: continue
-    if toSeq(run.first ..< run.first + run.count).anyIt(v.inside[it]): continue
+    if toSeq(run.first..<run.first + run.count).anyIt(v.inside[it]): continue
     if found.anyIt(it.first == run.first and it.wanted != run.wanted): continue
     if result.anyIt(it.first == run.first): continue
     result.add run
@@ -215,14 +212,14 @@ func fixBlanks*(path, source: string): Fix =
   let found = runs(path, source)
   var
     lines = source.split('\n')
-    origin = toSeq(1 .. lines.len)
+    origin = toSeq(1..lines.len)
   for run in found.sortedByIt(-it.first):
     let
       after = run.first + run.count
-      kept = origin[run.first ..< run.first + min(run.count, run.wanted)]
+      kept = origin[run.first..<run.first + min(run.count, run.wanted)]
       inserted = newSeq[int](run.wanted - kept.len)
-    lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
-    origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
+    lines = lines[0..<run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
+    origin = origin[0..<run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in found:
     let rule =

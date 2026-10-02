@@ -26,10 +26,8 @@ import ./[domains, findings]
 
 
 const
-  ROLE_KEY* = "**Role:**"
-    ## Opening of role line, bold as every prompt and template writes it.
-  COMMENT_OPEN* = "<!--"
-    ## Opening of HTML comment, which unfilled template carries after key.
+  ROLE_KEY* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
+  COMMENT_OPEN* = "<!--"  ## Opening of HTML comment, which unfilled template carries after key.
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
@@ -48,7 +46,7 @@ func roleLine*(body: string): string =
     let s = line.strip
     if s.len == 0: continue
     let open = s.find(COMMENT_OPEN)
-    return (if open < 0: s else: s[0 ..< open].strip)
+    return (if open < 0: s else: s[0..<open].strip)
   ""
 
 

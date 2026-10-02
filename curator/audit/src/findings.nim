@@ -20,15 +20,13 @@ import std/[algorithm, sequtils]
 
 
 type
-  Finding* = object
-    ## Define one rule violation located at path and line.
+  Finding* = object  ## Define one rule violation located at path and line.
     path*: string  ## Repository-relative path, `/` separated; empty for branch-level.
     line*: int  ## One-based line; `0` when finding concerns whole file.
     message*: string  ## Telegraphic statement, ending with echoed value where one exists.
     is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
 
-  Fix* = object
-    ## Define source fixer returns, with one report per rewrite.
+  Fix* = object  ## Define source fixer returns, with one report per rewrite.
     source*: string  ## Text after fix; input itself where nothing broke rule.
     fixed*: seq[Finding]  ## Path and line of input rewritten, message naming rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.

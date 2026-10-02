@@ -89,15 +89,13 @@ type
     last: int  ## Zero-based line statement closes on; bracket spanning lines is read whole.
     target: string  ## Text after `import`, lines joined.
 
-  BindingRun = object
-    ## Define run of consecutive single bindings sharing keyword and indent.
+  BindingRun = object  ## Define run of consecutive single bindings sharing keyword and indent.
     first: int  ## Zero-based line of first binding.
     last: int  ## Zero-based line of last binding.
     keyword: string  ## Keyword each binding repeats.
     indent: int  ## Indent each binding stands at.
 
-  ReturnPlace {.pure.} = enum
-    ## Define where `return result` stands, which decides its one fix.
+  ReturnPlace {.pure.} = enum  ## Define where `return result` stands, which decides its one fix.
     Ending  ## Last statement of routine holding `result`, at its body's own indent: line goes.
     Early  ## Inside branch, or with more body after it: bare `return` exits with same value.
     Unread  ## Place scanner cannot name, or whose fix is not one: line stays.
@@ -109,8 +107,7 @@ type
     items: seq[string]  ## Modules, pragma kept, alphabetised once all are read.
     statement: string  ## Statement standing in their place.
 
-  Disorder = object
-    ## Define list language leaves unordered, written out of alphabetical order.
+  Disorder = object  ## Define list language leaves unordered, written out of alphabetical order.
     line: int  ## Zero-based line list stands on.
     first: int  ## Byte offset of first item.
     after: int  ## Byte offset after last item.
@@ -125,28 +122,23 @@ const
     ## Prefixes naming paths of one machine (CONTRIBUTOR.md, System).
   TYPESCRIPT_FLAGS* = ["exactOptionalPropertyTypes", "noUncheckedIndexedAccess", "strict"]
     ## Compiler options `tsconfig.json` sets to `true` (CONTRIBUTOR.md, TypeScript).
-  BINDING_KEYWORDS = ["const", "let", "var"]
-    ## Keywords opening binding.
+  BINDING_KEYWORDS = ["const", "let", "var"]  ## Keywords opening binding.
   CONDITIONS = ["case", "elif", "else", "except", "if", "of", "when"]
     ## Openers making `echo` beneath them conditional, i.e. failure diagnostic.
   FOREIGN_MARKS = ["dynlib", "header:", "importc", "importcpp", "importjs"]
     ## Pragmas marking foreign bindings, which alone may stand under `{.push.}`.
   STUB_KEYS = ["batchable", "joinable"]
     ## Testament keys `testament pattern` never reads (STYLE.md §6).
-  IMPORT_MARK = "import "
-    ## Opening of import statement at module level.
+  IMPORT_MARK = "import "  ## Opening of import statement at module level.
   RETURN_RESULT = "return result"
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.
   RESULT_ROUTINES = ["converter", "func", "method", "proc"]
     ## Routines holding implicit `result`; template and macro return from their caller.
   TESTAMENT_HEADER = "discard \"\"\""
     ## Opening of stub's testament header, which stands before module's header docs.
-  LONG_STRING = "\"\"\""
-    ## Delimiter of string spanning lines.
-  OPENERS = {'(', '[', '{'}
-    ## Brackets opening span that continues line.
-  CLOSERS = {')', ']', '}'}
-    ## Brackets closing such span.
+  LONG_STRING = "\"\"\""  ## Delimiter of string spanning lines.
+  OPENERS = {'(', '[', '{'}  ## Brackets opening span that continues line.
+  CLOSERS = {')', ']', '}'}  ## Brackets closing such span.
   ALL_PRAGMA = "{.all.}"
     ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
   PRAGMAS_BUILT_IN = [
@@ -175,8 +167,8 @@ func firstWord(text: string): string =
   ## Read leading identifier of stripped text.
   let s = text.strip
   var k = 0
-  while k < s.len and s[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
-  s[0 ..< k]
+  while k < s.len and s[k] in {'a'..'z', 'A'..'Z', '0'..'9', '_'}: inc k
+  s[0..<k]
 
 
 func dictionaryKey(name: string): (string, string) =
@@ -202,7 +194,7 @@ func bracketItems(text: string): seq[string] =
     open = text.find('[')
     close = text.rfind(']')
   if open < 0 or close < open: return
-  for item in text[open + 1 ..< close].split(','):
+  for item in text[open + 1..<close].split(','):
     let name = item.itemName
     if name.len > 0: result.add name
 
@@ -287,7 +279,7 @@ func pragmaNames(code: string): seq[string] =
     if open < 0: break
     let close = code.find(".}", open + 2)
     if close < 0: break
-    for p in code[open + 2 ..< close].split(','):
+    for p in code[open + 2..<close].split(','):
       let name = p.strip.split({':', ' ', '['})[0]
       if name.len > 0: result.add name
     at = close + 2
@@ -370,7 +362,7 @@ func checkTest(path, source: string; lines, code: seq[string]): seq[Finding] =
     else:
       let
         close = source.find(LONG_STRING, open + TESTAMENT_HEADER.len)
-        header = if close > open: source[open + TESTAMENT_HEADER.len ..< close] else: ""
+        header = if close > open: source[open + TESTAMENT_HEADER.len..<close] else: ""
       for line in header.splitLines:
         let s = line.strip
         if s.startsWith("cmd:") and " -r" in s:
@@ -456,7 +448,7 @@ func placeOf(lines, code: seq[string]; i: int): ReturnPlace =
   while after < code.len and code[after].strip.len == 0: inc after
   if after < code.len and code[after].indentOf >= indent: return ReturnPlace.Early
   let
-    has_statement = (opener + 1 ..< i).toSeq.anyIt(code[it].strip.len > 0)
+    has_statement = (opener + 1..<i).toSeq.anyIt(code[it].strip.len > 0)
     has_comment = lines[i].strip != RETURN_RESULT
     is_after_comment = lines[i - 1].strip.len > 0 and code[i - 1].strip.len == 0
   if not has_statement or has_comment or is_after_comment: ReturnPlace.Unread
@@ -484,7 +476,7 @@ func fixReturnResult(path, source: string): Fix =
         result.origin.setLen(result.origin.len - 1)
     of ReturnPlace.Early:
       let at = code[i].find(RETURN_RESULT)
-      shaped.add line[0 ..< at] & "return" & line[at + RETURN_RESULT.len .. ^1]
+      shaped.add line[0..<at] & "return" & line[at + RETURN_RESULT.len .. ^1]
       result.origin.add i + 1
     result.fixed.add finding(path, i + 1, "return result (STYLE.md §5)")
   result.source = shaped.join("\n")
@@ -496,7 +488,7 @@ func sortedBracket(statement: string): string =
   let
     open = statement.find('[')
     close = statement.rfind(']')
-    slots = statement[open + 1 ..< close].split(',')
+    slots = statement[open + 1..<close].split(',')
   var items = slots.mapIt(it.strip).filterIt(it.len > 0)
   items = items.sortedByIt(it.itemName.dictionaryKey)
   var
@@ -508,9 +500,9 @@ func sortedBracket(statement: string): string =
       filled.add slot
       continue
     let lead = slot.len - slot.strip(leading = true, trailing = false).len
-    filled.add slot[0 ..< lead] & items[k] & slot[lead + core.len .. ^1]
+    filled.add slot[0..<lead] & items[k] & slot[lead + core.len .. ^1]
     inc k
-  statement[0 .. open] & filled.join(",") & statement[close .. ^1]
+  statement[0..open] & filled.join(",") & statement[close .. ^1]
 
 
 func fixImports(path, source: string): Fix =
@@ -522,10 +514,10 @@ func fixImports(path, source: string): Fix =
   for span in code.importSpans:
     let items = span.target.bracketItems
     if items == items.sortedByIt(it.dictionaryKey): continue
-    let statement = lines[span.first .. span.last].join("\n")
-    if statement != code[span.first .. span.last].join("\n"): continue
+    let statement = lines[span.first..span.last].join("\n")
+    if statement != code[span.first..span.last].join("\n"): continue
     let sorted_lines = statement.sortedBracket.split('\n')
-    if sorted_lines.countIt(it.isWide) > lines[span.first .. span.last].countIt(it.isWide):
+    if sorted_lines.countIt(it.isWide) > lines[span.first..span.last].countIt(it.isWide):
       continue
     for k, line in sorted_lines: lines[span.first + k] = line
     result.fixed.add finding(path, span.first + 1, "bracket import (X.5)")
@@ -537,7 +529,7 @@ func fixImports(path, source: string): Fix =
     var j = i
     while j + 1 < spans.len and spans[j + 1].first == spans[j].last + 1: inc j
     let
-      block_spans = spans[i .. j]
+      block_spans = spans[i..j]
       ranked = block_spans.sortedByIt(it.target.importRank)
     if ranked != block_spans:
       var
@@ -548,7 +540,7 @@ func fixImports(path, source: string): Fix =
         if r < rank:
           result.fixed.add finding(path, span.first + 1, "import rank (X.5)")
         rank = max(rank, r)
-      for span in ranked: reordered.add lines[span.first .. span.last]
+      for span in ranked: reordered.add lines[span.first..span.last]
       for k, line in reordered: lines[spans[i].first + k] = line
     i = j + 1
   result.source = lines.join("\n")
@@ -562,13 +554,13 @@ func importParts(target: string): tuple[prefix: string, items: seq[string]] =
   var prefix, body: string
   if open >= 0:
     if not target.endsWith("]"): return
-    (prefix, body) = (target[0 ..< open], target[open + 1 ..< target.high])
+    (prefix, body) = (target[0..<open], target[open + 1..<target.high])
   else:
     let
       path = target.itemName
       slash = path.rfind('/')
     if slash < 0: return
-    (prefix, body) = (path[0 .. slash], path[slash + 1 .. ^1] & target[path.len .. ^1])
+    (prefix, body) = (path[0..slash], path[slash + 1 .. ^1] & target[path.len .. ^1])
   if not prefix.endsWith("/") or ',' in prefix or ' ' in prefix: return
   for item in body.split(','):
     let core = item.strip
@@ -589,7 +581,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
     var j = i
     while j + 1 < spans.len and spans[j + 1].first == spans[j].last + 1: inc j
     var prefixes: seq[string]
-    for span in spans[i .. j]:
+    for span in spans[i..j]:
       if span.first != span.last or lines[span.first] != code[span.first]: continue
       let (prefix, items) = span.target.importParts
       if prefix.len == 0: continue
@@ -683,7 +675,7 @@ func fixBindings(path, source: string): Fix =
   ##   that continuation moves, and every earlier run keeps its lines.
   result.source = source
   let runs = source.codeOnly.split('\n').bindingRuns
-  var origin = toSeq(1 .. source.count('\n') + 1)
+  var origin = toSeq(1..source.count('\n') + 1)
   for run in runs.reversed:
     let
       lines = result.source.split('\n')
@@ -692,21 +684,21 @@ func fixBindings(path, source: string): Fix =
       last = run.continuationOf(lines, code)
       margin = ' '.repeat(run.indent)
     var shaped = @[margin & run.keyword]
-    for k in run.first .. run.last:
+    for k in run.first..run.last:
       let binding = lines[k][run.indent + run.keyword.len .. ^1].strip(trailing = false)
       shaped.add margin & "  " & binding
-    for k in run.last + 1 .. last:
+    for k in run.last + 1..last:
       shaped.add(if lines[k].len == 0: "" else: "  " & lines[k])
 
     # Leave run to hand where its lines hold long string, or reshaping makes line wide.
     var is_long_string = false
-    for k in run.first .. last:
+    for k in run.first..last:
       let at = lines[k].find(LONG_STRING)
       if at >= 0 and kept[k][at] == ' ': is_long_string = true
-    let is_widened = shaped.countIt(it.isWide) > lines[run.first .. last].countIt(it.isWide)
+    let is_widened = shaped.countIt(it.isWide) > lines[run.first..last].countIt(it.isWide)
     if is_long_string or is_widened: continue
-    result.source = (lines[0 ..< run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
-    origin = origin[0 ..< run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
+    result.source = (lines[0..<run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
+    origin = origin[0..<run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
     result.fixed.insert(finding(path, run.first + 1, "single bindings (X.5)"), 0)
   if result.fixed.len > 0: result.origin = origin
 
@@ -719,7 +711,7 @@ func fixStrictFuncs(path, source: string): Fix =
   result.source = source
   var
     lines = source.split('\n')
-    origin = toSeq(1 .. lines.len)
+    origin = toSeq(1..lines.len)
     reported = 0
   let present = lines.find(STRICT_FUNCS)
   if present >= 0:
@@ -728,8 +720,8 @@ func fixStrictFuncs(path, source: string): Fix =
     var first = present
     if present + 1 < lines.len and lines[present + 1].len == 0:
       while first > 0 and lines[first - 1].len == 0: dec first
-    lines = lines[0 ..< first] & lines[present + 1 .. ^1]
-    origin = origin[0 ..< first] & origin[present + 1 .. ^1]
+    lines = lines[0..<first] & lines[present + 1 .. ^1]
+    origin = origin[0..<first] & origin[present + 1 .. ^1]
     reported = present + 1
   let code = lines.join("\n").codeOnly.split('\n')
   var at = -1
@@ -749,8 +741,8 @@ func fixStrictFuncs(path, source: string): Fix =
   if cut > 0 and lines[cut - 1].len > 0: inserted.add ""
   inserted.add STRICT_FUNCS
   if at >= 0 or cut == lines.len: inserted.add ""
-  result.source = (lines[0 ..< cut] & inserted & lines[cut .. ^1]).join("\n")
-  result.origin = origin[0 ..< cut] & inserted.mapIt(0) & origin[cut .. ^1]
+  result.source = (lines[0..<cut] & inserted & lines[cut .. ^1]).join("\n")
+  result.origin = origin[0..<cut] & inserted.mapIt(0) & origin[cut .. ^1]
   result.fixed.add finding(path, reported, "strictFuncs (STYLE.md §2)")
 
 
@@ -796,19 +788,19 @@ func disorders(source: string): seq[Disorder] =
     if spans.len < 2 or spans.anyIt(it[1] < it[0]): continue
     if is_pragma:
       if names.anyIt(it.toLowerAscii.replace("_", "") notin PRAGMAS_BUILT_IN): continue
-    elif toSeq(k ..< stop).anyIt(tokens[it].spelling(source) == "except"): continue
+    elif toSeq(k..<stop).anyIt(tokens[it].spelling(source) == "except"): continue
 
     # Sort item texts into slots they held: bare pragma before one with argument, then by name.
     let
-      texts = spans.mapIt(source[tokens[it[0]].first ..< tokens[it[1]].after])
+      texts = spans.mapIt(source[tokens[it[0]].first..<tokens[it[1]].after])
       keys = if is_pragma: names else: texts
-      order = toSeq(0 ..< texts.len).sortedByIt(
+      order = toSeq(0..<texts.len).sortedByIt(
         (is_pragma and spans[it][1] > spans[it][0], keys[it].dictionaryKey, it),
       )
-    if order == toSeq(0 ..< texts.len): continue
+    if order == toSeq(0..<texts.len): continue
     var sorted = texts[order[0]]
-    for i in 1 ..< spans.len:
-      sorted.add source[tokens[spans[i - 1][1]].after ..< tokens[spans[i][0]].first]
+    for i in 1..<spans.len:
+      sorted.add source[tokens[spans[i - 1][1]].after..<tokens[spans[i][0]].first]
       sorted.add texts[order[i]]
     result.add Disorder(
       line: t.line,
@@ -837,7 +829,7 @@ func fixLists(path, source: string): Fix =
   let found = source.disorders
   result.source = source
   for d in found.reversed:
-    result.source = result.source[0 ..< d.first] & d.sorted & result.source[d.after .. ^1]
+    result.source = result.source[0..<d.first] & d.sorted & result.source[d.after .. ^1]
   for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10)")
 
 
