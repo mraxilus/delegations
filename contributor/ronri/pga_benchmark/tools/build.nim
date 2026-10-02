@@ -78,6 +78,7 @@ const
   SYSTEM = [
     ("git", "read library head and trees `drive` holds pin to"),
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("binutils", "`objdump` disassembles object files `show` reads machine code from"),
     ("coreutils", "`sha256sum` store checks those faces with"),
   ]
     ## System packages build needs beyond compiler.
@@ -779,7 +780,7 @@ proc disassembled(cache, name: string): seq[string] =
   ## Read machine code of one function from whichever object file in cache holds it.
   for path in walkFiles(cache / "*.o"):
     let (text, code) = execCmdEx("objdump -d --no-show-raw-insn " & quoteShell(path))
-    if code != 0: continue
+    if code != 0: raise newException(OSError, "objdump failed; got exit `" & $code & "`.")
     var is_inside = false
     for line in text.splitLines:
       if line.contains("<" & name & ">:"): is_inside = true
