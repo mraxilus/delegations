@@ -168,6 +168,16 @@ suite "Hooks":
     check checkMessage(BRANCH, verbose, [], []).len == 0
 
 
+  test "subject is first paragraph, as git reads it, and earlier subjects stay with check-commits":
+    # Git joins lines before first blank line into subject, so line under subject is subject too.
+    let joined = "feat(pga_benchmark): add gaps\nGaps read baseline of each algebra.\n"
+    check checkMessage(BRANCH, joined, [], []).messages.anyIt("add gaps Gaps read" in it)
+    # `--amend` runs hook while old head is still among earlier subjects.
+    check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n", ["Old bad subject."], []).len == 0
+    # Same bad subject written again is still new finding: one earlier copy cancels one.
+    check checkMessage(BRANCH, "Old bad subject.\n", ["Old bad subject."], []).len > 0
+
+
   test "git command reads checkout it acts in, so worktree holds its own branch":
     check commandDirectory("git commit -m x", "/work/tree") == "/work/tree"
     check commandDirectory("git -C /other commit", "/work/tree") == "/other"
