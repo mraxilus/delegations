@@ -1083,6 +1083,22 @@ suite "Camera":
     check level.distance =~ opening.distance
     check abs(seen.x - after.x) < 0.01
     check abs(seen.y - before.y) < 0.01
+    # Level drag outside band zooms nothing either: heights match, so ratio is one.
+    var across = opening
+    let
+      (left, right) = (ScreenPosition(x: 700.0, y: 300.0), ScreenPosition(x: 800.0, y: 300.0))
+      taken = pointHeld(
+        eye, across.pivot, across.headingThrough(axes, wide, tall, left),
+        across.radiusHeld(wide, tall, 0.0),
+      )
+    across.panAcross(left, right, wide, tall, has_selection = true, depth_held = 19.0)
+    let carried = projectToScreen(
+      across.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, taken,
+    )
+    check across.distance =~ opening.distance
+    check across.pivot =~ opening.pivot
+    check abs(carried.x - right.x) < 0.01
+    check abs(carried.y - right.y) < 0.01
 
   test "a right drag with a selection keeps the point it took at the press":
     # Point asked again at each step lies on sphere zoom resizes, so it is other point, and
@@ -1129,12 +1145,13 @@ suite "Camera":
       (twelve, _) = dragged(12, column_press, [column_release])
       (returned, _) = dragged(12, column_press, [column_release, column_press])
     check once.distance =~ twelve.distance
+    check once.frame.forward =~ opening.frame.forward
     check returned.eye =~ opening.eye
     check returned.distance =~ opening.distance
     # Slant out and back: dolly and turntable turn are three motions for point's two
     #   coordinates, so path leaves trace. Measured 0.0018 at separation 19.
     let (slant_back, _) = dragged(12, slant_press, [slant_release, slant_press])
-    check norm(slant_back.eye - opening.eye) < 1.0e-3*opening.distance
+    check norm(slant_back.eye - opening.eye) < 0.0025
 
   test "an aimed zoom draws the pivot toward what it aimed at":
     # `dollyToward` scales pivot toward anchor by exactly factor distance.
