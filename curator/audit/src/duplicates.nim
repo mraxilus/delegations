@@ -21,7 +21,7 @@ const PARAGRAPH_WORDS* = 25
 type Paragraph* = object
   ## Define one prose paragraph and where it starts.
   text*: string  ## Words joined by single space.
-  line*: int     ## Line paragraph opens on, 1-based.
+  line*: int  ## Line paragraph opens on, 1-based.
 
 
 func paragraphs*(markdown: string): seq[Paragraph] =

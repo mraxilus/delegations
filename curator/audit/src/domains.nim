@@ -37,21 +37,21 @@ type
   Domain* = object
     ## Define one life area: folder slug, display name, one-line theme.
     folder*: string  ## Directory name under `contributor/`; also branch segment.
-    name*: string    ## Display name, may hold characters git refs reject.
-    theme*: string   ## One sentence naming what projects under it are about.
+    name*: string  ## Display name, may hold characters git refs reject.
+    theme*: string  ## One sentence naming what projects under it are about.
 
   Role* {.pure.} = enum
     ## Define what branch owns, one member per grammar arm.
-    Curator         ## `curator/<name>`: whole tree, rules and root work.
+    Curator  ## `curator/<name>`: whole tree, rules and root work.
     CuratorProject  ## `curator/<project>/<name>`: one curator project.
-    Contributor     ## `contributor/<domain>/<project>/<name>`: one domain project.
+    Contributor  ## `contributor/<domain>/<project>/<name>`: one domain project.
 
   Branch* = object
     ## Define parsed branch name.
     role*: Role
-    domain*: string   ## Domain folder; empty unless `Role.Contributor`.
+    domain*: string  ## Domain folder; empty unless `Role.Contributor`.
     project*: string  ## Project folder; empty for `Role.Curator`.
-    name*: string     ## Free part after prefix.
+    name*: string  ## Free part after prefix.
 
 
 const
@@ -66,10 +66,10 @@ const
       theme: "Game development across every other domain.",
     ),
   ]
-  CURATOR* = "curator"          ## Root of curator projects; head of curator branches.
+  CURATOR* = "curator"  ## Root of curator projects; head of curator branches.
   CONTRIBUTOR* = "contributor"  ## Root of domain folders; head of contributor branches.
   ROOTS* = [CURATOR, CONTRIBUTOR]  ## Project roots; each holds README.md and folders only.
-  MAIN* = "main"                ## Protected branch; owner merges into it by hand.
+  MAIN* = "main"  ## Protected branch; owner merges into it by hand.
 
 
 func findDomain*(folder: string): Option[Domain] =

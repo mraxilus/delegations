@@ -42,15 +42,15 @@ import ./[domains, findings, form]
 type
   Subject* = object
     ## Define parsed commit subject.
-    kind*: string     ## Commit type, member of `TYPES`.
-    scope*: string    ## Project name or `curator`.
+    kind*: string  ## Commit type, member of `TYPES`.
+    scope*: string  ## Project name or `curator`.
     summary*: string  ## Lowercase imperative summary without final period.
 
   Commit* = object
     ## Define one commit of branch as check reads it.
-    subject*: string      ## First line of message.
-    body*: string         ## Message after subject, trailers included.
-    paths*: seq[string]   ## Paths commit touches.
+    subject*: string  ## First line of message.
+    body*: string  ## Message after subject, trailers included.
+    paths*: seq[string]  ## Paths commit touches.
 
 
 const
