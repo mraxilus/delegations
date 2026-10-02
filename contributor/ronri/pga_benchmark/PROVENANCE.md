@@ -624,11 +624,11 @@ and a header that closes at its own indent.
 
 ## Library head
 
-**`drive` holds the pin to library head.** It reads the head of the library repository with
-`git ls-remote`, and compares the tree of the library directory at head with its tree at pin.
-A commit elsewhere in the repository changes nothing measured, so the check compares trees, not
-commits. A pin that lags head is a finding on every push until the pin follows, as the
-Architect chose. So each page shows the library as it stands.
+**The verb `head` holds the pin to library head.** It reads the head of the library repository
+with `git ls-remote`, and compares the tree of the library directory at head with its tree at
+pin. A commit elsewhere in the repository changes nothing measured, so the check compares trees,
+not commits. Where the trees agree, it exits 0. Where they do not, it prints its finding and
+exits 1.
 
 **`drive` holds every measurement and file to the pin.** Each baseline and each evaluation must be
 taken at the pin. Each evaluation must carry the digest of its edits as they are now. Each change
@@ -639,12 +639,16 @@ checkout is a finding. The checkout is under `dependencies/`, which git ignores,
 that runs over this project reaches it too. A quote would then match text that the pin does
 not hold.
 
-Cost: the verdict of `drive` depends on the library repository as well as on this project.
-The same commit here can pass today and fail after the library moves. That is the purpose of
-the check, and it departs from the rule that a check gives the same verdict on the same code.
+**No merge waits on `head`.** Its verdict moves with the library and not with this project.
+So `drive` and the suites read no head, and they give the same verdict on the same code
+(`CONTRIBUTOR.md`, Tests are paramount). The `head` workflow runs the verb daily, and keeps one
+issue open for this project while the pin lags. Following head stays the choice of this
+project, and the README lists the steps. Cost: the pages can show a library one day behind its
+head.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Head`: tree against commit,
-stamps, digests of edits, the publications and the README.
+stamps, digests of edits, the publications and the README. Suite `Internal: Driver` holds `drive`
+to read no head, and the verb `head` to report what `checkHead` finds.
 
 ## Dependencies
 
