@@ -1918,15 +1918,20 @@ Declared unmet, so the Style row above stays true (Article VIII.1):
 ## Form of the source
 
 **The source follows the charter of #257, rule by rule.** Every global is in SCREAMING_SNAKE_CASE,
-and each mutable one says why it is global. Every conversion is a prefix call, and every routine has
-a doc. Each module declares its types in one section, before its routines. Verified by the audit of
+and each mutable one says why it is global. Every conversion is a prefix call. Every routine has a
+doc, except some routines of the planner in `simulation/plan.nim`, and `times`, `transposed` and a
+nested `turnOf` in `simulation/rigid.nim`. Each module declares its types in one section, before its
+routines. Verified by the audit of
 #302, which counted 397 sites against 16 rules. A script for each rule found every site of it.
 
-**No name is an abbreviation.** The Architect ruled so on #305, past the closed list of V.6.
-`Vector`, `Position` and `Quaternion` are in full, and so is each name of the engine binding. The C
-name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins one-letter symbols is
-spelled out, as `delta_x` for `dx`. An acronym stays only where the root glossary lists it as one
-a layman knows (V.9).
+**A name spells its words out, but for a few that wait.** The Architect ruled so on #305, past the
+closed list of V.6. `Vector`, `Position` and `Quaternion` are in full, and so is each name of the
+engine binding. The C name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins
+one-letter symbols is spelled out, as `delta_x` for `dx`.
+
+Two kinds of name do not follow this yet. The search of the planner binds `sd`, an abbreviation,
+and joins symbols, as `fx`, `sy` and `yq`. `Dof` is an acronym that no glossary lists, and so are
+`svg`, `html`, `css` and `js` in several names. V.9 keeps an acronym only where a glossary lists it.
 
 **A path is a name too.** The simulation is in `simulation/`, and the build folders are
 `dependencies/` and `binaries/`. The root ignore file ignores both, so this project has no ignore
