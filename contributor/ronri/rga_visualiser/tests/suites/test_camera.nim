@@ -580,8 +580,9 @@ suite "Camera":
     #   with coarse depth every star past few hundred thousand units failed test and
     #   vanished from beside far star. Pinned against sixteen-bit step, coarsest buffer
     #   WebGL may hand out, at demo's own camera and at moon's.
-    const step_sixteen_bit = 2.0/65535.0
-    const reach = 6.5e6
+    const
+      step_sixteen_bit = 2.0/65535.0
+      reach = 6.5e6
     var camera = cameraAround(ORIGIN, 122.0, Direction(x: 2, y: 3, z: 5))
     let far = camera.distanceFar(reach)
     check camera.depthOf(camera.distanceNear, reach) =~ -1.0
