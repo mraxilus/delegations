@@ -67,7 +67,11 @@ those standards under `## Standards`, and a project glossary names its own. The 
 - A symbol keeps the case of its standard in prose, and takes the case of its kind in a name
   (`kib_peak`).
 
-No check reads a name, so each rule above holds because you read it.
+The `names` check reads the words of every declared name in Nim. It reports a word from a short
+table of coined abbreviations, each with its one full word. It also reports a run of capitals that
+no glossary lists. It passes what the glossaries list under `## Standards`, their terms, and the
+jargon of V.6. A binding of a library's own name is skipped, because the name is not ours. The
+rest of Article V holds because you read it.
 
 ## The queue and the shared allowance
 
@@ -166,6 +170,20 @@ Every later delegate:
    and prune what the change replaced.
 5. Before you merge several states or paths into one, list every behaviour that the old design
    carried for each state (`CONSTITUTION.md`, IV.7). Read the old code to do it.
+
+## How to drive a page on a simulated clock
+
+A correctness check moves time itself (Article IX.12). Install the clock of Playwright, paused,
+before the page loads. Timers, animation frames and `performance.now` then move only when the
+check moves them. Three things stay on real time, and `rga_visualiser` sets each one in
+`tools/drive/clock.ts`:
+
+- **The rendering step.** Resize, scroll and observer events fire on real frames. So wait for
+  one real rendering step before each simulated frame.
+- **CSS transitions.** The style engine runs them on real time. So run the timeline of the
+  document fast.
+- **The idle callback.** The clock of Playwright grants it no time. So grant 50 ms, the longest
+  idle period that a browser grants.
 
 ## Glossary process
 

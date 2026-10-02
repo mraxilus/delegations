@@ -130,8 +130,12 @@ suite "Hooks":
   test "push and commit message":
     check checkPush("abc\n", "abc").len == 0
     check checkPush("abc", "def").messages[0].contains("exact commit")
+    check markPath("/repo", ".git") == "/repo/.git/koch-check"
+    check markPath("/repo/wt", "/repo/.git/worktrees/wt") ==
+      "/repo/.git/worktrees/wt/koch-check"  # worktree's own dir, where `.git` is file
     check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", []).len == 0
     check checkMessage(BRANCH, "Add gaps", []).len == 1  # not conventional
+    check checkMessage(BRANCH, "Merge branch 'main' into " & BRANCH, []).len == 0  # git's own
     check checkMessage(
       BRANCH, "# comment\nfix(pga_benchmark): x", ["feat(pga_benchmark): y"]
     ).len == 1  # fix without test before it
@@ -143,7 +147,8 @@ suite "Hooks":
     check "outside grammar" in startContext("claude/x", "", "## List", @[])
     check "re-stamp" in startContext("curator/x", "", "## List", @[finding("", 0, "d")])
     check turnWrites([Call(name: "Bash", command: "git push -u origin x")])
-    check turnWrites([Call(name: "mcp__github__issue_write")])
+    check turnWrites([Call(name: "mcp__github__issue_write", has_body: true)])
+    check not turnWrites([Call(name: "mcp__github__update_pull_request")])  # draft toggle
     check not turnWrites([Call(name: "Bash", command: "git status"), Call(name: "Read")])
 
   test "transcript parse finds calls since last message of person":

@@ -17,9 +17,9 @@ when compileOption("profiler"):
 
 import std/[options, os, sequtils, sets, strutils]
 import ./[
-  checker, dependencies, domains, duplicates, english, faces, findings, form, glossary,
+  checker, dependencies, domains, duplicates, english, faces, findings, form, glossary, names,
   justification, kinds, layout, plan, prompts, prose, provenance, record, toolchain, tree,
-  workflows,
+  waits, workflows,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirectories
@@ -173,3 +173,21 @@ proc auditTree*(tree: Tree): seq[Finding] =
         glossaries.add (e.path, e.content)
   result.add checkStandardsAcross(glossaries)
   result.add checkDuplicates(documents)
+
+  # Names: every Nim file is held to words glossaries admit, root and its own project.
+  var root_exempt: seq[string]
+  for (path, source) in glossaries:
+    if path == ROOT_GLOSSARY: root_exempt = source.glossaryExemptions
+  for e in tree:
+    if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
+    var exempt = root_exempt & JARGON.toSeq
+    for (path, source) in glossaries:
+      if path != ROOT_GLOSSARY and e.path.startsWith(path[0 ..< path.len - ROOT_GLOSSARY.len]):
+        exempt.add source.glossaryExemptions
+    result.add checkNames(e.path, e.content, exempt)
+
+  # Fixed waits: drive code of every project, checker's own included, since its suite holds
+  #   names as strings, which Nim source is read without.
+  for e in tree:
+    if e.kind.isSome and e.path.isDriveCode(directories):
+      result.add checkWaits(e.path, e.content, e.kind.get)

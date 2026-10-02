@@ -87,19 +87,19 @@ proc childEnv(bin: string): StringTableRef =
   result["PATH"] = bin & PathSep & getEnv("PATH")
 
 
-proc runIn*(directory, program: string, args: openArray[string], bin = ""): int =
-  ## Run program with args in directory, output streamed; return exit code.
+proc runIn*(directory, program: string, arguments: openArray[string], bin = ""): int =
+  ## Run program with arguments in directory, output streamed; return exit code.
   ##   Toolchain `bin` leads child's PATH, so tools it shells out to are its own.
   let process = startProcess(
-    program, args = args, workingDir = directory, env = childEnv(bin),
+    program, args = arguments, workingDir = directory, env = childEnv(bin),
     options = {poUsePath, poParentStreams},
   )
   result = process.waitForExit
   process.close
 
 
-proc linesIn*(directory, program: string, args: openArray[string], bin = ""): seq[string] =
-  ## Run program with args in directory and read its stdout as lines; empty on non-zero exit.
+proc linesIn*(directory, program: string, arguments: openArray[string], bin = ""): seq[string] =
+  ## Run program with arguments in directory and read its stdout as lines; empty on non-zero exit.
   ##   Streaming variant above is for checks, whose product is their verdict; this is for
   ##   verb whose product is its output.
   ##   Line carrying whitespace is dropped: contract is one bare name per line, and only
@@ -107,7 +107,7 @@ proc linesIn*(directory, program: string, args: openArray[string], bin = ""): se
   ##   before its message. Compiler that complained still fails, since caller installs what
   ##   this returns and absent package names itself.
   let process = startProcess(
-    program, args = args, workingDir = directory, env = childEnv(bin), options = {poUsePath},
+    program, args = arguments, workingDir = directory, env = childEnv(bin), options = {poUsePath},
   )
   defer: process.close
   let output = process.outputStream.readAll

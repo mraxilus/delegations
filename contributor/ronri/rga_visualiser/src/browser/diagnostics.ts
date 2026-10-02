@@ -11,8 +11,11 @@
 /* reader opening diagnostics section wants numbers, not essay.             */
 /* ---------------------------------------------------------------------- */
 
-const FRAMES_HISTORY = 240;
-const history_frame = new Array(FRAMES_HISTORY).fill(16.6);
+// Least workable frame rate, from `timings.RATE_FRAME_LEAST`, which desktop reads too.
+const RATE_FRAME_LEAST = nimRateFrameLeast();
+// Four seconds at least workable rate, as desktop panel's own `FRAMES_HISTORY`.
+const FRAMES_HISTORY = 480;
+const history_frame = new Array(FRAMES_HISTORY).fill(1000 / RATE_FRAME_LEAST);
 let index_history_frame = 0;
 let time_frame_last = performance.now();
 const sparkline = elementById<HTMLCanvasElement>('sparkline');
@@ -193,7 +196,7 @@ function addPhaseTime(name: string, delta_milliseconds: number) {
 //   sampled on cadence of another.
 const MILLISECONDS_WINDOW_READING = 200;
 // How many frames back that span reaches, measured in frames' own durations rather.
-//   than assumed from frame rate: at 60 fps it is dozen, on labouring phone it is
+//   than assumed from frame rate: at 120 fps it is two dozen, on labouring phone it is
 //   two, and either way it is last 200 ms.
 function framesRecent() {
   let spanned = 0;
@@ -304,7 +307,7 @@ function isPhaseShown(name: string) {
 //   sparkline holds four seconds and shows *when*; reader chasing stall that happens
 //   once minute needs *how often*, which is distribution rather than trace. Kept as
 //   rolling window of last `FRAMES_EXCEEDANCE` frames -- about seventeen seconds at
-//   60 fps, which is long enough to hold stall and short enough that one ages out again
+//   120 fps, which is long enough to hold stall and short enough that one ages out again
 //   rather than flattening chart for minute -- summarised as share of them at or
 //   over each duration.
 //   Window is ring of samples *and* histogram of same samples, maintained
@@ -312,7 +315,7 @@ function isPhaseShown(name: string) {
 //   one it was in. That keeps per-frame cost couple of array writes -- this runs on
 //   every frame, including ones being measured -- and leaves curve single
 //   suffix scan over buckets, done only when section is actually open.
-const FRAMES_EXCEEDANCE = 1024;
+const FRAMES_EXCEEDANCE = 2048;
 const MILLISECONDS_BUCKET = 0.5; // Fine enough to separate 16.7 ms frame from 17.2.
 // **Slowest chart marks**, in frames per second, and reach of.
 //   histogram folded from it. Two have to agree or mark is unreachable: axis
@@ -432,22 +435,28 @@ const DECADES_EXCEEDANCE = 3;
 //   part curve around digits, little enough that it reads as ground rather than
 //   as box drawn behind them.
 const HALO_LABEL_EXCEEDANCE = 'rgba(22, 27, 34, 0.85)';
+// Halo's own reach past glyphs, both sides: stroke of 3 px straddles outline.
+const PIXELS_HALO_LABEL = 3;
+// Clear space mark's labels keep from slower mark's ink, so neither line is covered.
+const PIXELS_MARK_APART = 2;
 const SHARE_MARK_LEAST = 0.86;
 const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
 // Frame marks reader actually aims at, each named by rate it is: duration.
 //   means nothing to most people and "60" means something to everyone.
 //   This list is both marks and colour bands: `bandOfExceedance` indexes it and
-//   `colours_exceedance` maps over it. 15 fps entry therefore carries *poor band's
-//   own token* on purpose -- it is mark reader asked for, not fifth band. Anything
-//   past 33.3 ms is poor whichever side of 66.7 it falls, so curve merely splits into
-//   two runs there and strokes them same colour. **Do not tidy repeated token
-//   away**: dropping it would either lose mark or invent band. 1 fps entry below is
-//   same case second time, and is there for same reason: loading largest size
+//   `colours_exceedance` maps over it. Least workable rate wears good: frame inside it
+//   meets floor, and 240 fps mark above names frame twice as fast. Below floor is fair to
+//   60 fps and poor past it. 30 and 15 fps entries therefore carry *poor band's own token*
+//   on purpose -- each is mark reader asked for, not band of its own. Anything past
+//   16.7 ms is poor whichever mark it passes, so curve merely splits into runs there and
+//   strokes them same colour. **Do not tidy repeated token away**: dropping it would
+//   either lose mark or invent band. 1 fps entry below is same case again, and is
+//   there for same reason: loading largest size
 //   is frame of *seconds*, and chart whose slowest mark is 66.7 ms cannot say how bad
 //   that is -- it can only say `past the end`. Mark at 1,000 ms gives spike ruler.
 //   Its own consequence, stated rather than discovered: window holding one-second frame
-//   stretches axis until 8.3, 16.7 and 33.3 crowd into its leftmost tenth. That is
-//   self-limiting, since axis eases back as spike ages out of 1,024-frame
+//   stretches axis until 4.2, 8.3, 16.7 and 33.3 crowd into its leftmost tenth. That is
+//   self-limiting, since axis eases back as spike ages out of 2,048-frame
 //   window, and it is honest picture of window that really did hold such frame.
 //   10 and 5 fps marks fill stretch between 15 and 1, which is where labouring
 //   frame actually lands and where axis otherwise ran decade unlabelled. They need no
@@ -456,9 +465,11 @@ const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
 //   `bandOfExceedance` returns first entry reading falls under, so entry out of
 //   order would silently mis-band every frame past it.
 const MARKS_EXCEEDANCE = [
-  { milliseconds: 1000 / 120, label: '120', token: '--speed-fast' },
-  { milliseconds: 1000 / 60, label: '60', token: '--speed-good' },
-  { milliseconds: 1000 / 30, label: '30', token: '--speed-fair' },
+  { milliseconds: 1000 / 240, label: '240', token: '--speed-fast' },
+  { milliseconds: 1000 / RATE_FRAME_LEAST, label: String(RATE_FRAME_LEAST),
+    token: '--speed-good' },
+  { milliseconds: 1000 / 60, label: '60', token: '--speed-fair' },
+  { milliseconds: 1000 / 30, label: '30', token: '--speed-poor' },
   { milliseconds: 1000 / 15, label: '15', token: '--speed-poor' },
   { milliseconds: 1000 / 10, label: '10', token: '--speed-poor' },
   { milliseconds: 1000 / 5, label: '5', token: '--speed-poor' },
@@ -699,16 +710,29 @@ function drawAxisExceedance(
   //   22px of drawer that has none to spare, and number reader can find beside its
   //   own line is worth more than guarantee it is never crossed. Labels are drawn
   //   before curve, so where two meet it is curve that reads as continuous.
-  //   Drawn only where axis actually reaches them: window with nothing slower than
-  //   120 fps in it has no business drawing others, and 15 fps mark stays away
-  //   until window holds frame that slow. Floor is set so slowest mark
+  //   Drawn only where axis actually reaches them: 15 fps mark stays away until window
+  //   holds frame that slow. Floor is set so slowest mark
   //   axis is guaranteed to reach -- 30 fps -- stands clear of right edge with room
   //   for its own labels; see `SHARE_MARK_LEAST`.
+  //   **Mark gives way where its labels would run into slower mark beside it.** Walked
+  //   slowest first, so mark nearer floor keeps its place. On axis of 90 ms, 240 fps line
+  //   stood 17 px from 120's, and its labels covered 120's own line. Curve keeps its
+  //   bands either way, since they come from list and not from what is drawn.
   context.setLineDash([2, 3]);
-  for (const mark of MARKS_EXCEEDANCE) {
-    if (!Number.isFinite(mark.milliseconds)) continue;
+  let x_ink_slower = Infinity; // Leftmost ink of slower mark last drawn.
+  for (let index = MARKS_EXCEEDANCE.length - 1; index >= 0; index -= 1) {
+    const mark = MARKS_EXCEEDANCE[index];
+    if (mark === undefined || !Number.isFinite(mark.milliseconds)) continue;
     if (mark.milliseconds > milliseconds_full) continue;
     const x = Math.round(xOf(mark.milliseconds)) + 0.5;
+    const width_label = PIXELS_HALO_LABEL + Math.max(
+      context.measureText(mark.label).width,
+      context.measureText(mark.milliseconds.toFixed(1)).width,
+    );
+    const is_room = x + 14 < w;
+    const [ink_left, ink_right] = is_room ? [x, x + 2 + width_label] : [x - 2 - width_label, x];
+    if (ink_right + PIXELS_MARK_APART > x_ink_slower) continue;
+    x_ink_slower = ink_left;
     context.strokeStyle = 'rgba(139, 150, 163, 0.30)';
     context.beginPath();
     context.moveTo(x, 0);
@@ -717,7 +741,6 @@ function drawAxisExceedance(
     context.fillStyle = 'rgba(139, 150, 163, 0.75)';
     // Inside line where it would otherwise run off right edge. Both rows take.
     //   same side, so rate and its duration stay in one column whichever way they go.
-    const is_room = x + 14 < w;
     context.textAlign = is_room ? 'left' : 'right';
     const x_label = x + (is_room ? 2 : -2);
     // Haloed against drawer's own surface before being filled. These sit over plot.
@@ -1007,12 +1030,14 @@ function runSlowPass(deadline: IdleDeadline) {
 }
 
 // Draw last four seconds of frame times as one line, scaled to slowest of them.
+//   Range floors at least workable rate, as desktop's plot does, so smooth run does not
+//   zoom in on noise.
 function drawSparkline() {
   // Observer's size, not canvas's own; see `sizeObserved`.
   const w = size_sparkline.width || 300, h = size_sparkline.height || 40;
   if (sparkline.width !== w) sparkline.width = w;
   if (sparkline.height !== h) sparkline.height = h;
-  let highest = 16.6;
+  let highest = 1000 / RATE_FRAME_LEAST;
   for (const v of history_frame) if (v > highest) highest = v;
   context_sparkline.clearRect(0, 0, w, h);
   context_sparkline.strokeStyle = '#00a7a5';
@@ -1157,7 +1182,7 @@ function refreshDiagnostics() {
   if (memory !== undefined) {
     writeText(diagnostic_heap,
       (memory.usedJSHeapSize / (1024 * 1024)).toFixed(1) + ' / ' +
-      (memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(0) + ' MB');
+      (memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(0) + ' MiB');
   }
 
   writeText(diagnostic_pool, nimSceneCount() + ' / ' + nimSceneCapacity());

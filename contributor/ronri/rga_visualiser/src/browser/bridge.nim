@@ -1086,6 +1086,11 @@ proc nimRenderLineWidths(): seq[float32] {.exportc.} =
 proc nimPointCorners(): seq[float32] {.exportc.} = pointCorners()
   ## Report point quad's static corner buffer; see `mesh.pointCorners`.
 
+proc nimRateFrameLeast(): cfloat {.exportc.} = cfloat(RATE_FRAME_LEAST)
+  ## Report least workable frame rate, per second, which page's plots floor at.
+  ##   Desktop reads same constant, so neither front-end states it twice.
+
+
 proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)
   ## Report lit point's night-side brightness, for point fragment shader's uniform.
 
@@ -1267,17 +1272,28 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   )
 
 
+proc nimCameraPanGrab() {.exportc.} =
+  ## Take depth right drag will hold, as it begins.
+  ##   Called at press, while hover still reads what pointer is over; see
+  ##   `interaction.grabPan`.
+  INTERACTION_PAGE.grabPan(CAMERA_PAGE)
+
+
 proc nimCameraPanAt(
-  before_x, before_y, after_x, after_y: cfloat; width, height: cint
+  before_x, before_y, after_x, after_y: cfloat; width, height: cint; is_grabbed: bool
 ) {.exportc.} =
-  ## Move view by right drag, in whichever way its state reads.
-  ##   See `interaction.panAcross`.
-  ##   Both ends of pointer's step rather than its length, as every rate here takes.
+  ## Move view by right drag or two fingers, in whichever way its state reads.
+  ##   See `interaction.panAcross`. Both ends of step rather than its length: pan carries
+  ##   point between them.
+  ##   `is_grabbed` holds depth `nimCameraPanGrab` took. Otherwise pivot's depth, read at
+  ##   this step: two fingers pinch as they pan, and zoom moves any depth taken at landing.
+  ##   Width stays in signature, as page passes canvas whole; pixel's span reads height.
   TWEEN_CAMERA.halt()
   panAcross(
     CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
-    ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
+    ScreenPosition(x: float(after_x), y: float(after_y)), int(height),
     SELECTION_PAGE.len > 0,
+    if is_grabbed: INTERACTION_PAGE.depth_pan else: CAMERA_PAGE.distance,
   )
 
 

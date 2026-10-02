@@ -104,6 +104,31 @@ export async function closeDiagnostics(page: Page, was: Glass): Promise<void> {
   await settleGlass(page, was);
 }
 
+/** Assert heap row names unit its figures are in: mebibytes, since it divides by 1048576.
+ *
+ *  `MB` beside those figures reads as millions of bytes, which they are not. Reports unit
+ *  alone, since heap's figures move from run to run.
+ *  On real-clock page: simulated clock stands in for `performance`, and heap reads NaN there.
+ */
+export async function driveHeapUnit(page: Page): Promise<void> {
+  const was = await openDiagnostics(page);
+  // Tick writes row; browser without heap figures never does, and check then fails on blank.
+  await waitUntil(
+    page, () => /\d/.test(document.getElementById('diagnostic-heap')?.textContent ?? ''), null,
+  ).catch(() => undefined);
+  const said = await page.evaluate(
+    () => document.getElementById('diagnostic-heap')?.textContent ?? '',
+  );
+  await closeDiagnostics(page, was);
+  const unit = said.trim().split(/\s+/).at(-1) ?? '';
+  const is_shaped = /^\d+\.\d \/ \d+ \S+$/.test(said.trim());
+  report(
+    'the heap row names mebibytes, the unit that its figures are in',
+    is_shaped && unit === 'MiB',
+    `unit "${unit}", ${is_shaped ? 'after a used and a limit figure' : 'row out of shape'}`,
+  );
+}
+
 /** Check bridge's own build steps: populated, summing within whole, agreeing with clock.
  *
  *  Bridge reports scenery, scene objects and flatten; those must sum to no more than whole
