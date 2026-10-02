@@ -32,6 +32,10 @@ const
   DRIVEN_VERB* = "drive"
     ## Verb building project's page and driving it through real events. Project gains driven
     ## checks by carrying this verb and nothing else (`plan.nim`, `verbDirectories`).
+  HEAD_VERB* = "head"
+    ## Verb holding project's pin to outside reference that moves without commit here, such as
+    ## head of library repository. Its verdict varies with that reference, so it runs daily in
+    ## `head.yml` and never where merge waits (CONTRIBUTOR.md, Tests are paramount).
   SYSTEM_VERB* = "system"
     ## Verb printing system packages project needs, one bare name per line, for caller to
     ## install. Named here and in CONTRIBUTOR.md, "System dependencies".
@@ -117,23 +121,29 @@ proc linesIn*(directory, program: string, arguments: openArray[string], bin = ""
     if s.len > 0 and not s.contains({' ', '\t'}): result.add s
 
 
-proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
-  ## Type-check each project's own scripts, through build driver that project carries.
-  ##   Verb is project's, never koch's: what type-checking needs differs per project, and
-  ##   driver already derives its declarations first. koch names verb and nothing else.
+proc runVerb(root: string, targets: openArray[Target], verb, failed: string): seq[Finding] =
+  ## Run one verb of each project's driver, on toolchain its pin names; exit other than 0 is
+  ##   finding against driver, carrying that code.
   for target in targets:
     echo "== " & target.directory
     let code = runIn(
       root / target.directory,
       target.bin.nimOf,
-      ["r", "--hints:off", DRIVER_FILE, TYPES_VERB],
+      ["r", "--hints:off", DRIVER_FILE, verb],
       target.bin,
     )
     if code != 0:
       result.add finding(
         target.directory & "/" & DRIVER_FILE, 0,
-        "Type check failed; got exit `" & $code & "`.",
+        failed & "; got exit `" & $code & "`.",
       )
+
+
+proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
+  ## Type-check each project's own scripts, through build driver that project carries.
+  ##   Verb is project's, never koch's: what type-checking needs differs per project, and
+  ##   driver already derives its declarations first. koch names verb and nothing else.
+  runVerb(root, targets, TYPES_VERB, "Type check failed")
 
 
 proc runDriven*(root: string, targets: openArray[Target]): seq[Finding] =
@@ -141,19 +151,14 @@ proc runDriven*(root: string, targets: openArray[Target]): seq[Finding] =
   ##   Same shape as `runTypes` one step further along: verb is project's, koch names it and
   ##   nothing else. What that verb builds first, and what browser it reaches for, is project's
   ##   own business (CONTRIBUTOR.md, "System dependencies").
-  for target in targets:
-    echo "== " & target.directory
-    let code = runIn(
-      root / target.directory,
-      target.bin.nimOf,
-      ["r", "--hints:off", DRIVER_FILE, DRIVEN_VERB],
-      target.bin,
-    )
-    if code != 0:
-      result.add finding(
-        target.directory & "/" & DRIVER_FILE, 0,
-        "Driven checks failed; got exit `" & $code & "`.",
-      )
+  runVerb(root, targets, DRIVEN_VERB, "Driven checks failed")
+
+
+proc runHead*(root: string, targets: openArray[Target]): seq[Finding] =
+  ## Hold each project's pin to its outside reference, through driver that project carries.
+  ##   Verb prints its own finding; koch adds exit code alone, so workflow posting output
+  ##   posts what project said.
+  runVerb(root, targets, HEAD_VERB, "Head check failed")
 
 
 proc systemOf*(root: string, targets: openArray[Target]): seq[string] =

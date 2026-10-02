@@ -113,10 +113,12 @@ the same workflow compiles the projects whose code merged that week.
 `role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
 the opening role line and the labels to the role that the branch names.
 
-Four more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
-on `main` concludes failure. `draft.yml` returns a ready pull request to draft when a push
-lands on it. `posts.yml` comments once on an issue or a comment that lands with no role line.
-`ledger.yml` reads daily what GitHub records of the rules that no check reaches:
+Five more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
+on `main` concludes failure. `head.yml` runs the `head` verb of each project daily, and keeps
+one issue open for each project while that verb fails. `draft.yml` returns a ready pull request
+to draft when a push lands on it. `posts.yml` comments once on an issue or a comment that lands
+with no role line. `ledger.yml` reads daily what GitHub records of the rules that no check
+reaches:
 
 - a pull request ready without a green run;
 - a `Closes #N` that never fired;
