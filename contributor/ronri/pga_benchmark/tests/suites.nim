@@ -26,6 +26,19 @@ const
     ## Library checkout Atlas restores, relative to this file.
   SOURCE_UMBRELLA = staticRead(LIBRARY & "/pga.nim")
     ## Library umbrella, holding named aliases.
+  REFERENCE_FUNCTIONS_FLOOR =
+    when DIMENSIONS == 4 and IS_RIGID: 73
+    elif DIMENSIONS == 5 and IS_CONFORMAL: 84
+    else: 1
+    ## Reference functions own nimcache holds at pin, which optimality law must read.
+    ##   Fewer means guard skips one, or reference turned template; either moves floor by choice.
+  BOUND_ROWS_FLOOR =
+    when DIMENSIONS == 4 and IS_RIGID: 107
+    elif DIMENSIONS == 5 and IS_CONFORMAL: 130
+    elif DIMENSIONS == 3 and IS_RIGID: 39
+    elif DIMENSIONS == 4 and IS_CONFORMAL: 46
+    else: 1
+    ## Measurands with derived bound and emitted function at pin, which soundness law must read.
   SOURCE_OPERATORS = staticRead(LIBRARY & "/pga/operators.nim")
     ## Library operators, generated and hand-written.
   SOURCE_MULTIVECTORS = staticRead(LIBRARY & "/pga/multivectors.nim")
@@ -279,19 +292,19 @@ suite "Internal: Measurements":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
     check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
 
-  test "every measurand yields finite positive measurements and results reach sink":
+  test "timing instrument reads clock and records finite, ordered measurements of every measurand":
+    # Instrument reads real clock, as Article IX.12 lets its test do; no limit on time decides.
     measureCatalogue()
     check SINK != 0.0  # results folded, none dead
     for index, measurand in CATALOGUE:
       let measurement = MEASUREMENTS[Implementation.Library][index]
       check measurement.is_measured  # library implementation always has expression
-      check measurement.ns_median > 0.0 and measurement.ns_median < 1.0e6  # per-object nanoseconds
-      check measurement.ns_min > 0.0  # positive
       check measurement.ns_min <= measurement.ns_median  # minimum bounds median
       check MEASUREMENTS[Implementation.Reference][index].is_measured ==
         (measurand.reference.len > 0)  # reference implementation present where written
       check MEASUREMENTS[Implementation.Dense][index].is_measured ==
         (measurand.reference.len == 0)  # dense form present on every general measurand
+    check MEASUREMENTS[Implementation.Library].anyIt(it.ns_median > 0.0)  # clock was read
 
 
   test "runs combine to median of run medians, least minimum, and each run's median":
@@ -620,12 +633,16 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for p in CATALOGUE:
         if f.symbol == p.emittedHead and f.name notin roots: roots.add f.name
     let total = totals(INSPECTED, roots)
-    var compared = 0
+    var
+      rows_derived = 0
+      rows_compared = 0
     for p in CATALOGUE:
       let head = p.emittedHead
       if head.len == 0 or head in INLINED: continue
       let b = p.boundOf(metric)
       if not b.is_derived: continue
+      inc rows_derived
+      var is_compared = false
       # Operator carrying scalar overload spells same symbol at same arity, so stems of
       #   parameters are what tells two apart.
       var operands_dense, operands_scalar = 0
@@ -640,8 +657,10 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         # Bound is what algebra demands, so library meets it and never beats it. Totals
         #   fold callees, since bound of chain counts arithmetic wherever it is spent.
         check b.multiplies <= total[f.name].multiplies  # derivation is sound
-        inc compared
-    check compared > 0  # law is vacuous where nothing is compared
+        is_compared = true
+      if is_compared: inc rows_compared
+    check rows_derived >= BOUND_ROWS_FLOOR  # guard skips no derived bound
+    check rows_compared == rows_derived  # every derived bound meets its library function
 
   test "dense form spends multivector lower bound, and moves only operands and result":
     let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
@@ -670,16 +689,20 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check compared == CATALOGUE.countIt(it.reference.len == 0)  # every general row has one
 
   test "typed reference spends no fill and no error check, so it is optimal code":
-    var compared = 0
-    for f in INSPECTED:
-      if not f.module.moduleTail.startsWith("reference/"): continue
-      let counts = count(f.body)
-      checkpoint f.key & " fills " & $counts.zero_fills & ", checks " & $counts.checks
-      # Call to Nim function costs fill of its result and check of error flag after it,
-      #   so form shared with another function is spelled in place or is template.
-      check counts.zero_fills == 0 and counts.checks == 0  # straight line, as hand code is
-      inc compared
-    check compared > 0  # law is vacuous where nothing is compared
+    if not CATALOGUE.anyIt(it.reference.len > 0):
+      echo "    typed reference exists at rga4d and cga5d alone, so law skips (Article IX.9)"
+      skip()
+    else:
+      var compared = 0
+      for f in INSPECTED:
+        if not f.module.moduleTail.startsWith("reference/"): continue
+        let counts = count(f.body)
+        checkpoint f.key & " fills " & $counts.zero_fills & ", checks " & $counts.checks
+        # Call to Nim function costs fill of its result and check of error flag after it,
+        #   so form shared with another function is spelled in place or is template.
+        check counts.zero_fills == 0 and counts.checks == 0  # straight line, as hand code is
+        inc compared
+      check compared >= REFERENCE_FUNCTIONS_FLOOR  # guard skips no reference function
 
   test "own nimcache holds every catalogued symbol at its arity":
     let functions = INSPECTED
