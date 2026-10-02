@@ -63,7 +63,7 @@ func scalarOf(source: int): Slots =
   result[Basis.scalar] = @[Term(coefficient: 1.0, factors: @[(source, SLOT_WHOLE)])]
 
 
-func constantOf(b: Basis; coefficient = 1.0): Slots =
+func constantOf(b: Basis, coefficient = 1.0): Slots =
   ## Read unit constant on one basis element, signed.
   result[b] = @[Term(coefficient: coefficient, factors: @[])]
 
@@ -100,7 +100,7 @@ func summed(left, right: Slots; is_difference = false): Slots =
   for b in Basis: result[b] = combined(left[b] & other[b])
 
 
-func mapped(slots: Slots; cayley: Cayley1D): Slots =
+func mapped(slots: Slots, cayley: Cayley1D): Slots =
   ## Send each slot where one-dimensional table sends its basis element, signed; cell of
   ##   several terms sends slot to each.
   for b in Basis:
@@ -112,7 +112,7 @@ func mapped(slots: Slots; cayley: Cayley1D): Slots =
         )
 
 
-func selected(slots: Slots; grade: Grade): Slots =
+func selected(slots: Slots, grade: Grade): Slots =
   ## Keep slots of one grade, and drop rest.
   for b in LUT_BASES_BY_GRADE[grade]: result[b] = slots[b]
 
@@ -120,18 +120,18 @@ func selected(slots: Slots; grade: Grade): Slots =
 
 #[ Emission ]#
 
-func factorNode(factor: Factor; is_scalar_m: bool): NimNode =
+func factorNode(factor: Factor, is_scalar_m: bool): NimNode =
   ## Spell one factor: operand slot, scalar operand or temporary.
   let name = case factor.source
     of SOURCE_M: "m"
     of SOURCE_N: "n"
     else: "t" & $factor.source
-  if factor.slot == SLOT_WHOLE or factor.source == SOURCE_M and is_scalar_m: return ident(name)
+  if factor.slot == SLOT_WHOLE or (factor.source == SOURCE_M and is_scalar_m): return ident(name)
   if factor.source > SOURCE_N: return ident(name & "_" & $factor.slot)
   nnkBracketExpr.newTree(ident(name), newCall(bindSym"Basis", newLit(factor.slot)))
 
 
-func sumNode(terms: seq[Term]; is_scalar_m = false): NimNode =
+func sumNode(terms: seq[Term], is_scalar_m = false): NimNode =
   ## Spell sum of terms, sign folded into add or subtract; zero where none.
   if terms.len == 0: return newLit(0.0)
   for index, term in terms:
@@ -148,7 +148,7 @@ func sumNode(terms: seq[Term]; is_scalar_m = false): NimNode =
       else: infix(result, if is_negative: "-" else: "+", product)
 
 
-func temporaries(emitter: var Emitter; slots: Slots): Slots =
+func temporaries(emitter: var Emitter, slots: Slots): Slots =
   ## Bind each non-empty slot to scalar temporary, so later product reads it as one factor.
   let source = emitter.source_next
   inc emitter.source_next
@@ -158,7 +158,7 @@ func temporaries(emitter: var Emitter; slots: Slots): Slots =
     result[b] = @[Term(coefficient: 1.0, factors: @[(source, ord(b))])]
 
 
-func bindScalar(emitter: var Emitter; value: NimNode): int =
+func bindScalar(emitter: var Emitter, value: NimNode): int =
   ## Bind scalar expression to temporary, and read its source.
   result = emitter.source_next
   inc emitter.source_next
@@ -196,12 +196,12 @@ func rootOf(terms: seq[Term]): NimNode =
 func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   ## Evaluate measurand symbolically, as library defines it, from its tables.
 
-  func norm(emitter: var Emitter; m: Slots; cayley: Cayley2D; b: Basis): Slots =
+  func norm(emitter: var Emitter, m: Slots, cayley: Cayley2D, b: Basis): Slots =
     ## Read root of one slot of operand's product with itself, in that slot alone.
     let root = emitter.bindScalar(rootOf(emitter.product(m, m, cayley)[b]))
     result[b] = @[Term(coefficient: 1.0, factors: @[(root, SLOT_WHOLE)])]
 
-  func unitized(emitter: var Emitter; m: Slots; cayley: Cayley2D; b: Basis): Slots =
+  func unitized(emitter: var Emitter, m: Slots, cayley: Cayley2D, b: Basis): Slots =
     ## Scale operand by reciprocal of root of one slot of its product with itself, unless zero.
     let
       root = ident("t" & $emitter.bindScalar(rootOf(emitter.product(m, m, cayley)[b])))
@@ -214,14 +214,14 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
           factors: term.factors & @[(reciprocal, SLOT_WHOLE)],
         )
 
-  func container(emitter: var Emitter; m: Slots): Slots =
+  func container(emitter: var Emitter, m: Slots): Slots =
     ## Read container, i.e. `m ∧ (m⊟)☆`.
     when IS_CONFORMAL:
       emitter.product(m, m.mapped(CAYLEY_CARRIER).mapped(CAYLEYS_DUAL.anti.right),
         CAYLEYS_WEDGE.base)
     else: m
 
-  func cocarrier(emitter: var Emitter; m: Slots): Slots =
+  func cocarrier(emitter: var Emitter, m: Slots): Slots =
     ## Read cocarrier, i.e. `m☆ ∧ 𝐞∞`.
     when IS_CONFORMAL:
       emitter.product(m.mapped(CAYLEYS_DUAL.anti.right), constantOf(Basis.infinity),
@@ -359,7 +359,7 @@ macro emitDenseForms*(): untyped =
     result.add(
       if p.arity == 2:
         quote do:
-          func `name`*(`m`: `type_m`; `n`: Multivector): Multivector {.inline, noinit.} =
+          func `name`*(`m`: `type_m`, `n`: Multivector): Multivector {.inline, noinit.} =
             `body`
       else:
         quote do:

@@ -15,13 +15,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
-import std/strutils
+import std/[options, strutils]
 
 import pga
 
-import ./bound
-import ./kinds
+import ./[bound, kinds]
 
 
 type

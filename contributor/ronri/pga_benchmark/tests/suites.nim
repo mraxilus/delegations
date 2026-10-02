@@ -12,11 +12,10 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, changes, dense, gaps, guard, head, inspector, markdown, measurements, model, notes,
-  proposals, report,
+  bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
+  notes, proposals, report,
 ]
 import ../src/pga_benchmark/pages/[docket, evaluation, proposal, shell]
-import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
 
@@ -57,7 +56,7 @@ macro expressionsCompile(measurands: static seq[Measurand]): untyped =
         check `id`.len > 0  # id names gap
 
 
-macro checkReferences(measurands: static seq[Measurand]; chapter: static string): untyped =
+macro checkReferences(measurands: static seq[Measurand], chapter: static string): untyped =
   ## Emit one test per measurand holding library expression on images to reference on typed.
   ##   Chapter "2" takes gaps citing book equations of chapter 2; "3" takes rest, which
   ##   are motor, projection and support pages of rigidgeometricalgebra.org.
@@ -184,7 +183,7 @@ when IS_CONFORMAL:
   func bulkFlat*(m: Multivector): Multivector {.inline.} = ■ m
 func add*(m, n: Multivector): Multivector {.inline.} = m + n
 func add*(m: Multivector, s: float): Multivector {.inline.} = s + m
-func `∧`*(s: float; m: Multivector): Multivector = m
+func `∧`*(s: float, m: Multivector): Multivector = m
 func hidden(m: Multivector): Multivector = m
 """
     check aliasesIn(fixture, is_conformal = false) == @["selectGrade", "bulk", "add"]  # rigid
@@ -685,7 +684,7 @@ suite "Guard":
     )
     result["functions"] = functions
 
-  func one(name: string; f: JsonNode): JsonNode =
+  func one(name: string, f: JsonNode): JsonNode =
     ## Build functions object holding one function.
     result = newJObject()
     result[name] = f
@@ -1008,7 +1007,7 @@ suite "Proposals":
     directory_sign = "proposals/01-sign"
     record_sign = "# P01: Sign\n\nWhy.\n"
 
-  func numbered(number: int; status = "proposed"): Proposal =
+  func numbered(number: int, status = "proposed"): Proposal =
     ## Read well-formed proposal at number, with status.
     let
       directory = "proposals/" & align($number, 2, '0') & "-p" & $number

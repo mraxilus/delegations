@@ -246,7 +246,7 @@ const
     ## Text before literal bound; bound naming variable instead is unknown.
 
 
-func startOf(context: string; counter: string): int =
+func startOf(context, counter: string): int =
   ## Read value counter was last set to before loop, `<counter> = ((NI) <n>);`; zero else.
   let at = context.rfind(counter & " = ((NI) ")
   if at < 0: return 0
@@ -310,7 +310,7 @@ func `+`*(a, b: Counts): Counts =
   )
 
 
-func `*`(c: Counts; trips: int): Counts =
+func `*`(c: Counts, trips: int): Counts =
   ## Scale spent terms by trips; declarations and lines are static and stay.
   Counts(
     multiplies: c.multiplies * trips,
@@ -432,7 +432,7 @@ func totals*(functions: seq[CFunction]): Table[string, Counts] =
     result[name] = totalOf(name, own, sites, 0)
 
 
-func totals*(functions: seq[CFunction]; roots: openArray[string]): Table[string, Counts] =
+func totals*(functions: seq[CFunction], roots: openArray[string]): Table[string, Counts] =
   ## Count named functions only, with their callees folded in; same fold as whole-cache one.
   ##   Folding one root walks its whole call graph, so cost of folding every function of
   ##   cache grows past what suite can spend (Article IX.8). Reader wanting few functions

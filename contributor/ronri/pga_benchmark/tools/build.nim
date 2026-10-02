@@ -126,7 +126,7 @@ const
 
 #[ Processes ]#
 
-proc run(command: string; arguments: openArray[string]) =
+proc run(command: string, arguments: openArray[string]) =
   ## Run command with arguments from project directory; raise on non-zero exit.
   let
     process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
@@ -491,7 +491,7 @@ proc publications(): JsonNode =
 proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: docket, marginalia, then one per proposal.
 
-  func linksHtml(names: openArray[string]; published: JsonNode; self: string): string =
+  func linksHtml(names: openArray[string], published: JsonNode, self: string): string =
     ## Link every other published page, in page order, led by separator; empty where none.
     var links: seq[string]
     for name in names:
@@ -589,9 +589,10 @@ proc publishedAt(name, url: string) =
 
 #[ Evaluations ]#
 
-proc evaluate(which: string; is_thorough: bool) =
-  ## Try one change or proposal at pin, every one for `all`, or those `drive` would name for
-  ##   `stale`; write each evaluation document. Typed algebras alone, or all four when thorough.
+proc evaluate(which: string, is_thorough: bool) =
+  ## Try one change or proposal at pin, and write each evaluation document.
+  ##   `all` tries every one, and `stale` tries those `drive` would name.
+  ##   Typed algebras alone, or all four when thorough.
 
   func machine(): string =
     ## Describe machine evaluation ran on, as bench documents do.
@@ -880,8 +881,8 @@ proc main(): int =
       of "evaluate": 2 .. 3
       of "published": 3 .. 3
       else: 1 .. 1
-  if paramCount() notin arguments or verb == "evaluate" and paramCount() == 3 and
-      paramStr(3) != FLAG_THOROUGH:
+  if paramCount() notin arguments or
+      (verb == "evaluate" and paramCount() == 3 and paramStr(3) != FLAG_THOROUGH):
     stderr.write USAGE
     return 2
   try:

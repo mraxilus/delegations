@@ -37,7 +37,7 @@ proc takenNow*(): JsonNode =
   }
 
 
-func algebraNode*(name: string; dimensions: int; is_conformal: bool; size: int): JsonNode =
+func algebraNode*(name: string, dimensions: int, is_conformal: bool, size: int): JsonNode =
   ## Describe algebra measured: name, dimensions, metric, multivector size in bytes.
   %*{
     "name": name,
@@ -52,7 +52,7 @@ func document*(kind: string; algebra, taken: JsonNode): JsonNode =
   %*{"schema": SCHEMA, "kind": kind, "algebra": algebra, "taken": taken}
 
 
-func checkSchema*(node: JsonNode; kind: string): string =
+func checkSchema*(node: JsonNode, kind: string): string =
   ## Read why document cannot be used, empty when it can.
   if node.kind != JObject: return "Document is not object."
   if not node.hasKey("schema") or node["schema"].getInt != SCHEMA:

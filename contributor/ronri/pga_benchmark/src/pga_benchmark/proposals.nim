@@ -82,9 +82,11 @@ const
     ## Status as `claims.json` spells it, in `StatusProposal` order.
 
 
-func figureOf*(node: Block; directory: string): Option[Figure] =
-  ## Read figure paragraph names: caption, and path resolved against `directory` with `..`
-  ##   folded; none for any block that is not one image alone. Caption may wrap over lines.
+func figureOf*(node: Block, directory: string): Option[Figure] =
+  ## Read figure paragraph names: caption, and path resolved against `directory`.
+  ##   Path has `..` folded.
+  ##   None for any block that is not one image alone.
+  ##   Caption may wrap over lines.
   if node.kind != BlockKind.Paragraph: return none(Figure)
   let
     line = node.lines.join(" ").strip

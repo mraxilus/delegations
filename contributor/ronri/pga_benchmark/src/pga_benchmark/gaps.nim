@@ -160,7 +160,7 @@ const CAUSES* = [
 
 #[ Gaps ]#
 
-func at(node: JsonNode; key: string): JsonNode =
+func at(node: JsonNode, key: string): JsonNode =
   ## Read child by key; nil where node is nil or key absent.
   if node.isNil: nil else: node{key}
 
@@ -184,11 +184,11 @@ func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measu
 func decide*(gap: var Gap) =
   ## Decide gap: relative metrics open above reference, absolute ones above zero.
   gap.over_on = @[]
-  template relative(name: string; field: untyped) =
+  template relative(name: string, field: untyped) =
     if gap.library.field.isSome and gap.reference.field.isSome and
         gap.library.field.get > gap.reference.field.get:
       gap.over_on.add name
-  template absolute(name: string; field: untyped) =
+  template absolute(name: string, field: untyped) =
     if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
       gap.over_on.add name
   relative("multiplies", multiplies)
@@ -263,7 +263,7 @@ func toJson*(l: Docket): JsonNode =
   %*{"schema": SCHEMA, "kind": KIND_DOCKET, "next": l.next, "ids": ids}
 
 
-func assign*(gaps: var seq[Gap]; docket: var Docket) =
+func assign*(gaps: var seq[Gap], docket: var Docket) =
   ## Give every gap its identifier, allotting next number to keys docket lacks.
   for gap in gaps.mitems:
     if gap.key notin docket.ids:
@@ -292,7 +292,7 @@ func isLight(f: JsonNode): bool =
     f{"total", "subs"}.getInt == 0
 
 
-func named(names: openArray[string]; most = 6): string =
+func named(names: openArray[string], most = 6): string =
   ## Join names, first few spelled and rest counted, so evidence stays one sentence.
   if names.len <= most: return names.join(", ")
   names[0 ..< most].join(", ") & ", and " & $(names.len - most) & " more"
@@ -321,7 +321,7 @@ func countFunctions(
         result[3] = value
 
 
-func overGaps(gaps: openArray[Gap]; metric: string): seq[Gap] =
+func overGaps(gaps: openArray[Gap], metric: string): seq[Gap] =
   ## Select gaps open on metric.
   for gap in gaps:
     if metric in gap.over_on: result.add gap
@@ -435,7 +435,7 @@ func decideCause*(cause: Cause; algebras: openArray[Algebra]; gaps: openArray[Ga
 
 #[ Rendering ]#
 
-func wrap*(text: string; width = WIDTH; indent = ""): seq[string] =
+func wrap*(text: string, width = WIDTH, indent = ""): seq[string] =
   ## Break text at spaces into lines of at most width runes, continuation lines indented.
   var line = ""
   for word in strutils.splitWhitespace(text):
@@ -454,7 +454,7 @@ func cell(l, r: Option[int]): string =
   (if l.isSome: $l.get else: "–") & "/" & (if r.isSome: $r.get else: "–")
 
 
-func lowerBoundRows*(algebra: Algebra; gaps: openArray[Gap]): seq[string] =
+func lowerBoundRows*(algebra: Algebra, gaps: openArray[Gap]): seq[string] =
   ## Render multivector lower bound of each operation once, keyed by spelling and shape.
   ##   Bound rests on operation and arity, and never on operand kinds, so one row serves
   ##   every measurand that spells same operation. Row also carries what library spends on

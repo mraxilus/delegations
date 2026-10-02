@@ -48,7 +48,7 @@ func render*(f: Finding): string =
   f.path & ":" & $f.line & ": " & f.message
 
 
-func text(node: JsonNode; keys: varargs[string]): string =
+func text(node: JsonNode, keys: varargs[string]): string =
   ## Read nested field as text; empty where absent.
   let n = node{keys}
   if n.isNil: "" elif n.kind == JString: n.getStr else: $n

@@ -98,7 +98,7 @@ template `-`*(a: Vector3): Vector3 =
   ## Negated vector; 0 mul.
   (let u = a; Vector3(x: -u.x, y: -u.y, z: -u.z))
 
-template `*`*(a: Vector3; s: float): Vector3 =
+template `*`*(a: Vector3, s: float): Vector3 =
   ## Vector scaled; 3 mul.
   (let u = a; let f = s; Vector3(x: u.x * f, y: u.y * f, z: u.z * f))
 
@@ -117,7 +117,7 @@ func wedge*(a, b: RoundPoint): Dipole {.inline.} =
     ),
   )
 
-func wedge*(d: Dipole; a: RoundPoint): Circle {.inline.} =
+func wedge*(d: Dipole, a: RoundPoint): Circle {.inline.} =
   ## Join dipole and round point into circle, i.e. 𝐝 ∧ 𝐚; 30 mul, 20 add.
   Circle(
     g: CarrierPlane(
@@ -138,7 +138,7 @@ func wedge*(d: Dipole; a: RoundPoint): Circle {.inline.} =
     ),
   )
 
-func wedge*(a: RoundPoint; d: Dipole): Circle {.inline.} =
+func wedge*(a: RoundPoint, d: Dipole): Circle {.inline.} =
   ## Join round point and dipole, i.e. 𝐚 ∧ 𝐝 = 𝐝 ∧ 𝐚 since grades 1 and 2 commute; 30 mul,
   ##   20 add.
   Circle(
@@ -160,7 +160,7 @@ func wedge*(a: RoundPoint; d: Dipole): Circle {.inline.} =
     ),
   )
 
-func wedge*(c: Circle; a: RoundPoint): Sphere {.inline.} =
+func wedge*(c: Circle, a: RoundPoint): Sphere {.inline.} =
   ## Join circle and round point into sphere, i.e. 𝐜 ∧ 𝐚; 20 mul, 15 add.
   Sphere(
     u: -c.g.x * a.x - c.g.y * a.y - c.g.z * a.z - c.g.w * a.w,
@@ -170,7 +170,7 @@ func wedge*(c: Circle; a: RoundPoint): Sphere {.inline.} =
     w: c.m.x * a.x + c.m.y * a.y + c.m.z * a.z + c.g.w * a.u,
   )
 
-func wedge*(a: RoundPoint; c: Circle): Sphere {.inline.} =
+func wedge*(a: RoundPoint, c: Circle): Sphere {.inline.} =
   ## Join round point and circle, i.e. 𝐚 ∧ 𝐜 = −(𝐜 ∧ 𝐚); 20 mul, 15 add.
   Sphere(
     u: a.x * c.g.x + a.y * c.g.y + a.z * c.g.z + a.w * c.g.w,
@@ -206,7 +206,7 @@ func wedgeAnti*(s, t: Sphere): Circle {.inline.} =
     m: Vector3(x: s.x * t.w - s.w * t.x, y: s.y * t.w - s.w * t.y, z: s.z * t.w - s.w * t.z),
   )
 
-func wedgeAnti*(s: Sphere; c: Circle): Dipole {.inline.} =
+func wedgeAnti*(s: Sphere, c: Circle): Dipole {.inline.} =
   ## Meet sphere and circle in dipole, i.e. 𝐬 ∨ 𝐜; 30 mul, 20 add.
   Dipole(
     v: Vector3(
@@ -227,7 +227,7 @@ func wedgeAnti*(s: Sphere; c: Circle): Dipole {.inline.} =
     ),
   )
 
-func wedgeAnti*(c: Circle; s: Sphere): Dipole {.inline.} =
+func wedgeAnti*(c: Circle, s: Sphere): Dipole {.inline.} =
   ## Meet circle and sphere, i.e. 𝐜 ∨ 𝐬 = 𝐬 ∨ 𝐜 since antigrades 1 and 2 commute; 30 mul,
   ##   20 add.
   Dipole(
@@ -264,7 +264,7 @@ func wedgeAnti*(c, o: Circle): RoundPoint {.inline.} =
       c.v.x * o.m.x - c.v.y * o.m.y - c.v.z * o.m.z,
   )
 
-func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint {.inline.} =
+func wedgeAnti*(s: Sphere, d: Dipole): RoundPoint {.inline.} =
   ## Meet sphere and dipole in round point, i.e. 𝐬 ∨ 𝐝; 20 mul, 15 add.
   RoundPoint(
     x: s.y * d.m.z - s.z * d.m.y + s.u * d.p.x - s.w * d.v.x,
@@ -274,7 +274,7 @@ func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint {.inline.} =
     u: -s.x * d.p.x - s.y * d.p.y - s.z * d.p.z - s.w * d.p.w,
   )
 
-func wedgeAnti*(d: Dipole; s: Sphere): RoundPoint {.inline.} =
+func wedgeAnti*(d: Dipole, s: Sphere): RoundPoint {.inline.} =
   ## Meet dipole and sphere, i.e. 𝐝 ∨ 𝐬 = −(𝐬 ∨ 𝐝); 20 mul, 15 add.
   RoundPoint(
     x: d.m.y * s.z - d.m.z * s.y + d.v.x * s.w - d.p.x * s.u,

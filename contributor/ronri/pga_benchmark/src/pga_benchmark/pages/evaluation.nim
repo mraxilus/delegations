@@ -36,9 +36,9 @@ const SPREAD_ASSUMED = Spread(low: 0.92, high: 1.08, count: 0)
 #[ Figures ]#
 
 func touched*(
-  evaluation: JsonNode;
-  baselines: Table[string, JsonNode];
-  algebra: string;
+  evaluation: JsonNode,
+  baselines: Table[string, JsonNode],
+  algebra: string,
 ): seq[string] =
   ## List measurands whose library function evaluation changed, at one algebra.
   let
@@ -72,16 +72,16 @@ func spreadOf*(evaluations: openArray[JsonNode]): Spread =
 #[ Rendering ]#
 
 func verdictChips*(
-  evaluation: JsonNode;
-  baselines: Table[string, JsonNode];
-  spread: Spread;
+  evaluation: JsonNode,
+  baselines: Table[string, JsonNode],
+  spread: Spread,
 ): string =
   ## Render one chip per algebra: suites, then median time over what evaluation touched.
 
   func touchedMedian(
-    evaluation: JsonNode;
-    baselines: Table[string, JsonNode];
-    algebra: string;
+    evaluation: JsonNode,
+    baselines: Table[string, JsonNode],
+    algebra: string,
   ): float =
     ## Read median time ratio over measurands evaluation touched at algebra; zero where none.
     var ratios: seq[float]
@@ -136,7 +136,7 @@ func verdictChips*(
 func functionsTable*(evaluation: JsonNode): string =
   ## Render functions evaluation moved: multiplies, bytes and fills, pin then changed.
 
-  func transition(before, after: JsonNode, field: string): string =
+  func transition(before, after: JsonNode; field: string): string =
     ## Render one count at pin, then changed; `new` or `gone` where function is on one side.
     let
       was = if before.isNil or before.kind != JObject: "new" else: grouped(before{field}.getInt)
@@ -207,11 +207,12 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
     let stripped = line.strip(trailing = false)
     declarations.anyIt(stripped.startsWith(it))
 
-  func signature(lines: openArray[string]; first: int): (string, int) =
-    ## Read declaration opening at `first`, continued while its brackets stay open; drop body,
-    ##   pragmas and comment, and fold whitespace. Return signature and last line read.
+  func signature(lines: openArray[string], first: int): (string, int) =
+    ## Read declaration opening at `first`, continued while its brackets stay open.
+    ##   Drop body, pragmas and comment, and fold whitespace.
+    ##   Return signature and last line read.
 
-    func depthAfter(text: string; depth: int): int =
+    func depthAfter(text: string, depth: int): int =
       ## Count brackets left open after text, outside strings and backticks.
       result = depth
       var is_quoted, is_ticked = false
@@ -301,7 +302,7 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
       dec index
     none(string)
 
-  func signaturesHtml(label: string; signatures: openArray[string]): string =
+  func signaturesHtml(label: string, signatures: openArray[string]): string =
     ## Render signatures under label; empty where none.
     if signatures.len == 0: return ""
     result = "<span class=\"signatures\"><span class=\"label\">" & label & "</span>"

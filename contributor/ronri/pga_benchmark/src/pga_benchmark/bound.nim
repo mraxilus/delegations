@@ -102,14 +102,14 @@ func sizeOfMultivector*(m: Metric): int =
   8 * m.slots
 
 
-func isNull*(m: Metric; index: int): bool =
+func isNull*(m: Metric, index: int): bool =
   ## Read whether basis vector squares to zero and carries no metric image.
   ##   Rigid algebra degenerates its last vector. Conformal algebra pairs its last two off
   ##   diagonal, so neither is singular and metric stays invertible.
   not m.is_conformal and index == m.dimensions - 1
 
 
-func isImaged*(m: Metric; b: Blade): bool =
+func isImaged*(m: Metric, b: Blade): bool =
   ## Read whether blade survives metric, i.e. whether every factor carries image.
   for i in 0 ..< m.dimensions:
     if ((b shr i) and 1) == 1 and m.isNull(i): return false
@@ -162,7 +162,7 @@ func infinity(m: Metric): Blade =
   Blade(1) shl (m.dimensions - 1)
 
 
-func dualBlade(m: Metric; b: Blade; as_weight: bool): Option[Blade] =
+func dualBlade(m: Metric, b: Blade, as_weight: bool): Option[Blade] =
   ## Read blade dual of `b` lands on, sign aside, i.e. complement of its metric image.
   ##   Rigid metric keeps blade without null vector for bulk and blade with it for weight,
   ##   and drops other. Conformal metric swaps origin and infinity and drops nothing.
@@ -186,34 +186,34 @@ func isWedgeAntiNonzero(m: Metric; a, b: Blade): bool =
   (a or b) == m.fullBlade
 
 
-func imageOf(m: Metric; shape: Shape; s: Blade): Option[Blade] =
+func imageOf(m: Metric, shape: Shape, s: Blade): Option[Blade] =
   ## Read blade maps of compound definition send `s` to, or nothing where product dies.
   case shape
-  of Shape.Support: # 𝐞ₙ ∧ s☆
+  of Shape.Support:  # 𝐞ₙ ∧ s☆
     let t = m.dualBlade(s, as_weight = true)
     if t.isNone or not isWedgeNonzero(m.origin, t.get): return none(Blade)
     some(m.origin or t.get)
-  of Shape.SupportAnti: # 𝐞̄ₙ ∨ s★
+  of Shape.SupportAnti:  # 𝐞̄ₙ ∨ s★
     let
       t = m.dualBlade(s, as_weight = false)
       horizon = m.fullBlade xor m.origin
     if t.isNone or not m.isWedgeAntiNonzero(horizon, t.get): return none(Blade)
     some(horizon and t.get)
-  of Shape.Center: # s☆ ∧ 𝐞∞
+  of Shape.Center:  # s☆ ∧ 𝐞∞
     let t = m.dualBlade(s, as_weight = true)
     if t.isNone or not isWedgeNonzero(t.get, m.infinity): return none(Blade)
     some(t.get or m.infinity)
-  of Shape.Container: # (s ∧ 𝐞∞)☆
+  of Shape.Container:  # (s ∧ 𝐞∞)☆
     if not isWedgeNonzero(s, m.infinity): return none(Blade)
     m.dualBlade(s or m.infinity, as_weight = true)
-  of Shape.JoinCarrier: # s ∧ 𝐞∞
+  of Shape.JoinCarrier:  # s ∧ 𝐞∞
     if not isWedgeNonzero(s, m.infinity): return none(Blade)
     some(s or m.infinity)
   else:
     none(Blade)
 
 
-func compoundTerms*(m: Metric; shape: Shape): int =
+func compoundTerms*(m: Metric, shape: Shape): int =
   ## Count terms compound product spends once its maps fold into one table.
   ##   Map step (dual, constant product) is signed read, so table of product against mapped
   ##   operand holds one term for each pair of blades whose product survives, and no more.
@@ -247,7 +247,7 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 
 
-func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
+func lowerBoundOf*(shape: Shape, m: Metric, arity: range[1 .. 2]): LowerBound =
   ## Derive multivector lower bound of one operation from its shape and algebra.
   ##   Movement is operands read once and result written once, since dense operation needs
   ##   no fill, no copy and no intermediate to be correct.
@@ -311,7 +311,7 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
     result.adds = max(0, result.multiplies - m.slots)
 
 
-func lowerBoundOfChain*(parts: openArray[Shape]; m: Metric; arity: range[1 .. 2]): LowerBound =
+func lowerBoundOfChain*(parts: openArray[Shape], m: Metric, arity: range[1 .. 2]): LowerBound =
   ## Sum what each step of operation's own definition demands, where library composes it.
   ##   Arithmetic is sum over steps, and step carrying no rule adds nothing. Movement stays
   ##   operands read once and final result written once, since chain needs no intermediate

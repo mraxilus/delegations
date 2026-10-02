@@ -72,7 +72,7 @@ func toUpperAscii(s: string): string {.compileTime.} =
     result.add (if c in 'a' .. 'z': char(ord(c) - 32) else: c)
 
 
-func libraryPoolName*(kind: Kind; grade: Option[int]): string {.compileTime.} =
+func libraryPoolName*(kind: Kind, grade: Option[int]): string {.compileTime.} =
   ## Name pool feeding library implementation of measurand: dense image, graded dense, or scalar.
   ##   Branches as `if` rather than `case`, since algebras without typed kinds leave
   ##   typed branch unreachable and compiler would say so.

@@ -118,7 +118,7 @@ func isAnyNan*[T: object](x: T): bool =
 
 #[ Timing ]#
 
-func summarise*(rounds: openArray[int64]; objects: int): tuple[median, minimum: float] =
+func summarise*(rounds: openArray[int64], objects: int): tuple[median, minimum: float] =
   ## Read median and minimum nanoseconds per object over rounds.
   var sorted = @rounds
   sorted.sort
@@ -129,7 +129,7 @@ func summarise*(rounds: openArray[int64]; objects: int): tuple[median, minimum: 
   (median: median / float(objects), minimum: float(sorted[0]) / float(objects))
 
 
-template timeRounds(rounds: var array[ROUNDS, int64]; loop: untyped) =
+template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
   ## Run loop `ROUNDS` times, recording nanoseconds of each.
   for r in 0 ..< ROUNDS:
     let started = getMonoTime()
