@@ -14,8 +14,9 @@ a pull request of this repository.
 2. `nim r koch check` at the repository root passes on the exact commit you push, and again
    before every later push. The `pre-push` hook refuses a push whose tree it did not pass on.
 3. Open as a draft, and mark it ready only when the runner is green, every review comment is
-   answered, and nothing is left to change. A push to a ready pull request returns it to
-   draft, by the `draft` workflow. Mark it ready again after.
+   answered, and nothing is left to change. Before you push to a ready pull request, put it
+   back to draft. The `draft` workflow returns it to draft on a push, but it cannot see your
+   intent before the push. When the run is green, mark it ready again.
 4. Every comment opens with the role line of your branch and ends with the footer, and the
    `body` hook refuses one that does not. Write Simplified Technical English (`GUIDE.md`).
 5. Never rewrite pushed history, never merge, and never weaken a test to pass (`CLAUDE.md`).
