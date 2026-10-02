@@ -8,8 +8,8 @@ standard.
 ## Standards
 
 - **The International System of Units**, BIPM, SI Brochure, 9th edition, 2019: `s` and `m`
-  (Table 2), and the astronomical unit `au` (Table 8). The prefixes `k` and `m` (Table 7) give
-  `km` and `ms`.
+  (Table 2), and the astronomical unit `au` (Table 8). Every prefix of Table 7 joins these units,
+  as in `km`, `ms` and `ns`.
 - **IEC 80000-13**, IEC and ISO, edition 2, 2025: `bit`, `B` for the byte, and the binary
   prefixes `Ki` and `Mi`, so `KiB` and `MiB`. A name takes them in its own case, as `kib` and
   `mib`. A free source with the same symbols is NIST, Prefixes for binary multiples.
@@ -94,7 +94,7 @@ _Avoid_: bounds, prefix, boundary
 
 **Commit scope**:
 The word inside brackets in a commit subject. It names the project that the commit belongs
-to.
+to, or the role `curator` for a change outside every project.
 _Avoid_: tag
 
 **Record**:

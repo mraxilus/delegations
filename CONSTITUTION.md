@@ -53,9 +53,9 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    one-line forwarders. It is the API reference that is also source, and the source of truth
    for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
-   an old figure and a fixed bug go to the log (XI) and to the provenance file (VIII.6). A
-   live trap earns one line, and a test that trips on it. Where no test can reach the trap,
-   the line says why.
+   an old figure and a fixed bug go to the log (XI). The provenance file keeps only the reason
+   that the design is as it is now (VIII.6). A live trap earns one line, and a test that trips
+   on it. Where no test can reach the trap, the line says why.
 
 ```nim
 ## Construct specific PGA's `Basis` enum and related types/procedures.
@@ -435,15 +435,17 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
 9. A gap in the coverage is a placeholder test that reports itself as skipped, so that the run
    shows it. A test that cannot run under a configuration stays in the run, and skips there with
    its reason. Never remove such a test with a bare build-time gate.
-10. Code that the authority does not cover is tested in a suite named `Internal`, and its
-    tests are named by behaviour. Where the authority states a law without a number, name the
+10. Code that the authority does not cover is tested in suites whose names open with
+    `Internal:`, as `Internal: Planner`, and their tests are named by behaviour. The run then
+    shows where the authority stops. Where the authority states a law without a number, name the
     test by its behaviour, and cite the section or the page. Never invent a number.
 11. A test helper that the library does not need lives in the suite, and not in the library.
     Test code follows the same rules as library code.
-12. A test reads the real clock only where speed is what it holds, and its name or its section
-    says so. Every other test moves time itself where time matters, and never waits a span of
-    real time. A slow machine then takes longer to reach the same verdict, and never reaches
-    another one.
+12. A test reads the real clock only where speed is what it holds, or where it tests an
+    instrument that reads time. Its name or its section says which. An instrument reads nothing on
+    a simulated clock. Its test samples a count of frames or calls, and no limit on time decides
+    its verdict. Every other test moves time itself where time matters, and never waits a span of
+    real time. A slow machine then takes longer to reach the same verdict, and never another one.
 
 ```nim
 suite "Chapter 2":
