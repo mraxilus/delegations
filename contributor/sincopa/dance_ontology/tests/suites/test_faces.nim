@@ -13,7 +13,7 @@
 
 import std/[os, strutils, unittest]
 
-import ../../design/[faces, page]
+import ../../design/[faces, page, parts]
 
 
 const
@@ -226,3 +226,13 @@ suite "faces":
         dressed = withFaces(page, directory)
         declared = dressed.find("<meta charset=\"utf-8\">")
       check declared >= 0 and declared < dressed.find("@font-face") and declared < 1024
+
+
+  test "label of turn glyph names face pages ship":
+    ## Its label named `ui-sans-serif` first, which no page ships, so `¼` and `½` came from
+    ## reader's machine: Chromium 141 drew `¼` in DejaVu Sans on 2026-10-02 (repository
+    ## issue 391).  Audit's faces check reads no stack built through `&`, as this one is.
+    let
+      glyph = turnGlyph("&#188; turn")
+      opens = glyph.find("8px ") + "8px ".len
+    check familiesOf(glyph[opens ..< glyph.find(';', opens)])[0] == "Noto Sans"
