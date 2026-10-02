@@ -9,7 +9,7 @@
 
 import type { Page } from '@playwright/test';
 import { waitUntil } from './clock';
-import { readPhases, settleReading } from './frame';
+import { FRAMES_PHASES_LEAST, readPhases, settleReading } from './frame';
 import { report } from './report';
 
 /** Wait until drawer and diagnostics section stand as asked.
@@ -142,7 +142,7 @@ export async function drivePhaseSums(page: Page): Promise<void> {
     one.furniture + one.scene + one.flatten <= one.build + 1.0 && one.build <= one.wall + 1.0);
   report(
     'the build reports its phases, and they add up',
-    phases.length > 30 && sane.length === phases.length,
+    phases.length > FRAMES_PHASES_LEAST && sane.length === phases.length,
     `${sane.length} of ${phases.length} frames consistent`,
   );
 }

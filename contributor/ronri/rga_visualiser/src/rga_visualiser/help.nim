@@ -25,8 +25,8 @@
 ##   phone without scrolling, checked at compile time.
 ##     Cost: table that outgrows tab fails build until path is split or bound is raised.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
-## paths; see `visualiser.nim`'s "Render Paths" table.
+## Shared between desktop (`main.nim`) and browser (`bridge.nim`) render paths;
+## see PROVENANCE.md's "Render paths".
 
 {.experimental: "strictFuncs".}
 

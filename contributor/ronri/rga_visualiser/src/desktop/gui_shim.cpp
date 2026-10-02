@@ -419,7 +419,7 @@ void guiTabBarEnd() { ImGui::EndTabBar(); }
 
 // Begin one tab; `is_forced` opens it whatever reader last left open.
 //   How headless run reaches tab it cannot click; see
-//   `visualiser.Options.index_help_driven`.
+//   `main.Options.path_help_driven`.
 //   Passed every frame while it is set, so nothing else can take selection back.
 bool guiTabBegin(const char *label, bool is_forced) {
   return ImGui::BeginTabItem(label, nullptr,

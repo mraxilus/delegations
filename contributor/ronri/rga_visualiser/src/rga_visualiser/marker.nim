@@ -28,11 +28,11 @@
 ##   What marker surrounds is *whatever is drawn*, and both are drawn: great circle and
 ##   whole sky.
 ## Markers are described here and drawn by each render path's foreground layer
-## (`visualiser.drawSelectionMarker`, browser scripts's SVG overlay), never as scene geometry.
+## (`main.drawSelectionMarker`, browser scripts's SVG overlay), never as scene geometry.
 ##   Loop lying exactly on plane would z-fight with its fill, and marker occluded by
 ##   object it marks is not marker.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

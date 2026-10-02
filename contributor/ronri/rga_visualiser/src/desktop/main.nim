@@ -1730,7 +1730,7 @@ proc verdictDriven(
     )
 
   if options.is_search_driven:
-    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list.
+    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list
     #   is held to something other than rule it runs. Label typed is in no kind word, so
     #   labels alone are whole count; pick made first is labelled otherwise, so it adds one.
     var

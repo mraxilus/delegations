@@ -44,7 +44,7 @@
 ##   Ribbons draw apart from veils because state differs: ribbon writes depth,
 ##   translucent veil does not.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -334,7 +334,7 @@ type
       ## None where nothing asked to be drawn over; zero means whole mesh is overlay.
       ## Watermark rather than second `MeshSet`, since set reserves whole storage for run
       ## that is usually one object.
-      ##   Order already decides buckets (see `visualiser.assembleMeshes`), so index into
+      ##   Order already decides buckets (see `main.assembleMeshes`), so index into
       ##   order costs nothing.
 
   RibbonRecord* = object ## Define one line segment exactly as it is uploaded.

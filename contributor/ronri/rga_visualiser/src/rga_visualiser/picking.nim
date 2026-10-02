@@ -25,7 +25,7 @@
 ## Point wins tie over line, and line over plane.
 ##   Smaller pivot should not be swallowed by larger one drawn behind or through it.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 # `handle` names loop variable std's `typedthreads.handle` would win over: template body
