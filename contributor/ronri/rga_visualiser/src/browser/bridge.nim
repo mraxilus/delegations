@@ -1478,14 +1478,14 @@ proc nimHoverHandle(): cint {.exportc.} =
 proc nimIsHoverBackdrop(): bool {.exportc.} = INTERACTION_PAGE.is_hover_backdrop
   ## Report whether hovered object is horizon plane.
 
-proc nimCanTouchConstruct(): bool {.exportc.} = INTERACTION_PAGE.canConstructByTouch
+proc nimCanTouchConstruct(): bool {.exportc.} = INTERACTION_PAGE.isConstructibleByTouch
   ## Report whether finger's press where it stands may become construction drag.
-  ##   Same answer `beginDrag` gives touch at slop; see `interaction.canConstructByTouch`.
+  ##   Same answer `beginDrag` gives touch at slop; see `interaction.isConstructibleByTouch`.
 
 proc nimHoverRivals(): cint {.exportc.} = cint(INTERACTION_PAGE.count_hover_rivals)
   ## Report how many objects of hovered object's rank stood in reach; for driven checks.
   ## Report whether finger's press where it stands may become construction drag.
-  ##   Same answer `beginDrag` gives touch at slop; see `interaction.canConstructByTouch`.
+  ##   Same answer `beginDrag` gives touch at slop; see `interaction.isConstructibleByTouch`.
   ## Report whether what is hovered is whole sky, horizon plane.
   ##   True wherever nothing else is under pointer and such plane is in scene.
   ##   One hovered thing that must not act like one: starts no drag (see
@@ -1571,12 +1571,12 @@ proc nimRedo(): bool {.exportc.} =
 
 proc nimCanUndo(): bool {.exportc.} =
   ## Report whether `nimUndo` would move anywhere, so UI can disable its undo button.
-  HISTORY_PAGE.canUndo
+  HISTORY_PAGE.isUndoable
 
 
 proc nimCanRedo(): bool {.exportc.} =
   ## Report whether `nimRedo` would move anywhere, mirroring `nimCanUndo`.
-  HISTORY_PAGE.canRedo
+  HISTORY_PAGE.isRedoable
 
 
 proc nimDragKindForButton(dom_button: cint): cint {.exportc.} =
@@ -1600,16 +1600,16 @@ proc nimRevealsMenuOnButton(dom_button: cint): bool {.exportc.} =
   ## Say whether click of this pointer button brings selection menu up with it.
   ##   Same translation as `nimDragKindForButton`; what button means is `interaction`'s.
   case dom_button
-  of 0: revealsMenuOn(PointerButton.Left)
-  of 1: revealsMenuOn(PointerButton.Middle)
-  of 2: revealsMenuOn(PointerButton.Right)
+  of 0: isMenuRevealedOn(PointerButton.Left)
+  of 1: isMenuRevealedOn(PointerButton.Middle)
+  of 2: isMenuRevealedOn(PointerButton.Right)
   else: false
 
 
 proc nimRevealsWithoutPicking(has_selection, is_menu_shown: bool): bool {.exportc.} =
   ## Say whether menu-revealing click should only reveal, leaving selection alone.
-  ##   Forwards to `interaction.revealsWithoutPicking`; desktop asks identical question.
-  revealsWithoutPicking(has_selection, is_menu_shown)
+  ##   Forwards to `interaction.isRevealingWithoutPicking`; desktop asks identical question.
+  isRevealingWithoutPicking(has_selection, is_menu_shown)
 
 
 proc nimHelpEntries(): seq[cstring] {.exportc.} =
@@ -2278,17 +2278,17 @@ proc nimSceneVersion(): cint {.exportc.} = cint(VERSION_SCENE)
 proc nimSceneReadsVersion(version: cint): bool {.exportc.} =
   ## Report whether this build can read scene file stamped with this version.
   ##   Rule rather than number: what build reads is range, two literals to drift.
-  version >= 0 and version <= int(high(uint8)) and readsSceneVersion(uint8(version))
+  version >= 0 and version <= int(high(uint8)) and isSceneVersionReadable(uint8(version))
 
 proc nimSceneHasRadius(version: cint): bool {.exportc.} =
   ## Report whether file of this version carries radius after each object's geometry.
-  ##   Parser asks this rather than compare against literal; see `scene.hasRadius`.
-  version >= 0 and version <= int(high(uint8)) and hasRadius(uint8(version))
+  ##   Parser asks this rather than compare against literal; see `scene.isCarryingRadius`.
+  version >= 0 and version <= int(high(uint8)) and isCarryingRadius(uint8(version))
 
 proc nimSceneHasShine(version: cint): bool {.exportc.} =
   ## Report whether file of this version carries shines byte after each object's radius.
-  ##   Parser skips it; see `scene.hasShine`.
-  version >= 0 and version <= int(high(uint8)) and hasShine(uint8(version))
+  ##   Parser skips it; see `scene.isCarryingShine`.
+  version >= 0 and version <= int(high(uint8)) and isCarryingShine(uint8(version))
 
 
 proc nimSceneClear() {.exportc.} =

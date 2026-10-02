@@ -1037,7 +1037,7 @@ proc drawVeilRuns(renderer: Renderer, meshes: MeshSet, is_overlay: bool) =
   for i in begin ..< until: renderer.drawVeilRun(meshes.veils.runs[i])
 
 
-func hasOverlay(meshes: MeshSet): bool =
+func isHoldingOverlay(meshes: MeshSet): bool =
   ## Report whether anything in this set asked to be drawn over rest of it.
   if runOfRibbons(meshes.ribbons, is_overlay = true).count > 0: return true
   if runOfRings(meshes.rings, is_overlay = true).count > 0: return true
@@ -1174,7 +1174,7 @@ proc drawMeshes*(
   #   With test off, emission order decided among selected objects, and planet selected
   #   after its moon buried moon standing in front of it. Veils write no depth here
   #   either, as above.
-  if meshes.hasOverlay:
+  if meshes.isHoldingOverlay:
     gl.clear(gl.DEPTH_BUFFER_BIT)
     gl.useProgram(renderer.program_ribbon)
     renderer.drawRibbonRun(meshes, is_overlay = true)
