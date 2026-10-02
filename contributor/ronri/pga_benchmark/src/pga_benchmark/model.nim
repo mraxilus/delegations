@@ -30,7 +30,7 @@ type Movement* = object
     ## Sum of every cause.
 
 
-func sizeOfStem*(stem: string; size_multivector: int): int =
+func sizeOfStem*(stem: string, size_multivector: int): int =
   ## Read bytes of type named by C stem; zero for stems model does not know.
   case stem
   of "Multivector": size_multivector
@@ -51,7 +51,7 @@ func sizeOfStem*(stem: string; size_multivector: int): int =
   else: 0
 
 
-func movement*(function: CFunction; counts: Counts; size_multivector: int): Movement =
+func movement*(function: CFunction, counts: Counts, size_multivector: int): Movement =
   ## Model bytes one call of function moves, given its counts.
   var read = 0
   for stem in function.parameters: read += sizeOfStem(stem, size_multivector)

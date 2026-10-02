@@ -1,8 +1,8 @@
 ## Write measurements as JSON, schema 1, and read them back; tool side only.
-##   One document per configuration and kind: `bench` holds timing measurements of every measurand
-##   of both implementations, `static` holds counts read from emitted C. Both open with same
-##   `algebra` and `taken` objects, so any file says what it measured, on what, and when
-##   (Article VII.6). Keys are measurand ids, ASCII, stable across runs.
+##   One document per configuration and kind: `runtime` holds timing measurements of every
+##   measurand in each of `IMPLEMENTATIONS`, `static` holds counts read from emitted C. Both
+##   open with same `algebra` and `taken` objects, so any file says what it measured, on what,
+##   and when (Article VII.6). Keys are measurand ids, ASCII, stable across runs.
 ##
 ##   Cost: `std/json` allocates freely; runs once per file, never on timed path.
 
@@ -37,7 +37,7 @@ proc takenNow*(): JsonNode =
   }
 
 
-func algebraNode*(name: string; dimensions: int; is_conformal: bool; size: int): JsonNode =
+func algebraNode*(name: string, dimensions: int, is_conformal: bool, size: int): JsonNode =
   ## Describe algebra measured: name, dimensions, metric, multivector size in bytes.
   %*{
     "name": name,
@@ -52,7 +52,7 @@ func document*(kind: string; algebra, taken: JsonNode): JsonNode =
   %*{"schema": SCHEMA, "kind": kind, "algebra": algebra, "taken": taken}
 
 
-func checkSchema*(node: JsonNode; kind: string): string =
+func checkSchema*(node: JsonNode, kind: string): string =
   ## Read why document cannot be used, empty when it can.
   if node.kind != JObject: return "Document is not object."
   if not node.hasKey("schema") or node["schema"].getInt != SCHEMA:
@@ -67,7 +67,7 @@ func countsNode*(counts: Counts): JsonNode =
   %*{
     "multiplies": counts.multiplies,
     "adds": counts.adds,
-    "subs": counts.subs,
+    "subtractions": counts.subtractions,
     "divides": counts.divides,
     "zero_fills": counts.zero_fills,
     "intermediates": counts.intermediates,
@@ -92,8 +92,9 @@ func movementNode*(movement: Movement): JsonNode =
 
 
 func moduleTail*(module: string): string =
-  ## Read last two segments of mangled module path, `pga/operators` out of
-  ## `OOZdependenciesZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
+  ## Read last two segments of mangled module path, i.e. `pga/operators`.
+  ##   Source is e.g. `OOZdependenciesZ...ZpgaZoperators`; whole path spells checkout and
+  ##     outruns line width.
   ##   Compiler spells `/` as `Z` and `_` as `95`; only those two are undone.
   let
     parts = module.split('Z')
@@ -102,15 +103,17 @@ func moduleTail*(module: string): string =
 
 
 func isLibraryModule*(module: string): bool =
-  ## Decide whether module tail names library's module, rather than reference's or dense
-  ##   forms'; dense module's tail is `dense` in bench build, and path ends so elsewhere.
+  ## Decide whether module tail names library's module, rather than reference's or dense forms'.
+  ##   Dense module's tail is `dense` in bench build, and path ends so elsewhere.
   not module.startsWith("reference/") and module != "dense" and not module.endsWith("/dense")
 
 
 func functionNode*(function: CFunction; own, total: Counts; size_multivector: int): JsonNode =
-  ## Build object of one inspected function: key parts, module tail, inline flag, own and total
-  ## counts, movement modelled on total counts. Mangled name is left out: it spells
-  ## checkout path and compiler hash, neither of which is measurement.
+  ## Build object of one inspected function.
+  ##   Object holds key parts, module tail, inline flag, own and total counts, and movement
+  ##     modelled on total counts.
+  ##   Mangled name is left out: it spells checkout path and compiler hash, neither of which
+  ##     is measurement.
   %*{
     "symbol": function.symbol,
     "module": moduleTail(function.module),
@@ -132,9 +135,10 @@ func median*(values: openArray[float]): float =
   if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
 
 
-func runsCombined*(runs: openArray[JsonNode]): JsonNode =
-  ## Combine runtime documents of alternating runs of one binary into one: per implementation,
-  ##   median of run medians, least minimum, and each run's median in run order as `ns_runs`.
+func combineRuns*(runs: openArray[JsonNode]): JsonNode =
+  ## Combine runtime documents of alternating runs of one binary into one.
+  ##   Per implementation, it keeps median of run medians, least minimum, and each run's
+  ##   median in run order as `ns_runs`.
   ##   Run medians pair by index across implementations, since one run times both.
   ##   Header, NaN share and allocations are first run's; every run computes same pools.
   if runs.len == 0: return newJNull()
@@ -156,7 +160,16 @@ func runsCombined*(runs: openArray[JsonNode]): JsonNode =
 
 
 const GATED* = [
-  "multiplies", "adds", "subs", "divides", "zero_fills", "intermediates", "copies", "checks",
-  "calls", "allocations", "lines",
+  "multiplies",
+  "adds",
+  "subtractions",
+  "divides",
+  "zero_fills",
+  "intermediates",
+  "copies",
+  "checks",
+  "calls",
+  "allocations",
+  "lines",
 ]
   ## Count names gate compares: any growth is finding, every one deterministic.

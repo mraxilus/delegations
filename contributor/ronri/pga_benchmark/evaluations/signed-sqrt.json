@@ -36,7 +36,7 @@
           "before": {
             "multiplies": 24,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -51,7 +51,7 @@
           "after": {
             "multiplies": 24,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -68,7 +68,7 @@
           "before": {
             "multiplies": 24,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -83,7 +83,7 @@
           "after": {
             "multiplies": 24,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -101,7 +101,7 @@
           "after": {
             "multiplies": 0,
             "adds": 0,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 0,
             "intermediates": 0,
@@ -118,7 +118,7 @@
           "before": {
             "multiplies": 16,
             "adds": 14,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 7,
             "intermediates": 4,
@@ -133,7 +133,7 @@
           "after": {
             "multiplies": 16,
             "adds": 14,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 7,
             "intermediates": 4,
@@ -150,7 +150,7 @@
           "before": {
             "multiplies": 8,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -165,7 +165,7 @@
           "after": {
             "multiplies": 8,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -182,7 +182,7 @@
           "before": {
             "multiplies": 8,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -197,7 +197,7 @@
           "after": {
             "multiplies": 8,
             "adds": 7,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -781,7 +781,7 @@
           "before": {
             "multiplies": 64,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -796,7 +796,7 @@
           "after": {
             "multiplies": 64,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -813,7 +813,7 @@
           "before": {
             "multiplies": 64,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -828,7 +828,7 @@
           "after": {
             "multiplies": 64,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 1,
             "zero_fills": 1,
             "intermediates": 1,
@@ -846,7 +846,7 @@
           "after": {
             "multiplies": 0,
             "adds": 0,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 0,
             "intermediates": 0,
@@ -863,7 +863,7 @@
           "before": {
             "multiplies": 64,
             "adds": 62,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 7,
             "intermediates": 4,
@@ -878,7 +878,7 @@
           "after": {
             "multiplies": 64,
             "adds": 62,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 7,
             "intermediates": 4,
@@ -895,7 +895,7 @@
           "before": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -910,7 +910,7 @@
           "after": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -927,7 +927,7 @@
           "before": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -942,7 +942,7 @@
           "after": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -959,7 +959,7 @@
           "before": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -974,7 +974,7 @@
           "after": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -991,7 +991,7 @@
           "before": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
@@ -1006,7 +1006,7 @@
           "after": {
             "multiplies": 32,
             "adds": 31,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 2,
             "intermediates": 1,
