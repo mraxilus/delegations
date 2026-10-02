@@ -70,8 +70,11 @@ those standards under `## Standards`, and a project glossary names its own. The 
 The `names` check reads the words of every declared name in Nim. It reports a word from a short
 table of coined abbreviations, each with its one full word. It also reports a run of capitals that
 no glossary lists. It passes what the glossaries list under `## Standards`, their terms, and the
-jargon of V.6. A binding of a library's own name is skipped, because the name is not ours. The
-rest of Article V holds because you read it.
+jargon of V.6. A binding of a library's own name is skipped, because the name is not ours.
+
+The same check holds the first word of a routine (V.3) and the form of a lookup table (V.5). It
+also holds a global that shares its word with a type (V.10). The rest of Article V holds because
+you read it.
 
 ## The queue and the shared allowance
 
@@ -118,13 +121,16 @@ are not sure, they are not independent, and you make them one after the other.
 
 - **Each subagent works in a worktree of its own, on a branch of its own inside the
   grammar.** The hooks read the checkout where an edit or a commit happens, so each subagent
-  stays in the scope of its own branch.
+  stays in the scope of its own branch. Make the worktree yourself, on its branch, before the
+  subagent starts, because a tool that makes one names its own branch outside the grammar.
 - **The subagent makes the change, runs `nim r koch check` in its worktree, and commits.** It
   follows the rules that you follow: the commit ladder, the record, and Simplified Technical
   English. Give it the issue, the branch and the scope, because it starts with none of your
   context.
-- **You do the rest.** Read what each subagent did, and push its branch. Open each pull
-  request, drive it green, and answer on it. The sign-off and the carried list stay yours.
+- **You do the rest.** Read what each subagent did, and push its branch from its worktree, as
+  `git -C <worktree> push -u origin <branch>`. The `pre-push` hook reads the check mark of the
+  checkout that pushes. Open each pull request, drive it green, and answer on it. The sign-off
+  and the carried list stay yours.
 - **A subagent never pushes, and never writes on GitHub.** One account and one allowance
   serve every delegate (above), and you are the one who answers for each post.
 
@@ -302,14 +308,15 @@ A message that ends a turn which pushed or posted, and the message of a handover
 one block, `## Sign-off`. Nothing follows it.
 
 It serves three readers. The Architect needs what waits on them and what is ready. The next
-delegate needs where things stand and what is unfinished. The same delegate, after a
-compaction, needs the map of the artifacts and the carried list. Its parts come in one order:
+delegate needs where things stand and what is unfinished. The same delegate, after a compaction,
+needs the map of its branches, pull requests and issues, and the carried list. Its parts come in
+one order:
 
 1. **Role.** The role string, and the branch at its short head, `pushed` or `not pushed`. Then
    the pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
    `red` or `pending`.
-2. **Context.** Three sentences in the third person: what the branch is for, what the
-   Architect asked last, and the artifacts on entry, with no run result.
+2. **Context.** Three sentences in the third person. They say what the branch is for, what the
+   Architect asked last, and what was open on entry, with no run result.
 3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`. Rows are
    numbered from 1 and sorted by state, and a state never returns once the next one begins.
    - ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
