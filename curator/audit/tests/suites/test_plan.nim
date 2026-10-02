@@ -109,11 +109,11 @@ suite "Plan":
   test "head set is projects whose driver carries `head`, filtered as driven set is":
     # Daily run asks `--all`, so filter over every project is what selects one; driver
     #   carrying `drive` alone carries no reference to read.
-    const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
+    const driver = ALPHA_DIRECTORY & "/tools/build.nim"
     let
       held = goodTree().with(
         entry(
-          DRIVER,
+          driver,
           "case paramStr(1)\n" & "of \"drive\": drive()\n" & "of \"head\": head()\n" & "else:\n",
         ),
       )
@@ -123,7 +123,7 @@ suite "Plan":
     check held.carryingOnly(held.jobs([AUDIT_DIRECTORY & "/tests/taudit.nim"]),
       HEAD_VERB).len == 0  # filters what plan selected
     let driven = goodTree().with(
-      entry(DRIVER, "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"),
+      entry(driver, "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"),
     )
     check driven.carryingOnly(driven.allJobs, HEAD_VERB).len == 0  # `drive` alone
     check driven.carryingOnly(driven.allJobs, DRIVEN_VERB) == driven.drivenOnly(driven.allJobs)

@@ -192,7 +192,8 @@ suite "Fixes":
     check fix.fixed.mapIt(it.line) == @[2, 3, 3, 12, 12]  # banner each run stands beside
     check checkBanners("a.nim", fix.source).len == 0
     check fixed(fix.source).source == fix.source  # idempotent
-    check fixed("x\n#[ A ]#\ny\n", Kind.Configuration).source == "x\n#[ A ]#\ny\n"  # Nim syntax alone
+    let configuration = fixed("x\n#[ A ]#\ny\n", Kind.Configuration).source
+    check configuration == "x\n#[ A ]#\ny\n"  # Nim syntax alone
 
 
   test "fix never writes line width check reports":
