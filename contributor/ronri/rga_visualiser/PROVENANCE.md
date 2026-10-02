@@ -337,7 +337,8 @@ reaches another one (repository issue 329).
 
 **The host-save check runs on the simulated clock too, on a page of its own.** The stand-in host
 must stand before the script of the page runs, so the check cannot share the first page.
-`simulateClock` puts its page on the simulated clock, and its waits are frames.
+`simulateClock` puts its page on the simulated clock, and its waits are frames. Verified by a run,
+2026-10-02: its four checks pass on the simulated page, and the page raises no error.
 
 Three things that the clock does not reach are set on the simulated page:
 
@@ -358,6 +359,8 @@ of time. Their size is then the same on every machine, and only the figures move
 that page one of its own frames at a time. `settleTurn` waits on the transitions that an element
 runs, as `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12).
 Rejected: a limit of time as a fallback, which a loaded machine meets with no fault in the page.
+Verified by a run, 2026-10-02: the heap row and the tree checks pass on the real page with these
+waits.
 
 **The heap row reads `NaN` on the simulated page**, because the clock stands in for `performance`.
 So `driveHeapUnit` reads that row on the second page too.
