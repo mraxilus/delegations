@@ -166,8 +166,9 @@ func gathered(fragments: seq[string]): string =
 func blocks*(markdown: string): seq[Block] =
   ## Collect prose blocks, each list item and each run of plain lines standing alone.
   ##   Spans collapse over whole block, since span wrapped over line end is still one name.
-  var carried: seq[string]
-  var opened = 0
+  var
+    carried: seq[string]
+    opened = 0
   let lines = markdown.fencedOut.matterOut.splitLines
   for i, line in lines:
     let s = line.strip.multiReplace(("<!--", " "), ("-->", " ")).strip

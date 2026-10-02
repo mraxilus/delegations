@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[kinds, form]
+import ../../src/[form, kinds]
 
 
 func messages(path, source: string, kind: Kind): seq[string] =

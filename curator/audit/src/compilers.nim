@@ -184,10 +184,11 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   let directory = root / pin
   createDir(root)
   echo "== fetching Nim " & pin
-  let platform = platformOf(hostOS, hostCPU)
-  let is_built =
-    if pin.isBuilt(platform): buildSource(pin, directory)
-    else: fetchRelease(pin, platform, directory)
+  let
+    platform = platformOf(hostOS, hostCPU)
+    is_built =
+      if pin.isBuilt(platform): buildSource(pin, directory)
+      else: fetchRelease(pin, platform, directory)
 
   # Fetched compiler is asked what it is: wrong tarball or half-built tree is not toolchain.
   if is_built and pin.serves(compilerAt(bin / NIM)): return some(bin)

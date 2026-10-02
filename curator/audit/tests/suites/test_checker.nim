@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[strutils, unittest]
-import ../../src/[markdown, checker]
+import ../../src/[checker, markdown]
 
 
 const KOCH = """

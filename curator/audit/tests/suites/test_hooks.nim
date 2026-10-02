@@ -137,12 +137,22 @@ suite "Hooks":
     check markPath("/repo", ".git") == "/repo/.git/koch-check"
     check markPath("/repo/wt", "/repo/.git/worktrees/wt") ==
       "/repo/.git/worktrees/wt/koch-check"  # worktree's own dir, where `.git` is file
-    check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", []).len == 0
-    check checkMessage(BRANCH, "Add gaps", []).len == 1  # not conventional
-    check checkMessage(BRANCH, "Merge branch 'main' into " & BRANCH, []).len == 0  # git's own
+    check checkMessage(BRANCH, "feat(pga_benchmark): add gaps\n\nBody.\n", [], []).len == 0
+    check checkMessage(BRANCH, "Add gaps", [], []).len == 1  # not conventional
+    check checkMessage(BRANCH, "Merge branch 'main' into " & BRANCH, [], []).len == 0  # git's own
     check checkMessage(
-      BRANCH, "# comment\nfix(pga_benchmark): x", ["feat(pga_benchmark): y"]
+      BRANCH, "# comment\nfix(pga_benchmark): x", ["feat(pga_benchmark): y"], []
     ).len == 1  # fix without test before it
+    # Body and staged paths reach commit check too, so hook says before commit lands.
+    let wrapped = "feat(pga_benchmark): add gaps\n\nGaps read baseline of each\nalgebra.\n"
+    check checkMessage(BRANCH, wrapped, [], []).messages.anyIt("runs on" in it)
+    let staged =
+      ["contributor/ronri/pga_benchmark/PROVENANCE.md", "contributor/ronri/pga_benchmark/a.nim"]
+    check checkMessage(BRANCH, "docs(pga_benchmark): record gaps", [], staged).len == 1
+    # Comment lines and everything below scissors are git's, never body.
+    let verbose =
+      "feat(pga_benchmark): add gaps\n# Please enter.\n# ------------------------ >8\ndiff x\n"
+    check checkMessage(BRANCH, verbose, [], []).len == 0
 
   test "start context and turn writes":
     let text = startContext(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])

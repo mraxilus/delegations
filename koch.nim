@@ -44,7 +44,17 @@
 
 import std/[json, options, os, parseopt, sequtils, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, audit, plan, base, role, assets, hooks,
+  assets,
+  audit,
+  base,
+  commits,
+  domains,
+  findings,
+  hooks,
+  plan,
+  role,
+  scope,
+  tree,
 ]
 
 
@@ -56,7 +66,7 @@ Verbs:
   check-files    static checks over every file git lists; compiles nothing
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
-  check-commits  commit subjects since base: form, scope, test before fix
+  check-commits  commits since base: subject form, scope, test before fix, body, record apart
   check-drift    charter or checker that base gained and branch lacks
   check-role     pull request's role line and label, from ROLE_BODY and ROLE_LABELS
   hook           answer one hook event named as argument, from its JSON or refs on stdin
@@ -202,8 +212,9 @@ proc runHook(root, event, input: string): int =
   let branch = gitFields(root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
   case event
   of "path", "bash", "body", "edit", "stop":
-    let data = input.parseJson
-    let tool = data{"tool_name"}.getStr
+    let
+      data = input.parseJson
+      tool = data{"tool_name"}.getStr
     case event
     of "path":
       if tool notin EDIT_TOOLS: return 0
@@ -220,8 +231,9 @@ proc runHook(root, event, input: string): int =
         labels, data{"tool_input", "method"}.getStr == "create",
       ), 2)
     of "edit":
-      let path = insideRoot(data{"cwd"}.getStr(root), data{"tool_input", "file_path"}.getStr)
-      let tree = root.readTree
+      let
+        path = insideRoot(data{"cwd"}.getStr(root), data{"tool_input", "file_path"}.getStr)
+        tree = root.readTree
       var found = tree.auditTree
       found.add prunedFindings(root, tree)
       let mine = found.filterIt(it.path == path)
@@ -254,8 +266,9 @@ proc runHook(root, event, input: string): int =
     )
     0
   of "push":
-    let mark = root.markFile
-    let recorded = if fileExists(mark): readFile(mark) else: ""
+    let
+      mark = root.markFile
+      recorded = if fileExists(mark): readFile(mark) else: ""
     var found: seq[Finding]
     for line in input.splitLines:
       let fields = line.splitWhitespace
@@ -263,7 +276,10 @@ proc runHook(root, event, input: string): int =
       found.add checkPush(recorded, gitFields(root, ["rev-parse", fields[1] & "^{tree}"])[0])
     refuse(found, 1)
   of "msg":
-    refuse(checkMessage(branch, input, subjects(root, getEnv("BASE", "origin/" & MAIN))), 1)
+    let
+      earlier = subjects(root, getEnv("BASE", "origin/" & MAIN))
+      staged = gitFields(root, ["diff", "--cached", "-z", "--name-only"])
+    refuse(checkMessage(branch, input, earlier, staged), 1)
   else:
     stderr.write "koch hook: unknown event `" & event & "`.\n"
     2
@@ -279,12 +295,13 @@ proc run(options: Options): int =
     #   Cost: suite failure shows only after static pass is clean.
     if not options.reads({Root, Branch, Base}): return options.refused
     discard gitFields(options.root, ["fetch", "-q", "origin", MAIN])
-    let tree = options.root.readTree
-    let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
+    let
+      tree = options.root.readTree
+      (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
     found.add prunedFindings(options.root, tree)
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
-    found.add checkCommits(branch, subjects(options.root, base))
+    found.add checkHistory(branch, branchCommits(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))
     # Curator branch holds what reddens contributor project (duty 3), and blocks on rest.
     let (held, own) = splitHeld(branch, found)
@@ -325,7 +342,8 @@ proc run(options: Options): int =
     )
   of "check-commits":
     if not options.reads({Root, Branch, Base}): return options.refused
-    found = checkCommits(options.branchOrDefault, subjects(options.root, options.baseOrDefault))
+    let commits = branchCommits(options.root, options.baseOrDefault)
+    found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
     if not options.reads({Root, Base}): return options.refused
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))
@@ -333,10 +351,11 @@ proc run(options: Options): int =
     # Pull request's own two facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.
     if not options.reads({Root, Branch}): return options.refused
-    let named = getEnv("ROLE_LABELS").strip
-    let labels =
-      if named.len == 0: newSeq[string]()
-      else: named.parseJson.getElems.mapIt(it.getStr)
+    let
+      named = getEnv("ROLE_LABELS").strip
+      labels =
+        if named.len == 0: newSeq[string]()
+        else: named.parseJson.getElems.mapIt(it.getStr)
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
@@ -386,18 +405,20 @@ proc run(options: Options): int =
     #   Named none answers for machine: koch's own packages and every project's, unscoped,
     #   since question is what must be installed rather than what one change touched.
     if not options.reads({Root}, has_project = true): return options.refused
-    let tree = options.root.readTree
-    let named =
-      if options.project.len > 0:
-        systemPackages(options.root, tree, [options.project.strip(chars = {'/'})])
-      else: repositorySystem(options.root, tree, tree.projectDirectories)
+    let
+      tree = options.root.readTree
+      named =
+        if options.project.len > 0:
+          systemPackages(options.root, tree, [options.project.strip(chars = {'/'})])
+        else: repositorySystem(options.root, tree, tree.projectDirectories)
     for package in named: echo package
     return 0
   of "list-projects":
     if not options.reads({Root, Base, All, Recent, Drive}, has_project = true):
       return options.refused
-    let tree = options.root.readTree
-    let jobs = options.plannedJobs(tree)
+    let
+      tree = options.root.readTree
+      jobs = options.plannedJobs(tree)
     echo render(if options.is_drive: tree.drivenOnly(jobs) else: jobs)
     return 0
   of "stamp":

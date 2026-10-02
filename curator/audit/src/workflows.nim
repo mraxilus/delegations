@@ -13,12 +13,16 @@
 ##   Workflow that hands `gh` token other than run token, stored secret or one minted in step,
 ##   reaches by that token's grant, which no block here sets, so its `gh` marks are skipped.
 ##   Written when `draft.yml` left run token, since it cannot convert pull request to draft.
+##   Weekly window: workflow passing `--recent` runs on `cron` whose interval is
+##     `RECENT_DAYS` (CURATOR.md, duty 9), since both name one window. Interval is read for
+##     two shapes alone, one weekday (7) and every day (1); other shape reads as 0 and fails,
+##     so new shape is taught here first.
 ##   Cost: marks below are text, so step reaching same endpoint by other spelling goes unseen.
 ##   That is floor, never ceiling -- check catches what it names and claims nothing else.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils]
+import std/[options, sequtils, strutils]
 import ./findings
 
 
@@ -61,8 +65,9 @@ func permissionScopes*(workflow: string): Option[seq[string]] =
   ## Read scopes workflow's own top-level `permissions` block names; `none` when it has none.
   ##   Absent block and empty block differ: absent takes repository default, empty grants
   ##   nothing, and only first is left alone.
-  var scopes: seq[string]
-  var is_inside = false
+  var
+    scopes: seq[string]
+    is_inside = false
   for line in workflow.splitLines:
     if line.startsWith(PERMISSIONS_KEY):
       is_inside = true
@@ -91,4 +96,28 @@ func checkScopes*(path, workflow: string): seq[Finding] =
       "Steps use `" & mark & "`, so `permissions` must grant `" & scope &
         "`; block is whole grant and scope left out is `none`; got `" &
         granted.get.join(", ") & "`.",
+    )
+
+
+func cronDays*(workflow: string): int =
+  ## Read days between runs of workflow's `cron`: 7 for one weekday, 1 for every day, else 0.
+  for line in workflow.splitLines:
+    let at = line.find("cron:")
+    if at < 0: continue
+    let fields = line[at + 5 .. ^1].strip(chars = {' ', '\'', '"'}).splitWhitespace
+    if fields.len != 5 or fields[2] != "*" or fields[3] != "*": return 0
+    if fields[4] == "*": return 1
+    if not fields[4].anyIt(it in {',', '-', '/', '*'}): return 7
+    return 0
+
+
+func checkWindow*(path, workflow: string, days: int): seq[Finding] =
+  ## Report workflow passing `--recent` whose `cron` interval is not `RECENT_DAYS`.
+  if "--recent" notin workflow: return
+  let read = workflow.cronDays
+  if read != days:
+    result.add finding(
+      path, 0,
+      "Schedule and `RECENT_DAYS` name one window; change both together (CURATOR.md, duty 9); " &
+        "got `" & $read & "` days against `" & $days & "`.",
     )
