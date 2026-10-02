@@ -1,5 +1,4 @@
-## Enforce how Nim parameters separate and signatures and calls wrap (Article X.3, STYLE.md §5),
-##   and fix it (`koch fix`).
+## Enforce how Nim lists separate and wrap (Article X.3, STYLE.md §5), and fix it (`koch fix`).
 ##   Parameters: `,` between groups while every type appears once; where one group holds several
 ##     names of one type (`a, b: X`), `;` between every group, trailing one included. Holds on one
 ##     line and across several, in routine, routine type and lambda.
@@ -11,8 +10,10 @@
 ##     argument takes own line, indented one level, with trailing comma, and `)` opens line at
 ##     call's indent. Outermost call crossing `LINE_MAX` splits first; each line it leaves is
 ##     read again.
-##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`), so
-##     each rule is written once (Article II.1).
+##   Trailing separator: list written one item to line ends its last item with separator: call,
+##     parameters, array, seq, set, table, tuple of several items, constructor, import bracket.
+##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`,
+##     `trailingInserts`), so each rule is written once (Article II.1).
 ##
 ##   Contradiction, left to Architect: STYLE.md §5 wraps parameters onto one line of their own
 ##     first, and one to line only where that line fits not, yet its second example sets one
@@ -30,6 +31,7 @@
 ##   Bracket spanning lines that no call opens, i.e. hand-shaped array, seq, set or tuple, is
 ##     never reflowed: it moves with its argument, line breaks kept, re-indented. Argument
 ##     wrapped by hand that fits no line keeps its line breaks in same way.
+##   Parenthesis of one item takes no trailing comma, since `(a,)` is tuple and `(a)` grouping.
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); construct it cannot read surely stays as written.
 ##   Cost: fixer never writes line width check reports; rewrite that would, stays to hand.
@@ -70,6 +72,12 @@ type
     last: int  ## Zero-based last line replaced.
     lines: seq[string]
 
+  Insert = object
+    ## Define separator to insert after list's last item.
+    line: int  ## Zero-based line of item's last token.
+    at: int  ## Byte offset after item's last token.
+    separator: string
+
 
 const
   BLOCK_KEYWORDS = [
@@ -83,6 +91,8 @@ const
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keyword operators line may end on, continuing expression on next line.
+  TYPE_KEYWORDS = ["static", "tuple"]
+    ## Keywords whose `[` opens type, never constructor.
   INDENT_STEP = 2
     ## Spaces one level of wrapping indents (Article X.1).
   PASSES_MAX = 16
@@ -575,9 +585,82 @@ func fixCalls*(path, source: string): Fix =
     result = result.chain(applied(path, result.source, rewrites, "call wrapping (X.3)"))
 
 
-func fixWrapping*(path, source: string): Fix =
-  ## Rewrite separators, then signatures, then calls.
-  ##   Separators come first, since layouts join groups with separator they read.
+
+#[ Trailing Separators ]#
+
+func isConstructorOpen(s: Scan, o: int): bool =
+  ## Decide whether bracket `o` opens list of values: array, seq, set, table, tuple, import.
+  ##   `[` or `{` glued after operand indexes or names type; `(` glued after one calls; `{.`,
+  ##   `[.`, `(.` and `[:` open pragma or generic call.
+  let text = s.spelling(o)
+  if text notin ["(", "[", "{"]: return false
+  if o > 0:
+    let is_glued = s.tokens[o - 1].after == s.tokens[o].first
+    if is_glued and s.tokens.isOperandEnd(o - 1, s.source): return false
+    if s.spelling(o - 1) in TYPE_KEYWORDS: return false
+  text != "(" or s.tokens.signatureOf(s.partners, o, s.source) < 0
+
+
+func trailingInserts(s: Scan): seq[Insert] =
+  ## Find each list written one item to line whose last item lacks trailing separator.
+  for o in 0 ..< s.tokens.len:
+    if s.tokens[o].kind != TokenKind.Open or s.partners[o] < o: continue
+    let c = s.partners[o]
+    if not s.isLineLast(o) or not s.isLineFirst(c): continue
+    let
+      is_call = s.tokens.isCallOpen(s.partners, o, s.source)
+      is_signature = s.tokens.signatureOf(s.partners, o, s.source) >= 0
+      items = s.items(o)
+    if not (is_call or is_signature or s.isConstructorOpen(o)): continue
+    if items.len == 0 or items[^1].separator >= 0: continue
+    if not items.allIt(s.isLineFirst(it.first)): continue
+    if not items[0 ..< ^1].allIt(s.isLineLast(it.separator)): continue
+    let last = items[^1]
+    if toSeq(last.first .. last.last).anyIt(
+      s.spelling(it) in BLOCK_KEYWORDS or (s.spelling(it) == ":" and s.isLineLast(it)),
+    ):
+      continue
+    var separator = ","
+    if is_signature:
+      let groups = s.groupsOf(items)
+      if groups.len == 0: continue
+      separator = groups.separatorOf
+    elif s.spelling(o) == "(" and not is_call and items.len == 1: continue
+    let
+      line = s.lasts[last.last]
+      at = s.tokens[last.last].after
+      text = s.lines[line]
+      cut = at - s.starts[line]
+    if (text[0 ..< cut] & separator & text[cut .. ^1]).isWide and not text.isWide: continue
+    result.add Insert(line: line, at: at, separator: separator)
+
+
+func checkTrailing*(path, source: string): seq[Finding] =
+  ## Report list written one item to line without trailing separator (X.3).
+  ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
+  for insert in source.scan.trailingInserts:
+    result.add finding(
+      path,
+      insert.line + 1,
+      "List written one item to line takes trailing separator (X.3); got none, where `" &
+        insert.separator & "` stands.",
+    )
+
+
+func fixTrailing*(path, source: string): Fix =
+  ## Insert each trailing separator check reports, last first, so earlier offsets hold.
   result.source = source
-  for fixer in [fixSeparators, fixSignatures, fixCalls]:
+  let inserts = source.scan.trailingInserts
+  for insert in inserts.reversed:
+    result.source.insert(insert.separator, insert.at)
+  for insert in inserts:
+    result.fixed.add finding(path, insert.line + 1, "trailing separator (X.3) fixed")
+
+
+func fixWrapping*(path, source: string): Fix =
+  ## Rewrite separators, then signatures, then calls, then trailing separators.
+  ##   Separators come first, since layouts join groups with separator they read; trailing
+  ##   separators come last, adding what neither layout wrote to list left as written.
+  result.source = source
+  for fixer in [fixSeparators, fixSignatures, fixCalls, fixTrailing]:
     result = result.chain(fixer(path, result.source))

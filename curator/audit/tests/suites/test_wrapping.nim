@@ -1,6 +1,6 @@
-## Hold separators of parameters and wrapping of signatures and calls (Article X.3, STYLE.md
-##   §5): each breach is reported and fixed into its one layout; what rule leaves to hand is
-##   neither; fix changes nothing else, and nothing second time.
+## Hold separators and wrapping of lists (Article X.3, STYLE.md §5): each breach is reported and
+##   fixed into its one layout; what rule leaves to hand is neither; fix changes nothing else,
+##   and nothing second time.
 
 {.experimental: "strictFuncs".}
 
@@ -51,7 +51,7 @@ func fixed(source: string): string =
 func messages(source: string): seq[string] =
   ## Collect messages every wrapping check reports over source.
   (checkSeparators("a.nim", source) & checkSignatures("a.nim", source) &
-    checkCalls("a.nim", source)).mapIt(it.message)
+    checkCalls("a.nim", source) & checkTrailing("a.nim", source)).mapIt(it.message)
 
 
 func isSettled(source: string): bool =
@@ -143,6 +143,24 @@ suite "Wrapping":
       "foo(a) do (x: int):\n  discard\n",
     ]:
       check checkCalls("a.nim", kept).len == 0
+    check "foo(\n  a,  # Why.\n  b\n)\n".fixed == "foo(\n  a,  # Why.\n  b,\n)\n"  # trailing alone
+
+  test "list written one item to line takes trailing separator":
+    let lists = "let\n  a = @[\n    1,\n    2\n  ]\n  b = {\n    'x',\n    'y'\n  }\n" &
+      "  c = (\n    1,\n    2\n  )\n  d = Foo(\n    x: 1,  # Why.\n    y: 2\n  )\n"
+    check checkTrailing("a.nim", lists).len == 4
+    check lists.fixed == lists.replace("2\n  ]", "2,\n  ]").replace("'y'\n", "'y',\n")
+      .replace("2\n  )\n  d", "2,\n  )\n  d").replace("y: 2\n", "y: 2,\n")
+    check lists.fixed.isSettled
+    let imported = "import ./[\n  a,\n  b\n]\n"
+    check imported.fixed == "import ./[\n  a,\n  b,\n]\n"
+    check fixTrailing("a.nim", imported).source == imported.fixed  # rule alone writes it
+    for kept in [
+      "let a = (\n  b\n)\n",
+      "let a = @[1, 2,\n  3, 4]\n",
+      "type T = array[\n  3,\n  int\n]\n",
+    ]:
+      check checkTrailing("a.nim", kept).len == 0  # grouping, flowed list, type bracket
 
   test "clean source passes through unchanged":
     let clean = "proc f(a: int, b: string): int =\n  foo(a, b)\n\nlet x = @[\n  1,\n  2,\n]\n"
