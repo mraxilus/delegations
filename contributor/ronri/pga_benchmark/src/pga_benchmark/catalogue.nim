@@ -1,4 +1,4 @@
-## Catalogue every library operation as data: what to expression, on what, against which reference.
+## Catalogue every library operation as data: which expression, on what, against which reference.
 ##   One `Measurand` per operation per algebra, built at compile time under `when`, so every
 ##   later instrument (timing, C inspection, gap list) walks one list and nothing is
 ##   benchmarked by hand. Expression is library code over `m` and `n`, fully parenthesised

@@ -31,9 +31,9 @@ const
   SOURCE_MULTIVECTORS = staticRead(LIBRARY & "/pga/multivectors.nim")
     ## Library arithmetic and accessors.
   EXCLUDED = ["==", "=~", "$", "*"]
-    ## Exported symbols catalogue leaves out on purpose: poisoned equality, approximate
-    ## comparison and display are predicates or text, and `*` is template forwarding to
-    ## scalar `∧`, which catalogue measures once as `scale`.
+    ## Exported symbols catalogue leaves out on purpose.
+    ##   Poisoned equality, approximate comparison and display are predicates or text.
+    ##   `*` is template forwarding to scalar `∧`, which catalogue measures once as `scale`.
 
 
 macro expressionsCompile(measurands: static seq[Measurand]): untyped =

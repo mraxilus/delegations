@@ -75,11 +75,11 @@ type
     Center
       ## Antiwedge of cocarrier with operand, i.e. `(m☆ ∧ 𝐞∞) ∨ m`, counted from one table.
     Container
-      ## Wedge of operand with weight dual of its carrier, i.e. `m ∧ (m ∧ 𝐞∞)☆`, counted
-      ##   from one folded table.
+      ## Wedge of operand with weight dual of its carrier, i.e. `m ∧ (m ∧ 𝐞∞)☆`.
+      ##   Counted from one folded table.
     JoinCarrier
-      ## Antiwedge of one operand with carrier of other, i.e. `t ∨ (m ∧ 𝐞∞)`, counted from
-      ##   one folded table; second step of partner.
+      ## Antiwedge of one operand with carrier of other, i.e. `t ∨ (m ∧ 𝐞∞)`.
+      ##   Counted from one folded table; second step of partner.
   LowerBound* = object
     ## Define multivector lower bound of one operation, i.e. what algebra demands.
     is_derived*: bool

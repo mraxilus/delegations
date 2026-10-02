@@ -25,8 +25,9 @@ import ./[catalogue, kinds]
 
 type
   Factor = tuple[source, slot: int]
-    ## Define one factor of term: operand `m` (0), `n` (1) or temporary (2 on), and its slot;
-    ##   slot below zero reads source whole, as scalar operand or scalar temporary.
+    ## Define one factor of term: operand or temporary, and its slot.
+    ##   Source `m` is 0, `n` is 1, and temporaries are 2 on.
+    ##   Slot below zero reads source whole, as scalar operand or scalar temporary.
   Term = object
     ## Define one term of slot: coefficient times product of factors.
     coefficient: float
@@ -101,8 +102,8 @@ func summed(left, right: Slots; is_difference = false): Slots =
 
 
 func mapped(slots: Slots, cayley: Cayley1D): Slots =
-  ## Send each slot where one-dimensional table sends its basis element, signed; cell of
-  ##   several terms sends slot to each.
+  ## Send each slot where one-dimensional table sends its basis element, signed.
+  ##   Cell of several terms sends slot to each.
   for b in Basis:
     for destination in cayley[b]:
       for term in slots[b]:

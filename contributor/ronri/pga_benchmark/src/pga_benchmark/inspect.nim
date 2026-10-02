@@ -34,11 +34,11 @@ const
   REFERENCE_MARK = "referenceZ"
     ## Prefix of module suffix of every typed reference module.
   DENSE_MODULE = "dense"
-    ## Module suffix of dense form module, as bench entry beside it names it; build from
-    ##   elsewhere spells path before it, ending `Zdense`.
+    ## Module suffix of dense form module, as bench entry beside it names it.
+    ##   Build from elsewhere spells path before it, ending `Zdense`.
   KEY_SELECT = "{}(Multivector,int)"
-    ## Key both grade selections share; antigrade's instantiation, second declared, takes
-    ## key numbered by its overload index.
+    ## Key both grade selections share.
+    ##   Antigrade's instantiation, second declared, takes key numbered by its overload index.
   KEY_PART = "[](Multivector,Basis)"
     ## Key component read shares with its `var` twin; read is declared first.
 
@@ -50,9 +50,10 @@ func isKept(f: CFunction): bool =
 
 
 func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
-  ## Key kept functions, numbering those sharing stems by overload index so key holds
-  ## whatever order compiler emits them in: lowest index keeps bare key, others append
-  ## `#u<n>`. `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
+  ## Key kept functions, numbering those sharing stems by overload index.
+  ##   Key then holds whatever order compiler emits them in: lowest index keeps bare key,
+  ##     others append `#u<n>`.
+  ##   `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
   var
     groups: Table[string, seq[CFunction]]
     order: seq[string]
@@ -79,7 +80,7 @@ func referenceStem(k: Kind): string =
 
 
 func libraryKey(p: Measurand): string =
-  ## Key of library function measurand's expression calls; empty where it composes several.
+  ## Get key of library function measurand's expression calls; empty where it composes several.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
   let head = p.emittedHead
@@ -90,7 +91,7 @@ func libraryKey(p: Measurand): string =
 
 
 func referenceKey(p: Measurand): string =
-  ## Key of reference function measurand names, operands read off argument names.
+  ## Get key of reference function measurand names, operands read off argument names.
   let
     open = p.reference.find('(')
     close = p.reference.rfind(')')
@@ -105,7 +106,7 @@ func referenceKey(p: Measurand): string =
 
 
 func denseKey(p: Measurand): string =
-  ## Key of dense form of general measurand; empty on typed one, which has none.
+  ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
   for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])

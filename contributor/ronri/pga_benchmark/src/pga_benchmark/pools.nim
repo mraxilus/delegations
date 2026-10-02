@@ -67,7 +67,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
 
 
 func toUpperAscii(s: string): string {.compileTime.} =
-  ## Upper-case ASCII letters; local so runtime imports no string library.
+  ## Convert ASCII letters to upper case; local so runtime imports no string library.
   for c in s:
     result.add (if c in 'a' .. 'z': char(ord(c) - 32) else: c)
 

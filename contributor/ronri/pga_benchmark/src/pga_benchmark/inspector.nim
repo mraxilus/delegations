@@ -120,8 +120,9 @@ func demangle*(name: string): string =
 
 
 func stemOf(parameter: string): string =
-  ## Read type stem of one C parameter or return type, e.g. `Point` from
-  ## `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from `tyEnum_Basis__hash`.
+  ## Read type stem of one C parameter or return type.
+  ##   E.g. `Point` from `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from
+  ##     `tyEnum_Basis__hash`.
   let text = parameter.strip
   for prefix in ["tyObject_", "tyEnum_", "tyDistinct_", "tyTuple_"]:
     if text.startsWith(prefix):
@@ -213,9 +214,9 @@ func functionsIn*(source: string): seq[CFunction] =
 
 
 func plainSites(body: string): seq[string] =
-  ## Read mangled name at every call site of Nim function in text holding no loop,
-  ## accessor reads excluded. Call is identifier holding `__` followed by `(`; runtime
-  ## helpers hold none.
+  ## Read mangled name at every call site of Nim function in text holding no loop.
+  ##   Accessor reads are excluded.
+  ##   Call is identifier holding `__` followed by `(`; runtime helpers hold none.
   var i = 0
   while i < body.len:
     if body[i] notin IdentStartChars:
@@ -257,8 +258,8 @@ func startOf(context, counter: string): int =
 
 
 func tripsOf(inner, context: string): int =
-  ## Read how many times loop body runs from its bound test and counter's start; one
-  ## where bound is not literal.
+  ## Read how many times loop body runs from its bound test and counter's start.
+  ##   One where bound is not literal.
   let at = inner.find(BOUND_OPEN)
   if at < 0: return 1
   let start = at + BOUND_OPEN.len
@@ -328,8 +329,8 @@ func `*`(c: Counts, trips: int): Counts =
 
 
 func weighted(body, context: string): Counts =
-  ## Count spent terms with every loop's body weighted by its trips, nested loops
-  ## multiplying; text outside loops counts once.
+  ## Count spent terms with every loop's body weighted by its trips.
+  ##   Nested loops multiply; text outside loops counts once.
   var
     position = 0
     outside = ""
@@ -355,8 +356,8 @@ func weighted(body, context: string): Counts =
 
 
 func weightedSites(body, context: string): seq[string] =
-  ## Read call sites with every loop's body repeated by its trips, so callees fold once
-  ## per trip; sites outside loops once.
+  ## Read call sites with every loop's body repeated by its trips.
+  ##   Callees then fold once per trip; sites outside loops count once.
   var
     position = 0
     outside = ""
@@ -383,14 +384,15 @@ func weightedSites(body, context: string): seq[string] =
 
 
 func callSites*(body: string): seq[string] =
-  ## Read mangled name at every call site of Nim function in body, once per loop trip,
-  ## accessor reads excluded.
+  ## Read mangled name at every call site of Nim function in body, once per loop trip.
+  ##   Accessor reads are excluded.
   weightedSites(body, "")
 
 
 func count*(body: string): Counts =
-  ## Count what one function body spends, by text: terms once per loop trip where loop's
-  ## bound is literal, declarations and lines once.
+  ## Count what one function body spends, by text.
+  ##   Terms count once per loop trip where loop's bound is literal; declarations and lines
+  ##     count once.
   result = weighted(body, "")
   result.intermediates = body.countIntermediates
   result.lines = body.count('\n')

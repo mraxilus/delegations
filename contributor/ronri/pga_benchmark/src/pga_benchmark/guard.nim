@@ -5,7 +5,7 @@
 ##   build are not comparable; date and machine are ignored, as counts are theirs to vary
 ##   by nothing.
 ##
-##   Cost: findings render as `path:line: message; got value`, so `check` reads as koch does.
+##   Cost: findings render as `path:line: message; got value`, so `guard` reads as koch does.
 
 {.experimental: "strictFuncs".}
 
@@ -15,8 +15,9 @@ import ./report
 
 
 const BOUNDED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
-  ## Lower bound fields gate holds. Bound is derived rather than measured, so gate holds it
-  ##   to equality: it moves only where derivation moves, which is change to read, not drift.
+  ## Lower bound fields gate holds.
+  ##   Bound is derived rather than measured, so gate holds it to equality.
+  ##   It moves only where derivation moves, which is change to read, not drift.
 
 
 type

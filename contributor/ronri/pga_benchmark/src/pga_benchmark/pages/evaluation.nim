@@ -192,8 +192,9 @@ func nanTable*(evaluation: JsonNode): string =
 
 
 func editsHtml*(change: Change, files: Table[string, string]): string =
-  ## Render each edit closed: summary names where it lands and signatures it defines or sits
-  ##   in; opening it shows quote then replacement, or whole file.
+  ## Render each edit closed, under summary naming where it lands.
+  ##   Summary names signatures edit defines or sits in.
+  ##   Opening edit shows quote then replacement, or whole file.
   const declarations = ["func ", "proc ", "iterator ", "template ", "macro ", "method ",
     "converter ", "suite ", "test "]
     ## Words opening declaration whose signature summary shows.

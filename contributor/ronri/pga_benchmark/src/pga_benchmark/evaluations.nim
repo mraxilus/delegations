@@ -153,8 +153,8 @@ func algebraDefines(algebra: Algebra): seq[string] =
 
 
 func buildDefines(chain: Toolchain, pga: string): seq[string] =
-  ## Spell defines naming build in documents it writes, and leaving dense forms out, since they
-  ##   read tables by name at pin and change may rename them.
+  ## Spell defines naming build in documents it writes, and leaving dense forms out.
+  ##   Dense forms read tables by name at pin, and change may rename them.
   @[
     "-d:pga_benchmark.nim_commit=" & chain.nim,
     "-d:pga_benchmark.pga_commit=" & pga,

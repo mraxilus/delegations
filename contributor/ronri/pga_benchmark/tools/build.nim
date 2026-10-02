@@ -80,8 +80,10 @@ const
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("coreutils", "`sha256sum` store checks those faces with"),
   ]
-    ## System packages build needs beyond compiler. Compiler is toolchain, pinned in nimble
-    ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
+    ## System packages build needs beyond compiler.
+    ##   Compiler is toolchain, pinned in nimble file.
+    ##   Library is Atlas checkout, pinned in lock.
+    ##   Faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
     "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
     " [name|symbol] [url|algebra|--thorough]\n"
@@ -218,9 +220,10 @@ proc mergeAllocations(plain, instrumented: JsonNode): JsonNode =
 
 
 proc bench() =
-  ## Compile bench per algebra, plain for timings and instrumented for allocations; run plain
-  ##   ones in turn, algebra after algebra, `BENCH_RUNS` times, so drift of machine lands on
-  ##   every algebra alike; record combined measurements into `baseline/`.
+  ## Compile bench per algebra, plain for timings and instrumented for allocations.
+  ##   Run plain ones in turn, algebra after algebra, `BENCH_RUNS` times.
+  ##     Machine drift then lands on every algebra alike.
+  ##   Record combined measurements into `baseline/`.
   let
     nim = nimCommit()
     pga = pgaCommit()
@@ -327,8 +330,8 @@ proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
 
 
 proc readProposals(findings: var seq[Finding]): seq[Proposal] =
-  ## Read every proposal directory, in number order; malformed ones, numbers taken twice or
-  ##   skipped, and figures naming no file add findings.
+  ## Read every proposal directory, in number order.
+  ##   Malformed ones, numbers taken twice or skipped, and figures naming no file add findings.
   var directories: seq[string]
   for kind, path in walkDir(DIRECTORY_PROPOSALS):
     if kind == pcDir: directories.add path
@@ -361,10 +364,10 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
 proc candidatesOf(
   changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
 ): seq[Candidate] =
-  ## Shape one evaluation candidate per change and per proposed proposal; proposal carries its
-  ##   base chain first, less any base library already implements.
-  ##   Candidate's programs are program texts, so digest moves when program does. Frozen
-  ##   proposal shapes none: library holds or dropped its edits, so they no longer apply.
+  ## Shape one evaluation candidate per change and per proposed proposal.
+  ##   Proposal carries its base chain first, less any base library already implements.
+  ##   Candidate's programs are program texts, so digest moves when program does.
+  ##   Frozen proposal shapes none: library holds or dropped its edits, so they no longer apply.
   for (name, change) in changes:
     result.add Candidate(
       name: name,
@@ -432,8 +435,9 @@ proc headChecked(pin: string): seq[Finding] =
   ## Hold pin to library head, and checkout to pin: no local edit under library directory.
 
   proc libraryHead(pin: string): (string, string, string) =
-    ## Read tree of library directory at pin, and head commit of library repository with its
-    ##   tree; empty where git cannot read one. Fetches only when head is not pin.
+    ## Read tree of library directory at pin, and head commit of library repository with tree.
+    ##   Empty where git cannot read one.
+    ##   Fetches only when head is not pin.
     let
       (output_pin, code_pin) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
       tree_pin = if code_pin == 0: output_pin.strip.splitLines[^1] else: ""
@@ -684,8 +688,8 @@ proc pinnedChecked(pin: string): seq[Finding] =
 
 
 proc drive() =
-  ## Inspect, check against baselines, hold committed list and docket to regeneration, and
-  ##   hold pin to library head and every measurement, evaluation, file and page to pin.
+  ## Inspect, check against baselines, and hold committed list and docket to regeneration.
+  ##   Hold pin to library head, and every measurement, evaluation, file and page to pin.
   let pin = pgaCommit()
   var findings = headChecked(pin)
   inspect()

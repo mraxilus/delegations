@@ -1,8 +1,8 @@
 ## Write measurements as JSON, schema 1, and read them back; tool side only.
-##   One document per configuration and kind: `bench` holds timing measurements of every measurand
-##   of both implementations, `static` holds counts read from emitted C. Both open with same
-##   `algebra` and `taken` objects, so any file says what it measured, on what, and when
-##   (Article VII.6). Keys are measurand ids, ASCII, stable across runs.
+##   One document per configuration and kind: `runtime` holds timing measurements of every
+##   measurand in each of `IMPLEMENTATIONS`, `static` holds counts read from emitted C. Both
+##   open with same `algebra` and `taken` objects, so any file says what it measured, on what,
+##   and when (Article VII.6). Keys are measurand ids, ASCII, stable across runs.
 ##
 ##   Cost: `std/json` allocates freely; runs once per file, never on timed path.
 
@@ -92,8 +92,9 @@ func movementNode*(movement: Movement): JsonNode =
 
 
 func moduleTail*(module: string): string =
-  ## Read last two segments of mangled module path, `pga/operators` out of
-  ## `OOZdependenciesZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
+  ## Read last two segments of mangled module path, i.e. `pga/operators`.
+  ##   Source is e.g. `OOZdependenciesZ...ZpgaZoperators`; whole path spells checkout and
+  ##     outruns line width.
   ##   Compiler spells `/` as `Z` and `_` as `95`; only those two are undone.
   let
     parts = module.split('Z')
@@ -102,15 +103,17 @@ func moduleTail*(module: string): string =
 
 
 func isLibraryModule*(module: string): bool =
-  ## Decide whether module tail names library's module, rather than reference's or dense
-  ##   forms'; dense module's tail is `dense` in bench build, and path ends so elsewhere.
+  ## Decide whether module tail names library's module, rather than reference's or dense forms'.
+  ##   Dense module's tail is `dense` in bench build, and path ends so elsewhere.
   not module.startsWith("reference/") and module != "dense" and not module.endsWith("/dense")
 
 
 func functionNode*(function: CFunction; own, total: Counts; size_multivector: int): JsonNode =
-  ## Build object of one inspected function: key parts, module tail, inline flag, own and total
-  ## counts, movement modelled on total counts. Mangled name is left out: it spells
-  ## checkout path and compiler hash, neither of which is measurement.
+  ## Build object of one inspected function.
+  ##   Object holds key parts, module tail, inline flag, own and total counts, and movement
+  ##     modelled on total counts.
+  ##   Mangled name is left out: it spells checkout path and compiler hash, neither of which
+  ##     is measurement.
   %*{
     "symbol": function.symbol,
     "module": moduleTail(function.module),

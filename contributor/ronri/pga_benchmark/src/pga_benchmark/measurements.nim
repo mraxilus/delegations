@@ -43,8 +43,8 @@ type
   Measurement* = object
     ## Define measurements of one measurand in one implementation.
     is_measured*: bool
-      ## False where implementation has no expression: reference on general measurand, dense
-      ##   form on typed one.
+      ## False where implementation has no expression.
+      ##   Reference has none on general measurand, and dense form has none on typed one.
     ns_median*, ns_min*: float
       ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
@@ -140,8 +140,8 @@ template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
 macro emitMeasurand(
   index: static int, implementation: static Implementation, measurand: static Measurand
 ): untyped =
-  ## Emit timed run of one measurand in one implementation into
-  ##   `MEASUREMENTS[implementation][index]`.
+  ## Emit timed run of one measurand in one implementation.
+  ##   Result lands in `MEASUREMENTS[implementation][index]`.
   let expression =
     case implementation
     of Implementation.Library: measurand.expression
@@ -176,6 +176,8 @@ macro emitMeasurand(
           `body`)]
         rounds: array[ROUNDS, int64]
       let statistics_before = getAllocStats()
+      # Hot path, per pool slot: index and pool reads constant; work linear in `OBJECTS` times
+      #   `ROUNDS`; nothing allocates but `body`, and `allocations` counts what it does.
       timeRounds(rounds):
         for i in 0 ..< OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
@@ -198,8 +200,8 @@ macro emitMeasurand(
 
 
 macro emitCatalogue(): untyped =
-  ## Emit every measurand in every implementation, in catalogue order, so implementations of
-  ##   one measurand run one after another and drift of machine lands on each alike.
+  ## Emit every measurand in every implementation, in catalogue order.
+  ##   Implementations of one measurand run back to back, so machine drift lands on each alike.
   result = newStmtList()
   for index in 0 ..< CATALOGUE.len:
     for implementation in Implementation:

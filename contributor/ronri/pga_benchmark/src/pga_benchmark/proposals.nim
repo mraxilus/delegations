@@ -120,8 +120,9 @@ func parseProposal*(
   claims: JsonNode;
   directory: string;
 ): (Proposal, seq[Finding]) =
-  ## Read proposal from its directory, argument and change texts and parsed claims; `change`
-  ##   empty where proposal carries none, `claims` nil where file is not JSON.
+  ## Read proposal from its directory: argument and change texts and parsed claims.
+  ##   `change` is empty where proposal carries none.
+  ##   `claims` is nil where file is not JSON.
   var
     proposal = Proposal(directory: directory, claims: newJArray())
     findings: seq[Finding]

@@ -301,8 +301,8 @@ func named(names: openArray[string], most = 6): string =
 func countFunctions(
   algebras: openArray[Algebra], metric: string, is_inline_rule: bool
 ): (int, int, string, int) =
-  ## Count library functions exceeding zero on metric, or light operators not inline; return
-  ## count, total, worst key and its value.
+  ## Count library functions exceeding zero on metric, or light operators not inline.
+  ##   Return count, total, worst key and its value.
   var value_worst = -1
   for algebra in algebras:
     let functions = algebra.measurements_static.at("functions")
