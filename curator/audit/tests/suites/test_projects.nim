@@ -44,6 +44,22 @@ suite "Article IX":
     check found[0].path == "contributor/ronri/fail/tests"  # failing named
     check found[0].message.endsWith("got exit `1`.")  # testament exits 1 on failure
 
+  test "IX.6 project's own verb runs through its driver, and its exit becomes finding":
+    # `head` stands for every verb koch reaches: driver compiled in project directory, verb
+    #   as its one argument, and exit other than 0 named against driver.
+    let root = createTempDir("delegations_", "_verb")
+    defer: removeDir(root)
+    root.writeInto("contributor/ronri/lags/" & DRIVER_FILE,
+      "import std/os\n" &
+      "case paramStr(1)\n" &
+      "of \"" & HEAD_VERB & "\": quit(\"pin `a` lags reference `b`\", 1)\n" &
+      "else: quit(2)\n")
+    let found = runHead(root, [Target(directory: "contributor/ronri/lags")])
+    check found.len == 1  # reference moved
+    check found[0].path == "contributor/ronri/lags/" & DRIVER_FILE
+    check found[0].message.endsWith("got exit `1`.")  # verb's own code, unchanged
+    check runHead(root, newSeq[Target]()).len == 0  # no project carries verb
+
   test "IX.6 named toolchain is what runs, never whatever PATH holds":
     # Pin resolution hands each project its own compiler; runner must use it rather than
     #   falling back, or two projects on two pins would silently share one.
