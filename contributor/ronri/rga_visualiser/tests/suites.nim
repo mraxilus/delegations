@@ -16,8 +16,9 @@
 ##   Top-level tests compile into their module's init function, so one module made one C
 ##   function of whole suite, which one `gcc` compiled alone; one module each gives compiler
 ##   one C file each, compiled in parallel (PROVENANCE.md, Testing).
-##   Imported in fixed order, never read from directory: seeded generator then serves every
-##   test same draws, and order is order suites ran in as one file.
+##   Imported in alphabetised order (X.5), never read from directory. `test_camera` alone draws
+##   from seeded generator as it runs, and no suite before it draws, so each of its tests meets
+##   same draws here as alone. Suite drawing as it runs, sorted ahead of it, shifts its draws.
 ##   Each module also runs alone, e.g. `nim r -d:testing tests/suites/test_motors.nim`.
 
 {.experimental: "strictFuncs".}
@@ -27,21 +28,21 @@ when compileOption("profiler"):
   import std/nimprof
 
 import ./suites/[
-  test_objects,
-  test_motors,
-  test_camera,
-  test_mesh,
-  test_scene,
-  test_history,
-  test_camera_aim,
-  test_selection,
   test_arena_swap,
-  test_image,
+  test_camera,
+  test_camera_aim,
   test_help,
-  test_picking,
+  test_history,
+  test_image,
   test_interaction,
   test_marker,
-  test_orrery,
+  test_mesh,
   test_message,
+  test_motors,
+  test_objects,
+  test_orrery,
+  test_picking,
+  test_scene,
+  test_selection,
   test_wording,
 ]

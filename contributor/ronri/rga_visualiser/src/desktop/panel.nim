@@ -41,7 +41,7 @@ import pga
 import ./gui
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, message, orrery, picking,
-  tessellate, scene, selection, timings, wording,
+  scene, selection, tessellate, timings, wording,
 ]
 
 

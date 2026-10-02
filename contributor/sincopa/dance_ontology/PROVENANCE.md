@@ -1537,7 +1537,7 @@ markup kind, and it cost one string-literal edit for every change of style.
 Cost: `design/wholecloth.nim` checked its two markers at compile time while the markup was constant
 (Article IV.4). Markup read at run time carries only a run-time check, which echoes the marker and
 refuses to write a page without its data. Verified: `pages` run either side of the move writes the
-same 22 files, with equal SHA-256 sums.
+same files, with equal SHA-256 sums.
 
 **Whole-cloth markup is held within width by the audit now, and not by a script.** Every line fits
 100 runes except one, the Google Fonts request. That is one whitespace-free token of 179 runes on a
@@ -1911,7 +1911,7 @@ Renames of the simulation are rare.
 
 **The compiler is pinned exactly, at the version this project was verified on.**
 `requires "nim == 2.2.12"` in `dance_ontology.nimble`. It sat at 2.2.4 for two weeks, because 2.2.8
-onward crashed the compiler itself on six of the suites, with
+onward crashed the compiler itself on the suites that import the umbrella module, with
 `field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`. That was recorded as
 an upper bound that nobody had explained.
 
@@ -1920,23 +1920,25 @@ read its float `result` with `+=` before anything assigned it. From 2.2.8 the vi
 such a result an int register, and then reads `floatVal` off it.
 
 It bites only at compile time, and only where the function is reached in the VM. That is
-`const SCENES = buildScenes()` in `draw/scene.nim`. So exactly the six suites that import the
-umbrella module crashed, and the six that import `simulation/`, `design/` or submodules did not.
+`const SCENES = buildScenes()` in `draw/scene.nim`. So exactly the suites that import the umbrella
+module crashed, and the suites that import `simulation/`, `design/` or submodules did not.
 `result = 0.0` first is the whole of it, and the line carries a comment saying why, because it reads
 redundant and is not.
 
 Verified here 2026-09-10, and not assumed. Five lines reproduce the crash with nothing from this
 project: a `func` that accumulates into a float `result`, and is called from a `const`. It compiles
-on 2.2.4 and crashes on 2.2.12 with that message. Before the mend, 6 of 12 suites crash on 2.2.12 in
-2 m 28 s. After it, all 13 pass in 2 m 11 s, and the same 13 pass on 2.2.4.
+on 2.2.4 and crashes on 2.2.12 with that message. Before the mend, the suites that import the
+umbrella module crash on 2.2.12, and the run takes 2 m 28 s. After it, every suite passes in
+2 m 11 s, on 2.2.12 and on 2.2.4. `nim r koch test contributor/sincopa/dance_ontology` runs the
+suites and counts them.
 
-Behaviour is unchanged, and that is measured rather than argued. Every one of the 22 pages that
+Behaviour is unchanged, and that is measured rather than argued. Every page that
 `tools/build.nim pages` writes is byte-identical built with the line and without it. So no page
 changes, and none is republished.
 
 Verified by `suites/test_route.nim`, which takes the length of a run in a `const`, so the
 compile-time path has a law that names it. Without that, to tidy the line away would show up only as
-six suites failing to build.
+suites that fail to build.
 
 The diagnosis came from a sweep by a curator for stale versions, issue 106. Rejected: to stay on
 2.2.4, which kept a bound whose reason lived in one sentence of this file. `result +=` on a float

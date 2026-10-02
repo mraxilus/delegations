@@ -1011,32 +1011,31 @@ suite "Interaction":
 
 
   test "a left drag looks with nothing picked, and orbits with something picked":
-    # Both front-ends called `orbit` outright, so free flight's own `look` never reached
+    # Both front-ends called `orbit` outright, so free flight's own look never reached
     #   drag at all: eye swung round pivot where reader meant to turn in place.
-    let opening = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
-    # Nothing picked: eye stands exactly, and sight turns by what was asked for.
+    #   Both mice and finger now drag through `turnFollowing`.
+    const (wide, tall) = (1440, 900)
+    let
+      opening = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
+      (before, after) =
+        (ScreenPosition(x: 600.0, y: 400.0), ScreenPosition(x: 760.0, y: 470.0))
+    # Nothing picked: eye stands exactly, and sight turns.
     var flying = opening
-    flying.turnAcross(0.25, 0.1, has_selection = false)
+    flying.turnFollowing(before, after, wide, tall, has_selection = false)
     check flying.eye =~ opening.eye
     check not (flying.frame.forward =~ opening.frame.forward)
-    var looked = opening
-    looked.look(0.25, 0.1)
-    check flying.frame.forward =~ looked.frame.forward
     # Something picked: pivot and separation stand, and eye is what swings.
     var orbiting = opening
-    orbiting.turnAcross(0.25, 0.1, has_selection = true)
+    orbiting.turnFollowing(before, after, wide, tall, has_selection = true)
     check orbiting.pivot =~ opening.pivot
     check orbiting.distance =~ opening.distance
     check not (orbiting.eye =~ opening.eye)
-    var turned = opening
-    turned.orbit(0.25, 0.1)
-    check orbiting.eye =~ turned.eye
 
 
-  test "a finger's drag holds its roll, where a mouse keeps what transport leaves":
-    # Turning about camera's own axes carries roll round by solid angle drag encloses.
-    #   That is geometry rather than mistake, and touch asks for none of it: finger
-    #   wanders in curves, and has no roll key beside it.
+  test "a drag holds its roll, where turns about the camera's axes keep what transport leaves":
+    # Turning about camera's own axes carries roll round by solid angle loop encloses.
+    #   That is geometry rather than mistake, and no drag asks for any of it: finger
+    #   wanders in curves, and has no roll key beside it, and both mice drag as finger does.
     const loop = [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]
     # Stance these figures are read at: 19 units off pivot one unit above origin, 24 degrees up.
     let stance = cameraAround(
@@ -1045,7 +1044,8 @@ suite "Interaction":
     for picked in [false, true]:
       # One loop leaves solid angle it encloses, which is what says this is geometry.
       var once = stance
-      for (turn, rise) in loop: once.turnAcross(turn, rise, has_selection = picked)
+      for (turn, rise) in loop:
+        if picked: once.orbit(turn, rise) else: once.look(turn, rise)
       check once.rollHeld.isSome
       let enclosed = 0.3*0.3*cos(stance.elevation)
       check abs(once.rollHeld.get - enclosed) < 0.02*enclosed
@@ -1053,9 +1053,9 @@ suite "Interaction":
       var carried = stance
       for round in 1 .. 4:
         for (turn, rise) in loop:
-          carried.turnAcross(turn, rise, has_selection = picked)
+          if picked: carried.orbit(turn, rise) else: carried.look(turn, rise)
       check abs(carried.rollHeld.get - 0.3242) < 1.0e-3
-    # Finger's loop of pixels leaves none in either state, keeps roll reader set by twist,
+    # Drag's loop of pixels leaves none in either state, keeps roll reader set by twist,
     #   and brings camera back where it began.
     const (wide, tall) = (390, 844)
     let corners = [
@@ -1283,8 +1283,9 @@ suite "Interaction":
   test "with no selection a held key flies along the camera's own axes":
     # Fly reading of movement key rather than map one: forward dives where sight dives,
     #   and up is camera's own up, so rolled camera rises toward its own ceiling.
-    var interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
-    var camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
+    var
+      interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
+      camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
     camera.roll(0.7)
     let (eye_start, axes_start) = (camera.eye, camera.frame)
     interaction.holdKey(Key.W)

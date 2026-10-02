@@ -140,6 +140,94 @@ export async function drivePan(page: Page): Promise<void> {
   );
 }
 
+/** Drive right-button drag while selection stands, and assert it zooms by what it holds.
+ *
+ *  Vertical stretches from pivot's row, so point press took keeps pointer's height. It turns
+ *  nothing: turn chasing point's column spun view and levelled it, zoomed far out. Suite
+ *  holds it by projection; this holds page's wiring: press takes point, and step reads
+ *  canvas size and selection's reach.
+ *  Off middle column, where that turn was greatest. Pressed where nothing stands, since right
+ *  press on object arms drag instead. Last drag runs down from top of frame with drift
+ *  across, as hand drags.
+ */
+export async function driveStretch(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await settleHome(page);
+  await page.evaluate(() => nimSelectOnly(nimSceneHandles()[0] ?? 0));
+  await settleCamera(page); // Let framing ease finish before moving by hand.
+  const size = await page.evaluate(() => ({
+    width: document.getElementById('gl')?.clientWidth ?? 0,
+    height: document.getElementById('gl')?.clientHeight ?? 0,
+  }));
+  const row = size.height / 2;
+  const column = size.width / 2;
+
+  // Away from pivot's row on either side, and toward it.
+  const drags = [
+    { way: 'above it and away', press: { x: column + 80, y: row - 90 }, reach: row - 220 },
+    { way: 'below it and away', press: { x: column - 80, y: row + 90 }, reach: row + 210 },
+    { way: 'toward it', press: { x: column + 80, y: row - 380 }, reach: row - 60 },
+  ];
+  for (const { way, press, reach } of drags) {
+    const is_open = await page.evaluate(({ x, y }) => {
+      nimUpdateCursor(x, y);
+      nimUpdateHover(window.innerWidth, window.innerHeight);
+      return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+    }, press);
+    const before = await readCamera(page);
+    const rise_before = await page.evaluate(() => nimCameraElevation());
+    await page.mouse.move(press.x, press.y);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(press.x, reach, { steps: 12 });
+    await page.mouse.up({ button: 'right' });
+    const held = await page.evaluate(
+      ({ width, height }) => Array.from(nimCameraPanHeldAt(width, height)), size,
+    );
+    await settleCamera(page);
+    const after = await readCamera(page);
+    const rise_after = await page.evaluate(() => nimCameraElevation());
+    const slip = Math.abs((held[1] ?? 0) - reach);
+    const turned = Math.max(
+      Math.abs(after.azimuth - before.azimuth), Math.abs(rise_after - rise_before),
+    );
+    const is_closer = reach < row ? reach < press.y : reach > press.y;
+    report(
+      `a vertical right drag with a selection, ${way}, zooms and turns nothing`,
+      is_open && (held[2] ?? 0) > 0 && slip < 0.5 && turned < 1e-5 &&
+        (after.distance < before.distance) === is_closer &&
+        spanOf(before.pivot, after.pivot) < 1e-4,
+      `pressed on ${is_open ? 'open sky' : 'an object'}; point ${slip.toFixed(3)} px off the ` +
+        `cursor's height, turned ${turned.toFixed(6)}, separation ` +
+        `${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
+    );
+  }
+
+  // Down from very top with hand's drift across: turn stays left drag's own along pivot's
+  //   row. Turn that carried point press took swung azimuth 0.17 radians for each step.
+  const top = { x: column + 3, y: 8 };
+  const is_top_open = await page.evaluate(({ x, y }) => {
+    nimUpdateCursor(x, y);
+    nimUpdateHover(window.innerWidth, window.innerHeight);
+    return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+  }, top);
+  const bearings: number[] = [await page.evaluate(() => nimCameraAzimuth())];
+  await page.mouse.move(top.x, top.y);
+  await page.mouse.down({ button: 'right' });
+  for (let step = 1; step <= 24; step += 1) {
+    await page.mouse.move(top.x + (step % 2 ? 4 : -2) + step * 0.5, top.y + step * 16);
+    bearings.push(await page.evaluate(() => nimCameraAzimuth()));
+  }
+  await page.mouse.up({ button: 'right' });
+  // Largest turn of one step, against 0.17 radians of turn that carried point press took.
+  const jump = Math.max(...bearings.slice(1).map((b, i) => Math.abs(b - (bearings[i] ?? b))));
+  report(
+    'a right drag down from the top with a drift across turns as a left drag, and never jumps',
+    is_top_open && jump < 0.03,
+    `pressed on ${is_top_open ? 'open sky' : 'an object'}; largest turn of one step ` +
+      `${jump.toFixed(4)} radians, drifting 2 to 4 px across each of 24`,
+  );
+}
+
 /** Drive zoom low in frame, and assert eye follows pointer's own ray.
  *
  *  Free flight has no ground answer and no level one: ray under pointer is what carries
