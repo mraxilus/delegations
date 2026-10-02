@@ -213,3 +213,16 @@ suite "faces":
       checkpoint(stack)
       let families = familiesOf(stack)
       check families.len >= 3 and families[1] == "Noto Sans Math"
+
+
+  test "dressed page declares utf-8 ahead of its face block":
+    ## Face block is half megabyte of ASCII, and browser that opens page from file guesses
+    ## its charset from bytes ahead of first that is not ASCII.  Review page and whole-cloth
+    ## page declared none, and Chromium 141 read both as windows-1250 on 2026-10-02 once
+    ## block grew (repository issue 391).
+    for page in [DOCUMENT, FRAGMENT]:
+      checkpoint(page)
+      let
+        dressed = withFaces(page, directory)
+        declared = dressed.find("<meta charset=\"utf-8\">")
+      check declared >= 0 and declared < dressed.find("@font-face") and declared < 1024
