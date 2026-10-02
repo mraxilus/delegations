@@ -32,9 +32,9 @@ const STYLE* = """<style>
   --left: #3d7fd0; --right: #d0763d;
   --left-deep: #133a72; --right-deep: #723a13;
   --body-lit: #e2ddd5; --body-shade: #9d968b;
-  --serif: "Noto Serif", Georgia, "Times New Roman", serif;
-  --sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
-  --mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif: "Noto Serif", "Noto Sans Math", "Commit Mono", Georgia, "Times New Roman", serif;
+  --sans: "Noto Sans", "Noto Sans Math", "Commit Mono", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Commit Mono", "Noto Sans Math", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-variant-ligatures: contextual;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
