@@ -1591,7 +1591,8 @@ inside of a bracket. A prefix operator is glued to its operand.
   `)`, and a colon after an operator.
 - `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
   reads as that operator.
-- Never read: `;`, `::`, `.` and the operators that start with it, the paths of `import` and
+- A semicolon takes no space before it and one after, as a comma does.
+- Never read: `::`, `.` and the operators that start with it, the paths of `import` and
   `export`, and the export marker.
 - An export marker is a `*` glued after a name that a declaration places. That name opens its
   line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
