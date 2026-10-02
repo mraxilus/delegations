@@ -4,7 +4,7 @@
 ##   so one source serves every configuration and stubs pick which.
 ##
 ##   Bootstrap order, `[needs] -> target`, one line for each target:
-##     [] -> bound, inspector, markdown, surface, reference/scalars
+##     [] -> bound, inspector, markdown, surface, pages/search, reference/scalars
 ##     [pga] -> cells, kinds
 ##     [pga, bound, kinds] -> catalogue
 ##     [pga, catalogue, kinds] -> dense
@@ -25,6 +25,7 @@
 ##     [gaps, markdown, pages/shell, report] -> pages/docket
 ##     [changes, markdown, notes, pages/evaluation, pages/shell] -> pages/marginalia
 ##     [markdown, pages/evaluation, pages/shell, proposals] -> pages/proposal
+##     [pages/search] -> pages/find (entry point, compiled to JavaScript for docket)
 ##     [pga, bound, catalogue, inspector, kinds, report] -> inspect (entry point, tool side)
 ##     [pga, catalogue, kinds, measurements, pools, report] -> bench (entry point, tool side)
 ##
