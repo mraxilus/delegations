@@ -18,7 +18,9 @@ stated once is then reached through two mechanisms, rather than asked to agree w
 ## Authority replicated
 
 None directly. The `pga` library that it depends on replicates the book of Lengyel. This project
-replicates no published source, and derives no algebra of its own.
+replicates no published source. It derives the `exp` and `log` of a motor, which `pga` does not
+yet carry, from the operators of `pga`. `src/rga_visualiser/motors.nim` holds them, with the turn
+and the sandwich that are built on them.
 
 ## Build and test
 
@@ -123,7 +125,7 @@ src/browser/bridge.nim        every value the page draws, compiled through the J
 src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
 pages/shell.html              committed markup, with tokens the build fills
 tools/build.nim               the build driver: declare, types, web, drive, desktop,
-                              assets, system, clean
+                              driven, assets, system, clean
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/suites/                 one module for each suite, and the pool they share
@@ -143,9 +145,7 @@ pull request, and in the message that says the work is ready.
 | --- | --- |
 | rga_visualiser.html | https://claude.ai/code/artifact/a523f27b-d74e-4987-9b6e-7b1680e469a6 |
 
-The URL is written here because it was written nowhere. The page existed, and three changes to it
-merged without a republish, because nobody who read this repository could find where it was
-published.
+The URL lives here, so that a reader of this repository finds where the page is published.
 
 The desktop front-end has no entry. It is a binary, and Article XI.3 keeps binaries out of the tree,
 so it is shown as a screenshot instead.

@@ -234,15 +234,20 @@ proc runJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
   result.add runTests(root, targets)
 
 
-func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
-  ## Keep planned jobs of projects carrying driven checks.
+func carryingOnly*(tree: Tree, jobs: openArray[Job], verb: string): seq[Job] =
+  ## Keep planned jobs of projects whose driver dispatches verb.
   ##   Filter over what `list-projects` already selected rather than second selection of its
-  ##   own, so driven set inherits scoping, `--all` and `--recent` without restating any of it.
+  ##   own, so verb's set inherits scoping, `--all` and `--recent` without restating any of it.
   var directories: seq[string]
   for job in jobs: directories.add job.directory
-  let driven = tree.verbDirectories(directories, DRIVEN_VERB)
+  let carrying = tree.verbDirectories(directories, verb)
   for job in jobs:
-    if job.directory in driven: result.add job
+    if job.directory in carrying: result.add job
+
+
+func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
+  ## Keep planned jobs of projects carrying driven checks.
+  tree.carryingOnly(jobs, DRIVEN_VERB)
 
 
 proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
@@ -263,6 +268,22 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
     if tree.nodeDirectories([target.directory]).len > 0: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runDriven(root, targets)
+
+
+proc headJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+  ## Restore and run `head` of each planned project carrying it, on its own pin.
+  ##   Pin is resolved as `drivenJobs` resolves it, since verb compiles project code; restore
+  ##   failing short-circuits for reason it does there. No node restore: verb reads reference,
+  ##   and builds no page.
+  ##   `check` and `ciJobs` never call this. Verdict varies with reference rather than with
+  ##   code, so only `head.yml` runs it, daily, off every path merge waits on.
+  let held = tree.carryingOnly(jobs, HEAD_VERB)
+  if held.len == 0: return
+  let (targets, found) = held.targetsFor
+  result = found
+  result.add restoreAll(root, targets)
+  if result.len > 0: return
+  result.add runHead(root, targets)
 
 
 proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =

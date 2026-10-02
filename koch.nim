@@ -11,9 +11,12 @@
 ##     command to run locally.
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `check-types` runs
-##     project's `types`, `drive` its `drive`, and `list-packages` its `system`. Koch learns
-##     which projects carry `drive` and `system` by reading that driver's own dispatch, and
-##     which carry `types` by node manifest beside its lock; never from list.
+##     project's `types`, `drive` its `drive`, `head` its `head`, and `list-packages` its
+##     `system`. Koch learns which projects carry `drive`, `head` and `system` by reading that
+##     driver's own dispatch, and which carry `types` by node manifest beside its lock; never
+##     from list.
+##   `head` is no `check-` verb, and `check` never runs it: its verdict varies with outside
+##     reference rather than with code, so `head.yml` runs it daily, and merge waits on none.
 ##   `check-types` runs on driver's compiler and `drive` on project's own, because type check
 ##     compiles no project code and drive does: it builds page through JS backend. So `drive`
 ##     is planned like `test`, through `list-projects --drive`, and reaches CI as matrix.
@@ -53,6 +56,7 @@ import ./curator/audit/src/[
   fixes,
   hooks,
   plan,
+  projects,
   role,
   scope,
   tree,
@@ -73,6 +77,7 @@ Verbs:
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, then project's own `drive` verb, on project's own pin
+  head           fetch deps, then project's own `head` verb, on project's own pin
   fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
@@ -87,6 +92,7 @@ Options:
   --all            every project, not only those whose code changed
   --recent         projects whose code merged within last week
   --drive          list-projects keeps projects carrying `drive` verb
+  --head           list-projects keeps projects carrying `head` verb
   --write          stamp writes every Rules row rather than printing
   --dry-run        fix prints each change it would make, writes none, exits 1 where any
 """
@@ -96,7 +102,7 @@ Options:
 type
   Flag = enum
     ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Write, DryRun
+    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun
 
   Options = object
     ## Define parsed command line.
@@ -109,6 +115,7 @@ type
     is_all: bool
     is_recent: bool
     is_drive: bool
+    is_head: bool
     is_write: bool
     is_dry_run: bool
 
@@ -134,6 +141,7 @@ proc parseOptions(): Option[Options] =
       of "all": options.is_all = true
       of "recent": options.is_recent = true
       of "drive": options.is_drive = true
+      of "head": options.is_head = true
       of "write": options.is_write = true
       of "dry-run": options.is_dry_run = true
       else: return none(Options)
@@ -150,6 +158,7 @@ func given(options: Options): set[Flag] =
   if options.is_all: result.incl All
   if options.is_recent: result.incl Recent
   if options.is_drive: result.incl Drive
+  if options.is_head: result.incl Head
   if options.is_write: result.incl Write
   if options.is_dry_run: result.incl DryRun
 
@@ -418,6 +427,11 @@ proc run(options: Options): int =
       return options.refused
     let tree = options.root.readTree
     found = drivenJobs(options.root, tree, options.plannedJobs(tree))
+  of "head":
+    if not options.reads({Root, Base, All, Recent}, has_project = true):
+      return options.refused
+    let tree = options.root.readTree
+    found = headJobs(options.root, tree, options.plannedJobs(tree))
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
@@ -492,12 +506,13 @@ proc run(options: Options): int =
     for package in named: echo package
     return 0
   of "list-projects":
-    if not options.reads({Root, Base, All, Recent, Drive}, has_project = true):
+    if not options.reads({Root, Base, All, Recent, Drive, Head}, has_project = true):
       return options.refused
-    let
-      tree = options.root.readTree
-      jobs = options.plannedJobs(tree)
-    echo render(if options.is_drive: tree.drivenOnly(jobs) else: jobs)
+    let tree = options.root.readTree
+    var jobs = options.plannedJobs(tree)
+    if options.is_drive: jobs = tree.drivenOnly(jobs)
+    if options.is_head: jobs = tree.carryingOnly(jobs, HEAD_VERB)
+    echo render(jobs)
     return 0
   of "stamp":
     # Printing serves record written by hand; writing serves duty 1, where every record

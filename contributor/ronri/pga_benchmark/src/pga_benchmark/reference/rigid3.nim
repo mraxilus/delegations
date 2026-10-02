@@ -18,14 +18,14 @@
 ##   |---------|-------------------------------------------------|----------------------|
 ##
 ##   Each operation's doc states multiply and add counts of its form, i.e. what optimal
-##     code spends; suite `Inspector` reads those counts back from emitted C.
+##     code spends; suite `Internal: Inspector` reads those counts back from emitted C.
 ##   No function calls another: under `--panics:off` each call to Nim function fills its
 ##     result and checks error flag after it, and hand code spends neither; vector helpers
-##     are templates, and form two functions share is spelled in each. Suite `Inspector`
+##     are templates, and form two functions share is spelled in each. Suite `Internal: Inspector`
 ##     holds every reference function to no fill and no check.
 ##   Motor transforms are derived, not transcribed: rotation by quaternion (Qᵛ, Qᵛʷ),
 ##     translation 𝐭 = 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ), which is what antisandwich
-##     𝐐 ⟇ 𝐩 ⟇ 𝐐̰ spells for unit motor; suite `Chapter 3` holds them to library.
+##     𝐐 ⟇ 𝐩 ⟇ 𝐐̰ spells for unit motor; suite `Wiki: Motor` holds them to library.
 ##   Cost: transforms assume unitized motor obeying Qᵛ ∙ Qᵐ + Qᵛʷ Qᵐʷ = 0, as every
 ##     motor from composing rotations and translations does; arbitrary even element is
 ##     not motor and is not covered.
@@ -65,42 +65,44 @@ type
 #[ Vector Helpers ]#
 
 template cross*(a, b: Vector3): Vector3 =
-  ## Cross product, i.e. 𝐚 × 𝐛; 6 mul, 3 sub.
+  ## Multiply vectors through cross product, i.e. 𝐚 × 𝐛; 6 mul, 3 sub.
   (let u = a; let w = b;
     Vector3(x: u.y * w.z - u.z * w.y, y: u.z * w.x - u.x * w.z, z: u.x * w.y - u.y * w.x))
 
 template dot*(a, b: Vector3): float =
-  ## Dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
+  ## Multiply vectors through dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
   (let u = a; let w = b; u.x * w.x + u.y * w.y + u.z * w.z)
 
 template `+`*(a, b: Vector3): Vector3 =
-  ## Sum of vectors; 3 add.
+  ## Add vectors; 3 add.
   (let u = a; let w = b; Vector3(x: u.x + w.x, y: u.y + w.y, z: u.z + w.z))
 
 template `-`*(a, b: Vector3): Vector3 =
-  ## Difference of vectors; 3 sub.
+  ## Subtract vectors; 3 sub.
   (let u = a; let w = b; Vector3(x: u.x - w.x, y: u.y - w.y, z: u.z - w.z))
 
 template `-`*(a: Vector3): Vector3 =
-  ## Negated vector; 0 mul.
+  ## Negate vector; 0 mul.
   (let u = a; Vector3(x: -u.x, y: -u.y, z: -u.z))
 
-template `*`*(a: Vector3; s: float): Vector3 =
-  ## Vector scaled; 3 mul.
+template `*`*(a: Vector3, s: float): Vector3 =
+  ## Scale vector; 3 mul.
   (let u = a; let f = s; Vector3(x: u.x * f, y: u.y * f, z: u.z * f))
 
 template zero3(): Vector3 =
-  ## Spell zero vector by components; default constructor `Vector3()` costs zero fill and
-  ##   hook calls on this compiler, measured at 4 ns against 0 (see PROVENANCE, Reference).
+  ## Spell zero vector by components.
+  ##   Default constructor `Vector3()` costs zero fill and hook calls on this compiler.
+  ##   Measured at 4 ns against 0 (see PROVENANCE, Reference).
   Vector3(x: 0.0, y: 0.0, z: 0.0)
 
 template read3(v: Vector3): Vector3 =
-  ## Spell copy of vector by components; whole-object copy into constructor goes through
-  ##   `=dup` hook call on this compiler, measured at 20 ns against 2 (see PROVENANCE).
+  ## Spell copy of vector by components.
+  ##   Whole-object copy into constructor goes through `=dup` hook call on this compiler.
+  ##   Measured at 20 ns against 2 (see PROVENANCE).
   Vector3(x: v.x, y: v.y, z: v.z)
 
 
-template rotate(x: Vector3; v: Vector3; vw: float): Vector3 =
+template rotate(x, v: Vector3; vw: float): Vector3 =
   ## Rotate vector by unit quaternion (v, vw), i.e. x + 2(vw v × x + v × (v × x)).
   ##   18 mul, 12 add.
   (let u = x; let a = v; let s = vw; let c = cross(a, u); u + (c * s + cross(a, c)) * 2.0)
@@ -116,7 +118,7 @@ func wedge*(p, q: Point): Line {.inline.} =
     m: Vector3(x: p.y * q.z - p.z * q.y, y: p.z * q.x - p.x * q.z, z: p.x * q.y - p.y * q.x),
   )
 
-func wedge*(l: Line; p: Point): Plane {.inline.} =
+func wedge*(l: Line, p: Point): Plane {.inline.} =
   ## Join line and point into plane containing both, i.e. 𝐥 ∧ 𝐩; 12 mul, 8 add.
   Plane(
     x: l.v.y * p.z - l.v.z * p.y + l.m.x * p.w,
@@ -125,7 +127,7 @@ func wedge*(l: Line; p: Point): Plane {.inline.} =
     w: -l.m.x * p.x - l.m.y * p.y - l.m.z * p.z,
   )
 
-func wedge*(p: Point; l: Line): Plane {.inline.} =
+func wedge*(p: Point, l: Line): Plane {.inline.} =
   ## Join point and line, i.e. 𝐩 ∧ 𝐥 = 𝐥 ∧ 𝐩 since grades 1 and 2 commute; 12 mul, 8 add.
   Plane(
     x: p.z * l.v.y - p.y * l.v.z + p.w * l.m.x,
@@ -141,7 +143,7 @@ func wedgeAnti*(g, h: Plane): Line {.inline.} =
     m: Vector3(x: g.x * h.w - g.w * h.x, y: g.y * h.w - g.w * h.y, z: g.z * h.w - g.w * h.z),
   )
 
-func wedgeAnti*(g: Plane; l: Line): Point {.inline.} =
+func wedgeAnti*(g: Plane, l: Line): Point {.inline.} =
   ## Meet plane and line in point, i.e. 𝐠 ∨ 𝐥; 12 mul, 8 add.
   Point(
     x: l.m.y * g.z - l.m.z * g.y + l.v.x * g.w,
@@ -150,7 +152,7 @@ func wedgeAnti*(g: Plane; l: Line): Point {.inline.} =
     w: -l.v.x * g.x - l.v.y * g.y - l.v.z * g.z,
   )
 
-func wedgeAnti*(l: Line; g: Plane): Point {.inline.} =
+func wedgeAnti*(l: Line, g: Plane): Point {.inline.} =
   ## Meet line and plane, i.e. 𝐥 ∨ 𝐠 = 𝐠 ∨ 𝐥 since antigrades 1 and 2 commute; 12 mul, 8 add.
   Point(
     x: g.z * l.m.y - g.y * l.m.z + g.w * l.v.x,
@@ -163,7 +165,7 @@ func wedgeAnti*(k, l: Line): float {.inline.} =
   ## Meet lines in scalar measuring their crossing, i.e. 𝐤 ∨ 𝐥; 6 mul, 5 add.
   -(dot(k.v, l.m)) - dot(k.m, l.v)
 
-func wedgeAnti*(p: Point; g: Plane): float {.inline.} =
+func wedgeAnti*(p: Point, g: Plane): float {.inline.} =
   ## Meet point and plane in scalar measuring incidence, i.e. 𝐩 ∨ 𝐠; 4 mul, 3 add.
   p.x * g.x + p.y * g.y + p.z * g.z + p.w * g.w
 
@@ -172,27 +174,27 @@ func wedgeAnti*(p: Point; g: Plane): float {.inline.} =
 #[ Inner Products ]#
 
 func dot*(a, b: Point): float {.inline.} =
-  ## Inner product of points through bulks, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
+  ## Multiply points through inner product of their bulks, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
   a.x * b.x + a.y * b.y + a.z * b.z
 
 func dot*(k, l: Line): float {.inline.} =
-  ## Inner product of lines through moments, i.e. 𝐤 ∙ 𝐥; 3 mul, 2 add.
+  ## Multiply lines through inner product of their moments, i.e. 𝐤 ∙ 𝐥; 3 mul, 2 add.
   dot(k.m, l.m)
 
 func dot*(g, h: Plane): float {.inline.} =
-  ## Inner product of planes through positions, i.e. 𝐠 ∙ 𝐡; 1 mul.
+  ## Multiply planes through inner product of their positions, i.e. 𝐠 ∙ 𝐡; 1 mul.
   g.w * h.w
 
 func dotAnti*(a, b: Point): Antiscalar {.inline.} =
-  ## Inner antiproduct of points through weights, i.e. 𝐚 ∘ 𝐛; 1 mul.
+  ## Multiply points through inner antiproduct of their weights, i.e. 𝐚 ∘ 𝐛; 1 mul.
   Antiscalar(a.w * b.w)
 
 func dotAnti*(k, l: Line): Antiscalar {.inline.} =
-  ## Inner antiproduct of lines through directions, i.e. 𝐤 ∘ 𝐥; 3 mul, 2 add.
+  ## Multiply lines through inner antiproduct of their directions, i.e. 𝐤 ∘ 𝐥; 3 mul, 2 add.
   Antiscalar(dot(k.v, l.v))
 
 func dotAnti*(g, h: Plane): Antiscalar {.inline.} =
-  ## Inner antiproduct of planes through normals, i.e. 𝐠 ∘ 𝐡; 3 mul, 2 add.
+  ## Multiply planes through inner antiproduct of their normals, i.e. 𝐠 ∘ 𝐡; 3 mul, 2 add.
   Antiscalar(g.x * h.x + g.y * h.y + g.z * h.z)
 
 
@@ -200,27 +202,27 @@ func dotAnti*(g, h: Plane): Antiscalar {.inline.} =
 #[ Complements ]#
 
 func complementRight*(p: Point): Plane {.inline.} =
-  ## Right complement 𝐩̅, i.e. same components read as plane; 0 mul.
+  ## Get right complement 𝐩̅, i.e. same components read as plane; 0 mul.
   Plane(x: p.x, y: p.y, z: p.z, w: p.w)
 
 func complementLeft*(p: Point): Plane {.inline.} =
-  ## Left complement 𝐩̲, i.e. negated plane; 0 mul.
+  ## Get left complement 𝐩̲, i.e. negated plane; 0 mul.
   Plane(x: -p.x, y: -p.y, z: -p.z, w: -p.w)
 
 func complementRight*(l: Line): Line {.inline.} =
-  ## Right complement 𝐥̅, i.e. direction and moment swapped and negated; 0 mul.
+  ## Get right complement 𝐥̅, i.e. direction and moment swapped and negated; 0 mul.
   Line(v: -l.m, m: -l.v)
 
 func complementLeft*(l: Line): Line {.inline.} =
-  ## Left complement 𝐥̲, equal to right one for lines; 0 mul.
+  ## Get left complement 𝐥̲, equal to right one for lines; 0 mul.
   Line(v: -l.m, m: -l.v)
 
 func complementRight*(g: Plane): Point {.inline.} =
-  ## Right complement 𝐠̅, i.e. negated point; 0 mul.
+  ## Get right complement 𝐠̅, i.e. negated point; 0 mul.
   Point(x: -g.x, y: -g.y, z: -g.z, w: -g.w)
 
 func complementLeft*(g: Plane): Point {.inline.} =
-  ## Left complement 𝐠̲, i.e. same components read as point; 0 mul.
+  ## Get left complement 𝐠̲, i.e. same components read as point; 0 mul.
   Point(x: g.x, y: g.y, z: g.z, w: g.w)
 
 
@@ -228,27 +230,27 @@ func complementLeft*(g: Plane): Point {.inline.} =
 #[ Reverses ]#
 
 func reverse*(p: Point): Point {.inline.} =
-  ## Reverse 𝐩̃, identity on grade 1; 0 mul.
+  ## Get reverse 𝐩̃, identity on grade 1; 0 mul.
   p
 
 func reverse*(l: Line): Line {.inline.} =
-  ## Reverse 𝐥̃, negation on grade 2; 0 mul.
+  ## Get reverse 𝐥̃, negation on grade 2; 0 mul.
   Line(v: -l.v, m: -l.m)
 
 func reverse*(g: Plane): Plane {.inline.} =
-  ## Reverse 𝐠̃, negation on grade 3; 0 mul.
+  ## Get reverse 𝐠̃, negation on grade 3; 0 mul.
   Plane(x: -g.x, y: -g.y, z: -g.z, w: -g.w)
 
 func reverseAnti*(p: Point): Point {.inline.} =
-  ## Antireverse 𝐩̰, negation on antigrade 3; 0 mul.
+  ## Get antireverse 𝐩̰, negation on antigrade 3; 0 mul.
   Point(x: -p.x, y: -p.y, z: -p.z, w: -p.w)
 
 func reverseAnti*(l: Line): Line {.inline.} =
-  ## Antireverse 𝐥̰, negation on antigrade 2; 0 mul.
+  ## Get antireverse 𝐥̰, negation on antigrade 2; 0 mul.
   Line(v: -l.v, m: -l.m)
 
 func reverseAnti*(g: Plane): Plane {.inline.} =
-  ## Antireverse 𝐠̰, identity on antigrade 1; 0 mul.
+  ## Get antireverse 𝐠̰, identity on antigrade 1; 0 mul.
   g
 
 
@@ -256,27 +258,27 @@ func reverseAnti*(g: Plane): Plane {.inline.} =
 #[ Duals ]#
 
 func dualBulk*(p: Point): Plane {.inline.} =
-  ## Bulk dual 𝐩★, i.e. right complement of bulk; 0 mul.
+  ## Get bulk dual 𝐩★, i.e. right complement of bulk; 0 mul.
   Plane(x: p.x, y: p.y, z: p.z, w: 0.0)
 
 func dualBulk*(l: Line): Line {.inline.} =
-  ## Bulk dual 𝐥★; 0 mul.
+  ## Get bulk dual 𝐥★; 0 mul.
   Line(v: -l.m, m: zero3)
 
 func dualBulk*(g: Plane): Point {.inline.} =
-  ## Bulk dual 𝐠★; 0 mul.
+  ## Get bulk dual 𝐠★; 0 mul.
   Point(x: 0.0, y: 0.0, z: 0.0, w: -g.w)
 
 func dualWeight*(p: Point): Plane {.inline.} =
-  ## Weight dual 𝐩☆, i.e. right complement of weight; 0 mul.
+  ## Get weight dual 𝐩☆, i.e. right complement of weight; 0 mul.
   Plane(x: 0.0, y: 0.0, z: 0.0, w: p.w)
 
 func dualWeight*(l: Line): Line {.inline.} =
-  ## Weight dual 𝐥☆; 0 mul.
+  ## Get weight dual 𝐥☆; 0 mul.
   Line(v: zero3, m: -l.v)
 
 func dualWeight*(g: Plane): Point {.inline.} =
-  ## Weight dual 𝐠☆; 0 mul.
+  ## Get weight dual 𝐠☆; 0 mul.
   Point(x: -g.x, y: -g.y, z: -g.z, w: 0.0)
 
 
@@ -284,27 +286,27 @@ func dualWeight*(g: Plane): Point {.inline.} =
 #[ Parts ]#
 
 func bulk*(p: Point): Point {.inline.} =
-  ## Bulk 𝐩∙, i.e. components without e₄; 0 mul.
+  ## Extract bulk 𝐩∙, i.e. components without e₄; 0 mul.
   Point(x: p.x, y: p.y, z: p.z, w: 0.0)
 
 func weight*(p: Point): Point {.inline.} =
-  ## Weight 𝐩∘, i.e. components with e₄; 0 mul.
+  ## Extract weight 𝐩∘, i.e. components with e₄; 0 mul.
   Point(x: 0.0, y: 0.0, z: 0.0, w: p.w)
 
 func bulk*(l: Line): Line {.inline.} =
-  ## Bulk 𝐥∙, i.e. moment; 0 mul.
+  ## Extract bulk 𝐥∙, i.e. moment; 0 mul.
   Line(v: zero3, m: read3(l.m))
 
 func weight*(l: Line): Line {.inline.} =
-  ## Weight 𝐥∘, i.e. direction; 0 mul.
+  ## Extract weight 𝐥∘, i.e. direction; 0 mul.
   Line(v: read3(l.v), m: zero3)
 
 func bulk*(g: Plane): Plane {.inline.} =
-  ## Bulk 𝐠∙, i.e. position; 0 mul.
+  ## Extract bulk 𝐠∙, i.e. position; 0 mul.
   Plane(x: 0.0, y: 0.0, z: 0.0, w: g.w)
 
 func weight*(g: Plane): Plane {.inline.} =
-  ## Weight 𝐠∘, i.e. normal; 0 mul.
+  ## Extract weight 𝐠∘, i.e. normal; 0 mul.
   Plane(x: g.x, y: g.y, z: g.z, w: 0.0)
 
 
@@ -312,15 +314,15 @@ func weight*(g: Plane): Plane {.inline.} =
 #[ Attitudes ]#
 
 func attitude*(p: Point): float {.inline.} =
-  ## Attitude of point, i.e. 𝐩 ∨ 𝐞̅₄, its weight as scalar; 0 mul.
+  ## Get attitude of point, i.e. 𝐩 ∨ 𝐞̅₄, its weight as scalar; 0 mul.
   p.w
 
 func attitude*(l: Line): Point {.inline.} =
-  ## Attitude of line, i.e. its direction as point at infinity; 0 mul.
+  ## Get attitude of line, i.e. its direction as point at infinity; 0 mul.
   Point(x: l.v.x, y: l.v.y, z: l.v.z, w: 0.0)
 
 func attitude*(g: Plane): Line {.inline.} =
-  ## Attitude of plane, i.e. its normal as line at infinity; 0 mul.
+  ## Get attitude of plane, i.e. its normal as line at infinity; 0 mul.
   Line(v: zero3, m: Vector3(x: g.x, y: g.y, z: g.z))
 
 
@@ -328,51 +330,51 @@ func attitude*(g: Plane): Line {.inline.} =
 #[ Norms ]#
 
 func normBulkSquared*(p: Point): float {.inline.} =
-  ## Squared bulk norm 𝐩 ∙ 𝐩; 3 mul, 2 add.
+  ## Get squared bulk norm 𝐩 ∙ 𝐩; 3 mul, 2 add.
   p.x * p.x + p.y * p.y + p.z * p.z
 
 func normWeightSquared*(p: Point): float {.inline.} =
-  ## Squared weight norm 𝐩 ∘ 𝐩; 1 mul.
+  ## Get squared weight norm 𝐩 ∘ 𝐩; 1 mul.
   p.w * p.w
 
 func normBulkSquared*(l: Line): float {.inline.} =
-  ## Squared bulk norm 𝐥 ∙ 𝐥; 3 mul, 2 add.
+  ## Get squared bulk norm 𝐥 ∙ 𝐥; 3 mul, 2 add.
   dot(l.m, l.m)
 
 func normWeightSquared*(l: Line): float {.inline.} =
-  ## Squared weight norm 𝐥 ∘ 𝐥; 3 mul, 2 add.
+  ## Get squared weight norm 𝐥 ∘ 𝐥; 3 mul, 2 add.
   dot(l.v, l.v)
 
 func normBulkSquared*(g: Plane): float {.inline.} =
-  ## Squared bulk norm 𝐠 ∙ 𝐠; 1 mul.
+  ## Get squared bulk norm 𝐠 ∙ 𝐠; 1 mul.
   g.w * g.w
 
 func normWeightSquared*(g: Plane): float {.inline.} =
-  ## Squared weight norm 𝐠 ∘ 𝐠; 3 mul, 2 add.
+  ## Get squared weight norm 𝐠 ∘ 𝐠; 3 mul, 2 add.
   g.x * g.x + g.y * g.y + g.z * g.z
 
 func normBulk*(p: Point): float {.inline.} =
-  ## Bulk norm ‖𝐩‖∙; 3 mul, 2 add, 1 sqrt.
+  ## Get bulk norm ‖𝐩‖∙; 3 mul, 2 add, 1 sqrt.
   sqrt(p.x * p.x + p.y * p.y + p.z * p.z)
 
 func normWeight*(p: Point): Antiscalar {.inline.} =
-  ## Weight norm ‖𝐩‖∘, i.e. |w|; 1 abs.
+  ## Get weight norm ‖𝐩‖∘, i.e. |w|; 1 abs.
   Antiscalar(abs(p.w))
 
 func normBulk*(l: Line): float {.inline.} =
-  ## Bulk norm ‖𝐥‖∙; 3 mul, 2 add, 1 sqrt.
+  ## Get bulk norm ‖𝐥‖∙; 3 mul, 2 add, 1 sqrt.
   sqrt(dot(l.m, l.m))
 
 func normWeight*(l: Line): Antiscalar {.inline.} =
-  ## Weight norm ‖𝐥‖∘; 3 mul, 2 add, 1 sqrt.
+  ## Get weight norm ‖𝐥‖∘; 3 mul, 2 add, 1 sqrt.
   Antiscalar(sqrt(dot(l.v, l.v)))
 
 func normBulk*(g: Plane): float {.inline.} =
-  ## Bulk norm ‖𝐠‖∙, i.e. |w|; 1 abs.
+  ## Get bulk norm ‖𝐠‖∙, i.e. |w|; 1 abs.
   abs(g.w)
 
 func normWeight*(g: Plane): Antiscalar {.inline.} =
-  ## Weight norm ‖𝐠‖∘; 3 mul, 2 add, 1 sqrt.
+  ## Get weight norm ‖𝐠‖∘; 3 mul, 2 add, 1 sqrt.
   Antiscalar(sqrt(g.x * g.x + g.y * g.y + g.z * g.z))
 
 
@@ -407,7 +409,7 @@ func unitize*(g: Plane): Plane {.inline.} =
 #[ Supports ]#
 
 func support*(l: Line): Point {.inline.} =
-  ## Support of line, i.e. point on it closest to origin; 9 mul, 5 add.
+  ## Get support of line, i.e. point on it closest to origin; 9 mul, 5 add.
   Point(
     x: l.v.y * l.m.z - l.v.z * l.m.y,
     y: l.v.z * l.m.x - l.v.x * l.m.z,
@@ -416,15 +418,15 @@ func support*(l: Line): Point {.inline.} =
   )
 
 func support*(g: Plane): Point {.inline.} =
-  ## Support of plane, i.e. point on it closest to origin; 6 mul, 2 add.
+  ## Get support of plane, i.e. point on it closest to origin; 6 mul, 2 add.
   Point(x: -g.x * g.w, y: -g.y * g.w, z: -g.z * g.w, w: g.x * g.x + g.y * g.y + g.z * g.z)
 
 func supportAnti*(p: Point): Plane {.inline.} =
-  ## Antisupport of point, i.e. plane through it farthest from origin; 6 mul, 2 add.
+  ## Get antisupport of point, i.e. plane through it farthest from origin; 6 mul, 2 add.
   Plane(x: -p.x * p.w, y: -p.y * p.w, z: -p.z * p.w, w: p.x * p.x + p.y * p.y + p.z * p.z)
 
 func supportAnti*(l: Line): Plane {.inline.} =
-  ## Antisupport of line, i.e. plane containing it farthest from origin; 9 mul, 5 add.
+  ## Get antisupport of line, i.e. plane containing it farthest from origin; 9 mul, 5 add.
   Plane(
     x: l.v.z * l.m.y - l.v.y * l.m.z,
     y: l.v.x * l.m.z - l.v.z * l.m.x,
@@ -436,7 +438,7 @@ func supportAnti*(l: Line): Plane {.inline.} =
 
 #[ Projections ]#
 
-func projectOrthogonal*(p: Point; g: Plane): Point {.inline.} =
+func projectOrthogonal*(p: Point, g: Plane): Point {.inline.} =
   ## Project point orthogonally onto plane, homogeneous, i.e. 𝐠 ∨ (𝐩 ∧ 𝐠☆); 12 mul, 8 add.
   ##   Result is (𝐠∘ ∙ 𝐠∘) 𝐩 − 𝐠∘ (𝐩 ∨ 𝐠) on position, weight scaled alike.
   let
@@ -444,7 +446,7 @@ func projectOrthogonal*(p: Point; g: Plane): Point {.inline.} =
     d = p.x * g.x + p.y * g.y + p.z * g.z + p.w * g.w
   Point(x: p.x * s - g.x * d, y: p.y * s - g.y * d, z: p.z * s - g.z * d, w: p.w * s)
 
-func projectOrthogonal*(p: Point; l: Line): Point {.inline.} =
+func projectOrthogonal*(p: Point, l: Line): Point {.inline.} =
   ## Project point orthogonally onto line, homogeneous, i.e. 𝐥 ∨ (𝐩 ∧ 𝐥☆); 21 mul, 12 add.
   ##   Position is (𝐥∘ ∙ 𝐩) 𝐥ᵛ + w (𝐥ᵛ × 𝐥ᵐ), weight is w (𝐥ᵛ ∙ 𝐥ᵛ).
   let
@@ -457,7 +459,7 @@ func projectOrthogonal*(p: Point; l: Line): Point {.inline.} =
     w: p.w * dot(l.v, l.v),
   )
 
-func projectOrthogonal*(l: Line; g: Plane): Line {.inline.} =
+func projectOrthogonal*(l: Line, g: Plane): Line {.inline.} =
   ## Project line orthogonally onto plane, homogeneous, i.e. 𝐠 ∨ (𝐥 ∧ 𝐠☆); 30 mul, 18 add.
   ##   Direction is (𝐠∘ ∙ 𝐠∘) 𝐥ᵛ − 𝐠∘ (𝐠∘ ∙ 𝐥ᵛ); moment is
   ##   𝐠∘ (𝐠∘ ∙ 𝐥ᵐ) − (𝐠∘ × 𝐥ᵛ) gʷ... derived, held to library by suite.
@@ -495,27 +497,27 @@ func wedgeDotAnti*(a, b: Motor): Motor {.inline.} =
   )
 
 func reverseAnti*(q: Motor): Motor {.inline.} =
-  ## Antireverse 𝐐̰, negating antigrade-2 parts v and m; 0 mul.
+  ## Get antireverse 𝐐̰, negating antigrade-2 parts v and m; 0 mul.
   Motor(v: -q.v, m: -q.m, vw: q.vw, mw: q.mw)
 
 func reverse*(q: Motor): Motor {.inline.} =
-  ## Reverse 𝐐̃, negating grade-2 parts v and m; 0 mul.
+  ## Get reverse 𝐐̃, negating grade-2 parts v and m; 0 mul.
   Motor(v: -q.v, m: -q.m, vw: q.vw, mw: q.mw)
 
 func normWeightSquared*(q: Motor): float {.inline.} =
-  ## Squared weight norm 𝐐 ∘ 𝐐; 4 mul, 3 add.
+  ## Get squared weight norm 𝐐 ∘ 𝐐; 4 mul, 3 add.
   dot(q.v, q.v) + q.vw * q.vw
 
 func normBulkSquared*(q: Motor): float {.inline.} =
-  ## Squared bulk norm 𝐐 ∙ 𝐐; 4 mul, 3 add.
+  ## Get squared bulk norm 𝐐 ∙ 𝐐; 4 mul, 3 add.
   dot(q.m, q.m) + q.mw * q.mw
 
 func normWeight*(q: Motor): Antiscalar {.inline.} =
-  ## Weight norm ‖𝐐‖∘; 4 mul, 3 add, 1 sqrt.
+  ## Get weight norm ‖𝐐‖∘; 4 mul, 3 add, 1 sqrt.
   Antiscalar(sqrt(dot(q.v, q.v) + q.vw * q.vw))
 
 func normBulk*(q: Motor): float {.inline.} =
-  ## Bulk norm ‖𝐐‖∙; 4 mul, 3 add, 1 sqrt.
+  ## Get bulk norm ‖𝐐‖∙; 4 mul, 3 add, 1 sqrt.
   sqrt(dot(q.m, q.m) + q.mw * q.mw)
 
 func unitize*(q: Motor): Motor {.inline.} =
@@ -527,10 +529,10 @@ func unitize*(q: Motor): Motor {.inline.} =
   Motor(v: q.v * n, m: q.m * n, vw: q.vw * n, mw: q.mw * n)
 
 func translation*(q: Motor): Vector3 {.inline.} =
-  ## Translation unit motor carries, i.e. 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ); 12 mul, 9 add.
+  ## Get translation unit motor carries, i.e. 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ); 12 mul, 9 add.
   (q.m * q.vw - q.v * q.mw + cross(q.v, q.m)) * 2.0
 
-func transform*(p: Point; q: Motor): Point {.inline.} =
+func transform*(p: Point, q: Motor): Point {.inline.} =
   ## Move point by unit motor, i.e. 𝐐 ⟇ 𝐩 ⟇ 𝐐̰; 25 mul, 18 add.
   ##   Rotation and translation in one pass: `a` = Qᵛ × 𝐩 + Qᵐ w,
   ##   𝐩' = 𝐩 + 2(Qᵛ × `a` + `a` Qᵛʷ − Qᵛ Qᵐʷ w).
@@ -540,7 +542,7 @@ func transform*(p: Point; q: Motor): Point {.inline.} =
     u = cross(q.v, a) + a * q.vw - q.v * (q.mw * p.w)
   Point(x: p.x + 2.0 * u.x, y: p.y + 2.0 * u.y, z: p.z + 2.0 * u.z, w: p.w)
 
-func transform*(l: Line; q: Motor): Line {.inline.} =
+func transform*(l: Line, q: Motor): Line {.inline.} =
   ## Move line by unit motor, i.e. 𝐐 ⟇ 𝐥 ⟇ 𝐐̰; 54 mul, 36 add.
   ##   Direction rotates; moment rotates and gains 𝐭 × direction.
   let
@@ -549,7 +551,7 @@ func transform*(l: Line; q: Motor): Line {.inline.} =
     t = (q.m * q.vw - q.v * q.mw + cross(q.v, q.m)) * 2.0
   Line(v: read3(v), m: m + cross(t, v))
 
-func transform*(g: Plane; q: Motor): Plane {.inline.} =
+func transform*(g: Plane, q: Motor): Plane {.inline.} =
   ## Move plane by unit motor, i.e. 𝐐 ⟇ 𝐠 ⟇ 𝐐̰; 33 mul, 23 add.
   ##   Normal rotates; position loses normal ∙ 𝐭.
   let
@@ -557,7 +559,7 @@ func transform*(g: Plane; q: Motor): Plane {.inline.} =
     t = (q.m * q.vw - q.v * q.mw + cross(q.v, q.m)) * 2.0
   Plane(x: n.x, y: n.y, z: n.z, w: g.w - dot(n, t))
 
-func rotor*(axis: Vector3; angle: float): Motor {.inline.} =
+func rotor*(axis: Vector3, angle: float): Motor {.inline.} =
   ## Construct rotation motor about unit axis through origin; 4 mul, 1 sin, 1 cos.
   let h = angle * 0.5
   Motor(v: axis * sin(h), m: zero3, vw: cos(h), mw: 0.0)

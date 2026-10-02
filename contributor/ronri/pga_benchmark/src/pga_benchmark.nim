@@ -4,9 +4,10 @@
 ##   so one source serves every configuration and stubs pick which.
 ##
 ##   Bootstrap order, `[needs] -> target`, one line for each target:
-##     [] -> bound, inspector, surface, reference/scalars
-##     [pga] -> kinds
+##     [] -> bound, inspector, markdown, surface, reference/scalars
+##     [pga] -> cells, kinds
 ##     [pga, bound, kinds] -> catalogue
+##     [pga, catalogue, kinds] -> dense
 ##     [reference/scalars] -> reference/rigid3, reference/conformal3
 ##     [pga, reference/scalars, reference/rigid3 or reference/conformal3 by algebra] -> widening
 ##     [pga, kinds, widening] -> pools
@@ -15,7 +16,16 @@
 ##     [inspector, reference/rigid3, reference/conformal3] -> model
 ##     [inspector, model] -> report
 ##     [report] -> gaps, guard
-##     [pga, bound, catalogue, inspector, kinds, report] -> inspect
+##     [guard] -> head
+##     [guard, markdown] -> changes
+##     [changes, guard, markdown] -> notes, proposals
+##     [changes, guard, report] -> evaluations; program it generates needs [pga, cells]
+##     [changes, markdown] -> pages/shell
+##     [changes, markdown, pages/shell] -> pages/evaluation
+##     [gaps, markdown, pages/shell, report] -> pages/docket
+##     [changes, markdown, notes, pages/evaluation, pages/shell] -> pages/marginalia
+##     [markdown, pages/evaluation, pages/shell, proposals] -> pages/proposal
+##     [pga, bound, catalogue, inspector, kinds, report] -> inspect (entry point, tool side)
 ##     [pga, catalogue, kinds, measurements, pools, report] -> bench (entry point, tool side)
 ##
 ##   Umbrella exports what suites and instruments share; `measurements`, `report` and `bench`

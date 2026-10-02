@@ -43,8 +43,8 @@ type
   Measurement* = object
     ## Define measurements of one measurand in one implementation.
     is_measured*: bool
-      ## False where implementation has no expression: reference on general measurand, dense
-      ##   form on typed one.
+      ## False where implementation has no expression.
+      ##   Reference has none on general measurand, and dense form has none on typed one.
     ns_median*, ns_min*: float
       ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
@@ -118,18 +118,18 @@ func isAnyNan*[T: object](x: T): bool =
 
 #[ Timing ]#
 
-func summarise*(rounds: openArray[int64]; objects: int): tuple[median, minimum: float] =
+func summarise*(rounds: openArray[int64], objects: int): tuple[median, minimum: float] =
   ## Read median and minimum nanoseconds per object over rounds.
   var sorted = @rounds
   sorted.sort
   let
-    mid = sorted.len div 2
-    median = if sorted.len mod 2 == 1: float(sorted[mid])
-      else: (float(sorted[mid - 1]) + float(sorted[mid])) / 2.0
+    middle = sorted.len div 2
+    median = if sorted.len mod 2 == 1: float(sorted[middle])
+      else: (float(sorted[middle - 1]) + float(sorted[middle])) / 2.0
   (median: median / float(objects), minimum: float(sorted[0]) / float(objects))
 
 
-template timeRounds(rounds: var array[ROUNDS, int64]; loop: untyped) =
+template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
   ## Run loop `ROUNDS` times, recording nanoseconds of each.
   for r in 0 ..< ROUNDS:
     let started = getMonoTime()
@@ -140,8 +140,8 @@ template timeRounds(rounds: var array[ROUNDS, int64]; loop: untyped) =
 macro emitMeasurand(
   index: static int, implementation: static Implementation, measurand: static Measurand
 ): untyped =
-  ## Emit timed run of one measurand in one implementation into
-  ##   `MEASUREMENTS[implementation][index]`.
+  ## Emit timed run of one measurand in one implementation.
+  ##   Result lands in `MEASUREMENTS[implementation][index]`.
   let expression =
     case implementation
     of Implementation.Library: measurand.expression
@@ -176,6 +176,8 @@ macro emitMeasurand(
           `body`)]
         rounds: array[ROUNDS, int64]
       let statistics_before = getAllocStats()
+      # Hot path, per pool slot: index and pool reads constant; work linear in `OBJECTS` times
+      #   `ROUNDS`; nothing allocates but `body`, and `allocations` counts what it does.
       timeRounds(rounds):
         for i in 0 ..< OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
@@ -198,8 +200,8 @@ macro emitMeasurand(
 
 
 macro emitCatalogue(): untyped =
-  ## Emit every measurand in every implementation, in catalogue order, so implementations of
-  ##   one measurand run one after another and drift of machine lands on each alike.
+  ## Emit every measurand in every implementation, in catalogue order.
+  ##   Implementations of one measurand run back to back, so machine drift lands on each alike.
   result = newStmtList()
   for index in 0 ..< CATALOGUE.len:
     for implementation in Implementation:

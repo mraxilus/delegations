@@ -101,7 +101,7 @@ func parseBlocks*(source: string): seq[Block] =
       var body: seq[string]
       let opening = i + 1
       inc i
-      while i < lines.len and lines[i].strip(leading = false).fenceOf < fence: # Close on run.
+      while i < lines.len and lines[i].strip(leading = false).fenceOf < fence:  # Close on run.
         body.add lines[i]
         inc i
       result.add Block(
