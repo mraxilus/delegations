@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 8cf7d2a938f47104 |
+| Rules   | 5714afba6fb3aef0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this project.
@@ -541,8 +541,11 @@ and a stale anchor.
 hand-written. The body is rendered in Nim from committed files, so a page says only what those
 files say. The faces are the six that `rga_visualiser` embeds, fetched through
 `koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
-inputs that `:has()` rules read. The one script is the search box of the docket, and its text
-is constant, so the digest of each page still follows those files.
+inputs that `:has()` rules read.
+
+The one script is the search box of the docket. It is Nim, `pages/find.nim`, which the driver
+compiles to JavaScript under the flags of every build. The compiler is pinned, so the script
+and the digest of each page still follow those files.
 
 **A proposal can carry a figure.** A paragraph of one image alone, as
 `![Derivation map.](../../pages/derivation-map.svg)`, embeds the SVG that it names. The SVG lives
@@ -593,6 +596,11 @@ drift apart. An option of Operation or Operand hides on an algebra with no row f
 counter above the rows says how many show. A search box finds rows by words, as the Architect
 chose at the cost of a script. A row shows while its name, identifier, symbol, operation,
 expression and operand kinds hold every word typed.
+
+That rule is `isFound` in `pages/search.nim`, which the suites run natively and the script runs
+in the browser. Rejected: JavaScript in a Nim string, which no compiler reads. Rejected:
+TypeScript, which brings Node and a lockfile for eight lines, where Article II.9 keeps the
+source in Nim.
 
 **A publication holds each published page to its build.** `pages/published.json` maps each
 page to its URL and to the digest of the page as built when it was published. `drive` builds

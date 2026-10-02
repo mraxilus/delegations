@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 8cf7d2a938f47104 |
+| Rules   | 5714afba6fb3aef0 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -33,8 +33,8 @@ that this repository builds and drives.
 
 **How claims are marked.** Each subsystem closes with a *Checked* block. *Verified* means that the
 claim was established by a run of something, and it names what. *Assumed* means that it rests on
-reasoning alone. A figure with no *Verified* line beside it was once read off a panel and not
-measured again since, so treat it as indicative.
+reasoning alone. A figure with no *Verified* line beside it is unmeasured, and reads only as an
+estimate.
 
 Six tools of the prototype are not in this repository: `check_palette`, `check_atlas`,
 `check_prose`, `check_columns`, `verify.sh` and `verify_touch_pan.js`. A claim one held says so.
@@ -66,16 +66,13 @@ local inside a template, so `picking` turns on `openSym`. `iterator items` keeps
 it is the protocol of Nim itself.
 
 **Two spec keys must never be renamed, and neither would fail loudly.** `targets: "js"` is a
-testament key, and renamed, the browser suite runs on the wrong backend. `visualiser.items_max` is a
-compile-time define named in the `matrix` of the small suite. That the constant and the define still
-meet is checked by a compile against it.
+testament key, and renamed, the browser suite runs on the wrong backend. `visualiser.objects_max` is
+a compile-time define named in the `matrix` of the small suite. That the constant and the define
+still meet is checked by a compile against it.
 
-**Uppercase constants sit outside word boundaries**, so a rename by word misses `ALPHA_WASH` and
-`WIDTH_SHAPE_WORD`. The compiler names each miss.
-
-**`GHOST` could not become `PREVIEW`.** Nim compares identifiers ignoring case after the first
-letter, and ignoring underscores. The type `Preview` exists, so `none(Preview)` resolved to the
-renamed variable. It is `PREVIEW_EDIT`, beside `PREVIEW_APPLY`.
+**Nim compares names without case after the first letter, and without underscores**, so a module
+variable `PREVIEW` would shadow the type `Preview`. The variables are `PREVIEW_EDIT` and
+`PREVIEW_APPLY`.
 
 **`horizon` stays the word of `pga`**, and has no entry here, because the vocabulary of the algebra
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
@@ -110,24 +107,28 @@ and an empty label are allowed, because neither one is shown.
 It also refuses the opposite defect: a catalogue row that no front-end names. The catalogue cannot
 then grow words written for nobody.
 
-`tools/build.nim` imports the catalogue rather than parses it. To read `wording.nim` as text to
-recover the keys of the enum stops at the first blank line inside the enum. To walk `Wording` after
-an import of it fails to compile when a key moves.
+**The driver reads the catalogue as text, and imports none of it** (`tools/catalogue.nim`). The
+type check runs `tools/build.nim` on koch's compiler, never on the pin of this project, so the
+driver compiles no project code (#385). The read takes the whole enum, past its blank lines, and
+each row with its literals joined by `&`. A suite test on the pin holds the read to the compiled
+enum and table, so a moved key fails there. Rejected: an import of the catalogue, which compiled
+`wording.nim` and `format.nim` on koch's compiler.
 
 **One key for each control, and not one key for each word.** `NameRowHide` and `NamePickHide` both
 read `hide`, and are two keys. Two buttons honestly wear one word, and a translator may still need
 them apart.
 
 The law that no two keys carry the same text therefore holds over **prose** keys alone. Those are
-the tooltips and notes, where a repeated sentence is a copy. Labels carry their own law. Each one is
-stripped, with no doubled space, no trailing full stop, and at most `RUNES_LABEL_MOST` runes.
+the tooltips and notes, where a repeated sentence is a copy. The words on a control carry their own
+law. Each one is stripped, with no doubled space, no trailing full stop, and at most
+`RUNES_LABEL_MOST` runes.
 
-**Every control that both front-ends have is explained on both, from one key.** The page hangs 35 of
-the 41 `Tip` keys on its controls, set from scripts at load, because the markup carries no `title`.
-The six it does not hang are the window's alone. Those are its two file-path fields, its vsync
-switch, its two arenas, and its scene block. The page row of that block reads a count over a
-capacity, rather than the bytes that the sentence names. A control that the page has, and the window
-explains without the page explaining it, is a gap to close, and not a design choice.
+**Every control that both front-ends have is explained on both, from one key.** The page hangs the
+`Tip` key of each control it has, set from scripts at load, because the markup carries no `title`.
+The keys it does not hang are the window's alone: its two file-path fields, its vsync switch, its
+two arenas, and its scene block. The page row of that block reads a count over a capacity, rather
+than the bytes that the sentence names. A control that the page has, and the window explains without
+the page explaining it, is a gap to close, and not a design choice.
 
 **The application names itself once.** `NameTitle` reads `RGA Visualiser`, and both front-ends take
 it. The caption of the window is `captionWindow()`, which reads the catalogue rather than spells the
@@ -153,9 +154,14 @@ Not here: the words of the algebra itself. Those are operation names and notatio
 declarations of `pga`, kind words, and key and button names. Help composes with them, rather than
 copies them.
 
-*Checked.* Verified by build and by driven check. `declare` reports **177 wording keys**. A literal
-put back at a label call is refused. A key named only inside the catalogue is refused as shown by
-nobody. A `@WORD:` token that names an absent key fails the build, with the line that carries it.
+*Checked.* Verified by build and by driven check. `nim r tools/build.nim declare` reports the count
+of wording keys that it reads. A literal put back at a label call is refused. A key named only
+inside the catalogue is refused as shown by nobody. A `@WORD:` token that names an absent key fails
+the build, with the line that carries it.
+
+Verified by `suites.nim`: the read of the catalogue as text names every key in order. It reads the
+words of every row as the compiled catalogue holds them. On koch's compiler, `nim check` of the
+driver reaches no module under `src/`.
 
 ## Driven checks
 
@@ -178,21 +184,22 @@ and this file does not:
 | `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
+| `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
-`ceil(0.995n)` equals `n` for every `n` under 200. So a share demanded every frame at the 49-frame
-sample of `loaded`. There is now one definition, exported from `scenery` (repository issue 47).
-Per-frame tolerances are untouched, because a real accounting fault misses on every frame.
+`ceil(0.995n)` equals `n` for every `n` under 200. So a share demands every frame of the 49-frame
+sample of `loaded`. One definition is exported from `scenery` (repository issue 47). Per-frame
+tolerances are untouched, because a real accounting fault misses on every frame.
 
 **The scenery check takes the same allowance.** Preemption inside its bracket and outside both
 halves missed one frame of 109, of 126 and of 127. A fault misses every frame.
 
-**Count the mechanism that the claim names.** The cadence check of the panel counts `askSlowPass`,
-which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does not count calls to
-`drawExceedance`, which the axis switch and the gliding axis reach too. That gave 138 of 138 on one
-run, and 137 on the next, from identical code. Verified by a break on purpose: four axis presses in
-the window.
+**Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
+`askSlowPass`, which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does not
+count calls to `drawExceedance`, which the axis switch and the gliding axis reach too. Their count
+differs between runs of identical code. Verified by a break on purpose, recorded 2026-09-13: four
+axis presses in the window.
 
 **The tick check of the diagnostics tree counts the writes that repeat a row's text.** `writeText`
 exists to skip those writes, so a correct tick makes none, whatever the load. The check wants none,
@@ -289,7 +296,7 @@ passes whatever the page does.
 Time is never asserted, and on the simulated clock it reads 0 ms. The count of rows standing, 27
 for 5,040 objects, holds on every machine.
 
-`driveEditFromMenu` opens the panel onto the 41st object created, near the far end of the list. It
+`driveEditFromMenu` opens the drawer onto the 41st object created, near the far end of the list. It
 reads that row as standing before the call returns. It also reads it as lying under the pinned
 heading, with its whole form above the floor of the scroller.
 
@@ -435,10 +442,10 @@ in 3 runs of 3. The pinch then read 7.62 in 15 fresh pages of 15, 5 of them with
 `Math.random`, so the reach of the curve and the extent of the axis moved between runs. Mulberry32
 from `SEED_WINDOW` gives the same durations on every run.
 
-*Checked.* Verified by a run: two drives side by side on one delegate print the same 167 lines for
-the simulated page. Each loads the other, and the lines agree in every figure. Without the rendering
-step, the touch wait and the seed, two runs of the same code differ in 7 of those lines. Their
-verdicts agree.
+*Checked.* Verified by a run, 2026-09-30: two drives side by side on one delegate print the same
+lines for the simulated page. Each loads the other, and the lines agree in every figure. Without the
+rendering step, the touch wait and the seed, two runs of the same code differ in their figures.
+Their verdicts agree.
 
 ## Browser front-end
 
@@ -727,9 +734,16 @@ and `labelOf`. A law in the shared suite holds that every wheel word appears the
 through `nim cpp`, and their assertions run against real headers. Dear ImGui starts over a hidden
 SDL3 window, with a real OpenGL 3.3 core context under Xvfb, and draws through both its backends.
 
-Verified by looking. A 300-frame headless run writes a 1440x900 PNG, which carries the axes, the
-scale bar, the ground plane's disc, the points and the panel. Both front-ends draw one scene from
-one core. 60 frames is not enough for the entrance animation.
+Verified by looking, 2026-10-02, at the PNG that this command writes under Xvfb:
+
+```sh
+xvfb-run -a -s "-screen 0 1440x900x24" \
+  binaries/rga_visualiser --hidden --frames:300 --screenshot:desktop.png
+```
+
+The PNG carries the axes, the scale bar, the ground plane's disc, the points and the panel. Both
+front-ends draw one scene from one core. With `--frames:60` the disc is not drawn yet, because
+the entrance animation still runs.
 
 **Unverified**: no human has seen this on real graphics hardware. Software GL reports no
 multisampled visual, so thin lines alias.
@@ -738,11 +752,11 @@ multisampled visual, so thin lines alias.
 
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
-`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-menu`, and `--drive-help:<tab>`, one
-for each tab. Each one pushes real events through the queue of SDL. `driven` runs all of them
-and reports every failure, and not the first. It asks the binary which help tabs exist
-(`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive` chains it, here
-and on the runner (repository issue 91).
+`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, and
+`--drive-help:<tab>`, one for each tab. Each one pushes real events through the queue of SDL.
+`driven` runs all of them and reports every failure, and not the first. It asks the binary which
+help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive`
+chains it, here and on the runner (repository issue 91).
 
 `driven` counts the scripted runs. They cover these cases:
 
@@ -1241,8 +1255,9 @@ Verified by driven check:
 - the upper half of a wide disc brighter than its lower half on the page, which is world-up on
   screen from the opening camera.
 
-Verified by a render: the fade fractions, the cell size, the lattice alpha and the axis dimming. The
-occlusion error at the far ends is assumed to be tolerable, and is not measured.
+Assumed: the fade fractions, the cell size, the lattice alpha and the axis dimming. They were
+chosen by eye on a render, and no check holds them. The occlusion error at the far ends is assumed
+to be tolerable, and is unmeasured.
 
 ## Camera
 
@@ -2101,7 +2116,7 @@ the outline. Each front-end centres its own text.
   `WIDTH_MARKER_LABEL_HALO` 2 px of `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px
   face at weight 600.
 
-  The desktop sets the label in `PATH_FONT_LABEL`, with the math and symbol faces merged in, so
+  The desktop sets the label in `FACE_FONT_LABEL`, with the math and symbol faces merged in, so
   `G = L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel
   offsets in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
   `paint-order: stroke`.
@@ -2172,8 +2187,7 @@ Verified by driven check:
 - a 720-step orbit with the rail gap changing at most 0.103 px between frames;
 - two crossing planes selected changing 15,668 canvas pixels, against a noise floor of 0 pixels.
 
-Verified on the desktop: the pure-ink pixels of the selected line are 2,626 with the second pass,
-against 1,106 with the tail.
+On the desktop, the ink of the second pass is unmeasured.
 
 ## Marker pulse
 
@@ -2816,10 +2830,9 @@ landed to the right of its operand. The tilde-below of antireverse then read as 
 the left complement. Of the four compound operators only the `★` pair works infix, and `m ∧☆ n` must
 be written `` m.`∧ ☆`n ``.
 
-*Checked.* Verified by a render of all 27 entries at once, read by eye. Verified by suite: every
-entry non-empty, the placeholder rules of the substitution, and every parenthesis case. Verified
-by driven check: a join of joins flat, and a meet of joins parenthesised on the page. Nothing here
-re-checks that every glyph is in the atlas.
+*Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
+every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
+parenthesised on the page. Nothing here re-checks that every glyph is in the atlas.
 
 ## Naming and number formatting
 
@@ -2835,8 +2848,9 @@ behind `nimFormatNumber`. That is a decimal exponent by `log10`, the digits scal
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector through one writer
-(`scene.multivectorText`), and a shape through one (`scene.shapeText`). Diagnostics readings keep
-`%.*f` through `appendFixed`, because a live number that changes width is harder to read.
+(`scene.multivectorText`), and the kind of a multivector through one (`scene.kindText`). Diagnostics
+readings keep `%.*f` through `appendFixed`, because a live number that changes width is harder to
+read.
 
 Fixed char storage is read through `format.toText`, and never through `$toCstring`. That casts the
 *address* of the storage, and yields an empty string on the JS backend.

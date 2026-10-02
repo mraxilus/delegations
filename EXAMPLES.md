@@ -80,7 +80,7 @@ func grade*(b: Basis): Grade {.inline.} =
 
 func multiplyExterior(
   a, b: BasisSigned
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
   ##   If duplicate 1-vectors are present, `is_degenerate` returns true.
 
@@ -89,9 +89,10 @@ func grade*(m: Multivector): Option[Grade] =
 ```
 
 Three routines from `algebra.nim`, `cayleys.nim` and `multivectors.nim`, with their bodies left
-out. Every basis has a grade, so the first returns the plain value. A degenerate product still
-carries a basis, so the second returns it beside a named flag. A mixed multivector has no
-grade, so the third returns an `Option`.
+out. The tuple takes commas between its fields, where the reference writes semicolons. Every
+basis has a grade, so the first returns the plain value. A degenerate product still carries a
+basis, so the second returns it beside a named flag. A mixed multivector has no grade, so the
+third returns an `Option`.
 
 ## IV.6: Arenas, a scratch arena, and handles
 
@@ -176,7 +177,7 @@ cost falls names the convention again.
 ```nim
 test "Equation 2.99":
   var passed = 0
-  for 𝐦, 𝐧, _ in randomMultivectors():
+  for 𝐦, 𝐧, _ in multivectorsRandom():
     if 𝐦.grade.isNone or 𝐧.grade.isNone: continue
     if 𝐦.grade.get + 𝐧.grade.get != Grade.high: continue
     inc passed
@@ -184,10 +185,10 @@ test "Equation 2.99":
   check passed >= SAMPLES_FLOOR
 ```
 
-Changed from `tests/suites.nim`. The iterator takes its full word by V.6. The counter and the
-floor are the form that IX.3 asks for, where the reference has only the guards. The guards pass
-between one sample in eight and one in five, by dimension. Without the floor, a guard that rejects
-every sample leaves a test that passes with no evidence.
+Changed from `tests/suites.nim`. The iterator takes its full word by V.6, and its head first by
+V.2. The counter and the floor are the form that IX.3 asks for, where the reference has only
+the guards. The guards pass between one sample in eight and one in five, by dimension. Without
+the floor, a guard that rejects every sample leaves a test that passes with no evidence.
 
 ## X.2: Two tiers of banner
 
@@ -209,9 +210,9 @@ lines.
 ```nim
 {.push header: "reference/cayley.h".}
 type
-  CayleyEntry* {.importc: "cayley_entry", bycopy.} = object
+  EntryCayley* {.bycopy, importc: "cayley_entry".} = object
 ...
-proc wedgeReference*(a, b: cint): CayleyEntry {.importc: "cayley_wedge".}
+proc wedgeReference*(a, b: cint): EntryCayley {.importc: "cayley_wedge".}
 {.pop.}
 ```
 

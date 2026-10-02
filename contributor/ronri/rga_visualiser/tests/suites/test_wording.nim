@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+import ../../tools/catalogue
 
 
 suite "Wording":
@@ -141,3 +142,16 @@ suite "Wording":
     appendShownCounted(line, cursor, 12, 5038)
     finishChars(line, cursor)
     check toText(line) == "12 of 5038 shown"
+
+
+  test "the driver's reading of the catalogue as text holds every key and every row":
+    # Driver reads `wording.nim` as text and imports none of it, so type check compiles no
+    #   project code on koch's compiler (#385). Here, on pin, reading meets compiled enum
+    #   and table: key moved or row written in form reading cannot follow fails here.
+    const SOURCE = staticRead("../../src/rga_visualiser/wording.nim")
+    let (keys, words) = (keysOf(SOURCE), wordsOf(SOURCE))
+    check keys.len == ord(high(Wording)) + 1
+    check words.len == keys.len
+    for key in Wording:
+      check keys[ord(key)] == $key
+      check words.getOrDefault($key, "") == $wordingText(key)
