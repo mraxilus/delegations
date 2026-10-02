@@ -40,8 +40,9 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    incomplete.
 4. A module that implements an authority (a book, a paper, an RFC) carries aligned plain-text
    tables in its header. They map the code names to the notation of the authority, so that
-   book and code read side by side. A table is a derived view of the declarations. Verify the
-   table against them, and where the two disagree the declaration wins.
+   book and code read side by side. Its columns align by display width, as the eye reads them.
+   A table is a derived view of the declarations. Verify the table against them, and where the
+   two disagree the declaration wins.
 5. **Bootstrap gate.** Where types build each other at compile time, the umbrella header
    states the bootstrap order as a `->` diagram. The diagram is many to one. Each definition
    is the target of one line alone, and that line names everything that the definition needs.
@@ -204,7 +205,7 @@ static:
   doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
+for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 ```
 
 ## Article V: Names form an ordered system
@@ -309,8 +310,8 @@ CAYLEYS_WEDGE  # module constant
    language fixes it. A reader then finds every doc where the last one was.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
-    capitalised where they open a line. An identifier, a literal or a path inside a comment
-    takes backticks, so that a reader and the checker take it as a name.
+    capitalised where they open a sentence. An identifier, a literal or a path inside a
+    comment takes backticks, so that a reader and the checker take it as a name.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -476,12 +477,15 @@ suite "Chapter 2":
      and a declaration block (`type`, `const`) that follows another.
    - Every other definition takes two.
    - In a test file, a suite is a first tier and a test a second. Each takes the blank lines of
-     its tier: three before a suite, two before a test.
+     its tier: three before a suite, two before a test. A first child follows its opener at
+     once, as a test that opens a suite, and a suite that opens a `when` body. A suite after a
+     banner takes the one blank line of the banner.
 3. A call stays on its own line where it fits, and otherwise takes one argument to a line. A
-   signature may first wrap its parameters onto one line of their own. Otherwise it takes one
-   parameter, or one group of a shared type, to a line. One item to a line takes a trailing
-   separator. A declarative call names its arguments, and so do a code-generating call and a
-   constructor. A positional call stays positional.
+   signature that does not fit first wraps its parameters onto one line of their own. Where
+   that line does not fit either, it takes one parameter, or one group of a shared type, to a
+   line. One item to a line takes a trailing separator. A declarative call names its
+   arguments, and so do a code-generating call and a constructor. A positional call stays
+   positional.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
@@ -510,17 +514,24 @@ suite "Chapter 2":
    needs none. The split is a preference of the Architect rather than a finding, so taste
    decides, and the record says so. Merge faces by codepoint range where none covers
    everything, then render each codepoint against `.notdef` to verify the coverage.
-9. A trailing comment takes two spaces before its marker, a citation among them. A binary
-   operator, the range operator included, takes one space on each side. A prefix operator is
-   glued to its operand. A space inside an expression exists only where the tokeniser demands
-   it.
+9. A space inside an expression stands only where this list puts it, or where the tokeniser
+   demands it:
+   - one space on each side of a binary operator, and of `=`;
+   - one space after a comma and after a colon;
+   - two spaces before the marker of a trailing comment, a citation among them.
+
+   No space stands inside a bracket, around a range operator (`2..6`, `0..<n`), or after a
+   prefix operator, which is glued to its operand.
 10. A list that the language gives no order of its own is alphabetised, as the imports are.
-    That covers exports, pragmas and attributes, and a list of flags.
+    That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
+    dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
+    in two groups, the bare pragmas first, then those that take an argument.
 11. Definitions that exist under one configuration sit together in one conditional block inside
     their section. The configurations come in one fixed order across the project. Inside a
     routine, a nested helper comes first, after the doc.
 12. A parameter with a default states its type only where the default does not fix it, and a
-    field states its type always.
+    field states its type always. Only a literal fixes it, `default(T)` and `none(T)` among
+    them, so a default from a named constant states its type.
 
 ```nim
 defineOperator(
