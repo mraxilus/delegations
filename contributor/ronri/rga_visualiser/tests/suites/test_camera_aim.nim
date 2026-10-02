@@ -423,6 +423,31 @@ suite "Camera Aim":
     check not scene.isBackdropUnder(ground, scaleAt(12.0), wide, tall)
 
 
+  test "a point whose drawn sphere reaches every corner of the frame is backdrop":
+    # Fault: point was never backdrop, so one zoomed in until it filled frame left no glass
+    #   to press, and every press beside its middle armed drag rather than moving view.
+    const (wide, tall) = (1200, 900)
+    let corner = 0.5*hypot(float(wide), float(tall))
+    var scene = initScene()
+    let dot = scene.addObject(toMultivector(ORIGIN), "dot", inkCycled(0))
+    proc scaleAt(distance: float): DrawExtent =
+      cameraAround(ORIGIN, distance, Direction(x: 4, y: 0, z: 5)).drawExtentFor(tall, 0.0)
+    proc spanAt(distance: float): float =
+      ## Read drawn sphere's radius in pixels, as `isBackdropUnder` reads it.
+      let scale = scaleAt(distance)
+      radiusDrawnAt(scene.radiusAt(dot), ORIGIN, scale.scale)/
+        worldPerPixelAt(ORIGIN, scale.scale)
+    # Distance where sphere just reaches corners, read off span at unit distance.
+    let reach = spanAt(1.0)/corner
+    check reach > scene.radiusAt(dot)
+    check spanAt(0.8*reach) >= corner
+    check scene.isBackdropUnder(dot, scaleAt(0.8*reach), wide, tall)
+    check spanAt(1.25*reach) < corner
+    check not scene.isBackdropUnder(dot, scaleAt(1.25*reach), wide, tall)
+    # Far off, floor of few pixels draws it, and it stays handle.
+    check not scene.isBackdropUnder(dot, scaleAt(1000.0), wide, tall)
+
+
   test "a plane is judged by the disc drawn, not by the one its support would carry":
     # `mesh.addPlane` centres disc on object's own creation anchor where it has one,
     #   and on demo scene's own planes two stand as far as 3.7 units apart against
