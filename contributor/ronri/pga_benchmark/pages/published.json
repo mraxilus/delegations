@@ -1,7 +1,7 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "15637b554e89576b"
+    "digest": "8dfffe19f83b36ce"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
@@ -13,14 +13,14 @@
   },
   "typed-multivectors": {
     "url": "https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX",
-    "digest": "2a80374be8a76251"
+    "digest": "1c0b6614044d3353"
   },
   "partner-sign": {
     "url": "https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf",
-    "digest": "b25d3c71ddcec29c"
+    "digest": "bbfacdfcdce0565d"
   },
   "exact-kinds": {
     "url": "https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe",
-    "digest": "8b1e5dd8e09be687"
+    "digest": "367e9b92f8a566b0"
   }
 }
