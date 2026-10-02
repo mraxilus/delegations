@@ -95,6 +95,22 @@ suite "Article X":
     check gapMessages("let a = \"\"\"\nb # c\n\"\"\"\n").len == 0  # long string
     check gapMessages("{.used.}  # Used in b.nim.\n").len == 0  # pragma
 
+  test "X.2 exact: three blank lines before first tier, two before second, one after either":
+    let exact = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
+    check checkBanners("a.nim", exact).len == 0
+    check messages("a.nim", exact, Kind.Nim).len == 0  # lenient check accepts three before
+    check checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n").mapIt(it.message) ==
+      @["First-tier banner takes three blank lines before it (X.2); got `2`."]
+    check checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n")[0].message ==
+      "Second-tier banner takes two blank lines before it (X.2); got `3`."  # exactly two
+    check checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n")[0].message ==
+      "Banner takes one blank line after it (X.2); got `0`."
+    check checkBanners("a.nim", "#[ Opening ]#\n\nx\n").len == 0  # nothing above: no count
+    check checkBanners("a.nim", "x\n\n\n\n#[ A ]#\n\n\n\n#[ B ]#\n\ny\n").len == 0  # no count
+
+  test "X.2 exact waits outside static pass until projects clear it through koch fix":
+    check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n", Kind.Nim).len == 0
+
   test "X.9 waits outside static pass until projects clear it through koch fix":
     check messages("a.nim", "let a = 1 # One.\n", Kind.Nim).len == 0  # pull request after wires it
 
@@ -140,6 +156,17 @@ suite "Fixes":
     check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # nor does rest of form
     check fixed(fix.source).source == fix.source  # idempotent
     check fixed("a: 1 # b\n", Kind.Yaml).source == "a: 1 # b\n"  # Nim syntax alone
+
+  test "X.2 run beside banner takes count exact check reads, and nothing else moves":
+    let
+      dirty = "x = 1\n#[ Parent ]#\n#[[ Child ]]#\n\n\n\ny = 2\n\n\n\n\n#[[ Sibling ]]#\nz\n"
+      fix = fixed(dirty)
+    check fix.source ==
+      "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
+    check fix.fixed.mapIt(it.line) == @[2, 3, 3, 12, 12]  # banner each run stands beside
+    check checkBanners("a.nim", fix.source).len == 0
+    check fixed(fix.source).source == fix.source  # idempotent
+    check fixed("x\n#[ A ]#\ny\n", Kind.Cfg).source == "x\n#[ A ]#\ny\n"  # Nim syntax alone
 
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
