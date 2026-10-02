@@ -204,7 +204,7 @@ Before any code:
    `nim r koch test contributor/<domain>/<project>` runs your tests alone.
 
 The directories inside your project are yours. Nest `src/`, `app/`, `design/` or anything
-else that the work wants. Koch runs your tests and reaches three verbs of your own, and holds
+else that the work wants. Koch runs your tests and reaches four verbs of your own, and holds
 nothing else.
 
 A project that needs more carries one compiled driver, `tools/build.nim`, which takes one
@@ -213,11 +213,12 @@ declare. The driver is never a build file, because make is retired and a nimble 
 logic in the virtual machine of the compiler. Run it from the project directory, as
 `nim r tools/build.nim <command>`.
 
-The verbs that koch reaches are `types`, `drive` and `system`, and each one is described
-below. Koch runs them as `koch check-types`, `koch drive` and `koch list-packages`. Koch
-learns whether your project carries `drive` or `system` by a read of the dispatch of the
-driver itself. It runs `types` for every project that carries `package.json` beside its
-lock. A verb spelled any other way is one that the runner passes by in silence.
+The verbs that koch reaches are `types`, `drive`, `head` and `system`, and each one is
+described below. Koch runs them as `koch check-types`, `koch drive`, `koch head` and
+`koch list-packages`. Koch learns whether your project carries `drive`, `head` or `system` by a
+read of the dispatch of the driver itself. It runs `types` for every project that carries
+`package.json` beside its lock. A verb spelled any other way is one that the runner passes by in
+silence.
 
 ## Toolchain
 
@@ -340,6 +341,12 @@ them.
   variance with a retry, a longer timeout, a quarantine or a skip. Find what the check really
   waits on, and wait on that: **settle on what moved, and never on what has stopped
   changing**.
+- **A check against an outside reference that moves is the verb `head`, and no merge waits on
+  it.** Such a reference is the head of a library repository, or any source that changes with
+  no commit here. `test` and `drive` hold your code to the pin alone. `head` compares the pin
+  with the reference, and exits 0 where they agree. Where they do not, it prints its finding and
+  exits with another code. The `head` workflow runs it daily, and keeps one issue open for your
+  project while it fails.
 - **Only a speed check and an instrument check read the real clock** (Article IX.12). An
   instrument check reads a timing readout, and no limit on time decides its verdict. Every other
   check runs on a simulated clock, and `GUIDE.md`, How to drive a page on a simulated clock,

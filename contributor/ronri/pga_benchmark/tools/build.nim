@@ -45,7 +45,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
-from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
+from ../src/pga_benchmark/report import IMPLEMENTATIONS, combineRuns
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
@@ -78,10 +78,13 @@ const
   SYSTEM = [
     ("git", "read library head and trees `drive` holds pin to"),
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("binutils", "`objdump` disassembles object files `show` reads machine code from"),
     ("coreutils", "`sha256sum` store checks those faces with"),
   ]
-    ## System packages build needs beyond compiler. Compiler is toolchain, pinned in nimble
-    ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
+    ## System packages build needs beyond compiler.
+    ##   Compiler is toolchain, pinned in nimble file.
+    ##   Library is Atlas checkout, pinned in lock.
+    ##   Faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
     "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
     " [name|symbol] [url|algebra|--thorough]\n"
@@ -126,7 +129,7 @@ const
 
 #[ Processes ]#
 
-proc run(command: string; arguments: openArray[string]) =
+proc run(command: string, arguments: openArray[string]) =
   ## Run command with arguments from project directory; raise on non-zero exit.
   let
     process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
@@ -203,7 +206,7 @@ proc inspect() =
     run(inspector, [cache, BUILD / "static_" & name & ".json", nim, pga, FLAGS])
 
 
-proc merged(plain, instrumented: JsonNode): JsonNode =
+proc mergeAllocations(plain, instrumented: JsonNode): JsonNode =
   ## Take timings from plain run and allocation counts from instrumented one.
   result = plain
   result["taken"]["is_allocation_measured"] = instrumented{"taken", "is_allocation_measured"}
@@ -218,9 +221,10 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
 
 
 proc bench() =
-  ## Compile bench per algebra, plain for timings and instrumented for allocations; run plain
-  ##   ones in turn, algebra after algebra, `BENCH_RUNS` times, so drift of machine lands on
-  ##   every algebra alike; record combined measurements into `baseline/`.
+  ## Compile bench per algebra, plain for timings and instrumented for allocations.
+  ##   Run plain ones in turn, algebra after algebra, `BENCH_RUNS` times.
+  ##     Machine drift then lands on every algebra alike.
+  ##   Record combined measurements into `baseline/`.
   let
     nim = nimCommit()
     pga = pgaCommit()
@@ -241,7 +245,7 @@ proc bench() =
     let instrumented = BUILD / "bench_alloc_" & name
     run(instrumented, [instrumented & ".json"])
     let
-      measurements = merged(runsCombined(runs[name]), readDocument(instrumented & ".json"))
+      measurements = mergeAllocations(combineRuns(runs[name]), readDocument(instrumented & ".json"))
       recorded = BASELINE / "runtime_" & name & ".json"
     writeFile(recorded, pretty(measurements) & "\n")
     echo "Recorded ", recorded
@@ -327,8 +331,8 @@ proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
 
 
 proc readProposals(findings: var seq[Finding]): seq[Proposal] =
-  ## Read every proposal directory, in number order; malformed ones, numbers taken twice or
-  ##   skipped, and figures naming no file add findings.
+  ## Read every proposal directory, in number order.
+  ##   Malformed ones, numbers taken twice or skipped, and figures naming no file add findings.
   var directories: seq[string]
   for kind, path in walkDir(DIRECTORY_PROPOSALS):
     if kind == pcDir: directories.add path
@@ -361,10 +365,10 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
 proc candidatesOf(
   changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
 ): seq[Candidate] =
-  ## Shape one evaluation candidate per change and per proposed proposal; proposal carries its
-  ##   base chain first, less any base library already implements.
-  ##   Candidate's programs are program texts, so digest moves when program does. Frozen
-  ##   proposal shapes none: library holds or dropped its edits, so they no longer apply.
+  ## Shape one evaluation candidate per change and per proposed proposal.
+  ##   Proposal carries its base chain first, less any base library already implements.
+  ##   Candidate's programs are program texts, so digest moves when program does.
+  ##   Frozen proposal shapes none: library holds or dropped its edits, so they no longer apply.
   for (name, change) in changes:
     result.add Candidate(
       name: name,
@@ -432,8 +436,9 @@ proc headChecked(pin: string): seq[Finding] =
   ## Hold pin to library head, and checkout to pin: no local edit under library directory.
 
   proc libraryHead(pin: string): (string, string, string) =
-    ## Read tree of library directory at pin, and head commit of library repository with its
-    ##   tree; empty where git cannot read one. Fetches only when head is not pin.
+    ## Read tree of library directory at pin, and head commit of library repository with tree.
+    ##   Empty where git cannot read one.
+    ##   Fetches only when head is not pin.
     let
       (output_pin, code_pin) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
       tree_pin = if code_pin == 0: output_pin.strip.splitLines[^1] else: ""
@@ -491,7 +496,7 @@ proc publications(): JsonNode =
 proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: docket, marginalia, then one per proposal.
 
-  func linksHtml(names: openArray[string]; published: JsonNode; self: string): string =
+  func linksHtml(names: openArray[string], published: JsonNode, self: string): string =
     ## Link every other published page, in page order, led by separator; empty where none.
     var links: seq[string]
     for name in names:
@@ -589,9 +594,10 @@ proc publishedAt(name, url: string) =
 
 #[ Evaluations ]#
 
-proc evaluate(which: string; is_thorough: bool) =
-  ## Try one change or proposal at pin, every one for `all`, or those `drive` would name for
-  ##   `stale`; write each evaluation document. Typed algebras alone, or all four when thorough.
+proc evaluate(which: string, is_thorough: bool) =
+  ## Try one change or proposal at pin, and write each evaluation document.
+  ##   `all` tries every one, and `stale` tries those `drive` would name.
+  ##   Typed algebras alone, or all four when thorough.
 
   func machine(): string =
     ## Describe machine evaluation ran on, as bench documents do.
@@ -683,8 +689,8 @@ proc pinnedChecked(pin: string): seq[Finding] =
 
 
 proc drive() =
-  ## Inspect, check against baselines, hold committed list and docket to regeneration, and
-  ##   hold pin to library head and every measurement, evaluation, file and page to pin.
+  ## Inspect, check against baselines, and hold committed list and docket to regeneration.
+  ##   Hold pin to library head, and every measurement, evaluation, file and page to pin.
   let pin = pgaCommit()
   var findings = headChecked(pin)
   inspect()
@@ -707,21 +713,21 @@ proc sweep() =
     nim = nimCommit()
     pga = pgaCommit()
   createDir BUILD
-  var docs: seq[JsonNode]
+  var documents: seq[JsonNode]
   for dimensions in SWEEP:
     let
       name = "sweep_" & $dimensions & "d"
       binary = BUILD / name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
-    docs.add readDocument(binary & ".json")
+    documents.add readDocument(binary & ".json")
   var header = "measurand".alignLeft(26)
   for dimensions in SWEEP: header.add ($dimensions & "d").align(10)
   echo header
-  for id, _ in docs[0]{"measurands"}.pairs:
+  for id, _ in documents[0]{"measurands"}.pairs:
     var line = id.alignLeft(26)
-    for doc in docs:
-      let measurement = doc{"measurands", id, "library"}
+    for document in documents:
+      let measurement = document{"measurands", id, "library"}
       line.add(
         if measurement.isNil or measurement.kind != JObject: "–".align(10)
         else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10),
@@ -774,7 +780,7 @@ proc disassembled(cache, name: string): seq[string] =
   ## Read machine code of one function from whichever object file in cache holds it.
   for path in walkFiles(cache / "*.o"):
     let (text, code) = execCmdEx("objdump -d --no-show-raw-insn " & quoteShell(path))
-    if code != 0: continue
+    if code != 0: raise newException(OSError, "objdump failed; got exit `" & $code & "`.")
     var is_inside = false
     for line in text.splitLines:
       if line.contains("<" & name & ">:"): is_inside = true
@@ -880,8 +886,8 @@ proc main(): int =
       of "evaluate": 2 .. 3
       of "published": 3 .. 3
       else: 1 .. 1
-  if paramCount() notin arguments or verb == "evaluate" and paramCount() == 3 and
-      paramStr(3) != FLAG_THOROUGH:
+  if paramCount() notin arguments or
+      (verb == "evaluate" and paramCount() == 3 and paramStr(3) != FLAG_THOROUGH):
     stderr.write USAGE
     return 2
   try:

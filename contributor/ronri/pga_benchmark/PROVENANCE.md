@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 7f8e613282f6df5f |
+| Rules   | 8cf7d2a938f47104 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this project.
@@ -60,7 +60,7 @@ equation that defines the norm. The squared quantity is what stands under its ro
 suites of the library cite none. The reference returns the weight squared norm as an
 `Antiscalar`, so that widening puts it in the antiscalar slot where the library writes it.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Catalogue`. Ids are unique. Every
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Catalogue`. Ids are unique. Every
 expression compiles against the library. The set of symbols equals the set of exported
 operators, read out of `pga/operators.nim` and `pga/multivectors.nim`. The set of aliases
 equals the exports of the umbrella.
@@ -98,12 +98,18 @@ those calls, one build each. At rga4d the unitize of a line, a plane and a motor
 same runs, measurands with unchanged code moved ×0.60 to ×1.11. So outside the unitize forms,
 the effect on time is not separable from code layout.
 
-Verified by `test_rga4d.nim`, suite `Chapter 2`, and by `test_cga5d.nim`, suite `Chapter 3`. For
-every typed measurand and every seeded sample, the reference widened into the dense
-multivector equals the library within `=~`. Each check cites its equation or wiki page. Suite
-`Inspector` reads the nimcache of the test binary itself, and finds `wedge(Point,Point)`
-spending twelve multiplies and six subtractions, as its documentation states. The same suite
-holds every reference function in that nimcache to no zero fill and no error check.
+Verified by `test_rga4d.nim` and the other stubs, suite `Chapter 2` and one suite `Wiki: <page>` for
+each wiki page that a typed measurand cites. For every typed measurand and every seeded sample, the
+reference widened into the dense multivector equals the library within `=~`. Each check cites its
+equation or wiki page. At rga3d and cga4d no typed reference exists, so each of those suites holds
+one skipped test that names the gap. Suite `Internal: Catalogue` holds every typed cite under
+chapter 2 or a wiki page, so no cite falls outside every suite.
+
+Suite `Internal: Inspector` reads the nimcache of the test binary itself. It finds
+`wedge(Point,Point)` spending twelve multiplies and six subtractions, as its documentation
+states. It holds every reference function in that nimcache to no zero fill and no error check.
+The count it reads must reach `REFERENCE_FUNCTIONS_FLOOR`, which is 73 at rga4d and 84 at
+cga5d.
 
 ## Widening and pools
 
@@ -113,8 +119,8 @@ from `randomize(0)`: dense multivectors of every grade, typed objects in general
 lines and planes joined from points, and motors unitized. Every typed pool has a widened
 image, so the two implementations read equivalent operands.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`. Suites `Chapter 2` and `Chapter 3` run
-through the widening, and suite `Measurements` runs every measurand over the pools.
+Verified by `test_rga4d.nim` and the other stubs. Suite `Chapter 2` and the `Wiki` suites run
+through the widening, and suite `Internal: Measurements` runs every measurand over the pools.
 
 ## Measurements
 
@@ -171,11 +177,13 @@ under `## Standards`, so `ns_median` and `ns_library` keep it (V.6). A single
 letter stays only where an equation or a small index scope gives it meaning (V.6). Examples
 are `i` in a scan and `a + b` in the sum of counts.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Measurements` and `Allocation`.
-`summarise` runs on fixture rounds, and fixture runs combine to the median of their medians,
-the least minimum, and each run's median in order. A short run gives finite positive
-nanoseconds and a non-zero sink. The positive control raises the counter, and then no
-measurand allocates over a preallocated loop.
+Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Measurements` and
+`Internal: Allocation`. `summarise` runs on fixture rounds, and fixture runs combine to the median
+of their medians, the least minimum, and each run's median in order. A short run of the timing
+instrument reads the real clock, as Article IX.12 lets an instrument test do. It shows that the
+clock was read, that each minimum sits at or under its median, and that results reach a non-zero
+sink. No limit on time decides it. The positive control raises the counter, and then no measurand
+allocates over a preallocated loop.
 
 ## Inspector and movement
 
@@ -211,7 +219,7 @@ exceptions. `{.raises: [].}` on the callee does not remove it, and only `--panic
 counts are taken with the flags that the documents name, `-d:release`, which is
 what a user of the library gets by default.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Inspector`. It covers:
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Inspector`. It covers:
 
 - a demangling table with overload indices;
 - a fixture C source with known counts;
@@ -233,10 +241,11 @@ Date and machine are ignored, because static measurements owe them nothing. `dri
 verb that koch and CI run: inspect every algebra, guard, and hold the committed `gaps.md` and
 docket to regeneration. It is deterministic because it times nothing.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Guard`. Equal documents pass silently. One
-grown count is one finding, which names function, metric and both values. A shrink is an
-improvement only. Bytes moved are gated. A function absent in either document is a finding,
-and another build or schema is refused.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. Equal documents pass
+silently. One grown count is one finding, which names function, metric and both values. A shrink is
+an improvement only, and bytes moved are gated. A function absent in either document is a finding,
+and another build or schema is refused. A lower bound that moves either way, or that is absent now,
+is a finding.
 
 ## Lower bounds
 
@@ -297,11 +306,10 @@ dense operation needs none of them to be correct. It moves its operands read onc
 result written once. `gaps.md` carries one row for each operation of each algebra, since the
 bound rests on the operation and never on the operand kinds.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Lower bound`. At four dimensions with a
-rigid metric the derived counts reproduce 81 for the exterior product and 192 for the
-geometric product. They reproduce 8 for the bilinear form, and 54 and 27 for the
-contractions. They reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a
-unitize.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Lower bound`. At four dimensions
+with a rigid metric the derived counts reproduce 81 for the exterior product and 192 for the
+geometric product. They reproduce 8 for the bilinear form, and 54 and 27 for the contractions. They
+reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a unitize.
 
 The conformal metric is held to 1024 and to 32, and to 243 for each of the four dual
 products. A chain of an expansion and an exterior product is held to their sum, 486 at five
@@ -309,8 +317,10 @@ dimensions.
 
 The supports are held to 54 at four dimensions, and the centre and the container to 162 at
 five. The partner chain is held to 324, and to its mark as an estimate.
-Suite `Inspector` holds the soundness law. No lower bound outruns what the library spends
-on the same operation. That law reads every measurand of the build's own nimcache.
+Suite `Internal: Inspector` holds the soundness law. No lower bound outruns what the library
+spends on the same operation. That law reads the build's own nimcache, and every measurand
+with a derived bound meets its library function there. It reads at least `BOUND_ROWS_FLOOR`
+measurands: 107 at rga4d, 130 at cga5d, 39 at rga3d and 46 at cga4d.
 
 **What it found.** Every primitive product spends what the algebra demands, and the
 operations built on top of them do not. At four dimensions the library stands at the bound
@@ -394,11 +404,10 @@ tables are the library's, so a dense form shares any sign that the library gets 
 chapter suites hold the library to the reference, and the suite below holds the dense form to
 the library.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Dense forms` and `Inspector`. Every
-dense form equals the library on the seeded pools, NaN included. The same suite, compiled by
-hand at rga3d and cga4d on 2026-09-30, passes there too. The inspector holds each dense form
-at the multivector lower bound, or at or below it for a chain. It also holds each one free of
-fill, intermediate, copy, call and check.
+Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Dense forms` and
+`Internal: Inspector`, at all four algebras. Every dense form equals the library on the seeded
+pools, NaN included. The inspector holds each dense form at the multivector lower bound, or at or
+below it for a chain. It also holds each one free of fill, intermediate, copy, call and check.
 
 ## Gap list
 
@@ -418,10 +427,9 @@ its evidence and the condition that closes it. The list then closes by measureme
 by an edit. The renderer refuses any line beyond 100 runes, because the product is committed
 and form-checked.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Gaps`. It covers the gap verdicts on
-fixture documents, an unmeasured gap, and docket stability across a reorder and a new key. It
-also covers the verdict and evidence of every cause, the rendered width, and rune-counted
-wrap.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Gaps`. It covers the gap verdicts
+on fixture documents, an unmeasured gap, and docket stability across a reorder and a new key. It
+also covers the verdict and evidence of every cause, the rendered width, and rune-counted wrap.
 
 ## Driver
 
@@ -442,7 +450,7 @@ baseline/static_rga4d.json:0: Total `multiplies` of `∧(Multivector,Multivector
 got `81`, baseline `80`.
 ```
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Driver`: the dispatch, the usage
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Driver`: the dispatch, the usage
 string and the header table name the same verbs.
 
 ## Changes, proposals and evaluations
@@ -511,13 +519,12 @@ The change of `cayley-derivation` reproduces its draft byte for byte, and
 `proposals/02-typed-multivectors/prototype.nim` holds its laws against that draft at rga3d, rga4d
 and cga5d.
 
-Verified by `test_rga4d.nim` and `test_cga5d.nim`, suites `Markdown`, `Changes`,
-`Proposals`, `Evaluations` and `Cells`. They cover parse, quote and digest rules, and claim
-kinds. They cover proposal numbers taken twice or skipped, and the status that freezes a
-proposal. They also cover pairing of runs, NaN shares, the success line of the compiler, and
-the table serialiser at pin. They cover the algebras that an evaluation measures, with the
-flag and without it.
-A digest moves with edits, and never with prose.
+Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
+`Internal: Proposals`, `Internal: Evaluations` and `Internal: Cells`. They cover parse, quote and
+digest rules, and claim kinds. They cover proposal numbers taken twice or skipped, and the status
+that freezes a proposal. They also cover pairing of runs, NaN shares, the success line of the
+compiler, and the table serialiser at pin. They cover the algebras that an evaluation measures, with
+the flag and without it. A digest moves with edits, and never with prose.
 
 ## Notes
 
@@ -525,7 +532,8 @@ A digest moves with edits, and never with prose.
 about, and the page computes the line number at build from where the quote stands at pin. A
 quote that no longer occurs once is a finding.
 
-Verified by suite `Notes`: parse, location at pin, and a stale anchor.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Notes`: parse, location at pin,
+and a stale anchor.
 
 ## Pages
 
@@ -592,16 +600,19 @@ every page again, and any page whose digest differs is a finding. `README.md` mu
 of every publication, so the two copies of a URL cannot drift apart. Rejected: a page written by
 hand, or by a script outside this project, because nothing held it to the files.
 
-Verified by suite `Pages`: assembly fills every token, the spread until evaluations give enough
-ratios, and the chip that names removed NaN results. It covers the lower bound each docket row
-is measured against, and a general row timed against its dense form. It covers the median of
-run ratios with one tick for each run, and a reference that spends none. It covers the rule
-that reads each dropdown option, the classes of each row, and the split of a typed id. It
-covers the words each row is found by, and the shell rule that hides a row not found.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Pages`. Assembly fills every
+token. It covers the spread until evaluations give enough ratios, and the chip that names removed
+NaN results.
 
-Suite `Figures` covers the path a figure resolves, the SVG a page embeds, and every rule on the
-map. Suite `Edits` covers the closed edit, the signatures it defines or sits in, and a header that
-closes at its own indent.
+The same suite covers the lower bound each docket row is measured against, and a general row timed
+against its dense form. It covers the median of run ratios with one tick for each run, and a
+reference that spends none. It covers the rule that reads each dropdown option, the classes of each
+row, and the split of a typed id. It covers the words each row is found by, and the shell rule that
+hides a row not found.
+
+Suite `Internal: Figures` covers the path a figure resolves, the SVG a page embeds, and every rule
+on the map. Suite `Internal: Edits` covers the closed edit, the signatures it defines or sits in,
+and a header that closes at its own indent.
 
 ## Library head
 
@@ -624,8 +635,8 @@ Cost: the verdict of `drive` depends on the library repository as well as on thi
 The same commit here can pass today and fail after the library moves. That is the purpose of
 the check, and it departs from the rule that a check gives the same verdict on the same code.
 
-Verified by suite `Head`: tree against commit, stamps, digests of edits, the publications and
-the README.
+Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Head`: tree against commit,
+stamps, digests of edits, the publications and the README.
 
 ## Dependencies
 
@@ -639,22 +650,17 @@ That commit is the head of the library on 2026-10-01, as the standing instructio
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
-**The pin never held `181c8d8`.** There `merge` added a term without its negation when
-`as_negated` was set, so `e12 ⟑ e12` gave +1. That flipped 60 of the 384 terms of the
-geometric product at 4D. Suite `Chapter 3` failed on it, through the motor product against
-its reference, and the suites of the library passed. `16dbc17` fixes it, and the pin follows
-from there.
+**The pin is at or after `16dbc17`.** At `181c8d8`, `merge` keeps a term without its
+negation when `as_negated` is set. So `e12 ⟑ e12` gives +1, and 60 of the 384 terms of the
+geometric product at 4D flip. Suite `Wiki: Motor` fails there, through the motor product
+against its reference, and the suites of the library pass.
 
-**The bump from `0bc4655` moved the pin over two library changes that this project had to
-follow.** The library made the grade table private and read it from a generic `{}`. The umbrella
-module then failed to compile for every importer. The line `import pga` alone was enough to
-fail.
-
-The library then exported the table in `9f9019b`. The suites of the library did not
-catch this, because they import each module with `{.all.}` and never read the umbrella. The
-library also gained two operators, `|∙²` and `|∘²`, so the catalogue gained a measurand for
-each one. Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Catalogue`, which holds the
-catalogue to the exported surface of the library.
+**The pin is at or after `9f9019b`.** That commit exports the grade table, which the
+umbrella reads through a generic `{}`, so `import pga` compiles. The suites of the library
+import each module with `{.all.}` and never read the umbrella, so they do not hold this. The
+library has `|∙²` and `|∘²`, and the catalogue measures each one. Verified by
+`tests/test_*.nim`, suite `Internal: Catalogue`, which holds the catalogue to the exported
+surface of the library.
 
 **The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
 the same pin that `rga_visualiser` carries. The library spells seven operators with

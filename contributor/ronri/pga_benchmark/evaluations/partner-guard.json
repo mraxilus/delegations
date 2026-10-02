@@ -603,7 +603,7 @@
           "after": {
             "multiplies": 0,
             "adds": 0,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 0,
             "intermediates": 0,
@@ -620,7 +620,7 @@
           "before": {
             "multiplies": 518,
             "adds": 422,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 108,
             "intermediates": 8,
@@ -635,7 +635,7 @@
           "after": {
             "multiplies": 518,
             "adds": 422,
-            "subs": 0,
+            "subtractions": 0,
             "divides": 0,
             "zero_fills": 108,
             "intermediates": 8,

@@ -1,4 +1,4 @@
-## Catalogue every library operation as data: what to expression, on what, against which reference.
+## Catalogue every library operation as data: which expression, on what, against which reference.
 ##   One `Measurand` per operation per algebra, built at compile time under `when`, so every
 ##   later instrument (timing, C inspection, gap list) walks one list and nothing is
 ##   benchmarked by hand. Expression is library code over `m` and `n`, fully parenthesised
@@ -7,7 +7,8 @@
 ##   `MISSING` names operations reference carries and library lacks, each one gap.
 ##
 ##   Cost: expressions are strings lowered by `parseExpr` where measurands are emitted, so
-##     misspelt one fails at that compile rather than here; suite `Catalogue` compiles every one.
+##     misspelt one fails at that compile rather than here; suite `Internal: Catalogue`
+##     compiles every one.
 ##   Cost: `cite` is book equation where library's own suites cite one, else wiki page name,
 ##     never invented number.
 ##   Cost: conformal aliases differ from rigid ones in library (`bulkRound` for `bulk`), so
@@ -15,13 +16,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
-import std/strutils
+import std/[options, strutils]
 
 import pga
 
-import ./bound
-import ./kinds
+import ./[bound, kinds]
 
 
 type
@@ -47,6 +46,16 @@ type
       ## Reference expression over same names, e.g. `wedge(m, n)`; empty where none.
     cite*: string
       ## Book equation, e.g. `2.17`, or `wiki:<Page>` where library suites cite none.
+  RowGeneral = tuple[id, symbol, alias, expression: string; arity: int; cite: string]
+    ## Define one catalogue row of measurand over dense operands, read by `addGeneral`.
+  RowTyped = tuple[
+    id, symbol, alias, expression: string;
+    operand_m, operand_n: Kind;
+    reference, cite: string;
+  ]
+    ## Define one catalogue row of measurand over typed operands, read by `addTyped`.
+  RowUnary = tuple[id, symbol, alias, expression, reference, cite: string]
+    ## Define one catalogue row of unary map family of kinds carries, read by `addUnary`.
 
 
 const
@@ -60,40 +69,59 @@ const
     ## Library's name for `|∘ m`.
 
 
-func general(
-  id, symbol, alias, expression: string; arity: Arity; cite: string
-): Measurand {.compileTime.} =
-  ## Construct measurand over dense mixed-grade multivectors, i.e. library's own type.
-  Measurand(
-    id: id,
-    symbol: symbol,
-    alias: alias,
-    expression: expression,
-    arity: arity,
-    operands: [Kind.General, Kind.General],
-    grade: none(int),
-    reference: "",
-    cite: cite,
-  )
+func addGeneral(catalogue: var seq[Measurand], rows: openArray[RowGeneral]) {.compileTime.} =
+  ## Append measurand over dense mixed-grade multivectors, i.e. library's own type, per row.
+  for row in rows:
+    catalogue.add Measurand(
+      id: row.id,
+      symbol: row.symbol,
+      alias: row.alias,
+      expression: row.expression,
+      arity: Arity(row.arity),
+      operands: [Kind.General, Kind.General],
+      grade: none(int),
+      reference: "",
+      cite: row.cite,
+    )
 
 
-func typed(
-  id, symbol, alias, expression: string; operands: array[2, Kind]; reference, cite: string
-): Measurand {.compileTime.} =
-  ## Construct measurand over typed operands, held to reference expression.
-  ##   Arity follows second operand: `General` there marks unary measurand, since no typed measurand
-  ##   pairs typed object with dense one.
-  Measurand(
-    id: id,
-    symbol: symbol,
-    alias: alias,
-    expression: expression,
-    arity: (if operands[1] == Kind.General: 1 else: 2),
-    operands: operands,
-    grade: none(int),
-    reference: reference,
-    cite: cite,
-  )
+func addTyped(catalogue: var seq[Measurand], rows: openArray[RowTyped]) {.compileTime.} =
+  ## Append measurand over typed operands, held to reference expression, per row.
+  ##   Arity follows second operand: `General` there marks unary measurand, since no typed
+  ##   measurand pairs typed object with dense one.
+  for row in rows:
+    catalogue.add Measurand(
+      id: row.id,
+      symbol: row.symbol,
+      alias: row.alias,
+      expression: row.expression,
+      arity: (if row.operand_n == Kind.General: 1 else: 2),
+      operands: [row.operand_m, row.operand_n],
+      grade: none(int),
+      reference: row.reference,
+      cite: row.cite,
+    )
+
+
+func addUnary(
+  catalogue: var seq[Measurand],
+  kinds: openArray[tuple[kind: Kind, name: string]],
+  rows: openArray[RowUnary],
+) {.compileTime.} =
+  ## Append unary measurand per kind and row; id takes name of kind as suffix.
+  for (kind, name) in kinds:
+    for row in rows:
+      catalogue.add Measurand(
+        id: row.id & "_" & name,
+        symbol: row.symbol,
+        alias: row.alias,
+        expression: row.expression,
+        arity: 1,
+        operands: [kind, Kind.General],
+        grade: none(int),
+        reference: row.reference,
+        cite: row.cite,
+      )
 
 
 
@@ -101,96 +129,112 @@ func typed(
 
 const CATALOGUE* = block:
   ## Every operation library exports under this algebra, general measurands first.
-  var s: seq[Measurand]
+  var catalogue: seq[Measurand]
 
   # Binary products over dense operands.
-  s.add general("wedge", "∧", "wedge", "(m ∧ n)", 2, "2.17")
-  s.add general("wedge_anti", "∨", "wedgeAnti", "(m ∨ n)", 2, "2.29")
-  s.add general("wedge_dot", "⟑", "wedgeDot", "(m ⟑ n)", 2, "wiki:Geometric_product")
-  s.add general("wedge_dot_anti", "⟇", "wedgeDotAnti", "(m ⟇ n)", 2, "wiki:Geometric_product")
-  s.add general("dot", "∙", "dot", "(m ∙ n)", 2, "2.76")
-  s.add general("dot_anti", "∘", "dotAnti", "(m ∘ n)", 2, "2.76")
-  s.add general("contract_bulk", "∨★", "contractBulk", "(m ∨★ n)", 2, "2.119")
-  s.add general("contract_weight", "∨☆", "contractWeight", "(m ∨☆ n)", 2, "2.120")
-  s.add general("expand_bulk", "∧★", "expandBulk", "(m ∧★ n)", 2, "wiki:Expansions")
-  s.add general("expand_weight", "∧☆", "expandWeight", "(m ∧☆ n)", 2, "wiki:Expansions")
-  s.add general("add", "+", "add", "(m + n)", 2, "2.24")
-  s.add general("subtract", "-", "subtract", "(m - n)", 2, "2.24")
-  s.add general(
-    "project_central", "", "projectCentral", "projectCentral(m, n)", 2, "wiki:Projections"
-  )
-  s.add general(
-    "project_central_anti", "", "projectCentralAnti", "projectCentralAnti(m, n)", 2,
-    "wiki:Projections",
-  )
-  s.add general(
-    "project_orthogonal", "", "projectOrthogonal", "projectOrthogonal(m, n)", 2,
-    "wiki:Projections",
-  )
-  s.add general(
-    "project_orthogonal_anti", "", "projectOrthogonalAnti", "projectOrthogonalAnti(m, n)", 2,
-    "wiki:Projections",
-  )
+  catalogue.addGeneral [
+    ("wedge", "∧", "wedge", "(m ∧ n)", 2, "2.17"),
+    ("wedge_anti", "∨", "wedgeAnti", "(m ∨ n)", 2, "2.29"),
+    ("wedge_dot", "⟑", "wedgeDot", "(m ⟑ n)", 2, "wiki:Geometric_product"),
+    ("wedge_dot_anti", "⟇", "wedgeDotAnti", "(m ⟇ n)", 2, "wiki:Geometric_product"),
+    ("dot", "∙", "dot", "(m ∙ n)", 2, "2.76"),
+    ("dot_anti", "∘", "dotAnti", "(m ∘ n)", 2, "2.76"),
+    ("contract_bulk", "∨★", "contractBulk", "(m ∨★ n)", 2, "2.119"),
+    ("contract_weight", "∨☆", "contractWeight", "(m ∨☆ n)", 2, "2.120"),
+    ("expand_bulk", "∧★", "expandBulk", "(m ∧★ n)", 2, "wiki:Expansions"),
+    ("expand_weight", "∧☆", "expandWeight", "(m ∧☆ n)", 2, "wiki:Expansions"),
+    ("add", "+", "add", "(m + n)", 2, "2.24"),
+    ("subtract", "-", "subtract", "(m - n)", 2, "2.24"),
+    ("project_central", "", "projectCentral", "projectCentral(m, n)", 2, "wiki:Projections"),
+    (
+      "project_central_anti", "", "projectCentralAnti", "projectCentralAnti(m, n)",
+      2, "wiki:Projections",
+    ),
+    (
+      "project_orthogonal", "", "projectOrthogonal", "projectOrthogonal(m, n)",
+      2, "wiki:Projections",
+    ),
+    (
+      "project_orthogonal_anti", "", "projectOrthogonalAnti", "projectOrthogonalAnti(m, n)",
+      2, "wiki:Projections",
+    ),
+  ]
 
   # Scalar scaling, spelled through exterior product as library defines it.
-  s.add Measurand(
-    id: "scale", symbol: "∧", alias: "wedge", expression: "(m ∧ n)", arity: 2,
-    operands: [Kind.Scalar, Kind.General], grade: none(int), reference: "", cite: "2.24",
+  catalogue.add Measurand(
+    id: "scale",
+    symbol: "∧",
+    alias: "wedge",
+    expression: "(m ∧ n)",
+    arity: 2,
+    operands: [Kind.Scalar, Kind.General],
+    grade: none(int),
+    reference: "",
+    cite: "2.24",
   )
 
   # Unary maps over dense operand.
-  s.add general("bulk", "∙", ALIAS_BULK, "(∙ m)", 1, "2.68")
-  s.add general("weight", "∘", ALIAS_WEIGHT, "(∘ m)", 1, "2.68")
-  s.add general("complement_right", "/", "complementRight", "(/ m)", 1, "2.19")
-  s.add general("complement_left", "\\", "complementLeft", "(\\ m)", 1, "2.20")
-  s.add general("reverse", "~", "reverse", "(~ m)", 1, "wiki:Reverses")
-  s.add general("reverse_anti", "~∘", "reverseAnti", "(~∘ m)", 1, "wiki:Reverses")
-  s.add general("dual_bulk", "★", "dualBulk", "(★ m)", 1, "2.103")
-  s.add general("dual_weight", "☆", "dualWeight", "(☆ m)", 1, "2.103")
-  s.add general("negate", "-", "negate", "(- m)", 1, "2.24")
-  s.add general("norm_bulk", "|∙", ALIAS_NORM_BULK, "(|∙ m)", 1, "2.87")
-  s.add general("norm_weight", "|∘", ALIAS_NORM_WEIGHT, "(|∘ m)", 1, "2.88")
-  # Squared norms carry no umbrella alias, so alias stands empty and alias suite skips them.
-  #   Cite is equation defining norm, since squared quantity is what stands under its root
-  #   and library's own suites cite none.
-  #   Expression spells operator in backticks: `²` is no operator character to lexer, so
-  #     prefix form splits it off as identifier and `parseExpr` fails.
-  s.add general("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", 1, "2.87")
-  s.add general("norm_weight_squared", "|∘²", "", "(`|∘²`(m))", 1, "2.88")
-  s.add general("norm", "|", "norm", "(| m)", 1, "2.90")
-  s.add general("normalize_bulk", "^∙", "normalizeBulk", "(^∙ m)", 1, "2.89")
-  s.add general("normalize_weight", "^∘", "normalizeWeight", "(^∘ m)", 1, "2.89")
-  s.add general("unitize", "^", "unitize", "(^ m)", 1, "2.89")
-  s.add general("attitude", "⊖", "attitude", "(⊖ m)", 1, "2.73")
-  s.add general("select_grade", "{}", "selectGrade", "(m{Grade(1)})", 1, "2.17")
-  s.add general(
-    "select_grade_anti", "{}", "selectGradeAnti", "(m{GradeAnti(1)})", 1, "2.29"
-  )
-  s.add general("select_part", "[]", "selectPart", "(m[Basis.E1])", 1, "2.24")
+  catalogue.addGeneral [
+    ("bulk", "∙", ALIAS_BULK, "(∙ m)", 1, "2.68"),
+    ("weight", "∘", ALIAS_WEIGHT, "(∘ m)", 1, "2.68"),
+    ("complement_right", "/", "complementRight", "(/ m)", 1, "2.19"),
+    ("complement_left", "\\", "complementLeft", "(\\ m)", 1, "2.20"),
+    ("reverse", "~", "reverse", "(~ m)", 1, "wiki:Reverses"),
+    ("reverse_anti", "~∘", "reverseAnti", "(~∘ m)", 1, "wiki:Reverses"),
+    ("dual_bulk", "★", "dualBulk", "(★ m)", 1, "2.103"),
+    ("dual_weight", "☆", "dualWeight", "(☆ m)", 1, "2.103"),
+    ("negate", "-", "negate", "(- m)", 1, "2.24"),
+    ("norm_bulk", "|∙", ALIAS_NORM_BULK, "(|∙ m)", 1, "2.87"),
+    ("norm_weight", "|∘", ALIAS_NORM_WEIGHT, "(|∘ m)", 1, "2.88"),
+    # Squared norms carry no umbrella alias, so alias stands empty and alias suite skips them.
+    #   Cite is equation defining norm, since squared quantity is what stands under its root
+    #   and library's own suites cite none.
+    #   Expression spells operator in backticks: `²` is no operator character to lexer, so
+    #     prefix form splits it off as identifier and `parseExpr` fails.
+    ("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", 1, "2.87"),
+    ("norm_weight_squared", "|∘²", "", "(`|∘²`(m))", 1, "2.88"),
+    ("norm", "|", "norm", "(| m)", 1, "2.90"),
+    ("normalize_bulk", "^∙", "normalizeBulk", "(^∙ m)", 1, "2.89"),
+    ("normalize_weight", "^∘", "normalizeWeight", "(^∘ m)", 1, "2.89"),
+    ("unitize", "^", "unitize", "(^ m)", 1, "2.89"),
+    ("attitude", "⊖", "attitude", "(⊖ m)", 1, "2.73"),
+    ("select_grade", "{}", "selectGrade", "(m{Grade(1)})", 1, "2.17"),
+    ("select_grade_anti", "{}", "selectGradeAnti", "(m{GradeAnti(1)})", 1, "2.29"),
+    ("select_part", "[]", "selectPart", "(m[Basis.E1])", 1, "2.24"),
+  ]
 
   when IS_RIGID:
-    s.add general("support", "∩", "support", "(∩ m)", 1, "wiki:Support")
-    s.add general("support_anti", "∪", "supportAnti", "(∪ m)", 1, "wiki:Support")
+    catalogue.addGeneral [
+      ("support", "∩", "support", "(∩ m)", 1, "wiki:Support"),
+      ("support_anti", "∪", "supportAnti", "(∪ m)", 1, "wiki:Support"),
+    ]
   when IS_CONFORMAL:
-    s.add general("bulk_flat", "■", "bulkFlat", "(■ m)", 1, "wiki:Flat_bulk")
-    s.add general("weight_flat", "□", "weightFlat", "(□ m)", 1, "wiki:Flat_weight")
-    s.add general("norm_bulk_flat", "|■", "normBulkFlat", "(|■ m)", 1, "wiki:Flat_bulk")
-    s.add general("norm_weight_flat", "|□", "normWeightFlat", "(|□ m)", 1, "wiki:Flat_weight")
-    s.add general("carrier", "⊟", "carrier", "(⊟ m)", 1, "wiki:Carrier")
-    s.add general("carrier_co", "⊞", "carrierCo", "(⊞ m)", 1, "wiki:Cocarrier")
-    s.add general("center", "⊙", "center", "(⊙ m)", 1, "wiki:Center")
-    s.add general("container", "⊡", "container", "(⊡ m)", 1, "wiki:Container")
+    catalogue.addGeneral [
+      ("bulk_flat", "■", "bulkFlat", "(■ m)", 1, "wiki:Flat_bulk"),
+      ("weight_flat", "□", "weightFlat", "(□ m)", 1, "wiki:Flat_weight"),
+      ("norm_bulk_flat", "|■", "normBulkFlat", "(|■ m)", 1, "wiki:Flat_bulk"),
+      ("norm_weight_flat", "|□", "normWeightFlat", "(|□ m)", 1, "wiki:Flat_weight"),
+      ("carrier", "⊟", "carrier", "(⊟ m)", 1, "wiki:Carrier"),
+      ("carrier_co", "⊞", "carrierCo", "(⊞ m)", 1, "wiki:Cocarrier"),
+      ("center", "⊙", "center", "(⊙ m)", 1, "wiki:Center"),
+      ("container", "⊡", "container", "(⊡ m)", 1, "wiki:Container"),
+    ]
     # Partner reads operand's grade and panics on mixed grade, so pool draws round points.
-    s.add Measurand(
-      id: "partner", symbol: "⊛", alias: "partner", expression: "(⊛ m)", arity: 1,
-      operands: [Kind.General, Kind.General], grade: some(1), reference: "",
+    catalogue.add Measurand(
+      id: "partner",
+      symbol: "⊛",
+      alias: "partner",
+      expression: "(⊛ m)",
+      arity: 1,
+      operands: [Kind.General, Kind.General],
+      grade: some(1),
+      reference: "",
       cite: "wiki:Partner",
     )
 
   # Typed measurands: same library expression on images of typed objects, held to reference.
-  #   Tuples read id, symbol, alias, expression, kinds of m and n, reference, cite.
   when IS_RIGID and DIMENSIONS == 4:
-    for entry in [
+    catalogue.addTyped [
       (
         "wedge_point_point", "∧", "wedge", "(m ∧ n)",
         Kind.Point, Kind.Point, "wedge(m, n)", "2.17",
@@ -307,12 +351,12 @@ const CATALOGUE* = block:
         "norm_bulk_motor", "|∙", "normBulk", "(|∙ m)",
         Kind.Motor, Kind.General, "normBulk(m)", "wiki:Motor",
       ),
-    ]:
-      s.add typed(entry[0], entry[1], entry[2], entry[3], [entry[4], entry[5]], entry[6], entry[7])
+    ]
 
     # Unary maps every flat object carries; one measurand per object kind.
-    for (kind, name) in [(Kind.Point, "point"), (Kind.Line, "line"), (Kind.Plane, "plane")]:
-      for entry in [
+    catalogue.addUnary(
+      kinds = [(Kind.Point, "point"), (Kind.Line, "line"), (Kind.Plane, "plane")],
+      rows = [
         ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
         ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
         ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
@@ -332,14 +376,11 @@ const CATALOGUE* = block:
         ),
         ("unitize", "^", "unitize", "(^ m)", "unitize(m)", "2.89"),
         ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
-      ]:
-        s.add typed(
-          entry[0] & "_" & name, entry[1], entry[2], entry[3], [kind, Kind.General], entry[4],
-          entry[5],
-        )
+      ],
+    )
 
   when IS_CONFORMAL and DIMENSIONS == 5:
-    for entry in [
+    catalogue.addTyped [
       (
         "wedge_round_point_round_point", "∧", "wedge", "(m ∧ n)",
         Kind.RoundPoint, Kind.RoundPoint, "wedge(m, n)", "2.17",
@@ -420,15 +461,17 @@ const CATALOGUE* = block:
         "dot_anti_sphere_sphere", "∘", "dotAnti", "(m ∘ n)",
         Kind.Sphere, Kind.Sphere, "dotAnti(m, n)", "2.76",
       ),
-    ]:
-      s.add typed(entry[0], entry[1], entry[2], entry[3], [entry[4], entry[5]], entry[6], entry[7])
+    ]
 
     # Unary maps every round object carries; one measurand per object kind.
-    for (kind, name) in [
-      (Kind.RoundPoint, "round_point"), (Kind.Dipole, "dipole"), (Kind.Circle, "circle"),
-      (Kind.Sphere, "sphere"),
-    ]:
-      for entry in [
+    catalogue.addUnary(
+      kinds = [
+        (Kind.RoundPoint, "round_point"),
+        (Kind.Dipole, "dipole"),
+        (Kind.Circle, "circle"),
+        (Kind.Sphere, "sphere"),
+      ],
+      rows = [
         ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
         ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
         ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
@@ -445,34 +488,25 @@ const CATALOGUE* = block:
         ("center", "⊙", "center", "(⊙ m)", "center(m)", "wiki:Center"),
         ("container", "⊡", "container", "(⊡ m)", "container(m)", "wiki:Container"),
         ("partner", "⊛", "partner", "(⊛ m)", "partner(m)", "wiki:Partner"),
-      ]:
-        s.add typed(
-          entry[0] & "_" & name, entry[1], entry[2], entry[3], [kind, Kind.General], entry[4],
-          entry[5],
-        )
-  s
+      ],
+    )
+  catalogue
 
 
 const MISSING* = block:
   ## Operations reference carries and library lacks, each one gap; ids spelled alike.
-  var s: seq[Measurand]
+  var missing: seq[Measurand]
   when IS_CONFORMAL:
-    s.add Measurand(
-      id: "norm_center", symbol: "|⊙", alias: "normCenter", expression: "", arity: 1,
-      operands: [Kind.General, Kind.General], grade: none(int), reference: "",
-      cite: "wiki:Center_norm",
-    )
-    s.add Measurand(
-      id: "norm_radius", symbol: "|⊘", alias: "normRadius", expression: "", arity: 1,
-      operands: [Kind.General, Kind.General], grade: none(int), reference: "",
-      cite: "wiki:Radius_norm",
-    )
-  s
+    missing.addGeneral [
+      ("norm_center", "|⊙", "normCenter", "", 1, "wiki:Center_norm"),
+      ("norm_radius", "|⊘", "normRadius", "", 1, "wiki:Radius_norm"),
+    ]
+  missing
 
 
 const TEMPLATES* = [("^", "^∘")]
-  ## Symbols library spells as template over another, so C carries only second's function;
-  ## suite holds each pair to library source.
+  ## Symbols library spells as template over another.
+  ##   C carries only second's function; suite holds each pair to library source.
 
 const SHAPES* = [
   ("∧", Shape.Wedge), ("∨", Shape.Wedge),
@@ -544,7 +578,7 @@ func shapeOf*(p: Measurand): Shape =
   Shape.Unknown
 
 
-func boundOf*(p: Measurand; m: Metric): LowerBound =
+func boundOf*(p: Measurand, m: Metric): LowerBound =
   ## Derive multivector lower bound of measurand, by chain where library composes it.
   let parts = p.chainOf
   if parts.len > 0: return lowerBoundOfChain(parts, m, p.arity)
