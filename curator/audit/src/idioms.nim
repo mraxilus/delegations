@@ -818,15 +818,18 @@ func fixLists(path, source: string): Fix =
   for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10)")
 
 
+const IDIOM_FIXERS*: array[6, Fixer] = [
+  fixReturnResult, fixImports, fixConsolidations, fixBindings, fixStrictFuncs, fixLists,
+]
+  ## Idiom fixers in order they run: brackets merge after rank orders blocks, so merged
+  ##   statement takes first rank's place.
+
+
 func fixIdioms*(path, source: string): Fix =
   ## Rewrite Nim source so each idiom with one mechanical fix holds; report each rewrite.
   ##   `chain` traces each report through lines earlier fixers moved, to source as given.
-  ##   Brackets merge after rank orders blocks, so merged statement takes first rank's place.
   result.source = source
-  let fixers = [
-    fixReturnResult, fixImports, fixConsolidations, fixBindings, fixStrictFuncs, fixLists,
-  ]
-  for fixer in fixers: result = result.chain(fixer(path, result.source))
+  for fixer in IDIOM_FIXERS: result = result.chain(fixer(path, result.source))
 
 
 func checkMachinePaths*(path, source: string): seq[Finding] =

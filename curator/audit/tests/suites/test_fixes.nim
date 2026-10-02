@@ -23,6 +23,14 @@ const
     "proc g(\n    a: int\n) = discard\n" &
     "let x = foo(\n  1,\n  2,\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds, and no wired check.
+  FENCED_ROWS =
+    "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
+    "let n = matrix(1+2)\n"
+    ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
+  LOCK =
+    "{\n  \"items\": {},\n  \"nimbleFile\": {\n    \"filename\": \"alpha.nimble\",\n" &
+    "    \"content\": []\n  }\n}\n"
+    ## Atlas lock holding copy of nimble file `alpha.nimble`.
 
 
 suite "Fixes":
@@ -45,7 +53,7 @@ suite "Fixes":
   test "after fix, form and idiom checks report nothing, and second fix writes nothing":
     let
       path = "curator/audit/src/a.nim"
-      (written, fixed, refused) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
+      (written, fixed, refused, _) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
     check refused.len == 0 and written.len == 1
     let source = written[0].content
     check checkForm(path, source, Kind.Nim.rule).len == 0  # form checks report none
@@ -85,7 +93,7 @@ suite "Fixes":
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
                  "share one bracket", "alphabetised", "Named argument"]:
       check found.anyIt(rule in it.message)  # each rule reported
-    let (written, fixed, refused) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
+    let (written, fixed, refused, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
     check refused.len == 0 and written.len == 1
     check checkFormatting(path, written[0].content, Kind.Nim).len == 0  # all cleared
     check checkForm(path, written[0].content, Kind.Nim.rule).len == 0  # nothing new
@@ -122,3 +130,53 @@ suite "Fixes":
       let rule = other.kind.get.rule
       check not rule.has_guide  # no guide, so passes through unwritten
       check checkForm(other.path, other.content, rule).len > 0  # check reports it still
+
+  test "fence keeps lines between its markers; fix and layout checks reach every other line":
+    let
+      path = "curator/audit/src/a.nim"
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & FENCED_ROWS
+      unfenced = source.replace("  " & FENCE_OFF & "\n", "").replace("  " & FENCE_ON & "\n", "")
+    check checkFormatting(path, unfenced, Kind.Nim).anyIt(it.line == 5)  # rows join unfenced
+    check checkFormatting(path, source, Kind.Nim).mapIt(it.line) == @[12]  # after fence alone
+    let plan = fixEntries(CURATOR_BRANCH, [entry(path, source)])
+    check plan.written[0].content == source.replace("1+2", "1 + 2")  # rows kept, blank line too
+    check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
+    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0
+
+  test "fence left open runs to end of file; marker inside string fences nothing":
+    let
+      path = "curator/audit/a.nims"
+      tail = "let a = 1+2\n" & FENCE_OFF & "\nlet b = 1+2\n"
+    check fixEntries(CURATOR_BRANCH, [entry(path, tail)]).written[0].content ==
+      "let a = 1 + 2\n" & FENCE_OFF & "\nlet b = 1+2\n"
+    let quoted = "let s = \"\"\"\n" & FENCE_OFF & "\n\"\"\"\nlet b = 1+2\n"
+    check checkFormatting(path, quoted, Kind.NimScript).mapIt(it.line) == @[4]
+
+  test "fence crossing bracket leaves whole file as written, and is its one finding":
+    let
+      path = "curator/audit/a.nims"
+      crossing = "let a = 1+2\nlet m = f(\n  " & FENCE_OFF & "\n  1,  0,\n)\n" & FENCE_ON & "\n"
+      plan = fixEntries(CURATOR_BRANCH, [entry(path, crossing)])
+    check plan.written.len == 0 and plan.left.mapIt(it.line) == @[2]
+    check checkFormatting(path, crossing, Kind.NimScript).mapIt(it.line) == @[2]
+    let literal = "let a = 1+2\n#!fix fenced\n"  # would be read back as fenced line
+    check fixEntries(CURATOR_BRANCH, [entry(path, literal)]).left.mapIt(it.line) == @[2]
+
+  test "fixer that would move fenced lines is skipped, and its finding stays for hand":
+    let
+      path = "curator/audit/src/a.nim"
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet a = 1\nlet b = f(\n  " & FENCE_OFF &
+        "\n  1,  0,\n  " & FENCE_ON & "\n)\n"
+    check fixEntries(CURATOR_BRANCH, [entry(path, source)]).written.len == 0  # would re-indent
+    check checkIdioms(path, source).len == 1  # bindings finding left
+
+  test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
+    let
+      nimble = entry(ALPHA_DIRECTORY & "/alpha.nimble", "version = \"0.1.0\" \nlet a = 1+2\n")
+      tree = @[nimble, entry(ALPHA_DIRECTORY & "/atlas.lock", LOCK)]
+    check tree.lockedNimbles == @[nimble.path]
+    let plan = fixEntries(CONTRIBUTOR_BRANCH, [nimble], tree.lockedNimbles)
+    check plan.written.len == 0 and plan.left.len == 1 and "atlas.lock" in plan.left[0].message
+    check checkFormatting(tree).len == 0  # silent on it
+    check checkFormatting(@[nimble]).len == 1  # read where no lock holds its copy
+    check fixEntries(CONTRIBUTOR_BRANCH, [nimble]).written.len == 1

@@ -657,10 +657,13 @@ func fixTrailing*(path, source: string): Fix =
     result.fixed.add finding(path, insert.line + 1, "trailing separator (X.3)")
 
 
+const WRAPPING_FIXERS*: array[4, Fixer] = [fixSeparators, fixSignatures, fixCalls, fixTrailing]
+  ## Wrapping fixers in order they run. Separators come first, since layouts join groups with
+  ##   separator they read; trailing separators come last, adding what neither layout wrote to
+  ##   list left as written.
+
+
 func fixWrapping*(path, source: string): Fix =
   ## Rewrite separators, then signatures, then calls, then trailing separators.
-  ##   Separators come first, since layouts join groups with separator they read; trailing
-  ##   separators come last, adding what neither layout wrote to list left as written.
   result.source = source
-  for fixer in [fixSeparators, fixSignatures, fixCalls, fixTrailing]:
-    result = result.chain(fixer(path, result.source))
+  for fixer in WRAPPING_FIXERS: result = result.chain(fixer(path, result.source))

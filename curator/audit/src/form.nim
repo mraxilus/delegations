@@ -272,10 +272,13 @@ func fixBanners(path, source: string): Fix =
   if runs.len > 0: result.origin = origin
 
 
+func formFixers*(rule: KindRule): seq[Fixer] =
+  ## List form fixers kind rule names, in order they run: Nim syntax adds comments and banners.
+  result = @[Fixer(fixWhitespace), fixEnding]
+  if rule.syntax == Syntax.Nim: result.add @[Fixer(fixComments), fixBanners]
+
+
 func fixForm*(path, source: string; rule: KindRule): Fix =
   ## Rewrite source so each form check with one mechanical fix holds; report each rewrite.
   result.source = source
-  for fixer in [fixWhitespace, fixEnding]:
-    result = result.chain(fixer(path, result.source))
-  if rule.syntax == Syntax.Nim:
-    for fixer in [fixComments, fixBanners]: result = result.chain(fixer(path, result.source))
+  for fixer in rule.formFixers: result = result.chain(fixer(path, result.source))

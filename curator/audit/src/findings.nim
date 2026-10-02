@@ -33,6 +33,9 @@ type
     fixed*: seq[Finding]  ## Path and line of input rewritten, message naming rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.
 
+  Fixer* = proc (path, source: string): Fix {.nimcall, noSideEffect.}
+    ## Define fixer of one rule: source in, fixed source and its reports out.
+
 
 func finding*(path: string, line: int, message: string, is_propagation = false): Finding =
   ## Construct finding.
