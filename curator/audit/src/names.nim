@@ -18,10 +18,12 @@
 ##     SCREAMING no lowercase. One letter fits by its own case: capital passes type, global and
 ##     placeholder, lowercase passes routine, local, parameter and field. Plain ASCII is no
 ##     notation, so capital local is finding (Architect's ruling).
-##   III.5: source's notation is name holding non-ASCII letter. Mathematical letters carry no
-##     case in `std/unicode`, so `letterCase` reads them by block. Notation holds over case only
-##     for immutable global; every other notation is read as any name. Operator is backticked,
-##     so it is never read as name.
+##   III.5: source's notation is variable's name holding non-ASCII letter: binding, field or
+##     parameter. It holds over case at any scope, so its case is unread; at module scope it
+##     holds only for immutable global, so mutable global in notation is finding. Type,
+##     routine, member and placeholder are no variable, and their case is read; mathematical
+##     letters carry no case in `std/unicode`, so `letterCase` reads them by block. Operator is
+##     backticked, so it is never read as name.
 ##   V.10: reach of binding is decided in `reachOf` alone. Global where every enclosing block
 ##     opens no scope (`when` chain, bare `let`, `var`, `const` or `type`); local under routine
 ##     or any other block; entry inside top-level `when isMainModule:` and outside routine.
@@ -104,6 +106,8 @@ const
     ## First words routine never takes (V.3).
   BOOLEAN_PREFIXES* = ["is", "as", "should", "found", "has"]
     ## First words boolean takes: state, interpretation, policy, search outcome, possession (V.4).
+  VARIABLE_KINDS = {NameKind.Binding, NameKind.Field, NameKind.Parameter}
+    ## Kinds naming variable, which source's notation may name at any scope (III.5).
   HOST_PREDICATES = ["contains"]
     ## Predicates host calls by spelling: `in` and `notin` call `contains`.
   ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
@@ -687,8 +691,13 @@ func checkNames*(path, source: string, exempt: openArray[string]): seq[Finding] 
       continue
     let
       casing = d.casingOf
-      is_excused = d.reach == Reach.Global and not d.is_mutable and d.name.isNotation
-    if not is_excused and not d.name.isCased(casing):
+      is_notation = d.kind in VARIABLE_KINDS and d.name.isNotation
+    if is_notation and d.reach == Reach.Global and d.is_mutable:
+      result.add finding(
+        path, d.line, "Notation holds over case only for immutable global (III.5); got `" &
+          d.name & "`."
+      )
+    elif not is_notation and not d.name.isCased(casing):
       let
         rule = if d.kind == NameKind.Member: "V.11" elif casing == Casing.Letter: "V.12" else: "V.1"
         subject = if d.kind == NameKind.Binding: $d.reach else: $d.kind
