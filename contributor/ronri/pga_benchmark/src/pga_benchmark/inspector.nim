@@ -17,7 +17,7 @@
 ##     what their callees spend.
 ##
 ##   Cost: text reading is by substring, so pattern compiler changes would silently miss;
-##     suite `Inspector` holds reader to fixture and to this project's own nimcache.
+##     suite `Internal: Inspector` holds reader to fixture and to this project's own nimcache.
 
 {.experimental: "strictFuncs".}
 

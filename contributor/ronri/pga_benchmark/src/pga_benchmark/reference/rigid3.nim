@@ -18,14 +18,14 @@
 ##   |---------|-------------------------------------------------|----------------------|
 ##
 ##   Each operation's doc states multiply and add counts of its form, i.e. what optimal
-##     code spends; suite `Inspector` reads those counts back from emitted C.
+##     code spends; suite `Internal: Inspector` reads those counts back from emitted C.
 ##   No function calls another: under `--panics:off` each call to Nim function fills its
 ##     result and checks error flag after it, and hand code spends neither; vector helpers
-##     are templates, and form two functions share is spelled in each. Suite `Inspector`
+##     are templates, and form two functions share is spelled in each. Suite `Internal: Inspector`
 ##     holds every reference function to no fill and no check.
 ##   Motor transforms are derived, not transcribed: rotation by quaternion (Qᵛ, Qᵛʷ),
 ##     translation 𝐭 = 2(Qᵛʷ Qᵐ − Qᵐʷ Qᵛ + Qᵛ × Qᵐ), which is what antisandwich
-##     𝐐 ⟇ 𝐩 ⟇ 𝐐̰ spells for unit motor; suite `Chapter 3` holds them to library.
+##     𝐐 ⟇ 𝐩 ⟇ 𝐐̰ spells for unit motor; suite `Wiki: Motor` holds them to library.
 ##   Cost: transforms assume unitized motor obeying Qᵛ ∙ Qᵐ + Qᵛʷ Qᵐʷ = 0, as every
 ##     motor from composing rotations and translations does; arbitrary even element is
 ##     not motor and is not covered.
