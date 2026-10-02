@@ -18,7 +18,7 @@
 {.experimental: "strictFuncs".}
 
 when defined(js):
-  proc nowMilliseconds*(): float {.importjs: "performance.now()".}
+  proc nowMilliseconds*(): float {.importjs: "performance.now()", sideEffect.}
     ## Read page's monotonic clock, in milliseconds.
 else:
   import std/monotimes
