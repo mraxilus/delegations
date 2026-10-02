@@ -28,7 +28,7 @@
 ##   than to geometry, so they are written out directly.
 ## Every verb composes motion directly, `orbit` included, so roll reader sets survives.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 # Reorder so stance reads before frame derived from it, though `pan` calls `frame`.
 #   Constants below stay in dependency order regardless, as reordering does not cover them.

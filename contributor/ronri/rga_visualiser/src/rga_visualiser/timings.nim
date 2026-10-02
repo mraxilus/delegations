@@ -13,12 +13,12 @@
 ##   Two builds share no clock, and proc variable would put indirect call in every bracket.
 ## Also carries few figures that cannot be measured inside one frame; see `FrameRecord`.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
 when defined(js):
-  proc nowMilliseconds*(): float {.importjs: "performance.now()".}
+  proc nowMilliseconds*(): float {.importjs: "performance.now()", sideEffect.}
     ## Read page's monotonic clock, in milliseconds.
 else:
   import std/monotimes

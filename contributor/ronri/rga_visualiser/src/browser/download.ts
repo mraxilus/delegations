@@ -7,21 +7,17 @@
 /* ---------------------------------------------------------------------- */
 /* Handing file to reader.                                                */
 /*                                                                        */
-/* One route for scene file and image alike. It used to be five           */
-/* statements written out twice -- build Blob, make `<a download>`,       */
-/* click it -- with anchor never put in document. Detached                */
-/* anchor's synthetic click is ignored by Safari outright and is          */
-/* unreliable elsewhere, so saving anything from phone did nothing at     */
-/* all, while caller toasted "Saved" regardless. Both halves of that      */
-/* are fixed here: routes below are tried in order of how likely          */
-/* platform is to honour them, and nothing claims file was written.       */
+/* One route for scene file and image alike. Routes below are tried in    */
+/* order of how likely platform is to honour them, and nothing claims     */
+/* file was written: only what came back is said.                         */
+/* Rejected: detached `<a download>`, whose synthetic click Safari        */
+/* ignores outright and other browsers honour unreliably.                 */
 /* ---------------------------------------------------------------------- */
 
 // What last delivery attempt tried and what came back, kept for reader to read.
-//   Three rounds of this fault were spent guessing because every refusal was silent:
-//   share sheet failed with its reason swallowed, and download frame refuses raises no
-//   event at all. Page that cannot say what happened cannot be debugged from phone
-//   nobody here can reach, so outcomes are recorded rather than inferred.
+//   Every refusal is otherwise silent: share sheet swallows its reason, and download frame
+//   refuses with no event at all. Page that cannot say what happened cannot be debugged
+//   from phone nobody here can reach, so outcomes are recorded rather than inferred.
 // Route-by-route account of one delivery, shown when every automatic route failed.
 let report_delivery: string[] = [];
 

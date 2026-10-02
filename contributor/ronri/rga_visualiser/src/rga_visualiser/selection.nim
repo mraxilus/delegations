@@ -8,7 +8,7 @@
 ## Plain fixed-size value type with no refs, like `History` beside it.
 ##   Copying one is value copy, so it can live in GUI's own state struct without allocator.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 ##   Browser drives it through `bridge`'s `nimSelect*` exports rather than parallel
 ##   list in JavaScript, so every rule about membership, order and arity is written once.
 
@@ -78,9 +78,19 @@ func at*(selection: Selection, position: int): int = selection.handles[position]
 
 func contains*(selection: Selection, handle: int): bool =
   ## Report whether handle is picked.
+  ##   Walks picks; loop asking per object marks once instead (`markOnto`).
   for position in 0 ..< selection.count:
     if selection.handles[position] == handle: return true
   false
+
+
+func markOnto*(selection: Selection, marks: var openArray[bool], is_marked = true) =
+  ## Set mark of each picked handle in `marks` to `is_marked`, at cost of picks alone.
+  ##   Frame loop asks per object whether it is picked, and `contains` walks picks per ask:
+  ##   loop then costs objects times picks, which select all at capacity squares.
+  ##   Loop marks once, reads one mark per object, then clears same marks with `false`, so
+  ##   neither walk reaches capacity and marks need no reset of their own.
+  for position in 0 ..< selection.count: marks[selection.handles[position]] = is_marked
 
 
 func impliedArity*(selection: Selection): Arity =

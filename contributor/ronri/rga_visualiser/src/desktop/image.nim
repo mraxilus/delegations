@@ -20,7 +20,7 @@
 ##   Arena carving costs same fixed bound (`writePng` asserts instead of growing) in one
 ##   place caller owns.
 ##
-## Desktop-only; unreachable from browser build. See `visualiser.nim`'s "Render Paths".
+## Desktop-only; unreachable from browser build. See PROVENANCE.md's "Render paths".
 
 {.experimental: "strictFuncs".}
 
@@ -49,7 +49,7 @@ type
 #   Compiler assumes imported body is pure, so `func` calling one would compile; marked,
 #   only `proc` may reach effects, which is what makes `func` mean anything here.
 proc compressBound(source_length: Ulong): Ulong
-  {.importc: "compressBound", header: HEADER_ZLIB.}
+  {.importc: "compressBound", header: HEADER_ZLIB, sideEffect.}
   ## Report largest size `compress2` can produce for `source_length` bytes.
 
 proc compress2(
@@ -59,7 +59,7 @@ proc compress2(
   ## Deflate `source_length` bytes into `destination` at `level`, writing size back.
 
 proc crc32(crc: Ulong, buffer: ptr Byte, length: Uint): Ulong
-  {.importc: "crc32", header: HEADER_ZLIB.}
+  {.importc: "crc32", header: HEADER_ZLIB, sideEffect.}
   ## Fold `length` bytes at `buffer` into running CRC.
 
 

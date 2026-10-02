@@ -26,7 +26,7 @@
 ##   This module exposes raw per-object fields rather than bytes, since packing IEEE-754
 ##   doubles by hand in Nim/JS would reinvent browser's `DataView`.
 ##
-## Browser entry point; see `visualiser.nim`'s "Render Paths" table for module split.
+## Browser entry point; see PROVENANCE.md's "Render paths" for module split.
 
 {.experimental: "strictFuncs".}
 
@@ -303,10 +303,12 @@ template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
 var
   SCENE_PAGE: Scene
   CAMERA_PAGE: Camera
+  MARKS_PICKED: array[OBJECTS_MAX, bool] ## Mark each picked handle while frame is built.
+    ## Set and cleared around frame's loops; see `selection.markOnto`.
   MESHES_FURNITURE, MESHES: MeshSet ## Hold meshes at module scope, reused every frame.
     ## Cleared through `clearMeshes` rather than declared per frame.
     ## `clearMeshes` resets each mesh's `count_vertices`, not storage, mirroring
-    ## `visualiser.nim`'s `MESHES`/`MESHES_FURNITURE`.
+    ## `main.nim`'s `MESHES`/`MESHES_FURNITURE`.
     ## As `nimBuildFrame` locals, each call reallocates and zero-fills whole fixed
     ## storage regardless of object count: `MeshSet` reserves it up front, and JS backend
     ## has no stack allocation.
@@ -575,7 +577,7 @@ proc flattenInto(mesh: Mesh, destination: var FlatFloats) =
 
 proc placeSeeds(now: float) =
   ## Build same default scene desktop opens on with no saved scene.
-  ##   Five seeds, nothing derived; mirrors `visualiser.main`'s startup.
+  ##   Five seeds, nothing derived; mirrors `main.main`'s startup.
   ##   Arrives as replay, like demo and loaded file: watching it build states that these
   ##   were placed one at time and everything else is derived from them.
   SCENE_PAGE.restoreFrom(initScene())
@@ -1139,7 +1141,7 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ##   In that order, as `[overlay_line_width, selected_alpha, hover_alpha, label_height,
   ##   halo_width, halo_alpha]`.
   ##   Browser's SVG overlay then strokes markers and drag rubber-band at weights
-  ##   desktop's `visualiser.drawMarker` does, sizes name label's face to
+  ##   desktop's `main.drawMarker` does, sizes name label's face to
   ##   `marker.HEIGHT_MARKER_LABEL` and its halo to `WIDTH_MARKER_LABEL_HALO` at
   ##   `ALPHA_MARKER_LABEL_HALO`.
   ##   Marker's size is not here: depends on shape marked, and comes back from
@@ -1812,7 +1814,7 @@ proc nimDragArmingOnDwell(): cint {.exportc.} =
 proc nimUpdateDrag(now: cfloat) {.exportc.} =
   ## Forward to `interaction.updateDrag`.
   ##   Once per frame, after `nimUpdateHover`, before frame reading preview is built,
-  ##   order `visualiser.renderFrame` runs them in.
+  ##   order `main.renderFrame` runs them in.
   interaction.updateDrag(INTERACTION_PAGE, SCENE_PAGE, float(now))
 
 
@@ -1997,7 +1999,7 @@ proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
   ## Project object's representative point onto screen pixels, as `[x, y, is_in_front]`.
   ##   View over `FLAT_ANCHOR`, refilled per call: asked per frame for band's source and
   ##   for menu's anchor.
-  ##   Point `mesh.anchorFor` and `visualiser.drawInteractionOverlay` use, so browser's
+  ##   Point `mesh.anchorFor` and `main.drawInteractionOverlay` use, so browser's
   ##   hover ring and drag rubber-band draw as 2D overlay where desktop draws them.
   ##   Object's drawn centre, through anchor-aware `anchorFor`.
   ##     Plane's disc is centred on stored creation anchor, so band answering from support
@@ -2008,7 +2010,7 @@ proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##     carried across frames that can go stale when object is removed.
   ##   Horizon plane reports middle of view: it has no place in scene, so menu goes to
   ##   centre of frame `marker.markerFrame` draws around it.
-  ##   Duplicated by constraint in `visualiser.anchorOfSelection`; fix both or neither.
+  ##   Duplicated by constraint in `main.anchorOfSelection`; fix both or neither.
   if not SCENE_PAGE.isAlive(int(handle)): return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
   if SCENE_PAGE.geometryOf(int(handle)).isHorizonPlane:
     return FLAT_ANCHOR.fill3(0.5'f32*float32(width), 0.5'f32*float32(height), 1.0'f32)
@@ -2196,7 +2198,7 @@ proc nimSelectionPulse(
   ##     `samplePulse` clamps on open outline, so rail at phase 0 yields nothing, which
   ##     would skip advance, for ever.
   ##     Plane's loop is closed and wraps, so only lines would stall.
-  ##   Mirrors `visualiser.drawSelectionMarker`.
+  ##   Mirrors `main.drawSelectionMarker`.
   if not SCENE_PAGE.isAlive(int(handle)): return
   ensureViewOverlay(int(width), int(height))
   let
@@ -2408,7 +2410,7 @@ proc nimBuildFrame(
   ##   Through same `mesh.addObject` dispatch and `camera` transforms desktop draws
   ##   through, every object at full colour as desktop's interactive `assembleMeshes` draws.
   ##   Exceeds sixty-line default.
-  ##     Mirrors `visualiser.assembleMeshes`'s two-pass draw-order invariant and packs
+  ##     Mirrors `main.assembleMeshes`'s two-pass draw-order invariant and packs
   ##     view-projection plus whole `FrameData`, packaging desktop never needs.
   ##     Splitting packaging out would return partial results across extra boundary for no
   ##     reader benefit.
@@ -2430,7 +2432,7 @@ proc nimBuildFrame(
   INTERACTION_PAGE.pruneFocus(SCENE_PAGE)
 
   # Carry camera one frame further toward whatever is being worked on, then aim it again.
-  #   From what this frame holds, same rule `visualiser.assembleMeshes` applies.
+  #   From what this frame holds, same rule `main.assembleMeshes` applies.
   #   Advancing before `scale` is read keeps furniture extent consistent with where camera
   #   is.
   TWEEN_CAMERA.advance(CAMERA_PAGE, float(now), easeOutCubic)
@@ -2531,9 +2533,12 @@ proc nimBuildFrame(
     # About held origin, as furniture is; see `ORIGIN_RECORDS`.
     clearMeshes(MESHES, ORIGIN_RECORDS)
     cost.openTally()
+    # Mark picks once and read mark per handle below; see `selection.markOnto`.
+    SELECTION_PAGE.markOnto(MARKS_PICKED)
+    defer: SELECTION_PAGE.markOnto(MARKS_PICKED, is_marked = false)
     # Emit horizon plane's dome first, before anything sharing translucent veil pass.
     #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
-    #   ordinary plane's fill blends over it; see `visualiser.assembleMeshes`.
+    #   ordinary plane's fill blends over it; see `main.assembleMeshes`.
     #   By-handle "At" accessors rather than `pairs`: under JS backend `Object` holds `Scene`
     #   by value, so constructing one per live handle copies entire scene.
     #   To watermark, not capacity: `scene.bound` is high-water mark, which only rises;
@@ -2541,7 +2546,7 @@ proc nimBuildFrame(
     #   Placement once, emitted every frame: placement already answered sky or not, so walks
     #   sort on `PLACEMENTS[handle].kind` rather than reading multivector per handle per walk.
     for handle in 0 ..< SCENE_PAGE.bound:
-      if not SCENE_PAGE.isAlive(handle) or handle in SELECTION_PAGE: continue
+      if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
       if SCENE_PAGE.isVisible(handle):
         # Index in place, never bind to local; see `emitObject`.
         #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
@@ -2560,7 +2565,7 @@ proc nimBuildFrame(
           )
 
     for handle in 0 ..< SCENE_PAGE.bound:
-      if not SCENE_PAGE.isAlive(handle) or handle in SELECTION_PAGE: continue
+      if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
       if SCENE_PAGE.isVisible(handle):
         if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
           # Skip point outside view before it costs emitting, flatten and upload.
@@ -2601,7 +2606,7 @@ proc nimBuildFrame(
 
     # Emit what drag in progress would build, in same preview ink.
     #   Reader learns one "not committed yet" appearance; mirrors
-    #   `visualiser.assembleMeshes`.
+    #   `main.assembleMeshes`.
     if INTERACTION_PAGE.preview.isSome:
       var placement_derived = placeObject(
         INTERACTION_PAGE.preview.get.geometry, INTERACTION_PAGE.preview.get.anchor,
@@ -2613,7 +2618,7 @@ proc nimBuildFrame(
 
     # Emit everything selected last, drawn over cleared depth.
     #   Picked object is then never buried.
-    #   Mirrors `visualiser.assembleMeshes`.
+    #   Mirrors `main.assembleMeshes`.
     markOverlay(MESHES)
     for position in 0 ..< SELECTION_PAGE.len:
       let handle = SELECTION_PAGE.at(position)

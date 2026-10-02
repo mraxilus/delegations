@@ -410,7 +410,9 @@ suite "Camera":
     proc pseudo(): float =
       seed = (seed*97.31 + 33.77) mod 41.0
       seed - 20.5
-    for trial in 0 ..< 100:
+    const count_trials = 100
+      ## Seeded stances: pivots, distances and directions across sphere, off poles.
+    for trial in 0 ..< count_trials:
       let
         pivot = Position(x: pseudo(), y: pseudo(), z: pseudo())
         distance = 1.0 + abs(pseudo())
