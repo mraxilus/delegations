@@ -1511,6 +1511,13 @@ suite "Internal: Driver":
       let cell = line[7 ..< line.find('|', 7)].strip
       if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
 
+  test "drive holds code to pin alone, and verb head alone reads library head":
+    let
+      start = driver.find("proc drive() =")
+      body = driver[start ..< driver.find("\n\n\n", start)]
+    check "checkoutChecked()" in body and "headChecked" notin body  # drive reads no head
+    check "of \"head\": report(headChecked(pgaCommit()))" in driver  # head's verdict, exit code
+
   test "dispatch answers to every verb usage and header teach, and no other":
     check dispatched(driver).sorted == taught(driver).sorted  # usage string
     check dispatched(driver).sorted == tabled(driver).sorted  # header table
