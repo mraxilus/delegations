@@ -11,6 +11,9 @@
 ##     (`names.nim`), so `#` inside string never trips it. Line holding no code, i.e. whole
 ##     comment, doc comment, or text inside block comment or long string, holds no trailing
 ##     comment.
+##     Static pass does not run X.9 yet: `koch fix` lands first, so each project clears its
+##     gaps by one command on its own branch, and pull request after it wires `checkComments`
+##     into `checkForm` (CURATOR.md, duty 3). Fixer runs now, since it reports nothing new.
 ##
 ##   Line over width passes only when breaking cannot fix it: one whitespace-free token with
 ##     its indent already exceeds limit, that token is no longer than `TOKEN_MAX`, and rest of
@@ -32,8 +35,9 @@
 ##   Cost: `LICENSE.md` exempt from width; third-party text stays verbatim (XI.3 spirit).
 ##   Cost: X.9 read in Nim syntax alone (Nim, NimScript, nimble); trailing comment of
 ##     TypeScript, C, C++, YAML, cfg and shell goes unread until each kind gets scanner.
-##   Cost: column of aligned trailing comments reads as finding, and fixer sets each to two;
-##     X.9 asks two spaces, and alignment is spelled nowhere in charter.
+##   Cost: column of aligned trailing comments reads as finding, and fixer sets each to two.
+##     Architect's ruling: X.9 asks exactly two, since column breaks on rename; one longer
+##     name moves every comment of block, so one-line change rewrites whole column.
 
 {.experimental: "strictFuncs".}
 
@@ -124,8 +128,9 @@ func gaps(source: string): seq[Gap] =
     result.add Gap(line: i, at: at, spaces: spaces)
 
 
-func checkComments(path, source: string): seq[Finding] =
+func checkComments*(path, source: string): seq[Finding] =
   ## Report trailing comment without exactly two spaces before its marker (X.9).
+  ##   Named by its suite alone until `checkForm` calls it; header says why.
   for gap in source.gaps:
     if gap.spaces == COMMENT_GAP: continue
     result.add finding(
@@ -158,7 +163,6 @@ func checkForm*(path, source: string, rule: KindRule): seq[Finding] =
       )
     if rule.syntax == Syntax.Nim and line.tierOfBanner > 0:
       result.add checkBanner(path, lines, i)
-  if rule.syntax == Syntax.Nim: result.add checkComments(path, source)
 
 
 func fixWhitespace(path, source: string): Fix =

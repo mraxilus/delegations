@@ -21,6 +21,11 @@ func gapMessage(spaces: int): string =
   "Trailing comment takes two spaces before its marker (X.9); got `" & $spaces & "`."
 
 
+func gapMessages(source: string): seq[string] =
+  ## Read X.9 finding messages of Nim source.
+  checkComments("a.nim", source).mapIt(it.message)
+
+
 suite "Article X":
   test "X.1 width counts runes, not bytes":
     check messages("a.nim", "é ".repeat(49) & "éé\n", Kind.Nim).len == 0  # 100 runes pass
@@ -73,23 +78,25 @@ suite "Article X":
     check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks exactly one blank line after it."]  # only second tier defers
 
-  test "X.9 trailing comment takes two spaces before its marker":
-    check messages("a.nim", "let a = 1  # Two.\n", Kind.Nim).len == 0  # two pass
-    check messages("a.nim", "let a = 1 # One.\n", Kind.Nim) == @[gapMessage(1)]  # one fails
-    check messages("a.nim", "let a = 1# None.\n", Kind.Nim) == @[gapMessage(0)]  # glued fails
-    check messages("a.nim", "  a: int     ## Field.\n", Kind.Nim) == @[gapMessage(5)]  # aligned
-    check messages("a.nim", "let a = \"x\" # One.\n", Kind.Nim) == @[gapMessage(1)]  # after string
-    check checkForm("a.nim", "a = 1\nb = 2 # c\n", Kind.Nim.rule)[0].line == 2  # line named
+  test "X.9 trailing comment takes exactly two spaces before its marker":
+    check gapMessages("let a = 1  # Two.\n").len == 0  # two pass
+    check gapMessages("let a = 1 # One.\n") == @[gapMessage(1)]  # one fails
+    check gapMessages("let a = 1# None.\n") == @[gapMessage(0)]  # glued fails
+    check gapMessages("  a: int     ## Field.\n") == @[gapMessage(5)]  # aligned column fails
+    check gapMessages("let a = \"x\" # One.\n") == @[gapMessage(1)]  # after string
+    check checkComments("a.nim", "a = 1\nb = 2 # c\n")[0].line == 2  # line named
     check COMMENT_GAP == 2  # X.9 count, stated once
 
   test "X.9 reads code alone: string, whole comment and block hold no trailing comment":
-    check messages("a.nim", "let a = \"x # y\"\n", Kind.Nim).len == 0  # `#` inside string
-    check messages("a.nim", "let a = '#'\n", Kind.Nim).len == 0  # `#` as char
-    check messages("a.nim", "# Whole line.\n  ## Doc line.\n", Kind.Nim).len == 0  # no code
-    check messages("a.nim", "#[ a\nb # c\n]#\n", Kind.Nim).len == 0  # inside block comment
-    check messages("a.nim", "let a = \"\"\"\nb # c\n\"\"\"\n", Kind.Nim).len == 0  # long string
-    check messages("a.nim", "{.used.}  # Used in b.nim.\n", Kind.Nim).len == 0  # pragma
-    check messages("a.yml", "a: 1 # b\n", Kind.Yaml).len == 0  # Nim syntax alone
+    check gapMessages("let a = \"x # y\"\n").len == 0  # `#` inside string
+    check gapMessages("let a = '#'\n").len == 0  # `#` as char
+    check gapMessages("# Whole line.\n  ## Doc line.\n").len == 0  # no code
+    check gapMessages("#[ a\nb # c\n]#\n").len == 0  # inside block comment
+    check gapMessages("let a = \"\"\"\nb # c\n\"\"\"\n").len == 0  # long string
+    check gapMessages("{.used.}  # Used in b.nim.\n").len == 0  # pragma
+
+  test "X.9 waits outside static pass until projects clear it through koch fix":
+    check messages("a.nim", "let a = 1 # One.\n", Kind.Nim).len == 0  # pull request after wires it
 
 
 suite "Article VIII":
@@ -129,14 +136,15 @@ suite "Fixes":
     check fix.source == "let a = \"# x\"  # One.\nlet b = 2  ## Aligned.\nlet c = 3  # Two.\n" &
       "# Whole  line.\nlet d = 4  #Glued.\n"  # gaps alone move
     check fix.fixed.mapIt(it.line) == @[1, 2, 5]  # one report per line
-    check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
+    check checkComments("a.nim", fix.source).len == 0  # check reports none
+    check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # nor does rest of form
     check fixed(fix.source).source == fix.source  # idempotent
     check fixed("a: 1 # b\n", Kind.Yaml).source == "a: 1 # b\n"  # Nim syntax alone
 
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand
-    check messages("a.nim", near, Kind.Nim) == @[gapMessage(1)]  # finding stays
+    check gapMessages(near) == @[gapMessage(1)]  # finding stays
 
   test "clean source passes through unchanged":
     let clean = "## Do.\n\nlet a = \"x # y\"  # Two.\n# Whole line.\n"

@@ -41,6 +41,7 @@ suite "Fixes":
     check refused.len == 0 and written.len == 1
     let source = written[0].content
     check checkForm(path, source, Kind.Nim.rule).len == 0  # form checks report none
+    check checkComments(path, source).len == 0  # X.9 too, which static pass runs later
     check checkIdioms(path, source).len == 0  # idiom checks report none
     for rule in ["trailing whitespace", "file ending", "trailing comment", "bracket import",
                  "single bindings", "strictFuncs"]:
