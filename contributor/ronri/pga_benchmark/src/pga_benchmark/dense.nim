@@ -9,7 +9,8 @@
 ##     that is only map of another folds into product, as compound product's bound does.
 ##
 ##   Cost: tables are library's, so dense form shares any sign library gets wrong. Chapter
-##     suites hold library to reference, and suite `Dense forms` holds dense form to library.
+##     and wiki suites hold library to reference, and suite `Internal: Dense forms` holds
+##     dense form to library.
 ##   Cost: generation walks every cell of every table in compile-time VM; seconds at 5D.
 ##   Cost: measurand without recipe here fails build, so new general row brings its own.
 

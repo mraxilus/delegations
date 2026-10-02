@@ -7,7 +7,8 @@
 ##   `MISSING` names operations reference carries and library lacks, each one gap.
 ##
 ##   Cost: expressions are strings lowered by `parseExpr` where measurands are emitted, so
-##     misspelt one fails at that compile rather than here; suite `Catalogue` compiles every one.
+##     misspelt one fails at that compile rather than here; suite `Internal: Catalogue`
+##     compiles every one.
 ##   Cost: `cite` is book equation where library's own suites cite one, else wiki page name,
 ##     never invented number.
 ##   Cost: conformal aliases differ from rigid ones in library (`bulkRound` for `bulk`), so

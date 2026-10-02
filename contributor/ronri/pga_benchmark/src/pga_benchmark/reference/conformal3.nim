@@ -24,7 +24,7 @@
 ##     and moment differently, library's table wins.
 ##   No function calls another: under `--panics:off` each call to Nim function fills its
 ##     result and checks error flag after it, and hand code spends neither; vector helpers
-##     are templates, and form two functions share is spelled in each. Suite `Inspector`
+##     are templates, and form two functions share is spelled in each. Suite `Internal: Inspector`
 ##     holds every reference function to no fill and no check.
 ##   Norms and unitize carry no reference here: library defines them as square roots of
 ##     inner products, which are indefinite under conformal metric and yield NaN on real
