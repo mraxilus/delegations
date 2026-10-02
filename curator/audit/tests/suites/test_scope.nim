@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[domains, scope]
+import ../../src/[domains, findings, scope]
 
 
 const OUTSIDE = @[
@@ -87,3 +87,28 @@ suite "Scope":
     # Move never widens project branch: its prefix decides before exemption is read.
     check checkScope("contributor/ronri/beta/work", [alpha], [alpha]).len == 1  # other project
     check checkScope("curator/audit/work", [alpha], [alpha]).len == 1  # curator project
+
+  test "curator branch holds finding in contributor project, and blocks on rest":
+    # Duty 3: check that reddens project waits for project to fix, and curator never fixes it.
+    let
+      source = finding(CONTRIBUTOR & "/ronri/alpha/src/alpha.nim", 4, "Broke.")
+      record = finding(CONTRIBUTOR & "/ronri/alpha/PROVENANCE.md", 9, "Count in prose.")
+      stamp = finding(CONTRIBUTOR & "/ronri/alpha/PROVENANCE.md", 0, "Stale.", true)
+      index = finding(CONTRIBUTOR & "/ronri/README.md", 1, "Broke.")
+      own = finding(CURATOR & "/audit/src/scope.nim", 2, "Broke.")
+      root = finding("koch.nim", 7, "Broke.")
+      branch_level = finding("", 0, "Broke.")
+      found = @[source, record, stamp, index, own, root, branch_level]
+    for branch in ["curator/rules", "curator/audit/work"]:  # both curator roles
+      let (held, blocking) = splitHeld(branch, found)
+      check held == @[source, record]  # project's code and records alike
+      check blocking == @[stamp, index, own, root, branch_level]  # curator's, wherever it lands
+
+    # Contributor holds nothing: own project is its own, other project means red base.
+    for branch in ["contributor/ronri/alpha/work", "contributor/ronri/beta/work"]:
+      let (held, blocking) = splitHeld(branch, found)
+      check held.len == 0
+      check blocking == found
+
+    # Branch outside grammar holds nothing, so its scope finding still blocks.
+    check splitHeld("claude/setup", found).held.len == 0

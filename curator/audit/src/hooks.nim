@@ -4,10 +4,12 @@
 ##     for gate; this module reads hook's fact and names check holding it, so rule lives once.
 ##   Events, by verb argument: `path` refuses write outside branch scope; `edit` returns
 ##     static findings after write; `bash` refuses commit or push on `main` or outside grammar,
-##     and rewrite of pushed history; `body` holds post before it lands to role line, footer,
-##     Simplified Technical English counts, issue title and label, and pull request headings;
-##     `stop` refuses end of turn that pushed or posted and lacks sign-off block; `start`
-##     prints role, read order, carried list and drift; `push` and `msg` serve git hooks.
+##     rewrite of pushed history, and push past pre-push hook, since `koch check` holds what
+##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
+##     line, footer, Simplified Technical English counts, issue title and label, and pull
+##     request headings; `stop` refuses end of turn that pushed or posted and lacks sign-off
+##     block; `start` prints role, read order, carried list and drift; `push` and `msg` serve
+##     git hooks.
 ##   Pure functions take strings and return findings; procs read transcript JSON, since
 ##     `parseJson` is effectful.
 ##
@@ -128,6 +130,12 @@ func checkBash*(branch, command: string, is_head_pushed: bool): seq[Finding] =
     let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
     if sub == "push" and is_forced:
       result.add finding("", 0, "Never rewrite pushed history (XI.2); got `git push --force`.")
+    if sub == "push" and "--no-verify" in arguments:
+      result.add finding(
+        "", 0,
+        "Never push past pre-push hook; `koch check` holds what reddens contributor project " &
+          "(CURATOR.md, duty 3); got `git push --no-verify`.",
+      )
     if is_head_pushed and ((sub == "commit" and "--amend" in arguments) or sub == "rebase"):
       result.add finding(
         "", 0, "Never rewrite pushed history (XI.2); HEAD is on remote; got `git " & sub & "`."
