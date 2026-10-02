@@ -154,6 +154,15 @@ suite "Hooks":
       "feat(pga_benchmark): add gaps\n# Please enter.\n# ------------------------ >8\ndiff x\n"
     check checkMessage(BRANCH, verbose, [], []).len == 0
 
+  test "git command reads checkout it acts in, so worktree holds its own branch":
+    check commandDirectory("git commit -m x", "/work/tree") == "/work/tree"
+    check commandDirectory("git -C /other commit", "/work/tree") == "/other"
+    check commandDirectory("git -C sub commit", "/work/tree") == "/work/tree/sub"
+    check commandDirectory("cd /other && git push", "/work/tree") == "/other"
+    check commandDirectory("cd \"sub\" && git -C deeper push", "/work") == "/work/sub/deeper"
+    check commandDirectory("ls && git status", "/work") == "/work"
+
+
   test "start context and turn writes":
     let text = startContext(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
