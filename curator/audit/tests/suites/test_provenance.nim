@@ -35,6 +35,8 @@ suite "Article VIII":
     let stale = checkProvenance("p", good, "0000000000000000")
     check stale.len == 1 and stale[0].message.endsWith("got `deadbeefdeadbeef`.")  # stale
     check "`0000000000000000`" in stale[0].message  # expected stamp named
+    check stale[0].is_propagation  # curator's in any project, never held
+    check not checkProvenance("p", unreviewed, "deadbeefdeadbeef")[0].is_propagation  # project's
 
   test "VIII.6 Rules row is rewritten in place, padding and neighbours kept":
     let

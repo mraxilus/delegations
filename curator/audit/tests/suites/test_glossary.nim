@@ -54,6 +54,7 @@ suite "Glossary":
     check found.mapIt((it.path, it.line)) == @[("x/a/GLOSSARY.md", 5), ("x/b/GLOSSARY.md", 5)]
     check found[0].message.endsWith("got `SI`.")  # repeated from root
     check found[1].message.endsWith("got `IAU`, also in `x/a/GLOSSARY.md`.")  # shared
+    check found.allIt(it.is_propagation)  # moving standard is curator's, never held
     check checkStandardsAcross([("GLOSSARY.md", ROOT), ("x/b/GLOSSARY.md", B)]).len == 0
 
   test "every term carries definition on next line":

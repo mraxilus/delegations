@@ -4,6 +4,8 @@
 ##
 ##   Cost: line `0` marks whole-file findings, so `0` never means first line.
 ##   Cost: empty path marks branch-level findings (scope, commits) with no file to open.
+##   Propagation flag marks finding that rules change leaves for curator wherever it lands,
+##     such as stale stamp in contributor record; `scope.isHeld` never holds it.
 
 {.experimental: "strictFuncs".}
 
@@ -15,11 +17,12 @@ type Finding* = object
   path*: string     ## Repository-relative path, `/` separated; empty for branch-level.
   line*: int        ## One-based line; `0` when finding concerns whole file.
   message*: string  ## Telegraphic statement, ending with echoed value where one exists.
+  is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
 
 
-func finding*(path: string, line: int, message: string): Finding =
+func finding*(path: string, line: int, message: string, is_propagation = false): Finding =
   ## Construct finding.
-  Finding(path: path, line: line, message: message)
+  Finding(path: path, line: line, message: message, is_propagation: is_propagation)
 
 
 func `<`*(a, b: Finding): bool =
