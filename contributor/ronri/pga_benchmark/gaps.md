@@ -66,7 +66,7 @@ between steps. Every other bound in these tables is derived from the axioms alon
 ## rga4d
 
 This algebra has 4 dimensions, a rigid metric and a 128-byte multivector. The inspector took the
-counts on 2026-10-01, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-02, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `31213421d6699cb44a9a171b75388ef8188e1136` and flags `-d:release`. The bench ran 5 times on
 2026-10-01, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. The allocation gauge was live.
@@ -116,33 +116,33 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | G038 | support_anti | 162/– | 0/– | 1280/– | 3/– | 3/– | 48.2/– | over |
 | G039 | wedge_point_point | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 24.3/3.4 | over |
 | G040 | wedge_line_point | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 23.7/5.5 | over |
-| G041 | wedge_point_line | 81/12 | 0/0 | 384/144 | 0/0 | 0/1 | 23.7/5.4 | over |
+| G041 | wedge_point_line | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 23.7/5.4 | over |
 | G042 | wedge_anti_plane_plane | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 26.4/3.6 | over |
 | G043 | wedge_anti_plane_line | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 26.4/5.8 | over |
-| G044 | wedge_anti_line_plane | 81/12 | 0/0 | 384/144 | 0/0 | 0/1 | 26.4/5.3 | over |
-| G045 | wedge_anti_line_line | 81/6 | 0/0 | 384/104 | 0/0 | 0/2 | 26.4/3.5 | over |
+| G044 | wedge_anti_line_plane | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 26.4/5.3 | over |
+| G045 | wedge_anti_line_line | 81/6 | 0/0 | 384/104 | 0/0 | 0/0 | 26.4/3.5 | over |
 | G046 | wedge_anti_point_plane | 81/4 | 0/0 | 384/72 | 0/0 | 0/0 | 26.4/3.2 | over |
 | G047 | dot_point_point | 8/3 | 0/0 | 384/72 | 0/0 | 0/0 | 5.8/3.1 | over |
-| G048 | dot_line_line | 8/3 | 0/0 | 384/104 | 0/0 | 0/1 | 5.8/3.1 | over |
+| G048 | dot_line_line | 8/3 | 0/0 | 384/104 | 0/0 | 0/0 | 5.8/3.1 | over |
 | G049 | dot_plane_plane | 8/1 | 0/0 | 384/72 | 0/0 | 0/0 | 5.8/3.1 | over |
 | G050 | dot_anti_point_point | 8/1 | 0/0 | 384/72 | 0/0 | 0/0 | 5.2/3.1 | over |
-| G051 | dot_anti_line_line | 8/3 | 0/0 | 384/104 | 0/0 | 0/1 | 5.9/3.1 | over |
+| G051 | dot_anti_line_line | 8/3 | 0/0 | 384/104 | 0/0 | 0/0 | 5.9/3.1 | over |
 | G052 | dot_anti_plane_plane | 8/3 | 0/0 | 384/72 | 0/0 | 0/0 | 5.2/3.1 | over |
 | G053 | wedge_dot_anti_motor_motor | 192/48 | 0/0 | 384/256 | 0/0 | 0/0 | 50.4/13.7 | over |
-| G054 | transform_point_motor | –/25 | –/0 | –/192 | –/0 | –/8 | 134.1/5.5 | over |
-| G055 | transform_line_motor | –/57 | –/0 | –/400 | –/0 | –/23 | 108.8/9.6 | over |
-| G056 | transform_plane_motor | –/36 | –/0 | –/256 | –/0 | –/15 | 107.2/8.6 | over |
+| G054 | transform_point_motor | –/25 | –/0 | –/160 | –/0 | –/0 | 134.1/5.5 | over |
+| G055 | transform_line_motor | –/57 | –/0 | –/208 | –/0 | –/0 | 108.8/9.6 | over |
+| G056 | transform_plane_motor | –/36 | –/0 | –/160 | –/0 | –/0 | 107.2/8.6 | over |
 | G057 | project_orthogonal_point_plane | 135/14 | 0/0 | 1152/128 | 2/0 | 2/0 | 35.8/3.4 | over |
-| G058 | project_orthogonal_point_line | 135/19 | 0/0 | 1152/176 | 2/0 | 2/2 | 35.8/4.2 | over |
-| G059 | project_orthogonal_line_plane | 135/27 | 0/0 | 1152/224 | 2/0 | 2/10 | 36.4/5.0 | over |
-| G060 | support_line | 162/9 | 0/0 | 1280/112 | 3/0 | 3/1 | 44.3/1.6 | over |
+| G058 | project_orthogonal_point_line | 135/19 | 0/0 | 1152/144 | 2/0 | 2/0 | 35.8/4.2 | over |
+| G059 | project_orthogonal_line_plane | 135/27 | 0/0 | 1152/176 | 2/0 | 2/0 | 36.4/5.0 | over |
+| G060 | support_line | 162/9 | 0/0 | 1280/80 | 3/0 | 3/0 | 44.3/1.6 | over |
 | G061 | support_plane | 162/6 | 0/0 | 1280/64 | 3/0 | 3/0 | 46.5/1.2 | over |
 | G062 | support_anti_point | 162/6 | 0/0 | 1280/64 | 3/0 | 3/0 | 39.9/1.2 | over |
-| G063 | support_anti_line | 162/9 | 0/0 | 1280/112 | 3/0 | 3/1 | 38.0/1.7 | over |
-| G064 | reverse_anti_motor | 0/0 | 0/0 | 256/256 | 0/0 | 0/2 | 4.7/1.6 | over |
-| G065 | unitize_motor | 24/12 | 1/1 | 512/320 | 1/0 | 1/4 | 4.1/10.4 | over |
-| G066 | norm_weight_motor | 8/4 | 0/0 | 640/72 | 1/0 | 1/2 | 10.2/1.3 | over |
-| G067 | norm_bulk_motor | 8/4 | 0/0 | 640/72 | 1/0 | 1/2 | 10.2/1.5 | over |
+| G063 | support_anti_line | 162/9 | 0/0 | 1280/80 | 3/0 | 3/0 | 38.0/1.7 | over |
+| G064 | reverse_anti_motor | 0/0 | 0/0 | 256/192 | 0/0 | 0/0 | 4.7/1.6 | over |
+| G065 | unitize_motor | 24/12 | 1/1 | 512/256 | 1/0 | 1/0 | 4.1/10.4 | over |
+| G066 | norm_weight_motor | 8/4 | 0/0 | 640/72 | 1/0 | 1/0 | 10.2/1.3 | over |
+| G067 | norm_bulk_motor | 8/4 | 0/0 | 640/72 | 1/0 | 1/0 | 10.2/1.5 | over |
 | G068 | complement_right_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 4.2/0.7 | over |
 | G069 | complement_left_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 4.3/0.7 | over |
 | G070 | reverse_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 4.4/0.7 | over |
@@ -151,25 +151,25 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | G073 | dual_weight_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 3.5/0.7 | over |
 | G074 | bulk_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 2.8/0.8 | over |
 | G075 | weight_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 2.9/0.7 | over |
-| G076 | norm_bulk_point | 8/3 | 0/0 | 640/40 | 1/0 | 1/1 | 10.2/1.5 | over |
+| G076 | norm_bulk_point | 8/3 | 0/0 | 640/40 | 1/0 | 1/0 | 10.2/1.5 | over |
 | G077 | norm_weight_point | 8/0 | 0/0 | 640/40 | 1/0 | 1/0 | 9.7/0.4 | over |
 | G318 | norm_bulk_squared_point | 8/3 | 0/0 | 256/40 | 0/0 | 0/0 | 3.4/0.6 | over |
 | G319 | norm_weight_squared_point | 8/– | 0/– | 256/– | 0/– | 0/– | 3.7/0.4 | over |
 | G078 | unitize_point | 24/3 | 1/1 | 512/128 | 1/0 | 1/0 | 4.1/1.0 | over |
 | G079 | attitude_point | 0/0 | 0/0 | 256/40 | 0/0 | 0/0 | 2.7/0.4 | over |
-| G080 | complement_right_line | 0/0 | 0/0 | 256/192 | 0/0 | 0/2 | 4.0/1.8 | over |
-| G081 | complement_left_line | 0/0 | 0/0 | 256/192 | 0/0 | 0/2 | 4.1/1.8 | over |
-| G082 | reverse_line | 0/0 | 0/0 | 256/192 | 0/0 | 0/2 | 4.2/1.8 | over |
-| G083 | reverse_anti_line | 0/0 | 0/0 | 256/192 | 0/0 | 0/2 | 4.2/1.8 | over |
-| G084 | dual_bulk_line | 0/0 | 0/0 | 256/192 | 0/0 | 0/1 | 3.0/1.2 | over |
-| G085 | dual_weight_line | 0/0 | 0/0 | 256/192 | 0/0 | 0/1 | 3.2/1.1 | over |
+| G080 | complement_right_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 4.0/1.8 | over |
+| G081 | complement_left_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 4.1/1.8 | over |
+| G082 | reverse_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 4.2/1.8 | over |
+| G083 | reverse_anti_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 4.2/1.8 | over |
+| G084 | dual_bulk_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 3.0/1.2 | over |
+| G085 | dual_weight_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 3.2/1.1 | over |
 | G086 | bulk_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 2.9/1.1 | over |
 | G087 | weight_line | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 2.8/1.1 | over |
-| G088 | norm_bulk_line | 8/3 | 0/0 | 640/56 | 1/0 | 1/2 | 9.7/1.5 | over |
-| G089 | norm_weight_line | 8/3 | 0/0 | 640/56 | 1/0 | 1/2 | 9.6/1.5 | over |
-| G320 | norm_bulk_squared_line | 8/3 | 0/0 | 256/56 | 0/0 | 0/1 | 3.4/0.7 | over |
+| G088 | norm_bulk_line | 8/3 | 0/0 | 640/56 | 1/0 | 1/0 | 9.7/1.5 | over |
+| G089 | norm_weight_line | 8/3 | 0/0 | 640/56 | 1/0 | 1/0 | 9.6/1.5 | over |
+| G320 | norm_bulk_squared_line | 8/3 | 0/0 | 256/56 | 0/0 | 0/0 | 3.4/0.7 | over |
 | G321 | norm_weight_squared_line | 8/– | 0/– | 256/– | 0/– | 0/– | 4.0/0.7 | over |
-| G090 | unitize_line | 24/9 | 1/1 | 512/240 | 1/0 | 1/4 | 4.3/10.5 | over |
+| G090 | unitize_line | 24/9 | 1/1 | 512/192 | 1/0 | 1/0 | 4.3/10.5 | over |
 | G091 | attitude_line | 0/0 | 0/0 | 256/80 | 0/0 | 0/0 | 2.9/0.8 | over |
 | G092 | complement_right_plane | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 4.2/0.7 | over |
 | G093 | complement_left_plane | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 4.3/0.7 | over |
@@ -180,10 +180,10 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | G098 | bulk_plane | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 2.8/0.7 | over |
 | G099 | weight_plane | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 3.0/0.8 | over |
 | G100 | norm_bulk_plane | 8/0 | 0/0 | 640/40 | 1/0 | 1/0 | 10.2/0.4 | over |
-| G101 | norm_weight_plane | 8/3 | 0/0 | 640/40 | 1/0 | 1/1 | 10.2/1.5 | over |
+| G101 | norm_weight_plane | 8/3 | 0/0 | 640/40 | 1/0 | 1/0 | 10.2/1.5 | over |
 | G322 | norm_bulk_squared_plane | 8/1 | 0/0 | 256/40 | 0/0 | 0/0 | 3.6/0.4 | over |
 | G323 | norm_weight_squared_plane | 8/– | 0/– | 256/– | 0/– | 0/– | 3.9/0.6 | over |
-| G102 | unitize_plane | 24/7 | 1/1 | 512/160 | 1/0 | 1/1 | 4.2/10.0 | over |
+| G102 | unitize_plane | 24/7 | 1/1 | 512/128 | 1/0 | 1/0 | 4.2/10.0 | over |
 | G103 | attitude_plane | 0/0 | 0/0 | 256/80 | 0/0 | 0/0 | 2.7/1.0 | over |
 
 ### Multivector lower bound
@@ -234,7 +234,7 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 ## cga5d
 
 This algebra has 5 dimensions, a conformal metric and a 256-byte multivector. The inspector took the
-counts on 2026-10-01, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-02, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `31213421d6699cb44a9a171b75388ef8188e1136` and flags `-d:release`. The bench ran 5 times on
 2026-10-01, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. The allocation gauge was live.
@@ -291,26 +291,26 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | G148 | partner | 518/– | 0/– | 30720/– | 8/– | 271/– | 179.1/– | over |
 | G149 | wedge_round_point_round_point | 243/20 | 0/0 | 768/160 | 0/0 | 0/0 | 59.7/4.5 | over |
 | G150 | wedge_dipole_round_point | 243/30 | 0/0 | 768/200 | 0/0 | 0/0 | 60.1/10.9 | over |
-| G151 | wedge_round_point_dipole | 243/30 | 0/0 | 768/280 | 0/0 | 0/1 | 60.1/10.2 | over |
+| G151 | wedge_round_point_dipole | 243/30 | 0/0 | 768/200 | 0/0 | 0/0 | 60.1/10.2 | over |
 | G152 | wedge_circle_round_point | 243/20 | 0/0 | 768/160 | 0/0 | 0/0 | 60.0/5.8 | over |
 | G153 | wedge_round_point_circle | 243/20 | 0/0 | 768/160 | 0/0 | 0/0 | 60.0/6.2 | over |
 | G154 | wedge_dipole_dipole | 243/30 | 0/0 | 768/200 | 0/0 | 0/0 | 59.9/8.9 | over |
 | G155 | wedge_anti_sphere_sphere | 243/20 | 0/0 | 768/160 | 0/0 | 0/0 | 67.3/4.9 | over |
 | G156 | wedge_anti_sphere_circle | 243/30 | 0/0 | 768/200 | 0/0 | 0/0 | 67.7/11.3 | over |
-| G157 | wedge_anti_circle_sphere | 243/30 | 0/0 | 768/280 | 0/0 | 0/1 | 67.5/10.4 | over |
+| G157 | wedge_anti_circle_sphere | 243/30 | 0/0 | 768/200 | 0/0 | 0/0 | 67.5/10.4 | over |
 | G158 | wedge_anti_circle_circle | 243/30 | 0/0 | 768/200 | 0/0 | 0/0 | 67.7/9.2 | over |
 | G159 | wedge_anti_sphere_dipole | 243/20 | 0/0 | 768/160 | 0/0 | 0/0 | 67.9/6.0 | over |
 | G160 | wedge_anti_dipole_sphere | 243/20 | 0/0 | 768/160 | 0/0 | 0/0 | 67.7/5.6 | over |
 | G161 | dot_round_point_round_point | 32/5 | 0/0 | 768/88 | 0/0 | 0/0 | 12.5/3.3 | over |
-| G162 | dot_dipole_dipole | 32/10 | 0/0 | 768/168 | 0/0 | 0/3 | 12.5/4.7 | over |
-| G163 | dot_circle_circle | 32/10 | 0/0 | 768/168 | 0/0 | 0/3 | 12.5/4.7 | over |
+| G162 | dot_dipole_dipole | 32/10 | 0/0 | 768/168 | 0/0 | 0/0 | 12.5/4.7 | over |
+| G163 | dot_circle_circle | 32/10 | 0/0 | 768/168 | 0/0 | 0/0 | 12.5/4.7 | over |
 | G164 | dot_sphere_sphere | 32/5 | 0/0 | 768/88 | 0/0 | 0/0 | 12.5/3.3 | over |
-| G165 | dot_anti_round_point_round_point | 32/5 | 0/0 | 768/88 | 0/0 | 0/1 | 11.4/3.3 | over |
-| G166 | dot_anti_dipole_dipole | 32/10 | 0/0 | 768/168 | 0/0 | 0/4 | 11.4/4.9 | over |
-| G167 | dot_anti_circle_circle | 32/10 | 0/0 | 768/168 | 0/0 | 0/4 | 11.4/4.9 | over |
-| G168 | dot_anti_sphere_sphere | 32/5 | 0/0 | 768/88 | 0/0 | 0/1 | 11.4/3.3 | over |
+| G165 | dot_anti_round_point_round_point | 32/5 | 0/0 | 768/88 | 0/0 | 0/0 | 11.4/3.3 | over |
+| G166 | dot_anti_dipole_dipole | 32/10 | 0/0 | 768/168 | 0/0 | 0/0 | 11.4/4.9 | over |
+| G167 | dot_anti_circle_circle | 32/10 | 0/0 | 768/168 | 0/0 | 0/0 | 11.4/4.9 | over |
+| G168 | dot_anti_sphere_sphere | 32/5 | 0/0 | 768/88 | 0/0 | 0/0 | 11.4/3.3 | over |
 | G169 | complement_right_round_point | 0/0 | 0/0 | 512/80 | 0/0 | 0/0 | 8.7/1.7 | over |
-| G170 | complement_left_round_point | 0/0 | 0/0 | 512/120 | 0/0 | 0/1 | 8.6/2.5 | over |
+| G170 | complement_left_round_point | 0/0 | 0/0 | 512/80 | 0/0 | 0/0 | 8.6/2.5 | over |
 | G171 | reverse_round_point | 0/0 | 0/0 | 512/120 | 0/0 | 0/0 | 8.2/11.6 | over |
 | G172 | reverse_anti_round_point | 0/0 | 0/0 | 512/120 | 0/0 | 0/0 | 8.2/11.6 | over |
 | G173 | dual_bulk_round_point | 0/0 | 0/0 | 512/80 | 0/0 | 0/0 | 8.4/1.1 | over |
@@ -325,11 +325,11 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | G182 | center_round_point | 486/5 | 0/0 | 3584/120 | 4/0 | 4/0 | 121.1/1.7 | over |
 | G183 | container_round_point | 243/8 | 0/0 | 2560/80 | 3/0 | 3/0 | 71.1/1.6 | over |
 | G184 | partner_round_point | 518/10 | 0/0 | 30720/120 | 8/0 | 271/0 | 178.9/2.0 | over |
-| G185 | complement_right_dipole | 0/0 | 0/0 | 512/400 | 0/0 | 0/2 | 9.4/3.8 | over |
-| G186 | complement_left_dipole | 0/0 | 0/0 | 512/480 | 0/0 | 0/3 | 9.4/5.0 | over |
-| G187 | reverse_dipole | 0/0 | 0/0 | 512/320 | 0/0 | 0/2 | 9.0/3.0 | over |
-| G188 | reverse_anti_dipole | 0/0 | 0/0 | 512/560 | 0/0 | 0/3 | 9.0/3.0 | over |
-| G189 | dual_bulk_dipole | 0/0 | 0/0 | 512/320 | 0/0 | 0/1 | 9.2/3.0 | over |
+| G185 | complement_right_dipole | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 9.4/3.8 | over |
+| G186 | complement_left_dipole | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 9.4/5.0 | over |
+| G187 | reverse_dipole | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 9.0/3.0 | over |
+| G188 | reverse_anti_dipole | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 9.0/3.0 | over |
+| G189 | dual_bulk_dipole | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 9.2/3.0 | over |
 | G190 | dual_weight_dipole | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 9.3/2.6 | over |
 | G191 | bulk_dipole | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 8.4/2.2 | over |
 | G192 | weight_dipole | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 7.6/2.4 | over |
@@ -338,27 +338,27 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | G195 | attitude_dipole | 0/0 | 0/0 | 512/120 | 0/0 | 0/0 | 8.3/1.5 | over |
 | G196 | carrier_dipole | 0/0 | 0/0 | 512/128 | 0/0 | 0/0 | 7.7/1.4 | over |
 | G197 | carrier_co_dipole | 243/0 | 0/0 | 2048/112 | 2/0 | 2/0 | 45.2/1.1 | over |
-| G198 | center_dipole | 486/16 | 0/0 | 3584/160 | 4/0 | 4/1 | 120.3/3.1 | over |
-| G199 | container_dipole | 243/18 | 0/0 | 2560/160 | 3/0 | 3/2 | 71.3/3.4 | over |
-| G200 | partner_dipole | 518/29 | 0/0 | 30720/320 | 8/0 | 271/4 | 180.3/4.3 | over |
-| G201 | complement_right_circle | 0/0 | 0/0 | 512/400 | 0/0 | 0/2 | 8.5/3.6 | over |
-| G202 | complement_left_circle | 0/0 | 0/0 | 512/480 | 0/0 | 0/3 | 8.5/5.1 | over |
-| G203 | reverse_circle | 0/0 | 0/0 | 512/320 | 0/0 | 0/2 | 8.2/2.7 | over |
-| G204 | reverse_anti_circle | 0/0 | 0/0 | 512/560 | 0/0 | 0/3 | 8.2/2.7 | over |
+| G198 | center_dipole | 486/16 | 0/0 | 3584/120 | 4/0 | 4/0 | 120.3/3.1 | over |
+| G199 | container_dipole | 243/18 | 0/0 | 2560/120 | 3/0 | 3/0 | 71.3/3.4 | over |
+| G200 | partner_dipole | 518/29 | 0/0 | 30720/240 | 8/0 | 271/0 | 180.3/4.3 | over |
+| G201 | complement_right_circle | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 8.5/3.6 | over |
+| G202 | complement_left_circle | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 8.5/5.1 | over |
+| G203 | reverse_circle | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 8.2/2.7 | over |
+| G204 | reverse_anti_circle | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 8.2/2.7 | over |
 | G205 | dual_bulk_circle | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 8.4/2.9 | over |
-| G206 | dual_weight_circle | 0/0 | 0/0 | 512/320 | 0/0 | 0/1 | 8.5/2.7 | over |
+| G206 | dual_weight_circle | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 8.5/2.7 | over |
 | G207 | bulk_circle | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 7.9/2.3 | over |
 | G208 | weight_circle | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 7.6/2.4 | over |
 | G209 | bulk_flat_circle | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 8.2/2.2 | over |
 | G210 | weight_flat_circle | 0/0 | 0/0 | 512/240 | 0/0 | 0/0 | 7.3/2.1 | over |
 | G211 | attitude_circle | 0/0 | 0/0 | 512/160 | 0/0 | 0/0 | 8.5/2.4 | over |
 | G212 | carrier_circle | 0/0 | 0/0 | 512/112 | 0/0 | 0/0 | 7.7/1.0 | over |
-| G213 | carrier_co_circle | 243/0 | 0/0 | 2048/224 | 2/0 | 2/1 | 45.9/2.0 | over |
-| G214 | center_circle | 486/18 | 0/0 | 3584/160 | 4/0 | 4/1 | 120.2/3.4 | over |
+| G213 | carrier_co_circle | 243/0 | 0/0 | 2048/128 | 2/0 | 2/0 | 45.9/2.0 | over |
+| G214 | center_circle | 486/18 | 0/0 | 3584/120 | 4/0 | 4/0 | 120.2/3.4 | over |
 | G215 | container_circle | 243/16 | 0/0 | 2560/120 | 3/0 | 3/0 | 71.2/2.9 | over |
-| G216 | partner_circle | 518/29 | 0/0 | 30720/320 | 8/0 | 271/2 | 178.3/4.2 | over |
+| G216 | partner_circle | 518/29 | 0/0 | 30720/240 | 8/0 | 271/0 | 178.3/4.2 | over |
 | G217 | complement_right_sphere | 0/0 | 0/0 | 512/80 | 0/0 | 0/0 | 9.2/1.3 | over |
-| G218 | complement_left_sphere | 0/0 | 0/0 | 512/120 | 0/0 | 0/1 | 9.3/2.5 | over |
+| G218 | complement_left_sphere | 0/0 | 0/0 | 512/80 | 0/0 | 0/0 | 9.3/2.5 | over |
 | G219 | reverse_sphere | 0/0 | 0/0 | 512/120 | 0/0 | 0/0 | 9.0/12.7 | over |
 | G220 | reverse_anti_sphere | 0/0 | 0/0 | 512/120 | 0/0 | 0/0 | 9.0/12.7 | over |
 | G221 | dual_bulk_sphere | 0/0 | 0/0 | 512/80 | 0/0 | 0/0 | 9.1/1.2 | over |
