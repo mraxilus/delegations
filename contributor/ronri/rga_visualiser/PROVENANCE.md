@@ -110,9 +110,12 @@ and an empty label are allowed, because neither one is shown.
 It also refuses the opposite defect: a catalogue row that no front-end names. The catalogue cannot
 then grow words written for nobody.
 
-`tools/build.nim` imports the catalogue rather than parses it. To read `wording.nim` as text to
-recover the keys of the enum stops at the first blank line inside the enum. To walk `Wording` after
-an import of it fails to compile when a key moves.
+**The driver reads the catalogue as text, and imports none of it** (`tools/catalogue.nim`). The
+type check runs `tools/build.nim` on koch's compiler, never on the pin of this project, so the
+driver compiles no project code (#385). The read takes the whole enum, past its blank lines, and
+each row with its literals joined by `&`. A suite test on the pin holds the read to the compiled
+enum and table, so a moved key fails there. Rejected: an import of the catalogue, which compiled
+`wording.nim` and `format.nim` on koch's compiler.
 
 **One key for each control, and not one key for each word.** `NameRowHide` and `NamePickHide` both
 read `hide`, and are two keys. Two buttons honestly wear one word, and a translator may still need
@@ -153,9 +156,14 @@ Not here: the words of the algebra itself. Those are operation names and notatio
 declarations of `pga`, kind words, and key and button names. Help composes with them, rather than
 copies them.
 
-*Checked.* Verified by build and by driven check. `declare` reports **177 wording keys**. A literal
-put back at a label call is refused. A key named only inside the catalogue is refused as shown by
-nobody. A `@WORD:` token that names an absent key fails the build, with the line that carries it.
+*Checked.* Verified by build and by driven check. `nim r tools/build.nim declare` reports the count
+of wording keys that it reads. A literal put back at a label call is refused. A key named only
+inside the catalogue is refused as shown by nobody. A `@WORD:` token that names an absent key fails
+the build, with the line that carries it.
+
+Verified by `suites.nim`: the read of the catalogue as text names every key in order. It reads the
+words of every row as the compiled catalogue holds them. On koch's compiler, `nim check` of the
+driver reaches no module under `src/`.
 
 ## Driven checks
 
