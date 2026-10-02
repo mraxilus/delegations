@@ -1086,10 +1086,10 @@ func armingFor(button: uint8): Option[MenuArming] =
   if named.isNone: none(MenuArming) else: armingOf(named.get)
 
 
-func revealsMenuFor(button: uint8): bool =
+func isMenuRevealedFor(button: uint8): bool =
   ## Say whether click of this mouse button brings selection menu up with it.
   let named = pointerButtonOf(button)
-  named.isSome and revealsMenuOn(named.get)
+  named.isSome and isMenuRevealedOn(named.get)
 
 
 proc handleEvent(
@@ -1204,11 +1204,11 @@ proc handleEvent(
       if outcome.index_clicked.isSome:
         # Select what press that never became drag came down on.
         #   Button decides whether menu comes with it; shift decides add or replace;
-        #   independent; see `interaction.revealsMenuOn`.
+        #   independent; see `interaction.isMenuRevealedOn`.
         #   Unshifted, on selection standing with menu dismissed, click only brings menu
-        #   back; see `revealsWithoutPicking`.
-        if revealsMenuFor(event.button.button) and not is_shifted and
-            revealsWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
+        #   back; see `isRevealingWithoutPicking`.
+        if isMenuRevealedFor(event.button.button) and not is_shifted and
+            isRevealingWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
           panel.showSelectionMenuAt(interaction.cursor)
         else:
           if is_shifted: panel.selection.toggle(outcome.index_clicked.get)
@@ -1216,7 +1216,7 @@ proc handleEvent(
           # Note pick for camera: what was clicked stays under pointer as view comes in.
           panel.pointer_pick =
             some(PointerPick(handle: outcome.index_clicked.get))
-          if revealsMenuFor(event.button.button):
+          if isMenuRevealedFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
       elif outcome.index_created.isSome:
@@ -1238,14 +1238,14 @@ proc handleEvent(
       #   above.
       if interaction.is_hover_backdrop and interaction.index_hover.isSome:
         let handle = interaction.index_hover.get
-        if revealsMenuFor(event.button.button) and not is_shifted and
-            revealsWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
+        if isMenuRevealedFor(event.button.button) and not is_shifted and
+            isRevealingWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
           panel.showSelectionMenuAt(interaction.cursor)
         else:
           if is_shifted: panel.selection.toggle(handle)
           else: panel.selection.selectOnly(handle)
           panel.pointer_pick = some(PointerPick(handle: handle))
-          if revealsMenuFor(event.button.button):
+          if isMenuRevealedFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
       elif event.button.button == uint8(MouseButton.Left) and not is_shifted:
@@ -1347,11 +1347,11 @@ proc driveDrag(
   ##   animation stands wherever wall time put it.
   ##     Look at capture; do not byte-compare.
   const
-    (FRAME_REACH_SOURCE, FRAME_PRESS, FRAME_REACH_TARGET) = (2, 3, 4)
-    (FRAME_REACH_MORE, FRAME_RELEASE) = (8, 9)
+    (frame_reach_source, frame_press, frame_reach_target) = (2, 3, 4)
+    (frame_reach_more, frame_release) = (8, 9)
       ## Reach `more…` wedge two frames past menu opening, then let go on it.
       ##   Shorter runs still capture open menu.
-  if count_drawn == FRAME_REACH_MORE or count_drawn == FRAME_RELEASE:
+  if count_drawn == frame_reach_more or count_drawn == frame_release:
     # Aim at wedge itself, from same `anchorOf` that drew it.
     #   Never pixel guessed from compass.
     let at = anchorOf(interaction.menu.get(interaction.cursor), DragChoice.More)
@@ -1359,13 +1359,13 @@ proc driveDrag(
     reach.motion.x = cfloat(at.x)
     reach.motion.y = cfloat(at.y)
     sdl3.pushEvent(addr reach)
-    if count_drawn == FRAME_RELEASE:
+    if count_drawn == frame_release:
       var release = Event(kind: uint32(EventKind.MouseButtonUp))
       release.button.button = uint8(MouseButton.Right)
       sdl3.pushEvent(addr release)
     return
-  if count_drawn notin [FRAME_REACH_SOURCE, FRAME_PRESS, FRAME_REACH_TARGET]: return
-  let handle = if count_drawn == FRAME_REACH_TARGET: 1 else: 0
+  if count_drawn notin [frame_reach_source, frame_press, frame_reach_target]: return
+  let handle = if count_drawn == frame_reach_target: 1 else: 0
   if not scene.isAlive(handle): return
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
   if anchor.isNone: return
@@ -1378,7 +1378,7 @@ proc driveDrag(
   event.motion.x = cfloat(screen.x)
   event.motion.y = cfloat(screen.y)
   sdl3.pushEvent(addr event)
-  if count_drawn == FRAME_PRESS:
+  if count_drawn == frame_press:
     var press = Event(kind: uint32(EventKind.MouseButtonDown))
     press.button.button = uint8(MouseButton.Right)
     sdl3.pushEvent(addr press)
@@ -1496,7 +1496,7 @@ proc driveSelect(
   ## Script click, then two shift-clicks, on first three objects, then drag off menu's object.
   ##   Headless run then shows floating selection menu at each size and proves it does not
   ##   swallow next drag; for `--drive-select`.
-  ##   Clicks with button that reveals menu, read from `revealsMenuOn`.
+  ##   Clicks with button that reveals menu, read from `isMenuRevealedOn`.
   ##     Script clicking other button would screenshot empty screen.
   ##   Which state is captured is `--frames`' to choose.
   ##     Menu over one object by frame 5, two by 7, three by 9, drag resolved by 13.
@@ -1508,12 +1508,12 @@ proc driveSelect(
   ##   `getModState` reads.
   ##   Shares `driveDrag`'s warning: look at capture; do not byte-compare.
   const
-    FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
-    STEPS_CLICK = 6 # Three clicks, each frame to reach and frame to press.
+    frame_first = 2 # Past startup, so first frame's layout has settled.
+    steps_click = 6 # Three clicks, each frame to reach and frame to press.
     lut_handle_by_step = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
       ## Name which object each step aims at.
       ##   Three clicks on 0, 1 and 2, then drag from 2 (one menu follows) onto 0.
-  let step = count_drawn - FRAME_FIRST
+  let step = count_drawn - frame_first
   if step notin 0 ..< len(lut_handle_by_step): return
   let
     handle = lut_handle_by_step[step]
@@ -1536,17 +1536,17 @@ proc driveSelect(
   sdl3.setModState(if handle == 0 and step == 1: 0'u16 else: MODIFIER_SHIFT)
   var event = Event(
     kind:
-      if step < STEPS_CLICK or step == STEPS_CLICK + 1:
+      if step < steps_click or step == steps_click + 1:
         uint32(EventKind.MouseButtonDown)
       else: uint32(EventKind.MouseButtonUp)
   )
   event.button.button =
-    if revealsMenuOn(PointerButton.Right): uint8(MouseButton.Right)
+    if isMenuRevealedOn(PointerButton.Right): uint8(MouseButton.Right)
     else: uint8(MouseButton.Left)
   sdl3.pushEvent(addr event)
   # Post click as press and release in one drain.
   #   Drag's two halves are frames apart, so cursor really travels between them.
-  if step < STEPS_CLICK:
+  if step < steps_click:
     var release = Event(kind: uint32(EventKind.MouseButtonUp))
     release.button.button = event.button.button # Button that pressed is one that lifts.
     sdl3.pushEvent(addr release)
@@ -1578,13 +1578,13 @@ proc driveUndo(
   ##   Posted to SDL's queue, split across frames, for reasons `driveDrag` and
   ##   `driveSelect` give; same warning about byte-comparing.
   const
-    FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
-    STEPS_DRAG = 4 # Reach source, press, reach target, release.
+    frame_first = 2 # Past startup, so first frame's layout has settled.
+    steps_drag = 4 # Reach source, press, reach target, release.
     lut_handle_by_step = [0, 0, 1, 1]
-  let step = count_drawn - FRAME_FIRST
+  let step = count_drawn - frame_first
   if step < 0: return
 
-  if step < STEPS_DRAG:
+  if step < steps_drag:
     let handle = lut_handle_by_step[step]
     if not scene.isAlive(handle): return
     let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
@@ -1614,7 +1614,7 @@ proc driveUndo(
   # Leave frame of slack after release.
   #   Construction is then committed and its camera aim armed before orbit that overrides
   #   it starts.
-  let index = step - STEPS_DRAG - 1
+  let index = step - steps_drag - 1
   if index notin 0 ..< len(KEYS_UNDO_DRIVEN): return
   let (scancode, keycode, modifiers, is_down) = KEYS_UNDO_DRIVEN[index]
   var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
@@ -1631,10 +1631,10 @@ proc positionOverSky(
   ## Find point on screen where topmost thing under cursor is plane at horizon.
   ##   Scanned rather than hard-coded: which patch is bare sky depends on scene and camera,
   ##   and fixed pixel would quietly start testing something else.
-  const STEP_SCAN = 40
+  const step_scan = 40
   let scale = camera.drawExtentFor(height, REACH_SCENE)
-  for y in countup(STEP_SCAN, height - STEP_SCAN, STEP_SCAN):
-    for x in countup(STEP_SCAN, width - STEP_SCAN, STEP_SCAN):
+  for y in countup(step_scan, height - step_scan, step_scan):
+    for x in countup(step_scan, width - step_scan, step_scan):
       let
         at = ScreenPosition(x: float(x), y: float(y))
         handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
@@ -1653,12 +1653,12 @@ proc driveSky(
   ##     Drag below must turn view and build nothing; click must select sky.
   ##   Posted to SDL's queue, for reason `driveDrag` gives.
   const
-    FRAME_FIRST = 2
-    STEPS_DRAG = 5 # Reach, press, three frames of travel; release follows.
+    frame_first = 2
+    steps_drag = 5 # Reach, press, three frames of travel; release follows.
   # Build own precondition here.
   #   No sky in opening scene, so scan would find nothing and drive would silently do
   #   nothing.
-  if count_drawn == FRAME_FIRST - 1:
+  if count_drawn == frame_first - 1:
     var found_sky = false
     for handle in 0 ..< scene.bound:
       if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: found_sky = true
@@ -1670,8 +1670,8 @@ proc driveSky(
         "sky", Ink.Cobalt, now,
       )
     return
-  let step = count_drawn - FRAME_FIRST
-  if step notin 0 .. STEPS_DRAG + 3: return
+  let step = count_drawn - frame_first
+  if step notin 0 .. steps_drag + 3: return
   let over_sky = positionOverSky(
     scene, camera, camera.initMatrixViewProjection(width/height), width, height
   )
@@ -1679,14 +1679,14 @@ proc driveSky(
 
   var event: Event
   case step
-  of 0, STEPS_DRAG + 1: # Reach sky, for drag and then again for click.
+  of 0, steps_drag + 1: # Reach sky, for drag and then again for click.
     event = Event(kind: uint32(EventKind.MouseMotion))
     event.motion.x = cfloat(over_sky.get.x)
     event.motion.y = cfloat(over_sky.get.y)
-  of 1, STEPS_DRAG + 2:
+  of 1, steps_drag + 2:
     event = Event(kind: uint32(EventKind.MouseButtonDown))
     event.button.button = uint8(MouseButton.Left)
-  of STEPS_DRAG, STEPS_DRAG + 3:
+  of steps_drag, steps_drag + 3:
     event = Event(kind: uint32(EventKind.MouseButtonUp))
     event.button.button = uint8(MouseButton.Left)
   else: # Travel, which orbit reads as turning view.

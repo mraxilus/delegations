@@ -42,7 +42,7 @@ suite "Interaction":
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     interaction.count_hover_rivals = 2
-    check not interaction.canConstructByTouch
+    check not interaction.isConstructibleByTouch
     check not interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
     check not interaction.is_dragging
     check interaction.beginDrag(arming = MenuArming.Never, now = 0.0)
@@ -51,13 +51,13 @@ suite "Interaction":
     interaction.cancelDrag()
     # Lone object under finger drags as ever.
     interaction.count_hover_rivals = 1
-    check interaction.canConstructByTouch
+    check interaction.isConstructibleByTouch
     check interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
     interaction.cancelDrag()
     # Nothing hovered is not lone object either.
     interaction.index_hover = none(int)
     interaction.count_hover_rivals = 0
-    check not interaction.canConstructByTouch
+    check not interaction.isConstructibleByTouch
 
 
   test "the sky starts no drag, so a press on empty space still reaches the camera":
@@ -200,17 +200,17 @@ suite "Interaction":
 
   test "the button that reveals the menu is the right one, and only it":
     # Both render paths and help panel read this; fourth copy anywhere is drift.
-    check not revealsMenuOn(PointerButton.Left)
-    check revealsMenuOn(PointerButton.Right)
-    check not revealsMenuOn(PointerButton.Middle)
+    check not isMenuRevealedOn(PointerButton.Left)
+    check isMenuRevealedOn(PointerButton.Right)
+    check not isMenuRevealedOn(PointerButton.Middle)
 
 
   test "a revealing click only reveals while a selection stands with its menu down":
     # Total over both booleans, so neither caller has unhandled case.
-    check revealsWithoutPicking(has_selection = true, is_menu_shown = false)
-    check not revealsWithoutPicking(has_selection = true, is_menu_shown = true)
-    check not revealsWithoutPicking(has_selection = false, is_menu_shown = false)
-    check not revealsWithoutPicking(has_selection = false, is_menu_shown = true)
+    check isRevealingWithoutPicking(has_selection = true, is_menu_shown = false)
+    check not isRevealingWithoutPicking(has_selection = true, is_menu_shown = true)
+    check not isRevealingWithoutPicking(has_selection = false, is_menu_shown = false)
+    check not isRevealingWithoutPicking(has_selection = false, is_menu_shown = true)
 
 
   test "a wheel the cursor walks away from lets go, and re-aims onto the next object":
@@ -1189,12 +1189,12 @@ suite "Interaction":
     # Across axis stays level through pole, so sight turns in its own upright plane and
     #   camera comes down far side upside down, keeping its across.
     const (wide, tall) = (390, 844)
-    proc dragged(camera: Camera; picked: bool; across, down: float): Camera =
+    proc dragged(camera: Camera; is_picked: bool; across, down: float): Camera =
       # Drag finger from middle of canvas by these pixels, in one step.
       let middle = ScreenPosition(x: float(wide)/2.0, y: float(tall)/2.0)
       result = camera
       result.turnFollowing(middle, ScreenPosition(x: middle.x + across, y: middle.y + down),
-        wide, tall, has_selection = picked)
+        wide, tall, has_selection = is_picked)
     proc sweptBy(camera: Camera; across, down: float): (float, float) =
       # Read how far orbit's drag carries near side, between eye and pivot, across screen.
       let
