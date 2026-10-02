@@ -93,23 +93,23 @@ func fold*[T: object](x: T): float =
   ## Fold every field of typed object into sink, recursively.
   for _, value in x.fieldPairs: result += fold(value)
 
-func hasNan*(x: float): bool {.inline.} =
+func isAnyNan*(x: float): bool {.inline.} =
   ## Decide whether scalar is NaN.
   x.isNaN
 
-func hasNan*(x: Antiscalar): bool {.inline.} =
+func isAnyNan*(x: Antiscalar): bool {.inline.} =
   ## Decide whether antiscalar is NaN.
   float(x).isNaN
 
-func hasNan*(m: Multivector): bool =
+func isAnyNan*(m: Multivector): bool =
   ## Decide whether any component is NaN.
   for b in Basis:
     if m[b].isNaN: return true
 
-func hasNan*[T: object](x: T): bool =
+func isAnyNan*[T: object](x: T): bool =
   ## Decide whether any field of typed object is NaN, recursively.
   for _, value in x.fieldPairs:
-    if hasNan(value): return true
+    if isAnyNan(value): return true
 
 
 
@@ -182,7 +182,7 @@ macro emitMeasurand(
       let statistics_after = getAllocStats()
       var count_nan = 0
       for i in 0 ..< OBJECTS:
-        if hasNan(results[i]): inc count_nan
+        if isAnyNan(results[i]): inc count_nan
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
       MEASUREMENTS[`implementation_literal`][`index`] = Measurement(

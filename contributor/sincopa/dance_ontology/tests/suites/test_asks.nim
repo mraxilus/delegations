@@ -69,6 +69,22 @@ suite "each hold rests at named facing":
         expect Defect: discard isRestAway(rest)
 
 
+suite "simulation against reference":
+
+  test "simulation models every card reference draws":
+    ## Every position and movement reference draws is one dancers take with ease, so card
+    ##   simulation cannot reach is fault of simulation, never of card.
+    ##   Red with arms carried by pulls on hands alone: 33 of 231 cards unmodelled, all four
+    ##     swans and every whole chain among them, measured 2026-10-02.
+    let answers = parseFile(KEPT_MODELLED)["answers"]
+    var unmodelled: seq[string]
+    for key, answer in answers.pairs:
+      if not answer.getBool: unmodelled.add key
+    checkpoint "unmodelled: " & unmodelled.join(" ")
+    check answers.len == questions().len
+    check unmodelled.len == 0
+
+
 suite "each recording is of tree it is kept in":
   ## Verb whose stamp is unchanged records nothing again (`design/stamps`), so recording kept
   ##   with other stamp is of other physics, other questions or other verb.  Page would show it

@@ -193,6 +193,10 @@ proc coneAngleOf*(joint: JointId): cfloat {.importc: "b3SphericalJoint_GetConeAn
 proc twistAngleOf*(joint: JointId): cfloat {.importc: "b3SphericalJoint_GetTwistAngle".}
 proc push*(body: BodyId; force: Vector; wake: bool) {.importc: "b3Body_ApplyForceToCenter".}
 proc twistBy*(body: BodyId; torque: Vector; wake: bool) {.importc: "b3Body_ApplyTorque".}
+proc aimBall*(joint: JointId; target: Quaternion) {.importc: "b3SphericalJoint_SetTargetRotation".}
+proc stiffenBall*(joint: JointId; hertz: cfloat) {.importc: "b3SphericalJoint_SetSpringHertz".}
+proc aimHinge*(joint: JointId; target: cfloat) {.importc: "b3RevoluteJoint_SetTargetAngle".}
+proc stiffenHinge*(joint: JointId; hertz: cfloat) {.importc: "b3RevoluteJoint_SetSpringHertz".}
 {.pop.}
 
 const
