@@ -118,15 +118,19 @@ bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
     //   again would cost atlas two more copies of them for glyphs no heading asks for.
     if (path_font_title != nullptr && path_font_title[0] != '\0')
       font_title = atlas->AddFontFromFileTTF(path_font_title, size_font, nullptr, RANGES_TEXT);
-    // Add mono face last, with both supplementary ranges merged in.
+    // Add mono face last, with both supplementary faces merged in, then interface face.
     //   Unlike headings, text set in it is exactly text carrying notation: coefficient
     //   line reads `horizon plane: 2.038 e321` with wedge and subscripts in it, so absent
     //   merge would draw boxes in very rows this face exists for.
+    //   Interface face comes last, for postfix accents no other face here carries: `ˍ` and
+    //   `˷`. Last, so it supplies only what three before it lack, and Commit Mono keeps
+    //   every glyph it has.
     if (path_font_mono != nullptr && path_font_mono[0] != '\0') {
       font_mono = atlas->AddFontFromFileTTF(path_font_mono, size_font, nullptr, RANGES_TEXT);
       if (font_mono != nullptr) {
         for (auto pair : {std::pair<const char*, const ImWchar*>{path_font_math, RANGES_MATH},
-                          {path_font_symbol, RANGES_SYMBOL}}) {
+                          {path_font_symbol, RANGES_SYMBOL},
+                          {path_font, RANGES_TEXT}}) {
           if (pair.first == nullptr || pair.first[0] == '\0') continue;
           atlas->AddFontFromFileTTF(pair.first, size_font, &merge, pair.second);
         }
