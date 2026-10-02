@@ -198,6 +198,7 @@ func reachIn(source, name: string): Reach =
   source.declarations.filterIt(it.name == name)[0].reach
 
 
+
 suite "Names":
   test "comments and strings are blanked, newlines kept":
     let code = ("let a = \"# not comment\" # comment\nlet b = r\"raw \"\" quote\" #[ block\n" &
@@ -288,6 +289,7 @@ suite "Names":
     check found.anyIt("got `buf`" in it)  # parameter is ours
     check "getError" notin foreign.names and "buf" in foreign.names
 
+
   test "reach is global under blocks opening no scope, and local under any other":
     for name in ["TOP", "JS_ONLY", "NATIVE", "SECTION", "DEPENDENT", "CALL", "LEFT", "RIGHT"]:
       check BLOCKS.reachIn(name) == Reach.Global  # V.1
@@ -296,6 +298,7 @@ suite "Names":
     check "first" notin BLOCKS.names  # argument continuing value is no binding
     check "right_value" notin BLOCKS.names  # value side is never name
     check BLOCKS.breaches.len == 0  # V.1
+
 
   test "entry block holds no binding, and block of calls passes":
     let found = ENTRY_BINDS.breaches
@@ -311,6 +314,7 @@ suite "Names":
     check ENTRY_CALLS.breaches.len == 0  # V.10
     check "when isMainModule:\n  quit main()\n".breaches.len == 0  # V.10
 
+
   test "case follows kind of name":
     check CASES.breaches.len == 0  # V.1, V.11
     let found = CASES_BROKEN.breaches
@@ -325,6 +329,7 @@ suite "Names":
     check found.len == 8  # V.1, V.11
     check "Member is `PascalCase` (V.11); got `Str_Raw`." in OPERATORS.breaches
 
+
   test "one letter fits by its own case, and capital local is finding":
     # Architect's ruling: plain ASCII is no notation, so `N` and `M` take local case.
     check LETTERS.breaches == @[
@@ -332,6 +337,7 @@ suite "Names":
       "Parameter is `snake_case` (V.1); got `N`.",
       "Local is `snake_case` (V.1); got `M`.",
     ]  # V.1, V.6
+
 
   test "placeholder is one capital letter, and parameter holding type is snake":
     # Architect's ruling: `typedesc` parameter is parameter (V.1), never placeholder (V.12).
@@ -343,6 +349,7 @@ suite "Names":
     ]  # V.1, V.12
     check PLACEHOLDERS.declarations.filterIt(it.name == "t")[0].kind == NameKind.Parameter
 
+
   test "boolean is proposition or mode, and predicate func is `is…`":
     let found = BOOLEANS.breaches
     for name in ["gated", "done", "ready", "quiet"]:
@@ -352,6 +359,7 @@ suite "Names":
     check found.len == 5  # V.4: `proc`, `func` writing `var`, and `contains` are unread
     check "inferred" in BOOLEANS.names and not found.anyIt("inferred" in it)  # value unread
     check BOOLEAN_PREFIXES.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
+
 
   test "notation holds over case at any scope, but at module scope only for immutable global":
     # Variable takes source's notation (`𝐀`, `𝐮`, `𝐌` pass); mutable global never does.
@@ -364,12 +372,14 @@ suite "Names":
     check "𝐮".isCased(Casing.Snake) and "𝟎".isCased(Casing.Screaming)  # III.5
     check "Δt".isCased(Casing.Pascal) and not "δt".isCased(Casing.Pascal)  # III.5
 
+
   test "operator is backticked and never read as name":
     let found = OPERATORS.names
     check "∧" notin found and "[]" notin found  # III.5
     check "m" in found and "n" in found and "b" in found  # parameters of operator are read
     check "i" notin found  # call in body of routine without parameters is no parameter
     check "Code" in found and "Str_Raw" in found  # V.11, enum on one line
+
 
   test "casing follows kind and reach":
     check Declared(kind: NameKind.Binding, reach: Reach.Global).casingOf == Casing.Screaming

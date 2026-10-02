@@ -53,43 +53,38 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils]
-from std/unicode import Rune, isLower, isUpper, runes
+from std/unicode import isLower, isUpper, Rune, runes
 import ./[findings, glossary]
 
 
 type
-  NameKind* {.pure.} = enum
-    ## Define what declaration introduces name.
+  NameKind* {.pure.} = enum  ## Define what declaration introduces name.
     Binding, Routine, Type, Field, Parameter, Member, Placeholder
 
-  Reach* {.pure.} = enum
-    ## Define how far binding reaches, which fixes its case (V.1, V.10).
-    Local   ## Inside routine or block opening scope; every name not binding.
+  Reach* {.pure.} = enum  ## Define how far binding reaches, which fixes its case (V.1, V.10).
+    Local  ## Inside routine or block opening scope; every name not binding.
     Global  ## At module level, under blocks opening no scope.
-    Entry   ## Inside entry block, i.e. top-level `when isMainModule:`, outside routine.
+    Entry  ## Inside entry block, i.e. top-level `when isMainModule:`, outside routine.
 
-  Casing* {.pure.} = enum
-    ## Define case one kind of name takes (V.1, V.11, V.12).
+  Casing* {.pure.} = enum  ## Define case one kind of name takes (V.1, V.11, V.12).
     Pascal, Camel, Snake, Screaming, Letter
 
-  LetterCase {.pure.} = enum
-    ## Define case of one letter; digit and symbol carry none.
+  LetterCase {.pure.} = enum  ## Define case of one letter; digit and symbol carry none.
     None, Lower, Upper
 
   Declared* = object  ## Define one declared name with its place.
     name*: string
     line*: int
     kind*: NameKind
-    reach*: Reach        ## Binding's reach; `Local` for every other kind.
-    is_mutable*: bool    ## Binding by `var`, which notation never excuses (III.5).
-    is_boolean*: bool    ## Shows `bool` by type or literal value, or `func` returns it (V.4).
+    reach*: Reach  ## Binding's reach; `Local` for every other kind.
+    is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
+    is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
 
-  Opener = object
-    ## Define block enclosing line, by its opening line.
+  Opener = object  ## Define block enclosing line, by its opening line.
     indent: int
-    head: string         ## First word of opening line.
+    head: string  ## First word of opening line.
     is_scope_free: bool  ## Block opens no scope: `when` chain, or bare section keyword.
-    is_entry: bool       ## Top-level `when isMainModule:`, where module runs as program.
+    is_entry: bool  ## Top-level `when isMainModule:`, where module runs as program.
 
 
 const
@@ -101,8 +96,7 @@ const
     ## Coined abbreviation and its one full word (V.6).
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
-  VERBS_BANNED* = ["get", "compute", "new"]
-    ## First words routine never takes (V.3).
+  VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
   BOOLEAN_PREFIXES* = ["is", "as", "should", "found", "has"]
     ## First words boolean takes: state, interpretation, policy, search outcome, possession (V.4).
   VARIABLE_KINDS = {NameKind.Binding, NameKind.Field, NameKind.Parameter}
@@ -111,14 +105,11 @@ const
     ## Predicates host calls by spelling: `in` and `notin` call `contains`.
   ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
-  BINDING_KEYWORDS = ["let", "var", "const"]
-    ## Keywords opening binding, single or section.
+  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or section.
   SECTION_KEYWORDS = ["let", "var", "const", "type"]
     ## Keywords that, alone on line, open section and no scope.
-  CHAIN_WORDS = ["when", "elif", "else"]
-    ## Words opening branch of `when` chain.
-  CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]
-    ## Words standing before concept placeholder.
+  CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
+  CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
   IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
     ## ASCII characters identifier is built from; raw string prefix is one of them.
   NAME_CHARS = IDENT_CHARS + {'\x80'..'\xFF'}
@@ -225,7 +216,7 @@ func identifierAt(text: string, start: int): string =
   while i < text.len and text[i] == ' ': inc i
   var j = i
   while j < text.len and text[j] in NAME_CHARS: inc j
-  text[i ..< j]
+  text[i..<j]
 
 
 func nameOf(piece: string): string =
@@ -251,7 +242,7 @@ func splitTop(text: string, separators: set[char]): seq[string] =
 func topIndex(text: string, mark: char, start = 0): int =
   ## Find first `mark` outside brackets from index on; `-1` where none.
   var depth = 0
-  for k in start ..< text.len:
+  for k in start..<text.len:
     let c = text[k]
     if c in {'(', '[', '{'}: inc depth
     elif c in {')', ']', '}'}: dec depth
@@ -262,7 +253,7 @@ func topIndex(text: string, mark: char, start = 0): int =
 func closing(text: string, open: int): int =
   ## Find bracket closing one opened at index; `-1` where text ends first.
   var depth = 0
-  for k in open ..< text.len:
+  for k in open..<text.len:
     if text[k] in {'(', '[', '{'}: inc depth
     elif text[k] in {')', ']', '}'}:
       dec depth
@@ -273,7 +264,7 @@ func closing(text: string, open: int): int =
 func bindingSide(text: string): string =
   ## Cut binding text at its first `=` outside brackets, so value never reads as name.
   let at = text.topIndex('=')
-  if at < 0: text else: text[0 ..< at]
+  if at < 0: text else: text[0..<at]
 
 
 func isBooleanShown(text: string): bool =
@@ -334,7 +325,7 @@ func readType(text: string, line: int, names: var seq[Declared]): NameKind =
   var k = name.len
   if k < text.len and text[k] == '*': inc k
   if k < text.len and text[k] == '[' and text.closing(k) > k:
-    for p in text[k + 1 ..< text.closing(k)].placeholderNames:
+    for p in text[k + 1..<text.closing(k)].placeholderNames:
       names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
   let
     at = text.topIndex('=')
@@ -442,16 +433,19 @@ func declarations*(source: string): seq[Declared] =
           k += name.len
         if k < text.len and text[k] == '*': inc k
         if k < text.len and text[k] == '[' and text.closing(k) > k:
-          for p in text[k + 1 ..< text.closing(k)].placeholderNames:
+          for p in text[k + 1..<text.closing(k)].placeholderNames:
             result.add Declared(name: p, line: one, kind: NameKind.Placeholder)
           k = text.closing(k) + 1
         while k < text.len and text[k] == ' ': inc k
         var is_writing = false
         if k < text.len and text[k] == '(' and text.closing(k) > k:
-          let signature = text[k + 1 ..< text.closing(k)]
+          let signature = text[k + 1..<text.closing(k)]
           for (p, is_boolean) in signature.parameterNames:
             result.add Declared(
-              name: p, line: one, kind: NameKind.Parameter, is_boolean: is_boolean
+              name: p,
+              line: one,
+              kind: NameKind.Parameter,
+              is_boolean: is_boolean,
             )
           is_writing = signature.isWriting
           k = text.closing(k) + 1
@@ -464,7 +458,10 @@ func declarations*(source: string): seq[Declared] =
           is_foreign = FOREIGN_PRAGMAS.anyIt(it in text)
         if name.len > 0 and not is_foreign:
           result.add Declared(
-            name: name, line: one, kind: NameKind.Routine, is_boolean: is_predicate
+            name: name,
+            line: one,
+            kind: NameKind.Routine,
+            is_boolean: is_predicate,
           )
         break reading
 
@@ -488,10 +485,12 @@ func declarations*(source: string): seq[Declared] =
         # Field side runs to its type; `case` names variant's discriminator.
         let text = if word == "case": rest else: s
         if word notin ["of", "else", "elif", "when"] and text.topIndex(':') > 0:
-          for name in text[0 ..< text.topIndex(':')].splitTop({','}):
+          for name in text[0..<text.topIndex(':')].splitTop({','}):
             if name.nameOf.len > 0:
               result.add Declared(
-                name: name.nameOf, line: one, kind: NameKind.Field,
+                name: name.nameOf,
+                line: one,
+                kind: NameKind.Field,
                 is_boolean: text.isBooleanShown,
               )
         break reading
@@ -503,8 +502,12 @@ func declarations*(source: string): seq[Declared] =
         else:
           for name in rest.bindingNames:
             result.add Declared(
-              name: name, line: one, kind: NameKind.Binding, reach: openers.reachOf,
-              is_mutable: word == "var", is_boolean: rest.isBooleanShown,
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
+              reach: openers.reachOf,
+              is_mutable: word == "var",
+              is_boolean: rest.isBooleanShown,
             )
         break reading
 
@@ -514,17 +517,23 @@ func declarations*(source: string): seq[Declared] =
         if indent == section_child and (s.topIndex(':') > 0 or s.topIndex('=') > 0):
           for name in s.bindingNames:
             result.add Declared(
-              name: name, line: one, kind: NameKind.Binding, reach: openers.reachOf,
-              is_mutable: is_section_mutable, is_boolean: s.isBooleanShown,
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
+              reach: openers.reachOf,
+              is_mutable: is_section_mutable,
+              is_boolean: s.isBooleanShown,
             )
         break reading
 
       if word == "for":
         let at = rest.find(" in ")
         if at > 0:
-          for name in rest[0 ..< at].bindingNames:
+          for name in rest[0..<at].bindingNames:
             result.add Declared(
-              name: name, line: one, kind: NameKind.Binding,
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
               reach: openers.reachOf(is_scoped = true),
             )
         break reading
@@ -535,7 +544,9 @@ func declarations*(source: string): seq[Declared] =
           let name = rest[at + 4 .. ^1].strip(chars = {' ', ':'}).nameOf
           if name.len > 0:
             result.add Declared(
-              name: name, line: one, kind: NameKind.Binding,
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
               reach: openers.reachOf(is_scoped = true),
             )
 
@@ -569,9 +580,9 @@ func letterCase(r: Rune): LetterCase =
   ##   Latin styles run 52 letters, 26 capitals first; Greek styles run 58, 25 capitals first,
   ##     then nabla, 25 small, partial differential and 6 small variants.
   let c = int(r)
-  if c in 0x1D400 .. 0x1D6A3:
+  if c in 0x1D400..0x1D6A3:
     return (if (c - 0x1D400) mod 52 < 26: LetterCase.Upper else: LetterCase.Lower)
-  if c in 0x1D6A8 .. 0x1D7C9:
+  if c in 0x1D6A8..0x1D7C9:
     let k = (c - 0x1D6A8) mod 58
     if k < 25: return LetterCase.Upper
     if k in [25, 51]: return LetterCase.None
@@ -697,19 +708,24 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] 
     if d.is_boolean and d.kind == NameKind.Routine:
       if (parts.len < 2 or parts[0] != "is") and d.name notin HOST_PREDICATES:
         result.add finding(
-          path, d.line, "Predicate `func` is `is…` in camel case (V.4); got `" & d.name & "`."
+          path,
+          d.line,
+          "Predicate `func` is `is…` in camel case (V.4); got `" & d.name & "`.",
         )
     elif d.is_boolean and (parts.len < 2 or parts[0].toLowerAscii notin BOOLEAN_PREFIXES):
       result.add finding(
-        path, d.line, "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_` (V.4); got `" &
-          d.name & "`."
+        path,
+        d.line,
+        "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_` (V.4); got `" & d.name & "`.",
       )
 
     # Case follows kind; entry binding is reported once, and notation excuses immutable global.
     if d.kind == NameKind.Binding and d.reach == Reach.Entry:
       result.add finding(
-        path, d.line, "Entry block holds no binding; move code that binds into `proc main` " &
-          "(V.10); got `" & d.name & "`."
+        path,
+        d.line,
+        "Entry block holds no binding; move code that binds into `proc main` " &
+          "(V.10); got `" & d.name & "`.",
       )
       continue
     let
@@ -717,15 +733,18 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] 
       is_notation = d.kind in VARIABLE_KINDS and d.name.isNotation
     if is_notation and d.reach == Reach.Global and d.is_mutable:
       result.add finding(
-        path, d.line, "Notation holds over case only for immutable global (III.5); got `" &
-          d.name & "`."
+        path,
+        d.line,
+        "Notation holds over case only for immutable global (III.5); got `" & d.name & "`.",
       )
     elif not is_notation and not d.name.isCased(casing):
       let
         rule = if d.kind == NameKind.Member: "V.11" elif casing == Casing.Letter: "V.12" else: "V.1"
         subject = if d.kind == NameKind.Binding: $d.reach else: $d.kind
       result.add finding(
-        path, d.line, subject & " " & CASE_RULES[casing] & " (" & rule & "); got `" & d.name & "`."
+        path,
+        d.line,
+        subject & " " & CASE_RULES[casing] & " (" & rule & "); got `" & d.name & "`.",
       )
     if d.kind == NameKind.Binding and d.reach == Reach.Global and
         d.name.isCased(Casing.Screaming) and d.name.toLowerAscii.replace("_", "") in type_keys:
