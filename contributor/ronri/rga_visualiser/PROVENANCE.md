@@ -1624,9 +1624,15 @@ It matched the cursor at one canvas height alone, and ran 1.74 times it on 900 p
 `grabPan` takes the point that a left drag's orbit holds under the press. The vertical dollies, so
 that point's height over the pivot's row scales as the pointer's does. That is a pinch with one
 finger on the pivot, so a drag away from the row zooms in on either side of it. The horizontal then
-turns as a turntable, and carries the point across by what the pointer moved. Rejected, by the
-Architect's ruling: a zoom that keeps its direction wherever the press lands, which lets the point
-drift off.
+turns as a turntable, and carries the point across by what the pointer moved, from where the dolly
+left it. Rejected, by the Architect's ruling: a zoom that keeps its direction wherever the press
+lands, which lets the point drift off.
+
+**A vertical drag zooms, and turns nothing.** The dolly spreads the point from the middle, so it
+drifts toward the middle column or away as the zoom scales. Its height still follows the pointer's.
+Rejected: a turn that carries the point back to the pointer's own column, which asks for a great
+yaw near the line above the pivot. One drag out, 80 px off the middle, swung the azimuth 1.14
+radians and sank the elevation from 0.32 to 0.06. Zoomed in, each drag turned 0.19 radians.
 
 **Heights are read no nearer the pivot's row than `FRACTION_STRETCH_LEAST`, 5 percent of the canvas
 height.** Nearer, one pixel asks for a zoom without bound. So one drag zooms at most tenfold over
@@ -1642,8 +1648,8 @@ once, both end at 11.73.
 Two fingers take the point under each step, because they pinch as they move. `pointKept` finds the
 point again on its own sphere, after the dolly moves the eye.
 
-The dolly and the turn are three motions for the point's two coordinates, so a slant path leaves a
-trace. A slant drag out and back leaves the eye 0.0018 off at a separation of 19. On the middle
+A slant path turns its travel across at two zooms, so it leaves a trace. A slant drag out and back
+leaves the eye 0.122 off at a separation of 19, or 0.006 radians of turn. On the middle
 column the dolly moves alone, and out and back returns exactly. Rejected: 0.006 radians and a factor
 of 1.004 for each pixel, which held the point under the cursor nowhere.
 
@@ -1659,11 +1665,14 @@ of 1.004 for each pixel, which held the point under the cursor nowhere.
 - a right drag carries a point it holds at 2.5, 19 and 4,000 units to the pixel it reached, within
   0.01 px;
 - a right drag takes the depth under the pointer, or the pivot's over nothing;
-- a right drag with a selection carries its point to the pixel it reached, within 0.01 px, on both
-  sides of the pivot's row. A level drag zooms nothing, inside the band or outside it;
-- a right drag with a selection keeps the point its press took, and 12 steps land it within 0.01
-  px. On the middle column 1 step and 12 end alike, the sight stays, and out and back returns. A
-  slant drag out and back leaves the eye under 0.0025 off.
+- a right drag with a selection carries its point to the pointer's height, within 0.01 px, on both
+  sides of the pivot's row. Across, it lands where the spread and the travel leave it. A level drag
+  zooms nothing, inside the band or outside it;
+- a right drag with a selection keeps the point its press took. 12 steps land it within 0.01 px of
+  where the rule puts it. On the middle column 1 step and 12 end alike, the sight stays, and out
+  and back returns. A slant drag out and back leaves the eye under 0.15 off;
+- a vertical right drag with a selection, out and in, 80 px off the middle column, leaves the sight
+  and its up axis standing.
 
 The window's drags call the same `turnFollowing` and `panAcross`, with the window's own pixels. No
 drive reaches the window's mouse, so the suite holds that.
@@ -1679,9 +1688,9 @@ Verified by driven checks, in Chromium on 2026-09-26:
 Verified by driven check, in Chromium on 2026-10-01: a right drag of 360.6 px over nothing carried
 the pivot 360.6 px at its own depth. The fixed share of separation carried it 626.7 px.
 
-Verified by driven check, in Chromium on 2026-10-02: a right drag with one object picked held its
-point 0.000 px off the cursor. It did so above the pivot's row and below it, and the separation went
-from 19.00 to 10.79, then to 6.27.
+Verified by driven check, in Chromium on 2026-10-02: three vertical right drags with one object
+picked turned the view 0.000000. Each held its point 0.000 px off the cursor's height. The
+separation went from 19.00 to 10.73, to 6.22, then out to 32.09.
 
 ## Records and shaders
 
