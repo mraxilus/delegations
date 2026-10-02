@@ -121,7 +121,7 @@ suite "Idiom fixes":
     let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
     check fix.source == module("func f(): int =\n  if true:\n    return  # Early.\n  1\n")
     check fix.fixed.mapIt(it.line) == @[HEAD_LINES + 3]  # line check names
-    check fix.fixed[0].message == "return result (STYLE.md §5) fixed"  # rule named
+    check fix.fixed[0].message == "return result (STYLE.md §5)"  # rule named
     check fix.source.isSettled  # check reports none, and second fix changes nothing
     let followed = fixed(module("proc f(): int =\n  return result\n  echo 1\n"))
     check followed.source == module("proc f(): int =\n  return\n  echo 1\n")  # exit before more
@@ -170,7 +170,7 @@ suite "Idiom fixes":
   test "adjacent import lines are ordered by rank, and rank split by other lines stays":
     let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
     check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
-    check fix.fixed.mapIt(it.message) == @["import rank (X.5) fixed", "import rank (X.5) fixed"]
+    check fix.fixed.mapIt(it.message) == @["import rank (X.5)", "import rank (X.5)"]
     check fix.source.isSettled
     let apart = module("import ./a\n\nimport std/os\n")
     check fixed(apart).source == apart  # where it lands is choice: left to hand
@@ -180,7 +180,7 @@ suite "Idiom fixes":
     check consts.source ==
       module("const\n  A = 1  # One.\n  B = 2\n    ## Doc of B.\n\nlet c = 3\n")
     check consts.fixed.mapIt(it.line) == @[HEAD_LINES + 1]  # one report per run
-    check consts.fixed[0].message == "single bindings (X.5) fixed"
+    check consts.fixed[0].message == "single bindings (X.5)"
     check consts.source.isSettled
     let wrapped = fixed(module("proc f() =\n  let a = 1\n  let b = g(\n    2,\n  )\n  echo a\n"))
     check wrapped.source ==

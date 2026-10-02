@@ -81,6 +81,8 @@ const
     ## Heading above table naming verbs; other tables in same document name other things.
   IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## Characters Nim identifier is built from.
+  OPTION_CHARS = IDENT_CHARS + {'-'}
+    ## Characters option name is built from, as `--dry-run` spells it.
 
 
 func exportedRoutines*(source: string): seq[string] =
@@ -216,7 +218,7 @@ func usageOptions*(koch: string): seq[string] =
     var i = line.find(OPTION_MARK)
     while i >= 0:
       var j = i + OPTION_MARK.len
-      while j < line.len and line[j] in IDENT_CHARS: inc j
+      while j < line.len and line[j] in OPTION_CHARS: inc j
       let option = line[i + OPTION_MARK.len ..< j]
       if option.len > 0 and option notin result: result.add option
       i = line.find(OPTION_MARK, j)

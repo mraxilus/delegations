@@ -473,7 +473,7 @@ func fixReturnResult(path, source: string): Fix =
       let at = code[i].find(RETURN_RESULT)
       shaped.add line[0 ..< at] & "return" & line[at + RETURN_RESULT.len .. ^1]
       result.origin.add i + 1
-    result.fixed.add finding(path, i + 1, "return result (STYLE.md §5) fixed")
+    result.fixed.add finding(path, i + 1, "return result (STYLE.md §5)")
   result.source = shaped.join("\n")
   if result.origin.len == lines.len: result.origin.setLen(0)
 
@@ -515,7 +515,7 @@ func fixImports(path, source: string): Fix =
     if sorted_lines.countIt(it.isWide) > lines[span.first .. span.last].countIt(it.isWide):
       continue
     for k, line in sorted_lines: lines[span.first + k] = line
-    result.fixed.add finding(path, span.first + 1, "bracket import (X.5) fixed")
+    result.fixed.add finding(path, span.first + 1, "bracket import (X.5)")
 
   # Reorder each block of adjacent import statements by rank, stable within rank.
   let spans = code.importSpans
@@ -533,7 +533,7 @@ func fixImports(path, source: string): Fix =
       for span in block_spans:
         let r = span.target.importRank
         if r < rank:
-          result.fixed.add finding(path, span.first + 1, "import rank (X.5) fixed")
+          result.fixed.add finding(path, span.first + 1, "import rank (X.5)")
         rank = max(rank, r)
       for span in ranked: reordered.add lines[span.first .. span.last]
       for k, line in reordered: lines[spans[i].first + k] = line
@@ -625,7 +625,7 @@ func fixConsolidations(path, source: string): Fix =
     dropped: seq[int]
   for c in found:
     dropped.add c.lines[1 .. ^1]
-    result.fixed.add finding(path, c.lines[0] + 1, "import brackets (X.5) fixed")
+    result.fixed.add finding(path, c.lines[0] + 1, "import brackets (X.5)")
   for i, line in lines:
     if i in dropped: continue
     var statement = line
@@ -694,7 +694,7 @@ func fixBindings(path, source: string): Fix =
     if is_long_string or is_widened: continue
     result.source = (lines[0 ..< run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
     origin = origin[0 ..< run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
-    result.fixed.insert(finding(path, run.first + 1, "single bindings (X.5) fixed"), 0)
+    result.fixed.insert(finding(path, run.first + 1, "single bindings (X.5)"), 0)
   if result.fixed.len > 0: result.origin = origin
 
 
@@ -738,7 +738,7 @@ func fixStrictFuncs(path, source: string): Fix =
   if at >= 0 or cut == lines.len: inserted.add ""
   result.source = (lines[0 ..< cut] & inserted & lines[cut .. ^1]).join("\n")
   result.origin = origin[0 ..< cut] & inserted.mapIt(0) & origin[cut .. ^1]
-  result.fixed.add finding(path, reported, "strictFuncs (STYLE.md §2) fixed")
+  result.fixed.add finding(path, reported, "strictFuncs (STYLE.md §2)")
 
 
 func disorders(source: string): seq[Disorder] =
@@ -815,7 +815,7 @@ func fixLists(path, source: string): Fix =
   result.source = source
   for d in found.reversed:
     result.source = result.source[0 ..< d.first] & d.sorted & result.source[d.after .. ^1]
-  for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10) fixed")
+  for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10)")
 
 
 func fixIdioms*(path, source: string): Fix =

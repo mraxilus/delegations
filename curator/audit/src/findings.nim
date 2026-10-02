@@ -2,8 +2,9 @@
 ##   every fixer returns, which reports each rewrite in that same form.
 ##   One record shape keeps umbrella trivial: collect, sort, print, count.
 ##   Message convention (Article IV.4): end by echoing offending value in backticks.
-##   Fix reports rewrite as finding whose message names rule and `fixed`, so `koch fix` prints
-##     `path:line: <rule> fixed` through `render`, as check prints its own.
+##   Fix reports rewrite as finding whose message names rule alone, so `koch fix` prints
+##     `path:line: <rule> fixed` through `render`, as check prints its own, and its dry run
+##     prints `path:line: <rule> to fix` from same report.
 ##   Fixer that inserts or deletes lines records input line each output line came from, and
 ##     `chain` traces every later report through it. So each report names line of source as
 ##     given, whatever fixers ran before; fixer keeping its lines records nothing.

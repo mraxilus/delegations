@@ -235,6 +235,6 @@ func fixSpacing*(path, source: string): Fix =
           shaped[e.after - start .. ^1]
     if not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
-      for m in k .. j: result.fixed.add finding(path, line + 1, "operator spacing (X.9) fixed")
+      for m in k .. j: result.fixed.add finding(path, line + 1, "operator spacing (X.9)")
     k = j + 1
   result.source = lines.join("\n")

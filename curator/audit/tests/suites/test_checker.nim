@@ -111,6 +111,8 @@ when isMainModule:
     check checkOptions(KOCH & retired).len == 1  # option printed and never parsed
     # Text after usage block is not usage: header prose names options too.
     check (KOCH & usage & "## `--later` is prose\n").usageOptions == @["all", "root"]
+    let hyphened = "Usage: koch <verb>\n  --dry-run  print\n\"\"\"\n"
+    check hyphened.usageOptions == @["dry-run"]  # hyphen inside name is name
 
   test "only checks-reference table is read, since document tables others":
     # Repository map rows open with backticked paths and would otherwise read as verbs.

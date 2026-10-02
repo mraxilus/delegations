@@ -131,7 +131,7 @@ suite "Fixes":
     let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
     check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
     check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
-    check fix.fixed[0].message == "trailing whitespace (VIII.5) fixed"  # rule named
+    check fix.fixed[0].message == "trailing whitespace (VIII.5)"  # rule named
     check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
     check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
 

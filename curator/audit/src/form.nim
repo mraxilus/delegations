@@ -193,7 +193,7 @@ func fixWhitespace(path, source: string): Fix =
   for i, line in lines.mpairs:
     if not line.isEndedInWhitespace: continue
     line = line.strip(leading = false, chars = TRAILING_WHITESPACE)
-    result.fixed.add finding(path, i + 1, "trailing whitespace (VIII.5) fixed")
+    result.fixed.add finding(path, i + 1, "trailing whitespace (VIII.5)")
   result.source = lines.join("\n")
 
 
@@ -202,7 +202,7 @@ func fixEnding(path, source: string): Fix =
   result.source = source
   if source.len == 0 or (source.endsWith("\n") and not source.endsWith("\n\n")): return
   result.source = source.strip(leading = false, chars = {'\n'}) & "\n"
-  result.fixed.add finding(path, 0, "file ending (VIII.5) fixed")
+  result.fixed.add finding(path, 0, "file ending (VIII.5)")
 
 
 func fixComments(path, source: string): Fix =
@@ -215,7 +215,7 @@ func fixComments(path, source: string): Fix =
       spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
     if spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
-    result.fixed.add finding(path, gap.line + 1, "trailing comment (X.9) fixed")
+    result.fixed.add finding(path, gap.line + 1, "trailing comment (X.9)")
   result.source = lines.join("\n")
 
 
@@ -268,7 +268,7 @@ func fixBanners(path, source: string): Fix =
     lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
-  for run in runs: result.fixed.add finding(path, run.banner + 1, "banner spacing (X.2) fixed")
+  for run in runs: result.fixed.add finding(path, run.banner + 1, "banner spacing (X.2)")
   if runs.len > 0: result.origin = origin
 
 

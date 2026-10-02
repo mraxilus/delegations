@@ -54,7 +54,7 @@ suite "Fixes":
     for rule in ["trailing whitespace", "file ending", "trailing comment", "bracket import",
                  "single bindings", "strictFuncs"]:
       check fixed.anyIt(it.message.startsWith(rule))  # each fixer reported
-    check fixed.allIt(it.path == path and it.message.endsWith(" fixed"))
+    check fixed.allIt(it.path == path and it.message.endsWith(")"))  # rule alone, cited
     check fixEntries(CURATOR_BRANCH, written).written.len == 0  # idempotent
 
   test "curator branch never writes contributor code; one path outside refuses every write":

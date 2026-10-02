@@ -178,7 +178,7 @@ func applied(path, source: string; rewrites: openArray[Rewrite]; rule: string): 
     lines = lines[0 ..< rewrite.first] & rewrite.lines & lines[rewrite.last + 1 .. ^1]
     origin = origin[0 ..< rewrite.first] & traced & origin[rewrite.last + 1 .. ^1]
   result.source = lines.join("\n")
-  for rewrite in rewrites: result.fixed.add finding(path, rewrite.first + 1, rule & " fixed")
+  for rewrite in rewrites: result.fixed.add finding(path, rewrite.first + 1, rule)
   if origin != toSeq(1 .. origin.len): result.origin = origin
 
 
@@ -235,7 +235,7 @@ func fixSeparators*(path, source: string): Fix =
   result.source = source
   for k in s.separators:
     result.source[s.tokens[k].first] = if s.spelling(k) == ",": ';' else: ','
-    result.fixed.add finding(path, s.tokens[k].line + 1, "parameter separators (STYLE.md §5) fixed")
+    result.fixed.add finding(path, s.tokens[k].line + 1, "parameter separators (STYLE.md §5)")
 
 
 
@@ -654,7 +654,7 @@ func fixTrailing*(path, source: string): Fix =
   for insert in inserts.reversed:
     result.source.insert(insert.separator, insert.at)
   for insert in inserts:
-    result.fixed.add finding(path, insert.line + 1, "trailing separator (X.3) fixed")
+    result.fixed.add finding(path, insert.line + 1, "trailing separator (X.3)")
 
 
 func fixWrapping*(path, source: string): Fix =
