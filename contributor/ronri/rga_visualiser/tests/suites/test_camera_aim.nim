@@ -448,6 +448,39 @@ suite "Camera Aim":
     check not scene.isBackdropUnder(dot, scaleAt(1000.0), wide, tall)
 
 
+  test "a point picked alone holds the eye where its sphere fills the frame":
+    # Fault: zoom went on into point picked alone, past where its sphere reached every
+    #   corner and showed nothing more of it. Hold is floor, as frame rule is, so it takes
+    #   every move alike: drag, keys, wheel and pinch.
+    const (wide, tall) = (1200, 900)
+    var (scene, picked) = (initScene(), Selection())
+    let dot = scene.addObject(toMultivector(ORIGIN), "dot", inkCycled(0))
+    picked.toggle(dot)
+    var
+      camera = cameraAround(ORIGIN, 19.0, Direction(x: 4, y: 0, z: 5))
+      tween: CameraTween
+      pointer = none(PointerPick)
+    let filling = scene.radiusAt(dot)*float(tall)/(
+      tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+    )
+    camera.dolly(0.5*filling/camera.distance)
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(tall, 0.0), wide, tall,
+      0.0, 0.35, pointer, is_moving_camera = true,
+    )
+    check depthAlong(camera.eye, camera.frame.forward, ORIGIN) =~ filling
+    # Held there, it fills frame, so every press on it moves view.
+    check scene.isBackdropUnder(dot, camera.drawExtentFor(tall, 0.0), wide, tall)
+    # Further out than that, hold moves nothing.
+    var far = cameraAround(ORIGIN, 19.0, Direction(x: 4, y: 0, z: 5))
+    let stood = far.eye
+    tween.offerAim(
+      far, scene, picked, none(Preview), far.drawExtentFor(tall, 0.0), wide, tall,
+      0.0, 0.35, pointer, is_moving_camera = true,
+    )
+    check far.eye =~ stood
+
+
   test "a plane is judged by the disc drawn, not by the one its support would carry":
     # `mesh.addPlane` centres disc on object's own creation anchor where it has one,
     #   and on demo scene's own planes two stand as far as 3.7 units apart against

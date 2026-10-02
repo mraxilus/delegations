@@ -763,7 +763,7 @@ suite "Camera":
     # Nothing turned: wheel travels and never turns.
     check camera.frame.forward =~ axes_start.forward
 
-  test "the wheel comes in to what the pointer is over, and stops at its surface":
+  test "the wheel comes in to what the pointer is over, and stops where a point fills the frame":
     const (wide, tall) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
@@ -791,16 +791,44 @@ suite "Camera":
     check abs(after.x - before.x) <= 0.5
     check abs(after.y - before.y) <= 0.5
     check norm(camera.eye - planet) =~ 10.0
-    # Notch after notch stops at object's own drawn radius, rather than passing through.
+    # Notch after notch stops where point's sphere reaches every corner of frame: nearer
+    #   shows nothing more of it. Its drawn radius was floor before, and eye came on into
+    #   it until it filled screen and went past.
     for _ in 1 .. 40:
       interaction.dollyAtCursor(
         camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
         camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
         has_selection = false,
       )
-    check norm(camera.eye - planet) =~ radius
+    let filling = radius*float(tall)/(
+      tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+    )
+    check filling > radius
+    check norm(camera.eye - planet) =~ filling
     # Floor never pushes eye out again, however many notches follow.
     check dot(camera.eye - planet, camera.frame.forward) < 0.0
+
+  test "a wheel with a selection stops where the point it aims at fills the frame":
+    # Fault: turntable's wheel had no floor, so notch after notch onto point under pointer
+    #   carried eye into it, past where its sphere reached every corner.
+    const (wide, tall) = (1440, 900)
+    let planet = Position(x: 3.0, y: 1.0, z: 0.0)
+    var scene = initScene()
+    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    var
+      camera = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
+      interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(float(wide)/2.0, float(tall)/2.0)
+    for _ in 1 .. 40:
+      interaction.dollyAtCursor(
+        camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
+        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+        has_selection = true,
+      )
+    let filling = scene.radiusAt(0)*float(tall)/(
+      tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+    )
+    check norm(camera.eye - planet) =~ filling
 
   test "a zoom onto a point brings the pivot to its depth, and over nothing the pivot stands":
     # Turntable follows what reader looks at: eye carried up to planet while pivot.
