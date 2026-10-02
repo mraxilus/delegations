@@ -18,7 +18,7 @@ import pga
 import pga/[algebra {.all.}, cayleys {.all.}]
 
 
-type Blades*[B: static set[Basis]] = object
+type MultivectorOf*[B: static set[Basis]] = object
   ## Define multivector of bases `B` alone, coefficients dense in basis order.
   elements*: array[card(B), float]
 
@@ -63,7 +63,7 @@ macro defineKinds(): untyped =
   for (name, listed) in named:
     let (kind, spelled) = (ident(name), literal(listed))
     result.add quote do:
-      type `kind`* = Blades[`spelled`]
+      type `kind`* = MultivectorOf[`spelled`]
 
 
 defineKinds()
@@ -76,12 +76,12 @@ func slotOf(listed: set[Basis], basis: Basis): int =
     if other in listed: inc result
 
 
-template `[]`*[B: static set[Basis]](m: Blades[B], basis: static Basis): float =
+template `[]`*[B: static set[Basis]](m: MultivectorOf[B], basis: static Basis): float =
   ## Read coefficient of basis from its dense slot.
   m.elements[static(slotOf(B, basis))]
 
 
-template `[]=`*[B: static set[Basis]](m: var Blades[B], basis: static Basis, value: float) =
+template `[]=`*[B: static set[Basis]](m: var MultivectorOf[B], basis: static Basis, value: float) =
   ## Write coefficient of basis into its dense slot.
   m.elements[static(slotOf(B, basis))] = value
 
@@ -115,12 +115,12 @@ func reachOf(cayley: Cayley1D; bases_m: set[Basis]): set[Basis] {.compileTime.} 
 
 macro kindOf(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): untyped =
   ## Spell exact kind product reaches, as literal set, so it is same type as any alias of it.
-  nnkBracketExpr.newTree(ident"Blades", literal(reachOf(cayley, bases_m, bases_n)))
+  nnkBracketExpr.newTree(ident"MultivectorOf", literal(reachOf(cayley, bases_m, bases_n)))
 
 
 macro kindOf(cayley: static Cayley1D; bases_m: static set[Basis]): untyped =
   ## Spell exact kind map reaches, as literal set.
-  nnkBracketExpr.newTree(ident"Blades", literal(reachOf(cayley, bases_m)))
+  nnkBracketExpr.newTree(ident"MultivectorOf", literal(reachOf(cayley, bases_m)))
 
 
 func writesOf(sums: array[Basis, seq[NimNode]]): NimNode {.compileTime.} =
@@ -155,48 +155,48 @@ macro emitMap(cayley: static Cayley1D; bases_m: static set[Basis]; m: untyped): 
 
 
 func `∧`*[A, B: static set[Basis]](
-  m: Blades[A], n: Blades[B]
+  m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_WEDGE.base, A, B) {.noinit.} =
   ## Multiply through exterior product; result holds exactly bases reached.
   emitProduct(CAYLEYS_WEDGE.base, A, B, m, n)
 
 
 func `⟇`*[A, B: static set[Basis]](
-  m: Blades[A], n: Blades[B]
+  m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_WEDGE_DOT.anti, A, B) {.noinit.} =
   ## Multiply through geometric antiproduct; result holds exactly bases reached.
   emitProduct(CAYLEYS_WEDGE_DOT.anti, A, B, m, n)
 
 
 func `∙`*[A, B: static set[Basis]](
-  m: Blades[A], n: Blades[B]
+  m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_DOT.base, A, B) {.noinit.} =
   ## Multiply through inner product; result holds scalar slot alone.
   emitProduct(CAYLEYS_DOT.base, A, B, m, n)
 
 
 func `∘`*[A, B: static set[Basis]](
-  m: Blades[A], n: Blades[B]
+  m: MultivectorOf[A], n: MultivectorOf[B]
 ): kindOf(CAYLEYS_DOT.anti, A, B) {.noinit.} =
   ## Multiply through inner antiproduct; result holds antiscalar slot alone.
   emitProduct(CAYLEYS_DOT.anti, A, B, m, n)
 
 
 func `∙`*[A: static set[Basis]](
-  m: Blades[A]
+  m: MultivectorOf[A]
 ): kindOf(CAYLEYS_PARTS.bulk.round, A) {.noinit.} =
   ## Extract bulk; result holds exactly bulk bases of operand's kind.
   emitMap(CAYLEYS_PARTS.bulk.round, A, m)
 
 
 func `∘`*[A: static set[Basis]](
-  m: Blades[A]
+  m: MultivectorOf[A]
 ): kindOf(CAYLEYS_PARTS.weight.round, A) {.noinit.} =
   ## Extract weight; result holds exactly weight bases of operand's kind.
   emitMap(CAYLEYS_PARTS.weight.round, A, m)
 
 
-func toMultivector*[B: static set[Basis]](m: Blades[B]): Multivector =
+func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
   ## Widen exact kind to library's multivector, same coefficients.
   for basis in B: result[basis] = m.elements[slotOf(B, basis)]
 
@@ -204,12 +204,12 @@ func toMultivector*[B: static set[Basis]](m: Blades[B]): Multivector =
 
 #[ Laws ]#
 
-proc sample[B: static set[Basis]](kind: typedesc[Blades[B]]): Blades[B] =
+proc sample[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
   ## Draw one kind with every slot uniform in [-1, 1].
   for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
 
 
-func basesOf[B: static set[Basis]](kind: typedesc[Blades[B]]): set[Basis] = B
+func basesOf[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): set[Basis] = B
   ## Get bases kind holds.
 
 
@@ -221,7 +221,7 @@ proc main(): int =
     (m, n) = (sample(MultivectorWhole), sample(MultivectorWhole))
     bivector = sample(Kvector2)
   doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector, named by its alias"
-  doAssert (m ∙ n) is Blades[{Basis.scalar}], "dot of whole multivectors must be scalar slot"
+  doAssert (m ∙ n) is MultivectorOf[{Basis.scalar}], "dot of whole multivectors must be scalar slot"
   doAssert sizeof(m ∙ n) == sizeof(float), "dot writes one slot, never whole multivector"
   doAssert sizeof(m ∘ n) == sizeof(float), "antidot writes one slot, never whole multivector"
   doAssert basesOf(typeof(∙ bivector)) < basesOf(Kvector2), "bulk of bivector is part of grade"

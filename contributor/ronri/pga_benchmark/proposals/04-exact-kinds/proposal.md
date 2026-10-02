@@ -11,8 +11,8 @@ still names its basis.
 
 ## What it is
 
-- **Exact kinds.** `Blades[B]`, with `B: static set[Basis]`, holds `card(B)` floats. The slot of
-  a basis is the count of the bases of `B` below it, folded at compile time.
+- **Exact kinds.** `MultivectorOf[B]`, with `B: static set[Basis]`, holds `card(B)` floats. The
+  slot of a basis is the count of the bases of `B` below it, folded at compile time.
 - **Names.** `Kvector0` to `KvectorN`, `MultivectorEven`, `MultivectorOdd` and
   `MultivectorWhole` are aliases. A product that reaches one of those sets is that type, so the
   importer reads its name.
@@ -41,7 +41,7 @@ written as an exact kind writes 8 bytes, which is the bound.
 ## Limits
 
 - The reach is what the table can produce, as in P02. A sandwich still reaches every odd basis.
-- Where no alias fits, the importer reads `Blades[{E23, E31, E12}]`. P02 weighed that generic
+- Where no alias fits, the importer reads `MultivectorOf[{E23, E31, E12}]`. P02 weighed that generic
   and rejected it. Here it shows only where no name fits, and there it names the bases.
 - A norm takes a root of a squared norm, so it is a scalar function, and this proposal does not
   cover it.
@@ -53,11 +53,11 @@ written as an exact kind writes 8 bytes, which is the bound.
 |--------|-----------------------------------|
 | `float` for a product of one slot | Scalar and antiscalar become one type, and the basis is lost |
 | Smallest named kind, as P02 | Bulk of a bivector holds zeros in half its slots |
-| Return type `Blades[reachOf(...)]` | Built; it is not the same type as its alias |
+| Return type `MultivectorOf[reachOf(...)]` | Built; it is not the same type as its alias |
+| Name `Blades` for the generic | A blade factors into vectors, and a motor or a screw does not |
 | One named kind for each set reached | The names would spell the bases, as the generic does |
 
 ## Open decisions
 
-- Name the generic: `Blades`, or another name.
 - Whether `Multivector` becomes the alias of the whole set, since its layout is the same.
 - Name the whole kind: `MultivectorWhole`, or another name.
