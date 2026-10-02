@@ -477,7 +477,9 @@ func fixStrictFuncs(path, source: string): Fix =
   let code = source.codeOnly.split('\n')
   var at = -1
   for i, c in code:
-    if c.strip.len == 0 or c.startsWith("{.") or lines[i].startsWith(TESTAMENT_HEADER): continue
+    # Skip text, directives and testament header; `{.push.}` opens body of foreign bindings.
+    let is_directive = c.startsWith("{.") and not c.startsWith("{.push")
+    if c.strip.len == 0 or is_directive or lines[i].startsWith(TESTAMENT_HEADER): continue
     at = i
     break
   var shaped: seq[string]
