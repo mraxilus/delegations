@@ -16,7 +16,7 @@ import std/[strutils, unittest]
 import ../../design/plain
 
 
-suite "prose off markup":
+suite "Internal: Prose off markup":
   test "paragraph after drawn path is read":
     # Figure between two paragraphs is what every page does.
     let markup = """
@@ -66,7 +66,7 @@ suite "prose off markup":
     check markup.prose[0].sentences[0] == "One sentence here."
 
 
-suite "prose off Markdown":
+suite "Internal: Prose off Markdown":
   ## Reader copies repository's `english` check rather than importing it (`markdownProse`), so
   ## each way it could part from that check is pinned here.  Checked against that check on
   ## nine documents of repository, 1158 blocks and 2746 sentences, every one same.

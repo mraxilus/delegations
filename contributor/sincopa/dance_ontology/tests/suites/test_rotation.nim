@@ -12,7 +12,7 @@ import ../../src/dance_ontology/frame
 import ../../src/dance_ontology/rotation
 
 
-suite "twist":
+suite "Internal: Twist":
   test "a rotation of the whole couple stores nothing":
     # Couple travels round floor without unwinding, so shared rotation
     # cannot be counted as turn of each dancer in turn.
@@ -39,7 +39,7 @@ suite "twist":
     check turned.get.turn(rotates(Dancer.Follow, -1)) == some(pair)
 
 
-suite "capacity":
+suite "Internal: Capacity":
   test "one full turn is comfortable on one hand-to-hand connection":
     check fromKey("l-.").get.rest.capacity == 2
     check fromKey("-r.").get.rest.capacity == 2
@@ -57,7 +57,7 @@ suite "capacity":
     check closed.turn(together(2)) == some(closed)
 
 
-suite "geometry":
+suite "Internal: Geometry":
   test "half a turn exchanges the crossed and the parallel hand":
     for side in Side:
       check crossedSite(side, 0) == crossedSite(side)
@@ -70,7 +70,7 @@ suite "geometry":
     check not isFacing(1) and not isFacing(-1)
 
 
-suite "what the arm can carry":
+suite "Internal: What the arm can carry":
   test "the measured table is reproduced, cell by cell":
     # `Left to left`, one hand, danced.  Low wrap holds half turn; low
     # lock, high wrap and high lock each hold full one.
@@ -142,7 +142,7 @@ suite "what the arm can carry":
       check apart.isHolding(twist)
 
 
-suite "modifiers":
+suite "Internal: Modifiers":
   test "the two filled cells of the rotations sheet are reproduced":
     # `Left to left` held low: half turn left wraps, full turn right locks.
     check blocker(0).isNone
@@ -173,7 +173,7 @@ suite "modifiers":
     check not ABOVE_BLOCKS
 
 
-suite "what there is":
+suite "Internal: What there is":
   test "every posture stands, and no posture is counted twice":
     var seen: seq[Posture] = @[]
     for stood in postures():
@@ -269,7 +269,7 @@ proc glossarySides(): seq[string] =
     result.add word.strip
 
 
-suite "facings":
+suite "Internal: Facings":
   test "each of the sixteen states carries the name the Architect ruled":
     for lead in Seen:
       for follow in Seen:
