@@ -44,21 +44,21 @@ const
     ## spells; `gh run`, `gh issue` and `gh pr` are same reach through subcommand.
     ## `pull-requests` arrived late: no workflow read pull requests until sweep did, so gap
     ## sat unseen behind check written to stop exactly it.
-  RUN_TOKEN_MARKS* = ["${{ github.token }}", "secrets.GITHUB_TOKEN"]
+  TOKEN_RUN_MARKS* = ["${{ github.token }}", "secrets.GITHUB_TOKEN"]
     ## Text that hands run token to step.
   TOKEN_KEY* = "GH_TOKEN: ${{"
-    ## Text that hands `gh` some token; which one, `RUN_TOKEN_MARKS` tells.
+    ## Text that hands `gh` some token; which one, `TOKEN_RUN_MARKS` tells.
 
 
-func isRunTokenUsed(workflow: string): bool =
-  ## Whether some step of workflow holds run token, by text of `RUN_TOKEN_MARKS`.
-  for mark in RUN_TOKEN_MARKS:
+func isTokenRunUsed(workflow: string): bool =
+  ## Whether some step of workflow holds run token, by text of `TOKEN_RUN_MARKS`.
+  for mark in TOKEN_RUN_MARKS:
     if mark in workflow: return true
 
 
-func isOtherTokenHanded*(workflow: string): bool =
+func isTokenOtherHanded*(workflow: string): bool =
   ## Whether `gh` holds token other than run token in every step, so block binds no `gh` mark.
-  TOKEN_KEY in workflow and not workflow.isRunTokenUsed
+  TOKEN_KEY in workflow and not workflow.isTokenRunUsed
 
 
 func permissionScopes*(workflow: string): Option[seq[string]] =
@@ -85,11 +85,11 @@ func checkScopes*(path, workflow: string): seq[Finding] =
   ## Report scope workflow's steps use that its own `permissions` block leaves out.
   let granted = workflow.permissionScopes
   if granted.isNone: return
-  let is_other_token = workflow.isOtherTokenHanded
+  let is_token_other = workflow.isTokenOtherHanded
   var reported: seq[string]
   for (scope, mark) in SCOPE_MARKS:
     if mark notin workflow or scope in granted.get or scope in reported: continue
-    if mark != CHECKOUT_MARK and is_other_token: continue  # `gh` reaches by its own token
+    if mark != CHECKOUT_MARK and is_token_other: continue  # `gh` reaches by its own token
     reported.add scope
     result.add finding(
       path, 0,

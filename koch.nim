@@ -150,7 +150,7 @@ func given(options: Options): set[Flag] =
   if options.is_write: result.incl Write
 
 
-func isAllRead(options: Options, flags: set[Flag], has_project = false): bool =
+func isReadAll(options: Options, flags: set[Flag], has_project = false): bool =
   ## Decide whether command line sets only what verb reads: those options, and project
   ##   argument only where verb takes one.
   options.given <= flags and (has_project or options.project.len == 0)
@@ -280,7 +280,7 @@ proc runHook(root, event, input: string): int =
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
-      if not turn.calls.isWritingTurn: return 0
+      if not turn.calls.isTurnWriting: return 0
       let found = checkSignoff(turn.text, branch)
       if found.len == 0: return 0
       echo %*{"decision": "block", "reason": "End this turn with sign-off block (GUIDE.md, " &
@@ -324,7 +324,7 @@ proc run(options: Options): int =
     # Checks costing about second run first, and any finding among them stops run before
     #   types, suites and drive, which cost minutes and run again once finding is fixed.
     #   Cost: suite failure shows only after static pass is clean.
-    if not options.isAllRead({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base}): return options.refused
     discard gitFields(options.root, ["fetch", "-q", "origin", MAIN])
     let
       tree = options.root.readTree
@@ -356,32 +356,32 @@ proc run(options: Options): int =
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
-    if not options.isAllRead({Root}): return options.refused
+    if not options.isReadAll({Root}): return options.refused
     let tree = options.root.readTree
     found = tree.auditTree
     found.add prunedFindings(options.root, tree)
   of "check-types":
-    if not options.isAllRead({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = typeJobs(options.root, tree, options.scopedDirsOf(tree))
   of "check-scope":
-    if not options.isAllRead({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
     found = checkScope(
       options.branchOrDefault, changedPaths(options.root, base), movedPaths(options.root, base)
     )
   of "check-commits":
-    if not options.isAllRead({Root, Branch, Base}): return options.refused
+    if not options.isReadAll({Root, Branch, Base}): return options.refused
     let commits = branchCommits(options.root, options.baseOrDefault)
     found = checkHistory(options.branchOrDefault, commits)
   of "check-drift":
-    if not options.isAllRead({Root, Base}): return options.refused
+    if not options.isReadAll({Root, Base}): return options.refused
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))
   of "check-role":
     # Pull request's own two facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.
-    if not options.isAllRead({Root, Branch}): return options.refused
+    if not options.isReadAll({Root, Branch}): return options.refused
     let
       named = getEnv("ROLE_LABELS").strip
       labels =
@@ -392,15 +392,15 @@ proc run(options: Options): int =
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
     #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,
     #   JSON on stdout feeds context or blocks stop, exit 1 refuses git hook.
-    if not options.isAllRead({Root}, has_project = true): return options.refused
+    if not options.isReadAll({Root}, has_project = true): return options.refused
     return runHook(options.root, options.project, stdin.readAll)
   of "test":
-    if not options.isAllRead({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = runJobs(options.root, options.plannedJobs(tree))
   of "drive":
-    if not options.isAllRead({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = drivenJobs(options.root, tree, options.plannedJobs(tree))
@@ -408,7 +408,7 @@ proc run(options: Options): int =
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
     #   selects, as every verb taking projects reads them.
-    if not options.isAllRead({Root, Branch, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Branch, Base, All, Recent}, has_project = true):
       return options.refused
     let
       tree = options.root.readTree
@@ -429,7 +429,7 @@ proc run(options: Options): int =
     echo $fixed.len & " fixed."
     return 0
   of "fetch-deps":
-    if not options.isAllRead({Root, Base, All, Recent}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent}, has_project = true):
       return options.refused
     let tree = options.root.readTree
     found = restoreJobs(options.root, options.plannedJobs(tree))
@@ -437,7 +437,7 @@ proc run(options: Options): int =
     # Fetched file is repository's, never one project's: two targets pinning one file would
     #   hold two copies of one digest. Store holds digest; caller names which files it wants,
     #   so what is shared is bytes rather than choice.
-    if not options.isAllRead({}, has_project = true): return options.refused
+    if not options.isReadAll({}, has_project = true): return options.refused
     let root = storeRoot(getEnv(ASSETS_KEY))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
@@ -459,7 +459,7 @@ proc run(options: Options): int =
     # Named project answers for that project, which is what runner asks per matrix job.
     #   Named none answers for machine: koch's own packages and every project's, unscoped,
     #   since question is what must be installed rather than what one change touched.
-    if not options.isAllRead({Root}, has_project = true): return options.refused
+    if not options.isReadAll({Root}, has_project = true): return options.refused
     let
       tree = options.root.readTree
       named =
@@ -469,7 +469,7 @@ proc run(options: Options): int =
     for package in named: echo package
     return 0
   of "list-projects":
-    if not options.isAllRead({Root, Base, All, Recent, Drive}, has_project = true):
+    if not options.isReadAll({Root, Base, All, Recent, Drive}, has_project = true):
       return options.refused
     let
       tree = options.root.readTree
@@ -479,7 +479,7 @@ proc run(options: Options): int =
   of "stamp":
     # Printing serves record written by hand; writing serves duty 1, where every record
     #   moves at once.
-    if not options.isAllRead({Root, Write}): return options.refused
+    if not options.isReadAll({Root, Write}): return options.refused
     let tree = options.root.readTree
     if options.is_write:
       for path in writeRulesRows(options.root, tree): echo path

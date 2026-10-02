@@ -103,13 +103,13 @@ jobs:
           GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: gh pr ready "$NUMBER" --undo
 """
-    check secret.isOtherTokenHanded
+    check secret.isTokenOtherHanded
     check checkScopes("draft.yml", secret).len == 0
     let run_token = secret.replace("secrets.ADMIN_TOKEN", "github.token")
-    check not run_token.isOtherTokenHanded
+    check not run_token.isTokenOtherHanded
     check checkScopes("draft.yml", run_token).len == 1  # same step with run token wants grant
     # Run token spelled as secret is still run token, so block still binds.
-    check not secret.replace("secrets.ADMIN_TOKEN", "secrets.GITHUB_TOKEN").isOtherTokenHanded
+    check not secret.replace("secrets.ADMIN_TOKEN", "secrets.GITHUB_TOKEN").isTokenOtherHanded
 
   test "a token minted in a step is not the run token either, so the block binds no `gh` mark":
     # `draft.yml` mints token of GitHub App in step, since fine-grained token is refused too.
@@ -127,7 +127,7 @@ jobs:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         run: gh pr ready "$NUMBER" --undo
 """
-    check minted.isOtherTokenHanded
+    check minted.isTokenOtherHanded
     check checkScopes("draft.yml", minted).len == 0
 
   test "weekly schedule and RECENT_DAYS name one window":

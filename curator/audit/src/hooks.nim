@@ -388,7 +388,7 @@ func startContext*(branch, contributor, carried_heading: string, drift: seq[Find
   lines.join("\n")
 
 
-func isWritingTurn*(calls: openArray[Call]): bool =
+func isTurnWriting*(calls: openArray[Call]): bool =
   ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write with body.
   ##   Label or draft update carries no body and is no post, as `body` hook reads it.
   for c in calls:
