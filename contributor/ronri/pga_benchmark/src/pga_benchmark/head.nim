@@ -1,7 +1,8 @@
-## Hold what this project keeps to library head: pin, measurements, evaluations and pages.
-##   Pages show library at pin, and pin must be library head, so what reader sees is library
+## Hold pin to library head, and measurements, evaluations and pages to pin.
+##   Pages show library at pin, and pin follows library head, so what reader sees is library
 ##     as it stands. Four checks, each finding when it fails, none of them warnings:
 ##     - pin is head: library's directory at pin is same tree as at head of its repository;
+##       verb `head` alone runs it, since its verdict moves with library;
 ##     - every measurement names pin: static and runtime baselines, every evaluation;
 ##     - every evaluation names digest of its edits, so edited change or proposal needs new
 ##       evaluation;
@@ -11,8 +12,8 @@
 ##   Checks are pure over values tool side reads (commits, trees, documents, digests), so
 ##     tests feed them; reading repository and network stays in driver.
 ##
-##   Cost: pin that lags head fails every push of this project until pin follows, as
-##     Architect chose; library moving is work here, never something to wait out.
+##   Cost: pin that lags head fails `head`, which `head.yml` runs daily and which keeps one
+##     issue open until pin follows; no merge waits on it, so library moving is never red here.
 
 {.experimental: "strictFuncs".}
 

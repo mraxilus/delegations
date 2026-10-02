@@ -12,8 +12,8 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 
 ## Pages
 
-Three kinds of page answer the question. Each one is built from committed files alone, and
-`drive` holds each file to the library at pin, and the pin to library head.
+Three kinds of page answer the question. Each one is built from committed files alone.
+`drive` holds each file to the library at pin, and `head` holds the pin to library head.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
@@ -46,7 +46,8 @@ The words are in [`GLOSSARY.md`](GLOSSARY.md).
 
 ## When the library moves
 
-`drive` fails while the pin lags library head. To follow head:
+`head` fails while the pin lags library head. The daily `head` workflow runs it and keeps
+one issue open until the pin follows. To follow head:
 
 1. Bump the commit in `pga_benchmark.nimble` and `atlas.lock`, and restore with
    `nim r koch fetch-deps`.
@@ -60,7 +61,8 @@ The words are in [`GLOSSARY.md`](GLOSSARY.md).
 ```sh
 nim r koch check                                # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
-nim r tools/build.nim drive         # project directory: every check CI runs, head included
+nim r tools/build.nim drive         # project directory: every check CI runs, all at pin
+nim r tools/build.nim head          # compare pin with library head, as the daily workflow does
 nim r tools/build.nim bench         # five alternating runs into baseline/runtime_<algebra>.json
 nim r tools/build.nim baseline      # re-record static measurements after an intended change
 nim r tools/build.nim guard         # compare the last inspection against the baseline
