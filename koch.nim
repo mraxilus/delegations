@@ -62,7 +62,7 @@ const USAGE = """
 Usage: koch <verb> [project | file...] [options]
 
 Verbs:
-  check          every check pull request runs; quick ones first, stopping on finding
+  check          every check pull request runs; quick ones first, stopping on own finding
   check-files    static checks over every file git lists; compiles nothing
   check-types    npm ci, then project's own `types` verb, where node manifest sits
   check-scope    branch name, and every changed path inside branch's folder
@@ -303,10 +303,16 @@ proc run(options: Options): int =
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkHistory(branch, branchCommits(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))
-    if found.len > 0:
+    # Curator branch holds what reddens contributor project (duty 3), and blocks on rest.
+    let (held, own) = splitHeld(branch, found)
+    if own.len > 0:
       found.report
       echo "Types, suites and drive not run; fix findings above, then run again."
       return 1
+    if held.len > 0:
+      echo "Held for their projects (CURATOR.md, duty 3); runner stays red until they fix:"
+      held.report
+    found = own
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
     found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
     # Green run on clean tree records tree hash, which `pre-push` hook compares against

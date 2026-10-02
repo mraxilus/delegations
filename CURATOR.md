@@ -168,8 +168,11 @@ This section adds only what differs for a curator.
    project fixes on its own branch, and the check merges after. Never grandfather a finding
    into the check, and never fix the project yourself.
 
-   Such a branch is red by design, so no green run records a tree for the `pre-push` hook.
-   Push it with `--no-verify`, once, and say so in the pull request.
+   On such a branch, `nim r koch check` holds each finding inside a contributor project apart.
+   It lists them, runs the rest, and records the tree for the `pre-push` hook when the rest is
+   clean. The runner reads the whole tree, so the pull request stays red until each project
+   fixes. A stale stamp and a standard moved to the root glossary are propagation, so they stay
+   yours in any project. Never push with `--no-verify`, and the `bash` hook refuses it.
 
 4. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test in
    `curator/audit/tests/`, before the fix. A suite takes the name of the article that it
@@ -328,7 +331,7 @@ alone.
 
 | Verb | Reads | Does |
 |------|-------|------|
-| `check` | fresh `origin/main` | all below but `check-role`; quick ones first, stop on a finding |
+| `check` | fresh `origin/main` | all below but `check-role`; quick first, stop on own finding |
 | `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
 | `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
