@@ -56,16 +56,18 @@ macro expressionsCompile(measurands: static seq[Measurand]): untyped =
         check `id`.len > 0  # id names gap
 
 
-macro checkReferences(measurands: static seq[Measurand], chapter: static string): untyped =
-  ## Emit one test per measurand holding library expression on images to reference on typed.
-  ##   Chapter "2" takes gaps citing book equations of chapter 2; "3" takes rest, which
-  ##   are motor, projection and support pages of rigidgeometricalgebra.org.
+func isCitedUnder(cite, section: string): bool =
+  ## Decide whether cite falls under section: chapter `2.` holds its equations, page holds itself.
+  cite == section or (section.endsWith(".") and cite.startsWith(section))
+
+
+proc referenceTests(measurands: seq[Measurand], section: string): NimNode {.compileTime.} =
+  ## Build one test per typed measurand cited under section, holding library to reference.
   ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, so pairs vary.
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression and reference bind them
   for p in measurands:
-    if p.reference.len == 0: continue
-    if (chapter == "2") != p.cite.startsWith("2."): continue
+    if p.reference.len == 0 or not p.cite.isCitedUnder(section): continue
     let
       expression = parseExpr(p.expression)
       reference = parseExpr(p.reference)
@@ -90,7 +92,42 @@ macro checkReferences(measurands: static seq[Measurand], chapter: static string)
                 `n` {.used.} = `library_n`[j]  # Read by binary `expression`; unary leaves it.
               `expression`
           check got =~ expected  # library on images equals reference embedded
-  if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
+
+
+proc skippedReferenceTest(): NimNode {.compileTime.} =
+  ## Build placeholder test that skips where algebra carries no typed reference (Article IX.9).
+  quote do:
+    test "typed reference, which rga4d and cga5d alone carry":
+      skip()
+
+
+macro checkReferences(measurands: static seq[Measurand], section: static string): untyped =
+  ## Emit tests of typed measurands cited under section, or one skipped test where none is.
+  result = referenceTests(measurands, section)
+  if result.len == 0: result.add skippedReferenceTest()
+
+
+macro checkWikiReferences(measurands: static seq[Measurand]): untyped =
+  ## Emit one suite per wiki page typed measurands cite, named `Wiki: <page>`.
+  ##   Pages are those of rigidgeometricalgebra.org or conformalgeometricalgebra.org, by algebra.
+  ##   One suite of one skipped test stands where algebra carries no typed reference.
+  result = newStmtList()
+  var pages: seq[string]
+  for p in measurands:
+    if p.reference.len > 0 and p.cite.startsWith("wiki:") and p.cite notin pages:
+      pages.add p.cite
+  for page in pages:
+    let
+      name = newLit("Wiki: " & page["wiki:".len .. ^1].replace('_', ' '))
+      tests = referenceTests(measurands, page)
+    result.add quote do:
+      suite `name`:
+        `tests`
+  if pages.len == 0:
+    let tests = skippedReferenceTest()
+    result.add quote do:
+      suite "Wiki":
+        `tests`
 
 
 func isNear(got, expected: Multivector): bool =
@@ -136,7 +173,7 @@ macro checkDenseForms(measurands: static seq[Measurand]): untyped =
 fillPools(0)
 
 
-suite "Configuration":
+suite "Internal: Configuration":
   test "stub matrix names algebra umbrella reports":
     check DIMENSIONS in 2 .. 6  # library's own bound
     when DIMENSIONS == 4 and IS_RIGID:
@@ -145,7 +182,7 @@ suite "Configuration":
       check ALGEBRA_NAME == "cga5d"  # 3D Euclidean conformal
 
 
-suite "Surface":
+suite "Internal: Surface":
   test "symbols are read under gate of their algebra":
     const fixture = """
 defineOperator(
@@ -190,10 +227,15 @@ func hidden(m: Multivector): Multivector = m
     check aliasesIn(fixture, is_conformal = true) == @["selectGrade", "bulkFlat", "add"]  # cga
 
 
-suite "Catalogue":
+suite "Internal: Catalogue":
   test "ids are unique":
     let ids = idsOf(CATALOGUE) & idsOf(MISSING)
     check ids.deduplicate.len == ids.len  # one gap per operation
+
+  test "every typed cite falls under chapter 2 or wiki page, so one suite holds it":
+    for p in CATALOGUE:
+      if p.reference.len == 0: continue
+      check p.cite.startsWith("2.") or p.cite.startsWith("wiki:")  # no cite left unheld
 
   test "every expression compiles against library":
     expressionsCompile(CATALOGUE)
@@ -222,18 +264,17 @@ suite "Catalogue":
 
 
 suite "Chapter 2":
-  checkReferences(CATALOGUE, "2")
+  checkReferences(CATALOGUE, "2.")
 
 
-suite "Chapter 3":
-  checkReferences(CATALOGUE, "3")
+checkWikiReferences(CATALOGUE)
 
 
-suite "Dense forms":
+suite "Internal: Dense forms":
   checkDenseForms(CATALOGUE)
 
 
-suite "Measurements":
+suite "Internal: Measurements":
   test "summarise reads median and minimum per object":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
     check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
@@ -269,7 +310,7 @@ suite "Measurements":
     check median([4.0, 1.0, 3.0, 2.0]) == 2.5  # even count, mean of middle two
 
 
-suite "Allocation":
+suite "Internal: Allocation":
   test "allocation gauge is live under this build":
     let before = getAllocStats()
     var control = newSeq[float](8)
@@ -287,7 +328,7 @@ suite "Allocation":
           check measurement.allocations == 0  # heap untouched over every round
 
 
-suite "Lower bound":
+suite "Internal: Lower bound":
   test "derived counts reproduce what algebra demands":
     let m = Metric(dimensions: 4, is_conformal: false)
     check lowerBoundOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
@@ -366,7 +407,7 @@ let INSPECTED = inspectCache(CACHE)
   ## Read once: walking cache costs seconds, and two suites read same functions.
 
 
-suite "Inspector":
+suite "Internal: Inspector":
   test "mangled names demangle to symbols":
     check demangle("XE2X88XA7__u0__OOZdependenciesZpgaZoperators") == "∧"  # non-ASCII bytes
     check demangle("barXE2X88X99__u0__pgaZoperators") == "|∙"  # special word then bytes
@@ -662,7 +703,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
           check count(f.body).multiplies == 12 and count(f.body).subtractions == 6  # as documented
 
 
-suite "Guard":
+suite "Internal: Guard":
   const
     path = "baseline/rga4d.json"
     key = "∧(Multivector,Multivector)"
@@ -736,7 +777,7 @@ suite "Guard":
     check schema.findings.len == 1 and "Schema differs" in schema.findings[0].message  # refused
 
 
-suite "Gaps":
+suite "Internal: Gaps":
   const key_wedge = "∧(Multivector,Multivector)"
 
   func functionNode(
@@ -881,7 +922,7 @@ suite "Gaps":
     check wrap("∧∧∧ ∧∧∧", 3) == @["∧∧∧", "∧∧∧"]  # runes, not bytes
 
 
-suite "Markdown":
+suite "Internal: Markdown":
   test "blocks keep kind, level and line they open on":
     let blocks = parseBlocks("# Title\n\nWhy it is.\nStill why.\n\n- one\n- two\n\n" &
       "| a | b |\n|---|---|\n| 1 | 2 |\n")
@@ -909,7 +950,7 @@ suite "Markdown":
     check "<th>a</th>" in html and "<td>1</td>" in html and "---" notin html  # header split
 
 
-suite "Changes":
+suite "Internal: Changes":
   const
     record = "changes/sign.md"
     library = "let x = 1\nlet y = 2\nlet z = 1\n"
@@ -951,7 +992,7 @@ suite "Changes":
     check findings.len == 1 and "neither Edit nor Replace" in findings[0].message  # malformed
 
 
-suite "Notes":
+suite "Internal: Notes":
   const
     record = "marginalia/notes.md"
     source = "Notes.\n\n## Odd grade\n\n`pga/a.nim` · decide\n\n" &
@@ -975,7 +1016,7 @@ suite "Notes":
     check checkAnchors(notes, moved, record).len == 1  # quote gone from library
 
 
-suite "Head":
+suite "Internal: Head":
   const pin = "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315"
 
   test "pin passes when library tree is head's, whatever repository commit":
@@ -1008,7 +1049,7 @@ suite "Head":
       "`marginalia`" in findings[1].message  # changed page named
     check checkPublished(built, publications, "Pages: https://x/1.", "p").len == 4  # URLs unnamed
 
-suite "Proposals":
+suite "Internal: Proposals":
   const
     directory_sign = "proposals/01-sign"
     record_sign = "# P01: Sign\n\nWhy.\n"
@@ -1072,7 +1113,7 @@ suite "Proposals":
     check skipped.len == 1 and "`P02`" in skipped[0].message  # two was freed
 
 
-suite "Evaluations":
+suite "Internal: Evaluations":
   func run(ns: openArray[(string, float, float)]): JsonNode =
     ## Build one bench run: library median and NaN share per measurand.
     result = %*{"measurands": {}}
@@ -1130,7 +1171,7 @@ suite "Evaluations":
     check editsDigest([one], claims, @["a"]) != editsDigest([one], claims, @["b"])  # program
 
 
-suite "Figures":
+suite "Internal: Figures":
   test "figure is one image alone, path resolved against proposal's directory":
     let
       node = Block(kind: BlockKind.Paragraph, line: 3,
@@ -1169,7 +1210,7 @@ suite "Figures":
       check rule in svg  # each of four rules marks its arrow or box
 
 
-suite "Edits":
+suite "Internal: Edits":
   const source_pin = "func outer*(a: int;\n    b: int): int {.inline.} =\n  ## Doc.\n" &
     "  for x in 0 ..< a:\n    result += x\n\nimport std/math\n"
     ## Library file at pin: routine whose signature spans two lines, then top-level import.
@@ -1212,7 +1253,7 @@ suite "Edits":
       files)  # top-level statement sits in no routine
 
 
-suite "Cells":
+suite "Internal: Cells":
   test "table reads cell for cell, sign included, in both cell shapes":
     let wedge = cells(CAYLEYS_WEDGE.base)
     check wedge["E1,E2"] == %*[{"to": "E12", "neg": false}]  # 𝐞₁ ∧ 𝐞₂ = 𝐞₁₂
@@ -1221,7 +1262,7 @@ suite "Cells":
     check cells(CAYLEY_ATTITUDE).len > 0  # 1D table reads too
 
 
-suite "Pages":
+suite "Internal: Pages":
   let ids_docket = %*{"ids": {"rga4d/wedge": "G001", "rga4d/wedge_point_point": "G002"}}
     ## Docket file allotting both rows of `sheetDocket`.
 
@@ -1378,7 +1419,7 @@ suite "Pages":
     check "no evaluation" in verdictChips(nil, baselines, Spread())  # absent evaluation is said
 
 
-suite "Driver":
+suite "Internal: Driver":
   const driver = staticRead("../tools/build.nim")
 
   func dispatched(source: string): seq[string] =
