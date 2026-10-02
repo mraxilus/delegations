@@ -1656,14 +1656,45 @@ Rejected: to ask koch for a verb specific to a project. Cost: the driver runs fr
 directory, because every path in it is relative. Each recording costs minutes, which is why none
 runs under `pages`.
 
-**Every page ships the three faces it draws with, inlined.** Titles take Noto Serif, body text takes
-Noto Sans, and code and data take Commit Mono. Those are the standard three of the Architect, and
-what Article X.8 names.
+## Faces
+
+**Every page ships the faces it draws with, inlined.** Headings and titles take Noto Serif, body
+text takes Noto Sans, and code and data take Commit Mono. Those are the standard three of the
+Architect, and what Article X.8 names. Every heading rule of every sheet names the serif stack.
+Verified by `suites/test_faces.nim`, test "every heading takes serif face".
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
-X.8 reads as numbers, and a label that names a hand is interface text.
+X.8 reads as numbers, and a label that names a hand is interface text. Every label names Noto Sans
+first, the label of the turn glyph included. Verified by `suites/test_faces.nim`. The faces check
+of the audit reads no stack that `&` joins, and that label is one.
 
-Seven faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
+**No face of the three draws every character that the pages draw, so each stack names two more.**
+Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws all five
+arrows, and Commit Mono draws marks such as `✓` that the text faces lack. So a stack names its own
+face, then Noto Sans Math, then Commit Mono. That is the merge by codepoint range of X.8. The maps
+were read with fontconfig 2.15.0 on 2026-10-02, from files with the digests of the store.
+
+The wiring is verified by `suites/test_faces.nim`, test "every stack falls back to faces that draw
+what its own face lacks". The coverage is verified by hand in Chromium 141, 2026-10-02. Each
+character beyond ASCII went into a clone of its element, alone, at load and in each view of the
+Reference. The DevTools call `CSS.getPlatformFontsForNode` then named the face that drew it.
+
+On every page, every one of those characters came from a shipped face. On `main` before this, nine
+came from faces of the machine, on four pages.
+
+Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
+change the design.
+
+**A dressed page that declares no charset declares UTF-8.** The review page, the whole-cloth page
+and the bundled Reference are fragments, and publishing wraps each one in a document. Opened from a
+file, they declared no charset, so the browser guessed one from the bytes ahead of the first that is
+not ASCII. The face block is half a megabyte of ASCII. Behind it, Chromium 141 read the review page
+as windows-1250, and the whole-cloth page too once the block grew.
+
+So `withFaces` puts `<meta charset="utf-8">` first in a page that declares none. Verified by
+`suites/test_faces.nim`, and by hand in Chromium 141 on 2026-10-02: all ten pages read as UTF-8.
+
+Eight faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
 committed. Each one is pinned by package version *and* SHA-256. The version is pinned because an
 unversioned path serves whatever the host resolves that day. The digest is pinned because the bytes
 are embedded in what readers open.
@@ -1672,16 +1703,17 @@ are embedded in what readers open.
 every writer has run. To do it there rather than in each writer is what keeps the suites free of the
 network. That is **verified**: every suite passes with `build/` deleted outright.
 
-The origin of all seven is `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. All are under the
-**SIL Open Font License 1.1**, confirmed from the `LICENSE` of each package rather than assumed.
+The origin of all eight is `@fontsource`, by way of `cdn.jsdelivr.net`: 5.3.0 for seven, and 5.2.8
+for Noto Sans Math. All are under the **SIL Open Font License 1.1**, confirmed from the `LICENSE` of
+each package rather than assumed.
 
 Their addresses and checksums are no longer this project's to hold. They are the `ASSETS` table in
 `curator/audit/src/assets.nim`, which is the shared store of the repository. `assets` here names the
-seven files it wants, and `koch fetch-assets` answers with their paths.
+eight files it wants, and `koch fetch-assets` answers with their paths.
 
 That is the settlement of repository issue 116, which this project raised as its second consumer.
-Four of these seven were already pinned byte for byte by `rga_visualiser`. Article II.9 calls two
-lists of identical digests a copy that no constraint forces.
+A face that two projects draw with would otherwise be pinned twice, byte for byte. Article II.9
+calls two lists of identical digests a copy that no constraint forces.
 
 **The digest is the curator's, and the choice is this project's.** The store never says which faces
 a page draws with, so nothing about the autonomy of a project moved. This project was the first to
@@ -1690,10 +1722,9 @@ draw from it, and `rga_visualiser` draws from it too.
 The store keys entries by digest, so a face arrives under a name that is its hash. `assets` restores
 the file name on the way into `build/fonts`, because everything downstream reads faces by name.
 
-Verified 2026-09-10. All seven arrive, and all seven carry the digest that the store declares. Every
-built page is byte-for-byte the size it was when this project fetched them itself. To ask for a face
-that the store does not declare fails with a finding that names it, which is checked rather than
-assumed.
+Verified 2026-10-02. All eight arrive, and each one carries the digest that the store declares. To
+ask for a face that the store does not declare fails with a finding that names it, which is checked
+rather than assumed.
 
 That check has to live in a suite, and not only in the build. This project carries no `drive` verb,
 so the runner never runs its `assets`. A face named that the store lacks would otherwise surface
@@ -1704,8 +1735,9 @@ it. It reads it as text rather than by import. The law then depends on the decla
 the module of the curator keeping its present shape. It also means that this project imports no
 curator source, which none does.
 
-Cost, measured 2026-09-10 on this container: **+224 kB for each page**. 167,424 bytes of woff2
-become 224,384 of base64, across ten pages, so `build/` grows from 6.9 MB to 9.1 MB.
+Cost, measured 2026-10-02 on this container: the face block is **535,702 bytes on each page**, and
+224,279 without Noto Sans Math. The eight files are 400,884 bytes of woff2, and Noto Sans Math is
+233,460 of them, for five arrows. So the Reference grows from 582,206 bytes to 894,087.
 
 Rejected: to link the copy of the host, which names a face the reader may lack, and needs the
 network at reading time. Rejected: to subset for each page, which trades one shared block for ten
