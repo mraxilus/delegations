@@ -69,9 +69,11 @@ proc faceStyle*(directory = DIRECTORY_FONTS): string =
   for (file, family, weight, style) in FACES:
     let path = directory / file
     if not fileExists(path):
-      raise newException(IOError,
+      raise newException(
+        IOError,
         "Face is absent, so page would name one reader may lack; run " &
-          "`nim r tools/build.nim assets`: got `" & path & "`.")
+          "`nim r tools/build.nim assets`: got `" & path & "`.",
+      )
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
       ";font-weight:" & weight & ";font-display:block;src:url(data:font/woff2;base64," &
       encode(readFile(path)) & ") format(\"woff2\")}"
@@ -94,10 +96,10 @@ func withoutFaces*(html: string): string =
     var cut_to = shuts + shut.len
     if cut_to < result.len and result[cut_to] == '\n':
       cut_to += 1
-    result = result[0 ..< opens] & result[cut_to .. ^1]
+    result = result[0..<opens] & result[cut_to .. ^1]
 
 
-proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
+proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
   ## Put face style sheet last in page's head, so page ships what it draws with.
   ##   Last rather than first for two reasons: root rule keeping ligatures on then
   ##     wins over any page rule that would turn them off, and `bundle` folds head
@@ -124,13 +126,15 @@ proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
     html =
       if "<meta charset" in bare: bare
       elif opens < 0: charset & "\n" & bare
-      else: bare[0 ..< opens + head.len] & "\n" & charset & bare[opens + head.len .. ^1]
+      else: bare[0..<opens + head.len] & "\n" & charset & bare[opens + head.len .. ^1]
     shuts = html.find(shut)
   if shuts >= 0:
-    return html[0 ..< shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
+    return html[0..<shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
   let titled = html.find(title)
   if titled < 0:
-    raise newException(ValueError,
+    raise newException(
+      ValueError,
       "Page carries neither head nor title to put faces by; got first 40 " &
-        "characters `" & html[0 ..< min(40, html.len)] & "`.")
-  html[0 ..< titled + title.len] & "\n" & faceStyle(directory) & html[titled + title.len .. ^1]
+        "characters `" & html[0..<min(40, html.len)] & "`.",
+    )
+  html[0..<titled + title.len] & "\n" & faceStyle(directory) & html[titled + title.len .. ^1]

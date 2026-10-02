@@ -24,12 +24,9 @@ const
     ## Headless page, of shape review page and mark pages carry.
   STORE = "../../../curator/audit/src/assets.nim"
     ## Repository's declaration of every file fetched at build time, from project directory.
-  PATH_APP = "pages" / "app" / "index.html"
-    ## Shell of Reference, whose sheet sits in its head.
-  PATH_REVIEW = "pages" / "review" / "review.html"
-    ## Shell of review page.
-  PATH_WHOLECLOTH = "mockups" / "wholecloth.html"
-    ## Whole-cloth proposal, drawn by hand.
+  PATH_APP = "pages" / "app" / "index.html"  ## Shell of Reference, whose sheet sits in its head.
+  PATH_REVIEW = "pages" / "review" / "review.html"  ## Shell of review page.
+  PATH_WHOLECLOTH = "mockups" / "wholecloth.html"  ## Whole-cloth proposal, drawn by hand.
 
 
 proc stub(directory: string) =
@@ -50,14 +47,14 @@ func stylesOf(markup: string): string =
       head = markup.find('>', opens)
       shuts = markup.find("</style>", head)
     if head < 0 or shuts < 0: break
-    result.add markup[head + 1 ..< shuts] & "\n"
+    result.add markup[head + 1..<shuts] & "\n"
     at = shuts
   while true:
     let opens = result.find("/*")
     if opens < 0: return
     let shuts = result.find("*/", opens + 2)
-    if shuts < 0: return result[0 ..< opens]
-    result = result[0 ..< opens] & result[shuts + 2 .. ^1]
+    if shuts < 0: return result[0..<opens]
+    result = result[0..<opens] & result[shuts + 2 .. ^1]
 
 
 func declarationsOf(sheet, selector: string): seq[string] =
@@ -76,9 +73,9 @@ func declarationsOf(sheet, selector: string): seq[string] =
       if nested >= 0 and nested < shuts:
         start = at + 1
       else:
-        for written in sheet[start ..< at].split(','):
+        for written in sheet[start..<at].split(','):
           if written.strip == selector:
-            result.add sheet[at + 1 ..< shuts].split(';')
+            result.add sheet[at + 1..<shuts].split(';')
         start = shuts + 1
         at = shuts
     inc at
@@ -102,9 +99,9 @@ func stackOf(sheet, selector: string): seq[string] =
   let resolves = value.find("var(--")
   if resolves >= 0:
     let
-      property = value[resolves + 4 ..< value.find(')', resolves)]
+      property = value[resolves + 4..<value.find(')', resolves)]
       defined = sheet.find(property & ":")
-    value = if defined < 0: "" else: sheet[defined + property.len + 1 ..< sheet.find(';', defined)]
+    value = if defined < 0: "" else: sheet[defined + property.len + 1..<sheet.find(';', defined)]
   elif value.find('"') > 0:
     value = value[value.find('"') .. ^1]
   familiesOf(value)
@@ -115,6 +112,7 @@ suite "faces":
   let directory = getTempDir() / "dance_faces_test"
   removeDir(directory)
   stub(directory)
+
 
   test "every face named here is one repository's store declares":
     ## Store holds digest and address, this project holds choice (repository issue 116),
@@ -129,11 +127,13 @@ suite "faces":
       checkpoint(file)
       check ("\"" & file & "\"") in declared
 
+
   test "each face is inlined once, as bytes rather than as link":
     let style = faceStyle(directory)
     check style.count("@font-face") == faces.FACES.len
     check style.count("data:font/woff2;base64,") == faces.FACES.len
     check "http" notin style  # names no host page would have to reach (X.8)
+
 
   test "every family is named, and ligatures are kept on":
     let style = faceStyle(directory)
@@ -143,23 +143,28 @@ suite "faces":
     # sets this property; setting it at root means no later reset can lose them.
     check "font-variant-ligatures:contextual" in style
 
+
   test "absent face is refused, never quietly left out":
     expect IOError:
       discard faceStyle(directory / "nowhere")
+
 
   test "whole page takes faces inside its head":
     let dressed = withFaces(DOCUMENT, directory)
     check dressed.find("@font-face") < dressed.find("</head>")
     check dressed.count("<title>") == 1
 
+
   test "headless page takes faces after its title":
     let dressed = withFaces(FRAGMENT, directory)
     check dressed.find("</title>") < dressed.find("@font-face")
     check dressed.count("<main>") == 1
 
+
   test "page with neither head nor title is refused":
     expect ValueError:
       discard withFaces("<p>no head here</p>", directory)
+
 
   test "dressing is not doubled where it runs twice":
     ## Build dresses every page under `build/`, and not only pages this run wrote,
@@ -235,4 +240,4 @@ suite "faces":
     let
       glyph = turnGlyph("&#188; turn")
       opens = glyph.find("8px ") + "8px ".len
-    check familiesOf(glyph[opens ..< glyph.find(';', opens)])[0] == "Noto Sans"
+    check familiesOf(glyph[opens..<glyph.find(';', opens)])[0] == "Noto Sans"
