@@ -2,13 +2,13 @@
 ##   Parameters: `,` between groups while every type appears once; where one group holds several
 ##     names of one type (`a, b: X`), `;` between every group, trailing one included. Holds on one
 ##     line and across several, in routine, routine type and lambda.
-##   Tuple type: `,` between fields, by Architect's ruling, since `tuple[a, b: int, c: X]` and
-##     `;` form parse alike; comment after field stays.
+##   Tuple type: `,` between fields (STYLE.md §5); `tuple[a, b: int, c: X]` and `;` form parse
+##     alike, so rewrite moves no reading; comment after field stays.
 ##   Signature: one fitting `LINE_MAX` stands on one line, and wrapped one that would fit is
 ##     joined. Otherwise parameters take one line of their own, indented one level, where that
-##     line fits, by Architect's ruling; else each group takes own line, with trailing
-##     separator. Either way `)` opens closing line with return type and pragmas. One
-##     parameter alone on its line is list written one item to line, so it takes separator.
+##     line fits (X.3); else each group takes own line, with trailing separator. Either way
+##     `)` opens closing line with return type and pragmas. One parameter alone on its line is
+##     list written one item to line, so it takes separator.
 ##   Call: one fitting its line stays, and wrapped one that would fit is joined. Otherwise each
 ##     argument takes own line, indented one level, with trailing comma, and `)` opens line at
 ##     call's indent. Outermost call crossing `LINE_MAX` splits first; each line it leaves is
@@ -215,7 +215,7 @@ func separators(s: Scan): seq[int] =
 
 
 func tupleSeparators(s: Scan): seq[int] =
-  ## Find each `;` between fields of tuple type, which takes `,` by Architect's ruling.
+  ## Find each `;` between fields of tuple type, which takes `,` (STYLE.md §5).
   for o in 1 ..< s.tokens.len:
     if s.spelling(o) != "[" or s.spelling(o - 1) != "tuple" or s.partners[o] < o: continue
     for item in s.items(o):
@@ -319,8 +319,9 @@ func checkSignatures*(path, source: string): seq[Finding] =
     result.add finding(
       path,
       rewrite.first + 1,
-      "Signature stays on one line where it fits, else wraps one group to line, indented one " &
-        "level (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines.",
+      "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
+        "their own, else one group to line (X.3, STYLE.md §5); got `" &
+        $(rewrite.last - rewrite.first + 1) & "` lines.",
     )
 
 

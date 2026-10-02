@@ -1,5 +1,5 @@
 ## Enforce where declaration states its doc and its type (Article VI.9, X.12; STYLE.md §5), and
-##   fix it (`koch fix`), by Architect's ruling.
+##   fix it (`koch fix`).
 ##   Doc of type, field, binding and enum member: one-line doc stands on declaration's own
 ##     line, two spaces before `##`, where joined line fits `LINE_MAX`; otherwise on next line,
 ##     one level in. Doc of two or more lines stays where it is.

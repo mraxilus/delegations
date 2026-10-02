@@ -15,12 +15,10 @@ const
     ") {.compileTime.} =\n" &
     "  discard\n"
     ## STYLE.md §5, first signature example, as written there.
-  EXAMPLE_GROUP_LINES =
+  EXAMPLE_GROUPS =
     "func constructProductsTransitional(\n" &
-    "  complement, dual: Cayley1D;\n" &
-    "  wedges: Spatial[Cayley2D];\n" &
-    "  chirality: Chirality;\n" &
-    "  space: Space;\n" &
+    "  complement, dual: Cayley1D; wedges: Spatial[Cayley2D]; chirality: Chirality; " &
+    "space: Space\n" &
     "): array[Order, Cayley2D] {.compileTime.} =\n" &
     "  discard\n"
     ## STYLE.md §5, second signature example, as written there.
@@ -105,9 +103,11 @@ suite "Wrapping":
     let flat = "func filterFactors(cayley: var Cayley1D, factors: seq[Basis], as_exclusions = " &
       "false) {.compileTime.} =\n  discard\n"
     check flat.fixed == EXAMPLE_PARAMETERS_LINE  # 102 runes on one line
-    check EXAMPLE_GROUP_LINES.fixed == "func constructProductsTransitional(\n" &
-      "  complement, dual: Cayley1D; wedges: Spatial[Cayley2D]; chirality: Chirality; " &
-      "space: Space\n): array[Order, Cayley2D] {.compileTime.} =\n  discard\n"  # 91 runes fit
+    check EXAMPLE_GROUPS.isSettled
+    let group_lines = "func constructProductsTransitional(\n  complement, dual: Cayley1D;\n" &
+      "  wedges: Spatial[Cayley2D];\n  chirality: Chirality;\n  space: Space;\n" &
+      "): array[Order, Cayley2D] {.compileTime.} =\n  discard\n"
+    check group_lines.fixed == EXAMPLE_GROUPS  # parameters line of 91 runes fits
     let single = "proc " & LONG_NAME & "(parameter_named_at_length: Multivector): Multivector =\n"
     check single.fixed == "proc " & LONG_NAME & "(\n  parameter_named_at_length: Multivector,\n" &
       "): Multivector =\n"  # one item to line takes separator

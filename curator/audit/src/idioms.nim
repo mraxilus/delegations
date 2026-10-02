@@ -12,8 +12,8 @@
 ##     alphabetised (X.10): `checkLists`, read on tokens (`tokens.nim`), outside static pass
 ##     until projects run fix. Pragma list holds bare pragmas first, then pragmas with argument
 ##     (`key: value`, `key(arg)`), each group alphabetised.
-##   - Alphabetised means dictionary order, by Architect's ruling: case and `_` ignored, tie
-##     to code point, so `Facing` comes before `facing`, and `is_x` beside `isX`.
+##   - Alphabetised means dictionary order (X.10): case and `_` ignored, tie to code point,
+##     so `Facing` comes before `facing`, and `is_x` beside `isX`.
 ##   - Two consecutive single bindings of one keyword share that keyword (X.5).
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).

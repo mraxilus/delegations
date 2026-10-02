@@ -1,11 +1,10 @@
 ## Enforce spaces inside Nim expressions (Article X.9), and fix them (`koch fix`).
-##   Spaces are list, by Architect's ruling; every gap list names takes its count:
-##   - binary operator takes one space on each side; operator ending its line takes one before;
+##   Spaces are list X.9 gives; every gap list names takes its count:
+##   - binary operator and `=` take one space on each side; one ending its line takes one before;
 ##   - range operator (`..`, `..<`, `..^`) takes none on either side;
 ##   - prefix operator is glued to its operand;
 ##   - comma takes none before it and one after; colon of type, field or branch likewise;
 ##   - bracket holds no space inside it, after opening or before closing;
-##   - `=` of named argument takes one space on each side, as X.3 and V.4 spell `name = value`;
 ##   - trailing comment takes two before its marker, which `form.nim` holds.
 ##   Reads tokens (`tokens.nim`), so string, character, comment and quoted name never trip it.
 ##     Gap between two tokens of one line is read; line break and indent are not.
@@ -24,11 +23,10 @@
 ##     which `-128'i8` shows differs.
 ##   Gap is never closed where tokens would merge: `(` before `.` (`(.` opens pragma), `[`
 ##     before `:` (`[:`), `.` before `)` (`.)`), and colon after operator (`*:`, `=:`).
-##   `=` of named argument: lexer reads `=` as no operator, so any spacing of it moves nothing.
-##     Choice, recorded: X.3 example spells `symbols = "∧"` and V.4 `as_weight = true`, and tree
-##     spells every named argument so, so rule holds that form.
-##   Never read: `=` of definition, default or assignment, which X.9 leaves to its statement;
-##     `;`, which list leaves out; `::`, `.` and dot-like operators (`.?`), glued as field
+##   `=` of definition, default, assignment or named argument: lexer reads `=` as no operator,
+##     so any spacing of it moves nothing, and `=` glued to operator character lexes as other
+##     operator (`=-`), which rule never reads.
+##   Never read: `;`, which list leaves out; `::`, `.` and dot-like operators (`.?`), glued as field
 ##     access; operators of `import`, `include`, `from` and `export`, whose `/` and `..` spell
 ##     paths; export marker, i.e. `*` glued after name that declaration places, before
 ##     anything but operand. Name opening its line, following declaration keyword, or
@@ -53,7 +51,7 @@ type
     Binary  ## Around binary operator: one space each side.
     Range  ## Around range operator: none.
     Prefix  ## After prefix operator: none.
-    Named  ## Around `=` of named argument: one space each side.
+    Equals  ## Around `=`: one space each side.
     Comma  ## Before comma none, after it one.
     Colon  ## Before colon none, after it one.
     Inner  ## Inside bracket: none.
@@ -181,15 +179,8 @@ func respacings(source: string): seq[Respacing] =
     tokens = source.tokens
     partners = tokens.partners
     skipped = tokens.pathTokens(partners, source)
-  var
-    lasts = newSeq[int](tokens.len)
-    enclosing = newSeq[int](tokens.len)
-    opened: seq[int]
-  for k, t in tokens:
-    lasts[k] = t.lastLine(source)
-    enclosing[k] = if opened.len > 0: opened[^1] else: -1
-    if t.kind == TokenKind.Open: opened.add k
-    elif t.kind == TokenKind.Close and opened.len > 0: discard opened.pop
+  var lasts = newSeq[int](tokens.len)
+  for k, t in tokens: lasts[k] = t.lastLine(source)
   for k, t in tokens:
     if k == 0 or lasts[k - 1] < t.line: continue
     if tokens[k - 1].kind == TokenKind.Comment or t.kind == TokenKind.Comment: continue
@@ -208,17 +199,22 @@ func respacings(source: string): seq[Respacing] =
     if t.kind != TokenKind.Operator and not is_keyword_operator: continue
     var spacing = Respacing(line: t.line)
 
-    # Name `=` of named argument: name opens argument of call.
+    # Space `=` one each side, wherever it stands; lexer reads no spacing of it.
     if text == "=":
-      let o = enclosing[k]
-      if is_line_end or k < 2 or o < 0 or before.kind != TokenKind.Word: continue
-      if not tokens.isCallOpen(partners, o, source): continue
-      if tokens[k - 2].kind != TokenKind.Comma and k - 2 != o: continue
-      let right = tokens[k + 1].first - t.after
-      if left == 1 and right == 1: continue
-      spacing.placement = Placement.Named
-      spacing.edits = source.around(tokens, k, 1)
-      spacing.got = source.excerpt(before, tokens[k + 1])
+      spacing.placement = Placement.Equals
+      if is_line_end:
+        if left == 1: continue
+        spacing.edits = @[Edit(first: before.after, after: t.first, spaces: 1)]
+        spacing.got = source.excerpt(before, t)
+      else:
+        let
+          next = tokens[k + 1]
+          right = next.first - t.after
+        if left == 1 and right == 1: continue
+        if before.kind == TokenKind.Open or next.kind in {TokenKind.Close, TokenKind.Comma}:
+          continue
+        spacing.edits = source.around(tokens, k, 1)
+        spacing.got = source.excerpt(before, tokens[k + 1])
       result.add spacing
       continue
     if text in IGNORED_OPERATORS or (text.len > 1 and text[0] == '.' and text[1] != '.'):
@@ -276,7 +272,7 @@ func checkSpacing*(path, source: string): seq[Finding] =
       of Placement.Binary: "Binary operator takes one space on each side (X.9)"
       of Placement.Range: "Range operator takes no space on either side (X.9)"
       of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
-      of Placement.Named: "Named argument takes one space on each side of `=` (X.9, X.3)"
+      of Placement.Equals: "`=` takes one space on each side (X.9)"
       of Placement.Comma: "Comma takes no space before it and one after (X.9)"
       of Placement.Colon: "Colon takes no space before it and one after (X.9)"
       of Placement.Inner: "Bracket holds no space inside it (X.9)"

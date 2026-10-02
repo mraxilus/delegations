@@ -186,7 +186,7 @@ func lockedNimbles*(tree: Tree): seq[string] =
 func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix.
   ##   On every Nim kind: X.9 trailing comments and spaces, X.2 banners, suites and tests,
-  ##   X.11 helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators,
+  ##   STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators,
   ##   signatures, calls and trailing separators. On `.nim` alone, as idiom checks read it:
   ##   X.5 import brackets and X.10 lists. Fenced lines are read by none, and fence fix cannot
   ##   read is reported alone.

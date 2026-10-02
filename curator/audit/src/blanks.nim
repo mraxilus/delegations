@@ -1,5 +1,5 @@
-## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2, X.11),
-##   and fix them (`koch fix`), by Architect's ruling.
+## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2;
+##   STYLE.md §1), and fix them (`koch fix`).
 ##   Under `tests/`: suite is first tier and takes three blank lines before it; test is second
 ##     tier and takes two. First child follows its opener at once, i.e. test opening suite and
 ##     suite opening `when` body: no blank line. Suite or test right after banner takes
@@ -196,7 +196,8 @@ func runs(path, source: string): seq[Run] =
 
 
 func checkBlanks*(path, source: string): seq[Finding] =
-  ## Report blank lines beside suite, test or nested helper other than rule asks (X.2, X.11).
+  ## Report blank lines beside suite, test or nested helper other than rule asks (X.2, STYLE.md
+  ##   §1).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for run in runs(path, source):
     let message =
@@ -205,7 +206,7 @@ func checkBlanks*(path, source: string): seq[Finding] =
       of Target.Test: "Test takes two blank lines before it (X.2)"
       of Target.Child: "First child follows its opener at once (X.2)"
       of Target.Banner: "Suite or test after banner takes banner's one blank line (X.2)"
-      of Target.Helper: "Nested helper takes one blank line on each side (X.11)"
+      of Target.Helper: "Nested helper takes one blank line on each side (STYLE.md §1)"
     result.add finding(path, run.line + 1, message & "; got `" & $run.count & "`.")
 
 
@@ -225,6 +226,7 @@ func fixBlanks*(path, source: string): Fix =
   result.source = lines.join("\n")
   for run in found:
     let rule =
-      if run.target == Target.Helper: "helper blank lines (X.11)" else: "test blank lines (X.2)"
+      if run.target == Target.Helper: "helper blank lines (STYLE.md §1)"
+      else: "test blank lines (X.2)"
     result.fixed.add finding(path, run.line + 1, rule)
   if found.len > 0: result.origin = origin

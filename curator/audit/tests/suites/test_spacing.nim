@@ -69,10 +69,13 @@ suite "Spacing":
     for kept in ["let a = b[ : c]\n", "type T = object\n  x* : int\n"]:
       check kept.fixed == kept
 
-  test "named argument takes one space each side of `=`; default and assignment stay":
-    check "f(a=1, b  =  2)\n".fixed == "f(a = 1, b = 2)\n"
-    for kept in ["proc f(a=1) = discard\n", "x=1\n", "let y=2\n", "Foo(a: 1)\n"]:
+  test "`=` takes one space each side, wherever it stands":
+    check "f(a=1, b  =  2)\nproc g(a=1)= discard\nx=1\nlet y  =2\n".fixed ==
+      "f(a = 1, b = 2)\nproc g(a = 1) = discard\nx = 1\nlet y = 2\n"
+    check checkSpacing("a.nim", "x=1\n")[0].message.startsWith("`=` takes one space")
+    for kept in ["Foo(a: 1)\n", "proc f() =\n  discard\n"]:
       check kept.fixed == kept
+    check "x=-1\n".fixed == "x =- 1\n"  # `=-` is one operator, as lexer reads it
 
   test "never read: export marker, type colon, field dot, paths of imports, strings, comments":
     let kept = "import std/os, ../a\nexport b/c\nproc f*(x: int): int = x.y\n" &

@@ -91,7 +91,7 @@ suite "Fixes":
     check checkIdioms(path, LAYOUT).len == 0
     let found = checkFormatting(path, LAYOUT, Kind.Nim)
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
-                 "share one bracket", "alphabetised", "Named argument"]:
+                 "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
     let (written, fixed, refused, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
     check refused.len == 0 and written.len == 1

@@ -1,4 +1,4 @@
-## Hold blank lines beside suites, tests and nested helpers (Article X.2, X.11): each run of
+## Hold blank lines beside suites, tests and nested helpers (X.2, STYLE.md §1): each run of
 ##   other count is reported and fixed; fixture string, alias and side leaving owner are never
 ##   read; fix changes nothing else, and nothing second time.
 
