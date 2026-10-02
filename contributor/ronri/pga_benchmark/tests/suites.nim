@@ -28,6 +28,8 @@ const
   FLOOR_FUNCTIONS_REFERENCE =
     when DIMENSIONS == 4 and IS_RIGID: 73
     elif DIMENSIONS == 5 and IS_CONFORMAL: 84
+    elif DIMENSIONS == 3 and IS_RIGID: 50
+    elif DIMENSIONS == 4 and IS_CONFORMAL: 66
     else: 1
     ## Reference functions own nimcache holds at pin, which optimality law must read.
     ##   Fewer means guard skips one, or reference turned template; either moves floor by choice.
@@ -109,7 +111,7 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
 proc emitTestSkipped(): NimNode {.compileTime.} =
   ## Build placeholder test that skips where algebra carries no typed reference (Article IX.9).
   quote do:
-    test "typed reference, which rga4d and cga5d alone carry":
+    test "typed reference, which this algebra lacks":
       skip()
 
 
@@ -655,6 +657,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check m.bytes_moved == 896  # sum of every cause
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
+    check sizeOfStem("Point", 64, "referenceZrigid2") == 24  # 2D point, not 3D one
+    check sizeOfStem("Circle", 128, "referenceZconformal2") == 32  # 2D circle, not 3D one
 
 
   test "no lower bound outruns what library spends on same operation":
@@ -725,7 +729,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
   test "typed reference spends no fill and no error check, so it is optimal code":
     if not CATALOGUE.anyIt(it.reference.len > 0):
-      echo "    typed reference exists at rga4d and cga5d alone, so law skips (Article IX.9)"
+      echo "    typed reference exists at rga3d, rga4d, cga4d and cga5d alone, so law skips (IX.9)"
       skip()
     else:
       var compared = 0
@@ -760,6 +764,11 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in functions:
         if f.key == "wedge(Point,Point)":
           check count(f.body).multiplies == 12 and count(f.body).subtractions == 6  # as documented
+    when IS_RIGID and DIMENSIONS == 3:
+      check "wedge(Point,Point)" in keys  # typed reference reached from suites
+      for f in functions:
+        if f.key == "wedge(Point,Point)":
+          check count(f.body).multiplies == 6 and count(f.body).subtractions == 3  # as documented
 
 
 
@@ -1272,8 +1281,8 @@ suite "Internal: Evaluations":
       result["measurands"][id] = %*{"library": {"ns_median": time, "share_nan": nan}}
 
 
-  test "evaluation measures typed algebras, and all four only when thorough":
-    check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, both lower bounds cover
+  test "evaluation measures 3D algebras, and all four only when thorough":
+    check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, 3D Euclidean
     check algebrasEvaluated(true) == @["rga4d", "cga5d", "rga3d", "cga4d"]  # thorough adds
 
 
