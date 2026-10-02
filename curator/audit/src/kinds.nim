@@ -8,7 +8,7 @@
 ##   | Nim           | .nim                          | Nim         | yes   | no   |
 ##   | NimScript     | .nims                         | Nim         | yes   | no   |
 ##   | Nimble        | .nimble                       | Nim         | yes   | no   |
-##   | Cfg           | .cfg                          | Hash        | yes   | no   |
+##   | Configuration | .cfg                          | Hash        | yes   | no   |
 ##   | Markdown      | .md                           | None        | no    | no   |
 ##   | Yaml          | .yml .yaml                    | HashSpaced  | yes   | no   |
 ##   | GitIgnore     | .gitignore                    | HashLeading | yes   | no   |
@@ -27,7 +27,7 @@
 ##
 ##   Markdown is prose document, not comment: telegraphic rule (VI.5) covers comments only,
 ##     and CONSTITUTION.md itself uses articles. Form rules still apply to it.
-##   Nimble files are NimScript; Cfg covers `nim.cfg` Atlas writes and `koch.nim.cfg`.
+##   Nimble files are NimScript; Configuration covers `nim.cfg` Atlas writes and `koch.nim.cfg`.
 ##   TypeScript and Json registered ahead of use: owner allows TypeScript where JavaScript
 ##     is forced, and its tooling needs JSON configuration.
 ##   Cpp and C carry binding shim for library no Nim import expresses; `.hpp` is C++ header
@@ -59,8 +59,8 @@ type
 
   Kind* {.pure.} = enum
     ## Define file kinds checker reads.
-    Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Cpp,
-    C, Html, Svg, Json, Shell
+    Nim, NimScript, Nimble, Configuration, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript,
+    Cpp, C, Html, Svg, Json, Shell
 
   KindRule* = object
     ## Define how one kind is read.
@@ -73,7 +73,7 @@ const LUT_RULE_BY_KIND*: array[Kind, KindRule] = [
   Kind.Nim: KindRule(syntax: Syntax.Nim, is_prose: true),
   Kind.NimScript: KindRule(syntax: Syntax.Nim, is_prose: true),
   Kind.Nimble: KindRule(syntax: Syntax.Nim, is_prose: true),
-  Kind.Cfg: KindRule(syntax: Syntax.Hash, is_prose: true),
+  Kind.Configuration: KindRule(syntax: Syntax.Hash, is_prose: true),
   Kind.Markdown: KindRule(syntax: Syntax.None),
   Kind.Yaml: KindRule(syntax: Syntax.HashSpaced, is_prose: true),
   Kind.GitIgnore: KindRule(syntax: Syntax.HashLeading, is_prose: true),
@@ -102,7 +102,7 @@ func kindOf*(path: string): Option[Kind] =
   of ".nim": some(Kind.Nim)
   of ".nims": some(Kind.NimScript)
   of ".nimble": some(Kind.Nimble)
-  of ".cfg": some(Kind.Cfg)
+  of ".cfg": some(Kind.Configuration)
   of ".md": some(Kind.Markdown)
   of ".yml", ".yaml": some(Kind.Yaml)
   of ".ts": some(Kind.TypeScript)

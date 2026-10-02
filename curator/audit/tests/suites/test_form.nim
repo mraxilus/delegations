@@ -37,7 +37,8 @@ suite "Article X":
 
   test "X.1 tabs rejected in every kind":
     check messages("a.nim", "\tx\n", Kind.Nim) == @["Line holds tab."]  # no tabs
-    check messages("nim.cfg", "hints:off\t# x\n", Kind.Cfg) == @["Line holds tab."]  # cfg too
+    check messages("nim.cfg", "hints:off\t# x\n", Kind.Configuration) ==
+      @["Line holds tab."]  # cfg too
 
   test "X.2 banner spacing":
     let good = "x = 1\n\n\n\n#[ Section ]#\n\ny = 2\n"
@@ -48,7 +49,7 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # none after
     check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks exactly one blank line after it."]  # two after
-    check messages("nim.cfg", "#[ Section ]#\n", Kind.Cfg).len == 0  # Nim only
+    check messages("nim.cfg", "#[ Section ]#\n", Kind.Configuration).len == 0  # Nim only
 
   test "X.2 banner tiers":
     let nested = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n"

@@ -34,7 +34,7 @@ suite "Article I":
 
 suite "Article VI":
   test "VI.5 last extension decides":
-    check kindOf("koch.nim.cfg") == some(Kind.Cfg)  # driver flags read as cfg, never Nim
+    check kindOf("koch.nim.cfg") == some(Kind.Configuration)  # driver flags read as cfg, never Nim
 
   test "VI.5 unregistered kinds are none":
     for path in ["Makefile", "x.mk", "data.csv", "nimble.paths", "a.txt"]:  # 5 cases
