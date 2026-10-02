@@ -76,19 +76,13 @@ const
     ##   Slower than grow: grow is getting out of way, this is marker arriving at what it
     ##   stays as, and outline that snaps reads as second marker replacing first.
 
-  SPEED_ORBIT_PIXEL* = 0.006
-    ## Orbit this many radians per dragged pixel, on right drag with selection.
-    ##   Shared by both front-ends, unlike left drag's own rate: right drag is handed
-    ##   pixels here rather than each build's own reading.
-    ##   Under `visualiser.SPEED_ORBIT` of 0.008, which left drag turns at: right drag
-    ##   carries two readings at once, and reader wants finer hold on each.
-
-  FACTOR_DOLLY_PIXEL* = 1.004
-    ## Scale separation by this per pixel dragged down, on right drag with selection.
-    ##   Compounded per pixel, as `camera.FACTOR_DOLLY_SECOND` compounds per second, so
-    ##   drag out and back returns exactly.
-    ##   Two hundred pixels of drag is about 2.2 times, which is comparable to wheel's own
-    ##   notch band over same sweep.
+  FRACTION_STRETCH_LEAST* = 0.05
+    ## Read pointer no nearer pivot's row than this share of canvas height, on right drag
+    ## with selection.
+    ##   Stretch zooms by ratio of pointer's heights over that row, which runs away near it:
+    ##   pixel off row asks for zoom without bound. Floor bounds it to tenfold over half
+    ##   height, on every canvas, since it is share and not pixels.
+    ##   Inside band, vertical does nothing, and what drag holds slips; see `panAcross`.
 
   PIXELS_TAP_SLOP* = 12.0
     ## Move press further than this and it stops being press.
@@ -304,6 +298,11 @@ type
     depth_pan*: float ## Depth right drag holds under pointer, from eye along sight.
       ## Taken when drag begins, by `grabPan`: hover is off while camera moves, so
       ## `depth_pointer` is gone by second step.
+    point_pan*: Option[Position] ## Point right drag with selection holds under pointer.
+      ## Taken when drag begins, by `grabPan`, on sphere left drag's orbit holds.
+      ##   Kept, not asked again at each step: zoom resizes that sphere, so point asked
+      ##   again is other point, and zoom would turn on how many steps pointer sent.
+      ## None in free flight.
     seconds_travelling*: float ## How long current travel hold has lasted, in seconds.
       ## Speed climbs with this, and resets to zero on frame no travel key is held; see
       ## `driveHeld`.
@@ -814,28 +813,17 @@ proc dollyAtCursor*(
     has_selection, placed)
 
 
-func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
-  ## Turn camera by desktop mouse's left drag, in whichever way its state reads.
-  ##   Free flight looks: eye stands where it stands, and only sight turns.
-  ##   Selection orbits about what is picked.
-  ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
-  ##   either verb as selection comes and goes; see `camera.look`.
-  ##   Turning about camera's own axes carries roll round with it, by solid angle drag
-  ##   encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
-  ##   geometry of transport rather than mistake, and no order of two turns escapes it.
-  ##   Desktop keeps it, with Q and E to answer it; page's drags do not, see
-  ##   `turnFollowing`.
-  if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
-
-
 func turnFollowing*(
   camera: var Camera; before, after: ScreenPosition; width, height: int;
   has_selection: bool; reach_selection = 0.0
 ) =
-  ## Turn camera by page's drag, finger's or mouse's, from pixel it left to pixel it reached.
-  ##   Both turn as turntable does, about world up and level across, so neither leaves roll:
-  ##   touch has no roll key beside it, finger wanders in curves, and page's mouse drags as
-  ##   finger does. Roll reader set by twist or by Q and E survives.
+  ## Turn camera by left drag, finger's or either mouse's, from pixel it left to pixel it
+  ## reached.
+  ##   Both states turn as turntable does, about world up and level across, so neither
+  ##   leaves roll: touch has no roll key beside it, finger wanders in curves, and both
+  ##   mice drag as finger does. Roll reader set by twist or by Q and E survives.
+  ##     Not `look` and `orbit` about camera's own axes, which carry roll round by solid
+  ##     angle drag encloses: 0.3 radian loop leaves 4.7 degrees.
   ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
   ##   brings camera back. Not rate: no rate matches field of view at every pixel.
   ##   Free flight holds sky; see `camera.lookCarrying`.
@@ -859,16 +847,78 @@ func turnFollowing*(
   )
 
 
-func grabPan*(interaction: var Interaction, camera: Camera) =
-  ## Take depth right drag holds, as it begins: what pointer is over, or pivot over nothing.
-  ##   Pivot's depth is where orbit and zoom already centre, so empty space pans what
-  ##   reader is looking at.
+func grabPan*(
+  interaction: var Interaction; camera: Camera; width, height: int; has_selection: bool;
+  reach_selection = 0.0
+) =
+  ## Take what right drag holds, as it begins, under pointer where press came down.
+  ##   Free flight holds depth: what pointer is over, or pivot's over nothing. Pivot's depth
+  ##   is where orbit and zoom already centre, so empty space pans what reader looks at.
+  ##   Selection holds point on sphere left drag's orbit holds; see `turnFollowing`.
   interaction.depth_pan = interaction.depth_pointer.get(camera.distance)
+  interaction.point_pan = none(Position)
+  if not has_selection: return
+  let (eye, frame) = camera.sight
+  interaction.point_pan = some(pointHeld(
+    eye, camera.pivot, camera.headingThrough(frame, width, height, interaction.cursor),
+    camera.radiusHeld(width, height, reach_selection),
+  ))
+
+
+func stretchAcross(
+  camera: var Camera; before, after: ScreenPosition; width, height: int;
+  point_held: Option[Position]; reach_selection: float
+) =
+  ## Move camera by right drag with selection: across turns, and up and down zooms.
+  ##   Across turns as left drag along pivot's row turns, for same travel; see
+  ##   `turnFollowing`. So turn per pixel is left drag's own, wherever press landed.
+  ##     Not point press took: taken near top of frame, it stands near line above pivot,
+  ##     where each pixel across asks for great yaw, and hand's drift spun view about up.
+  ##   Up and down then dollies, so point held's height over pivot's row scales as
+  ##   pointer's does: pinch with one finger fixed on pivot. Away from row zooms in, on
+  ##   either side of it.
+  ##     From height turn left point at, so level drag zooms nothing, and vertical one holds
+  ##     point on pointer's height exactly.
+  ##     Heights are read no nearer row than `FRACTION_STRETCH_LEAST` of canvas, on side
+  ##     pixel drag left stands on. Inside band, vertical does nothing.
+  ##   Vertical drag turns nothing, and point drifts toward or from middle column as zoom
+  ##   scales it. Not turn chasing pointer's column: near line above pivot it needs great
+  ##   yaw, and spun view and levelled it.
+  ##   Point is one `grabPan` took, or one under pixel drag left where none was taken: two
+  ##   fingers pinch as they move.
+  let
+    (eye, frame) = camera.sight
+    aspect = float(width)/float(height)
+    held = point_held.get(pointHeld(
+      eye, eye + camera.distance*frame.forward,
+      camera.headingThrough(frame, width, height, before),
+      camera.radiusHeld(width, height, reach_selection),
+    ))
+    seen = projectToScreen(camera.initMatrixViewProjection(aspect), width, height, held)
+    row = 0.5*float(height)
+    side = if before.y <= row: 1.0 else: -1.0
+    least = FRACTION_STRETCH_LEAST*float(height)
+  if not seen.isInFront: return
+  if after.x != before.x:
+    camera.turnFollowing(
+      ScreenPosition(x: before.x, y: row), ScreenPosition(x: after.x, y: row),
+      width, height, has_selection = true, reach_selection,
+    )
+  let
+    (eye_turned, frame_turned) = camera.sight
+    turned = projectToScreen(camera.initMatrixViewProjection(aspect), width, height, held)
+    depth = depthAlong(eye_turned, frame_turned.forward, held)
+    ratio = max(side*(row - before.y), least)/max(side*(row - after.y), least)
+  if not turned.isInFront or depth <= 0.0 or ratio == 1.0: return
+  # Eye comes in by what leaves held depth at `ratio` of itself, so held height scales by
+  #   its inverse; pivot's separation gives up same length.
+  camera.dolly((camera.distance - depth*(1.0 - ratio))/camera.distance)
 
 
 func panAcross*(
-  camera: var Camera; before, after: ScreenPosition; height: int; has_selection: bool;
-  depth_held: float
+  camera: var Camera; before, after: ScreenPosition; width, height: int;
+  has_selection: bool; depth_held: float; point_held = none(Position);
+  reach_selection = 0.0
 ) =
   ## Move camera by right drag, in whichever way its state reads.
   ##   Free flight strafes along camera's own across and up, so point at `depth_held` under
@@ -879,16 +929,17 @@ func panAcross*(
   ##     Not rate: fraction of separation for each pixel matched cursor at one canvas height
   ##     alone, and ran 1.74 times it on 900 px at opening 45 degrees.
   ##   Selection zooms on vertical and orbits on horizontal, so one drag reaches both
-  ##   without asking for second button.
+  ##   without asking for second button. It holds `point_held` as free flight holds depth;
+  ##   see `stretchAcross`.
+  ##     Not rates: fixed angle and fixed factor for each pixel matched cursor nowhere.
+  if has_selection:
+    camera.stretchAcross(before, after, width, height, point_held, reach_selection)
+    return
   let
     across = after.x - before.x
     up = after.y - before.y
-  if has_selection:
-    camera.orbit(-SPEED_ORBIT_PIXEL*across, 0.0)
-    camera.dolly(pow(FACTOR_DOLLY_PIXEL, up))
-    return
-  let per_pixel =
-    2.0*depth_held*tan(0.5*degToRad(camera.degrees_field_of_view))/float(height)
+    per_pixel =
+      2.0*depth_held*tan(0.5*degToRad(camera.degrees_field_of_view))/float(height)
   camera.travel(0.0, -per_pixel*across, per_pixel*up)
 
 

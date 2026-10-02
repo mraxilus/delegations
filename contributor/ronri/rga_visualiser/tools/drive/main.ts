@@ -12,7 +12,7 @@ import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
-import { driveAim, driveLook, drivePan } from './pan';
+import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
@@ -176,6 +176,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await drivePanWhileSelected(page, devtools);
+  await driveStretch(page);
   await driveGroupTurnedAtOnce(page, devtools);
   await driveUndo(page);
   await driveReachable(page);

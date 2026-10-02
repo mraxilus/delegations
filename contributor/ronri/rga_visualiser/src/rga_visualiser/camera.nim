@@ -146,9 +146,8 @@ const
 
 const
   ## Fix rates held key moves camera at, per second of holding.
-  ##   Shared by both front-ends, unlike per-pixel drag rates: `visualiser.SPEED_ORBIT` is
-  ##   radians per pixel and browser scripts works in fractions of canvas width. Held key has no
-  ##   pixels in it.
+  ##   Shared by both front-ends, unlike drags, which carry what pointer holds pixel for
+  ##   pixel and so have no rate. Held key has no pixels in it.
   ##   Per second, not per press.
   ##     Per-press steps leaned on operating system's auto-repeat: movement began after
   ##     repeat delay and arrived in stutters.
@@ -891,6 +890,16 @@ func radiusHeld*(camera: Camera; width, height: int; reach_selection: float): fl
     per_pixel = 2.0*camera.distance*half_height/float(height)
     least = FRACTION_HELD_CANVAS*per_pixel*float(min(width, height))
   min(max(reach_selection, least), FRACTION_HELD_INSIDE*camera.distance)
+
+
+func reachAimed*(tween: CameraTween, pivot: Position): float =
+  ## Read reach of what is picked from `pivot`, off aim standing offer framed it with.
+  ##   What `radiusHeld` takes, so what is picked follows pointer over its extent.
+  ##   Every drag of both front-ends reads it here, so one statement says where it comes from.
+  ##   Zero where nothing finite is aimed.
+  if tween.goal.isNone or tween.goal.get.sphere.isNone: return 0.0
+  let bound = tween.goal.get.sphere.get
+  norm(bound.centre - pivot) + bound.radius
 
 
 func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Position =
