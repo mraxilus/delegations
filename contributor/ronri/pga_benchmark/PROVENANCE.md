@@ -166,8 +166,8 @@ measurand spreads ×2.39, at rga4d.
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak. The
 figures below stay as taken on 2026-09-28.
 
-**`ns` stays in names as a unit symbol.** The Architect ruled so for this project, as for `ms`,
-`px`, `kb` and `mb` on pull request 322. So `ns_median` and `ns_library` keep it. A single
+**`ns` stays in names as a unit symbol.** The root glossary takes every prefix of SI Table 7
+under `## Standards`, so `ns_median` and `ns_library` keep it (V.6). A single
 letter stays only where an equation or a small index scope gives it meaning (V.6). Examples
 are `i` in a scan and `a + b` in the sum of counts.
 
@@ -867,8 +867,8 @@ write the zeros first. The cell is the lower of the two passes:
 The fill loses from four dimensions up, where a result holds 128 bytes or more. There gcc
 emits the fill as `rep stos` under its generic tuning for x86-64. At the pin `^∙` and `^∘`
 take the root of `|∙²` or `|∘²`, and do not build the norm. Alone at `181c8d8`, that change
-ran at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes a rule for Article VII from
-these measurements.
+ran at ×0.55 to ×0.93 in all seven algebras. Article VII holds the rule that these measurements
+set (VII.3, VII.8 and VII.9).
 
 ## Known limitations
 
