@@ -78,7 +78,7 @@ macro defineMultivectors(): untyped =
     result.add quote do:
       type `kind`* = object
         elements*: array[card(`spelled`), float]
-      func bases*(T: typedesc[`kind`]): set[Basis] = `spelled`
+      func bases*(kind_type: typedesc[`kind`]): set[Basis] = `spelled`
   var class = names[0]
   for kind in names[1 .. ^1]: class = infix(class, "|", kind)
   result.add nnkTypeSection.newTree(
@@ -163,7 +163,8 @@ proc sample[T: SomeMultivector](): T =
   for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
 
 
-when isMainModule:
+proc main(): int =
+  ## Hold laws on seeded samples; print where they hold, and exit zero.
   randomize(SEED)
   let (p, q, v) = (sample[Kvector1](), sample[Kvector1](), sample[MultivectorEven]())
   doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector"
@@ -176,3 +177,8 @@ when isMainModule:
     doAssert ((motor ⟇ a) ⟇ motor).toMultivector =~
       ((motor.toMultivector ⟇ a.toMultivector) ⟇ motor.toMultivector)
   echo "typed-multivectors: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
+  0
+
+
+when isMainModule:
+  quit main()

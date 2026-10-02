@@ -109,7 +109,7 @@ func isNull*(m: Metric; index: int): bool =
   not m.is_conformal and index == m.dimensions - 1
 
 
-func hasImage*(m: Metric; b: Blade): bool =
+func isImaged*(m: Metric; b: Blade): bool =
   ## Read whether blade survives metric, i.e. whether every factor carries image.
   for i in 0 ..< m.dimensions:
     if ((b shr i) and 1) == 1 and m.isNull(i): return false
@@ -136,7 +136,7 @@ func geometricTerms*(m: Metric): int =
 func scalarFormTerms*(m: Metric): int =
   ## Count terms bilinear form landing in one slot spends, i.e. blades carrying image.
   for b in 0 ..< m.slots:
-    if m.hasImage(Blade(b)): inc result
+    if m.isImaged(Blade(b)): inc result
 
 
 func popcount(b: Blade): int =
@@ -172,7 +172,7 @@ func dualBlade(m: Metric; b: Blade; as_weight: bool): Option[Blade] =
     if (b and o) != 0: swapped = swapped or i
     if (b and i) != 0: swapped = swapped or o
     return some(m.fullBlade xor swapped)
-  if m.hasImage(b) == as_weight: return none(Blade)
+  if m.isImaged(b) == as_weight: return none(Blade)
   some(m.fullBlade xor b)
 
 
@@ -241,7 +241,7 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
   for raw in 0 ..< m.slots:
     let
       n = Blade(raw)
-      has_null = not m.hasImage(n)
+      has_null = not m.isImaged(n)
     if has_null != as_weight: continue
     let grade = n.popcount
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)

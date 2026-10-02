@@ -194,7 +194,7 @@ func nanTable*(evaluation: JsonNode): string =
 func editsHtml*(change: Change, files: Table[string, string]): string =
   ## Render each edit closed: summary names where it lands and signatures it defines or sits
   ##   in; opening it shows quote then replacement, or whole file.
-  const DECLARATIONS = ["func ", "proc ", "iterator ", "template ", "macro ", "method ",
+  const declarations = ["func ", "proc ", "iterator ", "template ", "macro ", "method ",
     "converter ", "suite ", "test "]
     ## Words opening declaration whose signature summary shows.
 
@@ -205,7 +205,7 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
   func isDeclaration(line: string): bool =
     ## Tell whether line opens routine, test or suite.
     let stripped = line.strip(trailing = false)
-    DECLARATIONS.anyIt(stripped.startsWith(it))
+    declarations.anyIt(stripped.startsWith(it))
 
   func signature(lines: openArray[string]; first: int): (string, int) =
     ## Read declaration opening at `first`, continued while its brackets stay open; drop body,
@@ -214,11 +214,11 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
     func depthAfter(text: string; depth: int): int =
       ## Count brackets left open after text, outside strings and backticks.
       result = depth
-      var quoted, ticked = false
+      var is_quoted, is_ticked = false
       for c in text:
-        if c == '"' and not ticked: quoted = not quoted
-        elif c == '`' and not quoted: ticked = not ticked
-        elif quoted or ticked: continue
+        if c == '"' and not is_ticked: is_quoted = not is_quoted
+        elif c == '`' and not is_quoted: is_ticked = not is_ticked
+        elif is_quoted or is_ticked: continue
         elif c in {'(', '[', '{'}: inc result
         elif c in {')', ']', '}'}: dec result
 
@@ -233,11 +233,11 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
     var
       cut = text.len
       level = 0
-      quoted, ticked = false
+      is_quoted, is_ticked = false
     for index, c in text:
-      if c == '"' and not ticked: quoted = not quoted
-      elif c == '`' and not quoted: ticked = not ticked
-      elif quoted or ticked: continue
+      if c == '"' and not is_ticked: is_quoted = not is_quoted
+      elif c == '`' and not is_quoted: is_ticked = not is_ticked
+      elif is_quoted or is_ticked: continue
       elif c in {'(', '[', '{'}: inc level
       elif c in {')', ']', '}'}: dec level
       elif level == 0 and c == '#':
