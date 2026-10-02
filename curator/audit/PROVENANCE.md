@@ -102,6 +102,13 @@ Html and Svg carry hand-written pages, which the layout check confines to `pages
   `koch.nim.cfg`, and a set of unregistered names. `test_layout.nim` yields one finding on
   `data.csv`, which names `curator/audit/src/kinds.nim`.
 
+**A kind whose language has a style guide is the only kind that `koch fix` writes.** The `Guide`
+column of the table is `KindRule.has_guide`. STYLE.md is the guide of Nim, so Nim, NimScript and
+nimble carry it, and they are the kinds that read as Nim syntax. No other language has a guide.
+
+- Verified by `suites/test_kinds.nim`: the column equals the registry, and the guide marks the
+  kinds of Nim syntax and no other kind.
+
 **A gated kind argues for itself in its header, and the gate is checked rather than trusted.**
 `Cpp` and `C` join TypeScript as languages admitted only where Nim cannot serve. `.hpp` reads
 as C++ and `.h` as C, because the name alone cannot tell them apart. `justification.nim`
@@ -211,12 +218,22 @@ whitespace-free token, with the indent of the line, already overruns. That token
 `TOKEN_MAX` (400 runes), and the rest fits once it is removed. A font URL has no whitespace to
 break at, prose always does, and minified markup is one run far past the bound.
 
-Lines split on LF only, so a CR survives. Nim banners need two blank lines before and one
-after. The syntax marks the tier: `#[ Title ]#` is the first tier, and `#[[ Title ]]#` is the
-second. Where a second-tier banner follows its parent at once, the child's own check governs
-the space between them. The first tier takes three blank lines before it (X.2), but the check
-demands two of every banner. A check of three would redden the contributor banners that are
-still spaced at two, so it waits on their fixes (CURATOR.md, duty 3).
+Lines split on LF only, so a CR survives. The syntax of a Nim banner marks its tier:
+`#[ Title ]#` is the first tier, and `#[[ Title ]]#` is the second. The wired check demands two
+blank lines before every banner, and one after. Where a second-tier banner follows its parent at
+once, the child's own check governs the space between them.
+
+**`checkBanners` holds X.2 exactly, outside the static pass for now.** A first tier takes three
+blank lines before it, a second tier two, and either one after. A second tier that follows its
+parent at once keeps its own two. The wired check accepts three, so the two checks agree on what
+the fixer writes. The pull request that wires the exact check drops the lenient one, after each
+project runs `koch fix` (CURATOR.md, duty 3).
+
+- X.2 gives no count for a banner that opens the file, or for a run that ends the file. It
+  gives none between two banners either, unless they are a parent and its child.
+- Verified by `suites/test_form.nim`: the lenient check passes three blank lines before a first
+  tier, and the exact check reports two. A fix writes the exact counts, and a second fix writes
+  nothing.
 
 - Rejected: an exemption for URLs by pattern, which guesses at intent. Rejected: an exemption
   for any single-token line, which admits machine output of any length. Rejected:
@@ -1234,6 +1251,10 @@ reads as text. The module states each rule in its header, and the list here give
 - `strictFuncs` stands in its exact form before the first import, in every module.
 - A bracket import is alphabetised, and the standard library comes before packages, then local
   modules. A bracket that spans lines is read whole.
+- Adjacent imports of one directory share one bracket, and a bracket of one module drops its
+  bracket (X.5, STYLE.md §5). `checkImportBrackets` holds this, outside the static pass for now.
+- A pragma list of a declaration and an `export` list are alphabetised (X.10). `checkLists` reads
+  tokens, and stays outside the static pass for now.
 - Two consecutive single bindings of one keyword share it, reported once for each run. A `let`
   beside a `var` passes, because they cannot share one keyword.
 - A `{.used.}` carries a comment that names its consumer. A `{.push.}` stands only over foreign
@@ -1259,20 +1280,54 @@ from its rig.
 ## Fixes
 
 **`koch fix` rewrites in place each finding that has one mechanical fix, and nothing else.** It is
-built from the checks. Each fixer sits beside its check, in `form.nim` and `idioms.nim`, and reads
-the same spans, runs, predicates and constants. So each rule is written once (Article II.1), and a
-fixer cannot drift from the check that names its finding. `fixes.nim` runs on each file the fixers
-whose checks read its kind, form first. Each rewrite prints as `path:line: <rule> fixed`, at
-the line that the check names, and the run ends with the count.
+built from the checks. Each fixer sits beside its check, in `form.nim`, `idioms.nim`,
+`spacing.nim` and `wrapping.nim`, and reads the same spans, runs, predicates and constants. So
+each rule is written once (Article II.1), and a fixer cannot drift from the check that names its
+finding. Each rewrite prints as `path:line: <rule> fixed`, at the line that the check names, and
+the run ends with the count. With the layout rules below, `koch fix` replaces nimpretty.
+
+**`koch fix` writes Nim files alone.** A fixer applies a style guide, and STYLE.md is the guide
+of Nim alone. So `fixSource` runs only on a kind that carries `has_guide`: Nim, NimScript and
+nimble. Every other kind passes through unwritten, Markdown, TypeScript, JSON, YAML, cfg and
+shell among them. The checks still read every kind, and a finding there stays for a fix by hand.
+
+- Verified by `suites/test_fixes.nim`: a Markdown, TypeScript, JSON, YAML, cfg and shell source
+  with trailing whitespace passes through, and its check still reports the whitespace. A Nim and
+  a nimble source are fixed. The scope test no longer writes a contributor `README.md`.
+
+**The fixers run in one order, and the chain runs again until the source settles.** Form runs
+first, so later fixers read clean line ends and the final gap of each comment. The idioms run
+next, because the bindings fixer indents lines, and every later width reads that indent. Spacing
+runs before wrapping, because the spaces it adds are width that wrapping measures. Wrapping runs
+separators, then signatures, then calls, then trailing separators. A layout joins groups with the
+separator it reads, and a trailing separator goes only where no layout wrote one.
+
+- A second round catches what a first round enabled, such as an operator that spacing refused
+  for width before a call split its line. `ROUNDS_MAX` is three, and the tree settles in two.
+- Verified by `suites/test_fixes.nim`: one source that breaks each layout rule settles in one
+  run. Every check then reports none of it, and a second run writes nothing.
 
 **Each report names a line of the source as given.** A fixer that inserts or deletes lines records
 the input line of each output line. `chain` traces every later report through that record.
 
-**The verb lands first, and the X.9 check after it.** The static pass does not run the check, but
-its fixer runs, because a fixer reports nothing new. Each project then clears its gaps with
-`nim r koch fix contributor/<domain>/<project>` on its own branch. A later pull request wires
-`checkComments` into `checkForm`. In the other order, each project fixes each gap by hand. A check
-that reddens a project merges only after that project fixes (CURATOR.md, duty 3).
+**The verb lands first, and the layout checks after it.** The static pass runs none of them, but
+their fixers run, because a fixer reports nothing new. Each project then clears its findings with
+`nim r koch fix contributor/<domain>/<project>` on its own branch. In the other order, each
+project fixes each finding by hand. A check that reddens a project merges only after that
+project fixes (CURATOR.md, duty 3).
+
+**`checkFormatting` in `fixes.nim` is the one list of checks that the next pull request wires.**
+That pull request adds one call to it in `auditTree`, and drops the lenient banner check of
+`checkForm`, which `checkBanners` replaces. The list on every kind of Nim syntax:
+
+- `checkComments`, the gap before a trailing comment (X.9);
+- `checkBanners`, the blank lines beside a banner (X.2);
+- `checkSpacing`, the spaces around an operator (X.9);
+- `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5).
+
+On `.nim` alone, as the idiom checks read it, the list adds `checkImportBrackets` (X.5) and
+`checkLists` (X.10). The move of a late `strictFuncs` needs no new check, because `checkIdioms`
+already reports it.
 
 **X.9 asks exactly two spaces, by the ruling of the Architect.** An aligned column breaks on a
 rename. One longer name moves every comment of the block. So a change of one line rewrites the
@@ -1290,7 +1345,10 @@ These findings have a fixer:
 - a run of single bindings, which becomes one keyword over bindings indented two spaces (X.5);
 - a missing `strictFuncs`, put where X.6 puts directives: after the header docs and notes, and
   before other code (STYLE.md §2);
-- `return result`, which goes or becomes `return` by its place (STYLE.md §5).
+- a late `strictFuncs`, moved to that place;
+- `return result`, which goes or becomes `return` by its place (STYLE.md §5);
+- each layout rule of the next section: separators, signatures, calls, trailing separators,
+  import brackets, unordered lists, operator spacing and banner blank lines.
 
 **The place of `return result` decides its fix.** STYLE.md §5 allows a bare `return` only for an
 early exit. So where the line ends a routine that holds `result`, at the own indent of its body,
@@ -1306,16 +1364,13 @@ from the line that opens its block, on the code view.
 
 **A finding with more than one reasonable fix has no fixer.** A tab has no fixer, because its
 width is a guess. A lone CR is a line break or a stray byte. A reflow, a wrap or a rename each
-fixes a long line. The banner check demands two blank lines where X.2 asks three of a first tier.
-An empty file has no fixer either.
+fixes a long line that holds no call. An empty file has no fixer either.
 
 - An import ranked low across lines that are not imports has no fixer, because where it lands is a
   choice.
 - A bracket that holds a comment has no fixer, because the comment belongs to an item or to a slot.
 - A run whose last binding opens a long string has no fixer, because a new indent changes the
   string.
-- `strictFuncs` after the imports is a move and not an insertion, so it waits for a rule of its
-  own.
 - A rule that needs a fact the text does not hold has no fixer. That covers the consumer of
   `{.used.}`, the reach of `{.push.}`, a seed and a stub header. It also covers debug output, a
   path of one machine and the flags of TypeScript.
@@ -1345,17 +1400,129 @@ project, so only a name reaches it.
 - Cost: a fix reaches only what a check names, and reading holds every other rule of layout.
 - Cost: an aligned column of trailing comments loses its alignment, by the ruling above.
 - Cost: a sorted bracket item changes the width of its line by the difference in length.
-- Verified by `suites/test_form.nim`, `suites/test_idioms.nim` and `suites/test_fixes.nim`. For
-  each fixer, its output has no finding of its check, a second fix changes nothing, and nothing
-  else changes. A clean source passes through unchanged. A curator branch that would write
-  contributor code writes nothing.
+- Verified by `suites/test_form.nim`, `suites/test_idioms.nim`, `suites/test_spacing.nim`,
+  `suites/test_wrapping.nim` and `suites/test_fixes.nim`. For each fixer, its output has no
+  finding of its check, a second fix changes nothing, and nothing else changes. A clean source
+  passes through unchanged. A curator branch that would write contributor code writes nothing.
 - Verified by `suites/test_idioms.nim`: `return result` goes at the end of a routine, and becomes
   `return` in a branch and before more body. A wrapped signature reads as one. Each place without
   one fix keeps its line, and a report after a deleted line names the line of the source as given.
-- Verified by hand with a scratch program over `fixEntries` and `auditTree`, 2026-10-02. It fixed
-  every file of the tree in memory, then ran the static pass again. Each X.9 gap cleared but three,
-  which the width guard keeps, and no new finding appeared. A second fix wrote nothing, and every
-  rewrite changed spaces alone.
+- Verified by hand over the whole tree, 2026-10-02, as `## Layout fixes` records.
+
+## Layout fixes
+
+**Each layout rule that has one right answer has a check and a fixer, from one reading.** The
+checks and fixers of separators, signatures, calls and trailing separators share the reading of
+`wrapping.nim`. Operator spacing reads `spacing.nim`, and both read tokens. A construct that the
+scanner cannot read with certainty stays as written, and its check stays silent.
+
+**`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
+operator. A `-` before a digit opens a number after a space or an opening bracket.
+
+- The glyphs are those of the commit pin of the `ronri` projects. It adds `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the
+  glyphs of 2.2.12, and no project on 2.2.12 spells them in code.
+- Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
+  each Nim file outside whitespace lies in one token, and each bracket finds its partner.
+
+**Parameters take commas while each type appears once, and semicolons where a group shares a
+type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
+included, in a routine, a routine type and a lambda. The separator after a typed group never
+changes what the compiler reads. A group without a type or a default stays, because a semicolon
+after it ends the group.
+
+**A signature that fits stands on one line, and one that fits nowhere takes one group to a line
+(X.3).** A wrapped signature that would fit is joined. Each layout indents one level, and the
+closing line opens with `)`. A signature that holds a comment, or a group that spans lines,
+stays. So does one that fits where the body after `=` on its line does not, because a moved body
+and a wrap are two answers.
+
+- Contradiction, open for the Architect. STYLE.md §5 wraps the parameters onto one line of
+  their own first. Yet its second example puts one group on each line, where one line of them
+  fits in 91 columns. X.3 says that a signature "may" wrap first. So where that line fits, the
+  fixer keeps the layout as written, with one level of indent. A one-line signature that is too
+  wide there stays for the hand.
+
+**A call that fits stays on its line, and one that does not takes one argument to a line (X.3).**
+A wrapped call that would fit is joined, and a split call never puts all its arguments on one
+line of their own. The outermost call that crosses `LINE_MAX` splits first, and each line it
+leaves is read again. An argument splits its own call only where that call is the whole argument.
+An argument that the hand wrapped, and that fits no line, keeps its line breaks and moves with
+its new indent.
+
+- A list that no call opens, and that spans lines, keeps its rows: the fixer never reflows it.
+- A call stays where it holds a comment, a long string that spans lines, or a block. A block is
+  a keyword that opens one, `;`, `do`, or `:` at the end of a line outside a condition.
+- A line break that joining could read again stays, such as one between two operands.
+
+**A list written one item to a line takes a trailing separator (X.3).** That holds for a call,
+parameters, an array, a seq, a set, a table, a tuple of several items, a constructor and an import
+bracket. Parameters take the separator that their groups take. A parenthesis of one item takes
+none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02:
+the compiler accepts the separator in each of these lists, and `;` after the last parameter group.
+
+**Adjacent imports of one directory share one bracket, and a bracket of one module drops it
+(X.5).** The merged statement takes the place of the first, and its items sort as bracket items
+sort. An item keeps `{.all.}`. An import with `except`, `as`, another pragma, a comment or a
+string stays apart, and so does a statement that spans lines. Imports apart across a blank line
+stay too, because where they meet is a choice.
+
+**A pragma list of a declaration and an `export` list are alphabetised (X.10).** The items sort
+into the slots they held, and a `key: value` item moves whole. A pragma statement that opens its
+line stays, such as `{.push.}`. A list that holds a pragma which code defines stays. Such a
+pragma may be a macro, and the compiler applies macros in the order written. The built-in
+pragmas come from the sets of `compiler/pragmas.nim`, and their order changes nothing that the
+compiler reads.
+
+- Open for the Architect: a list whose order case decides stays, and its check is silent. By
+  code point `Tree` sorts before `projectDirectories`, and by the alphabet it sorts after. The
+  imports sort by code point, and their module names hold no capitals.
+
+**A binary operator takes one space on each side, and a prefix operator is glued (X.9).** The
+range operators `..`, `..<` and `..^` are binary. The lexer reads only whether a space stands on
+each side of an operator, never how many. A space before and none after reads as prefix, so
+`a -b` is the call `a(-b)`. So the fixer rewrites spacing only where spaces stand on both sides or
+on neither, and before an operator that ends its line.
+
+- Asymmetric spacing stays, and the check is silent on it, because its fix is a choice of meaning.
+- A `-` glued before a number would become a literal, so `- 1` stays.
+- The `=` of a named argument takes one space on each side. X.3 spells `symbols = "∧"`, V.4
+  spells `as_weight = true`, and every named argument of the tree takes the spaces.
+- Never read: the `=` of a definition, a default or an assignment, and `:` and `::`. Also never
+  read: `.` and the operators that start with it, the paths of `import` and `export`, and a `*`
+  glued after a name.
+- Cost: `a*(b)` reads like `f*(x: int)`, so a glued `*` before a bracket stays.
+
+**Banners take the blank lines of X.2 exactly, and `strictFuncs` after the imports moves.** The
+banner fixer sets each run beside a banner to the count that `checkBanners` reads. The late
+`strictFuncs` moves to the place where a missing one goes. The blank lines above it go with it
+where blank lines stand below it too.
+
+**No fixer writes a line wider than `LINE_MAX`.** A rewrite that would do so stays, with its
+finding, for the hand.
+
+- Cost: X.1 asks that a hand-shaped block be fenced with the marker that the formatter reads, and
+  `koch fix` reads no marker yet. Two generated data files of `rga_visualiser`, `starfield.nim`
+  and `neighbourhood.nim`, hold 11,583 of its 12,134 call findings.
+
+**The whole-tree proof: no fix changes what code means.** Verified by hand, 2026-10-02, with a
+scratch program over `fixEntries`, `auditTree` and the parser of the compiler. The program fixed
+every Nim file of the tree in memory, on branch `main`, so scope refused nothing.
+
+- The fix wrote contributor code alone. The curator code took the same fixes in its own commits.
+- Reports by rule:
+  - calls 12,489, operator spacing 1,665, trailing comments 1,321;
+  - parameter separators 621, signatures 132, unordered lists 58;
+  - import brackets 21, trailing separators 6, banners 1.
+- Reports by project: `rga_visualiser` 14,705, `dance_ontology` 1,368, `pga_benchmark` 241.
+- Lines added and removed: `rga_visualiser` 97,833 and 26,385, `dance_ontology` 2,342 and 1,602,
+  `pga_benchmark` 639 and 332.
+- The static pass reported 0 findings before and after. The layout checks reported 16,700
+  findings before and 35 after, each one a line that the width guard keeps.
+- A second fix wrote nothing.
+- The parser of the compiler read each changed file to the same tree as before. Where a fix
+  merged import brackets or sorted a list, the trees are the same once that order is normalised.
+- Each Nim file that `nim check` passed before, on its own pin and config, passes after. A file
+  that failed before lacks a native library, or is a broken prototype.
 
 ## Fixed waits
 
@@ -1809,7 +1976,13 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether the fields of `update_pull_request` other than `draft` take REST or GraphQL. No call
   has isolated one.
 - Whether `koch fix` reads a fence marker, as Article X.1 asks of a formatter. It changes only what
-  a check reports, so a fence would exempt that check too.
+  a check reports, so a fence would exempt that check too. The call rule makes the question
+  urgent. It would turn each constructor of two lines in the generated data of `rga_visualiser`
+  into eight lines.
+- Which layout a signature takes where its parameters fit one line of their own. STYLE.md §5
+  says that line, and its second example and X.3 allow one group to a line (`## Layout fixes`).
+- Which order is alphabetical where case decides it: code point or the alphabet. The lists that
+  case decides stay as written until the Architect rules.
 - Whether `koch fix` with no name reads the changed files rather than the changed projects. Every
   verb that takes projects reads projects, so a run can rewrite a file that the branch did not
   touch (Precedence 2).
