@@ -1195,9 +1195,10 @@ the root or the project glossary lists it, as a symbol under `## Standards` or a
 jargon list of V.6 passes. Verified by `suites/test_names.nim`.
 
 **A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
-`importjs` or `dynlib` declares a name that the library chose, so it is skipped. Its parameters
-are ours, and they are read. The pragma block may stand on its own line after the signature,
-and the scanner joins it.
+`importjs` or `dynlib` declares a name that the library chose, so it is skipped. By the ruling
+of the Architect, its parameters are ours, and they are read. So `wake: bool` takes a boolean
+prefix like any other parameter. The pragma block may stand on its own line after the
+signature, and the scanner joins it.
 
 **The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
 Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
@@ -1210,15 +1211,19 @@ case is a fact about letters, so the check needs no list of words:
 - One letter fits by its own case. A capital passes a type, a global and a placeholder. A
   lowercase letter passes a routine, a local, a parameter and a field.
 
-**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is no
-notation, so `N` or `M` as a local, a parameter or a field takes the snake case. III.5 covers
-only the symbols of the source, such as `𝐦` and `𝐍`. They excuse the case of an immutable
-global, and nothing else. A name that holds a non-ASCII letter is notation. The check reads its
-case like any other name, except at an immutable global.
+**A variable in the notation of its source keeps that notation (III.5).** A binding, field or
+parameter whose name holds a non-ASCII letter is notation, such as `𝐦`, `𝐮` or `𝐌`. At any
+scope, notation holds over the case of V.1, so the check does not read its case. At module
+scope, notation holds only for an immutable global. So a mutable global in notation is one
+finding, which cites III.5.
 
-- `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
+- A type, a routine, an enum member and a placeholder are no variable, so their case is read.
+  `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
   them by their block, where each style runs its capitals first.
 - An operator is backticked, so it is never read as a name.
+
+**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
+never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
 
 **A parameter that holds a type is a parameter, by the ruling of the Architect.** So
 `t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
@@ -1239,14 +1244,20 @@ goes in `proc main`, and the block calls it. A binding in the entry block reache
 module, because `when` opens no scope. A routine makes it a true local in every language. The
 Architect rejected the exception that made such a binding a local of its block.
 
-- Each binding in the entry block is one finding, and its case is not judged. A `for` and an
-  `except … as` there bind too. A block of plain calls passes, and so does a routine inside it.
+- By the ruling of the Architect, every binding in the entry block outside a routine is a
+  finding, at any depth. The reason is that code that binds moves to `main`.
+- So a `for`, an `except … as`, and a `let` inside a loop of the block are findings too.
+- Each binding there is one finding, and its case is not judged. A block of plain calls
+  passes, and so does a routine inside it.
 
 **A boolean is a proposition or a mode (V.4).** A boolean binding, field or parameter opens
 with `is`, `as`, `should`, `found` or `has`, and a word follows it. A `func` that returns `bool`
-is a predicate, and its name opens with `is`. By the ruling of the Architect, a `proc` that
-returns `bool` reports the success of an action (V.3). So it is unread, and a `func` that
-writes a `var` parameter is unread for the same reason.
+is a predicate, and its name opens with `is`. The Architect ruled on the routines that are no
+predicate:
+
+- A `proc` that returns `bool` reports the success of an action (V.3), so it is unread.
+- A `func` that writes a `var` parameter and returns `bool` is an action too, so it is unread.
+- `contains` keeps its name, because `in` and `notin` call it by that spelling.
 
 - V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
   `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
@@ -1261,8 +1272,6 @@ writes a `var` parameter is unread for the same reason.
   brackets, and a name that `{.inject.}` makes.
 - Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
   value `true` or `false`. A boolean that a call returns holds by reading.
-- Cost: `in` calls `contains` by its spelling, so a predicate of that name keeps the name of
-  the host.
 - Cost: a Pascal name of capitals alone, such as `ANTI`, reads as an acronym and passes. V.9
   and reading hold it.
 
