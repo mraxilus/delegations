@@ -129,3 +129,14 @@ jobs:
 """
     check MINTED.handsGhOtherToken
     check checkScopes("draft.yml", MINTED).len == 0
+
+  test "weekly schedule and RECENT_DAYS name one window":
+    # Window is named twice, as cron and as constant, so change of one alone is finding.
+    const WEEKLY =
+      "on:\n  schedule:\n    - cron: '0 6 * * 1'\njobs:\n  a:\n    run: koch --recent\n"
+    check WEEKLY.cronDays == 7
+    check checkWindow("check.yml", WEEKLY, 7).len == 0
+    check "got `7` days against `1`" in checkWindow("check.yml", WEEKLY, 1)[0].message
+    check WEEKLY.replace("* * 1", "* * *").cronDays == 1
+    check WEEKLY.replace("* * 1", "* * 1-5").cronDays == 0  # shape untaught reads as 0
+    check checkWindow("ledger.yml", WEEKLY.replace("--recent", ""), 1).len == 0  # no window

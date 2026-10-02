@@ -13,7 +13,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, osproc, sequtils, streams, strutils]
-import ./[kinds, layout]
+import ./[commits, kinds, layout]
 
 export layout.Entry, layout.Tree
 
@@ -93,3 +93,18 @@ proc gainedPaths*(root, base: string): seq[string] =
 proc subjects*(root, base: string): seq[string] =
   ## List commit subjects reachable from HEAD but not `base`, merges excluded.
   gitFields(root, ["log", "-z", "--format=%s", "--no-merges", base & "..HEAD"])
+
+
+proc branchCommits*(root, base: string): seq[Commit] =
+  ## Read commits reachable from HEAD but not `base`, newest first, merges excluded.
+  ##   Paths come from `diff-tree` of each commit, so rename reads as both of its paths.
+  for hash in gitFields(root, ["log", "-z", "--format=%H", "--no-merges", base & "..HEAD"]):
+    let
+      name = hash.strip
+      message = gitFields(root, ["log", "-1", "-z", "--format=%s%x1f%b", name])[0]
+      parts = message.split('\x1f', 1)
+    result.add Commit(
+      subject: parts[0],
+      body: (if parts.len > 1: parts[1] else: ""),
+      paths: gitFields(root, ["diff-tree", "-z", "--no-commit-id", "--name-only", "-r", name]),
+    )

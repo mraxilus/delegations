@@ -44,7 +44,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, times]
 
-import ../src/pga_benchmark/[changes, proposals, gaps, guard, head, inspector, model, notes]
+import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
 from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
@@ -746,8 +746,9 @@ func shortened(text, stem, plain: string): string =
 
 func unindexed(text: string): string =
   ## Replace `(((Basis) n) - 0)` with `n`, which is what compiler spells there.
-  const OPEN = "(((Basis) "
-  const CLOSE = ") - 0)"
+  const
+    OPEN = "(((Basis) "
+    CLOSE = ") - 0)"
   var i = 0
   while true:
     let at = text.find(OPEN, i)

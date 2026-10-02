@@ -26,8 +26,9 @@ type Paragraph* = object
 
 func paragraphs*(markdown: string): seq[Paragraph] =
   ## Collect prose paragraphs of document, fenced code, tables and headings left out.
-  var words: seq[string]
-  var opened = 0
+  var
+    words: seq[string]
+    opened = 0
   let lines = markdown.fencedOut.splitLines
   for i, line in lines:
     let

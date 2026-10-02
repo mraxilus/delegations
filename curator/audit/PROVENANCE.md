@@ -261,6 +261,9 @@ are findings, and are never skipped. `.claude` and `.githooks` are root director
   Rejected: an inference of mock-up from generated, which makes the distinction an accident of
   formatting.
 - Cost: empty directories are invisible to git, so `tests/` must hold a file.
+- No tracked path lies under `build/`, `dependencies/` or `node_modules/` at any depth (XI.3).
+  The ignore file keeps them out, so this catches a forced add. A file that only bears such a
+  name, such as `dependencies.nim`, is no directory and passes.
 - Verified by `suites/test_layout.nim` over a fixture tree that the tests build. The project list is
   pinned, and the unknown-domain case asserts both the finding and the unchanged list.
   `test_audit.nim` proves that fixture clean under every static check.
@@ -343,6 +346,14 @@ such log, so the `check-files` job fetches every commit.
   the row says where.
 - Cost: line forms, and never a Markdown parse. A heading inside an HTML comment counts, and
   front matter is not skipped. No governed provenance file carries either.
+
+**A number written before `files`, `suites`, `checks` or `tests` in the prose of a record is a
+finding.** A count goes stale by the next commit, and nothing here reads it again, so the guide
+asks for the command that counts. Fenced code and code spans are skipped, so a command and its
+output may quote a count.
+
+- Cost: a count spelled in words passes, and reading holds it.
+
 - Verified by `suites/test_record.nim`, each form by line. `fencedOut` is verified by
   `suites/test_markdown.nim`.
 
@@ -493,6 +504,35 @@ on the same merge ref is what holds a stale stamp there.
   `CONTRIBUTOR.md`, check sources and `koch.nim`. At a synthetic merge of that head into
   `main`, with `main` as the first parent, it reports nothing.
 
+**A curator branch holds each finding inside a contributor project, and blocks on the rest.**
+A check that reddens a project waits for that project to fix, and the curator never fixes it
+(`CURATOR.md`, duty 3). Such a branch can never be clean, so `koch check` lists those findings
+apart and runs types, suites and drive on the rest. It records the tree for the `pre-push`
+hook when the rest is clean. The runner reads the whole tree and holds nothing, so the pull
+request stays red until each project fixes, and the merge gate is unchanged.
+
+Held means any path deeper than `contributor/<domain>/<project>/`, records included, because
+duty 3 forbids the fix there too. The two indexes above a project are the curator's, so they
+block. A finding that a rules change leaves for the curator carries a propagation flag at its
+source, and blocks in any project. These are the stale stamp and a standard that belongs in the
+root glossary. A contributor branch holds nothing: a finding in its project is its own, and one
+in another project means that the base is red.
+
+- Rejected: push past the hook with `--no-verify`, once for each branch. Every merge of the
+  base after that first push needs a second one, and a red head can never pass the hook.
+  The `bash` hook refuses `--no-verify` on a push.
+- Rejected: match the stale stamp by its message. The flag sits where the finding is made, so
+  a reworded message cannot move it into the held set.
+- Cost: the role is read from the branch name alone, because every delegate posts as one
+  account. A contributor that names a branch `curator/...` gets past its own hook and no
+  further. On the runner, `check-scope`, `check-role` and `check-files` read the same name.
+- Cost: a new check that reports false findings in contributor code has them held too, so
+  its branch still pushes. The draft stays red, and duty 3 still has the curator read each
+  finding before the issues open.
+- Verified by `suites/test_scope.nim`, which fails with the propagation flag ignored, and by
+  `suites/test_hooks.nim`, `suites/test_provenance.nim`, `suites/test_glossary.nim` and
+  `suites/test_findings.nim`.
+
 ## Commits
 
 **`type(scope)!?: summary`, with the commit types as data. On a project branch the scope must equal
@@ -523,6 +563,27 @@ scope, one test to one fix, with nothing between them. So the priority of the Ar
 - Verified by `suites/test_commits.nim`. The pair passes, and tests before the test pass. One
   finding comes from a fix alone, from a test after its fix, and from the test of another scope. One
   comes from a second fix on one test, and from a commit or a revert between them.
+
+**A body is in sentence case, with one sentence to a line (XI.4).** Each line opens with a
+capital, a digit or a code span. It ends on `.`, `!`, `?` or `:`, and holds no second sentence.
+The trailer block is skipped, and so are fenced and indented code. A list marker is read past,
+so each list item is held as a sentence too.
+
+- Measured before the check, over the last three hundred commits on `main`. Half of the bodies
+  with text wrapped a sentence across lines, the curator's own included. The check reads a
+  branch, never the history, so it holds from the next commit on.
+- Cost: a sentence boundary is a stop, a space and a capital outside a code span. An
+  abbreviation such as `No. 3` then reads as two sentences, and STE writes such words out.
+- Verified by `suites/test_commits.nim`. A wrapped line, two sentences on one line and a
+  lowercase line each fail. A list, a code span, a version number and a fenced block pass.
+
+**The record travels in a `docs` commit of its own.** A commit that touches `PROVENANCE.md` and
+any file but Markdown is a finding. Measured over the same history, one commit in twenty mixed
+them, most of them renames that the record cites. A rename and its record then take two commits.
+
+- The message hook reads the body and the staged paths, so a delegate hears both before the
+  commit lands. `check` and `check-commits` read each commit of the branch through `diff-tree`.
+- Verified by `suites/test_commits.nim` and `suites/test_hooks.nim`.
 
 ## Role
 
@@ -1149,6 +1210,37 @@ the scanner joins it. Found when the first run reported every OpenGL and SDL bin
 - Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
   is unread.
 
+## Idioms
+
+**Each idiom of STYLE.md and Article X.5 that one line shows is read on the code-only view of
+the names check.** So a string or a comment never trips it, and a page template held in a string
+reads as text. The module states each rule in its header, and the list here gives the reasons.
+
+- `strictFuncs` stands in its exact form before the first import, in every module.
+- A bracket import is alphabetised, and the standard library comes before packages, then local
+  modules. A bracket that spans lines is read whole.
+- Two consecutive single bindings of one keyword share it, reported once for each run. A `let`
+  beside a `var` passes, because they cannot share one keyword.
+- A `{.used.}` carries a comment that names its consumer. A `{.push.}` stands only over foreign
+  bindings. `return result` never appears, because a bare `return` exits with `result`.
+- Under `tests/`, a suite that imports `std/random` seeds it, and a stub carries its testament
+  header, without `-r`, `batchable` or `joinable`.
+- A path of one machine is a finding in every kind but Markdown. The checker names such paths
+  as fixtures, so its own project is left out, as the faces check leaves it out.
+- `tsconfig.json` sets its three flags to `true`, read as text, because TypeScript admits
+  comments that `std/json` refuses.
+
+**Debug output is told from a report by its shape alone.** An `echo` in a test that prints a
+value with no label, outside a condition, is the shape that debug output takes. A labelled
+`echo` passes as the report of a measured figure, and one under a condition passes as a failure
+diagnostic. Found when the first run reported every measured figure that `dance_ontology` prints
+from its rig.
+
+- Rejected: every `echo` in a test, which reports a deliberate measurement as debug output.
+- Cost: labelled debug output passes, and reading holds it. A seeded `initRand` passes as
+  `randomize(0)` does, because both fix the sequence.
+- Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
+
 ## Fixed waits
 
 **A fixed wait in drive code is a finding, because it reads the real clock in every
@@ -1282,6 +1374,11 @@ and a checkout still wants `contents`. The `draft` workflow is the case: GitHub 
 `convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a classic
 token converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run
 token.
+
+**The weekly window is named twice, as the cron of `check.yml` and as `RECENT_DAYS`.** So a
+workflow that passes `--recent` runs on a cron whose interval is that constant. The interval is
+read for two shapes alone, one weekday and every day. Any other shape reads as zero and fails, so
+a new shape is taught to `cronDays` first.
 
 - Verified by `suites/test_workflows.nim`. Verified by a break of it: delete `actions: read` from
   `watch.yml`, and `koch check-files` reports it by name and by what was granted. Restore it, and 0

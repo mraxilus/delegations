@@ -17,9 +17,9 @@ when compileOption("profiler"):
 
 import std/[options, os, sequtils, sets, strutils]
 import ./[
-  checker, dependencies, domains, duplicates, english, faces, findings, form, glossary, names,
-  justification, kinds, layout, plan, prompts, prose, provenance, record, toolchain, tree,
-  waits, workflows,
+  checker, dependencies, domains, duplicates, english, faces, findings, form, glossary, idioms,
+  justification, kinds, layout, names, plan, prompts, prose, provenance, record, toolchain,
+  tree, waits, workflows,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirectories
@@ -87,8 +87,9 @@ proc lockFindings(tree: Tree, directories: openArray[string]): seq[Finding] =
     let
       nimble_path = directory.nimblePath
       lock_path = directory & "/" & LOCK_FILE
-    var nimble, lock: string
-    var found_lock = false
+    var
+      nimble, lock: string
+      found_lock = false
     for e in tree:
       if e.path == nimble_path: nimble = e.content
       elif e.path == lock_path:
@@ -112,11 +113,14 @@ proc auditTree*(tree: Tree): seq[Finding] =
   # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
   #   readable here.
   for e in tree:
-    if e.path.startsWith(WORKFLOW_DIRECTORY): result.add checkScopes(e.path, e.content)
+    if e.path.startsWith(WORKFLOW_DIRECTORY):
+      result.add checkScopes(e.path, e.content)
+      result.add checkWindow(e.path, e.content, RECENT_DAYS)
 
   # Checker holds itself to rules it holds everything else to, from tree as git shows it.
-  var check_paths, check_sources, suite_sources: seq[string]
-  var koch_source, curator_source: string
+  var
+    check_paths, check_sources, suite_sources: seq[string]
+    koch_source, curator_source: string
   for e in tree:
     if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
       check_paths.add e.path
@@ -160,9 +164,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
         result.add checkPeopleWords(e.path, e.content)
     if e.path in PROMPT_PATHS: result.add checkPrompt(e.path, e.content)
     # Checker's own project names these families as data and carries fixture pages, so it
-    #   would report itself; it holds no presentation target of its own to check.
+    #   would report itself; it holds no presentation target of its own to check. Paths of
+    #   one machine it names as fixtures, for same reason.
     if not e.path.startsWith(DRIVER_DIRECTORY & "/"):
       result.add checkFaces(e.path, e.content)
+      if e.kind.get != Kind.Markdown: result.add checkMachinePaths(e.path, e.content)
+    if e.kind.get == Kind.Nim: result.add checkIdioms(e.path, e.content)
     for directory in directories:
       if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
@@ -173,6 +180,22 @@ proc auditTree*(tree: Tree): seq[Finding] =
         glossaries.add (e.path, e.content)
   result.add checkStandardsAcross(glossaries)
   result.add checkDuplicates(documents)
+
+  # TypeScript: project holding `.ts` carries `tsconfig.json` at its root, with its flags set.
+  for directory in directories:
+    if not tree.anyIt(it.path.startsWith(directory & "/") and it.path.endsWith(".ts")): continue
+    let config_path = directory & "/tsconfig.json"
+    var found_config = false
+    for e in tree:
+      if e.path == config_path:
+        found_config = true
+        result.add checkTsconfig(e.path, e.content)
+    if not found_config:
+      result.add finding(
+        config_path, 0,
+        "Project holding TypeScript carries `tsconfig.json` at its root (CONTRIBUTOR.md, " &
+          "TypeScript); got none.",
+      )
 
   # Names: every Nim file is held to words glossaries admit, root and its own project.
   var root_exempt: seq[string]

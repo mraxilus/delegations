@@ -10,11 +10,12 @@ import ../../src/rga_visualiser/marker {.all.}
 
 
 suite "Marker":
-  const (width_mark, height_mark) = (800, 600)
-  const step_glide = 0.005
-    ## Bearing between samples of glide law: 1257 in each orbit.
-    ##   Coarse enough to run in seconds on JS; fine enough that line's push turns through
-    ##   third of what its law allows in one step, and plane's sampled top still hops.
+  const
+    (width_mark, height_mark) = (800, 600)
+    step_glide = 0.005
+      ## Bearing between samples of glide law: 1257 in each orbit.
+      ##   Coarse enough to run in seconds on JS; fine enough that line's push turns through
+      ##   third of what its law allows in one step, and plane's sampled top still hops.
 
   func outToward(bearing, rise: float): Direction =
     ## Name direction from origin out to eye: `bearing` round world up, `rise` over unit run.

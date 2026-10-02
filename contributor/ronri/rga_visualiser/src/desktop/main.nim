@@ -175,8 +175,6 @@ const
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
 const
-  SPEED_ORBIT = 0.008
-    ## Set how far dragged pixel turns orbit, in radians.
   FACTOR_DOLLY = 1.12
     ## Set how much one wheel notch scales orbit distance.
     ##   Notch is aimed at cursor (`interaction.dollyAtCursor`).
@@ -1194,7 +1192,10 @@ proc handleEvent(
     elif event.button.button == uint8(MouseButton.Right):
       is_dragging_pan = true
       # Hover reads what press came down on now, and goes off once camera moves.
-      interaction.grabPan(camera)
+      interaction.grabPan(
+        camera, width_frame, height_frame, panel.selection.len > 0,
+        panel.tween_camera.reachAimed(camera.pivot),
+      )
   of uint32(EventKind.MouseButtonUp):
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
     if button_dragging == some(event.button.button):
@@ -1271,10 +1272,16 @@ proc handleEvent(
       interaction.is_dragging_camera = true
     if is_dragging_orbit:
       panel.tween_camera.abandon()
-      # Free flight looks and selection orbits; see `interaction.turnAcross`.
-      camera.turnAcross(
-        -SPEED_ORBIT*float(event.motion.xrel), SPEED_ORBIT*float(event.motion.yrel),
-        panel.selection.len > 0,
+      # Hold what is under pointer, as page does: free flight holds sky, and selection
+      #   point on sphere about pivot. See `interaction.turnFollowing`.
+      camera.turnFollowing(
+        ScreenPosition(
+          x: float(event.motion.x - event.motion.xrel),
+          y: float(event.motion.y - event.motion.yrel),
+        ),
+        ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
+        width_frame, height_frame, panel.selection.len > 0,
+        panel.tween_camera.reachAimed(camera.pivot),
       )
     if is_dragging_pan:
       panel.tween_camera.halt() # Pan places pivot itself; see `halt`.
@@ -1287,7 +1294,8 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        height_frame, panel.selection.len > 0, interaction.depth_pan,
+        width_frame, height_frame, panel.selection.len > 0, interaction.depth_pan,
+        interaction.point_pan, panel.tween_camera.reachAimed(camera.pivot),
       )
   else: discard
 

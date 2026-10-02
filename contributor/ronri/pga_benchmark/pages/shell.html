@@ -196,6 +196,12 @@ pre.code .cl { display: block; white-space: pre; }
 pre.code .ln { display: inline-block; width: 3.2em; color: var(--muted); user-select: none; }
 .edit { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); }
 .edit .where { color: var(--muted); font-size: 0.84rem; }
+details.edit > summary { cursor: pointer; }
+details.edit[open] > summary { margin-bottom: 6px; }
+.edit .signatures { display: grid; gap: 2px; grid-template-columns: minmax(0, 1fr);
+  margin: 4px 0 0 1.1rem; font-size: 0.84rem; }
+.edit .signatures .label { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; }
+.edit .signatures code { width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .pair .label { color: var(--muted); font-size: 0.74rem; text-transform: uppercase; }
 .prose { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }

@@ -416,7 +416,7 @@ const
   CAYLEYS_WEDGE* = block: # Antiwedge conjugates wedge by complements, i.e. 𝐦 ∨ 𝐧 = (𝐦̲ ∧ 𝐧̲)̅.
     let wedge = constructProductExterior()
     Spatial[Cayley2D](base: wedge, anti: wedge.constructAnti(CAYLEYS_COMPLEMENT))
-  CAYLEYS_WEDGES_TRANS* = constructProductsTransitional( # Σ𝐜 (𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★), one per order.
+  CAYLEYS_WEDGES_TRANS* = constructProductsTransitional( # Σ𝐜 (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★), one per order.
     CAYLEYS_COMPLEMENT.left, CAYLEYS_DUAL.base, CAYLEYS_WEDGE
   )
   CAYLEYS_WEDGE_DOT* = block: # Antiproduct conjugates geometric product by complements.
@@ -591,8 +591,8 @@ func constructProductTransitional(
   order: Order; complement, dual: Cayley1D; wedges: Spatial[Cayley2D]
 ): Cayley2D {.compileTime.} =
   ## Construct Cayley table for one order of transitional product.
-  ##   Sum over bases 𝐜 of one grade, i.e. Σ𝐜 (𝐜̄ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★).
-  ##   Which operand meets 𝐜̄ and which meets 𝐜★ changes nothing, so no chirality here.
+  ##   Sum over bases 𝐜 of one grade, i.e. Σ𝐜 (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★).
+  ##   Complement and dual sit on opposed sides; 𝐜̄ with left dual of 𝐜 gives same sum.
   for c in Basis:
 
     # Skip over bases of other orders, and bases without dual.

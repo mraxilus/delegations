@@ -21,7 +21,7 @@
 ##   Claim kinds: `suites` (library's suites pass), `tables` (pairs of expressions, pristine
 ##     then changed, equal at named algebras), `program` (compiles and exits zero at named
 ##     algebras), `count` (one measurand's function spends stated value of one metric),
-##     `build` (compiling bench entry costs at most stated share of pristine build, in peak
+##     `build` (compiling library alone costs at most stated share of pristine build, in peak
 ##     memory or seconds compiler reports).
 ##
 ##   Figure is paragraph of one image alone, as `![Derivation map](../../pages/map.svg)`: path

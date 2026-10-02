@@ -240,8 +240,9 @@ func checkOptions*(koch: string): seq[Finding] =
 
 func section*(markdown, heading: string): string =
   ## Read text under heading, up to next heading of same depth or deeper; empty when absent.
-  var lines: seq[string]
-  var is_inside = false
+  var
+    lines: seq[string]
+    is_inside = false
   for line in markdown.splitLines:
     if line.startsWith(heading):
       is_inside = true

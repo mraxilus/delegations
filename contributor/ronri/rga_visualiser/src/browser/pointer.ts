@@ -138,8 +138,8 @@ canvas.addEventListener('pointerdown', (e) => {
       button_mouse_drag = 'orbit';
     } else if (e.button === 2) {
       button_mouse_drag = 'pan';
-      // Hover above reads what press came down on; pan holds its depth from here.
-      nimCameraPanGrab();
+      // Hover above reads what press came down on; pan holds what it took from here.
+      nimCameraPanGrab(canvas.clientWidth, canvas.clientHeight);
     }
     return;
   }

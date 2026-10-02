@@ -101,8 +101,9 @@ func shorthandFamilies*(value: string): string =
   ##   field in Nim source rather than declaration, and reading it as stack reported field
   ##   type as family (measured on `src/desktop/gui.nim`).
   if not value.anyIt(it.isDigit) and "var(" notin value: return ""
-  var rest: seq[string]
-  var dropping = true
+  var
+    rest: seq[string]
+    dropping = true
   for token in value.splitWhitespace:
     if dropping and (token.toLowerAscii in SHAPES or token.anyIt(it.isDigit)):
       continue

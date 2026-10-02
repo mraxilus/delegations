@@ -431,6 +431,7 @@ var
   FLAT_LABEL = initFlatFloats(6)
   FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
+  FLAT_PAN_HELD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3*(ord(DragChoice.high) + 1))
   FLAT_MENU_CENTRE = initFlatFloats(2)
   FLAT_VIEW: seq[float32] = newSeq[float32](16)
@@ -1206,15 +1207,10 @@ proc nimCameraTurnAt(
   ##   Selection's reach from pivot is read off aim standing offer framed it with, so sphere
   ##   orbit holds spans what is picked.
   TWEEN_CAMERA.abandon()
-  let reach_selection =
-    if TWEEN_CAMERA.goal.isSome and TWEEN_CAMERA.goal.get.sphere.isSome:
-      let bound = TWEEN_CAMERA.goal.get.sphere.get
-      norm(bound.centre - CAMERA_PAGE.pivot) + bound.radius
-    else: 0.0
   turnFollowing(
     CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
-    SELECTION_PAGE.len > 0, reach_selection,
+    SELECTION_PAGE.len > 0, TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
   )
 
 
@@ -1272,11 +1268,14 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   )
 
 
-proc nimCameraPanGrab() {.exportc.} =
-  ## Take depth right drag will hold, as it begins.
+proc nimCameraPanGrab(width, height: cint) {.exportc.} =
+  ## Take what right drag will hold, as it begins.
   ##   Called at press, while hover still reads what pointer is over; see
   ##   `interaction.grabPan`.
-  INTERACTION_PAGE.grabPan(CAMERA_PAGE)
+  INTERACTION_PAGE.grabPan(
+    CAMERA_PAGE, int(width), int(height), SELECTION_PAGE.len > 0,
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+  )
 
 
 proc nimCameraPanAt(
@@ -1285,15 +1284,32 @@ proc nimCameraPanAt(
   ## Move view by right drag or two fingers, in whichever way its state reads.
   ##   See `interaction.panAcross`. Both ends of step rather than its length: pan carries
   ##   point between them.
-  ##   `is_grabbed` holds depth `nimCameraPanGrab` took. Otherwise pivot's depth, read at
-  ##   this step: two fingers pinch as they pan, and zoom moves any depth taken at landing.
-  ##   Width stays in signature, as page passes canvas whole; pixel's span reads height.
+  ##   `is_grabbed` holds what `nimCameraPanGrab` took. Otherwise pivot's depth, or point
+  ##   under pixel step left, read at this step: two fingers pinch as they pan, and zoom
+  ##   moves anything taken at landing.
   TWEEN_CAMERA.halt()
   panAcross(
     CAMERA_PAGE, ScreenPosition(x: float(before_x), y: float(before_y)),
-    ScreenPosition(x: float(after_x), y: float(after_y)), int(height),
+    ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
     SELECTION_PAGE.len > 0,
     if is_grabbed: INTERACTION_PAGE.depth_pan else: CAMERA_PAGE.distance,
+    if is_grabbed: INTERACTION_PAGE.point_pan else: none(Position),
+    TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+  )
+
+
+proc nimCameraPanHeldAt(width, height: cint): FlatBuffer {.exportc.} =
+  ## Project point right drag with selection holds onto screen pixels, as
+  ## `[x, y, is_in_front]`.
+  ##   For checks, which ask whether drag kept it under pointer; see `nimCameraPanGrab`.
+  ##   Zeros where none is held, as in free flight.
+  if INTERACTION_PAGE.point_pan.isNone: return FLAT_PAN_HELD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  let screen = projectToScreen(
+    CAMERA_PAGE.initMatrixViewProjection(float(width)/float(height)), int(width), int(height),
+    INTERACTION_PAGE.point_pan.get,
+  )
+  FLAT_PAN_HELD.fill3(
+    float32(screen.x), float32(screen.y), (if screen.isInFront: 1.0'f32 else: 0.0'f32)
   )
 
 

@@ -102,3 +102,13 @@ suite "Article VIII":
       @["`Pruned` must name commit as 7 to 40 hex digits; got `main`."]
     check "c723ede".isCommitId and "c723ede1d0fd6f5e01b6b4d5c2ea8c1f9b2a3d4e".isCommitId
     check not "c723ed".isCommitId and not "C723EDE".isCommitId  # short, upper
+
+  test "count written as number in prose goes stale, and is finding":
+    # Count goes stale by next commit and nothing reads it again (provenance guide).
+    check checkCounts("p/PROVENANCE.md", "Suite holds 12 suites.\n").mapIt(it.message) ==
+      @["Count is never number in prose; name command that counts (provenance guide); got " &
+        "`12 suites`."]
+    check checkCounts("p/PROVENANCE.md", "Run `koch test`; it lists suites.\n").len == 0
+    check checkCounts("p/PROVENANCE.md", "Command prints `12 files`.\n").len == 0  # code span
+    check checkCounts("p/PROVENANCE.md", "```text\n12 files\n```\n").len == 0  # fenced output
+    check checkCounts("p/PROVENANCE.md", "Took 22.8 s for 4 cores.\n").len == 0  # not counted
