@@ -184,8 +184,8 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
   ##   On every Nim kind: X.9 trailing comments and spaces, X.2 banners, suites and tests,
   ##   STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators,
   ##   signatures, calls and trailing separators. On `.nim` alone, as idiom checks read it:
-  ##   X.5 import brackets and X.10 lists. Fenced lines are read by none, and fence fix cannot
-  ##   read is reported alone.
+  ##   X.5 import brackets, X.10 lists and STYLE.md §3 profiler import. Fenced lines are read by
+  ##   none, and fence fix cannot read is reported alone.
   if kind.rule.syntax != Syntax.Nim: return
   let fence = source.fenceOf
   if fence.fault >= 0: return faultOf(path, fence)
@@ -196,7 +196,8 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
       checkSeparators, checkSignatures, checkCalls, checkTrailing,
     ]
   for check in checks: result.add check(path, view)
-  if kind == Kind.Nim: result.add checkImportBrackets(path, view) & checkLists(path, view)
+  if kind == Kind.Nim:
+    result.add checkImportBrackets(path, view) & checkLists(path, view) & checkProfiler(path, view)
   result = result.filterIt(it.line - 1 notin fence.lines)
 
 
