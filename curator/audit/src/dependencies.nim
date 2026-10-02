@@ -33,12 +33,12 @@ import ./[findings, projects]
 
 
 const
-  NIMBLE_EXT* = ".nimble"   ## Extension of package description file.
-  LOCK_FILE* = "atlas.lock" ## Atlas lock file name.
-  DEPS_DIRECTORY* = "deps"        ## Directory Atlas restores into when `atlas.config` names none.
+  NIMBLE_EXT* = ".nimble"  ## Extension of package description file.
+  LOCK_FILE* = "atlas.lock"  ## Atlas lock file name.
+  DEPS_DIRECTORY* = "deps"  ## Directory Atlas restores into when `atlas.config` names none.
   ATLAS_CONFIG* = "atlas.config"  ## Where project names its checkout directory, under `deps`.
-  NODE_MANIFEST* = "package.json"    ## Node manifest, naming tools project type-checks with.
-  NODE_LOCK* = "package-lock.json"   ## Node lock, pinning every one of those to exact version.
+  NODE_MANIFEST* = "package.json"  ## Node manifest, naming tools project type-checks with.
+  NODE_LOCK* = "package-lock.json"  ## Node lock, pinning every one of those to exact version.
   UNREADABLE = "Lock unreadable as JSON; got `"
     ## Opening of finding both lock readers report when JSON will not parse.
   NAME_END = {' ', '#', '@', '>', '<', '=', '~', '^'}
