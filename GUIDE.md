@@ -171,6 +171,20 @@ Every later delegate:
 5. Before you merge several states or paths into one, list every behaviour that the old design
    carried for each state (`CONSTITUTION.md`, IV.7). Read the old code to do it.
 
+## How to drive a page on a simulated clock
+
+A correctness check moves time itself (Article IX.12). Install the clock of Playwright, paused,
+before the page loads. Timers, animation frames and `performance.now` then move only when the
+check moves them. Three things stay on real time, and `rga_visualiser` sets each one in
+`tools/drive/clock.ts`:
+
+- **The rendering step.** Resize, scroll and observer events fire on real frames. So wait for
+  one real rendering step before each simulated frame.
+- **CSS transitions.** The style engine runs them on real time. So run the timeline of the
+  document fast.
+- **The idle callback.** The clock of Playwright grants it no time. So grant 50 ms, the longest
+  idle period that a browser grants.
+
 ## Glossary process
 
 `GLOSSARY.md` follows the `CONTEXT.md` format of Matt Pocock, and his domain-modelling

@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | f8538c19ea003803 |
+| Rules   | 53fe66180cf539a0 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -1473,6 +1473,15 @@ Orbit holds a point on a sphere about the pivot, since the pivot itself never mo
 sphere still turns the view. `radiusHeld` takes the selection's reach from the pivot. It is no less
 than a third of the short side at the pivot's depth, and inside the eye's separation.
 
+**A right drag in free flight carries the depth it grabbed, one pixel for one.** `grabPan` takes
+that depth at the press, while hover still reads what the pointer is over, or the pivot's over
+nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that depth.
+A point at that depth then stays under the cursor, at any canvas height and field of view.
+
+Two fingers hold the pivot's depth, read at each step, because they pinch as they pan. A depth
+taken at landing goes stale with the zoom. Rejected: a fixed share of the separation for each pixel.
+It matched the cursor at one canvas height alone, and ran 1.74 times it on 900 px at 45 degrees.
+
 Not a rate, which turns the sight by an angle the screen does not show. On a phone a 60 by 40 px
 drag carries free aim's picture 60.4 by 41.0 px, and a rate carried it 542.4 by 411.8. Not the roll
 put back after each turn about the camera's own axes, which leaves the sight sunk.
@@ -1597,6 +1606,9 @@ The separation then scales as the turntable's dolly scales it.
   ceiling where either is large;
 - a held `w` with nothing selected lies along the sight, and spends the separation it covers;
 - a strafe leaves that separation alone;
+- a right drag carries a point it holds at 2.5, 19 and 4,000 units to the pixel it reached, within
+  0.01 px;
+- a right drag takes the depth under the pointer, or the pivot's over nothing;
 - the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
 - 40 notches onto a point stop at its drawn radius, with the point held on its pixel;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
@@ -1618,6 +1630,9 @@ Verified by driven checks, in Chromium on 2026-09-26:
   2.063 units off the sight axis, which a straight dolly cannot do;
 - the opening page reads a local scale of 14.6842, not the separation of 19.000, and 5.020 units
   of flight drew it to 9.6647.
+
+Verified by driven check, in Chromium on 2026-10-01: a right drag of 360.6 px over nothing carried
+the pivot 360.6 px at its own depth. The fixed share of separation carried it 626.7 px.
 
 ## Records and shaders
 

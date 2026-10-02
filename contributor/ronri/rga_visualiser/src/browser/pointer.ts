@@ -138,6 +138,8 @@ canvas.addEventListener('pointerdown', (e) => {
       button_mouse_drag = 'orbit';
     } else if (e.button === 2) {
       button_mouse_drag = 'pan';
+      // Hover above reads what press came down on; pan holds its depth from here.
+      nimCameraPanGrab();
     }
     return;
   }
@@ -217,11 +219,11 @@ canvas.addEventListener('pointermove', (e) => {
       );
     } else if (button_mouse_drag === 'pan') {
       // Where pointer was and where it is, not how far it moved:
-      //   pan grabs level under it and carries that point along, which needs both ends of step.
+      //   pan carries point it grabbed from one to other, which needs both ends of step.
       nimCameraPanAt(
         prev.x - rect.left, prev.y - rect.top,
         current.x - rect.left, current.y - rect.top,
-        canvas.clientWidth, canvas.clientHeight,
+        canvas.clientWidth, canvas.clientHeight, true,
       );
     }
     is_hover_stale = true;
@@ -334,12 +336,12 @@ function settleTwoFingers() {
   }
 
   if (pan_last) {
-    // Grab and carry two fingers' own midpoint exactly as mouse drag is.
-    //   Same rule for both, so fix to one is fix to both.
+    // Carry two fingers' own midpoint by mouse's own rule, at pivot's depth.
+    //   Not depth taken at landing: fingers pinch as they pan, and zoom moves it.
     nimCameraPanAt(
       pan_last.x - rect.left, pan_last.y - rect.top,
       mid.x - rect.left, mid.y - rect.top,
-      canvas.clientWidth, canvas.clientHeight,
+      canvas.clientWidth, canvas.clientHeight, false,
     );
   }
   pan_last = mid;

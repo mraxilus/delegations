@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | f8538c19ea003803 |
+| Rules   | 53fe66180cf539a0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1211,6 +1211,30 @@ from its rig.
 - Cost: labelled debug output passes, and reading holds it. A seeded `initRand` passes as
   `randomize(0)` does, because both fix the sequence.
 - Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
+
+## Fixed waits
+
+**A fixed wait in drive code is a finding, because it reads the real clock in every
+context.** The names are `waitForTimeout` of Playwright, and `sleep` and `sleepAsync` of Nim.
+The check reads `tests/` and `tools/` of every project, with no exemption, because a speed
+check samples a count and never sleeps (Article IX.12). Each name carries its replacement, as
+the English check does. Verified by `suites/test_waits.nim`.
+
+**A timer is unread, because one name is both clocks.** Inside a page under the clock of
+Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
+report every correctness drive of `rga_visualiser`, where each `setTimeout` sits inside
+`evaluateOver` or `page.evaluate`. So the check holds the narrow half, and the rule holds the
+rest by reading.
+
+- Nim names compare as the compiler compares them, so `sleep_async` is `sleepAsync`. Nim
+  source is read with comments and strings blanked, so the suite of the check holds its
+  fixtures as strings and reports nothing.
+- `sleep` of TypeScript is the drive's own helper. In `rga_visualiser` it wraps `setTimeout`
+  inside a page on the simulated clock, so it is unread.
+- Verified on the tree: no finding in any project. A planted `sleep(10)` in a Nim suite and a
+  planted `waitForTimeout(100)` in a TypeScript drive each read as one finding.
+- Cost: a drive outside `tests/` and `tools/` is unseen. So is a window built from a page
+  timer, and a fixed wait of a language other than Nim and Playwright.
 
 ## Hooks
 
