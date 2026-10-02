@@ -42,19 +42,17 @@ export async function settleBranch(page: Page, node: string): Promise<void> {
 
 /** Wait until this element's own turn has finished, and rows it revealed have been written.
  *
- *  Transform asked for in same tick as click still reports one transition is leaving, so turn
- *  is waited out on browser's own `transitionend` rather than on clock. Bounded fallback
- *  because chevron already standing where it was asked to stand runs no transition at all.
+ *  Waits on transitions element runs, as browser's own `getAnimations` lists them, so chevron
+ *  already standing where it was asked to stand runs none and settles at once. Frames bound
+ *  wait, never time, so no limit on time decides verdict.
  */
 async function settleTurn(page: Page, selector: string): Promise<void> {
-  await page.evaluate((given) => new Promise<void>((done) => {
-    const element = document.querySelector(given);
-    if (element === null) { done(); return; }
-    let is_done = false;
-    const finish = (): void => { if (!is_done) { is_done = true; done(); } };
-    element.addEventListener('transitionend', finish, { once: true });
-    setTimeout(finish, 1000);
-  }), selector);
+  await waitUntil(
+    page,
+    (given) => !(document.querySelector(given)?.getAnimations()
+      .some((animation) => animation instanceof CSSTransition) ?? false),
+    selector,
+  );
   await settleReading(page);
 }
 
@@ -113,6 +111,7 @@ export async function closeDiagnostics(page: Page, was: Glass): Promise<void> {
 export async function driveHeapUnit(page: Page): Promise<void> {
   const was = await openDiagnostics(page);
   // Tick writes row; browser without heap figures never does, and check then fails on blank.
+  //   Frames bound wait, never time.
   await waitUntil(
     page, () => /\d/.test(document.getElementById('diagnostic-heap')?.textContent ?? ''), null,
   ).catch(() => undefined);
