@@ -481,6 +481,217 @@ const CATALOGUE* = block:
         ("partner", "⊛", "partner", "(⊛ m)", "partner(m)", "wiki:Partner"),
       ],
     )
+  when IS_RIGID and DIMENSIONS == 3:
+    catalogue.addTyped [
+      (
+        "wedge_point_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Point, Kind.Point, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_point_line", "∧", "wedge", "(m ∧ n)",
+        Kind.Point, Kind.Line, "wedge(m, n)", "2.18",
+      ),
+      (
+        "wedge_line_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Line, Kind.Point, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_anti_line_line", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Line, Kind.Line, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_point_line", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Point, Kind.Line, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_line_point", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Line, Kind.Point, "wedgeAnti(m, n)", "2.32",
+      ),
+      (
+        "dot_point_point", "∙", "dot", "(m ∙ n)",
+        Kind.Point, Kind.Point, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_line_line", "∙", "dot", "(m ∙ n)",
+        Kind.Line, Kind.Line, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_point_point", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Point, Kind.Point, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_line_line", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Line, Kind.Line, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "wedge_dot_anti_motor_motor", "⟇", "wedgeDotAnti", "(m ⟇ n)",
+        Kind.Motor, Kind.Motor, "wedgeDotAnti(m, n)", "wiki:Motor",
+      ),
+      (
+        "transform_point_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        Kind.Point, Kind.Motor, "transform(m, n)", "wiki:Motor",
+      ),
+      (
+        "transform_line_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        Kind.Line, Kind.Motor, "transform(m, n)", "wiki:Motor",
+      ),
+      (
+        "project_orthogonal_point_line", "", "projectOrthogonal", "projectOrthogonal(m, n)",
+        Kind.Point, Kind.Line, "projectOrthogonal(m, n)", "wiki:Projections",
+      ),
+      (
+        "support_line", "∩", "support", "(∩ m)",
+        Kind.Line, Kind.General, "support(m)", "wiki:Support",
+      ),
+      (
+        "support_anti_point", "∪", "supportAnti", "(∪ m)",
+        Kind.Point, Kind.General, "supportAnti(m)", "wiki:Support",
+      ),
+      (
+        "reverse_anti_motor", "~∘", "reverseAnti", "(~∘ m)",
+        Kind.Motor, Kind.General, "reverseAnti(m)", "wiki:Motor",
+      ),
+      (
+        "unitize_motor", "^", "unitize", "(^ m)",
+        Kind.Motor, Kind.General, "unitize(m)", "wiki:Motor",
+      ),
+      (
+        "norm_weight_motor", "|∘", "normWeight", "(|∘ m)",
+        Kind.Motor, Kind.General, "normWeight(m)", "wiki:Motor",
+      ),
+      (
+        "norm_bulk_motor", "|∙", "normBulk", "(|∙ m)",
+        Kind.Motor, Kind.General, "normBulk(m)", "wiki:Motor",
+      ),
+    ]
+
+    # Unary maps every flat object carries; one measurand per object kind.
+    catalogue.addUnary(
+      kinds = [(Kind.Point, "point"), (Kind.Line, "line")],
+      rows = [
+        ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
+        ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
+        ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
+        ("reverse_anti", "~∘", "reverseAnti", "(~∘ m)", "reverseAnti(m)", "wiki:Reverses"),
+        ("dual_bulk", "★", "dualBulk", "(★ m)", "dualBulk(m)", "2.103"),
+        ("dual_weight", "☆", "dualWeight", "(☆ m)", "dualWeight(m)", "2.103"),
+        ("bulk", "∙", "bulk", "(∙ m)", "bulk(m)", "2.68"),
+        ("weight", "∘", "weight", "(∘ m)", "weight(m)", "2.68"),
+        ("norm_bulk", "|∙", "normBulk", "(|∙ m)", "normBulk(m)", "2.87"),
+        ("norm_weight", "|∘", "normWeight", "(|∘ m)", "normWeight(m)", "2.88"),
+        # Weight squared norm lands in antiscalar slot, so reference wears `Antiscalar`;
+        #   conversion is free, since type is distinct float, and widening reads slot from it.
+        ("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", "normBulkSquared(m)", "2.87"),
+        (
+          "norm_weight_squared", "|∘²", "", "(`|∘²`(m))",
+          "Antiscalar(normWeightSquared(m))", "2.88",
+        ),
+        ("unitize", "^", "unitize", "(^ m)", "unitize(m)", "2.89"),
+        ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
+      ],
+    )
+  when IS_CONFORMAL and DIMENSIONS == 4:
+    catalogue.addTyped [
+      (
+        "wedge_round_point_round_point", "∧", "wedge", "(m ∧ n)",
+        Kind.PointRound, Kind.PointRound, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_dipole_round_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Dipole, Kind.PointRound, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_round_point_dipole", "∧", "wedge", "(m ∧ n)",
+        Kind.PointRound, Kind.Dipole, "wedge(m, n)", "2.18",
+      ),
+      (
+        "wedge_circle_round_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Circle, Kind.PointRound, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_round_point_circle", "∧", "wedge", "(m ∧ n)",
+        Kind.PointRound, Kind.Circle, "wedge(m, n)", "2.18",
+      ),
+      (
+        "wedge_dipole_dipole", "∧", "wedge", "(m ∧ n)",
+        Kind.Dipole, Kind.Dipole, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_anti_circle_circle", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Circle, Kind.Circle, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_circle_dipole", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Circle, Kind.Dipole, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_dipole_circle", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Dipole, Kind.Circle, "wedgeAnti(m, n)", "2.32",
+      ),
+      (
+        "wedge_anti_dipole_dipole", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Dipole, Kind.Dipole, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_circle_round_point", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Circle, Kind.PointRound, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_round_point_circle", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.PointRound, Kind.Circle, "wedgeAnti(m, n)", "2.32",
+      ),
+      (
+        "dot_round_point_round_point", "∙", "dot", "(m ∙ n)",
+        Kind.PointRound, Kind.PointRound, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_dipole_dipole", "∙", "dot", "(m ∙ n)",
+        Kind.Dipole, Kind.Dipole, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_circle_circle", "∙", "dot", "(m ∙ n)",
+        Kind.Circle, Kind.Circle, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_round_point_round_point", "∘", "dotAnti", "(m ∘ n)",
+        Kind.PointRound, Kind.PointRound, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_dipole_dipole", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Dipole, Kind.Dipole, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_circle_circle", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Circle, Kind.Circle, "dotAnti(m, n)", "2.76",
+      ),
+    ]
+
+    # Unary maps every round object carries; one measurand per object kind.
+    catalogue.addUnary(
+      kinds = [
+        (Kind.PointRound, "round_point"),
+        (Kind.Dipole, "dipole"),
+        (Kind.Circle, "circle"),
+      ],
+      rows = [
+        ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
+        ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
+        ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
+        ("reverse_anti", "~∘", "reverseAnti", "(~∘ m)", "reverseAnti(m)", "wiki:Reverses"),
+        ("dual_bulk", "★", "dualBulk", "(★ m)", "dualBulk(m)", "2.103"),
+        ("dual_weight", "☆", "dualWeight", "(☆ m)", "dualWeight(m)", "2.103"),
+        ("bulk", "∙", "bulkRound", "(∙ m)", "bulk(m)", "2.68"),
+        ("weight", "∘", "weightRound", "(∘ m)", "weight(m)", "2.68"),
+        ("bulk_flat", "■", "bulkFlat", "(■ m)", "bulkFlat(m)", "wiki:Flat_bulk"),
+        ("weight_flat", "□", "weightFlat", "(□ m)", "weightFlat(m)", "wiki:Flat_weight"),
+        ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
+        ("carrier", "⊟", "carrier", "(⊟ m)", "carrier(m)", "wiki:Carrier"),
+        ("carrier_co", "⊞", "carrierCo", "(⊞ m)", "carrierCo(m)", "wiki:Cocarrier"),
+        ("center", "⊙", "center", "(⊙ m)", "center(m)", "wiki:Center"),
+        ("container", "⊡", "container", "(⊡ m)", "container(m)", "wiki:Container"),
+        ("partner", "⊛", "partner", "(⊛ m)", "partner(m)", "wiki:Partner"),
+      ],
+    )
   catalogue
 
 

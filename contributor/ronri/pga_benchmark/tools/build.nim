@@ -86,7 +86,7 @@ const
     "<inspect|bench|baseline|guard|evaluate|pages|published|drive|head|gaps|show|sweep|" &
     "system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
-  FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures untyped algebras too.
+  FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures 2D algebras too.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
     ## Atlas checkout of library's repository.
   DIRECTORY_LIBRARY = "lengyel/projective_geometric_algebra_illuminated"
@@ -683,7 +683,7 @@ proc publishedAt(name, url: string) =
 proc evaluate(which: string, is_thorough: bool) =
   ## Try one change or proposal at pin, and write each evaluation document.
   ##   `all` tries every one, and `stale` tries those `drive` would name.
-  ##   Typed algebras alone, or all four when thorough.
+  ##   rga4d and cga5d alone, or all four when thorough.
 
   func machine(): string =
     ## Describe machine evaluation ran on, as bench documents do.
