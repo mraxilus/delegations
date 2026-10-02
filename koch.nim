@@ -207,9 +207,9 @@ proc checkoutAt(root, directory: string): string =
   ##     directory that exists.
   var at = directory
   while at.len > 1 and not dirExists(at): at = at.parentDir
-  const COMMON = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
+  const common = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
   try:
-    if gitFields(at, COMMON)[0].strip == gitFields(root, COMMON)[0].strip:
+    if gitFields(at, common)[0].strip == gitFields(root, common)[0].strip:
       return gitFields(at, ["rev-parse", "--show-toplevel"])[0].strip
   except IOError: discard
   root
