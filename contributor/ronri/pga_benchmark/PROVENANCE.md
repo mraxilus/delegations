@@ -76,7 +76,7 @@ cross-check of forms and counts, and nothing of it was copied.
 Where the sign conventions of the library differ from Terathon's, the library's were adopted,
 because the library is what is measured. The bulk and weight duals of points and planes carry
 the opposite sign. The conformal antidot is the negated dot. The cocarrier of a circle reads
-`FlatLine(v: -g.xyz, m: -c.v)`. The `Partner(Circle)` scalar of Terathon carries a sign typo,
+`LineFlat(v: -g.xyz, m: -c.v)`. The `Partner(Circle)` scalar of Terathon carries a sign typo,
 and the form here is `f = gw² - v·v - g·m`, which the law suite confirms against the library.
 
 Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library,
@@ -108,7 +108,7 @@ chapter 2 or a wiki page, so no cite falls outside every suite.
 Suite `Internal: Inspector` reads the nimcache of the test binary itself. It finds
 `wedge(Point,Point)` spending twelve multiplies and six subtractions, as its documentation
 states. It holds every reference function in that nimcache to no zero fill and no error check.
-The count it reads must reach `REFERENCE_FUNCTIONS_FLOOR`, which is 73 at rga4d and 84 at
+The count it reads must reach `FLOOR_FUNCTIONS_REFERENCE`, which is 73 at rga4d and 84 at
 cga5d.
 
 ## Widening and pools
@@ -147,7 +147,7 @@ control raised the counter first. A zero then means zero, and never an inert ins
 once compiled out.
 
 **The bench runs five times, and each time is the median of those runs.** `bench` runs the
-plain binary of each algebra in turn, algebra after algebra, `BENCH_RUNS = 5` times. So drift
+plain binary of each algebra in turn, algebra after algebra, `RUNS_BENCH = 5` times. So drift
 of the machine lands on every algebra alike. For each implementation the runtime baseline
 keeps the median of each run as `ns_runs`, in run order. `ns_median` is the median of those,
 and `ns_min` is the least minimum.
@@ -317,7 +317,7 @@ The supports are held to 54 at four dimensions, and the centre and the container
 five. The partner chain is held to 324, and to its mark as an estimate.
 Suite `Internal: Inspector` holds the soundness law. No lower bound outruns what the library
 spends on the same operation. That law reads the build's own nimcache, and every measurand
-with a derived bound meets its library function there. It reads at least `BOUND_ROWS_FLOOR`
+with a derived bound meets its library function there. It reads at least `FLOOR_ROWS_BOUND`
 measurands: 107 at rga4d, 130 at cga5d, 39 at rga3d and 46 at cga4d.
 
 **What the bound finds at the pin.** Every primitive product spends what the algebra demands,
@@ -479,7 +479,7 @@ library, reads the static measurements of every function, and times each measura
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
 lands on both.
 
-**An evaluation builds without dense forms**, under `-d:pga_benchmark.has_dense_forms=false`.
+**An evaluation builds without dense forms**, under `-d:pga_benchmark.has_forms_dense=false`.
 A dense form reads tables by their names at pin, and a change may rename them, as
 `cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
 dense form.
