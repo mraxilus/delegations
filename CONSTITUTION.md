@@ -219,12 +219,15 @@ for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
 2. Compose a name head first, with the qualifiers last, from general to specific, so that
    families sort and align: `wedge`/`wedgeAnti`, `norm`/`normBulk`/`normWeight`,
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
-   domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain.
+   domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain. The head
+   is the kind of value, so a word such as `PATH` or `MARKS` leads (`PATH_KOCH`, never
+   `KOCH_PATH`). An action keeps its verb first, and orders its object the same way
+   (`constructExomorphismMetric`).
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
    domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
    recurring kind of action keeps one verb:
    - `define…` names a macro that declares from data, and a template that declares a fixed
-     family is named for its act (`borrowGradeOperations`);
+     family is named for its act (`borrowOperationsGrade`);
    - `construct…` names a table that is built and returned, and `emit…` a function that
      returns AST;
    - `init…` names a constructor of a value, and `new…` never appears, because nothing is a
@@ -267,8 +270,8 @@ for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
 
 ```nim
 BasisDigits  # type
-constructMetricExomorphism  # callable
-metric_exomorphism  # local
+constructExomorphismMetric  # callable
+exomorphism_metric  # local
 is_degenerate  # boolean proposition
 LUT_GRADE_BY_BASIS  # lookup table, and module constant
 CAYLEYS_WEDGE  # module constant
@@ -450,7 +453,7 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
 ```nim
 suite "Chapter 2":
   test "Equation 2.2-4":
-    for b, c, 𝐮, 𝐯 in enumerateBasisPair():
+    for b, c, 𝐮, 𝐯 in enumeratePairBasis():
       if b.grade == Grade(1) and c.grade == Grade(1):
         check (𝐮 + 𝐯) ∧ (𝐮 + 𝐯) =~ 0  # 2.2a
         check 𝐮 ∧ 𝐯 =~ -(𝐯 ∧ 𝐮)  # 2.4
@@ -526,7 +529,7 @@ defineOperator(
   cayley = CAYLEYS_WEDGE.base,
 )
 
-let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
+let (flags_a, flags_b) = (a.basis.toFlags, b.basis.toFlags)
 if product.is_degenerate: continue
 ```
 

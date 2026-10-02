@@ -76,11 +76,11 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   borrow family once, through a documented template:
 
   ```nim
-  template borrowGradeOperations(T: typedesc) =
+  template borrowOperationsGrade(T: typedesc) =
     func `+`*(g, h: T): T {.borrow.}
     func `==`*(g, h: T): bool {.borrow.}
-  borrowGradeOperations(Grade)
-  borrowGradeOperations(GradeAnti)
+  borrowOperationsGrade(Grade)
+  borrowOperationsGrade(GradeAnti)
   ```
 
 - `{.pure.}` on a small enum that carries a semantic axis. Always qualify the members
@@ -242,7 +242,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   that `lent` iterators serve:
 
   ```nim
-  iterator randomMultivectors(count = SAMPLES):
+  iterator multivectorsRandom(count = SAMPLES):
       (lent Multivector, lent Multivector, lent Multivector) = ...
   ```
 
@@ -254,7 +254,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   test "Equation 2.87-89":
     when IS_CONFORMAL: skip()  # TODO: Enable when conformal dot product fixed.
     else:
-      for 𝐦, _, _ in randomMultivectors():
+      for 𝐦, _, _ in multivectorsRandom():
         check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
   ```
 
