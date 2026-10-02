@@ -69,8 +69,9 @@ func replacementOf(identifier: string, is_nim: bool): string =
 func checkWaits*(path, source: string, kind: Kind): seq[Finding] =
   ## Report fixed wait in drive source, line by line, with its replacement.
   if kind.rule.syntax == Syntax.None: return
-  let is_nim = kind in NIM_KINDS
-  let lines = (if is_nim: source.codeOnly else: source).splitLines
+  let
+    is_nim = kind in NIM_KINDS
+    lines = (if is_nim: source.codeOnly else: source).splitLines
   var commented = newSeq[seq[string]](lines.len)
   if not is_nim:
     for c in source.comments(kind.rule.syntax):
