@@ -21,10 +21,10 @@
 
 // Build atlas from three faces, merged in order of decreasing generality.
 //   No single face covers what this GUI writes.
-//   Each range list names only what its own face is here to supply, so glyph is never
-//   taken from face that merely happens to have it too.
-//   Verified by rendering every non-ASCII codepoint source actually uses against all
-//   three faces, none missing; re-run that check before narrowing any range below.
+//   Range lists below bind only Dear ImGui's legacy path. Renderer keeping textures of its
+//   own, as OpenGL 3 backend does, loads each glyph on demand from first merged face whose
+//   `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`), so merge order is
+//   precedence. `--drive-faces` asks each role's face for every codepoint build writes.
 static const ImWchar RANGES_TEXT[] = {
   0x0020, 0x00FF, // Latin and supplement.
   0x02B0, 0x02FF, // Spacing modifiers, which notation accents its operands with.
@@ -150,6 +150,19 @@ bool guiFontLoaded() { return is_font_loaded; }
 bool guiFontTitleLoaded() { return font_title != nullptr; }
 
 bool guiFontMonoLoaded() { return font_mono != nullptr; }
+
+// Report whether face that role sets text in draws `codepoint` from glyph of its own.
+//   Loads glyph as drawing does, through every face merged into role's, so false is exactly
+//   codepoint that would draw as fallback box.
+//   Role whose face is missing answers for interface face, which role then falls back to.
+//   `role` is ordinal of `gui.FaceRole`.
+bool guiFaceHasGlyph(int role, unsigned int codepoint) {
+  ImFontAtlas* atlas = ImGui::GetIO().Fonts;
+  if (atlas->Fonts.Size == 0) return false;
+  ImFont* font = role == 1 ? font_label : role == 2 ? font_title : role == 3 ? font_mono : nullptr;
+  if (font == nullptr) font = atlas->Fonts[0];
+  return font->GetFontBaked(font->LegacySize)->FindGlyphNoFallback((ImWchar)codepoint) != nullptr;
+}
 
 bool guiProcessEvent(const SDL_Event* event) { return ImGui_ImplSDL3_ProcessEvent(event); }
 
