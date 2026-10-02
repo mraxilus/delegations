@@ -1385,9 +1385,8 @@ pans by the travel of its midpoint.
 **Keys move by shared rates for each second**: `TURN_SECOND` 1.4, `RISE_SECOND` 1.1,
 `ROLL_SECOND` 1.4, `FACTOR_DOLLY_SECOND` 4.0, and `FACTOR_HASTE` 4.0 under shift. Each frame
 scales them by the elapsed time, so a hold covers the same ground at 60 Hz and at 144 Hz. The
-dolly compounds as `pow(factor, seconds)`. Drag rates differ between the front-ends for a real
-reason. The `SPEED_ORBIT` of the desktop (0.008) is radians for each pixel, and the browser
-scripts work in fractions of the canvas width.
+dolly compounds as `pow(factor, seconds)`. A drag has no rate, since each carries what it holds
+one pixel for one; see Drags.
 
 **The panel holds the motor as the value.** Both front-ends show all sixteen coefficients of
 `Camera.motor`, in the grid that objects use, and each can be typed. `motorRigid` settles what is
@@ -1439,59 +1438,17 @@ Assumed: that no reader wants a ceiling on the separation.
 `look`, `roll` and `travel` turn and slide about its own axes. With a selection it keeps the
 turntable.
 
-**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left drag
-and `panAcross` the right, and each picks between the two states inside itself. Not `orbit` for
-every drag, which swings the eye round the pivot where a reader means to turn in place.
-
 **Flight turns about a line through the eye.** `turnedAboutEye` joins the eye with a carried axis
 and turns about that line, so the eye stands where it stands and the frame stays orthonormal.
 `look` reads the frame again between its two turns. The across axis after a yaw is not the across
 axis before it. A pitch about the stale one tips the up axis off the sight, which is a roll nobody
 asked for.
 
-`look` takes the two arguments that `orbit` takes, with the same signs. So one desktop mouse drag
-feeds either verb as the selection comes and goes.
+`look` takes the two arguments that `orbit` takes, with the same signs. So one held key feeds
+either verb as the selection comes and goes.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
-
-**Turning about the camera's own axes carries roll round with it, so a finger turns about level
-axes.** The roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3
-radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That
-is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
-`orbit` carry exactly the same amount. The desktop's mouse keeps it, with Q and E to answer it.
-
-**A finger carries what it holds, one pixel for one.** `turnsCarrying` pitches about the level axis
-until one direction has the height of the other, then yaws about world up until their bearings meet.
-Of the two pitches that reach that height, it takes the pair that turns least, so a drag that comes
-back brings the camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near
-the pole, a height out of reach lets what the finger holds slip.
-
-Orbit holds a point on a sphere about the pivot, since the pivot itself never moves under orbit.
-`pointHeld` places it on the ray, on the sphere's near side while the ray passes within
-`radius/sqrt(2)` of the pivot. Beyond, a sheet of the same slope carries on, so a finger off the
-sphere still turns the view. `radiusHeld` takes the selection's reach from the pivot. It is no less
-than a third of the short side at the pivot's depth, and inside the eye's separation.
-
-**A right drag in free flight carries the depth it grabbed, one pixel for one.** `grabPan` takes
-that depth at the press, while hover still reads what the pointer is over, or the pivot's over
-nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that depth.
-A point at that depth then stays under the cursor, at any canvas height and field of view.
-
-Two fingers hold the pivot's depth, read at each step, because they pinch as they pan. A depth
-taken at landing goes stale with the zoom. Rejected: a fixed share of the separation for each pixel.
-It matched the cursor at one canvas height alone, and ran 1.74 times it on 900 px at 45 degrees.
-
-Not a rate, which turns the sight by an angle the screen does not show. On a phone a 60 by 40 px
-drag carries free aim's picture 60.4 by 41.0 px, and a rate carried it 542.4 by 411.8. Not the roll
-put back after each turn about the camera's own axes, which leaves the sight sunk.
-
-A finger has no roll key beside it and wanders in curves, and the page's mouse drags as a finger
-does. So `turnFollowing` turns about world up and the level axis across the sight, and keeps any
-roll a twist or Q and E set. Each axis is the world axis nearest the camera's own, signed from the
-camera. So the camera passes over the top, upside down on the far side, and the picture still
-follows the drag. On a 390 by 844 page in Chromium on 2026-09-24, a free-aim turn took 0.45 to 0.48
-ms. An orbit turn took 0.63 to 0.72 ms, over 2,000 turns of each.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1588,13 +1545,6 @@ The separation then scales as the turntable's dolly scales it.
 *Checked.* Verified by `suites.nim`:
 
 - a look turns the sight about the camera's own axes and leaves the eye where it stands;
-- a left drag looks with nothing picked and orbits with something picked, and the eye or the pivot
-  stands accordingly;
-- one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
-- a finger's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
-- a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
-- a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
-- an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - eight quarter-radian pitches make two radians in `look` and `orbit`, past straight down;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
@@ -1606,9 +1556,6 @@ The separation then scales as the turntable's dolly scales it.
   ceiling where either is large;
 - a held `w` with nothing selected lies along the sight, and spends the separation it covers;
 - a strafe leaves that separation alone;
-- a right drag carries a point it holds at 2.5, 19 and 4,000 units to the pixel it reached, within
-  0.01 px;
-- a right drag takes the depth under the pointer, or the pivot's over nothing;
 - the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
 - 40 notches onto a point stop at its drawn radius, with the point held on its pixel;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
@@ -1619,11 +1566,6 @@ The separation then scales as the turntable's dolly scales it.
 
 Verified by driven checks, in Chromium on 2026-09-26:
 
-- a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
-- a left drag, and a finger with nothing picked, of 60 and 40 px carried the object beside them
-  59.1 and 40.5 px;
-- a 600 px finger swipe away and back brought the azimuth back to 0.9828 and elevation to 0.321289;
-- a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
 - 500 ms of `w` on the opening page moved the eye 5.020 units, 0.000000 across the sight line.
   The separation gave up that same 5.020 of 19.000;
 - eight notches low in the frame carried the separation from 19.00 to 4.14. They left the eye
@@ -1631,8 +1573,111 @@ Verified by driven checks, in Chromium on 2026-09-26:
 - the opening page reads a local scale of 14.6842, not the separation of 19.000, and 5.020 units
   of flight drew it to 9.6647.
 
+## Drags
+
+**Every drag carries what it holds, one pixel for one, on both front-ends.** The left drag is
+`interaction.turnFollowing` and the right is `panAcross`, and each picks between the two states
+inside itself. Not `orbit` for every drag, which swings the eye round the pivot where a reader means
+to turn in place. Not a rate, which turns the sight by an angle the screen does not show. On a phone
+a 60 by 40 px drag carries free aim's picture 60.4 by 41.0 px, and a rate carried it 542.4 by 411.8.
+
+**A left drag turns about level axes, so it leaves no roll.** Turning about the camera's own axes
+carries roll round with it. The roll a closed loop leaves is the solid angle that loop encloses. A
+loop of 0.3 radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over
+four. That is the geometry of transport, not a fault, and `look` and `orbit` carry exactly the same
+amount. Held keys keep it, with Q and E beside them.
+
+A finger has no roll key beside it and wanders in curves, and both mice drag as a finger does. So
+`turnFollowing` turns about world up and the level axis across the sight, and keeps any roll a twist
+or Q and E set. Each axis is the world axis nearest the camera's own, signed from the camera. So the
+camera passes over the top, upside down on the far side, and the picture still follows the drag.
+Rejected: the window's own 0.008 radians for each pixel about the camera's axes, since both
+front-ends drag alike by the Architect's ruling.
+
+Rejected also: the roll put back after each turn about the camera's own axes, which leaves the sight
+sunk. On a 390 by 844 page in Chromium on 2026-09-24, a free-aim turn took 0.45 to 0.48 ms. An orbit
+turn took 0.63 to 0.72 ms, over 2,000 turns of each.
+
+**`turnsCarrying` holds what a left drag took.** It pitches about the level axis until one direction
+has the height of the other, then yaws about world up until their bearings meet. Of the two pitches
+that reach that height, it takes the pair that turns least, so a drag that comes back brings the
+camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near the pole, a height
+out of reach lets what the drag holds slip.
+
+Orbit holds a point on a sphere about the pivot, since the pivot itself never moves under orbit.
+`pointHeld` places it on the ray, on the sphere's near side while the ray passes within
+`radius/sqrt(2)` of the pivot. Beyond, a sheet of the same slope carries on, so a finger off the
+sphere still turns the view. `radiusHeld` takes the selection's reach from the pivot, which
+`reachAimed` reads off the aim that framed it. It is no less than a third of the short side at the
+pivot's depth, and inside the eye's separation.
+
+**A right drag in free flight carries the depth it grabbed, one pixel for one.** `grabPan` takes
+that depth at the press, while hover still reads what the pointer is over, or the pivot's over
+nothing. `panAcross` slides the camera square to the sight, by what one pixel spans at that depth.
+A point at that depth then stays under the cursor, at any canvas height and field of view.
+
+Two fingers hold the pivot's depth, read at each step, because they pinch as they pan. A depth
+taken at landing goes stale with the zoom. Rejected: a fixed share of the separation for each pixel.
+It matched the cursor at one canvas height alone, and ran 1.74 times it on 900 px at 45 degrees.
+
+**A right drag with a selection stretches from the pivot, and holds the point it grabbed.**
+`grabPan` takes the point that a left drag's orbit holds under the press. The vertical dollies, so
+that point's height over the pivot's row scales as the pointer's does. That is a pinch with one
+finger on the pivot, so a drag away from the row zooms in on either side of it. The horizontal then
+turns as a turntable, and carries the point across by what the pointer moved. The Architect chose
+this over a zoom that keeps its direction wherever the press lands, which lets the point drift off.
+
+**Heights are read no nearer the pivot's row than `FRACTION_STRETCH_LEAST`, 5 percent of the canvas
+height.** Nearer, one pixel asks for a zoom without bound. So one drag zooms at most tenfold over
+half the height, on any canvas. Inside the band the vertical does nothing, and the point slips.
+`stretchAcross` carries the point from where it stands, and not from the pointer. So a slip stays,
+and no turn that nobody dragged takes it back.
+
+**The point is taken once, at the press.** Asked again at each step, it lies on a sphere that the
+zoom resizes, so it is another point. The zoom then turned on how many steps the pointer sent. A
+130 px drag on the middle column ended at a separation of 11.73 in one step, and 10.98 in twelve.
+Taken once, both end at 11.73. Two fingers take the point under each step, because they pinch as
+they move. `pointKept` finds the point again on its own sphere, after the dolly moves the eye.
+
+The dolly and the turn are three motions for the point's two coordinates, so a slant path leaves a
+trace. A slant drag out and back leaves the eye 0.0018 off at a separation of 19. On the middle
+column the dolly moves alone, and out and back returns exactly. Rejected: 0.006 radians and a factor
+of 1.004 for each pixel, which held the point under the cursor nowhere.
+
+*Checked.* Verified by `suites.nim`:
+
+- a left drag looks with nothing picked and orbits with something picked, and the eye or the pivot
+  stands accordingly;
+- one loop of `look` or `orbit` leaves the solid angle it encloses, and four leave 0.324 radians;
+- a drag's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
+- a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
+- a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
+- an orbit passes over the top and a look under its feet, and a drag goes through the pole;
+- a right drag carries a point it holds at 2.5, 19 and 4,000 units to the pixel it reached, within
+  0.01 px;
+- a right drag takes the depth under the pointer, or the pivot's over nothing;
+- a right drag with a selection carries its point to the pixel it reached, within 0.01 px, on both
+  sides of the pivot's row. Inside the band it zooms nothing;
+- a right drag with a selection keeps the point its press took, and 12 steps land it within 0.01
+  px. On the middle column 1 step and 12 end alike, and out and back returns.
+
+The window's drags call the same `turnFollowing` and `panAcross`, with the window's own pixels. No
+drive reaches the window's mouse, so the suite holds that.
+
+Verified by driven checks, in Chromium on 2026-09-26:
+
+- a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
+- a left drag, and a finger with nothing picked, of 60 and 40 px carried the object beside them
+  59.1 and 40.5 px;
+- a 600 px finger swipe away and back brought the azimuth back to 0.9828 and elevation to 0.321289;
+- a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000.
+
 Verified by driven check, in Chromium on 2026-10-01: a right drag of 360.6 px over nothing carried
 the pivot 360.6 px at its own depth. The fixed share of separation carried it 626.7 px.
+
+Verified by driven check, in Chromium on 2026-10-02: a right drag with one object picked held its
+point 0.000 px off the cursor, above the pivot's row and below it. The separation went from 19.00 to
+10.79, then to 6.27.
 
 ## Records and shaders
 
