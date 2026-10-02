@@ -50,7 +50,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     i = 0
 
   # Take lead up to first note.
-  while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+  while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
     notes.lead.add blocks[i]
     inc i
 
@@ -59,15 +59,15 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     let heading = blocks[i]
     inc i
     var note = Note(title: heading.lines[0], line: heading.line)
-    let has_file = i < blocks.len and blocks[i].kind == BlockKind.Paragraph and
+    let has_file = i < blocks.len and blocks[i].kind == KindBlock.Paragraph and
       blocks[i].lines[0].startsWith("`")
-    if not has_file or i + 1 >= blocks.len or blocks[i + 1].kind != BlockKind.Fence:
+    if not has_file or i + 1 >= blocks.len or blocks[i + 1].kind != KindBlock.Fence:
       findings.add Finding(
         path: path,
         line: heading.line,
         message: "Note needs file line and quoted fence; got `" & note.title & "`.",
       )
-      while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+      while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
         inc i
       continue
     let
@@ -78,7 +78,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     if joined >= 0: note.status = first[joined + STATUS_JOIN.len .. ^1].strip
     note.quote = blocks[i + 1].lines.join("\n")
     i += 2
-    while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+    while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
       note.body.add blocks[i]
       inc i
     notes.items.add note

@@ -91,7 +91,7 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
       )
       continue
     var metrics: seq[(string, int, int)]
-    for metric in GATED:
+    for metric in METRICS_GATED:
       metrics.add (
         metric, before[key]{"total", metric}.getInt, node{"total", metric}.getInt
       )

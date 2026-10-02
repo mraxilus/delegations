@@ -58,10 +58,10 @@ type
 
 
 const
-  CLAIM_KINDS* = ["suites", "tables", "program", "count", "build"]
+  KINDS_CLAIM* = ["suites", "tables", "program", "count", "build"]
     ## Claim kinds evaluation knows how to check.
-  NUMBER_WIDTH = 2  ## Digits number is written with, zero-padded, in path and citation.
-  STATUS_WORDS = ["proposed", "implemented", "withdrawn"]
+  WIDTH_NUMBER = 2  ## Digits number is written with, zero-padded, in path and citation.
+  WORDS_STATUS = ["proposed", "implemented", "withdrawn"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
 
 
@@ -70,7 +70,7 @@ func figureOf*(node: Block, directory: string): Option[Figure] =
   ##   Path has `..` folded.
   ##   None for any block that is not one image alone.
   ##   Caption may wrap over lines.
-  if node.kind != BlockKind.Paragraph: return none(Figure)
+  if node.kind != KindBlock.Paragraph: return none(Figure)
   let
     line = node.lines.join(" ").strip
     middle = line.find("](")
@@ -85,7 +85,7 @@ func figureOf*(node: Block, directory: string): Option[Figure] =
 
 func citation*(proposal: Proposal): string =
   ## Cite proposal by its number, as `P02`.
-  "P" & align($proposal.number, NUMBER_WIDTH, '0')
+  "P" & align($proposal.number, WIDTH_NUMBER, '0')
 
 
 func isImplemented*(proposal: Proposal): bool =
@@ -110,7 +110,7 @@ func parseProposal*(
   let
     base = directory.rsplit('/', 1)[^1]
     dash = base.find('-')
-  if dash == NUMBER_WIDTH and base[0..<dash].allCharsInSet(Digits):
+  if dash == WIDTH_NUMBER and base[0..<dash].allCharsInSet(Digits):
     proposal.number = parseInt(base[0..<dash])
     proposal.name = base[dash + 1 .. ^1]
   else:
@@ -120,7 +120,7 @@ func parseProposal*(
       message: "Proposal directory needs its number, as `01-" & base & "`; got `" & base & "`.",
     )
   let blocks = parseBlocks(argument)
-  if blocks.len == 0 or blocks[0].kind != BlockKind.Heading or blocks[0].level != 1:
+  if blocks.len == 0 or blocks[0].kind != KindBlock.Heading or blocks[0].level != 1:
     findings.add Finding(
       path: directory & "/proposal.md",
       line: 1,
@@ -151,13 +151,13 @@ func parseProposal*(
     return (proposal, findings)
   proposal.builds_on = claims{"builds_on"}.getStr
   let status = claims{"status"}.getStr
-  if status notin STATUS_WORDS:
+  if status notin WORDS_STATUS:
     findings.add Finding(
       path: directory & "/claims.json",
       message: "Status must be proposed, implemented or withdrawn; got `" & status & "`.",
     )
   else:
-    proposal.status = StatusProposal(STATUS_WORDS.find(status))
+    proposal.status = StatusProposal(WORDS_STATUS.find(status))
   proposal.implemented_in = claims{"implemented_in"}.getStr
   if proposal.status == StatusProposal.Implemented and proposal.implemented_in.len == 0:
     findings.add Finding(
@@ -173,7 +173,7 @@ func parseProposal*(
     return (proposal, findings)
   for claim in listed:
     let kind = claim{"kind"}.getStr
-    if kind notin CLAIM_KINDS:
+    if kind notin KINDS_CLAIM:
       findings.add Finding(
         path: directory & "/claims.json",
         message: "Claim kind unknown; got `" & kind & "`.",
@@ -206,5 +206,5 @@ func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
       result.add Finding(
         path: "proposals",
         message: "Proposal numbers skip one, so it was freed; got `P" &
-          align($number, NUMBER_WIDTH, '0') & "` missing.",
+          align($number, WIDTH_NUMBER, '0') & "` missing.",
       )

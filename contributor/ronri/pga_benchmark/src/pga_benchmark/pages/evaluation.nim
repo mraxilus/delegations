@@ -67,12 +67,12 @@ func spreadOf*(evaluations: openArray[JsonNode]): Spread =
 
 #[ Rendering ]#
 
-func verdictChips*(
+func chipsVerdict*(
   evaluation: JsonNode, baselines: Table[string, JsonNode], spread: Spread
 ): string =
   ## Render one chip per algebra: suites, then median time over what evaluation touched.
 
-  func touchedMedian(
+  func medianTouched(
     evaluation: JsonNode, baselines: Table[string, JsonNode], algebra: string
   ): float =
     ## Read median time ratio over measurands evaluation touched at algebra; zero where none.
@@ -85,7 +85,7 @@ func verdictChips*(
     if ratios.len mod 2 == 1: ratios[ratios.len div 2]
     else: (ratios[ratios.len div 2 - 1] + ratios[ratios.len div 2]) / 2.0
 
-  func suitesText(evaluation: JsonNode, algebra: string): string =
+  func textSuites(evaluation: JsonNode, algebra: string): string =
     ## Render suites passed over run, with pin's beside where they differ.
     let
       suites = evaluation{"algebras", algebra, "suites"}
@@ -112,20 +112,20 @@ func verdictChips*(
       failed_pin = evaluation{"pin_suites", algebra, "failed"}.getInt
       (gone, came) = nanMoved(measured)
       kind = if failed > failed_pin or came > 0: "fail" else: "pass"
-      median = touchedMedian(evaluation, baselines, algebra)
-    var text = algebra & " suites " & suitesText(evaluation, algebra)
+      median = medianTouched(evaluation, baselines, algebra)
+    var text = algebra & " suites " & textSuites(evaluation, algebra)
     if measured{"functions"}.len > 0:
       text.add " · " & $measured{"functions"}.len & " functions moved"
     if gone > 0: text.add " · NaN gone in " & $gone
     if came > 0: text.add " · NaN new in " & $came
     if median > 0:
       let side = if median < spread.low: "fast" elif median > spread.high: "slow" else: "flat"
-      result.add chip(text & " · " & ratioText(median), kind & " " & side)
+      result.add chip(text & " · " & textRatio(median), kind & " " & side)
     else:
       result.add chip(text, kind)
 
 
-func functionsTable*(evaluation: JsonNode): string =
+func tableFunctions*(evaluation: JsonNode): string =
   ## Render functions evaluation moved: multiplies, bytes and fills, pin then changed.
 
   func transition(before, after: JsonNode; field: string): string =
@@ -146,11 +146,11 @@ func functionsTable*(evaluation: JsonNode): string =
       result.add "<tr><td>" & code(key) & "</td><td>" &
         transition(before, after, "multiplies") & "</td><td>" &
         transition(before, after, "bytes_moved") & "</td><td>" &
-        transition(before, after, "zero_fills") & "</td></tr>"
+        transition(before, after, "fills_zero") & "</td></tr>"
     result.add "</table></div>"
 
 
-func timesTable*(evaluation: JsonNode, baselines: Table[string, JsonNode], spread: Spread): string =
+func tableTimes*(evaluation: JsonNode, baselines: Table[string, JsonNode], spread: Spread): string =
   ## Render measurands evaluation touched, pin's time then changed time, per algebra.
   for algebra, measured in evaluation{"algebras"}.pairs:
     let ids = touched(evaluation, baselines, algebra)
@@ -166,11 +166,11 @@ func timesTable*(evaluation: JsonNode, baselines: Table[string, JsonNode], sprea
         side = if ratio < spread.low: "fast" elif ratio > spread.high: "slow" else: "flat"
       result.add "<tr class=\"" & side & "\"><td>" & escapeHtml(id) & "</td><td>" &
         timing[0].getFloat.fixed(1) & "</td><td>" & timing[1].getFloat.fixed(1) & "</td><td>" &
-        ratioText(ratio) & "</td></tr>"
+        textRatio(ratio) & "</td></tr>"
     result.add "</table></div>"
 
 
-func nanTable*(evaluation: JsonNode): string =
+func tableNan*(evaluation: JsonNode): string =
   ## Render measurands whose share of NaN results evaluation moved, pin's then changed, per algebra.
   for algebra, measured in evaluation{"algebras"}.pairs:
     let shares = measured{"nan"}
@@ -183,7 +183,7 @@ func nanTable*(evaluation: JsonNode): string =
     result.add "</table></div>"
 
 
-func editsHtml*(change: Change, files: Table[string, string]): string =
+func htmlEdits*(change: Change, files: Table[string, string]): string =
   ## Render each edit closed, under summary naming where it lands.
   ##   Summary names signatures edit defines or sits in.
   ##   Opening edit shows quote then replacement, or whole file.
@@ -295,7 +295,7 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
       dec index
     none(string)
 
-  func signaturesHtml(label: string, signatures: openArray[string]): string =
+  func htmlSignatures(label: string, signatures: openArray[string]): string =
     ## Render signatures under label; empty where none.
     if signatures.len == 0: return ""
     result = "<span class=\"signatures\"><span class=\"label\">" & label & "</span>"
@@ -307,7 +307,7 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
       let lines = edit.replacement.count('\n')
       result.add "<details class=\"edit\"><summary><span class=\"where\">replaces " &
         code(edit.path) & " whole, " & $lines & " lines, written against digest " &
-        code(edit.digest) & "</span>" & signaturesHtml("defines", declared(edit.replacement)) &
+        code(edit.digest) & "</span>" & htmlSignatures("defines", declared(edit.replacement)) &
         "</summary>" &
         renderFence(edit.replacement.strip(leading = false).splitLines, "nim", 1) & "</details>"
       continue
@@ -319,10 +319,10 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
       count_replacement = edit.replacement.strip(leading = false).splitLines.len
       defined = declared(edit.replacement)
       context =
-        if defined.len > 0: signaturesHtml("defines", defined)
+        if defined.len > 0: htmlSignatures("defines", defined)
         else:
           let inside = enclosing(source, edit.quote, at)
-          if inside.isSome: signaturesHtml("inside", [inside.get]) else: ""
+          if inside.isSome: htmlSignatures("inside", [inside.get]) else: ""
     result.add "<details class=\"edit\"><summary><span class=\"where\">" & code(where) &
       " · replaces " & $count_quote & (if count_quote == 1: " line" else: " lines") & " with " &
       $count_replacement & "</span>" & context &
@@ -331,7 +331,7 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
       "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></details>"
 
 
-func spreadText*(spread: Spread): string =
+func textSpread*(spread: Spread): string =
   ## State spread, and where it was read from.
   if spread.count == 0:
     "Times outside ×" & spread.low.fixed & " to ×" & spread.high.fixed & " count as moved. " &

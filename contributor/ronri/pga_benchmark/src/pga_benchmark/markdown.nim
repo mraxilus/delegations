@@ -18,10 +18,10 @@ import std/strutils
 
 
 type
-  BlockKind* {.pure.} = enum  ## Define kinds of block file holds.
+  KindBlock* {.pure.} = enum  ## Define kinds of block file holds.
     Heading, Paragraph, Bullets, Numbers, Tasks, Table, Fence
   Block* = object  ## Define one block of file, with line it opens on for findings.
-    kind*: BlockKind  ## What block is.
+    kind*: KindBlock  ## What block is.
     level*: int  ## Heading level, one to six; zero for other kinds.
     lines*: seq[string]
       ## Text lines: heading text, paragraph lines, list items, table rows, or fence body.
@@ -31,10 +31,10 @@ type
 
 
 const
-  FENCE_MARK = '`'  ## Character fence is run of.
-  FENCE_MIN = 3  ## Shortest run opening fence.
-  TASK_OPEN = "[ ] "  ## Marker of open task item.
-  TASK_DONE = "[x] "  ## Marker of done task item.
+  MARK_FENCE = '`'  ## Character fence is run of.
+  LENGTH_FENCE_MIN = 3  ## Shortest run opening fence.
+  MARK_TASK_OPEN = "[ ] "  ## Marker of open task item.
+  MARK_TASK_DONE = "[x] "  ## Marker of done task item.
 
 
 
@@ -43,9 +43,9 @@ const
 func fenceOf(line: string): int =
   ## Count backticks opening line; zero when fewer than fence needs.
   for c in line:
-    if c != FENCE_MARK: break
+    if c != MARK_FENCE: break
     inc result
-  if result < FENCE_MIN: result = 0
+  if result < LENGTH_FENCE_MIN: result = 0
 
 
 func headingOf(line: string): int =
@@ -61,7 +61,7 @@ func isBullet(line: string): bool =
   line.startsWith("- ") or line.startsWith("* ")
 
 
-func numberedText(line: string): int =
+func textNumbered(line: string): int =
   ## Read offset of text after `1. ` marker; zero when line opens no numbered item.
   var i = 0
   while i < line.len and line[i].isDigit: inc i
@@ -71,9 +71,9 @@ func numberedText(line: string): int =
 func parseBlocks*(source: string): seq[Block] =
   ## Split file into blocks, in order.
 
-  func isBlockStart(line: string): bool =
+  func isStartBlock(line: string): bool =
     ## Tell whether line opens block of its own, so ends paragraph before it.
-    line.headingOf > 0 or line.fenceOf > 0 or line.isBullet or line.numberedText > 0 or
+    line.headingOf > 0 or line.fenceOf > 0 or line.isBullet or line.textNumbered > 0 or
       line.startsWith("|")
 
   let lines = source.splitLines
@@ -96,7 +96,7 @@ func parseBlocks*(source: string): seq[Block] =
         body.add lines[i]
         inc i
       result.add Block(
-        kind: BlockKind.Fence,
+        kind: KindBlock.Fence,
         lines: body,
         language: line[fence .. ^1].strip,
         line: opening,
@@ -108,7 +108,7 @@ func parseBlocks*(source: string): seq[Block] =
     let level = line.headingOf
     if level > 0:
       result.add Block(
-        kind: BlockKind.Heading,
+        kind: KindBlock.Heading,
         level: level,
         lines: @[line[level + 1 .. ^1].strip],
         line: i + 1,
@@ -123,22 +123,22 @@ func parseBlocks*(source: string): seq[Block] =
       while i < lines.len and lines[i].startsWith("|"):
         rows.add lines[i]
         inc i
-      result.add Block(kind: BlockKind.Table, lines: rows, line: opening)
+      result.add Block(kind: KindBlock.Table, lines: rows, line: opening)
       continue
 
     # Read list items, each with its indented continuation lines.
-    if line.isBullet or line.numberedText > 0:
+    if line.isBullet or line.textNumbered > 0:
       let
-        is_numbered = line.numberedText > 0
+        is_numbered = line.textNumbered > 0
         opening = i + 1
       var
         items: seq[string]
         is_task = false
       while i < lines.len:
         let current = lines[i]
-        if (is_numbered and current.numberedText > 0) or (not is_numbered and current.isBullet):
-          let text = if is_numbered: current[current.numberedText .. ^1] else: current[2 .. ^1]
-          if text.startsWith(TASK_OPEN) or text.startsWith(TASK_DONE): is_task = true
+        if (is_numbered and current.textNumbered > 0) or (not is_numbered and current.isBullet):
+          let text = if is_numbered: current[current.textNumbered .. ^1] else: current[2 .. ^1]
+          if text.startsWith(MARK_TASK_OPEN) or text.startsWith(MARK_TASK_DONE): is_task = true
           items.add text
         elif current.startsWith("  ") and current.strip.len > 0 and items.len > 0:
           items[^1].add " " & current.strip
@@ -146,9 +146,9 @@ func parseBlocks*(source: string): seq[Block] =
           break
         inc i
       let kind =
-        if is_task: BlockKind.Tasks
-        elif is_numbered: BlockKind.Numbers
-        else: BlockKind.Bullets
+        if is_task: KindBlock.Tasks
+        elif is_numbered: KindBlock.Numbers
+        else: KindBlock.Bullets
       result.add Block(kind: kind, lines: items, line: opening)
       continue
 
@@ -156,10 +156,10 @@ func parseBlocks*(source: string): seq[Block] =
     var text: seq[string]
     let opening = i + 1
     while i < lines.len and lines[i].strip.len > 0:
-      if text.len > 0 and lines[i].isBlockStart: break
+      if text.len > 0 and lines[i].isStartBlock: break
       text.add lines[i].strip
       inc i
-    result.add Block(kind: BlockKind.Paragraph, lines: text, line: opening)
+    result.add Block(kind: KindBlock.Paragraph, lines: text, line: opening)
 
 
 
@@ -273,28 +273,28 @@ func renderBlock*(node: Block, offset = 1): string =
     result.add "</table></div>"
 
   case node.kind
-  of BlockKind.Heading:
+  of KindBlock.Heading:
     let tag = "h" & $min(node.level + offset, 6)
     "<" & tag & ">" & renderInline(node.lines[0]) & "</" & tag & ">"
-  of BlockKind.Paragraph:
+  of KindBlock.Paragraph:
     "<p>" & renderInline(node.lines.join(" ")) & "</p>"
-  of BlockKind.Bullets, BlockKind.Numbers:
-    let tag = if node.kind == BlockKind.Numbers: "ol" else: "ul"
+  of KindBlock.Bullets, KindBlock.Numbers:
+    let tag = if node.kind == KindBlock.Numbers: "ol" else: "ul"
     var html = "<" & tag & ">"
     for item in node.lines: html.add "<li>" & renderInline(item) & "</li>"
     html & "</" & tag & ">"
-  of BlockKind.Tasks:
+  of KindBlock.Tasks:
     var html = "<ul class=\"tasks\">"
     for item in node.lines:
       let (mark, text) =
-        if item.startsWith(TASK_DONE): ("done", item[TASK_DONE.len .. ^1])
-        elif item.startsWith(TASK_OPEN): ("open", item[TASK_OPEN.len .. ^1])
+        if item.startsWith(MARK_TASK_DONE): ("done", item[MARK_TASK_DONE.len .. ^1])
+        elif item.startsWith(MARK_TASK_OPEN): ("open", item[MARK_TASK_OPEN.len .. ^1])
         else: ("open", item)
       html.add "<li class=\"" & mark & "\">" & renderInline(text) & "</li>"
     html & "</ul>"
-  of BlockKind.Table:
+  of KindBlock.Table:
     renderTable(node.lines)
-  of BlockKind.Fence:
+  of KindBlock.Fence:
     renderFence(node.lines, node.language)
 
 

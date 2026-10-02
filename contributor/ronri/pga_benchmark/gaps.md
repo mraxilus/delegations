@@ -194,8 +194,8 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | `∨` | Wedge | 81 | 0 | 0 | 384 | 81/384 |
 | `⟑` | Geometric | 192 | 0 | 0 | 384 | 192/384 |
 | `⟇` | Geometric | 192 | 0 | 0 | 384 | 192/384 |
-| `∙` | ScalarForm | 8 | 0 | 0 | 264 | 8/384 |
-| `∘` | ScalarForm | 8 | 0 | 0 | 264 | 8/384 |
+| `∙` | FormScalar | 8 | 0 | 0 | 264 | 8/384 |
+| `∘` | FormScalar | 8 | 0 | 0 | 264 | 8/384 |
 | `∨★` | ContractBulk | 54 | 0 | 0 | 384 | 54/384 |
 | `∨☆` | ContractWeight | 27 | 0 | 0 | 384 | 27/384 |
 | `∧★` | ExpandBulk | 27 | 0 | 0 | 384 | 27/384 |
@@ -218,13 +218,13 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `|∙` | Norm | 8 | 0 | 1 | 136 | 8/640 |
 | `|∘` | Norm | 8 | 0 | 1 | 136 | 8/640 |
-| `|∙²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/256 |
-| `|∘²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/256 |
+| `|∙²` | NormSquared | 8 | 0 | 0 | 136 | 8/256 |
+| `|∘²` | NormSquared | 8 | 0 | 0 | 136 | 8/256 |
 | `|` | 2 Norm | 16 | 0 | 2 | 136 | 16/1664 |
 | `^∙` | Unitize | 24 | 1 | 1 | 256 | 24/512 |
 | `^∘` | Unitize | 24 | 1 | 1 | 256 | 24/512 |
 | `^` | Unitize | 24 | 1 | 1 | 256 | 24/512 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 256 | 0/256 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `∩` | Support | 54 | 0 | 0 | 256 | 162/1280 |
@@ -382,8 +382,8 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `∨` | Wedge | 243 | 0 | 0 | 768 | 243/768 |
 | `⟑` | Geometric | 1024 | 0 | 0 | 768 | 1024/768 |
 | `⟇` | Geometric | 1024 | 0 | 0 | 768 | 1024/768 |
-| `∙` | ScalarForm | 32 | 0 | 0 | 520 | 32/768 |
-| `∘` | ScalarForm | 32 | 0 | 0 | 520 | 32/768 |
+| `∙` | FormScalar | 32 | 0 | 0 | 520 | 32/768 |
+| `∘` | FormScalar | 32 | 0 | 0 | 520 | 32/768 |
 | `∨★` | ContractBulk | 243 | 0 | 0 | 768 | 243/768 |
 | `∨☆` | ContractWeight | 243 | 0 | 0 | 768 | 243/768 |
 | `∧★` | ExpandBulk | 243 | 0 | 0 | 768 | 243/768 |
@@ -406,21 +406,21 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
 | `|∙` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
 | `|∘` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
-| `|∙²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/512 |
-| `|∘²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/512 |
+| `|∙²` | NormSquared | 32 | 0 | 0 | 264 | 32/512 |
+| `|∘²` | NormSquared | 32 | 0 | 0 | 264 | 32/512 |
 | `|` | 2 Norm | 64 | 0 | 2 | 264 | 64/3328 |
 | `^∙` | Unitize | 64 | 1 | 1 | 512 | 64/1024 |
 | `^∘` | Unitize | 64 | 1 | 1 | 512 | 64/1024 |
 | `^` | Unitize | 64 | 1 | 1 | 512 | 64/1024 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 512 | 0/512 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 512 | 0/512 |
 | `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
 | `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
 | `■` | Permutation | 0 | 0 | 0 | 512 | 0/512 |
 | `□` | Permutation | 0 | 0 | 0 | 512 | 0/512 |
 | `|■` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
 | `|□` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
-| `⊟` | ConstantProduct | 0 | 0 | 0 | 512 | 0/512 |
-| `⊞` | ConstantProduct | 0 | 0 | 0 | 512 | 243/2048 |
+| `⊟` | ProductConstant | 0 | 0 | 0 | 512 | 0/512 |
+| `⊞` | ProductConstant | 0 | 0 | 0 | 512 | 243/2048 |
 | `⊙` | Center | 162 | 0 | 0 | 512 | 486/3584 |
 | `⊡` | Container | 162 | 0 | 0 | 512 | 243/2560 |
 | `⊛` | Permutation + Container + JoinCarrier | 324 | 0 | 0 | 512 | 518/30720 |
@@ -485,8 +485,8 @@ Gaps: 40. Over 17, met 23, unmeasured 0.
 | `∨` | Wedge | 27 | 0 | 0 | 192 | 27/192 |
 | `⟑` | Geometric | 48 | 0 | 0 | 192 | 48/192 |
 | `⟇` | Geometric | 48 | 0 | 0 | 192 | 48/192 |
-| `∙` | ScalarForm | 4 | 0 | 0 | 136 | 4/192 |
-| `∘` | ScalarForm | 4 | 0 | 0 | 136 | 4/192 |
+| `∙` | FormScalar | 4 | 0 | 0 | 136 | 4/192 |
+| `∘` | FormScalar | 4 | 0 | 0 | 136 | 4/192 |
 | `∨★` | ContractBulk | 18 | 0 | 0 | 192 | 18/192 |
 | `∨☆` | ContractWeight | 9 | 0 | 0 | 192 | 9/192 |
 | `∧★` | ExpandBulk | 9 | 0 | 0 | 192 | 9/192 |
@@ -509,13 +509,13 @@ Gaps: 40. Over 17, met 23, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
 | `|∙` | Norm | 4 | 0 | 1 | 72 | 4/320 |
 | `|∘` | Norm | 4 | 0 | 1 | 72 | 4/320 |
-| `|∙²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/128 |
-| `|∘²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/128 |
+| `|∙²` | NormSquared | 4 | 0 | 0 | 72 | 4/128 |
+| `|∘²` | NormSquared | 4 | 0 | 0 | 72 | 4/128 |
 | `|` | 2 Norm | 8 | 0 | 2 | 72 | 8/832 |
 | `^∙` | Unitize | 12 | 1 | 1 | 128 | 12/256 |
 | `^∘` | Unitize | 12 | 1 | 1 | 128 | 12/256 |
 | `^` | Unitize | 12 | 1 | 1 | 128 | 12/256 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 128 | 0/128 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 128 | 0/128 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
 | `∩` | Support | 18 | 0 | 0 | 128 | 54/640 |
@@ -588,8 +588,8 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `∨` | Wedge | 81 | 0 | 0 | 384 | 81/384 |
 | `⟑` | Geometric | 256 | 0 | 0 | 384 | 256/384 |
 | `⟇` | Geometric | 256 | 0 | 0 | 384 | 256/384 |
-| `∙` | ScalarForm | 16 | 0 | 0 | 264 | 16/384 |
-| `∘` | ScalarForm | 16 | 0 | 0 | 264 | 16/384 |
+| `∙` | FormScalar | 16 | 0 | 0 | 264 | 16/384 |
+| `∘` | FormScalar | 16 | 0 | 0 | 264 | 16/384 |
 | `∨★` | ContractBulk | 81 | 0 | 0 | 384 | 81/384 |
 | `∨☆` | ContractWeight | 81 | 0 | 0 | 384 | 81/384 |
 | `∧★` | ExpandBulk | 81 | 0 | 0 | 384 | 81/384 |
@@ -612,21 +612,21 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `|∙` | Norm | 16 | 0 | 1 | 136 | 16/640 |
 | `|∘` | Norm | 16 | 0 | 1 | 136 | 16/640 |
-| `|∙²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/256 |
-| `|∘²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/256 |
+| `|∙²` | NormSquared | 16 | 0 | 0 | 136 | 16/256 |
+| `|∘²` | NormSquared | 16 | 0 | 0 | 136 | 16/256 |
 | `|` | 2 Norm | 32 | 0 | 2 | 136 | 32/1664 |
 | `^∙` | Unitize | 32 | 1 | 1 | 256 | 32/512 |
 | `^∘` | Unitize | 32 | 1 | 1 | 256 | 32/512 |
 | `^` | Unitize | 32 | 1 | 1 | 256 | 32/512 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 256 | 0/256 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `■` | Permutation | 0 | 0 | 0 | 256 | 0/256 |
 | `□` | Permutation | 0 | 0 | 0 | 256 | 0/256 |
 | `|■` | Norm | 16 | 0 | 1 | 136 | 16/640 |
 | `|□` | Norm | 16 | 0 | 1 | 136 | 16/640 |
-| `⊟` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
-| `⊞` | ConstantProduct | 0 | 0 | 0 | 256 | 81/1024 |
+| `⊟` | ProductConstant | 0 | 0 | 0 | 256 | 0/256 |
+| `⊞` | ProductConstant | 0 | 0 | 0 | 256 | 81/1024 |
 | `⊙` | Center | 54 | 0 | 0 | 256 | 162/1792 |
 | `⊡` | Container | 54 | 0 | 0 | 256 | 81/1280 |
 | `⊛` | Permutation + Container + JoinCarrier | 108 | 0 | 0 | 256 | 178/9216 |

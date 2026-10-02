@@ -116,7 +116,7 @@ func selected(slots: Slots, grade: Grade): Slots =
 
 #[ Emission ]#
 
-func factorNode(factor: Factor, is_scalar_m: bool): NimNode =
+func nodeFactor(factor: Factor, is_scalar_m: bool): NimNode =
   ## Spell one factor: operand slot, scalar operand or temporary.
   let name = case factor.source
     of SOURCE_M: "m"
@@ -127,7 +127,7 @@ func factorNode(factor: Factor, is_scalar_m: bool): NimNode =
   nnkBracketExpr.newTree(ident(name), newCall(bindSym"Basis", newLit(factor.slot)))
 
 
-func sumNode(terms: seq[Term], is_scalar_m = false): NimNode =
+func nodeSum(terms: seq[Term], is_scalar_m = false): NimNode =
   ## Spell sum of terms, sign folded into add or subtract; zero where none.
   if terms.len == 0: return newLit(0.0)
   for index, term in terms:
@@ -136,7 +136,7 @@ func sumNode(terms: seq[Term], is_scalar_m = false): NimNode =
     if abs(magnitude - 1.0) > TOLERANCE_COEFFICIENT or term.factors.len == 0:
       product = newLit(magnitude)
     for factor in term.factors:
-      let node = factorNode(factor, is_scalar_m)
+      let node = nodeFactor(factor, is_scalar_m)
       product = if product.isNil: node else: infix(product, "*", node)
     let is_negative = term.coefficient < 0
     result =
@@ -150,7 +150,7 @@ func temporaries(emitter: var Emitter, slots: Slots): Slots =
   inc emitter.source_next
   for b in Basis:
     if slots[b].len == 0: continue
-    emitter.statements.add newLetStmt(ident("t" & $source & "_" & $ord(b)), sumNode(slots[b]))
+    emitter.statements.add newLetStmt(ident("t" & $source & "_" & $ord(b)), nodeSum(slots[b]))
     result[b] = @[Term(coefficient: 1.0, factors: @[(source, ord(b))])]
 
 
@@ -164,16 +164,16 @@ func bindScalar(emitter: var Emitter, value: NimNode): int =
 func product(emitter: var Emitter; left, right: Slots; cayley: Cayley2D): Slots =
   ## Multiply through two-dimensional table; operand already product binds temporaries first.
   let
-    left_bound = if left.degreeOf > 1: emitter.temporaries(left) else: left
-    right_bound = if right.degreeOf > 1: emitter.temporaries(right) else: right
+    bound_left = if left.degreeOf > 1: emitter.temporaries(left) else: left
+    bound_right = if right.degreeOf > 1: emitter.temporaries(right) else: right
   for a in Basis:
-    if left_bound[a].len == 0: continue
+    if bound_left[a].len == 0: continue
     for b in Basis:
-      if right_bound[b].len == 0: continue
+      if bound_right[b].len == 0: continue
       for destination in cayley[a][b]:
         let sign = if destination.is_negated: -1.0 else: 1.0
-        for x in left_bound[a]:
-          for y in right_bound[b]:
+        for x in bound_left[a]:
+          for y in bound_right[b]:
             result[destination.basis].add Term(
               coefficient: sign * x.coefficient * y.coefficient,
               factors: x.factors & y.factors,
@@ -183,7 +183,7 @@ func product(emitter: var Emitter; left, right: Slots; cayley: Cayley2D): Slots 
 
 func rootOf(terms: seq[Term]): NimNode =
   ## Spell square root of one slot's sum.
-  newCall(bindSym"sqrt", sumNode(terms))
+  newCall(bindSym"sqrt", nodeSum(terms))
 
 
 
@@ -326,15 +326,15 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
 
 #[ Functions ]#
 
-macro emitDenseForms*(): untyped =
-  ## Emit one dense form per general measurand, named by `denseNameOf`.
+macro emitFormsDense*(): untyped =
+  ## Emit one dense form per general measurand, named by `nameDenseOf`.
   ##   Partner carries sign of its operand's grade, as library's does; grade is read as
   ##   library reads it, from first component beyond tolerance, and sign flips, never scales.
   result = newStmtList()
   for p in CATALOGUE:
     if p.reference.len > 0: continue
     let
-      name = ident(p.denseNameOf)
+      name = ident(p.nameDenseOf)
       (m, n) = (ident"m", ident"n")
       is_scalar_m = p.operands[0] == Kind.Scalar
     if p.id == "select_part":
@@ -366,10 +366,10 @@ macro emitDenseForms*(): untyped =
       if is_partner and slots[b].len > 0:
         # Sum bound once and flipped after, since select over two sums spells each twice.
         let value = ident("value_" & $ord(b))
-        body.add newLetStmt(value, sumNode(slots[b], is_scalar_m))
+        body.add newLetStmt(value, nodeSum(slots[b], is_scalar_m))
         body.add newAssignment(target, quote do: (if `is_negated`: -`value` else: `value`))
       else:
-        body.add newAssignment(target, sumNode(slots[b], is_scalar_m))
+        body.add newAssignment(target, nodeSum(slots[b], is_scalar_m))
     let type_m = if is_scalar_m: ident"float" else: ident"Multivector"
     result.add(
       if p.arity == 2:
@@ -383,4 +383,4 @@ macro emitDenseForms*(): untyped =
     )
 
 
-emitDenseForms()
+emitFormsDense()

@@ -127,7 +127,7 @@ when IS_RIGID and DIMENSIONS == 4:
 
 
 when IS_CONFORMAL and DIMENSIONS == 5:
-  func widen*(a: RoundPoint): Multivector =
+  func widen*(a: PointRound): Multivector =
     ## Embed round point into e₁ e₂ e₃ e₄ e₅.
     result[Basis.E1] = a.x
     result[Basis.E2] = a.y
@@ -135,12 +135,12 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E4] = a.w
     result[Basis.E5] = a.u
 
-  func toRoundPoint*(m: Multivector): RoundPoint =
+  func toPointRound*(m: Multivector): PointRound =
     ## Extract round point from grade-1 slots.
     m.only({Basis.E1, Basis.E2, Basis.E3, Basis.E4, Basis.E5})
-    RoundPoint(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.E4], u: m[Basis.E5])
+    PointRound(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.E4], u: m[Basis.E5])
 
-  func widen*(p: FlatPoint): Multivector =
+  func widen*(p: PointFlat): Multivector =
     ## Embed flat point into e₁₅ e₂₅ e₃₅ e₄₅.
     result[Basis.E15] = p.x
     result[Basis.E25] = p.y
@@ -171,10 +171,10 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     Dipole(
       v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
       m: Vector3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
-      p: FlatPoint(x: m[Basis.E15], y: m[Basis.E25], z: m[Basis.E35], w: m[Basis.E45]),
+      p: PointFlat(x: m[Basis.E15], y: m[Basis.E25], z: m[Basis.E35], w: m[Basis.E45]),
     )
 
-  func widen*(l: FlatLine): Multivector =
+  func widen*(l: LineFlat): Multivector =
     ## Embed flat line into e₄₁₅ e₄₂₅ e₄₃₅ and e₂₃₅ e₃₁₅ e₁₂₅.
     result[Basis.E415] = l.v.x
     result[Basis.E425] = l.v.y
@@ -205,12 +205,12 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       },
     )
     Circle(
-      g: CarrierPlane(x: m[Basis.E423], y: m[Basis.E431], z: m[Basis.E412], w: m[Basis.E321]),
+      g: PlaneCarrier(x: m[Basis.E423], y: m[Basis.E431], z: m[Basis.E412], w: m[Basis.E321]),
       v: Vector3(x: m[Basis.E415], y: m[Basis.E425], z: m[Basis.E435]),
       m: Vector3(x: m[Basis.E235], y: m[Basis.E315], z: m[Basis.E125]),
     )
 
-  func widen*(g: FlatPlane): Multivector =
+  func widen*(g: PlaneFlat): Multivector =
     ## Embed flat plane into e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅.
     result[Basis.E4235] = g.x
     result[Basis.E4315] = g.y

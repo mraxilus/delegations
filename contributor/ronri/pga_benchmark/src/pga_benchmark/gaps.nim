@@ -31,9 +31,9 @@ type
     Over, Met, Unmeasured
   Values* = object
     ## Define one implementation's values of one gap; each absent where it or instrument is absent.
-    multiplies*, divides*, bytes*, zero_fills*, intermediates*, checks*, allocations*: Option[int]
+    multiplies*, divides*, bytes*, fills_zero*, intermediates*, checks*, allocations*: Option[int]
       ## Static measurements: counts read from emitted C; bytes are modelled movement.
-    ns*, nan_share*: Option[float]  ## Runtime measurements, absent where none is recorded.
+    ns*, share_nan*: Option[float]  ## Runtime measurements, absent where none is recorded.
   Gap* = object  ## Define one measurand of one algebra with both implementations' values.
     key*: string  ## `<algebra>/<measurand id>`, docket key.
     id*: string  ## Docket identifier, e.g. `G017`.
@@ -42,7 +42,7 @@ type
     bound*: Values
       ## Multivector lower bound, derived from algebra and never measured.
       ##   Absent where no rule is derived for measurand's shape.
-    over_on*: seq[string]  ## Metrics library exceeds target on.
+    metrics_over*: seq[string]  ## Metrics library exceeds target on.
     status*: Status  ## Verdict.
   Algebra* = object  ## Define one algebra's documents as read from `baseline/`.
     name*: string  ## Algebra name, e.g. `rga4d`.
@@ -52,7 +52,7 @@ type
     next*: int  ## Next number to allot.
     ids*: Table[string, string]  ## Identifier per gap key.
   Rule* {.pure.} = enum  ## Define how cause is decided from documents.
-    Terms, Time, ZeroFills, Intermediates, Checks, Inline, Nan, Compound, Missing, Cayley
+    Terms, Time, FillsZero, Intermediates, Checks, Inline, Nan, Compound, Missing, Cayley
   Cause* = object  ## Define one design-level gap.
     id*: string  ## Stable identifier, `D01` onward, never renumbered.
     title*: string  ## What gap is, one sentence.
@@ -79,7 +79,7 @@ const CAUSES* = [
   ),
   Cause(
     id: "D03",
-    rule: Rule.ZeroFills,
+    rule: Rule.FillsZero,
     title: "Operators zero-fill their full-width result before they write it.",
     closes_when: "no library function calls `nimZeroMem`.",
   ),
@@ -147,46 +147,46 @@ func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measu
     result.multiplies = some(function{"total", "multiplies"}.getInt)
     result.divides = some(function{"total", "divides"}.getInt)
     result.bytes = some(function{"movement", "bytes_moved"}.getInt)
-    result.zero_fills = some(function{"total", "zero_fills"}.getInt)
+    result.fills_zero = some(function{"total", "fills_zero"}.getInt)
     result.intermediates = some(function{"total", "intermediates"}.getInt)
     result.checks = some(function{"total", "checks"}.getInt)
   if not measurement.isNil and measurement.kind == JObject:
     result.ns = some(measurement{"ns_median"}.getFloat)
-    result.nan_share = some(measurement{"nan_share"}.getFloat)
+    result.share_nan = some(measurement{"share_nan"}.getFloat)
     if is_allocation_measured: result.allocations = some(measurement{"allocations"}.getInt)
 
 
 func decide*(gap: var Gap) =
   ## Decide gap: relative metrics open above reference, absolute ones above zero.
-  gap.over_on = @[]
+  gap.metrics_over = @[]
 
   template relative(name: string, field: untyped) =
     if gap.library.field.isSome and gap.reference.field.isSome and
         gap.library.field.get > gap.reference.field.get:
-      gap.over_on.add name
+      gap.metrics_over.add name
 
   template absolute(name: string, field: untyped) =
     if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
-      gap.over_on.add name
+      gap.metrics_over.add name
 
   relative("multiplies", multiplies)
   relative("divides", divides)
   relative("bytes", bytes)
-  absolute("zero_fills", zero_fills)
+  absolute("fills_zero", fills_zero)
   absolute("intermediates", intermediates)
   absolute("checks", checks)
   absolute("allocations", allocations)
-  if gap.library.nan_share.get(0.0) > 0.0: gap.over_on.add "nan"
+  if gap.library.share_nan.get(0.0) > 0.0: gap.metrics_over.add "nan"
   if gap.library.ns.isSome and gap.reference.ns.isSome and
       gap.library.ns.get > TOLERANCE * gap.reference.ns.get:
-    gap.over_on.add "time"
+    gap.metrics_over.add "time"
   gap.status =
-    if gap.over_on.len > 0: Status.Over
+    if gap.metrics_over.len > 0: Status.Over
     elif gap.library.multiplies.isNone and gap.library.ns.isNone: Status.Unmeasured
     else: Status.Met
 
 
-func boundValuesOf(node: JsonNode): Values =
+func valuesBoundOf(node: JsonNode): Values =
   ## Read multivector lower bound of one measurand; fields absent where document has none.
   ##   Bound spends no fill, no intermediate, no error check and no allocation by
   ##   construction, so those stand at zero rather than absent.
@@ -194,7 +194,7 @@ func boundValuesOf(node: JsonNode): Values =
   result.multiplies = some(node{"multiplies"}.getInt)
   result.divides = some(node{"divides"}.getInt)
   result.bytes = some(node{"bytes_moved"}.getInt)
-  result.zero_fills = some(0)
+  result.fills_zero = some(0)
   result.intermediates = some(0)
   result.checks = some(0)
   result.allocations = some(0)
@@ -222,7 +222,7 @@ func gapsOf*(algebra: Algebra): seq[Gap] =
       measurand{"reference"}.getStr,
       measured,
     )
-    gap.bound = boundValuesOf(measurand.at("bound"))
+    gap.bound = valuesBoundOf(measurand.at("bound"))
     gap.decide
     result.add gap
 
@@ -261,7 +261,7 @@ func assign*(gaps: var seq[Gap], docket: var Docket) =
 
 func isLibrary(f: JsonNode): bool =
   ## Decide whether inspected function is library's, rather than reference's or dense form.
-  f{"module"}.getStr.isLibraryModule
+  f{"module"}.getStr.isModuleLibrary
 
 
 func isOperator(f: JsonNode): bool =
@@ -305,10 +305,10 @@ func countFunctions(
         result[3] = value
 
 
-func overGaps(gaps: openArray[Gap], metric: string): seq[Gap] =
+func gapsOver(gaps: openArray[Gap], metric: string): seq[Gap] =
   ## Select gaps open on metric.
   for gap in gaps:
-    if metric in gap.over_on: result.add gap
+    if metric in gap.metrics_over: result.add gap
 
 
 func ratio(l, r: float): float =
@@ -321,7 +321,7 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
   result.cause = cause
   case cause.rule
   of Rule.Terms:
-    let open = gaps.overGaps("multiplies")
+    let open = gaps.gapsOver("multiplies")
     var
       worst: Gap
       excess_worst = 0
@@ -345,7 +345,7 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
       result.status = Status.Unmeasured
       result.evidence = "no bench recorded."
       return
-    let open = gaps.overGaps("time")
+    let open = gaps.gapsOver("time")
     var
       worst: Gap
       ratio_worst = 0.0
@@ -361,11 +361,11 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
         $open.len & " gaps. The worst is " & worst.key & ", at " &
           formatFloat(worst.library.ns.get, ffDecimal, 1) & " ns against " &
           formatFloat(worst.reference.ns.get, ffDecimal, 1) & " ns."
-  of Rule.ZeroFills, Rule.Intermediates, Rule.Checks, Rule.Inline:
+  of Rule.FillsZero, Rule.Intermediates, Rule.Checks, Rule.Inline:
     let
       metric =
         case cause.rule
-        of Rule.ZeroFills: "zero_fills"
+        of Rule.FillsZero: "fills_zero"
         of Rule.Intermediates: "intermediates"
         of Rule.Checks: "checks"
         else: "inline"
@@ -383,8 +383,8 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
       is_any_measured = false
       names: seq[string]
     for gap in gaps:
-      if gap.library.nan_share.isSome: is_any_measured = true
-      if gap.library.nan_share.get(0.0) > 0.0: names.add gap.key
+      if gap.library.share_nan.isSome: is_any_measured = true
+      if gap.library.share_nan.get(0.0) > 0.0: names.add gap.key
     result.status =
       if not is_any_measured: Status.Unmeasured
       elif names.len > 0: Status.Over
@@ -438,7 +438,7 @@ func cell(l, r: Option[int]): string =
   (if l.isSome: $l.get else: "–") & "/" & (if r.isSome: $r.get else: "–")
 
 
-func lowerBoundRows*(algebra: Algebra, gaps: openArray[Gap]): seq[string] =
+func rowsBoundLower*(algebra: Algebra, gaps: openArray[Gap]): seq[string] =
   ## Render multivector lower bound of each operation once, keyed by spelling and shape.
   ##   Bound rests on operation and arity, and never on operand kinds, so one row serves
   ##   every measurand that spells same operation. Row also carries what library spends on
@@ -595,7 +595,7 @@ func render*(
         cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
         cell(gap.library.checks, gap.reference.checks) & " | " &
         cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
-    let bounds = lowerBoundRows(algebra, own)
+    let bounds = rowsBoundLower(algebra, own)
     if bounds.len > 0:
       lines.add ""
       lines.add "### Multivector lower bound"

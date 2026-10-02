@@ -59,7 +59,7 @@ func assemble*(shell, title, body: string; faces: Table[string, string]): string
     result = result.replace(TOKEN_EMBED & face & "@", "data:font/woff2;base64," & encode(bytes))
 
 
-func pageDigest*(page: string): string =
+func digestPage*(page: string): string =
   ## Digest built page, as publications hold it once page is published.
   digestOf(page)
 
@@ -81,7 +81,7 @@ func fixed*(value: float, places = 2): string =
   formatFloat(value, ffDecimal, places)
 
 
-func ratioText*(ratio: float): string =
+func textRatio*(ratio: float): string =
   ## Format ratio of times as `×0.72`.
   "×" & ratio.fixed
 

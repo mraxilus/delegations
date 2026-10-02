@@ -15,7 +15,7 @@
 ##     (Article VII.4); driver runs plain build for timings and instrumented one for counts.
 ##   Dense form runs beside library on general measurand, from same pools, and never on typed
 ##     one; reference runs on typed measurand alone. Build under
-##     `-d:pga_benchmark.has_dense_forms=false` neither imports nor times dense forms, since they
+##     `-d:pga_benchmark.has_forms_dense=false` neither imports nor times dense forms, since they
 ##     read tables by name at pin and change may rename them; evaluation builds so.
 ##
 ##   Cost: measurements arrays hold one entry per measurand per implementation; sink is float.
@@ -30,10 +30,10 @@ import pga
 import ./[catalogue, kinds, pools, widening]
 
 
-const HAS_DENSE_FORMS* {.booldefine: "pga_benchmark.has_dense_forms".} = true
+const HAS_FORMS_DENSE* {.booldefine: "pga_benchmark.has_forms_dense".} = true
   ## Whether build emits and times dense forms; evaluation compares library with pin alone.
 
-when HAS_DENSE_FORMS: import ./dense
+when HAS_FORMS_DENSE: import ./dense
 
 
 type
@@ -46,7 +46,7 @@ type
     ns_median*, ns_min*: float  ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
       ## Heap allocations counted over every round; meaningful only when instrument is live.
-    nan_share*: float  ## Share of results carrying NaN in any component.
+    share_nan*: float  ## Share of results carrying NaN in any component.
 
 
 var
@@ -142,9 +142,9 @@ macro emitMeasurand(
     of Implementation.Library: measurand.expression
     of Implementation.Reference: measurand.reference
     of Implementation.Dense:
-      if not HAS_DENSE_FORMS or measurand.reference.len > 0: ""
-      elif measurand.arity == 2: measurand.denseNameOf & "(m, n)"
-      else: measurand.denseNameOf & "(m)"
+      if not HAS_FORMS_DENSE or measurand.reference.len > 0: ""
+      elif measurand.arity == 2: measurand.nameDenseOf & "(m, n)"
+      else: measurand.nameDenseOf & "(m)"
   if expression.len == 0:
     let implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     return quote do:
@@ -154,12 +154,12 @@ macro emitMeasurand(
     (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
     implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     pool_m = parseExpr(
-      if implementation == Implementation.Reference: referencePoolName(measurand.operands[0])
-      else: libraryPoolName(measurand.operands[0], measurand.grade),
+      if implementation == Implementation.Reference: namePoolReference(measurand.operands[0])
+      else: namePoolLibrary(measurand.operands[0], measurand.grade),
     )
     pool_n = parseExpr(
-      if implementation == Implementation.Reference: referencePoolName(measurand.operands[1])
-      else: libraryPoolName(measurand.operands[1], measurand.grade),
+      if implementation == Implementation.Reference: namePoolReference(measurand.operands[1])
+      else: namePoolLibrary(measurand.operands[1], measurand.grade),
     )
   quote do:
     block:
@@ -190,7 +190,7 @@ macro emitMeasurand(
         ns_median: median,
         ns_min: minimum,
         allocations: allocationsOf(statistics_after - statistics_before),
-        nan_share: float(count_nan) / float(OBJECTS),
+        share_nan: float(count_nan) / float(OBJECTS),
       )
 
 

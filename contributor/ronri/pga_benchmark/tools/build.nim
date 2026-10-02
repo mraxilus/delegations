@@ -51,7 +51,7 @@ import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
-  Candidate, Toolchain, algebrasEvaluated, editsDigest, pristineBinary, pristineSuites,
+  Candidate, Toolchain, algebrasEvaluated, digestEdits, binaryPristine, suitesPristine,
   readLibrary, runEvaluation
 
 
@@ -89,9 +89,9 @@ const
   FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures untyped algebras too.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
     ## Atlas checkout of library's repository.
-  LIBRARY_DIRECTORY = "lengyel/projective_geometric_algebra_illuminated"
+  DIRECTORY_LIBRARY = "lengyel/projective_geometric_algebra_illuminated"
     ## Library's directory inside its repository, as git names trees.
-  LIBRARY = CHECKOUT / LIBRARY_DIRECTORY  ## Library at pin, as `nim.cfg` names it.
+  LIBRARY = CHECKOUT / DIRECTORY_LIBRARY  ## Library at pin, as `nim.cfg` names it.
   DIRECTORY_CHANGES = "changes"  ## Changes, one Markdown file each (`changes.nim`).
   DIRECTORY_PROPOSALS = "proposals"  ## Proposal explorations, one directory each (`proposals.nim`).
   DIRECTORY_EVALUATIONS = "evaluations"
@@ -102,14 +102,14 @@ const
     ## Publications: page name to URL and digest at its last publish.
   PATH_README = "README.md"  ## File that must name every published URL.
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Repository driver, asked for faces.
-  EVALUATION_RUNS = 5  ## Timed runs of each binary per evaluation, alternating.
-  BENCH_RUNS = 5
+  RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
+  RUNS_BENCH = 5
     ## Timed runs of each algebra's bench, alternating algebras, so drift lands on all alike.
   TITLES = {"rga4d": "Rigid 4D", "cga5d": "Conformal 5D", "rga3d": "Rigid 3D",
     "cga4d": "Conformal 4D"}.toTable
     ## Tab title of each algebra on docket.
-  SHOWN_LINES = 40  ## Lines of one function this driver prints before naming file rest sits in.
-  SHOWN_WIDTH = 150  ## Characters of one line this driver prints before cutting it.
+  LINES_SHOWN = 40  ## Lines of one function this driver prints before naming file rest sits in.
+  WIDTH_SHOWN = 150  ## Characters of one line this driver prints before cutting it.
 
 
 
@@ -125,14 +125,14 @@ proc run(command: string, arguments: openArray[string]) =
     raise newException(OSError, command & " failed; got exit `" & $code & "`.")
 
 
-proc nimCommit(): string =
+proc commitNim(): string =
   ## Read commit of compiler on PATH from its version text; `unmeasured` where absent.
   for line in execProcess("nim", args = ["-v"], options = {poUsePath}).splitLines:
     if line.startsWith("git hash: "): return line["git hash: ".len .. ^1].strip
   "unmeasured"
 
 
-proc pgaCommit(): string =
+proc commitPga(): string =
   ## Read library commit from lock; `unmeasured` where lock names none.
   let items = parseJson(readFile(PATH_LOCK)){"items"}
   if items.isNil: return "unmeasured"
@@ -145,8 +145,8 @@ func defines(dimensions: int; is_conformal: bool; nim, pga: string): seq[string]
   @[
     "-d:pga.dimensions=" & $dimensions,
     "-d:pga.is_conformal=" & $is_conformal,
-    "-d:pga_benchmark.nim_commit=" & nim,
-    "-d:pga_benchmark.pga_commit=" & pga,
+    "-d:pga_benchmark.commit_nim=" & nim,
+    "-d:pga_benchmark.commit_pga=" & pga,
     "-d:pga_benchmark.flags=" & FLAGS,
   ]
 
@@ -177,8 +177,8 @@ proc readDocument(path: string): JsonNode =
 proc inspect() =
   ## Compile bench entry per algebra to C only, then read its cache into document.
   let
-    nim = nimCommit()
-    pga = pgaCommit()
+    nim = commitNim()
+    pga = commitPga()
   createDir BUILD
   for (name, dimensions, is_conformal) in CONFIGS:
     let cache = BUILD / "cache_" & name
@@ -222,12 +222,12 @@ proc mergeAllocations(plain, instrumented: JsonNode): JsonNode =
 
 proc bench() =
   ## Compile bench per algebra, plain for timings and instrumented for allocations.
-  ##   Run plain ones in turn, algebra after algebra, `BENCH_RUNS` times.
+  ##   Run plain ones in turn, algebra after algebra, `RUNS_BENCH` times.
   ##     Machine drift then lands on every algebra alike.
   ##   Record combined measurements into `baseline/`.
   let
-    nim = nimCommit()
-    pga = pgaCommit()
+    nim = commitNim()
+    pga = commitPga()
   createDir BUILD
   createDir BASELINE
   for (name, dimensions, is_conformal) in CONFIGS:
@@ -251,7 +251,7 @@ proc bench() =
       ["-d:nimAllocStats"],
     )
   var runs: Table[string, seq[JsonNode]]
-  for index in 1..BENCH_RUNS:
+  for index in 1..RUNS_BENCH:
     for (name, _, _) in CONFIGS:
       let output = BUILD / "bench_" & name & "_" & $index & ".json"
       run(BUILD / "bench_" & name, [output])
@@ -464,12 +464,12 @@ proc git(arguments: openArray[string]): (string, int) =
 proc headChecked(pin: string): seq[Finding] =
   ## Hold pin to library head: library directory's tree at pin equals its tree at head.
 
-  proc libraryHead(pin: string): (string, string, string) =
+  proc headLibrary(pin: string): (string, string, string) =
     ## Read tree of library directory at pin, and head commit of library repository with tree.
     ##   Empty where git cannot read one.
     ##   Fetches only when head is not pin.
     let
-      (output_pin, code_pin) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
+      (output_pin, code_pin) = git(["rev-parse", pin & ":" & DIRECTORY_LIBRARY])
       tree_pin = if code_pin == 0: output_pin.strip.splitLines[^1] else: ""
       (remote, code_remote) = git(["ls-remote", "origin", "HEAD"])
     if code_remote != 0: return (tree_pin, "", "")
@@ -480,16 +480,16 @@ proc headChecked(pin: string): seq[Finding] =
     if commit_head == pin: return (tree_pin, commit_head, tree_pin)
     let (_, code_fetch) = git(["fetch", "--quiet", "origin", "HEAD"])
     if code_fetch != 0: return (tree_pin, commit_head, "")
-    let (output_head, code_head) = git(["rev-parse", "FETCH_HEAD:" & LIBRARY_DIRECTORY])
+    let (output_head, code_head) = git(["rev-parse", "FETCH_HEAD:" & DIRECTORY_LIBRARY])
     (tree_pin, commit_head, if code_head == 0: output_head.strip.splitLines[^1] else: "")
 
-  let (tree_pin, commit_head, tree_head) = libraryHead(pin)
+  let (tree_pin, commit_head, tree_head) = headLibrary(pin)
   checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
 
 
 proc checkoutChecked(): seq[Finding] =
   ## Hold checkout to pin: no local edit under library directory.
-  let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
+  let (edited, code) = git(["status", "--porcelain", "--", DIRECTORY_LIBRARY])
   if code != 0 or edited.strip.len > 0:
     result.add Finding(
       path: LIBRARY,
@@ -541,10 +541,10 @@ proc compileScript(entry: string): string =
     raise newException(ValueError, "Script closes its element; got `" & output & "`.")
 
 
-proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
+proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: docket, marginalia, then one per proposal.
 
-  func linksHtml(names: openArray[string], published: JsonNode, self: string): string =
+  func htmlLinks(names: openArray[string], published: JsonNode, self: string): string =
     ## Link every other published page, in page order, led by separator; empty where none.
     var links: seq[string]
     for name in names:
@@ -559,7 +559,7 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
 
   var ignored: seq[Finding]
   let
-    pin = pgaCommit()
+    pin = commitPga()
     published = publications()
     text_shell = readFile(PATH_SHELL)
     changes = readChanges(ignored)
@@ -599,12 +599,12 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   result["docket"] = assemble(
     text_shell,
     "PGA Gap Docket",
-    docketBody(
+    bodyDocket(
       sheets,
       readDocument(PATH_DOCKET),
       overlays,
       pin,
-      linksHtml(names, published, "docket"),
+      htmlLinks(names, published, "docket"),
       compileScript(ENTRY_FIND),
     ),
     faces,
@@ -619,14 +619,14 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   result["marginalia"] = assemble(
     text_shell,
     "PGA Marginalia",
-    marginaliaBody(
+    bodyMarginalia(
       changes_evaluated,
       notes,
       files,
       baselines,
       spread,
       pin,
-      linksHtml(names, published, "marginalia"),
+      htmlLinks(names, published, "marginalia"),
     ),
     faces,
   )
@@ -640,7 +640,7 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
     result[proposal.name] = assemble(
       text_shell,
       proposal.citation & " " & titled(proposal.name),
-      proposalBody(
+      bodyProposal(
         proposal,
         evaluations.getOrDefault(proposal.name),
         files,
@@ -648,7 +648,7 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
         baselines,
         spread,
         pin,
-        linksHtml(names, published, proposal.name),
+        htmlLinks(names, published, proposal.name),
       ),
       faces,
     )
@@ -657,23 +657,23 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
 proc pages() =
   ## Build every page into `build/`, and print each with its digest.
   createDir BUILD
-  for name, page in builtPages(facesFromStore()).pairs:
+  for name, page in pagesBuilt(facesFromStore()).pairs:
     writeFile(BUILD / name & ".html", page)
-    echo "Built ", BUILD / name & ".html", "  ", pageDigest(page), "  ", page.len div 1024,
+    echo "Built ", BUILD / name & ".html", "  ", digestPage(page), "  ", page.len div 1024,
       " KiB"
 
 
 proc publishedAt(name, url: string) =
   ## Record page just published: its URL, and digest of page as built now.
-  let built = builtPages(facesFromStore())
+  let built = pagesBuilt(facesFromStore())
   if name notin built:
     raise newException(ValueError, "No page named `" & name & "`.")
   var entries = publications()
-  entries[name] = %*{"url": url, "digest": pageDigest(built[name])}
+  entries[name] = %*{"url": url, "digest": digestPage(built[name])}
   writeFile(PATH_PUBLICATIONS, pretty(entries) & "\n")
   echo "Recorded ", name, " at ", url
   for other, page in built.pairs:
-    if other != name and entries{other, "digest"}.getStr != pageDigest(page):
+    if other != name and entries{other, "digest"}.getStr != digestPage(page):
       echo "notice: ", other, " differs from its publication; publish it and record it too."
 
 
@@ -696,12 +696,12 @@ proc evaluate(which: string, is_thorough: bool) =
     candidates = candidatesOf(changes, proposals, findings)
   if findings.len > 0: report(findings)
   let
-    pin = pgaCommit()
+    pin = commitPga()
     tried = readEvaluations()
     selected = case which
       of "all": candidates
       of "stale": candidates.filterIt(it.name notin tried or checkEvaluation(tried[it.name], pin,
-        editsDigest(it.changes, it.claims, it.programs), "").len > 0)
+        digestEdits(it.changes, it.claims, it.programs), "").len > 0)
       else: candidates.filterIt(it.name == which)
   if selected.len == 0 and which == "stale":
     echo "Every evaluation is current."
@@ -713,10 +713,10 @@ proc evaluate(which: string, is_thorough: bool) =
   let chain = Toolchain(
     library: LIBRARY,
     work: BUILD / "evaluations",
-    nim: nimCommit(),
-    pga: pgaCommit(),
+    nim: commitNim(),
+    pga: commitPga(),
     flags: FLAGS,
-    runs: EVALUATION_RUNS,
+    runs: RUNS_EVALUATION,
   )
   var
     algebras: seq[evaluations.Algebra]
@@ -729,11 +729,11 @@ proc evaluate(which: string, is_thorough: bool) =
       evaluations.Algebra(name: name, dimensions: dimensions, is_conformal: is_conformal)
     algebras.add algebra
     baselines[name] = readDocument(BASELINE / "static_" & name & ".json")
-    pristine[name] = pristineBinary(chain, algebra)
+    pristine[name] = binaryPristine(chain, algebra)
   let
-    suites_pin = pristineSuites(chain, algebras)
+    suites_pin = suitesPristine(chain, algebras)
     taken = %*{"date": now().format("yyyy-MM-dd"), "machine": machine(), "nim": chain.nim,
-      "pga": chain.pga, "flags": FLAGS, "runs": EVALUATION_RUNS}
+      "pga": chain.pga, "flags": FLAGS, "runs": RUNS_EVALUATION}
   createDir DIRECTORY_EVALUATIONS
   for candidate in selected:
     echo "Trying ", candidate.name
@@ -777,7 +777,7 @@ proc pinnedChecked(pin: string): seq[Finding] =
         message: "No evaluation yet; run `evaluate " & candidate.name & "`.",
       )
       continue
-    let digest = editsDigest(candidate.changes, candidate.claims, candidate.programs)
+    let digest = digestEdits(candidate.changes, candidate.claims, candidate.programs)
     result.add checkEvaluation(evaluations[candidate.name], pin, digest, path)
   for name in evaluations.keys:
     if not candidates.anyIt(it.name == name) and not proposals.anyIt(it.name == name):
@@ -789,14 +789,14 @@ proc pinnedChecked(pin: string): seq[Finding] =
   result.add why
   result.add checkAnchors(notes, files, PATH_NOTES)
   var digests: Table[string, string]
-  for name, page in builtPages(facesFromStore()).pairs: digests[name] = pageDigest(page)
+  for name, page in pagesBuilt(facesFromStore()).pairs: digests[name] = digestPage(page)
   result.add checkPublished(digests, publications(), readFile(PATH_README), PATH_PUBLICATIONS)
 
 
 proc drive() =
   ## Inspect, check against baselines, and hold committed list and docket to regeneration.
   ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
-  let pin = pgaCommit()
+  let pin = commitPga()
   var findings = checkoutChecked()
   inspect()
   findings.add guarded()
@@ -815,8 +815,8 @@ proc drive() =
 proc sweep() =
   ## Time general measurands at every swept dimension, rigid metric, and print medians.
   let
-    nim = nimCommit()
-    pga = pgaCommit()
+    nim = commitNim()
+    pga = commitPga()
   createDir BUILD
   var documents: seq[JsonNode]
   for dimensions in SWEEP:
@@ -878,7 +878,7 @@ func unindexed(text: string): string =
 func readable(text: string): string =
   ## Rewrite emitted C so reader sees types and slots rather than hashes.
   ##   Reading aid alone: cache holds exact text every count is read from.
-  text.shortened(MULTIVECTOR, "Multivector").shortened("tyEnum_Basis", "Basis").unindexed
+  text.shortened(STEM_MULTIVECTOR, "Multivector").shortened("tyEnum_Basis", "Basis").unindexed
 
 
 proc disassembled(cache, name: string): seq[string] =
@@ -905,8 +905,8 @@ proc showFunction(symbol, algebra: string) =
     if name != algebra: continue
     found_algebra = true
     let
-      nim = nimCommit()
-      pga = pgaCommit()
+      nim = commitNim()
+      pga = commitPga()
     createDir BUILD
     let cache = BUILD / "cache_show_" & name
     compile(ENTRY_BENCH, BUILD / "show_" & name, cache, dimensions, is_conformal, nim, pga)
@@ -927,7 +927,7 @@ proc showFunction(symbol, algebra: string) =
       echo "   counts, callees folded in"
       echo "     multiplies    ", counts.multiplies
       echo "     divides       ", counts.divides
-      echo "     zero fills    ", counts.zero_fills, "   × ", size, " bytes"
+      echo "     zero fills    ", counts.fills_zero, "   × ", size, " bytes"
       echo "     intermediates ", counts.intermediates, "   × ", size, " bytes"
       echo "     copies        ", counts.copies, "   × ", size, " bytes"
       echo "     error checks  ", counts.checks
@@ -945,10 +945,10 @@ proc showFunction(symbol, algebra: string) =
       echo "   emitted C"
       var printed = 0
       for line in function.body.readable.splitLines:
-        if printed >= SHOWN_LINES:
+        if printed >= LINES_SHOWN:
           echo "     … ", counts.lines - printed, " more lines; whole body is in ", cache
           break
-        echo "     ", (if line.len > SHOWN_WIDTH: line[0..<SHOWN_WIDTH] & " …" else: line)
+        echo "     ", (if line.len > WIDTH_SHOWN: line[0..<WIDTH_SHOWN] & " …" else: line)
         inc printed
       echo ""
       echo "   machine code"
@@ -957,7 +957,7 @@ proc showFunction(symbol, algebra: string) =
         echo "     no symbol of its own, since it is inline; read its caller instead."
         continue
       for i, line in lines:
-        if i >= SHOWN_LINES:
+        if i >= LINES_SHOWN:
           echo "     … ", lines.len - i, " more instructions."
           break
         echo "     ", line
@@ -1007,7 +1007,7 @@ proc main(): int =
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
-    of "head": report(headChecked(pgaCommit()))
+    of "head": report(headChecked(commitPga()))
     of "gaps": gaps()
     of "sweep": sweep()
     of "system": system()

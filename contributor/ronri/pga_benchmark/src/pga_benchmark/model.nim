@@ -32,19 +32,19 @@ func sizeOfStem*(stem: string, size_multivector: int): int =
   of "Line": sizeof(rigid3.Line)
   of "Plane": sizeof(rigid3.Plane)
   of "Motor": sizeof(rigid3.Motor)
-  of "RoundPoint": sizeof(conformal3.RoundPoint)
+  of "PointRound": sizeof(conformal3.PointRound)
   of "Dipole": sizeof(conformal3.Dipole)
   of "Circle": sizeof(conformal3.Circle)
   of "Sphere": sizeof(conformal3.Sphere)
-  of "FlatPoint": sizeof(conformal3.FlatPoint)
-  of "FlatLine": sizeof(conformal3.FlatLine)
-  of "FlatPlane": sizeof(conformal3.FlatPlane)
-  of "CarrierPlane": sizeof(conformal3.CarrierPlane)
+  of "PointFlat": sizeof(conformal3.PointFlat)
+  of "LineFlat": sizeof(conformal3.LineFlat)
+  of "PlaneFlat": sizeof(conformal3.PlaneFlat)
+  of "PlaneCarrier": sizeof(conformal3.PlaneCarrier)
   of "Vector3": sizeof(rigid3.Vector3)
   else: 0
 
 
-func movement*(function: CFunction, counts: Counts, size_multivector: int): Movement =
+func movement*(function: FunctionC, counts: Counts, size_multivector: int): Movement =
   ## Model bytes one call of function moves, given its counts.
   var read = 0
   for stem in function.parameters: read += sizeOfStem(stem, size_multivector)
@@ -52,7 +52,7 @@ func movement*(function: CFunction, counts: Counts, size_multivector: int): Move
   result = Movement(
     bytes_read: read,
     bytes_written: written,
-    bytes_zeroed: counts.zero_fills * written,
+    bytes_zeroed: counts.fills_zero * written,
     bytes_copied: counts.copies * written,
     bytes_intermediates: counts.intermediates * size_multivector,
   )

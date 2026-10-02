@@ -25,7 +25,7 @@ import std/[algorithm, json, math, options, sequtils, strutils, tables]
 import ../markdown
 import ./shell
 from ../gaps import TOLERANCE
-from ../report import isLibraryModule, median
+from ../report import isModuleLibrary, median
 
 
 type
@@ -33,7 +33,7 @@ type
     multiplies, divides, bytes, read, written, zeroed, intermediates, copied: int
     fills, count_intermediates, copies, checks: int
     is_inline: bool
-  BoundFigures = object  ## Define multivector lower bound of one measurand, read and written split.
+  FiguresBound = object  ## Define multivector lower bound of one measurand, read and written split.
     multiplies, divides, bytes, read, written: int
     shape: string
     steps: seq[string]
@@ -46,7 +46,7 @@ type
       ## Operand kinds of typed row as id spells them, as `round_point`; empty on general row.
     is_general: bool
     library, reference, dense: Option[Figures]
-    bound: Option[BoundFigures]
+    bound: Option[FiguresBound]
     ns_library, ns_against, share_nan: float
       ## Library time, and time of what row is timed against.
       ##   Typed row is timed against reference, and general row against dense form.
@@ -90,7 +90,7 @@ const
   SHOWS = [("over", "over on any measure", false),
     ("over-multiplies", "over lower bound on multiplies", false),
     ("over-bytes", "over lower bound on bytes moved", false),
-    ("over-time", "time over " & ratioText(TOLERANCE), false),
+    ("over-time", "time over " & textRatio(TOLERANCE), false),
     ("at-bound", "at lower bound on both counts", false), ("chain", "chains", false),
     ("checks", "with error checks", false), ("fills", "with zero fills", false),
     ("nan", "returns NaN", false), ("typed", "typed measurands only", true)]
@@ -119,7 +119,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
         zeroed: movement{"bytes_zeroed"}.getInt,
         intermediates: movement{"bytes_intermediates"}.getInt,
         copied: movement{"bytes_copied"}.getInt,
-        fills: totals{"zero_fills"}.getInt,
+        fills: totals{"fills_zero"}.getInt,
         count_intermediates: totals{"intermediates"}.getInt,
         copies: totals{"copies"}.getInt,
         checks: totals{"checks"}.getInt,
@@ -127,10 +127,10 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       ),
     )
 
-  func boundOf(bound: JsonNode, width: int): Option[BoundFigures] =
+  func boundOf(bound: JsonNode, width: int): Option[FiguresBound] =
     ## Read bound with read and written bytes split out; none where no rule derived.
     ##   Scalar-valued shapes write one double; scale reads operand and one scalar.
-    if bound.isNil or bound.kind != JObject: return none(BoundFigures)
+    if bound.isNil or bound.kind != JObject: return none(FiguresBound)
     let
       steps = bound{"steps"}.getElems.mapIt(it.getStr)
       shape = bound{"shape"}.getStr
@@ -139,10 +139,10 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       bytes = bound{"bytes_moved"}.getInt
       (read, written) =
         if last == "Scale" and not is_chain: (width + 8, width)
-        elif last in ["ScalarForm", "SquaredNorm", "Norm"]: (bytes - 8, 8)
+        elif last in ["FormScalar", "NormSquared", "Norm"]: (bytes - 8, 8)
         else: (bytes - width, width)
     some(
-      BoundFigures(
+      FiguresBound(
         multiplies: bound{"multiplies"}.getInt,
         divides: bound{"divides"}.getInt,
         bytes: bytes,
@@ -206,7 +206,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
       bound: boundOf(measurand{"bound"}, width),
       ns_library: if is_timed_library: timing_library{"ns_median"}.getFloat else: 0.0,
       ns_against: if is_timed_against: timing_against{"ns_median"}.getFloat else: 0.0,
-      share_nan: if is_timed_library: timing_library{"nan_share"}.getFloat else: 0.0,
+      share_nan: if is_timed_library: timing_library{"share_nan"}.getFloat else: 0.0,
       ns_runs_library: if is_timed_library: runsOf(timing_library) else: @[],
       ns_runs_against: if is_timed_against: runsOf(timing_against) else: @[],
     )
@@ -223,7 +223,7 @@ func metricOf(figures: Option[Figures], is_bytes: bool): Option[int] =
   else: some(figures.get.multiplies)
 
 
-func metricOf(bound: Option[BoundFigures], is_bytes: bool): Option[int] =
+func metricOf(bound: Option[FiguresBound], is_bytes: bool): Option[int] =
   ## Read bytes or multiplies of bound; none where no rule derived.
   if bound.isNone: none(int)
   elif is_bytes: some(bound.get.bytes)
@@ -279,7 +279,7 @@ func positionOf(axis: Axis, ratio: float): float =
 
 #[ Facts ]#
 
-func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
+func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
   ## Render facts for both populations; typed toggle shows one.
 
   func tallyOf(rows: openArray[Row], is_typed: bool): Tally =
@@ -302,11 +302,11 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
         result.sums_reference[0] += row.reference.get.multiplies
         result.sums_reference[1] += row.reference.get.bytes
 
-  func fillShare(sheet: Sheet): int =
+  func shareFill(sheet: Sheet): int =
     ## Read share of library's modelled bytes that are zero fill, in percent.
     var total, zeroed: int
     for _, function in sheet.measurements_static{"functions"}.pairs:
-      if not function{"module"}.getStr.isLibraryModule: continue
+      if not function{"module"}.getStr.isModuleLibrary: continue
       total += function{"movement", "bytes_moved"}.getInt
       zeroed += function{"movement", "bytes_zeroed"}.getInt
     if total == 0: 0 else: int(round(100.0 * zeroed.float / total.float))
@@ -324,7 +324,7 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
     typed = tallyOf(rows, true)
     ratios_general = rows.filterIt(it.is_general).mapIt(it.ratioTime).filterIt(it > 0).sorted
     ratios_typed = rows.filterIt(not it.is_general).mapIt(it.ratioTime).filterIt(it > 0).sorted
-    fill = fillShare(sheet)
+    fill = shareFill(sheet)
   result = "<dl class=\"facts\">"
   for (tally, name_class, noun) in [(general, "typed-off", "operations"),
       (typed, "typed-only", "measurands")]:
@@ -336,8 +336,8 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
   for (ratios, name_class, against) in [(ratios_general, "typed-off", "dense form"),
       (ratios_typed, "typed-only", "reference")]:
     if ratios.len == 0: continue
-    result.add "<div class=\"" & name_class & "\"><dt>" & ratioText(ratios[ratios.len div 2]) &
-      "</dt><dd>median time over " & against & ", worst " & ratioText(ratios[^1]) & "</dd></div>"
+    result.add "<div class=\"" & name_class & "\"><dt>" & textRatio(ratios[ratios.len div 2]) &
+      "</dt><dd>median time over " & against & ", worst " & textRatio(ratios[^1]) & "</dd></div>"
   result.add "</dl>"
   let sums = [(general, "typed-off"), (typed, "typed-only")]
   result.add "<div class=\"aggregate\"><div class=\"legend\"><span class=\"library\">library " &
@@ -363,11 +363,11 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
 
 #[ Rows ]#
 
-func rowHtml(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
+func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
   ## Render one row as details: one deviation bar per measure, then breakdown.
   ##   Classes name every filter row passes, and custom properties its rank under every sort.
 
-  func countDeviation(row: Row, is_bytes: bool): Deviation =
+  func deviationCount(row: Row, is_bytes: bool): Deviation =
     ## Read deviation of one count: ratio, or excess where lower bound is zero.
     ##   Tick sits at multivector lower bound where typed row is measured against reference.
     let
@@ -394,9 +394,9 @@ func rowHtml(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
       result.label = grouped(library.get) & " over 0"
     else:
       result.ratio = row.ratioCount(is_bytes)
-      result.label = ratioText(result.ratio)
+      result.label = textRatio(result.ratio)
 
-  func timeDeviation(row: Row): Deviation =
+  func deviationTime(row: Row): Deviation =
     ## Read deviation of time, with each run's ratio.
     ##   Ratio is median run ratio over reference on typed row, and over dense form on general.
     ##   Nanoseconds alone where nothing else is timed.
@@ -412,14 +412,14 @@ func rowHtml(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
       return
     let ratios = row.ratiosRuns
     result.ratio = ratio
-    result.label = ratioText(ratio)
+    result.label = textRatio(ratio)
     result.tip.add ", " & (if row.is_general: "dense form " else: "reference ") &
       row.ns_against.fixed(1) & " ns"
     if ratios.len > 1:
       result.runs = ratios
-      result.tip.add ", runs " & ratios.mapIt(ratioText(it)).join(" ")
+      result.tip.add ", runs " & ratios.mapIt(textRatio(it)).join(" ")
 
-  func deviationHtml(deviation: Deviation, axis: Axis): string =
+  func htmlDeviation(deviation: Deviation, axis: Axis): string =
     ## Render one deviation bar on shared axis.
     ##   Bar runs from ×1, tick sits at multivector lower bound, and one tick marks each run.
     ##   Bare label where no ratio reads.
@@ -516,15 +516,15 @@ func rowHtml(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
     "\"><summary><span class=\"op\">" &
     "<span class=\"n\">" & escapeHtml(row.measurand) & "</span><span class=\"sub\">" &
     escapeHtml(row.id) & " · " & escapeHtml(row.symbol) & "</span>" & nan & "</span>" &
-    deviationHtml(countDeviation(row, false), axis) &
-    deviationHtml(countDeviation(row, true), axis) & deviationHtml(timeDeviation(row), axis) &
+    htmlDeviation(deviationCount(row, false), axis) &
+    htmlDeviation(deviationCount(row, true), axis) & htmlDeviation(deviationTime(row), axis) &
     "</summary>" & detail(row) & "</details>"
 
 
 
 #[ Page ]#
 
-func proposalsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
+func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
   ## Render how far each proposal moves parity with multivector bound.
 
   func parity(sheet: Sheet, overlay: JsonNode, is_typed: bool): (int, int, int) =
@@ -606,7 +606,7 @@ operation, and do not predict time across different operations. Inspect one your
     ## Method, same for every algebra.
 
 
-func docketBody*(
+func bodyDocket*(
   sheets: openArray[Sheet]; ids: JsonNode; overlays: openArray[Overlay]; pin, links, script: string
 ): string =
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
@@ -713,7 +713,7 @@ func docketBody*(
         "option:not(.in-" & sheet.name & ", [value=\"all\"]) { display: none; }\n"
     (html, rules)
 
-  func headHtml(axis: Axis): string =
+  func htmlHead(axis: Axis): string =
     ## Render column heads: each measure named over labels of shared axis at powers of two.
 
     func scale(axis: Axis, name_class: string): string =
@@ -764,8 +764,8 @@ func docketBody*(
   result.add rules & rules_controls & "</style>"
   for index, sheet in sheets:
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"summary\">" &
-      factsHtml(sheet, every[index]) & "</div></section>"
-  result.add controls & headHtml(axis)
+      htmlFacts(sheet, every[index]) & "</div></section>"
+  result.add controls & htmlHead(axis)
   for index, sheet in sheets:
     let
       rows = every[index]
@@ -776,7 +776,7 @@ func docketBody*(
     for row in rows:
       var ranks_row: array[SORTS.len, int]
       for index_sort in 0..<SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
-      result.add rowHtml(row, axis, ranks_row)
+      result.add htmlRow(row, axis, ranks_row)
     result.add "</div></section>"
-  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"
+  result.add htmlProposals(sheets, overlays) & METHOD & "</div>"
   if script.len > 0: result.add "<script>" & script & "</script>"
