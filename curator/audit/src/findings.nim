@@ -1,6 +1,9 @@
-## Define finding record every check emits, plus its order and report form.
+## Define finding record every check emits, plus its order and report form; and fix record
+##   every fixer returns, which reports each rewrite in that same form.
 ##   One record shape keeps umbrella trivial: collect, sort, print, count.
 ##   Message convention (Article IV.4): end by echoing offending value in backticks.
+##   Fix reports rewrite as finding whose message names rule and `fixed`, so `koch fix` prints
+##     `path:line: <rule> fixed` through `render`, as check prints its own.
 ##
 ##   Cost: line `0` marks whole-file findings, so `0` never means first line.
 ##   Cost: empty path marks branch-level findings (scope, commits) with no file to open.
@@ -12,17 +15,28 @@
 import std/[algorithm]
 
 
-type Finding* = object
-  ## Define one rule violation located at path and line.
-  path*: string     ## Repository-relative path, `/` separated; empty for branch-level.
-  line*: int        ## One-based line; `0` when finding concerns whole file.
-  message*: string  ## Telegraphic statement, ending with echoed value where one exists.
-  is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
+type
+  Finding* = object
+    ## Define one rule violation located at path and line.
+    path*: string  ## Repository-relative path, `/` separated; empty for branch-level.
+    line*: int  ## One-based line; `0` when finding concerns whole file.
+    message*: string  ## Telegraphic statement, ending with echoed value where one exists.
+    is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
+
+  Fix* = object
+    ## Define source fixer returns, with one report per rewrite.
+    source*: string  ## Text after fix; input itself where nothing broke rule.
+    fixed*: seq[Finding]  ## Path and line of input rewritten, message naming rule fixed.
 
 
 func finding*(path: string, line: int, message: string, is_propagation = false): Finding =
   ## Construct finding.
   Finding(path: path, line: line, message: message, is_propagation: is_propagation)
+
+
+func chain*(fix, step: Fix): Fix =
+  ## Chain fixer's step after fix: step's source, reports of both in order applied.
+  Fix(source: step.source, fixed: fix.fixed & step.fixed)
 
 
 func `<`*(a, b: Finding): bool =

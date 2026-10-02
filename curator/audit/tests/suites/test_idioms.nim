@@ -1,9 +1,14 @@
-## Hold one-line idioms of source: each rule fires on its breach and stays quiet on its form.
+## Hold one-line idioms of source: each rule fires on its breach and stays quiet on its form;
+##   each fixer clears its breach, changes nothing else, and changes nothing second time.
 
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/idioms
+import ../../src/[findings, idioms]
+
+
+const HEAD_LINES = 4
+  ## Lines `module` puts before body: doc, blank, pragma, blank.
 
 
 func module(body: string): string =
@@ -14,6 +19,17 @@ func module(body: string): string =
 func messages(path, source: string): seq[string] =
   ## Collect messages idioms check reports over source.
   checkIdioms(path, source).mapIt(it.message)
+
+
+func fixed(source: string): Fix =
+  ## Fix idioms of source, as `koch fix` does.
+  fixIdioms("a.nim", source)
+
+
+func isSettled(source: string): bool =
+  ## Decide whether fixed source reports no idiom finding and fixes to itself again.
+  let again = fixed(source)
+  messages("a.nim", source).len == 0 and again.source == source and again.fixed.len == 0
 
 
 suite "Idioms":
@@ -98,3 +114,73 @@ suite "Idioms":
     let one_off = all_set.replace("\"strict\": true", "\"strict\": false")
     check checkTsconfig("tsconfig.json", one_off).mapIt(it.message).anyIt("`strict`" in it)
     check checkTsconfig("tsconfig.json", "{}").len == TYPESCRIPT_FLAGS.len
+
+
+suite "Idiom fixes":
+  test "return result becomes bare return, comment and indent kept":
+    let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
+    check fix.source == module("func f(): int =\n  if true:\n    return  # Early.\n  1\n")
+    check fix.fixed.mapIt(it.line) == @[HEAD_LINES + 3]  # line check names
+    check fix.fixed[0].message == "return result (STYLE.md §5) fixed"  # rule named
+    check fix.source.isSettled  # check reports none, and second fix changes nothing
+
+  test "bracket items are sorted into slots they held, so layout stays":
+    let one_line = fixed(module("import std/[strutils, os]\nimport ./[b {.all.}, a]\n"))
+    check one_line.source == module("import std/[os, strutils]\nimport ./[a, b {.all.}]\n")
+    check one_line.fixed.mapIt(it.line) == @[HEAD_LINES + 1, HEAD_LINES + 2]  # one per bracket
+    check one_line.source.isSettled
+    let each_line = fixed(module("import ./[\n  c,\n  a,\n  b,\n]\n"))
+    check each_line.source == module("import ./[\n  a,\n  b,\n  c,\n]\n")  # one item per line
+    check each_line.source.isSettled
+    let flowed = fixed(module("import ./[\n  d, c,\n  b, a,\n]\n"))
+    check flowed.source == module("import ./[\n  a, b,\n  c, d,\n]\n")  # two items per line
+    check flowed.source.isSettled
+    let commented = module("import ./[\n  b,  # Why.\n  a,\n]\n")
+    check fixed(commented).source == commented  # comment belongs to item or slot: left to hand
+
+  test "adjacent import lines are ordered by rank, and rank split by other lines stays":
+    let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
+    check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
+    check fix.fixed.mapIt(it.message) == @["import rank (X.5) fixed", "import rank (X.5) fixed"]
+    check fix.source.isSettled
+    let apart = module("import ./a\n\nimport std/os\n")
+    check fixed(apart).source == apart  # where it lands is choice: left to hand
+
+  test "run of single bindings shares one keyword; comment, doc and continuation move with it":
+    let consts = fixed(module("const A = 1  # One.\nconst B = 2\n  ## Doc of B.\n\nlet c = 3\n"))
+    check consts.source ==
+      module("const\n  A = 1  # One.\n  B = 2\n    ## Doc of B.\n\nlet c = 3\n")
+    check consts.fixed.mapIt(it.line) == @[HEAD_LINES + 1]  # one report per run
+    check consts.fixed[0].message == "single bindings (X.5) fixed"
+    check consts.source.isSettled
+    let wrapped = fixed(module("proc f() =\n  let a = 1\n  let b = g(\n    2,\n  )\n  echo a\n"))
+    check wrapped.source ==
+      module("proc f() =\n  let\n    a = 1\n    b = g(\n      2,\n    )\n  echo a\n")
+    check wrapped.source.isSettled
+    let nested = fixed(module("let a = 1\nlet b = block:\n  let c = 2\n  let d = 3\n  c + d\n"))
+    check nested.source == module(
+      "let\n  a = 1\n  b = block:\n    let\n      c = 2\n      d = 3\n    c + d\n"
+    )  # inner run first, then outer carries it
+    check nested.source.isSettled
+    let long_string = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")
+    check fixed(long_string).source == long_string  # indent would change string: left to hand
+
+  test "missing strictFuncs goes where X.6 puts directives":
+    let
+      strict = "\n" & STRICT_FUNCS & "\n\n"
+      plain = fixed("## Do.\n\nimport std/os\n")
+      profiled = "when compileOption(\"profiler\"):\n  import std/nimprof\n"
+    check plain.source == "## Do.\n" & strict & "import std/os\n"  # after header docs
+    check plain.fixed.mapIt(it.line) == @[0]  # whole file, as check names it
+    check plain.source.isSettled
+    check fixed("## Do.\n\n# Design note.\n\n" & profiled).source ==
+      "## Do.\n\n# Design note.\n" & strict & profiled  # after notes, before instrumentation
+    let stub = "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n\nimport std/os\n"
+    check fixed(stub).source ==
+      "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n" & strict & "import std/os\n"  # after header
+    check fixed("## Do.\nimport std/os\n").source == "## Do.\n" & strict & "import std/os\n"
+    check fixed("## Do.\n").source == "## Do.\n\n" & STRICT_FUNCS & "\n"  # no code yet
+
+  test "clean module passes through unchanged":
+    let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")
+    check fixed(clean).source == clean and fixed(clean).fixed.len == 0

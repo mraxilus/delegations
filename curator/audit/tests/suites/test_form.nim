@@ -1,14 +1,19 @@
-## Replicate Article X.1, X.2, X.9 and VIII.5: form of source.
+## Replicate Article X.1, X.2, X.9 and VIII.5: form of source, and fixes form check names.
 
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[form, kinds]
+import ../../src/[findings, form, kinds]
 
 
 func messages(path, source: string, kind: Kind): seq[string] =
   ## Read finding messages of source under kind.
   checkForm(path, source, kind.rule).mapIt(it.message)
+
+
+func fixed(source: string, kind = Kind.Nim): Fix =
+  ## Fix form of source under kind, as `koch fix` does.
+  fixForm("a.nim", source, kind.rule)
 
 
 func gapMessage(spaces: int): string =
@@ -96,3 +101,44 @@ suite "Article VIII":
     check messages("a.nim", "x = 1\n\n", Kind.Nim) == @["File ends with blank line."]  # ending
     check messages("a.nim", "", Kind.Nim) == @["File is empty."]  # empty
     check checkForm("a.nim", "x\ny \n", Kind.Nim.rule)[0].line == 2  # line numbers one-based
+
+
+suite "Fixes":
+  test "trailing whitespace is cut, CR of CRLF ending among it, and nothing else":
+    let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
+    check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
+    check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
+    check fix.fixed[0].message == "trailing whitespace (VIII.5) fixed"  # rule named
+    check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
+    check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
+
+  test "ending becomes exactly one newline; empty file has no one fix":
+    for dirty in ["a = 1\nb = 2", "a = 1\nb = 2\n\n\n"]:  # lacking, then blank lines
+      let fix = fixed(dirty)
+      check fix.source == "a = 1\nb = 2\n"  # body kept
+      check fix.fixed.mapIt(it.line) == @[0]  # whole file
+      check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
+      check fixed(fix.source).fixed.len == 0  # idempotent
+    check fixed("").source == "" and fixed("").fixed.len == 0  # empty stays, finding and all
+
+  test "X.9 gap becomes two spaces, and code, string and comment text stay":
+    let
+      dirty = "let a = \"# x\" # One.\nlet b = 2     ## Aligned.\nlet c = 3  # Two.\n" &
+        "# Whole  line.\nlet d = 4#Glued.\n"
+      fix = fixed(dirty)
+    check fix.source == "let a = \"# x\"  # One.\nlet b = 2  ## Aligned.\nlet c = 3  # Two.\n" &
+      "# Whole  line.\nlet d = 4  #Glued.\n"  # gaps alone move
+    check fix.fixed.mapIt(it.line) == @[1, 2, 5]  # one report per line
+    check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
+    check fixed(fix.source).source == fix.source  # idempotent
+    check fixed("a: 1 # b\n", Kind.Yaml).source == "a: 1 # b\n"  # Nim syntax alone
+
+  test "fix never writes line width check reports":
+    let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
+    check fixed(near).source == near  # left to hand
+    check messages("a.nim", near, Kind.Nim) == @[gapMessage(1)]  # finding stays
+
+  test "clean source passes through unchanged":
+    let clean = "## Do.\n\nlet a = \"x # y\"  # Two.\n# Whole line.\n"
+    check fixed(clean).source == clean and fixed(clean).fixed.len == 0  # nothing rewritten
+    check fixed("# Text.\n", Kind.Markdown).fixed.len == 0  # every kind read
