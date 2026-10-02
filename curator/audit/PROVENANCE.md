@@ -127,7 +127,7 @@ so an include guard above the block, and a blank line inside it, both keep the r
 
 - Nim: line, doc and nesting block comments, plain, triple and generalized raw strings, char
   literals, and numeric suffix quotes.
-- Cfg: `#`, unless `\#`.
+- Configuration: `#`, unless `\#`.
 - YAML: `#` at line start, or after whitespace, outside quotes.
 - Ignore files: a leading `#` only.
 - TypeScript: `//`, `/* */`, its string forms, and doc stars stripped.
@@ -1184,31 +1184,87 @@ inside `pga`.
 ## Names
 
 **Every declared name in Nim is read, and its words are held to the table and the
-glossaries.** A declaration is a binding, a routine, a type, a field or a parameter, read by a
-text scanner after comments and strings are blanked. A word is a run between underscores and
-case changes. The table pairs each coined abbreviation with its one full word, as the English
-check pairs a word with its approved one.
+glossaries.** A declaration is a binding, a routine, a type, a field, a parameter, an enum
+member or a placeholder. A text scanner reads them after comments and strings are blanked. A
+binding comes from `let`, `var`, `const`, `for` or `except … as`. A word is a run between
+underscores and case changes. The table pairs each coined abbreviation with its one full word,
+as the English check pairs a word with its approved one.
 
 An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
 the root or the project glossary lists it, as a symbol under `## Standards` or as a term. The
 jargon list of V.6 passes. Verified by `suites/test_names.nim`.
 
 **A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
-`importjs` or `dynlib` declares a name the library owns, so it is skipped. Its parameters are
-ours, and they are read. The pragma block may stand on its own line after the signature, and
-the scanner joins it. Found when the first run reported every OpenGL and SDL binding of
-`rga_visualiser` under V.3.
+`importjs` or `dynlib` declares a name that the library chose, so it is skipped. Its parameters
+are ours, and they are read. The pragma block may stand on its own line after the signature,
+and the scanner joins it.
+
+**The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
+Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
+SCREAMING. A placeholder in generic brackets, or after `concept`, is one capital letter. Each
+case is a fact about letters, so the check needs no list of words:
+
+- Pascal opens on a capital and holds no underscore. Camel opens on no capital and holds no
+  underscore.
+- Snake holds no capital. SCREAMING holds no lowercase letter.
+- One letter fits by its own case. A capital passes a type, a global and a placeholder. A
+  lowercase letter passes a routine, a local, a parameter and a field.
+
+**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is no
+notation, so `N` or `M` as a local, a parameter or a field takes the snake case. III.5 covers
+only the symbols of the source, such as `𝐦` and `𝐍`. They excuse the case of an immutable
+global, and nothing else. A name that holds a non-ASCII letter is notation. The check reads its
+case like any other name, except at an immutable global.
+
+- `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
+  them by their block, where each style runs its capitals first.
+- An operator is backticked, so it is never read as a name.
+
+**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
+`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
+brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
+that way.
+
+**One function decides the reach of a binding.** The case of a binding marks its reach, and not
+its mutability (V.1). So `reachOf` reads the blocks that enclose the binding:
+
+- A routine makes it local.
+- The entry block, which is a top-level `when isMainModule:`, makes it an entry binding.
+- A binding that opens its own scope, such as `for` or `except … as`, is local.
+- It is global where every enclosing block opens no scope. Those blocks are a `when` chain, and
+  a bare `let`, `var`, `const` or `type`. Any other block makes it local.
+
+**The entry block holds no binding (V.10).** Where a module runs as a program, code that binds
+goes in `proc main`, and the block calls it. A binding in the entry block reaches the whole
+module, because `when` opens no scope. A routine makes it a true local in every language. The
+Architect rejected the exception that made such a binding a local of its block.
+
+- Each binding in the entry block is one finding, and its case is not judged. A `for` and an
+  `except … as` there bind too. A block of plain calls passes, and so does a routine inside it.
+
+**A boolean is a proposition or a mode (V.4).** A boolean binding, field or parameter opens
+with `is`, `as`, `should`, `found` or `has`, and a word follows it. A `func` that returns `bool`
+is a predicate, and its name opens with `is`. By the ruling of the Architect, a `proc` that
+returns `bool` reports the success of an action (V.3). So it is unread, and a `func` that
+writes a `var` parameter is unread for the same reason.
 
 - V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
   `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
-  is held as a module-level SCREAMING name that equals a type name without case or
-  underscores.
+  is held as a global SCREAMING name that equals a type name without case or underscores.
 - A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
-  reading. An enum member is unread, and V.1 is unheld here.
-- Rejected: a parser, which costs a dependency and a compiler version; the scanner reads the
-  line forms this charter prescribes.
-- Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
-  is unread.
+  reading.
+- Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
+  line forms that this charter prescribes.
+- Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
+  Architect ruled a finding.
+- Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
+  brackets, and a name that `{.inject.}` makes.
+- Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
+  value `true` or `false`. A boolean that a call returns holds by reading.
+- Cost: `in` calls `contains` by its spelling, so a predicate of that name keeps the name of
+  the host.
+- Cost: a Pascal name of capitals alone, such as `ANTI`, reads as an acronym and passes. V.9
+  and reading hold it.
 
 ## Idioms
 
