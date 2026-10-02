@@ -341,6 +341,7 @@ alone.
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
+| `fix` | named files, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
 | `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |

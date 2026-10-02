@@ -34,9 +34,9 @@ import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 type
   Entry* = object
     ## Define one file git reports: path, kind when registered, content when read.
-    path*: string        ## Repository-relative, `/` separated.
+    path*: string  ## Repository-relative, `/` separated.
     kind*: Option[Kind]  ## Registered kind; `none` leaves content unread.
-    content*: string     ## File text; empty for unregistered kinds.
+    content*: string  ## File text; empty for unregistered kinds.
 
   Tree* = seq[Entry]
     ## Define whole repository as git sees it.

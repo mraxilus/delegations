@@ -133,8 +133,8 @@ const
     ## Predicate of each casing, as finding states it.
 
 
-func codeOnly*(source: string): string =
-  ## Blank comments and string and char literals, keeping every newline and length.
+func blanked(source: string, should_keep_comments: bool): string =
+  ## Blank string and char literals, and comments unless kept, keeping every newline and length.
   ##   Nim forms: `#` to end of line, `#[ ]#` nesting, `"..."` with escapes, `"""..."""`,
   ##     raw `r"..."` with `""` escape, and `'c'`.
   result = newString(source.len)
@@ -145,23 +145,29 @@ func codeOnly*(source: string): string =
     for k in 0 ..< n:
       result[i] = (if source[i] == '\n': '\n' else: ' ')
       inc i
+  template comment(n: int) =
+    if should_keep_comments:
+      for k in 0 ..< n:
+        result[i] = source[i]
+        inc i
+    else: blank(n)
   while i < source.len:
     let c = source[i]
     if depth > 0:
       if c == ']' and i + 1 < source.len and source[i + 1] == '#':
         dec depth
-        blank(2)
+        comment(2)
       elif c == '#' and i + 1 < source.len and source[i + 1] == '[':
         inc depth
-        blank(2)
-      else: blank(1)
+        comment(2)
+      else: comment(1)
       continue
     if c == '#':
       if i + 1 < source.len and source[i + 1] == '[':
         inc depth
-        blank(2)
+        comment(2)
       else:
-        while i < source.len and source[i] != '\n': blank(1)
+        while i < source.len and source[i] != '\n': comment(1)
       continue
     if c == '"':
       let is_raw = i > 0 and source[i - 1] in IDENT_CHARS
@@ -192,6 +198,16 @@ func codeOnly*(source: string): string =
       continue
     result[i] = c
     inc i
+
+
+func codeOnly*(source: string): string =
+  ## Blank comments and string and char literals, keeping every newline and length.
+  source.blanked(should_keep_comments = false)
+
+
+func codeAndComments*(source: string): string =
+  ## Blank string and char literals alone, so every `#` left opens, holds or closes comment.
+  source.blanked(should_keep_comments = true)
 
 
 func indentOf*(line: string): int =

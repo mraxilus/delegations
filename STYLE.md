@@ -209,10 +209,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the tokeniser demands one.
 - A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
   Each one stands alone on its line, and is never indented.
-- nimpretty is advisory, and nothing checks its output. Where its output and the charter
-  differ, the charter wins. nimpretty sets one space before a trailing comment, where X.9 asks
-  for two, and a `;` between parameters, where §5 asks for `,`. Fence a hand-shaped block with
-  `#!nimpretty off` and `#!nimpretty on`. It reads no other marker, so `# fmt: off` does nothing.
+- `nim r koch fix` is the formatter. It applies each fix that a check names, and nothing else,
+  so your reading holds every other rule of layout.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
 - Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write

@@ -59,7 +59,7 @@ const
 type Compiler* = object
   ## Define what `nim --version` says about compiler on PATH.
   version*: string  ## Dotted release version it names.
-  commit*: string   ## Git hash it reports; empty when it reports none.
+  commit*: string  ## Git hash it reports; empty when it reports none.
 
 
 func isVersion*(s: string): bool =

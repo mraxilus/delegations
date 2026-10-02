@@ -67,14 +67,14 @@ const
 type
   Call* = object
     ## Define one tool call of turn, as transcript records it.
-    name*: string     ## Tool name, such as `Bash` or `mcp__github__issue_write`.
+    name*: string  ## Tool name, such as `Bash` or `mcp__github__issue_write`.
     command*: string  ## Bash command text; empty for other tools.
-    has_body*: bool   ## Input carried `body`, so GitHub write posted text.
+    has_body*: bool  ## Input carried `body`, so GitHub write posted text.
 
   Turn* = object
     ## Define what transcript says about turn since last message of person.
     calls*: seq[Call]  ## Tool calls in order.
-    text*: string      ## Text of last assistant message.
+    text*: string  ## Text of last assistant message.
 
 
 func isRoleString*(s: string): bool =
