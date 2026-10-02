@@ -109,11 +109,22 @@ proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
   ##     `font-variant-ligatures`, so order costs nothing either way.
   ##   Block earlier run left is taken out first, so dressing twice gives
   ##     one page and not one that grows by every face on every build.
+  ##   Page that declares no charset is given UTF-8, first in its head or first in
+  ##     fragment.  Block is half megabyte of ASCII, and browser that opens page from
+  ##     file guesses charset from bytes ahead of first that is not ASCII: Chromium 141
+  ##     read review page and whole-cloth page as windows-1250 behind it.
   const
     shut = "</head>"
     title = "</title>"
+    charset = "<meta charset=\"utf-8\">"
+    head = "<head>"
   let
-    html = withoutFaces(raw)
+    bare = withoutFaces(raw)
+    opens = bare.find(head)
+    html =
+      if "<meta charset" in bare: bare
+      elif opens < 0: charset & "\n" & bare
+      else: bare[0 ..< opens + head.len] & "\n" & charset & bare[opens + head.len .. ^1]
     shuts = html.find(shut)
   if shuts >= 0:
     return html[0 ..< shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
