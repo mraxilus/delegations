@@ -48,9 +48,13 @@ suite "Spacing":
 
   test "never read: export marker, type colon, field dot, paths of imports, strings, comments":
     let kept = "import std/os, ../a\nexport b/c\nproc f*(x: int): int = x.y\n" &
-      "type T* = object\n  a*: int\nlet s = \"a+b\"  # c+d\nlet q = `+`(1, 2)\nlet z = a*(b)\n"
+      "type T* = object\n  a*, b*: int\nlet s = \"a+b\"  # c+d\nlet q = `+`(1, 2)\n" &
+      "proc `+`*(a, b: T): T = a\nvar u*, v*: int\n"
     check checkSpacing("a.nim", kept).len == 0
     check kept.fixed == kept
+
+  test "glued `*` after name inside expression multiplies, since such name declares nothing":
+    check "let z = PI*(a + b)\nf(c, d*[1])\n".fixed == "let z = PI * (a + b)\nf(c, d * [1])\n"
 
   test "fix never writes wide line; finding stays for hand":
     let line = "let a = " & "x".repeat(89) & "+y\n"  # 99 runes; spaced, 101

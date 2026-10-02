@@ -14,14 +14,17 @@
 ##   Prefix place: operator after anything but operand; spaces after it go, unless `-` meets
 ##     number, since `- 1` glued is literal `-1`, which `-128'i8` shows differs.
 ##   `=` of named argument: lexer reads `=` as no operator, so any spacing of it moves nothing.
-##     Architect's choice to make: X.3 example spells `symbols = "∧"` and V.4 `as_weight = true`,
-##     and tree spells every named argument so, so rule holds that form.
+##     Choice, recorded: X.3 example spells `symbols = "∧"` and V.4 `as_weight = true`, and tree
+##     spells every named argument so, so rule holds that form.
 ##   Never read: `=` of definition, default or assignment, which X.9 leaves to its statement;
 ##     `:` and `::` of type and field; `.` and dot-like operators (`.?`), glued as field access;
 ##     operators of `import`, `include`, `from` and `export`, whose `/` and `..` spell paths;
-##     `*` glued after name and before anything but operand, i.e. export marker.
+##     export marker, i.e. `*` glued after name that declaration places, before anything but
+##     operand. Name opening its line, following declaration keyword, or following comma on
+##     line whose first name is marked, is so placed; name inside expression is not, so
+##     `PI*(a + b)` multiplies.
 ##
-##   Cost: `a*(b)` reads as `f*(x: int)` does, so glued `*` before bracket stays.
+##   Cost: name opening continuation line reads as declared, so `a*(b)` opening line stays.
 ##   Cost: asymmetric spacing stays, and reading holds it; its fix is choice of meaning.
 ##   Cost: fixer never writes line width check reports: spacing that would widen line past
 ##     `LINE_MAX` stays, finding and all.
@@ -62,6 +65,11 @@ const
     ## Operator tokens of type, field and access, never spaced as operators.
   STATEMENT_KEYWORDS = ["export", "from", "import", "include"]
     ## Keywords opening statement whose operators spell module paths.
+  DECLARATION_KEYWORDS = [
+    "const", "converter", "func", "iterator", "let", "macro", "method", "proc", "template", "type",
+    "using", "var",
+  ]
+    ## Keywords whose next name declares, so `*` glued after it marks export.
   EXCERPT_RUNES = 12
     ## Runes of each neighbour echoed beside operator.
 
@@ -88,6 +96,20 @@ func pathTokens(tokens: openArray[Token], partners: openArray[int], source: stri
         j = partners[j]
       inc j
     k = j
+
+
+func isExportMarker(tokens: openArray[Token], k: int, lasts: openArray[int], source: string): bool =
+  ## Decide whether `*` at `k` stands where export marker may: glued after name that opens its
+  ##   line, follows declaration keyword, or follows comma after name so marked.
+  ##   Name inside expression declares nothing, so `*` after it multiplies.
+  if tokens[k].spelling(source) != "*" or k == 0: return false
+  let name = tokens[k - 1]
+  if name.kind notin {TokenKind.Word, TokenKind.Quoted} or name.after != tokens[k].first:
+    return false
+  if k == 1 or lasts[k - 2] < name.line: return true
+  let before = tokens[k - 2].spelling(source)
+  if before in DECLARATION_KEYWORDS: return true
+  before == "," and k >= 3 and tokens.isExportMarker(k - 3, lasts, source)
 
 
 func excerpt(source: string; before, after: Token): string =
@@ -147,7 +169,7 @@ func respacings(source: string): seq[Respacing] =
 
     # Space binary operator one each side, where both or neither side holds space.
     if tokens.isOperandEnd(k - 1, source):
-      if text == "*" and left == 0 and before.kind in {TokenKind.Word, TokenKind.Quoted}:
+      if tokens.isExportMarker(k, lasts, source):
         let is_operand_next = not is_line_end and tokens[k + 1].first == t.after and
           tokens[k + 1].kind in {TokenKind.Word, TokenKind.Number, TokenKind.Text,
                                  TokenKind.Character, TokenKind.Quoted}
