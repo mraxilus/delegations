@@ -505,9 +505,10 @@ proc runEvaluation*(
       return (nil, @[Finding(path: candidate.path, message: "Changed library does not " &
         "build at " & algebra.name & "; got `" & why.strip.splitLines[^1] & "`.")])
     counted[algebra.name] = after
-    let binary = directory / "bench_" & algebra.name
-    let (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
-      directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
+    let
+      binary = directory / "bench_" & algebra.name
+      (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
+        directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
     if code != 0:
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
         algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])
