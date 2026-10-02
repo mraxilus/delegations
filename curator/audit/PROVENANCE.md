@@ -493,6 +493,35 @@ on the same merge ref is what holds a stale stamp there.
   `CONTRIBUTOR.md`, check sources and `koch.nim`. At a synthetic merge of that head into
   `main`, with `main` as the first parent, it reports nothing.
 
+**A curator branch holds each finding inside a contributor project, and blocks on the rest.**
+A check that reddens a project waits for that project to fix, and the curator never fixes it
+(`CURATOR.md`, duty 3). Such a branch can never be clean, so `koch check` lists those findings
+apart and runs types, suites and drive on the rest. It records the tree for the `pre-push`
+hook when the rest is clean. The runner reads the whole tree and holds nothing, so the pull
+request stays red until each project fixes, and the merge gate is unchanged.
+
+Held means any path deeper than `contributor/<domain>/<project>/`, records included, because
+duty 3 forbids the fix there too. The two indexes above a project are the curator's, so they
+block. A finding that a rules change leaves for the curator carries a propagation flag at its
+source, and blocks in any project. These are the stale stamp and a standard that belongs in the
+root glossary. A contributor branch holds nothing: a finding in its project is its own, and one
+in another project means that the base is red.
+
+- Rejected: push past the hook with `--no-verify`, once for each branch. Every merge of the
+  base after that first push needs a second one, and a red head can never pass the hook.
+  The `bash` hook refuses `--no-verify` on a push.
+- Rejected: match the stale stamp by its message. The flag sits where the finding is made, so
+  a reworded message cannot move it into the held set.
+- Cost: the role is read from the branch name alone, because every delegate posts as one
+  account. A contributor that names a branch `curator/...` gets past its own hook and no
+  further. On the runner, `check-scope`, `check-role` and `check-files` read the same name.
+- Cost: a new check that reports false findings in contributor code has them held too, so
+  its branch still pushes. The draft stays red, and duty 3 still has the curator read each
+  finding before the issues open.
+- Verified by `suites/test_scope.nim`, which fails with the propagation flag ignored, and by
+  `suites/test_hooks.nim`, `suites/test_provenance.nim`, `suites/test_glossary.nim` and
+  `suites/test_findings.nim`.
+
 ## Commits
 
 **`type(scope)!?: summary`, with the commit types as data. On a project branch the scope must equal

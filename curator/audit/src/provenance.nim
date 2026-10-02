@@ -1,7 +1,8 @@
 ## Enforce provenance header and rules stamp (Article VIII.6, provenance guide).
 ##   Header is first pipe table in file, `| Field | Value |`, with rows Harness, Author, Date,
 ##   Style, Rules, Review. Rules value is stamp of governing documents, so stale audit fails
-##   and rules change cannot merge half-propagated.
+##   and rules change cannot merge half-propagated. Stale stamp is propagation, so finding is
+##   curator's in any project.
 ##
 ##   Stamp is FNV-1a 64-bit over `RULES` contents in order, CR stripped, NUL between files,
 ##     rendered as 16 lowercase hex digits.
@@ -129,4 +130,5 @@ func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
       path, 0,
       "Rules stamp stale; re-audit project, then set `" & stamp_expected & "`; got `" &
         fields["Rules"] & "`.",
+      is_propagation = true,
     )
