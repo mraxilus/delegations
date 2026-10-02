@@ -27,10 +27,25 @@ else:
     float(getMonoTime().ticks) / 1_000_000.0
 
 
-const RATE_FRAME_LEAST* = 120.0
-  ## Hold least workable frame rate, per second, as Architect sets it (repository issue 346).
-  ##   Floor rather than goal: goal is as fast as machine allows, and nothing is held to it.
-  ##   Scripted run steps its clock at it, and both frame-time plots floor their range at it.
+const
+  RATE_FRAME_LEAST* = 120.0
+    ## Hold least workable frame rate, per second, as Architect sets it (repository issue 346).
+    ##   Floor rather than goal: goal is as fast as machine allows, and nothing is held to it.
+    ##   Scripted run steps its clock at it, and both frame-time plots floor their range at it.
+  RATE_FRAME_FAST* = 2.0*RATE_FRAME_LEAST
+    ## Name frame twice as fast as floor, fastest mark exceedance curve draws.
+    ##   Nothing is held to it; frame under it wears fast band.
+  SECONDS_HISTORY = 4.0
+    ## Span each front-end's frame-time plot holds, long enough to see stutter land and scroll off.
+  FRAMES_HISTORY* = int(SECONDS_HISTORY*RATE_FRAME_LEAST)
+    ## Bound how many recent frame times each front-end's plot keeps: `SECONDS_HISTORY` at floor.
+    ##   Machine faster than floor fills it in less time.
+  SECONDS_EXCEEDANCE = 17.0
+    ## Span page's exceedance curve summarises.
+    ##   Long enough to hold stall, short enough that one ages out again rather than flattening
+    ##   curve for minute.
+  FRAMES_EXCEEDANCE* = int(SECONDS_EXCEEDANCE*RATE_FRAME_LEAST)
+    ## Bound how many recent frames exceedance curve summarises: `SECONDS_EXCEEDANCE` at floor.
 
 
 
