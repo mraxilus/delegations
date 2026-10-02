@@ -3,7 +3,8 @@
 ##   - binary operator and `=` take one space on each side; one ending its line takes one before;
 ##   - range operator (`..`, `..<`, `..^`) takes none on either side;
 ##   - prefix operator is glued to its operand;
-##   - comma takes none before it and one after; colon of type, field or branch likewise;
+##   - comma and semicolon take none before them and one after; colon of type, field or branch
+##     likewise;
 ##   - bracket holds no space inside it, after opening or before closing;
 ##   - trailing comment takes two before its marker, which `form.nim` holds.
 ##   Reads tokens (`tokens.nim`), so string, character, comment and quoted name never trip it.
@@ -26,12 +27,11 @@
 ##   `=` of definition, default, assignment or named argument: lexer reads `=` as no operator,
 ##     so any spacing of it moves nothing, and `=` glued to operator character lexes as other
 ##     operator (`=-`), which rule never reads.
-##   Never read: `;`, which list leaves out; `::`, `.` and dot-like operators (`.?`), glued as field
-##     access; operators of `import`, `include`, `from` and `export`, whose `/` and `..` spell
-##     paths; export marker, i.e. `*` glued after name that declaration places, before
-##     anything but operand. Name opening its line, following declaration keyword, or
-##     following comma on line whose first name is marked, is so placed; name inside
-##     expression is not, so `PI*(a + b)` multiplies.
+##   Never read: `::`, `.` and dot-like operators (`.?`), glued as field access; operators of
+##     `import`, `include`, `from` and `export`, whose `/` and `..` spell paths; export marker,
+##     i.e. `*` glued after name that declaration places, before anything but operand. Name
+##     opening its line, following declaration keyword, or following comma on line whose first
+##     name is marked, is so placed; name inside expression is not, so `PI*(a + b)` multiplies.
 ##
 ##   Cost: name opening continuation line reads as declared, so `a*(b)` opening line stays.
 ##   Cost: asymmetric spacing stays, and reading holds it; its fix is choice of meaning.
@@ -52,6 +52,7 @@ type
     Prefix  ## After prefix operator: none.
     Equals  ## Around `=`: one space each side.
     Comma  ## Before comma none, after it one.
+    Semicolon  ## Before semicolon none, after it one.
     Colon  ## Before colon none, after it one.
     Inner  ## Inside bracket: none.
 
@@ -158,6 +159,8 @@ func gapRespacing(tokens: openArray[Token], k: int, source: string): Respacing =
       (wanted, result.placement) = (0, Placement.Inner)
   elif a.kind == TokenKind.Comma: (wanted, result.placement) = (1, Placement.Comma)
   elif b.kind == TokenKind.Comma: (wanted, result.placement) = (0, Placement.Comma)
+  elif a.kind == TokenKind.Semicolon: (wanted, result.placement) = (1, Placement.Semicolon)
+  elif b.kind == TokenKind.Semicolon: (wanted, result.placement) = (0, Placement.Semicolon)
   elif a.kind == TokenKind.Operator and left == ":":
     (wanted, result.placement) = (1, Placement.Colon)
   elif b.kind == TokenKind.Operator and right == ":" and a.kind != TokenKind.Operator:
@@ -269,6 +272,7 @@ func checkSpacing*(path, source: string): seq[Finding] =
       of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
       of Placement.Equals: "`=` takes one space on each side (X.9)"
       of Placement.Comma: "Comma takes no space before it and one after (X.9)"
+      of Placement.Semicolon: "Semicolon takes no space before it and one after (X.9)"
       of Placement.Colon: "Colon takes no space before it and one after (X.9)"
       of Placement.Inner: "Bracket holds no space inside it (X.9)"
     result.add finding(path, spacing.line + 1, message & "; got `" & spacing.got & "`.")

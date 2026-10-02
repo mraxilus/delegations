@@ -67,6 +67,14 @@ suite "Spacing":
     check checkSpacing("a.nim", "let a: int\nlet e = {:}\n").len == 0  # empty table stays
 
 
+  test "semicolon takes no space before it and one after, as comma does":
+    check "func f(a, b: int;c: string ; d: char): int = a\n".fixed ==
+      "func f(a, b: int; c: string; d: char): int = a\n"
+    check "a = 1;b = 2\n".fixed == "a = 1; b = 2\n"
+    check checkSpacing("a.nim", "f(a, b: int;c: X)\n")[0].message.startsWith("Semicolon takes")
+    check "proc f(a, b: int;\n       c: X) = discard\n".isSettled  # line break is not gap
+
+
   test "bracket holds no space inside it, and prefix operator after it glues":
     check "f( a, b )\nlet s = @[ 1 ]\nproc g() {. inline .}\nlet u = ( |∙ x)\n".fixed ==
       "f(a, b)\nlet s = @[1]\nproc g() {.inline.}\nlet u = (|∙x)\n"
