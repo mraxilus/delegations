@@ -73,6 +73,7 @@ Every rule below serves it:
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
 | `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
 | `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
+| `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | The `steward` skill and the `record-reviewer` | curator |
 | `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
@@ -125,7 +126,7 @@ This section adds only what differs for a curator.
 - **An answered issue that you close by hand** also says where the result differs from what
   was asked.
 - **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
-  `curator` when `check` or `ledger` concludes failure on `main`, so a red `main` reaches
+  `curator` when `check`, `ledger` or `head` concludes failure on `main`, so a red `main` reaches
   the queue. Read the run anyway, since a run cancelled, still queued or never triggered
   concludes nothing. A red `main` is the first work of the delegate.
 
@@ -225,7 +226,7 @@ This section adds only what differs for a curator.
    - a ruleset of `main` or of every branch, or a merge setting, that drifts from the list
      under Repository settings the Architect applies.
 
-   `watch.yml` watches both `check` and `ledger`, and opens or extends one issue for each
+   `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
    workflow.
 
 10. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new delegates as
@@ -348,6 +349,7 @@ alone.
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
+| `head` | projects with a `head` verb, or one | fetch dependencies, then the verb, on its pin |
 | `fix` | named files, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
