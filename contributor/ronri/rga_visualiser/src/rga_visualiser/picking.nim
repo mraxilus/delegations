@@ -131,8 +131,8 @@ type
   AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
     at*: Position ## World point that keeps its pixel through zoom.
     floor_reach*: float ## How near wheel may come to `at`, in either state.
-      ## Point's is where its sphere fills frame (`depthFilling`): nearer shows nothing
-      ## more of it. Other object's is its drawn radius, so wheel stops at surface rather
+      ## Point's is reach at which its depth fills frame (`depthFilling`): nearer shows
+      ## nothing more of it. Other object's is its drawn radius, so wheel stops at surface rather
       ## than carrying eye through it; see `camera.travelToward`.
     is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
       ## What stands somewhere is what reader looks at, so turntable's pivot follows its
@@ -789,11 +789,17 @@ proc anchorZoomAt*(
   let
     shaped = kindOf(scene.geometryOf(handle.get))
     radius = scene.radiusAt(handle.get)
+    # Fill is depth along sight, and floor is reach: eye moving on its line to anchor
+    #   scales both alike, so fill read as reach is fill times their ratio. Off middle,
+    #   reach runs longer than depth.
+    filling =
+      if shaped != some(Kind.Point): radius
+      else:
+        depthFilling(radius, scale, width, height)*norm(scale.eye - found.get)/
+          depthAlong(scale.eye, scale.forward, found.get)
   some(AnchorZoom(
     at: found.get,
-    floor_reach:
-      if shaped == some(Kind.Point): max(radius, depthFilling(radius, scale, width, height))
-      else: radius,
+    floor_reach: max(radius, filling),
     is_standing: shaped != some(Kind.Plane),
   ))
 
