@@ -1036,23 +1036,27 @@ suite "Camera":
     interaction.grabPan(camera, 1440, 900, has_selection = false)
     check interaction.depth_pan =~ camera.distance
 
-  test "a right drag with a selection carries the point it holds with the pointer":
+  test "a right drag with a selection zooms by the pointer's heights, and turns along the row":
     # Fault: rates stood here, fixed angle and fixed factor for each pixel, which matched
     #   cursor nowhere. Point held is one left drag's orbit holds, on sphere about pivot.
-    #   Vertical stretches from pivot's row, so away from row zooms in on either side.
-    #   Across, point moves by what pointer moved, from where zoom spread it from middle.
+    #   Across turns as left drag along pivot's row turns. Then point's height over row,
+    #   where that turn left it, scales as pointer's does, so away from row zooms in.
     const (wide, tall) = (1440, 900)
     let
+      row = 0.5*float(tall)
       opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
       steps = [
         # Above row and away from it, off middle column, so dolly spreads point across.
-        (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 760.0, y: 260.0), true),
+        (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 760.0, y: 260.0), 1),
         # Above row, toward it and across.
-        (ScreenPosition(x: 800.0, y: 280.0), ScreenPosition(x: 700.0, y: 360.0), false),
+        (ScreenPosition(x: 800.0, y: 280.0), ScreenPosition(x: 700.0, y: 360.0), -1),
         # Below row and away from it.
-        (ScreenPosition(x: 650.0, y: 560.0), ScreenPosition(x: 690.0, y: 640.0), true),
+        (ScreenPosition(x: 650.0, y: 560.0), ScreenPosition(x: 690.0, y: 640.0), 1),
+        # Level, outside band and inside it: no zoom.
+        (ScreenPosition(x: 700.0, y: 300.0), ScreenPosition(x: 800.0, y: 300.0), 0),
+        (ScreenPosition(x: 700.0, y: 440.0), ScreenPosition(x: 760.0, y: 430.0), 0),
       ]
-    for (before, after, is_closer) in steps:
+    for (before, after, way) in steps:
       var camera = opening
       let
         (eye, axes) = camera.sight
@@ -1060,54 +1064,31 @@ suite "Camera":
           eye, camera.pivot, camera.headingThrough(axes, wide, tall, before),
           camera.radiusHeld(wide, tall, 0.0),
         )
+      var left = opening
+      left.turnFollowing(
+        ScreenPosition(x: before.x, y: row), ScreenPosition(x: after.x, y: row), wide, tall,
+        has_selection = true,
+      )
       camera.panAcross(before, after, wide, tall, has_selection = true, depth_held = 19.0)
-      let seen = projectToScreen(
-        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
-      )
-      let spread = (0.5*float(tall) - after.y)/(0.5*float(tall) - before.y)
+      let
+        aspect = float(wide)/float(tall)
+        turned = projectToScreen(left.initMatrixViewProjection(aspect), wide, tall, held)
+        seen = projectToScreen(camera.initMatrixViewProjection(aspect), wide, tall, held)
+        least = FRACTION_STRETCH_LEAST*float(tall)
+        side = if before.y <= row: 1.0 else: -1.0
+        spread = max(side*(row - after.y), least)/max(side*(row - before.y), least)
       check seen.isInFront
-      check abs(seen.x - (0.5*float(wide) + (before.x - 0.5*float(wide))*spread +
-        after.x - before.x)) < 0.01
-      check abs(seen.y - after.y) < 0.01
+      check camera.frame.forward =~ left.frame.forward
+      check abs((row - seen.y) - (row - turned.y)*spread) < 0.01
       check camera.pivot =~ opening.pivot
-      check (camera.distance < opening.distance) == is_closer
-    # Inside band about row, vertical is dropped: no zoom, and held point keeps its height.
-    var level = opening
-    let
-      (eye, axes) = level.sight
-      (before, after) = (ScreenPosition(x: 700.0, y: 440.0), ScreenPosition(x: 760.0, y: 430.0))
-      held = pointHeld(
-        eye, level.pivot, level.headingThrough(axes, wide, tall, before),
-        level.radiusHeld(wide, tall, 0.0),
-      )
-    level.panAcross(before, after, wide, tall, has_selection = true, depth_held = 19.0)
-    let seen = projectToScreen(
-      level.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
-    )
-    check level.distance =~ opening.distance
-    check abs(seen.x - after.x) < 0.01
-    check abs(seen.y - before.y) < 0.01
-    # Level drag outside band zooms nothing either: heights match, so ratio is one.
-    var across = opening
-    let
-      (left, right) = (ScreenPosition(x: 700.0, y: 300.0), ScreenPosition(x: 800.0, y: 300.0))
-      taken = pointHeld(
-        eye, across.pivot, across.headingThrough(axes, wide, tall, left),
-        across.radiusHeld(wide, tall, 0.0),
-      )
-    across.panAcross(left, right, wide, tall, has_selection = true, depth_held = 19.0)
-    let carried = projectToScreen(
-      across.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, taken,
-    )
-    check across.distance =~ opening.distance
-    check across.pivot =~ opening.pivot
-    check abs(carried.x - right.x) < 0.01
-    check abs(carried.y - right.y) < 0.01
+      case way
+      of 1: check camera.distance < opening.distance
+      of -1: check camera.distance > opening.distance
+      else: check camera.distance =~ opening.distance
 
   test "a right drag with a selection keeps the point it took at the press":
     # Point asked again at each step lies on sphere zoom resizes, so it is other point, and
-    #   zoom turned on how many steps pointer sent. Taken once, it lands under pointer
-    #   however many steps carried it there.
+    #   zoom turned on how many steps pointer sent. Taken once, path matters little.
     const (wide, tall) = (1440, 900)
     let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     proc dragged(
@@ -1129,8 +1110,8 @@ suite "Camera":
             point_held = interaction.point_pan)
           at = next
       (camera, interaction.point_pan.get)
-    # Slant: twelve steps carry point taken at press to height released at, and to column
-    #   each step's spread and travel leave it, read here in pixels alone.
+    # Slant: twelve steps turn as one left drag along row, and leave point within 0.5 px of
+    #   height released at. Measured 0.21.
     let
       (slant_press, slant_release) =
         (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 700.0, y: 240.0))
@@ -1138,17 +1119,14 @@ suite "Camera":
       seen = projectToScreen(
         slanted.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
       )
-    var (column, at) = (slant_press.x - 0.5*float(wide), slant_press)
-    for step in 1 .. 12:
-      let next = ScreenPosition(
-        x: at.x + (slant_release.x - at.x)/float(12 - step + 1),
-        y: at.y + (slant_release.y - at.y)/float(12 - step + 1),
-      )
-      column = column*(0.5*float(tall) - next.y)/(0.5*float(tall) - at.y) + next.x - at.x
-      at = next
+    var left = opening
+    left.turnFollowing(
+      ScreenPosition(x: slant_press.x, y: 0.5*float(tall)),
+      ScreenPosition(x: slant_release.x, y: 0.5*float(tall)), wide, tall, has_selection = true,
+    )
     check slanted.distance < opening.distance
-    check abs(seen.x - (0.5*float(wide) + column)) < 0.01
-    check abs(seen.y - slant_release.y) < 0.01
+    check slanted.frame.forward =~ left.frame.forward
+    check abs(seen.y - slant_release.y) < 0.5
     # Middle column: dolly alone moves camera, so one step and twelve land alike, and out
     #   and back returns exactly.
     let
@@ -1161,10 +1139,11 @@ suite "Camera":
     check once.frame.forward =~ opening.frame.forward
     check returned.eye =~ opening.eye
     check returned.distance =~ opening.distance
-    # Slant out and back: travel across is turned at two zooms, so path leaves trace.
-    #   Measured 0.122 at separation 19.
+    # Slant out and back: sight returns, and separation takes trace of dollies read at
+    #   two depths. Measured 0.0017 at separation 19.
     let (slant_back, _) = dragged(12, slant_press, [slant_release, slant_press])
-    check norm(slant_back.eye - opening.eye) < 0.15
+    check slant_back.frame.forward =~ opening.frame.forward
+    check norm(slant_back.eye - opening.eye) < 0.0025
 
   test "a vertical right drag with a selection zooms, and turns nothing":
     # Fault: turn chased point's column after dolly spread it, and point stood near line

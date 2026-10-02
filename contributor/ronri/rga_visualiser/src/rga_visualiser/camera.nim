@@ -928,32 +928,6 @@ func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Positi
   position(place_eye + (nearest - back)*along).get(eye)
 
 
-func pointKept*(eye, pivot, held: Position; heading: Direction): Position =
-  ## Place point along sight `heading` from `eye` as far from `pivot` as `held` stands, on
-  ## same side of that sphere as `held`.
-  ##   Right drag with selection: dolly moved eye since point was taken, and `pointHeld`
-  ##   asked again would name other point. Orbit then carries one taken.
-  ##   Side is read off `held`'s own sight: short of pivot's foot on it, or past. Eye inside
-  ##   sphere sees far side alone, which reads as past.
-  ##   Where sight misses sphere, pivot's foot on it, and what is held slips.
-  ##   Algebra's, as in `pointHeld`: `nearest` is pivot's depth over plane through eye
-  ##   square to sight, and `miss` is pivot's distance from sight.
-  let
-    place_eye = toMultivector(eye)
-    place_pivot = toMultivector(pivot)
-    place_held = toMultivector(held)
-    radius = distanceBetween(place_held, place_pivot)
-    toward = ^∙ toMultivector(held - eye)
-    is_past = distanceBetween(place_eye, place_held) >
-      depthAgainst(planeThrough(place_eye, toward), place_pivot)
-    along = ^∙ toMultivector(heading)
-    ray = place_eye ∧ along
-    nearest = depthAgainst(planeThrough(place_eye, along), place_pivot)
-    miss = distanceBetween(^ projectOrthogonal(place_pivot, ray), place_pivot)
-    back = sqrt(max(radius*radius - miss*miss, 0.0))
-  position(place_eye + (if is_past: nearest + back else: nearest - back)*along).get(eye)
-
-
 func orbitCarrying*(camera: var Camera; held, under: Direction) =
   ## Turn eye about pivot as turntable does, so point `held` off pivot comes to be seen
   ## where point `under` off pivot is seen now.
