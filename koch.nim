@@ -100,12 +100,10 @@ Options:
 
 
 type
-  Flag = enum
-    ## Name option verb may read.
+  Flag = enum  ## Name option verb may read.
     Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun
 
-  Options = object
-    ## Define parsed command line.
+  Options = object  ## Define parsed command line.
     command: string
     project: string
     rest: seq[string]
