@@ -8,7 +8,7 @@
 /* Pointer input.                                                          */
 /*   One invariant across every pointer: PRESS TARGET CHOOSES SCHEME.      */
 /*   Press that lands on object constructs; one that lands on              */
-/*   empty space moves camera. Mirrors `visualiser.handleEvent`.           */
+/*   empty space moves camera. Mirrors `main.handleEvent`.                 */
 /*   Mouse: left-drag takes whatever two objects make and is never         */
 /*   interrupted, right-drag opens choice menu on arrival. From empty      */
 /*   space, left orbits, right pans, wheel dollies.                        */
@@ -130,7 +130,7 @@ canvas.addEventListener('pointerdown', (e) => {
     nimBeginPress(now());
     button_mouse_down = e.button;
     // Read off button whether drag decides for you or asks.
-    //   What it builds is read off operands at release; mirrors `visualiser.armingFor`.
+    //   What it builds is read off operands at release; mirrors `main.armingFor`.
     const arming_drag = nimDragKindForButton(e.button);
     if (arming_drag >= 0 && nimBeginDrag(arming_drag, now())) {
       button_mouse_drag = e.button;
@@ -170,7 +170,7 @@ canvas.addEventListener('pointerdown', (e) => {
     //   scheme they belong to. Sky is hovered wherever nothing else is and is refused
     //   there, so press on it still falls through to camera; so is crowd, several
     //   objects in reach of one finger, which moves view instead; see
-    //   `interaction.canConstructByTouch`.
+    //   `interaction.isConstructibleByTouch`.
     is_touch_press_constructing = nimCanTouchConstruct();
     if (handle_touch_down >= 0) nimBeginHold(handle_touch_down, now());
   } else {

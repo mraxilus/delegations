@@ -40,8 +40,9 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    incomplete.
 4. A module that implements an authority (a book, a paper, an RFC) carries aligned plain-text
    tables in its header. They map the code names to the notation of the authority, so that
-   book and code read side by side. A table is a derived view of the declarations. Verify the
-   table against them, and where the two disagree the declaration wins.
+   book and code read side by side. Its columns align by display width, as the eye reads them.
+   A table is a derived view of the declarations. Verify the table against them, and where the
+   two disagree the declaration wins.
 5. **Bootstrap gate.** Where types build each other at compile time, the umbrella header
    states the bootstrap order as a `->` diagram. The diagram is many to one. Each definition
    is the target of one line alone, and that line names everything that the definition needs.
@@ -53,9 +54,9 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
    one-line forwarders. It is the API reference that is also source, and the source of truth
    for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
-   an old figure and a fixed bug go to the log (XI) and to the provenance file (VIII.6). A
-   live trap earns one line, and a test that trips on it. Where no test can reach the trap,
-   the line says why.
+   an old figure and a fixed bug go to the log (XI). The provenance file keeps only the reason
+   that the design is as it is now (VIII.6). A live trap earns one line, and a test that trips
+   on it. Where no test can reach the trap, the line says why.
 
 ```nim
 ## Construct specific PGA's `Basis` enum and related types/procedures.
@@ -204,7 +205,7 @@ static:
   doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
+for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 ```
 
 ## Article V: Names form an ordered system
@@ -219,12 +220,15 @@ for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
 2. Compose a name head first, with the qualifiers last, from general to specific, so that
    families sort and align: `wedge`/`wedgeAnti`, `norm`/`normBulk`/`normWeight`,
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
-   domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain.
+   domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain. The head
+   is the kind of value, so a word such as `PATH` or `MARKS` leads (`PATH_KOCH`, never
+   `KOCH_PATH`). An action keeps its verb first, and orders its object the same way
+   (`constructExomorphismMetric`).
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
    domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
    recurring kind of action keeps one verb:
    - `define…` names a macro that declares from data, and a template that declares a fixed
-     family is named for its act (`borrowGradeOperations`);
+     family is named for its act (`borrowOperationsGrade`);
    - `construct…` names a table that is built and returned, and `emit…` a function that
      returns AST;
    - `init…` names a constructor of a value, and `new…` never appears, because nothing is a
@@ -268,8 +272,8 @@ for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
 
 ```nim
 BasisDigits  # type
-constructMetricExomorphism  # callable
-metric_exomorphism  # local
+constructExomorphismMetric  # callable
+exomorphism_metric  # local
 is_degenerate  # boolean proposition
 LUT_GRADE_BY_BASIS  # lookup table, and module constant
 CAYLEYS_WEDGE  # module constant
@@ -307,8 +311,8 @@ CAYLEYS_WEDGE  # module constant
    language fixes it. A reader then finds every doc where the last one was.
 10. A comment opens with a capital letter and closes with a period. A citation, a bare name and
     a table cell carry neither. `i.e.` and `e.g.` stay in a comment, lowercase inline and
-    capitalised where they open a line. An identifier, a literal or a path inside a comment
-    takes backticks, so that a reader and the checker take it as a name.
+    capitalised where they open a sentence. An identifier, a literal or a path inside a
+    comment takes backticks, so that a reader and the checker take it as a name.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -436,20 +440,22 @@ if is_tallying: cost.mark = cpuTime()  # Instrument runs only while report reads
 9. A gap in the coverage is a placeholder test that reports itself as skipped, so that the run
    shows it. A test that cannot run under a configuration stays in the run, and skips there with
    its reason. Never remove such a test with a bare build-time gate.
-10. Code that the authority does not cover is tested in a suite named `Internal`, and its
-    tests are named by behaviour. Where the authority states a law without a number, name the
+10. Code that the authority does not cover is tested in suites whose names open with
+    `Internal:`, as `Internal: Planner`, and their tests are named by behaviour. The run then
+    shows where the authority stops. Where the authority states a law without a number, name the
     test by its behaviour, and cite the section or the page. Never invent a number.
 11. A test helper that the library does not need lives in the suite, and not in the library.
     Test code follows the same rules as library code.
-12. A test reads the real clock only where speed is what it holds, and its name or its section
-    says so. Every other test moves time itself where time matters, and never waits a span of
-    real time. A slow machine then takes longer to reach the same verdict, and never reaches
-    another one.
+12. A test reads the real clock only where speed is what it holds, or where it tests an
+    instrument that reads time. Its name or its section says which. An instrument reads nothing on
+    a simulated clock. Its test samples a count of frames or calls, and no limit on time decides
+    its verdict. Every other test moves time itself where time matters, and never waits a span of
+    real time. A slow machine then takes longer to reach the same verdict, and never another one.
 
 ```nim
 suite "Chapter 2":
   test "Equation 2.2-4":
-    for b, c, 𝐮, 𝐯 in enumerateBasisPair():
+    for b, c, 𝐮, 𝐯 in enumeratePairBasis():
       if b.grade == Grade(1) and c.grade == Grade(1):
         check (𝐮 + 𝐯) ∧ (𝐮 + 𝐯) =~ 0  # 2.2a
         check 𝐮 ∧ 𝐯 =~ -(𝐯 ∧ 𝐮)  # 2.4
@@ -458,8 +464,8 @@ suite "Chapter 2":
 ## Article X: Form of the source
 
 1. Two-space indent. No tabs. Lines of at most 100 characters, counted in characters and not
-   in bytes. Where a formatter would destroy a hand-shaped block, fence the block with the
-   marker that the formatter reads.
+   in bytes. Where the formatter would destroy a hand-shaped block, fence the block between a
+   line `#!fix off` and a line `#!fix on`.
 2. A section banner is a distinct comment form, at most two tiers deep, and its syntax marks
    the tier. Its title is an English noun phrase in Title Case, qualifier then head, singular
    for one member and plural for several. A first-tier banner takes three blank lines before
@@ -472,12 +478,15 @@ suite "Chapter 2":
      and a declaration block (`type`, `const`) that follows another.
    - Every other definition takes two.
    - In a test file, a suite is a first tier and a test a second. Each takes the blank lines of
-     its tier: three before a suite, two before a test.
+     its tier: three before a suite, two before a test. A first child follows its opener at
+     once, as a test that opens a suite, and a suite that opens a `when` body. A suite after a
+     banner takes the one blank line of the banner.
 3. A call stays on its own line where it fits, and otherwise takes one argument to a line. A
-   signature may first wrap its parameters onto one line of their own. Otherwise it takes one
-   parameter, or one group of a shared type, to a line. One item to a line takes a trailing
-   separator. A declarative call names its arguments, and so do a code-generating call and a
-   constructor. A positional call stays positional.
+   signature that does not fit first wraps its parameters onto one line of their own. Where
+   that line does not fit either, it takes one parameter, or one group of a shared type, to a
+   line. One item to a line takes a trailing separator. A declarative call names its
+   arguments, and so do a code-generating call and a constructor. A positional call stays
+   positional.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
@@ -506,17 +515,24 @@ suite "Chapter 2":
    needs none. The split is a preference of the Architect rather than a finding, so taste
    decides, and the record says so. Merge faces by codepoint range where none covers
    everything, then render each codepoint against `.notdef` to verify the coverage.
-9. A trailing comment takes two spaces before its marker, a citation among them. A binary
-   operator, the range operator included, takes one space on each side. A prefix operator is
-   glued to its operand. A space inside an expression exists only where the tokeniser demands
-   it.
+9. A space inside an expression stands only where this list puts it, or where the tokeniser
+   demands it:
+   - one space on each side of a binary operator, and of `=`;
+   - one space after a comma, a semicolon and a colon;
+   - two spaces before the marker of a trailing comment, a citation among them.
+
+   No space stands inside a bracket, around a range operator (`2..6`, `0..<n`), or after a
+   prefix operator, which is glued to its operand.
 10. A list that the language gives no order of its own is alphabetised, as the imports are.
-    That covers exports, pragmas and attributes, and a list of flags.
+    That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
+    dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
+    in two groups, the bare pragmas first, then those that take an argument.
 11. Definitions that exist under one configuration sit together in one conditional block inside
     their section. The configurations come in one fixed order across the project. Inside a
     routine, a nested helper comes first, after the doc.
 12. A parameter with a default states its type only where the default does not fix it, and a
-    field states its type always.
+    field states its type always. Only a literal fixes it, `default(T)` and `none(T)` among
+    them, so a default from a named constant states its type.
 
 ```nim
 defineOperator(
@@ -525,7 +541,7 @@ defineOperator(
   cayley = CAYLEYS_WEDGE.base,
 )
 
-let (a_flags, b_flags) = (a.basis.toFlags, b.basis.toFlags)
+let (flags_a, flags_b) = (a.basis.toFlags, b.basis.toFlags)
 if product.is_degenerate: continue
 ```
 

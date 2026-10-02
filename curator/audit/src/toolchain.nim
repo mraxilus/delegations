@@ -37,27 +37,19 @@ import ./[dependencies, findings]
 
 
 const
-  NIM* = "nim"
-    ## Requirement name pin carries.
-  EXACT* = "=="
-    ## Operator pin must use; ranges are rejected.
+  NIM* = "nim"  ## Requirement name pin carries.
+  EXACT* = "=="  ## Operator pin must use; ranges are rejected.
   DRIVER_DIRECTORY* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
   WORKFLOW_PATH* = ".github/workflows/check.yml"
     ## Driver's own workflow, which must name driver version; others must agree where they do.
-  VERSION_KEY* = "NIM_VERSION:"
-    ## Key workflow states driver version under.
-  HASH_KEY = "git hash:"
-    ## Line `nim --version` reports its commit under.
-  VERSION_CHARS = Digits + {'.'}
-    ## Characters version string is built from.
-  COMMIT_CHARS = {'0'..'9', 'a'..'f'}
-    ## Characters commit pin is built from; lowercase hex only.
-  COMMIT_LEN* = 40
-    ## Length of full git commit, which is what pin carries.
+  VERSION_KEY* = "NIM_VERSION:"  ## Key workflow states driver version under.
+  HASH_KEY = "git hash:"  ## Line `nim --version` reports its commit under.
+  VERSION_CHARS = Digits + {'.'}  ## Characters version string is built from.
+  COMMIT_CHARS = {'0'..'9', 'a'..'f'}  ## Characters commit pin is built from; lowercase hex only.
+  COMMIT_LEN* = 40  ## Length of full git commit, which is what pin carries.
 
-type Compiler* = object
-  ## Define what `nim --version` says about compiler on PATH.
+type Compiler* = object  ## Define what `nim --version` says about compiler on PATH.
   version*: string  ## Dotted release version it names.
   commit*: string  ## Git hash it reports; empty when it reports none.
 
@@ -96,7 +88,8 @@ func checkPin*(path, nimble: string): seq[Finding] =
   ## Report nimble file carrying no exact Nim pin.
   if nimble.nimPin.isNone:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Nimble file must pin compiler exactly as `requires \"" & NIM & " " & EXACT &
         " <version>\"`, or by full commit where project follows compiler onto devel; " &
         "ranges cannot record what was verified; got `" &
@@ -131,12 +124,14 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
   if stated.isNone:
     if path != WORKFLOW_PATH: return
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Workflow must state driver version as `" & VERSION_KEY & " '<version>'`; got nothing.",
     )
   elif stated.get != pin:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Driver version must equal `" & DRIVER_DIRECTORY & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
     )

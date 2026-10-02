@@ -49,8 +49,7 @@ import ./[compilers, findings]
 
 
 const
-  ASSETS_KEY* = "KOCH_ASSETS_DIR"
-    ## Environment name overriding where assets are stored.
+  ASSETS_KEY* = "KOCH_ASSETS_DIR"  ## Environment name overriding where assets are stored.
   ASSETS_DIRECTORY* = ".cache/koch/assets"
     ## Default store, under home and beside `~/.cache/koch/nim`.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"

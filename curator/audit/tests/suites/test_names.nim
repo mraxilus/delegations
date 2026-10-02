@@ -206,6 +206,7 @@ suite "Names":
     check "comment" notin code and "quote" notin code and "block" notin code
     check "let a =" in code and "let b =" in code and code.splitLines[2].strip == "c"
 
+
   test "code-and-comments view blanks strings alone, keeping every length":
     let
       source = "let a = \"# not comment\" # comment\nlet b = '#' #[ block\n]# c"
@@ -214,6 +215,7 @@ suite "Names":
     check "not" notin kept and "'#'" notin kept  # string and char blanked
     check "# comment" in kept and "#[ block" in kept and kept.splitLines[2] == "]# c"
     check kept.find('#') == source.find("# comment")  # first `#` left opens comment
+
 
   test "declarations of every kind are read":
     let found = SOURCE.names
@@ -231,6 +233,7 @@ suite "Names":
     check kinds.filterIt(it.name == "Anti")[0].kind == NameKind.Member  # V.11
     check kinds.filterIt(it.name == "T")[0].kind == NameKind.Placeholder  # V.12
 
+
   test "words split at underscore and case change":
     check "lut_grade_by_basis".words == @["lut", "grade", "by", "basis"]
     check "wedgeAnti".words == @["wedge", "Anti"]
@@ -239,12 +242,14 @@ suite "Names":
     check "rga4d".words == @["rga4d"]
     check "DIRECTORY_SDL3".words == @["DIRECTORY", "SDL3"]
 
+
   test "acronyms are capital runs inside camel or Pascal names":
     check "toJSON".acronyms == @["JSON"]
     check "SDL3Window".acronyms == @["SDL3"]
     check "Chiral".acronyms.len == 0 and "isMixed".acronyms.len == 0
     check "DIRECTORY_SDL3".acronyms.len == 0  # screaming holds by reading
     check "rga_visualiser".acronyms.len == 0
+
 
   test "glossary gives exemptions from standards spans and terms":
     const glossary = "# d\n\n## Standards\n\n- **SI**, BIPM, 9th: `s` and `m` (Table 2), so " &
@@ -253,6 +258,7 @@ suite "Names":
     let exempt = glossary.glossaryExemptions
     for w in ["s", "m", "ms", "3D", "JSON", "fps", "Measurand"]: check w in exempt
     check "BIPM" notin exempt  # owner, not symbol
+
 
   test "abbreviation, acronym, verb, lookup and global findings":
     let found = checkNames("x.nim", SOURCE, ["JSON"]).messages
@@ -270,6 +276,7 @@ suite "Names":
       "Lookup table reads `lut_<value>_by_<key>` (V.5); got `LUT_GRADE`."]
     check "const LUT_GRADE_BY_BASIS = 1\n".breaches.len == 0
     check "proc get*(x: int) = x\n".breaches.len == 0  # one word is noun
+
 
   test "foreign binding keeps library's name, and its parameters are read":
     const foreign = "proc getError*(): cstring {.importc: \"SDL_GetError\".}\n" &

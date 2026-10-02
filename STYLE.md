@@ -40,7 +40,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     s + m
 
   template scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low
-  template m: untyped = MULTIVECTORS[i]  # Alias, never `let m = MULTIVECTORS[i]` in a hot loop.
+  template m: untyped = MULTIVECTORS[i]  # Alias, never `let m = MULTIVECTORS[i]` in hot loop.
   ```
 
 - Use a named `{.inline.}` func for an ordinary public façade, and not a template.
@@ -73,15 +73,16 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A pragma that the compiler checks is the annotation that VI.7 names, such as
   `{.raises: [].}` for no exceptions.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
-  that is not obvious at the use site (`{.borrow, compileTime, used.}  # Used in cayleys.nim.`).
-  Define a repeated mechanical borrow family once, through a documented template:
+  that is not obvious at the use site
+  (`` {.borrow, compileTime, used.}  # Used in `cayleys.nim`. ``). Define a repeated mechanical
+  borrow family once, through a documented template:
 
   ```nim
-  template borrowGradeOperations(t: typedesc) =
+  template borrowOperationsGrade(t: typedesc) =
     func `+`*(g, h: t): t {.borrow.}
     func `==`*(g, h: t): bool {.borrow.}
-  borrowGradeOperations(Grade)
-  borrowGradeOperations(GradeAnti)
+  borrowOperationsGrade(Grade)
+  borrowOperationsGrade(GradeAnti)
   ```
 
 - `{.pure.}` on a small enum that carries a semantic axis. Always qualify the members
@@ -131,7 +132,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   constant at the return of the boundary proc, and never upstream of it.
 - Use an enum-indexed fixed array for a closed static domain (`array[Basis, float]`), and a
   `range` type for a bounded index. A fixed pool carries its live extent as a field
-  (`bound`), and every walk is `for slot in 0 ..< pool.bound`.
+  (`bound`), and every walk is `for slot in 0..<pool.bound`.
 - Give a distinct type whose domain you walk an `items` iterator over its typedesc, so that
   `for k in Order:` reads as the domain.
 - Define `=~` as `abs(a - b) <= TOLERANCE_ABS * max(1, abs(a), abs(b))`, and derive
@@ -144,10 +145,11 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 ## 5. Signatures, imports, calls
 
 - A doc comment is `##`, so an empty slot is `## TODO: Document.` (VI.1). A doc takes one
-  position for each shape of declaration (VI.9). A type and a field take it after them on the
-  same line. A one-line routine takes it on the next line, indented to the body. A longer
-  routine takes it as the first line of the body. A `type` block takes a group doc on the
-  keyword line.
+  position for each shape of declaration (VI.9). A type, a field, a binding and an enum member
+  take it after them on the same line, where the joined line fits. Otherwise the doc takes the
+  next line, indented one level.
+- A one-line routine takes its doc on the next line, indented to the body. A longer routine
+  takes it as the first line of the body. A `type` block takes a group doc on the keyword line.
 - Group related bindings under one `const`, `let` or `var` section (X.5).
 - Write bracket imports, grouped and consolidated, each group alphabetised:
   `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
@@ -156,13 +158,14 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   way carries `{.used.}`, and a comment that names the sibling:
 
   ```nim
-  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in cayleys.nim.
+  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in `cayleys.nim`.
   ```
 
 - Put commas between parameters while every type appears once (`m: Multivector, b: Basis`).
   Escalate to semicolons between groups only where one group holds several parameters of one
-  type (`a, b: X; c: Y`). The rule holds on one line and across several. A formatter that
-  promotes every comma to a semicolon is wrong here, so configure it or ignore it.
+  type (`a, b: X; c: Y`). The rule holds on one line and across several. A tuple type takes
+  commas between its fields (`tuple[basis: BasisSigned, is_degenerate: bool]`). A formatter
+  that promotes every comma to a semicolon is wrong here, so configure it or ignore it.
 - A signature that does not fit on its line wraps its parameters onto one line of their own.
   Where that line does not fit either, put one parameter, or one group of a shared type, on
   each line, each with a trailing separator. Put the return type and the pragmas on the
@@ -174,10 +177,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ) {.compileTime.} =
 
   func constructProductsTransitional(
-    complement, dual: Cayley1D;
-    wedges: Spatial[Cayley2D];
-    chirality: Chirality;
-    space: Space;
+    complement, dual: Cayley1D; wedges: Spatial[Cayley2D]; chirality: Chirality; space: Space
   ): array[Order, Cayley2D] {.compileTime.} =
   ```
 
@@ -194,27 +194,31 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ```
 
 - A parameter with a default states its type only where the default does not fix it
-  (`as_exclusions = false`, `count: int = SAMPLES`). A field states its type always. An
-  empty-collection default is written one way in a project.
+  (`as_exclusions = false`, `count: int = SAMPLES`). Only a literal fixes it, `default(T)` and
+  `none(T)` among them. A field states its type always. An empty-collection default is
+  written one way in a project.
 - Use the implicit `result` for a structured accumulation. Use a bare final expression for a
   simple computed value. Use an explicit `return` only for an early exit. Never end with
   `return result`.
 - Bind a `case` or `if` expression that produces a value to a `let`, or to a `const` where
   the value is known at compile time.
 - Use UFCS where the first argument is plainly the subject: a query, an accessor, or a
-  `to<Target>` conversion, chained where it reads (`b.toDigits.toFlags`). An `init…` call may
-  take its subject the same way (`b.initElement(1)`). Use a prefix call for `construct…`,
-  `define…` and `emit…`, for a type conversion (`Grade(x)`, never `x.Grade`), and wherever no
-  argument plainly dominates. Use backticks for an operator definition. Use a raw string
-  (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the tokeniser demands one.
+  `to<Target>` conversion, chained where it reads (`b.toDigits.toFlags`). A conversion of a
+  compound argument stays a prefix call (`toMultivector(a + b)`), so that no parentheses hide
+  it. An `init…` call may take its subject the same way (`b.initElement(1)`). Use a prefix
+  call for `construct…`, `define…` and `emit…`, for a type conversion (`Grade(x)`, never
+  `x.Grade`), and wherever no argument plainly dominates. Use backticks for an operator
+  definition. Use a raw string (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the
+  tokeniser demands one.
 - A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
   Each one stands alone on its line, and is never indented.
 - `nim r koch fix` is the formatter. It applies each fix that a check names, and nothing else,
-  so your reading holds every other rule of layout.
+  so your reading holds every other rule of layout. It leaves the lines between `#!fix off`
+  and `#!fix on` as written (X.1). `--dry-run` prints each change, and writes none.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
 - Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write
-  `slot in 0 ..< N`, which allocates on the JS backend (§7).
+  `slot in 0..<N`, which allocates on the JS backend (§7).
 
 ## 6. Test harness
 
@@ -243,7 +247,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   that `lent` iterators serve:
 
   ```nim
-  iterator randomMultivectors(count = SAMPLES):
+  iterator multivectorsRandom(count: int = SAMPLES):
       (lent Multivector, lent Multivector, lent Multivector) = ...
   ```
 
@@ -255,7 +259,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   test "Equation 2.87-89":
     when IS_CONFORMAL: skip()  # TODO: Enable when conformal dot product fixed.
     else:
-      for 𝐦, _, _ in randomMultivectors():
+      for 𝐦, _, _ in multivectorsRandom():
         check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
   ```
 
@@ -284,7 +288,7 @@ the lowered output. A `let` of a scalar is free on both backends. What to look f
 - **JS backend.** Every object and array is a JS object, every copy is deep, and a
   `let x = y` of an object emits `nimCopy`. A by-value parameter copies at the call, and a
   by-value return copies on the way out. `lent` and `var` avoid the copy only where the
-  caller reads the value inline. `slot in a ..< b` builds a slice object, and `seq.add` and
+  caller reads the value inline. `slot in a..<b` builds a slice object, and `seq.add` and
   string concatenation allocate. Check with `grep -c nimCopy` on the emitted file, and read
   one call site of each new binding shape.
 - A boundary (`{.importc.}`, `{.importjs.}`, `{.exportc.}`) is where the rule of each target

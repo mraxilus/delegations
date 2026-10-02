@@ -20,7 +20,8 @@
 ##   | published | record URL and digest of page just published, as                     |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
-##   |           | measurement, evaluation, file and page to library head (`head.nim`)  |
+##   |           | measurement, evaluation, file, page and checkout to pin (`head.nim`) |
+##   | head      | compare pin with library head; finding where library moved since     |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
 ##   |           | machine code, as `show ∧` or `show ⟇ cga5d`                          |
@@ -32,8 +33,8 @@
 ##   Runs from project directory, on compiler nimble file pins, since every path is
 ##     relative and every build compiles library. `drive` compares static counts only, no
 ##     timing, so runner's verdict on measurements is same as local one.
-##   `drive` also reads library head over network, as Architect chose: pin that lags head is
-##     finding on every push until pin follows, so pages always show library as it stands.
+##   `head` alone reads library head over network, so its verdict moves with library and not
+##     with this project; `head.yml` runs it daily, and no merge waits on it (CONTRIBUTOR.md).
 ##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
 ##   Cost: `bench` and `evaluate` measurements name machine they were taken on; committing them
 ##     records that run and nothing more, as `PROVENANCE.md` says of every pair.
@@ -45,7 +46,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
-from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
+from ../src/pga_benchmark/report import IMPLEMENTATIONS, combineRuns
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
@@ -69,6 +70,8 @@ const
     ## Entry reaching every measurand; its cache is what inspect reads.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache, compiled per algebra for its catalogue.
+  ENTRY_FIND = "src/pga_benchmark/pages/find.nim"
+    ## Script of docket's search box, compiled to JavaScript for page.
   FLAGS = "-d:release"
     ## Build flags every measured build carries; documents name them.
   CONFIGS = [("rga4d", 4, false), ("cga5d", 5, true), ("rga3d", 3, false), ("cga4d", 4, true)]
@@ -78,13 +81,16 @@ const
   SYSTEM = [
     ("git", "read library head and trees `drive` holds pin to"),
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
+    ("binutils", "`objdump` disassembles object files `show` reads machine code from"),
     ("coreutils", "`sha256sum` store checks those faces with"),
   ]
-    ## System packages build needs beyond compiler. Compiler is toolchain, pinned in nimble
-    ##   file; library is Atlas checkout, pinned in lock; faces come from repository's store.
+    ## System packages build needs beyond compiler.
+    ##   Compiler is toolchain, pinned in nimble file.
+    ##   Library is Atlas checkout, pinned in lock.
+    ##   Faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
-    " [name|symbol] [url|algebra|--thorough]\n"
+    "<inspect|bench|baseline|guard|evaluate|pages|published|drive|head|gaps|show|sweep|" &
+    "system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"
     ## Flag after `evaluate <name>` that measures untyped algebras too.
@@ -126,7 +132,7 @@ const
 
 #[ Processes ]#
 
-proc run(command: string; arguments: openArray[string]) =
+proc run(command: string, arguments: openArray[string]) =
   ## Run command with arguments from project directory; raise on non-zero exit.
   let
     process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
@@ -203,7 +209,7 @@ proc inspect() =
     run(inspector, [cache, BUILD / "static_" & name & ".json", nim, pga, FLAGS])
 
 
-proc merged(plain, instrumented: JsonNode): JsonNode =
+proc mergeAllocations(plain, instrumented: JsonNode): JsonNode =
   ## Take timings from plain run and allocation counts from instrumented one.
   result = plain
   result["taken"]["is_allocation_measured"] = instrumented{"taken", "is_allocation_measured"}
@@ -218,9 +224,10 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
 
 
 proc bench() =
-  ## Compile bench per algebra, plain for timings and instrumented for allocations; run plain
-  ##   ones in turn, algebra after algebra, `BENCH_RUNS` times, so drift of machine lands on
-  ##   every algebra alike; record combined measurements into `baseline/`.
+  ## Compile bench per algebra, plain for timings and instrumented for allocations.
+  ##   Run plain ones in turn, algebra after algebra, `BENCH_RUNS` times.
+  ##     Machine drift then lands on every algebra alike.
+  ##   Record combined measurements into `baseline/`.
   let
     nim = nimCommit()
     pga = pgaCommit()
@@ -241,7 +248,7 @@ proc bench() =
     let instrumented = BUILD / "bench_alloc_" & name
     run(instrumented, [instrumented & ".json"])
     let
-      measurements = merged(runsCombined(runs[name]), readDocument(instrumented & ".json"))
+      measurements = mergeAllocations(combineRuns(runs[name]), readDocument(instrumented & ".json"))
       recorded = BASELINE / "runtime_" & name & ".json"
     writeFile(recorded, pretty(measurements) & "\n")
     echo "Recorded ", recorded
@@ -327,8 +334,8 @@ proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
 
 
 proc readProposals(findings: var seq[Finding]): seq[Proposal] =
-  ## Read every proposal directory, in number order; malformed ones, numbers taken twice or
-  ##   skipped, and figures naming no file add findings.
+  ## Read every proposal directory, in number order.
+  ##   Malformed ones, numbers taken twice or skipped, and figures naming no file add findings.
   var directories: seq[string]
   for kind, path in walkDir(DIRECTORY_PROPOSALS):
     if kind == pcDir: directories.add path
@@ -361,10 +368,10 @@ proc readProposals(findings: var seq[Finding]): seq[Proposal] =
 proc candidatesOf(
   changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
 ): seq[Candidate] =
-  ## Shape one evaluation candidate per change and per proposed proposal; proposal carries its
-  ##   base chain first, less any base library already implements.
-  ##   Candidate's programs are program texts, so digest moves when program does. Frozen
-  ##   proposal shapes none: library holds or dropped its edits, so they no longer apply.
+  ## Shape one evaluation candidate per change and per proposed proposal.
+  ##   Proposal carries its base chain first, less any base library already implements.
+  ##   Candidate's programs are program texts, so digest moves when program does.
+  ##   Frozen proposal shapes none: library holds or dropped its edits, so they no longer apply.
   for (name, change) in changes:
     result.add Candidate(
       name: name,
@@ -429,11 +436,12 @@ proc git(arguments: openArray[string]): (string, int) =
 
 
 proc headChecked(pin: string): seq[Finding] =
-  ## Hold pin to library head, and checkout to pin: no local edit under library directory.
+  ## Hold pin to library head: library directory's tree at pin equals its tree at head.
 
   proc libraryHead(pin: string): (string, string, string) =
-    ## Read tree of library directory at pin, and head commit of library repository with its
-    ##   tree; empty where git cannot read one. Fetches only when head is not pin.
+    ## Read tree of library directory at pin, and head commit of library repository with tree.
+    ##   Empty where git cannot read one.
+    ##   Fetches only when head is not pin.
     let
       (output_pin, code_pin) = git(["rev-parse", pin & ":" & LIBRARY_DIRECTORY])
       tree_pin = if code_pin == 0: output_pin.strip.splitLines[^1] else: ""
@@ -450,7 +458,11 @@ proc headChecked(pin: string): seq[Finding] =
     (tree_pin, commit_head, if code_head == 0: output_head.strip.splitLines[^1] else: "")
 
   let (tree_pin, commit_head, tree_head) = libraryHead(pin)
-  result.add checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
+  checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
+
+
+proc checkoutChecked(): seq[Finding] =
+  ## Hold checkout to pin: no local edit under library directory.
   let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
   if code != 0 or edited.strip.len > 0:
     result.add Finding(
@@ -488,10 +500,21 @@ proc publications(): JsonNode =
   if fileExists(PATH_PUBLICATIONS): readDocument(PATH_PUBLICATIONS) else: newJObject()
 
 
+proc compileScript(entry: string): string =
+  ## Compile page script from Nim to JavaScript under `FLAGS`, and read it.
+  ##   Script lands inside `<script>`, so text closing that element would break page.
+  let output = BUILD / entry.splitFile.name & ".js"
+  createDir BUILD
+  run("nim", ["js", "--hints:off", FLAGS, "--out:" & output, entry])
+  result = readFile(output)
+  if "</script" in result.toLowerAscii:
+    raise newException(ValueError, "Script closes its element; got `" & output & "`.")
+
+
 proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: docket, marginalia, then one per proposal.
 
-  func linksHtml(names: openArray[string]; published: JsonNode; self: string): string =
+  func linksHtml(names: openArray[string], published: JsonNode, self: string): string =
     ## Link every other published page, in page order, led by separator; empty where none.
     var links: seq[string]
     for name in names:
@@ -542,7 +565,7 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
     overlays.add overlay
   result["docket"] = assemble(text_shell, "PGA Gap Docket",
     docketBody(sheets, readDocument(PATH_DOCKET), overlays, pin,
-      linksHtml(names, published, "docket")), faces)
+      linksHtml(names, published, "docket"), compileScript(ENTRY_FIND)), faces)
   var changes_evaluated: seq[ChangeEvaluated]
   for (name, change) in changes:
     changes_evaluated.add ChangeEvaluated(name: name, change: change,
@@ -589,9 +612,10 @@ proc publishedAt(name, url: string) =
 
 #[ Evaluations ]#
 
-proc evaluate(which: string; is_thorough: bool) =
-  ## Try one change or proposal at pin, every one for `all`, or those `drive` would name for
-  ##   `stale`; write each evaluation document. Typed algebras alone, or all four when thorough.
+proc evaluate(which: string, is_thorough: bool) =
+  ## Try one change or proposal at pin, and write each evaluation document.
+  ##   `all` tries every one, and `stale` tries those `drive` would name.
+  ##   Typed algebras alone, or all four when thorough.
 
   func machine(): string =
     ## Describe machine evaluation ran on, as bench documents do.
@@ -683,10 +707,10 @@ proc pinnedChecked(pin: string): seq[Finding] =
 
 
 proc drive() =
-  ## Inspect, check against baselines, hold committed list and docket to regeneration, and
-  ##   hold pin to library head and every measurement, evaluation, file and page to pin.
+  ## Inspect, check against baselines, and hold committed list and docket to regeneration.
+  ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
   let pin = pgaCommit()
-  var findings = headChecked(pin)
+  var findings = checkoutChecked()
   inspect()
   findings.add guarded()
   let (text, ids) = generated()
@@ -707,21 +731,21 @@ proc sweep() =
     nim = nimCommit()
     pga = pgaCommit()
   createDir BUILD
-  var docs: seq[JsonNode]
+  var documents: seq[JsonNode]
   for dimensions in SWEEP:
     let
       name = "sweep_" & $dimensions & "d"
       binary = BUILD / name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
-    docs.add readDocument(binary & ".json")
+    documents.add readDocument(binary & ".json")
   var header = "measurand".alignLeft(26)
   for dimensions in SWEEP: header.add ($dimensions & "d").align(10)
   echo header
-  for id, _ in docs[0]{"measurands"}.pairs:
+  for id, _ in documents[0]{"measurands"}.pairs:
     var line = id.alignLeft(26)
-    for doc in docs:
-      let measurement = doc{"measurands", id, "library"}
+    for document in documents:
+      let measurement = document{"measurands", id, "library"}
       line.add(
         if measurement.isNil or measurement.kind != JObject: "–".align(10)
         else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10),
@@ -774,7 +798,7 @@ proc disassembled(cache, name: string): seq[string] =
   ## Read machine code of one function from whichever object file in cache holds it.
   for path in walkFiles(cache / "*.o"):
     let (text, code) = execCmdEx("objdump -d --no-show-raw-insn " & quoteShell(path))
-    if code != 0: continue
+    if code != 0: raise newException(OSError, "objdump failed; got exit `" & $code & "`.")
     var is_inside = false
     for line in text.splitLines:
       if line.contains("<" & name & ">:"): is_inside = true
@@ -880,8 +904,8 @@ proc main(): int =
       of "evaluate": 2 .. 3
       of "published": 3 .. 3
       else: 1 .. 1
-  if paramCount() notin arguments or verb == "evaluate" and paramCount() == 3 and
-      paramStr(3) != FLAG_THOROUGH:
+  if paramCount() notin arguments or
+      (verb == "evaluate" and paramCount() == 3 and paramStr(3) != FLAG_THOROUGH):
     stderr.write USAGE
     return 2
   try:
@@ -896,6 +920,7 @@ proc main(): int =
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
+    of "head": report(headChecked(pgaCommit()))
     of "gaps": gaps()
     of "sweep": sweep()
     of "system": system()

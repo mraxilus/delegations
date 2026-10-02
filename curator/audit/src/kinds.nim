@@ -2,28 +2,32 @@
 ##   Kind absent from registry is kind checker does not read; layout check rejects such
 ##   file (Article VI.5), so extending registry is curator work done before new kind lands.
 ##
-##   |---------------|-------------------------------|-------------|-------|------|
-##   | Kind          | Match                         | Syntax      | Prose | Gate |
-##   |---------------|-------------------------------|-------------|-------|------|
-##   | Nim           | .nim                          | Nim         | yes   | no   |
-##   | NimScript     | .nims                         | Nim         | yes   | no   |
-##   | Nimble        | .nimble                       | Nim         | yes   | no   |
-##   | Configuration | .cfg                          | Hash        | yes   | no   |
-##   | Markdown      | .md                           | None        | no    | no   |
-##   | Yaml          | .yml .yaml                    | HashSpaced  | yes   | no   |
-##   | GitIgnore     | .gitignore                    | HashLeading | yes   | no   |
-##   | GitAttributes | .gitattributes                | HashLeading | yes   | no   |
-##   | TypeScript    | .ts                           | Slash       | yes   | yes  |
-##   | Cpp           | .cpp .hpp                     | Slash       | yes   | yes  |
-##   | C             | .c .h                         | Slash       | yes   | yes  |
-##   | Html          | .html                         | Xml         | yes   | no   |
-##   | Svg           | .svg                          | Xml         | yes   | no   |
-##   | Json          | .json atlas.config atlas.lock | None        | no    | no   |
-##   | Shell         | .sh pre-push commit-msg       | Hash        | yes   | yes  |
-##   |---------------|-------------------------------|-------------|-------|------|
+##   |---------------|-------------------------------|-------------|-------|------|-------|
+##   | Kind          | Match                         | Syntax      | Prose | Gate | Guide |
+##   |---------------|-------------------------------|-------------|-------|------|-------|
+##   | Nim           | .nim                          | Nim         | yes   | no   | yes   |
+##   | NimScript     | .nims                         | Nim         | yes   | no   | yes   |
+##   | Nimble        | .nimble                       | Nim         | yes   | no   | yes   |
+##   | Configuration | .cfg                          | Hash        | yes   | no   | no    |
+##   | Markdown      | .md                           | None        | no    | no   | no    |
+##   | Yaml          | .yml .yaml                    | HashSpaced  | yes   | no   | no    |
+##   | GitIgnore     | .gitignore                    | HashLeading | yes   | no   | no    |
+##   | GitAttributes | .gitattributes                | HashLeading | yes   | no   | no    |
+##   | TypeScript    | .ts                           | Slash       | yes   | yes  | no    |
+##   | Cpp           | .cpp .hpp                     | Slash       | yes   | yes  | no    |
+##   | C             | .c .h                         | Slash       | yes   | yes  | no    |
+##   | Html          | .html                         | Xml         | yes   | no   | no    |
+##   | Svg           | .svg                          | Xml         | yes   | no   | no    |
+##   | Json          | .json atlas.config atlas.lock | None        | no    | no   | no    |
+##   | Shell         | .sh pre-push commit-msg       | Hash        | yes   | yes  | no    |
+##   |---------------|-------------------------------|-------------|-------|------|-------|
 ##
 ##   Gated kind is one owner admits only where Nim cannot serve; `justification.nim` demands
 ##     each such file argue for itself in its header, so gate is checked rather than trusted.
+##   Guide marks kind whose language has style guide; `koch fix` writes that kind alone, since
+##     fixer applies guide. STYLE.md is guide of Nim, and Nim, NimScript and nimble are Nim
+##     source, registered with Nim syntax; no other language has guide yet. Checks read every
+##     kind still, so finding in other kind stays for hand.
 ##
 ##   Markdown is prose document, not comment: telegraphic rule (VI.5) covers comments only,
 ##     and CONSTITUTION.md itself uses articles. Form rules still apply to it.
@@ -47,8 +51,7 @@ import std/[options, os]
 
 
 type
-  Syntax* {.pure.} = enum
-    ## Define how comments are found in file kind.
+  Syntax* {.pure.} = enum  ## Define how comments are found in file kind.
     None  ## No comments (JSON), or prose document (Markdown).
     Nim  ## `#` line, `#[ ]#` nesting block, outside string and char literals.
     Hash  ## `#` anywhere unless escaped as `\#` (cfg).
@@ -57,22 +60,21 @@ type
     Slash  ## `//` line and `/* */` block, outside string and template literals.
     Xml  ## `<!-- -->` block, spanning lines (HTML, SVG).
 
-  Kind* {.pure.} = enum
-    ## Define file kinds checker reads.
+  Kind* {.pure.} = enum  ## Define file kinds checker reads.
     Nim, NimScript, Nimble, Configuration, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript,
     Cpp, C, Html, Svg, Json, Shell
 
-  KindRule* = object
-    ## Define how one kind is read.
+  KindRule* = object  ## Define how one kind is read.
     syntax*: Syntax  ## Comment syntax scanner applies.
     is_prose*: bool  ## Telegraphic check applies to comments.
     is_gated*: bool  ## Language admitted only where Nim cannot serve, so header must argue.
+    has_guide*: bool  ## Language has style guide, so `koch fix` writes kind.
 
 
 const LUT_RULE_BY_KIND*: array[Kind, KindRule] = [
-  Kind.Nim: KindRule(syntax: Syntax.Nim, is_prose: true),
-  Kind.NimScript: KindRule(syntax: Syntax.Nim, is_prose: true),
-  Kind.Nimble: KindRule(syntax: Syntax.Nim, is_prose: true),
+  Kind.Nim: KindRule(syntax: Syntax.Nim, is_prose: true, has_guide: true),
+  Kind.NimScript: KindRule(syntax: Syntax.Nim, is_prose: true, has_guide: true),
+  Kind.Nimble: KindRule(syntax: Syntax.Nim, is_prose: true, has_guide: true),
   Kind.Configuration: KindRule(syntax: Syntax.Hash, is_prose: true),
   Kind.Markdown: KindRule(syntax: Syntax.None),
   Kind.Yaml: KindRule(syntax: Syntax.HashSpaced, is_prose: true),

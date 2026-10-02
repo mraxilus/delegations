@@ -19,7 +19,7 @@
 ## Lives above `picking` because folding selection needs `Selection`, and `picking` cannot
 ## import it: `selection` imports `marker`, which imports `picking`.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 ##   Rule was once written out in each, duplication that drifted.
 
 {.experimental: "strictFuncs".}
@@ -401,7 +401,7 @@ func holdFilled*(
 ) =
   ## Carry eye back out until point picked alone fills frame, and no further in.
   ##   Nearer shows nothing more of it: its sphere already reaches every corner, as
-  ##   `picking.coversView` reads, and eye would go on into it.
+  ##   `picking.isCoveringView` reads, and eye would go on into it.
   ##   Floor, as frame rule is, so it holds whatever moved camera: drag, keys, wheel and
   ##   pinch alike. Eye goes back along its own sight, so nothing turns.
   ##   There point is backdrop, so every press on it moves view.

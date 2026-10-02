@@ -3,8 +3,11 @@
 //   Host is stood in for: script put in before page's own records every save it is handed
 //   and answers as it is told. Real host asks reader to confirm; that prompt is host's and
 //   out of reach here, so check holds page to contract of `claude.use("downloads")` alone.
+//   Page of its own runs on simulated clock, as every correctness check does: its waits are
+//   frames, so loaded machine takes longer to reach same verdict and never reaches another.
 
 import type { Browser } from '@playwright/test';
+import { simulateClock, waitUntil } from './clock';
 import { report } from './report';
 
 /** One save host was handed: name page asked for, and bytes. */
@@ -55,6 +58,7 @@ export async function driveHostSave(
   const page = await browser.newPage({ viewport: size });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  await simulateClock(page);
   await page.addInitScript(() => {
     const host: HostStandIn = { answer: 'saved', saves: [] };
     const save = async (request: { filename: string; data: Blob }): Promise<{ status: string }> => {
@@ -73,10 +77,7 @@ export async function driveHostSave(
     };
   });
   await page.goto(url);
-  await page.waitForFunction(
-    () => typeof nimSceneCount === 'function' && nimSceneCount() > 0,
-    null, { timeout: 60000, polling: 'raf' },
-  );
+  await waitUntil(page, () => typeof nimSceneCount === 'function' && nimSceneCount() > 0, null);
   const saves = () => page.evaluate(
     () => (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.saves);
   const labels = () => page.evaluate(
@@ -89,9 +90,10 @@ export async function driveHostSave(
   // Scene: extension host refuses, so page hands it zip holding scene file unchanged.
   const labels_saved = await labels();
   await page.evaluate(() => document.getElementById('button-save-scene')?.click());
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     () => (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.saves.length > 0,
-    null, { timeout: 10000 },
+    null,
   ).catch(() => undefined);
   const scene = (await saves())[0];
   const entry = scene === undefined ? 'nothing handed' : entryOnly(new Uint8Array(scene.bytes));
@@ -111,9 +113,8 @@ export async function driveHostSave(
     name: scene?.filename ?? 'scene.zip', mimeType: 'application/zip',
     buffer: Buffer.from(scene?.bytes ?? []),
   });
-  await page.waitForFunction(
-    (count) => nimSceneCount() === count, labels_saved.length, { timeout: 10000 },
-  ).catch(() => undefined);
+  await waitUntil(page, (count) => nimSceneCount() === count, labels_saved.length)
+    .catch(() => undefined);
   const labels_loaded = await labels();
   report(
     'and the zip the host saved loads back as the scene it holds',
@@ -124,9 +125,10 @@ export async function driveHostSave(
 
   // Image: extension host takes, so PNG goes as itself.
   await page.evaluate(() => document.getElementById('button-export-png')?.click());
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     () => (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.saves.length > 1,
-    null, { timeout: 10000 },
+    null,
   ).catch(() => undefined);
   const image = (await saves())[1];
   const signature = (image?.bytes ?? []).slice(1, 4).map((byte) => String.fromCharCode(byte));
@@ -142,15 +144,14 @@ export async function driveHostSave(
     (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.answer = 'declined';
     document.getElementById('button-save-scene')?.click();
   });
-  await page.waitForFunction(
+  await waitUntil(
+    page,
     () => (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.saves.length > 2,
-    null, { timeout: 10000 },
+    null,
   ).catch(() => undefined);
   // Wait on what decline says, not for fixed span: toast is written once host's answer lands.
-  await page.waitForFunction(
-    () => document.getElementById('toast')?.textContent === 'Not saved.', null,
-    { timeout: 10000 },
-  ).catch(() => undefined);
+  await waitUntil(page, () => document.getElementById('toast')?.textContent === 'Not saved.', null)
+    .catch(() => undefined);
   const said = await toastSays();
   report(
     'a save the reader declines on the host is not offered again by another route',

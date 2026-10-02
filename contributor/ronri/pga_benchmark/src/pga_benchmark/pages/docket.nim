@@ -12,7 +12,8 @@
 ##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key.
 ##     Dropdowns name them, and `:has()` rules body generates read chosen option, so one list
 ##     here spells option and rule alike. Search box is only script: row hides while its words
-##     lack any word typed, as Architect chose at cost of script.
+##     lack any word typed, as Architect chose at cost of script. Script is Nim, `find.nim`,
+##     which driver compiles to JavaScript and passes in; rule it applies is `search.isFound`.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
@@ -50,8 +51,8 @@ type
     library, reference, dense: Option[Figures]
     bound: Option[BoundFigures]
     ns_library, ns_against, share_nan: float
-      ## Library time, and time of what row is timed against: reference on typed row, dense
-      ##   form on general row.
+      ## Library time, and time of what row is timed against.
+      ##   Typed row is timed against reference, and general row against dense form.
     ns_runs_library, ns_runs_against: seq[float]
       ## Median of each run, in run order, paired by index.
   Axis = object
@@ -168,9 +169,9 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     ## Read median of each run in run order; empty where runs are not recorded.
     timing{"ns_runs"}.getElems.mapIt(it.getFloat)
 
-  func split(id: string; count_operands: int): (string, seq[string]) =
-    ## Split typed measurand's id into operation and operand kinds, as catalogue joins them:
-    ##   one kind per operand, last first, longest kind where two end id alike.
+  func split(id: string, count_operands: int): (string, seq[string]) =
+    ## Split typed measurand's id into operation and operand kinds, as catalogue joins them.
+    ##   One kind per operand, last first, longest kind where two end id alike.
     result[0] = id
     for _ in 1 .. count_operands:
       var kind = ""
@@ -226,32 +227,33 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
 
 #[ Ratios ]#
 
-func metricOf(figures: Option[Figures]; is_bytes: bool): Option[int] =
+func metricOf(figures: Option[Figures], is_bytes: bool): Option[int] =
   ## Read bytes or multiplies of figures; none where figures are absent.
   if figures.isNone: none(int)
   elif is_bytes: some(figures.get.bytes)
   else: some(figures.get.multiplies)
 
 
-func metricOf(bound: Option[BoundFigures]; is_bytes: bool): Option[int] =
+func metricOf(bound: Option[BoundFigures], is_bytes: bool): Option[int] =
   ## Read bytes or multiplies of bound; none where no rule derived.
   if bound.isNone: none(int)
   elif is_bytes: some(bound.get.bytes)
   else: some(bound.get.multiplies)
 
 
-func targetOf(row: Row; is_bytes: bool): (Option[int], string) =
-  ## Read what row's count is measured against, with its name: reference on typed row that
-  ##   carries one, multivector lower bound else.
+func targetOf(row: Row, is_bytes: bool): (Option[int], string) =
+  ## Read what row's count is measured against, with its name.
+  ##   Reference on typed row that carries one, multivector lower bound else.
   if not row.is_general and row.reference.isSome:
     (metricOf(row.reference, is_bytes), "reference")
   else:
     (metricOf(row.bound, is_bytes), "multivector lower bound")
 
 
-func ratioCount(row: Row; is_bytes: bool): float =
-  ## Read library over what row's count is measured against; one where both are zero, zero
-  ##   where either is absent or only lower bound is zero, so no ratio reads.
+func ratioCount(row: Row, is_bytes: bool): float =
+  ## Read library over what row's count is measured against.
+  ##   One where both are zero.
+  ##   Zero where either is absent or only lower bound is zero, so no ratio reads.
   let
     library = metricOf(row.library, is_bytes)
     target = targetOf(row, is_bytes)[0]
@@ -262,22 +264,24 @@ func ratioCount(row: Row; is_bytes: bool): float =
 
 
 func ratiosRuns(row: Row): seq[float] =
-  ## Read library time over what row is timed against, run by run, paired by index since one
-  ##   run times both; empty where runs are not recorded on both.
+  ## Read library time over what row is timed against, run by run.
+  ##   Runs pair by index, since one run times both.
+  ##   Empty where runs are not recorded on both.
   if row.ns_runs_library.len != row.ns_runs_against.len: return
   for index, ns in row.ns_runs_library:
     if ns > 0 and row.ns_runs_against[index] > 0: result.add ns / row.ns_runs_against[index]
 
 
 func ratioTime(row: Row): float =
-  ## Read library time over what row is timed against: median of run ratios, or ratio of
-  ##   medians where runs are not recorded; zero where either is untimed.
+  ## Read library time over what row is timed against.
+  ##   Median of run ratios, or ratio of medians where runs are not recorded.
+  ##   Zero where either is untimed.
   if row.ns_library <= 0 or row.ns_against <= 0: return 0.0
   let ratios = row.ratiosRuns
   if ratios.len > 0: median(ratios) else: row.ns_library / row.ns_against
 
 
-func positionOf(axis: Axis; ratio: float): float =
+func positionOf(axis: Axis, ratio: float): float =
   ## Read where ratio sits on axis, in percent of its width, clamped to axis.
   let span = float(axis.exponent_high - axis.exponent_low)
   clamp(100.0 * (log2(ratio) - axis.exponent_low.float) / span, 0.0, 100.0)
@@ -368,13 +372,13 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
 
 #[ Rows ]#
 
-func rowHtml(row: Row; axis: Axis; order: array[SORTS.len, int]): string =
-  ## Render one row as details: one deviation bar per measure, then breakdown; classes name
-  ##   every filter row passes, and custom properties its rank under every sort.
+func rowHtml(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
+  ## Render one row as details: one deviation bar per measure, then breakdown.
+  ##   Classes name every filter row passes, and custom properties its rank under every sort.
 
-  func countDeviation(row: Row; is_bytes: bool): Deviation =
-    ## Read deviation of one count: ratio, or excess where lower bound is zero; tick at
-    ##   multivector lower bound where typed row is measured against reference.
+  func countDeviation(row: Row, is_bytes: bool): Deviation =
+    ## Read deviation of one count: ratio, or excess where lower bound is zero.
+    ##   Tick sits at multivector lower bound where typed row is measured against reference.
     let
       unit = if is_bytes: " bytes" else: " multiplies"
       library = metricOf(row.library, is_bytes)
@@ -402,8 +406,9 @@ func rowHtml(row: Row; axis: Axis; order: array[SORTS.len, int]): string =
       result.label = ratioText(result.ratio)
 
   func timeDeviation(row: Row): Deviation =
-    ## Read deviation of time: median run ratio over reference on typed row and over dense
-    ##   form on general row, with each run's ratio; nanoseconds alone where nothing else is timed.
+    ## Read deviation of time, with each run's ratio.
+    ##   Ratio is median run ratio over reference on typed row, and over dense form on general.
+    ##   Nanoseconds alone where nothing else is timed.
     result.name_measure = "time"
     if row.ns_library <= 0:
       result.label = "untimed"
@@ -423,9 +428,10 @@ func rowHtml(row: Row; axis: Axis; order: array[SORTS.len, int]): string =
       result.runs = ratios
       result.tip.add ", runs " & ratios.mapIt(ratioText(it)).join(" ")
 
-  func deviationHtml(deviation: Deviation; axis: Axis): string =
-    ## Render one deviation bar on shared axis: bar from ×1, tick at multivector lower bound,
-    ##   one tick for each run; bare label where no ratio reads.
+  func deviationHtml(deviation: Deviation, axis: Axis): string =
+    ## Render one deviation bar on shared axis.
+    ##   Bar runs from ×1, tick sits at multivector lower bound, and one tick marks each run.
+    ##   Bare label where no ratio reads.
     let origin = axis.positionOf(1.0)
     var marks: string
     if deviation.is_over_zero:
@@ -530,7 +536,7 @@ func rowHtml(row: Row; axis: Axis; order: array[SORTS.len, int]): string =
 func proposalsHtml(sheets: openArray[Sheet], overlays: openArray[Overlay]): string =
   ## Render how far each proposal moves parity with multivector bound.
 
-  func parity(sheet: Sheet; overlay: JsonNode; is_typed: bool): (int, int, int) =
+  func parity(sheet: Sheet, overlay: JsonNode, is_typed: bool): (int, int, int) =
     ## Count rows at bound on multiplies and on bytes, with overlay's functions in place.
     var bounded, at_multiplies, at_bytes: int
     let functions = sheet.measurements_static{"functions"}
@@ -578,18 +584,6 @@ counts, dense form for time</span><span class="mark-origin typed-only">×1: refe
 rows; multivector lower bound and dense form on general ones</span><span class="mark-tick
 typed-only">multivector lower bound</span><span class="mark-runs">each run</span></div>"""
     ## Legend of deviation bars, same for every algebra.
-  FIND = """<script>
-const find = document.getElementById("find");
-const filter = () => {
-  const words = find.value.toLowerCase().split(/\s+/).filter(Boolean);
-  for (const row of document.querySelectorAll("details.row"))
-    row.classList.toggle("unfound", !words.every((word) => row.dataset.find.includes(word)));
-};
-find.addEventListener("input", filter);
-filter();
-</script>"""
-    ## Script of search box, page's only one: row shows while its words hold every word typed.
-    ##   Runs once at load too, since browser may restore typed text.
   METHOD = """<section class="block"><details><summary>How each figure is computed</summary>
 <pre class="formula">W = sizeof(Multivector) = 2^D × 8 bytes
 
@@ -625,17 +619,18 @@ func docketBody*(
   sheets: openArray[Sheet];
   ids: JsonNode;
   overlays: openArray[Overlay];
-  pin, links: string;
+  pin, links, script: string;
 ): string =
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
+  ##   `script` is search box's JavaScript, compiled from `find.nim`; empty leaves page without.
 
   func keysOf(row: Row): array[SORTS.len, float] =
-    ## Read row's key under every sort, in order of `SORTS`; below zero where row has none, so
-    ##   such row sorts last.
+    ## Read row's key under every sort, in order of `SORTS`.
+    ##   Below zero where row has none, so such row sorts last.
 
     func above(value, base: Option[int]): float =
-      ## Read how far value stands above base, as ratio of both plus one; below zero where
-      ##   either is absent.
+      ## Read how far value stands above base, as ratio of both plus one.
+      ##   Below zero where either is absent.
       if value.isNone or base.isNone: -1.0 else: (value.get + 1).float / (base.get + 1).float
 
     let runs = row.ratiosRuns
@@ -666,10 +661,11 @@ func docketBody*(
           high = max(high, log2(ratio))
     Axis(exponent_low: clamp(floor(low).int, -3, -1), exponent_high: clamp(ceil(high).int, 1, 10))
 
-  func controlsOf(sheets: openArray[Sheet]; every: openArray[seq[Row]]): (string, string) =
-    ## Render legend and four dropdowns, with `:has()` rules that read them: sort, show,
-    ##   operation and operand. Option of last two carries class of each algebra it matches, so
-    ##   rule hides it on others; operation no general row applies shows beside typed ones alone.
+  func controlsOf(sheets: openArray[Sheet], every: openArray[seq[Row]]): (string, string) =
+    ## Render legend and four dropdowns, with `:has()` rules that read them.
+    ##   Dropdowns are sort, show, operation and operand.
+    ##   Option of last two carries class of each algebra it matches, so rule hides it on others.
+    ##   Operation no general row applies shows beside typed ones alone.
     ##   Operand filter holds only while typed measurands show, since its dropdown hides else.
 
     func option(value, label: string; classes: seq[string]; is_selected = false): string =
@@ -732,9 +728,9 @@ func docketBody*(
   func headHtml(axis: Axis): string =
     ## Render column heads: each measure named over labels of shared axis at powers of two.
 
-    func scale(axis: Axis; name_class: string): string =
-      ## Render labels of axis, every octave or every other where octaves are many; label off
-      ##   every fourth octave is minor, which narrow screen hides.
+    func scale(axis: Axis, name_class: string): string =
+      ## Render labels of axis, every octave or every other where octaves are many.
+      ##   Label off every fourth octave is minor, which narrow screen hides.
       let step = if axis.exponent_high - axis.exponent_low > 6: 2 else: 1
       result = "<span class=\"scale" & name_class & "\">"
       for exponent in axis.exponent_low .. axis.exponent_high:
@@ -794,4 +790,5 @@ func docketBody*(
       for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
       result.add rowHtml(row, axis, ranks_row)
     result.add "</div></section>"
-  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>" & FIND
+  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"
+  if script.len > 0: result.add "<script>" & script & "</script>"

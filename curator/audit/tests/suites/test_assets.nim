@@ -7,6 +7,7 @@ import ../../src/assets
 from ../../src/compilers import CACHE_DIRECTORY
 
 
+
 suite "Assets":
   test "store lies outside repository, and override wins":
     check storeRoot("/tmp/assets") == "/tmp/assets"
@@ -14,6 +15,7 @@ suite "Assets":
     # Audit reads untracked files, so store inside checkout would be audited.
     check not storeRoot("").startsWith(".")
     check ASSETS_DIRECTORY.parentDir == CACHE_DIRECTORY.parentDir  # beside `~/.cache/koch/nim`
+
 
   test "asset is stored under its digest, never under its name":
     # Two projects asking for one face share one entry by construction, and moved pin is
@@ -24,6 +26,7 @@ suite "Assets":
     check face notin pathOf("/s", face)  # name is nowhere in path
     check pathOf("/s", "not-a-face.woff2").len == 0  # undeclared face has no path
 
+
   test "address carries version, so bytes and version move together or neither":
     const face = "noto-serif-latin-600-normal.woff2"
     let address = face.addressOf
@@ -32,6 +35,7 @@ suite "Assets":
     check "@fontsource/noto-serif@" in address  # package and its version, in address
     check addressOf("not-a-face.woff2").len == 0
 
+
   test "TrueType comes from Noto's own repository, since fontsource ships none":
     # Atlas reads TrueType and `@fontsource` packages `woff2` alone, so desktop faces have
     #   their own upstream; store holds both rather than one project holding each.
@@ -39,6 +43,7 @@ suite "Assets":
     check "notofonts" in "NotoSansMath-Regular.ttf".addressOf
     check "commit-mono" in "CommitMonoV142-400Regular.otf".addressOf  # its author's own
     check "fontsource" in "noto-sans-latin-400-normal.woff2".addressOf
+
 
   test "every row is one file, one address and one digest of sixty-four hex digits":
     var files: seq[string]
@@ -49,7 +54,8 @@ suite "Assets":
       check prefix.startsWith("https://")
       check prefix.endsWith("/")  # prefix is directory; file is appended to it
       check digest.len == 64
-      for c in digest: check c in {'0' .. '9', 'a' .. 'f'}
+      for c in digest: check c in {'0'..'9', 'a'..'f'}
+
 
   test "store holds what both projects pinned, including all four they shared":
     # Rows are union of two tables that agreed. These four are what both tables held, byte
@@ -63,11 +69,13 @@ suite "Assets":
     check "noto-serif-latin-400-italic.woff2".declaredDigest.len == 64  # dance_ontology alone
     check "noto-sans-math-math-400-normal.woff2".declaredDigest.len == 64  # rga_visualiser alone
 
+
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
     check found[0].message.endsWith("got `fraunces-latin-400-normal.woff2`.")
     check "assets.nim" in found[0].path  # names table to add row to
+
 
   test "declaration publishes every row, so no consumer parses this source":
     # Project holding law that its faces are declared reads these rows, never `assets.nim`
@@ -84,6 +92,7 @@ suite "Assets":
     check declaration().endsWith("\n")
     # Proven by asking for one that is there: consumer checks membership without parsing.
     check "noto-serif-latin-600-normal.woff2 " in declaration()
+
 
   test "no declared row can be read as a path, which both project builds rely on":
     # Verb prints paths when files are named and rows when none are. Both contributor

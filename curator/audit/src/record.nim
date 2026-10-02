@@ -45,14 +45,13 @@ const
     ## Plurals whose number in prose is count that goes stale (provenance guide).
   OPEN_QUESTIONS* = "## Open questions"
     ## Heading of section that must come last; matched without case.
-  PRUNED* = "Pruned"
-    ## Optional header row naming commit before last prune, 7 to 40 hex digits.
+  PRUNED* = "Pruned"  ## Optional header row naming commit before last prune, 7 to 40 hex digits.
 
 
 func isDated*(s: string): bool =
   ## Decide whether `s` holds `YYYY-MM-DD` anywhere, digits bounded by non-digits.
-  for i in 0 .. s.len - 10:
-    if s[i ..< i + 10].isIsoDate and (i == 0 or s[i - 1] notin Digits) and
+  for i in 0..s.len - 10:
+    if s[i..<i + 10].isIsoDate and (i == 0 or s[i - 1] notin Digits) and
         (i + 10 == s.len or s[i + 10] notin Digits):
       return true
   false
@@ -80,7 +79,8 @@ func checkHeadings(path, source: string): seq[Finding] =
       let text = line.headingText
       if line.isDated:
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Section is headed by date; record describes what is and log holds when " &
             "(provenance guide); got `" & line & "`.",
         )
@@ -95,7 +95,8 @@ func checkHeadings(path, source: string): seq[Finding] =
       if s.len > 0 and not s.startsWith("|"):
         let mark = if lines[i + 1].strip[0] == '=': "# " else: "## "
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Heading is underlined, which no reader here sees; write `" & mark & s & "`.",
         )
   if open_at > 0 and open_at != last_at:
@@ -111,7 +112,8 @@ func checkLength(path, source: string): seq[Finding] =
   let count = source.count('\n') + (if source.len > 0 and source[^1] != '\n': 1 else: 0)
   if count > RECORD_LINES:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Record over " & $RECORD_LINES & " lines; prune to log and set `" & PRUNED &
         "` row (provenance guide); got " & $count & ".",
     )
@@ -131,7 +133,8 @@ func checkSections*(path, source: string): seq[Finding] =
       count = stop - start - 1
     if count > SECTION_LINES:
       result.add finding(
-        path, start + 1,
+        path,
+        start + 1,
         "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
           "guide); got " & $count & ".",
       )
@@ -139,7 +142,7 @@ func checkSections*(path, source: string): seq[Finding] =
 
 func isCommitId*(s: string): bool =
   ## Decide whether `s` is 7 to 40 lowercase hex digits, as git abbreviates commits.
-  s.len in 7 .. 40 and s.allCharsInSet({'0' .. '9', 'a' .. 'f'})
+  s.len in 7..40 and s.allCharsInSet({'0'..'9', 'a'..'f'})
 
 
 func prunedOf*(source: string): string =
@@ -153,7 +156,8 @@ func checkPrunedRow(path, source: string): seq[Finding] =
   let value = source.prunedOf
   if value.len > 0 and not value.isCommitId:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "`" & PRUNED & "` must name commit as 7 to 40 hex digits; got `" & value & "`.",
     )
 
@@ -169,11 +173,12 @@ func checkCounts*(path, source: string): seq[Finding] =
       if c == '`': is_span = not is_span
       elif not is_span: prose.add c
     let words = prose.splitWhitespace
-    for k in 0 ..< words.len - 1:
+    for k in 0..<words.len - 1:
       let next = words[k + 1].strip(chars = {',', '.', ';', ':', ')'})
       if words[k].allCharsInSet({'0'..'9'}) and next in COUNTED:
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Count is never number in prose; name command that counts (provenance guide); got `" &
             words[k] & " " & next & "`.",
         )

@@ -22,8 +22,8 @@
 ##   takes and whether one is due are rules about gesture.
 ##   Both drive object's marker drawn part-built, which is what makes wait bearable.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
-## paths; see `visualiser.nim`'s "Render Paths" table.
+## Shared between desktop (`main.nim`) and browser (`bridge.nim`) render paths;
+## see PROVENANCE.md's "Render paths".
 
 {.experimental: "strictFuncs".}
 
@@ -235,7 +235,7 @@ type
       ## finite plane whose disc fills view; see `picking.isBackdropUnder`.
     count_hover_rivals*: int ## How many objects of hovered object's rank were in reach.
       ## `picking.PickReport.count_rivals`; one where hover is unambiguous, zero where
-      ## nothing is hovered. Touch reads it through `canConstructByTouch`.
+      ## nothing is hovered. Touch reads it through `isConstructibleByTouch`.
       ## Whole sky, which every ray meets, so true wherever nothing else is under cursor
       ## and sky is in scene.
       ## Recorded at `updateHover`, where scene is in hand, so `beginDrag` and `endDrag`
@@ -449,7 +449,7 @@ func armingOf*(button: PointerButton): Option[MenuArming] =
   of PointerButton.Middle: none(MenuArming)
 
 
-func revealsMenuOn*(button: PointerButton): bool =
+func isMenuRevealedOn*(button: PointerButton): bool =
   ## Say whether click of this button brings up selection menu on what it picked.
   ##   Left selects and nothing more.
   ##     Doing both left reader who only wanted to pick dismissing menu they never asked
@@ -459,7 +459,7 @@ func revealsMenuOn*(button: PointerButton): bool =
   button == PointerButton.Right
 
 
-func revealsWithoutPicking*(has_selection, is_menu_shown: bool): bool =
+func isRevealingWithoutPicking*(has_selection, is_menu_shown: bool): bool =
   ## Say whether menu-revealing click should only reveal, leaving selection alone.
   ##   Selection standing with menu dismissed is reader who wants menu back, so click
   ##   reveals and picks nothing.
@@ -1238,7 +1238,7 @@ func isClick*(interaction: Interaction, now: float): bool =
   interaction.is_press_still
 
 
-func canConstructByTouch*(interaction: Interaction): bool =
+func isConstructibleByTouch*(interaction: Interaction): bool =
   ## Report whether press where finger stands may become construction drag.
   ##   Hovered, not sky, and unambiguous: exactly one object of winning rank in reach.
   ##   Finger sees no hover ring before it lands, so over crowd it cannot know which of
@@ -1260,9 +1260,9 @@ func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): b
   ##     else is; press on it starting drag would stop press on empty space falling
   ##     through to camera. Plane filling view leaves no empty space at all, so press on
   ##     it starting drag left view unmovable. Dragging backdrop is moving view.
-  ##   Touch, `MenuArming.OnDwell`, also refuses crowd; see `canConstructByTouch`.
+  ##   Touch, `MenuArming.OnDwell`, also refuses crowd; see `isConstructibleByTouch`.
   if interaction.index_hover.isNone or interaction.is_hover_backdrop: return false
-  if arming == MenuArming.OnDwell and not interaction.canConstructByTouch: return false
+  if arming == MenuArming.OnDwell and not interaction.isConstructibleByTouch: return false
   interaction.is_dragging = true
   interaction.index_source = interaction.index_hover.get
   interaction.index_destination = none(int)

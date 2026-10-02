@@ -11,6 +11,7 @@ const OTHER_PATH = ".github/workflows/role.yml"
   ## Second workflow installing compiler; driver's own is `WORKFLOW_PATH`.
 
 
+
 suite "Toolchain":
   test "version is digit runs separated by single dots":
     check isVersion("2.2.4")  # release
@@ -20,6 +21,7 @@ suite "Toolchain":
     check not isVersion("2..4")  # empty part
     check not isVersion(".2.4")  # leading dot
 
+
   test "commit is forty lowercase hex, and nothing else":
     check isCommit("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")  # forty hex
     check not isCommit("295bafc")  # short
@@ -28,6 +30,7 @@ suite "Toolchain":
     check not isCommit("2.2.4")  # version
     check isPin("2.2.4") and isPin(COMMIT)
     check not isPin("devel")  # moving target records nothing
+
 
   test "pin is read only when exact":
     check NIMBLE_TEXT.nimPin == some(PIN)  # fixture pins exactly
@@ -40,6 +43,7 @@ suite "Toolchain":
     check nimPin("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # devel dependency
     check nimPin("requires \"nim == devel\"\n").isNone  # label, not pin
 
+
   test "project without exact pin is finding, naming what it holds":
     check checkPin("p/p.nimble", NIMBLE_TEXT).len == 0  # exact pin passes
     let found = checkPin("p/p.nimble", "requires \"nim >= 2.2.4\"\n")
@@ -47,17 +51,20 @@ suite "Toolchain":
     check found[0].path == "p/p.nimble"
     check found[0].message.endsWith("got `nim >= 2.2.4`.")  # Article IV.4 echoes value
 
+
   test "driver version is read from workflow, quotes either way":
     check WORKFLOW_TEXT.workflowVersion == some(PIN)  # single quotes
     check workflowVersion("  NIM_VERSION: \"2.2.6\"\n") == some("2.2.6")  # double quotes
     check workflowVersion("  NIM_VERSION: 2.2.6\n") == some("2.2.6")  # bare
     check workflowVersion("name: check\n").isNone  # absent
 
+
   test "driver pins version, never commit":
     let found = checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, COMMIT)
     check found.len == 1  # setup action installs releases; every job waits on driver
     check found[0].message.endsWith("got `" & COMMIT & "`.")
     check checkDriver(OTHER_PATH, WORKFLOW_TEXT, COMMIT).len == 0  # named once, not per file
+
 
   test "every workflow stating version must equal driver project pin":
     for path in [WORKFLOW_PATH, OTHER_PATH]:  # driver's own, and second installing compiler
@@ -68,6 +75,7 @@ suite "Toolchain":
     # Absent key: driver's own must state version; workflow installing no compiler states none.
     check checkDriver(WORKFLOW_PATH, "name: check\n", PIN).len == 1  # unstated
     check checkDriver(OTHER_PATH, "name: role\n", PIN).len == 0  # left alone
+
 
   test "pin is served by commit for commit, by version otherwise":
     let running = Compiler(version: PIN, commit: COMMIT)

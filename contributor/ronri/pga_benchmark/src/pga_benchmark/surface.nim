@@ -48,7 +48,7 @@ func flipped(gate: Gate): Gate =
   of Gate.Any: Gate.Any
 
 
-func isAdmitted(frames: seq[Frame]; is_conformal: bool): bool =
+func isAdmitted(frames: seq[Frame], is_conformal: bool): bool =
   ## Decide whether innermost named gate admits algebra.
   for i in countdown(frames.high, 0):
     case frames[i].gate
@@ -69,7 +69,7 @@ func between(s, opening, closing: string): string =
   s[after ..< stop]
 
 
-iterator admitted(source: string; is_conformal: bool): string =
+iterator admitted(source: string, is_conformal: bool): string =
   ## Yield stripped lines algebra admits, tracking `when` gates by indentation.
   var frames: seq[Frame]
   for line in source.splitLines:
@@ -93,7 +93,7 @@ iterator admitted(source: string; is_conformal: bool): string =
 
 #[ Surface ]#
 
-func symbolsIn*(source: string; is_conformal: bool): seq[string] =
+func symbolsIn*(source: string, is_conformal: bool): seq[string] =
   ## Read operator symbols source defines for algebra, generated and hand-written alike.
   ##   Generated: `symbols = "∧",` inside `defineOperator`. Hand-written: backticked name
   ##   of exported `func` or `template`. Order is first appearance; duplicates dropped.
@@ -106,7 +106,7 @@ func symbolsIn*(source: string; is_conformal: bool): seq[string] =
     if symbol.len > 0 and symbol notin result: result.add symbol
 
 
-func aliasesIn*(source: string; is_conformal: bool): seq[string] =
+func aliasesIn*(source: string, is_conformal: bool): seq[string] =
   ## Read names of exported plain funcs source declares for algebra, i.e. named aliases.
   ##   Order is first appearance; overloads collapse to one name.
   for line in source.admitted(is_conformal):

@@ -21,6 +21,8 @@
 ##     ignored `build/`. Separation is declared by directory, never inferred from content.
 ##   No tracked path lies under `UNTRACKED_DIRECTORIES` at any depth (Article XI.3): ignore
 ##     file keeps them out, and forced add is what this catches.
+##   Shell lives only in `SHELL_DIRECTORIES`: it is curator's hook glue, and never enters
+##     project (CONTRIBUTOR.md, Boundaries).
 ##
 ##   Cost: rules read path strings, never disk, so tests feed synthetic trees and git
 ##     enumeration lives in `tree.nim`. Empty directories are invisible to git and so here.
@@ -32,14 +34,12 @@ import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 
 
 type
-  Entry* = object
-    ## Define one file git reports: path, kind when registered, content when read.
+  Entry* = object  ## Define one file git reports: path, kind when registered, content when read.
     path*: string  ## Repository-relative, `/` separated.
     kind*: Option[Kind]  ## Registered kind; `none` leaves content unread.
     content*: string  ## File text; empty for unregistered kinds.
 
-  Tree* = seq[Entry]
-    ## Define whole repository as git sees it.
+  Tree* = seq[Entry]  ## Define whole repository as git sees it.
 
 
 const
@@ -58,12 +58,12 @@ const
   UNTRACKED_DIRECTORIES* = ["build", "dependencies", "node_modules"]
     ## Directories holding build output or vendored source, never tracked (Article XI.3).
     ## Files every project directory must hold, besides its nimble file.
-  TESTS_DIRECTORY* = "tests"
-    ## Directory every project must populate.
+  TESTS_DIRECTORY* = "tests"  ## Directory every project must populate.
   PAGE_DIRECTORIES* = ["pages", "mockups"]
     ## Directories committed pages live in: kept pages, then one-off mock-ups.
-  KINDS_PATH = "curator/audit/src/kinds.nim"
-    ## Registry named in finding for unregistered kind.
+  SHELL_DIRECTORIES* = [".claude", ".githooks"]
+    ## Root directories Shell may live in: command Claude Code runs, and hooks git runs.
+  KINDS_PATH = "curator/audit/src/kinds.nim"  ## Registry named in finding for unregistered kind.
 
 
 func projectName*(directory: string): string =
@@ -79,7 +79,7 @@ func nimblePath*(directory: string): string =
 func directoryOf(path: string): string =
   ## Read directory part of path, empty at root.
   let cut = path.rfind('/')
-  if cut < 0: "" else: path[0 ..< cut]
+  if cut < 0: "" else: path[0..<cut]
 
 
 func projectDirectory*(parts: seq[string]): string =
@@ -109,7 +109,9 @@ func checkIndexEntry(path, child, holder, member: string): seq[Finding] =
   ## Report file directly inside folder that holds README.md and member folders only.
   if child != README_FILE:
     result.add finding(
-      path, 0, holder & " holds README.md and " & member & " folders only; got `" & child & "`."
+      path,
+      0,
+      holder & " holds README.md and " & member & " folders only; got `" & child & "`.",
     )
 
 
@@ -125,7 +127,8 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
   for page_directory in PAGE_DIRECTORIES:
     if directory.len > 0 and path.startsWith(directory & "/" & page_directory & "/"): return
   result.add finding(
-    path, 0,
+    path,
+    0,
     "Page outside `" & PAGE_DIRECTORIES.join("/` or `") & "/`; generated markup belongs under " &
       "`build/`; got `" & path & "`.",
   )
@@ -134,22 +137,29 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
 func checkEntry(e: Entry): seq[Finding] =
   ## Report entry outside layout or of unregistered kind.
   let parts = e.path.split('/')
-  for directory in parts[0 ..< parts.high]:
+  for directory in parts[0..<parts.high]:
     if directory in UNTRACKED_DIRECTORIES:
       result.add finding(
-        e.path, 0,
-        "Build output and vendored source stay untracked (Article XI.3); got `" & directory &
-          "/`.",
+        e.path,
+        0,
+        "Build output and vendored source stay untracked (Article XI.3); got `" & directory & "/`.",
       )
       break
   if e.kind.isSome and e.kind.get in {Kind.Html, Kind.Svg}:
     result.add checkPage(e.path, parts)
+  if e.kind.isSome and e.kind.get == Kind.Shell and parts[0] notin SHELL_DIRECTORIES:
+    result.add finding(
+      e.path,
+      0,
+      "Shell is hook glue of curator, and lives only in `" & SHELL_DIRECTORIES.join("/` or `") &
+        "/` (CONTRIBUTOR.md, The language is Nim); got `" & e.path & "`.",
+    )
   if e.kind.isNone:
     let (_, base, ext) = e.path.splitFile
     result.add finding(
-      e.path, 0,
-      "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext &
-        "`.",
+      e.path,
+      0,
+      "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext & "`.",
     )
   if parts.len == 1:
     if parts[0] notin ROOT_FILES:
@@ -193,7 +203,9 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
   for e in tree:
     if e.path.directoryOf == directory and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
       result.add finding(
-        e.path, 0, "Nimble file not named after project; expected `" & nimble & "`."
+        e.path,
+        0,
+        "Nimble file not named after project; expected `" & nimble & "`.",
       )
   if nimble in paths:
     result.add checkPin(nimble, tree[paths[nimble]].content)
@@ -202,9 +214,9 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
       lock = directory & "/" & LOCK_FILE
     if required.len > 0 and lock notin paths:
       result.add finding(
-        lock, 0,
-        "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") &
-          "`.",
+        lock,
+        0,
+        "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") & "`.",
       )
 
 
@@ -228,7 +240,8 @@ func checkDomainViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
     for d in DOMAINS:
       if @[d.folder, d.name, d.theme] notin rows:
         result.add finding(
-          README_FILE, 0,
+          README_FILE,
+          0,
           "Domain table lacks row `| " & d.folder & " | " & d.name & " | " & d.theme & " |`.",
         )
   for d in DOMAINS:

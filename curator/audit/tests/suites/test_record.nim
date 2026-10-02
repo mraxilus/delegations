@@ -16,10 +16,12 @@ const BODY = "\n## Design\n\nWhat is.\n\n## Open questions\n\nNone.\n"
   ## Smallest body guide accepts: subsystem section, then open questions last.
 
 
+
 suite "Article VIII":
   test "VIII.6 record in guide's shape passes":
     check messages(provenanceText("deadbeefdeadbeef") & BODY).len == 0
     check messages(provenanceText("deadbeefdeadbeef") & "\n## Design\n\nWhat is.\n").len == 0
+
 
   test "VIII.6 no section is headed by date":
     let
@@ -31,6 +33,7 @@ suite "Article VIII":
     check "x 2026-09-06 y".isDated and not "12026-09-06".isDated  # bounded by non-digit
     check not "2026-9-6".isDated and not "".isDated
 
+
   test "VIII.6 open questions is last section":
     let
       early = provenanceText("d") & "\n## Open questions\n\nOne.\n\n## Design\n\nWhat is.\n"
@@ -40,6 +43,7 @@ suite "Article VIII":
     check messages(provenanceText("d") & BODY & "\n### Deeper\n\nStill inside.\n").len == 0
     check messages(provenanceText("d") & "\n## OPEN QUESTIONS\n\n## Design\n").len == 1  # case
 
+
   test "VIII.6 no heading appears twice":
     let
       twice = provenanceText("d") & "\n## Design\n\n## Design\n"
@@ -48,6 +52,7 @@ suite "Article VIII":
     check found[0].message == "Heading appears twice; got `## Design`."
     let fenced = provenanceText("d") & "\n## Design\n\n```nim\n## Design\n```\n"
     check messages(fenced).len == 0  # heading inside fence is example
+
 
   test "VIII.6 heading is ATX, never underlined":
     let
@@ -61,10 +66,11 @@ suite "Article VIII":
     check messages(provenanceText("d") & "\nText.\n\n---\n\nMore.\n").len == 0  # rule after blank
     check messages(provenanceText("d") & "\n| a | b |\n|---|---|\n").len == 0  # table rule
 
+
   test "VIII.6 record over ceiling asks for prune and Pruned row":
     # Spread body over sections short enough that section ceiling stays quiet.
     var body = ""
-    for i in 0 ..< RECORD_LINES div SECTION_LINES + 1:
+    for i in 0..<RECORD_LINES div SECTION_LINES + 1:
       body.add "\n## Design " & $i & "\n" & "line\n".repeat(SECTION_LINES - 1)
     let
       long = provenanceText("d") & body
@@ -73,6 +79,7 @@ suite "Article VIII":
     check found[0].message.startsWith("Record over " & $RECORD_LINES & " lines; prune to log")
     check found[0].message.endsWith("got " & $(long.count('\n')) & ".")  # as wc -l counts
     check messages(provenanceText("d") & "line\n".repeat(SECTION_LINES - 10)).len == 0
+
 
   test "VIII.6 section over ceiling asks for prune or split":
     let
@@ -91,10 +98,9 @@ suite "Article VIII":
       "## Design\n".repeat(SECTION_LINES + 1) & "```\n"
     check checkSections("p", fenced).len == 1  # heading inside fence opens no section
 
+
   test "VIII.6 Pruned row names commit as hex":
-    let with_row = provenanceText("d").replace(
-      "| Review |", "| Pruned | c723ede |\n| Review |"
-    )
+    let with_row = provenanceText("d").replace("| Review |", "| Pruned | c723ede |\n| Review |")
     check messages(with_row & BODY).len == 0
     check with_row.prunedOf == "c723ede"
     check provenanceText("d").prunedOf.len == 0  # absent row
@@ -102,6 +108,7 @@ suite "Article VIII":
       @["`Pruned` must name commit as 7 to 40 hex digits; got `main`."]
     check "c723ede".isCommitId and "c723ede1d0fd6f5e01b6b4d5c2ea8c1f9b2a3d4e".isCommitId
     check not "c723ed".isCommitId and not "C723EDE".isCommitId  # short, upper
+
 
   test "count written as number in prose goes stale, and is finding":
     # Count goes stale by next commit and nothing reads it again (provenance guide).

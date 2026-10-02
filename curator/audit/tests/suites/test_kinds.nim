@@ -16,9 +16,10 @@ func yesNo(is_set: bool): string =
   if is_set: "yes" else: "no"
 
 
+
 suite "Article I":
   test "I.4 header table is derived view of registry":
-    check TABLE[0] == @["Kind", "Match", "Syntax", "Prose", "Gate"]  # columns read below
+    check TABLE[0] == @["Kind", "Match", "Syntax", "Prose", "Gate", "Guide"]  # columns read below
     let rows = TABLE[1 .. ^1]
     check rows.mapIt(it[0]) == Kind.toSeq.mapIt($it)  # every kind once, in enum order
     for (row, kind) in zip(rows, Kind.toSeq):
@@ -30,11 +31,19 @@ suite "Article I":
       check row[2] == $kind.rule.syntax  # Syntax column
       check row[3] == kind.rule.is_prose.yesNo  # Prose column
       check row[4] == kind.rule.is_gated.yesNo  # Gate column
+      check row[5] == kind.rule.has_guide.yesNo  # Guide column
+
+
+  test "I.4 guide is STYLE.md's, so Nim source alone carries it":
+    for kind in Kind:
+      check kind.rule.has_guide == (kind.rule.syntax == Syntax.Nim)  # Nim, NimScript, nimble
+
 
 
 suite "Article VI":
   test "VI.5 last extension decides":
     check kindOf("koch.nim.cfg") == some(Kind.Configuration)  # driver flags read as cfg, never Nim
+
 
   test "VI.5 unregistered kinds are none":
     for path in ["Makefile", "x.mk", "data.csv", "nimble.paths", "a.txt"]:  # 5 cases

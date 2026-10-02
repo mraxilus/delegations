@@ -1,0 +1,207 @@
+# Run each project's `head` verb daily, and keep one issue open for each project while it fails.
+#   `head` holds project's pin to outside reference that moves without commit here, such as
+#   head of library repository (CONTRIBUTOR.md, Tests are paramount). Its verdict varies with
+#   that reference, so it never runs where merge waits: `check.yml` holds code to pin alone, and
+#   this run is only place reference is read. `koch head` names verb and runs it on project's
+#   own pin; `list-projects --all --head` names projects carrying it, read from each driver.
+#
+#   One issue per project, never one per day. Open issue carrying project's marker is edited
+#   to latest run, so it always says what is, and gains comment only where finding changed:
+#   subscriber hears of new head once, and never of same one again. Run finding verb clean
+#   closes open issue, so next failure opens fresh one.
+#   Finding is not red run: verb failing is what issue is for, and job stays green. Job goes
+#   red only where it cannot set up or post, and `watch.yml` reads that.
+#   Finding compared from line `koch` prints before running verb (`== <project>`), so restore
+#   output above it never reads as change.
+#   Issue opens with role line after marker, as `watch.yml` writes it, and says workflow wrote
+#   it, so nobody reads it as delegate having judged anything. Label is project's directory,
+#   which is its role string, copied rather than composed.
+#
+#   Matrix job per project on its own pin, as `drive` in `check.yml`. Compiler arms, packages
+#   and Atlas cache are copies of that job's steps, since workflow shares steps only through
+#   action of its own (Article II.9); siblings are `test` and `drive` in `check.yml`, and fix
+#   to one is finished when all three are checked.
+#   `concurrency` holds one run at time, so two runs cannot both find no issue and open two.
+#   `permissions` block is whole grant: `contents: read` for checkout, `issues: write` for
+#   `gh issue`, and `actions: read` since run's own link spells `/actions/`, which
+#   `workflows.nim` reads as reach. Read grant on scheduled run costs nothing worth hiding
+#   text for.
+#   Cost: reference read daily, so pin may lag head by up to day before issue says so.
+
+name: head
+
+on:
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: head
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+env:
+  NIM_VERSION: '2.2.12'
+
+jobs:
+  list-projects:
+    runs-on: ubuntu-latest
+    outputs:
+      head: ${{ steps.select.outputs.head }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - id: select
+        # Assigned before echoed, as in `check.yml`: substitution inside `echo` cannot fail step.
+        run: |
+          head="$(nim r koch list-projects --all --head)"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+
+  head:
+    needs: list-projects
+    if: needs.list-projects.outputs.head != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.list-projects.outputs.head) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same two compiler arms as `test` and `drive` in `check.yml`.
+      - if: matrix.kind == 'version'
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ matrix.nim }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - if: matrix.kind == 'commit'
+        id: built
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/nim-commit
+          key: nim-commit-${{ runner.os }}-${{ matrix.nim }}
+      - if: matrix.kind == 'commit' && steps.built.outputs.cache-hit != 'true'
+        env:
+          COMMIT: ${{ matrix.nim }}
+        run: |
+          git clone --filter=blob:none https://github.com/nim-lang/Nim "$RUNNER_TEMP/nim-commit"
+          cd "$RUNNER_TEMP/nim-commit"
+          git checkout "$COMMIT"
+          sh build_all.sh
+      - if: matrix.kind == 'commit'
+        run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
+
+      # Packages come from project's own declaration, as in `drive`.
+      - env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          PACKAGES="$(nim r koch list-packages "$PROJECT")"
+          if [ -n "$PACKAGES" ]; then
+            sudo apt-get update -qq
+            echo "$PACKAGES" | xargs sudo apt-get install -y --no-install-recommends
+          fi
+
+      # Atlas cache keyed and placed as in `drive`.
+      - id: locked
+        env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
+          config="$PROJECT/atlas.config"
+          folder=$(sed -n 's/.*"deps": *"\([^"]*\)".*/\1/p' "$config" 2>/dev/null || true)
+          echo "folder=${folder:-deps}" >> "$GITHUB_OUTPUT"
+      - if: steps.locked.outputs.is_locked == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ matrix.dir }}/${{ steps.locked.outputs.folder }}
+          key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
+
+      # Exit is read rather than obeyed: verb failing is finding for issue, never red job.
+      - id: run
+        env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          code=0
+          nim r koch head "$PROJECT" > "$RUNNER_TEMP/head.txt" 2>&1 || code=$?
+          cat "$RUNNER_TEMP/head.txt"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Edit, open or close issue standing for project's head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PROJECT: ${{ matrix.dir }}
+          CODE: ${{ steps.run.outputs.code }}
+          NUMBER: ${{ github.run_number }}
+          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          marker="<!-- head:$PROJECT -->"
+          name="${PROJECT##*/}"
+          today="$(date -u +%F)"
+          at="**Run [$NUMBER]($URL)** on $today, at \`${SHA:0:7}\`."
+
+          # Read open issues rather than search: search indexing lags, and duplicate opened
+          #   because index was cold is exactly noise this avoids.
+          existing="$(gh issue list --repo "$REPO" --label "$PROJECT" --state open \
+            --limit 100 --json number,body \
+            --jq "[.[] | select(.body | contains(\"$marker\")) | .number] | first // empty")"
+
+          if [ "$CODE" = 0 ]; then
+            if [ -n "$existing" ]; then
+              passed="The \`head\` verb passed, so this workflow closes the issue. A later"
+              passed="$passed failure opens a new one."
+              closing="$(printf '**Role:** curator\n\n%s %s\n' "$at" "$passed")"
+              gh issue close "$existing" --repo "$REPO" --reason completed --comment "$closing"
+              echo "Closed issue #$existing."
+            fi
+            exit 0
+          fi
+
+          # From last `== <project>` line on, tail kept within what issue body holds.
+          finding="$(awk -v line="== $PROJECT" '$0 == line {text = ""; seen = 1}
+            seen {text = text $0 "\n"} END {printf "%s", text}' "$RUNNER_TEMP/head.txt" \
+            | tail -c 20000)"
+          if [ -z "$finding" ]; then finding="$(tail -c 20000 "$RUNNER_TEMP/head.txt")"; fi
+
+          # Paragraphs appended rather than written as heredoc: issue body renders each newline
+          #   as line break, so paragraph wrapped to width here would break mid-sentence there.
+          said="Opened by the \`head\` workflow rather than by a delegate, so nothing here has"
+          said="$said been read or judged yet. The \`head\` verb of this project holds its pin to"
+          said="$said a reference outside this repository, and it fails (CONTRIBUTOR.md, Tests"
+          said="$said are paramount)."
+          next="Each day that the verb still fails, this issue is edited to the latest run. It"
+          next="$next gains a comment only where the finding changed. A run where the verb"
+          next="$next passes closes this issue."
+          fence='````'
+          body="$(printf '%s\n\n**Role:** curator\n\n%s\n\n%s\n\n%stext\n%s\n%s\n\n%s\n' \
+            "$marker" "$said" "$at" "$fence" "$finding" "$fence" "$next")"
+
+          if [ -z "$existing" ]; then
+            opened="$(gh issue create --repo "$REPO" --label "$PROJECT" \
+              --title "\`$name\` fails its head check" --body "$body")"
+            echo "Opened $opened."
+            exit 0
+          fi
+
+          # Finding of last edit is text between fences; comment only where it moved.
+          before="$(gh issue view "$existing" --repo "$REPO" --json body --jq .body \
+            | tr -d '\r' | awk -v fence="$fence" '$0 == fence "text" {inside = 1; next}
+              $0 == fence {inside = 0} inside {print}')"
+          gh issue edit "$existing" --repo "$REPO" --body "$body"
+          echo "Edited issue #$existing."
+          if [ "$before" != "$finding" ]; then
+            changed="$(printf '**Role:** curator\n\n%s %s\n' "$at" \
+              "The finding changed, and the issue now holds it.")"
+            gh issue comment "$existing" --repo "$REPO" --body "$changed"
+            echo "Commented on issue #$existing."
+          fi

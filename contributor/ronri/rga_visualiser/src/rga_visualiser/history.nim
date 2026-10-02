@@ -28,7 +28,7 @@
 ##   Not covered: live label editing and coefficient drags, continuous inputs with no
 ##   clean commit boundary; recording every keystroke would flood timeline.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -44,7 +44,7 @@ const CAPACITY_HISTORY* {.define: "visualiser.history_capacity".} = 32
   ## Fix how many steps of timeline are retained.
   ##   Costs `CAPACITY_HISTORY * sizeof(Step)` of fixed reservation, and `Step` is whole
   ##   `Scene`, so this scales with `scene.OBJECTS_MAX`: not cheap.
-  ##     Largest reservation binary makes, counted by `visualiser.BYTES_MEMORY_TOTAL`;
+  ##     Largest reservation binary makes, counted by `main.BYTES_MEMORY_TOTAL`;
   ##     figures in `PROVENANCE.md`.
   ##   Kept at 32: depth costs nothing per edit (see `record`), so what remains is flat
   ##   reservation, linear per step. One lever to pull if page must be lighter.
@@ -123,11 +123,11 @@ func record*(history: var History, scene: Scene, camera: Camera) =
   history.count = history.cursor + 1
 
 
-func canUndo*(history: History): bool = history.cursor > 0
+func isUndoable*(history: History): bool = history.cursor > 0
   ## Report whether earlier entry exists to undo back to.
 
 
-func canRedo*(history: History): bool = history.cursor < history.count - 1
+func isRedoable*(history: History): bool = history.cursor < history.count - 1
   ## Report whether later entry exists to redo forward to.
 
 
@@ -144,7 +144,7 @@ func undo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Stance alone crosses, never whole camera value.
   ##     Lens is reader's setting, and `camera.CameraStance` says nothing aiming camera may
   ##     rewrite it. Whole-value assignment handed back lens of step arrived at.
-  if not history.canUndo: return false
+  if not history.isUndoable: return false
   camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
   history.cursor.dec
   # Restore through `restoreFrom`, never assignment: revision must pass every one drawn.
@@ -159,7 +159,7 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Both come from entry arrived at, same step `undo` reads its camera from, so
   ##   crossing one step either way puts view in same place.
   ##   Stance alone crosses, as in `undo`.
-  if not history.canRedo: return false
+  if not history.isRedoable: return false
   history.cursor.inc
   scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
   camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)

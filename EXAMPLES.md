@@ -12,11 +12,13 @@ constructed in its vocabulary, and its note opens with "Constructed".
 ## I.6: An internal that a sibling reaches
 
 ```nim
-func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
+func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in `cayleys.nim`.
 ```
 
-From `algebra.nim`. The function stays private, and `cayleys.nim` reaches it through `{.all.}`.
-The pragma silences the unused warning, and the comment names the sibling that uses it.
+Changed from `algebra.nim`, where the reference puts one space before the comment marker and
+writes the path bare. X.9 asks for two spaces, and VI.10 asks for backticks. The function stays
+private, and `cayleys.nim` reaches it through `{.all.}`. The pragma silences the unused warning,
+and the comment names the sibling that uses it.
 
 ## II.6: A restore issues a new revision
 
@@ -47,7 +49,7 @@ review the decision when that cost changes.
 ## II.9: A copy names its sibling
 
 ```ts
-/* Basis names of 3D RGA as union type, mirroring Basis in algebra.nim exactly. */
+/* Basis names of 3D RGA as union type, mirroring `Basis` in `algebra.nim` exactly. */
 type Basis = 'S' | 'E1' | 'E2' | 'E3' | 'E23' | 'E31' | 'E12' | 'E321'
 ```
 
@@ -78,7 +80,7 @@ func grade*(b: Basis): Grade {.inline.} =
 
 func multiplyExterior(
   a, b: BasisSigned
-): tuple[basis: BasisSigned; is_degenerate: bool] {.compileTime.} =
+): tuple[basis: BasisSigned, is_degenerate: bool] {.compileTime.} =
   ## Perform exterior product of two bases, reducing to its standard basis form.
   ##   If duplicate 1-vectors are present, `is_degenerate` returns true.
 
@@ -87,9 +89,10 @@ func grade*(m: Multivector): Option[Grade] =
 ```
 
 Three routines from `algebra.nim`, `cayleys.nim` and `multivectors.nim`, with their bodies left
-out. Every basis has a grade, so the first returns the plain value. A degenerate product still
-carries a basis, so the second returns it beside a named flag. A mixed multivector has no
-grade, so the third returns an `Option`.
+out. The tuple takes commas between its fields, where the reference writes semicolons. Every
+basis has a grade, so the first returns the plain value. A degenerate product still carries a
+basis, so the second returns it beside a named flag. A mixed multivector has no grade, so the
+third returns an `Option`.
 
 ## IV.6: Arenas, a scratch arena, and handles
 
@@ -97,7 +100,7 @@ grade, so the third returns an `Option`.
 Pool* = object  ## Define fixed-capacity arena of multivectors, addressed by stable handle.
   elements: array[HANDLES_MAX, Multivector]  ## Per-handle geometry.
   grades: array[HANDLES_MAX, Option[Grade]]  ## Per-handle grade, derived once per revision.
-  bound: int  ## Live extent; every walk stops here, never at HANDLES_MAX.
+  bound: int  ## Live extent; every walk stops here, never at `HANDLES_MAX`.
 ```
 
 ```nim
@@ -131,7 +134,8 @@ Constructed. The first row holds acronyms that a layman meets at school, on the 
 data, and the root glossary lists them. The second row holds the names of the algebras, which
 the root glossary defines under the conventions of Lengyel. The third row holds acronyms of a
 field that no glossary defines, so a name spells them out. The path line follows the reference
-at its pin, and changes when the pin moves. The test file carries its word before its name.
+at `3121342`, the commit that the lock of `pga_benchmark` holds, and changes when that lock
+moves. The test file carries its word before its name.
 
 ## VI.7 and VIII.1: A claim names its register
 
@@ -142,12 +146,12 @@ at its pin, and changes when the pin moves. The test file carries its word befor
 
 ```nim
   # TODO: Create LUT for all possible valid basisflags instead of computing each call.
-  #   Not even sure if this will provide a speed-up.
+  #   Not even sure if this will provide speed-up.
 ```
 
-From the header of `pga.nim`, and from `isNegatedByJoinLexicographic` in `cayleys.nim`. The
-first claim is intended, and it says so. The second cost is expected but not measured, and it
-says so.
+From the header of `pga.nim`, and changed from `isNegatedByJoinLexicographic` in `cayleys.nim`,
+where the reference writes "a speed-up" and VI.5 drops the article. The first claim is intended,
+and it says so. The second cost is expected but not measured, and it says so.
 
 ## VIII.2: The convention of the authority, and its cost
 
@@ -173,7 +177,7 @@ cost falls names the convention again.
 ```nim
 test "Equation 2.99":
   var passed = 0
-  for 𝐦, 𝐧, _ in randomMultivectors():
+  for 𝐦, 𝐧, _ in multivectorsRandom():
     if 𝐦.grade.isNone or 𝐧.grade.isNone: continue
     if 𝐦.grade.get + 𝐧.grade.get != Grade.high: continue
     inc passed
@@ -181,10 +185,10 @@ test "Equation 2.99":
   check passed >= SAMPLES_FLOOR
 ```
 
-Changed from `tests/suites.nim`. The iterator takes its full word by V.6. The counter and the
-floor are the form that IX.3 asks for, where the reference has only the guards. The guards pass
-between one sample in eight and one in five, by dimension. Without the floor, a guard that rejects
-every sample leaves a test that passes with no evidence.
+Changed from `tests/suites.nim`. The iterator takes its full word by V.6, and its head first by
+V.2. The counter and the floor are the form that IX.3 asks for, where the reference has only
+the guards. The guards pass between one sample in eight and one in five, by dimension. Without
+the floor, a guard that rejects every sample leaves a test that passes with no evidence.
 
 ## X.2: Two tiers of banner
 
@@ -206,9 +210,9 @@ lines.
 ```nim
 {.push header: "reference/cayley.h".}
 type
-  CayleyEntry* {.importc: "cayley_entry", bycopy.} = object
+  EntryCayley* {.bycopy, importc: "cayley_entry".} = object
 ...
-proc wedgeReference*(a, b: cint): CayleyEntry {.importc: "cayley_wedge".}
+proc wedgeReference*(a, b: cint): EntryCayley {.importc: "cayley_wedge".}
 {.pop.}
 ```
 

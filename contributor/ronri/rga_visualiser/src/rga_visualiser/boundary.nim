@@ -26,7 +26,7 @@
 ##   | motorOf         | 𝐐 even grades| Eight coefficients of rigid motion.          |
 ##   |-----------------|--------------|----------------------------------------------|
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

@@ -57,9 +57,9 @@ Every rule below serves it:
 |------|---------|-----------|
 | `README.md` | Chain, theme, domain table, layout, how checks and branches work | curator |
 | `LICENSE.md` | Prosperity Public License 3.0.0 | Architect |
-| `CONSTITUTION.md` | Language-independent coding constitution | Architect decides, curator writes |
-| `STYLE.md` | Nim expression guide | Architect decides, curator writes |
-| `EXAMPLES.md` | Worked examples both guides point into | Architect decides, curator writes |
+| `CONSTITUTION.md` | Constitution for every language, stamped | Architect decides, curator writes |
+| `STYLE.md` | Nim expression guide, stamped | Architect decides, curator writes |
+| `EXAMPLES.md` | Worked examples for both guides, stamped | Architect decides, curator writes |
 | `GLOSSARY.md` | The words of the repository itself | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
@@ -73,6 +73,7 @@ Every rule below serves it:
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
 | `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
 | `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
+| `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | The `steward` skill and the `record-reviewer` | curator |
 | `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
@@ -92,9 +93,14 @@ Every rule below serves it:
 
 - **Rules and root work.** Branch `curator/<name>` from `main`, with `<name>` matching
   `[a-z0-9][a-z0-9_-]*`. Every path is allowed, because a rules change must reach every
-  project. Inside a contributor project you may write only its three records (duty 11). The
-  commit scope is `curator` for a root file, and the project's own scope for a commit inside
-  a project. `check-commits` accepts any valid scope on this branch form.
+  project. Inside a contributor project you may write only its three records (duty 11).
+
+  The commit scope is `curator` for a root file, and the project's own scope for a commit
+  inside a project. `koch.nim` and `koch.nim.cfg` take `audit` when they change with the
+  checker, because `list-projects` selects `curator/audit` for them. The `test` before `fix`
+  ladder also needs one scope on both of its commits. A commit that crosses several projects,
+  such as a re-stamp, takes `curator`. `check-commits` accepts any valid scope on this branch
+  form.
 - **One curator project.** Branch `curator/<project>/<name>`, confined to
   `curator/<project>/`, with commit scope `<project>`, exactly like a contributor branch.
 - The commit types and the regression rule are those of `CONTRIBUTOR.md` (Branch and
@@ -120,7 +126,7 @@ This section adds only what differs for a curator.
 - **An answered issue that you close by hand** also says where the result differs from what
   was asked.
 - **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
-  `curator` when `check` or `ledger` concludes failure on `main`, so a red `main` reaches
+  `curator` when `check`, `ledger` or `head` concludes failure on `main`, so a red `main` reaches
   the queue. Read the run anyway, since a run cancelled, still queued or never triggered
   concludes nothing. A red `main` is the first work of the delegate.
 
@@ -211,14 +217,16 @@ This section adds only what differs for a curator.
    constant and as the cron, so change both together.
 
    `ledger.yml` is a different mechanism: a daily read of what GitHub records, into one issue
-   labelled `curator`. It reads four things:
+   labelled `curator`. It reports each of these:
 
    - a pull request ready without a green run;
    - a `Closes #N` that never fired;
    - an issue or pull request that opens with no role line, or carries no label;
-   - an issue whose title opens with a commit prefix, which each issue template forbids.
+   - an issue whose title opens with a commit prefix, which each issue template forbids;
+   - a ruleset of `main` or of every branch, or a merge setting, that drifts from the list
+     under Repository settings the Architect applies.
 
-   `watch.yml` watches both `check` and `ledger`, and opens or extends one issue for each
+   `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
    workflow.
 
 10. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new delegates as
@@ -331,7 +339,7 @@ alone.
 
 | Verb | Reads | Does |
 |------|-------|------|
-| `check` | fresh `origin/main` | all below but `check-role`; quick first, stop on own finding |
+| `check` | fresh `origin/main` | every `check-` verb but `check-role`, then `test` and `drive` |
 | `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
 | `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
 | `check-scope` | changed paths | branch grammar; project paths inside scope |
@@ -341,7 +349,8 @@ alone.
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
-| `fix` | named files, or projects | each fix a check names, in place; nothing outside scope |
+| `head` | projects with a `head` verb, or one | fetch dependencies, then the verb, on its pin |
+| `fix` | Nim files named, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
 | `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
@@ -351,9 +360,15 @@ alone.
 Every verb that takes projects reads the one named, else `--recent`, else `--all`, else the
 projects whose code changed. A verb refuses an option or an argument that it does not read.
 
+`fix` writes Nim files only, because Nim is the one language with a style guide. A finding in
+any other kind of file stays for a fix by hand.
+
 `check` leaves out `check-role`, because `check-role` reads a pull request rather than the
 tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels from the API as
 `ROLE_LABELS`. So only the runner can supply them.
+
+`check` runs the checks that cost about a second first, and a finding among them stops the
+run, except one that duty 3 holds apart.
 
 `check` costs minutes rather than the second that the static pass costs, whenever a changed
 project carries a `drive` verb. It then builds the page of that project and drives a real

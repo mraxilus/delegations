@@ -18,8 +18,7 @@ const PARAGRAPH_WORDS* = 25
   ## Words paragraph must hold before second copy is finding; shorter one is phrase.
 
 
-type Paragraph* = object
-  ## Define one prose paragraph and where it starts.
+type Paragraph* = object  ## Define one prose paragraph and where it starts.
   text*: string  ## Words joined by single space.
   line*: int  ## Line paragraph opens on, 1-based.
 
@@ -51,9 +50,10 @@ func checkDuplicates*(documents: openArray[(string, string)]): seq[Finding] =
       if p.text.count(' ') + 1 < PARAGRAPH_WORDS: continue
       if p.text in first:
         result.add finding(
-          path, p.line,
+          path,
+          p.line,
           "Paragraph appears twice; write it once and point at it (duty 10); first at `" &
-            first[p.text] & "`; got `" & p.text[0 ..< min(p.text.len, 60)] & "`.",
+            first[p.text] & "`; got `" & p.text[0..<min(p.text.len, 60)] & "`.",
         )
       else:
         first[p.text] = path & ":" & $p.line

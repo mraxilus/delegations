@@ -10,7 +10,7 @@
 ##   What magnitude should *read* as is project's own rule, so `formatMagnitude` states it
 ##   in plain Nim for that build, and `magnitudesAgree` in suite holds two to same answer.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths,
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths,
 ## transitively through `interaction`.
 
 {.experimental: "strictFuncs".}
@@ -28,6 +28,9 @@ const HEADER = "<stdio.h>"
 #   Guarded rather than left to fail at run time: JS backend *compiles* `importc` it has no
 #   definition for and throws only when call is reached, browser crash rather than build
 #   error. Every appender needing it is guarded to match.
+#   `noSideEffect`, sole binding without `sideEffect`: formatter writes only buffer it is
+#   handed, and every caller hands one on its own stack, so `func` formatting through it
+#   stays pure. Suite holds both backends to one answer (`magnitudesAgree`).
 when not defined(js):
   proc snprintf(buffer: cstring, size: csize_t, format: cstring): cint
     {.importc: "snprintf", header: HEADER, varargs, discardable, noSideEffect.}
