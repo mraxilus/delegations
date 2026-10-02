@@ -1,14 +1,29 @@
 ## Fix source in place where check names one mechanical fix (`koch fix`), inside branch scope.
-##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim` and
-##     `idioms.nim`, and reads that check's own data, so each rule is written once. This module
-##     selects files, runs on each file fixers its kind's checks name, and refuses any write
-##     outside scope.
+##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim`,
+##     `idioms.nim`, `spacing.nim` and `wrapping.nim`, and reads that check's own data, so each
+##     rule is written once. This module selects files, runs on each file fixers its kind's
+##     checks name, and refuses any write outside scope.
 ##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
 ##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
 ##     written and every other kind passes through. Checks read every kind still; finding in
 ##     Markdown, TypeScript, YAML or shell stays for hand.
-##   Inside that reach, fixer runs where its check runs: form fixers on every Nim kind, idiom
-##     fixers on `.nim` alone. Form runs first, so idiom fixers read clean line ends.
+##   Inside that reach, fixer runs where its check runs: form, spacing and wrapping fixers on
+##     every Nim kind, idiom fixers on `.nim` alone. Order keeps each fixer from undoing one
+##     before it:
+##   - form first (whitespace, ending, trailing comment, banner), so later fixers read clean
+##     line ends and final comment gaps, which wrapping counts in width;
+##   - idioms next (return, import order, import brackets, bindings, `strictFuncs`, unordered
+##     lists), since bindings indent lines and every later width reads that indent;
+##   - spacing before wrapping, since spaces it adds are width wrapping measures;
+##   - wrapping last, separators before signatures before calls before trailing separators:
+##     layouts join groups with separator they read, and trailing separator goes only where no
+##     layout wrote one.
+##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
+##     splits can take spacing fixer refused for width, so second round writes it, and
+##     `koch fix` run twice writes nothing second time.
+##   `checkFormatting` holds every check whose findings these fixers clear and static pass
+##     does not run yet; pull request after projects run `koch fix` wires it (CURATOR.md, duty
+##     3), one line in `auditTree`, and drops lenient banner check `checkForm` runs.
 ##   Scope: every path fix would write goes through `scope.checkScope` for branch. One path
 ##     outside refuses every write, so run writes all it planned or nothing. Curator branch
 ##     thus never writes contributor code (`checkPropagation`), as CURATOR.md duty 11 asks.
@@ -26,7 +41,25 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils]
-import ./[findings, form, idioms, kinds, layout, scope]
+import ./[findings, form, idioms, kinds, layout, scope, spacing, wrapping]
+
+
+const ROUNDS_MAX = 3
+  ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
+
+
+func checkFormatting*(path, source: string, kind: Kind): seq[Finding] =
+  ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix.
+  ##   X.9 trailing comments and operator spacing, X.2 banners, X.3 and STYLE.md §5
+  ##   separators, signatures, calls and trailing separators, on every Nim kind; X.5 import
+  ##   brackets and X.10 lists on `.nim`, as idiom checks read it.
+  if kind.rule.syntax != Syntax.Nim: return
+  let checks = [
+    checkComments, checkBanners, checkSpacing, checkSeparators, checkSignatures, checkCalls,
+    checkTrailing,
+  ]
+  for check in checks: result.add check(path, source)
+  if kind == Kind.Nim: result.add checkImportBrackets(path, source) & checkLists(path, source)
 
 
 func entriesNamed*(
@@ -49,11 +82,16 @@ func entriesNamed*(
 
 
 func fixSource(path, source: string, kind: Kind): Fix =
-  ## Run on source each fixer its kind's checks name, form first; kind without guide passes.
+  ## Run on source each fixer its kind's checks name, in order header gives, until source
+  ##   settles; kind without guide passes.
   result.source = source
   if not kind.rule.has_guide: return
-  result = fixForm(path, source, kind.rule)
-  if kind == Kind.Nim: result = result.chain(fixIdioms(path, result.source))
+  for round in 1 .. ROUNDS_MAX:
+    var step = fixForm(path, result.source, kind.rule)
+    if kind == Kind.Nim: step = step.chain(fixIdioms(path, step.source))
+    for fixer in [fixSpacing, fixWrapping]: step = step.chain(fixer(path, step.source))
+    if step.source == result.source: break
+    result = result.chain(step)
 
 
 func fixEntries*(

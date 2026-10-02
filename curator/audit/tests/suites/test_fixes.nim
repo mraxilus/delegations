@@ -16,6 +16,13 @@ const
     ## Contributor branch confined to `ALPHA_DIRECTORY`.
   DIRTY = "## Do.\nimport ./[b, a]\nimport std/os \n\nlet x = 1 # One.\nlet y = 2\n\n\n"
     ## Nim source breaking every rule with fixer: import, bindings, pragma, gap, ending.
+  LAYOUT =
+    "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/os\nimport std/strutils\n\n\n" &
+    "#[ Section ]#\n\n" &
+    "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
+    "proc g(\n    a: int\n) = discard\n" &
+    "let x = foo(\n  1,\n  2,\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    ## Nim source breaking each layout rule `checkFormatting` holds, and no wired check.
 
 
 suite "Fixes":
@@ -69,6 +76,33 @@ suite "Fixes":
       plan = fixEntries(CURATOR_BRANCH, [clean])
     check plan.written.len == 0 and plan.fixed.len == 0 and plan.refused.len == 0
     check fixEntries(CURATOR_BRANCH, [entry("a.bin", "x \n")]).written.len == 0  # kind unread
+
+  test "layout checks wait outside static pass, and fix clears every one in one run":
+    let path = "curator/audit/src/a.nim"
+    check checkForm(path, LAYOUT, Kind.Nim.rule).len == 0  # static pass reads none of them
+    check checkIdioms(path, LAYOUT).len == 0
+    let found = checkFormatting(path, LAYOUT, Kind.Nim)
+    for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
+                 "share one bracket", "alphabetised", "Named argument"]:
+      check found.anyIt(rule in it.message)  # each rule reported
+    let (written, fixed, refused) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
+    check refused.len == 0 and written.len == 1
+    check checkFormatting(path, written[0].content, Kind.Nim).len == 0  # all cleared
+    check checkForm(path, written[0].content, Kind.Nim.rule).len == 0  # nothing new
+    check checkIdioms(path, written[0].content).len == 0
+    check fixEntries(CURATOR_BRANCH, written).written.len == 0  # second run writes nothing
+    check written[0].content == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/[os, strutils]\n" &
+      "\n\n\n#[ Section ]#\n\n" &
+      "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
+      "proc g(a: int) = discard\n" &
+      "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
+    check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
+
+  test "layout checks read Nim syntax; import and list checks read `.nim` alone":
+    let breach = "import std/os\nimport std/strutils\nlet a = b+c\n"
+    check checkFormatting("a.nims", breach, Kind.NimScript).mapIt(it.message).allIt("X.9" in it)
+    check checkFormatting("a.nim", breach, Kind.Nim).len == 2  # brackets too
+    check checkFormatting("a.md", breach, Kind.Markdown).len == 0
 
   test "fix writes Nim kinds alone, the one language with guide; checks read every kind":
     let
