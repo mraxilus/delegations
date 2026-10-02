@@ -212,6 +212,21 @@ suite "Idiom fixes":
     let foreign = "{.push importc.}\nproc f()\n{.pop.}\n"
     check fixed("## Do.\n\n" & foreign).source == "## Do.\n" & strict & foreign  # push opens body
 
+  test "strictFuncs after imports moves where X.6 puts directives, as check reads it":
+    let
+      late = "## Do.\n\nimport std/os\n\n" & STRICT_FUNCS & "\n\n\nlet a = 1\n"
+      fix = fixed(late)
+    check "got it after" in messages("a.nim", late)[0]
+    check fix.source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/os\n\n\nlet a = 1\n"
+    check fix.fixed.mapIt(it.line) == @[5]  # line check names
+    check fix.source.isSettled
+    let glued = "## Do.\n\nimport std/os\n" & STRICT_FUNCS & "\nlet a = 1\n"
+    check fixed(glued).source == "## Do.\n\n" & STRICT_FUNCS & "\n\nimport std/os\nlet a = 1\n"
+    let pushed =
+      "## Do.\n\n{.push importc.}\nproc f()\n{.pop.}\nimport std/os\n" & STRICT_FUNCS & "\n"
+    check fixed(pushed).source ==
+      "## Do.\n\n" & STRICT_FUNCS & "\n\n{.push importc.}\nproc f()\n{.pop.}\nimport std/os\n"
+
   test "adjacent imports of one directory share one bracket; bracket of one module drops":
     let
       apart =

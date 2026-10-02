@@ -32,7 +32,9 @@
 ##   - Run of single bindings becomes keyword alone, then each binding indented two spaces;
 ##     lines continuing last binding (open bracket, deeper indent, doc under it) move too.
 ##   - Missing `strictFuncs` goes where X.6 puts directives: before first code line that is
-##     neither directive nor testament header, i.e. after header docs and design notes.
+##     neither directive nor testament header, i.e. after header docs and design notes. One
+##     standing after first import moves there; blank lines above it go with it where blank
+##     lines stand below it, so code after it keeps blank lines it had.
 ##   - `return result` ending routine that holds `result`, at its body's own indent, goes, with
 ##     blank lines opening its paragraph; inside branch, or before more body, it becomes bare
 ##     `return`. Both exit with same value, and §5 keeps `return` for early exit alone.
@@ -42,10 +44,9 @@
 ##   No fixer: import ranked low across lines that are not imports, since where it lands and
 ##     what blank lines surround it are both choices; bracket holding comment, since comment
 ##     belongs to item or to slot; run whose last binding opens long string, since indenting
-##     its lines changes string; `strictFuncs` after imports, which is move rather than one
-##     insertion and waits for its own rule; `{.used.}` consumer, `{.push.}` scope, random
-##     seed, stub header, debug output, machine path and TypeScript flags, since each needs
-##     knowledge text does not hold.
+##     its lines changes string; `{.used.}` consumer, `{.push.}` scope, random seed, stub
+##     header, debug output, machine path and TypeScript flags, since each needs knowledge
+##     text does not hold.
 ##   No fixer, and check silent: import with `except`, `as`, pragma but `{.all.}`, comment or
 ##     string, statement spanning lines, and imports apart across blank line, since merging
 ##     them is choice; list whose order may mean, i.e. pragma statement opening line and list
@@ -374,17 +375,19 @@ func checkTest(path, source: string, lines, code: seq[string]): seq[Finding] =
       )
 
 
+func firstImport(code: seq[string]): int =
+  ## Find zero-based line of first `import`, `include` or `from` at module level; `-1` if none.
+  for i, c in code:
+    if c.startsWith(IMPORT_MARK) or c.startsWith("include ") or c.startsWith("from "): return i
+  -1
+
+
 func checkIdioms*(path, source: string): seq[Finding] =
   ## Report Nim source breaking one-line idiom of STYLE.md or Article X.5.
   let
     lines = source.splitLines
     code = source.codeOnly.splitLines
-  let strict_at = lines.find(STRICT_FUNCS)
-  var import_at = -1
-  for i, c in code:
-    if c.startsWith(IMPORT_MARK) or c.startsWith("include ") or c.startsWith("from "):
-      import_at = i
-      break
+  let (strict_at, import_at) = (lines.find(STRICT_FUNCS), code.firstImport)
   if strict_at < 0:
     result.add finding(
       path, 0, "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none."
@@ -683,11 +686,26 @@ func fixBindings(path, source: string): Fix =
 
 
 func fixStrictFuncs(path, source: string): Fix =
-  ## Insert missing `strictFuncs` where X.6 puts directives, one blank line on each side.
+  ## Insert missing `strictFuncs` where X.6 puts directives, one blank line on each side; move
+  ##   one standing after first import there, as check reads it.
+  ##   Line moved takes blank lines above it along where blank lines stand below it too, so
+  ##     code after it keeps blank lines it had.
   result.source = source
-  let lines = source.split('\n')
-  if lines.find(STRICT_FUNCS) >= 0: return
-  let code = source.codeOnly.split('\n')
+  var
+    lines = source.split('\n')
+    origin = toSeq(1 .. lines.len)
+    reported = 0
+  let present = lines.find(STRICT_FUNCS)
+  if present >= 0:
+    let import_at = source.codeOnly.split('\n').firstImport
+    if import_at < 0 or present < import_at: return
+    var first = present
+    if present + 1 < lines.len and lines[present + 1].len == 0:
+      while first > 0 and lines[first - 1].len == 0: dec first
+    lines = lines[0 ..< first] & lines[present + 1 .. ^1]
+    origin = origin[0 ..< first] & origin[present + 1 .. ^1]
+    reported = present + 1
+  let code = lines.join("\n").codeOnly.split('\n')
   var at = -1
   for i, c in code:
     # Skip text, directives and testament header; `{.push.}` opens body of foreign bindings.
@@ -706,8 +724,8 @@ func fixStrictFuncs(path, source: string): Fix =
   inserted.add STRICT_FUNCS
   if at >= 0 or cut == lines.len: inserted.add ""
   result.source = (lines[0 ..< cut] & inserted & lines[cut .. ^1]).join("\n")
-  result.origin = toSeq(1 .. cut) & inserted.mapIt(0) & toSeq(cut + 1 .. lines.len)
-  result.fixed.add finding(path, 0, "strictFuncs (STYLE.md §2) fixed")
+  result.origin = origin[0 ..< cut] & inserted.mapIt(0) & origin[cut .. ^1]
+  result.fixed.add finding(path, reported, "strictFuncs (STYLE.md §2) fixed")
 
 
 func disorders(source: string): seq[Disorder] =
