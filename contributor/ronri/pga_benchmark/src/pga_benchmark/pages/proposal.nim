@@ -10,7 +10,8 @@
 ##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
 ##     whose file is absent renders as its text, and `drive` names it.
 ##
-##   Cost: whole-file replacement renders collapsed, since hundreds of lines would bury claims.
+##   Cost: every edit renders closed, with signatures it defines or sits in, since hundreds of
+##     lines would bury claims; reader opens edit to read its code.
 
 {.experimental: "strictFuncs".}
 

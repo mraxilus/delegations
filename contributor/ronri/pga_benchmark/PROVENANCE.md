@@ -520,6 +520,12 @@ page is built from it.
 the faces draw U+0332 after the letter. In code, ★ comes from the math face as ☆ does, because
 the mono face draws ★ smaller.
 
+**Every edit renders closed**, as the Architect asked. Its summary names the file and line at
+pin, and how many lines the edit replaces. It lists the signatures of the routines, tests and
+suites that the edit defines, with no body, pragma or comment. An edit that defines none names
+the routine that it sits in at pin, and an edit at top level names none. So a reader sees what
+changes before the edit opens.
+
 **The docket draws each measure as one bar off its lower bound**, as the Architect chose.
 Multiplies, bytes moved and time each give one bar from ×1 to the library over the lower
 bound that the row is measured against. A typed row is measured against its reference, and a
@@ -564,8 +570,11 @@ ratios, and the chip that names removed NaN results. It covers the lower bound e
 is measured against, and a general row timed against its dense form. It covers the median of
 run ratios with one tick for each run, and a reference that spends none. It covers the rule
 that reads each dropdown option, the classes of each row, and the split of a typed id. It
-covers the words each row is found by, and the shell rule that hides a row not found. Suite
-`Figures` covers the path a figure resolves, the SVG a page embeds, and every rule on the map.
+covers the words each row is found by, and the shell rule that hides a row not found.
+
+Suite `Figures` covers the path a figure resolves, the SVG a page embeds, and every rule on the
+map. Suite `Edits` covers the closed edit, the signatures it defines or sits in, and a header that
+closes at its own indent.
 
 ## Library head
 

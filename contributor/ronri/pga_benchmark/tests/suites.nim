@@ -1150,6 +1150,49 @@ suite "Figures":
       check rule in MAP  # each of four rules marks its arrow or box
 
 
+suite "Edits":
+  const SOURCE = "func outer*(a: int;\n    b: int): int {.inline.} =\n  ## Doc.\n" &
+    "  for x in 0 ..< a:\n    result += x\n\nimport std/math\n"
+    ## Library file at pin: routine whose signature spans two lines, then top-level import.
+
+  func edit(quote, replacement: string; digest = ""): Change =
+    ## Build change of one edit to `pga/a.nim`.
+    Change(edits: @[Edit(path: "pga/a.nim", quote: quote, replacement: replacement,
+      digest: digest)])
+
+  let files = {"pga/a.nim": SOURCE}.toTable
+    ## Library files edits read their line and context from.
+
+  test "edit renders closed, naming routine it sits in at pin":
+    let html = editsHtml(edit("    result += x\n", "    result -= x\n"), files)
+    check html.startsWith("<details class=\"edit\"><summary>") and " open" notin html  # closed
+    check "<code>pga/a.nim:5</code> · replaces 1 line with 1" in html  # where, and how much
+    check "inside</span><code>func outer*(a: int; b: int): int</code>" in html  # joined, bare
+
+  test "edit inside routine whose header closes at its own indent names that routine":
+    let
+      source = "macro define(\n  symbols: string;\n): untyped =\n  ## Doc.\n  var x = 1\n"
+      html = editsHtml(edit("  var x = 1\n", "  var x = 2\n"), {"pga/a.nim": source}.toTable)
+    check "inside</span><code>macro define(symbols: string): untyped</code>" in html  # as pga
+
+  test "edit that defines routines lists their signatures, nested ones left out":
+    let
+      replacement = "func added(x: int): int =\n  func helper(): int = 1\n  x + helper()\n\n" &
+        "test \"adds\":\n  check added(1) == 2\n"
+      html = editsHtml(edit("import std/math\n", replacement), files)
+    check "defines</span><code>func added(x: int): int</code><code>test &quot;adds&quot;</code>" in
+      html  # outer routine and test, body dropped
+    check "helper" notin html.split("</summary>")[0]  # nested routine stays in body
+
+  test "whole-file replacement lists top-level signatures, operators and pragmas kept apart":
+    let
+      replacement = "func `==`(a, b: Order): bool {.borrow.}\nproc b*(x: int) =\n  discard\n"
+      html = editsHtml(edit("", replacement, "abc"), files)
+    check "<code>func `==`(a, b: Order): bool</code><code>proc b*(x: int)</code>" in html  # bare
+    check "class=\"signatures\"" notin editsHtml(edit("import std/math\n", "import std/os\n"),
+      files)  # top-level statement sits in no routine
+
+
 suite "Cells":
   test "table reads cell for cell, sign included, in both cell shapes":
     let wedge = cells(CAYLEYS_WEDGE.base)
