@@ -249,7 +249,7 @@ proc runHook(root, event, input: string): int =
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
-      if not turn.calls.turnWrites: return 0
+      if not turn.calls.isWritingTurn: return 0
       let found = checkSignoff(turn.text, branch)
       if found.len == 0: return 0
       echo %*{"decision": "block", "reason": "End this turn with sign-off block (GUIDE.md, " &

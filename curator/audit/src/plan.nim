@@ -75,7 +75,7 @@ func testSet*(directories, paths: openArray[string]): seq[string] =
   result.sort
 
 
-func holds(tree: Tree, directory, name: string): bool =
+func isHolding(tree: Tree, directory, name: string): bool =
   ## Decide whether project directory holds file of that name.
   let path = directory & "/" & name
   for e in tree:
@@ -89,7 +89,7 @@ func nodeDirectories*(tree: Tree, directories: openArray[string]): seq[string] =
   ##   Lock is demanded beside manifest, since `npm ci` needs one and unpinned tools would
   ##   be only thing here nothing pins.
   for directory in directories:
-    if tree.holds(directory, NODE_MANIFEST) and tree.holds(directory, NODE_LOCK):
+    if tree.isHolding(directory, NODE_MANIFEST) and tree.isHolding(directory, NODE_LOCK):
       result.add directory
 
 

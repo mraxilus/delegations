@@ -142,7 +142,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
     )
 
 
-func serves*(pin: string, compiler: Compiler): bool =
+func isServedBy*(pin: string, compiler: Compiler): bool =
   ## Decide whether compiler is one pin names, by commit or by version.
   pin == (if pin.isCommit: compiler.commit else: compiler.version)
 

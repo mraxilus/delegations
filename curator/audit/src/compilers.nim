@@ -178,9 +178,9 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   ##   `none` is failure; `some("")` names compiler on PATH, which CI installs per job and
   ##   so always takes first branch. Two outcomes stay apart, since empty string means
   ##   PATH everywhere else here and would otherwise read as success.
-  if pin.serves(running): return some("")
+  if pin.isServedBy(running): return some("")
   let bin = binOf(root, pin)
-  if pin.serves(compilerAt(bin / NIM)): return some(bin)
+  if pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
   let directory = root / pin
   createDir(root)
   echo "== fetching Nim " & pin
@@ -191,6 +191,6 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
       else: fetchRelease(pin, platform, directory)
 
   # Fetched compiler is asked what it is: wrong tarball or half-built tree is not toolchain.
-  if is_built and pin.serves(compilerAt(bin / NIM)): return some(bin)
+  if is_built and pin.isServedBy(compilerAt(bin / NIM)): return some(bin)
   removeDir(directory)
   none(string)

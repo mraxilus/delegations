@@ -35,7 +35,7 @@ func withoutSpans(line: string): string =
 func diaryReference*(line: string): string =
   ## Read first diary reference line carries outside code; empty when none.
   let text = line.withoutSpans
-  if text.hasIsoDate:
+  if text.isDated:
     for i in 0 .. text.len - 10:
       if text[i ..< i + 10].isIsoDate: return text[i ..< i + 10]
   for i, c in text:

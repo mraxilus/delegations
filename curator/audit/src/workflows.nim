@@ -50,15 +50,15 @@ const
     ## Text that hands `gh` some token; which one, `RUN_TOKEN_MARKS` tells.
 
 
-func usesRunToken(workflow: string): bool =
+func isRunTokenUsed(workflow: string): bool =
   ## Whether some step of workflow holds run token, by text of `RUN_TOKEN_MARKS`.
   for mark in RUN_TOKEN_MARKS:
     if mark in workflow: return true
 
 
-func handsGhOtherToken*(workflow: string): bool =
+func isOtherTokenHanded*(workflow: string): bool =
   ## Whether `gh` holds token other than run token in every step, so block binds no `gh` mark.
-  TOKEN_KEY in workflow and not workflow.usesRunToken
+  TOKEN_KEY in workflow and not workflow.isRunTokenUsed
 
 
 func permissionScopes*(workflow: string): Option[seq[string]] =
@@ -85,7 +85,7 @@ func checkScopes*(path, workflow: string): seq[Finding] =
   ## Report scope workflow's steps use that its own `permissions` block leaves out.
   let granted = workflow.permissionScopes
   if granted.isNone: return
-  let is_other_token = workflow.handsGhOtherToken
+  let is_other_token = workflow.isOtherTokenHanded
   var reported: seq[string]
   for (scope, mark) in SCOPE_MARKS:
     if mark notin workflow or scope in granted.get or scope in reported: continue

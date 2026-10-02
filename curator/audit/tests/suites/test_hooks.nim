@@ -160,10 +160,10 @@ suite "Hooks":
     check "1. one" in text and "## Sign-off" in text
     check "outside grammar" in startContext("claude/x", "", "## List", @[])
     check "re-stamp" in startContext("curator/x", "", "## List", @[finding("", 0, "d")])
-    check turnWrites([Call(name: "Bash", command: "git push -u origin x")])
-    check turnWrites([Call(name: "mcp__github__issue_write", has_body: true)])
-    check not turnWrites([Call(name: "mcp__github__update_pull_request")])  # draft toggle
-    check not turnWrites([Call(name: "Bash", command: "git status"), Call(name: "Read")])
+    check isWritingTurn([Call(name: "Bash", command: "git push -u origin x")])
+    check isWritingTurn([Call(name: "mcp__github__issue_write", has_body: true)])
+    check not isWritingTurn([Call(name: "mcp__github__update_pull_request")])  # draft toggle
+    check not isWritingTurn([Call(name: "Bash", command: "git status"), Call(name: "Read")])
 
   test "transcript parse finds calls since last message of person":
     const transcript =
@@ -177,4 +177,4 @@ suite "Hooks":
     let turn = transcript.parseTurn
     check turn.calls.len == 1 and turn.calls[0].command == "git push"
     check turn.text.startsWith("Done.")
-    check turn.calls.turnWrites
+    check turn.calls.isWritingTurn

@@ -71,7 +71,7 @@ suite "Toolchain":
 
   test "pin is served by commit for commit, by version otherwise":
     let running = Compiler(version: PIN, commit: COMMIT)
-    check PIN.serves(running)  # version pin reads version
-    check COMMIT.serves(running)  # commit pin reads hash
-    check not "2.2.6".serves(running)  # another version does not
-    check not COMMIT.serves(Compiler(version: PIN))  # compiler reporting no hash serves none
+    check PIN.isServedBy(running)  # version pin reads version
+    check COMMIT.isServedBy(running)  # commit pin reads hash
+    check not "2.2.6".isServedBy(running)  # another version does not
+    check not COMMIT.isServedBy(Compiler(version: PIN))  # compiler reporting no hash serves none

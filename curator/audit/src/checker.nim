@@ -280,7 +280,7 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
     )
 
 
-func runPrefix(text: string, at: int): bool =
+func isCommandAt(text: string, at: int): bool =
   ## Decide whether `koch` at index is run as command: after `./`, after code span's opening
   ##   backtick, or after `nim r` and options only.
   if at >= 2 and text[at - 2 .. at - 1] == "./": return true
@@ -300,7 +300,7 @@ func mentionedVerbs*(source: string): seq[(int, string)] =
       var j = at + KOCH_MARK.len
       while j < line.len and line[j] in VERB_CHARS: inc j
       let verb = line[at + KOCH_MARK.len ..< j]
-      if verb.len > 0 and verb[0] in {'a'..'z'} and line.runPrefix(at):
+      if verb.len > 0 and verb[0] in {'a'..'z'} and line.isCommandAt(at):
         result.add (number, verb)
       at = line.find(KOCH_MARK, j)
 
