@@ -1364,24 +1364,6 @@ beside a far star. It is never written in the clip position. The clipper interpo
 coordinates linearly. It cut a corner behind the eye beside its front corner, and the disc ended
 at a hard chord.
 
-**The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
-`picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
-dollies about the middle of the frame, or travels the pointer's own ray in free flight. To point at
-something means *that thing, at the depth it stands at*. Rejected: the ground at `z = 0`, which
-the world does not have, and the level through the pivot, which names no place a reader points at.
-
-**The object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the orbit
-distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the way
-toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with the
-window. Horizon objects are refused, because they are at no place. The price is the jump: two
-notches taken either side of the edge of an object converge on different depths.
-
-`camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
-the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
-scale applied is read back from `distanceHeld`, so a zoom stopped by the floor moves the eye by
-exactly what it was allowed. **A pinch stays centred**, because the two-finger gesture already
-pans by the travel of its midpoint.
-
 **Keys move by shared rates for each second**: `TURN_SECOND` 1.4, `RISE_SECOND` 1.1,
 `ROLL_SECOND` 1.4, `FACTOR_DOLLY_SECOND` 4.0, and `FACTOR_HASTE` 4.0 under shift. Each frame
 scales them by the elapsed time, so a hold covers the same ground at 60 Hz and at 144 Hz. The
@@ -1423,14 +1405,62 @@ Verified by driven checks:
 
 - the sky is drawn behind a far star;
 - the disc of the ecliptic reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up;
-- an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
-  pivot-level anchor;
 - an anchor lookup takes 3.750 µs, against 488.250 µs keyed on the read-out pivot and angles;
-- a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - the view section shows sixteen coefficients, and a typed one settles on a unit motor;
 - it reads speed with nothing selected, and distance with a selection.
 
 Assumed: that no reader wants a ceiling on the separation.
+
+## Zoom
+
+**The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
+`picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
+dollies about the middle of the frame, or travels the pointer's own ray in free flight. To point at
+something means *that thing, at the depth it stands at*. Rejected: the ground at `z = 0`, which
+the world does not have, and the level through the pivot, which names no place a reader points at.
+
+**The object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the orbit
+distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the way
+toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with the
+window. Horizon objects are refused, because they are at no place. The price is the jump: two
+notches taken either side of the edge of an object converge on different depths.
+
+**The zoom stops where a point fills the frame.** Nearer shows nothing more of it. There its
+sphere reaches every corner, and the point is backdrop; see Picking. `picking.depthFilling` solves
+that depth, as the inverse of `coversView`. The wheel takes it as the floor of a point in both
+states (`AnchorZoom.floor_reach`). `framing.holdFilled` holds it for a point picked alone under
+every other move: a drag, a key and a pinch.
+
+The fill is a depth along the sight, and the wheel floors a reach. A move of the eye on its line to
+the anchor scales both by one factor. So the floor is the fill times the reach over the depth.
+Rejected: the fill as the reach. Under it, a point 17° off the middle stops 4% nearer than the
+fill. The hold then carries the eye back along its sight, off the line of the pointer.
+
+The hold takes a point picked alone. With more picked, the frame rule holds the group, and only
+the wheel stops at the fill of a point. In free flight nothing is picked to hold, so flight goes on
+into the point. Rejected: the drawn radius as the floor of a point. The wheel then goes on past the
+fill to the surface, and nothing more of the point shows.
+
+`camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
+the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
+scale applied is read back from `distanceHeld`. So a zoom stopped by the floor of the orbit
+distance moves the eye by exactly what it was allowed. **A pinch stays centred**, because the
+two-finger gesture already pans by the travel of its midpoint.
+
+*Checked.* Verified by `suites.nim`:
+
+- 40 notches with a selection onto a point stop where its sphere fills the frame;
+- off the middle, 40 notches stop at the depth of the fill in both states, with the point
+  0.5 px or less from the pointer;
+- a point picked alone is held at the fill from half of it, and left where it stands from 19.
+
+Verified by driven checks:
+
+- an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
+  pivot-level anchor;
+- a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
+- 40 notches onto a point picked alone stop at a depth of 0.115882196, against a fill of
+  0.115882251 read through float32. Ten more notches move the eye 0.
 
 ## Free flight
 
@@ -1539,8 +1569,9 @@ the pointer, as it does with a selection.
 
 Where an object stands under the pointer, `travelToward` carries the eye along its line to that
 object and holds it on its pixel. The floor is the object's drawn radius, so a run of notches stops
-at its surface. Where nothing stands there, `headingThrough` gives the ray and the eye travels it.
-The separation then scales as the turntable's dolly scales it.
+at its surface. The floor of a point is further out, where its sphere fills the frame; see Zoom.
+Where nothing stands there, `headingThrough` gives the ray and the eye travels it. The separation
+then scales as the turntable's dolly scales it.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -1557,7 +1588,7 @@ The separation then scales as the turntable's dolly scales it.
 - a held `w` with nothing selected lies along the sight, and spends the separation it covers;
 - a strafe leaves that separation alone;
 - the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
-- 40 notches onto a point stop at its drawn radius, with the point held on its pixel;
+- 40 notches onto a point stop where its sphere fills the frame, with the point held on its pixel;
 - the frustum takes its scale from the nearest drawn object, and hands it back at zero;
 - the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
 - the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
@@ -2173,15 +2204,22 @@ that it draws as. The horizon plane matches every ray, so it comes last. The ext
 `algebraFilled`, which is the one derivation point. Built fieldwise, a horizon point was silently
 unpickable with its multivector twins zero.
 
-**The sky is a click and hold target, and never a drag handle. So is a plane that fills the
-view.** With a horizon plane visible the cursor is over *something* almost everywhere. A press on
-empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
-reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
+**The sky is a click and hold target, and never a drag handle. So is a plane or a point that
+fills the view.** With a horizon plane visible the cursor is over *something* almost everywhere.
+A press on empty space becomes a camera move precisely because nothing was hovered. A finite plane
+whose disc reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
 
 Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. Rejected:
 the longer side, 1200 px, under which a plane covering the whole window still reads as a handle.
 
-`isBackdropUnder` folds both cases into one answer, which `beginDrag`, `destinationOf` and
+A point fills the frame as the zoom comes in to it, and its drawn sphere is held to the same
+corners (`mesh.radiusDrawnAt`). Rejected: a point that is always a handle. Zoomed in until it
+covers the frame, it leaves no glass to press, and every press on it arms a drag.
+
+`SLACK_COVERED` 1e-9 lets a disc fall that fraction short of the corners and still cover. An eye
+held at the fill stands one ulp short of it, and a bare `>=` reads the point there as a handle.
+
+`isBackdropUnder` folds every case into one answer, which `beginDrag`, `destinationOf` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears
 the selection. A tap still treats it as empty space. A tap on empty space is the only way a finger
 has to dismiss a selection. Touch reaches the sky by a long press.
@@ -2217,6 +2255,8 @@ the source and the destination. A removal of an object clears the highlight on b
 - a horizon point picked;
 - the disc bound sampled from inside the view;
 - the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
+- a point reads as backdrop at 0.8 of its fill depth, and as a handle at 1.25 of it and at 1,000
+  units;
 - a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner
   750 px from the middle.
 
@@ -2224,7 +2264,8 @@ Verified by a handle-for-handle map: 4,914 cursor positions across three cameras
 1,024 objects. They answered identically before and after the placement and copy changes. Verified
 by driven checks on both builds: a drag of bare sky turns the view and builds nothing, and a click
 on it selects it. The camera was dropped onto the ground plane, and a left-drag orbited without
-building.
+building. On the page, a point picked alone reads as backdrop at its fill, and as a handle one
+notch out. A right drag of 180 px on it moves the view and builds nothing.
 
 Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, and from 15.4 to
 4.7 ms at 10,000. A hover pick is 0.7, 1.6 and 3.5 ms at 60, 360 and 5,038.
