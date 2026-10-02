@@ -6,6 +6,9 @@
 ##   library's conformal norms return NaN on real objects and that is measured, not stated.
 ##   Operands are aliases into pools (template, never `let`), so loop reads pool slot and
 ##   writes result slot: what moves is operation's own traffic.
+##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
+##     drop each zero store that inlined operation repeats, and so time fewer stores than any
+##     caller pays.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
@@ -166,7 +169,7 @@ macro emitMeasurand(
   quote do:
     block:
       var
-        results: array[OBJECTS, typeof(block:
+        results {.noinit.}: array[OBJECTS, typeof(block:
           let
             `m` {.used.} = `pool_m`[0]  # Read by `body`.
             `n` {.used.} = `pool_n`[0]  # Read by `body` of binary measurand; unary leaves it.
