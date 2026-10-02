@@ -135,9 +135,9 @@ suite "faces":
     check style.count("data:font/woff2;base64,") == faces.FACES.len
     check "http" notin style  # names no host page would have to reach (X.8)
 
-  test "all three families are named, and ligatures are kept on":
+  test "every family is named, and ligatures are kept on":
     let style = faceStyle(directory)
-    for family in ["Noto Serif", "Noto Sans", "Commit Mono"]:
+    for family in ["Noto Serif", "Noto Sans", "Commit Mono", "Noto Sans Math"]:
       check ("font-family:\"" & family & "\"") in style
     # Commit Mono carries its ligatures in `calt`, on by default until something
     # sets this property; setting it at root means no later reset can lose them.
@@ -190,3 +190,26 @@ suite "faces":
         checkpoint(selector)
         let families = stackOf(sheet, selector)
         check families.len > 0 and families[0] == "Noto Serif"
+
+
+  test "every stack falls back to faces that draw what its own face lacks":
+    ## Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`, read with
+    ##   fontconfig 2.15.0 on 2026-10-02 from files of store's digests.  So pages drew
+    ##   five arrows from whatever face their reader's machine had (repository issue 391).
+    ##   Noto Sans Math draws all five, and Commit Mono draws `✓`, which other three lack.
+    for (sheet, selectors) in [
+      (page.STYLE.stylesOf, @["body", "h1", "code"]),
+      (readFile(PATH_APP).stylesOf, @["body", "h1"]),
+      (readFile(PATH_REVIEW).stylesOf, @["body", "h1", "code"]),
+      (readFile(PATH_WHOLECLOTH).stylesOf, @["body", "h1", ".m"]),
+    ]:
+      for selector in selectors:
+        checkpoint(selector)
+        let families = stackOf(sheet, selector)
+        check families.len >= 3 and families[1] == "Noto Sans Math"
+        if families.len >= 3 and families[0] != "Commit Mono":
+          check families[2] == "Commit Mono"
+    for stack in [faces.SERIF, faces.SANS_SERIF, faces.MONOSPACE]:
+      checkpoint(stack)
+      let families = familiesOf(stack)
+      check families.len >= 3 and families[1] == "Noto Sans Math"
