@@ -691,7 +691,7 @@ func coversView*(
 ): bool =
   ## Report whether disc of `radius` about `centre` reaches every corner of frame.
   ##   Cursor over such disc has no empty glass beside it to press instead, so it is
-  ##   treated as backdrop; see `isBackdropUnder`.
+  ##   treated as backdrop; see `isBackdropUnder`. Plane's disc or point's sphere alike.
   ##   Half of diagonal is reach from middle of frame to furthest corner, which is what
   ##   covering every pixel asks for. Longer side was asked for before, which is 1.6 times
   ##   that on 4:3 frame: plane covering whole window still read as drag handle, and view
@@ -705,14 +705,22 @@ func coversView*(
 func isBackdropUnder*(
   scene: Scene, handle: int, scale: DrawExtent, width, height: int
 ): bool =
-  ## Report whether hovered object is backdrop: horizon plane, or plane filling view.
+  ## Report whether hovered object is backdrop: horizon plane, or plane or point filling view.
   ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
+  ##   Point fills view as reader zooms into it, and then left no glass to press: drag
+  ##   armed on it, and view could come no nearer. Judged by sphere drawn, as plane is by
+  ##   disc; see `mesh.radiusDrawnAt`.
   let geometry = scene.geometryOf(handle)
   if geometry.isHorizonPlane: return true
-  if kindOf(geometry) != some(Kind.Plane): return false
+  let shaped = kindOf(geometry)
+  if shaped != some(Kind.Plane) and shaped != some(Kind.Point): return false
   let anchor = anchorFor(geometry, scene.anchorOverrideAt(handle), scale)
-  anchor.isSome and coversView(anchor.get, EXTENT_PLANE_F, scale, width, height)
+  if anchor.isNone: return false
+  let radius =
+    if shaped == some(Kind.Plane): EXTENT_PLANE_F
+    else: radiusDrawnAt(scene.radiusAt(handle), anchor.get, scale.scale)
+  coversView(anchor.get, radius, scale, width, height)
 
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
