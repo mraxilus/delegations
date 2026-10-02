@@ -193,6 +193,10 @@ suite "Internal: Configuration":
       check ALGEBRA_NAME == "rga4d"  # 3D Euclidean rigid, default of nim.cfg
     when DIMENSIONS == 5 and IS_CONFORMAL:
       check ALGEBRA_NAME == "cga5d"  # 3D Euclidean conformal
+    when DIMENSIONS == 3 and IS_RIGID:
+      check ALGEBRA_NAME == "rga3d"  # 2D Euclidean rigid
+    when DIMENSIONS == 4 and IS_CONFORMAL:
+      check ALGEBRA_NAME == "cga4d"  # 2D Euclidean conformal
 
 
 suite "Internal: Surface":
