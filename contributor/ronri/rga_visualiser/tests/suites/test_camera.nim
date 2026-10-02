@@ -1035,6 +1035,54 @@ suite "Camera":
     interaction.grabPan(camera)
     check interaction.depth_pan =~ camera.distance
 
+  test "a right drag with a selection carries the point it holds under the pointer":
+    # Fault: rates stood here, fixed angle and fixed factor for each pixel, which matched
+    #   cursor nowhere. Point held is one left drag's orbit holds, on sphere about pivot.
+    #   Vertical stretches from pivot's row, so away from row zooms in on either side.
+    const (wide, tall) = (1440, 900)
+    let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+    let steps = [
+      # Above row and away from it, off middle column, so orbit takes back what dolly spread.
+      (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 760.0, y: 260.0), true),
+      # Above row, toward it and across.
+      (ScreenPosition(x: 800.0, y: 280.0), ScreenPosition(x: 700.0, y: 360.0), false),
+      # Below row and away from it.
+      (ScreenPosition(x: 650.0, y: 560.0), ScreenPosition(x: 690.0, y: 640.0), true),
+    ]
+    for (before, after, is_closer) in steps:
+      var camera = opening
+      let
+        (eye, axes) = camera.sight
+        held = pointHeld(
+          eye, camera.pivot, camera.headingThrough(axes, wide, tall, before),
+          camera.radiusHeld(wide, tall, 0.0),
+        )
+      camera.panAcross(before, after, tall, has_selection = true, depth_held = 19.0)
+      let seen = projectToScreen(
+        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
+      )
+      check seen.isInFront
+      check abs(seen.x - after.x) < 0.01
+      check abs(seen.y - after.y) < 0.01
+      check camera.pivot =~ opening.pivot
+      check (camera.distance < opening.distance) == is_closer
+    # Inside band about row, vertical is dropped: no zoom, and held point keeps its height.
+    var level = opening
+    let
+      (eye, axes) = level.sight
+      (before, after) = (ScreenPosition(x: 700.0, y: 440.0), ScreenPosition(x: 760.0, y: 430.0))
+      held = pointHeld(
+        eye, level.pivot, level.headingThrough(axes, wide, tall, before),
+        level.radiusHeld(wide, tall, 0.0),
+      )
+    level.panAcross(before, after, tall, has_selection = true, depth_held = 19.0)
+    let seen = projectToScreen(
+      level.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
+    )
+    check level.distance =~ opening.distance
+    check abs(seen.x - after.x) < 0.01
+    check abs(seen.y - before.y) < 0.01
+
   test "a right drag with a selection zooms down the frame and orbits across it":
     const tall = 900
     let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
