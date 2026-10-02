@@ -446,7 +446,7 @@ func captionWindow*(): string =
   NAME_AUTHORITY & " — " & $wordingText(NameTitle)
 
 
-func namesControl*(key: Wording): bool =
+func isNamingControl*(key: Wording): bool =
   ## Report whether `key` names control rather than carrying prose.
   ##   Read from key's own first word, which enum's doc above fixes: key added without kind
   ##   in its name is caught by suite rather than classified wrongly in silence.
@@ -457,13 +457,13 @@ func namesControl*(key: Wording): bool =
 
 func isHelpCell*(key: Wording): bool =
   ## Report whether `key` is cell of help table rather than sentence or label.
-  ##   Read from key's first word, as `namesControl` is. Cell is fragment reader reads across
+  ##   Read from key's first word, as `isNamingControl` is. Cell is fragment reader reads across
   ##   its row -- no capital opens it and no full stop closes it -- so suite holds it to
   ##   neither shape, and to its own.
   ($key).startsWith("Help")
 
 
-func hasWords*(key: Wording): bool =
+func isCarryingWords*(key: Wording): bool =
   ## Report whether `key` carries words worth showing.
   ##   For suite, which holds every key to it: empty entry would draw empty tooltip, which is
   ##   worse than none at all.

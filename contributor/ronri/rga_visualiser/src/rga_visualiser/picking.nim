@@ -692,7 +692,7 @@ proc pickNearest*(
   pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).handle
 
 
-func coversView*(
+func isCoveringView*(
   centre: Position, radius: float, scale: DrawExtent, width, height: int
 ): bool =
   ## Report whether disc of `radius` about `centre` reaches every corner of frame.
@@ -710,7 +710,7 @@ func coversView*(
 
 func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float =
   ## Solve depth along sight at which disc of `radius` reaches every corner of frame.
-  ##   Inverse of `coversView`: nearer, disc covers frame; further, corners stand bare.
+  ##   Inverse of `isCoveringView`: nearer, disc covers frame; further, corners stand bare.
   ##   Where zoom toward point stops: nearer shows nothing more of it, and there it is
   ##   backdrop, so every press moves view. See `framing.holdFilled`.
   ##   One pixel spans `2*depth*tan(half field)/height`, and half diagonal reaches corner.
@@ -736,7 +736,7 @@ func isBackdropUnder*(
   let radius =
     if shaped == some(Kind.Plane): EXTENT_PLANE_F
     else: radiusDrawnAt(scene.radiusAt(handle), anchor.get, scale.scale)
-  coversView(anchor.get, radius, scale, width, height)
+  isCoveringView(anchor.get, radius, scale, width, height)
 
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =

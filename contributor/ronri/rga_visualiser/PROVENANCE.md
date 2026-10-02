@@ -1427,7 +1427,7 @@ notches taken either side of the edge of an object converge on different depths.
 
 **The zoom stops where a point fills the frame.** Nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop; see Picking. `picking.depthFilling` solves
-that depth, as the inverse of `coversView`. The wheel takes it as the floor of a point in both
+that depth, as the inverse of `isCoveringView`. The wheel takes it as the floor of a point in both
 states (`AnchorZoom.floor_reach`). `framing.holdFilled` holds it for a point picked alone under
 every other move: a drag, a key and a pinch.
 
@@ -2211,7 +2211,8 @@ unpickable with its multivector twins zero.
 **The sky is a click and hold target, and never a drag handle. So is a plane or a point that
 fills the view.** With a horizon plane visible the cursor is over *something* almost everywhere.
 A press on empty space becomes a camera move precisely because nothing was hovered. A finite plane
-whose disc reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
+whose disc reaches every corner of the frame (`picking.isCoveringView`) leaves no empty glass at
+all.
 
 Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. Rejected:
 the longer side, 1200 px, under which a plane covering the whole window still reads as a handle.
@@ -2276,7 +2277,7 @@ Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, an
 
 ## Interaction model
 
-**Which button does what, stated once.** `interaction.revealsMenuOn` says whether a click brings
+**Which button does what, stated once.** `interaction.isMenuRevealedOn` says whether a click brings
 the floating selection menu: right yes, left and middle no. `armingOf` says whether a drag opens
 the choice wheel. Both render paths and `help.nim` read them.
 
@@ -2320,7 +2321,7 @@ pick lands on some star almost anywhere, so a one-finger orbit kept becoming a c
 `RADIUS_CROWD_TOUCH` 72 px. That is wider than the pick reach, because the question is whether the
 finger could have meant something else.
 
-`interaction.canConstructByTouch` is true only with no rival, and is asked at the press through
+`interaction.isConstructibleByTouch` is true only with no rival, and is asked at the press through
 `nimCanTouchConstruct`. Where a gesture is ambiguous, movement wins, because the reader can zoom
 in until it is not, while an unwanted object must be undone. It is same-rank only, or every point
 on the ground would be a crowd.
@@ -2617,8 +2618,8 @@ whole of what version 3 added. Version 4 appended the radius after the geometry 
 Version 5 appended a byte after that, which said whether the point shone. Version 7 dropped it, so
 versions 5 and 6 alone carry one, read and skipped.
 
-Which versions carry each is `scene.hasRadius` and `hasShine`, which the browser parser reaches
-through `nimSceneHasRadius` and `nimSceneHasShine` rather than literals.
+Which versions carry each is `scene.isCarryingRadius` and `isCarryingShine`, which the browser
+parser reaches through `nimSceneHasRadius` and `nimSceneHasShine` rather than literals.
 
 Version 6 changed no byte. It records that the palette lost its structural `Algebra` handle at
 ordinal 7. Every hue that a file of version 2 to 5 wrote therefore sits one past today's, and
@@ -3043,7 +3044,7 @@ Verified by driven check:
 
 **A search narrows the objects list to the objects that answer every word typed.** A word answers
 where it stands in the label or in the kind word, with ASCII case folded. So `jup` finds `jupiter`,
-and `horizon` finds each horizon object, whatever its label. `scene.matchesSearch` holds the rule
+and `horizon` finds each horizon object, whatever its label. `scene.isMatchingSearch` holds the rule
 once, and `scene.handlesMatching` filters creation order by it. The page reaches both through
 `nimSceneHandlesMatching`, and the window calls them itself.
 
@@ -3120,7 +3121,7 @@ stall just before it fires.
 
 Both front-ends carry a `?` in the bottom-right corner, at least 44 px, which opens the same table
 `help.HELP_ENTRIES`. Both render that table. Construct rows derive from `armingOf` and
-`revealsMenuOn`, and keyboard rows from `motionFor` and `actionFor`. The `operations` tab is
+`isMenuRevealedOn`, and keyboard rows from `motionFor` and `actionFor`. The `operations` tab is
 generated from the catalogue, so it cannot fall behind.
 
 **Tabbed by how the reader is working**: `drag`, `select`, `menu`, `panel`, `camera`, `keys` and

@@ -411,25 +411,25 @@ suite "Scene":
       axis = scene.addObject(LINES[0], "m1", Ink.Rose)
       far = scene.addObject(⊖ LINES[1], "m12", Ink.Rose) # Horizon point.
       wall = scene.addObject(PLANES[0], "wall", Ink.Rose)
-    check scene.matchesSearch(jupiter, "jup")
-    check scene.matchesSearch(jupiter, "PITER")
-    check not scene.matchesSearch(moon, "jup")
-    check scene.matchesSearch(axis, "line")
-    check scene.matchesSearch(wall, "Plane")
-    check scene.matchesSearch(far, "horizon")
-    check not scene.matchesSearch(jupiter, "horizon")
-    check scene.matchesSearch(far, "horizon m1")
-    check scene.matchesSearch(far, "  m12 \t point ")
-    check not scene.matchesSearch(axis, "horizon m1")
+    check scene.isMatchingSearch(jupiter, "jup")
+    check scene.isMatchingSearch(jupiter, "PITER")
+    check not scene.isMatchingSearch(moon, "jup")
+    check scene.isMatchingSearch(axis, "line")
+    check scene.isMatchingSearch(wall, "Plane")
+    check scene.isMatchingSearch(far, "horizon")
+    check not scene.isMatchingSearch(jupiter, "horizon")
+    check scene.isMatchingSearch(far, "horizon m1")
+    check scene.isMatchingSearch(far, "  m12 \t point ")
+    check not scene.isMatchingSearch(axis, "horizon m1")
     # Blank search answers every object, since list with nothing typed is whole list.
     for handle in [jupiter, moon, axis, far, wall]:
-      check scene.matchesSearch(handle, "")
-      check scene.matchesSearch(handle, "  ")
+      check scene.isMatchingSearch(handle, "")
+      check scene.isMatchingSearch(handle, "  ")
     # Fixed buffer desktop types into reads to its terminator, as string does to its end.
     var typed: array[LABEL_MAX, char]
     toChars("io", typed)
-    check scene.matchesSearch(moon, typed)
-    check not scene.matchesSearch(jupiter, typed)
+    check scene.isMatchingSearch(moon, typed)
+    check not scene.isMatchingSearch(jupiter, typed)
     # Search of blanks alone narrows nothing, so front-end shows no count for it.
     check isSearching(typed)
     check isSearching(" io ")
@@ -560,22 +560,22 @@ suite "Scene":
       check carried.get.ink_ordinal == ord(Ink.Rose)
     # Same for every older version: radius joins chain at its boundary, once.
     for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_RADIUS:
-      check not hasRadius(version)
+      check not isCarryingRadius(version)
       # First hue in each version's own palette; see `ordinal_ink_rose_v5`.
       let ordinal = if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1 else: ordinal_ink_rose_v5
       check objectUpgraded(savedWith(ordinal, 0.0), version).get.radius == RADIUS_OBJECT_DEFAULT
-    check hasRadius(VERSION_SCENE)
+    check isCarryingRadius(VERSION_SCENE)
 
 
   test "only versions 5 and 6 carry a shines byte, and this build writes none":
     # Byte is skipped on reading and nothing is carried from it, so whole of what.
     #   version pair means is which offsets bytes after it parse from; see `sceneFileOf`.
     for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_SHINE:
-      check not hasShine(version)
+      check not isCarryingShine(version)
     for version in VERSION_SCENE_SHINE .. VERSION_SCENE_SHINE_LAST:
-      check hasShine(version)
+      check isCarryingShine(version)
       check objectUpgraded(savedWith(ordinal_ink_rose_v5), version).isSome
-    check not hasShine(VERSION_SCENE)
+    check not isCarryingShine(VERSION_SCENE)
     check VERSION_SCENE > VERSION_SCENE_SHINE_LAST
 
 
@@ -646,11 +646,11 @@ suite "Scene":
 
   test "a version outside what this build reads is refused by the chain itself":
     # Guard lives with walk rather than only at each call site, so caller that.
-    #   forgets to check `readsSceneVersion` still cannot get half-upgraded object.
+    #   forgets to check `isSceneVersionReadable` still cannot get half-upgraded object.
     check objectUpgraded(savedWith(ord(Ink.Rose)), 0'u8).isNone
     check objectUpgraded(savedWith(ord(Ink.Rose)), VERSION_SCENE + 1'u8).isNone
     for version in VERSION_SCENE_LEAST .. VERSION_SCENE:
-      check readsSceneVersion(version)
+      check isSceneVersionReadable(version)
       # First hue in each version's own palette; see `ordinal_ink_rose_v5`.
       let ordinal =
         if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1
@@ -876,14 +876,14 @@ suite "Scene":
           littleEndian64(addr bytes[0], addr coefficient)
           result &= bytes
         # Radius only from version that carries one; older bytes stop at geometry.
-        if hasRadius(version):
+        if isCarryingRadius(version):
           var
             radius = 2.0*RADIUS_OBJECT_DEFAULT
             bytes = newString(8)
           littleEndian64(addr bytes[0], addr radius)
           result &= bytes
         # Shine byte only from version that carries one, set so reader can tell.
-        if hasShine(version): result &= char(1)
+        if isCarryingShine(version): result &= char(1)
 
 
     test "a scene file from before the palette changed is read, not refused":
@@ -1003,7 +1003,7 @@ suite "Scene":
       check loadScene(scene, path).contains("version this build cannot read")
       check scene.len == 1
       check toText(scene[0].label) == "keep"
-      check not readsSceneVersion(0'u8) # Version byte of zero was never written either.
+      check not isSceneVersionReadable(0'u8) # Version byte of zero was never written either.
 
 
     test "a saved scene keeps creation order however its handles were reused":

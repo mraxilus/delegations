@@ -123,11 +123,11 @@ func record*(history: var History, scene: Scene, camera: Camera) =
   history.count = history.cursor + 1
 
 
-func canUndo*(history: History): bool = history.cursor > 0
+func isUndoable*(history: History): bool = history.cursor > 0
   ## Report whether earlier entry exists to undo back to.
 
 
-func canRedo*(history: History): bool = history.cursor < history.count - 1
+func isRedoable*(history: History): bool = history.cursor < history.count - 1
   ## Report whether later entry exists to redo forward to.
 
 
@@ -144,7 +144,7 @@ func undo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Stance alone crosses, never whole camera value.
   ##     Lens is reader's setting, and `camera.CameraStance` says nothing aiming camera may
   ##     rewrite it. Whole-value assignment handed back lens of step arrived at.
-  if not history.canUndo: return false
+  if not history.isUndoable: return false
   camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
   history.cursor.dec
   # Restore through `restoreFrom`, never assignment: revision must pass every one drawn.
@@ -159,7 +159,7 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Both come from entry arrived at, same step `undo` reads its camera from, so
   ##   crossing one step either way puts view in same place.
   ##   Stance alone crosses, as in `undo`.
-  if not history.canRedo: return false
+  if not history.isRedoable: return false
   history.cursor.inc
   scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
   camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
