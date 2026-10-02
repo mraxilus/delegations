@@ -773,7 +773,16 @@ proc dollyAt*(
   if anchor.isNone:
     camera.dolly(factor)
     return
-  camera.dollyToward(factor, anchor.get.at)
+  # Stop at anchor's floor, as free flight does; see `camera.travelToward`.
+  #   `dollyToward` scales eye's reach to anchor by factor, so floor bounds that factor.
+  #   Floor never pushes eye out: eye already nearer stays, and only zooms out.
+  let reach = norm(camera.eye - anchor.get.at)
+  if anchor.get.is_standing and reach > 0.0:
+    camera.dollyToward(
+      max(factor, min(anchor.get.floor_reach, reach)/reach), anchor.get.at
+    )
+  else:
+    camera.dollyToward(factor, anchor.get.at)
   if anchor.get.is_standing:
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
     let

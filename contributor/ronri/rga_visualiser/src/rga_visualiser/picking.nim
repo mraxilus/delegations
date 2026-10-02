@@ -49,6 +49,11 @@ const
     ##   Anchor at depth of what reader looks at is what map zoom means. Star field put
     ##   some star under every pixel, and anchoring on one thousand units off carried
     ##   eye across field in few notches and clipped scene away behind it.
+  SLACK_COVERED* = 1.0e-9
+    ## Allow disc this fraction short of frame's corners, and still count as covering it.
+    ##   Eye held on fill (`framing.holdFilled`) stands exactly at `depthFilling`, and bare
+    ##   `>=` fails there by one ulp: point held at cap read as handle again.
+    ##   Relative, as `framing.SLACK_FRAMED` is, since radii span many decades.
   RADIUS_PICK_POINT* = 34.0
     ## Bound how far, in pixels, cursor may sit from point's marker and still hit it.
     ##   Fingertip's contact patch is roughly this wide at phone density.
@@ -125,9 +130,10 @@ type
 
   AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
     at*: Position ## World point that keeps its pixel through zoom.
-    floor_reach*: float ## Drawn radius of object anchor stands on; zero for crossing.
-      ## How near free flight's wheel may come, so it stops at surface rather than carrying
-      ## eye through it; see `camera.travelToward`.
+    floor_reach*: float ## How near wheel may come to `at`, in either state.
+      ## Point's is where its sphere fills frame (`depthFilling`): nearer shows nothing
+      ## more of it. Other object's is its drawn radius, so wheel stops at surface rather
+      ## than carrying eye through it; see `camera.travelToward`.
     is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
       ## What stands somewhere is what reader looks at, so turntable's pivot follows its
       ## depth (`camera.repivotToDepth`). Plane is crossing, met where ray happens to fall:
@@ -699,7 +705,17 @@ func coversView*(
   ##   Measured about middle, so disc whose own centre stands well off screen is judged
   ##   by reach it has rather than by where it sits.
   radius/worldPerPixelAt(centre, scale.scale) >=
-    0.5*hypot(float(width), float(height))
+    0.5*hypot(float(width), float(height))*(1.0 - SLACK_COVERED)
+
+
+func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float =
+  ## Solve depth along sight at which disc of `radius` reaches every corner of frame.
+  ##   Inverse of `coversView`: nearer, disc covers frame; further, corners stand bare.
+  ##   Where zoom toward point stops: nearer shows nothing more of it, and there it is
+  ##   backdrop, so every press moves view. See `framing.holdFilled`.
+  ##   One pixel spans `2*depth*tan(half field)/height`, and half diagonal reaches corner.
+  radius*float(max(scale.heightPixels, 1))/
+    (scale.tangentHalfView*hypot(float(width), float(height)))
 
 
 func isBackdropUnder*(
@@ -770,10 +786,15 @@ proc anchorZoomAt*(
     scene, handle.get, camera, scale, width, height, cursor,
   )
   if found.isNone or not isAnchorNear(found.get, camera, scale): return
+  let
+    shaped = kindOf(scene.geometryOf(handle.get))
+    radius = scene.radiusAt(handle.get)
   some(AnchorZoom(
     at: found.get,
-    floor_reach: scene.radiusAt(handle.get),
-    is_standing: kindOf(scene.geometryOf(handle.get)) != some(Kind.Plane),
+    floor_reach:
+      if shaped == some(Kind.Point): max(radius, depthFilling(radius, scale, width, height))
+      else: radius,
+    is_standing: shaped != some(Kind.Plane),
   ))
 
 
