@@ -30,7 +30,7 @@ Here is a trap, and it is why the poison test reads as it does. `compiles(Step(M
 is **true**, but `let s = Step(MODULUS)` fails to build, because the conversion is invalid.
 So `compiles` cannot hold the poison for a constant at the bound. The test uses the literal
 16, which `compiles` rejects, and it pins the false positive as a check of its own. That
-check fails once the compiler agrees with its own build. Verified by `test_probe.nim` on Nim
+check fails once the compiler agrees with its own build. Verified by `test_modulus_4.nim` on Nim
 2.2.12.
 
 ## Operations
@@ -38,15 +38,17 @@ check fails once the compiler agrees with its own build. Verified by `test_probe
 **Advance is `⊕` with the alias `advance`, and inversion and identity are named.** `𝟎` is a
 Unicode identifier on purpose. It exercises rune-counted line width and the prose scanner,
 rather than notation from an authority. Article III.1 asks for canonical notation where a
-domain has one, and a probe has none. Verified by `test_probe.nim`, exhaustively over every pair
-and triple in both ring sizes: commutativity, associativity, identity, inverse, involution,
-and positions inside the ring.
+domain has one, and a probe has none. Verified by `test_modulus_4.nim` and `test_modulus_5.nim`,
+exhaustively over every pair and triple in each ring size: commutativity, associativity,
+identity, inverse, involution, and positions inside the ring.
 
 ## Tests
 
-**One testament stub with a matrix header**, with suites named after the subject of the
-header table, because no external authority exists. The matrix runs every test in each ring
-size. Verified by `test_probe.nim`, and `nim r koch test curator/probe` lists each row.
+**One stub for each ring size, and each includes one shared suite** (Article IX.7). The suite
+is `suites.nim`, and its suites are named after the subject of the header table, because no
+external authority exists. Each stub is its own compile, so a ring size fails by name and runs
+alone. Verified by `test_modulus_4.nim` and `test_modulus_5.nim`, and
+`nim r koch test curator/probe` lists each stub.
 
 ## Toolchain
 
