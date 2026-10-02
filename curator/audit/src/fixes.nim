@@ -56,7 +56,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils]
-import ./[blanks, findings, form, idioms, kinds, layout, names, scope, spacing, tokens, wrapping]
+import ./[blanks, declarations, findings, form, idioms, kinds, layout, names, scope, spacing]
+import ./[tokens, wrapping]
 
 
 const
@@ -162,8 +163,7 @@ func fixersOf(kind: Kind): seq[Fixer] =
   ## List fixers kind's checks name, in order header gives.
   result = kind.rule.formFixers
   if kind == Kind.Nim: result.add IDIOM_FIXERS
-  result.add Fixer(fixBlanks)
-  result.add Fixer(fixSpacing)
+  result.add @[Fixer(fixBlanks), fixDocs, fixDefaults, fixSpacing]
   result.add WRAPPING_FIXERS
 
 
@@ -193,8 +193,8 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
   let
     view = source.masked(fence)
     checks = [
-      checkComments, checkBanners, checkBlanks, checkSpacing, checkSeparators, checkSignatures,
-      checkCalls, checkTrailing,
+      checkComments, checkBanners, checkBlanks, checkDocs, checkDefaults, checkSpacing,
+      checkSeparators, checkSignatures, checkCalls, checkTrailing,
     ]
   for check in checks: result.add check(path, view)
   if kind == Kind.Nim: result.add checkImportBrackets(path, view) & checkLists(path, view)
