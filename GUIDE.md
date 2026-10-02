@@ -109,6 +109,25 @@ and the name of a tool does not say which one a call takes. The measurement is i
   wait. Read what you asked before you double again, because a backoff hides a wrong question
   where a drumbeat would show it.
 
+## Independent changes run in subagents
+
+Where your queue holds changes that are fully independent, give each one to a subagent, and
+run them at the same time. Two changes are fully independent when neither one changes a file
+that the other one reads or writes. Neither one may wait on the other one to merge. Where you
+are not sure, they are not independent, and you make them one after the other.
+
+- **Each subagent works in a worktree of its own, on a branch of its own inside the
+  grammar.** The hooks read the checkout where an edit or a commit happens, so each subagent
+  stays in the scope of its own branch.
+- **The subagent makes the change, runs `nim r koch check` in its worktree, and commits.** It
+  follows the rules that you follow: the commit ladder, the record, and Simplified Technical
+  English. Give it the issue, the branch and the scope, because it starts with none of your
+  context.
+- **You do the rest.** Read what each subagent did, and push its branch. Open each pull
+  request, drive it green, and answer on it. The sign-off and the carried list stay yours.
+- **A subagent never pushes, and never writes on GitHub.** One account and one allowance
+  serve every delegate (above), and you are the one who answers for each post.
+
 ## Toolchain
 
 Every project pins its compiler exactly (`CONTRIBUTOR.md`, Toolchain). What follows is how a
