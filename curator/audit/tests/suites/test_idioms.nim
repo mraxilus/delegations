@@ -180,6 +180,8 @@ suite "Idiom fixes":
       "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n" & strict & "import std/os\n"  # after header
     check fixed("## Do.\nimport std/os\n").source == "## Do.\n" & strict & "import std/os\n"
     check fixed("## Do.\n").source == "## Do.\n\n" & STRICT_FUNCS & "\n"  # no code yet
+    let foreign = "{.push importc.}\nproc f()\n{.pop.}\n"
+    check fixed("## Do.\n\n" & foreign).source == "## Do.\n" & strict & foreign  # push opens body
 
   test "clean module passes through unchanged":
     let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")
