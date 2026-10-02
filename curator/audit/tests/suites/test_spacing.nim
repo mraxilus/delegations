@@ -1,6 +1,6 @@
-## Hold operator spacing (Article X.9): each breach whose rewrite moves no reading is reported and
-##   fixed; asymmetric spacing, which lexer reads, is neither; fix changes nothing else, and
-##   nothing second time.
+## Hold spaces inside expressions to X.9 list: each breach whose rewrite moves no reading is
+##   reported and fixed; asymmetric spacing, which lexer reads, is neither; fix changes nothing
+##   else, and nothing second time.
 
 {.experimental: "strictFuncs".}
 
@@ -21,15 +21,27 @@ func isSettled(source: string): bool =
 
 suite "Spacing":
   test "binary operator spaced on neither side or wider on both takes one space each side":
-    let breach = "let x = a+b*c  -  d\nlet r = 0..<n\nlet s = x[1..^1]\nlet t = a  and  b\n"
-    check checkSpacing("a.nim", breach).len == 6  # `+`, `*`, `-`, `..<`, `..^`, `and`
+    let breach = "let x = a+b*c  -  d\nlet t = a  and  b\n"
+    check checkSpacing("a.nim", breach).len == 4  # `+`, `*`, `-`, `and`
     let mended = breach.fixed
-    check mended == "let x = a + b * c - d\nlet r = 0 ..< n\nlet s = x[1 ..^ 1]\nlet t = a and b\n"
+    check mended == "let x = a + b * c - d\nlet t = a and b\n"
     check mended.isSettled
     check checkSpacing("a.nim", "m∧n")[0].message.endsWith("got `m∧n`.")  # glyph operator
 
+  test "range operator takes no space, unless operator or negative number follows it":
+    let breach = "let r = 0 ..< n\nlet s = x[1 .. 2]\nfor i in 0  ..  3: discard\n" &
+      "let c = 'a' .. 'z'\n"
+    check checkSpacing("a.nim", breach).len == 4
+    check checkSpacing("a.nim", breach).allIt(it.message.startsWith("Range operator takes no"))
+    check breach.fixed ==
+      "let r = 0..<n\nlet s = x[1..2]\nfor i in 0..3: discard\nlet c = 'a'..'z'\n"
+    check breach.fixed.isSettled
+    for kept in ["let s = x[1 .. ^1]\n", "let s = a .. -1\n", "echo a ..b\n", "let s = a.. b\n"]:
+      check checkSpacing("a.nim", kept).len == 0  # would merge, or reading moves
+      check kept.fixed == kept
+
   test "asymmetric spacing stays, since lexer reads it: `a -b` is call of prefix operand":
-    for kept in ["echo -b\n", "a- b\n", "echo $x & y\n", "f(x)  -y\n"]:
+    for kept in ["echo -b\n", "a- b\n", "echo $x & y\n", "f(x)  -y\n", "a ⊖b\n"]:
       check checkSpacing("a.nim", kept).len == 0  # neither reported
       check kept.fixed == kept  # nor rewritten
 
@@ -40,6 +52,22 @@ suite "Spacing":
   test "prefix operator is glued to its operand, but minus before number stays":
     check "let x = - y\nf(@ [1], ^ 2)\n".fixed == "let x = -y\nf(@[1], ^2)\n"
     check checkSpacing("a.nim", "let x = - 1\n").len == 0  # glued would be literal `-1`
+
+  test "comma and colon take no space before them and one after":
+    check "f(a,b ,c,  d)\n".fixed == "f(a, b, c, d)\n"
+    check "proc f(x:int, y :string) = discard\nlet t = {\"a\":1}\n".fixed ==
+      "proc f(x: int, y: string) = discard\nlet t = {\"a\": 1}\n"
+    check checkSpacing("a.nim", "f(a,b)\n")[0].message.startsWith("Comma takes")
+    check checkSpacing("a.nim", "let a: int\nlet e = {:}\n").len == 0  # empty table stays
+
+  test "bracket holds no space inside it, and prefix operator after it glues":
+    check "f( a, b )\nlet s = @[ 1 ]\nproc g() {. inline .}\nlet u = ( |∙ x)\n".fixed ==
+      "f(a, b)\nlet s = @[1]\nproc g() {.inline.}\nlet u = (|∙x)\n"
+    check checkSpacing("a.nim", "f( a)\n")[0].message.startsWith("Bracket holds")
+
+  test "gap that would merge two tokens stays: `[:`, colon after operator":
+    for kept in ["let a = b[ : c]\n", "type T = object\n  x* : int\n"]:
+      check kept.fixed == kept
 
   test "named argument takes one space each side of `=`; default and assignment stay":
     check "f(a=1, b  =  2)\n".fixed == "f(a = 1, b = 2)\n"
@@ -62,6 +90,6 @@ suite "Spacing":
     check line.fixed == line
 
   test "clean source passes through unchanged":
-    let clean = "let x = a + b\nfor i in 0 ..< n: echo -i\nf(name = 1)\n"
+    let clean = "let x = a + b\nfor i in 0..<n: echo -i\nf(name = 1, b: 2)\n"
     check clean.isSettled
     check fixSpacing("a.nim", clean).fixed.mapIt(it.line).len == 0
