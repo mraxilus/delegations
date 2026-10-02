@@ -44,8 +44,10 @@ const HEAD_BODY = """
     <p class="lede">Below the stage, each still cell of the reference page appears in
       that page's order, with the simulation's still beside the drawing. For each cell the
       simulation winds the couple into that facing, lifts their joined hands, and then lets the
-      pose settle. It keeps the distance between the dancers where the pose carries the
-      least strain. Click a cell to put it on the stage, and the arrow buttons or the
+      pose settle. Where that does not hold, it plans every arm through the turn, and the
+      engine follows the plan. A wound still keeps the distance where the pose carries the
+      least strain, and a planned still keeps the distance of its plan. Click a cell to put
+      it on the stage, and the arrow buttons or the
       arrow keys step from one cell to the next. One list holds the stills first and
       the sweeps after them.</p>
   </header>
