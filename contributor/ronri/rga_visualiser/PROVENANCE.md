@@ -1437,9 +1437,13 @@ Rejected: the fill as the reach. Under it, a point 17° off the middle stops 4% 
 fill. The hold then carries the eye back along its sight, off the line of the pointer.
 
 The hold takes a point picked alone. With more picked, the frame rule holds the group, and only
-the wheel stops at the fill of a point. In free flight nothing is picked to hold, so flight goes on
-into the point. Rejected: the drawn radius as the floor of a point. The wheel then goes on past the
-fill to the surface, and nothing more of the point shows.
+the wheel stops at the fill of a point. Rejected: the drawn radius as the floor of a point. The
+wheel then goes on past the fill to the surface, and nothing more of the point shows.
+
+**Flight goes on into a point**, by the Architect's ruling. The cap is on the zoom, and flight is
+travel. Nothing is picked to hold, and the wheel and the pinch still stop at the fill. Rejected: a
+floor on flight at the fill of the point ahead. Flight through a field of points would stop at each
+one.
 
 `camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
 the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
