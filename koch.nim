@@ -88,6 +88,7 @@ Options:
   --recent         projects whose code merged within last week
   --drive          list-projects keeps projects carrying `drive` verb
   --write          stamp writes every Rules row rather than printing
+  --dry-run        fix prints each change it would make, writes none, exits 1 where any
 """
   ## Text `./koch` prints alone and on usage error; `checker.nim` reads verbs and options here.
 
@@ -95,7 +96,7 @@ Options:
 type
   Flag = enum
     ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Write
+    Root, Branch, Base, All, Recent, Drive, Write, DryRun
 
   Options = object
     ## Define parsed command line.
@@ -109,6 +110,7 @@ type
     is_recent: bool
     is_drive: bool
     is_write: bool
+    is_dry_run: bool
 
 
 proc parseOptions(): Option[Options] =
@@ -133,6 +135,7 @@ proc parseOptions(): Option[Options] =
       of "recent": options.is_recent = true
       of "drive": options.is_drive = true
       of "write": options.is_write = true
+      of "dry-run": options.is_dry_run = true
       else: return none(Options)
     of cmdEnd: discard
   if options.command.len == 0: return none(Options)
@@ -148,6 +151,7 @@ func given(options: Options): set[Flag] =
   if options.is_recent: result.incl Recent
   if options.is_drive: result.incl Drive
   if options.is_write: result.incl Write
+  if options.is_dry_run: result.incl DryRun
 
 
 func reads(options: Options, flags: set[Flag], has_project = false): bool =
@@ -417,8 +421,9 @@ proc run(options: Options): int =
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
-    #   selects, as every verb taking projects reads them.
-    if not options.reads({Root, Branch, Base, All, Recent}, has_project = true):
+    #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
+    #   change as `path:line: <rule> to fix`, and exits 1 where any would apply.
+    if not options.reads({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
     let
       tree = options.root.readTree
@@ -434,10 +439,12 @@ proc run(options: Options): int =
       refused.report
       echo "Nothing written; fix writes only inside branch scope."
       return 1
-    for e in written: writeFile(options.root / e.path, e.content)
-    for f in fixed.sorted: echo f.render
-    echo $fixed.len & " fixed."
-    return 0
+    let outcome = if options.is_dry_run: " to fix" else: " fixed"
+    if not options.is_dry_run:
+      for e in written: writeFile(options.root / e.path, e.content)
+    for f in fixed.sorted: echo f.render & outcome
+    echo $fixed.len & outcome & "."
+    return if options.is_dry_run and fixed.len > 0: 1 else: 0
   of "fetch-deps":
     if not options.reads({Root, Base, All, Recent}, has_project = true):
       return options.refused
