@@ -67,7 +67,7 @@ func countsNode*(counts: Counts): JsonNode =
   %*{
     "multiplies": counts.multiplies,
     "adds": counts.adds,
-    "subs": counts.subs,
+    "subtractions": counts.subtractions,
     "divides": counts.divides,
     "zero_fills": counts.zero_fills,
     "intermediates": counts.intermediates,
@@ -132,9 +132,10 @@ func median*(values: openArray[float]): float =
   if sorted.len mod 2 == 1: sorted[middle] else: (sorted[middle - 1] + sorted[middle]) / 2.0
 
 
-func runsCombined*(runs: openArray[JsonNode]): JsonNode =
-  ## Combine runtime documents of alternating runs of one binary into one: per implementation,
-  ##   median of run medians, least minimum, and each run's median in run order as `ns_runs`.
+func combineRuns*(runs: openArray[JsonNode]): JsonNode =
+  ## Combine runtime documents of alternating runs of one binary into one.
+  ##   Per implementation, it keeps median of run medians, least minimum, and each run's
+  ##   median in run order as `ns_runs`.
   ##   Run medians pair by index across implementations, since one run times both.
   ##   Header, NaN share and allocations are first run's; every run computes same pools.
   if runs.len == 0: return newJNull()
@@ -156,7 +157,16 @@ func runsCombined*(runs: openArray[JsonNode]): JsonNode =
 
 
 const GATED* = [
-  "multiplies", "adds", "subs", "divides", "zero_fills", "intermediates", "copies", "checks",
-  "calls", "allocations", "lines",
+  "multiplies",
+  "adds",
+  "subtractions",
+  "divides",
+  "zero_fills",
+  "intermediates",
+  "copies",
+  "checks",
+  "calls",
+  "allocations",
+  "lines",
 ]
   ## Count names gate compares: any growth is finding, every one deterministic.

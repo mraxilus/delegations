@@ -96,8 +96,8 @@ func referenceKey(p: Measurand): string =
     close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
   var stems: seq[string]
-  for arg in p.reference[open + 1 ..< close].split(','):
-    case arg.strip
+  for argument in p.reference[open + 1 ..< close].split(','):
+    case argument.strip
     of "m": stems.add referenceStem(p.operands[0])
     of "n": stems.add referenceStem(p.operands[1])
     else: discard

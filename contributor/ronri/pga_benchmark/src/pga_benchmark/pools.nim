@@ -37,13 +37,13 @@ when IS_RIGID and DIMENSIONS == 4:
       ## Planes joining line and point.
     POOL_MOTOR*: array[OBJECTS, Motor]
       ## Unit motors, translation composed with rotation.
-    POOL_POINT_MV*: array[OBJECTS, Multivector]
+    POOL_POINT_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_POINT`.
-    POOL_LINE_MV*: array[OBJECTS, Multivector]
+    POOL_LINE_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_LINE`.
-    POOL_PLANE_MV*: array[OBJECTS, Multivector]
+    POOL_PLANE_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_PLANE`.
-    POOL_MOTOR_MV*: array[OBJECTS, Multivector]
+    POOL_MOTOR_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_MOTOR`.
 
 when IS_CONFORMAL and DIMENSIONS == 5:
@@ -56,13 +56,13 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       ## Circles joining dipole and round point.
     POOL_SPHERE*: array[OBJECTS, Sphere]
       ## Spheres joining circle and round point.
-    POOL_ROUNDPOINT_MV*: array[OBJECTS, Multivector]
+    POOL_ROUNDPOINT_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_ROUNDPOINT`.
-    POOL_DIPOLE_MV*: array[OBJECTS, Multivector]
+    POOL_DIPOLE_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_DIPOLE`.
-    POOL_CIRCLE_MV*: array[OBJECTS, Multivector]
+    POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_CIRCLE`.
-    POOL_SPHERE_MV*: array[OBJECTS, Multivector]
+    POOL_SPHERE_WIDENED*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_SPHERE`.
 
 
@@ -79,7 +79,7 @@ func libraryPoolName*(kind: Kind, grade: Option[int]): string {.compileTime.} =
   if kind == Kind.General:
     if grade.isSome: "POOL_GRADED[" & $grade.get & "]" else: "POOL_GENERAL"
   elif kind == Kind.Scalar: "POOL_SCALAR"
-  else: "POOL_" & toUpperAscii($kind) & "_MV"
+  else: "POOL_" & toUpperAscii($kind) & "_WIDENED"
 
 
 func referencePoolName*(kind: Kind): string {.compileTime.} =
@@ -138,10 +138,10 @@ proc fillPools*(seed = 0) =
       POOL_LINE[i] = wedge(randPoint(), randPoint())
       POOL_PLANE[i] = wedge(wedge(randPoint(), randPoint()), randPoint())
       POOL_MOTOR[i] = randMotor()
-      POOL_POINT_MV[i] = POOL_POINT[i].widen
-      POOL_LINE_MV[i] = POOL_LINE[i].widen
-      POOL_PLANE_MV[i] = POOL_PLANE[i].widen
-      POOL_MOTOR_MV[i] = POOL_MOTOR[i].widen
+      POOL_POINT_WIDENED[i] = POOL_POINT[i].widen
+      POOL_LINE_WIDENED[i] = POOL_LINE[i].widen
+      POOL_PLANE_WIDENED[i] = POOL_PLANE[i].widen
+      POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
   when IS_CONFORMAL and DIMENSIONS == 5:
     for i in 0 ..< OBJECTS:
       POOL_ROUNDPOINT[i] = randRoundPoint()
@@ -150,7 +150,7 @@ proc fillPools*(seed = 0) =
       POOL_SPHERE[i] = wedge(
         wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint()), randRoundPoint()
       )
-      POOL_ROUNDPOINT_MV[i] = POOL_ROUNDPOINT[i].widen
-      POOL_DIPOLE_MV[i] = POOL_DIPOLE[i].widen
-      POOL_CIRCLE_MV[i] = POOL_CIRCLE[i].widen
-      POOL_SPHERE_MV[i] = POOL_SPHERE[i].widen
+      POOL_ROUNDPOINT_WIDENED[i] = POOL_ROUNDPOINT[i].widen
+      POOL_DIPOLE_WIDENED[i] = POOL_DIPOLE[i].widen
+      POOL_CIRCLE_WIDENED[i] = POOL_CIRCLE[i].widen
+      POOL_SPHERE_WIDENED[i] = POOL_SPHERE[i].widen

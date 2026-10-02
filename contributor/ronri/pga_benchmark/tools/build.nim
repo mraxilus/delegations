@@ -45,7 +45,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, times]
 
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
-from ../src/pga_benchmark/report import IMPLEMENTATIONS, runsCombined
+from ../src/pga_benchmark/report import IMPLEMENTATIONS, combineRuns
 import ../src/pga_benchmark/pages/[docket, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
@@ -203,7 +203,7 @@ proc inspect() =
     run(inspector, [cache, BUILD / "static_" & name & ".json", nim, pga, FLAGS])
 
 
-proc merged(plain, instrumented: JsonNode): JsonNode =
+proc mergeAllocations(plain, instrumented: JsonNode): JsonNode =
   ## Take timings from plain run and allocation counts from instrumented one.
   result = plain
   result["taken"]["is_allocation_measured"] = instrumented{"taken", "is_allocation_measured"}
@@ -241,7 +241,7 @@ proc bench() =
     let instrumented = BUILD / "bench_alloc_" & name
     run(instrumented, [instrumented & ".json"])
     let
-      measurements = merged(runsCombined(runs[name]), readDocument(instrumented & ".json"))
+      measurements = mergeAllocations(combineRuns(runs[name]), readDocument(instrumented & ".json"))
       recorded = BASELINE / "runtime_" & name & ".json"
     writeFile(recorded, pretty(measurements) & "\n")
     echo "Recorded ", recorded
@@ -708,21 +708,21 @@ proc sweep() =
     nim = nimCommit()
     pga = pgaCommit()
   createDir BUILD
-  var docs: seq[JsonNode]
+  var documents: seq[JsonNode]
   for dimensions in SWEEP:
     let
       name = "sweep_" & $dimensions & "d"
       binary = BUILD / name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
-    docs.add readDocument(binary & ".json")
+    documents.add readDocument(binary & ".json")
   var header = "measurand".alignLeft(26)
   for dimensions in SWEEP: header.add ($dimensions & "d").align(10)
   echo header
-  for id, _ in docs[0]{"measurands"}.pairs:
+  for id, _ in documents[0]{"measurands"}.pairs:
     var line = id.alignLeft(26)
-    for doc in docs:
-      let measurement = doc{"measurands", id, "library"}
+    for document in documents:
+      let measurement = document{"measurands", id, "library"}
       line.add(
         if measurement.isNil or measurement.kind != JObject: "–".align(10)
         else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10),

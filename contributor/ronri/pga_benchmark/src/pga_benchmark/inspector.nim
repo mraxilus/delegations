@@ -45,7 +45,7 @@ type
       ## Text between function's braces.
   Counts* = object
     ## Define what one function's text spends.
-    multiplies*, adds*, subs*, divides*: int
+    multiplies*, adds*, subtractions*, divides*: int
       ## Floating operations spelled as terms; divisions cost several multiplies each.
     zero_fills*: int
       ## `nimZeroMem` calls, i.e. whole-object zero fills.
@@ -283,7 +283,7 @@ func plain(body: string): Counts =
   Counts(
     multiplies: body.count(") * ("),
     adds: body.count(") + ("),
-    subs: body.count(") - ("),
+    subtractions: body.count(") - ("),
     divides: body.count(") / ("),
     zero_fills: body.count("nimZeroMem("),
     copies: body.count("(*Result) = ") + body.count("nimCopyMem(") + body.count("memcpy("),
@@ -298,7 +298,7 @@ func `+`*(a, b: Counts): Counts =
   Counts(
     multiplies: a.multiplies + b.multiplies,
     adds: a.adds + b.adds,
-    subs: a.subs + b.subs,
+    subtractions: a.subtractions + b.subtractions,
     divides: a.divides + b.divides,
     zero_fills: a.zero_fills + b.zero_fills,
     intermediates: a.intermediates + b.intermediates,
@@ -315,7 +315,7 @@ func `*`(c: Counts, trips: int): Counts =
   Counts(
     multiplies: c.multiplies * trips,
     adds: c.adds * trips,
-    subs: c.subs * trips,
+    subtractions: c.subtractions * trips,
     divides: c.divides * trips,
     zero_fills: c.zero_fills * trips,
     intermediates: c.intermediates,

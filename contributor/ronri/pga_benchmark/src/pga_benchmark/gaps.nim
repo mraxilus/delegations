@@ -289,7 +289,7 @@ func isOperator(f: JsonNode): bool =
 func isLight(f: JsonNode): bool =
   ## Decide whether function spends no arithmetic term, i.e. signs and permutations only.
   f{"total", "multiplies"}.getInt == 0 and f{"total", "adds"}.getInt == 0 and
-    f{"total", "subs"}.getInt == 0
+    f{"total", "subtractions"}.getInt == 0
 
 
 func named(names: openArray[string], most = 6): string =
@@ -332,7 +332,7 @@ func ratio(l, r: float): float =
   if r == 0.0: (if l == 0.0: 1.0 else: 1.0e9) else: l / r
 
 
-func decideCause*(cause: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]): Decision =
+func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Gap]): Decision =
   ## Decide cause by its rule over documents and gaps, with evidence in one sentence.
   result.cause = cause
   case cause.rule
@@ -625,7 +625,7 @@ func render*(
   lines.join("\n") & "\n"
 
 
-func generate*(algebras: openArray[Algebra]; docket: Docket): (string, Docket) =
+func generate*(algebras: openArray[Algebra], docket: Docket): (string, Docket) =
   ## Generate list and grown docket from documents.
   var gaps: seq[Gap]
   for a in algebras: gaps.add a.gapsOf

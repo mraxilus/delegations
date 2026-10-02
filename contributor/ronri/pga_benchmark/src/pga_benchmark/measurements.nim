@@ -123,9 +123,9 @@ func summarise*(rounds: openArray[int64], objects: int): tuple[median, minimum: 
   var sorted = @rounds
   sorted.sort
   let
-    mid = sorted.len div 2
-    median = if sorted.len mod 2 == 1: float(sorted[mid])
-      else: (float(sorted[mid - 1]) + float(sorted[mid])) / 2.0
+    middle = sorted.len div 2
+    median = if sorted.len mod 2 == 1: float(sorted[middle])
+      else: (float(sorted[middle - 1]) + float(sorted[middle])) / 2.0
   (median: median / float(objects), minimum: float(sorted[0]) / float(objects))
 
 
