@@ -6,12 +6,12 @@
 import type { CDPSession, Page } from '@playwright/test';
 import { MILLISECONDS_FRAME, advance, evaluateOver } from './clock';
 import {
-  placeCamera, readCamera, readPlaced, settleCamera, slideOf, spanOf, spanPivot,
+  depthOf, placeCamera, readCamera, readPlaced, settleCamera, slideOf, spanOf, spanPivot,
 } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
-import { pixelOf } from './wheel';
+import { handleAlone, pixelOf } from './wheel';
 import { dragFinger, pointersDown, tapAt, pinch } from './touch';
 
 /** Put camera back where it opened and drop selection, so each check starts alike. */
@@ -279,5 +279,100 @@ export async function driveBackdropPlane(
       `backdrop ${filled.is_backdrop}, drag ${is_drag_mid ? 'active' : 'refused'}, azimuth ` +
       `${filled.azimuth.toFixed(3)} -> ${after.azimuth.toFixed(3)}, objects ` +
       `${filled.objects} -> ${after.objects}`,
+  );
+}
+
+/** Drive wheel onto point picked alone until it fills view, then right drag on it.
+ *
+ *  Nearer than where its sphere reaches every corner shows nothing more of it, so wheel
+ *  stops at that depth. There point is backdrop, as plane filling view is: right drag on it
+ *  moves view rather than arming drag that asks what to build. One notch back out, corners
+ *  stand bare and it is handle again, which brackets stop to within one notch.
+ */
+export async function drivePointFills(page: Page): Promise<void> {
+  await fromHome(page);
+  // By kind, not label: checks before this one remove and build objects.
+  const dot = await handleAlone(page, 'point');
+  if (await page.evaluate((one) => nimObjectKindWord(one), dot) !== 'point') {
+    report('a point picked alone stands on screen to wheel onto', false, 'no point on screen');
+    return;
+  }
+  await page.evaluate((one) => nimSelectOnly(one), dot);
+  await settleCamera(page);
+  const at = await pixelOf(page, dot);
+  if (at === null) {
+    report('a point picked alone stands on screen to wheel onto', false, 'no pixel');
+    return;
+  }
+  const [x, y] = [at[0] ?? 0, at[1] ?? 0];
+  await page.mouse.move(x, y);
+  const notch = async (count: number, step: number): Promise<void> => {
+    for (let i = 0; i < count; i += 1) {
+      await page.mouse.wheel(0, step);
+      await waitFrames(page, 2);
+    }
+    await settleCamera(page);
+  };
+  const readHover = async (): Promise<{ hovered: number; is_backdrop: boolean }> =>
+    page.evaluate(([cx, cy]) => {
+      const canvas = document.getElementById('gl') as HTMLCanvasElement;
+      nimUpdateCursor(cx ?? 0, cy ?? 0);
+      nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
+      return { hovered: nimHoverHandle(), is_backdrop: nimIsHoverBackdrop() };
+    }, [x, y]);
+  // Depth where sphere's radius reaches half diagonal: inverse of `picking.coversView`.
+  const filling = await page.evaluate((one) => {
+    const canvas = document.getElementById('gl') as HTMLCanvasElement;
+    const tangent = Math.tan((0.5 * nimCameraFov() * Math.PI) / 180);
+    return nimObjectRadius(one) * canvas.clientHeight /
+      (tangent * Math.hypot(canvas.clientWidth, canvas.clientHeight));
+  }, dot);
+  const world = await page.evaluate((one) => Array.from(nimAnchorWorld(one)), dot);
+
+  await notch(40, -120);
+  const capped = await readCamera(page);
+  const filled = await readHover();
+  await notch(10, -120);
+  const held = await readCamera(page);
+  await notch(1, 120);
+  const backed = await readHover();
+  await notch(4, -120);
+
+  const objects = await page.evaluate(() => nimSceneCount());
+  const before = await readCamera(page);
+  await page.mouse.move(x, y);
+  await page.mouse.down({ button: 'right' });
+  for (let step = 1; step <= 6; step += 1) {
+    await page.mouse.move(x + 30 * step, y);
+    await waitFrames(page, 2);
+  }
+  const is_drag_mid = await page.evaluate(() => nimDragActive() || nimDragMenuOpen());
+  await page.mouse.up({ button: 'right' });
+  await settleCamera(page);
+  const after = await readCamera(page);
+  const objects_after = await page.evaluate(() => nimSceneCount());
+
+  // Eye and anchor cross bridge as float32, near 1e-7 of coordinates some units from origin;
+  //   over depth near 0.1, that reads as few parts in million.
+  const depth = depthOf(capped, world);
+  report(
+    'a wheel onto a point picked alone stops where its sphere fills the view',
+    Math.abs(depth / filling - 1) < 1e-5 && spanOf(held.eye, capped.eye) < 1e-9 * filling,
+    `depth ${depth.toPrecision(9)}, filling ${filling.toPrecision(9)}, ten more notches ` +
+      `moved eye ${spanOf(held.eye, capped.eye).toExponential(2)}`,
+  );
+  report(
+    'there the point is backdrop, and one notch out it is a handle again',
+    filled.hovered === dot && filled.is_backdrop && backed.hovered === dot &&
+      !backed.is_backdrop,
+    `at fill: hovered ${filled.hovered}, backdrop ${filled.is_backdrop}; one notch out: ` +
+      `hovered ${backed.hovered}, backdrop ${backed.is_backdrop}; point ${dot}`,
+  );
+  report(
+    'a right drag on a point that fills the view moves the view and builds nothing',
+    !is_drag_mid && Math.abs(after.azimuth - before.azimuth) > 0.05 &&
+      objects_after === objects,
+    `drag ${is_drag_mid ? 'armed' : 'refused'}, azimuth ${before.azimuth.toFixed(3)} -> ` +
+      `${after.azimuth.toFixed(3)}, objects ${objects} -> ${objects_after}`,
   );
 }

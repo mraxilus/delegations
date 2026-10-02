@@ -396,6 +396,29 @@ func stanceApproaching*(
 
 #[ Standing Offer ]#
 
+func holdFilled*(
+  camera: var Camera; scene: Scene; picked: Selection; scale: DrawExtent; width, height: int
+) =
+  ## Carry eye back out until point picked alone fills frame, and no further in.
+  ##   Nearer shows nothing more of it: its sphere already reaches every corner, as
+  ##   `picking.coversView` reads, and eye would go on into it.
+  ##   Floor, as frame rule is, so it holds whatever moved camera: drag, keys, wheel and
+  ##   pinch alike. Eye goes back along its own sight, so nothing turns.
+  ##   There point is backdrop, so every press on it moves view.
+  if picked.len != 1: return
+  let handle = picked.at(0)
+  if not scene.isAlive(handle) or kindOf(scene.geometryOf(handle)) != some(Kind.Point):
+    return
+  let centre = anchorFor(scene.geometryOf(handle), scene.anchorOverrideAt(handle), scale)
+  if centre.isNone: return
+  let
+    (eye, frame) = camera.sight
+    depth = depthAlong(eye, frame.forward, centre.get)
+    least = depthFilling(scene.radiusAt(handle), scale, width, height)
+  if depth <= 0.0 or depth >= least: return
+  camera.dolly((camera.distance + least - depth)/camera.distance)
+
+
 func offerAim*(
   tween: var CameraTween; camera: var Camera; scene: Scene; picked: Selection;
   staged: Option[Preview]; scale: DrawExtent; width, height: int; now, duration: float;
@@ -431,6 +454,10 @@ func offerAim*(
     tween.destination = camera.stanceOf
     tween.is_arrived = true
     tween.is_yielded = false
+  # Hold point picked alone off its fill whenever no ease carries camera: ease landing
+  #   is its own to place, and hold fighting it each frame would shake view.
+  if staged.isNone and (is_moving_camera or tween.is_arrived):
+    camera.holdFilled(scene, picked, scale, width, height)
   # Hold frame rule, in whichever way suits what reader is doing.
   #   Reader moving camera is cut back at once: ease would fight their own drag, and they
   #   are one in control.
