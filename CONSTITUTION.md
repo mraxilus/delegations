@@ -459,8 +459,8 @@ suite "Chapter 2":
 ## Article X: Form of the source
 
 1. Two-space indent. No tabs. Lines of at most 100 characters, counted in characters and not
-   in bytes. Where a formatter would destroy a hand-shaped block, fence the block with the
-   marker that the formatter reads.
+   in bytes. Where the formatter would destroy a hand-shaped block, fence the block between a
+   line `#!fix off` and a line `#!fix on`.
 2. A section banner is a distinct comment form, at most two tiers deep, and its syntax marks
    the tier. Its title is an English noun phrase in Title Case, qualifier then head, singular
    for one member and plural for several. A first-tier banner takes three blank lines before
