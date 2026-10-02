@@ -211,7 +211,8 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
   Each one stands alone on its line, and is never indented.
 - `nim r koch fix` is the formatter. It applies each fix that a check names, and nothing else,
-  so your reading holds every other rule of layout.
+  so your reading holds every other rule of layout. It leaves the lines between `#!fix off`
+  and `#!fix on` as written (X.1). `--dry-run` prints each change, and writes none.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
 - Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write

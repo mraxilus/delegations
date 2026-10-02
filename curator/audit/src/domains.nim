@@ -34,20 +34,17 @@ import std/[options, strutils]
 
 
 type
-  Domain* = object
-    ## Define one life area: folder slug, display name, one-line theme.
+  Domain* = object  ## Define one life area: folder slug, display name, one-line theme.
     folder*: string  ## Directory name under `contributor/`; also branch segment.
     name*: string  ## Display name, may hold characters git refs reject.
     theme*: string  ## One sentence naming what projects under it are about.
 
-  Role* {.pure.} = enum
-    ## Define what branch owns, one member per grammar arm.
+  Role* {.pure.} = enum  ## Define what branch owns, one member per grammar arm.
     Curator  ## `curator/<name>`: whole tree, rules and root work.
     CuratorProject  ## `curator/<project>/<name>`: one curator project.
     Contributor  ## `contributor/<domain>/<project>/<name>`: one domain project.
 
-  Branch* = object
-    ## Define parsed branch name.
+  Branch* = object  ## Define parsed branch name.
     role*: Role
     domain*: string  ## Domain folder; empty unless `Role.Contributor`.
     project*: string  ## Project folder; empty for `Role.Curator`.
@@ -108,12 +105,7 @@ func parseBranch*(branch: string): Option[Branch] =
     return some(Branch(role: Role.CuratorProject, project: parts[1], name: tail))
   if parts.len == 4 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome and
       parts[2].isProjectName:
-    return some(Branch(
-      role: Role.Contributor,
-      domain: parts[1],
-      project: parts[2],
-      name: tail,
-    ))
+    return some(Branch(role: Role.Contributor, domain: parts[1], project: parts[2], name: tail))
   none(Branch)
 
 

@@ -34,7 +34,8 @@ func checkBase*(gained: openArray[string]): seq[Finding] =
     if path.isGoverning and path notin behind: behind.add path
   if behind.len == 0: return
   result.add finding(
-    "", 0,
+    "",
+    0,
     "Branch predates rules or checker on base; merge base, re-audit, then push; got `" &
       behind.join(", ") & "`.",
   )

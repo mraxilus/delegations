@@ -46,14 +46,15 @@ func checkPropagation(path: string): seq[Finding] =
   if parts.len <= 3: return
   if parts.len == 4 and parts[3] in PROJECT_FILES: return
   result.add finding(
-    path, 0,
+    path,
+    0,
     "Curator writes only " & PROJECT_FILES.join(", ") & " in contributor project; change " &
       "rule or check and let contributor apply it; got `" & path & "`.",
   )
 
 
 func checkScope*(
-    branch: string, paths: openArray[string], moved: openArray[string] = []
+  branch: string, paths: openArray[string], moved: openArray[string] = []
 ): seq[Finding] =
   ## Report branch name outside grammar, then each path outside branch prefix.
   if branch == MAIN: return

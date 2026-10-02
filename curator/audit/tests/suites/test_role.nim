@@ -6,6 +6,7 @@ import std/[strutils, unicode, unittest]
 import ../../src/role
 
 
+
 suite "Role":
   test "role line is first non-blank line, without its trailing comment":
     check "**Role:** curator\n\n## Intent\n".roleLine == "**Role:** curator"
@@ -17,14 +18,16 @@ suite "Role":
     check "".roleLine == ""
     check "\n \n".roleLine == ""
 
+
   test "echoed opening is cut, since body may open with whole paragraph":
     check "short".shortened == "short"
     check "é".repeat(ECHO_MAX).shortened == "é".repeat(ECHO_MAX)  # runes, never bytes
     let long = "x".repeat(ECHO_MAX + 1).shortened
     check long.runeLen == ECHO_MAX + 1 and long.endsWith("…")  # cut marked
     check checkRole("curator/mend-it", "y".repeat(200), ["curator"])[0].message.endsWith(
-      "got `" & "y".repeat(ECHO_MAX) & "…`."
+      "got `" & "y".repeat(ECHO_MAX) & "…`.",
     )
+
 
   test "each branch arm names one role, and both halves demand it":
     for (branch, expected) in [
@@ -36,6 +39,7 @@ suite "Role":
       # Role of some other branch fails opening line and label alike.
       check checkRole(branch, "**Role:** curator/probe\n", ["curator/probe"]).len == 2
 
+
   test "missing, unfilled and mismatched opening each report once":
     let bare = checkRole("curator/mend-it", "## Intent\n", ["curator"])
     check bare.len == 1
@@ -46,6 +50,7 @@ suite "Role":
     ).len == 1  # template opened and left unfilled
     check checkRole("curator/mend-it", "**Role:** contributor/ronri/alpha\n", ["curator"])
       .len == 1  # role of somebody else
+
 
   test "label must be present, beside any other":
     check checkRole(
@@ -61,6 +66,7 @@ suite "Role":
     check wrong.len == 1  # near miss is miss
     check wrong[0].message.startsWith("Pull request must carry label")  # fault, not race
     check "`labeled` event" notin wrong[0].message
+
 
   test "branch outside grammar reports nothing, since scope already fails it":
     check checkRole("claude/setup-5uk08q", "", newSeq[string]()).len == 0

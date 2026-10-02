@@ -22,7 +22,7 @@ import ./[
   tree, waits, workflows,
 ]
 
-export layout.Tree, layout.Entry, layout.projectDirectories
+export layout.Entry, layout.projectDirectories, layout.Tree
 
 
 func rulesStamp*(tree: Tree): string =
@@ -66,7 +66,8 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
       let touched = gitFields(root, ["log", "-z", "--format=%H", "--", path])
       if not touched.anyIt(it.strip.startsWith(named)):
         result.add finding(
-          path, 0,
+          path,
+          0,
           "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
         )
 
@@ -192,7 +193,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
         result.add checkTsconfig(e.path, e.content)
     if not found_config:
       result.add finding(
-        config_path, 0,
+        config_path,
+        0,
         "Project holding TypeScript carries `tsconfig.json` at its root (CONTRIBUTOR.md, " &
           "TypeScript); got none.",
       )
@@ -205,7 +207,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
     var exempt = root_exempt & JARGON.toSeq
     for (path, source) in glossaries:
-      if path != ROOT_GLOSSARY and e.path.startsWith(path[0 ..< path.len - ROOT_GLOSSARY.len]):
+      if path != ROOT_GLOSSARY and e.path.startsWith(path[0..<path.len - ROOT_GLOSSARY.len]):
         exempt.add source.glossaryExemptions
     result.add checkNames(e.path, e.content, exempt)
 

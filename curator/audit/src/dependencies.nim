@@ -48,7 +48,7 @@ const
 func packageName*(requirement: string): string =
   ## Read package name from requirement, i.e. text before version, hash or space.
   for i, c in requirement:
-    if c in NAME_END: return requirement[0 ..< i]
+    if c in NAME_END: return requirement[0..<i]
   requirement
 
 
@@ -67,7 +67,7 @@ func requireLiterals*(nimble: string): seq[string] =
         continue
       let close = rest.find('"', i + 1)
       if close < 0: break
-      result.add rest[i + 1 ..< close]
+      result.add rest[i + 1..<close]
       i = close + 1
 
 
@@ -113,7 +113,7 @@ func firstDifference(stored, nimble: string): int =
   let
     held = stored.split('\n')
     committed = nimble.split('\n')
-  for i in 0 ..< max(held.len, committed.len):
+  for i in 0..<max(held.len, committed.len):
     let
       a = if i < held.len: held[i] else: ""
       b = if i < committed.len: committed[i] else: ""
@@ -137,7 +137,8 @@ proc checkLockNimble*(nimble_path, lock_path, lock, nimble: string): seq[Finding
     committed = nimble.split('\n')
     held = if line <= committed.len: committed[line - 1] else: ""
   result.add finding(
-    nimble_path, line,
+    nimble_path,
+    line,
     "Lock's stored nimble differs here, and `atlas rep` writes it back over this file; " &
       "regenerate lock, or make its stored copy match; got `" & held & "`.",
   )
@@ -171,7 +172,9 @@ proc restoreDependencies(root: string, target: Target): seq[Finding] =
   let code = runIn(root / target.directory, atlas, ["changed"], target.bin)
   if code != 0:
     result.add finding(
-      target.directory & "/" & LOCK_FILE, 0, "Checkouts differ from lock; got exit `" & $code & "`."
+      target.directory & "/" & LOCK_FILE,
+      0,
+      "Checkouts differ from lock; got exit `" & $code & "`.",
     )
 
 
@@ -198,5 +201,7 @@ proc restoreNode*(root: string, target: Target): seq[Finding] =
   let code = runIn(root / target.directory, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)
   if code != 0:
     result.add finding(
-      target.directory & "/" & NODE_LOCK, 0, "Node restore failed; got exit `" & $code & "`."
+      target.directory & "/" & NODE_LOCK,
+      0,
+      "Node restore failed; got exit `" & $code & "`.",
     )

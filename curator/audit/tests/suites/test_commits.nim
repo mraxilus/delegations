@@ -7,6 +7,7 @@ from std/unicode import runeLen
 import ../../src/commits
 
 
+
 suite "Article XI":
   test "XI.1 every type parses with project or curator scope":
     for kind in TYPES:  # 11 types, exhaustive
@@ -16,6 +17,7 @@ suite "Article XI":
         check parsed.get.summary == "add thing"  # summary kept
     check parseSubject("feat(alpha)!: drop api").isSome  # breaking marker
 
+
   test "XI.1 grammar rejects every deviation":
     for subject in [
       "add thing", "feat: add thing", "feat(alpha): Add thing", "feat(alpha): add thing.",
@@ -23,6 +25,7 @@ suite "Article XI":
       "feat(alpha): ", "wip(alpha): add thing", "feat(a/b): add thing", "(alpha): add thing",
     ]:  # 11 cases
       check parseSubject(subject).isNone  # type(scope): lowercase summary, no period
+
 
   test "XI.1 subject at most one source line wide":
     let at_limit = "feat(alpha): " & "a".repeat(SUBJECT_MAX - 13)
@@ -34,6 +37,7 @@ suite "Article XI":
     check checkCommits("contributor/ronri/alpha/work", [wide]).len == 0  # runes, not bytes
     check checkCommits("claude/setup", ["x".repeat(SUBJECT_MAX + 1)]).len ==
       2  # width checked beside grammar
+
 
   test "XI.1 scope must match project on contributor and curator project branches":
     check checkCommits("contributor/ronri/alpha/work", ["feat(alpha): add", "test(alpha): c"])
@@ -48,6 +52,7 @@ suite "Article XI":
       0  # unparsed branch checks format only
     check checkCommits("claude/setup", ["Bad subject"]).len == 1  # format still checked
     check checkCommits("contributor/ronri/alpha/work", []).len == 0  # no commits, no findings
+
 
   test "Regression rule: test of same scope sits immediately before each fix":
     # Subjects arrive newest first, so commit before element `i` is element `i + 1`.
@@ -80,6 +85,7 @@ suite "Article XI":
       "curator/work", ["refactor(audit): tidy it"]
     ).len == 0  # change needing no test is not fix
 
+
   test "XI.4 body is in sentence case, one sentence to line, trailers and code skipped":
     const TRAILERS = "\n\nCo-Authored-By: Name <a@b.c>\nClaude-Session: https://x.y/z\n"
     let listed = "Reason sits here.\nMechanism sits here:\n- First item.\n" & TRAILERS
@@ -92,11 +98,13 @@ suite "Article XI":
     check checkBody("s", "Run this:\n\n```text\nkoch check\n```\n").len == 0  # fenced code
     check checkBody("s", "").len == 0  # subject alone is enough
 
+
   test "record travels in commit of its own":
     check checkRecordCommit("docs(a): record", ["c/d/a/PROVENANCE.md", "c/d/a/README.md"]).len == 0
     check checkRecordCommit("feat(a): add", ["c/d/a/src/a.nim"]).len == 0
     let mixed = checkRecordCommit("feat(a): add", ["c/d/a/PROVENANCE.md", "c/d/a/src/a.nim"])
     check mixed.len == 1 and "got `c/d/a/src/a.nim` beside it" in mixed[0].message
+
 
   test "history runs subject, ladder, body and paths over every commit":
     let commits = @[
