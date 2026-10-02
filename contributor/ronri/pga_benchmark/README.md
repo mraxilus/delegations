@@ -21,6 +21,7 @@ Three kinds of page answer the question. Each one is built from committed files 
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
 | [P02 Typed multivectors][typed-multivectors] | proposal | concrete k-vector types, any dimension |
+| [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -113,3 +114,4 @@ checked against.
 [marginalia]: https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM
 [cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q
 [typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX
+[partner-sign]: https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf
