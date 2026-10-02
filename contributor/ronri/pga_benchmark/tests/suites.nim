@@ -12,11 +12,10 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, changes, dense, proposals, gaps, guard, head, inspector, markdown, measurements, model,
-  notes,
-  report,
+  bound, changes, dense, gaps, guard, head, inspector, markdown, measurements, model, notes,
+  proposals, report,
 ]
-import ../src/pga_benchmark/pages/[docket, shell, evaluation, proposal]
+import ../src/pga_benchmark/pages/[docket, evaluation, proposal, shell]
 import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
   algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
@@ -52,8 +51,8 @@ macro expressionsCompile(measurands: static seq[Measurand]): untyped =
     result.add quote do:
       block:
         var
-          `m` {.used.}: `kind_m`
-          `n` {.used.}: `kind_n`
+          `m` {.used.}: `kind_m`  # Read by `expression` of measurand.
+          `n` {.used.}: `kind_n`  # Read by `expression` of binary measurand; unary leaves it.
         check compiles(`expression`)  # expression of `id` parses and resolves against library
         check `id`.len > 0  # id names gap
 
@@ -82,12 +81,14 @@ macro checkReferences(measurands: static seq[Measurand]; chapter: static string)
           let
             j = (i * 7 + 3) mod OBJECTS
             expected = block:
-              let `m` {.used.} = `reference_m`[i]
-              let `n` {.used.} = `reference_n`[j]
+              let
+                `m` {.used.} = `reference_m`[i]  # Read by `reference`.
+                `n` {.used.} = `reference_n`[j]  # Read by binary `reference`; unary leaves it.
               widen(`reference`)
             got = block:
-              let `m` {.used.} = `library_m`[i]
-              let `n` {.used.} = `library_n`[j]
+              let
+                `m` {.used.} = `library_m`[i]  # Read by `expression`.
+                `n` {.used.} = `library_n`[j]  # Read by binary `expression`; unary leaves it.
               `expression`
           check got =~ expected  # library on images equals reference embedded
   if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
@@ -125,8 +126,9 @@ macro checkDenseForms(measurands: static seq[Measurand]): untyped =
           let
             j = (i * 7 + 3) mod OBJECTS
             (expected, got) = block:
-              let `m` {.used.} = `pool_m`[i]
-              let `n` {.used.} = `pool_n`[j]
+              let
+                `m` {.used.} = `pool_m`[i]  # Read by `expression` and `dense`.
+                `n` {.used.} = `pool_n`[j]  # Read by binary `expression` and `dense` alone.
               (`expression`, `dense`)
           check hasNan(got) == hasNan(expected)  # NaN exactly where library returns it
           if not hasNan(expected): check isNear(got, expected)  # dense form equals library
@@ -383,42 +385,43 @@ suite "Inspector":
     check overloadOf("wedge_u0__referenceZrigid3") == 0 and overloadOf("nimZeroMem") == -1  # none
 
   test "functions are split and counted from fixture C":
-    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
-    const FIXTURE = [
-      "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
-        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* n_p1, " &
-        MULTIVECTOR_MANGLED & "* Result) {",
-      "\tNF* T1_;",
-      "NF T2_;",
-      MULTIVECTOR_MANGLED & " T3_;",
-      "NIM_BOOL* nimErr_;",
-      "{",
-      "\t\tnimErr_ = nimErrorFlag();",
-      "nimZeroMem(((void*) Result), sizeof(" & MULTIVECTOR_MANGLED & "));",
-      "T2_ = X5BX5D__u1__OOZpgaZmultivectors(m_p0, ((tyEnum_Basis__h) 1));",
-      "if (NIM_UNLIKELY((*nimErr_))) {",
-      "\tgoto BeforeRet_;",
-      "}",
-      "(*T1_) = ((((NF) T2_) * ((NF) T2_)) + (((NF) T2_) * ((NF) T2_)));",
-      "(*T1_) = (((NF) T2_) - ((NF) T2_));",
-      "barXE2X88X99__u0__OOZpgaZoperators(m_p0, ((&T3_)));",
-      "if (NIM_UNLIKELY((*nimErr_))) {",
-      "\tgoto BeforeRet_;",
-      "}",
-      "}",
-      "\tBeforeRet_: ;",
-      "}",
-      "",
-      "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vector3__h* a_p0, " &
-        "tyObject_Vector3__h* b_p1) {",
-      "\tNF result;",
-      "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
-      "\treturn result;",
-      "}",
-      "",
-      "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
-        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result);",
-    ].join("\n") & "\n"
+    const
+      MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
+      FIXTURE = [
+        "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
+          MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* n_p1, " &
+          MULTIVECTOR_MANGLED & "* Result) {",
+        "\tNF* T1_;",
+        "NF T2_;",
+        MULTIVECTOR_MANGLED & " T3_;",
+        "NIM_BOOL* nimErr_;",
+        "{",
+        "\t\tnimErr_ = nimErrorFlag();",
+        "nimZeroMem(((void*) Result), sizeof(" & MULTIVECTOR_MANGLED & "));",
+        "T2_ = X5BX5D__u1__OOZpgaZmultivectors(m_p0, ((tyEnum_Basis__h) 1));",
+        "if (NIM_UNLIKELY((*nimErr_))) {",
+        "\tgoto BeforeRet_;",
+        "}",
+        "(*T1_) = ((((NF) T2_) * ((NF) T2_)) + (((NF) T2_) * ((NF) T2_)));",
+        "(*T1_) = (((NF) T2_) - ((NF) T2_));",
+        "barXE2X88X99__u0__OOZpgaZoperators(m_p0, ((&T3_)));",
+        "if (NIM_UNLIKELY((*nimErr_))) {",
+        "\tgoto BeforeRet_;",
+        "}",
+        "}",
+        "\tBeforeRet_: ;",
+        "}",
+        "",
+        "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vector3__h* a_p0, " &
+          "tyObject_Vector3__h* b_p1) {",
+        "\tNF result;",
+        "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
+        "\treturn result;",
+        "}",
+        "",
+        "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
+          MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result);",
+      ].join("\n") & "\n"
     let functions = functionsIn(FIXTURE)
     check functions.len == 2  # declaration ending in `;` skipped
     check functions[0].symbol == "∧"  # head demangled
@@ -436,64 +439,65 @@ suite "Inspector":
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
 
   test "terms inside loops of constant bound count once per trip":
-    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
-    const LOOP = [
-      "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
-        MULTIVECTOR_MANGLED & "* m_p1, " & MULTIVECTOR_MANGLED & "* Result) {",
-      "NI i_1;",
-      "NI res_1;",
-      "i_1 = ((NI) 0);",
-      "{",
-      "\twhile (1) {",
-      "\tNF T3_;",
-      "if ((!((i_1 < ((NI) 16))))) {",
-      "\tgoto LA7;",
-      "}",
-      "T3_ = (((NF) (*m_p1).data[i_1]) * ((NF) s_p0));",
-      "(*Result).data[i_1] = (((NF) T3_) + ((NF) 1.0));",
-      "halve__u0__OOZpgaZops(((&(*Result).data[i_1])));",
-      "i_1 += ((NI) 1);",
-      "}",
-      "LA7: ;",
-      "}",
-      "res_1 = ((NI) 0);",
-      "{",
-      "\twhile (1) {",
-      "if ((!((res_1 <= ((NI) 3))))) {",
-      "\tgoto LA9;",
-      "}",
-      "{",
-      "\tNI j_1;",
-      "j_1 = ((NI) 0);",
-      "\twhile (1) {",
-      "if ((!((j_1 < ((NI) 4))))) {",
-      "\tgoto LA11;",
-      "}",
-      "(*Result).data[j_1] = (((NF) (*m_p1).data[j_1]) - ((NF) s_p0));",
-      "j_1 += ((NI) 1);",
-      "}",
-      "LA11: ;",
-      "}",
-      "res_1 += ((NI) 1);",
-      "}",
-      "LA9: ;",
-      "}",
-      "{",
-      "\twhile (1) {",
-      "if ((!((i_1 < L_1)))) {",
-      "\tgoto LA13;",
-      "}",
-      "(*Result).data[0] = (((NF) s_p0) * ((NF) s_p0));",
-      "i_1 += ((NI) 1);",
-      "}",
-      "LA13: ;",
-      "}",
-      "}",
-      "",
-      "static N_INLINE(void, halve__u0__OOZpgaZops)(NF* x_p0) {",
-      "(*x_p0) = (((NF) (*x_p0)) * ((NF) 0.5));",
-      "}",
-    ].join("\n") & "\n"
+    const
+      MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
+      LOOP = [
+        "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
+          MULTIVECTOR_MANGLED & "* m_p1, " & MULTIVECTOR_MANGLED & "* Result) {",
+        "NI i_1;",
+        "NI res_1;",
+        "i_1 = ((NI) 0);",
+        "{",
+        "\twhile (1) {",
+        "\tNF T3_;",
+        "if ((!((i_1 < ((NI) 16))))) {",
+        "\tgoto LA7;",
+        "}",
+        "T3_ = (((NF) (*m_p1).data[i_1]) * ((NF) s_p0));",
+        "(*Result).data[i_1] = (((NF) T3_) + ((NF) 1.0));",
+        "halve__u0__OOZpgaZops(((&(*Result).data[i_1])));",
+        "i_1 += ((NI) 1);",
+        "}",
+        "LA7: ;",
+        "}",
+        "res_1 = ((NI) 0);",
+        "{",
+        "\twhile (1) {",
+        "if ((!((res_1 <= ((NI) 3))))) {",
+        "\tgoto LA9;",
+        "}",
+        "{",
+        "\tNI j_1;",
+        "j_1 = ((NI) 0);",
+        "\twhile (1) {",
+        "if ((!((j_1 < ((NI) 4))))) {",
+        "\tgoto LA11;",
+        "}",
+        "(*Result).data[j_1] = (((NF) (*m_p1).data[j_1]) - ((NF) s_p0));",
+        "j_1 += ((NI) 1);",
+        "}",
+        "LA11: ;",
+        "}",
+        "res_1 += ((NI) 1);",
+        "}",
+        "LA9: ;",
+        "}",
+        "{",
+        "\twhile (1) {",
+        "if ((!((i_1 < L_1)))) {",
+        "\tgoto LA13;",
+        "}",
+        "(*Result).data[0] = (((NF) s_p0) * ((NF) s_p0));",
+        "i_1 += ((NI) 1);",
+        "}",
+        "LA13: ;",
+        "}",
+        "}",
+        "",
+        "static N_INLINE(void, halve__u0__OOZpgaZops)(NF* x_p0) {",
+        "(*x_p0) = (((NF) (*x_p0)) * ((NF) 0.5));",
+        "}",
+      ].join("\n") & "\n"
     let
       functions = functionsIn(LOOP)
       c = count(functions[0].body)
@@ -504,30 +508,31 @@ suite "Inspector":
     check totals(functions)["scale__u0__OOZpgaZops"].multiplies == 17 + 16  # callee per trip
 
   test "divisions count as terms, once per trip, and fold from callees":
-    const MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
-    const DIVIDE = [
-      "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
-        MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result) {",
-      "NF n_1;",
-      "NI i_1;",
-      "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
-      "i_1 = ((NI) 0);",
-      "{",
-      "\twhile (1) {",
-      "if ((!((i_1 < ((NI) 4))))) {",
-      "\tgoto LA7;",
-      "}",
-      "slasheq__u0__system(((&(*Result).data[i_1])), n_1);",
-      "i_1 += ((NI) 1);",
-      "}",
-      "LA7: ;",
-      "}",
-      "}",
-      "",
-      "static N_INLINE(void, slasheq__u0__system)(NF* x_p0, NF y_p1) {",
-      "(*x_p0) = (((NF) (*x_p0)) / ((NF) y_p1));",
-      "}",
-    ].join("\n") & "\n"
+    const
+      MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
+      DIVIDE = [
+        "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
+          MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result) {",
+        "NF n_1;",
+        "NI i_1;",
+        "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
+        "i_1 = ((NI) 0);",
+        "{",
+        "\twhile (1) {",
+        "if ((!((i_1 < ((NI) 4))))) {",
+        "\tgoto LA7;",
+        "}",
+        "slasheq__u0__system(((&(*Result).data[i_1])), n_1);",
+        "i_1 += ((NI) 1);",
+        "}",
+        "LA7: ;",
+        "}",
+        "}",
+        "",
+        "static N_INLINE(void, slasheq__u0__system)(NF* x_p0, NF y_p1) {",
+        "(*x_p0) = (((NF) (*x_p0)) / ((NF) y_p1));",
+        "}",
+      ].join("\n") & "\n"
     let functions = functionsIn(DIVIDE)
     check count(functions[0].body).divides == 1  # reciprocal outside loop, once
     check count(functions[1].body).divides == 1  # callee's own division

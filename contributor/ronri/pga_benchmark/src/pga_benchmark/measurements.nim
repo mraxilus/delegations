@@ -167,16 +167,17 @@ macro emitMeasurand(
     block:
       var
         results: array[OBJECTS, typeof(block:
-          let `m` {.used.} = `pool_m`[0]
-          let `n` {.used.} = `pool_n`[0]
+          let
+            `m` {.used.} = `pool_m`[0]  # Read by `body`.
+            `n` {.used.} = `pool_n`[0]  # Read by `body` of binary measurand; unary leaves it.
           `body`)]
         rounds: array[ROUNDS, int64]
       let statistics_before = getAllocStats()
       timeRounds(rounds):
         for i in 0 ..< OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
-          template `m`(): untyped {.used.} = `pool_m`[i]
-          template `n`(): untyped {.used.} = `pool_n`[j]
+          template `m`(): untyped {.used.} = `pool_m`[i]  # Read by `body`.
+          template `n`(): untyped {.used.} = `pool_n`[j]  # Read by binary `body`; unary leaves it.
           results[i] = `body`
       let statistics_after = getAllocStats()
       var count_nan = 0

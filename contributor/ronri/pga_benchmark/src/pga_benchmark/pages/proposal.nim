@@ -16,8 +16,8 @@
 
 import std/[json, options, strutils, tables]
 
-import ../[proposals, markdown]
-import ./[shell, evaluation]
+import ../[markdown, proposals]
+import ./[evaluation, shell]
 
 
 func proposalBody*(
