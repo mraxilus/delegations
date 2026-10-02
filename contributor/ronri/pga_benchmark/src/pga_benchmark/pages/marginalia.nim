@@ -13,7 +13,7 @@
 import std/[json, strutils, tables]
 
 import ../[changes, markdown, notes]
-import ./[shell, evaluation]
+import ./[evaluation, shell]
 
 
 type ChangeEvaluated* = object

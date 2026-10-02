@@ -8,7 +8,7 @@
 ##     - runtime of every measurand, pristine and changed binaries run alternately, so drift
 ##       of machine lands on both alike, and ratio per measurand is median over runs;
 ##     - proposal claims: suites pass, tables equal pristine ones, programs run, counts hold,
-##       and build of bench entry costs no more than stated share of pristine build.
+##       and build of library alone costs no more than stated share of pristine build.
 ##   Result is one document in `evaluations/`, taken at pin and naming digest of edits it tried,
 ##     so `drive` refuses evaluation of another commit or of edits since changed (`head.nim`).
 ##   Working copy keeps checkout's directory name, since function keys and module tails are
@@ -68,6 +68,8 @@ type
 const
   ENTRY_BENCH = "src/pga_benchmark/bench.nim"
     ## Entry reaching every measurand.
+  ENTRY_LIBRARY* = "import pga\n"
+    ## Text of entry build claim compiles: library alone, so no module of harness sets peak.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache into static measurements.
   COUNTED = ["multiplies", "adds", "subs", "divides", "zero_fills", "intermediates", "copies",
@@ -349,14 +351,19 @@ proc tablesOf(
 proc buildCost(
   chain: Toolchain; library, directory, side: string; algebra: Algebra
 ): (float, float, string) =
-  ## Compile bench entry to C from empty cache; seconds and peak MiB compiler reports.
-  let cache = directory / "cache_build_" & side & "_" & algebra.name
+  ## Compile library alone to C from empty cache; seconds and peak MiB compiler reports.
+  ##   Bench entry put harness in measured build: one change to its inspector moved peak of
+  ##     changed side by fifty MiB, and pristine side by none, whose derivation peaks higher.
+  let
+    cache = directory / "cache_build_" & side & "_" & algebra.name
+    entry = directory / "build_" & side & ".nim"
   removeDir cache
+  writeFile(entry, ENTRY_LIBRARY)
   var arguments = @["c", "--hints:on", "--warnings:off", chain.flags, "--skipParentCfg:on",
     "--noNimblePath", "--path:" & library, "--nimcache:" & cache, "--compileOnly",
     "-o:" & directory / "build_" & side & "_" & algebra.name]
   arguments.add algebraDefines(algebra) & buildDefines(chain, chain.pga)
-  arguments.add ENTRY_BENCH
+  arguments.add entry
   let (output, code) = runCompiler(arguments)
   if code != 0: return (0.0, 0.0, output.strip.splitLines[^1])
   let (seconds, peak) = successOf(output)
@@ -505,9 +512,10 @@ proc runEvaluation*(
       return (nil, @[Finding(path: candidate.path, message: "Changed library does not " &
         "build at " & algebra.name & "; got `" & why.strip.splitLines[^1] & "`.")])
     counted[algebra.name] = after
-    let binary = directory / "bench_" & algebra.name
-    let (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
-      directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
+    let
+      binary = directory / "bench_" & algebra.name
+      (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
+        directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
     if code != 0:
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
         algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])

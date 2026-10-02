@@ -10,14 +10,15 @@
 ##   Figure paragraph embeds SVG it names, whole, so figure takes page's colours and faces; one
 ##     whose file is absent renders as its text, and `drive` names it.
 ##
-##   Cost: whole-file replacement renders collapsed, since hundreds of lines would bury claims.
+##   Cost: every edit renders closed, with signatures it defines or sits in, since hundreds of
+##     lines would bury claims; reader opens edit to read its code.
 
 {.experimental: "strictFuncs".}
 
 import std/[json, options, strutils, tables]
 
-import ../[proposals, markdown]
-import ./[shell, evaluation]
+import ../[markdown, proposals]
+import ./[evaluation, shell]
 
 
 func proposalBody*(
@@ -46,7 +47,7 @@ func proposalBody*(
       of "program": code(claim{"path"}.getStr) & " compiles and runs clean at " & algebras
       of "count": code(claim{"measurand"}.getStr) & " spends " & $claim{"value"}.getInt & " " &
         claim{"metric"}.getStr & " at " & claim{"algebra"}.getStr
-      of "build": "compiling bench entry costs at most ×" & claim{"at_most"}.getFloat.fixed &
+      of "build": "compiling library alone costs at most ×" & claim{"at_most"}.getFloat.fixed &
         " of pristine " & (if claim{"metric"}.getStr == "seconds": "seconds" else: "peak memory") &
         " at " & claim{"algebra"}.getStr
       else: escapeHtml(claim{"kind"}.getStr)
