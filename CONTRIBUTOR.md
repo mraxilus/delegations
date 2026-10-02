@@ -333,6 +333,12 @@ them.
   variance with a retry, a longer timeout, a quarantine or a skip. Find what the check really
   waits on, and wait on that: **settle on what moved, and never on what has stopped
   changing**.
+- **A speed check is the one check that reads the real clock** (Article IX.12). Its sample is
+  a count of frames or calls, and never a span of time, so only the figure moves with the
+  machine. Its bound is an upper limit that the runner and a delegate meet with a measured
+  margin, and a regression reads over it. The record holds the readings that set the bound,
+  from the runner and from a delegate, beside it. A bound moves only with new readings beside
+  it, and never to quiet a red run. The `waits` check holds the half that text can read.
 - **Where the cause is outside your project**, say so on an issue rather than absorb it.
   That cause is a browser, a runner image or a driver. Where you cannot make the check
   deterministic, say what varies and how often, measured. The Architect then decides whether

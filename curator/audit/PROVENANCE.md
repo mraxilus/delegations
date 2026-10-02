@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 09790e8743064dec |
+| Rules   | 53fe66180cf539a0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -669,11 +669,10 @@ daily and writes one issue labelled `curator`. It names these:
 The settings read goes through the rulesets endpoints. The classic protection endpoint answers
 nothing where the rules are rulesets, so the ledger reads the rules per branch with the token of
 a run. That token lacks the administration scope, so GitHub leaves the bypass actors out, and
-the secret `ADMIN_TOKEN` reads them. An anonymous read sees them too, but runners share
-addresses and the anonymous limit is sixty per hour. Both tokens miss the repository merge
-settings, so the ledger reads the merge methods the ruleset allows, and the head branch deletion
-is unread. A read that fails turns the run red, because a silent read is the failure the ledger
-exists to catch.
+the secret `TOKEN_DELEGATE` reads them. An anonymous read sees them too, but runners share
+addresses and the anonymous limit is sixty per hour. The run token and a fine-grained token
+miss the repository merge settings, so `TOKEN_DELEGATE` is a classic token and reads them. A read
+that fails turns the run red, because a silent read is the failure the ledger exists to catch.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
 rather than search, and the label as a hardcoded literal. Its schedule idiom is the one in
@@ -1121,6 +1120,59 @@ driven check passed with 0 findings, in a real Chromium over real gestures, with
 reading its verdict. Verified by a break of it: on the compiler of koch the same command fails
 inside `pga`.
 
+## Names
+
+**Every declared name in Nim is read, and its words are held to the table and the
+glossaries.** A declaration is a binding, a routine, a type, a field or a parameter, read by a
+text scanner after comments and strings are blanked. A word is a run between underscores and
+case changes. The table pairs each coined abbreviation with its one full word, as the English
+check pairs a word with its approved one.
+
+An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
+the root or the project glossary lists it, as a symbol under `## Standards` or as a term. The
+jargon list of V.6 passes. Verified by `suites/test_names.nim`.
+
+**A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
+`importjs` or `dynlib` declares a name the library owns, so it is skipped. Its parameters are
+ours, and they are read. The pragma block may stand on its own line after the signature, and
+the scanner joins it. Found when the first run reported every OpenGL and SDL binding of
+`rga_visualiser` under V.3.
+
+- V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
+  `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
+  is held as a module-level SCREAMING name that equals a type name without case or
+  underscores.
+- A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
+  reading. An enum member is unread, and V.1 is unheld here.
+- Rejected: a parser, which costs a dependency and a compiler version; the scanner reads the
+  line forms this charter prescribes.
+- Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
+  is unread.
+
+## Fixed waits
+
+**A fixed wait in drive code is a finding, because it reads the real clock in every
+context.** The names are `waitForTimeout` of Playwright, and `sleep` and `sleepAsync` of Nim.
+The check reads `tests/` and `tools/` of every project, with no exemption, because a speed
+check samples a count and never sleeps (Article IX.12). Each name carries its replacement, as
+the English check does. Verified by `suites/test_waits.nim`.
+
+**A timer is unread, because one name is both clocks.** Inside a page under the clock of
+Playwright, `setTimeout` and `performance.now` are simulated reads. A check over them would
+report every correctness drive of `rga_visualiser`, where each `setTimeout` sits inside
+`evaluateOver` or `page.evaluate`. So the check holds the narrow half, and the rule holds the
+rest by reading.
+
+- Nim names compare as the compiler compares them, so `sleep_async` is `sleepAsync`. Nim
+  source is read with comments and strings blanked, so the suite of the check holds its
+  fixtures as strings and reports nothing.
+- `sleep` of TypeScript is the drive's own helper. In `rga_visualiser` it wraps `setTimeout`
+  inside a page on the simulated clock, so it is unread.
+- Verified on the tree: no finding in any project. A planted `sleep(10)` in a Nim suite and a
+  planted `waitForTimeout(100)` in a TypeScript drive each read as one finding.
+- Cost: a drive outside `tests/` and `tools/` is unseen. So is a window built from a page
+  timer, and a fixed wait of a language other than Nim and Playwright.
+
 ## Hooks
 
 **Each hook of `.claude/settings.json` calls `koch hook <event>` and holds no rule of its own.**
@@ -1149,19 +1201,24 @@ The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Ve
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
 
 **The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
-writes the tree hash it passed on into `.git/koch-check` when the working tree is clean, and
-`pre-push` refuses a push whose tree differs. `commit-msg` runs the commit check over the new
-subject and the ladder before the commit lands. Both are two-line shell wrappers that call
-`hooks.sh`, because git runs a hook as an executable and a binary is never committed. A clone
-reads them only after the start hook sets `core.hooksPath`. So a tool other than Claude Code
-reaches CI unchecked, and CI stays the gate.
+writes the tree hash it passed on into `koch-check` in the git directory when the working tree
+is clean. `pre-push` refuses a push whose tree differs. The git directory is the one that
+`git rev-parse --git-dir` names, so a worktree, whose `.git` is a file, keeps its own mark.
+
+`commit-msg` runs the commit check over the new subject and the ladder before the commit
+lands. A merge commit passes it, because git writes that subject and the commit check excludes
+merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs a hook as an
+executable and a binary is never committed. A clone reads them once the start hook sets
+`core.hooksPath`, so any other tool reaches CI unchecked, and CI stays the gate.
 
 - A hook reaches only Claude Code, and only where it holds this repository alone, because a
   checkout of several repositories reads no project settings.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
   hook, which recompiles on each source change and costs seconds; the built binary costs
   milliseconds, and `nim r` stays as the fallback.
-- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop.
+- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop. It
+  counts a GitHub write as a post only where the call carried a body, as the `body` hook
+  does. So a label or a draft update ends no turn with a sign-off.
 - Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
   A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
   relative path then fails to open, and every hooked tool is refused, as happened once here.
@@ -1218,6 +1275,13 @@ steps call, rather than what they might. A workflow that declares no block is le
 because to take the default of the repository is somebody's decision rather than drift. Cost:
 the marks are text, so a step that reaches the same endpoint by another spelling goes unseen.
 That is a floor rather than a ceiling, and the module says so.
+
+A workflow may hand `gh` a token other than the run token, a stored secret or one minted in a
+step. That token reaches by its own grant, which no block sets, so the `gh` marks are skipped
+and a checkout still wants `contents`. The `draft` workflow is the case: GitHub refuses
+`convertPullRequestToDraft` to the token of a run and to a fine-grained token, so a classic
+token converts. The marks are text here too: `GH_TOKEN: ${{` and the two spellings of the run
+token.
 
 - Verified by `suites/test_workflows.nim`. Verified by a break of it: delete `actions: read` from
   `watch.yml`, and `koch check-files` reports it by name and by what was granted. Restore it, and 0

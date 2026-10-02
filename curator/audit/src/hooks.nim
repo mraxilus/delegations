@@ -19,7 +19,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, sequtils, strutils]
+import std/[json, options, os, sequtils, strutils]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
 
 
@@ -51,10 +51,13 @@ const
     ## Tag row carries for carried-list item.
   CARRIED_MAX* = 6
     ## Items on carried list (CONTRIBUTOR.md).
+  MERGE_SUBJECT = "Merge "
+    ## Opening of subject git writes for merge commit.
   PULL_HEADINGS* = ["## Intent", "## Scope", "## Verification", "## Record", "## Notes"]
     ## Headings pull request template gives.
-  CHECK_MARK* = ".git/koch-check"
-    ## File `koch check` writes tree hash it passed on, which `pre-push` reads.
+  CHECK_MARK* = "koch-check"
+    ## File in git dir where `koch check` writes tree hash it passed on, which `pre-push`
+    ##   reads; `markPath` places it.
   ROLE_WORD = "Role:"
     ## Word after bold marker in sign-off role line.
 
@@ -64,6 +67,7 @@ type
     ## Define one tool call of turn, as transcript records it.
     name*: string     ## Tool name, such as `Bash` or `mcp__github__issue_write`.
     command*: string  ## Bash command text; empty for other tools.
+    has_body*: bool   ## Input carried `body`, so GitHub write posted text.
 
   Turn* = object
     ## Define what transcript says about turn since last message of person.
@@ -112,18 +116,19 @@ func gitCommands*(command: string): seq[seq[string]] =
 
 func checkBash*(branch, command: string, is_head_pushed: bool): seq[Finding] =
   ## Report commit or push on `main` or outside grammar, and rewrite of pushed history.
-  for args in command.gitCommands:
-    if args.len == 0: continue
-    let sub = args[0]
+  for arguments in command.gitCommands:
+    if arguments.len == 0: continue
+    let sub = arguments[0]
     if sub in ["commit", "push"] and (branch == MAIN or branch.parseBranch.isNone):
       result.add finding(
         "", 0,
         "Never commit to `main`; push to branch inside grammar (CLAUDE.md); got `" & branch &
           "`.",
       )
-    if sub == "push" and args.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-")):
+    let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
+    if sub == "push" and is_forced:
       result.add finding("", 0, "Never rewrite pushed history (XI.2); got `git push --force`.")
-    if is_head_pushed and ((sub == "commit" and "--amend" in args) or sub == "rebase"):
+    if is_head_pushed and ((sub == "commit" and "--amend" in arguments) or sub == "rebase"):
       result.add finding(
         "", 0, "Never rewrite pushed history (XI.2); HEAD is on remote; got `git " & sub & "`."
       )
@@ -279,6 +284,14 @@ func checkSignoff*(message, branch: string): seq[Finding] =
   result.add englishFindings("sign-off", prose.join("\n"))
 
 
+func markPath*(root, git_directory: string): string =
+  ## Place check mark in git directory, as `git rev-parse --git-dir` names it from root.
+  ##   Literal `.git/` fails in worktree, where `.git` is file naming directory under main
+  ##     checkout's `.git/worktrees/`. Git names directory relative in main checkout and
+  ##     absolute in worktree; either way each checkout holds own mark, since each has own HEAD.
+  (if git_directory.isAbsolute: git_directory else: root / git_directory) / CHECK_MARK
+
+
 func checkPush*(recorded, pushed_tree: string): seq[Finding] =
   ## Report push of tree `koch check` did not pass on.
   if recorded.strip != pushed_tree.strip:
@@ -291,11 +304,15 @@ func checkPush*(recorded, pushed_tree: string): seq[Finding] =
 
 func checkMessage*(branch, message: string, earlier: openArray[string]): seq[Finding] =
   ## Report commit subject breaking form, scope or ladder, before commit lands.
+  ##   Merge commit passes: git writes its subject, and commit check excludes merges upstream
+  ##     (`commits.nim`), so duty to merge `main` into branch (CURATOR.md, duty 2) needs no
+  ##     bypass of hook.
   var subject = ""
   for line in message.splitLines:
     if line.strip.len > 0 and not line.startsWith("#"):
       subject = line.strip
       break
+  if subject.startsWith(MERGE_SUBJECT): return
   checkCommits(branch, @[subject] & @earlier)
 
 
@@ -323,9 +340,10 @@ func startContext*(branch, contributor, carried_heading: string, drift: seq[Find
 
 
 func turnWrites*(calls: openArray[Call]): bool =
-  ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write tool.
+  ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write with body.
+  ##   Label or draft update carries no body and is no post, as `body` hook reads it.
   for c in calls:
-    if c.name in WRITE_TOOLS: return true
+    if isPost(c.name, c.has_body): return true
     if c.name == "Bash" and c.command.gitCommands.anyIt(it.len > 0 and it[0] == "push"):
       return true
   false
@@ -359,7 +377,8 @@ proc parseTurn*(transcript: string): Turn =
       case item{"type"}.getStr
       of "tool_use":
         result.calls.add Call(
-          name: item{"name"}.getStr, command: item{"input", "command"}.getStr
+          name: item{"name"}.getStr, command: item{"input", "command"}.getStr,
+          has_body: item{"input", "body"} != nil,
         )
       of "text": text.add item{"text"}.getStr
       else: discard

@@ -123,10 +123,10 @@ func replaced*(tree: Tree, path, content: string): Tree =
     result.add (if e.path == path: entry(path, content) else: e)
 
 
-proc git*(root: string, args: string): string =
+proc git*(root: string, arguments: string): string =
   ## Run git in root with fixed identity; raise on failure, return stdout.
   let command = "git -C " & root.quoteShell &
-    " -c user.name=Test -c user.email=test@example.invalid -c commit.gpgsign=false " & args
+    " -c user.name=Test -c user.email=test@example.invalid -c commit.gpgsign=false " & arguments
   let (output, code) = execCmdEx(command)
   doAssert code == 0, "git failed; got `" & output & "`."
   output

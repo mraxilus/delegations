@@ -53,6 +53,11 @@ async function releaseExceedance(page: Page): Promise<void> {
 /** Seed of every window fed, so each run feeds same durations. */
 const SEED_WINDOW = 0x5eed;
 
+/** Read how many frames page's window holds, so feed that must replace it fills it. */
+async function framesWindow(page: Page): Promise<number> {
+  return page.evaluate(() => history_exceedance.length);
+}
+
 /** Feed window this many durations, drawn from what caller rolls.
  *
  *  Rolled by seeded generator rather than `Math.random`: curve's reach and axis's extent are
@@ -232,7 +237,8 @@ export async function driveAxis(page: Page): Promise<void> {
  */
 async function driveFloor(page: Page, reach: Reach): Promise<void> {
   const least = await page.evaluate(() => MILLISECONDS_AXIS_LEAST);
-  await feedWindow(page, 1024, [[1, 5, 9]]);
+  // Whole window, so no slow frame of mixed feed stays in it.
+  await feedWindow(page, await framesWindow(page), [[1, 5, 9]]);
   await settleAxis(page);
   const floored = await page.evaluate(() => {
     const said = document.getElementById('diagnostic-exceedance-axis')?.textContent ?? '';
@@ -338,7 +344,7 @@ async function driveMarks(page: Page, least: number): Promise<void> {
   const ink_floor = await readAxisInk(page);
   report(
     'every budget mark is named as a rate above it and a duration below it',
-    ink_floor.marks.length >= 3 &&
+    ink_floor.marks.length >= 4 &&
       ink_floor.named.every((mark) => mark.above > 0 && mark.below > 0),
     `${ink_floor.marks.length} marks at columns ${ink_floor.marks.join(', ')}, ` +
       `named ${ink_floor.named.map((one) => `${one.above}/${one.below}`).join(' ')}`,
@@ -360,12 +366,28 @@ async function driveMarks(page: Page, least: number): Promise<void> {
   await feedWindow(page, 1024, [[1, 10, 80]]);
   await settleAxis(page);
   const ink_wide = await readAxisInk(page);
+  const wide = await page.evaluate(
+    () => ({ extent: milliseconds_axis, floor: nimRateFrameLeast() }),
+  );
+  // Mark is found where its rate puts it on canvas, within pixel of rounding either way.
+  const columnOf = (rate: number): number => (ink_wide.width * 1000) / (rate * wide.extent);
+  const isMarkAt = (rate: number): boolean =>
+    ink_wide.marks.some((x) => Math.abs(x - columnOf(rate)) <= 2);
   report(
     'and the 15 fps mark appears only once the window holds a frame that slow',
-    // Counts alone: that each mark is named is check above's business, and check that fails
-    //   for two reasons tells you neither.
-    ink_floor.marks.length === 3 && ink_wide.marks.length === 4,
-    `${ink_floor.marks.length} marks on a fast window, ${ink_wide.marks.length} on a slow one`,
+    // Count on fast window, place on slow one: faster marks may give way there (below).
+    ink_floor.marks.length === 4 && isMarkAt(15),
+    `${ink_floor.marks.length} marks on a fast window; on a slow one, 15 fps at column ` +
+      `${columnOf(15).toFixed(0)}: ${isMarkAt(15)}`,
+  );
+  // On 90 ms axis 240 fps line stands 17 px from 120's, and its labels covered that line.
+  report(
+    'a mark whose labels would cover a slower one gives way, and the floor mark holds',
+    isMarkAt(wide.floor) && !isMarkAt(240) &&
+      ink_wide.named.every((mark) => mark.above > 0 && mark.below > 0),
+    `0-${wide.extent.toFixed(1)} ms: marks at columns ${ink_wide.marks.join(', ')}; ` +
+      `${wide.floor} fps at ${columnOf(wide.floor).toFixed(0)}, 240 at ` +
+      `${columnOf(240).toFixed(0)}`,
   );
 }
 
@@ -386,7 +408,8 @@ async function axisReading(page: Page): Promise<number> {
  *  was -- and seconds later it must have arrived, having passed through middle.
  */
 export async function driveAxisGlide(page: Page): Promise<void> {
-  await feedWindow(page, 1024, [[1, 40, 2]]);
+  // Whole window, so 126 ms frame below is slowest by far.
+  await feedWindow(page, await framesWindow(page), [[1, 40, 2]]);
   await settleAxis(page);
   const settled = await axisReading(page);
 

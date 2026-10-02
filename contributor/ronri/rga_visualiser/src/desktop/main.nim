@@ -220,8 +220,10 @@ const
     ##   and ease settle before verdict reads camera.
     ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
     ##   set of nineteen checks runs in about twenty seconds under software GL.
-  SECONDS_FRAME_DRIVEN* = 1.0/60.0
+  SECONDS_FRAME_DRIVEN* = 1.0/RATE_FRAME_LEAST
     ## Advance scripted run's clock by this much for each frame drawn, whatever machine takes.
+    ##   One frame at `timings.RATE_FRAME_LEAST`, so scripted run shows what reader at that
+    ##   floor sees.
     ##   Animations, held keys and camera ease all read that clock, so what scripted frame shows
     ##   is same on every machine, and verdict with it: slow machine takes longer to draw same
     ##   frames. Speed is measured by `--timings`, which keeps real clock.
@@ -1191,6 +1193,8 @@ proc handleEvent(
       is_dragging_orbit = true
     elif event.button.button == uint8(MouseButton.Right):
       is_dragging_pan = true
+      # Hover reads what press came down on now, and goes off once camera moves.
+      interaction.grabPan(camera)
   of uint32(EventKind.MouseButtonUp):
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
     if button_dragging == some(event.button.button):
@@ -1275,7 +1279,7 @@ proc handleEvent(
     if is_dragging_pan:
       panel.tween_camera.halt() # Pan places pivot itself; see `halt`.
       # Pass where pointer was and is, rather than how far it moved.
-      #   Pan grabs level under it and needs both ends of step; see
+      #   Pan carries point it grabbed between both ends of step; see
       #   `interaction.panAcross`.
       camera.panAcross(
         ScreenPosition(
@@ -1283,7 +1287,7 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        width_frame, height_frame, panel.selection.len > 0,
+        height_frame, panel.selection.len > 0, interaction.depth_pan,
       )
   else: discard
 
