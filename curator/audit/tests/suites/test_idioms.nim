@@ -117,12 +117,41 @@ suite "Idioms":
 
 
 suite "Idiom fixes":
-  test "return result becomes bare return, comment and indent kept":
+  test "return result inside branch, or with body after it, becomes bare return":
     let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
     check fix.source == module("func f(): int =\n  if true:\n    return  # Early.\n  1\n")
     check fix.fixed.mapIt(it.line) == @[HEAD_LINES + 3]  # line check names
     check fix.fixed[0].message == "return result (STYLE.md §5) fixed"  # rule named
     check fix.source.isSettled  # check reports none, and second fix changes nothing
+    let followed = fixed(module("proc f(): int =\n  return result\n  echo 1\n"))
+    check followed.source == module("proc f(): int =\n  return\n  echo 1\n")  # exit before more
+    check followed.source.isSettled
+
+  test "return result ending routine goes, with blank line opening its paragraph":
+    let ending = fixed(module("func f(): int =\n  result = 1\n  return result\n"))
+    check ending.source == module("func f(): int =\n  result = 1\n")  # line deleted
+    check ending.fixed.mapIt(it.line) == @[HEAD_LINES + 3]
+    check ending.source.isSettled
+    let spaced = "func f(): int =\n  result = 1\n\n  return result\n\n\nfunc g() = discard\n"
+    check fixed(module(spaced)).source ==
+      module("func f(): int =\n  result = 1\n\n\nfunc g() = discard\n")  # two blanks stay between
+    let wrapped = "func f(\n  a: int\n): int =\n  result = a\n  return result\n"
+    check fixed(module(wrapped)).source ==
+      module("func f(\n  a: int\n): int =\n  result = a\n")  # signature on lines of its own
+
+  test "return result whose place reads no one fix stays, finding and all":
+    for left in [
+      "func f(): int =\n  return result\n",  # only statement: body would go empty
+      "func f(): int =\n  result = 1\n  return result  # Done.\n",  # comment would lose its line
+      "func f(): int =\n  result = 1\n  # Hand back.\n  return result\n",  # comment names nothing
+      "template t(): int =\n  result = 1\n  return result\n",  # template returns from its caller
+    ]:
+      check fixed(module(left)).source == module(left)
+
+  test "report after deleted line names line of source as given":
+    let body = "func f(): int =\n  result = 1\n  return result\n\nlet a = 1\nlet b = 2\n"
+    check fixed(module(body)).fixed.mapIt(it.line) ==
+      @[HEAD_LINES + 3, HEAD_LINES + 5]  # traced past deleted line
 
   test "bracket items are sorted into slots they held, so layout stays":
     let one_line = fixed(module("import std/[strutils, os]\nimport ./[b {.all.}, a]\n"))
