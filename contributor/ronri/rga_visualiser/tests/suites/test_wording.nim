@@ -16,8 +16,8 @@ suite "Wording":
     #   still need them apart. Key names control, not word.
     var seen: Table[string, Wording]
     for key in Wording:
-      check hasWords(key)
-      if key.namesControl: continue
+      check isCarryingWords(key)
+      if key.isNamingControl: continue
       let text = $wordingText(key)
       if text in seen:
         checkpoint(&"`{key}` says what `{seen[text]}` says: {text}")
@@ -30,7 +30,7 @@ suite "Wording":
     #   no stray space, and starts with capital -- three things eye notices and no reviewer
     #   reliably does.
     for key in Wording:
-      if key.namesControl or key.isHelpCell: continue
+      if key.isNamingControl or key.isHelpCell: continue
       let text = $wordingText(key)
       check text == strip(text)
       check "  " notin text
@@ -57,7 +57,7 @@ suite "Wording":
     #   What label may not be is padded, doubled-spaced, or long enough to be prose --
     #   window padded `?` to size its button once, and that put layout in catalogue.
     for key in Wording:
-      if not key.namesControl: continue
+      if not key.isNamingControl: continue
       let text = $wordingText(key)
       check text == strip(text)
       check "  " notin text
@@ -83,7 +83,7 @@ suite "Wording":
     for word in strutils.splitWhitespace($wordingText(NameTitle)):
       check word[0].isUpperAscii
     for key in Wording:
-      if not key.namesControl or key == NameTitle: continue
+      if not key.isNamingControl or key == NameTitle: continue
       let text = $wordingText(key)
       check not text[0].isUpperAscii
 

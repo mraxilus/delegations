@@ -975,10 +975,11 @@ proc clean() =
 
 #[ Entry Point ]#
 
-when isMainModule:
+proc main(): int =
+  ## Run verb named on command line; exit code, 2 on usage error and 1 on failure.
   if paramCount() != 1:
     stderr.write USAGE
-    quit 2
+    return 2
   try:
     case paramStr(1)
     of "declare": declare()
@@ -992,7 +993,12 @@ when isMainModule:
     of "clean": clean()
     else:
       stderr.write USAGE
-      quit 2
+      return 2
   except CatchableError as e:
     stderr.write e.msg & "\n"
-    quit 1
+    return 1
+  0
+
+
+when isMainModule:
+  quit main()
