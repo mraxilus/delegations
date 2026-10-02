@@ -18,7 +18,7 @@ import ../src/pga_benchmark/[
 import ../src/pga_benchmark/pages/[docket, evaluation, proposal, shell]
 import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
-  algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
+  ENTRY_LIBRARY, algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
 
 
 const
@@ -1085,6 +1085,10 @@ suite "Evaluations":
       "out: a.json [SuccessX]\n"
     check successOf(output) == (0.213, 38.008)  # both read
     check successOf("Error: type mismatch\n") == (0.0, 0.0)  # failed build reads nothing
+
+  test "build claim compiles library alone, so no module of harness sets its peak":
+    for line in ENTRY_LIBRARY.splitLines:
+      check line.len == 0 or line == "import pga"  # inspector change once moved P01 to ×0.76
 
   test "function on one side only is null on other, so document prints":
     let
