@@ -1620,38 +1620,41 @@ Two fingers hold the pivot's depth, read at each step, because they pinch as the
 taken at landing goes stale with the zoom. Rejected: a fixed share of the separation for each pixel.
 It matched the cursor at one canvas height alone, and ran 1.74 times it on 900 px at 45 degrees.
 
-**A right drag with a selection stretches from the pivot, and holds the point it grabbed.**
-`grabPan` takes the point that a left drag's orbit holds under the press. The vertical dollies, so
-that point's height over the pivot's row scales as the pointer's does. That is a pinch with one
-finger on the pivot, so a drag away from the row zooms in on either side of it. The horizontal then
-turns as a turntable, and carries the point across by what the pointer moved, from where the dolly
-left it. Rejected, by the Architect's ruling: a zoom that keeps its direction wherever the press
-lands, which lets the point drift off.
+**A right drag with a selection turns across as a left drag along the pivot's row.** The turn goes
+first, through `turnFollowing`, for the same travel along the pivot's row. So the turn for each
+pixel is the left drag's own, wherever the press lands. Rejected: a turn that carries the point the
+press took. Near the top of the frame that point stands near the line above the pivot, where each
+pixel across asks for a great yaw. A drift of a few pixels for each step swung the azimuth 0.17
+radians.
 
-**A vertical drag zooms, and turns nothing.** The dolly spreads the point from the middle, so it
-drifts toward the middle column or away as the zoom scales. Its height still follows the pointer's.
-Rejected: a turn that carries the point back to the pointer's own column, which asks for a great
-yaw near the line above the pivot. One drag out, 80 px off the middle, swung the azimuth 1.14
-radians and sank the elevation from 0.32 to 0.06. Zoomed in, each drag turned 0.19 radians.
+**Up and down stretches from the pivot.** `grabPan` takes the point that a left drag's orbit holds
+under the press. The dolly scales that point's height over the pivot's row as the pointer's height
+scales, from where the turn left it. That is a pinch with one finger on the pivot, so a drag away
+from the row zooms in on either side of it. A vertical drag turns nothing and holds the point on the
+pointer's height exactly, and a level drag zooms nothing. Rejected, by the Architect's ruling: a
+zoom that keeps its direction wherever the press lands, which lets the point drift off.
+
+**A vertical drag lets the point drift across.** The dolly spreads the point from the middle, so it
+drifts toward the middle column or away as the zoom scales. Rejected: a turn that carries the point
+back to the pointer's own column, which asks for the same great yaw. One drag out, 80 px off the
+middle, swung the azimuth 1.14 radians and sank the elevation from 0.32 to 0.06. Zoomed in, each
+drag turned 0.19 radians.
 
 **Heights are read no nearer the pivot's row than `FRACTION_STRETCH_LEAST`, 5 percent of the canvas
 height.** Nearer, one pixel asks for a zoom without bound. So one drag zooms at most tenfold over
 half the height, on any canvas. Inside the band the vertical does nothing, and the point slips.
-`stretchAcross` carries the point from where it stands, and not from the pointer. So a slip stays,
-and no turn that nobody dragged takes it back.
 
 **The point is taken once, at the press.** Rejected: a point asked again at each step, which lies
 on a sphere that the zoom resizes. The zoom then turns on how many steps the pointer sends. A 130 px
 drag on the middle column ends at a separation of 11.73 in one step, and 10.98 in twelve. Taken
-once, both end at 11.73.
+once, both end at 11.73. Two fingers take the point under each step, because they pinch as they
+move.
 
-Two fingers take the point under each step, because they pinch as they move. `pointKept` finds the
-point again on its own sphere, after the dolly moves the eye.
-
-A slant path turns its travel across at two zooms, so it leaves a trace. A slant drag out and back
-leaves the eye 0.122 off at a separation of 19, or 0.006 radians of turn. On the middle
-column the dolly moves alone, and out and back returns exactly. Rejected: 0.006 radians and a factor
-of 1.004 for each pixel, which held the point under the cursor nowhere.
+A slant drag out and back returns the sight exactly, since each step turns as the row's left drag
+turns. Its separation keeps a trace of dollies read at two depths: the eye ends 0.0017 off at a
+separation of 19. On the middle column the dolly moves alone, and out and back returns exactly.
+Rejected: 0.006 radians and a factor of 1.004 for each pixel, which held the point under the cursor
+nowhere.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -1665,14 +1668,17 @@ of 1.004 for each pixel, which held the point under the cursor nowhere.
 - a right drag carries a point it holds at 2.5, 19 and 4,000 units to the pixel it reached, within
   0.01 px;
 - a right drag takes the depth under the pointer, or the pivot's over nothing;
-- a right drag with a selection carries its point to the pointer's height, within 0.01 px, on both
-  sides of the pivot's row. Across, it lands where the spread and the travel leave it. A level drag
-  zooms nothing, inside the band or outside it;
-- a right drag with a selection keeps the point its press took. 12 steps land it within 0.01 px of
-  where the rule puts it. On the middle column 1 step and 12 end alike, the sight stays, and out
-  and back returns. A slant drag out and back leaves the eye under 0.15 off;
+- a right drag with a selection turns as a left drag along the pivot's row, for the same travel.
+  Its point's height scales as the pointer's does, within 0.01 px, on both sides of the row. A
+  level drag zooms nothing, inside the band or outside it;
+- a right drag with a selection keeps the point its press took. 12 slant steps turn as one left
+  drag along the row, and leave the point within 0.5 px of the pointer's height. On the middle
+  column 1 step and 12 end alike, the sight stays, and out and back returns;
+- a slant drag out and back returns the sight, and leaves the eye under 0.0025 off;
 - a vertical right drag with a selection, out and in, 80 px off the middle column, leaves the sight
-  and its up axis standing.
+  and its up axis standing;
+- a right drag with a selection down from the top, drifting across, turns at each of 24 steps as
+  the row's left drag turns.
 
 The window's drags call the same `turnFollowing` and `panAcross`, with the window's own pixels. No
 drive reaches the window's mouse, so the suite holds that.
@@ -1690,7 +1696,8 @@ the pivot 360.6 px at its own depth. The fixed share of separation carried it 62
 
 Verified by driven check, in Chromium on 2026-10-02: three vertical right drags with one object
 picked turned the view 0.000000. Each held its point 0.000 px off the cursor's height. The
-separation went from 19.00 to 10.73, to 6.22, then out to 32.09.
+separation went from 19.00 to 10.73, to 6.22, then out to 32.09. A drag down from the top, drifting
+2 to 4 px across at each of 24 steps, turned at most 0.0166 radians in one step.
 
 ## Records and shaders
 
