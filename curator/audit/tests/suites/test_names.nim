@@ -159,12 +159,16 @@ func contains(s: Set, x: int): bool = true
   NOTATION = """
 const 𝟎* = 0
 let 𝐦 = 1
-var 𝐧 = 2
+var
+  𝐧 = 2
+  𝐍 = 3
+type Plane = object
+  𝐀: float
 proc wedge(𝐮: int): int =
   let 𝐌 = 𝐮
   𝐌
 """
-    ## Source's notation at module scope and inside routine.
+    ## Source's notation at module scope, mutable and not, and as field, parameter and local.
   OPERATORS = """
 func `∧`*(m, n: Multivector): Multivector = m
 func `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
@@ -333,11 +337,12 @@ suite "Names":
     check "inferred" in BOOLEANS.names and not found.anyIt("inferred" in it)  # value unread
     check BOOLEAN_PREFIXES.allIt(("proc run() =\n  let " & it & "_set = true\n").breaches.len == 0)
 
-  test "notation holds over case only for immutable global":
+  test "notation holds over case at any scope, but at module scope only for immutable global":
+    # Variable takes source's notation (`𝐀`, `𝐮`, `𝐌` pass); mutable global never does.
     check NOTATION.breaches == @[
-      "Global is `SCREAMING_SNAKE_CASE` (V.1); got `𝐧`.",
-      "Local is `snake_case` (V.1); got `𝐌`.",
-    ]  # III.5, V.1
+      "Notation holds over case only for immutable global (III.5); got `𝐧`.",
+      "Notation holds over case only for immutable global (III.5); got `𝐍`.",
+    ]  # III.5
     check "𝐦".isNotation and not "m".isNotation  # III.5
     check "𝐌".isCased(Casing.Screaming) and not "𝐌".isCased(Casing.Snake)  # III.5
     check "𝐮".isCased(Casing.Snake) and "𝟎".isCased(Casing.Screaming)  # III.5
