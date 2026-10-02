@@ -803,6 +803,28 @@ suite "Internal: Guard":
     let schema = compare(staticDocument(same), %*{"schema": 2}, path)
     check schema.findings.len == 1 and "Schema differs" in schema.findings[0].message  # refused
 
+  test "lower bound that moves either way or vanishes is finding":
+    func bounded(bound: JsonNode): JsonNode =
+      ## Build static document whose one measurand `wedge` carries bound given; none for nil.
+      result = staticDocument(newJObject())
+      result["measurands"] = %*{"wedge": {}}
+      if not bound.isNil: result["measurands"]["wedge"]["bound"] = bound
+    func multiplies(count: int): JsonNode =
+      ## Build lower bound of count multiplies, other fields fixed.
+      %*{"multiplies": count, "adds": 0, "divides": 0, "roots": 0, "bytes_moved": 384}
+    let
+      baseline = bounded(multiplies(81))
+      same = compare(baseline, bounded(multiplies(81)), path)
+      shrunk = compare(baseline, bounded(multiplies(64)), path)
+      grown = compare(baseline, bounded(multiplies(90)), path)
+      gone = compare(baseline, bounded(nil), path)
+    check same.findings.len == 0 and same.improvements.len == 0  # derivation unchanged
+    check shrunk.findings.len == 1 and shrunk.findings[0].render ==
+      path & ":0: Lower bound `multiplies` of `wedge` moved; got `64`, baseline `81`."  # IV.4
+    check grown.findings.len == 1 and "got `90`" in grown.findings[0].message  # equality gate
+    check gone.findings.len == 1 and
+      gone.findings[0].message == "Lower bound absent now; got `wedge`."  # bound lost
+
 
 suite "Internal: Gaps":
   const key_wedge = "∧(Multivector,Multivector)"
