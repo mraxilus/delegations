@@ -629,6 +629,18 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         break
     check compared == CATALOGUE.countIt(it.reference.len == 0)  # every general row has one
 
+  test "typed reference spends no fill and no error check, so it is optimal code":
+    var compared = 0
+    for f in INSPECTED:
+      if not f.module.moduleTail.startsWith("reference/"): continue
+      let counts = count(f.body)
+      checkpoint f.key & " fills " & $counts.zero_fills & ", checks " & $counts.checks
+      # Call to Nim function costs fill of its result and check of error flag after it,
+      #   so form shared with another function is spelled in place or is template.
+      check counts.zero_fills == 0 and counts.checks == 0  # straight line, as hand code is
+      inc compared
+    check compared > 0  # law is vacuous where nothing is compared
+
   test "own nimcache holds every catalogued symbol at its arity":
     let functions = INSPECTED
     var keys: seq[string]
