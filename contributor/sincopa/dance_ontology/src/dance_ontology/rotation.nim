@@ -146,7 +146,7 @@ const
     ##     their limit at rest with chests as close as stance puts them.
     ##     Disagreement, recorded rather than resolved; constant stays
     ##     dance's measurement.
-  ABOVE_BLOCKS* = false
+  IS_ABOVE_BLOCKING* = false
     ## Whether arm over head blocks turn.  It does in some cases and nobody
     ## has said which, so model turns freely there.
     ##   No longer on no authority for single connection: jointed-arm simulation
@@ -231,7 +231,7 @@ func armCapacity*(blocker: Option[Blocker]; level: Level): HalfTurns =
   ##   Arm above head is on axis couple turns about, so it has nothing to
   ##     wind round and nothing to run out of.
   ##     One case has it blocking anyway, and this does not know it yet,
-  ##       which is why `ABOVE_BLOCKS` says so out loud rather than being
+  ##       which is why `IS_ABOVE_BLOCKING` says so out loud rather than being
   ##       quietly absent.
   if level == Level.Above:
     return UNBOUNDED_TURNS

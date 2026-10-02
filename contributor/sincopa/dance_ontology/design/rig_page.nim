@@ -281,8 +281,8 @@ proc cellsBody(review: string; data: JsonNode): string =
 
 func unstamped*(text: string): string =
   ## Recording as page folds it in: its first field, stamp, left out.
-  const FIRST = "{\"stamp\":"
-  if not text.startsWith(FIRST): return text
+  const first = "{\"stamp\":"
+  if not text.startsWith(first): return text
   "{" & text[text.find('\n') + 1 .. ^1]
 
 

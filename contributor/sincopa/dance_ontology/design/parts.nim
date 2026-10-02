@@ -322,20 +322,20 @@ func frameParts*(): Parts =
     "The compound lands on the axis turn, so the two are not two moves."
 
   # And same four moves, running.
-  const MOVE_PIXELS = 1.3  ## Pixels one unit takes in frame page's moving cells.
+  const move_pixels = 1.3  ## Pixels one unit takes in frame page's moving cells.
   for named_move in MOVES:
     let
       tag = named_move.name.replace(" ", "_").replace(",", "")
       half = cycle(named_move.apply).poses.mapIt(extent(it, has_captions = false)).max
-      style = &"""class="mv" style="width: {numeral(2 * half * MOVE_PIXELS)}px;""" &
-        &""" height: {numeral(2 * half * MOVE_PIXELS)}px""""
+      style = &"""class="mv" style="width: {numeral(2 * half * move_pixels)}px;""" &
+        &""" height: {numeral(2 * half * move_pixels)}px""""
     result[&"mv_{tag}"] = animated("mv", HOLD, named_move.apply, some half)
       .replaceFirst("class=\"mv\"", style)
     result[&"mv_{tag}_still"] = renderFigure("mv still", HOLD, has_captions = false,
                                       half = some half)
       .replaceFirst("class=\"mv still\"",
-        &"""class="mv still" style="width: {numeral(2 * half * MOVE_PIXELS)}px;""" &
-          &""" height: {numeral(2 * half * MOVE_PIXELS)}px"""")
+        &"""class="mv still" style="width: {numeral(2 * half * move_pixels)}px;""" &
+          &""" height: {numeral(2 * half * move_pixels)}px"""")
 
 
 

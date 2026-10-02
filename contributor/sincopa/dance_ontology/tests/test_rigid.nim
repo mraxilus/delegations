@@ -424,29 +424,29 @@ suite "couple stand for sweep":
     ## most and their largest leaps, measured 2026-09-18.  L-l turning her
     ## positive way and R-r her negative are one hold seen in mirror.  Nearer
     ## distances carry 0.46 at most, and 0.52 on carries 0.66.
-    LEFT_TO_LEFT_POSITIVE: seq[Carry] = @[(0.44, 0.72, 0.125), (0.46, 0.72, 0.171),
+    left_to_left_positive: seq[Carry] = @[(0.44, 0.72, 0.125), (0.46, 0.72, 0.171),
                            (0.48, 0.72, 0.126), (0.50, 0.68, 0.121)]
-    RIGHT_TO_RIGHT_NEGATIVE: seq[Carry] = @[(0.44, 0.72, 0.135), (0.46, 0.72, 0.174),
+    right_to_right_negative: seq[Carry] = @[(0.44, 0.72, 0.135), (0.46, 0.72, 0.174),
                            (0.48, 0.72, 0.106), (0.50, 0.72, 0.121)]
     ## Same walks from same source, built into another binary: leaps differ by
     ## up to thirty five per cent, and at 0.50 L-l carries 0.68 either way.
-    LEFT_TO_LEFT_POSITIVE_ELSE: seq[Carry] = @[(0.44, 0.72, 0.114), (0.46, 0.72, 0.169),
+    left_to_left_positive_else: seq[Carry] = @[(0.44, 0.72, 0.114), (0.46, 0.72, 0.169),
                                 (0.48, 0.72, 0.133), (0.50, 0.68, 0.163)]
-    RIGHT_TO_RIGHT_NEGATIVE_ELSE: seq[Carry] = @[(0.44, 0.72, 0.116), (0.46, 0.72, 0.155),
+    right_to_right_negative_else: seq[Carry] = @[(0.44, 0.72, 0.116), (0.46, 0.72, 0.155),
                                 (0.48, 0.72, 0.124), (0.50, 0.68, 0.159)]
     ## Same hold at neck, walked whole sweep: L-l carries 1.00 from 0.42 and
     ## 0.98 from 0.38, and R-r 0.98 from both -- one step, which is how exactly
     ## stop is decided.
-    LEFT_TO_LEFT_HIGH: seq[Carry] = @[(0.36, 0.22, 0.045), (0.38, 0.98, 0.093),
+    left_to_left_high: seq[Carry] = @[(0.36, 0.22, 0.045), (0.38, 0.98, 0.093),
                             (0.40, 0.96, 0.100), (0.42, 1.00, 0.099),
                             (0.44, 0.82, 0.114), (0.46, 0.96, 0.104)]
-    RIGHT_TO_RIGHT_HIGH: seq[Carry] = @[(0.36, 0.22, 0.046), (0.38, 0.98, 0.099),
+    right_to_right_high: seq[Carry] = @[(0.36, 0.22, 0.046), (0.38, 0.98, 0.099),
                             (0.40, 0.96, 0.097), (0.42, 0.98, 0.100),
                             (0.44, 0.82, 0.109), (0.46, 0.98, 0.104)]
     ## Same hold over crown, running free from first distance: chest to chest
     ## joined hands are pinned between torsos and pop up, 189 mm in one moment,
     ## and from 0.42 on arms move under 90 mm.
-    LEFT_TO_LEFT_ABOVE: seq[Carry] = @[(0.36, Inf, 0.189), (0.38, Inf, 0.155),
+    left_to_left_above: seq[Carry] = @[(0.36, Inf, 0.189), (0.38, Inf, 0.155),
                              (0.40, Inf, 0.131), (0.42, Inf, 0.086),
                              (0.44, Inf, 0.077), (0.46, Inf, 0.084)]
 
@@ -459,18 +459,18 @@ suite "couple stand for sweep":
     ## one hold in mirror, and `rig is same seen in mirror` failed on this tree
     ## and not on last, nothing about rig having changed.
     for (walks_a, walks_b) in [
-      (LEFT_TO_LEFT_POSITIVE, RIGHT_TO_RIGHT_NEGATIVE),
-      (LEFT_TO_LEFT_POSITIVE, LEFT_TO_LEFT_POSITIVE_ELSE),
-      (RIGHT_TO_RIGHT_NEGATIVE, RIGHT_TO_RIGHT_NEGATIVE_ELSE),
-      (LEFT_TO_LEFT_POSITIVE_ELSE, RIGHT_TO_RIGHT_NEGATIVE_ELSE),
-      (LEFT_TO_LEFT_HIGH, RIGHT_TO_RIGHT_HIGH),
+      (left_to_left_positive, right_to_right_negative),
+      (left_to_left_positive, left_to_left_positive_else),
+      (right_to_right_negative, right_to_right_negative_else),
+      (left_to_left_positive_else, right_to_right_negative_else),
+      (left_to_left_high, right_to_right_high),
     ]:
       check abs(standAt(walks_a) - standAt(walks_b)) < SEEK + 1e-9
 
   test "stance steps out from hands pinned between torsos":
     ## Kept from before: nearest distance that carries turn is chest to chest.
-    check standAt(LEFT_TO_LEFT_ABOVE) >= 0.40
-    check LEFT_TO_LEFT_ABOVE[chosen(LEFT_TO_LEFT_ABOVE)].leap * 2.0 <= LEFT_TO_LEFT_ABOVE[0].leap
+    check standAt(left_to_left_above) >= 0.40
+    check left_to_left_above[chosen(left_to_left_above)].leap * 2.0 <= left_to_left_above[0].leap
 
 
 
@@ -779,14 +779,14 @@ suite "arms move as arms do":
     ## at none: diamond read as open and swan as cross, and every wound still on
     ## reference was answered by unwound pose.  Turned there, diamond's two
     ## connections cross twice in plan where open's run clear.
-    ##   Wound there whether or not pose holds, and from `DIAMOND`: what is
+    ##   Wound there whether or not pose holds, and from `diamond`: what is
     ##   claimed here is path, not hold.  From `APART` whole turn ends with arm
     ##   through body and one crossing, measured 2026-09-18 with hands asked
     ##   down to mid torso facing; from 0.70 it comes round with nothing given.
-    const DIAMOND = 0.70
+    const diamond = 0.70
     proc crossed(turns: float): int =
-      ## How many times two connections cross, wound there from `DIAMOND`.
-      var couple = build(HUMAN, restStance(HUMAN, DIAMOND), Band.Crown, WOUND, Body.Two)
+      ## How many times two connections cross, wound there from `diamond`.
+      var couple = build(HUMAN, restStance(HUMAN, diamond), Band.Crown, WOUND, Body.Two)
       couple.settle()
       var at = 0.0
       while abs(at) + 1e-9 < abs(turns):

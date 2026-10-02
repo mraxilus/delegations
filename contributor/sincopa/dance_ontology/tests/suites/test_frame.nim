@@ -18,8 +18,8 @@ suite "frames":
   test "an arm order is recorded exactly where the forearms overlap":
     var overlapping = 0
     for target in FRAMES:
-      check target.over.isSome == target.hasOverlap
-      if target.hasOverlap:
+      check target.over.isSome == target.isOverlapping
+      if target.isOverlapping:
         inc overlapping
     check overlapping == 2  # Left over Right, and Right over Left.
 

@@ -102,11 +102,11 @@ suite "the engine this project turns couples with":
       shape_definition = defaultShape()
       big = Capsule(center1: initVector(0, -0.3, 0), center2: initVector(0, 0.3, 0), radius: 0.2)
     discard createCapsule(centre, addr shape_definition, addr big)
-    const AROUND = 10
+    const count_around = 10
     var around: seq[BodyId]
-    for i in 0 ..< AROUND:
+    for i in 0 ..< count_around:
       # Ring of thin capsules, each poking into big one from its own side.
-      let angle = 2.0 * PI * float(i) / float(AROUND)
+      let angle = 2.0 * PI * float(i) / float(count_around)
       var thin_definition = defaultBody()
       thin_definition.kind = BODY_DYNAMIC
       thin_definition.position = Position(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
@@ -120,10 +120,10 @@ suite "the engine this project turns couples with":
       around.add thin_body
     step(world_id, cfloat(1.0 / 240.0), 8)
     let room = touchRoom(centre)
-    check room >= AROUND
+    check room >= count_around
     var seen = newSeq[Touch](max(1, int(room)))
     let reported = touches(centre, addr seen[0], cint(seen.len))
     checkpoint("room " & $room & ", contacts reported " & $reported)
-    check reported == AROUND
+    check reported == count_around
     var eight: array[8, Touch]
     check touches(centre, addr eight[0], 8) == 8

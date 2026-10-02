@@ -72,15 +72,15 @@ func withoutFaces*(html: string): string =
   ##   Replaces rather than skips, so page dressed before face changed takes new
   ##     bytes rather than keeping old ones.
   result = html
-  const SHUT = "</style>"
+  const shut = "</style>"
   while true:
     let opens = result.find(FACES_MARK)
     if opens < 0:
       break
-    let shuts = result.find(SHUT, opens)
+    let shuts = result.find(shut, opens)
     if shuts < 0:
       break
-    var cut_to = shuts + SHUT.len
+    var cut_to = shuts + shut.len
     if cut_to < result.len and result[cut_to] == '\n':
       cut_to += 1
     result = result[0 ..< opens] & result[cut_to .. ^1]
@@ -99,16 +99,16 @@ proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
   ##   Block earlier run left is taken out first, so dressing twice gives
   ##     one page and not one that grows by every face on every build.
   const
-    SHUT = "</head>"
-    TITLE = "</title>"
+    shut = "</head>"
+    title = "</title>"
   let
     html = withoutFaces(raw)
-    shuts = html.find(SHUT)
+    shuts = html.find(shut)
   if shuts >= 0:
     return html[0 ..< shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
-  let titled = html.find(TITLE)
+  let titled = html.find(title)
   if titled < 0:
     raise newException(ValueError,
       "Page carries neither head nor title to put faces by; got first 40 " &
         "characters `" & html[0 ..< min(40, html.len)] & "`.")
-  html[0 ..< titled + TITLE.len] & "\n" & faceStyle(directory) & html[titled + TITLE.len .. ^1]
+  html[0 ..< titled + title.len] & "\n" & faceStyle(directory) & html[titled + title.len .. ^1]

@@ -101,7 +101,7 @@ suite "the compounds":
         if compound(source, destination) != some(Compound.Cut):
           continue
         check source.hold == destination.hold
-        check source.hasOverlap and destination.hasOverlap
+        check source.isOverlapping and destination.isOverlapping
         check source.over != destination.over
 
   test "a place keeps the hand held and changes the hand holding it":

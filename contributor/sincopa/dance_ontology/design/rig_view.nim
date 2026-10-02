@@ -67,9 +67,9 @@ func styleOf(name: cstring): cstring {.importjs:
 
 proc inkOf(side, who: int): cstring =
   ## Hue is side, shade is whose: plain for follow, deep for lead.
-  const NAMES = [[cstring"--left-deep", cstring"--left"],
+  const names = [[cstring"--left-deep", cstring"--left"],
                  [cstring"--right-deep", cstring"--right"]]
-  styleOf(NAMES[side][who])
+  styleOf(names[side][who])
 
 const
   NEAR = 5.0 * PI / 180.0   ## Within this of either end, joint reads as spent.
