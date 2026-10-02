@@ -212,6 +212,37 @@ suite "Idiom fixes":
     let foreign = "{.push importc.}\nproc f()\n{.pop.}\n"
     check fixed("## Do.\n\n" & foreign).source == "## Do.\n" & strict & foreign  # push opens body
 
+  test "adjacent imports of one directory share one bracket; bracket of one module drops":
+    let
+      apart =
+        module("import std/strutils\nimport std/[os, algorithm]\nimport ./b\nimport ./a {.all.}\n")
+      fix = fixed(apart)
+    check checkImportBrackets("a.nim", apart).mapIt(it.message) == @[
+      "Imports of one directory share one bracket (X.5); got `std/` in `2` statements.",
+      "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
+    ]
+    check fix.source == module("import std/[algorithm, os, strutils]\nimport ./[a {.all.}, b]\n")
+    check fix.fixed.filterIt(it.message.startsWith("import brackets")).mapIt(it.line) ==
+      @[HEAD_LINES + 1, HEAD_LINES + 3]  # one report to merge, at first statement
+    check fix.source.isSettled
+    check checkImportBrackets("a.nim", fix.source).len == 0
+    check fixed(module("import std/[math]\n")).source == module("import std/math\n")
+    check checkImportBrackets("a.nim", module("import std/[math]\n"))[0].message ==
+      "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."
+
+  test "import with except, as, other pragma, comment, or apart from block stays":
+    for kept in [
+      "import std/os except getEnv\nimport std/strutils\n",
+      "import std/os as system_os\nimport std/strutils\n",
+      "import ./a {.used.}\nimport ./b\n",
+      "import std/os  # Why.\nimport std/strutils\n",
+      "import std/os\n\nimport std/strutils\n",
+      "from std/os import getEnv\nimport std/strutils\n",
+      "import ./a\nimport ../b\n",
+    ]:
+      check checkImportBrackets("a.nim", module(kept)).len == 0
+      check fixed(module(kept)).source == module(kept)
+
   test "clean module passes through unchanged":
     let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")
     check fixed(clean).source == clean and fixed(clean).fixed.len == 0

@@ -6,6 +6,8 @@
 ##     every module, suite included (§2).
 ##   - Bracket import is alphabetised, and standard library comes before packages, which
 ##     come before local modules (X.5, §5).
+##   - Adjacent imports of one directory share one bracket, and bracket of one module drops
+##     it (X.5, §5): `checkImportBrackets`, outside static pass until projects run fix.
 ##   - Two consecutive single bindings of one keyword share that keyword (X.5).
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).
@@ -22,6 +24,8 @@
 ##     once (Article II.1), and each rewrites only lines its check reports:
 ##   - Bracket items are sorted into slots they held, so bracket spanning lines keeps its
 ##     layout; contiguous import lines are reordered by rank, stable within rank.
+##   - Adjacent imports of one directory merge into one bracket at first one's line, items
+##     alphabetised and `{.all.}` kept; bracket of one module drops its bracket.
 ##   - Run of single bindings becomes keyword alone, then each binding indented two spaces;
 ##     lines continuing last binding (open bracket, deeper indent, doc under it) move too.
 ##   - Missing `strictFuncs` goes where X.6 puts directives: before first code line that is
@@ -39,6 +43,9 @@
 ##     insertion and waits for its own rule; `{.used.}` consumer, `{.push.}` scope, random
 ##     seed, stub header, debug output, machine path and TypeScript flags, since each needs
 ##     knowledge text does not hold.
+##   No fixer, and check silent: import with `except`, `as`, pragma but `{.all.}`, comment or
+##     string, statement spanning lines, and imports apart across blank line, since merging
+##     them is choice.
 ##   No fixer for `return result` whose place reads no one fix: routine's only statement, whose
 ##     body deletion would empty; line carrying comment, which would lose its line; line after
 ##     comment, which would then name nothing; end of template or macro, which returns from
@@ -81,6 +88,14 @@ type
     Early  ## Inside branch, or with more body after it: bare `return` exits with same value.
     Unread  ## Place scanner cannot name, or whose fix is not one: line stays.
 
+  Consolidation = object
+    ## Define adjacent imports of one directory to merge, or bracket of one module to drop.
+    lines: seq[int]  ## Zero-based line of each statement; first one takes merged statement.
+    prefix: string  ## Directory every statement imports from, e.g. `std/`.
+    items: seq[string]  ## Modules, pragma kept, alphabetised once all are read.
+    statement: string  ## Statement standing in their place.
+
+
 
 const
   STRICT_FUNCS* = "{.experimental: \"strictFuncs\".}"
@@ -111,6 +126,8 @@ const
     ## Brackets opening span that continues line.
   CLOSERS = {')', ']', '}'}
     ## Brackets closing such span.
+  ALL_PRAGMA = "{.all.}"
+    ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
 
 
 func firstWord(text: string): string =
@@ -476,6 +493,102 @@ func fixImports(path, source: string): Fix =
   result.source = lines.join("\n")
 
 
+func importParts(target: string): tuple[prefix: string, items: seq[string]] =
+  ## Split import target into directory and items: `std/os` gives `std/` and `os`, and
+  ##   `./[a, b {.all.}]` gives `./` and both items, pragma kept. Empty where target names no
+  ##   directory, holds `except`, `as` or second target, or item carries pragma but `{.all.}`.
+  let open = target.find('[')
+  var prefix, body: string
+  if open >= 0:
+    if not target.endsWith("]"): return
+    (prefix, body) = (target[0 ..< open], target[open + 1 ..< target.high])
+  else:
+    let
+      path = target.itemName
+      slash = path.rfind('/')
+    if slash < 0: return
+    (prefix, body) = (path[0 .. slash], path[slash + 1 .. ^1] & target[path.len .. ^1])
+  if not prefix.endsWith("/") or ',' in prefix or ' ' in prefix: return
+  for item in body.split(','):
+    let core = item.strip
+    if core.len == 0: continue
+    let rest = core[core.itemName.len .. ^1].strip
+    if '/' in core.itemName or (rest.len > 0 and rest != ALL_PRAGMA): return
+    result.items.add core
+  if result.items.len > 0: result.prefix = prefix
+
+
+func consolidations(lines, code: seq[string]): seq[Consolidation] =
+  ## Find each set of adjacent imports of one directory, and each bracket of one module.
+  ##   Imports are read in blocks of adjacent statements, as rank reads them; statement
+  ##   spanning lines, or holding comment or string, stays apart.
+  let spans = code.importSpans
+  var i = 0
+  while i < spans.len:
+    var j = i
+    while j + 1 < spans.len and spans[j + 1].first == spans[j].last + 1: inc j
+    var prefixes: seq[string]
+    for span in spans[i .. j]:
+      if span.first != span.last or lines[span.first] != code[span.first]: continue
+      let (prefix, items) = span.target.importParts
+      if prefix.len == 0: continue
+      let at = prefixes.find(prefix)
+      if at < 0:
+        prefixes.add prefix
+        result.add Consolidation(lines: @[span.first], prefix: prefix, items: items)
+      else:
+        let k = result.len - prefixes.len + at
+        result[k].lines.add span.first
+        for item in items:
+          if item notin result[k].items: result[k].items.add item
+    i = j + 1
+
+  # Keep those whose statement changes and fits its line.
+  result = result.filterIt(it.lines.len > 1 or (it.items.len == 1 and '[' in lines[it.lines[0]]))
+  for c in result.mitems:
+    c.items = c.items.sortedByIt(it.itemName)
+    c.statement = IMPORT_MARK & c.prefix &
+      (if c.items.len == 1: c.items[0] else: "[" & c.items.join(", ") & "]")
+  result = result.filterIt(not it.statement.isWide)
+
+
+func checkImportBrackets*(path, source: string): seq[Finding] =
+  ## Report adjacent imports of one directory standing apart, and bracket of one module (X.5,
+  ##   STYLE.md §5).
+  ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
+  for c in consolidations(source.split('\n'), source.codeOnly.split('\n')):
+    let message =
+      if c.lines.len > 1:
+        "Imports of one directory share one bracket (X.5); got `" & c.prefix & "` in `" &
+          $c.lines.len & "` statements."
+      else: "Bracket of one module drops its bracket (STYLE.md §5); got `" & c.prefix & "[" &
+        c.items[0] & "]`."
+    result.add finding(path, c.lines[0] + 1, message)
+
+
+func fixConsolidations(path, source: string): Fix =
+  ## Merge each set of adjacent imports of one directory into one bracket, at first one's line;
+  ##   bracket of one module drops its bracket.
+  let
+    lines = source.split('\n')
+    found = consolidations(lines, source.codeOnly.split('\n'))
+  var
+    shaped: seq[string]
+    dropped: seq[int]
+  for c in found:
+    dropped.add c.lines[1 .. ^1]
+    result.fixed.add finding(path, c.lines[0] + 1, "import brackets (X.5) fixed")
+  for i, line in lines:
+    if i in dropped: continue
+    var statement = line
+    for c in found:
+      if c.lines[0] == i: statement = c.statement
+    shaped.add statement
+    result.origin.add i + 1
+  result.source = shaped.join("\n")
+  if dropped.len == 0: result.origin.setLen(0)
+
+
 func depthOf(code: string): int =
   ## Count brackets code line opens and leaves open; negative where it closes more.
   for c in code:
@@ -568,8 +681,9 @@ func fixStrictFuncs(path, source: string): Fix =
 func fixIdioms*(path, source: string): Fix =
   ## Rewrite Nim source so each idiom with one mechanical fix holds; report each rewrite.
   ##   `chain` traces each report through lines earlier fixers moved, to source as given.
+  ##   Brackets merge after rank orders blocks, so merged statement takes first rank's place.
   result.source = source
-  for fixer in [fixReturnResult, fixImports, fixBindings, fixStrictFuncs]:
+  for fixer in [fixReturnResult, fixImports, fixConsolidations, fixBindings, fixStrictFuncs]:
     result = result.chain(fixer(path, result.source))
 
 
