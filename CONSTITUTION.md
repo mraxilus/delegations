@@ -116,8 +116,8 @@ is mandatory. Where it does not hold, to use the mechanism is cargo cult.
 ```nim
 type
   BasisDigits = distinct string  # Readable ordered factors.
-  BasisFlags  = distinct uint    # Bitwise membership and parity.
-  Basis       = enum             # Dense runtime index.
+  BasisFlags = distinct uint  # Bitwise membership and parity.
+  Basis = enum  # Dense runtime index.
 
 const DIMENSIONS* {.define: "pga.dimensions".} = 4  # Whole-module static configuration.
 
@@ -266,12 +266,12 @@ for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
     initial of what it ranges over. Where nothing constrains it, the letter is `T`.
 
 ```nim
-BasisDigits                 # type
+BasisDigits  # type
 constructMetricExomorphism  # callable
-metric_exomorphism          # local
-is_degenerate               # boolean proposition
-LUT_GRADE_BY_BASIS          # lookup table, and module constant
-CAYLEYS_WEDGE               # module constant
+metric_exomorphism  # local
+is_degenerate  # boolean proposition
+LUT_GRADE_BY_BASIS  # lookup table, and module constant
+CAYLEYS_WEDGE  # module constant
 ```
 
 ## Article VI: Documentation is an outline
