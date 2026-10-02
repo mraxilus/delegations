@@ -147,7 +147,8 @@ export async function drivePan(page: Page): Promise<void> {
  *  holds it by projection; this holds page's wiring: press takes point, and step reads
  *  canvas size and selection's reach.
  *  Off middle column, where that turn was greatest. Pressed where nothing stands, since right
- *  press on object arms drag instead.
+ *  press on object arms drag instead. Last drag runs down from top of frame with drift
+ *  across, as hand drags.
  */
 export async function driveStretch(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -200,6 +201,31 @@ export async function driveStretch(page: Page): Promise<void> {
         `${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
     );
   }
+
+  // Down from very top with hand's drift across: turn stays left drag's own along pivot's
+  //   row. Turn that carried point press took swung azimuth 0.17 radians for each step.
+  const top = { x: column + 3, y: 8 };
+  const is_top_open = await page.evaluate(({ x, y }) => {
+    nimUpdateCursor(x, y);
+    nimUpdateHover(window.innerWidth, window.innerHeight);
+    return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+  }, top);
+  const bearings: number[] = [await page.evaluate(() => nimCameraAzimuth())];
+  await page.mouse.move(top.x, top.y);
+  await page.mouse.down({ button: 'right' });
+  for (let step = 1; step <= 24; step += 1) {
+    await page.mouse.move(top.x + (step % 2 ? 4 : -2) + step * 0.5, top.y + step * 16);
+    bearings.push(await page.evaluate(() => nimCameraAzimuth()));
+  }
+  await page.mouse.up({ button: 'right' });
+  // Largest turn of one step, against 0.17 radians of turn that carried point press took.
+  const jump = Math.max(...bearings.slice(1).map((b, i) => Math.abs(b - (bearings[i] ?? b))));
+  report(
+    'a right drag down from the top with a drift across turns as a left drag, and never jumps',
+    is_top_open && jump < 0.03,
+    `pressed on ${is_top_open ? 'open sky' : 'an object'}; largest turn of one step ` +
+      `${jump.toFixed(4)} radians, drifting 2 to 4 px across each of 24`,
+  );
 }
 
 /** Drive zoom low in frame, and assert eye follows pointer's own ray.
