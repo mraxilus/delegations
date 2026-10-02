@@ -256,10 +256,17 @@ proc runHook(root, event, input: string): int =
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
-      refuse(checkBody(
-        tool, branch, data{"tool_input", "title"}.getStr, data{"tool_input", "body"}.getStr,
-        labels, data{"tool_input", "method"}.getStr == "create",
-      ), 2)
+      refuse(
+        checkBody(
+          tool,
+          branch,
+          data{"tool_input", "title"}.getStr,
+          data{"tool_input", "body"}.getStr,
+          labels,
+          data{"tool_input", "method"}.getStr == "create",
+        ),
+        2,
+      )
     of "edit":
       let
         checkout = checkoutAt(root, file.parentDir)
@@ -293,7 +300,10 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(gainedPaths(root, "origin/" & MAIN))
     except CatchableError: discard
     echo startContext(
-      branch, readFile(root / "CONTRIBUTOR.md"), "## Carry the unchecked list in the open", drift
+      branch,
+      readFile(root / "CONTRIBUTOR.md"),
+      "## Carry the unchecked list in the open",
+      drift,
     )
     0
   of "push":
@@ -350,9 +360,7 @@ proc run(options: Options): int =
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
       if gitFields(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(
-          options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0]
-        )
+        writeFile(options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0])
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
@@ -369,7 +377,9 @@ proc run(options: Options): int =
     if not options.reads({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
     found = checkScope(
-      options.branchOrDefault, changedPaths(options.root, base), movedPaths(options.root, base)
+      options.branchOrDefault,
+      changedPaths(options.root, base),
+      movedPaths(options.root, base),
     )
   of "check-commits":
     if not options.reads({Root, Branch, Base}): return options.refused
