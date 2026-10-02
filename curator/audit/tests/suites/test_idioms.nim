@@ -99,6 +99,25 @@ suite "Idioms":
     check messages("tests/suites/test_x.nim", module("")).len == 0  # suite is not stub
 
 
+  test "stub's `-r` is cut from `cmd`, and line of `batchable` or `joinable` goes":
+    let
+      header = "discard \"\"\"\naction: run\nbatchable: false\n" &
+        "cmd: \"nim c -r --hints:off -run $options $file\"\njoinable: true\n\"\"\"\n"
+      body = "include \"suites.nim\"\n"
+      stub = header & module(body)
+      fix = fixIdioms("tests/test_x.nim", stub)
+    check checkIdioms("tests/test_x.nim", stub).mapIt(it.line) == @[3, 4, 5]  # line of each key
+    check fix.source == "discard \"\"\"\naction: run\n" &
+      "cmd: \"nim c --hints:off -run $options $file\"\n\"\"\"\n" & module(body)
+    check fix.fixed.mapIt(it.line) == @[3, 4, 5]  # reports name lines as given
+    check checkIdioms("tests/test_x.nim", fix.source).len == 0  # flag alone, so `-run` stays
+    check fixIdioms("tests/test_x.nim", fix.source).fixed.len == 0  # second fix writes nothing
+    check fixIdioms("tests/suites/test_x.nim", stub).source == stub  # suite is no stub
+    let tail = "discard \"\"\"\ncmd: \"nim c $options $file -r\"\n\"\"\"\n" & module(body)
+    check fixIdioms("tests/test_x.nim", tail).source ==
+      "discard \"\"\"\ncmd: \"nim c $options $file\"\n\"\"\"\n" & module(body)  # before quote
+
+
   test "test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
     check "got `echo x`" in messages("tests/suites/test_x.nim", debug)[0]
