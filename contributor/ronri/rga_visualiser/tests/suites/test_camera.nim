@@ -1153,6 +1153,39 @@ suite "Camera":
     let (slant_back, _) = dragged(12, slant_press, [slant_release, slant_press])
     check norm(slant_back.eye - opening.eye) < 0.0025
 
+  test "a vertical right drag with a selection zooms, and turns nothing":
+    # Fault: turn chased point's column after dolly spread it, and point stood near line
+    #   above pivot, where column asks for great yaw. One drag out, 80 px off middle,
+    #   swung azimuth 1.14 radians and sank elevation from 0.32 to 0.06.
+    const (wide, tall) = (1440, 900)
+    let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+    for (press, release) in [
+      # Out, toward row, and in, away from it.
+      (ScreenPosition(x: 800.0, y: 50.0), ScreenPosition(x: 800.0, y: 400.0)),
+      (ScreenPosition(x: 800.0, y: 390.0), ScreenPosition(x: 800.0, y: 70.0)),
+    ]:
+      var
+        camera = opening
+        interaction = Interaction(is_enabled: true, cursor: press)
+        at = press
+      interaction.grabPan(camera, wide, tall, has_selection = true)
+      for step in 1 .. 20:
+        let next = ScreenPosition(
+          x: press.x, y: at.y + (release.y - at.y)/float(20 - step + 1)
+        )
+        camera.panAcross(at, next, wide, tall, has_selection = true, depth_held = 19.0,
+          point_held = interaction.point_pan)
+        at = next
+      let seen = projectToScreen(
+        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+        interaction.point_pan.get,
+      )
+      check camera.frame.forward =~ opening.frame.forward
+      check camera.frame.axis_up =~ opening.frame.axis_up
+      check camera.pivot =~ opening.pivot
+      check not (camera.distance =~ opening.distance)
+      check abs(seen.y - release.y) < 0.01
+
   test "an aimed zoom draws the pivot toward what it aimed at":
     # `dollyToward` scales pivot toward anchor by exactly factor distance.
     #   took, which is whole of why aimed zoom settles orbit centre onto what
