@@ -8,7 +8,7 @@
 ##     it never judges content, which is contributor's and Architect's work.
 ##   Across glossaries: standard project repeats from root, or two projects both list, is
 ##     finding at later place naming root as its home, since root holds what two projects
-##     share.
+##     share. Moving standard is propagation, so finding is curator's in any project.
 ##
 ##   Cost: zero terms and zero standards pass; format creates entries lazily as they resolve.
 ##   Cost: standard renamed by one word passes across check; it catches copy, never paraphrase,
@@ -113,11 +113,13 @@ func checkStandardsAcross*(glossaries: openArray[(string, string)]): seq[Finding
         result.add finding(
           path, line, "Standard is in root glossary already, so project must not repeat it; got `" &
             name & "`.",
+          is_propagation = true,
         )
       elif name in first_seen:
         result.add finding(
           path, line, "Standard two projects list belongs in root glossary; got `" & name &
             "`, also in `" & first_seen[name] & "`.",
+          is_propagation = true,
         )
       else: first_seen[name] = path
 
