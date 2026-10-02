@@ -830,6 +830,44 @@ suite "Camera":
     )
     check norm(camera.eye - planet) =~ filling
 
+  test "a wheel onto a point off the middle stops at the depth where it fills the frame":
+    # Fault: floor was reach from eye, and fill is depth along sight. Off middle, reach runs
+    #   longer than depth, so wheel stopped nearer than fill; hold of point picked alone
+    #   then carried eye back along sight, off pointer's line.
+    const (wide, tall) = (1440, 900)
+    let planet = Position(x: 3.0, y: 1.0, z: 0.0)
+    var scene = initScene()
+    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    for has_selection in [false, true]:
+      # Pivot 6 units across sight from planet, so planet stands 17 degrees off middle.
+      var
+        camera = cameraAround(
+          Position(x: 5.31, y: -4.54, z: 0.0), 20.0, Direction(x: 12, y: 5, z: 7)
+        )
+        interaction = Interaction(is_enabled: true)
+      let at = projectToScreen(
+        camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, planet,
+      )
+      interaction.updateCursor(at.x, at.y)
+      for _ in 1 .. 40:
+        interaction.dollyAtCursor(
+          camera, scene, 0.5, camera.drawExtentFor(tall, 0.0),
+          camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
+          has_selection,
+        )
+      let
+        filling = scene.radiusAt(0)*float(tall)/(
+          tan(0.5*degToRad(camera.degrees_field_of_view))*hypot(float(wide), float(tall))
+        )
+        (eye, frame) = camera.sight
+        held = projectToScreen(
+          camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, planet,
+        )
+      check depthAlong(eye, frame.forward, planet) =~ filling
+      check norm(camera.eye - planet) > 1.04*filling
+      check abs(held.x - at.x) <= 0.5
+      check abs(held.y - at.y) <= 0.5
+
   test "a zoom onto a point brings the pivot to its depth, and over nothing the pivot stands":
     # Turntable follows what reader looks at: eye carried up to planet while pivot.
     #   stayed far behind left every orbit swinging planet across frame. Over nothing
