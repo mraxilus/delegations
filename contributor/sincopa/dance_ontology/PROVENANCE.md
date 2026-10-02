@@ -1418,19 +1418,20 @@ laid along each other on purpose is owed, and the fold rule is repository issue 
 
 ## The swan
 
-**The swan is the position the model does not reach, and its cause is measured this far.** No
-distance holds a swan. The diamonds now stand nowhere either. That follows the rule that rests the
-hands at mid torso facing, which the walk and lift section records.
+**The carried walk does not reach the swan, and a planned turn does.** A planned turn reaches every
+card that the walk does not, the four swans among them (Planned turn). What follows is why the
+walk gives short. It is the reason that the planned turn exists.
 
 The corpus law in `test_rigid.nim` holds every still it walks to a strain of 0.1 (`AT_EASE`). That
 is two degrees of a twenty degree ease. It walks both chains from cross to cross, and the same-name
 chain either way about at half. It walks the free frame pillion too, and the single hold at quarter
-and half. It stops at the cross until the model reaches further. Every other still that holds stands
-at ease, or within a fifth of an ease band at its worst joint, measured 2026-09-18.
+and half. It stops at the cross. Every other still that the walk holds stands at ease, or within a
+fifth of an ease band at its worst joint, measured 2026-09-18.
 
-They wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of a turn, with
-hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26, with an arm
-against an arm, her collarbone retracted to its end, and her chest at forty.
+Walked, the swans wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of
+a turn, with hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26,
+with an arm against an arm, her collarbone retracted to its end, and her chest at forty. Under the
+rule that rests the hands at mid torso facing, the walk stands no diamond either.
 
 The film of the wind shows why. From the cross on, her arms wrap round her head at the height of the
 neck, rather than pass over it. Hands are carried at the lower edge of the band, a radius of a hand
@@ -1450,10 +1451,99 @@ collarbone, wider extension or a stronger loft lose a diamond.
 Rejected outright: the arms of the lead passing through those of the follow. That reached the swan
 by letting two arms occupy one place.
 
-What the swan is in the body stays the open question below. The drawing of the reference itself puts
-both joins at one point, with the right-over-left connection under. It reads as the extra turn
-beyond the cross, which lives between two stacked pairs of hands that turn about each other. The
-model has no hold that turns so.
+## Planned turn
+
+**A turn that the carried walk does not reach is planned, and the engine follows the plan.** The
+carried walk moves the arms only by weak pulls on the hands. So an arm caught on a head or on
+another arm stays caught. A dancer chooses the whole arm, and so does the plan. It chooses the
+collarbone, the roll of the shoulder, the elbow, the wrist, the waist and where to stand.
+
+`simulation/plan.nim` plans the arms of both dancers a fiftieth of a turn at a time (`STRIDE`). At
+each moment it takes the pose nearest to ease, close to the last pose, that keeps four things. The
+hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Every joint stays
+six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band (`room`).
+
+The plan is geometry alone. It uses the capsules, the ranges and the bands of the engine and the
+judge. So the engine meets nothing that the plan did not keep clear. No point of an arm moves more
+than 60 mm between two moments (`leap`), which is less than the thickness of an arm. The engine
+carries the arms between two moments as solid capsules. So an arm that would pass through another
+is stopped there, and the judge reads it.
+
+The plan also keeps the arms 40 mm clear where it can, at a cost (`ROOMY`, `slack`). It holds the
+hands at the torso band until the couple are a fortieth of a turn from face to face. That is twice
+the window of the judge (`FACE_WINDOW`), so the hands are down when the judge reads them.
+
+When the plan stops, it goes back some moments, moves the arms a little, and goes on. At each third
+stop it goes back to the last moment that the couple faced each other. It arranges the arms again
+there, and then goes on. The way down into facing decides the way up out of it.
+
+**The engine follows the plan, and the judge is the one of every walk.** `walk.follow` stands every
+body exactly where the plan starts (`placeBodies`). It then aims every joint at the plan with a
+spring of 30 hertz (`steer`, `STEER`). The wrist spring is three times as stiff, because the hand
+is the lightest link (`WRIST_STEER`). The follow turns and steps as the plan does
+(`turnStepping`). The judge is `gives`, and nothing in it changes.
+
+At each moment the planner reads the pose of the engine (`poseVector`). It plans the moment again
+from that pose (`corrected`), so the drift of the engine is answered at each moment. The target
+moves across the moment from where the couple are to the plan (`turnStepping`). That is a choice,
+and not a need that was measured. Measured on 2026-10-02, with the target at the end of the moment
+from its first step. D7 stands too, with a strain of 0.33 against 0.34, and so does the cross of
+the test.
+
+While the couple are steered, the lift, the draw, the weight of the elbow and the ease torques are
+off. The plan already holds what they do. The walls past the end of each swing stay on.
+
+The planner tries sixteen styles in a fixed order (`STYLES`). A style sets how hard the two joined
+pairs are drawn to one point. It also sets how hard each moment is held near the last, and one of
+four starts at rest. A hold that is its own mirror image also tries the mirror image of the plan
+for the other way about (`mirrored`). The first plan that the engine follows answers the card, in
+`design/modelled` and on the rig viewer (`seen.still`).
+
+Measured on 2026-10-02, on four cores. The planned way answers each of the 33 cards that the walk
+does not, the four swans among them. A same-name swan costs about 550 s, because the early styles
+do not reach it. The plan of D7 puts the couple 0.44 m apart. It draws both joined pairs to one
+point beside the lead, at the top of the torso band.
+
+**The planned stills hold inside every end, but they are not at ease.** Strain is nought at ease
+and one at an end. Where they stand, D3 reads 0.13, C2 0.26, and C6, D1 and D7 0.34. C1 reads 0.56
+and C7 0.57. Measured on 2026-10-02, with the first style that holds each one.
+
+The worst joint of C1, C2, C6 and C7 is her waist. The worst joint of D1 and D7 is the extension of
+her shoulder, and the worst joint of D3 is the twist of her shoulder.
+
+The two kinds of strain have two causes. The plan of D7 sits near ease, with a comfort of 0.07, so
+the drift of the engine from the plan makes its strain. The plan of C1 itself turns her waist half
+into its ease. Rejected: to let the arms settle toward ease at the last wind, a leap at a time.
+That took C1 from 0.56 to 0.53 and left D7 as it was.
+
+The spring is 30 hertz because of what was measured on D7 on 2026-10-01. At 15 hertz the engine
+gave by twist at 1.47 of a turn. At 25, 30 and 40 hertz it stood, with a strain of 0.33 to 0.34 at
+the extension of her left shoulder.
+
+Rejected, each measured on the cards that the walk does not reach, on 2026-10-01:
+
+- torque that holds the twist of each shoulder to the plan, at 30 and 100 newton metres for each
+  radian. C1 gave at the same moments as without it, and D7 gave at 1.26 of a turn, not 1.46;
+- a softer spring on the arms of the follow, a tenth and three tenths of the spring of the lead.
+  C1 gave between 0.60 and 1.37 of a turn, by an elbow, a swing, a wrist or reach;
+- arms with no friction. The plan of C1 stopped at the same moment, and D1 gave at 0.96 of a turn,
+  against 0.98 with friction;
+- two times the engine steps for each moment. D7 gave at the same moments, 0.71 and 1.31 of a turn;
+- capsules of true size in the plan alone, 33 mm for the forearm and 16 mm for the palm. Each plan
+  of the same-name swans then stopped at 0.59 to 0.70 of a turn. With the capsules of the engine,
+  the same plans went to 0.71 to 1.17.
+
+Verified by `test_plan.nim`. The engine stands every joint where the plan places it, and reads the
+plan back, within 0.1 mm over 128 poses. The mirror image of a plan stands every point at its
+reflection. A planned turn of the cross-name chain to its cross keeps the hands joined, the capsules
+apart and no point leaping. The engine follows it and stands there.
+
+Each law failed on a break made on purpose. The breaks were the lift read back with the wrong sign,
+and a sign kept in the mirror. Others were the joined hands left out of the plan, and the shoulder
+aimed outside its rest frame.
+
+Verified by `suites/test_asks.nim`: the simulation models every card that the reference draws. Red
+first, with 33 of 231 cards not modelled.
 
 ## Pages and build
 
@@ -1739,11 +1829,12 @@ runner walks every kept sweep and both drawn walks to the numbers this container
 
 ## Tests
 
-**Testament over `tests/t*.nim` from the project directory, with five binaries.** `test_engine.nim`,
-`test_read.nim` and `test_rigid.nim` link the C archive of the engine. `test_said.nim` compiles to
-JavaScript. `test_suites.nim` imports every other suite from `tests/suites/`, and each of them runs
-at import under its own suite name. `test_rigid.nim` and `test_read.nim` add `-d:danger`, because
-the sweeps are the slow part and `doAssert` survives it.
+**Testament over `tests/t*.nim` from the project directory, with six binaries.** `test_engine.nim`,
+`test_plan.nim`, `test_read.nim` and `test_rigid.nim` link the C archive of the engine.
+`test_said.nim` compiles to JavaScript. `test_suites.nim` imports every other suite from
+`tests/suites/`, and each of them runs at import under its own suite name. `test_plan.nim`,
+`test_rigid.nim` and `test_read.nim` add `-d:danger`, because the sweeps are the slow part and
+`doAssert` survives it.
 
 **`test_read.nim` settles its thirty couples on every core at once.** Each worker builds and settles
 its own couple, and gives back the arm poses alone. The law reads them on one thread, as before.
@@ -1970,13 +2061,16 @@ latent, and not urgent.
 - **What the swan is in the body.** The reference draws it pillion with all four hands above. Asked
   about a hammerlock, the Architect described a low one. The arm goes down, the shoulder rotates in
   as the hand goes behind the back, and the elbow bends behind to an L.
-- Two questions decide the four still cards the model does not reach, and every moving card into
-  them. Which one the swan over the crown is. Whether the extra full turn beyond the cross lives
-  in the wrists and the hand hold, or in the arms wrapping each other. Asked.
+- The model reaches the four swans by a planned turn, and each one waits for the Architect to
+  hold it against their own body. Two questions stay. Which one the swan over the crown is.
+  Whether the extra full turn beyond the cross lives in the wrists and the hand hold, or in the
+  arms wrapping each other. Asked.
 - The drawing of the reference itself puts both joins at one point, with the right-over-left
-  connection under. It reads as the turn living between two stacked pairs of hands. The hands of the
-  model, carried at the edge of the band, wrap her arms round her head instead. The levers tried are
-  recorded under the body simulation.
+  connection under. The planned D7 also draws both joined pairs to one point. The carried walk,
+  with its hands at the edge of the band, wraps her arms round her head instead.
+- **The swans are reached, but not at ease.** C1 and C7 turn her waist more than half into its
+  ease, and D1 and D7 take her shoulder a third of the way. The easiest swan of all the styles is
+  not yet sought, as `walk.standing` seeks the easiest distance.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, cell by cell on the viewer. The tags
   read *unconfirmed* until then.
