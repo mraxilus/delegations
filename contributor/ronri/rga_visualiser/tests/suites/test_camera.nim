@@ -1199,6 +1199,37 @@ suite "Camera":
       check not (camera.distance =~ opening.distance)
       check abs(seen.y - release.y) < 0.01
 
+  test "a right drag with a selection turns across as a left drag along the pivot's row":
+    # Fault: turn carried point press took across, and point taken near top of frame stands
+    #   near line above pivot, where each pixel across asks for great yaw. Drag down from top
+    #   with hand's drift of few pixels swung azimuth 0.17 radians for each step.
+    const (wide, tall) = (1440, 900)
+    let
+      opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+      press = ScreenPosition(x: 723.0, y: 6.0)
+      row = 0.5*float(tall)
+    var
+      camera = opening
+      interaction = Interaction(is_enabled: true, cursor: press)
+      at = press
+    interaction.grabPan(camera, wide, tall, has_selection = true)
+    for step in 1 .. 24:
+      let next = ScreenPosition(
+        x: 723.0 + (if step mod 2 == 1: 4.0 else: -2.0) + 0.5*float(step),
+        y: 6.0 + 16.0*float(step),
+      )
+      var left = camera
+      left.turnFollowing(
+        ScreenPosition(x: at.x, y: row), ScreenPosition(x: next.x, y: row), wide, tall,
+        has_selection = true,
+      )
+      camera.panAcross(at, next, wide, tall, has_selection = true, depth_held = 19.0,
+        point_held = interaction.point_pan)
+      check camera.frame.forward =~ left.frame.forward
+      check camera.frame.axis_up =~ left.frame.axis_up
+      at = next
+    check camera.pivot =~ opening.pivot
+
   test "an aimed zoom draws the pivot toward what it aimed at":
     # `dollyToward` scales pivot toward anchor by exactly factor distance.
     #   took, which is whole of why aimed zoom settles orbit centre onto what
