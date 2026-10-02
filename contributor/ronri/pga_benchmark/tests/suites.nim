@@ -12,11 +12,10 @@ from std/unicode import runeLen
 
 import ../src/pga_benchmark
 import ../src/pga_benchmark/[
-  bound, changes, dense, gaps, guard, head, inspector, markdown, measurements, model, notes,
-  proposals, report,
+  bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
+  notes, proposals, report,
 ]
 import ../src/pga_benchmark/pages/[docket, evaluation, proposal, shell]
-import ../src/pga_benchmark/cells
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
 
@@ -32,9 +31,9 @@ const
   SOURCE_MULTIVECTORS = staticRead(LIBRARY & "/pga/multivectors.nim")
     ## Library arithmetic and accessors.
   EXCLUDED = ["==", "=~", "$", "*"]
-    ## Exported symbols catalogue leaves out on purpose: poisoned equality, approximate
-    ## comparison and display are predicates or text, and `*` is template forwarding to
-    ## scalar `∧`, which catalogue measures once as `scale`.
+    ## Exported symbols catalogue leaves out on purpose.
+    ##   Poisoned equality, approximate comparison and display are predicates or text.
+    ##   `*` is template forwarding to scalar `∧`, which catalogue measures once as `scale`.
 
 
 macro expressionsCompile(measurands: static seq[Measurand]): untyped =
@@ -57,7 +56,7 @@ macro expressionsCompile(measurands: static seq[Measurand]): untyped =
         check `id`.len > 0  # id names gap
 
 
-macro checkReferences(measurands: static seq[Measurand]; chapter: static string): untyped =
+macro checkReferences(measurands: static seq[Measurand], chapter: static string): untyped =
   ## Emit one test per measurand holding library expression on images to reference on typed.
   ##   Chapter "2" takes gaps citing book equations of chapter 2; "3" takes rest, which
   ##   are motor, projection and support pages of rigidgeometricalgebra.org.
@@ -184,7 +183,7 @@ when IS_CONFORMAL:
   func bulkFlat*(m: Multivector): Multivector {.inline.} = ■ m
 func add*(m, n: Multivector): Multivector {.inline.} = m + n
 func add*(m: Multivector, s: float): Multivector {.inline.} = s + m
-func `∧`*(s: float; m: Multivector): Multivector = m
+func `∧`*(s: float, m: Multivector): Multivector = m
 func hidden(m: Multivector): Multivector = m
 """
     check aliasesIn(fixture, is_conformal = false) == @["selectGrade", "bulk", "add"]  # rigid
@@ -261,7 +260,7 @@ suite "Measurements":
         "library": {"ns_median": library, "ns_min": library - 1.0, "nan_share": 0.0},
         "reference": {"ns_median": reference, "ns_min": reference - 1.0, "nan_share": 0.0}}}}
     let
-      combined = runsCombined([run(12.0, 4.0), run(10.0, 5.0), run(11.0, 3.0)])
+      combined = combineRuns([run(12.0, 4.0), run(10.0, 5.0), run(11.0, 3.0)])
       library = combined{"measurands", "wedge", "library"}
     check combined{"taken", "runs"}.getInt == 3  # run count recorded
     check library{"ns_median"}.getFloat == 11.0 and library{"ns_min"}.getFloat == 9.0  # combined
@@ -429,7 +428,7 @@ suite "Inspector":
     check functions[0].stem_result == "Multivector" and not functions[0].is_inline  # via Result
     check functions[0].module == "OOZpgaZoperators"  # suffix after last `__`
     let c = count(functions[0].body)
-    check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
+    check c.multiplies == 2 and c.adds == 1 and c.subtractions == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
     check functions[1].symbol == "dot"  # second declaration
@@ -503,7 +502,7 @@ suite "Inspector":
       c = count(functions[0].body)
     check c.multiplies == 16 + 1  # 16-trip loop counts its term sixteen times; unknown bound once
     check c.adds == 16  # every term inside loop is weighted
-    check c.subs == 4 * 4  # nested loops multiply: `<= 3` from 0 is four trips, `< 4` four
+    check c.subtractions == 4 * 4  # nested loops multiply: `<= 3` from 0 is four trips, `< 4` four
     check c.calls == 16 and c.lines == 48  # call site per trip; lines stay static
     check totals(functions)["scale__u0__OOZpgaZops"].multiplies == 17 + 16  # callee per trip
 
@@ -660,7 +659,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       check "wedge(Point,Point)" in keys  # typed reference reached from suites
       for f in functions:
         if f.key == "wedge(Point,Point)":
-          check count(f.body).multiplies == 12 and count(f.body).subs == 6  # as documented
+          check count(f.body).multiplies == 12 and count(f.body).subtractions == 6  # as documented
 
 
 suite "Guard":
@@ -677,7 +676,7 @@ suite "Guard":
       "movement": movementNode(Movement(bytes_moved: bytes)),
     }
 
-  func doc(functions: JsonNode; flags = "-d:release"; dimensions = 4): JsonNode =
+  func staticDocument(functions: JsonNode, flags = "-d:release", dimensions = 4): JsonNode =
     ## Build static measurements document around functions.
     result = document(
       "static", algebraNode("rga4d", dimensions, false, 128),
@@ -685,7 +684,7 @@ suite "Guard":
     )
     result["functions"] = functions
 
-  func one(name: string; f: JsonNode): JsonNode =
+  func one(name: string, f: JsonNode): JsonNode =
     ## Build functions object holding one function.
     result = newJObject()
     result[name] = f
@@ -693,41 +692,47 @@ suite "Guard":
   test "equal documents pass with nothing to say":
     let
       same = one(key, node(81, 178, 1, 512))
-      v = compare(doc(same), doc(same), path)
+      v = compare(staticDocument(same), staticDocument(same), path)
     check v.findings.len == 0 and v.improvements.len == 0  # gate silent
 
   test "grown count is one finding naming function, metric and both values":
-    let v =
-      compare(doc(one(key, node(81, 178, 1, 512))), doc(one(key, node(90, 178, 1, 512))), path)
+    let
+      before = staticDocument(one(key, node(81, 178, 1, 512)))
+      v = compare(before, staticDocument(one(key, node(90, 178, 1, 512))), path)
     check v.findings.len == 1 and v.improvements.len == 0  # one metric grew
     check v.findings[0].render ==
       path & ":0: Total `multiplies` of `" & key & "` grew; got `90`, baseline `81`."  # IV.4
 
   test "shrunk count is improvement, never finding":
-    let v =
-      compare(doc(one(key, node(81, 178, 1, 512))), doc(one(key, node(81, 0, 1, 512))), path)
+    let
+      before = staticDocument(one(key, node(81, 178, 1, 512)))
+      v = compare(before, staticDocument(one(key, node(81, 0, 1, 512))), path)
     check v.findings.len == 0 and v.improvements.len == 1  # baseline moves by choice
     check "checks" in v.improvements[0] and "got `0`" in v.improvements[0]  # what shrank
 
   test "bytes moved are gated with counts":
-    let v =
-      compare(doc(one(key, node(81, 178, 1, 512))), doc(one(key, node(81, 178, 1, 640))), path)
+    let
+      before = staticDocument(one(key, node(81, 178, 1, 512)))
+      v = compare(before, staticDocument(one(key, node(81, 178, 1, 640))), path)
     check v.findings.len == 1 and "bytes_moved" in v.findings[0].message  # movement grew
 
   test "function absent in either document is finding":
-    let before = compare(doc(one(key, node(81, 178, 1, 512))), doc(newJObject()), path)
+    let
+      present = staticDocument(one(key, node(81, 178, 1, 512)))
+      absent = staticDocument(newJObject())
+      before = compare(present, absent, path)
     check before.findings.len == 1 and "absent now" in before.findings[0].message  # gone
-    let after = compare(doc(newJObject()), doc(one(key, node(81, 178, 1, 512))), path)
+    let after = compare(absent, present, path)
     check after.findings.len == 1 and "absent from baseline" in after.findings[0].message  # new
 
   test "documents of another build are not compared":
     let
       same = one(key, node(81, 178, 1, 512))
-      flags = compare(doc(same), doc(same, flags = "-d:danger"), path)
+      flags = compare(staticDocument(same), staticDocument(same, flags = "-d:danger"), path)
     check flags.findings.len == 1 and "`flags`" in flags.findings[0].message  # build differs
-    let dims = compare(doc(same), doc(same, dimensions = 5), path)
-    check dims.findings.len == 1 and "`dimensions`" in dims.findings[0].message  # algebra differs
-    let schema = compare(doc(same), %*{"schema": 2}, path)
+    let algebras = compare(staticDocument(same), staticDocument(same, dimensions = 5), path)
+    check algebras.findings.len == 1 and "`dimensions`" in algebras.findings[0].message  # differs
+    let schema = compare(staticDocument(same), %*{"schema": 2}, path)
     check schema.findings.len == 1 and "Schema differs" in schema.findings[0].message  # refused
 
 
@@ -793,7 +798,7 @@ suite "Gaps":
     Algebra(name: "rga4d", measurements_static: staticDoc(), measurements_runtime: runtimeDoc())
   ]
 
-  func decidedOf(rule: Rule; algebras: seq[Algebra]; gaps: seq[Gap]): Decision =
+  func decidedOf(rule: Rule, algebras: seq[Algebra], gaps: seq[Gap]): Decision =
     ## Decide cause carrying rule.
     for d in CAUSES:
       if d.rule == rule: return d.decideCause(algebras, gaps)
@@ -1008,7 +1013,7 @@ suite "Proposals":
     directory_sign = "proposals/01-sign"
     record_sign = "# P01: Sign\n\nWhy.\n"
 
-  func numbered(number: int; status = "proposed"): Proposal =
+  func numbered(number: int, status = "proposed"): Proposal =
     ## Read well-formed proposal at number, with status.
     let
       directory = "proposals/" & align($number, 2, '0') & "-p" & $number

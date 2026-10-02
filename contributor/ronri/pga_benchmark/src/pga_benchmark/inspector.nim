@@ -45,7 +45,7 @@ type
       ## Text between function's braces.
   Counts* = object
     ## Define what one function's text spends.
-    multiplies*, adds*, subs*, divides*: int
+    multiplies*, adds*, subtractions*, divides*: int
       ## Floating operations spelled as terms; divisions cost several multiplies each.
     zero_fills*: int
       ## `nimZeroMem` calls, i.e. whole-object zero fills.
@@ -120,8 +120,9 @@ func demangle*(name: string): string =
 
 
 func stemOf(parameter: string): string =
-  ## Read type stem of one C parameter or return type, e.g. `Point` from
-  ## `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from `tyEnum_Basis__hash`.
+  ## Read type stem of one C parameter or return type.
+  ##   E.g. `Point` from `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from
+  ##     `tyEnum_Basis__hash`.
   let text = parameter.strip
   for prefix in ["tyObject_", "tyEnum_", "tyDistinct_", "tyTuple_"]:
     if text.startsWith(prefix):
@@ -213,9 +214,9 @@ func functionsIn*(source: string): seq[CFunction] =
 
 
 func plainSites(body: string): seq[string] =
-  ## Read mangled name at every call site of Nim function in text holding no loop,
-  ## accessor reads excluded. Call is identifier holding `__` followed by `(`; runtime
-  ## helpers hold none.
+  ## Read mangled name at every call site of Nim function in text holding no loop.
+  ##   Accessor reads are excluded.
+  ##   Call is identifier holding `__` followed by `(`; runtime helpers hold none.
   var i = 0
   while i < body.len:
     if body[i] notin IdentStartChars:
@@ -246,7 +247,7 @@ const
     ## Text before literal bound; bound naming variable instead is unknown.
 
 
-func startOf(context: string; counter: string): int =
+func startOf(context, counter: string): int =
   ## Read value counter was last set to before loop, `<counter> = ((NI) <n>);`; zero else.
   let at = context.rfind(counter & " = ((NI) ")
   if at < 0: return 0
@@ -257,8 +258,8 @@ func startOf(context: string; counter: string): int =
 
 
 func tripsOf(inner, context: string): int =
-  ## Read how many times loop body runs from its bound test and counter's start; one
-  ## where bound is not literal.
+  ## Read how many times loop body runs from its bound test and counter's start.
+  ##   One where bound is not literal.
   let at = inner.find(BOUND_OPEN)
   if at < 0: return 1
   let start = at + BOUND_OPEN.len
@@ -283,7 +284,7 @@ func plain(body: string): Counts =
   Counts(
     multiplies: body.count(") * ("),
     adds: body.count(") + ("),
-    subs: body.count(") - ("),
+    subtractions: body.count(") - ("),
     divides: body.count(") / ("),
     zero_fills: body.count("nimZeroMem("),
     copies: body.count("(*Result) = ") + body.count("nimCopyMem(") + body.count("memcpy("),
@@ -298,7 +299,7 @@ func `+`*(a, b: Counts): Counts =
   Counts(
     multiplies: a.multiplies + b.multiplies,
     adds: a.adds + b.adds,
-    subs: a.subs + b.subs,
+    subtractions: a.subtractions + b.subtractions,
     divides: a.divides + b.divides,
     zero_fills: a.zero_fills + b.zero_fills,
     intermediates: a.intermediates + b.intermediates,
@@ -310,12 +311,12 @@ func `+`*(a, b: Counts): Counts =
   )
 
 
-func `*`(c: Counts; trips: int): Counts =
+func `*`(c: Counts, trips: int): Counts =
   ## Scale spent terms by trips; declarations and lines are static and stay.
   Counts(
     multiplies: c.multiplies * trips,
     adds: c.adds * trips,
-    subs: c.subs * trips,
+    subtractions: c.subtractions * trips,
     divides: c.divides * trips,
     zero_fills: c.zero_fills * trips,
     intermediates: c.intermediates,
@@ -328,8 +329,8 @@ func `*`(c: Counts; trips: int): Counts =
 
 
 func weighted(body, context: string): Counts =
-  ## Count spent terms with every loop's body weighted by its trips, nested loops
-  ## multiplying; text outside loops counts once.
+  ## Count spent terms with every loop's body weighted by its trips.
+  ##   Nested loops multiply; text outside loops counts once.
   var
     position = 0
     outside = ""
@@ -355,8 +356,8 @@ func weighted(body, context: string): Counts =
 
 
 func weightedSites(body, context: string): seq[string] =
-  ## Read call sites with every loop's body repeated by its trips, so callees fold once
-  ## per trip; sites outside loops once.
+  ## Read call sites with every loop's body repeated by its trips.
+  ##   Callees then fold once per trip; sites outside loops count once.
   var
     position = 0
     outside = ""
@@ -383,14 +384,15 @@ func weightedSites(body, context: string): seq[string] =
 
 
 func callSites*(body: string): seq[string] =
-  ## Read mangled name at every call site of Nim function in body, once per loop trip,
-  ## accessor reads excluded.
+  ## Read mangled name at every call site of Nim function in body, once per loop trip.
+  ##   Accessor reads are excluded.
   weightedSites(body, "")
 
 
 func count*(body: string): Counts =
-  ## Count what one function body spends, by text: terms once per loop trip where loop's
-  ## bound is literal, declarations and lines once.
+  ## Count what one function body spends, by text.
+  ##   Terms count once per loop trip where loop's bound is literal; declarations and lines
+  ##     count once.
   result = weighted(body, "")
   result.intermediates = body.countIntermediates
   result.lines = body.count('\n')
@@ -432,7 +434,7 @@ func totals*(functions: seq[CFunction]): Table[string, Counts] =
     result[name] = totalOf(name, own, sites, 0)
 
 
-func totals*(functions: seq[CFunction]; roots: openArray[string]): Table[string, Counts] =
+func totals*(functions: seq[CFunction], roots: openArray[string]): Table[string, Counts] =
   ## Count named functions only, with their callees folded in; same fold as whole-cache one.
   ##   Folding one root walks its whole call graph, so cost of folding every function of
   ##   cache grows past what suite can spend (Article IX.8). Reader wanting few functions

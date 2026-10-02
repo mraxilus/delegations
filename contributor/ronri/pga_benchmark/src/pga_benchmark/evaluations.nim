@@ -72,8 +72,18 @@ const
     ## Text of entry build claim compiles: library alone, so no module of harness sets peak.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache into static measurements.
-  COUNTED = ["multiplies", "adds", "subs", "divides", "zero_fills", "intermediates", "copies",
-    "checks", "calls", "lines"]
+  COUNTED = [
+    "multiplies",
+    "adds",
+    "subtractions",
+    "divides",
+    "zero_fills",
+    "intermediates",
+    "copies",
+    "checks",
+    "calls",
+    "lines",
+  ]
     ## Totals evaluation reports where they differ from pin.
   MOVED = ["bytes_moved", "bytes_zeroed", "bytes_intermediates"]
     ## Movement evaluation reports where it differs from pin.
@@ -143,8 +153,8 @@ func algebraDefines(algebra: Algebra): seq[string] =
 
 
 func buildDefines(chain: Toolchain, pga: string): seq[string] =
-  ## Spell defines naming build in documents it writes, and leaving dense forms out, since they
-  ##   read tables by name at pin and change may rename them.
+  ## Spell defines naming build in documents it writes, and leaving dense forms out.
+  ##   Dense forms read tables by name at pin, and change may rename them.
   @[
     "-d:pga_benchmark.nim_commit=" & chain.nim,
     "-d:pga_benchmark.pga_commit=" & pga,

@@ -74,7 +74,7 @@ type
 #[ Vector Helpers ]#
 
 template dot*(a, b: Vector3): float =
-  ## Dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
+  ## Multiply vectors through dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
   (let u = a; let w = b; u.x * w.x + u.y * w.y + u.z * w.z)
 
 template zero3(): Vector3 =
@@ -95,11 +95,11 @@ template zeroCarrier(): CarrierPlane =
 
 
 template `-`*(a: Vector3): Vector3 =
-  ## Negated vector; 0 mul.
+  ## Negate vector; 0 mul.
   (let u = a; Vector3(x: -u.x, y: -u.y, z: -u.z))
 
-template `*`*(a: Vector3; s: float): Vector3 =
-  ## Vector scaled; 3 mul.
+template `*`*(a: Vector3, s: float): Vector3 =
+  ## Scale vector; 3 mul.
   (let u = a; let f = s; Vector3(x: u.x * f, y: u.y * f, z: u.z * f))
 
 
@@ -117,7 +117,7 @@ func wedge*(a, b: RoundPoint): Dipole {.inline.} =
     ),
   )
 
-func wedge*(d: Dipole; a: RoundPoint): Circle {.inline.} =
+func wedge*(d: Dipole, a: RoundPoint): Circle {.inline.} =
   ## Join dipole and round point into circle, i.e. 𝐝 ∧ 𝐚; 30 mul, 20 add.
   Circle(
     g: CarrierPlane(
@@ -138,9 +138,9 @@ func wedge*(d: Dipole; a: RoundPoint): Circle {.inline.} =
     ),
   )
 
-func wedge*(a: RoundPoint; d: Dipole): Circle {.inline.} =
-  ## Join round point and dipole, i.e. 𝐚 ∧ 𝐝 = 𝐝 ∧ 𝐚 since grades 1 and 2 commute; 30 mul,
-  ##   20 add.
+func wedge*(a: RoundPoint, d: Dipole): Circle {.inline.} =
+  ## Join round point and dipole, i.e. 𝐚 ∧ 𝐝 = 𝐝 ∧ 𝐚; 30 mul, 20 add.
+  ##   Order swaps freely, since grades 1 and 2 commute.
   Circle(
     g: CarrierPlane(
       x: a.z * d.v.y - a.y * d.v.z + a.w * d.m.x,
@@ -160,7 +160,7 @@ func wedge*(a: RoundPoint; d: Dipole): Circle {.inline.} =
     ),
   )
 
-func wedge*(c: Circle; a: RoundPoint): Sphere {.inline.} =
+func wedge*(c: Circle, a: RoundPoint): Sphere {.inline.} =
   ## Join circle and round point into sphere, i.e. 𝐜 ∧ 𝐚; 20 mul, 15 add.
   Sphere(
     u: -c.g.x * a.x - c.g.y * a.y - c.g.z * a.z - c.g.w * a.w,
@@ -170,7 +170,7 @@ func wedge*(c: Circle; a: RoundPoint): Sphere {.inline.} =
     w: c.m.x * a.x + c.m.y * a.y + c.m.z * a.z + c.g.w * a.u,
   )
 
-func wedge*(a: RoundPoint; c: Circle): Sphere {.inline.} =
+func wedge*(a: RoundPoint, c: Circle): Sphere {.inline.} =
   ## Join round point and circle, i.e. 𝐚 ∧ 𝐜 = −(𝐜 ∧ 𝐚); 20 mul, 15 add.
   Sphere(
     u: a.x * c.g.x + a.y * c.g.y + a.z * c.g.z + a.w * c.g.w,
@@ -206,7 +206,7 @@ func wedgeAnti*(s, t: Sphere): Circle {.inline.} =
     m: Vector3(x: s.x * t.w - s.w * t.x, y: s.y * t.w - s.w * t.y, z: s.z * t.w - s.w * t.z),
   )
 
-func wedgeAnti*(s: Sphere; c: Circle): Dipole {.inline.} =
+func wedgeAnti*(s: Sphere, c: Circle): Dipole {.inline.} =
   ## Meet sphere and circle in dipole, i.e. 𝐬 ∨ 𝐜; 30 mul, 20 add.
   Dipole(
     v: Vector3(
@@ -227,9 +227,9 @@ func wedgeAnti*(s: Sphere; c: Circle): Dipole {.inline.} =
     ),
   )
 
-func wedgeAnti*(c: Circle; s: Sphere): Dipole {.inline.} =
-  ## Meet circle and sphere, i.e. 𝐜 ∨ 𝐬 = 𝐬 ∨ 𝐜 since antigrades 1 and 2 commute; 30 mul,
-  ##   20 add.
+func wedgeAnti*(c: Circle, s: Sphere): Dipole {.inline.} =
+  ## Meet circle and sphere, i.e. 𝐜 ∨ 𝐬 = 𝐬 ∨ 𝐜; 30 mul, 20 add.
+  ##   Order swaps freely, since antigrades 1 and 2 commute.
   Dipole(
     v: Vector3(
       x: c.g.z * s.y - c.g.y * s.z + c.v.x * s.u,
@@ -264,7 +264,7 @@ func wedgeAnti*(c, o: Circle): RoundPoint {.inline.} =
       c.v.x * o.m.x - c.v.y * o.m.y - c.v.z * o.m.z,
   )
 
-func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint {.inline.} =
+func wedgeAnti*(s: Sphere, d: Dipole): RoundPoint {.inline.} =
   ## Meet sphere and dipole in round point, i.e. 𝐬 ∨ 𝐝; 20 mul, 15 add.
   RoundPoint(
     x: s.y * d.m.z - s.z * d.m.y + s.u * d.p.x - s.w * d.v.x,
@@ -274,7 +274,7 @@ func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint {.inline.} =
     u: -s.x * d.p.x - s.y * d.p.y - s.z * d.p.z - s.w * d.p.w,
   )
 
-func wedgeAnti*(d: Dipole; s: Sphere): RoundPoint {.inline.} =
+func wedgeAnti*(d: Dipole, s: Sphere): RoundPoint {.inline.} =
   ## Meet dipole and sphere, i.e. 𝐝 ∨ 𝐬 = −(𝐬 ∨ 𝐝); 20 mul, 15 add.
   RoundPoint(
     x: d.m.y * s.z - d.m.z * s.y + d.v.x * s.w - d.p.x * s.u,
@@ -289,43 +289,43 @@ func wedgeAnti*(d: Dipole; s: Sphere): RoundPoint {.inline.} =
 #[ Inner Products ]#
 
 func dot*(a, b: RoundPoint): float {.inline.} =
-  ## Inner product of round points under conformal metric, i.e. 𝐚 ∙ 𝐛; 5 mul, 4 add.
+  ## Multiply round points through inner product under conformal metric, i.e. 𝐚 ∙ 𝐛; 5 mul, 4 add.
   a.x * b.x + a.y * b.y + a.z * b.z - a.w * b.u - a.u * b.w
 
 func dot*(d, f: Dipole): float {.inline.} =
-  ## Inner product of dipoles, i.e. 𝐝 ∙ 𝐟; 10 mul, 9 add.
+  ## Multiply dipoles through inner product, i.e. 𝐝 ∙ 𝐟; 10 mul, 9 add.
   dot(d.v, Vector3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
     dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
 
 func dot*(c, o: Circle): float {.inline.} =
-  ## Inner product of circles, i.e. 𝐜 ∙ 𝐨; 10 mul, 9 add.
+  ## Multiply circles through inner product, i.e. 𝐜 ∙ 𝐨; 10 mul, 9 add.
   c.g.w * o.g.w - dot(Vector3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
     dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
 
 func dot*(s, t: Sphere): float {.inline.} =
-  ## Inner product of spheres, i.e. 𝐬 ∙ 𝐭; 5 mul, 4 add.
+  ## Multiply spheres through inner product, i.e. 𝐬 ∙ 𝐭; 5 mul, 4 add.
   s.u * t.w + s.w * t.u - s.x * t.x - s.y * t.y - s.z * t.z
 
 func dotAnti*(a, b: RoundPoint): Antiscalar {.inline.} =
-  ## Inner antiproduct of round points, i.e. 𝐚 ∘ 𝐛 = −(𝐚 ∙ 𝐛)𝟙 here; 5 mul, 4 add.
+  ## Multiply round points through inner antiproduct, i.e. 𝐚 ∘ 𝐛 = −(𝐚 ∙ 𝐛)𝟙 here; 5 mul, 4 add.
   Antiscalar(-(a.x * b.x + a.y * b.y + a.z * b.z - a.w * b.u - a.u * b.w))
 
 func dotAnti*(d, f: Dipole): Antiscalar {.inline.} =
-  ## Inner antiproduct of dipoles, i.e. 𝐝 ∘ 𝐟; 10 mul, 9 add.
+  ## Multiply dipoles through inner antiproduct, i.e. 𝐝 ∘ 𝐟; 10 mul, 9 add.
   Antiscalar(-(
     dot(d.v, Vector3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
       dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
   ))
 
 func dotAnti*(c, o: Circle): Antiscalar {.inline.} =
-  ## Inner antiproduct of circles, i.e. 𝐜 ∘ 𝐨; 10 mul, 9 add.
+  ## Multiply circles through inner antiproduct, i.e. 𝐜 ∘ 𝐨; 10 mul, 9 add.
   Antiscalar(-(
     c.g.w * o.g.w - dot(Vector3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
       dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
   ))
 
 func dotAnti*(s, t: Sphere): Antiscalar {.inline.} =
-  ## Inner antiproduct of spheres, i.e. 𝐬 ∘ 𝐭; 5 mul, 4 add.
+  ## Multiply spheres through inner antiproduct, i.e. 𝐬 ∘ 𝐭; 5 mul, 4 add.
   Antiscalar(-(s.u * t.w + s.w * t.u - s.x * t.x - s.y * t.y - s.z * t.z))
 
 
@@ -333,35 +333,35 @@ func dotAnti*(s, t: Sphere): Antiscalar {.inline.} =
 #[ Complements ]#
 
 func complementRight*(a: RoundPoint): Sphere {.inline.} =
-  ## Right complement 𝐚̅, same components read as sphere; 0 mul.
+  ## Get right complement 𝐚̅, same components read as sphere; 0 mul.
   Sphere(u: a.u, x: a.x, y: a.y, z: a.z, w: a.w)
 
 func complementLeft*(a: RoundPoint): Sphere {.inline.} =
-  ## Left complement 𝐚̲, equal to right one for grade 1 in five dimensions; 0 mul.
+  ## Get left complement 𝐚̲, equal to right one for grade 1 in five dimensions; 0 mul.
   Sphere(u: a.u, x: a.x, y: a.y, z: a.z, w: a.w)
 
 func complementRight*(s: Sphere): RoundPoint {.inline.} =
-  ## Right complement 𝐬̅, same components read as round point; 0 mul.
+  ## Get right complement 𝐬̅, same components read as round point; 0 mul.
   RoundPoint(x: s.x, y: s.y, z: s.z, w: s.w, u: s.u)
 
 func complementLeft*(s: Sphere): RoundPoint {.inline.} =
-  ## Left complement 𝐬̲, equal to right one; 0 mul.
+  ## Get left complement 𝐬̲, equal to right one; 0 mul.
   RoundPoint(x: s.x, y: s.y, z: s.z, w: s.w, u: s.u)
 
 func complementRight*(d: Dipole): Circle {.inline.} =
-  ## Right complement 𝐝̅, negated with flat part becoming carrier plane; 0 mul.
+  ## Get right complement 𝐝̅, negated with flat part becoming carrier plane; 0 mul.
   Circle(g: CarrierPlane(x: -d.p.x, y: -d.p.y, z: -d.p.z, w: -d.p.w), v: -d.m, m: -d.v)
 
 func complementLeft*(d: Dipole): Circle {.inline.} =
-  ## Left complement 𝐝̲, equal to right one for grade 2; 0 mul.
+  ## Get left complement 𝐝̲, equal to right one for grade 2; 0 mul.
   Circle(g: CarrierPlane(x: -d.p.x, y: -d.p.y, z: -d.p.z, w: -d.p.w), v: -d.m, m: -d.v)
 
 func complementRight*(c: Circle): Dipole {.inline.} =
-  ## Right complement 𝐜̅, negated with carrier plane becoming flat part; 0 mul.
+  ## Get right complement 𝐜̅, negated with carrier plane becoming flat part; 0 mul.
   Dipole(v: -c.m, m: -c.v, p: FlatPoint(x: -c.g.x, y: -c.g.y, z: -c.g.z, w: -c.g.w))
 
 func complementLeft*(c: Circle): Dipole {.inline.} =
-  ## Left complement 𝐜̲, equal to right one for grade 3; 0 mul.
+  ## Get left complement 𝐜̲, equal to right one for grade 3; 0 mul.
   Dipole(v: -c.m, m: -c.v, p: FlatPoint(x: -c.g.x, y: -c.g.y, z: -c.g.z, w: -c.g.w))
 
 
@@ -369,35 +369,35 @@ func complementLeft*(c: Circle): Dipole {.inline.} =
 #[ Reverses ]#
 
 func reverse*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Reverse 𝐚̃, identity on grade 1; 0 mul.
+  ## Get reverse 𝐚̃, identity on grade 1; 0 mul.
   a
 
 func reverse*(d: Dipole): Dipole {.inline.} =
-  ## Reverse 𝐝̃, negation on grade 2; 0 mul.
+  ## Get reverse 𝐝̃, negation on grade 2; 0 mul.
   Dipole(v: -d.v, m: -d.m, p: FlatPoint(x: -d.p.x, y: -d.p.y, z: -d.p.z, w: -d.p.w))
 
 func reverse*(c: Circle): Circle {.inline.} =
-  ## Reverse 𝐜̃, negation on grade 3; 0 mul.
+  ## Get reverse 𝐜̃, negation on grade 3; 0 mul.
   Circle(g: CarrierPlane(x: -c.g.x, y: -c.g.y, z: -c.g.z, w: -c.g.w), v: -c.v, m: -c.m)
 
 func reverse*(s: Sphere): Sphere {.inline.} =
-  ## Reverse 𝐬̃, identity on grade 4; 0 mul.
+  ## Get reverse 𝐬̃, identity on grade 4; 0 mul.
   s
 
 func reverseAnti*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Antireverse 𝐚̰, identity on antigrade 4; 0 mul.
+  ## Get antireverse 𝐚̰, identity on antigrade 4; 0 mul.
   a
 
 func reverseAnti*(d: Dipole): Dipole {.inline.} =
-  ## Antireverse 𝐝̰, negation on antigrade 3; 0 mul.
+  ## Get antireverse 𝐝̰, negation on antigrade 3; 0 mul.
   Dipole(v: -d.v, m: -d.m, p: FlatPoint(x: -d.p.x, y: -d.p.y, z: -d.p.z, w: -d.p.w))
 
 func reverseAnti*(c: Circle): Circle {.inline.} =
-  ## Antireverse 𝐜̰, negation on antigrade 2; 0 mul.
+  ## Get antireverse 𝐜̰, negation on antigrade 2; 0 mul.
   Circle(g: CarrierPlane(x: -c.g.x, y: -c.g.y, z: -c.g.z, w: -c.g.w), v: -c.v, m: -c.m)
 
 func reverseAnti*(s: Sphere): Sphere {.inline.} =
-  ## Antireverse 𝐬̰, identity on antigrade 1; 0 mul.
+  ## Get antireverse 𝐬̰, identity on antigrade 1; 0 mul.
   s
 
 
@@ -405,39 +405,39 @@ func reverseAnti*(s: Sphere): Sphere {.inline.} =
 #[ Duals ]#
 
 func dualBulk*(a: RoundPoint): Sphere {.inline.} =
-  ## Dual 𝐚★; 0 mul.
+  ## Get dual 𝐚★; 0 mul.
   Sphere(u: -a.w, x: a.x, y: a.y, z: a.z, w: -a.u)
 
 func dualWeight*(a: RoundPoint): Sphere {.inline.} =
-  ## Antidual 𝐚☆; 0 mul.
+  ## Get antidual 𝐚☆; 0 mul.
   Sphere(u: a.w, x: -a.x, y: -a.y, z: -a.z, w: a.u)
 
 func dualBulk*(d: Dipole): Circle {.inline.} =
-  ## Dual 𝐝★; 0 mul.
+  ## Get dual 𝐝★; 0 mul.
   Circle(g: CarrierPlane(x: -d.v.x, y: -d.v.y, z: -d.v.z, w: d.p.w), v: -d.m,
     m: Vector3(x: -d.p.x, y: -d.p.y, z: -d.p.z))
 
 func dualWeight*(d: Dipole): Circle {.inline.} =
-  ## Antidual 𝐝☆; 0 mul.
+  ## Get antidual 𝐝☆; 0 mul.
   Circle(g: CarrierPlane(x: d.v.x, y: d.v.y, z: d.v.z, w: -d.p.w), v: read3(d.m),
     m: Vector3(x: d.p.x, y: d.p.y, z: d.p.z))
 
 func dualBulk*(c: Circle): Dipole {.inline.} =
-  ## Dual 𝐜★; 0 mul.
+  ## Get dual 𝐜★; 0 mul.
   Dipole(v: Vector3(x: c.g.x, y: c.g.y, z: c.g.z), m: read3(c.v),
     p: FlatPoint(x: c.m.x, y: c.m.y, z: c.m.z, w: -c.g.w))
 
 func dualWeight*(c: Circle): Dipole {.inline.} =
-  ## Antidual 𝐜☆; 0 mul.
+  ## Get antidual 𝐜☆; 0 mul.
   Dipole(v: Vector3(x: -c.g.x, y: -c.g.y, z: -c.g.z), m: -c.v,
     p: FlatPoint(x: -c.m.x, y: -c.m.y, z: -c.m.z, w: c.g.w))
 
 func dualBulk*(s: Sphere): RoundPoint {.inline.} =
-  ## Dual 𝐬★; 0 mul.
+  ## Get dual 𝐬★; 0 mul.
   RoundPoint(x: -s.x, y: -s.y, z: -s.z, w: s.u, u: s.w)
 
 func dualWeight*(s: Sphere): RoundPoint {.inline.} =
-  ## Antidual 𝐬☆; 0 mul.
+  ## Get antidual 𝐬☆; 0 mul.
   RoundPoint(x: s.x, y: s.y, z: s.z, w: -s.u, u: -s.w)
 
 
@@ -445,67 +445,67 @@ func dualWeight*(s: Sphere): RoundPoint {.inline.} =
 #[ Parts ]#
 
 func bulk*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Round bulk 𝐚∙, components without e₄ and e₅; 0 mul.
+  ## Extract round bulk 𝐚∙, components without e₄ and e₅; 0 mul.
   RoundPoint(x: a.x, y: a.y, z: a.z, w: 0.0, u: 0.0)
 
 func weight*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Round weight 𝐚∘, components with e₄ and without e₅; 0 mul.
+  ## Extract round weight 𝐚∘, components with e₄ and without e₅; 0 mul.
   RoundPoint(x: 0.0, y: 0.0, z: 0.0, w: a.w, u: 0.0)
 
 func bulkFlat*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Flat bulk 𝐚■, components with e₅ and without e₄; 0 mul.
+  ## Extract flat bulk 𝐚■, components with e₅ and without e₄; 0 mul.
   RoundPoint(x: 0.0, y: 0.0, z: 0.0, w: 0.0, u: a.u)
 
 func weightFlat*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Flat weight 𝐚□, components with both e₄ and e₅, none for round point; 0 mul.
+  ## Extract flat weight 𝐚□, components with both e₄ and e₅, none for round point; 0 mul.
   RoundPoint(x: 0.0, y: 0.0, z: 0.0, w: 0.0, u: 0.0)
 
 func bulk*(d: Dipole): Dipole {.inline.} =
-  ## Round bulk 𝐝∙, i.e. carrier moment; 0 mul.
+  ## Extract round bulk 𝐝∙, i.e. carrier moment; 0 mul.
   Dipole(v: zero3, m: read3(d.m), p: zeroFlatPoint)
 
 func weight*(d: Dipole): Dipole {.inline.} =
-  ## Round weight 𝐝∘, i.e. carrier direction; 0 mul.
+  ## Extract round weight 𝐝∘, i.e. carrier direction; 0 mul.
   Dipole(v: read3(d.v), m: zero3, p: zeroFlatPoint)
 
 func bulkFlat*(d: Dipole): Dipole {.inline.} =
-  ## Flat bulk 𝐝■, i.e. flat position; 0 mul.
+  ## Extract flat bulk 𝐝■, i.e. flat position; 0 mul.
   Dipole(v: zero3, m: zero3, p: FlatPoint(x: d.p.x, y: d.p.y, z: d.p.z, w: 0.0))
 
 func weightFlat*(d: Dipole): Dipole {.inline.} =
-  ## Flat weight 𝐝□, i.e. flat weight; 0 mul.
+  ## Extract flat weight 𝐝□, i.e. flat weight; 0 mul.
   Dipole(v: zero3, m: zero3, p: FlatPoint(x: 0.0, y: 0.0, z: 0.0, w: d.p.w))
 
 func bulk*(c: Circle): Circle {.inline.} =
-  ## Round bulk 𝐜∙, i.e. carrier position; 0 mul.
+  ## Extract round bulk 𝐜∙, i.e. carrier position; 0 mul.
   Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: c.g.w), v: zero3, m: zero3)
 
 func weight*(c: Circle): Circle {.inline.} =
-  ## Round weight 𝐜∘, i.e. carrier normal; 0 mul.
+  ## Extract round weight 𝐜∘, i.e. carrier normal; 0 mul.
   Circle(g: CarrierPlane(x: c.g.x, y: c.g.y, z: c.g.z, w: 0.0), v: zero3, m: zero3)
 
 func bulkFlat*(c: Circle): Circle {.inline.} =
-  ## Flat bulk 𝐜■, i.e. flat moment; 0 mul.
+  ## Extract flat bulk 𝐜■, i.e. flat moment; 0 mul.
   Circle(g: zeroCarrier, v: zero3, m: read3(c.m))
 
 func weightFlat*(c: Circle): Circle {.inline.} =
-  ## Flat weight 𝐜□, i.e. flat direction; 0 mul.
+  ## Extract flat weight 𝐜□, i.e. flat direction; 0 mul.
   Circle(g: zeroCarrier, v: read3(c.v), m: zero3)
 
 func bulk*(s: Sphere): Sphere {.inline.} =
-  ## Round bulk 𝐬∙, none for sphere; 0 mul.
+  ## Extract round bulk 𝐬∙, none for sphere; 0 mul.
   Sphere(u: 0.0, x: 0.0, y: 0.0, z: 0.0, w: 0.0)
 
 func weight*(s: Sphere): Sphere {.inline.} =
-  ## Round weight 𝐬∘, i.e. carrier weight; 0 mul.
+  ## Extract round weight 𝐬∘, i.e. carrier weight; 0 mul.
   Sphere(u: s.u, x: 0.0, y: 0.0, z: 0.0, w: 0.0)
 
 func bulkFlat*(s: Sphere): Sphere {.inline.} =
-  ## Flat bulk 𝐬■, i.e. flat position; 0 mul.
+  ## Extract flat bulk 𝐬■, i.e. flat position; 0 mul.
   Sphere(u: 0.0, x: 0.0, y: 0.0, z: 0.0, w: s.w)
 
 func weightFlat*(s: Sphere): Sphere {.inline.} =
-  ## Flat weight 𝐬□, i.e. flat normal; 0 mul.
+  ## Extract flat weight 𝐬□, i.e. flat normal; 0 mul.
   Sphere(u: 0.0, x: s.x, y: s.y, z: s.z, w: 0.0)
 
 
@@ -513,20 +513,20 @@ func weightFlat*(s: Sphere): Sphere {.inline.} =
 #[ Attitudes ]#
 
 func attitude*(a: RoundPoint): float {.inline.} =
-  ## Attitude of round point, i.e. 𝐚 ∨ 𝐞̅₄, its weight as scalar; 0 mul.
+  ## Get attitude of round point, i.e. 𝐚 ∨ 𝐞̅₄, its weight as scalar; 0 mul.
   a.w
 
 func attitude*(d: Dipole): RoundPoint {.inline.} =
-  ## Attitude of dipole, i.e. its direction and flat weight as round point; 0 mul.
+  ## Get attitude of dipole, i.e. its direction and flat weight as round point; 0 mul.
   RoundPoint(x: d.v.x, y: d.v.y, z: d.v.z, w: 0.0, u: d.p.w)
 
 func attitude*(c: Circle): Dipole {.inline.} =
-  ## Attitude of circle, i.e. carrier normal and flat direction as dipole; 0 mul.
+  ## Get attitude of circle, i.e. carrier normal and flat direction as dipole; 0 mul.
   Dipole(v: zero3, m: Vector3(x: c.g.x, y: c.g.y, z: c.g.z),
     p: FlatPoint(x: c.v.x, y: c.v.y, z: c.v.z, w: 0.0))
 
 func attitude*(s: Sphere): Circle {.inline.} =
-  ## Attitude of sphere, i.e. carrier weight and flat normal as circle; 0 mul.
+  ## Get attitude of sphere, i.e. carrier weight and flat normal as circle; 0 mul.
   Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: s.u), v: zero3,
     m: Vector3(x: s.x, y: s.y, z: s.z))
 
@@ -535,35 +535,35 @@ func attitude*(s: Sphere): Circle {.inline.} =
 #[ Carriers ]#
 
 func carrier*(a: RoundPoint): FlatPoint {.inline.} =
-  ## Carrier 𝐚 ∧ 𝐞₅, i.e. flat point at same position; 0 mul.
+  ## Get carrier 𝐚 ∧ 𝐞₅, i.e. flat point at same position; 0 mul.
   FlatPoint(x: a.x, y: a.y, z: a.z, w: a.w)
 
 func carrier*(d: Dipole): FlatLine {.inline.} =
-  ## Carrier 𝐝 ∧ 𝐞₅, i.e. flat line through dipole; 0 mul.
+  ## Get carrier 𝐝 ∧ 𝐞₅, i.e. flat line through dipole; 0 mul.
   FlatLine(v: read3(d.v), m: read3(d.m))
 
 func carrier*(c: Circle): FlatPlane {.inline.} =
-  ## Carrier 𝐜 ∧ 𝐞₅, i.e. flat plane containing circle; 0 mul.
+  ## Get carrier 𝐜 ∧ 𝐞₅, i.e. flat plane containing circle; 0 mul.
   FlatPlane(x: c.g.x, y: c.g.y, z: c.g.z, w: c.g.w)
 
 func carrier*(s: Sphere): Antiscalar {.inline.} =
-  ## Carrier 𝐬 ∧ 𝐞₅, i.e. whole space weighted by u; 0 mul.
+  ## Get carrier 𝐬 ∧ 𝐞₅, i.e. whole space weighted by u; 0 mul.
   Antiscalar(s.u)
 
 func carrierCo*(a: RoundPoint): Antiscalar {.inline.} =
-  ## Cocarrier 𝐚☆ ∧ 𝐞₅, i.e. whole space weighted by w; 0 mul.
+  ## Get cocarrier 𝐚☆ ∧ 𝐞₅, i.e. whole space weighted by w; 0 mul.
   Antiscalar(a.w)
 
 func carrierCo*(d: Dipole): FlatPlane {.inline.} =
-  ## Cocarrier 𝐝☆ ∧ 𝐞₅, i.e. flat plane normal to dipole through its center; 0 mul.
+  ## Get cocarrier 𝐝☆ ∧ 𝐞₅, i.e. flat plane normal to dipole through its center; 0 mul.
   FlatPlane(x: d.v.x, y: d.v.y, z: d.v.z, w: -d.p.w)
 
 func carrierCo*(c: Circle): FlatLine {.inline.} =
-  ## Cocarrier 𝐜☆ ∧ 𝐞₅, i.e. flat line through circle's center normal to it; 0 mul.
+  ## Get cocarrier 𝐜☆ ∧ 𝐞₅, i.e. flat line through circle's center normal to it; 0 mul.
   FlatLine(v: Vector3(x: -c.g.x, y: -c.g.y, z: -c.g.z), m: -c.v)
 
 func carrierCo*(s: Sphere): FlatPoint {.inline.} =
-  ## Cocarrier 𝐬☆ ∧ 𝐞₅, i.e. flat point at sphere's center; 0 mul.
+  ## Get cocarrier 𝐬☆ ∧ 𝐞₅, i.e. flat point at sphere's center; 0 mul.
   FlatPoint(x: s.x, y: s.y, z: s.z, w: -s.u)
 
 
@@ -571,11 +571,11 @@ func carrierCo*(s: Sphere): FlatPoint {.inline.} =
 #[ Centers ]#
 
 func center*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Center 𝐚⊞ ∨ 𝐚, i.e. same point scaled by its weight; 5 mul.
+  ## Get center 𝐚⊞ ∨ 𝐚, i.e. same point scaled by its weight; 5 mul.
   RoundPoint(x: a.x * a.w, y: a.y * a.w, z: a.z * a.w, w: a.w * a.w, u: a.w * a.u)
 
 func center*(d: Dipole): RoundPoint {.inline.} =
-  ## Center of dipole as round point with its radius; 16 mul, 10 add.
+  ## Get center of dipole as round point with its radius; 16 mul, 10 add.
   RoundPoint(
     x: d.v.y * d.m.z - d.v.z * d.m.y + d.v.x * d.p.w,
     y: d.v.z * d.m.x - d.v.x * d.m.z + d.v.y * d.p.w,
@@ -585,7 +585,7 @@ func center*(d: Dipole): RoundPoint {.inline.} =
   )
 
 func center*(c: Circle): RoundPoint {.inline.} =
-  ## Center of circle as round point with its radius; 18 mul, 12 add.
+  ## Get center of circle as round point with its radius; 18 mul, 12 add.
   RoundPoint(
     x: c.g.y * c.v.z - c.g.z * c.v.y - c.g.x * c.g.w,
     y: c.g.z * c.v.x - c.g.x * c.v.z - c.g.y * c.g.w,
@@ -595,7 +595,7 @@ func center*(c: Circle): RoundPoint {.inline.} =
   )
 
 func center*(s: Sphere): RoundPoint {.inline.} =
-  ## Center of sphere as round point with its radius; 8 mul, 3 add.
+  ## Get center of sphere as round point with its radius; 8 mul, 3 add.
   RoundPoint(
     x: -s.x * s.u, y: -s.y * s.u, z: -s.z * s.u, w: s.u * s.u,
     u: s.x * s.x + s.y * s.y + s.z * s.z - s.w * s.u,
@@ -606,14 +606,14 @@ func center*(s: Sphere): RoundPoint {.inline.} =
 #[ Containers ]#
 
 func container*(a: RoundPoint): Sphere {.inline.} =
-  ## Container 𝐚 ∧ (𝐚⊟)☆, i.e. smallest sphere holding round point; 8 mul, 3 add.
+  ## Get container 𝐚 ∧ (𝐚⊟)☆, i.e. smallest sphere holding round point; 8 mul, 3 add.
   Sphere(
     u: -a.w * a.w, x: a.x * a.w, y: a.y * a.w, z: a.z * a.w,
     w: a.w * a.u - a.x * a.x - a.y * a.y - a.z * a.z,
   )
 
 func container*(d: Dipole): Sphere {.inline.} =
-  ## Container of dipole, i.e. smallest sphere holding it; 18 mul, 12 add.
+  ## Get container of dipole, i.e. smallest sphere holding it; 18 mul, 12 add.
   Sphere(
     u: dot(d.v, d.v),
     x: d.v.z * d.m.y - d.v.y * d.m.z - d.v.x * d.p.w,
@@ -623,7 +623,7 @@ func container*(d: Dipole): Sphere {.inline.} =
   )
 
 func container*(c: Circle): Sphere {.inline.} =
-  ## Container of circle, i.e. smallest sphere holding it; 16 mul, 10 add.
+  ## Get container of circle, i.e. smallest sphere holding it; 16 mul, 10 add.
   Sphere(
     u: -c.g.x * c.g.x - c.g.y * c.g.y - c.g.z * c.g.z,
     x: c.g.y * c.v.z - c.g.z * c.v.y - c.g.w * c.g.x,
@@ -633,7 +633,7 @@ func container*(c: Circle): Sphere {.inline.} =
   )
 
 func container*(s: Sphere): Sphere {.inline.} =
-  ## Container of sphere, i.e. itself scaled by its weight; 5 mul.
+  ## Get container of sphere, i.e. itself scaled by its weight; 5 mul.
   Sphere(u: s.u * s.u, x: s.x * s.u, y: s.y * s.u, z: s.z * s.u, w: s.w * s.u)
 
 
@@ -641,7 +641,7 @@ func container*(s: Sphere): Sphere {.inline.} =
 #[ Partners ]#
 
 func partner*(a: RoundPoint): RoundPoint {.inline.} =
-  ## Partner, i.e. same point with squared radius negated; 10 mul, 4 add.
+  ## Get partner of round point, i.e. same point with squared radius negated; 10 mul, 4 add.
   let w2 = a.w * a.w
   RoundPoint(
     x: a.x * w2, y: a.y * w2, z: a.z * w2, w: a.w * w2,
@@ -649,7 +649,7 @@ func partner*(a: RoundPoint): RoundPoint {.inline.} =
   )
 
 func partner*(d: Dipole): Dipole {.inline.} =
-  ## Partner of dipole; 30 mul, 17 add.
+  ## Get partner of dipole; 30 mul, 17 add.
   let
     v2 = dot(d.v, d.v)
     f = d.p.w * d.p.w - dot(d.m, d.m) - d.v.x * d.p.x - d.v.y * d.p.y - d.v.z * d.p.z
@@ -665,7 +665,7 @@ func partner*(d: Dipole): Dipole {.inline.} =
   )
 
 func partner*(c: Circle): Circle {.inline.} =
-  ## Partner of circle; 30 mul, 17 add.
+  ## Get partner of circle; 30 mul, 17 add.
   ##   Symmetric with dipole's partner: f = gʷ² − 𝐯 ∙ 𝐯 − 𝐠 ∙ 𝐦; Terathon's header spells
   ##   its v-term with mixed signs, and library's own form is what suite holds this to.
   let
@@ -682,7 +682,7 @@ func partner*(c: Circle): Circle {.inline.} =
   )
 
 func partner*(s: Sphere): Sphere {.inline.} =
-  ## Partner of sphere; 10 mul, 4 add.
+  ## Get partner of sphere; 10 mul, 4 add.
   let u2 = s.u * s.u
   Sphere(
     u: s.u * u2, x: s.x * u2, y: s.y * u2, z: s.z * u2,

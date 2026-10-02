@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 9bede245df1fdef5 |
+| Rules   | 8cf7d2a938f47104 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -34,8 +34,8 @@ and `koch list-packages` reach through.
   project. The warm cost of the static pass is in Figures.
 
 **Each verb names its action and its object.** `check` runs every check that a pull request
-runs, and each `check-<object>` runs one of them. The other verbs act (`test`, `drive`, `fix`,
-`fetch-deps`, `fetch-assets`, `stamp`) or print (`list-packages`, `list-projects`). A CI job
+runs, and each `check-<object>` runs one of them. The other verbs act (`test`, `drive`, `head`,
+`fix`, `fetch-deps`, `fetch-assets`, `stamp`) or print (`list-packages`, `list-projects`). A CI job
 carries the name of the verb that it runs, so a red job names the command to run locally.
 `./koch` alone prints every verb and option with its effect.
 
@@ -1164,7 +1164,7 @@ dispatch of `tools/build.nim` and selects the projects that name `drive`, the de
 `nodeDirectories` uses one step earlier. `dispatchVerbs` reads the dispatch of koch and of a project
 driver alike, with the opening line as an argument. Koch cases over parsed options, and a
 project driver over its first argument. Cost: a project that spells the verb otherwise is
-passed by in silence, which is why CONTRIBUTOR.md names `drive` and `system` outright.
+passed by in silence, which is why CONTRIBUTOR.md names `drive`, `head` and `system` outright.
 
 **It is a matrix, each project on its own pin, where `check-types` is one plain job.** `drive`
 calls `web`, which runs `nim js` over `bridge.nim`, and that compiles project code and
@@ -1200,6 +1200,43 @@ Verified on the runner, 2026-09-07, which is the only place the claim means anyt
 driven check passed with 0 findings, in a real Chromium over real gestures, with the gate
 reading its verdict. Verified by a break of it: on the compiler of koch the same command fails
 inside `pga`.
+
+## Head checks
+
+**A check against an outside reference that moves runs daily, and never where a merge waits.**
+Such a reference is the head of a library repository, which changes with no commit here. A
+check that reads it gives two verdicts on one commit. CONTRIBUTOR.md, Tests are paramount,
+forbids that for a check of the code. So the project carries that read as its own verb, `head`,
+and `test` and `drive` hold the pin alone. `koch head` restores the project and runs
+`tools/build.nim head` on its own pin, as `koch drive` does, and `check` never calls it.
+
+**Enrolment is the verb, as for `drive`.** `carryingOnly` keeps the projects that
+`list-projects` selected and whose driver dispatches the verb, and `drivenOnly` is that filter
+for `drive`. `head.yml` asks `list-projects --all --head`, because a reference moves whether or
+not code changed.
+
+**One issue stands for each project while its verb fails.** `head.yml` edits the open issue that
+carries the marker of the project to the latest run. It comments only where the finding
+changed, so a subscriber hears of a new head once. A run where the verb passes closes the
+issue, and the next failure opens a new one. The finding is the output from the line
+`== <project>`, which koch prints before the verb, so restore output never reads as a change.
+
+- A failing verb is a finding for the issue, and the job stays green. The job goes red only
+  where it cannot set up or post, and `watch.yml` reads that.
+- Rejected: a lane on each push that may fail without blocking. It repeats one finding on each
+  push, and a mark that never blocks is read by nobody.
+- Rejected: a read of head inside `drive`. One commit then passes and later fails, and each merge
+  of that project waits on a bump.
+- Cost: the reference is read daily, so a pin may lag its head for up to a day before the issue
+  says so.
+- Cost: the compiler arms, packages and Atlas cache of `head.yml` copy those of `drive` in
+  `check.yml`. A workflow shares steps only through an action of its own.
+- Verified by `suites/test_plan.nim` and `suites/test_projects.nim`: the filter, and a real
+  driver whose `head` exits 1.
+- Verified by hand against a stub `gh`, GNU bash 5.2, 2026-10-02. A failing verb with no issue
+  opens one. The same finding the next day edits it and adds no comment. A new finding edits it
+  and adds one comment. A passing verb closes an open issue, and posts nothing where none is
+  open.
 
 ## Names
 
@@ -1460,7 +1497,7 @@ executable and a binary is never committed. A clone reads them once the start ho
 ## Watching main
 
 **A red `main` opens its own issue, because a duty to remember to look fails in silence.**
-`watch.yml` reads each finished run of `check` and `ledger` on `main`. It opens an issue
+`watch.yml` reads each finished run of `check`, `ledger` and `head` on `main`. It opens an issue
 labelled `curator` when the run concludes failure. That issue lands in the queue that CURATOR.md
 asks every delegate to read first, so no new rule exists. An existing rule produces an issue
 that the rule already asks the next delegate to read.
@@ -1571,9 +1608,9 @@ mistake is easy to make and impossible to see afterwards.
 
 **`nim r koch test --all` runs every project, each on its own compiler.** Every verb that takes
 projects reads the one named, else `--recent`, else `--all`, else what a change touches. So one
-rule serves `test`, `drive`, `check-types`, `fetch-deps` and `list-projects`. `check` stays
-scoped to what a change touches. Cost: to check everything locally is two commands,
-`check-files` and `test --all`, rather than one.
+rule serves `test`, `drive`, `head`, `fix`, `check-types`, `fetch-deps` and `list-projects`.
+`check` stays scoped to what a change touches. Cost: to check everything locally is two
+commands, `check-files` and `test --all`, rather than one.
 
 - Rejected: one verb for the static pass and every suite on the compiler that `PATH` holds. It
   fails whenever the pins differ.
