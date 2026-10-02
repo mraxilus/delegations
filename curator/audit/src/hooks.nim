@@ -358,17 +358,29 @@ func checkMessage*(
   ##     (`commits.nim`), so duty to merge `main` into branch (CURATOR.md, duty 2) needs no
   ##     bypass of hook.
   ##   Comment lines git adds, and all below its scissors line, are dropped before body is read.
+  ##   Subject is first paragraph, its lines joined by one space, as git reads it.
+  ##   Earlier subjects give ladder context alone: finding of theirs is `check-commits`' to
+  ##     report, and `--amend` keeps old head among them. One earlier finding cancels one same
+  ##     finding, so bad subject written again still reports.
+  ##   Cost: under `--amend`, ladder reads old head as commit before new one.
   var
-    subject = ""
-    body: seq[string]
+    subject_lines, body: seq[string]
+    is_subject_read = false
   for line in message.splitLines:
     if line.startsWith("# ------------------------ >8"): break
     if line.startsWith("#"): continue
-    if subject.len == 0:
-      if line.strip.len > 0: subject = line.strip
-    else: body.add line
+    if is_subject_read: body.add line
+    elif line.strip.len > 0: subject_lines.add line.strip
+    elif subject_lines.len > 0:
+      is_subject_read = true
+      body.add line
+  let subject = subject_lines.join(" ")
   if subject.startsWith(MERGE_SUBJECT): return
-  result = checkCommits(branch, @[subject] & @earlier)
+  var before = checkCommits(branch, earlier).mapIt(it.message)
+  for f in checkCommits(branch, @[subject] & @earlier):
+    let at = before.find(f.message)
+    if at >= 0: before.delete(at)
+    else: result.add f
   result.add checkBody(subject, body.join("\n"))
   result.add checkRecordCommit(subject, staged)
 

@@ -1760,6 +1760,12 @@ merges. Both are two-line shell wrappers that call `hooks.sh`, because git runs 
 executable and a binary is never committed. A clone reads them once the start hook sets
 `core.hooksPath`, so any other tool reaches CI unchecked, and CI stays the gate.
 
+The subject that `commit-msg` reads is the first paragraph, its lines joined, because git reads
+it so. A finding on an earlier subject stays with `check-commits`, because `--amend` keeps the
+old head among the earlier subjects. One earlier finding cancels one same finding, so a bad
+subject written again still reports. Under `--amend`, the ladder reads the old head as the
+commit before the new one, and `check-commits` reads the true order in CI.
+
 - A hook reaches only Claude Code, and only where it holds this repository alone, because a
   checkout of several repositories reads no project settings.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
