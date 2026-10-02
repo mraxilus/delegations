@@ -102,7 +102,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils]
+import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, unicode]
 
 import pga
 import ../rga_visualiser/[
@@ -251,6 +251,8 @@ static:
 # Hold vertex storage at module scope, far too large for stack frame.
 var
   MESHES: MeshSet ## Every scene object, excluding world furniture below.
+  MARKS_PICKED: array[OBJECTS_MAX, bool] ## Mark each picked handle while meshes assemble.
+    ## Set and cleared around loops of `assembleMeshes`; see `selection.markOnto`.
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture)
     ## Hold what `MESHES_FURNITURE` stands for, or none before first frame.
     ##   Still camera then keeps grid it has rather than rebuilding it every frame.
@@ -352,6 +354,8 @@ type
     is_menu_driven: bool ## Whether to open top menu at startup, with no click.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
+    is_faces_driven: bool ## Whether to ask each role's face for every codepoint build writes.
+      ## Headless run then shows no text drawn falls to `.notdef`; see `textsShown`.
     path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -397,6 +401,7 @@ proc applyOption(options: var Options, key, value: string) =
   of "drive-sky": options.is_sky_driven = true
   of "drive-search": options.is_search_driven = true
   of "drive-menu": options.is_menu_driven = true
+  of "drive-faces": options.is_faces_driven = true
   of "drive-help":
     for path in HelpPath:
       if titleOf(path) == value: options.path_help_driven = some(path)
@@ -406,7 +411,8 @@ proc applyOption(options: var Options, key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      "drive-select, drive-undo, drive-sky, drive-search, drive-menu or drive-help; " &
+      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces or " &
+      "drive-help; " &
       &"got `--{key}`."
 
 
@@ -414,7 +420,7 @@ func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
     options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
-    options.is_menu_driven or options.path_help_driven.isSome
+    options.is_menu_driven or options.is_faces_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -514,11 +520,14 @@ proc assembleMeshes(
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
   MESHES.clearMeshes(ORIGIN_RECORDS) # About held origin; see `ORIGIN_RECORDS`.
+  # Mark picks once and read mark per handle below; see `selection.markOnto`.
+  panel.selection.markOnto(MARKS_PICKED)
+  defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
   for handle, one in scene.pairs:
-    if not one.isVisible or not isHorizonPlane(one.geometry) or handle in panel.selection:
+    if not one.isVisible or not isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
@@ -526,7 +535,7 @@ proc assembleMeshes(
     discard MESHES.addObject(scratch[0], one.geometry, tint, scale, progress, one.anchorOverride)
 
   for handle, one in scene.pairs:
-    if not one.isVisible or isHorizonPlane(one.geometry) or handle in panel.selection:
+    if not one.isVisible or isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
@@ -1697,6 +1706,45 @@ proc driveSky(
   sdl3.pushEvent(addr event)
 
 
+func textsShown(): seq[string] =
+  ## Gather every text build itself writes on window, for `--drive-faces`.
+  ##   Read from where each is composed -- catalogue, help, notation, basis names, wheel and
+  ##   units -- rather than listed here, so row added there is asked about untouched.
+  ##   Names reader types are reader's own, and only printable ASCII among them is promised;
+  ##   see `codepointsOf`.
+  for key in Wording: result.add $wordingText(key)
+  for path in HelpPath: result.add [titleOf(path), descriptionOf(path)]
+  for entry in HELP_ENTRIES: result.add [entry.action, entry.outcome]
+  for operation in Operation:
+    result.add [
+      notationSymbolic(operation), notationNamed(operation),
+      notationSubstituted(operation, "a", "b"),
+    ]
+  for basis in Basis: result.add LUT_NAME_BY_BASIS[basis]
+  for choice in DragChoice: result.add labelOf(choice)
+  var units: array[64, char]
+  let text_units = buildChars(units):
+    appendDegrees(units, cursor, 1.0)
+    appendSpeedLight(units, cursor, 2.0)
+    appendRuler(units, cursor, 1.0)
+  result.add $text_units
+
+
+func codepointsOf(texts: openArray[string]): seq[int] =
+  ## Gather every codepoint `texts` hold, with all of printable ASCII, sorted and once each.
+  ##   Printable ASCII is in whatever texts hold, since reader names objects in it.
+  for codepoint in 0x20 .. 0x7E: result.add codepoint
+  for text in texts:
+    for rune in text.runes: result.add int(rune)
+  result.sort
+  var kept = 0
+  for codepoint in result:
+    if kept == 0 or result[kept - 1] != codepoint:
+      result[kept] = codepoint
+      inc kept
+  result.setLen kept
+
+
 proc verdictDriven(
   options: Options; scene: Scene; camera, camera_opened, camera_before_slide: Camera;
   interaction: Interaction; panel: Panel; count_settled: int;
@@ -1725,7 +1773,7 @@ proc verdictDriven(
     )
 
   if options.is_search_driven:
-    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list.
+    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list
     #   is held to something other than rule it runs. Label typed is in no kind word, so
     #   labels alone are whole count; pick made first is labelled otherwise, so it adds one.
     var
@@ -1772,6 +1820,29 @@ proc verdictDriven(
       panel.count_demo_offered == ord(ScaleOrrery.high) + 1,
       &"{panel.count_demo_offered} sizes offered, {ord(ScaleOrrery.high) + 1} in `orrery`",
     )
+
+  # Faces are their own verdict, and fire only in run that asked for them.
+  #   Claim is that every codepoint each role sets draws from glyph of some face merged into
+  #   that role's, never from `.notdef` (Article X.8). Title role sets panel headings alone,
+  #   and is asked for those; other three are asked for every text build writes.
+  if options.is_faces_driven:
+    let codepoints_shown = codepointsOf(textsShown())
+    for role in FaceRole:
+      let codepoints =
+        if role == FaceRole.Title:
+          codepointsOf([
+            $wordingText(NameHeadApply), $wordingText(NameHeadObjects),
+            $wordingText(NameHeadView), $wordingText(NameHeadDiagnostics),
+          ])
+        else: codepoints_shown
+      var missing: seq[string]
+      for codepoint in codepoints:
+        if not gui.hasGlyph(role, uint32(codepoint)): missing.add &"U+{codepoint:04X}"
+      let named = if missing.len == 0: "none" else: missing.join(", ")
+      report(
+        &"every codepoint the {role} face sets has a glyph, and none draws as .notdef",
+        missing.len == 0, &"{codepoints.len} codepoints asked, missing {named}",
+      )
 
   # Three roles, three faces, and every run says so.
   #   Claim is that each role got face of its own rather than falling back to interface

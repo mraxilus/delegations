@@ -34,7 +34,7 @@ const grid_pool = elementById<HTMLCanvasElement>('pool-grid');
 grid_pool.title = nimWording(Wording.TipDiagnosticsPool);
 sparkline.title = nimWording(Wording.TipDiagnosticsFrames);
 const context_pool = grid_pool === null ? null : grid_pool.getContext('2d');
-// Scene revision grid was last drawn at; -1 until it has been drawn once. Grid.
+// Scene revision grid was last drawn at; -1 until it has been drawn once. Grid
 //   is picture of which handles are occupied and in what ink, so it changes exactly when
 //   scene does -- see `scene.revision`, same counter frame hold reads. Its own
 //   geometry joins key because canvas cleared by resize has to be redrawn whatever

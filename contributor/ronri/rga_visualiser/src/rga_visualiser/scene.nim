@@ -21,7 +21,7 @@
 ##   | Two     | + - ∧ ∨ ⟑ ⟇ ∙ ∘ ∧★ ∧☆ ∨★ ∨☆    | Join, meet, geometric products.      |
 ##   |---------|--------------------------------|--------------------------------------|
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 ##   `saveScene`/`loadScene` are native-only (`when not defined(js)`); browser saves and
 ##   loads via download/upload.
 

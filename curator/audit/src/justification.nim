@@ -25,28 +25,26 @@ import ./[comments, findings, kinds]
 
 
 const
-  MARKER* = "not Nim because"
-    ## Phrase header of gated file must carry, followed by its reason.
-  GAP_MAX = 2
-    ## Widest line step keeping header run whole; `2` admits one blank line.
+  MARKER* = "not Nim because"  ## Phrase header of gated file must carry, followed by its reason.
+  GAP_MAX = 2  ## Widest line step keeping header run whole; `2` admits one blank line.
 
 
 func header*(found: seq[Comment]): string =
   ## Join text of comment block opening file, i.e. run from first comment until gap.
   if found.len == 0: return ""
   var texts = @[found[0].text]
-  for i in 1 ..< found.len:
+  for i in 1..<found.len:
     if found[i].line - found[i - 1].line > GAP_MAX: break
     texts.add found[i].text
   texts.join(" ")
 
 
-func checkJustification*(path, source: string, rule: KindRule): seq[Finding] =
+func checkJustification*(path, source: string; rule: KindRule): seq[Finding] =
   ## Report file of gated kind whose header carries no justification marker.
   if not rule.is_gated: return
   if MARKER in comments(source, rule.syntax).header: return
   result.add finding(
-    path, 1,
-    "Gated language needs justification in header, as `" & MARKER & " <reason>`; got " &
-      "nothing.",
+    path,
+    1,
+    "Gated language needs justification in header, as `" & MARKER & " <reason>`; got " & "nothing.",
   )

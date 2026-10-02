@@ -20,7 +20,8 @@
 ##   | published | record URL and digest of page just published, as                     |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
-##   |           | measurement, evaluation, file and page to library head (`head.nim`)  |
+##   |           | measurement, evaluation, file, page and checkout to pin (`head.nim`) |
+##   | head      | compare pin with library head; finding where library moved since     |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
 ##   |           | machine code, as `show ∧` or `show ⟇ cga5d`                          |
@@ -32,8 +33,8 @@
 ##   Runs from project directory, on compiler nimble file pins, since every path is
 ##     relative and every build compiles library. `drive` compares static counts only, no
 ##     timing, so runner's verdict on measurements is same as local one.
-##   `drive` also reads library head over network, as Architect chose: pin that lags head is
-##     finding on every push until pin follows, so pages always show library as it stands.
+##   `head` alone reads library head over network, so its verdict moves with library and not
+##     with this project; `head.yml` runs it daily, and no merge waits on it (CONTRIBUTOR.md).
 ##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
 ##   Cost: `bench` and `evaluate` measurements name machine they were taken on; committing them
 ##     records that run and nothing more, as `PROVENANCE.md` says of every pair.
@@ -88,8 +89,8 @@ const
     ##   Library is Atlas checkout, pinned in lock.
     ##   Faces come from repository's store.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|evaluate|pages|published|drive|gaps|show|sweep|system|clean>" &
-    " [name|symbol] [url|algebra|--thorough]\n"
+    "<inspect|bench|baseline|guard|evaluate|pages|published|drive|head|gaps|show|sweep|" &
+    "system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"
     ## Flag after `evaluate <name>` that measures untyped algebras too.
@@ -435,7 +436,7 @@ proc git(arguments: openArray[string]): (string, int) =
 
 
 proc headChecked(pin: string): seq[Finding] =
-  ## Hold pin to library head, and checkout to pin: no local edit under library directory.
+  ## Hold pin to library head: library directory's tree at pin equals its tree at head.
 
   proc libraryHead(pin: string): (string, string, string) =
     ## Read tree of library directory at pin, and head commit of library repository with tree.
@@ -457,7 +458,11 @@ proc headChecked(pin: string): seq[Finding] =
     (tree_pin, commit_head, if code_head == 0: output_head.strip.splitLines[^1] else: "")
 
   let (tree_pin, commit_head, tree_head) = libraryHead(pin)
-  result.add checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
+  checkHead(pin, tree_pin, commit_head, tree_head, PATH_LOCK)
+
+
+proc checkoutChecked(): seq[Finding] =
+  ## Hold checkout to pin: no local edit under library directory.
   let (edited, code) = git(["status", "--porcelain", "--", LIBRARY_DIRECTORY])
   if code != 0 or edited.strip.len > 0:
     result.add Finding(
@@ -703,9 +708,9 @@ proc pinnedChecked(pin: string): seq[Finding] =
 
 proc drive() =
   ## Inspect, check against baselines, and hold committed list and docket to regeneration.
-  ##   Hold pin to library head, and every measurement, evaluation, file and page to pin.
+  ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
   let pin = pgaCommit()
-  var findings = headChecked(pin)
+  var findings = checkoutChecked()
   inspect()
   findings.add guarded()
   let (text, ids) = generated()
@@ -915,6 +920,7 @@ proc main(): int =
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
+    of "head": report(headChecked(pgaCommit()))
     of "gaps": gaps()
     of "sweep": sweep()
     of "system": system()

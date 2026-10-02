@@ -7,15 +7,18 @@ import std/[algorithm, unittest]
 import ../../src/findings
 
 
+
 suite "Findings":
   test "render locates finding, dropping parts that locate nothing":
     check finding("a/b.nim", 3, "Broke.").render == "a/b.nim:3: Broke."
     check finding("a/b.nim", 0, "Broke.").render == "a/b.nim: Broke."  # whole file
     check finding("", 0, "Broke.").render == "Broke."  # branch-level, no file to open
 
+
   test "finding is no propagation unless check says so":
     check not finding("a/b.nim", 3, "Broke.").is_propagation  # default: whoever owns path
     check finding("a/b.nim", 3, "Broke.", is_propagation = true).is_propagation
+
 
   test "order is path, then line, then message, so reports are stable":
     let scattered = @[
@@ -31,6 +34,7 @@ suite "Findings":
     check ordered[3] == finding("b.nim", 1, "Second file.")
     # Same input in another order sorts same way, which is what stable output means.
     check scattered.reversed.sorted == ordered
+
 
   test "whole-file finding sorts before first line of same file":
     # `0` marks whole file and is never line one, so it leads its own file's findings.

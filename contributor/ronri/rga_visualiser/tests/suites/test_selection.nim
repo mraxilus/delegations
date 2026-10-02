@@ -235,3 +235,17 @@ suite "Selection":
     check selection.impliedArity == Arity.Two
     selection.toggle(6) # Three picked still names binary operation, on first two.
     check selection.impliedArity == Arity.Two
+
+
+  test "marks set from picks agree with asking each handle, and clearing them leaves none":
+    # Frame loops read mark per object rather than walk picks per object (#386); marks are
+    #   only as good as their agreement with `contains`, at every handle, and their reset.
+    var
+      selection = Selection()
+      marks: array[OBJECTS_MAX, bool]
+    for handle in countup(3, OBJECTS_MAX - 1, 7): selection.toggle(handle)
+    selection.toggle(10) # Dropped again: unpicked handle must carry no mark.
+    selection.markOnto(marks)
+    for handle in 0 ..< OBJECTS_MAX: check marks[handle] == (handle in selection)
+    selection.markOnto(marks, is_marked = false)
+    for handle in 0 ..< OBJECTS_MAX: check not marks[handle]

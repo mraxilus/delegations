@@ -28,12 +28,10 @@ import ./[findings, glossary]
 
 
 type
-  NameKind* {.pure.} = enum
-    ## Define what declaration introduces name.
+  NameKind* {.pure.} = enum  ## Define what declaration introduces name.
     Binding, Routine, Type, Field, Parameter
 
-  Declared* = object
-    ## Define one declared name with its place.
+  Declared* = object  ## Define one declared name with its place.
     name*: string
     line*: int
     kind*: NameKind
@@ -49,14 +47,11 @@ const
     ## Coined abbreviation and its one full word (V.6).
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
-  VERBS_BANNED* = ["get", "compute", "new"]
-    ## First words routine never takes (V.3).
+  VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
   ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
-  BINDING_KEYWORDS = ["let", "var", "const"]
-    ## Keywords opening binding, single or block.
-  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
-    ## Characters identifier is built from.
+  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or block.
+  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters identifier is built from.
   FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
     ## Pragmas marking routine as binding of library's own name.
 
@@ -69,16 +64,19 @@ func blanked(source: string, should_keep_comments: bool): string =
   var
     i = 0
     depth = 0
+
   template blank(n: int) =
-    for k in 0 ..< n:
+    for k in 0..<n:
       result[i] = (if source[i] == '\n': '\n' else: ' ')
       inc i
+
   template comment(n: int) =
     if should_keep_comments:
-      for k in 0 ..< n:
+      for k in 0..<n:
         result[i] = source[i]
         inc i
     else: blank(n)
+
   while i < source.len:
     let c = source[i]
     if depth > 0:
@@ -151,7 +149,7 @@ func identifierAt(text: string, start: int): string =
   while i < text.len and text[i] == ' ': inc i
   var j = i
   while j < text.len and text[j] in IDENT_CHARS: inc j
-  text[i ..< j]
+  text[i..<j]
 
 
 func nameOf(piece: string): string =
@@ -225,7 +223,7 @@ func declarations*(source: string): seq[Declared] =
         var
           depth = 0
           close = -1
-        for k in open ..< text.len:
+        for k in open..<text.len:
           if text[k] == '(': inc depth
           elif text[k] == ')':
             dec depth
@@ -233,7 +231,7 @@ func declarations*(source: string): seq[Declared] =
               close = k
               break
         if close > open:
-          for p in text[open + 1 ..< close].parameterNames:
+          for p in text[open + 1..<close].parameterNames:
             result.add Declared(name: p, line: one, kind: NameKind.Parameter)
       i = j + 1
       continue
@@ -271,14 +269,17 @@ func declarations*(source: string): seq[Declared] =
       let n = s.strip(chars = {'(', ')'}).nameOf
       if n.len > 0 and n != "_" and (":" in s or "=" in s):
         result.add Declared(
-          name: n, line: one, kind: NameKind.Binding, is_global: block_indent == 0
+          name: n,
+          line: one,
+          kind: NameKind.Binding,
+          is_global: block_indent == 0,
         )
       inc i
       continue
     if word == "for":
       let at = rest.find(" in ")
       if at > 0:
-        for name in rest[0 ..< at].split(','):
+        for name in rest[0..<at].split(','):
           let n = name.nameOf
           if n.len > 0 and n != "_": result.add Declared(name: n, line: one, kind: NameKind.Binding)
     inc i
@@ -296,7 +297,7 @@ func words*(name: string): seq[string] =
       if is_boundary:
         if c in {'a'..'z'}:
           # Capital before lowercase starts new word: `JSONData` is JSON, Data.
-          result.add cur[0 ..< cur.high]
+          result.add cur[0..<cur.high]
           cur = $cur[^1]
         else:
           result.add cur
@@ -315,7 +316,7 @@ func acronyms*(name: string): seq[string] =
   if name.isScreaming or '_' in name: return
   var run = ""
   let text = name & " "
-  for k in 0 ..< text.len - 1:
+  for k in 0..<text.len - 1:
     let
       c = text[k]
       opens_word = c in {'A'..'Z'} and text[k + 1] in {'a'..'z'}
@@ -338,13 +339,13 @@ func glossaryExemptions*(glossary: string): seq[string] =
         if open < 0: break
         let close = line.find('`', open + 1)
         if close < 0: break
-        for w in line[open + 1 ..< close].split({' ', ','}):
+        for w in line[open + 1..<close].split({' ', ','}):
           if w.len > 0: result.add w
         i = close + 1
-    if line.isTermLine: result.add line[2 ..< line.len - 3]
+    if line.isTermLine: result.add line[2..<line.len - 3]
 
 
-func checkNames*(path, source: string, exempt: openArray[string]): seq[Finding] =
+func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] =
   ## Report declared name that coins abbreviation, carries unlisted acronym, opens routine
   ##   with banned verb, misnames lookup table, or shares its word with type as global.
   let
@@ -361,26 +362,33 @@ func checkNames*(path, source: string, exempt: openArray[string]): seq[Finding] 
       for (short, full) in ABBREVIATIONS:
         if lower == short:
           result.add finding(
-            path, d.line, "Name coins abbreviation; write `" & full & "` (V.6); got `" & d.name &
-              "`."
+            path,
+            d.line,
+            "Name coins abbreviation; write `" & full & "` (V.6); got `" & d.name & "`.",
           )
     for a in d.name.acronyms:
       if a.toLowerAscii in lower_exempt: continue
       result.add finding(
-        path, d.line, "Acronym stays only where glossary lists it (V.9); got `" & a & "` in `" &
-          d.name & "`."
+        path,
+        d.line,
+        "Acronym stays only where glossary lists it (V.9); got `" & a & "` in `" & d.name & "`.",
       )
     if d.kind == NameKind.Routine and parts.len > 1 and parts[0] in VERBS_BANNED:
       result.add finding(
-        path, d.line, "Action is imperative verb and property is bare noun (V.3); got `" &
-          d.name & "`."
+        path,
+        d.line,
+        "Action is imperative verb and property is bare noun (V.3); got `" & d.name & "`.",
       )
     if parts.len > 1 and parts[0].toLowerAscii == "lut" and d.name.toLowerAscii.count("_by_") != 1:
       result.add finding(
-        path, d.line, "Lookup table reads `lut_<value>_by_<key>` (V.5); got `" & d.name & "`."
+        path,
+        d.line,
+        "Lookup table reads `lut_<value>_by_<key>` (V.5); got `" & d.name & "`.",
       )
     if d.kind == NameKind.Binding and d.is_global and d.name.isScreaming and
         d.name.toLowerAscii.replace("_", "") in type_keys:
       result.add finding(
-        path, d.line, "Global never shares its word with type (V.10); got `" & d.name & "`."
+        path,
+        d.line,
+        "Global never shares its word with type (V.10); got `" & d.name & "`.",
       )

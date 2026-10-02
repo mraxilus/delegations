@@ -72,9 +72,8 @@ const
     ## Panel, swept for shown text written where it is drawn.
   PATH_WORDING_NIM = "src" / "rga_visualiser" / "wording.nim"
     ## Catalogue of shown text, read for its keys and words; see `catalogue`.
-  PATH_MAIN_NIM = "src" / "desktop" / "main.nim"
   PATH_HELP_NIM = "src" / "rga_visualiser" / "help.nim"
-    ## Desktop entry point, which shows exactly one piece of text: window's own caption.
+    ## Help tables, swept for shown text written where they are composed.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
@@ -84,12 +83,12 @@ const
     ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
-  DRIVES = ["keys", "sky", "undo", "select", "drag", "search", "menu"]
+  DRIVES = ["keys", "sky", "undo", "select", "drag", "search", "menu", "faces"]
     ## Scripted runs entry point carries, each reporting checks of its own.
     ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
     ##   listed again, so `help.HelpPath` stays their one home (Article I.4).
   PATH_DESKTOP_NIM = "src" / "desktop" / "main.nim"
-    ## Desktop entry point `desktop` compiles.
+    ## Desktop entry point `desktop` compiles, which shows one piece of text: window's caption.
   PATH_DESKTOP_BINARY = BINARIES / "rga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `binaries/`.
   ENV_FONT = "RGA_FONT"
@@ -484,7 +483,7 @@ proc checkWording() =
   #   from. Positive rather than prohibiting: rule forbidding one spelling reads whole file,
   #   so comment naming product fails build, and split literal walks straight past it.
   #   Declaration absent at all is itself finding -- caption cannot go unnamed.
-  let caption = readFile(PATH_MAIN_NIM)
+  let caption = readFile(PATH_DESKTOP_NIM)
   block:
     var is_declared = false
     let lines = caption.splitLines
@@ -492,10 +491,10 @@ proc checkWording() =
       if not line.strip.startsWith(DECLARATION_CAPTION): continue
       is_declared = true
       if not line.namesKey("captionWindow"):
-        found.add PATH_MAIN_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got " &
+        found.add PATH_DESKTOP_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got " &
           line.strip
     if not is_declared:
-      found.add PATH_MAIN_NIM & ": no `" & DECLARATION_CAPTION & "` for caption to read from"
+      found.add PATH_DESKTOP_NIM & ": no `" & DECLARATION_CAPTION & "` for caption to read from"
 
   # Catalogue may not grow rows nothing shows either. Entry no front-end names is words
   #   written for nobody, and next reader cannot tell it from one still in use.

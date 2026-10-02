@@ -31,18 +31,15 @@ import ./[findings, projects, toolchain]
 
 
 const
-  CACHE_KEY* = "KOCH_NIM_DIR"
-    ## Environment name overriding where toolchains are cached.
+  CACHE_KEY* = "KOCH_NIM_DIR"  ## Environment name overriding where toolchains are cached.
   CACHE_DIRECTORY* = ".cache/koch/nim"
     ## Default cache, under home and beside Nim's own `~/.cache/nim`.
-  DOWNLOAD* = "https://nim-lang.org/download/nim-"
-    ## Prefix of published release tarball.
+  DOWNLOAD* = "https://nim-lang.org/download/nim-"  ## Prefix of published release tarball.
   DIGEST* = ".sha256"
     ## Suffix of digest nim-lang.org publishes beside each tarball, in `sha256sum` format,
     ## i.e. digest, two spaces, file name. Read from site rather than assumed: same
     ## sidecar exists for 2.2.4 and 2.2.12, and no `.asc` is published for either.
-  SOURCE* = "https://github.com/nim-lang/Nim"
-    ## Repository built from when no tarball serves pin.
+  SOURCE* = "https://github.com/nim-lang/Nim"  ## Repository built from when no tarball serves pin.
   PLATFORMS* = [
     ("linux", "amd64", "linux_x64"),
     ("linux", "i386", "linux_x32"),
@@ -87,7 +84,7 @@ func pinnedDigest*(published: string): string =
   let candidate = first[0]
   if candidate.len != 64: return ""
   for c in candidate:
-    if c notin {'0' .. '9', 'a' .. 'f'}: return ""
+    if c notin {'0'..'9', 'a'..'f'}: return ""
   candidate
 
 

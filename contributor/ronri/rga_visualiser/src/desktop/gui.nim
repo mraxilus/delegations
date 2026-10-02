@@ -54,6 +54,17 @@ const
 
 
 
+#[ Face Roles ]#
+
+type FaceRole* {.pure, size: sizeof(cint).} = enum ## Define role whose face sets text.
+  ## Ordinal is what `guiFaceHasGlyph` reads, so order here is order there.
+  Interface, ## Every text no other role takes.
+  Label, ## Selected object's name, over scene.
+  Title, ## Every panel heading.
+  Mono, ## Notation, and figures whose columns line up.
+
+
+
 #[ Facade Lifetime ]#
 
 # Import `gui_shim.cpp` one to one; see that file for what each wraps.
@@ -83,6 +94,9 @@ proc isFontTitleLoaded*(): bool {.importc: "guiFontTitleLoaded", sideEffect.}
 
 proc isFontMonoLoaded*(): bool {.importc: "guiFontMonoLoaded", sideEffect.}
   ## Report whether notation has mono face of its own rather than interface face.
+
+proc hasGlyph*(role: FaceRole, codepoint: uint32): bool {.importc: "guiFaceHasGlyph", sideEffect.}
+  ## Report whether `role`'s face draws `codepoint` from glyph of its own, never `.notdef`.
 
 proc processEvent*(event: ptr Event): bool {.importc: "guiProcessEvent", discardable, sideEffect.}
   ## Hand SDL event to Dear ImGui, reporting whether it wanted it.

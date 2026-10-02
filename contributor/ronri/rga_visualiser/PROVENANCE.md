@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 5714afba6fb3aef0 |
+| Rules   | 914ae2b574f73577 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -755,8 +755,8 @@ multisampled visual, so thin lines alias.
 
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
-`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, and
-`--drive-help:<tab>`, one for each tab. Each one pushes real events through the queue of SDL.
+`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
+and `--drive-help:<tab>`, one for each tab. Each one pushes real events through the queue of SDL.
 `driven` runs all of them and reports every failure, and not the first. It asks the binary which
 help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive`
 chains it, here and on the runner (repository issue 91).
@@ -770,6 +770,7 @@ chains it, here and on the runner (repository issue 91).
 - every help tab opens with rows in it;
 - a run whose face is missing still does its scripted work;
 - every type role is drawn in a face of its own;
+- every codepoint that each role sets has a glyph in the face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has.
 
@@ -794,6 +795,23 @@ A read of each font's `cmap` against the ranges that `gui_shim.cpp` declares giv
 math holds 1,773 of the 1,952 wanted. It costs about 2.5 MB fetched into `build/fonts`, because
 `stb_truetype` reads uncompressed faces.
 
+**Every codepoint that the build writes is asked of the face that sets it** (Article X.8).
+`--drive-faces` gathers the text from where it is composed. That is the wording catalogue, help, the
+notation of each operation, the basis names, the wheel and the units. It adds printable ASCII, since
+a reader names objects in it. `gui.hasGlyph` loads each codepoint through the face of each role, as
+drawing does, and reports each one that would draw as `.notdef`. The title role is asked for the
+panel headings alone, because nothing is merged into its face.
+
+**Merge order is precedence, and the range lists bind only the legacy path.** From Dear ImGui 1.92,
+a renderer that keeps textures of its own loads each glyph on demand. It takes the glyph from the
+first merged face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). Not a read
+of each `cmap` against the range lists, which asks a question that drawing does not ask.
+
+**The mono role merges the interface face last.** Commit Mono, Noto Sans Math and Noto Sans Symbols
+2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left complement
+and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the three faces
+before it lack. Its two accents are proportional in a mono line, which is the cost.
+
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
 1/120 s, whatever the machine takes, and the opening scene is born at zero. That is one frame at
 the least workable rate (Diagnostics). Animations, held keys and camera ease read that clock, so a
@@ -817,6 +835,20 @@ rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation
 18.5660 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb answers
 `Driven runs failed; got 1 -- drive-drag`, with exit 1.
+
+Verified by a run, 2026-10-02: before the mono merge, `--drive-faces` reports `FAIL every codepoint
+the Mono face sets has a glyph` with `missing U+02CD, U+02F7`. After it, all four roles pass.
+Verified by a read of each face's `cmap`, 2026-10-02, with a scratch reader: Noto Sans holds both
+codepoints, and the other three faces hold neither.
+
+Verified by looking, 2026-10-02, at the operations tab that this command draws:
+
+```sh
+xvfb-run -a -s "-screen 0 1440x900x24" binaries/rga_visualiser \
+  --hidden --drive-help:operations --frames:300 --screenshot:operations.png
+```
+
+Before the merge, both accents draw as `�`. After it, both draw as accents.
 
 ## Diagnostics
 
@@ -878,15 +910,18 @@ configuration file of its own.
 the draw loop of the desktop reach it. The JS backend cannot carve typed slices from a byte
 array at all.
 
-A shared module that reaches for something which only one path has is a **compile error, and not
-a comment**. `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene` and `loadScene`,
-with their `std/os` and `std/syncio` imports, carry the guard `when not defined(js)`. Every
-binding into C, SDL, Dear ImGui, zlib and JavaScript carries `sideEffect`, so a `func` that
-reaches one fails to compile. Without that mark the compiler holds an imported body to be pure.
+A shared module that reaches for something which only one path has is a **compile error, and not a
+comment**. `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene` and `loadScene`, with
+their `std/os` and `std/syncio` imports, carry the guard `when not defined(js)`. Every binding into
+C, SDL, Dear ImGui, zlib and JavaScript carries `sideEffect`, so a `func` that reaches one fails to
+compile. `format.snprintf` alone keeps `noSideEffect`: it writes only the buffer that it is handed,
+and each caller hands one on its own stack. Without that mark the compiler holds an imported body to
+be pure.
 
-*Checked.* Verified: the suite runs on both backends, so it exercises the guard rather than
-trusts it (see Testing). The `sideEffect` marks are what turned 51 funcs back into procs (see
-Style guide). Assumed: nothing.
+*Checked.* Verified: the suite runs on both backends, so it exercises the guard rather than trusts
+it (see Testing). The `sideEffect` marks are what turned 51 funcs back into procs (see Style guide).
+Verified by a compile, 2026-10-02: a `func` that calls `timings.nowMilliseconds` on the JavaScript
+backend is refused as `can have side effects`. It compiled before the mark. Assumed: nothing.
 
 ## Scene storage
 
@@ -2027,6 +2062,18 @@ Selection is **not** part of `Scene`. It is never saved and never on the timelin
 keeps each pick that still names its object (see Undo/redo). `pruneDead` runs after a removal,
 because a freed handle goes straight back to the next add.
 
+**The walks of a frame read one mark for each handle, and never the selection.** Both front-ends
+mark each pick once in `MARKS_PICKED` before the walks, through `selection.markOnto`, and clear the
+marks after them. `contains` walks the list, so a walk that asks it for each object costs the count
+of objects times the count of picks. Not a mark array inside `Selection`, which every copy of a
+selection would then carry.
+
+Measured 2026-10-02 on this container, an Intel Xeon at 2.80 GHz with 4 cores. A scratch program
+picks every handle of a `Selection` at `OBJECTS_MAX`, and times twenty frames of two walks each. On
+C at `-d:release`, one frame costs 17.2 to 18.4 ms with `contains` and 0.012 ms with marks. On
+JavaScript under Node 22, it costs 53.8 to 54.7 ms with `contains` and 0.50 to 0.56 ms with marks.
+Each range is three runs.
+
 **A selected object is drawn over every other object.** There is one watermark for each mesh
 (`index_overlay`, an `Option[int]`, because an index of zero means "all of it"). Then a second
 pass runs over **every** primitive kind, against a depth buffer cleared first. It is cleared
@@ -2835,7 +2882,9 @@ be written `` m.`∧ ☆`n ``.
 
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
-parenthesised on the page. Nothing here re-checks that every glyph is in the atlas.
+parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
+for every codepoint of the notation (Desktop driven checks). The page has no such check (Open
+questions).
 
 ## Naming and number formatting
 
@@ -3244,11 +3293,12 @@ that ends in a period, then elaboration as a hanging outline, one claim to a lin
 no articles, no history and no figures, and the history and the figures live here.
 `koch check-files` holds that register mechanically over every authored language.
 
-**Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.**
-Nim assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui
-layout compiles as a `func`. The mark is on all 130-odd bindings in `gui`, `opengl`, `sdl3`,
-`image` and the `importjs` lines of the bridge. Under it, 51 funcs failed to compile and went back
-to `proc`. A `func` in this tree means the compiler checked that it reaches no effect.
+**Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.** Nim
+assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui layout
+compiles as a `func`. The mark is on every binding in `gui`, `opengl`, `sdl3`, `image` and
+`timings`, and on the `importjs` lines of the bridge. `format.snprintf` alone keeps `noSideEffect`
+(Render paths). Under it, 51 funcs failed to compile and went back to `proc`. A `func` in this tree
+means the compiler checked that it reaches no effect.
 
 **A layman knows these acronyms, so they stay in names (V.9).** They are UI, RGB and RGBA, GIF and
 PNG, FOV, GL, GUI, DOM and fps, which the root glossary lists. The unit symbols that the root
@@ -3437,5 +3487,12 @@ leave it, to bound a plane by its crossing of the frame, or to let a plane alone
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
 cross products. The first only clips, so it may be the picture's; the second is construction, which
 the algebra owns. The choices are to move them into the algebra, or to leave them.
+
+**The page draws two postfix accents from whatever face the viewer has.** None of the four faces
+that the page embeds carries `ˍ` (U+02CD) or `˷` (U+02F7), the accents of left complement and
+antireverse. The Latin subset of Noto Sans stops short of them, so the browser takes each from a
+system face, or draws a box. Read 2026-10-02 from the `cmap` of each embedded `woff2`, with a
+scratch reader. The choices are to embed a face that holds them under a `unicode-range`, or to leave
+them. A check on the page, as `--drive-faces` is on the desktop, would hold the first.
 
 [replications]: https://gitlab.com/mraxilus/replications

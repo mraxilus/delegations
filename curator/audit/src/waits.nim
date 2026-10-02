@@ -33,12 +33,10 @@ const
     ("sleepAsync", "wait on condition, or advance clock check moves"),
   ]
     ## Fixed waits, each paired with what replaces it.
-  NIM_WAITS = ["sleep", "sleepAsync"]
-    ## Names read in Nim source alone.
+  NIM_WAITS = ["sleep", "sleepAsync"]  ## Names read in Nim source alone.
   NIM_KINDS = [Kind.Nim, Kind.NimScript, Kind.Nimble]
     ## Kinds Nim compiler reads, whose names compare as Nim compares them.
-  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
-    ## Characters identifier is built from.
+  IDENTIFIER_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters identifier is built from.
 
 
 func isDriveCode*(path: string, directories: openArray[string]): bool =
@@ -55,7 +53,7 @@ func identifiers(line: string): seq[string] =
     if line[i] in IDENTIFIER_CHARS:
       let start = i
       while i < line.len and line[i] in IDENTIFIER_CHARS: inc i
-      result.add line[start ..< i]
+      result.add line[start..<i]
     else: inc i
 
 
@@ -66,7 +64,7 @@ func replacementOf(identifier: string, is_nim: bool): string =
     if not is_nim and name notin NIM_WAITS and identifier == name: return replacement
 
 
-func checkWaits*(path, source: string, kind: Kind): seq[Finding] =
+func checkWaits*(path, source: string; kind: Kind): seq[Finding] =
   ## Report fixed wait in drive source, line by line, with its replacement.
   if kind.rule.syntax == Syntax.None: return
   let
@@ -75,7 +73,7 @@ func checkWaits*(path, source: string, kind: Kind): seq[Finding] =
   var commented = newSeq[seq[string]](lines.len)
   if not is_nim:
     for c in source.comments(kind.rule.syntax):
-      if c.line in 1 .. lines.len: commented[c.line - 1].add c.text.identifiers
+      if c.line in 1..lines.len: commented[c.line - 1].add c.text.identifiers
   for i, line in lines:
     for identifier in line.identifiers:
       let replacement = identifier.replacementOf(is_nim)
@@ -85,7 +83,8 @@ func checkWaits*(path, source: string, kind: Kind): seq[Finding] =
         commented[i].delete(at)
         continue
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Fixed wait reads real clock; " & replacement & " (Article IX.12); got `" &
           identifier & "`.",
       )

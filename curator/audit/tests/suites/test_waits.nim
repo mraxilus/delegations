@@ -30,8 +30,6 @@ await sleep(50);
 
 
 suite "Internal":
-
-
   test "drive code is read under tests and tools of each project":
     check "contributor/ronri/viewer/tests/test_view.nim".isDriveCode(DIRECTORIES)
     check "contributor/ronri/viewer/tools/drive/main.ts".isDriveCode(DIRECTORIES)

@@ -12,10 +12,12 @@ func messages(source: string): seq[string] =
   checkGlossary("g", source).mapIt(it.message)
 
 
+
 suite "Glossary":
   test "minimal glossary passes, with or without terms":
     check messages(GLOSSARY_TEXT).len == 0  # heading, description, Standards, Language, term
     check messages("# Empty\n\nNone yet.\n\n## Standards\n\n## Language\n").len == 0  # lazy
+
 
   test "heading and both sections required, in order":
     check messages("Intro\n\n## Standards\n\n## Language\n") ==
@@ -25,6 +27,7 @@ suite "Glossary":
     check messages("# Name\n\n## Language\n") == @["Glossary lacks `## Standards` heading."]
     check messages("# Name\n\n## Language\n\n## Standards\n") ==
       @["Glossary must put `## Standards` before `## Language`."]  # order
+
 
   test "standards entry names standard, owner and edition before its symbols":
     const
@@ -41,6 +44,7 @@ suite "Glossary":
     check not "- **SI** BIPM: `s`.".isStandardLine  # comma after name required
     check not "- **SI**, BIPM".isStandardLine  # colon required
 
+
   test "standard shared by projects, or repeated from root, is finding at later place":
     const
       SI = "- **SI**, BIPM, 9th: `s`.\n"
@@ -49,13 +53,14 @@ suite "Glossary":
       A = "# a\n\n## Standards\n\n" & SI & IAU & "\n## Language\n"
       B = "# b\n\n## Standards\n\n" & IAU & "\n## Language\n"
     let found = checkStandardsAcross(
-      [("GLOSSARY.md", ROOT), ("x/a/GLOSSARY.md", A), ("x/b/GLOSSARY.md", B)]
+      [("GLOSSARY.md", ROOT), ("x/a/GLOSSARY.md", A), ("x/b/GLOSSARY.md", B)],
     )
     check found.mapIt((it.path, it.line)) == @[("x/a/GLOSSARY.md", 5), ("x/b/GLOSSARY.md", 5)]
     check found[0].message.endsWith("got `SI`.")  # repeated from root
     check found[1].message.endsWith("got `IAU`, also in `x/a/GLOSSARY.md`.")  # shared
     check found.allIt(it.is_propagation)  # moving standard is curator's, never held
     check checkStandardsAcross([("GLOSSARY.md", ROOT), ("x/b/GLOSSARY.md", B)]).len == 0
+
 
   test "every term carries definition on next line":
     const L = "# N\n\n## Standards\n\n## Language\n\n"
@@ -66,9 +71,11 @@ suite "Glossary":
     check messages(L & "**Order**:\nA placed request.\n_Avoid_: Purchase\n").len == 0  # full entry
     check checkGlossary("g", L & "**Order**:\n")[0].line == 7  # line named
 
+
   test "term line grammar":
     check "**Order**:".isTermLine and not "**Order**".isTermLine  # colon required
     check not "**:".isTermLine and not "Order:".isTermLine  # bold and content required
+
 
   test "people words glossary avoids stay out of governed prose":
     check peopleWordsIn("The owner merges by hand.") == @["owner"]

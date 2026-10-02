@@ -16,11 +16,13 @@ func lines(source: string, syntax: Syntax): seq[int] =
   comments(source, syntax).mapIt(it.line)
 
 
+
 suite "Article VI":
   test "VI.5 Nim line and doc comments":
     check texts("x = 1 # note\n## doc\n### deep\n", Syntax.Nim) ==
       @["note", "doc", "deep"]  # marker runs stripped
     check lines("x = 1 # note\n\n## doc\n", Syntax.Nim) == @[1, 3]  # one-based lines
+
 
   test "VI.5 Nim string and char literals hide hashes":
     check texts("""a = "# not" # yes
@@ -33,16 +35,19 @@ suite "Article VI":
     check texts("discard \"\"\"\naction: run\n\"\"\"\n# after\n", Syntax.Nim) ==
       @["after"]  # testament header is string
 
+
   test "VI.5 Nim block comments nest and span lines":
     check texts("#[ Basis Conversion ]#\n", Syntax.Nim) == @["Basis Conversion"]  # banner
     check texts("#[ one\n two #[ inner ]# tail\n three ]# x = 1 # four\n", Syntax.Nim) ==
       @["one", "two inner tail", "three four"]  # nesting, per line, whitespace collapsed
     check texts("##[ doc block ]##\n", Syntax.Nim) == @["doc block"]  # doc block
 
+
   test "VI.5 cfg hash":
     check texts("hints:off # quiet\npath:\"a#b\" # yes\n", Syntax.Hash) ==
       @["quiet", "b\" # yes"]  # no string literals in cfg
     check texts("x = \\# literal\n", Syntax.Hash).len == 0  # escaped hash only
+
 
   test "VI.5 YAML hash after whitespace outside quotes":
     check texts("key: value # note\nurl: 'a#b' # yes\nq: \"x # y\"\n", Syntax.HashSpaced) ==
@@ -50,9 +55,11 @@ suite "Article VI":
     check texts("key: a#b\n", Syntax.HashSpaced).len == 0  # unspaced hash is data
     check texts("# top\n  # indented\n", Syntax.HashSpaced) == @["top", "indented"]  # line start
 
+
   test "VI.5 gitignore leading hash only":
     check texts("# note\nbin/ # not comment\n  # spaced\n", Syntax.HashLeading) ==
       @["note", "spaced"]  # first non-blank only
+
 
   test "VI.5 TypeScript slash forms":
     check texts("let a = 1; // one\n/* two */ let b = \"//\"; // three\n", Syntax.Slash) ==
@@ -60,6 +67,7 @@ suite "Article VI":
     check texts("let s = `//${x}`; // yes\n", Syntax.Slash) == @["yes"]  # template literal
     check texts("/**\n * Doc line\n * more\n */\n", Syntax.Slash) == @["Doc line", "more"]  # stars
     check texts("let c = 'it\\'s'; // yes\n", Syntax.Slash) == @["yes"]  # escaped quote
+
 
   test "VI.5 markup comments span lines and repeat":
     check texts("<p>x</p><!-- note -->\n", Syntax.Xml) == @["note"]  # one comment
@@ -69,6 +77,7 @@ suite "Article VI":
       @["one", "two"]  # spanning lines, per line
     check texts("<p>plain</p>\n", Syntax.Xml).len == 0  # markup is not comment
     check texts("<svg><!--<circle/>--></svg>\n", Syntax.Xml) == @["<circle/>"]  # markup inside
+
 
   test "VI.5 none yields nothing":
     check texts("# looks like comment\n", Syntax.None).len == 0  # Markdown, JSON

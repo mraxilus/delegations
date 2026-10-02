@@ -115,6 +115,16 @@ export async function readWork(page: Page, from = 0): Promise<Work | null> {
   }, from);
 }
 
+/** Least frames phase checks read before their verdict counts.
+ *
+ *  `MISSES_ACCOUNT_MAX` lets two frames miss; under this floor those two are large share, and
+ *  sample cannot tell fault from noise. Each check reports frames it read.
+ */
+export const FRAMES_PHASES_LEAST = 30;
+
+/** Least frames over 2 ms that accounting under demo reads: fewer leave too few to divide. */
+export const FRAMES_PHASES_HEAVY_LEAST = 20;
+
 /** Read each frame's clocks, dropping first two, which carry page's own warm-up. */
 export async function readPhases(page: Page, from = 2): Promise<Phase[]> {
   return page.evaluate((given) => (window.__phase_frame ?? []).slice(given), from);

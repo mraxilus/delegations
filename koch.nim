@@ -94,17 +94,16 @@ Options:
   --drive          list-projects keeps projects carrying `drive` verb
   --head           list-projects keeps projects carrying `head` verb
   --write          stamp writes every Rules row rather than printing
+  --dry-run        fix prints each change it would make, writes none, exits 1 where any
 """
   ## Text `./koch` prints alone and on usage error; `checker.nim` reads verbs and options here.
 
 
 type
-  Flag = enum
-    ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Head, Write
+  Flag = enum  ## Name option verb may read.
+    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun
 
-  Options = object
-    ## Define parsed command line.
+  Options = object  ## Define parsed command line.
     command: string
     project: string
     rest: seq[string]
@@ -116,6 +115,7 @@ type
     is_drive: bool
     is_head: bool
     is_write: bool
+    is_dry_run: bool
 
 
 proc parseOptions(): Option[Options] =
@@ -141,6 +141,7 @@ proc parseOptions(): Option[Options] =
       of "drive": options.is_drive = true
       of "head": options.is_head = true
       of "write": options.is_write = true
+      of "dry-run": options.is_dry_run = true
       else: return none(Options)
     of cmdEnd: discard
   if options.command.len == 0: return none(Options)
@@ -157,6 +158,7 @@ func given(options: Options): set[Flag] =
   if options.is_drive: result.incl Drive
   if options.is_head: result.incl Head
   if options.is_write: result.incl Write
+  if options.is_dry_run: result.incl DryRun
 
 
 func reads(options: Options, flags: set[Flag], has_project = false): bool =
@@ -265,10 +267,17 @@ proc runHook(root, event, input: string): int =
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
-      refuse(checkBody(
-        tool, branch, data{"tool_input", "title"}.getStr, data{"tool_input", "body"}.getStr,
-        labels, data{"tool_input", "method"}.getStr == "create",
-      ), 2)
+      refuse(
+        checkBody(
+          tool,
+          branch,
+          data{"tool_input", "title"}.getStr,
+          data{"tool_input", "body"}.getStr,
+          labels,
+          data{"tool_input", "method"}.getStr == "create",
+        ),
+        2,
+      )
     of "edit":
       let
         checkout = checkoutAt(root, file.parentDir)
@@ -302,7 +311,10 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(gainedPaths(root, "origin/" & MAIN))
     except CatchableError: discard
     echo startContext(
-      branch, readFile(root / "CONTRIBUTOR.md"), "## Carry the unchecked list in the open", drift
+      branch,
+      readFile(root / "CONTRIBUTOR.md"),
+      "## Carry the unchecked list in the open",
+      drift,
     )
     0
   of "push":
@@ -359,9 +371,7 @@ proc run(options: Options): int =
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
       if gitFields(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(
-          options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0]
-        )
+        writeFile(options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0])
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
@@ -378,7 +388,9 @@ proc run(options: Options): int =
     if not options.reads({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
     found = checkScope(
-      options.branchOrDefault, changedPaths(options.root, base), movedPaths(options.root, base)
+      options.branchOrDefault,
+      changedPaths(options.root, base),
+      movedPaths(options.root, base),
     )
   of "check-commits":
     if not options.reads({Root, Branch, Base}): return options.refused
@@ -421,8 +433,10 @@ proc run(options: Options): int =
   of "fix":
     # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
     #   Named files or directories come first, else projects `--recent`, `--all` or change
-    #   selects, as every verb taking projects reads them.
-    if not options.reads({Root, Branch, Base, All, Recent}, has_project = true):
+    #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
+    #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
+    #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
+    if not options.reads({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
     let
       tree = options.root.readTree
@@ -433,15 +447,22 @@ proc run(options: Options): int =
     if unknown.len > 0:
       unknown.report
       return 1
-    let (written, fixed, refused) = fixEntries(options.branchOrDefault, entries)
+    let (written, fixed, refused, left) = fixEntries(
+      options.branchOrDefault,
+      entries,
+      tree.lockedNimbles,
+    )
+    for f in left.sorted: echo f.render
     if refused.len > 0:
       refused.report
       echo "Nothing written; fix writes only inside branch scope."
       return 1
-    for e in written: writeFile(options.root / e.path, e.content)
-    for f in fixed.sorted: echo f.render
-    echo $fixed.len & " fixed."
-    return 0
+    let outcome = if options.is_dry_run: " to fix" else: " fixed"
+    if not options.is_dry_run:
+      for e in written: writeFile(options.root / e.path, e.content)
+    for f in fixed.sorted: echo f.render & outcome
+    echo $fixed.len & outcome & "."
+    return if options.is_dry_run and fixed.len > 0: 1 else: 0
   of "fetch-deps":
     if not options.reads({Root, Base, All, Recent}, has_project = true):
       return options.refused

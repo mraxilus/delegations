@@ -2,8 +2,9 @@
 ##   every fixer returns, which reports each rewrite in that same form.
 ##   One record shape keeps umbrella trivial: collect, sort, print, count.
 ##   Message convention (Article IV.4): end by echoing offending value in backticks.
-##   Fix reports rewrite as finding whose message names rule and `fixed`, so `koch fix` prints
-##     `path:line: <rule> fixed` through `render`, as check prints its own.
+##   Fix reports rewrite as finding whose message names rule alone, so `koch fix` prints
+##     `path:line: <rule> fixed` through `render`, as check prints its own, and its dry run
+##     prints `path:line: <rule> to fix` from same report.
 ##   Fixer that inserts or deletes lines records input line each output line came from, and
 ##     `chain` traces every later report through it. So each report names line of source as
 ##     given, whatever fixers ran before; fixer keeping its lines records nothing.
@@ -19,18 +20,19 @@ import std/[algorithm, sequtils]
 
 
 type
-  Finding* = object
-    ## Define one rule violation located at path and line.
+  Finding* = object  ## Define one rule violation located at path and line.
     path*: string  ## Repository-relative path, `/` separated; empty for branch-level.
     line*: int  ## One-based line; `0` when finding concerns whole file.
     message*: string  ## Telegraphic statement, ending with echoed value where one exists.
     is_propagation*: bool  ## Curator's to fix wherever it lands: rules change carried out.
 
-  Fix* = object
-    ## Define source fixer returns, with one report per rewrite.
+  Fix* = object  ## Define source fixer returns, with one report per rewrite.
     source*: string  ## Text after fix; input itself where nothing broke rule.
     fixed*: seq[Finding]  ## Path and line of input rewritten, message naming rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.
+
+  Fixer* = proc (path, source: string): Fix {.nimcall, noSideEffect.}
+    ## Define fixer of one rule: source in, fixed source and its reports out.
 
 
 func finding*(path: string, line: int, message: string, is_propagation = false): Finding =
