@@ -516,8 +516,9 @@ suite "Scene":
 
   # Where versions 2 to 5 wrote `Rose`: one past today's, palette then holding retired.
   #   structural slot `Algebra` at ordinal 7 before every hue; see `scene.upgradedFrom5`.
-  const ordinal_ink_rose_v5 = ord(Ink.Rose) + 1
-  const ordinal_ink_algebra_v5 = 7
+  const
+    ordinal_ink_rose_v5 = ord(Ink.Rose) + 1
+    ordinal_ink_algebra_v5 = 7
 
   proc savedWith(ordinal: int, radius = RADIUS_OBJECT_DEFAULT): ObjectSaved =
     ## Build object differing from its neighbours only in palette slot and radius.
