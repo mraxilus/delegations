@@ -16,8 +16,8 @@ import { driveAim, driveLook, drivePan, driveStretch } from './pan';
 import { driveWheel } from './wheel';
 import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
-  driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
-  driveTwoFingerPan,
+  driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, drivePointFills,
+  driveTouchConstruct, driveTwoFingerPan,
 } from './construct';
 import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
@@ -175,6 +175,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveLabelGlide(page);
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
+  await drivePointFills(page);
   await drivePanWhileSelected(page, devtools);
   await driveStretch(page);
   await driveGroupTurnedAtOnce(page, devtools);

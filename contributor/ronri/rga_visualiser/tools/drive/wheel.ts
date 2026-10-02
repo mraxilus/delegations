@@ -16,19 +16,21 @@ export async function pixelOf(page: Page, handle: number): Promise<number[] | nu
   }, handle);
 }
 
-/** Pick object standing furthest from every other on screen.
+/** Pick object standing furthest from every other on screen, of `kind` where one is named.
  *
  *  Rather than whichever handle happens to be last. Zoom aims at what `picking.pickNearest`
  *  finds under pointer, and that ranks point above plane, so pointer over two overlapping
  *  objects anchors on thinner one and check would be measuring object it did not aim at.
  *  Opening scene has point sitting few pixels from ground plane's own drawn anchor.
+ *  Kind is word `nimObjectKindWord` gives; empty takes any.
  */
-async function handleAlone(page: Page): Promise<number> {
+export async function handleAlone(page: Page, kind = ''): Promise<number> {
   const handles = await page.evaluate(() => nimSceneHandles());
-  const anchors: Array<{ handle: number; at: number[] }> = [];
+  const anchors: Array<{ handle: number; at: number[]; word: string }> = [];
   for (const handle of handles) {
     const at = await pixelOf(page, handle);
-    if (at !== null) anchors.push({ handle, at });
+    const word = await page.evaluate((one) => nimObjectKindWord(one), handle);
+    if (at !== null) anchors.push({ handle, at, word });
   }
   const apartOf = (one: { handle: number; at: number[] }): number => Math.min(
     ...anchors
@@ -37,7 +39,8 @@ async function handleAlone(page: Page): Promise<number> {
         (one.at[0] ?? 0) - (other.at[0] ?? 0), (one.at[1] ?? 0) - (other.at[1] ?? 0),
       )),
   );
-  const sorted = anchors.map((one) => ({ handle: one.handle, apart: apartOf(one) }))
+  const sorted = anchors.filter((one) => kind === '' || one.word === kind)
+    .map((one) => ({ handle: one.handle, apart: apartOf(one) }))
     .sort((a, b) => b.apart - a.apart);
   return sorted[0]?.handle ?? 0;
 }
