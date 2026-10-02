@@ -63,6 +63,10 @@ suite "Hooks":
     check checkBash(BRANCH, "git push -u origin " & BRANCH, false).len == 0
     check checkBash(BRANCH, "git push --force", false).messages[0].contains("XI.2")
     check checkBash(BRANCH, "git push -f origin x", false).len == 1
+    check checkBash(BRANCH, "git push --no-verify -u origin x", false).messages[0].contains(
+      "duty 3"
+    )  # pre-push hook skipped
+    check checkBash(BRANCH, "git commit --no-verify -m x", false).len == 0  # push alone
     check checkBash(BRANCH, "git commit --amend --no-edit", true).len == 1  # pushed head
     check checkBash(BRANCH, "git commit --amend --no-edit", false).len == 0  # local head
     check checkBash(BRANCH, "git rebase origin/main", true).len == 1
