@@ -910,9 +910,10 @@ these measurements.
 - Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.87,
   while the bulk unitize runs slower, ×1.2 to ×3.1. The library scales every slot in a loop,
   which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
-- Whether a product whose terms all land in one slot should return a `float` from the
-  emitter. At four dimensions 26 measurands stand above the byte bound for that reason
-  alone.
+- Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
+  the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
+  write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
+  squared norm, and under P04 each writes 8 bytes.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
