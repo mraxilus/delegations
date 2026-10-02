@@ -202,6 +202,26 @@ proc markFile(root: string): string =
   markPath(root, gitFields(root, ["rev-parse", "--git-dir"])[0].strip)
 
 
+proc checkoutAt(root, directory: string): string =
+  ## Read top of checkout of this repository holding directory, else root.
+  ##   Worktree shares root's git store, so both name one common directory; other repository,
+  ##     or none, falls back to root, as before. Path not yet written is read from nearest
+  ##     directory that exists.
+  var at = directory
+  while at.len > 1 and not dirExists(at): at = at.parentDir
+  const COMMON = ["rev-parse", "--path-format=absolute", "--git-common-dir"]
+  try:
+    if gitFields(at, COMMON)[0].strip == gitFields(root, COMMON)[0].strip:
+      return gitFields(at, ["rev-parse", "--show-toplevel"])[0].strip
+  except IOError: discard
+  root
+
+
+proc branchOf(checkout: string): string =
+  ## Read branch checked out in checkout.
+  gitFields(checkout, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
+
+
 proc refuse(found: seq[Finding], code: int): int =
   ## Print findings to stderr for hook host, and return code; zero findings return 0.
   if found.len == 0: return 0
@@ -211,20 +231,28 @@ proc refuse(found: seq[Finding], code: int): int =
 
 proc runHook(root, event, input: string): int =
   ## Answer one hook event from its stdin facts; dispatch over event name.
-  let branch = gitFields(root, ["rev-parse", "--abbrev-ref", "HEAD"])[0].strip
+  ##   `path`, `edit` and `bash` read checkout call acts in, never root alone: subagent works
+  ##     in worktree of its own, on branch of its own (GUIDE.md, Independent changes).
+  let branch = root.branchOf
   case event
   of "path", "bash", "body", "edit", "stop":
     let
       data = input.parseJson
       tool = data{"tool_name"}.getStr
+      directory = data{"cwd"}.getStr(root)
+      written = data{"tool_input", "file_path"}.getStr
+      file = if written.isAbsolute: written else: directory / written
     case event
     of "path":
       if tool notin EDIT_TOOLS: return 0
-      let path = insideRoot(data{"cwd"}.getStr(root), data{"tool_input", "file_path"}.getStr)
-      refuse(checkEditPath(branch, path), 2)
+      let checkout = checkoutAt(root, file.parentDir)
+      refuse(checkEditPath(checkout.branchOf, insideRoot(checkout, file)), 2)
     of "bash":
-      let is_pushed = gitFields(root, ["branch", "-r", "--contains", "HEAD"]).len > 0
-      refuse(checkBash(branch, data{"tool_input", "command"}.getStr, is_pushed), 2)
+      let
+        command = data{"tool_input", "command"}.getStr
+        checkout = checkoutAt(root, commandDirectory(command, directory))
+        is_pushed = gitFields(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
+      refuse(checkBash(checkout.branchOf, command, is_pushed), 2)
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
@@ -234,10 +262,11 @@ proc runHook(root, event, input: string): int =
       ), 2)
     of "edit":
       let
-        path = insideRoot(data{"cwd"}.getStr(root), data{"tool_input", "file_path"}.getStr)
-        tree = root.readTree
+        checkout = checkoutAt(root, file.parentDir)
+        path = insideRoot(checkout, file)
+        tree = checkout.readTree
       var found = tree.auditTree
-      found.add prunedFindings(root, tree)
+      found.add prunedFindings(checkout, tree)
       let mine = found.filterIt(it.path == path)
       if mine.len == 0: return 0
       let lines = mine.mapIt(it.path & ":" & $it.line & ": " & it.message)

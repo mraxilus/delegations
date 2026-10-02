@@ -99,22 +99,48 @@ func checkEditPath*(branch, path: string): seq[Finding] =
   checkScope(branch, [path])
 
 
+func segments(command: string): seq[seq[string]] =
+  ## Read words of each segment of shell text, split on shell operators.
+  var text = command
+  for op in ["&&", "||", ";", "|"]: text = text.replace(op, "\n")
+  for segment in text.splitLines: result.add segment.splitWhitespace
+
+
 func gitCommands*(command: string): seq[seq[string]] =
   ## Read arguments of every `git` command in shell text, subcommand first.
   ##   Shell operators split segments; `-c key=value` and `-C dir` before subcommand are
   ##     skipped, so `git -c x=y push` reads as `push`.
-  var text = command
-  for op in ["&&", "||", ";", "|"]: text = text.replace(op, "\n")
-  for segment in text.splitLines:
-    let
-      tokens = segment.splitWhitespace
-      at = tokens.find("git")
+  for tokens in command.segments:
+    let at = tokens.find("git")
     if at < 0: continue
     var i = at + 1
     while i < tokens.len and tokens[i].startsWith("-"):
       if tokens[i] in ["-c", "-C"]: inc i
       inc i
     result.add tokens[i .. ^1]
+
+
+func commandDirectory*(command, directory: string): string =
+  ## Read directory first `git` command of shell text acts in: its `-C`, else last `cd` before
+  ##   it, else `directory` call was made in. Relative path resolves against directory so far.
+  ##   Worktree is its own checkout on its own branch, so hook reading branch of directory
+  ##     command acts in judges subagent's commit by subagent's branch.
+  ##   Cost: only first `git` command is read; second one with other `-C` takes first's
+  ##     directory.
+  template resolved(base, path: string): string =
+    let bare = path.strip(chars = {'"', '\''})
+    if bare.isAbsolute: bare else: base / bare
+  result = directory
+  for tokens in command.segments:
+    if tokens.len > 1 and tokens[0] == "cd": result = resolved(result, tokens[1])
+    let at = tokens.find("git")
+    if at < 0: continue
+    var i = at + 1
+    while i < tokens.len and tokens[i].startsWith("-"):
+      if tokens[i] == "-C" and i + 1 < tokens.len: return resolved(result, tokens[i + 1])
+      if tokens[i] == "-c": inc i
+      inc i
+    return
 
 
 func checkBash*(branch, command: string, is_head_pushed: bool): seq[Finding] =
