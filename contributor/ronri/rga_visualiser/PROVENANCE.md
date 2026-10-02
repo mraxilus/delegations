@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58a60851a7cde940 |
+| Rules   | 8ef27c4c0639a3d3 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
