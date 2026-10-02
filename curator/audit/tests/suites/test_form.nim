@@ -1,4 +1,4 @@
-## Replicate Article X.1, X.2 and VIII.5: form of source.
+## Replicate Article X.1, X.2, X.9 and VIII.5: form of source.
 
 {.experimental: "strictFuncs".}
 
@@ -9,6 +9,11 @@ import ../../src/[form, kinds]
 func messages(path, source: string, kind: Kind): seq[string] =
   ## Read finding messages of source under kind.
   checkForm(path, source, kind.rule).mapIt(it.message)
+
+
+func gapMessage(spaces: int): string =
+  ## Render X.9 finding message for gap of given spaces.
+  "Trailing comment takes two spaces before its marker (X.9); got `" & $spaces & "`."
 
 
 suite "Article X":
@@ -62,6 +67,24 @@ suite "Article X":
       @["Banner lacks two blank lines before it."]  # child keeps its own two
     check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks exactly one blank line after it."]  # only second tier defers
+
+  test "X.9 trailing comment takes two spaces before its marker":
+    check messages("a.nim", "let a = 1  # Two.\n", Kind.Nim).len == 0  # two pass
+    check messages("a.nim", "let a = 1 # One.\n", Kind.Nim) == @[gapMessage(1)]  # one fails
+    check messages("a.nim", "let a = 1# None.\n", Kind.Nim) == @[gapMessage(0)]  # glued fails
+    check messages("a.nim", "  a: int     ## Field.\n", Kind.Nim) == @[gapMessage(5)]  # aligned
+    check messages("a.nim", "let a = \"x\" # One.\n", Kind.Nim) == @[gapMessage(1)]  # after string
+    check checkForm("a.nim", "a = 1\nb = 2 # c\n", Kind.Nim.rule)[0].line == 2  # line named
+    check COMMENT_GAP == 2  # X.9 count, stated once
+
+  test "X.9 reads code alone: string, whole comment and block hold no trailing comment":
+    check messages("a.nim", "let a = \"x # y\"\n", Kind.Nim).len == 0  # `#` inside string
+    check messages("a.nim", "let a = '#'\n", Kind.Nim).len == 0  # `#` as char
+    check messages("a.nim", "# Whole line.\n  ## Doc line.\n", Kind.Nim).len == 0  # no code
+    check messages("a.nim", "#[ a\nb # c\n]#\n", Kind.Nim).len == 0  # inside block comment
+    check messages("a.nim", "let a = \"\"\"\nb # c\n\"\"\"\n", Kind.Nim).len == 0  # long string
+    check messages("a.nim", "{.used.}  # Used in b.nim.\n", Kind.Nim).len == 0  # pragma
+    check messages("a.yml", "a: 1 # b\n", Kind.Yaml).len == 0  # Nim syntax alone
 
 
 suite "Article VIII":
