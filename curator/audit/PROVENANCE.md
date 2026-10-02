@@ -121,6 +121,11 @@ so an include guard above the block, and a blank line inside it, both keep the r
   files, 2026-09-06. An unjustified `shim.cpp` and an unjustified `glue.ts` each yield one finding
   at line 1. Each falls silent once the phrase is added.
 
+**Shell is gated as well, and the layout check holds it to `.claude/` and `.githooks/`.** It is
+the hook glue of the curator: the command that Claude Code runs, and the scripts that git runs
+as hooks. It never enters a project, by the ruling of the Architect (CONTRIBUTOR.md, The
+language is Nim). Verified by `suites/test_layout.nim`.
+
 ## Comment extraction
 
 **A hand-written scanner for each comment syntax, and one accumulator for each line.**
@@ -315,8 +320,8 @@ curator-only edit touches no project.
 **`koch stamp --write` sets the `Rules` row of every provenance file itself.** `withRulesRow`
 rewrites the row in place, and finds it as `headerFields` finds it, so what is written is what
 the check then reads. A provenance file already current is not touched, and each path that
-moved is printed. So duty 1 takes one verb for the rows, and no hand edit (curator review,
-C10).
+moved is printed. So duty 1 takes one verb for the rows, and no hand edit (CURATOR.md, duty
+1).
 
 - Rejected: a write of the whole header back, which would reformat a table that its writer
   padded.
@@ -922,10 +927,10 @@ hold here.
 
 ## Dependencies
 
-**Atlas for each project: requirements in `<project>.nimble`, checkouts in an ignored `deps/`,
-exact commits in a committed `atlas.lock`, and paths in a committed `nim.cfg`.** `koch fetch-deps`
-runs `atlas --noexec rep` in every project that holds a lock. It judges success by
-`atlas changed` exiting zero.
+**Atlas holds the packages of each project.** Requirements sit in `<project>.nimble`, and
+checkouts in the ignored folder that `atlas.config` names. Exact commits sit in a committed
+`atlas.lock`, and paths in a committed `nim.cfg`. `koch fetch-deps` runs `atlas --noexec rep` in
+every project that holds a lock. It judges success by `atlas changed` exiting zero.
 
 - Rejected: one Atlas project at the root. Atlas 0.9.0 has no shared-workspace model, and a
   root `nim.cfg` would leak every dependency into every project through parent-config lookup.
@@ -1006,7 +1011,7 @@ The phase finished in about four minutes, against about nine summed. It fired **
 its 06:00 slot**, which is what GitHub does with `schedule` under load. So a curator who reads
 the cron and returns at 06:05 finds nothing. To wait is part of a read of this signal.
 
-**The weekly run plans what merged inside `SWEEP_DAYS`**, and nothing in a quiet week. It
+**The weekly run plans what merged inside `RECENT_DAYS`**, and nothing in a quiet week. It
 judges "code" by the record-file exclusion that scoped runs use. Rot arrives with merges, and
 to compile a project that nothing touched is runner time for no information.
 
@@ -1015,10 +1020,10 @@ to compile a project that nothing touched is runner time for no information.
   that project next changes.
 - Cost: rot from outside the repository goes unseen through a quiet week, such as a runner
   image that moves under a pinned compiler.
-- Cost: the window is named twice, as the cron and as `SWEEP_DAYS`. Nothing checks that they
-  agree, so CURATOR.md duty 9 says to change them together.
+- The window is named twice, as the cron and as `RECENT_DAYS`, and `checkWindow` holds the two
+  together (Watching main).
 - A repository younger than the window has every commit inside it. So the skip is verified by
-  suite rather than by a live Monday. `test_plan.nim` drives `sweepFor` on a throwaway repository,
+  suite rather than by a live Monday. `test_plan.nim` drives `recentFor` on a throwaway repository,
   and drives the decision of `jobs` over code, record-only and empty changes. `test_tree.nim` drives
   `revBefore` at both ends.
 
@@ -1248,8 +1253,7 @@ reads as text. The module states each rule in its header, and the list here give
 **Debug output is told from a report by its shape alone.** An `echo` in a test that prints a
 value with no label, outside a condition, is the shape that debug output takes. A labelled
 `echo` passes as the report of a measured figure, and one under a condition passes as a failure
-diagnostic. Found when the first run reported every measured figure that `dance_ontology` prints
-from its rig.
+diagnostic.
 
 - Rejected: every `echo` in a test, which reports a deliberate measurement as debug output.
 - Cost: labelled debug output passes, and reading holds it. A seeded `initRand` passes as
@@ -1268,11 +1272,11 @@ the line that the check names, and the run ends with the count.
 **Each report names a line of the source as given.** A fixer that inserts or deletes lines records
 the input line of each output line. `chain` traces every later report through that record.
 
-**The verb lands first, and the X.9 check after it.** The static pass does not run the check, but
-its fixer runs, because a fixer reports nothing new. Each project then clears its gaps with
-`nim r koch fix contributor/<domain>/<project>` on its own branch. A later pull request wires
-`checkComments` into `checkForm`. In the other order, each project fixes each gap by hand. A check
-that reddens a project merges only after that project fixes (CURATOR.md, duty 3).
+**The X.9 check is written, and the static pass does not run it yet.** Its fixer runs, because a
+fixer reports nothing new. So each project clears its gaps with
+`nim r koch fix contributor/<domain>/<project>` on its own branch, and never by hand. A check
+that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #380
+queues the wiring.
 
 **X.9 asks exactly two spaces, by the ruling of the Architect.** An aligned column breaks on a
 rename. One longer name moves every comment of the block. So a change of one line rewrites the
@@ -1376,8 +1380,9 @@ rest by reading.
   fixtures as strings and reports nothing.
 - `sleep` of TypeScript is the drive's own helper. In `rga_visualiser` it wraps `setTimeout`
   inside a page on the simulated clock, so it is unread.
-- Verified on the tree: no finding in any project. A planted `sleep(10)` in a Nim suite and a
-  planted `waitForTimeout(100)` in a TypeScript drive each read as one finding.
+- Verified by hand with `nim r koch check-files` on 2026-10-01: no finding in any project. A
+  planted `sleep(10)` in a Nim suite and a planted `waitForTimeout(100)` in a TypeScript drive
+  each read as one finding.
 - Cost: a drive outside `tests/` and `tools/` is unseen. So is a window built from a page
   timer, and a fixed wait of a language other than Nim and Playwright.
 
@@ -1404,21 +1409,23 @@ checkout alone.** A subagent works in a worktree of its own, on a branch of its 
 (`GUIDE.md`, Independent changes run in subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
 names, else the working directory of the call. A directory outside this repository falls
-back to the primary checkout, as before.
+back to the primary checkout.
 
-- Found when a subagent could not run. The primary checkout was on a detached head, and the
-  hooks refused each edit and each commit in a worktree on a valid branch. They reported
-  `got HEAD`, which was the branch of the primary checkout.
-- Verified by fake inputs to the built koch, before and after, with a detached checkout as the
-  primary. The scope of the worktree's own branch still refuses a write outside it.
-- A path is now read from the top of its checkout. It was read from the working directory of
-  the call before, so a write from a subdirectory was held to the wrong path.
+- A detached head in the primary checkout never decides the branch of a worktree. So it never
+  refuses a subagent.
+- Verified by hand on 2026-10-02, by fake inputs to the built koch, before and after, with a
+  detached checkout as the primary. The scope of the worktree's own branch still refuses a write
+  outside it.
+- A path is read from the top of its checkout, and never from the working directory of the
+  call, which may be a subdirectory.
+- Cost: a git command in another repository falls back to the primary checkout. A commit there
+  is held to the branch of the primary checkout (#380).
 - Cost: only the first git command of a shell line is read. A second one with another `-C`
   is held to the branch of the first.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
-It fetches the release tarball where no compiler serves, and builds koch into `binaries/`. It
+It fetches the release tarball where no `nim` is on `PATH`, and builds koch into `binaries/`. It
 sets `core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
 exists. Every other hook command runs the built koch, and falls back to `nim r`.
 
@@ -1446,7 +1453,7 @@ executable and a binary is never committed. A clone reads them once the start ho
   does. So a label or a draft update ends no turn with a sign-off.
 - Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
   A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
-  relative path then fails to open, and every hooked tool is refused, as happened once here.
+  relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
 
@@ -1610,7 +1617,7 @@ the runner rather than by a curator who reads.
   whitespace words, because `tree.auditTree` is a call exactly as `auditTree(tree)` is.
 - Each source is counted once, and every export reads those counts. A scan of every source for
   each export took half of the static pass (Figures).
-- **Missing suite**: a check module without `tests/suites/t<module>.nim`.
+- **Missing suite**: a check module without `tests/suites/test_<module>.nim`.
 - **Verb mismatch**: one set named three times. The names are the verbs that koch dispatches,
   the verbs that its usage lists, and the rows of the checks table in CURATOR.md. Usage lists
   one verb to a line under `Verbs:`, verb first, so the read takes the first word of each
@@ -1669,7 +1676,7 @@ check module, it took 32.9 s and 32.6 s warm, and 49.2 s cold. `koch list-projec
 row on such a branch, so the figure covers the suites of `curator/audit` and the static pass.
 
 **The suites of `curator/audit` cost their compile, and almost nothing to run.** Each suite
-compiled alone in 0.8 s to 1.2 s warm, and the run of all 30 binaries took 2.1 s. Joined,
+compiled alone in 0.8 s to 1.2 s warm, and the run of every suite binary took 2.1 s. Joined,
 `nim r koch test curator/audit` takes 3.8 s to 4.2 s warm, against 31.9 s before.
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
@@ -1716,6 +1723,9 @@ runner, recorded 2026-09-07.
 
 - Unmeasured: npm cold on the runner, which needs a key poisoned on purpose. That figure is not
   owed.
+- The Atlas cache sits at the folder that `atlas.config` names, else at `deps`, the default of
+  Atlas. The step before the cache reads that folder, so the cache restores where Atlas
+  restores. Verified by hand on 2026-10-02, by the step run under `bash -e` for each project.
 
 **The install directory of SDL3 is cached, and its build tree is not.** No package carries
 SDL3, so `sdl3` clones, configures and builds it from source. That is 55.8 s of a 357 s
