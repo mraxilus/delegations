@@ -15,8 +15,9 @@ cmd: "nim c --hints:off -d:testing $options $file"
 ##     Release keeps `doAssert`, `assert`, bounds and overflow checks too, so this choice
 ##     is about time alone.  `test_asks` and `test_limb` were `-d:danger`, which drops bounds,
 ##     overflow and `assert`; built here they keep all three.
-##   Suites that link engine's C archive (`test_engine`, `test_read`, `test_rigid`) cannot share
-##     this binary, and `test_said` is compiled to JavaScript, so those stay binaries of their own.
+##   Suites that link engine's C archive (`test_engine`, `test_plan`, `test_read`, `test_rigid`)
+##     cannot share this binary, and `test_said` is compiled to JavaScript, so those stay
+##     binaries of their own.
 
 {.experimental: "strictFuncs".}
 

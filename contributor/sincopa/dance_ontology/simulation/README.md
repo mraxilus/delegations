@@ -24,8 +24,12 @@ a fiftieth of a turn at a time, and the engine carries the arms on. So an arm th
 body stays round it. Where the couple stand is chosen for each turn, and nothing is fixed except
 that the two bodies stay apart.
 
+Where the walk gives short, the turn is planned. The plan chooses every joint of both arms at each
+moment, and keeps every capsule clear and every joint in its range. The engine then follows the
+plan, and judges it as it judges a walk.
+
 `PROVENANCE.md` records the design and the reason for each part of it. See Body rig, Rigid body
-engine, Joints that give, Walk and lift, and Stance and strain.
+engine, Joints that give, Walk and lift, Stance and strain, and Planned turn.
 
 ## What it answers
 
@@ -43,9 +47,9 @@ simulation said, and nothing is tuned to make them agree.
 
 ## What it does not model
 
-The two bodies are of one stature. The couple stand at one distance for all of a turn, so they do
-not step as they turn. The arms weigh nothing. `PROVENANCE.md` gives the limits of the rig, joint by
-joint.
+The two bodies are of one stature. In a walk, the couple stand at one distance for all of a turn,
+so they do not step as they turn. In a planned turn, the follow steps as the plan does. The arms
+weigh nothing. `PROVENANCE.md` gives the limits of the rig, joint by joint.
 
 ## Reading it
 
@@ -60,7 +64,10 @@ engine.nim   the rigid body engine, bound; nothing above it knows it is C
 rigid.nim    two dancers in that engine: capsules, joints, their ranges,
              and what stops a connection
 walk.nim     a hold turned until something gives, from wherever the couple
-             stand for that turn; whether a pose holds, whether a turn reaches
+             stand for that turn; whether a pose holds, whether a turn reaches;
+             the engine steered along a planned turn
+plan.nim     the arms of both dancers planned through a turn, moment by
+             moment, as geometry, for the engine to follow
 seen.nim     one sweep recorded whole -- every capsule, every joint -- for
              the rig viewer to draw
 read.nim     what a pose says about itself, still in body words: crossings,
@@ -73,6 +80,8 @@ verdicts.md  what it said, translated once and generated, not edited
 ../tests/test_rigid.nim  the rig held to tape, geometry and the Architect's floor
 ../tests/suites/test_limb.nim  the tape's numbers and one arm's kinematics
 ../tests/test_read.nim   crossings read off the drawn arms, not assumed
+../tests/test_plan.nim   the plan held to the engine: one place for each body,
+             the mirror, a turn that keeps what it claims, and the engine on it
 ../design/rig_view.nim  the rig viewer, compiled to JS: every capsule the
              engine collides, and every joint beside its range
 ```
@@ -94,7 +103,8 @@ holding is worse than no page.
 The search for where to stand costs the most time. The simulation walks the turn again from many
 distances, two centimetres apart. A card that asks whether a turn is reached stops at the first
 distance that reaches it. So an easy card costs one sweep, and only a card that nothing reaches pays
-for the whole search.
+for the whole search. A card that no walk reaches is then planned. A same-name swan costs about ten
+minutes on one core.
 
 For that reason `modelled`, `rig` and `turns` each have a verb of their own, and their answers are
 committed. So `pages` uses what was last recorded, and does not pay for it again. `modelled` and
