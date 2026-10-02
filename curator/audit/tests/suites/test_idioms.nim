@@ -243,6 +243,29 @@ suite "Idiom fixes":
       check checkImportBrackets("a.nim", module(kept)).len == 0
       check fixed(module(kept)).source == module(kept)
 
+  test "pragma list of declaration and export list are alphabetised":
+    let
+      lists = module("proc f() {.importc: \"f\", header: \"a.h\", bycopy.}\nexport b, a\n")
+      fix = fixed(lists)
+    check checkLists("a.nim", lists).mapIt(it.message) == @[
+      "List language leaves unordered is alphabetised (X.10); got `importc, header, bycopy`.",
+      "List language leaves unordered is alphabetised (X.10); got `b, a`.",
+    ]
+    check fix.source ==
+      module("proc f() {.bycopy, header: \"a.h\", importc: \"f\".}\nexport a, b\n")  # whole items
+    check fix.source.isSettled
+
+  test "list order may mean or case decides stays: statement, user pragma, except, case":
+    for kept in [
+      "{.push raises: [], gcsafe.}\nproc f()\n{.pop.}\n",
+      "proc f() {.async, gcsafe.}\n",
+      "export pga except wedge, dot\n",
+      "export layout.Tree, layout.Entry, layout.projectDirectories\n",
+      "proc f() {.inline,\n  borrow.}\n",
+    ]:
+      check checkLists("a.nim", module(kept)).len == 0
+      check fixed(module(kept)).source == module(kept)
+
   test "clean module passes through unchanged":
     let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")
     check fixed(clean).source == clean and fixed(clean).fixed.len == 0

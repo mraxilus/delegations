@@ -1,6 +1,6 @@
 ## Enforce idioms of source that one line, or one header, shows (STYLE.md §2, §5, §6; Article
-##   VIII.5, X.5; CONTRIBUTOR.md, System and TypeScript); and fix each of these that has one
-##   mechanical fix (`koch fix`).
+##   VIII.5, X.5, X.10; CONTRIBUTOR.md, System and TypeScript); and fix each of these that has
+##   one mechanical fix (`koch fix`).
 ##   Nim rules read code-only view (`names.codeOnly`), so string and comment never trip them:
 ##   - `{.experimental: "strictFuncs".}` stands in this exact form before first import, in
 ##     every module, suite included (§2).
@@ -8,6 +8,8 @@
 ##     come before local modules (X.5, §5).
 ##   - Adjacent imports of one directory share one bracket, and bracket of one module drops
 ##     it (X.5, §5): `checkImportBrackets`, outside static pass until projects run fix.
+##   - Pragma list of declaration and `export` list are alphabetised (X.10): `checkLists`,
+##     read on tokens (`tokens.nim`), outside static pass until projects run fix.
 ##   - Two consecutive single bindings of one keyword share that keyword (X.5).
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).
@@ -26,6 +28,7 @@
 ##     layout; contiguous import lines are reordered by rank, stable within rank.
 ##   - Adjacent imports of one directory merge into one bracket at first one's line, items
 ##     alphabetised and `{.all.}` kept; bracket of one module drops its bracket.
+##   - List out of order has its items sorted into slots they held, `key: value` item whole.
 ##   - Run of single bindings becomes keyword alone, then each binding indented two spaces;
 ##     lines continuing last binding (open bracket, deeper indent, doc under it) move too.
 ##   - Missing `strictFuncs` goes where X.6 puts directives: before first code line that is
@@ -45,7 +48,10 @@
 ##     knowledge text does not hold.
 ##   No fixer, and check silent: import with `except`, `as`, pragma but `{.all.}`, comment or
 ##     string, statement spanning lines, and imports apart across blank line, since merging
-##     them is choice.
+##     them is choice; list whose order may mean, i.e. pragma statement opening line and list
+##     holding user pragma, which may be macro applied in order written; list whose order
+##     case decides, as `Tree`, `projectDirectories` by code point and reverse by alphabet,
+##     which waits on Architect's ruling.
 ##   No fixer for `return result` whose place reads no one fix: routine's only statement, whose
 ##     body deletion would empty; line carrying comment, which would lose its line; line after
 ##     comment, which would then name nothing; end of template or macro, which returns from
@@ -65,7 +71,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
-import ./[findings, form, names]
+import ./[findings, form, names, tokens]
 
 
 type
@@ -95,6 +101,13 @@ type
     items: seq[string]  ## Modules, pragma kept, alphabetised once all are read.
     statement: string  ## Statement standing in their place.
 
+  Disorder = object
+    ## Define list language leaves unordered, written out of alphabetical order.
+    line: int  ## Zero-based line list stands on.
+    first: int  ## Byte offset of first item.
+    after: int  ## Byte offset after last item.
+    sorted: string  ## Items alphabetised into slots they held, separators kept.
+    got: string  ## Items as written.
 
 
 const
@@ -128,6 +141,25 @@ const
     ## Brackets closing such span.
   ALL_PRAGMA = "{.all.}"
     ## Pragma bracket item may carry (STYLE.md §5); any other keeps its import apart.
+  PRAGMAS_BUILT_IN = [
+    "acyclic", "align", "asmnostackframe", "base", "bitsize", "booldefine", "borrow", "bycopy",
+    "byref", "callsite", "cdecl", "closure", "codegendecl", "compilerproc", "compiletime",
+    "completestruct", "constructor", "core", "cppnonpod", "cursor", "define", "delegator",
+    "deprecated", "dirty", "discardable", "dynlib", "effectsof", "enforcenoraises", "ensures",
+    "error", "explain", "exportc", "exportcpp", "exportnims", "extern", "fastcall", "final",
+    "forbids", "gcsafe", "gensym", "global", "goto", "guard", "header", "importc",
+    "importcompilerproc", "importcpp", "importjs", "importobjc", "incompletestruct",
+    "inheritable", "inject", "inline", "intdefine", "liftlocals", "linetrace", "locks", "magic",
+    "member", "nimcall", "noalias", "noconv", "nodecl", "nodestroy", "noinit", "noinline",
+    "nonreloadable", "noreturn", "nosideeffect", "nosinks", "package", "packed", "partial",
+    "procvar", "pure", "quirky", "raises", "redefine", "register", "requires", "requiresinit",
+    "safecall", "sendable", "shallow", "sideeffect", "size", "stacktrace", "stdcall",
+    "strdefine", "syscall", "systemraisesdefect", "tags", "thiscall", "thread", "threadvar",
+    "unchecked", "union", "used", "varargs", "virtual", "volatile",
+  ]
+    ## Pragmas compiler gives declarations (`pragmas.nim`, `procPragmas` to `fieldPragmas`),
+    ##   lowercase with underscores dropped, as Nim compares names. Order among them moves
+    ##   nothing; user pragma may be macro, applied in order written, so list holding one stays.
 
 
 func firstWord(text: string): string =
@@ -678,13 +710,92 @@ func fixStrictFuncs(path, source: string): Fix =
   result.fixed.add finding(path, 0, "strictFuncs (STYLE.md §2) fixed")
 
 
+func disorders(source: string): seq[Disorder] =
+  ## Find each pragma list of declaration, and each `export` list, out of alphabetical order.
+  ##   List on one line alone is read. Pragma statement opening line (`{.push.}`, `{.pop.}`,
+  ##   `{.emit.}`, `{.experimental.}`) stays, and so does list holding user pragma, `except`,
+  ##   or items whose order case decides, where alphabet and code points disagree.
+  let
+    tokens = source.tokens
+    partners = tokens.partners
+  for k, t in tokens:
+    let is_line_first = k == 0 or tokens[k - 1].lastLine(source) < t.line
+    var
+      spans: seq[(int, int)]
+      stop = -1
+    if t.spelling(source) == "{." and not is_line_first and partners[k] > k and
+        tokens[partners[k]].line == t.line:
+      stop = partners[k]
+    elif t.spelling(source) == "export" and is_line_first:
+      stop = k + 1
+      while stop < tokens.len and tokens[stop].line == t.line: inc stop
+      if tokens[stop - 1].kind == TokenKind.Comma: continue
+    else: continue
+
+    # Split items at commas outside nested brackets.
+    var m = k + 1
+    while m < stop:
+      let first = m
+      while m < stop and tokens[m].kind != TokenKind.Comma:
+        if tokens[m].kind == TokenKind.Open and partners[m] > m: m = partners[m]
+        inc m
+      spans.add (first, m - 1)
+      inc m
+    let names = spans.mapIt(tokens[it[0]].spelling(source))
+    if spans.len < 2 or spans.anyIt(it[1] < it[0]): continue
+    if t.spelling(source) == "{.":
+      if names.anyIt(it.toLowerAscii.replace("_", "") notin PRAGMAS_BUILT_IN): continue
+    elif toSeq(k ..< stop).anyIt(tokens[it].spelling(source) == "except"): continue
+
+    # Sort item texts into slots they held; leave list whose order case decides.
+    let
+      texts = spans.mapIt(source[tokens[it[0]].first ..< tokens[it[1]].after])
+      keys = if t.spelling(source) == "{.": names else: texts
+      by_alphabet = toSeq(0 ..< texts.len).sortedByIt((keys[it].toLowerAscii, it))
+      by_code_point = toSeq(0 ..< texts.len).sortedByIt((keys[it], it))
+    if by_alphabet != by_code_point or by_alphabet == toSeq(0 ..< texts.len): continue
+    var sorted = texts[by_alphabet[0]]
+    for i in 1 ..< spans.len:
+      sorted.add source[tokens[spans[i - 1][1]].after ..< tokens[spans[i][0]].first]
+      sorted.add texts[by_alphabet[i]]
+    result.add Disorder(
+      line: t.line,
+      first: tokens[spans[0][0]].first,
+      after: tokens[spans[^1][1]].after,
+      sorted: sorted,
+      got: names.join(", "),
+    )
+
+
+func checkLists*(path, source: string): seq[Finding] =
+  ## Report pragma list of declaration, or `export` list, out of alphabetical order (X.10).
+  ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
+  for d in source.disorders:
+    result.add finding(
+      path,
+      d.line + 1,
+      "List language leaves unordered is alphabetised (X.10); got `" & d.got & "`.",
+    )
+
+
+func fixLists(path, source: string): Fix =
+  ## Alphabetise each list check reports, last first, so earlier offsets hold; width is kept.
+  let found = source.disorders
+  result.source = source
+  for d in found.reversed:
+    result.source = result.source[0 ..< d.first] & d.sorted & result.source[d.after .. ^1]
+  for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10) fixed")
+
+
 func fixIdioms*(path, source: string): Fix =
   ## Rewrite Nim source so each idiom with one mechanical fix holds; report each rewrite.
   ##   `chain` traces each report through lines earlier fixers moved, to source as given.
   ##   Brackets merge after rank orders blocks, so merged statement takes first rank's place.
   result.source = source
-  for fixer in [fixReturnResult, fixImports, fixConsolidations, fixBindings, fixStrictFuncs]:
-    result = result.chain(fixer(path, result.source))
+  let fixers = [
+    fixReturnResult, fixImports, fixConsolidations, fixBindings, fixStrictFuncs, fixLists,
+  ]
+  for fixer in fixers: result = result.chain(fixer(path, result.source))
 
 
 func checkMachinePaths*(path, source: string): seq[Finding] =
