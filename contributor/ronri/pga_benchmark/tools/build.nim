@@ -69,6 +69,8 @@ const
     ## Entry reaching every measurand; its cache is what inspect reads.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache, compiled per algebra for its catalogue.
+  ENTRY_FIND = "src/pga_benchmark/pages/find.nim"
+    ## Script of docket's search box, compiled to JavaScript for page.
   FLAGS = "-d:release"
     ## Build flags every measured build carries; documents name them.
   CONFIGS = [("rga4d", 4, false), ("cga5d", 5, true), ("rga3d", 3, false), ("cga4d", 4, true)]
@@ -493,6 +495,17 @@ proc publications(): JsonNode =
   if fileExists(PATH_PUBLICATIONS): readDocument(PATH_PUBLICATIONS) else: newJObject()
 
 
+proc compileScript(entry: string): string =
+  ## Compile page script from Nim to JavaScript under `FLAGS`, and read it.
+  ##   Script lands inside `<script>`, so text closing that element would break page.
+  let output = BUILD / entry.splitFile.name & ".js"
+  createDir BUILD
+  run("nim", ["js", "--hints:off", FLAGS, "--out:" & output, entry])
+  result = readFile(output)
+  if "</script" in result.toLowerAscii:
+    raise newException(ValueError, "Script closes its element; got `" & output & "`.")
+
+
 proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
   ## Build every page from committed files: docket, marginalia, then one per proposal.
 
@@ -547,7 +560,7 @@ proc builtPages(faces: Table[string, string]): OrderedTable[string, string] =
     overlays.add overlay
   result["docket"] = assemble(text_shell, "PGA Gap Docket",
     docketBody(sheets, readDocument(PATH_DOCKET), overlays, pin,
-      linksHtml(names, published, "docket")), faces)
+      linksHtml(names, published, "docket"), compileScript(ENTRY_FIND)), faces)
   var changes_evaluated: seq[ChangeEvaluated]
   for (name, change) in changes:
     changes_evaluated.add ChangeEvaluated(name: name, change: change,

@@ -1369,11 +1369,11 @@ suite "Internal: Pages":
           "functions": {"∧(M,M)": {"total": {"multiplies": 81}}}},
         measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
       ids = %*{"schema": 1, "kind": "docket", "next": 8, "ids": {"rga4d/wedge": "G007"}}
-    check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "")  # shown beside symbol
+    check "G007 · ∧" in docketBody([sheet], ids, [], "bd6b23c590d7", "", "")  # shown beside symbol
 
   test "docket measures typed row against reference, general row against multivector bound":
     let
-      body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+      body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
     check "library 81 multiplies, reference 12, multivector lower bound 54\"" in body  # typed
     check "library 81 multiplies, multivector lower bound 54\"" in body  # general, no tick
     check ">×6.75<" in body and ">×1.50<" in body  # each over what it is measured against
@@ -1384,7 +1384,7 @@ suite "Internal: Pages":
       runs = %*{"wedge_point_point": {
         "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
         "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
-      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "", "")
     check ">×3.00<" in body  # median of 3.00, 2.00 and 3.67; ratio of medians reads 2.75
     check "runs ×3.00 ×2.00 ×3.67" in body  # each run named, in run order
     check body.count("<s style=") == 3  # one tick for each run
@@ -1394,7 +1394,7 @@ suite "Internal: Pages":
       runs = %*{"wedge": {
         "library": {"ns_median": 8.5, "nan_share": 0.0, "ns_runs": [8.0, 9.0]},
         "dense": {"ns_median": 3.5, "nan_share": 0.0, "ns_runs": [4.0, 3.0]}}}
-      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "", "")
     check "library 8.5 ns, dense form 3.5 ns" in body  # general row names what it times against
     check ">×2.50<" in body and body.count("<s style=") == 2  # median of 2.00 and 3.00, two ticks
 
@@ -1403,7 +1403,7 @@ suite "Internal: Pages":
       runs = %*{"wedge_point_point": {
         "library": {"ns_median": 11.0, "nan_share": 0.0, "ns_runs": [12.0, 10.0, 11.0]},
         "reference": {"ns_median": 4.0, "nan_share": 0.0, "ns_runs": [4.0, 5.0, 3.0]}}}
-      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "")
+      body = docketBody([sheetDocket(81, 12, runs)], ids_docket, [], "bd6b23c590d7", "", "")
 
     func tagOf(body, measurand: string): string =
       ## Read opening tag of row naming measurand.
@@ -1429,13 +1429,19 @@ suite "Internal: Pages":
     check "<option value=\"wedge\" class=\"in-rga4d\">wedge ∧</option>" in body  # symbol beside
 
   test "search box finds row by its words, and shell hides row script marks unfound":
-    const shell_html = staticRead("../pages/shell.html")
-    let body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    const
+      shell_html = staticRead("../pages/shell.html")
+      find_source = staticRead("../src/pga_benchmark/pages/find.nim")
+    let
+      sheets = [sheetDocket(81, 12, %*{})]
+      body = docketBody(sheets, ids_docket, [], "bd6b23c590d7", "", "filter()")
+      bare = docketBody(sheets, ids_docket, [], "bd6b23c590d7", "", "")
     check "<input type=\"search\" id=\"find\"" in body and body.count("<script>") == 1  # one
+    check "<script>filter()</script>" in body and "<script>" notin bare  # as driver passes it
     check "data-find=\"wedge_point_point g002 ∧ wedge point point\"" in body  # id, kinds, lower
     check "data-find=\"wedge g001 ∧ wedge\"" in body  # general row: no operand kind
-    check "classList.toggle(\"unfound\"" in body and "details.row.unfound { display: none; }" in
-      shell_html  # script marks, shell hides
+    check "classList.add(\"unfound\")" in find_source and
+      "details.row.unfound { display: none; }" in shell_html  # script marks, shell hides
 
   test "typed id splits at longest operand kind, one kind per operand":
     let
@@ -1446,13 +1452,13 @@ suite "Internal: Pages":
             "arity": 2}},
           "functions": {}},
         measurements_runtime: %*{"taken": {"date": "d", "machine": "m"}, "measurands": {}})
-      body = docketBody([sheet], %*{"ids": {}}, [], "bd6b23c590d7", "")
+      body = docketBody([sheet], %*{"ids": {}}, [], "bd6b23c590d7", "", "")
     check "operation-bulk_flat operand-round_point" in body  # round point, never point
     check "operation-wedge operand-round_point operand-dipole" in body  # both, in id order
     check "operand-point" notin body and "operation-bulk_flat_round" notin body  # no half kind
 
   test "count over reference that spends none reads its excess, never infinite ratio":
-    let body = docketBody([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "")
+    let body = docketBody([sheetDocket(81, 0, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
     check ">81 over 0<" in body and "class=\"open\"" in body  # bar runs to axis end
     check "×inf" notin body and "×nan" notin body  # no ratio divides by zero
 

@@ -98,7 +98,7 @@ src/pga_benchmark/notes.nim        notes on library source, anchored by quote
 src/pga_benchmark/proposals.nim    proposal directories: record, change, claims
 src/pga_benchmark/evaluations.nim  try change or proposal on copy of library at pin
 src/pga_benchmark/head.nim         hold pin to head, and every file and page to pin
-src/pga_benchmark/pages/           shell assembly, and one renderer per page kind
+src/pga_benchmark/pages/           shell assembly, one renderer per page kind, docket's search
 tools/build.nim                    driver verbs
 tests/                             suites, and the testament stubs that run them
 ```

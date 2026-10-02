@@ -12,7 +12,8 @@
 ##   Rows carry CSS hooks rather than script: class per filter, custom property per sort key.
 ##     Dropdowns name them, and `:has()` rules body generates read chosen option, so one list
 ##     here spells option and rule alike. Search box is only script: row hides while its words
-##     lack any word typed, as Architect chose at cost of script.
+##     lack any word typed, as Architect chose at cost of script. Script is Nim, `find.nim`,
+##     which driver compiles to JavaScript and passes in; rule it applies is `search.isFound`.
 ##
 ##   Cost: every row renders once per page whatever filter reader picks; 150 rows of four
 ##     algebras stay under one megabyte.
@@ -583,18 +584,6 @@ counts, dense form for time</span><span class="mark-origin typed-only">×1: refe
 rows; multivector lower bound and dense form on general ones</span><span class="mark-tick
 typed-only">multivector lower bound</span><span class="mark-runs">each run</span></div>"""
     ## Legend of deviation bars, same for every algebra.
-  FIND = """<script>
-const find = document.getElementById("find");
-const filter = () => {
-  const words = find.value.toLowerCase().split(/\s+/).filter(Boolean);
-  for (const row of document.querySelectorAll("details.row"))
-    row.classList.toggle("unfound", !words.every((word) => row.dataset.find.includes(word)));
-};
-find.addEventListener("input", filter);
-filter();
-</script>"""
-    ## Script of search box, page's only one: row shows while its words hold every word typed.
-    ##   Runs once at load too, since browser may restore typed text.
   METHOD = """<section class="block"><details><summary>How each figure is computed</summary>
 <pre class="formula">W = sizeof(Multivector) = 2^D × 8 bytes
 
@@ -630,9 +619,10 @@ func docketBody*(
   sheets: openArray[Sheet];
   ids: JsonNode;
   overlays: openArray[Overlay];
-  pin, links: string;
+  pin, links, script: string;
 ): string =
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
+  ##   `script` is search box's JavaScript, compiled from `find.nim`; empty leaves page without.
 
   func keysOf(row: Row): array[SORTS.len, float] =
     ## Read row's key under every sort, in order of `SORTS`.
@@ -800,4 +790,5 @@ func docketBody*(
       for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
       result.add rowHtml(row, axis, ranks_row)
     result.add "</div></section>"
-  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>" & FIND
+  result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"
+  if script.len > 0: result.add "<script>" & script & "</script>"
