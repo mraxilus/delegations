@@ -61,22 +61,22 @@ suite "Plan":
   test "project gains driven checks by carrying that verb, read from its own driver":
     # Nothing lists which project is driven either: koch reads driver's own dispatch, so
     #   verb arriving is what selects project, exactly as manifest is for type check.
-    const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
+    const driver = ALPHA_DIRECTORY & "/tools/build.nim"
     check goodTree().verbDirectories(DIRECTORIES, "drive").len == 0  # fixture carries no driver
-    let quiet = goodTree().with(entry(DRIVER,
+    let quiet = goodTree().with(entry(driver,
       "case paramStr(1)\n" &
       "of \"web\": web()\n" &
       "else:\n"))
     check quiet.verbDirectories(DIRECTORIES, "drive").len == 0  # driver without verb drives nothing
     check quiet.verbDirectories(DIRECTORIES, "web") == @[ALPHA_DIRECTORY]
-    let driven = goodTree().with(entry(DRIVER,
+    let driven = goodTree().with(entry(driver,
       "case paramStr(1)\n" &
       "of \"web\": web()\n" &
       "of \"drive\": drive()\n" &
       "else:\n"))
     check driven.verbDirectories(DIRECTORIES, "drive") == @[ALPHA_DIRECTORY]
     # Verb named past dispatch's `else` is another case's, never this project's.
-    let after = goodTree().with(entry(DRIVER,
+    let after = goodTree().with(entry(driver,
       "case paramStr(1)\n" &
       "of \"web\": web()\n" &
       "else:\n" &
@@ -84,9 +84,9 @@ suite "Plan":
     check after.verbDirectories(DIRECTORIES, "drive").len == 0
 
   test "driven set filters what plan already selected, so it inherits every scoping":
-    const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
+    const driver = ALPHA_DIRECTORY & "/tools/build.nim"
     let
-      tree = goodTree().with(entry(DRIVER,
+      tree = goodTree().with(entry(driver,
         "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
       selected = tree.drivenOnly(tree.jobs([ALPHA_DIRECTORY & "/src/alpha.nim"]))
     check selected.len == 1

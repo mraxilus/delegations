@@ -29,11 +29,11 @@ suite "Compilers":
 
   test "digest is read from sidecar, and anything that is not one reads as nothing":
     # What nim-lang.org serves, verbatim: `sha256sum` output, digest then two spaces.
-    const REAL = "7df1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638" &
+    const served = "7df1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638" &
       "  nim-2.2.12-linux_x64.tar.xz\n"
-    check pinnedDigest(REAL) ==
+    check pinnedDigest(served) ==
       "7df1611449a6842af69322aa2c1206942982650a5f6bc0d37bc8ec109932f638"
-    check pinnedDigest(REAL).len == 64
+    check pinnedDigest(served).len == 64
     # Proven by breaking it: text that is not digest reads as none rather than as digest
     #   that cannot match, since mismatch and nothing published are different reports.
     check pinnedDigest("").len == 0  # nothing served

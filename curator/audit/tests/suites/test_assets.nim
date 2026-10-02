@@ -18,17 +18,17 @@ suite "Assets":
   test "asset is stored under its digest, never under its name":
     # Two projects asking for one face share one entry by construction, and moved pin is
     #   different entry rather than stale one.
-    const FACE = "noto-sans-latin-400-normal.woff2"
-    let digest = FACE.declaredDigest
-    check pathOf("/s", FACE) == "/s" / digest
-    check FACE notin pathOf("/s", FACE)  # name is nowhere in path
+    const face = "noto-sans-latin-400-normal.woff2"
+    let digest = face.declaredDigest
+    check pathOf("/s", face) == "/s" / digest
+    check face notin pathOf("/s", face)  # name is nowhere in path
     check pathOf("/s", "not-a-face.woff2").len == 0  # undeclared face has no path
 
   test "address carries version, so bytes and version move together or neither":
-    const FACE = "noto-serif-latin-600-normal.woff2"
-    let address = FACE.addressOf
+    const face = "noto-serif-latin-600-normal.woff2"
+    let address = face.addressOf
     check address.startsWith("https://")
-    check address.endsWith(FACE)
+    check address.endsWith(face)
     check "@fontsource/noto-serif@" in address  # package and its version, in address
     check addressOf("not-a-face.woff2").len == 0
 

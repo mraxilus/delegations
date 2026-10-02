@@ -31,11 +31,11 @@ suite "Faces":
     check checkFaces("pages/shell.html", KEEPING).len == 0
 
   test "linking font host is failing to ship face":
-    const LINKED = """
+    const linked = """
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces">
 <style> body { font-family: "Noto Sans", sans-serif; } </style>
 """
-    let found = checkFaces("mockups/wholecloth.html", LINKED)
+    let found = checkFaces("mockups/wholecloth.html", linked)
     check found.len == 1
     check found[0].line == 1  # names line, so page opens at link
     check found[0].message.endsWith("got `fonts.googleapis.com`.")
@@ -44,10 +44,10 @@ suite "Faces":
         host & "/x\";\n").len == 1
 
   test "stack leading with family X.8 does not name is reported, by that family":
-    const OUTSIDE = """
+    const outside = """
   body { font-family: "Fraunces", Georgia, serif; }
 """
-    let found = checkFaces("p.html", OUTSIDE)
+    let found = checkFaces("p.html", outside)
     check found.len >= 1
     check found[0].message.endsWith("got `Fraunces`.")
 
@@ -76,11 +76,11 @@ suite "Faces":
     check firstFamily("").len == 0
 
   test "heading taking family other than serif is reported":
-    const SANS_HEADING = """
+    const sans_heading = """
   :root { --sans: "Noto Sans", sans-serif; --serif: "Noto Serif", serif; }
   h1 { font-family: var(--sans); }
 """
-    let found = checkFaces("p.html", SANS_HEADING)
+    let found = checkFaces("p.html", sans_heading)
     check found.len == 1
     check found[0].message.endsWith("got `Noto Sans`.")
     # Serif heading passes, and so does non-heading element taking sans.
@@ -118,31 +118,31 @@ suite "Faces":
     check inside.len == 0
 
   test "one level of var() is resolved, and unresolvable var is left alone":
-    const PROPS = [("--sans", "\"Noto Sans\", Arial"), ("--x", "var(--y)")]
-    check resolved("var(--sans)", PROPS) == "\"Noto Sans\", Arial"
-    check resolved("var(--absent)", PROPS) == "var(--absent)"  # named nothing here
-    check resolved("\"Noto Sans\"", PROPS) == "\"Noto Sans\""  # literal passes through
-    check resolved("var(--x)", PROPS) == "var(--y)"  # one level, never chased
+    const properties = [("--sans", "\"Noto Sans\", Arial"), ("--x", "var(--y)")]
+    check resolved("var(--sans)", properties) == "\"Noto Sans\", Arial"
+    check resolved("var(--absent)", properties) == "var(--absent)"  # named nothing here
+    check resolved("\"Noto Sans\"", properties) == "\"Noto Sans\""  # literal passes through
+    check resolved("var(--x)", properties) == "var(--y)"  # one level, never chased
 
   test "Commit Mono without its ligatures is face half used":
-    const NO_LIGATURES = """
+    const unligated = """
   :root { --mono: "Commit Mono", monospace; }
   code { font-family: var(--mono); }
 """
-    let found = checkFaces("p.html", NO_LIGATURES)
+    let found = checkFaces("p.html", unligated)
     check found.len == 1
     check found[0].line == 0  # whole-file finding: property may go anywhere
     check MONO in found[0].message
     # Either property satisfies it, since either can carry `calt`.
     for property in LIGATURES:
-      check checkFaces("p.html", NO_LIGATURES & "  code { " & property & ": x; }\n").len == 0
+      check checkFaces("p.html", unligated & "  code { " & property & ": x; }\n").len == 0
     # Page naming no Commit Mono is never asked for ligatures.
     check checkFaces("p.html", "  body { font-family: \"Noto Sans\", serif; }\n").len == 0
 
   test "property that is not stack is not read as one, whatever commas it holds":
     # `--ease` and `--surface` hold commas and name no family. Property is checked where
     #   `var()` reaches it from declaration, never on its own.
-    const PALETTE = """
+    const palette = """
   :root {
     --ease: cubic-bezier(0.215, 0.61, 0.355, 1);
     --surface: rgba(22, 27, 34, 0.82);
@@ -150,15 +150,15 @@ suite "Faces":
   }
   body { font-family: var(--sans); }
 """
-    check checkFaces("p.html", PALETTE).len == 0
+    check checkFaces("p.html", palette).len == 0
 
   test "line carrying two properties yields both, not first alone":
     # `:root { --sans: ...; --serif: ...; }` is one line and two stacks. Reading first alone
     #   leaves second unresolved, so `var(--serif)` reads as family nobody names, and page
     #   declaring its stack correctly becomes finding.
-    const ONE_LINE =
+    const one_line =
       """  :root { --mono: "Commit Mono", monospace; --serif: "Noto Serif", serif; }"""
-    let held = ONE_LINE.propertyValues
+    let held = one_line.propertyValues
     check held.len == 2
     check held[0][0] == "--mono"
     check held[1][0] == "--serif"
