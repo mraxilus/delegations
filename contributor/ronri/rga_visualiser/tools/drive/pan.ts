@@ -140,6 +140,65 @@ export async function drivePan(page: Page): Promise<void> {
   );
 }
 
+/** Drive right-button drag while selection stands, and assert it keeps what it took under cursor.
+ *
+ *  Vertical stretches from pivot's row and horizontal orbits, so point press took stays under
+ *  cursor. Suite holds it by projection; this holds page's wiring: press takes point, and
+ *  step reads canvas size and selection's reach.
+ *  Pressed where nothing stands, since right press on object arms drag instead.
+ */
+export async function driveStretch(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await settleHome(page);
+  await page.evaluate(() => nimSelectOnly(nimSceneHandles()[0] ?? 0));
+  await settleCamera(page); // Let framing ease finish before moving by hand.
+  const size = await page.evaluate(() => ({
+    width: document.getElementById('gl')?.clientWidth ?? 0,
+    height: document.getElementById('gl')?.clientHeight ?? 0,
+  }));
+  const row = size.height / 2;
+  const column = size.width / 2;
+
+  // Away from pivot's row on either side, off middle column so orbit takes part.
+  const drags = [
+    {
+      side: 'above',
+      press: { x: column + 60, y: row - 90 },
+      release: { x: column + 20, y: row - 220 },
+    },
+    {
+      side: 'below',
+      press: { x: column - 50, y: row + 90 },
+      release: { x: column - 90, y: row + 210 },
+    },
+  ];
+  for (const { side, press, release } of drags) {
+    const is_open = await page.evaluate(({ x, y }) => {
+      nimUpdateCursor(x, y);
+      nimUpdateHover(window.innerWidth, window.innerHeight);
+      return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+    }, press);
+    const before = await readCamera(page);
+    await page.mouse.move(press.x, press.y);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(release.x, release.y, { steps: 12 });
+    await page.mouse.up({ button: 'right' });
+    const held = await page.evaluate(
+      ({ width, height }) => Array.from(nimCameraPanHeldAt(width, height)), size,
+    );
+    await settleCamera(page);
+    const after = await readCamera(page);
+    const slip = Math.hypot((held[0] ?? 0) - release.x, (held[1] ?? 0) - release.y);
+    report(
+      `a right drag with a selection, ${side} the pivot and away, keeps its point under the cursor`,
+      is_open && (held[2] ?? 0) > 0 && slip < 0.5 && after.distance < before.distance &&
+        spanOf(before.pivot, after.pivot) < 1e-4,
+      `pressed on ${is_open ? 'open sky' : 'an object'}; point held ${slip.toFixed(3)} px off ` +
+        `the cursor, separation ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
+    );
+  }
+}
+
 /** Drive zoom low in frame, and assert eye follows pointer's own ray.
  *
  *  Free flight has no ground answer and no level one: ray under pointer is what carries

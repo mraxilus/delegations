@@ -431,6 +431,7 @@ var
   FLAT_LABEL = initFlatFloats(6)
   FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
+  FLAT_PAN_HELD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3*(ord(DragChoice.high) + 1))
   FLAT_MENU_CENTRE = initFlatFloats(2)
   FLAT_VIEW: seq[float32] = newSeq[float32](16)
@@ -1294,6 +1295,21 @@ proc nimCameraPanAt(
     if is_grabbed: INTERACTION_PAGE.depth_pan else: CAMERA_PAGE.distance,
     if is_grabbed: INTERACTION_PAGE.point_pan else: none(Position),
     TWEEN_CAMERA.reachAimed(CAMERA_PAGE.pivot),
+  )
+
+
+proc nimCameraPanHeldAt(width, height: cint): FlatBuffer {.exportc.} =
+  ## Project point right drag with selection holds onto screen pixels, as
+  ## `[x, y, is_in_front]`.
+  ##   For checks, which ask whether drag kept it under pointer; see `nimCameraPanGrab`.
+  ##   Zeros where none is held, as in free flight.
+  if INTERACTION_PAGE.point_pan.isNone: return FLAT_PAN_HELD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
+  let screen = projectToScreen(
+    CAMERA_PAGE.initMatrixViewProjection(float(width)/float(height)), int(width), int(height),
+    INTERACTION_PAGE.point_pan.get,
+  )
+  FLAT_PAN_HELD.fill3(
+    float32(screen.x), float32(screen.y), (if screen.isInFront: 1.0'f32 else: 0.0'f32)
   )
 
 
