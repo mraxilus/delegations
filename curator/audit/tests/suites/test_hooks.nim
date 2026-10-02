@@ -3,8 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/hooks
-import ../../src/findings
+import ../../src/[findings, hooks]
 
 
 const
@@ -64,7 +63,7 @@ suite "Hooks":
     check checkBash(BRANCH, "git push --force", false).messages[0].contains("XI.2")
     check checkBash(BRANCH, "git push -f origin x", false).len == 1
     check checkBash(BRANCH, "git push --no-verify -u origin x", false).messages[0].contains(
-      "duty 3"
+      "duty 3",
     )  # pre-push hook skipped
     check checkBash(BRANCH, "git commit --no-verify -m x", false).len == 0  # push alone
     check checkBash(BRANCH, "git commit --amend --no-edit", true).len == 1  # pushed head
@@ -91,7 +90,12 @@ suite "Hooks":
     check checkBody("mcp__github__add_issue_comment", BRANCH, "", long, [], false)
       .messages.anyIt("25 words" in it)
     let issue = checkBody(
-      "mcp__github__issue_write", BRANCH, "fix(x): do thing", good, ["bug"], true
+      "mcp__github__issue_write",
+      BRANCH,
+      "fix(x): do thing",
+      good,
+      ["bug"],
+      true,
     ).messages
     check issue.anyIt("claim" in it) and issue.anyIt("role label" in it)
     check checkBody("mcp__github__issue_write", BRANCH, "A claim", good, ["curator"], true).len == 0

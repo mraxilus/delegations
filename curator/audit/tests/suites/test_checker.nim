@@ -59,7 +59,7 @@ suite "Checker":
     let alone = ["curator/audit/src/form.nim"]
     check checkSuites(alone).len == 1
     check checkSuites(alone)[0].message.endsWith(
-      "`curator/audit/tests/suites/test_form.nim`; got nothing."
+      "`curator/audit/tests/suites/test_form.nim`; got nothing.",
     )
     check checkSuites(["koch.nim", "README.md"]).len == 0  # rule covers check modules only
     check moduleOf("curator/audit/src/form.nim") == "form"

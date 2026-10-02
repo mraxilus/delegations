@@ -80,7 +80,8 @@ func checkHeadings(path, source: string): seq[Finding] =
       let text = line.headingText
       if line.hasIsoDate:
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Section is headed by date; record describes what is and log holds when " &
             "(provenance guide); got `" & line & "`.",
         )
@@ -95,7 +96,8 @@ func checkHeadings(path, source: string): seq[Finding] =
       if s.len > 0 and not s.startsWith("|"):
         let mark = if lines[i + 1].strip[0] == '=': "# " else: "## "
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Heading is underlined, which no reader here sees; write `" & mark & s & "`.",
         )
   if open_at > 0 and open_at != last_at:
@@ -111,7 +113,8 @@ func checkLength(path, source: string): seq[Finding] =
   let count = source.count('\n') + (if source.len > 0 and source[^1] != '\n': 1 else: 0)
   if count > RECORD_LINES:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Record over " & $RECORD_LINES & " lines; prune to log and set `" & PRUNED &
         "` row (provenance guide); got " & $count & ".",
     )
@@ -131,7 +134,8 @@ func checkSections*(path, source: string): seq[Finding] =
       count = stop - start - 1
     if count > SECTION_LINES:
       result.add finding(
-        path, start + 1,
+        path,
+        start + 1,
         "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
           "guide); got " & $count & ".",
       )
@@ -153,7 +157,8 @@ func checkPrunedRow(path, source: string): seq[Finding] =
   let value = source.prunedOf
   if value.len > 0 and not value.isCommitId:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "`" & PRUNED & "` must name commit as 7 to 40 hex digits; got `" & value & "`.",
     )
 
@@ -171,9 +176,10 @@ func checkCounts*(path, source: string): seq[Finding] =
     let words = prose.splitWhitespace
     for k in 0 ..< words.len - 1:
       let next = words[k + 1].strip(chars = {',', '.', ';', ':', ')'})
-      if words[k].allCharsInSet({'0'..'9'}) and next in COUNTED:
+      if words[k].allCharsInSet({'0' .. '9'}) and next in COUNTED:
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Count is never number in prose; name command that counts (provenance guide); got `" &
             words[k] & " " & next & "`.",
         )

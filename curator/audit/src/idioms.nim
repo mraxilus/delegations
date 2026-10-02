@@ -167,7 +167,7 @@ func firstWord(text: string): string =
   ## Read leading identifier of stripped text.
   let s = text.strip
   var k = 0
-  while k < s.len and s[k] in {'a'..'z', 'A'..'Z', '0'..'9', '_'}: inc k
+  while k < s.len and s[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
   s[0 ..< k]
 
 
@@ -217,13 +217,15 @@ func checkImports(path: string, code: seq[string]): seq[Finding] =
     let items = span.target.bracketItems
     if items != items.sorted:
       result.add finding(
-        path, span.first + 1,
+        path,
+        span.first + 1,
         "Bracket import is alphabetised (X.5); got `" & items.join(", ") & "`.",
       )
     let r = span.target.importRank
     if r < rank:
       result.add finding(
-        path, span.first + 1,
+        path,
+        span.first + 1,
         "Standard library comes first, then packages, then local modules (X.5); got `" &
           span.target.split('[')[0] & "`.",
       )
@@ -258,7 +260,8 @@ func checkBindings(path: string, code: seq[string]): seq[Finding] =
   ## Report run of consecutive single bindings of one keyword at one indent, once per run.
   for run in code.bindingRuns:
     result.add finding(
-      path, run.first + 1,
+      path,
+      run.first + 1,
       "Consecutive single bindings share one keyword (X.5); got `" & run.keyword & "` twice.",
     )
 
@@ -277,14 +280,16 @@ func pragmaNames(code: string): seq[string] =
     at = close + 2
 
 
-func checkPragmas(path: string, lines, code: seq[string]): seq[Finding] =
+func checkPragmas(path: string; lines, code: seq[string]): seq[Finding] =
   ## Report `{.used.}` without comment, and `{.push.}` over block holding no foreign binding.
   for i, c in code:
     let s = c.strip
     if "used" in c.pragmaNames and s != "{.used.}" and
         lines[i].find('#', c.strip(leading = false).len) < 0:
       result.add finding(
-        path, i + 1, "`{.used.}` carries comment naming its consumer (STYLE.md §2); got none."
+        path,
+        i + 1,
+        "`{.used.}` carries comment naming its consumer (STYLE.md §2); got none.",
       )
     if s.startsWith("{.push"):
       var
@@ -296,13 +301,15 @@ func checkPragmas(path: string, lines, code: seq[string]): seq[Finding] =
         inc j
       if not FOREIGN_MARKS.anyIt(it in text):
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "`{.push.}` stands only over foreign bindings, which `{.pop.}` closes (STYLE.md §2); " &
             "got `" & s & "`.",
         )
     if s == RETURN_RESULT:
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Bare `return` exits early with `result`, and routine ends on value itself " &
           "(STYLE.md §5); got `return result`.",
       )
@@ -332,11 +339,13 @@ func isSeeded(code: string): bool =
   "initRand(" in code or (at >= 0 and at + 10 < code.len and code[at + 10] != ')')
 
 
-func checkTest(path, source: string, lines, code: seq[string]): seq[Finding] =
+func checkTest(path, source: string; lines, code: seq[string]): seq[Finding] =
   ## Report unseeded random suite, stub header breaking §6, and `echo` of debug shape.
   if code.isRandomImported and not code.join("\n").isSeeded:
     result.add finding(
-      path, 0, "Suite seeds `std/random`, as `randomize(0)` does (STYLE.md §6); got no seed."
+      path,
+      0,
+      "Suite seeds `std/random`, as `randomize(0)` does (STYLE.md §6); got no seed.",
     )
   let
     parts = path.split('/')
@@ -344,9 +353,7 @@ func checkTest(path, source: string, lines, code: seq[string]): seq[Finding] =
   if is_stub:
     let open = source.find(TESTAMENT_HEADER)
     if open < 0:
-      result.add finding(
-        path, 0, "Test stub carries testament header (STYLE.md §6); got none."
-      )
+      result.add finding(path, 0, "Test stub carries testament header (STYLE.md §6); got none.")
     else:
       let
         close = source.find(LONG_STRING, open + TESTAMENT_HEADER.len)
@@ -355,21 +362,24 @@ func checkTest(path, source: string, lines, code: seq[string]): seq[Finding] =
         let s = line.strip
         if s.startsWith("cmd:") and " -r" in s:
           result.add finding(
-            path, 0,
+            path,
+            0,
             "Stub `cmd` leaves out `-r`, since testament runs binary itself (STYLE.md §6); " &
               "got `-r`.",
           )
         for key in STUB_KEYS:
           if s.startsWith(key & ":"):
             result.add finding(
-              path, 0,
+              path,
+              0,
               "Stub leaves out keys `testament pattern` never reads (STYLE.md §6); got `" & key &
                 "`.",
             )
   for i, c in code:
     if c.firstWord == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Test leaves no debug output; label report, or print under failing condition " &
           "(VIII.5); got `" & c.strip & "`.",
       )
@@ -390,11 +400,14 @@ func checkIdioms*(path, source: string): seq[Finding] =
   let (strict_at, import_at) = (lines.find(STRICT_FUNCS), code.firstImport)
   if strict_at < 0:
     result.add finding(
-      path, 0, "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none."
+      path,
+      0,
+      "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got none.",
     )
   elif import_at >= 0 and strict_at > import_at:
     result.add finding(
-      path, strict_at + 1,
+      path,
+      strict_at + 1,
       "Module carries `" & STRICT_FUNCS & "` before its imports (STYLE.md §2); got it after.",
     )
   result.add checkImports(path, code)
@@ -403,7 +416,7 @@ func checkIdioms*(path, source: string): seq[Finding] =
   if "/tests/" in "/" & path: result.add checkTest(path, source, lines, code)
 
 
-func placeOf(lines, code: seq[string], i: int): ReturnPlace =
+func placeOf(lines, code: seq[string]; i: int): ReturnPlace =
   ## Read where `return result` on line `i` stands, from line opening its block.
   ##   Opener is nearest code line above at smaller indent. `:` opens branch; `=` opens
   ##   routine body where routine keyword stands on that line, or on line opening signature
@@ -631,7 +644,7 @@ func depthOf(code: string): int =
     elif c in CLOSERS: dec result
 
 
-func continuationOf(run: BindingRun, lines, code: seq[string]): int =
+func continuationOf(run: BindingRun; lines, code: seq[string]): int =
   ## Find last line continuing run's last binding: open bracket, deeper indent, doc under it.
   ##   Blank line counts only where line after it continues too.
   result = run.last
@@ -823,7 +836,8 @@ func checkMachinePaths*(path, source: string): seq[Finding] =
     for prefix in MACHINE_PATHS:
       if prefix in line:
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Source names path of one machine; take location from environment " &
             "(CONTRIBUTOR.md, System); got `" & prefix & "`.",
         )
@@ -843,6 +857,7 @@ func checkTsconfig*(path, config: string): seq[Finding] =
   for flag in TYPESCRIPT_FLAGS:
     if not config.isFlagSet(flag):
       result.add finding(
-        path, 0,
+        path,
+        0,
         "`tsconfig.json` sets `" & flag & "` to `true` (CONTRIBUTOR.md, TypeScript); got none.",
       )

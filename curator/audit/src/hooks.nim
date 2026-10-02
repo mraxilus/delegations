@@ -143,29 +143,32 @@ func commandDirectory*(command, directory: string): string =
     return
 
 
-func checkBash*(branch, command: string, is_head_pushed: bool): seq[Finding] =
+func checkBash*(branch, command: string; is_head_pushed: bool): seq[Finding] =
   ## Report commit or push on `main` or outside grammar, and rewrite of pushed history.
   for arguments in command.gitCommands:
     if arguments.len == 0: continue
     let sub = arguments[0]
     if sub in ["commit", "push"] and (branch == MAIN or branch.parseBranch.isNone):
       result.add finding(
-        "", 0,
-        "Never commit to `main`; push to branch inside grammar (CLAUDE.md); got `" & branch &
-          "`.",
+        "",
+        0,
+        "Never commit to `main`; push to branch inside grammar (CLAUDE.md); got `" & branch & "`.",
       )
     let is_forced = arguments.anyIt(it == "--force" or it == "-f" or it.startsWith("--force-"))
     if sub == "push" and is_forced:
       result.add finding("", 0, "Never rewrite pushed history (XI.2); got `git push --force`.")
     if sub == "push" and "--no-verify" in arguments:
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Never push past pre-push hook; `koch check` holds what reddens contributor project " &
           "(CURATOR.md, duty 3); got `git push --no-verify`.",
       )
     if is_head_pushed and ((sub == "commit" and "--amend" in arguments) or sub == "rebase"):
       result.add finding(
-        "", 0, "Never rewrite pushed history (XI.2); HEAD is on remote; got `git " & sub & "`."
+        "",
+        0,
+        "Never rewrite pushed history (XI.2); HEAD is on remote; got `git " & sub & "`.",
       )
 
 
@@ -190,7 +193,7 @@ func outsideComments(text: string): string =
 
 
 func checkBody*(
-    tool, branch, title, body: string, labels: openArray[string], is_create: bool
+  tool, branch, title, body: string; labels: openArray[string]; is_create: bool
 ): seq[Finding] =
   ## Report post that breaks what every post keeps, before it lands.
   let parsed = branch.parseBranch
@@ -198,7 +201,9 @@ func checkBody*(
     let expected = ROLE_KEY & " " & parsed.get.roleName
     if body.roleLine != expected:
       result.add finding(
-        "", 0, "Post must open with `" & expected & "`; got `" & body.roleLine.shortened & "`."
+        "",
+        0,
+        "Post must open with `" & expected & "`; got `" & body.roleLine.shortened & "`.",
       )
   if tool notin PULL_TOOLS and not body.strip.endsWith(FOOTER):
     result.add finding("", 0, "Post must end with footer `" & FOOTER & "`; got no footer.")
@@ -206,11 +211,14 @@ func checkBody*(
   if tool == "mcp__github__issue_write" and is_create:
     if title.parseSubject.isSome:
       result.add finding(
-        "", 0, "Issue title is claim, never `type(scope):` subject; got `" & title & "`."
+        "",
+        0,
+        "Issue title is claim, never `type(scope):` subject; got `" & title & "`.",
       )
     if not labels.anyIt(it.isRoleString):
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Issue must carry one role label, copied from grammar; got `" & labels.join(", ") & "`.",
       )
   if tool == "mcp__github__create_pull_request":
@@ -269,7 +277,9 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     parsed = branch.parseBranch
   if parsed.isSome and role_text != parsed.get.roleName:
     result.add finding(
-      "", 0, "Sign-off role must be `" & parsed.get.roleName & "`; got `" & role_text & "`."
+      "",
+      0,
+      "Sign-off role must be `" & parsed.get.roleName & "`; got `" & role_text & "`.",
     )
   let rows = after[starts[2] + 1 ..< starts[3]].join("\n").tableRows
   var
@@ -280,29 +290,31 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       result.add finding("", 0, "Sign-off row must hold five cells; got `" & $row.len & "`.")
       continue
     if row[0] != $(i + 1):
-      result.add finding(
-        "", 0, "Sign-off rows are numbered from 1 in order; got `" & row[0] & "`."
-      )
+      result.add finding("", 0, "Sign-off rows are numbered from 1 in order; got `" & row[0] & "`.")
     let
       marker = row[1].replace(SELECTOR, "")
       state = MARKERS.find(marker)
     if state < 0:
-      result.add finding(
-        "", 0, "Sign-off state must be one of ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "`."
-      )
+      result.add finding("", 0, "Sign-off state must be one of ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "`.")
     elif state < last:
       result.add finding(
-        "", 0, "Sign-off states sort ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "` after later state."
+        "",
+        0,
+        "Sign-off states sort ☑️ ✅ ⚠️ ⏸️ ⬜; got `" & row[1] & "` after later state.",
       )
     else: last = state
     if state == 1 and row[4].len == 0:
       result.add finding(
-        "", 0, "Sign-off ✅ row needs evidence; got empty cell in row " & row[0] & "."
+        "",
+        0,
+        "Sign-off ✅ row needs evidence; got empty cell in row " & row[0] & ".",
       )
     for n in row[2].carriedTags:
       if n < 1 or n > CARRIED_MAX:
         result.add finding(
-          "", 0, "Carried tag names item 1 to " & $CARRIED_MAX & "; got `" & $n & "`."
+          "",
+          0,
+          "Carried tag names item 1 to " & $CARRIED_MAX & "; got `" & $n & "`.",
         )
       elif n in seen:
         result.add finding("", 0, "Carried item tagged twice; got `" & $n & "`.")
@@ -312,7 +324,9 @@ func checkSignoff*(message, branch: string): seq[Finding] =
   for line in after[k .. ^1]:
     if line.strip.len > 0:
       result.add finding(
-        "", 0, "Nothing follows Next step of sign-off; got `" & line.shortened & "`."
+        "",
+        0,
+        "Nothing follows Next step of sign-off; got `" & line.shortened & "`.",
       )
   var prose: seq[string]
   for line in after:
@@ -336,14 +350,15 @@ func checkPush*(recorded, pushed_tree: string): seq[Finding] =
   ## Report push of tree `koch check` did not pass on.
   if recorded.strip != pushed_tree.strip:
     result.add finding(
-      "", 0,
+      "",
+      0,
       "`nim r koch check` must pass on exact commit pushed (CLAUDE.md); last green tree `" &
         recorded.strip & "`; got `" & pushed_tree.strip & "`.",
     )
 
 
 func checkMessage*(
-  branch, message: string, earlier: openArray[string], staged: openArray[string]
+  branch, message: string; earlier: openArray[string]; staged: openArray[string]
 ): seq[Finding] =
   ## Report commit breaking subject form, scope, ladder, body or record apart, before it lands.
   ##   Merge commit passes: git writes its subject, and commit check excludes merges upstream
@@ -365,7 +380,7 @@ func checkMessage*(
   result.add checkRecordCommit(subject, staged)
 
 
-func startContext*(branch, contributor, carried_heading: string, drift: seq[Finding]): string =
+func startContext*(branch, contributor, carried_heading: string; drift: seq[Finding]): string =
   ## Compose text `start` adds to context: role, read order, grammar warning, drift, list.
   let parsed = branch.parseBranch
   var lines: seq[string]
@@ -426,7 +441,8 @@ proc parseTurn*(transcript: string): Turn =
       case item{"type"}.getStr
       of "tool_use":
         result.calls.add Call(
-          name: item{"name"}.getStr, command: item{"input", "command"}.getStr,
+          name: item{"name"}.getStr,
+          command: item{"input", "command"}.getStr,
           has_body: item{"input", "body"} != nil,
         )
       of "text": text.add item{"text"}.getStr

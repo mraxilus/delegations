@@ -23,7 +23,7 @@ suite "Role":
     let long = "x".repeat(ECHO_MAX + 1).shortened
     check long.runeLen == ECHO_MAX + 1 and long.endsWith("…")  # cut marked
     check checkRole("curator/mend-it", "y".repeat(200), ["curator"])[0].message.endsWith(
-      "got `" & "y".repeat(ECHO_MAX) & "…`."
+      "got `" & "y".repeat(ECHO_MAX) & "…`.",
     )
 
   test "each branch arm names one role, and both halves demand it":

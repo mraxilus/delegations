@@ -51,7 +51,8 @@ func checkDuplicates*(documents: openArray[(string, string)]): seq[Finding] =
       if p.text.count(' ') + 1 < PARAGRAPH_WORDS: continue
       if p.text in first:
         result.add finding(
-          path, p.line,
+          path,
+          p.line,
           "Paragraph appears twice; write it once and point at it (duty 10); first at `" &
             first[p.text] & "`; got `" & p.text[0 ..< min(p.text.len, 60)] & "`.",
         )

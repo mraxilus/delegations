@@ -63,31 +63,33 @@ suite "Plan":
     #   verb arriving is what selects project, exactly as manifest is for type check.
     const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
     check goodTree().verbDirectories(DIRECTORIES, "drive").len == 0  # fixture carries no driver
-    let quiet = goodTree().with(entry(DRIVER,
-      "case paramStr(1)\n" &
-      "of \"web\": web()\n" &
-      "else:\n"))
+    let quiet = goodTree().with(
+      entry(DRIVER, "case paramStr(1)\n" & "of \"web\": web()\n" & "else:\n"),
+    )
     check quiet.verbDirectories(DIRECTORIES, "drive").len == 0  # driver without verb drives nothing
     check quiet.verbDirectories(DIRECTORIES, "web") == @[ALPHA_DIRECTORY]
-    let driven = goodTree().with(entry(DRIVER,
-      "case paramStr(1)\n" &
-      "of \"web\": web()\n" &
-      "of \"drive\": drive()\n" &
-      "else:\n"))
+    let driven = goodTree().with(
+      entry(
+        DRIVER,
+        "case paramStr(1)\n" & "of \"web\": web()\n" & "of \"drive\": drive()\n" & "else:\n",
+      ),
+    )
     check driven.verbDirectories(DIRECTORIES, "drive") == @[ALPHA_DIRECTORY]
     # Verb named past dispatch's `else` is another case's, never this project's.
-    let after = goodTree().with(entry(DRIVER,
-      "case paramStr(1)\n" &
-      "of \"web\": web()\n" &
-      "else:\n" &
-      "of \"drive\": drive()\n"))
+    let after = goodTree().with(
+      entry(
+        DRIVER,
+        "case paramStr(1)\n" & "of \"web\": web()\n" & "else:\n" & "of \"drive\": drive()\n",
+      ),
+    )
     check after.verbDirectories(DIRECTORIES, "drive").len == 0
 
   test "driven set filters what plan already selected, so it inherits every scoping":
     const DRIVER = ALPHA_DIRECTORY & "/tools/build.nim"
     let
-      tree = goodTree().with(entry(DRIVER,
-        "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
+      tree = goodTree().with(
+        entry(DRIVER, "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"),
+      )
       selected = tree.drivenOnly(tree.jobs([ALPHA_DIRECTORY & "/src/alpha.nim"]))
     check selected.len == 1
     check selected[0].directory == ALPHA_DIRECTORY
@@ -118,9 +120,7 @@ suite "Plan":
     check selected[0].directory == ALPHA_DIRECTORY
     check selected[0].pin == PIN
     check tree.allJobs.len == DIRECTORIES.len  # `--all` names every project
-    let unpinned = tree.replaced(
-      ALPHA_DIRECTORY & "/alpha.nimble", "requires \"nim >= 2.2.4\"\n"
-    )
+    let unpinned = tree.replaced(ALPHA_DIRECTORY & "/alpha.nimble", "requires \"nim >= 2.2.4\"\n")
     check unpinned.jobs([ALPHA_DIRECTORY & "/src/alpha.nim"]).len == 0  # nothing to install
 
   test "recent window runs what merged in it, or nothing at all":

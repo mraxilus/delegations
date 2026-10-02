@@ -31,6 +31,6 @@ suite "Base":
 
   test "each governing path is named once":
     check checkBase(["koch.nim", "koch.nim.cfg"])[0].message.endsWith(
-      "got `koch.nim, koch.nim.cfg`."
+      "got `koch.nim, koch.nim.cfg`.",
     )
     check checkBase(["koch.nim", "koch.nim"])[0].message.endsWith("got `koch.nim`.")

@@ -66,7 +66,7 @@ func replacementOf(identifier: string, is_nim: bool): string =
     if not is_nim and name notin NIM_WAITS and identifier == name: return replacement
 
 
-func checkWaits*(path, source: string, kind: Kind): seq[Finding] =
+func checkWaits*(path, source: string; kind: Kind): seq[Finding] =
   ## Report fixed wait in drive source, line by line, with its replacement.
   if kind.rule.syntax == Syntax.None: return
   let
@@ -85,7 +85,8 @@ func checkWaits*(path, source: string, kind: Kind): seq[Finding] =
         commented[i].delete(at)
         continue
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Fixed wait reads real clock; " & replacement & " (Article IX.12); got `" &
           identifier & "`.",
       )

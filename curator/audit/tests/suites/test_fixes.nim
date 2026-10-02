@@ -33,7 +33,7 @@ suite "Fixes":
       entry("koch.nim", DIRTY),
     ]
     let (entries, unknown) = tree.entriesNamed(
-      ["curator/audit/", "curator/audit/src/a.nim", "./koch.nim"]
+      ["curator/audit/", "curator/audit/src/a.nim", "./koch.nim"],
     )
     check entries.mapIt(it.path) == @[
       "curator/audit/src/a.nim", "curator/audit/src/b.nim", "koch.nim",

@@ -3,8 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/names
-import ../../src/findings
+import ../../src/[findings, names]
 
 
 const SOURCE = """

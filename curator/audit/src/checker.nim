@@ -75,11 +75,11 @@ const
     ## Command name as mention writes it, followed by verb.
   RUN_MARK* = "nim r "
     ## Compile-and-run form mention may open with, options between it and `koch`.
-  VERB_CHARS = {'a'..'z', '-'}
+  VERB_CHARS = {'a' .. 'z', '-'}
     ## Characters verb is spelled with.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
-  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
+  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## Characters Nim identifier is built from.
 
 
@@ -121,7 +121,8 @@ func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] 
     for name in source.exportedRoutines:
       if total[name] > counts[i][name]: continue
       result.add finding(
-        paths[i], 0,
+        paths[i],
+        0,
         "Routine is exported and named by no other module and no suite; drop its `*`, or " &
           "delete it; got `" & name & "`.",
       )
@@ -141,10 +142,7 @@ func checkSuites*(paths: openArray[string]): seq[Finding] =
     if module.len == 0: continue
     let suite = SUITE_DIRECTORY & "test_" & module & NIM_EXT
     if suite notin present:
-      result.add finding(
-        path, 0,
-        "Check module needs suite; write `" & suite & "`; got nothing.",
-      )
+      result.add finding(path, 0, "Check module needs suite; write `" & suite & "`; got nothing.")
 
 
 func between(line, opening, closing: string): string =
@@ -232,7 +230,8 @@ func checkOptions*(koch: string): seq[Finding] =
   let printed = koch.usageOptions
   if printed != parsed:
     result.add finding(
-      KOCH_PATH, 0,
+      KOCH_PATH,
+      0,
       "Usage text must print every option parser takes, and no other; expected `" &
         parsed.join(", ") & "`; got `" & printed.join(", ") & "`.",
     )
@@ -268,13 +267,14 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
   if dispatched.len == 0: return
   if koch.usageVerbs != dispatched:
     result.add finding(
-      KOCH_PATH, 0,
-      "Usage text must print every verb dispatch names; got `" &
-        koch.usageVerbs.join(", ") & "`.",
+      KOCH_PATH,
+      0,
+      "Usage text must print every verb dispatch names; got `" & koch.usageVerbs.join(", ") & "`.",
     )
   if curator.tableVerbs != dispatched:
     result.add finding(
-      CURATOR_PATH, 0,
+      CURATOR_PATH,
+      0,
       "Checks table must row every verb koch dispatches, and no other; expected `" &
         dispatched.join(", ") & "`; got `" & curator.tableVerbs.join(", ") & "`.",
     )
@@ -300,16 +300,17 @@ func mentionedVerbs*(source: string): seq[(int, string)] =
       var j = at + KOCH_MARK.len
       while j < line.len and line[j] in VERB_CHARS: inc j
       let verb = line[at + KOCH_MARK.len ..< j]
-      if verb.len > 0 and verb[0] in {'a'..'z'} and line.runPrefix(at):
+      if verb.len > 0 and verb[0] in {'a' .. 'z'} and line.runPrefix(at):
         result.add (number, verb)
       at = line.find(KOCH_MARK, j)
 
 
-func checkMentions*(path, source: string, verbs: openArray[string]): seq[Finding] =
+func checkMentions*(path, source: string; verbs: openArray[string]): seq[Finding] =
   ## Report `koch <verb>` whose verb koch does not dispatch.
   for (line, verb) in source.mentionedVerbs:
     if verb in verbs: continue
     result.add finding(
-      path, line, "Mention names verb koch does not dispatch; write one `./koch` lists; got `" &
-        verb & "`.",
+      path,
+      line,
+      "Mention names verb koch does not dispatch; write one `./koch` lists; got `" & verb & "`.",
     )

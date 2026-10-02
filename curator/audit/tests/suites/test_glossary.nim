@@ -49,7 +49,7 @@ suite "Glossary":
       A = "# a\n\n## Standards\n\n" & SI & IAU & "\n## Language\n"
       B = "# b\n\n## Standards\n\n" & IAU & "\n## Language\n"
     let found = checkStandardsAcross(
-      [("GLOSSARY.md", ROOT), ("x/a/GLOSSARY.md", A), ("x/b/GLOSSARY.md", B)]
+      [("GLOSSARY.md", ROOT), ("x/a/GLOSSARY.md", A), ("x/b/GLOSSARY.md", B)],
     )
     check found.mapIt((it.path, it.line)) == @[("x/a/GLOSSARY.md", 5), ("x/b/GLOSSARY.md", 5)]
     check found[0].message.endsWith("got `SI`.")  # repeated from root

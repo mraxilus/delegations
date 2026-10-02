@@ -40,8 +40,10 @@ suite "Faces":
     check found[0].line == 1  # names line, so page opens at link
     check found[0].message.endsWith("got `fonts.googleapis.com`.")
     for host in HOSTS:  # every host listed is reported, not first alone
-      check checkFaces("p.html", "a { font-family: \"Noto Sans\"; }\n@import \"https://" &
-        host & "/x\";\n").len == 1
+      check checkFaces(
+        "p.html",
+        "a { font-family: \"Noto Sans\"; }\n@import \"https://" & host & "/x\";\n",
+      ).len == 1
 
   test "stack leading with family X.8 does not name is reported, by that family":
     const OUTSIDE = """
@@ -84,8 +86,9 @@ suite "Faces":
     check found.len == 1
     check found[0].message.endsWith("got `Noto Sans`.")
     # Serif heading passes, and so does non-heading element taking sans.
-    check checkFaces("p.html",
-      "  :root { --serif: \"Noto Serif\", serif; }\n  h3 { font-family: var(--serif); }\n"
+    check checkFaces(
+      "p.html",
+      "  :root { --serif: \"Noto Serif\", serif; }\n  h3 { font-family: var(--serif); }\n",
     ).len == 0
 
   test "heading rule reads element, never class or word that merely contains one":
@@ -110,11 +113,13 @@ suite "Faces":
     check not isHeading("h3 .kicker, h4 .kicker")  # every selector in list reads its own
     # Subject decides, so list mixing both still reports where subject is heading.
     check isHeading("h1 .tag, h2")
-    let inside = checkFaces("p.html",
+    let inside = checkFaces(
+      "p.html",
       "  :root { --mono: \"Commit Mono\", monospace; --serif: \"Noto Serif\", serif; }\n" &
       "  h3 { font-family: var(--serif); }\n" &
       "  .plate h3 .tag { font: 600 0.62rem/1 var(--mono); }\n" &
-      "  code { font-feature-settings: \"calt\"; }\n")
+      "  code { font-feature-settings: \"calt\"; }\n",
+    )
     check inside.len == 0
 
   test "one level of var() is resolved, and unresolvable var is left alone":
@@ -168,12 +173,16 @@ suite "Faces":
   test "value deferring to cascade names no family, so it is not reported":
     # `font-family: inherit` takes whatever parent settled, and parent is checked where set.
     for defers in DEFERS:
-      check checkFaces("p.html",
-        "  a { font-family: \"Noto Sans\"; }\n  b { font-family: " & defers & "; }\n").len == 0
+      check checkFaces(
+        "p.html",
+        "  a { font-family: \"Noto Sans\"; }\n  b { font-family: " & defers & "; }\n",
+      ).len == 0
     # Heading deferring is not reported either, for same reason.
-    check checkFaces("p.html",
+    check checkFaces(
+      "p.html",
       "  :root { --serif: \"Noto Serif\", serif; }\n" &
-      "  h1 { font-family: var(--serif); }\n  h2 { font-family: inherit; }\n").len == 0
+      "  h1 { font-family: var(--serif); }\n  h2 { font-family: inherit; }\n",
+    ).len == 0
 
   test "font shorthand names family last, and is read as stack":
     # `design/page.nim` writes every stack this way, so check reading `font-family` alone
@@ -183,15 +192,20 @@ suite "Faces":
     check shorthandFamilies("italic bold 12px/30px Georgia, serif") == "Georgia, serif"
     check shorthandFamilies("0.66rem/1.4 \"Noto Sans\"") == "\"Noto Sans\""
     check shorthandFamilies("caption").len == 0  # names system font, no family list
-    let found = checkFaces("page.nim",
-      "  body { font: 16px/1.6 ui-sans-serif; }\n  x { font-family: \"Noto Sans\"; }\n")
+    let found = checkFaces(
+      "page.nim",
+      "  body { font: 16px/1.6 ui-sans-serif; }\n  x { font-family: \"Noto Sans\"; }\n",
+    )
     check found.len == 1
     check found[0].message.endsWith("got `ui-sans-serif`.")
     # Shorthand naming admitted family passes, and heading rule reaches it too.
-    check checkFaces("p.html",
-      "  :root { --serif: \"Noto Serif\", serif; }\n  h1 { font: 2rem var(--serif); }\n"
+    check checkFaces(
+      "p.html",
+      "  :root { --serif: \"Noto Serif\", serif; }\n  h1 { font: 2rem var(--serif); }\n",
     ).len == 0
-    let heading = checkFaces("p.html",
-      "  :root { --sans: \"Noto Sans\", serif; }\n  h1 { font: 2rem var(--sans); }\n")
+    let heading = checkFaces(
+      "p.html",
+      "  :root { --sans: \"Noto Sans\", serif; }\n  h1 { font: 2rem var(--sans); }\n",
+    )
     check heading.len == 1
     check heading[0].message.endsWith("got `Noto Sans`.")

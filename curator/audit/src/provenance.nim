@@ -104,12 +104,13 @@ func citations*(source: string): seq[string] =
     i = close + 1
 
 
-func checkCitations*(path, source, tests_prefix: string, paths: HashSet[string]): seq[Finding] =
+func checkCitations*(path, source, tests_prefix: string; paths: HashSet[string]): seq[Finding] =
   ## Report cited test absent from project's tests directory.
   for name in source.citations:
     if tests_prefix & name notin paths:
       result.add finding(
-        path, 0,
+        path,
+        0,
         "Claim cites test that is absent; write verification that can be repeated, or name " &
           "tool and date instead; got `" & name & "`.",
       )
@@ -127,7 +128,8 @@ func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
     result.add finding(path, 0, "Date must be `YYYY-MM-DD`; got `" & fields["Date"] & "`.")
   if "Rules" in fields and fields["Rules"] != stamp_expected:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Rules stamp stale; re-audit project, then set `" & stamp_expected & "`; got `" &
         fields["Rules"] & "`.",
       is_propagation = true,

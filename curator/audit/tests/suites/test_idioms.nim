@@ -50,7 +50,7 @@ suite "Idioms":
   test "consecutive single bindings of one keyword share it, once per run":
     let run = module("proc f() =\n  let a = 1\n  let b = 2\n  let c = 3\n")
     check messages("a.nim", run) == @[
-      "Consecutive single bindings share one keyword (X.5); got `let` twice."
+      "Consecutive single bindings share one keyword (X.5); got `let` twice.",
     ]  # one finding for run of three
     check messages("a.nim", module("proc f() =\n  let a = 1\n  var b = 2\n")).len == 0
     check messages("a.nim", module("proc f() =\n  let\n    a = 1\n    b = 2\n")).len == 0
@@ -188,7 +188,7 @@ suite "Idiom fixes":
     check wrapped.source.isSettled
     let nested = fixed(module("let a = 1\nlet b = block:\n  let c = 2\n  let d = 3\n  c + d\n"))
     check nested.source == module(
-      "let\n  a = 1\n  b = block:\n    let\n      c = 2\n      d = 3\n    c + d\n"
+      "let\n  a = 1\n  b = block:\n    let\n      c = 2\n      d = 3\n    c + d\n",
     )  # inner run first, then outer carries it
     check nested.source.isSettled
     let long_string = module("const A = 1\nconst B = \"\"\"\ntext\n\"\"\"\n")

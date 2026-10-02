@@ -52,7 +52,7 @@ func roleLine*(body: string): string =
   ""
 
 
-func checkRole*(branch, body: string, labels: openArray[string]): seq[Finding] =
+func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
   ## Report pull request whose opening line or labels do not name role its branch names.
   let parsed = branch.parseBranch
   if parsed.isNone: return
@@ -61,7 +61,8 @@ func checkRole*(branch, body: string, labels: openArray[string]): seq[Finding] =
     opening = body.roleLine
   if opening != ROLE_KEY & " " & expected:
     result.add finding(
-      "", 0,
+      "",
+      0,
       "Pull request must open with `" & ROLE_KEY & " " & expected &
         "`, which its branch names; got `" & opening.shortened & "`.",
     )

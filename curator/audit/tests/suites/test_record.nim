@@ -92,9 +92,7 @@ suite "Article VIII":
     check checkSections("p", fenced).len == 1  # heading inside fence opens no section
 
   test "VIII.6 Pruned row names commit as hex":
-    let with_row = provenanceText("d").replace(
-      "| Review |", "| Pruned | c723ede |\n| Review |"
-    )
+    let with_row = provenanceText("d").replace("| Review |", "| Pruned | c723ede |\n| Review |")
     check messages(with_row & BODY).len == 0
     check with_row.prunedOf == "c723ede"
     check provenanceText("d").prunedOf.len == 0  # absent row

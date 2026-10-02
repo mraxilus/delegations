@@ -75,7 +75,7 @@ func testSet*(directories, paths: openArray[string]): seq[string] =
   result.sort
 
 
-func holds(tree: Tree, directory, name: string): bool =
+func holds(tree: Tree; directory, name: string): bool =
   ## Decide whether project directory holds file of that name.
   let path = directory & "/" & name
   for e in tree:

@@ -66,7 +66,8 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
       let touched = gitFields(root, ["log", "-z", "--format=%H", "--", path])
       if not touched.anyIt(it.strip.startsWith(named)):
         result.add finding(
-          path, 0,
+          path,
+          0,
           "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
         )
 
@@ -192,7 +193,8 @@ proc auditTree*(tree: Tree): seq[Finding] =
         result.add checkTsconfig(e.path, e.content)
     if not found_config:
       result.add finding(
-        config_path, 0,
+        config_path,
+        0,
         "Project holding TypeScript carries `tsconfig.json` at its root (CONTRIBUTOR.md, " &
           "TypeScript); got none.",
       )

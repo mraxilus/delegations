@@ -40,7 +40,7 @@ func findArticles*(text: string): seq[string] =
     if bare in ARTICLES: result.add bare
 
 
-func checkProse*(path, source: string, syntax: Syntax): seq[Finding] =
+func checkProse*(path, source: string; syntax: Syntax): seq[Finding] =
   ## Report every comment line holding article.
   for c in comments(source, syntax):
     let found = c.text.findArticles

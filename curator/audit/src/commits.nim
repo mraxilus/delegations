@@ -80,7 +80,7 @@ func parseSubject*(subject: string): Option[Subject] =
   if not rest.startsWith(": "): return none(Subject)
   let
     summary = rest[2 .. ^1]
-    is_summary = summary.len > 0 and summary[0] in {'a'..'z', '0'..'9'} and
+    is_summary = summary.len > 0 and summary[0] in {'a' .. 'z', '0' .. '9'} and
       not summary.endsWith(".")
   if kind notin TYPES or not (scope == CURATOR or scope.isProjectName) or not is_summary:
     return none(Subject)
@@ -106,7 +106,8 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
         before.get.scope == parsed.get.scope
     if not is_paired:
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Fix needs `test(" & parsed.get.scope & ")` as commit immediately before it; mistake " &
           "earns test that fails before fix (CONTRIBUTOR.md, Tests are paramount); got `" &
           subjects[i] & "`.",
@@ -116,17 +117,17 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
     let parsed = s.parseSubject
     if parsed.isNone:
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Commit subject must match `type(scope): lowercase summary` without final period; got `" &
           s & "`.",
       )
     elif expected.isSome and parsed.get.scope != expected.get:
-      result.add finding(
-        "", 0, "Commit scope must be `" & expected.get & "`; got `" & s & "`."
-      )
+      result.add finding("", 0, "Commit scope must be `" & expected.get & "`; got `" & s & "`.")
     if s.runeLen > SUBJECT_MAX:
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Commit subject exceeds " & $SUBJECT_MAX & " characters; got `" & $s.runeLen & "`.",
       )
 
@@ -134,8 +135,8 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
 func isTrailer(line: string): bool =
   ## Decide whether line is git trailer, i.e. `Key: value` with hyphenated key.
   let colon = line.find(": ")
-  colon > 0 and line[0] in {'A'..'Z', 'a'..'z'} and
-    line[0 ..< colon].allCharsInSet({'A'..'Z', 'a'..'z', '0'..'9', '-'})
+  colon > 0 and line[0] in {'A' .. 'Z', 'a' .. 'z'} and
+    line[0 ..< colon].allCharsInSet({'A' .. 'Z', 'a' .. 'z', '0' .. '9', '-'})
 
 
 func sentenceLines(body: string): seq[string] =
@@ -171,21 +172,24 @@ func checkBody*(subject, body: string): seq[Finding] =
       if c == '`': is_span = not is_span
       elif not is_span: prose.add c
     let excerpt = (if text.len > 60: text[0 ..< 60] & "…" else: text)
-    if text.len > 0 and text[0] notin {'A'..'Z', '0'..'9', '`', '"'}:
+    if text.len > 0 and text[0] notin {'A' .. 'Z', '0' .. '9', '`', '"'}:
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Commit body is in sentence case (XI.4); got `" & excerpt & "` in `" & subject & "`.",
       )
     if text.len > 0 and text[^1] notin TERMINALS:
       result.add finding(
-        "", 0,
+        "",
+        0,
         "Commit body holds one sentence to line, and this one runs on (XI.4); got `" & excerpt &
           "` in `" & subject & "`.",
       )
     for k in 0 ..< prose.len - 2:
-      if prose[k] in {'.', '!', '?'} and prose[k + 1] == ' ' and prose[k + 2] in {'A'..'Z'}:
+      if prose[k] in {'.', '!', '?'} and prose[k + 1] == ' ' and prose[k + 2] in {'A' .. 'Z'}:
         result.add finding(
-          "", 0,
+          "",
+          0,
           "Commit body holds one sentence to line (XI.4); got two in `" & excerpt & "` in `" &
             subject & "`.",
         )
@@ -199,7 +203,8 @@ func checkRecordCommit*(subject: string, paths: openArray[string]): seq[Finding]
     code = paths.filterIt(not it.endsWith(".md"))
   if has_record and code.len > 0:
     result.add finding(
-      "", 0,
+      "",
+      0,
       "Record travels in `docs` commit of its own (CONTRIBUTOR.md, Branch); got `" & code[0] &
         "` beside it in `" & subject & "`.",
     )

@@ -48,7 +48,7 @@ const ROUNDS_MAX = 3
   ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
 
 
-func checkFormatting*(path, source: string, kind: Kind): seq[Finding] =
+func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix.
   ##   X.9 trailing comments and operator spacing, X.2 banners, X.3 and STYLE.md §5
   ##   separators, signatures, calls and trailing separators, on every Nim kind; X.5 import
@@ -63,7 +63,7 @@ func checkFormatting*(path, source: string, kind: Kind): seq[Finding] =
 
 
 func entriesNamed*(
-    tree: Tree, names: openArray[string]
+  tree: Tree, names: openArray[string]
 ): tuple[entries: seq[Entry], unknown: seq[Finding]] =
   ## Select entries names give, each once: file git lists, or every file under directory.
   ##   Name matching nothing is reported, never skipped.
@@ -81,7 +81,7 @@ func entriesNamed*(
       result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
 
 
-func fixSource(path, source: string, kind: Kind): Fix =
+func fixSource(path, source: string; kind: Kind): Fix =
   ## Run on source each fixer its kind's checks name, in order header gives, until source
   ##   settles; kind without guide passes.
   result.source = source
@@ -95,7 +95,7 @@ func fixSource(path, source: string, kind: Kind): Fix =
 
 
 func fixEntries*(
-    branch: string, entries: openArray[Entry]
+  branch: string, entries: openArray[Entry]
 ): tuple[written: seq[Entry], fixed, refused: seq[Finding]] =
   ## Fix each entry: entries to write, one report per rewrite, scope findings.
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.

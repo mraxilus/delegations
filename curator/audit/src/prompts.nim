@@ -65,7 +65,8 @@ func checkDiary(path, source: string): seq[Finding] =
     let found = line.diaryReference
     if found.len > 0:
       result.add finding(
-        path, i + 1,
+        path,
+        i + 1,
         "Prompt names incident; state rule and its cost here, and leave incident to record " &
           "or log (duty 10); got `" & found & "`.",
       )

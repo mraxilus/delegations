@@ -99,7 +99,8 @@ suite "Layout":
     for page_directory in PAGE_DIRECTORIES:  # 2 directories, exhaustive
       let inside = goodTree() & @[
         entry(
-          ALPHA_DIRECTORY & "/" & page_directory & "/index.html", "<!doctype html>\n<p>x</p>\n"
+          ALPHA_DIRECTORY & "/" & page_directory & "/index.html",
+          "<!doctype html>\n<p>x</p>\n",
         ),
         entry(AUDIT_DIRECTORY & "/" & page_directory & "/deep/frame.svg", "<svg></svg>\n"),
       ]

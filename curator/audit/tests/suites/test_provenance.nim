@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, sets, strutils, tables, unittest]
-import ../../src/[provenance]
+import ../../src/provenance
 import ./fixtures
 
 
@@ -15,7 +15,7 @@ suite "Article VIII":
     check stamp(["a", "b"]) != stamp(["b", "a"])  # order matters
     check stamp(["ab", ""]) != stamp(["a", "b"])  # boundary matters
     check stamp(["x\r\ny"]) == stamp(["x\ny"])  # CRLF checkout stamps same
-    check stamp(["x\r\ny"]).allCharsInSet({'0'..'9', 'a'..'f'})  # lowercase
+    check stamp(["x\r\ny"]).allCharsInSet({'0' .. '9', 'a' .. 'f'})  # lowercase
 
   test "VIII.6 header fields parse from first table":
     let fields = provenanceText("deadbeefdeadbeef").headerFields
@@ -64,15 +64,15 @@ suite "Article VIII":
     check citations("Nothing cited here.").len == 0
 
     check checkCitations("p/PROVENANCE.md", "Verified by `tfoo.nim`.", "p/tests/", present).len == 0
-    let found = checkCitations(
-      "p/PROVENANCE.md", "Verified by `tgone.nim`.", "p/tests/", present
-    )
+    let found = checkCitations("p/PROVENANCE.md", "Verified by `tgone.nim`.", "p/tests/", present)
     check found.len == 1
     check found[0].path == "p/PROVENANCE.md"
     check found[0].message.endsWith("got `tgone.nim`.")  # Article IV.4 echoes value
 
     # Citation naming another project's test does not resolve here.
     check checkCitations(
-      "p/PROVENANCE.md", "Verified by `tlaws.nim`.", "p/tests/",
-      ["q/tests/tlaws.nim"].toHashSet
+      "p/PROVENANCE.md",
+      "Verified by `tlaws.nim`.",
+      "p/tests/",
+      ["q/tests/tlaws.nim"].toHashSet,
     ).len == 1

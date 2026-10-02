@@ -153,12 +153,13 @@ func checkComments*(path, source: string): seq[Finding] =
   for gap in source.gaps:
     if gap.spaces == COMMENT_GAP: continue
     result.add finding(
-      path, gap.line + 1,
+      path,
+      gap.line + 1,
       "Trailing comment takes two spaces before its marker (X.9); got `" & $gap.spaces & "`.",
     )
 
 
-func checkForm*(path, source: string, rule: KindRule): seq[Finding] =
+func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
   ## Report form violations of source under kind rule.
   if source.len == 0: return @[finding(path, 0, "File is empty.")]
   if not source.endsWith("\n"): result.add finding(path, 0, "File lacks final newline.")
@@ -178,7 +179,9 @@ func checkForm*(path, source: string, rule: KindRule): seq[Finding] =
       result.add finding(path, number, "Line ends with whitespace.")
     if not is_width_exempt and line.isWide:
       result.add finding(
-        path, number, "Line exceeds " & $LINE_MAX & " characters; got `" & $line.runeLen & "`."
+        path,
+        number,
+        "Line exceeds " & $LINE_MAX & " characters; got `" & $line.runeLen & "`.",
       )
     if rule.syntax == Syntax.Nim and line.tierOfBanner > 0:
       result.add checkBanner(path, lines, i)
@@ -269,7 +272,7 @@ func fixBanners(path, source: string): Fix =
   if runs.len > 0: result.origin = origin
 
 
-func fixForm*(path, source: string, rule: KindRule): Fix =
+func fixForm*(path, source: string; rule: KindRule): Fix =
   ## Rewrite source so each form check with one mechanical fix holds; report each rewrite.
   result.source = source
   for fixer in [fixWhitespace, fixEnding]:

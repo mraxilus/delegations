@@ -75,7 +75,8 @@ func projectEntries*(directory: string, stamp: string): seq[Entry] =
     entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
     entry(directory & "/" & directory.projectName & NIMBLE_EXT, NIMBLE_TEXT),
     entry(
-      directory & "/tests/tall.nim", "## Test everything.\n\n" & STRICT_FUNCS & "\n\ndiscard\n"
+      directory & "/tests/tall.nim",
+      "## Test everything.\n\n" & STRICT_FUNCS & "\n\ndiscard\n",
     ),
   ]
 
@@ -88,7 +89,8 @@ func goodTree*(): Tree =
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
     entry(
-      "GLOSSARY.md", "# Fixture\n\nWords.\n\n## Standards\n\n## Language\n\n**Term**:\nOne thing.\n"
+      "GLOSSARY.md",
+      "# Fixture\n\nWords.\n\n## Standards\n\n## Language\n\n**Term**:\nOne thing.\n",
     ),
     entry("CURATOR.md", "# Curator\n\nDuties.\n"),
     entry("koch.nim", "## Drive checks.\n\n" & STRICT_FUNCS & "\n\ndiscard\n"),
@@ -101,7 +103,8 @@ func goodTree*(): Tree =
   for root in ROOTS: result.add entry(root & "/README.md", "# " & root & "\n\nProjects.\n")
   for d in DOMAINS:
     result.add entry(
-      CONTRIBUTOR & "/" & d.folder & "/README.md", "# " & d.name & "\n\n" & d.theme & "\n"
+      CONTRIBUTOR & "/" & d.folder & "/README.md",
+      "# " & d.name & "\n\n" & d.theme & "\n",
     )
   result.add projectEntries(AUDIT_DIRECTORY, stamp_now)
   result.add projectEntries(ALPHA_DIRECTORY, stamp_now)
@@ -119,7 +122,7 @@ func without*(tree: Tree, path: string): Tree =
     if e.path != path: result.add e
 
 
-func replaced*(tree: Tree, path, content: string): Tree =
+func replaced*(tree: Tree; path, content: string): Tree =
   ## Copy tree with entry at path carrying new content.
   for e in tree:
     result.add (if e.path == path: entry(path, content) else: e)
@@ -153,7 +156,9 @@ proc lockWith*(nimble: string): string =
   ##   original text exactly, trailing newline included.
   var lines = newJArray()
   for line in nimble.split('\n'): lines.add %line
-  pretty(%*{
-    "items": newJObject(),
-    "nimbleFile": {"filename": "probe" & NIMBLE_EXT, "content": lines},
-  }) & "\n"
+  pretty(
+    %*{
+      "items": newJObject(),
+      "nimbleFile": {"filename": "probe" & NIMBLE_EXT, "content": lines},
+    },
+  ) & "\n"

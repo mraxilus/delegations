@@ -250,14 +250,16 @@ func englishFindings*(path, source: string): seq[Finding] =
     let found = b.text.sentences
     if found.len > PARAGRAPH_SENTENCES:
       result.add finding(
-        path, b.line,
+        path,
+        b.line,
         "Paragraph must hold at most " & $PARAGRAPH_SENTENCES &
           " sentences; split it (ASD-STE100); got `" & $found.len & "`.",
       )
     for s in found:
       if s.splitWhitespace.len > SENTENCE_WORDS:
         result.add finding(
-          path, b.line,
+          path,
+          b.line,
           "Sentence must hold at most " & $SENTENCE_WORDS &
             " words; split it (ASD-STE100); got `" & s.opening & "`.",
         )
@@ -265,7 +267,8 @@ func englishFindings*(path, source: string): seq[Finding] =
     for (word, approved) in REPLACEMENTS:
       if " " & word & " " in plain:
         result.add finding(
-          path, b.line,
+          path,
+          b.line,
           "Word is outside approved dictionary; write `" & approved &
             "` (ASD-STE100); got `" & word & "`.",
         )

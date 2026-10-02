@@ -109,7 +109,9 @@ func checkIndexEntry(path, child, holder, member: string): seq[Finding] =
   ## Report file directly inside folder that holds README.md and member folders only.
   if child != README_FILE:
     result.add finding(
-      path, 0, holder & " holds README.md and " & member & " folders only; got `" & child & "`."
+      path,
+      0,
+      holder & " holds README.md and " & member & " folders only; got `" & child & "`.",
     )
 
 
@@ -125,7 +127,8 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
   for page_directory in PAGE_DIRECTORIES:
     if directory.len > 0 and path.startsWith(directory & "/" & page_directory & "/"): return
   result.add finding(
-    path, 0,
+    path,
+    0,
     "Page outside `" & PAGE_DIRECTORIES.join("/` or `") & "/`; generated markup belongs under " &
       "`build/`; got `" & path & "`.",
   )
@@ -137,9 +140,9 @@ func checkEntry(e: Entry): seq[Finding] =
   for directory in parts[0 ..< parts.high]:
     if directory in UNTRACKED_DIRECTORIES:
       result.add finding(
-        e.path, 0,
-        "Build output and vendored source stay untracked (Article XI.3); got `" & directory &
-          "/`.",
+        e.path,
+        0,
+        "Build output and vendored source stay untracked (Article XI.3); got `" & directory & "/`.",
       )
       break
   if e.kind.isSome and e.kind.get in {Kind.Html, Kind.Svg}:
@@ -147,9 +150,9 @@ func checkEntry(e: Entry): seq[Finding] =
   if e.kind.isNone:
     let (_, base, ext) = e.path.splitFile
     result.add finding(
-      e.path, 0,
-      "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext &
-        "`.",
+      e.path,
+      0,
+      "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext & "`.",
     )
   if parts.len == 1:
     if parts[0] notin ROOT_FILES:
@@ -193,7 +196,9 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
   for e in tree:
     if e.path.directoryOf == directory and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
       result.add finding(
-        e.path, 0, "Nimble file not named after project; expected `" & nimble & "`."
+        e.path,
+        0,
+        "Nimble file not named after project; expected `" & nimble & "`.",
       )
   if nimble in paths:
     result.add checkPin(nimble, tree[paths[nimble]].content)
@@ -202,9 +207,9 @@ func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq
       lock = directory & "/" & LOCK_FILE
     if required.len > 0 and lock notin paths:
       result.add finding(
-        lock, 0,
-        "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") &
-          "`.",
+        lock,
+        0,
+        "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") & "`.",
       )
 
 
@@ -228,7 +233,8 @@ func checkDomainViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
     for d in DOMAINS:
       if @[d.folder, d.name, d.theme] notin rows:
         result.add finding(
-          README_FILE, 0,
+          README_FILE,
+          0,
           "Domain table lacks row `| " & d.folder & " | " & d.name & " | " & d.theme & " |`.",
         )
   for d in DOMAINS:

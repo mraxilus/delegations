@@ -6,7 +6,7 @@ import std/[sequtils, strutils, unittest]
 import ../../src/[findings, form, kinds]
 
 
-func messages(path, source: string, kind: Kind): seq[string] =
+func messages(path, source: string; kind: Kind): seq[string] =
   ## Read finding messages of source under kind.
   checkForm(path, source, kind.rule).mapIt(it.message)
 

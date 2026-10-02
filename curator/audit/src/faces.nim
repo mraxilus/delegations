@@ -219,7 +219,8 @@ func checkFaces*(path, content: string): seq[Finding] =
     for host in HOSTS:
       if host in line:
         result.add finding(
-          path, i + 1,
+          path,
+          i + 1,
           "Page links font host rather than shipping face (Article X.8); got `" & host & "`.",
         )
 
@@ -244,9 +245,9 @@ func checkFaces*(path, content: string): seq[Finding] =
     if first.anyIt(it in {'&', '$', '(', ')', '{', '}'}): continue
     if first in GENERICS or not first.isFamily:
       result.add finding(
-        path, line,
-        "Stack leads with family X.8 does not name, so viewer may lack it; got `" &
-          first & "`.",
+        path,
+        line,
+        "Stack leads with family X.8 does not name, so viewer may lack it; got `" & first & "`.",
       )
 
   # Headings take serif, which is what X.8's role split says and what page drifts from
@@ -260,7 +261,8 @@ func checkFaces*(path, content: string): seq[Finding] =
     let first = value.resolved(properties).firstFamily
     if first.len > 0 and first.toLowerAscii notin DEFERS and not first.startsWith(SERIF):
       result.add finding(
-        path, line,
+        path,
+        line,
         "Heading takes family other than `" & SERIF & "` (Article X.8); got `" & first & "`.",
       )
 
@@ -275,7 +277,8 @@ func checkFaces*(path, content: string): seq[Finding] =
       if property in content: enables = true
     if not enables:
       result.add finding(
-        path, 0,
+        path,
+        0,
         "Source sets `" & MONO & "` without enabling its ligatures (Article X.8); got `" &
           LIGATURES[0] & "` absent.",
       )
