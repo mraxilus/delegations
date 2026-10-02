@@ -1,0 +1,21 @@
+{
+  "status": "proposed",
+  "builds_on": "cayley-derivation",
+  "claims": [
+    {
+      "kind": "suites"
+    },
+    {
+      "kind": "program",
+      "path": "laws.nim",
+      "algebras": ["cga4d", "cga5d"]
+    },
+    {
+      "kind": "count",
+      "algebra": "cga5d",
+      "measurand": "partner",
+      "metric": "multiplies",
+      "value": 324
+    }
+  ]
+}

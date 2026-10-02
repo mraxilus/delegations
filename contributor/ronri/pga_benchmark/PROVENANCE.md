@@ -904,9 +904,9 @@ set (VII.3, VII.8 and VII.9).
   unary part extractions take ×1.1 to ×1.4 longer at cga5d and ×0.25 as long at rga4d.
   `contract_bulk` (`∨★`) takes ×1.33 longer at rga4d. The bench fill is not the cause, and
   layout moves unchanged code as far. So layout is the likely cause.
-- Whether the sign of the partner folds into its first table by the grade of each term.
-  That is exact under the homogeneity the partner already asserts. It would take the partner
-  from 437 multiplies and 104 fills to its chain bound of 324. Unmeasured.
+- Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
+  grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
+  zero fills and two error checks. P01 alone spends 437, 104 and 268.
 - Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.87,
   while the bulk unitize runs slower, ×1.2 to ×3.1. The library scales every slot in a loop,
   which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
