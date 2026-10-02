@@ -26,9 +26,12 @@
 ##     lines continuing last binding (open bracket, deeper indent, doc under it) move too.
 ##   - Missing `strictFuncs` goes where X.6 puts directives: before first code line that is
 ##     neither directive nor testament header, i.e. after header docs and design notes.
-##   - `return result` becomes `return`, which exits with same value.
+##   - `return result` ending routine that holds `result`, at its body's own indent, goes, with
+##     blank lines opening its paragraph; inside branch, or before more body, it becomes bare
+##     `return`. Both exit with same value, and §5 keeps `return` for early exit alone.
 ##   Fixer never writes line width check reports (`form.isWide`); rewrite that would leaves
-##     its lines and finding for hand.
+##     its lines and finding for hand. Fixer moving lines records where each came from, so
+##     `chain` reports every later rewrite at line of source as given.
 ##   No fixer: import ranked low across lines that are not imports, since where it lands and
 ##     what blank lines surround it are both choices; bracket holding comment, since comment
 ##     belongs to item or to slot; run whose last binding opens long string, since indenting
@@ -36,6 +39,10 @@
 ##     insertion and waits for its own rule; `{.used.}` consumer, `{.push.}` scope, random
 ##     seed, stub header, debug output, machine path and TypeScript flags, since each needs
 ##     knowledge text does not hold.
+##   No fixer for `return result` whose place reads no one fix: routine's only statement, whose
+##     body deletion would empty; line carrying comment, which would lose its line; line after
+##     comment, which would then name nothing; end of template or macro, which returns from
+##     its caller; opener scanner cannot name, such as lambda bound to `let`.
 ##
 ##   Cost: text scanner, never parser. Import under `when` and `from … import` are unread.
 ##   Cost: seeded `initRand` passes as `randomize(0)` does, since both fix sequence; STYLE
@@ -68,6 +75,12 @@ type
     keyword: string  ## Keyword each binding repeats.
     indent: int  ## Indent each binding stands at.
 
+  ReturnPlace {.pure.} = enum
+    ## Define where `return result` stands, which decides its one fix.
+    Ending  ## Last statement of routine holding `result`, at its body's own indent: line goes.
+    Early  ## Inside branch, or with more body after it: bare `return` exits with same value.
+    Unread  ## Place scanner cannot name, or whose fix is not one: line stays.
+
 
 const
   STRICT_FUNCS* = "{.experimental: \"strictFuncs\".}"
@@ -88,6 +101,8 @@ const
     ## Opening of import statement at module level.
   RETURN_RESULT = "return result"
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.
+  RESULT_ROUTINES = ["converter", "func", "method", "proc"]
+    ## Routines holding implicit `result`; template and macro return from their caller.
   TESTAMENT_HEADER = "discard \"\"\""
     ## Opening of stub's testament header, which stands before module's header docs.
   LONG_STRING = "\"\"\""
@@ -336,16 +351,66 @@ func checkIdioms*(path, source: string): seq[Finding] =
   if "/tests/" in "/" & path: result.add checkTest(path, source, lines, code)
 
 
+func placeOf(lines, code: seq[string], i: int): ReturnPlace =
+  ## Read where `return result` on line `i` stands, from line opening its block.
+  ##   Opener is nearest code line above at smaller indent. `:` opens branch; `=` opens
+  ##   routine body where routine keyword stands on that line, or on line opening signature
+  ##   that its `)` closes. Any other opener is unread.
+  let indent = code[i].indentOf
+  var opener = i - 1
+  while opener >= 0 and (code[opener].strip.len == 0 or code[opener].indentOf >= indent):
+    dec opener
+  if opener < 0: return ReturnPlace.Unread
+  let head = code[opener].strip
+  if head.endsWith(":"): return ReturnPlace.Early
+  if not head.endsWith("="): return ReturnPlace.Unread
+  var signature = opener
+  if head.startsWith(")"):
+    signature = opener - 1
+    while signature >= 0 and
+        (code[signature].strip.len == 0 or code[signature].indentOf > code[opener].indentOf):
+      dec signature
+  if signature < 0 or code[signature].firstWord notin RESULT_ROUTINES:
+    return ReturnPlace.Unread
+
+  # Read what follows in body, and what ending line would leave behind.
+  var after = i + 1
+  while after < code.len and code[after].strip.len == 0: inc after
+  if after < code.len and code[after].indentOf >= indent: return ReturnPlace.Early
+  let
+    has_statement = (opener + 1 ..< i).toSeq.anyIt(code[it].strip.len > 0)
+    has_comment = lines[i].strip != RETURN_RESULT
+    is_after_comment = lines[i - 1].strip.len > 0 and code[i - 1].strip.len == 0
+  if not has_statement or has_comment or is_after_comment: ReturnPlace.Unread
+  else: ReturnPlace.Ending
+
+
 func fixReturnResult(path, source: string): Fix =
-  ## Rewrite `return result` as bare `return`, which exits with same value.
-  var lines = source.split('\n')
-  let code = source.codeOnly.split('\n')
-  for i, c in code:
-    if c.strip != RETURN_RESULT: continue
-    let at = c.find(RETURN_RESULT)
-    lines[i] = lines[i][0 ..< at] & "return" & lines[i][at + RETURN_RESULT.len .. ^1]
+  ## Delete `return result` ending routine, and rewrite earlier one as bare `return`.
+  ##   Both exit with same value, and STYLE.md §5 keeps `return` for early exit alone.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+  var shaped: seq[string]
+  for i, line in lines:
+    let place = if code[i].strip == RETURN_RESULT: placeOf(lines, code, i) else: ReturnPlace.Unread
+    case place
+    of ReturnPlace.Unread:
+      shaped.add line
+      result.origin.add i + 1
+      continue
+    of ReturnPlace.Ending:
+      # Blank lines opening its paragraph go with it.
+      while shaped.len > 0 and shaped[^1].len == 0:
+        shaped.setLen(shaped.len - 1)
+        result.origin.setLen(result.origin.len - 1)
+    of ReturnPlace.Early:
+      let at = code[i].find(RETURN_RESULT)
+      shaped.add line[0 ..< at] & "return" & line[at + RETURN_RESULT.len .. ^1]
+      result.origin.add i + 1
     result.fixed.add finding(path, i + 1, "return result (STYLE.md §5) fixed")
-  result.source = lines.join("\n")
+  result.source = shaped.join("\n")
+  if result.origin.len == lines.len: result.origin.setLen(0)
 
 
 func sortedBracket(statement: string): string =
