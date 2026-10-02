@@ -27,6 +27,11 @@ const
              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])], true)]
     ## Both two-hand holds, and whether each rests with follow turned away.
   TURNS = [0.0, 0.25, 0.5, 0.75, 1.0] ## Turns each hold is settled at.
+  FLOOR_CROSSINGS = 4
+    ## Least crossings settled holds show, so crossing law reads some: 8 on 2026-10-02.
+    ##   Margin, not 8: engine is chaotic, and same walks built into another binary differ
+    ##     (`test_rigid.nim`, suite "couple stand for sweep").
+  TRIALS_JITTER = 1000  ## Jittered copies of each knife-edge pose reader reads, seeded.
 
 func nearestOn(line: array[7, Vector]; point: Vector): tuple[offset, z: float] =
   ## How far `point` lies off polyline in plan, and how high polyline is there.
@@ -110,8 +115,8 @@ suite "two hands":
         check abs(crossing.at.x - on.x) < 1e-9 and abs(crossing.at.y - on.y) < 1e-9
         check other.offset < 1e-9
         check (crossing.over == 0) == (crossing.at.z >= other.z)
-    echo &"    {seen} crossings read off two holds, three bands, five turns"
-    check seen > 0
+    checkpoint &"{seen} crossings read off two holds, three bands, five turns"
+    check seen >= FLOOR_CROSSINGS
 
   test "crossing reader gives one answer at knife edge":
     ## Where crossing sits at vertex of both polylines, reader counted it on
@@ -150,7 +155,7 @@ suite "two hands":
     for (name, other) in [("at vertex", at_vertex), ("along", along_base)]:
       let exact = crossings(armsOf(base, other)).len
       var counts: CountTable[int]
-      for trial in 0 ..< 1000:
+      for trial in 0..<TRIALS_JITTER:
         var
           base_jittered = base
           other_jittered = other
@@ -166,7 +171,7 @@ suite "two hands":
             other_jittered[i].z,
           )
         counts.inc crossings(armsOf(base_jittered, other_jittered)).len
-      echo &"    {name}: exact {exact}, jittered {counts}"
+      checkpoint &"{name}: exact {exact}, jittered {counts}"
       check exact == 1
       check counts.len == 1
       check counts.hasKey(exact)
