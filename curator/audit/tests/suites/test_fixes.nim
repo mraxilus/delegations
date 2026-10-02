@@ -1,9 +1,10 @@
 ## Hold `koch fix` to its contract: after fix, checks report none of what it fixed; second fix
-##   writes nothing; any path outside branch scope refuses every write (CURATOR.md, duty 11).
+##   writes nothing; any path outside branch scope refuses every write (CURATOR.md, duty 11);
+##   kind without style guide passes through unwritten, its findings kept for hand.
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[options, sequtils, strutils, unittest]
 import ../../src/[findings, fixes, form, idioms, kinds]
 import ./fixtures
 
@@ -58,8 +59,6 @@ suite "Fixes":
     check both.refused.mapIt(it.path) == @[outside.path]  # outside path named
     check "Curator writes only" in both.refused[0].message  # `checkPropagation` reached
     check fixEntries(CURATOR_BRANCH, [inside]).written.len == 1  # inside alone writes
-    let record = entry(ALPHA_DIRECTORY & "/README.md", "# Alpha \n")
-    check fixEntries(CURATOR_BRANCH, [record]).written.len == 1  # record is curator's to write
     let confined = fixEntries(CONTRIBUTOR_BRANCH, [inside, outside])
     check confined.refused.mapIt(it.path) == @[inside.path]  # contributor confined too
     check fixEntries("claude/setup", [inside]).refused[0].path.len == 0  # branch outside grammar
@@ -70,3 +69,22 @@ suite "Fixes":
       plan = fixEntries(CURATOR_BRANCH, [clean])
     check plan.written.len == 0 and plan.fixed.len == 0 and plan.refused.len == 0
     check fixEntries(CURATOR_BRANCH, [entry("a.bin", "x \n")]).written.len == 0  # kind unread
+
+  test "fix writes Nim kinds alone, the one language with guide; checks read every kind":
+    let
+      nim = entry("curator/audit/src/a.nim", DIRTY)
+      script = entry("curator/audit/a.nimble", "version = \"0.1.0\" \n")
+      others = [
+        entry("curator/audit/README.md", "# Audit \n"),
+        entry("curator/audit/tools/a.ts", "// Do. \n"),
+        entry("curator/audit/a.json", "{} \n"),
+        entry(".github/workflows/a.yml", "# Do. \n"),
+        entry("curator/audit/nim.cfg", "# Do. \n"),
+        entry("curator/audit/a.sh", "# Do. \n"),
+      ]
+      plan = fixEntries(CURATOR_BRANCH, @[nim, script] & @others)
+    check plan.written.mapIt(it.path) == @[nim.path, script.path]  # Nim and nimble alone
+    for other in others:
+      let rule = other.kind.get.rule
+      check not rule.has_guide  # no guide, so passes through unwritten
+      check checkForm(other.path, other.content, rule).len > 0  # check reports it still

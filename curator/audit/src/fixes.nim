@@ -3,8 +3,12 @@
 ##     `idioms.nim`, and reads that check's own data, so each rule is written once. This module
 ##     selects files, runs on each file fixers its kind's checks name, and refuses any write
 ##     outside scope.
-##   Fixer runs where its check runs: form fixers on every registered kind, X.9 on Nim syntax,
-##     idiom fixers on Nim alone. Form runs first, so idiom fixers read clean line ends.
+##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
+##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
+##     written and every other kind passes through. Checks read every kind still; finding in
+##     Markdown, TypeScript, YAML or shell stays for hand.
+##   Inside that reach, fixer runs where its check runs: form fixers on every Nim kind, idiom
+##     fixers on `.nim` alone. Form runs first, so idiom fixers read clean line ends.
 ##   Scope: every path fix would write goes through `scope.checkScope` for branch. One path
 ##     outside refuses every write, so run writes all it planned or nothing. Curator branch
 ##     thus never writes contributor code (`checkPropagation`), as CURATOR.md duty 11 asks.
@@ -45,7 +49,9 @@ func entriesNamed*(
 
 
 func fixSource(path, source: string, kind: Kind): Fix =
-  ## Run on source each fixer its kind's checks name, form first.
+  ## Run on source each fixer its kind's checks name, form first; kind without guide passes.
+  result.source = source
+  if not kind.rule.has_guide: return
   result = fixForm(path, source, kind.rule)
   if kind == Kind.Nim: result = result.chain(fixIdioms(path, result.source))
 

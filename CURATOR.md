@@ -341,7 +341,7 @@ alone.
 | `hook` | one hook event, named as argument, on stdin | answers in that event's protocol |
 | `test` | changed projects, or one | fetch dependencies, then testament, on that project's pin |
 | `drive` | changed projects with a `drive` verb | fetch dependencies, then the verb, on its pin |
-| `fix` | named files, or projects | each fix a check names, in place; nothing outside scope |
+| `fix` | Nim files named, or projects | each fix a check names, in place; nothing outside scope |
 | `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
 | `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
 | `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
@@ -350,6 +350,9 @@ alone.
 
 Every verb that takes projects reads the one named, else `--recent`, else `--all`, else the
 projects whose code changed. A verb refuses an option or an argument that it does not read.
+
+`fix` writes Nim files only, because Nim is the one language with a style guide. A finding in
+any other kind of file stays for a fix by hand.
 
 `check` leaves out `check-role`, because `check-role` reads a pull request rather than the
 tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels from the API as
