@@ -874,11 +874,14 @@ func stretchAcross(
   ##   with one finger fixed on pivot. Away from row zooms in, on either side of it.
   ##     Heights are read no nearer row than `FRACTION_STRETCH_LEAST` of canvas, on side
   ##     pixel drag left stands on.
-  ##   Horizontal then orbits as turntable, carrying point across by what pointer moved, at
-  ##   height dolly left it. Inside band, that height is one it had, and vertical does
-  ##   nothing.
-  ##     From where point stands, not pointer: point that slipped keeps its slip rather than
+  ##   Horizontal then orbits as turntable, carrying point across by what pointer moved,
+  ##   from where dolly left it. So vertical drag turns nothing, and point drifts toward or
+  ##   from middle column as zoom scales it.
+  ##     Not pointer's own column: turn chasing dolly's spread needs great yaw near line
+  ##     above pivot, and spun view and levelled it.
+  ##     Not pointer's own pixel either: point that slipped keeps its slip rather than
   ##     snapping back by turn nobody dragged.
+  ##   Inside band, height is one point had, and vertical does nothing.
   ##   Dolly scales eye about pivot and orbit turns it there, so two commute, and drag that
   ##   comes back brings camera back.
   ##   Point is one `grabPan` took, or one under pixel drag left where none was taken: two
@@ -905,9 +908,9 @@ func stretchAcross(
     (eye_dollied, frame_dollied) = camera.sight
     dollied =
       projectToScreen(camera.initMatrixViewProjection(aspect), width, height, held)
-  if not dollied.isInFront: return
+  if not dollied.isInFront or after.x == before.x: return
   let
-    reached = ScreenPosition(x: seen.x + after.x - before.x, y: dollied.y)
+    reached = ScreenPosition(x: dollied.x + after.x - before.x, y: dollied.y)
     under = pointKept(
       eye_dollied, pivot, held,
       camera.headingThrough(frame_dollied, width, height, reached),

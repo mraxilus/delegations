@@ -1036,10 +1036,11 @@ suite "Camera":
     interaction.grabPan(camera, 1440, 900, has_selection = false)
     check interaction.depth_pan =~ camera.distance
 
-  test "a right drag with a selection carries the point it holds under the pointer":
+  test "a right drag with a selection carries the point it holds with the pointer":
     # Fault: rates stood here, fixed angle and fixed factor for each pixel, which matched
     #   cursor nowhere. Point held is one left drag's orbit holds, on sphere about pivot.
     #   Vertical stretches from pivot's row, so away from row zooms in on either side.
+    #   Across, point moves by what pointer moved, from where zoom spread it from middle.
     const (wide, tall) = (1440, 900)
     let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     let steps = [
@@ -1062,8 +1063,10 @@ suite "Camera":
       let seen = projectToScreen(
         camera.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
       )
+      let spread = (0.5*float(tall) - after.y)/(0.5*float(tall) - before.y)
       check seen.isInFront
-      check abs(seen.x - after.x) < 0.01
+      check abs(seen.x - (0.5*float(wide) + (before.x - 0.5*float(wide))*spread +
+        after.x - before.x)) < 0.01
       check abs(seen.y - after.y) < 0.01
       check camera.pivot =~ opening.pivot
       check (camera.distance < opening.distance) == is_closer
@@ -1125,7 +1128,8 @@ suite "Camera":
             point_held = interaction.point_pan)
           at = next
       (camera, interaction.point_pan.get)
-    # Slant: twelve steps carry point taken at press to pixel released at.
+    # Slant: twelve steps carry point taken at press to height released at, and to column
+    #   each step's spread and travel leave it, read here in pixels alone.
     let
       (slant_press, slant_release) =
         (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 700.0, y: 240.0))
@@ -1133,8 +1137,16 @@ suite "Camera":
       seen = projectToScreen(
         slanted.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, held,
       )
+    var (column, at) = (slant_press.x - 0.5*float(wide), slant_press)
+    for step in 1 .. 12:
+      let next = ScreenPosition(
+        x: at.x + (slant_release.x - at.x)/float(12 - step + 1),
+        y: at.y + (slant_release.y - at.y)/float(12 - step + 1),
+      )
+      column = column*(0.5*float(tall) - next.y)/(0.5*float(tall) - at.y) + next.x - at.x
+      at = next
     check slanted.distance < opening.distance
-    check abs(seen.x - slant_release.x) < 0.01
+    check abs(seen.x - (0.5*float(wide) + column)) < 0.01
     check abs(seen.y - slant_release.y) < 0.01
     # Middle column: dolly alone moves camera, so one step and twelve land alike, and out
     #   and back returns exactly.
@@ -1148,10 +1160,10 @@ suite "Camera":
     check once.frame.forward =~ opening.frame.forward
     check returned.eye =~ opening.eye
     check returned.distance =~ opening.distance
-    # Slant out and back: dolly and turntable turn are three motions for point's two
-    #   coordinates, so path leaves trace. Measured 0.0018 at separation 19.
+    # Slant out and back: travel across is turned at two zooms, so path leaves trace.
+    #   Measured 0.122 at separation 19.
     let (slant_back, _) = dragged(12, slant_press, [slant_release, slant_press])
-    check norm(slant_back.eye - opening.eye) < 0.0025
+    check norm(slant_back.eye - opening.eye) < 0.15
 
   test "a vertical right drag with a selection zooms, and turns nothing":
     # Fault: turn chased point's column after dolly spread it, and point stood near line
