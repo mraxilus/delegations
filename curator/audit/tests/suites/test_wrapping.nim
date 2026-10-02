@@ -90,14 +90,20 @@ suite "Wrapping":
       "): int =\n  discard\n"  # parameters fit no line of their own either
     check wide.fixed.isSettled
 
-  test "STYLE.md §5 examples stand as written; layout author chose stands where both fit":
-    for example in [EXAMPLE_PARAMETERS_LINE, EXAMPLE_GROUP_LINES]:
-      check example.isSettled
+  test "parameters take one line of their own where it fits, so one layout stands for each":
+    check EXAMPLE_PARAMETERS_LINE.isSettled
     let indented = EXAMPLE_PARAMETERS_LINE.replace("\n  cayley", "\n    cayley")
     check indented.fixed == EXAMPLE_PARAMETERS_LINE  # re-indented one level
     let flat = "func filterFactors(cayley: var Cayley1D, factors: seq[Basis], as_exclusions = " &
       "false) {.compileTime.} =\n  discard\n"
-    check flat.fixed == flat  # both layouts stand, so one-line form too wide waits for hand
+    check flat.fixed == EXAMPLE_PARAMETERS_LINE  # 102 runes on one line
+    check EXAMPLE_GROUP_LINES.fixed == "func constructProductsTransitional(\n" &
+      "  complement, dual: Cayley1D; wedges: Spatial[Cayley2D]; chirality: Chirality; " &
+      "space: Space\n): array[Order, Cayley2D] {.compileTime.} =\n  discard\n"  # 91 runes fit
+    let single = "proc " & LONG_NAME & "(parameter_named_at_length: Multivector): Multivector =\n"
+    check single.fixed == "proc " & LONG_NAME & "(\n  parameter_named_at_length: Multivector,\n" &
+      "): Multivector =\n"  # one item to line takes separator
+    check single.fixed.isSettled
 
   test "signature holding comment, or fitting where body after `=` does not, stays":
     let commented = "func f(\n  a: int,  # Why.\n  b: int,\n): int = a\n"

@@ -3,9 +3,10 @@
 ##     names of one type (`a, b: X`), `;` between every group, trailing one included. Holds on one
 ##     line and across several, in routine, routine type and lambda.
 ##   Signature: one fitting `LINE_MAX` stands on one line, and wrapped one that would fit is
-##     joined. Where parameters fit no line of their own, each group takes own line, indented one
-##     level, with trailing separator, and `)` opens closing line with return type and pragmas.
-##     Where they fit one line of their own, both layouts stand, each indented one level.
+##     joined. Otherwise parameters take one line of their own, indented one level, where that
+##     line fits, by Architect's ruling; else each group takes own line, with trailing
+##     separator. Either way `)` opens closing line with return type and pragmas. One
+##     parameter alone on its line is list written one item to line, so it takes separator.
 ##   Call: one fitting its line stays, and wrapped one that would fit is joined. Otherwise each
 ##     argument takes own line, indented one level, with trailing comma, and `)` opens line at
 ##     call's indent. Outermost call crossing `LINE_MAX` splits first; each line it leaves is
@@ -15,11 +16,6 @@
 ##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`,
 ##     `trailingInserts`), so each rule is written once (Article II.1).
 ##
-##   Contradiction, left to Architect: STYLE.md §5 wraps parameters onto one line of their own
-##     first, and one to line only where that line fits not, yet its second example sets one
-##     group to line where line of them fits in 91 columns; X.3 says signature "may" first wrap.
-##     So where that line fits, fixer keeps layout author chose, re-indented, and leaves one-line
-##     signature too wide there to hand; width check still reports it.
 ##   Left as written, check silent: parameter group without type or default, where `;` ends
 ##     group; signature or call holding comment, long string spanning lines, or block (keyword
 ##     opening block, `;` list, `do`, `:` ending line, `:` after call outside condition);
@@ -35,8 +31,8 @@
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); construct it cannot read surely stays as written.
 ##   Cost: fixer never writes line width check reports; rewrite that would, stays to hand.
-##   Cost: X.1 asks hand-shaped block be fenced with marker formatter reads; `koch fix` reads
-##     none yet, so hand-shaped call arguments, such as matrix rows, take one argument to line.
+##   Hand-shaped call arguments, such as matrix rows, take one argument to line unless fenced
+##     (`fixes.nim`, X.1): fenced line reads as comment, so call holding it stays as written.
 
 {.experimental: "strictFuncs".}
 
@@ -288,21 +284,8 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
     if not one.isWide: canonical = @[one]
     elif tail_signature != tail and not (head & joined & tail_signature).isWide: continue
     elif not parameters_line.anyIt(it.isWide):
-      # Both layouts stand here (STYLE.md §5 examples, X.3 "may"): keep author's, re-indented.
-      let
-        is_wrapped = s.isLineLast(o) and s.isLineFirst(c)
-        is_parameters_line = is_wrapped and last_line == first_line + 2 and
-          groups.allIt(s.tokens[it[0].first].line == first_line + 1)
-        is_group_lines = is_wrapped and last_line == first_line + groups.len + 1 and
-          toSeq(0 ..< groups.len).allIt(s.tokens[groups[it][0].first].line == first_line + 1 + it)
-      # One group fits both shapes, which differ by trailing separator alone: one name on its
-      #   line is list written one item to line, which takes it (X.3).
-      if is_parameters_line and is_group_lines:
-        let is_trailed = items[^1].separator >= 0 or items.len == 1
-        canonical = if is_trailed: group_lines else: parameters_line
-      elif is_parameters_line: canonical = parameters_line
-      elif is_group_lines: canonical = group_lines
-      else: continue
+      # One name on its line is list written one item to line, which takes separator (X.3).
+      canonical = if items.len == 1: group_lines else: parameters_line
     elif not group_lines.anyIt(it.isWide): canonical = group_lines
     else: continue
     if canonical != s.lines[first_line .. last_line]:
