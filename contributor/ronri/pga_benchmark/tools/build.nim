@@ -747,21 +747,21 @@ func shortened(text, stem, plain: string): string =
 func unindexed(text: string): string =
   ## Replace `(((Basis) n) - 0)` with `n`, which is what compiler spells there.
   const
-    OPEN = "(((Basis) "
-    CLOSE = ") - 0)"
+    opening = "(((Basis) "
+    closing = ") - 0)"
   var i = 0
   while true:
-    let at = text.find(OPEN, i)
+    let at = text.find(opening, i)
     if at < 0:
       result.add text[i .. ^1]
       break
-    let close = text.find(CLOSE, at)
+    let close = text.find(closing, at)
     if close < 0:
       result.add text[i .. ^1]
       break
     result.add text[i ..< at]
-    result.add text[at + OPEN.len ..< close]
-    i = close + CLOSE.len
+    result.add text[at + opening.len ..< close]
+    i = close + closing.len
 
 
 func readable(text: string): string =
@@ -870,7 +870,8 @@ proc clean() =
 
 #[ Entry Point ]#
 
-when isMainModule:
+proc main(): int =
+  ## Run verb named on command line; exit code, 2 on usage error and 1 on failure.
   let
     verb = if paramCount() > 0: paramStr(1) else: ""
     arguments =
@@ -882,7 +883,7 @@ when isMainModule:
   if paramCount() notin arguments or verb == "evaluate" and paramCount() == 3 and
       paramStr(3) != FLAG_THOROUGH:
     stderr.write USAGE
-    quit 2
+    return 2
   try:
     case paramStr(1)
     of "show":
@@ -901,7 +902,12 @@ when isMainModule:
     of "clean": clean()
     else:
       stderr.write USAGE
-      quit 2
+      return 2
   except CatchableError as e:
     stderr.write e.msg & "\n"
-    quit 1
+    return 1
+  0
+
+
+when isMainModule:
+  quit main()

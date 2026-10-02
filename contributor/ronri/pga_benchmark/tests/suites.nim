@@ -130,8 +130,8 @@ macro checkDenseForms(measurands: static seq[Measurand]): untyped =
                 `m` {.used.} = `pool_m`[i]  # Read by `expression` and `dense`.
                 `n` {.used.} = `pool_n`[j]  # Read by binary `expression` and `dense` alone.
               (`expression`, `dense`)
-          check hasNan(got) == hasNan(expected)  # NaN exactly where library returns it
-          if not hasNan(expected): check isNear(got, expected)  # dense form equals library
+          check isAnyNan(got) == isAnyNan(expected)  # NaN exactly where library returns it
+          if not isAnyNan(expected): check isNear(got, expected)  # dense form equals library
 
 
 fillPools(0)
@@ -148,7 +148,7 @@ suite "Configuration":
 
 suite "Surface":
   test "symbols are read under gate of their algebra":
-    const FIXTURE = """
+    const fixture = """
 defineOperator(
   symbols = "∧",
   docs = "x",
@@ -172,11 +172,11 @@ func `|`*(m: Multivector): Multivector =
 template `^`*(m: Multivector): Multivector = m
 # symbols = "∨∧★∘" stays comment
 """
-    check symbolsIn(FIXTURE, is_conformal = false) == @["∧", "∩", "∪", "|", "^"]  # rigid gate
-    check symbolsIn(FIXTURE, is_conformal = true) == @["∧", "■", "⊟", "|", "^"]  # else gate
+    check symbolsIn(fixture, is_conformal = false) == @["∧", "∩", "∪", "|", "^"]  # rigid gate
+    check symbolsIn(fixture, is_conformal = true) == @["∧", "■", "⊟", "|", "^"]  # else gate
 
   test "aliases are exported plain funcs under gate of their algebra":
-    const FIXTURE = """
+    const fixture = """
 func selectGrade*(m: Multivector, g: Grade): Multivector {.inline.} = m{g}
 when IS_RIGID:
   func bulk*(m: Multivector): Multivector {.inline.} = ∙ m
@@ -187,8 +187,8 @@ func add*(m: Multivector, s: float): Multivector {.inline.} = s + m
 func `∧`*(s: float; m: Multivector): Multivector = m
 func hidden(m: Multivector): Multivector = m
 """
-    check aliasesIn(FIXTURE, is_conformal = false) == @["selectGrade", "bulk", "add"]  # rigid
-    check aliasesIn(FIXTURE, is_conformal = true) == @["selectGrade", "bulkFlat", "add"]  # cga
+    check aliasesIn(fixture, is_conformal = false) == @["selectGrade", "bulk", "add"]  # rigid
+    check aliasesIn(fixture, is_conformal = true) == @["selectGrade", "bulkFlat", "add"]  # cga
 
 
 suite "Catalogue":
@@ -386,18 +386,18 @@ suite "Inspector":
 
   test "functions are split and counted from fixture C":
     const
-      MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
-      FIXTURE = [
+      multivector_mangled = "tyObject_Multivector__h"
+      fixture = [
         "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
-          MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* n_p1, " &
-          MULTIVECTOR_MANGLED & "* Result) {",
+          multivector_mangled & "* m_p0, " & multivector_mangled & "* n_p1, " &
+          multivector_mangled & "* Result) {",
         "\tNF* T1_;",
         "NF T2_;",
-        MULTIVECTOR_MANGLED & " T3_;",
+        multivector_mangled & " T3_;",
         "NIM_BOOL* nimErr_;",
         "{",
         "\t\tnimErr_ = nimErrorFlag();",
-        "nimZeroMem(((void*) Result), sizeof(" & MULTIVECTOR_MANGLED & "));",
+        "nimZeroMem(((void*) Result), sizeof(" & multivector_mangled & "));",
         "T2_ = X5BX5D__u1__OOZpgaZmultivectors(m_p0, ((tyEnum_Basis__h) 1));",
         "if (NIM_UNLIKELY((*nimErr_))) {",
         "\tgoto BeforeRet_;",
@@ -420,9 +420,9 @@ suite "Inspector":
         "}",
         "",
         "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
-          MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result);",
+          multivector_mangled & "* m_p0, " & multivector_mangled & "* Result);",
       ].join("\n") & "\n"
-    let functions = functionsIn(FIXTURE)
+    let functions = functionsIn(fixture)
     check functions.len == 2  # declaration ending in `;` skipped
     check functions[0].symbol == "∧"  # head demangled
     check functions[0].parameters == @["Multivector", "Multivector"]  # stems in order
@@ -440,10 +440,10 @@ suite "Inspector":
 
   test "terms inside loops of constant bound count once per trip":
     const
-      MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
-      LOOP = [
+      multivector_mangled = "tyObject_Multivector__h"
+      loop = [
         "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
-          MULTIVECTOR_MANGLED & "* m_p1, " & MULTIVECTOR_MANGLED & "* Result) {",
+          multivector_mangled & "* m_p1, " & multivector_mangled & "* Result) {",
         "NI i_1;",
         "NI res_1;",
         "i_1 = ((NI) 0);",
@@ -499,7 +499,7 @@ suite "Inspector":
         "}",
       ].join("\n") & "\n"
     let
-      functions = functionsIn(LOOP)
+      functions = functionsIn(loop)
       c = count(functions[0].body)
     check c.multiplies == 16 + 1  # 16-trip loop counts its term sixteen times; unknown bound once
     check c.adds == 16  # every term inside loop is weighted
@@ -509,10 +509,10 @@ suite "Inspector":
 
   test "divisions count as terms, once per trip, and fold from callees":
     const
-      MULTIVECTOR_MANGLED = "tyObject_Multivector__h"
-      DIVIDE = [
+      multivector_mangled = "tyObject_Multivector__h"
+      divide = [
         "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
-          MULTIVECTOR_MANGLED & "* m_p0, " & MULTIVECTOR_MANGLED & "* Result) {",
+          multivector_mangled & "* m_p0, " & multivector_mangled & "* Result) {",
         "NF n_1;",
         "NI i_1;",
         "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
@@ -533,14 +533,14 @@ suite "Inspector":
         "(*x_p0) = (((NF) (*x_p0)) / ((NF) y_p1));",
         "}",
       ].join("\n") & "\n"
-    let functions = functionsIn(DIVIDE)
+    let functions = functionsIn(divide)
     check count(functions[0].body).divides == 1  # reciprocal outside loop, once
     check count(functions[1].body).divides == 1  # callee's own division
     check totals(functions)["unit__u0__OOZpgaZops"].divides == 1 + 4  # folded once per trip
     check count(functions[0].body).multiplies == 0  # division is not multiply
 
   test "totals fold callees per call site":
-    const FIXTURE = """
+    const fixture = """
 N_NIMCALL(void, outer__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivector__h* Result) {
 inner__u0__m(m_p0, Result);
 inner__u0__m(m_p0, Result);
@@ -550,10 +550,10 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 (*Result) = (((NF) 1.0) * ((NF) 2.0));
 }
 """
-    let totals = totals(functionsIn(FIXTURE))
+    let totals = totals(functionsIn(fixture))
     check totals["inner__u0__m"].multiplies == 1  # own
     check totals["outer__u0__m"].multiplies == 2 and totals["outer__u0__m"].calls == 2  # twice
-    let rooted = totals(functionsIn(FIXTURE), ["outer__u0__m"])
+    let rooted = totals(functionsIn(fixture), ["outer__u0__m"])
     check rooted["outer__u0__m"] == totals["outer__u0__m"]  # fold from root agrees with whole
     check "inner__u0__m" notin rooted  # callee counted, never reported unasked
 
@@ -653,8 +653,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
 suite "Guard":
   const
-    PATH = "baseline/rga4d.json"
-    KEY = "∧(Multivector,Multivector)"
+    path = "baseline/rga4d.json"
+    key = "∧(Multivector,Multivector)"
 
   func node(multiplies, checks, zero_fills, bytes: int): JsonNode =
     ## Build one function as inspect does, from counts and bytes moved.
@@ -673,54 +673,54 @@ suite "Guard":
     )
     result["functions"] = functions
 
-  func one(key: string; f: JsonNode): JsonNode =
+  func one(name: string; f: JsonNode): JsonNode =
     ## Build functions object holding one function.
     result = newJObject()
-    result[key] = f
+    result[name] = f
 
   test "equal documents pass with nothing to say":
     let
-      same = one(KEY, node(81, 178, 1, 512))
-      v = compare(doc(same), doc(same), PATH)
+      same = one(key, node(81, 178, 1, 512))
+      v = compare(doc(same), doc(same), path)
     check v.findings.len == 0 and v.improvements.len == 0  # gate silent
 
   test "grown count is one finding naming function, metric and both values":
     let v =
-      compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(90, 178, 1, 512))), PATH)
+      compare(doc(one(key, node(81, 178, 1, 512))), doc(one(key, node(90, 178, 1, 512))), path)
     check v.findings.len == 1 and v.improvements.len == 0  # one metric grew
     check v.findings[0].render ==
-      PATH & ":0: Total `multiplies` of `" & KEY & "` grew; got `90`, baseline `81`."  # IV.4
+      path & ":0: Total `multiplies` of `" & key & "` grew; got `90`, baseline `81`."  # IV.4
 
   test "shrunk count is improvement, never finding":
     let v =
-      compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(81, 0, 1, 512))), PATH)
+      compare(doc(one(key, node(81, 178, 1, 512))), doc(one(key, node(81, 0, 1, 512))), path)
     check v.findings.len == 0 and v.improvements.len == 1  # baseline moves by choice
     check "checks" in v.improvements[0] and "got `0`" in v.improvements[0]  # what shrank
 
   test "bytes moved are gated with counts":
     let v =
-      compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(81, 178, 1, 640))), PATH)
+      compare(doc(one(key, node(81, 178, 1, 512))), doc(one(key, node(81, 178, 1, 640))), path)
     check v.findings.len == 1 and "bytes_moved" in v.findings[0].message  # movement grew
 
   test "function absent in either document is finding":
-    let before = compare(doc(one(KEY, node(81, 178, 1, 512))), doc(newJObject()), PATH)
+    let before = compare(doc(one(key, node(81, 178, 1, 512))), doc(newJObject()), path)
     check before.findings.len == 1 and "absent now" in before.findings[0].message  # gone
-    let after = compare(doc(newJObject()), doc(one(KEY, node(81, 178, 1, 512))), PATH)
+    let after = compare(doc(newJObject()), doc(one(key, node(81, 178, 1, 512))), path)
     check after.findings.len == 1 and "absent from baseline" in after.findings[0].message  # new
 
   test "documents of another build are not compared":
     let
-      same = one(KEY, node(81, 178, 1, 512))
-      flags = compare(doc(same), doc(same, flags = "-d:danger"), PATH)
+      same = one(key, node(81, 178, 1, 512))
+      flags = compare(doc(same), doc(same, flags = "-d:danger"), path)
     check flags.findings.len == 1 and "`flags`" in flags.findings[0].message  # build differs
-    let dims = compare(doc(same), doc(same, dimensions = 5), PATH)
+    let dims = compare(doc(same), doc(same, dimensions = 5), path)
     check dims.findings.len == 1 and "`dimensions`" in dims.findings[0].message  # algebra differs
-    let schema = compare(doc(same), %*{"schema": 2}, PATH)
+    let schema = compare(doc(same), %*{"schema": 2}, path)
     check schema.findings.len == 1 and "Schema differs" in schema.findings[0].message  # refused
 
 
 suite "Gaps":
-  const KEY_WEDGE = "∧(Multivector,Multivector)"
+  const key_wedge = "∧(Multivector,Multivector)"
 
   func functionNode(
     symbol, module: string; is_inline: bool; multiplies, checks, zero_fills, bytes: int
@@ -740,15 +740,15 @@ suite "Gaps":
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
     )
     var functions = newJObject()
-    functions[KEY_WEDGE] = functionNode("∧", "pga/operators", false, 81, 178, 1, 512)
+    functions[key_wedge] = functionNode("∧", "pga/operators", false, 81, 178, 1, 512)
     functions["wedge(Point,Point)"] = functionNode("wedge", "reference/rigid3", true, 12, 0, 0, 112)
     functions["~(Multivector)"] = functionNode("~", "pga/operators", false, 0, 0, 1, 384)
     functions["[](Multivector,Basis)"] = functionNode("[]", "pga/multivectors", true, 0, 0, 0, 136)
     result["functions"] = functions
     result["measurands"] = %*{
-      "wedge": {"symbol": "∧", "library": KEY_WEDGE, "reference": ""},
+      "wedge": {"symbol": "∧", "library": key_wedge, "reference": ""},
       "wedge_point_point": {
-        "symbol": "∧", "library": KEY_WEDGE, "reference": "wedge(Point,Point)"
+        "symbol": "∧", "library": key_wedge, "reference": "wedge(Point,Point)"
       },
       "select_part": {"symbol": "[]", "library": "[](Multivector,Basis)", "reference": ""},
       "transform_point_motor": {
@@ -777,7 +777,7 @@ suite "Gaps":
       "transform_point_motor": {"library": measurement(60.0), "reference": measurement(5.0)},
     }
 
-  let ALGEBRAS = @[
+  let algebras_fixture = @[
     Algebra(name: "rga4d", measurements_static: staticDoc(), measurements_runtime: runtimeDoc())
   ]
 
@@ -787,7 +787,7 @@ suite "Gaps":
       if d.rule == rule: return d.decideCause(algebras, gaps)
 
   test "gaps are decided against reference and against zero":
-    let gaps = gapsOf(ALGEBRAS[0])
+    let gaps = gapsOf(algebras_fixture[0])
     check gaps.len == 4  # one per measurand
     let by = gaps.mapIt((it.measurand, it)).toTable
     check by["wedge"].status == Status.Over and "checks" in by["wedge"].over_on  # absolute
@@ -807,7 +807,7 @@ suite "Gaps":
 
   test "docket keeps identifiers across reorder and allots next to new key":
     var
-      gaps = gapsOf(ALGEBRAS[0])
+      gaps = gapsOf(algebras_fixture[0])
       docket = docketOf(nil)
     gaps.assign(docket)
     check gaps[0].id == "G001" and gaps[3].id == "G004" and docket.next == 5  # in order
@@ -821,22 +821,23 @@ suite "Gaps":
 
   test "causes are decided by rule with evidence":
     let
-      gaps = gapsOf(ALGEBRAS[0])
-      checks = decidedOf(Rule.Checks, ALGEBRAS, gaps)
+      gaps = gapsOf(algebras_fixture[0])
+      checks = decidedOf(Rule.Checks, algebras_fixture, gaps)
     check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
-    check "`" & KEY_WEDGE & "` with 178" in checks.evidence  # most
-    check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
+    check "`" & key_wedge & "` with 178" in checks.evidence  # most
+    check decidedOf(Rule.Inline, algebras_fixture, gaps).evidence ==
       "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
-    check decidedOf(Rule.ZeroFills, ALGEBRAS, gaps).evidence.startsWith("2 of 3")  # ∧ and ~
-    check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence == "1 gaps. The widest is " &
+    check decidedOf(Rule.ZeroFills, algebras_fixture, gaps).evidence.startsWith("2 of 3")  # ∧ and ~
+    check decidedOf(Rule.Terms, algebras_fixture, gaps).evidence == "1 gaps. The widest is " &
       "rga4d/wedge_point_point, which spends 81 multiplies against 12."  # widest gap named
-    check decidedOf(Rule.Time, ALGEBRAS, gaps).evidence ==
+    check decidedOf(Rule.Time, algebras_fixture, gaps).evidence ==
       "2 gaps. The worst is rga4d/wedge_point_point, at 24.1 ns against 1.3 ns."  # worst ratio
-    check decidedOf(Rule.Nan, ALGEBRAS, gaps).status == Status.Met  # every share zero
-    check decidedOf(Rule.Compound, ALGEBRAS, gaps).evidence ==
+    check decidedOf(Rule.Nan, algebras_fixture, gaps).status == Status.Met  # every share zero
+    check decidedOf(Rule.Compound, algebras_fixture, gaps).evidence ==
       "rga4d/transform_point_motor."  # composed expression named
-    check decidedOf(Rule.Missing, ALGEBRAS, gaps).status == Status.Met  # nothing missing
-    check decidedOf(Rule.Cayley, ALGEBRAS, gaps).status == Status.Unmeasured  # not readable here
+    check decidedOf(Rule.Missing, algebras_fixture, gaps).status == Status.Met  # nothing missing
+    check decidedOf(Rule.Cayley, algebras_fixture, gaps).status ==
+      Status.Unmeasured  # not readable here
 
   test "causes count library functions, never reference or dense form":
     check isLibraryModule("pga/operators")  # library's own
@@ -845,7 +846,7 @@ suite "Gaps":
     check not isLibraryModule("pga_benchmark/dense")  # dense form, as test build names it
 
   test "rendered list fits width and names every gap":
-    let (text, docket) = generate(ALGEBRAS, docketOf(nil))
+    let (text, docket) = generate(algebras_fixture, docketOf(nil))
     var widest = 0
     for line in text.splitLines: widest = max(widest, runeLen(line))
     check widest <= WIDTH  # form check reads product
@@ -893,11 +894,11 @@ suite "Markdown":
 
 suite "Changes":
   const
-    RECORD = "changes/sign.md"
-    LIBRARY = "let x = 1\nlet y = 2\nlet z = 1\n"
+    record = "changes/sign.md"
+    library = "let x = 1\nlet y = 2\nlet z = 1\n"
 
   test "change reads title, why and edits in order":
-    let (change, findings) = parseChange(RECORD, "# Sign\n\nWhy.\n\n## Edit `pga/a.nim`\n\n" &
+    let (change, findings) = parseChange(record, "# Sign\n\nWhy.\n\n## Edit `pga/a.nim`\n\n" &
       "FENCEnim\nlet y = 2\nFENCE\n\nFENCEnim\nlet y = 3\nFENCE\n".replace("FENCE", "```"))
     check findings.len == 0  # well formed
     check change.title == "Sign" and change.why.len == 1  # title and why
@@ -906,41 +907,41 @@ suite "Changes":
     check change.edits[0].replacement == "let y = 3"  # second fence replaces
 
   test "quote found once is replaced; found twice or nowhere is finding":
-    var files = {"pga/a.nim": LIBRARY}.toTable
+    var files = {"pga/a.nim": library}.toTable
     let
       once = Change(edits: @[Edit(path: "pga/a.nim", quote: "let y = 2", replacement: "let y = 3")])
       twice = Change(edits: @[Edit(path: "pga/a.nim", quote: " = 1", replacement: " = 4", line: 5)])
       nowhere = Change(edits: @[Edit(path: "pga/a.nim", quote: "let w", replacement: "")])
-    check applyChange(files, once, RECORD).len == 0  # applies
+    check applyChange(files, once, record).len == 0  # applies
     check files["pga/a.nim"] == "let x = 1\nlet y = 3\nlet z = 1\n"  # replaced in place
-    let ambiguous = applyChange(files, twice, RECORD)
+    let ambiguous = applyChange(files, twice, record)
     check ambiguous.len == 1 and ambiguous[0].render ==
-      RECORD & ":5: Quote must occur once in `pga/a.nim`; got `2`."  # never guess
-    check applyChange(files, nowhere, RECORD).len == 1  # stale quote
+      record & ":5: Quote must occur once in `pga/a.nim`; got `2`."  # never guess
+    check applyChange(files, nowhere, record).len == 1  # stale quote
 
   test "whole-file replacement holds to digest of file at pin":
-    var files = {"pga/a.nim": LIBRARY}.toTable
+    var files = {"pga/a.nim": library}.toTable
     let
       fresh = Change(edits: @[
-        Edit(path: "pga/a.nim", replacement: "new\n", digest: digestOf(LIBRARY))
+        Edit(path: "pga/a.nim", replacement: "new\n", digest: digestOf(library))
       ])
       stale = Change(edits: @[Edit(path: "pga/a.nim", replacement: "new\n", digest: "0")])
-    check applyChange(files, stale, RECORD).len == 1  # file moved on at head
-    check applyChange(files, fresh, RECORD).len == 0 and files["pga/a.nim"] == "new\n"  # replaced
+    check applyChange(files, stale, record).len == 1  # file moved on at head
+    check applyChange(files, fresh, record).len == 0 and files["pga/a.nim"] == "new\n"  # replaced
 
   test "section that is neither edit nor replace is finding":
-    let (_, findings) = parseChange(RECORD, "# Sign\n\n## Rename things\n")
+    let (_, findings) = parseChange(record, "# Sign\n\n## Rename things\n")
     check findings.len == 1 and "neither Edit nor Replace" in findings[0].message  # malformed
 
 
 suite "Notes":
   const
-    RECORD = "marginalia/notes.md"
-    SOURCE = "Notes.\n\n## Odd grade\n\n`pga/a.nim` · decide\n\n" &
+    record = "marginalia/notes.md"
+    source = "Notes.\n\n## Odd grade\n\n`pga/a.nim` · decide\n\n" &
       "FENCEnim\nlet y = 2\nFENCE\n\nSay why.\n"
 
   test "note reads title, file, status, quote and body":
-    let (notes, findings) = parseNotes(RECORD, SOURCE.replace("FENCE", "```"))
+    let (notes, findings) = parseNotes(record, source.replace("FENCE", "```"))
     check findings.len == 0 and notes.lead.len == 1 and notes.items.len == 1  # one note
     let note = notes.items[0]
     check note.title == "Odd grade" and note.path == "pga/a.nim"  # heading, then file
@@ -949,31 +950,31 @@ suite "Notes":
 
   test "anchor is located at pin, and stale anchor is finding":
     let
-      (notes, _) = parseNotes(RECORD, SOURCE.replace("FENCE", "```"))
+      (notes, _) = parseNotes(record, source.replace("FENCE", "```"))
       files = {"pga/a.nim": "let x = 1\nlet y = 2\n"}.toTable
       moved = {"pga/a.nim": "let y = 3\n"}.toTable
-    check checkAnchors(notes, files, RECORD).len == 0  # quote found once
+    check checkAnchors(notes, files, record).len == 0  # quote found once
     check notes.items[0].lineAt(files) == 2  # located where it stands
-    check checkAnchors(notes, moved, RECORD).len == 1  # quote gone from library
+    check checkAnchors(notes, moved, record).len == 1  # quote gone from library
 
 
 suite "Head":
-  const PIN = "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315"
+  const pin = "bd6b23c590d7e1da91a1ea288a1a4b94dedbf315"
 
   test "pin passes when library tree is head's, whatever repository commit":
-    check checkHead(PIN, "tree1", "ffffffff", "tree1", "atlas.lock").len == 0  # same tree
-    let lag = checkHead(PIN, "tree1", "ffffffff", "tree2", "atlas.lock")
+    check checkHead(pin, "tree1", "ffffffff", "tree1", "atlas.lock").len == 0  # same tree
+    let lag = checkHead(pin, "tree1", "ffffffff", "tree2", "atlas.lock")
     check lag.len == 1 and "Pin lags library head" in lag[0].message  # library moved
-    check checkHead(PIN, "tree1", "", "", "atlas.lock").len == 1  # head unread is finding
+    check checkHead(pin, "tree1", "", "", "atlas.lock").len == 1  # head unread is finding
 
   test "measurement and evaluation must be taken at pin":
     let
-      fresh = %*{"taken": {"pga": PIN}, "edits_digest": "d1"}
+      fresh = %*{"taken": {"pga": pin}, "edits_digest": "d1"}
       stale = %*{"taken": {"pga": "0bc4655"}, "edits_digest": "d1"}
-    check checkStamp(fresh, PIN, "baseline/runtime_rga4d.json").len == 0  # at pin
-    check checkStamp(stale, PIN, "baseline/runtime_rga4d.json").len == 1  # re-take
-    check checkEvaluation(fresh, PIN, "d1", "evaluations/sign.json").len == 0  # current
-    check checkEvaluation(fresh, PIN, "d2", "evaluations/sign.json").len == 1  # edits changed since
+    check checkStamp(fresh, pin, "baseline/runtime_rga4d.json").len == 0  # at pin
+    check checkStamp(stale, pin, "baseline/runtime_rga4d.json").len == 1  # re-take
+    check checkEvaluation(fresh, pin, "d1", "evaluations/sign.json").len == 0  # current
+    check checkEvaluation(fresh, pin, "d2", "evaluations/sign.json").len == 1  # edits changed since
 
   test "built page must match digest it was published at, and README its URL":
     let
@@ -992,8 +993,8 @@ suite "Head":
 
 suite "Proposals":
   const
-    DIRECTORY = "proposals/01-sign"
-    RECORD = "# P01: Sign\n\nWhy.\n"
+    directory_sign = "proposals/01-sign"
+    record_sign = "# P01: Sign\n\nWhy.\n"
 
   func numbered(number: int; status = "proposed"): Proposal =
     ## Read well-formed proposal at number, with status.
@@ -1008,7 +1009,7 @@ suite "Proposals":
       claims = %*{"status": "proposed", "builds_on": "base", "claims": [{"kind": "suites"},
         {"kind": "build", "algebra": "rga6d", "metric": "peakmem", "at_most": 0.7},
         {"kind": "program", "path": "p.nim", "algebras": ["rga4d"]}]}
-      (proposal, findings) = parseProposal(RECORD, "", claims, DIRECTORY)
+      (proposal, findings) = parseProposal(record_sign, "", claims, directory_sign)
     check findings.len == 0 and proposal.title == "Sign"  # well formed, citation read off
     check proposal.number == 1 and proposal.name == "sign"  # number, then name, from path
     check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
@@ -1018,20 +1019,21 @@ suite "Proposals":
   test "unknown claim, missing title and claims that are not JSON are findings":
     let
       odd = %*{"status": "proposed", "claims": [{"kind": "vibes"}]}
-      (_, unknown) = parseProposal(RECORD, "", odd, DIRECTORY)
+      (_, unknown) = parseProposal(record_sign, "", odd, directory_sign)
       (_, untitled) = parseProposal("Why.\n", "", %*{"status": "proposed", "claims": []},
-        DIRECTORY)
-      (_, broken) = parseProposal(RECORD, "", nil, DIRECTORY)
+        directory_sign)
+      (_, broken) = parseProposal(record_sign, "", nil, directory_sign)
     check unknown.len == 1 and "`vibes`" in unknown[0].message  # never skipped in silence
-    check untitled.len == 1 and untitled[0].path == DIRECTORY & "/proposal.md"  # needs title
-    check broken.len == 1 and broken[0].path == DIRECTORY & "/claims.json"  # needs object
+    check untitled.len == 1 and untitled[0].path == directory_sign & "/proposal.md"  # needs title
+    check broken.len == 1 and broken[0].path == directory_sign & "/claims.json"  # needs object
 
   test "path without number, title without citation and unknown status are findings":
     let
       claims = %*{"status": "proposed", "claims": []}
-      (_, unnumbered) = parseProposal(RECORD, "", claims, "proposals/sign")
-      (_, uncited) = parseProposal("# Sign\n", "", claims, DIRECTORY)
-      (_, unplaced) = parseProposal(RECORD, "", %*{"status": "dreamt", "claims": []}, DIRECTORY)
+      (_, unnumbered) = parseProposal(record_sign, "", claims, "proposals/sign")
+      (_, uncited) = parseProposal("# Sign\n", "", claims, directory_sign)
+      (_, unplaced) =
+        parseProposal(record_sign, "", %*{"status": "dreamt", "claims": []}, directory_sign)
     check unnumbered.len == 2  # path lacks number, so title cites none it could match
     check "`01-sign`" in unnumbered[0].message  # names form path needs
     check uncited.len == 1 and "`P01: `" in uncited[0].message  # title opens with citation
@@ -1039,8 +1041,8 @@ suite "Proposals":
 
   test "implemented proposal needs its commit, and implemented or withdrawn is frozen":
     let
-      (bare, why) = parseProposal(RECORD, "",
-        %*{"status": "implemented", "claims": []}, DIRECTORY)
+      (bare, why) = parseProposal(record_sign, "",
+        %*{"status": "implemented", "claims": []}, directory_sign)
     check why.len == 1 and "`implemented_in`" in why[0].message  # commit it landed in
     check bare.isImplemented and bare.isFrozen  # frozen as well
     check numbered(1, "withdrawn").isFrozen and not numbered(1, "withdrawn").isImplemented
@@ -1138,20 +1140,20 @@ suite "Figures":
 
   test "P01 figure names committed map that shows every rule of P01":
     const
-      ARGUMENT = staticRead("../proposals/01-cayley-derivation/proposal.md")
-      MAP = staticRead("../pages/derivation-map.svg")
+      argument = staticRead("../proposals/01-cayley-derivation/proposal.md")
+      svg = staticRead("../pages/derivation-map.svg")
     let
-      (record, _) = parseProposal(ARGUMENT, "", %*{"status": "proposed", "claims": []},
+      (record, _) = parseProposal(argument, "", %*{"status": "proposed", "claims": []},
         "proposals/01-cayley-derivation")
       paths = record.body.mapIt(it.figureOf(record.directory)).filterIt(it.isSome).mapIt(
         it.get.path)
     check paths == @["pages/derivation-map.svg"]  # one figure, file staticRead found
     for rule in ["constructAnti", "applyMap", "applyConstant", "filterGrades", "signed sum"]:
-      check rule in MAP  # each of four rules marks its arrow or box
+      check rule in svg  # each of four rules marks its arrow or box
 
 
 suite "Edits":
-  const SOURCE = "func outer*(a: int;\n    b: int): int {.inline.} =\n  ## Doc.\n" &
+  const source_pin = "func outer*(a: int;\n    b: int): int {.inline.} =\n  ## Doc.\n" &
     "  for x in 0 ..< a:\n    result += x\n\nimport std/math\n"
     ## Library file at pin: routine whose signature spans two lines, then top-level import.
 
@@ -1160,7 +1162,7 @@ suite "Edits":
     Change(edits: @[Edit(path: "pga/a.nim", quote: quote, replacement: replacement,
       digest: digest)])
 
-  let files = {"pga/a.nim": SOURCE}.toTable
+  let files = {"pga/a.nim": source_pin}.toTable
     ## Library files edits read their line and context from.
 
   test "edit renders closed, naming routine it sits in at pin":
@@ -1244,9 +1246,9 @@ suite "Pages":
     check spreadOf([quiet]).low < 1.0 and spreadOf([quiet]).high > 1.0  # around no change
 
   test "every grid in shell bounds its columns, so wide content scrolls in place":
-    const SHELL = staticRead("../pages/shell.html")
+    const shell_html = staticRead("../pages/shell.html")
     var unbounded: seq[string]
-    for rule in SHELL.split('}'):
+    for rule in shell_html.split('}'):
       let body = rule.split('{')
       if body.len < 2 or "display: grid" notin body[^1]: continue
       if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
@@ -1320,13 +1322,13 @@ suite "Pages":
     check "<option value=\"wedge\" class=\"in-rga4d\">wedge ∧</option>" in body  # symbol beside
 
   test "search box finds row by its words, and shell hides row script marks unfound":
-    const SHELL = staticRead("../pages/shell.html")
+    const shell_html = staticRead("../pages/shell.html")
     let body = docketBody([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "")
     check "<input type=\"search\" id=\"find\"" in body and body.count("<script>") == 1  # one
     check "data-find=\"wedge_point_point g002 ∧ wedge point point\"" in body  # id, kinds, lower
     check "data-find=\"wedge g001 ∧ wedge\"" in body  # general row: no operand kind
     check "classList.toggle(\"unfound\"" in body and "details.row.unfound { display: none; }" in
-      SHELL  # script marks, shell hides
+      shell_html  # script marks, shell hides
 
   test "typed id splits at longest operand kind, one kind per operand":
     let
@@ -1360,7 +1362,7 @@ suite "Pages":
 
 
 suite "Driver":
-  const DRIVER = staticRead("../tools/build.nim")
+  const driver = staticRead("../tools/build.nim")
 
   func dispatched(source: string): seq[string] =
     ## Read verbs driver's dispatch answers to: quoted labels of `of` branches after case.
@@ -1385,13 +1387,13 @@ suite "Driver":
       if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
 
   test "dispatch answers to every verb usage and header teach, and no other":
-    check dispatched(DRIVER).sorted == taught(DRIVER).sorted  # usage string
-    check dispatched(DRIVER).sorted == tabled(DRIVER).sorted  # header table
-    check "inspect" in dispatched(DRIVER) and "bench" in dispatched(DRIVER)  # README's verbs
+    check dispatched(driver).sorted == taught(driver).sorted  # usage string
+    check dispatched(driver).sorted == tabled(driver).sorted  # header table
+    check "inspect" in dispatched(driver) and "bench" in dispatched(driver)  # README's verbs
 
   test "header table names files verbs write":
-    check "`baseline/runtime_<algebra>.json`" in DRIVER  # what `bench` records
-    check "`baseline/static_<algebra>.json`" in DRIVER  # what `baseline` records
-    check "| drive     | inspect, guard," in DRIVER  # drive runs guard, not retired check
-    check "`evaluations/<name>.json`" in DRIVER  # what evaluate writes
-    check "`pages/published.json`" in DRIVER  # what published writes
+    check "`baseline/runtime_<algebra>.json`" in driver  # what `bench` records
+    check "`baseline/static_<algebra>.json`" in driver  # what `baseline` records
+    check "| drive     | inspect, guard," in driver  # drive runs guard, not retired check
+    check "`evaluations/<name>.json`" in driver  # what evaluate writes
+    check "`pages/published.json`" in driver  # what published writes
