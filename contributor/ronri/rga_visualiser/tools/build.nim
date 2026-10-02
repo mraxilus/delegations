@@ -43,10 +43,9 @@
 
 import std/[os, osproc, strutils, tables]
 
-# Catalogue itself, not text of it: keys page names and words page shows are read from
-#   compiled enum and table, so key renamed there and not re-derived here fails to
-#   compile rather than to match (Article II.9).
-import ../src/rga_visualiser/wording
+# Catalogue read as text, never imported: type check runs this driver on koch's compiler,
+#   which must compile no project code (#385). Suite holds reading to compiled catalogue.
+import ./catalogue
 
 
 const
@@ -71,6 +70,8 @@ const
     ## Bridge whose own `exportc` signatures `declare` reads.
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
+  PATH_WORDING_NIM = "src" / "rga_visualiser" / "wording.nim"
+    ## Catalogue of shown text, read for its keys and words; see `catalogue`.
   PATH_MAIN_NIM = "src" / "desktop" / "main.nim"
   PATH_HELP_NIM = "src" / "rga_visualiser" / "help.nim"
     ## Desktop entry point, which shows exactly one piece of text: window's own caption.
@@ -360,12 +361,9 @@ proc declare() =
   #   `declare const enum` and not plain enum: ambient const enum is inlined at every use
   #   site, so page carries numbers rather than lookup object, and nothing new joins
   #   `SCRIPTS`. Both configurations already read this file.
-  var
-    keys = 0
-    wording = "declare const enum Wording {\n"
-  for key in Wording:
-    wording.add "  " & $key & " = " & $ord(key) & ",\n"
-    inc keys
+  let keys = keysOf(readFile(PATH_WORDING_NIM))
+  var wording = "declare const enum Wording {\n"
+  for ordinal, key in keys: wording.add "  " & key & " = " & $ordinal & ",\n"
   wording.add "}\n"
 
   var records: seq[string]
@@ -383,7 +381,7 @@ proc declare() =
       wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
   echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations, ",
-    keys, " wording keys)."
+    keys.len, " wording keys)."
 
 
 
@@ -503,9 +501,9 @@ proc checkWording() =
   #   written for nobody, and next reader cannot tell it from one still in use.
   var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption & readFile(PATH_HELP_NIM)
   for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
-  for key in Wording:
-    if not shown.namesKey($key):
-      found.add "wording.nim: `" & $key & "` is shown by neither front-end"
+  for key in keysOf(readFile(PATH_WORDING_NIM)):
+    if not shown.namesKey(key):
+      found.add "wording.nim: `" & key & "` is shown by neither front-end"
   if found.len > 0:
     raise newException(
       OSError,
@@ -654,8 +652,8 @@ proc worded(page: string): string =
   ##   Whole document is swept rather than attribute or element kind, since token is written
   ##   wherever page shows words.
   result = page
-  for key in Wording:
-    result = result.replace(TOKEN_WORD & $key & "@", $wordingText(key))
+  for key, words in wordsOf(readFile(PATH_WORDING_NIM)):
+    result = result.replace(TOKEN_WORD & key & "@", words)
   var unfilled: seq[string]
   # Bound first: bare `splitLines` in `for` resolves to iterator, which yields no index.
   let lines = result.splitLines
