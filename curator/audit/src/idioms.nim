@@ -8,8 +8,12 @@
 ##     come before local modules (X.5, §5).
 ##   - Adjacent imports of one directory share one bracket, and bracket of one module drops
 ##     it (X.5, §5): `checkImportBrackets`, outside static pass until projects run fix.
-##   - Pragma list of declaration and `export` list are alphabetised (X.10): `checkLists`,
-##     read on tokens (`tokens.nim`), outside static pass until projects run fix.
+##   - Pragma list of declaration, `export` list and names after `from … import` are
+##     alphabetised (X.10): `checkLists`, read on tokens (`tokens.nim`), outside static pass
+##     until projects run fix. Pragma list holds bare pragmas first, then pragmas with argument
+##     (`key: value`, `key(arg)`), each group alphabetised.
+##   - Alphabetised means dictionary order, by Architect's ruling: case and `_` ignored, tie
+##     to code point, so `Facing` comes before `facing`, and `is_x` beside `isX`.
 ##   - Two consecutive single bindings of one keyword share that keyword (X.5).
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).
@@ -28,7 +32,8 @@
 ##     layout; contiguous import lines are reordered by rank, stable within rank.
 ##   - Adjacent imports of one directory merge into one bracket at first one's line, items
 ##     alphabetised and `{.all.}` kept; bracket of one module drops its bracket.
-##   - List out of order has its items sorted into slots they held, `key: value` item whole.
+##   - List out of order has its items sorted into slots they held, `key: value` item whole,
+##     trailing comment left at line end.
 ##   - Run of single bindings becomes keyword alone, then each binding indented two spaces;
 ##     lines continuing last binding (open bracket, deeper indent, doc under it) move too.
 ##   - Missing `strictFuncs` goes where X.6 puts directives: before first code line that is
@@ -50,15 +55,17 @@
 ##   No fixer, and check silent: import with `except`, `as`, pragma but `{.all.}`, comment or
 ##     string, statement spanning lines, and imports apart across blank line, since merging
 ##     them is choice; list whose order may mean, i.e. pragma statement opening line and list
-##     holding user pragma, which may be macro applied in order written; list whose order
-##     case decides, as `Tree`, `projectDirectories` by code point and reverse by alphabet,
-##     which waits on Architect's ruling.
+##     holding user pragma. Compiler applies macro pragmas in order written (`semProcAnnotation`
+##     takes first macro it meets, and that macro sees rest), so moving user pragma can change
+##     routine it yields. Cost: such list stays as written even where its order moves nothing,
+##     and reading holds its order.
 ##   No fixer for `return result` whose place reads no one fix: routine's only statement, whose
 ##     body deletion would empty; line carrying comment, which would lose its line; line after
 ##     comment, which would then name nothing; end of template or macro, which returns from
 ##     its caller; opener scanner cannot name, such as lambda bound to `let`.
 ##
-##   Cost: text scanner, never parser. Import under `when` and `from … import` are unread.
+##   Cost: text scanner, never parser. Import under `when` is unread, and `from … import` is
+##     read for order of its names alone.
 ##   Cost: seeded `initRand` passes as `randomize(0)` does, since both fix sequence; STYLE
 ##     names `randomize(0)`, and reading holds which form project takes.
 ##   Cost: debug output is told from report by its shape alone: labelled `echo`, i.e. one
@@ -161,6 +168,7 @@ const
     ## Pragmas compiler gives declarations (`pragmas.nim`, `procPragmas` to `fieldPragmas`),
     ##   lowercase with underscores dropped, as Nim compares names. Order among them moves
     ##   nothing; user pragma may be macro, applied in order written, so list holding one stays.
+    ##   Cost: pragma missing here reads as user pragma, and its list stays as written.
 
 
 func firstWord(text: string): string =
@@ -169,6 +177,11 @@ func firstWord(text: string): string =
   var k = 0
   while k < s.len and s[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
   s[0 ..< k]
+
+
+func dictionaryKey(name: string): (string, string) =
+  ## Read key of dictionary order: case and `_` ignored, tie to code point (`Facing`, `facing`).
+  (name.toLowerAscii.replace("_", ""), name)
 
 
 func importRank(target: string): int =
@@ -215,7 +228,7 @@ func checkImports(path: string, code: seq[string]): seq[Finding] =
   var rank = -1
   for span in code.importSpans:
     let items = span.target.bracketItems
-    if items != items.sorted:
+    if items != items.sortedByIt(it.dictionaryKey):
       result.add finding(
         path,
         span.first + 1,
@@ -485,7 +498,7 @@ func sortedBracket(statement: string): string =
     close = statement.rfind(']')
     slots = statement[open + 1 ..< close].split(',')
   var items = slots.mapIt(it.strip).filterIt(it.len > 0)
-  items = items.sortedByIt(it.itemName)
+  items = items.sortedByIt(it.itemName.dictionaryKey)
   var
     k = 0
     filled: seq[string]
@@ -508,7 +521,7 @@ func fixImports(path, source: string): Fix =
   # Sort items in place, leaving bracket holding comment or wide result to hand.
   for span in code.importSpans:
     let items = span.target.bracketItems
-    if items == items.sorted: continue
+    if items == items.sortedByIt(it.dictionaryKey): continue
     let statement = lines[span.first .. span.last].join("\n")
     if statement != code[span.first .. span.last].join("\n"): continue
     let sorted_lines = statement.sortedBracket.split('\n')
@@ -594,7 +607,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   # Keep those whose statement changes and fits its line.
   result = result.filterIt(it.lines.len > 1 or (it.items.len == 1 and '[' in lines[it.lines[0]]))
   for c in result.mitems:
-    c.items = c.items.sortedByIt(it.itemName)
+    c.items = c.items.sortedByIt(it.itemName.dictionaryKey)
     c.statement = IMPORT_MARK & c.prefix &
       (if c.items.len == 1: c.items[0] else: "[" & c.items.join(", ") & "]")
   result = result.filterIt(not it.statement.isWide)
@@ -742,53 +755,61 @@ func fixStrictFuncs(path, source: string): Fix =
 
 
 func disorders(source: string): seq[Disorder] =
-  ## Find each pragma list of declaration, and each `export` list, out of alphabetical order.
+  ## Find each pragma list of declaration, `export` list and names of `from … import` out of
+  ##   dictionary order; pragma list holds bare pragmas first, then pragmas with argument.
   ##   List on one line alone is read. Pragma statement opening line (`{.push.}`, `{.pop.}`,
-  ##   `{.emit.}`, `{.experimental.}`) stays, and so does list holding user pragma, `except`,
-  ##   or items whose order case decides, where alphabet and code points disagree.
+  ##   `{.emit.}`, `{.experimental.}`) stays, and so does list holding user pragma or `except`.
   let
     tokens = source.tokens
     partners = tokens.partners
   for k, t in tokens:
-    let is_line_first = k == 0 or tokens[k - 1].lastLine(source) < t.line
+    let
+      is_line_first = k == 0 or tokens[k - 1].lastLine(source) < t.line
+      is_pragma = t.spelling(source) == "{."
     var
       spans: seq[(int, int)]
+      first = k + 1
       stop = -1
-    if t.spelling(source) == "{." and not is_line_first and partners[k] > k and
-        tokens[partners[k]].line == t.line:
+    if is_pragma and not is_line_first and partners[k] > k and tokens[partners[k]].line == t.line:
       stop = partners[k]
-    elif t.spelling(source) == "export" and is_line_first:
+    elif t.spelling(source) in ["export", "from"] and is_line_first:
       stop = k + 1
-      while stop < tokens.len and tokens[stop].line == t.line: inc stop
+      while stop < tokens.len and tokens[stop].line == t.line and
+          tokens[stop].kind != TokenKind.Comment:
+        inc stop
       if tokens[stop - 1].kind == TokenKind.Comma: continue
+      if t.spelling(source) == "from":
+        while first < stop and tokens[first].spelling(source) != "import": inc first
+        inc first
     else: continue
 
     # Split items at commas outside nested brackets.
-    var m = k + 1
+    var m = first
     while m < stop:
-      let first = m
+      let opening = m
       while m < stop and tokens[m].kind != TokenKind.Comma:
         if tokens[m].kind == TokenKind.Open and partners[m] > m: m = partners[m]
         inc m
-      spans.add (first, m - 1)
+      spans.add (opening, m - 1)
       inc m
     let names = spans.mapIt(tokens[it[0]].spelling(source))
     if spans.len < 2 or spans.anyIt(it[1] < it[0]): continue
-    if t.spelling(source) == "{.":
+    if is_pragma:
       if names.anyIt(it.toLowerAscii.replace("_", "") notin PRAGMAS_BUILT_IN): continue
     elif toSeq(k ..< stop).anyIt(tokens[it].spelling(source) == "except"): continue
 
-    # Sort item texts into slots they held; leave list whose order case decides.
+    # Sort item texts into slots they held: bare pragma before one with argument, then by name.
     let
       texts = spans.mapIt(source[tokens[it[0]].first ..< tokens[it[1]].after])
-      keys = if t.spelling(source) == "{.": names else: texts
-      by_alphabet = toSeq(0 ..< texts.len).sortedByIt((keys[it].toLowerAscii, it))
-      by_code_point = toSeq(0 ..< texts.len).sortedByIt((keys[it], it))
-    if by_alphabet != by_code_point or by_alphabet == toSeq(0 ..< texts.len): continue
-    var sorted = texts[by_alphabet[0]]
+      keys = if is_pragma: names else: texts
+      order = toSeq(0 ..< texts.len).sortedByIt(
+        (is_pragma and spans[it][1] > spans[it][0], keys[it].dictionaryKey, it),
+      )
+    if order == toSeq(0 ..< texts.len): continue
+    var sorted = texts[order[0]]
     for i in 1 ..< spans.len:
       sorted.add source[tokens[spans[i - 1][1]].after ..< tokens[spans[i][0]].first]
-      sorted.add texts[by_alphabet[i]]
+      sorted.add texts[order[i]]
     result.add Disorder(
       line: t.line,
       first: tokens[spans[0][0]].first,
@@ -799,13 +820,15 @@ func disorders(source: string): seq[Disorder] =
 
 
 func checkLists*(path, source: string): seq[Finding] =
-  ## Report pragma list of declaration, or `export` list, out of alphabetical order (X.10).
+  ## Report pragma list of declaration, `export` list or names of `from … import` out of
+  ##   dictionary order, bare pragmas first (X.10).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for d in source.disorders:
     result.add finding(
       path,
       d.line + 1,
-      "List language leaves unordered is alphabetised (X.10); got `" & d.got & "`.",
+      "List language leaves unordered is alphabetised, bare pragmas first (X.10); got `" &
+        d.got & "`.",
     )
 
 

@@ -258,24 +258,37 @@ suite "Idiom fixes":
       check checkImportBrackets("a.nim", module(kept)).len == 0
       check fixed(module(kept)).source == module(kept)
 
-  test "pragma list of declaration and export list are alphabetised":
+  test "pragma list of declaration, export list and names after `from … import` are alphabetised":
     let
-      lists = module("proc f() {.importc: \"f\", header: \"a.h\", bycopy.}\nexport b, a\n")
+      lists = module("proc f() {.importc: \"f\", header: \"a.h\", bycopy.}\nexport b, a  # Why.\n" &
+        "from std/os import walkDir, getEnv\n")
       fix = fixed(lists)
-    check checkLists("a.nim", lists).mapIt(it.message) == @[
-      "List language leaves unordered is alphabetised (X.10); got `importc, header, bycopy`.",
-      "List language leaves unordered is alphabetised (X.10); got `b, a`.",
+    check checkLists("a.nim", lists).mapIt(it.message.split("; ")[1]) == @[
+      "got `importc, header, bycopy`.", "got `b, a`.", "got `walkDir, getEnv`.",
     ]
-    check fix.source ==
-      module("proc f() {.bycopy, header: \"a.h\", importc: \"f\".}\nexport a, b\n")  # whole items
+    check fix.source == module("proc f() {.bycopy, header: \"a.h\", importc: \"f\".}\n" &
+      "export a, b  # Why.\nfrom std/os import getEnv, walkDir\n")  # whole items, comment stays
     check fix.source.isSettled
 
-  test "list order may mean or case decides stays: statement, user pragma, except, case":
+  test "pragma list holds bare pragmas first, then pragmas with argument":
+    let pragmas = module("proc f() {.raises: [], header: \"a.h\", inline, borrow.}\n")
+    check fixed(pragmas).source ==
+      module("proc f() {.borrow, inline, header: \"a.h\", raises: [].}\n")
+    check checkLists("a.nim", module("proc f() {.inline, header: \"a.h\".}\n")).len == 0
+
+  test "alphabetised is dictionary order: case and `_` ignored, tie to code point":
+    check fixed(module("export isB, is_a, facing, Facing\n")).source ==
+      module("export Facing, facing, is_a, isB\n")
+    check fixed(module("export layout.Tree, layout.Entry\n")).source ==
+      module("export layout.Entry, layout.Tree\n")
+    check "got `b_c, ba`" in messages("a.nim", module("import ./[b_c, ba]\n"))[0]
+    check fixed(module("import ./[b_c, ba]\n")).source == module("import ./[ba, b_c]\n")
+
+  test "list order may mean stays: statement, user pragma, except, list spanning lines":
     for kept in [
       "{.push raises: [], gcsafe.}\nproc f()\n{.pop.}\n",
       "proc f() {.async, gcsafe.}\n",
       "export pga except wedge, dot\n",
-      "export layout.Tree, layout.Entry, layout.projectDirectories\n",
       "proc f() {.inline,\n  borrow.}\n",
     ]:
       check checkLists("a.nim", module(kept)).len == 0
