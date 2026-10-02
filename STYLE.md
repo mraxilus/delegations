@@ -38,7 +38,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
     s + m
 
   template scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low
-  template m: untyped = MULTIVECTORS[i]  # Alias, never `let m = MULTIVECTORS[i]` in a hot loop.
+  template m: untyped = MULTIVECTORS[i]  # Alias, never `let m = MULTIVECTORS[i]` in hot loop.
   ```
 
 - Use a named `{.inline.}` func for an ordinary public façade, and not a template.
@@ -71,8 +71,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - A pragma that the compiler checks is the annotation that VI.7 names, such as
   `{.raises: [].}` for no exceptions.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
-  that is not obvious at the use site (`{.borrow, compileTime, used.}  # Used in cayleys.nim.`).
-  Define a repeated mechanical borrow family once, through a documented template:
+  that is not obvious at the use site
+  (`` {.borrow, compileTime, used.}  # Used in `cayleys.nim`. ``). Define a repeated mechanical
+  borrow family once, through a documented template:
 
   ```nim
   template borrowGradeOperations(T: typedesc) =
@@ -154,7 +155,7 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   way carries `{.used.}`, and a comment that names the sibling:
 
   ```nim
-  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in cayleys.nim.
+  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.}  # Used in `cayleys.nim`.
   ```
 
 - Put commas between parameters while every type appears once (`m: Multivector, b: Basis`).
