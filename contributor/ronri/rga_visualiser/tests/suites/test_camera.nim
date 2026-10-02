@@ -1042,15 +1042,16 @@ suite "Camera":
     #   Vertical stretches from pivot's row, so away from row zooms in on either side.
     #   Across, point moves by what pointer moved, from where zoom spread it from middle.
     const (wide, tall) = (1440, 900)
-    let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
-    let steps = [
-      # Above row and away from it, off middle column, so orbit takes back what dolly spread.
-      (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 760.0, y: 260.0), true),
-      # Above row, toward it and across.
-      (ScreenPosition(x: 800.0, y: 280.0), ScreenPosition(x: 700.0, y: 360.0), false),
-      # Below row and away from it.
-      (ScreenPosition(x: 650.0, y: 560.0), ScreenPosition(x: 690.0, y: 640.0), true),
-    ]
+    let
+      opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
+      steps = [
+        # Above row and away from it, off middle column, so dolly spreads point across.
+        (ScreenPosition(x: 760.0, y: 330.0), ScreenPosition(x: 760.0, y: 260.0), true),
+        # Above row, toward it and across.
+        (ScreenPosition(x: 800.0, y: 280.0), ScreenPosition(x: 700.0, y: 360.0), false),
+        # Below row and away from it.
+        (ScreenPosition(x: 650.0, y: 560.0), ScreenPosition(x: 690.0, y: 640.0), true),
+      ]
     for (before, after, is_closer) in steps:
       var camera = opening
       let
