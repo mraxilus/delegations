@@ -150,6 +150,8 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     var i = slice.first
     while i < asked.len:
       let question = asked[i]
+      # Carried walk first, since it answers most cards in seconds; planned way only
+      # where it stops, since that pays minutes per card.
       TOLD[i] = (
         if question.is_still:
           isHoldingAt(
@@ -160,9 +162,25 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
             question.is_away,
             question.head,
             is_either_way = question.is_either_way,
+          ) or isPlannedHolding(
+            HUMAN,
+            CROWN,
+            question.links,
+            question.turns,
+            question.is_away,
+            question.head,
+            is_either_way = question.is_either_way,
           )
         else:
           isReaching(
+            HUMAN,
+            CROWN,
+            question.links,
+            question.turns,
+            is_away = question.is_away,
+            who = question.who,
+            head = question.head,
+          ) or isPlannedReaching(
             HUMAN,
             CROWN,
             question.links,

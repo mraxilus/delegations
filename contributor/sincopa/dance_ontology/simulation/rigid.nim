@@ -163,6 +163,7 @@ type
                                   ## connection and end, from which it rises.
     who: array[Body, Figure]
     grip: seq[engine.JointId]
+    is_steered*: bool ## Joints sprung to plan; carry's lift and draw left off.
     shapes*: seq[Shape] ## Every capsule above, kept as it was handed to engine.
       ## Recorded rather than worked out again, so anything drawing couple draws
       ## what is being simulated and cannot quietly disagree with it.
@@ -278,7 +279,7 @@ func trunkCapsules*(rig: Rig): seq[tuple[a, z: Vector, radius: float]] =
 const
   HANG_BEND = 10.0 * PI / 180.0 ## Elbow of arm hanging free at side: relaxed arm
                    ## hangs near straight.  Assumed.
-  GIRDLE_RADIUS = 0.06  ## Radius of shoulder's capsule, neck's side to shoulder joint:
+  GIRDLE_RADIUS* = 0.06  ## Radius of shoulder's capsule, neck's side to shoulder joint:
                    ## deltoid and trapezius, estimate and not tape.  Architect's
                    ## to measure.
   COLLAR_HERTZ = 4.5  ## Hertz of spring holding each collarbone hinge where tape
@@ -1011,9 +1012,11 @@ proc holdSwing(couple: Couple) =
         lean_across = across - (across_range.upper - across_range.ease_upper)
         out_extend = extend - extend_range.upper
         out_across = across - across_range.upper
-      if lean_extend > 0.0:
+      # Lean through ease is comfort, which plan already holds when couple are steered;
+      # wall past end is range, and holds always.
+      if lean_extend > 0.0 and not couple.is_steered:
         back = back + cross(direction, (0.0, 1.0, 0.0)) * (SWING_LEAN * lean_extend)
-      if lean_across > 0.0:
+      if lean_across > 0.0 and not couple.is_steered:
         back = back + cross(direction, (1.0, 0.0, 0.0)) * (SWING_LEAN * lean_across)
       if out_extend > 0.0:
         back = back + cross(direction, (0.0, 1.0, 0.0)) * (SHOULDER_BACK * out_extend)
@@ -1189,13 +1192,192 @@ proc easeOff(couple: Couple) =
           engine.twistBy(arm_rig.link[Limb.Palm], asEngine(torque * -1.0), true)
           engine.twistBy(arm_rig.link[Limb.Fore], asEngine(torque), true)
 
+type Matrix* = array[3, array[3, float]]
+
+func times(a, b: Matrix): Matrix =
+  for i in 0 .. 2:
+    for j in 0 .. 2:
+      for k in 0 .. 2:
+        result[i][j] += a[i][k] * b[k][j]
+
+func transposed(a: Matrix): Matrix =
+  for i in 0 .. 2:
+    for j in 0 .. 2:
+      result[i][j] = a[j][i]
+
+func turnAbout(v: array[3, float]): Matrix =
+  ## Rodrigues: turn about `v` by its length.
+  let angle = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+  result = [[1.0, 0, 0], [0.0, 1, 0], [0.0, 0, 1]]
+  if angle < 1e-12: return
+  let
+    k = [v[0] / angle, v[1] / angle, v[2] / angle]
+    skew: Matrix = [[0.0, -k[2], k[1]], [k[2], 0.0, -k[0]], [-k[1], k[0], 0.0]]
+    square = times(skew, skew)
+  for i in 0 .. 2:
+    for j in 0 .. 2:
+      result[i][j] += sin(angle) * skew[i][j] + (1.0 - cos(angle)) * square[i][j]
+
+func quaternionOfMatrix(r: Matrix): engine.Quaternion =
+  ## Matrix of turn as engine's quaternion: frame's own coordinates, so no axis swap.
+  let trace = r[0][0] + r[1][1] + r[2][2]
+  var w, x, y, z: float
+  if trace > 0.0:
+    let s = sqrt(trace + 1.0) * 2.0
+    (w, x, y, z) = (0.25 * s, (r[2][1] - r[1][2]) / s, (r[0][2] - r[2][0]) / s,
+                    (r[1][0] - r[0][1]) / s)
+  elif r[0][0] > r[1][1] and r[0][0] > r[2][2]:
+    let s = sqrt(1.0 + r[0][0] - r[1][1] - r[2][2]) * 2.0
+    (w, x, y, z) = ((r[2][1] - r[1][2]) / s, 0.25 * s, (r[0][1] + r[1][0]) / s,
+                    (r[0][2] + r[2][0]) / s)
+  elif r[1][1] > r[2][2]:
+    let s = sqrt(1.0 + r[1][1] - r[0][0] - r[2][2]) * 2.0
+    (w, x, y, z) = ((r[0][2] - r[2][0]) / s, (r[0][1] + r[1][0]) / s, 0.25 * s,
+                    (r[1][2] + r[2][1]) / s)
+  else:
+    let s = sqrt(1.0 + r[2][2] - r[0][0] - r[1][1]) * 2.0
+    (w, x, y, z) = ((r[1][0] - r[0][1]) / s, (r[0][2] + r[2][0]) / s,
+                    (r[1][2] + r[2][1]) / s, 0.25 * s)
+  engine.Quaternion(vector: engine.initVector(x, y, z), scalar: cfloat(w))
+
+const REST_MATRIX: Matrix = [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
+  ## Upper arm's frame at rest in body's terms, columns right, back, down (`restFrame`).
+
+const WRIST_STEER* = 3.0
+  ## Wrist spring over every other joint's: palm is lightest link, and spring in hertz
+  ## holds it by that, so hand at others' rate trails plan.
+
+proc steer*(couple: var Couple; plan: openArray[float]; hertz: float) =
+  ## Spring every joint toward planned pose: waists, collarbones, shoulders,
+  ## elbows, wrists.  Plan is waists then nine per arm, lead's left first.
+  couple.is_steered = true
+  for who in Body:
+    engine.aimHinge(couple.who[who].waist, cfloat(plan[2 + ord(who)]))
+    engine.stiffenHinge(couple.who[who].waist, cfloat(hertz))
+    for arm in Arm:
+      let
+        base = 4 + 9 * (2 * ord(who) + ord(arm))
+        arm_rig = couple.who[who].arm[arm]
+      engine.aimHinge(arm_rig.swing[Collar.Fore], cfloat(side(arm) * plan[base]))
+      engine.aimHinge(arm_rig.swing[Collar.Up], cfloat(-side(arm) * plan[base + 1]))
+      for k in Collar: engine.stiffenHinge(arm_rig.swing[k], cfloat(hertz))
+      let shoulder_turn = times(transposed(REST_MATRIX),
+                                times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]),
+                                      REST_MATRIX))
+      engine.aimBall(arm_rig.shoulder, quaternionOfMatrix(shoulder_turn))
+      engine.stiffenBall(arm_rig.shoulder, cfloat(hertz))
+      engine.aimHinge(arm_rig.elbow, cfloat(plan[base + 5]))
+      engine.stiffenHinge(arm_rig.elbow, cfloat(hertz))
+      let wrist_turn = quaternionOfMatrix(turnAbout([plan[base + 6], plan[base + 7],
+                                                     plan[base + 8]]))
+      engine.aimBall(arm_rig.wrist, wrist_turn)
+      engine.stiffenBall(arm_rig.wrist, cfloat(hertz * WRIST_STEER))
+
+func turnVector(r: Matrix): array[3, float] =
+  ## Turn's axis scaled by its angle: inverse of `turnAbout`.
+  let
+    cosine = clamp((r[0][0] + r[1][1] + r[2][2] - 1.0) / 2.0, -1.0, 1.0)
+    angle = arccos(cosine)
+  if angle < 1e-9: return [0.0, 0.0, 0.0]
+  if angle > PI - 1e-6:
+    # Half turn: axis from diagonal.
+    let axis = [sqrt(max(0.0, (r[0][0] + 1.0) / 2.0)),
+                sqrt(max(0.0, (r[1][1] + 1.0) / 2.0)),
+                sqrt(max(0.0, (r[2][2] + 1.0) / 2.0))]
+    var signed = axis
+    if r[0][1] < 0.0: signed[1] = -signed[1]
+    if r[0][2] < 0.0: signed[2] = -signed[2]
+    return [signed[0] * angle, signed[1] * angle, signed[2] * angle]
+  let scale = angle / (2.0 * sin(angle))
+  [(r[2][1] - r[1][2]) * scale, (r[0][2] - r[2][0]) * scale, (r[1][0] - r[0][1]) * scale]
+
+proc axesInBody(couple: Couple; who: Body; link: engine.BodyId): Matrix =
+  ## Link's own three axes as columns, in its dancer's chest terms.
+  let
+    axes = axesOf(couple.chestStance(who))
+    origin = asWorld(engine.pointOf(link, engine.initVector(0, 0, 0)))
+  for j in 0 .. 2:
+    # Link's local axes are engine's; project's are turned from them (`asEngine`).
+    let
+      local = [engine.initVector(1, 0, 0), engine.initVector(0, 1, 0),
+               engine.initVector(0, 0, 1)][j]
+      world = asWorld(engine.pointOf(link, local)) - origin
+      own: Vector = (dot(world, axes.right), dot(world, axes.fore), world.z)
+    result[0][j] = own.x
+    result[1][j] = own.y
+    result[2][j] = own.z
+
+proc poseVector*(couple: Couple): array[40, float] =
+  ## Couple's pose read off engine in planner's own terms (`plan.Plan`): apart, sideways,
+  ## two waists, then each arm's collarbone, shoulder, elbow and wrist.
+  let
+    one = axesOf(couple.stance[Body.One]).origin
+    two = axesOf(couple.stance[Body.Two]).origin
+  # Lead stands at origin facing along y in every planned turn, so plan's apart and
+  # sideways are follow's place in those terms.
+  result[0] = two.y - one.y
+  result[1] = two.x - one.x
+  for who in Body:
+    result[2 + ord(who)] = float(engine.angleOf(couple.who[who].waist))
+    for arm in Arm:
+      let
+        base = 4 + 9 * (2 * ord(who) + ord(arm))
+        arm_rig = couple.who[who].arm[arm]
+        protract = side(arm) * float(engine.angleOf(arm_rig.swing[Collar.Fore]))
+        elevate = -side(arm) * float(engine.angleOf(arm_rig.swing[Collar.Up]))
+        girdle_turn = (block:
+          let
+            (cu, su) = (cos(side(arm) * protract), sin(side(arm) * protract))
+            (cf, sf) = (cos(-side(arm) * elevate), sin(-side(arm) * elevate))
+            about_up: Matrix = [[cu, -su, 0.0], [su, cu, 0.0], [0.0, 0.0, 1.0]]
+            about_fore: Matrix = [[cf, 0.0, sf], [0.0, 1.0, 0.0], [-sf, 0.0, cf]]
+          times(about_up, about_fore))
+        upper = axesInBody(couple, who, arm_rig.link[Limb.Upper])
+        forearm = axesInBody(couple, who, arm_rig.link[Limb.Fore])
+        hand = axesInBody(couple, who, arm_rig.link[Limb.Palm])
+        shoulder_turn = times(transposed(girdle_turn), times(upper, transposed(REST_MATRIX)))
+        wrist_turn = times(transposed(forearm), hand)
+        shoulder_vector = turnVector(shoulder_turn)
+        wrist_vector = turnVector(wrist_turn)
+      result[base] = protract
+      result[base + 1] = elevate
+      for k in 0 .. 2: result[base + 2 + k] = shoulder_vector[k]
+      result[base + 5] = float(engine.angleOf(arm_rig.elbow))
+      for k in 0 .. 2: result[base + 6 + k] = wrist_vector[k]
+
+type ArmPlacing* = object ## Where one arm's five bodies stand, in world.
+  root*, shoulder*, elbow*, wrist*: Vector
+  collar*, girdle*, upper*, fore*, palm*: Matrix
+    ## Each body's own three axes as columns, in world: what engine's turn of it carries
+    ## its local x, y and z onto.
+
+proc placeBodies*(couple: var Couple; chests: array[Body, Stance]; arms: array[4, ArmPlacing]) =
+  ## Stand couple where plan has them, every body at once, before anything is stepped:
+  ## couple start where plan starts, rather than walking there from arms hanging.
+  func turnOf(m: Matrix): engine.Quaternion =
+    quaternionOf(asEngine((m[0][0], m[1][0], m[2][0])), asEngine((m[0][1], m[1][1], m[2][1])),
+                 asEngine((m[0][2], m[1][2], m[2][2])))
+  for who in Body:
+    let axes = axesOf(chests[who])
+    engine.place(couple.who[who].chest, asPlace(axes.origin), standing(axes))
+    for arm in Arm:
+      let
+        placing = arms[2 * ord(who) + ord(arm)]
+        arm_rig = couple.who[who].arm[arm]
+      engine.place(arm_rig.collar, asPlace(placing.root), turnOf(placing.collar))
+      engine.place(arm_rig.girdle, asPlace(placing.shoulder), turnOf(placing.girdle))
+      engine.place(arm_rig.link[Limb.Upper], asPlace(placing.shoulder), turnOf(placing.upper))
+      engine.place(arm_rig.link[Limb.Fore], asPlace(placing.elbow), turnOf(placing.fore))
+      engine.place(arm_rig.link[Limb.Palm], asPlace(placing.wrist), turnOf(placing.palm))
+
 proc advance*(couple: Couple; steps: int) =
   ## Run engine on, carrying hands toward their band all through.
   for _ in 1 .. steps:
-    carry(couple)
+    if not couple.is_steered: carry(couple)
     holdSwing(couple)
-    elbowDown(couple)
-    easeOff(couple)
+    if not couple.is_steered:
+      elbowDown(couple)
+      easeOff(couple)
     engine.step(couple.world, cfloat(1.0 / HERTZ), SUBSTEPS)
 
 proc settle*(couple: var Couple) =
@@ -1217,13 +1399,45 @@ proc turn*(couple: var Couple; who: Body; by: float; steps: int) =
   let rate = by * 2.0 * PI * HERTZ / float(steps)
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, rate)))
   for _ in 1 .. steps:
-    carry(couple)
+    if not couple.is_steered: carry(couple)
     holdSwing(couple)
-    elbowDown(couple)
-    easeOff(couple)
+    if not couple.is_steered:
+      elbowDown(couple)
+      easeOff(couple)
     engine.step(couple.world, cfloat(1.0 / HERTZ), SUBSTEPS)
     couple.stance = turned(couple.stance, who, by / float(steps))
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
+
+proc turnStepping*(couple: var Couple; who: Body; by: float; step: Vector; steps: int;
+                   start: openArray[float] = []; finish: openArray[float] = [];
+                   hertz = 0.0) =
+  ## Turn one dancer as `turn` does while that dancer steps by `step`, metres on floor,
+  ## and where plans are given, steer from `start` to `finish` as turn goes.
+  ##   Target moves with bodies, every tenth step, so joints are asked for pose that fits
+  ##     where bodies are, and not for pose of moment's end while bodies are mid turn.
+  let
+    rate = by * 2.0 * PI * HERTZ / float(steps)
+    speed = step * (HERTZ / float(steps))
+    is_blending = start.len == finish.len and finish.len > 0
+  engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, rate)))
+  engine.setDrift(couple.who[who].trunk, asEngine(speed))
+  for k in 1 .. steps:
+    if is_blending and (k mod 10 == 1 or k == steps):
+      var between = newSeq[float](finish.len)
+      let share = float(k) / float(steps)
+      for j in 0 ..< finish.len: between[j] = start[j] + (finish[j] - start[j]) * share
+      couple.steer(between, hertz)
+    if not couple.is_steered: carry(couple)
+    holdSwing(couple)
+    if not couple.is_steered:
+      elbowDown(couple)
+      easeOff(couple)
+    engine.step(couple.world, cfloat(1.0 / HERTZ), SUBSTEPS)
+    couple.stance = turned(couple.stance, who, by / float(steps))
+    couple.stance[who].centre.x += step.x / float(steps)
+    couple.stance[who].centre.y += step.y / float(steps)
+  engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
+  engine.setDrift(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
 
 proc armPoseOf*(couple: Couple; who: Body; arm: Arm): ArmPose =
   ## Four points of one arm, joined or not.
