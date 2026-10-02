@@ -78,9 +78,19 @@ func at*(selection: Selection, position: int): int = selection.handles[position]
 
 func contains*(selection: Selection, handle: int): bool =
   ## Report whether handle is picked.
+  ##   Walks picks; loop asking per object marks once instead (`markOnto`).
   for position in 0 ..< selection.count:
     if selection.handles[position] == handle: return true
   false
+
+
+func markOnto*(selection: Selection, marks: var openArray[bool], is_marked = true) =
+  ## Set mark of each picked handle in `marks` to `is_marked`, at cost of picks alone.
+  ##   Frame loop asks per object whether it is picked, and `contains` walks picks per ask:
+  ##   loop then costs objects times picks, which select all at capacity squares.
+  ##   Loop marks once, reads one mark per object, then clears same marks with `false`, so
+  ##   neither walk reaches capacity and marks need no reset of their own.
+  for position in 0 ..< selection.count: marks[selection.handles[position]] = is_marked
 
 
 func impliedArity*(selection: Selection): Arity =

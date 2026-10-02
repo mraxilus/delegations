@@ -251,6 +251,8 @@ static:
 # Hold vertex storage at module scope, far too large for stack frame.
 var
   MESHES: MeshSet ## Every scene object, excluding world furniture below.
+  MARKS_PICKED: array[OBJECTS_MAX, bool] ## Mark each picked handle while meshes assemble.
+    ## Set and cleared around loops of `assembleMeshes`; see `selection.markOnto`.
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture)
     ## Hold what `MESHES_FURNITURE` stands for, or none before first frame.
     ##   Still camera then keeps grid it has rather than rebuilding it every frame.
@@ -514,11 +516,14 @@ proc assembleMeshes(
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
   MESHES.clearMeshes(ORIGIN_RECORDS) # About held origin; see `ORIGIN_RECORDS`.
+  # Mark picks once and read mark per handle below; see `selection.markOnto`.
+  panel.selection.markOnto(MARKS_PICKED)
+  defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
   for handle, one in scene.pairs:
-    if not one.isVisible or not isHorizonPlane(one.geometry) or handle in panel.selection:
+    if not one.isVisible or not isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
@@ -526,7 +531,7 @@ proc assembleMeshes(
     discard MESHES.addObject(scratch[0], one.geometry, tint, scale, progress, one.anchorOverride)
 
   for handle, one in scene.pairs:
-    if not one.isVisible or isHorizonPlane(one.geometry) or handle in panel.selection:
+    if not one.isVisible or isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)

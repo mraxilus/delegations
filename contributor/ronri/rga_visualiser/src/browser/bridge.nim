@@ -303,6 +303,8 @@ template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
 var
   SCENE_PAGE: Scene
   CAMERA_PAGE: Camera
+  MARKS_PICKED: array[OBJECTS_MAX, bool] ## Mark each picked handle while frame is built.
+    ## Set and cleared around frame's loops; see `selection.markOnto`.
   MESHES_FURNITURE, MESHES: MeshSet ## Hold meshes at module scope, reused every frame.
     ## Cleared through `clearMeshes` rather than declared per frame.
     ## `clearMeshes` resets each mesh's `count_vertices`, not storage, mirroring
@@ -2531,6 +2533,9 @@ proc nimBuildFrame(
     # About held origin, as furniture is; see `ORIGIN_RECORDS`.
     clearMeshes(MESHES, ORIGIN_RECORDS)
     cost.openTally()
+    # Mark picks once and read mark per handle below; see `selection.markOnto`.
+    SELECTION_PAGE.markOnto(MARKS_PICKED)
+    defer: SELECTION_PAGE.markOnto(MARKS_PICKED, is_marked = false)
     # Emit horizon plane's dome first, before anything sharing translucent veil pass.
     #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
     #   ordinary plane's fill blends over it; see `visualiser.assembleMeshes`.
@@ -2541,7 +2546,7 @@ proc nimBuildFrame(
     #   Placement once, emitted every frame: placement already answered sky or not, so walks
     #   sort on `PLACEMENTS[handle].kind` rather than reading multivector per handle per walk.
     for handle in 0 ..< SCENE_PAGE.bound:
-      if not SCENE_PAGE.isAlive(handle) or handle in SELECTION_PAGE: continue
+      if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
       if SCENE_PAGE.isVisible(handle):
         # Index in place, never bind to local; see `emitObject`.
         #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
@@ -2560,7 +2565,7 @@ proc nimBuildFrame(
           )
 
     for handle in 0 ..< SCENE_PAGE.bound:
-      if not SCENE_PAGE.isAlive(handle) or handle in SELECTION_PAGE: continue
+      if not SCENE_PAGE.isAlive(handle) or MARKS_PICKED[handle]: continue
       if SCENE_PAGE.isVisible(handle):
         if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
           # Skip point outside view before it costs emitting, flatten and upload.
