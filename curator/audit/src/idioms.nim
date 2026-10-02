@@ -444,6 +444,7 @@ func fixBindings(path, source: string): Fix =
   ##   that continuation moves, and every earlier run keeps its lines.
   result.source = source
   let runs = source.codeOnly.split('\n').bindingRuns
+  var origin = toSeq(1 .. source.count('\n') + 1)
   for run in runs.reversed:
     let
       lines = result.source.split('\n')
@@ -466,7 +467,9 @@ func fixBindings(path, source: string): Fix =
     let is_widened = shaped.countIt(it.isWide) > lines[run.first .. last].countIt(it.isWide)
     if is_long_string or is_widened: continue
     result.source = (lines[0 ..< run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
+    origin = origin[0 ..< run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
     result.fixed.insert(finding(path, run.first + 1, "single bindings (X.5) fixed"), 0)
+  if result.fixed.len > 0: result.origin = origin
 
 
 func fixStrictFuncs(path, source: string): Fix =
@@ -482,28 +485,24 @@ func fixStrictFuncs(path, source: string): Fix =
     if c.strip.len == 0 or is_directive or lines[i].startsWith(TESTAMENT_HEADER): continue
     at = i
     break
-  var shaped: seq[string]
-  if at >= 0:
-    shaped = lines[0 ..< at]
-    if at > 0 and lines[at - 1].len > 0: shaped.add ""
-    shaped.add [STRICT_FUNCS, ""]
-    shaped.add lines[at .. ^1]
-  else:
-    # Module without code takes directive after its last line of text.
-    var last = lines.len
-    while last > 0 and lines[last - 1].len == 0: dec last
-    shaped = lines[0 ..< last]
-    if last > 0: shaped.add ""
-    shaped.add STRICT_FUNCS
-    shaped.add lines[last .. ^1]
-    if last == lines.len: shaped.add ""
-  result.source = shaped.join("\n")
+
+  # Cut before that line; module without code takes directive after its last line of text.
+  var cut = at
+  if at < 0:
+    cut = lines.len
+    while cut > 0 and lines[cut - 1].len == 0: dec cut
+  var inserted: seq[string]
+  if cut > 0 and lines[cut - 1].len > 0: inserted.add ""
+  inserted.add STRICT_FUNCS
+  if at >= 0 or cut == lines.len: inserted.add ""
+  result.source = (lines[0 ..< cut] & inserted & lines[cut .. ^1]).join("\n")
+  result.origin = toSeq(1 .. cut) & inserted.mapIt(0) & toSeq(cut + 1 .. lines.len)
   result.fixed.add finding(path, 0, "strictFuncs (STYLE.md §2) fixed")
 
 
 func fixIdioms*(path, source: string): Fix =
   ## Rewrite Nim source so each idiom with one mechanical fix holds; report each rewrite.
-  ##   Fixers that keep line count run first, so each reports lines of source as given.
+  ##   `chain` traces each report through lines earlier fixers moved, to source as given.
   result.source = source
   for fixer in [fixReturnResult, fixImports, fixBindings, fixStrictFuncs]:
     result = result.chain(fixer(path, result.source))
