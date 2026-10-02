@@ -1488,9 +1488,13 @@ on neither, and before an operator that ends its line.
 - The `=` of a named argument takes one space on each side. X.3 spells `symbols = "∧"`, V.4
   spells `as_weight = true`, and every named argument of the tree takes the spaces.
 - Never read: the `=` of a definition, a default or an assignment, and `:` and `::`. Also never
-  read: `.` and the operators that start with it, the paths of `import` and `export`, and a `*`
-  glued after a name.
-- Cost: `a*(b)` reads like `f*(x: int)`, so a glued `*` before a bracket stays.
+  read: `.` and the operators that start with it, the paths of `import` and `export`, and the
+  export marker.
+- An export marker is a `*` glued after a name that a declaration places. That name opens its
+  line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
+  expression declares nothing, so `PI*(a + b)` multiplies.
+- Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
+  start of such a line stays.
 
 **Banners take the blank lines of X.2 exactly, and `strictFuncs` after the imports moves.** The
 banner fixer sets each run beside a banner to the count that `checkBanners` reads. The late
@@ -1510,13 +1514,13 @@ every Nim file of the tree in memory, on branch `main`, so scope refused nothing
 
 - The fix wrote contributor code alone. The curator code took the same fixes in its own commits.
 - Reports by rule:
-  - calls 12,489, operator spacing 1,665, trailing comments 1,321;
+  - calls 12,489, operator spacing 1,700, trailing comments 1,321;
   - parameter separators 621, signatures 132, unordered lists 58;
   - import brackets 21, trailing separators 6, banners 1.
-- Reports by project: `rga_visualiser` 14,705, `dance_ontology` 1,368, `pga_benchmark` 241.
-- Lines added and removed: `rga_visualiser` 97,833 and 26,385, `dance_ontology` 2,342 and 1,602,
+- Reports by project: `rga_visualiser` 14,740, `dance_ontology` 1,368, `pga_benchmark` 241.
+- Lines added and removed: `rga_visualiser` 97,852 and 26,404, `dance_ontology` 2,342 and 1,602,
   `pga_benchmark` 639 and 332.
-- The static pass reported 0 findings before and after. The layout checks reported 16,700
+- The static pass reported 0 findings before and after. The layout checks reported 16,735
   findings before and 35 after, each one a line that the width guard keeps.
 - A second fix wrote nothing.
 - The parser of the compiler read each changed file to the same tree as before. Where a fix
