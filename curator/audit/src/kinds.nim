@@ -49,13 +49,13 @@ import std/[options, os]
 type
   Syntax* {.pure.} = enum
     ## Define how comments are found in file kind.
-    None         ## No comments (JSON), or prose document (Markdown).
-    Nim          ## `#` line, `#[ ]#` nesting block, outside string and char literals.
-    Hash         ## `#` anywhere unless escaped as `\#` (cfg).
-    HashSpaced   ## `#` at line start or after whitespace, outside quotes (YAML).
+    None  ## No comments (JSON), or prose document (Markdown).
+    Nim  ## `#` line, `#[ ]#` nesting block, outside string and char literals.
+    Hash  ## `#` anywhere unless escaped as `\#` (cfg).
+    HashSpaced  ## `#` at line start or after whitespace, outside quotes (YAML).
     HashLeading  ## `#` as first non-blank character only (.gitignore).
-    Slash        ## `//` line and `/* */` block, outside string and template literals.
-    Xml          ## `<!-- -->` block, spanning lines (HTML, SVG).
+    Slash  ## `//` line and `/* */` block, outside string and template literals.
+    Xml  ## `<!-- -->` block, spanning lines (HTML, SVG).
 
   Kind* {.pure.} = enum
     ## Define file kinds checker reads.
@@ -64,9 +64,9 @@ type
 
   KindRule* = object
     ## Define how one kind is read.
-    syntax*: Syntax   ## Comment syntax scanner applies.
-    is_prose*: bool   ## Telegraphic check applies to comments.
-    is_gated*: bool   ## Language admitted only where Nim cannot serve, so header must argue.
+    syntax*: Syntax  ## Comment syntax scanner applies.
+    is_prose*: bool  ## Telegraphic check applies to comments.
+    is_gated*: bool  ## Language admitted only where Nim cannot serve, so header must argue.
 
 
 const LUT_RULE_BY_KIND*: array[Kind, KindRule] = [

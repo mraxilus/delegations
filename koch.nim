@@ -6,7 +6,7 @@
 ##     copy lives here.
 ##
 ##   Verb names action and its object. `check` runs every check pull request runs, and each
-##     `check-<object>` runs one of them; other verbs act (`test`, `drive`, `fetch-*`,
+##     `check-<object>` runs one of them; other verbs act (`test`, `drive`, `fix`, `fetch-*`,
 ##     `stamp`) or print (`list-*`). CI job running verb carries verb's name, so red job names
 ##     command to run locally.
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
@@ -42,7 +42,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, parseopt, sequtils, strutils]
+import std/[algorithm, json, options, os, parseopt, sequtils, strutils]
 import ./curator/audit/src/[
   assets,
   audit,
@@ -50,6 +50,7 @@ import ./curator/audit/src/[
   commits,
   domains,
   findings,
+  fixes,
   hooks,
   plan,
   role,
@@ -72,6 +73,7 @@ Verbs:
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, then project's own `drive` verb, on project's own pin
+  fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
   list-packages  OS packages koch and projects need, one per line
@@ -115,12 +117,12 @@ proc parseOptions(): Option[Options] =
   for kind, key, value in getopt():
     case kind
     of cmdArgument:
-      # Third argument onward is refused for every verb but `fetch-assets`, which names files
-      #   rather than one project; refusing them everywhere would make that verb impossible
-      #   and accepting them everywhere would let typo pass as argument nothing reads.
+      # Third argument onward is refused for every verb but `fetch-assets` and `fix`, which
+      #   name files rather than one project; refusing them everywhere would make those verbs
+      #   impossible and accepting them everywhere would let typo pass as argument nothing reads.
       if options.command.len == 0: options.command = key
       elif options.project.len == 0: options.project = key
-      elif options.command == "fetch-assets": options.rest.add key
+      elif options.command in ["fetch-assets", "fix"]: options.rest.add key
       else: return none(Options)
     of cmdLongOption, cmdShortOption:
       case key
@@ -402,6 +404,30 @@ proc run(options: Options): int =
       return options.refused
     let tree = options.root.readTree
     found = drivenJobs(options.root, tree, options.plannedJobs(tree))
+  of "fix":
+    # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
+    #   Named files or directories come first, else projects `--recent`, `--all` or change
+    #   selects, as every verb taking projects reads them.
+    if not options.reads({Root, Branch, Base, All, Recent}, has_project = true):
+      return options.refused
+    let
+      tree = options.root.readTree
+      named = (if options.project.len > 0: @[options.project] else: @[]) & options.rest
+      (entries, unknown) = tree.entriesNamed(
+        if named.len > 0: named else: options.scopedDirsOf(tree)
+      )
+    if unknown.len > 0:
+      unknown.report
+      return 1
+    let (written, fixed, refused) = fixEntries(options.branchOrDefault, entries)
+    if refused.len > 0:
+      refused.report
+      echo "Nothing written; fix writes only inside branch scope."
+      return 1
+    for e in written: writeFile(options.root / e.path, e.content)
+    for f in fixed.sorted: echo f.render
+    echo $fixed.len & " fixed."
+    return 0
   of "fetch-deps":
     if not options.reads({Root, Base, All, Recent}, has_project = true):
       return options.refused
