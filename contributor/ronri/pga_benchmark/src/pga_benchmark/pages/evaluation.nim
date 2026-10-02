@@ -22,10 +22,8 @@ import ./shell
 
 type Spread* = object
   ## Define range that holds 90% of time ratios in evaluations that change no library function.
-  low*, high*: float
-    ## Fifth and ninety-fifth percentile of ratio, each measurand alone.
-  count*: int
-    ## Ratios spread is read from; zero where spread is assumed.
+  low*, high*: float  ## Fifth and ninety-fifth percentile of ratio, each measurand alone.
+  count*: int  ## Ratios spread is read from; zero where spread is assumed.
 
 
 const SPREAD_ASSUMED = Spread(low: 0.92, high: 1.08, count: 0)
@@ -36,9 +34,7 @@ const SPREAD_ASSUMED = Spread(low: 0.92, high: 1.08, count: 0)
 #[ Figures ]#
 
 func touched*(
-  evaluation: JsonNode,
-  baselines: Table[string, JsonNode],
-  algebra: string,
+  evaluation: JsonNode, baselines: Table[string, JsonNode], algebra: string
 ): seq[string] =
   ## List measurands whose library function evaluation changed, at one algebra.
   let
@@ -72,16 +68,12 @@ func spreadOf*(evaluations: openArray[JsonNode]): Spread =
 #[ Rendering ]#
 
 func verdictChips*(
-  evaluation: JsonNode,
-  baselines: Table[string, JsonNode],
-  spread: Spread,
+  evaluation: JsonNode, baselines: Table[string, JsonNode], spread: Spread
 ): string =
   ## Render one chip per algebra: suites, then median time over what evaluation touched.
 
   func touchedMedian(
-    evaluation: JsonNode,
-    baselines: Table[string, JsonNode],
-    algebra: string,
+    evaluation: JsonNode, baselines: Table[string, JsonNode], algebra: string
   ): float =
     ## Read median time ratio over measurands evaluation touched at algebra; zero where none.
     var ratios: seq[float]
@@ -249,13 +241,13 @@ func editsHtml*(change: Change, files: Table[string, string]): string =
           (index + 1 == text.len or text[index + 1] == ' '):
         cut = index
         break
-    var clean = text[0 ..< cut]
+    var clean = text[0..<cut]
     while "{." in clean and ".}" in clean:
       let
         opening = clean.find("{.")
         closing = clean.find(".}", opening)
       if closing < 0: break
-      clean = clean[0 ..< opening] & clean[closing + 2 .. ^1]
+      clean = clean[0..<opening] & clean[closing + 2 .. ^1]
     clean = clean.splitWhitespace.join(" ").replace("( ", "(").replace(" )", ")")
       .replace(";)", ")").replace(",)", ")")
     (clean.strip(chars = {' ', ':'}), last)

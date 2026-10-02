@@ -112,10 +112,12 @@ when IS_RIGID and DIMENSIONS == 4:
 
   func toMotor*(m: Multivector): Motor =
     ## Extract motor from even-grade slots.
-    m.only({
-      Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12, Basis.scalarAnti,
-      Basis.scalar,
-    })
+    m.only(
+      {
+        Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12, Basis.scalarAnti,
+        Basis.scalar,
+      },
+    )
     Motor(
       v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
       m: Vector3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
@@ -160,10 +162,12 @@ when IS_CONFORMAL and DIMENSIONS == 5:
 
   func toDipole*(m: Multivector): Dipole =
     ## Extract dipole from grade-2 slots.
-    m.only({
-      Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12, Basis.E15, Basis.E25,
-      Basis.E35, Basis.E45,
-    })
+    m.only(
+      {
+        Basis.E41, Basis.E42, Basis.E43, Basis.E23, Basis.E31, Basis.E12, Basis.E15, Basis.E25,
+        Basis.E35, Basis.E45,
+      },
+    )
     Dipole(
       v: Vector3(x: m[Basis.E41], y: m[Basis.E42], z: m[Basis.E43]),
       m: Vector3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
@@ -194,10 +198,12 @@ when IS_CONFORMAL and DIMENSIONS == 5:
 
   func toCircle*(m: Multivector): Circle =
     ## Extract circle from grade-3 slots.
-    m.only({
-      Basis.E423, Basis.E431, Basis.E412, Basis.E321, Basis.E415, Basis.E425, Basis.E435,
-      Basis.E235, Basis.E315, Basis.E125,
-    })
+    m.only(
+      {
+        Basis.E423, Basis.E431, Basis.E412, Basis.E321, Basis.E415, Basis.E425, Basis.E435,
+        Basis.E235, Basis.E315, Basis.E125,
+      },
+    )
     Circle(
       g: CarrierPlane(x: m[Basis.E423], y: m[Basis.E431], z: m[Basis.E412], w: m[Basis.E321]),
       v: Vector3(x: m[Basis.E415], y: m[Basis.E425], z: m[Basis.E435]),
@@ -223,6 +229,9 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     ## Extract sphere from grade-4 slots.
     m.only({Basis.E1234, Basis.E4235, Basis.E4315, Basis.E4125, Basis.E3215})
     Sphere(
-      u: m[Basis.E1234], x: m[Basis.E4235], y: m[Basis.E4315], z: m[Basis.E4125],
+      u: m[Basis.E1234],
+      x: m[Basis.E4235],
+      y: m[Basis.E4315],
+      z: m[Basis.E4125],
       w: m[Basis.E3215],
     )

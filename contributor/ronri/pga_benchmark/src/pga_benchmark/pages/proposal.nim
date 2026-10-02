@@ -67,14 +67,16 @@ func proposalBody*(
     pga_shown =
       if proposal.isFrozen and not evaluation.isNil: evaluation{"taken", "pga"}.getStr else: pin
     standing =
-      if proposal.isImplemented: "implemented in " & code(proposal.implemented_in[
-        0 ..< min(7, proposal.implemented_in.len)])
+      if proposal.isImplemented: "implemented in " & code(
+        proposal.implemented_in[
+          0..<min(7, proposal.implemented_in.len)],
+      )
       elif proposal.isFrozen: "withdrawn"
       else: "proposed"
   result = "<div class=\"page\"><header><h1>" & escapeHtml(proposal.citation) & ": " &
     renderInline(proposal.title) & "</h1><p class=\"meta\">" & escapeHtml(proposal.citation) &
     " " & code(proposal.name) & " · " & standing & " · pga " &
-    code(pga_shown[0 ..< min(7, pga_shown.len)])
+    code(pga_shown[0..<min(7, pga_shown.len)])
   if proposal.builds_on.len > 0: result.add " · builds on " & code(proposal.builds_on)
   if not evaluation.isNil:
     result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) & ", " &

@@ -22,68 +22,43 @@ import ./report
 const
   TOLERANCE* = 1.25
     ## Factor library median may exceed reference median by before gap opens on time.
-  WIDTH* = 100
-    ## Runes per line rendered list stays within, since form check reads it.
-  KIND_DOCKET = "docket"
-    ## Document kind of docket file.
+  WIDTH* = 100  ## Runes per line rendered list stays within, since form check reads it.
+  KIND_DOCKET = "docket"  ## Document kind of docket file.
 
 
 type
-  Status* {.pure.} = enum
-    ## Define verdict of one gap or cause.
+  Status* {.pure.} = enum  ## Define verdict of one gap or cause.
     Over, Met, Unmeasured
   Values* = object
     ## Define one implementation's values of one gap; each absent where it or instrument is absent.
     multiplies*, divides*, bytes*, zero_fills*, intermediates*, checks*, allocations*: Option[int]
       ## Static measurements: counts read from emitted C; bytes are modelled movement.
-    ns*, nan_share*: Option[float]
-      ## Runtime measurements, absent where none is recorded.
-  Gap* = object
-    ## Define one measurand of one algebra with both implementations' values.
-    key*: string
-      ## `<algebra>/<measurand id>`, docket key.
-    id*: string
-      ## Docket identifier, e.g. `G017`.
-    algebra*, measurand*: string
-      ## Algebra name and measurand id.
-    library*, reference*: Values
-      ## Both implementations.
+    ns*, nan_share*: Option[float]  ## Runtime measurements, absent where none is recorded.
+  Gap* = object  ## Define one measurand of one algebra with both implementations' values.
+    key*: string  ## `<algebra>/<measurand id>`, docket key.
+    id*: string  ## Docket identifier, e.g. `G017`.
+    algebra*, measurand*: string  ## Algebra name and measurand id.
+    library*, reference*: Values  ## Both implementations.
     bound*: Values
       ## Multivector lower bound, derived from algebra and never measured.
       ##   Absent where no rule is derived for measurand's shape.
-    over_on*: seq[string]
-      ## Metrics library exceeds target on.
-    status*: Status
-      ## Verdict.
-  Algebra* = object
-    ## Define one algebra's documents as read from `baseline/`.
-    name*: string
-      ## Algebra name, e.g. `rga4d`.
-    measurements_static*: JsonNode
-      ## Static measurements document.
-    measurements_runtime*: JsonNode
-      ## Runtime measurements document; nil where none is recorded.
-  Docket* = object
-    ## Define identifier docket: next number and every key allotted so far.
-    next*: int
-      ## Next number to allot.
-    ids*: Table[string, string]
-      ## Identifier per gap key.
-  Rule* {.pure.} = enum
-    ## Define how cause is decided from documents.
+    over_on*: seq[string]  ## Metrics library exceeds target on.
+    status*: Status  ## Verdict.
+  Algebra* = object  ## Define one algebra's documents as read from `baseline/`.
+    name*: string  ## Algebra name, e.g. `rga4d`.
+    measurements_static*: JsonNode  ## Static measurements document.
+    measurements_runtime*: JsonNode  ## Runtime measurements document; nil where none is recorded.
+  Docket* = object  ## Define identifier docket: next number and every key allotted so far.
+    next*: int  ## Next number to allot.
+    ids*: Table[string, string]  ## Identifier per gap key.
+  Rule* {.pure.} = enum  ## Define how cause is decided from documents.
     Terms, Time, ZeroFills, Intermediates, Checks, Inline, Nan, Compound, Missing, Cayley
-  Cause* = object
-    ## Define one design-level gap.
-    id*: string
-      ## Stable identifier, `D01` onward, never renumbered.
-    title*: string
-      ## What gap is, one sentence.
-    rule*: Rule
-      ## How documents decide it.
-    closes_when*: string
-      ## Condition closing it, in words.
-  Decision* = object
-    ## Define cause with its verdict and evidence.
+  Cause* = object  ## Define one design-level gap.
+    id*: string  ## Stable identifier, `D01` onward, never renumbered.
+    title*: string  ## What gap is, one sentence.
+    rule*: Rule  ## How documents decide it.
+    closes_when*: string  ## Condition closing it, in words.
+  Decision* = object  ## Define cause with its verdict and evidence.
     cause*: Cause
     status*: Status
     evidence*: string
@@ -184,13 +159,16 @@ func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measu
 func decide*(gap: var Gap) =
   ## Decide gap: relative metrics open above reference, absolute ones above zero.
   gap.over_on = @[]
+
   template relative(name: string, field: untyped) =
     if gap.library.field.isSome and gap.reference.field.isSome and
         gap.library.field.get > gap.reference.field.get:
       gap.over_on.add name
+
   template absolute(name: string, field: untyped) =
     if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
       gap.over_on.add name
+
   relative("multiplies", multiplies)
   relative("divides", divides)
   relative("bytes", bytes)
@@ -233,10 +211,16 @@ func gapsOf*(algebra: Algebra): seq[Gap] =
     var gap = Gap(key: algebra.name & "/" & id, algebra: algebra.name, measurand: id)
     let measurement = algebra.measurements_runtime.at("measurands").at(id)
     gap.library = valuesOf(
-      functions, measurement.at("library"), measurand{"library"}.getStr, measured
+      functions,
+      measurement.at("library"),
+      measurand{"library"}.getStr,
+      measured,
     )
     gap.reference = valuesOf(
-      functions, measurement.at("reference"), measurand{"reference"}.getStr, measured
+      functions,
+      measurement.at("reference"),
+      measurand{"reference"}.getStr,
+      measured,
     )
     gap.bound = boundValuesOf(measurand.at("bound"))
     gap.decide
@@ -295,7 +279,7 @@ func isLight(f: JsonNode): bool =
 func named(names: openArray[string], most = 6): string =
   ## Join names, first few spelled and rest counted, so evidence stays one sentence.
   if names.len <= most: return names.join(", ")
-  names[0 ..< most].join(", ") & ", and " & $(names.len - most) & " more"
+  names[0..<most].join(", ") & ", and " & $(names.len - most) & " more"
 
 
 func countFunctions(
@@ -539,7 +523,7 @@ func render*(
     "reads `baseline/*.json`. Do not edit it by hand. Every gap keeps its number, because " &
     "`baseline/docket.json` holds the numbers and the driver reuses none. The pinned compiler " &
     "emits C for the `bench` entry, and the inspector counts that C. A cell gives the library " &
-    "value first and the reference value second."
+    "value first and the reference value second.",
   )
   lines.add ""
   lines.add wrap(
@@ -547,7 +531,7 @@ func render*(
     "the library spends a zero fill, an intermediate, an error check, an allocation or a NaN. " &
     "Time is over where the library median is more than " & $TOLERANCE & " times the " &
     "reference median. A gap is met in every other case. Bytes are modelled movement for each " &
-    "call, and runtime measurements are medians of the last bench that ran by hand."
+    "call, and runtime measurements are medians of the last bench that ran by hand.",
   )
   lines.add ""
   lines.add wrap(
@@ -556,7 +540,7 @@ func render*(
     "dense multivector. It is derived from the axioms, and it is never measured. The type " &
     "optimised lower bound is the typed reference, which is measured rather than derived. " &
     "Work that reaches the first bound changes no type, and work that reaches the second " &
-    "changes every one."
+    "changes every one.",
   )
   lines.add ""
   lines.add wrap(
@@ -565,7 +549,7 @@ func render*(
     "operands read once plus its result written once. It rests on the operation alone, so " &
     "one row serves every measurand that spells that operation. The last column is what " &
     "the library spends there, as multiplies over bytes moved. An operation whose shape " &
-    "carries no rule is absent, rather than present without ground."
+    "carries no rule is absent, rather than present without ground.",
   )
   lines.add ""
   lines.add wrap(
@@ -573,7 +557,7 @@ func render*(
     "operators. The bound of a chain sums what each step demands, and a step that carries " &
     "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
     "minimum, because a special routine can share work between steps. Every other bound in " &
-    "these tables is derived from the axioms alone."
+    "these tables is derived from the axioms alone.",
   )
   lines.add ""
   lines.add "## Causes"
@@ -598,7 +582,7 @@ func render*(
         own.add gap
     lines.add wrap(
       "Gaps: " & $own.len & ". Over " & $counts[Status.Over] & ", met " &
-      $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & "."
+      $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & ".",
     )
     lines.add ""
     lines.add "| Id | Measurand | Mul | Div | Bytes | Int | Chk | ns | Status |"

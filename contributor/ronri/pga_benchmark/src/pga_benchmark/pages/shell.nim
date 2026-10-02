@@ -22,12 +22,9 @@ import ../[changes, markdown]
 
 
 const
-  TOKEN_TITLE* = "@TITLE@"
-    ## Token page's title replaces.
-  TOKEN_BODY* = "@BODY@"
-    ## Token rendered body replaces.
-  TOKEN_EMBED* = "@EMBED:"
-    ## Opening of token one face replaces, closed by `@`.
+  TOKEN_TITLE* = "@TITLE@"  ## Token page's title replaces.
+  TOKEN_BODY* = "@BODY@"  ## Token rendered body replaces.
+  TOKEN_EMBED* = "@EMBED:"  ## Opening of token one face replaces, closed by `@`.
   FACES* = [
     "commit-mono-latin-400-normal.woff2",
     "noto-sans-latin-400-normal.woff2",
@@ -50,7 +47,7 @@ func facesAsked*(shell: string): seq[string] =
   while at >= 0:
     let close = shell.find('@', at + TOKEN_EMBED.len)
     if close < 0: break
-    let face = shell[at + TOKEN_EMBED.len ..< close]
+    let face = shell[at + TOKEN_EMBED.len..<close]
     if face notin result: result.add face
     at = shell.find(TOKEN_EMBED, close + 1)
 

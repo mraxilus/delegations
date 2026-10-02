@@ -23,30 +23,19 @@ import ./[changes, guard, markdown]
 
 
 type
-  Note* = object
-    ## Define one note on library source.
-    title*: string
-      ## Heading of section.
-    path*: string
-      ## Library-relative file quoted, as `pga/multivectors.nim`.
-    status*: string
-      ## Short verdict after file, as `decide`; empty where file gives none.
-    quote*: string
-      ## Lines of library note is about, verbatim at pin.
-    body*: seq[Block]
-      ## Blocks after quote.
-    line*: int
-      ## Line of notes file section opens on, for findings.
-  Notes* = object
-    ## Define whole notes file: blocks before first note, then notes in order.
-    lead*: seq[Block]
-      ## Blocks before first note, title included.
-    items*: seq[Note]
-      ## Notes in file order.
+  Note* = object  ## Define one note on library source.
+    title*: string  ## Heading of section.
+    path*: string  ## Library-relative file quoted, as `pga/multivectors.nim`.
+    status*: string  ## Short verdict after file, as `decide`; empty where file gives none.
+    quote*: string  ## Lines of library note is about, verbatim at pin.
+    body*: seq[Block]  ## Blocks after quote.
+    line*: int  ## Line of notes file section opens on, for findings.
+  Notes* = object  ## Define whole notes file: blocks before first note, then notes in order.
+    lead*: seq[Block]  ## Blocks before first note, title included.
+    items*: seq[Note]  ## Notes in file order.
 
 
-const STATUS_JOIN = " · "
-  ## Text between quoted file and status in note's first line.
+const STATUS_JOIN = " · "  ## Text between quoted file and status in note's first line.
 
 
 
@@ -84,7 +73,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     let
       first = blocks[i].lines.join(" ")
       close = first.find('`', 1)
-    note.path = if close > 1: first[1 ..< close] else: ""
+    note.path = if close > 1: first[1..<close] else: ""
     let joined = first.find(STATUS_JOIN)
     if joined >= 0: note.status = first[joined + STATUS_JOIN.len .. ^1].strip
     note.quote = blocks[i + 1].lines.join("\n")

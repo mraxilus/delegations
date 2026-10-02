@@ -37,7 +37,9 @@ func measurementNode(f: Measurement): JsonNode =
 proc benchDocument(): JsonNode =
   ## Gather every measurand's measurements into `bench` document.
   result = document(
-    "runtime", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), takenNow()
+    "runtime",
+    algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR),
+    takenNow(),
   )
   result["taken"]["rounds"] = %ROUNDS
   result["taken"]["objects"] = %OBJECTS

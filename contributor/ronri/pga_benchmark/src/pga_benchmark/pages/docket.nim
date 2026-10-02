@@ -29,19 +29,16 @@ from ../report import isLibraryModule, median
 
 
 type
-  Figures = object
-    ## Define one implementation's counts and movement for one measurand.
+  Figures = object  ## Define one implementation's counts and movement for one measurand.
     multiplies, divides, bytes, read, written, zeroed, intermediates, copied: int
     fills, count_intermediates, copies, checks: int
     is_inline: bool
-  BoundFigures = object
-    ## Define multivector lower bound of one measurand, read and written split.
+  BoundFigures = object  ## Define multivector lower bound of one measurand, read and written split.
     multiplies, divides, bytes, read, written: int
     shape: string
     steps: seq[string]
     is_chain: bool
-  Row = object
-    ## Define one measurand as docket shows it.
+  Row = object  ## Define one measurand as docket shows it.
     id, measurand, symbol, expression, cite: string
     operation: string
       ## Operation measurand applies: own id on general row, id less its operand kinds on typed.
@@ -60,33 +57,21 @@ type
     exponent_low, exponent_high: int
   Deviation = object
     ## Define one deviation bar: library over lower bound it is measured against, and its marks.
-    name_measure: string
-      ## Measure bar shows: multiplies, bytes or time.
-    ratio: float
-      ## Library over lower bound; zero where none reads.
-    is_over_zero: bool
-      ## Lower bound is zero and library spends above it, so bar runs to axis end.
-    tick: float
-      ## Where multivector lower bound stands, as ratio; zero where none is marked.
-    runs: seq[float]
-      ## Ratio of each run, in run order; empty where runs are not recorded.
-    label, tip: string
-      ## Text beside bar, and text on hover.
-  Tally = object
-    ## Define counts of one population of rows against bound.
+    name_measure: string  ## Measure bar shows: multiplies, bytes or time.
+    ratio: float  ## Library over lower bound; zero where none reads.
+    is_over_zero: bool  ## Lower bound is zero and library spends above it, so bar runs to axis end.
+    tick: float  ## Where multivector lower bound stands, as ratio; zero where none is marked.
+    runs: seq[float]  ## Ratio of each run, in run order; empty where runs are not recorded.
+    label, tip: string  ## Text beside bar, and text on hover.
+  Tally = object  ## Define counts of one population of rows against bound.
     bounded, at_multiplies, at_bytes, chains: int
     sums_library, sums_bound, sums_reference: array[2, int]
     full: int
-  Sheet* = object
-    ## Define one algebra's documents docket reads.
-    name*, title*: string
-      ## Short name and title, as `rga4d` and `Rigid 4D`.
-    dimensions*: int
-      ## Vector space dimensions.
-    measurements_static*, measurements_runtime*: JsonNode
-      ## Committed baselines at pin.
-  Overlay* = object
-    ## Define one proposal's changed functions per algebra, and where its page is.
+  Sheet* = object  ## Define one algebra's documents docket reads.
+    name*, title*: string  ## Short name and title, as `rga4d` and `Rigid 4D`.
+    dimensions*: int  ## Vector space dimensions.
+    measurements_static*, measurements_runtime*: JsonNode  ## Committed baselines at pin.
+  Overlay* = object  ## Define one proposal's changed functions per algebra, and where its page is.
     name*, title*, url*: string
       ## Proposal name, title and published URL; empty URL where unpublished.
     functions*: Table[string, JsonNode]
@@ -124,21 +109,23 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     let
       totals = function{"total"}
       movement = function{"movement"}
-    some(Figures(
-      multiplies: totals{"multiplies"}.getInt,
-      divides: totals{"divides"}.getInt,
-      bytes: movement{"bytes_moved"}.getInt,
-      read: movement{"bytes_read"}.getInt,
-      written: movement{"bytes_written"}.getInt,
-      zeroed: movement{"bytes_zeroed"}.getInt,
-      intermediates: movement{"bytes_intermediates"}.getInt,
-      copied: movement{"bytes_copied"}.getInt,
-      fills: totals{"zero_fills"}.getInt,
-      count_intermediates: totals{"intermediates"}.getInt,
-      copies: totals{"copies"}.getInt,
-      checks: totals{"checks"}.getInt,
-      is_inline: function{"inline"}.getBool,
-    ))
+    some(
+      Figures(
+        multiplies: totals{"multiplies"}.getInt,
+        divides: totals{"divides"}.getInt,
+        bytes: movement{"bytes_moved"}.getInt,
+        read: movement{"bytes_read"}.getInt,
+        written: movement{"bytes_written"}.getInt,
+        zeroed: movement{"bytes_zeroed"}.getInt,
+        intermediates: movement{"bytes_intermediates"}.getInt,
+        copied: movement{"bytes_copied"}.getInt,
+        fills: totals{"zero_fills"}.getInt,
+        count_intermediates: totals{"intermediates"}.getInt,
+        copies: totals{"copies"}.getInt,
+        checks: totals{"checks"}.getInt,
+        is_inline: function{"inline"}.getBool,
+      ),
+    )
 
   func boundOf(bound: JsonNode, width: int): Option[BoundFigures] =
     ## Read bound with read and written bytes split out; none where no rule derived.
@@ -154,16 +141,18 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
         if last == "Scale" and not is_chain: (width + 8, width)
         elif last in ["ScalarForm", "SquaredNorm", "Norm"]: (bytes - 8, 8)
         else: (bytes - width, width)
-    some(BoundFigures(
-      multiplies: bound{"multiplies"}.getInt,
-      divides: bound{"divides"}.getInt,
-      bytes: bytes,
-      read: read,
-      written: written,
-      shape: shape,
-      steps: steps,
-      is_chain: is_chain,
-    ))
+    some(
+      BoundFigures(
+        multiplies: bound{"multiplies"}.getInt,
+        divides: bound{"divides"}.getInt,
+        bytes: bytes,
+        read: read,
+        written: written,
+        shape: shape,
+        steps: steps,
+        is_chain: is_chain,
+      ),
+    )
 
   func runsOf(timing: JsonNode): seq[float] =
     ## Read median of each run in run order; empty where runs are not recorded.
@@ -173,7 +162,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     ## Split typed measurand's id into operation and operand kinds, as catalogue joins them.
     ##   One kind per operand, last first, longest kind where two end id alike.
     result[0] = id
-    for _ in 1 .. count_operands:
+    for _ in 1..count_operands:
       var kind = ""
       for candidate in KINDS:
         if result[0].endsWith("_" & candidate) and candidate.len > kind.len: kind = candidate
@@ -356,8 +345,10 @@ func factsHtml(sheet: Sheet, rows: openArray[Row]): string =
     "typed-only\">reference</span></div>"
   for (label, index) in [("Multiplies, summed", 0), ("Bytes moved, summed", 1)]:
     for (tally, name_class) in sums:
-      let top = max([tally.sums_library[index], tally.sums_bound[index],
-        tally.sums_reference[index]])
+      let top = max(
+        [tally.sums_library[index], tally.sums_bound[index],
+          tally.sums_reference[index]],
+      )
       result.add "<div class=\"" & name_class & "\"><h4>" & label & "</h4><div class=\"bars\">" &
         bar("library", tally.sums_library[index], top, "library") &
         bar("bound", tally.sums_bound[index], top, "multivector lower bound")
@@ -616,10 +607,7 @@ operation, and do not predict time across different operations. Inspect one your
 
 
 func docketBody*(
-  sheets: openArray[Sheet];
-  ids: JsonNode;
-  overlays: openArray[Overlay];
-  pin, links, script: string;
+  sheets: openArray[Sheet]; ids: JsonNode; overlays: openArray[Overlay]; pin, links, script: string
 ): string =
   ## Render docket body: header, one tab per algebra, controls, proposals against bound, method.
   ##   `script` is search box's JavaScript, compiled from `find.nim`; empty leaves page without.
@@ -733,7 +721,7 @@ func docketBody*(
       ##   Label off every fourth octave is minor, which narrow screen hides.
       let step = if axis.exponent_high - axis.exponent_low > 6: 2 else: 1
       result = "<span class=\"scale" & name_class & "\">"
-      for exponent in axis.exponent_low .. axis.exponent_high:
+      for exponent in axis.exponent_low..axis.exponent_high:
         if exponent mod step != 0: continue
         let label =
           case exponent
@@ -758,7 +746,7 @@ func docketBody*(
     count_runs = taken{"runs"}.getInt(1)
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
     $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
-    "<p class=\"meta\">pga " & code(pin[0 ..< 7]) & " · time " & escapeHtml(taken{"date"}.getStr) &
+    "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(taken{"date"}.getStr) &
     ", " & escapeHtml(taken{"machine"}.getStr) &
     (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
     " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
@@ -783,11 +771,11 @@ func docketBody*(
       rows = every[index]
       keys = rows.mapIt(keysOf(it))
     var order: array[SORTS.len, Table[string, int]]
-    for index_sort in 0 ..< SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
+    for index_sort in 0..<SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"
     for row in rows:
       var ranks_row: array[SORTS.len, int]
-      for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
+      for index_sort in 0..<SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
       result.add rowHtml(row, axis, ranks_row)
     result.add "</div></section>"
   result.add proposalsHtml(sheets, overlays) & METHOD & "</div>"

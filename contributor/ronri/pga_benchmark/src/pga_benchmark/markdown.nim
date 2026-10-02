@@ -18,32 +18,23 @@ import std/strutils
 
 
 type
-  BlockKind* {.pure.} = enum
-    ## Define kinds of block file holds.
+  BlockKind* {.pure.} = enum  ## Define kinds of block file holds.
     Heading, Paragraph, Bullets, Numbers, Tasks, Table, Fence
-  Block* = object
-    ## Define one block of file, with line it opens on for findings.
-    kind*: BlockKind
-      ## What block is.
-    level*: int
-      ## Heading level, one to six; zero for other kinds.
+  Block* = object  ## Define one block of file, with line it opens on for findings.
+    kind*: BlockKind  ## What block is.
+    level*: int  ## Heading level, one to six; zero for other kinds.
     lines*: seq[string]
       ## Text lines: heading text, paragraph lines, list items, table rows, or fence body.
     language*: string
       ## Language fence names after its opening run, as `nim`; empty for other kinds.
-    line*: int
-      ## Line block opens on, counted from one.
+    line*: int  ## Line block opens on, counted from one.
 
 
 const
-  FENCE_MARK = '`'
-    ## Character fence is run of.
-  FENCE_MIN = 3
-    ## Shortest run opening fence.
-  TASK_OPEN = "[ ] "
-    ## Marker of open task item.
-  TASK_DONE = "[x] "
-    ## Marker of done task item.
+  FENCE_MARK = '`'  ## Character fence is run of.
+  FENCE_MIN = 3  ## Shortest run opening fence.
+  TASK_OPEN = "[ ] "  ## Marker of open task item.
+  TASK_DONE = "[x] "  ## Marker of done task item.
 
 
 
@@ -198,10 +189,10 @@ func renderInline*(text: string): string =
       while i + run < text.len and text[i + run] == '`': inc run
       let close = text.find(repeat('`', run), i + run)
       if close > 0:
-        result.add "<code>" & escapeHtml(text[i + run ..< close].strip) & "</code>"
+        result.add "<code>" & escapeHtml(text[i + run..<close].strip) & "</code>"
         i = close + run
         continue
-      result.add escapeHtml(text[i ..< i + run])
+      result.add escapeHtml(text[i..<i + run])
       i += run
       continue
 
@@ -209,7 +200,7 @@ func renderInline*(text: string): string =
     if c == '*' and i + 1 < text.len and text[i + 1] == '*':
       let close = text.find("**", i + 2)
       if close > i + 2:
-        result.add "<strong>" & renderInline(text[i + 2 ..< close]) & "</strong>"
+        result.add "<strong>" & renderInline(text[i + 2..<close]) & "</strong>"
         i = close + 2
         continue
 
@@ -218,7 +209,7 @@ func renderInline*(text: string): string =
         (i == 0 or text[i - 1] in {' ', '(', '['}):
       let close = text.find(c, i + 1)
       if close > i + 1 and (close + 1 == text.len or text[close + 1] notin Letters + Digits):
-        result.add "<em>" & renderInline(text[i + 1 ..< close]) & "</em>"
+        result.add "<em>" & renderInline(text[i + 1..<close]) & "</em>"
         i = close + 1
         continue
 
@@ -228,9 +219,9 @@ func renderInline*(text: string): string =
       if close > i:
         let finish = text.find(')', close + 2)
         if finish > close:
-          let address = text[close + 2 ..< finish]
+          let address = text[close + 2..<finish]
           result.add "<a href=\"" & escapeHtml(address) & "\">" &
-            renderInline(text[i + 1 ..< close]) & "</a>"
+            renderInline(text[i + 1..<close]) & "</a>"
           i = finish + 1
           continue
 

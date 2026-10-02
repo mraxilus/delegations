@@ -18,16 +18,13 @@ import pga
 import pga/[algebra {.all.}, cayleys {.all.}]
 
 
-type Parity {.pure.} = enum
-  ## Define halves of algebra by parity of grade.
+type Parity {.pure.} = enum  ## Define halves of algebra by parity of grade.
   Even, Odd
 
 
 const
-  SAMPLES = 256
-    ## Seeded samples each law is checked on.
-  SEED = 0
-    ## Seed of sample generator, so every run checks same samples.
+  SAMPLES = 256  ## Seeded samples each law is checked on.
+  SEED = 0  ## Seed of sample generator, so every run checks same samples.
 
 
 
@@ -47,7 +44,7 @@ func basesOfParity(parity: Parity): set[Basis] {.compileTime.} =
 
 func kinds(): seq[(string, set[Basis])] {.compileTime.} =
   ## List every generated kind with its bases, smallest first: grades, then parities.
-  for grade in Grade.low .. Grade.high:
+  for grade in Grade.low..Grade.high:
     result.add(("Kvector" & $int(grade), basesOfGrade(grade)))
   result.add(("MultivectorEven", basesOfParity(Parity.Even)))
   result.add(("MultivectorOdd", basesOfParity(Parity.Odd)))
@@ -82,7 +79,7 @@ macro defineMultivectors(): untyped =
   var class = names[0]
   for kind in names[1 .. ^1]: class = infix(class, "|", kind)
   result.add nnkTypeSection.newTree(
-    nnkTypeDef.newTree(postfix(ident"SomeMultivector", "*"), newEmptyNode(), class)
+    nnkTypeDef.newTree(postfix(ident"SomeMultivector", "*"), newEmptyNode(), class),
   )
 
 
@@ -134,7 +131,8 @@ macro emitProduct(
     var sum = sums[basis][0]
     for term in sums[basis][1 .. ^1]: sum = infix(sum, "+", term)
     body.add newAssignment(
-      nnkBracketExpr.newTree(product, nnkDotExpr.newTree(ident"Basis", ident($basis))), sum
+      nnkBracketExpr.newTree(product, nnkDotExpr.newTree(ident"Basis", ident($basis))),
+      sum,
     )
   body.add product
   result = newBlockStmt(body)
@@ -160,7 +158,7 @@ func toMultivector*[T: SomeMultivector](m: T): Multivector =
 
 proc sample[T: SomeMultivector](): T =
   ## Draw one kind with every slot uniform in [-1, 1].
-  for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
+  for index in 0..<result.elements.len: result.elements[index] = rand(-1.0..1.0)
 
 
 proc main(): int =
@@ -169,7 +167,7 @@ proc main(): int =
   let (p, q, v) = (sample[Kvector1](), sample[Kvector1](), sample[MultivectorEven]())
   doAssert (p ∧ q) is Kvector2, "vector wedge vector must be bivector"
   doAssert ((v ⟇ p) ⟇ v) is MultivectorOdd, "even sandwich of vector reaches odd half"
-  for _ in 1 .. SAMPLES:
+  for _ in 1..SAMPLES:
     let
       (a, b) = (sample[Kvector1](), sample[Kvector2]())
       motor = sample[MultivectorEven]()

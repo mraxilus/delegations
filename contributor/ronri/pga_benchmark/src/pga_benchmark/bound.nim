@@ -28,52 +28,34 @@ import std/options
 type
   Blade* = uint32
     ## Define basis blade as bitmask, i.e. bit `i` set where basis vector `i` is factor.
-  Metric* = object
-    ## Define which algebra lower bound is derived for.
-    dimensions*: int
-      ## Count of basis vectors.
+  Metric* = object  ## Define which algebra lower bound is derived for.
+    dimensions*: int  ## Count of basis vectors.
     is_conformal*: bool
       ## Conformal algebra pairs last two vectors; rigid algebra degenerates last one.
   Shape* {.pure.} = enum
     ## Define arithmetic shape of one operation, i.e. which rule derives its bound.
-    Unknown
-      ## No rule derived yet; bound is absent rather than wrong.
-    Wedge
-      ## Exterior product over dense operands, i.e. terms whose factors are disjoint.
-    Geometric
-      ## Geometric product over dense operands, i.e. terms whose shared factors have image.
-    ScalarForm
-      ## Bilinear form landing in one slot, e.g. inner product.
-    SquaredNorm
-      ## Bilinear form of operand with itself, landing in one slot.
-    Norm
-      ## Squared norm and one root.
-    Componentwise
-      ## Slot-by-slot sum or difference.
-    Permutation
-      ## Sign and reorder only, i.e. no multiply and no add.
-    Scale
-      ## Every slot times one scalar.
-    Unitize
-      ## Norm, one reciprocal, every slot scaled by it.
-    ConstantProduct
-      ## Product against constant carrying one unit component, i.e. signed reads.
-    ContractBulk
-      ## Antiwedge against bulk dual of second operand.
-    ContractWeight
-      ## Antiwedge against weight dual of second operand.
-    ExpandBulk
-      ## Wedge against bulk dual of second operand.
-    ExpandWeight
-      ## Wedge against weight dual of second operand.
+    Unknown  ## No rule derived yet; bound is absent rather than wrong.
+    Wedge  ## Exterior product over dense operands, i.e. terms whose factors are disjoint.
+    Geometric  ## Geometric product over dense operands, i.e. terms whose shared factors have image.
+    ScalarForm  ## Bilinear form landing in one slot, e.g. inner product.
+    SquaredNorm  ## Bilinear form of operand with itself, landing in one slot.
+    Norm  ## Squared norm and one root.
+    Componentwise  ## Slot-by-slot sum or difference.
+    Permutation  ## Sign and reorder only, i.e. no multiply and no add.
+    Scale  ## Every slot times one scalar.
+    Unitize  ## Norm, one reciprocal, every slot scaled by it.
+    ConstantProduct  ## Product against constant carrying one unit component, i.e. signed reads.
+    ContractBulk  ## Antiwedge against bulk dual of second operand.
+    ContractWeight  ## Antiwedge against weight dual of second operand.
+    ExpandBulk  ## Wedge against bulk dual of second operand.
+    ExpandWeight  ## Wedge against weight dual of second operand.
     Support
       ## Antiwedge of operand with wedge of origin against its weight dual, i.e.
       ##   `m ∨ (𝐞ₙ ∧ m☆)`, counted from one folded table rather than as sum of steps.
     SupportAnti
       ## Wedge of operand with antiwedge of horizon against its bulk dual, i.e.
       ##   `m ∧ (𝐞̄ₙ ∨ m★)`, counted from one folded table.
-    Center
-      ## Antiwedge of cocarrier with operand, i.e. `(m☆ ∧ 𝐞∞) ∨ m`, counted from one table.
+    Center  ## Antiwedge of cocarrier with operand, i.e. `(m☆ ∧ 𝐞∞) ∨ m`, counted from one table.
     Container
       ## Wedge of operand with weight dual of its carrier, i.e. `m ∧ (m ∧ 𝐞∞)☆`.
       ##   Counted from one folded table.
@@ -86,8 +68,7 @@ type
       ## False where shape carries no rule yet; every count below is then meaningless.
     is_chain*: bool
       ## True where bound sums steps of library's own definition rather than one rule.
-    multiplies*, adds*, divides*, roots*: int
-      ## Arithmetic that survives.
+    multiplies*, adds*, divides*, roots*: int  ## Arithmetic that survives.
     bytes_read*, bytes_written*: int
       ## Operands read once, result written once; no fill, no copy, no intermediate.
 
@@ -111,7 +92,7 @@ func isNull*(m: Metric, index: int): bool =
 
 func isImaged*(m: Metric, b: Blade): bool =
   ## Read whether blade survives metric, i.e. whether every factor carries image.
-  for i in 0 ..< m.dimensions:
+  for i in 0..<m.dimensions:
     if ((b shr i) and 1) == 1 and m.isNull(i): return false
   true
 
@@ -121,7 +102,7 @@ func wedgeTerms*(m: Metric): int =
   ##   Each dimension stands in one of three states for pair: in neither, in first, in
   ##   second. So count is three raised to dimensions, and metric never enters.
   result = 1
-  for _ in 0 ..< m.dimensions: result *= 3
+  for _ in 0..<m.dimensions: result *= 3
 
 
 func geometricTerms*(m: Metric): int =
@@ -129,13 +110,13 @@ func geometricTerms*(m: Metric): int =
   ##   Dimension carrying image stands in four states for pair; null dimension loses state
   ##   where both operands carry it, leaving three.
   result = 1
-  for i in 0 ..< m.dimensions:
+  for i in 0..<m.dimensions:
     result *= (if m.isNull(i): 3 else: 4)
 
 
 func scalarFormTerms*(m: Metric): int =
   ## Count terms bilinear form landing in one slot spends, i.e. blades carrying image.
-  for b in 0 ..< m.slots:
+  for b in 0..<m.slots:
     if m.isImaged(Blade(b)): inc result
 
 
@@ -219,10 +200,10 @@ func compoundTerms*(m: Metric, shape: Shape): int =
   ##   operand holds one term for each pair of blades whose product survives, and no more.
   ##   Pairs give distinct products of two components, so count holds under same assumption
   ##   as primitives: no subexpression shared between slots.
-  for raw in 0 ..< m.slots:
+  for raw in 0..<m.slots:
     let image = m.imageOf(shape, Blade(raw))
     if image.isNone: continue
-    for other in 0 ..< m.slots:
+    for other in 0..<m.slots:
       let
         a = Blade(other)
         survives = case shape
@@ -238,7 +219,7 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
   ##   Antiwedge with dual of `n` needs first operand to contain `n`, which two raised to
   ##   dimensions less grade of `n` counts; wedge needs it contained in `n` instead, which
   ##   two raised to grade of `n` counts.
-  for raw in 0 ..< m.slots:
+  for raw in 0..<m.slots:
     let
       n = Blade(raw)
       has_null = not m.isImaged(n)
@@ -247,7 +228,7 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 
 
-func lowerBoundOf*(shape: Shape, m: Metric, arity: range[1 .. 2]): LowerBound =
+func lowerBoundOf*(shape: Shape, m: Metric, arity: range[1..2]): LowerBound =
   ## Derive multivector lower bound of one operation from its shape and algebra.
   ##   Movement is operands read once and result written once, since dense operation needs
   ##   no fill, no copy and no intermediate to be correct.
@@ -311,7 +292,7 @@ func lowerBoundOf*(shape: Shape, m: Metric, arity: range[1 .. 2]): LowerBound =
     result.adds = max(0, result.multiplies - m.slots)
 
 
-func lowerBoundOfChain*(parts: openArray[Shape], m: Metric, arity: range[1 .. 2]): LowerBound =
+func lowerBoundOfChain*(parts: openArray[Shape], m: Metric, arity: range[1..2]): LowerBound =
   ## Sum what each step of operation's own definition demands, where library composes it.
   ##   Arithmetic is sum over steps, and step carrying no rule adds nothing. Movement stays
   ##   operands read once and final result written once, since chain needs no intermediate

@@ -29,27 +29,21 @@ type
     ## Define one factor of term: operand or temporary, and its slot.
     ##   Source `m` is 0, `n` is 1, and temporaries are 2 on.
     ##   Slot below zero reads source whole, as scalar operand or scalar temporary.
-  Term = object
-    ## Define one term of slot: coefficient times product of factors.
+  Term = object  ## Define one term of slot: coefficient times product of factors.
     coefficient: float
     factors: seq[Factor]
   Slots = array[Basis, seq[Term]]
     ## Define multivector symbolically: each slot is sum of its terms.
-  Emitter = object
-    ## Define generation state: statements so far, and source next temporary takes.
+  Emitter = object  ## Define generation state: statements so far, and source next temporary takes.
     statements: NimNode
     source_next: int
 
 
 const
-  SOURCE_M = 0
-    ## Source of first operand.
-  SOURCE_N = 1
-    ## Source of second operand.
-  SLOT_WHOLE = -1
-    ## Slot that reads source whole, as scalar.
-  TOLERANCE_COEFFICIENT = 1e-12
-    ## Coefficient below which combined term vanishes.
+  SOURCE_M = 0  ## Source of first operand.
+  SOURCE_N = 1  ## Source of second operand.
+  SLOT_WHOLE = -1  ## Slot that reads source whole, as scalar.
+  TOLERANCE_COEFFICIENT = 1e-12  ## Coefficient below which combined term vanishes.
 
 
 
@@ -219,15 +213,21 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   func container(emitter: var Emitter, m: Slots): Slots =
     ## Read container, i.e. `m ∧ (m⊟)☆`.
     when IS_CONFORMAL:
-      emitter.product(m, m.mapped(CAYLEY_CARRIER).mapped(CAYLEYS_DUAL.anti.right),
-        CAYLEYS_WEDGE.base)
+      emitter.product(
+        m,
+        m.mapped(CAYLEY_CARRIER).mapped(CAYLEYS_DUAL.anti.right),
+        CAYLEYS_WEDGE.base,
+      )
     else: m
 
   func cocarrier(emitter: var Emitter, m: Slots): Slots =
     ## Read cocarrier, i.e. `m☆ ∧ 𝐞∞`.
     when IS_CONFORMAL:
-      emitter.product(m.mapped(CAYLEYS_DUAL.anti.right), constantOf(Basis.infinity),
-        CAYLEYS_WEDGE.base)
+      emitter.product(
+        m.mapped(CAYLEYS_DUAL.anti.right),
+        constantOf(Basis.infinity),
+        CAYLEYS_WEDGE.base,
+      )
     else: m
 
   case id
@@ -270,11 +270,15 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   of "norm_weight": emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti)
   of "norm":
     when IS_RIGID:
-      summed(emitter.norm(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar),
-        emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti))
+      summed(
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar),
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti),
+      )
     else:
-      summed(emitter.norm(m, CAYLEYS_DOT.base, Basis.scalar),
-        emitter.norm(m, CAYLEYS_DOT.anti, Basis.scalarAnti))
+      summed(
+        emitter.norm(m, CAYLEYS_DOT.base, Basis.scalar),
+        emitter.norm(m, CAYLEYS_DOT.anti, Basis.scalarAnti),
+      )
   of "normalize_bulk": emitter.unitized(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar)
   of "normalize_weight", "unitize":
     emitter.unitized(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti)
@@ -286,13 +290,19 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       case id
       of "support":
         let origin = constantOf(Basis.origin)
-        emitter.product(m, emitter.product(origin, m.mapped(CAYLEYS_DUAL.anti.right),
-          CAYLEYS_WEDGE.base), CAYLEYS_WEDGE.anti)
+        emitter.product(
+          m,
+          emitter.product(origin, m.mapped(CAYLEYS_DUAL.anti.right), CAYLEYS_WEDGE.base),
+          CAYLEYS_WEDGE.anti,
+        )
       of "support_anti":
         let horizon = constantOf(Basis.horizon.basis,
           if Basis.horizon.is_negated: -1.0 else: 1.0)
-        emitter.product(m, emitter.product(horizon, m.mapped(CAYLEYS_DUAL.base.right),
-          CAYLEYS_WEDGE.anti), CAYLEYS_WEDGE.base)
+        emitter.product(
+          m,
+          emitter.product(horizon, m.mapped(CAYLEYS_DUAL.base.right), CAYLEYS_WEDGE.anti),
+          CAYLEYS_WEDGE.base,
+        )
       else: raiseAssert("No dense form for `" & id & "`.")
     else:
       case id
@@ -305,8 +315,11 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       of "center": emitter.product(emitter.cocarrier(m), m, CAYLEYS_WEDGE.anti)
       of "container": emitter.container(m)
       of "partner":
-        emitter.product(emitter.container(m.mapped(CAYLEYS_DUAL.anti.right)),
-          m.mapped(CAYLEY_CARRIER), CAYLEYS_WEDGE.anti)
+        emitter.product(
+          emitter.container(m.mapped(CAYLEYS_DUAL.anti.right)),
+          m.mapped(CAYLEY_CARRIER),
+          CAYLEYS_WEDGE.anti,
+        )
       else: raiseAssert("No dense form for `" & id & "`.")
 
 

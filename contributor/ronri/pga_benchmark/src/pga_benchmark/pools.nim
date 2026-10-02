@@ -20,56 +20,39 @@ export widening
 
 
 var
-  POOL_GENERAL*: array[OBJECTS, Multivector]
-    ## Dense multivectors, every component Gaussian.
-  POOL_GRADED*: array[0 .. DIMENSIONS, array[OBJECTS, Multivector]]
+  POOL_GENERAL*: array[OBJECTS, Multivector]  ## Dense multivectors, every component Gaussian.
+  POOL_GRADED*: array[0..DIMENSIONS, array[OBJECTS, Multivector]]
     ## Dense multivectors holding one grade each.
-  POOL_SCALAR*: array[OBJECTS, float]
-    ## Scalars, Gaussian.
+  POOL_SCALAR*: array[OBJECTS, float]  ## Scalars, Gaussian.
 
 when IS_RIGID and DIMENSIONS == 4:
   var
-    POOL_POINT*: array[OBJECTS, Point]
-      ## Points with weight near one.
-    POOL_LINE*: array[OBJECTS, Line]
-      ## Lines joining two points.
-    POOL_PLANE*: array[OBJECTS, Plane]
-      ## Planes joining line and point.
-    POOL_MOTOR*: array[OBJECTS, Motor]
-      ## Unit motors, translation composed with rotation.
-    POOL_POINT_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_POINT`.
-    POOL_LINE_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_LINE`.
-    POOL_PLANE_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_PLANE`.
-    POOL_MOTOR_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_MOTOR`.
+    POOL_POINT*: array[OBJECTS, Point]  ## Points with weight near one.
+    POOL_LINE*: array[OBJECTS, Line]  ## Lines joining two points.
+    POOL_PLANE*: array[OBJECTS, Plane]  ## Planes joining line and point.
+    POOL_MOTOR*: array[OBJECTS, Motor]  ## Unit motors, translation composed with rotation.
+    POOL_POINT_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
+    POOL_LINE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
+    POOL_PLANE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_PLANE`.
+    POOL_MOTOR_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
 
 when IS_CONFORMAL and DIMENSIONS == 5:
   var
     POOL_ROUNDPOINT*: array[OBJECTS, RoundPoint]
       ## Round points with weight near one and Gaussian flat bulk.
-    POOL_DIPOLE*: array[OBJECTS, Dipole]
-      ## Dipoles joining two round points.
-    POOL_CIRCLE*: array[OBJECTS, Circle]
-      ## Circles joining dipole and round point.
-    POOL_SPHERE*: array[OBJECTS, Sphere]
-      ## Spheres joining circle and round point.
-    POOL_ROUNDPOINT_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_ROUNDPOINT`.
-    POOL_DIPOLE_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_DIPOLE`.
-    POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_CIRCLE`.
-    POOL_SPHERE_WIDENED*: array[OBJECTS, Multivector]
-      ## Dense images of `POOL_SPHERE`.
+    POOL_DIPOLE*: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
+    POOL_CIRCLE*: array[OBJECTS, Circle]  ## Circles joining dipole and round point.
+    POOL_SPHERE*: array[OBJECTS, Sphere]  ## Spheres joining circle and round point.
+    POOL_ROUNDPOINT_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_ROUNDPOINT`.
+    POOL_DIPOLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_DIPOLE`.
+    POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_CIRCLE`.
+    POOL_SPHERE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_SPHERE`.
 
 
 func toUpperAscii(s: string): string {.compileTime.} =
   ## Convert ASCII letters to upper case; local so runtime imports no string library.
   for c in s:
-    result.add (if c in 'a' .. 'z': char(ord(c) - 32) else: c)
+    result.add (if c in 'a'..'z': char(ord(c) - 32) else: c)
 
 
 func libraryPoolName*(kind: Kind, grade: Option[int]): string {.compileTime.} =
@@ -119,7 +102,10 @@ when IS_CONFORMAL and DIMENSIONS == 5:
   proc randRoundPoint(): RoundPoint =
     ## Draw round point with Gaussian position and flat bulk, weight near one.
     RoundPoint(
-      x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0), w: gauss(1.0, 0.25),
+      x: gauss(0.0, 1.0),
+      y: gauss(0.0, 1.0),
+      z: gauss(0.0, 1.0),
+      w: gauss(1.0, 0.25),
       u: gauss(0.0, 1.0),
     )
 
@@ -127,13 +113,13 @@ when IS_CONFORMAL and DIMENSIONS == 5:
 proc fillPools*(seed = 0) =
   ## Fill every pool from seed; deterministic, so suites and measurands agree across runs.
   randomize(seed)
-  for i in 0 ..< OBJECTS:
+  for i in 0..<OBJECTS:
     POOL_GENERAL[i] = randMultivector()
-    for g in 0 .. DIMENSIONS:
+    for g in 0..DIMENSIONS:
       POOL_GRADED[g][i] = randMultivector(some(g))
     POOL_SCALAR[i] = gauss(0.0, 1.0)
   when IS_RIGID and DIMENSIONS == 4:
-    for i in 0 ..< OBJECTS:
+    for i in 0..<OBJECTS:
       POOL_POINT[i] = randPoint()
       POOL_LINE[i] = wedge(randPoint(), randPoint())
       POOL_PLANE[i] = wedge(wedge(randPoint(), randPoint()), randPoint())
@@ -143,12 +129,13 @@ proc fillPools*(seed = 0) =
       POOL_PLANE_WIDENED[i] = POOL_PLANE[i].widen
       POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
   when IS_CONFORMAL and DIMENSIONS == 5:
-    for i in 0 ..< OBJECTS:
+    for i in 0..<OBJECTS:
       POOL_ROUNDPOINT[i] = randRoundPoint()
       POOL_DIPOLE[i] = wedge(randRoundPoint(), randRoundPoint())
       POOL_CIRCLE[i] = wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint())
       POOL_SPHERE[i] = wedge(
-        wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint()), randRoundPoint()
+        wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint()),
+        randRoundPoint(),
       )
       POOL_ROUNDPOINT_WIDENED[i] = POOL_ROUNDPOINT[i].widen
       POOL_DIPOLE_WIDENED[i] = POOL_DIPOLE[i].widen

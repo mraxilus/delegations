@@ -29,49 +29,31 @@ import ./[changes, guard, report]
 
 
 type
-  Algebra* = object
-    ## Define algebra evaluation measures: name, dimensions, metric.
-    name*: string
-      ## Short name, as `rga4d`.
-    dimensions*: int
-      ## Vector space dimensions.
-    is_conformal*: bool
-      ## Metric: conformal where true, rigid else.
-  Toolchain* = object
-    ## Define where evaluation reads and writes, and what build it names.
-    library*: string
-      ## Library checkout at pin.
-    work*: string
-      ## Directory evaluations build under.
-    nim*: string
-      ## Compiler commit.
-    pga*: string
-      ## Library commit: pin.
-    flags*: string
-      ## Build flags every measured build carries.
-    runs*: int
-      ## Timed runs of each binary, alternating.
-  Candidate* = object
-    ## Define what one evaluation tries: edits in order, programs and claims.
-    name*: string
-      ## Evaluation name, file name of its document.
-    path*: string
-      ## Change file or proposal directory findings name.
-    changes*: seq[Change]
-      ## Changes applied in order, base proposal first.
+  Algebra* = object  ## Define algebra evaluation measures: name, dimensions, metric.
+    name*: string  ## Short name, as `rga4d`.
+    dimensions*: int  ## Vector space dimensions.
+    is_conformal*: bool  ## Metric: conformal where true, rigid else.
+  Toolchain* = object  ## Define where evaluation reads and writes, and what build it names.
+    library*: string  ## Library checkout at pin.
+    work*: string  ## Directory evaluations build under.
+    nim*: string  ## Compiler commit.
+    pga*: string  ## Library commit: pin.
+    flags*: string  ## Build flags every measured build carries.
+    runs*: int  ## Timed runs of each binary, alternating.
+  Candidate* = object  ## Define what one evaluation tries: edits in order, programs and claims.
+    name*: string  ## Evaluation name, file name of its document.
+    path*: string  ## Change file or proposal directory findings name.
+    changes*: seq[Change]  ## Changes applied in order, base proposal first.
     programs*: seq[string]
       ## Text of programs proposal's claims run, so digest moves when program does.
-    claims*: JsonNode
-      ## Claims proposal makes; empty array for change.
+    claims*: JsonNode  ## Claims proposal makes; empty array for change.
 
 
 const
-  ENTRY_BENCH = "src/pga_benchmark/bench.nim"
-    ## Entry reaching every measurand.
+  ENTRY_BENCH = "src/pga_benchmark/bench.nim"  ## Entry reaching every measurand.
   ENTRY_LIBRARY* = "import pga\n"
     ## Text of entry build claim compiles: library alone, so no module of harness sets peak.
-  ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
-    ## Entry reading cache into static measurements.
+  ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"  ## Entry reading cache into static measurements.
   COUNTED = [
     "multiplies",
     "adds",
@@ -164,10 +146,7 @@ func buildDefines(chain: Toolchain, pga: string): seq[string] =
 
 
 proc compileAgainst(
-  chain: Toolchain;
-  library, entry, binary, cache: string;
-  algebra: Algebra;
-  should_stop_at_c: bool;
+  chain: Toolchain; library, entry, binary, cache: string; algebra: Algebra; should_stop_at_c: bool
 ): (string, int) =
   ## Compile project entry against library copy, skipping project `nim.cfg` that names pin's.
   var arguments = @["c", "--hints:off", "--warnings:off", chain.flags, "--skipParentCfg:on",
@@ -195,24 +174,38 @@ proc suites(library, cache: string; algebra: Algebra): JsonNode =
   }
 
 
-proc staticOf(
-  chain: Toolchain; library, directory: string; algebra: Algebra
-): (JsonNode, string) =
+proc staticOf(chain: Toolchain; library, directory: string; algebra: Algebra): (JsonNode, string) =
   ## Inspect emitted C of bench entry built against library; document and failure text.
   let
     cache = directory / "cache_bench_" & algebra.name
     inspector = directory / "inspect_" & algebra.name
     output = directory / "static_" & algebra.name & ".json"
   removeDir cache
-  var (log, code) = compileAgainst(chain, library, ENTRY_BENCH,
-    directory / "bench_c_" & algebra.name, cache, algebra, should_stop_at_c = true)
+  var (log, code) = compileAgainst(
+    chain,
+    library,
+    ENTRY_BENCH,
+    directory / "bench_c_" & algebra.name,
+    cache,
+    algebra,
+    should_stop_at_c = true,
+  )
   if code != 0: return (nil, log)
-  (log, code) = compileAgainst(chain, library, ENTRY_INSPECT, inspector,
-    directory / "cache_inspect_" & algebra.name, algebra, should_stop_at_c = false)
+  (log, code) = compileAgainst(
+    chain,
+    library,
+    ENTRY_INSPECT,
+    inspector,
+    directory / "cache_inspect_" & algebra.name,
+    algebra,
+    should_stop_at_c = false,
+  )
   if code != 0: return (nil, log)
-  (log, code) = execCmdEx(quoteShell(inspector) & " " & quoteShell(cache) & " " &
-    quoteShell(output) & " " & quoteShell(chain.nim) & " " & quoteShell(chain.pga) & " " &
-    quoteShell(chain.flags))
+  (log, code) = execCmdEx(
+    quoteShell(inspector) & " " & quoteShell(cache) & " " &
+      quoteShell(output) & " " & quoteShell(chain.nim) & " " & quoteShell(chain.pga) & " " &
+      quoteShell(chain.flags),
+  )
   if code != 0: return (nil, log)
   (parseJson(readFile(output)), "")
 
@@ -258,7 +251,7 @@ func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
   if pristine.len == 0 or candidate.len == 0: return
   for id, _ in pristine[0]{"measurands"}.pairs:
     var ns_before, ns_after, ratios: seq[float]
-    for i in 0 ..< min(pristine.len, candidate.len):
+    for i in 0..<min(pristine.len, candidate.len):
       let
         ns_pristine = pristine[i]{"measurands", id, "library", "ns_median"}
         ns_changed = candidate[i]{"measurands", id, "library", "ns_median"}
@@ -293,16 +286,14 @@ func successOf*(output: string): (float, float) =
     var seconds, peak: float
     for part in line.split("; "):
       if part.endsWith("MiB peakmem"):
-        peak = parseFloat(part[0 ..< part.len - "MiB peakmem".len])
+        peak = parseFloat(part[0..<part.len - "MiB peakmem".len])
       elif part.endsWith("s") and part.len > 1 and part[0].isDigit:
         try: seconds = parseFloat(part[0 ..< ^1])
         except ValueError: discard
     return (seconds, peak)
 
 
-proc timed(
-  chain: Toolchain; pristine, candidate, directory: string
-): (JsonNode, JsonNode) =
+proc timed(chain: Toolchain; pristine, candidate, directory: string): (JsonNode, JsonNode) =
   ## Run both binaries alternately `runs` times each; times and NaN shares per measurand.
 
   proc timedRun(binary, output: string): JsonNode =
@@ -311,7 +302,7 @@ proc timed(
     if code == 0: parseJson(readFile(output)) else: nil
 
   var before, after: seq[JsonNode]
-  for run in 1 .. chain.runs:
+  for run in 1..chain.runs:
     let
       run_pristine = timedRun(pristine, directory / "pristine_" & $run & ".json")
       run_changed = timedRun(candidate, directory / "changed_" & $run & ".json")
@@ -393,11 +384,7 @@ proc checkClaims(
     ## Find algebra by name; one no evaluation measures is read from name, as `rga6d`.
     for algebra in algebras:
       if algebra.name == name: return algebra
-    Algebra(
-      name: name,
-      dimensions: parseInt(name[3 .. ^2]),
-      is_conformal: name.startsWith("cga"),
-    )
+    Algebra(name: name, dimensions: parseInt(name[3 .. ^2]), is_conformal: name.startsWith("cga"))
 
   result = newJArray()
   for claim in candidate.claims:
@@ -428,7 +415,7 @@ proc checkClaims(
           is_holding = false
           detail.add algebra.name & " did not build: " & (if why.len > 0: why[^1] else: "")
           continue
-        for i in 0 ..< pairs.len:
+        for i in 0..<pairs.len:
           if before[i] != after[i]:
             is_holding = false
             detail.add algebra.name & " " & side_changed[i] & " differs"
@@ -463,8 +450,11 @@ proc checkClaims(
             else: peak_after / peak_before
         is_holding = ratio <= claim{"at_most"}.getFloat
         detail.add algebra.name & " peak " & formatFloat(peak_before, ffDecimal, 1) & " → " &
-          formatFloat(peak_after, ffDecimal, 1) & " MiB, " & formatFloat(seconds_before,
-          ffDecimal, 2) & " → " & formatFloat(seconds_after, ffDecimal, 2) & " s, ×" &
+          formatFloat(peak_after, ffDecimal, 1) & " MiB, " & formatFloat(
+            seconds_before,
+            ffDecimal,
+            2,
+          ) & " → " & formatFloat(seconds_after, ffDecimal, 2) & " s, ×" &
           formatFloat(ratio, ffDecimal, 2)
     of "count":
       let
@@ -524,8 +514,15 @@ proc runEvaluation*(
     counted[algebra.name] = after
     let
       binary = directory / "bench_" & algebra.name
-      (log, code) = compileAgainst(chain, copy, ENTRY_BENCH, binary,
-        directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
+      (log, code) = compileAgainst(
+        chain,
+        copy,
+        ENTRY_BENCH,
+        binary,
+        directory / "cache_timed_" & algebra.name,
+        algebra,
+        should_stop_at_c = false,
+      )
     if code != 0:
       return (nil, @[Finding(path: candidate.path, message: "Timed build failed at " &
         algebra.name & "; got `" & log.strip.splitLines[^1] & "`.")])
@@ -553,6 +550,13 @@ proc pristineBinary*(chain: Toolchain, algebra: Algebra): string =
   let directory = chain.work / "pristine"
   createDir directory
   result = directory / "bench_" & algebra.name
-  let (log, code) = compileAgainst(chain, chain.library, ENTRY_BENCH, result,
-    directory / "cache_timed_" & algebra.name, algebra, should_stop_at_c = false)
+  let (log, code) = compileAgainst(
+    chain,
+    chain.library,
+    ENTRY_BENCH,
+    result,
+    directory / "cache_timed_" & algebra.name,
+    algebra,
+    should_stop_at_c = false,
+  )
   if code != 0: raise newException(OSError, "Pristine bench failed; got `" & log & "`.")

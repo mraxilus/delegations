@@ -37,27 +37,22 @@ when HAS_DENSE_FORMS: import ./dense
 
 
 type
-  Implementation* {.pure.} = enum
-    ## Define which implementation measurement belongs to.
+  Implementation* {.pure.} = enum  ## Define which implementation measurement belongs to.
     Library, Reference, Dense
-  Measurement* = object
-    ## Define measurements of one measurand in one implementation.
+  Measurement* = object  ## Define measurements of one measurand in one implementation.
     is_measured*: bool
       ## False where implementation has no expression.
       ##   Reference has none on general measurand, and dense form has none on typed one.
-    ns_median*, ns_min*: float
-      ## Nanoseconds per object, median and minimum over rounds.
+    ns_median*, ns_min*: float  ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
       ## Heap allocations counted over every round; meaningful only when instrument is live.
-    nan_share*: float
-      ## Share of results carrying NaN in any component.
+    nan_share*: float  ## Share of results carrying NaN in any component.
 
 
 var
   MEASUREMENTS*: array[Implementation, array[CATALOGUE.len, Measurement]]
     ## Measurements of every measurand, filled by `measureCatalogue`.
-  SINK*: float
-    ## Fold of every result, printed so no result is dead.
+  SINK*: float  ## Fold of every result, printed so no result is dead.
 
 
 func isAllocationMeasured*(): bool =
@@ -74,7 +69,7 @@ func allocationsOf*(stats: AllocStats): int =
     text = $stats
     start = text.find("allocCount: ") + "allocCount: ".len
     stop = text.find(',', start)
-  parseInt(text[start ..< stop])
+  parseInt(text[start..<stop])
 
 
 
@@ -131,7 +126,7 @@ func summarise*(rounds: openArray[int64], objects: int): tuple[median, minimum: 
 
 template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
   ## Run loop `ROUNDS` times, recording nanoseconds of each.
-  for r in 0 ..< ROUNDS:
+  for r in 0..<ROUNDS:
     let started = getMonoTime()
     loop
     rounds[r] = (getMonoTime() - started).inNanoseconds
@@ -179,14 +174,14 @@ macro emitMeasurand(
       # Hot path, per pool slot: index and pool reads constant; work linear in `OBJECTS` times
       #   `ROUNDS`; nothing allocates but `body`, and `allocations` counts what it does.
       timeRounds(rounds):
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template `m`(): untyped {.used.} = `pool_m`[i]  # Read by `body`.
           template `n`(): untyped {.used.} = `pool_n`[j]  # Read by binary `body`; unary leaves it.
           results[i] = `body`
       let statistics_after = getAllocStats()
       var count_nan = 0
-      for i in 0 ..< OBJECTS:
+      for i in 0..<OBJECTS:
         if isAnyNan(results[i]): inc count_nan
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
@@ -203,7 +198,7 @@ macro emitCatalogue(): untyped =
   ## Emit every measurand in every implementation, in catalogue order.
   ##   Implementations of one measurand run back to back, so machine drift lands on each alike.
   result = newStmtList()
-  for index in 0 ..< CATALOGUE.len:
+  for index in 0..<CATALOGUE.len:
     for implementation in Implementation:
       result.add newCall(
         bindSym"emitMeasurand",

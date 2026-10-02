@@ -21,20 +21,13 @@ const BOUNDED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
 
 
 type
-  Finding* = object
-    ## Define one gate failure, located at file and line.
-    path*: string
-      ## File failing, project-relative.
-    line*: int
-      ## Line failing, counted from one; zero where whole document fails.
-    message*: string
-      ## Statement ending with value got.
-  Verdict* = object
-    ## Define outcome of one comparison.
-    findings*: seq[Finding]
-      ## Growths and mismatches; any one fails gate.
-    improvements*: seq[string]
-      ## Shrinks, reported and never failing.
+  Finding* = object  ## Define one gate failure, located at file and line.
+    path*: string  ## File failing, project-relative.
+    line*: int  ## Line failing, counted from one; zero where whole document fails.
+    message*: string  ## Statement ending with value got.
+  Verdict* = object  ## Define outcome of one comparison.
+    findings*: seq[Finding]  ## Growths and mismatches; any one fails gate.
+    improvements*: seq[string]  ## Shrinks, reported and never failing.
 
 
 const
@@ -117,7 +110,7 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
       elif now < was:
         result.improvements.add(
           "Total `" & metric & "` of `" & key & "` shrank; got `" & $now & "`, baseline `" &
-            $was & "`."
+            $was & "`.",
         )
   # Bounds are derived, so they never drift: any move means derivation itself changed.
   let
@@ -130,7 +123,8 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
       let now = bounds_after{id, "bound"}
       if now.isNil:
         result.findings.add Finding(
-          path: path, message: "Lower bound absent now; got `" & id & "`."
+          path: path,
+          message: "Lower bound absent now; got `" & id & "`.",
         )
         continue
       for metric in BOUNDED:

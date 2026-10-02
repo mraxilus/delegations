@@ -24,34 +24,27 @@ import ./[bound, kinds]
 
 
 type
-  Arity* = range[1 .. 2]
-    ## Define operand count of measurand.
-  Measurand* = object
-    ## Define one catalogued operation under measurement.
-    id*: string
-      ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
-    symbol*: string
-      ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.
-    alias*: string
-      ## Library named alias from `pga.nim`, e.g. `wedge`; empty where none exists.
+  Arity* = range[1..2]  ## Define operand count of measurand.
+  Measurand* = object  ## Define one catalogued operation under measurement.
+    id*: string  ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
+    symbol*: string  ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.
+    alias*: string  ## Library named alias from `pga.nim`, e.g. `wedge`; empty where none exists.
     expression*: string
       ## Library expression over `m` and `n`, fully parenthesised, e.g. `(m ∧ n)`.
-    arity*: Arity = 1
-      ## Operand count expression reads; defaulted so object has valid zero value.
+    arity*: Arity = 1  ## Operand count expression reads; defaulted so object has valid zero value.
     operands*: array[2, Kind]
       ## Kind of `m` and of `n`; second is `General` and unread for unary measurand.
     grade*: Option[int]
       ## Grade `General` operands are drawn at, where operation needs k-vector; none = mixed.
     reference*: string
       ## Reference expression over same names, e.g. `wedge(m, n)`; empty where none.
-    cite*: string
-      ## Book equation, e.g. `2.17`, or `wiki:<Page>` where library suites cite none.
-  RowGeneral = tuple[id, symbol, alias, expression: string; arity: int; cite: string]
+    cite*: string  ## Book equation, e.g. `2.17`, or `wiki:<Page>` where library suites cite none.
+  RowGeneral = tuple[id, symbol, alias, expression: string, arity: int, cite: string]
     ## Define one catalogue row of measurand over dense operands, read by `addGeneral`.
   RowTyped = tuple[
-    id, symbol, alias, expression: string;
-    operand_m, operand_n: Kind;
-    reference, cite: string;
+    id, symbol, alias, expression: string,
+    operand_m, operand_n: Kind,
+    reference, cite: string,
   ]
     ## Define one catalogue row of measurand over typed operands, read by `addTyped`.
   RowUnary = tuple[id, symbol, alias, expression, reference, cite: string]
@@ -61,10 +54,8 @@ type
 const
   ALIAS_BULK = when IS_RIGID: "bulk" else: "bulkRound"
     ## Library's name for `∙ m`, which conformal umbrella qualifies as round.
-  ALIAS_WEIGHT = when IS_RIGID: "weight" else: "weightRound"
-    ## Library's name for `∘ m`.
-  ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"
-    ## Library's name for `|∙ m`.
+  ALIAS_WEIGHT = when IS_RIGID: "weight" else: "weightRound"  ## Library's name for `∘ m`.
+  ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"  ## Library's name for `|∙ m`.
   ALIAS_NORM_WEIGHT = when IS_RIGID: "normWeight" else: "normWeightRound"
     ## Library's name for `|∘ m`.
 

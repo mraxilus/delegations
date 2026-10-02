@@ -14,20 +14,13 @@ import ./inspector
 import ./reference/[conformal3, rigid3]
 
 
-type Movement* = object
-  ## Define bytes one call moves, by cause.
-  bytes_read*: int
-    ## Operands read, i.e. sum of parameter sizes.
-  bytes_written*: int
-    ## Result written once.
-  bytes_zeroed*: int
-    ## Whole-object zero fills, i.e. `nimZeroMem` calls times result size.
-  bytes_copied*: int
-    ## Whole-object copies times result size.
-  bytes_intermediates*: int
-    ## Local multivector intermediates times multivector size.
-  bytes_moved*: int
-    ## Sum of every cause.
+type Movement* = object  ## Define bytes one call moves, by cause.
+  bytes_read*: int  ## Operands read, i.e. sum of parameter sizes.
+  bytes_written*: int  ## Result written once.
+  bytes_zeroed*: int  ## Whole-object zero fills, i.e. `nimZeroMem` calls times result size.
+  bytes_copied*: int  ## Whole-object copies times result size.
+  bytes_intermediates*: int  ## Local multivector intermediates times multivector size.
+  bytes_moved*: int  ## Sum of every cause.
 
 
 func sizeOfStem*(stem: string, size_multivector: int): int =

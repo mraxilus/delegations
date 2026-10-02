@@ -38,46 +38,29 @@ import ./[changes, guard, markdown]
 
 
 type
-  StatusProposal* {.pure.} = enum
-    ## Define where proposal stands.
+  StatusProposal* {.pure.} = enum  ## Define where proposal stands.
     Proposed, Implemented, Withdrawn
-  Proposal* = object
-    ## Define one proposal exploration as read from its directory.
-    number*: int
-      ## Number path and title carry, as `2`; zero where path gives none.
-    name*: string
-      ## Directory name after number, as `typed-multivectors`.
-    directory*: string
-      ## Project-relative directory, as `proposals/02-typed-multivectors`.
-    title*: string
-      ## Heading of `proposal.md` after its citation.
-    status*: StatusProposal
-      ## Where proposal stands.
-    implemented_in*: string
-      ## Library commit that implements proposal; empty unless implemented.
-    body*: seq[Block]
-      ## Blocks of `proposal.md` after title.
-    change*: Change
-      ## Candidate edits; none where proposal carries no `change.md`.
-    builds_on*: string
-      ## Name of proposal whose change applies first; empty where none.
-    claims*: JsonNode
-      ## Claims evaluation checks, in order.
-  Figure* = object
-    ## Define one figure proposal embeds.
-    caption*: string
-      ## Text under figure, as image alternative gives it.
-    path*: string
-      ## Project-relative path of SVG, as `pages/derivation-map.svg`.
-    line*: int
-      ## Line of `proposal.md` figure stands on, for findings.
+  Proposal* = object  ## Define one proposal exploration as read from its directory.
+    number*: int  ## Number path and title carry, as `2`; zero where path gives none.
+    name*: string  ## Directory name after number, as `typed-multivectors`.
+    directory*: string  ## Project-relative directory, as `proposals/02-typed-multivectors`.
+    title*: string  ## Heading of `proposal.md` after its citation.
+    status*: StatusProposal  ## Where proposal stands.
+    implemented_in*: string  ## Library commit that implements proposal; empty unless implemented.
+    body*: seq[Block]  ## Blocks of `proposal.md` after title.
+    change*: Change  ## Candidate edits; none where proposal carries no `change.md`.
+    builds_on*: string  ## Name of proposal whose change applies first; empty where none.
+    claims*: JsonNode  ## Claims evaluation checks, in order.
+  Figure* = object  ## Define one figure proposal embeds.
+    caption*: string  ## Text under figure, as image alternative gives it.
+    path*: string  ## Project-relative path of SVG, as `pages/derivation-map.svg`.
+    line*: int  ## Line of `proposal.md` figure stands on, for findings.
 
 
 const
   CLAIM_KINDS* = ["suites", "tables", "program", "count", "build"]
     ## Claim kinds evaluation knows how to check.
-  NUMBER_WIDTH = 2
-    ## Digits number is written with, zero-padded, in path and citation.
+  NUMBER_WIDTH = 2  ## Digits number is written with, zero-padded, in path and citation.
   STATUS_WORDS = ["proposed", "implemented", "withdrawn"]
     ## Status as `claims.json` spells it, in `StatusProposal` order.
 
@@ -97,7 +80,7 @@ func figureOf*(node: Block, directory: string): Option[Figure] =
     if part == "..":
       if parts.len > 0: parts.setLen(parts.len - 1)
     elif part.len > 0 and part != ".": parts.add part
-  some(Figure(caption: line[2 ..< middle], path: parts.join("/"), line: node.line))
+  some(Figure(caption: line[2..<middle], path: parts.join("/"), line: node.line))
 
 
 func citation*(proposal: Proposal): string =
@@ -116,9 +99,7 @@ func isFrozen*(proposal: Proposal): bool =
 
 
 func parseProposal*(
-  argument, change: string;
-  claims: JsonNode;
-  directory: string;
+  argument, change: string; claims: JsonNode; directory: string
 ): (Proposal, seq[Finding]) =
   ## Read proposal from its directory: argument and change texts and parsed claims.
   ##   `change` is empty where proposal carries none.
@@ -129,8 +110,8 @@ func parseProposal*(
   let
     base = directory.rsplit('/', 1)[^1]
     dash = base.find('-')
-  if dash == NUMBER_WIDTH and base[0 ..< dash].allCharsInSet(Digits):
-    proposal.number = parseInt(base[0 ..< dash])
+  if dash == NUMBER_WIDTH and base[0..<dash].allCharsInSet(Digits):
+    proposal.number = parseInt(base[0..<dash])
     proposal.name = base[dash + 1 .. ^1]
   else:
     proposal.name = base
@@ -220,7 +201,7 @@ func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
         message: "Proposal number is taken; got `" & proposal.citation & "`.",
       )
     seen.add proposal.number
-  for number in 1 .. max(seen & @[0]):
+  for number in 1..max(seen & @[0]):
     if number notin seen:
       result.add Finding(
         path: "proposals",

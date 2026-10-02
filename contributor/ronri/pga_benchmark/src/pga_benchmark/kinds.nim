@@ -32,12 +32,10 @@ import pga
 
 
 when IS_RIGID and DIMENSIONS == 4:
-  type Kind* {.pure.} = enum
-    ## Define operand kinds of 4D rigid algebra.
+  type Kind* {.pure.} = enum  ## Define operand kinds of 4D rigid algebra.
     General, Scalar, Point, Line, Plane, Motor, Flector
 elif IS_CONFORMAL and DIMENSIONS == 5:
-  type Kind* {.pure.} = enum
-    ## Define operand kinds of 5D conformal algebra.
+  type Kind* {.pure.} = enum  ## Define operand kinds of 5D conformal algebra.
     General, Scalar, RoundPoint, Dipole, Circle, Sphere, FlatPoint, FlatLine, FlatPlane
 else:
   type Kind* {.pure.} = enum

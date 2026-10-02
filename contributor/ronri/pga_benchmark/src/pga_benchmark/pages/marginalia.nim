@@ -18,12 +18,9 @@ import ./[evaluation, shell]
 
 type ChangeEvaluated* = object
   ## Define one change as marginalia shows it: name, change, and its evaluation where run.
-  name*: string
-    ## File name under `changes/`, without extension.
-  change*: Change
-    ## Edits and why.
-  evaluation*: JsonNode
-    ## Evaluation document; nil where none was run.
+  name*: string  ## File name under `changes/`, without extension.
+  change*: Change  ## Edits and why.
+  evaluation*: JsonNode  ## Evaluation document; nil where none was run.
 
 
 func marginaliaBody*(
@@ -64,7 +61,7 @@ func marginaliaBody*(
       renderBlocks(note.body, 2) & "</article>"
 
   result = "<div class=\"page\"><header><h1>PGA Marginalia</h1><p class=\"meta\">pga " &
-    code(pin[0 ..< 7]) & " · every change tried at pin, every note located at pin" & links &
+    code(pin[0..<7]) & " · every change tried at pin, every note located at pin" & links &
     "</p></header>"
   result.add "<section class=\"block\"><h2>Changes proposed</h2><p class=\"note\">" &
     spreadText(spread) & "</p>"

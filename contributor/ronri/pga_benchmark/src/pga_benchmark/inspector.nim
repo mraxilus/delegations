@@ -25,42 +25,28 @@ import std/[algorithm, os, strutils, tables]
 
 
 type
-  CFunction* = object
-    ## Define one function read from emitted C.
-    name*: string
-      ## Mangled name as emitted.
-    symbol*: string
-      ## Demangled head, e.g. `∧`, `|∙`, `wedge`, `{}`.
+  CFunction* = object  ## Define one function read from emitted C.
+    name*: string  ## Mangled name as emitted.
+    symbol*: string  ## Demangled head, e.g. `∧`, `|∙`, `wedge`, `{}`.
     module*: string
       ## Module suffix after last `__`, e.g. `referenceZrigid3`; empty where name has none.
-    overload*: int
-      ## Overload index `_u<n>`, `-1` where name carries none.
+    overload*: int  ## Overload index `_u<n>`, `-1` where name carries none.
     parameters*: seq[string]
       ## Parameter type stems in order, e.g. `Multivector`, `Point`, `float`; `Result` excluded.
     stem_result*: string
       ## Type stem of what call writes: `Result` parameter's, else return type's; `void` if none.
-    is_inline*: bool
-      ## True for `static N_INLINE`, false for `N_NIMCALL`.
-    body*: string
-      ## Text between function's braces.
-  Counts* = object
-    ## Define what one function's text spends.
+    is_inline*: bool  ## True for `static N_INLINE`, false for `N_NIMCALL`.
+    body*: string  ## Text between function's braces.
+  Counts* = object  ## Define what one function's text spends.
     multiplies*, adds*, subtractions*, divides*: int
       ## Floating operations spelled as terms; divisions cost several multiplies each.
-    zero_fills*: int
-      ## `nimZeroMem` calls, i.e. whole-object zero fills.
-    intermediates*: int
-      ## Local multivector objects declared.
-    copies*: int
-      ## Whole-object assignments and memory copies.
-    checks*: int
-      ## Error-flag branches after calls.
-    calls*: int
-      ## Call sites of other Nim functions, accessor reads excluded.
-    allocations*: int
-      ## Heap allocation calls.
-    lines*: int
-      ## Lines of body.
+    zero_fills*: int  ## `nimZeroMem` calls, i.e. whole-object zero fills.
+    intermediates*: int  ## Local multivector objects declared.
+    copies*: int  ## Whole-object assignments and memory copies.
+    checks*: int  ## Error-flag branches after calls.
+    calls*: int  ## Call sites of other Nim functions, accessor reads excluded.
+    allocations*: int  ## Heap allocation calls.
+    lines*: int  ## Lines of body.
 
 
 const
@@ -71,8 +57,7 @@ const
     ("eq", "="), ("lt", "<"), ("gt", ">"),
   ]
     ## Words compiler spells ASCII operator characters with, longest first.
-  MULTIVECTOR* = "tyObject_Multivector"
-    ## Type stem of library's dense object in emitted C.
+  MULTIVECTOR* = "tyObject_Multivector"  ## Type stem of library's dense object in emitted C.
   ACCESSOR = "X5BX5D_"
     ## Mangled head of `[]`, whose calls are element reads and not counted as calls.
 
@@ -86,8 +71,8 @@ func stripSuffix(name: string): string =
   if stop < 0: return name
   var i = stop - 1
   while i >= 0 and name[i] in Digits: dec i
-  if i >= 1 and name[i] in {'u', 'c'} and name[i - 1] == '_': name[0 ..< i - 1]
-  else: name[0 ..< stop]
+  if i >= 1 and name[i] in {'u', 'c'} and name[i - 1] == '_': name[0..<i - 1]
+  else: name[0..<stop]
 
 
 func decode(head: string): string =
@@ -96,7 +81,7 @@ func decode(head: string): string =
   while i < head.len:
     if head[i] == 'X' and i + 2 < head.len and head[i + 1] in HexDigits and
         head[i + 2] in HexDigits:
-      result.add char(parseHexInt(head[i + 1 .. i + 2]))
+      result.add char(parseHexInt(head[i + 1..i + 2]))
       i += 3
       continue
     var is_special = false
@@ -115,7 +100,7 @@ func demangle*(name: string): string =
   ## Read symbol out of mangled function name.
   ##   Head ending in `_` was encoded and is decoded; plain head is identifier as written.
   let head = name.stripSuffix
-  if head.len > 0 and head[^1] == '_': decode(head[0 ..< head.high])
+  if head.len > 0 and head[^1] == '_': decode(head[0..<head.high])
   else: head
 
 
@@ -129,7 +114,7 @@ func stemOf(parameter: string): string =
       let start = prefix.len
       var stop = start
       while stop < text.len and text[stop] notin {'_', '*', ' '}: inc stop
-      return text[start ..< stop]
+      return text[start..<stop]
   if text == "NF" or text.startsWith("NF "): return "float"
   if text == "NI" or text.startsWith("NI "): return "int"
   if text == "NIM_BOOL" or text.startsWith("NIM_BOOL "): return "bool"
@@ -139,7 +124,7 @@ func stemOf(parameter: string): string =
 func moduleOf(name: string): string =
   ## Read module suffix after last `__`; empty where name carries none.
   let at = name.rfind("__")
-  if at < 0: "" else: name[at + 2 ..< name.len]
+  if at < 0: "" else: name[at + 2..<name.len]
 
 
 func overloadOf*(name: string): int =
@@ -151,7 +136,7 @@ func overloadOf*(name: string): int =
   var i = stop - 1
   while i >= 0 and name[i] in Digits: dec i
   if i >= 1 and i < stop - 1 and name[i] == 'u' and name[i - 1] == '_':
-    parseInt(name[i + 1 ..< stop])
+    parseInt(name[i + 1..<stop])
   else: -1
 
 
@@ -168,7 +153,7 @@ func functionsIn*(source: string): seq[CFunction] =
     let
       line_end = source.find('\n', position)
       stop = if line_end < 0: source.len else: line_end
-      line = source[position ..< stop]
+      line = source[position..<stop]
     position = stop + 1
     let
       is_inline = line.startsWith("static N_INLINE(")
@@ -180,15 +165,15 @@ func functionsIn*(source: string): seq[CFunction] =
       name_stop = line.find(')', comma)
     if comma < 0 or name_stop < 0: continue
     let
-      name = line[comma + 1 ..< name_stop].strip
-      returns = line[parenthesis_open + 1 ..< comma].stemOf
+      name = line[comma + 1..<name_stop].strip
+      returns = line[parenthesis_open + 1..<comma].stemOf
       parameters_start = line.find('(', name_stop)
       parameters_stop = line.rfind(')')
     if parameters_start < 0 or parameters_stop <= parameters_start: continue
     var
       parameters: seq[string]
       stem_result = returns
-    for parameter in line[parameters_start + 1 ..< parameters_stop].split(','):
+    for parameter in line[parameters_start + 1..<parameters_stop].split(','):
       let stem = parameter.stemOf
       if stem.len == 0: continue
       if parameter.strip.endsWith(" Result"): stem_result = stem
@@ -208,7 +193,7 @@ func functionsIn*(source: string): seq[CFunction] =
       parameters: parameters,
       stem_result: stem_result,
       is_inline: is_inline,
-      body: source[position ..< i],
+      body: source[position..<i],
     )
     position = i
 
@@ -224,7 +209,7 @@ func plainSites(body: string): seq[string] =
       continue
     var stop = i
     while stop < body.len and body[stop] in IdentChars: inc stop
-    let name = body[i ..< stop]
+    let name = body[i..<stop]
     i = stop
     if stop < body.len and body[stop] == '(' and "__" in name and not name.startsWith(ACCESSOR):
       result.add name
@@ -239,12 +224,10 @@ func countIntermediates(body: string): int =
 
 
 const
-  LOOP_OPEN = "while (1) {"
-    ## Text every loop compiler emits opens with; bound is tested inside.
+  LOOP_OPEN = "while (1) {"  ## Text every loop compiler emits opens with; bound is tested inside.
   BOUND_OPEN = "if ((!(("
     ## Text loop's bound test opens with, e.g. `if ((!((i_1 < ((NI) 16))))) {`.
-  BOUND_TYPE = "((NI) "
-    ## Text before literal bound; bound naming variable instead is unknown.
+  BOUND_TYPE = "((NI) "  ## Text before literal bound; bound naming variable instead is unknown.
 
 
 func startOf(context, counter: string): int =
@@ -254,7 +237,7 @@ func startOf(context, counter: string): int =
   let digits_start = at + counter.len + " = ((NI) ".len
   var stop = digits_start
   while stop < context.len and context[stop] in Digits: inc stop
-  if stop == digits_start: 0 else: parseInt(context[digits_start ..< stop])
+  if stop == digits_start: 0 else: parseInt(context[digits_start..<stop])
 
 
 func tripsOf(inner, context: string): int =
@@ -265,7 +248,7 @@ func tripsOf(inner, context: string): int =
   let start = at + BOUND_OPEN.len
   var i = start
   while i < inner.len and inner[i] in IdentChars: inc i
-  let counter = inner[start ..< i]
+  let counter = inner[start..<i]
   if counter.len == 0: return 1
   let is_inclusive = inner.continuesWith(" <= ", i)
   if not is_inclusive and not inner.continuesWith(" < ", i): return 1
@@ -275,7 +258,7 @@ func tripsOf(inner, context: string): int =
   var stop = i
   while stop < inner.len and inner[stop] in Digits: inc stop
   if stop == i: return 1
-  let bound = parseInt(inner[i ..< stop]) + (if is_inclusive: 1 else: 0)
+  let bound = parseInt(inner[i..<stop]) + (if is_inclusive: 1 else: 0)
   max(1, bound - startOf(context, counter))
 
 
@@ -337,9 +320,9 @@ func weighted(body, context: string): Counts =
   while true:
     let at = body.find(LOOP_OPEN, position)
     if at < 0:
-      outside.add body[position ..< body.len]
+      outside.add body[position..<body.len]
       break
-    outside.add body[position ..< at]
+    outside.add body[position..<at]
     var
       i = at + LOOP_OPEN.len
       depth = 1
@@ -348,8 +331,8 @@ func weighted(body, context: string): Counts =
       elif body[i] == '}': dec depth
       inc i
     let
-      inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
-      before = context & body[0 ..< at]
+      inner = body[at + LOOP_OPEN.len..<max(at + LOOP_OPEN.len, i - 1)]
+      before = context & body[0..<at]
     result = result + weighted(inner, before) * tripsOf(inner, before)
     position = i
   result = result + plain(outside)
@@ -364,9 +347,9 @@ func weightedSites(body, context: string): seq[string] =
   while true:
     let at = body.find(LOOP_OPEN, position)
     if at < 0:
-      outside.add body[position ..< body.len]
+      outside.add body[position..<body.len]
       break
-    outside.add body[position ..< at]
+    outside.add body[position..<at]
     var
       i = at + LOOP_OPEN.len
       depth = 1
@@ -375,10 +358,10 @@ func weightedSites(body, context: string): seq[string] =
       elif body[i] == '}': dec depth
       inc i
     let
-      inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
-      before = context & body[0 ..< at]
+      inner = body[at + LOOP_OPEN.len..<max(at + LOOP_OPEN.len, i - 1)]
+      before = context & body[0..<at]
       sites = weightedSites(inner, before)
-    for _ in 1 .. tripsOf(inner, before): result.add sites
+    for _ in 1..tripsOf(inner, before): result.add sites
     position = i
   result.add plainSites(outside)
 
@@ -417,9 +400,7 @@ func totalOf(
     if callee != name: result = result + totalOf(callee, own, sites, depth + 1)
 
 
-func folded(
-  functions: seq[CFunction]
-): (Table[string, Counts], Table[string, seq[string]]) =
+func folded(functions: seq[CFunction]): (Table[string, Counts], Table[string, seq[string]]) =
   ## Read own counts and call sites of each function once, keyed by mangled name.
   for f in functions:
     if f.name in result[0]: continue

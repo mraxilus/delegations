@@ -31,8 +31,7 @@ const
     ## Algebra lower bounds are derived for, spelled from same build definitions library reads.
   LIBRARY_MARK = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
-  REFERENCE_MARK = "referenceZ"
-    ## Prefix of module suffix of every typed reference module.
+  REFERENCE_MARK = "referenceZ"  ## Prefix of module suffix of every typed reference module.
   DENSE_MODULE = "dense"
     ## Module suffix of dense form module, as bench entry beside it names it.
     ##   Build from elsewhere spells path before it, ending `Zdense`.
@@ -86,7 +85,7 @@ func libraryKey(p: Measurand): string =
   let head = p.emittedHead
   if head.len == 0: return ""
   var stems: seq[string]
-  for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
+  for i in 0..<int(p.arity): stems.add libraryStem(p.operands[i])
   head & "(" & stems.join(",") & ")"
 
 
@@ -97,19 +96,19 @@ func referenceKey(p: Measurand): string =
     close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
   var stems: seq[string]
-  for argument in p.reference[open + 1 ..< close].split(','):
+  for argument in p.reference[open + 1..<close].split(','):
     case argument.strip
     of "m": stems.add referenceStem(p.operands[0])
     of "n": stems.add referenceStem(p.operands[1])
     else: discard
-  p.reference[0 ..< open] & "(" & stems.join(",") & ")"
+  p.reference[0..<open] & "(" & stems.join(",") & ")"
 
 
 func denseKey(p: Measurand): string =
   ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
-  for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
+  for i in 0..<int(p.arity): stems.add libraryStem(p.operands[i])
   p.denseNameOf & "(" & stems.join(",") & ")"
 
 
@@ -161,7 +160,9 @@ proc main(): int =
   taken["pga"] = %paramStr(4)
   taken["flags"] = %paramStr(5)
   var doc = document(
-    "static", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), taken
+    "static",
+    algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR),
+    taken,
   )
   var
     kept = newJObject()

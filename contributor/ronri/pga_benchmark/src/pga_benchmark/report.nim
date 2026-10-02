@@ -14,8 +14,7 @@ import ./[inspector, model]
 
 
 const
-  SCHEMA* = 1
-    ## Schema version written into every document; reader refuses another.
+  SCHEMA* = 1  ## Schema version written into every document; reader refuses another.
   NIM_COMMIT* {.strdefine: "pga_benchmark.nim_commit".} = "unmeasured"
     ## Compiler commit driver passes at build; "unmeasured" where built by hand.
   PGA_COMMIT* {.strdefine: "pga_benchmark.pga_commit".} = "unmeasured"
