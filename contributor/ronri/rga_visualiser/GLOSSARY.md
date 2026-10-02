@@ -103,11 +103,6 @@ saying what an action did. Every wording is named, and named once, so both front
 same words.
 _Avoid_: string, label, copy, caption, blurb
 
-**Front-end**:
-One of the two things built from the shared geometry code: the browser page, or the desktop
-application.
-_Avoid_: target, backend, client, build
-
 **Shell**:
 The committed markup of the browser front-end, carrying the tokens the build fills.
 _Avoid_: template, skeleton, index

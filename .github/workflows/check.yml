@@ -142,18 +142,21 @@ jobs:
       # Atlas checkouts: `koch test` restores them from lock on every run, and lock names
       #   exact commit each time, so cache keyed on that lock returns same tree it would
       #   have fetched. Key carries no project name: two projects sharing lock share tree it
-      #   names, so entry either restores what that lock says or misses. Projects holding no
-      #   lock skip step; `actions/cache` warns on absent path, and warning nobody acts on
-      #   is noise.
+      #   names, so entry either restores what that lock says or misses. Path is folder that
+      #   `atlas.config` names, else `deps`, Atlas default. Projects holding no lock skip
+      #   step; `actions/cache` warns on absent path, and warning nobody acts on is noise.
       - id: locked
         env:
           PROJECT: ${{ matrix.dir }}
         run: |
           if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
+          config="$PROJECT/atlas.config"
+          folder=$(sed -n 's/.*"deps": *"\([^"]*\)".*/\1/p' "$config" 2>/dev/null || true)
+          echo "folder=${folder:-deps}" >> "$GITHUB_OUTPUT"
       - if: steps.locked.outputs.is_locked == 'true'
         uses: actions/cache@v6
         with:
-          path: ${{ matrix.dir }}/deps
+          path: ${{ matrix.dir }}/${{ steps.locked.outputs.folder }}
           key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
 
       - env:
@@ -213,10 +216,13 @@ jobs:
           PROJECT: ${{ matrix.dir }}
         run: |
           if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
+          config="$PROJECT/atlas.config"
+          folder=$(sed -n 's/.*"deps": *"\([^"]*\)".*/\1/p' "$config" 2>/dev/null || true)
+          echo "folder=${folder:-deps}" >> "$GITHUB_OUTPUT"
       - if: steps.locked.outputs.is_locked == 'true'
         uses: actions/cache@v6
         with:
-          path: ${{ matrix.dir }}/deps
+          path: ${{ matrix.dir }}/${{ steps.locked.outputs.folder }}
           key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
 
       - run: mkdir -p ~/.npm

@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58a60851a7cde940 |
+| Rules   | 7f8e613282f6df5f |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -3205,9 +3205,9 @@ Verified by browser drive:
 
 ## Style guide
 
-Two documents sit at the root of the repository. `CONSTITUTION.md` is the rule of law. It is
-eleven articles over exposition, derivation, notation, build-time safety, naming, documentation,
-cost, honesty, tests, form and the record. It carries a precedence clause and three gated
+Two documents sit at the root of the repository. `CONSTITUTION.md` is the coding constitution. Its
+articles cover exposition, derivation, notation, build-time safety, naming, documentation, cost,
+honesty, tests, form and the record. It carries a precedence clause, which names the gated
 mechanisms. `STYLE.md` is the Nim expression guide.
 
 Every comment is in the register of the `pga` library. That is a one-line imperative summary
@@ -3222,8 +3222,8 @@ layout compiles as a `func`. The mark is on all 130-odd bindings in `gui`, `open
 to `proc`. A `func` in this tree means the compiler checked that it reaches no effect.
 
 **A layman knows these acronyms, so they stay in names (V.9).** They are UI, RGB and RGBA, GIF and
-PNG, FOV, GL, GUI, DOM and fps, beside those the Architect kept on repository issue 305. The unit
-symbols ms, px, kb and mb join the jargon list of V.6. The Architect ruled both on pull request 322.
+PNG, FOV, GL, GUI, DOM and fps, which the root glossary lists. The unit symbols that the root
+glossary names under `## Standards`, such as `ms`, `px` and `mib`, stay as well (V.6).
 Every other acronym that a field or a library coined is spelled out in its name. So are the
 astronomical unit, the cyclic redundancy check, Lempel–Ziv–Welch and model-view-projection.
 
