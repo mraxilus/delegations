@@ -468,7 +468,7 @@ func turnGlyph*(label: string; width = 44.0): string =
   &"""<svg viewBox="0 0 {numeral(width)} 30" width="{numeral(width)}" height="30"""" &
     " aria-hidden=\"true\">" &
     &"""<text x="{numeral(middle)}" y="9" text-anchor="middle" style="font: 8px""" &
-    &""" ui-sans-serif, system-ui, sans-serif; fill: {FAINT}">{label}""" &
+    &""" 'Noto Sans', ui-sans-serif, system-ui, sans-serif; fill: {FAINT}">{label}""" &
     "</text>" &
     &"""<path d="M{numeral(tail)} 20 L{numeral(head)} 20 M{numeral(tail + 5)} 15""" &
     &""" L{numeral(tail)} 20 L{numeral(tail + 5)} 25""" &
