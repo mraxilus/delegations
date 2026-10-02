@@ -1497,11 +1497,12 @@ suite "Internal: Driver":
         result.add s[4 ..< s.find('"', 4)]
 
   func taught(source: string): seq[string] =
-    ## Read verbs usage string teaches, between its angle brackets.
+    ## Read verbs usage string teaches, between its angle brackets, across its literals.
     let
-      open = source.find("\"<")
-      close = source.find(">", open)
-    source[open + 2 ..< close].split('|')
+      start = source.find("USAGE =")
+      text = source[start ..< source.find("##", start)].multiReplace(("\" &", ""), ("\"", ""))
+      joined = text.splitWhitespace.join
+    joined[joined.find('<') + 1 ..< joined.find('>')].split('|')
 
   func tabled(source: string): seq[string] =
     ## Read verbs header table rows, first cell of each row naming one.
