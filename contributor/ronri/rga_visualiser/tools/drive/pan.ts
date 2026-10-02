@@ -140,12 +140,14 @@ export async function drivePan(page: Page): Promise<void> {
   );
 }
 
-/** Drive right-button drag while selection stands, and assert it keeps what it took under cursor.
+/** Drive right-button drag while selection stands, and assert it zooms by what it holds.
  *
- *  Vertical stretches from pivot's row and horizontal orbits, so point press took stays under
- *  cursor. Suite holds it by projection; this holds page's wiring: press takes point, and
- *  step reads canvas size and selection's reach.
- *  Pressed where nothing stands, since right press on object arms drag instead.
+ *  Vertical stretches from pivot's row, so point press took keeps pointer's height. It turns
+ *  nothing: turn chasing point's column spun view and levelled it, zoomed far out. Suite
+ *  holds it by projection; this holds page's wiring: press takes point, and step reads
+ *  canvas size and selection's reach.
+ *  Off middle column, where that turn was greatest. Pressed where nothing stands, since right
+ *  press on object arms drag instead.
  */
 export async function driveStretch(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -159,42 +161,43 @@ export async function driveStretch(page: Page): Promise<void> {
   const row = size.height / 2;
   const column = size.width / 2;
 
-  // Away from pivot's row on either side, off middle column so orbit takes part.
+  // Away from pivot's row on either side, and toward it.
   const drags = [
-    {
-      side: 'above',
-      press: { x: column + 60, y: row - 90 },
-      release: { x: column + 20, y: row - 220 },
-    },
-    {
-      side: 'below',
-      press: { x: column - 50, y: row + 90 },
-      release: { x: column - 90, y: row + 210 },
-    },
+    { way: 'above it and away', press: { x: column + 80, y: row - 90 }, reach: row - 220 },
+    { way: 'below it and away', press: { x: column - 80, y: row + 90 }, reach: row + 210 },
+    { way: 'toward it', press: { x: column + 80, y: row - 380 }, reach: row - 60 },
   ];
-  for (const { side, press, release } of drags) {
+  for (const { way, press, reach } of drags) {
     const is_open = await page.evaluate(({ x, y }) => {
       nimUpdateCursor(x, y);
       nimUpdateHover(window.innerWidth, window.innerHeight);
       return nimHoverHandle() < 0 || nimIsHoverBackdrop();
     }, press);
     const before = await readCamera(page);
+    const rise_before = await page.evaluate(() => nimCameraElevation());
     await page.mouse.move(press.x, press.y);
     await page.mouse.down({ button: 'right' });
-    await page.mouse.move(release.x, release.y, { steps: 12 });
+    await page.mouse.move(press.x, reach, { steps: 12 });
     await page.mouse.up({ button: 'right' });
     const held = await page.evaluate(
       ({ width, height }) => Array.from(nimCameraPanHeldAt(width, height)), size,
     );
     await settleCamera(page);
     const after = await readCamera(page);
-    const slip = Math.hypot((held[0] ?? 0) - release.x, (held[1] ?? 0) - release.y);
+    const rise_after = await page.evaluate(() => nimCameraElevation());
+    const slip = Math.abs((held[1] ?? 0) - reach);
+    const turned = Math.max(
+      Math.abs(after.azimuth - before.azimuth), Math.abs(rise_after - rise_before),
+    );
+    const is_closer = reach < row ? reach < press.y : reach > press.y;
     report(
-      `a right drag with a selection, ${side} the pivot and away, keeps its point under the cursor`,
-      is_open && (held[2] ?? 0) > 0 && slip < 0.5 && after.distance < before.distance &&
+      `a vertical right drag with a selection, ${way}, zooms and turns nothing`,
+      is_open && (held[2] ?? 0) > 0 && slip < 0.5 && turned < 1e-5 &&
+        (after.distance < before.distance) === is_closer &&
         spanOf(before.pivot, after.pivot) < 1e-4,
-      `pressed on ${is_open ? 'open sky' : 'an object'}; point held ${slip.toFixed(3)} px off ` +
-        `the cursor, separation ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
+      `pressed on ${is_open ? 'open sky' : 'an object'}; point ${slip.toFixed(3)} px off the ` +
+        `cursor's height, turned ${turned.toFixed(6)}, separation ` +
+        `${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}`,
     );
   }
 }
