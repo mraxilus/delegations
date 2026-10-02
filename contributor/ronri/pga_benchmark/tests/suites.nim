@@ -15,7 +15,7 @@ import ../src/pga_benchmark/[
   bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
   notes, proposals, report,
 ]
-import ../src/pga_benchmark/pages/[docket, evaluation, proposal, shell]
+import ../src/pga_benchmark/pages/[docket, evaluation, proposal, search, shell]
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, editsDigest, functionsChanged, nanOf, successOf, timesOf
 
@@ -1300,6 +1300,17 @@ suite "Internal: Edits":
     check "<code>func `==`(a, b: Order): bool</code><code>proc b*(x: int)</code>" in html  # bare
     check "class=\"signatures\"" notin editsHtml(edit("import std/math\n", "import std/os\n"),
       files)  # top-level statement sits in no routine
+
+
+suite "Internal: Search":
+  test "row shows while its words hold every word typed, case folded in ASCII":
+    const words = "wedge_point_point g007 ∧ wedge point"
+    check isFound(words, "")  # nothing typed shows every row
+    check isFound(words, "  ")  # blanks alone are no word
+    check isFound(words, "WEDGE")  # case folds, as row words do
+    check isFound(words, "g00 ∧")  # each word may be part of one
+    check not isFound(words, "wedge dot")  # one word missing hides row
+    check not isFound(words, "Ⅹ")  # symbol absent hides row
 
 
 suite "Internal: Cells":
