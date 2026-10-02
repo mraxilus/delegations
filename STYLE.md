@@ -77,9 +77,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   Define a repeated mechanical borrow family once, through a documented template:
 
   ```nim
-  template borrowGradeOperations(T: typedesc) =
-    func `+`*(g, h: T): T {.borrow.}
-    func `==`*(g, h: T): bool {.borrow.}
+  template borrowGradeOperations(t: typedesc) =
+    func `+`*(g, h: t): t {.borrow.}
+    func `==`*(g, h: t): bool {.borrow.}
   borrowGradeOperations(Grade)
   borrowGradeOperations(GradeAnti)
   ```
