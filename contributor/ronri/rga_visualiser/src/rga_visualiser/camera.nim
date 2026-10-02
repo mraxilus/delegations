@@ -893,6 +893,16 @@ func radiusHeld*(camera: Camera; width, height: int; reach_selection: float): fl
   min(max(reach_selection, least), FRACTION_HELD_INSIDE*camera.distance)
 
 
+func reachAimed*(tween: CameraTween, pivot: Position): float =
+  ## Read reach of what is picked from `pivot`, off aim standing offer framed it with.
+  ##   What `radiusHeld` takes, so what is picked follows pointer over its extent.
+  ##   Every drag of both front-ends reads it here, so one statement says where it comes from.
+  ##   Zero where nothing finite is aimed.
+  if tween.goal.isNone or tween.goal.get.sphere.isNone: return 0.0
+  let bound = tween.goal.get.sphere.get
+  norm(bound.centre - pivot) + bound.radius
+
+
 func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Position =
   ## Place point finger's orbit holds along sight `heading` from `eye`.
   ##   On sphere of `radius` about `pivot`, nearer side, where ray passes within
@@ -917,6 +927,32 @@ func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Positi
       if miss <= radius/sqrt(2.0): sqrt(radius*radius - miss*miss)
       else: radius*radius/(2.0*miss)
   position(place_eye + (nearest - back)*along).get(eye)
+
+
+func pointKept*(eye, pivot, held: Position; heading: Direction): Position =
+  ## Place point along sight `heading` from `eye` as far from `pivot` as `held` stands, on
+  ## same side of that sphere as `held`.
+  ##   Right drag with selection: dolly moved eye since point was taken, and `pointHeld`
+  ##   asked again would name other point. Orbit then carries one taken.
+  ##   Side is read off `held`'s own sight: short of pivot's foot on it, or past. Eye inside
+  ##   sphere sees far side alone, which reads as past.
+  ##   Where sight misses sphere, pivot's foot on it, and what is held slips.
+  ##   Algebra's, as in `pointHeld`: `nearest` is pivot's depth over plane through eye
+  ##   square to sight, and `miss` is pivot's distance from sight.
+  let
+    place_eye = toMultivector(eye)
+    place_pivot = toMultivector(pivot)
+    place_held = toMultivector(held)
+    radius = distanceBetween(place_held, place_pivot)
+    toward = ^∙ toMultivector(held - eye)
+    is_past = distanceBetween(place_eye, place_held) >
+      depthAgainst(planeThrough(place_eye, toward), place_pivot)
+    along = ^∙ toMultivector(heading)
+    ray = place_eye ∧ along
+    nearest = depthAgainst(planeThrough(place_eye, along), place_pivot)
+    miss = distanceBetween(^ projectOrthogonal(place_pivot, ray), place_pivot)
+    back = sqrt(max(radius*radius - miss*miss, 0.0))
+  position(place_eye + (if is_past: nearest + back else: nearest - back)*along).get(eye)
 
 
 func orbitCarrying*(camera: var Camera; held, under: Direction) =

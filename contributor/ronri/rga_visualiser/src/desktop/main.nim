@@ -1194,7 +1194,10 @@ proc handleEvent(
     elif event.button.button == uint8(MouseButton.Right):
       is_dragging_pan = true
       # Hover reads what press came down on now, and goes off once camera moves.
-      interaction.grabPan(camera)
+      interaction.grabPan(
+        camera, width_frame, height_frame, panel.selection.len > 0,
+        panel.tween_camera.reachAimed(camera.pivot),
+      )
   of uint32(EventKind.MouseButtonUp):
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
     if button_dragging == some(event.button.button):
@@ -1287,7 +1290,8 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        height_frame, panel.selection.len > 0, interaction.depth_pan,
+        width_frame, height_frame, panel.selection.len > 0, interaction.depth_pan,
+        interaction.point_pan, panel.tween_camera.reachAimed(camera.pivot),
       )
   else: discard
 
