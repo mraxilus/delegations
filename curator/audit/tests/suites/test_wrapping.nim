@@ -77,6 +77,14 @@ suite "Wrapping":
     let untyped = "template t(a; b: int) = discard\n"
     check untyped.fixed == untyped  # group without type is read by no rule
 
+  test "tuple type takes `,` between fields, its comments kept":
+    let tuples = "type T = tuple[a, b: int; c: string]\nlet u: tuple[\n  x: int;  # Why.\n" &
+      "  y: int;\n] = (1, 2)\n"
+    check checkSeparators("a.nim", tuples).mapIt(it.message).allIt(it.startsWith("Tuple type"))
+    check fixSeparators("a.nim", tuples).source == "type T = tuple[a, b: int, c: string]\n" &
+      "let u: tuple[\n  x: int,  # Why.\n  y: int,\n] = (1, 2)\n"
+    check checkSeparators("a.nim", "let p = (a; b)\n").len == 0  # statement list, no tuple
+
   test "signature that fits joins one line; one that fits nowhere takes one group to line":
     let joined = "func f(\n    a: int, b: int\n): int =\n  a\n"
     check checkSignatures("a.nim", joined)[0].message.endsWith("got `3` lines.")

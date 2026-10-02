@@ -2,6 +2,8 @@
 ##   Parameters: `,` between groups while every type appears once; where one group holds several
 ##     names of one type (`a, b: X`), `;` between every group, trailing one included. Holds on one
 ##     line and across several, in routine, routine type and lambda.
+##   Tuple type: `,` between fields, by Architect's ruling, since `tuple[a, b: int, c: X]` and
+##     `;` form parse alike; comment after field stays.
 ##   Signature: one fitting `LINE_MAX` stands on one line, and wrapped one that would fit is
 ##     joined. Otherwise parameters take one line of their own, indented one level, where that
 ##     line fits, by Architect's ruling; else each group takes own line, with trailing
@@ -212,8 +214,17 @@ func separators(s: Scan): seq[int] =
       if separator >= 0 and s.spelling(separator) != wanted: result.add separator
 
 
+func tupleSeparators(s: Scan): seq[int] =
+  ## Find each `;` between fields of tuple type, which takes `,` by Architect's ruling.
+  for o in 1 ..< s.tokens.len:
+    if s.spelling(o) != "[" or s.spelling(o - 1) != "tuple" or s.partners[o] < o: continue
+    for item in s.items(o):
+      if item.separator >= 0 and s.tokens[item.separator].kind == TokenKind.Semicolon:
+        result.add item.separator
+
+
 func checkSeparators*(path, source: string): seq[Finding] =
-  ## Report separator between parameter groups breaking STYLE.md §5.
+  ## Report separator between parameter groups breaking STYLE.md §5, and `;` of tuple type.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let s = source.scan
   for k in s.separators:
@@ -222,6 +233,12 @@ func checkSeparators*(path, source: string): seq[Finding] =
       s.tokens[k].line + 1,
       "Parameters take `;` between groups where one group shares its type, and `,` otherwise " &
         "(STYLE.md §5); got `" & s.spelling(k) & "`.",
+    )
+  for k in s.tupleSeparators:
+    result.add finding(
+      path,
+      s.tokens[k].line + 1,
+      "Tuple type takes `,` between fields (STYLE.md §5); got `;`.",
     )
 
 
@@ -232,6 +249,9 @@ func fixSeparators*(path, source: string): Fix =
   for k in s.separators:
     result.source[s.tokens[k].first] = if s.spelling(k) == ",": ';' else: ','
     result.fixed.add finding(path, s.tokens[k].line + 1, "parameter separators (STYLE.md §5)")
+  for k in s.tupleSeparators:
+    result.source[s.tokens[k].first] = ','
+    result.fixed.add finding(path, s.tokens[k].line + 1, "tuple separators (STYLE.md §5)")
 
 
 
