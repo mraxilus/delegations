@@ -114,7 +114,7 @@ const
 type Block* = object
   ## Define one prose block and where it opens.
   text*: string  ## Words joined by single space, backticked spans collapsed.
-  line*: int     ## Line block opens on, 1-based.
+  line*: int  ## Line block opens on, 1-based.
 
 
 func spansCollapsed*(text: string): string =

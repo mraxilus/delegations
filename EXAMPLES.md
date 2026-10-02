@@ -94,10 +94,10 @@ grade, so the third returns an `Option`.
 ## IV.6: Arenas, a scratch arena, and handles
 
 ```nim
-Pool* = object ## Define fixed-capacity arena of multivectors, addressed by stable handle.
-  elements: array[HANDLES_MAX, Multivector] ## Per-handle geometry.
-  grades: array[HANDLES_MAX, Option[Grade]] ## Per-handle grade, derived once per revision.
-  bound: int ## Live extent; every walk stops here, never at HANDLES_MAX.
+Pool* = object  ## Define fixed-capacity arena of multivectors, addressed by stable handle.
+  elements: array[HANDLES_MAX, Multivector]  ## Per-handle geometry.
+  grades: array[HANDLES_MAX, Option[Grade]]  ## Per-handle grade, derived once per revision.
+  bound: int  ## Live extent; every walk stops here, never at HANDLES_MAX.
 ```
 
 ```nim

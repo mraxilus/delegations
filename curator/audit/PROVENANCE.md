@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0c20f4b6c8e6b294 |
+| Rules   | 58a60851a7cde940 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -34,7 +34,7 @@ and `koch list-packages` reach through.
   project. The warm cost of the static pass is in Figures.
 
 **Each verb names its action and its object.** `check` runs every check that a pull request
-runs, and each `check-<object>` runs one of them. The other verbs act (`test`, `drive`,
+runs, and each `check-<object>` runs one of them. The other verbs act (`test`, `drive`, `fix`,
 `fetch-deps`, `fetch-assets`, `stamp`) or print (`list-packages`, `list-projects`). A CI job
 carries the name of the verb that it runs, so a red job names the command to run locally.
 `./koch` alone prints every verb and option with its effect.
@@ -235,6 +235,21 @@ generated `package-lock.json` of 93 lines, longest 117 runes, audits with 0 find
 line carries one `sha512-` digest of 95 runes, and fits without it, so the unbreakable-token
 rule passes it. So the shape holds at any lockfile size, and the width rule needs no exemption
 beside `LICENSE.md`.
+
+**A trailing comment in Nim takes exactly two spaces before its marker (X.9).** The marker is the
+first `#` after the code of a line. The check reads it on the code-only view and on a
+code-and-comments view, which blanks strings alone. So a `#` inside a string or a char never trips
+it. A line with no code, such as a whole comment or a doc line, holds no trailing comment. The
+static pass does not run this check yet, and `## Fixes` says why.
+
+- Cost: only Nim syntax is read. A trailing comment in TypeScript, C, C++, YAML, cfg or shell
+  stays unread until each kind has a scanner.
+- A column of aligned trailing comments is a finding, by the ruling of the Architect. The charter
+  examples that aligned a column now take two spaces. The excerpt of `algebra.nim` in
+  `EXAMPLES.md` keeps its one space, because it is quoted verbatim at its pin.
+- Verified by `suites/test_form.nim`: a gap of one, of none and of five fails, after code and after
+  a string. A `#` in a string, a char, a block comment or a long string passes, and so does a whole
+  comment line. `checkForm` reports no gap yet.
 
 ## Layout
 
@@ -1241,6 +1256,107 @@ from its rig.
   `randomize(0)` does, because both fix the sequence.
 - Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
 
+## Fixes
+
+**`koch fix` rewrites in place each finding that has one mechanical fix, and nothing else.** It is
+built from the checks. Each fixer sits beside its check, in `form.nim` and `idioms.nim`, and reads
+the same spans, runs, predicates and constants. So each rule is written once (Article II.1), and a
+fixer cannot drift from the check that names its finding. `fixes.nim` runs on each file the fixers
+whose checks read its kind, form first. Each rewrite prints as `path:line: <rule> fixed`, at
+the line that the check names, and the run ends with the count.
+
+**Each report names a line of the source as given.** A fixer that inserts or deletes lines records
+the input line of each output line. `chain` traces every later report through that record.
+
+**The verb lands first, and the X.9 check after it.** The static pass does not run the check, but
+its fixer runs, because a fixer reports nothing new. Each project then clears its gaps with
+`nim r koch fix contributor/<domain>/<project>` on its own branch. A later pull request wires
+`checkComments` into `checkForm`. In the other order, each project fixes each gap by hand. A check
+that reddens a project merges only after that project fixes (CURATOR.md, duty 3).
+
+**X.9 asks exactly two spaces, by the ruling of the Architect.** An aligned column breaks on a
+rename. One longer name moves every comment of the block. So a change of one line rewrites the
+whole column, and the history of each line moves with it. Two spaces cost one line of diff for
+one line of change.
+
+These findings have a fixer:
+
+- trailing whitespace, and the CR of a CRLF ending with it (VIII.5);
+- an ending that is not exactly one newline (VIII.5);
+- a gap other than two spaces before a trailing comment (X.9);
+- a bracket import out of order, sorted into the slots that its items held, so the layout stays
+  (X.5);
+- adjacent import lines out of rank, put in order, and stable inside one rank (X.5);
+- a run of single bindings, which becomes one keyword over bindings indented two spaces (X.5);
+- a missing `strictFuncs`, put where X.6 puts directives: after the header docs and notes, and
+  before other code (STYLE.md §2);
+- `return result`, which goes or becomes `return` by its place (STYLE.md §5).
+
+**The place of `return result` decides its fix.** STYLE.md §5 allows a bare `return` only for an
+early exit. So where the line ends a routine that holds `result`, at the own indent of its body,
+the line goes. The blank lines that open its paragraph go with it. Inside a branch, or before more
+body, the line becomes a bare `return`, which exits with the same value. The fixer reads the place
+from the line that opens its block, on the code view.
+
+- A place that reads no one fix keeps its line and its finding. That is the only statement of a
+  routine, because the body would go empty. It is also a line with a comment, or a line after a
+  comment, because the comment would lose its line or name nothing.
+- The end of a template or a macro keeps its line, because there `return` leaves the caller.
+- An opener that the scanner cannot name, such as a lambda bound to `let`, keeps its line.
+
+**A finding with more than one reasonable fix has no fixer.** A tab has no fixer, because its
+width is a guess. A lone CR is a line break or a stray byte. A reflow, a wrap or a rename each
+fixes a long line. The banner check demands two blank lines where X.2 asks three of a first tier.
+An empty file has no fixer either.
+
+- An import ranked low across lines that are not imports has no fixer, because where it lands is a
+  choice.
+- A bracket that holds a comment has no fixer, because the comment belongs to an item or to a slot.
+- A run whose last binding opens a long string has no fixer, because a new indent changes the
+  string.
+- `strictFuncs` after the imports is a move and not an insertion, so it waits for a rule of its
+  own.
+- A rule that needs a fact the text does not hold has no fixer. That covers the consumer of
+  `{.used.}`, the reach of `{.push.}`, a seed and a stub header. It also covers debug output, a
+  path of one machine and the flags of TypeScript.
+
+**A fixer never writes a line that the width check reports.** Where a fix would widen a line past
+`LINE_MAX`, the fixer leaves that line, and its finding stays for the hand. A gap of one space on a
+line of 100 characters is the case that occurs.
+
+**The verb refuses every write outside the scope of the branch.** Each path that a fix would write
+goes through `checkScope` of `scope.nim`, for the branch that `--branch`, `BRANCH` or git names. One
+path outside refuses the whole run, so a run writes all that it planned or nothing. So a curator
+branch never writes contributor code, because `checkPropagation` refuses it. The run prints the
+scope findings and exits 1. `main` passes scope as the merge target, so a fix there writes freely.
+
+**The verb reads what every verb that takes projects reads.** It reads named files or directories,
+else the projects that `--recent`, `--all` or the change selects. A name that matches no file is a
+finding, so a typo never passes as a fix of nothing. A root file such as `koch.nim` is in no
+project, so only a name reaches it.
+
+- Rejected: nimpretty. It sets one space before a trailing comment, where X.9 asks two, and a `;`
+  between parameters, where STYLE.md §5 asks a `,`.
+- Rejected: a fork of the layouter of nimpretty. It is a second formatter, with layout rules that
+  drift from the checks.
+- Rejected: an AST printer. It loses the place of each comment and every layout that a hand chose.
+- The Architect weighed these three and rejected them, because each holds a rule twice: as a
+  check, and as a layout.
+- Cost: a fix reaches only what a check names, and reading holds every other rule of layout.
+- Cost: an aligned column of trailing comments loses its alignment, by the ruling above.
+- Cost: a sorted bracket item changes the width of its line by the difference in length.
+- Verified by `suites/test_form.nim`, `suites/test_idioms.nim` and `suites/test_fixes.nim`. For
+  each fixer, its output has no finding of its check, a second fix changes nothing, and nothing
+  else changes. A clean source passes through unchanged. A curator branch that would write
+  contributor code writes nothing.
+- Verified by `suites/test_idioms.nim`: `return result` goes at the end of a routine, and becomes
+  `return` in a branch and before more body. A wrapped signature reads as one. Each place without
+  one fix keeps its line, and a report after a deleted line names the line of the source as given.
+- Verified by hand with a scratch program over `fixEntries` and `auditTree`, 2026-10-02. It fixed
+  every file of the tree in memory, then ran the static pass again. Each X.9 gap cleared but three,
+  which the width guard keeps, and no new finding appeared. A second fix wrote nothing, and every
+  rewrite changed spaces alone.
+
 ## Fixed waits
 
 **A fixed wait in drive code is a finding, because it reads the real clock in every
@@ -1692,3 +1808,8 @@ pull requests sat on both sides, so the subject of a call does not say which met
   and the selection of the trigger is not. A red `main` is not worth causing to prove it.
 - Whether the fields of `update_pull_request` other than `draft` take REST or GraphQL. No call
   has isolated one.
+- Whether `koch fix` reads a fence marker, as Article X.1 asks of a formatter. It changes only what
+  a check reports, so a fence would exempt that check too.
+- Whether `koch fix` with no name reads the changed files rather than the changed projects. Every
+  verb that takes projects reads projects, so a run can rewrite a file that the branch did not
+  touch (Precedence 2).

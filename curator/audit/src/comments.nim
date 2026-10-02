@@ -20,7 +20,7 @@ import ./kinds
 type
   Comment* = object
     ## Define comment text found on one line, markers stripped.
-    line*: int     ## One-based line of text.
+    line*: int  ## One-based line of text.
     text*: string  ## Comment text, markers removed, whitespace collapsed to single spaces.
 
   Scan = object
