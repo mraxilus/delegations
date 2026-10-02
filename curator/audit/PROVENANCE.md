@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 53fe66180cf539a0 |
+| Rules   | 0c20f4b6c8e6b294 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1282,6 +1282,23 @@ that holds it. The events, each one a verb argument:
 - `stop` refuses the end of a turn that pushed or posted and did not end with the sign-off.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
+
+**`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
+checkout alone.** A subagent works in a worktree of its own, on a branch of its own
+(`GUIDE.md`, Independent changes run in subagents). The checkout of a write is the one that
+holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
+names, else the working directory of the call. A directory outside this repository falls
+back to the primary checkout, as before.
+
+- Found when a subagent could not run. The primary checkout was on a detached head, and the
+  hooks refused each edit and each commit in a worktree on a valid branch. They reported
+  `got HEAD`, which was the branch of the primary checkout.
+- Verified by fake inputs to the built koch, before and after, with a detached checkout as the
+  primary. The scope of the worktree's own branch still refuses a write outside it.
+- A path is now read from the top of its checkout. It was read from the working directory of
+  the call before, so a write from a subdirectory was held to the wrong path.
+- Cost: only the first git command of a shell line is read. A second one with another `-C`
+  is held to the branch of the first.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
