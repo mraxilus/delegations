@@ -75,8 +75,17 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # two after, no child
     check messages("a.nim", "x = 1\n\n\n\n#[ Parent ]#\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks two blank lines before it."]  # child keeps its own two
-    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim) ==
-      @["Banner lacks exactly one blank line after it."]  # only second tier defers
+    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim).len == 0
+
+  test "X.2 lenient check reads no side exact check gives no count, so it accepts every fix":
+    for unread in [
+      "#[ Opening ]#\n\nx = 1\n",  # nothing above
+      "x = 1\n\n\n\n#[ Closing ]#\n",  # nothing below
+      "x = 1\n\n\n\n#[ A ]#\n#[ B ]#\n\ny = 2\n",  # banner beside banner, no parent and child
+      "x = 1\n\n\n#[[ A ]]#\n\n#[ B ]#\n\ny = 2\n",
+    ]:
+      check messages("a.nim", unread, Kind.Nim).len == 0
+      check fixForm("a.nim", unread, Kind.Nim.rule).source == unread  # exact fixer agrees
 
   test "X.9 trailing comment takes exactly two spaces before its marker":
     check gapMessages("let a = 1  # Two.\n").len == 0  # two pass

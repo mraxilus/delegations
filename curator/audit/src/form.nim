@@ -6,7 +6,8 @@
 ##   Per Nim banner, first tier `#[ Title ]#` or second tier `#[[ Title ]]#`: two blank lines
 ##     before, exactly one after (X.2). First-tier banner followed at once by second-tier
 ##     banner leaves spacing between them to child's own two-before check. Three blank lines
-##     pass too, so this lenient check accepts what exact one writes.
+##     pass too, and side with no text beyond it, or with banner beyond it other than parent
+##     above child, goes unread, so this lenient check accepts all exact one writes.
 ##   Exact X.2 (`checkBanners`): first tier takes exactly three blank lines before, second tier
 ##     exactly two, either exactly one after; second tier following its parent at once keeps its
 ##     own two. Banner opening file, run ending file, and banner after banner other than parent
@@ -96,17 +97,23 @@ func tierOfBanner(line: string): int =
 
 func checkBanner(path: string, lines: seq[string], i: int): seq[Finding] =
   ## Report banner at index `i` lacking two blank lines before or exactly one after.
-  var blanks = 0
+  ##   Side where exact check reads no count is not read: no text beyond it, or banner beyond
+  ##   it other than parent above child.
+  var
+    blanks = 0
+    above = i - 1
   while i + blanks + 1 < lines.len and lines[i + blanks + 1].len == 0: inc blanks
+  while above >= 0 and lines[above].len == 0: dec above
   let
     next = i + blanks + 1
-    is_child_next = lines[i].tierOfBanner == 1 and next < lines.len and
-      lines[next].tierOfBanner == 2
+    is_parent_above = above >= 0 and lines[above].tierOfBanner == 1 and
+      lines[i].tierOfBanner == 2
+    is_read_before = above >= 0 and (lines[above].tierOfBanner == 0 or is_parent_above)
+    is_read_after = next < lines.len and lines[next].tierOfBanner == 0
     is_spaced_before = i >= 2 and lines[i - 1].len == 0 and lines[i - 2].len == 0
-    is_spaced_after = is_child_next or (blanks == 1 and next < lines.len)
-  if not is_spaced_before:
+  if is_read_before and not is_spaced_before:
     result.add finding(path, i + 1, "Banner lacks two blank lines before it.")
-  if not is_spaced_after:
+  if is_read_after and blanks != 1:
     result.add finding(path, i + 1, "Banner lacks exactly one blank line after it.")
 
 
