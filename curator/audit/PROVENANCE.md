@@ -34,8 +34,8 @@ and `koch list-packages` reach through.
   project. The warm cost of the static pass is in Figures.
 
 **Each verb names its action and its object.** `check` runs every check that a pull request
-runs, and each `check-<object>` runs one of them. The other verbs act (`test`, `drive`, `fix`,
-`fetch-deps`, `fetch-assets`, `stamp`) or print (`list-packages`, `list-projects`). A CI job
+runs, and each `check-<object>` runs one of them. The other verbs act (`test`, `drive`, `head`,
+`fix`, `fetch-deps`, `fetch-assets`, `stamp`) or print (`list-packages`, `list-projects`). A CI job
 carries the name of the verb that it runs, so a red job names the command to run locally.
 `./koch` alone prints every verb and option with its effect.
 
@@ -1232,8 +1232,11 @@ issue, and the next failure opens a new one. The finding is the output from the 
 - Cost: the compiler arms, packages and Atlas cache of `head.yml` copy those of `drive` in
   `check.yml`. A workflow shares steps only through an action of its own.
 - Verified by `suites/test_plan.nim` and `suites/test_projects.nim`: the filter, and a real
-  driver whose `head` exits 1. The issue step was verified by hand against a stub `gh` in five
-  cases, with GNU bash 5.2, on 2026-10-02.
+  driver whose `head` exits 1.
+- Verified by hand against a stub `gh`, GNU bash 5.2, 2026-10-02. A failing verb with no issue
+  opens one. The same finding the next day edits it and adds no comment. A new finding edits it
+  and adds one comment. A passing verb closes an open issue, and posts nothing where none is
+  open.
 
 ## Names
 
@@ -1605,9 +1608,9 @@ mistake is easy to make and impossible to see afterwards.
 
 **`nim r koch test --all` runs every project, each on its own compiler.** Every verb that takes
 projects reads the one named, else `--recent`, else `--all`, else what a change touches. So one
-rule serves `test`, `drive`, `check-types`, `fetch-deps` and `list-projects`. `check` stays
-scoped to what a change touches. Cost: to check everything locally is two commands,
-`check-files` and `test --all`, rather than one.
+rule serves `test`, `drive`, `head`, `fix`, `check-types`, `fetch-deps` and `list-projects`.
+`check` stays scoped to what a change touches. Cost: to check everything locally is two
+commands, `check-files` and `test --all`, rather than one.
 
 - Rejected: one verb for the static pass and every suite on the compiler that `PATH` holds. It
   fails whenever the pins differ.
