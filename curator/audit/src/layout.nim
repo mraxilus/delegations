@@ -21,6 +21,8 @@
 ##     ignored `build/`. Separation is declared by directory, never inferred from content.
 ##   No tracked path lies under `UNTRACKED_DIRECTORIES` at any depth (Article XI.3): ignore
 ##     file keeps them out, and forced add is what this catches.
+##   Shell lives only in `SHELL_DIRECTORIES`: it is curator's hook glue, and never enters
+##     project (CONTRIBUTOR.md, Boundaries).
 ##
 ##   Cost: rules read path strings, never disk, so tests feed synthetic trees and git
 ##     enumeration lives in `tree.nim`. Empty directories are invisible to git and so here.
@@ -62,6 +64,8 @@ const
     ## Directory every project must populate.
   PAGE_DIRECTORIES* = ["pages", "mockups"]
     ## Directories committed pages live in: kept pages, then one-off mock-ups.
+  SHELL_DIRECTORIES* = [".claude", ".githooks"]
+    ## Root directories Shell may live in: command Claude Code runs, and hooks git runs.
   KINDS_PATH = "curator/audit/src/kinds.nim"
     ## Registry named in finding for unregistered kind.
 
@@ -147,6 +151,12 @@ func checkEntry(e: Entry): seq[Finding] =
       break
   if e.kind.isSome and e.kind.get in {Kind.Html, Kind.Svg}:
     result.add checkPage(e.path, parts)
+  if e.kind.isSome and e.kind.get == Kind.Shell and parts[0] notin SHELL_DIRECTORIES:
+    result.add finding(
+      e.path, 0,
+      "Shell is hook glue of curator, and lives only in `" & SHELL_DIRECTORIES.join("/` or `") &
+        "/` (CONTRIBUTOR.md, The language is Nim); got `" & e.path & "`.",
+    )
   if e.kind.isNone:
     let (_, base, ext) = e.path.splitFile
     result.add finding(

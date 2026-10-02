@@ -85,7 +85,7 @@ suite "History":
     check picked.len == 0
 
 
-  test "undo and redo retrace every recorded state exactly, and canUndo/canRedo agree":
+  test "undo and redo retrace every recorded state exactly, and isUndoable/isRedoable agree":
     var
       scene = initScene()
       camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
@@ -98,26 +98,26 @@ suite "History":
       snapshots.add(scene)
 
     # Cursor sits at last recorded state: nothing to redo yet, everything to undo.
-    check not history.canRedo
-    check history.canUndo
+    check not history.isRedoable
+    check history.isUndoable
 
     # Walk all way back, checking scene equality against what was actually recorded.
-    #   at each step, and that canUndo agrees with undo's own success, right up to
+    #   at each step, and that isUndoable agrees with undo's own success, right up to
     #   seeded state undo can never reach past.
     for i in countdown(len(snapshots) - 1, 1):
-      check history.canUndo
+      check history.isUndoable
       check history.undo(scene, camera)
       check scenesEqual(scene, snapshots[i - 1])
-    check not history.canUndo
+    check not history.isUndoable
     check not history.undo(scene, camera)
     check scenesEqual(scene, snapshots[0])
 
     # Walk all way forward again, same way.
     for i in 1 ..< len(snapshots):
-      check history.canRedo
+      check history.isRedoable
       check history.redo(scene, camera)
       check scenesEqual(scene, snapshots[i])
-    check not history.canRedo
+    check not history.isRedoable
     check not history.redo(scene, camera)
 
 
@@ -146,15 +146,15 @@ suite "History":
     #   and its newest just behind it; index that forgets wrap still lands
     #   count and can still land two ends, and misorders everything between them.
     for i in 1 ..< CAPACITY_HISTORY:
-      check history.canRedo
+      check history.isRedoable
       check history.redo(scene, camera)
       check scenesEqual(scene, snapshots[len(snapshots) - CAPACITY_HISTORY + i])
-    check not history.canRedo
+    check not history.isRedoable
     for i in countdown(CAPACITY_HISTORY - 2, 0):
-      check history.canUndo
+      check history.isUndoable
       check history.undo(scene, camera)
       check scenesEqual(scene, snapshots[len(snapshots) - CAPACITY_HISTORY + i])
-    check not history.canUndo
+    check not history.isUndoable
 
 
   test "a fresh record after undo truncates the redo-able future":
@@ -172,14 +172,14 @@ suite "History":
 
     discard history.undo(scene, camera)
     check scenesEqual(scene, state_a)
-    check history.canRedo
+    check history.isRedoable
 
     scene.addObject(POINTS[2], "c", Ink.Rose) # Diverges from discarded state above.
     history.record(scene, camera)
-    check not history.canRedo
+    check not history.isRedoable
     check not history.redo(scene, camera)
 
-    check history.canUndo
+    check history.isUndoable
     discard history.undo(scene, camera)
     check scenesEqual(scene, state_a)
 

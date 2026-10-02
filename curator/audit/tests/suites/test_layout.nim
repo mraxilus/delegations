@@ -46,6 +46,14 @@ suite "Layout":
     check found.len == 1 and "curator/audit/src/kinds.nim" in found[0].message  # VI.5
     check found[0].message.endsWith("got `data.csv`.")  # IV.4 echo value
 
+  test "Shell lives only where hooks live":
+    check (goodTree() & @[entry(".claude/hooks.sh", "#!/bin/sh\n")]).checkLayout.len == 0  # glue
+    check (goodTree() & @[entry(".githooks/pre-push", "#!/bin/sh\n")]).checkLayout.len == 0  # git
+    let script = ALPHA_DIRECTORY & "/tools/run.sh"
+    check (goodTree() & @[entry(script, "#!/bin/sh\n")]).messages ==
+      @["Shell is hook glue of curator, and lives only in `.claude/` or `.githooks/` " &
+        "(CONTRIBUTOR.md, The language is Nim); got `" & script & "`."]  # project script
+
   test "build output and vendored source stay untracked at any depth":
     for directory in ["build", "dependencies", "node_modules"]:
       let

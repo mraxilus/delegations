@@ -1663,14 +1663,14 @@ proc layoutChipRow*(
   #   Orbit is not step, though each step restores view it was made from.
   #   Each button greys out where its side of timeline is empty.
   #   Successful step drops open session too.
-  gui.disabledPush(not history.canUndo)
+  gui.disabledPush(not history.isUndoable)
   if gui.button(wordingText(NameChipUndo)):
     if not stepHistory(panel, scene, camera, history, is_undo = true):
       panel.say(stepMessage(is_undo = true), now)
   gui.disabledPop()
   gui.tooltip(wordingText(TipChipUndo))
   gui.sameLine()
-  gui.disabledPush(not history.canRedo)
+  gui.disabledPush(not history.isRedoable)
   if gui.button(wordingText(NameChipRedo)):
     if not stepHistory(panel, scene, camera, history, is_undo = false):
       panel.say(stepMessage(is_undo = false), now)

@@ -166,7 +166,7 @@ suite "Picking":
     ) == some(1)
 
   test "a pick counts its rivals: two points in reach are two, a point over a plane is one":
-    # What touch refuses to drag from; see `interaction.canConstructByTouch`.
+    # What touch refuses to drag from; see `interaction.isConstructibleByTouch`.
     #   Rank decides first, so plane under point is no rival to it.
     #   Tilted, so ground plane is seen face on rather than edge on.
     let

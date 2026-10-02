@@ -13,7 +13,7 @@ delegate posts as the same account, so this line is the only thing that says who
 ## What is blocked
 
 <!-- Say it exactly, with the path, the branch or the command. Write "I cannot add
-`gui_shim.cpp`, because `.cpp` is not a registered kind" and not "the audit is strict". The
+`edge.glsl`, because `.glsl` is not a registered kind" and not "the audit is strict". The
 title of this issue says that block as a claim, with no `type(scope):` prefix, which belongs to
 commits. -->
 
@@ -30,8 +30,8 @@ respected the rule rather than went around it. -->
 
 ## What you propose
 
-<!-- A change, as exact as you can make it. "Register `.cpp` in `kinds.nim` with `//`
-comments" beats "allow C++". Where you cannot see a fix, say so. To name the problem is
+<!-- A change, as exact as you can make it. "Register `.glsl` in `kinds.nim` with `//`
+comments" beats "allow shaders". Where you cannot see a fix, say so. To name the problem is
 enough. -->
 
 ## What it costs to decline

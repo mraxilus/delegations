@@ -170,7 +170,7 @@ canvas.addEventListener('pointerdown', (e) => {
     //   scheme they belong to. Sky is hovered wherever nothing else is and is refused
     //   there, so press on it still falls through to camera; so is crowd, several
     //   objects in reach of one finger, which moves view instead; see
-    //   `interaction.canConstructByTouch`.
+    //   `interaction.isConstructibleByTouch`.
     is_touch_press_constructing = nimCanTouchConstruct();
     if (handle_touch_down >= 0) nimBeginHold(handle_touch_down, now());
   } else {

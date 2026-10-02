@@ -145,7 +145,7 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
   offset = magic_wanted.length;
   if (magic !== magic_wanted) throw new Error('File is not a scene file.');
   // *range* through bridge, not this build's own writing version: every version.
-  //   ever written stays readable, and which those are is `scene.readsSceneVersion`'s
+  //   ever written stays readable, and which those are is `scene.isSceneVersionReadable`'s
   //   answer rather than pair of literals here to fall out of step with it.
   const version = view.getUint8(offset); offset += 1;
   if (!nimSceneReadsVersion(version)) {

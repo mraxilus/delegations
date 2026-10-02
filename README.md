@@ -72,9 +72,15 @@ each job carries the name of the koch verb that it runs:
 
 - `check-files`: layout, form, telegraphic comments, and records with their headers and stamps.
   It also reads glossary shape, the prompts, and the Simplified Technical English of the
-  root documents and of every project record. It reads copied paragraphs, shipped faces,
-  workflow grants, the compiler pin of each project, and each lock against its nimble file.
-  It reads the reason that a file not in Nim gives, and the rules that the checker holds
+  root documents and of every project record. It holds the root documents and every Markdown
+  file under `curator/` to the words that the glossary gives for people. It reads copied
+  paragraphs, shipped faces, the compiler pin of each project, and each lock against its
+  nimble file.
+
+  In Nim it reads the words of each declared name, and the idioms that `STYLE.md` sets. It
+  reads fixed waits in drive code, and the flags of each `tsconfig.json`. In each workflow it
+  reads the grants, the compiler that the workflow installs, and the weekly window against its
+  cron. It reads the reason that a file not in Nim gives, and the rules that the checker holds
   itself to. It runs over the whole tree.
 - `test`: one job for each project whose code changed, on a pull request, on the push to
   `main`, and in the weekly run alike. Each one installs that project's own pinned compiler,
@@ -89,7 +95,11 @@ each job carries the name of the koch verb that it runs:
   like `test`, and on the same pins, because a build of the page does compile project
   code.
 - `check-scope`: every changed path lies inside the folder of the branch.
-- `check-commits`: every subject is a Conventional Commit whose scope matches the branch.
+- `check-commits`: every subject is a Conventional Commit of at most 100 characters. On a
+  project branch its scope is that project, and on `curator/<name>` any valid scope passes. A
+  `fix` follows a `test` of the same scope, with nothing between them. A body is in sentence
+  case, with one sentence to a line. `PROVENANCE.md` travels in a commit of its own, with no
+  file beside it but Markdown.
 - `check-drift`: the branch carries the charter and the checker as `main` now holds them. A stamp
   that a charter change falsified after the branch forked is then caught before the merge.
 - `summarize`: the gate that `check-files`, `test`, `check-types`, `drive` and `check-drift`
@@ -101,14 +111,19 @@ fan out over. It names projects rather than checks them, and it also reports to 
 the same workflow compiles the projects whose code merged that week.
 
 `role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
-the opening role line and the labels to the role that the branch names. Two more workflows
-watch the rest. `watch.yml` opens an issue labelled `curator` when a run on `main` concludes
-failure. `ledger.yml` reads daily what GitHub records of the rules that no check reaches:
+the opening role line and the labels to the role that the branch names.
+
+Four more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
+on `main` concludes failure. `draft.yml` returns a ready pull request to draft when a push
+lands on it. `posts.yml` comments once on an issue or a comment that lands with no role line.
+`ledger.yml` reads daily what GitHub records of the rules that no check reaches:
 
 - a pull request ready without a green run;
 - a `Closes #N` that never fired;
 - an issue or pull request without its role line or label;
-- an issue whose title opens with a commit prefix.
+- an issue whose title opens with a commit prefix;
+- the rulesets of `main` and of every branch, and the merge settings, against the list in
+  `CURATOR.md`.
 
 `koch.nim` drives everything, as a compiled Nim program, in the shape that the repository of
 Nim itself uses. `nim r koch check` runs the same checks locally against a fresh

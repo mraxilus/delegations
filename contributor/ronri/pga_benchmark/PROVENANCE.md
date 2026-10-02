@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 58a60851a7cde940 |
+| Rules   | 7f8e613282f6df5f |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this project.
@@ -86,11 +86,24 @@ the former costs about 4 ns and the latter about 20 ns, through the `=dup` hook.
 would have hidden the cost of the library. Unitize forms take one reciprocal and multiply, as
 Terathon does, where the library divides each component. The divide column shows both.
 
+**No reference function calls another.** Under `--panics:off`, each call to a Nim function
+fills its result with zeros and branches on the error flag after it. Hand-written code spends
+neither. So the vector helpers and the rotation are templates, and a form that two functions
+share is spelled in each. A spelled form carries the terms of the form it repeats, so their
+arithmetic counts are equal.
+
+Five alternating runs on this container on 2026-10-02 time the reference with and without
+those calls, one build each. At rga4d the unitize of a line, a plane and a motor ran ×0.23 to
+×0.24 of its time with the call. The other changed measurands moved ×0.52 to ×1.35. In the
+same runs, measurands with unchanged code moved ×0.60 to ×1.11. So outside the unitize forms,
+the effect on time is not separable from code layout.
+
 Verified by `test_rga4d.nim`, suite `Chapter 2`, and by `test_cga5d.nim`, suite `Chapter 3`. For
 every typed measurand and every seeded sample, the reference widened into the dense
 multivector equals the library within `=~`. Each check cites its equation or wiki page. Suite
 `Inspector` reads the nimcache of the test binary itself, and finds `wedge(Point,Point)`
-spending twelve multiplies and six subtractions, as its documentation states.
+spending twelve multiplies and six subtractions, as its documentation states. The same suite
+holds every reference function in that nimcache to no zero fill and no error check.
 
 ## Widening and pools
 
@@ -111,6 +124,15 @@ moves only the traffic of the operation itself. Every result is folded into one 
 the timing, so nothing is dead. The share of results that carry NaN is counted. The conformal
 norms of the library return NaN on real objects, and that is measured rather than stated.
 
+**Result slots start uninitialised (`noinit`).** A fill of zeros that the compiler sees lets it
+delete each store of zero that repeats the fill. The bench then times fewer stores than a caller
+pays.
+
+Alone, `∙` at rga4d ran at 4.4 ns into slots filled once with zeros, and at 7.0 ns into slots
+left uninitialised. In the bench at `3121342`, the machine code holds 245 stores of zero
+with or without the fill. So there a fill gives no measurand a discount, and the `noinit`
+keeps it so as the catalogue grows. Both figures are from this container on 2026-10-02.
+
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
 under `-d:nimAllocStats`. The bench refuses to report allocation counts unless a positive
@@ -128,20 +150,24 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines were taken again on 2026-10-01**, at `3121342`, on a machine of the
-same description, five runs each. Their medians run ×0.47 to ×0.59 those of 2026-09-30 across
-the four algebras, and on 2026-09-30 the machine reported steal time. So times taken at
-different hours never compare, and ratios within one run do.
+**The runtime baselines are from 2026-10-02**, at `3121342`, five runs each on a machine of
+the same description. On that day the bench of 2026-10-01 ran in turn with them. At rga4d its
+library ran ×1.19 to ×1.22 slower than on
+2026-10-01, its reference ×1.26 to ×1.27, and its dense forms ×1.00 to ×1.01. The bench of
+these baselines ran ×0.99 to ×1.01 of it in the same runs.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.17
-apart at rga4d and ×1.07 at cga5d. They are ×1.05 at rga3d and ×1.04 at cga4d, and the widest
-measurand spreads ×2.27, at rga3d. On 2026-09-30 the median measurand spread ×1.36 at rga4d.
+So the machine moves between days, and not by one factor for each implementation. Times
+taken at different hours never compare, and ratios within one run do.
+
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
+apart at rga4d and ×1.17 at cga5d. They are ×1.06 at rga3d and ×1.10 at cga4d, and the widest
+measurand spreads ×2.39, at rga4d.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak. The
 figures below stay as taken on 2026-09-28.
 
-**`ns` stays in names as a unit symbol.** The Architect ruled so for this project, as for `ms`,
-`px`, `kb` and `mb` on pull request 322. So `ns_median` and `ns_library` keep it. A single
+**`ns` stays in names as a unit symbol.** The root glossary takes every prefix of SI Table 7
+under `## Standards`, so `ns_median` and `ns_library` keep it (V.6). A single
 letter stays only where an equation or a small index scope gives it meaning (V.6). Examples
 are `i` in a scan and `a + b` in the sum of counts.
 
@@ -180,9 +206,10 @@ bytes read, written, zeroed, copied and materialised for each call. It names the
 the code moves, and is not a measurement of cache traffic (Article VIII.1).
 
 On the pinned commit an error-flag branch follows every call of a Nim procedure under goto
-exceptions, in both implementations. `{.raises: [].}` on the callee does not remove it, and
-only `--panics:on` does (see Figures). Counts are taken with the flags that the documents
-name, `-d:release`, which is what a user of the library gets by default.
+exceptions. `{.raises: [].}` on the callee does not remove it, and only `--panics:on` does
+(see Figures). The library does not stand behind `--panics:on`, as the Architect ruled. So
+counts are taken with the flags that the documents name, `-d:release`, which is
+what a user of the library gets by default.
 
 Verified by `test_rga4d.nim` and `test_cga5d.nim`, suite `Inspector`. It covers:
 
@@ -798,9 +825,8 @@ entry with `--compileOnly`, and a count in its C. `∧` at 4D fell from 178 bran
 lines to 0 and 551. That figure is now mostly spent. At `bd6b23c` the default build emits no
 branch in `∧`. It emits 139 branches over the whole of rga4d, where it emitted 4388.
 
-The
-switch still makes defects fatal, so whether the users of the library may take it is the call
-of the Architect. The guard measures the default.
+The switch makes defects fatal, and the library does not stand behind it (see Inspector and
+movement). So the guard measures the default build.
 
 A divide against a multiply by a reciprocal was measured on a 16-double array, over 1024
 objects and 40 rounds, as medians. Under `-d:danger` the in-place divide loop ran at 9.7 ns,
@@ -841,8 +867,8 @@ write the zeros first. The cell is the lower of the two passes:
 The fill loses from four dimensions up, where a result holds 128 bytes or more. There gcc
 emits the fill as `rep stos` under its generic tuning for x86-64. At the pin `^∙` and `^∘`
 take the root of `|∙²` or `|∘²`, and do not build the norm. Alone at `181c8d8`, that change
-ran at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes a rule for Article VII from
-these measurements.
+ran at ×0.55 to ×0.93 in all seven algebras. Article VII holds the rule that these measurements
+set (VII.3, VII.8 and VII.9).
 
 ## Known limitations
 
@@ -862,39 +888,32 @@ these measurements.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared.
 - `sweep` is hand-run only, and the 6D figure was taken once.
-- The bench writes each result into a local array that it fills with zeros once. So the
-  compiler sees that memory, and deletes each store of zero that repeats the fill. A result
-  with many zero elements then reads faster in the bench than it runs elsewhere. The bias
-  touches every figure that compares a fill with written zeros, among them two open
-  questions below. Timed alone at `181c8d8`, those functions do not lose when they write
-  every element.
+- A change to the bench outside a measurand moves the time of that measurand. Ten alternating
+  runs with and without `noinit`, on this container on 2026-10-02, keep the median ratio of
+  each implementation at ×0.99 to ×1.00. Single measurands move steadily from ×0.80 (`scale`)
+  to ×1.16 (`wedge_anti`). Code layout is the likely cause. So a time ratio inside about ×0.6
+  to ×1.4 between two builds is weak evidence of a change.
 
 ## Open questions
 
-- Whether `--panics:on` is a build that the library will stand behind. The other way to drop
-  the checks is to make the operators call nothing. One way is to read the components
-  directly, rather than through `[]`.
-- The reference is not yet optimal on the Nim side. `rotate` and `transform` still zero-fill
-  a `Vector3` result, and pay a branch for each helper call under the default flags. To write
-  their components directly would lower the reference figures further.
 - Whether the 2D references (rga3d, cga4d) are worth a derivation. Their gaps carry library
   counts and absolute verdicts only.
 - Why the write-once unitize shapes run three times slower than the in-place one under
   `-d:release`, in the reciprocal experiment above.
-- Why the unary part extractions at cga5d lost ×1.1 to ×1.4 at `6a91c3f`. There they began
-  to write every slot, and the same change won ×0.25 at rga4d. The byte model says they move
-  less, so the cause is outside it.
-- Why `contract_bulk` (`∨★`) at rga4d runs ×1.33 slower once it writes every slot, while every
-  other generated product holds or wins.
-- Whether the sign of the partner folds into its first table by the grade of each term.
-  That is exact under the homogeneity the partner already asserts. It would take the partner
-  from 437 multiplies and 104 fills to its chain bound of 324. Unmeasured.
+- Whether the losses at `6a91c3f` are more than code layout. When every slot is written, the
+  unary part extractions take ×1.1 to ×1.4 longer at cga5d and ×0.25 as long at rga4d.
+  `contract_bulk` (`∨★`) takes ×1.33 longer at rga4d. The bench fill is not the cause, and
+  layout moves unchanged code as far. So layout is the likely cause.
+- Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
+  grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
+  zero fills and two error checks. P01 alone spends 437, 104 and 268.
 - Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.87,
   while the bulk unitize runs slower, ×1.2 to ×3.1. The library scales every slot in a loop,
   which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
-- Whether a product whose terms all land in one slot should return a `float` from the
-  emitter. At four dimensions 26 measurands stand above the byte bound for that reason
-  alone.
+- Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
+  the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
+  write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
+  squared norm, and under P04 each writes 8 bytes.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library

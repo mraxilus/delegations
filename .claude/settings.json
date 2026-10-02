@@ -3,7 +3,10 @@
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push -f*)",
-      "mcp__github__merge_pull_request"
+      "mcp__github__create_or_update_file",
+      "mcp__github__delete_file",
+      "mcp__github__merge_pull_request",
+      "mcp__github__push_files"
     ]
   },
   "hooks": {

@@ -8,7 +8,7 @@
     "sizeof_multivector": 256
   },
   "taken": {
-    "date": "2026-10-01",
+    "date": "2026-10-02",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
     "pga": "31213421d6699cb44a9a171b75388ef8188e1136",
@@ -3714,15 +3714,15 @@
       "returns": "Circle",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
         "lines": 10
       },
@@ -3731,21 +3731,21 @@
         "adds": 9,
         "subs": 11,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 10
       },
       "movement": {
         "bytes_read": 120,
         "bytes_written": 80,
-        "bytes_zeroed": 80,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 280
+        "bytes_moved": 200
       }
     },
     "wedge(Circle,RoundPoint)": {
@@ -3978,15 +3978,15 @@
       "returns": "Dipole",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
         "lines": 10
       },
@@ -3995,21 +3995,21 @@
         "adds": 9,
         "subs": 11,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 10
       },
       "movement": {
         "bytes_read": 120,
         "bytes_written": 80,
-        "bytes_zeroed": 80,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 280
+        "bytes_moved": 200
       }
     },
     "wedgeAnti(Circle,Circle)": {
@@ -4188,50 +4188,6 @@
         "bytes_moved": 88
       }
     },
-    "dot(Vector3,Vector3)": {
-      "symbol": "dot",
-      "module": "reference/conformal3",
-      "params": [
-        "Vector3",
-        "Vector3"
-      ],
-      "returns": "float",
-      "inline": true,
-      "own": {
-        "multiplies": 3,
-        "adds": 2,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "total": {
-        "multiplies": 3,
-        "adds": 2,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "movement": {
-        "bytes_read": 48,
-        "bytes_written": 8,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 56
-      }
-    },
     "dot(Dipole,Dipole)": {
       "symbol": "dot",
       "module": "reference/conformal3",
@@ -4242,17 +4198,17 @@
       "returns": "float",
       "inline": true,
       "own": {
-        "multiplies": 1,
-        "adds": 2,
+        "multiplies": 10,
+        "adds": 8,
         "subs": 1,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
-        "calls": 3,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 35
+        "lines": 23
       },
       "total": {
         "multiplies": 10,
@@ -4262,10 +4218,10 @@
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
-        "calls": 3,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 44
+        "lines": 23
       },
       "movement": {
         "bytes_read": 160,
@@ -4286,17 +4242,17 @@
       "returns": "float",
       "inline": true,
       "own": {
-        "multiplies": 1,
-        "adds": 0,
+        "multiplies": 10,
+        "adds": 6,
         "subs": 3,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
-        "calls": 3,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 35
+        "lines": 23
       },
       "total": {
         "multiplies": 10,
@@ -4306,10 +4262,10 @@
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
-        "calls": 3,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 44
+        "lines": 23
       },
       "movement": {
         "bytes_read": 160,
@@ -4374,17 +4330,17 @@
       "returns": "float",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
+        "multiplies": 5,
+        "adds": 2,
+        "subs": 2,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 15
+        "lines": 3
       },
       "total": {
         "multiplies": 5,
@@ -4394,10 +4350,10 @@
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 18
+        "lines": 3
       },
       "movement": {
         "bytes_read": 80,
@@ -4418,17 +4374,17 @@
       "returns": "float",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
+        "multiplies": 10,
+        "adds": 8,
+        "subs": 1,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 15
+        "lines": 23
       },
       "total": {
         "multiplies": 10,
@@ -4438,10 +4394,10 @@
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 4,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 59
+        "lines": 23
       },
       "movement": {
         "bytes_read": 160,
@@ -4462,17 +4418,17 @@
       "returns": "float",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
+        "multiplies": 10,
+        "adds": 6,
+        "subs": 3,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 15
+        "lines": 23
       },
       "total": {
         "multiplies": 10,
@@ -4482,10 +4438,10 @@
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 4,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 59
+        "lines": 23
       },
       "movement": {
         "bytes_read": 160,
@@ -4506,17 +4462,17 @@
       "returns": "float",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
+        "multiplies": 5,
+        "adds": 1,
+        "subs": 3,
         "divides": 0,
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 15
+        "lines": 3
       },
       "total": {
         "multiplies": 5,
@@ -4526,10 +4482,10 @@
         "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 18
+        "lines": 3
       },
       "movement": {
         "bytes_read": 80,
@@ -4596,34 +4552,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 5
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 15
+        "lines": 5
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
-        "bytes_zeroed": 40,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "reverse(RoundPoint)": {
@@ -5228,49 +5184,6 @@
         "bytes_moved": 120
       }
     },
-    "-(Vector3)": {
-      "symbol": "-",
-      "module": "reference/conformal3",
-      "params": [
-        "Vector3"
-      ],
-      "returns": "Vector3",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 7
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 7
-      },
-      "movement": {
-        "bytes_read": 24,
-        "bytes_written": 24,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 48
-      }
-    },
     "complementRight(Dipole)": {
       "symbol": "complementRight",
       "module": "reference/conformal3",
@@ -5284,34 +5197,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 3,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 24
+        "lines": 14
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 3,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 38
+        "lines": 14
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 240,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 400
+        "bytes_moved": 160
       }
     },
     "complementLeft(Dipole)": {
@@ -5327,34 +5240,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 14
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 4,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
-        "calls": 3,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 48
+        "lines": 14
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 320,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 480
+        "bytes_moved": 160
       }
     },
     "reverse(Dipole)": {
@@ -5370,34 +5283,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 34
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 80,
+        "bytes_zeroed": 0,
         "bytes_copied": 80,
         "bytes_intermediates": 0,
-        "bytes_moved": 320
+        "bytes_moved": 240
       }
     },
     "reverseAnti(Dipole)": {
@@ -5413,34 +5326,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 13
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 3,
+        "zero_fills": 0,
         "intermediates": 0,
-        "copies": 2,
-        "checks": 3,
-        "calls": 3,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 47
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 240,
-        "bytes_copied": 160,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
         "bytes_intermediates": 0,
-        "bytes_moved": 560
+        "bytes_moved": 240
       }
     },
     "dualBulk(Dipole)": {
@@ -5456,34 +5369,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 27
+        "lines": 12
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 160,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 320
+        "bytes_moved": 160
       }
     },
     "dualWeight(Dipole)": {
@@ -5839,38 +5752,38 @@
       "returns": "RoundPoint",
       "inline": true,
       "own": {
-        "multiplies": 13,
-        "adds": 3,
+        "multiplies": 16,
+        "adds": 5,
         "subs": 6,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 9
       },
       "total": {
         "multiplies": 16,
         "adds": 5,
         "subs": 6,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 9
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 40,
-        "bytes_zeroed": 40,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 160
+        "bytes_moved": 120
       }
     },
     "container(Dipole)": {
@@ -5882,82 +5795,38 @@
       "returns": "Sphere",
       "inline": true,
       "own": {
-        "multiplies": 12,
-        "adds": 3,
+        "multiplies": 18,
+        "adds": 7,
         "subs": 6,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 13
       },
       "total": {
         "multiplies": 18,
         "adds": 7,
         "subs": 6,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 29
+        "lines": 13
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 40,
-        "bytes_zeroed": 40,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 160
-      }
-    },
-    "*(Vector3,float)": {
-      "symbol": "*",
-      "module": "reference/conformal3",
-      "params": [
-        "Vector3",
-        "float"
-      ],
-      "returns": "Vector3",
-      "inline": true,
-      "own": {
-        "multiplies": 3,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 7
-      },
-      "total": {
-        "multiplies": 3,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 7
-      },
-      "movement": {
-        "bytes_read": 32,
-        "bytes_written": 24,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 56
+        "bytes_moved": 120
       }
     },
     "partner(Dipole)": {
@@ -5969,38 +5838,38 @@
       "returns": "Dipole",
       "inline": true,
       "own": {
-        "multiplies": 17,
-        "adds": 3,
+        "multiplies": 29,
+        "adds": 7,
         "subs": 7,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 4,
-        "calls": 4,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 33
+        "lines": 32
       },
       "total": {
         "multiplies": 29,
         "adds": 7,
         "subs": 7,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 4,
-        "calls": 4,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 53
+        "lines": 32
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 80,
+        "bytes_zeroed": 0,
         "bytes_copied": 80,
         "bytes_intermediates": 0,
-        "bytes_moved": 320
+        "bytes_moved": 240
       }
     },
     "complementRight(Circle)": {
@@ -6016,34 +5885,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 3,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 24
+        "lines": 14
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 3,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 38
+        "lines": 14
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 240,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 400
+        "bytes_moved": 160
       }
     },
     "complementLeft(Circle)": {
@@ -6059,34 +5928,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 14
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 4,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
-        "calls": 3,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 48
+        "lines": 14
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 320,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 480
+        "bytes_moved": 160
       }
     },
     "reverse(Circle)": {
@@ -6102,34 +5971,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 34
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 80,
+        "bytes_zeroed": 0,
         "bytes_copied": 80,
         "bytes_intermediates": 0,
-        "bytes_moved": 320
+        "bytes_moved": 240
       }
     },
     "reverseAnti(Circle)": {
@@ -6145,34 +6014,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 13
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 3,
+        "zero_fills": 0,
         "intermediates": 0,
-        "copies": 2,
-        "checks": 3,
-        "calls": 3,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 47
+        "lines": 16
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 240,
-        "bytes_copied": 160,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
         "bytes_intermediates": 0,
-        "bytes_moved": 560
+        "bytes_moved": 240
       }
     },
     "dualBulk(Circle)": {
@@ -6231,34 +6100,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 27
+        "lines": 12
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 160,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 320
+        "bytes_moved": 160
       }
     },
     "bulk(Circle)": {
@@ -6532,34 +6401,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 16
+        "lines": 8
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 2,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 23
+        "lines": 8
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 48,
-        "bytes_zeroed": 96,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 224
+        "bytes_moved": 128
       }
     },
     "center(Circle)": {
@@ -6571,38 +6440,38 @@
       "returns": "RoundPoint",
       "inline": true,
       "own": {
-        "multiplies": 15,
-        "adds": 5,
+        "multiplies": 18,
+        "adds": 7,
         "subs": 6,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 9
       },
       "total": {
         "multiplies": 18,
         "adds": 7,
         "subs": 6,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 20
+        "lines": 9
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 40,
-        "bytes_zeroed": 40,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 160
+        "bytes_moved": 120
       }
     },
     "container(Circle)": {
@@ -6657,38 +6526,38 @@
       "returns": "Circle",
       "inline": true,
       "own": {
-        "multiplies": 23,
-        "adds": 5,
+        "multiplies": 29,
+        "adds": 7,
         "subs": 7,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 29
+        "lines": 24
       },
       "total": {
         "multiplies": 29,
         "adds": 7,
         "subs": 7,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 1,
-        "checks": 2,
-        "calls": 2,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 39
+        "lines": 24
       },
       "movement": {
         "bytes_read": 80,
         "bytes_written": 80,
-        "bytes_zeroed": 80,
+        "bytes_zeroed": 0,
         "bytes_copied": 80,
         "bytes_intermediates": 0,
-        "bytes_moved": 320
+        "bytes_moved": 240
       }
     },
     "complementRight(Sphere)": {
@@ -6747,34 +6616,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 10
+        "lines": 5
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 1,
-        "calls": 1,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 15
+        "lines": 5
       },
       "movement": {
         "bytes_read": 40,
         "bytes_written": 40,
-        "bytes_zeroed": 40,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 120
+        "bytes_moved": 80
       }
     },
     "reverse(Sphere)": {

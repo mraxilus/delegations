@@ -6,6 +6,9 @@
 ##   library's conformal norms return NaN on real objects and that is measured, not stated.
 ##   Operands are aliases into pools (template, never `let`), so loop reads pool slot and
 ##   writes result slot: what moves is operation's own traffic.
+##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
+##     drop each zero store that inlined operation repeats, and so time fewer stores than any
+##     caller pays.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
@@ -93,23 +96,23 @@ func fold*[T: object](x: T): float =
   ## Fold every field of typed object into sink, recursively.
   for _, value in x.fieldPairs: result += fold(value)
 
-func hasNan*(x: float): bool {.inline.} =
+func isAnyNan*(x: float): bool {.inline.} =
   ## Decide whether scalar is NaN.
   x.isNaN
 
-func hasNan*(x: Antiscalar): bool {.inline.} =
+func isAnyNan*(x: Antiscalar): bool {.inline.} =
   ## Decide whether antiscalar is NaN.
   float(x).isNaN
 
-func hasNan*(m: Multivector): bool =
+func isAnyNan*(m: Multivector): bool =
   ## Decide whether any component is NaN.
   for b in Basis:
     if m[b].isNaN: return true
 
-func hasNan*[T: object](x: T): bool =
+func isAnyNan*[T: object](x: T): bool =
   ## Decide whether any field of typed object is NaN, recursively.
   for _, value in x.fieldPairs:
-    if hasNan(value): return true
+    if isAnyNan(value): return true
 
 
 
@@ -166,7 +169,7 @@ macro emitMeasurand(
   quote do:
     block:
       var
-        results: array[OBJECTS, typeof(block:
+        results {.noinit.}: array[OBJECTS, typeof(block:
           let
             `m` {.used.} = `pool_m`[0]  # Read by `body`.
             `n` {.used.} = `pool_n`[0]  # Read by `body` of binary measurand; unary leaves it.
@@ -182,7 +185,7 @@ macro emitMeasurand(
       let statistics_after = getAllocStats()
       var count_nan = 0
       for i in 0 ..< OBJECTS:
-        if hasNan(results[i]): inc count_nan
+        if isAnyNan(results[i]): inc count_nan
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
       MEASUREMENTS[`implementation_literal`][`index`] = Measurement(
