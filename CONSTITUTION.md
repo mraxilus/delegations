@@ -517,7 +517,7 @@ suite "Chapter 2":
 9. A space inside an expression stands only where this list puts it, or where the tokeniser
    demands it:
    - one space on each side of a binary operator, and of `=`;
-   - one space after a comma and after a colon;
+   - one space after a comma, a semicolon and a colon;
    - two spaces before the marker of a trailing comment, a citation among them.
 
    No space stands inside a bracket, around a range operator (`2..6`, `0..<n`), or after a
