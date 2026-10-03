@@ -5,6 +5,9 @@
 ##     than presence.
 ##   Inputs arrive through environment: branch and body from event payload, label names from
 ##     API, since payload carries none on event that opens pull request.
+##   Role line may stand below attribution block that harness writes first and requires:
+##     marker comment `ccr-projects-attribution`, rendering as nothing, then italic credit
+##     line naming who asked. Block is passed only whole, once and in order.
 ##   `ledger.yml` reads same two facts daily over open items, which samples rather than gates:
 ##     pull request living half hour is almost never open when it runs, and it reports after
 ##     merge rather than before.
@@ -15,6 +18,9 @@
 ##   Cost: comment is unreachable, and is what remains of CONTRIBUTOR.md's first carried rule.
 ##   Cost: labels are searched for expected string rather than compared whole, since label is
 ##     added when work hands across and never removed.
+##   Cost: attribution block is harness's text, held as data in `LINES_ATTRIBUTION`; when
+##     harness changes it, every such pull request fails again, while suite, whose fixture
+##     copies it, stays green.
 ##   Empty label list can still be opening's own state rather than delegate's mistake: no API
 ##     call creates pull request and its label together, so label can land after run reads it,
 ##     and `labeled` event clears it. Message says so, and one naming wrong label does not.
@@ -28,6 +34,11 @@ import ./[domains, findings]
 const
   ROLE_KEY* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
   COMMENT_OPEN* = "<!--"  ## Opening of HTML comment, which unfilled template carries after key.
+  LINES_ATTRIBUTION = [
+    (opening: "<!-- ccr-projects-attribution:", closing: "-->"),  # Marker; renders as nothing.
+    (opening: "_Requested by **", closing: "_"),  # Credit in italics, naming who asked.
+  ]
+    ## Lines of attribution block above role line, in order, each known by its two ends.
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
@@ -39,12 +50,19 @@ func shortened*(line: string): string =
 
 
 func roleLine*(body: string): string =
-  ## Read first non-blank line of body, with any trailing HTML comment dropped.
+  ## Read first non-blank line below any attribution block, with trailing HTML comment dropped.
   ##   Unfilled template opens `**Role:** <!-- curator, or ... -->`, which then reads as key
-  ##   alone and fails equality below, rather than passing as line naming no role.
+  ##     alone and fails equality below, rather than passing as line naming no role.
+  ##   Each line of block is passed only whole and in its place, so stray credit line, second
+  ##     block or any other comment still reads as opening.
+  var passed = 0  # Lines of `LINES_ATTRIBUTION` passed so far.
   for line in body.splitLines:
     let s = line.strip
     if s.len == 0: continue
+    if passed < LINES_ATTRIBUTION.len and s.startsWith(LINES_ATTRIBUTION[passed].opening) and
+        s.endsWith(LINES_ATTRIBUTION[passed].closing):
+      inc passed
+      continue
     let open = s.find(COMMENT_OPEN)
     return (if open < 0: s else: s[0..<open].strip)
   ""
