@@ -89,7 +89,7 @@ func crossedSite*(side: Side): Site =
   of Side.Right: Site.RightHand
 
 
-func isCrossed*(side: Side; site: Site): bool = site == crossedSite(side)
+func isCrossed*(side: Side, site: Site): bool = site == crossedSite(side)
   ## Test whether connection crosses midline between bodies.
 
 
@@ -116,11 +116,11 @@ func countHolds*(frame: Frame): int =
       inc result
 
 
-func isUsingHand*(frame: Frame; side: Side): bool = frame.hold[side].isSome
+func isUsingHand*(frame: Frame, side: Side): bool = frame.hold[side].isSome
   ## Test whether one hand of lead is holding anything.
 
 
-func holder*(frame: Frame; site: Site): Option[Side] =
+func holder*(frame: Frame, site: Site): Option[Side] =
   ## Get which hand of lead holds this hand of follow, if either does.
   for side in Side:
     if frame.hold[side] == some(site):
@@ -128,7 +128,7 @@ func holder*(frame: Frame; site: Site): Option[Side] =
   none(Side)
 
 
-func isHeld*(frame: Frame; site: Site): bool = frame.holder(site).isSome
+func isHeld*(frame: Frame, site: Site): bool = frame.holder(site).isSome
   ## Test whether one hand of follow is held.
 
 
@@ -221,7 +221,7 @@ func followName*(site: Site): string =
   of Site.RightHand: "right"
 
 
-func describeConnection*(side: Side; site: Site; joiner = "-to-"): string =
+func describeConnection*(side: Side, site: Site, joiner = "-to-"): string =
   ## Name one connection, as `Left-to-left` or `Left to left`.
   leadName(side) & joiner & followName(site)
 

@@ -33,7 +33,7 @@ const
     ##     (`test_rigid.nim`, suite "couple stand for sweep").
   TRIALS_JITTER = 1000  ## Jittered copies of each knife-edge pose reader reads, seeded.
 
-func nearestOn(line: array[7, Vector]; point: Vector): tuple[offset, z: float] =
+func nearestOn(line: array[7, Vector], point: Vector): tuple[offset, z: float] =
   ## How far `point` lies off polyline in plan, and how high polyline is there.
   ##   Rebuilt here rather than borrowed from reader, which keeps its own copy
   ##     private: borrowing it would check reader against itself (Article II.9).

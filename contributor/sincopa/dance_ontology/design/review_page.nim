@@ -97,7 +97,7 @@ const QUARTER_WAY = wayName(wayOf(HalfTurns(QUARTER)))
   ##   Read off turn itself rather than written down, so label cannot
   ##     outlive sign it describes.
 
-func said(tag: string; quarter: int): string =
+func said(tag: string, quarter: int): string =
   ## Name one manner of turn, how far it has gone, and which way round.
   if quarter == 0: &"{MANNER_SAID[tag]} {QUARTER_SAID[quarter]}"
   else: &"{MANNER_SAID[tag]} {QUARTER_SAID[quarter]} {QUARTER_WAY}"
@@ -142,7 +142,7 @@ func reviewParts*(single, hand: Parts): Parts =
 func sheetOf(parts: Parts): string =
   ## Build page, holding every card already ruled on to its own pin.
 
-  func stepped(id: string; steps: seq[tuple[pick, note, svg: string]];
+  func stepped(id: string, steps: seq[tuple[pick, note, svg: string]],
                asks: seq[string] = @[]): string =
     ## Stack several drawings in one cell, one shown at time, with button
     ## apiece.
@@ -278,7 +278,7 @@ func sheetOf(parts: Parts): string =
         holds[armFor(side)] = some armFor(target.hold[side].get)
     restOf(holds)
 
-  proc facingNote(target: Frame; twist: int; way: string): string =
+  proc facingNote(target: Frame, twist: int, way: string): string =
     ## Say which facing this picture draws, and what it is turned from.
     ##   Standard diagram turns follow alone, by half turns (`twist`).
     let
@@ -348,7 +348,7 @@ func sheetOf(parts: Parts): string =
     body.add "</div>"
   body.add "</section>"
 
-  func windNote(note: string; wind: float; zero = ""): string =
+  func windNote(note: string, wind: float, zero = ""): string =
     ## Say how far position stands from where its chain rests, and which way
     ## round.
     ##   Way comes from `wayOf`, so page and vocabulary cannot drift apart on

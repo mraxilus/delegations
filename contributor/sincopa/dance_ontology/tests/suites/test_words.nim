@@ -68,7 +68,7 @@ func shown(report: string): seq[string] =
   result.sort(proc (a, b: string): int = cmp(b.len, a.len))
 
 
-func residue(phrase: string; terms: seq[string]): string =
+func residue(phrase: string, terms: seq[string]): string =
   ## Strike every term out of phrase, leaving what table does not name.
   result = phrase
   for term in terms:

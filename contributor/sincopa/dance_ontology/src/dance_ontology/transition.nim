@@ -213,7 +213,7 @@ func moves*(source: Frame): seq[Move] =
   result.sort(compare)
 
 
-func phrase*(source: Frame; move: Move): string =
+func phrase*(source: Frame, move: Move): string =
   ## Say move as teacher would call it, naming both hands.
   ##
   ## Which dancer each hand belongs to is said by its case and by nothing else:
@@ -302,7 +302,7 @@ func compoundPhrase*(source, destination: Frame): string =
       leadName(side)
 
 
-func label*(source: Frame; move: Move): seq[string] =
+func label*(source: Frame, move: Move): seq[string] =
   ## Name move in fewest words that still say what to do, line by line.
   ##   `collect` has to say which hand of follow it takes, because same hand
   ##     of lead can reach either, and it has to say over or under where both

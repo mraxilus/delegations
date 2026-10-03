@@ -27,7 +27,7 @@ proc world(): WorldId =
   definition.should_sleep = false
   createWorld(addr definition)
 
-proc capsule(world_id: WorldId; x: float): BodyId =
+proc capsule(world_id: WorldId, x: float): BodyId =
   ## Upright limb-thick capsule, standing where told.
   var body_definition = defaultBody()
   body_definition.kind = BODY_DYNAMIC

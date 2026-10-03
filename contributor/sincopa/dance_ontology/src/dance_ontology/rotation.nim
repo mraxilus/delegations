@@ -165,7 +165,7 @@ func isFacing*(twist: HalfTurns): bool = twist mod 2 == 0
   ## Test whether partners still face each other after rotation.
 
 
-func crossedSite*(side: Side; twist: HalfTurns): Site =
+func crossedSite*(side: Side, twist: HalfTurns): Site =
   ## Get follow hand this lead hand reaches only across midline, after
   ## rotation.
   ##
@@ -176,7 +176,7 @@ func crossedSite*(side: Side; twist: HalfTurns): Site =
   if isFacing(twist): crossedSite(side) else: parallelSite(side)
 
 
-func parallelSite*(side: Side; twist: HalfTurns): Site =
+func parallelSite*(side: Side, twist: HalfTurns): Site =
   ## Get follow hand this lead hand reaches without crossing, after rotation.
   if isFacing(twist): parallelSite(side) else: crossedSite(side)
 
@@ -218,7 +218,7 @@ func seenAfter*(turned: array[Dancer, QuarterTurns]): array[Dancer, Seen] =
 
 #[ Capacity ]#
 
-func armCapacity*(blocker: Option[Blocker]; level: Level): HalfTurns =
+func armCapacity*(blocker: Option[Blocker], level: Level): HalfTurns =
   ## Get how much twist arm itself can carry, wherever it has ended up.
   ##   Measured on `Left to left`, one hand: low wrap holds half turn and
   ##     everything else holds full one.
@@ -281,7 +281,7 @@ func blocker*(twist: HalfTurns): Option[Blocker] =
   else: some(Blocker.Lock)
 
 
-func blockerOf*(twist: HalfTurns; level: Level): Option[Blocker] =
+func blockerOf*(twist: HalfTurns, level: Level): Option[Blocker] =
   ## Get what blocks arm at given twist, at height it is carried.
   ##
   ## Only low or high arm is wound round anything: arm over head is on axis,
@@ -290,7 +290,7 @@ func blockerOf*(twist: HalfTurns; level: Level): Option[Blocker] =
   if level == Level.Above: none(Blocker) else: blocker(twist)
 
 
-func armsCapacity*(posture: Posture; twist: HalfTurns): HalfTurns =
+func armsCapacity*(posture: Posture, twist: HalfTurns): HalfTurns =
   ## Get how much twist arms of posture carry between them.
   ##   Tightest arm binds.
   ##     Couple is held together by all of its connections at once, so first
@@ -308,7 +308,7 @@ func armsCapacity*(posture: Posture; twist: HalfTurns): HalfTurns =
         posture.level[side]))
 
 
-func around*(blocker: Blocker; level: Level): Option[BodySite] =
+func around*(blocker: Blocker, level: Level): Option[BodySite] =
   ## Get place on body wound arm is carried around.
   ##   Workbook asks whether upper and lower wrap are separate modifiers.
   ##     They are not: level at which arm is already carried decides where
@@ -342,13 +342,13 @@ func rest*(target: Frame): Posture =
   Posture(frame: target, level: [Level.Low, Level.Low], contact: none(Contact), twist: 0)
 
 
-func rests*(posture: Posture; side: Side; where: BodySite): Posture =
+func rests*(posture: Posture, side: Side, where: BodySite): Posture =
   ## Rest one lead hand on follow's body, which takes turn away.
   result = posture
   result.contact = some(Contact(side: side, where: where))
 
 
-func rotates*(who: Dancer; amount: HalfTurns): Turn =
+func rotates*(who: Dancer, amount: HalfTurns): Turn =
   ## Form turn where one dancer rotates and other holds their facing.
   result.turns[who] = amount
 
@@ -358,7 +358,7 @@ func together*(amount: HalfTurns): Turn =
   Turn(turns: [amount, amount])
 
 
-func stored*(posture: Posture; motion: Turn): HalfTurns =
+func stored*(posture: Posture, motion: Turn): HalfTurns =
   ## Get twist that turn would leave stored, whether or not it can be.
   ##
   ## Turn is taken as one motion rather than as one dancer after other,
@@ -367,7 +367,7 @@ func stored*(posture: Posture; motion: Turn): HalfTurns =
   posture.twist + motion.turns[Dancer.Follow] - motion.turns[Dancer.Lead]
 
 
-func isHolding*(posture: Posture; twist: HalfTurns): bool =
+func isHolding*(posture: Posture, twist: HalfTurns): bool =
   ## Test whether posture can stand at given twist.
   ##   Two ceilings, and posture has to be under both: what joins couple can
   ##     only give away so much turn, and arm can only carry so much wherever
@@ -380,7 +380,7 @@ func isHolding*(posture: Posture; twist: HalfTurns): bool =
   abs(twist) <= posture.capacity and abs(twist) <= posture.armsCapacity(twist)
 
 
-func turn*(posture: Posture; motion: Turn): Option[Posture] =
+func turn*(posture: Posture, motion: Turn): Option[Posture] =
   ## Turn couple, refusing turn that arms cannot hold.
   ##
   ## Refusal is what matters: turn beyond posture's capacity is not turn
@@ -447,7 +447,7 @@ func postures*(): seq[Posture] =
           result.add stood
 
 
-func refusal*(posture: Posture; twist: HalfTurns): Option[Refusal] =
+func refusal*(posture: Posture, twist: HalfTurns): Option[Refusal] =
   ## Say which ceiling refuses twist, if either does.
   ##
   ## Hold is named first where both would refuse, because it is one that

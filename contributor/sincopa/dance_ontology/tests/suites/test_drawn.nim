@@ -31,7 +31,7 @@ suite "Internal: Capsule on canvas":
       trunk = (a: (0.0, 0.0, 0.925), z: (0.0, 0.0, 1.235))
       arm = (a: (0.0, 0.15, 1.35), z: (0.0, 0.15, 1.05))
       order = drawOrder([trunk, arm], 0.0, 1.2, framing)
-    proc place(capsule: int; height: float): int =
+    proc place(capsule: int, height: float): int =
       ## Where in order piece of `capsule` nearest `height` is painted.
       var best = Inf
       for i, piece in order:

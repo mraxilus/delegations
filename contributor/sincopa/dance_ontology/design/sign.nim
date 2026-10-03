@@ -60,13 +60,13 @@ const BOTH_UNSAID: SignArms = [(true, none(Level)), (true, none(Level))]
   ## Both columns drawn, neither level said -- default sign.
 
 
-func dashes*(perimeter: float; count: int; duty = 0.58): string =
+func dashes*(perimeter: float, count: int, duty = 0.58): string =
   ## Get dash pattern that closes on itself, so no stub shows at join.
   let period = perimeter / float(count)
   &"{numeral(period * duty)} {numeral(period * (1 - duty))}"
 
 
-func scaled*(points: seq[Point]; factor: float): seq[Point] =
+func scaled*(points: seq[Point], factor: float): seq[Point] =
   ## Pull polygon in towards its own centre.
   var centre_x, centre_y = 0.0
   for point in points:
@@ -78,7 +78,7 @@ func scaled*(points: seq[Point]; factor: float): seq[Point] =
     result.add (centre_x + (point.x - centre_x) * factor, centre_y + (point.y - centre_y) * factor)
 
 
-func polygon(points: seq[Point]; should_close = true): string =
+func polygon(points: seq[Point], should_close = true): string =
   ## Write polygon as path data.
   var joined: seq[string]
   for point in points:
@@ -113,7 +113,7 @@ func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
     perimeter = if is_leading: 2 * PIP + 2 * hypot(side_x, side_y)
                 else: 2 * PI * (PIP / 2)
 
-  func shape(inset: float; style: string): string =
+  func shape(inset: float, style: string): string =
     ## One outline or fill, as dancer's own mark: path or circle.
     if is_leading:
       let path = if inset == 1.0: polygon(points) else: polygon(scaled(points, inset))
@@ -258,9 +258,9 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float
   (bits.join("\n        "), (min(x_values), y_top - over, max(x_values), y_bottom))
 
 
-func sign*(slots: seq[Row]; lean = Lean.Clockwise; arms = BOTH_UNSAID;
-    about = none(About); pip_about: seq[About] = @[];
-    ending = none(Ending); scale = 1.2; is_packed = true): string =
+func sign*(slots: seq[Row], lean = Lean.Clockwise, arms = BOTH_UNSAID,
+    about = none(About), pip_about: seq[About] = @[],
+    ending = none(Ending), scale = 1.2, is_packed = true): string =
   ## Draw one turn sign: quarter turns up from foot, arms across, one
   ## height for every sign.
   let

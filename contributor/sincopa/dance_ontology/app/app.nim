@@ -159,7 +159,7 @@ proc hasRoomForMap(): bool =
     .getPropertyValue("--wide")).strip() == "1"
 
 
-proc setScrollLeft(box: Node; value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
+proc setScrollLeft(box: Node, value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
   ## Set how far scrolling box is scrolled; `std/dom` only reads it.
 
 
@@ -392,7 +392,7 @@ func renderKey(): string =
     "holds is faded. A line with a gap in it passes under the other.")
 
 
-func renderSpokesView(current: Frame; motion: Motion;
+func renderSpokesView(current: Frame, motion: Motion,
     taken: Option[Frame]): string =
   ## Draw where couple are and every way out, and nothing else.
   tag("div", "class=\"view-spokes\"",
@@ -407,7 +407,7 @@ func renderSpokesView(current: Frame; motion: Motion;
       "the deeper shade. Take a spoke, and it becomes the middle."))
 
 
-func renderMapView(current: Frame; motion: Motion; taken: Option[Frame]): string =
+func renderMapView(current: Frame, motion: Motion, taken: Option[Frame]): string =
   ## Draw where couple stand in whole ontology.
   tag("div", "class=\"view-map\"",
     tag("div", "class=\"scroll\"", renderMap(some(current), motion, taken)) &
@@ -432,7 +432,7 @@ func renderMapView(current: Frame; motion: Motion; taken: Option[Frame]): string
       "clicked, and a compound dances its two moves in turn."))
 
 
-func renderStageBody(current: Frame; drawing: Drawing; motion: Motion;
+func renderStageBody(current: Frame, drawing: Drawing, motion: Motion,
     taken: Option[Frame]): string =
   ## Show frame couple hold, drawn way dancer has asked for.
   ##   Name shown is frame being *left* until move lands, because
@@ -448,8 +448,8 @@ func renderStageBody(current: Frame; drawing: Drawing; motion: Motion;
     renderKey() & tag("div", "class=\"views\"", shown)
 
 
-func renderDance(current: Frame; drawing: Drawing; motion: Motion;
-    taken: Option[Frame]; danced: seq[Step]): string =
+func renderDance(current: Frame, drawing: Drawing, motion: Motion,
+    taken: Option[Frame], danced: seq[Step]): string =
   ## Show current frame, what it allows, and what it does not.
   tag("div", "class=\"stage\"",
     tag("section", "class=\"panel wide\" id=\"stage\" tabindex=\"-1\"",
@@ -460,7 +460,7 @@ func renderDance(current: Frame; drawing: Drawing; motion: Motion;
 
 #[ Atlas View ]#
 
-func isAdmitting(narrowing: Filter; target: Frame): bool =
+func isAdmitting(narrowing: Filter, target: Frame): bool =
   ## Test whether frame answers everything dancer has asked to see.
   ##
   ## Every question left unasked admits everything, and asked ones are read

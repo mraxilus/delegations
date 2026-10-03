@@ -68,7 +68,7 @@ func toMillimetres(point: Vector): JsonNode =
   ## Write point in whole millimetres.
   %*[int(round(point.x * 1000.0)), int(round(point.y * 1000.0)), int(round(point.z * 1000.0))]
 
-func frame(moment: Moment; band: Band; links: seq[Link]): JsonNode =
+func frame(moment: Moment, band: Band, links: seq[Link]): JsonNode =
   ## Record one moment as page draws it: arms, words and crossings.
   let tight = tightest(HUMAN, moment.stance, links, moment.arms)
   result = %*{
@@ -109,7 +109,7 @@ func frame(moment: Moment; band: Band; links: seq[Link]): JsonNode =
     result["connections"].add connection
 
 
-func frames(sweep: Swept; band: Band; links: seq[Link]): JsonNode =
+func frames(sweep: Swept, band: Band, links: seq[Link]): JsonNode =
   ## Every moment of both ways, in order of turn, rest once.
   ##   Negative way was walked outward from rest, so it is read back to front.
   result = newJArray()

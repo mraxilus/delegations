@@ -108,7 +108,7 @@ const
     ## Engine archived into one library, which `simulation/engine.nim` links.
 
 
-proc run(program: string; arguments: openArray[string]) =
+proc run(program: string, arguments: openArray[string]) =
   ## Run program with args from project directory; raise on non-zero exit.
   ##   Named rather than shelled through string, so no argument needs quoting and no
   ##     path with space in it can split.

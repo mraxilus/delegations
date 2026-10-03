@@ -28,7 +28,7 @@ const QUARTER_NAMES = ["none", "&#188;", "&#189;", "&#190;"]
   ## How far round from app's own frame, in quarters.
 
 
-func plates(parts: Parts; manner: Manner): string =
+func plates(parts: Parts, manner: Manner): string =
   ## Lay out one manner of turn: one plate per connection, positions then
   ## edges.
   let tag = MANNERS[manner].tag

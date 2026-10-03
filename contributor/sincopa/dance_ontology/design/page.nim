@@ -165,7 +165,7 @@ func document*(title, page_body: string): string =
     &"{STYLE}{page_body}"
 
 
-func filled*(template_body: string;
+func filled*(template_body: string,
     fills: openArray[tuple[marker, value: string]]): string =
   ## Close every `{marker}` hole in page template, and refuse build that
   ## leaves one open or fills one that is not there.

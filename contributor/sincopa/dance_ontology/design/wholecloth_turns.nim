@@ -320,7 +320,7 @@ func interpolate[N: static int](destination: var array[N, float]; a, b: JsObject
 
 #[ Marks And Bodies ]#
 
-func markShape(centre: Vector2, who: Dancer, style, extra: cstring): cstring =
+func markShape(centre: Vector2; who: Dancer; style, extra: cstring): cstring =
   ## Draw mark's shape: square for lead, round for follow.
   case who
   of Dancer.Lead:
