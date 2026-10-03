@@ -4,7 +4,8 @@
 ##     overlap, but insertions may share offset; rank orders them, lower first, so wrapper
 ##     planned outside another opens before it (`int(float(x))`).
 ##   Rename is planned whole or refused whole, since part of rename breaks build:
-##   - declaration must resolve, in file that compiles;
+##   - declaration must resolve, in file that compiles, to symbol declared at that very site;
+##     name check's scanner may read use as declaration, and rename of it would repeat other;
 ##   - every name token of scope that Nim reads as old name must resolve, in file that
 ##     compiles: one resolving to declaration is renamed, one resolving to other symbol stays,
 ##     and one resolving to nothing refuses rename, since it cannot be proved either way.
@@ -143,6 +144,9 @@ func planRename*(
   let
     declared = declaring.symbols[(rename.line, rename.column)]
     shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(not it.isIdentical(declared))
+  if not declared.file.endsWith("/" & rename.path) or declared.line != rename.line or
+      declared.column != rename.column:
+    refuse "`" & rename.path & ":" & $rename.line & "` names symbol declared elsewhere"
   if shadowed.len > 0:
     refuse "`" & rename.renamed & "` would shadow `" & shadowed[0].name & "`"
 

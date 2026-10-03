@@ -227,7 +227,8 @@ suite "Fixes":
     check queries.len == 2
     check queries[0].sites == @[(5, 4)] and queries[0].names == @["context"]
     check queries[1].sites == @[(7, 8)]
-    let declared = Symbol(kind: "skLet", name: "a.ctx", file: "/r/a.nim", line: 5, column: 4)
+    let declared =
+      Symbol(kind: "skLet", name: "a.ctx", file: "/r/curator/audit/src/a.nim", line: 5, column: 4)
     var answers = @[Answer(path: a.path), Answer(path: b.path)]
     answers[0].symbols[(5, 4)] = declared
     answers[0].globals["context"] = @[]
