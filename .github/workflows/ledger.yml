@@ -17,7 +17,8 @@
 #   would name loose style rather than missing role. Comment half stays carried with first
 #   rule.
 #   Role line may follow leading HTML comment, since issue that `watch.yml` or this file opens
-#   carries its marker first, and marker renders as nothing.
+#   carries its marker first, and marker renders as nothing. On pull request it may also follow
+#   credit line of attribution block that harness writes, as `role.nim` reads it.
 #
 #   `permissions` block is whole grant, never addition: scope left out is set to `none`. Ledger
 #   reads runs, reads pull requests, writes issues, and names those three and nothing else.
@@ -123,10 +124,13 @@ jobs:
             --jq '.[] | select(.title | test("^[a-z]+(\\([^)]*\\))?!?: "))
                   | "- Issue #\(.number) is titled as commit: `` \(.title) ``"')"
           [ -z "$commit_titled" ] || found="$found$commit_titled"$'\n'
+          # Pull request may open with attribution block that `role.nim` passes: marker is
+          #   leading comment, and credit line may follow it. Ledger reads loose, so credit line
+          #   passes after any comment, and issue, which carries no block, keeps pattern above.
           bare_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
             --json number,body \
             --jq '.[] | select((.body // "")
-                  | test("^\\s*(<!--[^>]*-->\\s*)*"
+                  | test("^\\s*(<!--[^>]*-->\\s*)*(_requested by [^\\n]*_\\s*)?"
                     + "\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
                   | "- Pull request #\(.number) opens with no role line"')"
           [ -z "$bare_prs" ] || found="$found$bare_prs"$'\n'
