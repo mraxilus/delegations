@@ -1034,14 +1034,14 @@ of the corpus of the laws. Every capsule that the page draws is one that the eng
 
 **Comfort is a slope inside a range, and not a wall at its end.** The limits of the engine are
 walls, and its springs, at one hertz (`EASE`), are nothing. So every joint ran to an end and stayed.
-Her arm sat forty five degrees behind the frontal plane at the height of the head, for six
-arm-moments of a crown turn. The Architect refused that on sight.
+The follow's arm sat forty five degrees behind the frontal plane at the height of the head. It
+stayed there for six arm-moments of a crown turn. The Architect refused that on sight.
 
 The range of each joint carries an ease band before each end, and inside it a torque grows with the
 lean.
 
-- Swing takes the same 200 newton metres per radian as its wall (`SWING_LEAN`), because at ten her
-  arm still reached the wall.
+- Swing takes the same 200 newton metres per radian as its wall (`SWING_LEAN`), because at ten the
+  arm of the follow still reached the wall.
 - Twist takes 25 (`TWIST_LEAN`), which is about the passive stiffness of a shoulder near the end of
   its rotation. At seven, three newton metres at the end of the ease was under what forty newtons of
   lift at reach puts on a shoulder. Joints then sat at their ends in most stills.
@@ -1067,10 +1067,10 @@ The shoulder spring of a free arm is five hertz (`HANG_HERTZ`, assumed). It stan
 that holds a hanging arm plumb. That is about seventeen newton metres per radian, for five kilograms
 of arm at a third of a metre.
 
-At one hertz the spring gave about two. The friction of the flank then dragged her arms behind her
-slow half turn by forty nine degrees. They crept back to thirty three through the settle, so A2
-stood with her hand 413 mm off plumb. Measured at two hertz: twenty four and eight. At three:
-thirteen and five. At five: five and four.
+At one hertz the spring gave about two. The friction of the flank then dragged the arms of the
+follow behind a slow half turn by forty nine degrees. They crept back to thirty three through the
+settle, so A2 stood with the hand of the follow 413 mm off plumb. Measured at two hertz: twenty four
+and eight. At three: thirteen and five. At five: five and four.
 
 Verified by `test_rigid.nim`. A free couple wound half a turn either way hang every arm within ten
 degrees of plumb, and the hand within 0.2 m of it. Red first.
@@ -1159,10 +1159,11 @@ straightening out as the arms come down.
 `up` is how far the couple are from face to face, with whole turns folded away. So a couple wound a
 whole turn have their hands down again.
 
-Going up, the hands rise over her head. Coming back, they come forward off her crown first, to
+Going up, the hands rise over the head of the follow. Coming back, they come forward off that crown
+first, to
 between the two bodies, and then down (`leaving`, `over`). Let down straight from over the crown
-they pass through her head. The rise from rest keeps a key of its own, which is the wind (`wound`,
-`risen`). Rejected: that rise keyed to facing too. It let the hands down onto her head through the
+they pass through the head. The rise from rest keeps a key of its own, which is the wind (`wound`,
+`risen`). Rejected: that rise keyed to facing too. It let the hands down onto the head through the
 second half of every whole turn.
 
 Facing, a hand over the crown is a hold at some other height, as a hand under its band always was
@@ -1279,8 +1280,8 @@ engine solves its limits rather than clamps them.
 A still whose card fixes no way about is wound either way at every distance, and takes whichever way
 sits easier (`either`). Those are the frames of the standard diagram turned half a turn, which draw
 the same picture turned either way. The card claims a position and not a path. The single hold wound
-the way asked stood at 0.48 m, with her twist a third of the way into its ease. The other way about
-it stood at 0.36 m, at ease outright.
+the way asked stood at 0.48 m, with the twist of the follow a third of the way into its ease. The
+other way about it stood at 0.36 m, at ease outright.
 
 Verified by `test_rigid.nim`: the free way is never worse than the way asked, and is at ease. Red
 first.
@@ -1419,8 +1420,9 @@ met none. That is the strongest evidence so far that the floor was right and the
 than the other way about.
 
 With bodies solid the crown is free both ways. Both low lock ways, and the cross-name high lock, go
-past the whole turn of the floor by her wrist. The wraps stop between half and a whole turn, by her
-twist or his wrist. Each disagreement is printed, and is the Architect's to rule on.
+past the whole turn of the floor by the wrist of the follow. The wraps stop between half and a whole
+turn, by the twist of the follow or the wrist of the lead. Each disagreement is printed, and is the
+Architect's to rule on.
 
 **Verdicts are an instrument run, assumed current.** `simulation/verdicts.nim` asks the simulation
 what the sheet asks. It writes `simulation/verdicts.md` in the words of the sheet, through one
@@ -1452,25 +1454,25 @@ chain either way about at half. It walks the free frame pillion too, and the sin
 and half. It stops at the cross. Every other still that the walk holds stands at ease, or within a
 fifth of an ease band at its worst joint, measured 2026-09-18.
 
-Walked, the swans wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of
-a turn, with hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26,
-with an arm against an arm, her collarbone retracted to its end, and her chest at forty. Under the
-rule that rests the hands at mid torso facing, the walk stands no diamond either.
+Walked, the swans wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of a
+turn, with hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26,
+with an arm against an arm, the follow's collarbone retracted to its end, and the chest at forty.
+Under the rule that rests the hands at mid torso facing, the walk stands no diamond either.
 
-The film of the wind shows why. From the cross on, her arms wrap round her head at the height of the
-neck, rather than pass over it. Hands are carried at the lower edge of the band, a radius of a hand
-over the crown. That leaves no room for a forearm to cross above the head.
+The film of the wind shows why. From the cross on, the arms of the follow wrap round the head at the
+height of the neck, rather than pass over it. Hands are carried at the lower edge of the band, a
+radius of a hand over the crown. That leaves no room for a forearm to cross above the head.
 
 Carried a hand's breadth higher, or on up through the band, the cross-name swan winds to 1.14 and
 the same-name gives early by twist. Those lofts are assumed. The reference draws the two joins of
 the swan at one point, one pair under the other. The two pairs of joined hands gathered together
-over the crown that way winds the cross-name to 1.34, with her collarbone at its end.
+over the crown that way winds the cross-name to 1.34, with the follow's collarbone at its end.
 
 Eight one-line changes on the lofted model were each measured on both swans at four distances, with
 five held stills as control. None stands a swan. A stiffer grip and a finer step carry the
-cross-name furthest, to 1.16 and 1.32, with hands parting or her wrist at its cone. A wider wrist
-cone and a firmer draw carry the same-name furthest, to 1.42 and 1.38, arm against arm. A softer
-collarbone, wider extension or a stronger loft lose a diamond.
+cross-name furthest, to 1.16 and 1.32, with hands parting or the follow's wrist at its cone. A wider
+wrist cone and a firmer draw carry the same-name furthest, to 1.42 and 1.38, arm against arm. A
+softer collarbone, wider extension or a stronger loft lose a diamond.
 
 Rejected outright: the arms of the lead passing through those of the follow. That reached the swan
 by letting two arms occupy one place.
@@ -1560,20 +1562,22 @@ an end. Where they stand, D3 reads 0.15, C2 0.19, and D1 and D7 0.37. C1, C6 and
 Measured on 2026-10-02, with the first style that holds each one. The joints of the arms read the
 same from `design/rig.json`.
 
-The worst joint of C1 and C7 is the forward swing of her collarbone, and of C6 her waist. The worst
-joint of D1 and D7 is the bend of her elbow, and of C2 and D3 the twist of her right shoulder.
+The worst joint of C1 and C7 is the forward swing of the collarbone, and of C6 the waist. Of D1 and
+D7 it is the bend of the elbow, and of C2 and D3 the twist of the right shoulder. Each one is a
+joint of the follow.
 
 The first plan that holds answers a card, and not the easiest one. Sprung after the plan, the first
 plan of C6 to hold stood the couple 1.05 m apart, at 0.17. Stood a moment at a time, an earlier plan
-holds, 0.36 m apart, with her waist at its end. With the gap to a palm read from the start of a
-segment, the replay still stands C6 at 0.99. C1 reads 1.00 stood or sprung. Measured 2026-10-02.
+holds, 0.36 m apart, with the waist of the follow at its end. With the gap to a palm read from the
+start of a segment, the replay still stands C6 at 0.99. C1 reads 1.00 stood or sprung. Measured
+2026-10-02.
 
 Rejected: to let the arms settle toward ease at the last wind, a leap at a time. With the engine
 sprung after the plan, that took C1 from 0.56 to 0.53 and left D7 as it was.
 
 The spring is 30 hertz because of what was measured on D7 on 2026-10-01. At 15 hertz the engine
 gave by twist at 1.47 of a turn. At 25, 30 and 40 hertz it stood, with a strain of 0.33 to 0.34 at
-the extension of her left shoulder.
+the extension of the left shoulder of the follow.
 
 Rejected, each measured on the cards that the walk does not reach, on 2026-10-01:
 
@@ -1837,7 +1841,7 @@ from that distance.
 `simulation/*.nim` and of the pinned commit of the engine. A law fails when the answers carry
 another stamp, so a simulation that changed and was not answered again cannot pass. And a law walks
 every kept sweep and two drawn walks again, live, and asks for the same numbers. Verified by
-`test_rigid.nim`, suite "answers".
+`test_rigid.nim`, suite "Internal: Answers".
 
 Each of those three laws failed on a break made on purpose. The breaks were a comment added to
 `simulation/vector.nim`, a distance moved off the grid by 1 mm, and a kept turn changed by one step.
@@ -1894,8 +1898,9 @@ is current.
 Rejected: a conversion that allows missing and extra fields. It would also accept a broken file of
 this stamp, with zeros for the readings that it lacks.
 
-Verified by `suites/test_words.nim`, suite "kept readings of other physics are read again". Its law
-of other fields failed with `ValueError` where the file was converted before the stamp was read.
+Verified by `suites/test_words.nim`, suite "Internal: Kept readings of other physics are read
+again". Its law of other fields fails with `ValueError` where the file is converted before the
+stamp is read.
 
 **The two recordings that pages read are kept with a stamp too.** `design/modelled.json` and
 `design/rig.json` each carry one (`design/stamps.nim`). It is a digest of the physics of the
@@ -1958,6 +1963,21 @@ STYLE.md §6 asks, so a failing check does not stop the suites after it.
 Cost: a suite under `tests/suites/` is not run alone by testament. It runs as part of
 `test_suites.nim`, or alone by name as an argument to that binary.
 
+**Computed floats compare through `=~` (Article IV.5).** `tests/fixtures.nim` defines it as
+STYLE.md §4 does: a relative tolerance with an absolute floor. `-d:dance_ontology.tolerance_places`
+sets the count of places, and the default is 9. The name of the file does not open with `t`, so
+testament does not run it, and the review page counts no law in it. Verified by a run of
+`test_suites.nim` at 16 places, under the precision of a double, where the lengths of the arm in
+`suites/test_limb.nim` fail. At 15 places, and at 9, every suite passes.
+
+A bound with a physical margin, such as 0.05 m, ten degrees or 1 mm of a measured girth, stays a
+bound. It is a law of its own, and not an equality. A value that a clamp, an empty sum or a stored
+literal gives exactly keeps `==`.
+
+**The suites of the simulation open with `Internal:` too (Article IX.10).** The standards of the
+body give values to `simulation/rig.nim`, and no suite mirrors a chapter of them. The suites of
+`suites/test_workbook.nim` mirror the base sheet, which is an authority, and keep its names.
+
 **The review page counts the laws of every suite, joined or not.** It reads every `t*.nim` under
 `tests/`, so a suite that moves into a folder is still counted. Verified by
 `suites/test_review.nim`, which counts the laws of each stub and of the suites it imports, and reads
@@ -2012,6 +2032,10 @@ Declared unmet, so the Style row above stays true (Article VIII.1):
   ones touched since gained one, and the rest keep `## TODO: Document.` in spirit but not in text.
   Cost: a reader opens the body.
 - X.2: banner tiers are unmarked, and every banner is spaced as second tier.
+- IV.5: `==` is not poisoned on floats. The floats of this project are plain `float`, and a
+  distinct type for each measure reaches every module of the simulation and the drawing. The tests
+  compare computed floats through `=~`. Cost: a routine of the library can compare two computed
+  floats exactly, and no check stops it.
 - VII.1: readings of emitted code exist for the whole-cloth port only. The Reference and the viewer
   were written before the rule, and their binding shapes are unread. Cost: a copy in a hot path may
   hide there.
@@ -2147,9 +2171,9 @@ latent, and not urgent.
   pass the same crossing went unbroken for 16 of them, because the fold hid it entirely. It is not
   obviously mendable by tuning. A crossing that enters through an endpoint is at the endpoint for
   some interval, whatever the construction.
-- There are two choices. One is to let the break eat the end, which detaches the line from its
-  hand. The other is to hold the crossing hidden until it can be broken, which means to trim the
-  reach further, and that reaches every drawing. Left for the Architect to rule on.
+- There are two choices. One is to let the break eat the end, which detaches the line from its hand.
+  The other is to hold the crossing hidden until it can be broken, which means to trim the reach
+  further, and that reaches every drawing. Left for the Architect to rule on.
 - **The drawing does not yet build the chain the way the Architect describes it.** They danced the
   figure and stated the model. One connection **curls around** the other, and the other **hinges
   straight**. That is a right angle at the joined hands, which opens until the two forearms are in
@@ -2161,33 +2185,32 @@ latent, and not urgent.
   not a swan: two straight lines crossing in an X. It was scored before it was looked at. Anything
   that replaces the sine is drawn and looked at first.
 - **What the swan is in the body.** The reference draws it at `Face-to-back`, with all four hands
-  above. Asked
-  about a hammerlock, the Architect described a low one. The arm goes down, the shoulder rotates in
-  as the hand goes behind the back, and the elbow bends behind to an L.
-- The model reaches the four swans by a planned turn, and each one waits for the Architect to
-  hold it against their own body. Two questions stay. Which one the swan over the crown is.
-  Whether the extra full turn beyond the cross lives in the wrists and the hand hold, or in the
-  arms wrapping each other. Asked.
+  above. Asked about a hammerlock, the Architect described a low one. The arm goes down, the
+  shoulder rotates in as the hand goes behind the back, and the elbow bends behind to an L.
+- The model reaches the four swans by a planned turn, and each one waits for the Architect to hold
+  it against their own body. Two questions stay. Which one the swan over the crown is. Whether the
+  extra full turn beyond the cross lives in the wrists and the hand hold, or in the arms wrapping
+  each other. Asked.
 - The drawing of the reference itself puts both joins at one point, with the right-over-left
   connection under. The planned D7 holds its two joins 0.15 m apart. The carried walk, with its
-  hands at the edge of the band, wraps her arms round her head instead.
-- **The swans are reached, but not at ease.** C1 and C7 swing her collarbone forward to its end,
-  and D1 and D7 bend her elbow a third of the way into its ease. The easiest swan of all the
-  styles is not yet sought, as `walk.standing` seeks the easiest distance.
+  hands at the edge of the band, wraps the arms of the follow round the head instead.
+- **The swans are reached, but not at ease.** C1 and C7 swing the follow's collarbone forward to its
+  end. D1 and D7 bend the follow's elbow a third of the way into its ease. The easiest swan of all
+  the styles is not yet sought, as `walk.standing` seeks the easiest distance.
 - **With the springs, the planned swans of the same-name chain held on the last bit of one sum.**
-  When the wind was added to the facing of the follow in another order, that facing changed in
-  its last bit. Then D1 and D7 stood no pose in any of the sixteen styles. Measured 2026-10-02
-  with the engine sprung after the plan. The facing keeps its order, and the engine now stands
-  each planned moment instead (Planned turn).
-- **The swans wrap the connection that the card draws straight.** The card draws the connection
-  over at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen
-  from above in `design/rig.json`, the connection that C1 draws straight runs 2.61 times its line
-  between the shoulders, and the other 1.26. In D1 they run 2.11 and 1.52, and C7 and D7 are
-  their mirror images. Measured 2026-10-03.
+  When the wind was added to the facing of the follow in another order, that facing changed in its
+  last bit. Then D1 and D7 stood no pose in any of the sixteen styles. Measured 2026-10-02 with the
+  engine sprung after the plan. The facing keeps its order, and the engine now stands each planned
+  moment instead (Planned turn).
+- **The swans wrap the connection that the card draws straight.** The card draws the connection over
+  at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen from
+  above in `design/rig.json`, the connection that C1 draws straight runs 2.61 times its line between
+  the shoulders, and the other 1.26. In D1 they run 2.11 and 1.52, and C7 and D7 are their mirror
+  images. Measured 2026-10-03.
 - **A palm as thick as a hand gets the drawn swans, but it moves the carried walk.** The palm is a
-  ball 8 cm across, and a hand is about 3 cm thick. The test was a ball 4 cm across in the plan
-  and the engine, with plans pulled toward the drawn straight connection. They held C1 at 0.09
-  and C7 at 0.05, and D1 and D7 at 0.83, by the bend of her left elbow. But the carried
+  ball 8 cm across, and a hand is about 3 cm thick. The test was a ball 4 cm across in the plan and
+  the engine, with plans pulled toward the drawn straight connection. They held C1 at 0.09 and C7 at
+  0.05, and D1 and D7 at 0.83, by the bend of the left elbow of the follow. But the carried
   cross-name hold over the crown then gave at 0.98 of a turn, where a law holds it free.
 
   With a ball 6 cm across, the carried walk stayed as it is, and no plan of the drawn C1 held in
@@ -2200,9 +2223,10 @@ latent, and not urgent.
   locks go past the whole turn of the floor. Whether a hammerlock goes a whole turn, and what moves
   in the body when it does, is the Architect's.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
-- **Two one-moment flips in the cross-name crown turn.** They are 370 mm as his arm straightens over
-  at 0.28, and 220 mm as hers turns over at 1.18. Weightless links with springs this weak do that at
-  no cost. The corpus of the leap law does not include that sweep, and says so.
+- **Two one-moment flips in the cross-name crown turn.** They are 370 mm as the lead's arm
+  straightens over at 0.28, and 220 mm as the follow's arm turns over at 1.18. Weightless links with
+  springs this weak do that at no cost. The corpus of the leap law does not include that sweep,
+  and says so.
 - **The crossing reader at a knife edge**, with arms laid along each other, repository issue 88.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
