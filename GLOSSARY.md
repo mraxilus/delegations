@@ -109,9 +109,9 @@ The three files that every project carries and a curator may write: `README.md`,
 _Avoid_: docs, metadata
 
 **Role**:
-The string that says who is speaking: `coordinator`, `coordinator/<name>`, `curator`,
-`curator/<project>` or `contributor/<domain>/<project>`. It opens every issue, pull request and
-comment, and it labels every issue and pull request.
+The string that says who is speaking: `coordinator`, `curator`, `curator/<project>` or
+`contributor/<domain>/<project>`. It opens every issue, pull request and comment, and it
+labels every issue and pull request.
 _Avoid_: identity, persona
 
 **Queue**:
