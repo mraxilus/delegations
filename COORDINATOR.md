@@ -86,9 +86,10 @@ Where a fact needs a change to the repository, start the delegate whose scope ho
    request, as in `curator: fix(audit): read the role line below the attribution block`. That
    title is a commit subject, `type(scope): summary`, lowercase and imperative, with no closing
    period. Its scope follows `CONTRIBUTOR.md` and `CURATOR.md`, Branch and commits, and is not
-   the role. A thread that holds no role opens its title with `none`. One thread opens one pull
-   request where it can, so the part after the role matches that title. Never give an issue
-   title the commit form, because the ledger and the `body` hook refuse it there.
+   the role. A thread that does the work of the coordinator itself, such as a read, a check or
+   a cleanup, opens its title with `coordinator`. One thread opens one pull request where it
+   can, so the part after the role matches that title. Never give an issue title the commit
+   form, because the ledger and the `body` hook refuse it there.
 6. **Set the effort** of the delegate, as `Effort` says.
 7. **Write the brief.** It carries the role string, the branch, the issue and the effort. It
    also carries each default that you chose where the words of the Architect left a choice
