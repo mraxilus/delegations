@@ -81,11 +81,14 @@
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 600;
     font-display: block;
     src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
-  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
+  /* Maths and symbols ship one weight each, declared over 400 to 600: semibold label or
+     chip then draws its operators from them, as they are, and never from face of viewer's
+     system. Not 400 alone, which matches no semibold text, so its operators fall through. */
+  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400 600;
     font-display: block;
     unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27EF, U+2A00-2AFF, U+1D400-1D7FF;
     src: url(@EMBED:NotoSansMath-Regular.ttf@) format("truetype"); }
-  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
+  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400 600;
     font-display: block;
     unicode-range: U+25A0-25FF, U+2600-26FF, U+2700-27BF;
     src: url(@EMBED:NotoSansSymbols2-Regular.ttf@) format("truetype"); }
