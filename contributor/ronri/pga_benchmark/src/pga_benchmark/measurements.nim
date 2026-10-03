@@ -19,7 +19,7 @@
 ##     estimated cold is optimised for size, so library's loops stay scalar while straight-line
 ##     forms still vectorise. Suite `Internal: Inspector` holds it.
 ##   Result slots align to cache line, so every implementation writes same layout; alignment
-##     alone moves time of identical code by up to about a fifth.
+##     alone moves time of identical code by up to one fifth.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
