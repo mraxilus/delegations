@@ -43,10 +43,12 @@ const HEAD_BODY = """
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
     <p class="lede">Below the stage, each still cell of the reference page appears in
       that page's order, with the simulation's still beside the drawing. For each cell the
-      simulation winds the couple into that facing, lifts their joined hands, and then lets the
-      pose settle. Where that does not hold, it plans every arm through the turn, and the
-      engine follows the plan. A wound still keeps the distance where the pose carries the
-      least strain, and a planned still keeps the distance of its plan. Click a cell to put
+      simulation turns the dancer that the cell turns, lifts the joined hands over that
+      dancer's crown, and then lets the pose settle. An orbit is the dancer at the centre
+      turning the other way, so the hands go over their crown. Where that does not hold, it
+      plans every arm through the turn, and the engine stands each moment of the plan. A wound still
+      keeps the distance where the pose carries the least strain, and a planned still keeps
+      the distance of its plan. Click a cell to put
       it on the stage, and the arrow buttons or the
       arrow keys step from one cell to the next. One list holds the stills first and
       the sweeps after them.</p>
@@ -281,12 +283,13 @@ proc cellsBody(review: string; data: JsonNode): string =
 
 func unstamped*(text: string): string =
   ## Recording as page folds it in: its first field, stamp, left out.
-  const FIRST = "{\"stamp\":"
-  if not text.startsWith(FIRST): return text
+  const first = "{\"stamp\":"
+  if not text.startsWith(first): return text
   "{" & text[text.find('\n') + 1 .. ^1]
 
 
-when isMainModule:
+proc main() =
+  ## Fold recording, viewer and reference into `rig.html`, in directory first argument names.
   let
     directory = if paramCount() >= 1: paramStr(1) else: "."
     data = "design" / "rig.json"
@@ -308,3 +311,7 @@ when isMainModule:
                     "<script>" & readFile(view) & "</script>\n")
   writeFile(directory / "rig.html", withFaces(html))
   echo "wrote ", directory / "rig.html"
+
+
+when isMainModule:
+  main()

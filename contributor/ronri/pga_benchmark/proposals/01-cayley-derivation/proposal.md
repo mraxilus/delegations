@@ -29,10 +29,12 @@ use at compile time only.
 
 - **Completeness.** Each compound operator of the book gets one table: `∩ ∪ ⊞ ⊙ ⊡`. At pin,
   each is a chain of dense products at run time.
-- **Simplicity.** Four constructors go: `constructDual`, `constructMetricExomorphismAnti`, the
-  anti path of `constructProductExterior`, and the dual overload of `constructProductInterior`.
+- **Simplicity.** Three constructors go: `constructDual`, the anti path of
+  `constructProductExterior`, and the dual overload of `constructProductInterior`. At pin,
+  nothing calls the anti path.
 - **Consistency.** Every anti side comes from one rule, and every interior product is one dual
-  fed into one product.
+  fed into one product. At pin, `constructAnti` gives the anti side of reverse, 𝐆, wedge, dual
+  and dot. The antiproduct and the expansions come from a second transwedge family.
 
 ## Transwedge
 

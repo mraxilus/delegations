@@ -16,6 +16,12 @@ const
   APART = 0.40
   LEFT = Arm.Left
   RIGHT = Arm.Right
+  SAMPLES_ELBOW = 200  ## Grips and hands elbow law draws, seeded.
+  FLOOR_ELBOW = 125
+    ## Least of those that arm reaches, so elbow's own checks run: 139 at seed 7, 2026-10-02.
+  SAMPLES_CLIPPED = 300  ## Segments clipped law draws, seeded.
+  FLOOR_CLIPPED = 200
+    ## Least of those that meet torso band, so its wide error is read: 226 at seed 11, 2026-10-02.
 
 
 suite "the rig":
@@ -72,8 +78,10 @@ suite "one arm, forward and back":
   let stance = facing(HUMAN, APART)[Body.One]
 
   test "the elbow keeps both lengths on every swivel":
-    var random = initRand(7)
-    for _ in 0 ..< 200:
+    var
+      random = initRand(7)
+      reached = 0
+    for _ in 0..<SAMPLES_ELBOW:
       let
         shoulder_point = shoulder(HUMAN, stance, LEFT)
         grip = shoulder_point + (
@@ -89,9 +97,11 @@ suite "one arm, forward and back":
         chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0 .. 2.0 * PI))
       if chain.stretch <= HUMAN.upper + HUMAN.fore and
          chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
+        inc reached
         check abs(distance(chain.pose.shoulder, chain.pose.elbow) - HUMAN.upper) < 1e-9
         check abs(distance(chain.pose.elbow, chain.pose.wrist) - HUMAN.fore) < 1e-9
       check abs(distance(chain.pose.wrist, chain.pose.grip) - HUMAN.hand) < 1e-9
+    check reached >= FLOOR_ELBOW
 
   test "the joints read back what they were set to":
     var worst = 0.0
@@ -170,8 +180,10 @@ suite "nothing passes through anybody":
   ## `contact` and `vector` alone, which engine's own contact does not replace,
   ## since reader still asks them whether arm presses body.
   test "the clipped test agrees with a sampled truth, and errs only wide":
-    var random = initRand(11)
-    for _ in 0 ..< 300:
+    var
+      random = initRand(11)
+      finite = 0
+    for _ in 0..<SAMPLES_CLIPPED:
       let
         a: Vector = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
         b: Vector = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
@@ -186,8 +198,10 @@ suite "nothing passes through anybody":
       if truth == Inf:
         check got == Inf
       else:
+        inc finite
         check got <= truth + 1e-9
         check got >= truth - 0.003
+    check finite >= FLOOR_CLIPPED
 
   test "over the crown there is nothing to hit":
     let

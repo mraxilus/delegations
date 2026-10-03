@@ -711,8 +711,14 @@ a copy from two different faces.
   gets the same property from a cache keyed on the file that holds the digests, one layer
   down. The store sits at `~/.cache/koch/assets`, beside `~/.cache/koch/nim` and outside the
   checkout, because the audit reads untracked files.
-- The rows hold `woff2` faces for pages, and TrueType or OpenType faces for the desktop atlas,
-  which `@fontsource` does not ship. Where two projects pin one file, they pin one digest.
+- **Pages and the desktop atlas embed whole Noto faces, from the Noto release (Article X.8).**
+  Noto was chosen so that no character of a page falls outside its faces, and a subset undoes
+  that. The rows hold each whole face that a page draws, as TrueType, which `@fontsource` does
+  not ship. Where two projects pin one file, they pin one digest.
+- The `woff2` subsets of `@fontsource` stay only while a page still asks for one. A Noto subset
+  row leaves once no page names it. Commit Mono is no Noto, and pages keep its subset.
+- Cost: a whole face is 610 to 760 KB of TrueType, where its Latin subset is about 13 KB. A page
+  that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
   `compilers.digestOf`, so the parse that `test_compilers.nim` tests also guards the store.
 - Verified by `suites/test_assets.nim`. Verified by hand with `nim r koch fetch-assets`, recorded
