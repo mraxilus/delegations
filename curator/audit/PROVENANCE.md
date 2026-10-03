@@ -672,14 +672,19 @@ may open with a whole paragraph, and the finding is read in a log.
   empty list would let a pull request opened and merged in one go carry no label.
 - Cost: an issue carries no branch, so which label it needs stays a judgement, and stays the
   ledger's. A comment is unreachable, and that is what remains of the first carried rule.
-- Cost: the labels are searched for the expected string rather than compared whole. A label
-  joins when work hands across, and labels are never removed.
+- Cost: the labels are searched for the expected string rather than compared whole. A role
+  label joins when work hands across, and role labels are never removed. The `architect` label
+  marks a state and comes off, and the search passes over it.
 - Cost: `check` cannot run this verb, because it has no pull request to read. It is the one check
   that a delegate meets on the runner rather than before a push.
 - Verified by `suites/test_role.nim` on the line reader, the cut, and each arm of the grammar.
 - Verified by hand with `nim r koch check-role`, recorded 2026-09-14. Pull requests replayed as they
   stood before they were mended, with neither line nor label, report both findings each. Pull
   requests of each role, as they stand, report none.
+
+**The coordinator holds no branch, so `check-role` never reads it.** It opens issues and
+comments, and no pull request. Its role string is `coordinator`, which `isRoleString` in the
+`body` hook accepts (section Hooks).
 
 **The role line may stand below the attribution block of a harness.** A harness that starts a
 delegate in a thread writes two lines above each pull request body that it opens, and it
@@ -798,6 +803,7 @@ daily and writes one issue labelled `curator`. It names these:
 - a `Closes #N` that never fired;
 - an issue or pull request that opens with no role line, or carries no label;
 - an issue whose title takes the form of a commit subject;
+- an issue or pull request closed with the `architect` label still on it;
 - the rulesets of `main` or the ruleset on every branch drifted from the list in `CURATOR.md`.
 
 The settings read goes through the rulesets endpoints. The classic protection endpoint answers
@@ -879,6 +885,32 @@ beside the section that each title comes from.
   title is named and no other, among them `fix:`, `feat(audit)!:`, `bug:` and `koch:`. Over
   the real titles of that day, the step names nothing.
 - Cost: the pattern is `jq` inside shell, as the role-line pattern is, so no suite drives it.
+
+**The ledger names a closed item that still carries the `architect` label.** The label marks a
+state, and not a role. An item carries it while it waits on the Architect, and the coordinator
+removes it once the ruling is posted (`COORDINATOR.md`, The queue). A closed item that still
+carries it is a removal that the coordinator missed, and the next filter on the label shows a
+stale queue.
+
+- Pull requests are read in every state and then filtered, so a closed one and a merged one
+  both count.
+- The role-line pattern for issues names `coordinator` beside `curator` and `contributor/`,
+  because a brief and a ruling of the coordinator open with its role line. The pattern for pull
+  requests does not, because the coordinator opens no pull request.
+- Cost: `--limit 100` reads the newest hundred of each kind. A stale label older than those is
+  missed. The coordinator removes each label as it goes, so the list stays short (inferred).
+- Cost: `gh` filters a label through search, so a label that no item carries yet reads as no
+  item. That is inferred from the source of `gh`, and not run against GitHub. A read that fails
+  instead turns the run red, by `set -e`, and is never silent.
+- Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
+  2026-10-03. The lines were read from the workflow file. The fixture holds two closed issues
+  and three pull requests: one open, one closed and one merged. The step names both issues and
+  the closed and merged pull requests, and nothing else. Over no item, and over one open pull
+  request, it names nothing.
+- The role-line pattern for issues, verified by hand through real `jq` 1.7 on 2026-10-03, over
+  fixture bodies read as the workflow holds them. `**Role:** coordinator`, after a marker or
+  alone, passes, and so does `Role: coordinator` unbolded. `**Role:** coordinat`, a missing
+  role line, a null body and an unfilled template are named.
 
 ## Toolchain
 
@@ -1953,9 +1985,10 @@ that holds it. The events, each one a verb argument:
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
   history.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
-  counts. It also refuses an issue titled as a commit or carrying no role label, and a pull
-  request body that leaves the template unfilled.
-- `stop` refuses the end of a turn that pushed or posted and did not end with the sign-off.
+  counts. It also refuses an issue titled as a commit, or one with no role label or with the
+  label `coordinator`. It refuses a pull request body that leaves the template unfilled.
+- `stop` refuses the end of a turn that pushed or posted and lacks the sign-off. It also
+  refuses a sign-off out of shape.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
@@ -2017,6 +2050,40 @@ commit before the new one, and `check-commits` reads the true order in CI.
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+**`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
+sign-off row or a decision class may name the coordinator as the role that acts. No branch
+holds it, so no hook compares its role line with a branch. An issue that carries the label
+`coordinator` is refused. A brief carries the label of the role that it starts, and no item is
+the work of the coordinator.
+
+**The sign-off serves the coordinator first, so `stop` holds the parts that the coordinator
+reads.** The coordinator lifts each decision onto a card for the Architect without a change of
+words, and sorts on its class. It also reads which role each ⚠️ row waits on (`GUIDE.md`, The
+sign-off).
+The block carries eight labels in order: `Role`, `Brief`, `State`, `Context`, `Decisions`, the
+table, `Summary` and `Next step`.
+
+- The brief is `#N` or `none`. The state is `done`, `working`, `waiting` or `blocked`, and it is
+  `blocked` exactly when a decision blocks this delegate.
+- Decisions are numbered from `D1`, and each one names its class and where its ruling goes. With
+  no decision, the label reads `**Decisions:** None.`, and over its blocks it stands alone.
+- A class is `blocks this delegate`, that class with `and` and the role strings that wait too,
+  `has a workaround:` with the workaround, or `fact`.
+- A `fact` offers no option and picks none. Every other decision asks a question that ends with
+  `?`. It offers two to four options, each with a label of at most three words, and recommends
+  one by its letter. Four is what a decision card holds.
+- A ⚠️ row opens its last cell with a role string or `outside`. A ⏸️ row names a decision that
+  the block holds, as `D1`.
+- Rejected: a fenced block of YAML. It renders as no table on GitHub, and the `english` check
+  skips fenced text, so its prose would go unchecked.
+- Cost: the check reads shape, and never whether a decision says anything, or whether an option
+  is honest.
+- Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
+  runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
+  sign-off. The second stop passes.
+- Verified by `suites/test_hooks.nim`: one assertion for each rule above. The fixtures are the
+  example in `GUIDE.md`, cut short, and a sign-off with no brief and no decision.
 
 ## Watching main
 
