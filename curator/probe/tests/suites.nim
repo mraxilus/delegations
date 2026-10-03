@@ -2,8 +2,7 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 import std/unittest
 import ../src/probe

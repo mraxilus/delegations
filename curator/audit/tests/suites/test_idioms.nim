@@ -99,6 +99,50 @@ suite "Idioms":
     check messages("tests/suites/test_x.nim", module("")).len == 0  # suite is not stub
 
 
+  test "stub's `-r` is cut from `cmd`, and line of `batchable` or `joinable` goes":
+    let
+      header = "discard \"\"\"\naction: run\nbatchable: false\n" &
+        "cmd: \"nim c -r --hints:off -run $options $file\"\njoinable: true\n\"\"\"\n"
+      body = PROFILER_IMPORT & "\n\ninclude \"suites.nim\"\n"
+      stub = header & module(body)
+      fix = fixIdioms("tests/test_x.nim", stub)
+    check checkIdioms("tests/test_x.nim", stub).mapIt(it.line) == @[3, 4, 5]  # line of each key
+    check fix.source == "discard \"\"\"\naction: run\n" &
+      "cmd: \"nim c --hints:off -run $options $file\"\n\"\"\"\n" & module(body)
+    check fix.fixed.mapIt(it.line) == @[3, 4, 5]  # reports name lines as given
+    check checkIdioms("tests/test_x.nim", fix.source).len == 0  # flag alone, so `-run` stays
+    check fixIdioms("tests/test_x.nim", fix.source).fixed.len == 0  # second fix writes nothing
+    check fixIdioms("tests/suites/test_x.nim", stub).source == stub  # suite is no stub
+    let tail = "discard \"\"\"\ncmd: \"nim c $options $file -r\"\n\"\"\"\n" & module(body)
+    check fixIdioms("tests/test_x.nim", tail).source ==
+      "discard \"\"\"\ncmd: \"nim c $options $file\"\n\"\"\"\n" & module(body)  # before quote
+
+
+  test "profiler import stands on one line, after pragmas of entry, umbrella and stub":
+    let
+      guard = "when compileOption(\"profiler\"):\n  import std/nimprof\n"
+      two = module(guard & "\nimport std/os\n")
+    check checkProfiler("a.nim", two).mapIt(it.line) == @[HEAD_LINES + 1]
+    check fixed(two).source == module(PROFILER_IMPORT & "\n\nimport std/os\n")
+    check checkProfiler("a.nim", fixed(two).source).len == 0
+    let entry = module("import std/os\n\nwhen isMainModule:\n  echo 1\n")
+    check checkProfiler("a.nim", entry)[0].message.endsWith("got none.")
+    check fixed(entry).source ==
+      module(PROFILER_IMPORT & "\n\nimport std/os\n\nwhen isMainModule:\n  echo 1\n")
+    check fixed(entry).source.isSettled and checkProfiler("a.nim", fixed(entry).source).len == 0
+    let library = module("import std/os\n")
+    check checkProfiler("curator/probe/src/probe.nim", library).len == 1  # umbrella
+    check checkProfiler("curator/probe/src/probe/ring.nim", library).len == 0  # module of it
+    check checkProfiler("a.nim", library).len == 0  # neither entry nor umbrella
+    let
+      header = "discard \"\"\"\naction: run\n\"\"\"\n## Do.\n\n" &
+        "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
+      stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
+    check stub.source == header & "\n" & PROFILER_IMPORT & "\n\ninclude \"suites.nim\"\n"
+    check stub.fixed.mapIt(it.message) == @["profiler import (STYLE.md §3)"]
+    check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
+
+
   test "test echo of unlabelled value is debug output; label or condition passes":
     let debug = module("test \"a\":\n  echo x\n")
     check "got `echo x`" in messages("tests/suites/test_x.nim", debug)[0]
@@ -216,7 +260,7 @@ suite "Idiom fixes":
     let
       strict = "\n" & STRICT_FUNCS & "\n\n"
       plain = fixed("## Do.\n\nimport std/os\n")
-      profiled = "when compileOption(\"profiler\"):\n  import std/nimprof\n"
+      profiled = PROFILER_IMPORT & "\n"
     check plain.source == "## Do.\n" & strict & "import std/os\n"  # after header docs
     check plain.fixed.mapIt(it.line) == @[0]  # whole file, as check names it
     check plain.source.isSettled

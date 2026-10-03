@@ -32,9 +32,9 @@ between steps. Every other bound in these tables is derived from the axioms alon
 ## Causes
 
 - **D01, over.** Dense products spend every Cayley-table term where typed forms spend few. Evidence:
-  73 gaps. The widest is cga5d/partner_round_point, which spends 518 multiplies against 10. Closes
+  128 gaps. The widest is cga5d/partner_round_point, which spends 518 multiplies against 10. Closes
   when no typed gap spends more multiplies than its reference.
-- **D02, over.** Library calls run slower than typed forms beyond the band. Evidence: 151 gaps. The
+- **D02, over.** Library calls run slower than typed forms beyond the band. Evidence: 259 gaps. The
   worst is cga5d/carrier_co_round_point, at 46.8 ns against 0.4 ns. Closes when no gap's library
   median exceeds 1.25 times its reference's.
 - **D03, over.** Operators zero-fill their full-width result before they write it. Evidence: 80 of
@@ -54,8 +54,9 @@ between steps. Every other bound in these tables is derived from the axioms alon
   cga5d/norm_weight, cga5d/norm, cga5d/normalize_bulk, cga5d/normalize_weight, cga5d/unitize, and 10
   more. Closes when every bench measurement's NaN share is zero.
 - **D08, over.** A transform by motor spells three products, because it has no operator of its own.
-  Evidence: rga4d/transform_point_motor, rga4d/transform_line_motor, rga4d/transform_plane_motor.
-  Closes when every catalogued measurand spells one library function.
+  Evidence: rga4d/transform_point_motor, rga4d/transform_line_motor, rga4d/transform_plane_motor,
+  rga3d/transform_point_motor, rga3d/transform_line_motor. Closes when every catalogued measurand
+  spells one library function.
 - **D09, over.** The library refuses two norms that the reference carries. Evidence:
   cga5d/norm_center `|⊙`, cga5d/norm_radius `|⊘`, cga4d/norm_center `|⊙`, cga4d/norm_radius `|⊘`.
   Closes when the catalogue's missing list is empty.
@@ -194,8 +195,8 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | `∨` | Wedge | 81 | 0 | 0 | 384 | 81/384 |
 | `⟑` | Geometric | 192 | 0 | 0 | 384 | 192/384 |
 | `⟇` | Geometric | 192 | 0 | 0 | 384 | 192/384 |
-| `∙` | ScalarForm | 8 | 0 | 0 | 264 | 8/384 |
-| `∘` | ScalarForm | 8 | 0 | 0 | 264 | 8/384 |
+| `∙` | FormScalar | 8 | 0 | 0 | 264 | 8/384 |
+| `∘` | FormScalar | 8 | 0 | 0 | 264 | 8/384 |
 | `∨★` | ContractBulk | 54 | 0 | 0 | 384 | 54/384 |
 | `∨☆` | ContractWeight | 27 | 0 | 0 | 384 | 27/384 |
 | `∧★` | ExpandBulk | 27 | 0 | 0 | 384 | 27/384 |
@@ -218,13 +219,13 @@ Gaps: 111. Over 88, met 23, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `|∙` | Norm | 8 | 0 | 1 | 136 | 8/640 |
 | `|∘` | Norm | 8 | 0 | 1 | 136 | 8/640 |
-| `|∙²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/256 |
-| `|∘²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/256 |
+| `|∙²` | NormSquared | 8 | 0 | 0 | 136 | 8/256 |
+| `|∘²` | NormSquared | 8 | 0 | 0 | 136 | 8/256 |
 | `|` | 2 Norm | 16 | 0 | 2 | 136 | 16/1664 |
 | `^∙` | Unitize | 24 | 1 | 1 | 256 | 24/512 |
 | `^∘` | Unitize | 24 | 1 | 1 | 256 | 24/512 |
 | `^` | Unitize | 24 | 1 | 1 | 256 | 24/512 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 256 | 0/256 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `∩` | Support | 54 | 0 | 0 | 256 | 162/1280 |
@@ -382,8 +383,8 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `∨` | Wedge | 243 | 0 | 0 | 768 | 243/768 |
 | `⟑` | Geometric | 1024 | 0 | 0 | 768 | 1024/768 |
 | `⟇` | Geometric | 1024 | 0 | 0 | 768 | 1024/768 |
-| `∙` | ScalarForm | 32 | 0 | 0 | 520 | 32/768 |
-| `∘` | ScalarForm | 32 | 0 | 0 | 520 | 32/768 |
+| `∙` | FormScalar | 32 | 0 | 0 | 520 | 32/768 |
+| `∘` | FormScalar | 32 | 0 | 0 | 520 | 32/768 |
 | `∨★` | ContractBulk | 243 | 0 | 0 | 768 | 243/768 |
 | `∨☆` | ContractWeight | 243 | 0 | 0 | 768 | 243/768 |
 | `∧★` | ExpandBulk | 243 | 0 | 0 | 768 | 243/768 |
@@ -406,21 +407,21 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
 | `|∙` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
 | `|∘` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
-| `|∙²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/512 |
-| `|∘²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/512 |
+| `|∙²` | NormSquared | 32 | 0 | 0 | 264 | 32/512 |
+| `|∘²` | NormSquared | 32 | 0 | 0 | 264 | 32/512 |
 | `|` | 2 Norm | 64 | 0 | 2 | 264 | 64/3328 |
 | `^∙` | Unitize | 64 | 1 | 1 | 512 | 64/1024 |
 | `^∘` | Unitize | 64 | 1 | 1 | 512 | 64/1024 |
 | `^` | Unitize | 64 | 1 | 1 | 512 | 64/1024 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 512 | 0/512 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 512 | 0/512 |
 | `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
 | `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
 | `■` | Permutation | 0 | 0 | 0 | 512 | 0/512 |
 | `□` | Permutation | 0 | 0 | 0 | 512 | 0/512 |
 | `|■` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
 | `|□` | Norm | 32 | 0 | 1 | 264 | 32/1280 |
-| `⊟` | ConstantProduct | 0 | 0 | 0 | 512 | 0/512 |
-| `⊞` | ConstantProduct | 0 | 0 | 0 | 512 | 243/2048 |
+| `⊟` | ProductConstant | 0 | 0 | 0 | 512 | 0/512 |
+| `⊞` | ProductConstant | 0 | 0 | 0 | 512 | 243/2048 |
 | `⊙` | Center | 162 | 0 | 0 | 512 | 486/3584 |
 | `⊡` | Container | 162 | 0 | 0 | 512 | 243/2560 |
 | `⊛` | Permutation + Container + JoinCarrier | 324 | 0 | 0 | 512 | 518/30720 |
@@ -428,54 +429,102 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 ## rga3d
 
 This algebra has 3 dimensions, a rigid metric and a 64-byte multivector. The inspector took the
-counts on 2026-10-01, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-02, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `31213421d6699cb44a9a171b75388ef8188e1136` and flags `-d:release`. The bench ran 5 times on
-2026-10-02, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
+2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. The allocation gauge was live.
-Gaps: 40. Over 17, met 23, unmeasured 0.
+Gaps: 88. Over 65, met 23, unmeasured 0.
 
 | Id | Measurand | Mul | Div | Bytes | Int | Chk | ns | Status |
 |----|-----------|-----|-----|-------|-----|-----|----|--------|
-| G233 | wedge | 27/– | 0/– | 192/– | 0/– | 0/– | 5.4/– | met |
-| G234 | wedge_anti | 27/– | 0/– | 192/– | 0/– | 0/– | 9.4/– | met |
-| G235 | wedge_dot | 48/– | 0/– | 192/– | 0/– | 0/– | 15.0/– | met |
-| G236 | wedge_dot_anti | 48/– | 0/– | 192/– | 0/– | 0/– | 15.6/– | met |
-| G237 | dot | 4/– | 0/– | 192/– | 0/– | 0/– | 3.2/– | met |
-| G238 | dot_anti | 4/– | 0/– | 192/– | 0/– | 0/– | 3.2/– | met |
-| G239 | contract_bulk | 18/– | 0/– | 192/– | 0/– | 0/– | 6.8/– | met |
-| G240 | contract_weight | 9/– | 0/– | 192/– | 0/– | 0/– | 4.3/– | met |
-| G241 | expand_bulk | 9/– | 0/– | 192/– | 0/– | 0/– | 4.3/– | met |
-| G242 | expand_weight | 18/– | 0/– | 192/– | 0/– | 0/– | 6.8/– | met |
-| G243 | add | 0/– | 0/– | 256/– | 0/– | 0/– | 3.3/– | over |
-| G244 | subtract | 0/– | 0/– | 256/– | 0/– | 0/– | 3.2/– | over |
-| G245 | project_central | 36/– | 0/– | 576/– | 2/– | 2/– | 10.8/– | over |
-| G246 | project_central_anti | 45/– | 0/– | 576/– | 2/– | 2/– | 11.9/– | over |
-| G247 | project_orthogonal | 45/– | 0/– | 576/– | 2/– | 2/– | 11.8/– | over |
-| G248 | project_orthogonal_anti | 36/– | 0/– | 576/– | 2/– | 2/– | 10.0/– | over |
-| G249 | scale | 8/– | 0/– | 136/– | 0/– | 0/– | 4.1/– | met |
+| G233 | wedge | 27/– | 0/– | 192/– | 0/– | 0/– | 6.2/– | met |
+| G234 | wedge_anti | 27/– | 0/– | 192/– | 0/– | 0/– | 11.2/– | met |
+| G235 | wedge_dot | 48/– | 0/– | 192/– | 0/– | 0/– | 17.1/– | met |
+| G236 | wedge_dot_anti | 48/– | 0/– | 192/– | 0/– | 0/– | 17.1/– | met |
+| G237 | dot | 4/– | 0/– | 192/– | 0/– | 0/– | 4.2/– | met |
+| G238 | dot_anti | 4/– | 0/– | 192/– | 0/– | 0/– | 3.7/– | met |
+| G239 | contract_bulk | 18/– | 0/– | 192/– | 0/– | 0/– | 7.7/– | met |
+| G240 | contract_weight | 9/– | 0/– | 192/– | 0/– | 0/– | 5.1/– | met |
+| G241 | expand_bulk | 9/– | 0/– | 192/– | 0/– | 0/– | 5.1/– | met |
+| G242 | expand_weight | 18/– | 0/– | 192/– | 0/– | 0/– | 7.8/– | met |
+| G243 | add | 0/– | 0/– | 256/– | 0/– | 0/– | 4.9/– | over |
+| G244 | subtract | 0/– | 0/– | 256/– | 0/– | 0/– | 4.9/– | over |
+| G245 | project_central | 36/– | 0/– | 576/– | 2/– | 2/– | 12.1/– | over |
+| G246 | project_central_anti | 45/– | 0/– | 576/– | 2/– | 2/– | 13.3/– | over |
+| G247 | project_orthogonal | 45/– | 0/– | 576/– | 2/– | 2/– | 14.3/– | over |
+| G248 | project_orthogonal_anti | 36/– | 0/– | 576/– | 2/– | 2/– | 11.6/– | over |
+| G249 | scale | 8/– | 0/– | 136/– | 0/– | 0/– | 4.6/– | met |
 | G250 | bulk | 0/– | 0/– | 128/– | 0/– | 0/– | 1.8/– | met |
-| G251 | weight | 0/– | 0/– | 128/– | 0/– | 0/– | 1.9/– | met |
-| G252 | complement_right | 0/– | 0/– | 128/– | 0/– | 0/– | 2.3/– | met |
-| G253 | complement_left | 0/– | 0/– | 128/– | 0/– | 0/– | 2.3/– | met |
-| G254 | reverse | 0/– | 0/– | 128/– | 0/– | 0/– | 3.2/– | met |
+| G251 | weight | 0/– | 0/– | 128/– | 0/– | 0/– | 1.8/– | met |
+| G252 | complement_right | 0/– | 0/– | 128/– | 0/– | 0/– | 2.6/– | met |
+| G253 | complement_left | 0/– | 0/– | 128/– | 0/– | 0/– | 2.6/– | met |
+| G254 | reverse | 0/– | 0/– | 128/– | 0/– | 0/– | 1.6/– | met |
 | G255 | reverse_anti | 0/– | 0/– | 128/– | 0/– | 0/– | 1.6/– | met |
-| G256 | dual_bulk | 0/– | 0/– | 128/– | 0/– | 0/– | 2.1/– | met |
-| G257 | dual_weight | 0/– | 0/– | 128/– | 0/– | 0/– | 1.9/– | met |
-| G258 | negate | 0/– | 0/– | 192/– | 0/– | 0/– | 3.1/– | over |
-| G259 | norm_bulk | 4/– | 0/– | 320/– | 1/– | 1/– | 11.1/– | over |
-| G260 | norm_weight | 4/– | 0/– | 320/– | 1/– | 1/– | 10.4/– | over |
-| G326 | norm_bulk_squared | 4/– | 0/– | 128/– | 0/– | 0/– | 2.2/– | met |
-| G327 | norm_weight_squared | 4/– | 0/– | 128/– | 0/– | 0/– | 2.0/– | met |
-| G261 | norm | 8/– | 0/– | 832/– | 4/– | 4/– | 12.1/– | over |
-| G262 | normalize_bulk | 12/– | 1/– | 256/– | 1/– | 1/– | 6.1/– | over |
-| G263 | normalize_weight | 12/– | 1/– | 256/– | 1/– | 1/– | 3.4/– | over |
-| G264 | unitize | 12/– | 1/– | 256/– | 1/– | 1/– | 3.4/– | over |
-| G265 | attitude | 0/– | 0/– | 128/– | 0/– | 0/– | 1.9/– | met |
-| G266 | select_grade | 0/– | 0/– | 200/– | 0/– | 0/– | 2.9/– | over |
-| G267 | select_grade_anti | 0/– | 0/– | 200/– | 0/– | 1/– | 3.4/– | over |
-| G268 | select_part | – | – | – | – | – | 0.5/– | met |
-| G269 | support | 54/– | 0/– | 640/– | 3/– | 3/– | 8.2/– | over |
-| G270 | support_anti | 54/– | 0/– | 640/– | 3/– | 3/– | 8.7/– | over |
+| G256 | dual_bulk | 0/– | 0/– | 128/– | 0/– | 0/– | 1.8/– | met |
+| G257 | dual_weight | 0/– | 0/– | 128/– | 0/– | 0/– | 1.8/– | met |
+| G258 | negate | 0/– | 0/– | 192/– | 0/– | 0/– | 4.2/– | over |
+| G259 | norm_bulk | 4/– | 0/– | 320/– | 1/– | 1/– | 4.0/– | over |
+| G260 | norm_weight | 4/– | 0/– | 320/– | 1/– | 1/– | 4.0/– | over |
+| G326 | norm_bulk_squared | 4/– | 0/– | 128/– | 0/– | 0/– | 2.1/– | met |
+| G327 | norm_weight_squared | 4/– | 0/– | 128/– | 0/– | 0/– | 1.8/– | met |
+| G261 | norm | 8/– | 0/– | 832/– | 4/– | 4/– | 14.3/– | over |
+| G262 | normalize_bulk | 12/– | 1/– | 256/– | 1/– | 1/– | 6.0/– | over |
+| G263 | normalize_weight | 12/– | 1/– | 256/– | 1/– | 1/– | 3.8/– | over |
+| G264 | unitize | 12/– | 1/– | 256/– | 1/– | 1/– | 3.8/– | over |
+| G265 | attitude | 0/– | 0/– | 128/– | 0/– | 0/– | 1.8/– | met |
+| G266 | select_grade | 0/– | 0/– | 200/– | 0/– | 0/– | 4.1/– | over |
+| G267 | select_grade_anti | 0/– | 0/– | 200/– | 0/– | 1/– | 4.7/– | over |
+| G268 | select_part | – | – | – | – | – | 0.6/– | met |
+| G269 | support | 54/– | 0/– | 640/– | 3/– | 3/– | 9.8/– | over |
+| G270 | support_anti | 54/– | 0/– | 640/– | 3/– | 3/– | 10.0/– | over |
+| G330 | wedge_point_point | 27/6 | 0/0 | 192/72 | 0/0 | 0/0 | 12.1/3.5 | over |
+| G331 | wedge_point_line | 27/3 | 0/0 | 192/56 | 0/0 | 0/0 | 13.2/3.5 | over |
+| G332 | wedge_line_point | 27/3 | 0/0 | 192/56 | 0/0 | 0/0 | 13.3/3.5 | over |
+| G333 | wedge_anti_line_line | 27/6 | 0/0 | 192/72 | 0/0 | 0/0 | 12.0/3.5 | over |
+| G334 | wedge_anti_point_line | 27/3 | 0/0 | 192/56 | 0/0 | 0/0 | 12.8/3.5 | over |
+| G335 | wedge_anti_line_point | 27/3 | 0/0 | 192/56 | 0/0 | 0/0 | 12.6/3.5 | over |
+| G336 | dot_point_point | 4/2 | 0/0 | 192/56 | 0/0 | 0/0 | 3.6/3.5 | over |
+| G337 | dot_line_line | 4/1 | 0/0 | 192/56 | 0/0 | 0/0 | 3.6/3.5 | over |
+| G338 | dot_anti_point_point | 4/1 | 0/0 | 192/56 | 0/0 | 0/0 | 3.6/3.5 | over |
+| G339 | dot_anti_line_line | 4/2 | 0/0 | 192/56 | 0/0 | 0/0 | 3.6/3.5 | over |
+| G340 | wedge_dot_anti_motor_motor | 48/12 | 0/0 | 192/128 | 0/0 | 0/0 | 17.4/4.2 | over |
+| G341 | transform_point_motor | –/15 | –/0 | –/80 | –/0 | –/0 | 39.5/4.8 | over |
+| G342 | transform_line_motor | –/15 | –/0 | –/80 | –/0 | –/0 | 37.3/5.0 | over |
+| G343 | project_orthogonal_point_line | 45/10 | 0/0 | 576/72 | 2/0 | 2/0 | 14.4/4.0 | over |
+| G344 | support_line | 54/4 | 0/0 | 640/48 | 3/0 | 3/0 | 10.1/1.1 | over |
+| G345 | support_anti_point | 54/4 | 0/0 | 640/48 | 3/0 | 3/0 | 10.7/1.1 | over |
+| G346 | reverse_anti_motor | 0/0 | 0/0 | 128/96 | 0/0 | 0/0 | 1.6/1.1 | over |
+| G347 | unitize_motor | 12/6 | 1/1 | 256/128 | 1/0 | 1/0 | 3.3/3.1 | over |
+| G348 | norm_weight_motor | 4/2 | 0/0 | 320/40 | 1/0 | 1/0 | 4.0/1.7 | over |
+| G349 | norm_bulk_motor | 4/2 | 0/0 | 320/40 | 1/0 | 1/0 | 4.0/2.1 | over |
+| G350 | complement_right_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 2.6/0.9 | over |
+| G351 | complement_left_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 2.6/0.9 | over |
+| G352 | reverse_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.6/0.8 | over |
+| G353 | reverse_anti_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.6/0.9 | over |
+| G354 | dual_bulk_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G355 | dual_weight_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G356 | bulk_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G357 | weight_point | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G358 | norm_bulk_point | 4/2 | 0/0 | 320/32 | 1/0 | 1/0 | 4.0/2.1 | over |
+| G359 | norm_weight_point | 4/0 | 0/0 | 320/32 | 1/0 | 1/0 | 4.0/0.6 | over |
+| G360 | norm_bulk_squared_point | 4/2 | 0/0 | 128/32 | 0/0 | 0/0 | 2.1/0.7 | over |
+| G361 | norm_weight_squared_point | 4/– | 0/– | 128/– | 0/– | 0/– | 1.8/0.7 | over |
+| G362 | unitize_point | 12/2 | 1/1 | 256/48 | 1/0 | 1/0 | 3.8/1.4 | over |
+| G363 | attitude_point | 0/0 | 0/0 | 128/32 | 0/0 | 0/0 | 1.8/0.7 | over |
+| G364 | complement_right_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 2.6/0.9 | over |
+| G365 | complement_left_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 2.6/0.9 | over |
+| G366 | reverse_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.6/0.9 | over |
+| G367 | reverse_anti_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.6/0.8 | over |
+| G368 | dual_bulk_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G369 | dual_weight_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G370 | bulk_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.8 | over |
+| G371 | weight_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.9 | over |
+| G372 | norm_bulk_line | 4/0 | 0/0 | 320/32 | 1/0 | 1/0 | 4.0/0.7 | over |
+| G373 | norm_weight_line | 4/2 | 0/0 | 320/32 | 1/0 | 1/0 | 4.0/2.1 | over |
+| G374 | norm_bulk_squared_line | 4/1 | 0/0 | 128/32 | 0/0 | 0/0 | 2.1/0.5 | over |
+| G375 | norm_weight_squared_line | 4/– | 0/– | 128/– | 0/– | 0/– | 1.8/0.7 | over |
+| G376 | unitize_line | 12/5 | 1/1 | 256/48 | 1/0 | 1/0 | 3.8/3.5 | over |
+| G377 | attitude_line | 0/0 | 0/0 | 128/48 | 0/0 | 0/0 | 1.8/0.9 | over |
 
 ### Multivector lower bound
 
@@ -485,8 +534,8 @@ Gaps: 40. Over 17, met 23, unmeasured 0.
 | `∨` | Wedge | 27 | 0 | 0 | 192 | 27/192 |
 | `⟑` | Geometric | 48 | 0 | 0 | 192 | 48/192 |
 | `⟇` | Geometric | 48 | 0 | 0 | 192 | 48/192 |
-| `∙` | ScalarForm | 4 | 0 | 0 | 136 | 4/192 |
-| `∘` | ScalarForm | 4 | 0 | 0 | 136 | 4/192 |
+| `∙` | FormScalar | 4 | 0 | 0 | 136 | 4/192 |
+| `∘` | FormScalar | 4 | 0 | 0 | 136 | 4/192 |
 | `∨★` | ContractBulk | 18 | 0 | 0 | 192 | 18/192 |
 | `∨☆` | ContractWeight | 9 | 0 | 0 | 192 | 9/192 |
 | `∧★` | ExpandBulk | 9 | 0 | 0 | 192 | 9/192 |
@@ -509,76 +558,143 @@ Gaps: 40. Over 17, met 23, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
 | `|∙` | Norm | 4 | 0 | 1 | 72 | 4/320 |
 | `|∘` | Norm | 4 | 0 | 1 | 72 | 4/320 |
-| `|∙²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/128 |
-| `|∘²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/128 |
+| `|∙²` | NormSquared | 4 | 0 | 0 | 72 | 4/128 |
+| `|∘²` | NormSquared | 4 | 0 | 0 | 72 | 4/128 |
 | `|` | 2 Norm | 8 | 0 | 2 | 72 | 8/832 |
 | `^∙` | Unitize | 12 | 1 | 1 | 128 | 12/256 |
 | `^∘` | Unitize | 12 | 1 | 1 | 128 | 12/256 |
 | `^` | Unitize | 12 | 1 | 1 | 128 | 12/256 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 128 | 0/128 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 128 | 0/128 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
 | `∩` | Support | 18 | 0 | 0 | 128 | 54/640 |
 | `∪` | SupportAnti | 18 | 0 | 0 | 128 | 54/640 |
+| `((n ⟇ m) ⟇ (~∘ n))` | Permutation + 2 Geometric | 96 | 0 | 0 | 192 | – |
 
 ## cga4d
 
 This algebra has 4 dimensions, a conformal metric and a 128-byte multivector. The inspector took the
-counts on 2026-10-01, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
+counts on 2026-10-02, on linux amd64, 4 cores, with nim `27763495bcfe265507ca98aedc1c7064bf1e0e4d`,
 pga `31213421d6699cb44a9a171b75388ef8188e1136` and flags `-d:release`. The bench ran 5 times on
-2026-10-02, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
+2026-10-03, on linux amd64, 4 cores, over 40 rounds of 1024 objects each. Each time is the median of
 those runs. The allocation gauge was live.
-Gaps: 47. Over 21, met 26, unmeasured 0.
+Gaps: 113. Over 87, met 26, unmeasured 0.
 
 | Id | Measurand | Mul | Div | Bytes | Int | Chk | ns | Status |
 |----|-----------|-----|-----|-------|-----|-----|----|--------|
-| G271 | wedge | 81/– | 0/– | 384/– | 0/– | 0/– | 17.6/– | met |
-| G272 | wedge_anti | 81/– | 0/– | 384/– | 0/– | 0/– | 33.6/– | met |
-| G273 | wedge_dot | 256/– | 0/– | 384/– | 0/– | 0/– | 66.2/– | met |
-| G274 | wedge_dot_anti | 256/– | 0/– | 384/– | 0/– | 0/– | 67.6/– | met |
-| G275 | dot | 16/– | 0/– | 384/– | 0/– | 0/– | 6.9/– | met |
-| G276 | dot_anti | 16/– | 0/– | 384/– | 0/– | 0/– | 8.7/– | met |
-| G277 | contract_bulk | 81/– | 0/– | 384/– | 0/– | 0/– | 27.5/– | met |
-| G278 | contract_weight | 81/– | 0/– | 384/– | 0/– | 0/– | 25.7/– | met |
-| G279 | expand_bulk | 81/– | 0/– | 384/– | 0/– | 0/– | 23.6/– | met |
-| G280 | expand_weight | 81/– | 0/– | 384/– | 0/– | 0/– | 24.1/– | met |
-| G281 | add | 0/– | 0/– | 512/– | 0/– | 0/– | 15.3/– | over |
-| G282 | subtract | 0/– | 0/– | 512/– | 0/– | 0/– | 14.3/– | over |
-| G283 | project_central | 162/– | 0/– | 1152/– | 2/– | 2/– | 54.9/– | over |
-| G284 | project_central_anti | 162/– | 0/– | 1152/– | 2/– | 2/– | 52.8/– | over |
-| G285 | project_orthogonal | 162/– | 0/– | 1152/– | 2/– | 2/– | 54.3/– | over |
-| G286 | project_orthogonal_anti | 162/– | 0/– | 1152/– | 2/– | 2/– | 53.3/– | over |
-| G287 | scale | 16/– | 0/– | 264/– | 0/– | 0/– | 8.2/– | met |
-| G288 | bulk | 0/– | 0/– | 256/– | 0/– | 0/– | 4.1/– | met |
-| G289 | weight | 0/– | 0/– | 256/– | 0/– | 0/– | 4.0/– | met |
-| G290 | complement_right | 0/– | 0/– | 256/– | 0/– | 0/– | 5.3/– | met |
-| G291 | complement_left | 0/– | 0/– | 256/– | 0/– | 0/– | 5.3/– | met |
-| G292 | reverse | 0/– | 0/– | 256/– | 0/– | 0/– | 5.4/– | met |
-| G293 | reverse_anti | 0/– | 0/– | 256/– | 0/– | 0/– | 5.4/– | met |
-| G294 | dual_bulk | 0/– | 0/– | 256/– | 0/– | 0/– | 5.3/– | met |
-| G295 | dual_weight | 0/– | 0/– | 256/– | 0/– | 0/– | 5.2/– | met |
-| G296 | negate | 0/– | 0/– | 384/– | 0/– | 0/– | 13.3/– | over |
-| G297 | norm_bulk | 16/– | 0/– | 640/– | 1/– | 1/– | 13.2/– | over |
-| G298 | norm_weight | 16/– | 0/– | 640/– | 1/– | 1/– | 13.4/– | over |
-| G328 | norm_bulk_squared | 16/– | 0/– | 256/– | 0/– | 0/– | 5.0/– | met |
-| G329 | norm_weight_squared | 16/– | 0/– | 256/– | 0/– | 0/– | 4.9/– | met |
-| G299 | norm | 32/– | 0/– | 1664/– | 4/– | 4/– | 14.2/– | over |
-| G300 | normalize_bulk | 32/– | 1/– | 512/– | 1/– | 1/– | 14.2/– | over |
+| G271 | wedge | 81/– | 0/– | 384/– | 0/– | 0/– | 19.7/– | met |
+| G272 | wedge_anti | 81/– | 0/– | 384/– | 0/– | 0/– | 30.2/– | met |
+| G273 | wedge_dot | 256/– | 0/– | 384/– | 0/– | 0/– | 73.3/– | met |
+| G274 | wedge_dot_anti | 256/– | 0/– | 384/– | 0/– | 0/– | 72.2/– | met |
+| G275 | dot | 16/– | 0/– | 384/– | 0/– | 0/– | 8.6/– | met |
+| G276 | dot_anti | 16/– | 0/– | 384/– | 0/– | 0/– | 8.0/– | met |
+| G277 | contract_bulk | 81/– | 0/– | 384/– | 0/– | 0/– | 30.1/– | met |
+| G278 | contract_weight | 81/– | 0/– | 384/– | 0/– | 0/– | 28.9/– | met |
+| G279 | expand_bulk | 81/– | 0/– | 384/– | 0/– | 0/– | 26.6/– | met |
+| G280 | expand_weight | 81/– | 0/– | 384/– | 0/– | 0/– | 27.2/– | met |
+| G281 | add | 0/– | 0/– | 512/– | 0/– | 0/– | 15.6/– | over |
+| G282 | subtract | 0/– | 0/– | 512/– | 0/– | 0/– | 16.1/– | over |
+| G283 | project_central | 162/– | 0/– | 1152/– | 2/– | 2/– | 63.7/– | over |
+| G284 | project_central_anti | 162/– | 0/– | 1152/– | 2/– | 2/– | 58.4/– | over |
+| G285 | project_orthogonal | 162/– | 0/– | 1152/– | 2/– | 2/– | 63.7/– | over |
+| G286 | project_orthogonal_anti | 162/– | 0/– | 1152/– | 2/– | 2/– | 59.7/– | over |
+| G287 | scale | 16/– | 0/– | 264/– | 0/– | 0/– | 11.8/– | met |
+| G288 | bulk | 0/– | 0/– | 256/– | 0/– | 0/– | 9.2/– | met |
+| G289 | weight | 0/– | 0/– | 256/– | 0/– | 0/– | 6.5/– | met |
+| G290 | complement_right | 0/– | 0/– | 256/– | 0/– | 0/– | 6.8/– | met |
+| G291 | complement_left | 0/– | 0/– | 256/– | 0/– | 0/– | 6.9/– | met |
+| G292 | reverse | 0/– | 0/– | 256/– | 0/– | 0/– | 6.9/– | met |
+| G293 | reverse_anti | 0/– | 0/– | 256/– | 0/– | 0/– | 6.9/– | met |
+| G294 | dual_bulk | 0/– | 0/– | 256/– | 0/– | 0/– | 6.9/– | met |
+| G295 | dual_weight | 0/– | 0/– | 256/– | 0/– | 0/– | 6.9/– | met |
+| G296 | negate | 0/– | 0/– | 384/– | 0/– | 0/– | 15.6/– | over |
+| G297 | norm_bulk | 16/– | 0/– | 640/– | 1/– | 1/– | 15.6/– | over |
+| G298 | norm_weight | 16/– | 0/– | 640/– | 1/– | 1/– | 16.2/– | over |
+| G328 | norm_bulk_squared | 16/– | 0/– | 256/– | 0/– | 0/– | 7.3/– | met |
+| G329 | norm_weight_squared | 16/– | 0/– | 256/– | 0/– | 0/– | 6.7/– | met |
+| G299 | norm | 32/– | 0/– | 1664/– | 4/– | 4/– | 16.6/– | over |
+| G300 | normalize_bulk | 32/– | 1/– | 512/– | 1/– | 1/– | 21.0/– | over |
 | G301 | normalize_weight | 32/– | 1/– | 512/– | 1/– | 1/– | 8.8/– | over |
-| G302 | unitize | 32/– | 1/– | 512/– | 1/– | 1/– | 8.0/– | over |
-| G303 | attitude | 0/– | 0/– | 256/– | 0/– | 0/– | 4.0/– | met |
-| G304 | select_grade | 0/– | 0/– | 392/– | 0/– | 0/– | 12.8/– | over |
-| G305 | select_grade_anti | 0/– | 0/– | 392/– | 0/– | 1/– | 14.2/– | over |
-| G306 | select_part | – | – | – | – | – | 0.8/– | met |
-| G307 | bulk_flat | 0/– | 0/– | 256/– | 0/– | 0/– | 3.4/– | met |
-| G308 | weight_flat | 0/– | 0/– | 256/– | 0/– | 0/– | 4.0/– | met |
-| G309 | norm_bulk_flat | 16/– | 0/– | 640/– | 1/– | 1/– | 13.1/– | over |
-| G310 | norm_weight_flat | 16/– | 0/– | 640/– | 1/– | 1/– | 13.3/– | over |
-| G311 | carrier | 0/– | 0/– | 256/– | 0/– | 0/– | 4.4/– | met |
-| G312 | carrier_co | 81/– | 0/– | 1024/– | 2/– | 2/– | 20.9/– | over |
-| G313 | center | 162/– | 0/– | 1792/– | 4/– | 4/– | 56.3/– | over |
-| G314 | container | 81/– | 0/– | 1280/– | 3/– | 3/– | 36.2/– | over |
-| G315 | partner | 178/– | 0/– | 9216/– | 8/– | 143/– | 87.9/– | over |
+| G302 | unitize | 32/– | 1/– | 512/– | 1/– | 1/– | 8.9/– | over |
+| G303 | attitude | 0/– | 0/– | 256/– | 0/– | 0/– | 6.9/– | met |
+| G304 | select_grade | 0/– | 0/– | 392/– | 0/– | 0/– | 15.6/– | over |
+| G305 | select_grade_anti | 0/– | 0/– | 392/– | 0/– | 1/– | 15.9/– | over |
+| G306 | select_part | – | – | – | – | – | 0.9/– | met |
+| G307 | bulk_flat | 0/– | 0/– | 256/– | 0/– | 0/– | 5.9/– | met |
+| G308 | weight_flat | 0/– | 0/– | 256/– | 0/– | 0/– | 6.3/– | met |
+| G309 | norm_bulk_flat | 16/– | 0/– | 640/– | 1/– | 1/– | 15.6/– | over |
+| G310 | norm_weight_flat | 16/– | 0/– | 640/– | 1/– | 1/– | 15.8/– | over |
+| G311 | carrier | 0/– | 0/– | 256/– | 0/– | 0/– | 5.7/– | met |
+| G312 | carrier_co | 81/– | 0/– | 1024/– | 2/– | 2/– | 23.9/– | over |
+| G313 | center | 162/– | 0/– | 1792/– | 4/– | 4/– | 64.8/– | over |
+| G314 | container | 81/– | 0/– | 1280/– | 3/– | 3/– | 41.5/– | over |
+| G315 | partner | 178/– | 0/– | 9216/– | 8/– | 143/– | 98.9/– | over |
+| G378 | wedge_round_point_round_point | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 27.3/4.0 | over |
+| G379 | wedge_dipole_round_point | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 26.9/4.8 | over |
+| G380 | wedge_round_point_dipole | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 26.9/5.2 | over |
+| G381 | wedge_circle_round_point | 81/4 | 0/0 | 384/72 | 0/0 | 0/0 | 26.9/3.6 | over |
+| G382 | wedge_round_point_circle | 81/4 | 0/0 | 384/72 | 0/0 | 0/0 | 26.9/3.6 | over |
+| G383 | wedge_dipole_dipole | 81/6 | 0/0 | 384/104 | 0/0 | 0/0 | 26.9/4.0 | over |
+| G384 | wedge_anti_circle_circle | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 29.8/3.8 | over |
+| G385 | wedge_anti_circle_dipole | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 29.9/5.5 | over |
+| G386 | wedge_anti_dipole_circle | 81/12 | 0/0 | 384/112 | 0/0 | 0/0 | 29.8/5.4 | over |
+| G387 | wedge_anti_dipole_dipole | 81/6 | 0/0 | 384/104 | 0/0 | 0/0 | 29.8/4.0 | over |
+| G388 | wedge_anti_circle_round_point | 81/4 | 0/0 | 384/72 | 0/0 | 0/0 | 29.8/3.6 | over |
+| G389 | wedge_anti_round_point_circle | 81/4 | 0/0 | 384/72 | 0/0 | 0/0 | 29.8/3.6 | over |
+| G390 | dot_round_point_round_point | 16/4 | 0/0 | 384/72 | 0/0 | 0/0 | 8.6/3.6 | over |
+| G391 | dot_dipole_dipole | 16/6 | 0/0 | 384/104 | 0/0 | 0/0 | 8.6/3.9 | over |
+| G392 | dot_circle_circle | 16/4 | 0/0 | 384/72 | 0/0 | 0/0 | 8.6/3.6 | over |
+| G393 | dot_anti_round_point_round_point | 16/4 | 0/0 | 384/72 | 0/0 | 0/0 | 8.0/3.6 | over |
+| G394 | dot_anti_dipole_dipole | 16/6 | 0/0 | 384/104 | 0/0 | 0/0 | 8.1/3.9 | over |
+| G395 | dot_anti_circle_circle | 16/4 | 0/0 | 384/72 | 0/0 | 0/0 | 8.0/3.6 | over |
+| G396 | complement_right_round_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.9/1.0 | over |
+| G397 | complement_left_round_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.8/1.3 | over |
+| G398 | reverse_round_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.8/0.8 | over |
+| G399 | reverse_anti_round_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.9/0.9 | over |
+| G400 | dual_bulk_round_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.9/1.2 | over |
+| G401 | dual_weight_round_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.9/1.2 | over |
+| G402 | bulk_round_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 9.2/0.8 | over |
+| G403 | weight_round_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.5/0.9 | over |
+| G404 | bulk_flat_round_point | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 5.9/0.9 | over |
+| G405 | weight_flat_round_point | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.3/0.5 | over |
+| G406 | attitude_round_point | 0/0 | 0/0 | 256/40 | 0/0 | 0/0 | 6.8/0.6 | over |
+| G407 | carrier_round_point | 0/0 | 0/0 | 256/56 | 0/0 | 0/0 | 5.7/1.3 | over |
+| G408 | carrier_co_round_point | 81/0 | 0/0 | 1024/40 | 2/0 | 2/0 | 23.6/0.7 | over |
+| G409 | center_round_point | 162/4 | 0/0 | 1792/96 | 4/0 | 4/0 | 65.2/1.2 | over |
+| G410 | container_round_point | 81/6 | 0/0 | 1280/64 | 3/0 | 3/0 | 41.9/1.6 | over |
+| G411 | partner_round_point | 178/8 | 0/0 | 9216/96 | 8/0 | 143/0 | 100.0/1.7 | over |
+| G412 | complement_right_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.9/2.0 | over |
+| G413 | complement_left_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.8/2.0 | over |
+| G414 | reverse_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.9/2.0 | over |
+| G415 | reverse_anti_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.8/2.0 | over |
+| G416 | dual_bulk_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.8/2.3 | over |
+| G417 | dual_weight_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.9/1.8 | over |
+| G418 | bulk_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 9.1/2.6 | over |
+| G419 | weight_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.5/1.2 | over |
+| G420 | bulk_flat_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 5.9/2.6 | over |
+| G421 | weight_flat_dipole | 0/0 | 0/0 | 256/144 | 0/0 | 0/0 | 6.3/2.5 | over |
+| G422 | attitude_dipole | 0/0 | 0/0 | 256/80 | 0/0 | 0/0 | 6.8/1.1 | over |
+| G423 | carrier_dipole | 0/0 | 0/0 | 256/72 | 0/0 | 0/0 | 5.7/1.4 | over |
+| G424 | carrier_co_dipole | 81/0 | 0/0 | 1024/72 | 2/0 | 2/0 | 23.6/1.1 | over |
+| G425 | center_dipole | 162/9 | 0/0 | 1792/80 | 4/0 | 4/0 | 65.2/2.2 | over |
+| G426 | container_dipole | 81/9 | 0/0 | 1280/80 | 3/0 | 3/0 | 42.0/2.1 | over |
+| G427 | partner_dipole | 178/15 | 0/0 | 9216/144 | 8/0 | 143/0 | 100.8/2.8 | over |
+| G428 | complement_right_circle | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.8/1.3 | over |
+| G429 | complement_left_circle | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.8/1.0 | over |
+| G430 | reverse_circle | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.8/0.9 | over |
+| G431 | reverse_anti_circle | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.9/0.8 | over |
+| G432 | dual_bulk_circle | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.8/0.9 | over |
+| G433 | dual_weight_circle | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 6.9/0.9 | over |
+| G434 | bulk_circle | 0/0 | 0/0 | 256/64 | 0/0 | 0/0 | 9.2/0.4 | over |
+| G435 | weight_circle | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.5/1.1 | over |
+| G436 | bulk_flat_circle | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 5.9/0.9 | over |
+| G437 | weight_flat_circle | 0/0 | 0/0 | 256/96 | 0/0 | 0/0 | 6.3/1.1 | over |
+| G438 | attitude_circle | 0/0 | 0/0 | 256/80 | 0/0 | 0/0 | 6.8/1.3 | over |
+| G439 | carrier_circle | 0/0 | 0/0 | 256/40 | 0/0 | 0/0 | 5.7/0.7 | over |
+| G440 | carrier_co_circle | 81/0 | 0/0 | 1024/56 | 2/0 | 2/0 | 23.6/0.8 | over |
+| G441 | center_circle | 162/6 | 0/0 | 1792/64 | 4/0 | 4/0 | 65.2/1.7 | over |
+| G442 | container_circle | 81/4 | 0/0 | 1280/96 | 3/0 | 3/0 | 41.9/1.1 | over |
+| G443 | partner_circle | 178/8 | 0/0 | 9216/96 | 8/0 | 143/0 | 100.6/1.6 | over |
 
 ### Multivector lower bound
 
@@ -588,8 +704,8 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `∨` | Wedge | 81 | 0 | 0 | 384 | 81/384 |
 | `⟑` | Geometric | 256 | 0 | 0 | 384 | 256/384 |
 | `⟇` | Geometric | 256 | 0 | 0 | 384 | 256/384 |
-| `∙` | ScalarForm | 16 | 0 | 0 | 264 | 16/384 |
-| `∘` | ScalarForm | 16 | 0 | 0 | 264 | 16/384 |
+| `∙` | FormScalar | 16 | 0 | 0 | 264 | 16/384 |
+| `∘` | FormScalar | 16 | 0 | 0 | 264 | 16/384 |
 | `∨★` | ContractBulk | 81 | 0 | 0 | 384 | 81/384 |
 | `∨☆` | ContractWeight | 81 | 0 | 0 | 384 | 81/384 |
 | `∧★` | ExpandBulk | 81 | 0 | 0 | 384 | 81/384 |
@@ -612,21 +728,21 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `-` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `|∙` | Norm | 16 | 0 | 1 | 136 | 16/640 |
 | `|∘` | Norm | 16 | 0 | 1 | 136 | 16/640 |
-| `|∙²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/256 |
-| `|∘²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/256 |
+| `|∙²` | NormSquared | 16 | 0 | 0 | 136 | 16/256 |
+| `|∘²` | NormSquared | 16 | 0 | 0 | 136 | 16/256 |
 | `|` | 2 Norm | 32 | 0 | 2 | 136 | 32/1664 |
 | `^∙` | Unitize | 32 | 1 | 1 | 256 | 32/512 |
 | `^∘` | Unitize | 32 | 1 | 1 | 256 | 32/512 |
 | `^` | Unitize | 32 | 1 | 1 | 256 | 32/512 |
-| `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
+| `⊖` | ProductConstant | 0 | 0 | 0 | 256 | 0/256 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `■` | Permutation | 0 | 0 | 0 | 256 | 0/256 |
 | `□` | Permutation | 0 | 0 | 0 | 256 | 0/256 |
 | `|■` | Norm | 16 | 0 | 1 | 136 | 16/640 |
 | `|□` | Norm | 16 | 0 | 1 | 136 | 16/640 |
-| `⊟` | ConstantProduct | 0 | 0 | 0 | 256 | 0/256 |
-| `⊞` | ConstantProduct | 0 | 0 | 0 | 256 | 81/1024 |
+| `⊟` | ProductConstant | 0 | 0 | 0 | 256 | 0/256 |
+| `⊞` | ProductConstant | 0 | 0 | 0 | 256 | 81/1024 |
 | `⊙` | Center | 54 | 0 | 0 | 256 | 162/1792 |
 | `⊡` | Container | 54 | 0 | 0 | 256 | 81/1280 |
 | `⊛` | Permutation + Container + JoinCarrier | 108 | 0 | 0 | 256 | 178/9216 |

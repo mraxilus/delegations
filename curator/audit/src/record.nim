@@ -102,8 +102,8 @@ func checkHeadings(path, source: string): seq[Finding] =
   if open_at > 0 and open_at != last_at:
     result.add finding(
       path, open_at,
-      "`## Open questions` must be last section (provenance guide); got section at line " &
-        $last_at & " after it.",
+      "`## Open questions` must be last section (provenance guide); got section at line `" &
+        $last_at & "` after it.",
     )
 
 
@@ -115,7 +115,7 @@ func checkLength(path, source: string): seq[Finding] =
       path,
       0,
       "Record over " & $RECORD_LINES & " lines; prune to log and set `" & PRUNED &
-        "` row (provenance guide); got " & $count & ".",
+        "` row (provenance guide); got `" & $count & "`.",
     )
 
 
@@ -136,7 +136,7 @@ func checkSections*(path, source: string): seq[Finding] =
         path,
         start + 1,
         "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
-          "guide); got " & $count & ".",
+          "guide); got `" & $count & "`.",
       )
 
 

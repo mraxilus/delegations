@@ -32,8 +32,11 @@
 ##     newline; gap before trailing comment becomes two spaces; run of blank lines beside
 ##     banner takes count exact X.2 check reads. Fixer never writes line width check reports,
 ##     so gap it would widen past `LINE_MAX` stays, finding and all.
-##   No fixer: tab, since its width is guess; lone CR, which is line break or stray byte;
-##     width, which reflow, wrap or rename each fix; empty file.
+##   Tab inside one-line string that is neither raw nor long, in Nim syntax, is written `\t`:
+##     escape reads as same byte, so string is unchanged.
+##   No fixer: other tab, since its width is guess, and raw or long string reads `\t` as two
+##     characters; lone CR, which is line break or stray byte; width, which reflow, wrap or
+##     rename each fix; empty file.
 ##
 ##   Cost: two-space indent unverified; indent width depends on syntax and stays with review.
 ##   Cost: wired banner check demands two blank lines of every banner, where X.2 asks three of
@@ -48,7 +51,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, unicode]
-import ./[findings, kinds, names]
+import ./[findings, kinds, names, tokens]
 
 
 const
@@ -65,6 +68,9 @@ const
   LUT_BLANKS_BY_TIER: array[1..2, int] = [3, 2]
     ## Blank lines banner of each tier takes before it (X.2).
   BLANKS_AFTER_BANNER = 1  ## Blank lines either banner takes after it (X.2).
+  LONG_QUOTE = "\"\"\""  ## Delimiter of long string, which reads backslash as itself.
+  IDENTIFIER_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
+    ## Characters whose glue before quote makes string raw (`r"…"`, `fmt"…"`).
 
 
 type
@@ -208,6 +214,37 @@ func fixEnding(path, source: string): Fix =
   result.fixed.add finding(path, 0, "file ending (VIII.5)")
 
 
+func tabsInStrings(source: string): seq[int] =
+  ## Find byte offset of each tab inside one-line string that is neither raw nor long.
+  ##   Raw string, i.e. one glued after identifier (`r"…"`, `fmt"…"`), reads backslash as itself.
+  for t in source.tokens:
+    if t.kind != TokenKind.Text or t.lastLine(source) != t.line: continue
+    if source.continuesWith(LONG_QUOTE, t.first): continue
+    if t.first > 0 and source[t.first - 1] in IDENTIFIER_CHARS: continue
+    for k in t.first..<t.after:
+      if source[k] == '\t': result.add k
+
+
+func fixTabs(path, source: string): Fix =
+  ## Write each tab `tabsInStrings` finds as `\t`, last first, unless its line would be wide.
+  let
+    tabs = source.tabsInStrings
+    starts = source.lineStarts
+  var lines = source.split('\n')
+  for line in 0..<lines.len:
+    let
+      first = starts[line]
+      after = first + lines[line].len
+      held = tabs.filterIt(it >= first and it < after)
+    if held.len == 0: continue
+    var shaped = lines[line]
+    for k in held.reversed: shaped = shaped[0..<k - first] & "\\t" & shaped[k - first + 1 .. ^1]
+    if shaped.isWide and not lines[line].isWide: continue
+    lines[line] = shaped
+    result.fixed.add finding(path, line + 1, "tab in string (X.1)")
+  result.source = lines.join("\n")
+
+
 func fixComments(path, source: string): Fix =
   ## Set two spaces before each trailing comment's marker, unless line would then be wide.
   var lines = source.split('\n')
@@ -276,9 +313,10 @@ func fixBanners(path, source: string): Fix =
 
 
 func formFixers*(rule: KindRule): seq[Fixer] =
-  ## List form fixers kind rule names, in order they run: Nim syntax adds comments and banners.
+  ## List form fixers kind rule names, in order they run: Nim syntax adds tabs in strings,
+  ##   comments and banners.
   result = @[Fixer(fixWhitespace), fixEnding]
-  if rule.syntax == Syntax.Nim: result.add @[Fixer(fixComments), fixBanners]
+  if rule.syntax == Syntax.Nim: result.add @[Fixer(fixTabs), fixComments, fixBanners]
 
 
 func fixForm*(path, source: string; rule: KindRule): Fix =
