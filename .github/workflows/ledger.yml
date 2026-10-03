@@ -8,6 +8,8 @@
 #   Issue titled as commit is fact GitHub records and never sat on carried list, so it is
 #   ledger read rather than carried line. Pull request title is skipped, since merge commit
 #   takes it as subject and so it takes that shape by rule.
+#   Closed item still labelled `architect` is fact GitHub records too: label marks state, not
+#   role (COORDINATOR.md, queue section), and coordinator removes it once ruling is posted.
 #
 #   Daily rather than weekly: pull request ready and red for week is failure this exists to
 #   catch.
@@ -106,7 +108,7 @@ jobs:
             --json number,body,labels \
             --jq '.[] | select((.body // "")
                   | test("^\\s*(<!--[^>]*-->\\s*)*"
-                    + "\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
+                    + "\\*{0,2}role:\\*{0,2}\\s*`?(coordinator|curator|contributor/)"; "i") | not)
                   | "- Issue #\(.number) opens with no role line"')"
           [ -z "$bare" ] || found="$found$bare"$'\n'
           unlabelled="$(gh issue list --repo "$REPO" --state open --limit 100 \
@@ -139,6 +141,20 @@ jobs:
             --jq '.[] | select(.labels | length == 0)
                   | "- Pull request #\(.number) carries no label, so no role filter finds it"')"
           [ -z "$unlabelled_prs" ] || found="$found$unlabelled_prs"$'\n'
+
+          # Queue label left behind. `architect` marks state, not role, so it comes off once
+          #   ruling is posted; closed item still carrying it means coordinator missed removal,
+          #   and next filter on label shows stale queue. Pull requests are read in every state,
+          #   then filtered, so closed and merged both count.
+          stale_issues="$(gh issue list --repo "$REPO" --state closed --label architect \
+            --limit 100 --json number \
+            --jq '.[] | "- Issue #\(.number) is closed and still carries `architect`"')"
+          [ -z "$stale_issues" ] || found="$found$stale_issues"$'\n'
+          stale_prs="$(gh pr list --repo "$REPO" --state all --label architect --limit 100 \
+            --json number,state \
+            --jq '.[] | select(.state != "OPEN") | "- Pull request #\(.number) is"
+                  + " \(.state | ascii_downcase) and still carries `architect`"')"
+          [ -z "$stale_prs" ] || found="$found$stale_prs"$'\n'
 
           # Repository settings Architect applies (CURATOR.md). Repository holds them as rulesets,
           #   and classic protection endpoint answers nothing where rules are rulesets. Rules per

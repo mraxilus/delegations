@@ -23,9 +23,9 @@ Overarching theme: methods of communication.
 ## Layout
 
 ```text
-README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  EXAMPLES.md  CURATOR.md  CONTRIBUTOR.md
-GUIDE.md  CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore  .gitattributes  .github/
-.claude/  .githooks/
+README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  EXAMPLES.md  CURATOR.md  COORDINATOR.md
+CONTRIBUTOR.md  GUIDE.md  CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore
+.gitattributes  .github/  .claude/  .githooks/
 curator/README.md                        curator projects: audit, probe, any other
 curator/<project>/                       README.md  PROVENANCE.md  GLOSSARY.md  <project>.nimble
                                          src/  tests/  [tools/build.nim  pages/  mockups/
@@ -37,11 +37,15 @@ contributor/<domain>/<project>/          same shape as a curator project
 
 ## Roles
 
+- The **coordinator** delegate starts the other delegates and presents to the Architect, in
+  one place, everything that waits on them. It decides nothing and writes no file. Exactly
+  one works at a time. It starts from [COORDINATOR.md](COORDINATOR.md). The Architect trials
+  it at a later date, and until then every other delegate works with the Architect directly.
 - A **curator** delegate keeps the rules, the root files and the curator projects, and never
   writes code inside a contributor project. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** delegate builds one project and touches nothing outside its folder. It
   starts from [CONTRIBUTOR.md](CONTRIBUTOR.md).
-- Both then read [GUIDE.md](GUIDE.md), the how-to that they share. Every word they write for
+- All then read [GUIDE.md](GUIDE.md), the how-to that they share. Every word they write for
   a person is Simplified Technical English, and the guide gives the rules.
 
 ## Issues
@@ -124,6 +128,7 @@ reaches:
 - a `Closes #N` that never fired;
 - an issue or pull request without its role line or label;
 - an issue whose title opens with a commit prefix;
+- an issue or pull request closed with the `architect` label still on it;
 - the rulesets of `main` and of every branch, and the merge settings, against the list in
   `CURATOR.md`.
 

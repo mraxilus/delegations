@@ -27,6 +27,7 @@ suite "Layout":
 
   test "root holds only listed entries":
     check (goodTree() & @[entry("NOTES.md", "x\n")]).paths == @["NOTES.md"]  # root file
+    check (goodTree() & @[entry("COORDINATOR.md", "# Coordinator\n")]).paths.len == 0  # prompt
     check (goodTree() & @[entry("tools/x.nim", "x\n")]).paths == @["tools/x.nim"]  # root directory
 
 

@@ -47,8 +47,8 @@ const
     ## Index every root, every domain and every project carries, named once for all three.
   ROOT_FILES* = [
     README_FILE, "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "EXAMPLES.md", "CURATOR.md",
-    "CONTRIBUTOR.md", "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg",
-    ".gitignore", ".gitattributes",
+    "COORDINATOR.md", "CONTRIBUTOR.md", "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim",
+    "koch.nim.cfg", ".gitignore", ".gitattributes",
   ]
     ## Files allowed directly at root.
   ROOT_DIRECTORIES* = [".github", ".claude", ".githooks"]
