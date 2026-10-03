@@ -14,7 +14,7 @@ builds two families of tables, not four.
         CAYLEYS_DUAL.base.left,
         CAYLEYS_WEDGE,
         Chirality.Left,
-        Space.Base,
+        Spatiality.Base,
       ),
 ```
 
@@ -30,7 +30,7 @@ builds two families of tables, not four.
         CAYLEYS_DUAL.anti.left,
         CAYLEYS_WEDGE,
         Chirality.Left,
-        Space.Anti,
+        Spatiality.Anti,
       ),
 ```
 

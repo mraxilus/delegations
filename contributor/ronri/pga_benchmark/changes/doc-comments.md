@@ -189,20 +189,6 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 ## Edit `pga/algebra.nim`
 
 ```nim
-  Space {.pure, used.} = enum Base, Anti
-    ## Define distinction between PGA's spacial duality.
-```
-
-```nim
-    ##   Right is library default; left tables are built but nothing reads them.
-  Space {.pure, used.} = enum Base, Anti
-    ## Define distinction between PGA's spacial duality.
-    ##   Base spans 𝟏..eₙ; anti is its complement under antiscalar.
-```
-
-## Edit `pga/algebra.nim`
-
-```nim
   ##     Order 4D 2/3-vectors to align as right complements of basis vectors,
   ##       to consider 4x4 transformation matrix rows as planes, columns as points.
   ##       TODO: Understand statement above better.
@@ -259,17 +245,39 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 
 ```nim
     # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
-    #   Heap here is compiler's VM only; measured cost is copying (lines 378, 444).
+    #   Heap here is compiler's VM only: macros alone read these tables.
 ```
 
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  CAYLEYS_DOT* = Spatial[Cayley2D](
+  Chirality {.pure.} = enum Left, Right
+    ## Define distinction between PGA operation orientations.
+  Partiality {.pure.} = enum Bulk, Weight
+    ## Define distinction between PGA's disjoint parts.
+  Spatiality {.pure.} = enum Base, Anti
+    ## Define distinction between PGA's spacial duality.
 ```
 
 ```nim
-  CAYLEYS_DOT* = Spatial[Cayley2D](
+  Chirality {.pure.} = enum Left, Right
+    ## Define distinction between PGA operation orientations.
+    ##   Right is library default; left tables are built but nothing reads them.
+  Partiality {.pure.} = enum Bulk, Weight
+    ## Define distinction between PGA's disjoint parts.
+  Spatiality {.pure.} = enum Base, Anti
+    ## Define distinction between PGA's spacial duality.
+    ##   Base spans 𝟏..eₙ; anti is its complement under antiscalar.
+```
+
+## Edit `pga/cayleys.nim`
+
+```nim
+  CAYLEYS_DOT* = block:
+```
+
+```nim
+  CAYLEYS_DOT* = block:
     ## Dot is transwedge of order k where both operands have grade k.
 ```
 
@@ -287,11 +295,11 @@ func projectOrthogonalAnti*(m, n: Multivector): Multivector {.inline.} = n ∧ (
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧)
+  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).
 ```
 
 ```nim
-  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧)
+  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).
   ##   So one degenerate factor makes whole blade degenerate.
 ```
 
