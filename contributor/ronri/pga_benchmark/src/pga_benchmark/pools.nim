@@ -5,6 +5,8 @@
 ##   translation composed with rotation), beside their dense images.
 ##   Pools are module globals sized by `OBJECTS`, filled by one proc, walked by `lent`;
 ##   nothing on timed path allocates or reseeds.
+##   Each pool starts on cache line, so dense and typed objects read same layout in every
+##   build; linker alone puts pool anywhere 8 bytes apart.
 ##
 ##   Cost: memory is `OBJECTS` × every pool, i.e. few megabytes at 6D; taken once.
 
@@ -20,52 +22,62 @@ export widening
 
 
 var
-  POOL_GENERAL*: array[OBJECTS, Multivector]  ## Dense multivectors, every component Gaussian.
-  POOL_GRADED*: array[0..DIMENSIONS, array[OBJECTS, Multivector]]
+  POOL_GENERAL* {.align(64).}: array[OBJECTS, Multivector]
+    ## Dense multivectors, every component Gaussian.
+  POOL_GRADED* {.align(64).}: array[0..DIMENSIONS, array[OBJECTS, Multivector]]
     ## Dense multivectors holding one grade each.
-  POOL_SCALAR*: array[OBJECTS, float]  ## Scalars, Gaussian.
+  POOL_SCALAR* {.align(64).}: array[OBJECTS, float]  ## Scalars, Gaussian.
 
 when IS_RIGID and DIMENSIONS == 4:
   var
-    POOL_POINT*: array[OBJECTS, Point]  ## Points with weight near one.
-    POOL_LINE*: array[OBJECTS, Line]  ## Lines joining two points.
-    POOL_PLANE*: array[OBJECTS, Plane]  ## Planes joining line and point.
-    POOL_MOTOR*: array[OBJECTS, Motor]  ## Unit motors, translation composed with rotation.
-    POOL_POINT_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
-    POOL_LINE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
-    POOL_PLANE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_PLANE`.
-    POOL_MOTOR_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
+    POOL_POINT* {.align(64).}: array[OBJECTS, Point]  ## Points with weight near one.
+    POOL_LINE* {.align(64).}: array[OBJECTS, Line]  ## Lines joining two points.
+    POOL_PLANE* {.align(64).}: array[OBJECTS, Plane]  ## Planes joining line and point.
+    POOL_MOTOR* {.align(64).}: array[OBJECTS, Motor]
+      ## Unit motors, translation composed with rotation.
+    POOL_POINT_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
+    POOL_LINE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
+    POOL_PLANE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_PLANE`.
+    POOL_MOTOR_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
 
 when IS_CONFORMAL and DIMENSIONS == 5:
   var
-    POOL_POINTROUND*: array[OBJECTS, PointRound]
+    POOL_POINTROUND* {.align(64).}: array[OBJECTS, PointRound]
       ## Round points with weight near one and Gaussian flat bulk.
-    POOL_DIPOLE*: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
-    POOL_CIRCLE*: array[OBJECTS, Circle]  ## Circles joining dipole and round point.
-    POOL_SPHERE*: array[OBJECTS, Sphere]  ## Spheres joining circle and round point.
-    POOL_POINTROUND_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINTROUND`.
-    POOL_DIPOLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_DIPOLE`.
-    POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_CIRCLE`.
-    POOL_SPHERE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_SPHERE`.
+    POOL_DIPOLE* {.align(64).}: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
+    POOL_CIRCLE* {.align(64).}: array[OBJECTS, Circle]  ## Circles joining dipole and round point.
+    POOL_SPHERE* {.align(64).}: array[OBJECTS, Sphere]  ## Spheres joining circle and round point.
+    POOL_POINTROUND_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_POINTROUND`.
+    POOL_DIPOLE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_DIPOLE`.
+    POOL_CIRCLE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_CIRCLE`.
+    POOL_SPHERE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_SPHERE`.
 
 when IS_RIGID and DIMENSIONS == 3:
   var
-    POOL_POINT*: array[OBJECTS, Point]  ## Points with weight near one.
-    POOL_LINE*: array[OBJECTS, Line]  ## Lines joining two points.
-    POOL_MOTOR*: array[OBJECTS, Motor]  ## Unit motors, translation composed with rotation.
-    POOL_POINT_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
-    POOL_LINE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
-    POOL_MOTOR_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
+    POOL_POINT* {.align(64).}: array[OBJECTS, Point]  ## Points with weight near one.
+    POOL_LINE* {.align(64).}: array[OBJECTS, Line]  ## Lines joining two points.
+    POOL_MOTOR* {.align(64).}: array[OBJECTS, Motor]
+      ## Unit motors, translation composed with rotation.
+    POOL_POINT_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
+    POOL_LINE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
+    POOL_MOTOR_WIDENED* {.align(64).}: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
 
 when IS_CONFORMAL and DIMENSIONS == 4:
   var
-    POOL_POINTROUND*: array[OBJECTS, PointRound]
+    POOL_POINTROUND* {.align(64).}: array[OBJECTS, PointRound]
       ## Round points with weight near one and Gaussian flat bulk.
-    POOL_DIPOLE*: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
-    POOL_CIRCLE*: array[OBJECTS, Circle]  ## Circles joining dipole and round point.
-    POOL_POINTROUND_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINTROUND`.
-    POOL_DIPOLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_DIPOLE`.
-    POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_CIRCLE`.
+    POOL_DIPOLE* {.align(64).}: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
+    POOL_CIRCLE* {.align(64).}: array[OBJECTS, Circle]  ## Circles joining dipole and round point.
+    POOL_POINTROUND_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_POINTROUND`.
+    POOL_DIPOLE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_DIPOLE`.
+    POOL_CIRCLE_WIDENED* {.align(64).}: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_CIRCLE`.
 
 
 func toUpperAscii(s: string): string {.compileTime.} =

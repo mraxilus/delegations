@@ -145,9 +145,9 @@ func overloadOf*(name: string): int =
 
 func functionsIn*(source: string): seq[FunctionC] =
   ## Read every function definition of C source, with its parameter stems and body.
-  ##   Definition opens on line `N_NIMCALL(<type>, <name>)(<params>) {` or
-  ##   `static N_INLINE(<type>, <name>)(<params>) {`; declarations end in `;` and are
-  ##   skipped. Body runs to brace closing that line's.
+  ##   Definition opens on line `N_NIMCALL(<type>, <name>)(<params>) {`,
+  ##   `N_NOINLINE(<type>, <name>)(<params>) {` or `static N_INLINE(<type>, <name>)(<params>) {`;
+  ##   declarations end in `;` and are skipped. Body runs to brace closing that line's.
   var position = 0
   while position < source.len:
     let
@@ -157,7 +157,8 @@ func functionsIn*(source: string): seq[FunctionC] =
     position = stop + 1
     let
       is_inline = line.startsWith("static N_INLINE(")
-      is_call = line.startsWith("N_NIMCALL(") or line.startsWith("N_LIB_PRIVATE N_NIMCALL(")
+      is_call = line.startsWith("N_NIMCALL(") or line.startsWith("N_LIB_PRIVATE N_NIMCALL(") or
+        line.startsWith("N_NOINLINE(") or line.startsWith("N_LIB_PRIVATE N_NOINLINE(")
     if not (is_inline or is_call) or not line.endsWith("{"): continue
     let
       parenthesis_open = line.find('(')
