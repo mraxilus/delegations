@@ -308,6 +308,37 @@ suite "Internal: Dense forms":
 
 
 suite "Internal: Measurements":
+  test "every pool starts on cache line":
+    # Pool off line puts 128-byte multivector across three lines, not two, and typed object
+    #   across lines in other patterns, so library and reference read different layouts.
+    template heldToLine(pool: untyped) =
+      checkpoint astToStr(pool) & " starts at " & $(cast[uint](addr pool[0]) mod 64)
+      check cast[uint](addr pool[0]) mod 64 == 0  # first object starts on line
+    heldToLine(POOL_GENERAL)
+    heldToLine(POOL_GRADED[0])
+    heldToLine(POOL_SCALAR)
+    when declared(POOL_POINT):
+      heldToLine(POOL_POINT)
+      heldToLine(POOL_LINE)
+      heldToLine(POOL_MOTOR)
+      heldToLine(POOL_POINT_WIDENED)
+      heldToLine(POOL_LINE_WIDENED)
+      heldToLine(POOL_MOTOR_WIDENED)
+    when declared(POOL_PLANE):
+      heldToLine(POOL_PLANE)
+      heldToLine(POOL_PLANE_WIDENED)
+    when declared(POOL_POINTROUND):
+      heldToLine(POOL_POINTROUND)
+      heldToLine(POOL_DIPOLE)
+      heldToLine(POOL_CIRCLE)
+      heldToLine(POOL_POINTROUND_WIDENED)
+      heldToLine(POOL_DIPOLE_WIDENED)
+      heldToLine(POOL_CIRCLE_WIDENED)
+    when declared(POOL_SPHERE):
+      heldToLine(POOL_SPHERE)
+      heldToLine(POOL_SPHERE_WIDENED)
+
+
   test "summarise reads median and minimum per object":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
     check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
