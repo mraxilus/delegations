@@ -1313,9 +1313,39 @@ confirms it.** `design/asks.nim` is one list of what every still card asks: whic
 turned, and whose crown the hands go over. `design/modelled` reads it, answers each one, and writes
 `design/modelled.json`. `design/rig` reads it and records each still.
 
-Moving cards ask whether the couple carry the turn under one manner of the four. An orbit is the
-other dancer turned the other way about, so its sense is flipped, and hands are raised over whoever
-walks under.
+Moving cards ask whether the couple carry the turn under one manner of the four.
+
+**A card turns the dancer that it draws turning, and the hands go over their crown.** The
+simulation turns one dancer on their own spot, and the partner stays where they stand. So a lead
+who turns a quarter has the follow at their side, and a follow who turns a quarter is still ahead.
+Who turns is half of what a card asks.
+
+An orbit keeps the walker facing the centre (rule 32). So the relation of the walker to the
+connection never changes, and the dancer at the centre turns against it. Physically, an orbit is
+the dancer at the centre turning the other way about. That is the reading of the Architect. The
+connection goes round the dancer who turns, so the hands go over their crown. `asks.turnerOf` holds
+this one rule for stills and for moving cards.
+
+Turned by the follow alone, every still of the turn of a lead stood the follow ahead of the lead.
+Every orbit carried its hands over the crown of the walker, so each orbit still stood the pose of
+the other manner of its cell. The page walks each single-hand move clockwise for every manner, and
+the chain by the sense of its manner. Turned by the sense of the chain, the own turn of the lead
+went anticlockwise where the caption says clockwise. So did the orbit of the lead.
+
+Verified by `suites/test_asks.nim`, each law red first. Every single-hand card stands the follow
+where its cell draws them, facing as drawn. The two cards of one cell turn one dancer. Every card
+carries its hands over the crown of the dancer who turns. Every single-hand move ends where the walk
+of its cell ends.
+
+**A crossed pair fixes its way about.** A frame that names one connection over turns whichever way
+puts that one over, as the chain names its positions (`route.overArm`). Its drawing is the same
+either way about, because the drawing puts the named connection over whichever way the couple
+turned. Asked either way, the simulation stood A11 in the crossing of A9, left over right, where
+the card draws right over left.
+
+Verified by `suites/test_asks.nim`, both red first. A9 is the D5 of the chain, and A11 its D3. Every
+crossed still lays the connection that its card names over, at the crossing of the lead. That
+crossing is the one nearest the lead along both connections.
 
 The page counts turns clockwise seen from above, and the simulation anticlockwise. Every wind is
 flipped in one place before it is asked (`asked`). Flipped for the chains alone, A16 was stood in
@@ -1477,11 +1507,28 @@ When the plan stops, it goes back some moments, moves the arms a little, and goe
 stop it goes back to the last moment that the couple faced each other. It arranges the arms again
 there, and then goes on. The way down into facing decides the way up out of it.
 
-**The engine follows the plan, and the judge is the one of every walk.** `walk.follow` stands every
-body exactly where the plan starts (`placeBodies`). It then aims every joint at the plan with a
-spring of 30 hertz (`steer`, `STEER`). The wrist spring is three times as stiff, because the hand
-is the lightest link (`WRIST_STEER`). The follow turns and steps as the plan does
-(`turnStepping`). The judge is `gives`, and nothing in it changes.
+**The engine stands every planned moment, and the judge is the one of every walk.** `walk.replay`
+stands every body where the plan has it at one moment, with nothing moving (`standAt`). It aims
+every joint at the plan, lets the engine take two steps to find every contact (`STAND_STEPS`), and
+judges (`gives`). Then it takes the next moment. At the end it lets the pose settle (`SETTLE`) and
+judges again. A planned card holds where the engine stands every moment of its plan and its end.
+
+Each moment is stood afresh from the plan, so the engine judges the plan itself. Sprung after the
+plan instead (`walk.follow`), the answer turned on the drift of the springs. D1 and D7 held or not
+on the last bit of one sum.
+
+The lead's turn of the same-name chain to its swan gave at 0.46 to 1.11 of a turn, sprung. It gave
+in every style whose plan reached the swan. Stood a moment at a time, with the gap to a palm read
+true, every such plan held: 4 of 8 tries each way. Measured 2026-10-02.
+
+The plan holds every capsule clear at each moment, and no point leaps further than its style lets
+it between two moments. So the replay judges a path, and not a list of poses.
+
+**The engine can also follow the plan, sprung after it.** `walk.follow` stands every body exactly
+where the plan starts (`placeBodies`). It then aims every joint at the plan with a spring of 30
+hertz (`steer`, `STEER`). The wrist spring is three times as stiff, because the hand
+is the lightest link (`WRIST_STEER`). The engine turns the dancer that the plan turns, and steps
+the follow, as the plan does (`turnStepping`). The judge is `gives`, and nothing in it changes.
 
 At each moment the planner reads the pose of the engine (`poseVector`). It plans the moment again
 from that pose (`corrected`), so the drift of the engine is answered at each moment. The target
@@ -1493,28 +1540,42 @@ the test.
 While the couple are steered, the lift, the draw, the weight of the elbow and the ease torques are
 off. The plan already holds what they do. The walls past the end of each swing stay on.
 
+`test_plan.nim` holds the springs to one planned turn, so this way stays able to follow a plan.
+No card is answered by it.
+
 The planner tries sixteen styles in a fixed order (`STYLES`). A style sets how hard the two joined
 pairs are drawn to one point. It also sets how hard each moment is held near the last, and one of
 four starts at rest. A hold that is its own mirror image also tries the mirror image of the plan
-for the other way about (`mirrored`). The first plan that the engine follows answers the card, in
+for the other way about (`mirrored`). The first plan that the engine stands answers the card, in
 `design/modelled` and on the rig viewer (`seen.still`).
 
-Measured on 2026-10-02, on four cores. The planned way answers each of the 33 cards that the walk
-does not, the four swans among them. A same-name swan costs about 550 s, because the early styles
-do not reach it. The plan of D7 puts the couple 0.44 m apart. It draws both joined pairs to one
-point beside the lead, at the top of the torso band.
+**The gap to a palm is read from the nearest point of each segment.** The planner holds each palm
+as a point with a radius, as the engine does. `vector.closest` read the gap from the start of the
+other segment when that segment was a point. So a plan of the drawn D1 kept 5.8 cm between a palm
+and a forearm, where the palm sat 5.4 cm inside it. The engine stood that palm 4.3 cm inside the
+forearm and gave. Verified by `test_plan.nim`, red first.
 
-**The planned stills hold inside every end, but they are not at ease.** Strain is nought at ease
-and one at an end. Where they stand, D3 reads 0.13, C2 0.26, and C6, D1 and D7 0.34. C1 reads 0.56
-and C7 0.57. Measured on 2026-10-02, with the first style that holds each one.
+Measured on 2026-10-03, on four cores. The planned way answers each of the 32 cards that the walk
+does not, the four swans among them. Eight cost about 2240 s each: D1, D7, and the six moves of the
+same-name chain to its swans that the follow turns. The others cost 54 s to 371 s. The plan of D7
+puts the couple 0.56 m apart. It holds its two joins 0.15 m from each other, at the top of the
+torso band.
 
-The worst joint of C1, C2, C6 and C7 is her waist. The worst joint of D1 and D7 is the extension of
-her shoulder, and the worst joint of D3 is the twist of her shoulder.
+**Three planned stills stand at an end, and none is at ease.** Strain is nought at ease and one at
+an end. Where they stand, D3 reads 0.15, C2 0.19, and D1 and D7 0.37. C1, C6 and C7 read 1.00.
+Measured on 2026-10-02, with the first style that holds each one. The joints of the arms read the
+same from `design/rig.json`.
 
-The two kinds of strain have two causes. The plan of D7 sits near ease, with a comfort of 0.07, so
-the drift of the engine from the plan makes its strain. The plan of C1 itself turns her waist half
-into its ease. Rejected: to let the arms settle toward ease at the last wind, a leap at a time.
-That took C1 from 0.56 to 0.53 and left D7 as it was.
+The worst joint of C1 and C7 is the forward swing of her collarbone, and of C6 her waist. The worst
+joint of D1 and D7 is the bend of her elbow, and of C2 and D3 the twist of her right shoulder.
+
+The first plan that holds answers a card, and not the easiest one. Sprung after the plan, the first
+plan of C6 to hold stood the couple 1.05 m apart, at 0.17. Stood a moment at a time, an earlier plan
+holds, 0.36 m apart, with her waist at its end. With the gap to a palm read from the start of a
+segment, the replay still stands C6 at 0.99. C1 reads 1.00 stood or sprung. Measured 2026-10-02.
+
+Rejected: to let the arms settle toward ease at the last wind, a leap at a time. With the engine
+sprung after the plan, that took C1 from 0.56 to 0.53 and left D7 as it was.
 
 The spring is 30 hertz because of what was measured on D7 on 2026-10-01. At 15 hertz the engine
 gave by twist at 1.47 of a turn. At 25, 30 and 40 hertz it stood, with a strain of 0.33 to 0.34 at
@@ -1531,16 +1592,20 @@ Rejected, each measured on the cards that the walk does not reach, on 2026-10-01
 - two times the engine steps for each moment. D7 gave at the same moments, 0.71 and 1.31 of a turn;
 - capsules of true size in the plan alone, 33 mm for the forearm and 16 mm for the palm. Each plan
   of the same-name swans then stopped at 0.59 to 0.70 of a turn. With the capsules of the engine,
-  the same plans went to 0.71 to 1.17.
+  the same plans went to 0.71 to 1.17. That was measured with the gap to a palm read wrongly.
 
 Verified by `test_plan.nim`. The engine stands every joint where the plan places it, and reads the
-plan back, within 0.1 mm over 128 poses. The mirror image of a plan stands every point at its
-reflection. A planned turn of the cross-name chain to its cross keeps the hands joined, the capsules
-apart and no point leaping. The engine follows it and stands there.
+plan back, within 0.1 mm over 128 poses. A third of them are at rest. The others are a third of a
+turn past rest, turned by the follow or by the lead.
+
+The mirror image of a plan stands every point at its reflection. A planned turn of the cross-name
+chain to its cross keeps the hands joined, the capsules apart and no point leaping. The engine
+follows it and stands there.
 
 Each law failed on a break made on purpose. The breaks were the lift read back with the wrong sign,
 and a sign kept in the mirror. Others were the joined hands left out of the plan, and the shoulder
-aimed outside its rest frame.
+aimed outside its rest frame. The last was the bodies placed turning the follow whatever the plan
+turns, which put a point 1.25 m off the plan.
 
 Verified by `suites/test_asks.nim`: the simulation models every card that the reference draws. Red
 first, with 33 of 231 cards not modelled.
@@ -1993,10 +2058,11 @@ gave the same stage, readout and strip at 72 fixed states: six holds, three leve
 Each kept answer, reading, card, recording and turn came back the same number, in the same order.
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
-so a change of names alone reads the physics again. On 2026-09-28, on four cores, the answers took
-151 s and the report 433 s. The modelled cards took 721 s, the rig 564 s and the whole-cloth turns
-1,170 s. That is the cost of a stamp that reads text and not the program, and it is accepted.
-Renames of the simulation are rare.
+so a change of names alone reads the physics again. On 2026-10-02, on four cores, the answers took
+144 s and the report 421 s. The rig took 2464 s and the whole-cloth turns 1135 s. The modelled
+cards took 7245 s on 2026-10-03, and 95 percent of the work was in the 32 planned cards. That is
+the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
+simulation are rare.
 
 ## Toolchain
 
@@ -2068,11 +2134,29 @@ latent, and not urgent.
   Whether the extra full turn beyond the cross lives in the wrists and the hand hold, or in the
   arms wrapping each other. Asked.
 - The drawing of the reference itself puts both joins at one point, with the right-over-left
-  connection under. The planned D7 also draws both joined pairs to one point. The carried walk,
-  with its hands at the edge of the band, wraps her arms round her head instead.
-- **The swans are reached, but not at ease.** C1 and C7 turn her waist more than half into its
-  ease, and D1 and D7 take her shoulder a third of the way. The easiest swan of all the styles is
-  not yet sought, as `walk.standing` seeks the easiest distance.
+  connection under. The planned D7 holds its two joins 0.15 m apart. The carried walk, with its
+  hands at the edge of the band, wraps her arms round her head instead.
+- **The swans are reached, but not at ease.** C1 and C7 swing her collarbone forward to its end,
+  and D1 and D7 bend her elbow a third of the way into its ease. The easiest swan of all the
+  styles is not yet sought, as `walk.standing` seeks the easiest distance.
+- **With the springs, the planned swans of the same-name chain held on the last bit of one sum.**
+  When the wind was added to the facing of the follow in another order, that facing changed in
+  its last bit. Then D1 and D7 stood no pose in any of the sixteen styles. Measured 2026-10-02
+  with the engine sprung after the plan. The facing keeps its order, and the engine now stands
+  each planned moment instead (Planned turn).
+- **The swans wrap the connection that the card draws straight.** The card draws the connection
+  over at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen
+  from above in `design/rig.json`, the connection that C1 draws straight runs 2.61 times its line
+  between the shoulders, and the other 1.26. In D1 they run 2.11 and 1.52, and C7 and D7 are
+  their mirror images. Measured 2026-10-03.
+- **A palm as thick as a hand gets the drawn swans, but it moves the carried walk.** The palm is a
+  ball 8 cm across, and a hand is about 3 cm thick. The test was a ball 4 cm across in the plan
+  and the engine, with plans pulled toward the drawn straight connection. They held C1 at 0.09
+  and C7 at 0.05, and D1 and D7 at 0.83, by the bend of her left elbow. But the carried
+  cross-name hold over the crown then gave at 0.98 of a turn, where a law holds it free.
+
+  With a ball 6 cm across, the carried walk stayed as it is, and no plan of the drawn C1 held in
+  39 minutes. Measured 2026-10-02. The size of a palm is the Architect's to measure.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, cell by cell on the viewer. The tags
   read *unconfirmed* until then.
