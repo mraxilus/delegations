@@ -214,9 +214,9 @@ So the machine moves between days, and not by one factor for each implementation
 taken at different hours never compare, and ratios within one run do.
 
 Within these baselines, the least and greatest run ratios of the median measurand are ×1.15
-apart at rga4d and at cga5d, ×1.10 at rga3d and ×1.06 at cga4d. The widest measurand spreads
-×4.73, as `dual_weight_line` at rga3d does. Its reference takes under one nanosecond in four runs
-of five. In two runs of five, its library takes ×2.8 its usual time.
+apart at rga4d and at cga5d. They are ×1.10 apart at rga3d and ×1.06 at cga4d. The widest
+measurand spreads ×4.73, as `dual_weight_line` at rga3d does. Its reference takes under one
+nanosecond in four runs of five. In two runs of five, its library takes ×2.8 its usual time.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -540,7 +540,9 @@ else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the 
 (`evaluations/cayley-derivation.json`, 2026-10-03, `linux amd64, 4 cores`). So the claim of P01,
 ×0.70 at most, fails at the pin. At `3121342` the library peaked at 285.8 MiB and P01 at
 170.9 MiB, on 2026-10-01. The refactor at the pin takes 50.8 MiB of the 114.9 MiB that P01 saved
-there. Rejected: the bench entry, which puts the harness in the measured build. With the library
+there.
+
+Rejected: the bench entry, which puts the harness in the measured build. With the library
 fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
 261.2 MiB at rga6d on 2026-10-01. A wider bound would not hold either, since the next change to
 the harness moves it again.
