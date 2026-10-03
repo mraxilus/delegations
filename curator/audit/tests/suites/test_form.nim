@@ -213,7 +213,8 @@ suite "Fixes":
     ]:
       check fixed(kept).source == kept
       check messages("a.nim", kept, Kind.Nim) == @["Line holds tab."]  # finding stays
-    check fixed("let s = \"a\tb\"\n", Kind.Configuration).source == "let s = \"a\tb\"\n"  # Nim alone
+    let configuration = fixed("let s = \"a\tb\"\n", Kind.Configuration).source
+    check configuration == "let s = \"a\tb\"\n"  # Nim alone
 
 
   test "fix never writes line width check reports":
