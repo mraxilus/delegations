@@ -9,8 +9,8 @@
 ##     Markdown, TypeScript, YAML or shell stays for hand.
 ##   Inside that reach, fixer runs where its check runs: idiom fixers on `.nim` alone, every
 ##     other fixer on every Nim kind. Order keeps each fixer from undoing one before it:
-##   - form first (whitespace, ending, trailing comment, banner), so later fixers read clean
-##     line ends and final comment gaps, which wrapping counts in width;
+##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
+##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
 ##   - idioms next (return, import order, import brackets, bindings, `strictFuncs`, unordered
 ##     lists), since bindings indent lines and every later width reads that indent;
 ##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
