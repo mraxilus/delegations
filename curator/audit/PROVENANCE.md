@@ -855,6 +855,12 @@ is the failure it exists to catch.
   window is not. A body that opens `**Role:**` and one that opens
   `Role:` unbolded both pass, while a null body and a missing label are named. A red `ledger`
   beside an open `check` issue opens its own issue.
+- **An issue opened again after the merge passes.** GitHub reads a closing keyword in any
+  sentence, so a body that says it does not close an issue closes it all the same. The delegate
+  who opens that issue again does so on purpose, and `closingIssuesReferences` keeps the link.
+  So the ledger reads the events of each issue that it would name, at the cost of one read each.
+  It passes an issue with a `reopened` event after the merge, and still names one opened again
+  before it. Verified by hand through a stub for `gh` and real `jq` 1.7, 2026-10-03.
 - Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is
   free while the repository is public. A private one pays: 1,909 of 2,000 free minutes were
   measured used while this repository was private.
