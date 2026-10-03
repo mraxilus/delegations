@@ -6,7 +6,15 @@ it is agreed.
 
 ## Standards
 
-The root glossary holds the default standards, and this project has selected none of its own.
+The root glossary holds the default standards. This project selects four of its own, one for each
+language that its pages are written in.
+
+- **HTML Standard**, WHATWG, Living Standard: `html`, the markup of each page.
+- **Scalable Vector Graphics (SVG) 2**, W3C, Candidate Recommendation, 2018: `svg`, the markup of
+  each picture.
+- **CSS Snapshot 2024**, W3C, Group Note, 2025: `css`, the style sheets of each page.
+- **ECMAScript 2026 Language Specification**, Ecma International, ECMA-262, 17th edition, 2026:
+  `js`, the language of each script that Nim compiles.
 
 ## Language
 
@@ -214,6 +222,11 @@ _Avoid_: arrow, nose, pointer, tick
 Every measurement that the simulation stands on: rounds, heights, arm lengths, joint ranges and
 hand bands, each one with its source.
 _Avoid_: body model, skeleton, anthropometry
+
+**Degree of freedom**:
+One way in which a joint of the arm moves, between the two ends of its range, such as the bend
+of the elbow. `Dof` names one in code.
+_Avoid_: axis, motion, movement
 
 **Pose**:
 Where every joint of a held arm is. A search finds the most comfortable arrangement that

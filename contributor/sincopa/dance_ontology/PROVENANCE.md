@@ -1929,9 +1929,9 @@ closed list of V.6. `Vector`, `Position` and `Quaternion` are in full, and so is
 engine binding. The C name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins
 one-letter symbols is spelled out, as `delta_x` for `dx`.
 
-Two kinds of name do not follow this yet. The search of the planner binds `sd`, an abbreviation,
-and joins symbols, as `fx`, `sy` and `yq`. `Dof` is an acronym that no glossary lists, and so are
-`svg`, `html`, `css` and `js` in several names. V.9 keeps an acronym only where a glossary lists it.
+One kind of name does not follow this yet. The search of the planner binds `sd`, an abbreviation,
+and joins symbols, as `fx`, `sy` and `yq`. An acronym stays only where a glossary lists it (V.9).
+The glossary of this project lists `Dof` as a term, and `svg`, `html`, `css` and `js` as standards.
 
 **A path is a name too.** The simulation is in `simulation/`, and the build folders are
 `dependencies/` and `binaries/`. The root ignore file ignores both, so this project has no ignore
