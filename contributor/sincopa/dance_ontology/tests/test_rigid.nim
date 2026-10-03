@@ -28,6 +28,7 @@ import std/[atomics, cpuinfo, math, os, random, strformat, strutils, tables, typ
           unittest]
 
 import ../simulation/[answers, body, hold, limb, read, rig, rigid, vector, walk]
+import ./fixtures
 
 
 const
@@ -1033,9 +1034,9 @@ suite "Internal: Every still stands at ease":
     var couple = build(HUMAN, restStance(HUMAN, 0.44), Band.Crown, WOUND, Body.Two)
     for wind in [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 1.5]:
       couple.stance = turned(restStance(HUMAN, 0.44), Body.Two, wind)
-      check abs(couple.wound - wind) < 1e-9
+      check couple.wound =~ wind
       let away = min(wind mod 1.0, 1.0 - wind mod 1.0)
-      check abs(couple.up - min(1.0, away / 0.25)) < 1e-6
+      check couple.up =~ min(1.0, away / 0.25)
       if away > 1e-6 and away < 0.5 - 1e-6: check couple.isLeavingCrown == (wind < 0.5)
       check couple.height >= couple.up
       if couple.isLeavingCrown: check couple.over == 1.0

@@ -17,6 +17,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[atomics, cpuinfo, math, random, strformat, tables, typedthreads, unittest]
 
 import ../simulation/[body, hold, limb, read, rig, rigid, vector]
+import ./fixtures
 
 
 const
@@ -118,7 +119,7 @@ suite "Internal: Two hands":
           k = int(crossing.along)
           on = first_line[k] + (first_line[k + 1] - first_line[k]) * (crossing.along - float(k))
           other = nearestOn(second_line, crossing.at)
-        check abs(crossing.at.x - on.x) < 1e-9 and abs(crossing.at.y - on.y) < 1e-9
+        check crossing.at.x =~ on.x and crossing.at.y =~ on.y
         check other.offset < 1e-9
         check (crossing.over == 0) == (crossing.at.z >= other.z)
     checkpoint &"{seen} crossings read off two holds, three bands, five turns"
@@ -196,6 +197,6 @@ suite "Internal: Two hands":
     let tight = tightest(HUMAN, couple.stance, links, arms)
     check tight.room < Inf
     check tight.strain >= 0.0 and tight.strain <= 1.0
-    check abs(strain(Tight(room: 0.0)) - 1.0) < 1e-9
-    check abs(strain(Tight(room: 1.0)) - 0.0) < 1e-9
+    check strain(Tight(room: 0.0)) =~ 1.0
+    check strain(Tight(room: 1.0)) =~ 0.0
     couple.free()

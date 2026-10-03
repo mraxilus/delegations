@@ -15,6 +15,7 @@
 import std/[math, sequtils, unittest]
 
 import ../../src/dance_ontology/draw/[geometry, route]
+import ../fixtures
 
 
 const
@@ -89,7 +90,7 @@ suite "Internal: Reach breaks":
       # Reach loses exactly its gap, no more and no less.  Bare test that
       # crossing sits in no run passed while gap was cut to whole samples
       # and so took more than it meant to.
-      check abs(drawn - (span - (gap.shuts - gap.opens))) < 1e-6
+      check drawn =~ span - (gap.shuts - gap.opens)
 
 
   test "a reach that crosses nothing is not broken":
@@ -120,7 +121,7 @@ suite "Internal: Reach breaks":
         gap = gapFor(at, span, hidesAt(LINE_SAMPLED, crossingAt(at), LINE_SAMPLED[i]))
       if gap.shuts <= gap.opens:
         continue
-      check abs((gap.opens + gap.shuts) / 2 - at) < 1e-9
+      check (gap.opens + gap.shuts) / 2 =~ at
 
 
   test "an uncrossed reach is drawn whole":
@@ -178,11 +179,11 @@ const
 
 suite "Internal: Drawn run":
   test "length of run is sum of its steps, taken at compile time":
-    check abs(WALKED - 7.0) < 1e-9
+    check WALKED =~ 7.0
 
 
   test "length of run is same taken at run time":
-    check abs(polylineLength(SQUARE) - WALKED) < 1e-9
+    check polylineLength(SQUARE) =~ WALKED
 
 
   test "run of one point, or none, is no length at all":

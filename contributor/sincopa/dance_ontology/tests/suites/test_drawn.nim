@@ -6,6 +6,7 @@
 import std/unittest
 
 import ../../design/drawn
+import ../fixtures
 
 
 
@@ -70,7 +71,7 @@ suite "Internal: Capsule on canvas":
     let
       along: Seen = (x: 0.0, y: 1.0, depth: 0.0)
       across = lightAcross((x: 0.6, y: 0.8, depth: 0.0), along)
-    check abs(across.x - 0.6) < 1e-9
-    check abs(across.y) < 1e-9
+    check across.x =~ 0.6
+    check across.y =~ 0.0
     let whole = lightAcross((x: 0.6, y: 0.8, depth: 0.0), (x: 0.0, y: 0.0, depth: 0.0))
     check whole == (x: 0.6, y: 0.8, depth: 0.0)

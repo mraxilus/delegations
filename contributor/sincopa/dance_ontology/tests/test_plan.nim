@@ -20,6 +20,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[math, random, unittest]
 
 import ../simulation/[body, hold, limb, plan, rig, rigid, vector, walk]
+import ./fixtures
 
 
 const
@@ -153,7 +154,7 @@ suite "Internal: Planned turn":
 
   test "plan winds hand-to-hand from rest to its cross":
     check path.is_reached
-    check abs(path.winds[^1] - CROSS) < 1e-9
+    check path.winds[^1] =~ CROSS
 
 
   test "every moment keeps hands joined, capsules apart and no point leaping":
@@ -202,4 +203,4 @@ suite "Internal: Planned turn":
     )
     checkpoint "stopped by " & $followed.why & " at " & $followed.at
     check followed.is_holding
-    check abs(followed.at - CROSS) < 1e-9
+    check followed.at =~ CROSS
