@@ -138,3 +138,33 @@ suite "Names":
     check not found.anyIt("getShaderiv" in it)  # pragma on its own line
     check found.anyIt("got `buf`" in it)  # parameter is ours
     check "getError" notin F.names and "buf" in F.names
+
+
+  test "V.6 abbreviation is spelled out word by word, case kept, exempt words aside":
+    check "ctx".respelled([]) == "context"
+    check "tmpDir".respelled([]) == "temporaryDirectory"
+    check "Cfg".respelled([]) == "Configuration"
+    check "CFG_PATH".respelled([]) == "CONFIGURATION_PATH"
+    check "dir_hint".respelled([]) == "directory_hint"
+    check "dirs".respelled([]) == "dirs"  # plural is other word, outside table
+    check "ctx".respelled(["ctx"]) == "ctx"  # glossary admits it
+    check "src_dir".respelled([]) == "src_directory"  # jargon of V.6 stays
+
+
+  test "V.6 rename target is each declaration check reports, at its name's column":
+    let
+      source = "proc f(ctx: int, b: int) =\n  let tmp = ctx\n  echo tmp\n"
+      renames = abbreviationRenames(source, [])
+    check renames == @[(1, 7, "ctx", "context"), (2, 6, "tmp", "temporary")]
+    check checkNames("a.nim", source, JARGON).len == renames.len  # check reads same set
+
+
+  test "exemptions are jargon, root glossary and glossary of path's own project":
+    let glossaries = @[
+      ("GLOSSARY.md", "# R\n\n## Standards\n\n- **S**: `ms`.\n\n## Language\n"),
+      ("curator/audit/GLOSSARY.md", "# A\n\n## Standards\n\n- **T**: `px`.\n\n## Language\n"),
+      ("curator/probe/GLOSSARY.md", "# P\n\n## Standards\n\n- **U**: `au`.\n\n## Language\n"),
+    ]
+    let exempt = glossaries.exemptionsOf("curator/audit/src/a.nim")
+    check "ms" in exempt and "px" in exempt and "lut" in exempt
+    check "au" notin exempt  # other project's glossary
