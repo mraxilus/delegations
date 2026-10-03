@@ -11,8 +11,15 @@
 ##     caller pays.
 ##   Result of three floats or fewer returns by value, so loop binds it before storing it.
 ##     Assigned straight into slot, it passes through temporary that call site zero-fills, and
-##     in function this large compiler keeps that fill as out-of-line `rep stos`, about 11 ns
-##     per object that no caller of normal size pays. Suite `Internal: Inspector` holds it.
+##     in large function compiler keeps that fill as out-of-line `rep stos`, about 11 ns per
+##     object that no caller of normal size pays. Suite `Internal: Inspector` holds it.
+##   Each measurand times in procedure of its own per implementation, as caller's function
+##     would call it. In one function holding every loop, error check after each call drains
+##     compiler's estimate of reaching code below it to zero from second measurand on; code
+##     estimated cold is optimised for size, so library's loops stay scalar while straight-line
+##     forms still vectorise. Suite `Internal: Inspector` holds it.
+##   Result slots align to cache line, so every implementation writes same layout; alignment
+##     alone moves time of identical code by up to about a fifth.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
@@ -168,7 +175,7 @@ macro emitMeasurand(
   quote do:
     block:
       var
-        results {.noinit.}: array[OBJECTS, typeof(block:
+        results {.noinit, align(64).}: array[OBJECTS, typeof(block:
           let
             `m` {.used.} = `pool_m`[0]  # Read by `body`.
             `n` {.used.} = `pool_n`[0]  # Read by `body` of binary measurand; unary leaves it.
@@ -204,21 +211,31 @@ macro emitMeasurand(
 
 
 macro emitCatalogue(): untyped =
-  ## Emit every measurand in every implementation, in catalogue order.
-  ##   Implementations of one measurand run back to back, so machine drift lands on each alike.
+  ## Emit one procedure per measurand per implementation, then `measureCatalogue` calling each.
+  ##   Calls follow catalogue order, and implementations of one measurand run back to back, so
+  ##   machine drift lands on each alike.
   result = newStmtList()
+  let calls = newStmtList()
   for index in 0..<CATALOGUE.len:
     for implementation in Implementation:
-      result.add newCall(
-        bindSym"emitMeasurand",
-        newLit(index),
-        newCall(ident"Implementation", newLit(ord(implementation))),
-        newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
-      )
+      let
+        name = ident("measure" & $index & $implementation)
+        timed = newCall(
+          bindSym"emitMeasurand",
+          newLit(index),
+          newCall(ident"Implementation", newLit(ord(implementation))),
+          newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
+        )
+      result.add quote do:
+        proc `name`() {.noinline.} =
+          `timed`
+      calls.add newCall(name)
+  result.add quote do:
+    proc measureCatalogue*() =
+      ## Time and count every measurand in every implementation; pools must be filled first.
+      ##   First recorded round warms caches; median over rounds discounts it, minimum shows
+      ##   warmed cost.
+      `calls`
 
 
-proc measureCatalogue*() =
-  ## Time and count every measurand in every implementation; pools must be filled first.
-  ##   First recorded round warms caches; median over rounds discounts it, minimum shows
-  ##   warmed cost.
-  emitCatalogue()
+emitCatalogue()
