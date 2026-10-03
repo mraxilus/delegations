@@ -207,20 +207,20 @@ suite "Hooks":
 
 
   test "sign-off parts come in order Architect set":
-    const CONTEXT = "**Context:** This branch adds the gap list. The Architect asked for " &
+    const context = "**Context:** This branch adds the gap list. The Architect asked for " &
       "baselines. #331 was a draft.\n\n"
-    let context_first = SIGNOFF.replace(CONTEXT, "").replace("| # |", CONTEXT & "| # |")
+    let context_first = SIGNOFF.replace(context, "").replace("| # |", context & "| # |")
     check checkSignoff(context_first, BRANCH)
       .messages.anyIt("lacks `**Context:**` in its order" in it)  # table comes first
-    const SUMMARY = "**Summary:** The gap list is done. Row 4 waits on D1.\n\n"
-    let summary_last = SIGNOFF.replace(SUMMARY, "").replace("**Next", SUMMARY & "**Next")
+    const summary = "**Summary:** The gap list is done. Row 4 waits on D1.\n\n"
+    let summary_last = SIGNOFF.replace(summary, "").replace("**Next", summary & "**Next")
     check checkSignoff(summary_last, BRANCH)
       .messages.anyIt("lacks `**Decisions:**` in its order" in it)  # decisions follow summary
 
 
   test "sign-off state and decisions label":
-    const STATE = "**State:** blocked, at `3f2a9c1`, pushed, #331 draft\n"
-    check checkSignoff(SIGNOFF.replace(STATE, ""), BRANCH)
+    const state = "**State:** blocked, at `3f2a9c1`, pushed, #331 draft\n"
+    check checkSignoff(SIGNOFF.replace(state, ""), BRANCH)
       .messages.anyIt("lacks `**State:**`" in it)
     check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
       .messages.anyIt("state is one of" in it and "got `stuck`." in it)  # word, not branch
@@ -247,20 +247,20 @@ suite "Hooks":
       .messages.anyIt("lacks `Where:`" in it)
     check checkSignoff(SIGNOFF.replace("- Class: fact", "- Class: urgent"), BRANCH)
       .messages.anyIt("Class is" in it)
-    const OTHERS = "- Class: blocks this delegate and "
+    const others = "- Class: blocks this delegate and "
     check checkSignoff(
-      SIGNOFF.replace("- Class: blocks this delegate", OTHERS & "the visualiser"), BRANCH
+      SIGNOFF.replace("- Class: blocks this delegate", others & "the visualiser"), BRANCH
     ).messages.anyIt("role string; got `the visualiser`" in it)
     check checkSignoff(
-      SIGNOFF.replace("- Class: blocks this delegate", OTHERS & "curator, curator/audit"), BRANCH
+      SIGNOFF.replace("- Class: blocks this delegate", others & "curator, curator/audit"), BRANCH
     ).len == 0
 
 
   test "sign-off decision offers two to four short options and picks one":
     check checkSignoff(SIGNOFF.replace("  - b. Rename: twelve suites change.\n", ""), BRANCH)
       .messages.anyIt("offers 2 to 4 options; got `1`" in it)
-    const MORE = "  - c. Drop: x.\n  - d. Wait: x.\n  - e. Ask: x.\n- Recommends:"
-    check checkSignoff(SIGNOFF.replace("- Recommends:", MORE), BRANCH)
+    const more = "  - c. Drop: x.\n  - d. Wait: x.\n  - e. Ask: x.\n- Recommends:"
+    check checkSignoff(SIGNOFF.replace("- Recommends:", more), BRANCH)
       .messages.anyIt("offers 2 to 4 options; got `5`" in it)
     check checkSignoff(SIGNOFF.replace("a. Keep:", "a. Keep both names here:"), BRANCH)
       .messages.anyIt("at most 3 words" in it)
