@@ -7,7 +7,9 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest]
+import std/[
+  algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest,
+]
 from std/unicode import runeLen
 
 import ../src/pga_benchmark

@@ -73,8 +73,7 @@ const
     ## Library's own stub per algebra, relative to checkout.
   ALGEBRAS_EVALUATED* = ["rga4d", "cga5d"]
     ## Algebras every evaluation measures: 3D Euclidean ones; each more costs builds and runs.
-  ALGEBRAS_THOROUGH* = ["rga3d", "cga4d"]
-    ## Algebras thorough evaluation adds: 2D Euclidean ones.
+  ALGEBRAS_THOROUGH* = ["rga3d", "cga4d"]  ## Algebras thorough evaluation adds: 2D Euclidean ones.
 
 
 func algebrasEvaluated*(is_thorough: bool): seq[string] =

@@ -39,8 +39,7 @@ type
     x*, y*, w*: float
   Line* = object  ## Define line 𝐠 with normal x y and position w; grade 2.
     x*, y*, w*: float
-  Motor* = object
-    ## Define motor 𝐐 with bulk x y and weight z w; grades 1 and 3, i.e. antieven.
+  Motor* = object  ## Define motor 𝐐 with bulk x y and weight z w; grades 1 and 3, i.e. antieven.
     x*, y*, z*, w*: float
 
 

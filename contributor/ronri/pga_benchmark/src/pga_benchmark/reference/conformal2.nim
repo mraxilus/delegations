@@ -93,7 +93,7 @@ func wedge*(d, f: Dipole): Antiscalar {.inline.} =
   ## Join dipoles in antiscalar measuring their crossing, i.e. 𝐝 ∧ 𝐟; 6 mul, 5 add.
   Antiscalar(
     -(d.g.x * f.p.x) - d.g.y * f.p.y - d.g.w * f.p.w - d.p.x * f.g.x - d.p.y * f.g.y -
-      d.p.w * f.g.w
+      d.p.w * f.g.w,
   )
 
 func wedgeAnti*(c, o: Circle): Dipole {.inline.} =
@@ -157,7 +157,7 @@ func dotAnti*(a, b: PointRound): Antiscalar {.inline.} =
 func dotAnti*(d, f: Dipole): Antiscalar {.inline.} =
   ## Multiply dipoles through inner antiproduct, i.e. 𝐝 ∘ 𝐟; 6 mul, 5 add.
   Antiscalar(
-    d.p.w * f.p.w + d.p.x * f.g.y - d.p.y * f.g.x - d.g.w * f.g.w - d.g.x * f.p.y + d.g.y * f.p.x
+    d.p.w * f.p.w + d.p.x * f.g.y - d.p.y * f.g.x - d.g.w * f.g.w - d.g.x * f.p.y + d.g.y * f.p.x,
   )
 
 func dotAnti*(c, o: Circle): Antiscalar {.inline.} =
@@ -381,12 +381,7 @@ func center*(d: Dipole): PointRound {.inline.} =
 
 func center*(c: Circle): PointRound {.inline.} =
   ## Get center of circle as round point with its radius; 6 mul, 2 add.
-  PointRound(
-    x: c.u * c.x,
-    y: c.u * c.y,
-    w: -(c.u * c.u),
-    u: c.u * c.w - c.x * c.x - c.y * c.y,
-  )
+  PointRound(x: c.u * c.x, y: c.u * c.y, w: -(c.u * c.u), u: c.u * c.w - c.x * c.x - c.y * c.y)
 
 
 
@@ -394,12 +389,7 @@ func center*(c: Circle): PointRound {.inline.} =
 
 func container*(a: PointRound): Circle {.inline.} =
   ## Get container of round point, i.e. 𝐚 ∧ (𝐚⊟)☆, circle of its radius; 6 mul, 2 add.
-  Circle(
-    u: -(a.w * a.w),
-    x: a.w * a.x,
-    y: a.w * a.y,
-    w: a.u * a.w - a.x * a.x - a.y * a.y,
-  )
+  Circle(u: -(a.w * a.w), x: a.w * a.x, y: a.w * a.y, w: a.u * a.w - a.x * a.x - a.y * a.y)
 
 func container*(d: Dipole): Circle {.inline.} =
   ## Get container of dipole, i.e. circle on both its points about its center; 9 mul, 5 add.
@@ -421,12 +411,7 @@ func container*(c: Circle): Circle {.inline.} =
 func partner*(a: PointRound): PointRound {.inline.} =
   ## Get partner of round point, i.e. same point with squared radius negated; 8 mul, 2 add.
   let w2 = a.w * a.w
-  PointRound(
-    x: a.x * w2,
-    y: a.y * w2,
-    w: a.w * w2,
-    u: (a.x * a.x + a.y * a.y - a.u * a.w) * a.w,
-  )
+  PointRound(x: a.x * w2, y: a.y * w2, w: a.w * w2, u: (a.x * a.x + a.y * a.y - a.u * a.w) * a.w)
 
 func partner*(d: Dipole): Dipole {.inline.} =
   ## Get partner of dipole; 15 mul, 6 add.
@@ -444,9 +429,4 @@ func partner*(d: Dipole): Dipole {.inline.} =
 func partner*(c: Circle): Circle {.inline.} =
   ## Get partner of circle, i.e. same circle with squared radius negated; 8 mul, 2 add.
   let u2 = c.u * c.u
-  Circle(
-    u: c.u * u2,
-    x: c.x * u2,
-    y: c.y * u2,
-    w: (c.x * c.x + c.y * c.y - c.u * c.w) * c.u,
-  )
+  Circle(u: c.u * u2, x: c.x * u2, y: c.y * u2, w: (c.x * c.x + c.y * c.y - c.u * c.w) * c.u)

@@ -10,9 +10,9 @@
 
 {.experimental: "strictFuncs".}
 
-import ./inspector
 import std/strutils
 
+import ./inspector
 import ./reference/[conformal2, conformal3, rigid2, rigid3]
 
 
@@ -25,7 +25,7 @@ type Movement* = object  ## Define bytes one call moves, by cause.
   bytes_moved*: int  ## Sum of every cause.
 
 
-func sizeOfStem*(stem: string, size_multivector: int, module: string = ""): int =
+func sizeOfStem*(stem: string, size_multivector: int, module = ""): int =
   ## Read bytes of type named by C stem; zero for stems model does not know.
   ##   Typed stems repeat across algebras at other sizes, so module of function reading them
   ##   names reference whose types they are; 3D Euclidean reference where module names none.
