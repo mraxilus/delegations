@@ -53,13 +53,15 @@ const
   ASSETS_DIRECTORY* = ".cache/koch/assets"
     ## Default store, under home and beside `~/.cache/koch/nim`.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
-    ## Host serving `woff2` packaged by `@fontsource`, which is what page embeds.
+    ## Host serving `woff2` subsets packaged by `@fontsource`.
   NOTOFONTS = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"
-    ## Noto project's own release repository, serving TrueType `@fontsource` does not ship.
+    ## Noto project's own release repository, serving whole TrueType faces.
   COMMIT_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
     ## Commit Mono is nobody's Noto, so its TrueType comes from its author's repository.
   ASSETS* = [
-    # Page faces: `woff2` through `@fontsource`, version pinned in address, bytes by digest.
+    # Subset faces: `woff2` through `@fontsource`, version pinned in address, bytes by digest.
+    #   Article X.8 ships Noto whole, so Noto subset serves only page not yet moved, and its row
+    #   leaves once no page asks for it. Commit Mono is no Noto, and pages draw its subset.
     ("commit-mono-latin-400-normal.woff2",
       FONTSOURCE & "@fontsource/commit-mono@5.3.0/files/",
       "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
@@ -87,13 +89,23 @@ const
     ("noto-serif-latin-600-normal.woff2",
       FONTSOURCE & "@fontsource/noto-serif@5.3.0/files/",
       "abf0abc765331d7a1bbe6eb3603cf86be1cf3d1edbcf911cc2d52f78998c02d9"),
-    # Desktop faces: TrueType and OpenType, which atlas reads and `@fontsource` does not ship.
+    # Whole faces: TrueType and OpenType from each face's own release, which pages and desktop
+    #   atlas both embed; `@fontsource` ships none of them.
     ("NotoSans-Regular.ttf",
       NOTOFONTS & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
       "61b72eacd39533f0e5916cbb458abd7b3cf870667f63f3069dac2a75aa0317a2"),
     ("NotoSans-Bold.ttf",
       NOTOFONTS & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
       "8e6da60154ae06e5e860777c4ccf8c7338d9b96ba34c1222db40a367d79b35dc"),
+    ("NotoSans-SemiBold.ttf",
+      NOTOFONTS & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
+      "cd264c3c623fbcd1c2baca0e4d5c1d99cce45b77d59823b55d098c4562bca61c"),
+    ("NotoSerif-Regular.ttf",
+      NOTOFONTS & "@NotoSerif-v2.013/fonts/NotoSerif/hinted/ttf/",
+      "504b8ec55d003cade88fb0a7bb93254ad81fd1cb29f4818d260300dbaef5d37b"),
+    ("NotoSerif-Italic.ttf",
+      NOTOFONTS & "@NotoSerif-v2.013/fonts/NotoSerif/hinted/ttf/",
+      "637c44b0dbd0df16a969548483b01612dd095e306761af14072ae3ab69389b4f"),
     ("NotoSerif-SemiBold.ttf",
       NOTOFONTS & "@NotoSerif-v2.013/fonts/NotoSerif/hinted/ttf/",
       "24d978fa5a0b096fc9e2f8d3f2bd7004634351d19d5b2e3be74b8ed61c68c236"),
