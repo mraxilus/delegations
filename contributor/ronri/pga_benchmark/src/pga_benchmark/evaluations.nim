@@ -2,7 +2,7 @@
 ##   Evaluation is how change or proposal earns figures page shows. It copies library checkout,
 ##     applies edits (base proposal first where proposal builds on one), then measures copy
 ##     against pin:
-##     - library's own suites, both typed algebras or all four when thorough, pristine counts
+##     - library's own suites, at rga4d and cga5d or all four when thorough, pristine counts
 ##       beside;
 ##     - static measurements of every function change touches, pin's baseline as before;
 ##     - runtime of every measurand, pristine and changed binaries run alternately, so drift
@@ -72,9 +72,8 @@ const
   PATH_STUB = "tests" / "$1" / "test_$1.nim"
     ## Library's own stub per algebra, relative to checkout.
   ALGEBRAS_EVALUATED* = ["rga4d", "cga5d"]
-    ## Algebras every evaluation measures: typed ones, which both lower bounds cover.
-  ALGEBRAS_THOROUGH* = ["rga3d", "cga4d"]
-    ## Algebras thorough evaluation adds: untyped ones, which multivector lower bound alone covers.
+    ## Algebras every evaluation measures: 3D Euclidean ones; each more costs builds and runs.
+  ALGEBRAS_THOROUGH* = ["rga3d", "cga4d"]  ## Algebras thorough evaluation adds: 2D Euclidean ones.
 
 
 func algebrasEvaluated*(is_thorough: bool): seq[string] =

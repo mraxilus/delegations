@@ -10,8 +10,10 @@
 
 {.experimental: "strictFuncs".}
 
+import std/strutils
+
 import ./inspector
-import ./reference/[conformal3, rigid3]
+import ./reference/[conformal2, conformal3, rigid2, rigid3]
 
 
 type Movement* = object  ## Define bytes one call moves, by cause.
@@ -23,32 +25,52 @@ type Movement* = object  ## Define bytes one call moves, by cause.
   bytes_moved*: int  ## Sum of every cause.
 
 
-func sizeOfStem*(stem: string, size_multivector: int): int =
+func sizeOfStem*(stem: string, size_multivector: int, module = ""): int =
   ## Read bytes of type named by C stem; zero for stems model does not know.
+  ##   Typed stems repeat across algebras at other sizes, so module of function reading them
+  ##   names reference whose types they are; 3D Euclidean reference where module names none.
   case stem
   of "Multivector": size_multivector
   of "float", "int", "Antiscalar": 8
-  of "Point": sizeof(rigid3.Point)
-  of "Line": sizeof(rigid3.Line)
-  of "Plane": sizeof(rigid3.Plane)
-  of "Motor": sizeof(rigid3.Motor)
-  of "PointRound": sizeof(conformal3.PointRound)
-  of "Dipole": sizeof(conformal3.Dipole)
-  of "Circle": sizeof(conformal3.Circle)
-  of "Sphere": sizeof(conformal3.Sphere)
-  of "PointFlat": sizeof(conformal3.PointFlat)
-  of "LineFlat": sizeof(conformal3.LineFlat)
-  of "PlaneFlat": sizeof(conformal3.PlaneFlat)
-  of "PlaneCarrier": sizeof(conformal3.PlaneCarrier)
-  of "Vector3": sizeof(rigid3.Vector3)
-  else: 0
+  else:
+    if module.endsWith("rigid2"):
+      case stem
+      of "Point": sizeof(rigid2.Point)
+      of "Line": sizeof(rigid2.Line)
+      of "Motor": sizeof(rigid2.Motor)
+      else: 0
+    elif module.endsWith("conformal2"):
+      case stem
+      of "PointRound": sizeof(conformal2.PointRound)
+      of "Dipole": sizeof(conformal2.Dipole)
+      of "Circle": sizeof(conformal2.Circle)
+      of "PointFlat": sizeof(conformal2.PointFlat)
+      of "LineFlat": sizeof(conformal2.LineFlat)
+      of "LineCarrier": sizeof(conformal2.LineCarrier)
+      else: 0
+    else:
+      case stem
+      of "Point": sizeof(rigid3.Point)
+      of "Line": sizeof(rigid3.Line)
+      of "Plane": sizeof(rigid3.Plane)
+      of "Motor": sizeof(rigid3.Motor)
+      of "PointRound": sizeof(conformal3.PointRound)
+      of "Dipole": sizeof(conformal3.Dipole)
+      of "Circle": sizeof(conformal3.Circle)
+      of "Sphere": sizeof(conformal3.Sphere)
+      of "PointFlat": sizeof(conformal3.PointFlat)
+      of "LineFlat": sizeof(conformal3.LineFlat)
+      of "PlaneFlat": sizeof(conformal3.PlaneFlat)
+      of "PlaneCarrier": sizeof(conformal3.PlaneCarrier)
+      of "Vector3": sizeof(rigid3.Vector3)
+      else: 0
 
 
 func movement*(function: FunctionC, counts: Counts, size_multivector: int): Movement =
   ## Model bytes one call of function moves, given its counts.
   var read = 0
-  for stem in function.parameters: read += sizeOfStem(stem, size_multivector)
-  let written = sizeOfStem(function.stem_result, size_multivector)
+  for stem in function.parameters: read += sizeOfStem(stem, size_multivector, function.module)
+  let written = sizeOfStem(function.stem_result, size_multivector, function.module)
   result = Movement(
     bytes_read: read,
     bytes_written: written,

@@ -48,6 +48,25 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_CIRCLE`.
     POOL_SPHERE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_SPHERE`.
 
+when IS_RIGID and DIMENSIONS == 3:
+  var
+    POOL_POINT*: array[OBJECTS, Point]  ## Points with weight near one.
+    POOL_LINE*: array[OBJECTS, Line]  ## Lines joining two points.
+    POOL_MOTOR*: array[OBJECTS, Motor]  ## Unit motors, translation composed with rotation.
+    POOL_POINT_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINT`.
+    POOL_LINE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_LINE`.
+    POOL_MOTOR_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_MOTOR`.
+
+when IS_CONFORMAL and DIMENSIONS == 4:
+  var
+    POOL_POINTROUND*: array[OBJECTS, PointRound]
+      ## Round points with weight near one and Gaussian flat bulk.
+    POOL_DIPOLE*: array[OBJECTS, Dipole]  ## Dipoles joining two round points.
+    POOL_CIRCLE*: array[OBJECTS, Circle]  ## Circles joining dipole and round point.
+    POOL_POINTROUND_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_POINTROUND`.
+    POOL_DIPOLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_DIPOLE`.
+    POOL_CIRCLE_WIDENED*: array[OBJECTS, Multivector]  ## Dense images of `POOL_CIRCLE`.
+
 
 func toUpperAscii(s: string): string {.compileTime.} =
   ## Convert ASCII letters to upper case; local so runtime imports no string library.
@@ -110,6 +129,23 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     )
 
 
+when IS_RIGID and DIMENSIONS == 3:
+  proc pointRandom(): Point =
+    ## Draw point with Gaussian position and weight near one.
+    Point(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), w: gauss(1.0, 0.25))
+
+  proc motorRandom(): Motor =
+    ## Draw unit motor: translation by Gaussian offset after rotation about Gaussian center.
+    let center = Point(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), w: 1.0)
+    wedgeDotAnti(translator(gauss(0.0, 1.0), gauss(0.0, 1.0)), rotor(center, gauss(0.0, 1.5)))
+
+
+when IS_CONFORMAL and DIMENSIONS == 4:
+  proc pointRoundRandom(): PointRound =
+    ## Draw round point with Gaussian position and flat bulk, weight near one.
+    PointRound(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), w: gauss(1.0, 0.25), u: gauss(0.0, 1.0))
+
+
 proc fillPools*(seed = 0) =
   ## Fill every pool from seed; deterministic, so suites and measurands agree across runs.
   randomize(seed)
@@ -141,3 +177,19 @@ proc fillPools*(seed = 0) =
       POOL_DIPOLE_WIDENED[i] = POOL_DIPOLE[i].widen
       POOL_CIRCLE_WIDENED[i] = POOL_CIRCLE[i].widen
       POOL_SPHERE_WIDENED[i] = POOL_SPHERE[i].widen
+  when IS_RIGID and DIMENSIONS == 3:
+    for i in 0..<OBJECTS:
+      POOL_POINT[i] = pointRandom()
+      POOL_LINE[i] = wedge(pointRandom(), pointRandom())
+      POOL_MOTOR[i] = motorRandom()
+      POOL_POINT_WIDENED[i] = POOL_POINT[i].widen
+      POOL_LINE_WIDENED[i] = POOL_LINE[i].widen
+      POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
+  when IS_CONFORMAL and DIMENSIONS == 4:
+    for i in 0..<OBJECTS:
+      POOL_POINTROUND[i] = pointRoundRandom()
+      POOL_DIPOLE[i] = wedge(pointRoundRandom(), pointRoundRandom())
+      POOL_CIRCLE[i] = wedge(wedge(pointRoundRandom(), pointRoundRandom()), pointRoundRandom())
+      POOL_POINTROUND_WIDENED[i] = POOL_POINTROUND[i].widen
+      POOL_DIPOLE_WIDENED[i] = POOL_DIPOLE[i].widen
+      POOL_CIRCLE_WIDENED[i] = POOL_CIRCLE[i].widen

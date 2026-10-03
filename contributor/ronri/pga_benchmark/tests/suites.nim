@@ -7,7 +7,9 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, compilesettings, json, macros, options, sequtils, strutils, tables, unittest]
+import std/[
+  algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest,
+]
 from std/unicode import runeLen
 
 import ../src/pga_benchmark
@@ -28,6 +30,8 @@ const
   FLOOR_FUNCTIONS_REFERENCE =
     when DIMENSIONS == 4 and IS_RIGID: 73
     elif DIMENSIONS == 5 and IS_CONFORMAL: 84
+    elif DIMENSIONS == 3 and IS_RIGID: 50
+    elif DIMENSIONS == 4 and IS_CONFORMAL: 66
     else: 1
     ## Reference functions own nimcache holds at pin, which optimality law must read.
     ##   Fewer means guard skips one, or reference turned template; either moves floor by choice.
@@ -109,7 +113,7 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
 proc emitTestSkipped(): NimNode {.compileTime.} =
   ## Build placeholder test that skips where algebra carries no typed reference (Article IX.9).
   quote do:
-    test "typed reference, which rga4d and cga5d alone carry":
+    test "typed reference, which this algebra lacks":
       skip()
 
 
@@ -655,6 +659,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check m.bytes_moved == 896  # sum of every cause
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
+    check sizeOfStem("Point", 64, "referenceZrigid2") == 24  # 2D point, not 3D one
+    check sizeOfStem("Circle", 128, "referenceZconformal2") == 32  # 2D circle, not 3D one
 
 
   test "no lower bound outruns what library spends on same operation":
@@ -725,7 +731,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
   test "typed reference spends no fill and no error check, so it is optimal code":
     if not CATALOGUE.anyIt(it.reference.len > 0):
-      echo "    typed reference exists at rga4d and cga5d alone, so law skips (Article IX.9)"
+      echo "    typed reference exists at rga3d, rga4d, cga4d and cga5d alone, so law skips (IX.9)"
       skip()
     else:
       var compared = 0
@@ -738,6 +744,21 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         check counts.fills_zero == 0 and counts.checks == 0  # straight line, as hand code is
         inc compared
       check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
+
+
+  test "timed loop binds result returned by value, so no temporary is zero-filled":
+    # Result of three floats or fewer returns by value; assigned straight into its slot, it
+    #   passes through temporary this large function zero-fills out of line, about 11 ns.
+    var calls, filled = 0
+    for path in walkFiles(CACHE / "*measurements.nim.c"):
+      let lines = readFile(path).splitLines
+      for index, line in lines:
+        if "referenceZ" notin line: continue
+        inc calls
+        if index > 0 and lines[index - 1].startsWith("nimZeroMem") and line.startsWith("T"):
+          inc filled
+    check calls > 0  # loops that call reference are read
+    check filled == 0  # no reference result passes through zero-filled temporary
 
 
   test "own nimcache holds every catalogued symbol at its arity":
@@ -760,6 +781,11 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in functions:
         if f.key == "wedge(Point,Point)":
           check count(f.body).multiplies == 12 and count(f.body).subtractions == 6  # as documented
+    when IS_RIGID and DIMENSIONS == 3:
+      check "wedge(Point,Point)" in keys  # typed reference reached from suites
+      for f in functions:
+        if f.key == "wedge(Point,Point)":
+          check count(f.body).multiplies == 6 and count(f.body).subtractions == 3  # as documented
 
 
 
@@ -1272,8 +1298,8 @@ suite "Internal: Evaluations":
       result["measurands"][id] = %*{"library": {"ns_median": time, "share_nan": nan}}
 
 
-  test "evaluation measures typed algebras, and all four only when thorough":
-    check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, both lower bounds cover
+  test "evaluation measures 3D algebras, and all four only when thorough":
+    check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, 3D Euclidean
     check algebrasEvaluated(true) == @["rga4d", "cga5d", "rga3d", "cga4d"]  # thorough adds
 
 
@@ -1548,6 +1574,18 @@ suite "Internal: Pages":
     check "library 81 multiplies, multivector lower bound 54\"" in body  # general, no tick
     check ">×6.75<" in body and ">×1.50<" in body  # each over what it is measured against
     check body.count("<b style=") == 2  # tick at multivector bound, typed row only, both counts
+
+
+  test "header names each date runs were taken on, with algebras timed then":
+    var later = sheetDocket(81, 12, %*{})
+    later.name = "rga3d"
+    later.title = "Rigid 3D"
+    later.measurements_runtime["taken"]["date"] = %"e"
+    let
+      both = bodyDocket([sheetDocket(81, 12, %*{}), later], ids_docket, [], "bd6b23c590d7", "", "")
+      one = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
+    check "time d for Rigid 4D, e for Rigid 3D, m" in both  # each algebra under its own date
+    check "time d, m" in one  # one date stays plain
 
 
   test "time bar is median of run ratios, and each run is one tick":

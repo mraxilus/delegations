@@ -3,8 +3,8 @@
 ##   library result on embedded operands. Extraction under `-d:testing` asserts every
 ##   component outside object's slots is zero, so library result of wrong grade fails
 ##   loudly rather than silently losing components.
-##   Slots follow library's `Basis` enum for this algebra, listed in `reference/rigid3.nim`
-##   header table; algebra without typed reference exports scalar images alone.
+##   Slots follow library's `Basis` enum for this algebra, listed in header table of its
+##   reference module; algebra without typed reference exports scalar images alone.
 ##
 ##   Cost: images are built component by component through library's accessor, i.e. one
 ##     store per slot plus zero fill of rest; suites only, never on timed path.
@@ -24,6 +24,16 @@ when IS_CONFORMAL and DIMENSIONS == 5:
   import ./reference/conformal3
 
   export conformal3
+
+when IS_RIGID and DIMENSIONS == 3:
+  import ./reference/rigid2
+
+  export rigid2
+
+when IS_CONFORMAL and DIMENSIONS == 4:
+  import ./reference/conformal2
+
+  export conformal2
 
 export scalars
 
@@ -235,3 +245,94 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       z: m[Basis.E4125],
       w: m[Basis.E3215],
     )
+
+
+when IS_RIGID and DIMENSIONS == 3:
+  func widen*(p: Point): Multivector =
+    ## Embed point into e₁ e₂ e₃.
+    result[Basis.E1] = p.x
+    result[Basis.E2] = p.y
+    result[Basis.E3] = p.w
+
+  func toPoint*(m: Multivector): Point =
+    ## Extract point from grade-1 slots.
+    m.only({Basis.E1, Basis.E2, Basis.E3})
+    Point(x: m[Basis.E1], y: m[Basis.E2], w: m[Basis.E3])
+
+  func widen*(g: Line): Multivector =
+    ## Embed line into e₂₃ e₃₁ e₁₂.
+    result[Basis.E23] = g.x
+    result[Basis.E31] = g.y
+    result[Basis.E12] = g.w
+
+  func toLine*(m: Multivector): Line =
+    ## Extract line from grade-2 slots.
+    m.only({Basis.E23, Basis.E31, Basis.E12})
+    Line(x: m[Basis.E23], y: m[Basis.E31], w: m[Basis.E12])
+
+  func widen*(q: Motor): Multivector =
+    ## Embed motor into grade-1 slots and 𝟙.
+    result[Basis.E1] = q.x
+    result[Basis.E2] = q.y
+    result[Basis.E3] = q.z
+    result[Basis.scalarAnti] = q.w
+
+  func toMotor*(m: Multivector): Motor =
+    ## Extract motor from antieven slots.
+    m.only({Basis.E1, Basis.E2, Basis.E3, Basis.scalarAnti})
+    Motor(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.scalarAnti])
+
+
+when IS_CONFORMAL and DIMENSIONS == 4:
+  func widen*(a: PointRound): Multivector =
+    ## Embed round point into e₁ e₂ e₃ e₄.
+    result[Basis.E1] = a.x
+    result[Basis.E2] = a.y
+    result[Basis.E3] = a.w
+    result[Basis.E4] = a.u
+
+  func toPointRound*(m: Multivector): PointRound =
+    ## Extract round point from grade-1 slots.
+    m.only({Basis.E1, Basis.E2, Basis.E3, Basis.E4})
+    PointRound(x: m[Basis.E1], y: m[Basis.E2], w: m[Basis.E3], u: m[Basis.E4])
+
+  func widen*(p: PointFlat): Multivector =
+    ## Embed flat point into e₄₁ e₄₂ e₄₃.
+    result[Basis.E41] = p.x
+    result[Basis.E42] = p.y
+    result[Basis.E43] = p.w
+
+  func widen*(d: Dipole): Multivector =
+    ## Embed dipole into grade-2 slots.
+    result[Basis.E23] = d.g.x
+    result[Basis.E31] = d.g.y
+    result[Basis.E12] = d.g.w
+    result[Basis.E41] = d.p.x
+    result[Basis.E42] = d.p.y
+    result[Basis.E43] = d.p.w
+
+  func toDipole*(m: Multivector): Dipole =
+    ## Extract dipole from grade-2 slots.
+    m.only({Basis.E23, Basis.E31, Basis.E12, Basis.E41, Basis.E42, Basis.E43})
+    Dipole(
+      g: LineCarrier(x: m[Basis.E23], y: m[Basis.E31], w: m[Basis.E12]),
+      p: PointFlat(x: m[Basis.E41], y: m[Basis.E42], w: m[Basis.E43]),
+    )
+
+  func widen*(l: LineFlat): Multivector =
+    ## Embed flat line into e₄₂₃ e₄₃₁ e₄₁₂.
+    result[Basis.E423] = l.x
+    result[Basis.E431] = l.y
+    result[Basis.E412] = l.w
+
+  func widen*(c: Circle): Multivector =
+    ## Embed circle into grade-3 slots.
+    result[Basis.E321] = c.u
+    result[Basis.E423] = c.x
+    result[Basis.E431] = c.y
+    result[Basis.E412] = c.w
+
+  func toCircle*(m: Multivector): Circle =
+    ## Extract circle from grade-3 slots.
+    m.only({Basis.E321, Basis.E423, Basis.E431, Basis.E412})
+    Circle(u: m[Basis.E321], x: m[Basis.E423], y: m[Basis.E431], w: m[Basis.E412])
