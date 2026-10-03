@@ -4,8 +4,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, strutils, unittest]
-import ../../src/[findings, fixes, form, idioms, kinds]
+import std/[options, sequtils, strutils, tables, unittest]
+import ../../src/[findings, fixes, form, idioms, kinds, symbols]
 import ./fixtures
 
 
@@ -179,6 +179,70 @@ suite "Fixes":
         "\n  1,  0,\n  " & FENCE_ON & "\n)\n"
     check fixEntries(CURATOR_BRANCH, [entry(path, source)]).written.len == 0  # would re-indent
     check checkIdioms(path, source).len == 1  # bindings finding left
+
+
+  test "dead export of checker drops its `*` through tree context, where own module calls it":
+    let
+      path = "curator/audit/src/a.nim"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nfunc f*(): int = 1\n\nlet x = f()\n"
+      tree = @[entry(path, module), entry("curator/audit/src/b.nim", "## Do.\n")]
+      context = tree.contextOf
+      plan = fixEntries(CURATOR_BRANCH, [tree[0]], context = context)
+    check plan.written[0].content == module.replace("f*()", "f()")
+    check plan.fixed.mapIt(it.line) == @[5]
+    check fixEntries(CURATOR_BRANCH, [tree[0]]).written.len == 0  # no context: nothing known
+    let again = @[plan.written[0], tree[1]]
+    check fixEntries(CURATOR_BRANCH, [again[0]], context = again.contextOf).written.len == 0
+
+
+  test "semantic pass settles conversion first; file compiling nowhere is left with its error":
+    let
+      path = "curator/audit/src/a.nim"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet y = x.float\n"
+      queries = semanticQueries(@[entry(path, module)], [entry(path, module)])
+    check queries.len == 1 and queries[0].sites == @[(5, 10), (5, 8)]
+    var answer = Answer(path: path)
+    answer.symbols[(5, 10)] = Symbol(kind: "skType")
+    answer.symbols[(5, 8)] = Symbol(kind: "skLet")
+    let
+      tree = @[entry(path, module)]
+      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, [answer]))
+    check plan.written[0].content == module.replace("x.float", "float(x)")
+    check plan.fixed.mapIt(it.message) == @["type conversion (STYLE.md §5)"]
+    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
+    let
+      failed = Answer(path: path, reason: "undeclared identifier: 'x'")
+      left = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, [failed]))
+    check left.written.len == 0
+    check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
+
+
+  test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      a = entry("curator/audit/src/a.nim", head & "let ctx* = 1\n")
+      b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet y = ctx\n")
+      tree = @[a, b]
+      queries = semanticQueries(tree, tree)
+    check queries.len == 2
+    check queries[0].sites == @[(5, 4)] and queries[0].names == @["context"]
+    check queries[1].sites == @[(7, 8)]
+    let declared =
+      Symbol(kind: "skLet", name: "a.ctx", file: "/r/curator/audit/src/a.nim", line: 5, column: 4)
+    var answers = @[Answer(path: a.path), Answer(path: b.path)]
+    answers[0].symbols[(5, 4)] = declared
+    answers[0].globals["context"] = @[]
+    answers[1].symbols[(7, 8)] = declared
+    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    check plan.written.len == 2
+    check plan.written[0].content == head & "let context* = 1\n"
+    check plan.written[1].content == head & "import ./a\n\nlet y = context\n"
+    check plan.fixed.filterIt(it.message == "abbreviation (V.6)").len == 2
+    let alone = fixEntries(CURATOR_BRANCH, [a], context = tree.contextOf([a], answers))
+    check alone.written.len == 0  # rename would write `b.nim`, which fix leaves alone
+    check "refused: it would write `" & b.path & "`, which this fix leaves alone" in
+      alone.left[0].message
+    check alone.left[0].message.endsWith("; got `ctx`.")
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":

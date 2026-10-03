@@ -19,8 +19,7 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $opt
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, macros, os, strutils]
 

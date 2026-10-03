@@ -22,8 +22,7 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 
 const MODULUS* {.define: "probe.modulus".} = 4  ## Ring size; validated statically below.
