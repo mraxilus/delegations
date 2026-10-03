@@ -16,18 +16,59 @@ Done.
 
 **Role:** contributor/ronri/pga_benchmark, `gap-list` at `3f2a9c1`, pushed, #331 draft
 
+**Brief:** #329
+
+**State:** blocked
+
 **Context:** This branch adds the gap list. The Architect asked for baselines. #331 was a draft.
+
+**Decisions:**
+
+**D1.** Keep the names `rga4d` and `cga5d` in the tests?
+- Class: blocks this delegate
+- Where: #310
+- Options:
+  - a. Keep: the tests stay as they are.
+  - b. Rename: twelve suites change.
+- Recommends: a, because both names are the names of the authority.
+- Delay costs: #331 stays a draft.
+
+**D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
+- Class: fact
+- Where: #331
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
 | 1 | ☑️ | Names stay by the ruling (carried 3) | #320 | the Architect ruled |
 | 2 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
-| 3 | ⏸️ | Names in the tests | #310 | the Architect rules |
-| 4 | ⬜ | cga5d baseline | `tests/` | this delegate |
+| 3 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
+| 4 | ⏸️ | Names in the tests | #310 | D1 |
+| 5 | ⬜ | cga5d baseline | `tests/` | this delegate |
 
-**Summary:** The gap list is done. Row 3 waits on the Architect.
+**Summary:** The gap list is done. Row 4 waits on D1.
 
-**Next step:** Architect: rule on #310.
+**Next step:** Architect: rule on D1 in #310.
+"""
+  PLAIN = """
+## Sign-off
+
+**Role:** contributor/ronri/pga_benchmark, `gap-list` at `3f2a9c1`, pushed, #331 ready
+
+**Brief:** none
+
+**State:** done
+
+**Context:** This branch adds the gap list.
+
+**Decisions:** None.
+
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
+
+**Summary:** The gap list is done.
+
+**Next step:** Architect: merge #331.
 """
 
 
@@ -143,6 +184,7 @@ suite "Hooks":
 
   test "sign-off shape":
     check checkSignoff(SIGNOFF, BRANCH).len == 0
+    check checkSignoff(PLAIN, BRANCH).len == 0  # no brief, no decision
     check checkSignoff("Done.\n", BRANCH).messages[0].contains("must end with")
     check checkSignoff(SIGNOFF & "\n## After\n", BRANCH).messages.anyIt("Nothing follows" in it)
     check checkSignoff(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH)
@@ -150,10 +192,10 @@ suite "Hooks":
     check checkSignoff(SIGNOFF.replace("**Role:** contributor/ronri", "**Role:** curator"), BRANCH)
       .messages.anyIt("role must be" in it)
     check checkSignoff(SIGNOFF.replace("| 2 | ✅ |", "| 2 | ⬜ |"), BRANCH)
-      .messages.anyIt("sort" in it)  # ⬜ before ⏸️
+      .messages.anyIt("sort" in it)  # ⬜ before ⚠️
     check checkSignoff(SIGNOFF.replace("| `koch check` green |", "| |"), BRANCH)
       .messages.anyIt("needs evidence" in it)
-    check checkSignoff(SIGNOFF.replace("| 3 | ⏸️ |", "| 5 | ⏸️ |"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("| 4 | ⏸️ |", "| 6 | ⏸️ |"), BRANCH)
       .messages.anyIt("numbered" in it)
     check checkSignoff(SIGNOFF.replace("(carried 3)", "(carried 9)"), BRANCH)
       .messages.anyIt("1 to 6" in it)
@@ -161,6 +203,81 @@ suite "Hooks":
       .messages.anyIt("Nothing follows Next step" in it)
     check checkSignoff(SIGNOFF.replace("| 2 | ✅ |", "| 2 | 🟢 |"), BRANCH)
       .messages.anyIt("one of" in it)
+
+
+  test "sign-off brief and state":
+    check checkSignoff(SIGNOFF.replace("**State:** blocked\n", ""), BRANCH)
+      .messages.anyIt("lacks `**State:**`" in it)
+    check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
+      .messages.anyIt("state is one of" in it)
+    check checkSignoff(SIGNOFF.replace("**Brief:** #329", "**Brief:** issue 329"), BRANCH)
+      .messages.anyIt("brief is `#N`" in it)
+    check checkSignoff(SIGNOFF.replace("**Brief:** #329", "**Brief:** none"), BRANCH).len == 0
+    let unblocked = SIGNOFF.replace("- Class: blocks this delegate", "- Class: has a workaround: x")
+    check checkSignoff(unblocked, BRANCH).messages.anyIt("exactly when" in it)  # blocked, no block
+    check checkSignoff(unblocked.replace("**State:** blocked", "**State:** working"), BRANCH)
+      .len == 0
+    check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** working"), BRANCH)
+      .messages.anyIt("exactly when" in it)  # block, not blocked
+    check checkSignoff(PLAIN.replace("**Decisions:** None.", "**Decisions:**"), BRANCH)
+      .messages.anyIt("writes `**Decisions:** None.`" in it)
+    check checkSignoff(SIGNOFF.replace("**Decisions:**\n", "**Decisions:** Two.\n"), BRANCH)
+      .messages.anyIt("stands alone" in it)
+
+
+  test "sign-off decision is card coordinator lifts unchanged":
+    check checkSignoff(SIGNOFF.replace("**D2.**", "**D3.**"), BRANCH)
+      .messages.anyIt("numbered from D1" in it)
+    check checkSignoff(SIGNOFF.replace("- Class: fact\n", ""), BRANCH)
+      .messages.anyIt("lacks `Class:`" in it)
+    check checkSignoff(SIGNOFF.replace("- Where: #310\n", ""), BRANCH)
+      .messages.anyIt("lacks `Where:`" in it)
+    check checkSignoff(SIGNOFF.replace("- Class: fact", "- Class: urgent"), BRANCH)
+      .messages.anyIt("Class is" in it)
+    const OTHERS = "- Class: blocks this delegate and "
+    check checkSignoff(
+      SIGNOFF.replace("- Class: blocks this delegate", OTHERS & "the visualiser"), BRANCH
+    ).messages.anyIt("role string; got `the visualiser`" in it)
+    check checkSignoff(
+      SIGNOFF.replace("- Class: blocks this delegate", OTHERS & "curator, curator/audit"), BRANCH
+    ).len == 0
+
+
+  test "sign-off decision offers two to four short options and picks one":
+    check checkSignoff(SIGNOFF.replace("  - b. Rename: twelve suites change.\n", ""), BRANCH)
+      .messages.anyIt("offers 2 to 4 options; got `1`" in it)
+    const MORE = "  - c. Drop: x.\n  - d. Wait: x.\n  - e. Ask: x.\n- Recommends:"
+    check checkSignoff(SIGNOFF.replace("- Recommends:", MORE), BRANCH)
+      .messages.anyIt("offers 2 to 4 options; got `5`" in it)
+    check checkSignoff(SIGNOFF.replace("a. Keep:", "a. Keep both names here:"), BRANCH)
+      .messages.anyIt("at most 3 words" in it)
+    check checkSignoff(SIGNOFF.replace("a. Keep:", "a. Keep the tests."), BRANCH)
+      .messages.anyIt("`<letter>. <label>: <consequence>`" in it)  # no colon closes label
+    check checkSignoff(SIGNOFF.replace("- Recommends: a,", "- Recommends: c,"), BRANCH)
+      .messages.anyIt("Recommends names letter" in it)
+    check checkSignoff(SIGNOFF.replace("- Recommends: a,", "- Recommends: a. Keep,"), BRANCH)
+      .len == 0  # letter closed by period
+    check checkSignoff(SIGNOFF.replace("- Recommends: a, because", "- Because"), BRANCH)
+      .messages.anyIt("lacks `Recommends:`" in it)
+    check checkSignoff(SIGNOFF.replace("in the tests?", "in the tests."), BRANCH)
+      .messages.anyIt("ends with `?`" in it)
+    let asks = SIGNOFF.replace("- Where: #331\n", "- Where: #331\n- Options:\n  - a. Buy: x.\n")
+    check checkSignoff(asks, BRANCH).messages.anyIt("offers no option" in it)  # fact asks nothing
+    let picks = SIGNOFF.replace("- Where: #331\n", "- Where: #331\n- Recommends: a\n")
+    check checkSignoff(picks, BRANCH).messages.anyIt("picks no option" in it)
+
+
+  test "sign-off rows name who acts":
+    check checkSignoff(SIGNOFF.replace("| #310 | D1 |", "| #310 | the Architect rules |"), BRANCH)
+      .messages.anyIt("names decision it waits on" in it)
+    check checkSignoff(SIGNOFF.replace("| #310 | D1 |", "| #310 | D3 |"), BRANCH)
+      .messages.anyIt("names decision it waits on" in it)  # no such decision
+    check checkSignoff(SIGNOFF.replace("contributor/ronri/rga_visualiser, fix", "they fix"), BRANCH)
+      .messages.anyIt("opens last cell with role string" in it)
+    check checkSignoff(
+      SIGNOFF.replace("contributor/ronri/rga_visualiser, fix", "outside, GitHub fixes runner"),
+      BRANCH,
+    ).len == 0
 
 
   test "push and commit message":

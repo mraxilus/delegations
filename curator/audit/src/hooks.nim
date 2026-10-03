@@ -14,17 +14,48 @@
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
+##   Sign-off serves coordinator first (GUIDE.md, Output contract): it lifts each decision
+##     block unchanged onto card for Architect, sorts on class, and reads which role each ⚠️
+##     row waits on. So shape check holds what coordinator reads: state word, brief, class and
+##     place of each decision, two to four short options, and recommendation naming one.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `gitCommands` splits on shell operators by text, so `git` inside quoted string is
 ##     read as command; refusal then errs on safe side.
-##   Cost: sign-off check reads shape, never whether row says anything; evidence cell of ✅
-##     row must be non-empty and nothing more.
+##   Cost: sign-off check reads shape, never whether row or decision says anything; evidence
+##     cell of ✅ row must be non-empty and nothing more, and option need not be honest.
+##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
+##     for coordinator, whose message is digest, turn that posted is asked once for sign-off,
+##     and second stop passes.
 
 {.experimental: "strictFuncs".}
 
 import std/[json, options, os, sequtils, strutils]
 import ./[checker, commits, domains, english, findings, markdown, role, scope]
+
+
+type
+  Part {.pure.} = enum  ## Define one part of sign-off block, in order block holds them.
+    Role, Brief, State, Context, Decisions, Table, Summary, Next
+
+  Decision = object  ## Define one decision block of sign-off, as its shape check reads it.
+    number: int  ## `n` of `**D<n>.**`; zero where not digits.
+    question: string  ## Text after number, on its first line.
+    class: string  ## Text after `Class:`; empty where block lacks item.
+    where: string  ## Text after `Where:`; empty where block lacks item.
+    has_options: bool  ## Block holds `Options:` item.
+    options: seq[tuple[letter: char, label: string]]
+      ## Lettered items under `Options:`; label empty where no colon closes it.
+    recommends: string  ## Text after `Recommends:`; empty where block lacks item.
+
+  Call* = object  ## Define one tool call of turn, as transcript records it.
+    name*: string  ## Tool name, such as `Bash` or `mcp__github__issue_write`.
+    command*: string  ## Bash command text; empty for other tools.
+    has_body*: bool  ## Input carried `body`, so GitHub write posted text.
+
+  Turn* = object  ## Define what transcript says about turn since last message of person.
+    calls*: seq[Call]  ## Tool calls in order.
+    text*: string  ## Text of last assistant message.
 
 
 const
@@ -46,9 +77,34 @@ const
   SIGNOFF_HEADING* = "## Sign-off"  ## Heading of closing block (GUIDE.md, Output contract).
   SIGNOFF_TABLE* = "| # | State | Item | Where | Evidence, or who acts |"
     ## Header row of its table, exact.
-  SIGNOFF_LABELS* = ["**Role:**", "**Context:**", SIGNOFF_TABLE, "**Summary:**", "**Next step:**"]
+  SIGNOFF_LABELS: array[Part, string] = [
+    "**Role:**", "**Brief:**", "**State:**", "**Context:**", "**Decisions:**", SIGNOFF_TABLE,
+    "**Summary:**", "**Next step:**",
+  ]
     ## Parts of block, in order each must appear.
-  MARKERS* = ["☑", "✅", "⚠", "⏸", "⬜"]  ## State markers in sort order, variation selector stripped.
+  BLOCKED = "blocked"  ## State word of delegate nothing moves for until Architect decides.
+  STATES_SIGNOFF = ["done", "working", "waiting", BLOCKED]  ## Words `**State:**` takes.
+  NONE_DECISION = "None."  ## Text after `**Decisions:**` where block holds no decision.
+  NONE_BRIEF = "none"  ## Text after `**Brief:**` where no issue started delegate.
+  CLASS_BLOCKS = "blocks this delegate"  ## Class of decision delegate cannot work around.
+  CLASS_BLOCKS_OTHERS = CLASS_BLOCKS & " and "
+    ## Opening of class naming role strings that wait too, after `and`, split on comma.
+  CLASS_WORKAROUND = "has a workaround:"  ## Opening of class naming workaround after colon.
+  CLASS_FACT = "fact"  ## Class of decision Architect must know and need not decide.
+  OPTIONS_MIN = 2  ## Options decision offers at least, unless its class is `fact`.
+  OPTIONS_MAX = 4  ## Options decision offers at most, which is what decision card holds.
+  WORDS_OPTION = 3  ## Words label of option holds at most.
+  OPENING_DECISION = "**D"  ## Opening of decision line, before its number.
+  CLOSING_DECISION = ".**"  ## Closing of decision number, before question.
+  ITEM_CLASS = "- Class:"  ## Item naming class of decision.
+  ITEM_WHERE = "- Where:"  ## Item naming issue or pull request where ruling goes.
+  ITEM_OPTIONS = "- Options:"  ## Item over lettered options.
+  ITEM_RECOMMENDS = "- Recommends:"  ## Item naming letter of option delegate picks, then why.
+  OUTSIDE = "outside"  ## Word ⚠️ row opens last cell with where no role acts.
+  MARKER_WAIT = "⚠"  ## State marker of row another delegate or outside party acts on.
+  MARKER_HOLD = "⏸"  ## State marker of row Architect acts on.
+  MARKERS* = ["☑", "✅", MARKER_WAIT, MARKER_HOLD, "⬜"]
+    ## State markers in sort order, variation selector stripped.
   SELECTOR = "️"  ## Variation selector some markers carry; stripped before match.
   CARRIED_TAG = "(carried "  ## Tag row carries for carried-list item.
   CARRIED_MAX* = 6  ## Items on carried list (CONTRIBUTOR.md).
@@ -59,17 +115,6 @@ const
     ## File in git dir where `koch check` writes tree hash it passed on, which `pre-push`
     ##   reads; `markPath` places it.
   ROLE_WORD = "Role:"  ## Word after bold marker in sign-off role line.
-
-
-type
-  Call* = object  ## Define one tool call of turn, as transcript records it.
-    name*: string  ## Tool name, such as `Bash` or `mcp__github__issue_write`.
-    command*: string  ## Bash command text; empty for other tools.
-    has_body*: bool  ## Input carried `body`, so GitHub write posted text.
-
-  Turn* = object  ## Define what transcript says about turn since last message of person.
-    calls*: seq[Call]  ## Tool calls in order.
-    text*: string  ## Text of last assistant message.
 
 
 func isRoleString*(s: string): bool =
@@ -241,45 +286,122 @@ func carriedTags(cell: string): seq[int] =
     at = cell.find(CARRIED_TAG, at + 1)
 
 
-func checkSignoff*(message, branch: string): seq[Finding] =
-  ## Report message that lacks sign-off block, or holds it out of shape.
-  let lines = message.splitLines
-  var at = -1
-  for i, line in lines:
-    if line.strip == SIGNOFF_HEADING: at = i
-  if at < 0:
-    return @[finding(
-      "", 0, "Turn that pushed or posted must end with `" & SIGNOFF_HEADING &
-        "` block (GUIDE.md, Output contract); got none."
-    )]
-  let after = lines[at + 1 .. ^1]
-  for line in after:
-    if line.startsWith("#"):
-      result.add finding("", 0, "Nothing follows sign-off; got heading `" & line & "`.")
-  var
-    starts: seq[int]
-    pos = 0
-  for label in SIGNOFF_LABELS:
-    var found = -1
-    for j in pos..<after.len:
-      if after[j].startsWith(label):
-        found = j
-        break
-    if found < 0:
-      result.add finding("", 0, "Sign-off lacks `" & label & "` in its order; got none.")
-    else: pos = found + 1
-    starts.add found
-  if starts.anyIt(it < 0): return
-  let
-    role_text = after[starts[0]][SIGNOFF_LABELS[0].len .. ^1].strip.split(',')[0].strip
-    parsed = branch.parseBranch
-  if parsed.isSome and role_text != parsed.get.roleName:
+func decisionsIn(lines: openArray[string]): seq[Decision] =
+  ## Read each `**D<n>.**` block of lines, with items under it, in order.
+  ##   Option is item opening `- <letter>.` below `Options:`, at any indent, so flat list
+  ##     reads as nested one does.
+  for line in lines:
+    let s = line.strip
+    if s.startsWith(OPENING_DECISION) and s.len > OPENING_DECISION.len and
+        s[OPENING_DECISION.len] in Digits:
+      var close = OPENING_DECISION.len
+      while close < s.len and s[close] in Digits: inc close
+      result.add Decision(
+        number: s[OPENING_DECISION.len ..< close].parseInt,
+        question:
+          if s.continuesWith(CLOSING_DECISION, close):
+            s[close + CLOSING_DECISION.len .. ^1].strip
+          else: "",
+      )
+      continue
+    if result.len == 0: continue
+    if s.startsWith(ITEM_CLASS): result[^1].class = s[ITEM_CLASS.len .. ^1].strip
+    elif s.startsWith(ITEM_WHERE): result[^1].where = s[ITEM_WHERE.len .. ^1].strip
+    elif s.startsWith(ITEM_OPTIONS): result[^1].has_options = true
+    elif s.startsWith(ITEM_RECOMMENDS):
+      result[^1].recommends = s[ITEM_RECOMMENDS.len .. ^1].strip
+    elif result[^1].has_options and s.len > 3 and s.startsWith("- ") and
+        s[2] in LowercaseLetters and s[3] == '.':
+      let
+        item = s[4 .. ^1]
+        colon = item.find(':')
+      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0 ..< colon].strip)
+
+
+func decisionFindings(d: Decision; at: int): seq[Finding] =
+  ## Report decision block out of shape: number, class, place, options, pick and question.
+  ##   Class `fact` asks nothing, so it offers no option and picks none; every other class
+  ##     asks question with two to four options, and names pick among them.
+  let name = "`D" & $d.number & "`"
+  if d.number != at + 1:
+    result.add finding("", 0, "Decisions are numbered from D1 in order; got " & name & ".")
+  if d.class.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Class:`; got none.")
+  if d.where.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Where:`; got none.")
+  if d.class.startsWith(CLASS_BLOCKS_OTHERS):
+    let roles = d.class[CLASS_BLOCKS_OTHERS.len .. ^1].replace(" and ", ",").split(',')
+    for r in roles:
+      if not r.strip.isRoleString:
+        result.add finding(
+          "",
+          0,
+          "Class names each role that waits too as role string; got `" & r.strip & "`.",
+        )
+  elif d.class.len > 0 and d.class notin [CLASS_BLOCKS, CLASS_FACT] and
+      not (d.class.startsWith(CLASS_WORKAROUND) and d.class.len > CLASS_WORKAROUND.len):
     result.add finding(
       "",
       0,
-      "Sign-off role must be `" & parsed.get.roleName & "`; got `" & role_text & "`.",
+      "Class is `" & CLASS_BLOCKS & "`, `" & CLASS_BLOCKS_OTHERS & "<role>`, `" &
+        CLASS_WORKAROUND & " <workaround>` or `" & CLASS_FACT & "`; got `" & d.class & "`.",
     )
-  let rows = after[starts[2] + 1..<starts[3]].join("\n").tableRows
+  if d.class == CLASS_FACT:
+    if d.has_options or d.options.len > 0:
+      result.add finding(
+        "",
+        0,
+        "Decision of class `fact` offers no option; got `" & $d.options.len & "` in " & name &
+          ".",
+      )
+    if d.recommends.len > 0:
+      result.add finding(
+        "", 0, "Decision of class `fact` picks no option; got `" & d.recommends.shortened & "`."
+      )
+    return
+  if d.options.len < OPTIONS_MIN or d.options.len > OPTIONS_MAX:
+    result.add finding(
+      "",
+      0,
+      "Decision " & name & " offers " & $OPTIONS_MIN & " to " & $OPTIONS_MAX & " options; got `" &
+        $d.options.len & "`.",
+    )
+  for o in d.options:
+    if o.label.len == 0:
+      result.add finding(
+        "",
+        0,
+        "Option reads `<letter>. <label>: <consequence>`; got `" & o.letter & "` in " & name &
+          ".",
+      )
+    elif o.label.splitWhitespace.len > WORDS_OPTION:
+      result.add finding(
+        "",
+        0,
+        "Option label holds at most " & $WORDS_OPTION & " words; got `" & o.label & "`.",
+      )
+  let pick = d.recommends.split({',', ' ', '.', ':'})[0]
+  if d.recommends.len == 0:
+    result.add finding("", 0, "Decision " & name & " lacks `Recommends:`; got none.")
+  elif pick.len != 1 or pick[0] notin d.options.mapIt(it.letter):
+    result.add finding(
+      "", 0, "Recommends names letter of one option of " & name & "; got `" & pick & "`."
+    )
+  if not d.question.endsWith("?"):
+    result.add finding(
+      "", 0, "Question of " & name & " ends with `?`; got `" & d.question.shortened & "`."
+    )
+
+
+func decisionNumbers(cell: string): seq[int] =
+  ## Read every `D<n>` word of cell as n.
+  for word in cell.split({' ', ',', '.', ';', ':', '(', ')'}):
+    if word.len > 1 and word[0] == 'D' and word[1 .. ^1].allCharsInSet(Digits):
+      result.add word[1 .. ^1].parseInt
+
+
+func rowFindings(rows: seq[seq[string]]; numbers: openArray[int]): seq[Finding] =
+  ## Report rows of sign-off table out of shape: cells, order, evidence, carried tags, who acts.
+  ##   ⚠️ row opens last cell with role that acts, or `outside`, so coordinator sees which
+  ##     delegate blocks which; ⏸️ row names decision it waits on, so its card carries it.
   var
     last = 0
     seen: seq[int]
@@ -307,6 +429,22 @@ func checkSignoff*(message, branch: string): seq[Finding] =
         0,
         "Sign-off ✅ row needs evidence; got empty cell in row `" & row[0] & "`.",
       )
+    let actor = if row[4].len == 0: "" else: row[4].splitWhitespace[0].strip(chars = {',', ':'})
+    if marker == MARKER_WAIT and actor != OUTSIDE and not actor.isRoleString:
+      result.add finding(
+        "",
+        0,
+        "Sign-off ⚠️ row opens last cell with role string or `" & OUTSIDE & "`; got `" & actor &
+          "` in row `" & row[0] & "`.",
+      )
+    let named = row[4].decisionNumbers
+    if marker == MARKER_HOLD and (named.len == 0 or named.anyIt(it notin numbers)):
+      result.add finding(
+        "",
+        0,
+        "Sign-off ⏸️ row names decision it waits on as `D<n>`; got `" & row[4] & "` in row `" &
+          row[0] & "`.",
+      )
     for n in row[2].carriedTags:
       if n < 1 or n > CARRIED_MAX:
         result.add finding(
@@ -317,7 +455,90 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       elif n in seen:
         result.add finding("", 0, "Carried item tagged twice; got `" & $n & "`.")
       else: seen.add n
-  var k = starts[4] + 1
+
+
+func checkSignoff*(message, branch: string): seq[Finding] =
+  ## Report message that lacks sign-off block, or holds it out of shape.
+  let lines = message.splitLines
+  var at = -1
+  for i, line in lines:
+    if line.strip == SIGNOFF_HEADING: at = i
+  if at < 0:
+    return @[finding(
+      "", 0, "Turn that pushed or posted must end with `" & SIGNOFF_HEADING &
+        "` block (GUIDE.md, Output contract); got none."
+    )]
+  let after = lines[at + 1 .. ^1]
+  for line in after:
+    if line.startsWith("#"):
+      result.add finding("", 0, "Nothing follows sign-off; got heading `" & line & "`.")
+  var
+    starts: array[Part, int]
+    pos = 0
+  for part, label in SIGNOFF_LABELS:
+    starts[part] = -1
+    for j in pos..<after.len:
+      if after[j].startsWith(label):
+        starts[part] = j
+        break
+    if starts[part] < 0:
+      result.add finding("", 0, "Sign-off lacks `" & label & "` in its order; got none.")
+    else: pos = starts[part] + 1
+  if starts.anyIt(it < 0): return
+
+  template rest(part: Part): string =
+    after[starts[part]][SIGNOFF_LABELS[part].len .. ^1].strip
+
+  let
+    role_text = Part.Role.rest.split(',')[0].strip
+    parsed = branch.parseBranch
+    brief = Part.Brief.rest
+    state_word = Part.State.rest
+    decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Table]])
+  if parsed.isSome and role_text != parsed.get.roleName:
+    result.add finding(
+      "",
+      0,
+      "Sign-off role must be `" & parsed.get.roleName & "`; got `" & role_text & "`.",
+    )
+  if brief != NONE_BRIEF and not (brief.len > 1 and brief[0] == '#' and
+      brief[1 .. ^1].allCharsInSet(Digits)):
+    result.add finding(
+      "", 0, "Sign-off brief is `#N`, or `" & NONE_BRIEF & "`; got `" & brief & "`."
+    )
+  if state_word notin STATES_SIGNOFF:
+    result.add finding(
+      "",
+      0,
+      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`.",
+    )
+  elif (state_word == BLOCKED) != decisions.anyIt(it.class.startsWith(CLASS_BLOCKS)):
+    result.add finding(
+      "",
+      0,
+      "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & state_word &
+        "`.",
+    )
+  if decisions.len == 0 and Part.Decisions.rest != NONE_DECISION:
+    result.add finding(
+      "",
+      0,
+      "Sign-off with no decision writes `" & SIGNOFF_LABELS[Part.Decisions] & " " &
+        NONE_DECISION & "`; got `" & Part.Decisions.rest.shortened & "`.",
+    )
+  elif decisions.len > 0 and Part.Decisions.rest.len > 0:
+    result.add finding(
+      "",
+      0,
+      "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened &
+        "`.",
+    )
+  for i, d in decisions: result.add decisionFindings(d, i)
+  result.add rowFindings(
+    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").tableRows,
+    decisions.mapIt(it.number),
+  )
+  var k = starts[Part.Next] + 1
   while k < after.len and after[k].strip.len > 0: inc k
   for line in after[k .. ^1]:
     if line.strip.len > 0:
