@@ -39,8 +39,7 @@
 
 {.experimental: "strictFuncs".}
 
-import ./frame
-import ./rotation
+import ./[frame, rotation]
 import ./draw/scene
 
 
@@ -67,7 +66,7 @@ const
 
 #[ Frames ]#
 
-func frameBody(target: Frame; twist: HalfTurns): string =
+func frameBody(target: Frame, twist: HalfTurns): string =
   ## Draw contents of frame picture, without frame around them.
   ##   Two things reach drawing, and no more: whether follow faces, and
   ##     which way she turned if she does not.  Whole turn puts her back
@@ -85,7 +84,7 @@ func frameHeight*(width: int): int =
   (width * HEIGHT) div WIDTH
 
 
-func renderFrame*(target: Frame; twist: HalfTurns = 0): string =
+func renderFrame*(target: Frame, twist: HalfTurns = 0): string =
   ## Draw frame as picture that stands on its own.
   ##   Given twist it draws posture instead: same frame, seen with
   ##     follow turned as far as that twist has turned them.
@@ -93,8 +92,7 @@ func renderFrame*(target: Frame; twist: HalfTurns = 0): string =
     "\" class=\"frame\" role=\"img\">" & frameBody(target, twist) & "</svg>"
 
 
-func renderFramePlaced*(target: Frame; x, y, width: int;
-    twist: HalfTurns = 0): string =
+func renderFramePlaced*(target: Frame; x, y, width: int; twist: HalfTurns = 0): string =
   ## Draw frame picture at place inside larger drawing.
   ##   Same body, given its own viewport: nested picture keeps its own
   ##     coordinates, so drawing around it never has to know how frame

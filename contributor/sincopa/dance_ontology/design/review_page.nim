@@ -69,8 +69,7 @@ const
           "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32",
           "F1", "F2"]
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
-  DROPPED: seq[string] = @[]
-    ## Ids Architect has ruled out.
+  DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
   CONFIRMED: seq[string] = @[]
     ## Ids whose simulation still Architect has confirmed against their own body, on
     ## viewer page that lays each beside its cell.  Added as they are confirmed,
@@ -97,7 +96,7 @@ const QUARTER_WAY = wayName(wayOf(HalfTurns(QUARTER)))
   ##   Read off turn itself rather than written down, so label cannot
   ##     outlive sign it describes.
 
-func said(tag: string; quarter: int): string =
+func said(tag: string, quarter: int): string =
   ## Name one manner of turn, how far it has gone, and which way round.
   if quarter == 0: &"{MANNER_SAID[tag]} {QUARTER_SAID[quarter]}"
   else: &"{MANNER_SAID[tag]} {QUARTER_SAID[quarter]} {QUARTER_WAY}"
@@ -113,7 +112,7 @@ func unpinned(svg: string): string =
   let shut = result.find('"', at + opening.len)
   if shut < 0:
     return
-  result = result[0 ..< at] & result[shut + 1 .. ^1]
+  result = result[0..<at] & result[shut + 1 .. ^1]
 
 proc checkReview*() =
   ## Check every card ruled on has pin holding it to what it was drawn as.
@@ -142,8 +141,9 @@ func reviewParts*(single, hand: Parts): Parts =
 func sheetOf(parts: Parts): string =
   ## Build page, holding every card already ruled on to its own pin.
 
-  func stepped(id: string; steps: seq[tuple[pick, note, svg: string]];
-               asks: seq[string] = @[]): string =
+  func stepped(
+    id: string, steps: seq[tuple[pick, note, svg: string]], asks: seq[string] = @[]
+  ): string =
     ## Stack several drawings in one cell, one shown at time, with button
     ## apiece.
     ##   Each step carries simulation's own tag, not cell.  Cell that folds six edges
@@ -173,8 +173,12 @@ func sheetOf(parts: Parts): string =
     &"""{picks}<div class="frames">{frames}</div>""" &
       &"""<div class="picks">{buttons}</div>"""
 
-  func card(id, label, note, art: string; drawings: seq[string];
-            is_switching = false; asks: seq[string] = @[]): string =
+  func card(
+    id, label, note, art: string;
+    drawings: seq[string];
+    is_switching = false;
+    asks: seq[string] = @[];
+  ): string =
     ## Set one cell beside its identifier, carrying whatever has been ruled
     ## on it.  Unmarked is unreviewed, not approved.
     let
@@ -230,12 +234,19 @@ func sheetOf(parts: Parts): string =
     ## Set one drawing in cell of its own.
     card(id, label, note, unpinned(svg), @[unpinned(svg)], asks = asks)
 
-  func card(id, label, note: string;
-            steps: seq[tuple[pick, note, svg: string]];
-            asks: seq[string] = @[]): string =
+  func card(
+    id, label, note: string; steps: seq[tuple[pick, note, svg: string]]; asks: seq[string] = @[]
+  ): string =
     ## Set several drawings in one cell, switched between by button.
-    card(id, label, note, stepped(id, steps, asks),
-         steps.mapIt(unpinned(it.svg)), is_switching = true, asks = asks)
+    card(
+      id,
+      label,
+      note,
+      stepped(id, steps, asks),
+      steps.mapIt(unpinned(it.svg)),
+      is_switching = true,
+      asks = asks,
+    )
 
   var body = ""
 
@@ -262,6 +273,7 @@ func sheetOf(parts: Parts): string =
   the follow turns. Which arm ends over depends on the way the follow turned, so A16 and A17 draw
   the two ways. They are the one frame of the eight where the way round changes the
   picture.</p><div class="grid">"""
+
   func armFor(side: Side): Arm =
     ## Say which drawn arm this side of lead is.
     if side == Side.Left: Arm.Left else: Arm.Right
@@ -278,7 +290,7 @@ func sheetOf(parts: Parts): string =
         holds[armFor(side)] = some armFor(target.hold[side].get)
     restOf(holds)
 
-  proc facingNote(target: Frame; twist: int; way: string): string =
+  proc facingNote(target: Frame, twist: int, way: string): string =
     ## Say which facing this picture draws, and what it is turned from.
     ##   Standard diagram turns follow alone, by half turns (`twist`).
     let
@@ -295,9 +307,12 @@ func sheetOf(parts: Parts): string =
   for i, target in FRAMES:
     for twist in [0, 1]:
       let way = if twist == 1 and isTurnShown(target): "clockwise" else: ""
-      body.add card(&"A{i * 2 + twist + 1}", describe(target),
-                    facingNote(target, twist, way),
-                    renderFrame(target, HalfTurns(twist)))
+      body.add card(
+        &"A{i * 2 + twist + 1}",
+        describe(target),
+        facingNote(target, twist, way),
+        renderFrame(target, HalfTurns(twist)),
+      )
   # And other way round, wherever turning that way draws different picture.
   # Appended rather than interleaved, so every identifier already ruled on
   # still names picture it was ruled on.
@@ -307,8 +322,7 @@ func sheetOf(parts: Parts): string =
     if widdershins == renderFrame(target, HalfTurns(1)):
       continue
     inc also
-    body.add card(&"A{also}", describe(target),
-                  facingNote(target, 1, "anticlockwise"), widdershins)
+    body.add card(&"A{also}", describe(target), facingNote(target, 1, "anticlockwise"), widdershins)
   body.add "</div></section>"
 
   # `B`. Single-hand turns: what animated page walks through.
@@ -321,15 +335,15 @@ func sheetOf(parts: Parts): string =
   lead. Two are orbits, the follow round the lead and the lead round the follow. A quarter
   says how far round that manner has gone.</p>"""
   var b_count = 0
-  for connection in 0 ..< SINGLES.len:
+  for connection in 0..<SINGLES.len:
     body.add &"""<h3>{escaped(SINGLES[connection].name)}</h3><div class="grid wide">"""
     var
-      seen = initTable[string, string]()   # svg -> id already given it
+      seen = initTable[string, string]()  # svg -> id already given it
       order: seq[string]
       whose = initTable[string, seq[string]]()
       asked = initTable[string, seq[string]]()  # svg -> questions it stands for
     for manner in Manner:
-      for quarter in 0 ..< QUARTERS_ROUND:
+      for quarter in 0..<QUARTERS_ROUND:
         let key = &"st_{MANNERS[manner].tag}_{connection}_{quarter}"
         if key notin stills: continue
         let svg = stills[key]
@@ -348,7 +362,7 @@ func sheetOf(parts: Parts): string =
     body.add "</div>"
   body.add "</section>"
 
-  func windNote(note: string; wind: float; zero = ""): string =
+  func windNote(note: string, wind: float, zero = ""): string =
     ## Say how far position stands from where its chain rests, and which way
     ## round.
     ##   Way comes from `wayOf`, so page and vocabulary cannot drift apart on
@@ -357,7 +371,6 @@ func sheetOf(parts: Parts): string =
     ##     which `chainFor` names for hand-to-hand chain it was written for.
     if abs(wind) < 1e-9: (if zero.len > 0: zero else: note)
     else: note & " " & wayName(wayOf(HalfTurns(wind * 2)))
-
 
   # `C`. Chain two-hand page walks.
   let chains = parts
@@ -385,10 +398,21 @@ func sheetOf(parts: Parts): string =
   couple, and it names one turn whichever dancer walks it. Section D is drawn at this scale, so
   the two chains stand against each other.</p><div class="grid wide">"""
   for i, position in CHAIN:
-    body.add card(&"C{i + 1}", position.name, windNote(position.note, position.wind),
-      renderFigure("tiny", HAND_TO_HAND, ABOVE_BOTH, has_captions = false,
-        pose = some handPose(position.wind), half = some half,
-        twist = windTwist(position.wind), should_clear_marks = true))
+    body.add card(
+      &"C{i + 1}",
+      position.name,
+      windNote(position.note, position.wind),
+      renderFigure(
+        "tiny",
+        HAND_TO_HAND,
+        ABOVE_BOTH,
+        has_captions = false,
+        pose = some handPose(position.wind),
+        half = some half,
+        twist = windTwist(position.wind),
+        should_clear_marks = true,
+      ),
+    )
   body.add "</div></section>"
 
 
@@ -406,12 +430,21 @@ func sheetOf(parts: Parts): string =
   whole turns, and {paired_half} at the halves. No page in this project walks this
   chain.</p><div class="grid wide">"""
   for i, position in dual_chain:
-    body.add card(&"D{i + 1}", position.name,
-      windNote(position.note, position.wind,
-             zero = "this hold's own parallel state"),
-      renderFigure("tiny", PAIRED, ABOVE_BOTH, has_captions = false,
-        pose = some posedAt(position.wind, dual_phase), half = some half,
-        twist = windTwist(position.wind), should_clear_marks = true))
+    body.add card(
+      &"D{i + 1}",
+      position.name,
+      windNote(position.note, position.wind, zero = "this hold's own parallel state"),
+      renderFigure(
+        "tiny",
+        PAIRED,
+        ABOVE_BOTH,
+        has_captions = false,
+        pose = some posedAt(position.wind, dual_phase),
+        half = some half,
+        twist = windTwist(position.wind),
+        should_clear_marks = true,
+      ),
+    )
   body.add "</div></section>"
 
   # `E`. Every single-hand turn animated, edge by edge.
@@ -433,7 +466,7 @@ func sheetOf(parts: Parts): string =
   rule makes the motion catch</b>: the reach steps round a chevron as it passes, then snaps
   back. The stills stand as they are drawn, and the mend belongs to the walk.</p>"""
   var e_count = 0
-  for connection in 0 ..< SINGLES.len:
+  for connection in 0..<SINGLES.len:
     body.add &"""<h3>{escaped(SINGLES[connection].name)}</h3><div class="grid wide">"""
     for manner in Manner:
       let
@@ -441,12 +474,17 @@ func sheetOf(parts: Parts): string =
         said = &"{MANNER_SAID[tag]} {QUARTER_WAY}"
       if &"rd_{tag}_{connection}" in stills:
         inc e_count
-        body.add card(&"E{e_count}", said, "the whole round, four quarters in one",
-                      stills[&"rd_{tag}_{connection}"], asks = @[&"rd_{tag}_{connection}"])
+        body.add card(
+          &"E{e_count}",
+          said,
+          "the whole round, four quarters in one",
+          stills[&"rd_{tag}_{connection}"],
+          asks = @[&"rd_{tag}_{connection}"],
+        )
       var
         steps: seq[tuple[pick, note, svg: string]]
         asks_e: seq[string]
-      for quarter in 0 ..< QUARTERS_ROUND:
+      for quarter in 0..<QUARTERS_ROUND:
         let key = &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}"
         if key notin stills: continue
         asks_e.add key
@@ -456,8 +494,7 @@ func sheetOf(parts: Parts): string =
           stills[key])
       if steps.len > 0:
         inc e_count
-        body.add card(&"E{e_count}", said, "one quarter at a time", steps,
-                      asks = asks_e)
+        body.add card(&"E{e_count}", said, "one quarter at a time", steps, asks = asks_e)
     body.add "</div>"
   body.add "</section>"
 
@@ -467,7 +504,6 @@ func sheetOf(parts: Parts): string =
     ##     turn by follow winds (rule 30), so each manner turns whichever way
     ##     carries pair inward along chain, and that sense is measured.
     wayName(wayOf(HalfTurns(HALF * windSense(manner))))
-
 
   # `F`. Every chain edge animated.
   body.add """<section id="chain-moving"><h2>F &middot; The cross-name chain, moving</h2>
@@ -488,13 +524,17 @@ func sheetOf(parts: Parts): string =
       said = &"{MANNER_SAID[tag]} {chainWay(manner)}"
     if &"hc_{tag}" in chains:
       inc f_count
-      body.add card(&"F{f_count}", said,
-                    &"the whole chain, {CHAIN.len - 1} halves out and back",
-                    chains[&"hc_{tag}"], asks = @[&"hc_{tag}"])
+      body.add card(
+        &"F{f_count}",
+        said,
+        &"the whole chain, {CHAIN.len - 1} halves out and back",
+        chains[&"hc_{tag}"],
+        asks = @[&"hc_{tag}"],
+      )
     var
       steps: seq[tuple[pick, note, svg: string]]
       asks_f: seq[string]
-    for i in 0 ..< CHAIN.len - 1:
+    for i in 0..<CHAIN.len - 1:
       let key = &"hw_{tag}_{i}"
       if key notin chains: continue
       asks_f.add key
@@ -520,13 +560,17 @@ func sheetOf(parts: Parts): string =
       said = &"{MANNER_SAID[tag]} {chainWay(manner)}"
     if &"pc_{tag}" in chains:
       inc g_count
-      body.add card(&"G{g_count}", said,
-                    &"the whole chain, {dual_chain.len - 1} halves out and back",
-                    chains[&"pc_{tag}"], asks = @[&"pc_{tag}"])
+      body.add card(
+        &"G{g_count}",
+        said,
+        &"the whole chain, {dual_chain.len - 1} halves out and back",
+        chains[&"pc_{tag}"],
+        asks = @[&"pc_{tag}"],
+      )
     var
       steps: seq[tuple[pick, note, svg: string]]
       asks_g: seq[string]
-    for i in 0 ..< dual_chain.len - 1:
+    for i in 0..<dual_chain.len - 1:
       let key = &"pw_{tag}_{i}"
       if key notin chains: continue
       asks_g.add key
@@ -544,7 +588,7 @@ func sheetOf(parts: Parts): string =
     ##   Count follows longest walk on page, so cell of six steps cannot
     ##     quietly lose its last one.
     var css = ""
-    for i in 1 .. max(QUARTERS_ROUND, CHAIN.len - 1):
+    for i in 1..max(QUARTERS_ROUND, CHAIN.len - 1):
       css.add &"  .steps input:nth-of-type({i}):checked ~ .frames > " &
         &"div:nth-child({i}) {{ display: block; }}\n"
       css.add &"  .steps input:nth-of-type({i}):checked ~ .picks > " &
@@ -685,7 +729,7 @@ func drawingOf(html, id: string): string =
     let shuts = html.find("</svg>", starts)
     if shuts < 0:
       break
-    result.add html[starts .. shuts + "</svg>".len - 1]
+    result.add html[starts..shuts + "</svg>".len - 1]
     at = shuts + 1
 
 

@@ -152,7 +152,7 @@ code { font: 0.88em var(--mono); background: var(--wash); padding: 0.1em 0.35em;
 
 
 type
-  Swatch* {.pure.} = enum ## Five ways key draws pair of hands.
+  Swatch* {.pure.} = enum  ## Five ways key draws pair of hands.
     Free, Unsaid, Low, High, Above
 
 
@@ -165,8 +165,7 @@ func document*(title, page_body: string): string =
     &"{STYLE}{page_body}"
 
 
-func filled*(template_body: string;
-    fills: openArray[tuple[marker, value: string]]): string =
+func filled*(template_body: string, fills: openArray[tuple[marker, value: string]]): string =
   ## Close every `{marker}` hole in page template, and refuse build that
   ## leaves one open or fills one that is not there.
   result = template_body

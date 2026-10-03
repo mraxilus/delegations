@@ -23,8 +23,7 @@ import std/tables
 import ./[page, parts]
 
 
-const TITLE* = "The Turn Sign, So Far"
-  ## What page calls itself, in its tab and at its head.
+const TITLE* = "The Turn Sign, So Far"  ## What page calls itself, in its tab and at its head.
 
 
 const BODY = """

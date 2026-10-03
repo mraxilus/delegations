@@ -13,6 +13,7 @@ import std/[options, unittest]
 import ../../src/dance_ontology
 
 
+
 suite "the base sheet":
   test "seven of the sheet's nine states read as distinct valid frames":
     var seen: seq[Frame] = @[]
@@ -29,10 +30,12 @@ suite "the base sheet":
     check seen.len == 7  # base: nine states, two of them deferred
     check workbookFrame("shine").isNone
 
+
   test "the two deferred states are the ones that rest on the body":
     check DEFERRED_STATES == ["closed", "half-closed"]  # base: its first two rows
     check countDeferredCells() == 9  # base: nine cells touch "closed" or "half-closed"
     check CELLS.len - countDeferredCells() == 18  # base: hand-to-hand remainder
+
 
   test "each of the 27 filled cells names a known pair of states, once":
     check CELLS.len == 27  # base: 27 filled cells, read row by row
@@ -45,12 +48,14 @@ suite "the base sheet":
         check not (other.source == cell.source and
           other.destination == cell.destination)
 
+
   test "every cell naming a slide reaches a deferred state":
     # Slide travels along body, so it needs place on body to reach.
     for cell in CELLS:
       if "slide" notin readCell(cell.text):
         continue
       check cell.source.isDeferred or cell.destination.isDeferred  # base: three "slide" cells
+
 
   test "the helper words of the ontology are read, including its synonyms":
     check readHelper("collect") == some(Helper.Collect)
@@ -62,6 +67,7 @@ suite "the base sheet":
     check readCompound("pass") == readCompound("place")  # base: writes both words
     check readCompound("collect").isNone
     check readCell("place, drop, collect").len == 3  # base: its longest cell, into "half-closed"
+
 
 
 suite "the audit of the base sheet":
@@ -86,6 +92,7 @@ suite "the audit of the base sheet":
     check compounds == 6  # base: four "pass" cells and two "cut" cells
     check primitives + compounds == 18
 
+
   test "the checkable cells are every move between the states they name":
     var derived = 0
     for source in WORKBOOK_STATES:
@@ -99,6 +106,7 @@ suite "the audit of the base sheet":
           inc derived
     check derived == 18  # base: matches its 18 hand-to-hand cells, none over
 
+
   test "nothing in the hand-to-hand part of the sheet disagrees":
     for finding in audit():
       check finding.kind notin {
@@ -109,6 +117,7 @@ suite "the audit of the base sheet":
         FindingKind.EdgeUnsupported,
       }
 
+
   test "what is left is two deferred states and one missing frame":
     var counted: array[FindingKind, int]
     for finding in audit():
@@ -116,6 +125,7 @@ suite "the audit of the base sheet":
     check counted[FindingKind.StateDeferred] == 2  # base: "closed" and "half-closed"
     check counted[FindingKind.FrameAbsent] == 1  # base: no row for free frame
     check audit().len == 3
+
 
   test "the missing frame is the one where nobody is holding on":
     for finding in audit():

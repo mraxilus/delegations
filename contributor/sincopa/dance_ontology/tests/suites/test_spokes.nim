@@ -11,6 +11,7 @@ import std/[math, options, strutils, unittest]
 import ../../src/dance_ontology
 
 
+
 suite "Internal: The spokes":
   test "a frame has one spoke per move and one per compound, and no others":
     for here in FRAMES:
@@ -19,6 +20,7 @@ suite "Internal: The spokes":
         if compound(here, target).isSome:
           inc named
       check spokesOf(here).len == moves(here).len + named
+
 
   test "every spoke arrives somewhere the ontology derives":
     for here in FRAMES:
@@ -30,6 +32,7 @@ suite "Internal: The spokes":
           check classify(here, spoke.to).isSome
         check spoke.lines.len > 0
 
+
   test "no two spokes of a frame arrive in the same place":
     for here in FRAMES:
       var
@@ -40,6 +43,7 @@ suite "Internal: The spokes":
         check endOf(spoke) notin places
         seen.add spoke.to
         places.add endOf(spoke)
+
 
   test "a collect points up, a drop points down, and a compound goes aside":
     # Tower is built upwards, so taking hand climbs and letting one go
@@ -55,6 +59,7 @@ suite "Internal: The spokes":
           check rise > 0
 
 
+
 suite "Internal: The space and the window":
   test "every frame is drawn inside the one space":
     # Space is what lets node travel: coordinate has to mean same
@@ -67,6 +72,7 @@ suite "Internal: The space and the window":
       check x + width <= box_x + box_width
       check y + height <= box_y + box_height
 
+
   test "a window holds the whole of the frame it is cut for":
     for here in FRAMES:
       let (x, y, width, height) = windowOf(here)
@@ -77,6 +83,7 @@ suite "Internal: The space and the window":
         let (label_x, label_y) = labelAt(spoke)
         check label_x > x and label_x < x + width
         check label_y > y and label_y < y + height
+
 
   test "a window is cut to its frame rather than to the widest one":
     # Every frame in one box would leave frames with ways out one way only
@@ -92,11 +99,13 @@ suite "Internal: The space and the window":
       check width <= SPOKES_BOX[2]
       check height <= SPOKES_BOX[3]
 
+
   test "the middle is inside every window, with the drawing around it":
     for here in FRAMES:
       let (x, y, width, height) = windowOf(here)
       check MIDDLE[0] > x and MIDDLE[0] < x + width
       check MIDDLE[1] > y and MIDDLE[1] < y + height
+
 
 
 suite "Internal: The moving":
@@ -112,6 +121,7 @@ suite "Internal: The moving":
         "--grow": GROW_TIME}:
       check declared.contains(name & ": " & $time & "ms")
 
+
   test "the move is told one clause at a time, in the one order":
     # Ways not taken go first, so that what mark does next is only
     # thing moving; frame left behind goes only once mark has left it;
@@ -123,6 +133,7 @@ suite "Internal: The moving":
     # Leaf folds before its own branch, so way out goes leaf first.
     check FOLD_LEAF <= FOLD_LAG + FOLD_BRANCH
 
+
   test "nothing is still moving when the drawing is replaced":
     # Animation's clock starts frame or two after page asks for
     # phase, so anything timed to end exactly on time in fact ends late and is
@@ -131,6 +142,7 @@ suite "Internal: The moving":
     check CENTRE_AT + CENTRE_TIME <= CLOSE_TEMPO.leaveTime - SEAM_MARGIN
     check CLOSE_TEMPO.moveTime > CLOSE_TEMPO.leaveTime
     check CLOSE_TEMPO.leadOnTime >= CLOSE_TEMPO.moveTime
+
 
   test "the drawing is sized in numbers, so the room it has can be divided by it":
     # Length cannot be divided by length, and one thing stylesheet
@@ -149,13 +161,16 @@ suite "Internal: The moving":
     # and they scale with it already.
     check renderSpokes(FRAMES[0]).contains("--ox: " & $MIDDLE[0] & "px")
 
+
   test "a drawing may shrink to fit, but never past reading its own names":
     # Whole drawing shrinks together, names included, so fitting it into any
     # room at all would mean fitting it into room where it says nothing.
     # Floor is tied to size name is drawn at, so two cannot drift.
     check LEAST_READABLE < LABEL_SIZE
-    check closeStyle().contains("--least-unit: " &
-      formatFloat(LEAST_READABLE / LABEL_SIZE, ffDecimal, 3) & "px")
+    check closeStyle().contains(
+      "--least-unit: " & formatFloat(LEAST_READABLE / LABEL_SIZE, ffDecimal, 3) & "px",
+    )
+
 
   test "the map says a move in less time, having less to say":
     # Both drawings pass same mark along same move, and that is all
@@ -172,6 +187,7 @@ suite "Internal: The moving":
     check passStyle(WIDE_TEMPO).contains("--pass: ")
     check closeStyle().contains("--pass: ")
 
+
   test "a stagger is shared out, so a crowded frame still finishes on time":
     for here in FRAMES:
       let picture = renderSpokes(here)
@@ -181,12 +197,14 @@ suite "Internal: The moving":
       if spokesOf(here).len > 1:
         check picture.contains("--turn: 1.000")
 
+
   test "every phase names itself to the stylesheet, distinctly":
     var named: seq[string] = @[]
     for moving in Motion:
       check phase(moving).len > 0
       check phase(moving) notin named
       named.add phase(moving)
+
 
   test "while leaving, the way taken is marked and every other is folding":
     for here in FRAMES:
@@ -196,11 +214,13 @@ suite "Internal: The moving":
         check picture.count(" taken\"") == 1
         check picture.count(" going\"") == spokesOf(here).len - 1
 
+
   test "a frame standing still is neither taking nor folding":
     for here in FRAMES:
       let picture = renderSpokes(here)
       check not picture.contains(" taken\"")
       check not picture.contains(" going\"")
+
 
   test "every leaf is grown from the place it occupies":
     for here in FRAMES:
@@ -210,6 +230,7 @@ suite "Internal: The moving":
         check picture.contains("--lx: " & $x & "px; --ly: " & $y & "px")
       # Branch grows from middle, and middle is one place for them all.
       check picture.count("--ox: ") == 1
+
 
   test "a move ends on the very drawing the frame reached is given at rest":
     # This is whole of why swap cannot be seen.  What leaving drawing
@@ -228,9 +249,11 @@ suite "Internal: The moving":
         check resting.contains("--w: " & $width & "; --h: " & $height)
         # And it ends panned so that frame reached, which is standing out
         # where its way out put it, is left exactly where middle will be.
-        check leaving.contains("--to-px: " & $(pan_x + MIDDLE[0] - end_x) &
-          "; --to-py: " & $(pan_y + MIDDLE[1] - end_y))
+        check leaving.contains(
+          "--to-px: " & $(pan_x + MIDDLE[0] - end_x) & "; --to-py: " & $(pan_y + MIDDLE[1] - end_y),
+        )
         check resting.contains("--px: " & $pan_x & "; --py: " & $pan_y)
+
 
   test "the mark carries the distance from the frame held to the one chosen":
     for here in FRAMES:
@@ -244,6 +267,7 @@ suite "Internal: The moving":
     check renderSpokes(FRAMES[0]).contains("--mx: 0px; --my: 0px")
 
 
+
 suite "Internal: The drawing":
   test "only the frame held and the frames it reaches are drawn":
     for here in FRAMES:
@@ -255,13 +279,16 @@ suite "Internal: The drawing":
             compound(here, target).isSome
         check is_drawn == is_reachable
 
+
   test "the frame held is the one in the middle":
     for here in FRAMES:
       let picture = renderSpokes(here)
       # Drawn at middle of space, whatever window that frame is seen
       # through: window moves, middle does not.
-      check picture.contains("<g class=\"core\"><g class=\"node held\" " &
-        "data-frame=\"" & here.key & "\">")
+      check picture.contains(
+        "<g class=\"core\"><g class=\"node held\" " & "data-frame=\"" & here.key & "\">",
+      )
+
 
   test "one frame is marked, and it is the frame being held":
     for here in FRAMES:

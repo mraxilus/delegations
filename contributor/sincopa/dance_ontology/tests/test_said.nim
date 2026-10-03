@@ -22,8 +22,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[options, unittest]
 
-import ../design/plain
-import ../design/rig_view
+import ../design/[plain, rig_view]
 import ../app/app {.all.}
 import ../src/dance_ontology
 
@@ -47,8 +46,10 @@ func pages(): seq[(string, string)] =
     result.add ("controls " & $view, renderControls(view))
 
 
+
 suite "Internal: The Reference says its prose in few words":
   let built = pages()
+
 
   test "every view builds prose to read":
     # Laws below say nothing about markup that holds no paragraph.
@@ -58,17 +59,20 @@ suite "Internal: The Reference says its prose in few words":
       paragraphs += markup.prose.len
     check paragraphs > 0
 
+
   test "no sentence runs past the bound":
     for (name, markup) in built:
       for said in markup.longSentences:
         checkpoint name & ": " & said
         fail()
 
+
   test "no paragraph runs past the bound":
     for (name, markup) in built:
       for said in markup.longParagraphs:
         checkpoint name & ", opening: " & said
         fail()
+
 
 
 suite "Internal: The rig viewer says its prose in few words":

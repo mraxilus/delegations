@@ -25,8 +25,7 @@ import std/[options, strformat, tables]
 import ./[page, parts]
 
 
-const TITLE* = "Hand-to-Hand Turns, So Far"
-  ## What page calls itself, in its tab and at its head.
+const TITLE* = "Hand-to-Hand Turns, So Far"  ## What page calls itself, in its tab and at its head.
 
 
 const WINDING: array[Manner, string] = [
@@ -50,7 +49,7 @@ const WINDING: array[Manner, string] = [
     "way, so it winds the pair half a turn too. It is the one manner of " &
     "the four that takes the lead off their spot. Its second stage brings " &
     "back the travel and the turn together.",
-] ## What each manner of turn does to pair, in this page's terms.
+]  ## What each manner of turn does to pair, in this page's terms.
   ##   Not `MANNERS`'s own blurbs: those speak of single hand
   ##     coming round, and here orientation is exactly what returns.
 
@@ -64,10 +63,12 @@ func plates(parts: Parts): string =
     result.add """<p>Every edge of the chain. Each one rocks between its two
       ends, so the half turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
-    for i in 0 ..< CHAIN.len - 1:
+    for i in 0..<CHAIN.len - 1:
       let
         moving = parts[&"hw_{description.tag}_{i}"].replaceFirst(
-          "class=\"mv\"", "class=\"mv moving\"")
+          "class=\"mv\"",
+          "class=\"mv moving\"",
+        )
         still = parts[&"hw_{description.tag}_{i}_still"]
       # Every manner walks chain now, orbits included (rule 32), so every
       # cell says position it lands on.
@@ -209,7 +210,12 @@ func render*(parts: Parts): string =
       chain.add parts["g_half"]
     chain.add figure(parts[&"hh_{i}"], &"<b>{position.name}</b><br>{position.note}")
   # Chain's two facings are read off pose through model, never written down.
-  document(TITLE, BODY.filled(@[("chain", chain), ("plates", plates(parts)),
-    ("whole", facingAt(HAND_TO_HAND, 1.0).get.name),
-    ("half", facingAt(HAND_TO_HAND, 0.5).get.name),
-    ("handRest", restOf(HAND_TO_HAND).name), ("pairRest", restOf(PAIRED).name)]))
+  document(
+    TITLE,
+    BODY.filled(
+      @[("chain", chain), ("plates", plates(parts)),
+        ("whole", facingAt(HAND_TO_HAND, 1.0).get.name),
+        ("half", facingAt(HAND_TO_HAND, 0.5).get.name),
+        ("handRest", restOf(HAND_TO_HAND).name), ("pairRest", restOf(PAIRED).name)],
+    ),
+  )

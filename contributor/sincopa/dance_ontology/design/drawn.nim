@@ -19,17 +19,17 @@
 import std/[algorithm, math, strutils]
 
 
-const DAB* = 0.04 ## Longest dab one capsule is painted in, metres: torso in
+const DAB* = 0.04  ## Longest dab one capsule is painted in, metres: torso in
                   ## eight, upper arm in six, sphere in one.
 
 type
-  Spot* = tuple[x, y, z: float] ## One point in world, metres, z up.
+  Spot* = tuple[x, y, z: float]  ## One point in world, metres, z up.
   Framing* = tuple[middle: array[3, float], reach: float]
     ## Middle of what one entry covers, and half of how far it spreads.
-  Seen* = tuple[x, y, depth: float] ## On screen: across, down, and depth toward eye.
-  Drawn* = enum ## What one capsule is put on canvas as.
+  Seen* = tuple[x, y, depth: float]  ## On screen: across, down, and depth toward eye.
+  Drawn* = enum  ## What one capsule is put on canvas as.
     Stroke, Disc
-  Piece* = tuple[capsule: int, a, z: Spot] ## Part of capsule `capsule` put down as one stroke.
+  Piece* = tuple[capsule: int, a, z: Spot]  ## Part of capsule `capsule` put down as one stroke.
 
 
 func seen*(point: Spot; azimuth, elevation: float; framing: Framing): Seen =
@@ -57,8 +57,9 @@ func along(a, z: Spot; t: float): Spot =
   ## Find point fraction `t` of way from `a` to `z`.
   (a.x + (z.x - a.x) * t, a.y + (z.y - a.y) * t, a.z + (z.z - a.z) * t)
 
-func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: float;
-                framing: Framing): seq[Piece] =
+func drawOrder*(
+  capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: float; framing: Framing
+): seq[Piece] =
   ## Every capsule in pieces no longer than `DAB`, painter's order: furthest
   ## first, by depth of each piece's middle, equal depths in engine's order.
   ##   Whole capsule by depth of its nearer end painted upper arm hanging from
@@ -70,10 +71,12 @@ func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: floa
   var keyed: seq[(float, Piece)]
   for i, capsule in capsules:
     let
-      long = sqrt((capsule.z.x - capsule.a.x) ^ 2 + (capsule.z.y - capsule.a.y) ^ 2 +
-                  (capsule.z.z - capsule.a.z) ^ 2)
+      long = sqrt(
+        (capsule.z.x - capsule.a.x) ^ 2 + (capsule.z.y - capsule.a.y) ^ 2 +
+                    (capsule.z.z - capsule.a.z) ^ 2,
+      )
       n = max(1, int(ceil(long / DAB)))
-    for k in 0 ..< n:
+    for k in 0..<n:
       let
         a = along(capsule.a, capsule.z, float(k) / float(n))
         z = along(capsule.a, capsule.z, float(k + 1) / float(n))
@@ -82,7 +85,7 @@ func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: floa
   keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
   for entry in keyed: result.add entry[1]
 
-func litAt*(fore: Seen; s: float): float =
+func litAt*(fore: Seen, s: float): float =
   ## How lit one body's side is at offset `s` across it, -1 at its back edge to
   ## 1 at its front edge, given where it faces on screen: 0 dark, 1 light.
   ##   Each dancer is lit from their own front, as if they carried lamp on
@@ -108,9 +111,9 @@ func lightAcross*(fore, axis: Seen): Seen =
 func mixColours*(dark, light: string; t: float): string =
   ## Colour `t` of way from `dark` to `light`, each `#rrggbb`, as `rgb(r, g, b)`.
   var parts: seq[string]
-  for k in 0 .. 2:
+  for k in 0..2:
     let
-      a = float(parseHexInt(dark[1 + 2 * k .. 2 + 2 * k]))
-      b = float(parseHexInt(light[1 + 2 * k .. 2 + 2 * k]))
+      a = float(parseHexInt(dark[1 + 2 * k..2 + 2 * k]))
+      b = float(parseHexInt(light[1 + 2 * k..2 + 2 * k]))
     parts.add $int(round(a + (b - a) * t))
   "rgb(" & parts.join(", ") & ")"

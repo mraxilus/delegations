@@ -107,8 +107,7 @@ func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
     result[i * 3 + 2] = sceneOf(target, is_facing = false, is_clockwise = false)
 
 
-const SCENES = buildScenes()
-  ## Every frame picture, drawn in compiler and shipped as text.
+const SCENES = buildScenes()  ## Every frame picture, drawn in compiler and shipped as text.
 
 
 func sceneFor*(target: Frame; is_facing, is_clockwise: bool): string =

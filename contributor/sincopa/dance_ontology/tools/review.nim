@@ -30,8 +30,7 @@ import ./title
 const
   TEMPLATE_PATH = "pages" / "review" / "review.html"
     ## Committed page holding prose and one marker per derived number or picture.
-  PAGE_NAME* = "review.html"
-    ## File page is written as, under output directory.
+  PAGE_NAME* = "review.html"  ## File page is written as, under output directory.
   DIRECTORY_FRAMES* = "frames"
     ## Directory under output holding one SVG per frame, for anything that is not HTML.
   DISAGREEMENTS = {
@@ -40,7 +39,7 @@ const
     FindingKind.EdgeCompound,
     FindingKind.HelperDiffers,
     FindingKind.EdgeUnsupported,
-  } ## Name finding kinds that mean workbook and model differ.
+  }  ## Name finding kinds that mean workbook and model differ.
 
 
 
@@ -94,7 +93,7 @@ func escape(text: string): string =
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 
-func inked(said: string; should_escape = true): string =
+func inked(said: string, should_escape = true): string =
   ## Say name with each hand it names written in that dancer's own ink.
   ##   Page's drawings ink their words this way, and name in prose beside them is same
   ##     name; reader who has learnt two shades from map should not have to learn them
@@ -113,7 +112,7 @@ func inked(said: string; should_escape = true): string =
     result.add "<span style=\"color: " & ink & "\">" & text & "</span>"
 
 
-func statisticCard(number: int; caption: string; is_good = false): string =
+func statisticCard(number: int, caption: string, is_good = false): string =
   ## Draw one figure in strip at head of page.
   "<div class=\"stat" & (if is_good: " good" else: "") & "\"><b>" & $number &
     "</b><span>" & caption & "</span></div>"
@@ -186,8 +185,7 @@ func renderMatrix(): string =
       if helper.isNone and named.isNone:
         result.add "<td></td>"
         continue
-      let known = cellText(
-        workbookName(source).get(""), workbookName(target).get(""))
+      let known = cellText(workbookName(source).get(""), workbookName(target).get(""))
       result.add "<td class=\"on" & (if known.isSome: "" else: " new") &
         (if helper.isNone: " two" else: "") &
         "\" title=\"" & escape(source.describe) & " to " &
@@ -273,8 +271,8 @@ func inkTerms(page: string): string =
     let
       inner = start + opens.len
       stop = result.find(shuts, inner)
-      said = inked(result[inner ..< stop], should_escape = false)
-    result = result[0 ..< inner] & said & result[stop .. ^1]
+      said = inked(result[inner..<stop], should_escape = false)
+    result = result[0..<inner] & said & result[stop .. ^1]
     at = inner + said.len + shuts.len
 
 
@@ -313,7 +311,7 @@ proc renderReview*(): string =
   let at = page.find("{{")
   doAssert at < 0,
     "Every marker in review prose should be filled; got `" &
-      page[at ..< min(at + 24, page.len)] & "`."
+      page[at..<min(at + 24, page.len)] & "`."
   inkTerms(page)
 
 

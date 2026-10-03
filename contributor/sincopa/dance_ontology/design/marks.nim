@@ -35,7 +35,7 @@ proc checkFrameAndRules() =
 var LUT_PARTS_BY_PAGE: Table[string, Parts]
   ## Parts of every page built so far, by page, so none is routed twice.
 
-proc once(name: string; build: proc (): Parts {.nimcall.}): Parts =
+proc once(name: string, build: proc (): Parts {.nimcall.}): Parts =
   ## Parts of page `name`, built on first asking and kept.
   if name notin LUT_PARTS_BY_PAGE:
     LUT_PARTS_BY_PAGE[name] = build()
@@ -73,10 +73,10 @@ const PAGES* = [
    parts_of: proc (): Parts {.nimcall.} = once("review.html", reviewed),
    check: proc (parts: Parts) {.nimcall.} = checkReview(),
    render: proc (parts: Parts): string {.nimcall.} = review_page.render(parts)),
-] ## Each page: its file, its figures, its checks, its layout.
+]  ## Each page: its file, its figures, its checks, its layout.
 
 
-proc buildPage*(page_index: int; directory_out: string) =
+proc buildPage*(page_index: int, directory_out: string) =
   ## Check page `page_index` of `PAGES`, then write it into `directory_out`.
   let
     page = PAGES[page_index]
@@ -92,7 +92,7 @@ proc buildPage*(page_index: int; directory_out: string) =
 
 proc buildPages*(directory_out: string) =
   ## Check and rebuild every page into `directory_out`.
-  for i in 0 ..< PAGES.len:
+  for i in 0..<PAGES.len:
     buildPage(i, directory_out)
 
 
