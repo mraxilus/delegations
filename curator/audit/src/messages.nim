@@ -54,7 +54,7 @@ func contentOf(t: Token, source: string): (int, int) =
   else: (t.first + 1, t.after - 1)
 
 
-func pieceAt(tokens: openArray[Token], partners: openArray[int]; k: int; source: string): Piece =
+func pieceAt(tokens: openArray[Token], partners: openArray[int], k: int, source: string): Piece =
   ## Read operand opening at token `k`: literal, prefixed literal, or expression running to
   ##   next `&` outside brackets, separator, closing bracket or line end `&` does not continue.
   let t = tokens[k]
@@ -79,7 +79,7 @@ func pieceAt(tokens: openArray[Token], partners: openArray[int]; k: int; source:
 
 
 func chainFrom(
-  tokens: openArray[Token], partners: openArray[int]; k: int; source: string
+  tokens: openArray[Token], partners: openArray[int], k: int, source: string
 ): seq[Piece] =
   ## Read concatenation from literal token `k` to its end: each `&` followed by operand.
   result.add Piece(first: k, last: k, literal: k)
@@ -97,9 +97,7 @@ func chainFrom(
     at = piece.last + 1
 
 
-func valuesOf(
-  chain: seq[Piece], tokens: openArray[Token]; tail: int; source: string
-): seq[Value] =
+func valuesOf(chain: seq[Piece], tokens: openArray[Token], tail: int, source: string): seq[Value] =
   ## Read every bare value of chain past byte offset `tail`, with backticks it lacks.
   ##   Backticks of literals are counted from tail, where every span of message before `got`
   ##   has closed, interpolations aside; so value inside span another value or text opens

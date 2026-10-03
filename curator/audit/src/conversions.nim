@@ -76,9 +76,7 @@ func isTargetName(text: string): bool =
   text.len > 2 and text.startsWith("to") and text[2] in {'A'..'Z'}
 
 
-func isPlain(
-  tokens: openArray[Token], partners: openArray[int]; a, b: int; source: string
-): bool =
+func isPlain(tokens: openArray[Token]; partners: openArray[int]; a, b: int; source: string): bool =
   ## Decide whether tokens `a` to `b` are name with call, index or field glued after it.
   if a > b or tokens[a].kind != TokenKind.Word or tokens[a].isKeyword(source): return false
   var k = a + 1
@@ -155,7 +153,7 @@ func fixTargets*(path, source: string): Fix =
 
 
 func importedNames(
-  tokens: openArray[Token], partners: openArray[int]; source: string
+  tokens: openArray[Token], partners: openArray[int], source: string
 ): HashSet[string] =
   ## Collect names standing in `import`, `include`, `from` and `export` statements: modules
   ##   file may qualify name with.
@@ -163,9 +161,7 @@ func importedNames(
     if tokens[k].kind == TokenKind.Word: result.incl tokens[k].spelling(source)
 
 
-func receiverOf(
-  tokens: openArray[Token], partners: openArray[int]; dot: int; source: string
-): int =
+func receiverOf(tokens: openArray[Token], partners: openArray[int], dot: int, source: string): int =
   ## Read index of first token of receiver ending before `.` at `dot`: name with calls, indexes
   ##   and fields glued after it, or bracket group; `-1` where none stands there.
   var j = dot - 1
@@ -234,7 +230,7 @@ func conversionQuery*(path, source: string): Query =
 
 
 func isGroup(
-  tokens: openArray[Token], partners: openArray[int]; first, last: int; source: string
+  tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): bool =
   ## Decide whether tokens `first` to `last` are one parenthesis holding one expression, no
   ##   tuple: no comma, semicolon or `:` at its own depth.
@@ -282,22 +278,25 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
       ]
     else:
       conversion.edits = @[
-        Edit(first: tokens[c.first].first, after: tokens[c.first].first, text: name & "(",
-             rank: -span),
+        Edit(
+          first: tokens[c.first].first,
+          after: tokens[c.first].first,
+          text: name & "(",
+          rank: -span,
+        ),
         Edit(first: tokens[c.dot].first, after: tokens[c.name].after, text: ")"),
       ]
     result.add conversion
 
 
-func checkConversions*(path, source: string, answer: Answer): seq[Finding] =
+func checkConversions*(path, source: string; answer: Answer): seq[Finding] =
   ## Report type conversion written `x.T`, as semantic pass settles it (STYLE.md §5).
   ##   Static pass compiles nothing, so `koch fix --dry-run` is where it runs (`fixes.nim`).
   for conversion in conversions(source, answer):
     result.add finding(
       path,
       conversion.line + 1,
-      "Type conversion is prefix call, as `Grade(x)` (STYLE.md §5); got `" & conversion.got &
-        "`.",
+      "Type conversion is prefix call, as `Grade(x)` (STYLE.md §5); got `" & conversion.got & "`.",
     )
 
 

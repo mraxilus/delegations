@@ -88,9 +88,7 @@ const
   EXCERPT_RUNES = 12  ## Runes of each neighbour echoed beside breach.
 
 
-func pathTokens*(
-  tokens: openArray[Token], partners: openArray[int], source: string
-): HashSet[int] =
+func pathTokens*(tokens: openArray[Token], partners: openArray[int], source: string): HashSet[int] =
   ## Collect tokens of `import`, `include`, `from` and `export` statements: brackets, and lines
   ##   indented under statement's own, included.
   var indents: seq[int]

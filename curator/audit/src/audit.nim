@@ -12,8 +12,7 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 import std/[options, os, sequtils, sets, strutils]
 import ./[

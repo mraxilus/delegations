@@ -87,8 +87,7 @@ const
 
 
 type
-  Fence = object
-    ## Define lines fence leaves alone, and line where fence cannot be read, if any.
+  Fence = object  ## Define lines fence leaves alone, and line where fence cannot be read, if any.
     lines: seq[int]  ## Zero-based fenced lines, markers included, in order.
     fault: int
       ## Zero-based line fence crosses bracket or token at, or reads `FENCED`; `-1` if none.
@@ -270,7 +269,7 @@ func scopeOf(tree: Tree, path: string): seq[(string, string)] =
       result.add (e.path, e.content)
 
 
-func renamesOf(tree: Tree; entries: openArray[Entry]; locked: openArray[string]): seq[Rename] =
+func renamesOf(tree: Tree, entries: openArray[Entry], locked: openArray[string]): seq[Rename] =
   ## Read rename of each declaration in entries coining abbreviation (V.6), as names check
   ##   reads it, with words glossaries admit.
   let directories = tree.projectDirectories

@@ -109,7 +109,7 @@ func isOperandToken(tokens: openArray[Token], k: int, source: string): bool =
 
 
 func elementsOf(
-  tokens: openArray[Token], partners: openArray[int]; first, last: int; source: string
+  tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): seq[Element] =
   ## Read tokens `first` to `last` of one bracket depth as elements; bracket group, and `.`
   ##   with name, glued after operand join it as call, index or field.
@@ -161,7 +161,7 @@ func elementsOf(
     k = e.last + 1
 
 
-func isStatementBreak(tokens: openArray[Token]; k: int; source: string): bool =
+func isStatementBreak(tokens: openArray[Token], k: int, source: string): bool =
   ## Decide whether line break before token `k` ends statement: token before it neither
   ##   operator, keyword operator, separator nor opening bracket.
   if k == 0 or tokens[k - 1].lastLine(source) == tokens[k].line: return false
@@ -173,7 +173,7 @@ func isStatementBreak(tokens: openArray[Token]; k: int; source: string): bool =
 
 
 func segmentsOf(
-  tokens: openArray[Token], partners: openArray[int]; first, last: int; source: string
+  tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): seq[seq[Element]] =
   ## Split one bracket depth into expressions between delimiters, nested depths included.
   let elements = elementsOf(tokens, partners, first, last, source)
@@ -266,8 +266,7 @@ func checkMixtures*(path, source: string): seq[Finding] =
     result.add finding(
       path,
       tokens[mixture.runs[0][0]].line + 1,
-      "Condition mixing `and` with `or` parenthesises each `and` (X.4); got `" & mixture.got &
-        "`.",
+      "Condition mixing `and` with `or` parenthesises each `and` (X.4); got `" & mixture.got & "`.",
     )
 
 
@@ -287,7 +286,7 @@ func fixMixtures*(path, source: string): Fix =
       lines = tokens[mixture.runs[0][0]].line..tokens[mixture.runs[^1][1]].lastLine(source)
       before = source.split('\n')
       after = shaped.split('\n')
-    if toSeq(lines).anyIt(after[it].isWide and not before[it].isWide): continue
+    if lines.toSeq.anyIt(after[it].isWide and not before[it].isWide): continue
     inserts.add planned
     result.fixed.add finding(path, tokens[mixture.runs[0][0]].line + 1, "and with or (X.4)")
   result.source = source
@@ -310,10 +309,7 @@ func negations(source: string): seq[Negation] =
       if after.role != Role.Binary or after.precedence < PRECEDENCE_COMPARISON: continue
       if tokens[after.first].spelling(source) == ".": continue
       let stop = if operand + 2 < segment.len: segment[operand + 2].last else: after.last
-      result.add Negation(
-        line: tokens[e.first].line,
-        got: excerpt(source, tokens, e.first, stop),
-      )
+      result.add Negation(line: tokens[e.first].line, got: excerpt(source, tokens, e.first, stop))
 
 
 func checkNegations*(path, source: string): seq[Finding] =

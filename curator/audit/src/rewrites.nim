@@ -142,9 +142,7 @@ func planRename*(
     refuse "declaration resolves to no symbol"
   let
     declared = declaring.symbols[(rename.line, rename.column)]
-    shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(
-      not it.isIdentical(declared),
-    )
+    shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(not it.isIdentical(declared))
   if shadowed.len > 0:
     refuse "`" & rename.renamed & "` would shadow `" & shadowed[0].name & "`"
 

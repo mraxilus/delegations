@@ -73,13 +73,15 @@ func symbolOf*(line: string): Option[Symbol] =
   let fields = line.split('\t')
   if fields.len < 7: return none(Symbol)
   try:
-    some(Symbol(
-      kind: fields[1],
-      name: fields[2],
-      file: fields[4],
-      line: fields[5].parseInt,
-      column: fields[6].parseInt,
-    ))
+    some(
+      Symbol(
+        kind: fields[1],
+        name: fields[2],
+        file: fields[4],
+        line: fields[5].parseInt,
+        column: fields[6].parseInt,
+      ),
+    )
   except ValueError: none(Symbol)
 
 

@@ -69,7 +69,7 @@ const
 
 func runeWidth(r: Rune): int =
   ## Read display width of one rune.
-  let code = r.int
+  let code = int(r)
   for (first, last, width) in WIDTHS:
     if code < first: return 1
     if code <= last: return width

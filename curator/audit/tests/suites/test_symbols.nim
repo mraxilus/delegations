@@ -61,10 +61,14 @@ suite "Internal: Symbols":
       ]
     defer: removeDir(root)
     for e in tree: writeInto(root, e.path, e.content)
-    let answers = resolve(root, tree, [
-      Query(path: "curator/fixture/src/a.nim", sites: @[(3, 8), (3, 6)], names: @["float"]),
-      Query(path: "curator/fixture/src/b.nim", sites: @[(1, 8)]),
-    ])
+    let answers = resolve(
+      root,
+      tree,
+      [
+        Query(path: "curator/fixture/src/a.nim", sites: @[(3, 8), (3, 6)], names: @["float"]),
+        Query(path: "curator/fixture/src/b.nim", sites: @[(1, 8)]),
+      ],
+    )
     check answers.len == 2
     let a = answers[0]
     check a.reason.len == 0

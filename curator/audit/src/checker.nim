@@ -139,9 +139,7 @@ func fixDeadExports*(path, source: string; dead: openArray[string]): Fix =
     for i, line in lines:
       let words = line.splitWhitespace
       if words.len >= 2 and words[0] in ROUTINES and words[1].startsWith(name & "*"): declared.add i
-    let named = source.tokens.countIt(
-      it.kind == TokenKind.Word and it.spelling(source) == name,
-    )
+    let named = source.tokens.countIt(it.kind == TokenKind.Word and it.spelling(source) == name)
     if declared.len == 0 or named <= declared.len: continue
     for i in declared:
       let at = lines[i].find(name & "*")

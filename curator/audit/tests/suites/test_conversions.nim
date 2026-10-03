@@ -3,8 +3,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
-import std/tables
+import std/[sequtils, strutils, tables, unittest]
 import ../../src/[conversions, findings, rewrites, symbols]
 
 
