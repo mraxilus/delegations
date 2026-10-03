@@ -86,13 +86,13 @@ template `*`*(a: Vector3, s: float): Vector3 =
 
 template zero3(): Vector3 =
   ## Spell zero vector by components.
-  ##   Default constructor `Vector3()` zero-fills field through `nimZeroMem`, which bench's
-  ##     large function keeps out of line: 20 to 21 ns more per row at rga4d (see PROVENANCE).
+  ##   Default constructor `Vector3()` zero-fills field through `nimZeroMem`; in bench, about
+  ##     21 ns more on four line rows at rga4d (see PROVENANCE, Reference).
   Vector3(x: 0.0, y: 0.0, z: 0.0)
 
 template read3(v: Vector3): Vector3 =
   ## Spell copy of vector by components.
-  ##   Whole-object copy calls synthesised `=dup` hook out of line: 0.6 to 1.7 ns more per row
+  ##   Whole-object copy calls synthesised `=dup` hook; in bench, 1.6 ns more on two line rows
   ##     at rga4d (see PROVENANCE, Reference).
   Vector3(x: v.x, y: v.y, z: v.z)
 
