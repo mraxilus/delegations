@@ -2074,11 +2074,15 @@ the Architect trials it, lifts each decision onto a card without a change of wor
 The block carries seven labels in order: `Role`, `State`, the table, `Context`, `Summary`,
 `Decisions` and `Next step`.
 
-- The state opens with `done`, `working`, `waiting` or `blocked`, and the check reads that word
-  alone, before the first comma. Where the branch stands follows it, and no check reads it. The
-  state is `blocked` exactly when a decision blocks this delegate.
+- The state opens with `done`, `working`, `waiting` or `blocked`. The check reads that word
+  alone, up to the first comma or space. Where the branch stands follows it, and only the
+  `english` check reads it. Verified by hand through the built hook, 2026-10-03: a state line
+  over 25 words gives an `english` finding. The state is `blocked` exactly when a decision
+  blocks this delegate.
 - The block holds no brief line, by the choice of the Architect: no delegate starts from a
-  brief until the Architect trials the coordinator.
+  brief until the Architect trials the coordinator. No check refuses a line beyond the seven
+  labels, so reading holds this rule. Verified by hand through the built hook, 2026-10-03: a
+  sign-off with a brief line passes.
 - Decisions are numbered from `D1`, and each one names its class and where its ruling goes. With
   no decision, the label reads `**Decisions:** None.`, and over its blocks it stands alone.
 - A class is `blocks this delegate`, that class with `and` and the role strings that wait too,
@@ -2095,8 +2099,9 @@ The block carries seven labels in order: `Role`, `State`, the table, `Context`, 
 - Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
   runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
   sign-off. The second stop passes.
-- Verified by `suites/test_hooks.nim`: one assertion for each rule above, and two for the
-  order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off with no decision.
+- Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
+  and two for the order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off
+  with no decision.
 
 ## Watching main
 
