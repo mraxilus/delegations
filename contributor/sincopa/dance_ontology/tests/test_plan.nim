@@ -198,8 +198,8 @@ suite "Internal: Planned turn":
           gap = closest(p.a, p.z, q.a, q.z).gap - p.radius - q.radius
         check gap > path.problem.style.clearance - JOINED
       if moment > 0:
-        # Arms only, as planner holds them: trunks are carried by turn itself.
-        for k in 2 * trunkCapsules(HUMAN).len..<capsules.len:
+        # Arms only, as planner holds them: trunks and faces are carried by turn itself.
+        for k in 2 * trunkCapsules(HUMAN).len..<capsules.len - placed.faces.len:
           check distance(capsules[k].a, before[k].a) < path.problem.style.leap + JOINED
           check distance(capsules[k].z, before[k].z) < path.problem.style.leap + JOINED
       before = capsules

@@ -17,13 +17,14 @@
 import std/[bitops, math]
 
 import ./[body, hold, rig, vector]
-from ./rigid {.all.} import ArmPlacing, GIRDLE_RADIUS, Matrix, MATRIX_REST, times, transposed,
-  trunkCapsules, turnAbout
+from ./rigid {.all.} import ArmPlacing, faceCapsule, GIRDLE_RADIUS, Matrix, MATRIX_REST, times,
+  transposed, trunkCapsules, turnAbout
 
 
 const
   PER_ARM* = 9  ## Freedoms of one arm: two of collarbone, three of shoulder, elbow, three of wrist.
   SIZE* = 4 + 4 * PER_ARM  ## Apart, sideways (held nought), two waists, four arms.
+  ARM_CAPSULES = 16  ## Capsules of four arms, after trunks: girdle, upper, fore and palm of each.
 
 type
   Plan* = array[SIZE, float]  ## One pose of couple, as planner holds it.
@@ -32,8 +33,8 @@ type
 
   Shape = object  ## One capsule's owner, as engine's filters read it.
     who: Body
-    arm: int  ## Arm index nought to three, or -1 for trunk.
-    part: int  ## Nought girdle, one upper, two fore, three palm; -1 trunk.
+    arm: int  ## Arm index nought to three, -1 for trunk, -2 for face.
+    part: int  ## Nought girdle, one upper, two fore, three palm; -1 trunk or face.
 
   Style* = object  ## How couple go about turn: one way among several planner tries.
     gather*: float  ## Newtons per metre, as weight, drawing two joined pairs to one point.
@@ -112,6 +113,7 @@ type
   Placed* = object  ## Whole couple placed.
     arms*: array[4, ArmPlaced]
     trunks*: array[Body, seq[Capsule]]
+    faces*: array[Body, Capsule]  ## Sphere ahead of each head, which every arm keeps off.
 
 
 func facingOf*(plan: Plan, who: Body, wind: float, is_away: bool, turner = Body.Two): float =
@@ -206,6 +208,8 @@ func place*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.Two)
     let frame = frameOf(plan, who, wind, is_away, turner)
     for (a, z, radius) in trunkCapsules(rig):
       result.trunks[who].add (frame.world(a), frame.world(z), radius)
+    let face = faceCapsule(rig)
+    result.faces[who] = (frame.world(face.a), frame.world(face.z), face.radius)
     for arm in Arm:
       let i = armIndex(who, arm)
       result.arms[i] = placeArm(rig, plan, i, frame)
@@ -214,11 +218,12 @@ func pairsOf*(problem: Problem): seq[(int, int)] = problem.pairs
   ## Every pair of capsules engine collides, by index into `capsulesOf`.
 
 func capsulesOf*(placed: Placed): seq[Capsule] =
-  ## Every capsule, trunks first, then each arm's girdle, upper, fore, palm.
+  ## Every capsule, trunks first, then each arm's girdle, upper, fore, palm, then each face.
   for who in Body:
     for capsule in placed.trunks[who]: result.add capsule
   for i in 0..3:
     for capsule in placed.arms[i].capsules: result.add capsule
+  for who in Body: result.add placed.faces[who]
 
 
 func problemOf*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): Problem =
@@ -230,6 +235,8 @@ func problemOf*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): P
   for i in 0..3:
     for part in 0..3:
       result.shapes.add Shape(who: (if i < 2: Body.One else: Body.Two), arm: i, part: part)
+  for who in Body:
+    result.shapes.add Shape(who: who, arm: -2, part: -1)
   var joined: seq[(int, int)]
   for link in links:
     let
@@ -240,6 +247,11 @@ func problemOf*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): P
   for i in 0..<result.shapes.len:
     for j in i + 1..<result.shapes.len:
       let (p, q) = (result.shapes[i], result.shapes[j])
+      # Face meets every link of every arm, and nothing else: girdle runs from neck.
+      if p.arm == -2 or q.arm == -2:
+        let other = (if p.arm == -2: q else: p)
+        if other.arm >= 0 and other.part >= 1: result.pairs.add (i, j)
+        continue
       # Own trunk and own girdles share one group.
       if p.who == q.who and (p.arm < 0 or p.part == 0) and (q.arm < 0 or q.part == 0):
         continue
@@ -386,7 +398,8 @@ func leapsOf(problem: Problem, capsules, before: seq[Capsule], first_arm: int):
     seq[array[2, float]] =
   ## Each arm capsule's leap terms since last moment, or none where there is no last moment.
   if before.len > 0:
-    for k in first_arm..<capsules.len:
+    # Arms only: trunks and faces are carried by turn itself.
+    for k in first_arm..<first_arm + ARM_CAPSULES:
       result.add leapsOf(problem, capsules[k], before[k])
 
 func cramped*(rig: Rig, problem: Problem, placed: Placed): float =
@@ -444,7 +457,9 @@ type
     balls: seq[Ball]  ## Each capsule's ball.
     gaps: Gaps
     first_arm: int  ## Place of first arm capsule in `capsules`.
+    first_face: int  ## Place of first face in `capsules`, after every arm's.
     trunk: seq[Capsule]  ## One trunk's capsules in body's own frame (`rigid.trunkCapsules`).
+    face: Capsule  ## One face in body's own frame (`rigid.faceCapsule`).
     eases: array[4, array[6, float]]
     waists: array[2, float]
     margins: array[4, array[3, float]]
@@ -477,8 +492,11 @@ proc reckon(
   r.placed = place(rig, plan, wind, problem.is_away, problem.turner)
   r.capsules = capsulesOf(r.placed)
   r.first_arm = 2 * r.placed.trunks[Body.One].len
+  r.first_face = r.first_arm + ARM_CAPSULES
   if r.trunk.len == 0:
     for capsule in trunkCapsules(rig): r.trunk.add capsule
+    let face = faceCapsule(rig)
+    r.face = (face.a, face.z, face.radius)
   r.balls.setLen(r.capsules.len)
   for k, capsule in r.capsules: r.balls[k] = ballOf(capsule)
   let threshold = thresholdOf(problem)
@@ -533,10 +551,11 @@ func movedPairs(rig: Rig, problem: Problem): Moving =
   let
     trunk = trunkCapsules(rig).len
     first_arm = 2 * trunk
+    first_face = first_arm + ARM_CAPSULES
   func isOf(k: int, who: Body): bool =
-    ## Whether capsule `k` is one of body's own: its trunk, or one of its two arms.
+    ## Whether capsule `k` is one of body's own: its trunk, one of its two arms, or its face.
     k in ord(who) * trunk..<(ord(who) + 1) * trunk or
-      k in first_arm + 8 * ord(who)..<first_arm + 8 * (ord(who) + 1)
+      k in first_arm + 8 * ord(who)..<first_arm + 8 * (ord(who) + 1) or k == first_face + ord(who)
   for k, (a, b) in problem.pairs:
     for i in 0..3:
       for f in 0..3:
@@ -620,7 +639,8 @@ proc restore(r: var Reckoning, held: Held, freedom: int, moved: seq[int]) =
 type HeldBody = object  ## What one body's step re-reckoned away from, to put back.
   arms: array[2, ArmPlaced]
   trunk: seq[Capsule]
-  balls: seq[Ball]  ## Trunk's, then both arms'.
+  face: Capsule
+  balls: seq[Ball]  ## Trunk's, then both arms', then face's.
   leaps: array[8, array[2, float]]
   waists: array[2, float]
   gaps: seq[float]  ## Gap of each moved pair, in order moved.
@@ -652,7 +672,7 @@ proc stepBody(
     trunk = r.trunk.len
     threshold = thresholdOf(problem)
   held.trunk.setLen(trunk)
-  held.balls.setLen(trunk + 8)
+  held.balls.setLen(trunk + 9)
   for t in 0..<trunk:
     let k = ord(who) * trunk + t
     held.trunk[t] = r.capsules[k]
@@ -660,6 +680,12 @@ proc stepBody(
     r.capsules[k] = (frame.world(r.trunk[t].a), frame.world(r.trunk[t].z), r.trunk[t].radius)
     r.placed.trunks[who][t] = r.capsules[k]
     r.balls[k] = ballOf(r.capsules[k])
+  let face = r.first_face + ord(who)
+  held.face = r.capsules[face]
+  held.balls[trunk + 8] = r.balls[face]
+  r.capsules[face] = (frame.world(r.face.a), frame.world(r.face.z), r.face.radius)
+  r.placed.faces[who] = r.capsules[face]
+  r.balls[face] = ballOf(r.capsules[face])
   for side in 0..1:
     let i = 2 * ord(who) + side
     held.arms[side] = r.placed.arms[i]
@@ -693,6 +719,10 @@ proc restoreBody(r: var Reckoning, held: HeldBody, freedom: int, moved: seq[int]
     r.capsules[k] = held.trunk[t]
     r.placed.trunks[who][t] = held.trunk[t]
     r.balls[k] = held.balls[t]
+  let face = r.first_face + ord(who)
+  r.capsules[face] = held.face
+  r.placed.faces[who] = held.face
+  r.balls[face] = held.balls[trunk + 8]
   for side in 0..1:
     let i = 2 * ord(who) + side
     r.placed.arms[i] = held.arms[side]

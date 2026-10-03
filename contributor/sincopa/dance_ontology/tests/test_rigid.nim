@@ -324,18 +324,20 @@ suite "Internal: Two dancers in rigid body engine":
   test "every capsule page draws is one engine was given":
     ## Page is debug view, so its honesty rests on this: list it draws from is
     ## list handed to engine, recorded as it was handed over rather than worked
-    ## out again afterwards.  Two trunks of four capsules, four shoulders of
-    ## one, and four arms of three, is what `build` makes.
+    ## out again afterwards.  Two trunks of four capsules and one face, four
+    ## shoulders of one, and four arms of three, is what `build` makes.
     let couple = rest()
-    check couple.shapes.len == 2 * 4 + 4 + 4 * 3
-    var trunks, girdles, limbs = 0
+    check couple.shapes.len == 2 * (4 + 1) + 4 + 4 * 3
+    var trunks, faces, girdles, limbs = 0
     for shape in couple.shapes:
       check shape.radius > 0.0
       case shape.mark
       of Mark.Trunk: trunks += 1
+      of Mark.Face: faces += 1
       of Mark.Girdle: girdles += 1
       else: limbs += 1
     check trunks == 8
+    check faces == 2
     check girdles == 4
     check limbs == 12
     couple.free()
@@ -926,13 +928,16 @@ proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
   ## worked out here and not engine's manifolds, and which two.
   ##   Pairs engine never collides are left out: capsules of one body, one arm's
   ##     own links, girdle and upper arm it hangs from, trunk and girdles of one
-  ##     dancer, and two joined palms.
+  ##     dancer, face and anything but arm's link, and two joined palms.
 
   proc isSkipped(shape_a, shape_b: Shape): bool =
-    ## Decide whether pair of shapes may overlap: one body, or one arm's own links.
+    ## Decide whether pair of shapes may overlap: one body, one arm's own links, or face and
+    ## anything but arm's link.
+    let limbs = {Mark.Upper, Mark.Fore, Mark.Palm}
     if shape_a.body == shape_b.body: return true
+    if Mark.Face in {shape_a.mark, shape_b.mark} and shape_a.mark notin limbs and
+       shape_b.mark notin limbs: return true
     if shape_a.who == shape_b.who:
-      let limbs = {Mark.Upper, Mark.Fore, Mark.Palm}
       if shape_a.mark notin limbs and shape_b.mark notin limbs: return true
       if shape_a.arm == shape_b.arm and shape_a.mark in limbs and shape_b.mark in limbs: return true
       if shape_a.arm == shape_b.arm and

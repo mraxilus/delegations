@@ -279,7 +279,7 @@ func assembled*(stamp: string, texts: seq[string]): string =
   head.add "\"fore\":" & figure(HUMAN.fore)
   head.add "\"hand\":" & figure(HUMAN.hand)
   head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
-  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
+  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\",\"face\"]"
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
   head.add "\"stills\":[\n" & stills.join(",\n") & "]"
   "{" & head.join(",\n") & "}\n"

@@ -141,7 +141,8 @@ type
 
   Mark* {.pure.} = enum  ## What part of whom one capsule is.
     Trunk, Upper, Fore, Palm,
-    Girdle  ## Shoulder: from neck's side out to shoulder joint, on body that gives.
+    Girdle,  ## Shoulder: from neck's side out to shoulder joint, on body that gives.
+    Face  ## Sphere ahead of head (`faceCapsule`), which every arm keeps off.
 
   Shape* = object  ## One capsule engine collides, as engine was given it.
     body*: engine.BodyId
@@ -343,6 +344,8 @@ const
 const
   TRUNK_BIT = 1'u64  ## Torso, neck and head.
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64]  ## Lead's arms, follow's arms.
+  FACE_BIT = 8'u64  ## Faces, which meet arms alone: trunks keep heads apart, and spheres of
+                   ## couple chest to chest overlap 2 cm, where dancers turn heads aside.
   EVERY = high(uint64)  ## Meets everything.
 
 func ownGroup(who: Body): cint =
@@ -379,13 +382,18 @@ proc capsule(
   shape_definition.density = cfloat(density)
   shape_definition.material.friction = cfloat(FRICTION)
   shape_definition.filter.group_index = group
-  shape_definition.filter.category_bits = (if mark == Mark.Trunk: TRUNK_BIT else: ARM_BIT[who])
+  shape_definition.filter.category_bits =
+    case mark
+    of Mark.Trunk: TRUNK_BIT
+    of Mark.Face: FACE_BIT
+    else: ARM_BIT[who]
   # Everything meets everything, arms of two dancers included.  Letting lead's
   # arms pass through follow's was tried, on Architect's point that lead gets lead's
   # own arm out of way, and it reached swan -- by letting arms occupy same place,
   # which no couple does.  Architect: it made simulation worse.  Reverted.  Point stands
   # and wants real answer: lead who *moves* lead's arm, not one whose arm is absent.
-  shape_definition.filter.mask_bits = EVERY
+  shape_definition.filter.mask_bits =
+    if mark == Mark.Face: ARM_BIT[Body.One] or ARM_BIT[Body.Two] else: EVERY
   discard engine.createCapsule(body, addr shape_definition, addr capsule)
   couple.shapes.add Shape(
     body: body,
@@ -461,6 +469,21 @@ proc trunkOf(couple: var Couple, who: Body): tuple[hips, chest: engine.BodyId,
       DENSITY,
       ownGroup(who),
     )
+  # Face weighs nothing: it is room arms keep off, and head already carries its weight.  In
+  # trunk's group, so own girdles, which run from neck, pass it.
+  let face = faceCapsule(couple.rig)
+  capsule(
+    couple,
+    body,
+    who,
+    Arm.Left,
+    Mark.Face,
+    asEngine(face.a),
+    asEngine(face.z),
+    face.radius,
+    0.0,
+    ownGroup(who),
+  )
 
 const MARKS = [Mark.Upper, Mark.Fore, Mark.Palm]
   ## Which mark each of arm's three links carries, in `Limb`'s own order.
