@@ -841,6 +841,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
   write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
   squared norm, and under P04 each writes 8 bytes.
+- Whether the library takes P05, `multivector-align`, and whether P02 and P04 take its rule for
+  kinds. A caller that holds multivectors in a `seq` times `-m` at ×0.37 to ×0.84 of the pin. It
+  times `m + n` at ×0.78 to ×0.84, at no cost in size. A kind that the alignment pads runs ×1.18 to
+  ×4.90 slower, so the rule aligns a kind of an even count of floats alone. The figures are in
+  `proposals/05-multivector-align/proposal.md`.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
