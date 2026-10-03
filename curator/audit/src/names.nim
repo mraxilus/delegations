@@ -89,6 +89,7 @@ type
     head: string  ## First word of opening line.
     is_scope_free: bool  ## Block opens no scope: `when` chain, or bare section keyword.
     is_entry: bool  ## Top-level `when isMainModule:`, where module runs as program.
+    substituted: seq[string]  ## Parameters of template, which its body names in place of argument.
 
 
 const
@@ -353,6 +354,11 @@ func isOpening(lines: openArray[string], i: int): bool =
   k < lines.len and lines[k].indentOf > lines[i].indentOf
 
 
+func isSubstituted(openers: openArray[Opener], name: string): bool =
+  ## Decide whether enclosing template substitutes name, so declaration there declares argument.
+  openers.anyIt(name in it.substituted)
+
+
 func reachOf(openers: openArray[Opener], is_scoped = false): Reach =
   ## Decide reach of binding under enclosing blocks, outermost first (V.1, V.10).
   ##   Routine makes local, entry block makes entry, and so does binding opening own scope
@@ -408,7 +414,9 @@ func declarations*(source: string): seq[Declared] =
         is_entry: indent == 0 and word == "when" and "isMainModule" in s,
       )
       is_opening = lines.isOpening(i)
-    var next = i + 1
+    var
+      next = i + 1
+      substituted: seq[string]
 
     block reading:
       if word in ROUTINE_KEYWORDS and rest.len > 0 and rest[0] == ' ':
@@ -445,6 +453,7 @@ func declarations*(source: string): seq[Declared] =
         if k < text.len and text[k] == '(' and text.closing(k) > k:
           let signature = text[k + 1..<text.closing(k)]
           for (p, is_boolean) in signature.parameterNames:
+            if word == "template": substituted.add p
             result.add Declared(
               name: p,
               line: one,
@@ -474,7 +483,11 @@ func declarations*(source: string): seq[Declared] =
         break reading
       if word == "type" or (type_indent >= 0 and indent == type_indent + 2):
         if "=" in s:
-          let below = (if word == "type": rest.strip else: s).readType(one, result)
+          var read: seq[Declared]
+          let below = (if word == "type": rest.strip else: s).readType(one, read)
+          result.add read.filterIt(
+            not (it.kind == NameKind.Type and openers.isSubstituted(it.name)),
+          )
           if below == NameKind.Member: enum_indent = indent
           elif below == NameKind.Field: object_indent = indent
         break reading
@@ -505,6 +518,7 @@ func declarations*(source: string): seq[Declared] =
           is_section_mutable = word == "var"
         else:
           for name in rest.bindingNames:
+            if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
               line: one,
@@ -520,6 +534,7 @@ func declarations*(source: string): seq[Declared] =
         if section_child < 0: section_child = indent
         if indent == section_child and (s.topIndex(':') > 0 or s.topIndex('=') > 0):
           for name in s.bindingNames:
+            if openers.isSubstituted(name): continue
             result.add Declared(
               name: name,
               line: one,
@@ -554,7 +569,10 @@ func declarations*(source: string): seq[Declared] =
               reach: openers.reachOf(is_scoped = true),
             )
 
-    if is_opening: openers.add opener
+    if is_opening:
+      var held = opener
+      held.substituted = substituted
+      openers.add held
     i = next
 
 
