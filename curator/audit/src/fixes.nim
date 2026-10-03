@@ -1,9 +1,10 @@
 ## Fix source in place where check names one mechanical fix (`koch fix`), inside branch scope.
 ##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim`,
-##     `prose.nim`, `alignment.nim`, `messages.nim`, `precedence.nim`, `idioms.nim`,
-##     `checker.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and `wrapping.nim`, and
-##     reads that check's own data, so each rule is written once. This module selects files,
-##     runs on each file fixers its kind's checks name, and refuses any write outside scope.
+##     `prose.nim`, `alignment.nim`, `messages.nim`, `precedence.nim`, `conversions.nim`,
+##     `idioms.nim`, `checker.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and
+##     `wrapping.nim`, and reads that check's own data, so each rule is written once. This
+##     module selects files, runs on each file fixers its kind's checks name, and refuses any
+##     write outside scope.
 ##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
 ##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
 ##     written and every other kind passes through. Checks read every kind still; finding in
@@ -13,7 +14,7 @@
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
 ##   - content next (articles in comments, I.4 tables, backticks of IV.4 messages, parentheses
-##     of X.4 conditions), since each changes width of its line;
+##     of X.4 conditions, `to<Target>` subject first), since each changes width of its line;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent;
@@ -65,8 +66,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils]
-import ./[alignment, blanks, checker, declarations, findings, form, idioms, kinds, layout]
-import ./[messages, names, precedence, prose, scope, spacing, tokens, wrapping]
+import ./[alignment, blanks, checker, conversions, declarations, findings, form, idioms, kinds]
+import ./[layout, messages, names, precedence, prose, scope, spacing, tokens, wrapping]
 
 
 const
@@ -174,7 +175,7 @@ func faultOf(path: string, fence: Fence): seq[Finding] =
 func fixersOf(kind: Kind): seq[Fixer] =
   ## List fixers kind's checks name, in order header gives.
   result = kind.rule.formFixers
-  result.add @[Fixer(fixArticles), fixAlignment, fixMessages, fixMixtures]
+  result.add @[Fixer(fixArticles), fixAlignment, fixMessages, fixMixtures, fixTargets]
   if kind == Kind.Nim: result.add IDIOM_FIXERS
   result.add @[Fixer(fixBlanks), fixDocs, fixDefaults, fixSpacing]
   result.add WRAPPING_FIXERS
@@ -198,8 +199,9 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   On every Nim kind: X.9 trailing comments and spaces, X.2 banners, I.4 tables, IV.4
-  ##   messages, X.4 conditions, suites and tests, STYLE.md §1 helpers, doc position, X.12
-  ##   defaults, and X.3 and STYLE.md §5 separators, signatures, calls and trailing separators.
+  ##   messages, X.4 conditions, STYLE.md §5 `to<Target>` calls, suites and tests, STYLE.md §1
+  ##   helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures,
+  ##   calls and trailing separators.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
   ##   alone.
@@ -210,8 +212,8 @@ func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
     view = source.masked(fence)
     checks = [
       checkComments, checkBanners, checkAlignment, checkMessages, checkMixtures, checkNegations,
-      checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators, checkSignatures,
-      checkCalls, checkTrailing,
+      checkTargets, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
+      checkSignatures, checkCalls, checkTrailing,
     ]
   for check in checks: result.add check(path, view)
   if kind == Kind.Nim:
