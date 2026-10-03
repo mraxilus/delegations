@@ -2066,10 +2066,10 @@ coordinator holds no branch. An issue that carries the label `coordinator` is re
 carries the label of the role that it starts, and no item is the work of the coordinator.
 Verified by `suites/test_hooks.nim`.
 
-**The sign-off serves the coordinator first, so `stop` holds the parts that the coordinator
-reads.** The coordinator lifts each decision onto a card for the Architect without a change of
-words, and sorts on its class. It also reads which role each ⚠️ row waits on (`GUIDE.md`, The
-sign-off).
+**The sign-off serves the Architect first, so `stop` holds the parts that the Architect decides
+on.** Each decision reads as a decision card, and its class says what blocks. Each ⚠️ row names
+the role that it waits on (`GUIDE.md`, The sign-off). The coordinator, once the Architect trials
+it, lifts each decision onto a card without a change of words.
 The block carries eight labels in order: `Role`, `Brief`, `State`, `Context`, `Decisions`, the
 table, `Summary` and `Next step`.
 
