@@ -2016,12 +2016,32 @@ back to the primary checkout.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
-It fetches the release tarball where no `nim` is on `PATH`, and builds koch into `binaries/`. It
-sets `core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
-exists. Every other hook command runs the built koch, and falls back to `nim r`.
+At the start it fetches the release tarball where no `nim` is on `PATH`. It sets
+`core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
+exists. Every hook command runs the koch that it built into `binaries/`, and falls back to
+`nim r`.
 
 The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Verified by hand
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
+
+**The built koch is keyed on its source at HEAD, so no hook runs a checker older than the
+checkout.** The key is the object ids of `koch.nim`, `koch.nim.cfg`, the nimble file of this
+project and `src/` at HEAD, kept in `binaries/koch.key`. A hook whose key differs builds again
+first, so a commit, a merge or a switch of branch reaches the next hook. The key reads HEAD and
+never the working tree, so an edit in progress builds nothing. The build writes beside the
+binary and then renames it. A directory lock lets one build run, while a concurrent hook runs
+the binary that it finds.
+
+- Rejected: a key of file times, which builds again after each edit of the checker in the main
+  checkout. Half-made code then fails that build on every hook.
+- Cost: about five seconds of build where the key moved, and one `git rev-parse` on each hook.
+  A lock older than ten minutes is one that a killed build left, and the next hook removes it.
+- Cost: a binary built from a tree with uncommitted edits keeps them under the key of HEAD. A
+  checker bug that this checkout commits reaches the next hook. Checker work in a worktree
+  leaves the hooks of the main checkout as they were.
+- Verified by `suites/test_hooks.nim`: the real file runs through real git and `sh`, with a stub
+  compiler that names the source it read. By hand on 2026-10-03, a first hook built in 2.3 s,
+  and a second ran in 0.016 s.
 
 **The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
 writes the tree hash it passed on into `koch-check` in the git directory when the working tree
