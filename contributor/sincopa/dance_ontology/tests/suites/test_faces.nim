@@ -108,7 +108,7 @@ func stackOf(sheet, selector: string): seq[string] =
 
 
 
-suite "faces":
+suite "Internal: Faces":
   let directory = getTempDir() / "dance_faces_test"
   removeDir(directory)
   stub(directory)
