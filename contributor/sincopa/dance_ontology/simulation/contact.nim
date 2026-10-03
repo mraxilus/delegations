@@ -128,10 +128,10 @@ func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, grip: V
   ##   Upper arm always hangs against flank, so it is not asked;
   ##     what says arm is wound rather than merely led there is part
   ##     of it past elbow.
-  const NEAR = 0.01
+  const near = 0.01
   let shape = shapeOf(rig, stance)
   for (a, b) in [(pose.elbow, pose.wrist), (pose.wrist, pose.grip)]:
     for part in [Part.Torso, Part.Neck]:
-      if partGap(shape.axes, shape.parts[part], a, b) < NEAR:
+      if partGap(shape.axes, shape.parts[part], a, b) < near:
         return true
   false

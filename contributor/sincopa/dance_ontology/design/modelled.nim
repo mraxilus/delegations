@@ -215,13 +215,18 @@ proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($
   ## Stamp answers carry: physics, this verb, and every question.
 
 
-when isMainModule:
+proc main() =
+  ## Record what simulation answers of every card, unless recording carries tree's stamp.
   let stamp = modelledStamp()
   if fileExists(KEPT_MODELLED) and parseFile(KEPT_MODELLED){"stamp"}.getStr == stamp:
     echo "design/modelled.json is up to date: ", stamp
-    quit(0)
+    return
   var said = newJObject()
   for id, is_modelled in answers():
     said[id] = %is_modelled
   writeFile(KEPT_MODELLED, pretty(%*{"stamp": stamp, "answers": said}) & "\n")
   echo "wrote design/modelled.json: ", said.len, " answers"
+
+
+when isMainModule:
+  main()

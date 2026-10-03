@@ -156,10 +156,10 @@ func engineCommit*(build: string): string =
   ## Engine's pinned commit, read from `tools/build.nim` as text: first quoted forty
   ## hex digits after engine's name.  Empty where none is found, which stamp law
   ## refuses.
-  const NAME = "\"box3d\""
-  let at = build.find(NAME)
+  const name = "\"box3d\""
+  let at = build.find(name)
   if at < 0: return
-  var opens = build.find('"', at + NAME.len)
+  var opens = build.find('"', at + name.len)
   while opens >= 0:
     let shut = build.find('"', opens + 1)
     if shut < 0: return
@@ -324,7 +324,12 @@ proc answer*(): Answers =
   for i, question in STILLS: result.stills[question.key] = STOODS[i]
 
 
-when isMainModule:
+proc main() =
+  ## Write every answer that laws ask of simulation.
   let got = answer()
   writeFile(KEPT, pretty(%got) & "\n")
   echo "wrote ", KEPT
+
+
+when isMainModule:
+  main()

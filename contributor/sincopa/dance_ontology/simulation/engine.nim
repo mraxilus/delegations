@@ -196,8 +196,8 @@ proc touches*(body: BodyId, into: ptr Touch, room: cint): cint {.importc: "b3Bod
 proc partedBy*(joint: JointId): cfloat {.importc: "b3Joint_GetLinearSeparation".}
 proc coneAngleOf*(joint: JointId): cfloat {.importc: "b3SphericalJoint_GetConeAngle".}
 proc twistAngleOf*(joint: JointId): cfloat {.importc: "b3SphericalJoint_GetTwistAngle".}
-proc push*(body: BodyId, force: Vector, wake: bool) {.importc: "b3Body_ApplyForceToCenter".}
-proc twistBy*(body: BodyId, torque: Vector, wake: bool) {.importc: "b3Body_ApplyTorque".}
+proc push*(body: BodyId, force: Vector, should_wake: bool) {.importc: "b3Body_ApplyForceToCenter".}
+proc twistBy*(body: BodyId, torque: Vector, should_wake: bool) {.importc: "b3Body_ApplyTorque".}
 proc aimBall*(joint: JointId, target: Quaternion) {.importc: "b3SphericalJoint_SetTargetRotation".}
 proc stiffenBall*(joint: JointId, hertz: cfloat) {.importc: "b3SphericalJoint_SetSpringHertz".}
 proc aimHinge*(joint: JointId, target: cfloat) {.importc: "b3RevoluteJoint_SetTargetAngle".}

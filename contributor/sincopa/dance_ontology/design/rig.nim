@@ -239,11 +239,12 @@ proc rigStamp*(): string =
   stampOf(currentSourcePath(), jobs().mapIt($it))
 
 
-when isMainModule:
+proc main() =
+  ## Record every sweep and still viewer draws, unless recording carries tree's stamp.
   let stamp = rigStamp()
   if fileExists(KEPT_RIG) and readFile(KEPT_RIG).parseJson{"stamp"}.getStr == stamp:
     echo "design/rig.json is up to date: ", stamp
-    quit(0)
+    return
   # Recorded on every core at once: sweeps and stills each build their own
   # worlds and share nothing but their two slots.
   let count = jobs().len
@@ -272,3 +273,7 @@ when isMainModule:
   head.add "\"stills\":[\n" & stills.join(",\n") & "]"
   writeFile(KEPT_RIG, "{" & head.join(",\n") & "}\n")
   echo "wrote design/rig.json"
+
+
+when isMainModule:
+  main()

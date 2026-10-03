@@ -417,7 +417,8 @@ proc lacking*(): int = SWEEPS_WANTED.len + RUNGS_WANTED.len
   ## How many readings last render lacked.
 
 
-when isMainModule:
+proc main() =
+  ## Render report, read only readings it lacks, and keep those it reads.
   READINGS_KEPT = keptReadings()
   var text = render()
   if lacking() > 0:
@@ -437,3 +438,7 @@ when isMainModule:
   keep(keeping)
   writeFile("simulation/verdicts.md", text)
   echo "wrote simulation/verdicts.md"
+
+
+when isMainModule:
+  main()
