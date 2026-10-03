@@ -1574,6 +1574,18 @@ suite "Internal: Pages":
     check body.count("<b style=") == 2  # tick at multivector bound, typed row only, both counts
 
 
+  test "header names each date runs were taken on, with algebras timed then":
+    var later = sheetDocket(81, 12, %*{})
+    later.name = "rga3d"
+    later.title = "Rigid 3D"
+    later.measurements_runtime["taken"]["date"] = %"e"
+    let
+      both = bodyDocket([sheetDocket(81, 12, %*{}), later], ids_docket, [], "bd6b23c590d7", "", "")
+      one = bodyDocket([sheetDocket(81, 12, %*{})], ids_docket, [], "bd6b23c590d7", "", "")
+    check "time d for Rigid 4D, e for Rigid 3D, m" in both  # each algebra under its own date
+    check "time d, m" in one  # one date stays plain
+
+
   test "time bar is median of run ratios, and each run is one tick":
     let
       runs = %*{"wedge_point_point": {
