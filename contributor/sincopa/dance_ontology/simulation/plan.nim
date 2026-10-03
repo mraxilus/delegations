@@ -48,6 +48,7 @@ type
     style*: Style
     links*: seq[Link]
     is_away*: bool
+    turner*: Body ## Dancer whose facing carries wind: one at centre of turn.
     lower*, upper*: float ## Band joined hands are held to, metres.
     shapes: seq[Shape]
     pairs: seq[(int, int)]
@@ -127,17 +128,22 @@ type
     trunks*: array[Body, seq[Capsule]]
 
 
-func facingOf*(plan: Plan; who: Body; wind: float; is_away: bool): float =
-  ## Way chest faces: lead along y, follow back along it, follow turned by wind.
-  if who == Body.One: PI / 2.0 + plan[2]
-  else: -PI / 2.0 + 2.0 * PI * wind + (if is_away: PI else: 0.0) + plan[3]
+func facingOf*(plan: Plan; who: Body; wind: float; is_away: bool; turner = Body.Two): float =
+  ## Way chest faces: lead along y, follow back along it, turner turned by wind.
+  ##   Turner turns on own spot and partner stays where they stand, as card draws it: lead
+  ##     who turns quarter has follow at side, and follow who turns quarter is still ahead.
+  ##   Wind is added second, in one order for both: swan's planned still holds or not on
+  ##     last bit of this sum.  Added last, D1 and D7 stood no pose.
+  let turned = (if who == turner: 2.0 * PI * wind else: 0.0)
+  if who == Body.One: PI / 2.0 + turned + plan[2]
+  else: -PI / 2.0 + turned + (if is_away: PI else: 0.0) + plan[3]
 
-func place*(rig: Rig; plan: Plan; wind: float; is_away: bool): Placed =
+func place*(rig: Rig; plan: Plan; wind: float; is_away: bool; turner = Body.Two): Placed =
   ## Every capsule and joint reading of couple at this plan and wind.
   let neck = halfBreadth(rig, Part.Neck)
   for who in Body:
     let
-      facing = facingOf(plan, who, wind, is_away)
+      facing = facingOf(plan, who, wind, is_away, turner)
       origin: Vector = (if who == Body.One: (0.0, 0.0, 0.0) else: (plan[1], plan[0], 0.0))
       right: Vector = (sin(facing), -cos(facing), 0.0)
       fore: Vector = (cos(facing), sin(facing), 0.0)
@@ -195,9 +201,9 @@ func capsulesOf*(placed: Placed): seq[Capsule] =
     for capsule in placed.arms[i].capsules: result.add capsule
 
 
-func problemOf*(rig: Rig; links: seq[Link]; is_away: bool): Problem =
+func problemOf*(rig: Rig; links: seq[Link]; is_away: bool; turner = Body.Two): Problem =
   ## Hold, and every pair of capsules engine collides, by its own filters.
-  result = Problem(links: links, is_away: is_away, lower: 0.0, upper: 3.0)
+  result = Problem(links: links, is_away: is_away, turner: turner, lower: 0.0, upper: 3.0)
   for who in Body:
     for _ in trunkCapsules(rig):
       result.shapes.add Shape(who: who, arm: -1, part: -1)
@@ -345,7 +351,7 @@ proc solve*(rig: Rig; problem: Problem; start, last: Plan; wind: float; before: 
   for stage in 0 .. 2:
     let weight = [1e3, 1e5, 1e7][stage]
     proc cost(y: Plan): float =
-      let placed = place(rig, y, wind, problem.is_away)
+      let placed = place(rig, y, wind, problem.is_away, problem.turner)
       result = comfort(rig, placed, y) + weight * violation(rig, problem, placed, before)
       for k in 0 ..< SIZE: result += holding * (y[k] - last[k]) ^ 2 + bias[k] * y[k]
       if problem.style.slack > 0.0:
@@ -437,7 +443,7 @@ proc solve*(rig: Rig; problem: Problem; start, last: Plan; wind: float; before: 
       g = gy
       if improvement < 1e-12 * max(1.0, abs(fx)): break
   result.plan = x
-  let placed = place(rig, x, wind, problem.is_away)
+  let placed = place(rig, x, wind, problem.is_away, problem.turner)
   result.broken = violation(rig, problem, placed, before)
   result.cost = comfort(rig, placed, x)
 
@@ -514,10 +520,12 @@ proc restOf*(rig: Rig; problem: var Problem; tries = 8): tuple[plan: Plan, broke
       best = solved.cost
       result = (solved.plan, solved.broken)
 
-proc planPath*(rig: Rig; links: seq[Link]; is_away: bool; turns: float; style: Style): Path =
-  ## Plan couple from rest to `turns` of wind, moment by moment, as far as plan keeps
-  ## everything.  Stuck, it backs off, nudges arms at standing wind and tries again.
-  var problem = problemOf(rig, links, is_away)
+proc planPath*(rig: Rig; links: seq[Link]; is_away: bool; turns: float; style: Style;
+               turner = Body.Two): Path =
+  ## Plan couple from rest to `turns` of wind, `turner` turning, moment by moment, as far as
+  ## plan keeps everything.  Stuck, it backs off, nudges arms at standing wind and tries
+  ## again.
+  var problem = problemOf(rig, links, is_away, turner)
   problem.style = style
   let rest = restOf(rig, problem)
   if rest.broken >= KEPT: return
@@ -543,7 +551,7 @@ proc planPath*(rig: Rig; links: seq[Link]; is_away: bool; turns: float; style: S
     problem.lower = lower
     problem.upper = upper
     let
-      before = capsulesOf(place(rig, last, wind, is_away))
+      before = capsulesOf(place(rig, last, wind, is_away, turner))
       solved = solve(rig, problem, last, last, target, before, bias = bias)
     if solved.broken < KEPT:
       result.winds.add target
@@ -577,7 +585,7 @@ proc planPath*(rig: Rig; links: seq[Link]; is_away: bool; turns: float; style: S
             start[j] += 0.3 * (spread(float(j * (walk + 5) + 31 * failures +
                                             17 * problem.style.seed) * 0.6180339887) - 0.5) * 2.0
           let
-            here = capsulesOf(place(rig, result.plans[^1], at, is_away))
+            here = capsulesOf(place(rig, result.plans[^1], at, is_away, turner))
             moved = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.0)
           if moved.broken < KEPT:
             result.winds.add at
@@ -599,7 +607,7 @@ proc planPath*(rig: Rig; links: seq[Link]; is_away: bool; turns: float; style: S
         start[j] += 0.1 * sqrt(float(failures)) *
                     (spread(float(j * (nudge + 7 * failures)) * 0.7548776662) - 0.5) * 2.0
       let
-        here = capsulesOf(place(rig, result.plans[^1], at, is_away))
+        here = capsulesOf(place(rig, result.plans[^1], at, is_away, turner))
         nudged = solve(rig, problem, start, result.plans[^1], at, here, stay = 0.02)
       if nudged.broken < KEPT:
         result.winds.add at
@@ -626,7 +634,8 @@ proc corrected*(rig: Rig; path: Path; i: int; now: Plan): Plan =
   problem.lower = lower
   problem.upper = upper
   let
-    before = capsulesOf(place(rig, now, path.winds[max(0, i - 1)], problem.is_away))
+    before = capsulesOf(place(rig, now, path.winds[max(0, i - 1)], problem.is_away,
+                              problem.turner))
     solved = solve(rig, problem, now, path.plans[i], wind, before)
   if solved.broken < KEPT: solved.plan else: path.plans[i]
 
@@ -683,7 +692,7 @@ func mirrored*(path: Path): Path =
     result.plans[i] = mirrored(path.plans[i])
 
 
-func placings*(rig: Rig; plan: Plan; wind: float; is_away: bool):
+func placings*(rig: Rig; plan: Plan; wind: float; is_away: bool; turner = Body.Two):
     tuple[chests: array[Body, Stance], arms: array[4, ArmPlacing]] =
   ## Where every body of couple stands at this plan, as engine places bodies: what
   ## `rigid.placeBodies` is handed so couple start where plan starts.
@@ -692,7 +701,7 @@ func placings*(rig: Rig; plan: Plan; wind: float; is_away: bool):
     ## Trunk's and girdle's own axes in body's terms: right, up, back (`rigid.standing`).
   for who in Body:
     let
-      facing = facingOf(plan, who, wind, is_away)
+      facing = facingOf(plan, who, wind, is_away, turner)
       origin: Vector = (if who == Body.One: (0.0, 0.0, 0.0) else: (plan[1], plan[0], 0.0))
       right: Vector = (sin(facing), -cos(facing), 0.0)
       fore: Vector = (cos(facing), sin(facing), 0.0)

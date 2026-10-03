@@ -207,7 +207,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
           ask = job.ask
           recording = still(HUMAN, Band.Crown, ask.links, ask.key, ask.turns,
                             is_away = ask.isRestAway, head = ask.head,
-                            is_either_way = ask.is_either_way)
+                            is_either_way = ask.is_either_way, who = ask.who)
         NOTES[i] =
           if recording.stills.len > 0:
             &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"

@@ -322,7 +322,7 @@ suite "Transwedge":
 
 ```
 
-## Replace `pga/cayleys.nim` from `2b71408a1ac3f6d6`
+## Replace `pga/cayleys.nim` from `5830753c587df8bb`
 
 ```nim
 ## Define and construct Cayley tables for any PGA.
@@ -350,12 +350,6 @@ import ./[algebra {.all.}]
 
 #[ Type Definitions ]#
 
-type Order = distinct range[0..DIMENSIONS]
-func `==`(a, b: Order): bool {.borrow.}
-iterator items(t: typedesc[Order]): Order =
-  for i in 0..DIMENSIONS: yield Order(i)
-
-
 type ## Define type definitions dependent on `Basis` needed for macros.
   BasisSigned* = object ## Define signed representation of basis.
     basis*: Basis
@@ -366,7 +360,13 @@ type ## Define type definitions dependent on `Basis` needed for macros.
     array[Basis, array[Basis, seq[BasisSigned]]] # Support conformal operators with `seq`.
     # TODO: Avoid seq as heap allocated, perhaps array with count custom type.
 
-type
+type ## Define type definitions for algebraic distinctions.
+  Chirality {.pure.} = enum Left, Right
+    ## Define distinction between PGA operation orientations.
+  Partiality {.pure.} = enum Bulk, Weight
+    ## Define distinction between PGA's disjoint parts.
+
+type ## Define type defintions for containers of algebraic distinctions.
   Chiral*[T] = object
     left*, right*: T
   Formal*[T] = object
@@ -378,6 +378,12 @@ type
     bulk*, weight*: T
   Spatial*[T] = object
     base*, anti*: T
+
+## Define type definition for transwedge order.
+type Order = distinct range[0..DIMENSIONS]
+func `==`(a, b: Order): bool {.borrow.}
+iterator items(t: typedesc[Order]): Order =
+  for i in 0..DIMENSIONS: yield Order(i)
 
 
 
@@ -403,8 +409,8 @@ const
 
 const
   CAYLEYS_PARTS* = Partial[Formal[Cayley1D]]( # Weight conjugates bulk under rigid metric only.
-    bulk: constructParts(as_weight = false),
-    weight: constructParts(as_weight = true),
+    bulk: constructParts(Partiality.Bulk),
+    weight: constructParts(Partiality.Weight),
   )
 
 const
@@ -476,13 +482,13 @@ when IS_RIGID:
 
 #[ Operation Construction ]#
 
-func constructComplement(chirality: Chirality): Cayley1D {.compileTime.} =
+func constructComplement(chirality: Chirality): Cayley1D {.compileTime, noinit.} =
   ## Construct Cayley table for left and right complements.
   for b in Basis:
     result[b] = @[b.complement(chirality)]
 
 
-func constructReverse(): Cayley1D {.compileTime.} =
+func constructReverse(): Cayley1D {.compileTime, noinit.} =
   ## Construct Cayley table for reverse; antireverse comes from `constructAnti`.
   for b in Basis:
     result[b] = @[b.reverse]
@@ -501,9 +507,12 @@ func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTim
     result[𝐞ₙ.pred] = @[BasisSigned(basis: 𝐞ₙ, is_negated: true)]
 
 
-func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime.} =
+func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime, noinit.} =
   ## Construct metric exomorphism 𝐆 from metric 𝖌 simplified as 1D cayley table.
-  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧)
+  ##   𝖌 expands to 𝐆 via 𝐆(𝐦 ∧ 𝐧) = (𝐆𝐦) ∧ (𝐆𝐧).
+  ##   Likewise with `constructAnti` applied on output:
+  ##     𝔾 via 𝔾𝐦 = 𝐆̲𝐦̲̅, i.e. right complement of 𝐦, left complement of result.
+  ##     Equivalent to expanding as 𝔾 via 𝔾(𝐦 ∨ 𝐧) = (𝔾𝐦) ∨ (𝔾𝐧).
   result = metric
 
   for b in Basis:
@@ -517,7 +526,7 @@ func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime.} =
       if result[basis].len == 0:
         is_degenerate = true
         break
-      bases.add(result[basis].single)
+      bases.add(result[basis].toSigned)
     if is_degenerate: continue
 
     # Reconstruct resulting signed basis from vector components.
@@ -530,29 +539,29 @@ func constructMetricExomorphism(metric: Cayley1D): Cayley1D {.compileTime.} =
     result[b] = @[product.basis]
 
 
-func constructParts(as_weight: bool): Formal[Cayley1D] {.compileTime.} =
+func constructParts(partiality: Partiality): Formal[Cayley1D] {.compileTime, noinit.} =
   ## Construct Cayley table for (round/flat) bulk/weight.
-  ##   RGA can be derived from metric instead, however CGA requires explicit construction.
-  ##   E.g. In RGA, equivalent to applying exomporphism as .
+  ##   We can derive RGA parts from metric instead, however, CGA requires explicit construction.
+  ##   E.g. this is, in RGA, equivalent to applying exomporphism as 𝐆𝐦 or 𝔾𝐦.
 
-  func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime.} =
-    ## TODO: Document.
-    var identity: Cayley1D
+  func constructPart(inclusions, exclusions: seq[Basis]): Cayley1D {.compileTime, noinit.} =
+    ## Construct sub-slice of Cayley table respresenting identity map.
     for b in Basis:
-      identity[b] = @[b.toSigned]
-    identity.filterFactors(inclusions)
-    identity.filterFactors(exclusions, as_exclusions = true)
-    identity
+      result[b] = @[b.toSigned]
+    result.filterFactors(inclusions)
+    result.filterFactors(exclusions, as_exclusions = true)
+
+  let
+    inclusions = case partiality
+      of Partiality.Bulk: @[]
+      of Partiality.Weight: @[Basis.origin]
+    exclusions = case partiality
+      of Partiality.Bulk: @[Basis.origin]
+      of Partiality.Weight: @[]
 
   when IS_RIGID:
-    let (inclusions, exclusions) =
-      if not as_weight: (@[], @[Basis.origin])
-      else: (@[Basis.origin], @[])
     Formal[Cayley1D](round: constructPart(inclusions, exclusions))
   else:
-    let (inclusions, exclusions) =
-      if not as_weight: (@[], @[Basis.origin])
-      else: (@[Basis.origin], @[])
     Formal[Cayley1D](
       round: constructPart(inclusions, exclusions & @[Basis.infinity]),
       flat: constructPart(inclusions & @[Basis.infinity], exclusions),
@@ -597,7 +606,7 @@ func constructProductTransitional(
 
     # Skip over bases of other orders, and bases without dual.
     if Order(c.grade) != order or dual[c].len == 0: continue
-    let (c_complement, c_dual) = (complement[c].single, dual[c].single)
+    let (c_complement, c_dual) = (complement[c].toSigned, dual[c].toSigned)
 
     for a in Basis:
 
@@ -683,9 +692,9 @@ func constructAnti(map: Cayley1D; complements: Chiral[Cayley1D]): Cayley1D {.com
   ## Construct anti-variant of map by conjugating with complements, i.e. (map 𝐦̲)̅.
   ##   Right complement into operand, left complement out of product.
   for b in Basis:
-    let b_from = complements.right[b].single
+    let b_from = complements.right[b].toSigned
     for b_map in map[b_from.basis]:
-      let b_to = complements.left[b_map.basis].single
+      let b_to = complements.left[b_map.basis].toSigned
       result[b].mergeTerm(BasisSigned(
         basis: b_to.basis,
         is_negated: b_from.is_negated xor b_map.is_negated xor b_to.is_negated,
@@ -697,9 +706,9 @@ func constructAnti(cayley: Cayley2D; complements: Chiral[Cayley1D]): Cayley2D {.
   ##   Right complement into each operand, left complement out of product.
   for a in Basis:
     for b in Basis:
-      let (a_from, b_from) = (complements.right[a].single, complements.right[b].single)
+      let (a_from, b_from) = (complements.right[a].toSigned, complements.right[b].toSigned)
       for term in cayley[a_from.basis][b_from.basis]:
-        let b_to = complements.left[term.basis].single
+        let b_to = complements.left[term.basis].toSigned
         result[a][b].mergeTerm(BasisSigned(
           basis: b_to.basis,
           is_negated: (
@@ -762,13 +771,14 @@ func multiplyExterior(
   )
 
 
-func toSigned(b: Basis): BasisSigned {.compileTime.} = BasisSigned(basis: b)
+func toSigned(b: Basis): BasisSigned {.compileTime, noinit.} = BasisSigned(basis: b)
+  ## Convert basis to signed basis assuming positive.
 
 
-func single(cell: seq[BasisSigned]): BasisSigned {.compileTime.} =
-  ## Get sole term of cell of permutation map (complement, dual, metric).
-  assert cell.len == 1, &"Attempt to read sole term of cell without exactly one; got `{cell}`."
-  cell[0]
+func toSigned(product: seq[BasisSigned]): BasisSigned {.compileTime.} =
+  ## Convert cayley product cell to signed basis where is singleton.
+  assert product.len == 1, &"Attempt to extract singular product term from `{product}`."
+  product[0]
 
 
 

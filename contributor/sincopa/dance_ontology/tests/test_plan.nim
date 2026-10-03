@@ -61,25 +61,44 @@ func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
 
 suite "planner and engine are one rig":
 
+  test "gap to palm is read from nearest point of segment, wherever palm lies along it":
+    ## Planner holds each palm as point with radius (`plan.place`), so every gap it keeps to
+    ##   palm asks `vector.closest` of segment and point.  Read from segment's start, plan of
+    ##   drawn D1 kept 5.8 cm between palm and forearm where palm sat 5.4 cm inside it, and
+    ##   engine stood that palm 4.3 cm inside forearm, measured 2026-10-02.
+    let point: Vector = (0.5, 0.2, 0.0)
+    for (a, b) in [((0.0, 0.0, 0.0), (1.0, 0.0, 0.0)), ((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))]:
+      let
+        near = closest(a, b, point, point)
+        back = closest(point, point, a, b)
+      check abs(near.gap - 0.2) < MIRRORED
+      check abs(near.t - 0.5) < MIRRORED
+      check abs(back.gap - 0.2) < MIRRORED
+
   test "engine stands every joint where plan places it, and reads plan back":
     ## Red with collarbone's lift read back with lead's sign on both sides: furthest point
     ## 164 mm off plan, measured 2026-10-02.
+    ##   Stood past rest too, turned by either dancer: plan that turns lead stands follow
+    ##     where lead's turn leaves them, and engine must stand it there.  Red with engine's
+    ##     bodies placed turning follow whatever plan turns: furthest point 1.25 m off plan,
+    ##     measured 2026-10-02.
     var
       generator = initRand(31)
       worst = 0.0
     for sample in 0 ..< SAMPLES:
       let plan = randomPlan(HUMAN, generator)
       for is_away in [false, true]:
-        var couple = build(HUMAN, restStance(HUMAN, plan[0], is_away), Band.Crown,
-                           HAND_TO_HAND, Body.Two, is_away)
-        let start = placings(HUMAN, plan, 0.0, is_away)
+        let (wind, turner) = [(0.0, Body.Two), (0.3, Body.Two), (0.3, Body.One)][sample mod 3]
+        var couple = build(HUMAN, turned(restStance(HUMAN, plan[0], is_away), turner, wind),
+                           Band.Crown, HAND_TO_HAND, turner, is_away)
+        let start = placings(HUMAN, plan, wind, is_away, turner)
         couple.placeBodies(start.chests, start.arms)
         var read: Plan
         let vector = couple.poseVector
         for k in 0 ..< SIZE: read[k] = vector[k]
         let
-          planned = place(HUMAN, plan, 0.0, is_away)
-          again = place(HUMAN, read, 0.0, is_away)
+          planned = place(HUMAN, plan, wind, is_away, turner)
+          again = place(HUMAN, read, wind, is_away, turner)
         for who in Body:
           for arm in Arm:
             let
