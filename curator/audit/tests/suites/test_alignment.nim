@@ -32,7 +32,7 @@ suite "Article I":
       source = "##   |-----|-----|\n##   | 𝐋̂  | b   |\n##   | x   | y   |\n"
       found = checkAlignment("a.nim", source)
     check found.mapIt(it.line) == @[2]  # combining mark makes row one short
-    check found[0].message.endsWith("got `𝐋̂` 4 wide in column of 5.")
+    check found[0].message.endsWith("cell 4 wide stands in column of 5; got `𝐋̂`.")
     check source.fixed == "##   |-----|-----|\n##   | 𝐋̂   | b   |\n##   | x   | y   |\n"
     check source.fixed.isSettled
 

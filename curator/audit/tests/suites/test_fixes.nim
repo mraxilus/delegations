@@ -239,8 +239,9 @@ suite "Fixes":
     check plan.fixed.filterIt(it.message == "abbreviation (V.6)").len == 2
     let alone = fixEntries(CURATOR_BRANCH, [a], context = tree.contextOf([a], answers))
     check alone.written.len == 0  # rename would write `b.nim`, which fix leaves alone
-    check alone.left[0].message.endsWith("got it would write `" & b.path & "`, which this fix " &
-      "leaves alone.")
+    check "refused: it would write `" & b.path & "`, which this fix leaves alone" in
+      alone.left[0].message
+    check alone.left[0].message.endsWith("; got `ctx`.")
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":

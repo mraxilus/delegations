@@ -405,8 +405,9 @@ func fixEntries*(
       result.left.add finding(
         e.path,
         plan.rename.line,
-        "Rename to `" & plan.rename.renamed & "` refused, so " & plan.rename.rule &
-          " stays for hand; got " & plan.refusal & ".",
+        plan.rename.rule.capitalizeAscii & " stays for hand, since rename to `" &
+          plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
+          "`.",
       )
     if e.path in context.answers and context.answers[e.path].reason.len > 0:
       result.left.add finding(

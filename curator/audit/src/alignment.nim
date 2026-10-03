@@ -161,17 +161,16 @@ func checkAlignment*(path, source: string): seq[Finding] =
   for table in source.alignments:
     for k, row in table.rows:
       if table.shaped[k] == lines[row.line]: continue
-      var got = ""
+      var (got, wide, column) = (lines[row.line].strip, 0, 0)
       for c, cell in row.cells:
         if cell.displayWidth != table.widths[c]:
-          got = "`" & cell.strip & "` " & $cell.displayWidth & " wide in column of " &
-            $table.widths[c]
+          (got, wide, column) = (cell.strip, cell.displayWidth, table.widths[c])
           break
       result.add finding(
         path,
         row.line + 1,
-        "Table column aligns by display width, as eye reads it (I.4); got " &
-          (if got.len > 0: got else: "separator of other widths") & ".",
+        "Table column aligns by display width, as eye reads it (I.4); cell " & $wide &
+          " wide stands in column of " & $column & "; got `" & got & "`.",
       )
 
 
