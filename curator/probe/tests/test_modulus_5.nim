@@ -7,4 +7,6 @@ matrix: "-d:probe.modulus=5"
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 include "suites.nim"
