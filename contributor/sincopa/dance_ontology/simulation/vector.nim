@@ -127,7 +127,9 @@ func closest*(a, b, c, d: Vector): tuple[t, u, gap: float] =
       1.0,
     )
   if second_squared < 1e-12:
+    # Second is point, as palm is: nearest point of first is its foot, not its start.
     t = 0.0
+    s = if first_squared < 1e-12: 0.0 else: clamp(-first_dot_offset / first_squared, 0.0, 1.0)
   else:
     t = (first_dot_second * s + second_dot_offset) / second_squared
   if t < 0.0:

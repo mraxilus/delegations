@@ -101,8 +101,10 @@ proc stillOf(couple: Couple; at: float): Still =
     result.apart.add pose.apart
 
 proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
-            turns: float; is_away = false; head = Body.Two; is_either_way = false): Shown =
-  ## One still, from distance couple stand for it, or none if no distance holds.
+            turns: float; is_away = false; head = Body.Two; is_either_way = false;
+            who = Body.Two): Shown =
+  ## One still, `who` turning, from distance couple stand for it, or none if no distance
+  ## holds.
   ##   Still is wound to its facing and left standing, as `walk.stood` has it,
   ##     and distance is `walk.standing`'s choice, as is way about where still
   ##     fixes none, so what page draws of it is what `modelled` answered about
@@ -110,9 +112,9 @@ proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
   ##   Still no carried walk holds is stood where planned way stands it
   ##     (`walk.plannedStill`), as `modelled` answers it.
   result = Shown(hold: name, band: band, turns: turns, is_stopped: true, why: Stop.None)
-  let where = standing(rig, band, links, turns, is_away, head, is_either_way)
+  let where = standing(rig, band, links, turns, is_away, head, is_either_way, who)
   if not where.is_holding:
-    let planned = plannedStill(rig, band, links, turns, is_away, head, is_either_way)
+    let planned = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
     if planned.is_holding:
       result.apart = planned.apart
       result.turns = planned.turns
@@ -120,7 +122,8 @@ proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
       result.stills.add stillOf(planned.couple, planned.turns)
       planned.couple.free()
     return
-  let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart)
+  let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart,
+                                   who)
   if is_holding:
     result.apart = where.apart
     result.turns = where.turns
