@@ -15,54 +15,54 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[math, options]
 import ./[body, hold, limb, plan, rig, rigid, vector]
 
 
 const
-  STEP* = 0.02   ## Turns walked between two moments.
-  BEATS* = 200   ## Engine steps per moment.  Slow enough to stay quasi-static.
-  MOST* = 2.5    ## Turns tried each way before sweep gives up.
-  SEEK* = 0.02   ## Standing distances tried, metres between them.
+  STEP* = 0.02  ## Turns walked between two moments.
+  BEATS* = 200  ## Engine steps per moment.  Slow enough to stay quasi-static.
+  MOST* = 2.5  ## Turns tried each way before sweep gives up.
+  SEEK* = 0.02  ## Standing distances tried, metres between them.
     ## Whole sweep is run at each distance, so search is what this costs.  Measured
     ## landscape is plateaus four centimetres wide, so grid half of one cannot step
     ## over one; finer than that buys under twentieth of turn, which is below
     ## anything any card asks.
-  ROOM* = 1.0    ## And how far out from clear air search looks.
-  SMOOTHER* = 2.0 ## Stance further out takes tie from nearer only for arms moving
+  ROOM* = 1.0  ## And how far out from clear air search looks.
+  SMOOTHER* = 2.0  ## Stance further out takes tie from nearer only for arms moving
                   ## this many times less between moments.  Largest leap of walk is
                   ## chaotic: seen in mirror it differs by up to fifth, and built
                   ## from same source by another compiler by up to thirty five per
                   ## cent, last bits amplified.  Tie broken within five millimetres
                   ## chose stances two steps apart for one hold seen in mirror, and
                   ## again for one hold built twice.
-  LOOK* = 0.1    ## Metres further out looked once turn runs free, for stance
+  LOOK* = 0.1  ## Metres further out looked once turn runs free, for stance
                  ## moving arms less: free way is not walked over whole `ROOM`,
                  ## fifty walks where one did.
 
 
 type
-  Capsule* = tuple[a, z: Vector, radius: float] ## Segment's two ends in world, and radius.
+  Capsule* = tuple[a, z: Vector, radius: float]  ## Segment's two ends in world, and radius.
 
-  Moment* = object ## One moment of turn, all page needs to draw it.
-    at*: float ## Turns from rest, signed.
+  Moment* = object  ## One moment of turn, all page needs to draw it.
+    at*: float  ## Turns from rest, signed.
     stance*: array[Body, Stance]
-    arms*: seq[array[2, ArmPose]] ## One per connection.
-    trunks*: array[Body, seq[Capsule]] ## Every trunk capsule where engine has it.
-    girdles*: array[Body, array[Arm, Capsule]] ## And each shoulder's.
-    room*: float ## Least room any joint had here.
+    arms*: seq[array[2, ArmPose]]  ## One per connection.
+    trunks*: array[Body, seq[Capsule]]  ## Every trunk capsule where engine has it.
+    girdles*: array[Body, array[Arm, Capsule]]  ## And each shoulder's.
+    room*: float  ## Least room any joint had here.
 
-  Walk* = object ## One sweep, one way.
-    found_rest*: bool ## Whether hold stood at all where this was walked from.
-    apart*: float ## And how far apart couple stood to walk it.
+  Walk* = object  ## One sweep, one way.
+    found_rest*: bool  ## Whether hold stood at all where this was walked from.
+    apart*: float  ## And how far apart couple stood to walk it.
     is_stopped*: bool
     at*: float  ## Turns reached when something gave.
     why*: Stop
-    which*: int ## Which connection gave.
-    whose*: Hand ## And whose hand, on which arm, it gave at.
+    which*: int  ## Which connection gave.
+    whose*: Hand  ## And whose hand, on which arm, it gave at.
     moments*: seq[Moment]
 
-  Swept* = object ## Both ways from one rest.
+  Swept* = object  ## Both ways from one rest.
     apart*: float
     found_rest*: bool
     negative*, positive*: Walk
@@ -72,12 +72,13 @@ type
     ## (`Inf` running free), and furthest any point of held arm moved between
     ## two moments.
 
-  Stood* = object ## Where couple stand for one still, and how it sits.
+  Stood* = object  ## Where couple stand for one still, and how it sits.
     is_holding*: bool
     apart*: float  ## Distance chosen, metres axis to axis.
     turns*: float  ## Way couple were wound there, signed: their own where still
                    ## fixes neither.
-    strain*: Strain ## How near pose there is to any end.
+    strain*: Strain  ## How near pose there is to any end.
+    tried*: seq[Option[float]]  ## Strain of each distance and way tried, in order: none gave.
 
 
 iterator stands*(rig: Rig): float =
@@ -91,7 +92,7 @@ iterator stands*(rig: Rig): float =
     apart += SEEK
 
 
-proc momentOf(couple: Couple; at: float): tuple[moment: Moment, why: Stop, which: int,
+proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which: int,
                                            whose: Hand] =
   ## Read every connection at this moment, and say what gave, if anything.
   result.moment = Moment(at: at, stance: couple.chestStances, room: Inf)
@@ -104,7 +105,7 @@ proc momentOf(couple: Couple; at: float): tuple[moment: Moment, why: Stop, which
       result.moment.girdles[shape.who][shape.arm] = (ends.a, ends.z, shape.radius)
   result.why = Stop.None
   result.which = -1
-  for i in 0 ..< couple.links.len:
+  for i in 0..<couple.links.len:
     let pose = couple.poseOf(i)
     result.moment.arms.add pose.arms
     result.moment.room = min(result.moment.room, roomAt(couple, pose, i))
@@ -115,8 +116,15 @@ proc momentOf(couple: Couple; at: float): tuple[moment: Moment, why: Stop, which
         result.which = i
         result.whose = couple.links[i].ends[end_index]
 
-proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
-             apart, most, step: float; is_away: bool; head: Body): Walk =
+proc walked*(
+  rig: Rig;
+  band: Band;
+  links: seq[Link];
+  who: Body;
+  apart, most, step: float;
+  is_away: bool;
+  head: Body;
+): Walk =
   ## Turn one way from one standing distance until something gives, or until
   ## `most` is reached.
   var couple = build(rig, restStance(rig, apart, is_away), band, links, head, is_away)
@@ -140,9 +148,16 @@ proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
     result.moments.add now.moment
   couple.free()
 
-proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-            is_away: bool; head: Body; apart: float;
-            who = Body.Two): tuple[is_holding: bool, couple: Couple] =
+proc stood*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away: bool,
+  head: Body,
+  apart: float,
+  who = Body.Two,
+): tuple[is_holding: bool, couple: Couple] =
   ## Couple wound to this facing from rest at this one distance, `who` turning, and left
   ## standing there, and whether pose holds.  Caller frees couple, holding or not.
   ##   Wound, not built there.  Winding is path, not facing: couple built at
@@ -173,16 +188,31 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   result.is_holding = result.couple.gives == Stop.None
 
 
-proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              is_away: bool; head: Body; apart: float; who: Body): Stood =
+proc standsAt(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away: bool,
+  head: Body,
+  apart: float,
+  who: Body,
+): Stood =
   ## Whether pose holds at this facing from this one distance, and how it sits.
   let (is_holding, couple) = stood(rig, band, links, turns, is_away, head, apart, who)
   result = Stood(is_holding: is_holding, apart: apart, turns: turns, strain: couple.strainOf)
   couple.free()
 
-proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-               is_away = false; head = Body.Two; is_either_way = false;
-               who = Body.Two): Stood =
+proc standing*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away = false,
+  head = Body.Two,
+  is_either_way = false,
+  who = Body.Two,
+): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
@@ -203,25 +233,42 @@ proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##     distance, and way asked keeps tie: card claims position, and couple
   ##     take whichever way there sits easier.
   result = Stood(is_holding: false, strain: Strain(most: Inf))
+  var tried: seq[Option[float]]
   for far in stands(rig):
     for way in (if is_either_way: @[turns, -turns] else: @[turns]):
       let got = standsAt(rig, band, links, way, is_away, head, far, who)
-      if not got.is_holding: continue
-      if not result.is_holding or got.strain.most < result.strain.most:
+      tried.add (if got.is_holding: some(got.strain.most) else: none(float))
+      if got.is_holding and (not result.is_holding or got.strain.most < result.strain.most):
         result = got
-      if result.strain.most <= 0.0: return
+      result.tried = tried
+      if result.is_holding and result.strain.most <= 0.0: return
 
-proc isHoldingAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              is_away = false; head = Body.Two; apart = 0.0; is_either_way = false;
-              who = Body.Two): bool =
+proc isHoldingAt*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away = false,
+  head = Body.Two,
+  apart = 0.0,
+  is_either_way = false,
+  who = Body.Two,
+): bool =
   ## Whether any pose holds at this facing, `who` turning, from any distance couple may
   ## stand at.
   if apart > 0.0:
     return standsAt(rig, band, links, turns, is_away, head, apart, who).is_holding
   standing(rig, band, links, turns, is_away, head, is_either_way, who).is_holding
 
-proc isReaching*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              is_away = false; who = Body.Two; head = Body.Two): bool =
+proc isReaching*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away = false,
+  who = Body.Two,
+  head = Body.Two,
+): bool =
   ## Whether couple carry this hold that far from any distance they may stand at.
   ##   Card asks whether couple can do this, and couple choose where to stand for
   ##     it.  So one distance carrying it is enough, and answer comes as soon as
@@ -239,9 +286,9 @@ proc isReaching*(rig: Rig; band: Band; links: seq[Link]; turns: float;
 
 func leapOf*(walk: Walk): float =
   ## Furthest any point of any held arm moves between two moments of walk.
-  for j in 1 ..< walk.moments.len:
-    for i in 0 ..< walk.moments[j].arms.len:
-      for k in 0 .. 1:
+  for j in 1..<walk.moments.len:
+    for i in 0..<walk.moments[j].arms.len:
+      for k in 0..1:
         let
           before = walk.moments[j - 1].arms[i][k]
           after = walk.moments[j].arms[i][k]
@@ -267,8 +314,9 @@ func chosen*(walks: openArray[Carry]): int =
     if carry.got != far and far - carry.got > STEP + 1e-9: continue
     if result < 0 or carry.leap * SMOOTHER < walks[result].leap: result = i
 
-proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
-              most, step: float; is_away: bool; head: Body): Walk =
+proc furthest(
+  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
+): Walk =
   ## Walk one way from whichever distance carries it furthest, and among
   ## distances carrying it as far, from one where arms move least between
   ## moments.
@@ -284,7 +332,7 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
   var
     walks: seq[Walk]
     carries: seq[Carry]
-    free = Inf ## First distance turn ran free from.
+    free = Inf  ## First distance turn ran free from.
   for apart in stands(rig):
     if apart > free + LOOK + SEEK / 2.0: break
     let walk = walked(rig, band, links, who, apart, most, step, is_away, head)
@@ -294,9 +342,17 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
     if carries[^1].got == Inf: free = min(free, apart)
   if carries.len > 0: result = walks[chosen(carries)]
 
-proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
-            most = MOST; step = STEP; apart = 0.0; is_away = false;
-            head = Body.Two): Swept =
+proc swept*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  who = Body.Two,
+  most = MOST,
+  step = STEP,
+  apart = 0.0,
+  is_away = false,
+  head = Body.Two,
+): Swept =
   ## Sweep both ways, each from wherever that way carries furthest.
   ##   `who` turns; `head` is whose crown joined hands are carried over.  Callers
   ##     pass same dancer for both: one whose facing turns against connection has
@@ -321,10 +377,10 @@ proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
 #[ Planned Turn ]#
 
 const
-  STEER* = 30.0 ## Hertz every joint is sprung toward plan at: what dancer's muscles hold.
+  STEER* = 30.0  ## Hertz every joint is sprung toward plan at: what dancer's muscles hold.
     ##   Measured on D7, 2026-10-01: at fifteen engine gave by twist at 1.47 of turn; at
     ##     twenty five, thirty and forty it stood, strain 0.33 to 0.34.
-  STAND_STEPS = 2 ## Engine steps each planned moment is stood for before it is judged:
+  STEPS_STAND = 2  ## Engine steps each planned moment is stood for before it is judged:
                   ## enough for engine to find every contact pose has (`replay`).
   STYLES* = block:
     ## Ways couple go about turn, tried in order: each moment held near last loosely,
@@ -335,18 +391,26 @@ const
       k = 0
     for stay in [0.3, 1.0]:
       for gather in [5.0, 2.0]:
-        for seed in 0 .. 3:
-          styles[k] = Style(gather: gather, leap: 0.06, stay: stay, seed: seed,
-                            margin: 6.0 * PI / 180.0, room: 0.03, clearance: 0.02,
-                            slack: 300.0)
+        for seed in 0..3:
+          styles[k] = Style(
+            gather: gather,
+            leap: 0.06,
+            stay: stay,
+            seed: seed,
+            margin: 6.0 * PI / 180.0,
+            room: 0.03,
+            clearance: 0.02,
+            slack: 300.0,
+          )
           inc k
     styles
 
 type Followed* = tuple[is_holding: bool, at: float, why: Stop, strain: Strain]
   ## How far engine followed plan, and what gave if anything did.
 
-proc follow(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body; path: Path;
-            should_stand: bool): tuple[followed: Followed, couple: Couple] =
+proc follow(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path, should_stand: bool
+): tuple[followed: Followed, couple: Couple] =
   ## Whether engine, every joint sprung toward plan and nothing else steering, holds every
   ## moment of reached path, and stands at its end where `should_stand`; couple as left.
   ##   Turns plan's turner and steps follow toward lead, as plan does.
@@ -365,11 +429,18 @@ proc follow(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body; p
     # answered rather than carried.
     var now: Plan
     let read = couple.poseVector
-    for k in 0 ..< SIZE: now[k] = read[k]
+    for k in 0..<SIZE: now[k] = read[k]
     let target = corrected(rig, path, i, now)
-    couple.turnStepping(path.problem.turner, path.winds[i] - path.winds[i - 1], Body.Two,
-                        (target[1] - now[1], target[0] - now[0], 0.0), BEATS,
-                        now, target, STEER)
+    couple.turnStepping(
+      path.problem.turner,
+      path.winds[i] - path.winds[i - 1],
+      Body.Two,
+      (target[1] - now[1], target[0] - now[0], 0.0),
+      BEATS,
+      now,
+      target,
+      STEER,
+    )
     let why = couple.gives
     said = (why == Stop.None, path.winds[i], why, couple.strainOf)
     inc i
@@ -379,8 +450,9 @@ proc follow(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body; p
     said = (why == Stop.None, said.at, why, couple.strainOf)
   (said, couple)
 
-proc replay*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body; path: Path;
-             should_stand: bool): tuple[followed: Followed, couple: Couple] =
+proc replay*(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path, should_stand: bool
+): tuple[followed: Followed, couple: Couple] =
   ## Engine stood at every moment of plan in turn and judged there, then left to stand at
   ## its end where `should_stand`; couple as left.
   ##   Each moment is stood afresh from plan, so what engine judges is plan itself and not
@@ -392,14 +464,14 @@ proc replay*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body; 
   var
     couple = build(rig, base, band, links, head, is_away)
     said: Followed
-  for i in 0 ..< path.plans.len:
+  for i in 0..<path.plans.len:
     var stance = restStance(rig, path.plans[i][0], is_away)
     stance[Body.Two].centre.x = path.plans[i][1]
     stance = turned(stance, path.problem.turner, path.winds[i])
     let at = placings(rig, path.plans[i], path.winds[i], is_away, path.problem.turner)
     couple.standAt(stance, at.chests, at.arms)
     couple.steer(path.plans[i], STEER)
-    couple.advance(STAND_STEPS)
+    couple.advance(STEPS_STAND)
     let why = couple.gives
     said = (why == Stop.None, path.winds[i], why, couple.strainOf)
     if not said.is_holding: break
@@ -409,8 +481,9 @@ proc replay*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body; 
     said = (why == Stop.None, said.at, why, couple.strainOf)
   (said, couple)
 
-proc replayed*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body;
-               path: Path; should_stand: bool): Followed =
+proc replayed*(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path, should_stand: bool
+): Followed =
   ## Whether engine stands every moment of plan, and at its end where `should_stand`
   ## (`replay`).
   if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None, Strain())
@@ -418,8 +491,9 @@ proc replayed*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body
   couple.free()
   said
 
-proc followed*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body;
-               path: Path; should_stand: bool): Followed =
+proc followed*(
+  rig: Rig, band: Band, links: seq[Link], is_away: bool, head: Body, path: Path, should_stand: bool
+): Followed =
   ## Whether engine follows plan through every moment of path, and stands at its end
   ## where `should_stand` (`follow`).
   if not path.is_reached or path.plans.len == 0: return (false, 0.0, Stop.None, Strain())
@@ -427,38 +501,83 @@ proc followed*(rig: Rig; band: Band; links: seq[Link]; is_away: bool; head: Body
   couple.free()
   said
 
-proc pathsFor(rig: Rig; links: seq[Link]; is_away: bool; wind: float; style: Style;
-              turner: Body): seq[Path] =
+proc pathsFor(
+  rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+): seq[Path] =
   ## Way this style plans wind, and where hold is its own mirror image, same style's plan
   ## of other way seen in mirror: rig is same either side, planner's starts are not.
   result.add planPath(rig, links, is_away, wind, style, turner)
   if isMirrorSame(links):
     result.add mirrored(planPath(rig, links, is_away, -wind, style, turner))
 
-type PlannedStill* = tuple[is_holding: bool, turns, apart: float, couple: Couple]
+type PlannedStill* = object
   ## Still planned way stands, wound which way, from where, and couple standing there.
+  is_holding*: bool
+  turns*, apart*: float
+  couple*: Couple
+  strain*: float  ## Worst joint of pose that stands, nought at ease and one at end.
+  tried*: seq[Option[float]]  ## Strain of each plan tried, in order: none where none stood.
 
-proc plannedStill*(rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool;
-                   head: Body; is_either_way = false; who = Body.Two): PlannedStill =
-  ## First planned way of winding to this facing, `who` turning, that holds and stands
-  ## there, styles and ways in fixed order; caller frees couple of one that holds.
+proc plannedStill*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away: bool,
+  head: Body,
+  is_either_way = false,
+  who = Body.Two,
+  should_seek_ease = false,
+): PlannedStill =
+  ## Planned way of winding to this facing, `who` turning, that holds and stands there,
+  ## styles and ways in fixed order; caller frees couple of one that holds.
+  ##   First that holds answers whether any does (`isPlannedHolding`).  Where
+  ##     `should_seek_ease`, every plan is tried and one nearest to ease is kept, as
+  ##     `standing` keeps distance: first that held stood C6 with follow's waist at its
+  ##     end, strain 1.00, where other path of same style held at 0.19, 2026-10-03.
+  ##   Plan at ease ends search, since nothing betters it; earlier plan keeps tie.
   for way in (if is_either_way: @[turns, -turns] else: @[turns]):
     for style in STYLES:
       for path in pathsFor(rig, links, is_away, way, style, who):
-        if not path.is_reached: continue
+        if not path.is_reached:
+          result.tried.add none(float)
+          continue
         let (said, couple) = replay(rig, band, links, is_away, head, path, should_stand = true)
-        if said.is_holding: return (true, way, couple.poseVector[0], couple)
-        couple.free()
+        if not said.is_holding:
+          result.tried.add none(float)
+          couple.free()
+          continue
+        let strain = couple.strainOf.most
+        result.tried.add some(strain)
+        if result.is_holding and strain >= result.strain:
+          couple.free()
+          continue
+        if result.is_holding: result.couple.free()
+        result.is_holding = true
+        result.turns = way
+        result.apart = couple.poseVector[0]
+        result.couple = couple
+        result.strain = strain
+        if not should_seek_ease or strain <= 0.0: return
 
-proc isPlannedHolding*(rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool;
-                       head: Body; is_either_way = false; who = Body.Two): bool =
+proc isPlannedHolding*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away: bool,
+  head: Body,
+  is_either_way = false,
+  who = Body.Two,
+): bool =
   ## Whether some planned way of winding to this facing holds, and stands there.
   let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
   if found.is_holding: found.couple.free()
   found.is_holding
 
-proc isPlannedReaching*(rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool;
-                        who, head: Body): bool =
+proc isPlannedReaching*(
+  rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool; who, head: Body
+): bool =
   ## Whether some planned way carries couple this far, `who` turning.
   for style in STYLES:
     for path in pathsFor(rig, links, is_away, turns, style, who):

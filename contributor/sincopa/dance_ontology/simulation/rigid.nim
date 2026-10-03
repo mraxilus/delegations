@@ -47,23 +47,23 @@ initLock(LOCK_WORLDS)
 
 
 const
-  HERTZ* = 240.0      ## Steps per second.  Arm is short and stiff; slower step lets
+  HERTZ* = 240.0  ## Steps per second.  Arm is short and stiff; slower step lets
                       ## grip joint stretch before solver catches it.
-  SUBSTEPS* = cint(8) ## Engine's own inner steps, where joint limits are met.
-  DENSITY = 1000.0    ## Flesh is about water, so links weigh what arms weigh.
-  DAMPING = 4.0          ## Linear and angular damping: arms settle, never ring.
+  SUBSTEPS* = cint(8)  ## Engine's own inner steps, where joint limits are met.
+  DENSITY = 1000.0  ## Flesh is about water, so links weigh what arms weigh.
+  DAMPING = 4.0  ## Linear and angular damping: arms settle, never ring.
                       ## Measured against leaps between moments: seven times this
                       ## took 232 mm to 204, so it is not what leaps were.
-  PARTED* = 0.02      ## Hands this far apart, in metres, are no longer joined.
-  AT_END* = 0.02      ## Joint within this of its end, in radians, is at its end.
-  GIVE* = 0.1         ## How far past its end joint may sit and still hold, in that
+  PARTED* = 0.02  ## Hands this far apart, in metres, are no longer joined.
+  AT_END* = 0.02  ## Joint within this of its end, in radians, is at its end.
+  GIVE* = 0.1  ## How far past its end joint may sit and still hold, in that
                       ## end's ease.  Same reading, and same reason, old solver's
                       ## `TOLERANCE` had: under three degrees at joint is less than
                       ## flesh gives.  Without it arm cannot rest against its limit
                       ## and slide along it, which is what arm does: hold reads
                       ## blocked at very moment limit is first touched, and torque
                       ## that should push arm back never gets one step to act in.
-  CONTACT = 0.125 * HERTZ * float(SUBSTEPS) ## Hertz overlap is pushed apart at:
+  CONTACT = 0.125 * HERTZ * float(SUBSTEPS)  ## Hertz overlap is pushed apart at:
                       ## engine's own cap, eighth of its substep rate.  Its default
                       ## of thirty is softer than simulation's own forces, and arms were
                       ## crushed through bodies with hands still joined -- forearm
@@ -71,15 +71,15 @@ const
                       ## arms "get crushed and phase through".  Measured over
                       ## crown sweep: 44.7 mm deepest at thirty, 7.9 at 120, 2.2 at
                       ## 240 and no less at 480, under engine's 5 mm slop.
-  FRICTION = 0.2      ## Coulomb friction where arm meets body.  Engine's default
+  FRICTION = 0.2  ## Coulomb friction where arm meets body.  Engine's default
                       ## of 0.6 is rubber on road; cloth on cloth is nearer this,
                       ## and arm lying over head at 0.6 was dragged round with it
                       ## as dancer turned under, winding follow's shoulder to its end by
                       ## 1.24 turns.  Measured: cross-name crown hold stops at 1.24
                       ## at 0.6, at 1.46 at nought, and turns free at this.
-  THROUGH* = 0.01     ## Overlap this deep, in metres, is arm through body: twice
+  THROUGH* = 0.01  ## Overlap this deep, in metres, is arm through body: twice
                       ## engine's slop, where contact holding is never seen.
-  GRIP = 30.0         ## Hertz joined hands hold at: half engine's default, and
+  GRIP = 30.0  ## Hertz joined hands hold at: half engine's default, and
                       ## and softest thing in couple after shoulder girdle, so
                       ## hold forced past what arms can do gives at hands, in
                       ## life as here, and parting is what says which joint was
@@ -89,7 +89,7 @@ const
                       ## its five centimetres first, wrist carried nine past its
                       ## cone; at this, nothing.  Held as stiffly as joints,
                       ## joints tore.
-  HOLD = 0.25 * HERTZ * float(SUBSTEPS) ## Hertz every joint but grip holds at: engine's
+  HOLD = 0.25 * HERTZ * float(SUBSTEPS)  ## Hertz every joint but grip holds at: engine's
                       ## own cap, quarter of its substep rate, and above contact's,
                       ## so what gives first is contact and not joint.  At its
                       ## default of sixty, arm pressing own chest carried chest
@@ -97,12 +97,12 @@ const
                       ## twice this), and once contact was stiff, joints tore
                       ## instead: elbow 42 degrees past straight, wrist 40 past
                       ## its cone, twist 27 past its end.
-  SETTLE* = 3000      ## Steps given to first pose before anything is read off it.
+  SETTLE* = 3000  ## Steps given to first pose before anything is read off it.
                       ## Measured: twist still moving at 1000, settled by 3000.
-  CLEAR* = 0.10       ## Least clear air between two torsos, metres.
-  EASE* = 1.0         ## Hertz of spring holding each joint toward its rest.
-  EASE_DAMPING* = 1.0    ## And its damping.  Soft: it biases pose, never drives it.
-  HANG_HERTZ* = 5.0      ## Hertz of shoulder's spring on arm hanging free, standing
+  CLEAR* = 0.10  ## Least clear air between two torsos, metres.
+  EASE* = 1.0  ## Hertz of spring holding each joint toward its rest.
+  EASE_DAMPING* = 1.0  ## And its damping.  Soft: it biases pose, never drives it.
+  HANG_HERTZ* = 5.0  ## Hertz of shoulder's spring on arm hanging free, standing
                       ## in for weight that holds hanging arm plumb: five kilograms
                       ## of arm at third of metre is seventeen newton metres per
                       ## radian.  At one hertz, spring is about two, and flank's
@@ -110,7 +110,7 @@ const
                       ## forty nine degrees, creeping back to thirty three through
                       ## settle; at two, twenty four and eight; three, thirteen and
                       ## five; here, five and four.  Assumed.
-  WRIST_EASE* = 5.0   ## Hertz of wrist's spring.  Hand weighs four hundred grams,
+  WRIST_EASE* = 5.0  ## Hertz of wrist's spring.  Hand weighs four hundred grams,
                       ## so at one hertz its spring is three hundredths of newton
                       ## metre per radian and wrist meets nothing before its cone:
                       ## joined at rest, wrists sat at sixty of sixty, and plainest
@@ -121,63 +121,63 @@ const
 
 
 type
-  Limb* {.pure.} = enum ## Three links of one arm, shoulder outward.
+  Limb* {.pure.} = enum  ## Three links of one arm, shoulder outward.
     Upper, Fore, Palm
 
-  ArmRig = object ## One arm's bodies and its three joints, and what it hangs from.
-    collar: engine.BodyId ## Collarbone: hinged to chest at breastbone about trunk's up.
-    girdle: engine.BodyId ## Shoulder girdle: hinged to collarbone about trunk's fore,
+  ArmRig = object  ## One arm's bodies and its three joints, and what it hangs from.
+    collar: engine.BodyId  ## Collarbone: hinged to chest at breastbone about trunk's up.
+    girdle: engine.BodyId  ## Shoulder girdle: hinged to collarbone about trunk's fore,
                        ## so shoulder joint rolls fore and aft and shrugs up, as
                        ## scapula on its collarbone does.
     link: array[Limb, engine.BodyId]
-    swing: array[Collar, engine.JointId] ## Collarbone's two hinges, `Collar`'s order.
+    swing: array[Collar, engine.JointId]  ## Collarbone's two hinges, `Collar`'s order.
     shoulder, elbow, wrist: engine.JointId
 
-  Figure = object ## One dancer: trunk that is turned, and two arms that follow.
-    trunk: engine.BodyId ## Hips: kinematic, turned by simulation, never pushed.
-    chest: engine.BodyId ## What shoulders hang from: dynamic, yaws on hips.
-    waist: engine.JointId ## Hinge between them, about trunk's up.
+  Figure = object  ## One dancer: trunk that is turned, and two arms that follow.
+    trunk: engine.BodyId  ## Hips: kinematic, turned by simulation, never pushed.
+    chest: engine.BodyId  ## What shoulders hang from: dynamic, yaws on hips.
+    waist: engine.JointId  ## Hinge between them, about trunk's up.
     arm: array[Arm, ArmRig]
 
-  Mark* {.pure.} = enum ## What part of whom one capsule is.
+  Mark* {.pure.} = enum  ## What part of whom one capsule is.
     Trunk, Upper, Fore, Palm,
-    Girdle ## Shoulder: from neck's side out to shoulder joint, on body that gives.
+    Girdle  ## Shoulder: from neck's side out to shoulder joint, on body that gives.
 
-  Shape* = object ## One capsule engine collides, as engine was given it.
+  Shape* = object  ## One capsule engine collides, as engine was given it.
     body*: engine.BodyId
     who*: Body  ## Whose.
-    arm*: Arm   ## Which arm, where `mark` is not `Trunk`.
+    arm*: Arm  ## Which arm, where `mark` is not `Trunk`.
     mark*: Mark
-    a*, z*: engine.Vector ## Its segment's two ends, in that body's own terms.
-    radius*: float       ## And radius round segment.
+    a*, z*: engine.Vector  ## Its segment's two ends, in that body's own terms.
+    radius*: float  ## And radius round segment.
 
-  Couple* = object ## Both dancers, their world, and connections between their hands.
+  Couple* = object  ## Both dancers, their world, and connections between their hands.
     world: engine.WorldId
     rig*: Rig
     stance*: array[Body, Stance]
     band*: Band
     links*: seq[Link]
-    turning*: Body ## Whose head hands are carried over, at crown.
-    rest_twist: float ## Twist of couple's rest, so how far they have wound is known.
-    rest_tip: seq[array[2, float]] ## Where each joined hand settled at rest, per
+    turning*: Body  ## Whose head hands are carried over, at crown.
+    rest_twist: float  ## Twist of couple's rest, so how far they have wound is known.
+    rest_tip: seq[array[2, float]]  ## Where each joined hand settled at rest, per
                                   ## connection and end, from which it rises.
     who: array[Body, Figure]
     grip: seq[engine.JointId]
-    is_steered*: bool ## Joints sprung to plan; carry's lift and draw left off.
-    shapes*: seq[Shape] ## Every capsule above, kept as it was handed to engine.
+    is_steered*: bool  ## Joints sprung to plan; carry's lift and draw left off.
+    shapes*: seq[Shape]  ## Every capsule above, kept as it was handed to engine.
       ## Recorded rather than worked out again, so anything drawing couple draws
       ## what is being simulated and cannot quietly disagree with it.
 
-  Pose* = object ## Where one connection's two arms lie, and what their joints read.
+  Pose* = object  ## Where one connection's two arms lie, and what their joints read.
     arms*: array[2, ArmPose]
-    twist*, bend*, wrist*: array[2, float] ## Each arm's three joints, radians.
-    apart*: float ## How far engine has pulled two hands apart, metres.
+    twist*, bend*, wrist*: array[2, float]  ## Each arm's three joints, radians.
+    apart*: float  ## How far engine has pulled two hands apart, metres.
 
-  Strain* = object ## Where couple's pose is nearest some end, over every arm,
+  Strain* = object  ## Where couple's pose is nearest some end, over every arm,
                         ## both waists and every shoulder girdle.
     most*: float  ## Nought outside every ease, one at some end, more past it.
     whose*: Hand  ## Arm it sits at, where it is arm's.
-    what*: string ## Which joint: freedom's name, `waist` or `girdle`.
+    what*: string  ## Which joint: freedom's name, `waist` or `girdle`.
 
 
 
@@ -240,15 +240,17 @@ func quaternionProduct(a, b: engine.Quaternion): engine.Quaternion =
       a.scalar * b.vector.z + a.vector.x * b.vector.y -
         a.vector.y * b.vector.x + a.vector.z * b.scalar,
     ),
-    scalar: cfloat(a.scalar * b.scalar - a.vector.x * b.vector.x -
-                   a.vector.y * b.vector.y - a.vector.z * b.vector.z),
+    scalar: cfloat(
+      a.scalar * b.scalar - a.vector.x * b.vector.x -
+                     a.vector.y * b.vector.y - a.vector.z * b.vector.z,
+    ),
   )
 
 
 
 #[ Couple Construction ]#
 
-func stadium(rig: Rig; part: Part): tuple[radius, spread: float] =
+func stadium(rig: Rig, part: Part): tuple[radius, spread: float] =
   ## Radius of section's round ends, and how far apart their two centres sit.
   ##   Tape gives round and flatness; stadium of that round at that flatness is
   ##     two capsules side by side.  Flatness of one gives spread of nought, so
@@ -277,7 +279,7 @@ func trunkCapsules*(rig: Rig): seq[tuple[a, z: Vector, radius: float]] =
         break
 
 const
-  HANG_BEND = 10.0 * PI / 180.0 ## Elbow of arm hanging free at side: relaxed arm
+  HANG_BEND = 10.0 * PI / 180.0  ## Elbow of arm hanging free at side: relaxed arm
                    ## hangs near straight.  Assumed.
   GIRDLE_RADIUS* = 0.06  ## Radius of shoulder's capsule, neck's side to shoulder joint:
                    ## deltoid and trapezius, estimate and not tape.  Architect's
@@ -295,9 +297,9 @@ const
                    ## shoulder turns glenoid too, which arm raised overhead
                    ## twists by; spring alone let free arm shoved by other body
                    ## carry its girdle 251 mm off, into own torso.  Assumed.
-  COLLAR_LEAN = 40.0 ## Newton metres per radian collarbone is turned back once
+  COLLAR_LEAN = 40.0  ## Newton metres per radian collarbone is turned back once
                    ## into its ease: seven at ease's end.  Assumed.
-  COLLAR_RADIUS = 0.06 ## Radius of collarbone's own capsule, which meets nothing:
+  COLLAR_RADIUS = 0.06  ## Radius of collarbone's own capsule, which meets nothing:
                    ## it gives collarbone half kilogram, fifth of girdle's, so
                    ## solver holds chain of chest, collarbone and girdle.  At one
                    ## centimetre, fiftieth of girdle, both girdles left their
@@ -308,7 +310,7 @@ const
                    ## are too rigid, arms get dislocated because of it -- shoulder
                    ## joint sat nine centimetres outside every capsule of its own
                    ## body, and nothing of it could give.
-  WAIST_LEAN = 60.0 ## Newton metres per radian chest is turned back toward
+  WAIST_LEAN = 60.0  ## Newton metres per radian chest is turned back toward
     ## square once yawed into waist's ease: fifteen at ease's end, about what
     ## trunk's passive stiffness gives near end of thoracic rotation.  Assumed.
     ## Waist's range is rig's (`Rig.waist`).  Shoulders lag or lead hips by it,
@@ -324,9 +326,9 @@ const
     ##     still past it.
 
 const
-  TRUNK_BIT = 1'u64        ## Torso, neck and head.
-  ARM_BIT: array[Body, uint64] = [2'u64, 4'u64] ## Lead's arms, follow's arms.
-  EVERY = high(uint64)     ## Meets everything.
+  TRUNK_BIT = 1'u64  ## Torso, neck and head.
+  ARM_BIT: array[Body, uint64] = [2'u64, 4'u64]  ## Lead's arms, follow's arms.
+  EVERY = high(uint64)  ## Meets everything.
 
 func ownGroup(who: Body): cint =
   ## Group one dancer's trunk and shoulder girdles share, so they never meet:
@@ -336,15 +338,23 @@ func ownGroup(who: Body): cint =
   ##     so arm still meets its own trunk and other dancer's girdle meets both.
   -cint(100 + ord(who))
 
-func isHeld(couple: Couple; who: Body; arm: Arm): bool =
+func isHeld(couple: Couple, who: Body, arm: Arm): bool =
   ## Whether this arm's hand is joined to any other.
   for link in couple.links:
     for hand in link.ends:
       if hand == (who, arm): return true
   false
 
-proc capsule(couple: var Couple; body: engine.BodyId; who: Body; arm: Arm; mark: Mark;
-             a, z: engine.Vector; capsule_radius, density: float; group: cint) =
+proc capsule(
+  couple: var Couple;
+  body: engine.BodyId;
+  who: Body;
+  arm: Arm;
+  mark: Mark;
+  a, z: engine.Vector;
+  capsule_radius, density: float;
+  group: cint;
+) =
   ## Hang one capsule on body, with its own group so arm's own links pass.
   ##   Kept on couple as well as handed to engine: page draws this list, so shape
   ##     drawn and shape collided are one thing said once.
@@ -385,7 +395,7 @@ func upFrame(): engine.Quaternion =
   ##     about frame A's local z, so hinge frame turns local z onto local y.
   quaternionOf(engine.initVector(1, 0, 0), engine.initVector(0, 0, -1), engine.initVector(0, 1, 0))
 
-proc trunkOf(couple: var Couple; who: Body): tuple[hips, chest: engine.BodyId,
+proc trunkOf(couple: var Couple, who: Body): tuple[hips, chest: engine.BodyId,
                                              waist: engine.JointId] =
   ## Hips as kinematic body, turned and never pushed, carrying nothing; every
   ## capsule on dynamic chest hinged to them about trunk's up, sprung to neutral
@@ -457,7 +467,7 @@ func foreFrame(): engine.Quaternion =
   ##     onto it: x stays, y is turned about.
   quaternionOf(engine.initVector(1, 0, 0), engine.initVector(0, -1, 0), engine.initVector(0, 0, -1))
 
-func collarSign(arm: Arm; hinge: Collar): float =
+func collarSign(arm: Arm, hinge: Collar): float =
   ## Which way hinge's own angle runs against rig's stated sense for this arm.
   ##   Rig states protraction and elevation positive.  Right shoulder swung
   ##     about trunk's up by positive angle goes fore; left goes aft.  Shoulder
@@ -467,13 +477,13 @@ func collarSign(arm: Arm; hinge: Collar): float =
   of Collar.Fore: side(arm)
   of Collar.Up: -side(arm)
 
-func collarEnds*(rig: Rig; arm: Arm; hinge: Collar): tuple[lower, upper: float] =
+func collarEnds*(rig: Rig, arm: Arm, hinge: Collar): tuple[lower, upper: float] =
   ## One collarbone hinge's two ends in hinge's own sense, for this arm.
   let collar_range = rig.collar[hinge]
   if collarSign(arm, hinge) > 0.0: (collar_range.lower, collar_range.upper)
   else: (-collar_range.upper, -collar_range.lower)
 
-func collarRange(rig: Rig; arm: Arm; hinge: Collar): Range =
+func collarRange(rig: Rig, arm: Arm, hinge: Collar): Range =
   ## One collarbone hinge's range in hinge's own sense, eases carried with ends.
   let collar_range = rig.collar[hinge]
   if collarSign(arm, hinge) > 0.0: collar_range
@@ -485,8 +495,16 @@ func collarRange(rig: Rig; arm: Arm; hinge: Collar): Range =
     neutral: -collar_range.neutral,
   )
 
-proc limbOf(couple: var Couple; who: Body; arm: Arm; mark: Mark; at: Vector;
-            turn: engine.Quaternion; long: float; group: cint): engine.BodyId =
+proc limbOf(
+  couple: var Couple,
+  who: Body,
+  arm: Arm,
+  mark: Mark,
+  at: Vector,
+  turn: engine.Quaternion,
+  long: float,
+  group: cint,
+): engine.BodyId =
   ## One link: its own length along its local z, hung from `at`.
   var body_definition = engine.defaultBody()
   body_definition.kind = engine.BODY_DYNAMIC
@@ -515,7 +533,7 @@ proc limbOf(couple: var Couple; who: Body; arm: Arm; mark: Mark; at: Vector;
     let middle = engine.initVector(0, 0, long / 2.0)
     capsule(couple, result, who, arm, mark, middle, middle, long / 2.0, DENSITY, group)
 
-proc armOf(couple: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
+proc armOf(couple: var Couple, who: Body, arm: Arm, group: cint): ArmRig =
   ## Three links on shoulder, elbow and wrist, laid out hanging.
   let
     stance = couple.stance[who]
@@ -574,8 +592,18 @@ proc armOf(couple: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   grip_definition.gravity_scale = 0.0
   grip_definition.should_sleep = false
   result.girdle = engine.createBody(couple.world, addr grip_definition)
-  capsule(couple, result.girdle, who, arm, Mark.Girdle, asEngine(inner), asEngine((0.0, 0.0, 0.0)),
-          GIRDLE_RADIUS, DENSITY, ownGroup(who))
+  capsule(
+    couple,
+    result.girdle,
+    who,
+    arm,
+    Mark.Girdle,
+    asEngine(inner),
+    asEngine((0.0, 0.0, 0.0)),
+    GIRDLE_RADIUS,
+    DENSITY,
+    ownGroup(who),
+  )
   # Hinge's angle is turn about its frame's local z, right handed.  Right
   # shoulder at trunk's right turned about trunk's up goes fore for positive
   # angle, and about trunk's fore goes down; left shoulder goes other way each
@@ -684,8 +712,14 @@ proc armOf(couple: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   cuff.base.constraint_hertz = cfloat(HOLD)
   result.wrist = engine.createBall(couple.world, addr cuff)
 
-proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
-            links: seq[Link]; turning = Body.Two; is_away = false): Couple =
+proc build*(
+  rig: Rig,
+  stance: array[Body, Stance],
+  band: Band,
+  links: seq[Link],
+  turning = Body.Two,
+  is_away = false,
+): Couple =
   ## Stand two dancers, hang four arms, and join hands each link names.
   ##   No gravity.  Question reference asks is where arms can be, not what they
   ##     weigh, and weightless arms stay where turn leaves them, so pose at one
@@ -733,7 +767,7 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
     grip.base.constraint_hertz = cfloat(GRIP)
     result.grip.add engine.createBall(result.world, addr grip)
 
-proc partedAt*(couple: Couple; who: Body; arm: Arm): array[3, float] =
+proc partedAt*(couple: Couple, who: Body, arm: Arm): array[3, float] =
   ## How far shoulder, elbow and wrist of one arm have each been pulled apart,
   ## metres: engine's joints are soft, and what they give is dislocation.
   let arm_rig = couple.who[who].arm[arm]
@@ -743,7 +777,7 @@ proc partedAt*(couple: Couple; who: Body; arm: Arm): array[3, float] =
     float(engine.partedBy(arm_rig.wrist)),
   ]
 
-proc chestStance*(couple: Couple; who: Body): Stance =
+proc chestStance*(couple: Couple, who: Body): Stance =
   ## Where shoulders stand: hips' stance, turned by waist.
   ##   Every reading of arm in body's own terms goes through this, since arm
   ##     hangs from chest and not from hips.
@@ -764,8 +798,8 @@ proc free*(couple: Couple) =
 #[ Turn Readings ]#
 
 const
-  LIFT = 400.0 ## Newtons per metre couple carry joined hands toward their band by.
-  RAISE = 0.25 ## Turns over which hands rise from where they rest to their band.
+  LIFT = 400.0  ## Newtons per metre couple carry joined hands toward their band by.
+  RAISE = 0.25  ## Turns over which hands rise from where they rest to their band.
     ## Hands go up before head passes under, which is at quarter turn, and they
     ## go up as arm moves and not as switch is thrown: asked for band's edge
     ## outright, hand crossed 359 mm in first fiftieth of turn, which page draws
@@ -773,21 +807,21 @@ const
     ## each hand settled, and pull is not eased in on top of it: eased in, hand
     ## lagged ramp and caught up in one burst of 200 mm.
   FALL = 40.0  ## And damping on it, so hands arrive rather than swing.
-  MUSCLE = 40.0 ## Newtons one arm carries its wrist with, at most: arm's own
+  MUSCLE = 40.0  ## Newtons one arm carries its wrist with, at most: arm's own
     ## weight, which is what dancer lifts arm against and plainly can.  Lift
     ## and draw are springs toward where hands are meant to be, and spring
     ## wanting more than this is force dancer does not have: uncapped, hand
     ## twenty centimetres under its rise pulled with eighty newtons, through
     ## grip, on partner's shoulder, and every girdle sat at its rope's end
     ## before quarter turn.  Assumed.
-  DRAW = [40.0, 40.0, 10.0] ## Per band, newtons per metre hands are drawn toward
+  DRAW = [40.0, 40.0, 10.0]  ## Per band, newtons per metre hands are drawn toward
     ## where couple mean to carry them.  Weighted as old solver's `CENTRING` was,
     ## two to two to one half, and weak on purpose: this is preference couple have,
     ## not constraint.  Strong, it drags hands to one spot and arms trail into
     ## swings no shoulder makes, and hold reads blocked when only hands were held
     ## wrongly.  Measured at two hundred newtons per metre: crown blocked at 0.34
     ## of turn where floor says it never blocks.
-  SHOULDER_BACK = 200.0 ## Newton metres per radian arm is past its swing.
+  SHOULDER_BACK = 200.0  ## Newton metres per radian arm is past its swing.
     ## Stiff, so arm pressed against its end stays within `GIVE` of it rather than
     ## sinking through.  Upper arm's inertia is about 0.074, so this rings at some
     ## eight hertz, well inside step of two hundred and forty.
@@ -795,7 +829,7 @@ const
     ## never resisting it let engine walk arm into places no shoulder goes and made
     ## hold read blocked where dancer would simply have put arm elsewhere.  Torque
     ## is what other three joints already get from engine; this gives swing same.
-  SWING_LEAN = 200.0 ## Newton metres per radian arm is into its swing's ease: as
+  SWING_LEAN = 200.0  ## Newton metres per radian arm is into its swing's ease: as
     ## stiff as wall past its end.  End alone is wall, and arm led over crown
     ## went round back of head at that wall, forty five degrees behind frontal
     ## plane at head's height, where going over top costs nothing.  Architect:
@@ -879,7 +913,7 @@ func bandNow*(couple: Couple): tuple[lower, upper: float] =
   (lower: low.lower + (high.lower - low.lower) * height_fraction,
    upper: low.upper + (high.upper - low.upper) * height_fraction)
 
-func tipOf(couple: Couple; arm_rig: ArmRig): Vector =
+func tipOf(couple: Couple, arm_rig: ArmRig): Vector =
   ## Fingertip, which band is asked of.
   ##   Fingertip alone, forearm's lower end not too: asked of elbow as well over
   ##     crown, so forearm would clear head outright, every rise went in bursts,
@@ -888,7 +922,7 @@ func tipOf(couple: Couple; arm_rig: ArmRig): Vector =
   ##     is contact's to answer, and contact is stiff enough to now.
   asWorld(engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, cfloat(couple.rig.hand))))
 
-proc muscle(couple: Couple; arm_rig: ArmRig; force: Vector) =
+proc muscle(couple: Couple, arm_rig: ArmRig, force: Vector) =
   ## Carry this arm's wrist by `force`, put on as torque at shoulder and elbow
   ## with equal and opposite torque on link inside: what muscle does.
   ##   Force on links alone pulled whole chain up through shoulder and dragged
@@ -950,7 +984,7 @@ proc carry(couple: Couple) =
       ## instead makes both reach across their own body and spends adduction
       ## they need for turn.
   for i, link in couple.links:
-    for k in 0 .. 1:
+    for k in 0..1:
       let
         arm_rig = couple.who[link.ends[k].body].arm[link.ends[k].arm]
         tip = tipOf(couple, arm_rig)
@@ -992,14 +1026,15 @@ proc holdSwing(couple: Couple) =
     for arm in Arm:
       let
         arm_rig = couple.who[who].arm[arm]
-        shoulder_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Upper],
-          engine.initVector(0, 0, 0),
-        ))
-        elbow_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Upper],
-          engine.initVector(0, 0, cfloat(couple.rig.upper)),
-        ))
+        shoulder_point = asWorld(
+          engine.pointOf(arm_rig.link[Limb.Upper], engine.initVector(0, 0, 0)),
+        )
+        elbow_point = asWorld(
+          engine.pointOf(
+            arm_rig.link[Limb.Upper],
+            engine.initVector(0, 0, cfloat(couple.rig.upper)),
+          ),
+        )
         upper_arm = ownTerms(axes, arm, elbow_point) - ownTerms(axes, arm, shoulder_point)
         direction = unit(upper_arm)
       var back: Vector = (0.0, 0.0, 0.0)
@@ -1028,11 +1063,13 @@ proc holdSwing(couple: Couple) =
         # gives exactly minus what is wanted, and turns correction into shove.
         let own: Vector = (if arm == Arm.Left: (x: back.x, y: -back.y, z: -back.z)
                         else: back)
-        engine.twistBy(arm_rig.link[Limb.Upper],
-                    asEngine(axes.right * own.x + axes.fore * own.y + (0.0, 0.0, own.z)),
-                    true)
+        engine.twistBy(
+          arm_rig.link[Limb.Upper],
+          asEngine(axes.right * own.x + axes.fore * own.y + (0.0, 0.0, own.z)),
+          true,
+        )
 
-const ELBOW_DOWN = 1.0 ## Newton metres elbow is turned down by: upper arm's
+const ELBOW_DOWN = 1.0  ## Newton metres elbow is turned down by: upper arm's
   ## weight about that line at half its lever, two kilograms at five centimetres.
   ## Measured: at nought, elbow crossed 280 mm between moments and arms rested
   ## twisted fifty four degrees to keep wrists straight; at two, wrists rested
@@ -1053,18 +1090,18 @@ proc elbowDown(couple: Couple) =
       if not couple.isHeld(who, arm): continue
       let
         arm_rig = couple.who[who].arm[arm]
-        shoulder_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Upper],
-          engine.initVector(0, 0, 0),
-        ))
-        elbow_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Upper],
-          engine.initVector(0, 0, cfloat(couple.rig.upper)),
-        ))
-        wrist_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Fore],
-          engine.initVector(0, 0, cfloat(couple.rig.fore)),
-        ))
+        shoulder_point = asWorld(
+          engine.pointOf(arm_rig.link[Limb.Upper], engine.initVector(0, 0, 0)),
+        )
+        elbow_point = asWorld(
+          engine.pointOf(
+            arm_rig.link[Limb.Upper],
+            engine.initVector(0, 0, cfloat(couple.rig.upper)),
+          ),
+        )
+        wrist_point = asWorld(
+          engine.pointOf(arm_rig.link[Limb.Fore], engine.initVector(0, 0, cfloat(couple.rig.fore))),
+        )
         line = wrist_point - shoulder_point
       if dot(line, line) < 1e-4: continue
       let
@@ -1086,7 +1123,7 @@ const
                      ## this.  Assumed.
   ELBOW_LEAN = 15.0  ## Same for elbow, whose ease is thirty five degrees: nine
                      ## at end.  Assumed.
-  WRIST_LEAN = 6.0   ## Same for wrist, two at cone: hand about it is one
+  WRIST_LEAN = 6.0  ## Same for wrist, two at cone: hand about it is one
                      ## thousandth, so this rings at twelve hertz there, well
                      ## inside step.  Assumed.
 
@@ -1132,22 +1169,21 @@ proc easeOff(couple: Couple) =
     for arm in Arm:
       let
         arm_rig = couple.who[who].arm[arm]
-        shoulder_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Upper],
-          engine.initVector(0, 0, 0),
-        ))
-        elbow_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Upper],
-          engine.initVector(0, 0, cfloat(couple.rig.upper)),
-        ))
-        wrist_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Fore],
-          engine.initVector(0, 0, cfloat(couple.rig.fore)),
-        ))
-        grip_point = asWorld(engine.pointOf(
-          arm_rig.link[Limb.Palm],
-          engine.initVector(0, 0, cfloat(couple.rig.hand)),
-        ))
+        shoulder_point = asWorld(
+          engine.pointOf(arm_rig.link[Limb.Upper], engine.initVector(0, 0, 0)),
+        )
+        elbow_point = asWorld(
+          engine.pointOf(
+            arm_rig.link[Limb.Upper],
+            engine.initVector(0, 0, cfloat(couple.rig.upper)),
+          ),
+        )
+        wrist_point = asWorld(
+          engine.pointOf(arm_rig.link[Limb.Fore], engine.initVector(0, 0, cfloat(couple.rig.fore))),
+        )
+        grip_point = asWorld(
+          engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, cfloat(couple.rig.hand))),
+        )
         upper_direction = unit(elbow_point - shoulder_point)
         fore_direction = unit(wrist_point - elbow_point)
         hand_direction = unit(grip_point - wrist_point)
@@ -1194,18 +1230,20 @@ proc easeOff(couple: Couple) =
 
 type Matrix* = array[3, array[3, float]]
 
-func times(a, b: Matrix): Matrix =
-  for i in 0 .. 2:
-    for j in 0 .. 2:
-      for k in 0 .. 2:
+func times(a, b: Matrix): Matrix {.used.} =  # Used in `plan.nim`.
+  ## Multiply matrices of turn, i.e. turn by `b`, then by `a`.
+  for i in 0..2:
+    for j in 0..2:
+      for k in 0..2:
         result[i][j] += a[i][k] * b[k][j]
 
-func transposed(a: Matrix): Matrix =
-  for i in 0 .. 2:
-    for j in 0 .. 2:
+func transposed(a: Matrix): Matrix {.used.} =  # Used in `plan.nim`.
+  ## Transpose matrix of turn, i.e. its inverse.
+  for i in 0..2:
+    for j in 0..2:
       result[i][j] = a[j][i]
 
-func turnAbout(v: array[3, float]): Matrix =
+func turnAbout(v: array[3, float]): Matrix {.used.} =  # Used in `plan.nim`.
   ## Rodrigues: turn about `v` by its length.
   let angle = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
   result = [[1.0, 0, 0], [0.0, 1, 0], [0.0, 0, 1]]
@@ -1214,8 +1252,8 @@ func turnAbout(v: array[3, float]): Matrix =
     k = [v[0] / angle, v[1] / angle, v[2] / angle]
     skew: Matrix = [[0.0, -k[2], k[1]], [k[2], 0.0, -k[0]], [-k[1], k[0], 0.0]]
     square = times(skew, skew)
-  for i in 0 .. 2:
-    for j in 0 .. 2:
+  for i in 0..2:
+    for j in 0..2:
       result[i][j] += sin(angle) * skew[i][j] + (1.0 - cos(angle)) * square[i][j]
 
 func quaternionOfMatrix(r: Matrix): engine.Quaternion =
@@ -1240,14 +1278,15 @@ func quaternionOfMatrix(r: Matrix): engine.Quaternion =
                     (r[1][2] + r[2][1]) / s, 0.25 * s)
   engine.Quaternion(vector: engine.initVector(x, y, z), scalar: cfloat(w))
 
-const REST_MATRIX: Matrix = [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
+const MATRIX_REST {.used.}: Matrix =  # Used in `plan.nim`.
+  [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
   ## Upper arm's frame at rest in body's terms, columns right, back, down (`restFrame`).
 
 const WRIST_STEER* = 3.0
   ## Wrist spring over every other joint's: palm is lightest link, and spring in hertz
   ## holds it by that, so hand at others' rate trails plan.
 
-proc steer*(couple: var Couple; plan: openArray[float]; hertz: float) =
+proc steer*(couple: var Couple, plan: openArray[float], hertz: float) =
   ## Spring every joint toward planned pose: waists, collarbones, shoulders,
   ## elbows, wrists.  Plan is waists then nine per arm, lead's left first.
   couple.is_steered = true
@@ -1261,15 +1300,20 @@ proc steer*(couple: var Couple; plan: openArray[float]; hertz: float) =
       engine.aimHinge(arm_rig.swing[Collar.Fore], cfloat(side(arm) * plan[base]))
       engine.aimHinge(arm_rig.swing[Collar.Up], cfloat(-side(arm) * plan[base + 1]))
       for k in Collar: engine.stiffenHinge(arm_rig.swing[k], cfloat(hertz))
-      let shoulder_turn = times(transposed(REST_MATRIX),
-                                times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]),
-                                      REST_MATRIX))
+      let shoulder_turn = times(
+        transposed(MATRIX_REST),
+        times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
+      )
       engine.aimBall(arm_rig.shoulder, quaternionOfMatrix(shoulder_turn))
       engine.stiffenBall(arm_rig.shoulder, cfloat(hertz))
       engine.aimHinge(arm_rig.elbow, cfloat(plan[base + 5]))
       engine.stiffenHinge(arm_rig.elbow, cfloat(hertz))
-      let wrist_turn = quaternionOfMatrix(turnAbout([plan[base + 6], plan[base + 7],
-                                                     plan[base + 8]]))
+      let wrist_turn = quaternionOfMatrix(
+        turnAbout(
+          [plan[base + 6], plan[base + 7],
+                                                         plan[base + 8]],
+        ),
+      )
       engine.aimBall(arm_rig.wrist, wrist_turn)
       engine.stiffenBall(arm_rig.wrist, cfloat(hertz * WRIST_STEER))
 
@@ -1291,12 +1335,12 @@ func turnVector(r: Matrix): array[3, float] =
   let scale = angle / (2.0 * sin(angle))
   [(r[2][1] - r[1][2]) * scale, (r[0][2] - r[2][0]) * scale, (r[1][0] - r[0][1]) * scale]
 
-proc axesInBody(couple: Couple; who: Body; link: engine.BodyId): Matrix =
+proc axesInBody(couple: Couple, who: Body, link: engine.BodyId): Matrix =
   ## Link's own three axes as columns, in its dancer's chest terms.
   let
     axes = axesOf(couple.chestStance(who))
     origin = asWorld(engine.pointOf(link, engine.initVector(0, 0, 0)))
-  for j in 0 .. 2:
+  for j in 0..2:
     # Link's local axes are engine's; project's are turned from them (`asEngine`).
     let
       local = [engine.initVector(1, 0, 0), engine.initVector(0, 1, 0),
@@ -1335,28 +1379,34 @@ proc poseVector*(couple: Couple): array[40, float] =
         upper = axesInBody(couple, who, arm_rig.link[Limb.Upper])
         forearm = axesInBody(couple, who, arm_rig.link[Limb.Fore])
         hand = axesInBody(couple, who, arm_rig.link[Limb.Palm])
-        shoulder_turn = times(transposed(girdle_turn), times(upper, transposed(REST_MATRIX)))
+        shoulder_turn = times(transposed(girdle_turn), times(upper, transposed(MATRIX_REST)))
         wrist_turn = times(transposed(forearm), hand)
         shoulder_vector = turnVector(shoulder_turn)
         wrist_vector = turnVector(wrist_turn)
       result[base] = protract
       result[base + 1] = elevate
-      for k in 0 .. 2: result[base + 2 + k] = shoulder_vector[k]
+      for k in 0..2: result[base + 2 + k] = shoulder_vector[k]
       result[base + 5] = float(engine.angleOf(arm_rig.elbow))
-      for k in 0 .. 2: result[base + 6 + k] = wrist_vector[k]
+      for k in 0..2: result[base + 6 + k] = wrist_vector[k]
 
-type ArmPlacing* = object ## Where one arm's five bodies stand, in world.
+type ArmPlacing* = object  ## Where one arm's five bodies stand, in world.
   root*, shoulder*, elbow*, wrist*: Vector
   collar*, girdle*, upper*, fore*, palm*: Matrix
     ## Each body's own three axes as columns, in world: what engine's turn of it carries
     ## its local x, y and z onto.
 
-proc placeBodies*(couple: var Couple; chests: array[Body, Stance]; arms: array[4, ArmPlacing]) =
+proc placeBodies*(couple: var Couple, chests: array[Body, Stance], arms: array[4, ArmPlacing]) =
   ## Stand couple where plan has them, every body at once, before anything is stepped:
   ## couple start where plan starts, rather than walking there from arms hanging.
+
   func turnOf(m: Matrix): engine.Quaternion =
-    quaternionOf(asEngine((m[0][0], m[1][0], m[2][0])), asEngine((m[0][1], m[1][1], m[2][1])),
-                 asEngine((m[0][2], m[1][2], m[2][2])))
+    ## Read matrix of turn as engine's quaternion, its columns being frame's axes.
+    quaternionOf(
+      asEngine((m[0][0], m[1][0], m[2][0])),
+      asEngine((m[0][1], m[1][1], m[2][1])),
+      asEngine((m[0][2], m[1][2], m[2][2])),
+    )
+
   for who in Body:
     let axes = axesOf(chests[who])
     engine.place(couple.who[who].chest, asPlace(axes.origin), standing(axes))
@@ -1370,8 +1420,12 @@ proc placeBodies*(couple: var Couple; chests: array[Body, Stance]; arms: array[4
       engine.place(arm_rig.link[Limb.Fore], asPlace(placing.elbow), turnOf(placing.fore))
       engine.place(arm_rig.link[Limb.Palm], asPlace(placing.wrist), turnOf(placing.palm))
 
-proc standAt*(couple: var Couple; stance: array[Body, Stance]; chests: array[Body, Stance];
-              arms: array[4, ArmPlacing]) =
+proc standAt*(
+  couple: var Couple,
+  stance: array[Body, Stance],
+  chests: array[Body, Stance],
+  arms: array[4, ArmPlacing],
+) =
   ## Stand couple at one planned moment, nothing moving: hips at `stance`, chests and arms
   ## where plan places them (`walk.replay`).
   couple.stance = stance
@@ -1391,9 +1445,9 @@ proc standAt*(couple: var Couple; stance: array[Body, Stance]; chests: array[Bod
         engine.setSpin(body, still)
         engine.setDrift(body, still)
 
-proc advance*(couple: Couple; steps: int) =
+proc advance*(couple: Couple, steps: int) =
   ## Run engine on, carrying hands toward their band all through.
-  for _ in 1 .. steps:
+  for _ in 1..steps:
     if not couple.is_steered: carry(couple)
     holdSwing(couple)
     if not couple.is_steered:
@@ -1408,18 +1462,18 @@ proc settle*(couple: var Couple) =
   couple.rest_tip = @[]
   for link in couple.links:
     var tip: array[2, float]
-    for k in 0 .. 1:
+    for k in 0..1:
       tip[k] = tipOf(couple, couple.who[link.ends[k].body].arm[link.ends[k].arm]).z
     couple.rest_tip.add tip
 
-proc turn*(couple: var Couple; who: Body; by: float; steps: int) =
+proc turn*(couple: var Couple, who: Body, by: float, steps: int) =
   ## Turn one dancer on their own spot, anticlockwise seen from above.
   ##   Stance is carried along step by step rather than set at end: swing is read
   ##     in dancer's own terms, so leaving stance behind for whole move judges
   ##     every arm against frame dancer has already left.
   let rate = by * 2.0 * PI * HERTZ / float(steps)
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, rate)))
-  for _ in 1 .. steps:
+  for _ in 1..steps:
     if not couple.is_steered: carry(couple)
     holdSwing(couple)
     if not couple.is_steered:
@@ -1429,9 +1483,17 @@ proc turn*(couple: var Couple; who: Body; by: float; steps: int) =
     couple.stance = turned(couple.stance, who, by / float(steps))
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
 
-proc turnStepping*(couple: var Couple; who: Body; by: float; mover: Body; step: Vector;
-                   steps: int; start: openArray[float] = []; finish: openArray[float] = [];
-                   hertz = 0.0) =
+proc turnStepping*(
+  couple: var Couple,
+  who: Body,
+  by: float,
+  mover: Body,
+  step: Vector,
+  steps: int,
+  start: openArray[float] = [],
+  finish: openArray[float] = [],
+  hertz = 0.0,
+) =
   ## Turn one dancer as `turn` does while `mover` steps by `step`, metres on floor, and
   ## where plans are given, steer from `start` to `finish` as turn goes.
   ##   Target moves with bodies, every tenth step, so joints are asked for pose that fits
@@ -1444,11 +1506,11 @@ proc turnStepping*(couple: var Couple; who: Body; by: float; mover: Body; step: 
     is_blending = start.len == finish.len and finish.len > 0
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, rate)))
   engine.setDrift(couple.who[mover].trunk, asEngine(speed))
-  for k in 1 .. steps:
+  for k in 1..steps:
     if is_blending and (k mod 10 == 1 or k == steps):
       var between = newSeq[float](finish.len)
       let share = float(k) / float(steps)
-      for j in 0 ..< finish.len: between[j] = start[j] + (finish[j] - start[j]) * share
+      for j in 0..<finish.len: between[j] = start[j] + (finish[j] - start[j]) * share
       couple.steer(between, hertz)
     if not couple.is_steered: carry(couple)
     holdSwing(couple)
@@ -1462,7 +1524,7 @@ proc turnStepping*(couple: var Couple; who: Body; by: float; mover: Body; step: 
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
   engine.setDrift(couple.who[mover].trunk, asEngine((0.0, 0.0, 0.0)))
 
-proc armPoseOf*(couple: Couple; who: Body; arm: Arm): ArmPose =
+proc armPoseOf*(couple: Couple, who: Body, arm: Arm): ArmPose =
   ## Four points of one arm, joined or not.
   ##   Every arm, not only ones holding: arm hanging free is still arm, and
   ##     anything drawing couple has to draw it.
@@ -1471,10 +1533,9 @@ proc armPoseOf*(couple: Couple; who: Body; arm: Arm): ArmPose =
     shoulder: asWorld(engine.pointOf(arm_rig.link[Limb.Upper], engine.initVector(0, 0, 0))),
     elbow: asWorld(engine.pointOf(arm_rig.link[Limb.Fore], engine.initVector(0, 0, 0))),
     wrist: asWorld(engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, 0))),
-    grip: asWorld(engine.pointOf(
-      arm_rig.link[Limb.Palm],
-      engine.initVector(0, 0, cfloat(couple.rig.hand)),
-    )),
+    grip: asWorld(
+      engine.pointOf(arm_rig.link[Limb.Palm], engine.initVector(0, 0, cfloat(couple.rig.hand))),
+    ),
   )
 
 proc jointsOf*(
@@ -1487,15 +1548,15 @@ proc jointsOf*(
    float(engine.twistAngleOf(arm_rig.shoulder)), float(engine.angleOf(arm_rig.elbow)),
    float(engine.coneAngleOf(arm_rig.wrist)))
 
-proc endsOf*(couple: Couple; shape: Shape): tuple[a, z: Vector] =
+proc endsOf*(couple: Couple, shape: Shape): tuple[a, z: Vector] =
   ## Where one capsule's segment lies in world now.
   ##   Asked of engine rather than worked out from stance, so drawing cannot
   ##     drift from what is being simulated.
   (asWorld(engine.pointOf(shape.body, shape.a)), asWorld(engine.pointOf(shape.body, shape.z)))
 
-proc poseOf*(couple: Couple; i: int): Pose =
+proc poseOf*(couple: Couple, i: int): Pose =
   ## Where one connection's two arms lie, and what engine says their joints read.
-  for k in 0 .. 1:
+  for k in 0..1:
     let
       hand = couple.links[i].ends[k]
       arm_rig = couple.who[hand.body].arm[hand.arm]
@@ -1505,14 +1566,14 @@ proc poseOf*(couple: Couple; i: int): Pose =
     result.wrist[k] = float(engine.coneAngleOf(arm_rig.wrist))
   result.apart = float(engine.partedBy(couple.grip[i]))
 
-func twistEnds*(rig: Rig; arm: Arm): tuple[lower, upper: float] =
+func twistEnds*(rig: Rig, arm: Arm): tuple[lower, upper: float] =
   ## Humeral rotation's two ends for one arm.  Rig states them for right arm,
   ## in negative and out positive; left arm is same joint mirrored, so swapped.
   let twist_range = rig.range[Dof.Twist]
   if arm == Arm.Right: (twist_range.lower, twist_range.upper)
   else: (-twist_range.upper, -twist_range.lower)
 
-proc deepest(couple: Couple; i: int): tuple[depth: float, met: Stop, end_index: int] =
+proc deepest(couple: Couple, i: int): tuple[depth: float, met: Stop, end_index: int] =
   ## Deepest any link of any arm sits in anything, by engine's own manifolds,
   ## and whether that is body or arm; `end_index` names which of connection `i`'s two
   ## arms it is, where it is one of them.
@@ -1529,7 +1590,7 @@ proc deepest(couple: Couple; i: int): tuple[depth: float, met: Stop, end_index: 
     for arm in Arm:
       var end_index = 0
       if i >= 0:
-        for side in 0 .. 1:
+        for side in 0..1:
           if couple.links[i].ends[side] == (who, arm): end_index = side
       for limb in Limb:
         mine.add (couple.who[who].arm[arm].link[limb], end_index)
@@ -1542,7 +1603,7 @@ proc deepest(couple: Couple; i: int): tuple[depth: float, met: Stop, end_index: 
     # stood 22 mm through each other with nothing said.
     var seen = newSeq[engine.Touch](max(1, int(engine.touchRoom(me))))
     let touch_count = engine.touches(me, addr seen[0], cint(seen.len))
-    for touch_index in 0 ..< touch_count:
+    for touch_index in 0..<touch_count:
       let other = (if engine.bodyOf(seen[touch_index].shape_id_a) == me:
                      engine.bodyOf(seen[touch_index].shape_id_b)
                    else: engine.bodyOf(seen[touch_index].shape_id_a))
@@ -1554,18 +1615,18 @@ proc deepest(couple: Couple; i: int): tuple[depth: float, met: Stop, end_index: 
           if other == couple.who[who].arm[arm].girdle:
             is_trunk = true
       let folds = cast[ptr UncheckedArray[engine.Manifold]](seen[touch_index].manifolds)
-      for manifold_index in 0 ..< seen[touch_index].manifold_count:
-        for point_index in 0 ..< folds[manifold_index].point_count:
+      for manifold_index in 0..<seen[touch_index].manifold_count:
+        for point_index in 0..<folds[manifold_index].point_count:
           let depth = -float(folds[manifold_index].points[point_index].separation)
           if depth > result.depth:
             result = (depth, (if is_trunk: Stop.Through else: Stop.Arms), end_index)
 
-proc metBy(couple: Couple; i: int): Stop =
+proc metBy(couple: Couple, i: int): Stop =
   ## What one connection's arms are against, if anything, once hands have parted.
   let deep = deepest(couple, i)
   if deep.depth > 0.0: deep.met else: Stop.None
 
-func freedom(joint_range: Range; value: float; as_both_ends: bool): float =
+func freedom(joint_range: Range, value: float, as_both_ends: bool): float =
   ## How far value sits from nearer end of range, in that end's ease.
   ##   Not `margin`: margin counts stop with no ease as costing nothing to lean
   ##     on, so straight elbow reads infinitely comfortable.  Choosing where to
@@ -1581,13 +1642,13 @@ func freedom(joint_range: Range; value: float; as_both_ends: bool): float =
   if as_both_ends:
     result = min(result, (value - joint_range.lower) / ease_lower)
 
-func roomAt*(couple: Couple; pose: Pose; i: int): float =
+func roomAt*(couple: Couple, pose: Pose, i: int): float =
   ## How free this connection's tightest joint still is to move either way.
   ##   Read off engine's own joints rather than off pose again, and without
   ##     swing, which engine was never given.  Wrist's range is cone, so its
   ##     nought is middle of it and only its edge counts.
   result = Inf
-  for k in 0 .. 1:
+  for k in 0..1:
     let
       twist_range = couple.rig.range[Dof.Twist]
       (lower, upper) = twistEnds(couple.rig, couple.links[i].ends[k].arm)
@@ -1601,13 +1662,13 @@ func roomAt*(couple: Couple; pose: Pose; i: int): float =
     result = min(result, freedom(couple.rig.range[Dof.Bend], pose.bend[k], true))
     result = min(result, freedom(couple.rig.range[Dof.Wrist], pose.wrist[k], false))
 
-func restStance*(rig: Rig; apart: float; is_away = false): array[Body, Stance] =
+func restStance*(rig: Rig, apart: float, is_away = false): array[Body, Stance] =
   ## Where couple start.  Same-name pair is built Face-to-back: face to face its two
   ## connections lie through each other, so couple would not collect it there.
   result = facing(rig, apart)
   if is_away: result = turned(result, Body.Two, 0.5)
 
-proc stoppedBy*(couple: Couple; i: int): tuple[why: Stop, end_index: int] =
+proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
   ## What stops this connection here, if anything does, and at which of its two arms.
   ##   Swing is asked first and whatever hands are doing, because engine was never
   ##     given it: nothing else in model holds extension or adduction, so asking
@@ -1615,7 +1676,7 @@ proc stoppedBy*(couple: Couple; i: int): tuple[why: Stop, end_index: int] =
   ##   Everything else engine itself enforces, so it can only be reached by hands
   ##     coming apart, and then engine's own joints say which gave.
   let pose = poseOf(couple, i)
-  for k in 0 .. 1:
+  for k in 0..1:
     let
       hand = couple.links[i].ends[k]
       arm_joints = joints(couple.chestStance(hand.body), hand.arm, pose.arms[k])
@@ -1627,7 +1688,7 @@ proc stoppedBy*(couple: Couple; i: int): tuple[why: Stop, end_index: int] =
     return (deep.met, deep.end_index)
   if pose.apart <= PARTED:
     return (Stop.None, -1)
-  for k in 0 .. 1:
+  for k in 0..1:
     let
       hand = couple.links[i].ends[k]
       (lower, upper) = twistEnds(couple.rig, hand.arm)
@@ -1640,18 +1701,18 @@ proc stoppedBy*(couple: Couple; i: int): tuple[why: Stop, end_index: int] =
   let met = metBy(couple, i)
   if met != Stop.None: (met, 0) else: (Stop.Reach, 0)
 
-proc stopOf*(couple: Couple; i: int): Stop = stoppedBy(couple, i).why
+proc stopOf*(couple: Couple, i: int): Stop = stoppedBy(couple, i).why
   ## What stops this connection here, if anything does.
 
 const
-  FACING* = 0.05 ## Of way up (`up`), within which couple count as facing and
+  FACING* = 0.05  ## Of way up (`up`), within which couple count as facing and
                  ## hands are asked into torso band: wound whole turn, couple
                  ## come back within float of face to face, not to it.
-  OVER* = 0.05   ## Metres joined hand may sit over torso band's top facing: wound
+  OVER* = 0.05  ## Metres joined hand may sit over torso band's top facing: wound
                  ## arms press hands up against lift's forty newtons, and same-name
                  ## chain come round to face to face sat at 1.37 to 1.39 m against
                  ## 1.35, mid torso by any reading and hold at no other height.
-  SAG* = 0.03    ## Metres joined hand may sit under its band's edge, once
+  SAG* = 0.03  ## Metres joined hand may sit under its band's edge, once
                  ## risen, lift being spring against comfort and not wall.
 
 proc gives*(couple: Couple): Stop =
@@ -1665,7 +1726,7 @@ proc gives*(couple: Couple): Stop =
   ##     before this, still whose hands never rose read as holding, and card
   ##     asked over crown was answered by hold at hip.  `SAG` is lift's own
   ##     slack.
-  for i in 0 ..< couple.links.len:
+  for i in 0..<couple.links.len:
     let why = couple.stopOf(i)
     if why != Stop.None: return why
   let deep = deepest(couple, -1)
@@ -1686,13 +1747,13 @@ proc gives*(couple: Couple): Stop =
 
 #[ Pose Strain ]#
 
-proc collarOf*(couple: Couple; who: Body; arm: Arm): array[Collar, float] =
+proc collarOf*(couple: Couple, who: Body, arm: Arm): array[Collar, float] =
   ## What one collarbone's two hinges read, radians, in rig's stated sense:
   ## protraction and elevation positive.
   for k in Collar:
     result[k] = collarSign(arm, k) * float(engine.angleOf(couple.who[who].arm[arm].swing[k]))
 
-proc girdleOff*(couple: Couple; who: Body; arm: Arm): float =
+proc girdleOff*(couple: Couple, who: Body, arm: Arm): float =
   ## How far one shoulder joint sits from where tape puts it on chest, metres.
   distance(couple.armPoseOf(who, arm).shoulder, shoulder(couple.rig, couple.chestStance(who), arm))
 
@@ -1704,7 +1765,7 @@ proc strainOf*(couple: Couple): Strain =
   ##   Every arm, not held ones alone: free arm shoved to its twist's end by
   ##     partner's trunk is strain couple feel, and asking held arms alone let
   ##     couple stand with free arm at its end and read as at ease.
-  const NAMES: array[Dof, string] = ["extend", "across", "twist", "bend", "wrist"]
+  const names: array[Dof, string] = ["extend", "across", "twist", "bend", "wrist"]
   result = Strain(most: 0.0, what: "")
   for who in Body:
     let waist = strainOf(couple.rig.waist, float(engine.angleOf(couple.who[who].waist)))
@@ -1727,9 +1788,11 @@ proc strainOf*(couple: Couple): Strain =
                           (Dof.Wrist, couple.rig.range[Dof.Wrist], wrist_angle)]:
         let got = strainOf(joint_range, value)
         if got > result.most:
-          result = Strain(most: got, whose: (who, arm), what: NAMES[dof])
+          result = Strain(most: got, whose: (who, arm), what: names[dof])
       for k in Collar:
-        let got = strainOf(collarRange(couple.rig, arm, k),
-                           float(engine.angleOf(couple.who[who].arm[arm].swing[k])))
+        let got = strainOf(
+          collarRange(couple.rig, arm, k),
+          float(engine.angleOf(couple.who[who].arm[arm].swing[k])),
+        )
         if got > result.most:
           result = Strain(most: got, whose: (who, arm), what: "collar " & $k)

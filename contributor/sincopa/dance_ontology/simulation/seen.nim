@@ -15,53 +15,56 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[math, options]
 
 import ./[body, hold, limb, rig, rigid, vector, walk]
 
 
 type
-  Bar* = object ## One capsule, where it lies now.
+  Bar* = object  ## One capsule, where it lies now.
     who*: Body
-    arm*: Arm   ## Which arm, where `mark` is not `Trunk`.
+    arm*: Arm  ## Which arm, where `mark` is not `Trunk`.
     mark*: Mark
-    a*, z*: Vector ## Segment's two ends, in world.
-    radius*: float   ## And radius round it.
+    a*, z*: Vector  ## Segment's two ends, in world.
+    radius*: float  ## And radius round it.
 
-  Ache* = object ## One arm's joints, each beside range it has to stay inside.
+  Ache* = object  ## One arm's joints, each beside range it has to stay inside.
     who*: Body
     arm*: Arm
     read*: array[Dof, float]  ## What joint reads.
-    lower*, upper*: array[Dof, float] ## And ends it is held between.
+    lower*, upper*: array[Dof, float]  ## And ends it is held between.
 
-  Faces* = object ## Where one dancer stands and which way they look.
-    at*: Vector   ## Axis at floor.
-    fore*: Vector ## Unit, horizontal, out of their chest.
+  Faces* = object  ## Where one dancer stands and which way they look.
+    at*: Vector  ## Axis at floor.
+    fore*: Vector  ## Unit, horizontal, out of their chest.
 
-  Still* = object ## One moment, everything page draws of it.
-    at*: float          ## Turns from rest, signed.
+  Still* = object  ## One moment, everything page draws of it.
+    at*: float  ## Turns from rest, signed.
     faces*: array[Body, Faces]
     bars*: seq[Bar]
     arms*: seq[Ache]
-    grips*: seq[Vector]    ## Where each pair of joined hands has got to.
+    grips*: seq[Vector]  ## Where each pair of joined hands has got to.
     apart*: seq[float]  ## And how far engine has pulled each pair apart.
 
-  Shown* = object ## Whole sweep, and what came of it.
-    hold*: string       ## Which hold, in words.
+  Shown* = object  ## Whole sweep, and what came of it.
+    hold*: string  ## Which hold, in words.
     band*: Band
-    apart*: float       ## Where couple stood for it.
-    turns*: float       ## How far it got.
+    apart*: float  ## Where couple stood for it.
+    turns*: float  ## How far it got.
     is_stopped*: bool
     why*: Stop
-    whose*: Hand        ## Whose hand it gave at.
+    whose*: Hand  ## Whose hand it gave at.
     stills*: seq[Still]
+    is_planned*: bool  ## Whether planner stood still, where no distance of carried walk held.
+    strain*: float  ## Worst joint of still, nought at ease and one at end.
+    tried*: seq[Option[float]]  ## Strain of each pose its search tried, in order: none gave.
 
 
 func degrees*(radians: float): float = radians * 180.0 / PI
   ## Convert radians to degrees.
 
 
-proc acheOf(couple: Couple; who: Body; arm: Arm): Ache =
+proc acheOf(couple: Couple, who: Body, arm: Arm): Ache =
   ## Read one arm's six joints, each against its own two ends.
   ##   Twist's ends are swapped for left arm, as `twistEnds` has it, so range
   ##     quoted here is arm's own rather than rig's unmirrored one.
@@ -76,7 +79,7 @@ proc acheOf(couple: Couple; who: Body; arm: Arm): Ache =
   result.lower[Dof.Twist] = twist_lower
   result.upper[Dof.Twist] = twist_upper
 
-proc stillOf(couple: Couple; at: float): Still =
+proc stillOf(couple: Couple, at: float): Still =
   ## Everything page draws of couple as they stand this moment.
   result.at = at
   for who in Body:
@@ -95,51 +98,88 @@ proc stillOf(couple: Couple; at: float): Still =
   for who in Body:
     for arm in Arm:
       result.arms.add couple.acheOf(who, arm)
-  for i in 0 ..< couple.links.len:
+  for i in 0..<couple.links.len:
     let pose = couple.poseOf(i)
     result.grips.add (pose.arms[0].grip + pose.arms[1].grip) * 0.5
     result.apart.add pose.apart
 
-proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
-            turns: float; is_away = false; head = Body.Two; is_either_way = false;
-            who = Body.Two): Shown =
+proc still*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  name: string,
+  turns: float,
+  is_away = false,
+  head = Body.Two,
+  is_either_way = false,
+  who = Body.Two,
+): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds.
   ##   Still is wound to its facing and left standing, as `walk.stood` has it,
   ##     and distance is `walk.standing`'s choice, as is way about where still
   ##     fixes none, so what page draws of it is what `modelled` answered about
   ##     it, where model has couple stand.
-  ##   Still no carried walk holds is stood where planned way stands it
-  ##     (`walk.plannedStill`), as `modelled` answers it.
+  ##   Still no carried walk holds is stood where planned way stands it nearest to ease,
+  ##     of every plan that holds (`walk.plannedStill`), as distance is chosen.
   result = Shown(hold: name, band: band, turns: turns, is_stopped: true, why: Stop.None)
   let where = standing(rig, band, links, turns, is_away, head, is_either_way, who)
   if not where.is_holding:
-    let planned = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
+    let planned = plannedStill(
+      rig,
+      band,
+      links,
+      turns,
+      is_away,
+      head,
+      is_either_way,
+      who,
+      should_seek_ease = true,
+    )
+    result.is_planned = true
+    result.tried = planned.tried
     if planned.is_holding:
       result.apart = planned.apart
       result.turns = planned.turns
+      result.strain = planned.strain
       result.is_stopped = false
       result.stills.add stillOf(planned.couple, planned.turns)
       planned.couple.free()
     return
-  let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart,
-                                   who)
+  let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart, who)
+  result.tried = where.tried
   if is_holding:
     result.apart = where.apart
     result.turns = where.turns
+    result.strain = where.strain.most
     result.is_stopped = false
     result.stills.add stillOf(couple, where.turns)
   couple.free()
 
-proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
-            who = Body.Two; step = STEP; is_away = false;
-            head = Body.Two): Shown =
+proc shown*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  name: string,
+  who = Body.Two,
+  step = STEP,
+  is_away = false,
+  head = Body.Two,
+): Shown =
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
   ##     where model has them stand and not somewhere chosen for drawing.
   let
-    sweep = swept(rig, band, links, who = who, most = MOST, step = step,
-               is_away = is_away, head = head)
+    sweep = swept(
+      rig,
+      band,
+      links,
+      who = who,
+      most = MOST,
+      step = step,
+      is_away = is_away,
+      head = head,
+    )
     best = (if step >= 0.0: sweep.positive else: sweep.negative)
   result = Shown(
     hold: name,

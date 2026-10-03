@@ -16,7 +16,7 @@
 ##     to it.
 ##
 ##   |---------------------------|------------------|
-##   | Simulation reads                 | Dance says       |
+##   | Simulation reads          | Dance says       |
 ##   |---------------------------|------------------|
 ##   | Band.Torso                | low              |
 ##   | Band.Neck                 | high             |
@@ -49,8 +49,8 @@ const SIDES = ["Face", "Starboard", "Back", "Port"]
 const FACINGS* =
   block:
     var each: array[16, ((int, int), string)]
-    for by_lead in 0 .. 3:
-      for by_follow in 0 .. 3:
+    for by_lead in 0..3:
+      for by_follow in 0..3:
         each[by_lead * 4 + by_follow] = ((by_lead, by_follow),
           SIDES[by_lead] & "-to-" & SIDES[by_follow].toLowerAscii)
     each
@@ -83,7 +83,7 @@ func whose*(hand: Hand): string =
   if hand.body == Body.One: "lead's" else: "follow's"
 
 
-func said*(lying: Option[Lying]; band: Band): string =
+func said*(lying: Option[Lying], band: Band): string =
   ## Write where held arm lies, in words dance uses.
   ##   Arm over head is on axis couple turn about, so it winds round nothing
   ##     and carries no modifier: band alone answers.

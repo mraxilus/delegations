@@ -1,0 +1,19 @@
+{
+  "status": "proposed",
+  "builds_on": "",
+  "claims": [
+    {
+      "kind": "suites"
+    },
+    {
+      "kind": "program",
+      "path": "layout.nim",
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+    },
+    {
+      "kind": "program",
+      "path": "timing.nim",
+      "algebras": ["rga3d", "rga4d", "cga4d", "cga5d"]
+    }
+  ]
+}
