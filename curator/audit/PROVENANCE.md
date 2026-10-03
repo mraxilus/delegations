@@ -1746,7 +1746,8 @@ side.
 
 - A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
 - A stub that includes a suite with the import then imports the module twice. The compiler
-  accepts that, and `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02).
+  accepts that, and `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02). The
+  Architect accepts the duplicate, so that the fixer stays simple and reads no include.
 - Verified by `suites/test_idioms.nim`.
 
 **A `to<Target>` call of a plain argument takes its subject first (STYLE.md §5).** A plain
