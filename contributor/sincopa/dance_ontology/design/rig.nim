@@ -26,7 +26,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[cpuinfo, json, math, os, sequtils, strformat, strutils, typedthreads]
+import std/[cpuinfo, json, math, options, os, sequtils, strformat, strutils, typedthreads]
 
 import ../simulation/[body, hold, rig, seen]
 import ./[asks, stamps]
@@ -150,6 +150,12 @@ proc bodyOfSweep(recording: Shown, key = ""): string =
   if recording.stills.len == 0:
     bits.add "\"stills\":[]"
     return "{" & bits.join(",\n") & "}"
+  if key.len > 0:
+    var tried: seq[string]
+    for strain in recording.tried: tried.add (if strain.isSome: figure(strain.get) else: "null")
+    bits.add &"\"planned\":" & (if recording.is_planned: "true" else: "false")
+    bits.add &"\"strain\":{figure(recording.strain)}"
+    bits.add wrapped("\"tried\":[" & tried.join(",") & "]")
   let first = recording.stills[0]
   var tag, radii: seq[string]
   for bar in first.bars:
@@ -218,7 +224,8 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
           )
         NOTES[i] =
           if recording.stills.len > 0:
-            &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"
+            &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}, " &
+              &"strain {recording.strain:.2f} of {recording.tried.len} tried"
           else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
         RECORDING_TEXTS[i] = bodyOfSweep(recording, ask.key)
       else:

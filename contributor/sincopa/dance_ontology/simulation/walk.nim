@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[math, options]
 import ./[body, hold, limb, plan, rig, rigid, vector]
 
 
@@ -78,6 +78,7 @@ type
     turns*: float  ## Way couple were wound there, signed: their own where still
                    ## fixes neither.
     strain*: Strain  ## How near pose there is to any end.
+    tried*: seq[Option[float]]  ## Strain of each distance and way tried, in order: none gave.
 
 
 iterator stands*(rig: Rig): float =
@@ -232,13 +233,15 @@ proc standing*(
   ##     distance, and way asked keeps tie: card claims position, and couple
   ##     take whichever way there sits easier.
   result = Stood(is_holding: false, strain: Strain(most: Inf))
+  var tried: seq[Option[float]]
   for far in stands(rig):
     for way in (if is_either_way: @[turns, -turns] else: @[turns]):
       let got = standsAt(rig, band, links, way, is_away, head, far, who)
-      if not got.is_holding: continue
-      if not result.is_holding or got.strain.most < result.strain.most:
+      tried.add (if got.is_holding: some(got.strain.most) else: none(float))
+      if got.is_holding and (not result.is_holding or got.strain.most < result.strain.most):
         result = got
-      if result.strain.most <= 0.0: return
+      result.tried = tried
+      if result.is_holding and result.strain.most <= 0.0: return
 
 proc isHoldingAt*(
   rig: Rig,
@@ -507,8 +510,13 @@ proc pathsFor(
   if isMirrorSame(links):
     result.add mirrored(planPath(rig, links, is_away, -wind, style, turner))
 
-type PlannedStill* = tuple[is_holding: bool, turns, apart: float, couple: Couple]
+type PlannedStill* = object
   ## Still planned way stands, wound which way, from where, and couple standing there.
+  is_holding*: bool
+  turns*, apart*: float
+  couple*: Couple
+  strain*: float  ## Worst joint of pose that stands, nought at ease and one at end.
+  tried*: seq[Option[float]]  ## Strain of each plan tried, in order: none where none stood.
 
 proc plannedStill*(
   rig: Rig,
@@ -519,16 +527,38 @@ proc plannedStill*(
   head: Body,
   is_either_way = false,
   who = Body.Two,
+  should_seek_ease = false,
 ): PlannedStill =
-  ## First planned way of winding to this facing, `who` turning, that holds and stands
-  ## there, styles and ways in fixed order; caller frees couple of one that holds.
+  ## Planned way of winding to this facing, `who` turning, that holds and stands there,
+  ## styles and ways in fixed order; caller frees couple of one that holds.
+  ##   First that holds answers whether any does (`isPlannedHolding`).  Where
+  ##     `should_seek_ease`, every plan is tried and one nearest to ease is kept, as
+  ##     `standing` keeps distance: first that held stood C6 with follow's waist at its
+  ##     end, strain 1.00, where other path of same style held at 0.19, 2026-10-03.
+  ##   Plan at ease ends search, since nothing betters it; earlier plan keeps tie.
   for way in (if is_either_way: @[turns, -turns] else: @[turns]):
     for style in STYLES:
       for path in pathsFor(rig, links, is_away, way, style, who):
-        if not path.is_reached: continue
+        if not path.is_reached:
+          result.tried.add none(float)
+          continue
         let (said, couple) = replay(rig, band, links, is_away, head, path, should_stand = true)
-        if said.is_holding: return (true, way, couple.poseVector[0], couple)
-        couple.free()
+        if not said.is_holding:
+          result.tried.add none(float)
+          couple.free()
+          continue
+        let strain = couple.strainOf.most
+        result.tried.add some(strain)
+        if result.is_holding and strain >= result.strain:
+          couple.free()
+          continue
+        if result.is_holding: result.couple.free()
+        result.is_holding = true
+        result.turns = way
+        result.apart = couple.poseVector[0]
+        result.couple = couple
+        result.strain = strain
+        if not should_seek_ease or strain <= 0.0: return
 
 proc isPlannedHolding*(
   rig: Rig,

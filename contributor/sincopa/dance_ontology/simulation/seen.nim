@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[math, options]
 
 import ./[body, hold, limb, rig, rigid, vector, walk]
 
@@ -55,6 +55,9 @@ type
     why*: Stop
     whose*: Hand  ## Whose hand it gave at.
     stills*: seq[Still]
+    is_planned*: bool  ## Whether planner stood still, where no distance of carried walk held.
+    strain*: float  ## Worst joint of still, nought at ease and one at end.
+    tried*: seq[Option[float]]  ## Strain of each pose its search tried, in order: none gave.
 
 
 func degrees*(radians: float): float = radians * 180.0 / PI
@@ -117,23 +120,38 @@ proc still*(
   ##     and distance is `walk.standing`'s choice, as is way about where still
   ##     fixes none, so what page draws of it is what `modelled` answered about
   ##     it, where model has couple stand.
-  ##   Still no carried walk holds is stood where planned way stands it
-  ##     (`walk.plannedStill`), as `modelled` answers it.
+  ##   Still no carried walk holds is stood where planned way stands it nearest to ease,
+  ##     of every plan that holds (`walk.plannedStill`), as distance is chosen.
   result = Shown(hold: name, band: band, turns: turns, is_stopped: true, why: Stop.None)
   let where = standing(rig, band, links, turns, is_away, head, is_either_way, who)
   if not where.is_holding:
-    let planned = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
+    let planned = plannedStill(
+      rig,
+      band,
+      links,
+      turns,
+      is_away,
+      head,
+      is_either_way,
+      who,
+      should_seek_ease = true,
+    )
+    result.is_planned = true
+    result.tried = planned.tried
     if planned.is_holding:
       result.apart = planned.apart
       result.turns = planned.turns
+      result.strain = planned.strain
       result.is_stopped = false
       result.stills.add stillOf(planned.couple, planned.turns)
       planned.couple.free()
     return
   let (is_holding, couple) = stood(rig, band, links, where.turns, is_away, head, where.apart, who)
+  result.tried = where.tried
   if is_holding:
     result.apart = where.apart
     result.turns = where.turns
+    result.strain = where.strain.most
     result.is_stopped = false
     result.stills.add stillOf(couple, where.turns)
   couple.free()
