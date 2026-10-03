@@ -278,6 +278,21 @@ func trunkCapsules*(rig: Rig): seq[tuple[a, z: Vector, radius: float]] =
       if spread == 0.0:
         break
 
+const FACE_FORE* = 0.05
+  ## Metres face's sphere sits ahead of head's centre, at head's radius: arm clear of sphere
+  ## is clear of face.
+  ##   Sphere's front reaches 14 cm ahead of head's axis, where head reaches 9; nose sits
+  ##     about 12 cm ahead, by ANSUR II head length 0.20 / 0.19 m, so arm resting on sphere
+  ##     stands some 2 cm off nose.  Beside head sphere stands 1.3 cm proud of head's
+  ##     capsule, and over crown 0.8 cm.  Estimate and not tape.
+
+func faceCapsule*(rig: Rig): tuple[a, z: Vector, radius: float] =
+  ## Face as one sphere ahead of head, in body's own terms: x right, y fore, z up.
+  let
+    head = trunkCapsules(rig)[^1]
+    centre = (head.a + head.z) * 0.5 + (0.0, FACE_FORE, 0.0)
+  (centre, centre, head.radius)
+
 const
   HANG_BEND = 10.0 * PI / 180.0  ## Elbow of arm hanging free at side: relaxed arm
                    ## hangs near straight.  Assumed.
