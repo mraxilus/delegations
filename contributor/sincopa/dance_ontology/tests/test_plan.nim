@@ -51,9 +51,11 @@ func randomPlan(rig: Rig, generator: var Rand): Plan =
     for k in 6..8: result[base + k] = generator.rand(-0.8..0.8)
 
 func pointsOf(placed: ArmPlaced): array[4, Vector] =
+  ## Read four points of arm planner placed, shoulder to grip.
   [placed.shoulder, placed.elbow, placed.wrist, placed.grip]
 
 func pointsOf(pose: ArmPose): array[4, Vector] =
+  ## Read four points of posed arm, shoulder to grip.
   [pose.shoulder, pose.elbow, pose.wrist, pose.grip]
 
 func reflected(point: Vector): Vector = (-point.x, point.y, point.z)

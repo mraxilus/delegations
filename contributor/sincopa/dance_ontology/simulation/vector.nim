@@ -15,14 +15,14 @@
 import std/math
 
 
-type Vector* = tuple[x, y, z: float] ## Point or direction, in metres.
+type Vector* = tuple[x, y, z: float]  ## Point or direction, in metres.
 
 
 # Arithmetic of vectors, one operation to line.
 func `+`*(a, b: Vector): Vector = (a.x + b.x, a.y + b.y, a.z + b.z)
 func `-`*(a, b: Vector): Vector = (a.x - b.x, a.y - b.y, a.z - b.z)
 func `-`*(a: Vector): Vector = (-a.x, -a.y, -a.z)
-func `*`*(a: Vector; k: float): Vector = (a.x * k, a.y * k, a.z * k)
+func `*`*(a: Vector, k: float): Vector = (a.x * k, a.y * k, a.z * k)
 func dot*(a, b: Vector): float = a.x * b.x + a.y * b.y + a.z * b.z
 func cross*(a, b: Vector): Vector =
   ## Multiply vectors across, i.e. `a × b`.

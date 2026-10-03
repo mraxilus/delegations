@@ -16,41 +16,42 @@ import ./[body, contact, hold, limb, rig, vector]
 
 
 type
-  Aspect* {.pure.} = enum ## Which face of its own body hand is carried to.
-    Fore, ## Across front: past midline, on other arm's side.
-    Aft   ## Behind back.
+  Aspect* {.pure.} = enum  ## Which face of its own body hand is carried to.
+    Fore,  ## Across front: past midline, on other arm's side.
+    Aft  ## Behind back.
 
-  Lying* = object ## Where one held arm lies on its own body.
+  Lying* = object  ## Where one held arm lies on its own body.
     aspect*: Aspect
     band*: Band
-    is_pressing*: bool   ## Forearm or hand on torso or neck.
+    is_pressing*: bool  ## Forearm or hand on torso or neck.
     is_elbow_fore*: bool  ## Elbow in front of body: arm folded forward.
 
-  Crossing* = object ## Where two connections cross in plan.
+  Crossing* = object  ## Where two connections cross in plan.
     at*: Vector
-    along*: float ## How far along first connection, nought to six.
-    across*: float ## Same along second, which says whether crossing sits
+    along*: float  ## How far along first connection, nought to six.
+    across*: float  ## Same along second, which says whether crossing sits
                    ## where it can slide off that one's end.
-    over*: int ## Which connection is higher there, 0 or 1.
-    sense*: int ## +1 where second crosses first left to right
+    over*: int  ## Which connection is higher there, 0 or 1.
+    sense*: int  ## +1 where second crosses first left to right
                 ## looking along it, else -1.
 
-  Arms* = seq[array[2, ArmPose]] ## Every connection's two arms, as `walk.Moment`
+  Arms* = seq[array[2, ArmPose]]  ## Every connection's two arms, as `walk.Moment`
                                  ## and `rigid.Pose` both hand them over.
 
-  Tight* = object ## Joint nearest its edge across every held arm.
-    room*: float ## `margin` of that joint: nought at edge, one ease in, negative past.
+  Tight* = object  ## Joint nearest its edge across every held arm.
+    room*: float  ## `margin` of that joint: nought at edge, one ease in, negative past.
     dof*: Dof
     whose*: Hand
 
 
-func armOf*(links: seq[Link]; i: int; who: Body): int =
+func armOf*(links: seq[Link], i: int, who: Body): int =
   ## Which end of connection `i` is `who`'s.
   if links[i].ends[0].body == who: 0 else: 1
 
 
-func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance];
-              arms: Arms; i: int; who: Body): Option[Lying] =
+func lyingOn*(
+  rig: Rig, band: Band, links: seq[Link], stance: array[Body, Stance], arms: Arms, i: int, who: Body
+): Option[Lying] =
   ## Where `who`'s arm in connection `i` lies on `who`'s own body; none where
   ## it is out in front, or carried over crown.
   if band == Band.Crown:
@@ -71,15 +72,17 @@ func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance
     aspect = Aspect.Fore
   else:
     return none(Lying)
-  some(Lying(
-    aspect: aspect,
-    band: band,
-    is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
-    is_elbow_fore: elbow.y > 0.0,
-  ))
+  some(
+    Lying(
+      aspect: aspect,
+      band: band,
+      is_pressing: isPressingBody(rig, stance, (pose.elbow, pose.wrist, pose.grip)),
+      is_elbow_fore: elbow.y > 0.0,
+    ),
+  )
 
 
-func polyline*(arms: Arms; i: int): array[7, Vector] =
+func polyline*(arms: Arms, i: int): array[7, Vector] =
   ## One connection as seven points: shoulder to shoulder through grip.
   let
     arm_a = arms[i][0]
@@ -123,8 +126,8 @@ func crossings*(arms: Arms): seq[Crossing] =
   let
     first = polyline(arms, 0)
     second = polyline(arms, 1)
-  for i in 0 ..< 6:
-    for j in 0 ..< 6:
+  for i in 0..<6:
+    for j in 0..<6:
       let
         a = first[i]
         b = first[i + 1]
@@ -166,14 +169,13 @@ func crossings*(arms: Arms): seq[Crossing] =
       )
 
 
-func tightest*(rig: Rig; stance: array[Body, Stance]; links: seq[Link];
-               arms: Arms): Tight =
+func tightest*(rig: Rig, stance: array[Body, Stance], links: seq[Link], arms: Arms): Tight =
   ## Which joint of which held arm is nearest its edge, and how near.
   ##   Read off pose by `joints`, so it says same thing whichever model posed it.
   ##   Twist's ends are mirrored for left arm, as `rigid.twistEnds` has them.
   result = Tight(room: Inf)
-  for i in 0 ..< links.len:
-    for k in 0 .. 1:
+  for i in 0..<links.len:
+    for k in 0..1:
       let
         hand = links[i].ends[k]
         arm_joints = joints(stance[hand.body], hand.arm, arms[i][k])

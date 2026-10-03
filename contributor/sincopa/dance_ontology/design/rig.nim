@@ -26,7 +26,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[cpuinfo, json, math, os, sequtils, strformat, strutils, typedthreads]
+import std/[cpuinfo, json, math, options, os, sequtils, strformat, strutils, typedthreads]
 
 import ../simulation/[body, hold, rig, seen]
 import ./[asks, stamps]
@@ -39,7 +39,7 @@ const KEPT_RIG* = currentSourcePath().parentDir / "rig.json"
 type
   Cut = tuple[name: string, arms: seq[(Arm, Arm)], is_away: bool, band: Band]
 
-  Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
+  Job* = object  ## One recording: sweep by its place in `SHOWN`, or still by its ask.
     cut: int
     ask: StillAsk
     is_still: bool
@@ -63,7 +63,7 @@ const SHOWN: seq[Cut] = @[
   ## drawn, and two chains at each lower band, where floor and engine still argue.
 
 const
-  PLACE = 4 ## Decimal places kept.  Tenth of millimetre on lengths, and finer
+  PLACE = 4  ## Decimal places kept.  Tenth of millimetre on lengths, and finer
             ## than any reading on angles; more is noise from solver's own jitter.
   BANDS = ["torso", "neck", "above"]
 
@@ -84,7 +84,7 @@ func jsonArray(values: seq[float]): string =
   for value in values: bits.add figure(value)
   "[" & bits.join(",") & "]"
 
-func wrapped(text: string; width = 96): string =
+func wrapped(text: string, width = 96): string =
   ## Whole field is wrapped, name and all: wrapped after its name, first line
   ## ran to 102 once shoulders were capsules too.
   ## Break long run of figures across lines after commas.  Charter holds every
@@ -102,7 +102,7 @@ func wrapped(text: string; width = 96): string =
     var j = i
     while j < text.len and text[j] != ',': j += 1
     if j < text.len: j += 1
-    let piece = text[i ..< j]
+    let piece = text[i..<j]
     if line > 0 and line + piece.len > width:
       result.add '\n'
       line = 0
@@ -132,7 +132,7 @@ func gripped(moment: Still): seq[float] =
   for grip in moment.grips: result.add [grip.x, grip.y, grip.z]
 
 
-proc bodyOfSweep(recording: Shown; key = ""): string =
+proc bodyOfSweep(recording: Shown, key = ""): string =
   ## One sweep as page reads it, or one still, keyed by question it answers.
   var bits: seq[string]
   if key.len > 0:
@@ -150,6 +150,12 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
   if recording.stills.len == 0:
     bits.add "\"stills\":[]"
     return "{" & bits.join(",\n") & "}"
+  if key.len > 0:
+    var tried: seq[string]
+    for strain in recording.tried: tried.add (if strain.isSome: figure(strain.get) else: "null")
+    bits.add &"\"planned\":" & (if recording.is_planned: "true" else: "false")
+    bits.add &"\"strain\":{figure(recording.strain)}"
+    bits.add wrapped("\"tried\":[" & tried.join(",") & "]")
   let first = recording.stills[0]
   var tag, radii: seq[string]
   for bar in first.bars:
@@ -185,13 +191,46 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
 
 func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.
-  for i in 0 ..< SHOWN.len: result.add Job(cut: i, is_still: false)
+  for i in 0..<SHOWN.len: result.add Job(cut: i, is_still: false)
   for ask in stillAsks(): result.add Job(ask: ask, is_still: true)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
-  RECORDING_TEXTS: seq[string] ## Each recording's text, written by whichever worker did it.
+  RECORDING_TEXTS: seq[string]  ## Each recording's text, written by whichever worker did it.
   NOTES: seq[string]  ## And one line saying what it found.
+
+proc recorded(job: Job): tuple[note, text: string] =
+  ## Record one job: line saying what it found, and its text as page reads it.
+  if job.is_still:
+    let
+      ask = job.ask
+      recording = still(
+        HUMAN,
+        Band.Crown,
+        ask.links,
+        ask.key,
+        ask.turns,
+        is_away = ask.isRestAway,
+        head = ask.head,
+        is_either_way = ask.is_either_way,
+        who = ask.who,
+      )
+    result.note =
+      if recording.stills.len > 0:
+        &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}, " &
+          &"strain {recording.strain:.2f} of {recording.tried.len} tried"
+      else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
+    result.text = bodyOfSweep(recording, ask.key)
+  else:
+    let cut = SHOWN[job.cut]
+    var links: seq[Link] = @[]
+    for (lead_arm, follow_arm) in cut.arms:
+      links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
+    let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
+    result.note = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
+               &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
+    result.text = bodyOfSweep(recording)
+
 
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Record every `every`th job from `first` on.  Each worker lists jobs for
@@ -201,27 +240,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     let all = jobs()
     var i = slice.first
     while i < all.len:
-      let job = all[i]
-      if job.is_still:
-        let
-          ask = job.ask
-          recording = still(HUMAN, Band.Crown, ask.links, ask.key, ask.turns,
-                            is_away = ask.isRestAway, head = ask.head,
-                            is_either_way = ask.is_either_way, who = ask.who)
-        NOTES[i] =
-          if recording.stills.len > 0:
-            &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"
-          else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
-        RECORDING_TEXTS[i] = bodyOfSweep(recording, ask.key)
-      else:
-        let cut = SHOWN[job.cut]
-        var links: seq[Link] = @[]
-        for (lead_arm, follow_arm) in cut.arms:
-          links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
-        let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
-        NOTES[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
-                   &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
-        RECORDING_TEXTS[i] = bodyOfSweep(recording)
+      (NOTES[i], RECORDING_TEXTS[i]) = recorded(all[i])
       i += slice.every
 
 
@@ -231,28 +250,14 @@ proc rigStamp*(): string =
   stampOf(currentSourcePath(), jobs().mapIt($it))
 
 
-when isMainModule:
-  let stamp = rigStamp()
-  if fileExists(KEPT_RIG) and readFile(KEPT_RIG).parseJson{"stamp"}.getStr == stamp:
-    echo "design/rig.json is up to date: ", stamp
-    quit(0)
-  # Recorded on every core at once: sweeps and stills each build their own
-  # worlds and share nothing but their two slots.
-  let count = jobs().len
-  RECORDING_TEXTS = newSeq[string](count)
-  NOTES = newSeq[string](count)
-  let cores = max(1, countProcessors())
-  var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for worker in 0 ..< cores:
-    createThread(workers[worker], work, (worker, cores))
-  joinThreads(workers)
-  for note in NOTES: echo note
+func assembled(stamp: string, texts: seq[string]): string =
+  ## Whole recording as file keeps it: stamp, rig's measures, then each job's text.
   # Every still card, wound to its facing from distance that sits easiest.
   #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
   #   each cell of reference; card no distance holds is recorded with no moment.
   let
-    cuts = RECORDING_TEXTS[0 ..< SHOWN.len]
-    stills = RECORDING_TEXTS[SHOWN.len ..< count]
+    cuts = texts[0..<SHOWN.len]
+    stills = texts[SHOWN.len..^1]
   var head: seq[string]
   head.add "\"stamp\":\"" & stamp & "\""
   head.add "\"upper\":" & figure(HUMAN.upper)
@@ -262,5 +267,29 @@ when isMainModule:
   head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
   head.add "\"stills\":[\n" & stills.join(",\n") & "]"
-  writeFile(KEPT_RIG, "{" & head.join(",\n") & "}\n")
+  "{" & head.join(",\n") & "}\n"
+
+
+proc main() =
+  ## Record every sweep and still viewer draws, unless recording carries tree's stamp.
+  let stamp = rigStamp()
+  if fileExists(KEPT_RIG) and readFile(KEPT_RIG).parseJson{"stamp"}.getStr == stamp:
+    echo "design/rig.json is up to date: ", stamp
+    return
+  # Recorded on every core at once: sweeps and stills each build their own
+  # worlds and share nothing but their two slots.
+  let count = jobs().len
+  RECORDING_TEXTS = newSeq[string](count)
+  NOTES = newSeq[string](count)
+  let cores = max(1, countProcessors())
+  var workers = newSeq[Thread[tuple[first, every: int]]](cores)
+  for worker in 0..<cores:
+    createThread(workers[worker], work, (worker, cores))
+  joinThreads(workers)
+  for note in NOTES: echo note
+  writeFile(KEPT_RIG, assembled(stamp, RECORDING_TEXTS))
   echo "wrote design/rig.json"
+
+
+when isMainModule:
+  main()
