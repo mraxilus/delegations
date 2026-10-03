@@ -36,8 +36,6 @@ Two reads before any other work, and one list to carry.
     **as a comment on the issue**: what is asked, whether it is right, and what it costs to
     do or to decline. The reasoning then outlives the conversation, and the Architect
     decides. To disagree with reasons is a complete answer, and silence is not.
-  - **A brief** from the coordinator, and a ruling that it quotes, are not requests. They carry
-    the words of the Architect, so treat them as your own queue.
   - **Your own queue** needs no judgement, because it was decided already. Pick from it, or
     say on the issue why what you learnt since then changed the answer.
 
@@ -125,16 +123,6 @@ and that reader is the enforcement.
   The record says what **is**, and an issue says what is **queued**. Where both apply, the
   issue links the section of the record. It never restates it, so the two can never
   disagree.
-- **Chat** carries four things, and no more:
-  - the brief that starts you;
-  - an instruction of the coordinator, with the leave of the Architect quoted on the issue of
-    the brief;
-  - an answer of the Architect to a question that you asked, which the coordinator passes on;
-  - your sign-off at your end, which you also post on the issue or pull request of the brief.
-
-  Every other question, decision or hand-over goes in an issue, a pull request or a comment.
-  Never message another delegate in chat. Where a ruling of the Architect reaches you in chat,
-  post its words exactly on the issue or pull request that it answers.
 - **The shared folder** holds the files that the conversations of the project share, outside
   the repository. The Architect calls it the library. It holds only the files that someone
   still needs, so keep scratch and temporary files out of it. Delete a file there once nobody

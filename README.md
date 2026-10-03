@@ -39,7 +39,8 @@ contributor/<domain>/<project>/          same shape as a curator project
 
 - The **coordinator** delegate starts the other delegates and presents to the Architect, in
   one place, everything that waits on them. It decides nothing and writes no file. Exactly
-  one works at a time. It starts from [COORDINATOR.md](COORDINATOR.md).
+  one works at a time. It starts from [COORDINATOR.md](COORDINATOR.md). The Architect trials
+  it at a later date, and until then every other delegate works with the Architect directly.
 - A **curator** delegate keeps the rules, the root files and the curator projects, and never
   writes code inside a contributor project. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** delegate builds one project and touches nothing outside its folder. It
@@ -55,10 +56,6 @@ change. A curator who reads a project and finds something opens one to say what 
 may not edit the source of a contributor. Either way the answer is written on the issue, and
 the Architect decides.
 
-A brief starts a delegate. It quotes the words of the Architect, and its label names the role
-that does the work. The label `architect` marks each issue and pull request that waits on the
-Architect, and the coordinator removes it once the Architect rules.
-
 They also carry the queue of each delegate, because a delegate ends and takes its intentions
 with it. The record says what **is**, and an issue says what is **queued**. An issue links
 the record rather than restates it.
@@ -67,8 +64,8 @@ Every delegate posts as the same account, so each issue carries a label that say
 is. The label is the role string that the branch names. It is `curator` for the rules, the
 checks, the merge process and the root files. It is `curator/<project>` or
 `contributor/<domain>/<project>` for one project. A delegate finds its work by a filter on
-its own label. Role labels are added and never removed, so when an answer hands work across,
-the label of the other role joins the first.
+its own label. Labels are added and never removed, so when an answer hands work across, the
+label of the other role joins the first.
 
 ## Branches and checks
 

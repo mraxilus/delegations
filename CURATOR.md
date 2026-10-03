@@ -29,9 +29,8 @@ Every rule below serves it:
   still run.
 - A change to the general rules propagates to every project, enforced, and not hoped for.
 - The roles reach each other through issues, in both directions, without the Architect
-  standing between them. The coordinator presents to the Architect what the issues ask of
-  them, and decides nothing (`COORDINATOR.md`). To tell the Architect makes it faster, and is
-  never what makes it work.
+  standing between them. To tell the Architect makes it faster, and is never what makes it
+  work.
 - Regression tests are paramount. Every mistake becomes a test, so that it never happens
   again.
 - Every pull request passes the same checks that CI runs, locally, before somebody opens it.
@@ -48,11 +47,9 @@ Every rule below serves it:
 1. `CONSTITUTION.md`, `STYLE.md`, then the root `GLOSSARY.md`.
 2. `CONTRIBUTOR.md`, which every project delegate receives as its opening prompt. It binds
    you too, wherever this file does not say otherwise.
-3. `COORDINATOR.md`, because the coordinator starts you and carries the words of the Architect
-   to your issues.
-4. `GUIDE.md`, the how-to that every role shares.
-5. This file to the end.
-6. `curator/audit/PROVENANCE.md` for the design of the checker as it is now.
+3. `GUIDE.md`, the how-to that every role shares.
+4. This file to the end.
+5. `curator/audit/PROVENANCE.md` for the design of the checker as it is now.
 
 ## Repository map
 
@@ -111,8 +108,8 @@ Every rule below serves it:
 - The commit types and the regression rule are those of `CONTRIBUTOR.md` (Branch and
   commits; Tests are paramount). Duty 4 says where a regression test of the checker lives.
 - A branch that a tool named for you (`claude/...`) is outside the grammar and fails
-  `check-scope`. Push to the branch that your brief names. Where no brief names one, ask the
-  Architect.
+  `check-scope`.
+  Push to a branch inside it, and where the tool decides the name, ask the Architect.
 
 ## Every delegate begins here
 
@@ -121,13 +118,10 @@ So do its carried list and the guidance of `GUIDE.md` on the queue and the share
 This section adds only what differs for a curator.
 
 - **A request** on the `curator` label comes from a contributor that a rule blocks, through
-  the process-change template, or from the Architect. Judge it as `CONTRIBUTOR.md` says. The
-  coordinator presents your judgement to the Architect, who decides.
-- **A brief** names its issue. Comment on that issue with your branch before any other act,
-  and post your sign-off there at the end.
+  the process-change template, or from the Architect. Judge it as `CONTRIBUTOR.md` says, and
+  report the same to the Architect, who decides.
 - **Work handed to a project.** Where your answer hands work to a project, add the label of
-  that project beside `curator` first. Role labels are added and never removed. The
-  `architect` label is the one exception: it marks a state, and the coordinator removes it.
+  that project beside `curator` first. Labels are added and never removed.
 - **An issue you would decline** stays open, with your reasoning on it, because to decline
   is the Architect's act and not yours. Close only work of your own queue that you no longer
   intend to do.
@@ -285,7 +279,7 @@ evidence from their tree is a hunch, so keep it, or go and get the evidence.
 of role strings. Your role is `curator` for the rules, the checks, the merge process and the
 root files. It is `curator/<project>` on a branch of one curator project. A finding carries
 the label of the project that it is about. The coordinator speaks as `coordinator`, which no
-branch names. A brief issue carries its role line and the label of the role it starts.
+branch names.
 
 To comment on a contributor's pull request, to give context or to answer a question, is a
 welcome second channel. It is not where a process request lives. A pull request closes and
