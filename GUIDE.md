@@ -312,25 +312,27 @@ you do it.
 A message that ends a turn which pushed or posted, and the message of a handover, closes with
 one block, `## Sign-off`. Nothing follows it.
 
-It serves three readers. The Architect reads it first, for what waits on them, so the block puts
-each decision first, in the shape of a decision card. The next delegate, and the same delegate
-after a compaction, read the rest. Its parts come in one order:
+It serves three readers. The Architect reads it first, and set the order of its parts. The
+block says who the delegate is and where it stands, then what happened, then what waits on the
+Architect. The next delegate, and the same delegate after a compaction, read the same block.
+Its parts come in this order:
 
-1. **Role.** The role string, and the branch at its short head, `pushed` or `not pushed`. Then
-   the pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
-   `red` or `pending`.
-2. **Brief.** The issue of the brief, or `none`.
-3. **State.** One word. `blocked` means that nothing moves until the Architect decides.
-   `waiting` means that nothing moves until another delegate or an outside party acts.
-   `working` means that this delegate has work it can do now. `done` means that nothing is left.
+1. **Role.** The role string, then the branch.
+2. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
+   pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
+   `red` or `pending`. The word is one of these:
+   - `blocked`: nothing moves until the Architect decides.
+   - `waiting`: nothing moves until another delegate or an outside party acts.
+   - `working`: this delegate has work it can do now.
+   - `done`: nothing is left.
+3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
 4. **Context.** At most three sentences in the third person. They say what the branch is for,
    and what the Architect asked last.
-5. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
-   `**Decisions:** None.` where there is none.
-6. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
-7. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
+5. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
    by number, and decisions as `D1`.
-8. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
+6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
+   `**Decisions:** None.` where there is none.
+7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
    string. No forecast.
 
 #### A decision
@@ -385,16 +387,25 @@ where it holds this repository alone, and reading holds it elsewhere.
 ```md
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list` at
-`3f2a9c1`, pushed, #331 draft, run 412 green
+**Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
 
-**Brief:** #329
+**State:** blocked, at `3f2a9c1`, pushed, #331 draft, run 412 green
 
-**State:** blocked
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
+| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
+| 3 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
+| 4 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
+| 5 | ⏸️ | Names in the tests (carried 2) | #310 | D1 |
+| 6 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate |
 
 **Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
 the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
 of each algebra.
+
+**Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
+belongs to rga_visualiser and blocks nothing here.
 
 **Decisions:**
 
@@ -410,18 +421,6 @@ of each algebra.
 **D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
 - Class: fact
 - Where: #331
-
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
-| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 3 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
-| 4 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
-| 5 | ⏸️ | Names in the tests (carried 2) | #310 | D1 |
-| 6 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate |
-
-**Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
-belongs to rga_visualiser and blocks nothing here.
 
 **Next step:** Architect: rule on D1 in #310, the issue on the names in the tests.
 ```
