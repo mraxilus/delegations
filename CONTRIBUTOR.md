@@ -135,6 +135,12 @@ and that reader is the enforcement.
   Every other question, decision or hand-over goes in an issue, a pull request or a comment.
   Never message another delegate in chat. Where a ruling of the Architect reaches you in chat,
   post its words exactly on the issue or pull request that it answers.
+- **The shared folder** holds the files that the conversations of the project share, outside
+  the repository. The Architect calls it the library. It holds only the files that someone
+  still needs, so keep scratch and temporary files out of it. Delete a file there once nobody
+  needs it. That is once its task ends, once its content is acted on, or once the repository
+  holds its final form or records it. Read a file before you delete it, and never delete one
+  that a running thread still uses.
 - **Say which role you are.** Every delegate posts as the same account, so open every issue,
   pull request and comment with `**Role:** contributor/<domain>/<project>`. Label every pull
   request and every issue of your own queue with that same string. An issue for another role

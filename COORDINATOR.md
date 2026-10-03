@@ -163,8 +163,12 @@ Architect what works, and what waits on them, so keep it true.
 - **Read the list after each answer and each report.** No thread shows as waiting on the
   Architect while nothing waits on them.
 - **Resolve each idle thread that is no longer needed**, because its work is finished or
-  superseded, and each of its questions has an answer. Its files and reports stay where they
-  are. This holds even where the last message of the thread is yours or a delegate's.
+  superseded, and each of its questions has an answer. Its reports stay where they are, and its
+  files stay until nobody needs them. This holds even where the last message of the thread is
+  yours or a delegate's.
+- **Check the shared folder each time that you read the list.** Have each file there that
+  nobody needs deleted, through a thread that the Architect can open. `CONTRIBUTOR.md`,
+  Boundaries, says when nobody needs a file.
 
 ## Record a ruling
 

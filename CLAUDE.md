@@ -17,8 +17,8 @@ A model writes every line here, under the direction of the Architect. Before any
    Technical English, and `GUIDE.md` gives the rules. A glossary term is proposed, and never
    written on sight.
 7. Chat carries the brief, the report, an instruction the Architect allowed, and an answer of
-   the Architect to the delegate that asked, and no more. `CONTRIBUTOR.md`, Boundaries, Chat,
-   gives the rule.
+   the Architect to the delegate that asked, and no more. The shared folder of the project
+   holds only files that someone still needs. `CONTRIBUTOR.md`, Boundaries, gives both rules.
 8. A record describes what is, and never narrates what happened. The reason a design is as
    it is belongs in the record. A list of events does not.
 9. A turn that pushed or posted ends with the sign-off block that `GUIDE.md`, Output
