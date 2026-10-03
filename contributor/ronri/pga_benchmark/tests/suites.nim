@@ -7,7 +7,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, compilesettings, json, macros, options, sequtils, strutils, tables, unittest]
+import std/[algorithm, compilesettings, json, macros, options, os, sequtils, strutils, tables, unittest]
 from std/unicode import runeLen
 
 import ../src/pga_benchmark
@@ -742,6 +742,21 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         check counts.fills_zero == 0 and counts.checks == 0  # straight line, as hand code is
         inc compared
       check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
+
+
+  test "timed loop binds result returned by value, so no temporary is zero-filled":
+    # Result of three floats or fewer returns by value; assigned straight into its slot, it
+    #   passes through temporary this large function zero-fills out of line, about 11 ns.
+    var calls, filled = 0
+    for path in walkFiles(CACHE / "*measurements.nim.c"):
+      let lines = readFile(path).splitLines
+      for index, line in lines:
+        if "referenceZ" notin line: continue
+        inc calls
+        if index > 0 and lines[index - 1].startsWith("nimZeroMem") and line.startsWith("T"):
+          inc filled
+    check calls > 0  # loops that call reference are read
+    check filled == 0  # no reference result passes through zero-filled temporary
 
 
   test "own nimcache holds every catalogued symbol at its arity":
