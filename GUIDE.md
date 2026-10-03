@@ -1,9 +1,10 @@
 # Guide
 
-How-to for every delegate, curator or contributor. Nothing here binds on its own. What binds is
-in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, and in `CURATOR.md`. A
-section here binds where one of those documents points at it. The stamp covers this file too,
-so a change here re-audits every project, as a change to the rules it carries should.
+How-to for every delegate: curator, contributor or coordinator. Nothing here binds on its own.
+What binds is in `CONSTITUTION.md`, `STYLE.md`, `EXAMPLES.md` and `CONTRIBUTOR.md`, and in
+`CURATOR.md` and `COORDINATOR.md`. A section here binds where one of those documents points at
+it. The stamp covers this file too, so a change here re-audits every project, as a change to
+the rules it carries should.
 
 ## Simplified Technical English
 
@@ -45,7 +46,7 @@ leave a comment in code alone, which drops its articles and keeps the rest (Arti
   step.
 
 The `english` check reads three things: sentence length, paragraph length and that short
-table of words. It reads every root document except `LICENSE.md`, and the four templates. It
+table of words. It reads every root document except `LICENSE.md`, and the five templates. It
 also reads the README of each project root and of each domain, and the three records of every
 project.
 
@@ -286,6 +287,10 @@ build.
 The same URL belongs in both places. The pull request is the record, and the message is what
 gets read first.
 
+**Name each issue and pull request by what it is or does**, in plain words, and never by its
+number alone. The number goes in a link. A reader who did not watch has no context for a bare
+number.
+
 **Show the change in that same message.** Give a screenshot where it is visual, and a worked
 example where it is not. Where there is nothing to show, give one sentence that says why.
 GitHub takes no image from an API, so this message is the only channel that a picture has.
@@ -305,31 +310,72 @@ you do it.
 ### The sign-off
 
 A message that ends a turn which pushed or posted, and the message of a handover, closes with
-one block, `## Sign-off`. Nothing follows it.
+one block, `## Sign-off`. Nothing follows it. Post the same block as a comment on the issue of
+your brief, or on your pull request where no brief exists.
 
-It serves three readers. The Architect needs what waits on them and what is ready. The next
-delegate needs where things stand and what is unfinished. The same delegate, after a compaction,
-needs the map of its branches, pull requests and issues, and the carried list. Its parts come in
-one order:
+The coordinator reads it first. It sorts what each delegate needs from the Architect, and
+presents it in one place without a change of words. So the block puts each decision first, in
+the shape of a decision card. The next delegate, and the same delegate after a compaction, read
+the rest. Its parts come in one order:
 
 1. **Role.** The role string, and the branch at its short head, `pushed` or `not pushed`. Then
    the pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
    `red` or `pending`.
-2. **Context.** Three sentences in the third person. They say what the branch is for, what the
-   Architect asked last, and what was open on entry, with no run result.
-3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`. Rows are
-   numbered from 1 and sorted by state, and a state never returns once the next one begins.
-   - ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
-     names it.
-   - ✅ done this turn, nobody acts. The last cell is never empty.
-   - ⚠️ an issue met, another delegate or an outside party acts. The last cell names who, and
-     on what.
-   - ⏸️ the Architect acts, whatever the cause. The last cell names what.
-   - ⬜ up next, this delegate acts.
-4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
-   by number.
-5. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
+2. **Brief.** The issue of the brief, or `none`.
+3. **State.** One word. `blocked` means that nothing moves until the Architect decides.
+   `waiting` means that nothing moves until another delegate or an outside party acts.
+   `working` means that this delegate has work it can do now. `done` means that nothing is left.
+4. **Context.** At most three sentences in the third person. They say what the branch is for,
+   and what the Architect asked last.
+5. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
+   `**Decisions:** None.` where there is none.
+6. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
+7. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
+   by number, and decisions as `D1`.
+8. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
    string. No forecast.
+
+#### A decision
+
+Write each decision so that the coordinator can put it in front of the Architect unchanged.
+
+```md
+**D1.** Keep the names `rga4d` and `cga5d` in the tests?
+- Class: blocks this delegate
+- Where: #310
+- Options:
+  - a. Keep: the tests stay as they are, and the root glossary gains two names.
+  - b. Rename: twelve suites change, and the gap list waits one turn.
+- Recommends: a, because both names are the names of the authority.
+- Delay costs: #331 stays a draft.
+```
+
+- **The question** is one sentence that ends with `?`, verb first where it can be.
+- **Class** is one of these. The coordinator sorts on it.
+  - `blocks this delegate`
+  - `blocks this delegate and <role>`, with each role string that waits too
+  - `has a workaround: <the workaround>`
+  - `fact`, for something the Architect must know and need not decide
+- **Where** is the issue or pull request where the ruling goes. Open one first where none
+  exists, because a ruling in chat alone is lost.
+- **Options** are two to four. A label is at most three words. Each consequence is one sentence
+  that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
+  has no options, no recommendation and no delay cost.
+- **Recommends** names one option, and why, in one sentence.
+- **Delay costs** says what waits while nobody decides.
+
+#### The table
+
+Rows are numbered from 1 and sorted by state, and a state never returns once the next one
+begins.
+
+- ☑️ done earlier, nobody acts. A row stays only while it is a carried item or another row
+  names it.
+- ✅ done this turn, nobody acts. The last cell is never empty.
+- ⚠️ another delegate or an outside party acts. The last cell opens with that role string, or
+  with `outside`, then says on what.
+- ⏸️ the Architect acts. The last cell names the decision, as `D1`.
+- ⬜ up next, this delegate acts.
 
 A carried item is a row in the state it is in, tagged `(carried N)`. A carried item that does
 not apply is not a row, and goes in the pull request body under Record. An item is a clause a
@@ -344,24 +390,42 @@ where it holds this repository alone, and reading holds it elsewhere.
 **Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list` at
 `3f2a9c1`, pushed, #331 draft, run 412 green
 
+**Brief:** #329
+
+**State:** blocked
+
 **Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
 the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
-of each algebra. On entry, #331 was a draft and #310 held the open question on the names.
+of each algebra.
+
+**Decisions:**
+
+**D1.** Keep the names `rga4d` and `cga5d` in the tests?
+- Class: blocks this delegate
+- Where: #310
+- Options:
+  - a. Keep: the tests stay as they are, and the root glossary gains two names.
+  - b. Rename: twelve suites change, and the gap list waits one turn.
+- Recommends: a, because both names are the names of the authority.
+- Delay costs: #331 stays a draft.
+
+**D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
+- Class: fact
+- Where: #331
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
-| 1 | ☑️ | `rga4d` and `cga5d` stay, by the ruling on V.9 | #320 | the Architect ruled |
-| 2 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
-| 3 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 4 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
-| 5 | ⚠️ | `koch drive` red in the drive of rga_visualiser | run 413, #332 | its contributor |
-| 6 | ⏸️ | V.9 names in the tests: keep `rga4d`, or rename (carried 2) | #310 | the Architect |
-| 7 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate, 16 GB |
+| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
+| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
+| 3 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
+| 4 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
+| 5 | ⏸️ | Names in the tests (carried 2) | #310 | D1 |
+| 6 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate |
 
-**Summary:** The gap list is done and green, and #331 waits only on the Architect. Row 6 waits
-on the Architect. The red run in row 5 belongs to rga_visualiser and blocks nothing here.
+**Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
+belongs to rga_visualiser and blocks nothing here.
 
-**Next step:** Architect: rule on #310 in #331 Notes.
+**Next step:** Architect: rule on D1 in #310, the issue on the names in the tests.
 ```
 
 ## Provenance guide
