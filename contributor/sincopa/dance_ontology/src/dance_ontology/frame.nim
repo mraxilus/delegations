@@ -100,7 +100,7 @@ func other*(side: Side): Side =
   of Side.Right: Side.Left
 
 
-func hasOverlap*(frame: Frame): bool =
+func isOverlapping*(frame: Frame): bool =
   ## Test whether both forearms cross midline and so lie on top of each other.
   frame.hold[Side.Left] == some(crossedSite(Side.Left)) and
     frame.hold[Side.Right] == some(crossedSite(Side.Right))
@@ -146,7 +146,7 @@ func isValid*(frame: Frame): bool =
   ##       values.
   if frame.hold[Side.Left].isSome and frame.hold[Side.Left] == frame.hold[Side.Right]:
     return false
-  frame.over.isSome == frame.hasOverlap
+  frame.over.isSome == frame.isOverlapping
 
 
 func reflect*(frame: Frame): Frame =

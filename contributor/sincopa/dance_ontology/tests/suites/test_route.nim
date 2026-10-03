@@ -177,5 +177,5 @@ suite "drawn run":
   test "run of one point, or none, is no length at all":
     check polylineLength(@[]) == 0.0
     check polylineLength(@[(1.0, 2.0)]) == 0.0
-    const NOTHING = polylineLength(@[])
-    check NOTHING == 0.0
+    const nothing = polylineLength(@[])
+    check nothing == 0.0

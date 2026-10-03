@@ -247,7 +247,7 @@ func extentOf(here: Frame): (int, int, int, int) =
   ##     drops has nothing above, so box that holds one frame is not
   ##     box that holds another.  This is what window is cut to; it is
   ##     not what frame is drawn in.
-  const PAD = 14
+  const pad = 14
   # Frame's name is often wider than frame it names, and name is part of
   # drawing: box measured to pictures alone would cut words off.
   var
@@ -268,7 +268,7 @@ func extentOf(here: Frame): (int, int, int, int) =
     top = min(top, y - frameHeight(NODE_WIDTH) div 2 - NAME_ROOM)
     bottom = max(bottom, max(label_y + plateSpan(spoke.lines)[1] div 2,
       y + frameHeight(NODE_WIDTH) div 2))
-  (left - PAD, top - PAD, right - left + 2 * PAD, bottom - top + 2 * PAD)
+  (left - pad, top - pad, right - left + 2 * pad, bottom - top + 2 * pad)
 
 
 func spokesBox(): (int, int, int, int) {.compileTime.} =

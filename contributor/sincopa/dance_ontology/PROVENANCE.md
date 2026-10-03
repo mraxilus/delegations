@@ -2024,8 +2024,11 @@ such global takes a qualifier, such as `DRAWING_SHOWN`. The compiler says so as 
 
 **Each local, parameter and field is in snake_case, and each boolean says what it is.** The
 Architect ruled so on #308, by V.1 and V.4. A boolean value takes `is_`, `as_`, `should_`, `found_`
-or `has_`. A routine that answers yes or no takes `is...`, or `has...` as the twin of `has_`. One
-concept keeps one name in each module, such as `is_away`, `is_holding`, `is_stopped` and
+or `has_`. A function that answers yes or no takes `is...`, as the names check of #371 reads V.4.
+So `isOverlapping` says whether two forearms lie on each other. A `proc` that answers reports an
+action, so `hasRoomForMap` keeps its name.
+
+One concept keeps one name in each module, such as `is_away`, `is_holding`, `is_stopped` and
 `found_rest`.
 
 **A predicate never takes the word of a value that it meets.** Nim reads `is_away` and `isAway` as

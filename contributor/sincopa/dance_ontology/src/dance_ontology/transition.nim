@@ -223,7 +223,7 @@ func phrase*(source: Frame; move: Move): string =
   case move.helper
   of Helper.Collect:
     result = "collect " & hand & " to " & followName(move.to.hold[move.side].get)
-    if move.to.hasOverlap:
+    if move.to.isOverlapping:
       result.add ", " & (if move.to.over.get == move.side: "over" else: "under") &
         " the " & leadName(other(move.side)) & " arm"
   of Helper.Drop:
@@ -326,7 +326,7 @@ func label*(source: Frame; move: Move): seq[string] =
   case move.helper
   of Helper.Collect:
     result = @["collect " & followName(move.to.hold[move.side].get)]
-    if move.to.hasOverlap:
+    if move.to.isOverlapping:
       result.add(if move.to.over.get == move.side: "over" else: "under")
   of Helper.Drop:
     # Frame being left is where hold still exists, which is why this reads

@@ -106,11 +106,11 @@ func unpinned(svg: string): string =
   ## Take off pixel size workbench pins each figure to for its own rows, so
   ## card decides how big picture is drawn: inline style would beat sheet.
   result = svg
-  const OPEN = " style=\"width: "
-  let at = result.find(OPEN)
+  const opening = " style=\"width: "
+  let at = result.find(opening)
   if at < 0:
     return
-  let shut = result.find('"', at + OPEN.len)
+  let shut = result.find('"', at + opening.len)
   if shut < 0:
     return
   result = result[0 ..< at] & result[shut + 1 .. ^1]
@@ -361,7 +361,6 @@ func sheetOf(parts: Parts): string =
 
   # `C`. Chain two-hand page walks.
   let chains = parts
-  const PAIRED: Holds = [some Arm.Left, some Arm.Right]
   let
     dual_phase = phaseOf(PAIRED)
     dual_chain = chainFor(PAIRED)
@@ -538,7 +537,7 @@ func sheetOf(parts: Parts): string =
       body.add card(&"G{g_count}", said, "one edge at a time", steps, asks = asks_g)
   body.add "</div></section>"
 
-  const SWITCHING = block:
+  const switching = block:
     ## Rules that show one step of switching cell and light its button.
     ##   Written out per step rather than by script: page is markup browser
     ##     draws with nothing running, and it stays that way.
@@ -553,7 +552,7 @@ func sheetOf(parts: Parts): string =
         " color: var(--card); border-color: var(--ink); }\n"
     css
 
-  const HEAD = """<style>
+  const head = """<style>
   :root { --keep: #3f7550; --keep-wash: #eef4f0; --drop: #b3392a;
     --drop-wash: #f8efed; --mend: #a06a1e; --mend-wash: #f7f1e6;
     --mend-ink: #7a5016; }
@@ -627,9 +626,9 @@ func sheetOf(parts: Parts): string =
   .picks label:hover { border-color: var(--rule-strong); color: var(--ink); }
   .steps input:focus-visible ~ .picks { outline: 1px dashed var(--rule-strong);
     outline-offset: 3px; }
-""" & SWITCHING & """  </style>"""
+""" & switching & """  </style>"""
 
-  let sheet = HEAD & """<div class="wrap">
+  let sheet = head & """<div class="wrap">
   <h1>Frame positions, drawn</h1>
   <p class="lede">Every position this project draws, in one place, so that the Architect
   can keep or drop each one. Every card carries an identifier to quote back.</p>
@@ -671,12 +670,12 @@ func drawingOf(html, id: string): string =
   ##     those before its identifier up to identifier itself.
   ##   Cell that switches between several drawings carries all of them, and
   ##     verdict on cell is verdict on all, so pin covers all.
-  const CELL = """<figure class="pic"""
+  const cell = """<figure class="pic"""
   let
     marks = &"<code>{id}</code>"
     names = html.find(marks)
   doAssert names > 0, &"A ruled card is not on the page: got `{id}`."
-  let opens = html.rfind(CELL, last = names)
+  let opens = html.rfind(cell, last = names)
   doAssert opens >= 0, &"A ruled card has no cell of its own: got `{id}`."
   var at = opens
   while true:

@@ -170,7 +170,7 @@ suite "modifiers":
       check blockerOf(twist, Level.Above).isNone
       check armCapacity(blockerOf(twist, Level.Above), Level.Above) ==
         UNBOUNDED_TURNS
-    check not ABOVE_BLOCKS
+    check not IS_ABOVE_BLOCKING
 
 
 suite "what there is":
