@@ -6,9 +6,8 @@ humanoid bodies, four hands, and the geometry of a face-to-face position.
 
 The model has one state and one relation. A **frame** is what each hand of the lead holds,
 and how the arms lie where they overlap. A **move** exists between two frames exactly when
-the difference between them is one primitive. Everything else is derived from those two
-things: the names, the routes, the audit of the source workbook, the drawings and the browser
-validator.
+they differ in one connection. Everything else is derived from those two things: the names,
+the routes, the audit of the source workbook, the drawings and the Reference.
 
 ```
                    Right to left               Right-to-right over Left-to-left
@@ -51,7 +50,7 @@ translation is printed in one table, and nothing is tuned to make them agree.
   it with a newer sheet that this project has not been given. So what the audit reports, and the
   sheet-facing half of the review page, are findings about a document no longer in use. Both
   stay running until the new sheet arrives and replaces the transcription.
-- The forty drawing rules of the Architect as given, held as data in `design/rules.nim`, and
+- The drawing rules of the Architect as given, held as data in `design/rules.nim`, and
   mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the pages to them.
 - For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
   one is in `simulation/rig.nim` with its derivation, and `tests/test_rigid.nim`,
@@ -79,7 +78,7 @@ publish a page is to republish its built file to the URL it already has, listed 
 
 ## Published pages
 
-The validator is the page that the project stands behind. Every other one is a mock-up or an
+The Reference is the page that the project stands behind. Every other one is a mock-up or an
 instrument, kept for reference. `CONTRIBUTOR.md` draws the same line between `pages/` and
 `mockups/`, and every published title carries it. A gallery that holds both then says which
 is which before either one is opened.
@@ -115,7 +114,7 @@ is in the log, and in `PROVENANCE.md` where it still bears on the design.
 ```
 src/dance_ontology.nim             umbrella: bootstrap order, re-exports
 src/dance_ontology/frame.nim       frames, their laws, their names, reflection
-src/dance_ontology/transition.nim  the two primitives, the two compounds, the routes
+src/dance_ontology/transition.nim  collect and drop, the two compound moves, the routes
 src/dance_ontology/diagram.nim     one drawing of a frame, for everything that shows one
 src/dance_ontology/map.nim         the whole graph as one picture: frames and moves
 src/dance_ontology/spokes.nim      the frame held and every way out of it, and no more
@@ -125,19 +124,21 @@ src/dance_ontology/rotation.nim    the unfinished rotation axis: twist, body, wr
 src/dance_ontology/axle.nim        the rotation axis drawn as an axle of postures
 src/dance_ontology/draw/           the shared drawing chain: geometry, style, pose,
                                    body, figure, route, scene, and its own terms
-app/app.nim                        the browser validator's script
+app/app.nim                        the script of the Reference
 design/                            the mock-up workbench: rules first, pages after
 simulation/                               the body simulation, standalone on purpose
 tools/audit.nim                    the same audit, printed
 pages/                             hand-written pages this project stands behind:
-                                   app and simulation shells, review page's prose
+                                   app shell, review page's prose
 mockups/                           wholecloth.html, hand-drawn proposal to react to
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
-tools/build.nim                    this project's verbs: pages, modelled, rig, turns,
-                                   verdicts, shot, clean
-tests/                             the simulation's laws (test_rigid, test_read) and the engine's
-                                   (test_engine); test_said, in JavaScript; test_suites, which runs
+tools/build.nim                    this project's verbs: pages, assets, pins, modelled,
+                                   rig, turns, verdicts, answers, engine, shot, system,
+                                   clean
+tests/                             the simulation's laws (test_rigid, test_read), the engine's
+                                   (test_engine) and the planner's (test_plan); test_said, in
+                                   JavaScript; test_suites, which runs
                                    every other suite as one binary from suites/: the laws
                                    over every pair of frames, the tape's (test_limb), the
                                    workbench's gates (test_marks) and the review page
@@ -145,11 +146,11 @@ tests/                             the simulation's laws (test_rigid, test_read)
 build/                             every page, picture and script; ignored by git
 ```
 
-## The validator
+## The Reference
 
 `build/app/index.html` shows three things, and so does `artifact.html`, which is the same
-page as one self-contained file. It shows the frame you are in, and every frame one primitive
-away with the phrase that leads it. It also shows every frame that is *not*, with the way
+page as one self-contained file. It shows the frame you are in, and every frame one move away
+with the phrase that leads it. It also shows every frame that is *not*, with the way
 there spelled out a move at a time. Only what is offered can be clicked, so a move that the
 ontology does not derive cannot be danced.
 
@@ -174,7 +175,7 @@ Two named compounds, `place` and `cut`, are pairs of those moves that a lead thi
 one. They are the two that the vocabulary marks with an asterisk.
 
 The `base` sheet names nine states, seven of them hand-to-hand, and eighteen of its
-twenty-seven cells hold between those seven. All eighteen name the same primitive that the
+twenty-seven cells hold between those seven. All eighteen name the same move that the
 model derives independently. They are every move that exists between those seven states:
 nothing missing, and nothing spare.
 
