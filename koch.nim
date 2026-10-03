@@ -451,12 +451,12 @@ proc run(options: Options): int =
       return 1
     let
       locked = tree.lockedNimbles
-      answers = resolve(options.root, tree, semanticQueries(entries, locked))
+      answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
       (written, fixed, refused, left) = fixEntries(
         options.branchOrDefault,
         entries,
         locked,
-        tree.contextOf(answers),
+        tree.contextOf(entries, answers, locked),
       )
     for f in left.sorted: echo f.render
     if refused.len > 0:

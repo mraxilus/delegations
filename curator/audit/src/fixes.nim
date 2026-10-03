@@ -25,10 +25,12 @@
 ##     layouts join groups with separator they read, and trailing separator goes only where no
 ##     layout wrote one.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
-##     from what `contextOf` reads: type conversion `x.T` that semantic pass settles
-##     (`conversions.nim`, `symbols.nim`), then dead export of checker (`checker.nim`), whose
-##     `*` goes where its own module calls it. Fix of named files reads tree whole. File
-##     holding candidate that compiles on no backend is left to hand, with its error.
+##     from what `contextOf` reads: rename of abbreviation (V.6) across files, planned whole or
+##     refused whole (`names.nim`, `rewrites.nim`), and type conversion `x.T` (`conversions.nim`),
+##     each from semantic pass (`symbols.nim`); then dead export of checker (`checker.nim`),
+##     whose `*` goes where its own module calls it. Fix of named files reads tree whole, and
+##     rename writing file it leaves out is refused. File holding candidate that compiles on no
+##     backend is left to hand, with its error.
 ##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
 ##     splits can take spacing fixer refused for width, so second round writes it, and
 ##     `koch fix` run twice writes nothing second time.
@@ -68,9 +70,9 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils, tables]
-import ./[alignment, blanks, checker, conversions, declarations, findings, form, idioms, kinds]
-import ./[layout, messages, names, precedence, prose, rewrites, scope, spacing, symbols, tokens]
-import ./wrapping
+import ./[alignment, blanks, checker, conversions, declarations, findings, form, glossary]
+import ./[idioms, kinds, layout, messages, names, precedence, prose, rewrites, scope, spacing]
+import ./[symbols, tokens, wrapping]
 
 
 const
@@ -96,6 +98,7 @@ type
     ##   rule read across modules, and symbol each name resolves to.
     dead: seq[(string, string)]  ## Path and name of each export no other module names.
     answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
+    plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
 
 
 func fenceOf(source: string): Fence =
@@ -253,18 +256,74 @@ func entriesNamed*(
       result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
 
 
-func semanticQueries*(entries: openArray[Entry], locked: openArray[string] = []): seq[Query] =
-  ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
-  ##   §5). File fix leaves as written asks nothing.
+func isNimKind(e: Entry): bool =
+  ## Decide whether entry is of kind fix writes: Nim, NimScript or nimble.
+  e.kind.isSome and e.kind.get.rule.has_guide
+
+
+func scopeOf(tree: Tree, path: string): seq[(string, string)] =
+  ## Read Nim files rename of name declared in path may reach: path's own project, and root
+  ##   files, which import across projects (`koch.nim`).
+  let directory = path.split('/').projectDirectory
+  for e in tree:
+    if e.isNimKind and (e.path.split('/').projectDirectory == directory or '/' notin e.path):
+      result.add (e.path, e.content)
+
+
+func renamesOf(tree: Tree; entries: openArray[Entry]; locked: openArray[string]): seq[Rename] =
+  ## Read rename of each declaration in entries coining abbreviation (V.6), as names check
+  ##   reads it, with words glossaries admit.
+  let directories = tree.projectDirectories
+  var glossaries: seq[(string, string)]
+  for e in tree:
+    if e.path == ROOT_GLOSSARY or directories.anyIt(e.path == it & "/" & ROOT_GLOSSARY):
+      glossaries.add (e.path, e.content)
   for e in entries:
-    if e.kind.isNone or not e.kind.get.rule.has_guide or e.path in locked: continue
-    let query = conversionQuery(e.path, e.content)
-    if query.sites.len > 0: result.add query
+    if not e.isNimKind or e.path in locked: continue
+    let exempt = glossaries.exemptionsOf(e.path)
+    for (line, column, name, renamed) in abbreviationRenames(e.content, exempt):
+      result.add Rename(
+        path: e.path,
+        line: line,
+        column: column,
+        name: name,
+        renamed: renamed,
+        rule: "abbreviation (V.6)",
+      )
 
 
-func contextOf*(tree: Tree, answers: openArray[Answer] = []): Context =
+func semanticQueries*(
+  tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
+): seq[Query] =
+  ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
+  ##   §5), and every site of each name rename of abbreviation (V.6) would write, across its
+  ##   scope. File fix leaves as written asks nothing; one query holds all one file is asked.
+  var asked: seq[Query]
+  for e in entries:
+    if e.isNimKind and e.path notin locked: asked.add conversionQuery(e.path, e.content)
+  for rename in renamesOf(tree, entries, locked):
+    asked.add rename.queriesOf(tree.scopeOf(rename.path))
+  for query in asked:
+    if query.sites.len == 0 and query.names.len == 0: continue
+    var k = result.mapIt(it.path).find(query.path)
+    if k < 0:
+      result.add Query(path: query.path)
+      k = result.high
+    for site in query.sites:
+      if site notin result[k].sites: result[k].sites.add site
+    for name in query.names:
+      if name notin result[k].names: result[k].names.add name
+
+
+func contextOf*(
+  tree: Tree,
+  entries: openArray[Entry] = [],
+  answers: openArray[Answer] = [],
+  locked: openArray[string] = [],
+): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
-  ##   them from its modules, `koch.nim` and its suites; and answer of each file asked.
+  ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
+  ##   of each abbreviation in entries, refused where it would write file entries leave out.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
@@ -273,6 +332,17 @@ func contextOf*(tree: Tree, answers: openArray[Answer] = []): Context =
     if e.path.startsWith(SUITE_DIRECTORY): suites.add e.content
   result.dead = deadExports(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
+  let named = entries.mapIt(it.path)
+  for rename in renamesOf(tree, entries, locked):
+    let scope = tree.scopeOf(rename.path)
+    var fenced = initTable[string, seq[int]]()
+    for (path, source) in scope: fenced[path] = source.fenceOf.lines
+    var plan = planRename(rename, scope, result.answers, fenced)
+    for path in plan.edits.keys:
+      if plan.refusal.len > 0: break
+      if path notin named or path in locked:
+        plan.refusal = "it would write `" & path & "`, which this fix leaves alone"
+    result.plans.add plan
 
 
 func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context): Fix =
@@ -281,11 +351,18 @@ func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context)
   ##   Fixers that semantic pass and tree inform run first, once, on source as given.
 
   # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
-  var base = source
+  var renamed: seq[Edit]
+  for plan in context.plans:
+    if plan.refusal.len > 0 or path notin plan.edits: continue
+    renamed.add plan.edits[path]
+    for (file, line) in plan.lines:
+      if file == path: result.fixed.add finding(path, line, plan.rename.rule)
+  var base = source.applied(renamed)
   if path in context.answers:
-    let (edits, reports) = conversionEdits(path, source, context.answers[path], fence.lines)
-    base = source.applied(edits)
-    result.fixed = reports
+    let (edits, reports) =
+      conversionEdits(path, source, context.answers[path], fence.lines, renamed)
+    base = source.applied(renamed & edits)
+    result.fixed.add reports
   let shape = base.masked(fence).fenceShape
   result.source = base.masked(fence)
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
@@ -323,6 +400,14 @@ func fixEntries*(
     if fence.fault >= 0:
       result.left.add faultOf(e.path, fence)
       continue
+    for plan in context.plans:
+      if plan.rename.path != e.path or plan.refusal.len == 0: continue
+      result.left.add finding(
+        e.path,
+        plan.rename.line,
+        "Rename to `" & plan.rename.renamed & "` refused, so " & plan.rename.rule &
+          " stays for hand; got " & plan.refusal & ".",
+      )
     if e.path in context.answers and context.answers[e.path].reason.len > 0:
       result.left.add finding(
         e.path,

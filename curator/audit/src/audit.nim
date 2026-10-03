@@ -200,16 +200,9 @@ proc auditTree*(tree: Tree): seq[Finding] =
       )
 
   # Names: every Nim file is held to words glossaries admit, root and its own project.
-  var root_exempt: seq[string]
-  for (path, source) in glossaries:
-    if path == ROOT_GLOSSARY: root_exempt = source.glossaryExemptions
   for e in tree:
     if e.kind.isNone or e.kind.get notin [Kind.Nim, Kind.NimScript, Kind.Nimble]: continue
-    var exempt = root_exempt & JARGON.toSeq
-    for (path, source) in glossaries:
-      if path != ROOT_GLOSSARY and e.path.startsWith(path[0..<path.len - ROOT_GLOSSARY.len]):
-        exempt.add source.glossaryExemptions
-    result.add checkNames(e.path, e.content, exempt)
+    result.add checkNames(e.path, e.content, glossaries.exemptionsOf(e.path))
 
   # Fixed waits: drive code of every project, checker's own included, since its suite holds
   #   names as strings, which Nim source is read without.

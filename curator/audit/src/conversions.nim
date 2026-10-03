@@ -301,16 +301,25 @@ func checkConversions*(path, source: string, answer: Answer): seq[Finding] =
     )
 
 
+func isTouching(a, b: Edit): bool =
+  ## Decide whether two edits write one byte, or one inserts strictly inside other's span.
+  if a.first == a.after: b.first < a.first and a.first < b.after
+  elif b.first == b.after: a.first < b.first and b.first < a.after
+  else: a.first < b.after and b.first < a.after
+
+
 func conversionEdits*(
-  path, source: string; answer: Answer; fenced: openArray[int]
+  path, source: string; answer: Answer; fenced: openArray[int]; held: openArray[Edit] = []
 ): (seq[Edit], seq[Finding]) =
-  ## Read edits writing each conversion check reports, and one report per conversion; fenced
-  ##   line (X.1), and line conversions would widen, keep every conversion on them, for hand.
+  ## Read edits writing each conversion check reports, and one report per conversion. Fenced
+  ##   line (X.1), and line conversions would widen beside `held` edits of other fixers, keep
+  ##   every conversion on them for hand; so does conversion touching span held edit writes.
   var found = conversions(source, answer).filterIt(it.line notin fenced)
+  found = found.filterIt(not it.edits.anyIt((let e = it; held.anyIt(it.isTouching(e)))))
   let before = source.split('\n')
   while true:
     let
-      after = source.applied(found.mapIt(it.edits).concat).split('\n')
+      after = source.applied(found.mapIt(it.edits).concat & held.toSeq).split('\n')
       widened = toSeq(0..<before.len).filterIt(after[it].isWide and not before[it].isWide)
     if widened.len == 0: break
     found = found.filterIt(it.line notin widened)

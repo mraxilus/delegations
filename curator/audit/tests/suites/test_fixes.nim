@@ -199,22 +199,48 @@ suite "Fixes":
     let
       path = "curator/audit/src/a.nim"
       module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet y = x.float\n"
-      queries = semanticQueries([entry(path, module)])
+      queries = semanticQueries(@[entry(path, module)], [entry(path, module)])
     check queries.len == 1 and queries[0].sites == @[(5, 10), (5, 8)]
     var answer = Answer(path: path)
     answer.symbols[(5, 10)] = Symbol(kind: "skType")
     answer.symbols[(5, 8)] = Symbol(kind: "skLet")
     let
       tree = @[entry(path, module)]
-      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf([answer]))
+      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, [answer]))
     check plan.written[0].content == module.replace("x.float", "float(x)")
     check plan.fixed.mapIt(it.message) == @["type conversion (STYLE.md §5)"]
     check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
     let
       failed = Answer(path: path, reason: "undeclared identifier: 'x'")
-      left = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf([failed]))
+      left = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, [failed]))
     check left.written.len == 0
     check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
+
+
+  test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      a = entry("curator/audit/src/a.nim", head & "let ctx* = 1\n")
+      b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet y = ctx\n")
+      tree = @[a, b]
+      queries = semanticQueries(tree, tree)
+    check queries.len == 2
+    check queries[0].sites == @[(5, 4)] and queries[0].names == @["context"]
+    check queries[1].sites == @[(7, 8)]
+    let declared = Symbol(kind: "skLet", name: "a.ctx", file: "/r/a.nim", line: 5, column: 4)
+    var answers = @[Answer(path: a.path), Answer(path: b.path)]
+    answers[0].symbols[(5, 4)] = declared
+    answers[0].globals["context"] = @[]
+    answers[1].symbols[(7, 8)] = declared
+    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    check plan.written.len == 2
+    check plan.written[0].content == head & "let context* = 1\n"
+    check plan.written[1].content == head & "import ./a\n\nlet y = context\n"
+    check plan.fixed.filterIt(it.message == "abbreviation (V.6)").len == 2
+    let alone = fixEntries(CURATOR_BRANCH, [a], context = tree.contextOf([a], answers))
+    check alone.written.len == 0  # rename would write `b.nim`, which fix leaves alone
+    check alone.left[0].message.endsWith("got it would write `" & b.path & "`, which this fix " &
+      "leaves alone.")
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
