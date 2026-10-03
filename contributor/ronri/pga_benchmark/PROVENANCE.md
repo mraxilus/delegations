@@ -162,6 +162,36 @@ moves only the traffic of the operation itself. Every result is folded into one 
 the timing, so nothing is dead. The share of results that carry NaN is counted. The conformal
 norms of the library return NaN on real objects, and that is measured rather than stated.
 
+**Each timed loop has a procedure of its own**, one for each measurand of each implementation,
+as the function of a caller would call it. In one function that holds every loop, Nim puts an
+error check after each call, and gcc guesses that each check may be taken. Its estimate of
+reaching code below then falls to zero after the first measurand. Code that gcc estimates
+never to run is optimised for size, and gcc does not vectorise its loops. So the loop of `+`
+stayed scalar, while the straight-line dense form still became two-wide adds.
+
+At rga4d at `d9be8ae`, gcc estimated 5,215 of the 5,306 blocks of that function never to run.
+It analysed 5 of its loops for vectorisation. Without its guessed profile, it analysed 673 and
+vectorised the loop of `+`. Three alternating runs of each build at rga4d, on `linux amd64,
+4 cores` on 2026-10-03, time the library against its dense form:
+
+| Measurand | One function | A procedure each |
+|-----------|--------------|------------------|
+| `+` | ×1.54 | ×0.78 |
+| `-` | ×1.48 | ×0.79 |
+| `-m` | ×1.85 | ×1.00 |
+| `scale` | ×1.29 | ×1.01 |
+| median general measurand | ×1.035 | ×1.001 |
+
+The norms stay at ×1.7 and the antigrade selection at ×2.9, so those gaps are the library's.
+Suite `Internal: Inspector` holds each timed loop in a C function of its own.
+
+**Pools and results start on a cache line.** The linker put each pool 32 bytes into a line at
+rga4d, so a multivector read spanned three lines and not two. Typed objects straddle lines in
+other patterns, so dense and typed operands read different layouts. On the same machine and
+day, one straight-line form ran 6.40 to 7.59 ns as its arrays moved. Without aligned results,
+`dual_weight_point` at rga4d ran 5.44 ns against 2.71 ns. Suite `Internal: Measurements` holds
+each pool to a line.
+
 **Result slots start uninitialised (`noinit`).** A fill of zeros that the compiler sees lets it
 delete each store of zero that repeats the fill. The bench then times fewer stores than a caller
 pays.
@@ -172,9 +202,9 @@ with or without the fill. So there a fill gives no measurand a discount, and the
 keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
 **A result of three floats or fewer is bound before its slot.** Nim returns such a result by
-value, through a temporary that the call site fills with zeros. In the large function that
-holds every loop, the compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller
-of normal size pays nothing, because there the fill is two stores that the compiler deletes.
+value, through a temporary that the call site fills with zeros. In a large function, the
+compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller of normal size pays
+nothing, because there the fill is two stores that the compiler deletes.
 Of the 2D reference rows, 30 return such a result, and of the 3D ones none.
 
 Two sessions of five alternating runs on `linux amd64, 4 cores` on 2026-10-03 time the 2D
@@ -213,10 +243,9 @@ of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its den
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.15
-apart at rga4d and at cga5d. They are ×1.10 apart at rga3d and ×1.06 at cga4d. The widest
-measurand spreads ×4.73, as `dual_weight_line` at rga3d does. Its reference takes under one
-nanosecond in four runs of five. In two runs of five, its library takes ×2.8 its usual time.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.10
+to ×1.12 apart at each algebra. The widest measurand spreads ×2.24, as `partner_circle` at
+cga4d does. Its reference takes about 1.4 ns, and in one run of five it takes 3.1 ns.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -438,15 +467,13 @@ bound is an estimate.
 
 **What the library spends in time against them.** The runtime baselines time each dense form
 beside the library, five alternating runs at `d9be8ae`, at four algebras, on `linux amd64, 4 cores`
-on 2026-10-03. The median general
-measurand runs ×1.00 to ×1.05 its dense form, since most library operators are already one
-generated table. The compound operations are not. They run ×1.9 to ×5.7 their dense forms, from
-the container at cga5d to the support at rga4d.
+on 2026-10-03. The median general measurand runs ×1.00 to ×1.01 its dense form, since most
+library operators are already one generated table. The compound operations are not. They run
+×2.1 to ×6.5 their dense forms, from the container at cga5d to the support at rga4d.
 
-Sum, difference and negation run ×1.6 to ×2.6, though at the pin they fill nothing and are
-inline. The antigrade selection runs ×2.0 to ×2.8, and the norms ×0.96 to ×3.4. The weight
-unitizes run faster than their dense forms, ×0.59 to ×0.81, and the bulk unitize slower, ×1.5 to
-×3.0. So a dense form is a measure, and never a lower bound on time.
+The antigrade selection runs ×2.4 to ×3.2, and the norms ×0.77 to ×2.1. Sum, difference and
+negation run ×0.65 to ×1.12, and the unitizes ×0.89 to ×1.14. So a dense form is a measure, and
+never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -777,8 +804,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Known limitations
 
-- Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. The
-  evaluations committed now measure rga4d and cga5d only.
+- Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Of the
+  evaluations committed now, `multivector-align` alone measures all four.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
@@ -798,6 +825,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   each implementation at ×0.99 to ×1.00. Single measurands move steadily from ×0.80 (`scale`)
   to ×1.16 (`wedge_anti`). Code layout is the likely cause. So a time ratio inside about ×0.6
   to ×1.4 between two builds is weak evidence of a change.
+- Two forms that spend the same arithmetic can differ in time. At rga4d `+` and its dense form
+  compile to the same 16 loads, 8 adds and 8 stores. The loop of the library interleaves each
+  load, add and store, and the dense form groups its loads first. Of the 66 rows that spend the
+  same counts in both, the median reads ×1.00, and light rows stray to ×0.65 at cga5d. Why order
+  moves time is unmeasured, since this container offers no hardware counters.
 
 ## Open questions
 
@@ -805,11 +837,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
   after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
-- Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.81,
-  while the bulk unitize runs slower, ×1.5 to ×3.0. The library scales every slot in a loop,
-  which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
-- Why `+` and `-` run ×1.6 to ×1.9 their dense forms at the pin, where both fill nothing and
-  write each slot once. The cause is not isolated.
 - Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
   the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
   write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a
