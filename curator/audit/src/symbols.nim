@@ -10,6 +10,9 @@
 ##     fixers leave it and their findings stay for hand.
 ##   Answer of file: symbol each site resolves to (`def`), and global declarations named exactly
 ##     as each name asked (`globalSymbols`, read whole and filtered by Nim's own identity).
+##   Routine returning value answers its own declared name with its implicit `result`, placed
+##     at start of routine's line (both pins served, 2026-10-03); that answer reads as routine
+##     declared at site, where every use of it resolves, so rename finds its declaration.
 ##   Entries run several at once, `PARALLEL` at most: each takes its input whole, so reading
 ##     their output in turn lets later ones run meanwhile.
 ##
@@ -33,7 +36,8 @@ import ./[compilers, layout, plan, toolchain]
 
 type
   Symbol* = object  ## Define symbol name resolves to: kind, qualified name, definition.
-    kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`, `skLet`.
+    kind*: string  ## Symbol kind, as compiler names it, e.g. `skType`; `routine` for routine
+                   ##   whose own name pass answers with its result, kind unread.
     name*: string  ## Qualified name, e.g. `system.float`.
     file*: string  ## Absolute path of definition.
     line*: int  ## One-based line of definition.
@@ -66,6 +70,9 @@ const
   ERROR_SEVERITY = "Error"  ## Severity of `chk` answer that leaves file unresolved.
   BACKEND_JS = "--backend:js"  ## Option asking JavaScript backend, for file C rejects.
   TESTING_DEFINE = "-d:testing"  ## Define stub's own `cmd` passes, read under `tests/`.
+  RESULT_KIND = "skResult"  ## Kind of routine's implicit `result`.
+  RESULT_SUFFIX = ".result"  ## Last part of qualified name of implicit `result`.
+  ROUTINE_KIND = "routine"  ## Kind given routine declared at site whose answer is its result.
 
 
 func symbolOf*(line: string): Option[Symbol] =
@@ -99,6 +106,21 @@ func blocksOf*(output: string): seq[seq[string]] =
       result.add current
       current = @[]
     else: current.add line
+
+
+func declaredAt(symbol: Symbol, path: string, site: (int, int)): Symbol =
+  ## Read symbol answered at site of file at repository-relative path: routine declared there
+  ##   where answer is its implicit result on that line, else answer itself.
+  if symbol.kind != RESULT_KIND or not symbol.file.endsWith("/" & path) or
+      symbol.line != site[0] or not symbol.name.endsWith(RESULT_SUFFIX):
+    return symbol
+  Symbol(
+    kind: ROUTINE_KIND,
+    name: symbol.name[0 ..< ^RESULT_SUFFIX.len],
+    file: symbol.file,
+    line: site[0],
+    column: site[1],
+  )
 
 
 func isSameName*(a, b: string): bool =
@@ -170,7 +192,7 @@ proc answersOf(entry: Entry, process: Process): seq[Answer] =
     for site in query.sites:
       if at < blocks.len and blocks[at].len > 0:
         let symbol = blocks[at][0].symbolOf
-        if symbol.isSome: answer.symbols[site] = symbol.get
+        if symbol.isSome: answer.symbols[site] = symbol.get.declaredAt(query.path, site)
       inc at
     for name in query.names:
       var found: seq[Symbol]
