@@ -2060,8 +2060,9 @@ Each kept answer, reading, card, recording and turn came back the same number, i
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
 so a change of names alone reads the physics again. On 2026-10-02, on four cores, the answers took
 144 s and the report 421 s. The rig took 2464 s and the whole-cloth turns 1135 s. The modelled
-cards took 7245 s on 2026-10-03, and 95 percent of the work was in the 32 planned cards. That is
-the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
+cards took 7245 s on 2026-10-03, and 95 percent of the work was in the 32 planned cards.
+
+That is the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
 simulation are rare.
 
 ## Toolchain
