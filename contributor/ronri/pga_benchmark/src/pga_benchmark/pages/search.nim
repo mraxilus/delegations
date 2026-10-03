@@ -7,8 +7,8 @@
 import std/strutils
 
 
-func isFound*(row_words, typed: string): bool =
+func isFound*(words_row, typed: string): bool =
   ## Decide whether row shows: its words hold every word typed, case folded in ASCII.
   for word in typed.toLowerAscii.splitWhitespace:
-    if word notin row_words: return false
+    if word notin words_row: return false
   true

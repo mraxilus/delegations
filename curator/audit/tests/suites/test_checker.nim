@@ -56,6 +56,20 @@ suite "Checker":
     check found[0].message.endsWith("got `gone`.")
 
 
+  test "dead export drops its `*` where own module calls it, and stays where nothing does":
+    let
+      used = "func gone*(): int = 1\nfunc gone*(x: int): int = x  # Overload.\nlet y = gone()\n"
+      unused = "func idle*(): int = 1  # `idle` named in comment alone.\n"
+      dead = deadExports(["m.nim", "n.nim"], [used, unused], [])
+    check dead == @[("m.nim", "gone"), ("m.nim", "gone"), ("n.nim", "idle")]
+    let fix = fixDeadExports("m.nim", used, ["gone"])
+    check fix.source == used.replace("gone*", "gone")  # every overload, call kept
+    check fix.fixed.len == 2 and fix.fixed[0].line == 1
+    check checkDeadExports(["m.nim", "n.nim"], [fix.source, unused], []).len == 1  # `idle` alone
+    check fixDeadExports("m.nim", fix.source, ["gone"]).fixed.len == 0  # second fix: nothing
+    check fixDeadExports("n.nim", unused, ["idle"]).source == unused  # delete is choice: stays
+
+
   test "every check module carries suite named after it":
     let paired = ["curator/audit/src/form.nim", "curator/audit/tests/suites/test_form.nim"]
     check checkSuites(paired).len == 0

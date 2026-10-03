@@ -196,6 +196,26 @@ suite "Fixes":
     check configuration == "x\n#[ A ]#\ny\n"  # Nim syntax alone
 
 
+  test "X.1 tab in one-line string that is neither raw nor long is written `\\t`, and no other":
+    let
+      plain = "let s = \"a\tb\"\nlet c = &\"x\t{y}\"\n"
+      fix = fixed(plain)
+    check fix.source == "let s = \"a\\tb\"\nlet c = &\"x\\t{y}\"\n"  # escape reads same byte
+    check fix.fixed.mapIt(it.message) == @["tab in string (X.1)", "tab in string (X.1)"]
+    check messages("a.nim", fix.source, Kind.Nim).len == 0  # check reports none after fix
+    check fixed(fix.source).fixed.len == 0  # second fix writes nothing
+    for kept in [
+      "let s = r\"a\tb\"\n",  # raw: `\\t` reads as two characters
+      "let s = fmt\"a\tb\"\n",  # generalised raw
+      "let s = \"\"\"a\tb\"\"\"\n",  # long string
+      "let s = 1  # a\tb\n",  # comment
+      "\tlet s = 1\n",  # indent: width is guess
+    ]:
+      check fixed(kept).source == kept
+      check messages("a.nim", kept, Kind.Nim) == @["Line holds tab."]  # finding stays
+    check fixed("let s = \"a\tb\"\n", Kind.Configuration).source == "let s = \"a\tb\"\n"  # Nim alone
+
+
   test "fix never writes line width check reports":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand

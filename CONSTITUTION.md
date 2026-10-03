@@ -172,8 +172,9 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    configuration fails statically, and an internal impossibility is an assertion. Expected
    absence is a typed Option or an empty value, and never an in-range sentinel. Where a failed
    case still carries a meaningful value, return that value beside a named flag. A message
-   ends by echoing the value: ``"…; got `{value}`."`` An expensive check runs under the
-   assertions flag.
+   ends by echoing each value in backticks, context included, as in
+   ``"…; got `{value}` for `{key}`."``, so an empty value stays visible. An expensive check runs
+   under the assertions flag.
 5. Decide the policy for each special case: zero, empty, NaN, overflow, and a zero norm. Express it
    in the return type, as IV.4 has it. Where no invalid value is possible, return the plain value.
    Compare computed floats only through a relative tolerance with an absolute floor, and poison

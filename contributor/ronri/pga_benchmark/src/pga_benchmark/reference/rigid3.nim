@@ -43,20 +43,15 @@ export scalars
 
 
 type
-  Vector3* = object
-    ## Define three components named as vector; direction, moment or normal.
+  Vector3* = object  ## Define three components named as vector; direction, moment or normal.
     x*, y*, z*: float
-  Point* = object
-    ## Define point 𝐩 with homogeneous weight w; grade 1.
+  Point* = object  ## Define point 𝐩 with homogeneous weight w; grade 1.
     x*, y*, z*, w*: float
-  Line* = object
-    ## Define line 𝐥 with direction v and moment m; grade 2.
+  Line* = object  ## Define line 𝐥 with direction v and moment m; grade 2.
     v*, m*: Vector3
-  Plane* = object
-    ## Define plane 𝐠 with normal (x y z) and position w; grade 3.
+  Plane* = object  ## Define plane 𝐠 with normal (x y z) and position w; grade 3.
     x*, y*, z*, w*: float
-  Motor* = object
-    ## Define motor 𝐐 with weight (v, vw) and bulk (m, mw); even grades.
+  Motor* = object  ## Define motor 𝐐 with weight (v, vw) and bulk (m, mw); even grades.
     v*, m*: Vector3
     vw*, mw*: float
 
@@ -91,14 +86,14 @@ template `*`*(a: Vector3, s: float): Vector3 =
 
 template zero3(): Vector3 =
   ## Spell zero vector by components.
-  ##   Default constructor `Vector3()` costs zero fill and hook calls on this compiler.
-  ##   Measured at 4 ns against 0 (see PROVENANCE, Reference).
+  ##   Default constructor `Vector3()` zero-fills field through `nimZeroMem`; in bench, about
+  ##     21 ns more on four line rows at rga4d (see PROVENANCE, Reference).
   Vector3(x: 0.0, y: 0.0, z: 0.0)
 
 template read3(v: Vector3): Vector3 =
   ## Spell copy of vector by components.
-  ##   Whole-object copy into constructor goes through `=dup` hook call on this compiler.
-  ##   Measured at 20 ns against 2 (see PROVENANCE).
+  ##   Whole-object copy calls synthesised `=dup` hook; in bench, 1.6 ns more on two line rows
+  ##     at rga4d (see PROVENANCE, Reference).
   Vector3(x: v.x, y: v.y, z: v.z)
 
 

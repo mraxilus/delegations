@@ -7,6 +7,8 @@
 ##     is none. Suite counts as caller: test proves routine works, never that anything wants
 ##     it, yet pure rules here are covered by calling them directly. Mention anywhere counts,
 ##     comment included, so rule reports only routines nothing outside their module names.
+##     Fixer (`koch fix`) drops `*` where module itself calls routine; routine nothing calls
+##     keeps its finding, since to delete it is choice.
 ##   Missing suite: check module without `tests/suites/t<module>.nim`.
 ##   Verb mismatch: verbs koch dispatches, verbs its usage text lists, and verbs CURATOR.md
 ##     tables are one set named three times.
@@ -34,7 +36,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, tables]
-import ./[findings, markdown]
+import ./[findings, markdown, tokens]
 
 
 const
@@ -101,9 +103,10 @@ func identifiers(source: string): CountTable[string] =
     i = j
 
 
-func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] =
-  ## Report routine exported from checker that no other module and no suite names.
-  ##   Exports are read from `sources` alone; suites call, and export nothing checker owns.
+func deadExports*(paths, sources, suites: openArray[string]): seq[(string, string)] =
+  ## Read path and name of each routine exported from checker that no other module and no
+  ##   suite names. Exports are read from `sources` alone; suites call, and export nothing
+  ##   checker owns.
   let counts = sources.mapIt(it.identifiers)
   var total = initCountTable[string]()
   for count in counts: total.merge count
@@ -111,12 +114,38 @@ func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] 
   for i, source in sources:
     for name in source.exportedRoutines:
       if total[name] > counts[i][name]: continue
-      result.add finding(
-        paths[i],
-        0,
-        "Routine is exported and named by no other module and no suite; drop its `*`, or " &
-          "delete it; got `" & name & "`.",
-      )
+      result.add (paths[i], name)
+
+
+func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] =
+  ## Report routine exported from checker that no other module and no suite names.
+  for (path, name) in deadExports(paths, sources, suites):
+    result.add finding(
+      path,
+      0,
+      "Routine is exported and named by no other module and no suite; drop its `*`, or " &
+        "delete it; got `" & name & "`.",
+    )
+
+
+func fixDeadExports*(path, source: string; dead: openArray[string]): Fix =
+  ## Drop `*` of each routine `dead` names that its own module calls; leave one nothing calls.
+  ##   Call is name read as code token beyond its declarations, so comment and string count
+  ##   none; to delete routine nothing calls is choice, and its finding stays for hand.
+  result.source = source
+  var lines = source.split('\n')
+  for name in dead:
+    var declared: seq[int]
+    for i, line in lines:
+      let words = line.splitWhitespace
+      if words.len >= 2 and words[0] in ROUTINES and words[1].startsWith(name & "*"): declared.add i
+    let named = source.tokens.countIt(it.kind == TokenKind.Word and it.spelling(source) == name)
+    if declared.len == 0 or named <= declared.len: continue
+    for i in declared:
+      let at = lines[i].find(name & "*")
+      lines[i] = lines[i][0..<at + name.len] & lines[i][at + name.len + 1 .. ^1]
+      result.fixed.add finding(path, i + 1, "dead export (CURATOR.md, Checks reference)")
+  result.source = lines.join("\n")
 
 
 func moduleOf*(path: string): string =

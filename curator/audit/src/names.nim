@@ -38,6 +38,10 @@
 ##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
 ##     `lut_<value>_by_<key>`.
 ##
+##   V.6 has fixer (`koch fix`): `abbreviationRenames` reads each declaration coining
+##     abbreviation and its full spelling, case kept, as check reads it, and rename planner of
+##     `rewrites.nim` renames it at every use through semantic pass, or refuses with reason.
+##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
 ##     where it sits in `type` block; tuple type in brackets, and name `{.inject.}` makes, are
@@ -52,9 +56,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils]
+import std/[algorithm, sequtils, strutils]
 from std/unicode import isLower, isUpper, Rune, runes
-import ./[findings, glossary]
+import ./[findings, glossary, tokens]
 
 
 type
@@ -554,25 +558,70 @@ func declarations*(source: string): seq[Declared] =
     i = next
 
 
+func wordSpans(name: string): seq[(int, int)] =
+  ## Read span of each word of name, split at `_` and at case changes.
+  var first = -1  # Index current word opens at; `-1` between words.
+  for k, c in name:
+    if c == '_':
+      if first >= 0: result.add (first, k)
+      first = -1
+      continue
+    if first < 0:
+      first = k
+      continue
+    let is_boundary = (c in {'A'..'Z'} and name[k - 1] in {'a'..'z', '0'..'9'}) or
+      (c in {'a'..'z'} and k - first > 1 and name[k - 1] in {'A'..'Z'} and
+        name[k - 2] in {'A'..'Z'})
+    if not is_boundary: continue
+    # Capital before lowercase starts new word: `JSONData` is JSON, Data.
+    let cut = if c in {'a'..'z'}: k - 1 else: k
+    result.add (first, cut)
+    first = cut
+  if first >= 0: result.add (first, name.len)
+
+
 func words*(name: string): seq[string] =
   ## Split name at `_` and at case changes: `lut_grade`, `wedgeAnti`, `JSONData` give words.
-  for part in name.split('_'):
-    var cur = ""
-    for k, c in part:
-      let is_boundary = cur.len > 0 and (
-        (c in {'A'..'Z'} and cur[^1] in {'a'..'z', '0'..'9'}) or
-        (c in {'a'..'z'} and cur.len > 1 and cur[^1] in {'A'..'Z'} and cur[^2] in {'A'..'Z'})
-      )
-      if is_boundary:
-        if c in {'a'..'z'}:
-          # Capital before lowercase starts new word: `JSONData` is JSON, Data.
-          result.add cur[0..<cur.high]
-          cur = $cur[^1]
-        else:
-          result.add cur
-          cur = ""
-      cur.add c
-    if cur.len > 0: result.add cur
+  name.wordSpans.mapIt(name[it[0]..<it[1]])
+
+
+func fullWordOf(word: string, lower_exempt: openArray[string]): string =
+  ## Read full word `ABBREVIATIONS` gives coined abbreviation, in word's own case; empty where
+  ##   word is none, or exempt.
+  let lower = word.toLowerAscii
+  if lower in lower_exempt or lower in JARGON: return
+  for (short, full) in ABBREVIATIONS:
+    if lower != short: continue
+    if word == lower: return full
+    if word == word.toUpperAscii: return full.toUpperAscii
+    return full.capitalizeAscii
+
+
+func respelled*(name: string, exempt: openArray[string]): string =
+  ## Spell name with each coined abbreviation written out, case kept (V.6): `ctx_dir` gives
+  ##   `context_directory`, `bufSize` gives `bufferSize`. Same name where it coins none.
+  let lower_exempt = exempt.mapIt(it.toLowerAscii)
+  result = name
+  for (first, after) in name.wordSpans.reversed:
+    let full = name[first..<after].fullWordOf(lower_exempt)
+    if full.len > 0: result = result[0..<first] & full & result[after .. ^1]
+
+
+func abbreviationRenames*(
+  source: string, exempt: openArray[string]
+): seq[(int, int, string, string)] =
+  ## Read one-based line, zero-based byte column, name and full spelling of each declared name
+  ##   coining abbreviation (V.6), as `checkNames` reads them.
+  let
+    tokens = source.tokens
+    starts = source.lineStarts
+  for d in source.declarations:
+    let renamed = d.name.respelled(exempt)
+    if renamed == d.name: continue
+    for t in tokens:
+      if t.line == d.line - 1 and t.kind == TokenKind.Word and t.spelling(source) == d.name:
+        result.add (d.line, t.first - starts[t.line], d.name, renamed)
+        break
 
 
 func letterCase(r: Rune): LetterCase =
@@ -662,6 +711,16 @@ func glossaryExemptions*(glossary: string): seq[string] =
     if line.isTermLine: result.add line[2..<line.len - 3]
 
 
+func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[string] =
+  ## Read words name in path may take beyond table: jargon of V.6, and what root glossary and
+  ##   glossary of path's own project list (`glossaryExemptions`).
+  result = JARGON.toSeq
+  for (glossary, source) in glossaries:
+    let directory = glossary[0..<glossary.len - ROOT_GLOSSARY.len]
+    if glossary == ROOT_GLOSSARY or path.startsWith(directory):
+      result.add source.glossaryExemptions
+
+
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] =
   ## Report declared name that coins abbreviation, carries unlisted acronym, opens routine
   ##   with banned verb, misnames lookup table or boolean, breaks case of its kind, binds in
@@ -675,15 +734,13 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] 
   for d in declared:
     let parts = d.name.words
     for w in parts:
-      let lower = w.toLowerAscii
-      if lower in lower_exempt or lower in JARGON: continue
-      for (short, full) in ABBREVIATIONS:
-        if lower == short:
-          result.add finding(
-            path,
-            d.line,
-            "Name coins abbreviation; write `" & full & "` (V.6); got `" & d.name & "`.",
-          )
+      let full = w.fullWordOf(lower_exempt).toLowerAscii
+      if full.len == 0: continue
+      result.add finding(
+        path,
+        d.line,
+        "Name coins abbreviation; write `" & full & "` (V.6); got `" & d.name & "`.",
+      )
     for a in d.name.acronyms:
       if a.toLowerAscii in lower_exempt: continue
       result.add finding(

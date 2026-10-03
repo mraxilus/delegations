@@ -300,7 +300,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Sign-off ✅ row needs evidence; got empty cell in row " & row[0] & ".",
+        "Sign-off ✅ row needs evidence; got empty cell in row `" & row[0] & "`.",
       )
     for n in row[2].carriedTags:
       if n < 1 or n > CARRIED_MAX:
