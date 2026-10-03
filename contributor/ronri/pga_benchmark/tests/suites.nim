@@ -524,6 +524,18 @@ suite "Internal: Inspector":
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
 
 
+  test "definition marked noinline reads as function":
+    let functions = functionsIn([
+      "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void);",
+      "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void) {",
+      "\tT1_ = getMonoTime_u0__stdZmonotimes();",
+      "}",
+    ].join("\n") & "\n")
+    check functions.len == 1  # declaration skipped, definition read
+    check functions[0].name == "measure0Library_u0__m" and not functions[0].is_inline  # head
+    check "getMonoTime" in functions[0].body  # body runs to its closing brace
+
+
   test "terms inside loops of constant bound count once per trip":
     const
       multivector_mangled = "tyObject_Multivector__h"
@@ -760,6 +772,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         check clocks == 2  # one timed loop: clock read before and after each round
     let pairs_measured = CATALOGUE.len + CATALOGUE.countIt(it.reference.len > 0) +
       (if HAS_FORMS_DENSE: CATALOGUE.countIt(it.reference.len == 0) else: 0)
+    checkpoint $functions_timing & " timing functions for " & $pairs_measured & " measured pairs"
     check functions_timing == pairs_measured  # one function per measurand per implementation
 
 
