@@ -117,13 +117,18 @@ The one self-contained file the build assembles out of the shell, the bridge, th
 and the faces.
 _Avoid_: bundle, artefact, output, document
 
+**Panel**:
+The chrome a reader edits the scene and the camera through. On the desktop it is a window
+beside the scene, and on the page it is the drawer.
+_Avoid_: sidebar, pane
+
 **Drawer**:
-The sliding container of chrome. It comes in from the right on a wide screen, and up from
-the bottom on a phone.
-_Avoid_: panel, sidebar, sheet, tray
+The panel of the page: a sliding container. It comes in from the right on a wide screen, and
+up from the bottom on a phone.
+_Avoid_: sidebar, sheet, tray
 
 **Section**:
-One collapsible part of the drawer: apply, objects, view, or diagnostics.
+One collapsible part of the panel: apply, objects, view, or diagnostics.
 _Avoid_: panel, tab, pane, accordion
 
 ### Editing
@@ -158,8 +163,8 @@ can be looked at under load.
 _Avoid_: demo, sample scene, stress scene, fixture
 
 **Tick**:
-The periodic refresh by the diagnostics panel of its readings. It is deliberately slower
-than the frame, and split by the window it averages over.
+One pass in which the diagnostics take new readings. It runs slower than the frame, and each
+reading is split by the window it averages over.
 _Avoid_: update, poll, refresh, sample
 
 **Band**:
