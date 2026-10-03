@@ -1,7 +1,7 @@
 ## Fix source in place where check names one mechanical fix (`koch fix`), inside branch scope.
 ##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim`,
-##     `prose.nim`, `idioms.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and
-##     `wrapping.nim`, and reads that check's own data, so each rule is written once. This
+##     `prose.nim`, `idioms.nim`, `checker.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim`
+##     and `wrapping.nim`, and reads that check's own data, so each rule is written once. This
 ##     module selects files, runs on each file fixers its kind's checks name, and refuses any
 ##     write outside scope.
 ##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
@@ -22,6 +22,9 @@
 ##   - wrapping last, separators before signatures before calls before trailing separators:
 ##     layouts join groups with separator they read, and trailing separator goes only where no
 ##     layout wrote one.
+##   Fixer whose rule reads several modules runs first, once, on source as given, from what
+##     `contextOf` reads of whole tree: dead export of checker (`checker.nim`), whose `*` goes
+##     where its own module calls it. Fix of named files reads that context from whole tree.
 ##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
 ##     splits can take spacing fixer refused for width, so second round writes it, and
 ##     `koch fix` run twice writes nothing second time.
@@ -61,8 +64,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils]
-import ./[blanks, declarations, findings, form, idioms, kinds, layout, names, prose, scope]
-import ./[spacing, tokens, wrapping]
+import ./[blanks, checker, declarations, findings, form, idioms, kinds, layout, names, prose]
+import ./[scope, spacing, tokens, wrapping]
 
 
 const
@@ -76,10 +79,17 @@ const
   NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
 
-type Fence = object
-  ## Define lines fence leaves alone, and line where fence cannot be read, if any.
-  lines: seq[int]  ## Zero-based fenced lines, markers included, in order.
-  fault: int  ## Zero-based line fence crosses bracket or token at, or reads `FENCED`; `-1` if none.
+type
+  Fence = object
+    ## Define lines fence leaves alone, and line where fence cannot be read, if any.
+    lines: seq[int]  ## Zero-based fenced lines, markers included, in order.
+    fault: int
+      ## Zero-based line fence crosses bracket or token at, or reads `FENCED`; `-1` if none.
+
+  Context* = object
+    ## Define what whole tree tells fixer of one file that its text cannot: rule read across
+    ##   modules.
+    dead: seq[(string, string)]  ## Path and name of each export no other module names.
 
 
 func fenceOf(source: string): Fence =
@@ -233,11 +243,28 @@ func entriesNamed*(
       result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
 
 
-func fixSource(path, source: string; kind: Kind; fence: Fence): Fix =
+func contextOf*(tree: Tree): Context =
+  ## Read what tree tells fixers across modules: dead exports of checker, as static pass reads
+  ##   them from its modules, `koch.nim` and its suites.
+  var paths, sources, suites: seq[string]
+  for e in tree:
+    if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
+      paths.add e.path
+      sources.add e.content
+    if e.path.startsWith(SUITE_DIRECTORY): suites.add e.content
+  result.dead = deadExports(paths, sources, suites).deduplicate
+
+
+func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context): Fix =
   ## Run on source each fixer its kind's checks name, in order header gives, until source
   ##   settles; fenced lines read as `FENCED`, and fixer that would move them is skipped.
+  ##   Fixers that tree informs run first, once, on source as given.
   let shape = source.masked(fence).fenceShape
   result.source = source.masked(fence)
+  let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
+  if dead.len > 0:
+    let step = fixDeadExports(path, result.source, dead)
+    if step.source.fenceShape == shape: result = result.chain(step)
   for round in 1..ROUNDS_MAX:
     var step = Fix(source: result.source)
     for fixer in kind.fixersOf:
@@ -250,10 +277,11 @@ func fixSource(path, source: string; kind: Kind; fence: Fence): Fix =
 
 
 func fixEntries*(
-  branch: string, entries: openArray[Entry], locked: openArray[string] = []
+  branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
 ): tuple[written: seq[Entry], fixed, refused, left: seq[Finding]] =
   ## Fix each entry: entries to write, one report per rewrite, scope findings, and files left
-  ##   as written with reason: nimble file `locked` names, fence fix cannot read.
+  ##   as written with reason: nimble file `locked` names, fence fix cannot read. `context`
+  ##   carries what tree tells fixers across modules (`contextOf`).
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   for e in entries:
     if e.kind.isNone or not e.kind.get.rule.has_guide: continue
@@ -268,7 +296,7 @@ func fixEntries*(
     if fence.fault >= 0:
       result.left.add faultOf(e.path, fence)
       continue
-    let fix = fixSource(e.path, e.content, e.kind.get, fence)
+    let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
     if fix.source == e.content: continue
     result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
     result.fixed.add fix.fixed

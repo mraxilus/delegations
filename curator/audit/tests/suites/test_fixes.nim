@@ -181,6 +181,20 @@ suite "Fixes":
     check checkIdioms(path, source).len == 1  # bindings finding left
 
 
+  test "dead export of checker drops its `*` through tree context, where own module calls it":
+    let
+      path = "curator/audit/src/a.nim"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nfunc f*(): int = 1\n\nlet x = f()\n"
+      tree = @[entry(path, module), entry("curator/audit/src/b.nim", "## Do.\n")]
+      context = tree.contextOf
+      plan = fixEntries(CURATOR_BRANCH, [tree[0]], context = context)
+    check plan.written[0].content == module.replace("f*()", "f()")
+    check plan.fixed.mapIt(it.line) == @[5]
+    check fixEntries(CURATOR_BRANCH, [tree[0]]).written.len == 0  # no context: nothing known
+    let again = @[plan.written[0], tree[1]]
+    check fixEntries(CURATOR_BRANCH, [again[0]], context = again.contextOf).written.len == 0
+
+
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
     let
       nimble = entry(ALPHA_DIRECTORY & "/alpha.nimble", "version = \"0.1.0\" \nlet a = 1+2\n")

@@ -451,6 +451,7 @@ proc run(options: Options): int =
       options.branchOrDefault,
       entries,
       tree.lockedNimbles,
+      tree.contextOf,
     )
     for f in left.sorted: echo f.render
     if refused.len > 0:
