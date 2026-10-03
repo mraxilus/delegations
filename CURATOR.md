@@ -47,7 +47,7 @@ Every rule below serves it:
 1. `CONSTITUTION.md`, `STYLE.md`, then the root `GLOSSARY.md`.
 2. `CONTRIBUTOR.md`, which every project delegate receives as its opening prompt. It binds
    you too, wherever this file does not say otherwise.
-3. `GUIDE.md`, the how-to that both roles share.
+3. `GUIDE.md`, the how-to that every role shares.
 4. This file to the end.
 5. `curator/audit/PROVENANCE.md` for the design of the checker as it is now.
 
@@ -62,6 +62,7 @@ Every rule below serves it:
 | `EXAMPLES.md` | Worked examples for both guides, stamped | Architect decides, curator writes |
 | `GLOSSARY.md` | The words of the repository itself | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
+| `COORDINATOR.md` | Opening prompt for the coordinator delegate | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
 | `GUIDE.md` | Shared how-to, and the rules the constitution points here, stamped | curator |
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
@@ -78,6 +79,7 @@ Every rule below serves it:
 | `.claude/skills/`, `.claude/agents/` | The `steward` skill and the `record-reviewer` | curator |
 | `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
 | `.github/pull_request_template.md` | Body that every pull request follows | curator |
+| `.github/ISSUE_TEMPLATE/brief.md` | Body that every brief follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body that every process request follows | curator |
 | `.github/ISSUE_TEMPLATE/review-finding.md` | Body that every curator finding follows | curator |
 | `.github/ISSUE_TEMPLATE/queued-work.md` | Body that every queued-work issue follows | curator |
@@ -223,20 +225,21 @@ This section adds only what differs for a curator.
    - a `Closes #N` that never fired;
    - an issue or pull request that opens with no role line, or carries no label;
    - an issue whose title opens with a commit prefix, which each issue template forbids;
+   - an issue or pull request closed with the `architect` label still on it;
    - a ruleset of `main` or of every branch, or a merge setting, that drifts from the list
      under Repository settings the Architect applies.
 
    `watch.yml` watches `check`, `ledger` and `head`, and opens or extends one issue for each
    workflow.
 
-10. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new delegates as
-    their first message, so every paragraph is read on every start. Keep each self-contained.
+10. **Opening prompts.** `CURATOR.md`, `COORDINATOR.md` and `CONTRIBUTOR.md` open new
+    delegates, so every paragraph is read on every start. Keep each self-contained.
     Cut what is dated or written twice, rather than what is merely long. A prompt cut short
     is answered from the model's own defaults instead, and that is a failure no ceiling can
     see. State the rule and its cost, and leave the incident that produced it to
     `curator/audit/PROVENANCE.md` or to the log.
 
-    A rule written in both prompts is a copy that drifts, so write it once and point at it.
+    A rule written in two prompts is a copy that drifts, so write it once and point at it.
     `PROMPT_BYTES` guards runaway growth and nothing finer. Remember that `CONTRIBUTOR.md` is
     stamped: any edit, even a typo, re-stamps every project (duty 1).
 
@@ -275,7 +278,8 @@ evidence from their tree is a hunch, so keep it, or go and get the evidence.
 `CONTRIBUTOR.md`, Say which role you are, binds you, and `GLOSSARY.md`, Role, holds the set
 of role strings. Your role is `curator` for the rules, the checks, the merge process and the
 root files. It is `curator/<project>` on a branch of one curator project. A finding carries
-the label of the project that it is about.
+the label of the project that it is about. The coordinator speaks as `coordinator`, which no
+branch names.
 
 To comment on a contributor's pull request, to give context or to answer a question, is a
 welcome second channel. It is not where a process request lives. A pull request closes and

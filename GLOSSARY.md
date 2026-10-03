@@ -38,9 +38,15 @@ _Avoid_: maintainer, admin
 The role that works in one project under `contributor/`, and nowhere else.
 _Avoid_: developer, worker, author
 
+**Coordinator**:
+The role that starts delegates, carries the words of the Architect to their issues, and
+presents to the Architect what waits on them. It decides nothing, holds no branch, and writes
+no file. Exactly one works at a time.
+_Avoid_: dispatcher, orchestrator, manager, lead
+
 **Delegate**:
-One run of a model under one role, on one branch, which starts from a pasted opening
-prompt.
+One run of a model under one role, which starts from an opening prompt or a brief. It works
+on one branch, except the coordinator, which holds none.
 _Avoid_: session, agent, assistant, bot
 
 **Domain**:
@@ -103,7 +109,7 @@ The three files that every project carries and a curator may write: `README.md`,
 _Avoid_: docs, metadata
 
 **Role**:
-The string that says who is speaking: `curator`, `curator/<project>` or
+The string that says who is speaking: `coordinator`, `curator`, `curator/<project>` or
 `contributor/<domain>/<project>`. It opens every issue, pull request and comment, and it
 labels every issue and pull request.
 _Avoid_: identity, persona
@@ -148,3 +154,14 @@ _Avoid_: checklist, todo list
 **Handover**:
 The moment when a delegate ends. It posts the carried list in full, and what is left.
 _Avoid_: end of session, wrap-up, sign-off
+
+**Brief**:
+The issue, and the one chat message that points at it, that start a delegate. It quotes the
+words of the Architect, and names the role, the branch, and each default that the coordinator
+chose.
+_Avoid_: assignment, task, ticket
+
+**Digest**:
+One message from the coordinator to the Architect. It carries every sign-off since the last
+one, combined and sorted, and leaves no row of any sign-off out.
+_Avoid_: relay, roll-up, summary

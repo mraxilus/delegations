@@ -75,6 +75,7 @@ suite "Article VI.8":
 
   test "governed set derives records and index READMEs from layout":
     check isGoverned("CONSTITUTION.md")  # root document, still data
+    check isGoverned("COORDINATOR.md") and isGoverned(".github/ISSUE_TEMPLATE/brief.md")
     check isGoverned("curator/README.md")  # project root index
     check isGoverned("contributor/README.md")
     check isGoverned("contributor/abstand/README.md")  # registered domain index
