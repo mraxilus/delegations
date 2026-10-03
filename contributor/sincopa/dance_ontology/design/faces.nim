@@ -4,10 +4,11 @@
 ##     from `build/`, from published artefact and from file, none of which can be
 ##     relied on to reach font host, so bytes travel inside page as data URI rather
 ##     than as link to one.
-##     Cost of inlining: every page carries same 223 kB of base64, measured, whatever
-##       of it that page uses.  Rejected: linking host's copy, which names face
-##       viewer may lack and needs network at reading time; rejected: subsetting per
-##       page, which trades one shared block for five that drift.
+##     Cost of inlining: every page carries same 536 kB face block, whatever of it that
+##       page uses, measured in `build/` on 2026-10-02; Noto Sans Math is 311 kB of it.
+##       Rejected: linking host's copy, which names face viewer may lack and needs
+##       network at reading time; rejected: subsetting per page, which trades one
+##       shared block for five that drift.
 ##   Faces themselves are fetched and pinned by `tools/build.nim`, verb `assets`;
 ##     this module only reads what that wrote, and says so loudly when it is absent,
 ##     because page drawn without them is page nobody can compare with another.
@@ -33,21 +34,31 @@ const
     ("noto-sans-latin-600-normal.woff2", "Noto Sans", "600", "normal"),
     ("commit-mono-latin-400-normal.woff2", "Commit Mono", "400", "normal"),
     ("commit-mono-latin-700-normal.woff2", "Commit Mono", "700", "normal"),
+    ("noto-sans-math-math-400-normal.woff2", "Noto Sans Math", "400", "normal"),
   ]
-    ## Each face with family, weight and style it answers to.  Rows match `FACES` in
-    ##   `tools/build.nim`, which pins their bytes; that table is what to change to
-    ##   add one, and this is what to change to name it.
+    ## Each face with family, weight and style it answers to.  Repository's store pins
+    ##   bytes of each file by digest (`curator/audit/src/assets.nim`), and verb `assets`
+    ##   of `tools/build.nim` fetches every row: row here is what to add to ship face.
+    ##   Noto Sans Math draws arrows, which neither text face holds, and every stack names
+    ##     it after its own face: merge by codepoint range (X.8).
+    ##     Cost: its 311 kB is most of face block on every page, for five arrows.
+    ##     Rejected: Commit Mono alone, which draws no `⇄`; another mark for `place`, which
+    ##       would change design.
   FACES_MARK* = "<style data-faces>"
     ## Opening tag of face block, which names block so later run can find it.
     ##   Build dresses every page under `build/`, and not only pages it wrote, so
     ##     page earlier run left there arrives already dressed.  Marked block is
     ##     what lets dressing take old one out before it puts new one in.
-  SERIF* = "\"Noto Serif\", Georgia, \"Times New Roman\", serif"
+  SERIF* = "\"Noto Serif\", \"Noto Sans Math\", \"Commit Mono\", Georgia, " &
+    "\"Times New Roman\", serif"
     ## Titles.  Fallback is only for face that failed to load, never for one absent.
-  SANS_SERIF* = "\"Noto Sans\", ui-sans-serif, system-ui, sans-serif"
-    ## Body text.
-  MONOSPACE* = "\"Commit Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
-    ## Code, data and figures.
+    ##   Noto Sans Math draws arrows, and Commit Mono marks such as `✓` that both lack.
+  SANS_SERIF* = "\"Noto Sans\", \"Noto Sans Math\", \"Commit Mono\", ui-sans-serif, " &
+    "system-ui, sans-serif"
+    ## Body text, with same two faces after it as titles.
+  MONOSPACE* = "\"Commit Mono\", \"Noto Sans Math\", ui-monospace, SFMono-Regular, " &
+    "Menlo, monospace"
+    ## Code, data and figures, with Noto Sans Math for `⇄`, which Commit Mono lacks.
 
 
 proc faceStyle*(directory = DIRECTORY_FONTS): string =
@@ -58,9 +69,11 @@ proc faceStyle*(directory = DIRECTORY_FONTS): string =
   for (file, family, weight, style) in FACES:
     let path = directory / file
     if not fileExists(path):
-      raise newException(IOError,
+      raise newException(
+        IOError,
         "Face is absent, so page would name one reader may lack; run " &
-          "`nim r tools/build.nim assets`: got `" & path & "`.")
+          "`nim r tools/build.nim assets`: got `" & path & "`.",
+      )
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
       ";font-weight:" & weight & ";font-display:block;src:url(data:font/woff2;base64," &
       encode(readFile(path)) & ") format(\"woff2\")}"
@@ -83,10 +96,10 @@ func withoutFaces*(html: string): string =
     var cut_to = shuts + shut.len
     if cut_to < result.len and result[cut_to] == '\n':
       cut_to += 1
-    result = result[0 ..< opens] & result[cut_to .. ^1]
+    result = result[0..<opens] & result[cut_to .. ^1]
 
 
-proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
+proc withFaces*(raw: string, directory = DIRECTORY_FONTS): string =
   ## Put face style sheet last in page's head, so page ships what it draws with.
   ##   Last rather than first for two reasons: root rule keeping ligatures on then
   ##     wins over any page rule that would turn them off, and `bundle` folds head
@@ -98,17 +111,30 @@ proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
   ##     `font-variant-ligatures`, so order costs nothing either way.
   ##   Block earlier run left is taken out first, so dressing twice gives
   ##     one page and not one that grows by every face on every build.
+  ##   Page that declares no charset is given UTF-8, first in its head or first in
+  ##     fragment.  Block is half megabyte of ASCII, and browser that opens page from
+  ##     file guesses charset from bytes ahead of first that is not ASCII: Chromium 141
+  ##     read review page and whole-cloth page as windows-1250 behind it.
   const
     shut = "</head>"
     title = "</title>"
+    charset = "<meta charset=\"utf-8\">"
+    head = "<head>"
   let
-    html = withoutFaces(raw)
+    bare = withoutFaces(raw)
+    opens = bare.find(head)
+    html =
+      if "<meta charset" in bare: bare
+      elif opens < 0: charset & "\n" & bare
+      else: bare[0..<opens + head.len] & "\n" & charset & bare[opens + head.len .. ^1]
     shuts = html.find(shut)
   if shuts >= 0:
-    return html[0 ..< shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
+    return html[0..<shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
   let titled = html.find(title)
   if titled < 0:
-    raise newException(ValueError,
+    raise newException(
+      ValueError,
       "Page carries neither head nor title to put faces by; got first 40 " &
-        "characters `" & html[0 ..< min(40, html.len)] & "`.")
-  html[0 ..< titled + title.len] & "\n" & faceStyle(directory) & html[titled + title.len .. ^1]
+        "characters `" & html[0..<min(40, html.len)] & "`.",
+    )
+  html[0..<titled + title.len] & "\n" & faceStyle(directory) & html[titled + title.len .. ^1]

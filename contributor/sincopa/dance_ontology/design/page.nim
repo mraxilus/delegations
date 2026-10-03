@@ -32,9 +32,9 @@ const STYLE* = """<style>
   --left: #3d7fd0; --right: #d0763d;
   --left-deep: #133a72; --right-deep: #723a13;
   --body-lit: #e2ddd5; --body-shade: #9d968b;
-  --serif: "Noto Serif", Georgia, "Times New Roman", serif;
-  --sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
-  --mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif: "Noto Serif", "Noto Sans Math", "Commit Mono", Georgia, "Times New Roman", serif;
+  --sans: "Noto Sans", "Noto Sans Math", "Commit Mono", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Commit Mono", "Noto Sans Math", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-variant-ligatures: contextual;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -53,7 +53,7 @@ const STYLE* = """<style>
 body { margin: 0; padding: 2rem 1.25rem 5rem; background: var(--paper);
   color: var(--ink); font: 16px/1.6 var(--sans); }
 .sheet { max-width: 62rem; margin: 0 auto; }
-h1, h2, h3 { text-wrap: balance; }
+h1, h2, h3 { font-family: var(--serif); text-wrap: balance; }
 .kicker { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--dim); margin: 0; }
 h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); line-height: 1.05; margin: 0.7rem 0 0;
