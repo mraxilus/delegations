@@ -109,11 +109,11 @@ const CHART_FACING* = 40.0
   ## follow chevron and not page.
 
 
-func said*(level: Option[Level]; arm = Arm.Left): Levels =
+func said*(level: Option[Level], arm = Arm.Left): Levels =
   ## Say one arm's level, or nothing at all where nothing was said.
   result[arm] = level
 
-func said*(way: Option[Way]; arm = Arm.Left): Ways =
+func said*(way: Option[Way], arm = Arm.Left): Ways =
   ## Say one arm's way, or nothing at all where nothing was said.
   result[arm] = way
 
@@ -434,7 +434,7 @@ func levelsFor*(holds: Holds): Levels =
   if holds[Arm.Left].isSome: ABOVE_ONE else: ABOVE_OTHER
 
 
-func quarterPose*(manner: Manner; quarter: int): Pose =
+func quarterPose*(manner: Manner, quarter: int): Pose =
   ## Get pose this manner of turn reaches after so many quarters.
   ##   Drawn canonically, with lead facing up: that is what position
   ##     is, whatever stages turning took to arrive at it.
@@ -458,7 +458,7 @@ func placeOf*(pose: Pose): tuple[axis, facing: float] =
   (floorMod(relation.axis, 360.0), floorMod(relation.facing, 360.0))
 
 
-func turnGlyph*(label: string; width = 44.0): string =
+func turnGlyph*(label: string, width = 44.0): string =
   ## Draw one edge of cycle: two-headed arrow, since turn reverses.
   ##   Arrow keeps its length whatever box; `width` is room for
   ##     label above it, which longer name needs more of.
@@ -657,7 +657,7 @@ func phaseOf*(holds: Holds): float =
   raise newException(Defect, &"A hold runs parallel at neither phase; got `{holds}`.")
 
 
-func facingAt*(holds: Holds; wind: float): Option[Facing] =
+func facingAt*(holds: Holds, wind: float): Option[Facing] =
   ## Name facing hold's chain stands at `wind` turns from its rest, read off
   ## pose through model.
   facingOf(posedAt(wind, phaseOf(holds)))
@@ -770,7 +770,7 @@ const PAIRED*: Holds = [some Arm.Left, some Arm.Right]
   ##     connections lie through each other (rule 31).
 
 
-func chainTurnParts*(holds: Holds; key: string): Parts =
+func chainTurnParts*(holds: Holds, key: string): Parts =
   ## Build every SVG one chain's turns page places, keyed under `key`.
   ##   Two chains are drawn -- hand to hand, and same-name pair -- and they
   ##     differ only in which hands are joined and where chain rests.  Written

@@ -55,7 +55,7 @@ func twoTone*(runs: seq[Run]; midpoint: Point; lead_side, follow_side: Arm):
   @[reachMarkup(near, DEEP[lead_side]), reachMarkup(far, INK[follow_side])]
 
 
-func ghosts*(holds: Holds; levels: Levels; ways: Ways):
+func ghosts*(holds: Holds, levels: Levels, ways: Ways):
     seq[tuple[who: Dancer, arm: Arm]] =
   ## List every hand that is not where its arm hangs.
   for arm in Arm:
@@ -67,7 +67,7 @@ func ghosts*(holds: Holds; levels: Levels; ways: Ways):
         result.add (who, own)
 
 
-func settled*(pose: Pose; holds: Holds; levels: Levels; ways: Ways): Pose =
+func settled*(pose: Pose, holds: Holds, levels: Levels, ways: Ways): Pose =
   ## Get same pose with every hand put in slot its hold settles it
   ## in.
   ##   There is nothing to solve: settled hand is in one of six places, and
@@ -93,8 +93,8 @@ func bodiesOf(pose: Pose): tuple[lead, follow: route.Body] =
    (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
 
 
-func isDanceable*(pose: Pose; holds: Holds;
-    levels: Levels = default(Levels); ways: Ways = default(Ways)): bool =
+func isDanceable*(pose: Pose, holds: Holds,
+    levels: Levels = default(Levels), ways: Ways = default(Ways)): bool =
   ## Test whether every lock and wrap in this hold really is one (rule 7).
   ##   Lock or wrap position may only be used when line goes round no
   ##     less than just under half circumference -- it does not mean
@@ -156,7 +156,7 @@ func axisOf*(put: Pose): tuple[along, across: Point, bearing: float] =
   (along, (-along.y, along.x), bearing(follow.x - lead.x, follow.y - lead.y))
 
 
-func windOf*(put: Pose; holds: Holds; arm: Arm): tuple[phi, spread: float] =
+func windOf*(put: Pose, holds: Holds, arm: Arm): tuple[phi, spread: float] =
   ## Measure how far one connection has wound, in degrees (rules 27, 28).
   ##   Each held hand sits on its own body's rim, and both bodies stand on
   ##     pair's axis, so angle hand makes with that axis is what
@@ -202,9 +202,9 @@ func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
     result[under].add meeting
 
 
-func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
-    over = none(Arm); free = Free.Fade; has_captions = true;
-    ways: Ways = default(Ways); twist: Twists = NO_TWIST;
+func partsOf*(pose: Pose, holds: Holds, levels: Levels = default(Levels),
+    over = none(Arm), free = Free.Fade, has_captions = true,
+    ways: Ways = default(Ways), twist: Twists = NO_TWIST,
     should_clear_marks = false): seq[string] =
   ## Draw every element of one pose, in order picture is read from.
   ##   `clear_marks` asks straight reach to bend round marks it does
@@ -309,7 +309,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   bits.filterIt(it.len > 0)
 
 
-func extent*(pose: Pose; has_captions = true): float =
+func extent*(pose: Pose, has_captions = true): float =
   ## Measure how far this pose reaches from origin, ring and captions
   ## included.
   let edge = if has_captions: CAPTION_RADIUS + 20 else: BODY_RADIUS + HAND_RADIUS + 2
@@ -325,10 +325,10 @@ func view*(half: float): string =
   &"""viewBox="{numeral(-half)} {numeral(-half)} {numeral(2 * half)} {numeral(2 * half)}""""
 
 
-func renderFigure*(classes: string; holds: Holds;
-    levels: Levels = default(Levels); over = none(Arm); lead_turn = 0.0;
-    follow_turn = 0.0; free = Free.Fade; has_captions = true; pose = none(Pose);
-    half = none(float); ways: Ways = default(Ways); twist: Twists = NO_TWIST;
+func renderFigure*(classes: string, holds: Holds,
+    levels: Levels = default(Levels), over = none(Arm), lead_turn = 0.0,
+    follow_turn = 0.0, free = Free.Fade, has_captions = true, pose = none(Pose),
+    half = none(float), ways: Ways = default(Ways), twist: Twists = NO_TWIST,
     should_clear_marks = false): string =
   ## Draw one picture, canonical unless pose is handed in already turned.
   let
@@ -377,7 +377,7 @@ func beat*(t: float): string =
     result = "0"
 
 
-func keyed*(times: seq[float]; count: int): string =
+func keyed*(times: seq[float], count: int): string =
   ## Say when each frame of animation is due, where they are not evenly
   ## spread (rule 26).
   ##   Evenly spread is what browser assumes, so nothing is written for
@@ -391,7 +391,7 @@ func keyed*(times: seq[float]; count: int): string =
   ""
 
 
-func animate*(attribute: string; steps: seq[float]; duration: float;
+func animate*(attribute: string, steps: seq[float], duration: float,
     times: seq[float] = @[]): string =
   ## Animate one attribute over cycle.
   &"""<animate attributeName="{attribute}" values="{series(steps)}"""" &
@@ -415,7 +415,7 @@ const GAPS_DRAWN = 2
   ##     number of them, which is what lets pattern be animated at all.
 
 
-func dashedAt*(points: seq[Point]; dives: seq[tuple[opens, shuts: float]];
+func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]],
     starts = 0.0):
     tuple[pattern, offset: string] =
   ## Say moving reach's break as dash pattern: how far it runs, how long
@@ -510,7 +510,7 @@ func dashedAt*(points: seq[Point]; dives: seq[tuple[opens, shuts: float]];
   (says.join(" "), numeral(lengths[1]))
 
 
-func facings*(poses: seq[Pose]; who: Dancer): seq[float] =
+func facings*(poses: seq[Pose], who: Dancer): seq[float] =
   ## Get dancer's facing through cycle, continuous so it turns way
   ## it turned.
   ##   Wrapped angles step from 179 to -179 at half turn and are read as
@@ -519,10 +519,10 @@ func facings*(poses: seq[Pose]; who: Dancer): seq[float] =
   continuous(poses.mapIt(it.facing[who]))
 
 
-func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
-    half = none(float); levels: Levels = default(Levels);
-    ways: Ways = default(Ways); duration = 9.6;
-    times: seq[float] = @[]; wound = 0.0): string =
+func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
+    half = none(float), levels: Levels = default(Levels),
+    ways: Ways = default(Ways), duration = 9.6,
+    times: seq[float] = @[], wound = 0.0): string =
   ## Draw one picture moving through walk of poses handed in.
   ##   Every moving figure comes through here, whether its walk is whole
   ##     move's cycle or one edge of state graph rocked back and forth.
@@ -712,7 +712,7 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
   #   It also lets mark keep its own dot rather than having one
   #     animated alongside it: group can hold two elements where
   #     `paired` reopens one.
-  func carried(mark: string; points: seq[Point]): string =
+  func carried(mark: string, points: seq[Point]): string =
     ## Carry mark along points, looped over whole cycle.
     let places = points.mapIt(coordinates(it))
     "<g>" &
@@ -736,9 +736,9 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
     bits.join("\n        ") & "\n      </svg>"
 
 
-func animated*(classes: string; holds: Holds; move: MoveApply;
-    half = none(float); levels: Levels = default(Levels);
-    ways: Ways = default(Ways); duration = 9.6; samples = 14): string =
+func animated*(classes: string, holds: Holds, move: MoveApply,
+    half = none(float), levels: Levels = default(Levels),
+    ways: Ways = default(Ways), duration = 9.6, samples = 14): string =
   ## Draw same picture, moving: stage one travels, stage two comes home.
   let walk = cycle(move, samples)
   animatedPoses(classes, holds, walk.poses, half, levels, ways, duration,

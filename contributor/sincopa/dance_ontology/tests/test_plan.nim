@@ -37,7 +37,7 @@ const
                 ## squared over whole violation, so one pair is never further.
 
 
-func randomPlan(rig: Rig; generator: var Rand): Plan =
+func randomPlan(rig: Rig, generator: var Rand): Plan =
   ## Pose inside every range planner keeps, couple at arm's length or nearer.
   result[0] = generator.rand(0.5 .. 1.2)
   for k in 2 .. 3: result[k] = generator.rand(rig.waist.lower .. rig.waist.upper)

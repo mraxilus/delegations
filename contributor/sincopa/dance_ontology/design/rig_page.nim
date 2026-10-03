@@ -234,7 +234,7 @@ func sheetOf(html: string): string =
     at = stop
 
 
-proc cellsBody(review: string; data: JsonNode): string =
+proc cellsBody(review: string, data: JsonNode): string =
   ## Lay every still cell out as reference page does, simulation's still beside it.
   var
     entry_of: Table[string, int]

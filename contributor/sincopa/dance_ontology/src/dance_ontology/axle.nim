@@ -49,7 +49,7 @@ func axleWidth*: int =
   2 * (MOST_TURN * STEP) + NODE_WIDTH + 60
 
 
-func centreOf*(stood: Posture; twist: HalfTurns): (int, int) =
+func centreOf*(stood: Posture, twist: HalfTurns): (int, int) =
   ## Get where twist sits along axle.
   ##   Placed by twist itself rather than by index, so distance
   ##     between two postures on drawing is size of turn between
@@ -67,7 +67,7 @@ func standing*(stood: Posture): seq[HalfTurns] =
 
 #[ Drawing ]#
 
-func arc(stood: Posture; twist: HalfTurns; is_refused: bool): string =
+func arc(stood: Posture, twist: HalfTurns, is_refused: bool): string =
   ## Draw one landing as arc from where couple are to where it puts
   ## them.
   ##   One arc per place turn lands, not one per turn.  Twelve turns land
@@ -98,7 +98,7 @@ func arc(stood: Posture; twist: HalfTurns; is_refused: bool): string =
   result.add "</g>"
 
 
-func renderAxle*(stood: Posture; motion = Motion.Still;
+func renderAxle*(stood: Posture, motion = Motion.Still,
     taken = none(HalfTurns)): string =
   ## Draw twist axis, postures on it, and every turn out of one held.
   let

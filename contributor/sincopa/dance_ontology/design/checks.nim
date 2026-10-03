@@ -27,7 +27,7 @@ import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
 from ../src/dance_ontology/frame import nil
 
 
-func decimal(value: float; places: int): string =
+func decimal(value: float, places: int): string =
   ## Write float as report lines expect it.
   formatFloat(value, ffDecimal, places).strip(leading = false, chars = {'.'})
 

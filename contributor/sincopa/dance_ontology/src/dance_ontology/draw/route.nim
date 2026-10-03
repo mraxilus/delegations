@@ -160,7 +160,7 @@ func swanning*(turns: float): float =
   pow(wayThrough(turns), SWAN_EASE)
 
 
-func windShare*(turns: float; arm: Arm): float =
+func windShare*(turns: float, arm: Arm): float =
   ## Measure how much of wound pair's swing this connection carries
   ## (rule 31).
   ##   Evenly to whole turn, so frame, cross and diamond are drawn
@@ -231,7 +231,7 @@ func isSegmentHitting*(p, q: Point; body: Body): bool =
   false
 
 
-func taut*(ends: Ends; way: WayRound; cap = 90): Option[tuple[points: seq[Point],
+func taut*(ends: Ends, way: WayRound, cap = 90): Option[tuple[points: seq[Point],
     length: float]] =
   ## Pull string tight from hand to hand around two bodies.
   ##   Each end pays out along its own outline, sample by sample, until
@@ -278,7 +278,7 @@ func polylineLength*(points: seq[Point]): float =
     result += distance(points[i], points[i + 1])
 
 
-func trimEnd(points: seq[Point]; centre: Point; reach: float): seq[Point] =
+func trimEnd(points: seq[Point], centre: Point, reach: float): seq[Point] =
   ## Cut path where it leaves hand's own mark, so ink starts on
   ## mark's border rather than under its middle.
   for i, point in points:
@@ -304,7 +304,7 @@ func reversed(points: seq[Point]): seq[Point] =
     result.add points[i]
 
 
-func resample*(points: seq[Point]; count: int): seq[Point] =
+func resample*(points: seq[Point], count: int): seq[Point] =
   ## Say same path as `count` evenly spaced points -- one shape for every
   ## frame of animation, so route can morph instead of jumping.
   var cumulative = @[0.0]
@@ -328,7 +328,7 @@ func resample*(points: seq[Point]; count: int): seq[Point] =
 
 #[ Rim Directions ]#
 
-func frontOf*(hand: Point; body: Body): Option[float] =
+func frontOf*(hand: Point, body: Body): Option[float] =
   ## Get way round rim, from this hand, that heads for its own
   ## dancer's front.
   ##   Hand's own side turns "front" or "back" into direction by itself,
@@ -343,7 +343,7 @@ func frontOf*(hand: Point; body: Body): Option[float] =
   some(if offset > 0: -1.0 else: 1.0)
 
 
-func wayFor*(ends: Ends; level: Option[Level]; way: Option[Way]):
+func wayFor*(ends: Ends, level: Option[Level], way: Option[Way]):
     Option[WayRound] =
   ## Get which way round both bodies this hold says its line goes.
   ##   Not what is shortest -- what dance says: both wraps come round
@@ -362,7 +362,7 @@ func wayFor*(ends: Ends; level: Option[Level]; way: Option[Way]):
     some (-sides.a.get, -sides.b.get)
 
 
-func wrapArc*(ends: Ends; way: WayRound): Option[tuple[a, b: float]] =
+func wrapArc*(ends: Ends, way: WayRound): Option[tuple[a, b: float]] =
   ## Measure how far round each body line actually hugs, in degrees.
   ##   `taut` walks these arcs already and throws count away; this keeps
   ##     it, because wrap that does not wrap is not wrap (rule 7) and
@@ -391,7 +391,7 @@ func wrapArc*(ends: Ends; way: WayRound): Option[tuple[a, b: float]] =
   none(tuple[a, b: float])
 
 
-func isWrappingEnough*(ends: Ends; level: Option[Level]; way: Option[Way]): bool =
+func isWrappingEnough*(ends: Ends, level: Option[Level], way: Option[Way]): bool =
   ## Test whether this hold's line really does go round body far enough to
   ## be lock or wrap it claims to be (rule 7).
   let asked = wayFor(ends, level, way)
@@ -417,7 +417,7 @@ func straightReach*(a, b: Point): seq[Point] =
 
 #[ Settling Past Marks ]#
 
-func alongAt*(points: seq[Point]; q: Point): float =
+func alongAt*(points: seq[Point], q: Point): float =
   ## How far along line point nearest `q` lies.
   ##   Distance along, not distance away: line that comes back on itself
   ##     passes near same place twice, so nearness alone cannot say
@@ -435,7 +435,7 @@ func alongAt*(points: seq[Point]; q: Point): float =
   nearest.at
 
 
-func nearestOn*(points: seq[Point]; q: Point): float =
+func nearestOn*(points: seq[Point], q: Point): float =
   ## Measure how close drawn line comes to point, segments and all.
   ##   Sampled points alone would miss sag between them, which is
   ##     very place line that looks clear stops being clear.
@@ -592,7 +592,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     ## it.
     (a.x + along[0] * x + across[0] * y, a.y + along[1] * x + across[1] * y)
 
-  func bowedPast(asked: seq[Mark]; side: float): seq[Point] =
+  func bowedPast(asked: seq[Mark], side: float): seq[Point] =
     ## One-bend way past everything: single curve pinned at two
     ## hands and held to one side of chord (rules 23 and 24).
     ##   Marks are read as sky-line first: how far out string would
@@ -717,7 +717,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
                      mark.centre.y + away.y / length * mark.clear)
     band
 
-  func sagged(asked: seq[Mark]; length: float): seq[Mark] =
+  func sagged(asked: seq[Mark], length: float): seq[Mark] =
     ## Same marks, each grown by how deep drawn chord across it cuts.
     let step = length / float(ROUTE_COUNT - 1)
     for mark in asked:
@@ -887,7 +887,7 @@ const
     ##   another; gap that long is hole in picture, so angle is floored
     ##   and grazing pair takes widest break drawing will draw.
 
-func headingAt(points: seq[Point]; at: Point): float =
+func headingAt(points: seq[Point], at: Point): float =
   ## Say which way reach is going where it passes nearest this point.
   var near = (distance: Inf, index: 0)
   for i, point in points:
@@ -957,7 +957,7 @@ func alongOf(points: seq[Point]): seq[float] =
     result.add result[^1] + distance(points[i], points[i + 1])
 
 
-func atAlong(points: seq[Point]; along: seq[float]; want: float): Point =
+func atAlong(points: seq[Point], along: seq[float], want: float): Point =
   ## Get point this far along reach, reading between two samples where it
   ## falls between them.
   for i in 0 ..< points.high:
@@ -971,7 +971,7 @@ func atAlong(points: seq[Point]; along: seq[float]; want: float): Point =
   points[^1]
 
 
-func runsOutside(points: seq[Point]; along: seq[float];
+func runsOutside(points: seq[Point], along: seq[float],
     gaps: seq[tuple[opens, shuts: float]]): seq[Run] =
   ## Collect what is left of reach once its gaps are taken out.
   ##   Each piece is cut exactly on its gap's edge, between samples where
@@ -1027,7 +1027,7 @@ func cutGapsAt*(points, over: seq[Point]; centres: seq[Point]): seq[Run] =
 
 #[ Emitted Reach ]#
 
-func routed*(ends: Ends; way = none(WayRound)):
+func routed*(ends: Ends, way = none(WayRound)):
     Option[tuple[points: seq[Point], way: WayRound]] =
   ## Route one reach: hand border to hand border, wrapping wherever it must.
   ##   With nothing said it takes short way round.  Hand it one of `WAYS`
@@ -1073,7 +1073,7 @@ func oneWayRound*(frames: seq[Ends]): WayRound =
   best.get.way
 
 
-func splitAt*(runs: seq[Run]; midpoint: Point): tuple[near, far: seq[Run]] =
+func splitAt*(runs: seq[Run], midpoint: Point): tuple[near, far: seq[Run]] =
   ## Cut reach in two at point nearest `midpoint`, so it can be drawn in two
   ## shades that meet there.
   ##   Two halves share that point, so join is join and not gap;
@@ -1119,7 +1119,7 @@ func smoothed*(run: Run): string =
   result.add " L" & coordinates(run[^1])
 
 
-func reachMarkup*(runs: seq[Run]; ink: string): string =
+func reachMarkup*(runs: seq[Run], ink: string): string =
   ## Draw one shade's worth of reach as single path.
   var pieces: seq[string]
   for run in runs:
@@ -1131,7 +1131,7 @@ func reachMarkup*(runs: seq[Run]; ink: string): string =
     """ stroke-linejoin="round"/>"""
 
 
-func cutGap*(points: seq[Point]; over: seq[Point]): seq[Run] =
+func cutGap*(points: seq[Point], over: seq[Point]): seq[Run] =
   ## Break under reach where over one crosses it.
   ##   Where they cross, and nowhere else: break says reach passes
   ##     beneath something, so pair that never meets carries none.

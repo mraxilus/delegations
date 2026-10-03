@@ -46,12 +46,12 @@ func contextOf(id: cstring): JsObject {.importjs:
   ## Get drawing context of canvas named `id`.
 func canvasOf(id: cstring): JsObject {.importjs: "document.getElementById(#)".}
 func contextOf(canvas: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
-func toFixed(number: float; places: int): cstring {.importjs: "(#).toFixed(#)".}
+func toFixed(number: float, places: int): cstring {.importjs: "(#).toFixed(#)".}
 func toFloat(item: JsObject): float {.importjs: "(#)".}
 func count(list: JsObject): int {.importjs: "(#).length".}
 func text(item: JsObject): cstring {.importjs: "(#)".}
 func truth(item: JsObject): bool {.importjs: "(#)".}
-func has(record: JsObject; name: cstring): bool {.importjs: "((#)[#] !== undefined)".}
+func has(record: JsObject, name: cstring): bool {.importjs: "((#)[#] !== undefined)".}
 func joined(a, b: JsObject): JsObject {.importjs: "(#).concat(#)".}
 func entriesOn(event: Event): cstring {.importjs:
   "(#).currentTarget.getAttribute('data-entries')".}

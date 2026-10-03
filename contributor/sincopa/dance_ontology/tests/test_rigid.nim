@@ -64,7 +64,7 @@ type
     ## One still of corpus stood live once, and every measure two laws read of it.
 
 
-proc rest(band = Band.Torso; apart = APART): Couple =
+proc rest(band = Band.Torso, apart = APART): Couple =
   ## Build couple at rest at `band`, `apart` metres apart, and settle it.
   result = build(HUMAN, facing(HUMAN, apart), band, SHAKE)
   result.settle()
@@ -82,7 +82,7 @@ proc answered(): Answers =
   ANSWERS_GIVEN
 
 
-proc live(key: string; is_positive: bool): Went
+proc live(key: string, is_positive: bool): Went
   ## Sweep of `SWEEPS` walked live one way, from distance its kept answer chose.
 
 proc standOf(question: StillAsked): tuple[is_holding: bool, couple: Couple] =
@@ -518,7 +518,7 @@ func between(a, b, c, d: Vector): float =
     s = clamp((first_dot_second - first_dot_offset) / max(first_squared, 1e-12), 0.0, 1.0)
   distance(a + first * s, c + second * t)
 
-func linkCapsules(rig: Rig; pose: ArmPose): seq[tuple[p, q: Vector, radius: float]] =
+func linkCapsules(rig: Rig, pose: ArmPose): seq[tuple[p, q: Vector, radius: float]] =
   ## Arm's three links as engine holds them: capsule set in from each joint by
   ## its radius, and hand too short for that as ball at its middle.
   for (joint_a, joint_b, long) in [
@@ -532,7 +532,7 @@ func linkCapsules(rig: Rig; pose: ArmPose): seq[tuple[p, q: Vector, radius: floa
     else:
       result.add ((joint_a + joint_b) * 0.5, (joint_a + joint_b) * 0.5, long / 2.0)
 
-func deepestOf(walk: Walk; links: seq[Link]): float =
+func deepestOf(walk: Walk, links: seq[Link]): float =
   ## Deepest any link of any held arm sits in any body, over every moment.
   ##   Read against trunk capsules where engine has them, with distance worked
   ##     out here and not engine's manifolds.  Arm hangs from its own girdle and
@@ -558,7 +558,7 @@ func deepestOf(walk: Walk; links: seq[Link]): float =
                 between(link_a, link_b, girdle_a, girdle_b) - link_radius - girdle_radius,
               )
 
-func leapIn(walk: Walk; links: seq[Link]): tuple[most, at: float] =
+func leapIn(walk: Walk, links: seq[Link]): tuple[most, at: float] =
   ## Furthest any point of any held arm moves between two moments, and where.
   ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
   ##     check simulation against itself.
@@ -582,7 +582,7 @@ func leapIn(walk: Walk; links: seq[Link]): tuple[most, at: float] =
 const SWING_END = HUMAN.range[Dof.Extend].upper - 5.0 * PI / 180.0
   ## Extension within five degrees of swing's end.
 
-func extensionOf(walk: Walk; links: seq[Link]): tuple[peak: float, at_end: int] =
+func extensionOf(walk: Walk, links: seq[Link]): tuple[peak: float, at_end: int] =
   ## Furthest first connection's two arms extend, and arm-moments at swing's end.
   result.peak = -Inf
   for moment in walk.moments:
@@ -593,7 +593,7 @@ func extensionOf(walk: Walk; links: seq[Link]): tuple[peak: float, at_end: int] 
       result.peak = max(result.peak, joint_angles.extend)
       if joint_angles.extend > SWING_END: inc result.at_end
 
-func wentOf(walk: Walk; links: seq[Link]): Went =
+func wentOf(walk: Walk, links: seq[Link]): Went =
   ## Walk reduced to numbers laws read.
   let
     (most, at) = leapIn(walk, links)
@@ -681,7 +681,7 @@ proc walkEveryWay() =
   for worker in 0 ..< cores: createThread(workers[worker], going, worker)
   joinThreads(workers)
 
-proc live(key: string; is_positive: bool): Went =
+proc live(key: string, is_positive: bool): Went =
   ## Walk is simulation's own, on this build: only where couple stand comes from
   ##   answers.  `walked` builds its own world, so it walks exactly what search
   ##   walked from that distance.
