@@ -313,7 +313,7 @@ func panOf*(window: (int, int, int, int)): (int, int) =
 
 #[ Drawing ]#
 
-func spokeClass(spoke: Spoke; motion: Motion; taken: Option[Frame]): string =
+func spokeClass(spoke: Spoke, motion: Motion, taken: Option[Frame]): string =
   ## Say what one way out of frame is doing while couple move.
   result = "spoke" & (if spoke.is_compound: " two" else: "")
   if motion != Motion.Leaving:
@@ -321,7 +321,7 @@ func spokeClass(spoke: Spoke; motion: Motion; taken: Option[Frame]): string =
   result.add(if taken == some(spoke.to): " taken" else: " going")
 
 
-func renderSpokes*(here: Frame; motion = Motion.Still;
+func renderSpokes*(here: Frame, motion = Motion.Still,
     taken = none(Frame)): string =
   ## Draw frame couple hold, every way out of it, and move being
   ## made.

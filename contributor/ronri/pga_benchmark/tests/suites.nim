@@ -308,6 +308,37 @@ suite "Internal: Dense forms":
 
 
 suite "Internal: Measurements":
+  test "every pool starts on cache line":
+    # Pool off line puts 128-byte multivector across three lines, not two, and typed object
+    #   across lines in other patterns, so library and reference read different layouts.
+    template heldToLine(pool: untyped) =
+      checkpoint astToStr(pool) & " starts at " & $(cast[uint](addr pool[0]) mod 64)
+      check cast[uint](addr pool[0]) mod 64 == 0  # first object starts on line
+    heldToLine(POOL_GENERAL)
+    heldToLine(POOL_GRADED[0])
+    heldToLine(POOL_SCALAR)
+    when declared(POOL_POINT):
+      heldToLine(POOL_POINT)
+      heldToLine(POOL_LINE)
+      heldToLine(POOL_MOTOR)
+      heldToLine(POOL_POINT_WIDENED)
+      heldToLine(POOL_LINE_WIDENED)
+      heldToLine(POOL_MOTOR_WIDENED)
+    when declared(POOL_PLANE):
+      heldToLine(POOL_PLANE)
+      heldToLine(POOL_PLANE_WIDENED)
+    when declared(POOL_POINTROUND):
+      heldToLine(POOL_POINTROUND)
+      heldToLine(POOL_DIPOLE)
+      heldToLine(POOL_CIRCLE)
+      heldToLine(POOL_POINTROUND_WIDENED)
+      heldToLine(POOL_DIPOLE_WIDENED)
+      heldToLine(POOL_CIRCLE_WIDENED)
+    when declared(POOL_SPHERE):
+      heldToLine(POOL_SPHERE)
+      heldToLine(POOL_SPHERE_WIDENED)
+
+
   test "summarise reads median and minimum per object":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
     check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
@@ -522,6 +553,18 @@ suite "Internal: Inspector":
     check functions[1].stem_result == "float" and functions[1].is_inline  # via return type
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
+
+
+  test "definition marked noinline reads as function":
+    let functions = functionsIn([
+      "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void);",
+      "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void) {",
+      "\tT1_ = getMonoTime_u0__stdZmonotimes();",
+      "}",
+    ].join("\n") & "\n")
+    check functions.len == 1  # declaration skipped, definition read
+    check functions[0].name == "measure0Library_u0__m" and not functions[0].is_inline  # head
+    check "getMonoTime" in functions[0].body  # body runs to its closing brace
 
 
   test "terms inside loops of constant bound count once per trip":
@@ -746,9 +789,28 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
 
 
+  test "each timed loop sits in C function of its own":
+    # One function holding every loop puts error check after each call; compiler's estimate
+    #   of reaching code below drains to zero, so it optimises rest for size, and library's
+    #   loops stay scalar while straight-line forms vectorise.
+    var functions_timing = 0
+    for path in walkFiles(CACHE / "*measurements.nim.c"):
+      for f in functionsIn(readFile(path)):
+        let clocks = f.body.count("getMonoTime")
+        if clocks == 0: continue
+        inc functions_timing
+        checkpoint f.name & " reads clock " & $clocks & " times"
+        check clocks == 2  # one timed loop: clock read before and after each round
+    let pairs_measured = CATALOGUE.len + CATALOGUE.countIt(it.reference.len > 0) +
+      (if HAS_FORMS_DENSE: CATALOGUE.countIt(it.reference.len == 0) else: 0)
+    checkpoint $functions_timing & " timing functions for " & $pairs_measured & " measured pairs"
+    check functions_timing == pairs_measured  # one function per measurand per implementation
+
+
   test "timed loop binds result returned by value, so no temporary is zero-filled":
     # Result of three floats or fewer returns by value; assigned straight into its slot, it
-    #   passes through temporary this large function zero-fills out of line, about 11 ns.
+    #   passes through temporary that call site zero-fills, out of line where function is
+    #   large, about 11 ns.
     var calls, filled = 0
     for path in walkFiles(CACHE / "*measurements.nim.c"):
       let lines = readFile(path).splitLines

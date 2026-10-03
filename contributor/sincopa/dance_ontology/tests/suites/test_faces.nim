@@ -11,7 +11,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, unittest]
+import std/[os, sequtils, strutils, unittest]
 
 import ../../design/[faces, page, parts]
 
@@ -108,7 +108,7 @@ func stackOf(sheet, selector: string): seq[string] =
 
 
 
-suite "faces":
+suite "Internal: Faces":
   let directory = getTempDir() / "dance_faces_test"
   removeDir(directory)
   stub(directory)
@@ -131,8 +131,29 @@ suite "faces":
   test "each face is inlined once, as bytes rather than as link":
     let style = faceStyle(directory)
     check style.count("@font-face") == faces.FACES.len
-    check style.count("data:font/woff2;base64,") == faces.FACES.len
+    check style.count(";base64,") == faces.FACES.len
     check "http" notin style  # names no host page would have to reach (X.8)
+
+
+  test "each face declares media type and format of its own file":
+    ## TrueType and woff2 travel side by side, so each rule says which of them its bytes are.
+    check formatOf("NotoSans-Regular.ttf") == (media: "font/ttf", format: "truetype")
+    check formatOf("commit-mono-latin-400-normal.woff2") == (media: "font/woff2", format: "woff2")
+    expect ValueError:
+      discard formatOf("NotoSans-Regular.otf")
+    let style = faceStyle(directory)
+    check style.count("format(\"truetype\")") == faces.FACES.countIt(it[0].endsWith(".ttf"))
+
+
+  test "every Noto face ships whole, as TrueType of its own release":
+    ## Article X.8 ships Noto whole and never as subset: Noto was chosen so no character of
+    ##   page falls outside its faces, and subset undoes that.  Commit Mono is no Noto, and
+    ##   keeps its subset.
+    for (file, family, _, _) in faces.FACES:
+      if family.startsWith("Noto"):
+        checkpoint(file)
+        check file.endsWith(".ttf")
+        check "latin" notin file
 
 
   test "every family is named, and ligatures are kept on":
@@ -176,8 +197,8 @@ suite "faces":
       let
         once = withFaces(page, directory)
         twice = withFaces(once, directory)
-      check once.count("data:font/woff2;base64,") == faces.FACES.len
-      check twice.count("data:font/woff2;base64,") == faces.FACES.len
+      check once.count(";base64,") == faces.FACES.len
+      check twice.count(";base64,") == faces.FACES.len
       check twice == once
 
 

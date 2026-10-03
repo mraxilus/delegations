@@ -58,7 +58,7 @@ type
     ## Whether each connection locks or wraps, where that has been said.
 
 
-func settleOf*(level: Option[Level]; way: Option[Way]): Option[Settle] =
+func settleOf*(level: Option[Level], way: Option[Way]): Option[Settle] =
   ## Get what this hold does to its hand and its line, where rules 4 to 6
   ## say anything.
   ##   Rules 4 and 5 name *other* hand; rule 6 names current one.

@@ -337,7 +337,7 @@ func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
   some((int(opens), int(shuts - opens)))
 
 
-func isClear(box: Box; used: seq[Box]): bool =
+func isClear(box: Box, used: seq[Box]): bool =
   ## Test whether something can be drawn here without landing on anything else.
   for other in used:
     if isOverlapping(box, other):
@@ -546,7 +546,7 @@ func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string;
   result.add "</g>"
 
 
-func standingOf(target: Frame; where: Option[Frame]): (bool, bool, bool) =
+func standingOf(target: Frame, where: Option[Frame]): (bool, bool, bool) =
   ## Get how frame stands to wherever couple are: held, reachable, or two.
   if where.isNone:
     return (false, false, false)
@@ -600,7 +600,7 @@ const WIDE_TEMPO* = Tempo(
 )
 
 
-func renderMap*(here: Option[Frame]; motion = Motion.Still;
+func renderMap*(here: Option[Frame], motion = Motion.Still,
     taken = none(Frame)): string =
   ## Draw graph, with couple standing on one frame if they are
   ## dancing.

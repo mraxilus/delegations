@@ -50,7 +50,7 @@ proc resolve(path: cstring): cstring {.importjs: "require('path').resolve(#)".}
 proc jsString(value: JsObject): cstring {.importjs: "String(#)".}
   ## Read javascript value as string it already is.
 
-proc gotoUrl(page: JsObject; url: cstring): JsObject {.importjs: "#.goto(#)".}
+proc gotoUrl(page: JsObject, url: cstring): JsObject {.importjs: "#.goto(#)".}
   ## Navigate page; `goto` is reserved word that bridge would mangle.
 
 proc variableNamed(name: cstring): cstring {.importjs: "(process.env[#] || '')".}

@@ -82,7 +82,7 @@ func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: floa
   keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
   for entry in keyed: result.add entry[1]
 
-func litAt*(fore: Seen; s: float): float =
+func litAt*(fore: Seen, s: float): float =
   ## How lit one body's side is at offset `s` across it, -1 at its back edge to
   ## 1 at its front edge, given where it faces on screen: 0 dark, 1 light.
   ##   Each dancer is lit from their own front, as if they carried lamp on

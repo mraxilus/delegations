@@ -85,7 +85,7 @@ func isRestAway*(ask: StillAsk): bool = isRestAway(ask.rest)
   ## Say card's rest as simulation is told it.
 
 
-func turnerOf*(manner: Manner; amount: float): tuple[who: Body, turns: float] =
+func turnerOf*(manner: Manner, amount: float): tuple[who: Body, turns: float] =
   ## Who simulation turns for this manner, and how far in its own sense, where page turns
   ## manner's own dancer `amount` turns clockwise.
   ##   Axis turn is walker's own: they turn on spot, and partner stays where they stand.
@@ -113,7 +113,7 @@ func stillAsks*(): seq[StillAsk] =
   #     asked either way (`either`): half turn from rest is half turn whichever
   #     way couple took it.  Same reading page makes when it decides whether to
   #     draw frame turned other way at all (A17).
-  func amountFor(target: Frame; twist: int): float =
+  func amountFor(target: Frame, twist: int): float =
     ## Say how far frame winds from its rest to facing `twist` draws: nought or half turn.
     if turnedFacing(0.0, 180.0 * float(twist)) == some(restOf(target)): 0.0 else: 0.5
   func isDrawnEitherWay(target: Frame): bool =

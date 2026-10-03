@@ -94,7 +94,7 @@ func escape(text: string): string =
   text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 
-func inked(said: string; should_escape = true): string =
+func inked(said: string, should_escape = true): string =
   ## Say name with each hand it names written in that dancer's own ink.
   ##   Page's drawings ink their words this way, and name in prose beside them is same
   ##     name; reader who has learnt two shades from map should not have to learn them
@@ -113,7 +113,7 @@ func inked(said: string; should_escape = true): string =
     result.add "<span style=\"color: " & ink & "\">" & text & "</span>"
 
 
-func statisticCard(number: int; caption: string; is_good = false): string =
+func statisticCard(number: int, caption: string, is_good = false): string =
   ## Draw one figure in strip at head of page.
   "<div class=\"stat" & (if is_good: " good" else: "") & "\"><b>" & $number &
     "</b><span>" & caption & "</span></div>"

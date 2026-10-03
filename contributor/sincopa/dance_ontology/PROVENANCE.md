@@ -1731,10 +1731,10 @@ of the audit reads no stack that `&` joins, and that label is one.
 Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws all five
 arrows, and Commit Mono draws marks such as `✓` that the text faces lack. So a stack names its own
 face, then Noto Sans Math, then Commit Mono. That is the merge by codepoint range of X.8. The maps
-were read with fontconfig 2.15.0 on 2026-10-02, from files with the digests of the store.
+were read with fontconfig 2.15.0 on 2026-10-03, from the whole faces with the digests of the store.
 
 The wiring is verified by `suites/test_faces.nim`, test "every stack falls back to faces that draw
-what its own face lacks". The coverage is verified by hand in Chromium 141, 2026-10-02. Each
+what its own face lacks". The coverage is verified by hand in Chromium 141, 2026-10-03. Each
 character beyond ASCII went into a clone of its element, alone, at load and in each view of the
 Reference. The DevTools call `CSS.getPlatformFontsForNode` then named the face that drew it.
 
@@ -1753,18 +1753,40 @@ as windows-1250, and the whole-cloth page too once the block grew.
 So `withFaces` puts `<meta charset="utf-8">` first in a page that declares none. Verified by
 `suites/test_faces.nim`, and by hand in Chromium 141 on 2026-10-02: all ten pages read as UTF-8.
 
+**Each Noto face ships whole, as the TrueType of its own release.** Noto was chosen so that no
+character of a page falls outside its faces. A Latin subset undoes that (Article X.8, as #425 rules
+it). Commit Mono is no Noto, and keeps its Latin subset. Each rule declares the media type and the
+format of its own file, which `formatOf` reads off its extension.
+
+Verified by `suites/test_faces.nim`, test "every Noto face ships whole, as TrueType of its own
+release". With the subsets of `main` back in its rows, that law fails on each of the six Noto
+faces. The test "each face declares media type and format of its own file" holds the formats.
+
+**The hinted build of each Noto face ships, by the ruling of the Architect on 2026-10-03.** Hinting
+snaps each letter to the pixel grid at small sizes, so small text stays sharp on a screen of low
+density. The unhinted build of the same release holds the same characters, and lacks the tables
+`cvt`, `fpgm`, `prep` and `gasp`. It also lacks the instruction program in each glyph. So it is
+about 32 percent smaller: Noto Sans Regular is 610,392 bytes hinted and 418,820 unhinted.
+Rejected: the unhinted build, which would save about 1.5 MB on each page.
+
+Compared by hand on 2026-10-03, for Noto Sans Regular. fontconfig 2.15.0 reads the same charset
+from both builds. Their table directories differ in those four tables, in `glyf`, and in the
+version string of `name`.
+
 Eight faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
-committed. Each one is pinned by package version *and* SHA-256. The version is pinned because an
-unversioned path serves whatever the host resolves that day. The digest is pinned because the bytes
-are embedded in what readers open.
+committed. Each one is pinned by package or release version *and* SHA-256. The version is pinned
+because an unversioned path serves whatever the host resolves that day. The digest is pinned
+because the bytes are embedded in what readers open.
 
 `design/faces.nim` inlines them as data URIs, and `pages` dresses every page it wrote, once, after
 every writer has run. To do it there rather than in each writer is what keeps the suites free of the
 network. That is **verified**: every suite passes with `build/` deleted outright.
 
-The origin of all eight is `@fontsource`, by way of `cdn.jsdelivr.net`: 5.3.0 for seven, and 5.2.8
-for Noto Sans Math. All are under the **SIL Open Font License 1.1**, confirmed from the `LICENSE` of
-each package rather than assumed.
+The two faces of Commit Mono come from `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. The six
+Noto faces come whole from the releases of the Noto project, by the same host. They are 2.013 for
+Noto Sans and Noto Serif, and 2.539 for Noto Sans Math. All are under the **SIL Open Font License
+1.1**. For Commit Mono that is confirmed from the `LICENSE` of its package, rather than assumed.
+For each Noto face it is confirmed from the licence in its own `name` table.
 
 Their addresses and checksums are no longer this project's to hold. They are the `ASSETS` table in
 `curator/audit/src/assets.nim`, which is the shared store of the repository. `assets` here names the
@@ -1781,7 +1803,7 @@ draw from it, and `rga_visualiser` draws from it too.
 The store keys entries by digest, so a face arrives under a name that is its hash. `assets` restores
 the file name on the way into `build/fonts`, because everything downstream reads faces by name.
 
-Verified 2026-10-02. All eight arrive, and each one carries the digest that the store declares. To
+Verified 2026-10-03. All eight arrive, and each one carries the digest that the store declares. To
 ask for a face that the store does not declare fails with a finding that names it, which is checked
 rather than assumed.
 
@@ -1794,9 +1816,10 @@ it. It reads it as text rather than by import. The law then depends on the decla
 the module of the curator keeping its present shape. It also means that this project imports no
 curator source, which none does.
 
-Cost, measured 2026-10-02 on this container: the face block is **535,702 bytes on each page**, and
-224,279 without Noto Sans Math. The eight files are 400,884 bytes of woff2, and Noto Sans Math is
-233,460 of them, for five arrows. So the Reference grows from 582,206 bytes to 894,087.
+Cost, measured 2026-10-03 on this container: the face block is **5,655,720 bytes on each page**,
+where the Latin subsets made it 535,702. The eight files are 4,240,892 bytes, and the six whole Noto
+faces are 4,145,460 of them. So the Reference grows from 894,122 bytes to 6,014,140, and
+`design/review.html` from 10,783,631 to 15,903,649.
 
 Rejected: to link the copy of the host, which names a face the reader may lack, and needs the
 network at reading time. Rejected: to subset for each page, which trades one shared block for ten

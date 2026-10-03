@@ -35,7 +35,7 @@ func apartOf(a, b: float): float =
   let d = floorMod(a - b, 360.0)
   min(d, 360.0 - d)
 
-func armOf(still: JsonNode; who: Body; arm: Arm): ArmPose =
+func armOf(still: JsonNode, who: Body, arm: Arm): ArmPose =
   ## One arm as recording keeps it, from engine's own capsules: each limb's capsule runs
   ##   its radius in from both joints, and palm's sphere sits half hand past wrist.
   let
@@ -59,7 +59,7 @@ func armOf(still: JsonNode; who: Body; arm: Arm): ArmPose =
   result.wrist = fore.z + forward * fore.radius
   result.grip = palm.a * 2.0 - result.wrist
 
-func armsOf(still: JsonNode; links: seq[Link]): Arms =
+func armsOf(still: JsonNode, links: seq[Link]): Arms =
   ## Every connection's two arms, lead's first, as recording keeps them.
   for link in links:
     result.add [armOf(still, link.ends[0].body, link.ends[0].arm),

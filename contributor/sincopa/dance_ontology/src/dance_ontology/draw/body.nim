@@ -88,7 +88,7 @@ type Free* {.pure.} = enum ## Say how hand nobody holds is drawn.
 
 #[ Six Spots ]#
 
-func slotBearing*(arm: Arm; slot: Slot): float =
+func slotBearing*(arm: Arm, slot: Slot): float =
   ## Get where one of six spots sits, as bearing off body's facing.
   ##   Two sides, and on each place where arm hangs, one spot
   ##     slightly towards dancer's front and one slightly towards their
@@ -102,7 +102,7 @@ func slotBearing*(arm: Arm; slot: Slot): float =
           of Slot.Default: 0.0)
 
 
-func slotOf*(arm: Arm; level: Option[Level]; way: Option[Way]):
+func slotOf*(arm: Arm, level: Option[Level], way: Option[Way]):
     tuple[arm: Arm, slot: Slot] =
   ## Get one of six spots this hand settles in: whose side, how far round.
   ##   `above` never settles anywhere but its own side's default (rule 8).
@@ -113,20 +113,20 @@ func slotOf*(arm: Arm; level: Option[Level]; way: Option[Way]):
    settled.get.slot)
 
 
-func roundOf*(level: Option[Level]; way: Option[Way]): Option[Sends] =
+func roundOf*(level: Option[Level], way: Option[Way]): Option[Sends] =
   ## Get which way round body this hold sends its line, where rules 4 to
   ## 6 say anything; none where nothing is said and short way is taken.
   let settled = settleOf(level, way)
   if settled.isSome: some settled.get.sends else: none(Sends)
 
 
-func handBearing*(facing: float; arm: Arm; wind = 0.0): float =
+func handBearing*(facing: float, arm: Arm, wind = 0.0): float =
   ## Get bearing hand sits at: round from front, past rest spot
   ## by however far arm has been carried.
   facing + (if arm == Arm.Left: -1.0 else: 1.0) * (ARM_REST + wind)
 
 
-func settledWind*(arm: Arm; level: Option[Level]; way: Option[Way]): float =
+func settledWind*(arm: Arm, level: Option[Level], way: Option[Way]): float =
   ## Get winding that puts this hand in its slot.
   ##   Winding is measured off hand's own side and runs towards back
   ##     for either hand, so this is only place two conventions are
@@ -137,7 +137,7 @@ func settledWind*(arm: Arm; level: Option[Level]; way: Option[Way]): float =
   if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
 
 
-func handPoint*(centre: Point; facing: float; arm: Arm; wind = 0.0): Point =
+func handPoint*(centre: Point, facing: float, arm: Arm, wind = 0.0): Point =
   ## Get where one hand is on rim.
   polar(centre.x, centre.y, BODY_RADIUS, handBearing(facing, arm, wind))
 
@@ -182,7 +182,7 @@ func rim*(centre: Point; facing, bearing_start, bearing_stop: float; width = RIM
     " stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
 
 
-func chevronPoints*(centre: Point; facing: float): array[3, Point] =
+func chevronPoints*(centre: Point, facing: float): array[3, Point] =
   ## Get three points chevron is drawn through: wing, apex,
   ## other wing.
   ##   One source for shape, so drawing and anything that has to
@@ -198,7 +198,7 @@ func chevronPoints*(centre: Point; facing: float): array[3, Point] =
     centre.y - forward.y * CHEVRON_BACK + across.y * CHEVRON_HALF)]
 
 
-func chevron*(centre: Point; facing: float): string =
+func chevron*(centre: Point, facing: float): string =
   ## Say facing, small and at centre of body.
   ##   In middle rather than on rim, because rim breaks for
   ##     hands and carries nothing else.  Centre is only part of
@@ -213,7 +213,7 @@ func chevron*(centre: Point; facing: float): string =
     " stroke-linejoin=\"round\"/>"
 
 
-func border*(pose: Pose; who: Dancer): string =
+func border*(pose: Pose, who: Dancer): string =
   ## Draw dancer's whole boundary: one quiet outline, broken at hands.
   ##   It says nothing but *here is body*.  Rim used to fill up in
   ##     arm's colour as that arm wound round -- second progress ring
@@ -240,7 +240,7 @@ func border*(pose: Pose; who: Dancer): string =
 
 #[ Hands And Furniture ]#
 
-func fillOf*(level: Option[Level]; arm: Arm; is_deep = false): string =
+func fillOf*(level: Option[Level], arm: Arm, is_deep = false): string =
   ## Get fill that level draws as -- only place level becomes fill,
   ## so hands and pips cannot drift.
   if level == some(Level.Low):
@@ -290,8 +290,8 @@ func ringOf*(pose: Pose): string =
     """ stroke-dasharray="3 4"/>"""
 
 
-func caption*(centre: Point; facing: float; arm: Arm; text: string;
-    wind = 0.0; ink = FAINT): string =
+func caption*(centre: Point, facing: float, arm: Arm, text: string,
+    wind = 0.0, ink = FAINT): string =
   ## Set hand's name just past it, growing outwards, in that hand's own ink.
   ##   Caption names one hand, and hand is drawn in colour that says
   ##     whose it is, so word that names it is written in same one --

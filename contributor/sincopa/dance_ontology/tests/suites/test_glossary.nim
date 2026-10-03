@@ -65,7 +65,7 @@ func replaced(source, term: string): seq[string] =
         if trimmed.len > 0 and trimmed[0].isUpperAscii: result.add trimmed.toLowerAscii
 
 
-func avoided(source: string; terms: openArray[string]): Table[string, seq[string]] =
+func avoided(source: string, terms: openArray[string]): Table[string, seq[string]] =
   ## Collect words each named entry replaced, by term entry names.
   ##   Entry opens `**Term**:` and its rejected words sit on `_Avoid_:` line
   ##     inside same entry, comma separated.
