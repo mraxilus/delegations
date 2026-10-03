@@ -67,31 +67,33 @@
      has no stars or crosses, so all three are declared under one family and
      separated by unicode-range -- same split `gui_shim.cpp` merges into one
      atlas for desktop.
-       Each `@EMBED:<file>@` names WOFF2 in `fonts/` that `build_browser.sh`
+       Each `@EMBED:<file>@` names face in `build/fonts` that `tools/build.nim web`
      replaces with that file's own base64 data URL. Payload stays out of this
-     file so tracked source is 26 KB rather than the ~940 KB it assembles to,
-     and so fonts stay vendored -- kept locally, never committed -- way
-     `dependencies.list` already prescribes. Family, weight and unicode-range are
-     tracked here beside codepoints they cover; only bytes are injected. */
+     file, so fonts stay out of tree -- fetched by digest from shared store, never
+     committed. Family, weight and unicode-range are tracked here beside codepoints
+     they cover; only bytes are injected.
+       Each Noto face is whole, as TrueType of its own release, so no character
+     falls outside it to face of viewer's system (Article X.8). Commit Mono is no
+     Noto, and stays its Latin WOFF2. */
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
     font-display: block;
-    src: url(@EMBED:noto-sans-latin-400-normal.woff2@) format("woff2"); }
+    src: url(@EMBED:NotoSans-Regular.ttf@) format("truetype"); }
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 600;
     font-display: block;
-    src: url(@EMBED:noto-sans-latin-600-normal.woff2@) format("woff2"); }
+    src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
     font-display: block;
     unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27EF, U+2A00-2AFF, U+1D400-1D7FF;
-    src: url(@EMBED:noto-sans-math-math-400-normal.woff2@) format("woff2"); }
+    src: url(@EMBED:NotoSansMath-Regular.ttf@) format("truetype"); }
   @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
     font-display: block;
     unicode-range: U+25A0-25FF, U+2600-26FF, U+2700-27BF;
-    src: url(@EMBED:noto-sans-symbols-2-symbols-400-normal.woff2@) format("woff2"); }
+    src: url(@EMBED:NotoSansSymbols2-Regular.ttf@) format("truetype"); }
   /* Serif ships at 600 alone, which is weight every title is set at; 400 would be face
      nothing draws, and browser asked for 600 would fake bold from it. */
   @font-face { font-family: "Noto Serif UI"; font-style: normal; font-weight: 600;
     font-display: block;
-    src: url(@EMBED:noto-serif-latin-600-normal.woff2@) format("woff2"); }
+    src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
   @font-face { font-family: "Commit Mono UI"; font-style: normal; font-weight: 400;
     font-display: block;
     src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
