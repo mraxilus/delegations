@@ -2066,15 +2066,19 @@ coordinator holds no branch. An issue that carries the label `coordinator` is re
 carries the label of the role that it starts, and no item is the work of the coordinator.
 Verified by `suites/test_hooks.nim`.
 
-**The sign-off serves the Architect first, so `stop` holds the parts that the Architect decides
-on.** Each decision reads as a decision card, and its class says what blocks. Each ⚠️ row names
-the role that it waits on (`GUIDE.md`, The sign-off). The coordinator, once the Architect trials
-it, lifts each decision onto a card without a change of words.
-The block carries eight labels in order: `Role`, `Brief`, `State`, `Context`, `Decisions`, the
-table, `Summary` and `Next step`.
+**The sign-off follows the order that the Architect set, and `stop` holds that order.** The
+Architect reads the block first: who the delegate is and where it stands, then what happened,
+then what waits on them (`GUIDE.md`, The sign-off). Each decision reads as a decision card, and
+its class says what blocks. Each ⚠️ row names the role that it waits on. The coordinator, once
+the Architect trials it, lifts each decision onto a card without a change of words.
+The block carries seven labels in order: `Role`, `State`, the table, `Context`, `Summary`,
+`Decisions` and `Next step`.
 
-- The brief is `#N` or `none`. The state is `done`, `working`, `waiting` or `blocked`, and it is
-  `blocked` exactly when a decision blocks this delegate.
+- The state opens with `done`, `working`, `waiting` or `blocked`, and the check reads that word
+  alone, before the first comma. Where the branch stands follows it, and no check reads it. The
+  state is `blocked` exactly when a decision blocks this delegate.
+- The block holds no brief line, by the choice of the Architect: no delegate starts from a
+  brief until the Architect trials the coordinator.
 - Decisions are numbered from `D1`, and each one names its class and where its ruling goes. With
   no decision, the label reads `**Decisions:** None.`, and over its blocks it stands alone.
 - A class is `blocks this delegate`, that class with `and` and the role strings that wait too,
@@ -2091,8 +2095,8 @@ table, `Summary` and `Next step`.
 - Cost: `stop` cannot tell the coordinator, which holds no branch, from a delegate. Where it
   runs for the coordinator, whose message is the digest, a turn that posted is asked once for a
   sign-off. The second stop passes.
-- Verified by `suites/test_hooks.nim`: one assertion for each rule above. The fixtures are the
-  example in `GUIDE.md`, cut short, and a sign-off with no brief and no decision.
+- Verified by `suites/test_hooks.nim`: one assertion for each rule above, and two for the
+  order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off with no decision.
 
 ## Watching main
 
