@@ -4,11 +4,14 @@
 ##     from `build/`, from published artefact and from file, none of which can be
 ##     relied on to reach font host, so bytes travel inside page as data URI rather
 ##     than as link to one.
-##     Cost of inlining: every page carries same 536 kB face block, whatever of it that
-##       page uses, measured in `build/` on 2026-10-02; Noto Sans Math is 311 kB of it.
+##     Cost of inlining: every page carries same 5.66 MB face block, whatever of it that
+##       page uses, measured in `build/` on 2026-10-03, where Latin subsets made 536 kB.
 ##       Rejected: linking host's copy, which names face viewer may lack and needs
 ##       network at reading time; rejected: subsetting per page, which trades one
 ##       shared block for five that drift.
+##   Noto ships whole, never as subset (X.8): Noto was chosen so no character of page
+##     falls outside its faces, and subset undoes that.  Commit Mono is no Noto, and keeps
+##     its Latin subset.
 ##   Faces themselves are fetched and pinned by `tools/build.nim`, verb `assets`;
 ##     this module only reads what that wrote, and says so loudly when it is absent,
 ##     because page drawn without them is page nobody can compare with another.
@@ -27,23 +30,26 @@ const
   DIRECTORY_FONTS* = "build" / "fonts"
     ## Directory `assets` writes faces into, read from project directory.
   FACES* = [
-    ("noto-serif-latin-400-normal.woff2", "Noto Serif", "400", "normal"),
-    ("noto-serif-latin-600-normal.woff2", "Noto Serif", "600", "normal"),
-    ("noto-serif-latin-400-italic.woff2", "Noto Serif", "400", "italic"),
-    ("noto-sans-latin-400-normal.woff2", "Noto Sans", "400", "normal"),
-    ("noto-sans-latin-600-normal.woff2", "Noto Sans", "600", "normal"),
+    ("NotoSerif-Regular.ttf", "Noto Serif", "400", "normal"),
+    ("NotoSerif-SemiBold.ttf", "Noto Serif", "600", "normal"),
+    ("NotoSerif-Italic.ttf", "Noto Serif", "400", "italic"),
+    ("NotoSans-Regular.ttf", "Noto Sans", "400", "normal"),
+    ("NotoSans-SemiBold.ttf", "Noto Sans", "600", "normal"),
     ("commit-mono-latin-400-normal.woff2", "Commit Mono", "400", "normal"),
     ("commit-mono-latin-700-normal.woff2", "Commit Mono", "700", "normal"),
-    ("noto-sans-math-math-400-normal.woff2", "Noto Sans Math", "400", "normal"),
+    ("NotoSansMath-Regular.ttf", "Noto Sans Math", "400", "normal"),
   ]
     ## Each face with family, weight and style it answers to.  Repository's store pins
     ##   bytes of each file by digest (`curator/audit/src/assets.nim`), and verb `assets`
     ##   of `tools/build.nim` fetches every row: row here is what to add to ship face.
     ##   Noto Sans Math draws arrows, which neither text face holds, and every stack names
     ##     it after its own face: merge by codepoint range (X.8).
-    ##     Cost: its 311 kB is most of face block on every page, for five arrows.
+    ##     Cost: its 862 kB as base64 is about 15 percent of face block on every page, for
+    ##       five arrows.
     ##     Rejected: Commit Mono alone, which draws no `⇄`; another mark for `place`, which
     ##       would change design.
+  LUT_FORMAT_BY_EXTENSION* = [(".ttf", "font/ttf", "truetype"), (".woff2", "font/woff2", "woff2")]
+    ## Media type and CSS format that each kind of face file declares, by its extension.
   FACES_MARK* = "<style data-faces>"
     ## Opening tag of face block, which names block so later run can find it.
     ##   Build dresses every page under `build/`, and not only pages it wrote, so
@@ -61,6 +67,15 @@ const
     ## Code, data and figures, with Noto Sans Math for `⇄`, which Commit Mono lacks.
 
 
+func formatOf*(file: string): tuple[media, format: string] =
+  ## Media type and CSS format that face `file` declares, read off its extension.
+  ##   Raises for kind no row names, rather than declare bytes browser cannot read.
+  for (extension, media, format) in LUT_FORMAT_BY_EXTENSION:
+    if file.endsWith(extension):
+      return (media, format)
+  raise newException(ValueError, "Face file is of no kind page can declare; got `" & file & "`.")
+
+
 proc faceStyle*(directory = DIRECTORY_FONTS): string =
   ## Build `<style>` holding every face inlined, and root that keeps ligatures on.
   ##   Raises where face is missing, rather than writing page that silently falls
@@ -74,9 +89,10 @@ proc faceStyle*(directory = DIRECTORY_FONTS): string =
         "Face is absent, so page would name one reader may lack; run " &
           "`nim r tools/build.nim assets`: got `" & path & "`.",
       )
+    let (media, format) = formatOf(file)
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
-      ";font-weight:" & weight & ";font-display:block;src:url(data:font/woff2;base64," &
-      encode(readFile(path)) & ") format(\"woff2\")}"
+      ";font-weight:" & weight & ";font-display:block;src:url(data:" & media & ";base64," &
+      encode(readFile(path)) & ") format(\"" & format & "\")}"
   FACES_MARK & rules.join("\n") & "\n:root{font-variant-ligatures:contextual}</style>"
 
 
