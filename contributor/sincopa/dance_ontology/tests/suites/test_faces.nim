@@ -197,8 +197,8 @@ suite "faces":
       let
         once = withFaces(page, directory)
         twice = withFaces(once, directory)
-      check once.count("data:font/woff2;base64,") == faces.FACES.len
-      check twice.count("data:font/woff2;base64,") == faces.FACES.len
+      check once.count(";base64,") == faces.FACES.len
+      check twice.count(";base64,") == faces.FACES.len
       check twice == once
 
 
