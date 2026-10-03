@@ -1230,18 +1230,20 @@ proc easeOff(couple: Couple) =
 
 type Matrix* = array[3, array[3, float]]
 
-func times(a, b: Matrix): Matrix =
+func times(a, b: Matrix): Matrix {.used.} =  # Used in `plan.nim`.
+  ## Multiply matrices of turn, i.e. turn by `b`, then by `a`.
   for i in 0..2:
     for j in 0..2:
       for k in 0..2:
         result[i][j] += a[i][k] * b[k][j]
 
-func transposed(a: Matrix): Matrix =
+func transposed(a: Matrix): Matrix {.used.} =  # Used in `plan.nim`.
+  ## Transpose matrix of turn, i.e. its inverse.
   for i in 0..2:
     for j in 0..2:
       result[i][j] = a[j][i]
 
-func turnAbout(v: array[3, float]): Matrix =
+func turnAbout(v: array[3, float]): Matrix {.used.} =  # Used in `plan.nim`.
   ## Rodrigues: turn about `v` by its length.
   let angle = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
   result = [[1.0, 0, 0], [0.0, 1, 0], [0.0, 0, 1]]
@@ -1276,7 +1278,8 @@ func quaternionOfMatrix(r: Matrix): engine.Quaternion =
                     (r[1][2] + r[2][1]) / s, 0.25 * s)
   engine.Quaternion(vector: engine.initVector(x, y, z), scalar: cfloat(w))
 
-const REST_MATRIX: Matrix = [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
+const MATRIX_REST {.used.}: Matrix =  # Used in `plan.nim`.
+  [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
   ## Upper arm's frame at rest in body's terms, columns right, back, down (`restFrame`).
 
 const WRIST_STEER* = 3.0
@@ -1298,8 +1301,8 @@ proc steer*(couple: var Couple, plan: openArray[float], hertz: float) =
       engine.aimHinge(arm_rig.swing[Collar.Up], cfloat(-side(arm) * plan[base + 1]))
       for k in Collar: engine.stiffenHinge(arm_rig.swing[k], cfloat(hertz))
       let shoulder_turn = times(
-        transposed(REST_MATRIX),
-        times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), REST_MATRIX),
+        transposed(MATRIX_REST),
+        times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
       )
       engine.aimBall(arm_rig.shoulder, quaternionOfMatrix(shoulder_turn))
       engine.stiffenBall(arm_rig.shoulder, cfloat(hertz))
@@ -1376,7 +1379,7 @@ proc poseVector*(couple: Couple): array[40, float] =
         upper = axesInBody(couple, who, arm_rig.link[Limb.Upper])
         forearm = axesInBody(couple, who, arm_rig.link[Limb.Fore])
         hand = axesInBody(couple, who, arm_rig.link[Limb.Palm])
-        shoulder_turn = times(transposed(girdle_turn), times(upper, transposed(REST_MATRIX)))
+        shoulder_turn = times(transposed(girdle_turn), times(upper, transposed(MATRIX_REST)))
         wrist_turn = times(transposed(forearm), hand)
         shoulder_vector = turnVector(shoulder_turn)
         wrist_vector = turnVector(wrist_turn)
@@ -1397,6 +1400,7 @@ proc placeBodies*(couple: var Couple, chests: array[Body, Stance], arms: array[4
   ## couple start where plan starts, rather than walking there from arms hanging.
 
   func turnOf(m: Matrix): engine.Quaternion =
+    ## Read matrix of turn as engine's quaternion, its columns being frame's axes.
     quaternionOf(
       asEngine((m[0][0], m[1][0], m[2][0])),
       asEngine((m[0][1], m[1][1], m[2][1])),
@@ -1761,7 +1765,7 @@ proc strainOf*(couple: Couple): Strain =
   ##   Every arm, not held ones alone: free arm shoved to its twist's end by
   ##     partner's trunk is strain couple feel, and asking held arms alone let
   ##     couple stand with free arm at its end and read as at ease.
-  const NAMES: array[Dof, string] = ["extend", "across", "twist", "bend", "wrist"]
+  const names: array[Dof, string] = ["extend", "across", "twist", "bend", "wrist"]
   result = Strain(most: 0.0, what: "")
   for who in Body:
     let waist = strainOf(couple.rig.waist, float(engine.angleOf(couple.who[who].waist)))
@@ -1784,7 +1788,7 @@ proc strainOf*(couple: Couple): Strain =
                           (Dof.Wrist, couple.rig.range[Dof.Wrist], wrist_angle)]:
         let got = strainOf(joint_range, value)
         if got > result.most:
-          result = Strain(most: got, whose: (who, arm), what: NAMES[dof])
+          result = Strain(most: got, whose: (who, arm), what: names[dof])
       for k in Collar:
         let got = strainOf(
           collarRange(couple.rig, arm, k),

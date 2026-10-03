@@ -17,7 +17,8 @@
 import std/math
 
 import ./[body, hold, rig, vector]
-from ./rigid import ArmPlacing, GIRDLE_RADIUS, Matrix, trunkCapsules
+from ./rigid {.all.} import ArmPlacing, GIRDLE_RADIUS, Matrix, MATRIX_REST, times, transposed,
+  trunkCapsules, turnAbout
 
 
 const
@@ -54,8 +55,6 @@ type
     pairs: seq[(int, int)]
 
 const
-  REST: Matrix = [[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
-    ## Upper arm's frame at rest, body's terms: right, back, down (`rigid.restFrame`).
   ROOMY = 0.04  ## Metres plan would sooner keep from arms and band's edges, where it can.
   FACE_WINDOW = 0.1  ## Of way up within which plan holds hands at torso band: twice judge's
                     ## `rigid.FACING`, so engine following plan has hands down when judged.
@@ -63,55 +62,40 @@ const
 func armIndex*(who: Body, arm: Arm): int = 2 * ord(who) + ord(arm)
   ## Arm's place in plan: lead's left, lead's right, follow's left, follow's right.
 
-func times(a, b: Matrix): Matrix =
-  for i in 0..2:
-    for j in 0..2:
-      for k in 0..2:
-        result[i][j] += a[i][k] * b[k][j]
-
-func transposed(a: Matrix): Matrix =
-  for i in 0..2:
-    for j in 0..2:
-      result[i][j] = a[j][i]
-
 func apply(a: Matrix, v: Vector): Vector =
+  ## Turn vector by matrix, i.e. `a` `v`.
   (a[0][0] * v.x + a[0][1] * v.y + a[0][2] * v.z,
    a[1][0] * v.x + a[1][1] * v.y + a[1][2] * v.z,
    a[2][0] * v.x + a[2][1] * v.y + a[2][2] * v.z)
 
 func column(a: Matrix, j: int): Vector = (a[0][j], a[1][j], a[2][j])
+  ## Read column `j` of matrix: where turn carries axis `j`.
 
 func aboutUp(angle: float): Matrix =
+  ## Turn by `angle` about vertical axis, anticlockwise seen from above.
   [[cos(angle), -sin(angle), 0.0], [sin(angle), cos(angle), 0.0], [0.0, 0.0, 1.0]]
 
 func aboutFore(angle: float): Matrix =
+  ## Turn by `angle` about forward axis.
   [[cos(angle), 0.0, sin(angle)], [0.0, 1.0, 0.0], [-sin(angle), 0.0, cos(angle)]]
 
 func aboutRight(angle: float): Matrix =
+  ## Turn by `angle` about rightward axis.
   [[1.0, 0.0, 0.0], [0.0, cos(angle), -sin(angle)], [0.0, sin(angle), cos(angle)]]
 
-func turnAbout*(x, y, z: float): Matrix =
-  ## Rodrigues: turn about vector by its length.
-  let angle = sqrt(x * x + y * y + z * z)
-  result = [[1.0, 0, 0], [0.0, 1, 0], [0.0, 0, 1]]
-  if angle < 1e-12: return
-  let
-    k = [x / angle, y / angle, z / angle]
-    skew: Matrix = [[0.0, -k[2], k[1]], [k[2], 0.0, -k[0]], [-k[1], k[0], 0.0]]
-    square = times(skew, skew)
-  for i in 0..2:
-    for j in 0..2:
-      result[i][j] += sin(angle) * skew[i][j] + (1.0 - cos(angle)) * square[i][j]
 
 func shoulderTurn*(plan: Plan, i: int): Matrix =
   ## Upper arm's turn from rest in frame of its girdle: what engine's ball reads.
   let base = 4 + PER_ARM * i
-  times(transposed(REST), times(turnAbout(plan[base + 2], plan[base + 3], plan[base + 4]), REST))
+  times(
+    transposed(MATRIX_REST),
+    times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
+  )
 
 func wristTurn*(plan: Plan, i: int): Matrix =
   ## Hand's turn in frame of its forearm: what engine's wrist reads.
   let base = 4 + PER_ARM * i
-  turnAbout(plan[base + 6], plan[base + 7], plan[base + 8])
+  turnAbout([plan[base + 6], plan[base + 7], plan[base + 8]])
 
 func twistOf(turn: Matrix): float = arctan2(turn[1][0] - turn[0][1], turn[0][0] + turn[1][1])
   ## Engine's twist of ball's turn about its own z (`b3GetTwistAngle`).
@@ -148,20 +132,25 @@ func place*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.Two)
       right: Vector = (sin(facing), -cos(facing), 0.0)
       fore: Vector = (cos(facing), sin(facing), 0.0)
     func world(p: Vector): Vector = origin + right * p.x + fore * p.y + (0.0, 0.0, p.z)
+      ## Carry point from body's own frame into world.
     for (a, z, radius) in trunkCapsules(rig):
       result.trunks[who].add (world(a), world(z), radius)
     for arm in Arm:
       let
         i = armIndex(who, arm)
         base = 4 + PER_ARM * i
-        sd = side(arm)
-        root: Vector = (sd * neck, 0.0, rig.top[Part.Torso])
-        reach: Vector = (sd * (rig.shoulder_out - neck), 0.0, rig.shoulder_up - rig.top[Part.Torso])
-        girdle = times(aboutUp(sd * plan[base]), aboutFore(-sd * plan[base + 1]))
+        handedness = side(arm)
+        root: Vector = (handedness * neck, 0.0, rig.top[Part.Torso])
+        reach: Vector = (
+          handedness * (rig.shoulder_out - neck),
+          0.0,
+          rig.shoulder_up - rig.top[Part.Torso],
+        )
+        girdle = times(aboutUp(handedness * plan[base]), aboutFore(-handedness * plan[base + 1]))
         shoulder = root + apply(girdle, reach)
         upper = times(
           girdle,
-          times(turnAbout(plan[base + 2], plan[base + 3], plan[base + 4]), REST),
+          times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
         )
         elbow = shoulder + column(upper, 2) * rig.upper
         forearm = times(upper, aboutRight(plan[base + 5]))
@@ -334,6 +323,7 @@ func boundsOf(rig: Rig, margin: float): Bounds =
     result[base + 5] = (rig.range[Dof.Bend].lower, rig.range[Dof.Bend].upper - margin)
 
 func clamped(plan: Plan, bounds: Bounds): Plan =
+  ## Hold every freedom of plan inside its bounds.
   for k in 0..<SIZE: result[k] = clamp(plan[k], bounds[k][0], bounds[k][1])
 
 
@@ -361,6 +351,7 @@ proc solve*(
   for stage in 0..2:
     let weight = [1e3, 1e5, 1e7][stage]
     proc cost(y: Plan): float =
+      ## Weigh pose: comfort, weighted violation, stay near last, bias, slack and gather.
       let placed = place(rig, y, wind, problem.is_away, problem.turner)
       result = comfort(rig, placed, y) + weight * violation(rig, problem, placed, before)
       for k in 0..<SIZE: result += holding * (y[k] - last[k]) ^ 2 + bias[k] * y[k]
@@ -373,41 +364,43 @@ proc solve*(
           second = placed.arms[armIndex(two.body, two.arm)].grip
         result += problem.style.gather * distance(first, second) ^ 2
     proc gradient(y: Plan, at: float): Plan =
+      ## Read gradient of cost by forward difference, `at` being cost at `y`.
       for k in 0..<SIZE:
         if bounds[k][0] == bounds[k][1]: continue
         var z = y
         z[k] += 1e-7
         result[k] = (cost(z) - at) / 1e-7
-    const MEMORY = 8
+    const memory = 8
     var
       steps: seq[Plan]
       changes: seq[Plan]
-      fx = cost(x)
-      g = gradient(x, fx)
+      cost_x = cost(x)
+      g = gradient(x, cost_x)
     for iteration in 0..<iterations:
-      # Two-loop recursion for search direction.
+      # Two-loop recursion for search direction: `curvature_pair` is sᵀy of one stored pair,
+      # `projection_step` sᵀq, `projection_change` yᵀq and `square_change` yᵀy.
       var
         q = g
         alphas = newSeq[float](steps.len)
       for m in countdown(steps.len - 1, 0):
-        var sy, sq = 0.0
+        var curvature_pair, projection_step = 0.0
         for k in 0..<SIZE:
-          sy += steps[m][k] * changes[m][k]
-          sq += steps[m][k] * q[k]
-        alphas[m] = sq / sy
+          curvature_pair += steps[m][k] * changes[m][k]
+          projection_step += steps[m][k] * q[k]
+        alphas[m] = projection_step / curvature_pair
         for k in 0..<SIZE: q[k] -= alphas[m] * changes[m][k]
       if steps.len > 0:
-        var sy, yy = 0.0
+        var curvature_pair, square_change = 0.0
         for k in 0..<SIZE:
-          sy += steps[^1][k] * changes[^1][k]
-          yy += changes[^1][k] * changes[^1][k]
-        for k in 0..<SIZE: q[k] *= sy / yy
+          curvature_pair += steps[^1][k] * changes[^1][k]
+          square_change += changes[^1][k] * changes[^1][k]
+        for k in 0..<SIZE: q[k] *= curvature_pair / square_change
       for m in 0..<steps.len:
-        var yq, sy = 0.0
+        var projection_change, curvature_pair = 0.0
         for k in 0..<SIZE:
-          yq += changes[m][k] * q[k]
-          sy += steps[m][k] * changes[m][k]
-        let beta = yq / sy
+          projection_change += changes[m][k] * q[k]
+          curvature_pair += steps[m][k] * changes[m][k]
+        let beta = projection_change / curvature_pair
         for k in 0..<SIZE: q[k] += steps[m][k] * (alphas[m] - beta)
       var slope = 0.0
       for k in 0..<SIZE: slope -= g[k] * q[k]
@@ -423,35 +416,35 @@ proc solve*(
         length = (if steps.len == 0: min(1.0, 0.1 / max(1e-12, sqrt(-slope))) else: 1.0)
         is_accepted = false
         y: Plan
-        fy: float
+        cost_y: float
       for tries in 0..<30:
         for k in 0..<SIZE: y[k] = x[k] - length * q[k]
         y = clamped(y, bounds)
-        fy = cost(y)
-        if fy <= fx + 1e-4 * length * slope:
+        cost_y = cost(y)
+        if cost_y <= cost_x + 1e-4 * length * slope:
           is_accepted = true
           break
         length *= 0.5
       if not is_accepted: break
-      let gy = gradient(y, fy)
+      let gradient_y = gradient(y, cost_y)
       var
         step, change: Plan
         curvature = 0.0
       for k in 0..<SIZE:
         step[k] = y[k] - x[k]
-        change[k] = gy[k] - g[k]
+        change[k] = gradient_y[k] - g[k]
         curvature += step[k] * change[k]
       if curvature > 1e-12:
         steps.add step
         changes.add change
-        if steps.len > MEMORY:
+        if steps.len > memory:
           steps.delete 0
           changes.delete 0
-      let improvement = fx - fy
+      let improvement = cost_x - cost_y
       x = y
-      fx = fy
-      g = gy
-      if improvement < 1e-12 * max(1.0, abs(fx)): break
+      cost_x = cost_y
+      g = gradient_y
+      if improvement < 1e-12 * max(1.0, abs(cost_x)): break
   result.plan = x
   let placed = place(rig, x, wind, problem.is_away, problem.turner)
   result.broken = violation(rig, problem, placed, before)
@@ -708,7 +701,7 @@ func placings*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.T
   ## Where every body of couple stands at this plan, as engine places bodies: what
   ## `rigid.placeBodies` is handed so couple start where plan starts.
   let neck = halfBreadth(rig, Part.Neck)
-  const TRUNK_AXES: Matrix = [[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]
+  const trunk_axes: Matrix = [[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]
     ## Trunk's and girdle's own axes in body's terms: right, up, back (`rigid.standing`).
   for who in Body:
     let
@@ -719,19 +712,24 @@ func placings*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.T
       world: Matrix = [[right.x, fore.x, 0.0], [right.y, fore.y, 0.0], [0.0, 0.0, 1.0]]
     result.chests[who] = Stance(centre: (origin.x, origin.y), facing: facing)
     func toWorld(p: Vector): Vector = origin + right * p.x + fore * p.y + (0.0, 0.0, p.z)
+      ## Carry point from body's own frame into world.
     for arm in Arm:
       let
         i = armIndex(who, arm)
         base = 4 + PER_ARM * i
-        sd = side(arm)
-        root: Vector = (sd * neck, 0.0, rig.top[Part.Torso])
-        reach: Vector = (sd * (rig.shoulder_out - neck), 0.0, rig.shoulder_up - rig.top[Part.Torso])
-        collar = aboutUp(sd * plan[base])
-        girdle = times(collar, aboutFore(-sd * plan[base + 1]))
+        handedness = side(arm)
+        root: Vector = (handedness * neck, 0.0, rig.top[Part.Torso])
+        reach: Vector = (
+          handedness * (rig.shoulder_out - neck),
+          0.0,
+          rig.shoulder_up - rig.top[Part.Torso],
+        )
+        collar = aboutUp(handedness * plan[base])
+        girdle = times(collar, aboutFore(-handedness * plan[base + 1]))
         shoulder = root + apply(girdle, reach)
         upper = times(
           girdle,
-          times(turnAbout(plan[base + 2], plan[base + 3], plan[base + 4]), REST),
+          times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
         )
         elbow = shoulder + column(upper, 2) * rig.upper
         forearm = times(upper, aboutRight(plan[base + 5]))
@@ -742,8 +740,8 @@ func placings*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.T
         shoulder: shoulder.toWorld,
         elbow: elbow.toWorld,
         wrist: wrist.toWorld,
-        collar: times(world, times(collar, TRUNK_AXES)),
-        girdle: times(world, times(girdle, TRUNK_AXES)),
+        collar: times(world, times(collar, trunk_axes)),
+        girdle: times(world, times(girdle, trunk_axes)),
         upper: times(world, upper),
         fore: times(world, forearm),
         palm: times(world, hand),

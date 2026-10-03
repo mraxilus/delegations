@@ -377,7 +377,7 @@ const
   STEER* = 30.0  ## Hertz every joint is sprung toward plan at: what dancer's muscles hold.
     ##   Measured on D7, 2026-10-01: at fifteen engine gave by twist at 1.47 of turn; at
     ##     twenty five, thirty and forty it stood, strain 0.33 to 0.34.
-  STAND_STEPS = 2  ## Engine steps each planned moment is stood for before it is judged:
+  STEPS_STAND = 2  ## Engine steps each planned moment is stood for before it is judged:
                   ## enough for engine to find every contact pose has (`replay`).
   STYLES* = block:
     ## Ways couple go about turn, tried in order: each moment held near last loosely,
@@ -468,7 +468,7 @@ proc replay*(
     let at = placings(rig, path.plans[i], path.winds[i], is_away, path.problem.turner)
     couple.standAt(stance, at.chests, at.arms)
     couple.steer(path.plans[i], STEER)
-    couple.advance(STAND_STEPS)
+    couple.advance(STEPS_STAND)
     let why = couple.gives
     said = (why == Stop.None, path.winds[i], why, couple.strainOf)
     if not said.is_holding: break
