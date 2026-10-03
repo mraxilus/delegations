@@ -14,10 +14,11 @@
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
-##   Sign-off serves coordinator first (GUIDE.md, Output contract): it lifts each decision
-##     block unchanged onto card for Architect, sorts on class, and reads which role each ⚠️
-##     row waits on. So shape check holds what coordinator reads: state word, brief, class and
-##     place of each decision, two to four short options, and recommendation naming one.
+##   Sign-off serves Architect first (GUIDE.md, Output contract): each decision block reads as
+##     card, class says what blocks, and each ⚠️ row names role it waits on. Coordinator, once
+##     trialed, lifts each block onto card unchanged. So shape check holds what reader decides
+##     on: state word, brief, class and place of each decision, two to four short options, and
+##     recommendation naming one.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `gitCommands` splits on shell operators by text, so `git` inside quoted string is
