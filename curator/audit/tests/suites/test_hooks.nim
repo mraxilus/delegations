@@ -82,9 +82,7 @@ suite "Hooks":
   test "role string grammar":
     check "curator".isRoleString and "curator/audit".isRoleString
     check "coordinator".isRoleString  # role with no branch
-    check "coordinator/library".isRoleString  # thread on coordinator's own work
-    check not "coordinator/".isRoleString and not "coordinator/Library".isRoleString
-    check not "coordinator/library/x".isRoleString
+    check not "coordinator/library".isRoleString  # its own thread holds coordinator
     check "contributor/ronri/pga_benchmark".isRoleString
     check not "contributor/nowhere/x".isRoleString and not "owner".isRoleString
     check not "contributor/ronri/pga_benchmark/gap-list".isRoleString  # branch, not role
@@ -173,14 +171,6 @@ suite "Hooks":
       ["curator", "architect"],
       true,
     ).len == 0  # queue label beside role label
-    check checkBody(
-      "mcp__github__issue_write",
-      BRANCH,
-      "A claim",
-      good,
-      ["coordinator/library"],
-      true,
-    ).len == 0  # brief of thread on coordinator's own work carries its string
 
 
   test "pull request body keeps template headings and shows change":
@@ -291,10 +281,6 @@ suite "Hooks":
       .messages.anyIt("opens last cell with role string" in it)
     check checkSignoff(
       SIGNOFF.replace("contributor/ronri/rga_visualiser, fix", "outside, GitHub fixes runner"),
-      BRANCH,
-    ).len == 0
-    check checkSignoff(
-      SIGNOFF.replace("contributor/ronri/rga_visualiser, fix", "coordinator/library, cleans"),
       BRANCH,
     ).len == 0
 

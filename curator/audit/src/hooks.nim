@@ -14,8 +14,6 @@
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
-##     `coordinator/<name>` is thread coordinator starts for its own read, check or cleanup;
-##     it holds no branch either, and its brief carries its string as label.
 ##   Sign-off serves coordinator first (GUIDE.md, Output contract): it lifts each decision
 ##     block unchanged onto card for Architect, sorts on class, and reads which role each ⚠️
 ##     row waits on. So shape check holds what coordinator reads: state word, brief, class and
@@ -120,13 +118,12 @@ const
 
 
 func isRoleString*(s: string): bool =
-  ## Decide whether `s` is role string: `coordinator`, `coordinator/<name>`, `curator`,
-  ##   `curator/<project>` or `contributor/<domain>/<project>`. Coordinator holds no branch,
-  ##   so grammar never names it; `<name>` takes project folder's grammar, as `<project>` does.
+  ## Decide whether `s` is role string: `coordinator`, `curator`, `curator/<project>` or
+  ##   `contributor/<domain>/<project>`. Coordinator holds no branch, so grammar never names it.
   let parts = s.split('/')
   case parts.len
   of 1: s in [COORDINATOR, CURATOR]
-  of 2: parts[0] in [COORDINATOR, CURATOR] and parts[1].isProjectName
+  of 2: parts[0] == CURATOR and parts[1].isProjectName
   of 3: parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome and parts[2].isProjectName
   else: false
 
