@@ -45,6 +45,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[algorithm, json, options, os, parseopt, sequtils, strutils]
 import ./curator/audit/src/[
   assets,
