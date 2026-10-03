@@ -256,7 +256,7 @@ suite "Internal: Simulation against reference":
 
   test "every still stands easiest pose that held, and its search tried every pose short of ease":
     ## Carried walk tries every distance, and planner every style and way, and each keeps pose
-    ##   nearest to ease that holds (`walk.standing`, `walk.plannedStillEasiest`).  Search
+    ##   nearest to ease that holds (`walk.standing`, `walk.plannedStill`).  Search
     ##   ends early only at pose at ease, which nothing betters.
     ##   Red with first plan that held kept, measured 2026-10-03: C6 stood follow's waist at its
     ##     end, strain 1.00, where other path of same style held at 0.19.
