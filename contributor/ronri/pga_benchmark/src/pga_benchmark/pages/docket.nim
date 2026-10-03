@@ -744,9 +744,24 @@ func bodyDocket*(
     axis = axisOf(every)
     taken = sheets[0].measurements_runtime{"taken"}
     count_runs = taken{"runs"}.getInt(1)
+
+  # Name each date runs were taken on; algebras follow their date where dates differ.
+  var dates: seq[(string, seq[string])]
+  for sheet in sheets:
+    let date = sheet.measurements_runtime{"taken", "date"}.getStr
+    var index = 0
+    while index < dates.len and dates[index][0] != date: inc index
+    if index == dates.len: dates.add (date, @[])
+    dates[index][1].add sheet.title
+  var text_dates = ""
+  for (date, titles) in dates:
+    if text_dates.len > 0: text_dates.add ", "
+    text_dates.add date
+    if dates.len > 1: text_dates.add " for " & titles.join(" and ")
+
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
     $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
-    "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(taken{"date"}.getStr) &
+    "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
     ", " & escapeHtml(taken{"machine"}.getStr) &
     (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
     " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
