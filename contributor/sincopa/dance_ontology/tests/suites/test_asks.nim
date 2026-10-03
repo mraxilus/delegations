@@ -9,7 +9,7 @@ import ../../design/[asks, modelled, parts, rig_page, twins]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
-from ../../simulation/rigid import Mark, restStance
+from ../../simulation/rigid import faceCapsule, Mark, restStance, trunkCapsules
 from ../../simulation/walk import stands, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
@@ -20,6 +20,8 @@ import ../../src/dance_ontology/frame
 const
   ARRANGED = 1e-6  ## Degrees two arrangements may differ by: arithmetic alone.
   STRAIN_SAME = 1e-9  ## Strain two figures of one pose may differ by, in one recording: none.
+  FACE_SLOP = 0.005  ## Metres arm may sit inside face: engine's own linear slop, which it never
+                    ## resolves (`test_rigid.SLOP`).
 
 
 func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
@@ -70,6 +72,43 @@ func armsOf(still: JsonNode, links: seq[Link]): Arms =
   for link in links:
     result.add [armOf(still, link.ends[0].body, link.ends[0].arm),
                 armOf(still, link.ends[1].body, link.ends[1].arm)]
+
+func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
+  ## Two ends of `i`th capsule of one recorded moment.
+  ((frame[6 * i].getFloat, frame[6 * i + 1].getFloat, frame[6 * i + 2].getFloat),
+   (frame[6 * i + 3].getFloat, frame[6 * i + 4].getFloat, frame[6 * i + 5].getFloat))
+
+func faceGapOf(recording, frame: JsonNode): float =
+  ## Nearest any arm of either dancer comes to either face at one recorded moment, past both
+  ## radii: face placed off recording's own head and torso, as `rigid.faceCapsule` sets it.
+  ##   Torso is two capsules side by side, left first (`rigid.trunkCapsules`), so they give
+  ##     chest's right, and head is last capsule of trunk.
+  let
+    (tags, radii) = (recording["tag"], recording["radii"])
+    face = faceCapsule(HUMAN)
+    (head_low, head_high, _) = trunkCapsules(HUMAN)[^1]
+    offset = face.a - (head_low + head_high) * 0.5
+    upward: Vector = (0.0, 0.0, 1.0)
+  var faces: seq[Vector]
+  for who in Body:
+    var trunk: seq[int]
+    for i in 0..<tags.len:
+      if tags[i][0].getInt == ord(who) and tags[i][2].getInt == ord(Mark.Trunk): trunk.add i
+    let
+      rightward = unit(capsuleAt(frame, trunk[1]).a - capsuleAt(frame, trunk[0]).a)
+      forward = cross(upward, rightward)
+      head = capsuleAt(frame, trunk[^1])
+    faces.add (head.a + head.z) * 0.5 + rightward * offset.x + forward * offset.y +
+              upward * offset.z
+  result = Inf
+  for i in 0..<tags.len:
+    if tags[i][2].getInt notin [ord(Mark.Upper), ord(Mark.Fore), ord(Mark.Palm)]: continue
+    let limb = capsuleAt(frame, i)
+    for centre in faces:
+      result = min(
+        result,
+        closest(limb.a, limb.z, centre, centre).gap - radii[i].getFloat - face.radius,
+      )
 
 
 
@@ -348,6 +387,32 @@ suite "Internal: Simulation against reference":
         check (rightward > 0.0) == (side == ord(Arm.Right))
         inc girdles
     check girdles == 4 * stills
+
+
+  test "every arm keeps clear of every face, in every still and every moment of every sweep":
+    ## Each dancer keeps each arm clear of every face, own and partner's (#375).  Each still
+    ##   is read as page shows it, so twin card is read as still it mirrors.
+    ##   Red with no face in planner or engine, measured 2026-10-03: 313 of 652 recorded moments
+    ##     held arm inside face, 47 mm at deepest, nearly all dancer's own forearm across own face
+    ##     with hand over crown.
+    let kept = parseFile(KEPT_RIG)
+    var
+      moments = 0
+      inside: seq[string]
+      deepest = Inf
+    for recording in stillsShown(kept) & kept["sweeps"].getElems:
+      let name =
+        if recording.hasKey("key"): recording["key"].getStr
+        else: recording["hold"].getStr & " " & recording["band"].getStr
+      for moment, frame in recording["points"].getElems:
+        let gap = faceGapOf(recording, frame)
+        inc moments
+        deepest = min(deepest, gap)
+        if gap < -FACE_SLOP: inside.add &"{name}@{moment}"
+    checkpoint &"`{inside.len}` of `{moments}` moments hold arm inside face, deepest at " &
+      &"`{deepest}` m: " & inside[0..<min(inside.len, 12)].join(" ")
+    check moments >= stillAsks().len
+    check inside.len == 0
 
 
   test "simulation models every card reference draws":
