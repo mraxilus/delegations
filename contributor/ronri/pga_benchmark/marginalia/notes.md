@@ -259,34 +259,6 @@ movement: `|` fills and writes all 2^D slots to hand back two. Proposal P02,
 The wedge with one basis element is a signed selection, not a full product. Proposal P01,
 `cayley-derivation`, generates `∩` and `∪` as one table each, through map operators.
 
-## Addition fills before it writes
-
-`pga/multivectors.nim` · open
-
-```nim
-func `+`*(m, n: Multivector): Multivector =
-  ## Add multivectors, i.e. 𝐦 + 𝐧.
-  for b in Basis:
-    result[b] = m[b] + n[b]
-```
-
-`+` fills its result, then writes every slot, and it is not inline. The generated operators
-carry `{.noinit.}`; `+` and `-` are written by hand, and do not.
-
-## Scalar minus multivector branches per slot
-
-`pga/multivectors.nim` · open
-
-```nim
-func `-`*(s: float, m: Multivector): Multivector =
-  ## Subtract multivector from scalar, i.e. 𝐬 − 𝐦.
-  for b in Basis:
-    result[b] = (if b == Basis.scalar: s - m[Basis.scalar] else: -m[b])
-```
-
-`s − m` compares `b == Basis.scalar` for each slot, to treat one slot differently. Negate in
-the loop, then set the scalar slot after it.
-
 ## Grade filters need a doc line
 
 `pga/operators.nim` · open

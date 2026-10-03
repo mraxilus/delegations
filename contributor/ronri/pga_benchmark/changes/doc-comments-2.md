@@ -120,36 +120,12 @@ when IS_RIGID:
 ## Edit `pga/cayleys.nim`
 
 ```nim
-  #   If so, can remove below and original constructProductInterior().
-  #   Does flipping wedges and keeping (anti)dual still perform transwedge?
-  #     If so, then possibly missing 4 variants of transwedge.
-```
-
-```nim
-  #   Term counts agree with transwedge path at 4D: 54, 27, 27, 54.
-  #   If so, can remove below and original constructProductInterior().
-  #   Does flipping wedges and keeping (anti)dual still perform transwedge?
-```
-
-## Edit `pga/cayleys.nim`
-
-```nim
 func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
 ```
 
 ```nim
 func constructMetric(dimensions: int; is_conformal: bool): Cayley1D {.compileTime.} =
   # NOTE: Only constructor taking configuration as arguments; siblings read globals.
-```
-
-## Edit `pga/cayleys.nim`
-
-```nim
-  ##   E.g. In RGA, equivalent to applying exomporphism as .
-```
-
-```nim
-  ##   Both arms below compute same inclusions and exclusions before they differ.
 ```
 
 ## Edit `pga/cayleys.nim`
