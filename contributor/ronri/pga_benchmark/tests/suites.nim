@@ -746,9 +746,27 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       check compared >= FLOOR_FUNCTIONS_REFERENCE  # guard skips no reference function
 
 
+  test "each timed loop sits in C function of its own":
+    # One function holding every loop puts error check after each call; compiler's estimate
+    #   of reaching code below drains to zero, so it optimises rest for size, and library's
+    #   loops stay scalar while straight-line forms vectorise.
+    var functions_timing = 0
+    for path in walkFiles(CACHE / "*measurements.nim.c"):
+      for f in functionsIn(readFile(path)):
+        let clocks = f.body.count("getMonoTime")
+        if clocks == 0: continue
+        inc functions_timing
+        checkpoint f.name & " reads clock " & $clocks & " times"
+        check clocks == 2  # one timed loop: clock read before and after each round
+    let pairs_measured = CATALOGUE.len + CATALOGUE.countIt(it.reference.len > 0) +
+      (if HAS_FORMS_DENSE: CATALOGUE.countIt(it.reference.len == 0) else: 0)
+    check functions_timing == pairs_measured  # one function per measurand per implementation
+
+
   test "timed loop binds result returned by value, so no temporary is zero-filled":
     # Result of three floats or fewer returns by value; assigned straight into its slot, it
-    #   passes through temporary this large function zero-fills out of line, about 11 ns.
+    #   passes through temporary that call site zero-fills, out of line where function is
+    #   large, about 11 ns.
     var calls, filled = 0
     for path in walkFiles(CACHE / "*measurements.nim.c"):
       let lines = readFile(path).splitLines
