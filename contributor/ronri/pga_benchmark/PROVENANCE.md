@@ -536,12 +536,14 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 dense form.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
-else. At rga6d the library with P01 peaks at 170.9 MiB against 285.8 MiB at the pin, ×0.60
-(`evaluations/cayley-derivation.json`, 2026-10-01, `linux amd64, 4 cores`). Rejected: the bench
-entry, which puts the harness in the measured build. With the library fixed at `bd6b23c`, one
-change to `inspector.nim` alone moved the P01 side from 211.7 MiB to 261.2 MiB at rga6d on
-2026-10-01. A wider bound would not hold either, since the next change to the harness moves it
-again.
+else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73
+(`evaluations/cayley-derivation.json`, 2026-10-03, `linux amd64, 4 cores`). So the claim of P01,
+×0.70 at most, fails at the pin. At `3121342` the library peaked at 285.8 MiB and P01 at
+170.9 MiB, on 2026-10-01. The refactor at the pin takes 50.8 MiB of the 114.9 MiB that P01 saved
+there. Rejected: the bench entry, which puts the harness in the measured build. With the library
+fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
+261.2 MiB at rga6d on 2026-10-01. A wider bound would not hold either, since the next change to
+the harness moves it again.
 
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
