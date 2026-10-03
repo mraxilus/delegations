@@ -1,5 +1,5 @@
-## What each still card of reference asks of body simulation: which hands are joined, how
-## far couple are turned from rest, and whose crown joined hands are carried over.
+## What each still card of reference asks of body simulation: which hands are joined, who
+## turns and how far from rest, and so whose crown joined hands are carried over.
 ##
 ##   One list, read by `design/modelled` (which answers each) and by `design/rig`
 ##     (which records each), so card is asked same question wherever it is asked.
@@ -15,6 +15,7 @@ import ../simulation/[body, hold]
 import ../src/dance_ontology/diagram
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
+from ../src/dance_ontology/draw/pose import About
 from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
@@ -22,9 +23,11 @@ import ./parts
 type StillAsk* = object ## One still card, as simulation is asked it.
   key*: string    ## Question's key, as page keys its own pictures.
   links*: seq[Link]
-  turns*: float   ## Facing, in turns from where hold rests.
+  turns*: float   ## How far `who` turns from where hold rests, simulation's own sense.
   rest*: Facing   ## Facing hold rests at (`parts.restOf`).
-  head*: Body     ## Whose crown joined hands go over.
+  who*: Body      ## Who simulation turns: dancer at centre of turn.
+  head*: Body     ## Whose crown joined hands go over: one who turns, since connection goes
+                  ## round dancer whose facing turns against it.
   is_either_way*: bool   ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
 
@@ -82,6 +85,20 @@ func isRestAway*(ask: StillAsk): bool = isRestAway(ask.rest)
   ## Say card's rest as simulation is told it.
 
 
+func turnerOf*(manner: Manner; amount: float): tuple[who: Body, turns: float] =
+  ## Who simulation turns for this manner, and how far in its own sense, where page turns
+  ## manner's own dancer `amount` turns clockwise.
+  ##   Axis turn is walker's own: they turn on spot, and partner stays where they stand.
+  ##   Orbit keeps walker facing centre (rule 32), so walker's relation to connection never
+  ##     changes and centre dancer's does: physically, dancer at centre turns other way
+  ##     about.  Architect's reading.  Simulation turns that dancer, and connection goes
+  ##     round them and over their crown.  Card draws same: orbit lands on picture partner's
+  ##     axis turn reaches (`parts.FAMILY_OF`).
+  let walker = bodyOf(MANNERS[manner].who)
+  if MANNERS[manner].about == About.Axis: (walker, asked(amount))
+  else: (otherThan(walker), asked(-amount))
+
+
 func stillAsks*(): seq[StillAsk] =
   ## Every still card, in page's own order: standard diagram, single-hand
   ## positions, then both chains.
@@ -102,16 +119,25 @@ func stillAsks*(): seq[StillAsk] =
   func isDrawnEitherWay(target: Frame): bool =
     ## Decide whether frame draws same picture wound either way about.
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
+  #   Frame that names one connection over turns whichever way puts that one over, as
+  #     chain names its positions (`route.overArm`): left over at positive wind.  So it
+  #     fixes way about, though it draws same picture either way: drawing puts frame's own
+  #     connection over whichever way couple turned.  Asked either way, A11 stood A9's
+  #     crossing, left over right.
+  func senseOf(target: Frame): float =
+    ## Say which way frame's half turn goes: right over winds other way.
+    if target.over.isSome and target.over.get == Side.Right: -1.0 else: 1.0
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
       result.add StillAsk(
         key: &"A{i * 2 + twist + 1}",
         links: linksOf(holdsOf(target)),
-        turns: asked(amount),
+        turns: asked(senseOf(target) * amount),
         rest: restOf(target),
+        who: Body.Two,
         head: Body.Two,
-        is_either_way: amount != 0.0 and isDrawnEitherWay(target),
+        is_either_way: amount != 0.0 and target.over.isNone and isDrawnEitherWay(target),
       )
   block:
     let target = FRAMES[^1]
@@ -120,20 +146,25 @@ func stillAsks*(): seq[StillAsk] =
       links: linksOf(holdsOf(target)),
       turns: asked(-amountFor(target, 1)),
       rest: restOf(target),
+      who: Body.Two,
       head: Body.Two,
     )
-  # `B`: four single-hand holds, four manners, four quarters.  Hands go over
-  # crown of dancer who walks under, which follows manner.
+  # `B`: four single-hand holds, four manners, four quarters.  Page turns every manner's
+  # own dancer clockwise (`parts.quarterPose`), and simulation turns whoever `turnerOf`
+  # says, so each card stands as drawn: lead who turned has follow at their side.
+  #   Turning follow alone stood every lead's turn with follow ahead, and orbit with hands
+  #     over walker's crown: twin cards of one picture stood two poses.
   for single_index, single in SINGLES:
     for manner in Manner:
-      let sense = windSense(manner)
       for quarter in 0 ..< QUARTERS_ROUND:
+        let (who, turns) = turnerOf(manner, float(quarter) / float(QUARTERS_ROUND))
         result.add StillAsk(
           key: &"st_{MANNERS[manner].tag}_{single_index}_{quarter}",
           links: linksOf(single.holds),
-          turns: asked(sense * float(quarter) / float(QUARTERS_ROUND)),
+          turns: turns,
           rest: restOf(single.holds),
-          head: bodyOf(MANNERS[manner].who),
+          who: who,
+          head: who,
         )
   # `C` and `D`: two chains, seven positions each, half turn apart.
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
@@ -143,5 +174,6 @@ func stillAsks*(): seq[StillAsk] =
         links: linksOf(arms),
         turns: asked(wind),
         rest: restOf(arms),
+        who: Body.Two,
         head: Body.Two,
       )

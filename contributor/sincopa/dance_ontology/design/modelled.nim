@@ -11,11 +11,10 @@
 ##   Answers are keyed by question, never by card's own name: page already folds
 ##     duplicate pictures together and hands out identifiers, and second place doing
 ##     that would be second place to get it wrong.
-##   Four manners are two motions.  Orbit about couple's centre is change of world
-##     frame and moves neither dancer with respect to other, so manner that orbits is
-##     physically turn of *other* dancer, other way about.  Architect's reading, and it
-##     is what `simulation/rigid` is asked.  What survives is whose crown hands are over: couple
-##     raise them over dancer who walks under, which follows manner, not physics.
+##   Four manners are two motions.  Orbit keeps walker facing centre, so it is physically
+##     turn of dancer at centre, other way about.  Architect's reading, and it is what
+##     `simulation/rigid` is asked (`asks.turnerOf`).  Connection goes round dancer who
+##     turns, so hands go over their crown, orbit or not.
 ##   Card simulation has not been asked about is absent, and gets no tag: unasked reads as
 ##     unasked rather than as disagreement.
 ##   Answers are kept with stamp of physics, questions and this verb (`design/stamps`), and
@@ -28,7 +27,6 @@ when compileOption("profiler"): import std/nimprof
 import std/[cpuinfo, json, os, sequtils, strformat, tables, typedthreads]
 
 import ../simulation/[body, hold, rig, walk]
-import ../src/dance_ontology/rotation
 import ./[asks, parts, stamps]
 
 
@@ -42,39 +40,33 @@ const CROWN = Band.Crown
 
 
 type Question* = object ## One card's question, as data, so threads may share it.
-  key: string
-  links: seq[Link]
-  is_away: bool
-  is_still: bool    ## Still card: whether pose holds; else whether couple carry.
-  turns: float   ## Facing for still; how far to carry, in manner's own sense.
-  is_either_way: bool   ## Still that fixes no way about: wound either way.
-  who, head: Body ## Who turns, and whose crown hands go over, for moving card.
+  key*: string
+  links*: seq[Link]
+  is_away*: bool
+  is_still*: bool    ## Still card: whether pose holds; else whether couple carry.
+  turns*: float   ## How far `who` turns, simulation's own sense: to still, or carried.
+  is_either_way*: bool   ## Still that fixes no way about: wound either way.
+  who*, head*: Body ## Who turns, and whose crown hands go over: one dancer.
 
 
 func moving(key: string; links: seq[Link]; is_away: bool; manner: Manner;
-            turns: float): Question =
-  ## Whether this hold carries this far under this manner, `turns` being already
-  ## in simulation's own sense (`asks.asked`).
+            amount: float): Question =
+  ## Whether this hold carries this far under this manner, page turning manner's own
+  ## dancer `amount` turns clockwise (`asks.turnerOf`).
   ##   Couple stand for turn they are about to take, so question goes straight to
   ##     `walk.reaches`, which asks it of every distance couple may stand at and
   ##     answers at first that carries it.  Sweeping once and reading several
   ##     answers off it would be cheaper, but it would pin whole manner to one
   ##     distance again, which is what Architect ruled against.
-  let
-    walks = bodyOf(MANNERS[manner].who)
-    turner = if ord(MANNERS[manner].about) == ord(About.Axis): walks
-             else: otherThan(walks)
-    # Orbit is other dancer turned other way about, so its sense is flipped.
-    should_flip = ord(MANNERS[manner].about) != ord(About.Axis)
-    way = (if should_flip: -turns else: turns)
+  let (who, turns) = turnerOf(manner, amount)
   Question(
     key: key,
     links: links,
     is_away: is_away,
     is_still: false,
-    turns: way,
-    who: turner,
-    head: walks,
+    turns: turns,
+    who: who,
+    head: who,
   )
 
 func questions*(): seq[Question] =
@@ -90,27 +82,28 @@ func questions*(): seq[Question] =
       is_still: true,
       turns: ask.turns,
       is_either_way: ask.is_either_way,
-      who: Body.Two,
+      who: ask.who,
       head: ask.head,
     )
 
-  # `B` and `E`: four single-hand holds, four manners, four quarters, moving.
+  # `B` and `E`: four single-hand holds, four manners, four quarters, moving.  Page walks
+  # every manner's own dancer clockwise, one quarter per card (`parts.singleTurnParts`).
+  #   Turned by chain's sense instead, lead's own turn and lead's orbit went anticlockwise
+  #     where caption says clockwise.
   for connection, single in SINGLES:
     let links = linksOf(single.holds)
     for manner in Manner:
-      let
-        tag = MANNERS[manner].tag
-        sense = windSense(manner)
+      let tag = MANNERS[manner].tag
       for quarter in 0 ..< QUARTERS_ROUND:
         result.add moving(
           &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}",
           links,
           isRestAway(restOf(single.holds)),
           manner,
-          asked(sense * float(quarter + 1) / float(QUARTERS_ROUND)),
+          float(quarter + 1) / float(QUARTERS_ROUND),
         )
       result.add moving(&"rd_{tag}_{connection}", links, isRestAway(restOf(single.holds)), manner,
-                        asked(sense))
+                        1.0)
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
   #   These are moving cards, so they are asked whether couple carry along them
@@ -123,7 +116,9 @@ func questions*(): seq[Question] =
       let
         tag = MANNERS[manner].tag
         sense = windSense(manner)
-      result.add moving(&"{key}c_{tag}", links, is_away, manner, asked(sense * STEPS[^1]))
+      # Page walks chain by manner's own dancer, `windSense` half turns per step
+      # (`parts.chainTurnParts`).
+      result.add moving(&"{key}c_{tag}", links, is_away, manner, sense * STEPS[^1])
       for i in 0 ..< STEPS.len - 1:
         # Edge is walked entire, so what it asks of couple is its *furthest*
         # wound end, kept with its own sign, and not where it happens to
@@ -134,7 +129,7 @@ func questions*(): seq[Question] =
         # saw it at once -- they are same edge mirrored.
         let far = (if abs(STEPS[i]) > abs(STEPS[i + 1]): STEPS[i]
                    else: STEPS[i + 1])
-        result.add moving(&"{key}w_{tag}_{i}", links, is_away, manner, asked(sense * far))
+        result.add moving(&"{key}w_{tag}_{i}", links, is_away, manner, sense * far)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var TOLD: seq[bool] ## Each worker writes its own questions' answers here.
@@ -162,6 +157,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
             question.is_away,
             question.head,
             is_either_way = question.is_either_way,
+            who = question.who,
           ) or isPlannedHolding(
             HUMAN,
             CROWN,
@@ -170,6 +166,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
             question.is_away,
             question.head,
             is_either_way = question.is_either_way,
+            who = question.who,
           )
         else:
           isReaching(

@@ -204,20 +204,19 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-02 at rga4d and cga5d, and from 2026-10-03 at rga3d and
-cga4d**, at `3121342`, five runs each on `linux amd64, 4 cores`. In turn with them, the bench of
-2026-10-01 ran again. At rga4d its library ran at ×1.19 to ×1.22 of its own times of 2026-10-01, and
-its reference at ×1.26 to ×1.27. Its dense forms ran at ×1.00 to ×1.01. The bench of these baselines
-ran ×0.99 to ×1.01 of it in the same runs.
+**The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each
+on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with
+the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to ×1.22
+of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to
+×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
-Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
-apart at rga4d and ×1.17 at cga5d. In the baselines of 2026-10-03 they are ×1.04 at rga3d and
-×1.07 at cga4d. The widest measurand spreads ×4.74, as `attitude_point` at rga3d does. Its
-reference takes under one nanosecond. In one run of five, its library takes ×2.9 its usual time,
-and its reference ×0.6.
+Within these baselines, the least and greatest run ratios of the median measurand are ×1.15
+apart at rga4d and at cga5d. They are ×1.10 apart at rga3d and ×1.06 at cga4d. The widest
+measurand spreads ×4.73, as `dual_weight_line` at rga3d does. Its reference takes under one
+nanosecond in four runs of five. In two runs of five, its library takes ×2.8 its usual time.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -437,15 +436,17 @@ orthogonal antiprojection spend 81 against 108 at rga4d, and 27 against 36 at rg
 first step leaves whole grades at zero, and the second step reads none of them. So a chain
 bound is an estimate.
 
-**What the library spends in time against them.** The runtime baselines of 2026-10-02 time
-each dense form beside the library, five alternating runs. The median general measurand runs
-×1.00 to ×1.08 its dense form, since most library operators are already one generated table.
-The compound operations are not. They run ×2.1 to ×6.1 their dense forms, from the
-container to the cocarrier, both at cga5d.
+**What the library spends in time against them.** The runtime baselines time each dense form
+beside the library, five alternating runs at `d9be8ae`, at four algebras, on `linux amd64, 4 cores`
+on 2026-10-03. The median general
+measurand runs ×1.00 to ×1.05 its dense form, since most library operators are already one
+generated table. The compound operations are not. They run ×1.9 to ×5.7 their dense forms, from
+the container at cga5d to the support at rga4d.
 
-Negation and the antigrade selection run ×2.0 to ×4.2, and the norms ×2.0 to ×5.1. The
-weight unitizes run faster than their dense forms, ×0.59 to ×0.86, and the bulk unitize
-slower, ×1.7 to ×3.0. So a dense form is a measure, and never a lower bound on time.
+Sum, difference and negation run ×1.6 to ×2.6, though at the pin they fill nothing and are
+inline. The antigrade selection runs ×2.0 to ×2.8, and the norms ×0.96 to ×3.4. The weight
+unitizes run faster than their dense forms, ×0.59 to ×0.81, and the bulk unitize slower, ×1.5 to
+×3.0. So a dense form is a measure, and never a lower bound on time.
 
 Rejected: a dense form written by hand for each operation. There are 40 to 47 operations at
 each of four algebras, and forms by hand would drift from the library as it moves. The
@@ -536,12 +537,15 @@ A dense form reads tables by their names at pin, and a change may rename them, a
 dense form.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
-else. At rga6d the library with P01 peaks at 170.9 MiB against 285.8 MiB at the pin, ×0.60
-(`evaluations/cayley-derivation.json`, 2026-10-01, `linux amd64, 4 cores`). Rejected: the bench
-entry, which puts the harness in the measured build. With the library fixed at `bd6b23c`, one
-change to `inspector.nim` alone moved the P01 side from 211.7 MiB to 261.2 MiB at rga6d on
-2026-10-01. A wider bound would not hold either, since the next change to the harness moves it
-again.
+else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73
+(`evaluations/cayley-derivation.json`, 2026-10-03, `linux amd64, 4 cores`). So the claim of P01,
+×0.70 at most, fails at the pin, where P01 saves 64.2 MiB. The pin builds most anti tables with
+`constructAnti`, as P01 does. Which part of the cost the two share is not isolated.
+
+Rejected: the bench entry, which puts the harness in the measured build. With the library
+fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
+261.2 MiB at rga6d on 2026-10-01. A wider bound would not hold either, since the next change to
+the harness moves it again.
 
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
@@ -696,10 +700,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `31213421d6699cb44a9a171b75388ef8188e1136`, and `nim.cfg` names
+records the resolved commit `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-01, as the standing instruction of the
+That commit is the head of the library on 2026-10-03, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -724,7 +728,7 @@ static counts are `baseline/static_<algebra>.json`, from `baseline`. They are ex
 compiler commit, with loop trips weighted. The runtime medians are
 `baseline/runtime_<algebra>.json`, from `bench`: five alternating runs of 40 rounds over 1024
 objects, in nanoseconds for each object. Each file names its date, machine, commits and flags
-under `taken`, and at the pin they are from 2026-10-02 on `linux amd64, 4 cores`.
+under `taken`, and at the pin they are from 2026-10-03 on `linux amd64, 4 cores`.
 
 `gaps.md` and the docket show each gap of the pin from those files, and `show` prints the C and
 the machine code of one function. The figures of each proposal before and after its edits are
@@ -740,14 +744,16 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
-carrier are generated. The cost that stays is what the hand-written norms pay.
+unrolled at no cost. At the pin `d9be8ae` the library works this way, and its attitude and
+carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
+fill nothing. The cost that stays is what the hand-written norms pay.
 
-The cost is measured at the pin `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
+The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
 each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
-functions that did not change moved ×0.86 to ×1.02.
+functions that did not change moved ×0.86 to ×1.02. The pin `d9be8ae` changes no norm and no
+generated operator, as its static baselines show, so these figures stand for it.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
@@ -799,9 +805,11 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts
   after the edits in `evaluations/partner-sign.json` and `evaluations/cayley-derivation.json`.
-- Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.86,
-  while the bulk unitize runs slower, ×1.7 to ×3.0. The library scales every slot in a loop,
+- Why the weight unitizes of the library run faster than their dense forms, ×0.59 to ×0.81,
+  while the bulk unitize runs slower, ×1.5 to ×3.0. The library scales every slot in a loop,
   which the compiler may vectorise, where the dense form spells each slot. Unmeasured.
+- Why `+` and `-` run ×1.6 to ×1.9 their dense forms at the pin, where both fill nothing and
+  write each slot once. The cause is not isolated.
 - Whether the library takes P04, `exact-kinds`, so that a product returns a kind of exactly
   the bases it reaches. At rga4d 16 measurands stand above the byte bound only because they
   write a whole multivector for one slot, and at cga5d 12 do. Each is a dot, an antidot or a

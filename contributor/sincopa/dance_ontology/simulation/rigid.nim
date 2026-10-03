@@ -1370,6 +1370,27 @@ proc placeBodies*(couple: var Couple; chests: array[Body, Stance]; arms: array[4
       engine.place(arm_rig.link[Limb.Fore], asPlace(placing.elbow), turnOf(placing.fore))
       engine.place(arm_rig.link[Limb.Palm], asPlace(placing.wrist), turnOf(placing.palm))
 
+proc standAt*(couple: var Couple; stance: array[Body, Stance]; chests: array[Body, Stance];
+              arms: array[4, ArmPlacing]) =
+  ## Stand couple at one planned moment, nothing moving: hips at `stance`, chests and arms
+  ## where plan places them (`walk.replay`).
+  couple.stance = stance
+  for who in Body:
+    let axes = axesOf(stance[who])
+    engine.place(couple.who[who].trunk, asPlace(axes.origin), standing(axes))
+  couple.placeBodies(chests, arms)
+  let still = asEngine((0.0, 0.0, 0.0))
+  for who in Body:
+    for body in [couple.who[who].trunk, couple.who[who].chest]:
+      engine.setSpin(body, still)
+      engine.setDrift(body, still)
+    for arm in Arm:
+      let arm_rig = couple.who[who].arm[arm]
+      for body in [arm_rig.collar, arm_rig.girdle, arm_rig.link[Limb.Upper],
+                   arm_rig.link[Limb.Fore], arm_rig.link[Limb.Palm]]:
+        engine.setSpin(body, still)
+        engine.setDrift(body, still)
+
 proc advance*(couple: Couple; steps: int) =
   ## Run engine on, carrying hands toward their band all through.
   for _ in 1 .. steps:
@@ -1408,19 +1429,21 @@ proc turn*(couple: var Couple; who: Body; by: float; steps: int) =
     couple.stance = turned(couple.stance, who, by / float(steps))
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
 
-proc turnStepping*(couple: var Couple; who: Body; by: float; step: Vector; steps: int;
-                   start: openArray[float] = []; finish: openArray[float] = [];
+proc turnStepping*(couple: var Couple; who: Body; by: float; mover: Body; step: Vector;
+                   steps: int; start: openArray[float] = []; finish: openArray[float] = [];
                    hertz = 0.0) =
-  ## Turn one dancer as `turn` does while that dancer steps by `step`, metres on floor,
-  ## and where plans are given, steer from `start` to `finish` as turn goes.
+  ## Turn one dancer as `turn` does while `mover` steps by `step`, metres on floor, and
+  ## where plans are given, steer from `start` to `finish` as turn goes.
   ##   Target moves with bodies, every tenth step, so joints are asked for pose that fits
   ##     where bodies are, and not for pose of moment's end while bodies are mid turn.
+  ##   Who turns and who steps are two: plan stands lead still and steps follow toward
+  ##     them, whichever of two turns.
   let
     rate = by * 2.0 * PI * HERTZ / float(steps)
     speed = step * (HERTZ / float(steps))
     is_blending = start.len == finish.len and finish.len > 0
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, rate)))
-  engine.setDrift(couple.who[who].trunk, asEngine(speed))
+  engine.setDrift(couple.who[mover].trunk, asEngine(speed))
   for k in 1 .. steps:
     if is_blending and (k mod 10 == 1 or k == steps):
       var between = newSeq[float](finish.len)
@@ -1434,10 +1457,10 @@ proc turnStepping*(couple: var Couple; who: Body; by: float; step: Vector; steps
       easeOff(couple)
     engine.step(couple.world, cfloat(1.0 / HERTZ), SUBSTEPS)
     couple.stance = turned(couple.stance, who, by / float(steps))
-    couple.stance[who].centre.x += step.x / float(steps)
-    couple.stance[who].centre.y += step.y / float(steps)
+    couple.stance[mover].centre.x += step.x / float(steps)
+    couple.stance[mover].centre.y += step.y / float(steps)
   engine.setSpin(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
-  engine.setDrift(couple.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
+  engine.setDrift(couple.who[mover].trunk, asEngine((0.0, 0.0, 0.0)))
 
 proc armPoseOf*(couple: Couple; who: Body; arm: Arm): ArmPose =
   ## Four points of one arm, joined or not.

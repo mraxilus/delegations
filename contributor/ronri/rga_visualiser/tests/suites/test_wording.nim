@@ -148,8 +148,8 @@ suite "Wording":
     # Driver reads `wording.nim` as text and imports none of it, so type check compiles no
     #   project code on koch's compiler (#385). Here, on pin, reading meets compiled enum
     #   and table: key moved or row written in form reading cannot follow fails here.
-    const SOURCE = staticRead("../../src/rga_visualiser/wording.nim")
-    let (keys, words) = (keysOf(SOURCE), wordsOf(SOURCE))
+    const source = staticRead("../../src/rga_visualiser/wording.nim")
+    let (keys, words) = (keysOf(source), wordsOf(source))
     check keys.len == ord(high(Wording)) + 1
     check words.len == keys.len
     for key in Wording:
