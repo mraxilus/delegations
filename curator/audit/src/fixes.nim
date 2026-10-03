@@ -1,8 +1,9 @@
 ## Fix source in place where check names one mechanical fix (`koch fix`), inside branch scope.
 ##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim`,
-##     `idioms.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and `wrapping.nim`, and
-##     reads that check's own data, so each rule is written once. This module selects files,
-##     runs on each file fixers its kind's checks name, and refuses any write outside scope.
+##     `prose.nim`, `idioms.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and
+##     `wrapping.nim`, and reads that check's own data, so each rule is written once. This
+##     module selects files, runs on each file fixers its kind's checks name, and refuses any
+##     write outside scope.
 ##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
 ##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
 ##     written and every other kind passes through. Checks read every kind still; finding in
@@ -11,8 +12,10 @@
 ##     other fixer on every Nim kind. Order keeps each fixer from undoing one before it:
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
-##   - idioms next (return, import order, import brackets, bindings, `strictFuncs`, unordered
-##     lists), since bindings indent lines and every later width reads that indent;
+##   - content next (articles in comments), since each changes width of its line;
+##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
+##     profiler import, unordered lists), since bindings indent lines and every later width
+##     reads that indent;
 ##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
 ##     since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
@@ -58,8 +61,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils]
-import ./[blanks, declarations, findings, form, idioms, kinds, layout, names, scope, spacing]
-import ./[tokens, wrapping]
+import ./[blanks, declarations, findings, form, idioms, kinds, layout, names, prose, scope]
+import ./[spacing, tokens, wrapping]
 
 
 const
@@ -160,6 +163,7 @@ func faultOf(path: string, fence: Fence): seq[Finding] =
 func fixersOf(kind: Kind): seq[Fixer] =
   ## List fixers kind's checks name, in order header gives.
   result = kind.rule.formFixers
+  result.add fixArticles
   if kind == Kind.Nim: result.add IDIOM_FIXERS
   result.add @[Fixer(fixBlanks), fixDocs, fixDefaults, fixSpacing]
   result.add WRAPPING_FIXERS

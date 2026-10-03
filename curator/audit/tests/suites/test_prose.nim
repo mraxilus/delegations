@@ -10,6 +10,9 @@ const
   TELEGRAPHIC = ["Order", "files", "for", "reader", "learning", "subject,", "not", "compiler."]
     ## Word pool without articles.
   SAMPLES = 300  ## Random comments drawn per property.
+  NOUNS = ["Order", "files", "reader", "learning", "subject,", "compiler."]
+    ## Words of pool that open noun phrase, so article before one goes.
+  APPLIED_MIN = 150  ## Samples that must reach article law; six of eight pool words do.
 
 
 
@@ -42,3 +45,47 @@ suite "Article VI":
       check findArticles(words.join(" ")).len == 0  # no article, no finding
       words.insert(["a", "An", "the."][rand(2)], rand(words.len))
       check findArticles(words.join(" ")).len == 1  # one article, one finding
+
+
+
+suite "Article VI fixes":
+  test "VI.5 lowercase article goes from Nim comment, with space after it":
+    let
+      source = "## Read the file, then a row.\nlet x = 1  # Hold an index (the end).\n" &
+        "#[ Skip the\n   header. ]#\n"
+      fix = fixArticles("a.nim", source)
+    check fix.source == "## Read file, then row.\nlet x = 1  # Hold index (end).\n" &
+      "#[ Skip the\n   header. ]#\n"  # article at line end stays
+    check fix.fixed.mapIt(it.line) == @[1, 2]  # one report per line
+    check fix.fixed[0].message == "article in comment (VI.5)"
+    check checkProse("a.nim", fix.source, Syntax.Nim).mapIt(it.line) == @[3]  # left one alone
+    check fixArticles("a.nim", fix.source).fixed.len == 0  # second fix writes nothing
+
+
+  test "VI.5 article naming value, capital, glued punctuation, code and quote stay":
+    for kept in [
+      "# Swap a and b.\n",  # function word after: `a` names value
+      "# Given a, b.\n",  # punctuation glued
+      "# The end.\n",  # capital opens sentence
+      "# Appendix A lists rows.\n",  # capital label
+      "# Use `the` word.\n",  # backtick span
+      "# Print \"the row\" verbatim.\n",  # quote
+      "# Move a b.\n",  # one letter after: likely names
+      "let s = \"the row\"\n",  # string, never comment
+    ]:
+      check fixArticles("a.nim", kept).source == kept
+
+
+  test "VI.5 property: fix deletes each inserted article before noun, and nothing else":
+    randomize(0)
+    var applied = 0
+    for _ in 1..SAMPLES:  # 300 samples, seeded
+      var words = newSeqWith(rand(1..8), TELEGRAPHIC[rand(TELEGRAPHIC.high)])
+      let plain = "# " & words.join(" ") & "\n"
+      check fixArticles("a.nim", plain).source == plain  # telegraphic stays
+      let at = rand(words.high)
+      if words[at] notin NOUNS: continue  # function word after article: article kept
+      words.insert(["a", "an", "the"][rand(2)], at)
+      check fixArticles("a.nim", "# " & words.join(" ") & "\n").source == plain
+      inc applied
+    check applied >= APPLIED_MIN  # guard filters out few samples
