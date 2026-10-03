@@ -22,8 +22,7 @@ import std/[json, strutils, tables]
 import ./guard
 
 
-const SHORT = 7
-  ## Digits of commit findings name, as `git log --oneline` prints.
+const SHORT = 7  ## Digits of commit findings name, as `git log --oneline` prints.
 
 
 
@@ -31,7 +30,7 @@ const SHORT = 7
 
 func short(commit: string): string =
   ## Shorten commit for findings.
-  if commit.len > SHORT: commit[0 ..< SHORT] else: commit
+  if commit.len > SHORT: commit[0..<SHORT] else: commit
 
 
 func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =
@@ -52,12 +51,12 @@ func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =
 func checkStamp*(document: JsonNode; pin, path: string): seq[Finding] =
   ## Hold one measurement document to pin: it must be taken at pin's commit.
 
-  func takenPga(document: JsonNode): string =
+  func commitTaken(document: JsonNode): string =
     ## Read library commit document was taken at; empty where it names none.
     let node = document{"taken", "pga"}
     if node.isNil or node.kind != JString: "" else: node.getStr
 
-  let taken = document.takenPga
+  let taken = document.commitTaken
   if taken != pin:
     result.add Finding(
       path: path,

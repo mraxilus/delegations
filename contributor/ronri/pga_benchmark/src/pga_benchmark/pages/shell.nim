@@ -22,12 +22,9 @@ import ../[changes, markdown]
 
 
 const
-  TOKEN_TITLE* = "@TITLE@"
-    ## Token page's title replaces.
-  TOKEN_BODY* = "@BODY@"
-    ## Token rendered body replaces.
-  TOKEN_EMBED* = "@EMBED:"
-    ## Opening of token one face replaces, closed by `@`.
+  TOKEN_TITLE* = "@TITLE@"  ## Token page's title replaces.
+  TOKEN_BODY* = "@BODY@"  ## Token rendered body replaces.
+  TOKEN_EMBED* = "@EMBED:"  ## Opening of token one face replaces, closed by `@`.
   FACES* = [
     "commit-mono-latin-400-normal.woff2",
     "noto-sans-latin-400-normal.woff2",
@@ -50,7 +47,7 @@ func facesAsked*(shell: string): seq[string] =
   while at >= 0:
     let close = shell.find('@', at + TOKEN_EMBED.len)
     if close < 0: break
-    let face = shell[at + TOKEN_EMBED.len ..< close]
+    let face = shell[at + TOKEN_EMBED.len..<close]
     if face notin result: result.add face
     at = shell.find(TOKEN_EMBED, close + 1)
 
@@ -62,7 +59,7 @@ func assemble*(shell, title, body: string; faces: Table[string, string]): string
     result = result.replace(TOKEN_EMBED & face & "@", "data:font/woff2;base64," & encode(bytes))
 
 
-func pageDigest*(page: string): string =
+func digestPage*(page: string): string =
   ## Digest built page, as publications hold it once page is published.
   digestOf(page)
 
@@ -84,7 +81,7 @@ func fixed*(value: float, places = 2): string =
   formatFloat(value, ffDecimal, places)
 
 
-func ratioText*(ratio: float): string =
+func textRatio*(ratio: float): string =
   ## Format ratio of times as `×0.72`.
   "×" & ratio.fixed
 

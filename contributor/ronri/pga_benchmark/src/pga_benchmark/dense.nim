@@ -29,27 +29,21 @@ type
     ## Define one factor of term: operand or temporary, and its slot.
     ##   Source `m` is 0, `n` is 1, and temporaries are 2 on.
     ##   Slot below zero reads source whole, as scalar operand or scalar temporary.
-  Term = object
-    ## Define one term of slot: coefficient times product of factors.
+  Term = object  ## Define one term of slot: coefficient times product of factors.
     coefficient: float
     factors: seq[Factor]
   Slots = array[Basis, seq[Term]]
     ## Define multivector symbolically: each slot is sum of its terms.
-  Emitter = object
-    ## Define generation state: statements so far, and source next temporary takes.
+  Emitter = object  ## Define generation state: statements so far, and source next temporary takes.
     statements: NimNode
     source_next: int
 
 
 const
-  SOURCE_M = 0
-    ## Source of first operand.
-  SOURCE_N = 1
-    ## Source of second operand.
-  SLOT_WHOLE = -1
-    ## Slot that reads source whole, as scalar.
-  TOLERANCE_COEFFICIENT = 1e-12
-    ## Coefficient below which combined term vanishes.
+  SOURCE_M = 0  ## Source of first operand.
+  SOURCE_N = 1  ## Source of second operand.
+  SLOT_WHOLE = -1  ## Slot that reads source whole, as scalar.
+  TOLERANCE_COEFFICIENT = 1e-12  ## Coefficient below which combined term vanishes.
 
 
 
@@ -122,7 +116,7 @@ func selected(slots: Slots, grade: Grade): Slots =
 
 #[ Emission ]#
 
-func factorNode(factor: Factor, is_scalar_m: bool): NimNode =
+func nodeFactor(factor: Factor, is_scalar_m: bool): NimNode =
   ## Spell one factor: operand slot, scalar operand or temporary.
   let name = case factor.source
     of SOURCE_M: "m"
@@ -133,7 +127,7 @@ func factorNode(factor: Factor, is_scalar_m: bool): NimNode =
   nnkBracketExpr.newTree(ident(name), newCall(bindSym"Basis", newLit(factor.slot)))
 
 
-func sumNode(terms: seq[Term], is_scalar_m = false): NimNode =
+func nodeSum(terms: seq[Term], is_scalar_m = false): NimNode =
   ## Spell sum of terms, sign folded into add or subtract; zero where none.
   if terms.len == 0: return newLit(0.0)
   for index, term in terms:
@@ -142,7 +136,7 @@ func sumNode(terms: seq[Term], is_scalar_m = false): NimNode =
     if abs(magnitude - 1.0) > TOLERANCE_COEFFICIENT or term.factors.len == 0:
       product = newLit(magnitude)
     for factor in term.factors:
-      let node = factorNode(factor, is_scalar_m)
+      let node = nodeFactor(factor, is_scalar_m)
       product = if product.isNil: node else: infix(product, "*", node)
     let is_negative = term.coefficient < 0
     result =
@@ -156,7 +150,7 @@ func temporaries(emitter: var Emitter, slots: Slots): Slots =
   inc emitter.source_next
   for b in Basis:
     if slots[b].len == 0: continue
-    emitter.statements.add newLetStmt(ident("t" & $source & "_" & $ord(b)), sumNode(slots[b]))
+    emitter.statements.add newLetStmt(ident("t" & $source & "_" & $ord(b)), nodeSum(slots[b]))
     result[b] = @[Term(coefficient: 1.0, factors: @[(source, ord(b))])]
 
 
@@ -170,16 +164,16 @@ func bindScalar(emitter: var Emitter, value: NimNode): int =
 func product(emitter: var Emitter; left, right: Slots; cayley: Cayley2D): Slots =
   ## Multiply through two-dimensional table; operand already product binds temporaries first.
   let
-    left_bound = if left.degreeOf > 1: emitter.temporaries(left) else: left
-    right_bound = if right.degreeOf > 1: emitter.temporaries(right) else: right
+    bound_left = if left.degreeOf > 1: emitter.temporaries(left) else: left
+    bound_right = if right.degreeOf > 1: emitter.temporaries(right) else: right
   for a in Basis:
-    if left_bound[a].len == 0: continue
+    if bound_left[a].len == 0: continue
     for b in Basis:
-      if right_bound[b].len == 0: continue
+      if bound_right[b].len == 0: continue
       for destination in cayley[a][b]:
         let sign = if destination.is_negated: -1.0 else: 1.0
-        for x in left_bound[a]:
-          for y in right_bound[b]:
+        for x in bound_left[a]:
+          for y in bound_right[b]:
             result[destination.basis].add Term(
               coefficient: sign * x.coefficient * y.coefficient,
               factors: x.factors & y.factors,
@@ -189,7 +183,7 @@ func product(emitter: var Emitter; left, right: Slots; cayley: Cayley2D): Slots 
 
 func rootOf(terms: seq[Term]): NimNode =
   ## Spell square root of one slot's sum.
-  newCall(bindSym"sqrt", sumNode(terms))
+  newCall(bindSym"sqrt", nodeSum(terms))
 
 
 
@@ -219,15 +213,21 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   func container(emitter: var Emitter, m: Slots): Slots =
     ## Read container, i.e. `m ∧ (m⊟)☆`.
     when IS_CONFORMAL:
-      emitter.product(m, m.mapped(CAYLEY_CARRIER).mapped(CAYLEYS_DUAL.anti.right),
-        CAYLEYS_WEDGE.base)
+      emitter.product(
+        m,
+        m.mapped(CAYLEY_CARRIER).mapped(CAYLEYS_DUAL.anti.right),
+        CAYLEYS_WEDGE.base,
+      )
     else: m
 
   func cocarrier(emitter: var Emitter, m: Slots): Slots =
     ## Read cocarrier, i.e. `m☆ ∧ 𝐞∞`.
     when IS_CONFORMAL:
-      emitter.product(m.mapped(CAYLEYS_DUAL.anti.right), constantOf(Basis.infinity),
-        CAYLEYS_WEDGE.base)
+      emitter.product(
+        m.mapped(CAYLEYS_DUAL.anti.right),
+        constantOf(Basis.infinity),
+        CAYLEYS_WEDGE.base,
+      )
     else: m
 
   case id
@@ -270,11 +270,15 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
   of "norm_weight": emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti)
   of "norm":
     when IS_RIGID:
-      summed(emitter.norm(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar),
-        emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti))
+      summed(
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar),
+        emitter.norm(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti),
+      )
     else:
-      summed(emitter.norm(m, CAYLEYS_DOT.base, Basis.scalar),
-        emitter.norm(m, CAYLEYS_DOT.anti, Basis.scalarAnti))
+      summed(
+        emitter.norm(m, CAYLEYS_DOT.base, Basis.scalar),
+        emitter.norm(m, CAYLEYS_DOT.anti, Basis.scalarAnti),
+      )
   of "normalize_bulk": emitter.unitized(m, CAYLEYS_NORM_SQUARED.base, Basis.scalar)
   of "normalize_weight", "unitize":
     emitter.unitized(m, CAYLEYS_NORM_SQUARED.anti, Basis.scalarAnti)
@@ -286,13 +290,19 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       case id
       of "support":
         let origin = constantOf(Basis.origin)
-        emitter.product(m, emitter.product(origin, m.mapped(CAYLEYS_DUAL.anti.right),
-          CAYLEYS_WEDGE.base), CAYLEYS_WEDGE.anti)
+        emitter.product(
+          m,
+          emitter.product(origin, m.mapped(CAYLEYS_DUAL.anti.right), CAYLEYS_WEDGE.base),
+          CAYLEYS_WEDGE.anti,
+        )
       of "support_anti":
         let horizon = constantOf(Basis.horizon.basis,
           if Basis.horizon.is_negated: -1.0 else: 1.0)
-        emitter.product(m, emitter.product(horizon, m.mapped(CAYLEYS_DUAL.base.right),
-          CAYLEYS_WEDGE.anti), CAYLEYS_WEDGE.base)
+        emitter.product(
+          m,
+          emitter.product(horizon, m.mapped(CAYLEYS_DUAL.base.right), CAYLEYS_WEDGE.anti),
+          CAYLEYS_WEDGE.base,
+        )
       else: raiseAssert("No dense form for `" & id & "`.")
     else:
       case id
@@ -305,23 +315,26 @@ func recipeOf(emitter: var Emitter; id: string; m, n: Slots): Slots =
       of "center": emitter.product(emitter.cocarrier(m), m, CAYLEYS_WEDGE.anti)
       of "container": emitter.container(m)
       of "partner":
-        emitter.product(emitter.container(m.mapped(CAYLEYS_DUAL.anti.right)),
-          m.mapped(CAYLEY_CARRIER), CAYLEYS_WEDGE.anti)
+        emitter.product(
+          emitter.container(m.mapped(CAYLEYS_DUAL.anti.right)),
+          m.mapped(CAYLEY_CARRIER),
+          CAYLEYS_WEDGE.anti,
+        )
       else: raiseAssert("No dense form for `" & id & "`.")
 
 
 
 #[ Functions ]#
 
-macro emitDenseForms*(): untyped =
-  ## Emit one dense form per general measurand, named by `denseNameOf`.
+macro emitFormsDense*(): untyped =
+  ## Emit one dense form per general measurand, named by `nameDenseOf`.
   ##   Partner carries sign of its operand's grade, as library's does; grade is read as
   ##   library reads it, from first component beyond tolerance, and sign flips, never scales.
   result = newStmtList()
   for p in CATALOGUE:
     if p.reference.len > 0: continue
     let
-      name = ident(p.denseNameOf)
+      name = ident(p.nameDenseOf)
       (m, n) = (ident"m", ident"n")
       is_scalar_m = p.operands[0] == Kind.Scalar
     if p.id == "select_part":
@@ -353,10 +366,10 @@ macro emitDenseForms*(): untyped =
       if is_partner and slots[b].len > 0:
         # Sum bound once and flipped after, since select over two sums spells each twice.
         let value = ident("value_" & $ord(b))
-        body.add newLetStmt(value, sumNode(slots[b], is_scalar_m))
+        body.add newLetStmt(value, nodeSum(slots[b], is_scalar_m))
         body.add newAssignment(target, quote do: (if `is_negated`: -`value` else: `value`))
       else:
-        body.add newAssignment(target, sumNode(slots[b], is_scalar_m))
+        body.add newAssignment(target, nodeSum(slots[b], is_scalar_m))
     let type_m = if is_scalar_m: ident"float" else: ident"Multivector"
     result.add(
       if p.arity == 2:
@@ -370,4 +383,4 @@ macro emitDenseForms*(): untyped =
     )
 
 
-emitDenseForms()
+emitFormsDense()

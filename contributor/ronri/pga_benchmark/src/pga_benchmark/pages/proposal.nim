@@ -21,7 +21,7 @@ import ../[markdown, proposals]
 import ./[evaluation, shell]
 
 
-func proposalBody*(
+func bodyProposal*(
   proposal: Proposal;
   evaluation: JsonNode;
   files: Table[string, string];
@@ -32,10 +32,10 @@ func proposalBody*(
 ): string =
   ## Render proposal page body; `figures` maps project-relative SVG path to its text.
 
-  func claimsHtml(evaluation: JsonNode): string =
+  func htmlClaims(evaluation: JsonNode): string =
     ## Render claims evaluation checked, each with its verdict and detail.
 
-    func claimText(claim: JsonNode): string =
+    func textClaim(claim: JsonNode): string =
       ## Render what one claim asserts, in words.
       let algebras = block:
         var names: seq[string]
@@ -58,30 +58,32 @@ func proposalBody*(
       let is_holding = claim{"passed"}.getBool
       var detail: seq[string]
       for line in claim{"detail"}.getElems: detail.add escapeHtml(line.getStr)
-      result.add "<tr><td>" & claimText(claim) & "</td><td>" &
+      result.add "<tr><td>" & textClaim(claim) & "</td><td>" &
         chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") &
         "</td><td>" & detail.join("<br>") & "</td></tr>"
     result.add "</table></div>"
 
   let
-    pga_shown =
+    commit_shown =
       if proposal.isFrozen and not evaluation.isNil: evaluation{"taken", "pga"}.getStr else: pin
     standing =
-      if proposal.isImplemented: "implemented in " & code(proposal.implemented_in[
-        0 ..< min(7, proposal.implemented_in.len)])
+      if proposal.isImplemented: "implemented in " & code(
+        proposal.implemented_in[
+          0..<min(7, proposal.implemented_in.len)],
+      )
       elif proposal.isFrozen: "withdrawn"
       else: "proposed"
   result = "<div class=\"page\"><header><h1>" & escapeHtml(proposal.citation) & ": " &
     renderInline(proposal.title) & "</h1><p class=\"meta\">" & escapeHtml(proposal.citation) &
     " " & code(proposal.name) & " · " & standing & " · pga " &
-    code(pga_shown[0 ..< min(7, pga_shown.len)])
+    code(commit_shown[0..<min(7, commit_shown.len)])
   if proposal.builds_on.len > 0: result.add " · builds on " & code(proposal.builds_on)
   if not evaluation.isNil:
     result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) & ", " &
       escapeHtml(evaluation{"taken", "machine"}.getStr)
   result.add links & "</p><div class=\"chips\">" &
-    verdictChips(evaluation, baselines, spread) & "</div></header>"
-  result.add "<section class=\"block\"><h2>Claims</h2>" & claimsHtml(evaluation) & "</section>"
+    chipsVerdict(evaluation, baselines, spread) & "</div></header>"
+  result.add "<section class=\"block\"><h2>Claims</h2>" & htmlClaims(evaluation) & "</section>"
   result.add "<section class=\"block prose\">"
   for node in proposal.body:
     let figure = node.figureOf(proposal.directory)
@@ -94,10 +96,10 @@ func proposalBody*(
   result.add "</section>"
   if proposal.change.edits.len > 0:
     result.add "<section class=\"block\"><h2>What it changes</h2>" &
-      editsHtml(proposal.change, files) & "</section>"
+      htmlEdits(proposal.change, files) & "</section>"
   if not evaluation.isNil:
     result.add "<section class=\"block\"><h2>What it measured at pin</h2><p class=\"note\">" &
-      spreadText(spread) & "</p>" & functionsTable(evaluation) & nanTable(evaluation) &
-      timesTable(evaluation, baselines, spread) &
+      textSpread(spread) & "</p>" & tableFunctions(evaluation) & tableNan(evaluation) &
+      tableTimes(evaluation, baselines, spread) &
       "</section>"
   result.add "</div>"

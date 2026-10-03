@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 914ae2b574f73577 |
+| Rules   | cc6b6533a73a85a0 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -328,12 +328,17 @@ any GPU.
 
 ## Clocks of the driven checks
 
-**Correctness checks run on a simulated clock, and only speed checks read the real one.**
-`clock.ts` installs the clock of Playwright, paused, before the page loads. Timers, animation
-frames, idle callbacks and `performance.now` then move only when a check moves them. `advance`
-moves a span, `advanceFrames` moves frames, and `waitUntil` steps one frame at a time until a
-condition holds. A slow machine takes longer in real time to reach a verdict, and never reaches
-another one (repository issue 329).
+**Correctness checks run on a simulated clock, and only speed and instrument checks read the real
+one** (Article IX.12). `clock.ts` installs the clock of Playwright, paused, before the page loads.
+Timers, animation frames, idle callbacks and `performance.now` then move only when a check moves
+them. `advance` moves a span, `advanceFrames` moves frames, and `waitUntil` steps one frame at a
+time until a condition holds. A slow machine takes longer in real time to reach a verdict, and never
+reaches another one (repository issue 329).
+
+**The host-save check runs on the simulated clock too, on a page of its own.** The stand-in host
+must stand before the script of the page runs, so the check cannot share the first page.
+`simulateClock` puts its page on the simulated clock, and its waits are frames. Verified by a run,
+2026-10-02: its four checks pass on the simulated page, and the page raises no error.
 
 Three things that the clock does not reach are set on the simulated page:
 
@@ -347,8 +352,15 @@ Three things that the clock does not reach are set on the simulated page:
 
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
-`driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than
-spans of time. Their size is then the same on every machine, and only the figures move with speed.
+`driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than spans
+of time. Their size is then the same on every machine, and only the figures move with speed.
+
+**Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
+that page one of its own frames at a time. `settleTurn` waits on the transitions that an element
+runs, as `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12).
+Rejected: a limit of time as a fallback, which a loaded machine meets with no fault in the page.
+Verified by a run, 2026-10-02: the heap row and the tree checks pass on the real page with these
+waits.
 
 **The heap row reads `NaN` on the simulated page**, because the clock stands in for `performance`.
 So `driveHeapUnit` reads that row on the second page too.
@@ -846,15 +858,18 @@ states it once, and the page reads it through `nimRateFrameLeast`. A scripted de
 its clock one frame at that rate. The frame-time plot of the window and the sparkline of the page
 floor their range at 8.3 ms. A smooth run then does not zoom in on noise.
 
-**The plots and the curve hold spans of time, sized at the floor.** The plot of each front-end
-holds 480 frames, which is four seconds at 120 per second. The exceedance curve holds 2,048, about
-seventeen seconds. A machine faster than the floor fills each in less time.
+**The plots and the curve hold spans of time, sized at the floor.** The plot of each front-end holds
+`timings.FRAMES_HISTORY` frames, four seconds at the floor. The exceedance curve holds
+`timings.FRAMES_EXCEEDANCE`, seventeen seconds at the floor. `timings.nim` derives each from its
+span and `RATE_FRAME_LEAST`, and the page reads both through the bridge. So a new floor moves both
+windows. A machine faster than the floor fills each in less time.
 
-**The marks of the curve are 240, 120, 60, 30, 15, 10, 5 and 1 per second, and they bound its
-colour bands.** A frame under 4.2 ms is fast, under 8.3 ms good, under 16.7 ms fair, and slower is
-poor. The 120 mark wears good, because a frame inside it meets the floor. The 240 mark names a frame
-twice as fast, and nothing is held to it (`GLOSSARY.md`, Mark). Rejected: 120 as fast and 60 as
-good, which names a rate under the floor good.
+**The marks of the curve are 240, 120, 60, 30, 15, 10, 5 and 1 per second, and they bound its colour
+bands.** A frame under 4.2 ms is fast, under 8.3 ms good, under 16.7 ms fair, and slower is poor.
+The 120 mark wears good, because a frame inside it meets the floor. The 240 mark,
+`timings.RATE_FRAME_FAST`, names a frame twice as fast as the floor, and nothing is held to it
+(`GLOSSARY.md`, Mark). Rejected: 120 as fast and 60 as good, which names a rate under the floor
+good.
 
 **A mark gives way where its labels would cover a slower mark.** The marks are walked slowest first,
 so the one nearer the floor keeps its place. On an axis of 90 ms, the 240 line stood 17 px from the

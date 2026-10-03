@@ -25,15 +25,14 @@ import ./[bound, catalogue, inspector, kinds, report]
 
 
 const
-  ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
+  NAME_ALGEBRA = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
   METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
     ## Algebra lower bounds are derived for, spelled from same build definitions library reads.
-  LIBRARY_MARK = "illuminatedZpga"
+  MARK_LIBRARY = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
-  REFERENCE_MARK = "referenceZ"
-    ## Prefix of module suffix of every typed reference module.
-  DENSE_MODULE = "dense"
+  MARK_REFERENCE = "referenceZ"  ## Prefix of module suffix of every typed reference module.
+  MODULE_DENSE = "dense"
     ## Module suffix of dense form module, as bench entry beside it names it.
     ##   Build from elsewhere spells path before it, ending `Zdense`.
   KEY_SELECT = "{}(Multivector,int)"
@@ -43,19 +42,19 @@ const
     ## Key component read shares with its `var` twin; read is declared first.
 
 
-func isKept(f: CFunction): bool =
+func isKept(f: FunctionC): bool =
   ## Decide whether function belongs to library, reference or dense forms, i.e. to gap list.
-  LIBRARY_MARK in f.module or f.module.startsWith(REFERENCE_MARK) or
-    f.module == DENSE_MODULE or f.module.endsWith("Z" & DENSE_MODULE)
+  MARK_LIBRARY in f.module or f.module.startsWith(MARK_REFERENCE) or
+    f.module == MODULE_DENSE or f.module.endsWith("Z" & MODULE_DENSE)
 
 
-func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
+func keyed(functions: seq[FunctionC]): seq[(string, FunctionC)] =
   ## Key kept functions, numbering those sharing stems by overload index.
   ##   Key then holds whatever order compiler emits them in: lowest index keeps bare key,
   ##     others append `#u<n>`.
   ##   `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
   var
-    groups: Table[string, seq[CFunction]]
+    groups: Table[string, seq[FunctionC]]
     order: seq[string]
   for f in functions:
     if not f.isKept: continue
@@ -63,57 +62,57 @@ func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
     groups.mgetOrPut(f.key, @[]).add f
   for key in order:
     var group = groups[key]
-    group.sort(proc (a, b: CFunction): int = cmp(a.overload, b.overload))
+    group.sort(proc (a, b: FunctionC): int = cmp(a.overload, b.overload))
     for i, f in group:
       let numbered = if i == 0: key else: key & "#u" & $f.overload
       result.add((numbered, f))
 
 
-func libraryStem(k: Kind): string =
+func stemLibrary(k: Kind): string =
   ## Read C stem library takes for operand: `float` for scalar, dense multivector else.
   if k == Kind.Scalar: "float" else: "Multivector"
 
 
-func referenceStem(k: Kind): string =
+func stemReference(k: Kind): string =
   ## Read C stem reference takes: `float` for scalar, dense for general, else kind's name.
   if k == Kind.Scalar: "float" elif k == Kind.General: "Multivector" else: $k
 
 
-func libraryKey(p: Measurand): string =
+func keyLibrary(p: Measurand): string =
   ## Get key of library function measurand's expression calls; empty where it composes several.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
-  let head = p.emittedHead
+  let head = p.headEmitted
   if head.len == 0: return ""
   var stems: seq[string]
-  for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
   head & "(" & stems.join(",") & ")"
 
 
-func referenceKey(p: Measurand): string =
+func keyReference(p: Measurand): string =
   ## Get key of reference function measurand names, operands read off argument names.
   let
     open = p.reference.find('(')
     close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
   var stems: seq[string]
-  for argument in p.reference[open + 1 ..< close].split(','):
+  for argument in p.reference[open + 1..<close].split(','):
     case argument.strip
-    of "m": stems.add referenceStem(p.operands[0])
-    of "n": stems.add referenceStem(p.operands[1])
+    of "m": stems.add stemReference(p.operands[0])
+    of "n": stems.add stemReference(p.operands[1])
     else: discard
-  p.reference[0 ..< open] & "(" & stems.join(",") & ")"
+  p.reference[0..<open] & "(" & stems.join(",") & ")"
 
 
-func denseKey(p: Measurand): string =
+func keyDense(p: Measurand): string =
   ## Get key of dense form of general measurand; empty on typed one, which has none.
   if p.reference.len > 0: return ""
   var stems: seq[string]
-  for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
-  p.denseNameOf & "(" & stems.join(",") & ")"
+  for i in 0..<int(p.arity): stems.add stemLibrary(p.operands[i])
+  p.nameDenseOf & "(" & stems.join(",") & ")"
 
 
-func measurandsNode(): JsonNode =
+func nodeMeasurands(): JsonNode =
   ## Build catalogue: one object per measurand naming its keys, expression and citation.
   result = newJObject()
   for p in CATALOGUE:
@@ -122,15 +121,15 @@ func measurandsNode(): JsonNode =
       "alias": p.alias,
       "arity": int(p.arity),
       "expression": p.expression,
-      "library": p.libraryKey,
-      "reference": p.referenceKey,
-      "dense": p.denseKey,
+      "library": p.keyLibrary,
+      "reference": p.keyReference,
+      "dense": p.keyDense,
       "cite": p.cite,
     }
     let b = p.boundOf(METRIC)
     if b.is_derived:
       result[p.id]["bound"] = %*{
-        "shape": p.shapeNameOf,
+        "shape": p.nameShapeOf,
         "is_chain": b.is_chain,
         "steps": p.stepsOf,
         "multiplies": b.multiplies,
@@ -141,7 +140,7 @@ func measurandsNode(): JsonNode =
       }
 
 
-func missingNode(): JsonNode =
+func nodeMissing(): JsonNode =
   ## Build operations reference carries and library lacks.
   result = newJObject()
   for p in MISSING:
@@ -161,17 +160,19 @@ proc main(): int =
   taken["pga"] = %paramStr(4)
   taken["flags"] = %paramStr(5)
   var doc = document(
-    "static", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), taken
+    "static",
+    nodeAlgebra(NAME_ALGEBRA, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR),
+    taken,
   )
   var
     kept = newJObject()
     count = 0
   for (key, f) in functions.keyed:
-    kept[key] = functionNode(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
+    kept[key] = nodeFunction(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
     inc count
   doc["functions"] = kept
-  doc["measurands"] = measurandsNode()
-  doc["missing"] = missingNode()
+  doc["measurands"] = nodeMeasurands()
+  doc["missing"] = nodeMissing()
   writeFile(paramStr(2), pretty(doc) & "\n")
   echo "inspected ", functions.len, " functions, kept ", count, " into ", paramStr(2)
   0

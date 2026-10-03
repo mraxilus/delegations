@@ -22,8 +22,9 @@ export const MILLISECONDS_FRAME = 16;
 
 /** Most frames `waitUntil` steps before it gives up.
  *
- *  Simulated frames, not wall time: 30 simulated seconds, far past any ease or transition this
- *  page runs. Condition still false by then never becomes true, and saying so is verdict.
+ *  Frames, not wall time, on either clock: on simulated page 30 simulated seconds, far past any
+ *  ease or transition this page runs. Condition still false by then never becomes true, and
+ *  saying so is verdict.
  */
 export const FRAMES_UNTIL_MOST = 1875;
 
@@ -139,24 +140,18 @@ export async function advanceFrames(page: Page, frames: number): Promise<void> {
 /** Step page one frame at time until condition holds, and raise where it never does.
  *
  *  Condition is read at each frame boundary, so where it first holds is same frame on every
- *  machine. Real-clock page polls on its own frames, bounded by time rather than frames.
+ *  machine. Real-clock page steps its own frames, so count of frames bounds wait there too,
+ *  and no limit on time decides verdict (Article IX.12).
  */
 export async function waitUntil<A>(
   page: Page, condition: (given: A) => boolean, given: A,
   frames_most: number = FRAMES_UNTIL_MOST,
 ): Promise<void> {
-  if (!isSimulated(page)) {
-    await page.waitForFunction(
-      condition as (given: unknown) => boolean, given as unknown,
-      { timeout: frames_most * MILLISECONDS_FRAME, polling: 'raf' },
-    );
-    return;
-  }
   for (let frame = 0; frame <= frames_most; frame += 1) {
     if (await page.evaluate(condition as (given: unknown) => boolean, given as unknown)) return;
-    await runSpan(page, MILLISECONDS_FRAME);
+    await advanceFrames(page, 1);
   }
-  throw new Error(`Condition still false after ${frames_most} simulated frames.`);
+  throw new Error(`Condition still false after ${frames_most} frames.`);
 }
 
 /** Run page function that waits on page's own timers, while simulated time moves this far.

@@ -137,10 +137,6 @@ const
     ##   Red, green, blue, no alpha, since every cell is opaque.
   INK_POOL_FREE = Ink.Grid
     ## Draw free object-pool handle in palette's recessive furniture colour.
-  FRAMES_HISTORY* {.define: "visualiser.frames_history".} = 480
-    ## Bound how many recent per-frame timings live diagnostics graph keeps.
-    ##   Four seconds at `timings.RATE_FRAME_LEAST`, long enough to see stutter land and
-    ##   scroll off. Page's sparkline holds same count.
 
 
 

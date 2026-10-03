@@ -23,30 +23,19 @@ import ./[changes, guard, markdown]
 
 
 type
-  Note* = object
-    ## Define one note on library source.
-    title*: string
-      ## Heading of section.
-    path*: string
-      ## Library-relative file quoted, as `pga/multivectors.nim`.
-    status*: string
-      ## Short verdict after file, as `decide`; empty where file gives none.
-    quote*: string
-      ## Lines of library note is about, verbatim at pin.
-    body*: seq[Block]
-      ## Blocks after quote.
-    line*: int
-      ## Line of notes file section opens on, for findings.
-  Notes* = object
-    ## Define whole notes file: blocks before first note, then notes in order.
-    lead*: seq[Block]
-      ## Blocks before first note, title included.
-    items*: seq[Note]
-      ## Notes in file order.
+  Note* = object  ## Define one note on library source.
+    title*: string  ## Heading of section.
+    path*: string  ## Library-relative file quoted, as `pga/multivectors.nim`.
+    status*: string  ## Short verdict after file, as `decide`; empty where file gives none.
+    quote*: string  ## Lines of library note is about, verbatim at pin.
+    body*: seq[Block]  ## Blocks after quote.
+    line*: int  ## Line of notes file section opens on, for findings.
+  Notes* = object  ## Define whole notes file: blocks before first note, then notes in order.
+    lead*: seq[Block]  ## Blocks before first note, title included.
+    items*: seq[Note]  ## Notes in file order.
 
 
-const STATUS_JOIN = " · "
-  ## Text between quoted file and status in note's first line.
+const STATUS_JOIN = " · "  ## Text between quoted file and status in note's first line.
 
 
 
@@ -61,7 +50,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     i = 0
 
   # Take lead up to first note.
-  while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+  while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
     notes.lead.add blocks[i]
     inc i
 
@@ -70,26 +59,26 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     let heading = blocks[i]
     inc i
     var note = Note(title: heading.lines[0], line: heading.line)
-    let has_file = i < blocks.len and blocks[i].kind == BlockKind.Paragraph and
+    let has_file = i < blocks.len and blocks[i].kind == KindBlock.Paragraph and
       blocks[i].lines[0].startsWith("`")
-    if not has_file or i + 1 >= blocks.len or blocks[i + 1].kind != BlockKind.Fence:
+    if not has_file or i + 1 >= blocks.len or blocks[i + 1].kind != KindBlock.Fence:
       findings.add Finding(
         path: path,
         line: heading.line,
         message: "Note needs file line and quoted fence; got `" & note.title & "`.",
       )
-      while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+      while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
         inc i
       continue
     let
       first = blocks[i].lines.join(" ")
       close = first.find('`', 1)
-    note.path = if close > 1: first[1 ..< close] else: ""
+    note.path = if close > 1: first[1..<close] else: ""
     let joined = first.find(STATUS_JOIN)
     if joined >= 0: note.status = first[joined + STATUS_JOIN.len .. ^1].strip
     note.quote = blocks[i + 1].lines.join("\n")
     i += 2
-    while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+    while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
       note.body.add blocks[i]
       inc i
     notes.items.add note

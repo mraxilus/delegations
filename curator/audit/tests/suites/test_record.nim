@@ -39,7 +39,7 @@ suite "Article VIII":
       early = provenanceText("d") & "\n## Open questions\n\nOne.\n\n## Design\n\nWhat is.\n"
       found = checkRecord("p", early)
     check found.len == 1 and found[0].line == 12  # open questions' own line
-    check found[0].message.endsWith("got section at line 16 after it.")
+    check found[0].message.endsWith("got section at line `16` after it.")
     check messages(provenanceText("d") & BODY & "\n### Deeper\n\nStill inside.\n").len == 0
     check messages(provenanceText("d") & "\n## OPEN QUESTIONS\n\n## Design\n").len == 1  # case
 
@@ -77,7 +77,7 @@ suite "Article VIII":
       found = checkRecord("p", long)
     check found.len == 1
     check found[0].message.startsWith("Record over " & $RECORD_LINES & " lines; prune to log")
-    check found[0].message.endsWith("got " & $(long.count('\n')) & ".")  # as wc -l counts
+    check found[0].message.endsWith("got `" & $(long.count('\n')) & "`.")  # as wc -l counts
     check messages(provenanceText("d") & "line\n".repeat(SECTION_LINES - 10)).len == 0
 
 
@@ -88,7 +88,7 @@ suite "Article VIII":
     check found.len == 1
     check found[0].message ==
       "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
-        "guide); got " & $(SECTION_LINES + 1) & "."
+        "guide); got `" & $(SECTION_LINES + 1) & "`."
     check found[0].line == wide.splitLines.find("## Body sim") + 1  # heading, not overflow
     # Same body, split in two, passes: ceiling is on section and not on record.
     let split = provenanceText("d") & "\n## One\n" & "line\n".repeat(SECTION_LINES - 1) &

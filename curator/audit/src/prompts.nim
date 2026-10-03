@@ -76,8 +76,8 @@ func checkPromptSize(path, source: string): seq[Finding] =
   if source.len > PROMPT_BYTES:
     result.add finding(
       path, 0,
-      "Prompt over " & $PROMPT_BYTES & " bytes; prune before adding (duty 10); got " &
-        $source.len & ".",
+      "Prompt over " & $PROMPT_BYTES & " bytes; prune before adding (duty 10); got `" &
+        $source.len & "`.",
     )
 
 

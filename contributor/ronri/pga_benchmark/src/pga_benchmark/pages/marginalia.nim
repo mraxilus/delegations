@@ -18,15 +18,12 @@ import ./[evaluation, shell]
 
 type ChangeEvaluated* = object
   ## Define one change as marginalia shows it: name, change, and its evaluation where run.
-  name*: string
-    ## File name under `changes/`, without extension.
-  change*: Change
-    ## Edits and why.
-  evaluation*: JsonNode
-    ## Evaluation document; nil where none was run.
+  name*: string  ## File name under `changes/`, without extension.
+  change*: Change  ## Edits and why.
+  evaluation*: JsonNode  ## Evaluation document; nil where none was run.
 
 
-func marginaliaBody*(
+func bodyMarginalia*(
   changes_evaluated: openArray[ChangeEvaluated];
   notes: Notes;
   files: Table[string, string];
@@ -37,24 +34,24 @@ func marginaliaBody*(
   ## Render marginalia body: header, changes with evaluations and spread, then notes under lead.
   ##   Lead's own title is dropped, since section heading names notes already.
 
-  func changeHtml(change_evaluated: ChangeEvaluated): string =
+  func htmlChange(change_evaluated: ChangeEvaluated): string =
     ## Render one change: title, chips, then why, edits and measurements on open.
     let
       change = change_evaluated.change
       summary = if change.why.len > 0: renderBlock(change.why[0], 2) else: ""
     result = "<details class=\"card\" id=\"change-" & escapeHtml(change_evaluated.name) &
       "\"><summary><h3>" & renderInline(change.title) & "</h3><div class=\"chips\">" &
-      verdictChips(change_evaluated.evaluation, baselines, spread) & "</div>" & summary &
+      chipsVerdict(change_evaluated.evaluation, baselines, spread) & "</div>" & summary &
       "</summary>"
     if change.why.len > 1: result.add renderBlocks(change.why[1 .. ^1], 2)
-    result.add editsHtml(change, files)
+    result.add htmlEdits(change, files)
     if not change_evaluated.evaluation.isNil:
       let evaluation = change_evaluated.evaluation
-      result.add functionsTable(evaluation) & nanTable(evaluation) &
-        timesTable(evaluation, baselines, spread)
+      result.add tableFunctions(evaluation) & tableNan(evaluation) &
+        tableTimes(evaluation, baselines, spread)
     result.add "</details>"
 
-  func noteHtml(note: Note): string =
+  func htmlNote(note: Note): string =
     ## Render one note: title, status, file and line at pin, quoted lines, body.
     let at = note.lineAt(files)
     result = "<article class=\"card note\"><h3>" & renderInline(note.title) &
@@ -64,14 +61,14 @@ func marginaliaBody*(
       renderBlocks(note.body, 2) & "</article>"
 
   result = "<div class=\"page\"><header><h1>PGA Marginalia</h1><p class=\"meta\">pga " &
-    code(pin[0 ..< 7]) & " · every change tried at pin, every note located at pin" & links &
+    code(pin[0..<7]) & " · every change tried at pin, every note located at pin" & links &
     "</p></header>"
   result.add "<section class=\"block\"><h2>Changes proposed</h2><p class=\"note\">" &
-    spreadText(spread) & "</p>"
-  for change_evaluated in changes_evaluated: result.add changeHtml(change_evaluated)
+    textSpread(spread) & "</p>"
+  for change_evaluated in changes_evaluated: result.add htmlChange(change_evaluated)
   result.add "</section><section class=\"block\"><h2>Notes in the margin</h2>"
   var lead = notes.lead
-  if lead.len > 0 and lead[0].kind == BlockKind.Heading and lead[0].level == 1: lead.delete(0)
+  if lead.len > 0 and lead[0].kind == KindBlock.Heading and lead[0].level == 1: lead.delete(0)
   if lead.len > 0: result.add "<div class=\"prose\">" & renderBlocks(lead, 2) & "</div>"
-  for note in notes.items: result.add noteHtml(note)
+  for note in notes.items: result.add htmlNote(note)
   result.add "</section></div>"

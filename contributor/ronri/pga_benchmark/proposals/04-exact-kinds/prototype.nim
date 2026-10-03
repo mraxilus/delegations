@@ -24,10 +24,8 @@ type MultivectorOf*[B: static set[Basis]] = object
 
 
 const
-  SAMPLES = 256
-    ## Seeded samples each law is checked on.
-  SEED = 0
-    ## Seed of sample generator, so every run checks same samples.
+  SAMPLES = 256  ## Seeded samples each law is checked on.
+  SEED = 0  ## Seed of sample generator, so every run checks same samples.
 
 
 
@@ -55,11 +53,11 @@ macro defineKinds(): untyped =
   ## Name kinds of P02 as aliases of exact kinds: grades, parities, and whole algebra.
   result = newStmtList()
   var named: seq[(string, set[Basis])]
-  for grade in Grade.low .. Grade.high:
+  for grade in Grade.low..Grade.high:
     named.add(("Kvector" & $int(grade), basesOfGrade(grade)))
   named.add(("MultivectorEven", basesOfParity(true)))
   named.add(("MultivectorOdd", basesOfParity(false)))
-  named.add(("MultivectorWhole", {Basis.low .. Basis.high}))
+  named.add(("MultivectorWhole", {Basis.low..Basis.high}))
   for (name, listed) in named:
     let (kind, spelled) = (ident(name), literal(listed))
     result.add quote do:
@@ -95,7 +93,7 @@ func sumOf(terms: seq[NimNode]): NimNode {.compileTime.} =
   for term in terms[1 .. ^1]: result = infix(result, "+", term)
 
 
-func readOf(m: NimNode; basis: Basis): NimNode {.compileTime.} =
+func readOf(m: NimNode, basis: Basis): NimNode {.compileTime.} =
   ## Spell read of one coefficient of operand.
   nnkBracketExpr.newTree(m, nnkDotExpr.newTree(ident"Basis", ident($basis)))
 
@@ -107,7 +105,7 @@ func reachOf(cayley: Cayley2D; bases_m, bases_n: set[Basis]): set[Basis] {.compi
       for term in cayley[left][right]: result.incl term.basis
 
 
-func reachOf(cayley: Cayley1D; bases_m: set[Basis]): set[Basis] {.compileTime.} =
+func reachOf(cayley: Cayley1D, bases_m: set[Basis]): set[Basis] {.compileTime.} =
   ## Get bases map reaches over operand's bases.
   for basis in bases_m:
     for term in cayley[basis]: result.incl term.basis
@@ -118,7 +116,7 @@ macro kindOf(cayley: static Cayley2D; bases_m, bases_n: static set[Basis]): unty
   nnkBracketExpr.newTree(ident"MultivectorOf", literal(reachOf(cayley, bases_m, bases_n)))
 
 
-macro kindOf(cayley: static Cayley1D; bases_m: static set[Basis]): untyped =
+macro kindOf(cayley: static Cayley1D, bases_m: static set[Basis]): untyped =
   ## Spell exact kind map reaches, as literal set.
   nnkBracketExpr.newTree(ident"MultivectorOf", literal(reachOf(cayley, bases_m)))
 
@@ -144,7 +142,7 @@ macro emitProduct(
   writesOf(sums)
 
 
-macro emitMap(cayley: static Cayley1D; bases_m: static set[Basis]; m: untyped): untyped =
+macro emitMap(cayley: static Cayley1D, bases_m: static set[Basis], m: untyped): untyped =
   ## Emit map over operand's bases alone, into result of exact kind.
   var sums: array[Basis, seq[NimNode]]
   for basis in bases_m:
@@ -183,14 +181,14 @@ func `∘`*[A, B: static set[Basis]](
 
 
 func `∙`*[A: static set[Basis]](
-  m: MultivectorOf[A]
+  m: MultivectorOf[A],
 ): kindOf(CAYLEYS_PARTS.bulk.round, A) {.noinit.} =
   ## Extract bulk; result holds exactly bulk bases of operand's kind.
   emitMap(CAYLEYS_PARTS.bulk.round, A, m)
 
 
 func `∘`*[A: static set[Basis]](
-  m: MultivectorOf[A]
+  m: MultivectorOf[A],
 ): kindOf(CAYLEYS_PARTS.weight.round, A) {.noinit.} =
   ## Extract weight; result holds exactly weight bases of operand's kind.
   emitMap(CAYLEYS_PARTS.weight.round, A, m)
@@ -206,7 +204,7 @@ func toMultivector*[B: static set[Basis]](m: MultivectorOf[B]): Multivector =
 
 proc sample[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): MultivectorOf[B] =
   ## Draw one kind with every slot uniform in [-1, 1].
-  for index in 0 ..< result.elements.len: result.elements[index] = rand(-1.0 .. 1.0)
+  for index in 0..<result.elements.len: result.elements[index] = rand(-1.0..1.0)
 
 
 func basesOf[B: static set[Basis]](kind: typedesc[MultivectorOf[B]]): set[Basis] = B
@@ -224,11 +222,11 @@ proc main(): int =
   doAssert (m ∙ n) is MultivectorOf[{Basis.scalar}], "dot of whole multivectors must be scalar slot"
   doAssert sizeof(m ∙ n) == sizeof(float), "dot writes one slot, never whole multivector"
   doAssert sizeof(m ∘ n) == sizeof(float), "antidot writes one slot, never whole multivector"
-  doAssert basesOf(typeof(∙ bivector)) < basesOf(Kvector2), "bulk of bivector is part of grade"
+  doAssert basesOf(typeof(∙bivector)) < basesOf(Kvector2), "bulk of bivector is part of grade"
   when IS_RIGID:
-    doAssert basesOf(typeof(∙ bivector)) + basesOf(typeof(∘ bivector)) == basesOf(Kvector2),
+    doAssert basesOf(typeof(∙bivector)) + basesOf(typeof(∘bivector)) == basesOf(Kvector2),
       "bulk and weight of bivector cover its grade, under rigid metric"
-  for _ in 1 .. SAMPLES:
+  for _ in 1..SAMPLES:
     let
       (a, b) = (sample(Kvector1), sample(Kvector2))
       (u, v) = (sample(MultivectorWhole), sample(MultivectorWhole))
@@ -238,8 +236,8 @@ proc main(): int =
       ((motor.toMultivector ⟇ a.toMultivector) ⟇ motor.toMultivector)
     doAssert (u ∙ v).toMultivector =~ (u.toMultivector ∙ v.toMultivector)
     doAssert (u ∘ v).toMultivector =~ (u.toMultivector ∘ v.toMultivector)
-    doAssert (∙ b).toMultivector =~ (∙ b.toMultivector)
-    doAssert (∘ b).toMultivector =~ (∘ b.toMultivector)
+    doAssert (∙b).toMultivector =~ (∙b.toMultivector)
+    doAssert (∘b).toMultivector =~ (∘b.toMultivector)
   echo "exact-kinds: laws hold at ", DIMENSIONS, "D, conformal ", IS_CONFORMAL
   0
 

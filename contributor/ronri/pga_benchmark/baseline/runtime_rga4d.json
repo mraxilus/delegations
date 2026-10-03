@@ -26,7 +26,7 @@
         "ns_median": 17.16,
         "ns_min": 17.0,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           17.21,
           17.16,
@@ -40,7 +40,7 @@
         "ns_median": 21.15,
         "ns_min": 20.37,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           21.16,
           21.07,
@@ -57,7 +57,7 @@
         "ns_median": 29.43,
         "ns_min": 29.32,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           29.43,
           29.43,
@@ -71,7 +71,7 @@
         "ns_median": 27.86,
         "ns_min": 27.73,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           27.85,
           27.87,
@@ -88,7 +88,7 @@
         "ns_median": 52.23,
         "ns_min": 48.9,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           49.18,
           54.31,
@@ -102,7 +102,7 @@
         "ns_median": 50.3,
         "ns_min": 48.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           49.15,
           50.3,
@@ -119,7 +119,7 @@
         "ns_median": 51.75,
         "ns_min": 49.87,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           50.29,
           51.75,
@@ -133,7 +133,7 @@
         "ns_median": 50.56,
         "ns_min": 49.73,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           50.56,
           52.26,
@@ -150,7 +150,7 @@
         "ns_median": 6.09,
         "ns_min": 5.84,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.1,
           6.25,
@@ -164,7 +164,7 @@
         "ns_median": 5.87,
         "ns_min": 5.62,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.79,
           6.35,
@@ -181,7 +181,7 @@
         "ns_median": 6.76,
         "ns_min": 5.38,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.52,
           6.4,
@@ -195,7 +195,7 @@
         "ns_median": 6.71,
         "ns_min": 6.25,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.54,
           6.45,
@@ -212,7 +212,7 @@
         "ns_median": 17.7,
         "ns_min": 17.56,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           17.7,
           18.03,
@@ -226,7 +226,7 @@
         "ns_median": 14.59,
         "ns_min": 14.47,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           14.59,
           14.77,
@@ -243,7 +243,7 @@
         "ns_median": 10.01,
         "ns_min": 9.76,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           10.01,
           10.18,
@@ -257,7 +257,7 @@
         "ns_median": 7.95,
         "ns_min": 7.64,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           7.93,
           8.13,
@@ -274,7 +274,7 @@
         "ns_median": 9.64,
         "ns_min": 9.24,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           9.52,
           9.76,
@@ -288,7 +288,7 @@
         "ns_median": 9.07,
         "ns_min": 8.91,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           9.07,
           9.38,
@@ -305,7 +305,7 @@
         "ns_median": 19.19,
         "ns_min": 18.92,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           19.05,
           19.29,
@@ -319,7 +319,7 @@
         "ns_median": 17.74,
         "ns_min": 17.35,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           17.74,
           18.36,
@@ -336,7 +336,7 @@
         "ns_median": 13.8,
         "ns_min": 13.68,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           13.82,
           13.86,
@@ -350,7 +350,7 @@
         "ns_median": 5.37,
         "ns_min": 5.25,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.35,
           5.33,
@@ -367,7 +367,7 @@
         "ns_median": 14.27,
         "ns_min": 13.62,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           14.28,
           14.33,
@@ -381,7 +381,7 @@
         "ns_median": 5.38,
         "ns_min": 5.26,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.35,
           5.31,
@@ -398,7 +398,7 @@
         "ns_median": 39.9,
         "ns_min": 39.72,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           39.88,
           40.16,
@@ -412,7 +412,7 @@
         "ns_median": 22.39,
         "ns_min": 21.94,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           22.39,
           22.45,
@@ -429,7 +429,7 @@
         "ns_median": 44.17,
         "ns_min": 42.52,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           43.67,
           44.34,
@@ -443,7 +443,7 @@
         "ns_median": 36.83,
         "ns_min": 36.42,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           36.54,
           38.05,
@@ -460,7 +460,7 @@
         "ns_median": 44.76,
         "ns_min": 44.1,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           44.59,
           44.44,
@@ -474,7 +474,7 @@
         "ns_median": 37.14,
         "ns_min": 37.03,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           37.14,
           37.17,
@@ -491,7 +491,7 @@
         "ns_median": 43.76,
         "ns_min": 42.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           43.72,
           43.76,
@@ -505,7 +505,7 @@
         "ns_median": 23.48,
         "ns_min": 23.39,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           23.48,
           23.45,
@@ -522,7 +522,7 @@
         "ns_median": 7.28,
         "ns_min": 7.09,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           7.21,
           7.42,
@@ -536,7 +536,7 @@
         "ns_median": 4.43,
         "ns_min": 3.94,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.46,
           4.41,
@@ -553,7 +553,7 @@
         "ns_median": 3.74,
         "ns_min": 3.33,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.09,
           4.23,
@@ -567,7 +567,7 @@
         "ns_median": 3.76,
         "ns_min": 3.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.08,
           4.23,
@@ -584,7 +584,7 @@
         "ns_median": 3.97,
         "ns_min": 3.57,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.85,
           3.97,
@@ -598,7 +598,7 @@
         "ns_median": 3.95,
         "ns_min": 3.55,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.83,
           3.95,
@@ -615,7 +615,7 @@
         "ns_median": 5.79,
         "ns_min": 5.31,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.81,
           5.75,
@@ -629,7 +629,7 @@
         "ns_median": 5.78,
         "ns_min": 5.32,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.83,
           5.76,
@@ -646,7 +646,7 @@
         "ns_median": 5.79,
         "ns_min": 5.29,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.8,
           5.76,
@@ -660,7 +660,7 @@
         "ns_median": 5.78,
         "ns_min": 5.23,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.83,
           5.76,
@@ -677,7 +677,7 @@
         "ns_median": 5.98,
         "ns_min": 5.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.98,
           5.92,
@@ -691,7 +691,7 @@
         "ns_median": 5.98,
         "ns_min": 5.46,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.98,
           5.94,
@@ -708,7 +708,7 @@
         "ns_median": 5.98,
         "ns_min": 5.43,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.37,
           5.91,
@@ -722,7 +722,7 @@
         "ns_median": 5.94,
         "ns_min": 5.47,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.94,
           5.91,
@@ -739,7 +739,7 @@
         "ns_median": 4.0,
         "ns_min": 3.59,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.92,
           4.0,
@@ -753,7 +753,7 @@
         "ns_median": 3.96,
         "ns_min": 3.56,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.91,
           3.96,
@@ -770,7 +770,7 @@
         "ns_median": 4.46,
         "ns_min": 3.9,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.8,
           4.46,
@@ -784,7 +784,7 @@
         "ns_median": 4.08,
         "ns_min": 3.91,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.51,
           4.45,
@@ -801,7 +801,7 @@
         "ns_median": 12.93,
         "ns_min": 12.42,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           13.44,
           12.85,
@@ -815,7 +815,7 @@
         "ns_median": 4.88,
         "ns_min": 4.74,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.86,
           4.81,
@@ -832,7 +832,7 @@
         "ns_median": 12.18,
         "ns_min": 11.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.18,
           12.18,
@@ -846,7 +846,7 @@
         "ns_median": 4.0,
         "ns_min": 3.98,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.01,
           3.99,
@@ -863,7 +863,7 @@
         "ns_median": 12.43,
         "ns_min": 12.01,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.33,
           12.35,
@@ -877,7 +877,7 @@
         "ns_median": 5.52,
         "ns_min": 5.1,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.1,
           5.97,
@@ -894,7 +894,7 @@
         "ns_median": 4.34,
         "ns_min": 4.29,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.35,
           4.32,
@@ -908,7 +908,7 @@
         "ns_median": 4.01,
         "ns_min": 3.98,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.01,
           3.99,
@@ -925,7 +925,7 @@
         "ns_median": 5.26,
         "ns_min": 4.77,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.29,
           5.97,
@@ -939,7 +939,7 @@
         "ns_median": 5.49,
         "ns_min": 4.84,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.42,
           6.22,
@@ -956,7 +956,7 @@
         "ns_median": 13.92,
         "ns_min": 13.81,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           13.91,
           13.92,
@@ -970,7 +970,7 @@
         "ns_median": 4.52,
         "ns_min": 4.28,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.57,
           4.33,
@@ -987,7 +987,7 @@
         "ns_median": 9.06,
         "ns_min": 8.9,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           9.28,
           8.93,
@@ -1001,7 +1001,7 @@
         "ns_median": 5.33,
         "ns_min": 5.28,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.31,
           5.38,
@@ -1018,7 +1018,7 @@
         "ns_median": 4.92,
         "ns_min": 4.68,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.71,
           4.96,
@@ -1032,7 +1032,7 @@
         "ns_median": 8.31,
         "ns_min": 8.22,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           8.29,
           8.3,
@@ -1049,7 +1049,7 @@
         "ns_median": 4.9,
         "ns_min": 4.67,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.72,
           4.99,
@@ -1063,7 +1063,7 @@
         "ns_median": 8.3,
         "ns_min": 8.2,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           8.28,
           8.3,
@@ -1080,7 +1080,7 @@
         "ns_median": 3.49,
         "ns_min": 3.33,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.72,
           3.85,
@@ -1094,7 +1094,7 @@
         "ns_median": 3.48,
         "ns_min": 3.33,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.72,
           3.85,
@@ -1111,7 +1111,7 @@
         "ns_median": 13.86,
         "ns_min": 13.15,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           13.89,
           13.83,
@@ -1125,7 +1125,7 @@
         "ns_median": 4.63,
         "ns_min": 4.28,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.9,
           4.88,
@@ -1142,7 +1142,7 @@
         "ns_median": 14.7,
         "ns_min": 13.95,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           14.71,
           14.63,
@@ -1156,7 +1156,7 @@
         "ns_median": 3.54,
         "ns_min": 3.4,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.53,
           3.54,
@@ -1173,7 +1173,7 @@
         "ns_median": 0.79,
         "ns_min": 0.75,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.79,
           0.77,
@@ -1187,7 +1187,7 @@
         "ns_median": 0.78,
         "ns_min": 0.74,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.79,
           0.77,
@@ -1204,7 +1204,7 @@
         "ns_median": 56.86,
         "ns_min": 56.67,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           56.86,
           56.9,
@@ -1218,7 +1218,7 @@
         "ns_median": 9.97,
         "ns_min": 9.94,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           9.97,
           9.97,
@@ -1235,7 +1235,7 @@
         "ns_median": 48.4,
         "ns_min": 48.16,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           48.34,
           48.49,
@@ -1249,7 +1249,7 @@
         "ns_median": 10.87,
         "ns_min": 10.86,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           10.87,
           10.87,
@@ -1266,7 +1266,7 @@
         "ns_median": 24.36,
         "ns_min": 24.27,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           24.34,
           24.37,
@@ -1279,7 +1279,7 @@
         "ns_median": 3.37,
         "ns_min": 3.32,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.36,
           3.37,
@@ -1297,7 +1297,7 @@
         "ns_median": 23.79,
         "ns_min": 23.66,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           23.72,
           23.79,
@@ -1310,7 +1310,7 @@
         "ns_median": 3.88,
         "ns_min": 3.83,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.88,
           3.88,
@@ -1328,7 +1328,7 @@
         "ns_median": 23.82,
         "ns_min": 23.67,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           23.75,
           29.46,
@@ -1341,7 +1341,7 @@
         "ns_median": 4.33,
         "ns_min": 4.3,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.33,
           4.33,
@@ -1359,7 +1359,7 @@
         "ns_median": 26.44,
         "ns_min": 26.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           26.43,
           26.44,
@@ -1372,7 +1372,7 @@
         "ns_median": 3.64,
         "ns_min": 3.6,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.64,
           3.65,
@@ -1390,7 +1390,7 @@
         "ns_median": 26.46,
         "ns_min": 26.33,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           26.46,
           26.43,
@@ -1403,7 +1403,7 @@
         "ns_median": 4.02,
         "ns_min": 3.98,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.02,
           4.02,
@@ -1421,7 +1421,7 @@
         "ns_median": 26.46,
         "ns_min": 26.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           26.44,
           26.44,
@@ -1434,7 +1434,7 @@
         "ns_median": 4.08,
         "ns_min": 4.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.08,
           4.09,
@@ -1452,7 +1452,7 @@
         "ns_median": 26.44,
         "ns_min": 26.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           26.44,
           26.41,
@@ -1465,7 +1465,7 @@
         "ns_median": 3.48,
         "ns_min": 3.45,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.47,
           3.49,
@@ -1483,7 +1483,7 @@
         "ns_median": 26.46,
         "ns_min": 26.34,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           26.43,
           26.46,
@@ -1496,7 +1496,7 @@
         "ns_median": 3.17,
         "ns_min": 3.14,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.17,
           3.17,
@@ -1514,7 +1514,7 @@
         "ns_median": 6.01,
         "ns_min": 5.78,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.01,
           5.93,
@@ -1527,7 +1527,7 @@
         "ns_median": 3.07,
         "ns_min": 3.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.07,
           3.07,
@@ -1545,7 +1545,7 @@
         "ns_median": 5.96,
         "ns_min": 5.82,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.96,
           5.91,
@@ -1558,7 +1558,7 @@
         "ns_median": 3.07,
         "ns_min": 3.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.07,
           3.07,
@@ -1576,7 +1576,7 @@
         "ns_median": 5.99,
         "ns_min": 5.82,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.0,
           5.92,
@@ -1589,7 +1589,7 @@
         "ns_median": 3.06,
         "ns_min": 3.05,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.06,
           3.06,
@@ -1607,7 +1607,7 @@
         "ns_median": 6.27,
         "ns_min": 5.83,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.14,
           5.93,
@@ -1620,7 +1620,7 @@
         "ns_median": 3.06,
         "ns_min": 3.05,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.06,
           3.06,
@@ -1638,7 +1638,7 @@
         "ns_median": 6.08,
         "ns_min": 5.45,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.08,
           5.91,
@@ -1651,7 +1651,7 @@
         "ns_median": 3.07,
         "ns_min": 3.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.07,
           3.07,
@@ -1669,7 +1669,7 @@
         "ns_median": 6.24,
         "ns_min": 5.64,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.08,
           5.87,
@@ -1682,7 +1682,7 @@
         "ns_median": 3.07,
         "ns_min": 3.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.07,
           3.07,
@@ -1700,7 +1700,7 @@
         "ns_median": 50.9,
         "ns_min": 50.08,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           59.35,
           50.67,
@@ -1713,7 +1713,7 @@
         "ns_median": 13.66,
         "ns_min": 13.61,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           16.77,
           13.65,
@@ -1731,7 +1731,7 @@
         "ns_median": 136.16,
         "ns_min": 126.19,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           141.8,
           137.38,
@@ -1744,7 +1744,7 @@
         "ns_median": 6.67,
         "ns_min": 6.43,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.71,
           6.64,
@@ -1762,7 +1762,7 @@
         "ns_median": 134.87,
         "ns_min": 125.15,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           133.52,
           138.32,
@@ -1775,7 +1775,7 @@
         "ns_median": 12.05,
         "ns_min": 11.92,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.07,
           12.05,
@@ -1793,7 +1793,7 @@
         "ns_median": 131.83,
         "ns_min": 126.6,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           131.83,
           136.37,
@@ -1806,7 +1806,7 @@
         "ns_median": 11.05,
         "ns_min": 10.08,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           11.03,
           11.05,
@@ -1824,7 +1824,7 @@
         "ns_median": 44.82,
         "ns_min": 44.19,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           45.09,
           44.53,
@@ -1837,7 +1837,7 @@
         "ns_median": 4.36,
         "ns_min": 4.31,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.37,
           4.36,
@@ -1855,7 +1855,7 @@
         "ns_median": 44.87,
         "ns_min": 43.91,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           45.13,
           44.28,
@@ -1868,7 +1868,7 @@
         "ns_median": 5.32,
         "ns_min": 5.26,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.33,
           5.32,
@@ -1886,7 +1886,7 @@
         "ns_median": 44.63,
         "ns_min": 44.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           44.63,
           44.39,
@@ -1899,7 +1899,7 @@
         "ns_median": 6.48,
         "ns_min": 6.37,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           6.48,
           6.49,
@@ -1917,7 +1917,7 @@
         "ns_median": 56.46,
         "ns_min": 56.14,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           56.48,
           56.55,
@@ -1930,7 +1930,7 @@
         "ns_median": 2.1,
         "ns_min": 2.05,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           2.16,
           2.1,
@@ -1948,7 +1948,7 @@
         "ns_median": 62.12,
         "ns_min": 61.75,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           62.15,
           62.19,
@@ -1961,7 +1961,7 @@
         "ns_median": 1.59,
         "ns_min": 1.52,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.59,
           1.6,
@@ -1979,7 +1979,7 @@
         "ns_median": 53.13,
         "ns_min": 48.15,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           53.0,
           53.17,
@@ -1992,7 +1992,7 @@
         "ns_median": 1.59,
         "ns_min": 1.53,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.59,
           1.59,
@@ -2010,7 +2010,7 @@
         "ns_median": 53.24,
         "ns_min": 52.93,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           56.06,
           53.24,
@@ -2023,7 +2023,7 @@
         "ns_median": 2.11,
         "ns_min": 2.07,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           2.11,
           2.2,
@@ -2041,7 +2041,7 @@
         "ns_median": 5.91,
         "ns_min": 5.4,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.91,
           5.85,
@@ -2054,7 +2054,7 @@
         "ns_median": 1.64,
         "ns_min": 1.45,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.65,
           1.63,
@@ -2072,7 +2072,7 @@
         "ns_median": 5.49,
         "ns_min": 5.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.49,
           5.56,
@@ -2085,7 +2085,7 @@
         "ns_median": 3.31,
         "ns_min": 2.99,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.31,
           3.33,
@@ -2103,7 +2103,7 @@
         "ns_median": 13.67,
         "ns_min": 12.05,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           13.71,
           13.67,
@@ -2116,7 +2116,7 @@
         "ns_median": 1.75,
         "ns_min": 1.59,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.75,
           1.78,
@@ -2134,7 +2134,7 @@
         "ns_median": 12.37,
         "ns_min": 11.96,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.39,
           13.25,
@@ -2147,7 +2147,7 @@
         "ns_median": 1.85,
         "ns_min": 1.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.85,
           1.85,
@@ -2165,7 +2165,7 @@
         "ns_median": 5.23,
         "ns_min": 5.14,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.23,
           5.19,
@@ -2178,7 +2178,7 @@
         "ns_median": 0.79,
         "ns_min": 0.75,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.84,
           0.78,
@@ -2196,7 +2196,7 @@
         "ns_median": 5.26,
         "ns_min": 5.08,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.22,
           5.19,
@@ -2209,7 +2209,7 @@
         "ns_median": 1.69,
         "ns_min": 0.76,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.77,
           0.78,
@@ -2227,7 +2227,7 @@
         "ns_median": 5.42,
         "ns_min": 5.27,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.42,
           5.39,
@@ -2240,7 +2240,7 @@
         "ns_median": 0.79,
         "ns_min": 0.73,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.84,
           0.78,
@@ -2258,7 +2258,7 @@
         "ns_median": 5.41,
         "ns_min": 5.25,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.4,
           5.32,
@@ -2271,7 +2271,7 @@
         "ns_median": 1.67,
         "ns_min": 0.76,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.77,
           0.78,
@@ -2289,7 +2289,7 @@
         "ns_median": 3.61,
         "ns_min": 3.47,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.56,
           3.6,
@@ -2302,7 +2302,7 @@
         "ns_median": 0.92,
         "ns_min": 0.87,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.92,
           0.92,
@@ -2320,7 +2320,7 @@
         "ns_median": 4.11,
         "ns_min": 3.9,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.37,
           4.46,
@@ -2333,7 +2333,7 @@
         "ns_median": 0.86,
         "ns_min": 0.83,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.86,
           0.86,
@@ -2351,7 +2351,7 @@
         "ns_median": 3.41,
         "ns_min": 3.32,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.72,
           3.85,
@@ -2364,7 +2364,7 @@
         "ns_median": 0.92,
         "ns_min": 0.87,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.92,
           0.92,
@@ -2382,7 +2382,7 @@
         "ns_median": 3.64,
         "ns_min": 3.45,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.49,
           3.63,
@@ -2395,7 +2395,7 @@
         "ns_median": 0.86,
         "ns_min": 0.82,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.85,
           0.86,
@@ -2413,7 +2413,7 @@
         "ns_median": 12.37,
         "ns_min": 12.0,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.39,
           12.33,
@@ -2426,7 +2426,7 @@
         "ns_median": 1.87,
         "ns_min": 1.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.85,
           1.87,
@@ -2444,7 +2444,7 @@
         "ns_median": 12.39,
         "ns_min": 11.87,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.29,
           12.47,
@@ -2457,7 +2457,7 @@
         "ns_median": 0.49,
         "ns_min": 0.49,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.49,
           0.49,
@@ -2475,7 +2475,7 @@
         "ns_median": 4.32,
         "ns_min": 4.29,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.36,
           4.31,
@@ -2488,7 +2488,7 @@
         "ns_median": 0.79,
         "ns_min": 0.74,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.74,
           0.79,
@@ -2506,7 +2506,7 @@
         "ns_median": 4.91,
         "ns_min": 4.53,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.41,
           5.14,
@@ -2519,7 +2519,7 @@
         "ns_median": 0.5,
         "ns_min": 0.49,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.5,
           0.49,
@@ -2537,7 +2537,7 @@
         "ns_median": 5.11,
         "ns_min": 4.9,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.93,
           5.03,
@@ -2550,7 +2550,7 @@
         "ns_median": 1.25,
         "ns_min": 1.24,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.25,
           1.25,
@@ -2568,7 +2568,7 @@
         "ns_median": 3.73,
         "ns_min": 3.33,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.73,
           3.86,
@@ -2581,7 +2581,7 @@
         "ns_median": 0.49,
         "ns_min": 0.48,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.49,
           0.49,
@@ -2599,7 +2599,7 @@
         "ns_median": 5.25,
         "ns_min": 5.14,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.19,
           5.56,
@@ -2612,7 +2612,7 @@
         "ns_median": 1.67,
         "ns_min": 1.62,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.67,
           1.8,
@@ -2630,7 +2630,7 @@
         "ns_median": 5.27,
         "ns_min": 5.15,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.21,
           6.1,
@@ -2643,7 +2643,7 @@
         "ns_median": 1.67,
         "ns_min": 1.62,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.67,
           1.68,
@@ -2661,7 +2661,7 @@
         "ns_median": 5.43,
         "ns_min": 5.35,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.42,
           5.43,
@@ -2674,7 +2674,7 @@
         "ns_median": 1.62,
         "ns_min": 1.56,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.62,
           1.58,
@@ -2692,7 +2692,7 @@
         "ns_median": 5.42,
         "ns_min": 5.29,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.61,
           5.63,
@@ -2705,7 +2705,7 @@
         "ns_median": 1.64,
         "ns_min": 1.56,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.85,
           1.58,
@@ -2723,7 +2723,7 @@
         "ns_median": 3.65,
         "ns_min": 3.53,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.4,
           3.65,
@@ -2736,7 +2736,7 @@
         "ns_median": 1.49,
         "ns_min": 1.41,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.84,
           1.48,
@@ -2754,7 +2754,7 @@
         "ns_median": 4.11,
         "ns_min": 3.91,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.62,
           4.47,
@@ -2767,7 +2767,7 @@
         "ns_median": 1.46,
         "ns_min": 1.4,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.82,
           1.46,
@@ -2785,7 +2785,7 @@
         "ns_median": 3.4,
         "ns_min": 3.32,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.65,
           3.86,
@@ -2798,7 +2798,7 @@
         "ns_median": 1.39,
         "ns_min": 1.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.8,
           1.39,
@@ -2816,7 +2816,7 @@
         "ns_median": 3.67,
         "ns_min": 3.49,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.36,
           3.64,
@@ -2829,7 +2829,7 @@
         "ns_median": 1.44,
         "ns_min": 1.36,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.76,
           1.39,
@@ -2847,7 +2847,7 @@
         "ns_median": 12.27,
         "ns_min": 11.97,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           15.1,
           12.27,
@@ -2860,7 +2860,7 @@
         "ns_median": 1.85,
         "ns_min": 1.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.86,
           1.87,
@@ -2878,7 +2878,7 @@
         "ns_median": 12.43,
         "ns_min": 11.99,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.5,
           12.44,
@@ -2891,7 +2891,7 @@
         "ns_median": 1.87,
         "ns_min": 1.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.87,
           1.87,
@@ -2909,7 +2909,7 @@
         "ns_median": 4.32,
         "ns_min": 4.3,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.36,
           4.32,
@@ -2922,7 +2922,7 @@
         "ns_median": 0.91,
         "ns_min": 0.87,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.91,
           0.91,
@@ -2940,7 +2940,7 @@
         "ns_median": 5.43,
         "ns_min": 4.89,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.93,
           5.71,
@@ -2953,7 +2953,7 @@
         "ns_median": 0.91,
         "ns_min": 0.88,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.91,
           0.92,
@@ -2971,7 +2971,7 @@
         "ns_median": 5.69,
         "ns_min": 5.38,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.43,
           5.7,
@@ -2984,7 +2984,7 @@
         "ns_median": 3.41,
         "ns_min": 3.38,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.41,
           3.38,
@@ -3002,7 +3002,7 @@
         "ns_median": 3.81,
         "ns_min": 3.64,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.11,
           4.27,
@@ -3015,7 +3015,7 @@
         "ns_median": 1.12,
         "ns_min": 1.01,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.12,
           1.15,
@@ -3033,7 +3033,7 @@
         "ns_median": 5.73,
         "ns_min": 5.66,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.71,
           5.73,
@@ -3046,7 +3046,7 @@
         "ns_median": 1.73,
         "ns_min": 0.78,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.84,
           0.86,
@@ -3064,7 +3064,7 @@
         "ns_median": 5.82,
         "ns_min": 5.12,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.76,
           5.74,
@@ -3077,7 +3077,7 @@
         "ns_median": 0.88,
         "ns_min": 0.73,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.92,
           0.87,
@@ -3095,7 +3095,7 @@
         "ns_median": 5.98,
         "ns_min": 5.39,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.98,
           5.94,
@@ -3108,7 +3108,7 @@
         "ns_median": 1.85,
         "ns_min": 0.78,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.85,
           0.85,
@@ -3126,7 +3126,7 @@
         "ns_median": 5.94,
         "ns_min": 5.8,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.92,
           5.87,
@@ -3139,7 +3139,7 @@
         "ns_median": 0.87,
         "ns_min": 0.78,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.92,
           0.86,
@@ -3157,7 +3157,7 @@
         "ns_median": 4.01,
         "ns_min": 3.56,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.94,
           4.05,
@@ -3170,7 +3170,7 @@
         "ns_median": 0.98,
         "ns_min": 0.91,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.96,
           0.98,
@@ -3188,7 +3188,7 @@
         "ns_median": 4.52,
         "ns_min": 3.95,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.81,
           4.93,
@@ -3201,7 +3201,7 @@
         "ns_median": 0.9,
         "ns_min": 0.8,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.9,
           0.9,
@@ -3219,7 +3219,7 @@
         "ns_median": 3.76,
         "ns_min": 3.28,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.11,
           4.24,
@@ -3232,7 +3232,7 @@
         "ns_median": 0.95,
         "ns_min": 0.83,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.94,
           0.95,
@@ -3250,7 +3250,7 @@
         "ns_median": 4.02,
         "ns_min": 3.5,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.86,
           4.01,
@@ -3263,7 +3263,7 @@
         "ns_median": 1.02,
         "ns_min": 0.88,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.01,
           1.02,
@@ -3281,7 +3281,7 @@
         "ns_median": 13.5,
         "ns_min": 12.63,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           13.52,
           13.4,
@@ -3294,7 +3294,7 @@
         "ns_median": 0.54,
         "ns_min": 0.49,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.54,
           0.54,
@@ -3312,7 +3312,7 @@
         "ns_median": 12.79,
         "ns_min": 12.16,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           12.94,
           12.56,
@@ -3325,7 +3325,7 @@
         "ns_median": 1.85,
         "ns_min": 1.85,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.85,
           1.85,
@@ -3343,7 +3343,7 @@
         "ns_median": 4.33,
         "ns_min": 4.29,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           4.36,
           4.33,
@@ -3356,7 +3356,7 @@
         "ns_median": 0.5,
         "ns_min": 0.49,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.5,
           0.5,
@@ -3374,7 +3374,7 @@
         "ns_median": 4.94,
         "ns_min": 4.51,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.36,
           5.2,
@@ -3387,7 +3387,7 @@
         "ns_median": 0.74,
         "ns_min": 0.74,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           0.74,
           0.74,
@@ -3405,7 +3405,7 @@
         "ns_median": 5.17,
         "ns_min": 5.09,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           5.19,
           5.17,
@@ -3418,7 +3418,7 @@
         "ns_median": 3.07,
         "ns_min": 3.06,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.08,
           3.1,
@@ -3436,7 +3436,7 @@
         "ns_median": 3.48,
         "ns_min": 3.33,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           3.73,
           3.86,
@@ -3449,7 +3449,7 @@
         "ns_median": 1.31,
         "ns_min": 1.28,
         "allocations": 0,
-        "nan_share": 0.0,
+        "share_nan": 0.0,
         "ns_runs": [
           1.3,
           1.3,
