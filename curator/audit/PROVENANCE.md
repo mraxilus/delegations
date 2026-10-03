@@ -895,9 +895,8 @@ stale queue.
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
 - The role-line pattern for issues names `coordinator` beside `curator` and `contributor/`,
-  because a brief and a ruling of the coordinator open with its role line. It reads a prefix,
-  so `coordinator/<name>` passes too. The pattern for pull requests names neither of the two,
-  because neither opens a pull request.
+  because a brief and a ruling of the coordinator open with its role line. The pattern for pull
+  requests does not, because the coordinator opens no pull request.
 - Cost: `--limit 100` reads the newest hundred of each kind. A stale label older than those is
   missed. The coordinator removes each label as it goes, so the list stays short (inferred).
 - Cost: `gh` filters a label through search, so a label that no item carries yet reads as no
@@ -910,9 +909,8 @@ stale queue.
   request, it names nothing. Through a stub whose every read fails, the step exits 1.
 - The role-line pattern for issues, verified by hand through real `jq` 1.7 on 2026-10-03, over
   fixture bodies read as the workflow holds them. `**Role:** coordinator`, after a marker or
-  alone, passes, and so does `Role: coordinator` unbolded. `**Role:** coordinator/library`
-  passes in the same three forms. `**Role:** coordinat`, `**Role:** coordinat/library`, a
-  missing role line, a null body and an unfilled template are named.
+  alone, passes, and so does `Role: coordinator` unbolded. `**Role:** coordinat`, a missing
+  role line, a null body and an unfilled template are named.
 - Cost: `gh` runs `--jq` through `gojq`, and the two checks above ran `jq` 1.7. That the two
   agree here is inferred. No program calls a builtin that `gojq` lacks, and the pattern holds
   no lookaround and no back-reference.
@@ -2056,20 +2054,12 @@ commit before the new one, and `check-commits` reads the true order in CI.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
 
-**`coordinator` and `coordinator/<name>` are role strings that no branch names.**
-`isRoleString` accepts both, so a sign-off row or a decision class may name either one as the
-role that acts. A hook compares a role line with the branch only where the branch is in the
-grammar, and neither one holds a branch.
-
-- `coordinator/<name>` is a thread that the coordinator starts for its own read, check or
-  cleanup (`COORDINATOR.md`, One coordinator). `<name>` takes the grammar of a project folder,
-  as `<project>` does in `curator/<project>`.
-- Rejected, by the ruling of the Architect: `coordinator` for such a thread too, with one
-  coordinator that leads. `coordinator/<name>` keeps "exactly one coordinator" as it is written.
-- An issue that carries the label `coordinator` is refused, because no item is the work of the
-  coordinator itself. A brief carries the label of the role that it starts, so a brief for
-  `coordinator/library` carries that string.
-- Verified by `suites/test_hooks.nim`.
+**`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
+sign-off row or a decision class may name the coordinator as the role that acts. A hook
+compares a role line with the branch only where the branch is in the grammar, and the
+coordinator holds no branch. An issue that carries the label `coordinator` is refused. A brief
+carries the label of the role that it starts, and no item is the work of the coordinator.
+Verified by `suites/test_hooks.nim`.
 
 **The sign-off serves the coordinator first, so `stop` holds the parts that the coordinator
 reads.** The coordinator lifts each decision onto a card for the Architect without a change of
