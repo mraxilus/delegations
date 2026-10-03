@@ -24,21 +24,21 @@ import ./[body, rig, vector]
 
 
 type
-  Touch* = object ## Nearest link comes to body, and to which part.
+  Touch* = object  ## Nearest link comes to body, and to which part.
     part*: Part
-    gap*: float ## Clearance in metres; negative is through skin.
+    gap*: float  ## Clearance in metres; negative is through skin.
 
-  PartShape* = object ## One part's section and band, ready for test.
-    half_breadth*: float ## Half its breadth.
+  PartShape* = object  ## One part's section and band, ready for test.
+    half_breadth*: float  ## Half its breadth.
     flat*: float  ## Depth over breadth.
-    bottom*, top*: float ## Band, widened by limb's radius each way.
+    bottom*, top*: float  ## Band, widened by limb's radius each way.
 
-  BodyShape* = object ## One body as contact test sees it.
+  BodyShape* = object  ## One body as contact test sees it.
     axes*: Axes
     parts*: array[Part, PartShape]
 
 
-func shapeOf*(rig: Rig; stance: Stance): BodyShape =
+func shapeOf*(rig: Rig, stance: Stance): BodyShape =
   ## Body's shape at stance.
   result.axes = axesOf(stance)
   for part in Part:
@@ -76,8 +76,10 @@ func partGap*(axes: Axes; part_shape: PartShape; a, b: Vector): float =
   if near.distance == Inf:
     return Inf
   let k = if near.distance < 1e-9: 1.0
-          else: sqrt(near.near_x * near.near_x +
-                     part_shape.flat * part_shape.flat * near.near_y * near.near_y) / near.distance
+          else: sqrt(
+            near.near_x * near.near_x +
+                       part_shape.flat * part_shape.flat * near.near_y * near.near_y,
+          ) / near.distance
   (near.distance - part_shape.half_breadth) * k
 
 func partGap*(rig: Rig; axes: Axes; part: Part; a, b: Vector): float =
@@ -121,7 +123,7 @@ func armGap*(rig: Rig; a, b, c, d: Vector; meet: Vector; excuse: float): float =
   near.gap - 2.0 * rig.limb
 
 
-func isPressingBody*(rig: Rig; stance: Stance; pose: tuple[elbow, wrist, grip: Vector]): bool =
+func isPressingBody*(rig: Rig, stance: Stance, pose: tuple[elbow, wrist, grip: Vector]): bool =
   ## Whether forearm or hand lies on its own torso or neck.
   ##   Upper arm always hangs against flank, so it is not asked;
   ##     what says arm is wound rather than merely led there is part

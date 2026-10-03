@@ -25,7 +25,7 @@ const
     ##   Once said `X`, which sits on avoid line of **Cross**, while
     ##     `design/parts` named same rung right: two namings of one chain, and
     ##     only one of them correct.  `tests/suites/test_glossary` now reads both.
-  WIDTH = 100 ## Columns report's prose wraps at.
+  WIDTH = 100  ## Columns report's prose wraps at.
   SEEN = ["ahead", "at right", "behind", "at left"]
     ## Say where one has other, by quarters clockwise (`body.quartersTo`).
 
@@ -65,7 +65,7 @@ func whyOf(way: WayRead): string =
   ## Say what refuses, as `words.why` says it of walk.
   why(Walk(is_stopped: way.is_stopped, at: way.at, why: way.why, whose: way.whose))
 
-func blockLine(way: WayRead; sign: string; should_say_apart = true): string =
+func blockLine(way: WayRead, sign: string, should_say_apart = true): string =
   ## Say where sweep blocks one way and why, and how far apart couple stood for it.
   ##   Kept short: two of these sit in one table row under audit's hundred columns.
   ##   Stance is dropped where row names it, since repeating it there says nothing.
@@ -90,13 +90,14 @@ func restName(is_away: bool): string =
 # Mutable: render reads kept readings and gathers asks it lacks, and report renders
 # through many routines, so each would carry them otherwise.
 var
-  READINGS_KEPT*: Readings ## Readings report renders from.
+  READINGS_KEPT*: Readings  ## Readings report renders from.
   SWEEPS_WANTED: seq[SweepAsk] ## Sweeps render asked for and `READINGS_KEPT` lacks, in order asked.
   RUNGS_WANTED: seq[RungAsk]
-  KEYS_USED: HashSet[string] ## Keys render read, so file keeps nothing no render reads.
+  KEYS_USED: HashSet[string]  ## Keys render read, so file keeps nothing no render reads.
 
-proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; is_away = false;
-             apart = 0.0): SweepRead =
+proc sweepOf(
+  band: Band, links: seq[Link], who = Body.Two, is_away = false, apart = 0.0
+): SweepRead =
   ## Kept reading of sweep; lacking it, ask for it and render blank for now.
   let
     ask = askOf(band, links, who, is_away, apart)
@@ -105,7 +106,7 @@ proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; is_away = false;
   if key in READINGS_KEPT.sweeps: return READINGS_KEPT.sweeps[key]
   if ask notin SWEEPS_WANTED: SWEEPS_WANTED.add ask
 
-proc rungOf(band: Band; turn: float): RungRead =
+proc rungOf(band: Band, turn: float): RungRead =
   ## Kept reading of rung; lacking it, ask for it and render blank for now.
   let
     ask = RungAsk(band: band, turn: turn)
@@ -114,7 +115,7 @@ proc rungOf(band: Band; turn: float): RungRead =
   if key in READINGS_KEPT.rungs: return READINGS_KEPT.rungs[key]
   if ask notin RUNGS_WANTED: RUNGS_WANTED.add ask
 
-func glanceAt(sweep: SweepRead; at: float): Glance = sweep.glances[int(round(at * 2.0)) + 4]
+func glanceAt(sweep: SweepRead, at: float): Glance = sweep.glances[int(round(at * 2.0)) + 4]
   ## Moment report reads at `at` turns, which is half turn from -2 to 2.
 
 
@@ -124,8 +125,10 @@ func glanceAt(sweep: SweepRead; at: float): Glance = sweep.glances[int(round(at 
 proc rigTable(): string =
   ## Tabulate rig's measurements.
   result.add "## The rig\n\n"
-  result.add prose("Every measurement is a mixed-sex midpoint of ANSUR II medians; the " &
-    "joints are the AAOS ranges held to what a dancer will do without pain.")
+  result.add prose(
+    "Every measurement is a mixed-sex midpoint of ANSUR II medians; the " &
+      "joints are the AAOS ranges held to what a dancer will do without pain.",
+  )
   result.add "| measure | value |\n|---|---|\n"
   result.add &"| torso round | {HUMAN.round[Part.Torso]} m, an ellipse " &
     &"{turns(2 * halfBreadth(HUMAN, Part.Torso))} across and " &
@@ -159,9 +162,11 @@ proc rigTable(): string =
 proc singleHolds(): string =
   ## Tabulate every one-hand hold at every band, follow turned.
   result.add "## One hand held, the follow turned\n\n"
-  result.add prose(&"Counted from {restName(false)}, in turns, anticlockwise seen from above " &
-    "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
-    "into the last stretch before a joint's edge the worst joint is (1 is the edge).")
+  result.add prose(
+    &"Counted from {restName(false)}, in turns, anticlockwise seen from above " &
+      "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
+      "into the last stretch before a joint's edge the worst joint is (1 is the edge).",
+  )
   for (lead_arm, follow_arm, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
                        (Arm.Left, Arm.Right, "L-r"), (Arm.Right, Arm.Left, "R-l")]:
     let links = oneLink(lead_arm, follow_arm)
@@ -235,7 +240,7 @@ proc pairHolds(): string =
           result.add &"| {half(half_turns)} | blocked | | | |\n"
           continue
         var cross = ""
-        for crossing in 0 ..< min(glance.crossed, glance.over.len):
+        for crossing in 0..<min(glance.crossed, glance.over.len):
           cross.add (if cross.len > 0: ", " else: "") &
             (if glance.over[crossing] == 0: "first over" else: "second over")
         if cross.len == 0: cross = "none"
@@ -247,11 +252,13 @@ proc pairHolds(): string =
 proc chain(): string =
   ## Tabulate whether any pose holds at each rung of chain, asked still.
   result.add "## The chain, asked still\n\n"
-  result.add prose("L-r.R-l wound to each rung and asked whether pose holds there standing " &
-    "still -- not whether the arms carry to it at the pace of the turn, which the sweeps " &
-    "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
-    "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
-    "Asked from every distance the couple may stand at, and shown from first that holds.")
+  result.add prose(
+    "L-r.R-l wound to each rung and asked whether pose holds there standing " &
+      "still -- not whether the arms carry to it at the pace of the turn, which the sweeps " &
+      "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
+      "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
+      "Asked from every distance the couple may stand at, and shown from first that holds.",
+  )
   result.add "| level | rung | facing | holds | strain | crossings | standing |\n" &
     "|---|---|---|---|---|---|---|\n"
   for (word, band) in BANDS:
@@ -268,7 +275,7 @@ proc chain(): string =
   result.add "\n"
 
 
-proc drawnRow(drawn: string; links: seq[Link]; who: Body; turn: float; band: Band): string =
+proc drawnRow(drawn: string, links: seq[Link], who: Body, turn: float, band: Band): string =
   ## Tabulate one state whole-cloth page draws, asked of simulation.
   let glance = glanceAt(sweepOf(band, links, who = who), turn)
   if not glance.is_reached:
@@ -282,31 +289,67 @@ proc drawnStates(): string =
   result.add "## The states the whole-cloth page draws\n\n"
   result.add "| drawn as | turned | holds | follow's arm | lead's arm | strain |\n" &
     "|---|---|---|---|---|---|\n"
-  result.add drawnRow("Left to left, open",
-    oneLink(Arm.Left, Arm.Left), Body.Two, 0.0, Band.Torso)
-  result.add drawnRow("Left to right-wrap-low @ 1/2",
-    oneLink(Arm.Left, Arm.Right), Body.Two, -0.5, Band.Torso)
-  result.add drawnRow("Left to right-wrap-high @ 1/2",
-    oneLink(Arm.Left, Arm.Right), Body.Two, -0.5, Band.Neck)
-  result.add drawnRow("Left to left-lock-low @ -1",
-    oneLink(Arm.Left, Arm.Left), Body.Two, -1.0, Band.Torso)
-  result.add drawnRow("Left to left-lock-high @ -1",
-    oneLink(Arm.Left, Arm.Left), Body.Two, -1.0, Band.Neck)
-  result.add drawnRow("Left to left @ above, +1",
-    oneLink(Arm.Left, Arm.Left), Body.Two, 1.0, Band.Crown)
-  result.add drawnRow("Left-Lock-Low to left, lead turned -1",
-    oneLink(Arm.Left, Arm.Left), Body.One, -1.0, Band.Torso)
-  result.add drawnRow("Left-Lock-Low to left, lead turned +1",
-    oneLink(Arm.Left, Arm.Left), Body.One, 1.0, Band.Torso)
+  result.add drawnRow("Left to left, open", oneLink(Arm.Left, Arm.Left), Body.Two, 0.0, Band.Torso)
+  result.add drawnRow(
+    "Left to right-wrap-low @ 1/2",
+    oneLink(Arm.Left, Arm.Right),
+    Body.Two,
+    -0.5,
+    Band.Torso,
+  )
+  result.add drawnRow(
+    "Left to right-wrap-high @ 1/2",
+    oneLink(Arm.Left, Arm.Right),
+    Body.Two,
+    -0.5,
+    Band.Neck,
+  )
+  result.add drawnRow(
+    "Left to left-lock-low @ -1",
+    oneLink(Arm.Left, Arm.Left),
+    Body.Two,
+    -1.0,
+    Band.Torso,
+  )
+  result.add drawnRow(
+    "Left to left-lock-high @ -1",
+    oneLink(Arm.Left, Arm.Left),
+    Body.Two,
+    -1.0,
+    Band.Neck,
+  )
+  result.add drawnRow(
+    "Left to left @ above, +1",
+    oneLink(Arm.Left, Arm.Left),
+    Body.Two,
+    1.0,
+    Band.Crown,
+  )
+  result.add drawnRow(
+    "Left-Lock-Low to left, lead turned -1",
+    oneLink(Arm.Left, Arm.Left),
+    Body.One,
+    -1.0,
+    Band.Torso,
+  )
+  result.add drawnRow(
+    "Left-Lock-Low to left, lead turned +1",
+    oneLink(Arm.Left, Arm.Left),
+    Body.One,
+    1.0,
+    Band.Torso,
+  )
   result.add "\n"
 
 
 proc standing(): string =
   ## Tabulate block at three stances told, beside one couple choose.
   result.add "## Standing closer, and further\n\n"
-  result.add prose("L-l low, turning the follow, at three stances told rather than chosen: " &
-    "what the block does when the couple are made to step in or out.  The row above them is " &
-    "where they stand when left to choose.")
+  result.add prose(
+    "L-l low, turning the follow, at three stances told rather than chosen: " &
+      "what the block does when the couple are made to step in or out.  The row above them is " &
+      "where they stand when left to choose.",
+  )
   result.add "| apart | lock way | wrap way |\n|---|---|---|\n"
   let
     links = oneLink(Arm.Left, Arm.Left)
@@ -326,10 +369,12 @@ proc standing(): string =
 proc report(): string =
   ## Write whole report.
   result.add "# What the simulation says\n\n"
-  result.add prose("Generated by `nim r tools/build.nim verdicts` from " &
-    "`simulation/verdicts.nim`; do not edit by hand.  The simulation answers in its own " &
-    "physical words, and `simulation/words.nim` translates once.  The whole-cloth page " &
-    "reads that same table, so the page and this report cannot give one pose two answers:")
+  result.add prose(
+    "Generated by `nim r tools/build.nim verdicts` from " &
+      "`simulation/verdicts.nim`; do not edit by hand.  The simulation answers in its own " &
+      "physical words, and `simulation/words.nim` translates once.  The whole-cloth page " &
+      "reads that same table, so the page and this report cannot give one pose two answers:",
+  )
   result.add "| the simulation says | the sheet says |\n|---|---|\n"
   result.add "| the arm out in front, on neither face of its own body | open |\n"
   result.add "| the hand across the front of its own body | wrap |\n"
@@ -343,12 +388,14 @@ proc report(): string =
     result.add &"| the lead has the follow {SEEN[seen[0]]}, the follow has the lead " &
       &"{SEEN[seen[1]]} | {name} |\n"
   result.add "\n"
-  result.add prose("Read with the model's limits in mind: the shoulder girdle is rigid, so " &
-    "a reach a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
-    "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
-    "stand for each turn wherever it carries furthest, never inside each other.  A " &
-    "*blocks* is therefore a little early, and a *holds* says the pose exists without " &
-    "any of that help.")
+  result.add prose(
+    "Read with the model's limits in mind: the shoulder girdle is rigid, so " &
+      "a reach a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
+      "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
+      "stand for each turn wherever it carries furthest, never inside each other.  A " &
+      "*blocks* is therefore a little early, and a *holds* says the pose exists without " &
+      "any of that help.",
+  )
   result.add rigTable()
   result.add singleHolds()
   result.add floorClaim()

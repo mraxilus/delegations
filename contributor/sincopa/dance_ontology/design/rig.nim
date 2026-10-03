@@ -39,7 +39,7 @@ const KEPT_RIG* = currentSourcePath().parentDir / "rig.json"
 type
   Cut = tuple[name: string, arms: seq[(Arm, Arm)], is_away: bool, band: Band]
 
-  Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
+  Job* = object  ## One recording: sweep by its place in `SHOWN`, or still by its ask.
     cut: int
     ask: StillAsk
     is_still: bool
@@ -63,7 +63,7 @@ const SHOWN: seq[Cut] = @[
   ## drawn, and two chains at each lower band, where floor and engine still argue.
 
 const
-  PLACE = 4 ## Decimal places kept.  Tenth of millimetre on lengths, and finer
+  PLACE = 4  ## Decimal places kept.  Tenth of millimetre on lengths, and finer
             ## than any reading on angles; more is noise from solver's own jitter.
   BANDS = ["torso", "neck", "above"]
 
@@ -84,7 +84,7 @@ func jsonArray(values: seq[float]): string =
   for value in values: bits.add figure(value)
   "[" & bits.join(",") & "]"
 
-func wrapped(text: string; width = 96): string =
+func wrapped(text: string, width = 96): string =
   ## Whole field is wrapped, name and all: wrapped after its name, first line
   ## ran to 102 once shoulders were capsules too.
   ## Break long run of figures across lines after commas.  Charter holds every
@@ -102,7 +102,7 @@ func wrapped(text: string; width = 96): string =
     var j = i
     while j < text.len and text[j] != ',': j += 1
     if j < text.len: j += 1
-    let piece = text[i ..< j]
+    let piece = text[i..<j]
     if line > 0 and line + piece.len > width:
       result.add '\n'
       line = 0
@@ -132,7 +132,7 @@ func gripped(moment: Still): seq[float] =
   for grip in moment.grips: result.add [grip.x, grip.y, grip.z]
 
 
-proc bodyOfSweep(recording: Shown; key = ""): string =
+proc bodyOfSweep(recording: Shown, key = ""): string =
   ## One sweep as page reads it, or one still, keyed by question it answers.
   var bits: seq[string]
   if key.len > 0:
@@ -185,12 +185,12 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
 
 func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.
-  for i in 0 ..< SHOWN.len: result.add Job(cut: i, is_still: false)
+  for i in 0..<SHOWN.len: result.add Job(cut: i, is_still: false)
   for ask in stillAsks(): result.add Job(ask: ask, is_still: true)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
-  RECORDING_TEXTS: seq[string] ## Each recording's text, written by whichever worker did it.
+  RECORDING_TEXTS: seq[string]  ## Each recording's text, written by whichever worker did it.
   NOTES: seq[string]  ## And one line saying what it found.
 
 proc work(slice: tuple[first, every: int]) {.thread.} =
@@ -205,9 +205,17 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
       if job.is_still:
         let
           ask = job.ask
-          recording = still(HUMAN, Band.Crown, ask.links, ask.key, ask.turns,
-                            is_away = ask.isRestAway, head = ask.head,
-                            is_either_way = ask.is_either_way, who = ask.who)
+          recording = still(
+            HUMAN,
+            Band.Crown,
+            ask.links,
+            ask.key,
+            ask.turns,
+            is_away = ask.isRestAway,
+            head = ask.head,
+            is_either_way = ask.is_either_way,
+            who = ask.who,
+          )
         NOTES[i] =
           if recording.stills.len > 0:
             &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"
@@ -243,7 +251,7 @@ when isMainModule:
   NOTES = newSeq[string](count)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for worker in 0 ..< cores:
+  for worker in 0..<cores:
     createThread(workers[worker], work, (worker, cores))
   joinThreads(workers)
   for note in NOTES: echo note
@@ -251,8 +259,8 @@ when isMainModule:
   #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
   #   each cell of reference; card no distance holds is recorded with no moment.
   let
-    cuts = RECORDING_TEXTS[0 ..< SHOWN.len]
-    stills = RECORDING_TEXTS[SHOWN.len ..< count]
+    cuts = RECORDING_TEXTS[0..<SHOWN.len]
+    stills = RECORDING_TEXTS[SHOWN.len..<count]
   var head: seq[string]
   head.add "\"stamp\":\"" & stamp & "\""
   head.add "\"upper\":" & figure(HUMAN.upper)

@@ -35,14 +35,13 @@ import ./[body, hold, rig, walk]
 const
   HERE* = currentSourcePath().parentDir.parentDir
     ## Project directory, which every path below is relative to.
-  KEPT* = HERE / "simulation" / "answers.json"
-    ## Where answers are kept.
+  KEPT* = HERE / "simulation" / "answers.json"  ## Where answers are kept.
   HASH_OFFSET = 0xcbf29ce484222325'u64
   HASH_PRIME = 0x100000001b3'u64
 
   SHAKE* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Plainest hold there is: one hand each, face to face.
-  ASK* = 0.6 ## Turn laws put to that hold, in turns, turning her negative way.
+  ASK* = 0.6  ## Turn laws put to that hold, in turns, turning her negative way.
     ## Chosen to make search work for its answer: measured 2026-09-13 with bodies
     ## solid, that hold carries 0.28 that way from first distance couple may stand
     ## at and 0.64 only from 0.70 to 0.72 m, so this is reached only by looking
@@ -53,12 +52,12 @@ const
              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
     ## Same-name chain, built Face-to-back: hold that stops from every distance at
     ## torso height.  Turn no distance carries has to be asked of hold that has one.
-  BEYOND* = 1.2 ## Turn no distance carries that chain; best of them is 0.92, measured
+  BEYOND* = 1.2  ## Turn no distance carries that chain; best of them is 0.92, measured
                 ## 2026-09-13 with shoulder girdles giving, against 0.42 before them.
   WOUND* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name chain, whose stills reference draws wound to turn and half.
-  FREE*: seq[Link] = @[] ## No hands joined.
+  FREE*: seq[Link] = @[]  ## No hands joined.
   LEFT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
     ## Single hold, left to left.
   RIGHT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
@@ -79,28 +78,28 @@ type
   StillAsked* = tuple[key: string, links: seq[Link], turns: float, is_away, is_either_way: bool]
     ## Still over crown, and distance couple stand at for it.
 
-  Way* = object ## One way of sweep, from distance search chose.
+  Way* = object  ## One way of sweep, from distance search chose.
     is_holding*: bool  ## Whether hold stood at rest from any distance.
-    apart*: float ## Distance chosen, metres axis to axis.
+    apart*: float  ## Distance chosen, metres axis to axis.
     is_stopped*: bool
-    at*: float    ## Turns reached when something gave.
+    at*: float  ## Turns reached when something gave.
     why*: Stop
 
-  Ways* = object ## Both ways of one sweep.
+  Ways* = object  ## Both ways of one sweep.
     negative*, positive*: Way
 
-  Walked* = object ## One walk from one distance, in numbers alone.
+  Walked* = object  ## One walk from one distance, in numbers alone.
     apart*: float
-    is_holding*: bool ## Whether hold stood at rest there.
+    is_holding*: bool  ## Whether hold stood at rest there.
     is_stopped*: bool
     at*: float
 
-  Stand* = object ## Where couple stand for one still.
+  Stand* = object  ## Where couple stand for one still.
     is_holding*: bool
     apart*: float
-    turns*: float ## Way couple were wound there, signed.
+    turns*: float  ## Way couple were wound there, signed.
 
-  Answers* = object ## Every search answered, and stamp of what answered it.
+  Answers* = object  ## Every search answered, and stamp of what answered it.
     stamp*: string
     sweeps*: OrderedTable[string, Ways]
     walks*: OrderedTable[string, seq[Walked]]
@@ -108,7 +107,7 @@ type
     stills*: OrderedTable[string, Stand]
 
   Job = enum Sweep, WalkFrom, Reach, Still
-  Task = tuple[job: Job, index, far: int] ## One search, or one walk from one distance.
+  Task = tuple[job: Job, index, far: int]  ## One search, or one walk from one distance.
 
 const
   SWEEPS*: array[6, SweepAsked] = [
@@ -118,16 +117,16 @@ const
     ("left to left over crown", Band.Crown, LEFT_TO_LEFT, 1.0),
     ("left to right over crown", Band.Crown, LEFT_TO_RIGHT, 1.0),
     ("left to right at torso", Band.Torso, LEFT_TO_RIGHT, 1.0),
-  ] ## Every sweep laws stand couple for.
+  ]  ## Every sweep laws stand couple for.
   WALKS*: array[3, WalkAsked] = [
     ("shake at torso, negative", Band.Torso, SHAKE, 1.6, -STEP),
     ("shake at torso, positive", Band.Torso, SHAKE, 1.6, STEP),
     ("shake at torso, asked", Band.Torso, SHAKE, ASK, -STEP),
-  ] ## Every walk laws read from every distance.
+  ]  ## Every walk laws read from every distance.
   REACHES*: array[2, ReachAsked] = [
     ("shake asked", Band.Torso, SHAKE, -ASK, false),
     ("chain beyond", Band.Torso, CHAIN, BEYOND, true),
-  ] ## Every `reaches` laws ask.
+  ]  ## Every `reaches` laws ask.
   STILLS*: array[11, StillAsked] = [
     ("cross-name at -0.5", WOUND, -0.5, false, false),
     ("cross-name at +0.0", WOUND, 0.0, false, false),
@@ -140,15 +139,14 @@ const
     ("same-name at half", CHAIN, -0.5, true, false),
     ("right to left at half", RIGHT_TO_LEFT, 0.5, false, false),
     ("right to left at half, either way", RIGHT_TO_LEFT, 0.5, false, true),
-  ] ## Every still laws stand couple for.
-  CORPUS* = 8
-    ## First stills of `STILLS`, which every still law reads; rest answer one law each.
+  ]  ## Every still laws stand couple for.
+  CORPUS* = 8  ## First stills of `STILLS`, which every still law reads; rest answer one law each.
 
 
 
 #[ Stamp ]#
 
-func feed(digest: var uint64; text: string) =
+func feed(digest: var uint64, text: string) =
   ## Feed bytes to FNV-1a digest, with NUL after them so no two feeds run together.
   for character in text:
     digest = (digest xor uint64(ord(character))) * HASH_PRIME
@@ -165,11 +163,11 @@ func engineCommit*(build: string): string =
   while opens >= 0:
     let shut = build.find('"', opens + 1)
     if shut < 0: return
-    let quoted = build[opens + 1 ..< shut]
+    let quoted = build[opens + 1..<shut]
     if quoted.len == 40 and quoted.allCharsInSet(HexDigits): return quoted
     opens = build.find('"', shut + 1)
 
-proc stamp*(directory = HERE; leaving: openArray[string] = []): string =
+proc stamp*(directory = HERE, leaving: openArray[string] = []): string =
   ## Digest of what answers depend on: every `simulation/*.nim` by name, in name order, and
   ## engine's pinned commit.  `leaving` names files it passes over.
   var files: seq[string]
@@ -192,25 +190,25 @@ proc kept*(path = KEPT): Answers =
   let node = parseFile(path)
   node.to(Answers)
 
-proc sweepOf*(answers: Answers; key: string): Ways =
+proc sweepOf*(answers: Answers, key: string): Ways =
   ## Kept sweep, or failure naming verb that answers it.
   doAssert key in answers.sweeps, "No sweep answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
   answers.sweeps[key]
 
-proc walksOf*(answers: Answers; key: string): seq[Walked] =
+proc walksOf*(answers: Answers, key: string): seq[Walked] =
   ## Kept walks from every distance, nearest first.
   doAssert key in answers.walks, "No walks answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
   answers.walks[key]
 
-proc isReaching*(answers: Answers; key: string): bool =
+proc isReaching*(answers: Answers, key: string): bool =
   ## Kept answer of `reaches`.
   doAssert key in answers.reaches, "No reach answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
   answers.reaches[key]
 
-proc stillOf*(answers: Answers; key: string): Stand =
+proc stillOf*(answers: Answers, key: string): Stand =
   ## Kept distance couple stand at for still.
   doAssert key in answers.stills, "No still answered; run `nim r tools/build.nim answers`: got `" &
     key & "`."
@@ -234,9 +232,9 @@ func wayOf(walk: Walk): Way =
 # Mutable and global: thread takes one argument, so workers read tasks and write answers
 # into slots allotted here before any thread starts.
 var
-  TASKS: seq[Task]     ## Every task, longest first, set before any thread starts.
-  TASK_NEXT: Atomic[int]    ## Next task not yet taken.
-  FARS: seq[float]     ## Every distance couple may stand at.
+  TASKS: seq[Task]  ## Every task, longest first, set before any thread starts.
+  TASK_NEXT: Atomic[int]  ## Next task not yet taken.
+  FARS: seq[float]  ## Every distance couple may stand at.
   SWEPTS: array[SWEEPS.len, Ways]
   WALKEDS: array[WALKS.len, seq[Walked]]
   REACHED: array[REACHES.len, bool]
@@ -308,16 +306,16 @@ proc answer*(): Answers =
   ##     searches leave idle at end.  `reaches` of hold no distance carries walks
   ##     every distance, so it is taken first of all.
   for far in stands(HUMAN): FARS.add far
-  for i in 0 ..< REACHES.len: TASKS.add (Reach, i, 0)
-  for i in 0 ..< SWEEPS.len: TASKS.add (Sweep, i, 0)
-  for i in 0 ..< STILLS.len: TASKS.add (Still, i, 0)
-  for i in 0 ..< WALKS.len:
+  for i in 0..<REACHES.len: TASKS.add (Reach, i, 0)
+  for i in 0..<SWEEPS.len: TASKS.add (Sweep, i, 0)
+  for i in 0..<STILLS.len: TASKS.add (Still, i, 0)
+  for i in 0..<WALKS.len:
     WALKEDS[i] = newSeq[Walked](FARS.len)
-    for k in 0 ..< FARS.len: TASKS.add (WalkFrom, i, k)
+    for k in 0..<FARS.len: TASKS.add (WalkFrom, i, k)
   TASK_NEXT.store(0)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[int]](cores)
-  for worker in 0 ..< cores: createThread(workers[worker], working, worker)
+  for worker in 0..<cores: createThread(workers[worker], working, worker)
   joinThreads(workers)
   result.stamp = stamp()
   for i, question in SWEEPS: result.sweeps[question.key] = SWEPTS[i]

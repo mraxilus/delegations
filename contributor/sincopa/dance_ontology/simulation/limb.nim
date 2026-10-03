@@ -28,33 +28,33 @@ import ./[body, rig, vector]
 
 
 type
-  ArmPose* = object ## Four points of one arm, in world.
-    shoulder*, elbow*, wrist*, grip*: Vector ## Shoulder, elbow, wrist, grip.
+  ArmPose* = object  ## Four points of one arm, in world.
+    shoulder*, elbow*, wrist*, grip*: Vector  ## Shoulder, elbow, wrist, grip.
 
-  Joints* = object ## What each joint reads, radians, in body's own terms.
-    extend*, across*, elevation*: float ## Upper arm: behind, across, up.
+  Joints* = object  ## What each joint reads, radians, in body's own terms.
+    extend*, across*, elevation*: float  ## Upper arm: behind, across, up.
     twist*, bend*, wrist*: float
 
-  Chain* = object ## What laying out arm to grip found.
+  Chain* = object  ## What laying out arm to grip found.
     pose*: ArmPose
-    stretch*: float ## Shoulder to wrist: over `upper + fore` is out of reach.
+    stretch*: float  ## Shoulder to wrist: over `upper + fore` is out of reach.
 
-  Circle* = object ## Circle elbow can sit on for one grip and hand.
+  Circle* = object  ## Circle elbow can sit on for one grip and hand.
     ##   Everything `posed` works out that does not depend on swivel, kept
     ##     so seed can try every swivel round it for price of one.
-    shoulder*, wrist*: Vector ## Shoulder and wrist.
-    stretch*: float ## Shoulder to wrist.
-    axis*: Vector ## Unit, shoulder towards wrist; zero where two coincide.
-    along*, radius*: float ## Circle's centre along `axis`, and its radius.
-    down*, side*: Vector ## Its basis: lowest point's direction, and across.
+    shoulder*, wrist*: Vector  ## Shoulder and wrist.
+    stretch*: float  ## Shoulder to wrist.
+    axis*: Vector  ## Unit, shoulder towards wrist; zero where two coincide.
+    along*, radius*: float  ## Circle's centre along `axis`, and its radius.
+    down*, side*: Vector  ## Its basis: lowest point's direction, and across.
 
-  Swing* = object ## Joints read before twist, and what twist needs.
-    joints*: Joints ## Everything but `twist`, which is nought here.
-    upper*, fore*: Vector ## Unit: upper arm and forearm, in body's mirrored terms.
+  Swing* = object  ## Joints read before twist, and what twist needs.
+    joints*: Joints  ## Everything but `twist`, which is nought here.
+    upper*, fore*: Vector  ## Unit: upper arm and forearm, in body's mirrored terms.
 
 const
-  REST_DOWN = (0.0, 0.0, -1.0) ## Upper arm hanging: swing's rest.
-  REST_PLANE = (1.0, 0.0, 0.0) ## Its elbow plane's normal at rest: bending
+  REST_DOWN = (0.0, 0.0, -1.0)  ## Upper arm hanging: swing's rest.
+  REST_PLANE = (1.0, 0.0, 0.0)  ## Its elbow plane's normal at rest: bending
                                ## forward, with arm read as right arm.
   STRAIGHT = 5.0 * PI / 180.0  ## Under this bend elbow has no plane, so
                                ## no twist is read off it.
@@ -74,8 +74,11 @@ func circleOf*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector): Ci
     return
   let d = result.stretch
   result.axis = (result.wrist - shoulder_point) * (1.0 / d)
-  result.along = clamp((rig.upper * rig.upper - rig.fore * rig.fore + d * d) / (2.0 * d),
-                       -rig.upper, rig.upper)
+  result.along = clamp(
+    (rig.upper * rig.upper - rig.fore * rig.fore + d * d) / (2.0 * d),
+    -rig.upper,
+    rig.upper,
+  )
   result.radius = sqrt(max(0.0, rig.upper * rig.upper - result.along * result.along))
   var down = REST_DOWN - result.axis * dot(REST_DOWN, result.axis)
   if norm(down) < 1e-6:
@@ -85,8 +88,9 @@ func circleOf*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector): Ci
   result.down = down
   result.side = cross(result.axis, down)
 
-func posedOn*(rig: Rig; circle: Circle; grip_point: Vector;
-              cosine_swivel, sine_swivel: float): Chain =
+func posedOn*(
+  rig: Rig; circle: Circle; grip_point: Vector; cosine_swivel, sine_swivel: float
+): Chain =
   ## Lay arm with its elbow on circle at swivel whose cosine and
   ## sine these are.
   result.stretch = circle.stretch
@@ -123,8 +127,9 @@ func posed*(rig: Rig; shoulder_point, grip_point, hand_direction: Vector; swivel
   )
 
 
-func placed*(rig: Rig; stance: Stance; arm: Arm; upper_direction: Vector;
-             twist, bend, wrist, roll: float): ArmPose =
+func placed*(
+  rig: Rig; stance: Stance; arm: Arm; upper_direction: Vector; twist, bend, wrist, roll: float
+): ArmPose =
   ## Build arm from its joints: upper arm along unit `upper_direction` in
   ## body's mirrored terms, twisted, bent at elbow, hand off
   ## forearm by `wrist` in direction `roll` turns it to.
@@ -156,12 +161,12 @@ func placed*(rig: Rig; stance: Stance; arm: Arm; upper_direction: Vector;
     )
 
 
-func ownTerms*(axes: Axes; arm: Arm; point: Vector): Vector =
+func ownTerms*(axes: Axes, arm: Arm, point: Vector): Vector =
   ## World point in body's mirrored terms: right arm's, always.
   let body_point = toBody(axes, point)
   if arm == Arm.Left: mirrored(body_point) else: body_point
 
-func swing*(axes: Axes; arm: Arm; pose: ArmPose): Swing =
+func swing*(axes: Axes, arm: Arm, pose: ArmPose): Swing =
   ## Read every joint but twist off pose, in body's own terms.
   ##   Twist is dear one to read, and one each seed asks for last,
   ##     so it is read apart.
@@ -192,19 +197,19 @@ func twistOf*(arm_swing: Swing): float =
   else:
     0.0
 
-func joints*(axes: Axes; arm: Arm; pose: ArmPose): Joints =
+func joints*(axes: Axes, arm: Arm, pose: ArmPose): Joints =
   ## Read every joint off pose, in body's own terms, body's
   ## axes already worked out.
   let arm_swing = swing(axes, arm, pose)
   result = arm_swing.joints
   result.twist = twistOf(arm_swing)
 
-func joints*(stance: Stance; arm: Arm; pose: ArmPose): Joints =
+func joints*(stance: Stance, arm: Arm, pose: ArmPose): Joints =
   ## Read every joint off pose, in body's own terms.
   joints(axesOf(stance), arm, pose)
 
 
-func reading*(arm_joints: Joints; dof: Dof): float =
+func reading*(arm_joints: Joints, dof: Dof): float =
   ## One value of joints that range applies to.
   case dof
   of Dof.Extend: arm_joints.extend
@@ -213,12 +218,12 @@ func reading*(arm_joints: Joints; dof: Dof): float =
   of Dof.Bend: arm_joints.bend
   of Dof.Wrist: arm_joints.wrist
 
-func margins*(rig: Rig; arm_joints: Joints): array[Dof, float] =
+func margins*(rig: Rig, arm_joints: Joints): array[Dof, float] =
   ## Each freedom's distance inside its range, in its ease.
   for dof in Dof:
     result[dof] = margin(rig.range[dof], reading(arm_joints, dof))
 
-func strain*(rig: Rig; arm_joints: Joints): tuple[most: float, dof: Dof] =
+func strain*(rig: Rig, arm_joints: Joints): tuple[most: float, dof: Dof] =
   ## How far into last stretch before edge arm is: nought well
   ## inside, one at edge, more past it; and which joint that is.
   result = (0.0, Dof.Extend)
@@ -230,7 +235,7 @@ func strain*(rig: Rig; arm_joints: Joints): tuple[most: float, dof: Dof] =
       result.dof = dof
   result.most = max(0.0, 1.0 - least)
 
-func room*(rig: Rig; arm_joints: Joints): float =
+func room*(rig: Rig, arm_joints: Joints): float =
   ## How far nearest joint is from *either* end of its range, in that
   ## end's ease: freedom arm has to move any way at all.
   ##   Unlike `margin`, stop with no ease counts as end here --
@@ -250,7 +255,7 @@ func room*(rig: Rig; arm_joints: Joints): float =
     if dof != Dof.Wrist:
       result = min(result, (value - joint_range.lower) / unit_lower)
 
-func comfort*(rig: Rig; arm_joints: Joints): float =
+func comfort*(rig: Rig, arm_joints: Joints): float =
   ## Smooth cost of pose: how far every joint sits from its rest,
   ## squared and summed, with arm's lift counted too.
   ##   Minimised by solver among poses that hold, so that neighbouring

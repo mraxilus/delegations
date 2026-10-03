@@ -45,50 +45,50 @@ import std/math
 
 
 type
-  Part* {.pure.} = enum ## Three cylinders body is made of, floor upward.
+  Part* {.pure.} = enum  ## Three cylinders body is made of, floor upward.
     Torso, Neck, Head
 
-  Band* {.pure.} = enum ## Where pair of joined hands is carried.
+  Band* {.pure.} = enum  ## Where pair of joined hands is carried.
     ##   Named for body part, not for word of dance: which of
     ##     these is "low" is put on outside simulation.
-    Torso, ## About chest, below shoulder line.
+    Torso,  ## About chest, below shoulder line.
     Neck,  ## About neck, between shoulders and chin.
     Crown  ## Over head, clear of it.
 
-  Dof* {.pure.} = enum ## Freedoms of arm that have ends.
-    Extend, ## Upper arm behind frontal plane, in degrees of angle.
-    Across, ## Upper arm across body, past sagittal plane.
+  Dof* {.pure.} = enum  ## Freedoms of arm that have ends.
+    Extend,  ## Upper arm behind frontal plane, in degrees of angle.
+    Across,  ## Upper arm across body, past sagittal plane.
     Twist,  ## Upper arm turned about its own length: in is negative.
-    Bend,   ## Elbow, nought when straight.
-    Wrist   ## Hand off line of forearm, whichever way.
+    Bend,  ## Elbow, nought when straight.
+    Wrist  ## Hand off line of forearm, whichever way.
 
-  Collar* {.pure.} = enum ## Freedoms of shoulder girdle on its collarbone, at breastbone.
-    Fore, ## Girdle swung about trunk's up: protraction positive, retraction negative.
-    Up    ## Girdle swung about trunk's fore: elevation positive, depression negative.
+  Collar* {.pure.} = enum  ## Freedoms of shoulder girdle on its collarbone, at breastbone.
+    Fore,  ## Girdle swung about trunk's up: protraction positive, retraction negative.
+    Up  ## Girdle swung about trunk's fore: elevation positive, depression negative.
 
-  Range* = object ## How far one freedom goes, and where it starts to strain.
-    lower*, upper*: float     ## Ends, radians.  Past either is refused.
-    ease_lower*, ease_upper*: float ## How far short of each end strain begins;
+  Range* = object  ## How far one freedom goes, and where it starts to strain.
+    lower*, upper*: float  ## Ends, radians.  Past either is refused.
+    ease_lower*, ease_upper*: float  ## How far short of each end strain begins;
                         ## nought where end is stop that can be leant on.
-    neutral*: float     ## Where joint rests; solver prefers it.
+    neutral*: float  ## Where joint rests; solver prefers it.
 
-  Rig* = object ## Tape's numbers, and joints' ranges.
-    round*: array[Part, float] ## Circumferences, metres.
+  Rig* = object  ## Tape's numbers, and joints' ranges.
+    round*: array[Part, float]  ## Circumferences, metres.
     flat*: array[Part, float]  ## Depth over breadth of section: one is
                                ## round; chest is about three quarters.
-    top*: array[Part, float]   ## Height each part stops at.  Torso
+    top*: array[Part, float]  ## Height each part stops at.  Torso
                                ## stops under shoulder joints by slope
                                ## of shoulders, so raised arm clears it.
-    hip*: float                ## Where torso starts.
-    shoulder_out*: float        ## Each shoulder joint from axis, sideways.
-    shoulder_up*: float         ## And its height.
-    upper*, fore*, hand*: float ## Shoulder to elbow, elbow to wrist, wrist to grip.
-    limb*: float               ## Half of arm's thickness.
+    hip*: float  ## Where torso starts.
+    shoulder_out*: float  ## Each shoulder joint from axis, sideways.
+    shoulder_up*: float  ## And its height.
+    upper*, fore*, hand*: float  ## Shoulder to elbow, elbow to wrist, wrist to grip.
+    limb*: float  ## Half of arm's thickness.
     range*: array[Dof, Range]
-    waist*: Range              ## Thoracic rotation: shoulders yawing on hips.
-    collar*: array[Collar, Range] ## Girdle's two swings about where collarbone
+    waist*: Range  ## Thoracic rotation: shoulders yawing on hips.
+    collar*: array[Collar, Range]  ## Girdle's two swings about where collarbone
                                ## meets breastbone, each with its ease.
-    band*: array[Band, tuple[lower, upper: float]] ## Hand heights offered per band.
+    band*: array[Band, tuple[lower, upper: float]]  ## Hand heights offered per band.
 
 
 func toRadians(degrees: float): float = degrees * PI / 180.0
@@ -193,21 +193,21 @@ const HUMAN* = Rig(
   ##     assumed, as waist's is.
 
 
-func halfBreadth*(rig: Rig; part: Part): float =
+func halfBreadth*(rig: Rig, part: Part): float =
   ## Side to side, from axis: what tape's round makes ellipse of
   ## part's flatness (Ramanujan's perimeter, inverted).
   let flatness = rig.flat[part]
   rig.round[part] / (PI * (3.0 * (1.0 + flatness) -
                            sqrt((3.0 + flatness) * (1.0 + 3.0 * flatness))))
 
-func halfDepth*(rig: Rig; part: Part): float =
+func halfDepth*(rig: Rig, part: Part): float =
   ## Front to back, from axis.
   halfBreadth(rig, part) * rig.flat[part]
 
-func radius*(rig: Rig; part: Part): float = rig.round[part] / (2.0 * PI)
+func radius*(rig: Rig, part: Part): float = rig.round[part] / (2.0 * PI)
   ## Round as one number: radius of circle of that round.
 
-func bottom*(rig: Rig; part: Part): float =
+func bottom*(rig: Rig, part: Part): float =
   ## Height part starts at: hip, or top of part below.
   case part
   of Part.Torso: rig.hip
@@ -225,7 +225,7 @@ const SLACK* = toRadians(0.5)
   ## its limits rather than clamping them, so joint leant on its stop reads hair
   ## past it.
 
-func strainOf*(range: Range; value: float): float =
+func strainOf*(range: Range, value: float): float =
   ## How far into ease before either end `value` sits: nought outside every
   ## ease, one at end, more past it.  Stop with no ease costs nothing to lean
   ## on, and counts only once value is past it by more than `SLACK`, in units of
@@ -242,7 +242,7 @@ func strainOf*(range: Range; value: float): float =
     worst = max(worst, 1.0 + (range.lower - value) / span)
   max(0.0, worst)
 
-func margin*(range: Range; value: float): float =
+func margin*(range: Range, value: float): float =
   ## How far `value` is inside range, in units of ease at nearer
   ## end: one and more is comfortable, nought is edge, negative is past it.
   ##   End with no ease is stop that costs nothing to lean on, so
@@ -262,7 +262,7 @@ func margin*(range: Range; value: float): float =
           else: Inf
   min(margin_lower, margin_upper)
 
-func eased*(range: Range; value: float): float =
+func eased*(range: Range, value: float): float =
   ## Distance from joint's neutral, as fraction of way to
   ## farther end: smooth cost solver minimises.
   let span = max(range.upper - range.neutral, range.neutral - range.lower)

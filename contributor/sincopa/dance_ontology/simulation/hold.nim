@@ -11,18 +11,18 @@ import ./body
 
 
 type
-  Link* = object ## One connection: which two hands it joins.
+  Link* = object  ## One connection: which two hands it joins.
     ends*: array[2, Hand]
 
-  Stop* {.pure.} = enum ## What ends turn, one thing at once.
-    None,     ## Nothing: it holds.
-    Reach,    ## Hands drew apart with every joint still inside its range.
-    Twist,    ## Upper arm turned about its own length as far as it goes.
-    Elbow,    ## Elbow at its bend.
-    Wrist,    ## Hand as far off forearm as it goes.
-    Swing,    ## Upper arm too far behind or across body.
+  Stop* {.pure.} = enum  ## What ends turn, one thing at once.
+    None,  ## Nothing: it holds.
+    Reach,  ## Hands drew apart with every joint still inside its range.
+    Twist,  ## Upper arm turned about its own length as far as it goes.
+    Elbow,  ## Elbow at its bend.
+    Wrist,  ## Hand as far off forearm as it goes.
+    Swing,  ## Upper arm too far behind or across body.
     Through,  ## Arm against body.
-    Arms      ## Arm against arm.
+    Arms  ## Arm against arm.
 
 
 func says*(stop: Stop): string =

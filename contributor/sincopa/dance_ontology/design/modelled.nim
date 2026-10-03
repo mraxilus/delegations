@@ -39,18 +39,17 @@ const CROWN = Band.Crown
   ## and `ABOVE_ONE`/`ABOVE_OTHER` for singles, so no card asks about any other band.
 
 
-type Question* = object ## One card's question, as data, so threads may share it.
+type Question* = object  ## One card's question, as data, so threads may share it.
   key*: string
   links*: seq[Link]
   is_away*: bool
-  is_still*: bool    ## Still card: whether pose holds; else whether couple carry.
-  turns*: float   ## How far `who` turns, simulation's own sense: to still, or carried.
-  is_either_way*: bool   ## Still that fixes no way about: wound either way.
-  who*, head*: Body ## Who turns, and whose crown hands go over: one dancer.
+  is_still*: bool  ## Still card: whether pose holds; else whether couple carry.
+  turns*: float  ## How far `who` turns, simulation's own sense: to still, or carried.
+  is_either_way*: bool  ## Still that fixes no way about: wound either way.
+  who*, head*: Body  ## Who turns, and whose crown hands go over: one dancer.
 
 
-func moving(key: string; links: seq[Link]; is_away: bool; manner: Manner;
-            amount: float): Question =
+func moving(key: string, links: seq[Link], is_away: bool, manner: Manner, amount: float): Question =
   ## Whether this hold carries this far under this manner, page turning manner's own
   ## dancer `amount` turns clockwise (`asks.turnerOf`).
   ##   Couple stand for turn they are about to take, so question goes straight to
@@ -94,7 +93,7 @@ func questions*(): seq[Question] =
     let links = linksOf(single.holds)
     for manner in Manner:
       let tag = MANNERS[manner].tag
-      for quarter in 0 ..< QUARTERS_ROUND:
+      for quarter in 0..<QUARTERS_ROUND:
         result.add moving(
           &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}",
           links,
@@ -102,8 +101,13 @@ func questions*(): seq[Question] =
           manner,
           float(quarter + 1) / float(QUARTERS_ROUND),
         )
-      result.add moving(&"rd_{tag}_{connection}", links, isRestAway(restOf(single.holds)), manner,
-                        1.0)
+      result.add moving(
+        &"rd_{tag}_{connection}",
+        links,
+        isRestAway(restOf(single.holds)),
+        manner,
+        1.0,
+      )
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
   #   These are moving cards, so they are asked whether couple carry along them
@@ -119,7 +123,7 @@ func questions*(): seq[Question] =
       # Page walks chain by manner's own dancer, `windSense` half turns per step
       # (`parts.chainTurnParts`).
       result.add moving(&"{key}c_{tag}", links, is_away, manner, sense * STEPS[^1])
-      for i in 0 ..< STEPS.len - 1:
+      for i in 0..<STEPS.len - 1:
         # Edge is walked entire, so what it asks of couple is its *furthest*
         # wound end, kept with its own sign, and not where it happens to
         # finish.  Chain runs from swan in to frame and out to other swan, so
@@ -132,7 +136,7 @@ func questions*(): seq[Question] =
         result.add moving(&"{key}w_{tag}_{i}", links, is_away, manner, sense * far)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
-var TOLD: seq[bool] ## Each worker writes its own questions' answers here.
+var TOLD: seq[bool]  ## Each worker writes its own questions' answers here.
 
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Answer every `every`th question from `first` on: worlds are engine's own
@@ -199,7 +203,7 @@ proc answers(): OrderedTable[string, bool] =
   TOLD = newSeq[bool](asked.len)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for worker in 0 ..< cores:
+  for worker in 0..<cores:
     createThread(workers[worker], work, (worker, cores))
   joinThreads(workers)
   result = initOrderedTable[string, bool]()
