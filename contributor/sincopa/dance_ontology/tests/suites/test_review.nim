@@ -9,12 +9,10 @@ import std/[options, os, strutils, unittest]
 
 import ../../design/plain
 import ../../src/dance_ontology
-import ../../tools/review
-import ../../tools/title
+import ../../tools/[review, title]
 
 
-const OUT = "build/review"
-  ## Where page and pictures land; ignored by git, created here.
+const OUT = "build/review"  ## Where page and pictures land; ignored by git, created here.
 
 
 func importsOf(source: string): seq[string] =
@@ -39,10 +37,11 @@ func suitesOf(stub: string): seq[string] =
         open = statement.find("/[", at)
         shut = statement.find(']', at)
       if statement[at - 1] != '.' and open > at and shut > open and
-          statement[at + 2 ..< open].allCharsInSet(IdentChars):
-        for name in statement[open + 2 ..< shut].split(','):
-          result.add "tests" / statement[at + 2 ..< open] / name.strip & ".nim"
+          statement[at + 2..<open].allCharsInSet(IdentChars):
+        for name in statement[open + 2..<shut].split(','):
+          result.add "tests" / statement[at + 2..<open] / name.strip & ".nim"
       at = statement.find("./", at + 2)
+
 
 
 suite "Internal: The review page":
@@ -62,6 +61,7 @@ suite "Internal: The review page":
     check "<title>" & MOCKUP & " — " in page
     check "<title>" & WORK & " — " notin page
 
+
   test "the page counts the laws of every suite a stub runs":
     # Laws live in stubs and in suites stubs import, so count is taken from stubs
     # themselves, rather than from where page's count looks.
@@ -74,6 +74,7 @@ suite "Internal: The review page":
     check laws > 0
     check $laws & " tests run over all " in renderReview()
 
+
   test "the page and every picture are written and read back":
     createDir(OUT)
     writeReview(OUT)
@@ -82,6 +83,7 @@ suite "Internal: The review page":
       let path = OUT / DIRECTORY_FRAMES / (target.slug & ".svg")
       check fileExists(path)
       check readFile(path) == renderFrame(target)  # one picture per frame
+
 
   test "and there are no pictures of anything else":
     # `writeReview` clears directory first, so frame that is renamed cannot leave its
@@ -98,6 +100,7 @@ suite "Internal: The review page":
       check name in want
     check found.len == want.len
 
+
   test "the page shows every frame and every move":
     # Name is written in hands it names, so it is several elements and not one.  Read
     # past ink for words, and read gallery's own card rather than whole page: every
@@ -106,9 +109,9 @@ suite "Internal: The review page":
     let page = renderReview().multiReplace(("</span>", ""))
     var named: seq[string] = @[]
     for chunk in page.split("<div class=\"name\">")[1 .. ^1]:
-      var said = chunk[0 ..< chunk.find("</div>")]
+      var said = chunk[0..<chunk.find("</div>")]
       while said.contains("<span"):
-        said = said[0 ..< said.find("<span")] & said[said.find('>',
+        said = said[0..<said.find("<span")] & said[said.find('>',
           said.find("<span")) + 1 .. ^1]
       named.add said
     check named.len == FRAMES.len
@@ -122,6 +125,7 @@ suite "Internal: The review page":
     # Matrix carries one cell per move and one per compound.
     check page.count("<td class=\"on") == cells
 
+
   test "the pictures fix no colour of their own":
     # They are shown inside two pages that theme them and as standalone files that cannot
     # be themed, so every ink is custom property with fallback and no ink is written down
@@ -130,6 +134,7 @@ suite "Internal: The review page":
       let picture = renderFrame(target)
       check picture.count('#') == picture.count("var(--")
       check picture.count('#') > 0
+
 
   test "a frame's file name survives its description":
     check fromKey("--.").get.slug == "free"

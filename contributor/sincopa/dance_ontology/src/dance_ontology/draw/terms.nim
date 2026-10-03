@@ -22,43 +22,42 @@ import std/options
 
 
 type
-  Dancer* {.pure.} = enum ## Name one of couple.
+  Dancer* {.pure.} = enum  ## Name one of couple.
     Lead, Follow
-  Arm* {.pure.} = enum ## Name side of body, and so one hand of dancer.
-    Left = "L", Right = "R" ## Letter is markup's own key: `$` gives it.
-  Level* {.pure.} = enum ## Name height connection is held at.
+  Arm* {.pure.} = enum  ## Name side of body, and so one hand of dancer.
+    Left = "L", Right = "R"  ## Letter is markup's own key: `$` gives it.
+  Level* {.pure.} = enum  ## Name height connection is held at.
     ## Every level is height (rule 36); which arm passes over which is
     ##   wrap's business, not level's (rule 38).
-    Low,               ## Below shoulder, about torso.
-    High,              ## Above shoulder, about neck.
-    Above              ## Above head.
-  Way* {.pure.} = enum ## Name what held arm does at its level.
-    Lock, ## Arm bent behind back (low), or bent to shoulder of
+    Low,  ## Below shoulder, about torso.
+    High,  ## Above shoulder, about neck.
+    Above  ## Above head.
+  Way* {.pure.} = enum  ## Name what held arm does at its level.
+    Lock,  ## Arm bent behind back (low), or bent to shoulder of
           ## same arm (high) -- round back either way (rule 37).
     Wrap  ## Arm crossed round front of body, under (low) or
           ## over (high) dancer's other arm (rule 38).
-  Slot* {.pure.} = enum ## Name one of three spots hand can settle on side.
-    Front,             ## Slightly towards dancer's own front.
-    Default,           ## Where arm hangs.
-    Back               ## Slightly towards dancer's own back.
-  Whose* {.pure.} = enum ## Say which dancer's side settling hand lands on.
+  Slot* {.pure.} = enum  ## Name one of three spots hand can settle on side.
+    Front,  ## Slightly towards dancer's own front.
+    Default,  ## Where arm hangs.
+    Back  ## Slightly towards dancer's own back.
+  Whose* {.pure.} = enum  ## Say which dancer's side settling hand lands on.
     Own, Other
-  Sends* {.pure.} = enum ## Say which way round body hold sends its line.
+  Sends* {.pure.} = enum  ## Say which way round body hold sends its line.
     FrontWay, BackWay
-  Settle* = tuple ## Hold what one lock or wrap does to its hand and its line.
-    whose: Whose       ## Whose side hand settles on.
-    slot: Slot         ## How far round that side it sits.
-    sends: Sends       ## Which way round body line goes.
+  Settle* = tuple  ## Hold what one lock or wrap does to its hand and its line.
+    whose: Whose  ## Whose side hand settles on.
+    slot: Slot  ## How far round that side it sits.
+    sends: Sends  ## Which way round body line goes.
 
   Holds* = array[Arm, Option[Arm]]
     ## What each lead hand holds: follow's own side, where one is held.
-  Levels* = array[Arm, Option[Level]]
-    ## Level of each held connection, where one has been said.
+  Levels* = array[Arm, Option[Level]]  ## Level of each held connection, where one has been said.
   Ways* = array[Arm, Option[Way]]
     ## Whether each connection locks or wraps, where that has been said.
 
 
-func settleOf*(level: Option[Level]; way: Option[Way]): Option[Settle] =
+func settleOf*(level: Option[Level], way: Option[Way]): Option[Settle] =
   ## Get what this hold does to its hand and its line, where rules 4 to 6
   ## say anything.
   ##   Rules 4 and 5 name *other* hand; rule 6 names current one.
@@ -72,17 +71,17 @@ func settleOf*(level: Option[Level]; way: Option[Way]): Option[Settle] =
     of Level.Low:
       case way.get
       of Way.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
-      of Way.Lock: some (Whose.Other, Slot.Back, Sends.BackWay)    # rule 5
+      of Way.Lock: some (Whose.Other, Slot.Back, Sends.BackWay)  # rule 5
     of Level.High:
       case way.get
       of Way.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
-      of Way.Lock: some (Whose.Own, Slot.Back, Sends.BackWay)      # rule 6
+      of Way.Lock: some (Whose.Own, Slot.Back, Sends.BackWay)  # rule 6
     of Level.Above:
-      none(Settle)                                                 # rule 8
+      none(Settle)  # rule 8
   settled
 
 
-const WRAP_MIN* = 170 ## Least degrees line must hug body for lock or
+const WRAP_MIN* = 170  ## Least degrees line must hug body for lock or
                       ## wrap to be one at all.
   ##   Rule 7 asks for `"no less than just under 1/2 of the circumference"`.
   ##   Arcs this geometry produces are quantised at 0, 51, 90, 141 and

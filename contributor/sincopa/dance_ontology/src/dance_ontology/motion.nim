@@ -37,16 +37,16 @@
 #[ Phases ]#
 
 type
-  Motion* {.pure.} = enum ## Name what drawing is doing at one instant.
-    Still,    ## Nothing is moving; drawing shows frame couple hold.
+  Motion* {.pure.} = enum  ## Name what drawing is doing at one instant.
+    Still,  ## Nothing is moving; drawing shows frame couple hold.
     Leaving,  ## Move is chosen, and drawing is telling whole of it.
     Arriving  ## Frame reached is held, and its own ways are growing.
 
-  Tempo* = object ## Say when drawing moves, and for how long.
+  Tempo* = object  ## Say when drawing moves, and for how long.
     pass_at*: int  ## When mark leaves frame held, from move being asked for.
-    pass*: int     ## How long mark takes to reach frame chosen.
-    settle*: int   ## How long after that before drawing may be replaced.
-    grown*: int    ## How long after *that* before drawing has finished moving.
+    pass*: int  ## How long mark takes to reach frame chosen.
+    settle*: int  ## How long after that before drawing may be replaced.
+    grown*: int  ## How long after *that* before drawing has finished moving.
 
 
 func phase*(motion: Motion): string =

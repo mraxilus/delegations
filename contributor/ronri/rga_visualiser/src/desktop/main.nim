@@ -102,12 +102,12 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, unicode]
+import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils]
 
 import pga
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message,
-  orrery, picking, scene, selection, storyboard, tessellate, timings, wording,
+  orrery, picking, scene, selection, shown, storyboard, tessellate, timings, wording,
 ]
 import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sdl3]
 
@@ -355,7 +355,7 @@ type
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
     is_faces_driven: bool ## Whether to ask each role's face for every codepoint build writes.
-      ## Headless run then shows no text drawn falls to `.notdef`; see `textsShown`.
+      ## Headless run then shows no text drawn falls to `.notdef`; see `shown`.
     path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -1706,45 +1706,6 @@ proc driveSky(
   sdl3.pushEvent(addr event)
 
 
-func textsShown(): seq[string] =
-  ## Gather every text build itself writes on window, for `--drive-faces`.
-  ##   Read from where each is composed -- catalogue, help, notation, basis names, wheel and
-  ##   units -- rather than listed here, so row added there is asked about untouched.
-  ##   Names reader types are reader's own, and only printable ASCII among them is promised;
-  ##   see `codepointsOf`.
-  for key in Wording: result.add $wordingText(key)
-  for path in HelpPath: result.add [titleOf(path), descriptionOf(path)]
-  for entry in HELP_ENTRIES: result.add [entry.action, entry.outcome]
-  for operation in Operation:
-    result.add [
-      notationSymbolic(operation), notationNamed(operation),
-      notationSubstituted(operation, "a", "b"),
-    ]
-  for basis in Basis: result.add LUT_NAME_BY_BASIS[basis]
-  for choice in DragChoice: result.add labelOf(choice)
-  var units: array[64, char]
-  let text_units = buildChars(units):
-    appendDegrees(units, cursor, 1.0)
-    appendSpeedLight(units, cursor, 2.0)
-    appendRuler(units, cursor, 1.0)
-  result.add $text_units
-
-
-func codepointsOf(texts: openArray[string]): seq[int] =
-  ## Gather every codepoint `texts` hold, with all of printable ASCII, sorted and once each.
-  ##   Printable ASCII is in whatever texts hold, since reader names objects in it.
-  for codepoint in 0x20 .. 0x7E: result.add codepoint
-  for text in texts:
-    for rune in text.runes: result.add int(rune)
-  result.sort
-  var kept = 0
-  for codepoint in result:
-    if kept == 0 or result[kept - 1] != codepoint:
-      result[kept] = codepoint
-      inc kept
-  result.setLen kept
-
-
 proc verdictDriven(
   options: Options; scene: Scene; camera, camera_opened, camera_before_slide: Camera;
   interaction: Interaction; panel: Panel; count_settled: int;
@@ -1826,7 +1787,7 @@ proc verdictDriven(
   #   that role's, never from `.notdef` (Article X.8). Title role sets panel headings alone,
   #   and is asked for those; other three are asked for every text build writes.
   if options.is_faces_driven:
-    let codepoints_shown = codepointsOf(textsShown())
+    let codepoints_shown = codepointsShown()
     for role in FaceRole:
       let codepoints =
         if role == FaceRole.Title:

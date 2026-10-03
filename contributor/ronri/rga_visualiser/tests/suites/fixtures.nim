@@ -12,8 +12,8 @@ import std/[
 import ../../src/rga_visualiser/projections
 import ../../src/rga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, marker, message, motors,
-  neighbourhood, objects, orrery, picking, scene, selection, starfield, storyboard, tessellate,
-  wording,
+  neighbourhood, objects, orrery, picking, scene, selection, shown, starfield, storyboard,
+  tessellate, wording,
 ]
 # Arena, PNG encoder and GIF encoder are desktop-only: each binds C entry.
 #   point JS backend has none of. Their own suites are guarded to match, below.
@@ -26,8 +26,8 @@ when not defined(js):
 export
   math, options, os, random, sets, strformat, strutils, tables, unicode, unittest,
   projections, boundary, camera, format, framing, help, history, interaction, marker, message,
-  motors, neighbourhood, objects, orrery, picking, scene, selection, starfield, storyboard,
-  tessellate, wording
+  motors, neighbourhood, objects, orrery, picking, scene, selection, shown, starfield,
+  storyboard, tessellate, wording
 when not defined(js):
   export endians, arena, gif, image
 

@@ -12,6 +12,7 @@ import std/[options, sequtils, strutils, unittest]
 import ../../src/dance_ontology
 
 
+
 suite "Internal: The picture":
   test "the lead's hands are squares and the follow's are circles":
     # Which hand is whose was said only by captions over and under
@@ -26,6 +27,7 @@ suite "Internal: The picture":
       check picture.count("<rect") == 2
       check picture.count("<circle") == 2
 
+
   test "a free hand fades and a held one does not":
     # Fill cannot say this any more, and should not: fill says *level*
     # hand is held at -- solid low, dotted high, hatched above -- and frame
@@ -38,6 +40,7 @@ suite "Internal: The picture":
       check renderFrame(target).count("opacity=\"0.5\"") ==
         4 - 2 * target.countHolds
 
+
   test "every frame is drawn in the one space, whatever it holds":
     # Coordinate has to mean same place in every frame, because views
     # put frames side by side and read one against another.
@@ -47,14 +50,16 @@ suite "Internal: The picture":
         picture = renderFrame(target)
         start = picture.find("viewBox=\"")
       check start >= 0
-      let box = picture[start .. picture.find('"', start + 9)]
+      let box = picture[start..picture.find('"', start + 9)]
       if box notin boxes:
         boxes.add box
     check boxes.len == 1
 
+
   test "a picture names the frame it draws, for a reader who cannot see it":
     for target in FRAMES:
       check renderFrame(target).contains("<title>" & target.describe & "</title>")
+
 
   test "turned back to front, the follow's hands change sides":
     # Picture's half of `crossedSite`.  At half turn hand that was
@@ -77,6 +82,7 @@ suite "Internal: The picture":
       let is_undecided = target.countHolds == 2 and target.over.isNone
       check (renderFrame(target, 1) != renderFrame(target, -1)) == is_undecided
 
+
   test "a connection is drawn in its two hands' own colours":
     # So line itself says which named hands are joined -- `Left to right`
     # runs blue into orange along its whole length -- instead of leaving it to
@@ -91,7 +97,7 @@ suite "Internal: The picture":
         if not piece.contains("stroke-width=\"3.4\""):
           continue
         let at = piece.find("stroke=\"") + 8
-        inks.add piece[at ..< piece.find('"', at)]
+        inks.add piece[at..<piece.find('"', at)]
       # Two halves to every connection, and no half of any other colour.
       check inks.len == 2 * target.countHolds
       check inks.countIt(it.contains("-deep")) == target.countHolds
@@ -104,6 +110,7 @@ suite "Internal: The picture":
                 else: "--right,"
         check inks.anyIt(it.contains(near))
         check inks.anyIt(it.contains(far))
+
 
   test "both dancers say which way they face, in every picture":
     # This used to be mark that appeared only when follow had turned, on

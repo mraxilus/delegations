@@ -460,9 +460,13 @@ the page's own custom properties. A selector that styles something inside a head
 styling the heading. A source that names Commit Mono enables `calt`, where its functional
 ligatures live.
 
-- Cost: declarations are read and expressions are not. So a stack assembled through `&` is
-  unseen, and so is a heading styled through a class alone. The desktop atlas is outside the
-  ligature rule by X.8 itself, because Dear ImGui shapes no text, and it declares no CSS.
+- **Nim literals that `&` carries across a line end are joined first.** A stack whose first
+  family opens the next literal is then read whole. The joined text lands on the first line,
+  and each line that it consumed is left empty, so every other line keeps its number.
+- Cost: declarations are read and expressions are not. So a stack built from a variable is
+  unseen, and so is a heading styled through a class alone. A finding inside a joined chain
+  names the line where the chain opens. The desktop atlas is outside the ligature rule by X.8
+  itself, because Dear ImGui shapes no text, and it declares no CSS.
 - Verified by `suites/test_faces.nim`, each rule by line, and the label beside a heading among them.
 
 ## Branch scope

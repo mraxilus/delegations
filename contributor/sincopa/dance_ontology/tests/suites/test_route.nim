@@ -14,16 +14,16 @@
 
 import std/[math, sequtils, unittest]
 
-import ../../src/dance_ontology/draw/geometry
-import ../../src/dance_ontology/draw/route
+import ../../src/dance_ontology/draw/[geometry, route]
+import ../fixtures
 
 
 const
-  STEP = 2.0    ## Spacing of sampled line, close to what reach uses.
-  POINT_COUNT = 33        ## Points in it, which is `ROUTE_COUNT`.
+  STEP = 2.0  ## Spacing of sampled line, close to what reach uses.
+  POINT_COUNT = 33  ## Points in it, which is `ROUTE_COUNT`.
 
 let
-  LINE_SAMPLED = (0 ..< POINT_COUNT).mapIt((x: float(it) * STEP, y: 0.0))
+  LINE_SAMPLED = (0..<POINT_COUNT).mapIt((x: float(it) * STEP, y: 0.0))
     ## Straight sampled line standing in for reach: laws below are about
     ## where gap falls along line, and shape of line does not enter them.
   REACH_SQUARE = @[(x: 0.0, y: -20.0), (x: 0.0, y: 20.0)]
@@ -36,9 +36,9 @@ proc crossingAt(where: float): seq[Point] =
 
 
 const
-  WAVE_HEIGHT = 8.0        ## How far waved reach swings either side of `LINE_SAMPLED`.
+  WAVE_HEIGHT = 8.0  ## How far waved reach swings either side of `LINE_SAMPLED`.
   SPAN = float(POINT_COUNT - 1) * STEP  ## Length `LINE_SAMPLED` runs over.
-  ON_ZEROS = 4 * STEP ## Wavelength whose zeros land on sampled points.
+  ON_ZEROS = 4 * STEP  ## Wavelength whose zeros land on sampled points.
     ## Cosine of this wavelength is nought at every second sample, so each
     ##   crossing sits on vertex and is met by both segments sharing it --
     ##   which is duplicate fold exists to drop.
@@ -49,8 +49,10 @@ const
 
 func crossedBy(wavelength: float): seq[Point] =
   ## Get reach waving across `LINE_SAMPLED`, crossing at every zero of its cosine.
-  (0 ..< POINT_COUNT).mapIt((x: float(it) * STEP,
-                   y: WAVE_HEIGHT * cos(float(it) * STEP * 2 * PI / wavelength)))
+  (0..<POINT_COUNT).mapIt(
+    (x: float(it) * STEP,
+                     y: WAVE_HEIGHT * cos(float(it) * STEP * 2 * PI / wavelength)),
+  )
 
 func zerosOf(wavelength: float): int =
   ## Count places cosine of this wavelength crosses nought over sampled span.
@@ -62,20 +64,21 @@ func zerosOf(wavelength: float): int =
     at += wavelength / 2
 
 
-suite "Internal: Reach breaks":
 
+suite "Internal: Reach breaks":
   test "a break never eats either end of a reach":
-    for i in 0 ..< POINT_COUNT:
+    for i in 0..<POINT_COUNT:
       let runs = cutGapsAt(LINE_SAMPLED, crossingAt(float(i) * STEP), @[LINE_SAMPLED[i]])
       check runs.len > 0
       check runs[0][0] == LINE_SAMPLED[0]
       check runs[^1][^1] == LINE_SAMPLED[^1]
 
+
   test "a break falls where the lines cross":
     # Crossing nearer than half break to either hand cannot be covered
     # and still leave reach whole; every other one is covered.
     let span = float(POINT_COUNT - 1) * STEP
-    for i in 0 ..< POINT_COUNT:
+    for i in 0..<POINT_COUNT:
       let at = float(i) * STEP
       if at < BREAK / 2 or at > span - BREAK / 2:
         continue
@@ -87,7 +90,8 @@ suite "Internal: Reach breaks":
       # Reach loses exactly its gap, no more and no less.  Bare test that
       # crossing sits in no run passed while gap was cut to whole samples
       # and so took more than it meant to.
-      check abs(drawn - (span - (gap.shuts - gap.opens))) < 1e-6
+      check drawn =~ span - (gap.shuts - gap.opens)
+
 
   test "a reach that crosses nothing is not broken":
     # Break says this line passes under that one.  Where there is no
@@ -95,6 +99,7 @@ suite "Internal: Reach breaks":
     # something no picture means.
     let beside = LINE_SAMPLED.mapIt((x: it.x, y: 20.0))
     check cutGap(LINE_SAMPLED, beside) == @[LINE_SAMPLED]
+
 
   test "a reach that is crossed is broken where it is crossed":
     let
@@ -104,18 +109,20 @@ suite "Internal: Reach breaks":
     check runs[0][0] == LINE_SAMPLED[0]
     check runs[^1][^1] == LINE_SAMPLED[^1]
 
+
   test "a break sits on its crossing, not beside it":
     # Break says this line passes under that one, and it says it where
     # they cross.  Gap pushed off to one side leaves crossing drawn whole
     # and puts hole in line where nothing happens.
     let span = float(POINT_COUNT - 1) * STEP
-    for i in 0 ..< POINT_COUNT:
+    for i in 0..<POINT_COUNT:
       let
         at = float(i) * STEP
         gap = gapFor(at, span, hidesAt(LINE_SAMPLED, crossingAt(at), LINE_SAMPLED[i]))
       if gap.shuts <= gap.opens:
         continue
-      check abs((gap.opens + gap.shuts) / 2 - at) < 1e-9
+      check (gap.opens + gap.shuts) / 2 =~ at
+
 
   test "an uncrossed reach is drawn whole":
     let runs = cutGapsAt(LINE_SAMPLED, REACH_SQUARE, @[])
@@ -123,8 +130,8 @@ suite "Internal: Reach breaks":
     check runs[0] == LINE_SAMPLED
 
 
-suite "Internal: Crossings found":
 
+suite "Internal: Crossings found":
   test "crossings close together are still separate crossings":
     # Crossing is where two reaches swap which side of one another they lie,
     # so how many there are is how many times that happens -- and every one
@@ -136,6 +143,7 @@ suite "Internal: Crossings found":
       let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
       check met.len == zerosOf(wavelength)  # rule 14
 
+
   test "one crossing met twice at one spot is reported once":
     # Vertex of one reach sitting exactly on other is met by both segments
     # that share it, at same point twice.  That, and only that, is duplicate
@@ -144,12 +152,13 @@ suite "Internal: Crossings found":
     let met = crossingsOf(LINE_SAMPLED, crossedBy(ON_ZEROS))
     check met.len == zerosOf(ON_ZEROS)  # rule 14
 
+
   test "crossings come out in order along first reach":
     # Which arm dives is alternated from first crossing to last (rule 27),
     # so order is load-bearing and not incidental.
     for wavelength in WAVELENGTHS:
       let met = crossingsOf(LINE_SAMPLED, crossedBy(wavelength))
-      for i in 1 ..< met.len:
+      for i in 1..<met.len:
         check met[i - 1].x < met[i].x  # rule 27
 
 
@@ -167,12 +176,15 @@ const
     ##     notices, since ordinary call at run time never touches that path.
 
 
+
 suite "Internal: Drawn run":
   test "length of run is sum of its steps, taken at compile time":
-    check abs(WALKED - 7.0) < 1e-9
+    check WALKED =~ 7.0
+
 
   test "length of run is same taken at run time":
-    check abs(polylineLength(SQUARE) - WALKED) < 1e-9
+    check polylineLength(SQUARE) =~ WALKED
+
 
   test "run of one point, or none, is no length at all":
     check polylineLength(@[]) == 0.0

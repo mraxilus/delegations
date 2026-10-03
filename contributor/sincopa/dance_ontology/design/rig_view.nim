@@ -46,12 +46,12 @@ func contextOf(id: cstring): JsObject {.importjs:
   ## Get drawing context of canvas named `id`.
 func canvasOf(id: cstring): JsObject {.importjs: "document.getElementById(#)".}
 func contextOf(canvas: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
-func toFixed(number: float; places: int): cstring {.importjs: "(#).toFixed(#)".}
+func toFixed(number: float, places: int): cstring {.importjs: "(#).toFixed(#)".}
 func toFloat(item: JsObject): float {.importjs: "(#)".}
 func count(list: JsObject): int {.importjs: "(#).length".}
 func text(item: JsObject): cstring {.importjs: "(#)".}
 func truth(item: JsObject): bool {.importjs: "(#)".}
-func has(record: JsObject; name: cstring): bool {.importjs: "((#)[#] !== undefined)".}
+func has(record: JsObject, name: cstring): bool {.importjs: "((#)[#] !== undefined)".}
 func joined(a, b: JsObject): JsObject {.importjs: "(#).concat(#)".}
 func entriesOn(event: Event): cstring {.importjs:
   "(#).currentTarget.getAttribute('data-entries')".}
@@ -72,13 +72,13 @@ proc inkOf(side, who: int): cstring =
   styleOf(names[side][who])
 
 const
-  NEAR = 5.0 * PI / 180.0   ## Within this of either end, joint reads as spent.
+  NEAR = 5.0 * PI / 180.0  ## Within this of either end, joint reads as spent.
   DOFS = [cstring"extend", cstring"across", cstring"twist",
           cstring"bend", cstring"wrist"]
   SIDES = [cstring"left", cstring"right"]
   WHOSE = [cstring"lead", cstring"follow"]
-  AZIMUTH_START = 0.6      ## Camera round world's up at start, radians.
-  ELEVATION_START = 0.18     ## And tilt above floor.
+  AZIMUTH_START = 0.6  ## Camera round world's up at start, radians.
+  ELEVATION_START = 0.18  ## And tilt above floor.
 
 # Mutable: viewer's state, which every handler reads and changes.  Browser calls
 # handlers with nothing of their own, so state lives here.
@@ -87,9 +87,9 @@ var
   ELEVATION = ELEVATION_START
   ZOOM = 1.0
   FRAMING_SHOWN: Framing = ([0.0, 0.0, 0.95], 1.2)
-  ENTRIES_ALL: JsObject ## Every still, then every sweep.
-  PICK = 0      ## Which entry.
-  MOMENT_SHOWN = 0     ## Which moment of it.
+  ENTRIES_ALL: JsObject  ## Every still, then every sweep.
+  PICK = 0  ## Which entry.
+  MOMENT_SHOWN = 0  ## Which moment of it.
   IS_PLAYING = true
   IS_DRAGGING = false
   X_PREV, Y_PREV = 0.0
@@ -110,17 +110,18 @@ proc ends(recording: JsObject; i, at: int): tuple[a, z: Spot] =
   let
     row = recording.points[at]
     k = i * 6
-  ((x: toFloat(row[k]), y: toFloat(row[k + 1]), z: toFloat(row[k + 2])),
-   (x: toFloat(row[k + 3]), y: toFloat(row[k + 4]), z: toFloat(row[k + 5])))
+  ((x: row[k].toFloat, y: row[k + 1].toFloat, z: row[k + 2].toFloat),
+   (x: row[k + 3].toFloat, y: row[k + 4].toFloat, z: row[k + 5].toFloat))
 
 
-proc paintOn(canvas: JsObject; recording: JsObject; at: int; azimuth, elevation, zoom: float;
-             framing: Framing) =
+proc paintOn(
+  canvas: JsObject; recording: JsObject; at: int; azimuth, elevation, zoom: float; framing: Framing
+) =
   ## Draw one moment of one entry on one canvas, seen from one place.
   let
     context = contextOf(canvas)
-    width = toFloat(canvas.width)
-    height = toFloat(canvas.height)
+    width = canvas.width.toFloat
+    height = canvas.height.toFloat
     scale = min(width, height) / (2.2 * framing.reach) * zoom
     centre_x = width / 2.0
     centre_y = height / 2.0
@@ -134,7 +135,7 @@ proc paintOn(canvas: JsObject; recording: JsObject; at: int; azimuth, elevation,
   let span = 1.5
   var grid_offset = -span
   while grid_offset <= span + 0.001:
-    for way in 0 .. 1:
+    for way in 0..1:
       let
         a: Spot = (if way == 0: (framing.middle[0] + grid_offset, framing.middle[1] - span, 0.0)
                    else: (framing.middle[0] - span, framing.middle[1] + grid_offset, 0.0))
@@ -154,11 +155,11 @@ proc paintOn(canvas: JsObject; recording: JsObject; at: int; azimuth, elevation,
   # image is difference of two projected points.
   let look = recording.faces[at]
   var facing: array[2, Seen]
-  for who in 0 .. 1:
+  for who in 0..1:
     let
       k = who * 4
-      here: Spot = (toFloat(look[k]), toFloat(look[k + 1]), 0.0)
-      ahead: Spot = (here.x + toFloat(look[k + 2]), here.y + toFloat(look[k + 3]), 0.0)
+      here: Spot = (look[k].toFloat, look[k + 1].toFloat, 0.0)
+      ahead: Spot = (here.x + look[k + 2].toFloat, here.y + look[k + 3].toFloat, 0.0)
       seen_here = seen(here, azimuth, elevation, framing)
       seen_ahead = seen(ahead, azimuth, elevation, framing)
     facing[who] = (
@@ -172,25 +173,25 @@ proc paintOn(canvas: JsObject; recording: JsObject; at: int; azimuth, elevation,
 
   # Capsules, furthest first, in order `drawn` gives.
   var capsules: seq[tuple[a, z: Spot]]
-  for i in 0 ..< count(recording.radii):
+  for i in 0..<count(recording.radii):
     capsules.add ends(recording, i, at)
   context.lineCap = cstring("round").toJs
   for piece in drawOrder(capsules, azimuth, elevation, framing):
     let
       i = piece.capsule
       tag = recording.tag[i]
-      mark = int(toFloat(tag[2]))
+      mark = int(tag[2].toFloat)
       (a, z) = (piece.a, piece.z)
       seen_a = seen(a, azimuth, elevation, framing)
       seen_z = seen(z, azimuth, elevation, framing)
-      radius = toFloat(recording.radii[i])
+      radius = recording.radii[i].toFloat
     var ink: JsObject
     if mark == 0 or mark == 4:
       # Trunk and girdle: light across from back edge to front edge, along
       # facing's image on screen, through piece's middle.
       let
         axis: Seen = (x: seen_z.x - seen_a.x, y: seen_z.y - seen_a.y, depth: 0.0)
-        fore = lightAcross(facing[int(toFloat(tag[0]))], axis)
+        fore = lightAcross(facing[int(tag[0].toFloat)], axis)
         across = sqrt(fore.x * fore.x + fore.y * fore.y)
         middle_x = centre_x + (seen_a.x + seen_z.x) / 2.0 * scale
         middle_y = centre_y + (seen_a.y + seen_z.y) / 2.0 * scale
@@ -209,7 +210,7 @@ proc paintOn(canvas: JsObject; recording: JsObject; at: int; azimuth, elevation,
           discard gradient.addColorStop(stop, cstring(mixColours(shade, lit, litAt(fore, offset))))
         ink = gradient
     else:
-      ink = inkOf(int(toFloat(tag[1])), int(toFloat(tag[0]))).toJs
+      ink = inkOf(int(tag[1].toFloat), int(tag[0].toFloat)).toJs
     case drawnAs(a, z)
     of Drawn.Stroke:
       context.lineWidth = (2.0 * radius * scale).toJs
@@ -232,9 +233,14 @@ proc paintOn(canvas: JsObject; recording: JsObject; at: int; azimuth, elevation,
 
   # Where hands are joined, and how far engine has pulled them apart.
   let grip = recording.grips[at]
-  for k in 0 ..< count(grip) div 3:
-    let seen_grip = seen((x: toFloat(grip[k * 3]), y: toFloat(grip[k * 3 + 1]),
-                  z: toFloat(grip[k * 3 + 2])), azimuth, elevation, framing)
+  for k in 0..<count(grip) div 3:
+    let seen_grip = seen(
+      (x: grip[k * 3].toFloat, y: grip[k * 3 + 1].toFloat,
+                    z: grip[k * 3 + 2].toFloat),
+      azimuth,
+      elevation,
+      framing,
+    )
     context.fillStyle = styleOf("--ink").toJs
     discard context.beginPath()
     discard context.arc(
@@ -258,20 +264,20 @@ proc readout() =
   var html = cstring""
   if moments() > 0:
     let angles = sweep_shown.angles[MOMENT_SHOWN]
-    for arm in 0 ..< count(sweep_shown.arm):
+    for arm in 0..<count(sweep_shown.arm):
       let
-        who = int(toFloat(sweep_shown.arm[arm][0]))
-        side = int(toFloat(sweep_shown.arm[arm][1]))
+        who = int(sweep_shown.arm[arm][0].toFloat)
+        side = int(sweep_shown.arm[arm][1].toFloat)
       # Label, not heading: heading would take serif face (Article X.8).
       html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
         inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
         SIDES[side] & cstring"</p>"
-      for dof in 0 ..< DOFS.len:
+      for dof in 0..<DOFS.len:
         let
           k = arm * DOFS.len + dof
-          angle = toFloat(angles[k])
-          lower = toFloat(sweep_shown.lower[k])
-          upper = toFloat(sweep_shown.upper[k])
+          angle = angles[k].toFloat
+          lower = sweep_shown.lower[k].toFloat
+          upper = sweep_shown.upper[k].toFloat
           span = (if upper - lower > 1e-9: upper - lower else: 1.0)
           at = (angle - lower) / span
           is_spent = angle <= lower + NEAR or angle >= upper - NEAR
@@ -292,21 +298,21 @@ proc caption() =
   if isStill(sweep_shown):
     document.getElementById("where").innerHTML =
       (if moments() > 0:
-         cstring"<b>" & toFixed(toFloat(sweep_shown.turns), 2) & cstring"</b> turns · stood <b>" &
-           toFixed(toFloat(sweep_shown.apart), 2) & cstring"</b> m apart"
+         cstring"<b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns · stood <b>" &
+           toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
        else:
-         cstring"<b>" & toFixed(toFloat(sweep_shown.turns), 2) &
+         cstring"<b>" & toFixed(sweep_shown.turns.toFloat, 2) &
            cstring"</b> turns · no pose holds")
     document.getElementById("verdict").innerHTML =
       (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
   else:
-    let turned = toFloat(sweep_shown.at[MOMENT_SHOWN])
+    let turned = sweep_shown.at[MOMENT_SHOWN].toFloat
     document.getElementById("where").innerHTML =
       cstring"<b>" & toFixed(turned, 2) & cstring"</b> turns · stood <b>" &
-      toFixed(toFloat(sweep_shown.apart), 2) & cstring"</b> m apart"
+      toFixed(sweep_shown.apart.toFloat, 2) & cstring"</b> m apart"
     document.getElementById("verdict").innerHTML =
       (if truth(sweep_shown.stopped):
-         cstring"Stops at <b>" & toFixed(toFloat(sweep_shown.turns), 2) & cstring"</b> turns: " &
+         cstring"Stops at <b>" & toFixed(sweep_shown.turns.toFloat, 2) & cstring"</b> turns: " &
            text(sweep_shown.says)
        else:
          cstring(VERDICTS[2]))
@@ -318,17 +324,17 @@ proc framingOf(recording: JsObject): Framing =
   var
     lower = [1e9, 1e9, 1e9]
     upper = [-1e9, -1e9, -1e9]
-  for moment in 0 ..< momentsOf(recording):
+  for moment in 0..<momentsOf(recording):
     let row = recording.points[moment]
-    for k in 0 ..< count(row) div 3:
-      for axis in 0 .. 2:
-        let coordinate = toFloat(row[k * 3 + axis])
+    for k in 0..<count(row) div 3:
+      for axis in 0..2:
+        let coordinate = row[k * 3 + axis].toFloat
         lower[axis] = min(lower[axis], coordinate)
         upper[axis] = max(upper[axis], coordinate)
   ## Framed to capsules, not to floor.  Rig is trunk upward and has no legs, so
   ## forcing floor into frame spends half of it on gap where legs would be;
   ## grid is still drawn at nought and comes into view on zooming out.
-  for axis in 0 .. 2:
+  for axis in 0..2:
     result.middle[axis] = (lower[axis] + upper[axis]) / 2.0
   result.reach =
     max(max(upper[0] - lower[0], upper[1] - lower[1]), upper[2] - lower[2]) / 2.0 + 0.15
@@ -367,8 +373,8 @@ proc show() =
 proc size() =
   ## Match canvas to its box at twice its pixels, then redraw.
   let canvas = canvasOf("view")
-  canvas.width = (toFloat(canvas.clientWidth) * 2.0).toJs
-  canvas.height = (toFloat(canvas.clientHeight) * 2.0).toJs
+  canvas.width = (canvas.clientWidth.toFloat * 2.0).toJs
+  canvas.height = (canvas.clientHeight.toFloat * 2.0).toJs
   show()
 
 
@@ -379,7 +385,7 @@ proc thumbs() =
       canvas = node.toJs
       index = parseInt($node.getAttribute("data-entry"))
       recording = entry(index)
-      width = toFloat(canvas.clientWidth) * 2.0
+      width = canvas.clientWidth.toFloat * 2.0
     canvas.width = width.toJs
     canvas.height = width.toJs
     if momentsOf(recording) > 0:
@@ -408,7 +414,7 @@ proc start() =
   ## Read recording, tie each entry to its reference cell, and draw first.
   ENTRIES_ALL = joined(rig().stills, rig().sweeps)
   # Which cell of reference each entry belongs to, read off page itself.
-  for i in 0 ..< count(ENTRIES_ALL):
+  for i in 0..<count(ENTRIES_ALL):
     LUT_CARD_BY_ENTRY.add cstring""
     LUT_CELL_BY_ENTRY.add nil
   for node in document.querySelectorAll("figure[data-entries]"):
@@ -426,7 +432,7 @@ proc start() =
 
   # Picker, stills by cell and question, sweeps by hold and band.
   var option_list = cstring""
-  for i in 0 ..< count(ENTRIES_ALL):
+  for i in 0..<count(ENTRIES_ALL):
     let
       recording = entry(i)
       name = (if isStill(recording): LUT_CARD_BY_ENTRY[i] & cstring" · " & text(recording.key)
@@ -454,20 +460,20 @@ proc start() =
   document.getElementById("scrub").addEventListener("input", proc (event: Event) =
     IS_PLAYING = false
     document.getElementById("play").innerHTML = cstring"Play"
-    MOMENT_SHOWN = int(toFloat(canvasOf("scrub").value))
+    MOMENT_SHOWN = int(canvasOf("scrub").value.toFloat)
     show())
 
   let canvas = canvasOf("view")
   canvas.addEventListener(cstring"pointerdown", proc (event: Event) =
     IS_DRAGGING = true
-    X_PREV = toFloat(event.toJs.clientX)
-    Y_PREV = toFloat(event.toJs.clientY))
+    X_PREV = event.toJs.clientX.toFloat
+    Y_PREV = event.toJs.clientY.toFloat)
   document.addEventListener("pointerup", proc (event: Event) = IS_DRAGGING = false)
   document.addEventListener("pointermove", proc (event: Event) =
     if IS_DRAGGING:
       let
-        x = toFloat(event.toJs.clientX)
-        y = toFloat(event.toJs.clientY)
+        x = event.toJs.clientX.toFloat
+        y = event.toJs.clientY.toFloat
       AZIMUTH += (x - X_PREV) * 0.01
       ELEVATION = max(-1.4, min(1.4, ELEVATION + (y - Y_PREV) * 0.01))
       X_PREV = x
@@ -475,7 +481,7 @@ proc start() =
       paint())
   canvas.addEventListener(cstring"wheel", proc (event: Event) =
     event.preventDefault()
-    ZOOM = max(0.35, min(4.0, ZOOM * (if toFloat(event.toJs.deltaY) > 0.0: 0.92 else: 1.08)))
+    ZOOM = max(0.35, min(4.0, ZOOM * (if event.toJs.deltaY.toFloat > 0.0: 0.92 else: 1.08)))
     paint())
 
   window.addEventListener("resize", proc (event: Event) =

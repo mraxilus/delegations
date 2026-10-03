@@ -491,57 +491,6 @@ Each licence is read off the package rather than assumed.
 pairs each package with what it is for. `system` prints those names for the caller to install
 (repository issue 60). No package version is pinned or invented.
 
-**`drive` fetches faces, and `web` refuses without them.** A caller who reaches for `web` directly
-is building, rather than being given.
-
-**Faces come from the store of the repository, and which faces is this project's.**
-`koch fetch-assets` holds any file fetched at build time: the names, the digests and the fetch,
-in `curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
-front-ends out of it (repository issues 116 and 124).
-
-Those are the `@fontsource` `woff2` of the page, and the desktop's own, which `FACES_DESKTOP` names.
-The page takes Commit Mono, Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, and Noto
-Serif. All are under the SIL Open Font License 1.1. Commit Mono is `otf` there, which is what its
-author publishes, and `stb_truetype` reads its CFF outlines.
-
-`assets` writes `build/fonts/store.list`, one line for each face, naming the store entry it was
-copied from. `web` compares its input against that entry before it embeds. Verified by a break of
-it, twice: `store.list` moved away, and one byte appended to a copied face.
-
-**The math face is pinned one version behind its siblings**, which is the fetch pinned rather than
-the family. 5.3.0 renamed its subset, and an unversioned path had kept working only by a fall back
-to 5.2.8 (repository issue 111).
-
-**Three faces, three roles, and nothing else picks between them.** The standard of the Architect is
-Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The page draws
-them through `--serif`, `--sans` and `--mono`. The desktop draws them through `guiHeader` and
-`guiMonoPush` with `guiMonoPop`.
-
-What counts as a title is looked up. Material 3 puts text inside components in the label role. So
-the help tab strip and the toggle chips stay sans. The serif takes the headings that name a section,
-and the name of the application itself.
-
-**Commit Mono splits its ligatures across two switches, and the page needs both.** The distributed
-`woff2` carries `calt`, which browsers apply unasked, and which most ligatures ride on. The opt-in
-sets are `ss01` to `ss05`, which the arrows and comparisons come from.
-
-So the stylesheet says `font-variant-ligatures: common-ligatures contextual` outright, because a
-reset that writes `none` takes `calt` with it. It says `font-feature-settings: "ss01" 1, "ss02" 1`
-to ask for what is never on. No combination moves a column. Noto Sans Math publishes an `ss01` that
-the mono stack falls through to, and the operators rendered identical either way.
-
-**The serif ships at 600 alone, because 600 is the weight every title is set at.** A weight that
-nothing ships is a face that the browser of the reader invents (Article X.8). The check reads
-pixels, and not width. The heading shot as the page has it, and again with the interface face forced
-onto it, makes one picture where there should be two. Width cannot part them.
-
-**The desktop draws the same three roles.** `NotoSerif-SemiBold` matches the 600 of the page, and
-`CommitMonoV142-400Regular` sets notation. The supplementary ranges are merged into the mono and
-interface faces, because those rows carry wedges. Commit Mono comes from the repository of its
-author, because `@fontsource` ships no TrueType.
-
-**Ligatures cannot reach the desktop**, because Dear ImGui shapes no text, so no GSUB feature fires.
-
 **The chip row floats over the canvas, and its width budget is measured rather than assumed.** Six
 controls ride it, and the row is flex. So where it stops fitting, the controls inside it give.
 
@@ -630,6 +579,80 @@ non-null assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn`
 Verified by driven check against a stand-in host: a scene saves as a zip and loads back, and a PNG
 saves as itself. A declined save offers no link. Verified by `unzip -t`: the zip is sound.
 **Untested**: the real host. **Unverified**: no human has driven this page.
+
+## Faces
+
+**`drive` fetches faces, and `web` refuses without them.** A caller who reaches for `web` directly
+is building, rather than being given.
+
+**Faces come from the store of the repository, and which faces is this project's.**
+`koch fetch-assets` holds any file fetched at build time: the names, the digests and the fetch,
+in `curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+front-ends out of it (repository issues 116 and 124).
+
+The page takes each Noto face whole, as the TrueType of its own release, and Commit Mono as the
+Latin `woff2` of `@fontsource`. The desktop takes its own list, `FACES_DESKTOP`, and the two lists
+share files. The page takes Commit Mono, Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols
+2, and Noto Serif. All are under the SIL Open Font License 1.1. Commit Mono is `otf` there, which is
+what its author publishes, and `stb_truetype` reads its CFF outlines.
+
+`assets` writes `build/fonts/store.list`, one line for each face, naming the store entry it was
+copied from. `web` compares its input against that entry before it embeds. Verified by a break of
+it, twice: `store.list` moved away, and one byte appended to a copied face.
+
+**Three faces, three roles, and nothing else picks between them.** The standard of the Architect is
+Noto Serif for titles, Noto Sans for body, and Commit Mono for code and monospace. The page draws
+them through `--serif`, `--sans` and `--mono`. The desktop draws them through `guiHeader` and
+`guiMonoPush` with `guiMonoPop`.
+
+What counts as a title is looked up. Material 3 puts text inside components in the label role. So
+the help tab strip and the toggle chips stay sans. The serif takes the headings that name a section,
+and the name of the application itself.
+
+**Commit Mono splits its ligatures across two switches, and the page needs both.** The distributed
+`woff2` carries `calt`, which browsers apply unasked, and which most ligatures ride on. The opt-in
+sets are `ss01` to `ss05`, which the arrows and comparisons come from.
+
+So the stylesheet says `font-variant-ligatures: common-ligatures contextual` outright, because a
+reset that writes `none` takes `calt` with it. It says `font-feature-settings: "ss01" 1, "ss02" 1`
+to ask for what is never on. No combination moves a column. Noto Sans Math publishes an `ss01` that
+the mono stack falls through to, and the operators rendered identical either way.
+
+**Each Noto face of the page ships whole, as the TrueType of its own release** (Article X.8, as the
+Architect ruled it on 2026-10-03). A Latin subset leaves each character past its range to a face of
+the viewer's system. `ˍ` and `˷` of the notation are two such characters (repository issue 411). The
+cost is weight: the built page is 7,830,702 bytes, against 4,271,072 with the subsets. Measured on
+2026-10-03 with `ls -l build/rga_visualiser.html`, at `main` and at this change. Rejected: a subset
+of Noto Sans cut for the two accents, which no store row could host without a release.
+
+**The maths and symbol faces are declared over 400 to 600.** Each ships one weight. Declared at 400
+alone, they match no semibold text, so a selected label or a chip at 600 takes its operators from
+the viewer's system. Over 400 to 600, the browser draws them as they are. The cost is regular
+operators beside semibold letters, which the desktop label also draws.
+
+**Every character that the page writes is asked of the faces that it ships**, by
+`driveFacesCovered`. It reads the codepoints from `nimCodepointsShown`, the gathering of `shown`
+that `--drive-faces` reads too. It adds the markup of the page and the strings of its scripts, which
+no catalogue holds. It reads each `@font-face` rule of the shell, and the `cmap` of its file. It
+resolves each stack at each declared weight as CSS matching does, and reports each codepoint that
+falls past the faces the page ships.
+
+*Checked.* Verified by a run, 2026-10-03. With the whole faces, and the maths and symbols at 400
+alone, the check fails in all three stacks at 600. It names the operators, the bold operands and the
+chip symbols. With the weight ranges, all three stacks pass at 400 and 600. The other page checks
+pass with the whole faces.
+
+**The serif ships at 600 alone, because 600 is the weight every title is set at.** A weight that
+nothing ships is a face that the browser of the reader invents (Article X.8). The check reads
+pixels, and not width. The heading shot as the page has it, and again with the interface face forced
+onto it, makes one picture where there should be two. Width cannot part them.
+
+**The desktop draws the same three roles.** `NotoSerif-SemiBold` matches the 600 of the page, and
+`CommitMonoV142-400Regular` sets notation. The supplementary ranges are merged into the mono and
+interface faces, because those rows carry wedges. Commit Mono comes from the repository of its
+author, because `@fontsource` ships no TrueType.
+
+**Ligatures cannot reach the desktop**, because Dear ImGui shapes no text, so no GSUB feature fires.
 
 ## Desktop front-end
 
@@ -796,11 +819,12 @@ math holds 1,773 of the 1,952 wanted. It costs about 2.5 MB fetched into `build/
 `stb_truetype` reads uncompressed faces.
 
 **Every codepoint that the build writes is asked of the face that sets it** (Article X.8).
-`--drive-faces` gathers the text from where it is composed. That is the wording catalogue, help, the
-notation of each operation, the basis names, the wheel and the units. It adds printable ASCII, since
-a reader names objects in it. `gui.hasGlyph` loads each codepoint through the face of each role, as
-drawing does, and reports each one that would draw as `.notdef`. The title role is asked for the
-panel headings alone, because nothing is merged into its face.
+`shown.codepointsShown` gathers the text from where it is composed, for `--drive-faces` and for the
+page alike. That is the wording catalogue, help, the notation of each operation, the basis names,
+the wheel and the units. It adds printable ASCII, since a reader names objects in it. `gui.hasGlyph`
+loads each codepoint through the face of each role, as drawing does, and reports each one that would
+draw as `.notdef`. The title role is asked for the panel headings alone, because nothing is merged
+into its face.
 
 **Merge order is precedence, and the range lists bind only the legacy path.** From Dear ImGui 1.92,
 a renderer that keeps textures of its own loads each glyph on demand. It takes the glyph from the
@@ -2883,8 +2907,8 @@ be written `` m.`∧ ☆`n ``.
 *Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
 every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
 parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
-for every codepoint of the notation (Desktop driven checks). The page has no such check (Open
-questions).
+for every codepoint of the notation (Desktop driven checks). On the page, `driveFacesCovered` asks
+the faces that it ships (Faces).
 
 ## Naming and number formatting
 
@@ -3487,12 +3511,5 @@ leave it, to bound a plane by its crossing of the frame, or to let a plane alone
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
 cross products. The first only clips, so it may be the picture's; the second is construction, which
 the algebra owns. The choices are to move them into the algebra, or to leave them.
-
-**The page draws two postfix accents from whatever face the viewer has.** None of the four faces
-that the page embeds carries `ˍ` (U+02CD) or `˷` (U+02F7), the accents of left complement and
-antireverse. The Latin subset of Noto Sans stops short of them, so the browser takes each from a
-system face, or draws a box. Read 2026-10-02 from the `cmap` of each embedded `woff2`, with a
-scratch reader. The choices are to embed a face that holds them under a `unicode-range`, or to leave
-them. A check on the page, as `--drive-faces` is on the desktop, would hold the first.
 
 [replications]: https://gitlab.com/mraxilus/replications

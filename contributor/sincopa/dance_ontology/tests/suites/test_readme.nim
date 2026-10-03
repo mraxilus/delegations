@@ -18,12 +18,9 @@ import ../../design/[plain, rules]
 
 
 const
-  WRITTEN = ["simulation/README.md", "design/README.md"]
-    ## READMEs held so far.
-  RULED = "design/README.md"
-    ## README quoting ledger, one `### Rule N` heading per rule.
-  HEADING = "### Rule "
-    ## Opening of heading rule's quotation sits under.
+  WRITTEN = ["simulation/README.md", "design/README.md"]  ## READMEs held so far.
+  RULED = "design/README.md"  ## README quoting ledger, one `### Rule N` heading per rule.
+  HEADING = "### Rule "  ## Opening of heading rule's quotation sits under.
 
 
 func quoted(document: string): seq[tuple[rule: int, words: string]] =
@@ -46,6 +43,7 @@ func quoted(document: string): seq[tuple[rule: int, words: string]] =
         is_closed = true
 
 
+
 suite "Internal: This project's own Markdown":
   test "every README held keeps each sentence and each paragraph to its bound":
     ## Failure names file and sentence, so it says what to split.
@@ -61,14 +59,15 @@ suite "Internal: This project's own Markdown":
               " words: ", sentence
           check sentence.splitWhitespace.len <= WORDS
 
+
   test "design README quotes every rule of ledger once, in order, word for word":
     ## Failure names rule and both wordings, so it says which copy moved.
     var numbers: seq[int]
     for (rule, words) in readFile(currentSourcePath.parentDir / ".." / ".." / RULED).quoted:
       numbers.add rule
-      let ledger = (if rule in 1 .. RULES.len: RULES[rule - 1] else: "")
+      let ledger = (if rule in 1..RULES.len: RULES[rule - 1] else: "")
       if words != ledger:
         echo "    rule ", rule, " quoted: ", words
         echo "    rule ", rule, " ledger: ", ledger
       check words == ledger
-    check numbers == toSeq(1 .. RULES.len)
+    check numbers == toSeq(1..RULES.len)

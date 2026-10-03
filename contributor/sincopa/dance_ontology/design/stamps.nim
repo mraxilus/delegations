@@ -30,7 +30,7 @@ func digest(parts: openArray[string]): string =
     hash = hash * HASH_PRIME
   hash.toHex(16).toLowerAscii
 
-proc stampOf*(verb: string; questions: openArray[string]): string =
+proc stampOf*(verb: string, questions: openArray[string]): string =
   ## Stamp of recording `verb` makes of `questions`: physics, verb's source, then each
   ## question.
   var parts = @[physics(), readFile(verb)]

@@ -22,7 +22,7 @@ func spoken(picture: string): string =
     let at = result.find("<tspan")
     if at < 0:
       break
-    result = result[0 ..< at] & result[result.find('>', at) + 1 .. ^1]
+    result = result[0..<at] & result[result.find('>', at) + 1 .. ^1]
   result = result.replace("</tspan>", "")
 
 
@@ -34,7 +34,8 @@ func attribute(chunk, name: string): int =
   if at < 0:
     return 0
   let rest = chunk[at + key.len .. ^1]
-  parseInt(rest[0 ..< rest.find('"')])
+  parseInt(rest[0..<rest.find('"')])
+
 
 
 suite "Internal: The layout":
@@ -49,6 +50,7 @@ suite "Internal: The layout":
     for target in FRAMES:
       check target in seen
 
+
   test "no two frames are drawn in the same place":
     var places: seq[(int, int)] = @[]
     for target in FRAMES:
@@ -58,10 +60,12 @@ suite "Internal: The layout":
       check centre[1] > 0 and centre[1] < MAP_HEIGHT
       places.add centre
 
+
   test "frames with the same number of connections share a row":
     for a in FRAMES:
       for b in FRAMES:
         check (centreOf(a)[1] == centreOf(b)[1]) == (a.countHolds == b.countHolds)
+
 
   test "a move always runs up the page, from fewer connections to more":
     # Which is whole of what rows buy: reader who knows which way is
@@ -71,11 +75,13 @@ suite "Internal: The layout":
         let is_rising = move.helper == Helper.Collect
         check (centreOf(move.to)[1] < centreOf(source)[1]) == is_rising
 
+
   test "free is at the foot of the tower and the fullest frames at its head":
     for target in FRAMES:
       for other in FRAMES:
         if target.countHolds < other.countHolds:
           check centreOf(target)[1] > centreOf(other)[1]
+
 
   test "the order the tower stacks the frames is the order it draws them in":
     # Anything that puts frames in line -- matrix orders both its axes
@@ -85,8 +91,9 @@ suite "Internal: The layout":
     check order.len == FRAMES.len
     for target in FRAMES:
       check target in order
-    for index in 1 ..< order.len:
+    for index in 1..<order.len:
       check centreOf(order[index - 1])[1] <= centreOf(order[index])[1]
+
 
 
 suite "Internal: The drawing":
@@ -110,6 +117,7 @@ suite "Internal: The drawing":
     check picture.count("<g class=\"join naming") == joined div 2
     check picture.count("<g class=\"way naming") == moved div 2
 
+
   test "every line is drawn before any name is written":
     # Name carries plate to keep drawing out from under it, and plate
     # can only hide what is already there.  Written as each line was drawn,
@@ -125,6 +133,7 @@ suite "Internal: The drawing":
         first_name = min(first_name, picture.find(mark))
       check last_ink < first_name
 
+
   test "every frame is drawn, with its name":
     # Read past ink: frame is named in hands it names, so its name is
     # several elements and not one.  Asked of drawn name and not of
@@ -133,12 +142,13 @@ suite "Internal: The drawing":
     let picture = renderMap(none(Frame)).spoken
     var names: seq[string] = @[]
     for chunk in picture.split("class=\"node-name\"")[1 .. ^1]:
-      let said = chunk[0 ..< chunk.find("</text>")]
+      let said = chunk[0..<chunk.find("</text>")]
       names.add said[said.find('>') + 1 .. ^1]
     check names.len == FRAMES.len
     for target in FRAMES:
       check picture.contains("data-frame=\"" & target.key & "\"")
       check target.describe in names
+
 
   test "a map with nobody on it has no marker and lights nothing":
     let picture = renderMap(none(Frame))
@@ -146,15 +156,18 @@ suite "Internal: The drawing":
     check not picture.contains(" lit")
     check not picture.contains("reachable")
 
+
   test "one frame is marked, and the mark is the same ring the close drawing uses":
     for here in FRAMES:
       let picture = renderMap(some(here))
       check picture.count("class=\"mark\"") == 1
       # Both drawings ring frame held from same numbers, so that two
       # say *here* same way and neither says it twice.
-      check picture.contains(markAt(centreOf(here)[0], centreOf(here)[1],
-        NODE_WIDTH, " style=\"--mx: 0px; --my: 0px\""))
+      check picture.contains(
+        markAt(centreOf(here)[0], centreOf(here)[1], NODE_WIDTH, " style=\"--mx: 0px; --my: 0px\""),
+      )
       check renderSpokes(here).count("class=\"mark\"") == 1
+
 
   test "the marker stands on the frame held and carries the way to the next":
     for here in FRAMES:
@@ -163,14 +176,18 @@ suite "Internal: The drawing":
       check renderMap(some(here)).contains("--mx: 0px; --my: 0px")
       for move in moves(here):
         let picture = renderMap(some(here), Motion.Leaving, some(move.to))
-        check picture.contains("--mx: " & $(centreOf(move.to)[0] -
-          centreOf(here)[0]) & "px; --my: " & $(centreOf(move.to)[1] -
-          centreOf(here)[1]) & "px")
+        check picture.contains(
+          "--mx: " & $(centreOf(move.to)[0] -
+            centreOf(here)[0]) & "px; --my: " & $(centreOf(move.to)[1] -
+            centreOf(here)[1]) & "px",
+        )
+
 
   test "only the frames one move away are offered":
     for here in FRAMES:
       let picture = renderMap(some(here))
       check picture.count("reachable") == moves(here).len
+
 
   test "a frame a compound away is offered, and marked as two moves":
     for here in FRAMES:
@@ -179,6 +196,7 @@ suite "Internal: The drawing":
         if compound(here, target).isSome:
           inc named
       check renderMap(some(here)).count(" two\"") == named
+
 
   test "every line is named, and no name is drawn over anything else":
     # Naming only lines underfoot let rest of map go unread, and
@@ -203,7 +221,7 @@ suite "Internal: The drawing":
       for chunk in picture.split("<rect class=\""):
         if not (chunk.startsWith("edge-plate") or chunk.startsWith("arc-plate")):
           continue
-        let own = chunk[0 ..< chunk.find("/>")]
+        let own = chunk[0..<chunk.find("/>")]
         boxes.add (own.attribute("x"), own.attribute("y"), own.attribute("width"),
           own.attribute("height"))
       check boxes.len == moved div 2 + joined div 2
@@ -212,6 +230,7 @@ suite "Internal: The drawing":
           check not isOverlapping(box, other)
         for frame in frameBoxes():
           check not isOverlapping(box, frame)
+
 
   test "a line is named for the move away from where the couple stand":
     # Line is two moves, one each way.  Named for collect either way,
@@ -231,11 +250,11 @@ suite "Internal: The drawing":
         if move.helper != Helper.Drop:
           continue
         inc drops
-        check picture.spoken.contains(
-          ">drop " & followName(here.hold[move.side].get) & "<")
+        check picture.spoken.contains(">drop " & followName(here.hold[move.side].get) & "<")
       check not picture.contains(">drop<")
       if here.countHolds > 0:
         check drops > 0
+
 
   test "a compound underfoot names the hand it moves, and one nobody stands on may not":
     # Stood on one end curve has direction like any other line.  Stood on
@@ -249,6 +268,7 @@ suite "Internal: The drawing":
           continue
         let picture = renderMap(some(here))
         check picture.spoken.contains(">" & compoundName(here, target) & "<")
+
 
   test "a compound is inked in both the arms it hands a hand between":
     # Ordinary line has one ink because same arm acts whichever way it is
@@ -270,6 +290,7 @@ suite "Internal: The drawing":
           let ink = (if side == Side.Left: "var(--left" else: "var(--right")
           check picture.contains("class=\"arc\" d=\"M") and picture.contains(ink)
 
+
   test "every frame's name has a plate to keep the lines off it":
     # Lines leave frame from its middle, so they run out through words
     # above it.  Every other name in drawing has plate; so does this one.
@@ -279,8 +300,11 @@ suite "Internal: The drawing":
       spokesOf(FRAMES[0]).len + 1
     for here in FRAMES:
       let (x, y, width, height) = nameBox(here, centreOf(here)[0], centreOf(here)[1], 74)
-      check picture.contains("class=\"name-plate\" x=\"" & $x & "\" y=\"" & $y &
-        "\" width=\"" & $width & "\" height=\"" & $height & "\"")
+      check picture.contains(
+        "class=\"name-plate\" x=\"" & $x & "\" y=\"" & $y &
+          "\" width=\"" & $width & "\" height=\"" & $height & "\"",
+      )
+
 
   test "the ink of a line is the acting arm, in the lead's own shade":
     # Once line is unlit two arms are told apart by colour alone, so every
@@ -296,7 +320,7 @@ suite "Internal: The drawing":
       if not fragment.startsWith("\"") and not fragment.startsWith(" lit"):
         continue
       inc lines
-      let element = fragment[0 ..< fragment.find("/>")]
+      let element = fragment[0..<fragment.find("/>")]
       check element.contains("var(--left-deep") or
         element.contains("var(--right-deep")
       check not element.contains("var(--left,")
@@ -305,6 +329,7 @@ suite "Internal: The drawing":
     for source in FRAMES:
       moved += moves(source).len
     check lines == moved div 2
+
 
   test "a name says the follow's hand in the follow's own ink":
     # Label is lead acting, so whole of it used to be lead's deep
@@ -323,12 +348,17 @@ suite "Internal: The drawing":
         if hand.isNone:
           continue
         inc named_hands
-        check picture.contains("<tspan style=\"fill: " &
-          followColour(hand.get) & "\">" & followName(hand.get) & "</tspan>")
+        check picture.contains(
+          "<tspan style=\"fill: " &
+            followColour(hand.get) & "\">" & followName(hand.get) & "</tspan>",
+        )
         # Follow's plain shade, never lead's deep one.
-        check not picture.contains("<tspan style=\"fill: " &
-          armColour(move.side) & "\">" & followName(hand.get) & "</tspan>")
+        check not picture.contains(
+          "<tspan style=\"fill: " &
+            armColour(move.side) & "\">" & followName(hand.get) & "</tspan>",
+        )
     check named_hands > 0
+
 
   test "a frame's name is drawn in the hands the frame joins":
     # Same law one step further out.  `Left to left` names two hands as
@@ -347,9 +377,12 @@ suite "Internal: The drawing":
       for side in Side:
         if target.hold[side].isNone:
           continue
-        check picture.contains("<tspan style=\"fill: " & armColour(side) &
-          "\">" & leadName(side) & "</tspan>")
-        check picture.contains("<tspan style=\"fill: " &
-          followColour(target.hold[side].get) & "\">" &
-          followName(target.hold[side].get) & "</tspan>")
+        check picture.contains(
+          "<tspan style=\"fill: " & armColour(side) & "\">" & leadName(side) & "</tspan>",
+        )
+        check picture.contains(
+          "<tspan style=\"fill: " &
+            followColour(target.hold[side].get) & "\">" &
+            followName(target.hold[side].get) & "</tspan>",
+        )
     check named_frames == FRAMES.len - 1

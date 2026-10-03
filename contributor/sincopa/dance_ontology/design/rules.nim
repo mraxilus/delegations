@@ -151,7 +151,7 @@ const RULES* = [
     "for a single person are excluded, until deemed necessary",
   "half-closed, Left to left held low: wrap at left@0.5, lock at right@1",
   "that applies to everything but high lock",
-] ## Each rule verbatim, one-indexed in prose as `RULES[i - 1]`.
+]  ## Each rule verbatim, one-indexed in prose as `RULES[i - 1]`.
   ##   Rules 10 to 14 govern rotation page: rotation as edges over
   ##     app's eight frames, everything held high.
   ##   In rule 13 twisted states are ends of chain, not cycle --
@@ -466,7 +466,7 @@ const RULES* = [
 const FROM_ABOVE*: array[2, tuple[level: Option[Level], way: Option[Way]]] = [
   (some Level.High, some Way.Wrap),
   (none Level, none Way),
-] ## Only transitions out of `above`, per rule 8: upper wrap, or back
+]  ## Only transitions out of `above`, per rule 8: upper wrap, or back
   ## to default.
   ##   *Upper wrap* is read as high wrap; that reading is
   ##     implementer's, not rule's, and page flags it as such.

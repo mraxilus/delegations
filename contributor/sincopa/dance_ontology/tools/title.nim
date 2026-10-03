@@ -18,7 +18,6 @@
 
 
 const
-  WORK* = "Dance Ontology"
-    ## Name of body of work, titling page project stands behind.
+  WORK* = "Dance Ontology"  ## Name of body of work, titling page project stands behind.
   MOCKUP* = WORK & " Mockup"
     ## Same name marked as exploration, titling page project does not stand behind.

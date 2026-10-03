@@ -6,6 +6,8 @@
 import std/unittest
 
 import ../../design/drawn
+import ../fixtures
+
 
 
 suite "Internal: Capsule on canvas":
@@ -19,6 +21,7 @@ suite "Internal: Capsule on canvas":
     check drawnAs(palm, palm) == Drawn.Disc
     check drawnAs(palm, (0.108, 0.244, 1.020)) == Drawn.Stroke
 
+
   test "capsule hanging beside another is painted behind it where it is behind":
     ## Architect, on viewer from near overhead: z ordering is messed up at some
     ## angles.  Whole capsule was ordered by depth of its nearer end, so upper
@@ -31,7 +34,7 @@ suite "Internal: Capsule on canvas":
       trunk = (a: (0.0, 0.0, 0.925), z: (0.0, 0.0, 1.235))
       arm = (a: (0.0, 0.15, 1.35), z: (0.0, 0.15, 1.05))
       order = drawOrder([trunk, arm], 0.0, 1.2, framing)
-    proc place(capsule: int; height: float): int =
+    proc place(capsule: int, height: float): int =
       ## Where in order piece of `capsule` nearest `height` is painted.
       var best = Inf
       for i, piece in order:
@@ -42,6 +45,7 @@ suite "Internal: Capsule on canvas":
           result = i
     check place(1, 1.07) < place(0, 1.22)
     check place(1, 1.33) > place(0, 1.22)
+
 
   test "each body is lit from its own front":
     ## Architect: see facing easily, without chevrons on floor and lines at
@@ -58,6 +62,7 @@ suite "Internal: Capsule on canvas":
     check mixColours("#000000", "#ffffff", 1.0) == "rgb(255, 255, 255)"
     check mixColours("#102030", "#ffffff", 0.5) == "rgb(136, 144, 152)"
 
+
   test "light runs across each piece, never along it":
     ## Lit along facing's image on screen as it fell, torso showed bands: each
     ## piece's gradient was centred on its own middle, and where facing's image
@@ -66,7 +71,7 @@ suite "Internal: Capsule on canvas":
     let
       along: Seen = (x: 0.0, y: 1.0, depth: 0.0)
       across = lightAcross((x: 0.6, y: 0.8, depth: 0.0), along)
-    check abs(across.x - 0.6) < 1e-9
-    check abs(across.y) < 1e-9
+    check across.x =~ 0.6
+    check across.y =~ 0.0
     let whole = lightAcross((x: 0.6, y: 0.8, depth: 0.0), (x: 0.0, y: 0.0, depth: 0.0))
     check whole == (x: 0.6, y: 0.8, depth: 0.0)

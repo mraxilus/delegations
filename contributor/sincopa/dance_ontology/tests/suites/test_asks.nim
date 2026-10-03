@@ -15,7 +15,7 @@ from ../../src/dance_ontology/draw/route import overArm
 import ../../src/dance_ontology/frame
 
 
-const ARRANGED = 1e-6 ## Degrees two arrangements may differ by: arithmetic alone.
+const ARRANGED = 1e-6  ## Degrees two arrangements may differ by: arithmetic alone.
 
 
 func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
@@ -23,7 +23,9 @@ func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
   ## above: what `pose.relative` reads off drawing, read off simulation's stance.
   ##   Simulation counts anticlockwise from its x and drawing clockwise from up page, which
   ##     is simulation's y.
+
   func page(radians: float): float = 90.0 - radians * 180.0 / PI
+
   let
     (one, two) = (stance[Body.One], stance[Body.Two])
     bearing = page(arctan2(two.centre.y - one.centre.y, two.centre.x - one.centre.x))
@@ -35,17 +37,17 @@ func apartOf(a, b: float): float =
   let d = floorMod(a - b, 360.0)
   min(d, 360.0 - d)
 
-func armOf(still: JsonNode; who: Body; arm: Arm): ArmPose =
+func armOf(still: JsonNode, who: Body, arm: Arm): ArmPose =
   ## One arm as recording keeps it, from engine's own capsules: each limb's capsule runs
   ##   its radius in from both joints, and palm's sphere sits half hand past wrist.
   let
     tags = still["tag"].getElems
     points = still["points"][^1].getElems
     radii = still["radii"].getElems
-  var capsules: array[1 .. 3, tuple[a, z: Vector, radius: float]]
+  var capsules: array[1..3, tuple[a, z: Vector, radius: float]]
   for i, tag in tags:
     let part = tag[2].getInt
-    if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm) and part in 1 .. 3:
+    if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm) and part in 1..3:
       capsules[part] = ((points[6 * i].getFloat, points[6 * i + 1].getFloat,
                          points[6 * i + 2].getFloat),
                         (points[6 * i + 3].getFloat, points[6 * i + 4].getFloat,
@@ -59,16 +61,18 @@ func armOf(still: JsonNode; who: Body; arm: Arm): ArmPose =
   result.wrist = fore.z + forward * fore.radius
   result.grip = palm.a * 2.0 - result.wrist
 
-func armsOf(still: JsonNode; links: seq[Link]): Arms =
+func armsOf(still: JsonNode, links: seq[Link]): Arms =
   ## Every connection's two arms, lead's first, as recording keeps them.
   for link in links:
     result.add [armOf(still, link.ends[0].body, link.ends[0].arm),
                 armOf(still, link.ends[1].body, link.ends[1].arm)]
 
 
-suite "what each card asks of simulation":
+
+suite "Internal: What each card asks of simulation":
   var ask_by_key = initTable[string, StillAsk]()
   for ask in stillAsks(): ask_by_key[ask.key] = ask
+
 
   test "one picture is one question, whichever section draws it":
     ## Standard diagram's A16 is hand to hand wound half turn clockwise, which
@@ -86,12 +90,14 @@ suite "what each card asks of simulation":
       check frame_ask.turns == chain_ask.turns
       check frame_ask.is_either_way == chain_ask.is_either_way
 
+
   test "page counts clockwise seen from above, and simulation anticlockwise":
     ## Chain's C5 is wound half turn clockwise, and simulation turns anticlockwise for
     ## positive turns, so C5 is asked negative.
     check ask_by_key["C5"].turns == -0.5
     check ask_by_key["C3"].turns == 0.5
     check wayOf(HalfTurns(1)) == Way.Clockwise
+
 
   test "every single-hand card stands where its cell draws follow, facing as drawn":
     ## Simulation turns one dancer on their own spot, and partner stays where they stand:
@@ -102,26 +108,26 @@ suite "what each card asks of simulation":
     ##     every lead's turn and every orbit of follow stood follow ahead of lead.
     for single_index, single in SINGLES:
       for manner in Manner:
-        for quarter in 0 ..< QUARTERS_ROUND:
+        for quarter in 0..<QUARTERS_ROUND:
           let
             ask = ask_by_key[&"st_{MANNERS[manner].tag}_{single_index}_{quarter}"]
-            stood = arranged(turned(restStance(HUMAN, 1.0, ask.isRestAway), ask.who,
-                                    ask.turns))
+            stood = arranged(turned(restStance(HUMAN, 1.0, ask.isRestAway), ask.who, ask.turns))
             drawn = relative(quarterPose(manner, quarter))
           checkpoint ask.key & ": stood " & $stood & ", drawn " & $drawn
           check apartOf(stood.axis, drawn.axis) < ARRANGED
           check apartOf(stood.facing, drawn.facing) < ARRANGED
+
 
   test "two cards of one cell stand one arrangement, turned by one dancer":
     ## Orbit lands where partner's axis turn lands (`parts.FAMILY_OF`), and page folds
     ##   both onto one cell.  So both turn one dancer, and hands go over one crown.
     ##   Red with orbit asked over walker's crown, measured 2026-10-02: every orbit's still
     ##     stood its other manner's pose, follow's orbit as follow's own turn.
-    for single_index in 0 ..< SINGLES.len:
+    for single_index in 0..<SINGLES.len:
       for manner in Manner:
         for mate in Manner:
-          for quarter in 0 ..< QUARTERS_ROUND:
-            for other in 0 ..< QUARTERS_ROUND:
+          for quarter in 0..<QUARTERS_ROUND:
+            for other in 0..<QUARTERS_ROUND:
               if placeOf(quarterPose(manner, quarter)) != placeOf(quarterPose(mate, other)):
                 continue
               if quarter == 0: continue
@@ -131,6 +137,7 @@ suite "what each card asks of simulation":
               checkpoint one.key & " against " & two.key
               check one.who == two.who
               check one.head == two.head
+
 
   test "every card carries joined hands over crown of dancer who turns":
     ## Connection goes round dancer whose facing turns against it, and over crown it goes
@@ -144,6 +151,7 @@ suite "what each card asks of simulation":
     for question in questions():
       checkpoint question.key
       check question.head == question.who
+
 
   test "every single-hand move ends where its cell's walk ends":
     ## Page walks every manner's own dancer clockwise, one quarter per card
@@ -161,8 +169,9 @@ suite "what each card asks of simulation":
           for candidate in Manner:
             if MANNERS[candidate].tag == parts[1]: found = candidate
           found
-        stood = arranged(turned(restStance(HUMAN, 1.0, question.is_away), question.who,
-                                question.turns))
+        stood = arranged(
+          turned(restStance(HUMAN, 1.0, question.is_away), question.who, question.turns),
+        )
         drawn = relative(quarterPose(manner, parseInt(parts[4])))
       inc moves
       checkpoint question.key & ": stood " & $stood & ", drawn " & $drawn
@@ -171,8 +180,8 @@ suite "what each card asks of simulation":
     check moves == SINGLES.len * 4 * QUARTERS_ROUND
 
 
-suite "each hold rests at named facing":
 
+suite "Internal: Each hold rests at named facing":
   test "each chain rests where its connections run parallel, and alternates from there":
     ## Hand to hand runs parallel Face-to-face, and crossed pair Face-to-back (rule 31).
     ##   Chain steps by half turns, so facing is rest at whole turns and other
@@ -184,6 +193,7 @@ suite "each hold rests at named facing":
         let is_whole = abs(wind - round(wind)) < 1e-9
         check facingAt(holds, wind) == some(if is_whole: rest else: other)
 
+
   test "simulation is told each card's rest where it stands couple":
     ## Card names its rest from model (`parts.restOf`), and simulation is told only
     ##   `away`.  Stance simulation then stands couple in, read by simulation's own words, is
@@ -191,6 +201,7 @@ suite "each hold rests at named facing":
     for ask in stillAsks():
       checkpoint ask.key
       check facingName(restStance(HUMAN, 1.0, ask.isRestAway)) == some(ask.rest.name)
+
 
   test "simulation is asked no rest it cannot stand":
     ## Simulation stands couple Face-to-face or follow turned half, and no other rest.
@@ -201,13 +212,15 @@ suite "each hold rests at named facing":
         expect Defect: discard isRestAway(rest)
 
 
-suite "simulation against reference":
+
+suite "Internal: Simulation against reference":
   let recorded = block:
     var stills = initTable[string, JsonNode]()
     for still in parseFile(KEPT_RIG)["stills"].getElems: stills[still["key"].getStr] = still
     stills
   var ask_by_key = initTable[string, StillAsk]()
   for ask in stillAsks(): ask_by_key[ask.key] = ask
+
 
   test "every crossed still lays connection its card names over at lead's crossing":
     ## Card is named for lead's arm on top where lead's two arms cross (`route.overArm`):
@@ -236,6 +249,7 @@ suite "simulation against reference":
         if crossing.along + crossing.across < first.along + first.across: first = crossing
       check ask.links[first.over].ends[0].arm == arm
 
+
   test "simulation models every card reference draws":
     ## Every position and movement reference draws is one dancers take with ease, so card
     ##   simulation cannot reach is fault of simulation, never of card.
@@ -250,16 +264,18 @@ suite "simulation against reference":
     check unmodelled.len == 0
 
 
-suite "each recording is of tree it is kept in":
+
+suite "Internal: Each recording is of tree it is kept in":
   ## Verb whose stamp is unchanged records nothing again (`design/stamps`), so recording kept
   ##   with other stamp is of other physics, other questions or other verb.  Page would show it
   ##   as this tree's answer.
-
   test "answers the reference page tags carry the stamp the tree gives":
     check parseFile(KEPT_MODELLED)["stamp"].getStr == modelledStamp()
 
+
   test "recording the rig page plays carries the stamp the tree gives":
     check parseFile(KEPT_RIG)["stamp"].getStr == rigStamp()
+
 
   test "rig page folds in the recording without its stamp, and nothing else left out":
     ## Stamp changes with any change to physics, where page shows none.
