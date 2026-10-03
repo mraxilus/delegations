@@ -25,7 +25,12 @@ alternating runs of the pin and of the changed library, on `linux amd64, 4 cores
 | `m ∧ n` | ×0.79 | ×0.98 | ×0.69 |
 | `m ⟑ n` | ×0.95 | ×0.99 | ×0.69 |
 
-The dual at rga4d runs slower, ×1.00 to ×1.99 across the five runs, and why is not isolated.
+The dual at rga4d reads ×1.42 because it compares with the best case of the pin. With the pin,
+it takes 4.4 ns where results sit at the same offset in a page as operands, as two `seq` of one
+size are allocated. With results 128, 256 or 2048 bytes further, it takes 7.2 to 7.6 ns.
+Aligned, it takes 6.2 to 6.6 ns at each of these offsets. The same runs rule out the order of
+instructions, which is the same in both, and the placement of the loop and of its branch.
+
 The bench aligns its own pools and results, so its evaluation shows only what the temporaries
 inside the library gain.
 
