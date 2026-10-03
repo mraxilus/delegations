@@ -159,6 +159,19 @@ left uninitialised. In the bench at `3121342`, the machine code holds 245 stores
 with or without the fill. So there a fill gives no measurand a discount, and the `noinit`
 keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
+**A result of three floats or fewer is bound before its slot.** Nim returns such a result by
+value, through a temporary that the call site fills with zeros. In the large function that
+holds every loop, the compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller
+of normal size pays nothing, because there the fill is two stores that the compiler deletes.
+Of the 2D reference rows, 30 return such a result, and of the 3D ones none.
+
+Two sessions of five alternating runs on `linux amd64, 4 cores` on 2026-10-03 time the 2D
+references, with the fill and then without it. With the fill, those 26 rows at rga3d and 4 at cga4d took 12.1 to
+15.5 ns. Bound first, they took 0.8 to 5.0 ns, as `complement_left_line` went from 12.81 to
+0.88 ns. The other reference rows moved ×0.42 to ×1.70. With and without the binding, the C at
+rga4d and cga5d is the same byte for byte. Suite `Internal: Inspector` holds the loop to no
+temporary filled with zeros.
+
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
 under `-d:nimAllocStats`. The bench refuses to report allocation counts unless a positive
@@ -185,8 +198,9 @@ So the machine moves between days, and not by one factor for each implementation
 taken at different hours never compare, and ratios within one run do.
 
 Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
-apart at rga4d and ×1.17 at cga5d. They are ×1.06 at rga3d and ×1.10 at cga4d, and the widest
-measurand spreads ×2.39, at rga4d.
+apart at rga4d and ×1.17 at cga5d. In the baselines of 2026-10-03 they are ×1.04 at rga3d and
+×1.07 at cga4d. The widest measurand spreads ×4.74, as `attitude_point` at rga3d does. Its
+reference takes under one nanosecond, and one run of five took its library three times longer.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
