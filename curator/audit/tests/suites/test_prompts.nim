@@ -29,6 +29,10 @@ suite "Duty 10":
     check found[0].message.endsWith("got `issue 25`.")
 
 
+  test "every file that opens delegate is prompt, coordinator's too":
+    check PROMPT_PATHS == ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+
+
   test "prompt over its byte ceiling is finding naming size":
     let
       long = "# P\n\n" & "x".repeat(PROMPT_BYTES)

@@ -3,7 +3,7 @@
 ##     approved words. Dictionary is ASD's and is not copied here. Three rules are mechanical
 ##     enough to check: sentence length, paragraph length, and words outside dictionary that
 ##     have one approved replacement. Rest holds by reading, as `GUIDE.md` sets out.
-##   Root documents and four templates are data in `ENGLISH_PATHS`, and every other governed
+##   Root documents and five templates are data in `ENGLISH_PATHS`, and every other governed
 ##     document derives from layout: README of each project root and each domain, and three
 ##     records of each project. Project or domain added later is read from its first line,
 ##     rather than when curator remembers to widen list.
@@ -37,6 +37,7 @@ import ./[domains, findings, layout, markdown]
 
 const
   ENGLISH_PATHS* = [
+    ".github/ISSUE_TEMPLATE/brief.md",
     ".github/ISSUE_TEMPLATE/process-change.md",
     ".github/ISSUE_TEMPLATE/queued-work.md",
     ".github/ISSUE_TEMPLATE/review-finding.md",
@@ -44,6 +45,7 @@ const
     "CLAUDE.md",
     "CONSTITUTION.md",
     "CONTRIBUTOR.md",
+    "COORDINATOR.md",
     "CURATOR.md",
     "EXAMPLES.md",
     "GLOSSARY.md",

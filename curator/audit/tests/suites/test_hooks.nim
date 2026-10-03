@@ -40,6 +40,7 @@ func messages(found: seq[Finding]): seq[string] =
 suite "Hooks":
   test "role string grammar":
     check "curator".isRoleString and "curator/audit".isRoleString
+    check "coordinator".isRoleString  # role with no branch
     check "contributor/ronri/pga_benchmark".isRoleString
     check not "contributor/nowhere/x".isRoleString and not "owner".isRoleString
     check not "contributor/ronri/pga_benchmark/gap-list".isRoleString  # branch, not role
@@ -107,6 +108,24 @@ suite "Hooks":
     check checkBody("mcp__github__issue_write", BRANCH, "A claim", good, ["curator"], true).len == 0
     check checkBody("mcp__github__issue_write", BRANCH, "Any title", good, ["curator"], false)
       .len == 0  # update reads neither title nor labels
+    check checkBody("mcp__github__issue_write", BRANCH, "A claim", good, ["coordinator"], true)
+      .messages.anyIt("never `coordinator`" in it)  # brief carries label of role it starts
+    check checkBody(
+      "mcp__github__issue_write",
+      BRANCH,
+      "A claim",
+      good,
+      ["curator", "coordinator"],
+      true,
+    ).messages.anyIt("never `coordinator`" in it)  # no item is coordinator's
+    check checkBody(
+      "mcp__github__issue_write",
+      BRANCH,
+      "A claim",
+      good,
+      ["curator", "architect"],
+      true,
+    ).len == 0  # queue label beside role label
 
 
   test "pull request body keeps template headings and shows change":

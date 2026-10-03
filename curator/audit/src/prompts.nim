@@ -15,7 +15,8 @@ import ./[findings, markdown, provenance, record]
 
 
 const
-  PROMPT_PATHS* = ["CONTRIBUTOR.md", "CURATOR.md"]  ## Files pasted as opening prompts.
+  PROMPT_PATHS* = ["CONTRIBUTOR.md", "COORDINATOR.md", "CURATOR.md"]
+    ## Files that open new delegates.
   PROMPT_BYTES* = 40_000
     ## Bytes prompt may hold; ceiling guards runaway growth, never trims by length alone.
     ## Number is Architect's.
