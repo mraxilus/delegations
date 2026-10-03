@@ -1,4 +1,4 @@
-## Enforce idioms of source that one line, or one header, shows (STYLE.md §2, §5, §6; Article
+## Enforce idioms of source that one line, or one header, shows (STYLE.md §2, §3, §5, §6; Article
 ##   VIII.5, X.5, X.10; CONTRIBUTOR.md, System and TypeScript); and fix each of these that has
 ##   one mechanical fix (`koch fix`).
 ##   Nim rules read code-only view (`names.codeOnly`), so string and comment never trip them:
@@ -18,6 +18,10 @@
 ##   - `{.used.}` carries trailing comment naming its consumer (§2).
 ##   - `{.push.}` stands only over block of foreign bindings, which `{.pop.}` closes (§2).
 ##   - `return result` never appears: bare `return` exits early with `result` (§5).
+##   - Profiler import stands on one line, `when compileOption("profiler"): import
+##     std/nimprof`; entry module (`when isMainModule:`), library umbrella
+##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
+##     `checkProfiler`, outside static pass until projects run fix.
 ##   Under `tests/` alone:
 ##   - suite importing `std/random` seeds it (§6);
 ##   - stub `tests/test_*.nim` carries testament header, without `-r`, `batchable` or
@@ -43,15 +47,18 @@
 ##   - `return result` ending routine that holds `result`, at its body's own indent, goes, with
 ##     blank lines opening its paragraph; inside branch, or before more body, it becomes bare
 ##     `return`. Both exit with same value, and §5 keeps `return` for early exit alone.
+##   - Stub's `-r` is cut from `cmd`, and line of `batchable` or `joinable` goes.
+##   - Profiler import on two lines joins onto one. Missing one goes after last pragma opening
+##     module, blank line each side; module opening with no pragma stays to hand.
 ##   Fixer never writes line width check reports (`form.isWide`); rewrite that would leaves
 ##     its lines and finding for hand. Fixer moving lines records where each came from, so
 ##     `chain` reports every later rewrite at line of source as given.
 ##   No fixer: import ranked low across lines that are not imports, since where it lands and
 ##     what blank lines surround it are both choices; bracket holding comment, since comment
 ##     belongs to item or to slot; run whose last binding opens long string, since indenting
-##     its lines changes string; `{.used.}` consumer, `{.push.}` scope, random seed, stub
-##     header, debug output, machine path and TypeScript flags, since each needs knowledge
-##     text does not hold.
+##     its lines changes string; `{.used.}` consumer, `{.push.}` scope, random seed, missing
+##     stub header, debug output, machine path and TypeScript flags, since each needs
+##     knowledge text does not hold.
 ##   No fixer, and check silent: import with `except`, `as`, pragma but `{.all.}`, comment or
 ##     string, statement spanning lines, and imports apart across blank line, since merging
 ##     them is choice; list whose order may mean, i.e. pragma statement opening line and list
@@ -107,6 +114,20 @@ type
     items: seq[string]  ## Modules, pragma kept, alphabetised once all are read.
     statement: string  ## Statement standing in their place.
 
+  StubKey = object
+    ## Define testament key STYLE.md §6 leaves out of stub: line, and span of `-r` to cut.
+    line: int  ## Zero-based line of header.
+    key: string  ## `-r`, `batchable` or `joinable`.
+    first: int  ## Byte offset in line of ` -r`; `-1` where whole line goes.
+    after: int  ## Byte offset in line after ` -r`; `-1` where whole line goes.
+
+  Profiler = object
+    ## Define profiler import as module holds it: two-line forms, presence, and where one goes.
+    pairs: seq[int]  ## Zero-based line of `when` of each import written on two lines.
+    is_present: bool  ## Import stands at module level, on one line or two.
+    is_entry: bool  ## Module is entry, library umbrella or test stub, so carries import.
+    anchor: int  ## Zero-based line of last pragma opening module, import goes after; `-1` none.
+
   Disorder = object  ## Define list language leaves unordered, written out of alphabetical order.
     line: int  ## Zero-based line list stands on.
     first: int  ## Byte offset of first item.
@@ -129,6 +150,13 @@ const
     ## Pragmas marking foreign bindings, which alone may stand under `{.push.}`.
   STUB_KEYS = ["batchable", "joinable"]
     ## Testament keys `testament pattern` never reads (STYLE.md §6).
+  RUN_FLAG = " -r"  ## Flag stub's `cmd` leaves out, with space before it (STYLE.md §6).
+  PROFILER_IMPORT* = "when compileOption(\"profiler\"): import std/nimprof"
+    ## Profiler import every entry module, umbrella and stub carries, one line (STYLE.md §3).
+  PROFILER_GUARD = "when compileOption(\"profiler\"):"
+    ## First line of profiler import written on two lines.
+  PROFILER_MODULE = "import std/nimprof"  ## Second line of that form, indented under first.
+  MAIN_GUARD = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
   IMPORT_MARK = "import "  ## Opening of import statement at module level.
   RETURN_RESULT = "return result"
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.
@@ -344,6 +372,39 @@ func isSeeded(code: string): bool =
   "initRand(" in code or (at >= 0 and at + 10 < code.len and code[at + 10] != ')')
 
 
+func isStub(path: string): bool =
+  ## Decide whether path is testament stub: `tests/test_*.nim`, directly under `tests/`.
+  let parts = path.split('/')
+  parts.len >= 2 and parts[^2] == "tests" and parts[^1].startsWith("test_")
+
+
+func headerLines(source: string): Slice[int] =
+  ## Read zero-based lines inside stub's testament header; empty slice where none closes.
+  let open = source.find(TESTAMENT_HEADER)
+  if open < 0: return 1..0
+  let close = source.find(LONG_STRING, open + TESTAMENT_HEADER.len)
+  if close < 0: return 1..0
+  source[0..<open].count('\n') + 1..source[0..<close].count('\n') - 1
+
+
+func stubKeys(path, source: string): seq[StubKey] =
+  ## Find each key §6 leaves out of stub's testament header: `-r` in `cmd`, whole line of
+  ##   `batchable` or `joinable`. `-r` is flag alone, so space, quote or line end follows it.
+  if not path.isStub: return
+  let lines = source.split('\n')
+  for i in source.headerLines:
+    let s = lines[i].strip
+    if s.startsWith("cmd:"):
+      var at = lines[i].find(RUN_FLAG)
+      while at >= 0:
+        let after = at + RUN_FLAG.len
+        if after == lines[i].len or lines[i][after] in {' ', '"'}:
+          result.add StubKey(line: i, key: RUN_FLAG.strip, first: at, after: after)
+        at = lines[i].find(RUN_FLAG, after)
+    for key in STUB_KEYS:
+      if s.startsWith(key & ":"): result.add StubKey(line: i, key: key, first: -1, after: -1)
+
+
 func checkTest(path, source: string; lines, code: seq[string]): seq[Finding] =
   ## Report unseeded random suite, stub header breaking §6, and `echo` of debug shape.
   if code.isRandomImported and not code.join("\n").isSeeded:
@@ -352,34 +413,16 @@ func checkTest(path, source: string; lines, code: seq[string]): seq[Finding] =
       0,
       "Suite seeds `std/random`, as `randomize(0)` does (STYLE.md §6); got no seed.",
     )
-  let
-    parts = path.split('/')
-    is_stub = parts.len >= 2 and parts[^2] == "tests" and parts[^1].startsWith("test_")
-  if is_stub:
-    let open = source.find(TESTAMENT_HEADER)
-    if open < 0:
-      result.add finding(path, 0, "Test stub carries testament header (STYLE.md §6); got none.")
-    else:
-      let
-        close = source.find(LONG_STRING, open + TESTAMENT_HEADER.len)
-        header = if close > open: source[open + TESTAMENT_HEADER.len..<close] else: ""
-      for line in header.splitLines:
-        let s = line.strip
-        if s.startsWith("cmd:") and " -r" in s:
-          result.add finding(
-            path,
-            0,
-            "Stub `cmd` leaves out `-r`, since testament runs binary itself (STYLE.md §6); " &
-              "got `-r`.",
-          )
-        for key in STUB_KEYS:
-          if s.startsWith(key & ":"):
-            result.add finding(
-              path,
-              0,
-              "Stub leaves out keys `testament pattern` never reads (STYLE.md §6); got `" & key &
-                "`.",
-            )
+  if path.isStub and source.find(TESTAMENT_HEADER) < 0:
+    result.add finding(path, 0, "Test stub carries testament header (STYLE.md §6); got none.")
+  for stub in stubKeys(path, source):
+    let message =
+      if stub.first >= 0:
+        "Stub `cmd` leaves out `-r`, since testament runs binary itself (STYLE.md §6); got `-r`."
+      else:
+        "Stub leaves out keys `testament pattern` never reads (STYLE.md §6); got `" & stub.key &
+          "`."
+    result.add finding(path, stub.line + 1, message)
   for i, c in code:
     if c.firstWord == "echo" and '"' notin lines[i] and not code.isUnderCondition(i):
       result.add finding(
@@ -746,6 +789,106 @@ func fixStrictFuncs(path, source: string): Fix =
   result.fixed.add finding(path, reported, "strictFuncs (STYLE.md §2)")
 
 
+func isUmbrella(path: string): bool =
+  ## Decide whether path is library umbrella: `<project>/src/<project>.nim`.
+  let parts = path.split('/')
+  parts.len >= 3 and parts[^2] == "src" and parts[^1] == parts[^3] & ".nim"
+
+
+func profilerOf(path, source: string): Profiler =
+  ## Read profiler import of module: forms on two lines, presence, and pragma it goes after.
+  ##   Module opens with header docs, notes and testament header; pragma lines after them, with
+  ##   blank lines between, are its directives (X.6), and import goes after last one.
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    header = source.headerLines
+  result.anchor = -1
+  result.is_entry = path.isStub or path.isUmbrella
+  for i, line in lines:
+    if code[i].strip.len == 0: continue
+    if line.startsWith(MAIN_GUARD): result.is_entry = true
+    if line == PROFILER_IMPORT: result.is_present = true
+    if line == PROFILER_GUARD and i + 1 < lines.len and lines[i + 1].strip == PROFILER_MODULE and
+        lines[i + 1].indentOf > 0:
+      result.is_present = true
+      result.pairs.add i
+
+  # Find last pragma line of directives opening module, past docs, notes and testament header.
+  var is_opening = true
+  for i, line in lines:
+    if not is_opening: break
+    if code[i].strip.len == 0 or i in header or line.startsWith(TESTAMENT_HEADER): continue
+    if line.startsWith("{.") and not line.startsWith("{.push"): result.anchor = i
+    else: is_opening = false
+
+
+func checkProfiler*(path, source: string): seq[Finding] =
+  ## Report profiler import on two lines, and entry module, umbrella or stub lacking it (STYLE.md
+  ##   §3).
+  ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
+  let profiler = profilerOf(path, source)
+  for i in profiler.pairs:
+    result.add finding(
+      path,
+      i + 1,
+      "Profiler import stands on one line, `" & PROFILER_IMPORT & "` (STYLE.md §3); got `2` lines.",
+    )
+  if profiler.is_entry and not profiler.is_present:
+    result.add finding(
+      path,
+      0,
+      "Entry module, library umbrella and test stub import profiler right after pragmas " &
+        "(STYLE.md §3); got none.",
+    )
+
+
+func fixProfiler(path, source: string): Fix =
+  ## Join each two-line profiler import onto one line; insert one, after module's last opening
+  ##   pragma, where entry module, umbrella or stub lacks it. Module without such pragma stays.
+  let profiler = profilerOf(path, source)
+  result.source = source
+  if profiler.pairs.len == 0 and (profiler.is_present or not profiler.is_entry or
+      profiler.anchor < 0):
+    return
+  let lines = source.split('\n')
+  var shaped: seq[string]
+  for i, line in lines:
+    if i - 1 in profiler.pairs: continue
+    shaped.add(if i in profiler.pairs: PROFILER_IMPORT else: line)
+    result.origin.add i + 1
+    if i == profiler.anchor and not profiler.is_present:
+      shaped.add ["", PROFILER_IMPORT]
+      result.origin.add [0, 0]
+      if i + 1 < lines.len and lines[i + 1].strip.len > 0:
+        shaped.add ""
+        result.origin.add 0
+  result.source = shaped.join("\n")
+  for i in profiler.pairs: result.fixed.add finding(path, i + 1, "profiler import (STYLE.md §3)")
+  if not profiler.is_present: result.fixed.add finding(path, 0, "profiler import (STYLE.md §3)")
+
+
+func fixStubKeys(path, source: string): Fix =
+  ## Cut `-r` from stub's `cmd`, and delete line of `batchable` or `joinable`, as check reads them.
+  let found = stubKeys(path, source)
+  result.source = source
+  if found.len == 0: return
+  var
+    lines = source.split('\n')
+    dropped: seq[int]
+  for stub in found.reversed:
+    if stub.first < 0: dropped.add stub.line
+    else: lines[stub.line] = lines[stub.line][0..<stub.first] & lines[stub.line][stub.after .. ^1]
+  var shaped: seq[string]
+  for i, line in lines:
+    if i in dropped: continue
+    shaped.add line
+    result.origin.add i + 1
+  result.source = shaped.join("\n")
+  if dropped.len == 0: result.origin.setLen(0)
+  for stub in found: result.fixed.add finding(path, stub.line + 1, "stub keys (STYLE.md §6)")
+
+
 func disorders(source: string): seq[Disorder] =
   ## Find each pragma list of declaration, `export` list and names of `from … import` out of
   ##   dictionary order; pragma list holds bare pragmas first, then pragmas with argument.
@@ -833,11 +976,19 @@ func fixLists(path, source: string): Fix =
   for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10)")
 
 
-const IDIOM_FIXERS*: array[6, Fixer] = [
-  fixReturnResult, fixImports, fixConsolidations, fixBindings, fixStrictFuncs, fixLists,
+const IDIOM_FIXERS*: array[8, Fixer] = [
+  fixReturnResult,
+  fixStubKeys,
+  fixImports,
+  fixConsolidations,
+  fixBindings,
+  fixStrictFuncs,
+  fixProfiler,
+  fixLists,
 ]
   ## Idiom fixers in order they run: brackets merge after rank orders blocks, so merged
-  ##   statement takes first rank's place.
+  ##   statement takes first rank's place; profiler import goes after pragma `strictFuncs`
+  ##   fixer places.
 
 
 func fixIdioms*(path, source: string): Fix =
