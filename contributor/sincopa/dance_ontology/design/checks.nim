@@ -299,7 +299,7 @@ proc checkRules*() =
   # and `"in high lock the line goes around the back of the modified body"`,
   # to back of current hand.  Table here is rules
   # transcribed, held against settle table that drawing derives from.
-  const WHERE = [
+  const landings = [
     (level: Level.High, way: Way.Wrap, whose: Whose.Other, spot: Slot.Front,
      sends: Sends.FrontWay),
     (level: Level.Low, way: Way.Wrap, whose: Whose.Other, spot: Slot.Front,
@@ -309,7 +309,7 @@ proc checkRules*() =
     (level: Level.High, way: Way.Lock, whose: Whose.Own, spot: Slot.Back,
      sends: Sends.BackWay),
   ]
-  for landing in WHERE:
+  for landing in landings:
     for arm in Arm:
       let lands = if landing.whose == Whose.Own: arm else: other(arm)
       doAssert slotOf(arm, some landing.level, some landing.way) == (lands, landing.spot),
@@ -341,7 +341,7 @@ proc checkRules*() =
   # `doesn't make sense to have a wrap or a lock without the line actually`
   # `going around the body."`
   var arc_seen: HashSet[float]
-  for landing in WHERE:
+  for landing in landings:
     for turn in [0.0, 90.0, 180.0, 270.0]:
       let
         pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
@@ -711,8 +711,8 @@ proc checkSingleTurns*(built: Parts) =
   #     putting whole of its offset against one hand and running straight
   #     to it.  Long curve is one that crests away from both.
   const
-    CREST_SEEN = 0.1   ## Least offset counted as shape rather than as noise.
-    CREST_IN = 0.25    ## How far in from either hand crest has to stand.
+    crest_seen = 0.1       ## Least offset counted as shape rather than as noise.
+    crest_in_floor = 0.25  ## How far in from either hand crest has to stand.
   var
     turns: array[4, int]
     bought = 0.0
@@ -740,9 +740,9 @@ proc checkSingleTurns*(built: Parts) =
           turns[min(bendsIn(settled_reach), turns.high)] += 1
           sharpest = max(sharpest, sharpestIn(settled_reach))
           let crest = crestOf(settled_reach)
-          if crest.offset > CREST_SEEN:
+          if crest.offset > crest_seen:
             let stands = min(crest.at, 1 - crest.at)
-            doAssert stands > CREST_IN,
+            doAssert stands > crest_in_floor,
               &"A reach crests beside a hand rather than across its span; " &
                 &"got `{decimal(crest.at, 2)}` on {manner} of {single.name}."
             inc curved
@@ -870,9 +870,9 @@ proc checkSingleTurns*(built: Parts) =
   # that is asserted rather than assumed.
   #   Margin, not bare `<`: two legs paced alike come out equal to within
   #     rounding, and one float hair either way is not difference anybody
-  #     sees.  `RESET_READS` is how much quicker return has to be before
+  #     sees.  `reset_reads` is how much quicker return has to be before
   #     eye takes it for reset rather than for repeat.
-  const RESET_READS = 0.9
+  const reset_reads = 0.9
   var laziest = 0.0
   for manner in Manner:
     let
@@ -886,7 +886,7 @@ proc checkSingleTurns*(built: Parts) =
       half = walk.poses.len div 2
       going = walk.times[half - 1]
       coming = 1.0 - walk.times[half]
-    doAssert coming < going * RESET_READS,
+    doAssert coming < going * reset_reads,
       &"A move's reset does not read as quicker than its turn; got " &
         &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {manner}."
     laziest = max(laziest, coming / going)
@@ -902,7 +902,7 @@ proc checkSingleTurns*(built: Parts) =
       half = walk.poses.len div 2
       going = walk.times[half - 1]
       coming = 1.0 - walk.times[half]
-    doAssert coming < going * RESET_READS,
+    doAssert coming < going * reset_reads,
       &"A cycle's reset does not read as quicker than its move; got " &
         &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {named_move.name}."
     laziest = max(laziest, coming / going)
@@ -1056,13 +1056,13 @@ proc checkHandTurns*(built: Parts) =
   # into short stub and swan is built again rather than one opening into
   # other.  Architect danced it and called that out, 2026-09-08.
   const
-    HOLDS_ITS_BEND = 1.2 ## Turns of wind by which straight one must still
+    holds_its_bend = 1.2 ## Turns of wind by which straight one must still
                          ## carry most of its swing.
-    MOST_OF_IT = 0.5     ## What most of it is, as share.
-  doAssert windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)) > MOST_OF_IT,
+    most_of_it = 0.5     ## What most of it is, as share.
+  doAssert windShare(holds_its_bend, straightArm(holds_its_bend)) > most_of_it,
     &"The straight connection gives up its bend too early; at " &
-      &"{decimal(HOLDS_ITS_BEND, 2)} turns it carries only " &
-      &"`{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)}`."
+      &"{decimal(holds_its_bend, 2)} turns it carries only " &
+      &"`{decimal(windShare(holds_its_bend, straightArm(holds_its_bend)), 2)}`."
   # And what that bend is for: diamond keeps its two crossings all way to
   # swan, where third joins them.  Pair that crosses once is one arm laid
   # over other rather than going round it, and no such state lies between
@@ -1101,8 +1101,8 @@ proc checkHandTurns*(built: Parts) =
       &"stretch."
   told.add &"and the diamond opens into the swan rather than coming apart " &
     &"on the way: the straight connection still carries " &
-    &"{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)} " &
-    &"of its swing at {decimal(HOLDS_ITS_BEND, 2)} turns, nowhere over " &
+    &"{decimal(windShare(holds_its_bend, straightArm(holds_its_bend)), 2)} " &
+    &"of its swing at {decimal(holds_its_bend, 2)} turns, nowhere over " &
     &"that stretch do the two cross fewer than {fewest} times, and the " &
     &"third crossing arrives once and stays -- at " &
     &"{decimal(abs(turned_at), 2)} of a turn"
@@ -1334,7 +1334,7 @@ proc checkHandTurns*(built: Parts) =
           along += run
         result.add here
 
-  const WRITTEN = 0.15 ## Slack markup's own one decimal leaves in sum.
+  const written = 0.15 ## Slack markup's own one decimal leaves in sum.
   var gaps = 0
   # One loop for each axis of data: manner, edge of chain, frame, arm, end, mark, piece.
   # Split would hide its shape.
@@ -1433,7 +1433,7 @@ proc checkHandTurns*(built: Parts) =
                 # markup carries, which is one decimal on each of several
                 # numbers.  Drawing emits no piece between that and
                 # `SEEN_RUN`, so gap between them is where fault shows.
-                doAssert piece <= WRITTEN or piece >= SEEN_RUN - WRITTEN,
+                doAssert piece <= written or piece >= SEEN_RUN - written,
                   &"A break leaves a piece too short to read as line; got " &
                     &"`{decimal(piece, 2)}` on {arm} shade {k} in {manner} " &
                     &"edge {edge} frame {i}."

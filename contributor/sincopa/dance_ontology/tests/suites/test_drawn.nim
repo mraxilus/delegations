@@ -8,7 +8,7 @@ import std/unittest
 import ../../design/drawn
 
 
-suite "capsule on canvas":
+suite "Internal: Capsule on canvas":
   test "capsule of no length is put down as disc, never as stroke of no length":
     ## Sphere is capsule whose two ends are one point, and palm is one.  Stroke
     ## of no length with round caps is drawn as disc by one browser and as

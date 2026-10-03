@@ -513,8 +513,10 @@ suite "Chapter 2":
    and interface text, and Commit Mono for code, data and figures. Enable the ligatures of
    Commit Mono wherever the renderer shapes text, because a glyph atlas that does no shaping
    needs none. The split is a preference of the Architect rather than a finding, so taste
-   decides, and the record says so. Merge faces by codepoint range where none covers
-   everything, then render each codepoint against `.notdef` to verify the coverage.
+   decides, and the record says so. A Noto face ships whole and never as a subset, since Noto
+   was chosen so that no character of a page falls outside its faces. Merge faces by codepoint
+   range where none covers everything, then render each codepoint against `.notdef` to verify
+   the coverage.
 9. A space inside an expression stands only where this list puts it, or where the tokeniser
    demands it:
    - one space on each side of a binary operator, and of `=`;

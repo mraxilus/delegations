@@ -283,12 +283,13 @@ proc cellsBody(review: string; data: JsonNode): string =
 
 func unstamped*(text: string): string =
   ## Recording as page folds it in: its first field, stamp, left out.
-  const FIRST = "{\"stamp\":"
-  if not text.startsWith(FIRST): return text
+  const first = "{\"stamp\":"
+  if not text.startsWith(first): return text
   "{" & text[text.find('\n') + 1 .. ^1]
 
 
-when isMainModule:
+proc main() =
+  ## Fold recording, viewer and reference into `rig.html`, in directory first argument names.
   let
     directory = if paramCount() >= 1: paramStr(1) else: "."
     data = "design" / "rig.json"
@@ -310,3 +311,7 @@ when isMainModule:
                     "<script>" & readFile(view) & "</script>\n")
   writeFile(directory / "rig.html", withFaces(html))
   echo "wrote ", directory / "rig.html"
+
+
+when isMainModule:
+  main()

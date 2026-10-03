@@ -7,7 +7,7 @@ import std/[options, strutils, unittest]
 import ../../src/dance_ontology/frame
 
 
-suite "frames":
+suite "Internal: Frames":
   test "every enumerated frame is valid and distinct":
     check FRAMES.len == 8
     for target in FRAMES:
@@ -18,8 +18,8 @@ suite "frames":
   test "an arm order is recorded exactly where the forearms overlap":
     var overlapping = 0
     for target in FRAMES:
-      check target.over.isSome == target.hasOverlap
-      if target.hasOverlap:
+      check target.over.isSome == target.isOverlapping
+      if target.isOverlapping:
         inc overlapping
     check overlapping == 2  # Left over Right, and Right over Left.
 
@@ -64,7 +64,7 @@ suite "frames":
     check fromKey("l-.").get.reflect == fromKey("-r.").get
 
 
-suite "hands":
+suite "Internal: Hands":
   test "the two readings of a connection agree with each other":
     for target in FRAMES:
       var held = 0
@@ -99,7 +99,7 @@ suite "hands":
       check not free_frame.isUsingHand(side)
 
 
-suite "naming":
+suite "Internal: Naming":
   test "every frame is named":
     var names: seq[string] = @[]
     for target in FRAMES:

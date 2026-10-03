@@ -38,7 +38,7 @@ func titleOf(page: string): string =
   page[opens + "<title>".len ..< shuts].split(" \u2014 ")[^1]
 
 
-suite "mark workbench":
+suite "Internal: Mark workbench":
   createDir(OUT)
   for i in 0 ..< PAGES.len:
     test PAGES[i].name:
@@ -70,7 +70,7 @@ suite "mark workbench":
         checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
         fail()
 
-suite "every page this project publishes":
+suite "Internal: Every page this project publishes":
   test "viewer's title reads in title case, as every other does":
     ## Viewer is written by its own module rather than by workbench above, so its title is
     ## held here against same reading rather than left as only one nothing checks.
@@ -90,7 +90,7 @@ suite "every page this project publishes":
       fail()
 
 
-suite "the sixteen facings, drawn":
+suite "Internal: The sixteen facings, drawn":
   # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
   # them from model, so every name below comes from model, never from page it checks.
   test "the frame page draws each facing once, under its own name":
@@ -148,7 +148,7 @@ suite "the sixteen facings, drawn":
       check got == want
 
 
-suite "the rests and the chains, named by model":
+suite "Internal: The rests and the chains, named by model":
   ## Each page names chain's rest and facings through `parts.restOf` and
   ##   `parts.facingAt`, and law reads written page back (Article IX.5).
 

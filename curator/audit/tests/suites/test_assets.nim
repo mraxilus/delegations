@@ -70,6 +70,17 @@ suite "Assets":
     check "noto-sans-math-math-400-normal.woff2".declaredDigest.len == 64  # rga_visualiser alone
 
 
+  test "each Noto face a page draws is declared whole (Article X.8)":
+    # Noto was chosen so that no character of page falls outside its faces, and subset undoes
+    #   that; so every Noto face pages draw has its whole TrueType file here.
+    for file in [
+      "NotoSans-Regular.ttf", "NotoSans-SemiBold.ttf", "NotoSansMath-Regular.ttf",
+      "NotoSansSymbols2-Regular.ttf", "NotoSerif-Italic.ttf", "NotoSerif-Regular.ttf",
+      "NotoSerif-SemiBold.ttf",
+    ]:
+      check file.declaredDigest.len == 64
+
+
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1

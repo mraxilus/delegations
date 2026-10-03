@@ -62,7 +62,7 @@ func zerosOf(wavelength: float): int =
     at += wavelength / 2
 
 
-suite "reach breaks":
+suite "Internal: Reach breaks":
 
   test "a break never eats either end of a reach":
     for i in 0 ..< POINT_COUNT:
@@ -123,7 +123,7 @@ suite "reach breaks":
     check runs[0] == LINE_SAMPLED
 
 
-suite "crossings found":
+suite "Internal: Crossings found":
 
   test "crossings close together are still separate crossings":
     # Crossing is where two reaches swap which side of one another they lie,
@@ -167,7 +167,7 @@ const
     ##     notices, since ordinary call at run time never touches that path.
 
 
-suite "drawn run":
+suite "Internal: Drawn run":
   test "length of run is sum of its steps, taken at compile time":
     check abs(WALKED - 7.0) < 1e-9
 
@@ -177,5 +177,5 @@ suite "drawn run":
   test "run of one point, or none, is no length at all":
     check polylineLength(@[]) == 0.0
     check polylineLength(@[(1.0, 2.0)]) == 0.0
-    const NOTHING = polylineLength(@[])
-    check NOTHING == 0.0
+    const nothing = polylineLength(@[])
+    check nothing == 0.0
