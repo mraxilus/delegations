@@ -224,6 +224,8 @@ suite "Hooks":
       .messages.anyIt("lacks `**State:**`" in it)
     check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
       .messages.anyIt("state is one of" in it and "got `stuck`." in it)  # word, not branch
+    check checkSignoff(SIGNOFF.replace("**State:** blocked,", "**State:** blocked"), BRANCH)
+      .len == 0  # word ends at space too
     let unblocked = SIGNOFF.replace("- Class: blocks this delegate", "- Class: has a workaround: x")
     check checkSignoff(unblocked, BRANCH).messages.anyIt("exactly when" in it)  # blocked, no block
     check checkSignoff(unblocked.replace("**State:** blocked", "**State:** working"), BRANCH)
