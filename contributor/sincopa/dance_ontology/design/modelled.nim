@@ -42,13 +42,13 @@ const CROWN = Band.Crown
 
 
 type Question* = object ## One card's question, as data, so threads may share it.
-  key: string
-  links: seq[Link]
-  is_away: bool
-  is_still: bool    ## Still card: whether pose holds; else whether couple carry.
-  turns: float   ## Facing for still; how far to carry, in manner's own sense.
-  is_either_way: bool   ## Still that fixes no way about: wound either way.
-  who, head: Body ## Who turns, and whose crown hands go over, for moving card.
+  key*: string
+  links*: seq[Link]
+  is_away*: bool
+  is_still*: bool    ## Still card: whether pose holds; else whether couple carry.
+  turns*: float   ## Facing for still; how far to carry, in manner's own sense.
+  is_either_way*: bool   ## Still that fixes no way about: wound either way.
+  who*, head*: Body ## Who turns, and whose crown hands go over, for moving card.
 
 
 func moving(key: string; links: seq[Link]; is_away: bool; manner: Manner;

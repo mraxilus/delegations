@@ -24,6 +24,7 @@ type StillAsk* = object ## One still card, as simulation is asked it.
   links*: seq[Link]
   turns*: float   ## Facing, in turns from where hold rests.
   rest*: Facing   ## Facing hold rests at (`parts.restOf`).
+  who*: Body      ## Who simulation turns: follow alone, as `walk.stood` turns every still.
   head*: Body     ## Whose crown joined hands go over.
   is_either_way*: bool   ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
@@ -110,6 +111,7 @@ func stillAsks*(): seq[StillAsk] =
         links: linksOf(holdsOf(target)),
         turns: asked(amount),
         rest: restOf(target),
+        who: Body.Two,
         head: Body.Two,
         is_either_way: amount != 0.0 and isDrawnEitherWay(target),
       )
@@ -120,6 +122,7 @@ func stillAsks*(): seq[StillAsk] =
       links: linksOf(holdsOf(target)),
       turns: asked(-amountFor(target, 1)),
       rest: restOf(target),
+      who: Body.Two,
       head: Body.Two,
     )
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
@@ -133,6 +136,7 @@ func stillAsks*(): seq[StillAsk] =
           links: linksOf(single.holds),
           turns: asked(sense * float(quarter) / float(QUARTERS_ROUND)),
           rest: restOf(single.holds),
+          who: Body.Two,
           head: bodyOf(MANNERS[manner].who),
         )
   # `C` and `D`: two chains, seven positions each, half turn apart.
@@ -143,5 +147,6 @@ func stillAsks*(): seq[StillAsk] =
         links: linksOf(arms),
         turns: asked(wind),
         rest: restOf(arms),
+        who: Body.Two,
         head: Body.Two,
       )

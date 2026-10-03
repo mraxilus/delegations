@@ -61,6 +61,20 @@ func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
 
 suite "planner and engine are one rig":
 
+  test "gap to palm is read from nearest point of segment, wherever palm lies along it":
+    ## Planner holds each palm as point with radius (`plan.place`), so every gap it keeps to
+    ##   palm asks `vector.closest` of segment and point.  Read from segment's start, plan of
+    ##   drawn D1 kept 5.8 cm between palm and forearm where palm sat 5.4 cm inside it, and
+    ##   engine stood that palm 4.3 cm inside forearm, measured 2026-10-02.
+    let point: Vector = (0.5, 0.2, 0.0)
+    for (a, b) in [((0.0, 0.0, 0.0), (1.0, 0.0, 0.0)), ((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))]:
+      let
+        near = closest(a, b, point, point)
+        back = closest(point, point, a, b)
+      check abs(near.gap - 0.2) < MIRRORED
+      check abs(near.t - 0.5) < MIRRORED
+      check abs(back.gap - 0.2) < MIRRORED
+
   test "engine stands every joint where plan places it, and reads plan back":
     ## Red with collarbone's lift read back with lead's sign on both sides: furthest point
     ## 164 mm off plan, measured 2026-10-02.
