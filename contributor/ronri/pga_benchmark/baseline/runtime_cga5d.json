@@ -23,30 +23,30 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 98.96,
-        "ns_min": 92.23,
+        "ns_median": 97.28,
+        "ns_min": 92.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          97.33,
-          97.23,
-          131.76,
-          98.96,
-          138.86
+          97.28,
+          143.04,
+          97.35,
+          92.23,
+          92.33
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 105.86,
-        "ns_min": 93.51,
+        "ns_median": 96.81,
+        "ns_min": 93.4,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          96.96,
-          140.37,
-          105.86,
-          97.94,
-          142.03
+          96.81,
+          98.93,
+          98.55,
+          93.54,
+          93.7
         ]
       }
     },
@@ -54,30 +54,30 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 130.33,
-        "ns_min": 96.57,
+        "ns_median": 97.41,
+        "ns_min": 92.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          97.46,
-          137.18,
-          130.33,
-          99.29,
-          133.4
+          97.41,
+          97.62,
+          97.27,
+          98.49,
+          93.2
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 100.94,
-        "ns_min": 96.95,
+        "ns_median": 97.3,
+        "ns_min": 94.02,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          97.53,
-          112.52,
-          97.09,
-          100.94,
-          138.07
+          97.28,
+          97.3,
+          97.43,
+          97.4,
+          94.16
         ]
       }
     },
@@ -85,30 +85,30 @@
       "symbol": "⟑",
       "arity": 2,
       "library": {
-        "ns_median": 535.16,
-        "ns_min": 485.86,
+        "ns_median": 525.14,
+        "ns_min": 483.98,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          533.65,
-          725.01,
-          529.91,
-          535.16,
-          735.0
+          524.26,
+          525.14,
+          528.26,
+          533.12,
+          511.71
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 542.48,
-        "ns_min": 491.87,
+        "ns_median": 524.08,
+        "ns_min": 483.28,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          538.33,
-          744.65,
-          530.46,
-          542.48,
-          712.99
+          534.99,
+          512.05,
+          537.12,
+          524.08,
+          505.95
         ]
       }
     },
@@ -116,30 +116,30 @@
       "symbol": "⟇",
       "arity": 2,
       "library": {
-        "ns_median": 530.04,
-        "ns_min": 486.36,
+        "ns_median": 529.72,
+        "ns_min": 486.31,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          530.04,
-          595.07,
-          510.95,
-          526.51,
-          703.46
+          534.16,
+          505.74,
+          529.72,
+          531.64,
+          529.1
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 544.19,
-        "ns_min": 495.68,
+        "ns_median": 530.24,
+        "ns_min": 488.27,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          546.14,
-          544.19,
-          532.51,
-          517.38,
-          698.13
+          541.91,
+          527.17,
+          531.15,
+          530.24,
+          527.0
         ]
       }
     },
@@ -147,30 +147,30 @@
       "symbol": "∙",
       "arity": 2,
       "library": {
-        "ns_median": 18.66,
-        "ns_min": 18.28,
+        "ns_median": 18.34,
+        "ns_min": 18.27,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          20.79,
-          18.49,
-          18.31,
-          18.66,
-          27.94
+          18.4,
+          18.34,
+          18.3,
+          18.32,
+          18.42
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 18.88,
-        "ns_min": 18.29,
+        "ns_median": 18.3,
+        "ns_min": 18.14,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          19.09,
-          18.49,
-          18.34,
-          18.88,
-          29.17
+          18.42,
+          18.3,
+          18.31,
+          18.26,
+          18.3
         ]
       }
     },
@@ -178,30 +178,30 @@
       "symbol": "∘",
       "arity": 2,
       "library": {
-        "ns_median": 17.91,
-        "ns_min": 17.6,
+        "ns_median": 17.43,
+        "ns_min": 17.15,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.91,
-          17.78,
-          17.77,
-          20.59,
-          25.99
+          17.23,
+          17.38,
+          17.53,
+          17.55,
+          17.43
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 17.85,
-        "ns_min": 17.71,
+        "ns_median": 17.58,
+        "ns_min": 17.41,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.85,
-          17.81,
-          17.74,
-          18.95,
-          18.92
+          17.49,
+          17.58,
+          17.63,
+          17.69,
+          17.58
         ]
       }
     },
@@ -209,30 +209,30 @@
       "symbol": "∨★",
       "arity": 2,
       "library": {
-        "ns_median": 99.28,
-        "ns_min": 95.51,
+        "ns_median": 96.41,
+        "ns_min": 92.14,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          99.28,
-          99.25,
-          96.07,
-          131.81,
-          138.49
+          96.41,
+          96.96,
+          96.46,
+          96.04,
+          95.65
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 101.58,
-        "ns_min": 97.01,
+        "ns_median": 97.43,
+        "ns_min": 94.85,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.37,
-          101.58,
-          97.39,
-          129.9,
-          136.57
+          143.98,
+          97.43,
+          98.88,
+          97.38,
+          95.14
         ]
       }
     },
@@ -240,30 +240,30 @@
       "symbol": "∨☆",
       "arity": 2,
       "library": {
-        "ns_median": 102.51,
-        "ns_min": 99.72,
+        "ns_median": 100.52,
+        "ns_min": 95.72,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          102.36,
-          102.51,
-          100.31,
-          134.16,
-          140.12
+          105.06,
+          100.55,
+          100.52,
+          100.28,
+          96.08
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 103.21,
-        "ns_min": 100.25,
+        "ns_median": 100.64,
+        "ns_min": 95.67,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          103.21,
-          103.21,
-          100.7,
-          139.65,
-          141.35
+          108.05,
+          100.59,
+          100.67,
+          100.64,
+          96.11
         ]
       }
     },
@@ -271,30 +271,30 @@
       "symbol": "∧★",
       "arity": 2,
       "library": {
-        "ns_median": 102.34,
-        "ns_min": 99.57,
+        "ns_median": 99.63,
+        "ns_min": 96.25,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          102.27,
-          102.34,
-          99.99,
-          144.09,
-          102.97
+          136.95,
+          99.63,
+          136.64,
+          99.61,
+          96.37
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 101.22,
-        "ns_min": 99.21,
+        "ns_median": 99.24,
+        "ns_min": 94.92,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.22,
-          101.17,
-          99.33,
-          143.42,
-          101.66
+          102.58,
+          99.24,
+          100.67,
+          99.18,
+          99.21
         ]
       }
     },
@@ -302,30 +302,30 @@
       "symbol": "∧☆",
       "arity": 2,
       "library": {
-        "ns_median": 107.6,
-        "ns_min": 103.53,
+        "ns_median": 103.55,
+        "ns_min": 100.34,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          107.49,
-          107.6,
-          103.71,
-          146.38,
-          107.96
+          107.74,
+          106.67,
+          103.47,
+          103.55,
+          103.49
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 103.16,
-        "ns_min": 100.12,
+        "ns_median": 100.06,
+        "ns_min": 96.32,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          103.12,
-          103.16,
-          100.2,
-          146.82,
-          103.21
+          103.17,
+          101.56,
+          100.06,
+          99.97,
+          99.84
         ]
       }
     },
@@ -333,30 +333,30 @@
       "symbol": "+",
       "arity": 2,
       "library": {
-        "ns_median": 9.47,
-        "ns_min": 9.31,
+        "ns_median": 9.95,
+        "ns_min": 9.19,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.93,
-          9.47,
-          9.47,
-          12.6,
-          9.34
+          10.44,
+          9.23,
+          10.64,
+          9.95,
+          9.42
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 12.49,
-        "ns_min": 12.04,
+        "ns_median": 8.91,
+        "ns_min": 8.85,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          12.49,
-          12.19,
-          12.21,
-          14.59,
-          12.52
+          8.91,
+          8.91,
+          8.89,
+          10.56,
+          8.96
         ]
       }
     },
@@ -364,30 +364,30 @@
       "symbol": "-",
       "arity": 2,
       "library": {
-        "ns_median": 9.48,
-        "ns_min": 9.3,
+        "ns_median": 9.25,
+        "ns_min": 9.18,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.9,
-          9.48,
-          9.47,
-          10.73,
-          9.33
+          9.25,
+          9.24,
+          9.5,
+          9.25,
+          9.41
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 9.63,
-        "ns_min": 9.48,
+        "ns_median": 9.0,
+        "ns_min": 8.94,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.89,
-          9.55,
-          9.53,
-          10.03,
-          9.63
+          9.0,
+          9.02,
+          8.99,
+          8.99,
+          9.04
         ]
       }
     },
@@ -395,30 +395,30 @@
       "symbol": "",
       "arity": 2,
       "library": {
-        "ns_median": 214.44,
-        "ns_min": 208.03,
+        "ns_median": 214.56,
+        "ns_min": 204.31,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          217.23,
-          215.86,
-          214.44,
-          210.86,
-          214.01
+          215.23,
+          214.56,
+          215.41,
+          209.0,
+          211.79
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 198.75,
-        "ns_min": 191.38,
+        "ns_median": 196.96,
+        "ns_min": 189.86,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          199.38,
-          201.88,
-          198.75,
-          198.64,
-          198.28
+          201.7,
+          193.6,
+          198.66,
+          190.6,
+          196.96
         ]
       }
     },
@@ -426,30 +426,30 @@
       "symbol": "",
       "arity": 2,
       "library": {
-        "ns_median": 189.03,
-        "ns_min": 178.06,
+        "ns_median": 188.33,
+        "ns_min": 178.18,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          192.31,
-          189.03,
-          188.58,
-          190.66,
-          187.98
+          189.0,
+          183.21,
+          185.16,
+          188.33,
+          270.1
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 182.58,
-        "ns_min": 178.9,
+        "ns_median": 184.19,
+        "ns_min": 172.77,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          184.89,
-          182.49,
-          181.49,
-          183.56,
-          182.58
+          185.56,
+          181.4,
+          184.19,
+          179.38,
+          272.29
         ]
       }
     },
@@ -457,30 +457,30 @@
       "symbol": "",
       "arity": 2,
       "library": {
-        "ns_median": 214.45,
-        "ns_min": 203.52,
+        "ns_median": 213.64,
+        "ns_min": 209.28,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          217.42,
-          213.2,
-          214.45,
-          214.23,
-          215.57
+          217.22,
+          212.46,
+          213.64,
+          213.55,
+          292.11
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 199.25,
-        "ns_min": 195.23,
+        "ns_median": 199.78,
+        "ns_min": 190.22,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          202.85,
-          199.12,
-          197.52,
-          199.25,
-          200.13
+          204.17,
+          199.78,
+          198.49,
+          197.65,
+          274.23
         ]
       }
     },
@@ -488,30 +488,30 @@
       "symbol": "",
       "arity": 2,
       "library": {
-        "ns_median": 189.8,
-        "ns_min": 177.32,
+        "ns_median": 189.53,
+        "ns_min": 178.46,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          193.56,
-          189.3,
-          185.62,
-          192.33,
-          189.8
+          215.45,
+          179.05,
+          189.53,
+          187.95,
+          261.67
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 183.43,
-        "ns_min": 179.3,
+        "ns_median": 192.34,
+        "ns_min": 182.47,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          187.6,
-          183.43,
-          180.97,
-          184.35,
-          182.91
+          213.25,
+          190.31,
+          192.34,
+          191.5,
+          277.42
         ]
       }
     },
@@ -519,30 +519,30 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 6.7,
-        "ns_min": 6.52,
+        "ns_median": 6.55,
+        "ns_min": 6.35,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          6.7,
-          6.7,
-          6.7,
-          6.67,
-          6.56
+          8.5,
+          6.45,
+          6.55,
+          6.41,
+          8.64
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 11.13,
-        "ns_min": 11.01,
+        "ns_median": 9.74,
+        "ns_min": 9.58,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.13,
-          11.15,
-          11.16,
-          11.13,
-          11.11
+          12.33,
+          9.7,
+          9.74,
+          9.71,
+          11.57
         ]
       }
     },
@@ -550,30 +550,30 @@
       "symbol": "∙",
       "arity": 1,
       "library": {
-        "ns_median": 12.99,
-        "ns_min": 12.66,
+        "ns_median": 12.73,
+        "ns_min": 12.41,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          12.99,
-          13.06,
-          12.79,
-          12.95,
-          13.52
+          15.95,
+          12.58,
+          12.67,
+          12.73,
+          15.74
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 12.87,
-        "ns_min": 12.65,
+        "ns_median": 13.02,
+        "ns_min": 12.69,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.39,
-          12.73,
+          16.76,
+          13.02,
+          12.91,
           12.75,
-          12.87,
-          13.31
+          15.53
         ]
       }
     },
@@ -581,30 +581,30 @@
       "symbol": "∘",
       "arity": 1,
       "library": {
-        "ns_median": 11.36,
-        "ns_min": 11.19,
+        "ns_median": 12.16,
+        "ns_min": 11.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.7,
-          11.26,
-          11.52,
-          11.36,
-          11.36
+          14.74,
+          12.04,
+          12.12,
+          12.16,
+          14.01
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 11.35,
-        "ns_min": 11.18,
+        "ns_median": 12.22,
+        "ns_min": 11.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.71,
-          11.23,
-          11.51,
-          11.32,
-          11.35
+          14.81,
+          12.01,
+          12.12,
+          12.22,
+          13.38
         ]
       }
     },
@@ -612,30 +612,30 @@
       "symbol": "/",
       "arity": 1,
       "library": {
-        "ns_median": 9.88,
-        "ns_min": 9.56,
+        "ns_median": 7.02,
+        "ns_min": 6.96,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.36,
-          9.65,
-          9.65,
-          9.88,
-          10.24
+          8.99,
+          7.02,
+          7.01,
+          7.01,
+          8.5
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 9.91,
-        "ns_min": 9.59,
+        "ns_median": 7.02,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.34,
-          9.69,
-          9.68,
-          9.91,
-          10.25
+          9.08,
+          7.02,
+          7.02,
+          7.01,
+          8.49
         ]
       }
     },
@@ -643,30 +643,30 @@
       "symbol": "\\",
       "arity": 1,
       "library": {
-        "ns_median": 9.95,
-        "ns_min": 9.49,
+        "ns_median": 7.02,
+        "ns_min": 6.96,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.37,
-          9.69,
-          9.7,
-          9.95,
-          10.24
+          8.98,
+          7.02,
+          7.01,
+          7.01,
+          8.5
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 10.23,
-        "ns_min": 9.63,
+        "ns_median": 7.02,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.39,
-          9.69,
-          10.4,
-          9.93,
-          10.23
+          8.51,
+          7.02,
+          7.02,
+          7.01,
+          8.71
         ]
       }
     },
@@ -674,30 +674,30 @@
       "symbol": "~",
       "arity": 1,
       "library": {
-        "ns_median": 9.54,
-        "ns_min": 9.33,
+        "ns_median": 11.06,
+        "ns_min": 9.35,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.71,
-          9.39,
-          9.4,
-          9.54,
-          9.82
+          11.64,
+          9.44,
+          11.06,
+          9.74,
+          11.79
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 9.54,
-        "ns_min": 9.28,
+        "ns_median": 9.77,
+        "ns_min": 9.34,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.73,
-          9.37,
+          11.89,
+          9.42,
           9.41,
-          9.54,
-          9.78
+          9.77,
+          11.46
         ]
       }
     },
@@ -705,30 +705,30 @@
       "symbol": "~∘",
       "arity": 1,
       "library": {
-        "ns_median": 9.72,
-        "ns_min": 9.32,
+        "ns_median": 9.49,
+        "ns_min": 9.36,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.72,
-          11.41,
-          9.39,
-          9.54,
-          9.78
+          11.89,
+          9.44,
+          9.44,
+          9.74,
+          9.49
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 9.55,
-        "ns_min": 9.32,
+        "ns_median": 9.46,
+        "ns_min": 9.37,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.7,
-          9.41,
-          9.38,
-          9.55,
-          9.8
+          11.87,
+          9.43,
+          9.46,
+          9.75,
+          9.46
         ]
       }
     },
@@ -736,30 +736,30 @@
       "symbol": "★",
       "arity": 1,
       "library": {
-        "ns_median": 13.91,
-        "ns_min": 13.2,
+        "ns_median": 12.44,
+        "ns_min": 11.62,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.35,
-          14.1,
-          13.91,
-          13.94,
-          13.74
+          15.76,
+          11.71,
+          11.94,
+          12.44,
+          14.01
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 13.9,
-        "ns_min": 13.2,
+        "ns_median": 12.49,
+        "ns_min": 11.69,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.34,
-          14.08,
-          13.92,
-          13.9,
-          13.8
+          16.75,
+          11.78,
+          12.01,
+          12.49,
+          14.55
         ]
       }
     },
@@ -767,30 +767,30 @@
       "symbol": "☆",
       "arity": 1,
       "library": {
-        "ns_median": 11.17,
-        "ns_min": 10.7,
+        "ns_median": 11.45,
+        "ns_min": 11.05,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.46,
-          10.95,
-          10.83,
-          11.17,
-          11.4
+          16.28,
+          11.15,
+          11.33,
+          11.45,
+          13.55
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 11.17,
-        "ns_min": 10.79,
+        "ns_median": 11.52,
+        "ns_min": 11.16,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.48,
-          10.98,
-          10.89,
-          11.17,
-          11.39
+          16.24,
+          11.22,
+          11.33,
+          11.52,
+          13.63
         ]
       }
     },
@@ -798,30 +798,30 @@
       "symbol": "-",
       "arity": 1,
       "library": {
-        "ns_median": 5.82,
+        "ns_median": 5.67,
         "ns_min": 5.62,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          7.11,
-          5.69,
-          5.65,
-          7.22,
-          5.82
+          8.19,
+          5.67,
+          5.66,
+          5.66,
+          7.5
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 8.72,
-        "ns_min": 8.56,
+        "ns_median": 8.67,
+        "ns_min": 8.57,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          8.77,
-          8.72,
+          10.97,
+          8.67,
           8.66,
-          8.66,
-          8.79
+          8.63,
+          9.21
         ]
       }
     },
@@ -829,30 +829,30 @@
       "symbol": "|∙",
       "arity": 1,
       "library": {
-        "ns_median": 20.49,
-        "ns_min": 18.93,
+        "ns_median": 20.61,
+        "ns_min": 18.51,
         "allocations": 0,
         "share_nan": 0.4970703125,
         "ns_runs": [
-          20.75,
-          20.49,
-          19.19,
-          20.71,
-          20.48
+          35.95,
+          20.61,
+          18.9,
+          20.6,
+          33.34
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 15.45,
-        "ns_min": 15.24,
+        "ns_median": 15.3,
+        "ns_min": 15.25,
         "allocations": 0,
         "share_nan": 0.4970703125,
         "ns_runs": [
-          16.17,
-          15.36,
-          15.26,
-          16.58,
-          15.45
+          26.65,
+          15.3,
+          15.27,
+          15.29,
+          23.92
         ]
       }
     },
@@ -860,30 +860,30 @@
       "symbol": "|∘",
       "arity": 1,
       "library": {
-        "ns_median": 20.25,
-        "ns_min": 18.81,
+        "ns_median": 18.64,
+        "ns_min": 18.14,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          20.26,
-          20.21,
-          18.89,
-          20.26,
-          20.25
+          35.19,
+          18.64,
+          18.17,
+          18.63,
+          32.8
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 14.79,
-        "ns_min": 14.5,
+        "ns_median": 14.45,
+        "ns_min": 13.4,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          15.47,
-          14.68,
-          14.55,
-          15.56,
-          14.79
+          22.11,
+          14.45,
+          13.45,
+          14.4,
+          19.54
         ]
       }
     },
@@ -891,30 +891,30 @@
       "symbol": "|∙²",
       "arity": 1,
       "library": {
-        "ns_median": 17.16,
-        "ns_min": 16.96,
+        "ns_median": 17.11,
+        "ns_min": 16.8,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          27.02,
-          17.16,
-          17.01,
-          18.25,
-          17.13
+          29.04,
+          16.89,
+          17.11,
+          16.83,
+          18.88
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 14.2,
-        "ns_min": 13.83,
+        "ns_median": 13.89,
+        "ns_min": 13.8,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          22.97,
-          13.9,
+          22.9,
           13.88,
-          14.79,
-          14.2
+          13.89,
+          13.87,
+          21.83
         ]
       }
     },
@@ -922,30 +922,30 @@
       "symbol": "|∘²",
       "arity": 1,
       "library": {
-        "ns_median": 16.5,
-        "ns_min": 15.88,
+        "ns_median": 15.88,
+        "ns_min": 15.25,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          22.36,
-          16.33,
-          15.93,
-          17.26,
-          16.5
+          15.76,
+          15.95,
+          15.3,
+          15.88,
+          21.14
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 13.09,
-        "ns_min": 12.48,
+        "ns_median": 12.83,
+        "ns_min": 11.58,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          18.57,
-          13.0,
-          12.51,
-          13.76,
-          13.09
+          13.41,
+          12.83,
+          11.62,
+          12.8,
+          17.61
         ]
       }
     },
@@ -953,30 +953,30 @@
       "symbol": "|",
       "arity": 1,
       "library": {
-        "ns_median": 25.86,
-        "ns_min": 24.87,
+        "ns_median": 26.75,
+        "ns_min": 24.57,
         "allocations": 0,
         "share_nan": 1.0,
         "ns_runs": [
-          25.86,
-          25.88,
-          25.04,
-          26.28,
-          25.82
+          26.75,
+          24.88,
+          28.02,
+          25.13,
+          43.83
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 21.25,
-        "ns_min": 21.17,
+        "ns_median": 21.31,
+        "ns_min": 21.22,
         "allocations": 0,
         "share_nan": 1.0,
         "ns_runs": [
-          21.86,
-          21.18,
-          21.22,
-          21.61,
-          21.25
+          22.5,
+          21.28,
+          21.31,
+          21.25,
+          41.85
         ]
       }
     },
@@ -984,30 +984,30 @@
       "symbol": "^∙",
       "arity": 1,
       "library": {
-        "ns_median": 28.58,
-        "ns_min": 27.56,
+        "ns_median": 28.42,
+        "ns_min": 27.58,
         "allocations": 0,
         "share_nan": 0.4970703125,
         "ns_runs": [
-          29.26,
-          28.62,
-          28.21,
-          27.61,
-          28.58
+          27.83,
+          28.41,
+          28.42,
+          28.44,
+          34.12
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 28.78,
-        "ns_min": 27.98,
+        "ns_median": 28.14,
+        "ns_min": 27.55,
         "allocations": 0,
         "share_nan": 0.4970703125,
         "ns_runs": [
-          29.79,
-          28.78,
-          28.02,
-          28.85,
-          28.75
+          27.73,
+          28.14,
+          27.98,
+          28.23,
+          39.02
         ]
       }
     },
@@ -1015,30 +1015,30 @@
       "symbol": "^∘",
       "arity": 1,
       "library": {
-        "ns_median": 28.73,
-        "ns_min": 27.52,
+        "ns_median": 28.05,
+        "ns_min": 27.14,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          29.17,
-          28.71,
-          28.26,
-          31.26,
-          28.73
+          27.27,
+          28.08,
+          28.02,
+          28.05,
+          34.14
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 25.27,
-        "ns_min": 24.51,
+        "ns_median": 24.55,
+        "ns_min": 24.15,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          26.63,
-          25.13,
-          24.56,
-          26.66,
-          25.27
+          24.24,
+          24.55,
+          24.51,
+          24.59,
+          34.24
         ]
       }
     },
@@ -1046,30 +1046,30 @@
       "symbol": "^",
       "arity": 1,
       "library": {
-        "ns_median": 28.77,
-        "ns_min": 28.13,
+        "ns_median": 27.98,
+        "ns_min": 27.12,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          29.18,
-          28.72,
-          28.25,
-          29.43,
-          28.77
+          27.24,
+          28.07,
+          27.97,
+          27.98,
+          33.46
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 25.24,
-        "ns_min": 24.53,
+        "ns_median": 24.54,
+        "ns_min": 24.16,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          26.64,
-          25.24,
-          24.64,
-          26.63,
-          25.19
+          24.24,
+          24.54,
+          24.5,
+          24.6,
+          34.25
         ]
       }
     },
@@ -1077,30 +1077,30 @@
       "symbol": "⊖",
       "arity": 1,
       "library": {
-        "ns_median": 12.98,
-        "ns_min": 12.73,
+        "ns_median": 12.88,
+        "ns_min": 12.6,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.26,
-          12.89,
-          12.87,
-          12.98,
-          14.12
+          13.71,
+          12.8,
+          12.81,
+          12.88,
+          15.28
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 12.98,
-        "ns_min": 12.76,
+        "ns_median": 12.81,
+        "ns_min": 12.56,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.25,
-          12.94,
-          12.98,
-          12.98,
-          14.14
+          13.71,
+          12.76,
+          12.81,
+          12.72,
+          18.27
         ]
       }
     },
@@ -1108,30 +1108,30 @@
       "symbol": "{}",
       "arity": 1,
       "library": {
-        "ns_median": 12.88,
-        "ns_min": 12.59,
+        "ns_median": 12.54,
+        "ns_min": 12.35,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          12.72,
-          12.9,
-          12.88,
-          13.06,
-          12.63
+          12.44,
+          12.44,
+          12.54,
+          12.54,
+          17.31
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 12.87,
-        "ns_min": 12.24,
+        "ns_median": 12.12,
+        "ns_min": 11.84,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.34,
-          12.31,
-          12.32,
-          12.95,
-          12.87
+          12.19,
+          11.98,
+          12.01,
+          12.12,
+          16.46
         ]
       }
     },
@@ -1139,30 +1139,30 @@
       "symbol": "{}",
       "arity": 1,
       "library": {
-        "ns_median": 14.86,
-        "ns_min": 13.54,
+        "ns_median": 13.62,
+        "ns_min": 13.57,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          14.84,
-          14.86,
-          14.7,
-          14.98,
-          14.87
+          13.6,
+          13.62,
+          13.6,
+          14.1,
+          19.13
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 4.54,
-        "ns_min": 4.47,
+        "ns_median": 4.23,
+        "ns_min": 4.19,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.66,
-          4.49,
-          4.48,
-          4.54,
-          4.61
+          4.26,
+          4.21,
+          4.24,
+          4.23,
+          4.22
         ]
       }
     },
@@ -1171,15 +1171,15 @@
       "arity": 1,
       "library": {
         "ns_median": 0.92,
-        "ns_min": 0.87,
+        "ns_min": 0.81,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
           0.92,
-          0.93,
           0.92,
           0.92,
-          0.92
+          0.92,
+          0.88
         ]
       },
       "reference": null,
@@ -1189,11 +1189,11 @@
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          0.92,
           0.93,
           0.92,
           0.92,
-          0.93
+          0.92,
+          1.03
         ]
       }
     },
@@ -1201,30 +1201,30 @@
       "symbol": "■",
       "arity": 1,
       "library": {
-        "ns_median": 13.08,
-        "ns_min": 13.02,
+        "ns_median": 12.99,
+        "ns_min": 12.88,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.33,
-          13.07,
-          13.08,
-          13.08,
-          13.18
+          13.06,
+          12.99,
+          12.98,
+          12.96,
+          17.17
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 13.11,
-        "ns_min": 12.99,
+        "ns_median": 12.98,
+        "ns_min": 12.9,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.34,
           13.05,
-          13.08,
-          13.11,
-          13.17
+          12.97,
+          12.97,
+          12.98,
+          17.7
         ]
       }
     },
@@ -1232,30 +1232,30 @@
       "symbol": "□",
       "arity": 1,
       "library": {
-        "ns_median": 13.4,
-        "ns_min": 12.91,
+        "ns_median": 13.24,
+        "ns_min": 12.92,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.4,
-          12.97,
-          13.61,
-          13.02,
-          13.43
+          13.78,
+          13.1,
+          13.24,
+          13.06,
+          15.91
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 13.01,
-        "ns_min": 12.9,
+        "ns_median": 13.31,
+        "ns_min": 12.91,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.36,
-          12.96,
-          13.0,
-          13.01,
-          13.41
+          13.71,
+          12.95,
+          13.31,
+          13.19,
+          16.01
         ]
       }
     },
@@ -1263,30 +1263,30 @@
       "symbol": "|■",
       "arity": 1,
       "library": {
-        "ns_median": 20.77,
-        "ns_min": 18.89,
+        "ns_median": 19.33,
+        "ns_min": 18.74,
         "allocations": 0,
         "share_nan": 0.4970703125,
         "ns_runs": [
-          20.79,
-          20.77,
-          20.62,
-          20.83,
-          20.73
+          18.8,
+          19.34,
+          18.91,
+          19.33,
+          32.85
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 15.46,
-        "ns_min": 15.28,
+        "ns_median": 15.57,
+        "ns_min": 15.23,
         "allocations": 0,
         "share_nan": 0.4970703125,
         "ns_runs": [
-          16.17,
-          15.35,
+          15.57,
+          18.23,
           15.3,
-          16.54,
-          15.46
+          15.24,
+          15.92
         ]
       }
     },
@@ -1294,30 +1294,30 @@
       "symbol": "|□",
       "arity": 1,
       "library": {
-        "ns_median": 20.03,
-        "ns_min": 18.57,
+        "ns_median": 18.79,
+        "ns_min": 18.27,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          20.02,
-          20.03,
-          18.65,
-          20.04,
-          20.03
+          18.35,
+          18.84,
+          18.75,
+          18.79,
+          32.58
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 14.66,
-        "ns_min": 14.37,
+        "ns_median": 14.43,
+        "ns_min": 13.77,
         "allocations": 0,
         "share_nan": 0.5029296875,
         "ns_runs": [
-          15.39,
-          14.61,
+          13.83,
+          14.44,
+          14.35,
           14.43,
-          15.6,
-          14.66
+          19.46
         ]
       }
     },
@@ -1325,30 +1325,30 @@
       "symbol": "⊟",
       "arity": 1,
       "library": {
-        "ns_median": 12.79,
-        "ns_min": 12.52,
+        "ns_median": 12.38,
+        "ns_min": 12.21,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.5,
-          12.58,
-          16.71,
-          12.79,
-          12.59
+          12.38,
+          12.37,
+          12.29,
+          12.39,
+          17.69
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 12.77,
-        "ns_min": 12.46,
+        "ns_median": 12.43,
+        "ns_min": 12.24,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.47,
-          16.27,
-          12.51,
-          12.77,
-          12.56
+          12.4,
+          12.43,
+          12.47,
+          12.35,
+          17.2
         ]
       }
     },
@@ -1356,30 +1356,30 @@
       "symbol": "⊞",
       "arity": 1,
       "library": {
-        "ns_median": 60.23,
-        "ns_min": 57.37,
+        "ns_median": 60.12,
+        "ns_min": 57.06,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          113.95,
-          60.25,
-          57.77,
-          60.23,
-          59.99
+          60.21,
+          59.46,
+          59.99,
+          60.12,
+          64.42
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 12.93,
-        "ns_min": 12.59,
+        "ns_median": 12.62,
+        "ns_min": 12.52,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.88,
-          12.66,
-          12.67,
-          12.93,
-          12.97
+          12.62,
+          12.6,
+          12.59,
+          17.51,
+          17.91
         ]
       }
     },
@@ -1387,30 +1387,30 @@
       "symbol": "⊙",
       "arity": 1,
       "library": {
-        "ns_median": 162.87,
-        "ns_min": 154.53,
+        "ns_median": 168.75,
+        "ns_min": 155.05,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          166.21,
-          162.87,
-          156.36,
-          163.93,
-          162.12
+          168.75,
+          162.23,
+          162.77,
+          253.41,
+          245.98
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 48.06,
-        "ns_min": 45.85,
+        "ns_median": 47.51,
+        "ns_min": 46.42,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          48.06,
-          48.21,
-          45.88,
-          49.27,
-          47.98
+          46.63,
+          47.17,
+          47.51,
+          71.64,
+          69.63
         ]
       }
     },
@@ -1418,30 +1418,30 @@
       "symbol": "⊡",
       "arity": 1,
       "library": {
-        "ns_median": 103.93,
-        "ns_min": 99.04,
+        "ns_median": 103.76,
+        "ns_min": 100.38,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          103.54,
-          103.93,
-          102.16,
-          104.03,
-          104.13
+          100.56,
+          103.76,
+          102.98,
+          158.63,
+          158.95
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 49.63,
-        "ns_min": 48.39,
+        "ns_median": 49.82,
+        "ns_min": 47.5,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          49.35,
-          49.66,
-          48.44,
-          50.45,
-          49.63
+          47.57,
+          49.82,
+          48.49,
+          74.83,
+          72.27
         ]
       }
     },
@@ -1449,30 +1449,30 @@
       "symbol": "⊛",
       "arity": 1,
       "library": {
-        "ns_median": 250.19,
-        "ns_min": 245.79,
+        "ns_median": 251.0,
+        "ns_min": 240.78,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          266.59,
-          249.93,
-          250.19,
-          259.88,
-          249.37
+          243.75,
+          251.0,
+          254.44,
+          375.11,
+          249.59
         ]
       },
       "reference": null,
       "dense": {
-        "ns_median": 105.4,
-        "ns_min": 102.88,
+        "ns_median": 103.2,
+        "ns_min": 99.65,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          106.17,
-          105.4,
-          103.19,
-          106.25,
-          105.37
+          99.73,
+          99.75,
+          105.74,
+          165.75,
+          103.2
         ]
       }
     },
@@ -1480,29 +1480,29 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 101.88,
-        "ns_min": 98.69,
+        "ns_median": 99.22,
+        "ns_min": 96.84,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          102.35,
-          104.29,
-          98.86,
-          101.88,
-          101.15
+          96.9,
+          100.6,
+          99.22,
+          103.88,
+          99.18
         ]
       },
       "reference": {
-        "ns_median": 4.07,
-        "ns_min": 4.01,
+        "ns_median": 4.03,
+        "ns_min": 3.99,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.07,
-          4.06,
+          4.01,
+          4.01,
           4.03,
-          4.09,
-          4.08
+          4.07,
+          4.1
         ]
       },
       "dense": null
@@ -1511,29 +1511,29 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 102.0,
-        "ns_min": 98.74,
+        "ns_median": 98.34,
+        "ns_min": 94.92,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          103.23,
-          102.33,
-          98.82,
-          102.0,
-          101.48
+          96.48,
+          96.63,
+          98.34,
+          101.13,
+          98.34
         ]
       },
       "reference": {
-        "ns_median": 6.28,
-        "ns_min": 6.15,
+        "ns_median": 6.08,
+        "ns_min": 5.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          6.28,
-          6.31,
-          6.17,
-          7.08,
-          6.27
+          6.08,
+          6.04,
+          6.21,
+          6.26,
+          5.98
         ]
       },
       "dense": null
@@ -1542,29 +1542,29 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 101.52,
-        "ns_min": 98.67,
+        "ns_median": 96.52,
+        "ns_min": 94.86,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.81,
-          101.52,
-          98.94,
-          101.92,
-          101.38
+          96.52,
+          96.51,
+          98.63,
+          101.36,
+          95.04
         ]
       },
       "reference": {
-        "ns_median": 6.5,
-        "ns_min": 6.07,
+        "ns_median": 6.09,
+        "ns_min": 6.04,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          6.5,
+          6.08,
+          6.07,
+          10.94,
           6.09,
-          6.5,
-          6.1,
-          6.5
+          6.1
         ]
       },
       "dense": null
@@ -1573,29 +1573,29 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 101.54,
-        "ns_min": 98.69,
+        "ns_median": 101.12,
+        "ns_min": 94.85,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.33,
-          101.54,
-          98.78,
-          101.89,
-          101.69
+          104.72,
+          96.53,
+          101.12,
+          101.45,
+          94.96
         ]
       },
       "reference": {
-        "ns_median": 5.52,
-        "ns_min": 5.37,
+        "ns_median": 5.42,
+        "ns_min": 5.33,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          5.51,
-          5.57,
-          5.5,
-          5.54,
-          5.52
+          5.85,
+          5.36,
+          5.42,
+          5.46,
+          5.35
         ]
       },
       "dense": null
@@ -1604,29 +1604,29 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 101.63,
-        "ns_min": 98.22,
+        "ns_median": 101.59,
+        "ns_min": 93.92,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.1,
-          101.63,
-          98.28,
-          102.04,
-          102.11
+          107.85,
+          139.67,
+          99.85,
+          101.59,
+          94.46
         ]
       },
       "reference": {
-        "ns_median": 6.02,
-        "ns_min": 5.6,
+        "ns_median": 5.87,
+        "ns_min": 5.75,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.39,
-          5.81,
-          5.63,
-          6.02,
-          8.9
+          9.16,
+          9.78,
+          5.79,
+          5.87,
+          5.78
         ]
       },
       "dense": null
@@ -1635,29 +1635,29 @@
       "symbol": "∧",
       "arity": 2,
       "library": {
-        "ns_median": 101.48,
-        "ns_min": 96.97,
+        "ns_median": 101.18,
+        "ns_min": 93.91,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          142.89,
-          101.48,
-          98.95,
-          102.19,
-          101.45
+          135.75,
+          141.01,
+          94.41,
+          101.18,
+          94.49
         ]
       },
       "reference": {
-        "ns_median": 8.73,
-        "ns_min": 8.37,
+        "ns_median": 8.59,
+        "ns_min": 8.04,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          8.74,
-          8.83,
-          8.6,
-          8.39,
-          8.73
+          14.51,
+          14.82,
+          8.47,
+          8.59,
+          8.07
         ]
       },
       "dense": null
@@ -1666,29 +1666,29 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 100.12,
-        "ns_min": 96.47,
+        "ns_median": 100.23,
+        "ns_min": 93.07,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.63,
-          100.08,
-          96.65,
-          102.5,
-          100.12
+          143.03,
+          124.9,
+          97.26,
+          100.23,
+          93.34
         ]
       },
       "reference": {
         "ns_median": 4.65,
-        "ns_min": 4.54,
+        "ns_min": 4.5,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.62,
+          4.82,
+          4.68,
           4.65,
-          4.63,
-          4.65,
-          4.67
+          4.64,
+          4.52
         ]
       },
       "dense": null
@@ -1697,29 +1697,29 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 100.59,
-        "ns_min": 95.96,
+        "ns_median": 100.62,
+        "ns_min": 93.43,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          100.27,
-          100.59,
-          96.19,
-          102.16,
-          100.62
+          127.2,
+          100.67,
+          98.65,
+          100.62,
+          93.73
         ]
       },
       "reference": {
         "ns_median": 6.5,
-        "ns_min": 6.41,
+        "ns_min": 6.05,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          6.5,
-          6.51,
           6.52,
+          6.2,
           6.5,
-          6.48
+          6.24,
+          6.5
         ]
       },
       "dense": null
@@ -1728,29 +1728,29 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 100.27,
-        "ns_min": 95.06,
+        "ns_median": 101.95,
+        "ns_min": 93.79,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          99.84,
-          100.27,
-          97.14,
-          101.71,
-          100.45
+          136.48,
+          102.59,
+          98.04,
+          101.95,
+          94.16
         ]
       },
       "reference": {
-        "ns_median": 6.48,
-        "ns_min": 6.25,
+        "ns_median": 6.43,
+        "ns_min": 6.18,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          6.28,
-          6.48,
-          6.38,
-          7.28,
-          6.49
+          11.3,
+          6.43,
+          8.62,
+          6.23,
+          6.2
         ]
       },
       "dense": null
@@ -1759,29 +1759,29 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 99.78,
-        "ns_min": 94.87,
+        "ns_median": 97.33,
+        "ns_min": 93.66,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          95.07,
-          99.78,
-          96.46,
-          101.69,
-          100.16
+          139.12,
+          99.49,
+          97.25,
+          96.39,
+          97.33
         ]
       },
       "reference": {
-        "ns_median": 9.12,
-        "ns_min": 8.88,
+        "ns_median": 8.83,
+        "ns_min": 8.57,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.67,
-          9.08,
-          8.94,
-          9.13,
-          9.12
+          14.6,
+          8.83,
+          8.7,
+          8.83,
+          8.77
         ]
       },
       "dense": null
@@ -1790,29 +1790,29 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 100.35,
-        "ns_min": 97.05,
+        "ns_median": 100.16,
+        "ns_min": 94.53,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          100.35,
-          100.32,
-          97.34,
-          102.02,
-          100.4
+          135.61,
+          100.16,
+          97.02,
+          100.22,
+          96.99
         ]
       },
       "reference": {
-        "ns_median": 5.88,
-        "ns_min": 5.79,
+        "ns_median": 5.84,
+        "ns_min": 5.67,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          10.6,
+          5.72,
+          5.75,
           5.84,
-          5.88,
-          5.83,
-          6.05,
-          5.96
+          5.84
         ]
       },
       "dense": null
@@ -1821,29 +1821,29 @@
       "symbol": "∨",
       "arity": 2,
       "library": {
-        "ns_median": 100.27,
-        "ns_min": 96.07,
+        "ns_median": 100.59,
+        "ns_min": 94.22,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          100.21,
-          100.27,
-          96.42,
-          103.02,
-          100.57
+          136.89,
+          94.45,
+          104.02,
+          100.59,
+          97.31
         ]
       },
       "reference": {
-        "ns_median": 5.43,
-        "ns_min": 5.37,
+        "ns_median": 5.38,
+        "ns_min": 5.17,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          5.42,
-          5.43,
-          5.4,
-          5.44,
-          5.44
+          9.49,
+          5.19,
+          7.97,
+          5.38,
+          5.3
         ]
       },
       "dense": null
@@ -1852,27 +1852,27 @@
       "symbol": "∙",
       "arity": 2,
       "library": {
-        "ns_median": 18.48,
-        "ns_min": 18.17,
+        "ns_median": 18.39,
+        "ns_min": 18.08,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          20.74,
-          18.45,
-          18.2,
-          18.86,
-          18.48
+          28.78,
+          18.09,
+          28.09,
+          18.39,
+          18.32
         ]
       },
       "reference": {
         "ns_median": 2.04,
-        "ns_min": 2.03,
+        "ns_min": 2.02,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          4.04,
           2.04,
-          2.04,
-          2.04,
+          3.46,
           2.04,
           2.04
         ]
@@ -1883,28 +1883,28 @@
       "symbol": "∙",
       "arity": 2,
       "library": {
-        "ns_median": 18.52,
-        "ns_min": 18.19,
+        "ns_median": 18.33,
+        "ns_min": 18.07,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          20.77,
+          27.91,
+          18.09,
+          18.28,
           18.4,
-          18.23,
-          18.9,
-          18.52
+          18.33
         ]
       },
       "reference": {
         "ns_median": 3.94,
-        "ns_min": 3.92,
+        "ns_min": 3.91,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          6.23,
+          3.93,
           3.94,
-          3.94,
-          3.94,
-          3.95,
+          3.93,
           3.94
         ]
       },
@@ -1914,29 +1914,29 @@
       "symbol": "∙",
       "arity": 2,
       "library": {
-        "ns_median": 18.46,
-        "ns_min": 18.2,
+        "ns_median": 18.33,
+        "ns_min": 18.05,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          20.74,
-          18.43,
-          18.3,
-          18.95,
-          18.46
+          28.55,
+          18.1,
+          18.25,
+          18.39,
+          18.33
         ]
       },
       "reference": {
-        "ns_median": 3.94,
-        "ns_min": 3.92,
+        "ns_median": 3.93,
+        "ns_min": 3.91,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          6.17,
           3.93,
           3.93,
-          3.94,
-          3.94,
-          3.94
+          3.93,
+          3.93
         ]
       },
       "dense": null
@@ -1945,16 +1945,16 @@
       "symbol": "∙",
       "arity": 2,
       "library": {
-        "ns_median": 18.48,
-        "ns_min": 18.17,
+        "ns_median": 18.31,
+        "ns_min": 18.08,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          20.75,
-          18.39,
-          18.2,
-          18.88,
-          18.48
+          28.5,
+          18.11,
+          18.28,
+          18.4,
+          18.31
         ]
       },
       "reference": {
@@ -1965,8 +1965,8 @@
         "ns_runs": [
           2.04,
           2.04,
-          2.03,
-          2.03,
+          2.04,
+          2.04,
           2.04
         ]
       },
@@ -1976,29 +1976,29 @@
       "symbol": "∘",
       "arity": 2,
       "library": {
-        "ns_median": 17.81,
-        "ns_min": 17.72,
+        "ns_median": 17.62,
+        "ns_min": 17.2,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.87,
-          17.8,
-          17.76,
-          20.64,
-          17.81
+          26.57,
+          17.27,
+          17.62,
+          17.81,
+          17.46
         ]
       },
       "reference": {
-        "ns_median": 2.19,
-        "ns_min": 2.13,
+        "ns_median": 2.18,
+        "ns_min": 2.12,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          4.17,
           2.15,
-          2.19,
-          2.19,
-          2.2,
-          2.2
+          2.23,
+          2.14,
+          2.18
         ]
       },
       "dense": null
@@ -2007,29 +2007,29 @@
       "symbol": "∘",
       "arity": 2,
       "library": {
-        "ns_median": 17.79,
-        "ns_min": 17.59,
+        "ns_median": 17.76,
+        "ns_min": 17.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.89,
-          17.79,
-          17.62,
-          20.6,
-          17.73
+          25.99,
+          17.14,
+          18.47,
+          17.76,
+          17.43
         ]
       },
       "reference": {
-        "ns_median": 3.97,
-        "ns_min": 3.94,
+        "ns_median": 3.96,
+        "ns_min": 3.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.97,
-          3.97,
-          3.95,
-          3.98,
-          3.98
+          6.31,
+          3.94,
+          6.01,
+          3.96,
+          3.96
         ]
       },
       "dense": null
@@ -2038,29 +2038,29 @@
       "symbol": "∘",
       "arity": 2,
       "library": {
-        "ns_median": 17.8,
-        "ns_min": 17.71,
+        "ns_median": 17.88,
+        "ns_min": 17.25,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.83,
-          17.8,
-          17.74,
-          20.61,
-          17.78
+          26.79,
+          17.29,
+          25.83,
+          17.88,
+          17.55
         ]
       },
       "reference": {
-        "ns_median": 3.96,
-        "ns_min": 3.94,
+        "ns_median": 3.95,
+        "ns_min": 3.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          6.25,
+          3.94,
+          6.17,
           3.95,
-          3.95,
-          3.96,
-          3.96,
-          3.96
+          3.95
         ]
       },
       "dense": null
@@ -2069,16 +2069,16 @@
       "symbol": "∘",
       "arity": 2,
       "library": {
-        "ns_median": 17.83,
-        "ns_min": 17.73,
+        "ns_median": 17.69,
+        "ns_min": 17.23,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          17.83,
-          17.81,
-          20.18,
-          20.62,
-          17.79
+          26.0,
+          17.3,
+          28.78,
+          17.69,
+          17.46
         ]
       },
       "reference": {
@@ -2087,11 +2087,11 @@
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.2,
-          2.19,
-          2.2,
-          2.2,
-          2.18
+          2.38,
+          2.17,
+          4.06,
+          2.14,
+          2.2
         ]
       },
       "dense": null
@@ -2100,29 +2100,29 @@
       "symbol": "/",
       "arity": 1,
       "library": {
-        "ns_median": 9.94,
-        "ns_min": 9.62,
+        "ns_median": 7.13,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.37,
-          9.68,
-          9.71,
-          9.94,
-          10.26
+          8.47,
+          7.02,
+          10.18,
+          7.13,
+          7.02
         ]
       },
       "reference": {
-        "ns_median": 2.01,
+        "ns_median": 1.98,
         "ns_min": 1.94,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.01,
-          1.96,
-          1.97,
-          2.06,
-          2.06
+          2.37,
+          1.98,
+          2.4,
+          1.98,
+          1.97
         ]
       },
       "dense": null
@@ -2131,29 +2131,29 @@
       "symbol": "\\",
       "arity": 1,
       "library": {
-        "ns_median": 9.91,
-        "ns_min": 9.44,
+        "ns_median": 7.15,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.36,
-          9.69,
-          9.71,
-          9.91,
-          10.24
+          8.56,
+          7.03,
+          8.28,
+          7.15,
+          7.02
         ]
       },
       "reference": {
-        "ns_median": 2.02,
-        "ns_min": 1.9,
+        "ns_median": 1.98,
+        "ns_min": 1.87,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.02,
+          2.4,
           1.97,
-          2.01,
-          2.08,
-          2.06
+          2.36,
+          1.97,
+          1.98
         ]
       },
       "dense": null
@@ -2162,29 +2162,29 @@
       "symbol": "~",
       "arity": 1,
       "library": {
-        "ns_median": 9.56,
-        "ns_min": 9.27,
+        "ns_median": 9.95,
+        "ns_min": 9.34,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.72,
-          9.41,
-          9.4,
-          9.56,
-          9.78
+          11.84,
+          9.45,
+          11.56,
+          9.95,
+          9.48
         ]
       },
       "reference": {
-        "ns_median": 1.92,
-        "ns_min": 1.73,
+        "ns_median": 1.82,
+        "ns_min": 1.77,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.92,
-          1.81,
-          1.85,
-          1.93,
-          1.96
+          2.27,
+          1.79,
+          2.37,
+          1.8,
+          1.82
         ]
       },
       "dense": null
@@ -2193,29 +2193,29 @@
       "symbol": "~∘",
       "arity": 1,
       "library": {
-        "ns_median": 9.5,
-        "ns_min": 9.29,
+        "ns_median": 9.94,
+        "ns_min": 9.32,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.72,
-          9.37,
-          9.38,
-          9.5,
-          9.78
+          11.88,
+          9.41,
+          12.03,
+          9.94,
+          9.51
         ]
       },
       "reference": {
-        "ns_median": 1.91,
-        "ns_min": 1.79,
+        "ns_median": 1.81,
+        "ns_min": 1.76,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.91,
+          2.25,
           1.81,
-          1.85,
-          1.92,
-          1.96
+          2.39,
+          1.8,
+          1.81
         ]
       },
       "dense": null
@@ -2224,29 +2224,29 @@
       "symbol": "★",
       "arity": 1,
       "library": {
-        "ns_median": 13.87,
-        "ns_min": 13.22,
+        "ns_median": 12.57,
+        "ns_min": 11.64,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.37,
-          14.0,
-          13.87,
-          13.92,
-          13.82
+          14.27,
+          11.7,
+          14.32,
+          12.57,
+          11.77
         ]
       },
       "reference": {
-        "ns_median": 2.02,
-        "ns_min": 1.88,
+        "ns_median": 2.0,
+        "ns_min": 1.9,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.02,
-          1.97,
+          2.33,
           1.99,
-          2.08,
-          2.07
+          2.43,
+          1.98,
+          2.0
         ]
       },
       "dense": null
@@ -2255,29 +2255,29 @@
       "symbol": "☆",
       "arity": 1,
       "library": {
-        "ns_median": 11.17,
-        "ns_min": 10.82,
+        "ns_median": 11.53,
+        "ns_min": 11.15,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.47,
-          10.94,
-          10.89,
-          11.17,
-          11.39
+          13.69,
+          11.23,
+          14.0,
+          11.53,
+          11.26
         ]
       },
       "reference": {
-        "ns_median": 2.04,
-        "ns_min": 1.91,
+        "ns_median": 2.03,
+        "ns_min": 1.98,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.04,
-          2.02,
+          2.38,
           2.03,
-          2.13,
-          2.1
+          2.47,
+          2.03,
+          2.03
         ]
       },
       "dense": null
@@ -2286,29 +2286,29 @@
       "symbol": "∙",
       "arity": 1,
       "library": {
-        "ns_median": 13.0,
-        "ns_min": 12.63,
+        "ns_median": 12.9,
+        "ns_min": 12.47,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.0,
-          13.1,
-          12.76,
-          12.74,
-          13.45
+          15.26,
+          12.9,
+          15.31,
+          12.75,
+          12.68
         ]
       },
       "reference": {
-        "ns_median": 2.25,
-        "ns_min": 2.13,
+        "ns_median": 2.24,
+        "ns_min": 2.11,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.26,
-          2.25,
+          2.4,
+          2.23,
+          2.44,
           2.24,
-          2.25,
-          2.29
+          2.24
         ]
       },
       "dense": null
@@ -2317,29 +2317,29 @@
       "symbol": "∘",
       "arity": 1,
       "library": {
-        "ns_median": 11.36,
-        "ns_min": 11.2,
+        "ns_median": 12.15,
+        "ns_min": 11.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.7,
-          11.27,
-          11.47,
-          11.32,
-          11.36
+          13.62,
+          12.03,
+          14.03,
+          12.15,
+          12.02
         ]
       },
       "reference": {
-        "ns_median": 2.29,
-        "ns_min": 2.14,
+        "ns_median": 2.3,
+        "ns_min": 2.15,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.32,
-          2.29,
-          2.27,
-          2.28,
-          2.4
+          2.65,
+          2.3,
+          2.74,
+          2.3,
+          2.3
         ]
       },
       "dense": null
@@ -2348,29 +2348,29 @@
       "symbol": "■",
       "arity": 1,
       "library": {
-        "ns_median": 13.11,
-        "ns_min": 12.96,
+        "ns_median": 13.01,
+        "ns_min": 12.92,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.33,
-          13.09,
-          13.05,
-          13.11,
-          13.16
+          13.14,
+          13.01,
+          16.83,
+          13.01,
+          12.98
         ]
       },
       "reference": {
-        "ns_median": 1.01,
+        "ns_median": 1.0,
         "ns_min": 0.99,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.08,
+          1.27,
           1.0,
+          1.31,
           1.0,
-          1.01,
-          1.05
+          1.0
         ]
       },
       "dense": null
@@ -2379,16 +2379,16 @@
       "symbol": "□",
       "arity": 1,
       "library": {
-        "ns_median": 13.01,
-        "ns_min": 12.82,
+        "ns_median": 13.06,
+        "ns_min": 12.84,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.4,
-          13.01,
-          12.91,
-          13.0,
-          13.41
+          13.66,
+          13.03,
+          15.98,
+          13.06,
+          12.95
         ]
       },
       "reference": {
@@ -2397,9 +2397,9 @@
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          1.51,
           0.78,
-          0.78,
-          0.78,
+          1.55,
           0.78,
           0.78
         ]
@@ -2410,29 +2410,29 @@
       "symbol": "⊖",
       "arity": 1,
       "library": {
-        "ns_median": 12.97,
-        "ns_min": 12.79,
+        "ns_median": 12.86,
+        "ns_min": 12.67,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.28,
+          17.92,
           12.86,
-          12.86,
-          12.97,
-          14.16
+          18.42,
+          12.85,
+          12.78
         ]
       },
       "reference": {
-        "ns_median": 0.43,
-        "ns_min": 0.39,
+        "ns_median": 0.62,
+        "ns_min": 0.61,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          0.43,
-          0.43,
-          0.43,
-          0.43,
-          0.43
+          1.12,
+          0.61,
+          1.08,
+          0.62,
+          0.61
         ]
       },
       "dense": null
@@ -2441,28 +2441,28 @@
       "symbol": "⊟",
       "arity": 1,
       "library": {
-        "ns_median": 12.55,
-        "ns_min": 12.38,
+        "ns_median": 12.43,
+        "ns_min": 12.29,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.47,
-          12.47,
-          12.49,
-          12.78,
-          12.55
+          17.34,
+          12.4,
+          17.94,
+          12.4,
+          12.43
         ]
       },
       "reference": {
-        "ns_median": 0.86,
+        "ns_median": 0.87,
         "ns_min": 0.85,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          1.07,
           0.86,
-          0.86,
-          0.86,
-          0.86,
+          1.22,
+          0.87,
           0.86
         ]
       },
@@ -2472,29 +2472,29 @@
       "symbol": "⊞",
       "arity": 1,
       "library": {
-        "ns_median": 60.25,
-        "ns_min": 58.42,
+        "ns_median": 59.3,
+        "ns_min": 58.46,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          83.67,
-          60.05,
-          59.62,
-          60.25,
-          60.25
+          88.06,
+          58.67,
+          88.93,
+          58.96,
+          59.3
         ]
       },
       "reference": {
-        "ns_median": 0.61,
-        "ns_min": 0.61,
+        "ns_median": 0.43,
+        "ns_min": 0.37,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.05,
-          0.61,
-          0.61,
-          0.61,
-          0.61
+          0.43,
+          0.43,
+          0.75,
+          0.43,
+          0.43
         ]
       },
       "dense": null
@@ -2503,29 +2503,29 @@
       "symbol": "⊙",
       "arity": 1,
       "library": {
-        "ns_median": 163.09,
-        "ns_min": 158.52,
+        "ns_median": 159.76,
+        "ns_min": 155.51,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          164.4,
-          163.38,
-          159.97,
-          162.47,
-          163.09
+          162.56,
+          156.95,
+          253.15,
+          156.18,
+          159.76
         ]
       },
       "reference": {
-        "ns_median": 2.05,
+        "ns_median": 1.9,
         "ns_min": 1.87,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.08,
+          2.05,
+          1.9,
           1.91,
-          1.93,
-          2.44,
-          2.05
+          1.9,
+          1.9
         ]
       },
       "dense": null
@@ -2534,29 +2534,29 @@
       "symbol": "⊡",
       "arity": 1,
       "library": {
-        "ns_median": 103.85,
-        "ns_min": 99.56,
+        "ns_median": 102.32,
+        "ns_min": 99.74,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          103.5,
-          104.02,
-          102.18,
-          103.85,
-          104.51
+          103.96,
+          100.85,
+          159.58,
+          101.28,
+          102.32
         ]
       },
       "reference": {
-        "ns_median": 1.77,
-        "ns_min": 1.71,
+        "ns_median": 1.76,
+        "ns_min": 1.69,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.78,
-          1.77,
-          1.72,
-          2.09,
-          1.76
+          1.76,
+          1.71,
+          3.33,
+          1.76,
+          1.74
         ]
       },
       "dense": null
@@ -2565,29 +2565,29 @@
       "symbol": "⊛",
       "arity": 1,
       "library": {
-        "ns_median": 252.53,
-        "ns_min": 239.43,
+        "ns_median": 253.31,
+        "ns_min": 239.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          252.53,
-          245.18,
-          245.09,
-          252.98,
-          252.99
+          253.31,
+          246.25,
+          301.88,
+          373.48,
+          248.25
         ]
       },
       "reference": {
         "ns_median": 2.18,
-        "ns_min": 2.07,
+        "ns_min": 2.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.27,
-          2.1,
-          2.1,
-          2.89,
-          2.18
+          2.18,
+          2.14,
+          2.97,
+          2.55,
+          2.13
         ]
       },
       "dense": null
@@ -2596,29 +2596,29 @@
       "symbol": "/",
       "arity": 1,
       "library": {
-        "ns_median": 9.92,
-        "ns_min": 9.6,
+        "ns_median": 7.1,
+        "ns_min": 6.96,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.36,
-          9.69,
-          9.69,
-          9.92,
-          10.24
+          7.1,
+          7.02,
+          8.91,
+          8.61,
+          7.02
         ]
       },
       "reference": {
         "ns_median": 2.34,
-        "ns_min": 2.29,
+        "ns_min": 2.31,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.64,
+          2.34,
           2.33,
-          2.32,
-          3.13,
-          2.34
+          2.96,
+          3.05,
+          2.32
         ]
       },
       "dense": null
@@ -2627,29 +2627,29 @@
       "symbol": "\\",
       "arity": 1,
       "library": {
-        "ns_median": 9.9,
-        "ns_min": 9.4,
+        "ns_median": 7.13,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.36,
-          9.71,
-          9.63,
-          9.9,
-          10.23
+          7.13,
+          7.03,
+          9.17,
+          8.5,
+          7.03
         ]
       },
       "reference": {
-        "ns_median": 2.34,
+        "ns_median": 2.35,
         "ns_min": 2.3,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.64,
-          2.32,
-          2.32,
-          3.13,
-          2.34
+          2.35,
+          2.33,
+          3.01,
+          3.03,
+          2.33
         ]
       },
       "dense": null
@@ -2658,29 +2658,29 @@
       "symbol": "~",
       "arity": 1,
       "library": {
-        "ns_median": 9.56,
-        "ns_min": 9.31,
+        "ns_median": 9.83,
+        "ns_min": 9.34,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.74,
-          9.39,
-          9.38,
-          9.56,
-          9.78
+          9.83,
+          9.43,
+          11.81,
+          11.78,
+          9.45
         ]
       },
       "reference": {
-        "ns_median": 3.26,
-        "ns_min": 3.1,
+        "ns_median": 3.32,
+        "ns_min": 3.09,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.28,
+          3.32,
           3.13,
-          3.14,
-          3.26,
-          3.32
+          3.96,
+          3.95,
+          3.13
         ]
       },
       "dense": null
@@ -2689,29 +2689,29 @@
       "symbol": "~∘",
       "arity": 1,
       "library": {
-        "ns_median": 9.55,
-        "ns_min": 9.32,
+        "ns_median": 9.87,
+        "ns_min": 9.38,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.69,
-          9.39,
-          9.41,
-          9.55,
-          9.77
+          9.87,
+          9.45,
+          11.97,
+          11.51,
+          9.46
         ]
       },
       "reference": {
-        "ns_median": 3.26,
-        "ns_min": 3.08,
+        "ns_median": 3.32,
+        "ns_min": 3.06,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.27,
-          3.13,
-          3.13,
-          3.26,
-          3.31
+          3.32,
+          3.11,
+          3.87,
+          3.89,
+          3.13
         ]
       },
       "dense": null
@@ -2720,29 +2720,29 @@
       "symbol": "★",
       "arity": 1,
       "library": {
-        "ns_median": 13.77,
-        "ns_min": 13.3,
+        "ns_median": 12.32,
+        "ns_min": 11.72,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.4,
-          14.06,
-          13.77,
-          14.03,
-          13.76
+          12.32,
+          11.88,
+          14.63,
+          14.09,
+          11.79
         ]
       },
       "reference": {
-        "ns_median": 4.22,
-        "ns_min": 4.09,
+        "ns_median": 4.36,
+        "ns_min": 4.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.22,
-          4.13,
-          4.15,
-          4.4,
-          4.32
+          4.36,
+          4.16,
+          5.02,
+          4.98,
+          4.16
         ]
       },
       "dense": null
@@ -2751,29 +2751,29 @@
       "symbol": "☆",
       "arity": 1,
       "library": {
-        "ns_median": 11.18,
-        "ns_min": 10.74,
+        "ns_median": 11.74,
+        "ns_min": 11.08,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.48,
-          10.84,
-          10.82,
-          11.18,
-          11.4
+          11.74,
+          11.16,
+          14.31,
+          13.93,
+          11.17
         ]
       },
       "reference": {
-        "ns_median": 3.8,
-        "ns_min": 3.68,
+        "ns_median": 4.02,
+        "ns_min": 3.72,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.8,
-          3.71,
-          3.73,
-          3.88,
-          3.98
+          4.02,
+          3.75,
+          4.68,
+          4.56,
+          3.75
         ]
       },
       "dense": null
@@ -2782,29 +2782,29 @@
       "symbol": "∙",
       "arity": 1,
       "library": {
-        "ns_median": 12.78,
-        "ns_min": 12.44,
+        "ns_median": 13.3,
+        "ns_min": 12.67,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.09,
-          12.57,
-          12.73,
-          12.78,
-          13.4
+          13.3,
+          12.92,
+          15.86,
+          14.38,
+          12.87
         ]
       },
       "reference": {
-        "ns_median": 3.31,
-        "ns_min": 3.17,
+        "ns_median": 3.56,
+        "ns_min": 3.21,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.41,
-          3.19,
-          3.21,
-          3.31,
-          3.46
+          3.56,
+          3.25,
+          4.02,
+          4.15,
+          3.26
         ]
       },
       "dense": null
@@ -2813,29 +2813,29 @@
       "symbol": "∘",
       "arity": 1,
       "library": {
-        "ns_median": 11.36,
-        "ns_min": 11.2,
+        "ns_median": 12.17,
+        "ns_min": 11.87,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.69,
-          11.25,
-          11.51,
-          11.33,
-          11.36
+          12.17,
+          11.95,
+          13.48,
+          12.2,
+          12.04
         ]
       },
       "reference": {
-        "ns_median": 4.67,
-        "ns_min": 4.59,
+        "ns_median": 4.71,
+        "ns_min": 4.45,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.67,
-          4.67,
-          4.68,
-          4.64,
-          4.69
+          4.72,
+          4.63,
+          4.84,
+          4.71,
+          4.67
         ]
       },
       "dense": null
@@ -2844,29 +2844,29 @@
       "symbol": "■",
       "arity": 1,
       "library": {
-        "ns_median": 13.11,
+        "ns_median": 13.1,
         "ns_min": 12.94,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.31,
           13.1,
-          13.05,
-          13.11,
-          13.17
+          13.0,
+          16.74,
+          17.41,
+          12.99
         ]
       },
       "reference": {
-        "ns_median": 3.09,
-        "ns_min": 2.8,
+        "ns_median": 3.15,
+        "ns_min": 2.83,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.14,
-          2.85,
-          2.82,
-          3.09,
-          3.52
+          3.5,
+          2.88,
+          3.15,
+          3.27,
+          2.9
         ]
       },
       "dense": null
@@ -2875,29 +2875,29 @@
       "symbol": "□",
       "arity": 1,
       "library": {
-        "ns_median": 13.05,
-        "ns_min": 12.82,
+        "ns_median": 13.62,
+        "ns_min": 12.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.4,
-          12.98,
+          13.62,
           13.04,
-          13.05,
-          13.35
+          15.56,
+          16.85,
+          13.06
         ]
       },
       "reference": {
-        "ns_median": 4.17,
-        "ns_min": 4.09,
+        "ns_median": 4.14,
+        "ns_min": 3.99,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.17,
-          4.16,
-          4.18,
-          4.14,
-          4.19
+          4.23,
+          4.13,
+          4.13,
+          4.46,
+          4.14
         ]
       },
       "dense": null
@@ -2906,29 +2906,29 @@
       "symbol": "⊖",
       "arity": 1,
       "library": {
-        "ns_median": 12.98,
-        "ns_min": 12.84,
+        "ns_median": 13.73,
+        "ns_min": 12.67,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.23,
-          12.88,
-          12.98,
-          12.97,
-          14.04
+          13.73,
+          12.85,
+          17.34,
+          17.77,
+          12.87
         ]
       },
       "reference": {
-        "ns_median": 1.72,
+        "ns_median": 1.74,
         "ns_min": 1.7,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.71,
           1.72,
           1.74,
-          1.72,
-          1.71
+          2.13,
+          2.11,
+          1.73
         ]
       },
       "dense": null
@@ -2937,29 +2937,29 @@
       "symbol": "⊟",
       "arity": 1,
       "library": {
-        "ns_median": 12.59,
-        "ns_min": 12.45,
+        "ns_median": 12.4,
+        "ns_min": 12.26,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.43,
-          12.57,
-          12.54,
-          12.76,
-          12.59
+          12.35,
+          12.36,
+          16.83,
+          17.48,
+          12.4
         ]
       },
       "reference": {
-        "ns_median": 1.3,
-        "ns_min": 1.28,
+        "ns_median": 1.31,
+        "ns_min": 1.29,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.3,
-          1.3,
           1.31,
           1.3,
-          1.3
+          1.72,
+          1.31,
+          1.31
         ]
       },
       "dense": null
@@ -2968,29 +2968,29 @@
       "symbol": "⊞",
       "arity": 1,
       "library": {
-        "ns_median": 59.51,
-        "ns_min": 57.33,
+        "ns_median": 60.51,
+        "ns_min": 58.5,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          59.96,
-          58.73,
-          59.51,
-          59.17,
-          59.67
+          60.51,
+          59.21,
+          85.84,
+          92.28,
+          59.96
         ]
       },
       "reference": {
-        "ns_median": 1.13,
-        "ns_min": 1.11,
+        "ns_median": 1.14,
+        "ns_min": 1.12,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
           1.14,
           1.13,
-          1.14,
+          1.53,
           1.13,
-          1.13
+          1.14
         ]
       },
       "dense": null
@@ -2999,28 +2999,28 @@
       "symbol": "⊙",
       "arity": 1,
       "library": {
-        "ns_median": 158.84,
-        "ns_min": 154.83,
+        "ns_median": 164.75,
+        "ns_min": 160.33,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          157.09,
-          156.57,
-          160.99,
-          158.84,
-          162.9
+          164.75,
+          164.13,
+          173.36,
+          244.75,
+          162.65
         ]
       },
       "reference": {
-        "ns_median": 3.99,
+        "ns_median": 4.0,
         "ns_min": 3.99,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          4.12,
           3.99,
-          3.99,
-          4.02,
           4.0,
+          5.69,
           3.99
         ]
       },
@@ -3030,16 +3030,16 @@
       "symbol": "⊡",
       "arity": 1,
       "library": {
-        "ns_median": 102.13,
-        "ns_min": 100.43,
+        "ns_median": 103.86,
+        "ns_min": 102.22,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          100.61,
-          100.78,
-          102.13,
-          105.96,
-          104.04
+          106.75,
+          103.86,
+          102.82,
+          160.58,
+          102.45
         ]
       },
       "reference": {
@@ -3048,11 +3048,11 @@
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.58,
-          4.58,
-          4.61,
           4.59,
-          4.59
+          4.59,
+          4.59,
+          4.88,
+          4.58
         ]
       },
       "dense": null
@@ -3061,29 +3061,29 @@
       "symbol": "⊛",
       "arity": 1,
       "library": {
-        "ns_median": 253.79,
-        "ns_min": 242.91,
+        "ns_median": 257.25,
+        "ns_min": 245.71,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          250.04,
-          246.5,
-          253.79,
-          256.83,
-          255.38
+          257.25,
+          257.51,
+          253.12,
+          361.45,
+          252.61
         ]
       },
       "reference": {
-        "ns_median": 5.58,
-        "ns_min": 5.46,
+        "ns_median": 5.65,
+        "ns_min": 5.55,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          5.5,
-          5.49,
-          5.58,
-          6.19,
-          9.32
+          5.65,
+          5.65,
+          5.57,
+          5.66,
+          5.58
         ]
       },
       "dense": null
@@ -3092,29 +3092,29 @@
       "symbol": "/",
       "arity": 1,
       "library": {
-        "ns_median": 9.93,
-        "ns_min": 9.54,
+        "ns_median": 7.03,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.35,
-          9.66,
-          9.67,
-          9.93,
-          11.96
+          7.13,
+          7.02,
+          7.03,
+          8.46,
+          7.02
         ]
       },
       "reference": {
-        "ns_median": 3.33,
-        "ns_min": 3.15,
+        "ns_median": 2.47,
+        "ns_min": 2.44,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.33,
-          3.19,
-          3.19,
-          3.37,
-          3.87
+          2.47,
+          2.47,
+          2.47,
+          3.09,
+          2.47
         ]
       },
       "dense": null
@@ -3123,29 +3123,29 @@
       "symbol": "\\",
       "arity": 1,
       "library": {
-        "ns_median": 9.93,
-        "ns_min": 9.57,
+        "ns_median": 7.03,
+        "ns_min": 6.96,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.36,
-          9.68,
-          9.62,
-          9.93,
-          11.83
+          7.12,
+          7.02,
+          7.01,
+          8.37,
+          7.03
         ]
       },
       "reference": {
-        "ns_median": 3.33,
-        "ns_min": 3.16,
+        "ns_median": 2.47,
+        "ns_min": 2.44,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.33,
-          3.2,
-          3.19,
-          3.36,
-          3.98
+          2.47,
+          2.47,
+          2.47,
+          3.0,
+          2.47
         ]
       },
       "dense": null
@@ -3154,29 +3154,29 @@
       "symbol": "~",
       "arity": 1,
       "library": {
-        "ns_median": 9.55,
-        "ns_min": 9.3,
+        "ns_median": 9.85,
+        "ns_min": 9.37,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.73,
-          9.38,
-          9.38,
-          9.55,
-          9.78
+          9.85,
+          11.35,
+          9.45,
+          11.81,
+          9.46
         ]
       },
       "reference": {
-        "ns_median": 3.26,
-        "ns_min": 3.09,
+        "ns_median": 3.14,
+        "ns_min": 3.08,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.27,
+          3.31,
           3.13,
-          3.14,
-          3.26,
-          3.32
+          3.13,
+          3.82,
+          3.14
         ]
       },
       "dense": null
@@ -3185,29 +3185,29 @@
       "symbol": "~∘",
       "arity": 1,
       "library": {
-        "ns_median": 9.54,
-        "ns_min": 9.32,
+        "ns_median": 9.48,
+        "ns_min": 9.38,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.71,
-          9.42,
-          9.39,
-          9.54,
-          9.76
+          9.85,
+          9.44,
+          9.48,
+          9.88,
+          9.48
         ]
       },
       "reference": {
-        "ns_median": 3.26,
+        "ns_median": 3.14,
         "ns_min": 3.08,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.28,
+          3.31,
+          3.12,
           3.14,
-          3.15,
-          3.26,
-          3.33
+          3.14,
+          3.13
         ]
       },
       "dense": null
@@ -3216,29 +3216,29 @@
       "symbol": "★",
       "arity": 1,
       "library": {
-        "ns_median": 13.86,
-        "ns_min": 13.23,
+        "ns_median": 12.23,
+        "ns_min": 11.74,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.37,
-          13.86,
-          15.71,
-          14.02,
-          13.79
+          12.3,
+          11.81,
+          12.23,
+          14.44,
+          11.84
         ]
       },
       "reference": {
-        "ns_median": 2.91,
-        "ns_min": 2.76,
+        "ns_median": 2.84,
+        "ns_min": 2.79,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.4,
-          2.78,
-          2.77,
-          3.57,
-          2.91
+          2.85,
+          2.82,
+          2.84,
+          3.51,
+          2.83
         ]
       },
       "dense": null
@@ -3247,29 +3247,29 @@
       "symbol": "☆",
       "arity": 1,
       "library": {
-        "ns_median": 11.18,
-        "ns_min": 10.76,
+        "ns_median": 11.38,
+        "ns_min": 11.12,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.43,
-          10.9,
-          10.87,
-          11.18,
-          11.44
+          11.73,
+          11.22,
+          11.38,
+          13.47,
+          11.23
         ]
       },
       "reference": {
-        "ns_median": 3.43,
-        "ns_min": 2.76,
+        "ns_median": 2.68,
+        "ns_min": 2.65,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.43,
-          2.78,
-          2.78,
-          3.57,
-          3.61
+          2.67,
+          2.67,
+          2.68,
+          3.52,
+          2.68
         ]
       },
       "dense": null
@@ -3278,29 +3278,29 @@
       "symbol": "∙",
       "arity": 1,
       "library": {
-        "ns_median": 12.99,
-        "ns_min": 12.63,
+        "ns_median": 13.03,
+        "ns_min": 12.78,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.14,
-          12.76,
-          12.74,
-          12.99,
-          15.26
+          13.25,
+          12.87,
+          12.85,
+          15.98,
+          13.03
         ]
       },
       "reference": {
-        "ns_median": 4.24,
-        "ns_min": 4.1,
+        "ns_median": 4.14,
+        "ns_min": 4.11,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.26,
-          4.13,
-          4.12,
-          4.24,
-          5.31
+          4.14,
+          4.14,
+          4.14,
+          5.27,
+          4.17
         ]
       },
       "dense": null
@@ -3309,29 +3309,29 @@
       "symbol": "∘",
       "arity": 1,
       "library": {
-        "ns_median": 11.46,
-        "ns_min": 11.2,
+        "ns_median": 12.12,
+        "ns_min": 11.91,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.7,
-          11.24,
-          11.46,
-          11.32,
-          13.87
+          12.15,
+          12.03,
+          12.12,
+          13.86,
+          12.04
         ]
       },
       "reference": {
         "ns_median": 4.66,
-        "ns_min": 4.57,
+        "ns_min": 4.6,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.66,
-          4.66,
-          4.7,
+          4.71,
+          4.63,
           4.65,
-          4.97
+          5.04,
+          4.66
         ]
       },
       "dense": null
@@ -3340,29 +3340,29 @@
       "symbol": "■",
       "arity": 1,
       "library": {
-        "ns_median": 13.11,
-        "ns_min": 12.96,
+        "ns_median": 13.09,
+        "ns_min": 12.94,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.29,
-          13.05,
-          13.06,
-          13.11,
-          17.54
+          13.09,
+          13.01,
+          15.77,
+          17.21,
+          13.0
         ]
       },
       "reference": {
-        "ns_median": 4.37,
-        "ns_min": 4.3,
+        "ns_median": 4.34,
+        "ns_min": 4.28,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.46,
-          4.35,
-          4.37,
-          4.37,
-          4.48
+          4.52,
+          4.31,
+          4.32,
+          4.62,
+          4.34
         ]
       },
       "dense": null
@@ -3371,29 +3371,29 @@
       "symbol": "□",
       "arity": 1,
       "library": {
-        "ns_median": 13.05,
-        "ns_min": 12.85,
+        "ns_median": 13.19,
+        "ns_min": 12.77,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.39,
-          12.96,
-          12.95,
-          13.05,
-          16.06
+          13.48,
+          13.14,
+          12.85,
+          15.99,
+          13.19
         ]
       },
       "reference": {
         "ns_median": 3.29,
-        "ns_min": 3.22,
+        "ns_min": 3.25,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.44,
-          3.27,
+          3.52,
           3.29,
-          3.26,
-          4.14
+          3.29,
+          3.28,
+          3.29
         ]
       },
       "dense": null
@@ -3402,29 +3402,29 @@
       "symbol": "⊖",
       "arity": 1,
       "library": {
-        "ns_median": 12.97,
-        "ns_min": 12.69,
+        "ns_median": 12.9,
+        "ns_min": 12.65,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.23,
-          12.89,
-          12.93,
-          12.97,
-          17.85
+          13.7,
+          12.72,
+          12.84,
+          14.69,
+          12.9
         ]
       },
       "reference": {
-        "ns_median": 4.66,
+        "ns_median": 4.61,
         "ns_min": 4.55,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          4.66,
-          4.61,
-          4.66,
-          4.65,
-          4.77
+          4.72,
+          4.6,
+          4.6,
+          4.8,
+          4.61
         ]
       },
       "dense": null
@@ -3433,28 +3433,28 @@
       "symbol": "⊟",
       "arity": 1,
       "library": {
-        "ns_median": 12.76,
-        "ns_min": 12.49,
+        "ns_median": 12.41,
+        "ns_min": 12.22,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.48,
-          12.55,
-          12.55,
-          12.76,
-          17.3
+          12.4,
+          12.41,
+          12.31,
+          17.85,
+          12.42
         ]
       },
       "reference": {
         "ns_median": 1.01,
-        "ns_min": 0.98,
+        "ns_min": 0.99,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
           1.01,
-          1.01,
-          1.01,
           1.0,
+          1.01,
+          1.2,
           1.01
         ]
       },
@@ -3464,29 +3464,29 @@
       "symbol": "⊞",
       "arity": 1,
       "library": {
-        "ns_median": 59.16,
-        "ns_min": 56.96,
+        "ns_median": 60.0,
+        "ns_min": 58.47,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          59.16,
-          58.72,
-          57.7,
-          60.25,
-          92.16
+          60.38,
+          58.69,
+          59.24,
+          93.48,
+          60.0
         ]
       },
       "reference": {
-        "ns_median": 2.51,
-        "ns_min": 2.47,
+        "ns_median": 2.52,
+        "ns_min": 2.48,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.5,
-          2.51,
-          2.51,
-          2.51,
-          3.02
+          2.52,
+          2.52,
+          2.52,
+          3.1,
+          2.55
         ]
       },
       "dense": null
@@ -3495,16 +3495,16 @@
       "symbol": "⊙",
       "arity": 1,
       "library": {
-        "ns_median": 157.16,
-        "ns_min": 154.25,
+        "ns_median": 159.61,
+        "ns_min": 154.81,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          157.16,
-          156.79,
-          155.08,
-          162.43,
-          249.04
+          162.4,
+          157.45,
+          159.42,
+          244.62,
+          159.61
         ]
       },
       "reference": {
@@ -3516,8 +3516,8 @@
           4.58,
           4.58,
           4.58,
-          4.58,
-          6.92
+          6.59,
+          4.61
         ]
       },
       "dense": null
@@ -3526,29 +3526,29 @@
       "symbol": "⊡",
       "arity": 1,
       "library": {
-        "ns_median": 102.13,
-        "ns_min": 98.18,
+        "ns_median": 102.9,
+        "ns_min": 99.17,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          100.5,
-          100.67,
-          102.13,
-          103.77,
-          159.86
+          104.82,
+          100.95,
+          102.9,
+          160.03,
+          99.44
         ]
       },
       "reference": {
         "ns_median": 3.18,
-        "ns_min": 3.09,
+        "ns_min": 3.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
+          3.32,
           3.12,
-          3.11,
           3.18,
-          3.23,
-          5.07
+          5.51,
+          3.12
         ]
       },
       "dense": null
@@ -3557,29 +3557,29 @@
       "symbol": "⊛",
       "arity": 1,
       "library": {
-        "ns_median": 266.5,
-        "ns_min": 250.46,
+        "ns_median": 264.49,
+        "ns_min": 248.76,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          266.5,
-          262.77,
-          276.03,
-          263.28,
-          546.1
+          267.35,
+          259.81,
+          264.49,
+          388.42,
+          261.5
         ]
       },
       "reference": {
-        "ns_median": 5.63,
-        "ns_min": 5.46,
+        "ns_median": 5.66,
+        "ns_min": 5.41,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          5.63,
-          5.49,
-          5.58,
-          6.73,
-          5.64
+          5.66,
+          5.48,
+          5.68,
+          8.76,
+          5.42
         ]
       },
       "dense": null
@@ -3588,16 +3588,16 @@
       "symbol": "/",
       "arity": 1,
       "library": {
-        "ns_median": 9.91,
-        "ns_min": 9.6,
+        "ns_median": 7.03,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.35,
-          9.7,
-          9.69,
-          9.91,
-          12.01
+          7.13,
+          7.03,
+          7.02,
+          8.63,
+          7.02
         ]
       },
       "reference": {
@@ -3606,10 +3606,10 @@
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.64,
-          1.11,
           1.12,
-          1.52,
+          1.11,
+          1.11,
+          1.55,
           1.12
         ]
       },
@@ -3619,29 +3619,29 @@
       "symbol": "\\",
       "arity": 1,
       "library": {
-        "ns_median": 9.94,
-        "ns_min": 9.48,
+        "ns_median": 7.02,
+        "ns_min": 6.97,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          10.37,
-          9.63,
-          9.63,
-          9.94,
-          12.5
+          7.1,
+          7.02,
+          7.02,
+          8.48,
+          7.02
         ]
       },
       "reference": {
-        "ns_median": 1.34,
+        "ns_median": 1.13,
         "ns_min": 1.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.34,
-          1.12,
-          1.12,
-          1.52,
-          1.61
+          1.13,
+          1.11,
+          1.48,
+          1.56,
+          1.11
         ]
       },
       "dense": null
@@ -3650,29 +3650,29 @@
       "symbol": "~",
       "arity": 1,
       "library": {
-        "ns_median": 9.51,
-        "ns_min": 9.3,
+        "ns_median": 9.45,
+        "ns_min": 9.33,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.71,
-          9.37,
-          9.37,
-          9.51,
-          11.6
+          9.8,
+          9.39,
+          9.41,
+          11.68,
+          9.45
         ]
       },
       "reference": {
-        "ns_median": 1.9,
+        "ns_median": 1.81,
         "ns_min": 1.75,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.9,
-          1.82,
-          1.84,
-          1.92,
-          2.25
+          1.97,
+          1.81,
+          1.8,
+          2.25,
+          1.81
         ]
       },
       "dense": null
@@ -3681,29 +3681,29 @@
       "symbol": "~∘",
       "arity": 1,
       "library": {
-        "ns_median": 9.54,
-        "ns_min": 9.32,
+        "ns_median": 9.47,
+        "ns_min": 9.35,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          9.73,
-          9.4,
-          9.4,
-          9.54,
-          11.83
+          9.81,
+          9.46,
+          9.47,
+          11.51,
+          9.45
         ]
       },
       "reference": {
-        "ns_median": 1.91,
-        "ns_min": 1.73,
+        "ns_median": 1.81,
+        "ns_min": 1.72,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.91,
-          1.83,
-          1.85,
-          1.93,
-          2.24
+          1.97,
+          1.81,
+          1.81,
+          1.8,
+          1.8
         ]
       },
       "dense": null
@@ -3712,29 +3712,29 @@
       "symbol": "★",
       "arity": 1,
       "library": {
-        "ns_median": 13.88,
-        "ns_min": 13.07,
+        "ns_median": 12.22,
+        "ns_min": 11.61,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.32,
-          13.83,
-          13.88,
-          13.98,
-          16.01
+          12.31,
+          11.71,
+          12.22,
+          14.45,
+          11.73
         ]
       },
       "reference": {
-        "ns_median": 1.4,
+        "ns_median": 1.31,
         "ns_min": 1.28,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.4,
+          1.3,
           1.31,
-          1.29,
-          1.79,
-          1.82
+          1.3,
+          2.03,
+          1.31
         ]
       },
       "dense": null
@@ -3743,29 +3743,29 @@
       "symbol": "☆",
       "arity": 1,
       "library": {
-        "ns_median": 11.17,
-        "ns_min": 10.57,
+        "ns_median": 11.4,
+        "ns_min": 11.11,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.45,
-          10.79,
-          10.81,
-          11.17,
-          12.87
+          11.67,
+          11.19,
+          11.4,
+          13.53,
+          11.24
         ]
       },
       "reference": {
-        "ns_median": 1.4,
+        "ns_median": 1.3,
         "ns_min": 1.28,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.4,
+          1.3,
           1.3,
           1.3,
           1.79,
-          1.79
+          1.31
         ]
       },
       "dense": null
@@ -3774,16 +3774,16 @@
       "symbol": "∙",
       "arity": 1,
       "library": {
-        "ns_median": 13.01,
-        "ns_min": 12.69,
+        "ns_median": 13.06,
+        "ns_min": 12.65,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.01,
-          13.07,
-          12.76,
-          13.0,
-          15.42
+          13.27,
+          13.06,
+          12.91,
+          16.21,
+          12.83
         ]
       },
       "reference": {
@@ -3795,8 +3795,8 @@
           0.78,
           0.78,
           0.78,
-          0.78,
-          1.52
+          1.69,
+          0.78
         ]
       },
       "dense": null
@@ -3805,29 +3805,29 @@
       "symbol": "∘",
       "arity": 1,
       "library": {
-        "ns_median": 11.49,
-        "ns_min": 11.18,
+        "ns_median": 12.17,
+        "ns_min": 11.88,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          11.68,
-          11.26,
-          11.49,
-          11.29,
-          13.21
+          12.17,
+          12.03,
+          12.17,
+          13.93,
+          12.01
         ]
       },
       "reference": {
-        "ns_median": 2.38,
-        "ns_min": 2.21,
+        "ns_median": 2.37,
+        "ns_min": 2.2,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.43,
-          2.32,
-          2.32,
-          2.38,
-          3.03
+          2.36,
+          2.37,
+          2.36,
+          3.03,
+          2.37
         ]
       },
       "dense": null
@@ -3836,29 +3836,29 @@
       "symbol": "■",
       "arity": 1,
       "library": {
-        "ns_median": 13.08,
-        "ns_min": 12.93,
+        "ns_median": 13.02,
+        "ns_min": 12.95,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.31,
-          13.06,
-          13.07,
           13.08,
-          13.24
+          13.01,
+          13.02,
+          13.06,
+          13.02
         ]
       },
       "reference": {
-        "ns_median": 1.01,
+        "ns_median": 1.0,
         "ns_min": 0.99,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.08,
-          1.01,
+          1.05,
           1.0,
-          1.01,
-          1.05
+          1.0,
+          1.0,
+          1.0
         ]
       },
       "dense": null
@@ -3867,29 +3867,29 @@
       "symbol": "□",
       "arity": 1,
       "library": {
-        "ns_median": 13.12,
-        "ns_min": 12.76,
+        "ns_median": 13.06,
+        "ns_min": 12.93,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.41,
-          12.88,
-          13.12,
-          12.84,
-          13.62
+          13.65,
+          13.06,
+          13.11,
+          13.06,
+          12.99
         ]
       },
       "reference": {
-        "ns_median": 2.17,
+        "ns_median": 2.16,
         "ns_min": 2.05,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.3,
+          2.16,
+          2.16,
           2.17,
           2.17,
-          2.23,
-          2.17
+          2.16
         ]
       },
       "dense": null
@@ -3898,29 +3898,29 @@
       "symbol": "⊖",
       "arity": 1,
       "library": {
-        "ns_median": 12.97,
-        "ns_min": 12.73,
+        "ns_median": 12.87,
+        "ns_min": 12.59,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.25,
-          12.97,
-          12.9,
-          12.97,
-          14.48
+          13.55,
+          14.43,
+          12.67,
+          12.76,
+          12.87
         ]
       },
       "reference": {
-        "ns_median": 3.91,
-        "ns_min": 3.89,
+        "ns_median": 3.92,
+        "ns_min": 3.88,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.91,
-          3.92,
           3.92,
           3.91,
-          3.91
+          3.92,
+          3.93,
+          3.92
         ]
       },
       "dense": null
@@ -3929,29 +3929,29 @@
       "symbol": "⊟",
       "arity": 1,
       "library": {
-        "ns_median": 12.76,
-        "ns_min": 12.48,
+        "ns_median": 12.39,
+        "ns_min": 12.24,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          13.44,
-          12.53,
-          12.54,
-          12.76,
-          13.16
+          12.38,
+          12.44,
+          12.33,
+          12.39,
+          12.42
         ]
       },
       "reference": {
-        "ns_median": 0.38,
-        "ns_min": 0.36,
+        "ns_median": 0.61,
+        "ns_min": 0.61,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          0.38,
-          0.38,
-          0.43,
-          0.43,
-          0.38
+          0.61,
+          0.62,
+          0.61,
+          0.61,
+          0.61
         ]
       },
       "dense": null
@@ -3960,29 +3960,29 @@
       "symbol": "⊞",
       "arity": 1,
       "library": {
-        "ns_median": 59.81,
-        "ns_min": 58.39,
+        "ns_median": 60.24,
+        "ns_min": 57.33,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          58.76,
-          58.67,
-          59.81,
-          60.27,
-          61.21
+          60.44,
+          60.24,
+          59.26,
+          60.43,
+          59.95
         ]
       },
       "reference": {
         "ns_median": 1.02,
-        "ns_min": 1.0,
+        "ns_min": 1.01,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
           1.02,
           1.02,
+          1.03,
           1.02,
-          1.02,
-          1.03
+          1.02
         ]
       },
       "dense": null
@@ -3991,29 +3991,29 @@
       "symbol": "⊙",
       "arity": 1,
       "library": {
-        "ns_median": 160.12,
-        "ns_min": 155.89,
+        "ns_median": 162.67,
+        "ns_min": 156.01,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          157.05,
-          156.64,
-          160.12,
-          162.41,
-          170.2
+          163.31,
+          162.25,
+          162.67,
+          162.86,
+          160.35
         ]
       },
       "reference": {
-        "ns_median": 1.92,
-        "ns_min": 1.83,
+        "ns_median": 1.89,
+        "ns_min": 1.85,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          1.9,
-          1.85,
-          1.94,
-          2.48,
-          1.92
+          1.92,
+          1.88,
+          1.88,
+          1.92,
+          1.89
         ]
       },
       "dense": null
@@ -4022,29 +4022,29 @@
       "symbol": "⊡",
       "arity": 1,
       "library": {
-        "ns_median": 101.98,
-        "ns_min": 99.44,
+        "ns_median": 102.87,
+        "ns_min": 100.05,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          101.19,
-          100.71,
-          101.98,
-          104.12,
-          103.82
+          104.45,
+          100.9,
+          102.87,
+          103.61,
+          102.4
         ]
       },
       "reference": {
-        "ns_median": 2.19,
-        "ns_min": 2.07,
+        "ns_median": 2.18,
+        "ns_min": 2.1,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          2.52,
-          2.16,
-          2.19,
-          2.08,
-          2.22
+          2.21,
+          2.18,
+          2.17,
+          2.18,
+          2.18
         ]
       },
       "dense": null
@@ -4053,29 +4053,29 @@
       "symbol": "⊛",
       "arity": 1,
       "library": {
-        "ns_median": 258.29,
-        "ns_min": 245.47,
+        "ns_median": 259.63,
+        "ns_min": 245.55,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          389.64,
-          253.24,
-          258.29,
-          255.13,
-          272.06
+          261.08,
+          254.4,
+          259.63,
+          263.88,
+          257.99
         ]
       },
       "reference": {
-        "ns_median": 2.16,
-        "ns_min": 2.06,
+        "ns_median": 2.1,
+        "ns_min": 2.04,
         "allocations": 0,
         "share_nan": 0.0,
         "ns_runs": [
-          3.18,
-          2.09,
+          2.17,
+          2.07,
           2.1,
-          2.54,
-          2.16
+          2.09,
+          2.1
         ]
       },
       "dense": null
