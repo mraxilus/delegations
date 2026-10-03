@@ -148,7 +148,7 @@ func isSaying(text, phrase: string): bool =
     from_here = at + 1
 
 
-suite "chain speaks glossary":
+suite "Internal: Chain speaks glossary":
   let
     source = readFile(GLOSSARY)
     rejected = source.avoided(CHAIN_TERMS)
@@ -176,7 +176,7 @@ suite "chain speaks glossary":
           check position.name.toLowerAscii.isSaying(SHAPE_AT[tenths].toLowerAscii)
 
 
-suite "pages speak of the lead and the follow":
+suite "Internal: Pages speak of the lead and the follow":
   ## Glossary rejects every gendered word for dancer, and page is where reader
   ##   meets it.  Readout of whole-cloth panel said `her arm`, and reason turn
   ##   blocked said `his reach`, while every other law passed.
@@ -234,7 +234,7 @@ suite "pages speak of the lead and the follow":
           fail()
 
 
-suite "the report speaks glossary":
+suite "Internal: The report speaks glossary":
   ## Chain table of `simulation/verdicts.md` names every rung.  It said `X`, which
   ##   entry **Cross** rejects, while `design/parts` named same rung right: one
   ##   chain, two namings, one of them wrong.

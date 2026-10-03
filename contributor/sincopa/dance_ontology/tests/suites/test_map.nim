@@ -37,7 +37,7 @@ func attribute(chunk, name: string): int =
   parseInt(rest[0 ..< rest.find('"')])
 
 
-suite "the layout":
+suite "Internal: The layout":
   test "the drawing order names every frame exactly once":
     check NODE_ORDER.len == FRAMES.len
     var seen: seq[Frame] = @[]
@@ -89,7 +89,7 @@ suite "the layout":
       check centreOf(order[index - 1])[1] <= centreOf(order[index])[1]
 
 
-suite "the drawing":
+suite "Internal: The drawing":
   test "every move is one line and every compound is one curve":
     let picture = renderMap(none(Frame))
     var moved, joined = 0

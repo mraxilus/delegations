@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | cc6b6533a73a85a0 |
+| Rules   | f93ce63e7b4c6119 |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -14,7 +14,7 @@ Origin: built from three sources.
 
 - The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held
   as data in `src/dance_ontology/workbook.nim`.
-- The forty drawing rules of the Architect as given, held as data in `design/rules.nim`.
+- The drawing rules of the Architect as given, held as data in `design/rules.nim`.
 - For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges, in
   `simulation/rig.nim`.
 
@@ -54,7 +54,7 @@ term means is the second thing that pass settles.
 Held back by decision, and not by omission. The workbook, the base sheet and the vocabulary sheet
 wait until the new sheet arrives. Nothing should be written about a file that this project has not
 seen. The review page waits on the same sheet, and the ledger waits on the reconciliation of the
-forty rules.
+drawing rules.
 
 Sweep, stance, moment, rest, room and verdict are the method of the simulation rather than dance,
 and earn no entry. Neither does the `(led)` mark of the simulation, nor its point where the hands
@@ -82,11 +82,11 @@ each state one name.
 changes what they see, and nothing that the other sees. Twist is the Follow's turn less the Lead's,
 so it is the same for Face-to-face and Back-to-back. That is why a facing takes four bits.
 
-Verified by `suites/test_rotation.nim`, suite "facings". The law writes out the table of #289, and
-holds each state to the name in it. Each name gives the side of the Lead, then the side of the
-Follow, in the words of the glossary. Each law failed on a break made on purpose. The breaks
-swapped starboard and port, named the Follow first, and set the side of the Follow in capitals.
-One more listed the sides of the glossary in another order.
+Verified by `suites/test_rotation.nim`, suite "Internal: Facings". The law writes out the table
+of #289, and holds each state to the name in it. Each name gives the side of the Lead, then the
+side of the Follow, in the words of the glossary. Each law failed on a break made on purpose. The
+breaks swapped starboard and port, named the Follow first, and set the side of the Follow in
+capitals. One more listed the sides of the glossary in another order.
 
 **The drawings hold all sixteen facings, each read back through the model.** `ORIENTATIONS` in
 `parts.nim` finds, in the model, the turns on the spot that reach each facing from Face-to-face.
@@ -95,8 +95,8 @@ stops where a drawn pose reads as a facing other than its name. The frame page g
 the Lead a row: face, starboard, back, then port. The single-hand page names the facing of each
 quarter it draws, read off the drawn pose.
 
-Verified by `suites/test_marks.nim`, suite "the sixteen facings, drawn". The law on the rows failed
-when the rows were laid out by the side of the Follow.
+Verified by `suites/test_marks.nim`, suite "Internal: The sixteen facings, drawn". The law on the
+rows failed when the rows were laid out by the side of the Follow.
 
 The law on the single-hand page reads each name in the section and the place of its quarter. The
 manners share names, so a name found anywhere on the page would stand in for one that is missing
@@ -153,16 +153,9 @@ From the simulation:
 - `Move`, `Twist`, `Chain` and `Way` each name something in the simulation that is unrelated to the
   agreed term of the same spelling.
 
-**The layout block of the review page was stale in five ways, and is corrected.** The curator left
-one line for the hand of this project: the domain folder printed as `síncopa` where it is now
-`sincopa`. Four more were false beside it. `transition.nim` was said to hold four primitives, where
-it holds two. `app/shell.nim` and `tools/review_prose.nim` were named, though an earlier delivery of
-this project moved them to `pages/`. The build was invoked as `make`, which is retired.
-
-To go past one line was deliberate. The block named three files that do not exist, two of them
-removed by this project, and the Architect reads the page. Its wording still uses `validator` and
-`primitives`, where the agreed words are `Reference` and `Move`. That is a vocabulary sweep of the
-whole page, and not this fix.
+**The layout block of the review page names only files that exist.** The words of the page still
+say `validator` and `primitives`, where the agreed words are `Reference` and `Move`. That is a sweep
+of the vocabulary of the whole page, and it waits.
 
 **No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm `lead`
 and `follow`, and `simulation/verdicts.md` heads its tables the same way. Both files were rewritten
@@ -230,8 +223,8 @@ wrong in every use.
 
 **One state and one relation, and everything else derived.** A `Frame` is what each hand of the lead
 holds, and how the arms lie where they overlap. A move exists between two frames exactly when their
-difference is one primitive: `collect` adds a connection, and `drop` removes one. The two compounds,
-`place` and `cut`, are the pairs of primitives that the vocabulary marks with an asterisk. Names,
+difference is one connection: `collect` adds it, and `drop` removes it. The two compound moves,
+`place` and `cut`, are the pairs of moves that the vocabulary marks with an asterisk. Names,
 keys, slugs, routes and reflection are all read off the frame (`frame.nim`, `transition.nim`).
 
 Rejected: to name frames for what a dance calls them, which puts the hand-to-hand frame and the
@@ -240,7 +233,7 @@ which rest a hand on a body, have no frame here, and wait on a vocabulary for pl
 
 Verified by `suites/test_frame.nim` and `suites/test_transition.nim` over every pair of the eight
 frames, which is 64 pairs, exhaustive. They cover validity, naming round trips, reversibility,
-mirror symmetry, one law for each primitive, and full connectivity.
+mirror symmetry, one law for each move, and full connectivity.
 
 **The workbook is data, audited, and never trusted.** `workbook.nim` holds the states and cells of
 the `base` sheet, and the words of the `vocabulary` sheet, as constants. It derives findings by
@@ -248,7 +241,7 @@ kind. A cell names a move the model lacks, or the model has a move the sheet lac
 differs, or a cell waits on the body.
 
 Verified by `suites/test_workbook.nim`. Eighteen of twenty-seven cells are checkable today, and all
-eighteen name the primitive that the model derives, with nothing missing and nothing spare. The nine
+eighteen name the move that the model derives, with nothing missing and nothing spare. The nine
 deferred cells are counted, and not hidden.
 
 **Rotation is provisional and off the page.** `rotation.nim` holds twist, the three arm heights, the
@@ -256,15 +249,16 @@ two ceilings, blockers, wraps and locks. It also holds the measured fact that a 
 a turn, where everything else holds a whole one. `axle.nim` draws its postures as one line, placed
 by the twist itself.
 
-The views do not show it. 148 postures render as 16 distinct pictures, because level, contact and
-twist beyond its parity have no marks. A validator whose picture cannot tell two states apart is not
-validating. Verified by `suites/test_rotation.nim` and `suites/test_axle.nim`. The capacity
-constants are witnessed by the simulation (`simulation/verdicts.md`), which is evidence, and not
-authority.
+The views do not show it. 148 postures render as 17 distinct pictures, because level, contact and
+twist beyond its parity have no marks, but for one frame. `Left-to-right and Right-to-left` draws a
+quarter turn of twist one way apart from one the other way. Measured by hand on 2026-10-02, with
+`renderFrame` over `postures()`. A Reference whose picture cannot tell two states apart cannot
+check them. The capacity constants are witnessed by the simulation (`simulation/verdicts.md`),
+which is evidence, and not authority.
 
 ## Drawing chain
 
-**One drawing chain serves the validator, the review page and the workbench, so they cannot drift.**
+**One drawing chain serves the Reference, the review page and the workbench, so they cannot drift.**
 `draw/` builds the picture of a frame from the couple seen from above. There are two plain circles
 with a chevron for facing, and the lead is at the bottom facing up.
 
@@ -288,7 +282,7 @@ coordinates and are drawn through `canonicalise`, so every equal configuration i
 Cost: the picture of every frame is built at compile time. The browser then ships finished markup
 and none of the routing, at the price of compile time. Verified by `suites/test_diagram.nim`, where
 every picture says what its frame is, at any size. Verified by the gates of the workbench
-(`design/checks.nim`), with 102 assertions on the pages.
+(`design/checks.nim`), which assert on the pages.
 
 **Rule 24 was measured at the corner, and a kink walked through it.** A settled reach picks its way
 past the marks it must not touch. It weighs three candidates on length and turns together
@@ -313,9 +307,6 @@ suite from 20.9 to 23.3 seconds. The bow beats the hug on those two by a hundred
 line, so the preference is real but thin. It is the pins of the review sheet that keep a flip from
 passing unseen.
 
-Verified: the fix moved exactly two drawings of the 148 on the review page, and eight of the 273 on
-the single-turn page. It moved nothing on the frame, sign or hand-to-hand pages.
-
 **The chain is walked, and not jumped, so what lies between two positions is seen.** Past a whole
 turn the pair stops sharing its swing evenly. One connection gives its bend up and runs straight,
 while the other snakes round it (rule 31). How *quickly* it gives it up was written as a fast start,
@@ -327,9 +318,11 @@ the diamond fell apart, and the swan was built again rather than one opening int
 Architect danced the figure and named the missing bend.
 
 The hand-over is now slow at the start and quick at the end. The connection then keeps its bend
-nearly all the way, and gives it up at the last. Verified: no still moved. The hand-over is nothing
-at a whole turn and everything at a turn and a half. That is exactly where the positions of the
-chain sit, so all 87 pinned cards passed unaltered, and only the eight moving chain cells changed.
+nearly all the way, and gives it up at the last. The hand-over is nothing at a whole turn and
+everything at a turn and a half. That is exactly where the positions of the chain sit, so no still
+depends on it. Verified by the pins of the review page, which hold every ruled card to what it was
+drawn as (`design/review_page.nim`). `suites/test_marks.nim` builds that page, so the pins run with
+the suite.
 
 A first pass eased the hand-over at 3.5, which left the pair still crossing once between 1.28 and
 1.38 turns. One arm lay flat over the other rather than went round it, which the Architect saw and
@@ -448,7 +441,7 @@ moves and for how long, so the page waits on the schedule of the drawing itself.
 given when still. Where it leaves the frame standing is the place that the frame is given when
 still. That is what makes the swap of one drawing for the next invisible.
 
-## Validator
+## Reference
 
 **Three views, in the order that a reader wants them.** Atlas is every frame, drawn and counted, and
 the page opens there. Dance is the state machine from `free`. Matrix is every move at once, drawn
@@ -492,7 +485,7 @@ picture fixes a colour of its own, slugs are unique, and stale pictures are remo
 
 ## Design workbench
 
-**Rules are data, and the pages are held to them.** The forty-one rules as given live in
+**Rules are data, and the pages are held to them.** The rules as given live in
 `design/rules.nim`, in the words they arrived in, and `design/README.md` quotes each one.
 `checks.nim` asserts what each page claims, between the build of its parts and the write. The build
 refuses to write a page whose claims fail. Rejected: rules that are implemented and not asserted,
@@ -501,8 +494,8 @@ which quietly stop being true. The section on the rules of the drawing gives the
 **Each page's parts are built once, and a check reads what its page placed.** A page, its check and
 the review page all need the parts of the two walked pages. Routing is most of what the build costs,
 so `marks.nim` keeps the parts of every page it has built. The page suite ran for 14.05 s with each
-built three times, and runs for 7.11 s now, debug build, on 2026-09-24. Verified by the five pages,
-which are the same byte for byte by sha256, and by every line the checks print, which is the same.
+built three times, and runs for 7.11 s now, debug build, on 2026-09-24. Verified on that day: the
+pages it builds were the same byte for byte by sha256, and every line the checks print was the same.
 
 The five generated pages and the hand-drawn whole-cloth page are build products under
 `build/design/`. The whole-cloth markup is the committed file `mockups/wholecloth.html`. Its turns
@@ -523,7 +516,7 @@ caption or a swatch label is a fragment rather than a sentence.
 The rest of the subset, from the approved word to the active voice, is read rather than counted.
 
 Verified by `suites/test_marks.nim` over every page the workbench writes and over the committed
-whole-cloth markup, and by `suites/test_review.nim` over the reference page. Both laws were proved
+whole-cloth markup, and by `suites/test_review.nim` over the review page. Both laws were proved
 able to fail. One sentence lengthened past the bound reddens the page it sits on. A seventh sentence
 added to a full paragraph reddens the markup that holds it.
 
@@ -549,9 +542,7 @@ against a bound of 6. Every one is rewritten and the information is kept: the no
 and of the map are now two and three paragraphs. Proved able to fail on both paths, by lengthening
 one sentence of the Reference and one verdict of the viewer past the bound.
 
-The earlier record said that a count for both needed the browser, and that was wrong. Nothing the
-law calls touches the document. It also said that the viewer measured clean by hand, which held,
-and that nothing measured the Reference, which was true and hid nine faults.
+Nothing the law calls touches the document, so a count for both needs no browser.
 
 One line is counted by nothing still. The fourth verdict of the viewer opens `Stops at N turns:`
 and closes with a reason the simulation recorded, so it never stands as one whole string. Those
@@ -623,8 +614,9 @@ dresses twice, over both shapes of page, and demands the same bytes. `faceStyle`
 `<style data-faces>`, and `withFaces` takes an earlier block out before it puts the new one in.
 Replaced rather than skipped, so a page dressed before a face changed takes the new bytes.
 
-Verified: two `pages` runs over one tree now give ten pages that compare equal, byte for byte. The
-orphan pages under `build/simulation/` are gone, and no verb writes them again.
+Verified by `suites/test_faces.nim`, test "dressing is not doubled where it runs twice". Verified by
+hand on 2026-10-02: two `pages` runs over one tree gave pages that compare equal by `cmp`, byte for
+byte. No verb writes a page under `build/simulation/`.
 
 **The four are a manner of turn, and not a way of turning.** `Manner` and `MANNERS` replace
 `TurnWay` and `WAYS_OF_TURNING` through the workbench. The pages, the checks and the rule ledger say
@@ -821,15 +813,15 @@ the hatch travels with the mark. Verified by `checkSingleTurns` and `checkHandTu
 that a hatched mark moves nothing of its own.
 
 **The holds of two hands walk a chain of seven positions, a half turn apart (rules 28, 30 and 31).**
-The seven are swan, diamond, X, the frame, X, diamond and swan. The chain has ends, and is not a
-cycle (rule 30). Hand to hand and the crossed pair walk the same chain, and differ only in the
+The seven are swan, diamond, cross, neutral, cross, diamond and swan. The chain has ends, and is not
+a cycle (rule 30). Hand to hand and the crossed pair walk the same chain, and differ only in the
 facing where the hold is unwound (rule 31). `parts.restOf` names that facing, and `parts.chainFor`
 lays the seven out from it. Verified by `checkHandTurns`.
 
-**The wind is measured from the pose, and is not told (rule 28).** Each held hand sits on the rim of
-its body, and both bodies stand on the axis of the pair. So the angle a hand makes with that axis
-says how far round it has gone. The difference between the two ends is the wind. A reach is the
-shadow of a wound arm from above: straight at no wind, an X at a half, a diamond at a whole.
+**The twist is measured from the pose, and is not told (rule 28).** Each held hand sits on the rim
+of its body, and both bodies stand on the axis of the pair. So the angle a hand makes with that axis
+says how far round it has gone. The difference between the two ends is the twist. A reach is the
+shadow of a wound arm from above: straight at neutral, a cross at a half, and a diamond at a whole.
 Verified by `checkHandTurns`.
 
 **The crossings alternate, so a connection over at one crossing is under at the next (rule 27).**
@@ -866,7 +858,7 @@ to face.
 **Each hand is drawn in the colour of its side and the shade of its dancer.** Left is blue and right
 is orange, for both dancers. The lead's hands are in the deep shade, and the follow's in the plain
 one. Each of the four is a named colour with a fallback. So a picture follows the page it is on, and
-draws in its own ink when opened alone, as the app's figures in `doc/frames/` are. Verified by
+draws in its own ink when opened alone. Verified by
 `test_review.nim`, which checks that every ink is a named colour with a fallback.
 
 **The shape of a mark says whose hand it is.** The lead's hands are squares, and the follow's are
@@ -1087,7 +1079,8 @@ The spring of the wrist itself is five hertz (`WRIST_EASE`), which is the passiv
 wrist. At one hertz the wrists sat at their cone at rest, once the elbow was turned down.
 
 Friction where arm meets body is 0.2 (`FRICTION`), cloth on cloth. At the 0.6 of the engine, an arm
-lying over a head was dragged round with it as she turned under. That wound her shoulder to its end.
+lying over a head was dragged round with it as the follow turned under. That wound the shoulder of
+the follow to its end.
 
 Rejected, each one measured and each one worse: gravity on the arms, higher damping, and a ramp on
 the elbow. Rejected too: a raised floor for the crown, and a pull of the hands to a disc rather than
@@ -1272,10 +1265,11 @@ differs by a step. The stance over the crown steps out from the pinned hands, to
 leap. Red first.
 
 A still stands where its pose sits easiest. Every distance is wound to it, and the one nearest to
-ease is kept. A distance at ease outright ends the search, and the nearer one keeps a tie. The first
-distance that held was chest to chest. A couple asked pillion there had her free arm crushed between
-two torsos. Her shoulder sat at the end of its rope, her twist at its end, and her waist at forty,
-with nothing held.
+ease is kept. A distance at ease outright ends the search, and the nearer one keeps a tie.
+
+The first distance that held was chest to chest. A couple asked for `Face-to-back` there had the
+free arm of the follow crushed between two torsos. That shoulder sat at the end of its rope and of
+its twist. The waist of the follow sat at forty, with nothing held.
 
 Strain is read as the worst over every joint of every arm, both waists, and the two swings of every
 collarbone (`strainOf`, `Strain`). It is nought outside every ease, one at some end, and more past
@@ -1298,7 +1292,7 @@ other. The mirror law holds turn reached within one step, and what stopped it ex
 
 **A still is wound, and not built.** A card that draws the couple at half a turn or a turn and a
 half draws a winding of the arms. No facing says that. Built at the facing, the couple at a whole
-turn stand exactly as at none. So the diamond read as the open frame, and the swan as the cross.
+turn stand exactly as at none. So the diamond read as neutral, and the swan as the cross.
 Every joined hand hung at hip height, because the lift had never started.
 
 `walk.stood` turns the couple there from rest, at the pace of the walk itself, with the hands lifted
@@ -1383,7 +1377,7 @@ are the chains under wind.
 
 **The viewer draws what the engine collides, beside the cell it answers.** `design/rig` records
 every still and eight sweeps as capsule ends that the engine reports, at the radius it collides on.
-`design/rig_page` lays every still cell of the built reference page beside the still of the
+`design/rig_page` lays every still cell of the built review page beside the still of the
 simulation for it. That cell is the drawing, the badges and the caption, cut from the page itself,
 so what is compared is what was ruled on. It is one list of entries, walked by two buttons or the
 arrow keys. The drawing of the reference sits next to the joint readouts on the stage.
@@ -1612,7 +1606,7 @@ first, with 33 of 231 cards not modelled.
 
 ## Pages and build
 
-**Published titles say which pages the project stands behind.** The validator does, titled
+**Published titles say which pages the project stands behind.** The Reference does, titled
 `Dance Ontology — …`. Every other page is a mock-up or an instrument, and is titled
 `Dance Ontology Mockup — …`. That is the line `CONTRIBUTOR.md` already draws between `pages/` and
 `mockups/`. A gallery that holds both then says which is which before either one is opened.
@@ -1673,7 +1667,7 @@ not listed. The repository does not treat a published copy as its record, becaus
 Cost: a URL is no longer beside the subsystem that builds the page.
 
 **Hand-written pages are committed files, and everything a build emits is not.** The shell of the
-validator is `pages/app/index.html`. The prose of the review page, with one marker for each derived
+Reference is `pages/app/index.html`. The prose of the review page, with one marker for each derived
 figure, is `pages/review/review.html`. The hand-drawn proposal is `mockups/wholecloth.html`.
 
 `tools/build.nim pages` copies both shells into `build/`, and compiles the script of each page
@@ -1691,8 +1685,8 @@ markup kind, and it cost one string-literal edit for every change of style.
 
 Cost: `design/wholecloth.nim` checked its two markers at compile time while the markup was constant
 (Article IV.4). Markup read at run time carries only a run-time check, which echoes the marker and
-refuses to write a page without its data. Verified: `pages` run either side of the move writes the
-same files, with equal SHA-256 sums.
+refuses to write a page without its data. Verified by hand on 2026-09-06: `pages` run either side of
+the move wrote the same files, with equal SHA-256 sums.
 
 **Whole-cloth markup is held within width by the audit now, and not by a script.** Every line fits
 100 runes except one, the Google Fonts request. That is one whitespace-free token of 179 runes on a
@@ -1721,14 +1715,45 @@ Rejected: to ask koch for a verb specific to a project. Cost: the driver runs fr
 directory, because every path in it is relative. Each recording costs minutes, which is why none
 runs under `pages`.
 
-**Every page ships the three faces it draws with, inlined.** Titles take Noto Serif, body text takes
-Noto Sans, and code and data take Commit Mono. Those are the standard three of the Architect, and
-what Article X.8 names.
+## Faces
+
+**Every page ships the faces it draws with, inlined.** Headings and titles take Noto Serif, body
+text takes Noto Sans, and code and data take Commit Mono. Those are the standard three of the
+Architect, and what Article X.8 names. Every heading rule of every sheet names the serif stack.
+Verified by `suites/test_faces.nim`, test "every heading takes serif face".
 
 Labels drawn inside figures take Noto Sans rather than Commit Mono. The "code, data and figures" of
-X.8 reads as numbers, and a label that names a hand is interface text.
+X.8 reads as numbers, and a label that names a hand is interface text. Every label names Noto Sans
+first, the label of the turn glyph included. Verified by `suites/test_faces.nim`. The faces check
+of the audit reads no stack that `&` joins, and that label is one.
 
-Seven faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
+**No face of the three draws every character that the pages draw, so each stack names two more.**
+Noto Sans and Noto Serif draw no arrow, and Commit Mono draws no `⇄`. Noto Sans Math draws all five
+arrows, and Commit Mono draws marks such as `✓` that the text faces lack. So a stack names its own
+face, then Noto Sans Math, then Commit Mono. That is the merge by codepoint range of X.8. The maps
+were read with fontconfig 2.15.0 on 2026-10-02, from files with the digests of the store.
+
+The wiring is verified by `suites/test_faces.nim`, test "every stack falls back to faces that draw
+what its own face lacks". The coverage is verified by hand in Chromium 141, 2026-10-02. Each
+character beyond ASCII went into a clone of its element, alone, at load and in each view of the
+Reference. The DevTools call `CSS.getPlatformFontsForNode` then named the face that drew it.
+
+On every page, every one of those characters came from a shipped face. On `main` before this, nine
+came from faces of the machine, on four pages.
+
+Rejected: Commit Mono alone, which draws no `⇄`. Rejected: another mark for `place`, which would
+change the design.
+
+**A dressed page that declares no charset declares UTF-8.** The review page, the whole-cloth page
+and the bundled Reference are fragments, and publishing wraps each one in a document. Opened from a
+file, they declared no charset, so the browser guessed one from the bytes ahead of the first that is
+not ASCII. The face block is half a megabyte of ASCII. Behind it, Chromium 141 read the review page
+as windows-1250, and the whole-cloth page too once the block grew.
+
+So `withFaces` puts `<meta charset="utf-8">` first in a page that declares none. Verified by
+`suites/test_faces.nim`, and by hand in Chromium 141 on 2026-10-02: all ten pages read as UTF-8.
+
+Eight faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
 committed. Each one is pinned by package version *and* SHA-256. The version is pinned because an
 unversioned path serves whatever the host resolves that day. The digest is pinned because the bytes
 are embedded in what readers open.
@@ -1737,16 +1762,17 @@ are embedded in what readers open.
 every writer has run. To do it there rather than in each writer is what keeps the suites free of the
 network. That is **verified**: every suite passes with `build/` deleted outright.
 
-The origin of all seven is `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. All are under the
-**SIL Open Font License 1.1**, confirmed from the `LICENSE` of each package rather than assumed.
+The origin of all eight is `@fontsource`, by way of `cdn.jsdelivr.net`: 5.3.0 for seven, and 5.2.8
+for Noto Sans Math. All are under the **SIL Open Font License 1.1**, confirmed from the `LICENSE` of
+each package rather than assumed.
 
 Their addresses and checksums are no longer this project's to hold. They are the `ASSETS` table in
 `curator/audit/src/assets.nim`, which is the shared store of the repository. `assets` here names the
-seven files it wants, and `koch fetch-assets` answers with their paths.
+eight files it wants, and `koch fetch-assets` answers with their paths.
 
 That is the settlement of repository issue 116, which this project raised as its second consumer.
-Four of these seven were already pinned byte for byte by `rga_visualiser`. Article II.9 calls two
-lists of identical digests a copy that no constraint forces.
+A face that two projects draw with would otherwise be pinned twice, byte for byte. Article II.9
+calls two lists of identical digests a copy that no constraint forces.
 
 **The digest is the curator's, and the choice is this project's.** The store never says which faces
 a page draws with, so nothing about the autonomy of a project moved. This project was the first to
@@ -1755,10 +1781,9 @@ draw from it, and `rga_visualiser` draws from it too.
 The store keys entries by digest, so a face arrives under a name that is its hash. `assets` restores
 the file name on the way into `build/fonts`, because everything downstream reads faces by name.
 
-Verified 2026-09-10. All seven arrive, and all seven carry the digest that the store declares. Every
-built page is byte-for-byte the size it was when this project fetched them itself. To ask for a face
-that the store does not declare fails with a finding that names it, which is checked rather than
-assumed.
+Verified 2026-10-02. All eight arrive, and each one carries the digest that the store declares. To
+ask for a face that the store does not declare fails with a finding that names it, which is checked
+rather than assumed.
 
 That check has to live in a suite, and not only in the build. This project carries no `drive` verb,
 so the runner never runs its `assets`. A face named that the store lacks would otherwise surface
@@ -1769,8 +1794,9 @@ it. It reads it as text rather than by import. The law then depends on the decla
 the module of the curator keeping its present shape. It also means that this project imports no
 curator source, which none does.
 
-Cost, measured 2026-09-10 on this container: **+224 kB for each page**. 167,424 bytes of woff2
-become 224,384 of base64, across ten pages, so `build/` grows from 6.9 MB to 9.1 MB.
+Cost, measured 2026-10-02 on this container: the face block is **535,702 bytes on each page**, and
+224,279 without Noto Sans Math. The eight files are 400,884 bytes of woff2, and Noto Sans Math is
+233,460 of them, for five arrows. So the Reference grows from 582,206 bytes to 894,087.
 
 Rejected: to link the copy of the host, which names a face the reader may lack, and needs the
 network at reading time. Rejected: to subset for each page, which trades one shared block for ten
@@ -1894,9 +1920,9 @@ runner walks every kept sweep and both drawn walks to the numbers this container
 
 ## Tests
 
-**Testament over `tests/t*.nim` from the project directory, with six binaries.** `test_engine.nim`,
-`test_plan.nim`, `test_read.nim` and `test_rigid.nim` link the C archive of the engine.
-`test_said.nim` compiles to JavaScript. `test_suites.nim` imports every other suite from
+**Testament over `tests/t*.nim` from the project directory, with one binary for each.**
+`test_engine.nim`, `test_plan.nim`, `test_read.nim` and `test_rigid.nim` link the C archive of the
+engine. `test_said.nim` compiles to JavaScript. `test_suites.nim` imports every other suite from
 `tests/suites/`, and each of them runs at import under its own suite name. `test_plan.nim`,
 `test_rigid.nim` and `test_read.nim` add `-d:danger`, because the sweeps are the slow part and
 `doAssert` survives it.
@@ -1909,8 +1935,7 @@ arm over turned round, one connection given back twice, and no couple settled.
 
 **The suites that need no engine and no browser compile once.** Each binary compiled the standard
 library and its own imports again. Sixteen of them compiled for 31.4 s and ran for 0.8 s, and all
-nineteen took 62.4 s under testament. The one binary passes 209 laws, which is the sum that the
-nineteen passed.
+nineteen took 62.4 s under testament. The one binary passes every law that the nineteen passed.
 
 Joined, and with the pages built once, they take 18.5 s cold. That is 11.1 s of compile and 7.4 s of
 running, and 7.1 s of the running is the page suite. Measured on 2026-09-24, on four cores of a
@@ -1952,17 +1977,17 @@ reddens a law.
   s, compile included, and the whole of `koch check` took 110 s.
 - `test_rigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
   503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
-- The whole of `nim r koch check`, with the kept answers and the joined suites: 57 s and 66 s, in
-  two runs on 2026-09-24. `test_rigid.nim` took 30.4 s and 30.5 s of it, `test_suites.nim` 10.7 s
-  and 12.8 s, and `test_read.nim` 9.3 s and 9.2 s.
+- The whole of `nim r koch check`, with the kept answers, the joined suites and
+  `tests/test_plan.nim`: 102 s and 86 s. Those are two runs on four cores, on 2026-10-03.
 - `test_rigid.nim`, danger build, under `nim r koch check`: 331 s wall. That is four Xeon cores
   shared with nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `test_marks` takes
   12.6 s, `test_read` 7.9 s, and `test_engine` 3.3 s. Every other suite is under 2 s. It is a single
   figure with no pair, so it is unmeasured as an optimisation.
-- `tools/build.nim modelled`: 913 s wall, on the same machine and day, with two other recordings
-  sharing its cores. Unmeasured alone.
-- `tools/build.nim rig`: 523 s wall, on the same day, sharing cores with the suite. Unmeasured
-  alone.
+- `tools/build.nim modelled`: 7245 s wall on four cores, on 2026-10-03, with the planner. A
+  driver that saves each answer asked its 231 questions. 95 percent of the work is in the 32
+  planned cards.
+- `tools/build.nim rig`: 2464 s wall on four cores, compile included, on 2026-10-02, with the
+  planner.
 - `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
   its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
   change to words, compile included.
@@ -1987,22 +2012,27 @@ Declared unmet, so the Style row above stays true (Article VIII.1):
   ones touched since gained one, and the rest keep `## TODO: Document.` in spirit but not in text.
   Cost: a reader opens the body.
 - X.2: banner tiers are unmarked, and every banner is spaced as second tier.
-- VII.1: readings of emitted code exist for the whole-cloth port only. The validator and the viewer
+- VII.1: readings of emitted code exist for the whole-cloth port only. The Reference and the viewer
   were written before the rule, and their binding shapes are unread. Cost: a copy in a hot path may
   hide there.
 
 ## Form of the source
 
 **The source follows the charter of #257, rule by rule.** Every global is in SCREAMING_SNAKE_CASE,
-and each mutable one says why it is global. Every conversion is a prefix call, and every routine has
-a doc. Each module declares its types in one section, before its routines. Verified by the audit of
+and each mutable one says why it is global. Every conversion is a prefix call. Every routine has a
+doc, except some routines of the planner in `simulation/plan.nim`, and `times`, `transposed` and a
+nested `turnOf` in `simulation/rigid.nim`. Each module declares its types in one section, before its
+routines. Verified by the audit of
 #302, which counted 397 sites against 16 rules. A script for each rule found every site of it.
 
-**No name is an abbreviation.** The Architect ruled so on #305, past the closed list of V.6.
-`Vector`, `Position` and `Quaternion` are in full, and so is each name of the engine binding. The C
-name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins one-letter symbols is
-spelled out, as `delta_x` for `dx`. An acronym stays only where the root glossary lists it as one
-a layman knows (V.9).
+**A name spells its words out, but for a few that wait.** The Architect ruled so on #305, past the
+closed list of V.6. `Vector`, `Position` and `Quaternion` are in full, and so is each name of the
+engine binding. The C name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins
+one-letter symbols is spelled out, as `delta_x` for `dx`.
+
+One kind of name does not follow this yet. The search of the planner binds `sd`, an abbreviation,
+and joins symbols, as `fx`, `sy` and `yq`. An acronym stays only where a glossary lists it (V.9).
+The glossary of this project lists `Dof` as a term, and `svg`, `html`, `css` and `js` as standards.
 
 **A path is a name too.** The simulation is in `simulation/`, and the build folders are
 `dependencies/` and `binaries/`. The root ignore file ignores both, so this project has no ignore
@@ -2024,8 +2054,11 @@ such global takes a qualifier, such as `DRAWING_SHOWN`. The compiler says so as 
 
 **Each local, parameter and field is in snake_case, and each boolean says what it is.** The
 Architect ruled so on #308, by V.1 and V.4. A boolean value takes `is_`, `as_`, `should_`, `found_`
-or `has_`. A routine that answers yes or no takes `is...`, or `has...` as the twin of `has_`. One
-concept keeps one name in each module, such as `is_away`, `is_holding`, `is_stopped` and
+or `has_`. A function that answers yes or no takes `is...`, as the names check of #371 reads V.4.
+So `isOverlapping` says whether two forearms lie on each other. A `proc` that answers reports an
+action, so `hasRoomForMap` keeps its name.
+
+One concept keeps one name in each module, such as `is_away`, `is_holding`, `is_stopped` and
 `found_rest`.
 
 **A predicate never takes the word of a value that it meets.** Nim reads `is_away` and `isAway` as
@@ -2127,7 +2160,8 @@ latent, and not urgent.
   checked. A prototype of the hinge-and-curl model gave the right counts, and drew shapes that are
   not a swan: two straight lines crossing in an X. It was scored before it was looked at. Anything
   that replaces the sine is drawn and looked at first.
-- **What the swan is in the body.** The reference draws it pillion with all four hands above. Asked
+- **What the swan is in the body.** The reference draws it at `Face-to-back`, with all four hands
+  above. Asked
   about a hammerlock, the Architect described a low one. The arm goes down, the shoulder rotates in
   as the hand goes behind the back, and the elbow bends behind to an L.
 - The model reaches the four swans by a planned turn, and each one waits for the Architect to
@@ -2161,18 +2195,15 @@ latent, and not urgent.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, cell by cell on the viewer. The tags
   read *unconfirmed* until then.
-- **The floor at the low and neck bands.** The wraps stop between half and a whole turn, by her
-  twist or his wrist, where the floor says half or whole. The low locks go past the whole turn of
-  the floor. Whether a hammerlock goes a whole turn, and what moves in the body when it does, is the
-  Architect's.
+- **The floor at the low and neck bands.** The wraps stop between half and a whole turn, where the
+  floor says half or whole. The twist of the follow or the wrist of the lead stops them. The low
+  locks go past the whole turn of the floor. Whether a hammerlock goes a whole turn, and what moves
+  in the body when it does, is the Architect's.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **Two one-moment flips in the cross-name crown turn.** They are 370 mm as his arm straightens over
   at 0.28, and 220 mm as hers turns over at 1.18. Weightless links with springs this weak do that at
   no cost. The corpus of the leap law does not include that sweep, and says so.
 - **The crossing reader at a knife edge**, with arms laid along each other, repository issue 88.
-- **Whether the cards of section A are a question a body can be asked.** A9 and A11 draw the
-  same-name pair face to face, which rule 31 says has its connections lying through each other. The
-  model refusing them agrees with the rule.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.

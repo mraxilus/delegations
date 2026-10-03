@@ -45,7 +45,7 @@ func suitesOf(stub: string): seq[string] =
       at = statement.find("./", at + 2)
 
 
-suite "the review page":
+suite "Internal: The review page":
   test "the page renders with every marker filled":
     let page = renderReview()
     check page.len > 0

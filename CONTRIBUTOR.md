@@ -316,8 +316,9 @@ into `~/.cache/koch/assets`, checks it, and prints its path; `koch fetch-assets`
 every row that it declares. Your `tools/build.nim` names the files it wants and copies them
 into `build/`, and `PROVENANCE.md` records the origin, version and licence of each one. A file
 that `assets.nim` does not declare is a process-change issue for the curator, who adds the row.
+
 A presentation target ships the faces that Article X.8 names, inlined, and the store serves
-them.
+them. Each Noto face ships whole, as the TrueType file of its own release, and never as a subset.
 
 ## Tests are paramount
 

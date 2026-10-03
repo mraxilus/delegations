@@ -46,7 +46,7 @@ func quoted(document: string): seq[tuple[rule: int, words: string]] =
         is_closed = true
 
 
-suite "this project's own Markdown":
+suite "Internal: This project's own Markdown":
   test "every README held keeps each sentence and each paragraph to its bound":
     ## Failure names file and sentence, so it says what to split.
     for document in WRITTEN:

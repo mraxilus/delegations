@@ -645,12 +645,12 @@ proc renderStage() =
     (if SCENE_STORAGE.worst.len > 0: " at " & SCENE_STORAGE.worst else: cstring("")) &
     (if SCENE_STORAGE.is_reseed: cstring(" <span class=\"say\">(the arms re-posed here)</span>")
      else: "")
-  const UNSTOPPED: cstring = " (not within two turns)"
+  const unstopped: cstring = " (not within two turns)"
     ## Block's word where sweep ran out of range before any joint refused.
   var blocks = "blocks at " & turnFigure(-limits.negative) &
-    (if limits.is_stopped_negative: " (" & limits.why_negative & ")" else: UNSTOPPED) &
+    (if limits.is_stopped_negative: " (" & limits.why_negative & ")" else: unstopped) &
     " and " & turnFigure(limits.positive) &
-    (if limits.is_stopped_positive: " (" & limits.why_positive & ")" else: UNSTOPPED)
+    (if limits.is_stopped_positive: " (" & limits.why_positive & ")" else: unstopped)
   if is_at_negative or is_at_positive:
     blocks = "<b class=\"bad\">blocked here</b> — " &
       (if is_at_negative: limits.why_negative else: limits.why_positive) & "; " & blocks
