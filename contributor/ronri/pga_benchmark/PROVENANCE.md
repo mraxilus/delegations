@@ -76,17 +76,17 @@ own definitions. The Terathon Math Library was read as a cross-check of forms an
 nothing of it was copied.
 
 **The 2D forms come from an expansion of the definitions.** A script expands each definition
-of Lengyel's exterior algebra on the components of the typed objects. Its metric is
-e₁² = e₂² = 1 and e₃² = 0 at rga3d, and e₁² = e₂² = 1 and e₃ ∙ e₄ = −1 at cga4d. Before any
-form was read off, the expansion reproduced the library on every pair of basis elements. That
-covered every product, complement, dual, part, attitude, carrier and cocarrier, in 400 cases
-at rga3d and 1,245 at cga4d. It also reproduced the support, center, container and partner
-on one integer operand of each grade. The attitude takes 𝐞̅₃, the complement of the origin,
-as it takes 𝐞̅₄ at cga5d. The motor transforms take the form of Terathon for a unit motor,
-15 multiplies where the expansion spends 30. The partners are factored by hand, 15
-multiplies for a dipole where the expansion spends 36. The script stays out of the tree,
-because no checker reads its kind of file. The law suites hold every form to the library on
-the pools instead.
+of Lengyel's exterior algebra on the components of the typed objects. At rga3d its metric is
+e₁² = e₂² = 1 and e₃² = 0. At cga4d it is e₁² = e₂² = 1 and e₃ ∙ e₄ = −1. The expansion
+reproduces the library on every pair of basis elements: 400 cases at rga3d, 1,245 at cga4d.
+They cover every product, complement, dual, part, attitude, carrier and cocarrier.
+
+The expansion also reproduces the support, center, container and partner on one integer operand of
+each grade. The attitude takes 𝐞̅₃, the complement of the origin, as it takes 𝐞̅₄ at cga5d. The
+motor transforms take the form of Terathon for a unit motor, 15 multiplies where the expansion
+spends 30. The partners are factored by hand, 15 multiplies for a dipole where the expansion spends
+36. The script stays out of the tree, because no checker reads its kind of file. The law suites hold
+every form to the library on the pools instead.
 
 Where the sign conventions of the library differ from Terathon's, the library's were adopted,
 because the library is what is measured. The bulk and weight duals of points and planes carry
@@ -122,7 +122,7 @@ the gap. Suite `Internal: Catalogue` holds every typed cite under
 chapter 2 or a wiki page, so no cite falls outside every suite.
 
 Suite `Internal: Inspector` reads the nimcache of the test binary itself. It finds
-`wedge(Point,Point)` spending twelve multiplies and six subtractions at rga4d, and six and
+that `wedge(Point,Point)` spends twelve multiplies and six subtractions at rga4d, and six and
 three at rga3d, as its documentation states. It holds every reference function in that
 nimcache to no zero fill and no error check. The count it reads must reach
 `FLOOR_FUNCTIONS_REFERENCE`, which is 73 at rga4d, 84 at cga5d, 50 at rga3d and 66 at cga4d.
@@ -166,11 +166,14 @@ of normal size pays nothing, because there the fill is two stores that the compi
 Of the 2D reference rows, 30 return such a result, and of the 3D ones none.
 
 Two sessions of five alternating runs on `linux amd64, 4 cores` on 2026-10-03 time the 2D
-references, with the fill and then without it. With the fill, those 26 rows at rga3d and 4 at cga4d took 12.1 to
-15.5 ns. Bound first, they took 0.8 to 5.0 ns, as `complement_left_line` went from 12.81 to
-0.88 ns. The other reference rows moved ×0.42 to ×1.70. With and without the binding, the C at
-rga4d and cga5d is the same byte for byte. Suite `Internal: Inspector` holds the loop to no
-temporary filled with zeros.
+references, one with the fill and one bound first. With the fill, those 26 rows at rga3d and 4
+at cga4d take 12.1 to 15.5 ns. Bound first, they take 0.8 to 5.0 ns. Within each session,
+library over reference for `complement_left_line` reads ×0.20 with the fill and ×2.98 bound
+first. The other reference rows move ×0.42 to ×1.70 between the sessions.
+
+The session bound first is the committed baseline, and the session with the fill is not
+committed. Bound first or not, the C at rga4d and cga5d is the same byte for byte. Suite
+`Internal: Inspector` holds the loop to no temporary filled with zeros.
 
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
@@ -189,10 +192,11 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-02**, at `3121342`, five runs each on `linux amd64,
-4 cores`. In turn with them, the bench of 2026-10-01 ran again. At rga4d its library ran at ×1.19 to
-×1.22 of its own times of 2026-10-01, and its reference at ×1.26 to ×1.27. Its dense forms ran at
-×1.00 to ×1.01. The bench of these baselines ran ×0.99 to ×1.01 of it in the same runs.
+**The runtime baselines are from 2026-10-02 at rga4d and cga5d, and from 2026-10-03 at rga3d and
+cga4d**, at `3121342`, five runs each on `linux amd64, 4 cores`. In turn with them, the bench of
+2026-10-01 ran again. At rga4d its library ran at ×1.19 to ×1.22 of its own times of 2026-10-01, and
+its reference at ×1.26 to ×1.27. Its dense forms ran at ×1.00 to ×1.01. The bench of these baselines
+ran ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
@@ -200,7 +204,8 @@ taken at different hours never compare, and ratios within one run do.
 Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
 apart at rga4d and ×1.17 at cga5d. In the baselines of 2026-10-03 they are ×1.04 at rga3d and
 ×1.07 at cga4d. The widest measurand spreads ×4.74, as `attitude_point` at rga3d does. Its
-reference takes under one nanosecond, and one run of five took its library three times longer.
+reference takes under one nanosecond. In one run of five, its library takes ×2.9 its usual time,
+and its reference ×0.6.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -528,8 +533,9 @@ again.
 
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
-exactly while its edits are. Evaluations measure rga4d and cga5d. After `--thorough`, as
-`evaluate all --thorough`, they measure rga3d and cga4d as well, as the Architect chose.
+exactly while its edits are. Evaluations measure rga4d and cga5d, the 3D Euclidean algebras,
+since each algebra more costs builds and runs. After `--thorough`, as `evaluate all
+--thorough`, they measure rga3d and cga4d as well, as the Architect chose.
 
 **The spread comes from the evaluations themselves.** An evaluation that changes no library function
 moves no count, so the range of its time ratios is the range of the machine. The pages state
