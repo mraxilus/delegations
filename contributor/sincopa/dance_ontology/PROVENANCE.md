@@ -1762,6 +1762,17 @@ Verified by `suites/test_faces.nim`, test "every Noto face ships whole, as TrueT
 release". With the subsets of `main` back in its rows, that law fails on each of the six Noto
 faces. The test "each face declares media type and format of its own file" holds the formats.
 
+**The hinted build of each Noto face ships, by the ruling of the Architect on 2026-10-03.** Hinting
+snaps each letter to the pixel grid at small sizes, so small text stays sharp on a screen of low
+density. The unhinted build of the same release holds the same characters, and lacks the tables
+`cvt`, `fpgm`, `prep` and `gasp`. It also lacks the instruction program in each glyph. So it is
+about 32 percent smaller: Noto Sans Regular is 610,392 bytes hinted and 418,820 unhinted.
+Rejected: the unhinted build, which would save about 1.5 MB on each page.
+
+Compared by hand on 2026-10-03, for Noto Sans Regular. fontconfig 2.15.0 reads the same charset
+from both builds. Their table directories differ in those four tables, in `glyf`, and in the
+version string of `name`.
+
 Eight faces are fetched by the `assets` verb of `tools/build.nim` into `build/fonts`, and never
 committed. Each one is pinned by package or release version *and* SHA-256. The version is pinned
 because an unversioned path serves whatever the host resolves that day. The digest is pinned
