@@ -9,13 +9,17 @@
 ##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
 ##     drop each zero store that inlined operation repeats, and so time fewer stores than any
 ##     caller pays.
+##   Result of three floats or fewer returns by value, so loop binds it before storing it.
+##     Assigned straight into slot, it passes through temporary that call site zero-fills, and
+##     in function this large compiler keeps that fill as out-of-line `rep stos`, about 11 ns
+##     per object that no caller of normal size pays. Suite `Internal: Inspector` holds it.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
 ##     (Article VII.4); driver runs plain build for timings and instrumented one for counts.
 ##   Dense form runs beside library on general measurand, from same pools, and never on typed
 ##     one; reference runs on typed measurand alone. Build under
-##     `-d:pga_benchmark.has_dense_forms=false` neither imports nor times dense forms, since they
+##     `-d:pga_benchmark.has_forms_dense=false` neither imports nor times dense forms, since they
 ##     read tables by name at pin and change may rename them; evaluation builds so.
 ##
 ##   Cost: measurements arrays hold one entry per measurand per implementation; sink is float.
@@ -30,34 +34,29 @@ import pga
 import ./[catalogue, kinds, pools, widening]
 
 
-const HAS_DENSE_FORMS* {.booldefine: "pga_benchmark.has_dense_forms".} = true
+const HAS_FORMS_DENSE* {.booldefine: "pga_benchmark.has_forms_dense".} = true
   ## Whether build emits and times dense forms; evaluation compares library with pin alone.
 
-when HAS_DENSE_FORMS: import ./dense
+when HAS_FORMS_DENSE: import ./dense
 
 
 type
-  Implementation* {.pure.} = enum
-    ## Define which implementation measurement belongs to.
+  Implementation* {.pure.} = enum  ## Define which implementation measurement belongs to.
     Library, Reference, Dense
-  Measurement* = object
-    ## Define measurements of one measurand in one implementation.
+  Measurement* = object  ## Define measurements of one measurand in one implementation.
     is_measured*: bool
       ## False where implementation has no expression.
       ##   Reference has none on general measurand, and dense form has none on typed one.
-    ns_median*, ns_min*: float
-      ## Nanoseconds per object, median and minimum over rounds.
+    ns_median*, ns_min*: float  ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
       ## Heap allocations counted over every round; meaningful only when instrument is live.
-    nan_share*: float
-      ## Share of results carrying NaN in any component.
+    share_nan*: float  ## Share of results carrying NaN in any component.
 
 
 var
   MEASUREMENTS*: array[Implementation, array[CATALOGUE.len, Measurement]]
     ## Measurements of every measurand, filled by `measureCatalogue`.
-  SINK*: float
-    ## Fold of every result, printed so no result is dead.
+  SINK*: float  ## Fold of every result, printed so no result is dead.
 
 
 func isAllocationMeasured*(): bool =
@@ -74,7 +73,7 @@ func allocationsOf*(stats: AllocStats): int =
     text = $stats
     start = text.find("allocCount: ") + "allocCount: ".len
     stop = text.find(',', start)
-  parseInt(text[start ..< stop])
+  parseInt(text[start..<stop])
 
 
 
@@ -131,7 +130,7 @@ func summarise*(rounds: openArray[int64], objects: int): tuple[median, minimum: 
 
 template timeRounds(rounds: var array[ROUNDS, int64], loop: untyped) =
   ## Run loop `ROUNDS` times, recording nanoseconds of each.
-  for r in 0 ..< ROUNDS:
+  for r in 0..<ROUNDS:
     let started = getMonoTime()
     loop
     rounds[r] = (getMonoTime() - started).inNanoseconds
@@ -147,9 +146,9 @@ macro emitMeasurand(
     of Implementation.Library: measurand.expression
     of Implementation.Reference: measurand.reference
     of Implementation.Dense:
-      if not HAS_DENSE_FORMS or measurand.reference.len > 0: ""
-      elif measurand.arity == 2: measurand.denseNameOf & "(m, n)"
-      else: measurand.denseNameOf & "(m)"
+      if not HAS_FORMS_DENSE or measurand.reference.len > 0: ""
+      elif measurand.arity == 2: measurand.nameDenseOf & "(m, n)"
+      else: measurand.nameDenseOf & "(m)"
   if expression.len == 0:
     let implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     return quote do:
@@ -159,12 +158,12 @@ macro emitMeasurand(
     (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
     implementation_literal = newCall(ident"Implementation", newLit(ord(implementation)))
     pool_m = parseExpr(
-      if implementation == Implementation.Reference: referencePoolName(measurand.operands[0])
-      else: libraryPoolName(measurand.operands[0], measurand.grade),
+      if implementation == Implementation.Reference: namePoolReference(measurand.operands[0])
+      else: namePoolLibrary(measurand.operands[0], measurand.grade),
     )
     pool_n = parseExpr(
-      if implementation == Implementation.Reference: referencePoolName(measurand.operands[1])
-      else: libraryPoolName(measurand.operands[1], measurand.grade),
+      if implementation == Implementation.Reference: namePoolReference(measurand.operands[1])
+      else: namePoolLibrary(measurand.operands[1], measurand.grade),
     )
   quote do:
     block:
@@ -179,14 +178,19 @@ macro emitMeasurand(
       # Hot path, per pool slot: index and pool reads constant; work linear in `OBJECTS` times
       #   `ROUNDS`; nothing allocates but `body`, and `allocations` counts what it does.
       timeRounds(rounds):
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template `m`(): untyped {.used.} = `pool_m`[i]  # Read by `body`.
           template `n`(): untyped {.used.} = `pool_n`[j]  # Read by binary `body`; unary leaves it.
-          results[i] = `body`
+          when typeof(results[0]) is object and sizeof(results[0]) <= 3 * sizeof(float):
+            # Result returned by value: bind first, so call site fills no temporary.
+            let value = `body`
+            results[i] = value
+          else:
+            results[i] = `body`
       let statistics_after = getAllocStats()
       var count_nan = 0
-      for i in 0 ..< OBJECTS:
+      for i in 0..<OBJECTS:
         if isAnyNan(results[i]): inc count_nan
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
@@ -195,7 +199,7 @@ macro emitMeasurand(
         ns_median: median,
         ns_min: minimum,
         allocations: allocationsOf(statistics_after - statistics_before),
-        nan_share: float(count_nan) / float(OBJECTS),
+        share_nan: float(count_nan) / float(OBJECTS),
       )
 
 
@@ -203,7 +207,7 @@ macro emitCatalogue(): untyped =
   ## Emit every measurand in every implementation, in catalogue order.
   ##   Implementations of one measurand run back to back, so machine drift lands on each alike.
   result = newStmtList()
-  for index in 0 ..< CATALOGUE.len:
+  for index in 0..<CATALOGUE.len:
     for implementation in Implementation:
       result.add newCall(
         bindSym"emitMeasurand",

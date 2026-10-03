@@ -27,35 +27,23 @@ import ./[guard, markdown]
 
 
 type
-  Edit* = object
-    ## Define one edit to one library file.
-    path*: string
-      ## Library-relative path, as `pga/operators.nim`.
-    quote*: string
-      ## Text at pin edit replaces; empty for whole-file replacement.
-    replacement*: string
-      ## Text put in its place, or whole new file.
+  Edit* = object  ## Define one edit to one library file.
+    path*: string  ## Library-relative path, as `pga/operators.nim`.
+    quote*: string  ## Text at pin edit replaces; empty for whole-file replacement.
+    replacement*: string  ## Text put in its place, or whole new file.
     digest*: string
       ## Digest file at pin must have, for whole-file replacement; empty for quote edit.
-    line*: int
-      ## Line of change file edit's section opens on, for findings.
-  Change* = object
-    ## Define one proposed change: title, why, and edits in order.
-    title*: string
-      ## Heading of change file.
-    why*: seq[Block]
-      ## Blocks between title and first edit.
-    edits*: seq[Edit]
-      ## Edits applied in order.
+    line*: int  ## Line of change file edit's section opens on, for findings.
+  Change* = object  ## Define one proposed change: title, why, and edits in order.
+    title*: string  ## Heading of change file.
+    why*: seq[Block]  ## Blocks between title and first edit.
+    edits*: seq[Edit]  ## Edits applied in order.
 
 
 const
-  EDIT_HEAD = "Edit `"
-    ## Opening of heading naming quote edit.
-  REPLACE_HEAD = "Replace `"
-    ## Opening of heading naming whole-file replacement.
-  DIGEST_JOIN = "` from `"
-    ## Text between path and digest in replacement heading.
+  OPENING_EDIT = "Edit `"  ## Opening of heading naming quote edit.
+  OPENING_REPLACE = "Replace `"  ## Opening of heading naming whole-file replacement.
+  SEPARATOR_DIGEST = "` from `"  ## Text between path and digest in replacement heading.
 
 
 
@@ -73,7 +61,7 @@ func pathBetween(heading, opening: string): string =
   ## Read path in backticks after opening; empty when heading does not carry one.
   if not heading.startsWith(opening): return ""
   let close = heading.find('`', opening.len)
-  if close < 0: "" else: heading[opening.len ..< close]
+  if close < 0: "" else: heading[opening.len..<close]
 
 
 func parseChange*(path, source: string): (Change, seq[Finding]) =
@@ -85,13 +73,13 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
     i = 0
 
   # Take title from first heading, which must be level one.
-  if blocks.len == 0 or blocks[0].kind != BlockKind.Heading or blocks[0].level != 1:
+  if blocks.len == 0 or blocks[0].kind != KindBlock.Heading or blocks[0].level != 1:
     return (change, @[Finding(path: path, line: 1, message: "Change needs `# Title`; got none.")])
   change.title = blocks[0].lines[0]
   i = 1
 
   # Take why up to first edit section.
-  while i < blocks.len and not (blocks[i].kind == BlockKind.Heading and blocks[i].level == 2):
+  while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
     change.why.add blocks[i]
     inc i
 
@@ -99,15 +87,15 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
   while i < blocks.len:
     let heading = blocks[i]
     inc i
-    if heading.kind != BlockKind.Heading or heading.level != 2: continue
+    if heading.kind != KindBlock.Heading or heading.level != 2: continue
     var fences: seq[Block]
-    while i < blocks.len and blocks[i].kind == BlockKind.Fence:
+    while i < blocks.len and blocks[i].kind == KindBlock.Fence:
       fences.add blocks[i]
       inc i
     let
       text = heading.lines[0]
-      path_edit = text.pathBetween(EDIT_HEAD)
-      path_replace = text.pathBetween(REPLACE_HEAD)
+      path_edit = text.pathBetween(OPENING_EDIT)
+      path_replace = text.pathBetween(OPENING_REPLACE)
     if path_edit.len > 0:
       if fences.len != 2:
         findings.add Finding(
@@ -124,7 +112,7 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
       )
     elif path_replace.len > 0:
       let
-        opening = REPLACE_HEAD & path_replace & DIGEST_JOIN
+        opening = OPENING_REPLACE & path_replace & SEPARATOR_DIGEST
         digest = if text.startsWith(opening): text[opening.len .. ^1].strip(chars = {'`'}) else: ""
       if digest.len == 0 or fences.len != 1:
         findings.add Finding(
@@ -151,9 +139,7 @@ func parseChange*(path, source: string): (Change, seq[Finding]) =
 
 #[ Application ]#
 
-func applyChange*(
-  files: var Table[string, string], change: Change, source: string
-): seq[Finding] =
+func applyChange*(files: var Table[string, string], change: Change, source: string): seq[Finding] =
   ## Apply change to map of library path to text, in order; each misfit is finding.
   ##   Quote must occur exactly once; whole-file digest must match text at pin.
   for edit in change.edits:
@@ -190,4 +176,4 @@ func applyChange*(
 func lineOf*(text, quote: string): int =
   ## Read line quote opens on, counted from one; zero where quote is absent.
   let at = text.find(quote)
-  if at < 0: 0 else: text[0 ..< at].count('\n') + 1
+  if at < 0: 0 else: text[0..<at].count('\n') + 1

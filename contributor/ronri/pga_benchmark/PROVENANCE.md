@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-29 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 914ae2b574f73577 |
+| Rules   | cc6b6533a73a85a0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | de53b987e9686537ecae415d637952640dafb9ce |
 
@@ -68,23 +68,50 @@ equals the exports of the umbrella.
 ## Reference
 
 `reference/rigid3.nim` (4D, rigid) and `reference/conformal3.nim` (5D, conformal) hold
-Lengyel's typed objects and optimal forms, written in Nim. They are in 64-bit floats, so both
-implementations run the same scalar. Every operation was derived from the equations of the
-book and from the library's own definitions. The Terathon Math Library was read as a
-cross-check of forms and counts, and nothing of it was copied.
+Lengyel's typed objects and optimal forms for 3D Euclidean space, written in Nim.
+`reference/rigid2.nim` (3D, rigid) and `reference/conformal2.nim` (4D, conformal) hold them
+for 2D Euclidean space. They are in 64-bit floats, so both implementations run the same
+scalar. Every 3D operation was derived from the equations of the book and from the library's
+own definitions. The Terathon Math Library was read as a cross-check of forms and counts, and
+nothing of it was copied.
+
+**The 2D forms come from an expansion of the definitions.** A script expands each definition
+of Lengyel's exterior algebra on the components of the typed objects. At rga3d its metric is
+e₁² = e₂² = 1 and e₃² = 0. At cga4d it is e₁² = e₂² = 1 and e₃ ∙ e₄ = −1. The expansion
+reproduces the library on every pair of basis elements: 400 cases at rga3d, 1,245 at cga4d.
+They cover every product, complement, dual, part, attitude, carrier and cocarrier.
+
+The expansion also reproduces the support, center, container and partner on one integer operand of
+each grade. The attitude takes 𝐞̅₃, the complement of the origin, as it takes 𝐞̅₄ at cga5d. The
+motor transforms take the form of Terathon for a unit motor, 15 multiplies where the expansion
+spends 30. The partners are factored by hand, 15 multiplies for a dipole where the expansion spends
+36. The script stays out of the tree, because no checker reads its kind of file. The law suites hold
+every form to the library on the pools instead.
 
 Where the sign conventions of the library differ from Terathon's, the library's were adopted,
 because the library is what is measured. The bulk and weight duals of points and planes carry
 the opposite sign. The conformal antidot is the negated dot. The cocarrier of a circle reads
-`FlatLine(v: -g.xyz, m: -c.v)`. The `Partner(Circle)` scalar of Terathon carries a sign typo,
+`LineFlat(v: -g.xyz, m: -c.v)`. The `Partner(Circle)` scalar of Terathon carries a sign typo,
 and the form here is `f = gw² - v·v - g·m`, which the law suite confirms against the library.
 
-Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library,
-and the same reader counts it. Object construction goes through the `zero3` and `read3`
-templates, rather than `Vector3()` defaults and whole-object field copies. On the pinned commit
-the former costs about 4 ns and the latter about 20 ns, through the `=dup` hook. That hook
-would have hidden the cost of the library. Unitize forms take one reciprocal and multiply, as
-Terathon does, where the library divides each component. The divide column shows both.
+Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library, and
+the same reader counts it. Object construction goes through the `zero3` and `read3` templates,
+rather than `Vector3()` defaults and whole-object field copies. In C, a default zero-fills its field
+through `nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for
+`Vector3`. Either cost would charge the reference for work that hand-written code does not do.
+
+Three builds of the bench differ only in these two templates: as committed, `Vector3()` for
+`zero3`, and a whole copy for `read3`. Five alternating runs of each, on `linux amd64, 4 cores` on
+2026-10-03 at `3121342`, time them at rga4d and cga5d. At rga4d `bulk_line` runs 2.61 ns as
+committed, 23.49 ns with `Vector3()` and 4.19 ns with the copy. The other three line rows with a
+default run 22.5 to 23.5 ns, and `attitude_plane` runs 3.35 ns against 2.14 ns.
+
+Rows that use neither template move ×0.65 to ×1.29, so the copy in `transform_line_motor`, ×1.04,
+does not show. At cga5d a default adds 18 to 30 ns to eight rows, and a copy adds 1.6 to 4.4 ns to
+seven. Why a default costs 20 ns in a line row and 1.2 ns in `attitude_plane` is not isolated.
+
+Unitize forms take one reciprocal and multiply, as Terathon does, where the library divides each
+component. The divide column shows both.
 
 **No reference function calls another.** Under `--panics:off`, each call to a Nim function
 fills its result with zeros and branches on the error flag after it. Hand-written code spends
@@ -101,15 +128,20 @@ the effect on time is not separable from code layout.
 Verified by `test_rga4d.nim` and the other stubs, suite `Chapter 2` and one suite `Wiki: <page>` for
 each wiki page that a typed measurand cites. For every typed measurand and every seeded sample, the
 reference widened into the dense multivector equals the library within `=~`. Each check cites its
-equation or wiki page. At rga3d and cga4d no typed reference exists, so each of those suites holds
-one skipped test that names the gap. Suite `Internal: Catalogue` holds every typed cite under
+equation or wiki page. Each of the four algebras of the stubs carries a typed reference. An
+algebra that the sweep alone reaches holds one skipped test in each of those suites, which names
+the gap. Suite `Internal: Catalogue` holds every typed cite under
 chapter 2 or a wiki page, so no cite falls outside every suite.
 
 Suite `Internal: Inspector` reads the nimcache of the test binary itself. It finds
-`wedge(Point,Point)` spending twelve multiplies and six subtractions, as its documentation
-states. It holds every reference function in that nimcache to no zero fill and no error check.
-The count it reads must reach `REFERENCE_FUNCTIONS_FLOOR`, which is 73 at rga4d and 84 at
-cga5d.
+that `wedge(Point,Point)` spends twelve multiplies and six subtractions at rga4d, and six and
+three at rga3d, as its documentation states. It holds every reference function in that
+nimcache to no zero fill and no error check. The count it reads must reach
+`FLOOR_FUNCTIONS_REFERENCE`, which is 73 at rga4d, 84 at cga5d, 50 at rga3d and 66 at cga4d.
+
+The movement model reads the size of a typed stem from the module of the function that reads
+it. The 2D and 3D references share type names at other sizes: a 2D point is 24 bytes, and a 3D
+one 32. Suite `Internal: Inspector` holds both sizes.
 
 ## Widening and pools
 
@@ -139,6 +171,22 @@ left uninitialised. In the bench at `3121342`, the machine code holds 245 stores
 with or without the fill. So there a fill gives no measurand a discount, and the `noinit`
 keeps it so as the catalogue grows. Both figures are from `linux amd64, 4 cores` on 2026-10-02.
 
+**A result of three floats or fewer is bound before its slot.** Nim returns such a result by
+value, through a temporary that the call site fills with zeros. In the large function that
+holds every loop, the compiler keeps that fill as a call to an out-of-line `rep stosq`. A caller
+of normal size pays nothing, because there the fill is two stores that the compiler deletes.
+Of the 2D reference rows, 30 return such a result, and of the 3D ones none.
+
+Two sessions of five alternating runs on `linux amd64, 4 cores` on 2026-10-03 time the 2D
+references, one with the fill and one bound first. With the fill, those 26 rows at rga3d and 4
+at cga4d take 12.1 to 15.5 ns. Bound first, they take 0.8 to 5.0 ns. Within each session,
+library over reference for `complement_left_line` reads ×0.20 with the fill and ×2.98 bound
+first. The other reference rows move ×0.42 to ×1.70 between the sessions.
+
+The session bound first is the committed baseline, and the session with the fill is not
+committed. Bound first or not, the C at rga4d and cga5d is the same byte for byte. Suite
+`Internal: Inspector` holds the loop to no temporary filled with zeros.
+
 `bench` runs `ROUNDS` rounds over `OBJECTS` objects, and reports the median and minimum
 nanoseconds for each object: the runtime measurements. The allocation gauge is live only
 under `-d:nimAllocStats`. The bench refuses to report allocation counts unless a positive
@@ -147,7 +195,7 @@ control raised the counter first. A zero then means zero, and never an inert ins
 once compiled out.
 
 **The bench runs five times, and each time is the median of those runs.** `bench` runs the
-plain binary of each algebra in turn, algebra after algebra, `BENCH_RUNS = 5` times. So drift
+plain binary of each algebra in turn, algebra after algebra, `RUNS_BENCH = 5` times. So drift
 of the machine lands on every algebra alike. For each implementation the runtime baseline
 keeps the median of each run as `ns_runs`, in run order. `ns_median` is the median of those,
 and `ns_min` is the least minimum.
@@ -156,17 +204,20 @@ One run times both implementations, so the runs pair by index, and each run give
 ratio. The docket draws one tick for each of those ratios. Rejected: the spread of rounds inside
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
-**The runtime baselines are from 2026-10-02**, at `3121342`, five runs each on `linux amd64,
-4 cores`. In turn with them, the bench of 2026-10-01 ran again. At rga4d its library ran at ×1.19 to
-×1.22 of its own times of 2026-10-01, and its reference at ×1.26 to ×1.27. Its dense forms ran at
-×1.00 to ×1.01. The bench of these baselines ran ×0.99 to ×1.01 of it in the same runs.
+**The runtime baselines are from 2026-10-02 at rga4d and cga5d, and from 2026-10-03 at rga3d and
+cga4d**, at `3121342`, five runs each on `linux amd64, 4 cores`. In turn with them, the bench of
+2026-10-01 ran again. At rga4d its library ran at ×1.19 to ×1.22 of its own times of 2026-10-01, and
+its reference at ×1.26 to ×1.27. Its dense forms ran at ×1.00 to ×1.01. The bench of these baselines
+ran ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
 
 Within these baselines, the least and greatest run ratios of the median measurand are ×1.07
-apart at rga4d and ×1.17 at cga5d. They are ×1.06 at rga3d and ×1.10 at cga4d, and the widest
-measurand spreads ×2.39, at rga4d.
+apart at rga4d and ×1.17 at cga5d. In the baselines of 2026-10-03 they are ×1.04 at rga3d and
+×1.07 at cga4d. The widest measurand spreads ×4.74, as `attitude_point` at rga3d does. Its
+reference takes under one nanosecond. In one run of five, its library takes ×2.9 its usual time,
+and its reference ×0.6.
 
 So one run's time ratio is weak evidence, and the ticks on the docket say how weak.
 
@@ -317,7 +368,7 @@ The supports are held to 54 at four dimensions, and the centre and the container
 five. The partner chain is held to 324, and to its mark as an estimate.
 Suite `Internal: Inspector` holds the soundness law. No lower bound outruns what the library
 spends on the same operation. That law reads the build's own nimcache, and every measurand
-with a derived bound meets its library function there. It reads at least `BOUND_ROWS_FLOOR`
+with a derived bound meets its library function there. It reads at least `FLOOR_ROWS_BOUND`
 measurands: 107 at rga4d, 130 at cga5d, 39 at rga3d and 46 at cga4d.
 
 **What the bound finds at the pin.** Every primitive product spends what the algebra demands,
@@ -479,7 +530,7 @@ library, reads the static measurements of every function, and times each measura
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
 lands on both.
 
-**An evaluation builds without dense forms**, under `-d:pga_benchmark.has_dense_forms=false`.
+**An evaluation builds without dense forms**, under `-d:pga_benchmark.has_forms_dense=false`.
 A dense form reads tables by their names at pin, and a change may rename them, as
 `cayley-derivation` does. The evaluation compares the library with the pin, so it needs no
 dense form.
@@ -494,10 +545,9 @@ again.
 
 The evaluation then checks the claims. The document names the pin and a digest of what it
 tried: every edit, every claim and every program, and never the prose. So an evaluation is current
-exactly while its edits are. Evaluations measure the two
-typed algebras, rga4d and cga5d, which both lower bounds cover. After `--thorough`, as
-`evaluate all --thorough`, they measure rga3d and cga4d as well, as the Architect chose. Those
-two carry no reference, so only the multivector lower bound covers them there.
+exactly while its edits are. Evaluations measure rga4d and cga5d, the 3D Euclidean algebras,
+since each algebra more costs builds and runs. After `--thorough`, as `evaluate all
+--thorough`, they measure rga3d and cga4d as well, as the Architect chose.
 
 **The spread comes from the evaluations themselves.** An evaluation that changes no library function
 moves no count, so the range of its time ratios is the range of the machine. The pages state
@@ -683,44 +733,46 @@ every implementation, with the gauge live, as the runtime baselines record. Scal
 dimensions is unmeasured at the pin, and `sweep` takes it by hand.
 
 **Generated operators write each zero element, and hand-written functions leave theirs to the
-default fill.** A generated operator writes every element as a straight statement, zeros
-included, because generation lowers a Cayley table and nobody writes the zeros by hand. The
-default fill there would cost a geometric mean of ×1.07 to ×1.23 from four dimensions up. A
-hand-written function, such as a norm, writes no zero. The Architect decided this, because the
-library is about PGA and not about micro-optimisation.
+default fill.** A generated operator writes every element as a straight statement, zeros included,
+because generation lowers a Cayley table and nobody writes the zeros by hand. At the pin, what the
+default fill would cost the generated operators is unmeasured. A hand-written function, such as a
+norm, writes no zero. The Architect decided this, because the library is about PGA and not about
+micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
 unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
 carrier are generated. The cost that stays is what the hand-written norms pay.
 
-The cost was measured at library `181c8d8` with the `merge` fix of `16dbc17`, on 2026-09-25.
-The machine is not recorded.
-Each function was called through a volatile procedure pointer, so its body compiled alone and
-wrote to memory that it could not see. Each figure comes from two passes, and each pass is the
-median of nine runs of 41 rounds over 1024 objects. Functions that did not change varied by
-±3%.
+The cost is measured at the pin `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
+2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
+each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
+passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
+functions that did not change moved ×0.86 to ×1.02.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
 
 | Norm | rga2d | rga3d | rga4d | rga5d | cga4d | cga5d | cga6d |
 |------|-------|-------|-------|-------|-------|-------|-------|
-| `|∙` | 2.6 / 2.6 | 3.9 / 3.9 | 13 / 7.0 | 34 / 12 | 16 / 9.4 | 53 / 24 | 109 / 76 |
-| `|■` | | | | | 16 / 9.3 | 53 / 25 | 109 / 76 |
-| `|∘` | 2.6 / 2.6 | 4.6 / 4.6 | 14 / 7.2 | 34 / 12 | 17 / 9.7 | 55 / 26 | 114 / 90 |
-| `|□` | | | | | 17 / 9.7 | 55 / 26 | 105 / 90 |
-| `|` | 4.0 / 3.7 | 5.9 / 5.6 | 24 / 15 | 58 / 46 | 31 / 22 | 86 / 74 | 163 / 150 |
+| `|∙` | 2.8 / 2.8 | 4.4 / 4.4 | 15 / 7.3 | 17 / 11 | 16 / 9.6 | 21 / 17 | 45 / 31 |
+| `|■` |  |  |  |  | 16 / 9.4 | 21 / 16 | 45 / 32 |
+| `|∘` | 2.8 / 2.8 | 4.5 / 4.6 | 15 / 8.1 | 17 / 11 | 17 / 6.3 | 22 / 13 | 51 / 33 |
+| `|□` |  |  |  |  | 16 / 6.3 | 22 / 13 | 51 / 33 |
+| `|` | 4.2 / 4.2 | 5.0 / 5.0 | 28 / 16 | 32 / 20 | 31 / 19 | 42 / 35 | 94 / 83 |
 
-The fill loses from four dimensions up, where a result holds 128 bytes or more. There gcc
-emits the fill as `rep stos` under its generic tuning for x86-64. At the pin `^∙` and `^∘`
-take the root of `|∙²` or `|∘²`, and do not build the norm. Alone at `181c8d8`, that change
-ran at ×0.55 to ×0.93 in all seven algebras. Article VII holds the rule that these measurements
-set (VII.3, VII.8 and VII.9).
+The fill loses from four dimensions up, where a result holds 128 bytes or more. In the harness at
+the pin, gcc emits the fill of `|∙` at rga4d as `rep stos`, under its generic tuning for x86-64.
+Article VII holds the rule that these measurements set (VII.3, VII.8 and VII.9).
+
+At the pin `^∙` and `^∘` take the root of `|∙²` or `|∘²`, and do not build the norm. Runs of the
+same method on the same machine on 2026-10-03 time that form against a variant of the pin that
+builds the norm. It takes ×0.36 to ×0.76 of the time from three dimensions up, and ×0.94 to ×0.97
+at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Known limitations
 
-- Evaluations time the two typed algebras unless `--thorough` asks for rga3d and cga4d too.
-  The evaluations committed now measure the typed algebras only.
+- Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. The
+  evaluations committed now measure rga4d and cga5d only.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
@@ -743,8 +795,6 @@ set (VII.3, VII.8 and VII.9).
 
 ## Open questions
 
-- Whether the 2D references (rga3d, cga4d) are worth a derivation. Their gaps carry library
-  counts and absolute verdicts only.
 - Whether the library takes P03, `partner-sign`, and with it a partner that does not check the
   grade of its operand. At cga5d, P03 on P01 spends the chain bound of 324 multiplies, three
   zero fills and two error checks. P01 alone spends 437, 104 and 268. Both are the counts

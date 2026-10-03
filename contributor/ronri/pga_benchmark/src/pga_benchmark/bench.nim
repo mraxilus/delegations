@@ -19,25 +19,27 @@ import pga
 import ./[catalogue, kinds, measurements, pools, report]
 
 
-const ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
+const NAME_ALGEBRA = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
   ## Name of algebra this build measures; umbrella spells same, kept here to stay entry.
 
 
-func measurementNode(f: Measurement): JsonNode =
+func nodeMeasurement(f: Measurement): JsonNode =
   ## Build one implementation's measurement; absent implementation is `null`.
   if not f.is_measured: return newJNull()
   %*{
     "ns_median": f.ns_median,
     "ns_min": f.ns_min,
     "allocations": f.allocations,
-    "nan_share": f.nan_share,
+    "share_nan": f.share_nan,
   }
 
 
-proc benchDocument(): JsonNode =
+proc documentBench(): JsonNode =
   ## Gather every measurand's measurements into `bench` document.
   result = document(
-    "runtime", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), takenNow()
+    "runtime",
+    nodeAlgebra(NAME_ALGEBRA, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR),
+    takenNow(),
   )
   result["taken"]["rounds"] = %ROUNDS
   result["taken"]["objects"] = %OBJECTS
@@ -47,9 +49,9 @@ proc benchDocument(): JsonNode =
     measurands[measurand.id] = %*{
       "symbol": measurand.symbol,
       "arity": int(measurand.arity),
-      "library": measurementNode(MEASUREMENTS[Implementation.Library][index]),
-      "reference": measurementNode(MEASUREMENTS[Implementation.Reference][index]),
-      "dense": measurementNode(MEASUREMENTS[Implementation.Dense][index]),
+      "library": nodeMeasurement(MEASUREMENTS[Implementation.Library][index]),
+      "reference": nodeMeasurement(MEASUREMENTS[Implementation.Reference][index]),
+      "dense": nodeMeasurement(MEASUREMENTS[Implementation.Dense][index]),
     }
   result["measurands"] = measurands
 
@@ -74,7 +76,7 @@ proc main(): int =
     stderr.write "Allocation counter inert under -d:nimAllocStats; refusing to report.\n"
     return 1
   measureCatalogue()
-  echo "algebra ", ALGEBRA_NAME, " objects ", OBJECTS, " rounds ", ROUNDS, " allocation gauge ",
+  echo "algebra ", NAME_ALGEBRA, " objects ", OBJECTS, " rounds ", ROUNDS, " allocation gauge ",
     (if isAllocationMeasured(): "live" else: "off")
   for index, measurand in CATALOGUE:
     let
@@ -87,10 +89,10 @@ proc main(): int =
     if d.is_measured:
       line.add "  dense " & formatFloat(d.ns_median, ffDecimal, 2).align(8) & " ns"
     if l.allocations > 0: line.add "  allocations " & $l.allocations
-    if l.nan_share > 0.0: line.add "  nan " & formatFloat(l.nan_share, ffDecimal, 2)
+    if l.share_nan > 0.0: line.add "  nan " & formatFloat(l.share_nan, ffDecimal, 2)
     echo line
   echo "checksum ", SINK
-  writeFile(paramStr(1), pretty(benchDocument()) & "\n")
+  writeFile(paramStr(1), pretty(documentBench()) & "\n")
   0
 
 

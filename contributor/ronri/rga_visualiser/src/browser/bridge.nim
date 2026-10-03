@@ -1093,6 +1093,15 @@ proc nimRateFrameLeast(): cfloat {.exportc.} = cfloat(RATE_FRAME_LEAST)
   ## Report least workable frame rate, per second, which page's plots floor at.
   ##   Desktop reads same constant, so neither front-end states it twice.
 
+proc nimRateFrameFast(): cfloat {.exportc.} = cfloat(RATE_FRAME_FAST)
+  ## Report rate of exceedance curve's fastest mark, twice least workable rate.
+
+proc nimFramesHistory(): cint {.exportc.} = cint(FRAMES_HISTORY)
+  ## Report how many recent frame times page's sparkline keeps, as desktop's plot does.
+
+proc nimFramesExceedance(): cint {.exportc.} = cint(FRAMES_EXCEEDANCE)
+  ## Report how many recent frames page's exceedance curve summarises.
+
 
 proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)
   ## Report lit point's night-side brightness, for point fragment shader's uniform.
