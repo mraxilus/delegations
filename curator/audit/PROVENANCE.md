@@ -2048,6 +2048,11 @@ commit before the new one, and `check-commits` reads the true order in CI.
 - The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop. It
   counts a GitHub write as a post only where the call carried a body, as the `body` hook
   does. So a label or a draft update ends no turn with a sign-off.
+- Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
+  only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
+  holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
+  built hook, 2026-10-03: a valid sign-off sent only as a reply leaves the turn blocked, with
+  `got none`. The same block as text passes.
 - Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
   A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
   relative path then fails to open, and every hooked tool is refused.
