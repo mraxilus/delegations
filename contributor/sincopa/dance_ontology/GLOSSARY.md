@@ -224,8 +224,8 @@ hand bands, each one with its source.
 _Avoid_: body model, skeleton, anthropometry
 
 **Degree of freedom**:
-One way in which a joint of the arm moves, between the two ends of its range, such as the bend
-of the elbow. `Dof` names one in code.
+One way in which a joint of the arm moves between two ends, such as the bend of the elbow.
+`Dof` names one in code.
 _Avoid_: axis, motion, movement
 
 **Pose**:
