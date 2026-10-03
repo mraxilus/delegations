@@ -45,12 +45,6 @@ second queue, and the Architect would again move between two places.
 So a new coordinator starts from the `architect` label, and never from a list of its own.
 Nothing checks that only one coordinator works. The Architect holds it by starting only one.
 
-A thread that you start for your own read, check or cleanup holds a role string of its own,
-`coordinator/<name>`, such as `coordinator/library`. It presents no queue, so it is not a second
-coordinator. Like you, it holds no branch and writes no file in the repository. `<name>` says
-what the thread does, in the grammar of a project folder: lowercase letters, digits and
-underscores, with a letter first.
-
 ## What you may do
 
 | Act | Allowed | Why |
@@ -82,8 +76,7 @@ Where a fact needs a change to the repository, start the delegate whose scope ho
    the place they were said. Where an issue exists, add the new words as a comment there.
 2. **Choose the role**, by the scope of the work. Rules, checks, the merge process and the root
    files are `curator`. One curator project is `curator/<project>`. One contributor project is
-   `contributor/<domain>/<project>`. Your own read, check or cleanup is `coordinator/<name>`.
-   Where the work crosses two scopes, it is two delegates.
+   `contributor/<domain>/<project>`. Where the work crosses two scopes, it is two delegates.
 3. **Name the branch**, inside the grammar of `CLAUDE.md`. A tool that names a branch for the
    delegate names one outside the grammar, so the brief overrides it.
 4. **Make sure that no other delegate works in that folder.** The first act of a delegate is a
@@ -93,10 +86,10 @@ Where a fact needs a change to the repository, start the delegate whose scope ho
    request, as in `curator: fix(audit): read the role line below the attribution block`. That
    title is a commit subject, `type(scope): summary`, lowercase and imperative, with no closing
    period. Its scope follows `CONTRIBUTOR.md` and `CURATOR.md`, Branch and commits, and is not
-   the role. A thread on your own read, check or cleanup opens its title with its role string,
-   such as `coordinator/library`. One thread opens one pull request where it can, so the part
-   after the role matches that title. Never give an issue title the commit form, because the
-   ledger and the `body` hook refuse it there.
+   the role. A thread that does the work of the coordinator itself, such as a read, a check or
+   a cleanup, opens its title with `coordinator`. One thread opens one pull request where it
+   can, so the part after the role matches that title. Never give an issue title the commit
+   form, because the ledger and the `body` hook refuse it there.
 6. **Set the effort** of the delegate, as `Effort` says.
 7. **Write the brief.** It carries the role string, the branch, the issue and the effort. It
    also carries each default that you chose where the words of the Architect left a choice
@@ -290,8 +283,7 @@ Record each answer to a card as `Record a ruling` says.
 Your role string is `coordinator`, and it has no branch. Open every issue and comment with
 `**Role:** coordinator`, and end each one with the footer of `CONTRIBUTOR.md`. Label a brief
 issue with the role string of the delegate it starts, and not with your own, because the work
-is theirs. No item is yours, so no item carries the label `coordinator`. A thread on your own
-read, check or cleanup speaks as `coordinator/<name>` (One coordinator). Copy each string, and
+is theirs. No item is yours, so no item carries the label `coordinator`. Copy each string, and
 never compose it.
 
 ## The shared allowance

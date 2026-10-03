@@ -23,9 +23,8 @@ imperative, with no `type(scope):` prefix. -->
 
 ## Role and branch
 
-- Role: <!-- `coordinator/<name>`, `curator`, `curator/<project>` or
-  `contributor/<domain>/<project>` -->
-- Branch: <!-- inside the grammar of CLAUDE.md, or `none` for `coordinator/<name>` -->
+- Role: <!-- `curator`, `curator/<project>` or `contributor/<domain>/<project>` -->
+- Branch: <!-- inside the grammar of CLAUDE.md -->
 - Effort: <!-- The level the delegate runs at. Quote the words of the Architect it comes from:
   the preference for the model, or a level named for this task. Never a level that the
   coordinator chose. -->

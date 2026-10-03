@@ -39,8 +39,7 @@ contributor/<domain>/<project>/          same shape as a curator project
 
 - The **coordinator** delegate starts the other delegates and presents to the Architect, in
   one place, everything that waits on them. It decides nothing and writes no file. Exactly
-  one works at a time, and a thread on its own read, check or cleanup holds
-  `coordinator/<name>`. It starts from [COORDINATOR.md](COORDINATOR.md).
+  one works at a time. It starts from [COORDINATOR.md](COORDINATOR.md).
 - A **curator** delegate keeps the rules, the root files and the curator projects, and never
   writes code inside a contributor project. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** delegate builds one project and touches nothing outside its folder. It
