@@ -9,6 +9,10 @@
 ##   Result slots start uninitialised (`noinit`): array filled with zeros would let C compiler
 ##     drop each zero store that inlined operation repeats, and so time fewer stores than any
 ##     caller pays.
+##   Result of three floats or fewer returns by value, so loop binds it before storing it.
+##     Assigned straight into slot, it passes through temporary that call site zero-fills, and
+##     in function this large compiler keeps that fill as out-of-line `rep stos`, about 11 ns
+##     per object that no caller of normal size pays. Suite `Internal: Inspector` holds it.
 ##
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
@@ -178,7 +182,12 @@ macro emitMeasurand(
           let j = (i * 7 + 3) mod OBJECTS
           template `m`(): untyped {.used.} = `pool_m`[i]  # Read by `body`.
           template `n`(): untyped {.used.} = `pool_n`[j]  # Read by binary `body`; unary leaves it.
-          results[i] = `body`
+          when typeof(results[0]) is object and sizeof(results[0]) <= 3 * sizeof(float):
+            # Result returned by value: bind first, so call site fills no temporary.
+            let value = `body`
+            results[i] = value
+          else:
+            results[i] = `body`
       let statistics_after = getAllocStats()
       var count_nan = 0
       for i in 0..<OBJECTS:
