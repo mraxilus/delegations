@@ -30,7 +30,7 @@ const
   FLOOR_CROSSINGS = 4
     ## Least crossings settled holds show, so crossing law reads some: 8 on 2026-10-02.
     ##   Margin, not 8: engine is chaotic, and same walks built into another binary differ
-    ##     (`test_rigid.nim`, suite "couple stand for sweep").
+    ##     (`test_rigid.nim`, suite "Internal: Couple stand for sweep").
   TRIALS_JITTER = 1000  ## Jittered copies of each knife-edge pose reader reads, seeded.
 
 func nearestOn(line: array[7, Vector], point: Vector): tuple[offset, z: float] =
@@ -103,7 +103,7 @@ proc settleAll() =
 
 
 
-suite "two hands":
+suite "Internal: Two hands":
   test "crossings are counted off drawn arms, not assumed":
     settleAll()
     var seen = 0

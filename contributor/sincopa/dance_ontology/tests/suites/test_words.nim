@@ -80,7 +80,7 @@ func residue(phrase: string, terms: seq[string]): string =
 
 
 
-suite "the report shows every word it says":
+suite "Internal: The report shows every word it says":
   let
     report = readFile(REPORT)
     terms = shown(report)
@@ -103,7 +103,7 @@ suite "the report shows every word it says":
 
 
 
-suite "the simulation names each facing as the model does":
+suite "Internal: The simulation names each facing as the model does":
   ## `words.FACINGS` names state two stand in from where each body sees other,
   ##   and `rotation.facing` names it from each dancer's turn on spot.  Neither
   ##   reads other, so agreement here is evidence and not echo.
@@ -122,7 +122,7 @@ suite "the simulation names each facing as the model does":
 
 
 
-suite "the report renders from its kept readings":
+suite "Internal: The report renders from its kept readings":
   ## Report is words over readings kept in `simulation/verdicts.json` (`simulation/readings`).
   ##   Law renders report from those readings and demands written one, byte for
   ##   byte, so words changed and not rendered again cannot pass.  Stamp is not
@@ -135,7 +135,7 @@ suite "the report renders from its kept readings":
 
 
 
-suite "kept readings of other physics are read again":
+suite "Internal: Kept readings of other physics are read again":
   ## `keptReadings` gives readings only where their stamp is tree's (`physics`), and none
   ##   otherwise, so verb reads them again.
   ##   Stamp is read before shape.  Rename in `simulation/` renames readings' fields and

@@ -25,7 +25,7 @@ const
 
 
 
-suite "the rig":
+suite "Internal: The rig":
   test "a body's rounds are the tape's, and the radii follow":
     for part in Part:
       let
@@ -79,7 +79,7 @@ suite "the rig":
 
 #[ One Arm ]#
 
-suite "one arm, forward and back":
+suite "Internal: One arm, forward and back":
   let stance = facing(HUMAN, APART)[Body.One]
 
 
@@ -189,7 +189,7 @@ suite "one arm, forward and back":
 
 #[ Contacts ]#
 
-suite "nothing passes through anybody":
+suite "Internal: Nothing passes through anybody":
   ## Two laws kept from `tlaws.nim` that asked solver nothing: they hold
   ## `contact` and `vector` alone, which engine's own contact does not replace,
   ## since reader still asks them whether arm presses body.

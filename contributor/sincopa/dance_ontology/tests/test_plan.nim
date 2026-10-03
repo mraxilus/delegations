@@ -60,7 +60,7 @@ func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
 
 
 
-suite "planner and engine are one rig":
+suite "Internal: Planner and engine are one rig":
   test "gap to palm is read from nearest point of segment, wherever palm lies along it":
     ## Planner holds each palm as point with radius (`plan.place`), so every gap it keeps to
     ##   palm asks `vector.closest` of segment and point.  Read from segment's start, plan of
@@ -147,7 +147,7 @@ suite "planner and engine are one rig":
 
 
 
-suite "planned turn":
+suite "Internal: Planned turn":
   let path = planPath(HUMAN, HAND_TO_HAND, false, CROSS, STYLES[0])
 
 

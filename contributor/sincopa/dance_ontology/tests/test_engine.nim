@@ -44,7 +44,7 @@ proc capsule(world_id: WorldId, x: float): BodyId =
 
 
 
-suite "the engine this project turns couples with":
+suite "Internal: The engine this project turns couples with":
   test "engine runs, and a body falls as far as gravity says":
     ## Cheapest proof binding is right: struct laid out wrong gives wrong figure here
     ##   rather than failing to link.

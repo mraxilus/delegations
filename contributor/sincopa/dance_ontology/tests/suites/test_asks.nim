@@ -66,7 +66,7 @@ func armsOf(still: JsonNode; links: seq[Link]): Arms =
                 armOf(still, link.ends[1].body, link.ends[1].arm)]
 
 
-suite "what each card asks of simulation":
+suite "Internal: What each card asks of simulation":
   var ask_by_key = initTable[string, StillAsk]()
   for ask in stillAsks(): ask_by_key[ask.key] = ask
 
@@ -171,7 +171,7 @@ suite "what each card asks of simulation":
     check moves == SINGLES.len * 4 * QUARTERS_ROUND
 
 
-suite "each hold rests at named facing":
+suite "Internal: Each hold rests at named facing":
 
   test "each chain rests where its connections run parallel, and alternates from there":
     ## Hand to hand runs parallel Face-to-face, and crossed pair Face-to-back (rule 31).
@@ -201,7 +201,7 @@ suite "each hold rests at named facing":
         expect Defect: discard isRestAway(rest)
 
 
-suite "simulation against reference":
+suite "Internal: Simulation against reference":
   let recorded = block:
     var stills = initTable[string, JsonNode]()
     for still in parseFile(KEPT_RIG)["stills"].getElems: stills[still["key"].getStr] = still
@@ -250,7 +250,7 @@ suite "simulation against reference":
     check unmodelled.len == 0
 
 
-suite "each recording is of tree it is kept in":
+suite "Internal: Each recording is of tree it is kept in":
   ## Verb whose stamp is unchanged records nothing again (`design/stamps`), so recording kept
   ##   with other stamp is of other physics, other questions or other verb.  Page would show it
   ##   as this tree's answer.

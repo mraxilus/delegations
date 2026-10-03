@@ -18,7 +18,7 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 ##     nothing took 22.8 s, each run alone, measured 2026-09-24 on four cores; answers
 ##     change only when simulation does.  Every pose and walk law holds is still stood or walked
 ##     live, at answered distance and with current code.  Answers are held to tree by their
-##     stamp, and by walking them again (suite "answers").
+##     stamp, and by walking them again (suite "Internal: Answers").
 
 {.experimental: "strictFuncs".}
 
@@ -107,7 +107,7 @@ func carried(walk: Way | Walked | Went): float =
 
 
 
-suite "two dancers in rigid body engine":
+suite "Internal: Two dancers in rigid body engine":
   test "each dancer stands where tape puts them":
     ## Within `GIVE_REST`: shoulder girdle is on spring, and at rest it sits 6.3 mm
     ## off tape, pushed by its own arm resting against torso.  Tape is where
@@ -219,7 +219,8 @@ suite "two dancers in rigid body engine":
     ##   fix was for: one build carries one step more from one distance than
     ##   another build does, and neither is wrong.
     ##   Both sides are kept answers: search's choice, and walk from every distance
-    ##     (`simulation/answers.nim`), each answered by simulation at stamp suite "answers" holds.
+    ##     (`simulation/answers.nim`), each answered by simulation at stamp suite
+    ##     "Internal: Answers" holds.
     let sweep = answered().sweepOf("shake at torso")
     for (chose, every) in [(sweep.negative, "shake at torso, negative"),
                            (sweep.positive, "shake at torso, positive")]:
@@ -428,7 +429,7 @@ suite "two dancers in rigid body engine":
 
 #[ Sweep Stances ]#
 
-suite "couple stand for sweep":
+suite "Internal: Couple stand for sweep":
   ## Where couple stand for sweep is chosen from every distance walked, by what
   ## each carried and how its arms moved.  Both are chaotic: two walks differing
   ## in last bit answer differently, and same source built by another compiler
@@ -729,7 +730,7 @@ proc corpus(): seq[Seen] =
 
 
 
-suite "arms move as arms do":
+suite "Internal: Arms move as arms do":
   ## Architect, watching viewer: bodies too rigid, arms crushed and passing
   ## through them, sharp moves between frames.  Measured before these laws:
   ## forearm 45 mm inside its own trunk with nothing said, and hand crossing
@@ -904,7 +905,7 @@ proc poses(): seq[Posed] =
 
 
 
-suite "every still stands at ease":
+suite "Internal: Every still stands at ease":
   ## Architect: every state is easily doable in reality without any strain,
   ## effort or forcing; no clipping, no dislocations, no cheating.  Read where
   ## couple stand for each still: nothing at any end past `AT_EASE`, nothing
@@ -1113,7 +1114,7 @@ suite "every still stands at ease":
 
 #[ Answers ]#
 
-suite "answers":
+suite "Internal: Answers":
   ## Laws above read where couple stand from `simulation/answers.json`, and search for
   ## nothing.  These hold that file to tree: every question laws ask is answered
   ## there, by simulation as it is now.
