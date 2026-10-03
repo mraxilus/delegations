@@ -35,8 +35,8 @@ import std/[options, strformat]
 import pga
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history,
-  interaction, marker, message, orrery, picking, ramp, scene, selection, storyboard,
-  tessellate, timings, wording,
+  interaction, marker, message, orrery, picking, ramp, scene, selection, shown,
+  storyboard, tessellate, timings, wording,
 ]
 
 
@@ -1088,6 +1088,12 @@ proc nimRenderLineWidths(): seq[float32] {.exportc.} =
 
 proc nimPointCorners(): seq[float32] {.exportc.} = pointCorners()
   ## Report point quad's static corner buffer; see `mesh.pointCorners`.
+
+proc nimCodepointsShown(): seq[cint] {.exportc.} =
+  ## Report every codepoint build itself writes, with printable ASCII, for page's faces check.
+  ##   Same gathering desktop's `--drive-faces` asks of its atlas; see `shown`.
+  for codepoint in codepointsShown(): result.add cint(codepoint)
+
 
 proc nimRateFrameLeast(): cfloat {.exportc.} = cfloat(RATE_FRAME_LEAST)
   ## Report least workable frame rate, per second, which page's plots floor at.
