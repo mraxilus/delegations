@@ -1466,8 +1466,8 @@ fixes no way about tries both ways.
 The engine stands every plan, and the rig viewer shows the one that holds nearest to ease
 (`walk.plannedStill`, `seen.still`). The search ends early only at a plan at ease, which no other
 plan betters. `design/rig.json` keeps the strain of each plan that it tried, and null for a plan
-that gave (`tried`). The viewer says how many it tried. `design/modelled` asks only whether a plan
-holds, so it stops at the first (`isPlannedHolding`).
+that gave (`tried`). The viewer shows the still alone, and not its strain. `design/modelled` asks
+only whether a plan holds, so it stops at the first (`isPlannedHolding`).
 
 Cost: a still short of ease stands every candidate. On four cores, four stills at once, C1 and C7
 take 3.0 h each, D1 and D7 3.5 h, and C2 and C6 0.9 h. A change to `simulation/` costs about
