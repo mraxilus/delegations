@@ -34,7 +34,7 @@ use at compile time only.
   nothing calls the anti path.
 - **Consistency.** Every anti side comes from one rule, and every interior product is one dual
   fed into one product. At pin, `constructAnti` gives the anti side of reverse, 𝐆, wedge, dual
-  and dot. The antiproduct and the expansions still come from a second transwedge family.
+  and dot. The antiproduct and the expansions come from a second transwedge family.
 
 ## Transwedge
 
