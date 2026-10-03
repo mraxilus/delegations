@@ -35,5 +35,5 @@ suite "Duty 10":
       found = checkPrompt("CONTRIBUTOR.md", long)
     check found.len == 1
     check found[0].message == "Prompt over " & $PROMPT_BYTES & " bytes; prune before adding " &
-      "(duty 10); got " & $long.len & "."
+      "(duty 10); got `" & $long.len & "`."
     check checkPrompt("CONTRIBUTOR.md", "x".repeat(PROMPT_BYTES)).len == 0  # at ceiling

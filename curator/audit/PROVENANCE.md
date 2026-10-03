@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 914ae2b574f73577 |
+| Rules   | cc6b6533a73a85a0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -1284,6 +1284,8 @@ the scanner joins it. Found when the first run reported every OpenGL and SDL bin
   reading. An enum member is unread, and V.1 is unheld here.
 - Rejected: a parser, which costs a dependency and a compiler version; the scanner reads the
   line forms this charter prescribes.
+- V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
+  the fixer share one reading of the words and of the exemptions of the glossaries.
 - Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
   is unread.
 
@@ -1325,10 +1327,11 @@ diagnostic.
 ## Fixes
 
 **`koch fix` rewrites in place each finding that has one mechanical fix, and nothing else.** It is
-built from the checks. Each fixer sits beside its check, in `form.nim`, `idioms.nim`,
-`blanks.nim`, `declarations.nim`, `spacing.nim` and `wrapping.nim`. It reads the same spans,
-runs, predicates and constants. So each rule is written once (Article II.1), and a fixer cannot
-drift from the check that names its finding.
+built from the checks. Each fixer sits beside its check, in `form.nim`, `prose.nim`,
+`alignment.nim`, `messages.nim`, `precedence.nim`, `conversions.nim`, `names.nim`, `idioms.nim`,
+`checker.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and `wrapping.nim`. It reads the
+same spans, runs, predicates and constants. So each rule is written once (Article II.1), and a
+fixer cannot drift from the check that names its finding.
 
 Each rewrite prints as `path:line: <rule> fixed`, at the line that the check names, and the run
 ends with the count. With the layout rules below, `koch fix` replaces nimpretty.
@@ -1377,9 +1380,13 @@ shell among them. The checks still read every kind, and a finding there stays fo
   with trailing whitespace passes through, and its check still reports the whitespace. A Nim and
   a nimble source are fixed. The scope test no longer writes a contributor `README.md`.
 
-**The fixers run in one order, and the chain runs again until the source settles.** Form runs
-first, so later fixers read clean line ends and the final gap of each comment. The idioms run
-next, because the bindings fixer indents lines, and every later width reads that indent. The
+**The fixers run in one order, and the chain runs again until the source settles.** First come
+the fixers that read more than one file: the renames and conversions of the semantic pass, then
+the dead exports. They run once, on the source as given, and their edits move no line. Form runs
+next, so later fixers read clean line ends and the final gap of each comment.
+
+The content fixers follow, because each changes the width of its line. The idioms run next,
+because the bindings fixer indents lines, and every later width reads that indent. The
 blank lines, the doc position and the literal defaults follow, because a joined doc and a dropped
 type change widths. Spacing runs before wrapping, because the spaces it adds are width that
 wrapping measures.
@@ -1411,11 +1418,18 @@ banner check of `checkForm`, which `checkBanners` replaces. The list on every ki
 - `checkDocs`, the place of a one-line doc (STYLE.md §5);
 - `checkDefaults`, a type that a literal default gives (X.12);
 - `checkSpacing`, the spaces inside an expression (X.9);
-- `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5).
+- `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5);
+- `checkAlignment`, the columns of a comment table (I.4);
+- `checkMessages`, the backticks around a value that a message echoes (IV.4);
+- `checkMixtures` and `checkNegations`, the parentheses of a condition (X.4);
+- `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5).
 
-On `.nim` alone, as the idiom checks read it, the list adds `checkImportBrackets` (X.5) and
-`checkLists` (X.10). The move of a late `strictFuncs` needs no new check, because `checkIdioms`
-already reports it.
+On `.nim` alone, as the idiom checks read it, the list adds `checkImportBrackets` (X.5),
+`checkLists` (X.10) and `checkProfiler` (STYLE.md §3). The move of a late `strictFuncs` needs no
+new check, because `checkIdioms` already reports it. `checkNegations` has no fixer, so a project
+clears it by hand before the wiring. The check of a type conversion needs the semantic pass. The
+static pass cannot run that pass, so `koch fix --dry-run` reports it, and the wiring decides its
+place.
 
 **X.9 asks exactly two spaces, by the ruling of the Architect.** An aligned column breaks on a
 rename. One longer name moves every comment of the block. So a change of one line rewrites the
@@ -1436,7 +1450,8 @@ These findings have a fixer:
 - a late `strictFuncs`, moved to that place;
 - `return result`, which goes or becomes `return` by its place (STYLE.md §5);
 - each layout rule of the next section: separators, signatures, calls, trailing separators,
-  import brackets, unordered lists, spaces, blank lines, doc position and literal defaults.
+  import brackets, unordered lists, spaces, blank lines, doc position and literal defaults;
+- each rule of `## Content fixes` and `## Semantic pass`.
 
 **The place of `return result` decides its fix.** STYLE.md §5 allows a bare `return` only for an
 early exit. So where the line ends a routine that holds `result`, at the own indent of its body,
@@ -1450,9 +1465,10 @@ from the line that opens its block, on the code view.
 - The end of a template or a macro keeps its line, because there `return` leaves the caller.
 - An opener that the scanner cannot name, such as a lambda bound to `let`, keeps its line.
 
-**A finding with more than one reasonable fix has no fixer.** A tab has no fixer, because its
-width is a guess. A lone CR is a line break or a stray byte. A reflow, a wrap or a rename each
-fixes a long line that holds no call. An empty file has no fixer either.
+**A finding with more than one reasonable fix has no fixer.** A tab outside a one-line plain
+string has no fixer, because its width is a guess. A lone CR is a line break or a stray byte. A
+reflow, a wrap or a rename each fixes a long line that holds no call. An empty file has no fixer
+either.
 
 - An import ranked low across lines that are not imports has no fixer, because where it lands is a
   choice.
@@ -1460,8 +1476,8 @@ fixes a long line that holds no call. An empty file has no fixer either.
 - A run whose last binding opens a long string has no fixer, because a new indent changes the
   string.
 - A rule that needs a fact the text does not hold has no fixer. That covers the consumer of
-  `{.used.}`, the reach of `{.push.}`, a seed and a stub header. It also covers debug output, a
-  path of one machine and the flags of TypeScript.
+  `{.used.}`, the reach of `{.push.}`, a seed and a missing stub header. It also covers debug
+  output, a path of one machine and the flags of TypeScript.
 
 **A fixer never writes a line that the width check reports.** Where a fix would widen a line past
 `LINE_MAX`, the fixer leaves that line, and its finding stays for the hand. A gap of one space on a
@@ -1677,6 +1693,186 @@ every Nim file of the tree in memory, on branch `main`, so scope refused nothing
   config. It passed 142 on the C backend and 6 on the JavaScript backend, and 25 failed both
   times.
 - A file that failed lacks a native library or a vendored source, or is a broken prototype.
+
+## Content fixes
+
+**Each content rule that has one right answer has a check and a fixer, from one reading.** The
+rules are the I.4 tables, the IV.4 messages, the X.4 conditions, the profiler import and the
+`to<Target>` calls. The static pass does not run their checks yet, as with the layout checks. So
+a project clears their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
+
+**A comment table aligns its columns by display width (I.4).** A combining mark takes no width,
+and a wide East Asian glyph or an emoji takes two. Every other rune takes one, and an ambiguous
+one does too. A column keeps the width of its separator row. It widens only where the text of a
+cell does not fit, to that text and one space.
+
+- The width guard of X.1 counts runes, and the table counts display width. The guard bounds what
+  an editor holds on one line, and the table aligns what the eye reads. So a table whose fix
+  would cross 100 runes stays for the hand.
+- `WIDTHS` holds the blocks that the scripts of this tree use, from Unicode 15. A mark of another
+  block, such as an Indic vowel sign, counts one.
+- A cell that holds `|`, even in backticks, splits. Its table then holds rows of other lengths,
+  and stays unread.
+- Verified by `suites/test_alignment.nim`. On the tree, line 23 of `motors.nim` of
+  `rga_visualiser` aligns by runes, and the fix pads it by one space.
+
+**A message echoes each value after `got` in backticks (IV.4).** The check reads the
+concatenation from the literal that holds `; got ` to its end. Each interpolation and each
+operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
+such as `got none.`, echoes no value and is no finding.
+
+- The fixer puts a backtick on each side of a bare value, inside the literals around it. A value
+  that ends the message has no literal after it, and stays for the hand.
+- The rule reads every value of the tail, so a context after the value takes backticks too, as
+  `for {manner}` does.
+- A test that builds the old text in the same form changes with it. A test that asserts the
+  text in another form changes by hand, as two tests of `test_record.nim` do.
+- Verified by `suites/test_messages.nim`.
+
+**A condition that mixes `and` with `or` takes parentheses around each `and` (X.4).** The parser
+already groups it so, because `and` binds tighter than `or`. So the parentheses move no reading.
+The check reads an expression on tokens, at one bracket depth, between delimiters. A command call
+holds the expression after its head.
+
+- `not` over a binary expression has a check and no fixer. Nim reads `not a == b` as
+  `(not a) == b`, so the right parentheses depend on intent.
+- Verified by `suites/test_precedence.nim`. The tree holds no finding of either rule.
+
+**Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
+§3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is
+`<project>/src/<project>.nim`, and a stub is `tests/test_*.nim`. The fixer joins the form on two
+lines. It inserts the line after the last pragma that opens the module, with a blank line on each
+side.
+
+- A `when isMainModule:` inside a string is no code, so `test_checker.nim` is no entry module.
+- A stub that includes a suite with the import then imports the module twice. The compiler
+  accepts that, and `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02). The
+  Architect accepts the duplicate, so that the fixer stays simple and reads no include.
+- Verified by `suites/test_idioms.nim`.
+
+**A `to<Target>` call of a plain argument takes its subject first (STYLE.md §5).** A plain
+argument is a name, with any call, index or field glued after it. A compound argument, a literal,
+a generic call, several arguments and a call across lines stay prefix calls. A call followed by
+a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
+
+- The rewrite reads no symbol. A field named like the routine, such as `to_x`, would capture the
+  method call. The tree holds no such field, and every changed file checks as before.
+- Verified by `suites/test_conversions.nim`.
+
+**Four rules that the static pass already holds gain a fixer.**
+
+- A tab inside a one-line string that is neither raw nor long becomes `\t`, which reads as the
+  same byte (X.1).
+- A lowercase article in a Nim comment goes, outside backticks and quotes, where the next word
+  opens a noun phrase (VI.5). So `swap a and b` keeps its `a`, and a capital `A` stays a finding.
+- `-r` leaves the `cmd` of a stub, and the lines of `batchable` and `joinable` go (STYLE.md §6).
+- A dead export of the checker drops its `*` where its own module calls it. A routine that
+  nothing calls stays, because to delete it is a choice.
+- An unseeded random in a test keeps a check and no fixer, because the seed is a choice.
+- Verified by `suites/test_form.nim`, `suites/test_prose.nim`, `suites/test_idioms.nim` and
+  `suites/test_checker.nim`. The tree holds no finding of these four rules.
+
+**The whole-tree proof of the content fixes: no fix changes what code means.** Verified by hand,
+2026-10-03, with the scratch program of `## Layout fixes`, which now asks the semantic pass too.
+It fixed every Nim file of the tree on branch `main`, with the checkouts of `koch fetch-deps`.
+
+- The fix wrote 182 contributor files, and no curator file. The curator code took the same
+  fixes in its own commits.
+- Reports of the content rules by project:
+  - `rga_visualiser`: `to<Target>` 474, tables 59, profiler imports 7, conversions 7, messages 3;
+  - `dance_ontology`: messages 66, `to<Target>` 61, tables 1, conversion 1;
+  - `pga_benchmark`: tables 22, conversions 12, profiler imports 4, `to<Target>` 3.
+- The layout rules gave 18,411 more reports, close to the figures of the layout proof.
+- Lines added and removed: `rga_visualiser` 99,020 and 27,522, `dance_ontology` 3,431 and
+  2,362, `pga_benchmark` 1,013 and 878.
+- Findings before and after: tables 100 and 18, messages 72 and 3, profiler imports 11 and 0,
+  `to<Target>` 538 and 0, conversions 20 and 0. A table that stays would cross 100 runes, and a
+  message that stays ends on its value.
+- The static pass reported 0 findings before and after. A second fix wrote nothing.
+- The semantic pass resolved 34 sites, in four of the files, in 8 s.
+- The parser of the compiler read 107 changed files to the same tree as before. It read the
+  other 75 to the same tree once normalised. To the normalisation of the layout proof, it adds
+  four steps. It drops a pair of parentheses and the profiler import, reads `x.f` as `f(x)`, and
+  drops backticks in a string.
+- `nim check` read each changed file with the same result before and after, on its own pin and
+  config. It passed 151 on the C backend and 6 on the JavaScript backend, and 25 failed both
+  times.
+
+## Semantic pass
+
+**Two rules ask what a name means, so `koch fix` asks the semantic pass of the compiler.** Text
+cannot tell a conversion `x.T` from a field or a module path, such as `rigid3.Point`. Text cannot
+find every use of a name across modules either. So `symbols.nim` asks `nimsuggest` of the
+toolchain that serves the pin of the project.
+
+- One `nimsuggest --v3 --stdin` serves each entry: the file itself, or the file that includes it.
+  It runs in the project directory, so the `nim.cfg` of the project applies.
+- Each file is checked first. A file that reports an error on the C backend is asked again on the
+  JavaScript backend. A file that fails both stays unresolved, and `koch fix` prints its first
+  error.
+- A routine that returns a value answers its own declared name with its implicit `result`. So that
+  answer reads as the routine declared at the site, where each use of it resolves. Both pins that
+  koch serves answer so (verified by hand, 2026-10-03).
+- Rejected: the compiler as a library inside koch. Every build of koch would compile the
+  compiler. Koch would also bind to one pin, and the `ronri` projects lex glyphs that only their
+  commit pin knows.
+- Rejected: `nim check --def` for each site, which compiles the project once for each site.
+  `nimsuggest` ships with each toolchain that koch serves, so the pass costs no build.
+- Cost, measured 2026-10-02 on this container: about 2 s for each entry of a curator module. A
+  front-end or a suite of `rga_visualiser` takes 5 to 9 s. Only a file with a candidate asks.
+- Cost: a file that needs a checkout of `koch fetch-deps`, or a native library, stays unresolved
+  without it. A branch of `when` that the defines leave out resolves nothing.
+- Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler.
+
+**A type conversion `x.T` becomes `T(x)` where the pass settles it (STYLE.md §5).** The candidate
+is a type-like name glued after a receiver. The name must resolve to a type, and the last name of
+the receiver to a value. A parenthesised receiver gives the call its parentheses, and a tuple
+keeps its own.
+
+- The edits apply once, before the chain, on the source as given. They move no line, so the fence
+  holds, and no edit lands on a fenced line.
+- A receiver that is a module the file imports, or a capitalised name, asks nothing. That keeps
+  the pass to the few files that hold a candidate.
+- The static pass compiles nothing, so it cannot run this check. `koch fix --dry-run` reports it.
+- Verified by `suites/test_conversions.nim` and `suites/test_fixes.nim`.
+
+**A coined abbreviation (V.6) is renamed to its full word at every use, or the rename is refused
+whole.** `names.nim` reads each declaration that the names check reports, and spells it out word
+by word, in its own case. `rewrites.nim` plans the rename from what the pass resolves.
+
+- The declaration must resolve to the symbol declared at that very site. The names scanner can
+  read a use as a declaration, and a rename there would repeat the real one.
+- A site that resolves to the declaration is renamed, and one that resolves to another symbol
+  stays. A site that resolves to nothing refuses the rename.
+- A named argument or a constructor field resolves through its callee. It is the declaration where
+  it is a parameter or a field of that callee.
+- The new name must not stand in a file that the rename writes. It must not name a global
+  declaration of a module compiled with the declaring file, `system` among them.
+- No edit may land on a fenced line, or widen a line past 100 characters. A rename that reaches a
+  file that the run does not fix is refused.
+- A mention of the old name in backticks, in a comment of a file where every use is renamed, is
+  renamed too.
+- The planner takes the new name from its caller. So a rename of V.1 reuses it, for the case of a
+  local constant or of another name. Only the rule that chooses the name is new.
+- Cost: the scope is the project of the declaring file and the root files.
+- Cost: overloads in one file share the qualified name of a parameter. So a named argument to
+  another overload is renamed too, and its build then fails.
+- Verified by `suites/test_rewrites.nim`, `suites/test_names.nim` and `suites/test_fixes.nim`.
+
+**The rename has its proof on commit `c5c65db` of `main`, because the tree of today holds no V.6
+finding.** Verified by hand, 2026-10-03, with a scratch program over `abbreviationRenames`,
+`planRename` and `resolve`. It applied the planned renames alone to a copy of that tree, with the
+checkouts of `koch fetch-deps`.
+
+- The names check gave 105 renames to plan. The semantic pass read 43 of the files in 155 s.
+- The planner planned 87 and refused 18. The declaring file of 9 compiles on no backend, and the
+  new name of 4 already stands. Another 4 would cross 100 characters. The last one is a use in a
+  tuple binding that the names scanner reads as a declaration.
+- The renames wrote 39 Nim files. The parser of the compiler read each to the same tree as
+  before, once the renames map back.
+- `nim check` read each with the same result before and after. It passed 35 on the C backend and
+  2 on the JavaScript backend, and 2 failed both times.
+- A second run gave 17 renames to plan, planned none, and so wrote nothing.
 
 ## Fixed waits
 

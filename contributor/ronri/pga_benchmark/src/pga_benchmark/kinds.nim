@@ -1,30 +1,23 @@
 ## Name operand kinds every measurand speaks in, and sizes every measurement is scaled by.
 ##   Kinds are typed objects Lengyel's reference carries for one algebra, plus `General`
 ##   for library's full multivector and `Scalar` for plain float. Algebra decides which
-##   kinds exist, so two complete enums stand under `when`: enum cannot hold `when` inside.
+##   kinds exist, so each branch of `when` holds one complete enum: enum cannot hold `when`.
 ##
-##   |------------|-----------------------------------|--------------------------------------|
-##   | Kind       | Rigid, 4D (3D Euclidean)          | Conformal, 5D (3D Euclidean)         |
-##   |------------|-----------------------------------|--------------------------------------|
-##   | General    | any multivector, 16 floats        | any multivector, 32 floats           |
-##   | Scalar     | float                             | float                                |
-##   | Point      | p = pˣe₁ + pʸe₂ + pᶻe₃ + pʷe₄    | --                                   |
-##   | Line       | l = lᵛ(e₄₁ e₄₂ e₄₃) + lᵐ(e₂₃ e₃₁ e₁₂) | --                             |
-##   | Plane      | g = (e₄₂₃ e₄₃₁ e₄₁₂) + gʷe₃₂₁    | --                                   |
-##   | Motor      | Q = Qᵛ + Qᵐ + Qᵛʷ𝟙 + Qᵐʷ𝟏         | --                                   |
-##   | Flector    | F = p + g                         | --                                   |
-##   | RoundPoint | --                                | `a` = x y z (e₁ e₂ e₃) + w e₄ + u e₅ |
-##   | Dipole     | --                                | d = dᵛ dᵐ + dᵖ(e₁₅ e₂₅ e₃₅ e₄₅)      |
-##   | Circle     | --                                | c = cᵍ(e₄₂₃ e₄₃₁ e₄₁₂ e₃₂₁) + cᵛ + cᵐ |
-##   | Sphere     | --                                | s = sᵘe₁₂₃₄ + (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅) |
-##   | FlatPoint  | --                                | p = (e₁₅ e₂₅ e₃₅ e₄₅)                |
-##   | FlatLine   | --                                | l = (e₄₁₅ e₄₂₅ e₄₃₅ e₂₃₅ e₃₁₅ e₁₂₅)  |
-##   | FlatPlane  | --                                | g = (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)        |
-##   |------------|-----------------------------------|--------------------------------------|
+##   |-------|-------------------------------------------------------------------|
+##   | Name  | Typed kinds beside `General` and `Scalar`, by module of reference |
+##   |-------|-------------------------------------------------------------------|
+##   | rga3d | Point, Line, Motor; `reference/rigid2.nim`                        |
+##   | rga4d | Point, Line, Plane, Motor, Flector; `reference/rigid3.nim`        |
+##   | cga4d | PointRound, Dipole, Circle; `reference/conformal2.nim`            |
+##   | cga5d | PointRound, Dipole, Circle, Sphere, PointFlat, LineFlat,          |
+##   |       | PlaneFlat; `reference/conformal3.nim`                             |
+##   |-------|-------------------------------------------------------------------|
 ##
-##   Cost: rigid algebras of other dimension carry only `General` and `Scalar` measurands, since
-##     Lengyel's typed reference exists for 3D Euclidean space alone here; scaling sweep
-##     measures those dense against dense.
+##   Each module's header table spells components of its kinds against library's basis.
+##   `General` is any multivector, 2^n floats; `Scalar` is float.
+##   Cost: algebras of other dimension carry only `General` and `Scalar` measurands, since
+##     Lengyel's typed reference exists for 2D and 3D Euclidean space alone here; scaling
+##     sweep measures those dense against dense.
 
 {.experimental: "strictFuncs".}
 
@@ -32,13 +25,17 @@ import pga
 
 
 when IS_RIGID and DIMENSIONS == 4:
-  type Kind* {.pure.} = enum
-    ## Define operand kinds of 4D rigid algebra.
+  type Kind* {.pure.} = enum  ## Define operand kinds of 4D rigid algebra.
     General, Scalar, Point, Line, Plane, Motor, Flector
 elif IS_CONFORMAL and DIMENSIONS == 5:
-  type Kind* {.pure.} = enum
-    ## Define operand kinds of 5D conformal algebra.
-    General, Scalar, RoundPoint, Dipole, Circle, Sphere, FlatPoint, FlatLine, FlatPlane
+  type Kind* {.pure.} = enum  ## Define operand kinds of 5D conformal algebra.
+    General, Scalar, PointRound, Dipole, Circle, Sphere, PointFlat, LineFlat, PlaneFlat
+elif IS_RIGID and DIMENSIONS == 3:
+  type Kind* {.pure.} = enum  ## Define operand kinds of 3D rigid algebra.
+    General, Scalar, Point, Line, Motor
+elif IS_CONFORMAL and DIMENSIONS == 4:
+  type Kind* {.pure.} = enum  ## Define operand kinds of 4D conformal algebra.
+    General, Scalar, PointRound, Dipole, Circle
 else:
   type Kind* {.pure.} = enum
     ## Define operand kinds of algebra without typed reference: dense and scalar only.
