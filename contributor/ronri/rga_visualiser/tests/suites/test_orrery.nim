@@ -3,6 +3,10 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+# Opened with `{.all.}`, so suite reads moon's frame directly: `spanOfNormal` decides where on
+#   its ring every moon stands, and `toEcliptic` with `directionEquatorial` turn its elements
+#   into frame its normal is read in.
+import ../../src/rga_visualiser/orrery {.all.}
 
 
 # Orrery needs room for its default size, and one configuration here deliberately compiles.
@@ -334,6 +338,53 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         check radToDeg(arccos(normals[name].z)) < 3.0
       # Luna's direction from Earth is off ecliptic: horizon plane stands on this.
       check abs((placed["luna"] - placed["earth"]).z) > 1.0e-6
+
+    test "every moon's orbit leans its inclination from its reference plane, about its node":
+      # Elements read back off built normal, by vector arithmetic apart from algebra that
+      #   builds it. Lean is angle from reference pole; node is where orbit climbs through
+      #   reference plane, measured round pole from where reference plane climbs through
+      #   equator.
+      #   Orbit lying in its reference plane has no node, so moon with no lean is passed by
+      #   there, and count that passed is held to floor.
+      const leaning_least = 17
+      let pole_equator = toEcliptic(Direction(x: 0, y: 0, z: 1))
+      var leaning = 0
+      for moon in MOONS:
+        let
+          normal = normalOfMoon(moon)
+          pole = toEcliptic(directionEquatorial(moon.pole_ascension, moon.pole_declination))
+          lean = arctan2(norm(cross(pole, normal)), dot(pole, normal))
+        check abs(lean - degToRad(moon.inclination)) <= 1.0e-12
+        if moon.inclination <= 0.0: continue
+        let
+          node_reference = normalize(cross(pole_equator, pole)).get
+          node_orbit = normalize(cross(pole, normal)).get
+          angle = arctan2(
+            dot(cross(node_reference, node_orbit), pole), dot(node_reference, node_orbit)
+          )
+          gap = angle - degToRad(moon.node)
+        check abs(arctan2(sin(gap), cos(gap))) <= 1.0e-9
+        inc leaning
+      checkpoint(&"{leaning} of {MOONS.len} moons lean, and each node read back")
+      check leaning >= leaning_least
+
+    test "every moon's ring starts at its ascending node on the ecliptic, turning about its normal":
+      # Every moon's phase is measured from first of its ring's two directions, so either one
+      #   flipped would stand moon across its planet, which test of plane alone never sees.
+      #   First lies in ecliptic and in orbit plane; second completes frame right-handed
+      #   about normal, so ring climbs out of ecliptic as it leaves its node.
+      for moon in MOONS:
+        let
+          normal = normalOfMoon(moon)
+          (node, second) = spanOfNormal(normal)
+        check abs(normal.z) < 1.0
+        check norm(node) =~ 1.0
+        check norm(second) =~ 1.0
+        check abs(node.z) <= 1.0e-12
+        check abs(dot(node, normal)) <= 1.0e-12
+        check abs(dot(node, second)) <= 1.0e-12
+        check dot(cross(node, second), normal) =~ 1.0
+        check second.z > 0.0
 
     test "every neighbour planet rings its star at its real axis, and one without is left out":
       # Archive stores missing semi-major axis as zero; such planet is left out rather
