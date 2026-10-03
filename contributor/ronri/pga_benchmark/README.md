@@ -23,6 +23,7 @@ Three kinds of page answer the question. Each one is built from committed files 
 | [P02 Typed multivectors][typed-multivectors] | proposal | concrete k-vector types, any dimension |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
 | [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
+| [P05 Multivector align][multivector-align] | proposal | multivector aligned to one register |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
@@ -119,3 +120,4 @@ checked against.
 [typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX
 [partner-sign]: https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf
 [exact-kinds]: https://claude.ai/artifact/UPfjVLGbsVLBz756DMkPJe
+[multivector-align]: https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh
