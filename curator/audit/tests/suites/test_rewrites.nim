@@ -109,6 +109,9 @@ suite "Internal: Rewrites":
     var unknown = answers()
     unknown["p/b.nim"].symbols.del((3, 7))
     check planOf(answers = unknown).refusal == "`p/b.nim:3` resolves to no symbol"
+    var elsewhere = answers()
+    elsewhere["p/a.nim"].symbols[(1, 8)].line = 9  # site uses name declared on other line
+    check planOf(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"
     var shadowing = answers()
     shadowing["p/a.nim"].globals["context"] = @[Symbol(kind: "skProc", name: "m.context")]
     check planOf(answers = shadowing).refusal == "`context` would shadow `m.context`"
