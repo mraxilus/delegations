@@ -32,21 +32,21 @@ import ./[geometry, pose, style, terms]
 
 
 const
-  BODY_RADIUS* = 20.0     ## Dancer, seen from above; their hands sit on it.
-  RIM_WIDTH* = 2.2       ## One width for whole boundary.
+  BODY_RADIUS* = 20.0  ## Dancer, seen from above; their hands sit on it.
+  RIM_WIDTH* = 2.2  ## One width for whole boundary.
 
 const
-  CHEVRON_OUT* = 7.0    ## How far centred chevron reaches forward.
-  CHEVRON_BACK = 1.0   ## And how little it reaches back.
-  CHEVRON_HALF = 5.0   ## Half its width, well inside rim.
-  CHEVRON_WIDTH = 1.6      ## Width its two legs are drawn at.
+  CHEVRON_OUT* = 7.0  ## How far centred chevron reaches forward.
+  CHEVRON_BACK = 1.0  ## And how little it reaches back.
+  CHEVRON_HALF = 5.0  ## Half its width, well inside rim.
+  CHEVRON_WIDTH = 1.6  ## Width its two legs are drawn at.
 
 const
-  RIM_STEP* = 3.0    ## Degrees between samples when route walks rim.
-  ARM_REST* = 90.0   ## Resting hand, one quarter of rim from front.
-  HAND_RADIUS* = 6.0      ## Hand mark's radius, or half its side.
-  CAPTION_RADIUS* = BODY_RADIUS + HAND_RADIUS + 2   ## Just past hand that caption names.
-  FREE_FADE* = 0.5   ## How far hand nobody holds fades, keeping its hue.
+  RIM_STEP* = 3.0  ## Degrees between samples when route walks rim.
+  ARM_REST* = 90.0  ## Resting hand, one quarter of rim from front.
+  HAND_RADIUS* = 6.0  ## Hand mark's radius, or half its side.
+  CAPTION_RADIUS* = BODY_RADIUS + HAND_RADIUS + 2  ## Just past hand that caption names.
+  FREE_FADE* = 0.5  ## How far hand nobody holds fades, keeping its hue.
 
 const SLOT_OFFSET* = 44.0
   ## How far round rim `front` and `back` sit from side.
@@ -60,9 +60,9 @@ const HAND_GAP* = radToDeg(arcsin((HAND_RADIUS + CAP) / BODY_RADIUS))
   ## keeps, turned into arc, so boundary and reach stop at one border.
 
 const
-  MARK_STROKE* = 1.5   ## Width hand mark is outlined at.
-  SEEN_GAP* = 1.2      ## Plain daylight between reach and what it clears.
-  CHEVRON_STEPS* = 6   ## Discs along one leg of chevron, so V is kept
+  MARK_STROKE* = 1.5  ## Width hand mark is outlined at.
+  SEEN_GAP* = 1.2  ## Plain daylight between reach and what it clears.
+  CHEVRON_STEPS* = 6  ## Discs along one leg of chevron, so V is kept
                        ## clear as shape it is.
 
 const
@@ -80,15 +80,15 @@ const
     ##     rule 14 forbids.  So shape is cleared as it is drawn.
 
 
-type Free* {.pure.} = enum ## Say how hand nobody holds is drawn.
-  Fade,                    ## Half strength, keeping its hue: free hand.
-  Grey                     ## Quiet outline: ghost of place hand left.
+type Free* {.pure.} = enum  ## Say how hand nobody holds is drawn.
+  Fade,  ## Half strength, keeping its hue: free hand.
+  Grey  ## Quiet outline: ghost of place hand left.
 
 
 
 #[ Six Spots ]#
 
-func slotBearing*(arm: Arm; slot: Slot): float =
+func slotBearing*(arm: Arm, slot: Slot): float =
   ## Get where one of six spots sits, as bearing off body's facing.
   ##   Two sides, and on each place where arm hangs, one spot
   ##     slightly towards dancer's front and one slightly towards their
@@ -102,7 +102,7 @@ func slotBearing*(arm: Arm; slot: Slot): float =
           of Slot.Default: 0.0)
 
 
-func slotOf*(arm: Arm; level: Option[Level]; way: Option[Way]):
+func slotOf*(arm: Arm, level: Option[Level], way: Option[Way]):
     tuple[arm: Arm, slot: Slot] =
   ## Get one of six spots this hand settles in: whose side, how far round.
   ##   `above` never settles anywhere but its own side's default (rule 8).
@@ -113,20 +113,20 @@ func slotOf*(arm: Arm; level: Option[Level]; way: Option[Way]):
    settled.get.slot)
 
 
-func roundOf*(level: Option[Level]; way: Option[Way]): Option[Sends] =
+func roundOf*(level: Option[Level], way: Option[Way]): Option[Sends] =
   ## Get which way round body this hold sends its line, where rules 4 to
   ## 6 say anything; none where nothing is said and short way is taken.
   let settled = settleOf(level, way)
   if settled.isSome: some settled.get.sends else: none(Sends)
 
 
-func handBearing*(facing: float; arm: Arm; wind = 0.0): float =
+func handBearing*(facing: float, arm: Arm, wind = 0.0): float =
   ## Get bearing hand sits at: round from front, past rest spot
   ## by however far arm has been carried.
   facing + (if arm == Arm.Left: -1.0 else: 1.0) * (ARM_REST + wind)
 
 
-func settledWind*(arm: Arm; level: Option[Level]; way: Option[Way]): float =
+func settledWind*(arm: Arm, level: Option[Level], way: Option[Way]): float =
   ## Get winding that puts this hand in its slot.
   ##   Winding is measured off hand's own side and runs towards back
   ##     for either hand, so this is only place two conventions are
@@ -137,7 +137,7 @@ func settledWind*(arm: Arm; level: Option[Level]; way: Option[Way]): float =
   if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
 
 
-func handPoint*(centre: Point; facing: float; arm: Arm; wind = 0.0): Point =
+func handPoint*(centre: Point, facing: float, arm: Arm, wind = 0.0): Point =
   ## Get where one hand is on rim.
   polar(centre.x, centre.y, BODY_RADIUS, handBearing(facing, arm, wind))
 
@@ -146,8 +146,7 @@ func handsOf*(pose: Pose): array[Dancer, array[Arm, Point]] =
   ## Get where all four hands are.
   for who in Dancer:
     for arm in Arm:
-      result[who][arm] = handPoint(
-        pose.place[who], pose.facing[who], arm, pose.wind[who][arm])
+      result[who][arm] = handPoint(pose.place[who], pose.facing[who], arm, pose.wind[who][arm])
 
 
 
@@ -182,7 +181,7 @@ func rim*(centre: Point; facing, bearing_start, bearing_stop: float; width = RIM
     " stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
 
 
-func chevronPoints*(centre: Point; facing: float): array[3, Point] =
+func chevronPoints*(centre: Point, facing: float): array[3, Point] =
   ## Get three points chevron is drawn through: wing, apex,
   ## other wing.
   ##   One source for shape, so drawing and anything that has to
@@ -198,7 +197,7 @@ func chevronPoints*(centre: Point; facing: float): array[3, Point] =
     centre.y - forward.y * CHEVRON_BACK + across.y * CHEVRON_HALF)]
 
 
-func chevron*(centre: Point; facing: float): string =
+func chevron*(centre: Point, facing: float): string =
   ## Say facing, small and at centre of body.
   ##   In middle rather than on rim, because rim breaks for
   ##     hands and carries nothing else.  Centre is only part of
@@ -213,7 +212,7 @@ func chevron*(centre: Point; facing: float): string =
     " stroke-linejoin=\"round\"/>"
 
 
-func border*(pose: Pose; who: Dancer): string =
+func border*(pose: Pose, who: Dancer): string =
   ## Draw dancer's whole boundary: one quiet outline, broken at hands.
   ##   It says nothing but *here is body*.  Rim used to fill up in
   ##     arm's colour as that arm wound round -- second progress ring
@@ -229,7 +228,7 @@ func border*(pose: Pose; who: Dancer): string =
     # runs through mark -- and stretch that extreme winding has squeezed
     # away is simply not drawn.
     stretches = [
-      (right + HAND_GAP, 360 - left - HAND_GAP),        # behind
+      (right + HAND_GAP, 360 - left - HAND_GAP),  # behind
       (360 - left + HAND_GAP, 360 + right - HAND_GAP),  # across front
     ]
   for (start, stop) in stretches:
@@ -240,7 +239,7 @@ func border*(pose: Pose; who: Dancer): string =
 
 #[ Hands And Furniture ]#
 
-func fillOf*(level: Option[Level]; arm: Arm; is_deep = false): string =
+func fillOf*(level: Option[Level], arm: Arm, is_deep = false): string =
   ## Get fill that level draws as -- only place level becomes fill,
   ## so hands and pips cannot drift.
   if level == some(Level.Low):
@@ -250,8 +249,14 @@ func fillOf*(level: Option[Level]; arm: Arm; is_deep = false): string =
   "none"
 
 
-func hand*(centre_x, centre_y: float; is_leading: bool; arm: Arm; is_held = true;
-    level = none(Level); free = Free.Fade): string =
+func hand*(
+  centre_x, centre_y: float;
+  is_leading: bool;
+  arm: Arm;
+  is_held = true;
+  level = none(Level);
+  free = Free.Fade;
+): string =
   ## Draw one hand, in its own side's ink: lead's deep, follow's
   ## plain.
   let
@@ -290,8 +295,9 @@ func ringOf*(pose: Pose): string =
     """ stroke-dasharray="3 4"/>"""
 
 
-func caption*(centre: Point; facing: float; arm: Arm; text: string;
-    wind = 0.0; ink = FAINT): string =
+func caption*(
+  centre: Point, facing: float, arm: Arm, text: string, wind = 0.0, ink = FAINT
+): string =
   ## Set hand's name just past it, growing outwards, in that hand's own ink.
   ##   Caption names one hand, and hand is drawn in colour that says
   ##     whose it is, so word that names it is written in same one --

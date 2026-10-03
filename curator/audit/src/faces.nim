@@ -32,9 +32,13 @@
 ##     is, which is what `design/page.nim` needed.
 ##   Cost: checker's own sources name these families as data and would report themselves, so
 ##     they are exempt -- same exemption `checkDeadExports` needs and for same reason.
-##   Cost: declarations are read, expressions are not. Source assembling font string through
-##     `&` is skipped rather than reported through its operators, so stack spelled only that
-##     way is unseen. Measured: two such lines in `dance_ontology` read as `&` before this.
+##   Nim literals that `&` carries across line end are joined before declarations are read, so
+##     stack whose first family opens next literal is read whole (#412). Joined text lands on
+##     first line and each line it consumed is left empty, so every line keeps its number.
+##     Cost: finding inside joined chain names line where chain opens, which may stand above
+##     line holding declaration.
+##   Cost: declarations are read, expressions are not. Stack built from variable rather than
+##     literal is skipped rather than reported through its operators, so it is unseen.
 
 {.experimental: "strictFuncs".}
 
@@ -74,6 +78,12 @@ const
   DEFERS* = ["inherit", "initial", "unset", "revert"]
     ## Values naming no family at all: each defers to what cascade already settled, which
     ## this check has read where it was set. Reporting them would be reporting twice.
+  LITERAL_CLOSERS = ["\"\"\" &", "\" &"]
+    ## Line end that closes Nim string literal and continues it with `&`; triple quote first,
+    ## since it also ends in single one.
+  LITERAL_OPENERS = ["&\"\"\"", "fmt\"\"\"", "\"\"\"", "&\"", "fmt\"", "\""]
+    ## Line start that opens literal continuing previous one; longer forms first, since each
+    ## shorter one is prefix of one before it.
   GENERICS = [
     "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui",
     "ui-serif", "ui-sans-serif", "ui-monospace", "ui-rounded",
@@ -106,6 +116,36 @@ func shorthandFamilies*(value: string): string =
     dropping = false
     rest.add token
   rest.join(" ")
+
+
+func joinedLiterals(content: string): string =
+  ## Join Nim string literals that `&` continues across line end into first line, leaving each
+  ##   consumed line empty so line numbers hold.
+  var
+    lines = content.splitLines
+    i = 0
+  while i < lines.len:
+    var j = i + 1
+    while j < lines.len:
+      let tail = lines[i].strip(leading = false)
+      var closer = ""
+      for candidate in LITERAL_CLOSERS:
+        if tail.endsWith(candidate):
+          closer = candidate
+          break
+      if closer.len == 0: break
+      let head = lines[j].strip(trailing = false)
+      var opener = ""
+      for candidate in LITERAL_OPENERS:
+        if head.startsWith(candidate):
+          opener = candidate
+          break
+      if opener.len == 0: break
+      lines[i] = tail[0 ..< tail.len - closer.len] & head[opener.len .. ^1]
+      lines[j] = ""
+      inc j
+    i = j
+  lines.join("\n")
 
 
 func firstFamily*(stack: string): string =
@@ -209,6 +249,7 @@ func checkFaces*(path, content: string): seq[Finding] =
   ##   Both forms are asked for: page writing every stack as shorthand carries no
   ##   `font-family` at all, and guard reading that alone skipped whole page.
   if MARK & ":" notin content and SHORTHAND & ":" notin content: return
+  let content = (if path.endsWith(".nim"): content.joinedLiterals else: content)
 
   let lines: seq[string] = content.splitLines
   for i, line in lines:
@@ -235,9 +276,8 @@ func checkFaces*(path, content: string): seq[Finding] =
       stack = value.resolved(properties)
       first = stack.firstFamily
     if first.len == 0 or first.toLowerAscii in DEFERS: continue
-    # Source building font string by concatenation leaves operators in what reads as family.
-    #   Check reads declarations, never expressions, and says so rather than reporting `&`
-    #   as family nobody named. Cost: violation spelled only through concatenation is unseen.
+    # Stack built from variable leaves operators in what reads as family. Check reads
+    #   declarations, never expressions, and says so rather than reporting `&` as family.
     if first.anyIt(it in {'&', '$', '(', ')', '{', '}'}): continue
     if first in GENERICS or not first.isFamily:
       result.add finding(

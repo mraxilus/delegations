@@ -10,6 +10,7 @@
 import std/[math, random, unittest]
 
 import ../../simulation/[body, contact, limb, rig, vector]
+import ../fixtures
 
 
 const
@@ -24,7 +25,8 @@ const
     ## Least of those that meet torso band, so its wide error is read: 226 at seed 11, 2026-10-02.
 
 
-suite "the rig":
+
+suite "Internal: The rig":
   test "a body's rounds are the tape's, and the radii follow":
     for part in Part:
       let
@@ -33,16 +35,18 @@ suite "the rig":
         h = ((a - b) / (a + b)) ^ 2
         round = PI * (a + b) * (1.0 + 3.0 * h / (10.0 + sqrt(4.0 - 3.0 * h)))
       check abs(round - HUMAN.round[part]) < 1e-3
-    check abs(halfBreadth(HUMAN, Part.Neck) - HUMAN.round[Part.Neck] / (2.0 * PI)) < 1e-9
+    check halfBreadth(HUMAN, Part.Neck) =~ HUMAN.round[Part.Neck] / (2.0 * PI)
     check halfDepth(HUMAN, Part.Torso) < halfBreadth(HUMAN, Part.Torso)
 
+
   test "the reach is the three links, and the bands are ordered":
-    check abs(reach(HUMAN) - 0.64) < 1e-9
+    check reach(HUMAN) =~ 0.64
     check HUMAN.band[Band.Torso].upper < HUMAN.band[Band.Neck].lower
     check HUMAN.band[Band.Neck].upper <= HUMAN.band[Band.Crown].lower
     check HUMAN.band[Band.Crown].lower >= HUMAN.top[Part.Head] + HUMAN.limb - 1e-9
     for part in Part:
       check rig.bottom(HUMAN, part) < HUMAN.top[part]
+
 
   test "the shoulder stands outside its own torso, and a hanging arm clears it":
     check HUMAN.shoulder_out > halfBreadth(HUMAN, Part.Torso)
@@ -57,25 +61,28 @@ suite "the rig":
         is_own = true,
       ).gap >= 0.0
 
+
   test "two bodies cannot stand closer than their chests":
-    check abs(touching(HUMAN) - 2.0 * halfDepth(HUMAN, Part.Torso)) < 1e-9
+    check touching(HUMAN) =~ 2.0 * halfDepth(HUMAN, Part.Torso)
+
 
   test "a hand is a quarter turn off the way its body faces":
     let
       stance = facing(HUMAN, APART)
       left_shoulder_one = shoulder(HUMAN, stance[Body.One], LEFT)
       left_shoulder_two = shoulder(HUMAN, stance[Body.Two], LEFT)
-    check abs(left_shoulder_one.x + HUMAN.shoulder_out) < 1e-9 and abs(left_shoulder_one.y) < 1e-9
-    check abs(left_shoulder_two.x - HUMAN.shoulder_out) < 1e-9 and
-      abs(left_shoulder_two.y - APART) < 1e-9
-    check abs(left_shoulder_one.z - HUMAN.shoulder_up) < 1e-9
+    check left_shoulder_one.x =~ -HUMAN.shoulder_out and left_shoulder_one.y =~ 0.0
+    check left_shoulder_two.x =~ HUMAN.shoulder_out and
+      left_shoulder_two.y =~ APART
+    check left_shoulder_one.z =~ HUMAN.shoulder_up
 
 
 
 #[ One Arm ]#
 
-suite "one arm, forward and back":
+suite "Internal: One arm, forward and back":
   let stance = facing(HUMAN, APART)[Body.One]
+
 
   test "the elbow keeps both lengths on every swivel":
     var
@@ -85,23 +92,26 @@ suite "one arm, forward and back":
       let
         shoulder_point = shoulder(HUMAN, stance, LEFT)
         grip = shoulder_point + (
-          random.rand(-0.5 .. 0.5),
-          random.rand(-0.5 .. 0.5),
-          random.rand(-0.5 .. 0.3),
+          random.rand(-0.5..0.5),
+          random.rand(-0.5..0.5),
+          random.rand(-0.5..0.3),
         )
-        hand_direction = unit((
-          random.rand(-1.0 .. 1.0),
-          random.rand(-1.0 .. 1.0),
-          random.rand(-1.0 .. 1.0),
-        ))
-        chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0 .. 2.0 * PI))
+        hand_direction = unit(
+          (
+            random.rand(-1.0..1.0),
+            random.rand(-1.0..1.0),
+            random.rand(-1.0..1.0),
+          ),
+        )
+        chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0..2.0 * PI))
       if chain.stretch <= HUMAN.upper + HUMAN.fore and
          chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
         inc reached
-        check abs(distance(chain.pose.shoulder, chain.pose.elbow) - HUMAN.upper) < 1e-9
-        check abs(distance(chain.pose.elbow, chain.pose.wrist) - HUMAN.fore) < 1e-9
-      check abs(distance(chain.pose.wrist, chain.pose.grip) - HUMAN.hand) < 1e-9
+        check distance(chain.pose.shoulder, chain.pose.elbow) =~ HUMAN.upper
+        check distance(chain.pose.elbow, chain.pose.wrist) =~ HUMAN.fore
+      check distance(chain.pose.wrist, chain.pose.grip) =~ HUMAN.hand
     check reached >= FLOOR_ELBOW
+
 
   test "the joints read back what they were set to":
     var worst = 0.0
@@ -112,9 +122,11 @@ suite "one arm, forward and back":
             for bend in [20.0, 70.0, 120.0]:
               for wrist in [0.0, 30.0]:
                 let
-                  upper_direction = unit((cos(elevation * PI / 180.0) * sin(azimuth * PI / 180.0),
-                            cos(elevation * PI / 180.0) * cos(azimuth * PI / 180.0),
-                            sin(elevation * PI / 180.0)))
+                  upper_direction = unit(
+                    (cos(elevation * PI / 180.0) * sin(azimuth * PI / 180.0),
+                              cos(elevation * PI / 180.0) * cos(azimuth * PI / 180.0),
+                              sin(elevation * PI / 180.0)),
+                  )
                   pose = placed(
                     HUMAN,
                     stance,
@@ -134,6 +146,7 @@ suite "one arm, forward and back":
                 worst = max(worst, abs(-sin(joint_angles.across) - upper_direction.x))
     check worst < 1e-6
 
+
   test "the twist reads the same across the arm pointing forward":
     for arm in Arm:
       let
@@ -142,6 +155,7 @@ suite "one arm, forward and back":
         above_angles = joints(stance, arm, above)
         below_angles = joints(stance, arm, below)
       check abs(above_angles.twist - below_angles.twist) < 0.05
+
 
   test "the left arm is the right arm in a mirror":
     let
@@ -156,26 +170,27 @@ suite "one arm, forward and back":
         LEFT,
         placed(HUMAN, stance, LEFT, upper_direction, -0.5, 1.4, 0.4, 0.3),
       )
-    check abs(right_arm_angles.twist - left_arm_angles.twist) < 1e-9 and
-      abs(right_arm_angles.across - left_arm_angles.across) < 1e-9
-    check abs(right_arm_angles.extend - left_arm_angles.extend) < 1e-9 and
-      abs(right_arm_angles.bend - left_arm_angles.bend) < 1e-9
+    check right_arm_angles.twist =~ left_arm_angles.twist and
+      right_arm_angles.across =~ left_arm_angles.across
+    check right_arm_angles.extend =~ left_arm_angles.extend and
+      right_arm_angles.bend =~ left_arm_angles.bend
+
 
   test "a range's margin is an ease in, nought at the edge, negative past it":
     let twist_range = HUMAN.range[Dof.Twist]
-    check abs(margin(twist_range, twist_range.upper) - 0.0) < 1e-9
-    check abs(margin(twist_range, twist_range.upper - twist_range.ease_upper) - 1.0) < 1e-9
+    check margin(twist_range, twist_range.upper) =~ 0.0
+    check margin(twist_range, twist_range.upper - twist_range.ease_upper) =~ 1.0
     check margin(twist_range, twist_range.upper + 0.1) < 0.0
-    check abs(margin(twist_range, twist_range.lower) - 0.0) < 1e-9
+    check margin(twist_range, twist_range.lower) =~ 0.0
     let bend_range = HUMAN.range[Dof.Bend]
-    check margin(bend_range, 0.0) > 1.0   # stop leant on costs nothing
+    check margin(bend_range, 0.0) > 1.0  # stop leant on costs nothing
     check margin(bend_range, -0.1) < 0.0  # past stop refuses
 
 
 
 #[ Contacts ]#
 
-suite "nothing passes through anybody":
+suite "Internal: Nothing passes through anybody":
   ## Two laws kept from `tlaws.nim` that asked solver nothing: they hold
   ## `contact` and `vector` alone, which engine's own contact does not replace,
   ## since reader still asks them whether arm presses body.
@@ -185,13 +200,13 @@ suite "nothing passes through anybody":
       finite = 0
     for _ in 0..<SAMPLES_CLIPPED:
       let
-        a: Vector = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
-        b: Vector = (random.rand(-0.5 .. 0.5), random.rand(-0.5 .. 0.5), random.rand(0.6 .. 1.9))
+        a: Vector = (random.rand(-0.5..0.5), random.rand(-0.5..0.5), random.rand(0.6..1.9))
+        b: Vector = (random.rand(-0.5..0.5), random.rand(-0.5..0.5), random.rand(0.6..1.9))
         lower = 0.8
         upper = 1.36
         got = axisNear(a, b, lower, upper).distance
       var truth = Inf
-      for i in 0 .. 400:
+      for i in 0..400:
         let p = a + (b - a) * (float(i) / 400.0)
         if p.z >= lower and p.z <= upper:
           truth = min(truth, sqrt(p.x * p.x + p.y * p.y))
@@ -202,6 +217,7 @@ suite "nothing passes through anybody":
         check got <= truth + 1e-9
         check got >= truth - 0.003
     check finite >= FLOOR_CLIPPED
+
 
   test "over the crown there is nothing to hit":
     let

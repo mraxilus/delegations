@@ -13,15 +13,14 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils]
+import std/strutils
 
 
 const
   WORDS* = 25
     ## Words one sentence of description may hold (`GUIDE.md`, "one instruction in one
     ##   sentence").  Instruction takes 20, which is not counted apart here: page describes.
-  SENTENCES* = 6
-    ## Sentences one paragraph may hold, opened by one that says topic.
+  SENTENCES* = 6  ## Sentences one paragraph may hold, opened by one that says topic.
 
 
 func cut(markup, opens, shuts: string): string =
@@ -32,7 +31,7 @@ func cut(markup, opens, shuts: string): string =
     if a < 0: return
     let b = result.find(shuts, a)
     if b < 0: return
-    result = result[0 ..< a] & " " & result[b + shuts.len .. ^1]
+    result = result[0..<a] & " " & result[b + shuts.len .. ^1]
 
 
 func plain(markup: string): string =
@@ -47,12 +46,28 @@ func plain(markup: string): string =
     else:
       if not is_inside: out_text.add character
   out_text.multiReplace(
-    ("&mdash;", "-"), ("&nbsp;", " "), ("&middot;", "-"), ("&amp;", "and"),
-    ("&frac12;", "half"), ("&#189;", "half"), ("&#188;", "quarter"), ("&frac14;", "quarter"),
-    ("&frac34;", "three quarters"), ("&#8722;", "minus"), ("&#10005;", "cross"),
-    ("&rsquo;", "'"), ("&ldquo;", "\""), ("&rdquo;", "\""), ("&hellip;", "..."),
-    ("&minus;", "minus"), ("&larr;", "left"), ("&rarr;", "right"), ("&#10003;", "tick"),
-    ("&#42;", "star"), ("&lt;", "less"), ("&gt;", "more"),
+    ("&mdash;", "-"),
+    ("&nbsp;", " "),
+    ("&middot;", "-"),
+    ("&amp;", "and"),
+    ("&frac12;", "half"),
+    ("&#189;", "half"),
+    ("&#188;", "quarter"),
+    ("&frac14;", "quarter"),
+    ("&frac34;", "three quarters"),
+    ("&#8722;", "minus"),
+    ("&#10005;", "cross"),
+    ("&rsquo;", "'"),
+    ("&ldquo;", "\""),
+    ("&rdquo;", "\""),
+    ("&hellip;", "..."),
+    ("&minus;", "minus"),
+    ("&larr;", "left"),
+    ("&rarr;", "right"),
+    ("&#10003;", "tick"),
+    ("&#42;", "star"),
+    ("&lt;", "less"),
+    ("&gt;", "more"),
   )
 
 
@@ -76,7 +91,7 @@ func prose*(markup: string): seq[string] =
         shuts = body.find("</" & kind & ">", head)
       if head < 0 or shuts < 0: break
       at = shuts + 1
-      let said = body[head + 1 ..< shuts].plain.splitWhitespace.join(" ")
+      let said = body[head + 1..<shuts].plain.splitWhitespace.join(" ")
       if said.len > 0: result.add said
 
 

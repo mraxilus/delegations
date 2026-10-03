@@ -41,30 +41,29 @@
 
 import std/[options, strutils]
 
-import ./frame
-import ./transition
+import ./[frame, transition]
 
 
 
 #[ Transcription ]#
 
 type
-  Cell* = object ## Hold one filled cell of workbook's transition matrix.
-    source*, destination*: string ## Workbook names of row and column.
-    text*: string                 ## Helpers that cell names, in cell's words.
+  Cell* = object  ## Hold one filled cell of workbook's transition matrix.
+    source*, destination*: string  ## Workbook names of row and column.
+    text*: string  ## Helpers that cell names, in cell's words.
 
-  FindingKind* {.pure.} = enum ## Name way workbook and model relate.
-    StateDeferred,    ## State that rests hand on body, outside this model.
-    FrameAbsent,      ## Frame that model derives and workbook has no row for.
-    EdgeAbsent,       ## Single primitive between two checkable states, cell empty.
-    ReverseAbsent,    ## Filled cell whose mirror cell is empty, though moves reverse.
-    EdgeCompound,     ## Cell naming sequence, so route rather than move.
-    HelperDiffers,    ## Cell naming primitive other than derived one.
-    EdgeUnsupported   ## Filled cell that model gives no single primitive for.
+  FindingKind* {.pure.} = enum  ## Name way workbook and model relate.
+    StateDeferred,  ## State that rests hand on body, outside this model.
+    FrameAbsent,  ## Frame that model derives and workbook has no row for.
+    EdgeAbsent,  ## Single primitive between two checkable states, cell empty.
+    ReverseAbsent,  ## Filled cell whose mirror cell is empty, though moves reverse.
+    EdgeCompound,  ## Cell naming sequence, so route rather than move.
+    HelperDiffers,  ## Cell naming primitive other than derived one.
+    EdgeUnsupported  ## Filled cell that model gives no single primitive for.
 
-  Finding* = object ## Hold one thing audit has to say about workbook.
+  Finding* = object  ## Hold one thing audit has to say about workbook.
     kind*: FindingKind
-    subject*: string ## Frame, state or pair of states finding concerns.
+    subject*: string  ## Frame, state or pair of states finding concerns.
     detail*: string  ## What model says, in ontology's vocabulary.
 
 
@@ -78,7 +77,7 @@ const WORKBOOK_STATES*: array[9, string] = [
   "Left-to-left over Right-to-right",
   "Left-to-right and Right-to-left",
   "Right-to-right over Left-to-left",
-] ## Name rows and columns of `base` sheet, in sheet's order.
+]  ## Name rows and columns of `base` sheet, in sheet's order.
 
 
 const CELLS*: array[27, Cell] = [
@@ -121,7 +120,7 @@ const CELLS*: array[27, Cell] = [
     destination: "Left-to-left over Right-to-right",
     text: "cut",
   ),
-] ## Hold every filled cell of `base` sheet, read row by row.
+]  ## Hold every filled cell of `base` sheet, read row by row.
 
 
 
@@ -305,8 +304,7 @@ func auditCells(): seq[Finding] =
       result.add Finding(
         kind: FindingKind.HelperDiffers,
         subject: subject,
-        detail: "cell says '" & cell.text & "'; the model derives " &
-          manner(helper.get),
+        detail: "cell says '" & cell.text & "'; the model derives " & manner(helper.get),
       )
 
 

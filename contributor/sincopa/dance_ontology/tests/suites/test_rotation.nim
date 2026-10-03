@@ -8,8 +8,8 @@
 
 import std/[options, os, sequtils, strutils, unittest]
 
-import ../../src/dance_ontology/frame
-import ../../src/dance_ontology/rotation
+import ../../src/dance_ontology/[frame, rotation]
+
 
 
 suite "Internal: Twist":
@@ -20,16 +20,19 @@ suite "Internal: Twist":
     check pair.turn(together(2)) == some(pair)
     check pair.turn(together(-3)) == some(pair)
 
+
   test "a turn one dancer takes alone is stored as twist":
     let hand_to_hand = fromKey("l-.").get.rest
     check hand_to_hand.turn(rotates(Dancer.Follow, 1)).get.twist == 1
     check hand_to_hand.turn(rotates(Dancer.Lead, 1)).get.twist == -1
+
 
   test "a turn beyond what the arms hold is refused":
     let hand_to_hand = fromKey("l-.").get.rest
     check hand_to_hand.turn(rotates(Dancer.Follow, 2)).isSome
     check hand_to_hand.turn(rotates(Dancer.Follow, 3)).isNone
     check hand_to_hand.turn(rotates(Dancer.Lead, 3)).isNone
+
 
   test "turning is reversible inside the capacity":
     let
@@ -39,14 +42,17 @@ suite "Internal: Twist":
     check turned.get.turn(rotates(Dancer.Follow, -1)) == some(pair)
 
 
+
 suite "Internal: Capacity":
   test "one full turn is comfortable on one hand-to-hand connection":
     check fromKey("l-.").get.rest.capacity == 2
     check fromKey("-r.").get.rest.capacity == 2
 
+
   test "a pair of connections binds at half a turn":
     check fromKey("rl.").get.rest.capacity == 1
     check fromKey("lrL").get.rest.capacity == 1
+
 
   test "a hand resting on the body gives no turn away":
     # This is what closed position is, and why turn out of it needs lead's
@@ -55,6 +61,7 @@ suite "Internal: Capacity":
     check closed.capacity == 0
     check closed.turn(rotates(Dancer.Follow, 1)).isNone
     check closed.turn(together(2)) == some(closed)
+
 
 
 suite "Internal: Geometry":
@@ -70,6 +77,7 @@ suite "Internal: Geometry":
     check not isFacing(1) and not isFacing(-1)
 
 
+
 suite "Internal: What the arm can carry":
   test "the measured table is reproduced, cell by cell":
     # `Left to left`, one hand, danced.  Low wrap holds half turn; low
@@ -79,16 +87,18 @@ suite "Internal: What the arm can carry":
     check armCapacity(some(Blocker.Wrap), Level.High) == 2  # assumed, see `CAPACITY_ARM`
     check armCapacity(some(Blocker.Lock), Level.High) == 2  # assumed, see `CAPACITY_ARM`
 
+
   test "a low wrap is the one thing that binds tighter than its hold":
     # Which is whole finding: limit is not property of what joins
     # couple, it is property of what arm is doing.
     let low = fromKey("l-.").get.rest
-    for twist in -2 .. 2:
+    for twist in -2..2:
       let arm = armCapacity(blocker(twist), low.level[Side.Left])
       if blocker(twist) == some(Blocker.Wrap):
         check arm < low.capacity
       else:
         check arm >= low.capacity
+
 
   test "held low, half a turn wraps and a full turn locks, either way":
     # And not because rule says so: low wrap cannot hold full turn, so
@@ -102,6 +112,7 @@ suite "Internal: What the arm can carry":
       check full.isSome
       check blocker(full.get.twist) == some(Blocker.Lock)
 
+
   test "one and a half turns is refused, and the hold is what refuses it":
     let low = fromKey("l-.").get.rest
     for way in [1, -1]:
@@ -111,15 +122,17 @@ suite "Internal: What the arm can carry":
       check 3 > low.capacity
       check armCapacity(blocker(3 * way), Level.Low) == CAPACITY_ARM
 
+
   test "a posture stands only where both ceilings allow it":
     for target in FRAMES:
       for level in Level:
         var posture = target.rest
         posture.level = [level, level]
-        for twist in -4 .. 4:
+        for twist in -4..4:
           let is_within_both = abs(twist) <= posture.capacity and
             abs(twist) <= posture.armsCapacity(twist)
           check posture.isHolding(twist) == is_within_both
+
 
   test "only an arm that is holding can be the one that runs out":
     # Free arm carries nothing, so height it happens to be at cannot stop
@@ -132,14 +145,16 @@ suite "Internal: What the arm can carry":
           lowered = target.rest
           raised = target.rest
         raised.level[side] = Level.High
-        for twist in -4 .. 4:
+        for twist in -4..4:
           check lowered.isHolding(twist) == raised.isHolding(twist)
+
 
   test "with nobody holding, nothing limits the turn":
     # Two people who are not touching can each face wherever they like.
     let apart = fromKey("--.").get.rest
-    for twist in -6 .. 6:
+    for twist in -6..6:
       check apart.isHolding(twist)
+
 
 
 suite "Internal: Modifiers":
@@ -149,15 +164,18 @@ suite "Internal: Modifiers":
     check blocker(-1) == some(Blocker.Wrap)  # rotations: half turn left wraps
     check blocker(2) == some(Blocker.Lock)  # rotations: full turn right locks
 
+
   test "a wrap is reachable from a pair and a lock is not":
     check blocker(fromKey("rl.").get.rest.capacity) == some(Blocker.Wrap)
     check blocker(fromKey("l-.").get.rest.capacity) == some(Blocker.Lock)
+
 
   test "the level an arm is carried at decides where it lands":
     check around(Blocker.Wrap, Level.Low) == some(BodySite.Torso)
     check around(Blocker.Wrap, Level.High) == some(BodySite.Neck)
     check around(Blocker.Lock, Level.Low) == some(BodySite.Waist)
     check around(Blocker.Lock, Level.High) == some(BodySite.Shoulder)
+
 
   test "an arm over the head is around nothing, and blocks on nothing":
     # It is on axis couple turns about, so there is nothing for it to be
@@ -166,11 +184,12 @@ suite "Internal: Modifiers":
     # waiting to be told rather than thing it has decided.
     for what in Blocker:
       check around(what, Level.Above).isNone
-    for twist in -6 .. 6:
+    for twist in -6..6:
       check blockerOf(twist, Level.Above).isNone
       check armCapacity(blockerOf(twist, Level.Above), Level.Above) ==
         UNBOUNDED_TURNS
     check not IS_ABOVE_BLOCKING
+
 
 
 suite "Internal: What there is":
@@ -182,15 +201,18 @@ suite "Internal: What there is":
       seen.add stood
     check postures().len > FRAMES.len
 
+
   test "a free hand's height is not a posture of its own":
     # Two postures differing only in where hand that is holding nothing is
     # carried are one posture, because that height cannot stop turn.
     for stood in postures():
       check stood == normalised(stood)
 
+
   test "every frame at rest is a posture, and is where its turns start from":
     for target in FRAMES:
       check target.rest in postures()
+
 
   test "the twelve turn sheets are six":
     # Turn is stored as one number for couple, and that number does not
@@ -206,9 +228,10 @@ suite "Internal: What there is":
           landings.add offer.to
       check landings.len == 6
     let lone = fromKey("l-.").get.rest
-    for size in 1 .. MOST_TURN:
+    for size in 1..MOST_TURN:
       check lone.turn(rotates(Dancer.Lead, size)) ==
         lone.turn(rotates(Dancer.Follow, -size))
+
 
   test "a turn is offered exactly when it is not refused":
     for stood in postures():
@@ -217,6 +240,7 @@ suite "Internal: What there is":
         check taken.isSome == offer.refused.isNone
         if offer.refused.isNone:
           check taken.get == offer.to
+
 
   test "a refusal names the ceiling that refuses, and the hold comes first":
     for stood in postures():
@@ -231,6 +255,7 @@ suite "Internal: What there is":
           # is reason, and not merely one of two.
           check abs(over) <= stood.capacity
           check abs(over) > stood.armsCapacity(over)
+
 
   test "held low on one hand, it is the arm that refuses first":
     # Finding, read back out of offers: from `Left to left` held low
@@ -261,12 +286,15 @@ const RULED: array[Seen, array[Seen, string]] = [
 proc glossarySides(): seq[string] =
   ## Sides glossary's entry `Facing` lists, in its own words and order.
   let
-    said = readFile(currentSourcePath().parentDir.parentDir.parentDir /
-                    "GLOSSARY.md").replace('\n', ' ')
+    said = readFile(currentSourcePath().parentDir.parentDir.parentDir / "GLOSSARY.md").replace(
+      '\n',
+      ' ',
+    )
     entry = said.find("**Facing**:")
     opens = said.find(':', said.find("to the other", entry)) + 1
-  for word in said[opens ..< said.find('.', opens)].replace(" or ", ", ").split(','):
+  for word in said[opens..<said.find('.', opens)].replace(" or ", ", ").split(','):
     result.add word.strip
+
 
 
 suite "Internal: Facings":
@@ -275,12 +303,14 @@ suite "Internal: Facings":
       for follow in Seen:
         check facing([lead, follow]).name == RULED[lead][follow]
 
+
   test "no two states share a name":
     var names: seq[string]
     for named in Facing:
       check named.name notin names
       names.add named.name
     check names.len == 16
+
 
   test "each name gives the Lead's side, then the Follow's, in the glossary's words":
     # Glossary lists sides in order each is met turning on spot to right:
@@ -296,6 +326,7 @@ suite "Internal: Facings":
       check halves[1] == words[ord(seen[Dancer.Follow])]
       check facing(seen) == named
 
+
   test "a dancer who turns on the spot shows the side the name gives":
     # Quarter to one's right puts what was ahead at one's left: port.
     for who in Dancer:
@@ -306,10 +337,11 @@ suite "Internal: Facings":
         check seen[who] == side
         check seen[if who == Dancer.Lead: Dancer.Follow else: Dancer.Lead] == Seen.Ahead
     # Ruling's own examples (issue #289).
-    check facing(seenAfter([0, 2])).name == "Face-to-back"   # Lead behind Follow.
-    check facing(seenAfter([0, 1])).name == "Face-to-port"   # Lead at Follow's left.
+    check facing(seenAfter([0, 2])).name == "Face-to-back"  # Lead behind Follow.
+    check facing(seenAfter([0, 1])).name == "Face-to-port"  # Lead at Follow's left.
     check facing(seenAfter([-1, 1])).name == "Starboard-to-port"  # Side by side, one way.
-    check facing(seenAfter([2, 1])).name == "Back-to-port"   # Lead's back at Follow's left.
+    check facing(seenAfter([2, 1])).name == "Back-to-port"  # Lead's back at Follow's left.
+
 
   test "twist cannot tell Face-to-face from Back-to-back, so a facing needs both turns":
     # Twist is follow's turn less lead's: same for both states below.
