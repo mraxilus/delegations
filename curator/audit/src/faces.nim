@@ -141,7 +141,7 @@ func joinedLiterals(content: string): string =
           opener = candidate
           break
       if opener.len == 0: break
-      lines[i] = tail[0 ..< tail.len - closer.len] & head[opener.len .. ^1]
+      lines[i] = tail[0..<tail.len - closer.len] & head[opener.len .. ^1]
       lines[j] = ""
       inc j
     i = j

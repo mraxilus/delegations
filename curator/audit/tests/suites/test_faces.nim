@@ -227,20 +227,22 @@ suite "Faces":
     check heading.len == 1
     check heading[0].message.endsWith("got `Noto Sans`.")
 
+
   test "stack that Nim joins with `&` across lines is read as one stack":
     # `design/parts.nim` of `dance_ontology` closed literal after `font: 8px` and opened next
     #   one with first family, so check read `&` and passed stack nobody shipped (#412).
-    const JOINED =
+    const joined =
       "  &\"\"\"<text style=\"font: 8px\"\"\" &\n" &
       "    &\"\"\" ui-sans-serif, system-ui; fill: red\">\"\"\" &\n" &
       "    \"</text>\"\n" &
       "  x { font-family: \"Noto Sans\"; }\n"
-    let found = checkFaces("design/parts.nim", JOINED)
+    let found = checkFaces("design/parts.nim", joined)
     check found.len == 1
     check found[0].line == 1  # where joined declaration opens
     check found[0].message.endsWith("got `ui-sans-serif`.")
     # Admitted family behind same join passes.
-    check checkFaces("p.nim", JOINED.replace("ui-sans-serif", "\"Noto Sans\"")).len == 0
+    check checkFaces("p.nim", joined.replace("ui-sans-serif", "\"Noto Sans\"")).len == 0
     # Joining keeps every line where it stood, so finding below join keeps its line.
-    check checkFaces("p.nim", JOINED & "  y { font-family: Arial; }\n").anyIt(
-      it.line == 5 and it.message.endsWith("got `Arial`."))
+    check checkFaces("p.nim", joined & "  y { font-family: Arial; }\n").anyIt(
+      it.line == 5 and it.message.endsWith("got `Arial`."),
+    )
