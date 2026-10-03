@@ -404,7 +404,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##   dancers reach across themselves, spend their adduction, and hold blocks at
     ##   0.28 of turn.
     ##   Whole turn, not turn and half: with bodies solid, cross-name hold winds
-    ##   her shoulder to its end at 1.20 to 1.30 turning one way from every
+    ##   follow's shoulder to its end at 1.20 to 1.30 turning one way from every
     ##   distance, which is twist alone and past every card.  Turn and half was
     ##   free only with arm through head.  Architect's to say whether that wind
     ##   is real.
@@ -437,8 +437,8 @@ suite "Internal: Couple stand for sweep":
   ## differs in last bits.  Choice has to stand still under that.
   const
     ## Same-name single hold at torso, walked 0.8 of turn: distances carrying
-    ## most and their largest leaps, measured 2026-09-18.  L-l turning her
-    ## positive way and R-r her negative are one hold seen in mirror.  Nearer
+    ## most and their largest leaps, measured 2026-09-18.  L-l turning follow's
+    ## positive way and R-r follow's negative are one hold seen in mirror.  Nearer
     ## distances carry 0.46 at most, and 0.52 on carries 0.66.
     left_to_left_positive: seq[Carry] = @[(0.44, 0.72, 0.125), (0.46, 0.72, 0.171),
                            (0.48, 0.72, 0.126), (0.50, 0.68, 0.121)]
@@ -965,9 +965,9 @@ suite "Internal: Every still stands at ease":
 
 
   test "free couple wound half a turn hang their arms by their sides":
-    ## Same, wound to A2: her arms come along with her turn and hang again once
+    ## Same, wound to A2: follow's arms come along with turn and hang again once
     ## it stops.  Before this, shoulder's spring at one hertz held hanging arm
-    ## with two newton metres per radian, and her arms lagged her slow half
+    ## with two newton metres per radian, and follow's arms lagged slow half
     ## turn by twenty five and forty nine degrees, then crept back through
     ## settle to eighteen and thirty three, hand 413 mm off plumb -- flank's
     ## friction against spring nothing like weight of arm.
@@ -1028,9 +1028,9 @@ suite "Internal: Every still stands at ease":
     ## `risen` keyed to wind from rest never let them be -- and swan may be
     ## reached only so, one connection straightening out as arms come down.
     ##   Nought face to face, one from `RAISE` of turn away, whole turns and
-    ##   all.  Going up hands rise over her head as they always did; coming
-    ##   back they come forward off her crown first and then down: let down
-    ##   straight from over crown to mid torso, they passed through her head.
+    ##   all.  Going up hands rise over follow's head as they always did; coming
+    ##   back they come forward off that crown first and then down: let down
+    ##   straight from over crown to mid torso, they passed through head.
     var couple = build(HUMAN, restStance(HUMAN, 0.44), Band.Crown, WOUND, Body.Two)
     for wind in [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 1.5]:
       couple.stance = turned(restStance(HUMAN, 0.44), Body.Two, wind)

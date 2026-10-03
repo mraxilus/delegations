@@ -150,7 +150,7 @@ const
     ## Whether arm over head blocks turn.  It does in some cases and nobody
     ## has said which, so model turns freely there.
     ##   No longer on no authority for single connection: jointed-arm simulation
-    ##     finds hand held over follow's head turns with her, and holds
+    ##     finds hand held over follow's head turns with follow, and holds
     ##     through two-and-a-half turns either way (`simulation/verdicts.md`).  Two
     ##     connections above are another matter -- simulation finds parallel pair
     ##     free one way and blocked at whole turn other way, crossed pair at

@@ -83,7 +83,7 @@ func sceneOf(target: Frame; is_facing, is_clockwise: bool): string {.compileTime
   ##     colour says which side, and both survive any size.
   ##   Where frame says which connection is over, that stands.  Where it
   ##     says nothing and follow is turned, its two connections cross, and
-  ##     which one is over follows which way she turned -- by `overArm`,
+  ##     which one is over follows which way follow turned -- by `overArm`,
   ##     same rule wound pair is drawn by (rules 27, 29).
   ##     Facing, nothing crosses, so there is nothing for way round to
   ##       decide and none is asked for.
@@ -115,7 +115,7 @@ func sceneFor*(target: Frame; is_facing, is_clockwise: bool): string =
   ##   Invalid frame has no picture rather than blank one: it is not
   ##     state, so there is nothing to draw and nothing to make up.
   ##   `clockwise` is read only where follow is turned, and says which way
-  ##     she turned to get there.  Caller does that arithmetic, since
+  ##     follow turned to get there.  Caller does that arithmetic, since
   ##     naming it here would need `rotation`'s words.
   let at = frameIndex(target)
   if at.isNone:

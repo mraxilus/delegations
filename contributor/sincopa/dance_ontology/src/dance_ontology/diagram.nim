@@ -69,8 +69,8 @@ const
 func frameBody(target: Frame, twist: HalfTurns): string =
   ## Draw contents of frame picture, without frame around them.
   ##   Two things reach drawing, and no more: whether follow faces, and
-  ##     which way she turned if she does not.  Whole turn puts her back
-  ##     where she was, so size of twist says nothing past its parity --
+  ##     which way follow turned if follow does not.  Whole turn puts follow
+  ##     back where follow was, so size of twist says nothing past its parity --
   ##     but its *sign* does, wherever turning makes two connections cross
   ##     and something has to say which of them is over (rule 14).
   ##   Arithmetic is done here because `scene` may not have `rotation`'s
