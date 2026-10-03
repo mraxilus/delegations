@@ -249,10 +249,12 @@ suite "Hooks":
       .messages.anyIt("Class is" in it)
     const others = "- Class: blocks this delegate and "
     check checkSignoff(
-      SIGNOFF.replace("- Class: blocks this delegate", others & "the visualiser"), BRANCH
+      SIGNOFF.replace("- Class: blocks this delegate", others & "the visualiser"),
+      BRANCH,
     ).messages.anyIt("role string; got `the visualiser`" in it)
     check checkSignoff(
-      SIGNOFF.replace("- Class: blocks this delegate", others & "curator, curator/audit"), BRANCH
+      SIGNOFF.replace("- Class: blocks this delegate", others & "curator, curator/audit"),
+      BRANCH,
     ).len == 0
 
 
