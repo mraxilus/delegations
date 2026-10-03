@@ -199,6 +199,39 @@ var
   RECORDING_TEXTS: seq[string]  ## Each recording's text, written by whichever worker did it.
   NOTES: seq[string]  ## And one line saying what it found.
 
+proc recorded(job: Job): tuple[note, text: string] =
+  ## Record one job: line saying what it found, and its text as page reads it.
+  if job.is_still:
+    let
+      ask = job.ask
+      recording = still(
+        HUMAN,
+        Band.Crown,
+        ask.links,
+        ask.key,
+        ask.turns,
+        is_away = ask.isRestAway,
+        head = ask.head,
+        is_either_way = ask.is_either_way,
+        who = ask.who,
+      )
+    result.note =
+      if recording.stills.len > 0:
+        &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}, " &
+          &"strain {recording.strain:.2f} of {recording.tried.len} tried"
+      else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
+    result.text = bodyOfSweep(recording, ask.key)
+  else:
+    let cut = SHOWN[job.cut]
+    var links: seq[Link] = @[]
+    for (lead_arm, follow_arm) in cut.arms:
+      links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
+    let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
+    result.note = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
+               &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
+    result.text = bodyOfSweep(recording)
+
+
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Record every `every`th job from `first` on.  Each worker lists jobs for
   ## itself, as `design/modelled` does: one list read by four threads raced on
@@ -207,36 +240,7 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     let all = jobs()
     var i = slice.first
     while i < all.len:
-      let job = all[i]
-      if job.is_still:
-        let
-          ask = job.ask
-          recording = still(
-            HUMAN,
-            Band.Crown,
-            ask.links,
-            ask.key,
-            ask.turns,
-            is_away = ask.isRestAway,
-            head = ask.head,
-            is_either_way = ask.is_either_way,
-            who = ask.who,
-          )
-        NOTES[i] =
-          if recording.stills.len > 0:
-            &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}, " &
-              &"strain {recording.strain:.2f} of {recording.tried.len} tried"
-          else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
-        RECORDING_TEXTS[i] = bodyOfSweep(recording, ask.key)
-      else:
-        let cut = SHOWN[job.cut]
-        var links: seq[Link] = @[]
-        for (lead_arm, follow_arm) in cut.arms:
-          links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
-        let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
-        NOTES[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
-                   &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
-        RECORDING_TEXTS[i] = bodyOfSweep(recording)
+      (NOTES[i], RECORDING_TEXTS[i]) = recorded(all[i])
       i += slice.every
 
 
@@ -244,6 +248,26 @@ proc rigStamp*(): string =
   ## Stamp recording carries: physics, this verb, and every job.
   ##   Sweep job names only its place in `SHOWN`, and `SHOWN` is in this verb's source.
   stampOf(currentSourcePath(), jobs().mapIt($it))
+
+
+func assembled(stamp: string, texts: seq[string]): string =
+  ## Whole recording as file keeps it: stamp, rig's measures, then each job's text.
+  # Every still card, wound to its facing from distance that sits easiest.
+  #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
+  #   each cell of reference; card no distance holds is recorded with no moment.
+  let
+    cuts = texts[0..<SHOWN.len]
+    stills = texts[SHOWN.len..^1]
+  var head: seq[string]
+  head.add "\"stamp\":\"" & stamp & "\""
+  head.add "\"upper\":" & figure(HUMAN.upper)
+  head.add "\"fore\":" & figure(HUMAN.fore)
+  head.add "\"hand\":" & figure(HUMAN.hand)
+  head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
+  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
+  head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
+  head.add "\"stills\":[\n" & stills.join(",\n") & "]"
+  "{" & head.join(",\n") & "}\n"
 
 
 proc main() =
@@ -263,22 +287,7 @@ proc main() =
     createThread(workers[worker], work, (worker, cores))
   joinThreads(workers)
   for note in NOTES: echo note
-  # Every still card, wound to its facing from distance that sits easiest.
-  #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
-  #   each cell of reference; card no distance holds is recorded with no moment.
-  let
-    cuts = RECORDING_TEXTS[0..<SHOWN.len]
-    stills = RECORDING_TEXTS[SHOWN.len..<count]
-  var head: seq[string]
-  head.add "\"stamp\":\"" & stamp & "\""
-  head.add "\"upper\":" & figure(HUMAN.upper)
-  head.add "\"fore\":" & figure(HUMAN.fore)
-  head.add "\"hand\":" & figure(HUMAN.hand)
-  head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
-  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
-  head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
-  head.add "\"stills\":[\n" & stills.join(",\n") & "]"
-  writeFile(KEPT_RIG, "{" & head.join(",\n") & "}\n")
+  writeFile(KEPT_RIG, assembled(stamp, RECORDING_TEXTS))
   echo "wrote design/rig.json"
 
 

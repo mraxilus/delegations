@@ -138,6 +138,49 @@ func questions*(): seq[Question] =
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var TOLD: seq[bool]  ## Each worker writes its own questions' answers here.
 
+proc answered(question: Question): bool =
+  ## Whether simulation models one card: carried walk first, since it answers most cards in
+  ## seconds, and planned way only where it stops, since that pays minutes per card.
+  if question.is_still:
+    isHoldingAt(
+      HUMAN,
+      CROWN,
+      question.links,
+      question.turns,
+      question.is_away,
+      question.head,
+      is_either_way = question.is_either_way,
+      who = question.who,
+    ) or isPlannedHolding(
+      HUMAN,
+      CROWN,
+      question.links,
+      question.turns,
+      question.is_away,
+      question.head,
+      is_either_way = question.is_either_way,
+      who = question.who,
+    )
+  else:
+    isReaching(
+      HUMAN,
+      CROWN,
+      question.links,
+      question.turns,
+      is_away = question.is_away,
+      who = question.who,
+      head = question.head,
+    ) or isPlannedReaching(
+      HUMAN,
+      CROWN,
+      question.links,
+      question.turns,
+      is_away = question.is_away,
+      who = question.who,
+      head = question.head,
+    )
+
+
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Answer every `every`th question from `first` on: worlds are engine's own
   ## and independent, so workers share nothing but `TOLD`.
@@ -148,50 +191,9 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     let asked = questions()
     var i = slice.first
     while i < asked.len:
-      let question = asked[i]
-      # Carried walk first, since it answers most cards in seconds; planned way only
-      # where it stops, since that pays minutes per card.
-      TOLD[i] = (
-        if question.is_still:
-          isHoldingAt(
-            HUMAN,
-            CROWN,
-            question.links,
-            question.turns,
-            question.is_away,
-            question.head,
-            is_either_way = question.is_either_way,
-            who = question.who,
-          ) or isPlannedHolding(
-            HUMAN,
-            CROWN,
-            question.links,
-            question.turns,
-            question.is_away,
-            question.head,
-            is_either_way = question.is_either_way,
-            who = question.who,
-          )
-        else:
-          isReaching(
-            HUMAN,
-            CROWN,
-            question.links,
-            question.turns,
-            is_away = question.is_away,
-            who = question.who,
-            head = question.head,
-          ) or isPlannedReaching(
-            HUMAN,
-            CROWN,
-            question.links,
-            question.turns,
-            is_away = question.is_away,
-            who = question.who,
-            head = question.head,
-          )
-      )
+      TOLD[i] = answered(asked[i])
       i += slice.every
+
 
 proc answers(): OrderedTable[string, bool] =
   ## Every card's answer, keyed as page keys its own pictures.
@@ -215,17 +217,22 @@ proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($
   ## Stamp answers carry: physics, this verb, and every question.
 
 
+func kept(stamp: string, told: OrderedTable[string, bool]): string =
+  ## Recording as file keeps it: stamp, then each card's answer in page's order.
+  var said = newJObject()
+  for id, is_modelled in told:
+    said[id] = %is_modelled
+  pretty(%*{"stamp": stamp, "answers": said}) & "\n"
+
+
 proc main() =
   ## Record what simulation answers of every card, unless recording carries tree's stamp.
   let stamp = modelledStamp()
   if fileExists(KEPT_MODELLED) and parseFile(KEPT_MODELLED){"stamp"}.getStr == stamp:
     echo "design/modelled.json is up to date: ", stamp
     return
-  var said = newJObject()
-  for id, is_modelled in answers():
-    said[id] = %is_modelled
-  writeFile(KEPT_MODELLED, pretty(%*{"stamp": stamp, "answers": said}) & "\n")
-  echo "wrote design/modelled.json: ", said.len, " answers"
+  writeFile(KEPT_MODELLED, kept(stamp, answers()))
+  echo "wrote design/modelled.json: ", questions().len, " answers"
 
 
 when isMainModule:
