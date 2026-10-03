@@ -310,13 +310,11 @@ you do it.
 ### The sign-off
 
 A message that ends a turn which pushed or posted, and the message of a handover, closes with
-one block, `## Sign-off`. Nothing follows it. Post the same block as a comment on the issue of
-your brief, or on your pull request where no brief exists.
+one block, `## Sign-off`. Nothing follows it.
 
-The coordinator reads it first. It sorts what each delegate needs from the Architect, and
-presents it in one place without a change of words. So the block puts each decision first, in
-the shape of a decision card. The next delegate, and the same delegate after a compaction, read
-the rest. Its parts come in one order:
+It serves three readers. The Architect reads it first, for what waits on them, so the block puts
+each decision first, in the shape of a decision card. The next delegate, and the same delegate
+after a compaction, read the rest. Its parts come in one order:
 
 1. **Role.** The role string, and the branch at its short head, `pushed` or `not pushed`. Then
    the pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
@@ -337,7 +335,7 @@ the rest. Its parts come in one order:
 
 #### A decision
 
-Write each decision so that the coordinator can put it in front of the Architect unchanged.
+Write each decision so that the Architect can decide it from the block alone.
 
 ```md
 **D1.** Keep the names `rga4d` and `cga5d` in the tests?
@@ -351,7 +349,7 @@ Write each decision so that the coordinator can put it in front of the Architect
 ```
 
 - **The question** is one sentence that ends with `?`, verb first where it can be.
-- **Class** is one of these. The coordinator sorts on it.
+- **Class** is one of these, so that the Architect sees first what blocks.
   - `blocks this delegate`
   - `blocks this delegate and <role>`, with each role string that waits too
   - `has a workaround: <the workaround>`
