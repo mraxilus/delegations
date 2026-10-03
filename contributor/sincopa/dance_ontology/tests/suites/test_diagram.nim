@@ -12,7 +12,7 @@ import std/[options, sequtils, strutils, unittest]
 import ../../src/dance_ontology
 
 
-suite "the picture":
+suite "Internal: The picture":
   test "the lead's hands are squares and the follow's are circles":
     # Which hand is whose was said only by captions over and under
     # picture, and those are first thing to go when it is drawn small --

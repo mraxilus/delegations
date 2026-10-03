@@ -53,8 +53,9 @@ translation is printed in one table, and nothing is tuned to make them agree.
 - The drawing rules of the Architect as given, held as data in `design/rules.nim`, and
   mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the pages to them.
 - For the body simulation, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
-  one is in `simulation/rig.nim` with its derivation, and `tests/test_rigid.nim`,
-  `tests/test_read.nim` and `tests/suites/test_limb.nim` hold the simulation to them.
+  one is in `simulation/rig.nim` with its derivation. `tests/test_rigid.nim`, `tests/test_read.nim`
+  and `tests/suites/test_limb.nim` hold the simulation to the values there, and no test cites a
+  line of a standard.
 
 ## Build and test
 
@@ -164,9 +165,10 @@ document, and it lives in the review page (`build/review/review.html`) and in
 `tools/audit.nim`.
 
 The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
-and not in the app. 148 postures render as 16 distinct pictures. Level, contact and twist beyond
-its parity have no marks yet. The workbench pages (`design/`) are where those marks get
-worked out, and the views wait until they are decided.
+and not in the app. 148 postures render as 17 distinct pictures. Level, contact and twist beyond
+its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a quarter
+turn of twist one way apart from one the other way. The workbench pages (`design/`) are where
+those marks get worked out, and the views wait until they are decided.
 
 ## What it says
 

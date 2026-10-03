@@ -82,11 +82,11 @@ each state one name.
 changes what they see, and nothing that the other sees. Twist is the Follow's turn less the Lead's,
 so it is the same for Face-to-face and Back-to-back. That is why a facing takes four bits.
 
-Verified by `suites/test_rotation.nim`, suite "facings". The law writes out the table of #289, and
-holds each state to the name in it. Each name gives the side of the Lead, then the side of the
-Follow, in the words of the glossary. Each law failed on a break made on purpose. The breaks
-swapped starboard and port, named the Follow first, and set the side of the Follow in capitals.
-One more listed the sides of the glossary in another order.
+Verified by `suites/test_rotation.nim`, suite "Internal: Facings". The law writes out the table
+of #289, and holds each state to the name in it. Each name gives the side of the Lead, then the
+side of the Follow, in the words of the glossary. Each law failed on a break made on purpose. The
+breaks swapped starboard and port, named the Follow first, and set the side of the Follow in
+capitals. One more listed the sides of the glossary in another order.
 
 **The drawings hold all sixteen facings, each read back through the model.** `ORIENTATIONS` in
 `parts.nim` finds, in the model, the turns on the spot that reach each facing from Face-to-face.
@@ -95,8 +95,8 @@ stops where a drawn pose reads as a facing other than its name. The frame page g
 the Lead a row: face, starboard, back, then port. The single-hand page names the facing of each
 quarter it draws, read off the drawn pose.
 
-Verified by `suites/test_marks.nim`, suite "the sixteen facings, drawn". The law on the rows failed
-when the rows were laid out by the side of the Follow.
+Verified by `suites/test_marks.nim`, suite "Internal: The sixteen facings, drawn". The law on the
+rows failed when the rows were laid out by the side of the Follow.
 
 The law on the single-hand page reads each name in the section and the place of its quarter. The
 manners share names, so a name found anywhere on the page would stand in for one that is missing
@@ -249,11 +249,12 @@ two ceilings, blockers, wraps and locks. It also holds the measured fact that a 
 a turn, where everything else holds a whole one. `axle.nim` draws its postures as one line, placed
 by the twist itself.
 
-The views do not show it. 148 postures render as 16 distinct pictures, because level, contact and
-twist beyond its parity have no marks. A Reference whose picture cannot tell two states apart
-cannot check them. Verified by `suites/test_rotation.nim` and `suites/test_axle.nim`. The capacity
-constants are witnessed by the simulation (`simulation/verdicts.md`), which is evidence, and not
-authority.
+The views do not show it. 148 postures render as 17 distinct pictures, because level, contact and
+twist beyond its parity have no marks, but for one frame. `Left-to-right and Right-to-left` draws a
+quarter turn of twist one way apart from one the other way. Measured by hand on 2026-10-02, with
+`renderFrame` over `postures()`. A Reference whose picture cannot tell two states apart cannot
+check them. The capacity constants are witnessed by the simulation (`simulation/verdicts.md`),
+which is evidence, and not authority.
 
 ## Drawing chain
 

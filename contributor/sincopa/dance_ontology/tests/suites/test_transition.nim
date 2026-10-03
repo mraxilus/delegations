@@ -11,7 +11,7 @@ import ../../src/dance_ontology/frame
 import ../../src/dance_ontology/transition
 
 
-suite "the relation":
+suite "Internal: The relation":
   test "no frame reaches itself":
     for target in FRAMES:
       check classify(target, target).isNone
@@ -42,7 +42,7 @@ suite "the relation":
     check edges < FRAMES.len * (FRAMES.len - 1)
 
 
-suite "the primitives":
+suite "Internal: The primitives":
   test "collect and drop change the number of connections by one":
     for source in FRAMES:
       for destination in FRAMES:
@@ -79,7 +79,7 @@ suite "the primitives":
         check classify(source, destination).isNone
 
 
-suite "the compounds":
+suite "Internal: The compounds":
   test "a compound is exactly two primitives, and no primitive is one":
     for source in FRAMES:
       for destination in FRAMES:
@@ -132,7 +132,7 @@ suite "the compounds":
         check route(source, destination)[0].to == fromKey("--.").get
 
 
-suite "moves":
+suite "Internal: Moves":
   test "the offered moves are exactly the frames one primitive away":
     for source in FRAMES:
       var offered: seq[Frame] = @[]
@@ -153,7 +153,7 @@ suite "moves":
       check move.helper == Helper.Collect
 
 
-suite "the way a compound is led":
+suite "Internal: The way a compound is led":
   test "it is two primitives, and they land where the compound says":
     for source in FRAMES:
       for destination in FRAMES:
@@ -204,7 +204,7 @@ suite "the way a compound is led":
         check there.get != back.get
 
 
-suite "routes":
+suite "Internal: Routes":
   test "every frame reaches every other, and a route is a chain of moves":
     for source in FRAMES:
       for destination in FRAMES:
@@ -275,7 +275,7 @@ suite "routes":
         check (steps.len == 1) == classify(source, destination).isSome
 
 
-suite "the vocabulary":
+suite "Internal: The vocabulary":
   test "no two moves share a mark, a name or a change":
     var
       marks: seq[char] = @[]

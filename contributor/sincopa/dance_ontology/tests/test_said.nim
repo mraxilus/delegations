@@ -47,7 +47,7 @@ func pages(): seq[(string, string)] =
     result.add ("controls " & $view, renderControls(view))
 
 
-suite "the Reference says its prose in few words":
+suite "Internal: The Reference says its prose in few words":
   let built = pages()
 
   test "every view builds prose to read":
@@ -71,7 +71,7 @@ suite "the Reference says its prose in few words":
         fail()
 
 
-suite "the rig viewer says its prose in few words":
+suite "Internal: The rig viewer says its prose in few words":
   test "every verdict is one paragraph inside both bounds":
     # Viewer writes each verdict into element rather than into markup, so each
     # one stands as its own paragraph.

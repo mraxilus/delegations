@@ -11,7 +11,7 @@ import std/[options, strutils, unittest]
 
 import ../../src/dance_ontology
 
-suite "the axle":
+suite "Internal: The axle":
   test "the axle is one line: a twist's place is affine in the twist":
     # Placed by twist itself rather than by index, so distance
     # between two postures on drawing is size of turn between

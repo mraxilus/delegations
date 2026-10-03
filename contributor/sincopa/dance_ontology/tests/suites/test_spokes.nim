@@ -11,7 +11,7 @@ import std/[math, options, strutils, unittest]
 import ../../src/dance_ontology
 
 
-suite "the spokes":
+suite "Internal: The spokes":
   test "a frame has one spoke per move and one per compound, and no others":
     for here in FRAMES:
       var named = 0
@@ -55,7 +55,7 @@ suite "the spokes":
           check rise > 0
 
 
-suite "the space and the window":
+suite "Internal: The space and the window":
   test "every frame is drawn inside the one space":
     # Space is what lets node travel: coordinate has to mean same
     # place in frame arrived at as it did in frame left behind.
@@ -99,7 +99,7 @@ suite "the space and the window":
       check MIDDLE[1] > y and MIDDLE[1] < y + height
 
 
-suite "the moving":
+suite "Internal: The moving":
   test "the times the drawing declares are the times the page waits on":
     let declared = closeStyle()
     for (name, time) in {"--pass-at": CLOSE_TEMPO.pass_at,
@@ -244,7 +244,7 @@ suite "the moving":
     check renderSpokes(FRAMES[0]).contains("--mx: 0px; --my: 0px")
 
 
-suite "the drawing":
+suite "Internal: The drawing":
   test "only the frame held and the frames it reaches are drawn":
     for here in FRAMES:
       let picture = renderSpokes(here)
