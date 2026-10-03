@@ -284,8 +284,9 @@ evidence from their tree is a hunch, so keep it, or go and get the evidence.
 `CONTRIBUTOR.md`, Say which role you are, binds you, and `GLOSSARY.md`, Role, holds the set
 of role strings. Your role is `curator` for the rules, the checks, the merge process and the
 root files. It is `curator/<project>` on a branch of one curator project. A finding carries
-the label of the project that it is about. The coordinator speaks as `coordinator`, which no
-branch names. A brief issue carries its role line and the label of the role it starts.
+the label of the project that it is about. The coordinator speaks as `coordinator`, and a
+thread on its own work as `coordinator/<name>`, and no branch names either. A brief issue
+carries its role line and the label of the role it starts.
 
 To comment on a contributor's pull request, to give context or to answer a question, is a
 welcome second channel. It is not where a process request lives. A pull request closes and

@@ -6,9 +6,9 @@ A model writes every line here, under the direction of the Architect. Before any
 2. Find your role from your branch, your brief or your opening prompt. `curator/<name>` and
    `curator/<project>/<name>` follow `CURATOR.md`. `contributor/<domain>/<project>/<name>`
    follows `CONTRIBUTOR.md`, and writes only under `contributor/<domain>/<project>/`. The
-   `coordinator` follows `COORDINATOR.md`, holds no branch, and writes no file. All then read
-   `GUIDE.md`. Where a tool names a branch for you (`claude/...`), push to the branch that
-   your brief names instead.
+   `coordinator` and each `coordinator/<name>` follow `COORDINATOR.md`, hold no branch, and
+   write no file. All then read `GUIDE.md`. Where a tool names a branch for you
+   (`claude/...`), push to the branch that your brief names instead.
 3. Run `nim r koch check` at the repository root before every push. It must pass.
 4. Open your own pull request as a draft when `koch check` passes, and label it with your role.
    Drive it green. The Architect merges it.
