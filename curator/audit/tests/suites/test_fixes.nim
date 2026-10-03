@@ -4,8 +4,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, strutils, unittest]
-import ../../src/[findings, fixes, form, idioms, kinds]
+import std/[options, sequtils, strutils, tables, unittest]
+import ../../src/[findings, fixes, form, idioms, kinds, symbols]
 import ./fixtures
 
 
@@ -193,6 +193,28 @@ suite "Fixes":
     check fixEntries(CURATOR_BRANCH, [tree[0]]).written.len == 0  # no context: nothing known
     let again = @[plan.written[0], tree[1]]
     check fixEntries(CURATOR_BRANCH, [again[0]], context = again.contextOf).written.len == 0
+
+
+  test "semantic pass settles conversion first; file compiling nowhere is left with its error":
+    let
+      path = "curator/audit/src/a.nim"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet y = x.float\n"
+      queries = semanticQueries([entry(path, module)])
+    check queries.len == 1 and queries[0].sites == @[(5, 10), (5, 8)]
+    var answer = Answer(path: path)
+    answer.symbols[(5, 10)] = Symbol(kind: "skType")
+    answer.symbols[(5, 8)] = Symbol(kind: "skLet")
+    let
+      tree = @[entry(path, module)]
+      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf([answer]))
+    check plan.written[0].content == module.replace("x.float", "float(x)")
+    check plan.fixed.mapIt(it.message) == @["type conversion (STYLE.md §5)"]
+    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
+    let
+      failed = Answer(path: path, reason: "undeclared identifier: 'x'")
+      left = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf([failed]))
+    check left.written.len == 0
+    check left.left[0].message.endsWith("got `undeclared identifier: 'x'`.")
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":

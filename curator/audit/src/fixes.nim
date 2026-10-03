@@ -24,9 +24,11 @@
 ##   - wrapping last, separators before signatures before calls before trailing separators:
 ##     layouts join groups with separator they read, and trailing separator goes only where no
 ##     layout wrote one.
-##   Fixer whose rule reads several modules runs first, once, on source as given, from what
-##     `contextOf` reads of whole tree: dead export of checker (`checker.nim`), whose `*` goes
-##     where its own module calls it. Fix of named files reads that context from whole tree.
+##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
+##     from what `contextOf` reads: type conversion `x.T` that semantic pass settles
+##     (`conversions.nim`, `symbols.nim`), then dead export of checker (`checker.nim`), whose
+##     `*` goes where its own module calls it. Fix of named files reads tree whole. File
+##     holding candidate that compiles on no backend is left to hand, with its error.
 ##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
 ##     splits can take spacing fixer refused for width, so second round writes it, and
 ##     `koch fix` run twice writes nothing second time.
@@ -65,9 +67,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, sets, strutils]
+import std/[options, sequtils, sets, strutils, tables]
 import ./[alignment, blanks, checker, conversions, declarations, findings, form, idioms, kinds]
-import ./[layout, messages, names, precedence, prose, scope, spacing, tokens, wrapping]
+import ./[layout, messages, names, precedence, prose, rewrites, scope, spacing, symbols, tokens]
+import ./wrapping
 
 
 const
@@ -89,9 +92,10 @@ type
       ## Zero-based line fence crosses bracket or token at, or reads `FENCED`; `-1` if none.
 
   Context* = object
-    ## Define what whole tree tells fixer of one file that its text cannot: rule read across
-    ##   modules.
+    ## Define what whole tree and semantic pass tell fixer of one file that its text cannot:
+    ##   rule read across modules, and symbol each name resolves to.
     dead: seq[(string, string)]  ## Path and name of each export no other module names.
+    answers: Table[string, Answer]  ## Semantic pass's answer for each file asked, by path.
 
 
 func fenceOf(source: string): Fence =
@@ -249,9 +253,18 @@ func entriesNamed*(
       result.unknown.add finding(path, 0, "Name matches no file git lists; got `" & name & "`.")
 
 
-func contextOf*(tree: Tree): Context =
-  ## Read what tree tells fixers across modules: dead exports of checker, as static pass reads
-  ##   them from its modules, `koch.nim` and its suites.
+func semanticQueries*(entries: openArray[Entry], locked: openArray[string] = []): seq[Query] =
+  ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
+  ##   §5). File fix leaves as written asks nothing.
+  for e in entries:
+    if e.kind.isNone or not e.kind.get.rule.has_guide or e.path in locked: continue
+    let query = conversionQuery(e.path, e.content)
+    if query.sites.len > 0: result.add query
+
+
+func contextOf*(tree: Tree, answers: openArray[Answer] = []): Context =
+  ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
+  ##   them from its modules, `koch.nim` and its suites; and answer of each file asked.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
@@ -259,14 +272,22 @@ func contextOf*(tree: Tree): Context =
       sources.add e.content
     if e.path.startsWith(SUITE_DIRECTORY): suites.add e.content
   result.dead = deadExports(paths, sources, suites).deduplicate
+  for answer in answers: result.answers[answer.path] = answer
 
 
 func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context): Fix =
   ## Run on source each fixer its kind's checks name, in order header gives, until source
   ##   settles; fenced lines read as `FENCED`, and fixer that would move them is skipped.
-  ##   Fixers that tree informs run first, once, on source as given.
-  let shape = source.masked(fence).fenceShape
-  result.source = source.masked(fence)
+  ##   Fixers that semantic pass and tree inform run first, once, on source as given.
+
+  # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
+  var base = source
+  if path in context.answers:
+    let (edits, reports) = conversionEdits(path, source, context.answers[path], fence.lines)
+    base = source.applied(edits)
+    result.fixed = reports
+  let shape = base.masked(fence).fenceShape
+  result.source = base.masked(fence)
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
     let step = fixDeadExports(path, result.source, dead)
@@ -302,6 +323,13 @@ func fixEntries*(
     if fence.fault >= 0:
       result.left.add faultOf(e.path, fence)
       continue
+    if e.path in context.answers and context.answers[e.path].reason.len > 0:
+      result.left.add finding(
+        e.path,
+        0,
+        "File compiles on no backend of its pin, so fixers resting on semantic pass leave it; " &
+          "got `" & context.answers[e.path].reason & "`.",
+      )
     let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
     if fix.source == e.content: continue
     result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)

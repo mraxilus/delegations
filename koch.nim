@@ -59,6 +59,7 @@ import ./curator/audit/src/[
   projects,
   role,
   scope,
+  symbols,
   tree,
 ]
 
@@ -436,6 +437,7 @@ proc run(options: Options): int =
     #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
     #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
     #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
+    #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
     if not options.reads({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
     let
@@ -447,12 +449,15 @@ proc run(options: Options): int =
     if unknown.len > 0:
       unknown.report
       return 1
-    let (written, fixed, refused, left) = fixEntries(
-      options.branchOrDefault,
-      entries,
-      tree.lockedNimbles,
-      tree.contextOf,
-    )
+    let
+      locked = tree.lockedNimbles
+      answers = resolve(options.root, tree, semanticQueries(entries, locked))
+      (written, fixed, refused, left) = fixEntries(
+        options.branchOrDefault,
+        entries,
+        locked,
+        tree.contextOf(answers),
+      )
     for f in left.sorted: echo f.render
     if refused.len > 0:
       refused.report
