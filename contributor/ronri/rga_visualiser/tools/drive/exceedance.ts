@@ -367,7 +367,7 @@ async function driveMarks(page: Page, least: number): Promise<void> {
   await settleAxis(page);
   const ink_wide = await readAxisInk(page);
   const wide = await page.evaluate(
-    () => ({ extent: milliseconds_axis, floor: nimRateFrameLeast() }),
+    () => ({ extent: milliseconds_axis, floor: nimRateFrameLeast(), fast: nimRateFrameFast() }),
   );
   // Mark is found where its rate puts it on canvas, within pixel of rounding either way.
   const columnOf = (rate: number): number => (ink_wide.width * 1000) / (rate * wide.extent);
@@ -380,14 +380,14 @@ async function driveMarks(page: Page, least: number): Promise<void> {
     `${ink_floor.marks.length} marks on a fast window; on a slow one, 15 fps at column ` +
       `${columnOf(15).toFixed(0)}: ${isMarkAt(15)}`,
   );
-  // On 90 ms axis 240 fps line stands 17 px from 120's, and its labels covered that line.
+  // On 90 ms axis fast mark's line stands so near floor's that its labels covered that line.
   report(
     'a mark whose labels would cover a slower one gives way, and the floor mark holds',
-    isMarkAt(wide.floor) && !isMarkAt(240) &&
+    isMarkAt(wide.floor) && !isMarkAt(wide.fast) &&
       ink_wide.named.every((mark) => mark.above > 0 && mark.below > 0),
     `0-${wide.extent.toFixed(1)} ms: marks at columns ${ink_wide.marks.join(', ')}; ` +
-      `${wide.floor} fps at ${columnOf(wide.floor).toFixed(0)}, 240 at ` +
-      `${columnOf(240).toFixed(0)}`,
+      `${wide.floor} fps at ${columnOf(wide.floor).toFixed(0)}, ${wide.fast} at ` +
+      `${columnOf(wide.fast).toFixed(0)}`,
   );
 }
 

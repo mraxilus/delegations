@@ -326,8 +326,11 @@ suite "Mesh":
     proc pseudo(): float =
       seed = (seed*97.31 + 33.77) mod 41.0
       (seed - 20.5)/20.5
+    const (count_trials, count_each_least) = (400, 20)
+      ## Segments drawn, and least of them that must reach each case: cut and gone.
+      ##   400 seeded segments within 40 units of eye reach both cases dozens of times.
     var (count_cut, count_gone) = (0, 0)
-    for trial in 0 ..< 400:
+    for trial in 0 ..< count_trials:
       MESHES.clearMeshes
       MESHES.addSegment(
         scale.eye + Direction(x: 40.0*pseudo(), y: 40.0*pseudo(), z: 40.0*pseudo()),
@@ -355,8 +358,8 @@ suite "Mesh":
       for (drawn, wanted) in [(tail_drawn, kept.get[0]), (head_drawn, kept.get[1])]:
         check norm(drawn - wanted) <= TOLERANCE_SINGLE*max(1.0, norm(wanted - scale.eye))
     # Sample reaches each case it claims to.
-    check count_cut > 20
-    check count_gone > 20
+    check count_cut > count_each_least
+    check count_gone > count_each_least
 
 
   test "line's own far end coincides exactly with where its attitude is drawn":

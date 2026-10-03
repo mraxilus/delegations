@@ -6,7 +6,7 @@
 
 /* ---------------------------------------------------------------------- */
 /* Overlay: hover ring + drag rubber-band, as plain 2D SVG drawn on top of */
-/* WebGL canvas -- mirrors `visualiser.drawInteractionOverlay` exactly     */
+/* WebGL canvas -- mirrors `main.drawInteractionOverlay` exactly           */
 /* (same radius, same tint per operation), just drawn through SVG rather   */
 /* than through Dear ImGui's own immediate-mode draw list.                */
 /* ---------------------------------------------------------------------- */

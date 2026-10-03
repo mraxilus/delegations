@@ -1,6 +1,6 @@
 // Check that outcome page reports stands as long as Nim says and then takes itself away;
-//   not Nim because what is under check is duration measured against real clock in real
-//   browser, which harness alone holds.
+//   not Nim because what is under check is duration that page's own timers keep in real
+//   browser, which harness alone holds. Runs on simulated clock, which moves those timers.
 //   Window had no check like this because window had no such behaviour: its line stood
 //   until something replaced it. `message.messageFade` states rule, suite holds it as
 //   arithmetic, and this holds page to it as it runs.
@@ -17,11 +17,11 @@ async function lifeOfMessage(page: Page): Promise<[number, number]> {
 
 /** Raise one outcome and wait for it to go, without touching it again.
  *
- *  Wall clock deliberately, unlike `driveRendered`: there what mattered was frames drawn
- *  and clock made check load-dependent, while here duration *is* thing under check.
- *  Second half waits on condition rather than sleeping exactly as long as toast should
- *  last, so machine that fires its timer late still passes; toast that never goes is only
- *  failure worth reporting.
+ *  Simulated clock, as every correctness check: duration *is* thing under check, and page's
+ *  own timers keep it, so `advance` moves exactly what toast waits on.
+ *  Second half steps frames until toast goes, rather than advancing its exact life, so check
+ *  reads going itself rather than arithmetic; toast that never goes is only failure worth
+ *  reporting.
  */
 export async function driveMessageGoes(page: Page): Promise<void> {
   const [standing, fading] = await lifeOfMessage(page);

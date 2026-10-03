@@ -6,14 +6,17 @@
 ##     copy lives here.
 ##
 ##   Verb names action and its object. `check` runs every check pull request runs, and each
-##     `check-<object>` runs one of them; other verbs act (`test`, `drive`, `fetch-*`,
+##     `check-<object>` runs one of them; other verbs act (`test`, `drive`, `fix`, `fetch-*`,
 ##     `stamp`) or print (`list-*`). CI job running verb carries verb's name, so red job names
 ##     command to run locally.
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `check-types` runs
-##     project's `types`, `drive` its `drive`, and `list-packages` its `system`. Koch learns
-##     which projects carry `drive` and `system` by reading that driver's own dispatch, and
-##     which carry `types` by node manifest beside its lock; never from list.
+##     project's `types`, `drive` its `drive`, `head` its `head`, and `list-packages` its
+##     `system`. Koch learns which projects carry `drive`, `head` and `system` by reading that
+##     driver's own dispatch, and which carry `types` by node manifest beside its lock; never
+##     from list.
+##   `head` is no `check-` verb, and `check` never runs it: its verdict varies with outside
+##     reference rather than with code, so `head.yml` runs it daily, and merge waits on none.
 ##   `check-types` runs on driver's compiler and `drive` on project's own, because type check
 ##     compiles no project code and drive does: it builds page through JS backend. So `drive`
 ##     is planned like `test`, through `list-projects --drive`, and reaches CI as matrix.
@@ -42,7 +45,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, os, parseopt, sequtils, strutils]
+import std/[algorithm, json, options, os, parseopt, sequtils, strutils]
 import ./curator/audit/src/[
   assets,
   audit,
@@ -50,8 +53,10 @@ import ./curator/audit/src/[
   commits,
   domains,
   findings,
+  fixes,
   hooks,
   plan,
+  projects,
   role,
   scope,
   tree,
@@ -72,6 +77,8 @@ Verbs:
   hook           answer one hook event named as argument, from its JSON or refs on stdin
   test           fetch deps, then testament over tests/t*.nim, on project's own pin
   drive          fetch deps, then project's own `drive` verb, on project's own pin
+  head           fetch deps, then project's own `head` verb, on project's own pin
+  fix            apply in place each fix checks name, refusing all where path is out of scope
   fetch-deps     check out what each atlas.lock pins, and confirm checkouts match
   fetch-assets   fetch named files into store, print each path; none named prints table
   list-packages  OS packages koch and projects need, one per line
@@ -85,18 +92,18 @@ Options:
   --all            every project, not only those whose code changed
   --recent         projects whose code merged within last week
   --drive          list-projects keeps projects carrying `drive` verb
+  --head           list-projects keeps projects carrying `head` verb
   --write          stamp writes every Rules row rather than printing
+  --dry-run        fix prints each change it would make, writes none, exits 1 where any
 """
   ## Text `./koch` prints alone and on usage error; `checker.nim` reads verbs and options here.
 
 
 type
-  Flag = enum
-    ## Name option verb may read.
-    Root, Branch, Base, All, Recent, Drive, Write
+  Flag = enum  ## Name option verb may read.
+    Root, Branch, Base, All, Recent, Drive, Head, Write, DryRun
 
-  Options = object
-    ## Define parsed command line.
+  Options = object  ## Define parsed command line.
     command: string
     project: string
     rest: seq[string]
@@ -106,7 +113,9 @@ type
     is_all: bool
     is_recent: bool
     is_drive: bool
+    is_head: bool
     is_write: bool
+    is_dry_run: bool
 
 
 proc parseOptions(): Option[Options] =
@@ -115,12 +124,12 @@ proc parseOptions(): Option[Options] =
   for kind, key, value in getopt():
     case kind
     of cmdArgument:
-      # Third argument onward is refused for every verb but `fetch-assets`, which names files
-      #   rather than one project; refusing them everywhere would make that verb impossible
-      #   and accepting them everywhere would let typo pass as argument nothing reads.
+      # Third argument onward is refused for every verb but `fetch-assets` and `fix`, which
+      #   name files rather than one project; refusing them everywhere would make those verbs
+      #   impossible and accepting them everywhere would let typo pass as argument nothing reads.
       if options.command.len == 0: options.command = key
       elif options.project.len == 0: options.project = key
-      elif options.command == "fetch-assets": options.rest.add key
+      elif options.command in ["fetch-assets", "fix"]: options.rest.add key
       else: return none(Options)
     of cmdLongOption, cmdShortOption:
       case key
@@ -130,7 +139,9 @@ proc parseOptions(): Option[Options] =
       of "all": options.is_all = true
       of "recent": options.is_recent = true
       of "drive": options.is_drive = true
+      of "head": options.is_head = true
       of "write": options.is_write = true
+      of "dry-run": options.is_dry_run = true
       else: return none(Options)
     of cmdEnd: discard
   if options.command.len == 0: return none(Options)
@@ -145,7 +156,9 @@ func given(options: Options): set[Flag] =
   if options.is_all: result.incl All
   if options.is_recent: result.incl Recent
   if options.is_drive: result.incl Drive
+  if options.is_head: result.incl Head
   if options.is_write: result.incl Write
+  if options.is_dry_run: result.incl DryRun
 
 
 func reads(options: Options, flags: set[Flag], has_project = false): bool =
@@ -254,10 +267,17 @@ proc runHook(root, event, input: string): int =
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
-      refuse(checkBody(
-        tool, branch, data{"tool_input", "title"}.getStr, data{"tool_input", "body"}.getStr,
-        labels, data{"tool_input", "method"}.getStr == "create",
-      ), 2)
+      refuse(
+        checkBody(
+          tool,
+          branch,
+          data{"tool_input", "title"}.getStr,
+          data{"tool_input", "body"}.getStr,
+          labels,
+          data{"tool_input", "method"}.getStr == "create",
+        ),
+        2,
+      )
     of "edit":
       let
         checkout = checkoutAt(root, file.parentDir)
@@ -291,7 +311,10 @@ proc runHook(root, event, input: string): int =
       drift = checkBase(gainedPaths(root, "origin/" & MAIN))
     except CatchableError: discard
     echo startContext(
-      branch, readFile(root / "CONTRIBUTOR.md"), "## Carry the unchecked list in the open", drift
+      branch,
+      readFile(root / "CONTRIBUTOR.md"),
+      "## Carry the unchecked list in the open",
+      drift,
     )
     0
   of "push":
@@ -348,9 +371,7 @@ proc run(options: Options): int =
     #   pushed commit; dirty tree records nothing, since no commit holds exactly what passed.
     if found.len == 0:
       if gitFields(options.root, ["status", "--porcelain"]).len == 0:
-        writeFile(
-          options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0]
-        )
+        writeFile(options.root.markFile, gitFields(options.root, ["rev-parse", "HEAD^{tree}"])[0])
         echo "Tree hash recorded for pre-push hook."
       else: echo "Working tree not clean; nothing recorded for pre-push hook."
   of "check-files":
@@ -367,7 +388,9 @@ proc run(options: Options): int =
     if not options.reads({Root, Branch, Base}): return options.refused
     let base = options.baseOrDefault
     found = checkScope(
-      options.branchOrDefault, changedPaths(options.root, base), movedPaths(options.root, base)
+      options.branchOrDefault,
+      changedPaths(options.root, base),
+      movedPaths(options.root, base),
     )
   of "check-commits":
     if not options.reads({Root, Branch, Base}): return options.refused
@@ -402,6 +425,44 @@ proc run(options: Options): int =
       return options.refused
     let tree = options.root.readTree
     found = drivenJobs(options.root, tree, options.plannedJobs(tree))
+  of "head":
+    if not options.reads({Root, Base, All, Recent}, has_project = true):
+      return options.refused
+    let tree = options.root.readTree
+    found = headJobs(options.root, tree, options.plannedJobs(tree))
+  of "fix":
+    # Fixers, file selection and scope refusal live in `fixes.nim`; koch writes and prints.
+    #   Named files or directories come first, else projects `--recent`, `--all` or change
+    #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
+    #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
+    #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
+    if not options.reads({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
+      return options.refused
+    let
+      tree = options.root.readTree
+      named = (if options.project.len > 0: @[options.project] else: @[]) & options.rest
+      (entries, unknown) = tree.entriesNamed(
+        if named.len > 0: named else: options.scopedDirsOf(tree)
+      )
+    if unknown.len > 0:
+      unknown.report
+      return 1
+    let (written, fixed, refused, left) = fixEntries(
+      options.branchOrDefault,
+      entries,
+      tree.lockedNimbles,
+    )
+    for f in left.sorted: echo f.render
+    if refused.len > 0:
+      refused.report
+      echo "Nothing written; fix writes only inside branch scope."
+      return 1
+    let outcome = if options.is_dry_run: " to fix" else: " fixed"
+    if not options.is_dry_run:
+      for e in written: writeFile(options.root / e.path, e.content)
+    for f in fixed.sorted: echo f.render & outcome
+    echo $fixed.len & outcome & "."
+    return if options.is_dry_run and fixed.len > 0: 1 else: 0
   of "fetch-deps":
     if not options.reads({Root, Base, All, Recent}, has_project = true):
       return options.refused
@@ -443,12 +504,13 @@ proc run(options: Options): int =
     for package in named: echo package
     return 0
   of "list-projects":
-    if not options.reads({Root, Base, All, Recent, Drive}, has_project = true):
+    if not options.reads({Root, Base, All, Recent, Drive, Head}, has_project = true):
       return options.refused
-    let
-      tree = options.root.readTree
-      jobs = options.plannedJobs(tree)
-    echo render(if options.is_drive: tree.drivenOnly(jobs) else: jobs)
+    let tree = options.root.readTree
+    var jobs = options.plannedJobs(tree)
+    if options.is_drive: jobs = tree.drivenOnly(jobs)
+    if options.is_head: jobs = tree.carryingOnly(jobs, HEAD_VERB)
+    echo render(jobs)
     return 0
   of "stamp":
     # Printing serves record written by hand; writing serves duty 1, where every record

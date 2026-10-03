@@ -320,7 +320,7 @@ export async function drivePointFills(page: Page): Promise<void> {
       nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
       return { hovered: nimHoverHandle(), is_backdrop: nimIsHoverBackdrop() };
     }, [x, y]);
-  // Depth where sphere's radius reaches half diagonal: inverse of `picking.coversView`.
+  // Depth where sphere's radius reaches half diagonal: inverse of `picking.isCoveringView`.
   const filling = await page.evaluate((one) => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const tangent = Math.tan((0.5 * nimCameraFov() * Math.PI) / 180);

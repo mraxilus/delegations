@@ -28,7 +28,7 @@
 ##   than to geometry, so they are written out directly.
 ## Every verb composes motion directly, `orbit` included, so roll reader sets survives.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 # Reorder so stance reads before frame derived from it, though `pan` calls `frame`.
 #   Constants below stay in dependency order regardless, as reordering does not cover them.
@@ -1200,13 +1200,13 @@ func `==`*(a, b: CameraAim): bool =
     let (m, n) = (a.centroid_sum.get, b.centroid_sum.get)
     for handle in [Basis.E1, Basis.E2, Basis.E3, Basis.E4]:
       if m[handle] != n[handle]: return false
-  func sameWay(one, other: Option[Direction]): bool =
+  func isSameWay(one, other: Option[Direction]): bool =
     ## Compare two optional directions coefficient by coefficient.
     if one.isSome != other.isSome: return false
     if one.isNone: return true
     let (d, e) = (one.get, other.get)
     d.x == e.x and d.y == e.y and d.z == e.z
-  sameWay(a.heading, b.heading) and sameWay(a.normal_crossing, b.normal_crossing)
+  isSameWay(a.heading, b.heading) and isSameWay(a.normal_crossing, b.normal_crossing)
 
 
 func widened*(bound: SphereWorld, place: Position, reach: float): SphereWorld =

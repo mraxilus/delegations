@@ -26,10 +26,8 @@ import ./[domains, findings]
 
 
 const
-  ROLE_KEY* = "**Role:**"
-    ## Opening of role line, bold as every prompt and template writes it.
-  COMMENT_OPEN* = "<!--"
-    ## Opening of HTML comment, which unfilled template carries after key.
+  ROLE_KEY* = "**Role:**"  ## Opening of role line, bold as every prompt and template writes it.
+  COMMENT_OPEN* = "<!--"  ## Opening of HTML comment, which unfilled template carries after key.
   ECHO_MAX* = 72
     ## Runes echoed back from opening line: it is whatever somebody typed, and body opening
     ## with whole paragraph would otherwise print that paragraph as finding.
@@ -48,11 +46,11 @@ func roleLine*(body: string): string =
     let s = line.strip
     if s.len == 0: continue
     let open = s.find(COMMENT_OPEN)
-    return (if open < 0: s else: s[0 ..< open].strip)
+    return (if open < 0: s else: s[0..<open].strip)
   ""
 
 
-func checkRole*(branch, body: string, labels: openArray[string]): seq[Finding] =
+func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
   ## Report pull request whose opening line or labels do not name role its branch names.
   let parsed = branch.parseBranch
   if parsed.isNone: return
@@ -61,7 +59,8 @@ func checkRole*(branch, body: string, labels: openArray[string]): seq[Finding] =
     opening = body.roleLine
   if opening != ROLE_KEY & " " & expected:
     result.add finding(
-      "", 0,
+      "",
+      0,
       "Pull request must open with `" & ROLE_KEY & " " & expected &
         "`, which its branch names; got `" & opening.shortened & "`.",
     )

@@ -168,11 +168,10 @@ export async function driveRingsTimed(page: Page): Promise<void> {
 
 /** How many timed frames this check reads, and how long it waits to be handed them.
  *
- *  Frames rather than clock, which is second attempt and worth recording: first slept
- *  1200 ms and then asked for twenty, so how many arrived was how fast machine was. It drew
- *  27 idle and 19 with `koch check` running beside it -- same code, two verdicts, which is what
- *  this repository says makes check wrong rather than machine. Waiting on count takes load
- *  out of verdict: loaded machine takes longer to reach twenty and still reaches it.
+ *  Frames rather than clock: waiting on count takes load out of verdict, since loaded machine
+ *  takes longer to reach twenty and still reaches it.
+ *  Rejected: fixed sleep, then twenty asked for, under which count arrived was machine's
+ *  speed -- 27 idle and 19 beside `koch check`, same code, two verdicts.
  *  Ceiling is what remains for page that draws nothing, and is far enough above worst
  *  measured run that reaching it means no frames rather than slow ones. Time waited is
  *  reported either way, so slow machine still says what it cost.

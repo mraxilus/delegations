@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
+import ../../tools/catalogue
 
 
 suite "Wording":
@@ -16,8 +17,8 @@ suite "Wording":
     #   still need them apart. Key names control, not word.
     var seen: Table[string, Wording]
     for key in Wording:
-      check hasWords(key)
-      if key.namesControl: continue
+      check isCarryingWords(key)
+      if key.isNamingControl: continue
       let text = $wordingText(key)
       if text in seen:
         checkpoint(&"`{key}` says what `{seen[text]}` says: {text}")
@@ -30,7 +31,7 @@ suite "Wording":
     #   no stray space, and starts with capital -- three things eye notices and no reviewer
     #   reliably does.
     for key in Wording:
-      if key.namesControl or key.isHelpCell: continue
+      if key.isNamingControl or key.isHelpCell: continue
       let text = $wordingText(key)
       check text == strip(text)
       check "  " notin text
@@ -57,7 +58,7 @@ suite "Wording":
     #   What label may not be is padded, doubled-spaced, or long enough to be prose --
     #   window padded `?` to size its button once, and that put layout in catalogue.
     for key in Wording:
-      if not key.namesControl: continue
+      if not key.isNamingControl: continue
       let text = $wordingText(key)
       check text == strip(text)
       check "  " notin text
@@ -83,7 +84,7 @@ suite "Wording":
     for word in strutils.splitWhitespace($wordingText(NameTitle)):
       check word[0].isUpperAscii
     for key in Wording:
-      if not key.namesControl or key == NameTitle: continue
+      if not key.isNamingControl or key == NameTitle: continue
       let text = $wordingText(key)
       check not text[0].isUpperAscii
 
@@ -141,3 +142,16 @@ suite "Wording":
     appendShownCounted(line, cursor, 12, 5038)
     finishChars(line, cursor)
     check toText(line) == "12 of 5038 shown"
+
+
+  test "the driver's reading of the catalogue as text holds every key and every row":
+    # Driver reads `wording.nim` as text and imports none of it, so type check compiles no
+    #   project code on koch's compiler (#385). Here, on pin, reading meets compiled enum
+    #   and table: key moved or row written in form reading cannot follow fails here.
+    const SOURCE = staticRead("../../src/rga_visualiser/wording.nim")
+    let (keys, words) = (keysOf(SOURCE), wordsOf(SOURCE))
+    check keys.len == ord(high(Wording)) + 1
+    check words.len == keys.len
+    for key in Wording:
+      check keys[ord(key)] == $key
+      check words.getOrDefault($key, "") == $wordingText(key)

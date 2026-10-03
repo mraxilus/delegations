@@ -57,10 +57,8 @@ const
     ## are derived rather than listed since then, so next project pays that cost at birth.
   SENTENCE_WORDS* = 25
     ## Words one sentence may hold, which is STE's limit for descriptive writing.
-  PARAGRAPH_SENTENCES* = 6
-    ## Sentences one paragraph may hold.
-  ECHO_WORDS = 8
-    ## Words finding quotes back of sentence it names.
+  PARAGRAPH_SENTENCES* = 6  ## Sentences one paragraph may hold.
+  ECHO_WORDS = 8  ## Words finding quotes back of sentence it names.
   SPAN_WORD = "name"
     ## Word backticked span collapses to, so identifier counts once however long it is.
   REPLACEMENTS* = [
@@ -111,10 +109,9 @@ const
     ## Two carry period, since token keeps period STE's own spelling holds.
 
 
-type Block* = object
-  ## Define one prose block and where it opens.
+type Block* = object  ## Define one prose block and where it opens.
   text*: string  ## Words joined by single space, backticked spans collapsed.
-  line*: int     ## Line block opens on, 1-based.
+  line*: int  ## Line block opens on, 1-based.
 
 
 func spansCollapsed*(text: string): string =
@@ -141,13 +138,13 @@ func matterOut(markdown: string): string =
   let lines = markdown.splitLines
   if lines.len == 0 or lines[0].strip != "---": return markdown
   var closed = -1
-  for i in 1 .. lines.high:
+  for i in 1..lines.high:
     if lines[i].strip == "---":
       closed = i
       break
   if closed < 0: return markdown
   var kept = lines
-  for i in 0 .. closed: kept[i] = ""
+  for i in 0..closed: kept[i] = ""
   kept.join("\n")
 
 
@@ -209,7 +206,7 @@ func opening(sentence: string): string =
   ## Quote back first words of sentence, with ellipsis where more follow.
   let words = sentence.splitWhitespace
   if words.len <= ECHO_WORDS: return sentence
-  words[0 ..< ECHO_WORDS].join(" ") & " ..."
+  words[0..<ECHO_WORDS].join(" ") & " ..."
 
 
 func tokenised(text: string): string =
@@ -250,14 +247,16 @@ func englishFindings*(path, source: string): seq[Finding] =
     let found = b.text.sentences
     if found.len > PARAGRAPH_SENTENCES:
       result.add finding(
-        path, b.line,
+        path,
+        b.line,
         "Paragraph must hold at most " & $PARAGRAPH_SENTENCES &
           " sentences; split it (ASD-STE100); got `" & $found.len & "`.",
       )
     for s in found:
       if s.splitWhitespace.len > SENTENCE_WORDS:
         result.add finding(
-          path, b.line,
+          path,
+          b.line,
           "Sentence must hold at most " & $SENTENCE_WORDS &
             " words; split it (ASD-STE100); got `" & s.opening & "`.",
         )
@@ -265,7 +264,8 @@ func englishFindings*(path, source: string): seq[Finding] =
     for (word, approved) in REPLACEMENTS:
       if " " & word & " " in plain:
         result.add finding(
-          path, b.line,
+          path,
+          b.line,
           "Word is outside approved dictionary; write `" & approved &
             "` (ASD-STE100); got `" & word & "`.",
         )

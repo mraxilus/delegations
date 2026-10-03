@@ -3,8 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/names
-import ../../src/findings
+import ../../src/[findings, names]
 
 
 const SOURCE = """
@@ -54,6 +53,7 @@ func messages(found: seq[Finding]): seq[string] =
   found.mapIt(it.message)
 
 
+
 suite "Names":
   test "comments and strings are blanked, newlines kept":
     let code = ("let a = \"# not comment\" # comment\nlet b = r\"raw \"\" quote\" #[ block\n" &
@@ -61,6 +61,17 @@ suite "Names":
     check code.splitLines.len == 3
     check "comment" notin code and "quote" notin code and "block" notin code
     check "let a =" in code and "let b =" in code and code.splitLines[2].strip == "c"
+
+
+  test "code-and-comments view blanks strings alone, keeping every length":
+    let
+      source = "let a = \"# not comment\" # comment\nlet b = '#' #[ block\n]# c"
+      kept = source.codeAndComments
+    check kept.len == source.len and kept.splitLines.len == 3
+    check "not" notin kept and "'#'" notin kept  # string and char blanked
+    check "# comment" in kept and "#[ block" in kept and kept.splitLines[2] == "]# c"
+    check kept.find('#') == source.find("# comment")  # first `#` left opens comment
+
 
   test "declarations of every kind are read":
     let found = SOURCE.names
@@ -75,6 +86,7 @@ suite "Names":
     check kinds.filterIt(it.name == "buf")[0].kind == NameKind.Parameter
     check kinds.filterIt(it.name == "args")[0].kind == NameKind.Field
 
+
   test "words split at underscore and case change":
     check "lut_grade_by_basis".words == @["lut", "grade", "by", "basis"]
     check "wedgeAnti".words == @["wedge", "Anti"]
@@ -83,6 +95,7 @@ suite "Names":
     check "rga4d".words == @["rga4d"]
     check "DIRECTORY_SDL3".words == @["DIRECTORY", "SDL3"]
 
+
   test "acronyms are capital runs inside camel or Pascal names":
     check "toJSON".acronyms == @["JSON"]
     check "SDL3Window".acronyms == @["SDL3"]
@@ -90,12 +103,14 @@ suite "Names":
     check "DIRECTORY_SDL3".acronyms.len == 0  # screaming holds by reading
     check "rga_visualiser".acronyms.len == 0
 
+
   test "glossary gives exemptions from standards spans and terms":
     const G = "# d\n\n## Standards\n\n- **SI**, BIPM, 9th: `s` and `m` (Table 2), so `ms`.\n" &
       "- **Acronyms**, Architect: `3D`, `JSON` and `fps`.\n\n## Language\n\n**Measurand**:\nOne.\n"
     let exempt = G.glossaryExemptions
     for w in ["s", "m", "ms", "3D", "JSON", "fps", "Measurand"]: check w in exempt
     check "BIPM" notin exempt  # owner, not symbol
+
 
   test "abbreviation, acronym, verb, lookup and global findings":
     let found = checkNames("x.nim", SOURCE, ["JSON"]).messages
@@ -112,6 +127,7 @@ suite "Names":
     check checkNames("y.nim", "let lut_grade = 1\n", []).messages[0].contains("(V.5)")
     check checkNames("y.nim", "let lut_grade_by_basis = 1\n", []).len == 0
     check checkNames("y.nim", "proc get*(x: int) = x\n", []).len == 0  # one word is noun
+
 
   test "foreign binding keeps library's name, and its parameters are read":
     const F = "proc getError*(): cstring {.importc: \"SDL_GetError\".}\n" &

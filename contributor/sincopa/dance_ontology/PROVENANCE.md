@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0c20f4b6c8e6b294 |
+| Rules   | 914ae2b574f73577 |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -2001,8 +2001,8 @@ a doc. Each module declares its types in one section, before its routines. Verif
 **No name is an abbreviation.** The Architect ruled so on #305, past the closed list of V.6.
 `Vector`, `Position` and `Quaternion` are in full, and so is each name of the engine binding. The C
 name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins one-letter symbols is
-spelled out, as `delta_x` for `dx`. An acronym stays only where a junior programmer knows it: SVG,
-HTML, CSS, JSON, JS, URL, ID and DoF stay, and FNV does not.
+spelled out, as `delta_x` for `dx`. An acronym stays only where the root glossary lists it as one
+a layman knows (V.9).
 
 **A path is a name too.** The simulation is in `simulation/`, and the build folders are
 `dependencies/` and `binaries/`. The root ignore file ignores both, so this project has no ignore

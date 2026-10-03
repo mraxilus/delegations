@@ -8,7 +8,7 @@
 import type { Page } from '@playwright/test';
 import { MILLISECONDS_FRAME, advance, evaluateOver, waitUntil } from './clock';
 import { settleCamera } from './camera';
-import { readPhases, waitFrames } from './frame';
+import { FRAMES_PHASES_HEAVY_LEAST, readPhases, waitFrames } from './frame';
 import { report } from './report';
 import { MISSES_ACCOUNT_MAX } from './scenery';
 
@@ -258,7 +258,7 @@ export async function driveLoadedAccounting(page: Page): Promise<void> {
     one.parts <= one.scene + 0.6 && one.parts >= one.scene - Math.max(3.0, 0.3 * one.scene));
   report(
     'and under it the same accounting still holds, on a phase big enough to divide',
-    heavy.length > 20 && sane.length >= heavy.length - MISSES_ACCOUNT_MAX,
+    heavy.length > FRAMES_PHASES_HEAVY_LEAST && sane.length >= heavy.length - MISSES_ACCOUNT_MAX,
     `${sane.length} of ${heavy.length} frames over 2 ms account, worst scene phase ` +
       `${Math.max(0, ...heavy.map((one) => one.scene)).toFixed(2)} ms`,
   );

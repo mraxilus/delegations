@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0c20f4b6c8e6b294 |
+| Rules   | 914ae2b574f73577 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -33,8 +33,8 @@ that this repository builds and drives.
 
 **How claims are marked.** Each subsystem closes with a *Checked* block. *Verified* means that the
 claim was established by a run of something, and it names what. *Assumed* means that it rests on
-reasoning alone. A figure with no *Verified* line beside it was once read off a panel and not
-measured again since, so treat it as indicative.
+reasoning alone. A figure with no *Verified* line beside it is unmeasured, and reads only as an
+estimate.
 
 Six tools of the prototype are not in this repository: `check_palette`, `check_atlas`,
 `check_prose`, `check_columns`, `verify.sh` and `verify_touch_pan.js`. A claim one held says so.
@@ -66,16 +66,13 @@ local inside a template, so `picking` turns on `openSym`. `iterator items` keeps
 it is the protocol of Nim itself.
 
 **Two spec keys must never be renamed, and neither would fail loudly.** `targets: "js"` is a
-testament key, and renamed, the browser suite runs on the wrong backend. `visualiser.items_max` is a
-compile-time define named in the `matrix` of the small suite. That the constant and the define still
-meet is checked by a compile against it.
+testament key, and renamed, the browser suite runs on the wrong backend. `visualiser.objects_max` is
+a compile-time define named in the `matrix` of the small suite. That the constant and the define
+still meet is checked by a compile against it.
 
-**Uppercase constants sit outside word boundaries**, so a rename by word misses `ALPHA_WASH` and
-`WIDTH_SHAPE_WORD`. The compiler names each miss.
-
-**`GHOST` could not become `PREVIEW`.** Nim compares identifiers ignoring case after the first
-letter, and ignoring underscores. The type `Preview` exists, so `none(Preview)` resolved to the
-renamed variable. It is `PREVIEW_EDIT`, beside `PREVIEW_APPLY`.
+**Nim compares names without case after the first letter, and without underscores**, so a module
+variable `PREVIEW` would shadow the type `Preview`. The variables are `PREVIEW_EDIT` and
+`PREVIEW_APPLY`.
 
 **`horizon` stays the word of `pga`**, and has no entry here, because the vocabulary of the algebra
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
@@ -110,24 +107,28 @@ and an empty label are allowed, because neither one is shown.
 It also refuses the opposite defect: a catalogue row that no front-end names. The catalogue cannot
 then grow words written for nobody.
 
-`tools/build.nim` imports the catalogue rather than parses it. To read `wording.nim` as text to
-recover the keys of the enum stops at the first blank line inside the enum. To walk `Wording` after
-an import of it fails to compile when a key moves.
+**The driver reads the catalogue as text, and imports none of it** (`tools/catalogue.nim`). The
+type check runs `tools/build.nim` on koch's compiler, never on the pin of this project, so the
+driver compiles no project code (#385). The read takes the whole enum, past its blank lines, and
+each row with its literals joined by `&`. A suite test on the pin holds the read to the compiled
+enum and table, so a moved key fails there. Rejected: an import of the catalogue, which compiled
+`wording.nim` and `format.nim` on koch's compiler.
 
 **One key for each control, and not one key for each word.** `NameRowHide` and `NamePickHide` both
 read `hide`, and are two keys. Two buttons honestly wear one word, and a translator may still need
 them apart.
 
 The law that no two keys carry the same text therefore holds over **prose** keys alone. Those are
-the tooltips and notes, where a repeated sentence is a copy. Labels carry their own law. Each one is
-stripped, with no doubled space, no trailing full stop, and at most `RUNES_LABEL_MOST` runes.
+the tooltips and notes, where a repeated sentence is a copy. The words on a control carry their own
+law. Each one is stripped, with no doubled space, no trailing full stop, and at most
+`RUNES_LABEL_MOST` runes.
 
-**Every control that both front-ends have is explained on both, from one key.** The page hangs 35 of
-the 41 `Tip` keys on its controls, set from scripts at load, because the markup carries no `title`.
-The six it does not hang are the window's alone. Those are its two file-path fields, its vsync
-switch, its two arenas, and its scene block. The page row of that block reads a count over a
-capacity, rather than the bytes that the sentence names. A control that the page has, and the window
-explains without the page explaining it, is a gap to close, and not a design choice.
+**Every control that both front-ends have is explained on both, from one key.** The page hangs the
+`Tip` key of each control it has, set from scripts at load, because the markup carries no `title`.
+The keys it does not hang are the window's alone: its two file-path fields, its vsync switch, its
+two arenas, and its scene block. The page row of that block reads a count over a capacity, rather
+than the bytes that the sentence names. A control that the page has, and the window explains without
+the page explaining it, is a gap to close, and not a design choice.
 
 **The application names itself once.** `NameTitle` reads `RGA Visualiser`, and both front-ends take
 it. The caption of the window is `captionWindow()`, which reads the catalogue rather than spells the
@@ -153,9 +154,14 @@ Not here: the words of the algebra itself. Those are operation names and notatio
 declarations of `pga`, kind words, and key and button names. Help composes with them, rather than
 copies them.
 
-*Checked.* Verified by build and by driven check. `declare` reports **177 wording keys**. A literal
-put back at a label call is refused. A key named only inside the catalogue is refused as shown by
-nobody. A `@WORD:` token that names an absent key fails the build, with the line that carries it.
+*Checked.* Verified by build and by driven check. `nim r tools/build.nim declare` reports the count
+of wording keys that it reads. A literal put back at a label call is refused. A key named only
+inside the catalogue is refused as shown by nobody. A `@WORD:` token that names an absent key fails
+the build, with the line that carries it.
+
+Verified by `suites.nim`: the read of the catalogue as text names every key in order. It reads the
+words of every row as the compiled catalogue holds them. On koch's compiler, `nim check` of the
+driver reaches no module under `src/`.
 
 ## Driven checks
 
@@ -178,21 +184,22 @@ and this file does not:
 | `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
+| `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
-`ceil(0.995n)` equals `n` for every `n` under 200. So a share demanded every frame at the 49-frame
-sample of `loaded`. There is now one definition, exported from `scenery` (repository issue 47).
-Per-frame tolerances are untouched, because a real accounting fault misses on every frame.
+`ceil(0.995n)` equals `n` for every `n` under 200. So a share demands every frame of the 49-frame
+sample of `loaded`. One definition is exported from `scenery` (repository issue 47). Per-frame
+tolerances are untouched, because a real accounting fault misses on every frame.
 
 **The scenery check takes the same allowance.** Preemption inside its bracket and outside both
 halves missed one frame of 109, of 126 and of 127. A fault misses every frame.
 
-**Count the mechanism that the claim names.** The cadence check of the panel counts `askSlowPass`,
-which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does not count calls to
-`drawExceedance`, which the axis switch and the gliding axis reach too. That gave 138 of 138 on one
-run, and 137 on the next, from identical code. Verified by a break on purpose: four axis presses in
-the window.
+**Count the mechanism that the claim names.** The cadence check of the diagnostics section counts
+`askSlowPass`, which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does not
+count calls to `drawExceedance`, which the axis switch and the gliding axis reach too. Their count
+differs between runs of identical code. Verified by a break on purpose, recorded 2026-09-13: four
+axis presses in the window.
 
 **The tick check of the diagnostics tree counts the writes that repeat a row's text.** `writeText`
 exists to skip those writes, so a correct tick makes none, whatever the load. The check wants none,
@@ -289,7 +296,7 @@ passes whatever the page does.
 Time is never asserted, and on the simulated clock it reads 0 ms. The count of rows standing, 27
 for 5,040 objects, holds on every machine.
 
-`driveEditFromMenu` opens the panel onto the 41st object created, near the far end of the list. It
+`driveEditFromMenu` opens the drawer onto the 41st object created, near the far end of the list. It
 reads that row as standing before the call returns. It also reads it as lying under the pinned
 heading, with its whole form above the floor of the scroller.
 
@@ -321,12 +328,17 @@ any GPU.
 
 ## Clocks of the driven checks
 
-**Correctness checks run on a simulated clock, and only speed checks read the real one.**
-`clock.ts` installs the clock of Playwright, paused, before the page loads. Timers, animation
-frames, idle callbacks and `performance.now` then move only when a check moves them. `advance`
-moves a span, `advanceFrames` moves frames, and `waitUntil` steps one frame at a time until a
-condition holds. A slow machine takes longer in real time to reach a verdict, and never reaches
-another one (repository issue 329).
+**Correctness checks run on a simulated clock, and only speed and instrument checks read the real
+one** (Article IX.12). `clock.ts` installs the clock of Playwright, paused, before the page loads.
+Timers, animation frames, idle callbacks and `performance.now` then move only when a check moves
+them. `advance` moves a span, `advanceFrames` moves frames, and `waitUntil` steps one frame at a
+time until a condition holds. A slow machine takes longer in real time to reach a verdict, and never
+reaches another one (repository issue 329).
+
+**The host-save check runs on the simulated clock too, on a page of its own.** The stand-in host
+must stand before the script of the page runs, so the check cannot share the first page.
+`simulateClock` puts its page on the simulated clock, and its waits are frames. Verified by a run,
+2026-10-02: its four checks pass on the simulated page, and the page raises no error.
 
 Three things that the clock does not reach are set on the simulated page:
 
@@ -340,8 +352,15 @@ Three things that the clock does not reach are set on the simulated page:
 
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
-`driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than
-spans of time. Their size is then the same on every machine, and only the figures move with speed.
+`driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than spans
+of time. Their size is then the same on every machine, and only the figures move with speed.
+
+**Every wait on the real page is a count of frames, and never a span of time.** `waitUntil` steps
+that page one of its own frames at a time. `settleTurn` waits on the transitions that an element
+runs, as `getAnimations` lists them. No limit on time then decides a verdict (Article IX.12).
+Rejected: a limit of time as a fallback, which a loaded machine meets with no fault in the page.
+Verified by a run, 2026-10-02: the heap row and the tree checks pass on the real page with these
+waits.
 
 **The heap row reads `NaN` on the simulated page**, because the clock stands in for `performance`.
 So `driveHeapUnit` reads that row on the second page too.
@@ -426,10 +445,10 @@ in 3 runs of 3. The pinch then read 7.62 in 15 fresh pages of 15, 5 of them with
 `Math.random`, so the reach of the curve and the extent of the axis moved between runs. Mulberry32
 from `SEED_WINDOW` gives the same durations on every run.
 
-*Checked.* Verified by a run: two drives side by side on one delegate print the same 167 lines for
-the simulated page. Each loads the other, and the lines agree in every figure. Without the rendering
-step, the touch wait and the seed, two runs of the same code differ in 7 of those lines. Their
-verdicts agree.
+*Checked.* Verified by a run, 2026-09-30: two drives side by side on one delegate print the same
+lines for the simulated page. Each loads the other, and the lines agree in every figure. Without the
+rendering step, the touch wait and the seed, two runs of the same code differ in their figures.
+Their verdicts agree.
 
 ## Browser front-end
 
@@ -718,9 +737,16 @@ and `labelOf`. A law in the shared suite holds that every wheel word appears the
 through `nim cpp`, and their assertions run against real headers. Dear ImGui starts over a hidden
 SDL3 window, with a real OpenGL 3.3 core context under Xvfb, and draws through both its backends.
 
-Verified by looking. A 300-frame headless run writes a 1440x900 PNG, which carries the axes, the
-scale bar, the ground plane's disc, the points and the panel. Both front-ends draw one scene from
-one core. 60 frames is not enough for the entrance animation.
+Verified by looking, 2026-10-02, at the PNG that this command writes under Xvfb:
+
+```sh
+xvfb-run -a -s "-screen 0 1440x900x24" \
+  binaries/rga_visualiser --hidden --frames:300 --screenshot:desktop.png
+```
+
+The PNG carries the axes, the scale bar, the ground plane's disc, the points and the panel. Both
+front-ends draw one scene from one core. With `--frames:60` the disc is not drawn yet, because
+the entrance animation still runs.
 
 **Unverified**: no human has seen this on real graphics hardware. Software GL reports no
 multisampled visual, so thin lines alias.
@@ -729,11 +755,11 @@ multisampled visual, so thin lines alias.
 
 **The suites test the rules, `tools/drive/` tests the wiring of the browser, and this tests the
 wiring of the desktop.** The entry point carries scripted runs: `--drive-keys`, `--drive-sky`,
-`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-menu`, and `--drive-help:<tab>`, one
-for each tab. Each one pushes real events through the queue of SDL. `driven` runs all of them
-and reports every failure, and not the first. It asks the binary which help tabs exist
-(`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive` chains it, here
-and on the runner (repository issue 91).
+`--drive-undo`, `--drive-select`, `--drive-drag`, `--drive-search`, `--drive-menu`, `--drive-faces`,
+and `--drive-help:<tab>`, one for each tab. Each one pushes real events through the queue of SDL.
+`driven` runs all of them and reports every failure, and not the first. It asks the binary which
+help tabs exist (`--help-tabs`), so `help.HelpPath` stays their one home (Article I.4). `drive`
+chains it, here and on the runner (repository issue 91).
 
 `driven` counts the scripted runs. They cover these cases:
 
@@ -744,6 +770,7 @@ and on the runner (repository issue 91).
 - every help tab opens with rows in it;
 - a run whose face is missing still does its scripted work;
 - every type role is drawn in a face of its own;
+- every codepoint that each role sets has a glyph in the face of that role;
 - a scene filled to capacity leaves what follows its list on the window;
 - the menu opens and offers the demo at every size that `orrery` has.
 
@@ -767,6 +794,23 @@ families move on their own.
 A read of each font's `cmap` against the ranges that `gui_shim.cpp` declares gives the coverage:
 math holds 1,773 of the 1,952 wanted. It costs about 2.5 MB fetched into `build/fonts`, because
 `stb_truetype` reads uncompressed faces.
+
+**Every codepoint that the build writes is asked of the face that sets it** (Article X.8).
+`--drive-faces` gathers the text from where it is composed. That is the wording catalogue, help, the
+notation of each operation, the basis names, the wheel and the units. It adds printable ASCII, since
+a reader names objects in it. `gui.hasGlyph` loads each codepoint through the face of each role, as
+drawing does, and reports each one that would draw as `.notdef`. The title role is asked for the
+panel headings alone, because nothing is merged into its face.
+
+**Merge order is precedence, and the range lists bind only the legacy path.** From Dear ImGui 1.92,
+a renderer that keeps textures of its own loads each glyph on demand. It takes the glyph from the
+first merged face whose `cmap` holds it (`imgui_draw.cpp`, `ImFontBaked_BuildLoadGlyph`). Not a read
+of each `cmap` against the range lists, which asks a question that drawing does not ask.
+
+**The mono role merges the interface face last.** Commit Mono, Noto Sans Math and Noto Sans Symbols
+2 carry no glyph for `ˍ` (U+02CD) or `˷` (U+02F7). Those are the postfix accents of left complement
+and antireverse, and Noto Sans carries both. It comes last, so it supplies only what the three faces
+before it lack. Its two accents are proportional in a mono line, which is the cost.
 
 **A scripted run keeps its own clock.** Each frame drawn advances it by `SECONDS_FRAME_DRIVEN`,
 1/120 s, whatever the machine takes, and the opening scene is born at zero. That is one frame at
@@ -792,6 +836,20 @@ rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation
 `FAIL  a drag from one object onto another opens its choice menu`, and the verb answers
 `Driven runs failed; got 1 -- drive-drag`, with exit 1.
 
+Verified by a run, 2026-10-02: before the mono merge, `--drive-faces` reports `FAIL every codepoint
+the Mono face sets has a glyph` with `missing U+02CD, U+02F7`. After it, all four roles pass.
+Verified by a read of each face's `cmap`, 2026-10-02, with a scratch reader: Noto Sans holds both
+codepoints, and the other three faces hold neither.
+
+Verified by looking, 2026-10-02, at the operations tab that this command draws:
+
+```sh
+xvfb-run -a -s "-screen 0 1440x900x24" binaries/rga_visualiser \
+  --hidden --drive-help:operations --frames:300 --screenshot:operations.png
+```
+
+Before the merge, both accents draw as `�`. After it, both draw as accents.
+
 ## Diagnostics
 
 **The least workable frame rate is 120 per second, and the goal above it is as fast as the
@@ -800,15 +858,18 @@ states it once, and the page reads it through `nimRateFrameLeast`. A scripted de
 its clock one frame at that rate. The frame-time plot of the window and the sparkline of the page
 floor their range at 8.3 ms. A smooth run then does not zoom in on noise.
 
-**The plots and the curve hold spans of time, sized at the floor.** The plot of each front-end
-holds 480 frames, which is four seconds at 120 per second. The exceedance curve holds 2,048, about
-seventeen seconds. A machine faster than the floor fills each in less time.
+**The plots and the curve hold spans of time, sized at the floor.** The plot of each front-end holds
+`timings.FRAMES_HISTORY` frames, four seconds at the floor. The exceedance curve holds
+`timings.FRAMES_EXCEEDANCE`, seventeen seconds at the floor. `timings.nim` derives each from its
+span and `RATE_FRAME_LEAST`, and the page reads both through the bridge. So a new floor moves both
+windows. A machine faster than the floor fills each in less time.
 
-**The marks of the curve are 240, 120, 60, 30, 15, 10, 5 and 1 per second, and they bound its
-colour bands.** A frame under 4.2 ms is fast, under 8.3 ms good, under 16.7 ms fair, and slower is
-poor. The 120 mark wears good, because a frame inside it meets the floor. The 240 mark names a frame
-twice as fast, and nothing is held to it (`GLOSSARY.md`, Mark). Rejected: 120 as fast and 60 as
-good, which names a rate under the floor good.
+**The marks of the curve are 240, 120, 60, 30, 15, 10, 5 and 1 per second, and they bound its colour
+bands.** A frame under 4.2 ms is fast, under 8.3 ms good, under 16.7 ms fair, and slower is poor.
+The 120 mark wears good, because a frame inside it meets the floor. The 240 mark,
+`timings.RATE_FRAME_FAST`, names a frame twice as fast as the floor, and nothing is held to it
+(`GLOSSARY.md`, Mark). Rejected: 120 as fast and 60 as good, which names a rate under the floor
+good.
 
 **A mark gives way where its labels would cover a slower mark.** The marks are walked slowest first,
 so the one nearer the floor keeps its place. On an axis of 90 ms, the 240 line stood 17 px from the
@@ -849,15 +910,18 @@ configuration file of its own.
 the draw loop of the desktop reach it. The JS backend cannot carve typed slices from a byte
 array at all.
 
-A shared module that reaches for something which only one path has is a **compile error, and not
-a comment**. `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene` and `loadScene`,
-with their `std/os` and `std/syncio` imports, carry the guard `when not defined(js)`. Every
-binding into C, SDL, Dear ImGui, zlib and JavaScript carries `sideEffect`, so a `func` that
-reaches one fails to compile. Without that mark the compiler holds an imported body to be pure.
+A shared module that reaches for something which only one path has is a **compile error, and not a
+comment**. `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene` and `loadScene`, with
+their `std/os` and `std/syncio` imports, carry the guard `when not defined(js)`. Every binding into
+C, SDL, Dear ImGui, zlib and JavaScript carries `sideEffect`, so a `func` that reaches one fails to
+compile. `format.snprintf` alone keeps `noSideEffect`: it writes only the buffer that it is handed,
+and each caller hands one on its own stack. Without that mark the compiler holds an imported body to
+be pure.
 
-*Checked.* Verified: the suite runs on both backends, so it exercises the guard rather than
-trusts it (see Testing). The `sideEffect` marks are what turned 51 funcs back into procs (see
-Style guide). Assumed: nothing.
+*Checked.* Verified: the suite runs on both backends, so it exercises the guard rather than trusts
+it (see Testing). The `sideEffect` marks are what turned 51 funcs back into procs (see Style guide).
+Verified by a compile, 2026-10-02: a `func` that calls `timings.nowMilliseconds` on the JavaScript
+backend is refused as `can have side effects`. It compiled before the mark. Assumed: nothing.
 
 ## Scene storage
 
@@ -1229,8 +1293,9 @@ Verified by driven check:
 - the upper half of a wide disc brighter than its lower half on the page, which is world-up on
   screen from the opening camera.
 
-Verified by a render: the fade fractions, the cell size, the lattice alpha and the axis dimming. The
-occlusion error at the far ends is assumed to be tolerable, and is not measured.
+Assumed: the fade fractions, the cell size, the lattice alpha and the axis dimming. They were
+chosen by eye on a render, and no check holds them. The occlusion error at the far ends is assumed
+to be tolerable, and is unmeasured.
 
 ## Camera
 
@@ -1427,7 +1492,7 @@ notches taken either side of the edge of an object converge on different depths.
 
 **The zoom stops where a point fills the frame.** Nearer shows nothing more of it. There its
 sphere reaches every corner, and the point is backdrop; see Picking. `picking.depthFilling` solves
-that depth, as the inverse of `coversView`. The wheel takes it as the floor of a point in both
+that depth, as the inverse of `isCoveringView`. The wheel takes it as the floor of a point in both
 states (`AnchorZoom.floor_reach`). `framing.holdFilled` holds it for a point picked alone under
 every other move: a drag, a key and a pinch.
 
@@ -1997,6 +2062,18 @@ Selection is **not** part of `Scene`. It is never saved and never on the timelin
 keeps each pick that still names its object (see Undo/redo). `pruneDead` runs after a removal,
 because a freed handle goes straight back to the next add.
 
+**The walks of a frame read one mark for each handle, and never the selection.** Both front-ends
+mark each pick once in `MARKS_PICKED` before the walks, through `selection.markOnto`, and clear the
+marks after them. `contains` walks the list, so a walk that asks it for each object costs the count
+of objects times the count of picks. Not a mark array inside `Selection`, which every copy of a
+selection would then carry.
+
+Measured 2026-10-02 on this container, an Intel Xeon at 2.80 GHz with 4 cores. A scratch program
+picks every handle of a `Selection` at `OBJECTS_MAX`, and times twenty frames of two walks each. On
+C at `-d:release`, one frame costs 17.2 to 18.4 ms with `contains` and 0.012 ms with marks. On
+JavaScript under Node 22, it costs 53.8 to 54.7 ms with `contains` and 0.50 to 0.56 ms with marks.
+Each range is three runs.
+
 **A selected object is drawn over every other object.** There is one watermark for each mesh
 (`index_overlay`, an `Option[int]`, because an index of zero means "all of it"). Then a second
 pass runs over **every** primitive kind, against a depth buffer cleared first. It is cleared
@@ -2089,7 +2166,7 @@ the outline. Each front-end centres its own text.
   `WIDTH_MARKER_LABEL_HALO` 2 px of `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` 0.85, on a 16 px
   face at weight 600.
 
-  The desktop sets the label in `PATH_FONT_LABEL`, with the math and symbol faces merged in, so
+  The desktop sets the label in `FACE_FONT_LABEL`, with the math and symbol faces merged in, so
   `G = L ∧ c` keeps its wedge. It has no stroked text, so it draws the label at eight one-pixel
   offsets in the halo colour. The browser stages one SVG `<text>` for each selected handle, with
   `paint-order: stroke`.
@@ -2160,8 +2237,7 @@ Verified by driven check:
 - a 720-step orbit with the rail gap changing at most 0.103 px between frames;
 - two crossing planes selected changing 15,668 canvas pixels, against a noise floor of 0 pixels.
 
-Verified on the desktop: the pure-ink pixels of the selected line are 2,626 with the second pass,
-against 1,106 with the tail.
+On the desktop, the ink of the second pass is unmeasured.
 
 ## Marker pulse
 
@@ -2211,7 +2287,8 @@ unpickable with its multivector twins zero.
 **The sky is a click and hold target, and never a drag handle. So is a plane or a point that
 fills the view.** With a horizon plane visible the cursor is over *something* almost everywhere.
 A press on empty space becomes a camera move precisely because nothing was hovered. A finite plane
-whose disc reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
+whose disc reaches every corner of the frame (`picking.isCoveringView`) leaves no empty glass at
+all.
 
 Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. Rejected:
 the longer side, 1200 px, under which a plane covering the whole window still reads as a handle.
@@ -2276,7 +2353,7 @@ Measured then, and not since: one pick went from 11.4 to 3.9 ms p50 at 1,024, an
 
 ## Interaction model
 
-**Which button does what, stated once.** `interaction.revealsMenuOn` says whether a click brings
+**Which button does what, stated once.** `interaction.isMenuRevealedOn` says whether a click brings
 the floating selection menu: right yes, left and middle no. `armingOf` says whether a drag opens
 the choice wheel. Both render paths and `help.nim` read them.
 
@@ -2320,7 +2397,7 @@ pick lands on some star almost anywhere, so a one-finger orbit kept becoming a c
 `RADIUS_CROWD_TOUCH` 72 px. That is wider than the pick reach, because the question is whether the
 finger could have meant something else.
 
-`interaction.canConstructByTouch` is true only with no rival, and is asked at the press through
+`interaction.isConstructibleByTouch` is true only with no rival, and is asked at the press through
 `nimCanTouchConstruct`. Where a gesture is ambiguous, movement wins, because the reader can zoom
 in until it is not, while an unwanted object must be undone. It is same-rank only, or every point
 on the ground would be a crowd.
@@ -2617,8 +2694,8 @@ whole of what version 3 added. Version 4 appended the radius after the geometry 
 Version 5 appended a byte after that, which said whether the point shone. Version 7 dropped it, so
 versions 5 and 6 alone carry one, read and skipped.
 
-Which versions carry each is `scene.hasRadius` and `hasShine`, which the browser parser reaches
-through `nimSceneHasRadius` and `nimSceneHasShine` rather than literals.
+Which versions carry each is `scene.isCarryingRadius` and `isCarryingShine`, which the browser
+parser reaches through `nimSceneHasRadius` and `nimSceneHasShine` rather than literals.
 
 Version 6 changed no byte. It records that the palette lost its structural `Algebra` handle at
 ordinal 7. Every hue that a file of version 2 to 5 wrote therefore sits one past today's, and
@@ -2803,10 +2880,11 @@ landed to the right of its operand. The tilde-below of antireverse then read as 
 the left complement. Of the four compound operators only the `★` pair works infix, and `m ∧☆ n` must
 be written `` m.`∧ ☆`n ``.
 
-*Checked.* Verified by a render of all 27 entries at once, read by eye. Verified by suite: every
-entry non-empty, the placeholder rules of the substitution, and every parenthesis case. Verified
-by driven check: a join of joins flat, and a meet of joins parenthesised on the page. Nothing here
-re-checks that every glyph is in the atlas.
+*Checked.* Verified by suite: every entry non-empty, the placeholder rules of the substitution, and
+every parenthesis case. Verified by driven check: a join of joins flat, and a meet of joins
+parenthesised on the page. Verified by driven check on the desktop: `--drive-faces` asks each face
+for every codepoint of the notation (Desktop driven checks). The page has no such check (Open
+questions).
 
 ## Naming and number formatting
 
@@ -2822,8 +2900,9 @@ behind `nimFormatNumber`. That is a decimal exponent by `log10`, the digits scal
 
 `formatBiggestFloat` disagrees with itself across backends on 1655 of 7000 values, so it is no
 primitive to build on. Both front-ends print a multivector through one writer
-(`scene.multivectorText`), and a shape through one (`scene.shapeText`). Diagnostics readings keep
-`%.*f` through `appendFixed`, because a live number that changes width is harder to read.
+(`scene.multivectorText`), and the kind of a multivector through one (`scene.kindText`). Diagnostics
+readings keep `%.*f` through `appendFixed`, because a live number that changes width is harder to
+read.
 
 Fixed char storage is read through `format.toText`, and never through `$toCstring`. That casts the
 *address* of the storage, and yields an empty string on the JS backend.
@@ -3043,7 +3122,7 @@ Verified by driven check:
 
 **A search narrows the objects list to the objects that answer every word typed.** A word answers
 where it stands in the label or in the kind word, with ASCII case folded. So `jup` finds `jupiter`,
-and `horizon` finds each horizon object, whatever its label. `scene.matchesSearch` holds the rule
+and `horizon` finds each horizon object, whatever its label. `scene.isMatchingSearch` holds the rule
 once, and `scene.handlesMatching` filters creation order by it. The page reaches both through
 `nimSceneHandlesMatching`, and the window calls them itself.
 
@@ -3120,7 +3199,7 @@ stall just before it fires.
 
 Both front-ends carry a `?` in the bottom-right corner, at least 44 px, which opens the same table
 `help.HELP_ENTRIES`. Both render that table. Construct rows derive from `armingOf` and
-`revealsMenuOn`, and keyboard rows from `motionFor` and `actionFor`. The `operations` tab is
+`isMenuRevealedOn`, and keyboard rows from `motionFor` and `actionFor`. The `operations` tab is
 generated from the catalogue, so it cannot fall behind.
 
 **Tabbed by how the reader is working**: `drag`, `select`, `menu`, `panel`, `camera`, `keys` and
@@ -3204,9 +3283,9 @@ Verified by browser drive:
 
 ## Style guide
 
-Two documents sit at the root of the repository. `CONSTITUTION.md` is the rule of law. It is
-eleven articles over exposition, derivation, notation, build-time safety, naming, documentation,
-cost, honesty, tests, form and the record. It carries a precedence clause and three gated
+Two documents sit at the root of the repository. `CONSTITUTION.md` is the coding constitution. Its
+articles cover exposition, derivation, notation, build-time safety, naming, documentation, cost,
+honesty, tests, form and the record. It carries a precedence clause, which names the gated
 mechanisms. `STYLE.md` is the Nim expression guide.
 
 Every comment is in the register of the `pga` library. That is a one-line imperative summary
@@ -3214,15 +3293,16 @@ that ends in a period, then elaboration as a hanging outline, one claim to a lin
 no articles, no history and no figures, and the history and the figures live here.
 `koch check-files` holds that register mechanically over every authored language.
 
-**Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.**
-Nim assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui
-layout compiles as a `func`. The mark is on all 130-odd bindings in `gui`, `opengl`, `sdl3`,
-`image` and the `importjs` lines of the bridge. Under it, 51 funcs failed to compile and went back
-to `proc`. A `func` in this tree means the compiler checked that it reaches no effect.
+**Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.** Nim
+assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui layout
+compiles as a `func`. The mark is on every binding in `gui`, `opengl`, `sdl3`, `image` and
+`timings`, and on the `importjs` lines of the bridge. `format.snprintf` alone keeps `noSideEffect`
+(Render paths). Under it, 51 funcs failed to compile and went back to `proc`. A `func` in this tree
+means the compiler checked that it reaches no effect.
 
 **A layman knows these acronyms, so they stay in names (V.9).** They are UI, RGB and RGBA, GIF and
-PNG, FOV, GL, GUI, DOM and fps, beside those the Architect kept on repository issue 305. The unit
-symbols ms, px, kb and mb join the jargon list of V.6. The Architect ruled both on pull request 322.
+PNG, FOV, GL, GUI, DOM and fps, which the root glossary lists. The unit symbols that the root
+glossary names under `## Standards`, such as `ms`, `px` and `mib`, stay as well (V.6).
 Every other acronym that a field or a library coined is spelled out in its name. So are the
 astronomical unit, the cyclic redundancy check, Lempel–Ziv–Welch and model-view-projection.
 
@@ -3407,5 +3487,12 @@ leave it, to bound a plane by its crossing of the frame, or to let a plane alone
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
 cross products. The first only clips, so it may be the picture's; the second is construction, which
 the algebra owns. The choices are to move them into the algebra, or to leave them.
+
+**The page draws two postfix accents from whatever face the viewer has.** None of the four faces
+that the page embeds carries `ˍ` (U+02CD) or `˷` (U+02F7), the accents of left complement and
+antireverse. The Latin subset of Noto Sans stops short of them, so the browser takes each from a
+system face, or draws a box. Read 2026-10-02 from the `cmap` of each embedded `woff2`, with a
+scratch reader. The choices are to embed a face that holds them under a `unicode-range`, or to leave
+them. A check on the page, as `--drive-faces` is on the desktop, would hold the first.
 
 [replications]: https://gitlab.com/mraxilus/replications

@@ -256,11 +256,9 @@ button_add.addEventListener('click', () => {
   openPanelTo(null);
 });
 
-// One function for buttons and for keys that do same thing. Keys used to.
-//   go through `button.click()`, which quietly made them depend on that button's own
-//   `disabled` attribute -- refreshed on low-cadence UI tick, so key pressed in
-//   frames after edit did nothing at all while timeline plainly had something on
-//   it. Measured, not suspected. Mirrors `panel.stepHistory` on desktop side.
+// One function for buttons and for keys that do same thing; mirrors `panel.stepHistory`.
+//   Rejected: keys through `button.click()`, which ties them to button's `disabled`,
+//   refreshed on low-cadence UI tick, so key pressed in frames after edit did nothing.
 //   Restored snapshot's handle numbers need not match, so open session has nothing
 //   trustworthy left to commit against and is dropped.
 function stepHistory(is_undo: boolean) {

@@ -7,6 +7,7 @@ import ../../src/tree
 import ./fixtures
 
 
+
 suite "Tree":
   test "git lists tracked and untracked files, never ignored ones":
     let root = tempRepo()
@@ -22,6 +23,7 @@ suite "Tree":
     check entries.mapIt(it.path) == root.listPaths  # same order
     check entries[1].kind.isSome and entries[1].content == "discard\n"  # registered kind read
     check entries[2].kind.isNone and entries[2].content.len == 0  # unregistered kind unread
+
 
   test "changed paths and subjects since base":
     let root = tempRepo()
@@ -41,12 +43,14 @@ suite "Tree":
     check subjects(root, "main") ==
       @["refactor(alpha): rename x", "feat(alpha): add x"]  # newest first, base excluded
 
+
   test "newest commit outside window, empty when none is that old":
     let root = tempRepo()
     defer: removeDir(root)
     let head = root.git("rev-parse HEAD").strip
     check root.revBefore(0) == head  # every commit lies before now
     check root.revBefore(3650) == ""  # nothing ten years old, so window holds whole history
+
 
   test "a warning git writes is never read as a field":
     # Two merge bases make git warn on `diff base...HEAD`, and warning ends in newline
@@ -80,6 +84,7 @@ suite "Tree":
       check path.startsWith(ALPHA_DIRECTORY)  # every field is still path, and path alone
     check ALPHA_DIRECTORY & "/scoped.nim" in changedPaths(root, "right")
 
+
   test "exact rename alone is move, and what base gained is read apart":
     let root = tempRepo()
     defer: removeDir(root)
@@ -103,6 +108,7 @@ suite "Tree":
     let changed = changedPaths(root, "main")
     check changed == @["a.nim", "b.nim", "c.nim", "d.nim"]  # both sides of every rename
     check "NEW.md" notin changed  # base's gain is no change of branch
+
 
   test "git failure raises with output":
     expect IOError: discard gitFields("/nonexistent_delegations", ["status"])  # non-zero exit

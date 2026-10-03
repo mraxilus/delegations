@@ -21,7 +21,7 @@
 ##   | Two     | + - ∧ ∨ ⟑ ⟇ ∙ ∘ ∧★ ∧☆ ∨★ ∨☆    | Join, meet, geometric products.      |
 ##   |---------|--------------------------------|--------------------------------------|
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 ##   `saveScene`/`loadScene` are native-only (`when not defined(js)`); browser saves and
 ##   loads via download/upload.
 
@@ -507,16 +507,16 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
   ##   Magnitudes stay project's four significant digits.
   ##   Appends from `cursor` rather than returning `string`, so redrawing every visible
   ##   object's coefficients every frame never touches heap.
-  var wrote_any = false
+  var has_written = false
   for b in Basis:
     if abs(m[b]) <= TOLERANCE_ABS: continue
     if m[b] < 0: appendChars(storage, cursor, " - ")
-    elif wrote_any: appendChars(storage, cursor, " + ")
+    elif has_written: appendChars(storage, cursor, " + ")
     appendMagnitude(storage, cursor, abs(m[b]))
     appendChars(storage, cursor, " ")
     appendChars(storage, cursor, LUT_NAME_BY_BASIS[b])
-    wrote_any = true
-  if not wrote_any:
+    has_written = true
+  if not has_written:
     appendChars(storage, cursor, "0 ")
     appendChars(storage, cursor, LUT_NAME_BY_BASIS[Basis.scalar])
 
@@ -859,14 +859,14 @@ const BLANKS_SEARCH = {' ', '\t'}
 func isSearching*(query: openArray[char]): bool =
   ## Report whether `query` holds any word, rather than nothing or blanks alone.
   ##   Blank query narrows nothing, so front-end shows no count and no `select all` for it.
-  ##   Reads to terminator or to end, as `matchesSearch` does.
+  ##   Reads to terminator or to end, as `isMatchingSearch` does.
   for ch in query:
     if ch == '\0': return false
     if ch notin BLANKS_SEARCH: return true
   false
 
 
-func matchesSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
+func isMatchingSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
   ## Report whether object answers `query`: each word of it stands in label or kind word.
   ##   Word matches anywhere, ASCII case folded, so `jup` finds `Jupiter` and `horizon` finds
   ##   every horizon object, whatever it is called.
@@ -881,7 +881,7 @@ func matchesSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
     ## Count characters ahead of terminator, or all of them where none stands.
     while result < text.len and text[result] != '\0': inc result
 
-  func holdsWord(text, query: openArray[char]; start, stop: int): bool =
+  func isHoldingWord(text, query: openArray[char]; start, stop: int): bool =
     ## Report whether `query[start ..< stop]` stands in `text` ahead of its terminator, folded.
     let
       length_text = lengthOf(text)
@@ -906,13 +906,13 @@ func matchesSearch*(scene: Scene, handle: int, query: openArray[char]): bool =
       continue
     var stop = start
     while stop < length_query and query[stop] notin BLANKS_SEARCH: inc stop
-    if not holdsWord(scene.labels[handle], query, start, stop):
+    if not isHoldingWord(scene.labels[handle], query, start, stop):
       if not is_kind_described:
         var cursor = 0
         describeKind(scene.geometries[handle], kind, cursor)
         finishChars(kind, cursor)
         is_kind_described = true
-      if not holdsWord(kind, query, start, stop): return false
+      if not isHoldingWord(kind, query, start, stop): return false
     start = stop
   true
 
@@ -939,7 +939,7 @@ func handlesMatching*(
   for position in 0 ..< count:
     let
       handle = handles[position]
-      is_matched = scene.matchesSearch(handle, query)
+      is_matched = scene.isMatchingSearch(handle, query)
     if is_matched: inc result.count_matched
     if is_matched or is_kept[handle]:
       handles[result.count_shown] = handle
@@ -1145,10 +1145,10 @@ const
     ##   Version 5 appended one shines byte to each object, after its radius.
     ##   Version 7 dropped it: nothing shines, every point is shaded from world's up.
   VERSION_SCENE_RADIUS* = 4'u8
-    ## Record first version whose objects carry radius; see `hasRadius`.
+    ## Record first version whose objects carry radius; see `isCarryingRadius`.
   VERSION_SCENE_SHINE* = 5'u8
   VERSION_SCENE_SHINE_LAST* = 6'u8
-    ## Record first and last version whose objects carry shines byte; see `hasShine`.
+    ## Record first and last version whose objects carry shines byte; see `isCarryingShine`.
   VERSION_SCENE_LEAST* = 1'u8
     ## Bound oldest format version this build still reads.
     ##   One, and it stays one: version floor that rises throws reader's work away.
@@ -1193,20 +1193,20 @@ const
     ##   colouring corrupt byte is guessing format refuses everywhere else.
 
 
-func readsSceneVersion*(version: uint8): bool =
+func isSceneVersionReadable*(version: uint8): bool =
   ## Report whether this build can read scene file stamped with this version.
   version >= VERSION_SCENE_LEAST and version <= VERSION_SCENE
 
 
-func hasRadius*(version: uint8): bool = version >= VERSION_SCENE_RADIUS
+func isCarryingRadius*(version: uint8): bool = version >= VERSION_SCENE_RADIUS
   ## Report whether file of this version carries radius after each object's geometry.
   ##   Both readers ask this rather than compare against literal; see `nimSceneHasRadius`.
 
 
-func hasShine*(version: uint8): bool =
+func isCarryingShine*(version: uint8): bool =
   ## Report whether file of this version carries shines byte after each object's radius.
   ##   Reader skips it: no build reads it into anything since version 7.
-  ##   Asked as `hasRadius` is; see `nimSceneHasShine`.
+  ##   Asked as `isCarryingRadius` is; see `nimSceneHasShine`.
   version >= VERSION_SCENE_SHINE and version <= VERSION_SCENE_SHINE_LAST
 
 
@@ -1283,7 +1283,7 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
   ##   On success every field is at `VERSION_SCENE`'s meaning, so caller may take
   ##   `Ink(ink_ordinal)` without further check.
   ##     Last guard here buys that, checked once at end.
-  if not readsSceneVersion(version): return none(ObjectSaved)
+  if not isSceneVersionReadable(version): return none(ObjectSaved)
   var carried = saved
   for boundary in version ..< VERSION_SCENE:
     let stepped =
@@ -1294,7 +1294,7 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
       of 4'u8: carried.upgradedFrom4
       of 5'u8: carried.upgradedFrom5
       of 6'u8: carried.upgradedFrom6
-      else: none(ObjectSaved) # Unreachable: `readsSceneVersion` bounds walk above.
+      else: none(ObjectSaved) # Unreachable: `isSceneVersionReadable` bounds walk above.
     if stepped.isNone: return none(ObjectSaved)
     carried = stepped.get
   if carried.ink_ordinal notin ord(Ink.low) .. ord(Ink.high): return none(ObjectSaved)
@@ -1425,7 +1425,7 @@ when not defined(js):
       return &"`{path}` is not a scene file."
 
     var version_byte: array[1, char]
-    if file.readChars(version_byte) != 1 or not readsSceneVersion(uint8(version_byte[0])):
+    if file.readChars(version_byte) != 1 or not isSceneVersionReadable(uint8(version_byte[0])):
       return &"`{path}` is a scene file of a version this build cannot read."
     let version = uint8(version_byte[0])
 
@@ -1463,11 +1463,11 @@ when not defined(js):
 
       # Read radius only where file has one; earlier versions take it from upgrade.
       var radius = RADIUS_OBJECT_DEFAULT
-      if hasRadius(version) and not file.readLittle(radius):
+      if isCarryingRadius(version) and not file.readLittle(radius):
         return &"`{path}` is truncated partway through object {index}'s radius."
 
       # Skip shines byte where file has one; nothing reads it since version 7.
-      if hasShine(version):
+      if isCarryingShine(version):
         var shine_byte: array[1, char]
         if file.readChars(shine_byte) != 1:
           return &"`{path}` is truncated partway through object {index}'s shine."

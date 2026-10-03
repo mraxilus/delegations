@@ -102,7 +102,7 @@
 when compileOption("profiler"):
   import std/nimprof
 
-import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils]
+import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils, unicode]
 
 import pga
 import ../rga_visualiser/[
@@ -251,6 +251,8 @@ static:
 # Hold vertex storage at module scope, far too large for stack frame.
 var
   MESHES: MeshSet ## Every scene object, excluding world furniture below.
+  MARKS_PICKED: array[OBJECTS_MAX, bool] ## Mark each picked handle while meshes assemble.
+    ## Set and cleared around loops of `assembleMeshes`; see `selection.markOnto`.
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture)
     ## Hold what `MESHES_FURNITURE` stands for, or none before first frame.
     ##   Still camera then keeps grid it has rather than rebuilding it every frame.
@@ -352,6 +354,8 @@ type
     is_menu_driven: bool ## Whether to open top menu at startup, with no click.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
+    is_faces_driven: bool ## Whether to ask each role's face for every codepoint build writes.
+      ## Headless run then shows no text drawn falls to `.notdef`; see `textsShown`.
     path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -397,6 +401,7 @@ proc applyOption(options: var Options, key, value: string) =
   of "drive-sky": options.is_sky_driven = true
   of "drive-search": options.is_search_driven = true
   of "drive-menu": options.is_menu_driven = true
+  of "drive-faces": options.is_faces_driven = true
   of "drive-help":
     for path in HelpPath:
       if titleOf(path) == value: options.path_help_driven = some(path)
@@ -406,7 +411,8 @@ proc applyOption(options: var Options, key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      "drive-select, drive-undo, drive-sky, drive-search, drive-menu or drive-help; " &
+      "drive-select, drive-undo, drive-sky, drive-search, drive-menu, drive-faces or " &
+      "drive-help; " &
       &"got `--{key}`."
 
 
@@ -414,7 +420,7 @@ func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
     options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
-    options.is_menu_driven or options.path_help_driven.isSome
+    options.is_menu_driven or options.is_faces_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -514,11 +520,14 @@ proc assembleMeshes(
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
   MESHES.clearMeshes(ORIGIN_RECORDS) # About held origin; see `ORIGIN_RECORDS`.
+  # Mark picks once and read mark per handle below; see `selection.markOnto`.
+  panel.selection.markOnto(MARKS_PICKED)
+  defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
   for handle, one in scene.pairs:
-    if not one.isVisible or not isHorizonPlane(one.geometry) or handle in panel.selection:
+    if not one.isVisible or not isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
@@ -526,7 +535,7 @@ proc assembleMeshes(
     discard MESHES.addObject(scratch[0], one.geometry, tint, scale, progress, one.anchorOverride)
 
   for handle, one in scene.pairs:
-    if not one.isVisible or isHorizonPlane(one.geometry) or handle in panel.selection:
+    if not one.isVisible or isHorizonPlane(one.geometry) or MARKS_PICKED[handle]:
       continue
     let
       progress = animationProgress(now, one.born)
@@ -1086,10 +1095,10 @@ func armingFor(button: uint8): Option[MenuArming] =
   if named.isNone: none(MenuArming) else: armingOf(named.get)
 
 
-func revealsMenuFor(button: uint8): bool =
+func isMenuRevealedFor(button: uint8): bool =
   ## Say whether click of this mouse button brings selection menu up with it.
   let named = pointerButtonOf(button)
-  named.isSome and revealsMenuOn(named.get)
+  named.isSome and isMenuRevealedOn(named.get)
 
 
 proc handleEvent(
@@ -1204,11 +1213,11 @@ proc handleEvent(
       if outcome.index_clicked.isSome:
         # Select what press that never became drag came down on.
         #   Button decides whether menu comes with it; shift decides add or replace;
-        #   independent; see `interaction.revealsMenuOn`.
+        #   independent; see `interaction.isMenuRevealedOn`.
         #   Unshifted, on selection standing with menu dismissed, click only brings menu
-        #   back; see `revealsWithoutPicking`.
-        if revealsMenuFor(event.button.button) and not is_shifted and
-            revealsWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
+        #   back; see `isRevealingWithoutPicking`.
+        if isMenuRevealedFor(event.button.button) and not is_shifted and
+            isRevealingWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
           panel.showSelectionMenuAt(interaction.cursor)
         else:
           if is_shifted: panel.selection.toggle(outcome.index_clicked.get)
@@ -1216,7 +1225,7 @@ proc handleEvent(
           # Note pick for camera: what was clicked stays under pointer as view comes in.
           panel.pointer_pick =
             some(PointerPick(handle: outcome.index_clicked.get))
-          if revealsMenuFor(event.button.button):
+          if isMenuRevealedFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
       elif outcome.index_created.isSome:
@@ -1238,14 +1247,14 @@ proc handleEvent(
       #   above.
       if interaction.is_hover_backdrop and interaction.index_hover.isSome:
         let handle = interaction.index_hover.get
-        if revealsMenuFor(event.button.button) and not is_shifted and
-            revealsWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
+        if isMenuRevealedFor(event.button.button) and not is_shifted and
+            isRevealingWithoutPicking(panel.selection.len > 0, panel.is_menu_selection_shown):
           panel.showSelectionMenuAt(interaction.cursor)
         else:
           if is_shifted: panel.selection.toggle(handle)
           else: panel.selection.selectOnly(handle)
           panel.pointer_pick = some(PointerPick(handle: handle))
-          if revealsMenuFor(event.button.button):
+          if isMenuRevealedFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
       elif event.button.button == uint8(MouseButton.Left) and not is_shifted:
@@ -1347,11 +1356,11 @@ proc driveDrag(
   ##   animation stands wherever wall time put it.
   ##     Look at capture; do not byte-compare.
   const
-    (FRAME_REACH_SOURCE, FRAME_PRESS, FRAME_REACH_TARGET) = (2, 3, 4)
-    (FRAME_REACH_MORE, FRAME_RELEASE) = (8, 9)
+    (frame_reach_source, frame_press, frame_reach_target) = (2, 3, 4)
+    (frame_reach_more, frame_release) = (8, 9)
       ## Reach `more…` wedge two frames past menu opening, then let go on it.
       ##   Shorter runs still capture open menu.
-  if count_drawn == FRAME_REACH_MORE or count_drawn == FRAME_RELEASE:
+  if count_drawn == frame_reach_more or count_drawn == frame_release:
     # Aim at wedge itself, from same `anchorOf` that drew it.
     #   Never pixel guessed from compass.
     let at = anchorOf(interaction.menu.get(interaction.cursor), DragChoice.More)
@@ -1359,13 +1368,13 @@ proc driveDrag(
     reach.motion.x = cfloat(at.x)
     reach.motion.y = cfloat(at.y)
     sdl3.pushEvent(addr reach)
-    if count_drawn == FRAME_RELEASE:
+    if count_drawn == frame_release:
       var release = Event(kind: uint32(EventKind.MouseButtonUp))
       release.button.button = uint8(MouseButton.Right)
       sdl3.pushEvent(addr release)
     return
-  if count_drawn notin [FRAME_REACH_SOURCE, FRAME_PRESS, FRAME_REACH_TARGET]: return
-  let handle = if count_drawn == FRAME_REACH_TARGET: 1 else: 0
+  if count_drawn notin [frame_reach_source, frame_press, frame_reach_target]: return
+  let handle = if count_drawn == frame_reach_target: 1 else: 0
   if not scene.isAlive(handle): return
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
   if anchor.isNone: return
@@ -1378,7 +1387,7 @@ proc driveDrag(
   event.motion.x = cfloat(screen.x)
   event.motion.y = cfloat(screen.y)
   sdl3.pushEvent(addr event)
-  if count_drawn == FRAME_PRESS:
+  if count_drawn == frame_press:
     var press = Event(kind: uint32(EventKind.MouseButtonDown))
     press.button.button = uint8(MouseButton.Right)
     sdl3.pushEvent(addr press)
@@ -1496,7 +1505,7 @@ proc driveSelect(
   ## Script click, then two shift-clicks, on first three objects, then drag off menu's object.
   ##   Headless run then shows floating selection menu at each size and proves it does not
   ##   swallow next drag; for `--drive-select`.
-  ##   Clicks with button that reveals menu, read from `revealsMenuOn`.
+  ##   Clicks with button that reveals menu, read from `isMenuRevealedOn`.
   ##     Script clicking other button would screenshot empty screen.
   ##   Which state is captured is `--frames`' to choose.
   ##     Menu over one object by frame 5, two by 7, three by 9, drag resolved by 13.
@@ -1508,12 +1517,12 @@ proc driveSelect(
   ##   `getModState` reads.
   ##   Shares `driveDrag`'s warning: look at capture; do not byte-compare.
   const
-    FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
-    STEPS_CLICK = 6 # Three clicks, each frame to reach and frame to press.
+    frame_first = 2 # Past startup, so first frame's layout has settled.
+    steps_click = 6 # Three clicks, each frame to reach and frame to press.
     lut_handle_by_step = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
       ## Name which object each step aims at.
       ##   Three clicks on 0, 1 and 2, then drag from 2 (one menu follows) onto 0.
-  let step = count_drawn - FRAME_FIRST
+  let step = count_drawn - frame_first
   if step notin 0 ..< len(lut_handle_by_step): return
   let
     handle = lut_handle_by_step[step]
@@ -1536,17 +1545,17 @@ proc driveSelect(
   sdl3.setModState(if handle == 0 and step == 1: 0'u16 else: MODIFIER_SHIFT)
   var event = Event(
     kind:
-      if step < STEPS_CLICK or step == STEPS_CLICK + 1:
+      if step < steps_click or step == steps_click + 1:
         uint32(EventKind.MouseButtonDown)
       else: uint32(EventKind.MouseButtonUp)
   )
   event.button.button =
-    if revealsMenuOn(PointerButton.Right): uint8(MouseButton.Right)
+    if isMenuRevealedOn(PointerButton.Right): uint8(MouseButton.Right)
     else: uint8(MouseButton.Left)
   sdl3.pushEvent(addr event)
   # Post click as press and release in one drain.
   #   Drag's two halves are frames apart, so cursor really travels between them.
-  if step < STEPS_CLICK:
+  if step < steps_click:
     var release = Event(kind: uint32(EventKind.MouseButtonUp))
     release.button.button = event.button.button # Button that pressed is one that lifts.
     sdl3.pushEvent(addr release)
@@ -1578,13 +1587,13 @@ proc driveUndo(
   ##   Posted to SDL's queue, split across frames, for reasons `driveDrag` and
   ##   `driveSelect` give; same warning about byte-comparing.
   const
-    FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
-    STEPS_DRAG = 4 # Reach source, press, reach target, release.
+    frame_first = 2 # Past startup, so first frame's layout has settled.
+    steps_drag = 4 # Reach source, press, reach target, release.
     lut_handle_by_step = [0, 0, 1, 1]
-  let step = count_drawn - FRAME_FIRST
+  let step = count_drawn - frame_first
   if step < 0: return
 
-  if step < STEPS_DRAG:
+  if step < steps_drag:
     let handle = lut_handle_by_step[step]
     if not scene.isAlive(handle): return
     let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
@@ -1614,7 +1623,7 @@ proc driveUndo(
   # Leave frame of slack after release.
   #   Construction is then committed and its camera aim armed before orbit that overrides
   #   it starts.
-  let index = step - STEPS_DRAG - 1
+  let index = step - steps_drag - 1
   if index notin 0 ..< len(KEYS_UNDO_DRIVEN): return
   let (scancode, keycode, modifiers, is_down) = KEYS_UNDO_DRIVEN[index]
   var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
@@ -1631,10 +1640,10 @@ proc positionOverSky(
   ## Find point on screen where topmost thing under cursor is plane at horizon.
   ##   Scanned rather than hard-coded: which patch is bare sky depends on scene and camera,
   ##   and fixed pixel would quietly start testing something else.
-  const STEP_SCAN = 40
+  const step_scan = 40
   let scale = camera.drawExtentFor(height, REACH_SCENE)
-  for y in countup(STEP_SCAN, height - STEP_SCAN, STEP_SCAN):
-    for x in countup(STEP_SCAN, width - STEP_SCAN, STEP_SCAN):
+  for y in countup(step_scan, height - step_scan, step_scan):
+    for x in countup(step_scan, width - step_scan, step_scan):
       let
         at = ScreenPosition(x: float(x), y: float(y))
         handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
@@ -1653,12 +1662,12 @@ proc driveSky(
   ##     Drag below must turn view and build nothing; click must select sky.
   ##   Posted to SDL's queue, for reason `driveDrag` gives.
   const
-    FRAME_FIRST = 2
-    STEPS_DRAG = 5 # Reach, press, three frames of travel; release follows.
+    frame_first = 2
+    steps_drag = 5 # Reach, press, three frames of travel; release follows.
   # Build own precondition here.
   #   No sky in opening scene, so scan would find nothing and drive would silently do
   #   nothing.
-  if count_drawn == FRAME_FIRST - 1:
+  if count_drawn == frame_first - 1:
     var found_sky = false
     for handle in 0 ..< scene.bound:
       if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: found_sky = true
@@ -1670,8 +1679,8 @@ proc driveSky(
         "sky", Ink.Cobalt, now,
       )
     return
-  let step = count_drawn - FRAME_FIRST
-  if step notin 0 .. STEPS_DRAG + 3: return
+  let step = count_drawn - frame_first
+  if step notin 0 .. steps_drag + 3: return
   let over_sky = positionOverSky(
     scene, camera, camera.initMatrixViewProjection(width/height), width, height
   )
@@ -1679,14 +1688,14 @@ proc driveSky(
 
   var event: Event
   case step
-  of 0, STEPS_DRAG + 1: # Reach sky, for drag and then again for click.
+  of 0, steps_drag + 1: # Reach sky, for drag and then again for click.
     event = Event(kind: uint32(EventKind.MouseMotion))
     event.motion.x = cfloat(over_sky.get.x)
     event.motion.y = cfloat(over_sky.get.y)
-  of 1, STEPS_DRAG + 2:
+  of 1, steps_drag + 2:
     event = Event(kind: uint32(EventKind.MouseButtonDown))
     event.button.button = uint8(MouseButton.Left)
-  of STEPS_DRAG, STEPS_DRAG + 3:
+  of steps_drag, steps_drag + 3:
     event = Event(kind: uint32(EventKind.MouseButtonUp))
     event.button.button = uint8(MouseButton.Left)
   else: # Travel, which orbit reads as turning view.
@@ -1695,6 +1704,45 @@ proc driveSky(
     event.motion.y = cfloat(over_sky.get.y)
     event.motion.xrel = cfloat(40)
   sdl3.pushEvent(addr event)
+
+
+func textsShown(): seq[string] =
+  ## Gather every text build itself writes on window, for `--drive-faces`.
+  ##   Read from where each is composed -- catalogue, help, notation, basis names, wheel and
+  ##   units -- rather than listed here, so row added there is asked about untouched.
+  ##   Names reader types are reader's own, and only printable ASCII among them is promised;
+  ##   see `codepointsOf`.
+  for key in Wording: result.add $wordingText(key)
+  for path in HelpPath: result.add [titleOf(path), descriptionOf(path)]
+  for entry in HELP_ENTRIES: result.add [entry.action, entry.outcome]
+  for operation in Operation:
+    result.add [
+      notationSymbolic(operation), notationNamed(operation),
+      notationSubstituted(operation, "a", "b"),
+    ]
+  for basis in Basis: result.add LUT_NAME_BY_BASIS[basis]
+  for choice in DragChoice: result.add labelOf(choice)
+  var units: array[64, char]
+  let text_units = buildChars(units):
+    appendDegrees(units, cursor, 1.0)
+    appendSpeedLight(units, cursor, 2.0)
+    appendRuler(units, cursor, 1.0)
+  result.add $text_units
+
+
+func codepointsOf(texts: openArray[string]): seq[int] =
+  ## Gather every codepoint `texts` hold, with all of printable ASCII, sorted and once each.
+  ##   Printable ASCII is in whatever texts hold, since reader names objects in it.
+  for codepoint in 0x20 .. 0x7E: result.add codepoint
+  for text in texts:
+    for rune in text.runes: result.add int(rune)
+  result.sort
+  var kept = 0
+  for codepoint in result:
+    if kept == 0 or result[kept - 1] != codepoint:
+      result[kept] = codepoint
+      inc kept
+  result.setLen kept
 
 
 proc verdictDriven(
@@ -1725,7 +1773,7 @@ proc verdictDriven(
     )
 
   if options.is_search_driven:
-    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list.
+    # Count objects labelled with what was typed, apart from `scene.handlesMatching`, so list
     #   is held to something other than rule it runs. Label typed is in no kind word, so
     #   labels alone are whole count; pick made first is labelled otherwise, so it adds one.
     var
@@ -1772,6 +1820,29 @@ proc verdictDriven(
       panel.count_demo_offered == ord(ScaleOrrery.high) + 1,
       &"{panel.count_demo_offered} sizes offered, {ord(ScaleOrrery.high) + 1} in `orrery`",
     )
+
+  # Faces are their own verdict, and fire only in run that asked for them.
+  #   Claim is that every codepoint each role sets draws from glyph of some face merged into
+  #   that role's, never from `.notdef` (Article X.8). Title role sets panel headings alone,
+  #   and is asked for those; other three are asked for every text build writes.
+  if options.is_faces_driven:
+    let codepoints_shown = codepointsOf(textsShown())
+    for role in FaceRole:
+      let codepoints =
+        if role == FaceRole.Title:
+          codepointsOf([
+            $wordingText(NameHeadApply), $wordingText(NameHeadObjects),
+            $wordingText(NameHeadView), $wordingText(NameHeadDiagnostics),
+          ])
+        else: codepoints_shown
+      var missing: seq[string]
+      for codepoint in codepoints:
+        if not gui.hasGlyph(role, uint32(codepoint)): missing.add &"U+{codepoint:04X}"
+      let named = if missing.len == 0: "none" else: missing.join(", ")
+      report(
+        &"every codepoint the {role} face sets has a glyph, and none draws as .notdef",
+        missing.len == 0, &"{codepoints.len} codepoints asked, missing {named}",
+      )
 
   # Three roles, three faces, and every run says so.
   #   Claim is that each role got face of its own rather than falling back to interface

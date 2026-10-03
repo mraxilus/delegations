@@ -72,7 +72,8 @@ proc movedPaths*(root, base: string): seq[string] =
   ##   `--name-status -M100%` reports `R100`, old path, new path; only exact renames count,
   ##   so edited file is never mistaken for moved one.
   let fields = gitFields(
-    root, ["diff", "-z", "--name-status", "--find-renames=100%", base & "...HEAD"]
+    root,
+    ["diff", "-z", "--name-status", "--find-renames=100%", base & "...HEAD"],
   )
   var i = 0
   while i + 2 < fields.len:

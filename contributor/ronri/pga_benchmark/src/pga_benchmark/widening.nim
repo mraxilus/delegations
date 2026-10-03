@@ -28,7 +28,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
 export scalars
 
 
-func only(m: Multivector; slots: set[Basis]) =
+func only(m: Multivector, slots: set[Basis]) =
   ## Assert, under `-d:testing`, that components outside slots are zero within tolerance.
   when defined(testing):
     for b in Basis:

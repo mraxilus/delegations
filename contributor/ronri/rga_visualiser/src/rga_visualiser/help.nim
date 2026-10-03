@@ -25,8 +25,8 @@
 ##   phone without scrolling, checked at compile time.
 ##     Cost: table that outgrows tab fails build until path is split or bound is raised.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
-## paths; see `visualiser.nim`'s "Render Paths" table.
+## Shared between desktop (`main.nim`) and browser (`bridge.nim`) render paths;
+## see PROVENANCE.md's "Render paths".
 
 {.experimental: "strictFuncs".}
 
@@ -176,19 +176,20 @@ const HELP_ENTRIES* = block:
       of MenuArming.OnDwell: HelpBuildOrPause
       of MenuArming.Always: HelpOpenWheel,
     )
-  # Say "on its own": finger over crowd moves view instead; see `interaction.canConstructByTouch`.
+  # Say "on its own": finger over crowd moves view instead.
+  #   See `interaction.isConstructibleByTouch`.
   add(HelpPath.Drag, HelpDragAloneOnto, HelpBuildDefined, is_touch = true)
   # Touch alone, now that mouse decides by button; see `MenuArming`.
   add(HelpPath.Drag, HelpPauseMidDrag, HelpOpenWheelNoButton, is_touch = true)
   add(HelpPath.Drag, wedgeNamed(labelOf(DragChoice.More)), HelpHandToPicker)
 
-  # Ask `interaction.revealsMenuOn` which button brings menu, as drag rows ask `armingOf`.
+  # Ask `interaction.isMenuRevealedOn` which button brings menu, as drag rows ask `armingOf`.
   #   Shift gets one row, not one per button: shift means same thing whichever button,
   #   and four rows overflow phone.
   for button in [PointerButton.Left, PointerButton.Right]:
     add(
       HelpPath.Select, withButton(nameOf(button), HelpClickObject),
-      if revealsMenuOn(button): HelpSameAndMenu else: HelpSelectJustOne,
+      if isMenuRevealedOn(button): HelpSameAndMenu else: HelpSelectJustOne,
     )
   add(HelpPath.Select, HelpHoldShiftClick, HelpAddOrDrop)
   add(

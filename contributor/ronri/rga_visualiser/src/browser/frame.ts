@@ -45,7 +45,7 @@ channel_render.port1.onmessage = markRendered;
 
 // Draw one frame, and nothing else. Split out of `frame()` so PNG button can draw and.
 //   read back **inside its own click**, without also re-running per-tick simulation that
-//   frame() does around it. Mirrors `visualiser.renderFrame`, which is split same way and
+//   frame() does around it. Mirrors `main.renderFrame`, which is split same way and
 //   for same reason: desktop's storyboard capture drives it directly too.
 function renderFrame(now_seconds: number) {
   resize();
@@ -64,9 +64,8 @@ function renderFrame(now_seconds: number) {
   // Record bridge's own three phases into same rings this side's phases use.
   //   Bridge times them where only it can see them.
   recordPhaseTime('build', data.ms_build);
-  // Frame's prologue and its view matrix, which used to belong to no row, and.
-  //   residue named phases still fail to cover -- so `build` now sums from what is
-  //   under it instead of merely being larger than sum.
+  // Frame's prologue and its view matrix each take row of own, and residue named phases
+  //   fail to cover takes `unaccounted`, so `build` sums from what is under it.
   recordPhaseTime('camera', data.ms_camera);
   recordPhaseTime('matrix', data.ms_matrix);
   recordPhaseTime('unaccounted', data.ms_unaccounted);
@@ -291,7 +290,7 @@ function frame() {
   //   Before frame that previews answer is assembled.
   //   Runs every frame rather than on pointermove alone: dwell is time passing over
   //   cursor that is deliberately still, so there is no move event to hang it off.
-  //   Mirrors `visualiser.renderFrame`'s order.
+  //   Mirrors `main.renderFrame`'s order.
   // Take one dolly and one pick per frame, whatever pointer reported.
   //   Device reporting faster than display would otherwise pay for answers nobody read:
   //   `picking.pickNearest` walks every live handle.

@@ -36,8 +36,9 @@ const
     "noto-sans-symbols-2-symbols-400-normal.woff2",
     "noto-serif-latin-600-normal.woff2",
   ]
-    ## Faces pages draw with: Article X.8's three families, plus maths and symbols that
-    ##   notation needs (`𝐆`, `⟑`, `★`). Same six as `rga_visualiser` page, from same store.
+    ## Faces pages draw with: Article X.8's three families, plus maths and symbols.
+    ##   Maths and symbols are what notation needs (`𝐆`, `⟑`, `★`).
+    ##   Same six as `rga_visualiser` page, from same store.
 
 
 

@@ -15,7 +15,7 @@
 ##   Objects in horizon are drawn fixed to `DrawExtent.eye` at `DrawExtent.radiusHorizon`,
 ##   so orbiting or dollying leaves each in same apparent direction, as real star would.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}

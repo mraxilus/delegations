@@ -13,8 +13,10 @@
 
 // Least workable frame rate, from `timings.RATE_FRAME_LEAST`, which desktop reads too.
 const RATE_FRAME_LEAST = nimRateFrameLeast();
-// Four seconds at least workable rate, as desktop panel's own `FRAMES_HISTORY`.
-const FRAMES_HISTORY = 480;
+// Frames sparkline keeps, from `timings.FRAMES_HISTORY`, which desktop's plot keeps too.
+const FRAMES_HISTORY = nimFramesHistory();
+// Fastest mark, from `timings.RATE_FRAME_FAST`: frame twice as fast as floor.
+const RATE_FRAME_FAST = nimRateFrameFast();
 const history_frame = new Array(FRAMES_HISTORY).fill(1000 / RATE_FRAME_LEAST);
 let index_history_frame = 0;
 let time_frame_last = performance.now();
@@ -32,7 +34,7 @@ const grid_pool = elementById<HTMLCanvasElement>('pool-grid');
 grid_pool.title = nimWording(Wording.TipDiagnosticsPool);
 sparkline.title = nimWording(Wording.TipDiagnosticsFrames);
 const context_pool = grid_pool === null ? null : grid_pool.getContext('2d');
-// Scene revision grid was last drawn at; -1 until it has been drawn once. Grid.
+// Scene revision grid was last drawn at; -1 until it has been drawn once. Grid
 //   is picture of which handles are occupied and in what ink, so it changes exactly when
 //   scene does -- see `scene.revision`, same counter frame hold reads. Its own
 //   geometry joins key because canvas cleared by resize has to be redrawn whatever
@@ -306,16 +308,16 @@ function isPhaseShown(name: string) {
 // **How often frame runs long, over window long enough to answer that.**
 //   sparkline holds four seconds and shows *when*; reader chasing stall that happens
 //   once minute needs *how often*, which is distribution rather than trace. Kept as
-//   rolling window of last `FRAMES_EXCEEDANCE` frames -- about seventeen seconds at
-//   120 fps, which is long enough to hold stall and short enough that one ages out again
-//   rather than flattening chart for minute -- summarised as share of them at or
+//   rolling window of last `FRAMES_EXCEEDANCE` frames -- `timings.SECONDS_EXCEEDANCE` at
+//   least workable rate, which is long enough to hold stall and short enough that one ages
+//   out again rather than flattening chart for minute -- summarised as share of them at or
 //   over each duration.
 //   Window is ring of samples *and* histogram of same samples, maintained
 //   together: frame entering increments its bucket, frame it evicts decrements
 //   one it was in. That keeps per-frame cost couple of array writes -- this runs on
 //   every frame, including ones being measured -- and leaves curve single
 //   suffix scan over buckets, done only when section is actually open.
-const FRAMES_EXCEEDANCE = 2048;
+const FRAMES_EXCEEDANCE = nimFramesExceedance();
 const MILLISECONDS_BUCKET = 0.5; // Fine enough to separate 16.7 ms frame from 17.2.
 // **Slowest chart marks**, in frames per second, and reach of.
 //   histogram folded from it. Two have to agree or mark is unreachable: axis
@@ -445,7 +447,7 @@ const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
 //   means nothing to most people and "60" means something to everyone.
 //   This list is both marks and colour bands: `bandOfExceedance` indexes it and
 //   `colours_exceedance` maps over it. Least workable rate wears good: frame inside it
-//   meets floor, and 240 fps mark above names frame twice as fast. Below floor is fair to
+//   meets floor, and fast mark above names frame twice as fast. Below floor is fair to
 //   60 fps and poor past it. 30 and 15 fps entries therefore carry *poor band's own token*
 //   on purpose -- each is mark reader asked for, not band of its own. Anything past
 //   16.7 ms is poor whichever mark it passes, so curve merely splits into runs there and
@@ -456,7 +458,7 @@ const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
 //   that is -- it can only say `past the end`. Mark at 1,000 ms gives spike ruler.
 //   Its own consequence, stated rather than discovered: window holding one-second frame
 //   stretches axis until 4.2, 8.3, 16.7 and 33.3 crowd into its leftmost tenth. That is
-//   self-limiting, since axis eases back as spike ages out of 2,048-frame
+//   self-limiting, since axis eases back as spike ages out of exceedance
 //   window, and it is honest picture of window that really did hold such frame.
 //   10 and 5 fps marks fill stretch between 15 and 1, which is where labouring
 //   frame actually lands and where axis otherwise ran decade unlabelled. They need no
@@ -465,7 +467,7 @@ const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
 //   `bandOfExceedance` returns first entry reading falls under, so entry out of
 //   order would silently mis-band every frame past it.
 const MARKS_EXCEEDANCE = [
-  { milliseconds: 1000 / 240, label: '240', token: '--speed-fast' },
+  { milliseconds: 1000 / RATE_FRAME_FAST, label: String(RATE_FRAME_FAST), token: '--speed-fast' },
   { milliseconds: 1000 / RATE_FRAME_LEAST, label: String(RATE_FRAME_LEAST),
     token: '--speed-good' },
   { milliseconds: 1000 / 60, label: '60', token: '--speed-fair' },

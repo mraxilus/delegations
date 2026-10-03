@@ -36,8 +36,7 @@ const
     ## Header rows every PROVENANCE.md carries.
   CITATION* = "verified by `"
     ## Opening of claim naming test that repeats it; matched without case.
-  NIM_EXT* = ".nim"
-    ## Extension citation must carry to be read as file rather than command.
+  NIM_EXT* = ".nim"  ## Extension citation must carry to be read as file rather than command.
   FNV_OFFSET = 0xcbf29ce484222325'u64
   FNV_PRIME = 0x100000001b3'u64
 
@@ -73,10 +72,10 @@ func withRulesRow*(source, stamp_new: string): string =
   for line in source.splitLines(keepEol = true):
     let s = line.strip
     if not is_done and s.len >= 2 and s.startsWith("|") and s.endsWith("|"):
-      let cells = s[1 ..< s.high].split('|')
+      let cells = s[1..<s.high].split('|')
       if cells.len == 2 and cells[0].strip == "Rules":
         let mid = line.find('|', line.find('|') + 1)
-        result.add line[0 .. mid] & " " & stamp_new & " " & line[line.rfind('|') .. ^1]
+        result.add line[0..mid] & " " & stamp_new & " " & line[line.rfind('|') .. ^1]
         is_done = true
         continue
     result.add line
@@ -85,7 +84,7 @@ func withRulesRow*(source, stamp_new: string): string =
 func isIsoDate*(s: string): bool =
   ## Decide whether `s` is `YYYY-MM-DD`.
   s.len == 10 and s[4] == '-' and s[7] == '-' and
-    (s[0 .. 3] & s[5 .. 6] & s[8 .. 9]).allCharsInSet(Digits)
+    (s[0..3] & s[5..6] & s[8..9]).allCharsInSet(Digits)
 
 
 func citations*(source: string): seq[string] =
@@ -99,17 +98,18 @@ func citations*(source: string): seq[string] =
       open = at + CITATION.len
       close = source.find('`', open)
     if close < 0: break
-    let name = source[open ..< close]
+    let name = source[open..<close]
     if name.endsWith(NIM_EXT): result.add name
     i = close + 1
 
 
-func checkCitations*(path, source, tests_prefix: string, paths: HashSet[string]): seq[Finding] =
+func checkCitations*(path, source, tests_prefix: string; paths: HashSet[string]): seq[Finding] =
   ## Report cited test absent from project's tests directory.
   for name in source.citations:
     if tests_prefix & name notin paths:
       result.add finding(
-        path, 0,
+        path,
+        0,
         "Claim cites test that is absent; write verification that can be repeated, or name " &
           "tool and date instead; got `" & name & "`.",
       )
@@ -127,7 +127,8 @@ func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
     result.add finding(path, 0, "Date must be `YYYY-MM-DD`; got `" & fields["Date"] & "`.")
   if "Rules" in fields and fields["Rules"] != stamp_expected:
     result.add finding(
-      path, 0,
+      path,
+      0,
       "Rules stamp stale; re-audit project, then set `" & stamp_expected & "`; got `" &
         fields["Rules"] & "`.",
       is_propagation = true,

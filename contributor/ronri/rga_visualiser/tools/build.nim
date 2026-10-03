@@ -43,10 +43,9 @@
 
 import std/[os, osproc, strutils, tables]
 
-# Catalogue itself, not text of it: keys page names and words page shows are read from
-#   compiled enum and table, so key renamed there and not re-derived here fails to
-#   compile rather than to match (Article II.9).
-import ../src/rga_visualiser/wording
+# Catalogue read as text, never imported: type check runs this driver on koch's compiler,
+#   which must compile no project code (#385). Suite holds reading to compiled catalogue.
+import ./catalogue
 
 
 const
@@ -71,9 +70,10 @@ const
     ## Bridge whose own `exportc` signatures `declare` reads.
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
-  PATH_MAIN_NIM = "src" / "desktop" / "main.nim"
+  PATH_WORDING_NIM = "src" / "rga_visualiser" / "wording.nim"
+    ## Catalogue of shown text, read for its keys and words; see `catalogue`.
   PATH_HELP_NIM = "src" / "rga_visualiser" / "help.nim"
-    ## Desktop entry point, which shows exactly one piece of text: window's own caption.
+    ## Help tables, swept for shown text written where they are composed.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
@@ -83,12 +83,12 @@ const
     ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
-  DRIVES = ["keys", "sky", "undo", "select", "drag", "search", "menu"]
+  DRIVES = ["keys", "sky", "undo", "select", "drag", "search", "menu", "faces"]
     ## Scripted runs entry point carries, each reporting checks of its own.
     ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
     ##   listed again, so `help.HelpPath` stays their one home (Article I.4).
   PATH_DESKTOP_NIM = "src" / "desktop" / "main.nim"
-    ## Desktop entry point `desktop` compiles.
+    ## Desktop entry point `desktop` compiles, which shows one piece of text: window's caption.
   PATH_DESKTOP_BINARY = BINARIES / "rga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `binaries/`.
   ENV_FONT = "RGA_FONT"
@@ -360,12 +360,9 @@ proc declare() =
   #   `declare const enum` and not plain enum: ambient const enum is inlined at every use
   #   site, so page carries numbers rather than lookup object, and nothing new joins
   #   `SCRIPTS`. Both configurations already read this file.
-  var
-    keys = 0
-    wording = "declare const enum Wording {\n"
-  for key in Wording:
-    wording.add "  " & $key & " = " & $ord(key) & ",\n"
-    inc keys
+  let keys = keysOf(readFile(PATH_WORDING_NIM))
+  var wording = "declare const enum Wording {\n"
+  for ordinal, key in keys: wording.add "  " & key & " = " & $ordinal & ",\n"
   wording.add "}\n"
 
   var records: seq[string]
@@ -383,7 +380,7 @@ proc declare() =
       wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
   echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations, ",
-    keys, " wording keys)."
+    keys.len, " wording keys)."
 
 
 
@@ -486,7 +483,7 @@ proc checkWording() =
   #   from. Positive rather than prohibiting: rule forbidding one spelling reads whole file,
   #   so comment naming product fails build, and split literal walks straight past it.
   #   Declaration absent at all is itself finding -- caption cannot go unnamed.
-  let caption = readFile(PATH_MAIN_NIM)
+  let caption = readFile(PATH_DESKTOP_NIM)
   block:
     var is_declared = false
     let lines = caption.splitLines
@@ -494,18 +491,18 @@ proc checkWording() =
       if not line.strip.startsWith(DECLARATION_CAPTION): continue
       is_declared = true
       if not line.namesKey("captionWindow"):
-        found.add PATH_MAIN_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got " &
+        found.add PATH_DESKTOP_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got " &
           line.strip
     if not is_declared:
-      found.add PATH_MAIN_NIM & ": no `" & DECLARATION_CAPTION & "` for caption to read from"
+      found.add PATH_DESKTOP_NIM & ": no `" & DECLARATION_CAPTION & "` for caption to read from"
 
   # Catalogue may not grow rows nothing shows either. Entry no front-end names is words
   #   written for nobody, and next reader cannot tell it from one still in use.
   var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption & readFile(PATH_HELP_NIM)
   for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
-  for key in Wording:
-    if not shown.namesKey($key):
-      found.add "wording.nim: `" & $key & "` is shown by neither front-end"
+  for key in keysOf(readFile(PATH_WORDING_NIM)):
+    if not shown.namesKey(key):
+      found.add "wording.nim: `" & key & "` is shown by neither front-end"
   if found.len > 0:
     raise newException(
       OSError,
@@ -654,8 +651,8 @@ proc worded(page: string): string =
   ##   Whole document is swept rather than attribute or element kind, since token is written
   ##   wherever page shows words.
   result = page
-  for key in Wording:
-    result = result.replace(TOKEN_WORD & $key & "@", $wordingText(key))
+  for key, words in wordsOf(readFile(PATH_WORDING_NIM)):
+    result = result.replace(TOKEN_WORD & key & "@", words)
   var unfilled: seq[string]
   # Bound first: bare `splitLines` in `for` resolves to iterator, which yields no index.
   let lines = result.splitLines
@@ -975,10 +972,11 @@ proc clean() =
 
 #[ Entry Point ]#
 
-when isMainModule:
+proc main(): int =
+  ## Run verb named on command line; exit code, 2 on usage error and 1 on failure.
   if paramCount() != 1:
     stderr.write USAGE
-    quit 2
+    return 2
   try:
     case paramStr(1)
     of "declare": declare()
@@ -992,7 +990,12 @@ when isMainModule:
     of "clean": clean()
     else:
       stderr.write USAGE
-      quit 2
+      return 2
   except CatchableError as e:
     stderr.write e.msg & "\n"
-    quit 1
+    return 1
+  0
+
+
+when isMainModule:
+  quit main()

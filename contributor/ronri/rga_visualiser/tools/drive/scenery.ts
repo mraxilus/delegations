@@ -9,7 +9,7 @@ import type { Page } from '@playwright/test';
 import { advance, advanceFrames } from './clock';
 import { settleCamera } from './camera';
 import { settleBranch } from './diagnostics';
-import { countFrames, readPhases, type Phase } from './frame';
+import { FRAMES_PHASES_LEAST, countFrames, readPhases, type Phase } from './frame';
 import { pickPlane } from './ground';
 import { report, reportWithin } from './report';
 
@@ -108,7 +108,7 @@ export async function driveKinds(page: Page): Promise<void> {
   const last = kinds[kinds.length - 1];
   report(
     'the scene phase is accounted for by the kinds it is spent on',
-    kinds.length > 30 && sane.length >= kinds.length - MISSES_ACCOUNT_MAX,
+    kinds.length > FRAMES_PHASES_LEAST && sane.length >= kinds.length - MISSES_ACCOUNT_MAX,
     `${sane.length} of ${kinds.length} frames account ` +
       `(floor ${kinds.length - MISSES_ACCOUNT_MAX}), last frame ` +
       `${last === undefined ? '?' : last.parts.toFixed(2)} of ` +
