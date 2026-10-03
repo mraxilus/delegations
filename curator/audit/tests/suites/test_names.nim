@@ -390,6 +390,20 @@ suite "Names":
     check "E1".isCased(Casing.Pascal) and "x2".isCased(Casing.Snake)  # V.1, digits carry none
 
 
+  test "name that template substitutes declares nothing of that name":
+    # `type name = object` inside `template defineKind(name: untyped)` declares parameter's
+    #   argument at expansion, never type `name` (P05 of `pga_benchmark`).
+    const substituted =
+      "template defineKind(name: untyped; count: static int) =\n" &
+      "  type name = object\n" &
+      "    elements: array[count, float]\n" &
+      "  let name_value = count\n"
+    check substituted.breaches.len == 0  # V.1
+    check substituted.declarations.filterIt(it.name == "name").mapIt(it.kind) ==
+      @[NameKind.Parameter]  # template parameter alone, no type
+    check "elements" in substituted.names and "name_value" in substituted.names
+
+
   test "V.6 abbreviation is spelled out word by word, case kept, exempt words aside":
     check "ctx".respelled([]) == "context"
     check "tmpDir".respelled([]) == "temporaryDirectory"
