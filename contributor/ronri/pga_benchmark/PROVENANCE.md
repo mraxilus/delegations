@@ -96,10 +96,18 @@ and the form here is `f = gw² - v·v - g·m`, which the law suite confirms agai
 
 Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library,
 and the same reader counts it. Object construction goes through the `zero3` and `read3`
-templates, rather than `Vector3()` defaults and whole-object field copies. On the pinned commit
-the former costs about 4 ns and the latter about 20 ns, through the `=dup` hook. That hook
-would have hidden the cost of the library. Unitize forms take one reciprocal and multiply, as
-Terathon does, where the library divides each component. The divide column shows both.
+templates, rather than `Vector3()` defaults and whole-object field copies. A default zero-fills
+its field through `nimZeroMem`, which the large function of the bench keeps out of line. A
+whole-object copy calls the `=dup` hook that the compiler makes for `Vector3`, out of line too.
+Either cost would charge the reference for work that hand code does not do.
+
+Five alternating runs of three builds of the bench, on `linux amd64, 4 cores` on 2026-10-03 at
+`3121342`, measure both. At rga4d a default adds 20.2 to 21.0 ns to `bulk_line`, `weight_line`,
+`dual_bulk_line` and `dual_weight_line`, and 1.2 ns to `attitude_plane`. A whole-object copy adds
+0.6 to 1.7 ns to the three rows that use one. Rows that use neither move ×1.00 in the median.
+
+Unitize forms take one reciprocal and multiply, as Terathon does, where the library divides each
+component. The divide column shows both.
 
 **No reference function calls another.** Under `--panics:off`, each call to a Nim function
 fills its result with zeros and branches on the error flag after it. Hand-written code spends
