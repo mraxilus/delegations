@@ -46,5 +46,5 @@ import ./pga_benchmark/[catalogue, kinds, pools, surface, widening]
 export catalogue, kinds, pga, pools, surface, widening
 
 
-const ALGEBRA_NAME* = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
+const NAME_ALGEBRA* = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
   ## Name of algebra this build measures, e.g. `rga4d`; keys every baseline and bench file.

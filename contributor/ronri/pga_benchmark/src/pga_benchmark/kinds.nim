@@ -13,13 +13,13 @@
 ##   | Plane      | g = (e₄₂₃ e₄₃₁ e₄₁₂) + gʷe₃₂₁    | --                                   |
 ##   | Motor      | Q = Qᵛ + Qᵐ + Qᵛʷ𝟙 + Qᵐʷ𝟏         | --                                   |
 ##   | Flector    | F = p + g                         | --                                   |
-##   | RoundPoint | --                                | `a` = x y z (e₁ e₂ e₃) + w e₄ + u e₅ |
+##   | PointRound | --                                | `a` = x y z (e₁ e₂ e₃) + w e₄ + u e₅ |
 ##   | Dipole     | --                                | d = dᵛ dᵐ + dᵖ(e₁₅ e₂₅ e₃₅ e₄₅)      |
 ##   | Circle     | --                                | c = cᵍ(e₄₂₃ e₄₃₁ e₄₁₂ e₃₂₁) + cᵛ + cᵐ |
 ##   | Sphere     | --                                | s = sᵘe₁₂₃₄ + (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅) |
-##   | FlatPoint  | --                                | p = (e₁₅ e₂₅ e₃₅ e₄₅)                |
-##   | FlatLine   | --                                | l = (e₄₁₅ e₄₂₅ e₄₃₅ e₂₃₅ e₃₁₅ e₁₂₅)  |
-##   | FlatPlane  | --                                | g = (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)        |
+##   | PointFlat  | --                                | p = (e₁₅ e₂₅ e₃₅ e₄₅)                |
+##   | LineFlat   | --                                | l = (e₄₁₅ e₄₂₅ e₄₃₅ e₂₃₅ e₃₁₅ e₁₂₅)  |
+##   | PlaneFlat  | --                                | g = (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)        |
 ##   |------------|-----------------------------------|--------------------------------------|
 ##
 ##   Cost: rigid algebras of other dimension carry only `General` and `Scalar` measurands, since
@@ -32,13 +32,11 @@ import pga
 
 
 when IS_RIGID and DIMENSIONS == 4:
-  type Kind* {.pure.} = enum
-    ## Define operand kinds of 4D rigid algebra.
+  type Kind* {.pure.} = enum  ## Define operand kinds of 4D rigid algebra.
     General, Scalar, Point, Line, Plane, Motor, Flector
 elif IS_CONFORMAL and DIMENSIONS == 5:
-  type Kind* {.pure.} = enum
-    ## Define operand kinds of 5D conformal algebra.
-    General, Scalar, RoundPoint, Dipole, Circle, Sphere, FlatPoint, FlatLine, FlatPlane
+  type Kind* {.pure.} = enum  ## Define operand kinds of 5D conformal algebra.
+    General, Scalar, PointRound, Dipole, Circle, Sphere, PointFlat, LineFlat, PlaneFlat
 else:
   type Kind* {.pure.} = enum
     ## Define operand kinds of algebra without typed reference: dense and scalar only.

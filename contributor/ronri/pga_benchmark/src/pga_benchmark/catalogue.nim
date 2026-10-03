@@ -24,34 +24,27 @@ import ./[bound, kinds]
 
 
 type
-  Arity* = range[1 .. 2]
-    ## Define operand count of measurand.
-  Measurand* = object
-    ## Define one catalogued operation under measurement.
-    id*: string
-      ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
-    symbol*: string
-      ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.
-    alias*: string
-      ## Library named alias from `pga.nim`, e.g. `wedge`; empty where none exists.
+  Arity* = range[1..2]  ## Define operand count of measurand.
+  Measurand* = object  ## Define one catalogued operation under measurement.
+    id*: string  ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
+    symbol*: string  ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.
+    alias*: string  ## Library named alias from `pga.nim`, e.g. `wedge`; empty where none exists.
     expression*: string
       ## Library expression over `m` and `n`, fully parenthesised, e.g. `(m ∧ n)`.
-    arity*: Arity = 1
-      ## Operand count expression reads; defaulted so object has valid zero value.
+    arity*: Arity = 1  ## Operand count expression reads; defaulted so object has valid zero value.
     operands*: array[2, Kind]
       ## Kind of `m` and of `n`; second is `General` and unread for unary measurand.
     grade*: Option[int]
       ## Grade `General` operands are drawn at, where operation needs k-vector; none = mixed.
     reference*: string
       ## Reference expression over same names, e.g. `wedge(m, n)`; empty where none.
-    cite*: string
-      ## Book equation, e.g. `2.17`, or `wiki:<Page>` where library suites cite none.
-  RowGeneral = tuple[id, symbol, alias, expression: string; arity: int; cite: string]
+    cite*: string  ## Book equation, e.g. `2.17`, or `wiki:<Page>` where library suites cite none.
+  RowGeneral = tuple[id, symbol, alias, expression: string, arity: int, cite: string]
     ## Define one catalogue row of measurand over dense operands, read by `addGeneral`.
   RowTyped = tuple[
-    id, symbol, alias, expression: string;
-    operand_m, operand_n: Kind;
-    reference, cite: string;
+    id, symbol, alias, expression: string,
+    operand_m, operand_n: Kind,
+    reference, cite: string,
   ]
     ## Define one catalogue row of measurand over typed operands, read by `addTyped`.
   RowUnary = tuple[id, symbol, alias, expression, reference, cite: string]
@@ -61,10 +54,8 @@ type
 const
   ALIAS_BULK = when IS_RIGID: "bulk" else: "bulkRound"
     ## Library's name for `∙ m`, which conformal umbrella qualifies as round.
-  ALIAS_WEIGHT = when IS_RIGID: "weight" else: "weightRound"
-    ## Library's name for `∘ m`.
-  ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"
-    ## Library's name for `|∙ m`.
+  ALIAS_WEIGHT = when IS_RIGID: "weight" else: "weightRound"  ## Library's name for `∘ m`.
+  ALIAS_NORM_BULK = when IS_RIGID: "normBulk" else: "normBulkRound"  ## Library's name for `|∙ m`.
   ALIAS_NORM_WEIGHT = when IS_RIGID: "normWeight" else: "normWeightRound"
     ## Library's name for `|∘ m`.
 
@@ -383,23 +374,23 @@ const CATALOGUE* = block:
     catalogue.addTyped [
       (
         "wedge_round_point_round_point", "∧", "wedge", "(m ∧ n)",
-        Kind.RoundPoint, Kind.RoundPoint, "wedge(m, n)", "2.17",
+        Kind.PointRound, Kind.PointRound, "wedge(m, n)", "2.17",
       ),
       (
         "wedge_dipole_round_point", "∧", "wedge", "(m ∧ n)",
-        Kind.Dipole, Kind.RoundPoint, "wedge(m, n)", "2.17",
+        Kind.Dipole, Kind.PointRound, "wedge(m, n)", "2.17",
       ),
       (
         "wedge_round_point_dipole", "∧", "wedge", "(m ∧ n)",
-        Kind.RoundPoint, Kind.Dipole, "wedge(m, n)", "2.18",
+        Kind.PointRound, Kind.Dipole, "wedge(m, n)", "2.18",
       ),
       (
         "wedge_circle_round_point", "∧", "wedge", "(m ∧ n)",
-        Kind.Circle, Kind.RoundPoint, "wedge(m, n)", "2.17",
+        Kind.Circle, Kind.PointRound, "wedge(m, n)", "2.17",
       ),
       (
         "wedge_round_point_circle", "∧", "wedge", "(m ∧ n)",
-        Kind.RoundPoint, Kind.Circle, "wedge(m, n)", "2.18",
+        Kind.PointRound, Kind.Circle, "wedge(m, n)", "2.18",
       ),
       (
         "wedge_dipole_dipole", "∧", "wedge", "(m ∧ n)",
@@ -431,7 +422,7 @@ const CATALOGUE* = block:
       ),
       (
         "dot_round_point_round_point", "∙", "dot", "(m ∙ n)",
-        Kind.RoundPoint, Kind.RoundPoint, "dot(m, n)", "2.76",
+        Kind.PointRound, Kind.PointRound, "dot(m, n)", "2.76",
       ),
       (
         "dot_dipole_dipole", "∙", "dot", "(m ∙ n)",
@@ -447,7 +438,7 @@ const CATALOGUE* = block:
       ),
       (
         "dot_anti_round_point_round_point", "∘", "dotAnti", "(m ∘ n)",
-        Kind.RoundPoint, Kind.RoundPoint, "dotAnti(m, n)", "2.76",
+        Kind.PointRound, Kind.PointRound, "dotAnti(m, n)", "2.76",
       ),
       (
         "dot_anti_dipole_dipole", "∘", "dotAnti", "(m ∘ n)",
@@ -466,7 +457,7 @@ const CATALOGUE* = block:
     # Unary maps every round object carries; one measurand per object kind.
     catalogue.addUnary(
       kinds = [
-        (Kind.RoundPoint, "round_point"),
+        (Kind.PointRound, "round_point"),
         (Kind.Dipole, "dipole"),
         (Kind.Circle, "circle"),
         (Kind.Sphere, "sphere"),
@@ -514,12 +505,12 @@ const SHAPES* = [
   ("∨★", Shape.ContractBulk), ("∨☆", Shape.ContractWeight),
   ("∧★", Shape.ExpandBulk), ("∧☆", Shape.ExpandWeight),
   ("+", Shape.Componentwise), ("-", Shape.Componentwise),
-  ("|∙²", Shape.SquaredNorm), ("|∘²", Shape.SquaredNorm),
+  ("|∙²", Shape.NormSquared), ("|∘²", Shape.NormSquared),
   ("|∙", Shape.Norm), ("|∘", Shape.Norm),
   ("|■", Shape.Norm), ("|□", Shape.Norm),
   ("^∙", Shape.Unitize), ("^∘", Shape.Unitize), ("^", Shape.Unitize),
-  ("⊖", Shape.ConstantProduct),
-  ("⊟", Shape.ConstantProduct), ("⊞", Shape.ConstantProduct),
+  ("⊖", Shape.ProductConstant),
+  ("⊟", Shape.ProductConstant), ("⊞", Shape.ProductConstant),
   ("∩", Shape.Support), ("∪", Shape.SupportAnti),
   ("⊙", Shape.Center), ("⊡", Shape.Container),
   ("/", Shape.Permutation), ("\\", Shape.Permutation),
@@ -569,7 +560,7 @@ func shapeOf*(p: Measurand): Shape =
   # Product against scalar operand scales every slot, whatever symbol spells it.
   if p.arity == 2 and Kind.Scalar in p.operands: return Shape.Scale
   if p.symbol in ["∙", "∘"]:
-    return (if p.arity == 2: Shape.ScalarForm else: Shape.Permutation)
+    return (if p.arity == 2: Shape.FormScalar else: Shape.Permutation)
   for (symbol, shape) in SHAPES:
     if p.symbol == symbol:
       # Componentwise covers binary sum and difference; unary `-` negates in place.
@@ -578,14 +569,14 @@ func shapeOf*(p: Measurand): Shape =
   Shape.Unknown
 
 
-func boundOf*(p: Measurand, m: Metric): LowerBound =
+func boundOf*(p: Measurand, m: Metric): BoundLower =
   ## Derive multivector lower bound of measurand, by chain where library composes it.
   let parts = p.chainOf
-  if parts.len > 0: return lowerBoundOfChain(parts, m, p.arity)
-  lowerBoundOf(p.shapeOf, m, p.arity)
+  if parts.len > 0: return boundLowerOfChain(parts, m, p.arity)
+  boundLowerOf(p.shapeOf, m, p.arity)
 
 
-func shapeNameOf*(p: Measurand): string =
+func nameShapeOf*(p: Measurand): string =
   ## Name shape of measurand: one shape, or steps of chain joined by plus.
   ##   Repeated step carries its count rather than its name twice, since whole chain of
   ##   partner outruns width record allows. `stepsOf` carries chain itself.
@@ -606,7 +597,7 @@ func shapeNameOf*(p: Measurand): string =
     result.add (if counts[i] > 1: $counts[i] & " " else: "") & step
 
 
-func denseNameOf*(p: Measurand): string =
+func nameDenseOf*(p: Measurand): string =
   ## Name dense form of general measurand, as `denseWedgeAnti` for `wedge_anti`.
   result = "dense"
   for word in p.id.split('_'): result.add word.capitalizeAscii
@@ -631,7 +622,7 @@ func emitted*(p: Measurand): string =
   p.symbol
 
 
-func emittedHead*(p: Measurand): string =
+func headEmitted*(p: Measurand): string =
   ## Name function library emits for measurand; empty where expression composes several.
   if p.symbol.len > 0: return p.emitted
   if p.alias.len > 0 and p.expression.startsWith(p.alias & "("): return p.alias

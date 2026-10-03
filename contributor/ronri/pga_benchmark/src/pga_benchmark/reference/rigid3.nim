@@ -43,20 +43,15 @@ export scalars
 
 
 type
-  Vector3* = object
-    ## Define three components named as vector; direction, moment or normal.
+  Vector3* = object  ## Define three components named as vector; direction, moment or normal.
     x*, y*, z*: float
-  Point* = object
-    ## Define point 𝐩 with homogeneous weight w; grade 1.
+  Point* = object  ## Define point 𝐩 with homogeneous weight w; grade 1.
     x*, y*, z*, w*: float
-  Line* = object
-    ## Define line 𝐥 with direction v and moment m; grade 2.
+  Line* = object  ## Define line 𝐥 with direction v and moment m; grade 2.
     v*, m*: Vector3
-  Plane* = object
-    ## Define plane 𝐠 with normal (x y z) and position w; grade 3.
+  Plane* = object  ## Define plane 𝐠 with normal (x y z) and position w; grade 3.
     x*, y*, z*, w*: float
-  Motor* = object
-    ## Define motor 𝐐 with weight (v, vw) and bulk (m, mw); even grades.
+  Motor* = object  ## Define motor 𝐐 with weight (v, vw) and bulk (m, mw); even grades.
     v*, m*: Vector3
     vw*, mw*: float
 

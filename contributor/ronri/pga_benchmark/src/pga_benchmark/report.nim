@@ -14,11 +14,10 @@ import ./[inspector, model]
 
 
 const
-  SCHEMA* = 1
-    ## Schema version written into every document; reader refuses another.
-  NIM_COMMIT* {.strdefine: "pga_benchmark.nim_commit".} = "unmeasured"
+  SCHEMA* = 1  ## Schema version written into every document; reader refuses another.
+  COMMIT_NIM* {.strdefine: "pga_benchmark.commit_nim".} = "unmeasured"
     ## Compiler commit driver passes at build; "unmeasured" where built by hand.
-  PGA_COMMIT* {.strdefine: "pga_benchmark.pga_commit".} = "unmeasured"
+  COMMIT_PGA* {.strdefine: "pga_benchmark.commit_pga".} = "unmeasured"
     ## Library commit driver reads from `atlas.lock` at build.
   FLAGS* {.strdefine: "pga_benchmark.flags".} = "unrecorded"
     ## Build flags driver passes, so measurements name their build.
@@ -31,13 +30,13 @@ proc takenNow*(): JsonNode =
   %*{
     "date": now().utc.format("yyyy-MM-dd"),
     "machine": hostOS & " " & hostCPU & ", " & $countProcessors() & " cores",
-    "nim": NIM_COMMIT,
-    "pga": PGA_COMMIT,
+    "nim": COMMIT_NIM,
+    "pga": COMMIT_PGA,
     "flags": FLAGS,
   }
 
 
-func algebraNode*(name: string, dimensions: int, is_conformal: bool, size: int): JsonNode =
+func nodeAlgebra*(name: string, dimensions: int, is_conformal: bool, size: int): JsonNode =
   ## Describe algebra measured: name, dimensions, metric, multivector size in bytes.
   %*{
     "name": name,
@@ -62,14 +61,14 @@ func checkSchema*(node: JsonNode, kind: string): string =
   ""
 
 
-func countsNode*(counts: Counts): JsonNode =
+func nodeCounts*(counts: Counts): JsonNode =
   ## Build counts as object with one field per count.
   %*{
     "multiplies": counts.multiplies,
     "adds": counts.adds,
     "subtractions": counts.subtractions,
     "divides": counts.divides,
-    "zero_fills": counts.zero_fills,
+    "fills_zero": counts.fills_zero,
     "intermediates": counts.intermediates,
     "copies": counts.copies,
     "checks": counts.checks,
@@ -79,7 +78,7 @@ func countsNode*(counts: Counts): JsonNode =
   }
 
 
-func movementNode*(movement: Movement): JsonNode =
+func nodeMovement*(movement: Movement): JsonNode =
   ## Build movement model as object with one field per cause.
   %*{
     "bytes_read": movement.bytes_read,
@@ -91,7 +90,7 @@ func movementNode*(movement: Movement): JsonNode =
   }
 
 
-func moduleTail*(module: string): string =
+func tailModule*(module: string): string =
   ## Read last two segments of mangled module path, i.e. `pga/operators`.
   ##   Source is e.g. `OOZdependenciesZ...ZpgaZoperators`; whole path spells checkout and
   ##     outruns line width.
@@ -102,13 +101,13 @@ func moduleTail*(module: string): string =
   tail.join("/").replace("95", "_")
 
 
-func isLibraryModule*(module: string): bool =
+func isModuleLibrary*(module: string): bool =
   ## Decide whether module tail names library's module, rather than reference's or dense forms'.
   ##   Dense module's tail is `dense` in bench build, and path ends so elsewhere.
   not module.startsWith("reference/") and module != "dense" and not module.endsWith("/dense")
 
 
-func functionNode*(function: CFunction; own, total: Counts; size_multivector: int): JsonNode =
+func nodeFunction*(function: FunctionC; own, total: Counts; size_multivector: int): JsonNode =
   ## Build object of one inspected function.
   ##   Object holds key parts, module tail, inline flag, own and total counts, and movement
   ##     modelled on total counts.
@@ -116,13 +115,13 @@ func functionNode*(function: CFunction; own, total: Counts; size_multivector: in
   ##     is measurement.
   %*{
     "symbol": function.symbol,
-    "module": moduleTail(function.module),
+    "module": tailModule(function.module),
     "params": function.parameters,
     "returns": function.stem_result,
     "inline": function.is_inline,
-    "own": countsNode(own),
-    "total": countsNode(total),
-    "movement": movementNode(movement(function, total, size_multivector)),
+    "own": nodeCounts(own),
+    "total": nodeCounts(total),
+    "movement": nodeMovement(movement(function, total, size_multivector)),
   }
 
 
@@ -159,12 +158,12 @@ func combineRuns*(runs: openArray[JsonNode]): JsonNode =
       measurement["ns_runs"] = %medians.mapIt(it.round(2))
 
 
-const GATED* = [
+const METRICS_GATED* = [
   "multiplies",
   "adds",
   "subtractions",
   "divides",
-  "zero_fills",
+  "fills_zero",
   "intermediates",
   "copies",
   "checks",
