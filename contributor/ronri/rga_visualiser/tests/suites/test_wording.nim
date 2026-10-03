@@ -144,6 +144,15 @@ suite "Wording":
     check toText(line) == "12 of 5038 shown"
 
 
+  test "every codepoint the build writes is gathered once, in order, with printable ASCII":
+    # Both front-ends ask their faces for this gathering, so codepoint missing here is
+    #   asked of no face at all.
+    let codepoints = codepointsShown()
+    for i in 1 ..< codepoints.len: check codepoints[i - 1] < codepoints[i]
+    for codepoint in 0x20 .. 0x7E: check codepoint in codepoints
+    for accent in [0x2CD, 0x2F7]: check accent in codepoints  # Left complement, antireverse.
+
+
   test "the driver's reading of the catalogue as text holds every key and every row":
     # Driver reads `wording.nim` as text and imports none of it, so type check compiles no
     #   project code on koch's compiler (#385). Here, on pin, reading meets compiled enum

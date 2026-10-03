@@ -31,6 +31,7 @@ import {
 } from './label';
 import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
+import { driveFacesCovered } from './faces';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveHoldScene } from './hold';
 import { driveDrawerCost, drivePlacementHeld } from './pool';
@@ -192,6 +193,9 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
+  // After role checks: those ask which face each role draws in, and this asks whether each
+  //   character page writes has glyph there.
+  await driveFacesCovered(page);
   await driveShadedFromAbove(page);
   await driveComet(page);
   await driveGround(page);

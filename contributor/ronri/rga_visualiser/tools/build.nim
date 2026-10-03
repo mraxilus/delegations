@@ -41,7 +41,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, strutils, tables]
+import std/[os, osproc, sequtils, strutils, tables]
 
 # Catalogue read as text, never imported: type check runs this driver on koch's compiler,
 #   which must compile no project code (#385). Suite holds reading to compiled catalogue.
@@ -166,11 +166,11 @@ const
     ##   last because it starts loop everything else has to be ready for.
   FACES = [
     "commit-mono-latin-400-normal.woff2",
-    "noto-sans-latin-400-normal.woff2",
-    "noto-sans-latin-600-normal.woff2",
-    "noto-sans-math-math-400-normal.woff2",
-    "noto-sans-symbols-2-symbols-400-normal.woff2",
-    "noto-serif-latin-600-normal.woff2",
+    "NotoSans-Regular.ttf",
+    "NotoSans-SemiBold.ttf",
+    "NotoSansMath-Regular.ttf",
+    "NotoSansSymbols2-Regular.ttf",
+    "NotoSerif-SemiBold.ttf",
   ]
     ## Faces page embeds. Names alone: what bytes each name is, and where they come from, is
     ##   `curator/audit/src/assets.nim`, and `koch fetch-assets` fetches and checks them.
@@ -180,6 +180,9 @@ const
     ##   and SHA-256, which two projects had written identically (repository issue 116).
     ##   Store keeps entries by digest, so face this project shares with another is one file
     ##   on disk rather than two, and pin that moves is different entry rather than stale one.
+    ##   Each Noto face ships whole, as TrueType of its own release (Article X.8): subset
+    ##   drew any character past its range from viewer's system (repository issue 411).
+    ##   Commit Mono is no Noto, and stays Latin `woff2`.
   FACES_DESKTOP = [
     "NotoSans-Regular.ttf",
     "NotoSans-Bold.ttf",
@@ -192,9 +195,9 @@ const
     ##   Six for three roles page draws too: `NotoSans` regular and bold for interface and for
     ##   name labels, `NotoSerif` semibold for headings, `CommitMono` for notation and
     ##   figures, and two supplementary Noto faces merged into whichever carries notation.
-    ##   Separate list rather than one: page embeds `woff2` and cannot read TrueType, binary
-    ##   reads outlines and cannot read `woff2`, so what each front-end wants is not what
-    ##   other does even where family is same.
+    ##   Separate list rather than one: binary reads outlines and cannot read `woff2`, and
+    ##   two front-ends set labels at different weights, so what each wants differs even where
+    ##   family is same. Lists overlap where both draw one file, and `assets` asks once.
   PACKAGES_SYSTEM = [
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
@@ -576,7 +579,7 @@ proc assets() =
   ##   second run copies nothing.
   createDir DIRECTORY_FONTS
   let
-    names = @FACES & @FACES_DESKTOP
+    names = deduplicate(@FACES & @FACES_DESKTOP)
     paths = facesFromStore(names)
   var
     manifest: seq[string]
@@ -602,6 +605,17 @@ proc storePathsCopied(): Table[string, string] =
   for line in readFile(PATH_FACES_FROM).strip.splitLines:
     let parts = line.strip.split(' ', 1)
     if parts.len == 2: result[parts[0]] = parts[1]
+
+
+func mediaOf(face: string): string =
+  ## Name media type data URL of `face` declares, read off its extension.
+  ##   Browser reads TrueType, OpenType and WOFF2 alike; type stated is what `format()` beside
+  ##   it in shell says, so two never disagree about one file.
+  case face.splitFile.ext
+  of ".ttf": "font/ttf"
+  of ".otf": "font/otf"
+  of ".woff2": "font/woff2"
+  else: raise newException(ValueError, "Face is TrueType, OpenType or WOFF2; got `" & face & "`.")
 
 
 proc checkFace(face: string, copied: Table[string, string]) =
@@ -701,7 +715,7 @@ proc web() =
     #   embeds is what every reader downloads. Wrong byte stops build rather than ships.
     checkFace(face, copied)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
-    page = page.replace(token, "data:font/woff2;base64," & readFile(path & ".b64").strip)
+    page = page.replace(token, "data:" & mediaOf(face) & ";base64," & readFile(path & ".b64").strip)
 
   page = page.worded
 
