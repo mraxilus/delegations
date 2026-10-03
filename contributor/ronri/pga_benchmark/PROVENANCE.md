@@ -94,17 +94,21 @@ the opposite sign. The conformal antidot is the negated dot. The cocarrier of a 
 `LineFlat(v: -g.xyz, m: -c.v)`. The `Partner(Circle)` scalar of Terathon carries a sign typo,
 and the form here is `f = gw² - v·v - g·m`, which the law suite confirms against the library.
 
-Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library,
-and the same reader counts it. Object construction goes through the `zero3` and `read3`
-templates, rather than `Vector3()` defaults and whole-object field copies. A default zero-fills
-its field through `nimZeroMem`, which the large function of the bench keeps out of line. A
-whole-object copy calls the `=dup` hook that the compiler makes for `Vector3`, out of line too.
-Either cost would charge the reference for work that hand code does not do.
+Every form is `{.inline.}`, so it lands in the same nimcache as the operators of the library, and
+the same reader counts it. Object construction goes through the `zero3` and `read3` templates,
+rather than `Vector3()` defaults and whole-object field copies. In C, a default zero-fills its field
+through `nimZeroMem`, and a whole-object copy calls the `=dup` hook that the compiler makes for
+`Vector3`. Either cost would charge the reference for work that hand-written code does not do.
 
-Five alternating runs of three builds of the bench, on `linux amd64, 4 cores` on 2026-10-03 at
-`3121342`, measure both. At rga4d a default adds 20.2 to 21.0 ns to `bulk_line`, `weight_line`,
-`dual_bulk_line` and `dual_weight_line`, and 1.2 ns to `attitude_plane`. A whole-object copy adds
-0.6 to 1.7 ns to the three rows that use one. Rows that use neither move ×1.00 in the median.
+Three builds of the bench differ only in these two templates: as committed, `Vector3()` for
+`zero3`, and a whole copy for `read3`. Five alternating runs of each, on `linux amd64, 4 cores` on
+2026-10-03 at `3121342`, time them at rga4d and cga5d. At rga4d `bulk_line` runs 2.61 ns as
+committed, 23.49 ns with `Vector3()` and 4.19 ns with the copy. The other three line rows with a
+default run 22.5 to 23.5 ns, and `attitude_plane` runs 3.35 ns against 2.14 ns.
+
+Rows that use neither template move ×0.65 to ×1.29, so the copy in `transform_line_motor`, ×1.04,
+does not show. At cga5d a default adds 18 to 30 ns to eight rows, and a copy adds 1.6 to 4.4 ns to
+seven. Why a default costs 20 ns in a line row and 1.2 ns in `attitude_plane` is not isolated.
 
 Unitize forms take one reciprocal and multiply, as Terathon does, where the library divides each
 component. The divide column shows both.
@@ -730,20 +734,20 @@ dimensions is unmeasured at the pin, and `sweep` takes it by hand.
 
 **Generated operators write each zero element, and hand-written functions leave theirs to the
 default fill.** A generated operator writes every element as a straight statement, zeros included,
-because generation lowers a Cayley table and nobody writes the zeros by hand. At `181c8d8` on
-2026-09-25, on a machine not recorded, the default fill there cost a geometric mean of ×1.07 to
-×1.23 from four dimensions up. A hand-written function, such as a norm, writes no zero. The
-Architect decided this, because the library is about PGA and not about micro-optimisation.
+because generation lowers a Cayley table and nobody writes the zeros by hand. At the pin, what the
+default fill would cost the generated operators is unmeasured. A hand-written function, such as a
+norm, writes no zero. The Architect decided this, because the library is about PGA and not about
+micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
 unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
 carrier are generated. The cost that stays is what the hand-written norms pay.
 
-The cost is measured at the pin `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz,
-on 2026-10-03. Each function is called through a volatile procedure pointer, so its body
-compiles alone and writes to memory that it cannot see. Each figure comes from two passes, and
-each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten functions that
-did not change moved ×0.86 to ×1.02.
+The cost is measured at the pin `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
+2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
+each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
+passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
+functions that did not change moved ×0.86 to ×1.02.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
@@ -756,11 +760,14 @@ write the zeros first. The cell is the lower of the two passes:
 | `|□` |  |  |  |  | 16 / 6.3 | 22 / 13 | 51 / 33 |
 | `|` | 4.2 / 4.2 | 5.0 / 5.0 | 28 / 16 | 32 / 20 | 31 / 19 | 42 / 35 | 94 / 83 |
 
-The fill loses from four dimensions up, where a result holds 128 bytes or more. There gcc emits the
-fill as `rep stos` under its generic tuning for x86-64. At the pin `^∙` and `^∘` take the root of
-`|∙²` or `|∘²`, and do not build the norm. Runs of the same method on 2026-10-03 time that form
-against a variant of the pin that builds the norm. It takes ×0.36 to ×0.97 of the time, in all seven
-algebras. Article VII holds the rule that these measurements set (VII.3, VII.8 and VII.9).
+The fill loses from four dimensions up, where a result holds 128 bytes or more. In the harness at
+the pin, gcc emits the fill of `|∙` at rga4d as `rep stos`, under its generic tuning for x86-64.
+Article VII holds the rule that these measurements set (VII.3, VII.8 and VII.9).
+
+At the pin `^∙` and `^∘` take the root of `|∙²` or `|∘²`, and do not build the norm. Runs of the
+same method on the same machine on 2026-10-03 time that form against a variant of the pin that
+builds the norm. It takes ×0.36 to ×0.76 of the time from three dimensions up, and ×0.94 to ×0.97
+at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Known limitations
 
