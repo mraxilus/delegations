@@ -14,10 +14,11 @@
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
-##   Sign-off serves Architect first (GUIDE.md, Output contract): each decision block reads as
-##     card, class says what blocks, and each ⚠️ row names role it waits on. Coordinator, once
-##     trialed, lifts each block onto card unchanged. So shape check holds what reader decides
-##     on: state word, brief, class and place of each decision, two to four short options, and
+##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, state with where
+##     branch stands, table, context, summary, decisions, next step. Each decision block reads
+##     as card, class says what blocks, and each ⚠️ row names role it waits on; coordinator,
+##     once trialed, lifts each block onto card unchanged. So shape check holds what Architect
+##     decides on: state word, class and place of each decision, two to four short options, and
 ##     recommendation naming one.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
@@ -37,7 +38,7 @@ import ./[checker, commits, domains, english, findings, markdown, role, scope]
 
 type
   Part {.pure.} = enum  ## Define one part of sign-off block, in order block holds them.
-    Role, Brief, State, Context, Decisions, Table, Summary, Next
+    Role, State, Table, Context, Summary, Decisions, Next
 
   Decision = object  ## Define one decision block of sign-off, as its shape check reads it.
     number: int  ## `n` of `**D<n>.**`; zero where not digits.
@@ -79,14 +80,14 @@ const
   SIGNOFF_TABLE* = "| # | State | Item | Where | Evidence, or who acts |"
     ## Header row of its table, exact.
   SIGNOFF_LABELS: array[Part, string] = [
-    "**Role:**", "**Brief:**", "**State:**", "**Context:**", "**Decisions:**", SIGNOFF_TABLE,
-    "**Summary:**", "**Next step:**",
+    "**Role:**", "**State:**", SIGNOFF_TABLE, "**Context:**", "**Summary:**", "**Decisions:**",
+    "**Next step:**",
   ]
     ## Parts of block, in order each must appear.
   BLOCKED = "blocked"  ## State word of delegate nothing moves for until Architect decides.
-  STATES_SIGNOFF = ["done", "working", "waiting", BLOCKED]  ## Words `**State:**` takes.
+  STATES_SIGNOFF = ["done", "working", "waiting", BLOCKED]
+    ## Words `**State:**` opens with, before where branch stands.
   NONE_DECISION = "None."  ## Text after `**Decisions:**` where block holds no decision.
-  NONE_BRIEF = "none"  ## Text after `**Brief:**` where no issue started delegate.
   CLASS_BLOCKS = "blocks this delegate"  ## Class of decision delegate cannot work around.
   CLASS_BLOCKS_OTHERS = CLASS_BLOCKS & " and "
     ## Opening of class naming role strings that wait too, after `and`, split on comma.
@@ -493,19 +494,13 @@ func checkSignoff*(message, branch: string): seq[Finding] =
   let
     role_text = Part.Role.rest.split(',')[0].strip
     parsed = branch.parseBranch
-    brief = Part.Brief.rest
-    state_word = Part.State.rest
-    decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Table]])
+    state_word = Part.State.rest.split({',', ' '})[0]
+    decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Next]])
   if parsed.isSome and role_text != parsed.get.roleName:
     result.add finding(
       "",
       0,
       "Sign-off role must be `" & parsed.get.roleName & "`; got `" & role_text & "`.",
-    )
-  if brief != NONE_BRIEF and not (brief.len > 1 and brief[0] == '#' and
-      brief[1 .. ^1].allCharsInSet(Digits)):
-    result.add finding(
-      "", 0, "Sign-off brief is `#N`, or `" & NONE_BRIEF & "`; got `" & brief & "`."
     )
   if state_word notin STATES_SIGNOFF:
     result.add finding(
@@ -536,7 +531,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     )
   for i, d in decisions: result.add decisionFindings(d, i)
   result.add rowFindings(
-    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").tableRows,
+    after[starts[Part.Table] + 1 ..< starts[Part.Context]].join("\n").tableRows,
     decisions.mapIt(it.number),
   )
   var k = starts[Part.Next] + 1

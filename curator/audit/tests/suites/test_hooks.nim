@@ -14,13 +14,21 @@ Done.
 
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `gap-list` at `3f2a9c1`, pushed, #331 draft
+**Role:** contributor/ronri/pga_benchmark, `gap-list`
 
-**Brief:** #329
+**State:** blocked, at `3f2a9c1`, pushed, #331 draft
 
-**State:** blocked
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ☑️ | Names stay by the ruling (carried 3) | #320 | the Architect ruled |
+| 2 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
+| 3 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
+| 4 | ⏸️ | Names in the tests | #310 | D1 |
+| 5 | ⬜ | cga5d baseline | `tests/` | this delegate |
 
 **Context:** This branch adds the gap list. The Architect asked for baselines. #331 was a draft.
+
+**Summary:** The gap list is done. Row 4 waits on D1.
 
 **Decisions:**
 
@@ -37,36 +45,24 @@ Done.
 - Class: fact
 - Where: #331
 
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ☑️ | Names stay by the ruling (carried 3) | #320 | the Architect ruled |
-| 2 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
-| 3 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
-| 4 | ⏸️ | Names in the tests | #310 | D1 |
-| 5 | ⬜ | cga5d baseline | `tests/` | this delegate |
-
-**Summary:** The gap list is done. Row 4 waits on D1.
-
 **Next step:** Architect: rule on D1 in #310.
 """
   PLAIN = """
 ## Sign-off
 
-**Role:** contributor/ronri/pga_benchmark, `gap-list` at `3f2a9c1`, pushed, #331 ready
+**Role:** contributor/ronri/pga_benchmark, `gap-list`
 
-**Brief:** none
-
-**State:** done
-
-**Context:** This branch adds the gap list.
-
-**Decisions:** None.
+**State:** done, at `3f2a9c1`, pushed, #331 ready
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
 | 1 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
 
+**Context:** This branch adds the gap list.
+
 **Summary:** The gap list is done.
+
+**Decisions:** None.
 
 **Next step:** Architect: merge #331.
 """
@@ -188,7 +184,7 @@ suite "Hooks":
 
   test "sign-off shape":
     check checkSignoff(SIGNOFF, BRANCH).len == 0
-    check checkSignoff(PLAIN, BRANCH).len == 0  # no brief, no decision
+    check checkSignoff(PLAIN, BRANCH).len == 0  # no decision
     check checkSignoff("Done.\n", BRANCH).messages[0].contains("must end with")
     check checkSignoff(SIGNOFF & "\n## After\n", BRANCH)
       .messages.anyIt("Nothing follows sign-off" in it)  # heading rule, not Next step rule
@@ -210,14 +206,24 @@ suite "Hooks":
       .messages.anyIt("one of" in it)
 
 
-  test "sign-off brief and state":
-    check checkSignoff(SIGNOFF.replace("**State:** blocked\n", ""), BRANCH)
+  test "sign-off parts come in order Architect set":
+    const CONTEXT = "**Context:** This branch adds the gap list. The Architect asked for " &
+      "baselines. #331 was a draft.\n\n"
+    let context_first = SIGNOFF.replace(CONTEXT, "").replace("| # |", CONTEXT & "| # |")
+    check checkSignoff(context_first, BRANCH)
+      .messages.anyIt("lacks `**Context:**` in its order" in it)  # table comes first
+    const SUMMARY = "**Summary:** The gap list is done. Row 4 waits on D1.\n\n"
+    let summary_last = SIGNOFF.replace(SUMMARY, "").replace("**Next", SUMMARY & "**Next")
+    check checkSignoff(summary_last, BRANCH)
+      .messages.anyIt("lacks `**Decisions:**` in its order" in it)  # decisions follow summary
+
+
+  test "sign-off state and decisions label":
+    const STATE = "**State:** blocked, at `3f2a9c1`, pushed, #331 draft\n"
+    check checkSignoff(SIGNOFF.replace(STATE, ""), BRANCH)
       .messages.anyIt("lacks `**State:**`" in it)
     check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** stuck"), BRANCH)
-      .messages.anyIt("state is one of" in it)
-    check checkSignoff(SIGNOFF.replace("**Brief:** #329", "**Brief:** issue 329"), BRANCH)
-      .messages.anyIt("brief is `#N`" in it)
-    check checkSignoff(SIGNOFF.replace("**Brief:** #329", "**Brief:** none"), BRANCH).len == 0
+      .messages.anyIt("state is one of" in it and "got `stuck`." in it)  # word, not branch
     let unblocked = SIGNOFF.replace("- Class: blocks this delegate", "- Class: has a workaround: x")
     check checkSignoff(unblocked, BRANCH).messages.anyIt("exactly when" in it)  # blocked, no block
     check checkSignoff(unblocked.replace("**State:** blocked", "**State:** working"), BRANCH)
