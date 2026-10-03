@@ -903,14 +903,17 @@ stale queue.
   item. That is inferred from the source of `gh`, and not run against GitHub. A read that fails
   instead turns the run red, by `set -e`, and is never silent.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
-  2026-10-03. The lines were read from the workflow file. The fixture holds two closed issues
-  and three pull requests: one open, one closed and one merged. The step names both issues and
-  the closed and merged pull requests, and nothing else. Over no item, and over one open pull
-  request, it names nothing.
+  2026-10-03. The step runs as the workflow holds it. The fixture holds two closed issues and
+  three pull requests: one open, one closed and one merged. The step names both issues and the
+  closed and merged pull requests, and nothing else. Over no item, and over one open pull
+  request, it names nothing. Through a stub whose every read fails, the step exits 1.
 - The role-line pattern for issues, verified by hand through real `jq` 1.7 on 2026-10-03, over
   fixture bodies read as the workflow holds them. `**Role:** coordinator`, after a marker or
   alone, passes, and so does `Role: coordinator` unbolded. `**Role:** coordinat`, a missing
   role line, a null body and an unfilled template are named.
+- Cost: `gh` runs `--jq` through `gojq`, and the two checks above ran `jq` 1.7. That the two
+  agree here is inferred. No program calls a builtin that `gojq` lacks, and the pattern holds
+  no lookaround and no back-reference.
 
 ## Toolchain
 
@@ -2052,10 +2055,11 @@ commit before the new one, and `check-commits` reads the true order in CI.
   Verified by `suites/test_hooks.nim`.
 
 **`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
-sign-off row or a decision class may name the coordinator as the role that acts. No branch
-holds it, so no hook compares its role line with a branch. An issue that carries the label
-`coordinator` is refused. A brief carries the label of the role that it starts, and no item is
-the work of the coordinator.
+sign-off row or a decision class may name the coordinator as the role that acts. A hook
+compares a role line with the branch only where the branch is in the grammar, and the
+coordinator holds no branch. An issue that carries the label `coordinator` is refused. A brief
+carries the label of the role that it starts, and no item is the work of the coordinator.
+Verified by `suites/test_hooks.nim`.
 
 **The sign-off serves the coordinator first, so `stop` holds the parts that the coordinator
 reads.** The coordinator lifts each decision onto a card for the Architect without a change of
