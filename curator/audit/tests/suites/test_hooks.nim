@@ -189,7 +189,8 @@ suite "Hooks":
     check checkSignoff(SIGNOFF, BRANCH).len == 0
     check checkSignoff(PLAIN, BRANCH).len == 0  # no brief, no decision
     check checkSignoff("Done.\n", BRANCH).messages[0].contains("must end with")
-    check checkSignoff(SIGNOFF & "\n## After\n", BRANCH).messages.anyIt("Nothing follows" in it)
+    check checkSignoff(SIGNOFF & "\n## After\n", BRANCH)
+      .messages.anyIt("Nothing follows sign-off" in it)  # heading rule, not Next step rule
     check checkSignoff(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH)
       .messages.anyIt("lacks `**Summary:**`" in it)
     check checkSignoff(SIGNOFF.replace("**Role:** contributor/ronri", "**Role:** curator"), BRANCH)
