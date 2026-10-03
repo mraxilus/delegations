@@ -1355,6 +1355,10 @@ predicate:
   line forms that this charter prescribes.
 - V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
   the fixer share one reading of the words and of the exemptions of the glossaries.
+- A name that a template substitutes declares nothing of that name. So `type name = object`
+  inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
+- A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
+  says (`[N: static int]`). The Architect weighed snake case, and kept the text.
 - Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
   Architect ruled a finding.
 - Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
