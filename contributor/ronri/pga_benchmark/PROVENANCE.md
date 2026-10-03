@@ -696,10 +696,10 @@ to read no head, and the verb `head` to report what `checkHead` finds.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `31213421d6699cb44a9a171b75388ef8188e1136`, and `nim.cfg` names
+records the resolved commit `d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-10-01, as the standing instruction of the
+That commit is the head of the library on 2026-10-03, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
 
@@ -740,10 +740,11 @@ norm, writes no zero. The Architect decided this, because the library is about P
 micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `3121342` the library works this way, and its attitude and
-carrier are generated. The cost that stays is what the hand-written norms pay.
+unrolled at no cost. At the pin `d9be8ae` the library works this way, and its attitude and
+carrier are generated. Its hand-written `+` and `-` carry `noinit` and write each slot, so they
+fill nothing. The cost that stays is what the hand-written norms pay.
 
-The cost is measured at the pin `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
+The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.10 GHz, on
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
 each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
