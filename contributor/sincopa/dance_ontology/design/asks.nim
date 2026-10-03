@@ -12,23 +12,22 @@
 import std/[options, strformat]
 
 import ../simulation/[body, hold]
-import ../src/dance_ontology/diagram
+import ../src/dance_ontology/[diagram, frame]
 import ../src/dance_ontology/draw/terms
-import ../src/dance_ontology/frame
 from ../src/dance_ontology/draw/pose import About
 from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
 
-type StillAsk* = object ## One still card, as simulation is asked it.
-  key*: string    ## Question's key, as page keys its own pictures.
+type StillAsk* = object  ## One still card, as simulation is asked it.
+  key*: string  ## Question's key, as page keys its own pictures.
   links*: seq[Link]
-  turns*: float   ## How far `who` turns from where hold rests, simulation's own sense.
-  rest*: Facing   ## Facing hold rests at (`parts.restOf`).
-  who*: Body      ## Who simulation turns: dancer at centre of turn.
-  head*: Body     ## Whose crown joined hands go over: one who turns, since connection goes
+  turns*: float  ## How far `who` turns from where hold rests, simulation's own sense.
+  rest*: Facing  ## Facing hold rests at (`parts.restOf`).
+  who*: Body  ## Who simulation turns: dancer at centre of turn.
+  head*: Body  ## Whose crown joined hands go over: one who turns, since connection goes
                   ## round dancer whose facing turns against it.
-  is_either_way*: bool   ## Whether couple may be wound to this facing either way about:
+  is_either_way*: bool  ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
 
 
@@ -102,6 +101,7 @@ func turnerOf*(manner: Manner, amount: float): tuple[who: Body, turns: float] =
 func stillAsks*(): seq[StillAsk] =
   ## Every still card, in page's own order: standard diagram, single-hand
   ## positions, then both chains.
+
   # `A`. Standard diagram: eight frames, each drawn at two facings.
   #   `twist` names facing *drawn* -- nought Face-to-face, one Face-to-back --
   #     and not half turns from frame's own rest.  Frame that rests Face-to-back is
@@ -116,9 +116,11 @@ func stillAsks*(): seq[StillAsk] =
   func amountFor(target: Frame, twist: int): float =
     ## Say how far frame winds from its rest to facing `twist` draws: nought or half turn.
     if turnedFacing(0.0, 180.0 * float(twist)) == some(restOf(target)): 0.0 else: 0.5
+
   func isDrawnEitherWay(target: Frame): bool =
     ## Decide whether frame draws same picture wound either way about.
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
+
   #   Frame that names one connection over turns whichever way puts that one over, as
   #     chain names its positions (`route.overArm`): left over at positive wind.  So it
   #     fixes way about, though it draws same picture either way: drawing puts frame's own
@@ -127,6 +129,7 @@ func stillAsks*(): seq[StillAsk] =
   func senseOf(target: Frame): float =
     ## Say which way frame's half turn goes: right over winds other way.
     if target.over.isSome and target.over.get == Side.Right: -1.0 else: 1.0
+
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
@@ -156,7 +159,7 @@ func stillAsks*(): seq[StillAsk] =
   #     over walker's crown: twin cards of one picture stood two poses.
   for single_index, single in SINGLES:
     for manner in Manner:
-      for quarter in 0 ..< QUARTERS_ROUND:
+      for quarter in 0..<QUARTERS_ROUND:
         let (who, turns) = turnerOf(manner, float(quarter) / float(QUARTERS_ROUND))
         result.add StillAsk(
           key: &"st_{MANNERS[manner].tag}_{single_index}_{quarter}",

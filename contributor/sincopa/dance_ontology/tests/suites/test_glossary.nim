@@ -15,8 +15,7 @@
 
 import std/[math, options, os, strutils, tables, unittest]
 
-import ../../design/parts
-import ../../design/rules
+import ../../design/[parts, rules]
 from ../../src/dance_ontology/rotation import nil
 
 
@@ -58,7 +57,7 @@ func replaced(source, term: string): seq[string] =
   for line in source.splitLines:
     let bare = line.strip
     if bare.startsWith("**") and bare.endsWith("**:"):
-      is_inside = bare[2 ..< bare.len - 3] == term
+      is_inside = bare[2..<bare.len - 3] == term
     elif bare.startsWith("_Avoid_:") and is_inside:
       for word in bare["_Avoid_:".len .. ^1].split(','):
         let trimmed = word.strip
@@ -73,13 +72,13 @@ func avoided(source: string, terms: openArray[string]): Table[string, seq[string
   for line in source.splitLines:
     let bare = line.strip
     if bare.startsWith("**") and bare.endsWith("**:"):
-      term = bare[2 ..< bare.len - 3]
+      term = bare[2..<bare.len - 3]
     elif bare.startsWith("_Avoid_:") and term in terms:
       for word in bare["_Avoid_:".len .. ^1].split(','):
         result.mgetOrPut(term, @[]).add word.strip.toLowerAscii
 
 
-func literals(source: string): seq[tuple[said: string; next: char]] =
+func literals(source: string): seq[tuple[said: string, next: char]] =
   ## Every string literal of Nim source, with character that follows it.
   ##   Follower tells key of object, which is data, from text page shows: writer
   ##     of sweep data holds `"him":` as key, and browser reads it back by that
@@ -87,20 +86,20 @@ func literals(source: string): seq[tuple[said: string; next: char]] =
   ##     those keys waits on rewrite of recorded sweeps.
   var i = 0
   while i < source.len:
-    if source[i] == '#' :
+    if source[i] == '#':
       while i < source.len and source[i] != '\n': i += 1
     elif source.continuesWith("\"\"\"", i):
       let opens = i + 3
       var shuts = source.find("\"\"\"", opens)
       if shuts < 0: shuts = source.len
-      result.add (source[opens ..< shuts], (if shuts + 3 < source.len: source[shuts + 3] else: ' '))
+      result.add (source[opens..<shuts], (if shuts + 3 < source.len: source[shuts + 3] else: ' '))
       i = shuts + 3
     elif source[i] == '\"':
       var j = i + 1
       while j < source.len and source[j] != '\"':
         if source[j] == '\\': j += 1
         j += 1
-      result.add (source[i + 1 ..< min(j, source.len)],
+      result.add (source[i + 1..<min(j, source.len)],
                   (if j + 1 < source.len: source[j + 1] else: ' '))
       i = j + 1
     else:
@@ -130,10 +129,10 @@ func rungsOf(report: string): seq[tuple[turns: int, said, facing: string]] =
     if opens < 0 or shuts < opens: continue
     var wound: float
     try:
-      wound = parseFloat(cell[opens + 1 ..< shuts])
+      wound = parseFloat(cell[opens + 1..<shuts])
     except ValueError:
       continue
-    result.add (int(round(wound * 100.0)), cell[0 ..< opens].strip, cells[2].strip)
+    result.add (int(round(wound * 100.0)), cell[0..<opens].strip, cells[2].strip)
 
 
 func isSaying(text, phrase: string): bool =
@@ -148,10 +147,12 @@ func isSaying(text, phrase: string): bool =
     from_here = at + 1
 
 
+
 suite "Internal: Chain speaks glossary":
   let
     source = readFile(GLOSSARY)
     rejected = source.avoided(CHAIN_TERMS)
+
 
   test "glossary still names every step of chain":
     # Laws below are vacuous where entries they read are missing, so entries
@@ -159,6 +160,7 @@ suite "Internal: Chain speaks glossary":
     for term in CHAIN_TERMS:
       check term in rejected
       check rejected[term].len > 0
+
 
   test "no position is named by word glossary rejects":
     for holds in HOLDS:
@@ -168,12 +170,14 @@ suite "Internal: Chain speaks glossary":
           for word in words:
             check not name.isSaying(word)
 
+
   test "every position carries glossary's own word":
     for holds in HOLDS:
       for position in chainFor(holds):
         let tenths = int(abs(position.wind) * 10)
         if tenths in SHAPE_AT:
           check position.name.toLowerAscii.isSaying(SHAPE_AT[tenths].toLowerAscii)
+
 
 
 suite "Internal: Pages speak of the lead and the follow":
@@ -185,6 +189,7 @@ suite "Internal: Pages speak of the lead and the follow":
     rejected = source.avoided(DANCER_TERMS)
     root = currentSourcePath().parentDir.parentDir.parentDir
 
+
   test "glossary still rejects a gendered word for each dancer":
     for term in DANCER_TERMS:
       check term in rejected
@@ -193,6 +198,7 @@ suite "Internal: Pages speak of the lead and the follow":
   var gendered: seq[string]
   for _, words in rejected:
     for word in words: gendered.add word
+
 
   test "no string a page shows says a gendered word":
     for directory in SAID_IN:
@@ -204,6 +210,7 @@ suite "Internal: Pages speak of the lead and the follow":
             if said.toLowerAscii.isSaying(word):
               checkpoint path.extractFilename & " says `" & word & "`: " & said
               fail()
+
 
   test "no string a page shows names a facing by name glossary replaced":
     ## Glossary replaced Pillion and Sidecar (issue #289), and they stood on
@@ -225,6 +232,7 @@ suite "Internal: Pages speak of the lead and the follow":
           checkpoint name & " says `" & word & "`"
           fail()
 
+
   test "no page written by hand says a gendered word":
     for name in DOCUMENTS:
       let said = readFile(root / name).toLowerAscii
@@ -232,6 +240,7 @@ suite "Internal: Pages speak of the lead and the follow":
         if said.isSaying(word):
           checkpoint name & " says `" & word & "`"
           fail()
+
 
 
 suite "Internal: The report speaks glossary":
@@ -246,12 +255,14 @@ suite "Internal: The report speaks glossary":
     report = readFile(REPORT)
     rungs = rungsOf(report)
 
+
   test "report still tabulates every rung of chain":
     # Laws below say nothing where table is missing or unparsed, so rows are
     # demanded first.
     check rungs.len > 0
     for (wound, _, _) in rungs:
       check wound in RUNG_AT
+
 
   test "no rung of report is named by word glossary rejects":
     for (wound, said, _) in rungs:
@@ -261,9 +272,11 @@ suite "Internal: The report speaks glossary":
             checkpoint "rung at " & $wound & " says `" & word & "`: " & said
             fail()
 
+
   test "every rung of report carries glossary's own word":
     for (wound, said, _) in rungs:
       check said.toLowerAscii.isSaying(RUNG_AT[wound])
+
 
   test "every rung of report stands at facing model gives its turn":
     ## Report reads facing off stance simulation winds couple to (`words.facingName`),
@@ -275,6 +288,7 @@ suite "Internal: The report speaks glossary":
         turned = [rotation.Dancer.Lead: 0, rotation.Dancer.Follow: -(wound div 25)]
         want = rotation.facing(rotation.seenAfter(turned))
       check said == want.name
+
 
   test "no facing of report is named by name glossary replaced":
     ## Report named rest of same-name pair `pillion lead`, while every page

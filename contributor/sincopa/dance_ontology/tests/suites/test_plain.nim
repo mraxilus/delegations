@@ -16,6 +16,7 @@ import std/[strutils, unittest]
 import ../../design/plain
 
 
+
 suite "Internal: Prose off markup":
   test "paragraph after drawn path is read":
     # Figure between two paragraphs is what every page does.
@@ -26,6 +27,7 @@ suite "Internal: Prose off markup":
     """
     check markup.prose == @["First paragraph.", "Second paragraph."]
 
+
   test "item after drawn line is read":
     # `line` opens same two letters as `li`.
     let markup = """
@@ -34,6 +36,7 @@ suite "Internal: Prose off markup":
       <ul><li>Second item.</li></ul>
     """
     check markup.prose == @["First item.", "Second item."]
+
 
   test "prose is text of paragraph and item alone":
     let markup = """
@@ -46,12 +49,14 @@ suite "Internal: Prose off markup":
     """
     check markup.prose == @["Paragraph.", "Item."]
 
+
   test "sentence at the bound holds, and one word past it fails":
     let
       ok = "<p>" & "word ".repeat(WORDS - 1) & "end.</p>"
       over = "<p>" & "word ".repeat(WORDS) & "end.</p>"
     check ok.longSentences.len == 0
     check over.longSentences.len == 1
+
 
   test "paragraph at the bound holds, and one sentence past it fails":
     let
@@ -60,36 +65,42 @@ suite "Internal: Prose off markup":
     check ok.longParagraphs.len == 0
     check over.longParagraphs.len == 1
 
+
   test "sentence ends at stop, and its words are counted whole":
     let markup = "<p>One sentence here. Two sentences now!  Three?</p>"
     check markup.prose[0].sentences.len == 3
     check markup.prose[0].sentences[0] == "One sentence here."
 
 
+
 suite "Internal: Prose off Markdown":
   ## Reader copies repository's `english` check rather than importing it (`markdownProse`), so
   ## each way it could part from that check is pinned here.  Checked against that check on
   ## nine documents of repository, 1158 blocks and 2746 sentences, every one same.
-
   test "fenced code is not read, however long its lines":
     let document = "Before.\n\n```\n" & "word ".repeat(WORDS + 10) & "\n```\n\nAfter."
     check document.markdownProse == @["Before.", "After."]
 
+
   test "quotation, table row, heading and rule carry no prose":
     let document = "# Heading\n\n> Quoted words of somebody else.\n\n| a | b |\n\n---\n\nProse."
     check document.markdownProse == @["Prose."]
+
 
   test "each list item is its own block, and blank line ends one":
     let document = "- First item.\n- Second item,\n  wrapped.\n\nPlain line one.\nPlain line two."
     check document.markdownProse ==
       @["First item.", "Second item, wrapped.", "Plain line one. Plain line two."]
 
+
   test "numbered item loses its number and keeps its words":
     check "12. Twelfth item.".markdownProse == @["Twelfth item."]
+
 
   test "backticked span is one word, however many it holds":
     let said = "Run `nim r tools/build.nim pages` now.".markdownProse[0]
     check said.splitWhitespace.len == 3
+
 
   test "sentence ends inside closing quote and emphasis, where page reader runs on":
     ## `**"Stop here."** Next.` is two sentences.  `sentences`, which reads pages, sees one,

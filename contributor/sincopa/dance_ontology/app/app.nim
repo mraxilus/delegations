@@ -27,7 +27,7 @@
 when compileOption("profiler"): import std/nimprof
 
 import std/[options, strutils]
-import std/dom except Frame ## Exclude browser's own `Frame`, which is window.
+import std/dom except Frame  ## Exclude browser's own `Frame`, which is window.
 
 import ../src/dance_ontology
 
@@ -36,21 +36,21 @@ import ../src/dance_ontology
 #[ Session ]#
 
 type
-  View {.pure.} = enum ## Select what page is showing.
+  View {.pure.} = enum  ## Select what page is showing.
     Atlas,  ## Every frame there is, which is what ontology *is*.
     Dance,  ## One frame alone, and what can be done from it.
     Matrix  ## Every move there is, as one table.
 
-  Drawing {.pure.} = enum ## Select how frame is drawn while dancing.
+  Drawing {.pure.} = enum  ## Select how frame is drawn while dancing.
     Dynamic,  ## Frame in middle and every way out of it.
     Overview  ## Whole ontology, with couple somewhere in it.
 
-  Filter = object ## Narrow list of frames to ones worth looking at.
-    holds: Option[int]   ## Number of connections, where that is being asked for.
-    lead: Option[Side]   ## Hand of lead that must be holding something.
-    follow: Option[Site] ## Hand of follow that must be held.
+  Filter = object  ## Narrow list of frames to ones worth looking at.
+    holds: Option[int]  ## Number of connections, where that is being asked for.
+    lead: Option[Side]  ## Hand of lead that must be holding something.
+    follow: Option[Site]  ## Hand of follow that must be held.
 
-  Step = object ## Hold one danced move, for history.
+  Step = object  ## Hold one danced move, for history.
     phrase: string
     to: Frame
 
@@ -73,13 +73,13 @@ var
   CURRENT = startFrame()
   VIEW_SHOWN = View.Atlas
   DRAWING_SHOWN = Drawing.Dynamic
-  IS_DRAWING_CHOSEN = false        ## Whether reader has picked drawing themselves.
+  IS_DRAWING_CHOSEN = false  ## Whether reader has picked drawing themselves.
   FILTER_APPLIED = Filter()
   HISTORY: seq[Step] = @[]
-  MOTION_NOW = Motion.Still     ## What drawings are doing at this instant.
-  FRAME_TAKEN = none(Frame)       ## Frame being moved to, while couple are leaving.
-  FRAME_QUEUED = none(Frame)      ## Second move of compound, waiting for first.
-  GENERATION = 0            ## Which move is in flight, so older one can be dropped.
+  MOTION_NOW = Motion.Still  ## What drawings are doing at this instant.
+  FRAME_TAKEN = none(Frame)  ## Frame being moved to, while couple are leaving.
+  FRAME_QUEUED = none(Frame)  ## Second move of compound, waiting for first.
+  GENERATION = 0  ## Which move is in flight, so older one can be dropped.
 
 
 func tempoOf(drawing: Drawing): Tempo =
@@ -114,8 +114,9 @@ proc standAgain(held: string) =
     return
   let
     parts = held.split(' ')
-    sought = document.querySelector(cstring("[data-action=\"" & parts[0] &
-      "\"][data-value=\"" & parts[1] & "\"]"))
+    sought = document.querySelector(
+      cstring("[data-action=\"" & parts[0] & "\"][data-value=\"" & parts[1] & "\"]"),
+    )
   if sought != nil:
     sought.focus()
     return
@@ -159,7 +160,7 @@ proc hasRoomForMap(): bool =
     .getPropertyValue("--wide")).strip() == "1"
 
 
-proc setScrollLeft(box: Node, value: int) {.importcpp: "#.scrollLeft = #", nodecl.}
+proc setScrollLeft(box: Node, value: int) {.nodecl, importcpp: "#.scrollLeft = #".}
   ## Set how far scrolling box is scrolled; `std/dom` only reads it.
 
 
@@ -236,8 +237,12 @@ func inked(said: string): string =
 
 func button(action, value, classes, body: string): string =
   ## Form button carrying action page should take when it is clicked.
-  tag("button", "class=\"" & classes & "\" data-action=\"" & action &
-    "\" data-value=\"" & escaped(value) & "\"", body)
+  tag(
+    "button",
+    "class=\"" & classes & "\" data-action=\"" & action &
+      "\" data-value=\"" & escaped(value) & "\"",
+    body,
+  )
 
 
 
@@ -257,12 +262,19 @@ func renderMoves(source: Frame): string =
   for move in available:
     let helper = $move.helper
     if helper != previous:
-      rows.add tag("h4", "", escaped(helper.toLowerAscii) & " &middot; " &
-        escaped(manner(move.helper)))
+      rows.add tag(
+        "h4",
+        "",
+        escaped(helper.toLowerAscii) & " &middot; " & escaped(manner(move.helper)),
+      )
       previous = helper
-    rows.add button("move", move.to.key, "move",
+    rows.add button(
+      "move",
+      move.to.key,
+      "move",
       tag("span", "class=\"phrase\"", inked(phrase(source, move))) &
-      tag("span", "class=\"target\"", inked(move.to.describe)))
+      tag("span", "class=\"target\"", inked(move.to.describe)),
+    )
   var shortcuts = ""
   for target in FRAMES:
     let helper = compound(source, target)
@@ -274,15 +286,20 @@ func renderMoves(source: Frame): string =
       if spelled.len > 0:
         spelled.add " &rarr; "
       spelled.add escaped(step.helper.name)
-    shortcuts.add button("compound", target.key, "move two",
+    shortcuts.add button(
+      "compound",
+      target.key,
+      "move two",
       tag("span", "class=\"phrase\"", inked(compoundPhrase(source, target))) &
-      tag("span", "class=\"target\"", inked(target.describe) & " &middot; " &
-        spelled))
+      tag("span", "class=\"target\"", inked(target.describe) & " &middot; " & spelled),
+    )
   if shortcuts.len > 0:
     shortcuts = tag("h4", "", "two moves, led as one") & shortcuts
-  tag("section", "class=\"panel\"",
-    tag("h3", "", "available now &middot; " & $available.len & " moves") &
-    rows & shortcuts)
+  tag(
+    "section",
+    "class=\"panel\"",
+    tag("h3", "", "available now &middot; " & $available.len & " moves") & rows & shortcuts,
+  )
 
 
 func renderElsewhere(source: Frame): string =
@@ -316,23 +333,31 @@ func renderElsewhere(source: Frame): string =
     # this is written way it is true rather than way it is convenient.
     var standing = source
     for step in route(source, target):
-      detail.add tag("span", "class=\"step\"",
-        inked(phrase(standing, step)) & tag("i", "", inked(step.to.describe)))
+      detail.add tag(
+        "span",
+        "class=\"step\"",
+        inked(phrase(standing, step)) & tag("i", "", inked(step.to.describe)),
+      )
       standing = step.to
-    rows.add tag("div", "class=\"far\"",
+    rows.add tag(
+      "div",
+      "class=\"far\"",
       tag("span", "class=\"phrase\"", inked(target.describe)) &
       tag("span", "class=\"target\"", $route(source, target).len & " moves") &
-      detail)
-  tag("section", "class=\"panel muted\"",
-    tag("h3", "", "not from here &middot; " & $count) & rows)
+      detail,
+    )
+  tag("section", "class=\"panel muted\"", tag("h3", "", "not from here &middot; " & $count) & rows)
 
 
 func renderHistory(danced: seq[Step]): string =
   ## Show sequence danced so far, with ways back out of it.
   var rows = ""
   for index in countdown(danced.high, 0):
-    rows.add tag("li", "", inked(danced[index].phrase) & " &rarr; " &
-      inked(danced[index].to.describe))
+    rows.add tag(
+      "li",
+      "",
+      inked(danced[index].phrase) & " &rarr; " & inked(danced[index].to.describe),
+    )
   tag("section", "class=\"panel\"",
     tag("h3", "", "danced &middot; " & $danced.len) &
     button("undo", "", "flat", "undo") & button("reset", "", "flat", "reset") &
@@ -368,10 +393,16 @@ func renderArms(): string =
   # Said in two inks it is about, so sentence that explains
   # convention is itself instance of it, and taken from model rather
   # than spelled again here.
-  swatches.add tag("span", "class=\"swatch aside\"",
-    tag("span", "",
+  swatches.add tag(
+    "span",
+    "class=\"swatch aside\"",
+    tag(
+      "span",
+      "",
       "&ldquo;" & inked(leadName(Side.Left)) & "&rdquo; is the lead's hand, " &
-      "&ldquo;" & inked(followName(Site.LeftHand)) & "&rdquo; the follow's"))
+      "&ldquo;" & inked(followName(Site.LeftHand)) & "&rdquo; the follow's",
+    ),
+  )
   tag("div", "class=\"legend\"", swatches)
 
 
@@ -383,57 +414,80 @@ func renderKey(): string =
   ##   Reader who has not been told cannot read frames, names,
   ##     matrix or map -- so it is said once, next to first drawing
   ##     they meet, in fewest words that will do it.
-  tag("p", "class=\"key\"",
+  tag(
+    "p",
+    "class=\"key\"",
     "Seen from above: two bodies, the lead at the bottom in squares and the " &
     "follow at the top in circles. A small chevron on each says the way that " &
     "dancer faces. A connection runs hand to hand, in the colours of its own " &
     "two hands, which meet at the middle. It goes round a body rather than " &
     "through one, so a crossed hold is drawn crossing. A hand that nobody " &
-    "holds is faded. A line with a gap in it passes under the other.")
+    "holds is faded. A line with a gap in it passes under the other.",
+  )
 
 
-func renderSpokesView(current: Frame, motion: Motion,
-    taken: Option[Frame]): string =
+func renderSpokesView(current: Frame, motion: Motion, taken: Option[Frame]): string =
   ## Draw where couple are and every way out, and nothing else.
   tag("div", "class=\"view-spokes\"",
     tag("div", "class=\"scroll\"", renderSpokes(current, motion, taken)) &
-    tag("p", "class=\"note\"", "The frame in the middle is the frame you hold. " &
-      "Every spoke is a way out of it, and nothing else is drawn. A collect " &
-      "takes a hand, so it points up. A drop lets one go, so it points down.") &
-    tag("p", "class=\"note\"", "A compound is two moves, so it goes out to " &
-      "the side, inked in both arms that it hands a hand between. Each name " &
-      "says the hand of the follow that the move takes or lets go, in the " &
-      "colour of that hand. The rest of the name is the arm of the lead, in " &
-      "the deeper shade. Take a spoke, and it becomes the middle."))
+    tag(
+      "p",
+      "class=\"note\"",
+      "The frame in the middle is the frame you hold. " &
+        "Every spoke is a way out of it, and nothing else is drawn. A collect " &
+        "takes a hand, so it points up. A drop lets one go, so it points down.",
+    ) &
+    tag(
+      "p",
+      "class=\"note\"",
+      "A compound is two moves, so it goes out to " &
+        "the side, inked in both arms that it hands a hand between. Each name " &
+        "says the hand of the follow that the move takes or lets go, in the " &
+        "colour of that hand. The rest of the name is the arm of the lead, in " &
+        "the deeper shade. Take a spoke, and it becomes the middle.",
+    ))
 
 
 func renderMapView(current: Frame, motion: Motion, taken: Option[Frame]): string =
   ## Draw where couple stand in whole ontology.
   tag("div", "class=\"view-map\"",
     tag("div", "class=\"scroll\"", renderMap(some(current), motion, taken)) &
-    tag("p", "class=\"note\"", "Each row holds one more connection than the " &
-      "row below it. So a line up the page is a collect, and a line down is " &
-      "a drop. A line you stand on is named for the move away from you, " &
-      "which is the move you can make. Every other line is named for the " &
-      "move that runs up it.") &
-    tag("p", "class=\"note\"", "Every name says the hand of the follow that " &
-      "the move takes or lets go, in the colour of that hand. The rest of " &
-      "the name is the arm of the lead that does it, in the deeper shade. So " &
-      "a name runs deep into plain, as the connection it makes does. Where a " &
-      "name lies across its own line, the line is cut for it and rounded at " &
-      "both ends. The break then reads as a name rather than as a line that " &
-      "stops.") &
-    tag("p", "class=\"note\"", "A dashed curve is a compound, inked in both " &
-      "arms, because it hands a hand from one arm to the other. The ink at " &
-      "each end is the arm that acts on the way to it. The frames you can " &
-      "reach come forward, the rest go quiet, and the ring moves along the " &
-      "line you take. A frame ringed in a solid line is one move away, and a " &
-      "dashed ring is a compound, which is two moves away. Both can be " &
-      "clicked, and a compound dances its two moves in turn."))
+    tag(
+      "p",
+      "class=\"note\"",
+      "Each row holds one more connection than the " &
+        "row below it. So a line up the page is a collect, and a line down is " &
+        "a drop. A line you stand on is named for the move away from you, " &
+        "which is the move you can make. Every other line is named for the " &
+        "move that runs up it.",
+    ) &
+    tag(
+      "p",
+      "class=\"note\"",
+      "Every name says the hand of the follow that " &
+        "the move takes or lets go, in the colour of that hand. The rest of " &
+        "the name is the arm of the lead that does it, in the deeper shade. So " &
+        "a name runs deep into plain, as the connection it makes does. Where a " &
+        "name lies across its own line, the line is cut for it and rounded at " &
+        "both ends. The break then reads as a name rather than as a line that " &
+        "stops.",
+    ) &
+    tag(
+      "p",
+      "class=\"note\"",
+      "A dashed curve is a compound, inked in both " &
+        "arms, because it hands a hand from one arm to the other. The ink at " &
+        "each end is the arm that acts on the way to it. The frames you can " &
+        "reach come forward, the rest go quiet, and the ring moves along the " &
+        "line you take. A frame ringed in a solid line is one move away, and a " &
+        "dashed ring is a compound, which is two moves away. Both can be " &
+        "clicked, and a compound dances its two moves in turn.",
+    ))
 
 
-func renderStageBody(current: Frame, drawing: Drawing, motion: Motion,
-    taken: Option[Frame]): string =
+func renderStageBody(
+  current: Frame, drawing: Drawing, motion: Motion, taken: Option[Frame]
+): string =
   ## Show frame couple hold, drawn way dancer has asked for.
   ##   Name shown is frame being *left* until move lands, because
   ##     drawing is still showing that frame: heading that changed before
@@ -442,18 +496,25 @@ func renderStageBody(current: Frame, drawing: Drawing, motion: Motion,
     case drawing
     of Drawing.Dynamic: renderSpokesView(current, motion, taken)
     of Drawing.Overview: renderMapView(current, motion, taken)
-  tag("div", "class=\"stage-head\"",
+  tag(
+    "div",
+    "class=\"stage-head\"",
     tag("h3", "", "frame") & tag("h2", "", inked(current.describe)) &
-    renderDrawingSwitch(drawing) & renderArms()) &
+    renderDrawingSwitch(drawing) & renderArms(),
+  ) &
     renderKey() & tag("div", "class=\"views\"", shown)
 
 
-func renderDance(current: Frame, drawing: Drawing, motion: Motion,
-    taken: Option[Frame], danced: seq[Step]): string =
+func renderDance(
+  current: Frame, drawing: Drawing, motion: Motion, taken: Option[Frame], danced: seq[Step]
+): string =
   ## Show current frame, what it allows, and what it does not.
   tag("div", "class=\"stage\"",
-    tag("section", "class=\"panel wide\" id=\"stage\" tabindex=\"-1\"",
-      renderStageBody(current, drawing, motion, taken)) &
+    tag(
+      "section",
+      "class=\"panel wide\" id=\"stage\" tabindex=\"-1\"",
+      renderStageBody(current, drawing, motion, taken),
+    ) &
     renderMoves(current) & renderElsewhere(current) & renderHistory(danced))
 
 
@@ -483,7 +544,7 @@ func chip(action, value, label: string; is_chosen: bool): string =
 func renderFilters(narrowing: Filter): string =
   ## Ask three questions that narrow gallery: how many, whose, which.
   var holds = chip("holds", "any", "any", is_chosen = narrowing.holds.isNone)
-  for count in 0 .. 2:
+  for count in 0..2:
     holds.add chip("holds", $count, $count & (if count == 1: " hand" else: " hands"),
       narrowing.holds == some(count))
   var lead = chip("lead", "any", "either", is_chosen = narrowing.lead.isNone)
@@ -492,12 +553,13 @@ func renderFilters(narrowing: Filter): string =
   var follow = chip("follow", "any", "either", is_chosen = narrowing.follow.isNone)
   for site in Site:
     follow.add chip("follow", $site, followName(site), is_chosen = narrowing.follow == some(site))
-  tag("div", "class=\"filters\"",
+  tag(
+    "div",
+    "class=\"filters\"",
     tag("div", "class=\"question\"", tag("span", "class=\"asks\"", "connections") & holds) &
-    tag("div", "class=\"question\"",
-      tag("span", "class=\"asks\"", "lead's hand holds") & lead) &
-    tag("div", "class=\"question\"",
-      tag("span", "class=\"asks\"", "follow's hand held") & follow))
+    tag("div", "class=\"question\"", tag("span", "class=\"asks\"", "lead's hand holds") & lead) &
+    tag("div", "class=\"question\"", tag("span", "class=\"asks\"", "follow's hand held") & follow),
+  )
 
 
 func renderGallery(narrowing: Filter): string =
@@ -537,7 +599,7 @@ const
   HELPER_GLYPHS: array[Helper, string] = [
     Helper.Collect: "&uarr;",
     Helper.Drop: "&darr;",
-  ] ## Point primitive way every other drawing points it.
+  ]  ## Point primitive way every other drawing points it.
     ##   Collect adds connection and drop takes one away, and both
     ##     map and close drawing say that by direction: up page for
     ##     collect, since collect builds frame up, and down for drop.
@@ -546,7 +608,7 @@ const
   COMPOUND_GLYPHS: array[Compound, string] = [
     Compound.Place: "&#8644;",
     Compound.Cut: "&times;",
-  ] ## Draw compound as what it does: place hands hand across, cut
+  ]  ## Draw compound as what it does: place hands hand across, cut
     ## crosses one arm over other.
 
 
@@ -581,12 +643,18 @@ func renderMarks(): string =
   ##   Drawn, legend and cell are same thing seen twice.
   var items = ""
   for helper in Helper:
-    items.add tag("span", "class=\"swatch\"",
-      renderMark("one", "var(--dim)", HELPER_GLYPHS[helper]) & helper.name)
+    items.add tag(
+      "span",
+      "class=\"swatch\"",
+      renderMark("one", "var(--dim)", HELPER_GLYPHS[helper]) & helper.name,
+    )
   for named in Compound:
-    items.add tag("span", "class=\"swatch\"",
+    items.add tag(
+      "span",
+      "class=\"swatch\"",
       renderMark("two", "var(--dim)", COMPOUND_GLYPHS[named]) &
-      ($named).toLowerAscii & ", two moves")
+      ($named).toLowerAscii & ", two moves",
+    )
   tag("div", "class=\"legend\"", items)
 
 
@@ -599,7 +667,7 @@ func renderCrosshair(across: int): string =
   ##     and gridless table needs it: without lines to follow, whole
   ##     difficulty of eight-by-eight is knowing which column you are in.
   result = "<style>"
-  for column in 2 .. across + 1:
+  for column in 2..across + 1:
     result.add ".matrix:has(td:nth-child(" & $column & "):hover) " &
       ":is(th, td):nth-child(" & $column & ") { background: var(--cross); }"
   result.add "</style>"
@@ -644,9 +712,11 @@ func renderMatrix(): string =
   var opens: seq[bool] = @[]
   for index, target in order:
     opens.add index > 0 and order[index - 1].countHolds != target.countHolds
-  var head = tag("th", "class=\"corner\"",
-    tag("span", "class=\"axis\"", "to &rarr;") &
-    tag("span", "class=\"axis\"", "from &darr;"))
+  var head = tag(
+    "th",
+    "class=\"corner\"",
+    tag("span", "class=\"axis\"", "to &rarr;") & tag("span", "class=\"axis\"", "from &darr;"),
+  )
   for index, target in order:
     head.add tag("th", "class=\"head" & (if opens[index]: " gap" else: "") &
       "\" title=\"" & escaped(target.describe) & "\"",
@@ -659,25 +729,38 @@ func renderMatrix(): string =
     # It fits beside name now that name is short, and it is legible at
     # that size now that lead's hands are squares: whose row is whose is in
     # marks, where before it was only in captions too small to read.
-    var row = tag("th", "class=\"row" & step & "\" title=\"" &
-      escaped(source.describe) & "\"",
-      tag("span", "class=\"who\"", inked(source.brief)) & renderFrame(source))
+    var row = tag(
+      "th",
+      "class=\"row" & step & "\" title=\"" & escaped(source.describe) & "\"",
+      tag("span", "class=\"who\"", inked(source.brief)) & renderFrame(source),
+    )
     for across, target in order:
       let
         edge = (if opens[across]: " gap" else: "") & step
         helper = classify(source, target)
         named = compound(source, target)
       if source == target:
-        row.add cell("self" & edge, "var(--rule-strong)", source.describe,
-          tag("span", "class=\"tile here\"", ""))
+        row.add cell(
+          "self" & edge,
+          "var(--rule-strong)",
+          source.describe,
+          tag("span", "class=\"tile here\"", ""),
+        )
       elif helper.isSome:
         let move = Move(helper: helper.get, to: target, side: actingSide(source, target))
-        row.add cell("one" & edge, toneOf(move.side), phrase(source, move),
-          tag("span", "class=\"tile one\"", HELPER_GLYPHS[move.helper]))
+        row.add cell(
+          "one" & edge,
+          toneOf(move.side),
+          phrase(source, move),
+          tag("span", "class=\"tile one\"", HELPER_GLYPHS[move.helper]),
+        )
       elif named.isSome:
-        row.add cell("two" & edge, toneOf(compoundSide(source, target).get),
+        row.add cell(
+          "two" & edge,
+          toneOf(compoundSide(source, target).get),
           compoundPhrase(source, target),
-          tag("span", "class=\"tile two\"", COMPOUND_GLYPHS[named.get]))
+          tag("span", "class=\"tile two\"", COMPOUND_GLYPHS[named.get]),
+        )
       else:
         let far = route(source, target).len
         row.add cell("away" & edge, "var(--faint)",
@@ -689,15 +772,22 @@ func renderMatrix(): string =
       tag("h3", "", "derived transition matrix") &
       renderMarks() & renderArms() & renderKey() &
       tag("div", "class=\"scroll\"", renderCrosshair(order.len) &
-        tag("table", "class=\"matrix\"",
-          tag("thead", "", tag("tr", "", head)) & tag("tbody", "", body))) &
-      tag("p", "class=\"note\"", "A cell is the move from its row to its " &
-        "column, inked in the arm of the lead that dances it. The frames are " &
-        "ordered down the tower, the same way the map stacks them. So every " &
-        "collect falls below the diagonal, and every drop above it. The " &
-        "compounds fall in the blocks along it, because they change what is " &
-        "held and not how much. A faded number is a pair that no single move " &
-        "joins, and it says how far apart they are.")))
+        tag(
+          "table",
+          "class=\"matrix\"",
+          tag("thead", "", tag("tr", "", head)) & tag("tbody", "", body),
+        )) &
+      tag(
+        "p",
+        "class=\"note\"",
+        "A cell is the move from its row to its " &
+          "column, inked in the arm of the lead that dances it. The frames are " &
+          "ordered down the tower, the same way the map stacks them. So every " &
+          "collect falls below the diagonal, and every drop above it. The " &
+          "compounds fall in the blocks along it, because they change what is " &
+          "held and not how much. A faded number is a pair that no single move " &
+          "joins, and it says how far apart they are.",
+      )))
 
 
 
@@ -785,7 +875,7 @@ proc dance(key: string) =
   if target.isNone or classify(CURRENT, target.get).isNone:
     return
   if MOTION_NOW == Motion.Leaving and FRAME_TAKEN == target:
-    return # Asked twice for same move, which is once.
+    return  # Asked twice for same move, which is once.
   if isMotionReduced():
     # Every phase collapses into change of state it was spelling out.  But
     # compound is two changes of state, and phase that would have taken its
@@ -899,7 +989,7 @@ proc handle(event: Event) =
         IS_DRAWING_CHOSEN = true
   of "holds":
     FILTER_APPLIED.holds = none(int)
-    for count in 0 .. 2:
+    for count in 0..2:
       if $count == value:
         FILTER_APPLIED.holds = some(count)
   of "lead":

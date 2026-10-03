@@ -24,8 +24,7 @@ import std/[asyncjs, jsffi]
 
 
 const
-  PLAYWRIGHT = "playwright"
-    ## Module node resolves for itself, where environment names none.
+  PLAYWRIGHT = "playwright"  ## Module node resolves for itself, where environment names none.
   VARIABLE_PLAYWRIGHT = "DANCE_PLAYWRIGHT"
     ## Names playwright outright, for install node cannot resolve -- global
     ##   one, which is where package manager puts it.
@@ -41,8 +40,7 @@ proc require(module: cstring): JsObject {.importjs: "require(#)".}
   ## Load node module; compiler has no reason to know what is inside.
 
 # Declared `var` because `importjs` binds node's own global object; nothing here writes it.
-var PROCESS_NODE {.importjs: "process", nodecl.}: JsObject
-  ## Node process, for its command line.
+var PROCESS_NODE {.nodecl, importjs: "process".}: JsObject  ## Node process, for its command line.
 
 proc resolve(path: cstring): cstring {.importjs: "require('path').resolve(#)".}
   ## Make path absolute, as file url needs.
@@ -95,9 +93,13 @@ proc playwright(): JsObject =
   try:
     result = require(at)
   except:
-    report(cstring("Cannot load playwright from `" & $at & "`; install what " &
-      "`nim r tools/build.nim shot` names, or point `" & VARIABLE_PLAYWRIGHT &
-      "` at it."))
+    report(
+      cstring(
+        "Cannot load playwright from `" & $at & "`; install what " &
+          "`nim r tools/build.nim shot` names, or point `" & VARIABLE_PLAYWRIGHT &
+          "` at it.",
+      ),
+    )
     stop(1)
 
 
@@ -115,16 +117,20 @@ proc shoot() {.async.} =
         chromium.launch(JsObject{executablePath: named})
       else: chromium.launch()).to(Future[JsObject])
   for theme in ["light", "dark"]:
-    let page = await browser.newPage(JsObject{
-      viewport: JsObject{width: 1000, height: 900},
-      colorScheme: cstring(theme),
-    }).to(Future[JsObject])
+    let page = await browser.newPage(
+      JsObject{
+        viewport: JsObject{width: 1000, height: 900},
+        colorScheme: cstring(theme),
+      },
+    ).to(Future[JsObject])
     discard await gotoUrl(page, url).to(Future[JsObject])
     discard await page.waitForTimeout(300).to(Future[JsObject])
-    discard await page.screenshot(JsObject{
-      path: cstring($prefix & "-" & theme & ".png"),
-      fullPage: true,
-    }).to(Future[JsObject])
+    discard await page.screenshot(
+      JsObject{
+        path: cstring($prefix & "-" & theme & ".png"),
+        fullPage: true,
+      },
+    ).to(Future[JsObject])
     discard await page.close().to(Future[JsObject])
   discard await browser.close().to(Future[JsObject])
 

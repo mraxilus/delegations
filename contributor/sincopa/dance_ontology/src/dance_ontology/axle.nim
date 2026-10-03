@@ -21,22 +21,19 @@
 
 import std/options
 
-import ./diagram
-import ./map
-import ./motion
-import ./rotation
+import ./[diagram, map, motion, rotation]
 
 
 
 #[ Layout ]#
 
 const
-  AXLE_HEIGHT* = 360 ## Height axle drawing asks its viewBox for.
-  NODE_WIDTH = 84   ## Width posture is drawn at along axle.
-  STEP = 132       ## Distance along axle between one half turn and next.
-  AXLE_Y = 250     ## Row postures are drawn in, under their arcs.
-  NAME_RISE = 14   ## Distance from top of picture up to its name.
-  ARC_RISE = 100   ## How far above axle shortest turn's arc reaches.
+  AXLE_HEIGHT* = 360  ## Height axle drawing asks its viewBox for.
+  NODE_WIDTH = 84  ## Width posture is drawn at along axle.
+  STEP = 132  ## Distance along axle between one half turn and next.
+  AXLE_Y = 250  ## Row postures are drawn in, under their arcs.
+  NAME_RISE = 14  ## Distance from top of picture up to its name.
+  ARC_RISE = 100  ## How far above axle shortest turn's arc reaches.
   LABEL_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
 
 
@@ -59,7 +56,7 @@ func centreOf*(stood: Posture, twist: HalfTurns): (int, int) =
 
 func standing*(stood: Posture): seq[HalfTurns] =
   ## Get every twist this frame, held at these heights, can stand at.
-  for twist in -MOST_TURN .. MOST_TURN:
+  for twist in -MOST_TURN..MOST_TURN:
     if stood.isHolding(twist):
       result.add twist
 
@@ -98,8 +95,7 @@ func arc(stood: Posture, twist: HalfTurns, is_refused: bool): string =
   result.add "</g>"
 
 
-func renderAxle*(stood: Posture, motion = Motion.Still,
-    taken = none(HalfTurns)): string =
+func renderAxle*(stood: Posture, motion = Motion.Still, taken = none(HalfTurns)): string =
   ## Draw twist axis, postures on it, and every turn out of one held.
   let
     width = axleWidth()
@@ -140,8 +136,13 @@ func renderAxle*(stood: Posture, motion = Motion.Still,
       "\" y=\"" & $(centre_y - frameHeight(NODE_WIDTH) div 2 - 5) & "\" width=\"" &
       $(NODE_WIDTH + 10) & "\" height=\"" & $(frameHeight(NODE_WIDTH) + 10) &
       "\" rx=\"6\"/>"
-    result.add renderFramePlaced(landing.frame, centre_x - NODE_WIDTH div 2,
-      centre_y - frameHeight(NODE_WIDTH) div 2, NODE_WIDTH, twist)
+    result.add renderFramePlaced(
+      landing.frame,
+      centre_x - NODE_WIDTH div 2,
+      centre_y - frameHeight(NODE_WIDTH) div 2,
+      NODE_WIDTH,
+      twist,
+    )
     let name = turnName(twist)
     result.add "<text class=\"node-name\" x=\"" & $centre_x & "\" y=\"" &
       $(centre_y - frameHeight(NODE_WIDTH) div 2 - NAME_RISE) &
@@ -159,6 +160,10 @@ func renderAxle*(stood: Posture, motion = Motion.Still,
   let
     (stood_x, stood_y) = centreOf(stood, stood.twist)
     (here_x, _) = centreOf(stood, here)
-  result.add markAt(stood_x, stood_y, NODE_WIDTH, " style=\"--mx: " & $(here_x - stood_x) &
-    "px; --my: 0px\"")
+  result.add markAt(
+    stood_x,
+    stood_y,
+    NODE_WIDTH,
+    " style=\"--mx: " & $(here_x - stood_x) & "px; --my: 0px\"",
+  )
   result.add "</svg>"

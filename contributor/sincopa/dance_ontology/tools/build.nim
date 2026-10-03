@@ -45,21 +45,15 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[os, osproc, strutils]
 
-import ../design/faces
-import ../design/review_page
+import ../design/[faces, review_page]
 
 
 const
-  BUILD = "build"
-    ## Directory every page, picture and script lands in.
-  BINARIES = "binaries"
-    ## Directory tool binaries land in.
-  DANGER = @["-d:danger", "--hints:off"]
-    ## Options of runs whose speed is point, i.e. sweeps.
-  RELEASE = @["-d:release", "--hints:off"]
-    ## Options of browser scripts shipped with pages.
-  QUIET = @["--hints:off"]
-    ## Options of runs whose output is their product.
+  BUILD = "build"  ## Directory every page, picture and script lands in.
+  BINARIES = "binaries"  ## Directory tool binaries land in.
+  DANGER = @["-d:danger", "--hints:off"]  ## Options of runs whose speed is point, i.e. sweeps.
+  RELEASE = @["-d:release", "--hints:off"]  ## Options of browser scripts shipped with pages.
+  QUIET = @["--hints:off"]  ## Options of runs whose output is their product.
   DIRECTORY_FONTS = BUILD / "fonts"
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
@@ -138,9 +132,11 @@ proc rootOf(): string =
   while not fileExists(result / "koch.nim"):
     let above = result.parentDir
     if above == result:
-      raise newException(OSError,
+      raise newException(
+        OSError,
         "No repository root above project, so shared store cannot be reached; got `" &
-          getCurrentDir() & "`.")
+          getCurrentDir() & "`.",
+      )
     result = above
 
 
@@ -156,18 +152,21 @@ proc assets() =
   for (file, _, _, _) in FACES:
     wanted.add file
   let (written, code) = execCmdEx(
-    "nim r --hints:off koch fetch-assets " & wanted.join(" "), workingDir = rootOf())
+    "nim r --hints:off koch fetch-assets " & wanted.join(" "),
+    workingDir = rootOf(),
+  )
   if code != 0:
-    raise newException(OSError,
-      "Shared store did not serve every face asked for; got:\n" & written)
+    raise newException(OSError, "Shared store did not serve every face asked for; got:\n" & written)
   var paths: seq[string]
   for line in written.splitLines:
     if line.startsWith('/') and fileExists(line):
       paths.add line
   if paths.len != wanted.len:
-    raise newException(OSError,
+    raise newException(
+      OSError,
       "Store answered with `" & $paths.len & "` paths for `" & $wanted.len &
-        "` faces asked for, so which is which cannot be told; got:\n" & written)
+        "` faces asked for, so which is which cannot be told; got:\n" & written,
+    )
   for i, file in wanted:
     copyFile(paths[i], DIRECTORY_FONTS / file)
   echo "Faces in ", DIRECTORY_FONTS, ": ", wanted.len, ", every one from repository store."
@@ -192,12 +191,13 @@ proc engine() =
       run("git", ["-C", into, "checkout", "--quiet", commit])
     let (written, code) = execCmdEx("git -C " & quoteShell(into) & " rev-parse HEAD")
     if code != 0:
-      raise newException(OSError,
-        "Cannot read commit of `" & into & "`; got exit `" & $code & "`.")
+      raise newException(OSError, "Cannot read commit of `" & into & "`; got exit `" & $code & "`.")
     let got = written.strip
     if got != commit:
-      raise newException(OSError,
-        "Clone of `" & name & "` stands at `" & got & "`, not pinned `" & commit & "`.")
+      raise newException(
+        OSError,
+        "Clone of `" & name & "` stands at `" & got & "`, not pinned `" & commit & "`.",
+      )
   if fileExists(ENGINE_LIBRARY):
     echo "Engine already archived: ", ENGINE_LIBRARY
     return
@@ -206,8 +206,11 @@ proc engine() =
   var objects: seq[string]
   for path in walkFiles(src / "*.c"):
     let object_file = BINARIES / path.extractFilename.changeFileExt("o")
-    run("cc", ["-O2", "-std=c17", "-I" & DIRECTORY_DEPENDENCIES / "box3d" / "include", "-I" & src,
-               "-c", path, "-o", object_file])
+    run(
+      "cc",
+      ["-O2", "-std=c17", "-I" & DIRECTORY_DEPENDENCIES / "box3d" / "include", "-I" & src,
+                 "-c", path, "-o", object_file],
+    )
     objects.add object_file
   if objects.len == 0:
     raise newException(OSError, "Engine's source holds no `.c` file; got `" & src & "`.")
@@ -238,8 +241,10 @@ proc turnsJs() =
   ##     every `pages` run should pay.
   let data = "design" / "turns.json"
   if not fileExists(data):
-    quit("Whole-cloth page has no sweeps; run `nim r tools/build.nim turns`: got `" &
-      data & "`.", 1)
+    quit(
+      "Whole-cloth page has no sweeps; run `nim r tools/build.nim turns`: got `" & data & "`.",
+      1,
+    )
   writeFile(BUILD / "design" / "turns.js", "var TURNS = " & readFile(data).strip() & ";\n")
   echo "wrote " & BUILD / "design" / "turns.js"
 
@@ -259,13 +264,17 @@ proc pages() =
   compileRun(["tools/review.nim", BUILD / "review"])
   compileRun(["design/marks.nim", BUILD / "design"])
   turnsJs()
-  nim(@["js"] & RELEASE & @[
-    "-o:" & BUILD / "design" / "wholecloth_turns.js", "design/wholecloth_turns.nim",
-  ])
+  nim(
+    @["js"] & RELEASE & @[
+      "-o:" & BUILD / "design" / "wholecloth_turns.js", "design/wholecloth_turns.nim",
+    ],
+  )
   compileRun(["design/wholecloth.nim", BUILD / "design"])
-  nim(@["js"] & RELEASE & @[
-    "-o:" & BUILD / "design" / "rig_view.js", "design/rig_view.nim",
-  ])
+  nim(
+    @["js"] & RELEASE & @[
+      "-o:" & BUILD / "design" / "rig_view.js", "design/rig_view.nim",
+    ],
+  )
   compileRun(["design/rig_page.nim", BUILD / "design"])
   dress()
 
@@ -328,9 +337,11 @@ proc shot() =
   ##   since it never opens them, so person running this is only reader told.
   echo "`shot` is run by hand and needs: ", helpers().join(", ")
   createDir(BUILD / "design")
-  nim(@["js"] & QUIET & @[
-    "-d:nodejs", "-o:" & BUILD / "design" / "shot.js", "design/shot.nim",
-  ])
+  nim(
+    @["js"] & QUIET & @[
+      "-d:nodejs", "-o:" & BUILD / "design" / "shot.js", "design/shot.nim",
+    ],
+  )
 
 
 proc system() =

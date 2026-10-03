@@ -52,68 +52,58 @@ import std/[dom, jsffi, math]
 #[ Domain ]#
 
 type
-  Arm {.pure.} = enum
-    ## Define which arm of dancer.
+  Arm {.pure.} = enum  ## Define which arm of dancer.
     Left, Right
 
   Dancer {.pure.} = enum
     ## Define who: lead (square marks, deep ink) or follow (round marks, plain ink).
     Lead, Follow
 
-  Hold {.pure.} = enum
-    ## Define six holds page offers, lead's hand named first.
+  Hold {.pure.} = enum  ## Define six holds page offers, lead's hand named first.
     LeftToLeft, RightToRight, LeftToRight, RightToLeft, LeftToLeftRightToRight,
     LeftToRightRightToLeft
 
-  Level {.pure.} = enum
-    ## Define three heights hands are held at.
+  Level {.pure.} = enum  ## Define three heights hands are held at.
     Low, High, Above
 
-  Part {.pure.} = enum
-    ## Define body parts drawn in side view, hip upward.
+  Part {.pure.} = enum  ## Define body parts drawn in side view, hip upward.
     Torso, Neck, Head
 
   View {.pure.} = enum
     ## Define projections: from above onto page, and from side along couple's line.
     Above, Side
 
-  Rope = tuple[lead, follow: Arm]
-    ## Define one connection: lead's arm to follow's arm.
+  Rope = tuple[lead, follow: Arm]  ## Define one connection: lead's arm to follow's arm.
 
   HoldDescription = object
     ## Define one hold: key in data, name on button, ropes, rest turn and its words.
-    key: cstring            ## Key of sweep in `TURNS.sweeps`, before `|level`.
+    key: cstring  ## Key of sweep in `TURNS.sweeps`, before `|level`.
     name: cstring
-    from_rest: cstring      ## Where turns count from, for readout.
+    from_rest: cstring  ## Where turns count from, for readout.
     ropes: array[2, Rope]
-    rope_count: int         ## Live bound of `ropes`.
-    rest: float             ## Turn at which nothing is wound.
-    is_pair: bool           ## Two ropes, so readout names each.
+    rope_count: int  ## Live bound of `ropes`.
+    rest: float  ## Turn at which nothing is wound.
+    is_pair: bool  ## Two ropes, so readout names each.
 
-  Limits = object
-    ## Define where one sweep runs out each way, and why.
-    negative, positive: float                       ## Turns reached each way, at most `MOST`.
-    why_negative, why_positive: cstring             ## What refused, each way.
+  Limits = object  ## Define where one sweep runs out each way, and why.
+    negative, positive: float  ## Turns reached each way, at most `MOST`.
+    why_negative, why_positive: cstring  ## What refused, each way.
     is_stopped_negative, is_stopped_positive: bool  ## Blocked within `MOST`, not merely ended.
-    found_rest: bool                  ## Whether rest pose exists at all.
+    found_rest: bool  ## Whether rest pose exists at all.
 
   Sweep = object
     ## Define one sweep as page reads it: limits, and moments as reference into `TURNS`.
     limits: Limits
     frames: JsObject
 
-  Vector2 = array[2, float]
-    ## Define point on page, or centre in millimetres.
+  Vector2 = array[2, float]  ## Define point on page, or centre in millimetres.
 
-  Vector3 = array[3, float]
-    ## Define joint in millimetres: across, along, up.
+  Vector3 = array[3, float]  ## Define joint in millimetres: across, along, up.
 
-  PartExtent = object
-    ## Define one body part's half-extents and height band, in millimetres.
+  PartExtent = object  ## Define one body part's half-extents and height band, in millimetres.
     across, deep, z_from, z_to: float
 
-  BodyPose = object
-    ## Define where one dancer stands and faces at one moment.
+  BodyPose = object  ## Define where one dancer stands and faces at one moment.
     centre: Vector2
     facing: float
 
@@ -121,20 +111,20 @@ type
     ## Define one rope at one moment: four joints each side, and simulation's words.
     lead, follow: array[4, Vector3]
     lead_says, follow_says: cstring
-    cross: JsObject         ## Crossings from data, `undefined` where none; read in place.
+    cross: JsObject  ## Crossings from data, `undefined` where none; read in place.
 
-  Scene = object
-    ## Define everything drawn at one turn, interpolated between two moments.
+  Scene = object  ## Define everything drawn at one turn, interpolated between two moments.
     turn, strain: float
     is_ok, is_reseed: bool
-    worst: cstring          ## Joint nearest its edge, or empty.
+    worst: cstring  ## Joint nearest its edge, or empty.
     bodies: array[Dancer, BodyPose]
     connections: array[2, Connection]
-    connection_count: int           ## Live bound of `connections`.
+    connection_count: int  ## Live bound of `connections`.
 
 
-func holdDescription(key, name, from_rest: cstring; ropes: openArray[Rope];
-    rest: float): HoldDescription =
+func holdDescription(
+  key, name, from_rest: cstring; ropes: openArray[Rope]; rest: float
+): HoldDescription =
   ## Build hold's specification, deriving bound and pairing from ropes given.
   result = HoldDescription(
     key: key,
@@ -148,12 +138,12 @@ func holdDescription(key, name, from_rest: cstring; ropes: openArray[Rope];
 
 
 const
-  SCALE = 125.0       ## Page units per metre, from above.
-  RIM = 20.0          ## Body radius on page.
-  MOST = 2.0          ## Turns shown each way, however far sweep went.
-  Z_SCALE = 62.5      ## Page units per metre of height, in side view.
-  SIDE_Y = 200.0      ## Page line of floor in side view.
-  STRIP_SLOTS = 11    ## Nine half turns and two blocks at most.
+  SCALE = 125.0  ## Page units per metre, from above.
+  RIM = 20.0  ## Body radius on page.
+  MOST = 2.0  ## Turns shown each way, however far sweep went.
+  Z_SCALE = 62.5  ## Page units per metre of height, in side view.
+  SIDE_Y = 200.0  ## Page line of floor in side view.
+  STRIP_SLOTS = 11  ## Nine half turns and two blocks at most.
   CHEVRON: array[3, Vector2] = [[-5.0, -4.0], [0.0, 4.0], [5.0, -4.0]]
     ## Chevron's three points about body centre, before turning to facing.
   HOLDS: array[Hold, HoldDescription] = [
@@ -205,8 +195,7 @@ const
     ## Level's word: in data key, on button, in readout.
   INKS: array[Arm, cstring] = ["left", "right"]
     ## Arm's ink, i.e. CSS variable stem `--left`, `--right`.
-  ARM_WORDS: array[Arm, cstring] = ["Left", "Right"]
-    ## Arm's word capitalised, for pair readout.
+  ARM_WORDS: array[Arm, cstring] = ["Left", "Right"]  ## Arm's word capitalised, for pair readout.
 
 
 
@@ -239,8 +228,7 @@ func sweepTable(): array[Hold, array[Level, Sweep]] =
   for hold in Hold:
     for level in Level: readSweep(result[hold][level], hold, level)
 
-let LUT_SWEEP_BY_HOLD = sweepTable()
-  ## Every sweep by hold and level, read once at load.
+let LUT_SWEEP_BY_HOLD = sweepTable()  ## Every sweep by hold and level, read once at load.
 
 
 func partExtent(rig: JsObject, part: Part): PartExtent =
@@ -305,14 +293,14 @@ func pointText(point: Vector2): cstring =
 func pathOf(joints: array[4, Vector3], view: static View): cstring =
   ## Write four joints as SVG path data, i.e. `M x,y L x,y L x,y L x,y`.
   result = "M "
-  for k in 0 ..< 4:
+  for k in 0..<4:
     if k > 0: result.add " L "
     result.add pointText(project(joints[k], view))
 
 func interpolate[N: static int](destination: var array[N, float]; a, b: JsObject; u: float) =
   ## Interpolate one vector between two moments into `destination`, reading both in place.
   ##   Writes into scene's own storage: returning array would copy it on assignment.
-  for i in 0 ..< destination.len:
+  for i in 0..<destination.len:
     let value_a = a[i].to(float)
     destination[i] = value_a + (b[i].to(float) - value_a) * u
 
@@ -357,7 +345,7 @@ func bodySvg(centre: Vector2, facing: Vector2): cstring =
   ## Draw one dancer from above: rim and chevron turned to facing.
   let angle = arctan2(facing[1], facing[0]) - PI / 2.0
   var points: cstring = ""
-  for i in 0 ..< CHEVRON.len:
+  for i in 0..<CHEVRON.len:
     let
       chevron_x = CHEVRON[i][0]
       chevron_y = CHEVRON[i][1]
@@ -368,7 +356,7 @@ func bodySvg(centre: Vector2, facing: Vector2): cstring =
     if i > 0: points.add " "
     points.add pointText([centre[0] + turned[0], centre[1] + turned[1]])
   "<circle cx=\"" & centre[0].toFixed(1) & "\" cy=\"" & centre[1].toFixed(1) & "\" r=\"" &
-    toText(RIM) & "\" class=\"rim\"/><polyline points=\"" & points & "\" class=\"chev\"/>"
+    RIM.toText & "\" class=\"rim\"/><polyline points=\"" & points & "\" class=\"chev\"/>"
 
 func shoulderOf(centre: Vector2, facing: float, arm: Arm): Vector2 =
   ## Locate shoulder joint in metres: left arm's quarter turn anticlockwise of facing.
@@ -446,12 +434,12 @@ func fillScene(scene: var Scene, frames: JsObject, turn: float): bool =
       facing_a = body_a.facing.to(float)
     interpolate(scene.bodies[who].centre, body_a.centre, body_b.centre, u)
     scene.bodies[who].facing = facing_a + (body_b.facing.to(float) - facing_a) * u
-  for i in 0 ..< scene.connection_count:
+  for i in 0..<scene.connection_count:
     let
       connection_a = moment_a.connections[i]
       connection_b = moment_b.connections[i]
       connection_near = near.connections[i]
-    for k in 0 ..< 4:
+    for k in 0..<4:
       interpolate(scene.connections[i].lead[k], connection_a.lead[k], connection_b.lead[k], u)
       interpolate(scene.connections[i].follow[k], connection_a.follow[k], connection_b.follow[k], u)
     scene.connections[i].lead_says = connection_near.leadSays.to(cstring)
@@ -477,7 +465,7 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   #   at most two), each four joints projected twice.  Allocates: JS strings for every
   #   `&` and `add`, and one two-element array per projected point; no Nim object copies
   #   (read in emitted JS: parameters and `template` aliases pass by reference).
-  for i in 0 ..< scene.connection_count:
+  for i in 0..<scene.connection_count:
     # Alias into storage, never copy.
     template connection: untyped = scene.connections[i]
     let
@@ -487,12 +475,12 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
       "\" style=\"stroke:var(--" & deep & ")\"/>"
     result.add "<path d=\"" & pathOf(connection.follow, View.Above) & "\" class=\"" & classes &
       "\" style=\"stroke:var(--" & plain & ")\"/>"
-    for k in 1 .. 2:
+    for k in 1..2:
       let joint = page(connection.lead[k][0], connection.lead[k][1])
       result.add "<circle cx=\"" & joint[0].toFixed(1) & "\" cy=\"" & joint[1].toFixed(1) &
         "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & deep &
         ");stroke-width:0.8\"/>"
-    for k in 1 .. 2:
+    for k in 1..2:
       let joint = page(connection.follow[k][0], connection.follow[k][1])
       result.add "<circle cx=\"" & joint[0].toFixed(1) & "\" cy=\"" & joint[1].toFixed(1) &
         "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & plain &
@@ -502,23 +490,35 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   var
     held_lead: array[Arm, bool]
     held_follow: array[Arm, bool]
-  for i in 0 ..< scene.connection_count:
+  for i in 0..<scene.connection_count:
     held_lead[HOLDS[hold].ropes[i].lead] = true
     held_follow[HOLDS[hold].ropes[i].follow] = true
   for arm in Arm:
     let
       at_lead = shoulderOf(scene.bodies[Dancer.Lead].centre, scene.bodies[Dancer.Lead].facing, arm)
       at_follow = shoulderOf(
-        scene.bodies[Dancer.Follow].centre, scene.bodies[Dancer.Follow].facing, arm)
-    result.add markSvg(page(at_lead[0] * 1000.0, at_lead[1] * 1000.0), Dancer.Lead, arm, level,
-      held_lead[arm])
-    result.add markSvg(page(at_follow[0] * 1000.0, at_follow[1] * 1000.0), Dancer.Follow, arm,
+        scene.bodies[Dancer.Follow].centre,
+        scene.bodies[Dancer.Follow].facing,
+        arm,
+      )
+    result.add markSvg(
+      page(at_lead[0] * 1000.0, at_lead[1] * 1000.0),
+      Dancer.Lead,
+      arm,
       level,
-      held_follow[arm])
+      held_lead[arm],
+    )
+    result.add markSvg(
+      page(at_follow[0] * 1000.0, at_follow[1] * 1000.0),
+      Dancer.Follow,
+      arm,
+      level,
+      held_follow[arm],
+    )
 
   # Same moment from side, looking along couple's line, lead on left.
   result.add "<g class=\"side\">" & sideBodies(scene)
-  for i in 0 ..< scene.connection_count:
+  for i in 0..<scene.connection_count:
     # Alias into storage, never copy.
     template connection: untyped = scene.connections[i]
     let
@@ -538,8 +538,8 @@ func turnWord(turn: float): cstring =
     sign: cstring = if halves < 0: "−" elif halves > 0: "+" else: ""
     magnitude = abs(halves)
     word =
-      if magnitude mod 2 == 0: toText(float(magnitude div 2))
-      elif magnitude > 1: toText(float(magnitude div 2)) & "½"
+      if magnitude mod 2 == 0: float(magnitude div 2).toText
+      elif magnitude > 1: float(magnitude div 2).toText & "½"
       else: cstring("½")
   sign & word
 
@@ -566,14 +566,14 @@ func levelOfName(name: cstring): Level =
 # Mutable: panel's state, which every handler reads and changes.  Browser calls
 # handlers with nothing of their own, so state lives here.
 var
-  HOLD_SHOWN = Hold.LeftToLeft          ## Hold on show.
-  LEVEL_SHOWN = Level.Low         ## Height on show.
-  TURN_DRAWN = -0.5               ## Turn drawn now.
-  TURN_TARGET = -0.5             ## Turn eased toward while not playing.
-  IS_PLAYING = false        ## Sweeping between blocks.
-  DIRECTION_PLAY = 1.0      ## Way play sweeps: `+1` toward `positive` block, `-1` other way.
-  NOW_PREV = 0.0            ## Timestamp of previous frame; seeded by `start`.
-  SCENE_STORAGE: Scene              ## One scene's storage, refilled per draw; never reallocated.
+  HOLD_SHOWN = Hold.LeftToLeft  ## Hold on show.
+  LEVEL_SHOWN = Level.Low  ## Height on show.
+  TURN_DRAWN = -0.5  ## Turn drawn now.
+  TURN_TARGET = -0.5  ## Turn eased toward while not playing.
+  IS_PLAYING = false  ## Sweeping between blocks.
+  DIRECTION_PLAY = 1.0  ## Way play sweeps: `+1` toward `positive` block, `-1` other way.
+  NOW_PREV = 0.0  ## Timestamp of previous frame; seeded by `start`.
+  SCENE_STORAGE: Scene  ## One scene's storage, refilled per draw; never reallocated.
 
 let
   STAGE_ELEMENT = document.getElementById("stage")
@@ -584,10 +584,8 @@ let
     ## Row of small figures, every half turn and both blocks.
   SLIDER_ELEMENT = InputElement(document.getElementById("turn"))
     ## Turn control, `-2` to `2` by `0.005`.
-  HOLD_BOX = document.getElementById("hold-buttons")
-    ## Holder of one button per hold.
-  LEVEL_BOX = document.getElementById("level-buttons")
-    ## Holder of one button per level.
+  HOLD_BOX = document.getElementById("hold-buttons")  ## Holder of one button per hold.
+  LEVEL_BOX = document.getElementById("level-buttons")  ## Holder of one button per level.
 
 
 proc clampTurn(turn: float): float =
@@ -606,7 +604,7 @@ proc renderStage() =
   let found_scene = fillScene(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
   STAGE_ELEMENT.innerHTML =
     if found_scene: sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) else: ""
-  SLIDER_ELEMENT.value = toText(TURN_DRAWN)
+  SLIDER_ELEMENT.value = TURN_DRAWN.toText
   let head = "<b>" & HOLDS[HOLD_SHOWN].name & "</b> · " & LEVEL_NAMES[LEVEL_SHOWN] & " · @ " &
     turnFigure(TURN_DRAWN) & " from " & HOLDS[HOLD_SHOWN].from_rest
   if not found_scene or not limits.found_rest:
@@ -618,7 +616,7 @@ proc renderStage() =
     is_at_negative = TURN_DRAWN <= -limits.negative + 1e-6 and limits.is_stopped_negative
     is_at_positive = TURN_DRAWN >= limits.positive - 1e-6 and limits.is_stopped_positive
   var lines: cstring = ""
-  for i in 0 ..< SCENE_STORAGE.connection_count:
+  for i in 0..<SCENE_STORAGE.connection_count:
     # Alias into storage, never copy.
     template connection: untyped = SCENE_STORAGE.connections[i]
     # Alias into storage, never copy.
@@ -629,7 +627,7 @@ proc renderStage() =
     var crossing: cstring = ""
     if not connection.cross.isUndefined:
       crossing = " <span class=\"say\">("
-      for k in 0 ..< connection.cross.length.to(int):
+      for k in 0..<connection.cross.length.to(int):
         if k > 0: crossing.add ", "
         crossing.add (if connection.cross[k].over.to(int) == 0: cstring("the first")
                       else: "the second") &
@@ -664,7 +662,7 @@ proc renderStrip() =
   var
     shown: array[STRIP_SLOTS, float]
     count = 0
-  for half in -4 .. 4:
+  for half in -4..4:
     shown[count] = float(half) / 2.0
     inc count
   if sweep.limits.is_stopped_negative:
@@ -675,7 +673,7 @@ proc renderStrip() =
     inc count
 
   # Sort ascending; insertion suits eleven values and keeps equal ones in order.
-  for i in 1 ..< count:
+  for i in 1..<count:
     var j = i
     while j > 0 and shown[j - 1] > shown[j]:
       swap(shown[j - 1], shown[j])
@@ -683,13 +681,13 @@ proc renderStrip() =
 
   # One figure per turn: crossed out beyond blocks, else scene with simulation's words.
   var html: cstring = ""
-  for i in 0 ..< count:
+  for i in 0..<count:
     let
       turn = shown[i]
       is_half = abs(turn * 2.0 - floor(turn * 2.0 + 0.5)) < 1e-6
     if turn < -sweep.limits.negative - 1e-6 or turn > sweep.limits.positive + 1e-6 or
         not sweep.limits.found_rest:
-      html.add "<figure class=\"mini blocked\" data-t=\"" & toText(turn) &
+      html.add "<figure class=\"mini blocked\" data-t=\"" & turn.toText &
         "\"><div class=\"x\">&#10005;</div><figcaption><b>@ " & turnWord(turn) &
         "</b><br><span class=\"say\">blocked — " &
         (if turn < 0.0: sweep.limits.why_negative else: sweep.limits.why_positive) &
@@ -698,14 +696,14 @@ proc renderStrip() =
     doAssert fillScene(SCENE_STORAGE, sweep.frames, turn),
       "Sweep within its blocks must have moments."
     var words: cstring = ""
-    for k in 0 ..< SCENE_STORAGE.connection_count:
+    for k in 0..<SCENE_STORAGE.connection_count:
       if k > 0: words.add " · "
       words.add SCENE_STORAGE.connections[k].follow_says
     let
       is_rest = abs(turn - HOLDS[HOLD_SHOWN].rest) < 1e-6
       is_limit = not is_half
     html.add "<figure class=\"mini" & (if is_limit: cstring(" limit") else: "") &
-      "\" data-t=\"" & toText(turn) & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
+      "\" data-t=\"" & turn.toText & "\"><svg viewBox=\"-52 -56 104 112\" width=\"70\">" &
       sceneSvg(HOLD_SHOWN, LEVEL_SHOWN, SCENE_STORAGE) & "</svg>" & "<figcaption><b>@ " &
       (if is_half: turnWord(turn) else: turnFigure(turn)) & "</b>" &
       (if is_rest: cstring(" rest") else: "") & (if is_limit: cstring(" the block") else: "") &

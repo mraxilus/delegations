@@ -24,34 +24,34 @@ export About
 
 
 const
-  TANGENT* = 0.25                    ## Sign's lean, across per down.
+  TANGENT* = 0.25  ## Sign's lean, across per down.
   THETA = arctan(TANGENT)
-  LEAN_SINE* = sin(THETA)         ## Lean, as sine every corner uses.
-  LEAN_COSINE* = cos(THETA)         ## And its cosine: leaning height's drop.
-  PAD* = 5.0                     ## Margin sign keeps inside its viewBox.
+  LEAN_SINE* = sin(THETA)  ## Lean, as sine every corner uses.
+  LEAN_COSINE* = cos(THETA)  ## And its cosine: leaning height's drop.
+  PAD* = 5.0  ## Margin sign keeps inside its viewBox.
 
 const
-  PIP* = 11.0                    ## Pip width, across sign.
-  GAP_X* = 4.0                   ## Margin, and gutter between arms.
-  SIGN_BODY* = 2 * PIP + 3 * GAP_X   ## Width between slanting edges.
-  QUARTERS* = 4                  ## Rows in full turn.
+  PIP* = 11.0  ## Pip width, across sign.
+  GAP_X* = 4.0  ## Margin, and gutter between arms.
+  SIGN_BODY* = 2 * PIP + 3 * GAP_X  ## Width between slanting edges.
+  QUARTERS* = 4  ## Rows in full turn.
   HEIGHT* = float(QUARTERS) * PIP + float(QUARTERS + 1) * GAP_X
     ## So full sign is exactly full turn.
-  OVER* = PIP                    ## How far open end runs on.
-  INSET = 0.76                   ## How far dashed pip's fill pulls in.
+  OVER* = PIP  ## How far open end runs on.
+  INSET = 0.76  ## How far dashed pip's fill pulls in.
 
 
 type
-  Row* {.pure.} = enum ## Say what one row of sign holds.
-    Lead,              ## Quarter danced by lead: leaning square.
-    Follow,            ## Quarter danced by follow: circle.
-    Ellipsis,          ## Row that counts nothing: count runs on across.
-    Repeat             ## Likewise, said as music's repeat colon.
-  Lean* {.pure.} = enum ## Which way sign leans: way turn goes.
+  Row* {.pure.} = enum  ## Say what one row of sign holds.
+    Lead,  ## Quarter danced by lead: leaning square.
+    Follow,  ## Quarter danced by follow: circle.
+    Ellipsis,  ## Row that counts nothing: count runs on across.
+    Repeat  ## Likewise, said as music's repeat colon.
+  Lean* {.pure.} = enum  ## Which way sign leans: way turn goes.
     Clockwise, Anticlockwise
-  Ending* {.pure.} = enum ## How sign for unfixed amount ends.
+  Ending* {.pure.} = enum  ## How sign for unfixed amount ends.
     Open, Spill, EllipsisEnd, RepeatEnd, Loop
-  SignArm* = tuple ## One column of sign: whether drawn, and its level.
+  SignArm* = tuple  ## One column of sign: whether drawn, and its level.
     is_shown: bool
     level: Option[Level]
   SignArms* = array[Arm, SignArm]
@@ -87,8 +87,13 @@ func polygon(points: seq[Point], should_close = true): string =
   if should_close: path & " Z" else: path
 
 
-func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
-    level: Option[Level]; about = none(About)): string =
+func pip*(
+  dancer: Dancer;
+  corner_x, corner_y, side_x, side_y: float;
+  arm: Arm;
+  level: Option[Level];
+  about = none(About);
+): string =
   ## Draw one quarter turn: shape says whose, column and ink which arm, fill
   ## its level.
   ##   Given `about`, pip carries axis-against-orbit itself, which
@@ -124,9 +129,10 @@ func pip*(dancer: Dancer; corner_x, corner_y, side_x, side_y: float; arm: Arm;
 
   var bits: seq[string]
   if about.isNone:
-    bits.add shape(1.0,
-      &"""fill="{fill}" stroke="{ink}" stroke-width="1.4"""" &
-        """ stroke-linejoin="round"""")
+    bits.add shape(
+      1.0,
+      &"""fill="{fill}" stroke="{ink}" stroke-width="1.4"""" & """ stroke-linejoin="round"""",
+    )
   else:
     if fill != "none":
       bits.add shape(INSET, &"""fill="{fill}" stroke="none"""")
@@ -147,7 +153,7 @@ func marker*(kind: Row; corner_x, corner_y, side_x, side_y: float; arm: Arm): st
     ink = INK[arm]
     centre_x = corner_x + PIP / 2 + side_x / 2
     centre_y = corner_y + side_y / 2
-  if kind == Row.Ellipsis:               # and so on, across
+  if kind == Row.Ellipsis:  # and so on, across
     for offset in [-3.7, 0.0, 3.7]:
       result.add &"""<circle cx="{numeral(centre_x + offset)}" cy="{numeral(centre_y)}" r="1.7"""" &
         &""" fill="{ink}"/>"""
@@ -157,9 +163,16 @@ func marker*(kind: Row; corner_x, corner_y, side_x, side_y: float; arm: Arm): st
         &""" fill="{ink}"/>"""
 
 
-func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float;
-    about: Option[About]; pip_about: seq[About]; ending: Option[Ending];
-    is_packed = true): tuple[markup: string, box: tuple[left, top, right, bottom: float]] =
+func signBody(
+  slots: seq[Row];
+  lean: Lean;
+  arms: SignArms;
+  x_left, y_foot: float;
+  about: Option[About];
+  pip_about: seq[About];
+  ending: Option[Ending];
+  is_packed = true;
+): tuple[markup: string, box: tuple[left, top, right, bottom: float]] =
   ## Draw sign at given place, returning markup and box it fills.
   ##   `slots` reads downwards, one entry per quarter turn, follow's
   ##     first, so mixed sign has one picture rather than two.
@@ -175,7 +188,7 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float
 
   func leftAt(y: float): float =
     ## Slanting left edge, at given height.
-    if lean == Lean.Clockwise: x_left + (y_bottom - y) * TANGENT    # leans right going up
+    if lean == Lean.Clockwise: x_left + (y_bottom - y) * TANGENT  # leans right going up
     else: x_left + (y - y_top) * TANGENT
 
   func slotTop(place: int): float =
@@ -258,9 +271,16 @@ func signBody(slots: seq[Row]; lean: Lean; arms: SignArms; x_left, y_foot: float
   (bits.join("\n        "), (min(x_values), y_top - over, max(x_values), y_bottom))
 
 
-func sign*(slots: seq[Row], lean = Lean.Clockwise, arms = BOTH_UNSAID,
-    about = none(About), pip_about: seq[About] = @[],
-    ending = none(Ending), scale = 1.2, is_packed = true): string =
+func sign*(
+  slots: seq[Row],
+  lean = Lean.Clockwise,
+  arms = BOTH_UNSAID,
+  about = none(About),
+  pip_about: seq[About] = @[],
+  ending = none(Ending),
+  scale = 1.2,
+  is_packed = true,
+): string =
   ## Draw one turn sign: quarter turns up from foot, arms across, one
   ## height for every sign.
   let

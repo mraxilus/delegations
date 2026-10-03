@@ -15,8 +15,7 @@ when compileOption("profiler"): import std/nimprof
 import std/os
 
 
-const PAGES = "pages"
-  ## Directory committed pages live in.
+const PAGES = "pages"  ## Directory committed pages live in.
 
 
 proc copyShells(build: string) =

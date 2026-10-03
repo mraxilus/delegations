@@ -158,12 +158,12 @@ const TITLE* = "The Rig, Drawn from the Engine"
 
 
 type
-  Cell = object ## One still cell of reference page, as built page holds it.
+  Cell = object  ## One still cell of reference page, as built page holds it.
     id: string
     asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
-    classes: string    ## Its own classes, carrying kept and modelled.
-    art: string        ## Inner markup of its drawing, badges and all.
-    caption: string    ## Its caption, whole.
+    classes: string  ## Its own classes, carrying kept and modelled.
+    art: string  ## Inner markup of its drawing, badges and all.
+    caption: string  ## Its caption, whole.
 
 
 func escaped(text: string): string =
@@ -181,7 +181,7 @@ func between(text, opener, closer: string; start: int): tuple[at, stop: int] =
 func attribute(tag, name: string): string =
   ## One attribute's value off one opening tag.
   let (start, stop) = between(tag, name & "=\"", "\"", 0)
-  if start < 0: "" else: tag[start ..< stop]
+  if start < 0: "" else: tag[start..<stop]
 
 
 func cellsOf(html: string): Table[string, seq[Cell]] =
@@ -201,26 +201,26 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
       continue
     let shut = html.find("</figure>", figure_start)
     doAssert shut > figure_start, "A cell on reference page never closes."
-    let whole = html[figure_start ..< shut + "</figure>".len]
+    let whole = html[figure_start..<shut + "</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
     let
       tag_end = whole.find('>')
-      opening = whole[0 .. tag_end]
+      opening = whole[0..tag_end]
     var cell = Cell(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: cell.asks = asks.split(' ')
     let (id_start, id_stop) = between(whole, "<code>", "</code>", 0)
     doAssert id_start > 0, "A cell on reference page carries no identifier."
-    cell.id = whole[id_start ..< id_stop]
+    cell.id = whole[id_start..<id_stop]
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A cell carries no drawing; got `{cell.id}`."
     let
       art_open = whole.find('>', art) + 1
       art_shut = whole.find("</div>", art_open)
-    cell.art = whole[art_open ..< art_shut]
+    cell.art = whole[art_open..<art_shut]
     let (caption_start, caption_stop) = between(whole, "<figcaption>", "</figcaption>", 0)
-    cell.caption = "<figcaption>" & whole[caption_start ..< caption_stop] & "</figcaption>"
+    cell.caption = "<figcaption>" & whole[caption_start..<caption_stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add cell
 
 func sheetOf(html: string): string =
@@ -229,7 +229,7 @@ func sheetOf(html: string): string =
   while true:
     let (start, stop) = between(html, "<style>", "</style>", at)
     doAssert start >= 0, "Reference page carries no style block for its cells."
-    let sheet = html[start ..< stop]
+    let sheet = html[start..<stop]
     if ".pic {" in sheet: return "<style>" & sheet & "</style>"
     at = stop
 
@@ -257,7 +257,7 @@ proc cellsBody(review: string, data: JsonNode): string =
       start = opens + head.len
     if opens < 0:
       quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
-    titles.add (letter, review[start ..< review.find("</h2>", start)])
+    titles.add (letter, review[start..<review.find("</h2>", start)])
   result.add """<section class="cells"><p class="lede">Every cell here comes from the
     reference page, with the same badges, and the simulation's still stands beside it. Where
     one cell asks more than one question, the badge shows the first. The picker above
@@ -304,11 +304,13 @@ proc main() =
   let
     review_html = readFile(review)
     data_text = readFile(data).strip().unstamped
-    html = document(TITLE,
-                    sheetOf(review_html) & SHEET & HEAD_BODY &
-                    cellsBody(review_html, parseJson(data_text)) &
-                    "<script>var RIG = " & data_text & ";</script>\n" &
-                    "<script>" & readFile(view) & "</script>\n")
+    html = document(
+      TITLE,
+      sheetOf(review_html) & SHEET & HEAD_BODY &
+      cellsBody(review_html, parseJson(data_text)) &
+      "<script>var RIG = " & data_text & ";</script>\n" &
+      "<script>" & readFile(view) & "</script>\n",
+    )
   writeFile(directory / "rig.html", withFaces(html))
   echo "wrote ", directory / "rig.html"
 

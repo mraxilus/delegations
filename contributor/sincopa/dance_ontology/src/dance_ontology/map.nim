@@ -31,10 +31,7 @@
 
 import std/[algorithm, math, options, strutils]
 
-import ./diagram
-import ./frame
-import ./motion
-import ./transition
+import ./[diagram, frame, motion, transition]
 import ./draw/[style, terms]
 
 
@@ -56,9 +53,8 @@ const
     ## Row for each number of connections frame can carry.
     ##   Descending, because tower is built upwards: hold nothing and
     ##     you are at bottom, hold both hands and you are at top.
-  NODE_WIDTH* = 74
-    ## Width frame's picture is drawn at on map.
-  NAME_RISE = 12 ## Distance from top of picture up to its name.
+  NODE_WIDTH* = 74  ## Width frame's picture is drawn at on map.
+  NAME_RISE = 12  ## Distance from top of picture up to its name.
   ARC_DIP = 100  ## How far compound curve hangs below row it joins.
 
 
@@ -72,7 +68,7 @@ const NODE_ORDER* = ["--.", "-r.", "l-.", "-l.", "r-.", "lrL", "lrR", "rl."]
 
 
 type
-  Box* = tuple[x, y, width, height: int] ## Room something takes up in drawing.
+  Box* = tuple[x, y, width, height: int]  ## Room something takes up in drawing.
 
 
 func rowOf(target: Frame): int = target.countHolds
@@ -128,7 +124,7 @@ const
   COLOUR_INK = "var(--ink, #1a1f1e)"
   COLOUR_DIM = "var(--dim, #6b716e)"
   LABEL_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
-  LINE_HEIGHT* = 12 ## Height of one line of stacked name.
+  LINE_HEIGHT* = 12  ## Height of one line of stacked name.
   NAME_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
 
 
@@ -288,10 +284,8 @@ const
 
 
 const
-  LABEL_AIR = 5
-    ## Daylight between line's cut end and box of name that cut it.
-  LONG_ENOUGH = 999
-    ## Dash longer than any line on map, for stretch after gap.
+  LABEL_AIR = 5  ## Daylight between line's cut end and box of name that cut it.
+  LONG_ENOUGH = 999  ## Dash longer than any line on map, for stretch after gap.
 
 
 func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
@@ -318,7 +312,7 @@ func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
       (float(start_y), rise, float(box.y), float(box.y + box.height))]:
     if abs(delta) < 1e-9:
       if start < near or start > far:
-        return none((int, int))        # runs parallel to box and outside it
+        return none((int, int))  # runs parallel to box and outside it
     else:
       var
         entry = (near - start) / delta
@@ -328,7 +322,7 @@ func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
       lower = max(lower, entry)
       upper = min(upper, exit)
   if upper <= lower:
-    return none((int, int))            # name is not on this line at all
+    return none((int, int))  # name is not on this line at all
   let
     opens = max(lower * length - float(LABEL_AIR), 1.0)
     shuts = min(upper * length + float(LABEL_AIR), length)
@@ -356,8 +350,9 @@ func placeBelow(x, y: int; lines: seq[string]; used: var seq[Box]): (int, int) =
   (x, y)
 
 
-func placeLabel(start_x, start_y, end_x, end_y: int; lines: seq[string];
-    used: var seq[Box]): (int, int) =
+func placeLabel(
+  start_x, start_y, end_x, end_y: int; lines: seq[string]; used: var seq[Box]
+): (int, int) =
   ## Get where name can sit near its line without landing on anything else.
   let
     run = end_x - start_x
@@ -381,8 +376,9 @@ func placeLabel(start_x, start_y, end_x, end_y: int; lines: seq[string];
   (x, y)
 
 
-func edge(a, b: Frame; side: Side; standing, was, taken: Option[Frame];
-    used: var seq[Box]): (string, string) =
+func edge(
+  a, b: Frame; side: Side; standing, was, taken: Option[Frame]; used: var seq[Box]
+): (string, string) =
   ## Draw pair of moves that join two frames, and name them.
   ##   Ink and name come back apart so that drawing can put
   ##     every line down before it writes single word.  Together, line
@@ -477,8 +473,9 @@ func arcName(a, b: Frame; standing: Option[Frame]): string =
   if there == compoundName(b, a): there else: ($helper.get).toLowerAscii
 
 
-func arc(a, b: Frame; name: string; standing, was: Option[Frame];
-    used: var seq[Box]): (string, string) =
+func arc(
+  a, b: Frame; name: string; standing, was: Option[Frame]; used: var seq[Box]
+): (string, string) =
   ## Draw compound as curve, since no single move joins two frames.
   ##   Ink and name apart, for reason `edge` parts them.
   let
@@ -501,9 +498,11 @@ func arc(a, b: Frame; name: string; standing, was: Option[Frame];
     (second_control_x, second_control_y) = ((control_x + end_x) div 2, (control_y + end_y) div 2)
     halfway_x = (first_control_x + second_control_x) div 2
     halfway_y = (first_control_y + second_control_y) div 2
+
   func ink(side: Option[Side]): string =
     ## Half's own arm's ink, or quiet ink where no arm acts.
     if side.isSome: armColour(side.get) else: COLOUR_DIM
+
   var curve = "<g class=\"join" & lit & "\">" &
     "<path class=\"arc\" d=\"M" & $start_x & " " & $start_y &
     "Q" & $first_control_x & " " & $first_control_y &
@@ -521,8 +520,7 @@ func arc(a, b: Frame; name: string; standing, was: Option[Frame];
     "</g>")
 
 
-func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string;
-    extra = ""): string =
+func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string; extra = ""): string =
   ## Draw one frame at place, with its name above it.
   ##   Both drawings put frames somewhere; only they know where.  Keeping
   ##     drawing of node here means two agree on what frame
@@ -541,8 +539,13 @@ func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string;
   let (name_x, name_y, name_width, name_height) = nameBox(target, centre_x, centre_y, width)
   result.add "<rect class=\"name-plate\" x=\"" & $name_x & "\" y=\"" & $name_y &
     "\" width=\"" & $name_width & "\" height=\"" & $name_height & "\" rx=\"3\"/>"
-  result.add text(centre_x, centre_y - height div 2 - NAME_RISE, target.describe,
-    NAME_FONT & "; fill: " & COLOUR_INK, "node-name")
+  result.add text(
+    centre_x,
+    centre_y - height div 2 - NAME_RISE,
+    target.describe,
+    NAME_FONT & "; fill: " & COLOUR_INK,
+    "node-name",
+  )
   result.add "</g>"
 
 
@@ -600,8 +603,7 @@ const WIDE_TEMPO* = Tempo(
 )
 
 
-func renderMap*(here: Option[Frame], motion = Motion.Still,
-    taken = none(Frame)): string =
+func renderMap*(here: Option[Frame], motion = Motion.Still, taken = none(Frame)): string =
   ## Draw graph, with couple standing on one frame if they are
   ## dancing.
   ##   While move is being made this is drawn as frame being *reached*
@@ -643,8 +645,14 @@ func renderMap*(here: Option[Frame], motion = Motion.Still,
       if pair in drawn:
         continue
       drawn.add pair
-      let (drawing, naming) = arc(source, target,
-        arcName(source, target, standing), standing, was, used)
+      let (drawing, naming) = arc(
+        source,
+        target,
+        arcName(source, target, standing),
+        standing,
+        was,
+        used,
+      )
       curve_ink.add drawing
       curve_names.add naming
 
@@ -656,8 +664,7 @@ func renderMap*(here: Option[Frame], motion = Motion.Still,
       if pair in drawn:
         continue
       drawn.add pair
-      let (drawing, naming) = edge(source, move.to, move.side, standing, was,
-        taken, used)
+      let (drawing, naming) = edge(source, move.to, move.side, standing, was, taken, used)
       ink.add drawing
       names.add naming
   result.add ink & curve_ink & names & curve_names
@@ -675,6 +682,10 @@ func renderMap*(here: Option[Frame], motion = Motion.Still,
       (taken_x, taken_y) = if is_leaving: centreOf(taken.get) else: (here_x, here_y)
     # Placed by where it is rather than moved to it, so that distance it
     # carries is distance to travel and not place to jump to.
-    result.add markAt(here_x, here_y, NODE_WIDTH, " style=\"--mx: " & $(taken_x - here_x) &
-      "px; --my: " & $(taken_y - here_y) & "px\"")
+    result.add markAt(
+      here_x,
+      here_y,
+      NODE_WIDTH,
+      " style=\"--mx: " & $(taken_x - here_x) & "px; --my: " & $(taken_y - here_y) & "px\"",
+    )
   result.add "</svg>"

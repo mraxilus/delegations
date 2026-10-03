@@ -28,11 +28,7 @@
 
 import std/[math, options, strutils]
 
-import ./diagram
-import ./frame
-import ./map
-import ./motion
-import ./transition
+import ./[diagram, frame, map, motion, transition]
 
 
 
@@ -49,9 +45,9 @@ const
     ##     node's plate and its name do not scale with its width, so two
     ##     would never quite line up.  Which frame is held is said by
     ##     mark around it instead of by its size.
-  SPOKE_RADIUS = 240 ## Length of lone spoke; crowded one reaches further.
+  SPOKE_RADIUS = 240  ## Length of lone spoke; crowded one reaches further.
   SPOKE_STEP = 40.0  ## Angle between two spokes of same kind, in degrees.
-  LABEL_SIZE* = 11   ## Size name is drawn at, in drawing's own units.
+  LABEL_SIZE* = 11  ## Size name is drawn at, in drawing's own units.
   LEAST_READABLE* = 8
     ## Smallest name may end up on screen, once drawing has been
     ## shrunk.
@@ -60,42 +56,33 @@ const
     ##     rather than words, and drawing of your options whose options
     ##     cannot be read is not worth fitting: below it drawing keeps
     ##     its size and scrolls instead.
-  NAME_ROOM = 24     ## Room frame's own name takes above it.
-  LABEL_DROP = 6     ## Gap between frame and name of move that reaches it.
+  NAME_ROOM = 24  ## Room frame's own name takes above it.
+  LABEL_DROP = 6  ## Gap between frame and name of move that reaches it.
   ##   Move is named under frame it arrives in rather than along
   ##     line that leads there.  Along line, four names leaving one
   ##     middle crowd each other however far out they are put; under
   ##     frames, they are as far apart as frames are.
-  UP = 270.0        ## Direction collect points, in degrees clockwise from east.
-  DOWN = 90.0       ## Direction drop points.
-  ASIDE = 0.0       ## Direction compound points.
+  UP = 270.0  ## Direction collect points, in degrees clockwise from east.
+  DOWN = 90.0  ## Direction drop points.
+  ASIDE = 0.0  ## Direction compound points.
 
 
 
 #[ Tempo ]#
 
 const
-  FOLD_SPREAD* = 60
-    ## Budget for starting one way folding after another, in milliseconds.
-  FOLD_LAG* = 50
-    ## How far behind its own leaf branch begins to fold.
-  FOLD_LEAF* = 120
-    ## Folding one leaf away: leaf growing, run backwards.
-  FOLD_BRANCH* = 110
-    ## Folding one branch back into middle: branch growing, run backwards.
-  SHRINK_TIME* = 140
-    ## Shrinking away frame left behind, once mark has left it.
-  CENTRE_TIME* = 340
-    ## Recentring drawing on frame reached, which is now all there is.
-  GROW_DELAY* = 50
-    ## Wait after drawing is replaced before first new way grows.
-  GROW_SPREAD* = 90
-    ## Budget for starting one way growing after another.
+  FOLD_SPREAD* = 60  ## Budget for starting one way folding after another, in milliseconds.
+  FOLD_LAG* = 50  ## How far behind its own leaf branch begins to fold.
+  FOLD_LEAF* = 120  ## Folding one leaf away: leaf growing, run backwards.
+  FOLD_BRANCH* = 110  ## Folding one branch back into middle: branch growing, run backwards.
+  SHRINK_TIME* = 140  ## Shrinking away frame left behind, once mark has left it.
+  CENTRE_TIME* = 340  ## Recentring drawing on frame reached, which is now all there is.
+  GROW_DELAY* = 50  ## Wait after drawing is replaced before first new way grows.
+  GROW_SPREAD* = 90  ## Budget for starting one way growing after another.
   LEAF_DELAY* = 100
     ## Wait between branch growing and its own leaf, which is what makes
     ## drawing read as branches first and leaves after rather than as one bloom.
-  GROW_TIME* = 170
-    ## Growing one branch, or one leaf once its branch has arrived.
+  GROW_TIME* = 170  ## Growing one branch, or one leaf once its branch has arrived.
 
 
 const CLOSE_TEMPO* = Tempo(
@@ -114,20 +101,19 @@ const CLOSE_TEMPO* = Tempo(
 const
   SHRINK_AT* = CLOSE_TEMPO.pass_at + CLOSE_TEMPO.pass
     ## When frame left behind starts to go, which is once mark has left.
-  CENTRE_AT* = SHRINK_AT + SHRINK_TIME
-    ## When drawing starts recentring on one frame left in it.
+  CENTRE_AT* = SHRINK_AT + SHRINK_TIME  ## When drawing starts recentring on one frame left in it.
 
 
 type
-  Spoke* = object ## Hold one way out of frame couple are holding.
-    to*: Frame           ## Frame it arrives in.
-    side*: Side          ## Arm that acts, which is ink it is drawn in.
+  Spoke* = object  ## Hold one way out of frame couple are holding.
+    to*: Frame  ## Frame it arrives in.
+    side*: Side  ## Arm that acts, which is ink it is drawn in.
     lines*: seq[string]  ## Name of move, line by line.
-    is_compound*: bool   ## Whether it is two moves rather than one.
+    is_compound*: bool  ## Whether it is two moves rather than one.
     back*: Option[Side]  ## Arm that acts coming other way, where they differ.
-    angle*: float        ## Direction it leaves middle, in degrees.
-    radius*: int         ## How far out it puts frame it arrives in.
-    turn*: int           ## Its place in order ways grow and fold.
+    angle*: float  ## Direction it leaves middle, in degrees.
+    radius*: int  ## How far out it puts frame it arrives in.
+    turn*: int  ## Its place in order ways grow and fold.
 
 
 func closeStyle*(): string =
@@ -194,7 +180,7 @@ func spokesOf*(here: Frame): seq[Spoke] =
     placed.radius = SPOKE_RADIUS + (named.len - 1) * 30
     result.add placed
 
-  for index in 0 ..< result.len:
+  for index in 0..<result.len:
     result[index].turn = index
 
 
@@ -261,13 +247,14 @@ func extentOf(here: Frame): (int, int, int, int) =
       (_, label_y) = labelAt(spoke)
       # Measured at size way out grows to when it is one taken, since
       # it grows where it stands and window cut any tighter would clip it.
-      half = max(max(widest(spoke.lines), spoke.to.describe.len) * 3 + 7,
-        NODE_WIDTH div 2 + 8)
+      half = max(max(widest(spoke.lines), spoke.to.describe.len) * 3 + 7, NODE_WIDTH div 2 + 8)
     left = min(left, x - half)
     right = max(right, x + half)
     top = min(top, y - frameHeight(NODE_WIDTH) div 2 - NAME_ROOM)
-    bottom = max(bottom, max(label_y + plateSpan(spoke.lines)[1] div 2,
-      y + frameHeight(NODE_WIDTH) div 2))
+    bottom = max(
+      bottom,
+      max(label_y + plateSpan(spoke.lines)[1] div 2, y + frameHeight(NODE_WIDTH) div 2),
+    )
   (left - pad, top - pad, right - left + 2 * pad, bottom - top + 2 * pad)
 
 
@@ -292,8 +279,7 @@ const SPOKES_BOX* = spokesBox()
   ## Hold space every frame is drawn in, as `x`, `y`, `width`, `height`.
 
 
-const MIDDLE* = (CENTRE_X, CENTRE_Y)
-  ## Hold one place frame being held is drawn, in every frame.
+const MIDDLE* = (CENTRE_X, CENTRE_Y)  ## Hold one place frame being held is drawn, in every frame.
 
 
 func windowOf*(here: Frame): (int, int, int, int) =
@@ -321,8 +307,7 @@ func spokeClass(spoke: Spoke, motion: Motion, taken: Option[Frame]): string =
   result.add(if taken == some(spoke.to): " taken" else: " going")
 
 
-func renderSpokes*(here: Frame, motion = Motion.Still,
-    taken = none(Frame)): string =
+func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): string =
   ## Draw frame couple hold, every way out of it, and move being
   ## made.
   ##   While move is being told, this draws frame it is being made

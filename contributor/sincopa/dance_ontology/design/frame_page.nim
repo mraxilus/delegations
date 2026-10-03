@@ -24,8 +24,7 @@ import std/[math, options, strformat, strutils, tables]
 import ./[page, parts, rules]
 
 
-const TITLE* = "The Frame, So Far"
-  ## What page calls itself, in its tab and at its head.
+const TITLE* = "The Frame, So Far"  ## What page calls itself, in its tab and at its head.
 
 
 const BODY = """

@@ -12,7 +12,7 @@
 import std/[math, strutils]
 
 
-type Point* = tuple ## Position on page, in SVG's own axes.
+type Point* = tuple  ## Position on page, in SVG's own axes.
   x, y: float
 
 

@@ -22,8 +22,8 @@ import ./[body, geometry, pose, route, style, terms]
 
 
 const
-  WIDE = 160.0     ## Box picture with captions needs.
-  SIZE = 116.0     ## And box it needs without them.
+  WIDE = 160.0  ## Box picture with captions needs.
+  SIZE = 116.0  ## And box it needs without them.
 
 type Twists* = array[Arm, float]
   ## How far each connection has wound, in turns: what reach swings
@@ -35,8 +35,7 @@ type Twists* = array[Arm, float]
   ##     it to mark, and rule 28's measured winding replaced braid with
   ##     geometry.  Neither has had caller since.
 
-const NO_TWIST*: Twists = [0.0, 0.0]
-  ## Nothing wound: every figure but turn pages'.
+const NO_TWIST*: Twists = [0.0, 0.0]  ## Nothing wound: every figure but turn pages'.
 
 
 
@@ -93,8 +92,7 @@ func bodiesOf(pose: Pose): tuple[lead, follow: route.Body] =
    (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
 
 
-func isDanceable*(pose: Pose, holds: Holds,
-    levels: Levels = default(Levels), ways: Ways = default(Ways)): bool =
+func isDanceable*(pose: Pose, holds: Holds, levels = default(Levels), ways = default(Ways)): bool =
   ## Test whether every lock and wrap in this hold really is one (rule 7).
   ##   Lock or wrap position may only be used when line goes round no
   ##     less than just under half circumference -- it does not mean
@@ -109,7 +107,7 @@ func isDanceable*(pose: Pose, holds: Holds,
     if holds[arm].isNone:
       continue
     if roundOf(levels[arm], ways[arm]).isNone:
-      continue                     # nothing claimed, nothing to hold up
+      continue  # nothing claimed, nothing to hold up
     let ends: route.Ends = (hands[Dancer.Lead][arm],
                             hands[Dancer.Follow][holds[arm].get],
                             lead_body, follow_body)
@@ -133,8 +131,8 @@ func clearingMarks*(put: Pose; a, b: Point): seq[Mark] =
   let hands = handsOf(put)
   for who in Dancer:
     let drawn = chevronPoints(put.place[who], put.facing[who])
-    for leg in 0 .. 1:
-      for step in 0 .. CHEVRON_STEPS:
+    for leg in 0..1:
+      for step in 0..CHEVRON_STEPS:
         let part = float(step) / float(CHEVRON_STEPS)
         result.add ((drawn[leg].x + (drawn[leg + 1].x - drawn[leg].x) * part,
                      drawn[leg].y + (drawn[leg + 1].y - drawn[leg].y) * part),
@@ -172,8 +170,7 @@ func windOf*(put: Pose, holds: Holds, arm: Arm): tuple[phi, spread: float] =
     hands = handsOf(put)
     a = hands[Dancer.Lead][arm]
     b = hands[Dancer.Follow][holds[arm].get]
-    phi_a = bearing(a.x - put.place[Dancer.Lead].x,
-                    a.y - put.place[Dancer.Lead].y) - axis.bearing
+    phi_a = bearing(a.x - put.place[Dancer.Lead].x, a.y - put.place[Dancer.Lead].y) - axis.bearing
     phi_b = bearing(b.x - put.place[Dancer.Follow].x,
                     b.y - put.place[Dancer.Follow].y) - axis.bearing
   (phi_a, wrap180(phi_b - phi_a))
@@ -184,8 +181,7 @@ func diveGap*(under, over: seq[Point]; meeting: Point): tuple[opens, shuts: floa
   ## measured along whole reach.
   ##   Same gap still reach is cut by, through same two funcs, so moving
   ##     figure breaks where its still breaks and at same width.
-  gapFor(alongAt(under, meeting), polylineLength(under),
-         hidesAt(under, over, meeting))
+  gapFor(alongAt(under, meeting), polylineLength(under), hidesAt(under, over, meeting))
 
 
 func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
@@ -202,10 +198,17 @@ func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
     result[under].add meeting
 
 
-func partsOf*(pose: Pose, holds: Holds, levels: Levels = default(Levels),
-    over = none(Arm), free = Free.Fade, has_captions = true,
-    ways: Ways = default(Ways), twist: Twists = NO_TWIST,
-    should_clear_marks = false): seq[string] =
+func partsOf*(
+  pose: Pose,
+  holds: Holds,
+  levels = default(Levels),
+  over = none(Arm),
+  free = Free.Fade,
+  has_captions = true,
+  ways = default(Ways),
+  twist: Twists = NO_TWIST,
+  should_clear_marks = false,
+): seq[string] =
   ## Draw every element of one pose, in order picture is read from.
   ##   `clear_marks` asks straight reach to bend round marks it does
   ##     not join (rule 22).  It is off by default so that only pages
@@ -234,8 +237,7 @@ func partsOf*(pose: Pose, holds: Holds, levels: Levels = default(Levels),
   # hand still at home has no ghost to confuse it with.
   for (who, arm) in ghosts(holds, levels, ways):
     let home = handPoint(put.place[who], put.facing[who], arm)
-    bits.add hand(home.x, home.y, who == Dancer.Lead, arm, is_held = false,
-                  free = Free.Grey)
+    bits.add hand(home.x, home.y, who == Dancer.Lead, arm, is_held = false, free = Free.Grey)
   # Wound pair crosses: once by half turn, twice by whole one, with
   # cross or diamond that makes (rules 27, 28).
   let is_winding = holds[Arm.Left].isSome and holds[Arm.Right].isSome and
@@ -259,9 +261,14 @@ func partsOf*(pose: Pose, holds: Holds, levels: Levels = default(Levels),
           # round; wind says how far.  Half turn's sweep is pose's
           # own -- hands really have swapped sides -- and whole turn's
           # is full round on top of it.
-          wound(ends.a, ends.b, axisOf(put).across,
-                degToRad(windOf(put, holds, arm).phi),
-                2 * PI * twist[arm], share = windShare(twist[arm], arm))
+          wound(
+            ends.a,
+            ends.b,
+            axisOf(put).across,
+            degToRad(windOf(put, holds, arm).phi),
+            2 * PI * twist[arm],
+            share = windShare(twist[arm], arm),
+          )
         elif should_clear_marks:
           clearedReach(ends.a, ends.b, clearingMarks(put, ends.a, ends.b))
         else:
@@ -288,24 +295,43 @@ func partsOf*(pose: Pose, holds: Holds, levels: Levels = default(Levels),
       bits.add twoTone(runs, points[points.len div 2], arm, holds[arm].get)
   for arm in Arm:
     let hand_centre = hands[Dancer.Lead][arm]
-    bits.add hand(hand_centre.x, hand_centre.y, is_leading = true, arm = arm,
-                  is_held = holds[arm].isSome, level = levels[arm], free = free)
+    bits.add hand(
+      hand_centre.x,
+      hand_centre.y,
+      is_leading = true,
+      arm = arm,
+      is_held = holds[arm].isSome,
+      level = levels[arm],
+      free = free,
+    )
   for own in [Arm.Right, Arm.Left]:
     let
       hand_centre = hands[Dancer.Follow][own]
       by = Arm.toSeq.filterIt(holds[it] == some(own))
       level = if by.len > 0: levels[by[0]] else: none(Level)
-    bits.add hand(hand_centre.x, hand_centre.y, is_leading = false, arm = own, is_held = by.len > 0,
-                  level = level, free = free)
+    bits.add hand(
+      hand_centre.x,
+      hand_centre.y,
+      is_leading = false,
+      arm = own,
+      is_held = by.len > 0,
+      level = level,
+      free = free,
+    )
   if has_captions:
     for arm in Arm:
       bits.add caption(put.place[Dancer.Lead], put.facing[Dancer.Lead], arm,
                        (if arm == Arm.Left: "Left" else: "Right"),
                        put.wind[Dancer.Lead][arm], DEEP[arm])
     for own in [Arm.Right, Arm.Left]:
-      bits.add caption(put.place[Dancer.Follow], put.facing[Dancer.Follow],
-                       own, handName(own), put.wind[Dancer.Follow][own],
-                       INK[own])
+      bits.add caption(
+        put.place[Dancer.Follow],
+        put.facing[Dancer.Follow],
+        own,
+        handName(own),
+        put.wind[Dancer.Follow][own],
+        INK[own],
+      )
   bits.filterIt(it.len > 0)
 
 
@@ -325,17 +351,27 @@ func view*(half: float): string =
   &"""viewBox="{numeral(-half)} {numeral(-half)} {numeral(2 * half)} {numeral(2 * half)}""""
 
 
-func renderFigure*(classes: string, holds: Holds,
-    levels: Levels = default(Levels), over = none(Arm), lead_turn = 0.0,
-    follow_turn = 0.0, free = Free.Fade, has_captions = true, pose = none(Pose),
-    half = none(float), ways: Ways = default(Ways), twist: Twists = NO_TWIST,
-    should_clear_marks = false): string =
+func renderFigure*(
+  classes: string,
+  holds: Holds,
+  levels = default(Levels),
+  over = none(Arm),
+  lead_turn = 0.0,
+  follow_turn = 0.0,
+  free = Free.Fade,
+  has_captions = true,
+  pose = none(Pose),
+  half = none(float),
+  ways = default(Ways),
+  twist: Twists = NO_TWIST,
+  should_clear_marks = false,
+): string =
   ## Draw one picture, canonical unless pose is handed in already turned.
   let
     drawn = if pose.isSome: pose.get
-            else: canonicalise(spinAbout(
-              spinAbout(rest(), Dancer.Lead, lead_turn),
-              Dancer.Follow, follow_turn))
+            else: canonicalise(
+              spinAbout(spinAbout(rest(), Dancer.Lead, lead_turn), Dancer.Follow, follow_turn),
+            )
     box = if half.isSome: half.get
           else: (if has_captions: WIDE else: SIZE) / 2
     bits = partsOf(
@@ -391,8 +427,9 @@ func keyed*(times: seq[float], count: int): string =
   ""
 
 
-func animate*(attribute: string, steps: seq[float], duration: float,
-    times: seq[float] = @[]): string =
+func animate*(
+  attribute: string, steps: seq[float], duration: float, times: seq[float] = @[]
+): string =
   ## Animate one attribute over cycle.
   &"""<animate attributeName="{attribute}" values="{series(steps)}"""" &
     keyed(times, steps.len) &
@@ -401,12 +438,11 @@ func animate*(attribute: string, steps: seq[float], duration: float,
 
 func paired*(markup, inner: string): string =
   ## Reopen self-closing element so it can carry its own animations.
-  let tag = markup[1 ..< markup.find(' ')]
+  let tag = markup[1..<markup.find(' ')]
   markup[0 .. ^3] & ">" & inner & "</" & tag & ">"
 
 
-const LONG_ENOUGH = 999.0
-  ## Dash long enough to be rest of any reach on any page.
+const LONG_ENOUGH = 999.0  ## Dash long enough to be rest of any reach on any page.
 
 const GAPS_DRAWN = 2
   ## Breaks moving reach has room for, whether it uses them or not.
@@ -415,8 +451,7 @@ const GAPS_DRAWN = 2
   ##     number of them, which is what lets pattern be animated at all.
 
 
-func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]],
-    starts = 0.0):
+func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]], starts = 0.0):
     tuple[pattern, offset: string] =
   ## Say moving reach's break as dash pattern: how far it runs, how long
   ## break is, and then rest of it (rule 29).
@@ -444,7 +479,7 @@ func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]],
   ##     one connection (rule 31), while frame has none at all, and
   ##     markup has to say same number of things either way.
   var runs = @[0.0]
-  for i in 0 ..< points.high:
+  for i in 0..<points.high:
     runs.add runs[^1] + distance(points[i], points[i + 1])
   # Where along this half each break falls, in order, so pattern reads
   # from one end to other.  Gap is centred on crossing and
@@ -489,7 +524,7 @@ func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]],
   var
     lengths: seq[float]
     at = 0.0
-  for k in 0 ..< GAPS_DRAWN:
+  for k in 0..<GAPS_DRAWN:
     let
       gap = if k < breaks.len: max(breaks[k].shuts - breaks[k].opens, 0.0)
             else: 0.0
@@ -504,7 +539,7 @@ func dashedAt*(points: seq[Point], dives: seq[tuple[opens, shuts: float]],
   # Pattern is written one gap longer at front and started one gap in,
   # which comes to same line and keeps first dash off zero.
   var says = @[numeral(lengths[0] + lengths[1])]
-  for k in 1 ..< lengths.len:
+  for k in 1..<lengths.len:
     says.add numeral(lengths[k])
   says.add numeral(LONG_ENOUGH)
   (says.join(" "), numeral(lengths[1]))
@@ -519,10 +554,17 @@ func facings*(poses: seq[Pose], who: Dancer): seq[float] =
   continuous(poses.mapIt(it.facing[who]))
 
 
-func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
-    half = none(float), levels: Levels = default(Levels),
-    ways: Ways = default(Ways), duration = 9.6,
-    times: seq[float] = @[], wound = 0.0): string =
+func animatedPoses*(
+  classes: string,
+  holds: Holds,
+  walk: seq[Pose],
+  half = none(float),
+  levels = default(Levels),
+  ways = default(Ways),
+  duration = 9.6,
+  times: seq[float] = @[],
+  wound = 0.0,
+): string =
   ## Draw one picture moving through walk of poses handed in.
   ##   Every moving figure comes through here, whether its walk is whole
   ##     move's cycle or one edge of state graph rocked back and forth.
@@ -557,7 +599,8 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
         """ stroke-width="1" stroke-dasharray="3 4"/>""",
       animate("cx", ring_centre_x, duration, times) &
         animate("cy", ring_centre_y, duration, times) &
-        animate("r", ring_radius, duration, times))
+        animate("r", ring_radius, duration, times),
+    )
 
   # Body is rigid: only where it is and which way it faces ever change.  So
   # it is drawn once, at origin facing up, and carried about by pair of
@@ -621,10 +664,14 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
         # hold says: two together are whole of winding.
         winds[arm] = seen.mapIt(it + 360 * wound - seen[0])
         for i, ends in frames:
-          routes[arm].add wound(ends.a, ends.b, axisOf(poses[i]).across,
-                                degToRad(windOf(poses[i], holds, arm).phi),
-                                degToRad(winds[arm][i]),
-                                share = windShare(winds[arm][i] / 360, arm))
+          routes[arm].add wound(
+            ends.a,
+            ends.b,
+            axisOf(poses[i]).across,
+            degToRad(windOf(poses[i], holds, arm).phi),
+            degToRad(winds[arm][i]),
+            share = windShare(winds[arm][i] / 360, arm),
+          )
       else:
         routes[arm] = frames.mapIt(straightReach(it.a, it.b))
     else:
@@ -649,7 +696,7 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
   # on page: snake passes near its own line again further along.
   var dives: array[Arm, seq[seq[tuple[opens, shuts: float]]]]
   if holds[Arm.Left].isSome and holds[Arm.Right].isSome:
-    for i in 0 ..< poses.len:
+    for i in 0..<poses.len:
       var mine: array[Arm, seq[tuple[opens, shuts: float]]]
       let
         turned_by = if winds[Arm.Left].len == poses.len: winds[Arm.Left][i]
@@ -659,8 +706,7 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
         on_top = overArm(turned_by / 360)
       for k, meeting in crossingsOf(routes[Arm.Left][i], routes[Arm.Right][i]):
         let under = if (k mod 2 == 0) == (on_top == Arm.Left): Arm.Right else: Arm.Left
-        mine[under].add diveGap(routes[under][i], routes[other(under)][i],
-                                meeting)
+        mine[under].add diveGap(routes[under][i], routes[other(under)][i], meeting)
       for arm in Arm:
         dives[arm].add mine[arm]
 
@@ -676,11 +722,10 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
         paths: seq[string]
         dashes, offsets: seq[string]
       for i, points in routes[arm]:
-        let part = points[lower .. upper]
+        let part = points[lower..upper]
         paths.add smoothed(part)
         if dives[arm].len == poses.len:
-          let dashed = dashedAt(part, dives[arm][i],
-                                starts = polylineLength(points[0 .. lower]))
+          let dashed = dashedAt(part, dives[arm][i], starts = polylineLength(points[0..lower]))
           dashes.add dashed.pattern
           offsets.add dashed.offset
       bits.add paired(
@@ -721,9 +766,10 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
       &""" dur="{duration}s" repeatCount="indefinite"/>""" & mark & "</g>"
 
   for arm in Arm:
-    bits.add carried(hand(0, 0, is_leading = true, arm = arm,
-                          is_held = holds[arm].isSome, level = levels[arm]),
-                     hands.mapIt(it[Dancer.Lead][arm]))
+    bits.add carried(
+      hand(0, 0, is_leading = true, arm = arm, is_held = holds[arm].isSome, level = levels[arm]),
+      hands.mapIt(it[Dancer.Lead][arm]),
+    )
   for own in [Arm.Right, Arm.Left]:
     let
       by = Arm.toSeq.filterIt(holds[it] == some(own))
@@ -736,10 +782,16 @@ func animatedPoses*(classes: string, holds: Holds, walk: seq[Pose],
     bits.join("\n        ") & "\n      </svg>"
 
 
-func animated*(classes: string, holds: Holds, move: MoveApply,
-    half = none(float), levels: Levels = default(Levels),
-    ways: Ways = default(Ways), duration = 9.6, samples = 14): string =
+func animated*(
+  classes: string,
+  holds: Holds,
+  move: MoveApply,
+  half = none(float),
+  levels = default(Levels),
+  ways = default(Ways),
+  duration = 9.6,
+  samples = 14,
+): string =
   ## Draw same picture, moving: stage one travels, stage two comes home.
   let walk = cycle(move, samples)
-  animatedPoses(classes, holds, walk.poses, half, levels, ways, duration,
-                times = walk.times)
+  animatedPoses(classes, holds, walk.poses, half, levels, ways, duration, times = walk.times)

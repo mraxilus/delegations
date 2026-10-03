@@ -43,7 +43,8 @@ proc capsule(world_id: WorldId, x: float): BodyId =
   discard createCapsule(result, addr shape_definition, addr capsule)
 
 
-suite "the engine this project turns couples with":
+
+suite "Internal: The engine this project turns couples with":
   test "engine runs, and a body falls as far as gravity says":
     ## Cheapest proof binding is right: struct laid out wrong gives wrong figure here
     ##   rather than failing to link.
@@ -52,7 +53,7 @@ suite "the engine this project turns couples with":
     let
       world_id = createWorld(addr definition)
       gravity = abs(float(definition.gravity.y))
-    check gravity > 9.0     # Engine's own, not this project's; only its order matters.
+    check gravity > 9.0  # Engine's own, not this project's; only its order matters.
     var body_definition = defaultBody()
     body_definition.kind = BODY_DYNAMIC
     body_definition.position = Position(x: 0.0, y: 10.0, z: 0.0)
@@ -65,11 +66,12 @@ suite "the engine this project turns couples with":
         radius: 0.05,
       )
     discard createCapsule(body, addr shape_definition, addr capsule)
-    for i in 1 .. 240:
+    for i in 1..240:
       step(world_id, cfloat(1.0 / 240.0), 8)
     let fell = 10.0 - positionOf(body).at.y
     # Half g t squared, with one second walked.
     check abs(fell - 0.5 * gravity) < 0.05
+
 
   test "two arms cannot stand inside one another":
     ## Reason engine is here at all.  Two capsules are started deep inside each other
@@ -80,12 +82,13 @@ suite "the engine this project turns couples with":
       body_a = capsule(world_id, -0.01)
       body_b = capsule(world_id, 0.01)
     check abs(positionOf(body_b).at.x - positionOf(body_a).at.x) < 0.03
-    for i in 1 .. 240:
+    for i in 1..240:
       step(world_id, cfloat(1.0 / 240.0), 8)
     let apart = abs(positionOf(body_b).at.x - positionOf(body_a).at.x)
     checkpoint("centres ended " & $apart & " m apart")
     # Two radii is where they touch; anything less is one standing inside other.
     check apart >= 2.0 * 0.045
+
 
   test "body touched by more things than eight reports every one":
     ## Contacts are read into room caller gives, and rest are dropped unsaid.
@@ -104,7 +107,7 @@ suite "the engine this project turns couples with":
     discard createCapsule(centre, addr shape_definition, addr big)
     const count_around = 10
     var around: seq[BodyId]
-    for i in 0 ..< count_around:
+    for i in 0..<count_around:
       # Ring of thin capsules, each poking into big one from its own side.
       let angle = 2.0 * PI * float(i) / float(count_around)
       var thin_definition = defaultBody()

@@ -30,8 +30,7 @@ import ./title
 const
   TEMPLATE_PATH = "pages" / "review" / "review.html"
     ## Committed page holding prose and one marker per derived number or picture.
-  PAGE_NAME* = "review.html"
-    ## File page is written as, under output directory.
+  PAGE_NAME* = "review.html"  ## File page is written as, under output directory.
   DIRECTORY_FRAMES* = "frames"
     ## Directory under output holding one SVG per frame, for anything that is not HTML.
   DISAGREEMENTS = {
@@ -40,7 +39,7 @@ const
     FindingKind.EdgeCompound,
     FindingKind.HelperDiffers,
     FindingKind.EdgeUnsupported,
-  } ## Name finding kinds that mean workbook and model differ.
+  }  ## Name finding kinds that mean workbook and model differ.
 
 
 
@@ -186,8 +185,7 @@ func renderMatrix(): string =
       if helper.isNone and named.isNone:
         result.add "<td></td>"
         continue
-      let known = cellText(
-        workbookName(source).get(""), workbookName(target).get(""))
+      let known = cellText(workbookName(source).get(""), workbookName(target).get(""))
       result.add "<td class=\"on" & (if known.isSome: "" else: " new") &
         (if helper.isNone: " two" else: "") &
         "\" title=\"" & escape(source.describe) & " to " &
@@ -273,8 +271,8 @@ func inkTerms(page: string): string =
     let
       inner = start + opens.len
       stop = result.find(shuts, inner)
-      said = inked(result[inner ..< stop], should_escape = false)
-    result = result[0 ..< inner] & said & result[stop .. ^1]
+      said = inked(result[inner..<stop], should_escape = false)
+    result = result[0..<inner] & said & result[stop .. ^1]
     at = inner + said.len + shuts.len
 
 
@@ -313,7 +311,7 @@ proc renderReview*(): string =
   let at = page.find("{{")
   doAssert at < 0,
     "Every marker in review prose should be filled; got `" &
-      page[at ..< min(at + 24, page.len)] & "`."
+      page[at..<min(at + 24, page.len)] & "`."
   inkTerms(page)
 
 

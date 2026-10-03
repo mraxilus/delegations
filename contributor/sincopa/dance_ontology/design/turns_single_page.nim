@@ -20,8 +20,7 @@ import std/[options, strformat, tables]
 import ./[page, parts]
 
 
-const TITLE* = "Single-Hand Turns, So Far"
-  ## What page calls itself, in its tab and at its head.
+const TITLE* = "Single-Hand Turns, So Far"  ## What page calls itself, in its tab and at its head.
 
 
 const QUARTER_NAMES = ["none", "&#188;", "&#189;", "&#190;"]
@@ -38,7 +37,7 @@ func plates(parts: Parts, manner: Manner): string =
       """apart. The fourth quarter comes back to the first, so the round """ &
       """closes and nothing is refused.</p>"""
     result.add """<div class="row mid">"""
-    for quarter in 0 ..< QUARTERS_ROUND:
+    for quarter in 0..<QUARTERS_ROUND:
       if quarter > 0:
         result.add parts["g_quarter"]
       let caption =
@@ -52,11 +51,13 @@ func plates(parts: Parts, manner: Manner): string =
     result.add """<p>And every transition between them. Each one rocks """ &
       """between its two positions, so the turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
-    for quarter in 0 ..< QUARTERS_ROUND:
+    for quarter in 0..<QUARTERS_ROUND:
       let
         to = (quarter + 1) mod QUARTERS_ROUND
         moving = parts[&"tr_{tag}_{connection}_{quarter}_{to}"].replaceFirst(
-          "class=\"mv\"", "class=\"mv moving\"")
+          "class=\"mv\"",
+          "class=\"mv moving\"",
+        )
         still = parts[&"tr_{tag}_{connection}_{quarter}_{to}_still"]
         caption = &"{QUARTER_NAMES[quarter]} &rarr; {QUARTER_NAMES[to]}"
       result.add &"<figure>{moving}{still}" &

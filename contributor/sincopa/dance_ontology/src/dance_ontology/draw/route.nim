@@ -20,59 +20,59 @@ import std/[algorithm, math, options, sequtils, strformat, strutils]
 import ./[body, geometry, style, terms]
 
 
-const ROUTE_COUNT* = 33   ## Points in every emitted reach, so frames can morph.
+const ROUTE_COUNT* = 33  ## Points in every emitted reach, so frames can morph.
 
 type
-  Body* = tuple ## One dancer, as routing sees them.
+  Body* = tuple  ## One dancer, as routing sees them.
     centre: Point
     facing: float
-  WayRound* = tuple ## How reach sets off round each body: one side or
+  WayRound* = tuple  ## How reach sets off round each body: one side or
                     ## other.
     a, b: float
-  Run* = seq[Point] ## One unbroken stretch of drawn reach.
-  Ends* = tuple ## One connection, as routing takes it.
+  Run* = seq[Point]  ## One unbroken stretch of drawn reach.
+  Ends* = tuple  ## One connection, as routing takes it.
     a, b: Point
     body_a, body_b: Body
 
-  Mark* = tuple ## Something settled reach must not run through.
+  Mark* = tuple  ## Something settled reach must not run through.
     centre: Point
     clear: float
 
 const WAYS*: array[4, WayRound] = [
   (1.0, 1.0), (1.0, -1.0), (-1.0, 1.0), (-1.0, -1.0),
-] ## Four ways reach can set off.  Which one whole move uses is
+]  ## Four ways reach can set off.  Which one whole move uses is
   ## settled once, before any of it is drawn -- see `oneWayRound`.
 
-const BREAK* = 11.0   ## Length of gap cut in under reach at crossing.
+const BREAK* = 11.0  ## Length of gap cut in under reach at crossing.
 
-const SAME_SPOT* = 0.1 ## Apart from which two meetings are one meeting.
+const SAME_SPOT* = 0.1  ## Apart from which two meetings are one meeting.
   ## Point is written to one decimal (`geometry.numeral`), so two meetings this
   ##   close emit as one place and no picture can tell them apart.
   ## Duplicate this drops is exact: vertex of one reach lying on other is
   ##   met by both segments sharing it, at that vertex both times.
 
 const
-  DIAMOND_ROOM* = 24.0 ## How wide diamond that wound pair holds opens at
+  DIAMOND_ROOM* = 24.0  ## How wide diamond that wound pair holds opens at
                        ## its middle.
-  WIND_NIP = 0.4     ## How far wound pair draws together between its
+  WIND_NIP = 0.4  ## How far wound pair draws together between its
                       ## hands, by whole turn.
     ## Two strands wound round each other pull in where they are wound and
     ##   are held apart only at their ends, so pair nips in at its middle
     ##   -- which is also what turns wide flat lens into diamond.  At no
     ##   wind there is nothing to pull, so it comes on with winding.
-  WIND_NIP_MORE = 0.2 ## And how much further by turn and half.
+  WIND_NIP_MORE = 0.2  ## And how much further by turn and half.
     ## Pull does not stop growing at whole turn; only this number's cap
     ##   did, which left pair drawn as though winding had stopped.
     ## What it buys is room between two connections where they run
     ##   alongside each other short of swan: they touched at 1.37 turns,
     ##   3.35 between their middles where line is 3.4 wide, and Architect
     ##   read Right as running into other rather than crossing it.
-  BAND_STEPS = 120   ## Points along reach relaxed past marks, before it.
+  BAND_STEPS = 120  ## Points along reach relaxed past marks, before it.
 
 const
-  SWAN_FROM = 1.0    ## Turns of wind past which pair stops sharing its
+  SWAN_FROM = 1.0  ## Turns of wind past which pair stops sharing its
                       ## swing evenly between two connections.
-  SWAN_EASE = 7.0   ## How quickly it hands over, as power of way
+  SWAN_EASE = 7.0  ## How quickly it hands over, as power of way
                       ## through.
     ## Well over one, so hand-over is slow at start and quick at end:
     ##   connection that ends up straight keeps its bend nearly all
@@ -83,12 +83,12 @@ const
     ##   through middle of walk -- diamond fell apart and swan was built
     ##   again rather than one opening into other.  Architect called that
     ##   out, 2026-09-08, and named bend as what was missing.
-  SWAN_DRAW_IN* = 0.65 ## How far snake pulls in against its partner
+  SWAN_DRAW_IN* = 0.65  ## How far snake pulls in against its partner
                        ## before it opens, as multiple of one connection's own.
     ## Wind two strands past whole turn and they pull tight on each other
     ##   before either can wrap other, which is what `WIND_NIP` already
     ##   says of pair's middle.  Snake does it as whole.
-  SWAN_DRAWS_AT = 3.0 ## How quickly it pulls in, as power of way through.
+  SWAN_DRAWS_AT = 3.0  ## How quickly it pulls in, as power of way through.
   SWAN_SWING* = 1.50  ## And how much swing it carries once opened, on
                       ## same scale.
     ## Over one, so snake plainly goes *round* straight connection rather
@@ -96,7 +96,7 @@ const
     ## Width is Architect's, and this is width they had: snake bows 21.9
     ##   where it bowed 22.0 before this stretch was mended, and 12.8 while
     ##   it carried no opening at all.
-  SWAN_OPENS_AT = 20.0 ## How late it opens, as power of way through.
+  SWAN_OPENS_AT = 20.0  ## How late it opens, as power of way through.
     ## Late, and that is what buys width.  Snake must stay in close where
     ##   third crossing runs near hand -- around 1.42 turns -- or that
     ##   crossing is cut by trim and count of them falls.  Opening after
@@ -179,15 +179,15 @@ func windShare*(turns: float, arm: Arm): float =
         (SWAN_SWING - SWAN_DRAW_IN) * pow(u, SWAN_OPENS_AT)
 
 const
-  BAND_PASSES = 240    ## Turns of pulling tight and pushing clear.
+  BAND_PASSES = 240  ## Turns of pulling tight and pushing clear.
     ## Enough for band round marks that figure holds to stop moving:
     ##   pull travels one point per pass, so band of `BAND_STEPS` needs
     ##   several times its own length to settle end to end.
-  SHOVES = 8           ## Shoves point gets per pass to leave every mark.
-  BAND_PULL = 0.5      ## How far point goes towards its neighbours' middle.
+  SHOVES = 8  ## Shoves point gets per pass to leave every mark.
+  BAND_PULL = 0.5  ## How far point goes towards its neighbours' middle.
     ## Half way is most that stays steady; further and band shivers
     ##   instead of settling.
-  CLEAR_PASSES = 12    ## Times band may be widened to what it left clear.
+  CLEAR_PASSES = 12  ## Times band may be widened to what it left clear.
     ## Widening mark moves band, which can hand shortfall to
     ##   mark next door, so settling takes some goes; `checks` measures
     ##   line that comes out rather than trusting that it did.
@@ -196,20 +196,20 @@ const
     ##   band that is this close is as clear as picture can show.
 
 const
-  BOW_SWELL = 2.0      ## Where bezier's control point starts, in apexes.
+  BOW_SWELL = 2.0  ## Where bezier's control point starts, in apexes.
     ## Twice apex is what puts bezier's own middle on it, so this is
     ##   least swelling that could clear what hull touched.
-  BOW_MORE = 0.35      ## And how much further out each try reaches.
-  BOW_TRIES = 12       ## Tries before hull is kept after all.
+  BOW_MORE = 0.35  ## And how much further out each try reaches.
+  BOW_TRIES = 12  ## Tries before hull is kept after all.
 
 const
-  BEND_MIN = 12.0      ## Degrees turn must add up to before it is bend.
+  BEND_MIN = 12.0  ## Degrees turn must add up to before it is bend.
     ## Under this is wander of curve drawn as `ROUTE_COUNT` straight bits,
     ##   which nobody reads as change of direction.
-  BEND_COST* = 14.0     ## Line second bend must save to be worth making.
+  BEND_COST* = 14.0  ## Line second bend must save to be worth making.
     ## About width of hand mark: turn reader has to follow should
     ##   buy at least as much as thing it is going round.
-  SHARP_MAX* = 15.0     ## Degrees at one corner past which bend is break.
+  SHARP_MAX* = 15.0  ## Degrees at one corner past which bend is break.
     ## Curve sampled at `ROUTE_COUNT` turns few degrees per corner however far
     ##   round it goes, so anything this sharp is change of direction made
     ##   at one point -- which is what rule 24 rules out.
@@ -221,7 +221,7 @@ const
 func isSegmentHitting*(p, q: Point; body: Body): bool =
   ## Test whether this straight stretch passes inside body's outline.
   const steps = 32
-  for i in 0 .. steps:
+  for i in 0..steps:
     let
       t = i / steps
       point: Point = (p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t)
@@ -243,7 +243,7 @@ func taut*(ends: Ends, way: WayRound, cap = 90): Option[tuple[points: seq[Point]
     bearing_b = bearing(ends.b.x - ends.body_b.centre.x, ends.b.y - ends.body_b.centre.y)
     arc_a = @[ends.a]
     arc_b = @[ends.b]
-  for _ in 0 ..< cap:
+  for _ in 0..<cap:
     let
       free_a = arc_a[^1]
       free_b = arc_b[^1]
@@ -274,7 +274,7 @@ func polylineLength*(points: seq[Point]): float =
   ##     register where nothing assigned it first, then crashes compiler
   ##     reading it (`tests/suites/test_route.nim` holds line in place).
   result = 0.0
-  for i in 0 ..< points.high:
+  for i in 0..<points.high:
     result += distance(points[i], points[i + 1])
 
 
@@ -308,11 +308,11 @@ func resample*(points: seq[Point], count: int): seq[Point] =
   ## Say same path as `count` evenly spaced points -- one shape for every
   ## frame of animation, so route can morph instead of jumping.
   var cumulative = @[0.0]
-  for i in 0 ..< points.high:
+  for i in 0..<points.high:
     cumulative.add cumulative[^1] + distance(points[i], points[i + 1])
   let total = if cumulative[^1] > 0: cumulative[^1] else: 1.0
   var j = 0
-  for k in 0 ..< count:
+  for k in 0..<count:
     let target = total * float(k) / float(count - 1)
     while j < points.len - 2 and cumulative[j + 1] < target:
       inc j
@@ -336,8 +336,7 @@ func frontOf*(hand: Point, body: Body): Option[float] =
   ##   Nothing where hand is dead ahead or dead behind and neither way
   ##     is more frontward than other -- typed absence, not zero
   ##     caller must know to test for.
-  let offset = wrap180(
-    bearing(hand.x - body.centre.x, hand.y - body.centre.y) - body.facing)
+  let offset = wrap180(bearing(hand.x - body.centre.x, hand.y - body.centre.y) - body.facing)
   if abs(offset) < 1e-9 or abs(abs(offset) - 180) < 1e-9:
     return none(float)
   some(if offset > 0: -1.0 else: 1.0)
@@ -355,7 +354,7 @@ func wayFor*(ends: Ends, level: Option[Level], way: Option[Way]):
     return none(WayRound)
   let sides = (a: frontOf(ends.a, ends.body_a), b: frontOf(ends.b, ends.body_b))
   if sides.a.isNone or sides.b.isNone:
-    return none(WayRound)             # dead ahead or behind: neither way
+    return none(WayRound)  # dead ahead or behind: neither way
   if sends.get == Sends.FrontWay:
     some (sides.a.get, sides.b.get)
   else:
@@ -374,7 +373,7 @@ func wrapArc*(ends: Ends, way: WayRound): Option[tuple[a, b: float]] =
     free_b = ends.b
     steps_a = 0
     steps_b = 0
-  for _ in 0 ..< 240:
+  for _ in 0..<240:
     let
       is_hitting_a = isSegmentHitting(free_a, free_b, ends.body_a)
       is_hitting_b = isSegmentHitting(free_a, free_b, ends.body_b)
@@ -440,14 +439,13 @@ func nearestOn*(points: seq[Point], q: Point): float =
   ##   Sampled points alone would miss sag between them, which is
   ##     very place line that looks clear stops being clear.
   result = Inf
-  for i in 0 ..< points.high:
+  for i in 0..<points.high:
     let
       (a, b) = (points[i], points[i + 1])
       run = (x: b.x - a.x, y: b.y - a.y)
       square = run.x * run.x + run.y * run.y
       along = if square < 1e-12: 0.0
-              else: clamp(((q.x - a.x) * run.x + (q.y - a.y) * run.y) / square,
-                          0.0, 1.0)
+              else: clamp(((q.x - a.x) * run.x + (q.y - a.y) * run.y) / square, 0.0, 1.0)
       near: Point = (a.x + run.x * along, a.y + run.y * along)
     result = min(result, distance(near, q))
 
@@ -467,7 +465,7 @@ func bendsIn*(points: seq[Point]): int =
     turned = 0.0
     against = 0.0
     is_counted = false
-  for i in 1 ..< points.high:
+  for i in 1..<points.high:
     let
       into = (x: points[i].x - points[i - 1].x, y: points[i].y - points[i - 1].y)
       away = (x: points[i + 1].x - points[i].x, y: points[i + 1].y - points[i].y)
@@ -478,7 +476,7 @@ func bendsIn*(points: seq[Point]): int =
       continue
     if way == 0:
       way = float(sgn(corner))
-    if sgn(corner).float == way:
+    if float(sgn(corner)) == way:
       turned += abs(corner)
       against = 0.0
     else:
@@ -501,7 +499,7 @@ func sharpestIn*(points: seq[Point]): float =
   ##   Curve drawn as `ROUTE_COUNT` straight bits turns slightly at every one
   ##     of them; corner turns much at one.  So sharpest corner, and
   ##     not total turning, is what tells break from bend.
-  for i in 1 ..< points.high:
+  for i in 1..<points.high:
     let
       into = (x: points[i].x - points[i - 1].x, y: points[i].y - points[i - 1].y)
       away = (x: points[i + 1].x - points[i].x, y: points[i + 1].y - points[i].y)
@@ -609,8 +607,8 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     ##       bezier passes short of its control point and has to reach
     ##       further out to clear what hull touched exactly.  Accepted
     ##       -- it is difference between bend and break.
-    var sky = @[0.0]                   # pinned at hand it starts from
-    for step in 1 ..< BAND_STEPS:
+    var sky = @[0.0]  # pinned at hand it starts from
+    for step in 1..<BAND_STEPS:
       let x = span * float(step) / float(BAND_STEPS)
       var pushed = 0.0
       for mark in asked:
@@ -622,11 +620,11 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
         if reach > 0:
           pushed = max(pushed, centre_y + sqrt(reach))
       sky.add pushed
-    sky.add 0.0                        # and at hand it ends on
+    sky.add 0.0  # and at hand it ends on
     # Upper hull of sky-line, walked left to right: point stays
     # only while line to it still turns same way as one before.
     var hull: seq[int]
-    for i in 0 .. sky.high:
+    for i in 0..sky.high:
       let x = span * float(i) / float(BAND_STEPS)
       while hull.len >= 2:
         let
@@ -653,7 +651,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     func curveWith(swell: float): seq[Point] =
       ## Bezier from hand to hand over control point this far out.
       let hold = placed(at, side * swell * sky[apex])
-      for step in 0 .. BAND_STEPS:
+      for step in 0..BAND_STEPS:
         let
           t = float(step) / float(BAND_STEPS)
           k = (1 - t) * (1 - t)
@@ -665,7 +663,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     # Bezier sags inside its control point, so it is swelled until it
     # really is clear of everything, and hull is kept for case --
     # mark sitting almost on hand -- where no swelling does it.
-    for try_number in 0 .. BOW_TRIES:
+    for try_number in 0..BOW_TRIES:
       let
         curve = curveWith(BOW_SWELL + BOW_MORE * float(try_number))
         is_clear = asked.allIt(nearestOn(curve, it.centre) >= it.clear)
@@ -676,12 +674,12 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     ## Shortest way past marks: band let go from straight line
     ## and left to settle.
     var band: seq[Point]
-    for step in 0 .. BAND_STEPS:
+    for step in 0..BAND_STEPS:
       band.add placed(span * float(step) / float(BAND_STEPS), 0.0)
     # One loop for each axis of data: pass, point of band, shove, mark.
     # Split would hide its shape.
-    for pass_number in 1 .. BAND_PASSES:
-      for i in 1 ..< band.high:
+    for pass_number in 1..BAND_PASSES:
+      for i in 1..<band.high:
         let
           pull: Point = ((band[i - 1].x + band[i + 1].x) / 2,
                          (band[i - 1].y + band[i + 1].y) / 2)
@@ -692,7 +690,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
         # is row of them along its own legs -- so point shoved clear of
         # each in turn ends up inside one before; deepest first is
         # what actually leaves whole huddle.
-        for shove in 1 .. SHOVES:
+        for shove in 1..SHOVES:
           var
             deepest = -1
             depth = 0.0
@@ -728,7 +726,7 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
   var
     asked = marks
     length = span
-  for _ in 0 .. CLEAR_PASSES:
+  for _ in 0..CLEAR_PASSES:
     let grown = sagged(asked, length)
     result = asDrawn(
       if side == 0: drawnOver(grown) else: bowedPast(grown, side))
@@ -750,8 +748,9 @@ const SIDES* = [0.0, 1.0, -1.0]
 
 #[ Winding And Crossings ]#
 
-func wound*(a, b: Point; across: Point; phi_a, sweep: float;
-    radius = BODY_RADIUS; share = 1.0): seq[Point] =
+func wound*(
+  a, b: Point; across: Point; phi_a, sweep: float; radius = BODY_RADIUS; share = 1.0
+): seq[Point] =
   ## Route one reach of wound pair: shadow wound arm casts from
   ## above (rules 27 and 28).
   ##   Two held hands sit on their own bodies' rims, one body's radius off
@@ -784,7 +783,7 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
     turns = sweep / (2 * PI)
     nip = WIND_NIP * min(abs(turns), 1.0) +
           WIND_NIP_MORE * wayThrough(turns)
-  for step in 0 .. BAND_STEPS:
+  for step in 0..BAND_STEPS:
     let
       t = float(step) / float(BAND_STEPS)
       drawn_in = swing * (1 - nip * sin(PI * t))
@@ -843,8 +842,8 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
   ##     near at all, which is how one cross went unbroken.
   ##   In order along `one`, so arm that dives can be alternated from
   ##     first crossing to last (rules 14, 27, 29).
-  for i in 0 ..< one.high:
-    for j in 0 ..< other.high:
+  for i in 0..<one.high:
+    for j in 0..<other.high:
       let
         p = one[i]
         q = other[j]
@@ -852,13 +851,13 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
         s = (x: other[j + 1].x - q.x, y: other[j + 1].y - q.y)
         turn_of = r.x * s.y - r.y * s.x
       if abs(turn_of) < 1e-12:
-        continue                     # running parallel, never meeting
+        continue  # running parallel, never meeting
       let
         gap = (x: q.x - p.x, y: q.y - p.y)
         along = (gap.x * s.y - gap.y * s.x) / turn_of
         across = (gap.x * r.y - gap.y * r.x) / turn_of
       if along < 0 or along > 1 or across < 0 or across > 1:
-        continue                     # lines meet, drawn bits do not
+        continue  # lines meet, drawn bits do not
       let at: Point = (p.x + r.x * along, p.y + r.y * along)
       # One point per crossing: two segments of one reach can both meet
       # same segment of other where they turn across it, and duplicate that
@@ -873,7 +872,7 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
 
 
 const
-  DAYLIGHT = LINK_WIDTH * 2 / 5 ## Space left between cut end and what it
+  DAYLIGHT = LINK_WIDTH * 2 / 5  ## Space left between cut end and what it
                             ## passes under.
     ## Two fifths of stroke either side.  At none, cut ends sit against
     ##   thing they pass beneath and break reads as touch rather than as
@@ -882,7 +881,7 @@ const
     ## Settled by looking (rules 33 to 35): swan and diamond were drawn
     ##   side by side at four clearances and Architect chose between
     ##   third of stroke and half of it.
-  GRAZING = 0.25      ## Least sine of crossing angle break is sized from.
+  GRAZING = 0.25  ## Least sine of crossing angle break is sized from.
     ## Two reaches meeting almost head on hide unbounded length of one
     ##   another; gap that long is hole in picture, so angle is floored
     ##   and grazing pair takes widest break drawing will draw.
@@ -953,14 +952,14 @@ func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
 func alongOf(points: seq[Point]): seq[float] =
   ## Measure how far along reach each of its points sits.
   result = @[0.0]
-  for i in 0 ..< points.high:
+  for i in 0..<points.high:
     result.add result[^1] + distance(points[i], points[i + 1])
 
 
 func atAlong(points: seq[Point], along: seq[float], want: float): Point =
   ## Get point this far along reach, reading between two samples where it
   ## falls between them.
-  for i in 0 ..< points.high:
+  for i in 0..<points.high:
     if along[i + 1] >= want:
       let step = along[i + 1] - along[i]
       if step <= 0:
@@ -971,8 +970,9 @@ func atAlong(points: seq[Point], along: seq[float], want: float): Point =
   points[^1]
 
 
-func runsOutside(points: seq[Point], along: seq[float],
-    gaps: seq[tuple[opens, shuts: float]]): seq[Run] =
+func runsOutside(
+  points: seq[Point], along: seq[float], gaps: seq[tuple[opens, shuts: float]]
+): seq[Run] =
   ## Collect what is left of reach once its gaps are taken out.
   ##   Each piece is cut exactly on its gap's edge, between samples where
   ##     that is where edge lies.  Dropping whole samples instead widened
@@ -1086,7 +1086,7 @@ func splitAt*(runs: seq[Run], midpoint: Point): tuple[near, far: seq[Run]] =
       if d < best.distance:
         best = (d, i, j)
   var
-    near = runs[0 ..< best.run_index] & @[runs[best.run_index][0 .. best.point_index]]
+    near = runs[0..<best.run_index] & @[runs[best.run_index][0..best.point_index]]
     far = @[runs[best.run_index][best.point_index .. ^1]] & runs[best.run_index + 1 .. ^1]
   for run in near:
     if run.len > 1:
@@ -1112,7 +1112,7 @@ func smoothed*(run: Run): string =
   ##   Command count follows point count, which is fixed, so
   ##     smoothed reach morphs exactly as straight-sided one did.
   result = "M" & coordinates(run[0])
-  for i in 1 ..< run.high:
+  for i in 1..<run.high:
     let midpoint: Point = ((run[i].x + run[i + 1].x) / 2,
                       (run[i].y + run[i + 1].y) / 2)
     result.add " Q" & coordinates(run[i]) & " " & coordinates(midpoint)

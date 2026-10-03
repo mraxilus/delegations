@@ -25,42 +25,42 @@ import std/[math, options]
 import ./[geometry, terms]
 
 
-const SEPARATION* = 56.0     ## Between two dancers' centres.
+const SEPARATION* = 56.0  ## Between two dancers' centres.
 
 type
-  Wind* = array[Arm, float] ## Degrees each arm has been carried past rest.
-  Winds* = array[Dancer, Wind] ## Both dancers' windings at once.
-  Ring* = tuple ## Orbit ring, drawn only while orbit is happening.
+  Wind* = array[Arm, float]  ## Degrees each arm has been carried past rest.
+  Winds* = array[Dancer, Wind]  ## Both dancers' windings at once.
+  Ring* = tuple  ## Orbit ring, drawn only while orbit is happening.
     centre: Point
     radius: float
-  Pose* = object ## Hold where couple are, and how far their arms wound.
+  Pose* = object  ## Hold where couple are, and how far their arms wound.
     place*: array[Dancer, Point]  ## World position of each dancer.
-    facing*: array[Dancer, float] ## Bearing each dancer faces, degrees.
-    wind*: Winds                  ## How far each arm is carried round.
-    ring*: Option[Ring]           ## Orbit ring, where one is happening.
+    facing*: array[Dancer, float]  ## Bearing each dancer faces, degrees.
+    wind*: Winds  ## How far each arm is carried round.
+    ring*: Option[Ring]  ## Orbit ring, where one is happening.
 
-  Anchor* {.pure.} = enum ## Say what picture is framed on.
-    Pair,                      ## Couple's midpoint: they sit in middle.
-    Lead                       ## Lead's own place: they are still point.
+  Anchor* {.pure.} = enum  ## Say what picture is framed on.
+    Pair,  ## Couple's midpoint: they sit in middle.
+    Lead  ## Lead's own place: they are still point.
 
   MoveApply* = proc (pose: Pose, scalar: float): Pose {.nimcall, noSideEffect.}
     ## One animated move, as pose it reaches at `scalar` of its full turn.
 
-  Walk* = tuple ## Move sampled for animation, and its own timing.
+  Walk* = tuple  ## Move sampled for animation, and its own timing.
     poses: seq[Pose]
-    times: seq[float] ## How far through move each pose is due, 0 to 1.
+    times: seq[float]  ## How far through move each pose is due, 0 to 1.
       ## Frames are not evenly spread: what move spends its time on is part
       ##   of what it says (rule 26).
 
-  About* {.pure.} = enum ## What dancer's turn goes round.
-    Axis,                     ## Their own centre: they turn on spot.
-    Orbit                     ## Their partner: they walk ring round them.
+  About* {.pure.} = enum  ## What dancer's turn goes round.
+    Axis,  ## Their own centre: they turn on spot.
+    Orbit  ## Their partner: they walk ring round them.
 
 
 
 #[ Standing And Turning ]#
 
-func rest*(wind: Winds = default(Winds)): Pose =
+func rest*(wind = default(Winds)): Pose =
   ## Get pose every picture is measured from: lead facing up page.
   Pose(
     place: [(0.0, SEPARATION / 2), (0.0, -SEPARATION / 2)],
@@ -72,6 +72,7 @@ func rest*(wind: Winds = default(Winds)): Pose =
 
 func movedPose*(pose: Pose; middle: Point; spin, amount: float): Pose =
   ## Turn whole pose about `middle`, then pull it `amount` of way home.
+
   func moved(point: Point): Point =
     ## Turn point about `middle` by `spin`, then pull it `amount` of way home.
     let rotated = turn(point, middle, spin)
@@ -148,10 +149,10 @@ func relative*(pose: Pose): tuple[axis, facing: float] =
   ##     holds still.  Two poses with same pair are same picture.
   let axis = bearing(
     pose.place[Dancer.Follow].x - pose.place[Dancer.Lead].x,
-    pose.place[Dancer.Follow].y - pose.place[Dancer.Lead].y)
+    pose.place[Dancer.Follow].y - pose.place[Dancer.Lead].y,
+  )
   (round(floorMod(axis - pose.facing[Dancer.Lead], 360.0), 6),
-   round(floorMod(pose.facing[Dancer.Follow] - pose.facing[Dancer.Lead],
-                  360.0), 6))
+   round(floorMod(pose.facing[Dancer.Follow] - pose.facing[Dancer.Lead], 360.0), 6))
 
 
 
@@ -163,17 +164,17 @@ func ease*(t: float): float =
 
 
 const
-  RE_FRAME_PACE* = 0.4 ## Clock second stage gets beside first.
+  RE_FRAME_PACE* = 0.4  ## Clock second stage gets beside first.
     ## Turn is subject and re-framing is picture catching
     ##   up with it, so re-framing runs at well under half pace --
     ##   quick enough to read as settle rather than as second move.
-  RESET_PACE* = 0.7 ## Clock coming back gets beside going out.
+  RESET_PACE* = 0.7  ## Clock coming back gets beside going out.
     ## Going out is what figure is of and coming back only undoes it, so
     ##   return runs quicker -- enough to read as reset rather than as
     ##   second turn, and not so quick that eye cannot follow it.
     ## Judged by eye, not measured: it is smallest step that reads at
     ##   glance, and is meant to be tuned that way.
-  ARRIVAL_HOLD* = 0.25 ## Beat held on turn's landing before it follows.
+  ARRIVAL_HOLD* = 0.25  ## Beat held on turn's landing before it follows.
     ## Without it two stages run together as one long motion; with it
     ##   turn is seen to finish, and what happens next is plainly
     ##   frame and not dance.
@@ -203,7 +204,7 @@ func cycle*(move: MoveApply, samples = 14): Walk =
       is_first = result.poses.len == 0
       base = if is_first: rest() else: result.poses[^1]
       pace = if is_first: 1.0 else: RESET_PACE
-    for i in 0 .. samples:
+    for i in 0..samples:
       result.poses.add move(base, sign * ease(i / samples))
       # Clock starts at first pose of all; first pose of second leg stands
       # on first leg's landing, so beat is held there as it is at every
@@ -213,7 +214,7 @@ func cycle*(move: MoveApply, samples = 14): Walk =
         elif is_first: 0.0
         else: ARRIVAL_HOLD)
     let landed = result.poses[^1]
-    for i in 0 .. samples:
+    for i in 0..samples:
       # Nothing travels in second stage, so ring goes out with it.
       var home = canonicalise(landed, ease(i / samples))
       home.ring = none(Ring)
@@ -245,8 +246,16 @@ func turned*(base: Pose, who: Dancer, about: About, degrees: float): Pose =
   of About.Orbit: orbit(base, who, degrees, is_locked = true)
 
 
-func turnWalk*(base: Pose, who: Dancer, about: About, degrees: float,
-    samples = 12, on = Anchor.Pair, steps = 1, has_return = true): Walk =
+func turnWalk*(
+  base: Pose,
+  who: Dancer,
+  about: About,
+  degrees: float,
+  samples = 12,
+  on = Anchor.Pair,
+  steps = 1,
+  has_return = true,
+): Walk =
   ## Sample turn and its return, in stages dance has.
   ##   Stage one is turn itself, **with world held still**:
   ##     dancer turns where they are and picture does not follow them.
@@ -271,13 +280,14 @@ func turnWalk*(base: Pose, who: Dancer, about: About, degrees: float,
   ##     can come back to same places and facings with its arms wound,
   ##     and wind is what drawing measures for itself (rule 28).
   ##     Only turn of nothing at all is skipped.
+
   func legs(from_pose: Pose, by: float): Walk =
     ## Walk pose `by` turns: turn as room sees it, then picture re-framed.
     let landed = turned(from_pose, who, about, by)
     if abs(by) < 1e-9:
       return (@[from_pose], @[0.0])
     # Stage one: turn, as room sees it, over whole beat of clock.
-    for i in 0 .. samples:
+    for i in 0..samples:
       result.poses.add turned(from_pose, who, about, by * ease(i / samples))
       result.times.add (if i == 0: 0.0 else: 1.0 / float(samples))
     # Stage two: picture is re-framed until lead faces up and
@@ -293,7 +303,7 @@ func turnWalk*(base: Pose, who: Dancer, about: About, degrees: float,
     # Beat on landing first: same pose twice, which is one still.
     result.poses.add result.poses[^1]
     result.times.add ARRIVAL_HOLD
-    for i in 1 .. samples:
+    for i in 1..samples:
       var home = canonicalise(landed, ease(i / samples), on)
       home.ring = none(Ring)
       result.poses.add home
@@ -307,7 +317,7 @@ func turnWalk*(base: Pose, who: Dancer, about: About, degrees: float,
   for (by, pace) in [(degrees, 1.0), (-degrees, RESET_PACE)]:
     if pace != 1.0 and not has_return:
       break
-    for step in 1 .. steps:
+    for step in 1..steps:
       let one = legs(standing, by)
       for i, pose in one.poses:
         result.poses.add pose
@@ -340,4 +350,4 @@ const MOVES*: array[4, tuple[name: string, apply: MoveApply]] = [
   ("follow orbits the lead", moveFollowOrbits),
   ("the lead orbits the follow", moveLeadOrbits),
   ("both, round each other", moveCouple),
-] ## Every animated move, in order page and checks walk them.
+]  ## Every animated move, in order page and checks walk them.

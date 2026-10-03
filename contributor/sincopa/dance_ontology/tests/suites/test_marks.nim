@@ -4,15 +4,11 @@
 
 import std/[options, os, strutils, unittest]
 
-import ../../design/marks
-import ../../design/parts
-import ../../design/plain
-import ../../design/rig_page
+import ../../design/[marks, parts, plain, rig_page]
 import ../../tools/title
 
 
-const OUT = "build/design"
-  ## Where pages land; ignored by git, created here.
+const OUT = "build/design"  ## Where pages land; ignored by git, created here.
 
 const SMALL = ["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into",
                "nor", "of", "on", "or", "over", "so", "the", "to", "up", "with", "yet"]
@@ -35,12 +31,13 @@ func titleOf(page: string): string =
   let opens = page.find("<title>")
   doAssert opens >= 0, "Page carries no title."
   let shuts = page.find("</title>", opens)
-  page[opens + "<title>".len ..< shuts].split(" \u2014 ")[^1]
+  page[opens + "<title>".len..<shuts].split(" \u2014 ")[^1]
+
 
 
 suite "Internal: Mark workbench":
   createDir(OUT)
-  for i in 0 ..< PAGES.len:
+  for i in 0..<PAGES.len:
     test PAGES[i].name:
       buildPage(i, OUT)
       let written = readFile(OUT / PAGES[i].name)
@@ -70,11 +67,14 @@ suite "Internal: Mark workbench":
         checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
         fail()
 
+
+
 suite "Internal: Every page this project publishes":
   test "viewer's title reads in title case, as every other does":
     ## Viewer is written by its own module rather than by workbench above, so its title is
     ## held here against same reading rather than left as only one nothing checks.
     check isTitleCased(TITLE)
+
 
   test "committed markup says its prose plainly too":
     ## Whole-cloth mock-up is hand-authored file rather than page workbench renders, so its
@@ -90,6 +90,7 @@ suite "Internal: Every page this project publishes":
       fail()
 
 
+
 suite "Internal: The sixteen facings, drawn":
   # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
   # them from model, so every name below comes from model, never from page it checks.
@@ -99,6 +100,7 @@ suite "Internal: The sixteen facings, drawn":
       check page.count("<figcaption>" & named.name & "</figcaption>") == 1
       # Name capitalises lead's side alone, so no header that capitalises names one.
       check page.count("<th>" & named.name) == 0
+
 
   test "the frame page gives each side of the lead a row, in the glossary's order":
     # Name gives lead's side first, so row for each side reads down page as names do.
@@ -114,16 +116,18 @@ suite "Internal: The sixteen facings, drawn":
           caption_at = page.find("<figcaption>", at)
         while caption_at >= 0 and caption_at < shuts:
           let start = caption_at + "<figcaption>".len
-          captions.add page[start ..< page.find("</figcaption>", start)]
+          captions.add page[start..<page.find("</figcaption>", start)]
           caption_at = page.find("<figcaption>", start)
         check captions.len == 4
         for caption in captions:
           check caption.startsWith(side & "-to-")
         at = shuts
 
+
   test "each drawn facing reads back as the facing it is named for":
     for named, orientation in ORIENTATIONS:
       check turnedFacing(orientation.lead_turn, orientation.follow_turn) == some(named)
+
 
   test "every quarter the single-hand page draws names its facing, in its own place":
     # Read within each manner's section, in order: manners share names, so name found
@@ -133,34 +137,38 @@ suite "Internal: The sixteen facings, drawn":
       let opens = page.find("<h2>" & MANNERS[manner].title & "</h2>")
       check opens >= 0
       if opens < 0: continue
-      let section = page[opens ..< page.find("</section>", opens)]
+      let section = page[opens..<page.find("</section>", opens)]
       var want, got: seq[string]
       for _ in SINGLES:
-        for quarter in 1 ..< QUARTERS_ROUND:
+        for quarter in 1..<QUARTERS_ROUND:
           let named = facingOf(quarterPose(manner, quarter))
           check named.isSome
           want.add (if named.isSome: named.get.name else: "")
       var at = section.find(" turn<br>")
       while at >= 0:
         let start = at + " turn<br>".len
-        got.add section[start ..< section.find("</figcaption>", start)]
+        got.add section[start..<section.find("</figcaption>", start)]
         at = section.find(" turn<br>", start)
       check got == want
+
 
 
 suite "Internal: The rests and the chains, named by model":
   ## Each page names chain's rest and facings through `parts.restOf` and
   ##   `parts.facingAt`, and law reads written page back (Article IX.5).
-
   test "the review page heads each chain with the facing it rests at":
     let page = readFile(OUT / "review.html")
-    check page.contains("<h2>C &middot; The cross-name chain, " &
-                        restOf(HAND_TO_HAND).name & " at rest</h2>")
-    check page.contains("<h2>D &middot; The same-name chain, " &
-                        restOf(PAIRED).name & " at rest</h2>")
+    check page.contains(
+      "<h2>C &middot; The cross-name chain, " & restOf(HAND_TO_HAND).name & " at rest</h2>",
+    )
+    check page.contains(
+      "<h2>D &middot; The same-name chain, " & restOf(PAIRED).name & " at rest</h2>",
+    )
+
 
   test "the hand-to-hand page names each facing its chain stands at":
     let page = readFile(OUT / "turns-hands.html")
-    check page.contains("<b>" & facingAt(HAND_TO_HAND, 1.0).get.name &
-                        "</b> at a whole number of turns")
+    check page.contains(
+      "<b>" & facingAt(HAND_TO_HAND, 1.0).get.name & "</b> at a whole number of turns",
+    )
     check page.contains("<b>" & facingAt(HAND_TO_HAND, 0.5).get.name & "</b> at a half")

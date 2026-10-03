@@ -44,56 +44,56 @@ import ./frame
 #[ Concepts ]#
 
 type
-  Dancer* {.pure.} = enum ## Name two roles, which rotate independently.
+  Dancer* {.pure.} = enum  ## Name two roles, which rotate independently.
     Lead, Follow
 
-  Level* {.pure.} = enum ## Name height arm is carried at.
+  Level* {.pure.} = enum  ## Name height arm is carried at.
     ## Every level is height (rule 36 in `design/rules`): low is below
     ## shoulder about torso, high above it about neck, above is over head.
     ## Earlier reading had low and high relative -- which arm lies over which
     ## -- and that was wrong: over-under of two arms is what *wrap* says
     ## (under other arm low, over it high), not what level says.
-    Low,   ## Below shoulder, about torso.
+    Low,  ## Below shoulder, about torso.
     High,  ## Above shoulder, about neck.
     Above  ## Above head, on axis couple turns about.
 
-  Way* {.pure.} = enum ## Name which way dancer turns, seen from above.
+  Way* {.pure.} = enum  ## Name which way dancer turns, seen from above.
     Clockwise,
     Anticlockwise
 
-  About* {.pure.} = enum ## Name what dancer turns around.
+  About* {.pure.} = enum  ## Name what dancer turns around.
     Axis,  ## Their own, so their facing changes where they stand.
     Orbit  ## Couple's centre of mass, so they travel around it.
 
-  BodySite* {.pure.} = enum ## Name place on body arm rests on or wraps around.
+  BodySite* {.pure.} = enum  ## Name place on body arm rests on or wraps around.
     Waist, Torso, Shoulder, Neck
 
-  Blocker* {.pure.} = enum ## Name what stops arm carrying any more twist.
-    Wrap, ## Arm is carried across front of body.
+  Blocker* {.pure.} = enum  ## Name what stops arm carrying any more twist.
+    Wrap,  ## Arm is carried across front of body.
     Lock  ## Arm is carried behind line of body.
 
-  HalfTurns* = int ## Count rotation in half turns, granularity workbook uses.
+  HalfTurns* = int  ## Count rotation in half turns, granularity workbook uses.
 
-  Turn* = object ## Hold one rotation of couple, one entry for each dancer.
-    turns*: array[Dancer, HalfTurns] ## Half turns, positive to that dancer's right.
+  Turn* = object  ## Hold one rotation of couple, one entry for each dancer.
+    turns*: array[Dancer, HalfTurns]  ## Half turns, positive to that dancer's right.
 
-  Contact* = object ## Hold one lead hand resting on follow's body.
-    side*: Side       ## Lead hand that rests.
+  Contact* = object  ## Hold one lead hand resting on follow's body.
+    side*: Side  ## Lead hand that rests.
     where*: BodySite  ## Place it rests on.
 
-  Posture* = object ## Hold frame together with rotation stored in it.
+  Posture* = object  ## Hold frame together with rotation stored in it.
     frame*: Frame
     level*: array[Side, Level]  ## Height each arm is carried at.
-    contact*: Option[Contact]   ## Hand resting on follow's body, which stops turn.
-    twist*: HalfTurns           ## Follow's rotation less lead's, in half turns.
+    contact*: Option[Contact]  ## Hand resting on follow's body, which stops turn.
+    twist*: HalfTurns  ## Follow's rotation less lead's, in half turns.
 
-  QuarterTurns* = int ## Count rotation in quarter turns, grain facing needs.
+  QuarterTurns* = int  ## Count rotation in quarter turns, grain facing needs.
 
-  Seen* {.pure.} = enum ## Name where dancer sees other, from their own front.
+  Seen* {.pure.} = enum  ## Name where dancer sees other, from their own front.
     ## Quarter turns clockwise, so turning on spot steps through them in order.
     Ahead, Right, Behind, Left
 
-  Facing* {.pure.} = enum ## Name sixteen states two dancers stand in to one another.
+  Facing* {.pure.} = enum  ## Name sixteen states two dancers stand in to one another.
     ## One is read off where each sees other (`facing`), which is side each turns
     ##   to other: face, starboard, back or port.  Name gives Lead's side, then
     ##   Follow's (`name`), as `GLOSSARY.md` does.
@@ -103,15 +103,15 @@ type
     BackToFace, BackToStarboard, BackToBack, BackToPort,
     PortToFace, PortToStarboard, PortToBack, PortToPort
 
-  Refusal* {.pure.} = enum ## Say what stops turn that cannot be taken.
-    Hold, ## What joins couple cannot give that much turn away.
-    Arm   ## Arm cannot carry that much, wherever it has wound up.
+  Refusal* {.pure.} = enum  ## Say what stops turn that cannot be taken.
+    Hold,  ## What joins couple cannot give that much turn away.
+    Arm  ## Arm cannot carry that much, wherever it has wound up.
 
-  Offer* = object ## Hold one turn out of posture, taken or refused.
-    who*: Dancer            ## Dancer who turns; other holds their facing.
-    amount*: HalfTurns      ## Half turns, positive to that dancer's right.
-    to*: Posture            ## Where it lands, or would land if it could.
-    refused*: Option[Refusal] ## Why it cannot be taken, where it cannot.
+  Offer* = object  ## Hold one turn out of posture, taken or refused.
+    who*: Dancer  ## Dancer who turns; other holds their facing.
+    amount*: HalfTurns  ## Half turns, positive to that dancer's right.
+    to*: Posture  ## Where it lands, or would land if it could.
+    refused*: Option[Refusal]  ## Why it cannot be taken, where it cannot.
 
 
 const
@@ -123,9 +123,9 @@ const
     ##     Cost of saturation constant: reader must learn that one value of
     ##       axis means never.  Accepted -- alternative wraps every
     ##       comparison in unwrap for no prevented mistake.
-  CAPACITY_SINGLE* = 2 ## Hold one full turn on one hand-to-hand connection.
-  CAPACITY_PAIR* = 1   ## Hold half turn on two hand-to-hand connections.
-  CAPACITY_CONTACT* = 0 ## Hold nothing while hand rests on partner's body.
+  CAPACITY_SINGLE* = 2  ## Hold one full turn on one hand-to-hand connection.
+  CAPACITY_PAIR* = 1  ## Hold half turn on two hand-to-hand connections.
+  CAPACITY_CONTACT* = 0  ## Hold nothing while hand rests on partner's body.
   CAPACITY_WRAP_LOW* = 1
     ## Hold half turn while arm is wrapped low.  Measured, not derived.
     ##   Earlier body simulation claimed to derive this and did not: it priced wound
@@ -150,7 +150,7 @@ const
     ## Whether arm over head blocks turn.  It does in some cases and nobody
     ## has said which, so model turns freely there.
     ##   No longer on no authority for single connection: jointed-arm simulation
-    ##     finds hand held over follow's head turns with her, and holds
+    ##     finds hand held over follow's head turns with follow, and holds
     ##     through two-and-a-half turns either way (`simulation/verdicts.md`).  Two
     ##     connections above are another matter -- simulation finds parallel pair
     ##     free one way and blocked at whole turn other way, crossed pair at
@@ -253,7 +253,7 @@ func capacity*(posture: Posture): HalfTurns =
   if posture.contact.isSome:
     return CAPACITY_CONTACT
   case posture.frame.countHolds
-  of 0: UNBOUNDED_TURNS # Nothing joins bodies, so nothing limits turn.
+  of 0: UNBOUNDED_TURNS  # Nothing joins bodies, so nothing limits turn.
   of 1: CAPACITY_SINGLE
   else: CAPACITY_PAIR
 
@@ -304,8 +304,7 @@ func armsCapacity*(posture: Posture, twist: HalfTurns): HalfTurns =
   result = UNBOUNDED_TURNS
   for side in Side:
     if posture.frame.hold[side].isSome:
-      result = min(result, armCapacity(blockerOf(twist, posture.level[side]),
-        posture.level[side]))
+      result = min(result, armCapacity(blockerOf(twist, posture.level[side]), posture.level[side]))
 
 
 func around*(blocker: Blocker, level: Level): Option[BodySite] =
@@ -403,7 +402,7 @@ const
     ##
     ## One-and-a-half turns.  Not claim that nothing larger is dancable, only
     ## that nothing larger is written down, so it is where enumerating stops.
-  TURN_WAYS* = [1, -1] ## To turning dancer's right, then to their left.
+  TURN_WAYS* = [1, -1]  ## To turning dancer's right, then to their left.
 
 
 func normalised*(posture: Posture): Posture =
@@ -431,15 +430,12 @@ func postures*(): seq[Posture] =
   for target in FRAMES:
     for left in Level:
       for right in Level:
-        let held = normalised(Posture(
-          frame: target,
-          level: [left, right],
-          contact: none(Contact),
-          twist: 0,
-        ))
+        let held = normalised(
+          Posture(frame: target, level: [left, right], contact: none(Contact), twist: 0),
+        )
         if held.level != [left, right]:
           continue
-        for twist in -MOST_TURN .. MOST_TURN:
+        for twist in -MOST_TURN..MOST_TURN:
           if not held.isHolding(twist):
             continue
           var stood = held
@@ -479,7 +475,7 @@ func turnsOf*(posture: Posture): seq[Offer] =
   ##       which is one thing it is for not doing.
   for who in Dancer:
     for way in TURN_WAYS:
-      for size in 1 .. MOST_TURN:
+      for size in 1..MOST_TURN:
         let
           amount = size * way
           motion = rotates(who, amount)

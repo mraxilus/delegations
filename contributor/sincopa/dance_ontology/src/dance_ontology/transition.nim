@@ -44,37 +44,37 @@ import ./frame
 #[ Concepts ]#
 
 type
-  Helper* {.pure.} = enum ## Name primitive way one frame becomes another.
-    Collect,              ## Form connection with free hand.
-    Drop                  ## Break connection, releasing hand.
+  Helper* {.pure.} = enum  ## Name primitive way one frame becomes another.
+    Collect,  ## Form connection with free hand.
+    Drop  ## Break connection, releasing hand.
 
-  Compound* {.pure.} = enum ## Name pair of primitives dance calls one move.
-    Place,                  ## Hand one connection over to other lead hand.
-    Cut                     ## Re-route arm around arm in its way.
+  Compound* {.pure.} = enum  ## Name pair of primitives dance calls one move.
+    Place,  ## Hand one connection over to other lead hand.
+    Cut  ## Re-route arm around arm in its way.
 
-  Move* = object ## Hold one primitive change of frame.
-    helper*: Helper ## Primitive that carries change.
-    side*: Side     ## Lead hand that acts: receiver for pass, arm that ends on
+  Move* = object  ## Hold one primitive change of frame.
+    helper*: Helper  ## Primitive that carries change.
+    side*: Side  ## Lead hand that acts: receiver for pass, arm that ends on
                     ## top for cut.
-    to*: Frame      ## Frame couple arrives in.
+    to*: Frame  ## Frame couple arrives in.
 
 
 const HELPER_CHANGES*: array[Helper, string] = [
   Helper.Collect: "a free hand takes a hand",
   Helper.Drop: "a held hand is released",
-] ## Say what each primitive changes about frame.
+]  ## Say what each primitive changes about frame.
 
 
 const HELPER_SYNONYMS*: array[Helper, string] = [
   Helper.Collect: "",
   Helper.Drop: "flick when led with momentum",
-] ## Give workbook's other word for primitive, where it has one.
+]  ## Give workbook's other word for primitive, where it has one.
 
 
 const HELPER_MARKS*: array[Helper, char] = [
   Helper.Collect: 'c',
   Helper.Drop: 'd',
-] ## Abbreviate each primitive to one letter printed cell has room for.
+]  ## Abbreviate each primitive to one letter printed cell has room for.
   ##
   ## For `doc/review.html`, which is document and sets its matrix as table.
   ## App draws its own matrix and points move instead, because drawing has
@@ -84,25 +84,25 @@ const HELPER_MARKS*: array[Helper, char] = [
 const COMPOUND_CHANGES*: array[Compound, string] = [
   Compound.Place: "one hand of the follow changes which lead hand holds it",
   Compound.Cut: "the arms exchange which one lies on top",
-] ## Say what each compound changes about frame.
+]  ## Say what each compound changes about frame.
 
 
 const COMPOUND_ORDERS*: array[Compound, string] = [
   Compound.Place: "collect, then drop",
   Compound.Cut: "drop, then collect",
-] ## Give order workbook writes each compound in.
+]  ## Give order workbook writes each compound in.
 
 
 const COMPOUND_OBSTRUCTED*: array[Compound, bool] = [
   Compound.Place: false,
   Compound.Cut: true,
-] ## Say whether other arm lies in path trace has to take.
+]  ## Say whether other arm lies in path trace has to take.
 
 
 const COMPOUND_MARKS*: array[Compound, char] = [
   Compound.Place: 'p',
   Compound.Cut: 'x',
-] ## Abbreviate each compound for printed matrix cell, as `HELPER_MARKS` does.
+]  ## Abbreviate each compound for printed matrix cell, as `HELPER_MARKS` does.
   ##
   ## `cut` takes letter it does because `collect` has one it would want.
 

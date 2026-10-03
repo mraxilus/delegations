@@ -33,10 +33,8 @@ import ../tools/title
 const
   MARKUP_PATH = "mockups" / "wholecloth.html"
     ## Committed mock-up this splices simulation's data and panel program into.
-  MARK_DATA = "{{turns_data}}"
-    ## Marker line standing where simulation's data script goes.
-  MARK_SCRIPT = "{{turns_script}}"
-    ## Marker line standing where panel program goes.
+  MARK_DATA = "{{turns_data}}"  ## Marker line standing where simulation's data script goes.
+  MARK_SCRIPT = "{{turns_script}}"  ## Marker line standing where panel program goes.
   MARK_TITLE = "{{title}}"
     ## Marker standing where page's title goes, so name of work is spelt once.
 
@@ -44,7 +42,7 @@ const
 func spliced(markup, marker, element: string): string =
   ## Replace marker with script element; fail naming marker where it is absent.
   doAssert markup.count(marker) == 1,
-    "Marker must stand once in markup; got `" & marker & "` " & $markup.count(marker) & " times."
+    "Marker must stand once in markup; got `" & marker & "` `" & $markup.count(marker) & "` times."
   markup.replace(marker, element)
 
 
