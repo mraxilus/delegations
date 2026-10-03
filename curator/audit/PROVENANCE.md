@@ -681,6 +681,29 @@ may open with a whole paragraph, and the finding is read in a log.
   stood before they were mended, with neither line nor label, report both findings each. Pull
   requests of each role, as they stand, report none.
 
+**The role line may stand below the attribution block of a harness.** A harness that starts a
+delegate in a thread writes two lines above each pull request body that it opens, and it
+requires them. First comes a marker, an HTML comment that opens `<!-- ccr-projects-attribution:`
+and renders as nothing. Then comes a credit line in italics that opens `_Requested by **` and
+names who asked. `roleLine` passes each line only whole and in its place. A credit line with no
+marker, a second block or any other comment still reads as the opening line.
+
+- Rejected: a skip of every leading comment and every italic line. Each would let a stray line
+  pass where the role line belongs.
+- Rejected: a request to each delegate to leave the block out. The harness marks the block as
+  required, so the delegate would meet two rules that disagree.
+- Cost: the block is the text of the harness, held as data in `LINES_ATTRIBUTION`. Where the
+  harness changes it, each such pull request fails again. The suite stays green, because its
+  fixture copies the block.
+- The `body` hook reads the line through `roleLine` too, so it lets such a pull request through
+  where the hooks run. The ledger reads the block more loosely (section Ledger).
+- Verified by `suites/test_role.nim`: a body below the block reads as the body alone, with `\n`
+  or `\r\n` line ends. Each stray part of a block reads as the opening line.
+- Verified by hand with `nim r koch check-role` and `koch hook body`, recorded 2026-10-03. Before
+  the fix, a body below the block read as an empty opening line. `check-role` exited 1, and the
+  `body` hook refused the body with exit 2. After the fix, the same body reports nothing, and the
+  finding echoes a wrong role below the block.
+
 ## Assets
 
 **One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md names
@@ -803,6 +826,10 @@ is the failure it exists to catch.
   carries its marker first, and a marker renders as nothing. Rejected: the pattern that read
   from the first character, which named each such issue as having no role line. The same
   pattern still names an unfilled template, whose role line opens `**Role:** <!--`.
+- **On a pull request, the role line may also follow the credit line of an attribution block**
+  (section Role). The ledger passes that line after any leading comment, and not only after the
+  marker. That is looser than `roleLine`, as the rest of the ledger reading is. An issue carries
+  no block, so the pattern for issues does not pass the line.
 - The `permissions` block of `ledger.yml` names `actions: read`, `issues: write` and
   `pull-requests: read`, and nothing else. `workflows.nim` marks `gh pr` as a use of
   `pull-requests`, so a block that leaves that scope out is a finding.
@@ -842,6 +869,11 @@ beside the section that each title comes from.
 - The role-line pattern, verified by hand through real `jq` 1.7 on 2026-09-24. The program was
   read from the workflow file, and it was run over fixture bodies. A marker before the role
   line passes, and an unfilled template, a missing role line and a null body are named.
+- The pattern for pull requests, verified by hand through `jq` 1.7 and `gojq` 0.12.19 on
+  2026-10-03. `gh` runs `--jq` through `gojq`, at 0.12.17 in `gh` 2.89.0. The program was read
+  from the workflow file, and it was run over fixture bodies. A role line below the block
+  passes, also unbolded and with `\r\n` line ends. A block over no role line, or over an
+  unfilled template, is named.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
   2026-09-24. The step runs as the workflow holds it. Over the fixture titles, each expected
   title is named and no other, among them `fix:`, `feat(audit)!:`, `bug:` and `koch:`. Over
