@@ -8,14 +8,18 @@ import std/[json, math, options, strformat, strutils, tables, unittest]
 import ../../design/[asks, modelled, parts, rig_page]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
+from ../../simulation/plan import isMirrorSame
 from ../../simulation/rigid import restStance
+from ../../simulation/walk import stands, STYLES
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
 from ../../src/dance_ontology/draw/route import overArm
 import ../../src/dance_ontology/frame
 
 
-const ARRANGED = 1e-6  ## Degrees two arrangements may differ by: arithmetic alone.
+const
+  ARRANGED = 1e-6  ## Degrees two arrangements may differ by: arithmetic alone.
+  STRAIN_SAME = 1e-9  ## Strain two figures of one pose may differ by, in one recording: none.
 
 
 func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
@@ -248,6 +252,33 @@ suite "simulation against reference":
       for crossing in found:
         if crossing.along + crossing.across < first.along + first.across: first = crossing
       check ask.links[first.over].ends[0].arm == arm
+
+
+  test "every still stands easiest pose that held, and its search tried every pose short of ease":
+    ## Carried walk tries every distance, and planner every style and way, and each keeps pose
+    ##   nearest to ease that holds (`walk.standing`, `walk.plannedStillEasiest`).  Search
+    ##   ends early only at pose at ease, which nothing betters.
+    ##   Red with first plan that held kept, measured 2026-10-03: C6 stood follow's waist at its
+    ##     end, strain 1.00, where other path of same style held at 0.19.
+    var distances = 0
+    for _ in stands(HUMAN): inc distances
+    var checked = 0
+    for key, still in recorded:
+      if not still.hasKey("at"): continue
+      let
+        ask = ask_by_key[key]
+        ways = (if ask.is_either_way: 2 else: 1)
+        paths = (if isMirrorSame(ask.links): 2 else: 1)
+        candidates = (if still["planned"].getBool: STYLES.len * paths * ways else: distances * ways)
+        stood = still["strain"].getFloat
+      var easiest = Inf
+      for strain in still["tried"].getElems:
+        if strain.kind != JNull: easiest = min(easiest, strain.getFloat)
+      checkpoint &"`{key}` stood at strain `{stood}`; easiest pose tried held at `{easiest}`."
+      check abs(stood - easiest) < STRAIN_SAME
+      if stood > 0.0: check still["tried"].len == candidates
+      inc checked
+    check checked == stillAsks().len
 
 
   test "simulation models every card reference draws":
