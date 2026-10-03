@@ -53,7 +53,7 @@ suite "Internal: Symbols":
       root = createTempDir("delegations_", "_symbols")
       pin = runningCompiler().version
       nimble = "version = \"0.1.0\"\nsrcDir = \"src\"\nrequires \"nim == " & pin & "\"\n"
-      source = "let\n  x = 3\n  y = x.float\n"
+      source = "let\n  x = 3\n  y = x.float\n\nfunc twice(n: int): int = n * 2\n\necho twice(x)\n"
       tree = @[
         entry("curator/fixture/fixture.nimble", nimble),
         entry("curator/fixture/src/a.nim", source),
@@ -65,7 +65,11 @@ suite "Internal: Symbols":
       root,
       tree,
       [
-        Query(path: "curator/fixture/src/a.nim", sites: @[(3, 8), (3, 6)], names: @["float"]),
+        Query(
+          path: "curator/fixture/src/a.nim",
+          sites: @[(3, 8), (3, 6), (5, 5), (7, 5)],
+          names: @["float"],
+        ),
         Query(path: "curator/fixture/src/b.nim", sites: @[(1, 8)]),
       ],
     )
@@ -75,4 +79,9 @@ suite "Internal: Symbols":
     check a.symbols[(3, 8)].kind == "skType" and a.symbols[(3, 8)].name == "system.float"
     check a.symbols[(3, 6)].kind == "skLet" and a.symbols[(3, 6)].line == 2
     check a.globals["float"].len >= 1  # `system.float` among them
+    # Routine's own name is routine declared there, though pass answers its implicit result.
+    let (declared, used) = (a.symbols[(5, 5)], a.symbols[(7, 5)])
+    check used.kind == "skFunc" and used.line == 5 and used.column == 5
+    check declared.line == used.line and declared.column == used.column
+    check declared.file == used.file and declared.name == used.name
     check answers[1].reason.contains("undeclared")  # compiles on no backend
