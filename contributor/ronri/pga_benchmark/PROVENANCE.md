@@ -205,10 +205,10 @@ ratio. The docket draws one tick for each of those ratios. Rejected: the spread 
 one run, because it misses drift between runs. That drift is the larger part on this machine.
 
 **The runtime baselines are from 2026-10-03 at all four algebras**, at `d9be8ae`, five runs each
-on `linux amd64, 4 cores`. On 2026-10-02, in turn with the baselines of that day at `3121342`, the
-bench of 2026-10-01 ran again. At rga4d its library ran at ×1.19 to ×1.22 of its own times of
-2026-10-01, and its reference at ×1.26 to ×1.27. Its dense forms ran at ×1.00 to ×1.01. The bench of
-2026-10-02 ran ×0.99 to ×1.01 of it in the same runs.
+on `linux amd64, 4 cores`. The bench of 2026-10-01, run at `3121342` on 2026-10-02 in turn with
+the baselines of that day, gives the drift between days. At rga4d its library runs ×1.19 to ×1.22
+of its own times of 2026-10-01. Its reference runs ×1.26 to ×1.27, and its dense forms ×1.00 to
+×1.01. The bench of 2026-10-02 runs ×0.99 to ×1.01 of it in the same runs.
 
 So the machine moves between days, and not by one factor for each implementation. Times
 taken at different hours never compare, and ratios within one run do.
@@ -436,8 +436,9 @@ orthogonal antiprojection spend 81 against 108 at rga4d, and 27 against 36 at rg
 first step leaves whole grades at zero, and the second step reads none of them. So a chain
 bound is an estimate.
 
-**What the library spends in time against them.** The runtime baselines of 2026-10-03 time
-each dense form beside the library, five alternating runs, at four algebras. The median general
+**What the library spends in time against them.** The runtime baselines time each dense form
+beside the library, five alternating runs at `d9be8ae`, at four algebras, on `linux amd64, 4 cores`
+on 2026-10-03. The median general
 measurand runs ×1.00 to ×1.05 its dense form, since most library operators are already one
 generated table. The compound operations are not. They run ×1.9 to ×5.7 their dense forms, from
 the container at cga5d to the support at rga4d.
@@ -538,9 +539,8 @@ dense form.
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73
 (`evaluations/cayley-derivation.json`, 2026-10-03, `linux amd64, 4 cores`). So the claim of P01,
-×0.70 at most, fails at the pin. At `3121342` the library peaked at 285.8 MiB and P01 at
-170.9 MiB, on 2026-10-01. The refactor at the pin takes 50.8 MiB of the 114.9 MiB that P01 saved
-there.
+×0.70 at most, fails at the pin, where P01 saves 64.2 MiB. The pin builds most anti tables with
+`constructAnti`, as P01 does. Which part of the cost the two share is not isolated.
 
 Rejected: the bench entry, which puts the harness in the measured build. With the library
 fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
@@ -752,7 +752,8 @@ The cost is measured at `3121342` on `linux amd64, 4 cores`, an Intel Xeon at 2.
 2026-10-03. The harness calls each function through a volatile procedure pointer. So the body of
 each function compiles alone, and writes to memory that it cannot see. Each figure comes from two
 passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Nine in ten
-functions that did not change moved ×0.86 to ×1.02.
+functions that did not change moved ×0.86 to ×1.02. The pin `d9be8ae` changes no norm and no
+generated operator, as its static baselines show, so these figures stand for it.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
