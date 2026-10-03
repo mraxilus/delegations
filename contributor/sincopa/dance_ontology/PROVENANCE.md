@@ -1944,14 +1944,17 @@ reddens a law.
   s, compile included, and the whole of `koch check` took 110 s.
 - `test_rigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
   503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
-- The whole of `nim r koch check`, with the kept answers and the joined suites: unmeasured since
-  `tests/test_plan.nim` joined it on 2026-10-02.
+- The whole of `nim r koch check`, with the kept answers, the joined suites and
+  `tests/test_plan.nim`: 102 s and 86 s. Those are two runs on four cores, on 2026-10-03.
 - `test_rigid.nim`, danger build, under `nim r koch check`: 331 s wall. That is four Xeon cores
   shared with nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `test_marks` takes
   12.6 s, `test_read` 7.9 s, and `test_engine` 3.3 s. Every other suite is under 2 s. It is a single
   figure with no pair, so it is unmeasured as an optimisation.
-- `tools/build.nim modelled`: unmeasured since the planner joined it on 2026-10-02.
-- `tools/build.nim rig`: unmeasured since the planner joined it on 2026-10-02.
+- `tools/build.nim modelled`: 7245 s wall on four cores, on 2026-10-03, with the planner. A
+  driver that saves each answer asked its 231 questions. 95 percent of the work is in the 32
+  planned cards.
+- `tools/build.nim rig`: 2464 s wall on four cores, compile included, on 2026-10-02, with the
+  planner.
 - `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
   its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
   change to words, compile included.
