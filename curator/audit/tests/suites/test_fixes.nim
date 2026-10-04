@@ -315,6 +315,32 @@ suite "Fixes":
     check fixEntries(CURATOR_BRANCH, again, context = again.contextOf(again)).written.len == 0
 
 
+  test "global breaking case and coining abbreviation takes one rename that settles both rules":
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      a = entry("curator/audit/src/a.nim", head & "let tmp_dir* = \"a\"\n")
+      b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet PATH_HOME = tmp_dir\n")
+      tree = @[a, b]
+    check semanticQueries(tree, tree).mapIt((it.path, it.sites, it.names)) == @[
+      (a.path, @[(5, 4)], @["TEMPORARY_DIRECTORY"]),
+      (b.path, @[(7, 16)], newSeq[string]()),
+    ]  # one rename asked, never V.6 spelling `temporary_directory` beside it
+    let declared =
+      Symbol(kind: "skLet", name: "a.tmp_dir", file: "/r/" & a.path, line: 5, column: 4)
+    var answers = @[Answer(path: a.path), Answer(path: b.path)]
+    answers[0].symbols[(5, 4)] = declared
+    answers[0].globals["TEMPORARY_DIRECTORY"] = @[]
+    answers[1].symbols[(7, 16)] = declared
+    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    check plan.written.mapIt(it.content) == @[
+      head & "let TEMPORARY_DIRECTORY* = \"a\"\n",
+      head & "import ./a\n\nlet PATH_HOME = TEMPORARY_DIRECTORY\n",
+    ]  # V.1, V.6
+    check plan.fixed.mapIt(it.message) ==
+      @["abbreviation (V.6) and global case (V.1)", "abbreviation (V.6) and global case (V.1)"]
+    check plan.written.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.6
+
+
   test "rename fix cannot prove stays for hand with its reason, and asks semantic pass nothing":
     let
       path = "curator/audit/src/a.nim"
