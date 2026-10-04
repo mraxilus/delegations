@@ -818,13 +818,13 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
   ##     hug against that hand.  Line then runs dead straight to its far
   ##     end and bends only there, which reads as kink beside hand
   ##     however few degrees each corner turns (rule 24, and `crestOf`
-  ##     measures it).  B04 and B23 of review sheet were drawn that way.
+  ##     measures it).  B04 and B23 of review page were drawn that way.
   ##     Cost of weighing always: three band relaxations per settled
   ##       reach where one sometimes did.  Accepted -- shape is what
   ##       page is for, and it buys curve over kink.
   ##     Margin can be slight: on those two, bow wins by hundredth of
   ##       unit of line.  Preference is real but thin, and it is review
-  ##       sheet's fixtures that keep flip from passing unseen.
+  ##       page's fixtures that keep flip from passing unseen.
   result = letGo(a, b, marks, SIDES[0])
   var least = readingCost(result)
   for side in SIDES[1 .. ^1]:

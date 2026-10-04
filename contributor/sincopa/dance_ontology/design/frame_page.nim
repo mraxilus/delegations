@@ -29,7 +29,7 @@ const TITLE* = "The Frame, So Far"  ## What page calls itself, in its tab and at
 
 const BODY = """
 
-<div class="sheet">
+<div class="page">
 
 <header class="top">
   <p class="kicker">Dance ontology · rotation · the frame</p>

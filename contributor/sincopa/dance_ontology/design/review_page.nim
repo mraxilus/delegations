@@ -85,7 +85,7 @@ func escaped(text: string): string =
 const
   MANNER_SAID = {"fa": "follow turns", "la": "lead turns",
               "fo": "follow orbits", "lo": "lead orbits"}.toTable
-    ## Workbench's tags said in words, since sheet is read by eye.
+    ## Workbench's tags said in words, since page is read by eye.
   QUARTER_SAID = ["none", "a quarter", "a half", "three quarters"]
     ## How far round that manner has gone, counted in quarter turns.
   QUARTER_FROM = ["the start", "a quarter", "a half", "three quarters"]
@@ -103,7 +103,7 @@ func said(tag: string, quarter: int): string =
 
 func unpinned(svg: string): string =
   ## Take off pixel size workbench pins each figure to for its own rows, so
-  ## card decides how big picture is drawn: inline style would beat sheet.
+  ## card decides how big picture is drawn: inline style would beat style sheet.
   result = svg
   const opening = " style=\"width: "
   let at = result.find(opening)
@@ -138,7 +138,7 @@ func reviewParts*(single, hand: Parts): Parts =
     result[key] = svg
 
 
-func sheetOf(parts: Parts): string =
+func pageOf(parts: Parts): string =
   ## Build page, holding every card already ruled on to its own fixture.
 
   func stepped(
@@ -674,7 +674,7 @@ func sheetOf(parts: Parts): string =
     outline-offset: 3px; }
 """ & switching & """  </style>"""
 
-  let sheet = head & """<div class="wrap">
+  let markup = head & """<div class="wrap">
   <h1>Frame positions, drawn</h1>
   <p class="lede">Every position this project draws, in one place, so that the Architect
   can keep or drop each one. Every card carries an identifier to quote back.</p>
@@ -694,19 +694,19 @@ func sheetOf(parts: Parts): string =
   # Counted off page itself rather than tallied while building it, so
   # count cannot drift from what is drawn.
   let
-    seen = sheet.count("""<figure class="pic""")
-    unsure = sheet.count("""<em class="badge unsure">""")
+    seen = markup.count("""<figure class="pic""")
+    unsure = markup.count("""<em class="badge unsure">""")
     tally = &"""<b>{KEPT.len}</b> kept &middot; <b>{DROPPED.len}</b> dropped """ &
       &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
       &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &
       &"""Against the model: <b>{CONFIRMED.len}</b> confirmed by the Architect, """ &
       &"""<b>{unsure}</b> reached by the simulation and not yet confirmed."""
-  sheet.replace("{{tally}}", tally)
+  markup.replace("{{tally}}", tally)
 
 
 func render*(parts: Parts): string =
   ## Lay page out under its own title.
-  document("Frame Positions, Drawn", sheetOf(parts))
+  document("Frame Positions, Drawn", pageOf(parts))
 
 
 func drawingOf(html, id: string): string =

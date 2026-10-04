@@ -126,7 +126,7 @@ func closeStyle*(): string =
     "ms; --grow-spread: " & $GROW_SPREAD & "ms; --leaf-delay: " & $LEAF_DELAY &
     "ms; --grow: " & $GROW_TIME & "ms" &
     # Drawing is laid out in numbers rather than lengths so that
-    # stylesheet can divide room it has by them; these are what it
+    # style sheet can divide room it has by them; these are what it
     # multiplies them back up by, and how far down it may go.
     "; --least-unit: " & formatFloat(LEAST_READABLE / LABEL_SIZE, ffDecimal, 3) &
     "px"
@@ -345,9 +345,9 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
       )
       (shift_x, shift_y) = (end_x - CENTRE_X, end_y - CENTRE_Y)
 
-  # Every number animation spends is written here, so that stylesheet
+  # Every number animation spends is written here, so that style sheet
   # holds shape of movement and this holds its size.
-  # Window and pan are bare numbers, not lengths.  Stylesheet has to
+  # Window and pan are bare numbers, not lengths.  Style sheet has to
   # divide room it has by width drawing wants, and length cannot
   # be divided by length -- so drawing hands over numbers and takes
   # back one unit to multiply them by.  Everything drawing is made of is

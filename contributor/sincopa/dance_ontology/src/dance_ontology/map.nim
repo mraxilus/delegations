@@ -40,7 +40,7 @@ import ./draw/[style, terms]
 
 const
   MAP_WIDTH* = 780
-    ## Width map asks for; `--wide` in app's stylesheet is
+    ## Width map asks for; `--wide` in app's style sheet is
     ## derived from it plus page's margins.
   MAP_HEIGHT* = 570
     ## Measured, not chosen: tallest drawing gets in any of

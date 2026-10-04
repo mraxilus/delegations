@@ -67,7 +67,7 @@ func plates(parts: Parts, manner: Manner): string =
 
 const BODY = """
 
-<div class="sheet">
+<div class="page">
 
 <header class="top">
   <p class="kicker">Dance ontology · rotation · single-hand turns</p>

@@ -79,7 +79,7 @@ func plates(parts: Parts): string =
 
 const BODY = """
 
-<div class="sheet">
+<div class="page">
 
 <header class="top">
   <p class="kicker">Dance ontology · rotation · hand-to-hand turns</p>

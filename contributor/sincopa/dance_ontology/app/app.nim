@@ -148,14 +148,14 @@ proc isMotionReduced(): bool =
 
 proc hasRoomForMap(): bool =
   ## Test whether screen has room to draw map at legible size.
-  ##   Asked of stylesheet rather than answered here.
+  ##   Asked of style sheet rather than answered here.
   ##     Which widths are wide is question about layout, and layout
   ##       is written there: answer is map's own least width plus
   ##       margins page is laid out with, and copy of that sum kept in
   ##       script would be second thing to change and second thing to
   ##       get wrong.
   ##   This is mirror of `motion.nim`, which owns times and writes them
-  ##     out for stylesheet to spend.
+  ##     out for style sheet to spend.
   ($window.getComputedStyle(document.documentElement)
     .getPropertyValue("--wide")).strip() == "1"
 
@@ -626,7 +626,7 @@ func matrixCell(classes, tone, told, body: string): string =
   ## Form one matrix cell, inked and named for what it says.
   ##   Ink is carried as property rather than class because thing
   ##     matrix cell varies by is which arm dances it, and that is one value, not
-  ##     set of states stylesheet has to enumerate.
+  ##     set of states style sheet has to enumerate.
   tag("td", "class=\"" & classes & "\" style=\"--tone: " & tone & "\"" &
     (if told.len > 0: " title=\"" & escaped(told) & "\"" else: ""), body)
 

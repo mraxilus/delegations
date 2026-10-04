@@ -2,8 +2,8 @@
 ## wrapper.
 ##
 ##   Five explorations live on five pages -- frame picture, turn
-##     sign, one turn mock-up per kind of hold, and sheet every drawn
-##     position is ruled on -- because they are separate questions that
+##     sign, one turn mock-up per kind of hold, and page every drawn
+##     frame state is ruled on -- because they are separate questions that
 ##     happen to be related, and page that holds more than one of them
 ##     makes each harder to read.
 ##   What they do share is palette and furniture, which is here so it
@@ -52,7 +52,7 @@ const STYLE* = """<style>
 * { box-sizing: border-box; }
 body { margin: 0; padding: 2rem 1.25rem 5rem; background: var(--paper);
   color: var(--ink); font: 16px/1.6 var(--sans); }
-.sheet { max-width: 62rem; margin: 0 auto; }
+.page { max-width: 62rem; margin: 0 auto; }
 h1, h2, h3 { font-family: var(--serif); text-wrap: balance; }
 .kicker { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--dim); margin: 0; }

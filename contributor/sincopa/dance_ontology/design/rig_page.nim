@@ -80,7 +80,7 @@ const HEAD_BODY = """
   </div>
 """
 
-const SHEET = """<style>
+const STYLE_SHEET = """<style>
 .rigview { max-width: 76rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 .rigview header { max-width: 44rem; margin-bottom: 1.5rem; }
 .rigview h1 { font-size: 1.6rem; line-height: 1.2; font-weight: 600; margin: 0.2rem 0 0.6rem; }
@@ -225,14 +225,14 @@ func cardsOf(html: string): Table[string, seq[Card]] =
     card.caption = "<figcaption>" & whole[caption_start..<caption_stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add card
 
-func sheetOf(html: string): string =
+func styleSheetOf(html: string): string =
   ## Reference page's own style, so its cards look here as they do there.
   var at = 0
   while true:
     let (start, stop) = between(html, "<style>", "</style>", at)
     doAssert start >= 0, "Reference page carries no style block for its cards."
-    let sheet = html[start..<stop]
-    if ".pic {" in sheet: return "<style>" & sheet & "</style>"
+    let style = html[start..<stop]
+    if ".pic {" in style: return "<style>" & style & "</style>"
     at = stop
 
 
@@ -309,7 +309,7 @@ proc main() =
     shown = folded(parseFile(data))
     html = document(
       TITLE,
-      sheetOf(review_html) & SHEET & HEAD_BODY &
+      styleSheetOf(review_html) & STYLE_SHEET & HEAD_BODY &
       cardsBody(review_html, shown) &
       "<script>var RIG = " & $shown & ";</script>\n" &
       "<script>" & readFile(view) & "</script>\n",

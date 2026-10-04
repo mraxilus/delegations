@@ -145,7 +145,7 @@ suite "Internal: The moving":
 
 
   test "the drawing is sized in numbers, so the room it has can be divided by it":
-    # Length cannot be divided by length, and one thing stylesheet
+    # Length cannot be divided by length, and one thing style sheet
     # has to work out is room it has over width drawing wants.  So
     # drawing hands over numbers and takes back unit to multiply them
     # by, and everything it is made of is multiple of that one unit.
@@ -183,7 +183,7 @@ suite "Internal: The moving":
     check WIDE_TEMPO.pass_at == 0
     check WIDE_TEMPO.grown == 0
     check WIDE_TEMPO.settle == SEAM_MARGIN
-    # Both declare same two times to their stylesheets, in same words.
+    # Both declare same two times to their style sheets, in same words.
     check passStyle(WIDE_TEMPO).contains("--pass: ")
     check closeStyle().contains("--pass: ")
 
@@ -198,7 +198,7 @@ suite "Internal: The moving":
         check picture.contains("--turn: 1.000")
 
 
-  test "every phase names itself to the stylesheet, distinctly":
+  test "every phase names itself to the style sheet, distinctly":
     var named: seq[string] = @[]
     for moving in Motion:
       check phase(moving).len > 0
