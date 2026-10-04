@@ -322,7 +322,7 @@ func leapsOf(problem: Problem, now, then: Capsule): array[2, float] =
    max(0.0, distance(now.z, then.z) - problem.style.leap) ^ 2]
 
 type Gaps = object
-  ## Each pair's gap, as `problem.pairs` lists them, and which of them may add to a sum.
+  ## Each pair's gap, as `problem.pairs` lists them, and which of them may add to any sum.
   ##   Pair whose bit is clear is past every threshold, so no sum adds it: sums run over
   ##     set bits alone, in pairs' own order, and come out same to last bit.
   values: seq[float]
@@ -335,7 +335,7 @@ func mark(gaps: var Gaps, k: int, threshold: float) =
   else: gaps.near[k div 64] = gaps.near[k div 64] and not bit
 
 iterator nearOnes(gaps: Gaps): float =
-  ## Gap of every pair that may add to a sum, in pairs' order.
+  ## Gap of every pair that may add to any sum, in pairs' order.
   for word_index, word in gaps.near:
     var bits = word
     while bits != 0:
