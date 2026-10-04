@@ -499,6 +499,12 @@ suite "Chapter 2":
    signal, and not a forced split. Keep a unified derivation intact where a split would hide
    the shape of the data, and say so in a comment. A condition that mixes `and` with `or`, or
    applies `not` to a binary expression, is parenthesised.
+
+   Parentheses that group what the parser groups anyway go. That covers a prefix term or one
+   plain operand as one side of a binary operator (`|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`, `2'u^DIMENSIONS`).
+   It also covers one plain operand after a prefix operator (`■𝐧`). A plain operand is a name
+   or a literal, with any call, index or field glued after it. Parentheses around a binary
+   expression stay, and so do those whose removal would glue two tokens into one, as in `^(|𝐦)`.
 5. Group related constants and bindings under one keyword, dependent bindings included, where the
    language allows it. Two or more consecutive single bindings always share one keyword.
    Destructure where one expression yields the values together, or where a parallel pair fits one
