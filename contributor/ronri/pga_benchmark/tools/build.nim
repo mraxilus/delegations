@@ -607,18 +607,28 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
   )
   var urls: Table[string, string]
   for proposal in proposals: urls[proposal.name] = published{proposal.name, "url"}.getStr
-  result["proposals"] = assemble(
-    text_shell,
-    "PGA Proposals",
-    bodyListing(proposals, evaluations, urls, pin, htmlLinks(names, published, "proposals")),
-    faces,
-  )
   var figures: Table[string, string]
   for proposal in proposals:
     for node in proposal.body:
       let figure = node.figureOf(proposal.directory)
       if figure.isSome and fileExists(figure.get.path):
         figures[figure.get.path] = readFile(figure.get.path)
+  result["proposals"] = assemble(
+    text_shell,
+    "PGA Proposals",
+    bodyListing(
+      proposals,
+      evaluations,
+      files,
+      figures,
+      baselines,
+      spread,
+      urls,
+      pin,
+      htmlLinks(names, published, "proposals"),
+    ),
+    faces,
+  )
   for proposal in proposals:
     result[proposal.name] = assemble(
       text_shell,

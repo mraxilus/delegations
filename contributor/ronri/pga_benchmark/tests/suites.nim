@@ -1913,21 +1913,33 @@ suite "Internal: Proposal list":
 
   test "graph draws undecided proposals alone, one arrow per base, deeper ones further right":
     let
-      graph = svgGraph(chain, urls)
-      decided = svgGraph([listed(1, "implemented")], urls)
-    check graph.count("<rect ") == 4 and graph.count("class=\"edge\"") == 2  # P04 left out
-    check "<a class=\"node\" href=\"https://example.org/p1\">" in graph  # node links page
-    check "<g class=\"node\"><title>P03: Title 3</title>" in graph  # unpublished one unlinked
-    check "x=\"8\" y=\"8\" width=\"264\"" in graph  # P01 first column, first row
-    check "x=\"356\" y=\"8\"" in graph and "x=\"704\" y=\"8\"" in graph  # P02, then P03
-    check "x=\"8\" y=\"94\"" in graph  # P05 under P01, since it builds on none
+      graph = htmlGraph(chain)
+      decided = htmlGraph([listed(1, "implemented")])
+    check graph.count("class=\"node\"") == 4 and graph.count("class=\"edge\"") == 2
+      # P04 left out
+    check "<label class=\"node\" for=\"pick-p1\" title=\"P01: Title 1\"" in graph
+      # box selects proposal for reading
+    check "style=\"left: 8px; top: 8px; width: 264px" in graph  # P01 first column, first row
+    check "left: 356px; top: 8px" in graph and "left: 704px; top: 8px" in graph  # P02, then P03
+    check "left: 8px; top: 100px" in graph  # P05 under P01, since it builds on none
     check decided == ""  # nothing undecided, nothing drawn
 
 
   test "list page names every proposal, with standing, claims, dependencies and blocks":
     let
-      evaluations = {"p1": %*{"claims": [{"passed": true}, {"passed": false}]}}.toTable
-      body = bodyListing(chain, evaluations, urls, "bd6b23c590d7", "")
+      evaluations =
+        {"p1": %*{"algebras": {}, "claims": [{"passed": true}, {"passed": false}]}}.toTable
+      body = bodyListing(
+        chain,
+        evaluations,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        urls,
+        "bd6b23c590d7",
+        "",
+      )
     check "5 proposals · 4 undecided · pga <code>bd6b23c</code>" in body  # counts in header
     for number in 1..5:
       check "Title " & $number & "</td>" in body  # every proposal, frozen one too
@@ -1935,7 +1947,7 @@ suite "Internal: Proposal list":
     check "<span class=\"chip pass\">implemented</span>" in body  # frozen one stands so
     check "<td>P02, P03</td></tr>" in body  # P01 blocks both downstream
     check "<td><a href=\"https://example.org/p1\">P01</a>, P02</td>" in body  # P03 needs both
-    check "<svg class=\"graph\"" in body  # graph drawn above table
+    check "<div class=\"graph\"" in body  # graph drawn above table
 
 
 
