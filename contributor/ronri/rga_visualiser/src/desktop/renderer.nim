@@ -296,27 +296,40 @@ float tanBounded(float angle) {
 }
 void main() {
   vec3 to_centre = in_centre - eye;
+  vec3 normal = cross(in_arm_first, in_arm_second);
   float radius = length(in_arm_first);
-  float across = dot(to_centre, axis_right);
-  float up = dot(to_centre, axis_up);
+  float side = sign(dot(to_centre, normal));
+  vec2 lateral = side*vec2(dot(normal, axis_right), dot(normal, axis_up));
+  float reach_lateral = length(lateral);
+  vec2 turn_up = reach_lateral > 0.0 ? lateral/reach_lateral : vec2(0.0, 1.0);
+  vec2 turn_across = vec2(turn_up.y, -turn_up.x);
+  vec2 view = vec2(tangent_half_view*aspect, tangent_half_view);
+  vec2 extent = vec2(dot(abs(turn_across), view), dot(abs(turn_up), view));
+  vec3 right_turned = turn_across.x*axis_right + turn_across.y*axis_up;
+  vec3 up_turned = turn_up.x*axis_right + turn_up.y*axis_up;
+  float across = dot(to_centre, right_turned);
+  float rise = dot(to_centre, up_turned);
   float depth = dot(to_centre, forward);
   float reach_across = length(vec2(across, depth));
-  float reach_up = length(vec2(up, depth));
+  float reach_up = length(vec2(rise, depth));
   vec2 corner_min = vec2(-1.0);
   vec2 corner_max = vec2(1.0);
   if (min(reach_across, reach_up) > radius) {
     float bearing_across = atan(across, depth);
     float spread_across = asin(radius/reach_across);
-    float bearing_up = atan(up, depth);
+    float bearing_up = atan(rise, depth);
     float spread_up = asin(radius/reach_up);
-    float wide = tangent_half_view*aspect;
-    float tall = tangent_half_view;
-    corner_min = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
-      tanBounded(bearing_up - spread_up)/tall), -1.0, 1.0);
-    corner_max = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
-      tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
+    corner_min = clamp(vec2(tanBounded(bearing_across - spread_across),
+      tanBounded(bearing_up - spread_up))/extent, -1.0, 1.0);
+    corner_max = clamp(vec2(tanBounded(bearing_across + spread_across),
+      tanBounded(bearing_up + spread_up))/extent, -1.0, 1.0);
   }
-  vertex_view = 0.5*(corner_min + corner_max) + in_corner*0.5*(corner_max - corner_min);
+  float facing = side*dot(normal, forward);
+  float line_vanishing = reach_lateral > 0.0
+    ? clamp(-facing/(reach_lateral*extent.y), -2.0, 2.0) : (facing > 0.0 ? -2.0 : 2.0);
+  corner_min.y = min(max(corner_min.y, line_vanishing), corner_max.y);
+  vec2 turned = 0.5*(corner_min + corner_max) + in_corner*0.5*(corner_max - corner_min);
+  vertex_view = (turned.x*extent.x*turn_across + turned.y*extent.y*turn_up)/view;
   float centre_depth = clamp(log2(max(depth, depth_near)/depth_near)*depth_log - 1.0,
     -1.0, 1.0);
   gl_Position = vec4(vertex_view, centre_depth, 1.0);
@@ -325,13 +338,15 @@ void main() {
   vertex_arm_first = in_arm_first;
   vertex_arm_second = in_arm_second;
 }
-""" ## Span one disc record over view box of its sphere, on GPU.
+""" ## Span one disc record over its sphere's box, turned and stopped at plane's vanishing line.
   ##   Sibling copy of `mesh.viewBoxOfDisc` and `mesh.expandDiscCorner`, and of WebGL
   ##   source in `gl.ts`; change to any one is not finished until other two are checked.
-  ##   Each axis is bounded by sphere's limb in that axis's plane with sight axis; whole
-  ##   view where sphere holds eye; corner is box's middle plus corner scaled by half
-  ##   extents, so quad is box. Clip depth is centre's logarithmic one, for fragment stage
-  ##   to overwrite.
+  ##   View turns until plane's normal, signed toward eye's side, points up; each turned axis
+  ##   is bounded by sphere's limb in that axis's plane with sight axis; whole turned view
+  ##   where sphere holds eye; floor rises to vanishing line, below which no ray meets plane
+  ##   in front of eye; corner is box's middle plus corner scaled by half extents, turned
+  ##   back, so quad is box. Clip depth is centre's logarithmic one, for fragment stage to
+  ##   overwrite.
 
 
 const SOURCE_FRAGMENT_DISC = """

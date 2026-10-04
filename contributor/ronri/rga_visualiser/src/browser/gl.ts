@@ -365,16 +365,20 @@ gl.bindBuffer(gl.ARRAY_BUFFER, buffer_ribbon_corners);
 gl.bufferData(gl.ARRAY_BUFFER,
   new Float32Array([0, -1, 1, -1, 1, 1, 0, -1, 1, 1, 0, 1]), gl.STATIC_DRAW);
 
-// Span one 13-float disc record over view box of its sphere, and cast ray per fragment.
+// Span one 13-float disc record over box of its sphere, turned to its plane and stopped at
+//   plane's vanishing line, and cast ray per fragment.
 //   Sibling copy of `mesh.viewBoxOfDisc`, `mesh.expandDiscCorner` and
 //   `mesh.hitDiscAlong`, references suite pins, and of GLSL 3.30 source in
 //   `renderer.nim`; change to any one of three is not finished until other two are
 //   checked.
-//   Each axis is bounded by sphere's limb in that axis's plane with sight axis, centre's
-//   bearing plus and minus half-angle sphere subtends, tangent bounded past quarter turn;
-//   whole view where sphere holds eye. Corner is box's middle plus corner scaled by half
-//   extents, so quad is box. Depth is fragment's own; without `EXT_frag_depth` disc rests
-//   at its centre's logarithmic depth.
+//   View is turned about sight axis until plane's normal, signed toward eye's side, points
+//   up; unturned where normal lies along sight. Each turned axis is bounded by sphere's limb
+//   in that axis's plane with sight axis, centre's bearing plus and minus half-angle sphere
+//   subtends, tangent bounded past quarter turn; whole turned view where sphere holds eye.
+//   Floor then rises to vanishing line, below which no ray meets plane in front of eye.
+//   Corner is box's middle plus corner scaled by half extents, turned back, so quad is box.
+//   Depth is fragment's own; without `EXT_frag_depth` disc rests at its centre's
+//   logarithmic depth.
 //   Not fan of corners on plane itself: corner behind eye left sliver for clipper that
 //   rasterised to nothing under grazing camera, and disc ended at hard chord.
 const SOURCE_VERTEX_DISC = `
@@ -403,27 +407,40 @@ const SOURCE_VERTEX_DISC = `
   }
   void main() {
     vec3 to_centre = aCentre - uEye;
+    vec3 normal = cross(aArmFirst, aArmSecond);
     float radius = length(aArmFirst);
-    float across = dot(to_centre, uRight);
-    float up = dot(to_centre, uUp);
+    float side = sign(dot(to_centre, normal));
+    vec2 lateral = side*vec2(dot(normal, uRight), dot(normal, uUp));
+    float reach_lateral = length(lateral);
+    vec2 turn_up = reach_lateral > 0.0 ? lateral/reach_lateral : vec2(0.0, 1.0);
+    vec2 turn_across = vec2(turn_up.y, -turn_up.x);
+    vec2 view = vec2(uTangentHalfView*uAspect, uTangentHalfView);
+    vec2 extent = vec2(dot(abs(turn_across), view), dot(abs(turn_up), view));
+    vec3 right = turn_across.x*uRight + turn_across.y*uUp;
+    vec3 up = turn_up.x*uRight + turn_up.y*uUp;
+    float across = dot(to_centre, right);
+    float rise = dot(to_centre, up);
     float depth = dot(to_centre, uForward);
     float reach_across = length(vec2(across, depth));
-    float reach_up = length(vec2(up, depth));
+    float reach_up = length(vec2(rise, depth));
     vec2 corner_min = vec2(-1.0);
     vec2 corner_max = vec2(1.0);
     if (min(reach_across, reach_up) > radius) {
       float bearing_across = atan(across, depth);
       float spread_across = asin(radius/reach_across);
-      float bearing_up = atan(up, depth);
+      float bearing_up = atan(rise, depth);
       float spread_up = asin(radius/reach_up);
-      float wide = uTangentHalfView*uAspect;
-      float tall = uTangentHalfView;
-      corner_min = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
-        tanBounded(bearing_up - spread_up)/tall), -1.0, 1.0);
-      corner_max = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
-        tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
+      corner_min = clamp(vec2(tanBounded(bearing_across - spread_across),
+        tanBounded(bearing_up - spread_up))/extent, -1.0, 1.0);
+      corner_max = clamp(vec2(tanBounded(bearing_across + spread_across),
+        tanBounded(bearing_up + spread_up))/extent, -1.0, 1.0);
     }
-    vView = 0.5*(corner_min + corner_max) + aCorner*0.5*(corner_max - corner_min);
+    float facing = side*dot(normal, uForward);
+    float line_vanishing = reach_lateral > 0.0
+      ? clamp(-facing/(reach_lateral*extent.y), -2.0, 2.0) : (facing > 0.0 ? -2.0 : 2.0);
+    corner_min.y = min(max(corner_min.y, line_vanishing), corner_max.y);
+    vec2 turned = 0.5*(corner_min + corner_max) + aCorner*0.5*(corner_max - corner_min);
+    vView = (turned.x*extent.x*turn_across + turned.y*extent.y*turn_up)/view;
     float centre_depth = clamp(log2(max(depth, uDepthNear)/uDepthNear)*uDepthLog - 1.0,
       -1.0, 1.0);
     gl_Position = vec4(vView, centre_depth, 1.0);

@@ -418,9 +418,16 @@ suite "Mesh":
       record, eye, rayThroughView(0.0, 0.5, right, up, forward, tangent, 1.0)
     ).isNone
     check hitDiscAlong(record, eye, forward).isNone
-    # Sphere holds eye, so box is whole view.
-    let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
-    check box.corner_min == (-1.0, -1.0) and box.corner_max == (1.0, 1.0)
+    # Sphere holds eye, so box is whole view up to plane's vanishing line, which level sight
+    #   puts across view's middle: quad is lower half, and not one row of sky over it.
+    let
+      box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
+      corner_one = expandDiscCorner(box, -1.0, -1.0)
+      corner_two = expandDiscCorner(box, 1.0, 1.0)
+    check isNear(min(corner_one[0], corner_two[0]), -1.0) and
+      isNear(max(corner_one[0], corner_two[0]), 1.0)
+    check isNear(min(corner_one[1], corner_two[1]), -1.0) and
+      isNear(max(corner_one[1], corner_two[1]), 0.0)
     # From ten units above, disc of radius one subtends 5.74 degrees each way: box is its
     #   tangent over view's, aspect widening across; rim is hit just inside and missed just
     #   outside, at depth ten.
@@ -575,6 +582,14 @@ suite "Mesh":
 
 
   test "plane becomes a flat filled disc and a rim, every vertex on it":
+    func turnedOf(box: DiscBox, spot: (float, float)): (float, float) =
+      ## Read view fraction `spot` in turned fractions `box` is stated in, undoing its steps.
+      let determinant = box.step_across[0]*box.step_up[1] - box.step_up[0]*box.step_across[1]
+      (
+        (spot[0]*box.step_up[1] - spot[1]*box.step_up[0])/determinant,
+        (box.step_across[0]*spot[1] - box.step_across[1]*spot[0])/determinant,
+      )
+
     for plane in PLANES:
       MESHES.clearMeshes
       check MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, scale_test) == Outcome.Finite
@@ -595,10 +610,11 @@ suite "Mesh":
       # Vertex lies on plane exactly when its offset from support is normal to normal.
       let (anchor, normal) = (positionAnchor(plane), directionNormal(plane))
       check anchor.isSome and normal.isSome
-      # Disc is spanned over view box of its sphere and filled by fragment's own ray:
+      # Disc is spanned over box of its sphere and filled by fragment's own ray:
       #   `viewBoxOfDisc` and `hitDiscAlong` -- its references -- are what is read here.
-      #   Every rim point in front of eye projects inside box, clamped to view as box is;
-      #   ray through centre lands at centre's depth; alpha is veil's, flat.
+      #   Every rim point in front of eye projects inside box, read in box's turned fractions
+      #   and clamped to turned view as box is; ray through centre lands at centre's depth;
+      #   alpha is veil's, flat.
       let
         record = MESHES.discs.records[0]
         (eye, right, up, forward) =
@@ -620,8 +636,11 @@ suite "Mesh":
           depth = dot(on_rim, forward)
         if depth <= scale_test.depthNear: continue
         let
-          across = clamp(dot(on_rim, right)/(depth*tangent), -1.0, 1.0)
-          rise = clamp(dot(on_rim, up)/(depth*tangent), -1.0, 1.0)
+          turned = turnedOf(
+            box, (dot(on_rim, right)/(depth*tangent), dot(on_rim, up)/(depth*tangent)),
+          )
+          across = clamp(turned[0], -1.0, 1.0)
+          rise = clamp(turned[1], -1.0, 1.0)
         check across >= box.corner_min[0] - 1.0e-9 and across <= box.corner_max[0] + 1.0e-9
         check rise >= box.corner_min[1] - 1.0e-9 and rise <= box.corner_max[1] + 1.0e-9
       let
