@@ -14,6 +14,14 @@ func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Pos
   camera.eye + (camera.distance/along)*heading
 
 
+template countLiftsIn(body: untyped): int =
+  ## Run `body`, and report how many motors it lifted into algebra; see `setCountingLifts`.
+  setCountingLifts(true)
+  body
+  setCountingLifts(false)
+  countLifts()
+
+
 suite "Camera":
   test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":
     # Whole claim of stance held as rigid motion: eye and pivot name it, and nothing else.
@@ -68,6 +76,24 @@ suite "Camera":
       check frame.axis_up =~ camera.frame.axis_up
       check frame.forward =~ camera.frame.forward
       check eye + camera.distance*frame.forward =~ camera.pivot
+
+
+  test "a reader handed the camera alone reads its stance once":
+    # Eye and frame are each read off stance through its motor, so each read lifts motor again.
+    #   Extent and transform read both, and far bound reads eye once more; `sight` reads both
+    #   off one lift (PROVENANCE.md, Camera). Counted rather than timed: count never moves
+    #   with load.
+    let
+      camera = cameraAround(PLACES[0], 7.0, Direction(x: 1.0, y: -0.4, z: 0.6))
+      lifts_sight = countLiftsIn:
+        discard camera.sight
+      lifts_extent = countLiftsIn:
+        discard camera.drawExtentFor(900, 50.0)
+      lifts_transform = countLiftsIn:
+        discard camera.initMatrixViewProjection(16.0/9.0, PLACES[1])
+    check lifts_sight == 1
+    check lifts_extent == 1
+    check lifts_transform == 1
 
 
   test "the camera's depths and held points agree with their classical forms":

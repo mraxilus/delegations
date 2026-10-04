@@ -67,7 +67,7 @@ import {
 } from './scenery';
 import { driveGround } from './ground';
 import { driveAntialias, driveBlankRefused } from './canvas';
-import { driveFrameWork, driveLoopRuns, watchFrames } from './frame';
+import { driveFrameWork, driveLoopRuns, driveStanceReadOnce, watchFrames } from './frame';
 import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
@@ -221,6 +221,9 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveVeilCovers(page);
   await driveMarkerShapedOnce(page);
   await driveComet(page);
+  // Before ground, which clears selection and sends camera home again, so no check after it
+  //   inherits drag this one makes.
+  await driveStanceReadOnce(page, SIZE_VIEW.width);
   await driveGround(page);
   await driveLoopRuns(page);
   // Curve, rows and rings below are what tree shows, so tree is open while they are read, and

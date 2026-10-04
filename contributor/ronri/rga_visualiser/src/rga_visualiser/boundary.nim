@@ -80,6 +80,13 @@ var
     ##   Suite opens it through `countPointsRead`; no front-end does.
   COUNT_POINTS_READ = 0
     ## Count points read since `countPointsRead` opened gate.
+  IS_COUNTING_LIFTS = false
+    ## Say whether anyone reads how many motors `toMultivector` lifts into algebra.
+    ##   Instrument, gated on its reader as `IS_COUNTING_POINTS_READ` is, at same closed cost.
+    ##   Suite opens it, and so does page's driven check through bridge's `nimSetCountingLifts`;
+    ##   desktop never does.
+  COUNT_LIFTS = 0
+    ## Count motors lifted since `setCountingLifts` last opened gate.
 
 
 template countPointsRead*(body: untyped): int =
@@ -92,6 +99,18 @@ template countPointsRead*(body: untyped): int =
   body
   IS_COUNTING_POINTS_READ = false
   COUNT_POINTS_READ
+
+
+proc setCountingLifts*(is_counting: bool) =
+  ## Open or close tally of motors `toMultivector` lifts; opening zeroes count.
+  ##   Each read of camera's eye or frame lifts its motor once, so count is how often stance
+  ##   was read. Pins cost where clock cannot: count reads same on every machine.
+  if is_counting: COUNT_LIFTS = 0
+  IS_COUNTING_LIFTS = is_counting
+
+
+proc countLifts*(): int = COUNT_LIFTS
+  ## Report how many motors `toMultivector` lifted since tally last opened.
 
 
 
@@ -115,6 +134,10 @@ func toMultivector*(d: Direction): Multivector =
 
 func toMultivector*(motor: Motor): Multivector =
   ## Lift rigid motion into even-grade multivector library operates on.
+  ##   Tallied while reader counts; see `setCountingLifts`.
+  # Cast covers tally alone: instrument's own state, which no caller reads as result.
+  {.cast(noSideEffect).}:
+    if IS_COUNTING_LIFTS: inc COUNT_LIFTS
   result[Basis.E41] = motor.turn_x
   result[Basis.E42] = motor.turn_y
   result[Basis.E43] = motor.turn_z

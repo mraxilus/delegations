@@ -1448,6 +1448,12 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA_PAGE.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
 
+proc nimSetCountingLifts(is_counting: bool) {.exportc.} = setCountingLifts(is_counting)
+  ## Open or close tally of motor lifts, for driven checks; see `boundary.setCountingLifts`.
+
+proc nimCountLifts(): cint {.exportc.} = cint(countLifts())
+  ## Report how many motors were lifted since tally last opened; see `boundary.countLifts`.
+
 
 
 #[ Picking And Drag ]#
