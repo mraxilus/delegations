@@ -203,10 +203,10 @@ func normCenter*(m: Multivector): Multivector {.inline, error: "TODO:  |⊙ m".}
 #   Library allows up to 9D PGAs, however, after 6D, compile/run times are increasingly slow.
 #   9D limit is implementation restriction as bases are encoded as single decimal digits.
 static:
-  doAssert DIMENSIONS in 2 .. 6,
+  doAssert DIMENSIONS in 2..6,
     &"Dimensionality should be in the range 2..6; got `{DIMENSIONS}`."
 
-for slot in 0 ..< pool.bound:  # Bound, never `HANDLES_MAX`.
+for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
 ```
 
 ## Article V: Names form an ordered system
@@ -520,14 +520,18 @@ suite "Chapter 2":
    the coverage.
 9. A space inside an expression stands only where this list puts it, or where the tokeniser
    demands it:
-   - one space on each side of a binary operator, a range operator among them (`2 .. 6`,
-     `0 ..< n`), and of `=`;
+   - one space on each side of a binary operator, and of `=`;
    - one space after a comma, a semicolon and a colon;
    - two spaces before the marker of a trailing comment, a citation among them.
 
-   No space stands inside a bracket, or after a prefix operator, which is glued to its operand
-   (`s[1 .. ^1]`). A compound operator stays whole (`s[1 ..^ 1]`), since it can carry an
-   optimisation that its parts lack.
+   No space stands inside a bracket, or after a prefix operator, which is glued to its operand.
+   A compound operator stays whole (`s[1..^1]`), since it can carry an optimisation that its
+   parts lack.
+
+   A range operator takes no space (`2..6`, `0..<n`). It takes one on each side where a piece
+   beside it holds an operator that binds tighter, as in `i + 1 ..< n`. Glued, `i + 1..<n` would
+   read as if the range starts at 1. It also keeps one where the glued tokens would lex as one
+   token, as before the prefix operator of `s[1 .. ^1]`.
 10. A list that the language gives no order of its own is alphabetised, as the imports are.
     That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
     dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
