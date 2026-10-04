@@ -1950,6 +1950,22 @@ turned axis the box bounds the sphere of the disc, or takes the whole turned vie
 holds the eye. Its floor then rises to the vanishing line, and the quad turns back onto the view. No
 ray below the line meets the plane in front of the eye, so the clip removes no pixel of the disc.
 
+**Where the whole rim stands in front of the eye, the box tightens to the picture of the rim.** The
+rim stands wholly in front where the depth of its centre is more than 1.001 times its depth swing
+(`FACTOR_RIM_AHEAD`). The swing is how far the depth of the rim runs on each side of the depth of
+its centre. The disc then stands in front of the eye too, and its picture is the convex hull of the
+picture of its rim. Along each turned axis the extremes of the rim are the two roots of one
+quadratic in the slope, so they bound the disc. The box takes them with a pad of 0.002 of a half
+extent (`MARGIN_BOX_RIM`), and never reaches past the box of the sphere.
+
+Elsewhere the box keeps the bound of the sphere, because a rim that reaches behind the eye has a
+picture without a bound. A `float32` emulation of the closed form over 1.5 million views set the
+margin and the pad, on 2026-10-04, and it is not kept. At a margin of a thousandth its worst error
+was under 1e-4 of a half extent, so the pad is twenty times that error. The pad is 0.9 px of a view
+900 px tall. Rejected: a margin of a ten-millionth, where the worst error reached 1.1e-2 of a half
+extent, five times the pad. Cost: each corner of the quad works out one quadratic for each turned
+axis, beside the bound of the sphere.
+
 Rejected: a box square to the view, which cannot stop at a slanted line. Rejected: a fan of 96
 triangles over the box, which drew the ellipse through its corners. That ellipse ran past the box by
 up to 41% of its half extent, and every fragment there was cast and discarded. Cost: each of the six
@@ -1968,8 +1984,34 @@ has two pairs, before then after, in ms of GPU work for each step:
 
 The same steps with the disc draws skipped read 5.5 to 9.2 ms, which is the spread of the bench. So
 the floor changes the opening scene and the steep view by less than that spread. At the opening
-scene the vanishing line stands near the top of the box, because the box bounds the sphere and not
-the disc. From the opening stance the sphere of the ground spans 50° of height, and its disc 21°.
+scene the cost is the box of the sphere. From the opening stance the sphere of the ground spans 50°
+of height, and its disc 21°.
+
+The box of the rim was measured on 2026-10-04 by the same bench, without antialias, as the simulated
+page draws. Each pair is `eecc2b5c`, then this design, in ms of GPU work for each step:
+
+| View | Box of the rim, without antialias |
+|------|-----------------------------------|
+| Opening scene | 11.0 to 7.1, 13.0 to 7.2 |
+| Level and low over the ground | 8.6 to 10.3, 10.5 to 9.5 |
+| Steep over the ground | 13.7 to 14.9, 15.8 to 13.8 |
+| Level and low under the ground | 8.3 to 8.5, 8.5 to 8.2 |
+
+The same steps with the disc draws skipped read 2.2 to 3.2 ms. The opening scene falls by 3.9 and
+5.8 ms. The other views move by no more than two runs of one build do. In the level views the
+rim reaches behind the eye, and in the steep view the disc covers nearly all of the view. With
+antialias, as the page of the reader draws, the opening scene read 18.2 to 18.2 and 18.8 to 15.0 ms.
+The two pairs disagree, so the gain with antialias is unmeasured.
+
+The browser drive ran on 2026-10-04 under the lock of the gate, on each build in turn, twice each.
+It is `build/drive/main.js` alone, timed from outside, with each page timed inside it:
+
+| Build | Browser drive | Simulated page | Real-clock page |
+|-------|---------------|----------------|-----------------|
+| `eecc2b5c`, box of the sphere | 237.5 s, 235.0 s | 211.2 s, 208.6 s | 23.6 s, 23.9 s |
+| Box of the rim | 215.3 s, 212.4 s | 190.1 s, 187.7 s | 22.5 s, 21.9 s |
+
+Every check passed in each run.
 
 A `DomeRecord` of 8 floats widens over a static unit sphere, which has no orientation. A
 `RingRecord` of 14 floats is the thirteen of a disc plus a width, and one instance draws the whole
@@ -2031,6 +2073,8 @@ hand.
 - the quad of the disc on the side of the vanishing line where rays meet the plane, over seeded
   views at every attitude and roll;
 - every spot of the disc that the view shows inside that quad, over the same views;
+- the box of the disc around the picture of its rim, and within 0.002 of a half extent, where the
+  whole rim stands ahead;
 - under a grazing eye, the quad of the disc as the lower half of the view;
 - the ray of the disc landing inside the rim and missing outside it;
 - a hit under a grazing eye nearer than the near plane;
@@ -2045,8 +2089,11 @@ px out, in opposite pairs, 0.01 and 0.001 units off, along two headings. Assumed
 0.1 ms for the flat buffer holds at current caps, because it was measured at 1,024 objects.
 
 Verified under Xvfb on 2026-10-04: the quad and its floor changed 3 of 15,552,000 storyboard pixels
-against `main`, by 12 or less in any channel. Verified by driven check: the veil of the ground over
-every spot its pick finds it at, from four views.
+against `main`, by 12 or less in any channel. The box of the rim changed 10 of them against
+`eecc2b5c`, by 12 or less in any channel. Each build wrote its frames with
+`xvfb-run -a binaries/rga_visualiser --storyboard:<directory>`. Verified by driven check: the veil
+of the ground over every spot its pick finds it at, from four views. The whole rim stands ahead in
+the steep view alone, so that view holds the box of the rim, at 4758 of 4758 spots veiled.
 
 ## Algebra boundary
 
@@ -3687,14 +3734,5 @@ passing proves that the runner carries that library. Assumed: nothing about the 
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
   in it. The near crossing is not the cause (see Records and shaders).
-
-## Open questions
-
-**The box of a veil bounds the sphere of its disc, and not the disc** (Records and shaders). Where
-the rim stands wholly in front of the eye, its picture along each turned axis has extremes in closed
-form. An experiment bounded the box by them there, and kept the sphere and the vanishing line
-elsewhere. At the opening scene it took GPU work for each step from 12.0 to 6.9 ms, and from 10.1 to
-6.9 ms. One drive with it read 188 s on the simulated page. The choices are to leave it, or to add
-that bound to the reference and both shaders, with a suite test of its own.
 
 [replications]: https://gitlab.com/mraxilus/replications
