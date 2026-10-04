@@ -77,7 +77,7 @@ const
         "\"lead's hand holds\") & lead) &\n" &
         "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
         "\"follow's hand held\") & follow),\n  )\n"
-    ## Argument the hand continued at its own indent, whose lines four spaces in cross `LINE_MAX`.
+    ## Argument hand continued at its own indent, whose lines four spaces in cross `LINE_MAX`.
 
 
 func fixedOf(source: string): string =
