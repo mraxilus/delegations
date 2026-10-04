@@ -537,7 +537,7 @@ once at pin. A line number moves with every library commit, and a quote moves on
 own lines do. So a change that still applies at head still says what it meant.
 
 **A proposal is one directory, with one shape.** `proposal.md` argues the future state,
-`change.md` holds its candidate edits, and `claims.json` names the proposal it builds on and the
+`change.md` holds its candidate edits, and `claims.json` lists the proposals it builds on and the
 claims that its evaluation checks. A claim is data, so the page shows each verdict beside it. The
 kinds are `suites`, `tables`, `program`, `count` and `build`. Rejected: a proposal as prose
 alone, because nothing could then say whether it still holds at head.
@@ -552,8 +552,28 @@ citation still leads to what was proposed and measured.
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
+**Proposals build on each other as a graph without cycles,** as the Architect ruled on
+2026-10-04. The Architect decides each proposal on its own. So each one lists in `builds_on` the
+proposals whose changes it needs, and an empty list says that it needs none. Rejected: one base
+for each proposal. A proposal that needs two others could then not say so.
+
+`dependenciesOf` walks the graph depth first. It gives what an adoption needs first, each one
+after its own bases and once only. `dependentsOf` gives what a rejection blocks. A cycle, an
+unknown name, a withdrawn base or a `builds_on` that is not a list is a finding. A base that the
+library implements drops out, since the library holds its edits.
+
+**Each proposal page states its dependencies, and one page lists every proposal.** The page of a
+proposal names what it depends on and what its rejection blocks. Where a proposal is reached
+through another, the page names that one too, as `(through P02)`. The list page gives each
+proposal its standing, its claims that hold, its dependencies and what it blocks.
+
+Above the table, the list page draws the undecided proposals as a graph, in columns by depth and
+in rows by number. An arrow points from a proposal to one that it builds on, as `builds_on`
+reads. A decided proposal needs no choice, so the graph leaves it out, and the table keeps it.
+
 **An evaluation measures a copy of the library at pin.** It copies the checkout, applies the edits
-(the base proposal first), and measures the copy against the pin. It runs the suites of the
+(what the proposal depends on first, in the order of `dependenciesOf`), and measures the copy
+against the pin. It runs the suites of the
 library, reads the static measurements of every function, and times each measurand. The
 binaries of the pin and of the copy run alternately, five times each, so drift of the machine
 lands on both.

@@ -19,6 +19,7 @@ Three kinds of page answer the question. Each one is built from committed files 
 |------|------|---------------|
 | [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
+| [Proposals][proposals] | list | every proposal, and graph of what each undecided one blocks |
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
 | [P02 Typed multivectors][typed-multivectors] | proposal | concrete k-vector types, any dimension |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
@@ -27,7 +28,9 @@ Three kinds of page answer the question. Each one is built from committed files 
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
-same shape, so the next exploration starts from the same frame.
+same shape, so the next exploration starts from the same frame. Each proposal page states what
+the proposal depends on, and what its rejection blocks. The **list** page names every proposal,
+and draws the undecided ones as a graph.
 
 ## What pages are built from
 
@@ -116,6 +119,7 @@ checked against.
 [replications]: https://gitlab.com/mraxilus/replications
 [docket]: https://claude.ai/artifact/XyT583x9RnTKixers2q4gT
 [marginalia]: https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM
+[proposals]: https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG
 [cayley-derivation]: https://claude.ai/artifact/2fi2hTpobqChXSTPq4vB6q
 [typed-multivectors]: https://claude.ai/artifact/V34TAWXNvrHBGN9fNBWYWX
 [partner-sign]: https://claude.ai/artifact/2fUYLonsQo7ejouCvCnpWf
