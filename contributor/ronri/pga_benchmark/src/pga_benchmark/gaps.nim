@@ -520,18 +520,19 @@ func render*(
   lines.add ""
   lines.add wrap(
     "The driver writes this file. To make it again, run `nim r tools/build.nim gaps`, which " &
-    "reads `baseline/*.json`. Do not edit it by hand. Every gap keeps its number, because " &
-    "`baseline/docket.json` holds the numbers and the driver reuses none. The pinned compiler " &
-    "emits C for the `bench` entry, and the inspector counts that C. A cell gives the library " &
-    "value first and the reference value second.",
+        "reads `baseline/*.json`. Do not edit it by hand. Every gap keeps its number, " &
+        "because `baseline/docket.json` holds the numbers and the driver reuses none. The " &
+        "pinned compiler emits C for the `bench` entry, and the inspector counts that C. A " &
+        "cell gives the library value first and the reference value second.",
   )
   lines.add ""
   lines.add wrap(
     "A gap is over where the library spends more than its reference. It is also over where " &
-    "the library spends a zero fill, an intermediate, an error check, an allocation or a NaN. " &
-    "Time is over where the library median is more than " & $TOLERANCE & " times the " &
-    "reference median. A gap is met in every other case. Bytes are modelled movement for each " &
-    "call, and runtime measurements are medians of the last bench that ran by hand.",
+        "the library spends a zero fill, an intermediate, an error check, an allocation or " &
+        "a NaN. Time is over where the library median is more than " & $TOLERANCE &
+        " times the reference median. A gap is met in every other case. Bytes are modelled " &
+        "movement for each call, and runtime measurements are medians of the last bench that " &
+        "ran by hand.",
   )
   lines.add ""
   lines.add wrap(

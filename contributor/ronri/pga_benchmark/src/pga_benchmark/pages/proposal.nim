@@ -92,9 +92,11 @@ func htmlProposal*(
       of "program": code(claim{"path"}.getStr) & " compiles and runs clean at " & algebras
       of "count": code(claim{"measurand"}.getStr) & " spends " & $claim{"value"}.getInt & " " &
           claim{"metric"}.getStr & " at " & claim{"algebra"}.getStr
-      of "build": "compiling library alone costs at most ×" & claim{"at_most"}.getFloat.fixed &
-        " of pristine " & (if claim{"metric"}.getStr == "seconds": "seconds" else: "peak memory") &
-        " at " & claim{"algebra"}.getStr
+      of "build":
+        "compiling library alone costs at most ×" & claim{"at_most"}.getFloat.fixed &
+            " of pristine " &
+            (if claim{"metric"}.getStr == "seconds": "seconds" else: "peak memory") & " at " &
+            claim{"algebra"}.getStr
       else: escapeHtml(claim{"kind"}.getStr)
 
     if evaluation.isNil: return "<p class=\"note\">No evaluation yet; claims are unchecked.</p>"
