@@ -1938,21 +1938,6 @@ rules are the I.4 tables, the IV.4 messages, the X.4 conditions, the profiler im
 `to<Target>` calls. The static pass does not run their checks yet, as with the layout checks. So
 a project clears their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
-**A comment table aligns its columns by display width (I.4).** A combining mark takes no width,
-and a wide East Asian glyph or an emoji takes two. Every other rune takes one, and an ambiguous
-one does too. A column keeps the width of its separator row. It widens only where the text of a
-cell does not fit, to that text and one space.
-
-- The width guard of X.1 counts runes, and the table counts display width. The guard bounds what
-  an editor holds on one line, and the table aligns what the eye reads. So a table whose fix
-  would cross 100 runes stays for the hand.
-- `WIDTHS` holds the blocks that the scripts of this tree use, from Unicode 15. A mark of another
-  block, such as an Indic vowel sign, counts one.
-- A cell that holds `|`, even in backticks, splits. Its table then holds rows of other lengths,
-  and stays unread.
-- Verified by `suites/test_alignment.nim`. On the tree, line 23 of `motors.nim` of
-  `rga_visualiser` aligns by runes, and the fix pads it by one space.
-
 **A message echoes each value after `got` in backticks (IV.4).** The check reads the
 concatenation from the literal that holds `; got ` to its end. Each interpolation and each
 operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
