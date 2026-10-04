@@ -47,7 +47,7 @@ import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, ti
 
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
 from ../src/pga_benchmark/report import combineRuns, IMPLEMENTATIONS
-import ../src/pga_benchmark/pages/[docket, marginalia, shell]
+import ../src/pga_benchmark/pages/[docket, listing, marginalia, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
@@ -385,7 +385,7 @@ proc candidatesOf(
   changes: seq[(string, Change)], proposals: seq[Proposal], findings: var seq[Finding]
 ): seq[Candidate] =
   ## Shape one evaluation candidate per change and per proposed proposal.
-  ##   Proposal carries its base chain first, less any base library already implements.
+  ##   Proposal carries changes of what it builds on first, less any library already implements.
   ##   Candidate's programs are program texts, so digest moves when program does.
   ##   Frozen proposal shapes none: library holds or dropped its edits, so they no longer apply.
   for (name, change) in changes:
@@ -403,34 +403,8 @@ proc candidatesOf(
         message: "Proposal shares name with change; got `" & proposal.name & "`.",
       )
     if proposal.isFrozen: continue
-    var
-      chain = @[proposal.change]
-      seen = @[proposal.name]
-      base = proposal.builds_on
-    while base.len > 0:
-      if base in seen:
-        findings.add Finding(
-          path: directory,
-          message: "Proposals build on each other in cycle; " & "got `" & base & "`.",
-        )
-        break
-      let found = proposals.filterIt(it.name == base)
-      if found.len == 0:
-        findings.add Finding(
-          path: directory,
-          message: "Proposal builds on no proposal here; got `" & base & "`.",
-        )
-        break
-      if found[0].isImplemented: break  # library holds its edits
-      if found[0].isFrozen:
-        findings.add Finding(
-          path: directory,
-          message: "Proposal builds on withdrawn proposal; got `" & found[0].citation & "`.",
-        )
-        break
-      chain.insert(found[0].change, 0)
-      seen.add base
-      base = found[0].builds_on
+    let (dependencies, why) = dependenciesOf(proposals, proposal)
+    findings.add why
     var programs: seq[string]
     for path in programsOf(proposal):
       if fileExists(path): programs.add readFile(path)
@@ -441,7 +415,7 @@ proc candidatesOf(
     result.add Candidate(
       name: proposal.name,
       path: directory,
-      changes: chain,
+      changes: dependencies.mapIt(it.change) & @[proposal.change],
       programs: programs,
       claims: proposal.claims,
     )
@@ -542,7 +516,8 @@ proc compileScript(entry: string): string =
 
 
 proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
-  ## Build every page from committed files: docket, marginalia, then one per proposal.
+  ## Build every page from committed files: docket, marginalia, proposal list, then one per
+  ##   proposal.
 
   func htmlLinks(names: openArray[string], published: JsonNode, self: string): string =
     ## Link every other published page, in page order, led by separator; empty where none.
@@ -567,7 +542,7 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     evaluations = readEvaluations()
     files = readLibrary(LIBRARY)
     (notes, _) = parseNotes(PATH_NOTES, readFile(PATH_NOTES))
-    names = @["docket", "marginalia"] & proposals.mapIt(it.name)
+    names = @["docket", "marginalia", "proposals"] & proposals.mapIt(it.name)
   var
     sheets: seq[Sheet]
     baselines: Table[string, JsonNode]
@@ -630,6 +605,14 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
     ),
     faces,
   )
+  var urls: Table[string, string]
+  for proposal in proposals: urls[proposal.name] = published{proposal.name, "url"}.getStr
+  result["proposals"] = assemble(
+    text_shell,
+    "PGA Proposals",
+    bodyListing(proposals, evaluations, urls, pin, htmlLinks(names, published, "proposals")),
+    faces,
+  )
   var figures: Table[string, string]
   for proposal in proposals:
     for node in proposal.body:
@@ -642,11 +625,13 @@ proc pagesBuilt(faces: Table[string, string]): OrderedTable[string, string] =
       proposal.citation & " " & titled(proposal.name),
       bodyProposal(
         proposal,
+        proposals,
         evaluations.getOrDefault(proposal.name),
         files,
         figures,
         baselines,
         spread,
+        urls,
         pin,
         htmlLinks(names, published, proposal.name),
       ),

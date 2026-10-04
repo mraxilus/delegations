@@ -1284,32 +1284,32 @@ suite "Internal: Proposals":
     parseProposal(
       heading,
       "",
-      %*{"status": status, "implemented_in": "abc", "claims": []},
+      %*{"status": status, "implemented_in": "abc", "builds_on": [], "claims": []},
       directory,
     )[0]
 
 
-  test "proposal reads number, title, status, base proposal and claims of every known kind":
+  test "proposal reads number, title, status, base proposals and claims of every known kind":
     let
-      claims = %*{"status": "proposed", "builds_on": "base", "claims": [{"kind": "suites"},
+      claims = %*{"status": "proposed", "builds_on": ["base"], "claims": [{"kind": "suites"},
         {"kind": "build", "algebra": "rga6d", "metric": "peakmem", "at_most": 0.7},
         {"kind": "program", "path": "p.nim", "algebras": ["rga4d"]}]}
       (proposal, findings) = parseProposal(record_sign, "", claims, directory_sign)
     check findings.len == 0 and proposal.title == "Sign"  # well formed, citation read off
     check proposal.number == 1 and proposal.name == "sign"  # number, then name, from path
     check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
-    check proposal.builds_on == "base" and proposal.claims.len == 3  # chain and claims
+    check proposal.builds_on == @["base"] and proposal.claims.len == 3  # bases and claims
     check proposal.programsOf == @["proposals/01-sign/p.nim"]  # program beside its proposal
 
 
   test "unknown claim, missing title and claims that are not JSON are findings":
     let
-      odd = %*{"status": "proposed", "claims": [{"kind": "vibes"}]}
+      odd = %*{"status": "proposed", "builds_on": [], "claims": [{"kind": "vibes"}]}
       (_, unknown) = parseProposal(record_sign, "", odd, directory_sign)
       (_, untitled) = parseProposal(
         "Why.\n",
         "",
-        %*{"status": "proposed", "claims": []},
+        %*{"status": "proposed", "builds_on": [], "claims": []},
         directory_sign,
       )
       (_, broken) = parseProposal(record_sign, "", nil, directory_sign)
@@ -1320,11 +1320,16 @@ suite "Internal: Proposals":
 
   test "path without number, title without citation and unknown status are findings":
     let
-      claims = %*{"status": "proposed", "claims": []}
+      claims = %*{"status": "proposed", "builds_on": [], "claims": []}
       (_, unnumbered) = parseProposal(record_sign, "", claims, "proposals/sign")
       (_, uncited) = parseProposal("# Sign\n", "", claims, directory_sign)
       (_, unplaced) =
-        parseProposal(record_sign, "", %*{"status": "dreamt", "claims": []}, directory_sign)
+        parseProposal(
+          record_sign,
+          "",
+          %*{"status": "dreamt", "builds_on": [], "claims": []},
+          directory_sign,
+        )
     check unnumbered.len == 2  # path lacks number, so title cites none it could match
     check "`01-sign`" in unnumbered[0].message  # names form path needs
     check uncited.len == 1 and "`P01: `" in uncited[0].message  # title opens with citation
@@ -1336,7 +1341,7 @@ suite "Internal: Proposals":
       (bare, why) = parseProposal(
         record_sign,
         "",
-        %*{"status": "implemented", "claims": []},
+        %*{"status": "implemented", "builds_on": [], "claims": []},
         directory_sign,
       )
     check why.len == 1 and "`implemented_in`" in why[0].message  # commit it landed in
@@ -1461,21 +1466,25 @@ suite "Internal: Figures":
       figures = {"pages/map.svg": "<svg id=\"m\"></svg>"}.toTable
       body = bodyProposal(
         record,
+        [record],
         nil,
         initTable[string, string](),
         figures,
         initTable[string, JsonNode](),
         Spread(),
+        initTable[string, string](),
         "bd6b23c590d7",
         "",
       )
       bare = bodyProposal(
         record,
+        [record],
         nil,
         initTable[string, string](),
         initTable[string, string](),
         initTable[string, JsonNode](),
         Spread(),
+        initTable[string, string](),
         "bd6b23c590d7",
         "",
       )
@@ -1492,7 +1501,7 @@ suite "Internal: Figures":
       (record, _) = parseProposal(
         argument,
         "",
-        %*{"status": "proposed", "claims": []},
+        %*{"status": "proposed", "builds_on": [], "claims": []},
         "proposals/01-cayley-derivation",
       )
       paths = record.body.mapIt(it.figureOf(record.directory)).filterIt(it.isSome).mapIt(
