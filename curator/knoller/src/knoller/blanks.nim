@@ -1,9 +1,9 @@
 ## Enforce blank lines beside suites, tests and nested helpers in Nim source (Article X.2;
 ##   STYLE.md §1), and fix them (`koch fix`).
-##   Under `tests/`: suite is first tier and takes three blank lines before it; test is second
-##     tier and takes two. First child follows its opener at once, i.e. test opening suite and
-##     suite opening `when` body: no blank line. Suite or test right after banner takes
-##     banner's one.
+##   Under `tests/` (`reports.isTestFile`): suite is first tier and takes three blank lines
+##     before it; test is second tier and takes two. First child follows its opener at once,
+##     i.e. test opening suite and suite opening `when` body: no blank line. Suite or test right
+##     after banner takes banner's one.
 ##   Nested helper, i.e. routine declared in body of routine: one blank line on each side,
 ##     right after owner's doc too. Side leaving owner's body is not read, since what stands
 ##     there is owner's sibling. Helper never moves (X.11 asks it first; reading holds that).
@@ -157,7 +157,7 @@ func runs(path, source: string): seq[Run] =
   ## Find each run of blank lines beside suite, test or nested helper whose count breaks rule.
   let
     v = source.viewOf
-    is_test_file = "/tests/" in "/" & path
+    is_test_file = path.isTestFile
   var found: seq[Run]
   for i in 0 ..< v.lines.len:
     if not v.isCode(i) or v.inside[i]: continue

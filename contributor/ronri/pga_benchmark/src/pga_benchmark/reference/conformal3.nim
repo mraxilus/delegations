@@ -6,17 +6,17 @@
 ##   Eric Lengyel) was read to cross-check forms and counts, and nothing is copied from
 ##   it. Scalar is `float`, as library's.
 ##
-##   |------------|----------------------------------------------|-------------------------|
-##   | Code       | Notation                                     | Library basis           |
-##   |------------|----------------------------------------------|-------------------------|
-##   | PointRound | 𝐚 = x y z (e₁ e₂ e₃) + w e₄ + u e₅           | E1 E2 E3 E4 E5          |
-##   | Dipole     | 𝐝 = dᵛ + dᵐ + dᵖ(e₁₅ e₂₅ e₃₅ e₄₅)            | E41.. E23.. E15.. E45   |
-##   | Circle     | 𝐜 = cᵍ(e₄₂₃ e₄₃₁ e₄₁₂ e₃₂₁) + cᵛ + cᵐ        | E423.. E415.. E235..    |
-##   | Sphere     | 𝐬 = u e₁₂₃₄ + x y z (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅) + w e₃₂₁₅ | E1234 E4235.. E3215 |
-##   | PointFlat  | 𝐩 = x y z w (e₁₅ e₂₅ e₃₅ e₄₅)                | E15 E25 E35 E45         |
-##   | LineFlat   | 𝐥 = lᵛ(e₄₁₅ e₄₂₅ e₄₃₅) + lᵐ(e₂₃₅ e₃₁₅ e₁₂₅)  | E415.. E235..           |
-##   | PlaneFlat  | 𝐠 = x y z w (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)        | E4235.. E3215           |
-##   |------------|----------------------------------------------|-------------------------|
+##   |------------|---------------------------------------------------|-------------------------|
+##   | Code       | Notation                                          | Library basis           |
+##   |------------|---------------------------------------------------|-------------------------|
+##   | PointRound | 𝐚 = x y z (e₁ e₂ e₃) + w e₄ + u e₅                | E1 E2 E3 E4 E5          |
+##   | Dipole     | 𝐝 = dᵛ + dᵐ + dᵖ(e₁₅ e₂₅ e₃₅ e₄₅)                 | E41.. E23.. E15.. E45   |
+##   | Circle     | 𝐜 = cᵍ(e₄₂₃ e₄₃₁ e₄₁₂ e₃₂₁) + cᵛ + cᵐ             | E423.. E415.. E235..    |
+##   | Sphere     | 𝐬 = u e₁₂₃₄ + x y z (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅) + w e₃₂₁₅ | E1234 E4235.. E3215     |
+##   | PointFlat  | 𝐩 = x y z w (e₁₅ e₂₅ e₃₅ e₄₅)                     | E15 E25 E35 E45         |
+##   | LineFlat   | 𝐥 = lᵛ(e₄₁₅ e₄₂₅ e₄₃₅) + lᵐ(e₂₃₅ e₃₁₅ e₁₂₅)       | E415.. E235..           |
+##   | PlaneFlat  | 𝐠 = x y z w (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)             | E4235.. E3215           |
+##   |------------|---------------------------------------------------|-------------------------|
 ##
 ##   Unary maps (complements, duals, attitude, carrier, cocarrier) are signed slot
 ##     permutations; signs are library's, read off its own tables on basis elements and
@@ -182,15 +182,15 @@ func wedge*(d, f: Dipole): Sphere {.inline.} =
   ## Join dipoles into sphere, i.e. 𝐝 ∧ 𝐟; 30 mul, 25 add.
   Sphere(
     u: -d.m.x * f.v.x - d.m.y * f.v.y - d.m.z * f.v.z -
-      d.v.x * f.m.x - d.v.y * f.m.y - d.v.z * f.m.z,
+        d.v.x * f.m.x - d.v.y * f.m.y - d.v.z * f.m.z,
     x: d.p.z * f.v.y - d.p.y * f.v.z + d.v.y * f.p.z - d.v.z * f.p.y +
-      d.m.x * f.p.w + d.p.w * f.m.x,
+        d.m.x * f.p.w + d.p.w * f.m.x,
     y: d.p.x * f.v.z - d.p.z * f.v.x + d.v.z * f.p.x - d.v.x * f.p.z +
-      d.m.y * f.p.w + d.p.w * f.m.y,
+        d.m.y * f.p.w + d.p.w * f.m.y,
     z: d.p.y * f.v.x - d.p.x * f.v.y + d.v.x * f.p.y - d.v.y * f.p.x +
-      d.m.z * f.p.w + d.p.w * f.m.z,
+        d.m.z * f.p.w + d.p.w * f.m.z,
     w: -d.m.x * f.p.x - d.m.y * f.p.y - d.m.z * f.p.z -
-      d.p.x * f.m.x - d.p.y * f.m.y - d.p.z * f.m.z,
+        d.p.x * f.m.x - d.p.y * f.m.y - d.p.z * f.m.z,
   )
 
 func wedgeAnti*(s, t: Sphere): Circle {.inline.} =
@@ -253,15 +253,15 @@ func wedgeAnti*(c, o: Circle): PointRound {.inline.} =
   ## Meet circles in round point, i.e. 𝐜 ∨ 𝐨; 30 mul, 25 add.
   PointRound(
     x: c.g.z * o.m.y - c.g.y * o.m.z + c.m.y * o.g.z - c.m.z * o.g.y +
-      c.g.w * o.v.x + c.v.x * o.g.w,
+        c.g.w * o.v.x + c.v.x * o.g.w,
     y: c.g.x * o.m.z - c.g.z * o.m.x + c.m.z * o.g.x - c.m.x * o.g.z +
-      c.g.w * o.v.y + c.v.y * o.g.w,
+        c.g.w * o.v.y + c.v.y * o.g.w,
     z: c.g.y * o.m.x - c.g.x * o.m.y + c.m.x * o.g.y - c.m.y * o.g.x +
-      c.g.w * o.v.z + c.v.z * o.g.w,
+        c.g.w * o.v.z + c.v.z * o.g.w,
     w: -c.g.x * o.v.x - c.g.y * o.v.y - c.g.z * o.v.z -
-      c.v.x * o.g.x - c.v.y * o.g.y - c.v.z * o.g.z,
+        c.v.x * o.g.x - c.v.y * o.g.y - c.v.z * o.g.z,
     u: -c.m.x * o.v.x - c.m.y * o.v.y - c.m.z * o.v.z -
-      c.v.x * o.m.x - c.v.y * o.m.y - c.v.z * o.m.z,
+        c.v.x * o.m.x - c.v.y * o.m.y - c.v.z * o.m.z,
   )
 
 func wedgeAnti*(s: Sphere, d: Dipole): PointRound {.inline.} =
@@ -295,12 +295,12 @@ func dot*(a, b: PointRound): float {.inline.} =
 func dot*(d, f: Dipole): float {.inline.} =
   ## Multiply dipoles through inner product, i.e. 𝐝 ∙ 𝐟; 10 mul, 9 add.
   dot(d.v, Vector3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
-    dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
+      dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
 
 func dot*(c, o: Circle): float {.inline.} =
   ## Multiply circles through inner product, i.e. 𝐜 ∙ 𝐨; 10 mul, 9 add.
   c.g.w * o.g.w - dot(Vector3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
-    dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
+      dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
 
 func dot*(s, t: Sphere): float {.inline.} =
   ## Multiply spheres through inner product, i.e. 𝐬 ∙ 𝐭; 5 mul, 4 add.
@@ -315,7 +315,7 @@ func dotAnti*(d, f: Dipole): Antiscalar {.inline.} =
   Antiscalar(
     -(
       dot(d.v, Vector3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
-        dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
+          dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
     ),
   )
 
@@ -324,7 +324,7 @@ func dotAnti*(c, o: Circle): Antiscalar {.inline.} =
   Antiscalar(
     -(
       c.g.w * o.g.w - dot(Vector3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
-        dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
+          dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
     ),
   )
 

@@ -1739,7 +1739,7 @@ proc stoppedBy*(couple: Couple, i: int): tuple[why: Stop, end_index: int] =
     if pose.wrist[k] >= couple.rig.range[Dof.Wrist].upper - AT_END:
       return (Stop.Wrist, k)
   let met = metBy(couple, i)
-  if met != Stop.None: (met, 0) else: (Stop.Reach, 0)
+  if met != Stop.None: (met, 0) else: (Stop.Span, 0)
 
 proc stopOf*(couple: Couple, i: int): Stop = stoppedBy(couple, i).why
   ## What stops this connection here, if anything does.
@@ -1830,10 +1830,10 @@ proc gives*(couple: Couple): Stop =
     for link in couple.links:
       for hand in link.ends:
         let z = tipOf(couple, couple.who[hand.body].arm[hand.arm]).z
-        if z < band.lower - SAG: return Stop.Reach
+        if z < band.lower - SAG: return Stop.Span
         # Facing, hands over crown are hold at some other height too: A09 stood
         # facing with every hand at 1.90 m and read as holding.
-        if is_facing and z > band.upper + OVER: return Stop.Reach
+        if is_facing and z > band.upper + OVER: return Stop.Span
   Stop.None
 
 

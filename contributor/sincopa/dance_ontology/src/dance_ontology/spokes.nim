@@ -8,7 +8,7 @@
 ##       distraction from one decision being made.
 ##   Spokes keep map's sense of direction.  `collect` takes
 ##     hand, so it points up; `drop` releases one, so it points down;
-##     compound is two moves and goes out to side.  Dancer who has
+##     compound move is two moves and goes out to side.  Dancer who has
 ##     read one drawing can read other.
 ##   Frame couple came from is remembered so that drawing can
 ##     start it where it was and let it arrive: spoke that was taken
@@ -64,7 +64,7 @@ const
   ##     frames, they are as far apart as frames are.
   UP = 270.0  ## Direction collect points, in degrees clockwise from east.
   DOWN = 90.0  ## Direction drop points.
-  ASIDE = 0.0  ## Direction compound points.
+  ASIDE = 0.0  ## Direction compound move points.
 
 
 
@@ -126,7 +126,7 @@ func closeStyle*(): string =
     "ms; --grow-spread: " & $GROW_SPREAD & "ms; --leaf-delay: " & $LEAF_DELAY &
     "ms; --grow: " & $GROW_TIME & "ms" &
     # Drawing is laid out in numbers rather than lengths so that
-    # stylesheet can divide room it has by them; these are what it
+    # style sheet can divide room it has by them; these are what it
     # multiplies them back up by, and how far down it may go.
     "; --least-unit: " & formatFloat(LEAST_READABLE / LABEL_SIZE, ffDecimal, 3) &
     "px"
@@ -137,7 +137,7 @@ func closeStyle*(): string =
 
 func spokesOf*(here: Frame): seq[Spoke] =
   ## Get every way out of frame, in order they are drawn.
-  ##   Collects, then drops, then compounds: order eye reads them
+  ##   Collects, then drops, then compound moves: order eye reads them
   ##     in, up page and then down it and then out to side.
   for helper in [Helper.Collect, Helper.Drop]:
     var same_kind: seq[Spoke] = @[]
@@ -164,7 +164,7 @@ func spokesOf*(here: Frame): seq[Spoke] =
     let compounded = compound(here, target)
     if compounded.isNone:
       continue
-    # Compound hands follow's hand from one of lead's arms to
+    # Compound move hands follow's hand from one of lead's arms to
     # other, so it has arm going out and different one coming back.
     # Drawing is inked in both: one arm for line that only ever means one.
     named.add Spoke(
@@ -228,14 +228,14 @@ func naming(x, y: int; lines: seq[string]; colour: string): string =
 #[ Space And Window ]#
 
 func extentOf(here: Frame): (int, int, int, int) =
-  ## Get box one frame's drawing needs, and no more.
+  ## Get bounds one frame's drawing needs, and no more.
   ##   Frame with only collects has nothing below it and frame with only
-  ##     drops has nothing above, so box that holds one frame is not
-  ##     box that holds another.  This is what window is cut to; it is
+  ##     drops has nothing above, so bounds that hold one frame are not
+  ##     bounds that hold another.  This is what window is cut to; it is
   ##     not what frame is drawn in.
   const pad = 14
   # Frame's name is often wider than frame it names, and name is part of
-  # drawing: box measured to pictures alone would cut words off.
+  # drawing: bounds measured to pictures alone would cut words off.
   var
     left = CENTRE_X - max(NODE_WIDTH div 2 + 8, textHalf(here.describe))
     right = CENTRE_X + max(NODE_WIDTH div 2 + 8, textHalf(here.describe))
@@ -258,8 +258,8 @@ func extentOf(here: Frame): (int, int, int, int) =
   (left - pad, top - pad, right - left + 2 * pad, bottom - top + 2 * pad)
 
 
-func spokesBox(): (int, int, int, int) {.compileTime.} =
-  ## Get one space every frame is drawn in: box that holds them all.
+func spokesBounds(): (int, int, int, int) {.compileTime.} =
+  ## Get one space every frame is drawn in: bounds that hold them all.
   ##   Fitting space to each frame would move middle from frame to
   ##     frame, and node travelling in from where it was would be
   ##     travelling in coordinate system that had changed under it.  One
@@ -275,7 +275,7 @@ func spokesBox(): (int, int, int, int) {.compileTime.} =
   (left, top, right - left, bottom - top)
 
 
-const SPOKES_BOX* = spokesBox()
+const SPOKES_BOUNDS* = spokesBounds()
   ## Hold space every frame is drawn in, as `x`, `y`, `width`, `height`.
 
 
@@ -293,7 +293,7 @@ func windowOf*(here: Frame): (int, int, int, int) =
 
 func panOf*(window: (int, int, int, int)): (int, int) =
   ## Get where drawing sits behind window, so window shows that part.
-  (SPOKES_BOX[0] - window[0], SPOKES_BOX[1] - window[1])
+  (SPOKES_BOUNDS[0] - window[0], SPOKES_BOUNDS[1] - window[1])
 
 
 
@@ -321,7 +321,7 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   ##     is why page can replace one with other there and no
   ##     reader can tell.
   let
-    (box_x, box_y, box_width, box_height) = SPOKES_BOX
+    (bounds_x, bounds_y, bounds_width, bounds_height) = SPOKES_BOUNDS
     is_leaving = motion == Motion.Leaving and taken.isSome
     window = windowOf(here)
     (pan_x, pan_y) = panOf(window)
@@ -345,9 +345,9 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
       )
       (shift_x, shift_y) = (end_x - CENTRE_X, end_y - CENTRE_Y)
 
-  # Every number animation spends is written here, so that stylesheet
+  # Every number animation spends is written here, so that style sheet
   # holds shape of movement and this holds its size.
-  # Window and pan are bare numbers, not lengths.  Stylesheet has to
+  # Window and pan are bare numbers, not lengths.  Style sheet has to
   # divide room it has by width drawing wants, and length cannot
   # be divided by length -- so drawing hands over numbers and takes
   # back one unit to multiply them by.  Everything drawing is made of is
@@ -356,16 +356,16 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   # `--mx`, `--my`, `--ox` and `--oy` stay lengths: they are read inside
   # picture, in its own units, and scale with it already.
   result = "<div class=\"viewport " & phase(motion) & "\" style=\"" &
-    closeStyle() & "; --bw: " & $box_width & "; --bh: " & $box_height &
+    closeStyle() & "; --bw: " & $bounds_width & "; --bh: " & $bounds_height &
     "; --w: " & $window[2] & "; --h: " & $window[3] &
     "; --px: " & $pan_x & "; --py: " & $pan_y &
     "; --to-w: " & $reached[2] & "; --to-h: " & $reached[3] &
     "; --to-px: " & $landing_pan_x & "; --to-py: " & $landing_pan_y &
     "; --mx: " & $shift_x & "px; --my: " & $shift_y &
     "px; --ox: " & $CENTRE_X & "px; --oy: " & $CENTRE_Y & "px\">"
-  result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $box_x & " " &
-    $box_y & " " & $box_width & " " & $box_height & "\" width=\"" & $box_width &
-    "\" height=\"" & $box_height &
+  result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $bounds_x & " " &
+    $bounds_y & " " & $bounds_width & " " & $bounds_height & "\" width=\"" & $bounds_width &
+    "\" height=\"" & $bounds_height &
     "\" class=\"spokes\" role=\"img\">" &
     "<title>" & here.describe & ", and every move away from it</title>"
 

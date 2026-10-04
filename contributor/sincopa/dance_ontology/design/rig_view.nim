@@ -9,7 +9,7 @@
 ##     canvas in that order.
 ##   One list of entries: every still of reference first, in page's order, then
 ##     every sweep.  Stage shows one; every still is also drawn small beside its
-##     own cell of reference, and clicking cell puts it on stage.  Architect: lay
+##     own card of reference, and clicking card puts it on stage.  Architect: lay
 ##     reference and simulation side by side, with next and previous.
 ##   Data is read in place through `jsffi`, never copied into Nim values: every
 ##     copy on JS backend is deep (STYLE.md), and this is read sixty times per
@@ -55,8 +55,8 @@ func has(record: JsObject, name: cstring): bool {.importjs: "((#)[#] !== undefin
 func joined(a, b: JsObject): JsObject {.importjs: "(#).concat(#)".}
 func entriesOn(event: Event): cstring {.importjs:
   "(#).currentTarget.getAttribute('data-entries')".}
-  ## Read off cell clicked at time of click: closure made in loop over cells
-  ## saw every cell's number as last one's, and every click chose D07.
+  ## Read off card clicked at time of click: closure made in loop over cards
+  ## saw every card's number as last one's, and every click chose D07.
 
 
 func styleOf(name: cstring): cstring {.importjs:
@@ -72,7 +72,7 @@ proc inkOf(side, who: int): cstring =
   styleOf(names[side][who])
 
 const
-  NEAR = 5.0 * PI / 180.0  ## Within this of either end, joint reads as spent.
+  NEAR = 5.0 * PI / 180.0  ## Within this of either end, joint reads as strained.
   DOFS = [cstring"extend", cstring"across", cstring"twist",
           cstring"bend", cstring"wrist"]
   SIDES = [cstring"left", cstring"right"]
@@ -93,8 +93,8 @@ var
   IS_PLAYING = true
   IS_DRAGGING = false
   X_PREV, Y_PREV = 0.0
-  LUT_CARD_BY_ENTRY: seq[cstring]  ## Reference cell each entry belongs to, or empty.
-  LUT_CELL_BY_ENTRY: seq[Element]  ## And cell itself, or nil.
+  LUT_ID_BY_ENTRY: seq[cstring]  ## Identifier of reference card each entry belongs to, or empty.
+  LUT_CARD_BY_ENTRY: seq[Element]  ## And card itself, or nil.
 
 
 # Entries of recording, read as viewer reads them.
@@ -278,11 +278,11 @@ proc readout() =
           angle = angles[k].toFloat
           lower = sweep_shown.lower[k].toFloat
           upper = sweep_shown.upper[k].toFloat
-          span = (if upper - lower > 1e-9: upper - lower else: 1.0)
-          at = (angle - lower) / span
-          is_spent = angle <= lower + NEAR or angle >= upper - NEAR
+          width = (if upper - lower > 1e-9: upper - lower else: 1.0)
+          at = (angle - lower) / width
+          is_strained = angle <= lower + NEAR or angle >= upper - NEAR
         html = html & cstring"<div class='dof" &
-          (if is_spent: cstring" spent" else: cstring"") & cstring"'><span>" &
+          (if is_strained: cstring" strained" else: cstring"") & cstring"'><span>" &
           DOFS[dof] & cstring"</span><div class='track'><b style='left:" &
           toFixed(max(0.0, min(1.0, at)) * 100.0, 1) & cstring"%'></b></div><em>" &
           toFixed(angle * 180.0 / PI, 0) & cstring"°</em><u>" &
@@ -346,18 +346,18 @@ proc fit() =
 
 
 proc reference() =
-  ## Reference's own drawing of this entry's cell beside stage, and cell marked.
-  for i, cell in LUT_CELL_BY_ENTRY:
-    if cell != nil:
-      cell.classList.remove(cstring"picked")
-  let cell = LUT_CELL_BY_ENTRY[PICK]
-  if cell == nil:
+  ## Reference's own drawing of this entry's card beside stage, and card marked.
+  for i, card in LUT_CARD_BY_ENTRY:
+    if card != nil:
+      card.classList.remove(cstring"picked")
+  let card = LUT_CARD_BY_ENTRY[PICK]
+  if card == nil:
     document.getElementById("ref").innerHTML = cstring""
     return
-  cell.classList.add(cstring"picked")
+  card.classList.add(cstring"picked")
   let
-    art = cell.querySelector(".art")
-    caption = cell.querySelector("figcaption")
+    art = card.querySelector(".art")
+    caption = card.querySelector("figcaption")
   document.getElementById("ref").innerHTML =
     cstring"<div class='art'>" & art.innerHTML & cstring"</div>" & caption.outerHTML
 
@@ -379,7 +379,7 @@ proc size() =
 
 
 proc thumbs() =
-  ## Every still drawn small beside its own cell, from one fixed place.
+  ## Every still drawn small beside its own card, from one fixed place.
   for node in document.querySelectorAll("canvas.thumb"):
     let
       canvas = node.toJs
@@ -411,31 +411,31 @@ proc choose(i: int) =
 
 
 proc start() =
-  ## Read recording, tie each entry to its reference cell, and draw first.
+  ## Read recording, tie each entry to its reference card, and draw first.
   ENTRIES_ALL = joined(rig().stills, rig().sweeps)
-  # Which cell of reference each entry belongs to, read off page itself.
+  # Which card of reference each entry belongs to, read off page itself.
   for i in 0..<count(ENTRIES_ALL):
-    LUT_CARD_BY_ENTRY.add cstring""
-    LUT_CELL_BY_ENTRY.add nil
+    LUT_ID_BY_ENTRY.add cstring""
+    LUT_CARD_BY_ENTRY.add nil
   for node in document.querySelectorAll("figure[data-entries]"):
-    let cell = Element(node)
-    for word in ($cell.getAttribute("data-entries")).split(' '):
+    let card = Element(node)
+    for word in ($card.getAttribute("data-entries")).split(' '):
       if word.len == 0: continue
       let index = parseInt(word)
-      LUT_CARD_BY_ENTRY[index] = cell.getAttribute("data-id")
-      LUT_CELL_BY_ENTRY[index] = cell
-    cell.addEventListener("click", proc (event: Event) =
+      LUT_ID_BY_ENTRY[index] = card.getAttribute("data-id")
+      LUT_CARD_BY_ENTRY[index] = card
+    card.addEventListener("click", proc (event: Event) =
       let first = ($entriesOn(event)).split(' ')
       if first.len > 0 and first[0].len > 0:
         choose(parseInt(first[0]))
         window.scrollTo(0, 0))
 
-  # Picker, stills by cell and question, sweeps by hold and band.
+  # Picker, stills by card and question, sweeps by hold and band.
   var option_list = cstring""
   for i in 0..<count(ENTRIES_ALL):
     let
       recording = entry(i)
-      name = (if isStill(recording): LUT_CARD_BY_ENTRY[i] & cstring" · " & text(recording.key)
+      name = (if isStill(recording): LUT_ID_BY_ENTRY[i] & cstring" · " & text(recording.key)
               else: text(recording.hold) & cstring" · " & text(recording.band))
     option_list = option_list & cstring"<option value='" & toFixed(float(i), 0) &
       cstring"'>" & name & cstring"</option>"

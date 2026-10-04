@@ -1,7 +1,9 @@
 ## Run knoller from shell: `knoller [--check] path...`, fixing each Nim file paths name.
 ##   Path names file, or directory standing for `.nim`, `.nims` and `.nimble` files `git
-##     ls-files` lists under it, sorted; outside git work tree, directory names none. Named file
-##     of other extension is passed over; path naming nothing is usage error.
+##     ls-files` lists under it, sorted. Named file of other extension is passed over; path
+##     naming nothing is usage error, and so is directory naming no Nim file, which says why:
+##     it lies outside git work tree, or git lists no Nim file under it (`listingOf`). Silent
+##     `0 to fix.` would read as clean run over files never read.
 ##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
@@ -9,9 +11,15 @@
 ##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
 ##     inside it with count and first line, so no fenced line goes unseen (`heldOf`); then
 ##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
+##   Every line printed is line of file as given: finding left in fixed text is traced back
+##     through fix (`traced`), as each rewrite is. Finding on line fix inserts has no line as
+##     given, so it prints at line `0`, path alone, and its message echoes its text.
 ##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
 ##     changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
+##   Fixers read each path whole, absolute and with `.` and `..` resolved (`layoutOf`), so test
+##     file, stub and umbrella read alike however command line names them; output prints path
+##     as named.
 ##   `outcomeOf` decides what run writes and prints from text alone, so suite drives it with
 ##     no file; `main` reads files, runs git, writes and prints.
 ##
@@ -73,6 +81,20 @@ func dialectOf*(path: string): Option[Dialect] =
   none(Dialect)
 
 
+func layoutOf*(path, directory: string): string =
+  ## Read path whole, as fixers read it: absolute, from directory it is named from, with `.` and
+  ##   `..` resolved.
+  if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path)
+
+
+func shownAs(reports: openArray[Report], path: string): seq[Report] =
+  ## Rename each report of one file to path as named, which output prints.
+  for report in reports:
+    var shown = report
+    shown.path = path
+    result.add shown
+
+
 func located(report: Report): string =
   ## Render location and rule of report: `path:line: <rule-id>`, line `0` left out.
   let location = if report.line == 0: report.path else: report.path & ":" & $report.line
@@ -88,19 +110,23 @@ func `<`(a, b: Report): bool =
 
 
 func outcomeOf*(
-  files: openArray[(string, string)], locked: openArray[string], is_check: bool
+  files: openArray[(string, string)], locked: openArray[string], is_check: bool, directory = "/"
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
-  ##   file `locked` names, or of no dialect, is passed over.
+  ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
+  ##   directory it is named from (`layoutOf`).
   var fixed, left, held: seq[Report]
   for (path, source) in files:
     let dialect = path.dialectOf
     if dialect.isNone or path in locked: continue
-    held.add heldOf(path, source, dialect.get)
-    let fix = formatted(path, source, dialect.get)
-    left.add fix.left & checkFormatting(path, fix.source, dialect.get)
+    let layout = path.layoutOf(directory)
+    held.add heldOf(layout, source, dialect.get).shownAs(path)
+    let fix = formatted(layout, source, dialect.get)
+    var after = checkFormatting(layout, fix.source, dialect.get)
+    for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
+    left.add shownAs(fix.left & after, path)
     if fix.source == source: continue
-    fixed.add fix.fixed
+    fixed.add fix.fixed.shownAs(path)
     if not is_check: result.written.add (path, fix.source)
   let outcome = if is_check: " to fix" else: " fixed"
   for report in fixed.sorted: result.lines.add report.located & outcome
@@ -110,13 +136,24 @@ func outcomeOf*(
   result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
 
 
-proc listed(directory: string): seq[string] =
-  ## Read Nim files git lists under directory, sorted; none outside git work tree.
-  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
-  if code != 0: return
+func listingOf*(directory, output: string; code: int): tuple[files: seq[string], refusal: string] =
+  ## Read Nim files git lists under directory, sorted, from output and exit code of `git ls-files
+  ##   -z` run there; refusal says why directory names none, and is empty where it names some.
+  if code != 0:
+    result.refusal = "Directory lies outside git work tree, so git lists no file under it; got `" &
+        directory & "`."
+    return
   for name in output.split('\0'):
-    if name.len > 0 and name.dialectOf.isSome: result.add directory / name
-  result.sort
+    if name.len > 0 and name.dialectOf.isSome: result.files.add directory / name
+  result.files.sort
+  if result.files.len == 0:
+    result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
+
+
+proc listed(directory: string): tuple[files: seq[string], refusal: string] =
+  ## Read Nim files git lists under directory, sorted, or why it names none.
+  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
+  listingOf(directory, output, code)
 
 
 proc lockedOf(paths: openArray[string]): seq[string] =
@@ -139,14 +176,25 @@ proc main*(): int =
     return 2
   var paths: seq[string]
   for path in options.get.paths:
-    if dirExists(path): paths.add path.listed
+    if dirExists(path):
+      let (files, refusal) = path.listed
+      if refusal.len > 0:
+        stderr.write refusal & "\n"
+        stderr.write USAGE
+        return 2
+      paths.add files
     elif fileExists(path): paths.add path
     else:
       stderr.write "Path names no file or directory; got `" & path & "`.\n"
       stderr.write USAGE
       return 2
   paths = paths.deduplicate
-  let outcome = outcomeOf(paths.mapIt((it, readFile(it))), paths.lockedOf, options.get.is_check)
+  let outcome = outcomeOf(
+    paths.mapIt((it, readFile(it))),
+    paths.lockedOf,
+    options.get.is_check,
+    getCurrentDir(),
+  )
   for (path, text) in outcome.written: writeFile(path, text)
   for line in outcome.lines: echo line
   outcome.code

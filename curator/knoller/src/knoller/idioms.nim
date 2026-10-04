@@ -19,8 +19,8 @@
 ##     std/nimprof`; entry module (`when isMainModule:`), library umbrella
 ##     (`<project>/src/<project>.nim`) and stub carry it right after their pragmas (§3):
 ##     `checkProfiler`, outside static pass until projects run fix.
-##   - Stub `tests/test_*.nim` leaves `-r`, `batchable` and `joinable` out of its testament
-##     header (§6).
+##   - Stub `tests/test_*.nim` (`reports.isStub`) leaves `-r`, `batchable` and `joinable` out of
+##     its testament header (§6).
 ##
 ##   Fixers read same spans, runs and constants their checks read, so each rule is written
 ##     once (Article II.1), and each rewrites only lines its check reports:
@@ -272,12 +272,6 @@ func checkBindings*(path: string, code: seq[string]): seq[Report] =
       Rule.SingleBindings,
       "Consecutive single bindings share one keyword (X.5); got `" & run.keyword & "` twice.",
     )
-
-
-func isStub*(path: string): bool =
-  ## Decide whether path is testament stub: `tests/test_*.nim`, directly under `tests/`.
-  let parts = path.split('/')
-  parts.len >= 2 and parts[^2] == "tests" and parts[^1].startsWith("test_")
 
 
 func headerLines(source: string): Slice[int] =

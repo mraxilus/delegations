@@ -3,7 +3,7 @@
 ##
 ## Workbook is source from which ontology grew, so it is treated as evidence
 ## rather than as truth.
-##   Every cell is checked against primitive that physics gives for same pair
+##   Every cell is checked against move that physics gives for same pair
 ##     of frames, and every disagreement is reported with its kind.
 ##   Cost of transcribing sheet here as data: twenty-seven cells copied and
 ##     kept by hand, to re-copy if workbook is ever re-read.  Accepted --
@@ -55,11 +55,11 @@ type
   FindingKind* {.pure.} = enum  ## Name way workbook and model relate.
     StateDeferred,  ## State that rests hand on body, outside this model.
     FrameAbsent,  ## Frame that model derives and workbook has no row for.
-    EdgeAbsent,  ## Single primitive between two checkable states, cell empty.
+    EdgeAbsent,  ## Single move between two checkable states, cell empty.
     ReverseAbsent,  ## Filled cell whose mirror cell is empty, though moves reverse.
-    EdgeCompound,  ## Cell naming sequence, so route rather than move.
-    HelperDiffers,  ## Cell naming primitive other than derived one.
-    EdgeUnsupported  ## Filled cell that model gives no single primitive for.
+    EdgeCompound,  ## Cell naming sequence, so transition rather than move.
+    HelperDiffers,  ## Cell naming helper other than derived one.
+    EdgeUnsupported  ## Filled cell that model gives no single move for.
 
   Finding* = object  ## Hold one thing audit has to say about workbook.
     kind*: FindingKind
@@ -178,11 +178,11 @@ func workbookName*(target: Frame): Option[string] =
 
 
 func readHelper*(word: string): Option[Helper] =
-  ## Read one primitive from cell, including workbook's synonyms.
+  ## Read one move from cell, including workbook's synonyms.
   ##
   ## `slide` and `trace` are absent because they slide hand along partner, and
   ## every cell that names one reaches deferred state.  `pass`, `place` and
-  ## `cut` are absent because they are compounds; `readCompound` reads those.
+  ## `cut` are absent because they are compound moves; `readCompound` reads those.
   case word.strip()
   of "collect": some(Helper.Collect)
   of "drop", "flick": some(Helper.Drop)
@@ -190,7 +190,7 @@ func readHelper*(word: string): Option[Helper] =
 
 
 func readCompound*(word: string): Option[Compound] =
-  ## Read one compound from cell, in any of words workbook uses.
+  ## Read one compound move from cell, in any of words workbook uses.
   case word.strip()
   of "pass", "place": some(Compound.Place)
   of "cut": some(Compound.Cut)
@@ -257,7 +257,7 @@ func auditFrames(): seq[Finding] =
 
 
 func auditCells(): seq[Finding] =
-  ## Report cells that disagree with primitive that model gives.
+  ## Report cells that disagree with move that model gives.
   for cell in CELLS:
     if cell.source.isDeferred or cell.destination.isDeferred:
       continue
@@ -271,8 +271,8 @@ func auditCells(): seq[Finding] =
       result.add Finding(
         kind: FindingKind.EdgeCompound,
         subject: subject,
-        detail: "cell names " & $words.len & " helpers; the model derives a route of " &
-          $route(source, destination).len & " primitives, so this is a path, not a move",
+        detail: "cell names " & $words.len & " helpers; the model derives a transition of " &
+          $route(source, destination).len & " moves, so this is a transition, not a move",
       )
       continue
     let
@@ -280,8 +280,8 @@ func auditCells(): seq[Finding] =
       named_compound = readCompound(words[0])
       derived_compound = compound(source, destination)
     if named_compound.isSome:
-      # Cell naming compound is right when model derives that compound for
-      # pair, and compound is two primitives long.
+      # Cell naming compound move is right when model derives that compound move
+      # for pair, and compound move is two moves long.
       if derived_compound == named_compound and
           route(source, destination).len == 2:
         continue
@@ -289,15 +289,15 @@ func auditCells(): seq[Finding] =
         kind: FindingKind.HelperDiffers,
         subject: subject,
         detail: "cell says '" & cell.text & "'; the model derives " &
-          (if derived_compound.isSome: $derived_compound.get else: "no compound"),
+          (if derived_compound.isSome: $derived_compound.get else: "no compound move"),
       )
       continue
     if helper.isNone:
       result.add Finding(
         kind: FindingKind.EdgeUnsupported,
         subject: subject,
-        detail: "no primitive and no compound joins these frames; the shortest " &
-          "route is " & $route(source, destination).len & " primitives",
+        detail: "no move and no compound move joins these frames; the shortest " &
+          "transition is " & $route(source, destination).len & " moves",
       )
       continue
     if named_helper.isNone or named_helper.get != helper.get:

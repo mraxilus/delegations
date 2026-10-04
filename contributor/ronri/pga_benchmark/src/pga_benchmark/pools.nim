@@ -24,7 +24,7 @@ export widening
 var
   POOL_GENERAL* {.align(64).}: array[OBJECTS, Multivector]
     ## Dense multivectors, every component Gaussian.
-  POOL_GRADED* {.align(64).}: array[0..DIMENSIONS, array[OBJECTS, Multivector]]
+  POOL_GRADED* {.align(64).}: array[0 .. DIMENSIONS, array[OBJECTS, Multivector]]
     ## Dense multivectors holding one grade each.
   POOL_SCALAR* {.align(64).}: array[OBJECTS, float]  ## Scalars, Gaussian.
 
@@ -83,7 +83,7 @@ when IS_CONFORMAL and DIMENSIONS == 4:
 func toUpperAscii(s: string): string {.compileTime.} =
   ## Convert ASCII letters to upper case; local so runtime imports no string library.
   for c in s:
-    result.add (if c in 'a'..'z': char(ord(c) - 32) else: c)
+    result.add (if c in 'a' .. 'z': char(ord(c) - 32) else: c)
 
 
 func namePoolLibrary*(kind: Kind, grade: Option[int]): string {.compileTime.} =
@@ -161,13 +161,13 @@ when IS_CONFORMAL and DIMENSIONS == 4:
 proc fillPools*(seed = 0) =
   ## Fill every pool from seed; deterministic, so suites and measurands agree across runs.
   randomize(seed)
-  for i in 0..<OBJECTS:
+  for i in 0 ..< OBJECTS:
     POOL_GENERAL[i] = multivectorRandom()
-    for g in 0..DIMENSIONS:
+    for g in 0 .. DIMENSIONS:
       POOL_GRADED[g][i] = multivectorRandom(some(g))
     POOL_SCALAR[i] = gauss(0.0, 1.0)
   when IS_RIGID and DIMENSIONS == 4:
-    for i in 0..<OBJECTS:
+    for i in 0 ..< OBJECTS:
       POOL_POINT[i] = pointRandom()
       POOL_LINE[i] = wedge(pointRandom(), pointRandom())
       POOL_PLANE[i] = wedge(wedge(pointRandom(), pointRandom()), pointRandom())
@@ -177,7 +177,7 @@ proc fillPools*(seed = 0) =
       POOL_PLANE_WIDENED[i] = POOL_PLANE[i].widen
       POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
   when IS_CONFORMAL and DIMENSIONS == 5:
-    for i in 0..<OBJECTS:
+    for i in 0 ..< OBJECTS:
       POOL_POINTROUND[i] = pointRoundRandom()
       POOL_DIPOLE[i] = wedge(pointRoundRandom(), pointRoundRandom())
       POOL_CIRCLE[i] = wedge(wedge(pointRoundRandom(), pointRoundRandom()), pointRoundRandom())
@@ -190,7 +190,7 @@ proc fillPools*(seed = 0) =
       POOL_CIRCLE_WIDENED[i] = POOL_CIRCLE[i].widen
       POOL_SPHERE_WIDENED[i] = POOL_SPHERE[i].widen
   when IS_RIGID and DIMENSIONS == 3:
-    for i in 0..<OBJECTS:
+    for i in 0 ..< OBJECTS:
       POOL_POINT[i] = pointRandom()
       POOL_LINE[i] = wedge(pointRandom(), pointRandom())
       POOL_MOTOR[i] = motorRandom()
@@ -198,7 +198,7 @@ proc fillPools*(seed = 0) =
       POOL_LINE_WIDENED[i] = POOL_LINE[i].widen
       POOL_MOTOR_WIDENED[i] = POOL_MOTOR[i].widen
   when IS_CONFORMAL and DIMENSIONS == 4:
-    for i in 0..<OBJECTS:
+    for i in 0 ..< OBJECTS:
       POOL_POINTROUND[i] = pointRoundRandom()
       POOL_DIPOLE[i] = wedge(pointRoundRandom(), pointRoundRandom())
       POOL_CIRCLE[i] = wedge(wedge(pointRoundRandom(), pointRoundRandom()), pointRoundRandom())

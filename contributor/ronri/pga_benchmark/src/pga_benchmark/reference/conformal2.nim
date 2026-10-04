@@ -7,12 +7,12 @@
 ##   |------------|-------------------------------------------|-------------------------|
 ##   | Code       | Notation                                  | Library basis           |
 ##   |------------|-------------------------------------------|-------------------------|
-##   | PointRound | 𝐚 = aˣe₁ + aʸe₂ + aʷe₃ + aᵘe₄              | E1 E2 E3 E4             |
-##   | Dipole     | 𝐝 = carrier line 𝐠 + flat point 𝐩          | E23 E31 E12 E41 E42 E43 |
-##   | Circle     | 𝐜 = cᵘe₃₂₁ + flat line (cˣ cʸ cʷ)          | E321 E423 E431 E412     |
-##   | LineCarrier| 𝐠 = gˣe₂₃ + gʸe₃₁ + gʷe₁₂                  | E23 E31 E12             |
-##   | PointFlat  | 𝐩 = pˣe₄₁ + pʸe₄₂ + pʷe₄₃                  | E41 E42 E43             |
-##   | LineFlat   | 𝐥 = lˣe₄₂₃ + lʸe₄₃₁ + lʷe₄₁₂               | E423 E431 E412          |
+##   | PointRound | 𝐚 = aˣe₁ + aʸe₂ + aʷe₃ + aᵘe₄             | E1 E2 E3 E4             |
+##   | Dipole     | 𝐝 = carrier line 𝐠 + flat point 𝐩         | E23 E31 E12 E41 E42 E43 |
+##   | Circle     | 𝐜 = cᵘe₃₂₁ + flat line (cˣ cʸ cʷ)         | E321 E423 E431 E412     |
+##   | LineCarrier| 𝐠 = gˣe₂₃ + gʸe₃₁ + gʷe₁₂                 | E23 E31 E12             |
+##   | PointFlat  | 𝐩 = pˣe₄₁ + pʸe₄₂ + pʷe₄₃                 | E41 E42 E43             |
+##   | LineFlat   | 𝐥 = lˣe₄₂₃ + lʸe₄₃₁ + lʷe₄₁₂              | E423 E431 E412          |
 ##   | Antisc.    | t𝟙                                        | E1234                   |
 ##   |------------|-------------------------------------------|-------------------------|
 ##
@@ -93,7 +93,7 @@ func wedge*(d, f: Dipole): Antiscalar {.inline.} =
   ## Join dipoles in antiscalar measuring their crossing, i.e. 𝐝 ∧ 𝐟; 6 mul, 5 add.
   Antiscalar(
     -(d.g.x * f.p.x) - d.g.y * f.p.y - d.g.w * f.p.w - d.p.x * f.g.x - d.p.y * f.g.y -
-      d.p.w * f.g.w,
+        d.p.w * f.g.w,
   )
 
 func wedgeAnti*(c, o: Circle): Dipole {.inline.} =
@@ -124,7 +124,7 @@ func wedgeAnti*(d: Dipole, c: Circle): PointRound {.inline.} =
 func wedgeAnti*(d, f: Dipole): float {.inline.} =
   ## Meet dipoles in scalar measuring their crossing, i.e. 𝐝 ∨ 𝐟; 6 mul, 5 add.
   -(d.g.x * f.p.x) - d.g.y * f.p.y - d.g.w * f.p.w - d.p.x * f.g.x - d.p.y * f.g.y -
-    d.p.w * f.g.w
+      d.p.w * f.g.w
 
 func wedgeAnti*(c: Circle, a: PointRound): float {.inline.} =
   ## Meet circle and round point in scalar measuring incidence, i.e. 𝐜 ∨ 𝐚; 4 mul, 3 add.

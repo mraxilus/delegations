@@ -162,7 +162,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     ## Split typed measurand's id into operation and operand kinds, as catalogue joins them.
     ##   One kind per operand, last first, longest kind where two end id alike.
     result[0] = id
-    for _ in 1..count_operands:
+    for _ in 1 .. count_operands:
       var kind = ""
       for candidate in KINDS:
         if result[0].endsWith("_" & candidate) and candidate.len > kind.len: kind = candidate
@@ -273,7 +273,7 @@ func ratioTime(row: Row): float =
 func positionOf(axis: Axis, ratio: float): float =
   ## Read where ratio sits on axis, in percent of its width, clamped to axis.
   let span = float(axis.exponent_high - axis.exponent_low)
-  clamp(100.0 * (log2(ratio) - axis.exponent_low.float) / span, 0.0, 100.0)
+  clamp(100.0 * (log2(ratio) - float(axis.exponent_low)) / span, 0.0, 100.0)
 
 
 
@@ -309,15 +309,15 @@ func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
       if not function{"module"}.getStr.isModuleLibrary: continue
       total += function{"movement", "bytes_moved"}.getInt
       zeroed += function{"movement", "bytes_zeroed"}.getInt
-    if total == 0: 0 else: int(round(100.0 * zeroed.float / total.float))
+    if total == 0: 0 else: int(round(100.0 * float(zeroed) / float(total)))
 
   func bar(kind: string; amount, top: int; tip: string): string =
     ## Render one summed bar: width against greatest of its group, value, tip.
     let width =
-      if top > 0: max(if amount > 0: 0.8 else: 0.0, 100.0 * amount.float / top.float) else: 0.0
+      if top > 0: max(if amount > 0: 0.8 else: 0.0, 100.0 * float(amount) / float(top)) else: 0.0
     "<div class=\"bar " & kind & "\" title=\"" & escapeHtml(tip) &
-      "\"><div class=\"track\"><i style=\"width:" & width.fixed & "%\"></i></div>" &
-      "<span class=\"v\">" & grouped(amount) & "</span></div>"
+        "\"><div class=\"track\"><i style=\"width:" & width.fixed & "%\"></i></div>" &
+        "<span class=\"v\">" & grouped(amount) & "</span></div>"
 
   let
     general = tallyOf(rows, false)
@@ -329,20 +329,20 @@ func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
   for (tally, name_class, noun) in [(general, "typed-off", "operations"),
       (typed, "typed-only", "measurands")]:
     result.add "<div class=\"" & name_class & "\"><dt>" & $tally.at_multiplies & "/" &
-      $tally.bounded & "</dt><dd>" & noun & " at multivector bound on multiplies</dd></div>" &
-      "<div class=\"" & name_class & "\"><dt>" & $tally.at_bytes & "/" & $tally.bounded &
-      "</dt><dd>at it on bytes moved</dd></div>"
+        $tally.bounded & "</dt><dd>" & noun & " at multivector bound on multiplies</dd></div>" &
+        "<div class=\"" & name_class & "\"><dt>" & $tally.at_bytes & "/" & $tally.bounded &
+        "</dt><dd>at it on bytes moved</dd></div>"
   result.add "<div><dt>" & $fill & "%</dt><dd>of library's modelled bytes are zero fill</dd></div>"
   for (ratios, name_class, against) in [(ratios_general, "typed-off", "dense form"),
       (ratios_typed, "typed-only", "reference")]:
     if ratios.len == 0: continue
     result.add "<div class=\"" & name_class & "\"><dt>" & textRatio(ratios[ratios.len div 2]) &
-      "</dt><dd>median time over " & against & ", worst " & textRatio(ratios[^1]) & "</dd></div>"
+        "</dt><dd>median time over " & against & ", worst " & textRatio(ratios[^1]) & "</dd></div>"
   result.add "</dl>"
   let sums = [(general, "typed-off"), (typed, "typed-only")]
   result.add "<div class=\"aggregate\"><div class=\"legend\"><span class=\"library\">library " &
-    "now</span><span class=\"bound\">multivector lower bound</span><span class=\"reference " &
-    "typed-only\">reference</span></div>"
+      "now</span><span class=\"bound\">multivector lower bound</span><span class=\"reference " &
+      "typed-only\">reference</span></div>"
   for (label, index) in [("Multiplies, summed", 0), ("Bytes moved, summed", 1)]:
     for (tally, name_class) in sums:
       let top = max(
@@ -350,13 +350,13 @@ func htmlFacts(sheet: Sheet, rows: openArray[Row]): string =
           tally.sums_reference[index]],
       )
       result.add "<div class=\"" & name_class & "\"><h4>" & label & "</h4><div class=\"bars\">" &
-        bar("library", tally.sums_library[index], top, "library") &
-        bar("bound", tally.sums_bound[index], top, "multivector lower bound")
+          bar("library", tally.sums_library[index], top, "library") &
+          bar("bound", tally.sums_bound[index], top, "multivector lower bound")
       if name_class == "typed-only":
         result.add bar("reference", tally.sums_reference[index], top, "reference")
       result.add "</div><p class=\"caption\">" & $tally.full & " " &
-        (if name_class == "typed-only": "measurands with all three" else: "operations") &
-        ".</p></div>"
+          (if name_class == "typed-only": "measurands with all three" else: "operations") &
+          ".</p></div>"
   result.add "</div>"
 
 
@@ -385,7 +385,7 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
       result.tip = "library " & grouped(library.get) & unit & "; nothing derived to measure against"
       return
     result.tip = "library " & grouped(library.get) & unit & ", " & name_target & " " &
-      grouped(target.get)
+        grouped(target.get)
     if name_target == "reference" and bound.isSome:
       result.tip.add ", multivector lower bound " & grouped(bound.get)
       if bound.get > 0 and target.get > 0: result.tick = bound.get / target.get
@@ -414,7 +414,7 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
     result.ratio = ratio
     result.label = textRatio(ratio)
     result.tip.add ", " & (if row.is_general: "dense form " else: "reference ") &
-      row.ns_against.fixed(1) & " ns"
+        row.ns_against.fixed(1) & " ns"
     if ratios.len > 1:
       result.runs = ratios
       result.tip.add ", runs " & ratios.mapIt(textRatio(it)).join(" ")
@@ -427,11 +427,11 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
     var marks: string
     if deviation.is_over_zero:
       marks.add "<i class=\"open\" style=\"left:" & origin.fixed & "%;width:" &
-        (100.0 - origin).fixed & "%\"></i>"
+          (100.0 - origin).fixed & "%\"></i>"
     elif deviation.ratio > 0:
       let at = axis.positionOf(deviation.ratio)
       marks.add "<i" & (if deviation.ratio < 1.0: " class=\"below\"" else: "") & " style=\"left:" &
-        min(origin, at).fixed & "%;width:" & abs(at - origin).fixed & "%\"></i>"
+          min(origin, at).fixed & "%;width:" & abs(at - origin).fixed & "%\"></i>"
     if deviation.tick > 0:
       marks.add "<b style=\"left:" & axis.positionOf(deviation.tick).fixed & "%\"></b>"
     for run in deviation.runs:
@@ -440,9 +440,9 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
       is_bare = deviation.ratio == 0 and not deviation.is_over_zero
       name = if deviation.name_measure == "bytes": "bytes moved" else: deviation.name_measure
     "<div class=\"deviation " & deviation.name_measure & (if is_bare: " bare" else: "") &
-      "\" title=\"" & escapeHtml(deviation.tip) & "\"><span class=\"k\">" & name &
-      "</span><div class=\"axis\">" & marks & "</div><span class=\"v\">" &
-      escapeHtml(deviation.label) & "</span></div>"
+        "\" title=\"" & escapeHtml(deviation.tip) & "\"><span class=\"k\">" & name &
+        "</span><div class=\"axis\">" & marks & "</div><span class=\"v\">" &
+        escapeHtml(deviation.label) & "</span></div>"
 
   func detail(row: Row): string =
     ## Render row's breakdown: expression, citation, shape, time, and counts by cause.
@@ -452,41 +452,42 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
       elif row.bound.get.is_chain: "chain: " & row.bound.get.steps.join(" → ")
       else: row.bound.get.shape
     result = "<div class=\"detail\"><p>" & code(row.expression) & " · " & escapeHtml(row.cite) &
-      " · " & escapeHtml(shape) & "</p>"
+        " · " & escapeHtml(shape) & "</p>"
     if row.library.isSome:
       let library = row.library.get
       result.add "<p>Library: " & $library.fills & " zero fills, " &
-        $library.count_intermediates & " intermediates, " & $library.copies & " copies, " &
-        $library.checks & " error checks, " & $library.divides & " divides, " &
-        (if library.is_inline: "inline" else: "not inline") & ".</p>"
+          $library.count_intermediates & " intermediates, " & $library.copies & " copies, " &
+          $library.checks & " error checks, " & $library.divides & " divides, " &
+          (if library.is_inline: "inline" else: "not inline") & ".</p>"
     if row.ns_library > 0:
       result.add "<p>Time, median of " & $max(1, row.ns_runs_library.len) & " runs: library " &
-        row.ns_library.fixed(1) & " ns"
+          row.ns_library.fixed(1) & " ns"
       if row.ns_against > 0:
         result.add (if row.is_general: ", dense form " else: ", reference ") &
-          row.ns_against.fixed(1) & " ns"
+            row.ns_against.fixed(1) & " ns"
       result.add ".</p>"
     result.add "<div class=\"table\"><table><tr><th></th><th>multiplies</th><th>bytes read</th>" &
-      "<th>written</th><th>zero fill</th><th>intermediates</th><th>copies</th>" &
-      "<th>bytes moved</th></tr>"
+        "<th>written</th><th>zero fill</th><th>intermediates</th><th>copies</th>" &
+        "<th>bytes moved</th></tr>"
     for (name, side, name_class) in [("library", row.library, ""),
         ("reference", row.reference, " class=\"typed-only\""), ("dense form", row.dense, "")]:
       if side.isNone: continue
       let figures = side.get
       result.add "<tr" & name_class & "><td>" & name & "</td><td>" & grouped(figures.multiplies) &
-        "</td><td>" & grouped(figures.read) & "</td><td>" & grouped(figures.written) &
-        "</td><td>" & grouped(figures.zeroed) & "</td><td>" & grouped(figures.intermediates) &
-        "</td><td>" & grouped(figures.copied) & "</td><td>" & grouped(figures.bytes) & "</td></tr>"
+          "</td><td>" & grouped(figures.read) & "</td><td>" & grouped(figures.written) &
+          "</td><td>" & grouped(figures.zeroed) & "</td><td>" & grouped(figures.intermediates) &
+          "</td><td>" & grouped(figures.copied) & "</td><td>" & grouped(figures.bytes) &
+          "</td></tr>"
     if row.bound.isSome:
       let bound = row.bound.get
       result.add "<tr><td>multivector lower bound</td><td>" & grouped(bound.multiplies) &
-        "</td><td>" & grouped(bound.read) & "</td><td>" & grouped(bound.written) &
-        "</td><td>0</td><td>0</td><td>0</td><td>" & grouped(bound.bytes) & "</td></tr>"
+          "</td><td>" & grouped(bound.read) & "</td><td>" & grouped(bound.written) &
+          "</td><td>0</td><td>0</td><td>0</td><td>" & grouped(bound.bytes) & "</td></tr>"
     result.add "</table></div></div>"
 
   var
     classes = @["row", "operation-" & row.operation] &
-      row.operands.deduplicate.mapIt("operand-" & it)
+        row.operands.deduplicate.mapIt("operand-" & it)
     is_at_bound = true
   if not row.is_general: classes.add "typed"
   for (is_bytes, name_class) in [(false, "over-multiplies"), (true, "over-bytes")]:
@@ -512,13 +513,13 @@ func htmlRow(row: Row, axis: Axis, order: array[SORTS.len, int]): string =
     words = (@[row.measurand, row.id, row.symbol, row.operation.replace('_', ' '),
       row.expression] & row.operands.mapIt(it.replace('_', ' '))).filterIt(it.len > 0)
   "<details class=\"" & classes.join(" ") & "\" style=\"" & ranks.join(";") &
-    "\" data-find=\"" & escapeHtml(words.join(" ").toLowerAscii) &
-    "\"><summary><span class=\"op\">" &
-    "<span class=\"n\">" & escapeHtml(row.measurand) & "</span><span class=\"sub\">" &
-    escapeHtml(row.id) & " · " & escapeHtml(row.symbol) & "</span>" & nan & "</span>" &
-    htmlDeviation(deviationCount(row, false), axis) &
-    htmlDeviation(deviationCount(row, true), axis) & htmlDeviation(deviationTime(row), axis) &
-    "</summary>" & detail(row) & "</details>"
+      "\" data-find=\"" & escapeHtml(words.join(" ").toLowerAscii) &
+      "\"><summary><span class=\"op\">" &
+      "<span class=\"n\">" & escapeHtml(row.measurand) & "</span><span class=\"sub\">" &
+      escapeHtml(row.id) & " · " & escapeHtml(row.symbol) & "</span>" & nan & "</span>" &
+      htmlDeviation(deviationCount(row, false), axis) &
+      htmlDeviation(deviationCount(row, true), axis) & htmlDeviation(deviationTime(row), axis) &
+      "</summary>" & detail(row) & "</details>"
 
 
 
@@ -549,9 +550,9 @@ func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
 
   if overlays.len == 0: return ""
   result = "<section class=\"block\"><h2>Proposals against the bound</h2><p class=\"note\">" &
-    "Each proposal's evaluation replaces the functions it changes; the rest stay as baselines " &
-    "hold them.</p><div class=\"table\"><table><tr><th>Proposal</th><th>Algebra</th>" &
-    "<th>At bound on multiplies, now → proposal</th><th>At bound on bytes</th></tr>"
+      "Each proposal's evaluation replaces the functions it changes; the rest stay as baselines " &
+      "hold them.</p><div class=\"table\"><table><tr><th>Proposal</th><th>Algebra</th>" &
+      "<th>At bound on multiplies, now → proposal</th><th>At bound on bytes</th></tr>"
   for overlay in overlays:
     for sheet in sheets:
       if sheet.name notin overlay.functions: continue
@@ -563,8 +564,8 @@ func htmlProposals(sheets: openArray[Sheet], overlays: openArray[Overlay]): stri
             "<a href=\"" & escapeHtml(overlay.url) & "\">" & escapeHtml(overlay.title) & "</a>"
           else: escapeHtml(overlay.title)
       result.add "<tr><td>" & title & "</td><td>" & sheet.title & "</td><td>" &
-        $now[1] & "/" & $now[0] & " → " & $after[1] & "/" & $after[0] & "</td><td>" & $now[2] &
-        "/" & $now[0] & " → " & $after[2] & "/" & $after[0] & "</td></tr>"
+          $now[1] & "/" & $now[0] & " → " & $after[1] & "/" & $after[0] & "</td><td>" & $now[2] &
+          "/" & $now[0] & " → " & $after[2] & "/" & $after[0] & "</td></tr>"
   result.add "</table></div></section>"
 
 
@@ -619,15 +620,15 @@ func bodyDocket*(
     func above(value, base: Option[int]): float =
       ## Read how far value stands above base, as ratio of both plus one.
       ##   Below zero where either is absent.
-      if value.isNone or base.isNone: -1.0 else: (value.get + 1).float / (base.get + 1).float
+      if value.isNone or base.isNone: -1.0 else: float(value.get + 1) / float(base.get + 1)
 
     let runs = row.ratiosRuns
     [above(metricOf(row.library, true), targetOf(row, true)[0]),
       above(metricOf(row.library, false), targetOf(row, false)[0]),
       (if row.ratioTime > 0: row.ratioTime else: -1.0),
       (if runs.len > 1: max(runs) / min(runs) else: -1.0),
-      (if row.library.isSome: row.library.get.divides.float else: -1.0),
-      (if row.library.isSome: row.library.get.checks.float else: -1.0)]
+      (if row.library.isSome: float(row.library.get.divides) else: -1.0),
+      (if row.library.isSome: float(row.library.get.checks) else: -1.0)]
 
   func ranks(rows: openArray[Row], keys: openArray[float]): Table[string, int] =
     ## Rank rows by key, largest first; ties, and rows keyed below zero, in docket order.
@@ -647,7 +648,7 @@ func bodyDocket*(
           if ratio <= 0: continue
           low = min(low, log2(ratio))
           high = max(high, log2(ratio))
-    Axis(exponent_low: clamp(floor(low).int, -3, -1), exponent_high: clamp(ceil(high).int, 1, 10))
+    Axis(exponent_low: clamp(int(floor(low)), -3, -1), exponent_high: clamp(int(ceil(high)), 1, 10))
 
   func controlsOf(sheets: openArray[Sheet], every: openArray[seq[Row]]): (string, string) =
     ## Render legend and four dropdowns, with `:has()` rules that read them.
@@ -659,8 +660,8 @@ func bodyDocket*(
     func option(value, label: string; classes: seq[string]; is_selected = false): string =
       ## Render one option, with its classes and whether it is chosen at rest.
       "<option value=\"" & value & "\"" &
-        (if classes.len > 0: " class=\"" & classes.join(" ") & "\"" else: "") &
-        (if is_selected: " selected" else: "") & ">" & escapeHtml(label) & "</option>"
+          (if classes.len > 0: " class=\"" & classes.join(" ") & "\"" else: "") &
+          (if is_selected: " selected" else: "") & ">" & escapeHtml(label) & "</option>"
 
     var
       operations: Table[string, tuple[symbol: string, algebras: seq[string], is_general: bool]]
@@ -676,41 +677,41 @@ func bodyDocket*(
           if sheet.name notin kinds.mgetOrPut(kind, @[]): kinds[kind].add sheet.name
     let names_operation = operations.keys.toSeq.sorted
     var html = "<div class=\"controls\">" & LEGEND & "<label class=\"control\">Find <input " &
-      "type=\"search\" id=\"find\" placeholder=\"wedge, ∧, G060\" autocomplete=\"off\">" &
-      "</label><label class=\"control\">Sort <select id=\"sort\">"
+        "type=\"search\" id=\"find\" placeholder=\"wedge, ∧, G060\" autocomplete=\"off\">" &
+        "</label><label class=\"control\">Sort <select id=\"sort\">"
     for index, (key, label) in SORTS: html.add option(key, label, @[], index == 0)
     html.add option("docket", "docket order", @[]) & "</select></label><label " &
-      "class=\"control\">Show <select id=\"show\">" & option("all", "all measurands", @[], true)
+        "class=\"control\">Show <select id=\"show\">" & option("all", "all measurands", @[], true)
     for (name_class, label, is_typed_only) in SHOWS:
       html.add option(name_class, label, if is_typed_only: @["typed-only"] else: @[])
     html.add "</select></label><label class=\"control\">Operation <select id=\"operation\">" &
-      option("all", "every operation", @[], true)
+        option("all", "every operation", @[], true)
     for name in names_operation:
       let entry = operations[name]
       html.add option(name, strip(name & " " & entry.symbol), entry.algebras.mapIt("in-" & it) &
         (if entry.is_general: @[] else: @["typed-only"]))
     html.add "</select></label><label class=\"control typed-only\">Operand <select " &
-      "id=\"operand\">" & option("all", "any operand", @[], true)
+        "id=\"operand\">" & option("all", "any operand", @[], true)
     for kind in KINDS:
       if kind in kinds: html.add option(kind, kind.replace('_', ' '), kinds[kind].mapIt("in-" & it))
     html.add "</select></label></div>"
     var rules: string
     for (key, _) in SORTS:
       rules.add "body:has(#sort option[value=\"" & key & "\"]:checked) details.row { order: " &
-        "var(--o-" & key & "); }\n"
+          "var(--o-" & key & "); }\n"
     for (name_class, _, _) in SHOWS:
       rules.add "body:has(#show option[value=\"" & name_class & "\"]:checked) " &
-        "details.row:not(." & name_class & ") { display: none; }\n"
+          "details.row:not(." & name_class & ") { display: none; }\n"
     for name in names_operation:
       rules.add "body:has(#operation option[value=\"" & name & "\"]:checked) " &
-        "details.row:not(.operation-" & name & ") { display: none; }\n"
+          "details.row:not(.operation-" & name & ") { display: none; }\n"
     for kind in KINDS:
       if kind notin kinds: continue
       rules.add "body:has(#typed:checked):has(#operand option[value=\"" & kind & "\"]:checked) " &
-        "details.row:not(.operand-" & kind & ") { display: none; }\n"
+          "details.row:not(.operand-" & kind & ") { display: none; }\n"
     for sheet in sheets:
       rules.add "body:has(#algebra-" & sheet.name & ":checked) :is(#operation, #operand) " &
-        "option:not(.in-" & sheet.name & ", [value=\"all\"]) { display: none; }\n"
+          "option:not(.in-" & sheet.name & ", [value=\"all\"]) { display: none; }\n"
     (html, rules)
 
   func htmlHead(axis: Axis): string =
@@ -721,7 +722,7 @@ func bodyDocket*(
       ##   Label off every fourth octave is minor, which narrow screen hides.
       let step = if axis.exponent_high - axis.exponent_low > 6: 2 else: 1
       result = "<span class=\"scale" & name_class & "\">"
-      for exponent in axis.exponent_low..axis.exponent_high:
+      for exponent in axis.exponent_low .. axis.exponent_high:
         if exponent mod step != 0: continue
         let label =
           case exponent
@@ -729,14 +730,14 @@ func bodyDocket*(
           of -2: "×¼"
           else: (if exponent < 0: "×1/" & $(1 shl -exponent) else: "×" & $(1 shl exponent))
         result.add "<i" & (if exponent mod 4 != 0: " class=\"minor\"" else: "") & " style=\"left:" &
-          axis.positionOf(pow(2.0, exponent.float)).fixed & "%\">" & label & "</i>"
+            axis.positionOf(pow(2.0, float(exponent))).fixed & "%\">" & label & "</i>"
       result.add "</span>"
 
     "<div class=\"head\" aria-hidden=\"true\"><span>Operation</span>" &
-      "<span class=\"deviation-head\"><span class=\"name\">Multiplies</span>" & scale(axis, "") &
-      "</span><span class=\"deviation-head\"><span class=\"name\">Bytes moved</span>" &
-      scale(axis, "") & "</span><span class=\"deviation-head\"><span class=\"name\">Time</span>" &
-      scale(axis, "") & "</span></div>"
+        "<span class=\"deviation-head\"><span class=\"name\">Multiplies</span>" & scale(axis, "") &
+        "</span><span class=\"deviation-head\"><span class=\"name\">Bytes moved</span>" &
+        scale(axis, "") & "</span><span class=\"deviation-head\"><span class=\"name\">Time</span>" &
+        scale(axis, "") & "</span></div>"
 
   var every: seq[seq[Row]]
   for sheet in sheets: every.add rowsOf(sheet, ids)
@@ -760,37 +761,37 @@ func bodyDocket*(
     if dates.len > 1: text_dates.add " for " & titles.join(" and ")
 
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
-    $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
-    "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
-    ", " & escapeHtml(taken{"machine"}.getStr) &
-    (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
-    " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
-    "type=\"checkbox\" id=\"typed\"> typed measurands</label></header><nav class=\"tabs\" " &
-    "aria-label=\"Algebra\">"
+      $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
+      "<p class=\"meta\">pga " & code(pin[0 ..< 7]) & " · time " & escapeHtml(text_dates) &
+      ", " & escapeHtml(taken{"machine"}.getStr) &
+      (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
+      " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
+      "type=\"checkbox\" id=\"typed\"> typed measurands</label></header><nav class=\"tabs\" " &
+      "aria-label=\"Algebra\">"
   for index, sheet in sheets:
     result.add "<label><input type=\"radio\" name=\"algebra\" id=\"algebra-" & sheet.name & "\"" &
-      (if index == 0: " checked" else: "") & "> " & sheet.title & "</label>"
+        (if index == 0: " checked" else: "") & "> " & sheet.title & "</label>"
   result.add "</nav>"
   let (controls, rules_controls) = controlsOf(sheets, every)
   var rules = "<style>"
   for sheet in sheets:
     rules.add "body:has(#algebra-" & sheet.name & ":checked) .algebra:not(.algebra-" & sheet.name &
-      ") { display: none; }\n"
+        ") { display: none; }\n"
   result.add rules & rules_controls & "</style>"
   for index, sheet in sheets:
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"summary\">" &
-      htmlFacts(sheet, every[index]) & "</div></section>"
+        htmlFacts(sheet, every[index]) & "</div></section>"
   result.add controls & htmlHead(axis)
   for index, sheet in sheets:
     let
       rows = every[index]
       keys = rows.mapIt(keysOf(it))
     var order: array[SORTS.len, Table[string, int]]
-    for index_sort in 0..<SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
+    for index_sort in 0 ..< SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"
     for row in rows:
       var ranks_row: array[SORTS.len, int]
-      for index_sort in 0..<SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
+      for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
       result.add htmlRow(row, axis, ranks_row)
     result.add "</div></section>"
   result.add htmlProposals(sheets, overlays) & METHOD & "</div>"

@@ -102,21 +102,21 @@ func slotBearing*(arm: Arm, slot: Slot): float =
           of Slot.Default: 0.0)
 
 
-func slotOf*(arm: Arm, level: Option[Level], way: Option[Way]):
+func slotOf*(arm: Arm, level: Option[Level], modifier: Option[Modifier]):
     tuple[arm: Arm, slot: Slot] =
   ## Get one of six spots this hand settles in: whose side, how far round.
   ##   `above` never settles anywhere but its own side's default (rule 8).
-  let settled = settleOf(level, way)
+  let settled = settleOf(level, modifier)
   if settled.isNone:
     return (arm, Slot.Default)
   ((if settled.get.whose == Whose.Own: arm else: other(arm)),
    settled.get.slot)
 
 
-func roundOf*(level: Option[Level], way: Option[Way]): Option[Sends] =
+func roundOf*(level: Option[Level], modifier: Option[Modifier]): Option[Sends] =
   ## Get which way round body this hold sends its line, where rules 4 to
   ## 6 say anything; none where nothing is said and short way is taken.
-  let settled = settleOf(level, way)
+  let settled = settleOf(level, modifier)
   if settled.isSome: some settled.get.sends else: none(Sends)
 
 
@@ -126,13 +126,13 @@ func handBearing*(facing: float, arm: Arm, wind = 0.0): float =
   facing + (if arm == Arm.Left: -1.0 else: 1.0) * (ARM_REST + wind)
 
 
-func settledWind*(arm: Arm, level: Option[Level], way: Option[Way]): float =
+func settledWind*(arm: Arm, level: Option[Level], modifier: Option[Modifier]): float =
   ## Get winding that puts this hand in its slot.
   ##   Winding is measured off hand's own side and runs towards back
   ##     for either hand, so this is only place two conventions are
   ##     reconciled.
   let
-    landed = slotOf(arm, level, way)
+    landed = slotOf(arm, level, modifier)
     aim = slotBearing(landed.arm, landed.slot)
   if arm == Arm.Left: -ARM_REST - aim else: aim - ARM_REST
 

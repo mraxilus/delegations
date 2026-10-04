@@ -42,7 +42,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; padding: 2.2rem 1.4rem 6rem; background: var(--paper);
   color: var(--ink); font: 16px/1.62 var(--body); }
-.sheet { max-width: 64rem; margin: 0 auto; }
+.page { max-width: 64rem; margin: 0 auto; }
 
 .kicker { font: 500 0.68rem/1 var(--mono); letter-spacing: 0.22em;
   text-transform: uppercase; color: var(--dim); margin: 0 0 0.8rem; }
@@ -234,7 +234,7 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
     <line x1="0" y1="0" x2="0" y2="3" stroke="var(--dim)" stroke-width="1.4"/></pattern>
 </defs></svg>
 
-<div class="sheet">
+<div class="page">
 
 <header class="top">
   <div class="words">
@@ -372,7 +372,7 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
     <div class="figrow" style="align-items: center">
       <figure>
         <svg viewBox="0 0 336 158" width="400" role="img"
-          aria-label="A side view of a dancer with three height bands: above over the head, high
+          aria-label="A side view of a dancer with three levels: above over the head, high
             about the neck, low about the torso.">
           <line x1="14" y1="141" x2="320" y2="141" class="axis"/>
           <circle cx="58" cy="27" r="11" class="rim"/>
@@ -401,7 +401,7 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
           <text x="116" y="108" class="lbl">a hand at rest hangs low,</text>
           <text x="116" y="119" class="lbl">so low is where states begin</text>
         </svg>
-        <figcaption>the three bands, worn as fills on every hand</figcaption>
+        <figcaption>the three levels, worn as fills on every hand</figcaption>
       </figure>
       <figure>
         <svg viewBox="0 0 200 120" width="200" aria-hidden="true">
@@ -653,7 +653,7 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
       follow <b>away</b> for the cross-name pair and <b>facing</b> for the same-name one. Neither
       X is a
       hold of its own. Counted from Face-to-face, the away rest is <b>@ &#8722;&#189;</b>.</p>
-      <p><b>The drawing decides which arm is over in the X.</b> At the torso the simulation finds
+      <p><b>The drawing decides which arm is over in the X.</b> Held low, the simulation finds
       the two
       arms of the X round opposite sides of the follow. One goes across the front, and one behind
       the back. So there is no crossing in plan for the drawing to settle.</p>
@@ -942,14 +942,14 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
             hand's own name</em></td></tr>
           <tr><td>both modified</td><td>Left-Lock-High to right-wrap-low<br><em>one each, per the
             budget</em></td></tr>
-          <tr><td>a position</td><td>Left to left @ &frac12;<br><em>the hold, turned from face to
-            face</em></td></tr>
+          <tr><td>a frame state</td><td>Left to left @ &frac12;<br><em>the hold, turned from face
+            to face</em></td></tr>
           <tr><td>shorthand</td><td>L–l · R–r<br><em>only where space is tight</em></td></tr>
         </table></div>
       <div class="note" style="flex: 1 1 18rem; margin-top: 1.2rem">
         <p><b>The safety edge, from your lock note.</b> A dancer <b>enters a low lock from
         low</b>.
-        Form it at the torso, and never form the shape high and carry it down. That is a rule
+        Form it low, and never form the shape high and carry it down. That is a rule
         about the move rather than the state, so it belongs on the transition arrows of plate
         6.</p>
       </div>
@@ -961,8 +961,8 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
 <section class="plate">
   <p class="pnum">plate 5 · turning</p>
   <h2>Turning is what writes the modifiers</h2>
-  <p>A <b>position</b> is a hold turned by a number of quarters, counted from Face-to-face as
-  your sheet counts. A same-name hold is drawn at its away rest, which sits half a turn along.
+  <p>A <b>frame state</b> is a hold turned by a number of quarters, counted from Face-to-face
+  as your sheet counts. A same-name hold is drawn at its away rest, which sits half a turn along.
   The orientation is not decoration. Turn the held dancer, and the connection winds across their
   body, which is where a wrap and a lock come from. Your one worked row says it for <span
   class="m">Left to left</span> held low. <b>Half a turn one way is the wrap, and a whole turn the
@@ -1106,25 +1106,25 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
 
 <section class="plate">
   <p class="pnum">plate 6 · the moves</p>
-  <h2>Two primitives, four named compounds</h2>
-  <p>Everything that changes what is held comes down to two primitives. The four starred helpers
+  <h2>Two moves, four named compound moves</h2>
+  <p>Everything that changes what is held comes down to two moves. The four starred helpers
   earn their names, because a lead thinks of each one as a single action. A starred helper keeps
   contact through a trace, which is a hand that travels on the partner rather than through the
   air. These are definitions alone. No symbol is chosen for them yet.</p>
   <div class="verbs">
-    <div class="verb"><div class="term">collect <span class="k">primitive</span></div>
+    <div class="verb"><div class="term">collect <span class="k">move</span></div>
       <p>Join a connection: a lead hand takes a follow hand.</p></div>
-    <div class="verb"><div class="term">drop <span class="k">primitive</span></div>
+    <div class="verb"><div class="term">drop <span class="k">move</span></div>
       <p>Release it: the connection ends, both hands go free.</p></div>
-    <div class="verb"><div class="term">flick <span class="k">compound &#42;</span></div>
+    <div class="verb"><div class="term">flick <span class="k">drop &#42;</span></div>
       <p>A drop with momentum: the lead sends the hand rather than lets it go.</p></div>
-    <div class="verb"><div class="term">trace <span class="k">compound &#42;</span></div>
+    <div class="verb"><div class="term">trace <span class="k">compound move &#42;</span></div>
       <p>Slide a held connection along the partner's body, and the contact holds all the
       way.</p></div>
-    <div class="verb"><div class="term">place <span class="k">compound &#42;</span></div>
+    <div class="verb"><div class="term">place <span class="k">compound move &#42;</span></div>
       <p>Collect, then drop somewhere new, traced the whole way, with nothing in the path.</p>
       </div>
-    <div class="verb"><div class="term">cut <span class="k">compound &#42;</span></div>
+    <div class="verb"><div class="term">cut <span class="k">compound move &#42;</span></div>
       <p>Drop, then collect past an arm, a torso or a neck in the way. The trace carries the
       contact over it.</p></div>
   </div>
@@ -1205,7 +1205,7 @@ table.ledger td.rope { font-size: 0.78rem; max-width: 16rem; }
   and no answer from the simulation.</p>
   <p style="margin-top:0.9rem"><b>Still yours to pick or refuse:</b></p>
   <ul>
-    <li>The <b>arm that lies over in the X</b>. At the torso and the neck the simulation finds the
+    <li>The <b>arm that lies over in the X</b>. Held low or high, the simulation finds the
     two arms
     round opposite sides of the follow. So there is no crossing in plan for the drawing to
     settle. Over the head it counts the crossings and names which arm is over. The still plates

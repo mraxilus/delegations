@@ -16,7 +16,7 @@ type
 
   Stop* {.pure.} = enum  ## What ends turn, one thing at once.
     None,  ## Nothing: it holds.
-    Reach,  ## Hands drew apart with every joint still inside its range.
+    Span,  ## Hands drew apart with every joint still inside its range.
     Twist,  ## Upper arm turned about its own length as far as it goes.
     Elbow,  ## Elbow at its bend.
     Wrist,  ## Hand as far off forearm as it goes.
@@ -30,7 +30,7 @@ func says*(stop: Stop): string =
   ## What to tell reader when turn ends this way.
   case stop
   of Stop.None: "nothing gives"
-  of Stop.Reach: "hands pull apart: arms are not long enough"
+  of Stop.Span: "hands pull apart: arms are not long enough"
   of Stop.Twist: "shoulder twists no further"
   of Stop.Elbow: "elbow bends no further"
   of Stop.Wrist: "wrist bends no further"

@@ -5,16 +5,16 @@ is a mock-up, and its title says so. The reason for each choice is in `../PROVEN
 rules of the drawing, the frame picture and the turn sign.
 
 **A check holds a drawing to a rule as it is written.** It does not show that a couple can dance
-what the drawing shows. The positions to trust are reference cells that are kept, modelled and
-confirmed. `CONFIRMED` in `review_page.nim` holds none yet.
+what the drawing shows. The frame states to trust are reference cells that are kept, modelled
+and confirmed. `CONFIRMED` in `review_page.nim` holds none yet.
 
 ## Pages
 
 - `frames.html` is the frame picture: how a held pair of hands looks, and how a move changes it.
 - `signs.html` is the turn sign: how to label a move with an amount of turn.
-- `turns-single.html` and `turns-hands.html` show each position a hold turns through, and each move
-  between two of them. The first is for one hand, and the second is for two.
-- `review.html` lays out each frame position the project draws, card by card, for the Architect to
+- `turns-single.html` and `turns-hands.html` show each frame state a hold turns through, and each
+  move between two of them. The first is for one hand, and the second is for two.
+- `review.html` lays out each frame state the project draws, card by card, for the Architect to
   rule on.
 - `rig.html` plays the sweeps and stills that the body simulation recorded.
 - `wholecloth.html` is drawn by hand, in `../mockups/wholecloth.html`. Its turns panel draws what
@@ -29,7 +29,7 @@ nim r tools/build.nim pages      # checks every standing rule, then writes every
 nim r tools/build.nim turns      # asks the simulation for every hold turning: turns.json
 nim r tools/build.nim rig        # records the sweeps the viewer plays: rig.json
 nim r tools/build.nim modelled   # records which cards the simulation reaches: modelled.json
-nim r tools/build.nim pins       # records what each ruled card is drawn as: review-pins.json
+nim r tools/build.nim fixtures   # records what each ruled card is drawn as: review-fixtures.json
 nim r tools/build.nim shot       # builds the helper that screenshots a page
 ```
 
@@ -123,7 +123,7 @@ Held by `checkSingleTurns`, on the turn pages.
 > hand to hand should have 3 positions allowed by rotation
 
 Replaced. Rule 16 gives a single hold no end, and rules 28 and 31 make the chain of two hands seven
-positions long.
+frame states long.
 
 ### Rule 13
 
@@ -331,8 +331,8 @@ simulation reports a hand across the front of its own body as a wrap.
 > generated two hand combinations for up to 1 modifier per lead/follow (maximum 2 total across all 4
 > hands); permutations with 2 modifiers for a single person are excluded, until deemed necessary
 
-Nothing checks it. The drawing holds one level and one way for each connection, and not for each
-arm.
+Nothing checks it. The drawing holds one level and one modifier for each connection, and not
+for each arm.
 
 ### Rule 40
 

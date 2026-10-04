@@ -1,13 +1,13 @@
 ## Ask body simulation about every card reference draws, and write down which it agrees with.
 ##
-##   Reference page carries two tags on each cell.  `kept` is Architect's, given by eye
+##   Reference page carries two badges on each cell.  `kept` is Architect's, given by eye
 ##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
 ##     both at hundred per cent, and gap between them is work left.
 ##   Written here rather than on page because asking simulation costs minutes and page is
 ##     markup.  Same arrangement `design/turns` uses, and same reason.
-##   Tag must not touch pins.  `review_page.drawingOf` cuts cards back out of built page
-##     by collecting their `svg` elements alone, so badge outside drawing changes no pin
-##     and no kept card is re-drawn by adding this.
+##   Badge must not touch fixtures.  `review_page.drawingOf` cuts cards back out of built
+##     page by collecting their `svg` elements alone, so badge outside drawing changes no
+##     fixture, and no kept card is re-drawn by adding this.
 ##   Answers are keyed by question, never by card's own name: page already folds
 ##     duplicate pictures together and hands out identifiers, and second place doing
 ##     that would be second place to get it wrong.
@@ -15,7 +15,7 @@
 ##     turn of dancer at centre, other way about.  Architect's reading, and it is what
 ##     `simulation/rigid` is asked (`asks.turnerOf`).  Connection goes round dancer who
 ##     turns, so hands go over their crown, orbit or not.
-##   Card simulation has not been asked about is absent, and gets no tag: unasked reads as
+##   Card simulation has not been asked about is absent, and gets no badge: unasked reads as
 ##     unasked rather than as disagreement.
 ##   Answers are kept with stamp of physics, questions and this verb (`design/stamps`), and
 ##     verb whose stamp is unchanged asks nothing again.  Its questions share one queue with

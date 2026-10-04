@@ -6,16 +6,16 @@
 ##   Eric Lengyel) was read to cross-check forms and counts, and nothing is copied from
 ##   it. Scalar is `float`, as library's, so both sides compute in same precision.
 ##
-##   |---------|-------------------------------------------------|----------------------|
-##   | Code    | Notation                                        | Library basis        |
-##   |---------|-------------------------------------------------|----------------------|
-##   | Point   | 𝐩 = pˣe₁ + pʸe₂ + pᶻe₃ + pʷe₄                    | E1 E2 E3 E4          |
-##   | Line    | 𝐥 = lᵛ(e₄₁ e₄₂ e₄₃) + lᵐ(e₂₃ e₃₁ e₁₂)            | E41 E42 E43 E23 E31 E12 |
-##   | Plane   | 𝐠 = gˣe₄₂₃ + gʸe₄₃₁ + gᶻe₄₁₂ + gʷe₃₂₁            | E423 E431 E412 E321  |
-##   | Motor   | 𝐐 = Qᵛ + Qᵛʷ𝟙 + Qᵐ + Qᵐʷ𝟏                       | E41..E12, E1234, S   |
-##   | Scalar  | s𝟏                                              | S                    |
-##   | Antisc. | t𝟙                                              | E1234                |
-##   |---------|-------------------------------------------------|----------------------|
+##   |---------|-------------------------------------------------|-------------------------|
+##   | Code    | Notation                                        | Library basis           |
+##   |---------|-------------------------------------------------|-------------------------|
+##   | Point   | 𝐩 = pˣe₁ + pʸe₂ + pᶻe₃ + pʷe₄                   | E1 E2 E3 E4             |
+##   | Line    | 𝐥 = lᵛ(e₄₁ e₄₂ e₄₃) + lᵐ(e₂₃ e₃₁ e₁₂)           | E41 E42 E43 E23 E31 E12 |
+##   | Plane   | 𝐠 = gˣe₄₂₃ + gʸe₄₃₁ + gᶻe₄₁₂ + gʷe₃₂₁           | E423 E431 E412 E321     |
+##   | Motor   | 𝐐 = Qᵛ + Qᵛʷ𝟙 + Qᵐ + Qᵐʷ𝟏                       | E41..E12, E1234, S      |
+##   | Scalar  | s𝟏                                              | S                       |
+##   | Antisc. | t𝟙                                              | E1234                   |
+##   |---------|-------------------------------------------------|-------------------------|
 ##
 ##   Each operation's doc states multiply and add counts of its form, i.e. what optimal
 ##     code spends; suite `Internal: Inspector` reads those counts back from emitted C.
@@ -481,14 +481,14 @@ func wedgeDotAnti*(a, b: Motor): Motor {.inline.} =
     vw: a.vw * b.vw - a.v.x * b.v.x - a.v.y * b.v.y - a.v.z * b.v.z,
     m: Vector3(
       x: a.mw * b.v.x + a.m.x * b.vw + a.m.y * b.v.z - a.m.z * b.v.y +
-        b.mw * a.v.x + b.m.x * a.vw - b.m.y * a.v.z + b.m.z * a.v.y,
+          b.mw * a.v.x + b.m.x * a.vw - b.m.y * a.v.z + b.m.z * a.v.y,
       y: a.mw * b.v.y - a.m.x * b.v.z + a.m.y * b.vw + a.m.z * b.v.x +
-        b.mw * a.v.y + b.m.x * a.v.z + b.m.y * a.vw - b.m.z * a.v.x,
+          b.mw * a.v.y + b.m.x * a.v.z + b.m.y * a.vw - b.m.z * a.v.x,
       z: a.mw * b.v.z + a.m.x * b.v.y - a.m.y * b.v.x + a.m.z * b.vw +
-        b.mw * a.v.z - b.m.x * a.v.y + b.m.y * a.v.x + b.m.z * a.vw,
+          b.mw * a.v.z - b.m.x * a.v.y + b.m.y * a.v.x + b.m.z * a.vw,
     ),
     mw: a.mw * b.vw - a.m.x * b.v.x - a.m.y * b.v.y - a.m.z * b.v.z +
-      b.mw * a.vw - b.m.x * a.v.x - b.m.y * a.v.y - b.m.z * a.v.z,
+        b.mw * a.vw - b.m.x * a.v.x - b.m.y * a.v.y - b.m.z * a.v.z,
   )
 
 func reverseAnti*(q: Motor): Motor {.inline.} =

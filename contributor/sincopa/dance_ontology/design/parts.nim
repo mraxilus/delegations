@@ -23,7 +23,7 @@ export Facing, name
 type
   Parts* = OrderedTable[string, string]  ## Every placed figure, in order it was built.
 
-  Family* {.pure.} = enum  ## Which round of positions one manner of turn walks.
+  Round* {.pure.} = enum  ## Which round of positions one manner of turn walks.
     FollowFacing,  ## Follow comes round where they stand.
     PairSwung  ## Axis swings and follow's facing with it.
   Manner* {.pure.} = enum  ## Four manners of turn couple can take.
@@ -82,22 +82,22 @@ const ORIENTATIONS*: array[Facing, tuple[name: string, lead_turn, follow_turn: f
 const HOLD*: Holds = [some Arm.Left, none Arm]  ## Workhorse hold: lead's Left to follow's left.
 
 const SETTLINGS* = [
-  (level: none Level, way: none Way, follow_turn: 0.0,
-   caption: "no way said<br>— it stays at its side"),
-  (level: some Level.Low, way: some Way.Lock, follow_turn: 0.0,
+  (level: none Level, modifier: none Modifier, follow_turn: 0.0,
+   caption: "no modifier said<br>— it stays at its side"),
+  (level: some Level.Low, modifier: some Modifier.Lock, follow_turn: 0.0,
    caption: "<em>low</em> lock<br>Face-to-face"),
-  (level: some Level.High, way: some Way.Lock, follow_turn: 0.0,
+  (level: some Level.High, modifier: some Modifier.Lock, follow_turn: 0.0,
    caption: "<em>high</em> lock<br>Face-to-face"),
-  (level: some Level.Low, way: some Way.Wrap, follow_turn: 180.0,
+  (level: some Level.Low, modifier: some Modifier.Wrap, follow_turn: 180.0,
    caption: "<em>low</em> wrap<br>" & Facing.FaceToBack.name),
-  (level: some Level.High, way: some Way.Wrap, follow_turn: 180.0,
+  (level: some Level.High, modifier: some Modifier.Wrap, follow_turn: 180.0,
    caption: "<em>high</em> wrap<br>" & Facing.FaceToBack.name),
 ]  ## Each settling drawn in orientation that admits it, because most do
   ## not: lock or wrap only exists where line really goes round.
 
 const GRID_STATES* = [
-  (level: Level.High, way: Way.Wrap), (level: Level.Low, way: Way.Wrap),
-  (level: Level.Low, way: Way.Lock), (level: Level.High, way: Way.Lock),
+  (level: Level.High, modifier: Modifier.Wrap), (level: Level.Low, modifier: Modifier.Wrap),
+  (level: Level.Low, modifier: Modifier.Lock), (level: Level.High, modifier: Modifier.Lock),
 ]  ## Grid rule 7 implies: which states exist in which orientation.
 
 const GRID_TURNS* = [0.0, 90.0, 180.0, 270.0]
@@ -112,9 +112,9 @@ func said*(level: Option[Level], arm = Arm.Left): Levels =
   ## Say one arm's level, or nothing at all where nothing was said.
   result[arm] = level
 
-func said*(way: Option[Way], arm = Arm.Left): Ways =
-  ## Say one arm's way, or nothing at all where nothing was said.
-  result[arm] = way
+func said*(modifier: Option[Modifier], arm = Arm.Left): Modifiers =
+  ## Say one arm's modifier, or nothing at all where nothing was said.
+  result[arm] = modifier
 
 
 func replaceFirst*(text, pattern, by: string): string =
@@ -130,7 +130,7 @@ func slotChart*(arm = Arm.Left): string =
   ##     to be wrong -- and drawn on body turned off vertical, because
   ##     spots are measured off dancer's facing rather than off
   ##     page, and body facing up hides difference (rule 3).
-  # Its own box rather than square every other figure uses: labels
+  # Its own bounds rather than square every other figure uses: labels
   # are wide and body is small, so square would draw it tiny.
   var
     bits = @["""<svg viewBox="-80 -46 160 92" width="248" height="143">"""]
@@ -141,7 +141,7 @@ func slotChart*(arm = Arm.Left): string =
   bits.add chevron((0.0, 0.0), CHART_FACING)
   var lands: seq[tuple[arm: Arm, slot: Slot]]
   for settling in SETTLINGS:
-    let landed = slotOf(arm, settling.level, settling.way)
+    let landed = slotOf(arm, settling.level, settling.modifier)
     if landed notin lands:
       lands.add landed
   for place in Arm:
@@ -243,11 +243,11 @@ func frameParts*(): Parts =
       "f",
       HOLD,
       said(settling.level),
-      ways = said(settling.way),
+      modifiers = said(settling.modifier),
       follow_turn = settling.follow_turn,
       has_captions = false,
     )
-    let landed = slotOf(Arm.Left, settling.level, settling.way)
+    let landed = slotOf(Arm.Left, settling.level, settling.modifier)
     if landed notin reached:
       reached.add landed
   # Left hand reaches four of six; other two belong to Right.
@@ -259,15 +259,15 @@ func frameParts*(): Parts =
     "High and low wrap collide; got one drawing for both."
 
   # Routing each hold decides, on one orientation that admits all three.
-  for (name, level, way) in [("route_wrap", Level.Low, Way.Wrap),
-                             ("route_low", Level.Low, Way.Lock),
-                             ("route_high", Level.High, Way.Lock)]:
-    let turn = if way == Way.Wrap: 180.0 else: 0.0
+  for (name, level, modifier) in [("route_wrap", Level.Low, Modifier.Wrap),
+                                  ("route_low", Level.Low, Modifier.Lock),
+                                  ("route_high", Level.High, Modifier.Lock)]:
+    let turn = if modifier == Modifier.Wrap: 180.0 else: 0.0
     result[name] = renderFigure(
       "f",
       HOLD,
       said(some level),
-      ways = said(some way),
+      modifiers = said(some modifier),
       follow_turn = turn,
       has_captions = false,
     )
@@ -283,14 +283,14 @@ func frameParts*(): Parts =
   for state in GRID_STATES:
     for turn in GRID_TURNS:
       let
-        key = &"grid_{word(state.level)}_{word(state.way)}_{int(turn)}"
+        key = &"grid_{word(state.level)}_{word(state.modifier)}_{int(turn)}"
         pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
-      if isDanceable(pose, HOLD, said(some state.level), said(some state.way)):
+      if isDanceable(pose, HOLD, said(some state.level), said(some state.modifier)):
         result[key] = renderFigure(
           "tiny",
           HOLD,
           said(some state.level),
-          ways = said(some state.way),
+          modifiers = said(some state.modifier),
           follow_turn = turn,
           has_captions = false,
         )
@@ -306,7 +306,7 @@ func frameParts*(): Parts =
     "f",
     HOLD,
     said(some Level.Above),
-    ways = said(some Way.Wrap),
+    modifiers = said(some Modifier.Wrap),
     has_captions = false,
   )
   doAssert result["above_plain"] == result["above_asked"],
@@ -314,7 +314,7 @@ func frameParts*(): Parts =
 
   # Orbit in two stages: follow travels, then world comes home.
   # Drawn twice -- orbit itself, where walker keeps their side to
-  # centre (rule 32), and compound, which is that orbit with
+  # centre (rule 32), and compound turn, which is that orbit with
   # counter-turn danced into it so walker keeps their own bearing.
   for (tag, is_locked) in [("orbit", true), ("compound", false)]:
     var stage_one = [0.0, 0.5, 1.0].mapIt(
@@ -337,7 +337,7 @@ func frameParts*(): Parts =
         half = some half,
       )
 
-  # What collapses, and what does not.  Compound -- orbit walked
+  # What collapses, and what does not.  Compound turn -- orbit walked
   # while turning other way, so walker keeps their own bearing --
   # lands in one picture whichever dancer walks it: only pair's axis has
   # swung, and drawing cannot say who walked.
@@ -348,10 +348,10 @@ func frameParts*(): Parts =
   result["collapse_follow_walked"] = renderFigure("f", HOLD, pose = some walked_by[Dancer.Follow])
   result["collapse_lead_walked"] = renderFigure("f", HOLD, pose = some walked_by[Dancer.Lead])
   doAssert result["collapse_follow_walked"] == result["collapse_lead_walked"],
-    "Two compounds draw two pictures; the drawing can say who walked."
+    "Two compound turns draw two pictures; the drawing can say who walked."
 
   # And orbit -- walker keeping their side to centre (rule 32) --
-  # lands where their partner's own axis turn lands.  Compound does not,
+  # lands where their partner's own axis turn lands.  Compound turn does not,
   # which is what pair of figures is here to show.
   var orbited = canonicalise(orbit(rest(), Dancer.Follow, 90, is_locked = true))
   orbited.ring = none(Ring)
@@ -363,7 +363,7 @@ func frameParts*(): Parts =
   doAssert result["collapse_orbit"] == result["collapse_axis"],
     "The collapse differs: orbit and axis draw two pictures."
   doAssert result["collapse_follow_walked"] != result["collapse_axis"],
-    "The compound lands on the axis turn, so the two are not two moves."
+    "The compound turn lands on the axis turn, so the two are not two moves."
 
   # And same four moves, running.
   const move_pixels = 1.3  ## Pixels one unit takes in frame page's moving cells.
@@ -399,7 +399,7 @@ const
 
 
 func sized(svg, classes: string; half, pixels: float): string =
-  ## Give cell room its row's box needs at its row's own scale.
+  ## Give cell room its row's bounds need at its row's own scale.
   ##   Shared by both turn pages -- it was defined twice, byte for byte,
   ##     inside each builder before pages were read side by side.
   svg.replaceFirst(&"class=\"{classes}\"",
@@ -460,13 +460,13 @@ const MANNERS*: array[Manner, tuple[
      "are drawn in motion.",
    who: Dancer.Lead, about: About.Orbit),
 ]  ## What each manner of turn is called on pages, who dances it, and
-  ## about what.  Which round it walks is not restated here: `FAMILY_OF`
+  ## about what.  Which round it walks is not restated here: `LUT_ROUND_BY_MANNER`
   ## carries that, measured -- second copy had crept into these rows and
   ## been one nothing read.
 
-const FAMILY_OF*: array[Manner, Family] = [
-  Family.FollowFacing, Family.PairSwung, Family.PairSwung,
-  Family.FollowFacing,
+const LUT_ROUND_BY_MANNER*: array[Manner, Round] = [
+  Round.FollowFacing, Round.PairSwung, Round.PairSwung,
+  Round.FollowFacing,
 ]  ## Which round each manner walks, measured and asserted below.
   ##   Orbit that faces centre turns walker as far as it carries
   ##     them (rule 32), so it comes to same thing as their partner's
@@ -509,7 +509,7 @@ func placeOf*(pose: Pose): tuple[axis, facing: float] =
 
 func turnGlyph*(label: string, width = 44.0): string =
   ## Draw one edge of cycle: two-headed arrow, since turn reverses.
-  ##   Arrow keeps its length whatever box; `width` is room for
+  ##   Arrow keeps its length whatever bounds; `width` is room for
   ##     label above it, which longer name needs more of.
   let
     middle = width / 2
@@ -537,13 +537,13 @@ func singleTurnParts*(): Parts =
   ##   Rule 15: every position drawn, every edge animated.
   ##   Rule 25: framed on lead, who therefore falls on same spot in
   ##     every cell -- which only reads if cells beside each other hold
-  ##     same box.
-  ##     Row of positions takes one box for whole page, since every
+  ##     same bounds.
+  ##     Row of positions takes one set of bounds for whole page, since every
   ##       position stands same distance apart.  Row of transitions
-  ##       takes one box per manner of turn, because lead who walks
+  ##       takes one set of bounds per manner of turn, because lead who walks
   ##       ring needs room lead who stands still does not, and spending
   ##       that room on every cell of every row would shrink all of them.
-  ##     Each cell is then given what its box needs at scale its own row
+  ##     Each cell is then given what its bounds need at scale its own row
   ##       draws at, so marks stay size they were and it is
   ##       cells that grow.
   var
@@ -566,7 +566,7 @@ func singleTurnParts*(): Parts =
 
   # Whole round, walked in one figure.  Four quarters close it (rule 16), so
   # it needs no return leg: it ends where it set off.
-  #   Its poses are ones four edges already pass through, so it asks box for
+  #   Its poses are ones four edges already pass through, so it asks bounds for
   #     nothing new -- which is measured here rather than assumed.
   var rounds: array[Manner, Walk]
   for manner in Manner:
@@ -683,8 +683,8 @@ func singleTurnParts*(): Parts =
           &"Two quarters draw alike; got `{quarter}` of `{manner}` on `{single_index}`."
         seen.add figure
 
-  # Manners of one family walk one round of positions, and manners of different
-  # families never meet except where every round meets, at rest.
+  # Manners of one round walk it together, and manners of different rounds never
+  # meet except where every round meets, at rest.
   for manner in Manner:
     for mate in Manner:
       var shared = 0
@@ -693,9 +693,9 @@ func singleTurnParts*(): Parts =
           if placeOf(quarterPose(manner, quarter)) ==
               placeOf(quarterPose(mate, other_quarter)):
             inc shared
-      let is_same_round = FAMILY_OF[manner] == FAMILY_OF[mate]
+      let is_same_round = LUT_ROUND_BY_MANNER[manner] == LUT_ROUND_BY_MANNER[mate]
       doAssert shared == (if is_same_round: QUARTERS_ROUND else: 1),
-        &"A manner left its family; got `{shared}` shared of `{manner}` and `{mate}`."
+        &"A manner left its round; got `{shared}` shared of `{manner}` and `{mate}`."
 
   # And nothing on this page wraps body: reach is connection's own
   # stroke width, and one drawn with arc has walked round body.
@@ -760,7 +760,7 @@ func phaseOf*(holds: Holds): float =
   ##     crossed pair Face-to-back, and those are
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
-    let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
+    let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Modifiers))
     if abs(windOf(put, holds, Arm.Left).spread) < 1e-6:
       return phase
   raise newException(Defect, &"A hold runs parallel at neither phase; got `{holds}`.")
@@ -838,7 +838,7 @@ func handPose*(wind = 0.0): Pose =
 func pairAt*(holds: Holds; wind, phase: float): array[Arm, seq[Point]] =
   ## Two reaches position draws, made as drawing makes them.
   let
-    put = settled(posedAt(wind, phase), holds, ABOVE_BOTH, default(Ways))
+    put = settled(posedAt(wind, phase), holds, ABOVE_BOTH, default(Modifiers))
     hands = handsOf(put)
   for arm in Arm:
     result[arm] = wound(
@@ -869,7 +869,7 @@ func windSense*(manner: Manner): float =
   for put in turnWalk(handPose(), description.who, description.about, HALF / 2,
                       on = Anchor.Lead).poses:
     let spread = windOf(
-      settled(put, HAND_TO_HAND, ABOVE_BOTH, default(Ways)),
+      settled(put, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers)),
       HAND_TO_HAND,
       Arm.Left,
     ).spread

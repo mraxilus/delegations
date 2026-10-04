@@ -28,13 +28,13 @@ const TITLE* = "The Turn Sign, So Far"  ## What page calls itself, in its tab an
 
 const BODY = """
 
-<div class="sheet">
+<div class="page">
 
 <header class="top">
   <p class="kicker">Dance ontology · rotation · the turn sign</p>
   <h1>The turn sign, so far</h1>
-  <p class="standfirst">A leaning box holds exactly one full turn. Its rows are <b>quarter
-  turns</b>, packed up from the foot, so an amount shows as how full the box is.
+  <p class="standfirst">A leaning turn gauge holds exactly one full turn. Its rows are
+  <b>quarter turns</b>, packed up from the foot, so an amount shows as how full the gauge is.
   Its columns are the two arms of the lead. The shape of a pip says whose quarter it is, and its
   fill says the level of that arm.</p>
    <p class="standfirst">Two things stay open. One is the mark for <em>any amount</em>.
@@ -67,7 +67,7 @@ const BODY = """
 <section>
   <div class="head"><span class="n">One</span><h2>Quarters, and the sign becomes
   a gauge</h2></div>
-  <p>The box holds one full turn in four rows. The rows pack up from the foot, so the amount
+  <p>The turn gauge holds one full turn in four rows. The rows pack up from the foot, so the amount
   reads as how full the sign is. The count of pips confirms that reading, and it does not carry
   the reading alone. A Laban staff fills upward for the same reason.</p>
 
@@ -163,9 +163,9 @@ const BODY = """
   is drawn full size, small, and once for the follow, beside a plain full turn.</p>
 
   <div class="plate pick">
-    <h3>One, the box never closes<span class="tag">recommended</span></h3>
+    <h3>One, the gauge never closes<span class="tag">recommended</span></h3>
     <p>The lid is not drawn, and the two long edges run on past it. It adds nothing, it removes
-    one stroke, and it fits the gauge. A box that never closes can never be full, so
+    one stroke, and it fits the gauge. A gauge that never closes can never be full, so
     nothing reads it as a count. It is the one candidate that costs nothing at small size. A
     missing line says it, and no new mark goes inside an already busy one.</p>
     <div class="row">
@@ -178,7 +178,7 @@ const BODY = """
 
   <div class="plate">
     <h3>Two, open with the next one showing</h3>
-    <p>The same open box, with a fifth pip up in the run-on. It says that the count keeps going
+    <p>The same open gauge, with a fifth pip up in the run-on. It says that the count keeps going
     rather than that the drawing stops. It costs a taller mark and one more thing inside it.</p>
     <div class="row">
       <figure>{any_spill}<figcaption><b>any</b>, spilling</figcaption></figure>
@@ -189,7 +189,7 @@ const BODY = """
 
   <div class="plate">
     <h3>Three, an ellipsis in the top row</h3>
-    <p>The box stays closed, and the fourth row holds three dots for each column rather than a
+    <p>The gauge stays closed, and the fourth row holds three dots for each column rather than a
     pip. It reads as three quarters, and so on. It is plain at full size. At small size the three
     dots merge into one blob, which then reads as a fourth pip.</p>
     <div class="row">

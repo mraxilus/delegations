@@ -79,4 +79,4 @@ func movement*(function: FunctionC, counts: Counts, size_multivector: int): Move
     bytes_intermediates: counts.intermediates * size_multivector,
   )
   result.bytes_moved = result.bytes_read + result.bytes_written + result.bytes_zeroed +
-    result.bytes_copied + result.bytes_intermediates
+      result.bytes_copied + result.bytes_intermediates

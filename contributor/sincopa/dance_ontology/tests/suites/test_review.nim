@@ -129,7 +129,7 @@ suite "Internal: The review page":
       for target in FRAMES:
         if compound(source, target).isSome:
           inc cells
-    # Matrix carries one cell per move and one per compound.
+    # Matrix carries one cell per move and one per compound move.
     check page.count("<td class=\"on") == cells
 
 

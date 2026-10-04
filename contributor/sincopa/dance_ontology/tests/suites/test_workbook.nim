@@ -2,7 +2,7 @@
 ##
 ## Workbook is independent reference: it was written by hand, before
 ## model existed.  Every filled cell of `base` sheet that holds between two
-## hand-to-hand frames must agree with primitive model derives for
+## hand-to-hand frames must agree with move model derives for
 ## same pair, and cells that wait for place on body are pinned here so
 ## that size of what is deferred stays visible.
 
@@ -72,7 +72,7 @@ suite "the base sheet":
 
 suite "the audit of the base sheet":
   test "every checkable cell is exactly the move the model derives":
-    var primitives, compounds = 0
+    var moves_named, compounds = 0
     for cell in CELLS:
       if cell.source.isDeferred or cell.destination.isDeferred:
         continue
@@ -85,12 +85,12 @@ suite "the audit of the base sheet":
         check compound(source, destination) == named
         check route(source, destination).len == 2
         continue
-      inc primitives
+      inc moves_named
       check classify(source, destination) == readHelper(cell.text)
       check readHelper(cell.text).isSome
-    check primitives == 12  # base: six "collect" and six "drop" cells
+    check moves_named == 12  # base: six "collect" and six "drop" cells
     check compounds == 6  # base: four "pass" cells and two "cut" cells
-    check primitives + compounds == 18
+    check moves_named + compounds == 18
 
 
   test "the checkable cells are every move between the states they name":

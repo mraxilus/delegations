@@ -107,7 +107,7 @@ proc readLibrary*(directory: string): Table[string, string] =
     raise newException(
       IOError,
       "Library checkout holds no Nim file; restore it with `nim r koch fetch-deps`; got `" &
-        directory & "`.",
+          directory & "`.",
     )
 
 
@@ -209,8 +209,8 @@ proc staticOf(chain: Toolchain; library, directory: string; algebra: Algebra): (
   if code != 0: return (nil, log)
   (log, code) = execCmdEx(
     quoteShell(inspector) & " " & quoteShell(cache) & " " &
-      quoteShell(output) & " " & quoteShell(chain.nim) & " " & quoteShell(chain.pga) & " " &
-      quoteShell(chain.flags),
+        quoteShell(output) & " " & quoteShell(chain.nim) & " " & quoteShell(chain.pga) & " " &
+        quoteShell(chain.flags),
   )
   if code != 0: return (nil, log)
   (parseJson(readFile(output)), "")
@@ -239,7 +239,7 @@ func functionsChanged*(before, after: JsonNode): JsonNode =
     was = before{"functions"}
     now = after{"functions"}
   if was.isNil or now.isNil: return
-  var keys = toSeq(was.keys)
+  var keys = was.keys.toSeq
   for key in now.keys:
     if key notin keys: keys.add key
   keys.sort
@@ -257,7 +257,7 @@ func timesOf*(pristine, candidate: seq[JsonNode]): JsonNode =
   if pristine.len == 0 or candidate.len == 0: return
   for id, _ in pristine[0]{"measurands"}.pairs:
     var ns_before, ns_after, ratios: seq[float]
-    for i in 0..<min(pristine.len, candidate.len):
+    for i in 0 ..< min(pristine.len, candidate.len):
       let
         ns_pristine = pristine[i]{"measurands", id, "library", "ns_median"}
         ns_changed = candidate[i]{"measurands", id, "library", "ns_median"}
@@ -292,7 +292,7 @@ func successOf*(output: string): (float, float) =
     var seconds, peak: float
     for part in line.split("; "):
       if part.endsWith("MiB peakmem"):
-        peak = parseFloat(part[0..<part.len - "MiB peakmem".len])
+        peak = parseFloat(part[0 ..< part.len - "MiB peakmem".len])
       elif part.endsWith("s") and part.len > 1 and part[0].isDigit:
         try: seconds = parseFloat(part[0 ..< ^1])
         except ValueError: discard
@@ -308,7 +308,7 @@ proc timed(chain: Toolchain; pristine, candidate, directory: string): (JsonNode,
     if code == 0: parseJson(readFile(output)) else: nil
 
   var before, after: seq[JsonNode]
-  for run in 1..chain.runs:
+  for run in 1 .. chain.runs:
     let
       run_pristine = runTimed(pristine, directory / "pristine_" & $run & ".json")
       run_changed = runTimed(candidate, directory / "changed_" & $run & ".json")
@@ -421,7 +421,7 @@ proc checkClaims(
           is_holding = false
           detail.add algebra.name & " did not build: " & (if why.len > 0: why[^1] else: "")
           continue
-        for i in 0..<pairs.len:
+        for i in 0 ..< pairs.len:
           if before[i] != after[i]:
             is_holding = false
             detail.add algebra.name & " " & side_changed[i] & " differs"

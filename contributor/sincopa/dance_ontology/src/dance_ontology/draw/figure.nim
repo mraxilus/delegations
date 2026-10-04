@@ -22,8 +22,8 @@ import ./[body, geometry, pose, route, style, terms]
 
 
 const
-  WIDE = 160.0  ## Box picture with captions needs.
-  SIZE = 116.0  ## And box it needs without them.
+  WIDE = 160.0  ## Bounds picture with captions needs.
+  SIZE = 116.0  ## And bounds it needs without them.
 
 type Twists* = array[Arm, float]
   ## How far each connection has wound, in turns: what reach swings
@@ -31,7 +31,7 @@ type Twists* = array[Arm, float]
   ## whole draws diamond, one and one-half draws swan.
   ##   It once carried two more channels -- pigtail at lone reach's
   ##     middle and braid across pair -- which retired rotation page
-  ##     owned.  Rule 16 took pigtail away, having no ceiling left for
+  ##     owned.  Rule 16 took pigtail away, having no block left for
   ##     it to mark, and rule 28's measured winding replaced braid with
   ##     geometry.  Neither has had caller since.
 
@@ -54,7 +54,7 @@ func twoTone*(runs: seq[Run]; midpoint: Point; lead_side, follow_side: Arm):
   @[reachMarkup(near, DEEP[lead_side]), reachMarkup(far, INK[follow_side])]
 
 
-func ghosts*(holds: Holds, levels: Levels, ways: Ways):
+func ghosts*(holds: Holds, levels: Levels, modifiers: Modifiers):
     seq[tuple[who: Dancer, arm: Arm]] =
   ## List every hand that is not where its arm hangs.
   for arm in Arm:
@@ -62,15 +62,15 @@ func ghosts*(holds: Holds, levels: Levels, ways: Ways):
       continue
     let held = [(Dancer.Lead, arm), (Dancer.Follow, holds[arm].get)]
     for (who, own) in held:
-      if slotOf(own, levels[arm], ways[arm]) != (own, Slot.Default):
+      if slotOf(own, levels[arm], modifiers[arm]) != (own, Slot.Default):
         result.add (who, own)
 
 
-func settled*(pose: Pose, holds: Holds, levels: Levels, ways: Ways): Pose =
+func settled*(pose: Pose, holds: Holds, levels: Levels, modifiers: Modifiers): Pose =
   ## Get same pose with every hand put in slot its hold settles it
   ## in.
   ##   There is nothing to solve: settled hand is in one of six places, and
-  ##     which one is decided by its own side and by level and way of
+  ##     which one is decided by its own side and by level and modifier of
   ##     hold it is part of (rules 2 to 6).
   ##   Hand that is free, or held by hold that has not said both, stays
   ##     where arm hangs.  Hands still move smoothly between slots when
@@ -79,9 +79,9 @@ func settled*(pose: Pose, holds: Holds, levels: Levels, ways: Ways): Pose =
   for arm in Arm:
     if holds[arm].isNone:
       continue
-    wind[Dancer.Lead][arm] = settledWind(arm, levels[arm], ways[arm])
+    wind[Dancer.Lead][arm] = settledWind(arm, levels[arm], modifiers[arm])
     let own = holds[arm].get
-    wind[Dancer.Follow][own] = settledWind(own, levels[arm], ways[arm])
+    wind[Dancer.Follow][own] = settledWind(own, levels[arm], modifiers[arm])
   result = pose
   result.wind = wind
 
@@ -92,7 +92,9 @@ func bodiesOf(pose: Pose): tuple[lead, follow: route.Body] =
    (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
 
 
-func isDanceable*(pose: Pose, holds: Holds, levels = default(Levels), ways = default(Ways)): bool =
+func isDanceable*(
+  pose: Pose, holds: Holds, levels = default(Levels), modifiers = default(Modifiers)
+): bool =
   ## Test whether every lock and wrap in this hold really is one (rule 7).
   ##   Lock or wrap position may only be used when line goes round no
   ##     less than just under half circumference -- it does not mean
@@ -100,18 +102,18 @@ func isDanceable*(pose: Pose, holds: Holds, levels = default(Levels), ways = def
   ##     body.  So whether state exists at all depends on orientation,
   ##     and this is what says so.
   let
-    put = settled(pose, holds, levels, ways)
+    put = settled(pose, holds, levels, modifiers)
     hands = handsOf(put)
     (lead_body, follow_body) = bodiesOf(put)
   for arm in Arm:
     if holds[arm].isNone:
       continue
-    if roundOf(levels[arm], ways[arm]).isNone:
+    if roundOf(levels[arm], modifiers[arm]).isNone:
       continue  # nothing claimed, nothing to hold up
     let ends: route.Ends = (hands[Dancer.Lead][arm],
                             hands[Dancer.Follow][holds[arm].get],
                             lead_body, follow_body)
-    if not isWrappingEnough(ends, levels[arm], ways[arm]):
+    if not isWrappingEnough(ends, levels[arm], modifiers[arm]):
       return false
   true
 
@@ -205,7 +207,7 @@ func partsOf*(
   over = none(Arm),
   free = Free.Fade,
   has_captions = true,
-  ways = default(Ways),
+  modifiers = default(Modifiers),
   twist: Twists = NO_TWIST,
   should_clear_marks = false,
 ): seq[string] =
@@ -218,12 +220,12 @@ func partsOf*(
   # Lock or wrap that does not go round body is not one, and state
   # that cannot be danced is edge that is not drawn -- so this refuses
   # rather than drawing something rules say does not exist.
-  doAssert isDanceable(pose, holds, levels, ways),
-    &"Undanceable state asked for; got `{holds}` at `{levels}`, `{ways}`."
+  doAssert isDanceable(pose, holds, levels, modifiers),
+    &"Undanceable state asked for; got `{holds}` at `{levels}`, `{modifiers}`."
   # Every drawing path comes through here, so this is where hands are
   # put: pose handed in ready-made is settled exactly like one built below.
   let
-    put = settled(pose, holds, levels, ways)
+    put = settled(pose, holds, levels, modifiers)
     hands = handsOf(put)
     (lead_body, follow_body) = bodiesOf(put)
 
@@ -235,7 +237,7 @@ func partsOf*(
   # `back` carries locks, so hand no longer says by where it sits how far
   # it has been taken -- ghost of place it left says it instead, and
   # hand still at home has no ghost to confuse it with.
-  for (who, arm) in ghosts(holds, levels, ways):
+  for (who, arm) in ghosts(holds, levels, modifiers):
     let home = handPoint(put.place[who], put.facing[who], arm)
     bits.add hand(home.x, home.y, who == Dancer.Lead, arm, is_held = false, free = Free.Grey)
   # Wound pair crosses: once by half turn, twice by whole one, with
@@ -275,7 +277,7 @@ func partsOf*(
           straightReach(ends.a, ends.b)
     else:
       # What hold says, if it says anything; short way if not.
-      routes[arm] = routed(ends, wayFor(ends, levels[arm], ways[arm])).get.points
+      routes[arm] = routed(ends, wayFor(ends, levels[arm], modifiers[arm])).get.points
   # Wound pair meets more than once, and rope alternates: each strand
   # dives under at every second crossing.  So crossings are found once,
   # in order along line, and shared out between two arms.
@@ -362,7 +364,7 @@ func renderFigure*(
   has_captions = true,
   pose = none(Pose),
   half = none(float),
-  ways = default(Ways),
+  modifiers = default(Modifiers),
   twist: Twists = NO_TWIST,
   should_clear_marks = false,
 ): string =
@@ -372,7 +374,7 @@ func renderFigure*(
             else: canonicalise(
               spinAbout(spinAbout(rest(), Dancer.Lead, lead_turn), Dancer.Follow, follow_turn),
             )
-    box = if half.isSome: half.get
+    bounds = if half.isSome: half.get
           else: (if has_captions: WIDE else: SIZE) / 2
     bits = partsOf(
       drawn,
@@ -381,11 +383,11 @@ func renderFigure*(
       over = over,
       free = free,
       has_captions = has_captions,
-      ways = ways,
+      modifiers = modifiers,
       twist = twist,
       should_clear_marks = should_clear_marks,
     )
-  &"""<svg class="{classes}" {view(box)}>""" & "\n        " &
+  &"""<svg class="{classes}" {view(bounds)}>""" & "\n        " &
     bits.join("\n        ") & "\n      </svg>"
 
 
@@ -560,7 +562,7 @@ func animatedPoses*(
   walk: seq[Pose],
   half = none(float),
   levels = default(Levels),
-  ways = default(Ways),
+  modifiers = default(Modifiers),
   duration = 9.6,
   times: seq[float] = @[],
   wound = 0.0,
@@ -577,8 +579,8 @@ func animatedPoses*(
   ##     so whole turns already in hold are one thing walk has
   ##     to be told (rule 28).
   let
-    poses = walk.mapIt(settled(it, holds, levels, ways))
-    box = if half.isSome: half.get
+    poses = walk.mapIt(settled(it, holds, levels, modifiers))
+    bounds = if half.isSome: half.get
           else: poses.mapIt(extent(it, has_captions = false)).max
     hands = poses.mapIt(handsOf(it))
 
@@ -679,7 +681,7 @@ func animatedPoses*(
       # slot is fixed relative to its facing, so direction is too.
       # Where it says nothing, one way is picked for whole move instead.
       let
-        said = wayFor(frames[0], levels[arm], ways[arm])
+        said = wayFor(frames[0], levels[arm], modifiers[arm])
         way = if said.isSome: said.get else: oneWayRound(frames)
       routes[arm] = frames.mapIt(routed(it, some(way)).get.points)
 
@@ -778,7 +780,7 @@ func animatedPoses*(
       hand(0, 0, is_leading = false, arm = own, is_held = is_held,
            level = (if is_held: levels[by[0]] else: none(Level))),
       hands.mapIt(it[Dancer.Follow][own]))
-  &"""<svg class="{classes}" {view(box)}>""" & "\n        " &
+  &"""<svg class="{classes}" {view(bounds)}>""" & "\n        " &
     bits.join("\n        ") & "\n      </svg>"
 
 
@@ -788,10 +790,10 @@ func animated*(
   move: MoveApply,
   half = none(float),
   levels = default(Levels),
-  ways = default(Ways),
+  modifiers = default(Modifiers),
   duration = 9.6,
   samples = 14,
 ): string =
   ## Draw same picture, moving: stage one travels, stage two comes home.
   let walk = cycle(move, samples)
-  animatedPoses(classes, holds, walk.poses, half, levels, ways, duration, times = walk.times)
+  animatedPoses(classes, holds, walk.poses, half, levels, modifiers, duration, times = walk.times)

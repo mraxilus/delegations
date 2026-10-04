@@ -29,7 +29,7 @@ const TITLE* = "The Frame, So Far"  ## What page calls itself, in its tab and at
 
 const BODY = """
 
-<div class="sheet">
+<div class="page">
 
 <header class="top">
   <p class="kicker">Dance ontology · rotation · the frame</p>
@@ -142,7 +142,7 @@ const BODY = """
         <br>the four a Left hand uses, in its ink</figcaption></figure>
       <figure><table class="slots">
         <tr><th></th><th>Left hand</th><th>Right hand</th><th>the line goes</th></tr>
-        <tr><td>no level, or no way said</td><td>left · side</td><td>right · side</td>
+        <tr><td>no level, or no modifier said</td><td>left · side</td><td>right · side</td>
         <td>the short way</td></tr>
         <tr><td><em>high</em> wrap</td><td>right · front</td><td>left · front</td>
         <td>round the front</td></tr>
@@ -259,7 +259,7 @@ const BODY = """
     against the lead. They are how far round the lead the follow stands, and which way the follow
     faces.
     Every rotation moves those two numbers, and two different moves land on one picture.</p>
-    <p><b>The compound by either dancer lands in the same place.</b> The follow walks a quarter
+    <p><b>The compound turn by either dancer lands in the same place.</b> The follow walks a quarter
     round the lead on their own bearing, and the lead walks a quarter round the follow on theirs.
     Both arrive at one picture: the axis of the pair has swung, and both bearings stand where
     they started. So <b>the drawing cannot say who walked</b>, and only the path says that.</p>
@@ -279,11 +279,11 @@ const BODY = """
         <br>a quarter on the spot</figcaption></figure>
     </div>
     <p>The build checks this rather than claims it. It asserts that each pair is one drawing,
-    mark for mark, and refuses to build where it is not. It asserts that the compound does not
-    land on the axis turn, so the two are two moves.</p>
+    mark for mark, and refuses to build where it is not. It asserts that the compound turn does
+    not land on the axis turn, so the two are two moves.</p>
     <p><b>So an axis turn against an orbit is a property of the move, and not of the state.</b> A
-    position cannot tell an orbit from the axis turn of the other dancer, because they land in one
-    place. It cannot say who walked either. The node never needs to know, and only the edge
+    frame state cannot tell an orbit from the axis turn of the other dancer, because they land in
+    one place. It cannot say who walked either. The node never needs to know, and only the edge
     does. That is why the two stages are worth an animation: the difference is a path and not a
     state.</p>
   </div>
@@ -349,10 +349,10 @@ const BODY = """
       turn of the follow less the turn of the lead. So it is the same for Face-to-face and
       Back-to-back. This picture stands on where each dancer sees the other, and
       <code>rotation.nim</code> reads a facing the same way.</p>
-    <p><b>Known and not mended.</b> A static frame keeps a square box of 120 by 120. A moving
-    frame takes a box fitted to everything it touches, so the moving frames differ in size and
+    <p><b>Known and not mended.</b> A static frame keeps square bounds of 120 by 120. A moving
+    frame takes bounds fitted to everything it touches, so the moving frames differ in size and
     stand at one scale instead. <code>frameHeight</code>, the cells of the matrix and the nodes of
-    the map still assume the old box of 100 by 116.</p>
+    the map still assume the old bounds of 100 by 116.</p>
   </div>
 </section>
 
@@ -389,13 +389,13 @@ func render*(parts: Parts): string =
     turned.add turnedFacing(0.0, turn).get.name
   var grid = """<table class="grid"><tr><th></th>"""
   for state in GRID_STATES:
-    grid.add &"<th><em>{word(state.level)}</em> {word(state.way)}</th>"
+    grid.add &"<th><em>{word(state.level)}</em> {word(state.modifier)}</th>"
   grid.add "</tr>"
   for i, turn in GRID_TURNS:
     # Facing's name capitalises lead's side alone, so header keeps its case.
     grid.add &"<tr><th style=\"text-transform: none\">{turned[i]}</th>"
     for state in GRID_STATES:
-      let cell = parts[&"grid_{word(state.level)}_{word(state.way)}_{int(turn)}"]
+      let cell = parts[&"grid_{word(state.level)}_{word(state.modifier)}_{int(turn)}"]
       grid.add "<td>" & (if cell.len > 0: cell else: "&mdash;") & "</td>"
     grid.add "</tr>"
   grid.add "</table>"

@@ -214,7 +214,7 @@ func bottom*(rig: Rig, part: Part): float =
   of Part.Neck: rig.top[Part.Torso]
   of Part.Head: rig.top[Part.Neck]
 
-func reach*(rig: Rig): float = rig.upper + rig.fore + rig.hand
+func span*(rig: Rig): float = rig.upper + rig.fore + rig.hand
   ## Shoulder to grip with everything straight: as far as hand goes.
 
 func touching*(rig: Rig): float = 2.0 * halfDepth(rig, Part.Torso)
@@ -230,16 +230,16 @@ func strainOf*(range: Range, value: float): float =
   ## ease, one at end, more past it.  Stop with no ease costs nothing to lean
   ## on, and counts only once value is past it by more than `SLACK`, in units of
   ## whole range.
-  let span = range.upper - range.lower
+  let width = range.upper - range.lower
   var worst = 0.0
   if range.ease_upper > 0.0:
     worst = max(worst, 1.0 - (range.upper - value) / range.ease_upper)
   elif value > range.upper + SLACK:
-    worst = max(worst, 1.0 + (value - range.upper) / span)
+    worst = max(worst, 1.0 + (value - range.upper) / width)
   if range.ease_lower > 0.0:
     worst = max(worst, 1.0 - (value - range.lower) / range.ease_lower)
   elif value < range.lower - SLACK:
-    worst = max(worst, 1.0 + (range.lower - value) / span)
+    worst = max(worst, 1.0 + (range.lower - value) / width)
   max(0.0, worst)
 
 func margin*(range: Range, value: float): float =
@@ -265,5 +265,5 @@ func margin*(range: Range, value: float): float =
 func eased*(range: Range, value: float): float =
   ## Distance from joint's neutral, as fraction of way to
   ## farther end: smooth cost solver minimises.
-  let span = max(range.upper - range.neutral, range.neutral - range.lower)
-  (value - range.neutral) / span
+  let width = max(range.upper - range.neutral, range.neutral - range.lower)
+  (value - range.neutral) / width

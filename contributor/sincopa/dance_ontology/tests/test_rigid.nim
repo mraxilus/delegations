@@ -472,7 +472,7 @@ suite "Internal: Two dancers in rigid body engine":
     check pairs == TWINS_SWEPT
 
 
-  test "over crown nothing stops single hold turning":
+  test "held above, nothing stops single hold turning":
     ## Architect, who dances it: above is level that blocks by twist alone, and
     ## floor's own table says no block either way for either single hold there.
     ## Arms are clear of both bodies and swing is nowhere near its ends, so this
@@ -488,7 +488,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##   is real.
     ##   And no held arm is carried to its swing's end on way there.  Architect,
     ##   watching viewer at 0.68 of cross-name turn: "no-one would let their arm
-    ##   wrap behind their head like this".  Her arm sat at forty five degrees
+    ##   wrap behind their head like this".  Held arm sat at forty five degrees
     ##   behind frontal plane, swing's end, for six arm-moments of that sweep and
     ##   in its ease for fifty five, where going over top costs nothing: engine's
     ##   limits are walls and nothing preferred middle of range.
@@ -573,9 +573,9 @@ suite "Internal: Couple stand for sweep":
 #[ Arm Motion ]#
 
 const
-  LEAP = 2.0 * PI * STEP * (HUMAN.shoulder_out + reach(HUMAN)) + 0.08
+  LEAP = 2.0 * PI * STEP * (HUMAN.shoulder_out + span(HUMAN)) + 0.08
     ## Furthest any point of arm may move between two moments: point carried at
-    ## arm's reach from turning axis goes 113 mm in one fiftieth of turn, and
+    ## arm's span from turning axis goes 113 mm in one fiftieth of turn, and
     ## arm moving on its own at one metre per second while couple turn at
     ## quarter turn per second adds eight centimetres, both at once and along
     ## one line.  Measured before: 245 to 891 mm, hands pinned between torsos

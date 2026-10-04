@@ -60,7 +60,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     inc i
     var note = Note(title: heading.lines[0], line: heading.line)
     let has_file = i < blocks.len and blocks[i].kind == KindBlock.Paragraph and
-      blocks[i].lines[0].startsWith("`")
+        blocks[i].lines[0].startsWith("`")
     if not has_file or i + 1 >= blocks.len or blocks[i + 1].kind != KindBlock.Fence:
       findings.add Finding(
         path: path,
@@ -73,7 +73,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     let
       first = blocks[i].lines.join(" ")
       close = first.find('`', 1)
-    note.path = if close > 1: first[1..<close] else: ""
+    note.path = if close > 1: first[1 ..< close] else: ""
     let joined = first.find(STATUS_JOIN)
     if joined >= 0: note.status = first[joined + STATUS_JOIN.len .. ^1].strip
     note.quote = blocks[i + 1].lines.join("\n")
@@ -104,7 +104,7 @@ func checkAnchors*(notes: Notes, files: Table[string, string], source: string): 
         path: source,
         line: note.line,
         message: "Note's quote must occur once at pin; got `" & $count & "` in `" &
-          note.path & "`.",
+            note.path & "`.",
       )
 
 
