@@ -1773,10 +1773,10 @@ project, so only a name reaches it.
 - Cost: an aligned column of trailing comments loses its alignment, by the ruling above.
 - Cost: a sorted bracket item changes the width of its line by the difference in length.
 - Verified by `suites/test_form.nim`, `suites/test_idioms.nim`, `suites/test_blanks.nim`,
-  `suites/test_declarations.nim`, `suites/test_spacing.nim`, `suites/test_wrapping.nim` and
-  `suites/test_fixes.nim`. For each fixer, its output has no finding of its check, a second fix
-  changes nothing, and nothing else changes. A clean source passes through unchanged. A curator
-  branch that would write contributor code writes nothing.
+  `suites/test_declarations.nim`, `suites/test_wrapping.nim` and `suites/test_fixes.nim`, and by
+  the suites of knoller for each fixer that moved there. For each fixer, its output has no
+  finding of its check, a second fix changes nothing, and nothing else changes. A clean source
+  passes through unchanged. A curator branch that would write contributor code writes nothing.
 - Verified by `suites/test_idioms.nim`: `return result` goes at the end of a routine, and becomes
   `return` in a branch and before more body. A wrapped signature reads as one. Each place without
   one fix keeps its line, and a report after a deleted line names the line of the source as given.
@@ -1849,53 +1849,10 @@ group sorted. The items sort into the slots they held, and a `key: value` item m
 - Verified by hand with `koch check-files`, 2026-10-02: the wired import check, now in
   dictionary order, reports no new finding on the tree.
 
-**Each space inside an expression takes the count of the list of X.9.** A binary operator and
-`=` take one space on each side, and one that ends its line takes one before it. A comma and a
-colon take none before them and one after. The inside of a bracket takes none. A prefix
-operator is glued to its operand.
-
-- The lexer reads only whether a space stands on each side of an operator, never how many. A
-  space before and none after reads as prefix, so `a -b` is the call `a(-b)`.
-- So the fixer rewrites the spaces of an operator only where they stand on both sides or on
-  neither. Asymmetric spacing stays, and its check is silent, because its fix is a choice of
-  meaning. So `a ⊖b` stays a command call.
-- A prefix operator stands after anything but an operand, which is where the parser reads a
-  prefix node. A `-` glued before a number would become a literal, so `- 1` stays.
-- A gap stays where closing it would merge two tokens: `(` before `.`, `[` before `:`, `.` before
-  `)`, and a colon after an operator.
-- `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
-  reads as that operator.
-- A semicolon takes no space before it and one after, as a comma does.
-- Never read: `::`, `.` and the operators that start with it, the paths of `import` and
-  `export`, and the export marker.
-- An export marker is a `*` glued after a name that a declaration places. That name opens its
-  line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
-  expression declares nothing, so `PI*(a + b)` multiplies.
-- Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
-  start of such a line stays.
-- Cost: the spaces that align the columns of a table go, unless a fence holds them.
-
-**A range operator takes one space on each side, as every binary operator does (X.9).** The
-Architect set this rule on 2026-10-04, so that every binary operator spaces alike. It covers `..`,
-`..<` and `..^`, as in `2 .. 6` and `0 ..< n`. A range that ends its line takes one space before
-it. Verified by `suites/test_spacing.nim`.
-
-- A `^` after a range is a prefix operator, so it stays glued to its operand, as in `s[1 .. ^1]`.
-  Verified by `suites/test_spacing.nim`: that line passes, and `s[1 .. ^ 1]` fixes to it.
-- Glued `1..^1` lexes as the one operator `..^`, so the fixer writes `1 ..^ 1`, and never splits
-  it. Verified by `suites/test_spacing.nim`. The Architect ruled on 2026-10-04 that a compound
-  operator stays whole, because it can carry an optimisation that its parts lack. In 2.2.12 the
-  template `..^` of `lib/system/indices.nim` is `a .. ^b`, verified by hand on 2026-10-04.
-- Cost: the fixer leaves `1 ..^ 1` where X.9 shows `1 .. ^1`. The split is a choice for the hand.
-- A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
-  `checkSpacing` and `fixSpacing` on that line.
-- No fixer writes a spaced range again. Verified by `suites/test_fixes.nim`: a spaced source goes
-  through every fixer unwritten, and a split call, a joined call and a wrapped signature keep
-  each space.
-- Cost: a glued range stays where its spaces would push a line with a trailing doc past
-  `LINE_MAX`. The doc fixer moves a doc only off a line that is already wide, so neither fixer
-  acts. Move the doc to its next line by hand, then fix. Verified by hand, 2026-10-04, through
-  `fixEntries`.
+**Spaces inside an expression take the count of X.9, and the record of knoller holds the rule.**
+No fixer of the chain writes a spaced range again. Verified by `suites/test_fixes.nim`: a spaced
+source goes through every fixer unwritten, and a split call, a joined call and a wrapped
+signature keep each space.
 
 **Banners take the blank lines of X.2 exactly, and `strictFuncs` after the imports moves.** The
 banner fixer sets each run beside a banner to the count that `checkBanners` reads. The late
