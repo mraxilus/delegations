@@ -15,8 +15,10 @@
 ##     parameter or field of that callee, in file declaring callee;
 ##   - new name must stand nowhere in files rename writes, and name no global declaration of
 ##     any module compiled with declaring file, `system` among them: it would collide there, or
-##     shadow it. New name Nim reads as old one (`localValue` to `local_value`) skips both
-##     tests: it changes no reading, so nothing new can collide;
+##     shadow it. Global there is what bare name reaches, `module.name` or enum member; field,
+##     parameter and local of other scope, which `globalSymbols` answers too, never collide.
+##     New name Nim reads as old one (`localValue` to `local_value`) skips both tests: it
+##     changes no reading, so nothing new can collide;
 ##   - new name is no keyword, and not `result`, which compiler declares in routine;
 ##   - no edit lands on fenced line (X.1), and none widens line past `LINE_MAX`.
 ##   Mention of old name in backticks, in comment of file where rename takes every use, is
@@ -64,6 +66,7 @@ const
   NAME_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
     ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
   RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
+  KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
 
 
 func applied*(source: string, edits: openArray[Edit]): string =
@@ -77,6 +80,12 @@ func applied*(source: string, edits: openArray[Edit]): string =
 func isIdentical(a, b: Symbol): bool =
   ## Decide whether two answers name one symbol: one definition site.
   a.file == b.file and a.line == b.line and a.column == b.column
+
+
+func isReached(symbol: Symbol): bool =
+  ## Decide whether bare name reaches symbol from module importing its own: global, i.e.
+  ##   `module.name`, or enum member; field, parameter and local nest one name deeper.
+  symbol.kind == KIND_MEMBER or symbol.name.count('.') == 1
 
 
 func nameAfter(source: string, first: int): int =
@@ -162,7 +171,9 @@ func planRename*(
     refuse "declaration resolves to no symbol"
   let
     declared = declaring.symbols[(rename.line, rename.column)]
-    shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(not it.isIdentical(declared))
+    shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(
+      it.isReached and not it.isIdentical(declared),
+    )
     is_respelled = rename.name.isSameName(rename.renamed)
   if not declared.file.endsWith("/" & rename.path) or declared.line != rename.line or
       declared.column != rename.column:
