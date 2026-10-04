@@ -200,11 +200,14 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 
 - An expression that does not fit breaks after a binary operator, because Nim refuses a line
   that opens with one. Each line of the expression past its statement line takes four spaces
-  more than that line, and all of them take that one indent. Where the expression opens its own
-  line after an opening bracket or a comma, every line of it takes the indent of that line. A
-  chain that opens on the line after `=` takes the four spaces too, its first line included. Any
-  other value on its own line after `=` keeps one level, as an `if` expression or a split call
-  does. A call and a signature keep their layout of one level, as above:
+  more than that line, and all of them take that one indent. A chain that opens on the line
+  after `=` takes the four spaces too, its first line included. Any other value on its own line
+  after `=` keeps one level, as an `if` expression or a split call does. A call and a signature
+  keep their layout of one level, as above.
+
+  An expression can open its own line after an opening bracket or the comma of a list. Then
+  every line of it takes the indent of that line. A bare value that opens its statement line
+  keeps the four spaces, since no bracket or comma sets it apart from the body:
 
   ```nim
   let depth = offset_x * bounds.forward.x + offset_y * bounds.forward.y +
