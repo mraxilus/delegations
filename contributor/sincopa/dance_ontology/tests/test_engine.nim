@@ -4,10 +4,11 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
 """
 ## Hold rigid body engine to what this project needs of it, before anything is built on it.
 ##
-##   Two laws and no more: that engine runs at all from Nim, and that two arms stop each
-##     other. Second is whole reason engine is here -- pose search this project had let
-##     arms pass through one another, and engine is answer to that, so it is what must be
-##     checked rather than assumed.
+##   What rig needs of engine and no more: that engine runs at all from Nim, that two arms
+##     stop each other, and that body touched by many things reports every contact. Second
+##     is whole reason engine is here -- pose search this project had let arms pass through
+##     one another, and engine is answer to that, so it is what must be checked rather than
+##     assumed.
 ##   Suite drives build that makes library it links (Article IX.6): importing module runs
 ##     `tools/build.nim engine` at compile time, so no machine needs verb run by hand.
 

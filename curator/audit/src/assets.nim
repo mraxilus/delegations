@@ -223,7 +223,7 @@ func toRanges*(text: string): seq[Slice[int]] =
     let
       bounds = token.split('-')
       low = bounds[0].parseHexInt
-    result.add low .. (if bounds.len > 1: bounds[1].parseHexInt else: low)
+    result.add low..(if bounds.len > 1: bounds[1].parseHexInt else: low)
 
 
 func declaration*(): string =

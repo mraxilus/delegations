@@ -35,6 +35,9 @@ const
   APART = 1.10  ## One distance laws below that do not care where couple stand use.
     ## Was where that hold left joints freest standing still, back when that was
     ## how standing was chosen.  It is now only place to build couple at.
+  FLOOR_STOPS = 4
+    ## Least stopped walks law on stops reads, so it reads some: 10 on 2026-10-04, five
+    ##   ways each kept and walked live.  Margin, not 10: recording moves which ways stop.
   GIVE_REST = 0.01  ## Metres shoulder may sit off tape at rest, girdle being on spring:
                    ## measured 6.3 mm, pushed by its own arm resting against torso.
   SLACK = 3.0 * PI / 180.0  ## Engine's limits are solved, not clamped, so joint may
@@ -257,6 +260,29 @@ suite "Internal: Two dancers in rigid body engine":
     check found_any
     check answered().isReaching("shake asked")
     check not answered().isReaching("chain beyond")
+
+
+  test "every walk that stops names what stopped it":
+    ## Walk is marked stopped only where `stoppedBy` names stop (`walk.walked`), so page
+    ## and report can say what ends each turn they show.
+    ##   Every way of every sweep is read as kept and as walked again live, which laws
+    ##     below walk anyway, so this walks nothing of its own.
+    ##   Still that holds at no distance and in no plan is marked stopped and names no stop
+    ##     (`seen.still`), and rig page says no pose holds there (`design/rig.nim`).  No
+    ##     law stands such still: every card reference draws is modelled
+    ##     (`suites/test_asks.nim`).
+    var stops = 0
+    let given = answered()
+    for question in SWEEPS:
+      let sweep = given.sweepOf(question.key)
+      for (is_positive, kept) in [(true, sweep.positive), (false, sweep.negative)]:
+        if not kept.is_holding: continue
+        let went = live(question.key, is_positive)
+        for (is_stopped, why) in [(kept.is_stopped, kept.why), (went.is_stopped, went.why)]:
+          if not is_stopped: continue
+          check why != Stop.None
+          stops += 1
+    check stops >= FLOOR_STOPS
 
 
   test "at rest every joint is free to move either way":
