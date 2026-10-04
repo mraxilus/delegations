@@ -8,7 +8,8 @@
 ##     name check's scanner may read use as declaration, and rename of it would repeat other;
 ##   - every name token of scope that Nim reads as old name must resolve, in file that
 ##     compiles: one resolving to declaration is renamed, one resolving to other symbol stays,
-##     and one resolving to nothing refuses rename, since it cannot be proved either way.
+##     and one resolving to nothing refuses rename, since it cannot be proved either way. Edit
+##     spans token as spelled there, since Nim reads `tmpDir` as `tmp_dir`.
 ##     Named argument and field of constructor (`f(name = v)`, `T(name: v)`), which semantic
 ##     pass resolves to nothing, resolve through callee: they are declaration where it is
 ##     parameter or field of that callee, in file declaring callee;
@@ -57,6 +58,10 @@ type
     refusal*: string  ## Why rename is refused; empty where planned.
 
 
+const NAME_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
+  ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
+
+
 func applied*(source: string, edits: openArray[Edit]): string =
   ## Apply edits to source, last first, so earlier offsets hold; insertions at one offset in
   ##   rank order.
@@ -68,6 +73,13 @@ func applied*(source: string, edits: openArray[Edit]): string =
 func isIdentical(a, b: Symbol): bool =
   ## Decide whether two answers name one symbol: one definition site.
   a.file == b.file and a.line == b.line and a.column == b.column
+
+
+func nameAfter(source: string, first: int): int =
+  ## Read byte offset after name token opening at offset; its spelling may differ from declared
+  ##   name's in case and underscores, which Nim ignores past first character.
+  result = first
+  while result < source.len and source[result] in NAME_CHARS: inc result
 
 
 func sitesOf(source, name: string): seq[(int, int)] =
@@ -178,7 +190,7 @@ func planRename*(
         is_every = false
         continue
       let first = starts[site[0] - 1] + site[1]
-      edits.add Edit(first: first, after: first + rename.name.len, text: rename.renamed)
+      edits.add Edit(first: first, after: source.nameAfter(first), text: rename.renamed)
       result.lines.add (path, site[0])
     if edits.len == 0: continue
     if source.sitesOf(rename.renamed).len > 0:
