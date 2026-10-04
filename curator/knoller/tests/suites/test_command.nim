@@ -14,8 +14,8 @@ const
   README = currentSourcePath().parentDir.parentDir.parentDir / "README.md"
     ## Record listing every rule id output cites.
   SUITES =
-    "{.experimental: \"strictFuncs\".}\n\nimport std/unittest\nsuite \"A\":\n  test \"a\":\n" &
-      "    check true\n  test \"b\":\n    check true\n"
+      "{.experimental: \"strictFuncs\".}\n\nimport std/unittest\n" &
+      "suite \"A\":\n  test \"a\":\n    check true\n  test \"b\":\n    check true\n"
     ## Suites of test file, each run of blank lines short.
   STUB = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\n\"\"\"\ninclude \"suites.nim\"\n"
     ## Testament stub whose `cmd` holds `-r`.

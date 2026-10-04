@@ -90,7 +90,7 @@ suite "Spacing":
 
   test "prefix operator before operator keeps one space, since glued pair lexes one operator":
     check STACKED.fixed ==
-      "let d = (|∙ ⊖(m ∧ n)) div (|∙(⊖m ∧ ⊖n))\nlet x = - -y\nlet z = - -y + (+ -1)\n"
+        "let d = (|∙ ⊖(m ∧ n)) div (|∙(⊖m ∧ ⊖n))\nlet x = - -y\nlet z = - -y + (+ -1)\n"
     check STACKED.fixed.isSettled  # spaced form passes check
     for kept in ["let d = (|∙ ⊖(m ∧ n))\n", "let x = - -y\n", "let x = + -1\n", "f($ -x)\n"]:
       check kept.isSettled  # `|∙⊖`, `--`, `+-` and `$-` would each lex as one operator
