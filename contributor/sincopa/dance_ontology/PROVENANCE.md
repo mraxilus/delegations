@@ -1841,6 +1841,26 @@ page could show the answers of other physics as those of this tree. Verified by
 another crown, and the law of the page failed when the page kept the stamp. A comment in
 `simulation/words.nim` failed none of the three.
 
+**Both recordings come from one queue, slowest job first, and a stopped run goes on where it
+stopped (#447).** `design/record.nim` puts every job of `rig` and of `modelled` in one queue, and
+each worker takes the next job as it ends one. The jobs measured slowest start first (`SLOWEST`), so
+the four workers end near the same time. Each result is kept under the stamp of its recording as it
+comes, in `build/record/`. A run that stops then asks only the jobs with no result, and each kept
+file is assembled in the order of its recording.
+
+Rejected: each verb splits its own jobs by worker. Then one worker held the rig for 5.7 h, where
+three ended between 3.1 and 3.8 h, and modelled took 3.0 h after it. Estimated 2026-10-03 from the
+time of each job. One queue over both took 6.3 h, and 25.0 h of work on four cores cannot take less
+than 6.2 h. Measured 2026-10-03, with a program of the same design.
+
+The order is measured, and it goes stale as the simulation changes. A wrong order costs time, and
+never changes an answer. A file renamed into place leaves no result where a worker stops mid-write.
+That is intended, because no law stops a worker mid-write.
+
+Verified by `suites/test_record.nim`, on stub jobs. A run in two parts asks each job once, and keeps
+the bytes of a run in one. The slowest jobs go first, in their order. Each law failed on a break
+made on purpose.
+
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
 
