@@ -2963,7 +2963,7 @@ class is added, rather than from load, so the two stack.
 
 *Checked.* Assumed: that one duration suits every transition, because nobody has asked otherwise.
 
-## Camera aiming and framing
+## Camera aiming
 
 **The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds.
 Rejected: four turntable numbers, which carry no roll and stand a rolled view upright.
@@ -3008,9 +3008,11 @@ Pan, wheel, pinch and typed view fields call `halt`, which marks the ease done w
 of those sets the pivot itself, and a pivot still arriving would slide the camera off it. Undo and
 redo call `adoptNext`; see Undo/redo.
 
-**Framing** (`framing.nim`). On a new pick **the orbit pivot comes to the middle of what was
-picked**, by `objects.centroidFolded`. It runs over the same objects that the bound is over, with
-each yielded **once** by `watched`. A middle is a tally where a bound is a set.
+## Framing
+
+**On a new pick, the orbit pivot comes to the middle of what was picked** (`framing.nim`), by
+`objects.centroidFolded`. It runs over the same objects that the bound is over, with each yielded
+**once** by `watched`. A middle is a tally where a bound is a set.
 
 The camera then moves by the **least zoom and orbit** on top of that which puts every selected
 object in view. In view means the centred box that `camera.reachCentred` shapes. That is
@@ -3049,10 +3051,10 @@ reports its own answer unframed, one ulp short of it.
 **A plane picked alone from a level view lifts the view off it**, by the ruling of #454. Seen along
 its own face, a plane draws as a sliver, and centring a sliver shows nothing of it.
 `stanceLifted` turns the stance about its pivot by the least turn that puts the sight
-`ANGLE_PLANE_LEAST`, 10°, off the plane. The eye keeps the side of the plane that it stood on, and
-a sight in the plane takes the side that world up leans to. The level direction of the sight is
-the meet of the plane with the plane that holds the sight and the normal. That direction, the
-pivot and the separation stay, and the horizon stays level.
+`ANGLE_PLANE_LEAST`, 10°, off the plane. The eye keeps its side of the plane, and a sight in the
+plane takes the side that world up leans to. The pivot, the separation and the level direction of
+the sight stay, and the horizon stays level. That direction is the meet of the plane with the plane
+that holds the sight and the normal.
 
 This is the bound that a star gets: a star off screen turns the view, by the least turn. A sight
 already 10° or more off the plane turns nothing, and no other pick turns. The lift applies once, as
@@ -3156,8 +3158,8 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 - a still camera that a resize leaves out of frame eases back, though it holds its goal;
 - a stance that history restores stays while framed, and eases back where it is not;
 - a horizon point is bound to the screen, a horizon line to crossing it, a horizon plane not at all.
-- a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye,
-  from above, from below, from in the plane and beside an upright plane;
+- a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye;
+- so does a plane seen from below, a sight in the plane, and an upright plane;
 - the pivot, the separation, the level direction and a level horizon stay through that lift;
 - a sight already 28° off the plane turns nothing, and a point picked turns nothing.
 
