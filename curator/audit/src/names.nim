@@ -52,8 +52,9 @@
 ##     `TODO: Document.` (VI.1), and leaves block calling `main()`; body keeps lines and indent.
 ##     `blockEntry` refuses block routine would read otherwise: guard beyond `isMainModule`,
 ##     which would compile body where guard fails; `{.global.}`, `{.threadvar.}` or foreign
-##     pragma; statement or export marker module level holds alone; `quit` with value at
-##     block's own indent, whose code `quit main()` would carry; and `main` named already.
+##     pragma; statement or export marker module level holds alone, at any depth; `quit` with
+##     value at block's own indent, whose code `quit main()` would carry; and `main` named
+##     already.
 ##
 ##   Rejected: `proc main` inside block, which V.10 allows; STYLE.md §1 and every program of
 ##     tree put it at module level, and block then holds one call.
@@ -984,14 +985,14 @@ func blockEntry*(source: string): BlockEntry =
         "` stands at module level alone"
       return
   for i in result.first..result.last:
-    if code[i].strip.len == 0 or code[i].indentOf != result.indent: continue
+    if code[i].strip.len == 0: continue
     let
       word = code[i].identifierAt(0)
       rest = code[i].strip[word.len .. ^1].strip
     if word in KEYWORDS_MODULE:
       result.refusal = "`" & word & "` stands at module level alone"
       return
-    if word == "quit" and rest notin ["", "()"]:
+    if code[i].indentOf == result.indent and word == "quit" and rest notin ["", "()"]:
       result.refusal = "`quit` at block's own indent returns value, which `quit main()` would carry"
       return
   for t in tokens:
