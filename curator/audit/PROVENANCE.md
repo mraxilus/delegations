@@ -1790,14 +1790,6 @@ checks and fixers of separators, signatures, calls and trailing separators share
 `declarations.nim`. A construct that the scanner cannot read with certainty stays as written,
 and its check stays silent.
 
-**`tokens.nim` keeps the rules of the lexer of the compiler.** A run of operator characters is one
-operator. A `-` before a digit opens a number after a space or an opening bracket.
-
-- The glyphs are those of the commit pin of the `ronri` projects. It adds `☆ ⟑ ⟇ ⩓ ⩔ ■ □` to the
-  glyphs of 2.2.12, and no project on 2.2.12 spells them in code.
-- Verified by `suites/test_tokens.nim`. Verified by hand over the tree, 2026-10-02: each byte of
-  each Nim file outside whitespace lies in one token, and each bracket finds its partner.
-
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
 included, in a routine, a routine type and a lambda. The separator after a typed group never
