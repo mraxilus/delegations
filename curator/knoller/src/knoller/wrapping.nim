@@ -645,6 +645,28 @@ func fallback(s: Scan; lead: string; a, b: int; trail: string; indent: int): Opt
   else: some(Laid(lines: operator.get, rule: Rule.OperatorWrapping))
 
 
+func isTrailed(s: Scan, o: int): bool =
+  ## Decide whether call `(` at `o` spans lines with comma after its last argument, on line
+  ##   before its `)`: mark of split hand wants (X.3), so call keeps one argument to line.
+  if not s.isMultiline(o) or not s.isEligibleCall(o): return false
+  let items = s.items(o)
+  items.len > 0 and items[^1].separator >= 0 and
+    s.tokens[s.partners[o]].line > s.tokens[items[^1].separator].line
+
+
+func isHug(s: Scan, o: int): bool =
+  ## Decide whether call `(` at `o` holds one argument, call spanning lines that hand hugs: its
+  ##   head glued after `(`, its `)` glued before `)` of `o` on one line, as `f(g(` … `))`.
+  let items = s.items(o)
+  if items.len != 1 or items[0].separator >= 0: return false
+  let
+    (first, last) = (items[0].first, items[0].last)
+    inner = s.partners[last]
+  s.tokens[first].first == s.tokens[o].after and
+    s.tokens[last].after == s.tokens[s.partners[o]].first and inner > first and
+    s.isMultiline(inner) and s.isEligibleCall(inner) and s.isWholeCall(first, last)
+
+
 func layout(
   s: Scan; lead: string; a, b: int; trail: string; indent: int; is_argument: bool
 ): Option[Laid] =
@@ -653,13 +675,20 @@ func layout(
   ##   One line where they fit; else outermost call crossing `LINE_MAX` splits, one argument to
   ##     line, each laid out again; else wrapping hand gave stays, re-indented; else line
   ##     breaks after operator, which split that fits no line falls back on too.
+  ##   Call spanning lines with comma after its last argument is never joined (`isTrailed`):
+  ##     outermost call spanning lines splits instead, and call hand hugs around it keeps its hug
+  ##     (`isHug`), so `x.add(Y(` … `))` keeps `))`.
   ##   Argument splits its crossing call only where that call is whole argument; expression
   ##     holding call has no one split, so its hand wrapping stays, or it breaks after
   ##     operator, or call is left.
   ##   Bracket spanning lines that no call opens is never joined: outermost call spanning lines
   ##     splits around it instead.
-  var target = -1
-  if s.isFlattenable(a, b):
+  var
+    target = -1
+    is_trailed = false
+  for k in a..b:
+    if s.tokens[k].kind == TokenKind.Open and s.isTrailed(k): is_trailed = true
+  if s.isFlattenable(a, b) and not is_trailed:
     let
       flat = s.flatten(a, b)
       one = lead & flat.text & trail
@@ -703,6 +732,16 @@ func layout(
       arguments = s.items(target)
       closer = ' '.repeat(indent) & ")"
     if arguments.len == 0: break split
+    if c == b and s.isHug(target):
+      let hug = s.layout(
+        lead & s.flatten(a, target).text,
+        arguments[0].first,
+        arguments[0].last,
+        ")" & trail,
+        indent,
+        is_argument = true,
+      )
+      if hug.isSome: return hug
     var lines = @[lead & s.flatten(a, target).text]
     for item in arguments:
       let argument = s.layout(
