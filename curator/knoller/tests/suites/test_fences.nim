@@ -1,10 +1,10 @@
-## Replicate fence of `fences.nim` header: fenced lines read, masked while fixers run, and
-##   written back.
+## Replicate fence of `fences.nim` header: fenced lines read and split into runs, masked while
+##   fixers run, and written back.
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[fences, rules]
+import std/[strutils, unittest]
+import ../../src/knoller/fences
 
 
 
@@ -16,15 +16,11 @@ suite "Fences":
     check "a\nb\n".fenceOf.lines.len == 0  # no marker, no fence
 
 
-  test "each fence warns once, at its first line, with lines it keeps; open one runs to end":
-    let
-      source = "a\n#!fix off\nb\n#!fix on\nc\n#!fix off\nd\n"
-      held = heldOf("a.nim", source.fenceOf)
-    check held.mapIt(it.line) == @[2, 6]  # one warning for each fence, at its marker
-    check held[0].message.endsWith("got lines `2` to `4`.")  # markers included
-    check held[1].message.endsWith("got lines `6` to `7`.")  # open fence runs to last line
-    check held.allIt(it.rule == Rule.FenceHeld)
-    check heldOf("a.nim", "a\nb\n".fenceOf).len == 0  # no fence, no warning
+  test "fenced lines split into one run for each fence, markers included; open one runs to end":
+    let source = "a\n#!fix off\nb\n#!fix on\nc\n#!fix off\nd\n"
+    check source.fenceOf.runsOf == @[1 .. 3, 5 .. 6]  # second fence left open
+    check "#!fix off\na\n#!fix on\n#!fix off\nb\n#!fix on\n".fenceOf.runsOf == @[0 .. 5]  # touch
+    check "a\nb\n".fenceOf.runsOf.len == 0  # no fence, no run
 
 
   test "marker inside string fences nothing, and fence crossing bracket is fault":
