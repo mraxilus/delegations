@@ -69,7 +69,7 @@ func moveTime*(tempo: Tempo): int = tempo.leaveTime + tempo.grown
 
 
 func leadOnTime*(tempo: Tempo): int = tempo.moveTime
-  ## Get when second move of compound may start.
+  ## Get when second move of compound move may start.
   ##   Not before first has finished being told.  Lead thinks of two as one
   ##     thing, but ontology knows frame between them is real, and drawing
   ##     that began unsaying it before it had finished saying it would be

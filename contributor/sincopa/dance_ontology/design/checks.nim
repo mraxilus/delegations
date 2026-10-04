@@ -489,11 +489,11 @@ proc checkSingleTurns*(built: Parts) =
   for manner in Manner:
     let walked = roundOfManner(manner)
     # Table's claim about this manner holds: it shares its round with
-    # every manner of its family, and with no other.
+    # every manner of its round, and with no other.
     for mate in Manner:
       let is_sharing = roundOfManner(mate) == walked
-      doAssert is_sharing == (FAMILY_OF[mate] == FAMILY_OF[manner]),
-        &"A manner left its family; got `{manner}` against `{mate}`."
+      doAssert is_sharing == (LUT_ROUND_BY_MANNER[mate] == LUT_ROUND_BY_MANNER[manner]),
+        &"A manner left its round; got `{manner}` against `{mate}`."
     if walked notin rounds:
       rounds.add walked
   doAssert rounds.len == 2,

@@ -86,7 +86,7 @@ func frameHeight*(width: int): int =
 
 func renderFrame*(target: Frame, twist: HalfTurns = 0): string =
   ## Draw frame as picture that stands on its own.
-  ##   Given twist it draws posture instead: same frame, seen with
+  ##   Given twist it draws frame state instead: same frame, seen with
   ##     follow turned as far as that twist has turned them.
   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & VIEW &
     "\" class=\"frame\" role=\"img\">" & frameBody(target, twist) & "</svg>"

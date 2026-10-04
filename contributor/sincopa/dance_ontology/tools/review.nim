@@ -198,9 +198,9 @@ func renderMatrix(): string =
   result.add "</tbody></table>"
 
 
-func renderPrimitives(): string =
-  ## List primitives, what each changes, and workbook's other word.
-  result = "<table class=\"plain\"><thead><tr><th>Primitive</th>" &
+func renderHelpers(): string =
+  ## List moves, what each changes, and workbook's other word.
+  result = "<table class=\"plain\"><thead><tr><th>Move</th>" &
     "<th>What changes</th><th>Your words</th></tr></thead><tbody>"
   for helper in Helper:
     let synonym =
@@ -213,8 +213,8 @@ func renderPrimitives(): string =
 
 
 func renderCompounds(): string =
-  ## List compounds, what each does, and why ontology names it.
-  result = "<table class=\"plain\"><thead><tr><th>Compound</th>" &
+  ## List compound moves, what each does, and why ontology names it.
+  result = "<table class=\"plain\"><thead><tr><th>Compound move</th>" &
     "<th>What changes</th><th>The two moves</th><th>Obstructed</th>" &
     "</tr></thead><tbody>"
   for named in Compound:
@@ -227,7 +227,7 @@ func renderCompounds(): string =
 
 
 func countCells(is_compound: bool): int =
-  ## Count checkable cells that name compound, or that name primitive.
+  ## Count checkable cells that name compound move, or that name move.
   for cell in CELLS:
     if cell.source.isDeferred or cell.destination.isDeferred:
       continue
@@ -289,10 +289,10 @@ proc renderReview*(): string =
     "matrix": renderMatrix(),
     "map": renderMap(none(Frame)),
     "arms": renderArms(),
-    "primitives": renderPrimitives(),
+    "helpers": renderHelpers(),
     "compounds": renderCompounds(),
     "compound_count": $(ord(high(Compound)) + 1),
-    "primitive_cells": $countCells(is_compound = false),
+    "move_cells": $countCells(is_compound = false),
     "compound_cells": $countCells(is_compound = true),
     "audit": renderAudit(),
     "legend": renderLegend(),
@@ -303,7 +303,7 @@ proc renderReview*(): string =
     "deferred": $countDeferredCells(),
     "named": $countNamedStates(),
     "free_moves": $(2 * moves(free_frame).len),
-    "primitive_count": $(ord(high(Helper)) + 1),
+    "helper_count": $(ord(high(Helper)) + 1),
     "laws": $countLaws(),
     "pairs": $(FRAMES.len * FRAMES.len),
     "diameter": $longestRoute(),

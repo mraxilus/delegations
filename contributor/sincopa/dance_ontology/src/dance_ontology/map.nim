@@ -20,10 +20,10 @@
 ##     Cost of one line for two moves: line cannot name both, so which
 ##       move it is named for has to be settled per reader (see `edge`).
 ##       Accepted -- twenty moves are ten lines.
-##   Compounds are drawn too, dashed and curved, because they join
+##   Compound moves are drawn too, dashed and curved, because they join
 ##     frames that no single move joins: they are shape of graph
 ##     rather than edge of it.
-##     Cost of drawing compounds: curves hang below their rows, and
+##     Cost of drawing compound moves: curves hang below their rows, and
 ##       drawing carries height they need (`ARC_DIP`, `MAP_HEIGHT`).
 ##       Accepted -- map missing them would be missing graph's shape.
 
@@ -45,7 +45,7 @@ const
   MAP_HEIGHT* = 570
     ## Measured, not chosen: tallest drawing gets in any of
     ## states it can be read in.
-    ##   Compounds hang below their own row, and row that has none
+    ##   Compound moves hang below their own row, and row that has none
     ##     of them is now bottom one, so turning tower up right
     ##     way left old height carrying eighty pixels of nothing.
   MARGIN = 44
@@ -55,7 +55,7 @@ const
     ##     you are at bottom, hold both hands and you are at top.
   NODE_WIDTH* = 74  ## Width frame's picture is drawn at on map.
   NAME_RISE = 12  ## Distance from top of picture up to its name.
-  ARC_DIP = 100  ## How far compound curve hangs below row it joins.
+  ARC_DIP = 100  ## How far curve of compound move hangs below row it joins.
 
 
 const NODE_ORDER* = ["--.", "-r.", "l-.", "-l.", "r-.", "lrL", "lrR", "rl."]
@@ -452,7 +452,7 @@ func edge(
 
 
 func arcName(a, b: Frame; standing: Option[Frame]): string =
-  ## Name compound that curve stands for, and hand it moves where it
+  ## Name compound move that curve stands for, and hand it moves where it
   ## can.
   ##   Stood on one end, curve has direction like any other line, so it
   ##     can be named for move away from reader -- hand and all.
@@ -476,7 +476,7 @@ func arcName(a, b: Frame; standing: Option[Frame]): string =
 func arc(
   a, b: Frame; name: string; standing, was: Option[Frame]; used: var seq[Box]
 ): (string, string) =
-  ## Draw compound as curve, since no single move joins two frames.
+  ## Draw compound move as curve, since no single move joins two frames.
   ##   Ink and name apart, for reason `edge` parts them.
   let
     (start_x, start_y) = centreOf(a)
@@ -488,7 +488,7 @@ func arc(
     lit = (if is_lit: " lit" else: "") & waking(is_lit, is_lit_prev, was.isSome)
   # Drawn as two halves, each in ink of arm that acts as you travel into
   # it.  Ordinary line has one ink because same arm acts whichever way it
-  # is read; compound has two because it hands follow's hand from one of
+  # is read; compound move has two because it hands follow's hand from one of
   # lead's arms to other, and which arm that is depends on which way you
   # are going.  Splitting curve is what lets it say both without lying about
   # either, and it stays dashed, because it is still two moves.

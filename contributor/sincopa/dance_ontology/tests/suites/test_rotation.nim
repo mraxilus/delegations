@@ -123,15 +123,15 @@ suite "Internal: What the arm can carry":
       check armCapacity(blocker(3 * way), Level.Low) == CAPACITY_ARM
 
 
-  test "a posture stands only where both ceilings allow it":
+  test "a frame state stands only where both ceilings allow it":
     for target in FRAMES:
       for level in Level:
-        var posture = target.rest
-        posture.level = [level, level]
+        var state = target.rest
+        state.level = [level, level]
         for twist in -4..4:
-          let is_within_both = abs(twist) <= posture.capacity and
-            abs(twist) <= posture.armsCapacity(twist)
-          check posture.isHolding(twist) == is_within_both
+          let is_within_both = abs(twist) <= state.capacity and
+            abs(twist) <= state.armsCapacity(twist)
+          check state.isHolding(twist) == is_within_both
 
 
   test "only an arm that is holding can be the one that runs out":
@@ -193,36 +193,36 @@ suite "Internal: Modifiers":
 
 
 suite "Internal: What there is":
-  test "every posture stands, and no posture is counted twice":
-    var seen: seq[Posture] = @[]
-    for stood in postures():
+  test "every frame state stands, and no frame state is counted twice":
+    var seen: seq[FrameState] = @[]
+    for stood in frameStates():
       check stood.isHolding(stood.twist)
       check stood notin seen
       seen.add stood
-    check postures().len > FRAMES.len
+    check frameStates().len > FRAMES.len
 
 
-  test "a free hand's height is not a posture of its own":
-    # Two postures differing only in where hand that is holding nothing is
-    # carried are one posture, because that height cannot stop turn.
-    for stood in postures():
+  test "a free hand's height is not a frame state of its own":
+    # Two frame states differing only in where hand that is holding nothing is
+    # carried are one frame state, because that height cannot stop turn.
+    for stood in frameStates():
       check stood == normalised(stood)
 
 
-  test "every frame at rest is a posture, and is where its turns start from":
+  test "every frame at rest is a frame state, and is where its turns start from":
     for target in FRAMES:
-      check target.rest in postures()
+      check target.rest in frameStates()
 
 
   test "the twelve turn sheets are six":
     # Turn is stored as one number for couple, and that number does not
     # care which of them moved: lead turning one way and follow turning
-    # other leave couple in same posture.  So half of workbook's
+    # other leave couple in same frame state.  So half of workbook's
     # twelve sheets are other half read backwards.
-    for stood in postures():
+    for stood in frameStates():
       let offers = turnsOf(stood)
       check offers.len == 12
-      var landings: seq[Posture] = @[]
+      var landings: seq[FrameState] = @[]
       for offer in offers:
         if offer.to notin landings:
           landings.add offer.to
@@ -234,7 +234,7 @@ suite "Internal: What there is":
 
 
   test "a turn is offered exactly when it is not refused":
-    for stood in postures():
+    for stood in frameStates():
       for offer in turnsOf(stood):
         let taken = stood.turn(rotates(offer.who, offer.amount))
         check taken.isSome == offer.refused.isNone
@@ -243,7 +243,7 @@ suite "Internal: What there is":
 
 
   test "a refusal names the ceiling that refuses, and the hold comes first":
-    for stood in postures():
+    for stood in frameStates():
       for offer in turnsOf(stood):
         if offer.refused.isNone:
           continue

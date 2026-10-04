@@ -69,7 +69,7 @@ suite "Internal: The layout":
 
   test "a move always runs up the page, from fewer connections to more":
     # Which is whole of what rows buy: reader who knows which way is
-    # up knows which primitive line is without reading its name.
+    # up knows which move line is without reading its name.
     for source in FRAMES:
       for move in moves(source):
         let is_rising = move.helper == Helper.Collect
@@ -97,7 +97,7 @@ suite "Internal: The layout":
 
 
 suite "Internal: The drawing":
-  test "every move is one line and every compound is one curve":
+  test "every move is one line and every compound move is one curve":
     let picture = renderMap(none(Frame))
     var moved, joined = 0
     for source in FRAMES:
@@ -189,7 +189,7 @@ suite "Internal: The drawing":
       check picture.count("reachable") == moves(here).len
 
 
-  test "a frame a compound away is offered, and marked as two moves":
+  test "a frame a compound move away is offered, and marked as two moves":
     for here in FRAMES:
       var named = 0
       for target in FRAMES:
@@ -256,7 +256,7 @@ suite "Internal: The drawing":
         check drops > 0
 
 
-  test "a compound underfoot names the hand it moves, and one nobody stands on may not":
+  test "a compound move underfoot names the hand it moves, and one nobody stands on may not":
     # Stood on one end curve has direction like any other line.  Stood on
     # neither, cut carries whichever hand ends up on top -- other one going
     # other way -- so naming one of them would be wrong on half of readings.
@@ -270,10 +270,10 @@ suite "Internal: The drawing":
         check picture.spoken.contains(">" & compoundName(here, target) & "<")
 
 
-  test "a compound is inked in both the arms it hands a hand between":
+  test "a compound move is inked in both the arms it hands a hand between":
     # Ordinary line has one ink because same arm acts whichever way it is
-    # read.  Compound has two, and which one you see depends on which end you
-    # are reading from, because that is what compound is.
+    # read.  Compound move has two, and which one you see depends on which end
+    # you are reading from, because that is what compound move is.
     let picture = renderMap(none(Frame))
     for a in FRAMES:
       for b in FRAMES:

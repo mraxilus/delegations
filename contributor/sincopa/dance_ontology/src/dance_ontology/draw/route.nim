@@ -108,7 +108,7 @@ const
 
 ## Both knobs above move where two reaches cross, and pair of them is
 ##   chosen for that rather than for width alone.
-##   Belief that they could not, which stood while whole family was ruled
+##   Belief that they could not, which stood while whole set was ruled
 ##     out untried, came of comparing two reaches at same point along
 ##     each.  They cross where they hold same *place*, at their own
 ##     points, and their chords differ: follow's two hands sit up to 20

@@ -99,7 +99,7 @@ const BODY = """
   <p><b>An orbit faces the centre.</b> Whichever side of the walker faced their partner goes on
   facing them. So the walker turns as far as they travel, and their chevron comes round with the
   ring. A walker who keeps their own bearing dances an orbit and a counter-turn at once. That is
-  the <em>compound</em>, which is another move, and these sections do not draw it.</p>
+  the <em>compound turn</em>, which is another move, and these sections do not draw it.</p>
   <p><b>That is what makes the manners comparable.</b> A walker who keeps their bearing never
   turns relative to their partner, so half a turn of that orbit changes nothing between them. An
   orbit that faces the centre turns the pair as far as an axis turn does. It lands on the very
@@ -174,9 +174,9 @@ const BODY = """
   under these four sections holds <b>two rounds</b> rather than four. Whether the
   page should lead with the two rounds, and put the four manners under them, is yours to call.</p>
   <p><b>An orbit lands where an axis turn lands.</b> So no position tells an orbit from the axis
-  turn of the other dancer, and the difference belongs to the move. The compound lands somewhere
-  of its own, and it is an orbit walked while the walker turns the other way. The frame page says
-  the same.</p>
+  turn of the other dancer, and the difference belongs to the move. The compound turn lands
+  somewhere of its own, and it is an orbit walked while the walker turns the other way. The frame
+  page says the same.</p>
   <p><b>What is not drawn here:</b> any limit. No refusal appears, because above has no ceiling.
     Ceilings and refusals come back with the first level that locks or wraps.</p>
 </div>

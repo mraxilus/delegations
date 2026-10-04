@@ -1,9 +1,9 @@
 ## Draw rotation axis as what it is: one line, with couple on it.
 ##
 ##   Hand-to-hand half is graph, so it is drawn as graph.  Rotation
-##     is not -- it is single quantity, twist, and every posture of one
+##     is not -- it is single quantity, twist, and every frame state of one
 ##     frame held at one height is somewhere along it.  So it is drawn as
-##     axle: postures laid out in order they are turned into,
+##     axle: frame states laid out in order they are turned into,
 ##     couple standing on one, and every turn out of it as arc from where
 ##     they are to where it would put them.
 ##   Turns that cannot be taken are drawn too, dashed and dimmed, for
@@ -14,7 +14,7 @@
 ##       it can show turn and refuse it in same breath.
 ##   Nothing places this drawing yet.  App's Dance view is graph-first
 ##     and rotation exploration moved to design workbench, so
-##     axle waits for page that stands postures in links.  `test_axle`
+##     axle waits for page that stands frame states in links.  `test_axle`
 ##     holds its laws green in meantime, so wait cannot rot.
 
 {.experimental: "strictFuncs".}
@@ -29,32 +29,32 @@ import ./[diagram, map, motion, rotation]
 
 const
   AXLE_HEIGHT* = 360  ## Height axle drawing asks its viewBox for.
-  NODE_WIDTH = 84  ## Width posture is drawn at along axle.
+  NODE_WIDTH = 84  ## Width frame state is drawn at along axle.
   STEP = 132  ## Distance along axle between one half turn and next.
-  AXLE_Y = 250  ## Row postures are drawn in, under their arcs.
+  AXLE_Y = 250  ## Row frame states are drawn in, under their arcs.
   NAME_RISE = 14  ## Distance from top of picture up to its name.
   ARC_RISE = 100  ## How far above axle shortest turn's arc reaches.
   LABEL_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
 
 
 func axleWidth*: int =
-  ## Get how wide axle has to be for postures that stand on it.
-  ##   Constant expression today -- every posture stands on same axle
-  ##     -- and callable so width can start depending on posture
-  ##     without callers changing.  It used to take posture and
+  ## Get how wide axle has to be for frame states that stand on it.
+  ##   Constant expression today -- every frame state stands on same axle
+  ##     -- and callable so width can start depending on frame state
+  ##     without callers changing.  It used to take frame state and
   ##     read nothing from it, which promised dependence untruthfully.
   2 * (MOST_TURN * STEP) + NODE_WIDTH + 60
 
 
-func centreOf*(stood: Posture, twist: HalfTurns): (int, int) =
+func centreOf*(stood: FrameState, twist: HalfTurns): (int, int) =
   ## Get where twist sits along axle.
   ##   Placed by twist itself rather than by index, so distance
-  ##     between two postures on drawing is size of turn between
+  ##     between two frame states on drawing is size of turn between
   ##     them.  Half turn is one step wherever it is taken.
   (axleWidth() div 2 + twist * STEP, AXLE_Y)
 
 
-func standing*(stood: Posture): seq[HalfTurns] =
+func standing*(stood: FrameState): seq[HalfTurns] =
   ## Get every twist this frame, held at these heights, can stand at.
   for twist in -MOST_TURN..MOST_TURN:
     if stood.isHolding(twist):
@@ -64,7 +64,7 @@ func standing*(stood: Posture): seq[HalfTurns] =
 
 #[ Drawing ]#
 
-func arc(stood: Posture, twist: HalfTurns, is_refused: bool): string =
+func arc(stood: FrameState, twist: HalfTurns, is_refused: bool): string =
   ## Draw one landing as arc from where couple are to where it puts
   ## them.
   ##   One arc per place turn lands, not one per turn.  Twelve turns land
@@ -95,8 +95,8 @@ func arc(stood: Posture, twist: HalfTurns, is_refused: bool): string =
   result.add "</g>"
 
 
-func renderAxle*(stood: Posture, motion = Motion.Still, taken = none(HalfTurns)): string =
-  ## Draw twist axis, postures on it, and every turn out of one held.
+func renderAxle*(stood: FrameState, motion = Motion.Still, taken = none(HalfTurns)): string =
+  ## Draw twist axis, frame states on it, and every turn out of one held.
   let
     width = axleWidth()
     is_leaving = motion == Motion.Leaving and taken.isSome
@@ -121,7 +121,7 @@ func renderAxle*(stood: Posture, motion = Motion.Still, taken = none(HalfTurns))
     drawn.add offer.to.twist
     result.add arc(stood, offer.to.twist, offer.refused.isSome)
 
-  # Postures standing on axle, each named for its turn and its arms.
+  # Frame states standing on axle, each named for its turn and its arms.
   for twist in ends:
     var landing = stood
     landing.twist = twist
@@ -130,7 +130,7 @@ func renderAxle*(stood: Posture, motion = Motion.Still, taken = none(HalfTurns))
       is_reachable = twist != stood.twist
       classes = "node" & (if twist == here: " here" else: "") &
         (if is_reachable: " reachable" else: "")
-    result.add "<g class=\"" & classes & "\" data-posture=\"" & landing.key &
+    result.add "<g class=\"" & classes & "\" data-frame-state=\"" & landing.key &
       "\">"
     result.add "<rect class=\"node-plate\" x=\"" & $(centre_x - NODE_WIDTH div 2 - 5) &
       "\" y=\"" & $(centre_y - frameHeight(NODE_WIDTH) div 2 - 5) & "\" width=\"" &

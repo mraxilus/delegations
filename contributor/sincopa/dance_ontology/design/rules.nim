@@ -361,7 +361,7 @@ const RULES* = [
   ##       it off and rule 32 turns it back on.  What rule 20 objected to --
   ##       *"combining orbit and axis turns"* -- is same arithmetic seen
   ##       from other side, and it is bearing-keeping walk that is
-  ##       compound now: orbit with counter-turn danced into it.
+  ##       compound turn now: orbit with counter-turn danced into it.
   ##     Consequence runs through everything.  Orbit lands where
   ##       *other* dancer's axis turn lands, so four manners walk **two**
   ##       rounds of positions rather than three, each round reached by one
@@ -370,8 +370,8 @@ const RULES* = [
   ##       path can say it.
   ##     And on frame page two collapse figures swap over.  It is
   ##       orbit that now lands on matching axis turn, and
-  ##       bearing-keeping compound that lands somewhere of its own --
-  ##       one picture either dancer's compound reaches, since only
+  ##       bearing-keeping compound turn that lands somewhere of its own --
+  ##       one picture either dancer's compound turn reaches, since only
   ##       pair's axis has swung.
   ##   Rule 33 tightens swan and fixes mark that would not hold still.
   ##     Swan's snake took whole of straight connection's swing

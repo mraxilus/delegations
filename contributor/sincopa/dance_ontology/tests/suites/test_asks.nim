@@ -200,7 +200,7 @@ suite "Internal: What each card asks of simulation":
 
 
   test "two cards of one cell stand one arrangement, turned by one dancer":
-    ## Orbit lands where partner's axis turn lands (`parts.FAMILY_OF`), and page folds
+    ## Orbit lands where partner's axis turn lands (`parts.LUT_ROUND_BY_MANNER`), and page folds
     ##   both onto one cell.  So both turn one dancer, and hands go over one crown.
     ##   Red with orbit asked over walker's crown, measured 2026-10-02: every orbit's still
     ##     stood its other manner's pose, follow's orbit as follow's own turn.

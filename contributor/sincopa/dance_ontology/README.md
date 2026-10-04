@@ -7,7 +7,7 @@ humanoid bodies, four hands, and the geometry of a face-to-face position.
 The model has one state and one relation. A **frame** is what each hand of the lead holds,
 and how the arms lie where they overlap. A **move** exists between two frames exactly when
 they differ in one connection. Everything else is derived from those two things: the names,
-the routes, the audit of the source workbook, the drawings and the Reference.
+the transitions, the audit of the source workbook, the drawings and the Reference.
 
 ```
                    Right to left               Right-to-right over Left-to-left
@@ -115,14 +115,14 @@ is in the log, and in `PROVENANCE.md` where it still bears on the design.
 ```
 src/dance_ontology.nim             umbrella: bootstrap order, re-exports
 src/dance_ontology/frame.nim       frames, their laws, their names, reflection
-src/dance_ontology/transition.nim  collect and drop, the two compound moves, the routes
+src/dance_ontology/transition.nim  collect and drop, the two compound moves, the transitions
 src/dance_ontology/diagram.nim     one drawing of a frame, for everything that shows one
 src/dance_ontology/map.nim         the whole graph as one picture: frames and moves
 src/dance_ontology/spokes.nim      the frame held and every way out of it, and no more
 src/dance_ontology/motion.nim      when a drawing moves: the phases and their times
 src/dance_ontology/workbook.nim    the base sheet as data, and the audit against it
 src/dance_ontology/rotation.nim    the unfinished rotation axis: twist, body, wraps
-src/dance_ontology/axle.nim        the rotation axis drawn as an axle of postures
+src/dance_ontology/axle.nim        the rotation axis drawn as an axle of frame states
 src/dance_ontology/draw/           the shared drawing chain: geometry, style, pose,
                                    body, figure, route, scene, and its own terms
 app/app.nim                        the script of the Reference
@@ -165,7 +165,7 @@ document, and it lives in the review page (`build/review/review.html`) and in
 `tools/audit.nim`.
 
 The rotation half (`rotation.nim`, `axle.nim`, `tests/suites/test_rotation.nim`) is on the bench,
-and not in the app. 148 postures render as 17 distinct pictures. Level, contact and twist beyond
+and not in the app. 148 frame states render as 17 distinct pictures. Level, contact and twist beyond
 its parity have no marks yet, but for one frame. `Left-to-right and Right-to-left` draws a quarter
 turn of twist one way apart from one the other way. The workbench pages (`design/`) are where
 those marks get worked out, and the views wait until they are decided.
@@ -173,7 +173,7 @@ those marks get worked out, and the views wait until they are decided.
 ## What it says
 
 Eight frames exist, and twenty moves join them, each one adding or removing one connection.
-Two named compounds, `place` and `cut`, are pairs of those moves that a lead thinks of as
+Two named compound moves, `place` and `cut`, are pairs of those moves that a lead thinks of as
 one. They are the two that the vocabulary marks with an asterisk.
 
 The `base` sheet names nine states, seven of them hand-to-hand, and eighteen of its

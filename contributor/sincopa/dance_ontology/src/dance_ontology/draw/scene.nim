@@ -74,7 +74,7 @@ func poseFor(is_facing: bool): Pose {.compileTime.} =
 func sceneOf(target: Frame; is_facing, is_clockwise: bool): string {.compileTime.} =
   ## Draw one frame: two bodies, their hands, and what joins them.
   ##   No level is said, because `Frame` does not carry one -- levels live
-  ##     in `rotation.Posture` and nothing hands them here yet.  So every
+  ##     in `rotation.FrameState` and nothing hands them here yet.  So every
   ##     hand draws hollow, which is what unsaid level looks like, and
   ##     free hand is same outline at half strength.  What is held is
   ##     said by connection running out of it.

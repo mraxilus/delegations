@@ -259,7 +259,7 @@ const BODY = """
     against the lead. They are how far round the lead the follow stands, and which way the follow
     faces.
     Every rotation moves those two numbers, and two different moves land on one picture.</p>
-    <p><b>The compound by either dancer lands in the same place.</b> The follow walks a quarter
+    <p><b>The compound turn by either dancer lands in the same place.</b> The follow walks a quarter
     round the lead on their own bearing, and the lead walks a quarter round the follow on theirs.
     Both arrive at one picture: the axis of the pair has swung, and both bearings stand where
     they started. So <b>the drawing cannot say who walked</b>, and only the path says that.</p>
@@ -279,8 +279,8 @@ const BODY = """
         <br>a quarter on the spot</figcaption></figure>
     </div>
     <p>The build checks this rather than claims it. It asserts that each pair is one drawing,
-    mark for mark, and refuses to build where it is not. It asserts that the compound does not
-    land on the axis turn, so the two are two moves.</p>
+    mark for mark, and refuses to build where it is not. It asserts that the compound turn does
+    not land on the axis turn, so the two are two moves.</p>
     <p><b>So an axis turn against an orbit is a property of the move, and not of the state.</b> A
     position cannot tell an orbit from the axis turn of the other dancer, because they land in one
     place. It cannot say who walked either. The node never needs to know, and only the edge

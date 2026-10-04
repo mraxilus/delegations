@@ -32,7 +32,7 @@ proc printFrames() =
 
 proc printMatrix() =
   ## Print every derived move, grouped by frame it starts from.
-  echo "\nderived transitions, with the compounds beneath the moves:"
+  echo "\nderived transitions, with the compound moves beneath the moves:"
   for source in FRAMES:
     echo "  from ", source.describe, "  [", source.key, "]"
     for move in moves(source):

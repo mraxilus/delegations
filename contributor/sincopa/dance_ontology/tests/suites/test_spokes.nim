@@ -13,7 +13,7 @@ import ../../src/dance_ontology
 
 
 suite "Internal: The spokes":
-  test "a frame has one spoke per move and one per compound, and no others":
+  test "a frame has one spoke per move and one per compound move, and no others":
     for here in FRAMES:
       var named = 0
       for target in FRAMES:
@@ -45,7 +45,7 @@ suite "Internal: The spokes":
         places.add endOf(spoke)
 
 
-  test "a collect points up, a drop points down, and a compound goes aside":
+  test "a collect points up, a drop points down, and a compound move goes aside":
     # Tower is built upwards, so taking hand climbs and letting one go
     # falls.  Screen's y grows downwards, so climbing is negative rise.
     for here in FRAMES:

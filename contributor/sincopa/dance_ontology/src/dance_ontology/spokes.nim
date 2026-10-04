@@ -8,7 +8,7 @@
 ##       distraction from one decision being made.
 ##   Spokes keep map's sense of direction.  `collect` takes
 ##     hand, so it points up; `drop` releases one, so it points down;
-##     compound is two moves and goes out to side.  Dancer who has
+##     compound move is two moves and goes out to side.  Dancer who has
 ##     read one drawing can read other.
 ##   Frame couple came from is remembered so that drawing can
 ##     start it where it was and let it arrive: spoke that was taken
@@ -64,7 +64,7 @@ const
   ##     frames, they are as far apart as frames are.
   UP = 270.0  ## Direction collect points, in degrees clockwise from east.
   DOWN = 90.0  ## Direction drop points.
-  ASIDE = 0.0  ## Direction compound points.
+  ASIDE = 0.0  ## Direction compound move points.
 
 
 
@@ -137,7 +137,7 @@ func closeStyle*(): string =
 
 func spokesOf*(here: Frame): seq[Spoke] =
   ## Get every way out of frame, in order they are drawn.
-  ##   Collects, then drops, then compounds: order eye reads them
+  ##   Collects, then drops, then compound moves: order eye reads them
   ##     in, up page and then down it and then out to side.
   for helper in [Helper.Collect, Helper.Drop]:
     var same_kind: seq[Spoke] = @[]
@@ -164,7 +164,7 @@ func spokesOf*(here: Frame): seq[Spoke] =
     let compounded = compound(here, target)
     if compounded.isNone:
       continue
-    # Compound hands follow's hand from one of lead's arms to
+    # Compound move hands follow's hand from one of lead's arms to
     # other, so it has arm going out and different one coming back.
     # Drawing is inked in both: one arm for line that only ever means one.
     named.add Spoke(

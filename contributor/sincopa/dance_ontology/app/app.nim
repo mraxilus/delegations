@@ -1,8 +1,8 @@
 ## Drive partner-work ontology from browser, as check on model.
 ##
 ##   Page is validator before it is toy: it shows frame couple
-##     is in, every frame one primitive away, and every frame that is *not*,
-##     with number of primitives it would take to get there.  Nothing
+##     is in, every frame one move away, and every frame that is *not*,
+##     with number of moves it would take to get there.  Nothing
 ##     outside offered list can be clicked, so move ontology does not
 ##     derive cannot be danced.
 ##   Only rendering lives here.  Frames and moves come from
@@ -78,7 +78,7 @@ var
   HISTORY: seq[Step] = @[]
   MOTION_NOW = Motion.Still  ## What drawings are doing at this instant.
   FRAME_TAKEN = none(Frame)  ## Frame being moved to, while couple are leaving.
-  FRAME_QUEUED = none(Frame)  ## Second move of compound, waiting for first.
+  FRAME_QUEUED = none(Frame)  ## Second move of compound move, waiting for first.
   GENERATION = 0  ## Which move is in flight, so older one can be dropped.
 
 
@@ -249,8 +249,8 @@ func button(action, value, classes, body: string): string =
 #[ Dance View ]#
 
 func renderMoves(source: Frame): string =
-  ## List what can be danced from here: every move, then every named compound.
-  ##   Compound is offered as one button because lead leads it as one
+  ## List what can be danced from here: every move, then every named compound move.
+  ##   Compound move is offered as one button because lead leads it as one
   ##     thing, and taking it dances both of its moves in turn rather than
   ##     jumping frame in between.
   ##   It is grouped and counted apart from moves so that page never
@@ -303,7 +303,7 @@ func renderMoves(source: Frame): string =
 
 
 func renderElsewhere(source: Frame): string =
-  ## List every frame that is not one primitive away, and way to it.
+  ## List every frame that is not one move away, and way to it.
   ##   This half of panel is what makes page validator: frame here
   ##     can be seen but not danced, and route says exactly what is missing.
   ##   Named step by step, in words moves panel uses for same
@@ -440,7 +440,7 @@ func renderSpokesView(current: Frame, motion: Motion, taken: Option[Frame]): str
     tag(
       "p",
       "class=\"note\"",
-      "A compound is two moves, so it goes out to " &
+      "A compound move is two moves, so it goes out to " &
         "the side, inked in both arms that it hands a hand between. Each name " &
         "says the hand of the follow that the move takes or lets go, in the " &
         "colour of that hand. The rest of the name is the arm of the lead, in " &
@@ -475,13 +475,13 @@ func renderMapView(current: Frame, motion: Motion, taken: Option[Frame]): string
     tag(
       "p",
       "class=\"note\"",
-      "A dashed curve is a compound, inked in both " &
+      "A dashed curve is a compound move, inked in both " &
         "arms, because it hands a hand from one arm to the other. The ink at " &
         "each end is the arm that acts on the way to it. The frames you can " &
         "reach come forward, the rest go quiet, and the ring moves along the " &
         "line you take. A frame ringed in a solid line is one move away, and a " &
-        "dashed ring is a compound, which is two moves away. Both can be " &
-        "clicked, and a compound dances its two moves in turn.",
+        "dashed ring is a compound move, which is two moves away. Both can be " &
+        "clicked, and a compound move dances its two moves in turn.",
     ))
 
 
@@ -599,7 +599,7 @@ const
   HELPER_GLYPHS: array[Helper, string] = [
     Helper.Collect: "&uarr;",
     Helper.Drop: "&darr;",
-  ]  ## Point primitive way every other drawing points it.
+  ]  ## Point move way every other drawing points it.
     ##   Collect adds connection and drop takes one away, and both
     ##     map and close drawing say that by direction: up page for
     ##     collect, since collect builds frame up, and down for drop.
@@ -608,7 +608,7 @@ const
   COMPOUND_GLYPHS: array[Compound, string] = [
     Compound.Place: "&#8644;",
     Compound.Cut: "&times;",
-  ]  ## Draw compound as what it does: place hands hand across, cut
+  ]  ## Draw compound move as what it does: place hands hand across, cut
     ## crosses one arm over other.
 
 
@@ -689,15 +689,15 @@ func renderMatrix(): string =
   ##       its ink, which is vocabulary map already uses, so same
   ##       three facts are said same way wherever page says them.
   ##   Every pair is answered.
-  ##     Pair no primitive joins used to be blank, which is half of chart
+  ##     Pair no move joins used to be blank, which is half of chart
   ##       saying nothing; it now carries how many moves apart two frames
   ##       are, which is question blank cell provokes.
   ##   Both axes run down tower, taking their order from drawing that
   ##     owns it, so that reading matrix top to bottom and reading map
   ##     top to bottom are same reading.
   ##     Down tower every collect runs from row to column *earlier*
-  ##       than it and every drop other way, so two primitives fall
-  ##       either side of diagonal and compounds -- which change what
+  ##       than it and every drop other way, so two moves fall
+  ##       either side of diagonal and compound moves -- which change what
   ##       is held without changing how much -- fall in blocks on it.
   ##     Structure is then in picture rather than in paragraph
   ##       under it.
@@ -784,7 +784,7 @@ func renderMatrix(): string =
           "column, inked in the arm of the lead that dances it. The frames are " &
           "ordered down the tower, the same way the map stacks them. So every " &
           "collect falls below the diagonal, and every drop above it. The " &
-          "compounds fall in the blocks along it, because they change what is " &
+          "compound moves fall in the blocks along it, because they change what is " &
           "held and not how much. A faded number is a pair that no single move " &
           "joins, and it says how far apart they are.",
       )))
@@ -848,7 +848,7 @@ proc dance(key: string)
 
 
 proc leadOn() =
-  ## Take second move of compound, if one is waiting on first.
+  ## Take second move of compound move, if one is waiting on first.
   let next = FRAME_QUEUED
   FRAME_QUEUED = none(Frame)
   if next.isSome:
@@ -869,7 +869,7 @@ proc dance(key: string) =
   ##     folding is taken at their word: state has not moved yet, so
   ##     fold begins again aimed at new frame.
   ##     Bumping generation is what drops first move's remaining
-  ##       phases, and is same guard that stops compound finishing itself
+  ##       phases, and is same guard that stops compound move finishing itself
   ##       after something else has been asked for.
   let target = fromKey(key)
   if target.isNone or classify(CURRENT, target.get).isNone:
@@ -878,7 +878,7 @@ proc dance(key: string) =
     return  # Asked twice for same move, which is once.
   if isMotionReduced():
     # Every phase collapses into change of state it was spelling out.  But
-    # compound is two changes of state, and phase that would have taken its
+    # compound move is two changes of state, and phase that would have taken its
     # second half has collapsed along with rest, so it is taken here instead
     # -- or page offers move and then does not make it, which is one
     # thing validator must never do.
@@ -915,7 +915,7 @@ proc dance(key: string) =
 
 
 proc danceCompound(key: string) =
-  ## Take named compound, move by move, so way through is danced.
+  ## Take named compound move, move by move, so way through is danced.
   ##   Lead thinks of it as one thing and ontology knows it is two, so
   ##     page dances both: second is queued behind first rather
   ##     than timed against it, and it starts as frame between them lands.

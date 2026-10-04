@@ -23,7 +23,7 @@ export Facing, name
 type
   Parts* = OrderedTable[string, string]  ## Every placed figure, in order it was built.
 
-  Family* {.pure.} = enum  ## Which round of positions one manner of turn walks.
+  Round* {.pure.} = enum  ## Which round of positions one manner of turn walks.
     FollowFacing,  ## Follow comes round where they stand.
     PairSwung  ## Axis swings and follow's facing with it.
   Manner* {.pure.} = enum  ## Four manners of turn couple can take.
@@ -314,7 +314,7 @@ func frameParts*(): Parts =
 
   # Orbit in two stages: follow travels, then world comes home.
   # Drawn twice -- orbit itself, where walker keeps their side to
-  # centre (rule 32), and compound, which is that orbit with
+  # centre (rule 32), and compound turn, which is that orbit with
   # counter-turn danced into it so walker keeps their own bearing.
   for (tag, is_locked) in [("orbit", true), ("compound", false)]:
     var stage_one = [0.0, 0.5, 1.0].mapIt(
@@ -337,7 +337,7 @@ func frameParts*(): Parts =
         half = some half,
       )
 
-  # What collapses, and what does not.  Compound -- orbit walked
+  # What collapses, and what does not.  Compound turn -- orbit walked
   # while turning other way, so walker keeps their own bearing --
   # lands in one picture whichever dancer walks it: only pair's axis has
   # swung, and drawing cannot say who walked.
@@ -348,10 +348,10 @@ func frameParts*(): Parts =
   result["collapse_follow_walked"] = renderFigure("f", HOLD, pose = some walked_by[Dancer.Follow])
   result["collapse_lead_walked"] = renderFigure("f", HOLD, pose = some walked_by[Dancer.Lead])
   doAssert result["collapse_follow_walked"] == result["collapse_lead_walked"],
-    "Two compounds draw two pictures; the drawing can say who walked."
+    "Two compound turns draw two pictures; the drawing can say who walked."
 
   # And orbit -- walker keeping their side to centre (rule 32) --
-  # lands where their partner's own axis turn lands.  Compound does not,
+  # lands where their partner's own axis turn lands.  Compound turn does not,
   # which is what pair of figures is here to show.
   var orbited = canonicalise(orbit(rest(), Dancer.Follow, 90, is_locked = true))
   orbited.ring = none(Ring)
@@ -363,7 +363,7 @@ func frameParts*(): Parts =
   doAssert result["collapse_orbit"] == result["collapse_axis"],
     "The collapse differs: orbit and axis draw two pictures."
   doAssert result["collapse_follow_walked"] != result["collapse_axis"],
-    "The compound lands on the axis turn, so the two are not two moves."
+    "The compound turn lands on the axis turn, so the two are not two moves."
 
   # And same four moves, running.
   const move_pixels = 1.3  ## Pixels one unit takes in frame page's moving cells.
@@ -460,13 +460,13 @@ const MANNERS*: array[Manner, tuple[
      "are drawn in motion.",
    who: Dancer.Lead, about: About.Orbit),
 ]  ## What each manner of turn is called on pages, who dances it, and
-  ## about what.  Which round it walks is not restated here: `FAMILY_OF`
+  ## about what.  Which round it walks is not restated here: `LUT_ROUND_BY_MANNER`
   ## carries that, measured -- second copy had crept into these rows and
   ## been one nothing read.
 
-const FAMILY_OF*: array[Manner, Family] = [
-  Family.FollowFacing, Family.PairSwung, Family.PairSwung,
-  Family.FollowFacing,
+const LUT_ROUND_BY_MANNER*: array[Manner, Round] = [
+  Round.FollowFacing, Round.PairSwung, Round.PairSwung,
+  Round.FollowFacing,
 ]  ## Which round each manner walks, measured and asserted below.
   ##   Orbit that faces centre turns walker as far as it carries
   ##     them (rule 32), so it comes to same thing as their partner's
@@ -683,8 +683,8 @@ func singleTurnParts*(): Parts =
           &"Two quarters draw alike; got `{quarter}` of `{manner}` on `{single_index}`."
         seen.add figure
 
-  # Manners of one family walk one round of positions, and manners of different
-  # families never meet except where every round meets, at rest.
+  # Manners of one round walk it together, and manners of different rounds never
+  # meet except where every round meets, at rest.
   for manner in Manner:
     for mate in Manner:
       var shared = 0
@@ -693,9 +693,9 @@ func singleTurnParts*(): Parts =
           if placeOf(quarterPose(manner, quarter)) ==
               placeOf(quarterPose(mate, other_quarter)):
             inc shared
-      let is_same_round = FAMILY_OF[manner] == FAMILY_OF[mate]
+      let is_same_round = LUT_ROUND_BY_MANNER[manner] == LUT_ROUND_BY_MANNER[mate]
       doAssert shared == (if is_same_round: QUARTERS_ROUND else: 1),
-        &"A manner left its family; got `{shared}` shared of `{manner}` and `{mate}`."
+        &"A manner left its round; got `{shared}` shared of `{manner}` and `{mate}`."
 
   # And nothing on this page wraps body: reach is connection's own
   # stroke width, and one drawn with arc has walked round body.
