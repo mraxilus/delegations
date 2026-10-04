@@ -12,6 +12,9 @@
 ##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
 ##     changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
+##   Fixers read each path whole, absolute and with `.` and `..` resolved (`layoutOf`), so test
+##     file, stub and umbrella read alike however command line names them; output prints path
+##     as named.
 ##   `outcomeOf` decides what run writes and prints from text alone, so suite drives it with
 ##     no file; `main` reads files, runs git, writes and prints.
 ##
@@ -73,6 +76,20 @@ func dialectOf*(path: string): Option[Dialect] =
   none(Dialect)
 
 
+func layoutOf*(path, directory: string): string =
+  ## Read path whole, as fixers read it: absolute, from directory it is named from, with `.` and
+  ##   `..` resolved.
+  if path.isAbsolute: path.normalizedPath else: normalizedPath(directory / path)
+
+
+func shownAs(reports: openArray[Report], path: string): seq[Report] =
+  ## Rename each report of one file to path as named, which output prints.
+  for report in reports:
+    var shown = report
+    shown.path = path
+    result.add shown
+
+
 func located(report: Report): string =
   ## Render location and rule of report: `path:line: <rule-id>`, line `0` left out.
   let location = if report.line == 0: report.path else: report.path & ":" & $report.line
@@ -88,19 +105,21 @@ func `<`(a, b: Report): bool =
 
 
 func outcomeOf*(
-  files: openArray[(string, string)], locked: openArray[string], is_check: bool
+  files: openArray[(string, string)], locked: openArray[string], is_check: bool, directory = "/"
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
-  ##   file `locked` names, or of no dialect, is passed over.
+  ##   file `locked` names, or of no dialect, is passed over. Fixers read each path whole from
+  ##   directory it is named from (`layoutOf`).
   var fixed, left, held: seq[Report]
   for (path, source) in files:
     let dialect = path.dialectOf
     if dialect.isNone or path in locked: continue
-    held.add heldOf(path, source, dialect.get)
-    let fix = formatted(path, source, dialect.get)
-    left.add fix.left & checkFormatting(path, fix.source, dialect.get)
+    let layout = path.layoutOf(directory)
+    held.add heldOf(layout, source, dialect.get).shownAs(path)
+    let fix = formatted(layout, source, dialect.get)
+    left.add shownAs(fix.left & checkFormatting(layout, fix.source, dialect.get), path)
     if fix.source == source: continue
-    fixed.add fix.fixed
+    fixed.add fix.fixed.shownAs(path)
     if not is_check: result.written.add (path, fix.source)
   let outcome = if is_check: " to fix" else: " fixed"
   for report in fixed.sorted: result.lines.add report.located & outcome
@@ -146,7 +165,12 @@ proc main*(): int =
       stderr.write USAGE
       return 2
   paths = paths.deduplicate
-  let outcome = outcomeOf(paths.mapIt((it, readFile(it))), paths.lockedOf, options.get.is_check)
+  let outcome = outcomeOf(
+    paths.mapIt((it, readFile(it))),
+    paths.lockedOf,
+    options.get.is_check,
+    getCurrentDir(),
+  )
   for (path, text) in outcome.written: writeFile(path, text)
   for line in outcome.lines: echo line
   outcome.code
