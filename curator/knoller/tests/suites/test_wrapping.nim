@@ -317,8 +317,12 @@ suite "Wrapping":
       "foo(\n  name = a +\n      b,\n)\n",  # named argument opens mid-line
       "foo(\n  x, a +\n      b,\n)\n",  # after other code
       "let x = a +\n    b\n",  # after statement head
+      "func f(): bool =\n  a or\n      b\n",  # bare value opens its statement line
     ]:
       check checkContinuations("a.nim", kept).len == 0  # four spaces past statement line
+    let bare = "func f(): bool =\n  a or\n  b\n"  # no bracket or comma sets value apart from body
+    check bare.fixed == bare.replace("\n  b", "\n      b")
+    check bare.fixed.isSettled
 
 
   test "call holding comment, long string spanning lines, or block stays":
