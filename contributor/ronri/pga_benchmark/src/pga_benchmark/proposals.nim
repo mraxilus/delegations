@@ -1,11 +1,11 @@
-## Read proposal exploration: argument, candidate change, claims, and proposal it builds on.
+## Read proposal exploration: argument, candidate change, claims, and proposals it builds on.
 ##   Proposal is future state of library, explored before Architect adopts any of it. One
 ##     directory each, same files for all, so next exploration starts from same frame:
 ##
 ##     ```
 ##     proposals/<NN>-<name>/proposal.md  argument, opening `# P<NN>: <title>`
 ##     proposals/<NN>-<name>/change.md    candidate edits to library at pin (`changes.nim`)
-##     proposals/<NN>-<name>/claims.json  status, proposal it builds on, claims evaluation checks
+##     proposals/<NN>-<name>/claims.json  status, proposals it builds on, claims evaluation checks
 ##     proposals/<NN>-<name>/*.nim        programs claim runs, named relative to directory
 ##     ```
 ##
@@ -28,11 +28,16 @@
 ##     resolves against proposal's directory, and page embeds SVG it names. SVG lives under
 ##     `pages/`, since layout admits hand-written markup there alone.
 ##
-##   Cost: builds-on chain is read one link deep per proposal; chain of three reads three.
+##   Proposals build on others as graph without cycles, as Architect ruled on 2026-10-04: each
+##     names those whose changes it needs, and is decided on its own. `dependenciesOf` lists
+##     what adopting proposal needs first; `dependentsOf` lists what rejecting it blocks.
+##
+##   Cost: graph is walked once per proposal and again per dependent, so `n` proposals cost
+##     `n²` walks; five cost twenty-five.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, options, strutils]
+import std/[json, options, sequtils, strutils]
 
 import ./[changes, guard, markdown]
 
@@ -49,7 +54,7 @@ type
     implemented_in*: string  ## Library commit that implements proposal; empty unless implemented.
     body*: seq[Block]  ## Blocks of `proposal.md` after title.
     change*: Change  ## Candidate edits; none where proposal carries no `change.md`.
-    builds_on*: string  ## Name of proposal whose change applies first; empty where none.
+    builds_on*: seq[string]  ## Names of proposals whose changes apply first; empty where none.
     claims*: JsonNode  ## Claims evaluation checks, in order.
   Figure* = object  ## Define one figure proposal embeds.
     caption*: string  ## Text under figure, as image alternative gives it.
@@ -149,7 +154,15 @@ func parseProposal*(
       message: "Claims are not JSON object; got none.",
     )
     return (proposal, findings)
-  proposal.builds_on = claims{"builds_on"}.getStr
+  let bases = claims{"builds_on"}
+  if bases.isNil or bases.kind != JArray or bases.getElems.anyIt(it.kind != JString):
+    findings.add Finding(
+      path: directory & "/claims.json",
+      message: "Builds on must list proposal names, as `[\"cayley-derivation\"]`; got `" &
+        (if bases.isNil: "none" else: $bases) & "`.",
+    )
+  else:
+    for base in bases: proposal.builds_on.add base.getStr
   let status = claims{"status"}.getStr
   if status notin WORDS_STATUS:
     findings.add Finding(
@@ -208,3 +221,75 @@ func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
         message: "Proposal numbers skip one, so it was freed; got `P" &
           align($number, WIDTH_NUMBER, '0') & "` missing.",
       )
+
+
+func visit(
+  proposals: openArray[Proposal];
+  name, directory: string;
+  walk: var seq[string];
+  order: var seq[Proposal];
+  findings: var seq[Finding];
+) =
+  ## Add proposal `name` to `order` after every proposal it builds on, depth first.
+  ##   `walk` holds names on path from root, so name met twice on it is cycle.
+  ##   Implemented proposal stops walk: library holds its edits.
+  if name in walk:
+    findings.add Finding(
+      path: directory,
+      message: "Proposals build on each other in cycle; got `" & name & "`.",
+    )
+    return
+  if order.anyIt(it.name == name): return
+  let found = proposals.filterIt(it.name == name)
+  if found.len == 0:
+    findings.add Finding(
+      path: directory,
+      message: "Proposal builds on no proposal here; got `" & name & "`.",
+    )
+    return
+  if found[0].isImplemented: return
+  if found[0].isFrozen:
+    findings.add Finding(
+      path: directory,
+      message: "Proposal builds on withdrawn proposal; got `" & found[0].citation & "`.",
+    )
+    return
+  walk.add name
+  for base in found[0].builds_on: visit(proposals, base, directory, walk, order, findings)
+  walk.setLen(walk.len - 1)
+  order.add found[0]
+
+
+func dependenciesOf*(
+  proposals: openArray[Proposal], proposal: Proposal
+): (seq[Proposal], seq[Finding]) =
+  ## List proposals adopting `proposal` needs first, each after those it builds on.
+  ##   Order is order changes apply in; implemented ones are absent, since library holds them.
+  ##   Unknown names, withdrawn ones and cycles add findings at `proposal`'s directory.
+  var
+    walk = @[proposal.name]
+    order: seq[Proposal]
+    findings: seq[Finding]
+  for base in proposal.builds_on:
+    visit(proposals, base, proposal.directory, walk, order, findings)
+  (order, findings)
+
+
+func dependentsOf*(proposals: openArray[Proposal], proposal: Proposal): seq[Proposal] =
+  ## List proposed proposals that rejecting `proposal` blocks, in number order.
+  ##   Blocked one needs `proposal` directly or through another.
+  for other in proposals:
+    if other.isFrozen or other.name == proposal.name: continue
+    if dependenciesOf(proposals, other)[0].anyIt(it.name == proposal.name): result.add other
+
+
+func basesToward*(
+  proposals: openArray[Proposal], proposal, target: Proposal
+): seq[Proposal] =
+  ## List bases `proposal` reaches `target` through, in number order.
+  ##   Empty where proposal builds on target directly, since no path needs naming.
+  if target.name in proposal.builds_on: return
+  for base in proposals:
+    if base.name in proposal.builds_on and
+        dependenciesOf(proposals, base)[0].anyIt(it.name == target.name):
+      result.add base

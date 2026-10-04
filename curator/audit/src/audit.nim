@@ -16,9 +16,9 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[options, os, sequtils, sets, strutils]
 import ./[
-  checker, dependencies, domains, duplicates, english, faces, findings, form, glossary, idioms,
-  justification, kinds, layout, names, plan, prompts, prose, provenance, record, toolchain,
-  tree, waits, workflows,
+  checker, coverage, dependencies, domains, duplicates, english, faces, findings, form, glossary,
+  idioms, justification, kinds, layout, names, plan, prompts, prose, provenance, record,
+  toolchain, tree, waits, workflows,
 ]
 
 export layout.Entry, layout.projectDirectories, layout.Tree
@@ -180,6 +180,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
         glossaries.add (e.path, e.content)
   result.add checkStandardsAcross(glossaries)
   result.add checkDuplicates(documents)
+
+  # Coverage reads project whole: faces it names anywhere against characters it writes
+  #   anywhere. Checker's own project names every face as data, so faces check's exemption
+  #   holds here too.
+  for directory in directories:
+    if directory != DRIVER_DIRECTORY: result.add tree.checkCoverage(directory)
 
   # TypeScript: project holding `.ts` carries `tsconfig.json` at its root, with its flags set.
   for directory in directories:

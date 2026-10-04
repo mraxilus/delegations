@@ -4,7 +4,8 @@ compose it. -->
 
 ## Intent
 
-<!-- One paragraph: what changes, and why. The title follows `type(scope): summary`. -->
+<!-- One paragraph: what changes, and why. The title follows `type(scope): summary`, and
+     `check-role` refuses one that does not. -->
 
 ## Scope
 

@@ -19,9 +19,14 @@
 ##   `SOL` is our own, hand-written and modelled same way, at origin rest are measured
 ##   from. Nothing stands at `POSITION_ORRERY`'s coordinate but Sol itself.
 ##   Every moon rings its planet in its real orbit plane; see `normalOfMoon`.
-##     Plane is algebra's construction: each node is meet of two planes, each lean is
-##     motor's turn. Equatorial to ecliptic stays coordinate conversion, as star's place is.
-##     Cost: two meets and three turns of dense multivectors for each moon, once at build.
+## Every place and every frame is algebra's construction, since where thing stands is its.
+##   Node is meet of two planes, bearing is meet of ground with vertical plane, each lean
+##   and each phase is motor's turn, and each body is point plus weightless direction.
+##   Only reading of catalogue's angles into direction stays closed form.
+##   Turns every star shares are built once, at compile time (`TURN_ECLIPTIC`).
+##   Cost: on JS backend largest size builds in about 150 ms against 21 ms in closed form,
+##     since each star pays one sandwich and one point of dense multivectors. Once at
+##     build, never per frame; measured pairs in `PROVENANCE.md`, Demo.
 ##   Stated simplifications, each one claim short of ephemeris: planets ring Sol in
 ##   ecliptic itself, inclinations dropped (Mercury's 7 degrees largest); where on its
 ##   ring any body stands is spread by rule, not read off date; neighbour systems lie flat.
@@ -88,8 +93,7 @@ type
 
   System* = object ## Define where one system stands and which way its ring is spun.
     reach*: float ## How far its sun stands from `POSITION_ORRERY`, in world units.
-    bearing*: float ## Which way it lies from that centre, in radians about vertical.
-    rise*: float ## How far it stands above or below centre's level, in radians.
+    toward*: Direction ## Which way it lies from that centre, unit, in ecliptic frame.
     spin*: float ## Where first planet stands on its ring, in radians.
 
   ScaleOrrery* {.pure.} = enum
@@ -247,10 +251,11 @@ const
     ##   Second finite line joins it to Earth, and horizon plane exists only because
     ##   Luna's ring is tipped out of ecliptic; load-bearing as `INDEX_SOL_EARTH` is.
 
-  SYSTEM_SOL = System(reach: 0.0, bearing: 0.0, rise: 0.0, spin: 0.4)
+  SYSTEM_SOL = System(reach: 0.0, toward: Direction(x: 1.0, y: 0.0, z: 0.0), spin: 0.4)
     ## Place Sol.
     ##   At `POSITION_ORRERY` itself, reach zero: Sol is origin every other system is
     ##   measured from, so it is one system not placed at all.
+    ##   `toward` is then any direction; x axis, so its ring counts from x.
     ##   Its ecliptic lies flat on plane z = 0, which world axes x and y span; every other
     ##   direction in scene is measured against it.
 
@@ -299,17 +304,6 @@ func directionEquatorial(ascension, declination: float): Direction =
   Direction(x: cos(up)*cos(along), y: cos(up)*sin(along), z: sin(up))
 
 
-func toEcliptic(d: Direction): Direction =
-  ## Turn equatorial direction into ecliptic frame, scene's own.
-  ##   Rotation about shared x axis, vernal equinox, by `OBLIQUITY_ECLIPTIC`: ecliptic's
-  ##   pole lands on +z, world axis z.
-  Direction(
-    x: d.x,
-    y: d.y*cos(OBLIQUITY_ECLIPTIC) + d.z*sin(OBLIQUITY_ECLIPTIC),
-    z: -d.y*sin(OBLIQUITY_ECLIPTIC) + d.z*cos(OBLIQUITY_ECLIPTIC),
-  )
-
-
 func planeAbout(normal: Direction): Multivector =
   ## Build plane through origin at right angles to `normal`, i.e. 𝐨 ∧ (𝐨 ∧ 𝐧)☆.
   ##   Weight expansion of origin by line along `normal`: plane holding point, square to line.
@@ -338,6 +332,49 @@ func turnedAbout(d, axis: Direction; radians: float): Direction =
   directionHorizon(toMultivector(d).carried(turn.get)).get(d)
 
 
+const
+  TURN_ECLIPTIC = turnAbout(1.0.e4 ∧ 1.0.e1, -OBLIQUITY_ECLIPTIC).get
+    ## Hold motor turning equatorial frame into ecliptic, about equinox, which is x axis.
+    ##   Built at compile time: every star and every moon turns by this one motor, and
+    ##     building it is most of what turn costs on JS backend (`PROVENANCE.md`, Demo).
+  TURN_ECLIPTIC_REVERSED = ~∘ TURN_ECLIPTIC
+    ## Hold its antireverse, so each turn pays sandwich alone.
+  TURN_QUARTER_UP = turnAbout(1.0.e4 ∧ 1.0.e3, 0.5*PI).get
+    ## Hold motor turning quarter turn about world up.
+    ##   Carries flat ring's bearing to its second direction.
+  TURN_QUARTER_UP_REVERSED = ~∘ TURN_QUARTER_UP ## Hold its antireverse.
+  AXIS_UP = 1.0.e4 ∧ 1.0.e3
+    ## Hold world's vertical axis through origin; joined with direction, it spans that
+    ##   direction's vertical plane.
+  PLANE_GROUND = groundPlane() ## Hold plane `z = 0`, which every bearing lies in.
+
+
+func turnedBy(d: Direction; motor, motor_reversed: Multivector): Direction =
+  ## Turn direction `d` through motor caller already holds, with its antireverse.
+  ##   Keeps `d` where read refuses, which rigid motion of horizon point never causes.
+  directionHorizon(toMultivector(d).carried(motor, motor_reversed)).get(d)
+
+
+func toEcliptic(d: Direction): Direction =
+  ## Turn equatorial direction into ecliptic frame, scene's own, through motor.
+  ##   Turn about shared x axis, vernal equinox, by `OBLIQUITY_ECLIPTIC` against right hand:
+  ##   ecliptic's pole lands on +z, world axis z.
+  ##   Change of frame is still rigid turn, which algebra owns.
+  turnedBy(d, TURN_ECLIPTIC, TURN_ECLIPTIC_REVERSED)
+
+
+func bearingOf*(toward: Direction): Option[Direction] =
+  ## Report level direction `toward` leans along, unit and outward: its bearing on ground.
+  ##   Meet of ground with plane joining origin, world up and `toward`; sense taken from
+  ##     `toward` by inner product, since meet's own runs with order of operands.
+  ##   None where `toward` stands straight up or down, or is no direction: it leans nowhere.
+  ##   Exported for `showOrrery`'s camera, and for suite.
+  let level = direction((AXIS_UP ∧ toMultivector(toward)) ∨ PLANE_GROUND)
+  if level.isNone: return
+  if innerOf(toMultivector(level.get), toMultivector(toward)) < 0.0: some(-level.get)
+  else: level
+
+
 func normalOfMoon*(moon: SolMoon): Direction =
   ## Report unit normal of moon's real orbit plane, in scene's ecliptic frame.
   ##   Elements name plane against reference plane whose pole is given: node is where
@@ -358,52 +395,40 @@ func normalOfMoon*(moon: SolMoon): Direction =
   toEcliptic(normal)
 
 
-func spanOfNormal(normal: Direction): (Direction, Direction) =
-  ## Report two unit directions spanning plane of unit `normal`, node first.
-  ##   First lies along plane's ascending node on ecliptic, where plane climbs through
-  ##   ground; second is first turned quarter turn about normal, so pair is right-handed
-  ##   about normal.
-  ##   Plane lying flat has no node, and takes x axis.
-  let first =
-    nodeAscending(normal, Direction(x: 0, y: 0, z: 1)).get(Direction(x: 1, y: 0, z: 0))
-  (first, turnedAbout(first, normal, 0.5*PI))
+func nodeOfRing(normal: Direction): Direction =
+  ## Report where ring of unit `normal` climbs through ecliptic, i.e. where its phase counts from.
+  ##   Ascending node on ground, so ring turned onward from it about `normal` climbs.
+  ##   Ring lying flat has no node, and takes x axis.
+  nodeAscending(normal, UP_WORLD).get(Direction(x: 1, y: 0, z: 0))
 
 
 
 #[ Construction ]#
 
 func sunOf(system: System): Position =
-  ## Report where system's own sun stands.
-  ##   Spherical about `POSITION_ORRERY`: `bearing` turns about vertical and `rise` lifts
-  ##   out of its level, so spreading systems spreads two angles and one distance.
-  let flat = system.reach*cos(system.rise)
-  Position(
-    x: POSITION_ORRERY.x + flat*cos(system.bearing),
-    y: POSITION_ORRERY.y + flat*sin(system.bearing),
-    z: POSITION_ORRERY.z + system.reach*sin(system.rise),
-  )
+  ## Report where system's own sun stands: `reach` out from `POSITION_ORRERY` along `toward`.
+  pointAlong(POSITION_ORRERY, system.toward, system.reach)
 
 
 func spanOf(system: System): (Direction, Direction) =
-  ## Report two directions system's own plane is spanned by.
+  ## Report two directions system's own plane is spanned by, its bearing first.
   ##   One place orientation is written down, so planet placed on its ecliptic is on very
   ##   plane scene holds.
-  ##   Flat: every system's plane is level with Sol's ecliptic, turned about vertical by
-  ##   its bearing so first planet's phase reads outward. Real orientation of any
-  ##   neighbour's plane is not on record, and none is claimed.
-  (
-    Direction(x: cos(system.bearing), y: sin(system.bearing), z: 0.0),
-    Direction(x: -sin(system.bearing), y: cos(system.bearing), z: 0.0),
-  )
+  ##   Flat: every system's plane is level with Sol's ecliptic. First direction is bearing of
+  ##   its sun, so first planet's phase reads outward; second is first turned quarter turn
+  ##   about world up. Real orientation of any neighbour's plane is not on record, and none
+  ##   is claimed.
+  ##   Sol leans nowhere, standing at origin, and takes x axis.
+  let along = bearingOf(system.toward).get(Direction(x: 1, y: 0, z: 0))
+  (along, turnedBy(along, TURN_QUARTER_UP, TURN_QUARTER_UP_REVERSED))
 
 
-func ringed(centre: Position; along, across: Direction; radius, angle: float): Position =
-  ## Report point on ring of `radius` about `centre`, at `angle` in plane two span.
-  Position(
-    x: centre.x + radius*(cos(angle)*along.x + sin(angle)*across.x),
-    y: centre.y + radius*(cos(angle)*along.y + sin(angle)*across.y),
-    z: centre.z + radius*(cos(angle)*along.z + sin(angle)*across.z),
-  )
+func ringed(centre: Position; node, normal: Direction; radius, angle: float): Position =
+  ## Report point on ring of `radius` about `centre`, `angle` on from `node` about `normal`.
+  ##   Node turned by phase through motor, then point that far along it from `centre`.
+  ##   Turned direction rather than point carried about ring's own axis: that axis stands
+  ##     up to 1e9 units out, and motor about it rounds point at that scale.
+  pointAlong(centre, turnedAbout(node, normal, angle), radius)
 
 
 func angleRing(spin: float; index, count: int): float =
@@ -507,16 +532,14 @@ func systemAt(star: Star): System =
   ##   Right ascension and declination are real direction, distance real length:
   ##   placement is coordinate conversion, not layout.
   ##     Catalogue frame is equatorial and scene's is ecliptic, so direction is turned
-  ##     by `toEcliptic` first; declination read straight as rise stood every star
+  ##     by `toEcliptic` first; declination read straight as height stood every star
   ##     23 degrees off where it is against Sol's planets.
   ##   `spin` is one thing here *not* real: where on its ring each planet stands.
   ##     Spread by star's own coordinates so no two systems' phases agree; deterministic,
   ##     stated as arbitrary.
-  let toward = toEcliptic(directionEquatorial(star.ascension, star.declination))
   System(
     reach: star.parsecs*ASTRONOMICAL_UNITS_PER_PARSEC,
-    bearing: arctan2(toward.y, toward.x),
-    rise: arcsin(clamp(toward.z, -1.0, 1.0)),
+    toward: toEcliptic(directionEquatorial(star.ascension, star.declination)),
     spin: star.declination,
   )
 
@@ -604,7 +627,7 @@ func constructSol(
       place =
         case body.role
         of Role.Sun: place_sol
-        of Role.Planet: ringed(place_sol, along, across, body.distance, angle)
+        of Role.Planet: ringed(place_sol, along, UP_WORLD, body.distance, angle)
         of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
     places[index] = place
     placed[index] = toMultivector(place)
@@ -619,8 +642,8 @@ func constructSol(
   var placement_moons: array[len(MOONS), Multivector]
   for index, moon in MOONS:
     let
-      (node, across_moon) = spanOfNormal(normalOfMoon(moon))
-      place = ringed(places[moon.parent], node, across_moon, radiusOfMoon(moon),
+      normal = normalOfMoon(moon)
+      place = ringed(places[moon.parent], nodeOfRing(normal), normal, radiusOfMoon(moon),
         SYSTEM_SOL.spin + 2.4*float(index))
     placement_moons[index] = toMultivector(place)
     scene.addObject(
@@ -671,7 +694,6 @@ func constructOrrery*(
     let
       system = systemAt(star)
       place_sun = sunOf(system)
-      (along, across) = spanOf(system)
       sun = toMultivector(place_sun)
       count_placed = placedOf(star)
     # No radius on record for any star or planet but our own; see `mesh.RADIUS_OBJECT_LEAST`.
@@ -679,6 +701,9 @@ func constructOrrery*(
       sun, star.name, LUT_INK_BY_ROLE[Role.Sun], now, radius = RADIUS_OBJECT_LEAST,
     )
     if count_placed == 0: continue
+    # Spanned only for star with planet to ring: most stars have none, and each span is
+    #   meet and sandwich of dense multivectors.
+    let (along, across) = spanOf(system)
 
     # Planet with no axis on record is left out; see `placedOf`.
     #   Guarded by block rather than `continue`: compiled to JS, `continue` here placed
@@ -687,7 +712,7 @@ func constructOrrery*(
     for which in 0 ..< star.planets:
       let planet = PLANETS[star.first + which]
       if planet.axis_semi_major > 0.0:
-        let place = ringed(place_sun, along, across, planet.axis_semi_major,
+        let place = ringed(place_sun, along, UP_WORLD, planet.axis_semi_major,
           angleRing(system.spin, which_placed, count_placed))
         inc which_placed
         scene.addObject(
@@ -742,21 +767,19 @@ func showOrrery*(
   scene.restoreFrom(initScene())
   constructOrrery(scene, scale, now)
   scene.replayFrom(now)
-  # Stand eye on reader's own bearing: sight less its height is its run, and eye goes back
-  #   along that run and up by `RISE_ORRERY_SHOWN` of it. Heights are inner products.
+  # Stand eye on reader's own bearing: eye goes back along it, and up by `RISE_ORRERY_SHOWN`
+  #   of each unit back. Bearing is meet of ground with plane holding sight and world up;
+  #   away is sum of two weightless points, read back unit.
   #   Sight straight up or down has no bearing, and reference sight stands in for it.
   let
-    forward = camera.frame.forward
-    flat = forward + (-innerOf(toMultivector(forward), toMultivector(UP_WORLD)))*UP_WORLD
-    run = sqrt(innerOf(toMultivector(flat), toMultivector(flat)))
-    bearing = if run > TOLERANCE_ABS: (1.0/run)*flat else: FORWARD_REFERENCE
-    away = (1.0/sqrt(1.0 + RISE_ORRERY_SHOWN*RISE_ORRERY_SHOWN))*(
-      -bearing + RISE_ORRERY_SHOWN*UP_WORLD
-    )
+    bearing = bearingOf(camera.frame.forward).get(FORWARD_REFERENCE)
+    away = directionHorizon(add(
+      wedge(-1.0, toMultivector(bearing)), wedge(RISE_ORRERY_SHOWN, toMultivector(UP_WORLD))
+    )).get(UP_WORLD)
   # Pitched camera is what solve reads: it carries new pivot and sight, and distance it
   #   carries does not reach solve.
   let pitched = camera.placed(
-    stanceFacing(POSITION_ORRERY + camera.distance*away, POSITION_ORRERY)
+    stanceFacing(pointAlong(POSITION_ORRERY, away, camera.distance), POSITION_ORRERY)
   )
   let fitted = distanceFitting(RADIUS_ORRERY, pitched, width, height, INSET_ORRERY_SHOWN)
   camera = camera.placed(stanceFacing(POSITION_ORRERY + fitted*away, POSITION_ORRERY))

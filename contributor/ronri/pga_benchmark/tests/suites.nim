@@ -17,7 +17,7 @@ import ../src/pga_benchmark/[
   bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
   notes, proposals, report,
 ]
-import ../src/pga_benchmark/pages/[docket, evaluation, proposal, search, shell]
+import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, search, shell]
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
   timesOf
@@ -1276,40 +1276,45 @@ suite "Internal: Proposals":
     directory_sign = "proposals/01-sign"
     record_sign = "# P01: Sign\n\nWhy.\n"
 
-  func numbered(number: int, status = "proposed"): Proposal =
-    ## Read well-formed proposal at number, with status.
+  func numbered(number: int, status = "proposed", bases: seq[int] = @[]): Proposal =
+    ## Read well-formed proposal at number, with status, building on proposals `bases` number.
     let
       directory = "proposals/" & align($number, 2, '0') & "-p" & $number
       heading = "# P" & align($number, 2, '0') & ": P\n"
     parseProposal(
       heading,
       "",
-      %*{"status": status, "implemented_in": "abc", "claims": []},
+      %*{
+        "status": status,
+        "implemented_in": "abc",
+        "builds_on": bases.mapIt("p" & $it),
+        "claims": [],
+      },
       directory,
     )[0]
 
 
-  test "proposal reads number, title, status, base proposal and claims of every known kind":
+  test "proposal reads number, title, status, base proposals and claims of every known kind":
     let
-      claims = %*{"status": "proposed", "builds_on": "base", "claims": [{"kind": "suites"},
+      claims = %*{"status": "proposed", "builds_on": ["base"], "claims": [{"kind": "suites"},
         {"kind": "build", "algebra": "rga6d", "metric": "peakmem", "at_most": 0.7},
         {"kind": "program", "path": "p.nim", "algebras": ["rga4d"]}]}
       (proposal, findings) = parseProposal(record_sign, "", claims, directory_sign)
     check findings.len == 0 and proposal.title == "Sign"  # well formed, citation read off
     check proposal.number == 1 and proposal.name == "sign"  # number, then name, from path
     check proposal.citation == "P01" and not proposal.isFrozen  # cited as RFC is
-    check proposal.builds_on == "base" and proposal.claims.len == 3  # chain and claims
+    check proposal.builds_on == @["base"] and proposal.claims.len == 3  # bases and claims
     check proposal.programsOf == @["proposals/01-sign/p.nim"]  # program beside its proposal
 
 
   test "unknown claim, missing title and claims that are not JSON are findings":
     let
-      odd = %*{"status": "proposed", "claims": [{"kind": "vibes"}]}
+      odd = %*{"status": "proposed", "builds_on": [], "claims": [{"kind": "vibes"}]}
       (_, unknown) = parseProposal(record_sign, "", odd, directory_sign)
       (_, untitled) = parseProposal(
         "Why.\n",
         "",
-        %*{"status": "proposed", "claims": []},
+        %*{"status": "proposed", "builds_on": [], "claims": []},
         directory_sign,
       )
       (_, broken) = parseProposal(record_sign, "", nil, directory_sign)
@@ -1320,11 +1325,16 @@ suite "Internal: Proposals":
 
   test "path without number, title without citation and unknown status are findings":
     let
-      claims = %*{"status": "proposed", "claims": []}
+      claims = %*{"status": "proposed", "builds_on": [], "claims": []}
       (_, unnumbered) = parseProposal(record_sign, "", claims, "proposals/sign")
       (_, uncited) = parseProposal("# Sign\n", "", claims, directory_sign)
       (_, unplaced) =
-        parseProposal(record_sign, "", %*{"status": "dreamt", "claims": []}, directory_sign)
+        parseProposal(
+          record_sign,
+          "",
+          %*{"status": "dreamt", "builds_on": [], "claims": []},
+          directory_sign,
+        )
     check unnumbered.len == 2  # path lacks number, so title cites none it could match
     check "`01-sign`" in unnumbered[0].message  # names form path needs
     check uncited.len == 1 and "`P01: `" in uncited[0].message  # title opens with citation
@@ -1336,7 +1346,7 @@ suite "Internal: Proposals":
       (bare, why) = parseProposal(
         record_sign,
         "",
-        %*{"status": "implemented", "claims": []},
+        %*{"status": "implemented", "builds_on": [], "claims": []},
         directory_sign,
       )
     check why.len == 1 and "`implemented_in`" in why[0].message  # commit it landed in
@@ -1350,6 +1360,53 @@ suite "Internal: Proposals":
     check checkNumbers([numbered(1), numbered(1)]).len == 1  # taken twice
     let skipped = checkNumbers([numbered(1), numbered(3)])
     check skipped.len == 1 and "`P02`" in skipped[0].message  # two was freed
+
+
+  test "builds on must list names, and absent list is finding, since proposal states its bases":
+    let
+      (_, single) = parseProposal(
+        record_sign,
+        "",
+        %*{"status": "proposed", "builds_on": "base", "claims": []},
+        directory_sign,
+      )
+      (_, silent) =
+        parseProposal(record_sign, "", %*{"status": "proposed", "claims": []}, directory_sign)
+    check single.len == 1 and "`\"base\"`" in single[0].message  # string is no list
+    check silent.len == 1 and "`none`" in silent[0].message  # silence states nothing
+
+
+  test "dependencies come each after its bases, once, so diamond applies four changes in order":
+    let
+      diamond = [numbered(1), numbered(2, bases = @[1]), numbered(3, bases = @[1]),
+        numbered(4, bases = @[3, 2])]
+      (order, findings) = dependenciesOf(diamond, diamond[3])
+    check findings.len == 0 and order.mapIt(it.name) == @["p1", "p3", "p2"]  # base first, once
+    check dependenciesOf(diamond, diamond[0])[0].len == 0  # root needs nothing
+    check dependentsOf(diamond, diamond[0]).mapIt(it.name) == @["p2", "p3", "p4"]  # downstream
+    check dependentsOf(diamond, diamond[2]).mapIt(it.name) == @["p4"]  # through one edge
+    check dependentsOf(diamond, diamond[3]).len == 0  # leaf blocks nothing
+    check basesToward(diamond, diamond[3], diamond[0]).mapIt(it.name) == @["p2", "p3"]
+      # reached through both, in number order
+    check basesToward(diamond, diamond[3], diamond[1]).len == 0  # direct base needs no path
+
+
+  test "implemented base drops out, and cycle, unknown or withdrawn base is finding":
+    let
+      landed = [numbered(1, "implemented"), numbered(2, bases = @[1])]
+      looped = [numbered(1, bases = @[2]), numbered(2, bases = @[1])]
+      lost = [numbered(1, bases = @[7])]
+      dropped = [numbered(1, "withdrawn"), numbered(2, bases = @[1])]
+      (cycle, why_cycle) = dependenciesOf(looped, looped[0])
+      (_, why_lost) = dependenciesOf(lost, lost[0])
+      (_, why_dropped) = dependenciesOf(dropped, dropped[1])
+    let (held, why_held) = dependenciesOf(landed, landed[1])
+    check held.len == 0 and why_held.len == 0  # library holds base
+    check dependentsOf(landed, landed[0]).len == 0  # rejecting landed one blocks nothing
+    check cycle.mapIt(it.name) == @["p2"] and why_cycle.len == 1  # walk stops, once
+    check "cycle" in why_cycle[0].message and why_cycle[0].path == looped[0].directory
+    check why_lost.len == 1 and "`p7`" in why_lost[0].message  # names unknown base
+    check why_dropped.len == 1 and "`P01`" in why_dropped[0].message  # cites withdrawn one
 
 
 
@@ -1461,21 +1518,25 @@ suite "Internal: Figures":
       figures = {"pages/map.svg": "<svg id=\"m\"></svg>"}.toTable
       body = bodyProposal(
         record,
+        [record],
         nil,
         initTable[string, string](),
         figures,
         initTable[string, JsonNode](),
         Spread(),
+        initTable[string, string](),
         "bd6b23c590d7",
         "",
       )
       bare = bodyProposal(
         record,
+        [record],
         nil,
         initTable[string, string](),
         initTable[string, string](),
         initTable[string, JsonNode](),
         Spread(),
+        initTable[string, string](),
         "bd6b23c590d7",
         "",
       )
@@ -1492,7 +1553,7 @@ suite "Internal: Figures":
       (record, _) = parseProposal(
         argument,
         "",
-        %*{"status": "proposed", "claims": []},
+        %*{"status": "proposed", "builds_on": [], "claims": []},
         "proposals/01-cayley-derivation",
       )
       paths = record.body.mapIt(it.figureOf(record.directory)).filterIt(it.isSome).mapIt(
@@ -1803,6 +1864,115 @@ suite "Internal: Pages":
       chips = chipsVerdict(document_evaluation, baselines, Spread(low: 0.9, high: 1.1))
     check "NaN gone in 1" in chips and "chip pass" in chips  # gain named, suites held
     check "no evaluation" in chipsVerdict(nil, baselines, Spread())  # absent evaluation is said
+
+
+
+suite "Internal: Proposal list":
+  func listed(number: int, status = "proposed", bases: seq[int] = @[]): Proposal =
+    ## Build proposal at number, titled after it, with status and bases by number.
+    let citation = "P" & align($number, 2, '0')
+    parseProposal(
+      "# " & citation & ": Title " & $number & "\n",
+      "",
+      %*{"status": status, "implemented_in": "abc", "builds_on": bases.mapIt("p" & $it),
+        "claims": []},
+      "proposals/" & align($number, 2, '0') & "-p" & $number,
+    )[0]
+
+  let
+    chain = @[listed(1), listed(2, bases = @[1]), listed(3, bases = @[2]), listed(4, "implemented"),
+      listed(5)]
+    urls = {"p1": "https://example.org/p1", "p3": ""}.toTable
+
+
+  test "proposal page states what it depends on and what rejection blocks, through which one":
+    let
+      body = bodyProposal(
+        chain[1],
+        chain,
+        nil,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        urls,
+        "bd6b23c590d7",
+        "",
+      )
+      root = htmlDependencies(chain, chain[0], urls)
+      leaf = htmlDependencies(chain, chain[2], urls)
+    check "<dt>Depends on</dt><dd><span><a href=\"https://example.org/p1\">P01</a> Title 1" &
+      "</span></dd>" in body  # base cited, linked and titled
+    check "<dt>Blocks if rejected</dt><dd><span>P03 Title 3</span></dd>" in body
+      # unpublished one cited, unlinked
+    check "<dt>Depends on</dt><dd><span class=\"none\">none</span></dd>" in root  # needs none
+    check "P03 Title 3 (through P02)" in root  # downstream named with path
+    check "P01</a> Title 1 (through P02)" in leaf  # upstream named with path
+    check "Blocks if rejected</dt><dd><span class=\"none\">none</span>" in leaf  # leaf blocks none
+
+
+  test "graph draws undecided proposals alone, one arrow per base, deeper ones further right":
+    let
+      graph = htmlGraph(chain)
+      decided = htmlGraph([listed(1, "implemented")])
+    check graph.count("class=\"node\"") == 4 and graph.count("class=\"edge\"") == 2
+      # P04 left out
+    check "<label class=\"node\" for=\"pick-p1\" title=\"P01: Title 1\"" in graph
+      # box selects proposal for reading
+    check "style=\"left: 8px; top: 8px; width: 264px" in graph  # P01 first column, first row
+    check "left: 356px; top: 8px" in graph and "left: 704px; top: 8px" in graph  # P02, then P03
+    check "left: 8px; top: 100px" in graph  # P05 under P01, since it builds on none
+    check decided == ""  # nothing undecided, nothing drawn
+
+
+  test "list page names every proposal, with standing, claims, dependencies and blocks":
+    let
+      evaluations =
+        {"p1": %*{"algebras": {}, "claims": [{"passed": true}, {"passed": false}]}}.toTable
+      body = bodyListing(
+        chain,
+        evaluations,
+        initTable[string, string](),
+        initTable[string, string](),
+        initTable[string, JsonNode](),
+        Spread(),
+        urls,
+        "bd6b23c590d7",
+        "",
+      )
+    check "5 proposals · 4 undecided · pga <code>bd6b23c</code>" in body  # counts in header
+    for number in 1..5:
+      check "Title " & $number & "</td>" in body  # every proposal, frozen one too
+    check "<span class=\"chip fail\">1 of 2 hold</span>" in body  # one claim fails
+    check "<span class=\"chip pass\">implemented</span>" in body  # frozen one stands so
+    check "<td>P02, P03</td></tr>" in body  # P01 blocks both downstream
+    check "<td><a href=\"https://example.org/p1\">P01</a>, P02</td>" in body  # P03 needs both
+    check "<div class=\"graph\"" in body  # graph drawn above table
+
+
+  test "list page holds every proposal whole behind its checkbox, none checked at rest":
+    let body = bodyListing(
+      chain,
+      initTable[string, JsonNode](),
+      initTable[string, string](),
+      initTable[string, string](),
+      initTable[string, JsonNode](),
+      Spread(),
+      urls,
+      "bd6b23c590d7",
+      "",
+    )
+    for number in 1..5:
+      let id = "pick-p" & $number
+      check "<input class=\"pick\" type=\"checkbox\" id=\"" & id & "\"><article" in body
+        # checkbox stands right before reading it shows
+      check body.count(" for=\"" & id & "\"") == 2 + (if number == 4: 0 else: 1)
+        # table row, close, and graph box where undecided
+      check "body:has(#" & id & ":checked) [for=\"" & id & "\"]" in body  # labels mark choice
+    check "\" checked" notin body and "checked=" notin body  # page opens with none selected
+    check "<h2>P02: Title 2</h2>" in body and "<h3>Claims</h3>" in body  # nested one level down
+    check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
+    check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
 
 
 
