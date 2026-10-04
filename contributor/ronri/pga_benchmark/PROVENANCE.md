@@ -977,8 +977,8 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 
 ## Known limitations
 
-- Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Of the
-  evaluations committed now, `multivector-align` alone measures all four.
+- Evaluations time rga4d and cga5d unless `--thorough` asks for rga3d and cga4d too. Each
+  evaluation committed now measures all four, from one run of `evaluate all --thorough`.
 - The `build` claim reads the peak memory and seconds that the compiler reports of itself, for
   the library alone. It compares two builds on one machine, and is no measurement of the
   machine.
