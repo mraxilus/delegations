@@ -10,6 +10,12 @@
 ##     fixers leave it and their findings stay for hand.
 ##   Answer of file: symbol each site resolves to (`def`), and global declarations named exactly
 ##     as each name asked (`globalSymbols`, read whole and filtered by Nim's own identity).
+##   Site of included file asks `dus`, whose answer opens on same definition, then lists uses:
+##     `def` there recompiles includer for each site (commit pin's `nimsuggest`, include query),
+##     where `dus` recompiles only what is dirty. Measured 2026-10-04 on this container, 20
+##     sites of shared suite of `rga_visualiser`: `def` 345 s, `dus` 50 s. Site of entry keeps
+##     `def`, since `dus` there would list every use of common symbol such as `float`. Cost:
+##     included file pays that list, in output and never in compile.
 ##   Routine returning value answers its own declared name with its implicit `result`, placed
 ##     at start of routine's line (both pins served, 2026-10-03); that answer reads as routine
 ##     declared at site, where every use of it resolves, so rename finds its declaration.
@@ -73,6 +79,9 @@ const
   RESULT_KIND = "skResult"  ## Kind of routine's implicit `result`.
   RESULT_SUFFIX = ".result"  ## Last part of qualified name of implicit `result`.
   ROUTINE_KIND = "routine"  ## Kind given routine declared at site whose answer is its result.
+  COMMAND_SITE = "def"  ## Command resolving site of entry itself: its definition alone.
+  COMMAND_INCLUDED = "dus"
+    ## Command resolving site of included file: its definition first, then each use of it.
 
 
 func symbolOf*(line: string): Option[Symbol] =
@@ -164,10 +173,12 @@ proc ask(entry: Entry, is_js: bool): Process =
   result = startProcess(tool, args = arguments, workingDir = entry.directory, options = {})
   let input = result.inputStream
   for query in entry.queries:
-    let file = entry.root / query.path
+    let
+      file = entry.root / query.path
+      command = if file == entry.file: COMMAND_SITE else: COMMAND_INCLUDED
     input.write "chkFile " & file & "\n"
     for (line, column) in query.sites:
-      input.write "def " & file & ":" & $line & ":" & $column & "\n"
+      input.write command & " " & file & ":" & $line & ":" & $column & "\n"
     for name in query.names: input.write "globalSymbols " & name & "\n"
   input.write "quit\n"
   input.close
