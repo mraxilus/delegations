@@ -72,7 +72,7 @@ proc inkOf(side, who: int): cstring =
   styleOf(names[side][who])
 
 const
-  NEAR = 5.0 * PI / 180.0  ## Within this of either end, joint reads as spent.
+  NEAR = 5.0 * PI / 180.0  ## Within this of either end, joint reads as strained.
   DOFS = [cstring"extend", cstring"across", cstring"twist",
           cstring"bend", cstring"wrist"]
   SIDES = [cstring"left", cstring"right"]
@@ -278,11 +278,11 @@ proc readout() =
           angle = angles[k].toFloat
           lower = sweep_shown.lower[k].toFloat
           upper = sweep_shown.upper[k].toFloat
-          span = (if upper - lower > 1e-9: upper - lower else: 1.0)
-          at = (angle - lower) / span
-          is_spent = angle <= lower + NEAR or angle >= upper - NEAR
+          width = (if upper - lower > 1e-9: upper - lower else: 1.0)
+          at = (angle - lower) / width
+          is_strained = angle <= lower + NEAR or angle >= upper - NEAR
         html = html & cstring"<div class='dof" &
-          (if is_spent: cstring" spent" else: cstring"") & cstring"'><span>" &
+          (if is_strained: cstring" strained" else: cstring"") & cstring"'><span>" &
           DOFS[dof] & cstring"</span><div class='track'><b style='left:" &
           toFixed(max(0.0, min(1.0, at)) * 100.0, 1) & cstring"%'></b></div><em>" &
           toFixed(angle * 180.0 / PI, 0) & cstring"°</em><u>" &

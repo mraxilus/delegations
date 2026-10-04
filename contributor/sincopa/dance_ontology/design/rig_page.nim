@@ -73,7 +73,7 @@ const HEAD_BODY = """
       <div class="ref" id="ref"></div>
       <div class="reads" id="reads"></div>
       <p class="note">A joint within five degrees of either end of its range reads
-        <span class="spent-key">spent</span>. Every range here is the rig's own value
+        <span class="strained-key">strained</span>. Every range here is the rig's own value
         for that arm. A shoulder's twist is mirrored between left and right, so its two
         ends belong to the arm and not to this table.</p>
     </aside>
@@ -133,10 +133,10 @@ const SHEET = """<style>
   transform: translateX(-50%); }
 .dof em { font-style: normal; text-align: right; color: var(--ink); }
 .dof u { text-decoration: none; color: var(--faint); font-size: 0.9em; }
-.dof.spent { color: var(--right); }
-.dof.spent em { color: var(--right); font-weight: 700; }
-.dof.spent .track b { background: var(--right); width: 0.3rem; }
-.spent-key { color: var(--right); font-weight: 700; }
+.dof.strained { color: var(--right); }
+.dof.strained em { color: var(--right); font-weight: 700; }
+.dof.strained .track b { background: var(--right); width: 0.3rem; }
+.strained-key { color: var(--right); font-weight: 700; }
 .note { font: 0.68rem/1.5 var(--sans); color: var(--faint);
   margin: 0.9rem 0 0; }
 .cells { margin-top: 2rem; }
