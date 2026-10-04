@@ -64,13 +64,20 @@ suite "Internal: The review page":
 
   test "the page counts the laws of every suite a stub runs":
     # Laws live in stubs and in suites stubs import, so count is taken from stubs
-    # themselves, rather than from where page's count looks.
+    # themselves, rather than from where page's count looks.  Every line that opens law
+    # counts, and each names its law by literal: name given at run time hides how many
+    # laws its line makes, so no count read off text can be right.
     var laws = 0
     for stub in walkFiles("tests/t*.nim"):
       for path in @[stub] & readFile(stub).suitesOf:
-        for line in readFile(path).splitLines:
-          if line.strip.startsWith("test \""):
-            inc laws
+        let lines = readFile(path).splitLines
+        for i, line in lines:
+          let opening = line.strip
+          if not opening.startsWith("test "): continue
+          inc laws
+          if not opening.startsWith("test \""):
+            checkpoint path & ":" & $(i + 1) & " names its law at run time: " & opening
+            fail()
     check laws > 0
     check $laws & " tests run over all " in renderReview()
 
