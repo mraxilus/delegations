@@ -1558,6 +1558,13 @@ which is once for each frame rather than once for each object. `picking.pickWalk
 and the frame before its walk, and `drawExtentFor` hands every reader one extent. It is the trade
 that `mesh.directionAcross` already makes.
 
+**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end reads
+`sight` after the ease moves the camera. It hands that eye and frame to the near reach, the origin
+of the records, the extent, the frustum and the transform. Each read of `eye` or `frame` lifts the
+motor and carries the reference stance through it again. A hold of the aim can move the camera, so a
+front-end reads again only where the motor moved. Rejected: the first read for the transform too,
+which then draws where the camera stood before the hold.
+
 **The view holds are keyed on what the camera holds, and never on what it reads out.**
 `SettingsFurniture` and the browser's `SettingsOverlay` both take the motor and the depth. Those are
 the stance itself, so two frames that agree on them agree on the eye, every axis, the pivot and both
@@ -1656,7 +1663,9 @@ speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interac
   slide, and a weightless one refused;
 - every seed object stands inside the opening frame, on six frames from upright phones to wide
   desktops. A frame wider than tall keeps 19 units;
-- the far bound reaches the scene's reach that its caller passes, however close the orbit is.
+- the far bound reaches the scene's reach that its caller passes, however close the orbit is;
+- the extent and the transform, given the camera alone, each lift its motor once;
+- the readers of a frame, given its eye and frame, lift the motor no more.
 
 Verified by driven checks:
 
@@ -1664,9 +1673,19 @@ Verified by driven checks:
 - the disc of the ecliptic reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up;
 - an anchor lookup takes 3.750 µs, against 488.250 µs keyed on the read-out pivot and angles;
 - the view section shows sixteen coefficients, and a typed one settles on a unit motor;
-- it reads speed with nothing selected, and distance with a selection.
+- it reads speed with nothing selected, and distance with a selection;
+- each frame build of the page lifts the motor once, still and while a drag orbits, where
+  `4a478976` lifts it 11 times.
 
-Assumed: that no reader wants a ceiling on the separation.
+Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz. It
+times batches of frame builds with the loop of the page stopped, in five interleaved pairs against
+`4a478976`. At the opening scene a still frame takes 0.11 to 0.13 ms against 0.26 to 0.31 ms. An
+orbiting frame takes 0.24 to 0.27 ms against 0.41 to 0.45 ms. At 5,038 objects they take 0.85 to
+0.90 and 1.62 to 1.76 ms, against 0.98 to 1.09 and 1.82 to 2.18 ms. Over 80 frames, the records
+and the transform that each frame hands the GPU match in both builds, bit for bit.
+
+Assumed: that no reader wants a ceiling on the separation. Assumed: that the desktop hands its five
+readers one read of the stance, which no check counts. Its frame time is unmeasured.
 
 ## Zoom
 
@@ -2248,6 +2267,9 @@ in the emitted JS. The tally is a write that `strictFuncs` counts as an effect, 
 `cast(noSideEffect)` covers that write alone. Rejected: `pointFrom` as a `proc`, which makes every
 `func` that reads a point a `proc` too. Rejected: a build flag, since an instrument is gated on its
 reader (STYLE.md).
+
+**`toMultivector` tallies each lift of a motor the same way.** `setCountingLifts` opens that tally,
+for the suite and for the driven check of the page, which reaches it through the bridge (Camera).
 
 **There is no debug layer, and nobody is to reintroduce it without an instruction.** A switch that
 drew every multivector a frame computed, as what it is, never helped to resolve anything.
