@@ -485,8 +485,9 @@ suite "Chapter 2":
 3. A call stays on its own line where it fits. A signature that does not fit first wraps its
    parameters onto one line of their own. Where that line does not fit either, it takes one
    parameter, or one group of a shared type, to a line. One item to a line takes a trailing
-   separator. A declarative call names its arguments, and so do a code-generating call and a
-   constructor. A positional call stays positional.
+   separator where the list would not fit joined on one line. A declarative call names its
+   arguments, and so do a code-generating call and a constructor. A positional call stays
+   positional.
 
    A call written one argument to a line, with a separator after its last argument, stays so
    where it would fit. That separator is the one mark of the split that the hand wants. A call
