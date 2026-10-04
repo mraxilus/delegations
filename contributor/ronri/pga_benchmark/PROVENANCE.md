@@ -673,9 +673,9 @@ left complement is written 𝐜̱, with U+0331, and the right one 𝐜̄, with U
 each bold maths letter and both marks, but it puts each mark beside the letter. So `htmlMarked`
 boxes each bold letter that carries a bar mark, together with its marks, and the shell draws the
 bar. The bar under stands where the face draws its macron below. The bar over stands 0.054em
-higher than the macron of the face, to clear the bold x-height. The mark stays in the text and a
-clip hides it, so copy and search read what the source says.
+higher than the macron of the face, to clear the bold x-height.
 
+The mark stays in the text and a clip hides it, so copy and search read what the source says.
 Each word that holds such a letter stays on one line, because a box is a place where a line may
 break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are. The
 figure of P01 draws its one bar in its SVG, as an underline, with the mark at size zero.
