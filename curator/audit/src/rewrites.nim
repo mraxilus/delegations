@@ -11,7 +11,9 @@
 ##     and one resolving to nothing refuses rename, since it cannot be proved either way. Edit
 ##     spans token as spelled there, since Nim reads `tmpDir` as `tmp_dir`. Answer naming
 ##     other identifier than token refuses too: it is call compiler placed on name, as `items`
-##     on `x` of `for e in x`, so what token names stays unknown.
+##     on `x` of `for e in x`, so what token names stays unknown. Old name inside braces of
+##     interpolated string (`&"…{x}…"`, `fmt"…"`) refuses, since strformat parses it from text
+##     and no token stands there to resolve or rename.
 ##     Named argument and field of constructor (`f(name = v)`, `T(name: v)`), which semantic
 ##     pass resolves to nothing, resolve through callee: they are declaration where it is
 ##     parameter or field of that callee, in file declaring callee;
@@ -69,6 +71,7 @@ const
     ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
   RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
+  INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
 
 
 func applied*(source: string, edits: openArray[Edit]): string =
@@ -82,6 +85,28 @@ func applied*(source: string, edits: openArray[Edit]): string =
 func isIdentical(a, b: Symbol): bool =
   ## Decide whether two answers name one symbol: one definition site.
   a.file == b.file and a.line == b.line and a.column == b.column
+
+
+func interpolatedLines(source, name: string): seq[int] =
+  ## Read zero-based line of each interpolated string naming `name` inside its braces, i.e.
+  ##   `&"…{x}…"` or `fmt"…{x}…"`: strformat parses it from text, so no name token stands there.
+  let tokens = source.tokens
+  for k, t in tokens:
+    if t.kind != TokenKind.Text or k == 0 or tokens[k - 1].after != t.first: continue
+    if tokens[k - 1].spelling(source) notin INTERPOLATORS: continue
+    var
+      depth = 0
+      word = ""
+      is_named = false
+    for c in t.spelling(source) & " ":
+      if c == '{': inc depth
+      elif c == '}' and depth > 0: dec depth
+      if depth > 0 and c in NAME_CHARS:
+        word.add c
+        continue
+      is_named = is_named or word.isSameName(name)
+      word = ""
+    if is_named: result.add t.line
 
 
 func isReached(symbol: Symbol): bool =
@@ -185,6 +210,10 @@ func planRename*(
 
   # Classify each site of old name; any site unresolved refuses rename whole.
   for (path, source) in files:
+    let interpolated = source.interpolatedLines(rename.name)
+    if interpolated.len > 0:
+      refuse "`" & path & ":" & $(interpolated[0] + 1) & "` names `" & rename.name &
+        "` inside interpolated string"
     let sites = source.sitesOf(rename.name)
     if sites.len == 0: continue
     if path notin answers or answers[path].reason.len > 0:
