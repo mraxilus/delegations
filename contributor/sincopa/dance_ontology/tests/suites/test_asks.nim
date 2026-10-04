@@ -11,7 +11,7 @@ import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
 from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
   restStance, trunkCapsules
-from ../../simulation/walk import stands, STYLES, twinOf
+from ../../simulation/walk import mirrored, stands, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
 from ../../src/dance_ontology/draw/route import overArm
@@ -169,6 +169,7 @@ suite "Internal: What each card asks of simulation":
       check frame_ask.who == chain_ask.who
       check frame_ask.turns == chain_ask.turns
       check frame_ask.is_either_way == chain_ask.is_either_way
+      check frame_ask.over == chain_ask.over
 
 
   test "page counts clockwise seen from above, and simulation anticlockwise":
@@ -309,6 +310,8 @@ suite "Internal: Simulation against reference":
     ##   crossing nearest lead along both connections.  Frame names its own (`Frame.over`).
     ##   Red with A11 asked A09's way about, measured 2026-10-02: left over right, where card
     ##     draws right over left.
+    ##   A16 and A17 draw C05 and C03, so they name what those name.  Red with A17 asked to
+    ##     cross nothing, measured 2026-10-04: it stood 0.44 m apart, where C03 crosses at 0.36.
     var named: seq[(string, Arm)]
     for i, target in FRAMES:
       if target.over.isSome:
@@ -318,7 +321,11 @@ suite "Internal: Simulation against reference":
     for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
       for i, wind in STEPS:
         if wind != 0.0: named.add (&"{tag}{i + 1:02}", armOf(overArm(wind)))
-    check named.len == 14
+    let chains = named
+    for (frame, chain) in [("A16", "C05"), ("A17", "C03")]:
+      for (key, arm) in chains:
+        if key == chain: named.add (frame, arm)
+    check named.len == 16
     for (key, arm) in named:
       let
         ask = ask_by_key[key]
@@ -373,7 +380,8 @@ suite "Internal: Simulation against reference":
       not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
         other.links == links and other.turns == turns and
         other.isRestAway == ask.isRestAway and other.head == ask.head and
-        other.is_either_way == ask.is_either_way and other.who == ask.who
+        other.is_either_way == ask.is_either_way and other.who == ask.who and
+        other.over == mirrored(ask.over)
     var twins, keeping = 0
     for still in kept["stills"]:
       let
