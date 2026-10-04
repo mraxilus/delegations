@@ -1,9 +1,10 @@
-## Enforce words of declared names (Article V.3, V.5, V.6, V.9, V.10; GUIDE.md, Names).
-##   Reads declarations alone: binding (`let`, `var`, `const`, `for`), routine, type, field and
-##     parameter. Name library owns reaches code only at use site, which is never read, so
-##     library clause of V.9 holds by construction. Foreign binding, i.e. routine carrying
-##     `importc`, `importcpp`, `importjs` or `dynlib`, declares library's own name and is
-##     skipped for same reason; its parameters are ours and are read.
+## Enforce declared names (Article III.5, V.1, V.3-V.6, V.9-V.12; GUIDE.md, Names).
+##   Reads declarations alone: binding (`let`, `var`, `const`, `for`, `except … as`), routine,
+##     type, field, parameter, enum member and placeholder in generic brackets. Name library
+##     owns reaches code only at use site, which is never read, so library clause of V.9 holds
+##     by construction. Foreign binding, i.e. routine carrying `importc`, `importcpp`,
+##     `importjs` or `dynlib`, declares library's own name and is skipped for same reason; its
+##     parameters are ours and are read.
 ##   Word is run between `_` and case changes; acronym is run of two or more capitals inside
 ##     camel or Pascal name. SCREAMING name is all capitals, so its acronyms cannot be told
 ##     from words and hold by reading.
@@ -11,35 +12,84 @@
 ##     for prose; word outside table passes, and reading catches rest. `JARGON` is closed list
 ##     of V.6. Caller adds symbols glossaries list under `## Standards` as code spans, and
 ##     their `**Term**` names, through `glossaryExemptions`.
+##   V.1, V.11, V.12: case follows kind. Type and enum member are Pascal, routine camel, local,
+##     parameter and field snake, global SCREAMING, placeholder one capital. Pascal opens on
+##     capital, camel and snake on none; Pascal and camel hold no `_`, snake no capital,
+##     SCREAMING no lowercase. One letter fits by its own case: capital passes type, global and
+##     placeholder, lowercase passes routine, local, parameter and field. Plain ASCII is no
+##     notation, so capital local is finding (Architect's ruling).
+##   III.5: source's notation is variable's name holding non-ASCII letter: binding, field or
+##     parameter. It holds over case at any scope, so its case is unread; at module scope it
+##     holds only for immutable global, so mutable global in notation is finding. Type,
+##     routine, member and placeholder are no variable, and their case is read; mathematical
+##     letters carry no case in `std/unicode`, so `letterCase` reads them by block. Operator is
+##     backticked, so it is never read as name.
+##   V.10: reach of binding is decided in `reachOf` alone. Global where every enclosing block
+##     opens no scope (`when` chain, bare `let`, `var`, `const` or `type`); local under routine
+##     or any other block; entry inside top-level `when isMainModule:` and outside routine.
+##     Entry block holds no binding, so binding there is one finding, its case unjudged.
+##     Global shares no word with type, compared without case and underscores, as Nim does.
+##   V.12: parameter typed `typedesc` is parameter, so snake (Architect's ruling); one capital
+##     is for placeholder in brackets after routine or type name, and after `concept`.
+##   V.4: boolean binding, field or parameter opens `is`, `as`, `should`, `found` or `has`,
+##     with word after it. `func` returning `bool` is predicate and opens `is`. `proc`
+##     returning `bool` reports success of action (V.3), so it is unread (Architect's ruling);
+##     `func` writing `var` parameter is action too, and is unread for same reason.
 ##   V.3: routine never opens with `get`, `compute` or `new`. V.5: name opening `lut` reads
-##     `lut_<value>_by_<key>`. V.10: module-level global shares no word with type, compared
-##     without case and underscores, as Nim compares them.
+##     `lut_<value>_by_<key>`.
 ##
 ##   V.6 has fixer (`koch fix`): `abbreviationRenames` reads each declaration coining
 ##     abbreviation and its full spelling, case kept, as check reads it, and rename planner of
 ##     `rewrites.nim` renames it at every use through semantic pass, or refuses with reason.
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
-##     signature is joined to its closing parenthesis; enum member is unread (its case is V.1,
-##     unheld here); object variant branch is read as fields where it sits in `type` block.
-##   Cost: generic parameter in brackets is unread; V.12 holds by reading.
+##     signature is joined to its closing parenthesis; object variant branch is read as fields
+##     where it sits in `type` block; tuple type in brackets, and name `{.inject.}` makes, are
+##     unread.
+##   Cost: boolean is read only where declaration shows it: type `bool`, or value literal
+##     `true` or `false`. Boolean from call or expression holds by reading.
+##   Cost: `in` calls `contains` by spelling, so predicate of that name keeps host's name.
+##   Cost: Pascal name of capitals alone, e.g. `ANTI`, reads as acronym and passes; V.9 and
+##     reading hold it. Letter outside `std/unicode` case tables and mathematical block carries
+##     no case, so it fits every casing.
 ##   Cost: word table is short list; `english.nim` pays same cost.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
+from std/unicode import isLower, isUpper, Rune, runes
 import ./[findings, glossary, tokens]
 
 
 type
   NameKind* {.pure.} = enum  ## Define what declaration introduces name.
-    Binding, Routine, Type, Field, Parameter
+    Binding, Routine, Type, Field, Parameter, Member, Placeholder
+
+  Reach* {.pure.} = enum  ## Define how far binding reaches, which fixes its case (V.1, V.10).
+    Local  ## Inside routine or block opening scope; every name not binding.
+    Global  ## At module level, under blocks opening no scope.
+    Entry  ## Inside entry block, i.e. top-level `when isMainModule:`, outside routine.
+
+  Casing* {.pure.} = enum  ## Define case one kind of name takes (V.1, V.11, V.12).
+    Pascal, Camel, Snake, Screaming, Letter
+
+  LetterCase {.pure.} = enum  ## Define case of one letter; digit and symbol carry none.
+    None, Lower, Upper
 
   Declared* = object  ## Define one declared name with its place.
     name*: string
     line*: int
     kind*: NameKind
-    is_global*: bool  ## Binding at module level, i.e. no indent.
+    reach*: Reach  ## Binding's reach; `Local` for every other kind.
+    is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
+    is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
+
+  Opener = object  ## Define block enclosing line, by its opening line.
+    indent: int
+    head: string  ## First word of opening line.
+    is_scope_free: bool  ## Block opens no scope: `when` chain, or bare section keyword.
+    is_entry: bool  ## Top-level `when isMainModule:`, where module runs as program.
+    substituted: seq[string]  ## Parameters of template, which its body names in place of argument.
 
 
 const
@@ -52,12 +102,30 @@ const
   JARGON* = ["lut", "min", "max", "src", "prev", "curr", "len"]
     ## Closed list of V.6, which Architect alone extends.
   VERBS_BANNED* = ["get", "compute", "new"]  ## First words routine never takes (V.3).
+  BOOLEAN_PREFIXES* = ["is", "as", "should", "found", "has"]
+    ## First words boolean takes: state, interpretation, policy, search outcome, possession (V.4).
+  VARIABLE_KINDS = {NameKind.Binding, NameKind.Field, NameKind.Parameter}
+    ## Kinds naming variable, which source's notation may name at any scope (III.5).
+  HOST_PREDICATES = ["contains"]
+    ## Predicates host calls by spelling: `in` and `notin` call `contains`.
   ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
     ## Keywords opening routine declaration.
-  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or block.
-  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters identifier is built from.
+  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or section.
+  SECTION_KEYWORDS = ["let", "var", "const", "type"]
+    ## Keywords that, alone on line, open section and no scope.
+  CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
+  CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
+  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
+    ## ASCII characters identifier is built from; raw string prefix is one of them.
+  NAME_CHARS = IDENT_CHARS + {'\x80'..'\xFF'}
+    ## Bytes declared name is built from: Nim reads every non-ASCII byte as letter.
   FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
     ## Pragmas marking routine as binding of library's own name.
+  CASE_RULES: array[Casing, string] = [
+    "is `PascalCase`", "is `lowerCamelCase`", "is `snake_case`", "is `SCREAMING_SNAKE_CASE`",
+    "is one capital letter",
+  ]
+    ## Predicate of each casing, as finding states it.
 
 
 func blanked(source: string, should_keep_comments: bool): string =
@@ -152,7 +220,7 @@ func identifierAt(text: string, start: int): string =
   var i = start
   while i < text.len and text[i] == ' ': inc i
   var j = i
-  while j < text.len and text[j] in IDENT_CHARS: inc j
+  while j < text.len and text[j] in NAME_CHARS: inc j
   text[i..<j]
 
 
@@ -176,20 +244,142 @@ func splitTop(text: string, separators: set[char]): seq[string] =
   result.add piece
 
 
-func parameterNames(signature: string): seq[string] =
-  ## Read parameter names of text between parentheses: `x, y: T; z = 1` gives `x`, `y`, `z`.
-  for p in signature.splitTop({',', ';'}):
-    let name = p.nameOf
-    if name.len > 0 and name != "_" and name != "var": result.add name
+func topIndex(text: string, mark: char, start = 0): int =
+  ## Find first `mark` outside brackets from index on; `-1` where none.
+  var depth = 0
+  for k in start..<text.len:
+    let c = text[k]
+    if c in {'(', '[', '{'}: inc depth
+    elif c in {')', ']', '}'}: dec depth
+    elif c == mark and depth == 0: return k
+  -1
+
+
+func closing(text: string, open: int): int =
+  ## Find bracket closing one opened at index; `-1` where text ends first.
+  var depth = 0
+  for k in open..<text.len:
+    if text[k] in {'(', '[', '{'}: inc depth
+    elif text[k] in {')', ']', '}'}:
+      dec depth
+      if depth == 0: return k
+  -1
+
+
+func bindingSide(text: string): string =
+  ## Cut binding text at its first `=` outside brackets, so value never reads as name.
+  let at = text.topIndex('=')
+  if at < 0: text else: text[0..<at]
+
+
+func isBooleanShown(text: string): bool =
+  ## Decide whether declaration shows boolean: type `bool`, or value literal `true` or `false`.
+  let
+    at = text.topIndex('=')
+    side = text.bindingSide
+    colon = side.topIndex(':')
+    value = if at < 0: "" else: text[at + 1 .. ^1].strip
+  (colon >= 0 and side[colon + 1 .. ^1].strip == "bool") or value in ["true", "false"]
+
+
+func bindingNames(text: string): seq[string] =
+  ## Read names text binds: `a`, `a, b: T`, `(a, b) = v`, `a {.used.} = v`.
+  for piece in text.bindingSide.strip(chars = {' ', '(', ')'}).splitTop({','}):
+    let name = piece.strip(chars = {' ', '(', ')'}).nameOf
+    if name.len > 0 and name != "_": result.add name
+
+
+func parameterNames(signature: string): seq[(string, bool)] =
+  ## Read parameters of text between parentheses, each with whether it shows boolean.
+  ##   `x, y: T; z = false` gives `x`, `y` and `z`, which is boolean; group shares its type.
+  let pieces = signature.splitTop({',', ';'})
+  var group: seq[string]
+  for k, piece in pieces:
+    let name = piece.nameOf
+    if name.len > 0 and name != "_" and name != "var": group.add name
+    if ':' in piece or '=' in piece or k == pieces.high:
+      let is_boolean = piece.isBooleanShown
+      for member in group: result.add (member, is_boolean)
+      group = @[]
+
+
+func isWriting(signature: string): bool =
+  ## Decide whether text between parentheses takes `var` parameter, which routine writes.
+  for piece in signature.splitTop({',', ';'}):
+    let at = piece.topIndex(':')
+    if at >= 0 and piece[at + 1 .. ^1].identifierAt(0) == "var": return true
+  false
+
+
+func placeholderNames(text: string): seq[string] =
+  ## Read placeholders of generic brackets or concept: `T`, `A, B: X`, `var C`, `N: static int`.
+  for piece in text.splitTop({',', ';'}):
+    var words = piece.strip.splitWhitespace
+    while words.len > 1 and words[0] in CONCEPT_MODIFIERS: words.delete(0)
+    if words.len == 0: continue
+    let name = words.join(" ").nameOf
+    if name.len > 0: result.add name
+
+
+func readType(text: string, line: int, names: var seq[Declared]): NameKind =
+  ## Read type's name and placeholders, and enum's members on its line; give kind lines below
+  ##   declare: `Member` under enum, `Field` under object or alias, `Placeholder` under concept.
+  let name = text.identifierAt(0)
+  if name.len == 0: return NameKind.Field
+  names.add Declared(name: name, line: line, kind: NameKind.Type)
+  var k = name.len
+  if k < text.len and text[k] == '*': inc k
+  if k < text.len and text[k] == '[' and text.closing(k) > k:
+    for p in text[k + 1..<text.closing(k)].placeholderNames:
+      names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
+  let
+    at = text.topIndex('=')
+    value = if at < 0: "" else: text[at + 1 .. ^1].strip
+    head = value.identifierAt(0)
+  if head == "enum":
+    for m in value[head.len .. ^1].splitTop({','}):
+      if m.nameOf.len > 0: names.add Declared(name: m.nameOf, line: line, kind: NameKind.Member)
+    return NameKind.Member
+  if head == "concept":
+    for p in value[head.len .. ^1].placeholderNames:
+      names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
+    return NameKind.Placeholder
+  NameKind.Field
+
+
+func isOpening(lines: openArray[string], i: int): bool =
+  ## Decide whether next non-blank line sits deeper than line `i`, i.e. line opens block.
+  var k = i + 1
+  while k < lines.len and lines[k].strip.len == 0: inc k
+  k < lines.len and lines[k].indentOf > lines[i].indentOf
+
+
+func isSubstituted(openers: openArray[Opener], name: string): bool =
+  ## Decide whether enclosing template substitutes name, so declaration there declares argument.
+  openers.anyIt(name in it.substituted)
+
+
+func reachOf(openers: openArray[Opener], is_scoped = false): Reach =
+  ## Decide reach of binding under enclosing blocks, outermost first (V.1, V.10).
+  ##   Routine makes local, entry block makes entry, and so does binding opening own scope
+  ##     there (`for`, `except … as`). Global needs every enclosing block to open no scope.
+  if openers.anyIt(it.head in ROUTINE_KEYWORDS): return Reach.Local
+  if openers.anyIt(it.is_entry): return Reach.Entry
+  if is_scoped or not openers.allIt(it.is_scope_free): return Reach.Local
+  Reach.Global
 
 
 func declarations*(source: string): seq[Declared] =
-  ## Read every declared name of Nim source with its line and kind.
+  ## Read every declared name of Nim source with its line, kind and reach.
   let lines = source.codeOnly.splitLines
   var
-    block_indent = -1
+    openers: seq[Opener]
+    section_indent = -1
+    section_child = -1
+    is_section_mutable = false
     type_indent = -1
     object_indent = -1
+    enum_indent = -1
     i = 0
   while i < lines.len:
     let
@@ -200,93 +390,190 @@ func declarations*(source: string): seq[Declared] =
     if s.len == 0:
       inc i
       continue
-    if block_indent >= 0 and indent <= block_indent: block_indent = -1
+
+    # Close blocks line leaves; branch of `when` chain keeps chain's freedom from scope.
+    var closed = Opener(indent: -1)
+    while openers.len > 0 and openers[^1].indent >= indent:
+      let top = openers.pop
+      if top.indent == indent: closed = top
+    if section_indent >= 0 and indent <= section_indent:
+      section_indent = -1
+      section_child = -1
     if type_indent >= 0 and indent <= type_indent: type_indent = -1
     if object_indent >= 0 and indent <= object_indent: object_indent = -1
+    if enum_indent >= 0 and indent <= enum_indent: enum_indent = -1
     let
       word = s.identifierAt(0)
       rest = s[word.len .. ^1]
-    if word in ROUTINE_KEYWORDS and rest.len > 0 and rest[0] == ' ':
-      let name = rest.identifierAt(0)
-      # Signature runs to matching parenthesis, across lines; pragmas follow it on same line.
-      var
-        text = s
-        j = i
-      while text.count('(') > text.count(')') and j + 1 < lines.len:
-        inc j
-        text.add lines[j]
-      # Pragma block may open on its own line after balanced signature.
-      if j + 1 < lines.len and lines[j + 1].strip.startsWith("{."):
-        inc j
-        text.add lines[j]
-      let is_foreign = FOREIGN_PRAGMAS.anyIt(it in text)
-      if name.len > 0 and not is_foreign:
-        result.add Declared(name: name, line: one, kind: NameKind.Routine)
-      let open = text.find('(')
-      if open >= 0:
+      is_chain = word in ["elif", "else"] and closed.indent == indent and
+        closed.is_scope_free and closed.head in CHAIN_WORDS
+      opener = Opener(
+        indent: indent,
+        head: word,
+        is_scope_free: word == "when" or is_chain or (s == word and word in SECTION_KEYWORDS),
+        is_entry: indent == 0 and word == "when" and "isMainModule" in s,
+      )
+      is_opening = lines.isOpening(i)
+    var
+      next = i + 1
+      substituted: seq[string]
+
+    block reading:
+      if word in ROUTINE_KEYWORDS and rest.len > 0 and rest[0] == ' ':
+        # Signature runs to matching parenthesis, across lines; pragmas follow it on same line.
         var
-          depth = 0
-          close = -1
-        for k in open..<text.len:
-          if text[k] == '(': inc depth
-          elif text[k] == ')':
-            dec depth
-            if depth == 0:
-              close = k
-              break
-        if close > open:
-          for p in text[open + 1..<close].parameterNames:
-            result.add Declared(name: p, line: one, kind: NameKind.Parameter)
-      i = j + 1
-      continue
-    if word == "type":
-      if rest.strip.len == 0: type_indent = indent
-      else:
-        let name = rest.identifierAt(0)
-        if name.len > 0: result.add Declared(name: name, line: one, kind: NameKind.Type)
-        object_indent = indent
-      inc i
-      continue
-    if type_indent >= 0 and indent == type_indent + 2:
-      let name = s.identifierAt(0)
-      if "=" in s and name.len > 0:
-        result.add Declared(name: name, line: one, kind: NameKind.Type)
-        object_indent = indent
-      inc i
-      continue
-    if object_indent >= 0 and indent > object_indent:
-      let name = s.identifierAt(0)
-      if ":" in s and name.len > 0 and name notin ["of", "case", "else", "elif", "when"]:
-        result.add Declared(name: name, line: one, kind: NameKind.Field)
-      inc i
-      continue
-    if word in BINDING_KEYWORDS:
-      if rest.strip.len == 0: block_indent = indent
-      else:
-        for name in rest.strip(chars = {' ', '(', ')'}).splitTop({','}):
-          let n = name.nameOf
-          if n.len > 0 and n != "_":
-            result.add Declared(name: n, line: one, kind: NameKind.Binding, is_global: indent == 0)
-      inc i
-      continue
-    if block_indent >= 0 and indent > block_indent:
-      let n = s.strip(chars = {'(', ')'}).nameOf
-      if n.len > 0 and n != "_" and (":" in s or "=" in s):
-        result.add Declared(
-          name: n,
-          line: one,
-          kind: NameKind.Binding,
-          is_global: block_indent == 0,
-        )
-      inc i
-      continue
-    if word == "for":
-      let at = rest.find(" in ")
-      if at > 0:
-        for name in rest[0..<at].split(','):
-          let n = name.nameOf
-          if n.len > 0 and n != "_": result.add Declared(name: n, line: one, kind: NameKind.Binding)
-    inc i
+          text = s
+          j = i
+        while text.count('(') > text.count(')') and j + 1 < lines.len:
+          inc j
+          text.add lines[j]
+        # Pragma block may open on its own line after balanced signature.
+        if j + 1 < lines.len and lines[j + 1].strip.startsWith("{."):
+          inc j
+          text.add lines[j]
+        next = j + 1
+
+        # Walk name, placeholders, parameters, then return type; backticked name is operator.
+        var k = word.len
+        while k < text.len and text[k] == ' ': inc k
+        var name = ""
+        if k < text.len and text[k] == '`':
+          let close = text.find('`', k + 1)
+          k = (if close < 0: text.len else: close + 1)
+        else:
+          name = text.identifierAt(k)
+          k += name.len
+        if k < text.len and text[k] == '*': inc k
+        if k < text.len and text[k] == '[' and text.closing(k) > k:
+          for p in text[k + 1..<text.closing(k)].placeholderNames:
+            result.add Declared(name: p, line: one, kind: NameKind.Placeholder)
+          k = text.closing(k) + 1
+        while k < text.len and text[k] == ' ': inc k
+        var is_writing = false
+        if k < text.len and text[k] == '(' and text.closing(k) > k:
+          let signature = text[k + 1..<text.closing(k)]
+          for (p, is_boolean) in signature.parameterNames:
+            if word == "template": substituted.add p
+            result.add Declared(
+              name: p,
+              line: one,
+              kind: NameKind.Parameter,
+              is_boolean: is_boolean,
+            )
+          is_writing = signature.isWriting
+          k = text.closing(k) + 1
+
+        # Predicate is `func` returning `bool` that writes no `var` parameter; else action.
+        let
+          tail = text[min(k, text.len) .. ^1].strip
+          is_predicate = word == "func" and not is_writing and tail.startsWith(":") and
+            tail.identifierAt(1) == "bool"
+          is_foreign = FOREIGN_PRAGMAS.anyIt(it in text)
+        if name.len > 0 and not is_foreign:
+          result.add Declared(
+            name: name,
+            line: one,
+            kind: NameKind.Routine,
+            is_boolean: is_predicate,
+          )
+        break reading
+
+      if word == "type" and rest.strip.len == 0:
+        type_indent = indent
+        break reading
+      if word == "type" or (type_indent >= 0 and indent == type_indent + 2):
+        if "=" in s:
+          var read: seq[Declared]
+          let below = (if word == "type": rest.strip else: s).readType(one, read)
+          result.add read.filterIt(
+            not (it.kind == NameKind.Type and openers.isSubstituted(it.name)),
+          )
+          if below == NameKind.Member: enum_indent = indent
+          elif below == NameKind.Field: object_indent = indent
+        break reading
+
+      if enum_indent >= 0 and indent > enum_indent:
+        for m in s.splitTop({','}):
+          if m.nameOf.len > 0:
+            result.add Declared(name: m.nameOf, line: one, kind: NameKind.Member)
+        break reading
+
+      if object_indent >= 0 and indent > object_indent:
+        # Field side runs to its type; `case` names variant's discriminator.
+        let text = if word == "case": rest else: s
+        if word notin ["of", "else", "elif", "when"] and text.topIndex(':') > 0:
+          for name in text[0..<text.topIndex(':')].splitTop({','}):
+            if name.nameOf.len > 0:
+              result.add Declared(
+                name: name.nameOf,
+                line: one,
+                kind: NameKind.Field,
+                is_boolean: text.isBooleanShown,
+              )
+        break reading
+
+      if word in BINDING_KEYWORDS:
+        if rest.strip.len == 0:
+          section_indent = indent
+          is_section_mutable = word == "var"
+        else:
+          for name in rest.bindingNames:
+            if openers.isSubstituted(name): continue
+            result.add Declared(
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
+              reach: openers.reachOf,
+              is_mutable: word == "var",
+              is_boolean: rest.isBooleanShown,
+            )
+        break reading
+
+      if section_indent >= 0 and indent > section_indent:
+        # First line under keyword fixes child indent; deeper line continues value above it.
+        if section_child < 0: section_child = indent
+        if indent == section_child and (s.topIndex(':') > 0 or s.topIndex('=') > 0):
+          for name in s.bindingNames:
+            if openers.isSubstituted(name): continue
+            result.add Declared(
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
+              reach: openers.reachOf,
+              is_mutable: is_section_mutable,
+              is_boolean: s.isBooleanShown,
+            )
+        break reading
+
+      if word == "for":
+        let at = rest.find(" in ")
+        if at > 0:
+          for name in rest[0..<at].bindingNames:
+            result.add Declared(
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
+              reach: openers.reachOf(is_scoped = true),
+            )
+        break reading
+
+      if word == "except":
+        let at = rest.find(" as ")
+        if at >= 0:
+          let name = rest[at + 4 .. ^1].strip(chars = {' ', ':'}).nameOf
+          if name.len > 0:
+            result.add Declared(
+              name: name,
+              line: one,
+              kind: NameKind.Binding,
+              reach: openers.reachOf(is_scoped = true),
+            )
+
+    if is_opening:
+      var held = opener
+      held.substituted = substituted
+      openers.add held
+    i = next
 
 
 func wordSpans(name: string): seq[(int, int)] =
@@ -355,14 +642,62 @@ func abbreviationRenames*(
         break
 
 
-func isScreaming(name: string): bool =
-  ## Decide whether name is SCREAMING_SNAKE_CASE, i.e. no lowercase letter.
-  name.allCharsInSet({'A'..'Z', '0'..'9', '_'}) and name.anyIt(it in {'A'..'Z'})
+func letterCase(r: Rune): LetterCase =
+  ## Read case of letter, mathematical alphanumerics by block, since `std/unicode` maps none.
+  ##   Latin styles run 52 letters, 26 capitals first; Greek styles run 58, 25 capitals first,
+  ##     then nabla, 25 small, partial differential and 6 small variants.
+  let c = int(r)
+  if c in 0x1D400..0x1D6A3:
+    return (if (c - 0x1D400) mod 52 < 26: LetterCase.Upper else: LetterCase.Lower)
+  if c in 0x1D6A8..0x1D7C9:
+    let k = (c - 0x1D6A8) mod 58
+    if k < 25: return LetterCase.Upper
+    if k in [25, 51]: return LetterCase.None
+    return LetterCase.Lower
+  if r.isUpper: LetterCase.Upper
+  elif r.isLower: LetterCase.Lower
+  else: LetterCase.None
+
+
+func isNotation*(name: string): bool =
+  ## Decide whether name is source's notation, i.e. holds non-ASCII letter (III.5).
+  name.anyIt(it >= '\x80')
+
+
+func isCased*(name: string, casing: Casing): bool =
+  ## Decide whether name is written in casing; first letter and every letter decide it.
+  var
+    first = LetterCase.None
+    count = 0
+    has_upper = false
+    has_lower = false
+  for r in name.runes:
+    let c = r.letterCase
+    if count == 0: first = c
+    inc count
+    has_upper = has_upper or c == LetterCase.Upper
+    has_lower = has_lower or c == LetterCase.Lower
+  case casing
+  of Casing.Pascal: first == LetterCase.Upper and '_' notin name
+  of Casing.Camel: first != LetterCase.Upper and '_' notin name
+  of Casing.Snake: not has_upper
+  of Casing.Screaming: not has_lower
+  of Casing.Letter: count == 1 and first == LetterCase.Upper
+
+
+func casingOf*(d: Declared): Casing =
+  ## Read casing declared name takes by its kind and reach (V.1, V.11, V.12).
+  case d.kind
+  of NameKind.Type, NameKind.Member: Casing.Pascal
+  of NameKind.Routine: Casing.Camel
+  of NameKind.Field, NameKind.Parameter: Casing.Snake
+  of NameKind.Placeholder: Casing.Letter
+  of NameKind.Binding: (if d.reach == Reach.Global: Casing.Screaming else: Casing.Snake)
 
 
 func acronyms*(name: string): seq[string] =
   ## Read runs of two or more capitals, digits attached, inside camel or Pascal name.
-  if name.isScreaming or '_' in name: return
+  if name.isCased(Casing.Screaming) or '_' in name: return
   var run = ""
   let text = name & " "
   for k in 0..<text.len - 1:
@@ -406,7 +741,8 @@ func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[s
 
 func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] =
   ## Report declared name that coins abbreviation, carries unlisted acronym, opens routine
-  ##   with banned verb, misnames lookup table, or shares its word with type as global.
+  ##   with banned verb, misnames lookup table or boolean, breaks case of its kind, binds in
+  ##   entry block, or shares its word with type as global.
   let
     lower_exempt = exempt.mapIt(it.toLowerAscii)
     declared = source.declarations
@@ -442,8 +778,51 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] 
         d.line,
         "Lookup table reads `lut_<value>_by_<key>` (V.5); got `" & d.name & "`.",
       )
-    if d.kind == NameKind.Binding and d.is_global and d.name.isScreaming and
-        d.name.toLowerAscii.replace("_", "") in type_keys:
+
+    # Boolean is proposition or mode; predicate `func` is `is…` (V.4).
+    if d.is_boolean and d.kind == NameKind.Routine:
+      if (parts.len < 2 or parts[0] != "is") and d.name notin HOST_PREDICATES:
+        result.add finding(
+          path,
+          d.line,
+          "Predicate `func` is `is…` in camel case (V.4); got `" & d.name & "`.",
+        )
+    elif d.is_boolean and (parts.len < 2 or parts[0].toLowerAscii notin BOOLEAN_PREFIXES):
+      result.add finding(
+        path,
+        d.line,
+        "Boolean opens `is_`, `as_`, `should_`, `found_` or `has_` (V.4); got `" & d.name & "`.",
+      )
+
+    # Case follows kind; entry binding is reported once, and notation excuses immutable global.
+    if d.kind == NameKind.Binding and d.reach == Reach.Entry:
+      result.add finding(
+        path,
+        d.line,
+        "Entry block holds no binding; move code that binds into `proc main` " &
+          "(V.10); got `" & d.name & "`.",
+      )
+      continue
+    let
+      casing = d.casingOf
+      is_notation = d.kind in VARIABLE_KINDS and d.name.isNotation
+    if is_notation and d.reach == Reach.Global and d.is_mutable:
+      result.add finding(
+        path,
+        d.line,
+        "Notation holds over case only for immutable global (III.5); got `" & d.name & "`.",
+      )
+    elif not is_notation and not d.name.isCased(casing):
+      let
+        rule = if d.kind == NameKind.Member: "V.11" elif casing == Casing.Letter: "V.12" else: "V.1"
+        subject = if d.kind == NameKind.Binding: $d.reach else: $d.kind
+      result.add finding(
+        path,
+        d.line,
+        subject & " " & CASE_RULES[casing] & " (" & rule & "); got `" & d.name & "`.",
+      )
+    if d.kind == NameKind.Binding and d.reach == Reach.Global and
+        d.name.isCased(Casing.Screaming) and d.name.toLowerAscii.replace("_", "") in type_keys:
       result.add finding(
         path,
         d.line,

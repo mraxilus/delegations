@@ -46,16 +46,16 @@ suite "Workflows":
   test "a workflow declaring no block is left alone, since that is a decision":
     # Absent block takes repository default; empty block grants nothing. Only first
     #   is somebody's choice rather than drift, so only second is read.
-    const NONE = "name: check\n\njobs:\n  a:\n    steps:\n      - run: gh issue list\n"
-    check NONE.permissionScopes.isNone
-    check checkScopes("check.yml", NONE).len == 0
-    const EMPTY = "name: c\n\npermissions:\n\njobs:\n  a:\n    steps:\n      - run: gh issue x\n"
-    check EMPTY.permissionScopes == some(newSeq[string]())
-    check checkScopes("check.yml", EMPTY).len == 1  # empty block grants nothing at all
+    const blockless = "name: check\n\njobs:\n  a:\n    steps:\n      - run: gh issue list\n"
+    check blockless.permissionScopes.isNone
+    check checkScopes("check.yml", blockless).len == 0
+    const empty = "name: c\n\npermissions:\n\njobs:\n  a:\n    steps:\n      - run: gh issue x\n"
+    check empty.permissionScopes == some(newSeq[string]())
+    check checkScopes("check.yml", empty).len == 1  # empty block grants nothing at all
 
 
   test "the block ends where indenting does, so later keys are not read as scopes":
-    const AFTER = """
+    const after = """
 permissions:
   contents: read
 
@@ -64,19 +64,19 @@ jobs:
     steps:
       - run: gh issue list
 """
-    check AFTER.permissionScopes == some(@["contents"])  # `jobs` and `a` are not scopes
-    check checkScopes("w.yml", AFTER).len == 1  # `gh issue` still wants `issues`
+    check after.permissionScopes == some(@["contents"])  # `jobs` and `a` are not scopes
+    check checkScopes("w.yml", after).len == 1  # `gh issue` still wants `issues`
 
 
   test "a job-level block is left to its job, since only column zero is the whole grant":
-    const NESTED = "name: x\n\njobs:\n  a:\n    permissions:\n      issues: write\n"
-    check NESTED.permissionScopes.isNone
+    const nested = "name: x\n\njobs:\n  a:\n    permissions:\n      issues: write\n"
+    check nested.permissionScopes.isNone
 
 
   test "listing pull requests wants `pull-requests`, which no other mark reaches":
     # `gh pr` is its own reach: `issues` does not cover it, so block granting only that
     #   loses it to `none`, and workflow listing pull requests gets 403.
-    const LISTS_PRS = """
+    const listing = """
 name: sweep
 
 permissions:
@@ -88,18 +88,18 @@ jobs:
     steps:
       - run: gh pr list --state open --json number,isDraft
 """
-    let found = checkScopes(".github/workflows/sweep.yml", LISTS_PRS)
+    let found = checkScopes(".github/workflows/sweep.yml", listing)
     check found.len == 1
     check "pull-requests" in found[0].message
     check "actions, issues" in found[0].message  # names what was granted
-    let granted = LISTS_PRS.replace("  issues: write\n", "  issues: write\n  pull-requests: read\n")
+    let granted = listing.replace("  issues: write\n", "  issues: write\n  pull-requests: read\n")
     check checkScopes(".github/workflows/sweep.yml", granted).len == 0
 
 
   test "a step that runs `gh` as a stored secret reaches by that secret, not the block":
     # Run token cannot convert pull request to draft, so `draft.yml` hands `gh` stored
     #   secret; block then grants nothing, and that is right rather than drift.
-    const SECRET = """
+    const secret = """
 name: draft
 
 permissions: {}
@@ -111,18 +111,18 @@ jobs:
           GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: gh pr ready "$NUMBER" --undo
 """
-    check SECRET.handsGhOtherToken
-    check checkScopes("draft.yml", SECRET).len == 0
-    let run_token = SECRET.replace("secrets.ADMIN_TOKEN", "github.token")
-    check not run_token.handsGhOtherToken
+    check secret.isTokenOtherHanded
+    check checkScopes("draft.yml", secret).len == 0
+    let run_token = secret.replace("secrets.ADMIN_TOKEN", "github.token")
+    check not run_token.isTokenOtherHanded
     check checkScopes("draft.yml", run_token).len == 1  # same step with run token wants grant
     # Run token spelled as secret is still run token, so block still binds.
-    check not SECRET.replace("secrets.ADMIN_TOKEN", "secrets.GITHUB_TOKEN").handsGhOtherToken
+    check not secret.replace("secrets.ADMIN_TOKEN", "secrets.GITHUB_TOKEN").isTokenOtherHanded
 
 
   test "a token minted in a step is not the run token either, so the block binds no `gh` mark":
     # `draft.yml` mints token of GitHub App in step, since fine-grained token is refused too.
-    const MINTED = """
+    const minted = """
 name: draft
 
 permissions: {}
@@ -136,17 +136,17 @@ jobs:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         run: gh pr ready "$NUMBER" --undo
 """
-    check MINTED.handsGhOtherToken
-    check checkScopes("draft.yml", MINTED).len == 0
+    check minted.isTokenOtherHanded
+    check checkScopes("draft.yml", minted).len == 0
 
 
   test "weekly schedule and RECENT_DAYS name one window":
     # Window is named twice, as cron and as constant, so change of one alone is finding.
-    const WEEKLY =
+    const weekly =
       "on:\n  schedule:\n    - cron: '0 6 * * 1'\njobs:\n  a:\n    run: koch --recent\n"
-    check WEEKLY.cronDays == 7
-    check checkWindow("check.yml", WEEKLY, 7).len == 0
-    check "got `7` days against `1`" in checkWindow("check.yml", WEEKLY, 1)[0].message
-    check WEEKLY.replace("* * 1", "* * *").cronDays == 1
-    check WEEKLY.replace("* * 1", "* * 1-5").cronDays == 0  # shape untaught reads as 0
-    check checkWindow("ledger.yml", WEEKLY.replace("--recent", ""), 1).len == 0  # no window
+    check weekly.cronDays == 7
+    check checkWindow("check.yml", weekly, 7).len == 0
+    check "got `7` days against `1`" in checkWindow("check.yml", weekly, 1)[0].message
+    check weekly.replace("* * 1", "* * *").cronDays == 1
+    check weekly.replace("* * 1", "* * 1-5").cronDays == 0  # shape untaught reads as 0
+    check checkWindow("ledger.yml", weekly.replace("--recent", ""), 1).len == 0  # no window
