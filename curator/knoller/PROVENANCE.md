@@ -404,8 +404,13 @@ Verified by `suites/test_spacing.nim`, with each example of the ruling.
 - An index, a type bracket and a generic bracket read alike, since tokens cannot tell them apart.
   So `array[N+1, int]` and `range[0..3]` take the form too.
 - An array literal that stands alone, such as `[a + b, c]` or `@[a + b]`, keeps its spaces.
-- A `[` after an export marker, as in `scalar*[I: Basis | Grade]`, follows no operand, so it keeps
-  its spaces.
+- The generic list that a routine or a type declares after its name is a declaration. It selects
+  nothing, so it keeps its spaces, export marker or not (`isDeclaredList`). That covers
+  `func scalar*[I: Basis | Grade]`, `func pick[I: Basis | Grade]` and `Foo[T: A | B] = object`.
+  Its head is a routine keyword or `type` on the line of the name. An entry of a `type` section
+  counts too, read from the nearest line above at a smaller indent. Verified by
+  `suites/test_spacing.nim`.
+- Cost: a generic list of an entry under a `when` inside a `type` section reads as a selector.
 - An operator that ends its line inside such a bracket takes one space before it, as elsewhere.
 - Spacing moves no parse tree here too. Verified by hand, 2026-10-04, with the parser of the
   commit pin of the `ronri` projects: `prev[i - 1]`, `digits[i + 1 ..< n]` and `a[f(x, y + 1)]`
