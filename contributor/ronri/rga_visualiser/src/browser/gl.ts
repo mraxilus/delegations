@@ -14,12 +14,24 @@
 /* `bridge.nim` doc for what deliberately does NOT carry over.    */
 /* ---------------------------------------------------------------------- */
 
+// Switch driven checks' harness sets before page loads; see `OPTIONS_CONTEXT`.
+interface Window {
+  /** Whether context multisamples; absent on every page but simulated one checks drive. */
+  should_antialias?: boolean;
+}
+
 const canvas = elementById<HTMLCanvasElement>('gl');
 // No `preserveDrawingBuffer`, deliberately: it makes every frame keep copy of drawing.
 //   buffer for whole session, on phone, so that button pressed once can read it
 //   afterwards. `captureFrameIfAsked` reads buffer from inside frame that drew it
 //   instead, which costs nothing and is what image export uses.
-const OPTIONS_CONTEXT: WebGLContextAttributes = { antialias: true, alpha: false };
+// Multisample unless told before page loaded not to, which only driven checks' harness does.
+//   Its simulated page reads no edge's sample, and multisampling cost about 10 ms of GPU work
+//   per frame there under SwiftShader. Reader's page never carries switch, so it always asks
+//   to multisample, as desktop does.
+const OPTIONS_CONTEXT: WebGLContextAttributes = {
+  antialias: window.should_antialias ?? true, alpha: false,
+};
 const context_webgl = (canvas.getContext('webgl', OPTIONS_CONTEXT)
   || canvas.getContext('experimental-webgl', OPTIONS_CONTEXT)) as WebGLRenderingContext | null;
 if (context_webgl === null) throw new Error('WebGL unavailable; page cannot draw.');

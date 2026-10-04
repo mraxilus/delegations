@@ -72,6 +72,13 @@ import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
 import { advance, hastenTransitions, simulateClock, waitUntil } from './clock';
 
+declare global {
+  interface Window {
+    /** Whether page's context multisamples; see `src/browser/gl.ts`. */
+    should_antialias?: boolean;
+  }
+}
+
 /** Simulated span tree stands open for before curve and rows are read: five of its ticks. */
 const MILLISECONDS_TREE_TICKS = 1000;
 
@@ -138,6 +145,10 @@ async function driveSimulated(browser: Browser): Promise<void> {
   page.on('pageerror', (error) => errors_page.push(error.message));
 
   await simulateClock(page);
+  // Draw without multisampling, set before page's script asks for its context: no verdict here
+  //   reads edge's sample, and multisampling cost about 10 ms of GPU work per frame. Reader's
+  //   page and real-clock page below keep it, and `driveAntialias` reads both.
+  await page.addInitScript(() => { window.should_antialias = false; });
   await page.goto(`file://${PATH_PAGE}`);
   await waitScene(page);
   // Two fingers go through Chrome's own protocol, and so does style engine's timeline, so
