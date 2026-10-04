@@ -3,8 +3,9 @@
 ##     says it ran, and figures it prints are evidence that never gates.
 ##   Built against pin and against changed library, one program gives each pair proposal reports.
 ##   Kinds hold 3 to 16 floats, counts that kinds of P02 hold, under natural, 16-byte and 64-byte
-##     alignment, so cost of each layout reads beside its padding. They need no library, so
-##     both builds print same rows.
+##     alignment, so cost of each layout reads beside its padding. Kind of 4 floats also takes
+##     32 bytes, which `alignmentOf` gives that count. Kinds need no library, so both builds print
+##     same rows, and literal stands where pin lacks `alignmentOf`.
 ##   Kind is summed and negated through operator of its own, returned by value, as library
 ##     writes its operators. Raw loop over slots of `var seq` parameter stays scalar, since
 ##     each store may alias `seq` itself, and so it shows no cost of layout.
@@ -59,7 +60,7 @@ template timeLibrary(label: string; body: untyped) =
 
 
 template defineKind(name: untyped; count: static int; alignment: static int) =
-  ## Define kind of `count` floats at one of three alignments, with sum and negation.
+  ## Define kind of `count` floats at one of four alignments, with sum and negation.
   ##   Operators return by value and loop each slot, as library writes its own.
   when alignment == 8:
     type name = object
@@ -67,6 +68,9 @@ template defineKind(name: untyped; count: static int; alignment: static int) =
   elif alignment == 16:
     type name = object
       elements {.align(16).}: array[count, float]
+  elif alignment == 32:
+    type name = object
+      elements {.align(32).}: array[count, float]
   else:
     type name = object
       elements {.align(64).}: array[count, float]
@@ -102,6 +106,7 @@ template timeKind(kind: typedesc; label: string) =
 
 defineKind(Kind3Natural, 3, 8); defineKind(Kind3Line16, 3, 16); defineKind(Kind3Line64, 3, 64)
 defineKind(Kind4Natural, 4, 8); defineKind(Kind4Line16, 4, 16); defineKind(Kind4Line64, 4, 64)
+defineKind(Kind4Line32, 4, 32)
 defineKind(Kind5Natural, 5, 8); defineKind(Kind5Line16, 5, 16); defineKind(Kind5Line64, 5, 64)
 defineKind(Kind6Natural, 6, 8); defineKind(Kind6Line16, 6, 16); defineKind(Kind6Line64, 6, 64)
 defineKind(Kind8Natural, 8, 8); defineKind(Kind8Line16, 8, 16); defineKind(Kind8Line64, 8, 64)
@@ -124,7 +129,7 @@ proc main() =
   timeKind(Kind3Natural, "3 natural"); timeKind(Kind3Line16, "3 align16")
   timeKind(Kind3Line64, "3 align64")
   timeKind(Kind4Natural, "4 natural"); timeKind(Kind4Line16, "4 align16")
-  timeKind(Kind4Line64, "4 align64")
+  timeKind(Kind4Line64, "4 align64"); timeKind(Kind4Line32, "4 align32")
   timeKind(Kind5Natural, "5 natural"); timeKind(Kind5Line16, "5 align16")
   timeKind(Kind5Line64, "5 align64")
   timeKind(Kind6Natural, "6 natural"); timeKind(Kind6Line16, "6 align16")
