@@ -1327,17 +1327,16 @@ across each piece and never along it. The first two and the last were red first.
 
 **Against the floor, which is the Architect's.** The floor says that everything gets a whole turn
 before it blocks, except a low wrap, which gets half. Nothing is tuned to it. Every change is argued
-from the rig or from a ruling of the Architect. `simulation/verdicts.md` prints what came out beside
-each claim, so a mend and a regression are both seen.
+from the rig or from a ruling of the Architect.
 
-Standing for the turn met seven of the eight single-hand claims of the floor, where standing at rest
-met none. That is the strongest evidence so far that the floor was right and the model wrong, rather
-than the other way about.
+`simulation/verdicts.md`, section The floor's claim, prints each claim of the floor beside the
+answer of the simulation and what stops it. So a mend and a regression are both seen. A recording
+can move any row, so this record cites the report and does not restate it. Where a row disagrees
+with the floor, the ruling is the Architect's.
 
-With bodies solid the crown is free both ways. Both low lock ways, and the cross-name high lock, go
-past the whole turn of the floor by the wrist of the follow. The wraps stop between half and a whole
-turn, by the twist of the follow or the wrist of the lead. Each disagreement is printed, and is the
-Architect's to rule on.
+Over the crown, nothing stops either single hold within a whole turn, either way. Those are the
+crown rows of the floor. Verified by `test_rigid.nim`, test "over crown nothing stops single hold
+turning". No law holds the rows at the low and neck bands, which the report prints alone.
 
 **Verdicts are an instrument run, assumed current.** `simulation/verdicts.nim` asks the simulation
 what the sheet asks. It writes `simulation/verdicts.md` in the words of the sheet, through one
@@ -2085,10 +2084,10 @@ urgent.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, cell by cell on the viewer. The tags
   read *unconfirmed* until then.
-- **The floor at the low and neck bands.** The wraps stop between half and a whole turn, where the
-  floor says half or whole. The twist of the follow or the wrist of the lead stops them. The low
-  locks go past the whole turn of the floor. Whether a hammerlock goes a whole turn, and what moves
-  in the body when it does, is the Architect's.
+- **The floor at the low and neck bands.** `simulation/verdicts.md` prints each claim of the floor
+  there beside the answer of the simulation and what stops it (Against the floor). Where the two
+  disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
+  moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **Two one-moment flips in the cross-name crown turn.** They are 370 mm as the lead's arm
   straightens over at 0.28, and 220 mm as the follow's arm turns over at 1.18. Weightless links with
