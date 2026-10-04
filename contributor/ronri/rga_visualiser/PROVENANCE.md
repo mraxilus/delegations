@@ -2822,9 +2822,10 @@ cross products and the sums of sines that placed the same objects outside the al
 object of the three sizes, each coefficient matches them within 1.0e-14 of the largest coefficient
 of its object.
 
-**The price is build time on the JS backend, once for each load.** Each figure is the median of 15
-builds of `constructOrrery`. They ran in Node 22, and in C with `-d:release`, in the Claude Code
-cloud container on 2026-10-04. Each pair was taken twice:
+**The price is build time on the JS backend, once for each load.** The Architect keeps it, by the
+ruling on #459, so no star leaves the algebra. Each figure is the median of 15 builds of
+`constructOrrery`. They ran in Node 22, and in C with `-d:release`, in the Claude Code cloud
+container on 2026-10-04. Each pair was taken twice:
 
 | Size | JS before | JS after | C before | C after |
 | --- | --- | --- | --- | --- |
