@@ -68,6 +68,7 @@ import { driveGround } from './ground';
 import { driveBlankRefused } from './canvas';
 import { driveFrameWork, driveLoopRuns, watchFrames } from './frame';
 import { driveHostSave } from './host';
+import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
 import { advance, hastenTransitions, simulateClock, waitUntil } from './clock';
 
@@ -203,6 +204,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   //   character page writes has glyph there.
   await driveFacesCovered(page);
   await driveShadedFromAbove(page);
+  await driveVeilCovers(page);
   await driveComet(page);
   await driveGround(page);
   await driveLoopRuns(page);
