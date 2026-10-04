@@ -16,6 +16,10 @@
 ##   Every still card of reference is recorded beside sweeps, one moment each,
 ##     wound to its facing as `walk.stood` winds it, so viewer can lay simulation's
 ##     answer beside each cell.
+##   Each answered still is kept once.  Reflected twin card (`walk.twinOf`) keeps none of
+##     its own: it names card that keeps still it mirrors (`mirror`), and page mirrors that
+##     still (`design/twins`).  Twin whose answer no card asks keeps answer itself, under its
+##     own name.
 ##
 ##   Recording is kept with stamp of physics, jobs and this verb (`design/stamps`), and verb
 ##     whose stamp is unchanged records nothing again.  Page leaves stamp out, so page changes
@@ -28,6 +32,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[math, options, os, sequtils, strformat, strutils]
 
 import ../simulation/[body, hold, rig, seen]
+from ../simulation/walk import twinOf
 import ./[asks, stamps]
 
 
@@ -131,11 +136,14 @@ func gripped(moment: Still): seq[float] =
   for grip in moment.grips: result.add [grip.x, grip.y, grip.z]
 
 
-proc bodyOfSweep(recording: Shown, key = ""): string =
+proc bodyOfSweep(recording: Shown, key = "", mirror = ""): string =
   ## One sweep as page reads it, or one still, keyed by question it answers.
+  ##   Twin card that keeps its own answer names itself as `mirror`.
   var bits: seq[string]
   if key.len > 0:
     bits.add &"\"key\":\"{key}\""
+  if mirror.len > 0:
+    bits.add &"\"mirror\":\"{mirror}\""
   bits.add &"\"hold\":\"{recording.hold}\""
   bits.add &"\"band\":\"{BANDS[ord(recording.band)]}\""
   bits.add &"\"apart\":{figure(recording.apart)}"
@@ -198,28 +206,48 @@ func nameOf*(job: Job): string =
   if job.is_still: job.ask.key
   else: &"{SHOWN[job.cut].name}, {BANDS[ord(SHOWN[job.cut].band)]}"
 
+func keeperOf(ask: StillAsk, links: seq[Link], turns: float): string =
+  ## Card that keeps answer to reflected twin `ask`: first card that asks it unreflected,
+  ## or `ask` itself where none does.
+  for other in stillAsks():
+    if not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
+        other.links == links and other.turns == turns and
+        other.isRestAway == ask.isRestAway and other.head == ask.head and
+        other.is_either_way == ask.is_either_way and other.who == ask.who:
+      return other.key
+  ask.key
+
 proc recorded*(job: Job): tuple[note, text: string] =
   ## Record one job: line saying what it found, and its text as page reads it.
+  ##   Reflected twin card names card that keeps its answer, and asks engine nothing.
   if job.is_still:
     let
       ask = job.ask
-      recording = still(
-        HUMAN,
-        Band.Crown,
-        ask.links,
-        ask.key,
-        ask.turns,
-        is_away = ask.isRestAway,
-        head = ask.head,
-        is_either_way = ask.is_either_way,
-        who = ask.who,
-      )
+      twin = twinOf(ask.links, ask.turns, ask.isRestAway)
+      keeper = (if twin.is_reflected: keeperOf(ask, twin.links, twin.turns) else: ask.key)
+    if keeper != ask.key:
+      result.note = &"{ask.key}: mirror of {keeper}"
+      result.text = &"{{\"key\":\"{ask.key}\",\n\"hold\":\"{ask.key}\",\n" &
+        &"\"band\":\"{BANDS[ord(Band.Crown)]}\",\n\"mirror\":\"{keeper}\"}}"
+      return
+    let recording = still(
+      HUMAN,
+      Band.Crown,
+      twin.links,
+      ask.key,
+      twin.turns,
+      is_away = ask.isRestAway,
+      head = ask.head,
+      is_either_way = ask.is_either_way,
+      who = ask.who,
+    )
     result.note =
       if recording.stills.len > 0:
         &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}, " &
           &"strain {recording.strain:.2f} of {recording.tried.len} tried"
-      else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
-    result.text = bodyOfSweep(recording, ask.key)
+      else: &"{ask.key}: {twin.turns:+.2f} turns, no pose holds"
+    if twin.is_reflected: result.note &= ", kept to mirror"
+    result.text = bodyOfSweep(recording, ask.key, (if twin.is_reflected: ask.key else: ""))
   else:
     let cut = SHOWN[job.cut]
     var links: seq[Link] = @[]
