@@ -11,8 +11,12 @@
 ##     neither sign-off block nor working line, and end of any turn whose message names `#N`
 ##     outside link or cites charter reference with no description; `start` prints role, read
 ##     order, carried list and drift; `push` and `msg` serve git hooks.
-##   Pure functions take strings and return findings; procs read transcript JSON, since
-##     `parseJson` is effectful.
+##   `gh api` in Bash posts as GitHub tools do, so `bash` reads each `gh api` write, maps it to
+##     tool whose rules it shares, and holds its body as `body` holds tool's; `stop` counts it as
+##     post. Hook runs before command, so body comes from literal text or file already written:
+##     file same command writes, stdin and shell expansion are refused, with finding naming mend.
+##   Pure functions take strings and return findings; procs read transcript JSON and body files,
+##     since `parseJson` and file reads are effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
 ##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, table,
@@ -28,6 +32,9 @@
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `gitCommands` splits on shell operators by text, so `git` inside quoted string is
 ##     read as command; refusal then errs on safe side.
+##   Cost: post whose body file same command writes, as by heredoc, is refused, so it takes two
+##     calls: one writes file, next posts it.
+##   Cost: mutation through `gh api graphql` reads as no post, so reading holds its body.
 ##   Cost: sign-off check reads shape, never whether row or decision says anything; evidence
 ##     cell of ✅ row must be non-empty and nothing more, and option need not be honest.
 ##   Cost: `stop` cannot tell coordinator, which holds no branch, from delegate; where it runs
@@ -63,6 +70,24 @@ type
     calls*: seq[Call]  ## Tool calls in order.
     text*: string  ## Text of last assistant message.
 
+  Word = object  ## Define one word of shell text, as shell passes it to command.
+    text: string  ## Word with quotes and escapes taken out.
+    is_expanded: bool  ## Holds `$` or backtick outside single quotes, which shell expands.
+
+  Request* = object  ## Define one `gh api` request of shell text, as `bash` hook reads it.
+    endpoint*: string  ## Path as written, such as `repos/o/r/issues/7/comments`.
+    action*: string  ## Method, uppercase, such as `POST`; `method` is Nim keyword.
+    tool*: string  ## GitHub tool whose rules request shares; empty where none.
+    is_create*: bool  ## Method is POST, so request makes new item, as `issue_write` create does.
+    has_body*: bool  ## Field `body` or `--input` file given; JSON of file may still hold none.
+    body*: string  ## Field `body` written inline.
+    path*: string  ## File of `-F body=@PATH` or `--input PATH`, resolved; empty where none.
+    is_input*: bool  ## `path` is `--input` JSON, whose `body`, `title` and `labels` it sends.
+    expansion*: string
+      ## First field `body`, `title` or `labels[]` holding shell expansion; empty where none.
+    title*: string  ## Field `title`.
+    labels*: seq[string]  ## Each field `labels[]`, in order.
+
 
 const
   EDIT_TOOLS* = ["Edit", "Write", "MultiEdit", "NotebookEdit"]
@@ -76,6 +101,26 @@ const
     "mcp__github__update_issue_comment", "mcp__github__add_comment_to_pending_review",
   ]
     ## GitHub tools that post; turn calling one ends with sign-off.
+  LUT_TOOL_BY_ENDPOINT = [
+    ("POST issues", "mcp__github__issue_write"),
+    ("PATCH issues/*", "mcp__github__issue_write"),
+    ("POST issues/*/comments", "mcp__github__add_issue_comment"),
+    ("PATCH issues/comments/*", "mcp__github__update_issue_comment"),
+    ("POST pulls", "mcp__github__create_pull_request"),
+    ("PATCH pulls/*", "mcp__github__update_pull_request"),
+    ("POST pulls/*/reviews", "mcp__github__pull_request_review_write"),
+    ("POST pulls/*/comments", "mcp__github__add_comment_to_pending_review"),
+    ("POST pulls/*/comments/*/replies", "mcp__github__add_reply_to_pull_request_comment"),
+    ("PATCH pulls/comments/*", "mcp__github__add_reply_to_pull_request_comment"),
+  ]
+    ## Tool whose rules `gh api` write shares, by method and endpoint from `issues` or `pulls`
+    ##   on; `*` stands for one segment. Review comment and reply share rules, so edit of one
+    ##   takes reply's.
+  FLAGS_VALUE = [
+    "-X", "--method", "-f", "--raw-field", "-F", "--field", "--input", "-H", "--header", "-q",
+    "--jq", "-t", "--template", "-p", "--preview", "--hostname", "--cache",
+  ]
+    ## Flags of `gh api` taking value, as next word or after `=`; short one also glued to it.
   COORDINATOR = "coordinator"
     ## Role string no branch names: coordinator opens issues and comments, and no pull request.
   FOOTER* = "_Generated by [Claude Code](https://claude.ai/code)_"
@@ -227,6 +272,197 @@ func isPost*(tool: string, has_body: bool): bool =
   tool in WRITE_TOOLS and has_body
 
 
+func shellWords(command: string): seq[seq[Word]] =
+  ## Read words of each command of shell text, quotes honoured, as shell splits them.
+  ##   Operator or newline ends command only outside quotes, so quoted body spanning lines stays
+  ##     one word. Single quotes keep each character; double quotes and bare text expand `$` and
+  ##     backtick, and backslash escapes.
+  ##   Heredoc text is skipped, so apostrophe in it opens no quote; `#` opening word comments out
+  ##     rest of line.
+  ##   Kept whole past sixty lines: one pass over characters, where each branch is one state of
+  ##     quoting, and split would hide which state each character is read in.
+  ##   Cost: subshell and substitution outside quotes read as commands of their own; shift `<<`
+  ##     reads as heredoc, and redirection as word.
+  var
+    words: seq[Word]
+    word: Word
+    is_open = false  # Word begun, though empty quotes leave it empty.
+    quote = '\0'  # Quote character open; NUL outside quotes.
+    heredocs: seq[tuple[delimiter: string, is_tabbed: bool]]  # Bodies skipped at next newline.
+    i = 0
+
+  template close() =
+    if is_open: words.add word
+    (word, is_open) = (Word(), false)
+
+  template finish() =
+    close()
+    if words.len > 0: result.add words
+    words = @[]
+
+  while i < command.len:
+    let c = command[i]
+    if quote == '\'':
+      if c == '\'': quote = '\0' else: word.text.add c
+    elif quote == '"':
+      if c == '"': quote = '\0'
+      elif c == '\\' and i + 1 < command.len and command[i + 1] in {'$', '`', '"', '\\', '\n'}:
+        inc i
+        if command[i] != '\n': word.text.add command[i]
+      else:
+        if c in {'$', '`'}: word.is_expanded = true
+        word.text.add c
+    elif c == '\\' and i + 1 < command.len:
+      inc i
+      if command[i] != '\n':
+        word.text.add command[i]
+        is_open = true
+    elif c in {'\'', '"'}:
+      quote = c
+      is_open = true
+    elif c == '#' and not is_open:
+      while i + 1 < command.len and command[i + 1] != '\n': inc i
+    elif command.continuesWith("<<<", i):
+      close()  # Here-string: word follows, and no heredoc opens.
+      i += 3
+      continue
+    elif command.continuesWith("<<", i):
+      # Read delimiter, quotes dropped; `<<-` strips leading tabs of its lines.
+      close()
+      i += 2
+      let is_tabbed = i < command.len and command[i] == '-'
+      if is_tabbed: inc i
+      while i < command.len and command[i] in {' ', '\t'}: inc i
+      var delimiter = ""
+      while i < command.len and command[i] notin Whitespace + {';', '&', '|', '(', ')', '<', '>'}:
+        if command[i] notin {'\'', '"', '\\'}: delimiter.add command[i]
+        inc i
+      heredocs.add (delimiter: delimiter, is_tabbed: is_tabbed)
+      continue
+    elif c == '\n':
+      # Skip each heredoc body opened on this line, through its delimiter line.
+      finish()
+      for heredoc in heredocs:
+        while i < command.len:
+          let
+            stop = command.find('\n', i + 1)
+            last = if stop < 0: command.len else: stop
+            line = command[i + 1 ..< last]
+          i = last
+          if heredoc.delimiter == (
+            if heredoc.is_tabbed: line.strip(trailing = false, chars = {'\t'}) else: line
+          ): break
+      heredocs = @[]
+    elif c in {';', '&', '|', '(', ')'}: finish()
+    elif c in {' ', '\t', '\r'}: close()
+    else:
+      if c in {'$', '`'}: word.is_expanded = true
+      word.text.add c
+      is_open = true
+    inc i
+  finish()
+
+
+func toolOf(action, endpoint: string): string =
+  ## Read GitHub tool whose rules request shares, by method and endpoint; empty where none.
+  ##   Endpoint is read from `issues` or `pulls` segment after `repos`, so owner and repo may be
+  ##     `{owner}/{repo}` or one shell variable, and leading `/`, host and query drop.
+  let
+    parts = endpoint.split('?')[0].split('/')
+    at = parts.find("repos")
+  if at < 0: return ""
+  for k in at + 1 ..< parts.len:
+    if parts[k] notin ["issues", "pulls"]: continue
+    let actual = @[action] & parts[k .. ^1]
+    for (route, tool) in LUT_TOOL_BY_ENDPOINT:
+      let pattern = route.split({' ', '/'})
+      if pattern.len == actual.len and (0 ..< actual.len).allIt(pattern[it] in ["*", actual[it]]):
+        return tool
+  ""
+
+
+func located(base, path: string): string =
+  ## Read path against base; stdin `-`, absolute path and path under `~` stay as written.
+  if path == "-" or path.isAbsolute or path.startsWith('~'): path else: base / path
+
+
+func requestOf(arguments: openArray[Word], directory: string): Request =
+  ## Read one `gh api` request from words after `api`: each flag with its value, and first other
+  ##   word as endpoint.
+  ##   Method is `-X` or `--method`, else POST where field or input file is given, else GET, as
+  ##     `gh api` sets it. `-F body=@PATH` and `--input PATH` name file `checkPosts` reads; `-f`
+  ##     takes `@` as text, as `gh api` does.
+  var
+    is_field = false
+    i = 0
+  while i < arguments.len:
+    var (flag, holder) = (arguments[i].text, arguments[i])
+    inc i
+    var value = ""
+    if flag.startsWith("--") and '=' in flag:
+      value = flag.split('=', 1)[1]
+      flag = flag.split('=', 1)[0]
+    elif flag in FLAGS_VALUE:
+      if i >= arguments.len: break
+      (value, holder) = (arguments[i].text, arguments[i])
+      inc i
+    elif flag.len > 2 and flag[0] == '-' and flag[0 .. 1] in FLAGS_VALUE:
+      value = flag[2 .. ^1]
+      flag = flag[0 .. 1]
+    elif flag.startsWith("-"): continue
+    else:
+      if result.endpoint.len == 0: result.endpoint = flag
+      continue
+    case flag
+    of "-X", "--method": result.action = value.toUpperAscii
+    of "--input":
+      (result.path, result.is_input, result.has_body) = (located(directory, value), true, true)
+      is_field = true
+    of "-f", "--raw-field", "-F", "--field":
+      let equal = value.find('=')
+      if equal < 0: continue
+      is_field = true
+      let (key, content) = (value[0 ..< equal], value[equal + 1 .. ^1])
+      if key notin ["body", "title", "labels[]"]: continue
+      if key == "body": result.has_body = true
+      if key == "body" and flag in ["-F", "--field"] and content.startsWith('@'):
+        result.path = located(directory, content[1 .. ^1])
+        continue
+      if holder.is_expanded and result.expansion.len == 0: result.expansion = value
+      case key
+      of "body": result.body = content
+      of "title": result.title = content
+      else: result.labels.add content
+    else: discard
+
+  # Default method as `gh api` does, then tool whose rules write shares.
+  if result.action.len == 0: result.action = if is_field: "POST" else: "GET"
+  result.is_create = result.action == "POST"
+  result.tool = toolOf(result.action, result.endpoint)
+
+
+func requests*(command, directory: string): seq[Request] =
+  ## Read every `gh api` request of shell text: endpoint, method, tool whose rules it shares,
+  ##   and fields `body`, `title` and `labels[]`.
+  ##   File resolves against directory command acts in: `directory`, moved by each `cd` before
+  ##     it. Stdin `-` and path under `~` stay as written, so `checkPosts` names them unread.
+  var working = directory
+  for words in command.shellWords:
+    if words[0].text == "cd":
+      working = located(working, if words.len > 1: words[1].text else: "~")
+      continue
+    for i in 0 ..< words.len - 1:
+      let name = words[i].text
+      if (name == "gh" or name.endsWith("/gh")) and words[i + 1].text == "api":
+        result.add requestOf(words[i + 2 .. ^1], working)
+        break
+
+
+func isPost*(request: Request): bool =
+  ## Decide whether `gh api` request posts text: write tool's rules hold, carrying body.
+  isPost(request.tool, request.has_body)
+
+
 func outsideComments(text: string): string =
   ## Blank every HTML comment, so template left unfilled reads as empty.
   var rest = text
@@ -279,6 +515,58 @@ func checkBody*(
     let shown = body.section(PULL_HEADINGS[2]).outsideComments.strip
     if PULL_HEADINGS[2] in headings and shown.len == 0:
       result.add finding("", 0, "Verification must show change; got template comment alone.")
+
+
+proc checkPosts*(branch, command, directory: string): seq[Finding] =
+  ## Report each `gh api` post of shell text that `checkBody` refuses, or whose body hook cannot
+  ##   read before command runs, with mend: literal path, or file written in earlier call.
+  ##   `--input` JSON with no `body` is no post, as tool call with none is not.
+  for request in requests(command, directory):
+    if not request.isPost: continue
+    if request.expansion.len > 0:
+      result.add finding(
+        "",
+        0,
+        "Hook reads `gh api` post before shell expands it; write body to file in earlier call, " &
+          "name it as `-F body=@<path>`, and write title and labels literally; got `" &
+          request.expansion.shortened & "`.",
+      )
+      continue
+    var (title, body, labels) = (request.title, request.body, request.labels)
+    if request.path.len > 0:
+      if request.path == "-" or request.path.startsWith('~') or request.path.contains({'$', '`'}):
+        result.add finding(
+          "",
+          0,
+          "Hook reads `gh api` post before command runs, so body from shell variable or stdin " &
+            "is unread; name file by literal path; got `" & request.path & "`.",
+        )
+        continue
+      if not request.path.fileExists:
+        result.add finding(
+          "",
+          0,
+          "Hook reads `gh api` post before command runs, so it cannot read file command itself " &
+            "writes; write file in earlier call; got missing `" & request.path & "`.",
+        )
+        continue
+      body = readFile(request.path)
+      if request.is_input:
+        let data =
+          try: body.parseJson
+          except JsonParsingError, ValueError: newJNull()
+        if data.kind != JObject:
+          result.add finding(
+            "",
+            0,
+            "`--input` file of `gh api` post must hold JSON object; got `" & request.path & "`.",
+          )
+          continue
+        if data{"body"} == nil: continue
+        body = data{"body"}.getStr
+        title = data{"title"}.getStr(title)
+        if data{"labels"} != nil: labels = data{"labels"}.getElems.mapIt(it.getStr)
+    result.add checkBody(request.tool, branch, title, body, labels, request.is_create)
 
 
 func carriedTags(cell: string): seq[int] =
@@ -843,12 +1131,16 @@ func startContext*(branch, contributor, carried_heading: string; drift: seq[Find
 
 
 func isTurnWriting*(calls: openArray[Call]): bool =
-  ## Decide whether turn pushed or posted: `git push` in Bash, or GitHub write with body.
-  ##   Label or draft update carries no body and is no post, as `body` hook reads it.
+  ## Decide whether turn pushed or posted: `git push` in Bash, GitHub write with body, or
+  ##   `gh api` write with body in Bash.
+  ##   Label or draft update carries no body and is no post, as `body` and `bash` hooks read it.
+  ##   Cost: `--input` file counts as body, since stop reads no file; JSON holding none still
+  ##     asks turn for sign-off or working line.
   for c in calls:
     if isPost(c.name, c.has_body): return true
-    if c.name == "Bash" and c.command.gitCommands.anyIt(it.len > 0 and it[0] == "push"):
-      return true
+    if c.name != "Bash": continue
+    if c.command.gitCommands.anyIt(it.len > 0 and it[0] == "push"): return true
+    if c.command.requests("").anyIt(it.isPost): return true
   false
 
 
