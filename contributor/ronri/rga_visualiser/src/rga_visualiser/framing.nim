@@ -54,6 +54,10 @@ const
     ## Fix how much of frame's height picked plane's disc spans once pick has come in.
     ##   Disc's major axis, whatever its tilt. Chosen by eye beside point's: plane that
     ##   only ever pulled back to keep its rim on screen never came to be looked at.
+  ANGLE_PLANE_LEAST* = degToRad(10.0)
+    ## Fix least angle sight stands off plane picked alone, in radians: ruling of #454.
+    ##   Plane nearer level with sight than this draws as sliver, and pick of it lifts view
+    ##   by least turn that reaches this; see `stanceLifted`.
 
 
 type PointerPick* = object ## Define pick made by pointer, awaiting camera's aim.
@@ -393,6 +397,41 @@ func stanceApproaching*(
   some(camera.stanceDollied(camera.stanceRepivoted(centre), distanceHeld(depth_end)))
 
 
+func stanceLifted*(stance: CameraStance; camera: Camera; normal: Direction): CameraStance =
+  ## Turn `stance` about its pivot until sight stands `ANGLE_PLANE_LEAST` off plane of unit
+  ## `normal`, by least turn; return it unchanged where sight already stands that far off.
+  ##   Plane picked alone from level view draws as sliver, and centring sliver shows nothing.
+  ##     Ruling of #454 turns view for plane alone, as its own bound turns it for star.
+  ##   Sight keeps its level direction in plane and gains just enough of normal, on side eye
+  ##     already stands, so view lifts rather than flips. Sight lying in plane takes side
+  ##     world up leans to.
+  ##     Level direction is meet of plane with plane holding sight and normal, both through
+  ##     origin; turned sight is sum of two weightless points, read back unit.
+  ##   Result is level stance facing pivot along turned sight, at stance's own separation,
+  ##     as `stanceFor` faces star: least turn off steep sight leaves view rolled.
+  let
+    placed = camera.placed(stance)
+    (point_sight, point_normal) = (toMultivector(placed.frame.forward), toMultivector(normal))
+    cosine = innerOf(point_sight, point_normal)
+  if abs(cosine) >= sin(ANGLE_PLANE_LEAST) - SLACK_FRAMED: return stance
+  let level = direction(
+    (1.0.e4 ∧☆ (1.0.e4 ∧ point_normal)) ∨ (1.0.e4 ∧ point_sight ∧ point_normal)
+  )
+  if level.isNone: return stance
+  let
+    along =
+      if innerOf(toMultivector(level.get), point_sight) < 0.0: -level.get else: level.get
+    is_above =
+      if abs(cosine) > SLACK_FRAMED: cosine < 0.0
+      else: innerOf(point_normal, toMultivector(UP_WORLD)) >= 0.0
+    lean = if is_above: -sin(ANGLE_PLANE_LEAST) else: sin(ANGLE_PLANE_LEAST)
+    lifted = directionHorizon(add(
+      wedge(cos(ANGLE_PLANE_LEAST), toMultivector(along)), wedge(lean, point_normal)
+    ))
+  if lifted.isNone: return stance
+  stanceFacing(pointAlong(placed.pivot, lifted.get, -stance.distance), placed.pivot)
+
+
 
 #[ Standing Offer ]#
 
@@ -470,6 +509,7 @@ func offerAim*(
     camera.holdHorizon(aim.get, width, height)
     return
   if pick.isNone and is_framed and tween.isGoalHeld(aim.get): return
+  let is_new_goal = pick.isSome or not tween.isGoalHeld(aim.get)
   var destination = none(CameraStance)
   if pick.isSome and staged.isNone and picked.len == 1 and picked.at(0) == pick.get.handle and
       scene.isAlive(pick.get.handle):
@@ -484,6 +524,14 @@ func offerAim*(
       )
   if destination.isNone:
     destination = some(stanceFor(aim.get, camera, width, height))
+  # Lift view off plane picked alone from level view, once, as pick lands (#454).
+  #   Plane is only finite pick that turns: sliver centred shows nothing of it. Goal already
+  #   held is reader's own framing since, kept as every other pick keeps it.
+  if is_new_goal and staged.isNone and picked.len == 1 and scene.isAlive(picked.at(0)):
+    let m = scene.geometryOf(picked.at(0))
+    if kindOf(m) == some(Kind.Plane) and not isHorizon(m):
+      let normal = directionNormal(m)
+      if normal.isSome: destination = some(destination.get.stanceLifted(camera, normal.get))
   # Frame broken under arrived ease re-arms it: goal held is no answer while rule fails.
   #   Ease still running is left to land, or re-arming each frame restarts it forever.
   tween.aimAt(
