@@ -24,7 +24,9 @@ const
     "#[ Section ]#\n\n" &
     "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
     "proc g(\n    a: int\n) = discard\n" &
-    "let x = foo(\n  1,\n  2\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    "let x = foo(\n  1,\n  2\n)\necho x\n" &
+    "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+    "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds, and no wired check.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
@@ -111,7 +113,9 @@ suite "Fixes":
       "\n\n\n#[ Section ]#\n\n" &
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
       "proc g(a: int) = discard\n" &
-      "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
+      "let x = foo(1, 2)\necho x\n" &
+      "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
     check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
 
 

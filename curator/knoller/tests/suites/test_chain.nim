@@ -19,7 +19,9 @@ const
     "#[ Section ]#\n\n" &
     "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
     "proc g(\n    a: int\n) = discard\n" &
-    "let x = foo(\n  1,\n  2\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    "let x = foo(\n  1,\n  2\n)\necho x\n" &
+    "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+    "  second_item_named_at_length_so_list_crosses_column\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
@@ -140,7 +142,9 @@ suite "Chain":
       "\n\n\n#[ Section ]#\n\n" &
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
       "proc g(a: int) = discard\n" &
-      "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
+      "let x = foo(1, 2)\necho x\n" &
+      "let y = @[\n  first_item_named_at_length_so_list_crosses_column,\n" &
+      "  second_item_named_at_length_so_list_crosses_column,\n]\necho h(q = 1)\nexport x, y\n"
     check checkFormatting("a.nim", fix.source, Dialect.Module).len == 0  # all cleared
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
     check fix.fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
@@ -301,6 +305,21 @@ suite "Repair that widens its line":
     check hugged.fixedOf == HEAD & "  result[a][b].add BasisSigned(\n    basis: term.basis,\n" &
       "    is_negated: dual_signed.is_negated xor term.is_negated,\n  )\n"
     check hugged.fixedOf.isSettled
+
+
+  test "group one item to line that would not fit joined takes comma, lines and chain kept":
+    let
+      chained = HEAD & "  result[m][n].add BasisSigned(\n    basis: product_to.basis,\n" &
+        "    is_negated: (\n      m_from.is_negated xor\n      n_from.is_negated xor\n" &
+        "      term.is_negated xor\n      product_to.is_negated\n    )\n  )\n"
+      dual = HEAD & "  result[b_from] = @[BasisSigned(\n    basis: b_to_complement.basis,\n" &
+        "    is_negated: b_to_signed.is_negated xor b_to_complement.is_negated\n  )]\n"
+      sliced = HEAD & "  result[b] = @[BasisSigned(\n    basis: result[b][0].basis,\n" &
+        "    is_negated: result[b][0].is_negated xor basis.is_negated\n  )]\n"
+    check chained.fixedOf == chained.replace("    )\n  )\n", "    ),\n  )\n")  # `cayleys.nim:271`
+    check dual.fixedOf == dual.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:338`
+    check sliced.fixedOf == sliced.replace("is_negated\n  )]", "is_negated,\n  )]")  # `:604`
+    for source in [chained, dual, sliced]: check source.fixedOf.isSettled  # second run
 
 
   test "value after `=` that is no chain keeps one level under its statement":

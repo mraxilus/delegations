@@ -333,22 +333,27 @@ suite "Wrapping":
     check "foo(\n  a,  # Why.\n  b\n)\n".fixed == "foo(\n  a,  # Why.\n  b,\n)\n"  # trailing alone
 
 
-  test "list written one item to line takes trailing separator":
-    let lists = "let\n  a = @[\n    1,\n    2\n  ]\n  b = {\n    'x',\n    'y'\n  }\n" &
-      "  c = (\n    1,\n    2\n  )\n  d = Foo(\n    x: 1,  # Why.\n    y: 2\n  )\n"
-    check checkTrailing("a.nim", lists).len == 4
-    check lists.fixed == lists.replace("2\n  ]", "2,\n  ]").replace("'y'\n", "'y',\n")
-      .replace("2\n  )\n  d", "2,\n  )\n  d").replace("y: 2\n", "y: 2,\n")
+  test "list one item to line takes trailing separator where it would not fit joined":
+    let
+      (x, y) = ("\"" & "x".repeat(50) & "\"", "\"" & "y".repeat(50) & "\"")
+      lists = "let\n  a = @[\n    " & x & ",\n    " & y & "\n  ]\n  b = {\n    " & x & ",\n    " &
+        y & "\n  }\n  c = (\n    " & x & ",\n    " & y & "\n  )\n  d = Foo(\n    x: 1,  # Why.\n" &
+        "    y: 2\n  )\n"
+    check checkTrailing("a.nim", lists).len == 4  # comment keeps `Foo` from joining
+    check lists.fixed == lists.replace(y & "\n", y & ",\n").replace("y: 2\n", "y: 2,\n")
     check lists.fixed.isSettled
-    let imported = "import ./[\n  a,\n  b\n]\n"
-    check imported.fixed == "import ./[\n  a,\n  b,\n]\n"
+    let imported = "import ./[\n  " & "a".repeat(50) & ",\n  " & "b".repeat(50) & "\n]\n"
+    check imported.fixed == imported.replace("b\n]", "b,\n]")
     check fixTrailing("a.nim", imported).source == imported.fixed  # rule alone writes it
     for kept in [
       "let a = (\n  b\n)\n",
       "let a = @[1, 2,\n  3, 4]\n",
       "type T = array[\n  3,\n  int\n]\n",
+      "let a = @[\n  1,\n  2\n]\n",  # fits joined: rows kept, no comma
+      "foo(\n  " & x & ", " & y & "\n)\n",  # items share line: comma would mark one to line
     ]:
       check checkTrailing("a.nim", kept).len == 0  # grouping, flowed list, type bracket
+    check "foo(\n  a,\n  b\n)\n".fixed == "foo(a, b)\n"  # fits joined: call joins, no comma
 
 
   test "trailing separator held on no line widens it, and keeps width guard on held line":
