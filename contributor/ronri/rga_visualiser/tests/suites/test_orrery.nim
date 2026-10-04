@@ -224,6 +224,43 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check planets_claimed == len(PLANETS)
       for which, times in covered: check times == 1
 
+    test "the star catalogue holds no composite entry beside its main star":
+      # **Composite entry is one more point for its system.** It points at its components,
+      #   but often at distance of older measurement, up to 6.2 parsecs off them.
+      #   Rule is tool's own, and `PROVENANCE.md` gives it: entry for system as whole comes
+      #   out where its main star stands here, and stays where main star has no parallax.
+      #   Pairs are whole and one component, by SIMBAD's links; first twelve were cut by hand.
+      const
+        cut = [
+          ("* mu. Cyg", "* mu.01 Cyg"), ("* zet Aqr", "* zet01 Aqr"),
+          ("* zet UMa", "* zet01 UMa"), ("2MASS J09153413+0422045", "** RED   17A"),
+          ("BD+32  4747", "HD 224635"), ("BD+49  2959", "HD 179957"),
+          ("BPM 14175", "NAME BPM 14175A"), ("HD  40887", "NAME HD 40887 AB"),
+          ("NAME BD-21 1074BC", "BD-21  1074B"), ("Smethells 177", "LP  990-139"),
+          ("StM 162", "NAME StM 162A"), ("StM 187", "NAME StM 187A"),
+        ]
+        # Only point for main star that has no parallax, then stars SIMBAD links to companion.
+        kept = [
+          ("* zet Cnc", "* zet02 Cnc"), ("G 123-49", "G 123-49B"),
+          ("HIP 110922", "LP  876-25"), ("LP  532-81", "LP  532-81 C"),
+          ("RX J0507.2+3731", "RX J0507.2+3731B"),
+          ("* ksi UMa B", "* ksi UMa Bb"), ("BD+16  2708", "BD+16  2708B"),
+          ("HD  61606", "BD-03  2002"), ("HD 222237", "HD 222237b"),
+        ]
+      var names = initHashSet[string]()
+      for star in STARS: names.incl(star.name)
+      # Read each into flag first, so failure names entry rather than printing whole table.
+      for (whole, part) in cut:
+        let (stands_part, stands_whole) = (part in names, whole in names)
+        checkpoint(&"`{whole}` beside `{part}`")
+        check stands_part
+        check not stands_whole
+      for (whole, part) in kept:
+        let (stands_part, stands_whole) = (part in names, whole in names)
+        checkpoint(&"`{whole}` beside `{part}`")
+        check stands_part
+        check stands_whole
+
     test "no point in it is a hub for the rest of the scene":
       # Fault that broke arrangement before this one: every line and plane joined.
       #   through single star, so scene drew as starburst. Counted, because "it looks
