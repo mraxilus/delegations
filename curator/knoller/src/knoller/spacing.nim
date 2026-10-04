@@ -8,7 +8,8 @@
 ##     cannot tell apart), symbol binary operator takes none, range and its math among them, at
 ##     any depth: `prev[i-1]`, `digits[i+1..<n]`, `a[f(x, y+1)]`; word operator keeps one each
 ##     side, which tokeniser demands, and glued tokens that would merge keep one; array literal
-##     standing alone is no such bracket;
+##     standing alone is no such bracket, nor generic list routine or type declares after its
+##     name, export marker or not (`func pick[I: A | B]`, `isDeclaredList`);
 ##   - prefix operator is glued to its operand, unless tokeniser demands one space (X.9);
 ##   - comma and semicolon take none before them and one after; colon of type, field or branch
 ##     likewise;
@@ -110,6 +111,10 @@ const
     "using", "var",
   ]
     ## Keywords whose next name declares, so `*` glued after it marks export.
+  GENERIC_HEADS = [
+    "converter", "func", "iterator", "macro", "method", "proc", "template", "type",
+  ]
+    ## Keywords whose head declares generic list after its name: declaration, never selector.
   PLAIN_BRACKETS = ["(", "[", "{"]
     ## Brackets that glue to dot or colon after them into one token, or before them from dot.
   EXCERPT_RUNES = 12  ## Runes of each neighbour echoed beside breach.
@@ -210,6 +215,36 @@ func gapRespacing(tokens: openArray[Token], k: int, source: string): Respacing =
   result.got = source.excerpt(a, b)
 
 
+func columnOf(source: string, at: int): int =
+  ## Count bytes between start of line and offset.
+  var k = at
+  while k > 0 and source[k - 1] != '\n': dec k
+  at - k
+
+
+func isDeclaredList(tokens: openArray[Token], k: int, source: string): bool =
+  ## Decide whether `[` at `k` opens generic list that declaration names: after name, export
+  ##   marker optional, that routine keyword or `type` heads on its line, or that opens entry
+  ##   line of `type` section, i.e. nearest line above at smaller indent opens with `type`.
+  var j = k - 1
+  if j > 0 and tokens[j].spelling(source) == "*" and tokens[j - 1].after == tokens[j].first:
+    dec j
+  if tokens[j].kind notin {TokenKind.Word, TokenKind.Quoted}: return false
+  if j > 0 and tokens[j - 1].lastLine(source) == tokens[j].line:
+    return tokens[j - 1].spelling(source) in GENERIC_HEADS
+
+  # Name opens its line: read keyword of nearest line above at smaller indent.
+  let indent = source.columnOf(tokens[j].first)
+  var m = j - 1
+  while m >= 0:
+    let is_first = m == 0 or tokens[m - 1].lastLine(source) < tokens[m].line
+    if is_first and tokens[m].kind != TokenKind.Comment and
+        source.columnOf(tokens[m].first) < indent:
+      return tokens[m].spelling(source) == "type"
+    dec m
+  false
+
+
 func isRangeApart(
   tokens: openArray[Token]; partners: openArray[int]; k: int; source: string
 ): bool =
@@ -268,7 +303,7 @@ func respacings(source: string): seq[Respacing] =
     lasts[k] = t.lastLine(source)
     let p = partners[k]
     if t.spelling(source) != "[" or k == 0 or p < k or tokens[k-1].after != t.first: continue
-    if tokens.isOperandEnd(k - 1, source):
+    if tokens.isOperandEnd(k - 1, source) and not tokens.isDeclaredList(k, source):
       for m in k + 1 ..< p: selected[m] = true
   for k, t in tokens:
     if k == 0 or lasts[k - 1] < t.line: continue
