@@ -472,7 +472,7 @@ suite "Internal: Two dancers in rigid body engine":
     check pairs == TWINS_SWEPT
 
 
-  test "over crown nothing stops single hold turning":
+  test "held above, nothing stops single hold turning":
     ## Architect, who dances it: above is level that blocks by twist alone, and
     ## floor's own table says no block either way for either single hold there.
     ## Arms are clear of both bodies and swing is nowhere near its ends, so this
