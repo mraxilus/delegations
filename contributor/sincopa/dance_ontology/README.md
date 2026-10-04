@@ -2,7 +2,7 @@
 
 An executable ontology of the frames that a couple can hold in partner dance, and the moves
 between them. It is written for salsa, but nothing in it is specific to salsa. It is two
-humanoid bodies, four hands, and the geometry of a face-to-face position.
+humanoid bodies, four hands, and the geometry of two dancers face to face.
 
 The model has one state and one relation. A **frame** is what each hand of the lead holds,
 and how the arms lie where they overlap. A **move** exists between two frames exactly when

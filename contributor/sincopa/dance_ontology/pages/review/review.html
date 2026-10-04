@@ -441,7 +441,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       <p>It matters more now that a <code>place</code> is two moves rather than one. Every hand-off
       in your sheet is a drop and then a collect, which is all four <em class="term">pass</em>
       cells. The frame between the two is <em class="term">free</em>. So the sheet names four
-      routes through a state that it does not hold.</p>
+      transitions through a state that it does not hold.</p>
       <p class="do"><b>Do:</b> add one row and one column. Four collects out,
       four drops in, and the graph closes.</p>
     </div>
@@ -449,7 +449,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <div class="finding defer">
       <div class="head">
         <h3>2. <em class="term">closed</em> and <em class="term">half-closed</em> are not
-        hand positions</h3>
+        hand-to-hand frame states</h3>
         <span class="chip">{{deferred}} cells depend on it</span>
       </div>
       <p>These two are the only states in your sheet that are not hand-to-hand,
@@ -482,10 +482,10 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       <p><em class="term">Left-to-left around Right-to-right</em> also sits in the same variant
       list as <em class="term">&hellip; over &hellip;</em>. <strong>Over</strong> is part of the
       state, which is the arm on top. <strong>Around</strong> is a wrap, which is a modifier that
-      rotation produces. While the two stay in one list, the position list grows every time an arm
-      does something.</p>
+      rotation produces. While the two stay in one list, the list of frame states grows every time
+      an arm does something.</p>
       <p class="do"><b>Do:</b> one word per move, and move
-      <em class="term">around</em> out of the position variants and into the
+      <em class="term">around</em> out of the variants of a frame state and into the
       modifiers.</p>
     </div>
 
@@ -505,15 +505,15 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       <blockquote>Unsure if it is correct to either separate or combine these
       positions? I'm leaning heavily towards them being the same thing. Perhaps I
       need a clearer definition of what a frame position is.</blockquote>
-      <p class="answer">One position, two states. Keep both readings.</p>
-      <p>A <strong>frame position</strong> is which hands hold what, such as
+      <p class="answer">One frame hold, two states. Keep both readings.</p>
+      <p>A <strong>frame hold</strong> is which hands hold what, such as
       <em class="term">Left-to-left and Right-to-right</em>. It is what you call out on the floor.
-      A <strong>frame</strong> is a position and the arm order together, and it is what the state
+      A <strong>frame</strong> is a frame hold and the arm order together, and it is what the state
       machine moves between.</p>
       <p>The test is whether a dancer passes between the two for free, and they cannot. A move from
       over-Left to over-Right takes a <code>cut</code>. Merge them, and the machine offers a move
-      that the arms forbid. Name them apart everywhere, and you report a new position every time an
-      arm changes height. In the code that costs one function: <code>describe</code> gives the
+      that the arms forbid. Name them apart everywhere, and you report a new frame state every time
+      an arm changes height. In the code that costs one function: <code>describe</code> gives the
       state, and <code>position</code> gives the class.</p>
     </div>
 

@@ -1,4 +1,4 @@
-## Lay out hand-to-hand turns page: seven positions, half turn apart.
+## Lay out hand-to-hand turns page: seven frame states, half turn apart.
 ##
 ##   Second of one mock-up per kind of turn (rule 15), and dual of
 ## first. Single hand turns for ever, so its twist is not part of
@@ -43,7 +43,7 @@ const WINDING: array[Manner, string] = [
     "who stands still. They keep <b>whichever side of them faced the lead " &
     "facing them</b>, so they turn as far as they travel (rule 32). That " &
     "winds the pair half a turn, which is the half turn an axis turn " &
-    "winds. So it walks the chain, and it lands on the position that the " &
+    "winds. So it walks the chain, and it lands on the frame state that the " &
     "axis turn of the <em>lead</em> lands on.",
   "The lead walks the half circle instead, and faces the centre the same " &
     "way, so it winds the pair half a turn too. It is the one manner of " &
@@ -71,7 +71,7 @@ func plates(parts: Parts): string =
         )
         still = parts[&"hw_{description.tag}_{i}_still"]
       # Every manner walks chain now, orbits included (rule 32), so every
-      # cell says position it lands on.
+      # cell says frame state it lands on.
       result.add &"<figure>{moving}{still}<figcaption>{CHAIN[i].name}" &
         &"<br>&rarr; <b>{CHAIN[i + 1].name}</b></figcaption></figure>"
     result.add "</div></div>"
@@ -92,15 +92,15 @@ const BODY = """
   hand held above turns for ever, so the twist is no part of the state and where the pair points
   is all of it. Hold both hands and it is the other way about. A whole turn puts every facing and
   every place back where it was. So the pointing says nothing, and <b>the twist is the state</b>.
-  That is a turn and a half each way, by halves, which is seven positions.</p>
+  That is a turn and a half each way, by halves, which is seven frame states.</p>
   <p class="sibling"><b>The crossed pair comes next</b>, on its own page. It is this chain, read
   half a turn along, so only the drawing is left.</p>
 </header>
 
 <section>
-  <div class="head"><span class="n">What is here</span><h2>Seven positions,
+  <div class="head"><span class="n">What is here</span><h2>Seven frame states,
   a half turn apart</h2></div>
-  <p><b>The middle position is the frame of the app</b>, drawn as the app draws it. Its two
+  <p><b>The middle frame state is the frame of the app</b>, drawn as the app draws it. Its two
   connections run side by side and cross nothing. Each half turn from there winds the pair
   one step further, and the chain runs out at a turn and a half each way.</p>
   <p><b>The wind says which way the partners face</b>, so the captions leave it out and this page
@@ -131,10 +131,10 @@ const BODY = """
   <p><b>All four manners of turn wind, and by the same half turn.</b> Rule 32 does that. A walker in
   orbit keeps whichever side of them faced the centre facing it. So they turn as far as they travel,
   and the pair winds with them. A half turn is then a half turn however it is danced, and the four
-  manners can be compared. <b>An orbit lands on the position the axis turn of the other dancer
-  reaches</b>, and every build measures that.</p>
-  <p><b>The names are preliminary, and yours.</b> <em>Left over Right</em> is the position where the
-  Left connection of the lead passes over the Right at the crossover of the lead. <em>Right over
+  manners can be compared. <b>An orbit lands on the frame state the axis turn of the other
+  dancer reaches</b>, and every build measures that.</p>
+  <p><b>The names are preliminary, and yours.</b> <em>Left over Right</em> is the frame state where
+  the Left connection of the lead passes over the Right at the crossover of the lead. <em>Right over
   Left</em> is its mirror. The cross, the diamond and the swan one step apart
   share a name, because they are one wind carried further.</p>
 </section>
@@ -142,9 +142,9 @@ const BODY = """
 <section>
   <div class="head"><span class="n">One chain</span><h2>Both patterns, half
   a turn apart</h2></div>
-  <p><b>Hand to hand and the crossed pair are one chain.</b> A hold has one position where its two
-  connections run parallel and cross nothing. That position sits at a different facing for each of
-  the two holds. Hand to hand runs parallel with the partners <b>{handRest}</b>. Hold left
+  <p><b>Hand to hand and the crossed pair are one chain.</b> A hold has one frame state where its
+  two connections run parallel and cross nothing. That frame state sits at a different facing for
+  each of the two holds. Hand to hand runs parallel with the partners <b>{handRest}</b>. Hold left
   to left and right to right instead, and it runs parallel <b>{pairRest}</b>, which is half a turn
   along this chain. Every step after that is the same step: cross, diamond and swan, out to
   a turn and a half each way.</p>
@@ -161,8 +161,8 @@ const BODY = """
   <div class="head"><span class="n">The chain</span><h2>The seven, in
   order</h2></div>
   <p>All four manners of turn reach these same seven, so they are drawn once rather than four
-  times over. A position cannot say which dancer turned, and only the path says that, which is why
-  every manner is drawn in motion below.</p>
+  times over. A frame state cannot say which dancer turned, and only the path says that, which is
+  why every manner is drawn in motion below.</p>
   <div class="row mid">
     {chain}
   </div>
@@ -179,7 +179,7 @@ const BODY = """
   crossing, and it closes to nothing where no crossing is there to mark. Watch a whole turn wind
   on, and the break appears at a hand and slides inward as the crossing does.</p>
   <p><b>What is not drawn:</b> anything past a turn and a half. The swans are the ends of the
-  chain and they hold. No frame of any animation is wound further, and no position draws two
+  chain and they hold. No frame of any animation is wound further, and no frame state draws two
   diamonds stacked. The build chooses which way a turn goes: whichever way walks the chain inward,
   measured for each manner rather than assumed. The chain runs out where this scope
   does, and not where the dance does. A pair can wind further, and what lies past the swan is

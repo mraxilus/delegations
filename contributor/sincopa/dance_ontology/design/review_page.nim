@@ -1,4 +1,4 @@
-## Lay out every frame position this project draws, card by card, for
+## Lay out every frame state this project draws, card by card, for
 ## Architect to rule on.
 ##
 ##   Page exists to be argued with: each card carries identifier to quote
@@ -76,7 +76,7 @@ const
     ## none yet.  Confirmation is of one still; when simulation's still of confirmed
     ## cell moves, its name comes out of here until it is confirmed again.
   FLAWED = initTable[string, string]()
-    ## Position is right, drawing is not: kept, with what to mend.
+    ## Frame state is right, drawing is not: kept, with what to mend.
 
 func escaped(text: string): string =
   ## Escape text for markup: ampersand and angle brackets.
@@ -329,9 +329,9 @@ func pageOf(parts: Parts): string =
 
   # `B`. Single-hand turns: what animated page walks through.
   let stills = parts
-  body.add """<section id="single"><h2>B &middot; Single-hand turn positions</h2>
-  <p class="lede">These are the positions that the single-hand turns page walks between. Two
-  manners of one family stand at the same four positions, and manners of two families meet
+  body.add """<section id="single"><h2>B &middot; Single-hand turn frame states</h2>
+  <p class="lede">These are the frame states that the single-hand turns page walks between.
+  Two manners of one round stand at the same four frame states, and manners of two rounds meet
   where they rest. So every repeat folds into one card, and each card names the manners and
   the quarters that land on it. Two manners are axis turns, one of the follow and one of the
   lead. Two are orbits, the follow round the lead and the lead round the follow. A quarter
@@ -365,7 +365,7 @@ func pageOf(parts: Parts): string =
   body.add "</section>"
 
   func windNote(note: string, wind: float, zero = ""): string =
-    ## Say how far position stands from where its chain rests, and which way
+    ## Say how far frame state stands from where its chain rests, and which way
     ## round.
     ##   Way comes from `wayOf`, so page and vocabulary cannot drift apart on
     ##     which sign is which.
@@ -459,7 +459,7 @@ func pageOf(parts: Parts): string =
   even where two of them
   start and end alike. The turn of the lead is told in two stages, as rule 18 asks.</p>
   <p class="how"><b>Every walk here turns one way.</b> The page turns by a positive quarter, so
-  every walk here is clockwise. The positions in section B are complete either way, because
+  every walk here is clockwise. The frame states in section B are complete either way, because
   four quarters make a whole round. <b>The anticlockwise walks are not drawn</b>, and neither
   is any edge run backwards. That is a gap in this reference, and not in the model.</p>
   <p class="how"><b>The bend at a chevron is a fault here, and nowhere above.</b> A reach keeps
@@ -675,8 +675,8 @@ func pageOf(parts: Parts): string =
 """ & switching & """  </style>"""
 
   let markup = head & """<div class="wrap">
-  <h1>Frame positions, drawn</h1>
-  <p class="lede">Every position this project draws, in one place, so that the Architect
+  <h1>Frame states, drawn</h1>
+  <p class="lede">Every frame state this project draws, in one place, so that the Architect
   can keep or drop each one. Every card carries an identifier to quote back.</p>
   <p class="tally">{{tally}}</p>
   <p class="how"><b>How to read it.</b> Section A is the standard diagram. It is a table of
@@ -706,7 +706,7 @@ func pageOf(parts: Parts): string =
 
 func render*(parts: Parts): string =
   ## Lay page out under its own title.
-  document("Frame Positions, Drawn", pageOf(parts))
+  document("Frame States, Drawn", pageOf(parts))
 
 
 func drawingOf(html, id: string): string =

@@ -282,8 +282,8 @@ const BODY = """
     mark for mark, and refuses to build where it is not. It asserts that the compound turn does
     not land on the axis turn, so the two are two moves.</p>
     <p><b>So an axis turn against an orbit is a property of the move, and not of the state.</b> A
-    position cannot tell an orbit from the axis turn of the other dancer, because they land in one
-    place. It cannot say who walked either. The node never needs to know, and only the edge
+    frame state cannot tell an orbit from the axis turn of the other dancer, because they land in
+    one place. It cannot say who walked either. The node never needs to know, and only the edge
     does. That is why the two stages are worth an animation: the difference is a path and not a
     state.</p>
   </div>

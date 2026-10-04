@@ -1,4 +1,4 @@
-## Lay out single-hand turns page: every position, every transition.
+## Lay out single-hand turns page: every frame state, every transition.
 ##
 ##   First of one mock-up per kind of turn (rule 15).  Held above,
 ##     single hand turns for ever (rules 16 and 17), so this page has no
@@ -7,7 +7,7 @@
 ##     manners of turn (rule 19), and animation of every edge between
 ##     them -- lead's in two stages rule 18 asks for.
 ##   Plates are generated rather than written out, because sixty-four
-##     positions and sixty-four transitions are table, not argument.
+##     frame states and sixty-four transitions are table, not argument.
 ##     Cost of generating them: prose cannot speak to one figure in
 ##       particular, only to whole set.  Accepted -- what is being shown
 ##       here is pattern, and pattern read cell by cell is not
@@ -28,12 +28,12 @@ const QUARTER_NAMES = ["none", "&#188;", "&#189;", "&#190;"]
 
 
 func plates(parts: Parts, manner: Manner): string =
-  ## Lay out one manner of turn: one plate per connection, positions then
+  ## Lay out one manner of turn: one plate per connection, frame states then
   ## edges.
   let tag = MANNERS[manner].tag
   for connection, single in SINGLES:
     result.add &"""<div class="plate"><h3>{single.name}</h3>"""
-    result.add """<p>Every position this manner reaches, a quarter turn """ &
+    result.add """<p>Every frame state this manner reaches, a quarter turn """ &
       """apart. The fourth quarter comes back to the first, so the round """ &
       """closes and nothing is refused.</p>"""
     result.add """<div class="row mid">"""
@@ -49,7 +49,7 @@ func plates(parts: Parts, manner: Manner): string =
     result.add figure(parts[&"st_{tag}_{connection}_0"], "<b>none</b><br>round again")
     result.add "</div>"
     result.add """<p>And every transition between them. Each one rocks """ &
-      """between its two positions, so the turn reads both ways:</p>"""
+      """between its two frame states, so the turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
     for quarter in 0..<QUARTERS_ROUND:
       let
@@ -88,7 +88,7 @@ const BODY = """
 <section>
   <div class="head"><span class="n">What is here</span><h2>Four manners of
   turn, and two sets of places they reach</h2></div>
-  <p><b>A position is a frame plus a count of quarter turns.</b> A turn does not change which
+  <p><b>A frame state is a frame plus a count of quarter turns.</b> A turn does not change which
     hands are held, so it does not change the frame. It changes where the pair points. The first
     cell of every row is the frame as the app draws it. Each step is a quarter turn, and the
     fourth brings the round back to the first.</p>
@@ -169,12 +169,12 @@ const BODY = """
 </section>
 
 <div class="note">
-  <p><b>What the two rounds cost.</b> Where two manners reach one round, a position cannot say
-  which of them was danced, and only the edge can. That holds for both pairs, so the state graph
+  <p><b>What the two rounds cost.</b> Where two manners reach one round, a frame state cannot
+  say which of them was danced, and only the edge can. That holds for both pairs, so the state graph
   under these four sections holds <b>two rounds</b> rather than four. Whether the
   page should lead with the two rounds, and put the four manners under them, is yours to call.</p>
-  <p><b>An orbit lands where an axis turn lands.</b> So no position tells an orbit from the axis
-  turn of the other dancer, and the difference belongs to the move. The compound turn lands
+  <p><b>An orbit lands where an axis turn lands.</b> So no frame state tells an orbit from the
+  axis turn of the other dancer, and the difference belongs to the move. The compound turn lands
   somewhere of its own, and it is an orbit walked while the walker turns the other way. The frame
   page says the same.</p>
   <p><b>What is not drawn here:</b> any limit. No refusal appears, because above has no block.
