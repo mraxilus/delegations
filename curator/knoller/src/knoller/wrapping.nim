@@ -29,8 +29,10 @@
 ##     and argument read flat. Call and signature keep their one level. Fixer re-indents hand's
 ##     lines too; run of lines whose bracket opens past its line, or holding comment line or
 ##     token spanning lines, stays. Operator break follows same rule.
-##   Trailing separator: list written one item to line ends its last item with separator: call,
-##     parameters, array, seq, set, table, tuple of several items, constructor, import bracket.
+##   Trailing separator: list written one item to line ends its last item with separator, where
+##     it would not fit joined: call, parameters, array, seq, set, table, tuple of several items,
+##     constructor, import bracket. List that fits joined takes none, since comma marks split
+##     hand wants (X.3): call joins, and other list keeps rows hand gave it.
 ##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`,
 ##     `continuationShifts`, `trailingInserts`), so each rule is written once (Article II.1).
 ##
@@ -1016,9 +1018,24 @@ func isConstructorOpen(s: Scan, o: int): bool =
   text != "(" or s.tokens.signatureOf(s.partners, o, s.source) < 0
 
 
+func isFittingJoined(s: Scan, o: int): bool =
+  ## Decide whether group bracket `o` opens would fit `LINE_MAX` joined onto line it opens on,
+  ##   with what follows its closing bracket there; group holding comment or token spanning
+  ##   lines never joins.
+  let c = s.partners[o]
+  for k in o..c:
+    if s.tokens[k].kind == TokenKind.Comment or s.lasts[k] > s.tokens[k].line: return false
+  let
+    (open_line, close_line) = (s.tokens[o].line, s.tokens[c].line)
+    head = s.lines[open_line][0 ..< s.tokens[o].first - s.starts[open_line]]
+    tail = s.lines[close_line][s.tokens[c].after - s.starts[close_line]..^1]
+  not (head & s.flatten(o, c).text & tail).isWide
+
+
 func trailingInserts(s: Scan, held: Held): seq[Insert] =
-  ## Find each list written one item to line whose last item lacks trailing separator; one
-  ##   whose separator would widen held line is left.
+  ## Find each list written one item to line whose last item lacks trailing separator, where
+  ##   list would not fit joined (`isFittingJoined`); one whose separator would widen held line
+  ##   is left. List that fits joined takes none: call joins, and hand keeps rows of other list.
   for o in 0 ..< s.tokens.len:
     if s.tokens[o].kind != TokenKind.Open or s.partners[o] < o: continue
     let c = s.partners[o]
@@ -1031,6 +1048,7 @@ func trailingInserts(s: Scan, held: Held): seq[Insert] =
     if items.len == 0 or items[^1].separator >= 0: continue
     if not items.allIt(s.isLineFirst(it.first)): continue
     if not items[0 ..< ^1].allIt(s.isLineLast(it.separator)): continue
+    if s.isFittingJoined(o): continue
     let last = items[^1]
     if toSeq(last.first .. last.last).anyIt(
       s.spelling(it) in BLOCK_KEYWORDS or (s.spelling(it) == ":" and s.isLineLast(it)),
