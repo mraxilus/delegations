@@ -9,7 +9,9 @@
 ##   - every name token of scope that Nim reads as old name must resolve, in file that
 ##     compiles: one resolving to declaration is renamed, one resolving to other symbol stays,
 ##     and one resolving to nothing refuses rename, since it cannot be proved either way. Edit
-##     spans token as spelled there, since Nim reads `tmpDir` as `tmp_dir`.
+##     spans token as spelled there, since Nim reads `tmpDir` as `tmp_dir`. Answer naming
+##     other identifier than token refuses too: it is call compiler placed on name, as `items`
+##     on `x` of `for e in x`, so what token names stays unknown.
 ##     Named argument and field of constructor (`f(name = v)`, `T(name: v)`), which semantic
 ##     pass resolves to nothing, resolve through callee: they are declaration where it is
 ##     parameter or field of that callee, in file declaring callee;
@@ -193,7 +195,12 @@ func planRename*(
       is_every = true
     for site in sites:
       var symbol: Symbol
-      if site in answers[path].symbols: symbol = answers[path].symbols[site]
+      if site in answers[path].symbols:
+        # Answer naming other identifier is call compiler placed on name: `items` of `for`.
+        symbol = answers[path].symbols[site]
+        if not symbol.name.split('.')[^1].isSameName(rename.name):
+          refuse "`" & path & ":" & $site[0] & "` resolves to `" & symbol.name &
+            "`, which its token does not name"
       else:
         # Named argument or field resolves through its callee: parameter of that routine, or
         #   field of that type, in file declaring it.
