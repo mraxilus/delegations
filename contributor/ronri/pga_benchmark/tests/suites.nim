@@ -17,7 +17,7 @@ import ../src/pga_benchmark/[
   bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
   notes, proposals, report,
 ]
-import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, search, shell]
+import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, render, search, shell]
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
   timesOf
@@ -1988,6 +1988,81 @@ suite "Internal: Proposal list":
     check "<h2>P02: Title 2</h2>" in body and "<h3>Claims</h3>" in body  # nested one level down
     check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
     check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
+
+
+
+suite "Internal: Render":
+  const fixture = staticRead("fixtures/control_faces.json")  ## Control page `drive` renders.
+  let expected = @[(element: "p#han", codepoint: 0x4E2D), (element: "p#open", codepoint: 0x2603)]
+    ## Findings control of these tests expects.
+
+  func foundOf(characters: openArray[(string, string, int)]): JsonNode =
+    ## Build document harness writes: page, element and codepoint of each character found.
+    result = newJObject()
+    for (page, element, codepoint) in characters:
+      if not result.hasKey(page): result[page] = %*{"characters": [], "faces": []}
+      result[page]["characters"].add %*{"element": element, "codepoint": codepoint}
+
+
+  test "control fixture expects findings, and its page writes each paragraph it names":
+    let
+      paragraphs = paragraphsOf(parseJson(fixture))
+      body = bodyControl(paragraphs)
+    check expectedOf(paragraphs).len > 0  # control proves something
+    check expectedOf(paragraphs).allIt(it.codepoint > 0x7F)  # beyond ASCII alone
+    check paragraphs.anyIt(not it.is_drawn_by_system)  # one shipped face draws, unexpected
+    for paragraph in paragraphs:
+      check "<p id=\"" & paragraph.id & "\"" in body  # each paragraph on page, by id
+      if paragraph.stack.len > 0:
+        check "font-family: " & escapeHtml(paragraph.stack) & "\"" in body  # own stack, inline
+
+
+  test "codepoint reads as Unicode names it":
+    check codepointText(0xE9) == "U+00E9"  # four digits at least
+    check codepointText(0x2603) == "U+2603"
+    check codepointText(0x1D400) == "U+1D400"  # beyond plane 0, five
+
+
+  test "character found on page reads as finding at its hosted page, ending in codepoint":
+    let findings = checkRendered(
+      foundOf([("docket", "p.note", 0x2603), ("control", "p#han", 0x4E2D),
+        ("control", "p#open", 0x2603)]),
+      expected,
+      "control",
+      "build/hosted",
+    )
+    check findings.mapIt(it.render) == @[
+      "build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.",
+    ]  # one finding, at page, element first, codepoint last
+
+
+  test "control passes on findings it expects, and one absent is blind":
+    let both = [("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
+    check checkRendered(foundOf(both), expected, "control", "h").len == 0  # sees, so passes
+    let blind = checkRendered(foundOf(both[0..0]), expected, "control", "h")
+    check blind.len == 1 and "Check is blind" in blind[0].message  # absent one is blind
+    check blind[0].message.endsWith("got none for `U+2603`.")  # names codepoint it missed
+    check checkRendered(newJObject(), expected, "control", "h").len == 2  # never rendered
+
+
+  test "control finding nobody expects, or expected one on other page, is finding":
+    let both = @[("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
+    check checkRendered(
+      foundOf(both & ("control", "p#closed", 0x2603)), expected, "control", "h"
+    ).len == 1  # control raises exactly what it expects
+    check checkRendered(
+      foundOf(both & ("docket", "p#han", 0x4E2D)), expected, "control", "h"
+    ).len == 1  # expectation holds on control alone
+
+
+  test "control expecting nothing proves nothing, and face not loaded is finding":
+    let none = checkRendered(newJObject(), [], "control", "h")
+    check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
+    let refused = %*{"docket": {"characters": [], "faces": [
+      {"family": "Noto Sans", "weight": "400", "status": "error"}]}}
+    check checkRendered(refused, expected, "control", "h").mapIt(it.message).anyIt(
+      it == "@font-face Noto Sans 400: Face does not load; got `error`."
+    )  # refused face named with status
 
 
 
