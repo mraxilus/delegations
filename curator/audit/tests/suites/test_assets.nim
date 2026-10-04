@@ -81,6 +81,17 @@ suite "Assets":
       check file.declaredDigest.len == 64
 
 
+  test "no row declares Noto subset, while Commit Mono keeps its own (Article X.8)":
+    # Store declaring no Noto subset is what stops page shipping one: `fetch-assets` refuses
+    #   any file no row declares. Commit Mono is no Noto, and pages draw its Latin subset.
+    for (file, prefix, _) in ASSETS:
+      if file.toLowerAscii.startsWith("noto"):
+        check file.endsWith(".ttf")  # whole TrueType, never `woff2` subset (Article X.8)
+        check "notofonts" in prefix  # Noto's own release, never `@fontsource` (Article X.8)
+    for file in ["commit-mono-latin-400-normal.woff2", "commit-mono-latin-700-normal.woff2"]:
+      check file.declaredDigest.len == 64  # X.8 binds Noto alone (Article X.8)
+
+
   test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
