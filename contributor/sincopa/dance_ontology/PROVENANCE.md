@@ -602,7 +602,7 @@ every animated edge of the last two. Each card carries the identifier to quote b
 has been ruled on it.
 
 **Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
-reads as a decision of a sign-off, which `GUIDE.md` numbers from D1. The Architect ruled this on
+reads as a decision of a sign-off, which `GUIDE.md` numbers from D01. The Architect ruled this on
 2026-10-04. The questions of sections A, C and D take the same names, because each question is keyed
 by its card. Verified by `suites/test_marks.nim`, which reads each identifier off the written page.
 It failed on 57 of 107 cards, which had one digit.
@@ -784,8 +784,8 @@ its crossing. The crossings are found segment against segment, as the stills fin
 `checkHandTurns`, which checks that a moving figure and the still it lands on break the same arm.
 
 **Each way of turning finds its own sense, so no move walks off the end of the chain (rule 30).**
-The simulation turns a quarter from the frame, and reads the wind at the furthest pose the walk
-reaches. Verified by `checkHandTurns`, which reads the wind on every frame of every move.
+The simulation turns a quarter from the frame, and reads the twist at the furthest pose the walk
+reaches. Verified by `checkHandTurns`, which reads the twist on every frame of every move.
 
 **Past a whole turn, one connection runs straight and the other goes round it (rule 31).** That is
 the swan. `route.windShare` gives the swing of the straight one to the snake. So at a turn and a
@@ -1089,7 +1089,7 @@ The arms are carried on by the engine. A pose at each moment is the pose before 
 an arm that has gone round a body stays round it.
 
 Joined hands rise from where each one settled at rest, to the lower edge of their band. They rise
-along a ramp over the first quarter turn of wind (`RAISE`). They are held to the ramp from both
+along a ramp over the first quarter turn of twist (`RAISE`). They are held to the ramp from both
 sides, because asked for the band outright a weightless hand crossed 359 mm in one moment. Risen,
 the two edges of the band are held (`LIFT` 400 newtons per metre, `FALL` 40 damping it), and
 everything between them is free. The band is a bound, and not a preference.
@@ -1110,7 +1110,7 @@ whole turn have their hands down again.
 Going up, the hands rise over the head of the follow. Coming back, they come forward off that crown
 first, to
 between the two bodies, and then down (`leaving`, `over`). Let down straight from over the crown
-they pass through the head. The rise from rest keeps a key of its own, which is the wind (`wound`,
+they pass through the head. The rise from rest keeps a key of its own, which is the twist (`wound`,
 `risen`). Rejected: that rise keyed to facing too. It let the hands down onto the head through the
 second half of every whole turn.
 
@@ -1119,16 +1119,16 @@ Facing, a hand over the crown is a hold at some other height, as a hand under it
 arms press the hands up against the forty newtons of the lift. The same-name chain come round to
 face to face sat at 1.37 to 1.39 m, against 1.35.
 
-Asked at a lower band, the hands rise from where they settled, over the first quarter turn of wind.
+Asked at a lower band, the hands rise from where they settled, over the first quarter turn of twist.
 That rise is whole from the rest for a hold that rests Face-to-back.
 
 Verified by `test_rigid.nim`. `up` is nought face to face, and one from a quarter turn away, at
-every wind of a turn and a half. The cross-name chain at rest and the same-name chain wound to face
-to face hold with every joined hand in the torso band. A09 stands at 0.76 m, with every hand between
-1.23 and 1.35 m. Red first.
+every twist up to a turn and a half. The cross-name chain at rest and the same-name chain wound to
+face to face hold with every joined hand in the torso band. A09 stands at 0.76 m, with every hand
+between 1.23 and 1.35 m. Red first.
 
 Under this rule no diamond stands. With the hands asked to mid torso after a whole turn they hold at
-no distance. The wind gives at a wrist, a twist or a hand under the crown band before it comes
+no distance. The turn gives at a wrist, a twist or a hand under the crown band before it comes
 round. Where it comes round, the pose left to stand gives too. Rejected: six centimetres of sag
 under the crown band, and not three. Measured, it stands neither diamond.
 
@@ -1292,8 +1292,8 @@ Verified by `suites/test_asks.nim`, both red first. A09 is the D05 of the chain,
 Every crossed still lays the connection that its card names over, at the crossing of the lead. That
 crossing is the one nearest the lead along both connections.
 
-The page counts turns clockwise seen from above, and the simulation anticlockwise. Every wind is
-flipped in one place before it is asked (`asked`). The wind is flipped for every card, and not for
+The page counts turns clockwise seen from above, and the simulation anticlockwise. Every twist is
+flipped in one place before it is asked (`asked`). The twist is flipped for every card, and not for
 the chains alone. Verified by `suites/test_asks.nim`: one picture is one question whichever section
 draws it, A16 being C05 and A17 C03, red first.
 
@@ -1319,7 +1319,7 @@ the other. That is a finding against the reading of the rule, and not a number b
 
 Sections B and E being whole is a weak result. Every card in them is over the crown, where a single
 hold sweeps free past two turns, so they test the model hardly at all. The cards that discriminate
-are the chains under wind.
+are the chains under twist.
 
 ## Rig viewer
 
@@ -1400,16 +1400,16 @@ walk gives short. It is the reason that the planned turn exists.
 
 The corpus law in `test_rigid.nim` holds every still it walks to a strain of 0.1 (`AT_EASE`). That
 is two degrees of a twenty degree ease. It walks both chains from cross to cross, and the same-name
-chain either way about at half. It walks the free frame pillion too, and the single hold at quarter
-and half. It stops at the cross. Every other still that the walk holds stands at ease, or within a
-fifth of an ease band at its worst joint, measured 2026-09-18.
+chain either way about at half. It walks the free frame Face-to-back too, and the single hold at
+quarter and half. It stops at the cross. Every other still that the walk holds stands at ease, or
+within a fifth of an ease band at its worst joint, measured 2026-09-18.
 
 Walked, the swans wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of a
 turn, with hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26,
 with an arm against an arm, the follow's collarbone retracted to its end, and the chest at forty.
 Under the rule that rests the hands at mid torso facing, the walk stands no diamond either.
 
-The film of the wind shows why. From the cross on, the arms of the follow wrap round the head at the
+The film of the turn shows why. From the cross on, the arms of the follow wrap round the head at the
 height of the neck, rather than pass over it. Hands are carried at the lower edge of the band, a
 radius of a hand over the crown. That leaves no room for a forearm to cross above the head.
 
@@ -1563,8 +1563,8 @@ torso band.
 end. In the easiest plan that holds, C02 and C06 read 0.11, D03 and A11 0.12, D01 and D07 0.37, and
 C01 and C07 0.68. Measured on 2026-10-03 from `design/rig.json`.
 
-Rejected: to let the arms settle toward ease at the last wind, a leap at a time. With the engine
-sprung after the plan, that took C01 from 0.56 to 0.53 and left D07 as it was.
+Rejected: to let the arms settle toward ease at the end of the turn, a leap at a time. With the
+engine sprung after the plan, that took C01 from 0.56 to 0.53 and left D07 as it was.
 
 The spring is 30 hertz because of what was measured on D07 on 2026-10-01. At 15 hertz the engine
 gave by twist at 1.47 of a turn. At 25, 30 and 40 hertz it stood, with a strain of 0.33 to 0.34 at
@@ -2321,7 +2321,7 @@ urgent.
 - **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 0.68,
   and D01 and D07 0.37 (Planned turn).
 - **With the springs, the planned swans of the same-name chain held on the last bit of one sum.**
-  When the wind was added to the facing of the follow in another order, that facing changed in its
+  When the twist was added to the facing of the follow in another order, that facing changed in its
   last bit. Then D01 and D07 stood no pose in any of the sixteen styles. Measured 2026-10-02 with
   the engine sprung after the plan. The facing keeps its order, and the engine now stands each
   planned moment instead (Planned turn).
