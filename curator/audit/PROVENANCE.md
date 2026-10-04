@@ -908,9 +908,11 @@ label would show a stale queue.
   removal on `converted_to_draft`, which `draft.yml` fires on each push to a ready pull request.
 - The workflow reads the labels before it removes one, so an item whose label somebody removed
   first is no failure.
-- Its grant is `issues: write` alone. The labels of a pull request go through the issues
-  endpoint, which takes either the issues grant or the pull requests grant. That is inferred
-  from the reference of the endpoint, and the first labelled pull request to merge verifies it.
+- Its grant is `issues: write` and `pull-requests: write`. The reference of the issues endpoint
+  says that either grant reaches the labels of a pull request. For the token of a run, that is
+  false. Verified by run 1 and run 2 of `architect.yml`, 2026-10-04. Run 1, with
+  `issues: write` alone, failed with exit 1 on the merge of #463. Run 2, with both grants and
+  the same script, removed the label on the merge of #467.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
