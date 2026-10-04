@@ -3,8 +3,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, unittest]
-import ../../src/knoller/fences
+import std/[sequtils, strutils, unittest]
+import ../../src/knoller/[fences, rules]
 
 
 
@@ -14,6 +14,17 @@ suite "Fences":
     check source.fenceOf.lines == @[1, 2, 3, 5, 6]  # two fences, second left open
     check source.fenceOf.fault == -1  # every fence readable
     check "a\nb\n".fenceOf.lines.len == 0  # no marker, no fence
+
+
+  test "each fence warns once, at its first line, with lines it keeps; open one runs to end":
+    let
+      source = "a\n#!fix off\nb\n#!fix on\nc\n#!fix off\nd\n"
+      held = heldOf("a.nim", source.fenceOf)
+    check held.mapIt(it.line) == @[2, 6]  # one warning for each fence, at its marker
+    check held[0].message.endsWith("got lines `2` to `4`.")  # markers included
+    check held[1].message.endsWith("got lines `6` to `7`.")  # open fence runs to last line
+    check held.allIt(it.rule == Rule.FenceHeld)
+    check heldOf("a.nim", "a\nb\n".fenceOf).len == 0  # no fence, no warning
 
 
   test "marker inside string fences nothing, and fence crossing bracket is fault":

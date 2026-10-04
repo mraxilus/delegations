@@ -58,7 +58,7 @@ suite "Fixes":
   test "after fix, form and idiom checks report nothing, and second fix writes nothing":
     let
       path = "curator/audit/src/a.nim"
-      (written, fixed, refused, _) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
+      (written, fixed, refused, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
     check refused.len == 0 and written.len == 1
     let source = written[0].content
     check checkForm(path, source, Kind.Nim.rule).len == 0  # form checks report none
@@ -101,7 +101,7 @@ suite "Fixes":
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
                  "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
-    let (written, fixed, refused, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
+    let (written, fixed, refused, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
     check refused.len == 0 and written.len == 1
     check checkFormatting(path, written[0].content, Kind.Nim).len == 0  # all cleared
     check checkForm(path, written[0].content, Kind.Nim.rule).len == 0  # nothing new
@@ -133,7 +133,7 @@ suite "Fixes":
         "a".repeat(20) & ": range[0 .. 9], " & "b".repeat(24) &
         ": array[0 ..< 4, int], c: int): int = c\n"
     check fixEntries(CURATOR_BRANCH, [entry(path, spaced)]).written.len == 0  # already spaced
-    let (written, fixed, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, wide)])
+    let (written, fixed, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, wide)])
     check written[0].content == head & "let x = foo(\n  s[0 ..< n],\n  t[1 .. ^1],\n  " &
       "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n)\nf(s[0 ..< n], t[1 .. ^1])\n" &
       "proc h(\n  " & "a".repeat(20) & ": range[0 .. 9], " & "b".repeat(24) &
@@ -173,6 +173,8 @@ suite "Fixes":
     check plan.written[0].content == source.replace("1+2", "1 + 2")  # rows kept, blank line too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
     check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0
+    check plan.held.len == 1 and plan.held[0].message.contains("Fence keeps its lines")  # warns
+    check fixEntries(CURATOR_BRANCH, [entry(path, unfenced)]).held.len == 0  # no fence, no warning
 
 
   test "fence left open runs to end of file; marker inside string fences nothing":
@@ -191,6 +193,7 @@ suite "Fixes":
       crossing = "let a = 1+2\nlet m = f(\n  " & FENCE_OFF & "\n  1,  0,\n)\n" & FENCE_ON & "\n"
       plan = fixEntries(CURATOR_BRANCH, [entry(path, crossing)])
     check plan.written.len == 0 and plan.left.mapIt(it.line) == @[2]
+    check plan.held.len == 0  # fence it cannot read is finding, and no warning
     check checkFormatting(path, crossing, Kind.NimScript).mapIt(it.line) == @[2]
     let literal = "let a = 1+2\n#!fix fenced\n"  # would be read back as fenced line
     check fixEntries(CURATOR_BRANCH, [entry(path, literal)]).left.mapIt(it.line) == @[2]

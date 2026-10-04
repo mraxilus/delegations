@@ -266,7 +266,10 @@ proc runHook(root, event, input: string): int =
         command = data{"tool_input", "command"}.getStr
         checkout = checkoutAt(root, commandDirectory(command, directory))
         is_pushed = gitFields(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
-      refuse(checkBash(checkout.branchOf, command, is_pushed), 2)
+      # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
+      var found = checkBash(checkout.branchOf, command, is_pushed)
+      found.add checkPosts(branch, command, directory)
+      refuse(found, 2)
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
@@ -441,6 +444,7 @@ proc run(options: Options): int =
     #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
     #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
     #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
+    #   Each fence prints as warning, so lines no fixer reads stay in view; exit code ignores it.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
@@ -456,13 +460,14 @@ proc run(options: Options): int =
     let
       locked = tree.lockedNimbles
       answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
-      (written, fixed, refused, left) = fixEntries(
+      (written, fixed, refused, left, held) = fixEntries(
         options.branchOrDefault,
         entries,
         locked,
         tree.contextOf(entries, answers, locked),
       )
     for f in left.sorted: echo f.render
+    for f in held.sorted: echo "warning: " & f.render
     if refused.len > 0:
       refused.report
       echo "Nothing written; fix writes only inside branch scope."

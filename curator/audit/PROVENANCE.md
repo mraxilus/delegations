@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 72e3cfc6a377411a |
+| Rules   | a2dba8c2495cd005 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -723,7 +723,7 @@ may open with a whole paragraph, and the finding is read in a log.
 
 **The coordinator holds no branch, so `check-role` never reads it.** It opens issues and
 comments, and no pull request. Its role string is `coordinator`, which `isRoleString` in the
-`body` hook accepts (section Hooks).
+`body` hook accepts (section Hooks on messages).
 
 **The role line may stand below the attribution block of a harness.** A harness that starts a
 delegate in a thread writes two lines above each pull request body that it opens, and it
@@ -1632,6 +1632,8 @@ reads as one that holds a comment, and stays as written.
   Its finding stays for the hand.
 - A fence that closes outside the bracket, string or comment it opens in leaves the whole file
   as written. `koch fix` prints it with its line, and `checkFormatting` reports it alone.
+- `koch fix` prints a warning for each fence that it reads, with the lines that the fence keeps.
+  So no held line goes unseen. A warning changes no exit code.
 - Rejected: each fixer told of the fence, and each rewrite tested against it. Every fixer would
   carry the fence, and the masking holds it in one place.
 - Cost: a skipped fixer is skipped whole for that file, and not for its one rewrite.
@@ -2115,7 +2117,7 @@ rest by reading.
 - Cost: a drive outside `tests/` and `tools/` is unseen. So is a window built from a page
   timer, and a fixed wait of a language other than Nim and Playwright.
 
-## Hooks
+## Hooks on tool calls
 
 **Each hook of `.claude/settings.json` calls `koch hook <event>` and holds no rule of its own.**
 The rule stays in the audit, once, and the hook reads the fact of its event and names the check
@@ -2125,7 +2127,7 @@ that holds it. The events, each one a verb argument:
 - `edit` runs the static checks after a write, and returns the findings of that file as
   context.
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
-  history.
+  history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
@@ -2205,19 +2207,49 @@ commit before the new one, and `check-commits` reads the true order in CI.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
   hook, which recompiles on each source change and costs seconds; the built binary costs
   milliseconds, and `nim r` stays as the fallback.
-- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop. It
-  counts a GitHub write as a post only where the call carried a body, as the `body` hook
-  does. So a label or a draft update ends no turn with a sign-off.
-- Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
-  only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
-  holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
-  built hook, 2026-10-03: a valid sign-off sent only as a reply leaves the turn blocked, with
-  `got none`. The same block as text passes.
 - Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
   A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+## Hooks on messages
+
+**`body` and `stop` hold what a delegate writes for a person: each post, and the message that
+ends a turn.** Section Hooks on tool calls gives the mechanism that both share. The `stop` hook
+passes once `stop_hook_active` is set, so a blocked turn cannot loop. It counts a GitHub write
+as a post only where the call carried a body, as the `body` hook does. So a label or a draft
+update ends no turn with a sign-off.
+
+- Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
+  only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
+  holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
+  built hook, 2026-10-03: a valid sign-off sent only as a reply leaves the turn blocked, with
+  `got none`. The same block as text passes.
+
+**`bash` holds a post made through `gh api` as `body` holds the post of a tool.** A delegate
+posts through `gh api` in Bash as well as through the GitHub tools, and one rule binds both.
+The hook reads the endpoint, the method, and the fields `body`, `title` and `labels[]` of each
+`gh api` command. It maps each write to the tool whose rules it shares, so `checkBody`
+applies unchanged. A write with no body is no post, as it is for a tool. `stop` counts a post
+through `gh api` as it counts the call of a tool.
+
+- The hook runs before the command, so the body must be readable before the post lands. It is
+  inline text, a file that `-F body=@PATH` names, or the JSON of `--input`. A body from a shell
+  variable or stdin is refused, and the finding asks for a literal path.
+- Cost: a post of a body that the same command writes, as by a heredoc, is refused. The file
+  does not exist yet, so the finding asks for it in an earlier call. That post takes two calls.
+- The words split as the shell splits them. Quotes are honoured, and the text of a heredoc is
+  skipped. A file resolves against the directory of the call, moved by each `cd` before it.
+- An edit of a review comment takes the rules of a reply, because both are review comments.
+- The role line reads the branch of the primary checkout, as `body` does, and not the checkout
+  of the call. A subagent never posts, so each post speaks for the delegate.
+- Cost: a mutation through `gh api graphql` reads as no post, so reading holds its body.
+- Cost: `stop` reads no file, so an `--input` file counts as a body where its JSON holds none.
+- Verified by `suites/test_hooks.nim`: each endpoint of the map, each source of a body, and each
+  body that the hook cannot read. Real files are read, refused and mended.
+- Verified by hand through koch built from the branch, 2026-10-04. A body file with a sentence
+  of 27 words is refused, and the mended file passes.
 
 **`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
 sign-off row or a decision class may name the coordinator as the role that acts. A hook

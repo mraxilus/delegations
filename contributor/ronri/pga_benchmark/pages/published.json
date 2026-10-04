@@ -1,7 +1,7 @@
 {
   "docket": {
     "url": "https://claude.ai/artifact/XyT583x9RnTKixers2q4gT",
-    "digest": "81cb3a75d3bedbde"
+    "digest": "b4f7b5d5d228ddca"
   },
   "marginalia": {
     "url": "https://claude.ai/artifact/6WwLfdHiisCtGWUcFxibBM",
@@ -25,10 +25,10 @@
   },
   "multivector-align": {
     "url": "https://claude.ai/artifact/AB3BNtWPEzguWswwnx5ckh",
-    "digest": "5e0af50562e2fc12"
+    "digest": "d06bed3cf04aad25"
   },
   "proposals": {
     "url": "https://claude.ai/artifact/CW9ZL5eotsVYrZPjMnTLoG",
-    "digest": "f18cad4bc9433a01"
+    "digest": "6e2550e05d001d4b"
   }
 }

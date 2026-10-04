@@ -249,10 +249,11 @@ func fixSource(
 
 func fixEntries*(
   branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
-): tuple[written: seq[Entry], fixed, refused, left: seq[Finding]] =
-  ## Fix each entry: entries to write, one report per rewrite, scope findings, and files left
-  ##   as written with reason: nimble file `locked` names, fence fix cannot read. `context`
-  ##   carries what tree tells fixers across modules (`contextOf`).
+): tuple[written: seq[Entry], fixed, refused, left, held: seq[Finding]] =
+  ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
+  ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
+  ##   for each fence, which keeps its lines as written. `context` carries what tree tells
+  ##   fixers across modules (`contextOf`).
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   for e in entries:
     if e.kind.isNone or not e.kind.get.rule.has_guide: continue
@@ -267,6 +268,7 @@ func fixEntries*(
     if fence.fault >= 0:
       result.left.add faultOf(e.path, fence).findingsOf
       continue
+    result.held.add heldOf(e.path, fence).findingsOf
     for plan in context.plans:
       if plan.rename.path != e.path or plan.refusal.len == 0: continue
       result.left.add finding(

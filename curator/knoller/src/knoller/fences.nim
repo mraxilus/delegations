@@ -99,6 +99,23 @@ func restored*(fixed, source: string; fence: Fence): string =
   lines.join("\n")
 
 
+func heldOf*(path: string, fence: Fence): seq[Report] =
+  ## Report each run of fenced lines, markers included, as one warning at its first line, so
+  ##   no fenced line goes unseen; fence left open runs to end of file.
+  var first = -1
+  for k, line in fence.lines:
+    if first < 0: first = line
+    if k + 1 < fence.lines.len and fence.lines[k + 1] == line + 1: continue
+    result.add initReport(
+      path,
+      first + 1,
+      Rule.FenceHeld,
+      "Fence keeps its lines as written, so no fixer reads them (X.1); got lines `" &
+        $(first + 1) & "` to `" & $(line + 1) & "`.",
+    )
+    first = -1
+
+
 func faultOf*(path: string, fence: Fence): seq[Report] =
   ## Report fence fix cannot read, which leaves file as written.
   if fence.fault < 0: return
