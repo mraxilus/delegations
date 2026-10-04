@@ -1797,6 +1797,11 @@ The Architect chose this on 2026-10-04, so that a recording walks one twin of ea
 suite asks one reflected twin raw, R-r at the torso, so that a law holds the engine to its mirror
 (below).
 
+A real couple holds on its left side as it holds on its right. So a hold that is proven for one
+mirror twin holds for the other, as the Architect ruled on 2026-10-04. Where the engine stands a
+reflected twin raw with other figures, the difference comes from the engine, and not from the
+couple.
+
 A frame hold that rests face to back has no twin. Its rest turns the follow half a turn one way
 (`rigid.restStance`). So the mirror image of that rest is the rest turned the other way, which is
 another rest. The same-name chain at minus half a turn unwinds to face to face. At plus half a turn,
@@ -2054,7 +2059,7 @@ of another job leaves its core idle, and no batch counts that core.
 Rejected: a batch as wide as the machine, for its 74 s more of the four cores. While every worker
 has a job, it walks distances past an answer, and growing batches do not. It also runs the square
 of the cores in walks at once, as `walk.planAhead` does in both designs. What that costs is
-unmeasured.
+unmeasured. The Architect chose growing batches on 2026-10-04.
 
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
