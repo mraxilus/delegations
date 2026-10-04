@@ -115,7 +115,8 @@ suite "Internal: Symbols":
     defer: removeDir(root)
     for e in tree: writeInto(root, e.path, e.content)
     let answers =
-      resolve(root, tree, [Query(path: tree[2].path, sites: @[(2, 8)], names: @[name])])
+      resolve(root, tree, [Query(path: tree[2].path, sites: @[(2, 8)], names: @[name, "w"])])
     check answers.len == 1 and answers[0].reason.len == 0
     check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1
-    check answers[0].globals[name].len == 0  # block after long answer, so each answer was read
+    check answers[0].globals[name].len == 0  # no symbol takes long name
+    check answers[0].globals["w"].len == 1  # last block, after long command, so every answer read
