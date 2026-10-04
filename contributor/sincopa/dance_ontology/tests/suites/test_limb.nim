@@ -39,8 +39,8 @@ suite "Internal: The rig":
     check halfDepth(HUMAN, Part.Torso) < halfBreadth(HUMAN, Part.Torso)
 
 
-  test "the reach is the three links, and the bands are ordered":
-    check reach(HUMAN) =~ 0.64
+  test "the span is the three links, and the bands are ordered":
+    check span(HUMAN) =~ 0.64
     check HUMAN.band[Band.Torso].upper < HUMAN.band[Band.Neck].lower
     check HUMAN.band[Band.Neck].upper <= HUMAN.band[Band.Crown].lower
     check HUMAN.band[Band.Crown].lower >= HUMAN.top[Part.Head] + HUMAN.limb - 1e-9

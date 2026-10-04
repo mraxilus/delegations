@@ -119,7 +119,7 @@ func why*(walk: Walk): string =
   if not walk.is_stopped: return "no block"
   case walk.why
   of Stop.None: "holds"
-  of Stop.Reach: whose(walk.whose) & " reach"
+  of Stop.Span: whose(walk.whose) & " span"
   of Stop.Twist: whose(walk.whose) & " shoulder, twist"
   of Stop.Elbow: whose(walk.whose) & " elbow"
   of Stop.Wrist: whose(walk.whose) & " wrist"
