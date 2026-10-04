@@ -29,7 +29,7 @@ nim r tools/build.nim pages      # checks every standing rule, then writes every
 nim r tools/build.nim turns      # asks the simulation for every hold turning: turns.json
 nim r tools/build.nim rig        # records the sweeps the viewer plays: rig.json
 nim r tools/build.nim modelled   # records which cards the simulation reaches: modelled.json
-nim r tools/build.nim pins       # records what each ruled card is drawn as: review-pins.json
+nim r tools/build.nim fixtures   # records what each ruled card is drawn as: review-fixtures.json
 nim r tools/build.nim shot       # builds the helper that screenshots a page
 ```
 

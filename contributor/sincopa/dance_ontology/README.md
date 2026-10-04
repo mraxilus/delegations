@@ -134,9 +134,9 @@ pages/                             hand-written pages this project stands behind
 mockups/                           wholecloth.html, hand-drawn proposal to react to
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
-tools/build.nim                    this project's verbs: pages, assets, pins, modelled,
-                                   rig, turns, verdicts, answers, engine, shot, system,
-                                   clean
+tools/build.nim                    this project's verbs: pages, assets, fixtures,
+                                   modelled, rig, turns, verdicts, answers, engine,
+                                   shot, system, clean
 tests/                             the simulation's laws (test_rigid, test_read), the engine's
                                    (test_engine) and the planner's (test_plan); test_said, in
                                    JavaScript; test_suites, which runs

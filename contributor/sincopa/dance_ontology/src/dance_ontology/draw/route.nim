@@ -824,7 +824,7 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
   ##       page is for, and it buys curve over kink.
   ##     Margin can be slight: on those two, bow wins by hundredth of
   ##       unit of line.  Preference is real but thin, and it is review
-  ##       sheet's pins that keep flip from passing unseen.
+  ##       sheet's fixtures that keep flip from passing unseen.
   result = letGo(a, b, marks, SIDES[0])
   var least = readingCost(result)
   for side in SIDES[1 .. ^1]:

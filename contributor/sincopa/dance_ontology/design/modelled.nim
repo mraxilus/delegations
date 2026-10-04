@@ -5,9 +5,9 @@
 ##     both at hundred per cent, and gap between them is work left.
 ##   Written here rather than on page because asking simulation costs minutes and page is
 ##     markup.  Same arrangement `design/turns` uses, and same reason.
-##   Tag must not touch pins.  `review_page.drawingOf` cuts cards back out of built page
-##     by collecting their `svg` elements alone, so badge outside drawing changes no pin
-##     and no kept card is re-drawn by adding this.
+##   Badge must not touch fixtures.  `review_page.drawingOf` cuts cards back out of built
+##     page by collecting their `svg` elements alone, so badge outside drawing changes no
+##     fixture, and no kept card is re-drawn by adding this.
 ##   Answers are keyed by question, never by card's own name: page already folds
 ##     duplicate pictures together and hands out identifiers, and second place doing
 ##     that would be second place to get it wrong.
