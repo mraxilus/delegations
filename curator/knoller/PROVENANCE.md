@@ -62,6 +62,7 @@ and their checks.
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
+- The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
   and a second run writes nothing. A script keeps its imports as written.
 
@@ -170,10 +171,6 @@ it. Verified by `suites/test_spacing.nim`.
 - Cost: the fixer leaves `1 ..^ 1` where X.9 shows `1 .. ^1`. The split is a choice for the hand.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
-- Cost: a glued range stays where its spaces would push a line with a trailing doc past
-  `LINE_MAX`. The doc fixer moves a doc only off a line that is already wide, so neither fixer
-  acts. Move the doc to its next line by hand, then fix. Verified by hand, 2026-10-04, through
-  `fixEntries`.
 
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
@@ -277,8 +274,8 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 - Cost: a literal with a suffix, such as `0'u8`, and a raw string keep their type, though it is
   exact.
 
-**No fixer writes a line wider than `LINE_MAX`.** A rewrite that would do so stays, with its
-finding, for the hand.
+**A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
+which fixers widen, which wraps follow, and what the chain holds where none fits.
 
 ## Content fixes
 
@@ -302,8 +299,12 @@ concatenation from the literal that holds `; got ` to its end. Each interpolatio
 operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
 such as `got none.`, echoes no value and is no finding.
 
-- The fixer puts a backtick on each side of a bare value, inside the literals around it. A value
-  that ends the message has no literal after it, and stays for the hand.
+- The fixer puts a backtick on each side of a bare value, inside the literals around it.
+- A value that ends the message has no literal after it, so the message takes a fixed shape. A
+  backtick goes at the end of the literal before the value, and `& "`."` goes after it. So the
+  message ends on its value, as IV.4 asks.
+- A value whose operator binds as loosely as `&`, or more loosely, keeps its finding, since the
+  appended literal would join that operator. So `"got " & a == b` stays.
 - The rule reads every value of the tail, so a context after the value takes backticks too, as
   `for {manner}` does.
 - A test that builds the old text in the same form changes with it. A test that asserts the
@@ -327,6 +328,111 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
 - The rewrite reads no symbol. A field named like the routine, such as `to_x`, would capture the
   method call. The tree holds no such field, and every changed file checks as before.
 - Verified by `suites/test_targets.nim`.
+
+## Wraps
+
+**A repair that widens its line past `LINE_MAX` stays, and the chain wraps the line.** The
+Architect asked for this on 2026-10-04, with three properties of `koch fix`. It is deterministic,
+a second run writes nothing, and no option sets a style. The tab, comment, message, condition,
+spacing, continuation and trailing separator fixers are wideners. Each one repairs freely off the
+held lines, and keeps the width guard on them.
+
+- The alignment and idiom fixers stay guarded, since a table column and an import bracket have no
+  wrap. The renames and conversions of `curator/audit` stay guarded too.
+- Each widener keeps a form of two arguments that holds every line, so its unit contract stays.
+
+**The wraps follow one fixed order, as the Architect ruled on 2026-10-04.** A line that a repair
+leaves wide takes the first of these that fits:
+
+1. the layout of its signature, or a split of the outermost call that crosses `LINE_MAX`;
+2. the line breaks that the hand gave, kept;
+3. a break after an operator;
+4. a doc moved to its own line, one level in;
+5. the shape of a message that ends on its value (`## Content fixes`);
+6. a plain `#` comment moved to its own line above, at the indent of its line.
+
+Where none fits, the line is held, and its finding stays for the hand.
+
+**The chain runs its rounds again, at most four times, and each time it holds the lines that the
+time before left wide.** The first time holds no line. A line that is still wide once the rounds
+settle, and that is narrow in the source as given, is held the next time. That time starts from
+the source as given again. The fourth time holds every line, which is how the chain ran before the
+wideners.
+
+- A held line never widens again. Each widener keeps its guard there, and no other fixer or wrap
+  writes a wide line. So the held lines grow each time, and an inserted line that is left wide
+  holds every line at once.
+- The held lines are a sorted `seq`, and each fixer is a function under `strictFuncs`. So the
+  output depends on the source alone.
+- A file that still changes after its last round stays as written. Its fix reports the rule
+  `unsettled` in `Fix.left`, so the chain never writes a file half settled. `curator/audit` keeps
+  its semantic edits for such a file, since a rename planned whole reaches other files too.
+- Rejected: a fixer that wraps its own line. `form.nim` and `wrapping.nim` would then import each
+  other, and a later fixer could undo the wrap.
+- Rejected: one pass of wraps at the end. It can leave a wide line, and nothing then holds the
+  repair back.
+- Cost: a line broken at an operator stays broken where it later fits, as a break of the hand does.
+- Verified by `suites/test_chain.nim`. Each case of the tree wraps to its exact output, and a
+  second run writes nothing. A line that no wrap fits keeps its finding, held the second time. A
+  file that never settles stays as written, with its finding.
+
+**The whole-tree proof of the wraps: no fix changes what code means.** Verified by hand,
+2026-10-04, with the scratch programs `prove.nim` and `trees.nim`. They ran `formatted` over every
+Nim file of the tree, in memory. They ran it on the code that this section describes, and on the
+code before the wideners.
+
+- Every file settles with the chain run at most twice, and no file falls back to every line held.
+- The run leaves no wide line. Two findings of spacing stay on one line of `test_mesh.nim` of
+  `rga_visualiser`, where an `if` expression puts `:` before code. Thirty-one continuations stay
+  two spaces in, each one packed by hand to 100 runes, as `## Wraps` gives.
+- The four messages that ended on their value take the shape. The usage error of `command.nim`
+  writes its usage apart, so its message ends on its value.
+- Rewrites, with the commit before in brackets:
+  - call splits 609 (599), spaces 2,346 (2,311), comment gaps 737 (735);
+  - doc positions 55 (54), messages 6 (3), signatures 117 (116);
+  - operator breaks 9, continuations 1,717 and comments moved above 1, all new.
+- The parser of the compiler, 2.2.12, reads each changed file to the tree it read before, once
+  the rewrites of `## Layout fixes` and `## Content fixes` are normalised. Against the commit
+  before, each file reads to the same tree once backticks and the shape of a message are
+  normalised.
+- `nim check` reads each changed file with the same result before and after, on its own pin, with
+  the checkouts of each lock. A file that fails both times lacks a native library or a vendored
+  source.
+- A second run writes nothing, and the files in reversed order give the same output.
+
+**The operator break adds no parentheses, by the ruling of the Architect on 2026-10-04.** Nim
+refuses a line that opens with a binary operator. After an operator, the parser reads the next
+line on (`optPar` in `compiler/parser.nim`). So a line breaks after the operator, and the parse
+tree stays.
+
+- The operator of lowest precedence breaks first, as the lexer reads precedence (`getPrecedence`
+  in `compiler/lexer.nim`). A glyph that the lexer files with `+`, such as `⊕`, binds at 8, and
+  every other glyph binds at 9. Each line takes the latest such operator that fits.
+- `in`, `notin`, `is`, `isnot`, `of` and `as` never take a break, and neither does an operator
+  glued on one side.
+- A line that holds a comment, a `;`, a block keyword after its head, or a `:` before code stays.
+  The `:` that types a binding passes, as in `let x: float = a + b`.
+- A call split that fits no line falls back on the operator break.
+- A compound operator stays whole, so `..^` breaks after itself.
+- Verified by `suites/test_wrapping.nim`.
+
+**A line that continues an expression after an operator takes four spaces more than the line that
+opens it (STYLE.md §5).** The Architect ruled this on 2026-10-04. Each continuation of one
+expression takes that one indent. A call and a signature keep their layout of one level. The fixer
+sets that indent on the continuations that the hand wrote too.
+
+- A run of lines stays as written where a token spans lines, or where a comment line stands
+  between two of them. It also stays where a bracket opened before it closes in its middle, or
+  where its last line leaves a bracket open.
+- Cost: a continuation that the hand packed to 100 runes two spaces in crosses `LINE_MAX` four
+  spaces in. No wrap reflows a string across lines, so such a line is held. Its finding stays for
+  the hand.
+- Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`.
+
+**A plain `#` trailing comment that does not fit moves to its own line above, by the ruling of the
+Architect on 2026-10-04.** It takes the indent of its line. The lexer drops a `#` comment, so the
+parse tree stays. A doc `##` and a block comment stay, and so does a comment that would not fit
+above. Verified by `suites/test_form.nim` and `suites/test_chain.nim`.
 
 ## Articles
 
