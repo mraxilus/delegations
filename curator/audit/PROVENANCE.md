@@ -2075,8 +2075,8 @@ that holds it. The events, each one a verb argument:
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
-- `stop` refuses the end of a turn that pushed or posted and lacks the sign-off. It also
-  refuses a sign-off out of shape.
+- `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
+  nor the working line. It also refuses a sign-off out of shape.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
@@ -2183,11 +2183,11 @@ The block carries seven labels in order: `Role`, `Context`, the table, `Summary`
 `Summary` starts. Verified by `suites/test_hooks.nim`, which refuses a table before the context
 and a state before the summary.
 
-- The state opens with `done`, `working`, `waiting` or `blocked`. The check reads that word
-  alone, up to the first comma or space. Where the branch stands follows it, and only the
-  `english` check reads it. Verified by hand through the built hook, 2026-10-03: a state line
-  over 25 words gives an `english` finding. The state is `blocked` exactly when a decision
-  blocks this delegate.
+- The state opens with `done`, `waiting` or `blocked`. The check reads that word alone, up to
+  the first comma or space. Where the branch stands follows it, and only the `english` check
+  reads it. Verified by hand through the built hook, 2026-10-03: a state line over 25 words
+  gives an `english` finding. The state is `blocked` exactly when a decision blocks this
+  delegate.
 - The block holds no brief line, by the choice of the Architect: no delegate starts from a
   brief until the Architect trials the coordinator. No check refuses a line beyond the seven
   labels, so reading holds this rule. Verified by hand through the built hook, 2026-10-03: a
@@ -2211,6 +2211,25 @@ and a state before the summary.
 - Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
   and two for the order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off
   with no decision.
+
+**A delegate signs off only when it stops, and a turn that ends while work goes on closes with
+a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
+the middle of work hides which delegates need the Architect. So each state word is a stop:
+`done`, `waiting` or `blocked`. A turn that pushed or posted closes with the sign-off, or with a
+last line that opens `**Working:**` and holds text. `stop` reads the sign-off in full where its
+heading is present, and else the last line.
+
+- Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
+  that is not last, and the state `working`. Its refusal of `working` points at the line.
+- Rejected, by the choice of the Architect: the hook skips the demand while a background task
+  has not reported. That ties the hook to the form of a task notification, which the harness
+  can change.
+- Rejected, by the same choice: no demand, with the shape read only where a sign-off is
+  present. Then a delegate can stop with no word to the Architect.
+- Cost: the hook reads that the working line holds text, and never whether anything runs. A
+  delegate that stops behind a working line passes, and only a reader sees it.
+- Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
+  by a change of label or draft alone is not asked for a sign-off.
 
 ## Watching main
 
