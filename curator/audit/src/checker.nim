@@ -71,7 +71,8 @@ const
   VERB_CHARS = {'a' .. 'z', '-'}  ## Characters verb is spelled with.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
-  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters Nim identifier is built from.
+  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+    ## Characters Nim identifier is built from.
   OPTION_CHARS = IDENT_CHARS + {'-'}
     ## Characters option name is built from, as `--dry-run` spells it.
 

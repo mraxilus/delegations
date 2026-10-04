@@ -36,7 +36,8 @@ const
   NIM_WAITS = ["sleep", "sleepAsync"]  ## Names read in Nim source alone.
   NIM_KINDS = [Kind.Nim, Kind.NimScript, Kind.Nimble]
     ## Kinds Nim compiler reads, whose names compare as Nim compares them.
-  IDENTIFIER_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}  ## Characters identifier is built from.
+  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
+    ## Characters identifier is built from.
 
 
 func isDriveCode*(path: string, directories: openArray[string]): bool =
