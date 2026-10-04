@@ -138,9 +138,9 @@ suite "Wrapping":
 
 
   test "call that fits joins; one that fits not takes one argument to line, trailing comma":
-    check fixCalls("a.nim", "foo(\n  a,\n  b,\n)\n").source == "foo(a, b)\n"
-    check fixCalls("a.nim", "x\nfoo(\n  a,\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
-    check "if foo(\n  a,\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
+    check fixCalls("a.nim", "foo(\n  a,\n  b\n)\n").source == "foo(a, b)\n"  # no comma after last
+    check fixCalls("a.nim", "x\nfoo(\n  a\n)\ny\n").fixed.mapIt(it.line) == @[2]  # line as given
+    check "if foo(\n  a\n):\n  discard\n".fixed == "if foo(a):\n  discard\n"  # `:` of `if`
     let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
       "column one hundred\")\n"
     check wide.fixed == "  result.add " & LONG_NAME & "(\n    path,\n    line,\n" &
@@ -149,6 +149,23 @@ suite "Wrapping":
     check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
       "\",\n  )\n"  # never all arguments on one line of their own
     for example in [EXAMPLE_CALL, EXAMPLE_DECLARATIVE]: check example.isSettled
+
+
+  test "call one argument to line with comma after last stays so, though it fits on one line":
+    let enumerated = "  newEnum(\n    ident\"Basis\",\n" &
+      "    fields = vectors.map(b => ident(b.toBasisName)),\n    public = true,\n" &
+      "    pure = true,\n  )\n"
+    check enumerated.isSettled  # `algebra.nim` of PGA library, comma marks split hand wants
+    let bare = enumerated.replace("pure = true,", "pure = true")
+    check bare.fixed == "  newEnum(ident\"Basis\", fields = vectors.map(b => " &
+      "ident(b.toBasisName)), public = true, pure = true)\n"  # no comma after last: joins
+    check bare.fixed.isSettled
+    let wide = "  result.add " & LONG_NAME & "(path, line, \"message long enough to cross " &
+      "column one hundred\")\n"
+    check wide.fixed.isSettled  # its comma keeps it split on second run
+    let hugged = "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
+      "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
+    check hugged.isSettled  # call hand hugs keeps its hug, inner one to line
 
 
   test "outermost call crossing column splits first, then each line it leaves":

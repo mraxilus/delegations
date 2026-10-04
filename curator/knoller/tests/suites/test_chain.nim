@@ -19,7 +19,7 @@ const
     "#[ Section ]#\n\n" &
     "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
     "proc g(\n    a: int\n) = discard\n" &
-    "let x = foo(\n  1,\n  2,\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    "let x = foo(\n  1,\n  2\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &

@@ -24,7 +24,7 @@ const
     "#[ Section ]#\n\n" &
     "proc f(a: int; b: string): int {.noSideEffect, inline.} = a+b.len\n" &
     "proc g(\n    a: int\n) = discard\n" &
-    "let x = foo(\n  1,\n  2,\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
+    "let x = foo(\n  1,\n  2\n)\necho x\nlet y = @[\n  1,\n  2\n]\necho h(q=1)\nexport y, x\n"
     ## Nim source breaking each layout rule `checkFormatting` holds, and no wired check.
   FENCED_ROWS =
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
@@ -129,7 +129,7 @@ suite "Fixes":
       ranged = head & "for i in 0..<n: f(s[i .. ^1], t[1..^2], i + 1 ..< n)\n" &
         "const C = {'a'..'z'}\ncase c\nof 'a'..'z': discard\nelse: discard\n"
       wide = head & "let x = foo(s[0..<n], t[1 .. ^1], " & "a".repeat(40) & ", " &
-        "b".repeat(26) & ")\nf(\n  s[0..<n],\n  t[1 .. ^1],\n)\nproc h(" &
+        "b".repeat(26) & ")\nf(\n  s[0..<n],\n  t[1 .. ^1]\n)\nproc h(" &
         "a".repeat(20) & ": range[0..9], " & "b".repeat(24) &
         ": array[0..<4, int], c: int): int = c\n"
     check fixEntries(CURATOR_BRANCH, [entry(path, ranged)]).written.len == 0  # in X.9 form
