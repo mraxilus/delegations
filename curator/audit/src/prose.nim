@@ -93,7 +93,7 @@ func articleCuts(source: string): seq[(int, int)] =
       if not is_plain: continue
       var opening = first
       while opening < k and source[opening] in OPENERS: inc opening
-      if source[opening..<k] notin ARTICLES: continue
+      if source[opening ..< k] notin ARTICLES: continue
 
       # Read word after spaces of same line; it must open noun phrase.
       var next = k
@@ -101,8 +101,8 @@ func articleCuts(source: string): seq[(int, int)] =
       if next >= t.after or source[next] in {'\n', '\r'}: continue
       var stop = next
       while stop < t.after and source[stop] notin Whitespace: inc stop
-      let word = source[next..<stop].strip(chars = PUNCTUATION)
-      if source[next] notin {'a'..'z', 'A'..'Z', '0'..'9', '`'}: continue
+      let word = source[next ..< stop].strip(chars = PUNCTUATION)
+      if source[next] notin {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '`'}: continue
       if word.len <= 1 or word.toLowerAscii in FUNCTION_WORDS: continue
       result.add (opening, next)
 
@@ -113,9 +113,9 @@ func fixArticles*(path, source: string): Fix =
   result.source = source
   var reported: seq[int]
   for (first, after) in cuts.reversed:
-    result.source = result.source[0..<first] & result.source[after .. ^1]
+    result.source = result.source[0 ..< first] & result.source[after .. ^1]
   for (first, _) in cuts:
-    let line = source[0..<first].count('\n') + 1
+    let line = source[0 ..< first].count('\n') + 1
     if line notin reported:
       reported.add line
       result.fixed.add finding(path, line, "article in comment (VI.5)")
