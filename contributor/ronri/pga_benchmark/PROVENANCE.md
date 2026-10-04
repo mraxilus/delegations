@@ -615,6 +615,20 @@ files say. The faces are the six that `rga_visualiser` embeds, fetched through
 `koch fetch-assets` and inlined as base64. Interaction is CSS: tabs, filters and sort are
 inputs that `:has()` rules read.
 
+**Each Noto face ships whole, as the TrueType of its own release** (Article X.8, as the
+Architect ruled it on 2026-10-03). Commit Mono is no Noto, so it ships as the Latin `woff2` of
+`@fontsource`. All six faces are under the SIL Open Font License 1.1. The cost is weight: each
+page is 4.3 to 5.2 MiB, against 0.9 to 1.8 MiB with the subsets, by `ls -l build` on
+2026-10-04.
+
+**Each stack holds every face of the sans stack before any family of the system.** So a
+character that the first faces of a stack lack falls to a face that the page ships. Noto Sans
+draws `ₙ`, `ₖ` and `ᵀ` in code, which no face of the mono stack holds, at a width that is not
+one column. Verified by `test_rga4d.nim`, which reads the stacks of the shell. A render in
+Chromium 141 on 2026-10-04 asked DevTools, through `CSS.getPlatformFontsForNode`, which fonts
+drew each text element of each page. With the subsets, faces of the system drew 106 glyphs on
+two pages, and with the whole faces and closed stacks they drew none.
+
 The one script is the search box of the docket. It is Nim, `pages/find.nim`, which the driver
 compiles to JavaScript under the flags of every build. The compiler is pinned, so the script
 and the digest of each page still follow those files.
@@ -626,9 +640,10 @@ tokens with fallbacks, so it follows the theme of the page and still reads alone
 names no file is a finding of `drive`. Rejected: a figure kept outside the repository, because no
 page is built from it.
 
-**Marks render as the faces allow.** The left complement is written 𝐜̱, with U+0331, because
-the faces draw U+0332 after the letter. In code, ★ comes from the math face as ☆ does, because
-the mono face draws ★ smaller.
+**Marks render as the faces allow.** The left complement is written 𝐜̱, with U+0331. Noto Sans
+Math holds each bold maths letter and both macrons, so it draws 𝐜̱, 𝐜̄ and 𝐞̄
+whole. It puts each mark beside the letter, and not under or over it, as the same render
+showed. In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
 
 **Every edit renders closed**, as the Architect asked. Its summary names the file and line at
 pin, and how many lines the edit replaces. It lists the signatures of the routines, tests and
@@ -846,6 +861,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   times `m + n` at ×0.78 to ×0.84, at no cost in size. A kind that the alignment pads runs ×1.18 to
   ×4.90 slower, so the rule aligns a kind of an even count of floats alone. The figures are in
   `proposals/05-multivector-align/proposal.md`.
+- Whether a marked bold letter, as 𝐜̱, renders by markup, with its mark drawn by CSS. Noto
+  Sans Math draws the mark beside the letter. Faces of the system drew it in place while the
+  pages shipped subsets, and Article X.8 rules those faces out. The pull request that ships the
+  whole faces holds both renders.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
