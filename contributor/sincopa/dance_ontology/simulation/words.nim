@@ -126,3 +126,4 @@ func why*(walk: Walk): string =
   of Stop.Swing: whose(walk.whose) & " shoulder, swing"
   of Stop.Through: whose(walk.whose) & " arm through a body"
   of Stop.Arms: "arm through arm"
+  of Stop.Crossed: "arms cross above elbow"

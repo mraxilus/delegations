@@ -70,7 +70,7 @@ Blocks: -1.58, 0.36 m apart: follow's wrist; +0.72, 0.44 m apart: follow's shoul
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
-| -1 1/2 | wrap low | open | 0.71 (near it) | 1.32 m |
+| -1 1/2 | wrap low | open | 0.72 (near it) | 1.32 m |
 | -1 | wrap low (led) | open | 0.09 | 1.20 m |
 | -1/2 | lock low (led) | open | 0.75 (near it) | 1.07 m |
 | 0 | open | open | 0.00 | 1.01 m |
@@ -81,13 +81,13 @@ Blocks: -1.58, 0.36 m apart: follow's wrist; +0.72, 0.44 m apart: follow's shoul
 
 ### L-l, high
 
-Blocks: -1.62, 0.38 m apart: lead's arm through a body; +0.98, 0.38 m apart: lead's arm through a
+Blocks: -1.64, 0.38 m apart: lead's arm through a body; +0.98, 0.38 m apart: lead's arm through a
 body.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
-| -1 1/2 | wrap high (led) | open | 0.36 | 1.51 m |
+| -1 1/2 | wrap high (led) | open | 0.35 | 1.49 m |
 | -1 | wrap high (led) | open | 0.13 | 1.50 m |
 | -1/2 | lock high (led) | wrap high (led) | 0.21 | 1.40 m |
 | 0 | wrap high (led) | wrap high (led) | 0.22 | 1.49 m |
@@ -98,19 +98,19 @@ body.
 
 ### L-l, above
 
-Blocks: -: free to 2.50 turns, 0.36 m apart; +: free to 2.50 turns, 0.42 m apart.
+Blocks: -: free to 2.50 turns, 0.38 m apart; +: free to 2.50 turns, 0.42 m apart.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
-| -2 | above | above | 1.00 (at edge) | 1.47 m |
-| -1 1/2 | above | above | 0.00 | 1.87 m |
-| -1 | above | above | 1.00 (at edge) | 1.47 m |
-| -1/2 | above | above | 0.00 | 1.87 m |
+| -2 | above | above | 0.28 | 1.37 m |
+| -1 1/2 | above | above | 0.00 | 1.90 m |
+| -1 | above | above | 0.25 | 1.37 m |
+| -1/2 | above | above | 0.00 | 1.89 m |
 | 0 | above | above | 0.15 | 1.00 m |
 | +1/2 | above | above | 0.00 | 1.73 m |
-| +1 | above | above | 0.11 | 1.37 m |
+| +1 | above | above | 0.10 | 1.37 m |
 | +1 1/2 | above | above | 0.00 | 1.73 m |
-| +2 | above | above | 0.44 | 1.43 m |
+| +2 | above | above | 0.14 | 1.37 m |
 
 ### R-r, low
 
@@ -125,12 +125,12 @@ Blocks: -0.72, 0.44 m apart: follow's shoulder, twist; +1.58, 0.36 m apart: foll
 | 0 | open | open | 0.07 | 1.01 m |
 | +1/2 | lock low (led) | open | 0.15 | 1.07 m |
 | +1 | wrap low (led) | open | 0.09 | 1.20 m |
-| +1 1/2 | wrap low | open | 0.71 (near it) | 1.32 m |
+| +1 1/2 | wrap low | open | 0.72 (near it) | 1.32 m |
 | +2 | blocked | | | |
 
 ### R-r, high
 
-Blocks: -0.98, 0.38 m apart: lead's arm through a body; +1.62, 0.38 m apart: lead's arm through a
+Blocks: -0.98, 0.38 m apart: lead's arm through a body; +1.64, 0.38 m apart: lead's arm through a
 body.
 
 | turn | follow's arm | lead's arm | strain | hands at |
@@ -142,28 +142,28 @@ body.
 | 0 | wrap high (led) | wrap high (led) | 0.22 | 1.49 m |
 | +1/2 | lock high (led) | wrap high (led) | 0.21 | 1.40 m |
 | +1 | wrap high (led) | open | 0.13 | 1.50 m |
-| +1 1/2 | wrap high (led) | open | 0.36 | 1.51 m |
+| +1 1/2 | wrap high (led) | open | 0.35 | 1.49 m |
 | +2 | blocked | | | |
 
 ### R-r, above
 
-Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.36 m apart.
+Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.38 m apart.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
-| -2 | above | above | 0.44 | 1.43 m |
+| -2 | above | above | 0.14 | 1.37 m |
 | -1 1/2 | above | above | 0.16 | 1.73 m |
-| -1 | above | above | 0.12 | 1.37 m |
+| -1 | above | above | 0.24 | 1.37 m |
 | -1/2 | above | above | 0.12 | 1.73 m |
-| 0 | above | above | 0.07 | 1.01 m |
-| +1/2 | above | above | 0.00 | 1.87 m |
-| +1 | above | above | 1.00 (at edge) | 1.47 m |
-| +1 1/2 | above | above | 0.00 | 1.87 m |
-| +2 | above | above | 1.00 (at edge) | 1.47 m |
+| 0 | above | above | 0.05 | 1.01 m |
+| +1/2 | above | above | 0.00 | 1.89 m |
+| +1 | above | above | 0.25 | 1.37 m |
+| +1 1/2 | above | above | 0.00 | 1.90 m |
+| +2 | above | above | 0.28 | 1.37 m |
 
 ### L-r, low
 
-Blocks: -0.86, 0.36 m apart: lead's arm through a body; +1.34, 0.44 m apart: follow's wrist.
+Blocks: -0.86, 0.36 m apart: lead's arm through a body; +1.36, 0.44 m apart: follow's wrist.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
@@ -195,23 +195,23 @@ Blocks: -1.12, 0.38 m apart: follow's shoulder, twist; +1.10, 0.90 m apart: arm 
 
 ### L-r, above
 
-Blocks: -: free to 2.50 turns, 0.44 m apart; +: free to 2.50 turns, 0.42 m apart.
+Blocks: -: free to 2.50 turns, 0.36 m apart; +: free to 2.50 turns, 0.42 m apart.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
-| -2 | above | above | 1.00 (at edge) | 1.47 m |
-| -1 1/2 | above | above | 0.01 | 1.74 m |
-| -1 | above | above | 1.00 (near it) | 1.42 m |
-| -1/2 | above | above | 0.05 | 1.74 m |
+| -2 | above | above | 0.71 (near it) | 1.58 m |
+| -1 1/2 | above | above | 0.11 | 1.73 m |
+| -1 | above | above | 0.68 | 1.58 m |
+| -1/2 | above | above | 0.00 | 1.74 m |
 | 0 | above | above | 0.00 | 1.00 m |
-| +1/2 | above | above | 0.00 | 1.90 m |
-| +1 | above | above | 0.29 | 1.37 m |
-| +1 1/2 | above | above | 0.00 | 1.79 m |
-| +2 | above | above | 0.30 | 1.37 m |
+| +1/2 | above | above | 0.00 | 1.93 m |
+| +1 | above | above | 0.32 | 1.37 m |
+| +1 1/2 | above | above | 0.00 | 1.78 m |
+| +2 | above | above | 0.32 | 1.37 m |
 
 ### R-l, low
 
-Blocks: -1.34, 0.44 m apart: follow's wrist; +0.86, 0.36 m apart: lead's arm through a body.
+Blocks: -1.36, 0.44 m apart: follow's wrist; +0.86, 0.36 m apart: lead's arm through a body.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
@@ -243,19 +243,19 @@ Blocks: -1.10, 0.90 m apart: arm through arm; +1.12, 0.38 m apart: follow's shou
 
 ### R-l, above
 
-Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.44 m apart.
+Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.36 m apart.
 
 | turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
-| -2 | above | above | 0.30 | 1.37 m |
-| -1 1/2 | above | above | 0.00 | 1.79 m |
-| -1 | above | above | 0.29 | 1.37 m |
-| -1/2 | above | above | 0.44 | 1.90 m |
+| -2 | above | above | 0.32 | 1.37 m |
+| -1 1/2 | above | above | 0.00 | 1.78 m |
+| -1 | above | above | 0.32 | 1.37 m |
+| -1/2 | above | above | 0.31 | 1.93 m |
 | 0 | above | above | 0.00 | 1.00 m |
 | +1/2 | above | above | 0.00 | 1.74 m |
-| +1 | above | above | 1.00 (at edge) | 1.42 m |
-| +1 1/2 | above | above | 0.00 | 1.74 m |
-| +2 | above | above | 1.00 (at edge) | 1.47 m |
+| +1 | above | above | 0.68 | 1.58 m |
+| +1 1/2 | above | above | 0.00 | 1.73 m |
+| +2 | above | above | 0.71 (near it) | 1.58 m |
 
 ## The floor's claim
 
@@ -267,11 +267,11 @@ positive; for L-r the wrap way is negative and the lock way positive.
 |---|---|---|---|---|---|
 | L-l | low | lock way | a whole turn | blocks at 1.58 | follow's wrist |
 | L-l | low | wrap way | half a turn | blocks at 0.72 | follow's shoulder, twist |
-| L-l | high | lock way | a whole turn | blocks at 1.62 | lead's arm through a body |
+| L-l | high | lock way | a whole turn | blocks at 1.64 | lead's arm through a body |
 | L-l | high | wrap way | a whole turn | blocks at 0.98 | lead's arm through a body |
 | L-l | above | lock way | no block | no block |  |
 | L-l | above | wrap way | no block | no block |  |
-| L-r | low | lock way | a whole turn | blocks at 1.34 | follow's wrist |
+| L-r | low | lock way | a whole turn | blocks at 1.36 | follow's wrist |
 | L-r | low | wrap way | half a turn | blocks at 0.86 | lead's arm through a body |
 | L-r | high | lock way | a whole turn | blocks at 1.10 | arm through arm |
 | L-r | high | wrap way | a whole turn | blocks at 1.12 | follow's shoulder, twist |
@@ -325,11 +325,11 @@ twist.
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
-| -1 | above | above | first over, second over | 0.59 |
+| -1 | above | above | first over, second over | 0.95 (near it) |
 | -1/2 | above | above | none | 0.29 |
 | 0 | above | above | none | 0.00 |
 | +1/2 | above | above | none | 0.02 |
-| +1 | above | above | second over, first over | 0.59 |
+| +1 | above | above | second over, first over | 0.95 (near it) |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -367,17 +367,17 @@ Blocks: -0.02, 0.42 m apart: follow's wrist; +0.70, 0.80 m apart: arm through ar
 
 ### L-l.R-r, from Face-to-back, above
 
-Blocks: -1.22, 0.46 m apart: arm through arm; +1.20, 0.42 m apart: follow's shoulder, twist.
+Blocks: -1.26, 0.40 m apart: arm through arm; +1.26, 0.40 m apart: arm through arm.
 
 | turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
-| -1 | above | above | first over, first over, second over, first over | 0.43 |
-| -1/2 | above | above | first over | 0.45 |
+| -1 | above | above | first over, second over | 0.62 |
+| -1/2 | above | above | first over | 0.83 (near it) |
 | 0 | above | above | none | 0.00 |
-| +1/2 | above | above | second over | 0.99 (near it) |
-| +1 | above | above | second over | 0.23 |
+| +1/2 | above | above | second over | 0.97 (near it) |
+| +1 | above | above | second over | 0.44 |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -394,10 +394,10 @@ that holds.
 | low | cross (0.50) | Face-to-back | yes | 1.00 (at edge) | 0 | 0.74 m |
 | low | diamond (1.00) | Face-to-face | no | | | no pose holds |
 | low | swan (1.50) | Face-to-back | no | | | no pose holds |
-| high | cross (0.50) | Face-to-back | yes | 1.00 (at edge) | 0 | 0.36 m |
+| high | cross (0.50) | Face-to-back | yes | 1.00 (at edge) | 2 | 0.78 m |
 | high | diamond (1.00) | Face-to-face | no | | | no pose holds |
 | high | swan (1.50) | Face-to-back | no | | | no pose holds |
-| above | cross (0.50) | Face-to-back | yes | 0.00 | 1 | 0.36 m |
+| above | cross (0.50) | Face-to-back | yes | 0.06 | 1 | 0.36 m |
 | above | diamond (1.00) | Face-to-face | no | | | no pose holds |
 | above | swan (1.50) | Face-to-back | no | | | no pose holds |
 
@@ -410,7 +410,7 @@ that holds.
 | Left to right-wrap-high @ 1/2 | -0.50 | yes | wrap high (led) | open | 0.18 |
 | Left to left-lock-low @ -1 | -1.00 | yes | wrap low (led) | open | 0.09 |
 | Left to left-lock-high @ -1 | -1.00 | yes | wrap high (led) | open | 0.13 |
-| Left to left @ above, +1 | 1.00 | yes | above | above | 0.11 |
+| Left to left @ above, +1 | 1.00 | yes | above | above | 0.10 |
 | Left-Lock-Low to left, lead turned -1 | -1.00 | yes | open | wrap low (led) | 0.09 |
 | Left-Lock-Low to left, lead turned +1 | 1.00 | blocked before it | | | |
 

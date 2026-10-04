@@ -6,9 +6,10 @@
 ##     twin card keeps answered still itself, and names itself.
 ##   Mirror flips every point's x, which is across couple's line, and every turn's sign.
 ##     Each arm's capsules keep their place and take other arm's name, so page paints them
-##     in other arm's colour.  Each arm's readings move to other arm's place, so readout keeps
-##     its order, and twist and its two ends turn other way, as rig states left arm's ends
-##     mirrored (`rigid.twistEnds`).
+##     in other arm's colour.  Torso's two capsules trade places, so left one stays first.
+##     Each arm's readings move to other arm's place, so readout keeps its order, and twist
+##     and its two ends turn other way, as rig states left arm's ends mirrored
+##     (`rigid.twistEnds`).
 ##   One place to say so, read by page (`design/rig_page`) and by laws that read stills
 ##     (`suites/test_asks.nim`), so what laws hold is what page shows.
 ##   Joined hands keep their order: page draws each as dot, and laws find each arm by name.
@@ -35,6 +36,19 @@ func flipped(rows: JsonNode, every: int, places: openArray[int]): JsonNode =
       moment.add (if k mod every in places: negated(figure) else: figure)
     result.add moment
 
+func traded(rows: JsonNode, pairs: openArray[(int, int)]): JsonNode =
+  ## Each row with capsules of each pair in each other's place, six figures each.
+  result = newJArray()
+  for row in rows:
+    var moment = newJArray()
+    for k in 0..<row.len:
+      var source = k div 6
+      for (a, b) in pairs:
+        if source == a: source = b
+        elif source == b: source = a
+      moment.add row[6 * source + k mod 6]
+    result.add moment
+
 func mirrored*(kept: JsonNode, key: string, marks, dofs: seq[string]): JsonNode =
   ## Still `kept` seen in mirror across couple's line, under card `key`, each arm recoloured.
   ##   `marks` and `dofs` are recording's own names, so mirror reads which capsule is arm's
@@ -52,7 +66,15 @@ func mirrored*(kept: JsonNode, key: string, marks, dofs: seq[string]): JsonNode 
     let (who, arm, mark) = (owner[0].getInt, owner[1].getInt, owner[2].getInt)
     tag.add %[who, (if marks[mark] in ARM_MARKS: 1 - arm else: arm), mark]
   result["tag"] = tag
-  result["points"] = flipped(kept["points"], 3, [0])
+  # Torso is two capsules side by side, left first (`rigid.trunkCapsules`): mirror puts right
+  # one first, so they trade places, as each arm takes other arm's name.
+  var trunks: array[2, seq[int]]
+  for i, owner in kept["tag"].getElems:
+    if marks[owner[2].getInt] == "trunk": trunks[owner[0].getInt].add i
+  var torsos: seq[(int, int)]
+  for trunk in trunks:
+    if trunk.len >= 2: torsos.add (trunk[0], trunk[1])
+  result["points"] = traded(flipped(kept["points"], 3, [0]), torsos)
   result["grips"] = flipped(kept["grips"], 3, [0])
   result["faces"] = flipped(kept["faces"], 2, [0])
   var at = newJArray()

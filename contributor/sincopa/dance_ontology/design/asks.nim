@@ -15,6 +15,7 @@ import ../simulation/[body, hold]
 import ../src/dance_ontology/[diagram, frame]
 import ../src/dance_ontology/draw/terms
 from ../src/dance_ontology/draw/pose import About
+from ../src/dance_ontology/draw/route import overArm
 from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
@@ -29,6 +30,8 @@ type StillAsk* = object  ## One still card, as simulation is asked it.
                   ## round dancer whose facing turns against it.
   is_either_way*: bool  ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
+  over*: int  ## Lead's arm card lays over at lead's crossing, by ordinal: still holds only
+              ## where pose lays it so (`walk.standsAt`).  Below nought where card names none.
 
 
 func bodyOf*(who: terms.Dancer): Body =
@@ -130,6 +133,12 @@ func stillAsks*(): seq[StillAsk] =
     ## Say which way frame's half turn goes: right over winds other way.
     if target.over.isSome and target.over.get == Side.Right: -1.0 else: 1.0
 
+  #   Wound frame of two connections lays one over at first crossing, as chain does, by its
+  #     wind (`route.overArm`): frame that names its own winds whichever way puts it over.
+  func overOf(target: Frame, wind: float): int =
+    ## Say which of lead's arms card lays over, by ordinal, or below nought where it names none.
+    if wind == 0.0 or linksOf(holdsOf(target)).len < 2: -1 else: ord(armOf(overArm(wind)))
+
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
@@ -141,6 +150,7 @@ func stillAsks*(): seq[StillAsk] =
         who: Body.Two,
         head: Body.Two,
         is_either_way: amount != 0.0 and target.over.isNone and isDrawnEitherWay(target),
+        over: overOf(target, senseOf(target) * amount),
       )
   block:
     let target = FRAMES[^1]
@@ -151,6 +161,7 @@ func stillAsks*(): seq[StillAsk] =
       rest: restOf(target),
       who: Body.Two,
       head: Body.Two,
+      over: overOf(target, -amountFor(target, 1)),
     )
   # `B`: four single-hand holds, four manners, four quarters.  Page turns every manner's
   # own dancer clockwise (`parts.quarterPose`), and simulation turns whoever `turnerOf`
@@ -168,8 +179,10 @@ func stillAsks*(): seq[StillAsk] =
           rest: restOf(single.holds),
           who: who,
           head: who,
+          over: -1,
         )
-  # `C` and `D`: two chains, seven positions each, half turn apart.
+  # `C` and `D`: two chains, seven positions each, half turn apart.  Each wound position names
+  # lead's arm on top at first crossing by its wind (`route.overArm`).
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
     for i, wind in STEPS:
       result.add StillAsk(
@@ -179,4 +192,5 @@ func stillAsks*(): seq[StillAsk] =
         rest: restOf(arms),
         who: Body.Two,
         head: Body.Two,
+        over: (if wind == 0.0: -1 else: ord(armOf(overArm(wind)))),
       )

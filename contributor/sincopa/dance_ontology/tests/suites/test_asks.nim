@@ -9,8 +9,9 @@ import ../../design/[asks, modelled, parts, rig_page, twins]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
-from ../../simulation/rigid import Mark, restStance
-from ../../simulation/walk import stands, STYLES, twinOf
+from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
+  restStance, trunkCapsules
+from ../../simulation/walk import mirrored, stands, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
 from ../../src/dance_ontology/draw/route import overArm
@@ -20,6 +21,11 @@ import ../../src/dance_ontology/frame
 const
   ARRANGED = 1e-6  ## Degrees two arrangements may differ by: arithmetic alone.
   STRAIN_SAME = 1e-9  ## Strain two figures of one pose may differ by, in one recording: none.
+  NOSE = 0.12  ## Metres nose sits ahead of head's axis, by ANSUR II head length 0.20 / 0.19 m.
+  FACE_HALF = 0.07  ## Metres from middle of face to cheek: half breadth across cheekbones, about
+                    ## 0.14 m by ANSUR II.  Estimate and not tape.
+  FACE_SLOP = 0.005  ## Metres arm may sit inside face: engine's own linear slop, which it never
+                    ## resolves (`test_rigid.SLOP`).
 
 
 func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
@@ -71,6 +77,76 @@ func armsOf(still: JsonNode, links: seq[Link]): Arms =
     result.add [armOf(still, link.ends[0].body, link.ends[0].arm),
                 armOf(still, link.ends[1].body, link.ends[1].arm)]
 
+func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
+  ## Two ends of `i`th capsule of one recorded moment.
+  ((frame[6 * i].getFloat, frame[6 * i + 1].getFloat, frame[6 * i + 2].getFloat),
+   (frame[6 * i + 3].getFloat, frame[6 * i + 4].getFloat, frame[6 * i + 5].getFloat))
+
+func faceGapOf(recording, frame: JsonNode): float =
+  ## Nearest any arm of either dancer comes to either face at one recorded moment, past both
+  ## radii: face placed off recording's own head and torso, as `rigid.faceCapsule` sets it.
+  ##   Torso is two capsules side by side, left first (`rigid.trunkCapsules`), so they give
+  ##     chest's right, and head is last capsule of trunk.
+  let
+    (tags, radii) = (recording["tag"], recording["radii"])
+    face = faceCapsule(HUMAN)
+    (head_low, head_high, _) = trunkCapsules(HUMAN)[^1]
+    offset = face.a - (head_low + head_high) * 0.5
+    upward: Vector = (0.0, 0.0, 1.0)
+  var faces: seq[Vector]
+  for who in Body:
+    var trunk: seq[int]
+    for i in 0..<tags.len:
+      if tags[i][0].getInt == ord(who) and tags[i][2].getInt == ord(Mark.Trunk): trunk.add i
+    let
+      rightward = unit(capsuleAt(frame, trunk[1]).a - capsuleAt(frame, trunk[0]).a)
+      forward = cross(upward, rightward)
+      head = capsuleAt(frame, trunk[^1])
+    faces.add (head.a + head.z) * 0.5 + rightward * offset.x + forward * offset.y +
+              upward * offset.z
+  result = Inf
+  for i in 0..<tags.len:
+    if tags[i][2].getInt notin [ord(Mark.Upper), ord(Mark.Fore), ord(Mark.Palm)]: continue
+    let limb = capsuleAt(frame, i)
+    for centre in faces:
+      result = min(
+        result,
+        closest(limb.a, limb.z, centre, centre).gap - radii[i].getFloat - face.radius,
+      )
+
+
+func isCrossed(recording, frame: JsonNode): bool =
+  ## Whether one dancer's own arms cross above elbow at one recorded moment, as `rigid.crossed`
+  ## judges it: elbows out of order, or other arm on upper arm short of its elbow's end.
+  ##   Each capsule of arm stops its radius short of both joints (`plan.placeArm`), and torso is
+  ##     two capsules side by side, left first (`rigid.trunkCapsules`), so they give chest's right.
+  let (tags, radii) = (recording["tag"], recording["radii"])
+  var
+    lines: seq[tuple[who, side, mark: int, a, z: Vector]]
+    trunks: array[2, seq[int]]
+  for i in 0..<tags.len:
+    let
+      (who, side, mark) = (tags[i][0].getInt, tags[i][1].getInt, tags[i][2].getInt)
+      (a, z) = capsuleAt(frame, i)
+    if mark == ord(Mark.Trunk): trunks[who].add i
+    elif mark in [ord(Mark.Upper), ord(Mark.Fore)]:
+      let along = unit(z - a) * radii[i].getFloat
+      lines.add (who, side, mark, a - along, z + along)
+  for who in 0..1:
+    let rightward = unit(capsuleAt(frame, trunks[who][1]).a - capsuleAt(frame, trunks[who][0]).a)
+    var elbows: array[2, Vector]
+    for line in lines:
+      if line.who == who and line.mark == ord(Mark.Upper): elbows[line.side] = line.z
+    if dot(elbows[1] - elbows[0], rightward) < ELBOWS_APART: return true
+  for upper in lines:
+    if upper.mark != ord(Mark.Upper): continue
+    for other in lines:
+      if other.who != upper.who or other.side == upper.side: continue
+      let met = closest(upper.a, upper.z, other.a, other.z)
+      if met.gap - 2.0 * HUMAN.limb < ON_UPPER and
+          (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
+        return true
+  false
 
 
 suite "Internal: What each card asks of simulation":
@@ -93,6 +169,7 @@ suite "Internal: What each card asks of simulation":
       check frame_ask.who == chain_ask.who
       check frame_ask.turns == chain_ask.turns
       check frame_ask.is_either_way == chain_ask.is_either_way
+      check frame_ask.over == chain_ask.over
 
 
   test "page counts clockwise seen from above, and simulation anticlockwise":
@@ -233,6 +310,8 @@ suite "Internal: Simulation against reference":
     ##   crossing nearest lead along both connections.  Frame names its own (`Frame.over`).
     ##   Red with A11 asked A09's way about, measured 2026-10-02: left over right, where card
     ##     draws right over left.
+    ##   A16 and A17 draw C05 and C03, so they name what those name.  Red with A17 asked to
+    ##     cross nothing, measured 2026-10-04: it stood 0.44 m apart, where C03 crosses at 0.36.
     var named: seq[(string, Arm)]
     for i, target in FRAMES:
       if target.over.isSome:
@@ -242,7 +321,11 @@ suite "Internal: Simulation against reference":
     for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
       for i, wind in STEPS:
         if wind != 0.0: named.add (&"{tag}{i + 1:02}", armOf(overArm(wind)))
-    check named.len == 14
+    let chains = named
+    for (frame, chain) in [("A16", "C05"), ("A17", "C03")]:
+      for (key, arm) in chains:
+        if key == chain: named.add (frame, arm)
+    check named.len == 16
     for (key, arm) in named:
       let
         ask = ask_by_key[key]
@@ -297,7 +380,8 @@ suite "Internal: Simulation against reference":
       not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
         other.links == links and other.turns == turns and
         other.isRestAway == ask.isRestAway and other.head == ask.head and
-        other.is_either_way == ask.is_either_way and other.who == ask.who
+        other.is_either_way == ask.is_either_way and other.who == ask.who and
+        other.over == mirrored(ask.over)
     var twins, keeping = 0
     for still in kept["stills"]:
       let
@@ -348,6 +432,87 @@ suite "Internal: Simulation against reference":
         check (rightward > 0.0) == (side == ord(Arm.Right))
         inc girdles
     check girdles == 4 * stills
+
+
+  test "each still page shows lists its torso's left capsule first":
+    ## Torso is two capsules side by side, left first (`rigid.trunkCapsules`), so laws read
+    ##   chest's right off them.  Twin card's still is mirrored (`design/twins`).
+    ##   Red with mirror that left torso's capsules in place, read 2026-10-04: every twin card
+    ##     listed right one first, so face law put face behind head.
+    var (stills, torsos) = (0, 0)
+    for key, still in recorded:
+      if not still.hasKey("at") or still["at"].len == 0: continue
+      inc stills
+      let (tags, row, look) = (still["tag"], still["points"][0], still["faces"][0])
+      for who in 0..1:
+        var trunk: seq[int]
+        for i in 0..<tags.len:
+          if tags[i][0].getInt == who and tags[i][2].getInt == ord(Mark.Trunk): trunk.add i
+        let
+          (left, right) = (capsuleAt(row, trunk[0]), capsuleAt(row, trunk[1]))
+          (fore_x, fore_y) = (look[4 * who + 2].getFloat, look[4 * who + 3].getFloat)
+          across = (right.a + right.z - left.a - left.z) * 0.5
+          rightward = across.x * fore_y - across.y * fore_x
+        checkpoint &"`{key}` torso of `{who}` lists left capsule `{rightward:.3f}` left of right"
+        check rightward > 0.0
+        inc torsos
+    check torsos == 2 * stills
+
+
+  test "face's sphere covers face alone, reaching nose and no wider than face":
+    ## Architect, 2026-10-04: smaller face first, sphere covering face alone, so arm may pass
+    ##   close to brow and cheek.  Red with sphere of head's own radius 5 cm ahead, which
+    ##     reached 14 cm ahead of head's axis and 9 cm to either side.
+    let
+      face = faceCapsule(HUMAN)
+      (head_low, head_high, _) = trunkCapsules(HUMAN)[^1]
+      ahead = face.a.y - ((head_low + head_high) * 0.5).y
+    checkpoint &"face reaches `{ahead + face.radius:.3f}` m ahead, `{face.radius:.3f}` m to side"
+    check abs(ahead + face.radius - NOSE) <= FACE_SLOP
+    check face.radius <= FACE_HALF
+
+
+  test "every arm keeps clear of every face, in every still and every moment of every sweep":
+    ## Each dancer keeps each arm clear of every face, own and partner's (#375).  Each still
+    ##   is read as page shows it, so twin card is read as still it mirrors.
+    ##   Red with no face in planner or engine, measured 2026-10-03: 313 of 652 recorded moments
+    ##     held arm inside face, 47 mm at deepest, nearly all dancer's own forearm across own face
+    ##     with hand over crown.
+    let kept = parseFile(KEPT_RIG)
+    var
+      moments = 0
+      inside: seq[string]
+      deepest = Inf
+    for recording in stillsShown(kept) & kept["sweeps"].getElems:
+      let name =
+        if recording.hasKey("key"): recording["key"].getStr
+        else: recording["hold"].getStr & " " & recording["band"].getStr
+      for moment, frame in recording["points"].getElems:
+        let gap = faceGapOf(recording, frame)
+        inc moments
+        deepest = min(deepest, gap)
+        if gap < -FACE_SLOP: inside.add &"{name}@{moment}"
+    checkpoint &"`{inside.len}` of `{moments}` moments hold arm inside face, deepest at " &
+      &"`{deepest}` m: " & inside[0..<min(inside.len, 12)].join(" ")
+    check moments >= stillAsks().len
+    check inside.len == 0
+
+
+  test "every still crosses arms below elbow alone, in every moment":
+    ## Each dancer's own arms cross at hands or forearms, and never above elbow (Architect,
+    ##   2026-10-04), as judge reads it (`rigid.crossed`).  Each still is read as page shows it.
+    ##   Red with no rule, read 2026-10-04: at D02 and D06 follow's elbows swap, and follow's
+    ##     upper arms lie on each other 9 cm before elbow.
+    var
+      crossed: seq[string]
+      moments = 0
+    for key, still in recorded:
+      for frame in still["points"].getElems:
+        inc moments
+        if isCrossed(still, frame): crossed.add key
+    checkpoint &"`{crossed.len}` of `{moments}` moments cross above elbow: " & crossed.join(" ")
+    check moments > 0
+    check crossed.len == 0
 
 
   test "simulation models every card reference draws":

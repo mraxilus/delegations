@@ -377,8 +377,9 @@ gl.bindBuffer(gl.ARRAY_BUFFER, buffer_ribbon_corners);
 gl.bufferData(gl.ARRAY_BUFFER,
   new Float32Array([0, -1, 1, -1, 1, 1, 0, -1, 1, 1, 0, 1]), gl.STATIC_DRAW);
 
-// Span one 13-float disc record over box of its sphere, turned to its plane and stopped at
-//   plane's vanishing line, and cast ray per fragment.
+// Span one 13-float disc record over box of its sphere, tightened to its rim's picture where
+//   whole rim stands ahead, turned to its plane and stopped at plane's vanishing line, and
+//   cast ray per fragment.
 //   Sibling copy of `mesh.viewBoxOfDisc`, `mesh.expandDiscCorner` and
 //   `mesh.hitDiscAlong`, references suite pins, and of GLSL 3.30 source in
 //   `renderer.nim`; change to any one of three is not finished until other two are
@@ -387,6 +388,9 @@ gl.bufferData(gl.ARRAY_BUFFER,
 //   up; unturned where normal lies along sight. Each turned axis is bounded by sphere's limb
 //   in that axis's plane with sight axis, centre's bearing plus and minus half-angle sphere
 //   subtends, tangent bounded past quarter turn; whole turned view where sphere holds eye.
+//   Box then tightens to rim's own picture where centre's depth passes 1.001 times rim's
+//   depth swing, `mesh.FACTOR_RIM_AHEAD`: extremes are roots of `a*t^2 - 2*b*t + c`, both
+//   axes at once, padded by 0.002, `mesh.MARGIN_BOX_RIM`.
 //   Floor then rises to vanishing line, below which no ray meets plane in front of eye.
 //   Corner is box's middle plus corner scaled by half extents, turned back, so quad is box.
 //   Depth is fragment's own; without `EXT_frag_depth` disc rests at its centre's
@@ -446,6 +450,18 @@ const SOURCE_VERTEX_DISC = `
         tanBounded(bearing_up - spread_up))/extent, -1.0, 1.0);
       corner_max = clamp(vec2(tanBounded(bearing_across + spread_across),
         tanBounded(bearing_up + spread_up))/extent, -1.0, 1.0);
+    }
+    vec2 swings = vec2(dot(aArmFirst, uForward), dot(aArmSecond, uForward));
+    if (depth > 1.001*length(swings)) {
+      vec2 arms_across = vec2(dot(aArmFirst, right), dot(aArmSecond, right));
+      vec2 arms_up = vec2(dot(aArmFirst, up), dot(aArmSecond, up));
+      float a = depth*depth - dot(swings, swings);
+      vec2 b = vec2(across*depth - dot(arms_across, swings), rise*depth - dot(arms_up, swings));
+      vec2 c = vec2(across*across - dot(arms_across, arms_across),
+        rise*rise - dot(arms_up, arms_up));
+      vec2 root = sqrt(max(b*b - a*c, 0.0));
+      corner_min = max(corner_min, clamp((b - root)/a/extent - 0.002, -1.0, 1.0));
+      corner_max = min(corner_max, clamp((b + root)/a/extent + 0.002, -1.0, 1.0));
     }
     float facing = side*dot(normal, uForward);
     float line_vanishing = reach_lateral > 0.0

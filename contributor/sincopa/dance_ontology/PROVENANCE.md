@@ -602,7 +602,7 @@ every animated edge of the last two. Each card carries the identifier to quote b
 has been ruled on it.
 
 **Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
-reads as a decision of a sign-off, which `GUIDE.md` numbers from D1. The Architect ruled this on
+reads as a decision of a sign-off, which `GUIDE.md` numbers from D01. The Architect ruled this on
 2026-10-04. The questions of sections A, C and D take the same names, because each question is keyed
 by its card. Verified by `suites/test_marks.nim`, which reads each identifier off the written page.
 It failed on 57 of 107 cards, which had one digit.
@@ -784,8 +784,8 @@ its crossing. The crossings are found segment against segment, as the stills fin
 `checkHandTurns`, which checks that a moving figure and the still it lands on break the same arm.
 
 **Each way of turning finds its own sense, so no move walks off the end of the chain (rule 30).**
-The simulation turns a quarter from the frame, and reads the wind at the furthest pose the walk
-reaches. Verified by `checkHandTurns`, which reads the wind on every frame of every move.
+The simulation turns a quarter from the frame, and reads the twist at the furthest pose the walk
+reaches. Verified by `checkHandTurns`, which reads the twist on every frame of every move.
 
 **Past a whole turn, one connection runs straight and the other goes round it (rule 31).** That is
 the swan. `route.windShare` gives the swing of the straight one to the snake. So at a turn and a
@@ -897,6 +897,25 @@ rotation of the forearm can turn the plane it bends in.
 Hands are offered three bands: torso 1.00 to 1.35 m, neck 1.40 to 1.50, and crown 1.735 to 2.00. The
 crown starts one radius of a limb over the head, so a hand carried there clears it by construction.
 
+**Each head carries a face, and every arm keeps clear of every face (#375).** The face is a sphere
+of 6 cm radius, half the length of a face from brow to chin (`rigid.faceCapsule`). Its centre sits 6
+cm ahead of the axis of the head. It sits 4 cm under the centre of the head, midway from brow to
+chin. So its front reaches 12 cm ahead of the axis, where the nose sits by the head length of ANSUR
+II, 0.20 and 0.19 m.
+
+The sphere is 12 cm across, about as wide as a face. The head is its own capsule, so an arm that is
+clear of both is clear of the face. Assumed: the size and the place of the sphere, which are
+estimates and not tape.
+
+The sphere covers the face alone, as the Architect asked on 2026-10-04. Rejected: a sphere of the
+radius of the head, 5 cm ahead of the centre of the head. Its front reached 2 cm past the nose, and
+beside the head it stood 1.3 cm out of the head. Rejected: no face, under which a raised forearm
+lies across its own face.
+
+Verified by `suites/test_asks.nim`: no arm sits more than 5 mm inside a face at any recorded moment
+of any still or sweep. That is the slop of the engine. A second law holds the sphere to the face:
+its front reaches the nose, and it is no wider than a face.
+
 Rejected: to import anything from `src/`, because a shorthand cannot check itself, and the
 simulation is what a shorthand is for. Verified by `suites/test_limb.nim`: the tape and the forward
 kinematics of one arm over seeded random arms, and the contact test against a sampled truth.
@@ -970,6 +989,39 @@ then gives at the hands, in life as here. At fifteen it fixed one law and cost e
 
 An arm deeper than a centimetre (`THROUGH`) in a body or in another arm is a stop. That is read off
 the manifolds of the engine every moment.
+
+The face meets the arms of both dancers and the girdles of the partner (`FACE_BIT`). Its own girdles
+share its group, so they pass it. The trunks keep two heads apart. Chest to chest, the two faces
+overlap by 2 cm, computed from the tape, where dancers turn their heads aside. The face sits on the
+chest and weighs nothing, because the head carries its weight. So an arm deeper than `THROUGH` in a
+face is a stop, as in a body.
+
+**Each dancer's own arms cross below the elbow, and their elbows keep their order.** A dancer
+crosses their arms at the hands or the forearms, up to just before the elbow. Their elbows rarely if
+ever cross over. The Architect said so on 2026-10-04, and ruled the same day that the rule binds the
+two arms of one dancer alone. Partners are free of it: a crossed half turn lays the forearm of the
+lead on the upper arm of the follow.
+
+So the judge of a still stops two poses (`Stop.Crossed`). In the first, the right elbow of a dancer
+passes more than 2 cm to the left of the left elbow (`ELBOWS_APART`). The judge reads left and right
+across the chest of that dancer. In the second, one arm of a dancer lies on their other upper arm
+(`ON_UPPER`). It lies there more than one radius of an arm before the elbow (`ELBOW_END`).
+
+Measured 2026-10-04. Without the rule, D02 passes the elbows of the follow by 37 mm. It also lays
+the upper arms of the follow on each other, 9 cm before the elbow. The crossed half turn stands the
+elbows of the follow side by side, 9 to 17 mm past each other. It lays the other forearm 2 to 3 cm
+before the elbow, and A17 and C03 lay it 1 cm before.
+
+Rejected: elbows kept in order with no slip, since the crossed half turn passes them by up to 17 mm.
+Rejected: 9 cm of each upper arm kept clear before the elbow, under which C03 and C05 stood the
+other connection over. Rejected: the rule on the arms of both partners, which the Architect ruled
+out.
+
+The judge of a sweep does not read the rule, until the Architect rules whether it binds a turn in
+motion (D5 on #375). The plan keeps it on every path that it plans (Planned turn).
+
+Verified by `suites/test_asks.nim`: in every moment of every still, the arms of each dancer cross
+below the elbow alone. The law reads the recorded capsules, and not the judge.
 
 The manifolds are read into the room that the engine says a body needs (`touchRoom`). Rejected: a
 fixed room for eight, which drops unseen the deepest contact of a forearm that touches nine things.
@@ -1089,7 +1141,7 @@ The arms are carried on by the engine. A pose at each moment is the pose before 
 an arm that has gone round a body stays round it.
 
 Joined hands rise from where each one settled at rest, to the lower edge of their band. They rise
-along a ramp over the first quarter turn of wind (`RAISE`). They are held to the ramp from both
+along a ramp over the first quarter turn of twist (`RAISE`). They are held to the ramp from both
 sides, because asked for the band outright a weightless hand crossed 359 mm in one moment. Risen,
 the two edges of the band are held (`LIFT` 400 newtons per metre, `FALL` 40 damping it), and
 everything between them is free. The band is a bound, and not a preference.
@@ -1110,7 +1162,7 @@ whole turn have their hands down again.
 Going up, the hands rise over the head of the follow. Coming back, they come forward off that crown
 first, to
 between the two bodies, and then down (`leaving`, `over`). Let down straight from over the crown
-they pass through the head. The rise from rest keeps a key of its own, which is the wind (`wound`,
+they pass through the head. The rise from rest keeps a key of its own, which is the twist (`wound`,
 `risen`). Rejected: that rise keyed to facing too. It let the hands down onto the head through the
 second half of every whole turn.
 
@@ -1119,16 +1171,16 @@ Facing, a hand over the crown is a hold at some other height, as a hand under it
 arms press the hands up against the forty newtons of the lift. The same-name chain come round to
 face to face sat at 1.37 to 1.39 m, against 1.35.
 
-Asked at a lower band, the hands rise from where they settled, over the first quarter turn of wind.
+Asked at a lower band, the hands rise from where they settled, over the first quarter turn of twist.
 That rise is whole from the rest for a hold that rests Face-to-back.
 
 Verified by `test_rigid.nim`. `up` is nought face to face, and one from a quarter turn away, at
-every wind of a turn and a half. The cross-name chain at rest and the same-name chain wound to face
-to face hold with every joined hand in the torso band. A09 stands at 0.76 m, with every hand between
-1.23 and 1.35 m. Red first.
+every twist up to a turn and a half. The cross-name chain at rest and the same-name chain wound to
+face to face hold with every joined hand in the torso band. A09 stands at 0.76 m, with every hand
+between 1.23 and 1.35 m. Red first.
 
 Under this rule no diamond stands. With the hands asked to mid torso after a whole turn they hold at
-no distance. The wind gives at a wrist, a twist or a hand under the crown band before it comes
+no distance. The turn gives at a wrist, a twist or a hand under the crown band before it comes
 round. Where it comes round, the pose left to stand gives too. Rejected: six centimetres of sag
 under the crown band, and not three. Measured, it stands neither diamond.
 
@@ -1292,9 +1344,27 @@ Verified by `suites/test_asks.nim`, both red first. A09 is the D05 of the chain,
 Every crossed still lays the connection that its card names over, at the crossing of the lead. That
 crossing is the one nearest the lead along both connections.
 
-The page counts turns clockwise seen from above, and the simulation anticlockwise. Every wind is
-flipped in one place before it is asked (`asked`). The wind is flipped for every card, and not for
-the chains alone. Verified by `suites/test_asks.nim`: one picture is one question whichever section
+**A still that answers a crossed card lays the connection that the card names over.** The search
+for a still keeps only a pose that crosses the arms of the lead as the card draws them
+(`walk.standsAt`, `walk.plannedStill`). Each card names the arm of the lead on top in `asks`
+(`over`), and a card that draws no crossing names none. A reflected twin names the other arm. The
+search reads the crossing as the law reads it (`read.crossings`). So a pose that crosses nothing, or
+crosses the other way, is another position than the card draws, and does not answer it.
+
+A wound frame of two connections names its arm by its wind, as the chain does (`route.overArm`).
+So A16 and A17 name what C05 and C03 name, and each pair is one question. A frame that names its
+own connection over winds whichever way puts it over, so its wind names that same arm.
+
+Measured 2026-10-04, under the smaller face. Nearest to ease, C03 and C05 stand 0.44 m apart at a
+strain of 0.036, and cross nothing. Crossed as their cards draw them, they stand 0.36 m apart at a
+strain of 0.064. Rejected: the easiest pose, whatever it crosses, which showed C03 and C05 with no
+crossing. Verified by `suites/test_asks.nim`: the law of the crossed still above fails on C03 and
+C05 where the search keeps any pose. It fails on A16 and A17 where they name no arm, and so does
+the law that one picture is one question.
+
+The page counts turns clockwise seen from above, and the simulation anticlockwise. `asked` flips
+every twist in one place, before the simulation answers, for every card and not for the chains
+alone. Verified by `suites/test_asks.nim`: one picture is one question whichever section
 draws it, A16 being C05 and A17 C03, red first.
 
 The questions are answered on every core at once. Each worker lists the questions for itself and
@@ -1319,7 +1389,7 @@ the other. That is a finding against the reading of the rule, and not a number b
 
 Sections B and E being whole is a weak result. Every card in them is over the crown, where a single
 hold sweeps free past two turns, so they test the model hardly at all. The cards that discriminate
-are the chains under wind.
+are the chains under twist.
 
 ## Rig viewer
 
@@ -1400,16 +1470,16 @@ walk gives short. It is the reason that the planned turn exists.
 
 The corpus law in `test_rigid.nim` holds every still it walks to a strain of 0.1 (`AT_EASE`). That
 is two degrees of a twenty degree ease. It walks both chains from cross to cross, and the same-name
-chain either way about at half. It walks the free frame pillion too, and the single hold at quarter
-and half. It stops at the cross. Every other still that the walk holds stands at ease, or within a
-fifth of an ease band at its worst joint, measured 2026-09-18.
+chain either way about at half. It walks the free frame Face-to-back too, and the single hold at
+quarter and half. It stops at the cross. Every other still that the walk holds stands at ease, or
+within a fifth of an ease band at its worst joint, measured 2026-09-18.
 
 Walked, the swans wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of a
 turn, with hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26,
 with an arm against an arm, the follow's collarbone retracted to its end, and the chest at forty.
 Under the rule that rests the hands at mid torso facing, the walk stands no diamond either.
 
-The film of the wind shows why. From the cross on, the arms of the follow wrap round the head at the
+The film of the turn shows why. From the cross on, the arms of the follow wrap round the head at the
 height of the neck, rather than pass over it. Hands are carried at the lower edge of the band, a
 radius of a hand over the crown. That leaves no room for a forearm to cross above the head.
 
@@ -1441,6 +1511,19 @@ between the bodies.
 each moment it takes the pose nearest to ease, close to the last pose, that keeps four things. The
 hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Every joint stays
 six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band (`room`).
+
+Each face is a capsule of the plan too. The arms and the girdles of the partner keep clear of it,
+as in the engine. Verified by `test_plan.nim`: the plan pairs each face with every capsule that the
+face of the engine meets.
+
+The plan keeps the elbow rule of the judge too (Rigid body engine). It adds a cost where the upper
+arm of a dancer comes within 1 cm of their other arm (`CROSS_ROOM`). The cost is nought at the end
+of the elbow, and it grows over one radius of an arm. So an arm that lies just before the elbow
+costs nothing. It adds a cost where the elbows of a dancer come within 1 cm of the order that the
+judge holds (`ELBOW_ROOM`).
+
+The room under each limit of the judge is the slop of the engine. Verified by `test_plan.nim`: the
+cost of each step that the planner keeps is the plain cost, to the last bit, with these terms in it.
 
 The plan is geometry alone. It uses the capsules, the ranges and the bands of the engine and the
 judge. So the engine meets nothing that the plan did not keep clear. No point of an arm moves more
@@ -1563,8 +1646,8 @@ torso band.
 end. In the easiest plan that holds, C02 and C06 read 0.11, D03 and A11 0.12, D01 and D07 0.37, and
 C01 and C07 0.68. Measured on 2026-10-03 from `design/rig.json`.
 
-Rejected: to let the arms settle toward ease at the last wind, a leap at a time. With the engine
-sprung after the plan, that took C01 from 0.56 to 0.53 and left D07 as it was.
+Rejected: to let the arms settle toward ease at the end of the turn, a leap at a time. With the
+engine sprung after the plan, that took C01 from 0.56 to 0.53 and left D07 as it was.
 
 The spring is 30 hertz because of what was measured on D07 on 2026-10-01. At 15 hertz the engine
 gave by twist at 1.47 of a turn. At 25, 30 and 40 hertz it stood, with a strain of 0.33 to 0.34 at
@@ -1857,8 +1940,9 @@ answer, the twin card keeps it itself, and names itself. A02, A04 and A06 do so,
 The page builder flips each point of that still across the line of the couple (`design/twins`). It
 names the capsules of each arm as those of the other arm, so the page paints them in the colour of
 the other arm. The readings of each arm move to the place of the other arm, and the twist and its
-two ends turn the other way. The Architect chose this on 2026-10-04. Rejected: a still reflected by
-the simulation and kept in the recording, which kept 41 stills that a mirror gives.
+two ends turn the other way. The two capsules of each torso trade places, so the left one stays
+first (`rigid.trunkCapsules`). The Architect chose this on 2026-10-04. Rejected: a still reflected
+by the simulation and kept in the recording, which kept 41 stills that a mirror gives.
 
 Verified on 2026-10-04 by a probe outside the tree, against the recording of `6cfc7bc1`. Each of the
 41 twin cards shows the still that the simulation reflected there, field for field. Only the order
@@ -1867,6 +1951,10 @@ of the capsules, of the joined hands and of the strains tried differs. Verified 
 itself. Each girdle stands on the side that its arm names, in every still that the page shows. Each
 of those laws failed on a break made on purpose: arms not recoloured, points not flipped, and a twin
 card that named another card.
+
+Without the trade of the torso, the right of each chest on a twin card points to its left. A law
+that reads the face from the chest then finds it behind the head. Verified by
+`suites/test_asks.nim`: each still that the page shows lists the left capsule of its torso first.
 
 The engine is not mirror exact, so a reflected twin shows other figures than the engine gives it.
 Against the recordings of `9bbf656`, which reflect nothing, these are the largest changes, compared
@@ -2320,11 +2408,6 @@ urgent.
   hands at the edge of the band, wraps the arms of the follow round the head instead.
 - **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 0.68,
   and D01 and D07 0.37 (Planned turn).
-- **With the springs, the planned swans of the same-name chain held on the last bit of one sum.**
-  When the wind was added to the facing of the follow in another order, that facing changed in its
-  last bit. Then D01 and D07 stood no pose in any of the sixteen styles. Measured 2026-10-02 with
-  the engine sprung after the plan. The facing keeps its order, and the engine now stands each
-  planned moment instead (Planned turn).
 - **The swans wrap the connection that the card draws straight.** The card draws the connection over
   at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen from
   above in `design/rig.json`, the connection that C01 draws straight runs 2.61 times its line

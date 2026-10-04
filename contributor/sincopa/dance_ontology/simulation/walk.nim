@@ -16,7 +16,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[atomics, cpuinfo, locks, math, options, sets, strutils, tables, typedthreads]
-import ./[body, hold, limb, plan, rig, rigid, vector]
+import ./[body, hold, limb, plan, read, rig, rigid, vector]
 
 
 const
@@ -490,6 +490,21 @@ proc stood*(
   result.is_holding = result.couple.gives == Stop.None
 
 
+func mirrored*(over: int): int = (if over < 0: over else: 1 - over)
+  ## Lead's arm card lays over, seen in mirror: each arm is other arm there.
+
+proc laysOver(couple: Couple, over: int): bool =
+  ## Whether couple lay connection of lead's arm `over` on top at lead's crossing, as its card
+  ## draws it: crossing nearest lead along both connections (`read.crossings`).
+  var arms: Arms
+  for i in 0..<couple.links.len: arms.add couple.poseOf(i).arms
+  let found = crossings(arms)
+  if found.len == 0: return false
+  var first = found[0]
+  for crossing in found:
+    if crossing.along + crossing.across < first.along + first.across: first = crossing
+  ord(couple.links[first.over].ends[0].arm) == over
+
 proc standsAt(
   rig: Rig,
   band: Band,
@@ -499,20 +514,25 @@ proc standsAt(
   head: Body,
   apart: float,
   who: Body,
+  over = -1,
 ): Stood =
   ## Whether pose holds at this facing from this one distance, and how it sits.
+  ##   Card that draws crossing (`over`) holds only where pose lays its connection over: pose
+  ##     that crosses nothing, or crosses other way, is another position than one card draws.
   let (is_holding, couple) = stood(rig, band, links, turns, is_away, head, apart, who)
-  result = Stood(is_holding: is_holding, apart: apart, turns: turns, strain: couple.strainOf)
+  result = Stood(is_holding: is_holding and (over < 0 or couple.laysOver(over)), apart: apart,
+                 turns: turns, strain: couple.strainOf)
   couple.free()
 
 type StandAsk = tuple[rig: Rig, band: Band, links: seq[Link], turns: float, is_away: bool,
-                       head: Body, apart: float, who: Body]
+                       head: Body, apart: float, who: Body, over: int]
   ## One still stood at one distance, by every argument it is stood with.
 
 proc stoodFor(ask: StandAsk): Stood {.nimcall, gcsafe.} =
   ## Stand one ask, as `standsAt` stands it.
   {.cast(gcsafe).}:
-    standsAt(ask.rig, ask.band, ask.links, ask.turns, ask.is_away, ask.head, ask.apart, ask.who)
+    standsAt(ask.rig, ask.band, ask.links, ask.turns, ask.is_away, ask.head, ask.apart, ask.who,
+             ask.over)
 
 proc standingOf(
   rig: Rig,
@@ -523,6 +543,7 @@ proc standingOf(
   head: Body,
   is_either_way: bool,
   who: Body,
+  over: int,
 ): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
@@ -551,7 +572,7 @@ proc standingOf(
     asks: seq[StandAsk]
   for far in stands(rig):
     for way in (if is_either_way: @[turns, -turns] else: @[turns]):
-      asks.add (rig, band, links, way, is_away, head, far, who)
+      asks.add (rig, band, links, way, is_away, head, far, who, over)
   var first = 0
   while first < asks.len:
     let batch = asks.batchOf(first)
@@ -572,6 +593,7 @@ proc standing*(
   head = Body.Two,
   is_either_way = false,
   who = Body.Two,
+  over = -1,
 ): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to ease, of
   ## every distance couple may stand at (`standingOf`).
@@ -579,9 +601,10 @@ proc standing*(
   let twin = twinOf(links, turns, is_away)
   if twin.is_reflected:
     return reflected(standing(rig, band, twin.links, twin.turns, is_away, head, is_either_way,
-                              who))
-  kept(STANDS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who),
-       standingOf(rig, band, links, turns, is_away, head, is_either_way, who))
+                              who, mirrored(over)))
+  kept(STANDS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who,
+                     $over),
+       standingOf(rig, band, links, turns, is_away, head, is_either_way, who, over))
 
 proc isHoldingAt*(
   rig: Rig,
@@ -593,16 +616,17 @@ proc isHoldingAt*(
   apart = 0.0,
   is_either_way = false,
   who = Body.Two,
+  over = -1,
 ): bool =
   ## Whether any pose holds at this facing, `who` turning, from any distance couple may
   ## stand at.  Twin's answer answers mirror image (`twinOf`).
   let twin = twinOf(links, turns, is_away)
   if twin.is_reflected:
     return isHoldingAt(rig, band, twin.links, twin.turns, is_away, head, apart, is_either_way,
-                       who)
+                       who, mirrored(over))
   if apart > 0.0:
-    return standsAt(rig, band, links, turns, is_away, head, apart, who).is_holding
-  standing(rig, band, links, turns, is_away, head, is_either_way, who).is_holding
+    return standsAt(rig, band, links, turns, is_away, head, apart, who, over).is_holding
+  standing(rig, band, links, turns, is_away, head, is_either_way, who, over).is_holding
 
 proc isReachingOf(
   rig: Rig, band: Band, links: seq[Link], turns: float, is_away: bool, who, head: Body
@@ -997,9 +1021,11 @@ proc plannedStill*(
   is_either_way = false,
   who = Body.Two,
   should_seek_ease = false,
+  over = -1,
 ): PlannedStill =
   ## Planned way of winding to this facing, `who` turning, that holds and stands there,
   ## styles and ways in fixed order; caller frees couple of one that holds.
+  ##   Card that draws crossing holds only where pose lays its connection over (`standsAt`).
   ##   First that holds answers whether any does (`isPlannedHolding`).  Where
   ##     `should_seek_ease`, every plan is tried and one nearest to ease is kept, as
   ##     `standing` keeps distance: first that held stood C06 with follow's waist at its
@@ -1014,7 +1040,7 @@ proc plannedStill*(
           result.tried.add none(float)
           continue
         let (said, couple) = replay(rig, band, links, is_away, head, path, should_stand = true)
-        if not said.is_holding:
+        if not said.is_holding or (over >= 0 and not couple.laysOver(over)):
           result.tried.add none(float)
           couple.free()
           continue
@@ -1040,18 +1066,22 @@ proc isPlannedHolding*(
   head: Body,
   is_either_way = false,
   who = Body.Two,
+  over = -1,
 ): bool =
   ## Whether some planned way of winding to this facing holds, and stands there.  Twin's
   ## answer answers mirror image (`twinOf`).
   let twin = twinOf(links, turns, is_away)
   if twin.is_reflected:
-    return isPlannedHolding(rig, band, twin.links, twin.turns, is_away, head, is_either_way, who)
+    return isPlannedHolding(rig, band, twin.links, twin.turns, is_away, head, is_either_way, who,
+                            mirrored(over))
   proc asked(): bool =
-    let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
+    let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who,
+                             over = over)
     if found.is_holding: found.couple.free()
     found.is_holding
   kept(PLANNED_HOLDS,
-       keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who), asked())
+       keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
+       asked())
 
 proc isPlannedReaching*(
   rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool; who, head: Body
