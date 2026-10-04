@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, strutils, tables, unittest]
-import ../../src/[rewrites, symbols]
+import ../../src/[rewrites, symbols, tokens]
 
 
 const
@@ -123,6 +123,52 @@ suite "Internal: Rewrites":
     check plan.refusal.len == 0
     check declaring.applied(plan.edits["p/a.nim"]) ==
       "proc f*(temporary_directory: int): int = temporary_directory + 1\n"  # `tmpDir` whole
+
+
+  test "rename Nim reads as same name skips presence and shadow, since it changes no reading":
+    let
+      declaring = "proc f*(localValue: int): int = localValue\n"
+      other = "let local_value = 2\n"
+      rename = Rename(
+        path: "p/a.nim",
+        line: 1,
+        column: 8,
+        name: "localValue",
+        renamed: "local_value",
+        rule: "parameter case (V.1)",
+      )
+      parameter =
+        Symbol(kind: "skParam", name: "a.f.localValue", file: "/r/p/a.nim", line: 1, column: 8)
+      global = Symbol(kind: "skLet", name: "b.local_value", file: "/r/p/b.nim", line: 1, column: 4)
+    var same = initTable[string, Answer]()
+    same["p/a.nim"] = Answer(path: "p/a.nim")
+    for site in [(1, 8), (1, 32)]: same["p/a.nim"].symbols[site] = parameter
+    same["p/a.nim"].globals["local_value"] = @[global]  # one name to Nim already
+    same["p/b.nim"] = Answer(path: "p/b.nim")
+    same["p/b.nim"].symbols[(1, 4)] = global
+    let plan = planRename(
+      rename,
+      [("p/a.nim", declaring), ("p/b.nim", other)],
+      same,
+      initTable[string, seq[int]](),
+    )
+    check plan.refusal.len == 0  # V.1
+    check declaring.applied(plan.edits["p/a.nim"]) ==
+      "proc f*(local_value: int): int = local_value\n"  # V.1
+    check "p/b.nim" notin plan.edits  # other symbol keeps its spelling
+
+
+  test "rename to keyword or to implicit `result` is refused, as compiler reads either otherwise":
+    for (renamed, refusal) in [
+      ("type", "`type` is keyword"),
+      ("t_ype", "`t_ype` is keyword"),
+      ("result", "`result` names implicit result of routine"),
+    ]:
+      var rename = RENAME
+      rename.renamed = renamed
+      let files = [("p/a.nim", DECLARING), ("p/b.nim", USING)]
+      check planRename(rename, files, answers(), initTable[string, seq[int]]()).refusal == refusal
+    check not "Type".isKeyword  # first letter exact, so `Type` is name
 
 
   test "rename is refused whole where any site, or new name, cannot be proved":

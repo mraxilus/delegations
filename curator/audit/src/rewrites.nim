@@ -15,13 +15,14 @@
 ##     parameter or field of that callee, in file declaring callee;
 ##   - new name must stand nowhere in files rename writes, and name no global declaration of
 ##     any module compiled with declaring file, `system` among them: it would collide there, or
-##     shadow it;
+##     shadow it. New name Nim reads as old one (`localValue` to `local_value`) skips both
+##     tests: it changes no reading, so nothing new can collide;
+##   - new name is no keyword, and not `result`, which compiler declares in routine;
 ##   - no edit lands on fenced line (X.1), and none widens line past `LINE_MAX`.
 ##   Mention of old name in backticks, in comment of file where rename takes every use, is
 ##     renamed too, so comment still names what code does.
 ##   Refusal names its reason, and rule's finding stays for hand. Rule choosing new name is
-##     caller's: V.6 abbreviation now (`names.nim`); V.1 case of local constant and of other
-##     names takes same planner.
+##     caller's (`names.nim`): V.6 abbreviation, and V.1 and V.11 case of each kind.
 ##
 ##   Cost: scope is caller's: project of declaring file and root files that import across
 ##     projects (`koch.nim`). Use in other project's file is not read, and none exists today.
@@ -50,6 +51,7 @@ type
     name*: string  ## Name as declared.
     renamed*: string  ## Name rule gives.
     rule*: string  ## Rule report names, e.g. `abbreviation (V.6)`.
+    is_local*: bool  ## Binding no other module can name, so scope is declaring file alone.
 
   Plan* = object  ## Define rename planned, or refused with reason.
     rename*: Rename
@@ -58,8 +60,10 @@ type
     refusal*: string  ## Why rename is refused; empty where planned.
 
 
-const NAME_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
-  ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
+const
+  NAME_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
+    ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
+  RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
 
 
 func applied*(source: string, edits: openArray[Edit]): string =
@@ -148,6 +152,9 @@ func planRename*(
     return
 
   result.rename = rename
+  if rename.renamed.isKeyword: refuse "`" & rename.renamed & "` is keyword"
+  if rename.renamed.isSameName(RESULT_NAME):
+    refuse "`" & rename.renamed & "` names implicit result of routine"
   if rename.path notin answers or answers[rename.path].reason.len > 0:
     refuse "declaring file does not compile on its pin"
   let declaring = answers[rename.path]
@@ -156,10 +163,11 @@ func planRename*(
   let
     declared = declaring.symbols[(rename.line, rename.column)]
     shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(not it.isIdentical(declared))
+    is_respelled = rename.name.isSameName(rename.renamed)
   if not declared.file.endsWith("/" & rename.path) or declared.line != rename.line or
       declared.column != rename.column:
     refuse "`" & rename.path & ":" & $rename.line & "` names symbol declared elsewhere"
-  if shadowed.len > 0:
+  if shadowed.len > 0 and not is_respelled:
     refuse "`" & rename.renamed & "` would shadow `" & shadowed[0].name & "`"
 
   # Classify each site of old name; any site unresolved refuses rename whole.
@@ -193,7 +201,7 @@ func planRename*(
       edits.add Edit(first: first, after: source.nameAfter(first), text: rename.renamed)
       result.lines.add (path, site[0])
     if edits.len == 0: continue
-    if source.sitesOf(rename.renamed).len > 0:
+    if not is_respelled and source.sitesOf(rename.renamed).len > 0:
       refuse "`" & rename.renamed & "` already stands in `" & path & "`"
 
     # Rename mention in backticks of comment where every use is renamed.

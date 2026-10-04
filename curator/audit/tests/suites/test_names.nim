@@ -429,6 +429,64 @@ suite "Names":
     check abbreviationRenames(binding, []).len == 0  # V.6, `DIR_FONTS` is use, never declaration
 
 
+  test "V.1 and V.11 case is spelled word by word, and spelling it again changes nothing":
+    check "localValue".cased(Casing.Snake) == "local_value"  # V.1
+    check "LOCAL_VALUE".cased(Casing.Snake) == "local_value"  # V.1
+    check "N".cased(Casing.Snake) == "n"  # V.1
+    check "Construct_table".cased(Casing.Camel) == "constructTable"  # V.1
+    check "DO_THING".cased(Casing.Camel) == "doThing"  # V.1
+    check "basis_digits".cased(Casing.Pascal) == "BasisDigits"  # V.1
+    check "base".cased(Casing.Pascal) == "Base"  # V.11
+    check "lastX".cased(Casing.Screaming) == "LAST_X"  # V.1
+    check "parse_JSON".cased(Casing.Camel) == "parseJSON"  # V.9, acronym kept
+    check "Key".cased(Casing.Letter) == "Key"  # V.12, initial is choice
+    for name in ["localValue", "LOCAL_VALUE", "Construct_table", "basis_digits", "lastX", "E1",
+                 "vec3Norm", "N", "anti_Side", "toJSON"]:
+      for casing in [Casing.Pascal, Casing.Camel, Casing.Snake, Casing.Screaming]:
+        let spelled = name.cased(casing)
+        check spelled.isCased(casing)  # V.1
+        check spelled.cased(casing) == spelled  # V.1, idempotent
+
+
+  test "V.1 and V.11 rename target is each case finding, and refusal names what fix cannot prove":
+    let renames = renamesCase(CASES_BROKEN, [])
+    check renames.len == CASES_BROKEN.breaches.len  # V.1, V.11: check reads same set
+    check renames.mapIt((it.name, it.renamed, it.rule)) == @[
+      ("basis_digits", "BasisDigits", "type case (V.1)"),
+      ("Width", "width", "field case (V.1)"),
+      ("base", "Base", "member case (V.11)"),
+      ("Anti_Side", "AntiSide", "member case (V.11)"),
+      ("lowerGlobal", "LOWER_GLOBAL", "global case (V.1)"),
+      ("Count", "count", "parameter case (V.1)"),
+      ("Construct_table", "constructTable", "routine case (V.1)"),
+      ("Local_value", "local_value", "local case (V.1)"),
+    ]  # V.1, V.11
+    check renames.filterIt(it.refusal.len > 0).mapIt(it.refusal) == @[
+      "`$` of member reads its name", "`$` of member reads its name"]  # V.11
+    check renames[5].line == 8 and renames[5].column == 21  # parameter's own token
+    const local = "proc run() =\n  const WIDE = 2\n  let TMP_DIR = \"a\"\n" &
+      "when isMainModule:\n  let VERB = paramStr(1)\n"
+    check renamesCase(local, []).mapIt((it.renamed, it.rule)) == @[
+      ("wide", "local constant case (V.1)"),
+      ("temporary_directory", "abbreviation (V.6) and local constant case (V.1)"),
+      ("verb", "local constant case (V.1)"),
+    ]  # V.1, V.6; entry binding takes case of local, where fix moves it (V.10)
+    const foreign = "type Def {.importc: \"b3Def\".} = object\n  enableSleep {.importc.}: bool\n" &
+      "var counter {.exportc.}: cint\nproc pushAt(Body_id: cint) {.importc: \"b3Push\".}\n" &
+      "type Side = enum\n  left = \"left\", Right\nproc Count(Count: int) = discard\n" &
+      "proc do_x_y() = discard\nproc f[Key](k: Key) = discard\n"
+    check renamesCase(foreign, []).mapIt((it.name, it.refusal)) == @[
+      ("enableSleep", "foreign code reads name through `importc`"),
+      ("counter", "foreign code reads name through `exportc`"),
+      ("Body_id", ""),  # parameter crosses by place
+      ("left", ""),  # member carries own string
+      ("Count", "line declares `Count` twice"),
+      ("Count", "line declares `Count` twice"),
+      ("do_x_y", "`doXY` reads `XY` as acronym (V.9)"),
+    ]  # V.1, V.11; placeholder `Key` (V.12) has no rename
+    check renamesCase("when isMainModule:\n  var COUNT {.global.} = 0\n", []).len == 0  # V.10
+
+
   test "V.10 entry block moves into documented `proc main`, and block calls it":
     const
       entry = "import std/os\n\n\nwhen isMainModule:\n  let verb = paramStr(1)\n" &
