@@ -5,8 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../../knoller/src/knoller
-import ../../src/[findings, wrapping]
+import ../../src/knoller/[reports, wrapping]
 
 
 const

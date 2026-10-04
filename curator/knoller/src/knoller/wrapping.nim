@@ -39,7 +39,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, sequtils, strutils, unicode]
-import ../../knoller/src/knoller
+import ./[form, reports, tokens, views]
 
 
 type

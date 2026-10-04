@@ -78,7 +78,7 @@ import std/[options, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[checker, conversions, findings, form, glossary]
 import ./[idioms, kinds, layout, names, prose, rewrites, scope]
-import ./[symbols, wrapping]
+import ./symbols
 
 
 const
