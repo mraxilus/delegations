@@ -201,7 +201,9 @@ and the shared allowance. This section adds only what differs for a curator.
 
 7. **New curator project.** Any name matching `[a-z][a-z0-9_]*`, on branch
    `curator/<project>/<name>`, with the full project shape from `CONTRIBUTOR.md`.
-   `curator/probe` is the worked example.
+   `curator/probe` is the worked example. A project that opens by moving code out of another
+   project opens on a root branch, `curator/<name>`, because the move writes outside the new
+   folder. `curator/knoller` opened that way.
 
 8. **Toolchain.** Each project pins its own compiler, and a bump of that pin is the work of
    that project. `NIM_VERSION` in each workflow that installs a compiler is the version that
