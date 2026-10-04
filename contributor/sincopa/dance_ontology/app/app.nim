@@ -603,7 +603,7 @@ const
     ##   Collect adds connection and drop takes one away, and both
     ##     map and close drawing say that by direction: up page for
     ##     collect, since collect builds frame up, and down for drop.
-    ##   Cell that said `c` and `d` made reader learn same fact
+    ##   Matrix cell that said `c` and `d` made reader learn same fact
     ##     second way.
   COMPOUND_GLYPHS: array[Compound, string] = [
     Compound.Place: "&#8644;",
@@ -614,25 +614,25 @@ const
 
 func toneOf(side: Side): string =
   ## Name custom property holding ink of one of lead's arms.
-  ##   Deep shade, because cell is lead acting -- same reading
+  ##   Deep shade, because matrix cell is lead acting -- same reading
   ##     that inks line on map and acting word of every name.
-  ##     Plain shade is follow's, and cell is never theirs.
+  ##     Plain shade is follow's, and matrix cell is never theirs.
   ##   Key directly above this table draws two arms deep, so plain
-  ##     cell disagreed with legend it was being read under.
+  ##     matrix cell disagreed with legend it was being read under.
   if side == Side.Left: "var(--left-deep)" else: "var(--right-deep)"
 
 
-func cell(classes, tone, told, body: string): string =
-  ## Form one cell of matrix, inked and named for what it says.
+func matrixCell(classes, tone, told, body: string): string =
+  ## Form one matrix cell, inked and named for what it says.
   ##   Ink is carried as property rather than class because thing
-  ##     cell varies by is which arm dances it, and that is one value, not
+  ##     matrix cell varies by is which arm dances it, and that is one value, not
   ##     set of states stylesheet has to enumerate.
   tag("td", "class=\"" & classes & "\" style=\"--tone: " & tone & "\"" &
     (if told.len > 0: " title=\"" & escaped(told) & "\"" else: ""), body)
 
 
 func renderMark(kind, tone, glyph: string): string =
-  ## Draw mark cell carries, in ink of arm that dances it.
+  ## Draw mark matrix cell carries, in ink of arm that dances it.
   tag("span", "class=\"tile " & kind & "\" style=\"--tone: " & tone & "\"", glyph)
 
 
@@ -640,7 +640,7 @@ func renderMarks(): string =
   ## Show what each mark in matrix means, drawn as matrix draws it.
   ##   Old legend spelled four letters out in sentence, which asked
   ##     reader to hold code in their head while they read grid.
-  ##   Drawn, legend and cell are same thing seen twice.
+  ##   Drawn, legend and matrix cell are same thing seen twice.
   var items = ""
   for helper in Helper:
     items.add tag(
@@ -685,13 +685,13 @@ func renderMatrix(): string =
   ##     name is claim about it and its picture is frame, so axes
   ##     carry pictures and reader can check vocabulary instead of
   ##     trusting it.
-  ##     Cell carries move's direction as mark and lead's arm as
+  ##     Matrix cell carries move's direction as mark and lead's arm as
   ##       its ink, which is vocabulary map already uses, so same
   ##       three facts are said same way wherever page says them.
   ##   Every pair is answered.
   ##     Pair no move joins used to be blank, which is half of chart
   ##       saying nothing; it now carries how many moves apart two frames
-  ##       are, which is question blank cell provokes.
+  ##       are, which is question blank matrix cell provokes.
   ##   Both axes run down tower, taking their order from drawing that
   ##     owns it, so that reading matrix top to bottom and reading map
   ##     top to bottom are same reading.
@@ -740,7 +740,7 @@ func renderMatrix(): string =
         helper = classify(source, target)
         named = compound(source, target)
       if source == target:
-        row.add cell(
+        row.add matrixCell(
           "self" & edge,
           "var(--rule-strong)",
           source.describe,
@@ -748,14 +748,14 @@ func renderMatrix(): string =
         )
       elif helper.isSome:
         let move = Move(helper: helper.get, to: target, side: actingSide(source, target))
-        row.add cell(
+        row.add matrixCell(
           "one" & edge,
           toneOf(move.side),
           phrase(source, move),
           tag("span", "class=\"tile one\"", HELPER_GLYPHS[move.helper]),
         )
       elif named.isSome:
-        row.add cell(
+        row.add matrixCell(
           "two" & edge,
           toneOf(compoundSide(source, target).get),
           compoundPhrase(source, target),
@@ -763,7 +763,7 @@ func renderMatrix(): string =
         )
       else:
         let far = route(source, target).len
-        row.add cell("away" & edge, "var(--faint)",
+        row.add matrixCell("away" & edge, "var(--faint)",
           (if far > 0: $far & " moves apart" else: ""),
           (if far > 0: $far else: ""))
     body.add tag("tr", "", row)
@@ -780,7 +780,7 @@ func renderMatrix(): string =
       tag(
         "p",
         "class=\"note\"",
-        "A cell is the move from its row to its " &
+        "A matrix cell is the move from its row to its " &
           "column, inked in the arm of the lead that dances it. The frames are " &
           "ordered down the tower, the same way the map stacks them. So every " &
           "collect falls below the diagonal, and every drop above it. The " &

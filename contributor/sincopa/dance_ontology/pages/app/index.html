@@ -326,8 +326,8 @@ button { font: inherit; color: inherit; cursor: pointer; border-radius: 7px;
   animation-delay: var(--pass-at); }
 .map .edge.taking { opacity: 1; stroke-width: 5; }
 .map .node.taking .node-plate { stroke: var(--ink); stroke-width: 2; }
-/* Matrix is chart, not spreadsheet. There is no grid: cell is one mark, drawn
-   way map draws same move -- pointed for its direction, inked for lead's arm --
+/* Matrix is chart, not spreadsheet. There is no grid: matrix cell is one mark,
+   drawn way map draws same move -- pointed for its direction, inked for lead's arm --
    and axes carry frames' pictures rather than their names turned on their sides.
    What ruled lines were for, knowing which column you are in, is done by
    lighting row and column instead. */
@@ -355,7 +355,7 @@ button { font: inherit; color: inherit; cursor: pointer; border-radius: 7px;
 .matrix .row .who { display: inline-block; vertical-align: middle;
   margin-right: 0.45rem; }
 .matrix .row .frame { display: inline-block; vertical-align: middle; }
-/* One shape for every mark, so cell reads as cell before it is read. Not scoped
+/* One shape for every mark, so matrix cell reads as one before it is read. Not scoped
    to table: legend draws same tile, and legend drawn some other way is one more
    thing to trust rather than read. */
 .tile { display: inline-flex; align-items: center; justify-content: center;
