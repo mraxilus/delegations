@@ -40,7 +40,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, tables]
-import ./[form, symbols, tokens]
+import ../../knoller/src/knoller
+import ./symbols
 
 
 type

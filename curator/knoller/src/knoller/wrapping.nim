@@ -39,7 +39,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, sequtils, strutils, unicode]
-import ./[findings, form, names, tokens]
+import ./[form, reports, tokens, views]
 
 
 type
@@ -160,7 +160,7 @@ func isHolding(s: Scan, item: Item, spellings: openArray[string]): bool =
     inc k
 
 
-func applied(path, source: string; rewrites: openArray[Rewrite]; rule: string): Fix =
+func applied(path, source: string; rewrites: openArray[Rewrite]; rule: Rule): Fix =
   ## Replace lines of each rewrite, last first; each new line traces to line it replaced.
   var
     lines = source.split('\n')
@@ -172,7 +172,7 @@ func applied(path, source: string; rewrites: openArray[Rewrite]; rule: string): 
     lines = lines[0 ..< rewrite.first] & rewrite.lines & lines[rewrite.last + 1 .. ^1]
     origin = origin[0 ..< rewrite.first] & traced & origin[rewrite.last + 1 .. ^1]
   result.source = lines.join("\n")
-  for rewrite in rewrites: result.fixed.add finding(path, rewrite.first + 1, rule)
+  for rewrite in rewrites: result.fixed.add initReport(path, rewrite.first + 1, rule)
   if origin != toSeq(1 .. origin.len): result.origin = origin
 
 
@@ -219,21 +219,23 @@ func tupleSeparators(s: Scan): seq[int] =
         result.add item.separator
 
 
-func checkSeparators*(path, source: string): seq[Finding] =
+func checkSeparators*(path, source: string): seq[Report] =
   ## Report separator between parameter groups breaking STYLE.md §5, and `;` of tuple type.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let s = source.scan
   for k in s.separators:
-    result.add finding(
+    result.add initReport(
       path,
       s.tokens[k].line + 1,
+      Rule.ParameterSeparators,
       "Parameters take `;` between groups where one group shares its type, and `,` otherwise " &
         "(STYLE.md §5); got `" & s.spelling(k) & "`.",
     )
   for k in s.tupleSeparators:
-    result.add finding(
+    result.add initReport(
       path,
       s.tokens[k].line + 1,
+      Rule.TupleSeparators,
       "Tuple type takes `,` between fields (STYLE.md §5); got `;`.",
     )
 
@@ -244,10 +246,10 @@ func fixSeparators*(path, source: string): Fix =
   result.source = source
   for k in s.separators:
     result.source[s.tokens[k].first] = if s.spelling(k) == ",": ';' else: ','
-    result.fixed.add finding(path, s.tokens[k].line + 1, "parameter separators (STYLE.md §5)")
+    result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.ParameterSeparators)
   for k in s.tupleSeparators:
     result.source[s.tokens[k].first] = ','
-    result.fixed.add finding(path, s.tokens[k].line + 1, "tuple separators (STYLE.md §5)")
+    result.fixed.add initReport(path, s.tokens[k].line + 1, Rule.TupleSeparators)
 
 
 
@@ -308,13 +310,14 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
       result.add Rewrite(first: first_line, last: last_line, lines: canonical)
 
 
-func checkSignatures*(path, source: string): seq[Finding] =
+func checkSignatures*(path, source: string): seq[Report] =
   ## Report signature laid out against X.3 and STYLE.md §5.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for rewrite in source.scan.signatureRewrites:
-    result.add finding(
+    result.add initReport(
       path,
       rewrite.first + 1,
+      Rule.SignatureWrapping,
       "Signature stays on one line where it fits, else wraps its parameters onto one line of " &
         "their own, else one group to line (X.3, STYLE.md §5); got `" &
         $(rewrite.last - rewrite.first + 1) & "` lines.",
@@ -323,7 +326,7 @@ func checkSignatures*(path, source: string): seq[Finding] =
 
 func fixSignatures*(path, source: string): Fix =
   ## Rewrite each signature check reports into its layout.
-  applied(path, source, source.scan.signatureRewrites, "signature wrapping (X.3)")
+  applied(path, source, source.scan.signatureRewrites, Rule.SignatureWrapping)
 
 
 
@@ -564,13 +567,14 @@ func callRewrites(s: Scan): seq[Rewrite] =
     else: inc line
 
 
-func checkCalls*(path, source: string): seq[Finding] =
+func checkCalls*(path, source: string): seq[Report] =
   ## Report call laid out against X.3 and STYLE.md §5.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for rewrite in source.scan.callRewrites:
-    result.add finding(
+    result.add initReport(
       path,
       rewrite.first + 1,
+      Rule.CallWrapping,
       "Call stays on its line where it fits, else takes one argument to line with trailing " &
         "comma (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines.",
     )
@@ -582,7 +586,7 @@ func fixCalls*(path, source: string): Fix =
   for pass in 1 .. PASSES_MAX:
     let rewrites = result.source.scan.callRewrites
     if rewrites.len == 0: break
-    result = result.chain(applied(path, result.source, rewrites, "call wrapping (X.3)"))
+    result = result.chain(applied(path, result.source, rewrites, Rule.CallWrapping))
 
 
 
@@ -635,13 +639,14 @@ func trailingInserts(s: Scan): seq[Insert] =
     result.add Insert(line: line, at: at, separator: separator)
 
 
-func checkTrailing*(path, source: string): seq[Finding] =
+func checkTrailing*(path, source: string): seq[Report] =
   ## Report list written one item to line without trailing separator (X.3).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for insert in source.scan.trailingInserts:
-    result.add finding(
+    result.add initReport(
       path,
       insert.line + 1,
+      Rule.TrailingSeparator,
       "List written one item to line takes trailing separator (X.3); got none, where `" &
         insert.separator & "` stands.",
     )
@@ -654,7 +659,7 @@ func fixTrailing*(path, source: string): Fix =
   for insert in inserts.reversed:
     result.source.insert(insert.separator, insert.at)
   for insert in inserts:
-    result.fixed.add finding(path, insert.line + 1, "trailing separator (X.3)")
+    result.fixed.add initReport(path, insert.line + 1, Rule.TrailingSeparator)
 
 
 const WRAPPING_FIXERS*: array[4, Fixer] = [fixSeparators, fixSignatures, fixCalls, fixTrailing]

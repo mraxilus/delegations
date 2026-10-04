@@ -1,0 +1,11 @@
+{
+  "name": "pga_benchmark",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Prosperity-3.0.0",
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.2",
+    "typescript": "7.0.2"
+  }
+}

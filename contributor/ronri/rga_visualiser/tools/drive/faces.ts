@@ -1,9 +1,14 @@
-// Check that every character page writes has glyph in face page ships, at every weight its
-//   faces are declared at; not Nim because what is under check is cascade of page's own
-//   stylesheet and bytes of faces it embeds, which only build and harness hold.
-//   Characters come from two places. Bridge's `nimCodepointsShown` gives every text catalogue,
-//   help, notation and units write, as desktop's `--drive-faces` reads them. Literal text of
-//   page itself -- its markup and strings of its scripts -- gives what no catalogue holds.
+// Check that every character page writes has glyph in face page ships, in stack and at weight
+//   that draw it; not Nim because what is under check is cascade of page's own stylesheet and
+//   bytes of faces it embeds, which only build and harness hold.
+//   Each element is held to its own stack and weight, as browser resolves them: its text, value
+//   and placeholder of field, and what its `::before` and `::after` generate. Stack read from
+//   text of shell would pass element that takes stack of its own.
+//   What page writes later stands nowhere yet. Bridge's `nimCodepointsShown` gives every text
+//   catalogue, help, notation and units write, as desktop's `--drive-faces` reads them, and
+//   strings of page's own scripts give rest. Element that will show such character may not
+//   stand yet either, so these, with every character page shows now, are held to every stack
+//   some element of page resolves to, at every weight page resolves or its faces declare.
 //   Faces are read as browser reads them: shell's `@font-face` rules give family, weight and
 //   unicode-range, and each file's own `cmap` gives what it holds. Within family, faces at
 //   weight CSS matching picks are tried in turn; then next family of stack.
@@ -12,15 +17,15 @@
 
 import type { Page } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { brotliDecompressSync } from 'node:zlib';
 import { report } from './report';
 
 /** Project root, two levels above compiled harness in `build/drive`. */
 const ROOT = join(__dirname, '..', '..');
 
-/** Variables of shell's stylesheet that name stacks, one for each role page draws. */
-const STACKS = ['--sans', '--mono', '--serif'];
+/** Types of `<input>` that show text page or reader writes; rest show none, or browser's own. */
+const TYPES_INPUT_TEXT = ['email', 'number', 'password', 'search', 'tel', 'text', 'url'];
 
 /** Tags of WOFF2's known tables, in order format numbers them; `cmap` is first. */
 const TAGS_WOFF2_KNOWN = ['cmap', 'head', 'hhea', 'hmtx', 'maxp', 'name', 'OS/2', 'post',
@@ -33,6 +38,18 @@ interface Face {
   ranges: [number, number][];
   file: string;
   held: Set<number>;
+}
+
+/** Stack and weight browser resolved for one element, named as finding names it. */
+interface Resolved {
+  element: string;
+  stack: string;
+  weight: number;
+}
+
+/** Characters one element shows, under stack and weight it resolved to. */
+interface Shown extends Resolved {
+  codepoints: number[];
 }
 
 /** Read every codepoint one `cmap` table maps to glyph other than `.notdef`. */
@@ -163,11 +180,19 @@ function weightMatched(wanted: number, declared: number[]): number {
   return above[0] ?? below[0] ?? wanted;
 }
 
+/** Split resolved `font-family` into its families, unquoted, in order stack tries them. */
+function familiesOf(stack: string): string[] {
+  return [...stack.matchAll(/"([^"]*)"|'([^']*)'|([^,"']+)/g)]
+    .map((match) => (match[1] ?? match[2] ?? match[3] ?? '').trim())
+    .filter((family) => family.length > 0);
+}
+
 /** Name face of stack that draws `codepoint` at `weight`, or none where viewer's own would. */
 function faceDrawing(faces: Face[], stack: string[], weight: number, codepoint: number):
     Face | undefined {
   for (const family of stack) {
-    const own = faces.filter((face) => face.family === family);
+    // Family names match without case, as CSS matches them.
+    const own = faces.filter((face) => face.family.toLowerCase() === family.toLowerCase());
     if (own.length === 0) continue;
     const declared = own.flatMap((face) => [face.weights[0], face.weights[1]]);
     const matched = weightMatched(weight, declared);
@@ -200,44 +225,142 @@ function codepointsOfScripts(): number[] {
   return codepoints;
 }
 
-/** Assert every character page writes is drawn by face page ships, in every stack. */
+/** Say codepoint as Unicode writes it. */
+function nameOfCodepoint(codepoint: number): string {
+  return `U+${codepoint.toString(16).toUpperCase().padStart(4, '0')}`;
+}
+
+/** Assert every character page writes is drawn by face page ships, in stack that draws it. */
 export async function driveFacesCovered(page: Page): Promise<void> {
   const shell = readFileSync(join(ROOT, 'pages', 'shell.html'), 'utf8');
   const faces = facesOf(shell);
-  // Markup as browser decoded it, entities and filled catalogue words alike, past scripts.
-  const from_page = await page.evaluate(() => {
-    const found: number[] = [];
+  const name_page = basename(new URL(page.url()).pathname);
+  const gathered = await page.evaluate((types_text) => {
+    // Tag, then id where it has one, else classes under nearest ancestor that has id.
+    const nameOf = (element: Element): string => {
+      const tag = element.tagName.toLowerCase();
+      if (element.id !== '') return `${tag}#${element.id}`;
+      const own = tag + [...element.classList].map((name) => `.${name}`).join('');
+      const holder = element.parentElement?.closest('[id]') ?? null;
+      return holder === null ? own : `#${holder.id} ${own}`;
+    };
+    const shown = new Map<string, { resolved: Resolved; codepoints: Set<number> }>();
+    const holders = new Set<Element>();
+    const add = (element: Element, name: string, style: CSSStyleDeclaration, text: string):
+        void => {
+      if (text.length === 0) return;
+      holders.add(element);
+      const resolved = { element: name, stack: style.fontFamily, weight: Number(style.fontWeight) };
+      const key = `${name}|${resolved.stack}|${resolved.weight}`;
+      const entry = shown.get(key) ?? { resolved, codepoints: new Set<number>() };
+      for (const character of text) entry.codepoints.add(character.codePointAt(0) ?? 0);
+      shown.set(key, entry);
+    };
+    // Markup as browser decoded it, entities and filled catalogue words alike, past scripts.
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
-      const parent = node.parentElement?.tagName ?? '';
-      if (parent === 'SCRIPT' || parent === 'STYLE') continue;
-      for (const character of node.textContent ?? '') found.push(character.codePointAt(0) ?? 0);
+      const parent = node.parentElement;
+      if (parent === null || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
+      add(parent, nameOf(parent), window.getComputedStyle(parent), node.textContent ?? '');
     }
-    for (const field of document.querySelectorAll('[placeholder]')) {
-      for (const character of field.getAttribute('placeholder') ?? '') {
-        found.push(character.codePointAt(0) ?? 0);
+    const resolved = new Map<string, Resolved>();
+    for (const element of [document.body, ...document.body.querySelectorAll('*')]) {
+      if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE') continue;
+      // Checkbox draws no text, and file field's button draws browser's own words in its own face.
+      if (element instanceof HTMLInputElement && !types_text.includes(element.type)) continue;
+      const style = window.getComputedStyle(element);
+      const key = `${style.fontFamily}|${style.fontWeight}`;
+      if (!resolved.has(key)) {
+        resolved.set(key, {
+          element: nameOf(element), stack: style.fontFamily, weight: Number(style.fontWeight),
+        });
+      }
+      // Field's value is text it shows, and no text node holds it.
+      if (element instanceof HTMLInputElement) add(element, nameOf(element), style, element.value);
+      const placeholder = element.getAttribute('placeholder');
+      if (placeholder !== null) {
+        add(
+          element,
+          `${nameOf(element)}::placeholder`,
+          window.getComputedStyle(element, '::placeholder'),
+          placeholder,
+        );
+      }
+      for (const pseudo of ['::before', '::after']) {
+        const style_pseudo = window.getComputedStyle(element, pseudo);
+        for (const literal of style_pseudo.content.matchAll(/"((?:[^"\\]|\\.)*)"/g)) {
+          const text = (literal[1] ?? '').replace(/\\(.)/g, '$1');
+          add(element, `${nameOf(element)}${pseudo}`, style_pseudo, text);
+        }
       }
     }
-    return [...nimCodepointsShown(), ...found];
-  });
-  const codepoints = [...new Set([...from_page, ...codepointsOfScripts()])]
-    .filter((codepoint) => codepoint >= 0x20).sort((a, b) => a - b);
-  const weights = [...new Set(faces.flatMap((face) => face.weights))].sort((a, b) => a - b);
-  for (const variable of STACKS) {
-    const declared = new RegExp(`${variable}:\\s*([^;]+);`).exec(shell)?.[1] ?? '';
-    const stack = declared.split(',').map((family) => family.trim().replace(/^"|"$/g, ''));
-    const missing: string[] = [];
-    for (const weight of weights) {
-      for (const codepoint of codepoints) {
-        if (faceDrawing(faces, stack, weight, codepoint) !== undefined) continue;
-        missing.push(`U+${codepoint.toString(16).toUpperCase().padStart(4, '0')} at ${weight}`);
-      }
-    }
-    report(
-      `every character the page writes in its ${variable} stack has a face the page ships`,
-      missing.length === 0,
-      `${codepoints.length} codepoints at weights ${weights.join(', ')}, from ` +
-        `${faces.length} faces; missing ${missing.length === 0 ? 'none' : missing.join(', ')}`,
+    return {
+      shown: [...shown.values()].map((entry) => ({
+        ...entry.resolved, codepoints: [...entry.codepoints],
+      })),
+      count_holders: holders.size,
+      resolved: [...resolved.values()],
+      catalogue: nimCodepointsShown(),
+    };
+  }, TYPES_INPUT_TEXT);
+
+  // Each element in its own stack, at its own weight.
+  const shown: Shown[] = gathered.shown.map((one) => ({
+    ...one, codepoints: one.codepoints.filter((codepoint) => codepoint >= 0x20),
+  }));
+  const missing_shown: string[] = [];
+  for (const one of shown) {
+    const stack = familiesOf(one.stack);
+    const missing = one.codepoints.filter(
+      (codepoint) => faceDrawing(faces, stack, one.weight, codepoint) === undefined,
+    ).sort((a, b) => a - b);
+    if (missing.length === 0) continue;
+    missing_shown.push(
+      `${name_page} ${one.element} at ${one.weight}: ${missing.map(nameOfCodepoint).join(' ')}`,
     );
   }
+  const stacks_shown = new Set(shown.map((one) => one.stack));
+  const count_shown = new Set(shown.flatMap((one) => one.codepoints)).size;
+  report(
+    'every character an element of the page shows has a face the page ships, in the stack ' +
+      'and at the weight that element resolves to',
+    missing_shown.length === 0,
+    `${gathered.count_holders} elements, ${count_shown} codepoints, in ${stacks_shown.size} ` +
+      `stacks, from ${faces.length} faces; missing ` +
+      `${missing_shown.length === 0 ? 'none' : missing_shown.join('; ')}`,
+  );
+
+  // What page can write, now or later, in every stack some element resolves to, at every
+  //   weight in play.
+  const writable = [...new Set([
+    ...shown.flatMap((one) => one.codepoints), ...gathered.catalogue, ...codepointsOfScripts(),
+  ])].filter((codepoint) => codepoint >= 0x20).sort((a, b) => a - b);
+  const stacks = new Map<string, string>();
+  for (const one of gathered.resolved) {
+    if (!stacks.has(one.stack)) stacks.set(one.stack, one.element);
+  }
+  const weights = [...new Set([
+    ...gathered.resolved.map((one) => one.weight), ...faces.flatMap((face) => face.weights),
+  ])].sort((a, b) => a - b);
+  const missing_writable: string[] = [];
+  for (const [stack, element] of stacks) {
+    const families = familiesOf(stack);
+    for (const weight of weights) {
+      const missing = writable.filter(
+        (codepoint) => faceDrawing(faces, families, weight, codepoint) === undefined,
+      );
+      if (missing.length === 0) continue;
+      missing_writable.push(
+        `${name_page} ${element} at ${weight}: ${missing.map(nameOfCodepoint).join(' ')}`,
+      );
+    }
+  }
+  report(
+    'and every character the page can write has a face the page ships, in every stack an ' +
+      'element of the page resolves to',
+    missing_writable.length === 0,
+    `${writable.length} codepoints of page, catalogue and scripts, in ${stacks.size} stacks at ` +
+      `weights ${weights.join(', ')}, from ${faces.length} faces; missing ` +
+      `${missing_writable.length === 0 ? 'none' : missing_writable.join('; ')}`,
+  );
 }

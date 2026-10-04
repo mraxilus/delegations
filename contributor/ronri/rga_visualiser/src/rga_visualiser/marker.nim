@@ -1435,6 +1435,32 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
 
 
 
+#[ Shape Tally ]#
+
+var
+  IS_COUNTING_SHAPED = false
+    ## Say whether anyone reads how many markers `markerFor` shapes.
+    ##   Mutable global because it is instrument, as `boundary.IS_COUNTING_POINTS_READ` is:
+    ##   gated on its reader, never on build flag (Art. VII.4). Closed, each shaping pays one
+    ##   load and one branch.
+    ##   Driven check opens it through bridge's `nimSetCountingShaped`; desktop never does.
+  COUNT_SHAPED = 0
+    ## Count markers shaped since `setCountingShaped` last opened gate.
+
+
+proc setCountingShaped*(is_counting: bool) =
+  ## Open or close tally of markers `markerFor` shapes; opening zeroes count.
+  ##   Pins cost where clock cannot: count reads same on every machine, and load never
+  ##   moves it.
+  if is_counting: COUNT_SHAPED = 0
+  IS_COUNTING_SHAPED = is_counting
+
+
+proc countShaped*(): int = COUNT_SHAPED
+  ## Report how many markers `markerFor` shaped since tally last opened.
+
+
+
 #[ Marker Dispatch ]#
 
 proc markerFor*(
@@ -1463,6 +1489,8 @@ proc markerFor*(
   ##     None where object has no orientation: point, and horizon plane (see
   ##     `markerFrame`).
   ##   None only where object has no drawable geometry. Every drawn shape has marker.
+  ##   Tallied while driven check counts; see `setCountingShaped`.
+  if IS_COUNTING_SHAPED: inc COUNT_SHAPED
   let shape = kindOf(geometry)
   if shape.isNone: return
   let

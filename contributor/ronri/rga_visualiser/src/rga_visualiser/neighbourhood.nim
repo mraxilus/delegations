@@ -1,6 +1,7 @@
 ## Hold real solar neighbourhood: every star within 31.53 parsecs known to carry planet.
 ##
-## Data only, and generated.
+## Data only, written once by tool that stays in tree this project was ported from.
+##   Kept here as written; fence keeps `koch fix` out of data (X.1).
 ##   Nothing here is chosen; it is snapshot of NASA Exoplanet Archive, taken once and
 ##   shipped, as `ramp.nim` ships snapshot of published colour map.
 ##   `PROVENANCE.md` carries source, date and acknowledgement archive asks for.
@@ -28,6 +29,7 @@ type
     axis_semi_major*: float ## Its semi-major axis in astronomical units; `0.0` where none is known.
 
 
+#!fix off
 const NEIGHBOURS*: array[331, Neighbour] = [
   Neighbour(name: "Proxima Cen", parsecs: 1.3012, ascension: 217.39347,
     declination: -62.67618, planets: 2, first: 0),
@@ -692,8 +694,10 @@ const NEIGHBOURS*: array[331, Neighbour] = [
   Neighbour(name: "HD 64114", parsecs: 31.5262, ascension: 117.98256,
     declination: -11.03372, planets: 1, first: 543),
 ] ## Every system, nearest first.
+#!fix on
 
 
+#!fix off
 const PLANETS*: array[544, NeighbourPlanet] = [
   NeighbourPlanet(name: "Proxima Cen b", axis_semi_major: 0.048480),
   NeighbourPlanet(name: "Proxima Cen d", axis_semi_major: 0.028810),
@@ -1240,3 +1244,4 @@ const PLANETS*: array[544, NeighbourPlanet] = [
   NeighbourPlanet(name: "HR 5183 b", axis_semi_major: 18.000000),
   NeighbourPlanet(name: "HD 64114 b", axis_semi_major: 0.246000),
 ] ## Every planet, grouped by system that owns it.
+#!fix on

@@ -344,6 +344,45 @@ export async function drivePlanePick(page: Page): Promise<void> {
   );
 }
 
+/** Least angle, in degrees, sight stands off plane picked alone; `framing.ANGLE_PLANE_LEAST`. */
+const DEGREES_PLANE_LEAST = 10;
+
+/** Drive pick of ground from level view and from steep one, and assert only first turns.
+ *
+ *  Ruling of #454: plane seen along its own face draws as sliver, so its pick lifts view to
+ *  ten degrees above it, by least turn. Pick slides pivot onto plane and turns nothing
+ *  else, so steep view keeps its elevation.
+ */
+export async function drivePlaneLifted(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  const ground = await page.evaluate(() => nimSceneHandles().find(
+    (one) => nimObjectKindWord(one) === 'plane' && nimObjectLabel(one) === 'ground',
+  ) ?? -1);
+  const pickFrom = async (eye: number[]): Promise<number> => {
+    await page.evaluate(() => clearSelection());
+    await page.evaluate(
+      (at) => nimPlaceCamera(at[0] ?? 0, at[1] ?? 0, at[2] ?? 0, 0, 0, 0), eye,
+    );
+    await settleCamera(page);
+    await page.evaluate((one) => { selectOnly(one, null); hideSelectionMenu(); }, ground);
+    await settleCamera(page);
+    return page.evaluate(() => (nimCameraElevation() * 180) / Math.PI);
+  };
+  const degreesOf = (eye: number[]): number =>
+    (Math.atan2(eye[2] ?? 0, Math.hypot(eye[0] ?? 0, eye[1] ?? 0)) * 180) / Math.PI;
+  const eye_level = [30, 22.5, 0.9];
+  const eye_steep = [24, 18, 16];
+  const level = await pickFrom(eye_level);
+  const steep = await pickFrom(eye_steep);
+  await page.evaluate(() => clearSelection());
+  report(
+    'a plane picked from a level view lifts the view to ten degrees above it',
+    Math.abs(level - DEGREES_PLANE_LEAST) < 0.01 && Math.abs(steep - degreesOf(eye_steep)) < 0.01,
+    `elevation ${level.toFixed(3)} degrees after a pick from ${degreesOf(eye_level).toFixed(3)}, ` +
+      `and ${steep.toFixed(3)} after a pick from ${degreesOf(eye_steep).toFixed(3)}`,
+  );
+}
+
 /** Drive pan while selection stands, which used to be taken straight back.
  *
  *  Standing framing offer re-armed every frame and dragged camera back to where it had

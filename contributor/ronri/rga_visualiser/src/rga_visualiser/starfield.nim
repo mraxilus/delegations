@@ -1,7 +1,8 @@
 ## Hold every star in real solar neighbourhood, and say which carry known planets.
 ##
 ## Reaches same 31.53 parsecs `neighbourhood.nim` does.
-## Data only, and generated.
+## Data only, written once by tool that stays in tree this project was ported from.
+##   Kept here as written; fence keeps `koch fix` out of data (X.1).
 ##   Nothing here is chosen; it is snapshot of SIMBAD, taken once and shipped, as
 ##   `neighbourhood.nim` ships one of NASA Exoplanet Archive and `ramp.nim` one of
 ##   published colour map.
@@ -49,6 +50,7 @@ type
     first*: int ## Where those entries begin, meaningless where `planets` is zero.
 
 
+#!fix off
 const STARS*: array[11252, Star] = [
   Star(name: "NAME Proxima Centauri", parsecs: 1.3020, ascension: 217.42894,
     declination: -62.67949, planets: 2, first: 0),
@@ -22555,3 +22557,4 @@ const STARS*: array[11252, Star] = [
   Star(name: "LP  830-47", parsecs: 31.5252, ascension: 42.59598,
     declination: -21.07923, planets: 0, first: 0),
 ]
+#!fix on

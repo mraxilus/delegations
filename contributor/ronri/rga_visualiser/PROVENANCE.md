@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0d8fe4d3362ba815 |
+| Rules   | 72e3cfc6a377411a |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -186,6 +186,7 @@ and this file does not:
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `blur` | every backdrop blur, what the drawer softens, and what its blur costs |
+| `veil` | the veil of a plane over every spot its pick finds it at |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
@@ -252,8 +253,22 @@ as one of zero, so the fixture drives both.
 
 Every sibling of the canvas is hidden by `opacity` for the capture. The reading is taken again until
 it carries a picture, up to ten times. To hide chrome forces a recomposite that a software
-rasteriser does not finish inside one frame. It costs about 0.49 s for each reading, about 19 times
-in a run.
+rasteriser does not finish inside one frame. It costs about 0.49 s for each reading, and the veil
+check alone takes eight.
+
+**The veil check holds the veil of a plane to the pick of that plane.** `driveVeilCovers` hides
+every object but the ground, and reads spots 15 px apart from four views: low, rolled, steep, and
+from underneath. In each view the eye stands inside the radius of the disc, so only the vanishing
+line can stop the box of the veil. Where the pick of the page finds the plane, the veil must change
+the spot by 8 or more over red, green and blue. A spot counts only where the canvas without the
+plane shows bare backdrop. A world axis in front of the veil hides it with no fault of the veil.
+
+Rejected: spots of one reading compared with each other, as `driveDiscUnderfoot` does, which pass on
+a canvas with no veil. Cost: eight readings, about 6 s of the drive. Verified by a break on purpose,
+2026-10-04, on the page without antialias. With the veil draws skipped, the low view read 4 of
+1878 spots veiled. With the floor of the box halfway between the vanishing line and the centre of
+the disc, it read 1677 of 1878. The steep view passed that break, because the line stands far off
+it.
 
 **Unexplained**: why the runner read blank through `readPixels` and white through the compositor.
 Neither Chromium here reproduces either.
@@ -351,6 +366,30 @@ Three things that the clock does not reach are set on the simulated page:
   span that covers its waits, and yields to the page between timers, so each await resolves in
   order.
 
+**The simulated page draws without antialias.** `driveSimulated` sets `should_antialias` to false by
+an init script, before the page loads. `gl.ts` reads that switch before it asks for its context, and
+asks to antialias wherever the switch is absent. So the page of the reader, the real-clock page and
+the host page antialias, and the speed checks time what the reader runs. No verdict on the simulated
+page reads the sample of an edge. `driveAntialias` reads what each context granted: false on the
+simulated page, and true on the real-clock page.
+
+Rejected: antialias off on every driven page, which would time a page that no reader runs. The bench
+of Records and shaders measured the cost at the opening scene on 2026-10-04. Without antialias, GPU
+work for each frame step fell from 18.1 to 10.0 ms, and from 18.0 to 12.1 ms.
+
+**The simulated page is bound by GPU work under SwiftShader, and a frame step costs whole display
+frames.** So a saving shows in the drive only where it takes a step under the next display frame.
+Measured on one delegate on 2026-10-04, under the lock of the gate, in turn, two runs each:
+
+| Build | Browser drive | Simulated page | Real-clock page |
+|-------|---------------|----------------|-----------------|
+| Fan over the box of the sphere, antialias | 323.5 s, 311.7 s | 294.0 s, 282.2 s | 27.0 s, 26.9 s |
+| Quad stopped at the vanishing line | 230.6 s, 232.4 s | 204.2 s, 207.1 s | 23.9 s, 22.5 s |
+
+The first row is `main` at `5b689518`, and the second is this design, with antialias off on the
+simulated page alone. Every check passed in each run. The veil check and the two context checks add
+about 6 s to the second row. The browser drive is `build/drive/main.js` alone, timed from outside.
+
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
 `driveMeasured` holds them, on a page of its own. Its samples are counts of frames rather than spans
@@ -388,14 +427,20 @@ up to its pins, on 2026-09-30. Runner readings are from one CI run of this chang
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the repair. On the new
-figure that is 1.8 ms at least, over the bound. The moving grid fault reads over its bound by 0.1 ms
-only. A check with no fault reading pins a budget rather than a repair.
+figure that is 1.8 ms at least, over the bound. The readings of the marker pin come from a pulse
+call that left out the swell, and so shaped the outline a second time. The pin now shapes it once
+for each pair, and that figure is unmeasured over the runs that set the bound. The moving grid fault
+reads over its bound by 0.1 ms only. A check with no fault reading pins a budget rather than a
+repair.
 
 **A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
 every machine, so load never moves it. The marker suite counts the points that each marker reads
 out of the algebra (Selection and markers). `driveGround` counts the lines that the records of the
-lattice lie on (Geometry and drawing). Each bound stays at 1.5 times, so a slowdown that no count
-names still fails. Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
+lattice lie on (Geometry and drawing). `driveMarkerShapedOnce` counts the outlines that the overlay
+shapes for each marker it draws (Marker pulse).
+
+Each bound stays at 1.5 times beside its count, so a slowdown that no count names still fails.
+Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
 
 The slowest delegate reads 1.7 to 4.3 times the runner, by a factor that changes with the check. The
 hover pick reads 17 times, because its runner reading is one 100 µs tick of the clock of the page. A
@@ -471,10 +516,11 @@ TypeScript owns WebGL, DOM and pointer events alone. Each script argues for itse
 the phrase `not Nim because`, which `justification.nim` demands of a gated kind.
 
 **The declarations of the bridge are derived, and never kept beside it.** `tools/build.nim declare`
-reads the `{.exportc.}` signatures of the bridge itself, and writes `build/bridge.d.ts`. A
-hand-written copy of those signatures would be a second home for each one. `types` is `declare` and
-both type-checker configurations, and it stops there. `web` and `drive` both call it. Verified by a
-break on purpose: to rename `nimSceneHandles` alone fails `types`.
+reads the `{.exportc.}` signatures of the bridge itself, and writes `build/bridge.d.ts` with every
+parameter required (Marker pulse). A hand-written copy of those signatures would be a second home
+for each one. `types` is `declare` and both type-checker configurations, and it stops there. `web`
+and `drive` both call it. Verified by a break on purpose: to rename `nimSceneHandles` alone fails
+`types`.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`**,
 as CONTRIBUTOR.md requires. Indexing therefore reports absence. The flat buffers of the bridge are
@@ -661,17 +707,47 @@ alone, they match no semibold text, so a selected label or a chip at 600 takes i
 the viewer's system. Over 400 to 600, the browser draws them as they are. The cost is regular
 operators beside semibold letters, which the desktop label also draws.
 
-**Every character that the page writes is asked of the faces that it ships**, by
-`driveFacesCovered`. It reads the codepoints from `nimCodepointsShown`, the gathering of `shown`
-that `--drive-faces` reads too. It adds the markup of the page and the strings of its scripts, which
-no catalogue holds. It reads each `@font-face` rule of the shell, and the `cmap` of its file. It
-resolves each stack at each declared weight as CSS matching does, and reports each codepoint that
-falls past the faces the page ships.
+**Each element is held to the faces of the stack that the browser resolves for it**, by
+`driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
+and `font-weight` of each element of the page. It holds the text of that element to that stack, at
+that weight. The value and the placeholder of a field count, and so does the text of `::before` and
+`::after`. A finding names the page, the element, the weight and each codepoint that no face of the
+stack maps.
 
-*Checked.* Verified by a run, 2026-10-03. With the whole faces, and the maths and symbols at 400
-alone, the check fails in all three stacks at 600. It names the operators, the bold operands and the
-chip symbols. With the weight ranges, all three stacks pass at 400 and 600. The other page checks
-pass with the whole faces.
+**Text that a script writes later is held to every stack in use.** That text is not on the page when
+the check runs, and the element that will show it can be absent too. `nimCodepointsShown` gives the
+catalogue, the help, the notation and the units, as `--drive-faces` reads them. The strings of the
+scripts give the rest, and the text on the page now joins them. The check holds each of these
+characters to each stack that an element of the page resolves to. It does this at each weight that
+an element resolves to, and at each weight that a face declares.
+
+So each stack in use must map every character that the page can write. That is why the mono and
+serif stacks name "Noto Sans UI" after their own face. The cost is that a stack for titles alone
+must map the operators too. A checkbox and a file field are not a stack in use, because they show no
+text that the page writes. Both resolve to Arial, and the button of a file field shows the words of
+the browser.
+
+The check reads each `@font-face` rule of the shell, and the `cmap` of its file. It matches the
+weight and the unicode-range of each face as CSS matching does, and tries the families of a stack in
+order. Rejected: the three stacks read from the text of the shell, which pass an element that takes
+a stack of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a
+layout box now. A hidden panel has none, and text that a script writes later has none either.
+
+Cost: an element that a script builds after the check runs counts only through its stack. Where no
+element on the page resolves to that stack at the check, the check does not see it.
+
+*Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153. The page
+stands as it opens, with the drawer and help open. Both checks pass, with `missing none`.
+
+Verified by a break on purpose, the same day and the same way. The rule
+`#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with
+`missing rga_visualiser.html #button-menu span at 400: U+2630`. The three stacks read from the text
+of the shell pass that break.
+
+With the maths and symbols declared at 400 alone, the check fails at 600. It names U+2715 in
+`button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use, it names the
+operators, the bold operands and the chip symbols. Verified by a run, 2026-10-03: the other page
+checks pass with the whole faces.
 
 **The serif ships at 600 alone, because 600 is the weight every title is set at.** A weight that
 nothing ships is a face that the browser of the reader invents (Article X.8). The check reads
@@ -1889,13 +1965,41 @@ and the four guard cuts equal `clipToEyeSide`, and the across equals the join
 `directionNormal(tail ∧ head ∧ eye)`, sign included.
 
 **A fill of a plane, its rim and the sky are one record each.** A `DiscRecord` of 13 floats spans
-the view box of its bounding sphere (`viewBoxOfDisc`), on the static corner buffer of the unit
-circle. Every fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any
-grazing angle and agrees with `picking.rayPlaneHit`.
+one quad over a box on the view (`viewBoxOfDisc`), on the static corners of `discCorners`. Every
+fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any grazing angle
+and agrees with `picking.rayPlaneHit`.
 
 It is not a fan of corners on the plane. A corner of such a fan behind the eye left the clipper a
 sliver. That sliver rasterised to nothing under a grazing camera, and the disc ended at a hard
 chord.
+
+**The box of a veil stops at the vanishing line of its plane.** The view turns about the sight axis
+until the normal of the plane, signed toward the side of the eye, points up. The vanishing line,
+where a sight ray runs along the plane, then runs across the turned view at any roll. Along each
+turned axis the box bounds the sphere of the disc, or takes the whole turned view where that sphere
+holds the eye. Its floor then rises to the vanishing line, and the quad turns back onto the view. No
+ray below the line meets the plane in front of the eye, so the clip removes no pixel of the disc.
+
+Rejected: a box square to the view, which cannot stop at a slanted line. Rejected: a fan of 96
+triangles over the box, which drew the ellipse through its corners. That ellipse ran past the box by
+up to 41% of its half extent, and every fragment there was cast and discarded. Cost: each of the six
+corners of the quad works out the box again, with a turn and a cross product.
+
+Measured on 2026-10-04 under SwiftShader, at 1200 by 900 px with antialias, by a bench that is not
+kept. It sums the `GPUTask` events of a Chromium trace over 100 simulated frame steps. Each change
+has two pairs, before then after, in ms of GPU work for each step:
+
+| View | Quad over the box | Floor at the vanishing line |
+|------|-------------------|-----------------------------|
+| Opening scene | 25.8 to 18.9, 21.5 to 18.1 | 18.9 to 19.8, 19.1 to 19.0 |
+| Level and low over the ground | 24.4 to 20.8, 21.8 to 21.2 | 21.1 to 16.7, 20.4 to 15.9 |
+| Steep over the ground | 36.5 to 26.7, 26.1 to 22.6 | 22.9 to 25.5, 23.0 to 24.0 |
+| Level and low under the ground | 24.8 to 21.0, 23.1 to 21.3 | 21.0 to 18.7, 23.5 to 17.7 |
+
+The same steps with the disc draws skipped read 5.5 to 9.2 ms, which is the spread of the bench. So
+the floor changes the opening scene and the steep view by less than that spread. At the opening
+scene the vanishing line stands near the top of the box, because the box bounds the sphere and not
+the disc. From the opening stance the sphere of the ground spans 50° of height, and its disc 21°.
 
 A `DomeRecord` of 8 floats widens over a static unit sphere, which has no orientation. A
 `RingRecord` of 14 floats is the thirteen of a disc plus a width, and one instance draws the whole
@@ -1935,7 +2039,8 @@ of a selected plane would draw depth-tested behind the fill that it highlights.
 The desktop asks for a framebuffer at `SAMPLES_MULTISAMPLE` 4, and **falls back to none where no
 visual offers it**. `llvmpipe` under `xvfb` refuses the window outright, rather than downgrades
 it. A visualiser that will not start is worse than one whose thinnest lines alias. The browser
-context asks for `antialias: true`.
+context asks for `antialias: true`, except on the simulated page of the driven checks (Clocks of the
+driven checks).
 
 **The flat buffers are the page's own typed arrays, filled in place.** A `seq[float32]` on the JS
 backend is an `Array` of boxed doubles, converted element by element into a staging
@@ -1951,7 +2056,12 @@ hand.
 - the widening reference against the algebra;
 - the near crossing of a line within a pixel of its recorded place, in a close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
-- the box of the disc against the projection of its rim;
+- the static corners of the disc as two triangles that tile its box;
+- the box of the disc against the projection of its rim, read in the turned fractions of the box;
+- the quad of the disc on the side of the vanishing line where rays meet the plane, over seeded
+  views at every attitude and roll;
+- every spot of the disc that the view shows inside that quad, over the same views;
+- under a grazing eye, the quad of the disc as the lower half of the view;
 - the ray of the disc landing inside the rim and missing outside it;
 - a hit under a grazing eye nearer than the near plane;
 - all ninety-six rim segments on the plane at its radius;
@@ -1963,6 +2073,10 @@ disc and dome. The record narrows its arms to float32 there. Verified by driven 
 records of the demo under 64, against a ring count over 120. Both lines cross two rings, 100 and 80
 px out, in opposite pairs, 0.01 and 0.001 units off, along two headings. Assumed: that the figure of
 0.1 ms for the flat buffer holds at current caps, because it was measured at 1,024 objects.
+
+Verified under Xvfb on 2026-10-04: the quad and its floor changed 3 of 15,552,000 storyboard pixels
+against `main`, by 12 or less in any channel. Verified by driven check: the veil of the ground over
+every spot its pick finds it at, from four views.
 
 ## Algebra boundary
 
@@ -2325,11 +2439,31 @@ ran 156 px/s along a rail against 348 round a circle. A gap longer than `SECONDS
 The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag band
 swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
+**The pulse and the label of a selected marker read the outline that the marker call shaped.** In
+each frame the page asks the bridge three times for each selected object: `nimSelectionMarker`,
+then `nimSelectionPulse`, then `nimSelectionLabelAt`. The marker call shapes the outline into
+`BOX_MARKER`, and `MARKER_SHAPED` keeps it beside every input that shaped it. Those inputs are the
+handle, the view size, the progress, the touch flag, the swell, the travel and the overlay
+settings. The pulse reads that entry where every input matches, and the label where the handle and
+the view size match. A miss shapes the outline again and drops the entry, so the label then shapes
+it a third time.
+
+**A call from the page passes every argument, because a Nim default never reaches it.** Nim fills
+in a default at the call site of a Nim caller alone. A JS call that leaves an argument out passes
+`undefined`, and `undefined` matches no stored value. So `tools/build.nim declare` makes each
+parameter of an export required in `build/bridge.d.ts`, a parameter with a Nim default included. A
+call that leaves an argument out then fails `types`, with `TS2554`.
+
 *Checked.* Verified by `suites.nim`: the head sitting its carried travel at 45 placements.
 
 Verified on the shipped browser: the advance of the comet at 62.4 to 63.3 px/s across four orbit
 rates. The residual at faster rates is **not explained** to the standard that the medians are. A
 tenth of frames step 236 to 388 px/s at laps and clip transitions.
+
+Verified by driven check: `driveMarkerShapedOnce` selects a point, a line and a plane in turn.
+Each reads 3 shapes for 3 markers drawn over three frames. With the swell left out of the pulse
+call, each read 9 for 3. Verified by a break on purpose, 2026-10-04: the pulse call without its
+swell fails `types`.
 
 ## Picking
 
@@ -2880,10 +3014,11 @@ leaves the ecliptic.
 of which Mercury's 7° is the largest. Earth in the spanned plane is what the horizon block turns on.
 The place of a body on its ring is the golden angle, and not a date. Neighbour systems lie flat.
 
-**Two catalogues ship, as data alone, and both are generated.** `neighbourhood.nim` is a snapshot
-of the NASA Exoplanet Archive, taken 2026-08-31 from its TAP service (`select hostname, pl_name,
-sy_dist, ra, dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`). It holds 331
-planet hosts out to 31.5 parsecs.
+**Two catalogues ship, as data alone, and this repository keeps both as written.** A tool wrote
+each one once, and that tool stays in the tree that this project came from. No tool here writes
+them again. `neighbourhood.nim` is a snapshot of the NASA Exoplanet Archive, taken 2026-08-31 from
+its TAP service (`select hostname, pl_name, sy_dist, ra, dec, pl_orbsmax from ps where
+sy_dist < 35 and default_flag = 1`). It holds 331 planet hosts out to 31.5 parsecs.
 
 The archive asks for this acknowledgement, word for word:
 
@@ -2892,6 +3027,18 @@ The archive asks for this acknowledgement, word for word:
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. It keeps 11,252 of 11,432.
+
+**A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
+`#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
+bracket. A fence that crosses a bracket makes the fix leave the whole file as written, so each
+fence holds a whole table. Without the fences, the fix wraps each row of `STARS` and `NEIGHBOURS`
+again, which adds lines and no meaning. The type headers stay outside the fences, so the fix
+repairs their layout as it repairs any other line.
+
+Verified by `nim r koch fix --dry-run --branch:main contributor/ronri/rga_visualiser`, 2026-10-04.
+Without the fences, it reports 11,259 findings in `starfield.nim` and 342 in `neighbourhood.nim`.
+With them, it reports 7 and 9, and each one is a trailing comment of a type header. Every other
+file of the project gives the same findings both times.
 
 Each planet host was matched to exactly one star **by sky position alone**, and the worst
 separation is 161 arcseconds. The two worst matches are Barnard's and Kapteyn's stars, which have
@@ -3022,7 +3169,7 @@ class is added, rather than from load, so the two stack.
 
 *Checked.* Assumed: that one duration suits every transition, because nobody has asked otherwise.
 
-## Camera aiming and framing
+## Camera aiming
 
 **The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds.
 Rejected: four turntable numbers, which carry no roll and stand a rolled view upright.
@@ -3067,9 +3214,11 @@ Pan, wheel, pinch and typed view fields call `halt`, which marks the ease done w
 of those sets the pivot itself, and a pivot still arriving would slide the camera off it. Undo and
 redo call `adoptNext`; see Undo/redo.
 
-**Framing** (`framing.nim`). On a new pick **the orbit pivot comes to the middle of what was
-picked**, by `objects.centroidFolded`. It runs over the same objects that the bound is over, with
-each yielded **once** by `watched`. A middle is a tally where a bound is a set.
+## Framing
+
+**On a new pick, the orbit pivot comes to the middle of what was picked** (`framing.nim`), by
+`objects.centroidFolded`. It runs over the same objects that the bound is over, with each yielded
+**once** by `watched`. A middle is a tally where a bound is a set.
 
 The camera then moves by the **least zoom and orbit** on top of that which puts every selected
 object in view. In view means the centred box that `camera.reachCentred` shapes. That is
@@ -3091,7 +3240,7 @@ Rejected: the rim held to the box, which throws the camera from 19 to 29.9 on th
 
 **The frame rule is a floor.** `stanceFor` pulls the eye back by the least step that carries it out
 to the fitting reach, and never in. A reader who stands further out keeps their own framing. A
-finite pick still changes neither azimuth nor elevation.
+finite pick changes neither azimuth nor elevation, except a plane picked alone from a level view.
 
 `camera.stepOutTo` solves `|v + r·u| = reach` for `r`, which is one quadratic. The positive root is
 always the answer where the offset falls short. The term under the root is `along² − outside`, and
@@ -3104,6 +3253,21 @@ goes to the centroid, and the separation gives up exactly what the rule asks for
 
 `SLACK_FRAMED` 1e-9 is the one tolerance. A `>=` against a reach that `stepOutTo` lands on exactly
 reports its own answer unframed, one ulp short of it.
+
+**A plane picked alone from a level view lifts the view off it**, by the ruling of #454. Seen along
+its own face, a plane draws as a sliver, and centring a sliver shows nothing of it.
+`stanceLifted` turns the stance about its pivot by the least turn that puts the sight
+`ANGLE_PLANE_LEAST`, 10°, off the plane. The eye keeps its side of the plane, and a sight in the
+plane takes the side that world up leans to. The pivot, the separation and the level direction of
+the sight stay, and the horizon stays level. That direction is the meet of the plane with the plane
+that holds the sight and the normal.
+
+This is the bound that a star gets: a star off screen turns the view, by the least turn. A sight
+already 10° or more off the plane turns nothing, and no other pick turns. The lift applies once, as
+the pick lands. A goal that the tween already holds is the reader's own framing since, and the lift
+keeps it. Rejected: a bound by the crossing of the frame, which brings the eye in to about 15 units
+and still draws a sliver. Rejected also: a turn to face every picked plane, which swings the view
+by up to 90°.
 
 **The floor holds while the reader flies.** Where the reader moves the camera and breaks the rule,
 `holdFramed` backs the eye out along its own sight. It uses the closed form that `stanceFor` pulls
@@ -3200,6 +3364,10 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 - a still camera that a resize leaves out of frame eases back, though it holds its goal;
 - a stance that history restores stays while framed, and eases back where it is not;
 - a horizon point is bound to the screen, a horizon line to crossing it, a horizon plane not at all.
+- a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye;
+- so does a plane seen from below, a sight in the plane, and an upright plane;
+- the pivot, the separation, the level direction and a level horizon stay through that lift;
+- a sight already 28° off the plane turns nothing, and a point picked turns nothing.
 
 Verified by driven check:
 
@@ -3212,7 +3380,9 @@ Verified by driven check:
 - a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
 - a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
   0.0000 from their middle;
-- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
+- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
+- a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
+  28.072° leaves it at 28.072° (`drivePlaneLifted`).
 
 ## Objects search
 
@@ -3563,11 +3733,11 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 
 ## Open questions
 
-**A plane the sight nearly lies in is framed by its whole disc, and gains nothing by it.** The bound
-over anything finite is one sphere, which a plane widens by its whole 8-unit disc. The rule then
-stands the eye 30.1 units off its centre at any scale. Within a few degrees of the plane the disc
-still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
-rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
-leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
+**The box of a veil bounds the sphere of its disc, and not the disc** (Records and shaders). Where
+the rim stands wholly in front of the eye, its picture along each turned axis has extremes in closed
+form. An experiment bounded the box by them there, and kept the sphere and the vanishing line
+elsewhere. At the opening scene it took GPU work for each step from 12.0 to 6.9 ms, and from 10.1 to
+6.9 ms. One drive with it read 188 s on the simulated page. The choices are to leave it, or to add
+that bound to the reference and both shaders, with a suite test of its own.
 
 [replications]: https://gitlab.com/mraxilus/replications

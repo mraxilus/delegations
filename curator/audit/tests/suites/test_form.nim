@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, form, kinds]
 
 
@@ -14,16 +15,6 @@ func messages(path, source: string; kind: Kind): seq[string] =
 func fixed(source: string, kind = Kind.Nim): Fix =
   ## Fix form of source under kind, as `koch fix` does.
   fixForm("a.nim", source, kind.rule)
-
-
-func gapMessage(spaces: int): string =
-  ## Render X.9 finding message for gap of given spaces.
-  "Trailing comment takes two spaces before its marker (X.9); got `" & $spaces & "`."
-
-
-func gapMessages(source: string): seq[string] =
-  ## Read X.9 finding messages of Nim source.
-  checkComments("a.nim", source).mapIt(it.message)
 
 
 
@@ -95,37 +86,9 @@ suite "Article X":
       check fixForm("a.nim", unread, Kind.Nim.rule).source == unread  # exact fixer agrees
 
 
-  test "X.9 trailing comment takes exactly two spaces before its marker":
-    check gapMessages("let a = 1  # Two.\n").len == 0  # two pass
-    check gapMessages("let a = 1 # One.\n") == @[gapMessage(1)]  # one fails
-    check gapMessages("let a = 1# None.\n") == @[gapMessage(0)]  # glued fails
-    check gapMessages("  a: int     ## Field.\n") == @[gapMessage(5)]  # aligned column fails
-    check gapMessages("let a = \"x\" # One.\n") == @[gapMessage(1)]  # after string
-    check checkComments("a.nim", "a = 1\nb = 2 # c\n")[0].line == 2  # line named
-    check COMMENT_GAP == 2  # X.9 count, stated once
-
-
-  test "X.9 reads code alone: string, whole comment and block hold no trailing comment":
-    check gapMessages("let a = \"x # y\"\n").len == 0  # `#` inside string
-    check gapMessages("let a = '#'\n").len == 0  # `#` as char
-    check gapMessages("# Whole line.\n  ## Doc line.\n").len == 0  # no code
-    check gapMessages("#[ a\nb # c\n]#\n").len == 0  # inside block comment
-    check gapMessages("let a = \"\"\"\nb # c\n\"\"\"\n").len == 0  # long string
-    check gapMessages("{.used.}  # Used in b.nim.\n").len == 0  # pragma
-
-
-  test "X.2 exact: three blank lines before first tier, two before second, one after either":
+  test "X.2 lenient check accepts each count exact check asks":
     let exact = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n\n\n#[[ Sibling ]]#\n\nz\n"
-    check checkBanners("a.nim", exact).len == 0
     check messages("a.nim", exact, Kind.Nim).len == 0  # lenient check accepts three before
-    check checkBanners("a.nim", "x = 1\n\n\n#[ Section ]#\n\ny = 2\n").mapIt(it.message) ==
-      @["First-tier banner takes three blank lines before it (X.2); got `2`."]
-    check checkBanners("a.nim", "x = 1\n\n\n\n#[[ Child ]]#\n\ny = 2\n")[0].message ==
-      "Second-tier banner takes two blank lines before it (X.2); got `3`."  # exactly two
-    check checkBanners("a.nim", "x = 1\n\n\n\n#[ Section ]#\ny = 2\n")[0].message ==
-      "Banner takes one blank line after it (X.2); got `0`."
-    check checkBanners("a.nim", "#[ Opening ]#\n\nx\n").len == 0  # nothing above: no count
-    check checkBanners("a.nim", "x\n\n\n\n#[ A ]#\n\n\n\n#[ B ]#\n\ny\n").len == 0  # no count
 
 
   test "X.2 exact waits outside static pass until projects clear it through koch fix":
@@ -154,7 +117,7 @@ suite "Fixes":
     let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
     check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
     check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
-    check fix.fixed[0].message == "trailing whitespace (VIII.5)"  # rule named
+    check fix.fixed[0].rule == Rule.TrailingWhitespace  # rule named
     check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
     check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
 
@@ -201,7 +164,7 @@ suite "Fixes":
       plain = "let s = \"a\tb\"\nlet c = &\"x\t{y}\"\n"
       fix = fixed(plain)
     check fix.source == "let s = \"a\\tb\"\nlet c = &\"x\\t{y}\"\n"  # escape reads same byte
-    check fix.fixed.mapIt(it.message) == @["tab in string (X.1)", "tab in string (X.1)"]
+    check fix.fixed.mapIt(it.rule) == @[Rule.TabInString, Rule.TabInString]
     check messages("a.nim", fix.source, Kind.Nim).len == 0  # check reports none after fix
     check fixed(fix.source).fixed.len == 0  # second fix writes nothing
     for kept in [
@@ -217,13 +180,5 @@ suite "Fixes":
     check configuration == "let s = \"a\tb\"\n"  # Nim alone
 
 
-  test "fix never writes line width check reports":
-    let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
-    check fixed(near).source == near  # left to hand
-    check gapMessages(near) == @[gapMessage(1)]  # finding stays
-
-
-  test "clean source passes through unchanged":
-    let clean = "## Do.\n\nlet a = \"x # y\"  # Two.\n# Whole line.\n"
-    check fixed(clean).source == clean and fixed(clean).fixed.len == 0  # nothing rewritten
+  test "clean source of every kind passes through unchanged":
     check fixed("# Text.\n", Kind.Markdown).fixed.len == 0  # every kind read

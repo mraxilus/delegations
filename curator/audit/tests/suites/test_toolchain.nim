@@ -77,6 +77,17 @@ suite "Toolchain":
     check checkDriver(OTHER_PATH, "name: role\n", PIN).len == 0  # left alone
 
 
+  test "knoller pins driver version, since koch compiles it":
+    const path = KNOLLER_DIRECTORY & "/knoller.nimble"
+    check checkKnoller(path, some(PIN), some(PIN)).len == 0  # agreement
+    let drifted = checkKnoller(path, some("2.2.6"), some(PIN))
+    check drifted.len == 1  # drift
+    check drifted[0].path == path  # points at knoller's nimble file
+    check drifted[0].message.endsWith("got `2.2.6`.")  # Article IV.4 echoes value
+    check checkKnoller(path, none(string), some(PIN)).len == 0  # absent is layout's finding
+    check checkKnoller(path, some(PIN), none(string)).len == 0  # driver unpinned, same
+
+
   test "pin is served by commit for commit, by version otherwise":
     let running = Compiler(version: PIN, commit: COMMIT)
     check PIN.isServedBy(running)  # version pin reads version

@@ -9,8 +9,8 @@
 ##     line, footer, Simplified Technical English counts, issue title and label, and pull
 ##     request headings; `stop` refuses end of turn that pushed or posted and closes with
 ##     neither sign-off block nor working line, and end of any turn whose message names `#N`
-##     outside link; `start` prints role, read order, carried list and drift; `push` and `msg`
-##     serve git hooks.
+##     outside link or cites charter reference with no description; `start` prints role, read
+##     order, carried list and drift; `push` and `msg` serve git hooks.
 ##   Pure functions take strings and return findings; procs read transcript JSON, since
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
@@ -670,6 +670,84 @@ func checkNumbersBare*(message: string): seq[Finding] =
             "short description and its number, as one link (GUIDE.md, Output contract).",
         )
       i = j
+
+
+func checkReferencesBare*(message: string): seq[Finding] =
+  ## Report each charter reference of message that stands with no description (GUIDE.md, Output
+  ##   contract): article `X.9`, after `Article ` or not, or `duty 3`, capital at sentence start.
+  ##   Reference passes inside parentheses where word holding letter stands before opening one,
+  ##     on same line, as rule's own examples cite it: `expression spacing (X.9)`. So
+  ##     `(X.2, X.9)` after text passes whole, and line or bullet opening with `(` fails.
+  ##   Code and links are skipped as `checkNumbersBare` skips them. Reference opens after no word
+  ##     character, `.`, `/` or `-`, and closes before no word character and no `.` with digit,
+  ##     so `2.2.12`, `D2`, `§5`, `MIX.3` and `IX.2.1` cite none. Each reference reports once.
+
+  func referenceEnd(text: string, at: int): int =
+    ## Read index past reference opening at `at` of text; `at` itself where none opens there.
+    if at > 0 and text[at - 1] in IdentChars + {'.', '/', '-'}: return at
+    var i = at
+    if text.continuesWith("duty ", at) or text.continuesWith("Duty ", at): i += "duty ".len
+    else:
+      while i < text.len and text[i] in {'I', 'V', 'X'}: inc i
+      if i == at or i >= text.len or text[i] != '.': return at
+      inc i
+    let digits = i
+    while i < text.len and text[i] in Digits: inc i
+    let is_longer = i < text.len and
+      (text[i] in IdentChars or (text[i] == '.' and i + 1 < text.len and text[i + 1] in Digits))
+    if i == digits or is_longer: at else: i
+
+  func isDescribed(line, text: string; at, after: int): bool =
+    ## Decide whether span `at ..< after` of line stands inside parentheses, with word holding
+    ##   letter before opening one; `text` is line with code and links blanked, same length.
+    var
+      depth = 0
+      open = -1
+      close = -1
+    for i in countdown(at - 1, 0):
+      if text[i] == ')': inc depth
+      elif text[i] == '(' and depth > 0: dec depth
+      elif text[i] == '(':
+        open = i
+        break
+    depth = 0
+    for i in after ..< text.len:
+      if text[i] == '(': inc depth
+      elif text[i] == ')' and depth > 0: dec depth
+      elif text[i] == ')':
+        close = i
+        break
+    if open < 0 or close < 0: return false
+    let words = line[0 ..< open].splitWhitespace
+    words.len > 0 and words[^1].contains(Letters)
+
+  let lines = message.fencedOut.splitLines
+  var
+    labels: seq[string]
+    seen: seq[string]
+  for line in lines:
+    let label = line.labelDefined
+    if label.len > 0: labels.add label
+  for line in lines:
+    if line.labelDefined.len > 0: continue
+    let text = line.codeSpansOut.linksOut(labels)
+    var i = 0
+    while i < text.len:
+      let after = text.referenceEnd(i)
+      if after == i:
+        inc i
+        continue
+      let reference = text[i ..< after]
+      if not line.isDescribed(text, i, after) and reference.toLowerAscii notin seen:
+        seen.add reference.toLowerAscii
+        result.add finding(
+          "",
+          0,
+          "Message cites `" & reference & "` with no description; cite each article and duty " &
+            "by short description and its reference, as `expression spacing (X.9)` (GUIDE.md, " &
+            "Output contract).",
+        )
+      i = after
 
 
 func checkEndTurn*(message, branch: string): seq[Finding] =

@@ -24,7 +24,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unicode]
-import ./[findings, form, names]
+import ./[form, reports, views]
 
 
 type
@@ -154,7 +154,7 @@ func alignments(source: string): seq[Alignment] =
       result.add table
 
 
-func checkAlignment*(path, source: string): seq[Finding] =
+func checkAlignment*(path, source: string): seq[Report] =
   ## Report table row in comment whose cells align otherwise than display width gives (I.4).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let lines = source.split('\n')
@@ -166,9 +166,10 @@ func checkAlignment*(path, source: string): seq[Finding] =
         if cell.displayWidth != table.widths[c]:
           (got, wide, column) = (cell.strip, cell.displayWidth, table.widths[c])
           break
-      result.add finding(
+      result.add initReport(
         path,
         row.line + 1,
+        Rule.TableAlignment,
         "Table column aligns by display width, as eye reads it (I.4); cell " & $wide &
           " wide stands in column of " & $column & "; got `" & got & "`.",
       )
@@ -182,5 +183,5 @@ func fixAlignment*(path, source: string): Fix =
     for k, row in table.rows:
       if table.shaped[k] == lines[row.line]: continue
       lines[row.line] = table.shaped[k]
-      result.fixed.add finding(path, row.line + 1, "table alignment (I.4)")
+      result.fixed.add initReport(path, row.line + 1, Rule.TableAlignment)
   result.source = lines.join("\n")
