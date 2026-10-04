@@ -328,6 +328,15 @@ suite "Repair that widens its line":
     for source in [chained, dual, sliced]: check source.fixedOf.isSettled  # second run
 
 
+  test "block head whose last line would stand at body's indent reads apart from body":
+    let head = HEAD & "  if check(a_long_name, first_condition or second_condition or\n" &
+      "    second_condition and first_condition):\n    echo a_long_name\n"
+    check head.fixedOf == HEAD &
+      "  if check(a_long_name, first_condition or second_condition or\n" &
+      "      (second_condition and first_condition)):\n    echo a_long_name\n"  # STYLE.md §5
+    check head.fixedOf.isSettled
+
+
   test "value after `=` that is no chain keeps one level under its statement":
     check (HEAD & TWIST).fixedOf == HEAD & TWIST
     check checkFormatting("a.nim", HEAD & TWIST, Dialect.Module).len == 0

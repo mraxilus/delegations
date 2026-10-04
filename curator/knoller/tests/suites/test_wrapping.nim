@@ -325,6 +325,41 @@ suite "Wrapping":
     check bare.fixed.isSettled
 
 
+  test "block head whose last line would stand at body's indent takes four spaces past first":
+    let
+      head = "proc p() =\n  if check(a_long_name, first_condition or second_condition or\n" &
+        "    second_condition and first_condition):\n    echo a_long_name\n"
+      lifted = head.replace("\n    second_condition", "\n      second_condition")
+    check checkContinuations("a.nim", head).mapIt(it.line) == @[3]
+    check checkContinuations("a.nim", head)[0].message.endsWith("got `2`.")
+    check head.fixed == lifted  # head reads apart from body
+    check lifted.isSettled  # second run writes nothing
+    let nested = "proc p() =\n  for x in (a, (b,\n      c),\n    d):\n    discard\n"
+    check nested.fixed == "proc p() =\n  for x in (a, (b,\n        c),\n      d):\n    discard\n"
+      # one step for every line, so hand's shape stays
+    for kept in [
+      "proc p() =\n  for b in x:\n    if (products.len != 0 and b.basis notin products) or\n" &
+        "        (as_exclusions and b.basis in products):\n      cayley[bm][bn] = @[]\n",
+      "proc p() =\n  if someCall(\n    argument_one,\n    argument_two,\n  ):\n    body()\n",
+      EXAMPLE_PARAMETERS_LINE,  # signature layouts of STYLE.md §5
+      EXAMPLE_GROUPS,
+      "static:\n  doAssert IS_RIGID or DIMENSIONS >= 3,\n" &
+        "    &\"Conformal Geometric Algebras must have dimensionality of 3 or more \" &\n" &
+        "    &\"(2 Conformal + 1 Euclidean); got `{DIMENSIONS}`.\"\n",  # no body under it
+    ]:
+      check checkContinuations("a.nim", kept).len == 0
+      check kept.fixed == kept
+
+
+  test "block head lift held on no line widens it, and keeps width guard on held line":
+    let
+      wide = "proc p() =\n  if check(a, first or\n    " & "b".repeat(45) & " + " & "c".repeat(45) &
+        "):\n    discard\n"  # line 3 of 99 runes; four spaces past first, 101
+      lifted = wide.replace("\n    b", "\n      b")
+    check WRAPPING_STEPS[3].run("a.nim", wide, Held()).source == lifted  # no line held: widens
+    check WRAPPING_STEPS[3].run("a.nim", wide, Held(lines: @[3])).source == wide  # its line held
+
+
   test "call holding comment, long string spanning lines, or block stays":
     for kept in [
       "foo(\n  a,  # Why.\n  b\n)\n",
