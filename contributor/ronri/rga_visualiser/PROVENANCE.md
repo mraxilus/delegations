@@ -1974,6 +1974,11 @@ a step short of the pivot's orthogonal projection onto it. Depths along the sigh
 the plane through the eye, distances are `distanceBetween`, and sides are `innerOf`. The near clip,
 a pixel's world size and the culling of chords are the picture's.
 
+**Readings and places go the same way.** The roll, the azimuth and the elevation are inner products
+with the world axes, and every distance that the camera acts on is `distanceBetween`. The places
+and frames of the orrery are the algebra's as well (see Demo: the solar neighbourhood). Outside it
+stand only the reading of catalogue angles into a direction, and the picture.
+
 **The tessellation assembles before it emits.** Each loop resolves its places through the algebra
 into a `DrawScratch`, and emits after. For the lattices and the axes the seam is between two procs.
 `placeObject` answers what a drawable is and where, from the multivector alone, so the answer
@@ -2797,18 +2802,39 @@ and a node against the reference plane of the moon. A pole in J2000 right ascens
 declination names that plane. It is the ecliptic for Luna and Nereid, the equator of Uranus for
 its five, and a local Laplace plane for the rest.
 
-**The algebra builds every orbit plane, because construction is its own** (see Algebra boundary).
-`normalOfMoon` meets the reference plane with the equator, and that line is the node of the
-equator. A motor turns it about the pole by the node angle. A second motor turns the pole about
-that line by the inclination. A last turn by the J2000 obliquity of 23.4392911° carries the whole
-into the ecliptic frame. That turn is a change of coordinates, as the place of a star is, so it
-stays in closed form.
+**The algebra builds every place and every frame, because construction is its own** (see Algebra
+boundary). `normalOfMoon` meets the reference plane with the equator, and that line is the node of
+the equator. A motor turns it about the pole by the node angle. A second motor turns the pole about
+that line by the inclination. A last motor turns the whole about the equinox by the J2000
+obliquity of 23.4392911°, into the ecliptic frame. Only the reading of two catalogue angles into a
+direction stays in closed form.
 
-The ring of a moon starts at its ascending node, where its plane meets the ecliptic. Its second
-direction is that node turned a quarter turn about the normal. Each plane of a meet is a weight
-expansion of the origin. Such a plane faces against its line, so only a meet of two is read.
-Rejected: the cross products that built the same frames outside the algebra. Over every moon, the
-normal and both ring directions differ from them by at most 1.0e-15.
+The ring of a moon starts at its ascending node, where its plane meets the ecliptic. A flat ring
+starts at the bearing of its sun: the meet of the ground with the vertical plane through the
+direction of the star. Each body is its node turned by its phase about the normal of its ring,
+then `pointAlong` that direction from its parent. Each plane of a meet is a weight expansion of
+the origin. Such a plane faces against its line, so only a meet of two is read.
+
+**The turns that every star shares are built once, at compile time.** `TURN_ECLIPTIC` and the
+quarter turn about world up are constants, with their antireverses, so a star pays one sandwich
+and one point. A ring is spanned only for a star with a planet. Rejected: the closed forms, the
+cross products and the sums of sines that placed the same objects outside the algebra. Over every
+object of the three sizes, each coefficient matches them within 1.0e-14 of the largest coefficient
+of its object.
+
+**The price is build time on the JS backend, once for each load.** Each figure is the median of 15
+builds of `constructOrrery`. They ran in Node 22, and in C with `-d:release`, in the Claude Code
+cloud container on 2026-10-04. Each pair was taken twice:
+
+| Size | JS before | JS after | C before | C after |
+| --- | --- | --- | --- | --- |
+| Nearest | 6.5, 5.5 ms | 7.9, 7.7 ms | 0.10, 0.11 ms | 0.13, 0.12 ms |
+| Neighbourhood | 6.3, 8.3 ms | 14.9, 15.1 ms | 0.14, 0.16 ms | 0.30, 0.30 ms |
+| Catalogue | 21.0, 21.0 ms | 159.8, 143.3 ms | 1.10, 1.13 ms | 2.68, 2.60 ms |
+
+A motor built for each star cost the Catalogue 1,058 ms, because building a motor is most of what
+a turn costs. On JS, a turn built on the spot costs 52.5 µs a call, and a turn by a held
+motor 24.4 µs. A bearing costs 21.3 µs, a point 9.8 µs, and the reading of two angles 0.7 µs.
 
 The pole of Uranus is the spin pole (RA 77.311°, Dec 15.175°), which is the antipode of the IAU
 north. The small inclinations of the elements then read prograde about it, as JPL states them.
@@ -2876,6 +2902,7 @@ stands nine thousand opening radii out, and a frame that held it shows one dot.
   the algebra that builds it;
 - the ring of every moon started at its ascending node and turned about its normal, which a node
   of flipped sign fails for every moon;
+- every body at its phase on its ring against a closed form, which a backward flat ring fails;
 - every neighbour planet at its real axis at the height of its star;
 - every planet without an axis absent, 49 counted from the table;
 - the radius of every body the conversion of its kilometres;
