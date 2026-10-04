@@ -42,7 +42,9 @@ suite "Role":
     let thread = MARKER & "\n" & CREDIT & "\n\n**Role:** curator\n\n## Intent\n"
     check checkRole("curator/mend-it", thread, ["curator"]).len == 0
     let wrong = checkRole(
-      "curator/mend-it", MARKER & "\n" & CREDIT & "\n**Role:** curator/probe\n", ["curator"]
+      "curator/mend-it",
+      MARKER & "\n" & CREDIT & "\n**Role:** curator/probe\n",
+      ["curator"],
     )
     check wrong.len == 1
     check wrong[0].message.endsWith("got `**Role:** curator/probe`.")  # line below block echoed

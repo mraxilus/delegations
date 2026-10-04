@@ -192,8 +192,8 @@ review page, along with the four cells worth dancing to settle the rest.
 
 Every law is under test through testament, on the compiler that this project pins. Those are
 the frame and transition laws over every pair of frames, the workbook audit cell by cell, and
-the drawings against the model. They are also the laws of the simulation over every moment of every
-sweep, and the gates of the workbench on every page.
+the drawings against the model. They are also the gates of the workbench on every page, and the
+laws of the simulation. Each law of the simulation holds over its own corpus of sweeps and stills.
 
 Unreviewed by a human. The design decisions, what was rejected and what each one costs are in
 `PROVENANCE.md`. The language of the project is in `GLOSSARY.md`.

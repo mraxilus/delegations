@@ -16,8 +16,7 @@ const
     ## Output of three commands: empty answer, one answer, empty answer.
   USES_PIPE = 800
     ## Uses of one symbol, so answer of `dus` listing them passes 64 KiB, pipe's capacity.
-  NAME_PIPE = 70_000
-    ## Length of name asked, so command asking it passes 64 KiB too.
+  NAME_PIPE = 70_000  ## Length of name asked, so command asking it passes 64 KiB too.
 
 
 
