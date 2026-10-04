@@ -163,7 +163,9 @@ proc isKept(path, stamp: string): bool =
 
 
 
-when isMainModule:
+proc main() =
+  ## Record each recording named on command line, or all five, from one queue, and assemble
+  ## each kept file.
   let asked = commandLineParams()
   var wanted: seq[Recording]
   for word in asked:
@@ -231,3 +233,7 @@ when isMainModule:
         READ_SWEEPS, texts[READ_RUNGS.len..^1], READ_RUNGS, texts[0..<READ_RUNGS.len]))
     removeDir(root / &"{recording}-{stamps[recording]}")
     echo &"wrote {recording}"
+
+
+when isMainModule:
+  main()

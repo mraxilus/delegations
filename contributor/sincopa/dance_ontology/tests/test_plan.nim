@@ -236,9 +236,9 @@ suite "Internal: Planner's cost":
     ##     too late, with waist's ease not reckoned in body's step, and with trunk's pairs
     ##     left out of body's step, measured 2026-10-04.
     var generator = initRand(20261004)
-    const SAME_NAME = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
+    const same_name = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
                         Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
-    for links in [HAND_TO_HAND, SAME_NAME, @[HAND_TO_HAND[0]]]:
+    for links in [HAND_TO_HAND, same_name, @[HAND_TO_HAND[0]]]:
       for is_away in [false, true]:
         for style in [STYLES[0], STYLES[13]]:
           var problem = problemOf(HUMAN, links, is_away)
