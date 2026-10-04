@@ -186,8 +186,8 @@ proc paintOn(
       seen_z = seen(z, azimuth, elevation, framing)
       radius = recording.radii[i].toFloat
     var ink: JsObject
-    if mark == 0 or mark == 4:
-      # Trunk and girdle: light across from back edge to front edge, along
+    if mark in [0, 4, 5]:
+      # Trunk, girdle and face: light across from back edge to front edge, along
       # facing's image on screen, through piece's middle.
       let
         axis: Seen = (x: seen_z.x - seen_a.x, y: seen_z.y - seen_a.y, depth: 0.0)

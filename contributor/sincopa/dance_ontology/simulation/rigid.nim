@@ -141,7 +141,8 @@ type
 
   Mark* {.pure.} = enum  ## What part of whom one capsule is.
     Trunk, Upper, Fore, Palm,
-    Girdle  ## Shoulder: from neck's side out to shoulder joint, on body that gives.
+    Girdle,  ## Shoulder: from neck's side out to shoulder joint, on body that gives.
+    Face  ## Sphere ahead of head (`faceCapsule`), which every arm keeps off.
 
   Shape* = object  ## One capsule engine collides, as engine was given it.
     body*: engine.BodyId
@@ -279,6 +280,22 @@ func trunkCapsules*(rig: Rig): seq[tuple[a, z: Vector, radius: float]] =
         break
 
 const
+  FACE_RADIUS* = 0.06  ## Metres of face's sphere: half face's length, brow to chin.
+  FACE_FORE* = 0.06  ## Metres face's sphere sits ahead of head's axis.
+  FACE_DOWN* = 0.04  ## Metres face's sphere sits under head's centre, midway brow to chin.
+  ##   Sphere covers face alone (Architect, 2026-10-04): its front reaches 12 cm ahead of
+  ##     head's axis, where nose sits by ANSUR II head length 0.20 / 0.19 m, and it is 12 cm
+  ##     across.  Head itself is its own capsule, so arm clear of both is clear of face.
+  ##     Estimate and not tape.
+
+func faceCapsule*(rig: Rig): tuple[a, z: Vector, radius: float] =
+  ## Face as one sphere ahead of head, in body's own terms: x right, y fore, z up.
+  let
+    head = trunkCapsules(rig)[^1]
+    centre = (head.a + head.z) * 0.5 + (0.0, FACE_FORE, -FACE_DOWN)
+  (centre, centre, FACE_RADIUS)
+
+const
   HANG_BEND = 10.0 * PI / 180.0  ## Elbow of arm hanging free at side: relaxed arm
                    ## hangs near straight.  Assumed.
   GIRDLE_RADIUS* = 0.06  ## Radius of shoulder's capsule, neck's side to shoulder joint:
@@ -328,6 +345,9 @@ const
 const
   TRUNK_BIT = 1'u64  ## Torso, neck and head.
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64]  ## Lead's arms, follow's arms.
+  FACE_BIT = 8'u64  ## Faces, which meet arms and partner's girdles alone, since own girdles share
+                   ## their group.  Trunks keep heads apart, and two faces of couple chest to chest
+                   ## overlap 2 cm, computed from tape, where dancers turn heads aside.
   EVERY = high(uint64)  ## Meets everything.
 
 func ownGroup(who: Body): cint =
@@ -364,13 +384,18 @@ proc capsule(
   shape_definition.density = cfloat(density)
   shape_definition.material.friction = cfloat(FRICTION)
   shape_definition.filter.group_index = group
-  shape_definition.filter.category_bits = (if mark == Mark.Trunk: TRUNK_BIT else: ARM_BIT[who])
+  shape_definition.filter.category_bits =
+    case mark
+    of Mark.Trunk: TRUNK_BIT
+    of Mark.Face: FACE_BIT
+    else: ARM_BIT[who]
   # Everything meets everything, arms of two dancers included.  Letting lead's
   # arms pass through follow's was tried, on Architect's point that lead gets lead's
   # own arm out of way, and it reached swan -- by letting arms occupy same place,
   # which no couple does.  Architect: it made simulation worse.  Reverted.  Point stands
   # and wants real answer: lead who *moves* lead's arm, not one whose arm is absent.
-  shape_definition.filter.mask_bits = EVERY
+  shape_definition.filter.mask_bits =
+    if mark == Mark.Face: ARM_BIT[Body.One] or ARM_BIT[Body.Two] else: EVERY
   discard engine.createCapsule(body, addr shape_definition, addr capsule)
   couple.shapes.add Shape(
     body: body,
@@ -446,6 +471,21 @@ proc trunkOf(couple: var Couple, who: Body): tuple[hips, chest: engine.BodyId,
       DENSITY,
       ownGroup(who),
     )
+  # Face weighs nothing: it is room arms keep off, and head already carries its weight.  In
+  # trunk's group, so own girdles, which run from neck, pass it.
+  let face = faceCapsule(couple.rig)
+  capsule(
+    couple,
+    body,
+    who,
+    Arm.Left,
+    Mark.Face,
+    asEngine(face.a),
+    asEngine(face.z),
+    face.radius,
+    0.0,
+    ownGroup(who),
+  )
 
 const MARKS = [Mark.Upper, Mark.Fore, Mark.Palm]
   ## Which mark each of arm's three links carries, in `Limb`'s own order.
@@ -1715,6 +1755,58 @@ const
   SAG* = 0.03  ## Metres joined hand may sit under its band's edge, once
                  ## risen, lift being spring against comfort and not wall.
 
+const
+  ELBOWS_APART* = -0.02  ## Metres each dancer's right elbow keeps to right of left one, along
+                         ## body's right: elbows side by side touch, and do not cross over.
+  ON_UPPER* = 0.005  ## Metres within which dancer's arm meets upper arm of their other arm.
+  ELBOW_END* = 0.045  ## Metres before elbow within which other arm may lie on upper arm: one
+                      ## arm's radius, where arms cross just before elbow.
+  ##   Each dancer's own two arms cross at hands or forearms, up to just before elbow, and
+  ##     their elbows rarely if ever cross over (Architect, 2026-10-04).  Partners' arms are
+  ##     free of rule: crossed half turn lays lead's forearm on follow's upper arm.
+  ##   Measured 2026-10-04: D02 without rule passes follow's elbows 37 mm, and lays follow's
+  ##     upper arms on each other 9 cm before elbow.  Crossed half turn stands follow's elbows
+  ##     side by side, 9 to 17 mm past, and other forearm 2 to 3 cm before elbow; A17 and C03,
+  ##     1 cm before it.
+
+proc elbowOf(couple: Couple, who: Body, arm: Arm): Vector =
+  ## Elbow in world: where forearm hangs from.
+  asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Fore], engine.initVector(0, 0, 0)))
+
+proc upperOf(couple: Couple, who: Body, arm: Arm): tuple[a, z: Vector] =
+  ## Upper arm's line, shoulder to elbow.
+  (asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Upper], engine.initVector(0, 0, 0))),
+   couple.elbowOf(who, arm))
+
+proc foreOf(couple: Couple, who: Body, arm: Arm): tuple[a, z: Vector] =
+  ## Forearm's line, elbow to wrist.
+  (couple.elbowOf(who, arm),
+   asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Palm], engine.initVector(0, 0, 0))))
+
+proc crossing*(couple: Couple): tuple[is_crossed: bool, whose: Hand] =
+  ## Whether one dancer's own arms cross above elbow, and whose: elbows out of order, or other
+  ## arm against upper arm short of its elbow's end.
+  for who in Body:
+    let axes = axesOf(couple.chestStance(who))
+    if dot(couple.elbowOf(who, Arm.Right) - couple.elbowOf(who, Arm.Left), axes.right) <
+        ELBOWS_APART:
+      return (true, (who, Arm.Right))
+  for who in Body:
+    for arm in Arm:
+      let upper = couple.upperOf(who, arm)
+      for other_who in Body:
+        for other_arm in Arm:
+          if other_who != who or other_arm == arm: continue
+          for line in [couple.upperOf(other_who, other_arm), couple.foreOf(other_who, other_arm)]:
+            let met = closest(upper.a, upper.z, line.a, line.z)
+            if met.gap - 2.0 * couple.rig.limb < ON_UPPER and
+                (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
+              return (true, (who, arm))
+  (false, (Body.One, Arm.Left))
+
+proc crossed*(couple: Couple): bool = couple.crossing.is_crossed
+  ## Whether arms cross above elbow anywhere.
+
 proc gives*(couple: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that
   ## gives, any arm through body or arm, or joined hands that never reached
@@ -1731,6 +1823,7 @@ proc gives*(couple: Couple): Stop =
     if why != Stop.None: return why
   let deep = deepest(couple, -1)
   if deep.depth > THROUGH: return deep.met
+  if couple.crossed: return Stop.Crossed
   let is_facing = couple.band == Band.Crown and couple.up <= FACING
   if couple.height >= 1.0 or is_facing:
     let band = couple.bandNow

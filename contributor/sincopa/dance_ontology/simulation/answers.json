@@ -1,12 +1,12 @@
 {
-  "stamp": "f0d12933b5f2188c",
+  "stamp": "270e2e254e7ff2d7",
   "sweeps": {
     "shake at torso": {
       "negative": {
         "is_holding": true,
         "apart": 0.43787780744861193,
         "is_stopped": true,
-        "at": 1.3400000000000007,
+        "at": 1.3600000000000008,
         "why": "Wrist"
       },
       "positive": {
@@ -109,7 +109,7 @@
         "is_holding": true,
         "apart": 0.43787780744861193,
         "is_stopped": true,
-        "at": 1.3400000000000007,
+        "at": 1.3600000000000008,
         "why": "Wrist"
       }
     }
@@ -138,13 +138,13 @@
         "apart": 0.4178778074486119,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.1800000000000006
+        "at": 1.1600000000000006
       },
       {
         "apart": 0.43787780744861193,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3400000000000007
+        "at": 1.3600000000000008
       },
       {
         "apart": 0.45787780744861195,
@@ -1029,7 +1029,7 @@
   "stills": {
     "cross-name at -0.5": {
       "is_holding": true,
-      "apart": 0.35787780744861186,
+      "apart": 0.43787780744861193,
       "turns": -0.5
     },
     "cross-name at +0.0": {
@@ -1039,7 +1039,7 @@
     },
     "cross-name at +0.5": {
       "is_holding": true,
-      "apart": 0.35787780744861186,
+      "apart": 0.43787780744861193,
       "turns": 0.5
     },
     "same-name at rest": {
@@ -1049,7 +1049,7 @@
     },
     "same-name at half, either way": {
       "is_holding": true,
-      "apart": 0.7578778074486122,
+      "apart": 0.7378778074486122,
       "turns": -0.5
     },
     "free, Face-to-back": {
@@ -1064,17 +1064,17 @@
     },
     "left to left at half": {
       "is_holding": true,
-      "apart": 0.45787780744861195,
+      "apart": 0.497877807448612,
       "turns": 0.5
     },
     "same-name at half": {
       "is_holding": true,
-      "apart": 0.7578778074486122,
+      "apart": 0.7378778074486122,
       "turns": -0.5
     },
     "right to left at half": {
       "is_holding": true,
-      "apart": 0.45787780744861195,
+      "apart": 0.47787780744861197,
       "turns": 0.5
     },
     "right to left at half, either way": {
