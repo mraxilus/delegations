@@ -330,11 +330,13 @@ you do it.
 
 ### The sign-off
 
-**Sign off only when you stop**: when nothing is left, or when nothing moves until someone
-else acts. The message that ends that turn, and the message of a handover, closes with one
-block, `## Sign-off`. Nothing follows it.
+**Sign off when you stop, and when a pull request goes ready.** You stop when nothing is left,
+or when nothing moves until someone else acts. A pull request that you mark ready waits on the
+Architect, so that turn signs off as `waiting`, even while other work goes on. Each run and
+subagent that has not reported is then a row of the table. The message that ends that turn, and
+the message of a handover, closes with one block, `## Sign-off`. Nothing follows it.
 
-**A turn that ends while your work goes on does not sign off.** A run or a subagent that has
+**Any other turn that ends while your work goes on does not sign off.** A run or a subagent that has
 not reported is such work. Where that turn pushed or posted, its message closes with one line
 instead. The line opens `**Working:**`, then names what runs and what wakes you:
 
@@ -369,7 +371,8 @@ compaction, read the same block. Its parts come in this order:
    - `waiting`: nothing moves until another delegate or an outside party acts.
    - `done`: nothing is left.
 
-   Each word is a stop. Work that goes on takes the working line, and no sign-off.
+   Each word is a stop, or a pull request gone ready. Other work that goes on takes the
+   working line, and no sign-off.
 6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
    `**Decisions:** None.` where there is none.
 7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
