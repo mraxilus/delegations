@@ -413,20 +413,15 @@ Verified by `suites/test_spacing.nim`, with each example of the ruling.
 
 ## Content fixes
 
-**A comment table aligns its columns by display width (I.4).** A combining mark takes no width,
-and a wide East Asian glyph or an emoji takes two. Every other rune takes one, and an ambiguous
-one does too. A column keeps the width of its separator row. It widens only where the text of a
-cell does not fit, to that text and one space.
+**No fixer and no check reads a comment table (I.4).** The width that a reader sees depends on the
+font, so no checker can read it. A glyph such as `⊖` takes one column in one font and two in
+another. Article I.4 asks the columns to align as the eye reads them, so reading holds the tables.
 
-- The width guard of X.1 counts runes, and the table counts display width. The guard bounds what
-  an editor holds on one line, and the table aligns what the eye reads. So a table whose fix
-  would cross 100 runes stays for the hand.
-- `WIDTHS` holds the blocks that the scripts of this tree use, from Unicode 15. A mark of another
-  block, such as an Indic vowel sign, counts one.
-- A cell that holds `|`, even in backticks, splits. Its table then holds rows of other lengths,
-  and stays unread.
-- Verified by `suites/test_alignment.nim`. On the tree, line 23 of `motors.nim` of
-  `rga_visualiser` aligns by runes, and the fix pads it by one space.
+- Rejected: alignment by display width, from the East Asian Width blocks of Unicode. On the PGA
+  library it padded each table row that holds a glyph, and each row read wrong in the font of the
+  Architect.
+- Verified by `suites/test_chain.nim`: a table row that holds a glyph, padded as the hand's font
+  shows it, passes the whole chain as written.
 
 **A message echoes each value after `got` in backticks (IV.4).** The check reads the
 concatenation from the literal that holds `; got ` to its end. Each interpolation and each
@@ -491,8 +486,8 @@ a second run writes nothing, and no option sets a style. The tab, comment, messa
 spacing, continuation and trailing separator fixers are wideners. Each one repairs freely off the
 held lines, and keeps the width guard on them.
 
-- The alignment and idiom fixers stay guarded, since a table column and an import bracket have no
-  wrap. The renames and conversions of `curator/audit` stay guarded too.
+- The idiom fixers stay guarded, since an import bracket has no wrap. The renames and conversions
+  of `curator/audit` stay guarded too.
 - Each widener keeps a form of two arguments that holds every line, so its unit contract stays.
 
 **The wraps follow one fixed order, as the Architect ruled on 2026-10-04.** A line that a repair
