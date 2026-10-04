@@ -263,12 +263,29 @@ line can stop the box of the veil. Where the pick of the page finds the plane, t
 the spot by 8 or more over red, green and blue. A spot counts only where the canvas without the
 plane shows bare backdrop. A world axis in front of the veil hides it with no fault of the veil.
 
-Rejected: spots of one reading compared with each other, as `driveDiscUnderfoot` does, which pass on
-a canvas with no veil. Cost: eight readings, about 6 s of the drive. Verified by a break on purpose,
-2026-10-04, on the page without antialias. With the veil draws skipped, the low view read 4 of
-1878 spots veiled. With the floor of the box halfway between the vanishing line and the centre of
-the disc, it read 1677 of 1878. The steep view passed that break, because the line stands far off
-it.
+Rejected: spots of one reading compared with each other, which pass on a canvas with no veil. Cost:
+eight readings, about 6 s of the drive. Verified by a break on purpose, 2026-10-04, on the page
+without antialias. With the veil draws skipped, the low view read 4 of 1878 spots veiled. With the
+floor of the box halfway between the vanishing line and the centre of the disc, it read 1677 of
+1878. The steep view passed that break, because the line stands far off it.
+
+**The disc check holds the disc of the ecliptic under a camera that stands inside it.**
+`driveDiscUnderfoot` puts the eye 1.5 units off Sol over the largest demo, 0.3 rad up and then
+0.0003 rad up. It reads one spot past Sol and three under the camera, with the ecliptic shown and
+again with it hidden. Each spot under the camera must read within 3 of the spot past Sol in
+luminance, so that the disc ends at no chord. Each spot must also change by `LIFT_LEAST` or more
+against the canvas without the plane, which holds that the disc is drawn at all. Every other object
+stays shown, because the spots stand clear of the dots and the axes of the demo.
+
+The veil check reads no eye that grazes a plane, and no depth range as wide as that of the demo.
+Rejected: the spots of one reading alone, which agree with each other where no disc is drawn. Cost:
+two more readings. Timed alone on this machine, 2026-10-04, the check took 3.1 s and 5.0 s. The
+spots of one reading alone took 2.5 s and 3.1 s. Verified by a break on purpose, the same day, with
+the disc draws skipped in `gl.ts`: each spot moved by 0, and both claims failed.
+
+The spots of one reading alone passed that break, at a luminance of 36.1 for every spot. That is
+the dome of the horizon plane of the demo, which the disc blends over. On the page as it is, the
+disc moves each spot by 23.
 
 **Unexplained**: why the runner read blank through `readPixels` and white through the compositor.
 Neither Chromium here reproduces either.
@@ -379,16 +396,9 @@ work for each frame step fell from 18.1 to 10.0 ms, and from 18.0 to 12.1 ms.
 
 **The simulated page is bound by GPU work under SwiftShader, and a frame step costs whole display
 frames.** So a saving shows in the drive only where it takes a step under the next display frame.
-Measured on one delegate on 2026-10-04, under the lock of the gate, in turn, two runs each:
-
-| Build | Browser drive | Simulated page | Real-clock page |
-|-------|---------------|----------------|-----------------|
-| Fan over the box of the sphere, antialias | 323.5 s, 311.7 s | 294.0 s, 282.2 s | 27.0 s, 26.9 s |
-| Quad stopped at the vanishing line | 230.6 s, 232.4 s | 204.2 s, 207.1 s | 23.9 s, 22.5 s |
-
-The first row is `main` at `5b689518`, and the second is this design, with antialias off on the
-simulated page alone. Every check passed in each run. The veil check and the two context checks add
-about 6 s to the second row. The browser drive is `build/drive/main.js` alone, timed from outside.
+Records and shaders gives the current time of the browser drive and of each page. Its table of
+those times has rows for `eecc2b5c` and the box of the rim. Each build there ran twice, in turn,
+under the lock of the gate on one delegate.
 
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
@@ -406,11 +416,16 @@ waits.
 So `driveHeapUnit` reads that row on the second page too.
 
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.**
-Runners and delegates meet it, and each fault that a bound pins reads over it. Delegate readings are
-from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to 2026-09-30, alone and in the
-gate. The anchor and the marker take a new figure, so theirs are from 11 runs of the measured page
-up to its pins, on 2026-09-30. Runner readings are from one CI run of this change. A fault reads as
-`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+Runners and delegates meet it, and each fault that a bound pins reads over it. A fault reads as
+`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then. The
+fault of the frame after an edit reads as Scene storage gives it, from 2026-10-04.
+
+Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
+2026-09-30, alone and in the gate. The anchor takes a new figure, so its readings are from 11 runs
+of the measured page up to its pins, on 2026-09-30. The marker readings are from 11 such runs on
+2026-10-04, with each outline shaped once for each pair (Marker pulse). Runner readings are from one
+CI run of the change that set each bound. The runner reading of the marker is from the drive job on
+`d305c68c`.
 
 | Check | Bound | Runner | Delegates | Fault |
 |-------|-------|--------|-----------|-------|
@@ -419,19 +434,22 @@ up to its pins, on 2026-09-30. Runner readings are from one CI run of this chang
 | Moving frame, median | 3 ms | 0.8 | 0.7 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
 | Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.7 ms | 0.60 | 0.68 to 1.12 | 3.2 |
+| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.34 to 0.70 | 3.2 |
 | Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
-| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | |
+| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | 30.3 to 33.1 |
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
-The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the repair. On the new
-figure that is 1.8 ms at least, over the bound. The readings of the marker pin come from a pulse
-call that left out the swell, and so shaped the outline a second time. The pin now shapes it once
-for each pair, and that figure is unmeasured over the runs that set the bound. The moving grid fault
-reads over its bound by 0.1 ms only. A check with no fault reading pins a budget rather than a
-repair.
+The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
+costs 2.7 times the repair. Assumed: the ratio holds where the check shapes each outline once. The
+fault then reads 0.91 ms at least on a delegate, and 1.0 ms on the runner, both under the bound.
+So the bound holds that fault only where the repair reads 0.42 ms or more, which is 9 of the 11
+delegate runs. The count of points in the marker suite holds it on every run (Selection and
+markers).
+
+The moving grid fault reads over its bound by 0.1 ms only. A check with no fault reading pins a
+budget rather than a repair.
 
 **A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
 every machine, so load never moves it. The marker suite counts the points that each marker reads
@@ -455,19 +473,20 @@ time. After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µ
 collection or a preemption then spoils one batch, and not the figure.
 
 The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
-worst median of 9 batches of 5 read 0.48 to 0.62 ms.
+worst median of 9 batches of 5 read 0.48 to 0.62 ms. Both shaped each outline twice.
 
 **Sustained load moves a median too.** With three of four cores kept busy, 10 runs of the measured
-page read the anchor at 7.0 to 14.5 µs. The marker read 0.74 to 2.1 ms, over its bound in 4 of
-the 10, and every other speed check stayed inside its bound. The gate runs projects one at a time,
-so no gate run puts that load beside the drive. A delegate that shares its cores with other tenants
-can still.
+page read the anchor at 7.0 to 14.5 µs, on 2026-09-30. Every speed check stayed inside its bound
+but the marker, which shaped each outline twice then. Ten such runs up to the pins on 2026-10-04
+read the marker at 0.34 to 0.78 ms, inside its bound. The gate runs projects one at a time, so no
+gate run puts that load beside the drive. A delegate that shares its cores with other tenants can
+still.
 
 **A delegate can read a speed check over its bound with no fault present.** On 2026-10-01, nine
 measured pages on a fresh delegate read the marker at 0.72 to 2.64 ms and the grid at 6.4 to 22.3.
-Six pages ran the read tally of `boundary`, and three ran the build without it, over the same
-range. The 2.64 ms was the first page after a build. The counts hold each fault whatever the clock
-reads.
+The marker check then shaped each outline twice, against a bound of 1.7 ms. Six pages ran the read
+tally of `boundary`, and three ran the build without it, over the same range. The 2.64 ms was the
+first page after a build. The counts hold each fault whatever the clock reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
@@ -714,18 +733,35 @@ that weight. The value and the placeholder of a field count, and so does the tex
 `::after`. A finding names the page, the element, the weight and each codepoint that no face of the
 stack maps.
 
-**Text that a script writes later is held to every stack in use.** That text is not on the page when
-the check runs, and the element that will show it can be absent too. `nimCodepointsShown` gives the
-catalogue, the help, the notation and the units, as `--drive-faces` reads them. The strings of the
-scripts give the rest, and the text on the page now joins them. The check holds each of these
-characters to each stack that an element of the page resolves to. It does this at each weight that
-an element resolves to, and at each weight that a face declares.
+**Text that a script writes later is held to every stack in use, and to every stack a rule
+declares.** That text is not on the page when the check runs, and the element that will show it can
+be absent too. `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
+`--drive-faces` reads them. The strings of the scripts give the rest, and the text on the page now
+joins them. The check holds each of these characters to each stack that an element of the page
+resolves to.
 
-So each stack in use must map every character that the page can write. That is why the mono and
-serif stacks name "Noto Sans UI" after their own face. The cost is that a stack for titles alone
-must map the operators too. A checkbox and a file field are not a stack in use, because they show no
-text that the page writes. Both resolve to Arial, and the button of a file field shows the words of
-the browser.
+It also holds them to each stack that a rule of the stylesheets of the page declares. An element
+that a script builds later takes its stack from a rule that stands now. The check does this at each
+weight that an element resolves to, that a rule declares, and that a face declares. A finding for a
+stack that no element resolves to names the rule by its selector, as `rule .later-panel`.
+
+**The check reads the declared stacks through the CSSOM, and the browser resolves each one.** It
+walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
+sheets. A rule counts whether or not it matches now. The declarations of each rule go on a probe
+under a hidden holder, so the browser itself resolves `var()` and the `font` shorthand. It resolves
+them against the document as it stands, and again under the custom properties of each rule that
+declares some. An element that a script builds later can stand under such a rule.
+
+The check leaves out two kinds of declaration. An `@font-face` rule names a face, and not a stack.
+A family of `inherit` or `unset` declares no stack of its own, because the element takes the stack
+of its parent. Rejected: `var()` read from the custom properties of the root, which misses a value
+that a rule under `@media` declares.
+
+So each stack in use, and each stack that a rule declares, must map every character that the page
+can write. That is why the mono and serif stacks name "Noto Sans UI" after their own face. The cost
+is that a stack for titles alone must map the operators too. A checkbox and a file field are not a
+stack in use, because they show no text that the page writes. Both resolve to Arial, and the button
+of a file field shows the words of the browser.
 
 The check reads each `@font-face` rule of the shell, and the `cmap` of its file. It matches the
 weight and the unicode-range of each face as CSS matching does, and tries the families of a stack in
@@ -733,16 +769,31 @@ order. Rejected: the three stacks read from the text of the shell, which pass an
 a stack of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a
 layout box now. A hidden panel has none, and text that a script writes later has none either.
 
-Cost: an element that a script builds after the check runs counts only through its stack. Where no
-element on the page resolves to that stack at the check, the check does not see it.
+Cost: a stack that no rule of the page declares counts only where an element resolves to it at the
+check. Such a stack is the browser's own for a form control, or a family that a script sets on an
+element. A bare button resolves to Arial, and a bare text area to monospace. Verified by a run,
+2026-10-04, in Chrome for Testing 153. Each button and field that a script builds matches a rule
+that declares a stack, and no script sets a family. Verified by a read of `src/browser` and the
+shell, the same day.
 
 *Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153. The page
-stands as it opens, with the drawer and help open. Both checks pass, with `missing none`.
+stands as it opens, with the drawer and help open. Both checks pass, with `missing none`. The stacks
+that the rules declare are the stacks in use.
 
 Verified by a break on purpose, the same day and the same way. The rule
 `#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with
 `missing rga_visualiser.html #button-menu span at 400: U+2630`. The three stacks read from the text
 of the shell pass that break.
+
+Verified by a second break, the same day and the same way. The rule
+`.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element at the check. It
+fails with `missing rga_visualiser.html rule .later-panel at 400:` and each codepoint that Commit
+Mono does not map, U+2630 among them. It fails the same way at 600 and at 700. A check that holds
+only the stacks in use passes that break.
+
+Verified by a third break, the same day and the same way. A rule for `.later-panel` sets
+`font: 600 12px var(--later)` inside `@media (max-width: 10px)`. Inside `@media print`, `:root`
+declares `--later` as the same stack. The check fails it with the same finding.
 
 With the maths and symbols declared at 400 alone, the check fails at 600. It names U+2715 in
 `button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use, it names the
@@ -1069,8 +1120,11 @@ index that a caller holds. Here **a handle number stays valid until its object i
 **`Scene.bound` is the highest handle that was ever occupied**, and every walk of a frame runs
 to it rather than to capacity. It only rises, so a walk to it is safe. Three walks run to
 capacity for good reason: the free list and the two object-pool strips, whose subject is how
-much room is left. The doc comment of `bound` names those three. A walk to capacity over five
-live objects costs 13.3 ms a frame on the JS backend.
+much room is left. The doc comment of `bound` names those three.
+
+A walk to capacity over the five objects of the opening scene costs less than the 0.1 ms that the
+clock of the page resolves. With every walk run to capacity, the still frame read a median of 0.6 to
+0.7 ms, as the build that walks to `bound` does. So no speed check can hold that fault.
 
 **`Scene.revision` counts the edits, and every writer sits inside `scene.nim`.** There is no
 geometry accessor that returns a `var`, which would be the hole through which a caller could
@@ -1084,8 +1138,9 @@ A placement cache keyed on it then drew six objects of the previous demo over th
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each
 handle at the edit that last changed it, and `restoreFrom` stamps every live handle of the
 snapshot. The placement cache of the browser re-places only the handles that carry a stamp later
-than the revision it last filled at. To re-place the whole scene for each edit costs a 42 ms
-frame at 5,038 objects. A restore still re-places everything.
+than the revision it last filled at. To re-place the whole scene for each edit costs a frame of
+30.3 to 33.1 ms at 5,038 objects. The frame after an edit that re-places one handle reads 2.8 to
+4.9 ms. A restore still re-places everything.
 
 **The record of the creation order is explicit** (`orders`, `count_created`, `handlesCreated`),
 and nothing infers it. Handle order stops being creation order as soon as anything is removed.
@@ -1095,9 +1150,12 @@ A sort by `born` was rejected, because it fails on three counts that all occur. 
 added in one frame share a clock reading. The `born` of a replayed object is stamped into the
 future. The `born` of a reused handle is stale until something overwrites it.
 
-`handlesCreated` is a heap sort. As an insertion sort at 5,038 objects it ran 12.7 million
-comparisons for each call. The panel of the desktop caches its answer against `scene.revision`.
-A sort in every frame was 98% of the CPU frame of the desktop at 5,038.
+`handlesCreated` is a heap sort. At 5,038 objects an insertion sort makes 12,688,203 comparisons
+where handle order is the reverse of creation order, and the heap sort makes 104,039. A scene takes
+that order where every handle is freed in rising order and then filled again. On the demo as it
+loads, handle order is creation order, and the two sorts make 5,037 and 113,106 comparisons. The
+panel of the desktop caches its answer against `scene.revision`. A sort in every frame was 98% of
+the CPU frame of the desktop at 5,038.
 
 **`LABEL_MAX` counts bytes, so a label is cut on a character boundary and says that it was cut.**
 `format.appendChars` copies a UTF-8 sequence only where all of it fits, and `scene.toChars`
@@ -1116,7 +1174,10 @@ so the loops that run for each frame use the accessors that take a handle instea
 - a label cut never splits a character, at any buffer size.
 
 Verified by driven check: undo while the frame is held redraws the current scene, and not the
-previous one. The figures 13.3 ms, 42 ms and 12.7 million are unmeasured since a fix.
+previous one. Verified by measurement on one delegate on 2026-10-04, under the lock of the gate, by
+builds and a counter that are not kept. A build that brings back the walk to capacity, and one that
+re-places every handle for each edit, each drove the measured page 3 times. The build without
+either fault drove it 11 times. A count over the largest demo on the C backend gave the comparisons.
 
 ## Memory and allocation
 
@@ -3074,20 +3135,44 @@ The archive asks for this acknowledgement, word for word:
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. On 2026-08-31 the query returned 11,432 entries, and the table keeps
-11,252 of them. Each of the other 180 is a composite entry, for a double or multiple system. The
-table holds the components of each such system as stars of their own. The cut is not in the
-query, so a run of the query alone returns the composite entries too.
+11,240 of them. Each of the other 192 is a composite entry, for a double or multiple system as a
+whole. The tool that wrote the table cut 180 of them, and 12 are cut by hand by its rule. The cut
+is not in the query, so a run of the query alone returns them too.
 
-Verified by a run of the recorded query against the TAP service of SIMBAD, 2026-10-04. It
-returns 11,430 entries. The query applies its own bounds of parallax and position, so the bound
-of 31.53 parsecs removes no entry. Every star of the table is in the result, at the distance
-that the table gives it. Of these stars, 17 carry a new SIMBAD name, at the same position. Each
-of the other 178 entries is a composite entry, and the table holds its components.
+**A composite entry comes out where the main star of its system has an entry of its own.** Kept,
+it is one more point for its system. SIMBAD often gives it a distance from an older measurement.
+Of the 12 cut by hand, 10 stood 0.55 to 6.2 parsecs off their components. `* zet UMa` stood at
+26.31 parsecs, and `* zet01 UMa` and `* zet02 UMa` stand at 24.87 and 24.83. The 12, none of
+which carried a planet, are these:
 
-SIMBAD links 174 of those composite entries to their components. The name of each of the other
-4 is the name of its components without their letter. So the result holds the same 11,252 stars
-as on 2026-08-31, and 2 fewer composite entries. By the same links, 21 composite entries stand
-in the table beside their own components.
+- `* mu. Cyg`, `* zet Aqr`, `* zet UMa`, `2MASS J09153413+0422045`, `BD+32 4747`, `BD+49 2959`
+- `BPM 14175`, `HD 40887`, `NAME BD-21 1074BC`, `Smethells 177`, `StM 162`, `StM 187`
+
+**A composite entry stays where its main star has no entry, because it is the only point for that
+star.** A star has no entry where SIMBAD gives it no parallax of its own. Five such entries stay:
+`* zet Cnc`, `G 123-49`, `HIP 110922`, `LP 532-81` and `RX J0507.2+3731`. The main star of
+`HIP 110922` is the pair `LP 876-26`, brighter by 0.6 in G than its companion. Rejected: a cut of
+these 5 too, which takes their main stars out of the scene. Cost: each stands for its main star
+at the distance of its system, up to 4.5 parsecs from its companion.
+
+The rule is the tool's own. Of the 174 composite entries that it cut and that SIMBAD links to their
+components, the table holds every component of 145. Of the other 29, it holds the main star alone.
+It cut 4 more by name, each the name of its components without their letter. It kept 15 composite
+entries whose only component in the table is a B or a C, by name. One is `HD 142`, with 3 planets.
+
+Four entries that SIMBAD links to a companion in the table are stars, and stay. These are
+`* ksi UMa B`, `BD+16 2708`, `HD 61606` and `HD 222237`. SIMBAD types each one as a star, and the
+table holds no separate A component for any of them.
+
+Verified by a run of the recorded query against the TAP service of SIMBAD, 2026-10-04. Two more
+queries read its links (`h_link`), and the parallax and G magnitude of each component. The query
+returns 11,430 entries, and its own bounds mean that the bound of 31.53 parsecs removes none. Every
+star of the table is in the result at its distance, 17 of them under a new SIMBAD name. Each of the
+other 190 is a composite entry whose main star stands in the table. Of the table, SIMBAD links only
+the 5 and the 4 above to a component that the table holds.
+
+Verified by `suites.nim`: the 12 are out of the table, and the 9 are in it, each beside a
+component that the table holds.
 
 **A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
 `#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing

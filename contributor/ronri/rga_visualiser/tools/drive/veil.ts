@@ -22,11 +22,12 @@ import { report } from './report';
  */
 const PIXELS_SPOT_STEP = 15;
 
-/** Least change veil makes to spot, as sum over red, green and blue.
+/** Least change veil makes to spot, as sum over red, green and blue; `demo.ts` holds disc to it.
  *
- *  Ground's veil, olive at `ALPHA_VEIL` 0.16 over backdrop, moves spot by about 30.
+ *  Ground's veil, olive at `ALPHA_VEIL` 0.16 over backdrop, moves spot by about 30; ecliptic's,
+ *  over demo's sky dome, by 23.
  */
-const LIFT_LEAST = 8;
+export const LIFT_LEAST = 8;
 
 /** Least spots each view must find on plane and bare beneath it, so view shows plane. */
 const SPOTS_ON_PLANE_LEAST = 200;
@@ -63,8 +64,8 @@ interface Covered {
   first_bare: Spot | null;
 }
 
-/** Sum of channel differences between two RGBA readings, alpha aside. */
-function differenceOf(a: number[], b: number[]): number {
+/** Sum of channel differences between two RGBA readings, alpha aside; `demo.ts` reads it too. */
+export function differenceOf(a: number[], b: number[]): number {
   return Math.abs((a[0] ?? 0) - (b[0] ?? 0)) + Math.abs((a[1] ?? 0) - (b[1] ?? 0)) +
     Math.abs((a[2] ?? 0) - (b[2] ?? 0));
 }

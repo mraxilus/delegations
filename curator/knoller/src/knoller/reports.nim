@@ -10,12 +10,17 @@
 ##     rewrites freely, and wrapping that runs after it breaks line; on held line it keeps
 ##     width guard, i.e. refuses rewrite that makes narrow line wide. Held lines are sorted
 ##     `seq`, never set or table, so every reading of them runs in one order.
+##   Path fixer reads is `/` separated: repository-relative from `koch`, absolute from command
+##     line (`command.layoutOf`). Rule reading layout from it reads test file and stub here
+##     alone, both from last directory `tests` (`testsPart`), so each meaning is written once.
 ##
 ##   Cost: line `0` marks whole-file report, so `0` never means first line.
+##   Cost: absolute path reads directories above repository too, so file under directory
+##     `tests` there reads as test file from command line.
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils]
+import std/[algorithm, sequtils, strutils]
 import ./rules
 
 export rules
@@ -23,7 +28,7 @@ export rules
 
 type
   Report* = object  ## Define one rewrite or finding, located at path and line.
-    path*: string  ## Repository-relative path, `/` separated.
+    path*: string  ## Path fixer read, `/` separated: repository-relative, or absolute.
     line*: int  ## One-based line; `0` when report concerns whole file.
     rule*: Rule  ## Rule rewritten or broken.
     message*: string  ## Finding's statement, ending with echoed value; empty for rewrite.
@@ -56,6 +61,24 @@ const EVERY* = Held(is_every: true)  ## Held of every line, as each widener's tw
 func initReport*(path: string, line: int, rule: Rule, message = ""): Report =
   ## Construct report: rewrite where message is empty, finding of check otherwise.
   Report(path: path, line: line, rule: rule, message: message)
+
+
+func testsPart(path: string): seq[string] =
+  ## Read names of path below its last directory `tests`; empty where no directory is so named.
+  let parts = path.split('/')
+  for k in countdown(parts.high - 1, 0):
+    if parts[k] == "tests": return parts[k + 1 .. ^1]
+
+
+func isTestFile*(path: string): bool =
+  ## Decide whether path lies under directory `tests`, at any depth.
+  path.testsPart.len > 0
+
+
+func isStub*(path: string): bool =
+  ## Decide whether path is testament stub: `test_*`, directly under directory `tests`.
+  let part = path.testsPart
+  part.len == 1 and part[0].startsWith("test_")
 
 
 func guarded*(fixer: Fixer): Step =

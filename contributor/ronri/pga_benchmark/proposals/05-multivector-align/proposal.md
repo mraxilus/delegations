@@ -143,12 +143,16 @@ and on Emerald Rapids under SSE2, AVX2 and AVX-512:
 | Floats | Kinds | Bytes | `alignmentOf` | Time over natural |
 |--------|-------|-------|---------------|-------------------|
 | 3 | rga3d point and line | 24 | 8, natural | ×1 |
-| 4 | rga3d motor and flector, rga4d point and plane | 32 | 32 | not measured |
+| 4 | rga3d motor and flector, rga4d point and plane | 32 | 32 | ×0.85 to ×1.17, Emerald Rapids |
 | 5 | cga5d round point and sphere | 40 | 8, natural | ×1 |
 | 6 | rga4d line | 48 | 16 | ×0.86 to ×1.08 |
 | 8 | rga4d motor and flector | 64 | 64 | ×0.65 to ×1.11 |
 | 10 | cga5d dipole and circle | 80 | 16 | ×0.86 to ×1.00 |
 | 16 | cga5d even and odd parts | 128 | 64 | ×0.76 to ×0.97 |
+
+The kind of 4 floats is timed at 32 bytes on Emerald Rapids alone, on 2026-10-04: 20 executions
+under each of SSE2, AVX2 and AVX-512. It pads nothing there, and it gains nothing over 16 bytes,
+which reads ×0.86 to ×1.00 in the same runs. So 32 bytes is safe for that count, and not better.
 
 A kind of an odd count keeps 8 bytes, so it can still cross a line. Only padding would prevent
 that, and padding costs more than the line.
@@ -166,8 +170,8 @@ that, and padding costs more than the line.
 - `timing.nim` times 7 operations, each in a procedure of its own. With SSE2 and 64 bytes, the
   compiler realigns the stack in 2 or 3 of them, and at pin in none. With AVX2 or AVX-512 and
   64 bytes, it realigns all 7, and at pin 5 or 6. No timing isolates that cost.
-- No run times a kind of 4 floats at 32 bytes, the one alignment of the rule that is not
-  measured.
+- Cascade Lake does not time the kind of 4 floats at 32 bytes. Under AVX2 its sum ranged ×0.86
+  to ×1.47 over 20 executions on Emerald Rapids.
 - At pin, `align` of an expression of a generic parameter stops the compiler. So the generic
   kind of P04 chooses among 8, 16, 32 and 64 through `when`. The macro of P02 knows each count
   when it runs, and writes the number.

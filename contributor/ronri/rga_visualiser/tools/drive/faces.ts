@@ -9,6 +9,8 @@
 //   strings of page's own scripts give rest. Element that will show such character may not
 //   stand yet either, so these, with every character page shows now, are held to every stack
 //   some element of page resolves to, at every weight page resolves or its faces declare.
+//   Element script builds later takes its stack from rule that stands now, so every stack
+//   page's stylesheets declare joins them, read through CSSOM, matched now or not.
 //   Faces are read as browser reads them: shell's `@font-face` rules give family, weight and
 //   unicode-range, and each file's own `cmap` gives what it holds. Within family, faces at
 //   weight CSS matching picks are tried in turn; then next family of stack.
@@ -50,6 +52,13 @@ interface Resolved {
 /** Characters one element shows, under stack and weight it resolved to. */
 interface Shown extends Resolved {
   codepoints: number[];
+}
+
+/** Stacks and weights rules of page's stylesheets declare, as browser resolves them. */
+interface Declared {
+  stacks: { rule: string; stack: string }[];
+  weights: number[];
+  count_rules: number;
 }
 
 /** Read every codepoint one `cmap` table maps to glyph other than `.notdef`. */
@@ -225,6 +234,75 @@ function codepointsOfScripts(): number[] {
   return codepoints;
 }
 
+/** Read every stack and weight that rules of page's stylesheets declare, as browser resolves them.
+ *
+ *  Walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and
+ *  imported sheets, whether or not it matches now. Each rule's own declarations go on probe
+ *  under hidden holder, so browser resolves `var()` and `font` shorthand itself: once against
+ *  document as it stands, then once under custom properties of each rule that declares some,
+ *  since element built later may sit under such rule.
+ *  Left out, each for its reason: `@font-face`, whose family names face rather than stack;
+ *  and `inherit` or `unset`, which declare no stack of their own, since element then takes
+ *  its parent's, which other rule or body declares.
+ */
+async function declaredOf(page: Page): Promise<Declared> {
+  return page.evaluate(() => {
+    const rules: CSSRule[] = [];
+    const gather = (list: CSSRuleList): void => {
+      for (const rule of list) {
+        rules.push(rule);
+        if (rule instanceof CSSImportRule && rule.styleSheet !== null) {
+          gather(rule.styleSheet.cssRules);
+        }
+        if ('cssRules' in rule) gather(rule.cssRules as CSSRuleList);
+      }
+    };
+    for (const sheet of [...document.styleSheets, ...document.adoptedStyleSheets]) {
+      gather(sheet.cssRules);
+    }
+    const styles = rules.flatMap((rule) => (
+      rule instanceof CSSFontFaceRule || !('style' in rule) ? [] :
+        [{ rule, style: rule.style as CSSStyleDeclaration }]
+    ));
+    const isDeclared = (style: CSSStyleDeclaration, longhand: string): boolean => {
+      // Shorthand holding `var()` leaves its longhands empty until computed.
+      const value = (style.getPropertyValue(longhand) || style.getPropertyValue('font')).trim();
+      return value !== '' && value !== 'inherit' && value !== 'unset';
+    };
+    const declaring = styles.filter(({ style }) => isDeclared(style, 'font-family'));
+    const contexts: [string, string][][] = [[]];
+    for (const { style } of styles) {
+      const own = [...style].filter((name) => name.startsWith('--'))
+        .map((name): [string, string] => [name, style.getPropertyValue(name)]);
+      if (own.length > 0) contexts.push(own);
+    }
+    const holder = document.createElement('div');
+    const probe = document.createElement('div');
+    holder.append(probe);
+    document.body.append(holder);
+    const stacks = new Map<string, string>();
+    const weights = new Set<number>();
+    for (const context of contexts) {
+      holder.style.cssText = 'display: none';
+      for (const [name, value] of context) holder.style.setProperty(name, value);
+      for (const { rule, style } of declaring) {
+        probe.style.cssText = style.cssText;
+        const computed = window.getComputedStyle(probe);
+        // Selector, or head of rule that has none, as stylesheet writes it.
+        const head = rule.cssText.slice(0, rule.cssText.indexOf('{')).trim();
+        if (!stacks.has(computed.fontFamily)) stacks.set(computed.fontFamily, head);
+        if (isDeclared(style, 'font-weight')) weights.add(Number(computed.fontWeight));
+      }
+    }
+    holder.remove();
+    return {
+      stacks: [...stacks].map(([stack, rule]) => ({ rule, stack })),
+      weights: [...weights],
+      count_rules: declaring.length,
+    };
+  });
+}
+
 /** Say codepoint as Unicode writes it. */
 function nameOfCodepoint(codepoint: number): string {
   return `U+${codepoint.toString(16).toUpperCase().padStart(4, '0')}`;
@@ -330,17 +408,23 @@ export async function driveFacesCovered(page: Page): Promise<void> {
       `${missing_shown.length === 0 ? 'none' : missing_shown.join('; ')}`,
   );
 
-  // What page can write, now or later, in every stack some element resolves to, at every
-  //   weight in play.
+  // What page can write, now or later, in every stack some element resolves to or some rule
+  //   declares, at every weight in play.
   const writable = [...new Set([
     ...shown.flatMap((one) => one.codepoints), ...gathered.catalogue, ...codepointsOfScripts(),
   ])].filter((codepoint) => codepoint >= 0x20).sort((a, b) => a - b);
+  const declared = await declaredOf(page);
   const stacks = new Map<string, string>();
   for (const one of gathered.resolved) {
     if (!stacks.has(one.stack)) stacks.set(one.stack, one.element);
   }
+  // Stack no element resolves to yet is named by first rule that declares it.
+  for (const one of declared.stacks) {
+    if (!stacks.has(one.stack)) stacks.set(one.stack, `rule ${one.rule}`);
+  }
   const weights = [...new Set([
-    ...gathered.resolved.map((one) => one.weight), ...faces.flatMap((face) => face.weights),
+    ...gathered.resolved.map((one) => one.weight), ...declared.weights,
+    ...faces.flatMap((face) => face.weights),
   ])].sort((a, b) => a - b);
   const missing_writable: string[] = [];
   for (const [stack, element] of stacks) {
@@ -357,10 +441,11 @@ export async function driveFacesCovered(page: Page): Promise<void> {
   }
   report(
     'and every character the page can write has a face the page ships, in every stack an ' +
-      'element of the page resolves to',
+      'element of the page resolves to or a rule of its stylesheets declares',
     missing_writable.length === 0,
-    `${writable.length} codepoints of page, catalogue and scripts, in ${stacks.size} stacks at ` +
-      `weights ${weights.join(', ')}, from ${faces.length} faces; missing ` +
+    `${writable.length} codepoints of page, catalogue and scripts, in ${stacks.size} stacks ` +
+      `(${declared.stacks.length} declared by ${declared.count_rules} rules) at weights ` +
+      `${weights.join(', ')}, from ${faces.length} faces; missing ` +
       `${missing_writable.length === 0 ? 'none' : missing_writable.join('; ')}`,
   );
 }
