@@ -1301,6 +1301,9 @@ simulation for it. That cell is the drawing, the badges and the caption, cut fro
 so what is compared is what was ruled on. It is one list of entries, walked by two buttons or the
 arrow keys. The drawing of the reference sits next to the joint readouts on the stage.
 
+A reflected twin card is the still that its mirror twin keeps, mirrored, as `design/rig_page`
+folds it in (Mirror twins).
+
 It is orthographic on purpose, so the outline of a capsule is exactly a stadium. Order is the
 painter's, by depth. Each capsule is cut into pieces no longer than 40 mm, and each piece is ordered
 by the depth of its own middle (`drawOrder`, `DAB`). Rejected: a whole capsule ordered by its nearer
@@ -1803,12 +1806,30 @@ Rejected: a twin for a frame hold that rests face to back too. The same-name cha
 turn then takes the answer of the plus half, reflected, which holds from no distance. Asked on its
 own, it holds 0.76 m apart. Measured 2026-10-04.
 
-The reflection flips every point across the line of the couple. Each arm takes the points of the
-other arm, and each twist turns the other way. That is because the rig states the ends of the left
-arm mirrored. The simulation reflects a facing about the way that its body faces at rest, so a
-wound turn keeps its laps. The bars of a still keep their places and names, and take the ends of
-their mirror. Of a planned frame hold that is its own mirror, the two paths of each style swap their
-places in `tried`.
+The simulation reflects each answer that a law or the report reads: a sweep, a walk, and the search
+of a still (`walk.twinOf`). The reflection flips every point across the line of the couple. Each arm
+takes the points of the other arm, and each twist turns the other way. That is because the rig
+states the ends of the left arm mirrored. The simulation reflects a facing about the way that its
+body faces at rest, so a wound turn keeps its laps.
+
+**The rig page shows each reflected twin as the still that its mirror twin keeps, mirrored, and each
+arm recoloured.** The rig recording keeps each answered still once. A twin card keeps no still of
+its own. It names the card that keeps the still that it mirrors (`mirror`). Where no card asks that
+answer, the twin card keeps it itself, and names itself. A2, A4 and A6 do so, counted 2026-10-04.
+
+The page builder flips each point of that still across the line of the couple (`design/twins`). It
+names the capsules of each arm as those of the other arm, so the page paints them in the colour of
+the other arm. The readings of each arm move to the place of the other arm, and the twist and its
+two ends turn the other way. The Architect chose this on 2026-10-04. Rejected: a still reflected by
+the simulation and kept in the recording, which kept 41 stills that a mirror gives.
+
+Verified on 2026-10-04 by a probe outside the tree, against the recording of `6cfc7bc1`. Each of the
+41 twin cards shows the still that the simulation reflected there, field for field. Only the order
+of the capsules, of the joined hands and of the strains tried differs. Verified by
+`suites/test_asks.nim`: each twin card names the card that keeps its answer, and the mirror undoes
+itself. Each girdle stands on the side that its arm names, in every still that the page shows. Each
+of those laws failed on a break made on purpose: arms not recoloured, points not flipped, and a twin
+card that named another card.
 
 The engine is not mirror exact, so a reflected twin shows other figures than the engine gives it.
 Against the recordings of `9bbf656`, which reflect nothing, these are the largest changes, compared
@@ -1977,7 +1998,7 @@ Every kept file is the same bytes from run to run, and with either width of batc
 stamp. Verified 2026-10-04 by three full runs from no kept file.
 
 **One run asks each question once, and every job that asks it again takes the answer.** The jobs of
-the five recordings ask the same questions. Rig and modelled stand the same 95 stills, field for
+the five recordings ask the same questions. Rig and modelled stand the same stills, field for
 field. The report sweeps the 18 frame holds that the whole-cloth page sweeps, and the rig viewer
 sweeps 8 of them. D1 and D7 plan the same 32 paths.
 
