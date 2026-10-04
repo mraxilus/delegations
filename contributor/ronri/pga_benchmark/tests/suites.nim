@@ -1628,6 +1628,29 @@ suite "Internal: Pages":
     check unbounded.len == 0  # grid child of auto width widens page at phone width
 
 
+  test "every stack holds each face of sans stack before any family shell does not ship":
+    const shell_html = staticRead("../pages/shell.html")
+    var shipped, gaps: seq[string]
+    for rule in shell_html.split("@font-face")[1..^1]:
+      let family = rule.split('"')[1]
+      if family notin shipped: shipped.add family
+    var stacks: seq[seq[string]]  # sans first, then serif and mono
+    for name in ["sans", "serif", "mono"]:
+      let
+        at = shell_html.find("--" & name & ": ") + name.len + 4
+        families = shell_html[at ..< shell_html.find(';', at)].split(',')
+      stacks.add @[]
+      for family in families:
+        let bare = family.strip.strip(chars = {'"'})
+        if bare notin shipped: break
+        stacks[^1].add bare
+    for stack in stacks[1..^1]:
+      for family in stacks[0]:
+        if family notin stack: gaps.add stack[0] & " stack lacks " & family
+    checkpoint "gaps: " & gaps.join(", ")
+    check gaps.len == 0  # Article X.8: stack falls to face page ships, never to face of system
+
+
   test "docket rows carry identifiers docket file allots":
     let
       sheet = Sheet(
