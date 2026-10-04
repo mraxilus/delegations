@@ -452,6 +452,128 @@ suite "Mesh":
     check box_behind.corner_min == box_behind.corner_max
 
 
+  test "a disc's box stops at its plane's vanishing line, and holds every spot of it shown":
+    # **No ray past vanishing line meets plane in front of eye**, so clip there is exact.
+    #   Quad reaching past line spans fragments that all discard; one stopping short of it
+    #   cuts disc. Both held over seeded views of planes in every attitude, eye mostly within
+    #   one radius of plane on either side, sight aimed near disc, roll drawn at random.
+    #   Every corner `expandDiscCorner` places stands on plane's side of its vanishing line,
+    #   and every spot of grid whose ray `hitDiscAlong` lands on disc lies inside that quad.
+    const
+      seed_views = 474 ## Seed of generator views are drawn from, local to this test.
+      samples_views = 256 ## Views drawn, each with plane, eye and sight of its own.
+      spots_side = 25 ## Spots along each side of view, at centres of equal cells.
+      views_crossed_least = 64 ## Least views whose vanishing line crosses view itself.
+      spots_on_disc_least = 20_000 ## Least spots landing on disc, over every view.
+      tolerance_side = 1.0e-9 ## Slack on either test, against `float` rounding alone.
+
+    proc unitDrawn(generator: var Rand): Direction =
+      ## Draw direction uniformly over sphere, by rejection from cube.
+      while true:
+        let candidate = Direction(
+          x: generator.rand(-1.0 .. 1.0), y: generator.rand(-1.0 .. 1.0),
+          z: generator.rand(-1.0 .. 1.0),
+        )
+        let length = norm(candidate)
+        if length > 0.1 and length <= 1.0: return (1.0/length)*candidate
+
+    func turnOf(a, b, c: (float, float)): float =
+      ## Measure twice signed area of triangle `a b c`, positive counter-clockwise.
+      (b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])
+
+    func leanOf(
+      spot: (float, float); right, up, forward, normal: Direction; tangent, aspect, side: float
+    ): float =
+      ## Measure how far ray through `spot` leans to plane's side of its vanishing line.
+      ##   Per unit ray and unit normal, so one tolerance serves every view.
+      let ray = rayThroughView(spot[0], spot[1], right, up, forward, tangent, aspect)
+      side*dot(ray, normal)/(norm(ray)*norm(normal))
+
+    var
+      generator = initRand(seed_views)
+      views_crossed = 0
+      spots_on_disc = 0
+    let
+      tangent = tan(0.5*degToRad(45.0))
+      aspect = float(WIDTH_OPENED)/float(HEIGHT_OPENED)
+    for _ in 0 ..< samples_views:
+      # Plane through centre near origin, arms square to its normal at radius one to eight.
+      let
+        normal_unit = unitDrawn(generator)
+        along = normalize(cross(normal_unit, unitDrawn(generator))).get
+        radius = generator.rand(1.0 .. 8.0)
+        arm_first = radius*along
+        arm_second = radius*cross(normal_unit, along)
+        centre = Position(
+          x: generator.rand(-5.0 .. 5.0), y: generator.rand(-5.0 .. 5.0),
+          z: generator.rand(-5.0 .. 5.0),
+        )
+        record = DiscRecord(
+          centre_x: float32(centre.x), centre_y: float32(centre.y), centre_z: float32(centre.z),
+          arm_first_x: float32(arm_first.x), arm_first_y: float32(arm_first.y),
+          arm_first_z: float32(arm_first.z), arm_second_x: float32(arm_second.x),
+          arm_second_y: float32(arm_second.y), arm_second_z: float32(arm_second.z),
+          fill_alpha: 1.0,
+        )
+      # Eye over or under plane, low in half of views, so vanishing line runs through view.
+      let
+        height = (if generator.rand(1.0) < 0.5: generator.rand(0.001 .. 0.5)
+          else: generator.rand(0.5 .. 3.0))*radius*(if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
+        offset_across = generator.rand(-1.5 .. 1.5)*radius
+        offset_along = generator.rand(-1.5 .. 1.5)*radius
+        eye = centre + offset_across*along + offset_along*cross(normal_unit, along) +
+          height*normal_unit
+        aim = centre + generator.rand(-1.2 .. 1.2)*arm_first +
+          generator.rand(-1.2 .. 1.2)*arm_second + (0.3*radius)*unitDrawn(generator)
+        forward = normalize(aim - eye).get
+        right = normalize(cross(forward, unitDrawn(generator))).get
+        up = cross(right, forward)
+      # Plane's side of its vanishing line: rays meeting plane in front of eye.
+      let
+        normal = Direction(
+          x: float(record.arm_first_y)*float(record.arm_second_z) -
+            float(record.arm_first_z)*float(record.arm_second_y),
+          y: float(record.arm_first_z)*float(record.arm_second_x) -
+            float(record.arm_first_x)*float(record.arm_second_z),
+          z: float(record.arm_first_x)*float(record.arm_second_y) -
+            float(record.arm_first_y)*float(record.arm_second_x),
+        )
+        to_centre = Direction(
+          x: float(record.centre_x) - eye.x,
+          y: float(record.centre_y) - eye.y,
+          z: float(record.centre_z) - eye.z,
+        )
+        side = (if dot(to_centre, normal) < 0.0: -1.0 else: 1.0)
+      var signs: set[bool]
+      for corner in [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]:
+        signs.incl leanOf(corner, right, up, forward, normal, tangent, aspect, side) > 0.0
+      if signs == {false, true}: inc views_crossed
+      let
+        box = viewBoxOfDisc(record, eye, right, up, forward, tangent, aspect)
+        quad = [
+          expandDiscCorner(box, -1.0, -1.0), expandDiscCorner(box, 1.0, -1.0),
+          expandDiscCorner(box, 1.0, 1.0), expandDiscCorner(box, -1.0, 1.0),
+        ]
+        area = 0.5*(turnOf(quad[0], quad[1], quad[2]) + turnOf(quad[0], quad[2], quad[3]))
+      if area > 0.0:
+        for corner in quad:
+          check leanOf(corner, right, up, forward, normal, tangent, aspect, side) >=
+            -tolerance_side
+      for i in 0 ..< spots_side:
+        for j in 0 ..< spots_side:
+          let
+            spot = (-1.0 + (2.0*float(i) + 1.0)/float(spots_side),
+              -1.0 + (2.0*float(j) + 1.0)/float(spots_side))
+            ray = rayThroughView(spot[0], spot[1], right, up, forward, tangent, aspect)
+          if hitDiscAlong(record, eye, ray).isNone: continue
+          inc spots_on_disc
+          check area > 0.0
+          for k in 0 ..< 4:
+            check turnOf(quad[k], quad[(k + 1) mod 4], spot) >= -tolerance_side
+    check views_crossed >= views_crossed_least
+    check spots_on_disc >= spots_on_disc_least
+
+
   test "plane becomes a flat filled disc and a rim, every vertex on it":
     for plane in PLANES:
       MESHES.clearMeshes
