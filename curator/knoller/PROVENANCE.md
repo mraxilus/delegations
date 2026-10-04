@@ -108,3 +108,16 @@ cell does not fit, to that text and one space.
   and stays unread.
 - Verified by `suites/test_alignment.nim`. On the tree, line 23 of `motors.nim` of
   `rga_visualiser` aligns by runes, and the fix pads it by one space.
+
+**A message echoes each value after `got` in backticks (IV.4).** The check reads the
+concatenation from the literal that holds `; got ` to its end. Each interpolation and each
+operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
+such as `got none.`, echoes no value and is no finding.
+
+- The fixer puts a backtick on each side of a bare value, inside the literals around it. A value
+  that ends the message has no literal after it, and stays for the hand.
+- The rule reads every value of the tail, so a context after the value takes backticks too, as
+  `for {manner}` does.
+- A test that builds the old text in the same form changes with it. A test that asserts the
+  text in another form changes by hand, as two tests of `test_record.nim` do.
+- Verified by `suites/test_messages.nim`.

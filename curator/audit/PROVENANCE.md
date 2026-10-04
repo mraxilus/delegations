@@ -1938,19 +1938,6 @@ rules are the I.4 tables, the IV.4 messages, the X.4 conditions, the profiler im
 `to<Target>` calls. The static pass does not run their checks yet, as with the layout checks. So
 a project clears their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
-**A message echoes each value after `got` in backticks (IV.4).** The check reads the
-concatenation from the literal that holds `; got ` to its end. Each interpolation and each
-operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
-such as `got none.`, echoes no value and is no finding.
-
-- The fixer puts a backtick on each side of a bare value, inside the literals around it. A value
-  that ends the message has no literal after it, and stays for the hand.
-- The rule reads every value of the tail, so a context after the value takes backticks too, as
-  `for {manner}` does.
-- A test that builds the old text in the same form changes with it. A test that asserts the
-  text in another form changes by hand, as two tests of `test_record.nim` do.
-- Verified by `suites/test_messages.nim`.
-
 **A condition that mixes `and` with `or` takes parentheses around each `and` (X.4).** The parser
 already groups it so, because `and` binds tighter than `or`. So the parentheses move no reading.
 The check reads an expression on tokens, at one bracket depth, between delimiters. A command call
