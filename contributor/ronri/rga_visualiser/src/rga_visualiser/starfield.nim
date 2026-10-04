@@ -2,7 +2,8 @@
 ##
 ## Reaches same 31.53 parsecs `neighbourhood.nim` does.
 ## Data only, written once by tool that stays in tree this project was ported from.
-##   Kept here as written; fence keeps `koch fix` out of data (X.1).
+##   Kept here as written, less `12` composite entries cut by hand by tool's own rule;
+##   fence keeps `koch fix` out of data (X.1).
 ##   Nothing here is chosen; it is snapshot of SIMBAD, taken once and shipped, as
 ##   `neighbourhood.nim` ships one of NASA Exoplanet Archive and `ramp.nim` one of
 ##   published colour map.
@@ -21,9 +22,10 @@
 ##   `otype = '*..'` is SIMBAD's star hierarchy, so brown and white dwarfs are included
 ##   with main-sequence stars: census of neighbourhood, not cut of it.
 ##     Filter is named so it can be re-run.
-## `11252` stars, ordered outward from Sol, of `11432` query returned.
-##   Other `180` are composite entries, doubles and multiples whose components stand here.
-##   Cut is tool's, not query's, so query alone returns them too.
+## `11240` stars, ordered outward from Sol, of `11432` query returned.
+##   Other `192` are composite entries, doubles and multiples whose components stand here.
+##   Cut is not query's, so query alone returns them too.
+##     Tool cut `180`; `PROVENANCE.md` names other `12` and rule that cut them.
 ## This is one layer that says where anything is.
 ##   `neighbourhood.nim` carries its own coordinates and distances; where two disagree
 ##   this one is right.
@@ -53,7 +55,7 @@ type
 
 
 #!fix off
-const STARS*: array[11252, Star] = [
+const STARS*: array[11240, Star] = [
   Star(name: "NAME Proxima Centauri", parsecs: 1.3020, ascension: 217.42894,
     declination: -62.67949, planets: 2, first: 0),
   Star(name: "* alf Cen A", parsecs: 1.3475, ascension: 219.90206,
@@ -3504,8 +3506,6 @@ const STARS*: array[11252, Star] = [
     declination: -67.83259, planets: 0, first: 0),
   Star(name: "LP  497-33", parsecs: 16.3934, ascension: 198.58490,
     declination: 13.33361, planets: 0, first: 0),
-  Star(name: "HD  40887", parsecs: 16.3934, ascension: 90.08135,
-    declination: -31.02878, planets: 0, first: 0),
   Star(name: "LP   25-2", parsecs: 16.3937, ascension: 278.96587,
     declination: 80.09433, planets: 0, first: 0),
   Star(name: "* alf Cir", parsecs: 16.3953, ascension: 220.62675,
@@ -3682,8 +3682,6 @@ const STARS*: array[11252, Star] = [
     declination: 18.93484, planets: 0, first: 0),
   Star(name: "2MASS J10433508+1213149", parsecs: 16.6945, ascension: 160.89618,
     declination: 12.22083, planets: 0, first: 0),
-  Star(name: "2MASS J09153413+0422045", parsecs: 16.6945, ascension: 138.89224,
-    declination: 4.36794, planets: 0, first: 0),
   Star(name: "WISE J030237.56-581740.2", parsecs: 16.6945, ascension: 45.65573,
     declination: -58.29439, planets: 0, first: 0),
   Star(name: "CD-42   469", parsecs: 16.6952, ascension: 20.39414,
@@ -4138,8 +4136,6 @@ const STARS*: array[11252, Star] = [
     declination: 54.21146, planets: 0, first: 0),
   Star(name: "Wolf 1450", parsecs: 17.3128, ascension: 82.46676,
     declination: -3.44169, planets: 0, first: 0),
-  Star(name: "StM 162", parsecs: 17.3310, ascension: 178.04089,
-    declination: 3.95648, planets: 0, first: 0),
   Star(name: "L   74-208", parsecs: 17.3376, ascension: 243.27469,
     declination: -70.15225, planets: 0, first: 0),
   Star(name: "UPM J0850-2822", parsecs: 17.3436, ascension: 132.54208,
@@ -6086,8 +6082,6 @@ const STARS*: array[11252, Star] = [
     declination: -57.35800, planets: 0, first: 0),
   Star(name: "BD-05  4394", parsecs: 19.7819, ascension: 255.70661,
     declination: -6.06840, planets: 0, first: 0),
-  Star(name: "NAME BD-21 1074BC", parsecs: 19.7902, ascension: 76.70614,
-    declination: -21.58438, planets: 0, first: 0),
   Star(name: "BD-21  1074B", parsecs: 19.7928, ascension: 76.70610,
     declination: -21.58425, planets: 0, first: 0),
   Star(name: "TWA 22", parsecs: 19.7936, ascension: 154.36205,
@@ -6164,8 +6158,6 @@ const STARS*: array[11252, Star] = [
     declination: 61.24359, planets: 0, first: 0),
   Star(name: "2MASS J08334323-5336417", parsecs: 19.8497, ascension: 128.42998,
     declination: -53.61146, planets: 0, first: 0),
-  Star(name: "StM 187", parsecs: 19.8527, ascension: 205.44295,
-    declination: 58.25550, planets: 0, first: 0),
   Star(name: "SCR J1159-4256", parsecs: 19.8563, ascension: 179.90693,
     declination: -42.94418, planets: 0, first: 0),
   Star(name: "LP  346-21", parsecs: 19.8589, ascension: 350.99970,
@@ -7470,8 +7462,6 @@ const STARS*: array[11252, Star] = [
     declination: 54.49014, planets: 0, first: 0),
   Star(name: "EGGR 482", parsecs: 21.2466, ascension: 66.58624,
     declination: 4.54184, planets: 0, first: 0),
-  Star(name: "BPM 14175", parsecs: 21.2495, ascension: 324.48193,
-    declination: -63.71193, planets: 0, first: 0),
   Star(name: "PM J15552-1010", parsecs: 21.2531, ascension: 238.81030,
     declination: -10.17306, planets: 0, first: 0),
   Star(name: "LP  676-30", parsecs: 21.2539, ascension: 193.45284,
@@ -8322,8 +8312,6 @@ const STARS*: array[11252, Star] = [
     declination: 38.79150, planets: 0, first: 0),
   Star(name: "LP  729-55", parsecs: 22.1115, ascension: 154.65085,
     declination: -11.71728, planets: 0, first: 0),
-  Star(name: "* mu. Cyg", parsecs: 22.1138, ascension: 326.03574,
-    declination: 28.74263, planets: 0, first: 0),
   Star(name: "HD 190470", parsecs: 22.1147, ascension: 301.04186,
     declination: 25.79023, planets: 0, first: 0),
   Star(name: "UPM J1601-4140", parsecs: 22.1203, ascension: 240.46505,
@@ -10656,8 +10644,6 @@ const STARS*: array[11252, Star] = [
     declination: 15.08047, planets: 0, first: 0),
   Star(name: "UPM J1852+1918", parsecs: 23.9790, ascension: 283.19305,
     declination: 19.31392, planets: 0, first: 0),
-  Star(name: "Smethells 177", parsecs: 23.9808, ascension: 13.34938,
-    declination: -41.23850, planets: 0, first: 0),
   Star(name: "G 271-110", parsecs: 23.9814, ascension: 24.22990,
     declination: -6.79389, planets: 0, first: 0),
   Star(name: "UCAC4 343-072291", parsecs: 23.9848, ascension: 217.79256,
@@ -11186,8 +11172,6 @@ const STARS*: array[11252, Star] = [
     declination: 36.50183, planets: 0, first: 0),
   Star(name: "PM J16016-2625", parsecs: 24.4482, ascension: 240.41561,
     declination: -26.42108, planets: 0, first: 0),
-  Star(name: "BD+49  2959", parsecs: 24.4499, ascension: 288.02094,
-    declination: 49.85575, planets: 0, first: 0),
   Star(name: "2MASS J08583467+3256275", parsecs: 24.4499, ascension: 134.64447,
     declination: 32.94099, planets: 0, first: 0),
   Star(name: "ULAS J095429.91+062309.9", parsecs: 24.4499, ascension: 148.62391,
@@ -13646,8 +13630,6 @@ const STARS*: array[11252, Star] = [
     declination: 56.01037, planets: 0, first: 0),
   Star(name: "LSPM J0603+3019", parsecs: 26.3079, ascension: 90.95557,
     declination: 30.32246, planets: 0, first: 0),
-  Star(name: "* zet UMa", parsecs: 26.3089, ascension: 200.98142,
-    declination: 54.92535, planets: 0, first: 0),
   Star(name: "UCAC4 365-067139", parsecs: 26.3098, ascension: 220.29331,
     declination: -17.08882, planets: 0, first: 0),
   Star(name: "UCAC4 457-060061", parsecs: 26.3115, ascension: 251.08570,
@@ -16514,8 +16496,6 @@ const STARS*: array[11252, Star] = [
     declination: 28.52494, planets: 0, first: 0),
   Star(name: "LP  600-8", parsecs: 28.1689, ascension: 95.06395,
     declination: -0.39422, planets: 0, first: 0),
-  Star(name: "* zet Aqr", parsecs: 28.1690, ascension: 337.20795,
-    declination: -0.01994, planets: 0, first: 0),
   Star(name: "Ross   83", parsecs: 28.1690, ascension: 141.39788,
     declination: 18.67134, planets: 0, first: 0),
   Star(name: "2MASS J07473990+2035378", parsecs: 28.1731, ascension: 116.91624,
@@ -17676,8 +17656,6 @@ const STARS*: array[11252, Star] = [
     declination: -24.00526, planets: 0, first: 0),
   Star(name: "PM J20382+2307", parsecs: 28.9267, ascension: 309.55999,
     declination: 23.13124, planets: 0, first: 0),
-  Star(name: "BD+32  4747", parsecs: 28.9268, ascension: 359.87205,
-    declination: 33.72386, planets: 0, first: 0),
   Star(name: "HD  61033", parsecs: 28.9268, ascension: 113.61681,
     declination: -52.96816, planets: 0, first: 0),
   Star(name: "HD  89906B", parsecs: 28.9281, ascension: 155.68200,

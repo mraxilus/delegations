@@ -12,7 +12,9 @@ import type { Page } from '@playwright/test';
 import { MILLISECONDS_FRAME, advance, evaluateOver, isSimulated, waitUntil } from './clock';
 import { placeCamera, readPlaced, settleCamera } from './camera';
 import { readCanvas, settleCanvas, type Spot } from './canvas';
+import { waitFrames } from './frame';
 import { report } from './report';
+import { differenceOf, LIFT_LEAST } from './veil';
 
 /** Kinds preset must carry, each of which draws something. */
 const KINDS_DRAWING = [
@@ -306,9 +308,42 @@ export async function driveFarSky(page: Page): Promise<void> {
  *  behind eye against far plane beside disc's centre: disc ended at hard chord below its
  *  centre wherever camera stood inside it, as it does after any click on body in it.
  *  Clip position keeps projective depth now; logarithm is written per fragment only.
+ *  Each stance is read with ecliptic shown and again with it hidden, and every spot must
+ *  move by `LIFT_LEAST`: spots of one reading agree with each other where no disc is drawn
+ *  at all, so comparing them alone passes with every disc draw skipped.
  */
 export async function driveDiscUnderfoot(page: Page): Promise<void> {
+  const luminance = (rgba: number[]): number =>
+    0.2126 * (rgba[0] ?? 0) + 0.7152 * (rgba[1] ?? 0) + 0.0722 * (rgba[2] ?? 0);
+  // Read spots with plane and without it, then show it again; hiding is page's own edit, and
+  //   frame after it builds scene again.
+  const readLifted = async (
+    handle: number, spots: Spot[],
+  ): Promise<{ shown: number[]; lifts: number[] }> => {
+    const shown = await readCanvas(page, spots);
+    await page.evaluate((one) => nimSetVisible(one, false), handle);
+    await waitFrames(page, 2);
+    const without = await readCanvas(page, spots);
+    await page.evaluate((one) => nimSetVisible(one, true), handle);
+    await waitFrames(page, 2);
+    return {
+      shown: shown.spots.map((one) => luminance(one ?? [])),
+      lifts: spots.map((_, i) => differenceOf(shown.spots[i] ?? [], without.spots[i] ?? [])),
+    };
+  };
+  const saidLifts = (lifts: number[]): string =>
+    `; it moves each spot by ${lifts.join(', ')} off the canvas without it, ` +
+    `${LIFT_LEAST} or more wanted`;
+
+  const claim = "the plane's disc reaches under a camera standing inside it";
   const before = await readPlaced(page);
+  const plane = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectLabel(one) === 'ecliptic sol') ?? -1,
+  );
+  if (plane < 0) {
+    report(claim, false, 'no ecliptic of Sol in the loaded demo');
+    return;
+  }
   // Ecliptic's disc reaches `EXTENT_PLANE` units from Sol; eye 1.5 units off Sol and 0.3 rad
   //   up stands well inside, so half of rim lies behind eye and plane runs on under camera.
   await page.evaluate(() => nimSelectClear());
@@ -317,35 +352,32 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
   await advance(page, 400);
   // One spot past Sol, on disc's far half; three below, where disc runs under camera toward
   //   near plane. All clear of world axes through centre and of demo's dots.
-  const spots: [number, number][] = [[500, 400], [450, 650], [350, 800], [750, 750]];
-  const reading = await readCanvas(page, spots);
-  const luminance = (rgba: number[]): number =>
-    0.2126 * (rgba[0] ?? 0) + 0.7152 * (rgba[1] ?? 0) + 0.0722 * (rgba[2] ?? 0);
-  const readings = reading.spots.map((one) => luminance(one ?? []));
-  const past = readings[0] ?? 0;
-  const under = readings.slice(1);
+  const spots: Spot[] = [[500, 400], [450, 650], [350, 800], [750, 750]];
+  const first = await readLifted(plane, spots);
+  const past = first.shown[0] ?? 0;
+  const under = first.shown.slice(1);
   const gap = Math.max(...under.map((one) => Math.abs(one - past)));
-  // Disc's veil lifts luminance well over bare backdrop's 19; chord cut left every spot under
-  //   camera at backdrop.
+  // Chord cut left every spot under camera at sky behind it, and skipped draw leaves every spot
+  //   there: equal readings hold no chord, and each spot's move holds that disc is drawn.
   report(
-    "the plane's disc reaches under a camera standing inside it",
-    gap <= 3,
+    claim,
+    gap <= 3 && first.lifts.every((one) => one >= LIFT_LEAST),
     `disc past Sol reads ${past.toFixed(1)}, under camera ` +
-      `${under.map((one) => one.toFixed(1)).join(', ')}; bare backdrop reads 19`,
+      `${under.map((one) => one.toFixed(1)).join(', ')}` + saidLifts(first.lifts),
   );
   // Second stance grazes plane, 0.0003 rad up: eye stands one eighth of near plane's
   //   distance off it, where fan's own near cut ended disc one third of way down.
   await placeCamera(page, { eye: [1.5, 0, 0.00045], pivot: [0, 0, 0] });
   await settleCamera(page);
   await advance(page, 400);
-  const grazing = (await readCanvas(page, spots.slice(1))).spots
-    .map((one) => luminance(one ?? []));
-  const gap_grazing = Math.max(...grazing.map((one) => Math.abs(one - past)));
+  const grazing = await readLifted(plane, spots.slice(1));
+  const gap_grazing = Math.max(...grazing.shown.map((one) => Math.abs(one - past)));
   report(
     "the plane's disc holds under a grazing camera",
-    gap_grazing <= 3,
-    `under camera 0.0003 rad over plane ${grazing.map((one) => one.toFixed(1)).join(', ')}, ` +
-      `against ${past.toFixed(1)} past Sol`,
+    gap_grazing <= 3 && grazing.lifts.every((one) => one >= LIFT_LEAST),
+    `under camera 0.0003 rad over plane ` +
+      `${grazing.shown.map((one) => one.toFixed(1)).join(', ')}, ` +
+      `against ${past.toFixed(1)} past Sol` + saidLifts(grazing.lifts),
   );
   await placeCamera(page, before);
   await settleCamera(page);
