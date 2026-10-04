@@ -80,21 +80,21 @@ template defineKind(name: untyped; count: static int; alignment: static int) =
     for k in 0..<count: result.elements[k] = -a.elements[k]
 
 
-template timeKind(T: typedesc; label: string) =
+template timeKind(kind: typedesc; label: string) =
   ## Time sum and negation of kind over `seq`, slot i paired with (7i + 3).
   block:
-    proc run(pool: seq[T]; results: var seq[T]) {.noinline.} =
+    proc run(pool: seq[kind]; results: var seq[kind]) {.noinline.} =
       ## Time both operations in procedure of their own.
-      timeRounds("kind " & label & " size " & $sizeof(T) & " add"):
+      timeRounds("kind " & label & " size " & $sizeof(kind) & " add"):
         for i in 0..<OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           results[i] = pool[i] + pool[j]
-      timeRounds("kind " & label & " size " & $sizeof(T) & " negate"):
+      timeRounds("kind " & label & " size " & $sizeof(kind) & " negate"):
         for i in 0..<OBJECTS:
           results[i] = -pool[i]
     var
-      pool = newSeq[T](OBJECTS)
-      results = newSeq[T](OBJECTS)
+      pool = newSeq[kind](OBJECTS)
+      results = newSeq[kind](OBJECTS)
     for i in 0..<OBJECTS:
       for k in 0..<pool[i].elements.len: pool[i].elements[k] = gauss()
     run(pool, results)

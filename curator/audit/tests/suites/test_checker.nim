@@ -92,7 +92,7 @@ suite "Checker":
     # koch learns which verbs project carries by reading its driver (`plan.nim`, `verbDirectories`),
     #   so line opening dispatch is given rather than fixed. Project cases over its first
     #   argument where koch cases over parsed options.
-    const DRIVER = """
+    const driver = """
 when isMainModule:
   case paramStr(1)
   of "web": web()
@@ -100,8 +100,8 @@ when isMainModule:
   else:
     stderr.write USAGE
 """
-    check DRIVER.dispatchVerbs(DRIVER_CASE) == @["drive", "web"]
-    check DRIVER.dispatchVerbs.len == 0  # koch's own opening matches nothing here
+    check driver.dispatchVerbs(DRIVER_CASE) == @["drive", "web"]
+    check driver.dispatchVerbs.len == 0  # koch's own opening matches nothing here
     check KOCH.dispatchVerbs(DRIVER_CASE).len == 0  # and neither way round
     check dispatchVerbs("", DRIVER_CASE).len == 0  # project carrying no driver at all
 
