@@ -893,10 +893,20 @@ beside the section that each title comes from.
 - Cost: the pattern is `jq` inside shell, as the role-line pattern is, so no suite drives it.
 
 **The ledger names a closed item that still carries the `architect` label.** The label marks a
-state, and not a role. An item carries it while it waits on the Architect, and the coordinator
-removes it once the ruling is posted (`COORDINATOR.md`, The queue). A closed item that still
-carries it is a removal that the coordinator missed, and the next filter on the label shows a
-stale queue.
+state, and not a role. A delegate adds it to its own item that waits on the Architect, and
+removes it once the ruling is posted (`CONTRIBUTOR.md`, Boundaries). `architect.yml` removes it
+from an item that closes, because the delegate that asked has often ended by the merge. So a
+closed item that still carries it marks a failed run of that workflow. The next filter on the
+label would show a stale queue.
+
+- **The workflow fires on a close alone, and never on a return to draft.** A decision can wait
+  on a draft pull request, and a label removed there would hide it from the Architect. Rejected:
+  removal on `converted_to_draft`, which `draft.yml` fires on each push to a ready pull request.
+- The workflow reads the labels before it removes one, so an item whose label somebody removed
+  first is no failure.
+- Its grant is `issues: write` alone. The labels of a pull request go through the issues
+  endpoint, which takes either the issues grant or the pull requests grant. That is inferred
+  from the reference of the endpoint, and the first labelled pull request to merge verifies it.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
@@ -2072,7 +2082,7 @@ that holds it. The events, each one a verb argument:
 
 **`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
-(`GUIDE.md`, Independent changes run in subagents). The checkout of a write is the one that
+(`GUIDE.md`, Work for subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
 names, else the working directory of the call. A directory outside this repository falls
 back to the primary checkout.
