@@ -76,10 +76,12 @@ proc countLaws(): int =
   ## Count tests, by reading suite rather than remembering number.
   ##   Reads every `t*.nim` under `tests/`, stubs and suites they import alike, relative
   ##     to project directory, where testament runs; run from elsewhere it counts nothing.
+  ##   Counts each line that opens law, as `test_review.nim` does.  That law also refuses
+  ##     law named at run time, whose line hides how many laws it makes.
   for path in walkDirRec("tests"):
     if path.endsWith(".nim") and path.extractFilename.startsWith('t'):
       for line in readFile(path).splitLines:
-        if line.strip().startsWith("test \""):
+        if line.strip().startsWith("test "):
           inc result
 
 
