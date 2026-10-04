@@ -429,6 +429,48 @@ suite "Names":
     check abbreviationRenames(binding, []).len == 0  # V.6, `DIR_FONTS` is use, never declaration
 
 
+  test "V.10 entry block moves into documented `proc main`, and block calls it":
+    const
+      entry = "import std/os\n\n\nwhen isMainModule:\n  let verb = paramStr(1)\n" &
+        "  for path in [verb]:\n    echo path\n# After block.\n"
+      moved = "import std/os\n\n\nproc main() =\n  ## TODO: Document.\n  let verb = paramStr(1)\n" &
+        "  for path in [verb]:\n    echo path\n\n\nwhen isMainModule:\n  main()\n# After block.\n"
+    let fix = fixBlockEntry("a.nim", entry)
+    check fix.source == moved  # V.10
+    check fix.fixed.mapIt(it.line) == @[5, 6]  # V.10, each binding check names
+    check fix.origin == @[1, 2, 3, 0, 0, 5, 6, 7, 0, 0, 4, 0, 8, 9]  # report traces to source
+    check entry.breaches.len == 2 and moved.breaches.len == 0  # V.10
+    check fixBlockEntry("a.nim", moved).source == moved  # V.10, second fix changes nothing
+    const branched = "when isMainModule:  # Run.\n  let a = 1\n  echo a\nelse:\n  discard\n"
+    check fixBlockEntry("a.nim", branched).source == "proc main() =\n  ## TODO: Document.\n" &
+      "  let a = 1\n  echo a\n\n\nwhen isMainModule:  # Run.\n  main()\nelse:\n  discard\n"
+    const nested = "when isMainModule:\n  let code = run()\n  if code != 0: quit code\n"
+    check nested.blockEntry.refusal.len == 0  # V.10, `quit` inside branch moves
+
+
+  test "V.10 entry block stays where routine would read it otherwise, and refusal says why":
+    let refused = [
+      ("when isMainModule:\n  var count {.global.} = 0\n",
+        "`{.global.}` binds at module level alone"),
+      ("when isMainModule:\n  let code = run()\n  quit code\n",
+        "`quit` at block's own indent returns value, which `quit main()` would carry"),
+      (ENTRY_BINDS, "`main` stands in module already"),
+      ("when isMainModule and defined(js):\n  let a = 1\n",
+        "`when isMainModule and defined(js):` guards more than `isMainModule`"),
+      ("when isMainModule:\n  import std/os\n  let a = paramStr(1)\n",
+        "`import` stands at module level alone"),
+      ("when isMainModule:\n  proc shown*() = discard\n  let a = 1\n",
+        "export marker of `shown` stands at module level alone"),
+      ("when isMainModule:\n  let a = 1\nwhen isMainModule:\n  echo 2\n",
+        "module holds `2` entry blocks"),
+    ]
+    for (source, refusal) in refused:
+      check source.blockEntry.refusal == refusal  # V.10
+      check fixBlockEntry("a.nim", source).source == source  # V.10, block stays
+    check ENTRY_CALLS.blockEntry.refusal.len == 0  # V.10, block binding nothing moves nothing
+    check fixBlockEntry("a.nim", ENTRY_CALLS).source == ENTRY_CALLS  # V.10
+
+
   test "exemptions are jargon, root glossary and glossary of path's own project":
     let glossaries = @[
       ("GLOSSARY.md", "# R\n\n## Standards\n\n- **S**: `ms`.\n\n## Language\n"),

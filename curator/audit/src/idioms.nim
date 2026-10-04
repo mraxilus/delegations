@@ -156,7 +156,6 @@ const
   PROFILER_GUARD = "when compileOption(\"profiler\"):"
     ## First line of profiler import written on two lines.
   PROFILER_MODULE = "import std/nimprof"  ## Second line of that form, indented under first.
-  MAIN_GUARD = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
   IMPORT_MARK = "import "  ## Opening of import statement at module level.
   RETURN_RESULT = "return result"
     ## Statement STYLE.md §5 bans, since bare `return` exits with `result`.

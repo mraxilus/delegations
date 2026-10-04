@@ -245,6 +245,31 @@ suite "Fixes":
     check alone.left[0].message.endsWith("; got `ctx`.")
 
 
+  test "entry block moves into `proc main` through fix, or stays for hand with its reason":
+    let
+      path = "curator/audit/src/a.nim"
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & PROFILER_IMPORT & "\n\n"
+      plan = fixEntries(
+        CURATOR_BRANCH,
+        [entry(path, head & "when isMainModule:\n  let count = 1\n  echo count\n")],
+      )
+    check plan.written.mapIt(it.content) == @[
+      head & "proc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
+        "when isMainModule:\n  main()\n",
+    ]  # V.10
+    check plan.fixed.mapIt((it.line, it.message)) == @[(8, "entry block (V.10)")]
+    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
+    let held = fixEntries(
+      CURATOR_BRANCH,
+      [entry(path, head & "when isMainModule:\n  var count {.global.} = 0\n")],
+    )
+    check held.written.len == 0
+    check held.left.mapIt((it.line, it.message)) == @[
+      (8, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+        "`{.global.}` binds at module level alone; got `count`."),
+    ]  # V.10
+
+
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
     let
       nimble = entry(ALPHA_DIRECTORY & "/alpha.nimble", "version = \"0.1.0\" \nlet a = 1+2\n")
