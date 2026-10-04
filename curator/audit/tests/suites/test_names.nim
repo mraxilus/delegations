@@ -423,6 +423,12 @@ suite "Names":
     check checkNames("a.nim", source, JARGON).len == renames.len  # check reads same set
 
 
+  test "tuple binding declares names before `=` alone, never global its value names":
+    const binding = "let (source, destination) = (paths[i], DIR_FONTS / face)\n"
+    check binding.names == @["source", "destination"]  # V.6
+    check abbreviationRenames(binding, []).len == 0  # V.6, `DIR_FONTS` is use, never declaration
+
+
   test "exemptions are jargon, root glossary and glossary of path's own project":
     let glossaries = @[
       ("GLOSSARY.md", "# R\n\n## Standards\n\n- **S**: `ms`.\n\n## Language\n"),
