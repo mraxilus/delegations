@@ -56,7 +56,7 @@ func joined(a, b: JsObject): JsObject {.importjs: "(#).concat(#)".}
 func entriesOn(event: Event): cstring {.importjs:
   "(#).currentTarget.getAttribute('data-entries')".}
   ## Read off cell clicked at time of click: closure made in loop over cells
-  ## saw every cell's number as last one's, and every click chose D7.
+  ## saw every cell's number as last one's, and every click chose D07.
 
 
 func styleOf(name: cstring): cstring {.importjs:

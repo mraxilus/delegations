@@ -42,6 +42,8 @@ const
                    ## measured 6.3 mm, pushed by its own arm resting against torso.
   SLACK = 3.0 * PI / 180.0  ## Engine's limits are solved, not clamped, so joint may
                            ## stand this far past its end for one step and come back.
+  TWINS_SWEPT = 1  ## Pairs of `SWEEPS` that are each other's mirror twin: shake, and left
+                   ## to right as far.
 
 
 type
@@ -89,10 +91,21 @@ proc answered(): Answers =
 proc live(key: string, is_positive: bool): Went
   ## Sweep of `SWEEPS` walked live one way, from distance its kept answer chose.
 
-proc standOf(question: StillAsked): tuple[is_holding: bool, couple: Couple] =
-  ## Couple stood live for still, at distance and way about kept answer gives.
-  let where = answered().stillOf(question.key)
-  stood(HUMAN, Band.Crown, question.links, where.turns, question.is_away, Body.Two, where.apart)
+proc standOf(question: StillAsked): tuple[is_holding: bool, couple: Couple, links: seq[Link]] =
+  ## Couple stood live for still, at distance and way about kept answer gives, and hold
+  ## stood.
+  ##   Simulation answers mirror twin as other twin reflected (`walk.twinOf`), so twin's
+  ##     answer is stood as other twin, which shows same holds, strain and heights.  Twin
+  ##     stood raw there may not hold: right to left at half, either way, stood 0.36 apart
+  ##     wound minus half, does not hold and strains 1.01, where left to right wound plus
+  ##     half is at ease, measured 2026-10-04.
+  let
+    where = answered().stillOf(question.key)
+    twin = twinOf(question.links, question.turns, question.is_away)
+    turns = (if twin.is_reflected: -where.turns else: where.turns)
+    (is_holding, couple) = stood(HUMAN, Band.Crown, twin.links, turns, question.is_away,
+                                 Body.Two, where.apart)
+  (is_holding, couple, twin.links)
 
 func asked(key: string): StillAsked =
   ## Still of `STILLS` by its key.
@@ -386,6 +399,8 @@ suite "Internal: Two dancers in rigid body engine":
     ## correction into shove further out.
     ##   Where couple stand each way is search's answer, kept; how far each walk
     ##     goes from there, and what stops it, is walked live (`live`).
+    ##   Simulation answers R-r as L-l reflected (`walk.twinOf`), so R-r is asked raw:
+    ##     its search and its walks are engine's own, as they were before twins.
     let
       left_to_left = answered().sweepOf("left to left at torso")
       right_to_right = answered().sweepOf("right to right at torso")
@@ -406,6 +421,11 @@ suite "Internal: Two dancers in rigid body engine":
     ## equally far then tie one way for one hold and other way for its mirror.
     ## Turn reached and what stopped it are still held exact below, which is
     ## what caught torque mirrored as vector.
+    ## Way that stood nowhere reads as not stopped at no turn, which matches its mirror
+    ## by nothing, so every way must stand.
+    for went in [left_to_left_positive, left_to_left_negative, right_to_right_positive,
+                 right_to_right_negative]:
+      check went.is_holding
     check abs(left_to_left.positive.apart - right_to_right.negative.apart) < SEEK + 1e-9
     check abs(left_to_left.negative.apart - right_to_right.positive.apart) < SEEK + 1e-9
     check left_to_left_positive.is_stopped == right_to_right_negative.is_stopped
@@ -418,6 +438,36 @@ suite "Internal: Two dancers in rigid body engine":
     check abs(left_to_left_negative.at - right_to_right_positive.at) < STEP + 1e-9
     check left_to_left_positive.why == right_to_right_negative.why
     check left_to_left_negative.why == right_to_right_positive.why
+
+
+  test "kept sweep of mirror twin is its other twin's, ways swapped":
+    ## Simulation answers hold whose lead's right comes first as its mirror twin reflected
+    ## (`walk.twinOf`): way that turns positive is twin's that turns negative, and
+    ## distance, turn reached and what stopped it are twin's own, to last bit.
+    ##   Pair is one engine does not mirror exactly: in `design/turns.json` of `9bbf656`,
+    ##     shake walked raw reaches 1.36 turns one way, where left to right reaches 1.34
+    ##     other way.  So law fails where twin is answered raw, as it was before twins.
+    var pairs = 0
+    let given = answered()
+    for question in SWEEPS:
+      let twin = twinOf(question.links, 1.0, false)
+      if question.is_raw or not twin.is_reflected: continue
+      for other in SWEEPS:
+        if other.band != question.band or other.most != question.most or
+           other.links.len != twin.links.len: continue
+        var is_same = true
+        for k in 0..<other.links.len:
+          is_same = is_same and other.links[k].ends == twin.links[k].ends
+        if not is_same: continue
+        inc pairs
+        let (asked, mirror) = (given.sweepOf(question.key), given.sweepOf(other.key))
+        for (way, image) in [(asked.positive, mirror.negative), (asked.negative, mirror.positive)]:
+          check way.is_holding == image.is_holding
+          check way.apart == image.apart
+          check way.is_stopped == image.is_stopped
+          check way.at == image.at
+          check way.why == image.why
+    check pairs == TWINS_SWEPT
 
 
   test "over crown nothing stops single hold turning":
@@ -670,7 +720,7 @@ proc going(id: int) {.thread.} =
   ## Take walks until none is left.
   ##   Holds are constants, so each worker reads its own copy; each walk builds
   ##     its own world; only numbers come back.  List of strings and sequences
-  ##     read by four threads is what `design/modelled.nim` records dying of.
+  ##     read by four threads is what `design/record.nim` records dying of.
   {.cast(gcsafe).}:
     while true:
       let i = GO_NEXT.fetchAdd(1)
@@ -679,8 +729,11 @@ proc going(id: int) {.thread.} =
       if task.is_sweep:
         let
           question = SWEEPS[task.index]
-          walk = walked(HUMAN, question.band, question.links, Body.Two, task.apart, question.most,
-                     (if task.is_positive: STEP else: -STEP), false, Body.Two)
+          step = (if task.is_positive: STEP else: -STEP)
+          walk = (if question.is_raw: walkedOf(HUMAN, question.band, question.links, Body.Two,
+                                               task.apart, question.most, step, false, Body.Two)
+                  else: walked(HUMAN, question.band, question.links, Body.Two, task.apart,
+                               question.most, step, false, Body.Two))
         WENTS[i] = wentOf(walk, question.links)
       else:
         let
@@ -701,8 +754,8 @@ proc going(id: int) {.thread.} =
 proc walkEveryWay() =
   ## Walk, on every core at once, every way of every sweep from its kept distance,
   ## and two walks of `WALKS` drawn by stamp from their kept distances.
-  ##   Laws read ten of those twelve ways between them, and law of answers reads
-  ##     all twelve; walked one after another they cost 14.5 s of one law's time,
+  ##   Laws read nine of those fourteen ways between them, and law of answers reads
+  ##     all fourteen; twelve walked one after another cost 14.5 s of one law's time,
   ##     measured 2026-09-24.  Way whose search found no distance is not walked.
   if GOES.len > 0: return
   let given = answered()
@@ -728,7 +781,8 @@ proc walkEveryWay() =
 proc live(key: string, is_positive: bool): Went =
   ## Walk is simulation's own, on this build: only where couple stand comes from
   ##   answers.  `walked` builds its own world, so it walks exactly what search
-  ##   walked from that distance.
+  ##   walked from that distance.  Raw question is walked on engine as it is
+  ##   (`walkedOf`), as its search was.
   ##   Way whose search found no distance to stand at is not walked, and reads
   ##   as hold that did not stand.
   walkEveryWay()
@@ -918,7 +972,7 @@ proc poses(): seq[Posed] =
   ##   Two laws stood same eight poses each, 6.2 s apiece, measured 2026-09-24.
   if STILLS_POSED.len == 0:
     for question in STILLS[0..<CORPUS]:
-      let (is_holding, couple) = standOf(question)
+      let (is_holding, couple, _) = standOf(question)
       var still: Posed = (question.key, is_holding, Strain(), 0.0, "", 0.0, 0.0)
       if is_holding:
         still.strain = couple.strainOf
@@ -991,7 +1045,7 @@ suite "Internal: Every still stands at ease":
 
 
   test "free couple wound half a turn hang their arms by their sides":
-    ## Same, wound to A2: follow's arms come along with turn and hang again once
+    ## Same, wound to A02: follow's arms come along with turn and hang again once
     ## it stops.  Before this, shoulder's spring at one hertz held hanging arm
     ## with two newton metres per radian, and follow's arms lagged slow half
     ## turn by twenty five and forty nine degrees, then crept back through
@@ -1037,7 +1091,7 @@ suite "Internal: Every still stands at ease":
     ## was wound from hold at hip.
     let question = asked("same-name at rest")
     check answered().stillOf(question.key).is_holding
-    let (holds, couple) = standOf(question)
+    let (holds, couple, _) = standOf(question)
     check holds
     for link in answers.CHAIN:
       for hand in link.ends:
@@ -1046,7 +1100,7 @@ suite "Internal: Every still stands at ease":
 
 
   test "hands are up only while couple are not face to face, whole turns and all":
-    ## Architect, on A9, wound half turn from pillion rest to face to face with
+    ## Architect, on A09, wound half turn from pillion rest to face to face with
     ## hands still over heads: modelled but unnatural.  Relaxed position facing
     ## is hands at mid torso; pillion or back to back they have to be above;
     ## facing, arms naturally come down.  Whole turns fold away: couple wound
@@ -1084,15 +1138,14 @@ suite "Internal: Every still stands at ease":
   test "facing couple rest their joined hands at mid torso":
     ## Same ruling, on couple as they stand: cross-name chain at its face to
     ## face rest, and same-name chain wound half turn from pillion rest to face
-    ## to face (A9), hold with every joined hand in torso band.  Before, A9
+    ## to face (A09), hold with every joined hand in torso band.  Before, A09
     ## stood at 0.60 m with every hand over crown.
     for name in ["cross-name at +0.0", "same-name at half"]:
       let
         question = asked(name)
-        links = question.links
         where = answered().stillOf(name)
       check where.is_holding
-      let (holds, couple) = standOf(question)
+      let (holds, couple, links) = standOf(question)
       check holds
       for link in links:
         for hand in link.ends:
@@ -1109,8 +1162,8 @@ suite "Internal: Every still stands at ease":
     ## than way asked alone.
     ##   Both searches' answers are kept; each pose is stood live there.
     let
-      (is_asked_holding, asked_at) = standOf(asked("right to left at half"))
-      (is_free_holding, free_at) = standOf(asked("right to left at half, either way"))
+      (is_asked_holding, asked_at, _) = standOf(asked("right to left at half"))
+      (is_free_holding, free_at, _) = standOf(asked("right to left at half, either way"))
       (asked_way, free_way) = (answered().stillOf("right to left at half"),
                              answered().stillOf("right to left at half, either way"))
       (asked_strain, free_strain) = (asked_at.strainOf, free_at.strainOf)

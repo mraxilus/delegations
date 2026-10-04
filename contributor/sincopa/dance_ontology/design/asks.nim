@@ -64,8 +64,8 @@ func asked*(wind: float): float = -wind
   ## Page's turn as simulation's.  Page counts clockwise seen from above
   ## (`rotation.wayOf`, "how drawings see couple"); simulation counts anticlockwise
   ## (`body.turned`).  Every wind is flipped here, in one place, before it is
-  ## asked: flipped for chains alone, A16 was stood in C3's pose and A17 in
-  ## C5's, mirror of what each card draws, and every single-hand card likewise.
+  ## asked: flipped for chains alone, A16 was stood in C03's pose and A17 in
+  ## C05's, mirror of what each card draws, and every single-hand card likewise.
 
 func restOf*(target: Frame): Facing = restOf(holdsOf(target))
   ## Name facing frame rests at.  Same reading `review_page` makes, by
@@ -124,7 +124,7 @@ func stillAsks*(): seq[StillAsk] =
   #   Frame that names one connection over turns whichever way puts that one over, as
   #     chain names its positions (`route.overArm`): left over at positive wind.  So it
   #     fixes way about, though it draws same picture either way: drawing puts frame's own
-  #     connection over whichever way couple turned.  Asked either way, A11 stood A9's
+  #     connection over whichever way couple turned.  Asked either way, A11 stood A09's
   #     crossing, left over right.
   func senseOf(target: Frame): float =
     ## Say which way frame's half turn goes: right over winds other way.
@@ -134,7 +134,7 @@ func stillAsks*(): seq[StillAsk] =
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
       result.add StillAsk(
-        key: &"A{i * 2 + twist + 1}",
+        key: &"A{i * 2 + twist + 1:02}",
         links: linksOf(holdsOf(target)),
         turns: asked(senseOf(target) * amount),
         rest: restOf(target),
@@ -173,7 +173,7 @@ func stillAsks*(): seq[StillAsk] =
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
     for i, wind in STEPS:
       result.add StillAsk(
-        key: tag & $(i + 1),
+        key: &"{tag}{i + 1:02}",
         links: linksOf(arms),
         turns: asked(wind),
         rest: restOf(arms),

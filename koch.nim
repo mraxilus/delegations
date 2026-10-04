@@ -302,6 +302,7 @@ proc runHook(root, event, input: string): int =
       if data{"stop_hook_active"}.getBool: return 0
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
       var found = checkNumbersBare(turn.text)
+      found.add checkReferencesBare(turn.text)
       if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch)
       if found.len == 0: return 0
       echo %*{"decision": "block", "reason": "Mend message that ends this turn (GUIDE.md, " &

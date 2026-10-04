@@ -330,11 +330,13 @@ you do it.
 
 ### The sign-off
 
-**Sign off only when you stop**: when nothing is left, or when nothing moves until someone
-else acts. The message that ends that turn, and the message of a handover, closes with one
-block, `## Sign-off`. Nothing follows it.
+**Sign off when you stop, and when a pull request goes ready.** You stop when nothing is left,
+or when nothing moves until someone else acts. A pull request that you mark ready waits on the
+Architect, so that turn signs off as `waiting`, even while other work goes on. Each run and
+subagent that has not reported is then a row of the table. The message that ends that turn, and
+the message of a handover, closes with one block, `## Sign-off`. Nothing follows it.
 
-**A turn that ends while your work goes on does not sign off.** A run or a subagent that has
+**Any other turn that ends while your work goes on does not sign off.** A run or a subagent that has
 not reported is such work. Where that turn pushed or posted, its message closes with one line
 instead. The line opens `**Working:**`, then names what runs and what wakes you:
 
@@ -343,6 +345,13 @@ instead. The line opens `**Working:**`, then names what runs and what wakes you:
 ```
 
 The `stop` hook refuses a turn that pushed or posted and closes with neither.
+
+**A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
+the notice that the pull request you marked ready is ready. So is an event that leaves each
+state as it was. Where that turn pushed and posted nothing, and your working line would read as
+before, end the turn with no message. Where the harness asks for a message, write `No change.`
+and nothing else. Your last working line still stands, so the Architect does not read the same
+line twice.
 
 The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
 The block says who the delegate is and what it works on, then what happened, then where it
@@ -362,7 +371,8 @@ compaction, read the same block. Its parts come in this order:
    - `waiting`: nothing moves until another delegate or an outside party acts.
    - `done`: nothing is left.
 
-   Each word is a stop. Work that goes on takes the working line, and no sign-off.
+   Each word is a stop, or a pull request gone ready. Other work that goes on takes the
+   working line, and no sign-off.
 6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
    `**Decisions:** None.` where there is none.
 7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
@@ -393,8 +403,9 @@ Write each decision so that the Architect can decide it from the block alone.
   - `has a workaround: <the workaround>`
   - `fact`, for something the Architect must know and need not decide
 - **Where** is the issue or pull request where the ruling goes. Open one first where none
-  exists, because a ruling in chat alone is lost. Label it `architect` (`CONTRIBUTOR.md`,
-  Boundaries).
+  exists, because a ruling in chat alone is lost. Label it `architect` the moment a decision
+  waits there (`CONTRIBUTOR.md`, Boundaries). Post the ruling there, and take `architect` off in
+  the same step, unless another decision still waits there.
 - **Options** are two to four. A label is at most three words. Each consequence is one sentence
   that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
   has no options, no recommendation and no delay cost.

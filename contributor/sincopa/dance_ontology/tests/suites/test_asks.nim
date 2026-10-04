@@ -5,12 +5,12 @@
 
 import std/[json, math, options, strformat, strutils, tables, unittest]
 
-import ../../design/[asks, modelled, parts, rig_page]
+import ../../design/[asks, modelled, parts, rig_page, twins]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
-from ../../simulation/rigid import restStance
-from ../../simulation/walk import stands, STYLES
+from ../../simulation/rigid import Mark, restStance
+from ../../simulation/walk import stands, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
 from ../../src/dance_ontology/draw/route import overArm
@@ -80,12 +80,12 @@ suite "Internal: What each card asks of simulation":
 
   test "one picture is one question, whichever section draws it":
     ## Standard diagram's A16 is hand to hand wound half turn clockwise, which
-    ## is chain's C5, and A17 is C3.  Asked with opposite signs, simulation stood A16 in
-    ## C3's pose and A17 in C5's, mirror of what each card draws.
-    ##   Crossed pair is chain's own: A9, left to left over right to right Face-to-face, is
-    ##     D5, and A11, right over left, is D3.  Red with crossed pair's half turn asked one
-    ##     way, or either way: A11 stood A9's crossing, measured 2026-10-02.
-    for (frame, chain) in [("A16", "C5"), ("A17", "C3"), ("A9", "D5"), ("A11", "D3")]:
+    ## is chain's C05, and A17 is C03.  Asked with opposite signs, simulation stood A16 in
+    ## C03's pose and A17 in C05's, mirror of what each card draws.
+    ##   Crossed pair is chain's own: A09, left to left over right to right Face-to-face, is
+    ##     D05, and A11, right over left, is D03.  Red with crossed pair's half turn asked one
+    ##     way, or either way: A11 stood A09's crossing, measured 2026-10-02.
+    for (frame, chain) in [("A16", "C05"), ("A17", "C03"), ("A09", "D05"), ("A11", "D03")]:
       checkpoint frame & " against " & chain
       let (frame_ask, chain_ask) = (ask_by_key[frame], ask_by_key[chain])
       check frame_ask.links == chain_ask.links
@@ -96,10 +96,10 @@ suite "Internal: What each card asks of simulation":
 
 
   test "page counts clockwise seen from above, and simulation anticlockwise":
-    ## Chain's C5 is wound half turn clockwise, and simulation turns anticlockwise for
-    ## positive turns, so C5 is asked negative.
-    check ask_by_key["C5"].turns == -0.5
-    check ask_by_key["C3"].turns == 0.5
+    ## Chain's C05 is wound half turn clockwise, and simulation turns anticlockwise for
+    ## positive turns, so C05 is asked negative.
+    check ask_by_key["C05"].turns == -0.5
+    check ask_by_key["C03"].turns == 0.5
     check wayOf(HalfTurns(1)) == Way.Clockwise
 
 
@@ -218,9 +218,11 @@ suite "Internal: Each hold rests at named facing":
 
 
 suite "Internal: Simulation against reference":
+  ## Laws read each still as page shows it, so twin card is read as still it mirrors
+  ##   (`design/twins`).
   let recorded = block:
     var stills = initTable[string, JsonNode]()
-    for still in parseFile(KEPT_RIG)["stills"].getElems: stills[still["key"].getStr] = still
+    for still in stillsShown(parseFile(KEPT_RIG)): stills[still["key"].getStr] = still
     stills
   var ask_by_key = initTable[string, StillAsk]()
   for ask in stillAsks(): ask_by_key[ask.key] = ask
@@ -229,17 +231,17 @@ suite "Internal: Simulation against reference":
   test "every crossed still lays connection its card names over at lead's crossing":
     ## Card is named for lead's arm on top where lead's two arms cross (`route.overArm`):
     ##   crossing nearest lead along both connections.  Frame names its own (`Frame.over`).
-    ##   Red with A11 asked A9's way about, measured 2026-10-02: left over right, where card
+    ##   Red with A11 asked A09's way about, measured 2026-10-02: left over right, where card
     ##     draws right over left.
     var named: seq[(string, Arm)]
     for i, target in FRAMES:
       if target.over.isSome:
-        let key = &"A{i * 2 + 1}"
+        let key = &"A{i * 2 + 1:02}"
         if ask_by_key[key].turns != 0.0:
           named.add (key, (if target.over.get == Side.Left: Arm.Left else: Arm.Right))
     for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
       for i, wind in STEPS:
-        if wind != 0.0: named.add (tag & $(i + 1), armOf(overArm(wind)))
+        if wind != 0.0: named.add (&"{tag}{i + 1:02}", armOf(overArm(wind)))
     check named.len == 14
     for (key, arm) in named:
       let
@@ -258,7 +260,7 @@ suite "Internal: Simulation against reference":
     ## Carried walk tries every distance, and planner every style and way, and each keeps pose
     ##   nearest to ease that holds (`walk.standing`, `walk.plannedStill`).  Search
     ##   ends early only at pose at ease, which nothing betters.
-    ##   Red with first plan that held kept, measured 2026-10-03: C6 stood follow's waist at its
+    ##   Red with first plan that held kept, measured 2026-10-03: C06 stood follow's waist at its
     ##     end, strain 1.00, where other path of same style held at 0.19.
     var distances = 0
     for _ in stands(HUMAN): inc distances
@@ -279,6 +281,73 @@ suite "Internal: Simulation against reference":
       if stood > 0.0: check still["tried"].len == candidates
       inc checked
     check checked == stillAsks().len
+
+
+  test "each reflected twin card names card that keeps answer to its mirror twin":
+    ## Twin card keeps no still of its own (`design/rig`): it names first card that asks its
+    ##   mirror twin unreflected (`walk.twinOf`), and page shows that still mirrored.  Where
+    ##   no card asks it, twin card keeps that answer itself and names itself.
+    ##   Mirror is its own undoing, figure for figure, on every still that holds.
+    let kept = parseFile(KEPT_RIG)
+    var marks, dofs: seq[string]
+    for name in kept["marks"]: marks.add name.getStr
+    for name in kept["dofs"]: dofs.add name.getStr
+    func isAnswerTo(other, ask: StillAsk, links: seq[Link], turns: float): bool =
+      ## Whether `other` asks question that answers twin `ask`, unreflected.
+      not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
+        other.links == links and other.turns == turns and
+        other.isRestAway == ask.isRestAway and other.head == ask.head and
+        other.is_either_way == ask.is_either_way and other.who == ask.who
+    var twins, keeping = 0
+    for still in kept["stills"]:
+      let
+        ask = ask_by_key[still["key"].getStr]
+        twin = twinOf(ask.links, ask.turns, ask.isRestAway)
+      checkpoint ask.key
+      check still.hasKey("mirror") == twin.is_reflected
+      if still.hasKey("at") and still["at"].len > 0:
+        let key = still["key"].getStr
+        var plain = still.copy
+        if plain.hasKey("mirror"): plain.delete("mirror")
+        check mirrored(mirrored(still, key, marks, dofs), key, marks, dofs) == plain
+      if not twin.is_reflected: continue
+      inc twins
+      var askers: seq[string]
+      for other in stillAsks():
+        if other.isAnswerTo(ask, twin.links, twin.turns): askers.add other.key
+      if askers.len == 0:
+        inc keeping
+        check still["mirror"].getStr == ask.key
+        check still.hasKey("turns")
+      else:
+        check still["mirror"].getStr == askers[0]
+        check not still.hasKey("turns")
+    checkpoint &"`{twins}` twin cards, `{keeping}` keep their own answer"
+    check twins > 0
+
+
+  test "each arm's girdle stands on its own side of its chest, in every still page shows":
+    ## Page colours each arm by side it is named for (`rig_view.inkOf`), so arm named left
+    ##   is to stand left.  Twin card's still is mirrored, so each arm is named as arm of
+    ##   other side (`design/twins`); named as before, it would be drawn in other arm's colour.
+    var (stills, girdles) = (0, 0)
+    for key, still in recorded:
+      if not still.hasKey("at") or still["at"].len == 0: continue
+      inc stills
+      let (tags, row, look) = (still["tag"], still["points"][0], still["faces"][0])
+      for i in 0..<tags.len:
+        if tags[i][2].getInt != ord(Mark.Girdle): continue
+        let
+          (who, side) = (tags[i][0].getInt, tags[i][1].getInt)
+          (at_x, at_y) = (look[4 * who].getFloat, look[4 * who + 1].getFloat)
+          (fore_x, fore_y) = (look[4 * who + 2].getFloat, look[4 * who + 3].getFloat)
+          middle_x = (row[6 * i].getFloat + row[6 * i + 3].getFloat) / 2.0
+          middle_y = (row[6 * i + 1].getFloat + row[6 * i + 4].getFloat) / 2.0
+          rightward = (middle_x - at_x) * fore_y - (middle_y - at_y) * fore_x
+        checkpoint &"`{key}` girdle of `{who}` `{side}` stands `{rightward:.3f}` rightward"
+        check (rightward > 0.0) == (side == ord(Arm.Right))
+        inc girdles
+    check girdles == 4 * stills
 
 
   test "simulation models every card reference draws":
@@ -308,12 +377,17 @@ suite "Internal: Each recording is of tree it is kept in":
     check parseFile(KEPT_RIG)["stamp"].getStr == rigStamp()
 
 
-  test "rig page folds in the recording without its stamp, and nothing else left out":
-    ## Stamp changes with any change to physics, where page shows none.
+  test "rig page folds in the recording without its stamp, each twin mirrored, nothing left out":
+    ## Stamp changes with any change to physics, where page shows none.  Twin card is folded
+    ##   in as still it names, mirrored (`design/twins`).
     let
-      text = readFile(KEPT_RIG).strip()
-      folded = parseJson(text.unstamped)
-    var kept = parseJson(text)
-    kept.delete("stamp")
-    check not folded.hasKey("stamp")
-    check folded == kept
+      kept = parseFile(KEPT_RIG)
+      page = folded(kept)
+      shown = stillsShown(kept)
+    check not page.hasKey("stamp")
+    for field, value in kept.pairs:
+      if field notin ["stamp", "stills"]: check page[field] == value
+    check page["stills"].len == kept["stills"].len
+    for i, still in kept["stills"].getElems:
+      check page["stills"][i] == shown[i]
+      if not still.hasKey("mirror"): check page["stills"][i] == still

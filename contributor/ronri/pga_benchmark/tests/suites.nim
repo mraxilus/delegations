@@ -17,7 +17,7 @@ import ../src/pga_benchmark/[
   bound, cells, changes, dense, gaps, guard, head, inspector, markdown, measurements, model,
   notes, proposals, report,
 ]
-import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, search, shell]
+import ../src/pga_benchmark/pages/[docket, evaluation, listing, proposal, render, search, shell]
 from ../src/pga_benchmark/evaluations import
   ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
   timesOf
@@ -1680,6 +1680,49 @@ suite "Internal: Pages":
     check "data:font/ttf;base64,dXZ3" in page  # TrueType bytes inlined as TrueType
 
 
+  test "page renders inside skeleton publish host serves, and carries none of its own":
+    const shell_html = staticRead("../pages/shell.html")
+    let
+      page = "<title>T</title><p>∧</p>"
+      document = hosted(page)
+      (opening, closing) = SKELETON_HOST
+    check document.startsWith("<!doctype html>")  # standards mode, as host serves it
+    check "<meta charset=\"utf-8\">" in opening  # page's text read as UTF-8
+    check "name=\"viewport\"" in opening  # phone width laid out as on host
+    check document[opening.len .. ^(closing.len + 1)] == page  # page whole, unchanged
+    check opening.endsWith("<body>") and closing.startsWith("</body>")  # page inside body
+    for tag in ["<!doctype", "<html", "<head", "<body", "<meta"]:
+      check tag notin shell_html.toLowerAscii  # shell holds no skeleton, so none doubles
+
+
+  test "bold letter with bar mark is boxed with its mark, and tags, SVG and script pass as are":
+
+    func stripped(html: string): string =
+      ## Drop tags, leaving text reader copies.
+      var is_tag = false
+      for c in html:
+        if c == '<': is_tag = true
+        elif c == '>': is_tag = false
+        elif not is_tag: result.add c
+
+    const shell_html = staticRead("../pages/shell.html")
+    let
+      prose = "<p>Below, 𝐜̱ is left, (𝐜̄∧𝐚) right, and 𝐆̲𝐦̲̅ both.</p>"
+      marked = htmlMarked(prose)
+      kept = "<svg><text>𝐜̱</text></svg><script>let a = \"𝐜̱\"</script><p title=\"𝐜̱\">c̄</p>"
+    check "<span class=\"word\"><span class=\"mark under\">𝐜̱</span></span>" in marked
+      # bar under, mark kept in box
+    check "<span class=\"word\">(<span class=\"mark over\">𝐜̄</span>∧𝐚)</span>" in marked
+      # whole word kept on one line
+    check "<span class=\"mark under tall\">𝐆̲</span><span class=\"mark under over\">𝐦̲̅</span>" in
+      marked  # capital is tall, two marks draw two bars
+    check "over tall" in htmlMarked("𝐛̄") and "tall" notin htmlMarked("𝐞̄")  # ascender only
+    check stripped(marked) == stripped(prose)  # text reader copies is text source holds
+    check htmlMarked(kept) == kept  # SVG, script, attribute and Latin letter pass as they are
+    for rule in [".mark.under::after", ".mark.over::before", ".mark.over.tall::before", ".word"]:
+      check rule in shell_html  # shell draws each box marking makes
+
+
   test "every Noto face ships whole, as TrueType of its own release":
     for face in FACES:
       if face.toLowerAscii.startsWith("noto"):
@@ -1976,8 +2019,86 @@ suite "Internal: Proposal list":
 
 
 
+suite "Internal: Render":
+  const fixture = staticRead("fixtures/control_faces.json")  ## Control page `drive` renders.
+  let expected = @[(element: "p#han", codepoint: 0x4E2D), (element: "p#open", codepoint: 0x2603)]
+    ## Findings control of these tests expects.
+
+  func foundOf(characters: openArray[(string, string, int)]): JsonNode =
+    ## Build document harness writes: page, element and codepoint of each character found.
+    result = newJObject()
+    for (page, element, codepoint) in characters:
+      if not result.hasKey(page): result[page] = %*{"characters": [], "faces": []}
+      result[page]["characters"].add %*{"element": element, "codepoint": codepoint}
+
+
+  test "control fixture expects findings, and its page writes each paragraph it names":
+    let
+      paragraphs = paragraphsOf(parseJson(fixture))
+      body = bodyControl(paragraphs)
+    check expectedOf(paragraphs).len > 0  # control proves something
+    check expectedOf(paragraphs).allIt(it.codepoint > 0x7F)  # beyond ASCII alone
+    check paragraphs.anyIt(not it.is_drawn_by_system)  # one shipped face draws, unexpected
+    for paragraph in paragraphs:
+      check "<p id=\"" & paragraph.id & "\"" in body  # each paragraph on page, by id
+      if paragraph.stack.len > 0:
+        check "font-family: " & escapeHtml(paragraph.stack) & "\"" in body  # own stack, inline
+
+
+  test "codepoint reads as Unicode names it":
+    check codepointText(0xE9) == "U+00E9"  # four digits at least
+    check codepointText(0x2603) == "U+2603"
+    check codepointText(0x1D400) == "U+1D400"  # beyond plane 0, five
+
+
+  test "character found on page reads as finding at its hosted page, ending in codepoint":
+    let
+      characters = [
+        ("docket", "p.note", 0x2603),
+        ("control", "p#han", 0x4E2D),
+        ("control", "p#open", 0x2603),
+      ]
+      findings = checkRendered(foundOf(characters), expected, "control", "build/hosted")
+    check findings.mapIt(it.render) == @[
+      "build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.",
+    ]  # one finding, at page, element first, codepoint last
+
+
+  test "control passes on findings it expects, and one absent is blind":
+    let both = [("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
+    check checkRendered(foundOf(both), expected, "control", "h").len == 0  # sees, so passes
+    let blind = checkRendered(foundOf(both[0 .. 0]), expected, "control", "h")
+    check blind.len == 1 and "Check is blind" in blind[0].message  # absent one is blind
+    check blind[0].message.endsWith("got none for `U+2603`.")  # names codepoint it missed
+    check checkRendered(newJObject(), expected, "control", "h").len == 2  # never rendered
+
+
+  test "control finding nobody expects, or expected one on other page, is finding":
+    let both = @[("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
+    check checkRendered(
+      foundOf(both & ("control", "p#closed", 0x2603)), expected, "control", "h"
+    ).len == 1  # control raises exactly what it expects
+    check checkRendered(
+      foundOf(both & ("docket", "p#han", 0x4E2D)), expected, "control", "h"
+    ).len == 1  # expectation holds on control alone
+
+
+  test "control expecting nothing proves nothing, and face not loaded is finding":
+    let none = checkRendered(newJObject(), [], "control", "h")
+    check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
+    let refused = %*{"docket": {"characters": [], "faces": [
+      {"family": "Noto Sans", "weight": "400", "status": "error"}]}}
+    let
+      messages = checkRendered(refused, expected, "control", "h").mapIt(it.message)
+      refusal = "@font-face Noto Sans 400: Face does not load; got `error`."
+    check refusal in messages  # refused face named with status
+
+
+
 suite "Internal: Driver":
-  const driver = staticRead("../tools/build.nim")
+  const
+    driver = staticRead("../tools/build.nim")  ## Dispatcher: header table, usage and packages.
+    verbs = staticRead("../tools/verbs.nim")  ## Program every verb compiling project code runs.
 
   func dispatched(source: string): seq[string] =
     ## Read verbs driver's dispatch answers to: quoted labels of `of` branches after case.
@@ -2002,19 +2123,70 @@ suite "Internal: Driver":
       let cell = line[7..<line.find('|', 7)].strip
       if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
 
+  func importsOf(source: string): seq[string] =
+    ## Read path each `import` or `from` statement of source names first, as written.
+    for line in source.splitLines:
+      let s = line.strip
+      if s.startsWith("#"): continue
+      for opener in ["import ", "from "]:
+        let at = s.find(opener)
+        if at < 0 or (at > 0 and not s[0 ..< at].endsWith(": ")): continue
+        result.add s[at + opener.len .. ^1].split(' ')[0]
+
+  func branched(source: string): Table[string, string] =
+    ## Read body of each dispatch branch, keyed by verb, up to next branch or `else:`.
+    var verb = ""
+    for line in source[source.find("case paramStr(1)") ..< source.len].splitLines:
+      let s = line.strip
+      if s == "else:": break
+      if s.startsWith("of \""):
+        verb = s[4 ..< s.find('"', 4)]
+        result[verb] = s[s.find(':', 4 + verb.len) + 1 .. ^1]
+      elif verb.len > 0:
+        result[verb].add "\n" & s
+
 
   test "drive holds code to pin alone, and verb head alone reads library head":
     let
-      start = driver.find("proc drive() =")
-      body = driver[start..<driver.find("\n\n\n", start)]
+      start = verbs.find("proc drive() =")
+      body = verbs[start ..< verbs.find("\n\n\n", start)]
     check "checkoutChecked()" in body and "headChecked" notin body  # drive reads no head
-    check "of \"head\": report(headChecked(commitPga()))" in driver  # head's verdict, exit code
+    check "of \"head\": report(headChecked(commitPga()))" in verbs  # head's verdict, exit code
 
 
   test "dispatch answers to every verb usage and header teach, and no other":
     check dispatched(driver).sorted == taught(driver).sorted  # usage string
     check dispatched(driver).sorted == tabled(driver).sorted  # header table
     check "inspect" in dispatched(driver) and "bench" in dispatched(driver)  # README's verbs
+    check "types" in dispatched(driver)  # what `koch check-types` runs over `package.json`
+
+
+  test "dispatcher imports standard library alone, so type check compiles no project code":
+    let imports = importsOf(driver)
+    check imports.len > 0  # reader finds dispatcher's imports
+    for path in imports:
+      check path.startsWith("std/")  # CONTRIBUTOR.md, TypeScript and Node
+    check importsOf(verbs).anyIt(it.startsWith("../src/"))  # reader sees project import
+
+
+  test "dispatcher hands on every verb but types and system, and verbs answers each":
+    let branches = branched(driver)
+    var handed: seq[string]
+    for verb, body in branches:
+      if "delegated()" in body: handed.add verb
+    check handed.sorted == dispatched(verbs).sorted  # each verb handed on is answered there
+    check "types" notin handed and "system" notin handed  # neither compiles project code
+    check "types()" in branches["drive"] and "browser()" in branches["drive"]  # readied first
+
+
+  test "drive builds every page once, and renders each page it builds":
+    let
+      start = verbs.find("proc drive() =")
+      body = verbs[start ..< verbs.find("\n\n\n", start)]
+    check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
+    check "pinnedChecked(pin, built)" in body  # digests of that build
+    check "renderedChecked(built, faces)" in body  # render of that build
+    check "(\"nodejs\"," in driver  # node that render runs under, declared
 
 
   test "header table names files verbs write":

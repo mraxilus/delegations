@@ -19,6 +19,9 @@
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
+##   | record   | every recording below in one queue, slowest job first, each question  |
+##   |          | asked once, each result kept as it comes, so run stopped part way     |
+##   |          | goes on where it stopped                                              |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
@@ -58,7 +61,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|modelled|rig|turns|verdicts|answers|engine|shot|system|clean>\n"
+    "<pages|assets|pins|modelled|rig|record|turns|verdicts|answers|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -250,7 +253,7 @@ proc turnsJs() =
 
 proc turns() =
   ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/turns.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "turns"])
 
 proc pages() =
   ## Write every page, picture and script under `build/`.
@@ -297,7 +300,7 @@ proc modelled() =
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
   ##   Verb asks nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/modelled.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "modelled"])
 
 
 proc rig() =
@@ -307,12 +310,22 @@ proc rig() =
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.
   ##   Verb records nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/rig.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "rig"])
+
+
+proc record() =
+  ## Rewrite every recording from one queue (`design/record`): answers, turns, report, rig
+  ## and modelled.
+  ##   One pool for all, slowest job first: four workers end near same time, where verbs one
+  ##     after other leave cores idle.  One run asks each question once, and every job that
+  ##     asks it again reads answer kept (`walk.keepAnswers`).  Each result is kept as it
+  ##     comes, so run stopped part way asks only what is left.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim"])
 
 
 proc verdicts() =
   ## Rewrite `simulation/verdicts.md` from model; instrument run, not build.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/verdicts.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "verdicts"])
 
 
 proc answers() =
@@ -322,7 +335,7 @@ proc answers() =
   ##     that read them from here would otherwise pay for them on every run.  Run
   ##     whenever any `simulation/*.nim` changes, since law refuses answers whose stamp is
   ##     not that of tree.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/answers.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "answers"])
 
 
 func helpers(): seq[string] =
@@ -378,6 +391,7 @@ proc main(): int =
     of "pins": pins()
     of "modelled": modelled()
     of "rig": rig()
+    of "record": record()
     of "turns": turns()
     of "verdicts": verdicts()
     of "answers": answers()

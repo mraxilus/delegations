@@ -74,6 +74,11 @@ func messages(found: seq[Finding]): seq[string] =
   found.mapIt(it.message)
 
 
+func citedBare(message: string): seq[string] =
+  ## Read reference each finding of `checkReferencesBare` names, in order.
+  checkReferencesBare(message).mapIt(it.message.split('`')[1])
+
+
 
 suite "Hooks":
   test "role string grammar":
@@ -271,6 +276,32 @@ suite "Hooks":
     check checkNumbersBare("Undefined [#465] stays bare.\n").len == 1  # no definition
     check checkNumbersBare("&#169; and x/y#12 and a#3\n").len == 0  # reference, fragment
     check checkNumbersBare("#463 then #463 again, and #7\n").len == 2  # each number once
+
+
+  test "message cites each charter reference by short description, never bare":
+    # Short description and its reference, as `names read head first (V.2)` (GUIDE.md, Output
+    #   contract). Each passing form stands beside bare `V.2`, so stub reporting nothing fails it
+    #   as stub reporting every reference does.
+    check checkReferencesBare("X.9 says so.\n").messages == @[
+      "Message cites `X.9` with no description; cite each article and duty by short " &
+        "description and its reference, as `expression spacing (X.9)` (GUIDE.md, Output contract).",
+    ]
+    check citedBare("It holds under V.2 here.\n") == @["V.2"]
+    check citedBare("Then duty 3 waits.\n") == @["duty 3"]
+    check citedBare("(X.9) opens the line.\n") == @["X.9"]
+    check citedBare("- (X.9) opens a bullet.\n") == @["X.9"]
+    check citedBare("Spacing (X.9 stays open.\n") == @["X.9"]  # no closing parenthesis
+    check citedBare("Expression spacing (X.9) holds, and V.2 alone.\n") == @["V.2"]
+    check citedBare("No evidence (Article VIII.1) holds, and V.2 alone.\n") == @["V.2"]
+    check citedBare("Both hold here (X.2, X.9), and V.2 alone.\n") == @["V.2"]  # one parenthesis
+    check citedBare("A check that reddens a project (duty 3), and V.2 alone.\n") == @["V.2"]
+    check citedBare("See `X.9`, and V.2 alone.\n") == @["V.2"]  # code span
+    check citedBare("```\nX.9 and duty 3\n```\nV.2 alone.\n") == @["V.2"]  # fenced code
+    check citedBare("[X.9](https://x/9) and [IV.4], and V.2 alone.\n\n[IV.4]: https://x/4\n") ==
+      @["V.2"]  # inline link, and shortcut link message defines
+    check citedBare("Nim 2.2.12, D1, D2, §5, MIX.3, IX.2.1 and a/V.2, and V.2 alone.\n") ==
+      @["V.2"]  # version, decision, section, longer token
+    check citedBare("X.9 then X.9 again, Duty 3 and duty 3.\n") == @["X.9", "Duty 3"]  # once
 
 
   test "sign-off decision is card coordinator lifts unchanged":

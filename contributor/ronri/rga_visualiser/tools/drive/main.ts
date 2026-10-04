@@ -22,7 +22,7 @@ import {
 import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
 import {
-  driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlanePick,
+  driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlaneLifted, drivePlanePick,
   drivePointerPick,
 } from './framing';
 import {
@@ -51,6 +51,7 @@ import {
   driveTickCadence, driveTickWrites,
 } from './objects';
 import { driveComet } from './comet';
+import { driveMarkerShapedOnce } from './marker';
 import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
@@ -179,6 +180,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await drivePickOrbit(page);
   await drivePointerPick(page);
   await drivePlanePick(page);
+  await drivePlaneLifted(page);
   await driveLabelGlide(page);
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
@@ -203,6 +205,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   //   character page writes has glyph there.
   await driveFacesCovered(page);
   await driveShadedFromAbove(page);
+  await driveMarkerShapedOnce(page);
   await driveComet(page);
   await driveGround(page);
   await driveLoopRuns(page);

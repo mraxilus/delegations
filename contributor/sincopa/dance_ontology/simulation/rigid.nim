@@ -870,7 +870,7 @@ func up*(couple: Couple): float =
   ##   Architect: relaxed position facing is hands at mid torso; pillion or back
   ##     to back they have to be above; facing, arms come down.  Couple wound
   ##     whole turn face each other again and their hands are down again,
-  ##     which `risen` keyed to wind from rest never let them be: A9 stood
+  ##     which `risen` keyed to wind from rest never let them be: A09 stood
   ##     facing with hands over heads.
   if couple.band != Band.Crown: return couple.risen
   min(1.0, couple.awayFrom / RAISE)
@@ -1738,7 +1738,7 @@ proc gives*(couple: Couple): Stop =
       for hand in link.ends:
         let z = tipOf(couple, couple.who[hand.body].arm[hand.arm]).z
         if z < band.lower - SAG: return Stop.Reach
-        # Facing, hands over crown are hold at some other height too: A9 stood
+        # Facing, hands over crown are hold at some other height too: A09 stood
         # facing with every hand at 1.90 m and read as holding.
         if is_facing and z > band.upper + OVER: return Stop.Reach
   Stop.None

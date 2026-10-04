@@ -209,7 +209,7 @@ export async function driveSums(page: Page): Promise<void> {
     }> = [];
     for (let i = 0; i < 30; i += 1) {
       nimCameraOrbit(0.01, 0); // Rebuild furniture, so sum covers real work.
-      const data = nimBuildFrame(1200 / 900, performance.now() / 1000, 900, true, true);
+      const data = nimBuildFrame(1200 / 900, performance.now() / 1000, 900, true, true, false);
       const children = data.ms_camera + data.ms_furniture + data.ms_scene +
         data.ms_matrix + data.ms_flatten + data.ms_unaccounted;
       runs.push({

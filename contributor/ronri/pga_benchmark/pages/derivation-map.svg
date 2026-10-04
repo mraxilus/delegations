@@ -1,5 +1,6 @@
 <!-- Derivation map of P01: three generators, four rules, every table operator reads.
-     Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it. -->
+     Colours are shell tokens, with fallbacks so file reads alone. Proposal embeds it.
+     Bar under bold letter is underline, mark kept at size zero: face gives letter no anchor. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 528" class="map" role="img"
   aria-labelledby="map-title map-desc">
 <title id="map-title">Derivation map</title>
@@ -76,7 +77,8 @@
 </g>
 <g><rect class="box" x="276" y="240" width="208" height="72" rx="8"/>
   <text class="strong" x="380" y="264" text-anchor="middle">Transwedge</text>
-  <text class="small" x="380" y="280" text-anchor="middle">Σ (𝐜̱ ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
+  <text class="small" x="380" y="280" text-anchor="middle">Σ (<tspan
+    text-decoration="underline">𝐜</tspan><tspan font-size="0">̱</tspan> ∨ 𝐚) ∧ (𝐛 ∨ 𝐜★)</text>
   <text class="small" x="380" y="296" text-anchor="middle">over bases 𝐜 of one grade</text>
 </g>
 <g><rect class="box" x="528" y="240" width="208" height="72" rx="8"/>
