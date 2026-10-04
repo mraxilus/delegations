@@ -12,7 +12,7 @@
 ##     `tools/build.nim`, are copy no real constraint forces (Article II.9), and nothing tells
 ##     such copy apart from two different files.
 ##
-##   Digest is curator's, choice is project's. Store says what bytes `noto-sans-latin-400`
+##   Digest is curator's, choice is project's. Store says what bytes `NotoSans-Regular.ttf`
 ##     is; it never says which files target wants, and targets differ -- one draws maths and
 ##     symbols, other draws italic serif. So per-project autonomy CONTRIBUTOR.md argues for
 ##     is untouched: what stops being written twice is only what was already identical.
@@ -37,7 +37,7 @@
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
 ##     resolves toolchains by pin. Different trust and different key, so `compilers.nim` keeps
 ##     it rather than this pretending one shape serves both.
-##   Cost: store grows and nothing prunes it. Face is ~30 kB where compiler is ~300 MB, so
+##   Cost: store grows and nothing prunes it. Face is under 1 MB where compiler is ~300 MB, so
 ##     what is unbounded here is number of pins repository has ever held, not bytes.
 ##   Cost: upstream that moves bytes under one address fails every project at once rather
 ##     than one. That is same failure one digest exists to make loud, and it is louder shared.
@@ -60,35 +60,14 @@ const
     ## Commit Mono is nobody's Noto, so its TrueType comes from its author's repository.
   ASSETS* = [
     # Subset faces: `woff2` through `@fontsource`, version pinned in address, bytes by digest.
-    #   Article X.8 ships Noto whole, so Noto subset serves only page not yet moved, and its row
-    #   leaves once no page asks for it. Commit Mono is no Noto, and pages draw its subset.
+    #   Commit Mono alone: it is no Noto, and pages draw its Latin subset. Article X.8 ships
+    #   every Noto face whole, so no row declares Noto subset, and `fetch-assets` refuses one.
     ("commit-mono-latin-400-normal.woff2",
       FONTSOURCE & "@fontsource/commit-mono@5.3.0/files/",
       "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
     ("commit-mono-latin-700-normal.woff2",
       FONTSOURCE & "@fontsource/commit-mono@5.3.0/files/",
       "1b00600b728444492b0c4906cb85e0055b889ea32ea4fb29bf25cd90cd0365b4"),
-    ("noto-sans-latin-400-normal.woff2",
-      FONTSOURCE & "@fontsource/noto-sans@5.3.0/files/",
-      "09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6"),
-    ("noto-sans-latin-600-normal.woff2",
-      FONTSOURCE & "@fontsource/noto-sans@5.3.0/files/",
-      "79e274470d1c5a0118eb325e2ea6f2eb2a449336d7fde1a4f20a2f32fe1119ed"),
-    ("noto-sans-math-math-400-normal.woff2",
-      FONTSOURCE & "@fontsource/noto-sans-math@5.2.8/files/",
-      "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
-    ("noto-sans-symbols-2-symbols-400-normal.woff2",
-      FONTSOURCE & "@fontsource/noto-sans-symbols-2@5.3.0/files/",
-      "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
-    ("noto-serif-latin-400-italic.woff2",
-      FONTSOURCE & "@fontsource/noto-serif@5.3.0/files/",
-      "a7386f772de25b62a3a449fa5d9f3e09916b65cf6a6dfc52f5a103c276fee157"),
-    ("noto-serif-latin-400-normal.woff2",
-      FONTSOURCE & "@fontsource/noto-serif@5.3.0/files/",
-      "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"),
-    ("noto-serif-latin-600-normal.woff2",
-      FONTSOURCE & "@fontsource/noto-serif@5.3.0/files/",
-      "abf0abc765331d7a1bbe6eb3603cf86be1cf3d1edbcf911cc2d52f78998c02d9"),
     # Whole faces: TrueType and OpenType from each face's own release, which pages and desktop
     #   atlas both embed; `@fontsource` ships none of them.
     ("NotoSans-Regular.ttf",
@@ -122,9 +101,8 @@ const
     ## Every file fetched at build time: its name, address prefix it is fetched from, and
     ## digest of its bytes. Faces are all of them today; licence of each is in PROVENANCE.md,
     ## where CONTRIBUTOR.md already asks for it, rather than in second column here.
-    ##   Rows are union of what two projects pinned separately, taken from their own tables
-    ##   rather than fetched afresh: where both pinned one file they pinned same digest, and
-    ##   that agreement is what made one table safe to write.
+    ##   Each file any project pins stands here once: where several pin one file they share
+    ##   its row and so its digest, and that agreement is what makes one table safe.
     ##   Version lives in address and bytes live in digest, so both move together or neither.
 
 
