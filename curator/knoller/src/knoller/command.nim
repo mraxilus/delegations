@@ -9,6 +9,9 @@
 ##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
 ##     inside it with count and first line, so no fenced line goes unseen (`heldOf`); then
 ##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
+##   Every line printed is line of file as given: finding left in fixed text is traced back
+##     through fix (`traced`), as each rewrite is. Finding on line fix inserts has no line as
+##     given, so it prints at line `0`, path alone, and its message echoes its text.
 ##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
 ##     changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
@@ -117,7 +120,9 @@ func outcomeOf*(
     let layout = path.layoutOf(directory)
     held.add heldOf(layout, source, dialect.get).shownAs(path)
     let fix = formatted(layout, source, dialect.get)
-    left.add shownAs(fix.left & checkFormatting(layout, fix.source, dialect.get), path)
+    var after = checkFormatting(layout, fix.source, dialect.get)
+    for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
+    left.add shownAs(fix.left & after, path)
     if fix.source == source: continue
     fixed.add fix.fixed.shownAs(path)
     if not is_check: result.written.add (path, fix.source)
