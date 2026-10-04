@@ -1755,6 +1755,20 @@ const
   SAG* = 0.03  ## Metres joined hand may sit under its band's edge, once
                  ## risen, lift being spring against comfort and not wall.
 
+const
+  ELBOWS_APART* = -0.02  ## Metres each dancer's right elbow keeps to right of left one, along
+                         ## body's right: elbows side by side touch, and do not cross over.
+  ON_UPPER* = 0.005  ## Metres within which dancer's arm meets upper arm of their other arm.
+  ELBOW_END* = 0.045  ## Metres before elbow within which other arm may lie on upper arm: one
+                      ## arm's radius, where arms cross just before elbow.
+  ##   Each dancer's own two arms cross at hands or forearms, up to just before elbow, and
+  ##     their elbows rarely if ever cross over (Architect, 2026-10-04).  Partners' arms are
+  ##     free of rule: crossed half turn lays lead's forearm on follow's upper arm.
+  ##   Measured 2026-10-04: D02 without rule passes follow's elbows 37 mm, and lays follow's
+  ##     upper arms on each other 9 cm before elbow.  Crossed half turn stands follow's elbows
+  ##     side by side, 9 to 17 mm past, and other forearm 2 to 3 cm before elbow; A17 and C03,
+  ##     1 cm before it.
+
 proc gives*(couple: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that
   ## gives, any arm through body or arm, or joined hands that never reached
