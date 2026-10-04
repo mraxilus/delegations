@@ -62,6 +62,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.TrailingSeparator: "X.3",
   Rule.CommentAbove: "X.1",
   Rule.Fence: "X.1",
+  Rule.Unsettled: "STYLE.md §5",
 ]
   ## Article each rule of knoller holds, as its report cites it.
 

@@ -776,9 +776,10 @@ func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
 
 
 func checkContinuations*(path, source: string): seq[Report] =
-  ## Report line continuing expression after operator at other indent than STYLE.md §5 gives.
+  ## Report line continuing expression after operator at other indent than STYLE.md §5 gives,
+  ##   one whose indent would widen it among them, so finding stays where fixer holds line.
   let s = source.scan
-  for rewrite in s.continuationShifts(EVERY):
+  for rewrite in s.continuationShifts(Held()):
     let relative = s.lines[rewrite.first].indentOf - rewrite.lines[0].indentOf + CONTINUATION_STEP
     result.add initReport(
       path,

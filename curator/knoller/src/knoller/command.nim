@@ -94,7 +94,7 @@ func outcomeOf*(
     let dialect = path.dialectOf
     if dialect.isNone or path in locked: continue
     let fix = formatted(path, source, dialect.get)
-    left.add checkFormatting(path, fix.source, dialect.get)
+    left.add fix.left & checkFormatting(path, fix.source, dialect.get)
     if fix.source == source: continue
     fixed.add fix.fixed
     if not is_check: result.written.add (path, fix.source)

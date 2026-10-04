@@ -4,8 +4,8 @@
 ##     for tool reading output.
 ##   Article citing each rule is caller's: `curator/audit` holds `CITATIONS`, indexed by
 ##     `Rule`, so rule without citation fails to compile there.
-##   Rule with no fixer names check alone: `NotOverBinary`, and `Fence` for fence fix cannot
-##     read.
+##   Rule with no fixer names check alone: `NotOverBinary`, `Fence` for fence fix cannot read,
+##     and `Unsettled` for file fixers do not settle.
 
 {.experimental: "strictFuncs".}
 
@@ -48,6 +48,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   TrailingSeparator = "trailing separator"  ## List of one item to line ends in separator.
   CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
+  Unsettled = "unsettled"  ## File fixers still change after their last round stays as written.
 
 
 func id*(rule: Rule): string =

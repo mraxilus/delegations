@@ -32,6 +32,7 @@ type
     source*: string  ## Text after fix; input itself where nothing broke rule.
     fixed*: seq[Report]  ## Path and line of input rewritten, with rule fixed.
     origin*: seq[int]  ## Input line of each output line, `0` where inserted; empty if none moved.
+    left*: seq[Report]  ## Finding fix leaves for hand, with its message; empty where none.
 
   Held* = object  ## Define lines whose width guard holds: every line, or lines listed.
     is_every*: bool  ## Every line held, so widener writes no wide line, as fixer before it.
@@ -90,6 +91,11 @@ func chain*(fix, step: Fix): Fix =
     var traced_report = f
     traced_report.line = fix.traced(f.line)
     result.fixed.add traced_report
+  result.left = fix.left
+  for f in step.left:
+    var traced_report = f
+    traced_report.line = fix.traced(f.line)
+    result.left.add traced_report
   result.origin =
     if step.origin.len == 0: fix.origin
     else: step.origin.mapIt(fix.traced(it))

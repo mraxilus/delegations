@@ -78,6 +78,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `trailing-separator` | A list of one item to a line ends in a separator. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
+| `unsettled` | A file that the fixers still change after their last round stays as written. |
 
 ## Build and test
 
