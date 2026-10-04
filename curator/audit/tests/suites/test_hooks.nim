@@ -448,3 +448,14 @@ suite "Hooks":
     discard root.git("checkout -q -- koch.nim")
     discard root.git("checkout -q -b old HEAD~1")
     check runHook(root, toolchain, "path") == "built from a"  # switch of branch
+
+    # Knoller, which checker imports by path, moves key as checker source does. Source alone,
+    #   without nimble file, holds order of key's paths too (`hooks.sh`, Trap).
+    discard root.git("checkout -q -")
+    check runHook(root, toolchain, "path") == "built from b"
+    let built = readFile(toolchain / "builds.log").countLines
+    root.writeInto("curator/knoller/src/knoller.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'chore(curator): source of knoller'")
+    check runHook(root, toolchain, "path") == "built from b"
+    check readFile(toolchain / "builds.log").countLines == built + 1  # knoller source moved key

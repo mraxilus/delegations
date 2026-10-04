@@ -136,6 +136,18 @@ when isMainModule:
     check hyphened.usageOptions == @["dry-run"]  # hyphen inside name is name
 
 
+  test "knoller, which checker imports by path, is held to dead-export rule":
+    check isExporting("curator/audit/src/layout.nim")  # check module
+    check isExporting(KOCH_PATH)  # driver
+    check isExporting("curator/knoller/src/knoller.nim")  # umbrella of knoller
+    check isExporting("curator/knoller/src/knoller/tokens.nim")  # module of knoller
+    check not isExporting("curator/knoller/tests/suites/test_tokens.nim")  # suite exports none
+    check not isExporting("curator/probe/src/probe.nim")  # other project
+    check isCalling("curator/audit/tests/suites/test_layout.nim")  # audit's suite calls
+    check isCalling("curator/knoller/tests/suites/test_tokens.nim")  # knoller's suite calls
+    check not isCalling("curator/knoller/src/knoller/tokens.nim")  # module is no suite
+
+
   test "only checks-reference table is read, since document tables others":
     # Repository map rows open with backticked paths and would otherwise read as verbs.
     let document = "## Repository map\n\n| Path | Who |\n|---|---|\n| `koch.nim` | curator |\n" &

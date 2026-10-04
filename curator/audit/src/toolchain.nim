@@ -10,6 +10,8 @@
 ##     `curator/audit`'s pin, since koch compiles that project's modules. Every workflow
 ##     installing compiler names it as `NIM_VERSION`, and check below demands agreement, as
 ##     `layout.nim` demands agreement between `DOMAINS` and README tables.
+##   `curator/knoller` pins driver version too: audit imports it by path, so koch compiles it.
+##     Sibling imported by path is no package, so it carries no lock.
 ##   Running compiler is one testament will invoke, so version comes from `nim --version`
 ##     rather than from `NimVersion` koch was built with; prebuilt `./koch` and newer `nim`
 ##     on PATH would otherwise disagree silently.
@@ -41,6 +43,8 @@ const
   EXACT* = "=="  ## Operator pin must use; ranges are rejected.
   DRIVER_DIRECTORY* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
+  KNOLLER_DIRECTORY* = "curator/knoller"
+    ## Project driver imports by path, so koch compiles it and it pins driver version.
   WORKFLOW_PATH* = ".github/workflows/check.yml"
     ## Driver's own workflow, which must name driver version; others must agree where they do.
   VERSION_KEY* = "NIM_VERSION:"  ## Key workflow states driver version under.
@@ -136,6 +140,17 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
       "Driver version must equal `" & DRIVER_DIRECTORY & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
     )
+
+
+func checkKnoller*(path: string, pin, driver: Option[string]): seq[Finding] =
+  ## Report knoller pinning other than driver version; absent pin is `layout.nim`'s to report.
+  if pin.isNone or driver.isNone or pin == driver: return
+  result.add finding(
+    path,
+    0,
+    "Project driver imports by path pins driver version `" & driver.get & "`, since koch " &
+      "compiles it; got `" & pin.get & "`.",
+  )
 
 
 func isServedBy*(pin: string, compiler: Compiler): bool =

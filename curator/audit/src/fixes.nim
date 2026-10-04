@@ -353,10 +353,10 @@ func contextOf*(
   ##   leave out.
   var paths, sources, suites: seq[string]
   for e in tree:
-    if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
+    if e.path.isExporting:
       paths.add e.path
       sources.add e.content
-    if e.path.startsWith(SUITE_DIRECTORY): suites.add e.content
+    if e.path.isCalling: suites.add e.content
   result.dead = deadExports(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)

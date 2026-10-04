@@ -9,6 +9,7 @@
 ##     comment included, so rule reports only routines nothing outside their module names.
 ##     Fixer (`koch fix`) drops `*` where module itself calls routine; routine nothing calls
 ##     keeps its finding, since to delete it is choice.
+##     Knoller is held to it as check module is: audit imports it by path, and its suites call.
 ##   Missing suite: check module without `tests/suites/t<module>.nim`.
 ##   Verb mismatch: verbs koch dispatches, verbs its usage text lists, and verbs CURATOR.md
 ##     tables are one set named three times.
@@ -36,7 +37,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, tables]
-import ./[findings, markdown, tokens]
+import ./[findings, markdown, tokens, toolchain]
 
 
 const
@@ -45,6 +46,9 @@ const
   CHECK_DIRECTORY* = "curator/audit/src/"  ## Modules these rules cover.
   SUITE_DIRECTORY* = "curator/audit/tests/suites/"
     ## Where each module's suite lives; `tests/test_suites.nim` runs them as one program.
+  KNOLLER_SOURCE_DIRECTORY = KNOLLER_DIRECTORY & "/src/"
+    ## Modules of package checker imports by path, held to dead-export rule as checker is.
+  KNOLLER_SUITE_DIRECTORY = KNOLLER_DIRECTORY & "/tests/suites/"  ## Where knoller's suites live.
   NIM_EXT* = ".nim"  ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
     ## Keywords opening routine definition; exported one ends its name with asterisk.
@@ -102,6 +106,17 @@ func identifiers(source: string): CountTable[string] =
     while j < source.len and source[j] in IDENT_CHARS: inc j
     result.inc source[i ..< j]
     i = j
+
+
+func isExporting*(path: string): bool =
+  ## Decide whether dead-export rule reads exports of path: check module, `koch.nim`, or module
+  ##   of knoller.
+  path.startsWith(CHECK_DIRECTORY) or path.startsWith(KNOLLER_SOURCE_DIRECTORY) or path == KOCH_PATH
+
+
+func isCalling*(path: string): bool =
+  ## Decide whether path is suite whose calls keep export alive: audit's or knoller's.
+  path.startsWith(SUITE_DIRECTORY) or path.startsWith(KNOLLER_SUITE_DIRECTORY)
 
 
 func deadExports*(paths, sources, suites: openArray[string]): seq[(string, string)] =
