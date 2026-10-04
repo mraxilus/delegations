@@ -83,7 +83,7 @@ type
 
 #[ Kept Answers ]#
 
-type Store[T] = object
+type Store*[T] = object
   ## Answers of one routine by every argument it was asked with, shared by every thread:
   ## each is answered once, and thread asking what another is answering waits for it.
   ##   Routine answers from its arguments alone, so answer kept is answer it gives again,
@@ -93,7 +93,12 @@ type Store[T] = object
   done: Table[string, T]
   busy: HashSet[string]
 
-proc answered[T](store: var Store[T], key: string, got: var T): bool =
+proc initStore*[T](store: var Store[T]) =
+  ## Make store ready, before any thread asks it.
+  initLock(store.lock)
+  initCond(store.cond)
+
+proc answered*[T](store: var Store[T], key: string, got: var T): bool =
   ## Whether `key` is answered, `got` then holding answer; else caller now answers it, and
   ## keeps answer with `keep`.  Waits while another thread answers it.
   withLock store.lock:
@@ -113,19 +118,19 @@ proc claimed[T](store: var Store[T], key: string): bool =
     store.busy.incl key
   true
 
-proc keep[T](store: var Store[T], key: string, answer: T) =
+proc keep*[T](store: var Store[T], key: string, answer: T) =
   ## Keep answer of `key`, and wake every thread waiting on it.
   withLock store.lock:
     store.done[key] = answer
     store.busy.excl key
   broadcast(store.cond)
 
-proc forget[T](store: var Store[T], key: string) =
+proc forget*[T](store: var Store[T], key: string) =
   ## Give up `key` unanswered, so thread waiting on it answers it itself.
   withLock store.lock: store.busy.excl key
   broadcast(store.cond)
 
-template kept(store: var Store, key: string, answer: untyped): untyped =
+template kept*(store: var Store, key: string, answer: untyped): untyped =
   ## Answer of `key` from `store`, or `answer` worked out once and kept there; plain
   ## `answer` where answers are not kept.
   var got: typeof(answer)
@@ -140,10 +145,10 @@ template kept(store: var Store, key: string, answer: untyped): untyped =
     store.keep(key, got)
   got
 
-func bits(value: float): string = toHex(cast[uint64](value))
+func bits*(value: float): string = toHex(cast[uint64](value))
   ## Float as its bits: key that tells every two values apart, nought from minus nought too.
 
-func keyOf(rig: Rig, links: seq[Link], parts: varargs[string]): string =
+func keyOf*(rig: Rig, links: seq[Link], parts: varargs[string]): string =
   ## Key of one question: rig, hold and every other argument, each as its own text.
   result = $rig
   for link in links: result.add "|" & $link
@@ -151,34 +156,129 @@ func keyOf(rig: Rig, links: seq[Link], parts: varargs[string]): string =
 
 # Mutable and global: one run keeps every answer for every thread, set before any starts.
 var
-  IS_KEEPING = false  ## Whether answers are kept: off unless run asks, so laws ask afresh.
+  IS_KEEPING* = false  ## Whether answers are kept: off unless run asks, so laws ask afresh.
   PLANS: Store[Path]  ## Every path planned, by `keyOfPlan`.
-  SWEEPS: Store[Swept]  ## Every sweep.
+  SWEEPS: Store[tuple[positive, negative: Walk]]  ## Both ways of every sweep.
   WALKS: Store[tuple[walk: Walk, most: float]]  ## Every walk from one distance, as far as asked.
   STANDS: Store[Stood]  ## Every distance search of still.
   REACHES: Store[bool]  ## Every carried reach.
   PLANNED_HOLDS: Store[bool]  ## Every planned still, as `isPlannedHolding` answers it.
   PLANNED_REACHES: Store[bool]  ## Every planned reach.
-initLock(PLANS.lock)
-initCond(PLANS.cond)
-initLock(SWEEPS.lock)
-initCond(SWEEPS.cond)
-initLock(WALKS.lock)
-initCond(WALKS.cond)
-initLock(STANDS.lock)
-initCond(STANDS.cond)
-initLock(REACHES.lock)
-initCond(REACHES.cond)
-initLock(PLANNED_HOLDS.lock)
-initCond(PLANNED_HOLDS.cond)
-initLock(PLANNED_REACHES.lock)
-initCond(PLANNED_REACHES.cond)
+initStore(PLANS)
+initStore(SWEEPS)
+initStore(WALKS)
+initStore(STANDS)
+initStore(REACHES)
+initStore(PLANNED_HOLDS)
+initStore(PLANNED_REACHES)
 
 proc keepAnswers*() =
   ## Keep every answer of this run, for every thread: call before any thread starts.
   ##   Recording asks one question in many jobs: 384 planned paths, of which 132 differ, and
   ##     95 stills that rig and modelled both ask, field for field (2026-10-04).
   IS_KEEPING = true
+
+
+#[ Mirror ]#
+
+type Twin* = object
+  ## Question as its mirror twin asks it: one of two questions that are each other's mirror
+  ## is answered, and other is that answer reflected.
+  ##   Twin of hold is its mirror image, each hand on other arm, at other turn.  Lead's left
+  ##     arm first is answered, of two holds that are each other's mirror; of hold that is
+  ##     its own mirror, way that turns positive.
+  ##   Hold that rests face to back has no twin: its rest is wound one way (`restsOf`), so
+  ##     mirror image of its rest is other rest.  Same-name chain at minus half unwinds to
+  ##     face to face, and at plus half winds whole turn.
+  is_reflected*: bool  ## Whether question is answered as its twin's answer, reflected.
+  links*: seq[Link]  ## Hold twin asks, in its own order.
+  turns*: float  ## And turn twin asks, other sign.
+  order*: seq[int]  ## Link of twin that each link of question is mirror of.
+
+func isSameEnds(a, b: Link): bool = a.ends[0] == b.ends[0] and a.ends[1] == b.ends[1]
+  ## Whether two connections join same two hands, in same order.
+
+func twinOf*(links: seq[Link], turns: float, is_away: bool): Twin =
+  ## Twin that answers question of this hold and turn, or question itself.
+  let is_own = isMirrorSame(links)
+  result = Twin(links: links, turns: turns)
+  result.is_reflected = not is_away and
+                        (if is_own: turns < 0.0 else: links[0].ends[0].arm == Arm.Right)
+  if not result.is_reflected:
+    for k in 0..<links.len: result.order.add k
+    return
+  result.turns = -turns
+  if not is_own:
+    result.links = @[]
+    for link in links: result.links.add mirrored(link)
+  for link in links:
+    let image = mirrored(link)
+    for j, other in result.links:
+      if isSameEnds(other, image): result.order.add j
+
+func otherArm(arm: Arm): Arm = (if arm == Arm.Left: Arm.Right else: Arm.Left)
+  ## Arm on other side of same body.
+
+func partnersOf*(rig: Rig): seq[int] =
+  ## Trunk capsule on other side of body from each, as `rigid.trunkCapsules` lists them:
+  ## itself where it lies on body's middle.
+  let trunk = trunkCapsules(rig)
+  for t, capsule in trunk:
+    var partner = t
+    for u, other in trunk:
+      if other.a.x == -capsule.a.x and other.a.z == capsule.a.z and
+         other.radius == capsule.radius: partner = u
+    result.add partner
+
+func reflected(capsule: Capsule): Capsule =
+  ## Capsule seen in mirror across couple's line.
+  (mirrored(capsule.a), mirrored(capsule.z), capsule.radius)
+
+func reflected(pose: ArmPose): ArmPose =
+  ## Arm's four points seen in mirror: arm of other side.
+  ArmPose(shoulder: mirrored(pose.shoulder), elbow: mirrored(pose.elbow),
+          wrist: mirrored(pose.wrist), grip: mirrored(pose.grip))
+
+func reflected*(stance: Stance, rest: float): Stance =
+  ## Stance seen in mirror: facing reflected about way body faces at rest, so turn wound
+  ## either way keeps its laps.
+  Stance(centre: (-stance.centre.x, stance.centre.y), facing: 2.0 * rest - stance.facing)
+
+func reflected(
+  moment: Moment, order: seq[int], rests: array[Body, float], partners: seq[int]
+): Moment =
+  ## Moment of twin seen in mirror: moment of question it answers.
+  result = Moment(at: -moment.at, room: moment.room)
+  for who in Body: result.stance[who] = reflected(moment.stance[who], rests[who])
+  for k in 0..<order.len:
+    let arms = moment.arms[order[k]]
+    result.arms.add [reflected(arms[0]), reflected(arms[1])]
+  for who in Body:
+    for t in 0..<moment.trunks[who].len:
+      result.trunks[who].add reflected(moment.trunks[who][partners[t]])
+    for arm in Arm: result.girdles[who][arm] = reflected(moment.girdles[who][otherArm(arm)])
+
+func reflected(walk: Walk, order: seq[int], rests: array[Body, float], partners: seq[int]):
+    Walk =
+  ## Walk of twin seen in mirror: walk of question it answers.
+  ##   Hand that gave is named where walk stopped; otherwise it names none.
+  result = Walk(found_rest: walk.found_rest, apart: walk.apart, is_stopped: walk.is_stopped,
+                at: walk.at, why: walk.why, which: walk.which, whose: walk.whose)
+  if walk.is_stopped:
+    result.which = order.find(walk.which)
+    result.whose = (walk.whose.body, otherArm(walk.whose.arm))
+  for moment in walk.moments: result.moments.add reflected(moment, order, rests, partners)
+
+func reflected(stood: Stood): Stood =
+  ## Still's distance search of twin seen in mirror: way wound is other way, and each
+  ## distance and way tried is tried in same order.
+  result = stood
+  result.turns = -stood.turns
+
+proc restsOf(rig: Rig, apart: float, is_away: bool): array[Body, float] =
+  ## Way each body faces at rest: what its facing is reflected about.
+  let stance = restStance(rig, apart, is_away)
+  for who in Body: result[who] = stance[who].facing
 
 
 iterator stands*(rig: Rig): float =
@@ -216,7 +316,7 @@ proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which
         result.which = i
         result.whose = couple.links[i].ends[end_index]
 
-proc walkedOf(
+proc walkedOf*(
   rig: Rig;
   band: Band;
   links: seq[Link];
@@ -277,8 +377,13 @@ proc walked*(
 ): Walk =
   ## Turn one way from one standing distance until something gives, or until `most` is
   ## reached (`walkedOf`).
+  ##   Twin's walk reflected answers mirror image (`twinOf`).
   ##   Kept walk as far or further from same distance gives this one cut short (`cut`):
   ##     sweep walks every distance to `MOST`, and reach asks each again to its own turn.
+  let twin = twinOf(links, step, is_away)
+  if twin.is_reflected:
+    return reflected(walked(rig, band, twin.links, who, apart, most, twin.turns, is_away, head),
+                     twin.order, restsOf(rig, apart, is_away), partnersOf(rig))
   if not IS_KEEPING:
     return walkedOf(rig, band, links, who, apart, most, step, is_away, head)
   let key = keyOf(rig, links, $band, $who, bits(apart), bits(step), $is_away, $head)
@@ -400,6 +505,11 @@ proc standing*(
 ): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to ease, of
   ## every distance couple may stand at (`standingOf`).
+  ##   Twin's answer reflected answers mirror image (`twinOf`).
+  let twin = twinOf(links, turns, is_away)
+  if twin.is_reflected:
+    return reflected(standing(rig, band, twin.links, twin.turns, is_away, head, is_either_way,
+                              who))
   kept(STANDS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who),
        standingOf(rig, band, links, turns, is_away, head, is_either_way, who))
 
@@ -415,7 +525,11 @@ proc isHoldingAt*(
   who = Body.Two,
 ): bool =
   ## Whether any pose holds at this facing, `who` turning, from any distance couple may
-  ## stand at.
+  ## stand at.  Twin's answer answers mirror image (`twinOf`).
+  let twin = twinOf(links, turns, is_away)
+  if twin.is_reflected:
+    return isHoldingAt(rig, band, twin.links, twin.turns, is_away, head, apart, is_either_way,
+                       who)
   if apart > 0.0:
     return standsAt(rig, band, links, turns, is_away, head, apart, who).is_holding
   standing(rig, band, links, turns, is_away, head, is_either_way, who).is_holding
@@ -448,7 +562,10 @@ proc isReaching*(
   head = Body.Two,
 ): bool =
   ## Whether couple carry this hold that far from any distance they may stand at
-  ## (`isReachingOf`).
+  ## (`isReachingOf`).  Twin's answer answers mirror image (`twinOf`).
+  let twin = twinOf(links, turns, is_away)
+  if twin.is_reflected:
+    return isReaching(rig, band, twin.links, twin.turns, is_away, who, head)
   kept(REACHES, keyOf(rig, links, $band, bits(turns), $is_away, $who, $head),
        isReachingOf(rig, band, links, turns, is_away, who, head))
 
@@ -483,7 +600,8 @@ func chosen*(walks: openArray[Carry]): int =
     if result < 0 or carry.leap * SMOOTHER < walks[result].leap: result = i
 
 proc furthest(
-  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool; head: Body
+  rig: Rig; band: Band; links: seq[Link]; who: Body; most, step: float; is_away: bool;
+  head: Body; is_raw: bool
 ): Walk =
   ## Walk one way from whichever distance carries it furthest, and among
   ## distances carrying it as far, from one where arms move least between
@@ -497,20 +615,22 @@ proc furthest(
   ##     under arm at.  Couple stand where move is smooth.  Once turn runs free
   ##     search looks `LOOK` further out for that and no further, since walking
   ##     every distance that carries free turn costs fifty walks where one did.
+  ##   Raw search walks engine's own walks (`walkedOf`).
   var
     walks: seq[Walk]
     carries: seq[Carry]
     free = Inf  ## First distance turn ran free from.
   for apart in stands(rig):
     if apart > free + LOOK + SEEK / 2.0: break
-    let walk = walked(rig, band, links, who, apart, most, step, is_away, head)
+    let walk = (if is_raw: walkedOf(rig, band, links, who, apart, most, step, is_away, head)
+                else: walked(rig, band, links, who, apart, most, step, is_away, head))
     if not walk.found_rest: continue
     walks.add walk
     carries.add (apart, (if walk.is_stopped: walk.at else: Inf), leapOf(walk))
     if carries[^1].got == Inf: free = min(free, apart)
   if carries.len > 0: result = walks[chosen(carries)]
 
-proc sweptOf(
+proc waysOf(
   rig: Rig,
   band: Band,
   links: seq[Link],
@@ -518,27 +638,38 @@ proc sweptOf(
   most, step, apart: float,
   is_away: bool,
   head: Body,
-): Swept =
-  ## Sweep both ways, each from wherever that way carries furthest.
+  is_raw: bool,
+): tuple[positive, negative: Walk] =
+  ## Both ways of sweep, each from wherever that way carries furthest.
   ##   `who` turns; `head` is whose crown joined hands are carried over.  Callers
   ##     pass same dancer for both: one whose facing turns against connection has
   ##     connection go round them, and round over crown is over their crown.
   ##   Two ways stand where each of them wants, not both where one of them does.
   ##     Turning one way and turning other are two turns, and couple about to
   ##     take either stand for that one.
-  if apart > 0.0:
-    result.positive = walked(rig, band, links, who, apart, most, step, is_away, head)
-    result.negative = walked(rig, band, links, who, apart, most, -step, is_away, head)
-  else:
-    result.positive = furthest(rig, band, links, who, most, step, is_away, head)
-    result.negative = furthest(rig, band, links, who, most, -step, is_away, head)
-  result.found_rest = result.positive.found_rest or result.negative.found_rest
-  result.apart = (if result.positive.at >= result.negative.at: result.positive.apart
-                  else: result.negative.apart)
+  ##   Hold that is its own mirror walks way that turns positive, and other way is it
+  ##     reflected (`twinOf`), unless it rests face to back or sweep is raw.
+  proc way(towards: float): Walk =
+    ## One way, `towards` its own step: engine's own walk where raw.
+    if apart > 0.0 and is_raw:
+      walkedOf(rig, band, links, who, apart, most, towards, is_away, head)
+    elif apart > 0.0: walked(rig, band, links, who, apart, most, towards, is_away, head)
+    else: furthest(rig, band, links, who, most, towards, is_away, head, is_raw)
+  if isMirrorSame(links) and not is_away and not is_raw:
+    let
+      ahead = way(abs(step))
+      twin = twinOf(links, -1.0, is_away)
+      behind = reflected(ahead, twin.order, restsOf(rig, ahead.apart, is_away), partnersOf(rig))
+    return (if step >= 0.0: (ahead, behind) else: (behind, ahead))
+  (way(step), way(-step))
+
+func sweptOf(positive, negative: Walk): Swept =
+  ## Sweep of these two ways: couple stand where way that got further stood.
+  result = Swept(positive: positive, negative: negative)
+  result.found_rest = positive.found_rest or negative.found_rest
+  result.apart = (if positive.at >= negative.at: positive.apart else: negative.apart)
   if not result.found_rest:
     result = Swept(apart: result.apart)
-
-
 
 proc swept*(
   rig: Rig,
@@ -550,11 +681,33 @@ proc swept*(
   apart = 0.0,
   is_away = false,
   head = Body.Two,
+  is_raw = false,
 ): Swept =
-  ## Sweep both ways, each from wherever that way carries furthest (`sweptOf`).
-  kept(SWEEPS, keyOf(rig, links, $band, $who, bits(most), bits(step), bits(apart), $is_away,
-                     $head),
-       sweptOf(rig, band, links, who, most, step, apart, is_away, head))
+  ## Sweep both ways, each from wherever that way carries furthest (`waysOf`).
+  ##   Twin's sweep reflected answers mirror image: its way that turns positive is other
+  ##     one's that turns negative (`twinOf`).
+  ##   Raw sweep is engine's own: it reflects no twin, and keeps nothing, so no other
+  ##     sweep reads it.
+  if is_raw:
+    let (positive, negative) = waysOf(rig, band, links, who, most, step, apart, is_away, head,
+                                      true)
+    return sweptOf(positive, negative)
+  let twin = twinOf(links, 1.0, is_away)
+  if twin.is_reflected and not isMirrorSame(links):
+    let (positive, negative) = kept(SWEEPS, keyOf(rig, twin.links, $band, $who, bits(most),
+                                                   bits(step), bits(apart), $is_away, $head),
+                                    waysOf(rig, band, twin.links, who, most, step, apart,
+                                           is_away, head, false))
+    let partners = partnersOf(rig)
+    return sweptOf(
+      reflected(negative, twin.order, restsOf(rig, negative.apart, is_away), partners),
+      reflected(positive, twin.order, restsOf(rig, positive.apart, is_away), partners),
+    )
+  let (positive, negative) = kept(SWEEPS, keyOf(rig, links, $band, $who, bits(most), bits(step),
+                                                 bits(apart), $is_away, $head),
+                                  waysOf(rig, band, links, who, most, step, apart, is_away,
+                                         head, false))
+  sweptOf(positive, negative)
 
 
 
@@ -816,7 +969,11 @@ proc isPlannedHolding*(
   is_either_way = false,
   who = Body.Two,
 ): bool =
-  ## Whether some planned way of winding to this facing holds, and stands there.
+  ## Whether some planned way of winding to this facing holds, and stands there.  Twin's
+  ## answer answers mirror image (`twinOf`).
+  let twin = twinOf(links, turns, is_away)
+  if twin.is_reflected:
+    return isPlannedHolding(rig, band, twin.links, twin.turns, is_away, head, is_either_way, who)
   proc asked(): bool =
     let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
     if found.is_holding: found.couple.free()
@@ -827,7 +984,11 @@ proc isPlannedHolding*(
 proc isPlannedReaching*(
   rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool; who, head: Body
 ): bool =
-  ## Whether some planned way carries couple this far, `who` turning.
+  ## Whether some planned way carries couple this far, `who` turning.  Twin's answer
+  ## answers mirror image (`twinOf`).
+  let twin = twinOf(links, turns, is_away)
+  if twin.is_reflected:
+    return isPlannedReaching(rig, band, twin.links, twin.turns, is_away, who, head)
   proc asked(): bool =
     planAhead(rig, links, is_away, @[turns], who)
     for style in STYLES:

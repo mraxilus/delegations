@@ -18,6 +18,7 @@
 import std/[math, options]
 
 import ./[body, hold, limb, rig, rigid, vector, walk]
+from ./plan import isMirrorSame
 
 
 type
@@ -103,16 +104,16 @@ proc stillOf(couple: Couple, at: float): Still =
     result.grips.add (pose.arms[0].grip + pose.arms[1].grip) * 0.5
     result.apart.add pose.apart
 
-proc still*(
+proc stillAsked(
   rig: Rig,
   band: Band,
   links: seq[Link],
   name: string,
   turns: float,
-  is_away = false,
-  head = Body.Two,
-  is_either_way = false,
-  who = Body.Two,
+  is_away: bool,
+  head: Body,
+  is_either_way: bool,
+  who: Body,
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds.
@@ -156,15 +157,15 @@ proc still*(
     result.stills.add stillOf(couple, where.turns)
   couple.free()
 
-proc shown*(
+proc shownAsked(
   rig: Rig,
   band: Band,
   links: seq[Link],
   name: string,
-  who = Body.Two,
-  step = STEP,
-  is_away = false,
-  head = Body.Two,
+  who: Body,
+  step: float,
+  is_away: bool,
+  head: Body,
 ): Shown =
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
@@ -202,3 +203,106 @@ proc shown*(
     at += step
     result.stills.add stillOf(couple, at)
   couple.free()
+
+
+#[ Mirror ]#
+
+# Mutable and global: one run keeps every still it stood, for every thread (`walk.keepAnswers`).
+var STILLS: Store[Shown]  ## Every still asked, by every argument but its name.
+initStore(STILLS)
+
+func otherArm(arm: Arm): Arm = (if arm == Arm.Left: Arm.Right else: Arm.Left)
+  ## Arm on other side of same body.
+
+func reflected(still: Still, rig: Rig, order: seq[int]): Still =
+  ## Still of twin seen in mirror: still of question it answers (`walk.twinOf`).
+  ##   Every bar keeps its own place and name, and takes its mirror's ends: arm's link of
+  ##     other arm, trunk's capsule on other side of body.  Each arm reads its mirror's
+  ##     joints, twist turned other way, as rig states left arm's ends mirrored.
+  let partners = partnersOf(rig)
+  result = Still(at: -still.at)
+  for who in Body:
+    result.faces[who] = Faces(at: mirrored(still.faces[who].at),
+                              fore: mirrored(still.faces[who].fore))
+  var trunks: array[Body, seq[int]]  ## Place of each body's trunk capsules, in order.
+  for p, bar in still.bars:
+    if bar.mark == Mark.Trunk: trunks[bar.who].add p
+  for p, bar in still.bars:
+    var q = p
+    if bar.mark == Mark.Trunk:
+      q = trunks[bar.who][partners[trunks[bar.who].find(p)]]
+    else:
+      for r, other in still.bars:
+        if other.who == bar.who and other.mark == bar.mark and other.arm == otherArm(bar.arm):
+          q = r
+    result.bars.add Bar(who: bar.who, arm: bar.arm, mark: bar.mark, a: mirrored(still.bars[q].a),
+                        z: mirrored(still.bars[q].z), radius: still.bars[q].radius)
+  for ache in still.arms:
+    var image: Ache
+    for other in still.arms:
+      if other.who == ache.who and other.arm == otherArm(ache.arm): image = other
+    var read = image.read
+    read[Dof.Twist] = -read[Dof.Twist]
+    result.arms.add Ache(who: ache.who, arm: ache.arm, read: read, lower: ache.lower,
+                         upper: ache.upper)
+  for k in 0..<order.len:
+    result.grips.add mirrored(still.grips[order[k]])
+    result.apart.add still.apart[order[k]]
+
+func reflected(shown: Shown, rig: Rig, name: string, order: seq[int], is_paired: bool): Shown =
+  ## Recording of twin seen in mirror: recording of question it answers.
+  ##   Hand that gave is named where turn stopped at it.  Planned hold that is its own
+  ##     mirror tries each style's two paths in other order, so their strains swap.
+  result = shown
+  result.hold = name
+  result.turns = -shown.turns
+  if shown.why != Stop.None: result.whose = (shown.whose.body, otherArm(shown.whose.arm))
+  result.stills = @[]
+  for still in shown.stills: result.stills.add reflected(still, rig, order)
+  if is_paired:
+    for k in 0..<shown.tried.len div 2:
+      (result.tried[2 * k], result.tried[2 * k + 1]) = (shown.tried[2 * k + 1], shown.tried[2 * k])
+
+proc still*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  name: string,
+  turns: float,
+  is_away = false,
+  head = Body.Two,
+  is_either_way = false,
+  who = Body.Two,
+): Shown =
+  ## One still, `who` turning, from distance couple stand for it, or none if no distance
+  ## holds (`stillAsked`).  Twin's still reflected answers mirror image (`walk.twinOf`).
+  ##   Card that asks what another card asks reads still that one stood, under its own name.
+  let
+    twin = twinOf(links, turns, is_away)
+    asked = kept(STILLS, keyOf(rig, twin.links, $band, bits(twin.turns), $is_away, $head,
+                              $is_either_way, $who),
+                 stillAsked(rig, band, twin.links, name, twin.turns, is_away, head,
+                            is_either_way, who))
+  if not twin.is_reflected:
+    result = asked
+    result.hold = name
+    return
+  reflected(asked, rig, name, twin.order, asked.is_planned and isMirrorSame(links))
+
+proc shown*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  name: string,
+  who = Body.Two,
+  step = STEP,
+  is_away = false,
+  head = Body.Two,
+): Shown =
+  ## Walk one way from wherever it carries furthest, keeping every moment whole
+  ## (`shownAsked`).  Twin's walk reflected answers mirror image (`walk.twinOf`).
+  let twin = twinOf(links, step, is_away)
+  if not twin.is_reflected:
+    return shownAsked(rig, band, links, name, who, step, is_away, head)
+  reflected(shownAsked(rig, band, twin.links, name, who, twin.turns, is_away, head), rig, name,
+            twin.order, false)

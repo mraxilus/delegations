@@ -69,8 +69,10 @@ const
 
 
 type
-  SweepAsked* = tuple[key: string, band: Band, links: seq[Link], most: float]
-    ## Hold swept both ways, each from distance that carries it furthest.
+  SweepAsked* = tuple[key: string, band: Band, links: seq[Link], most: float, is_raw: bool]
+    ## Hold swept both ways, each from distance that carries it furthest.  Raw sweep is
+    ## engine's own, where simulation answers mirror twin as other twin reflected
+    ## (`walk.swept`).
   WalkAsked* = tuple[key: string, band: Band, links: seq[Link], most, step: float]
     ## Hold walked one way from every distance, to hold search to argument maximum.
   ReachAsked* = tuple[key: string, band: Band, links: seq[Link], turns: float, is_away: bool]
@@ -110,14 +112,17 @@ type
   Task* = tuple[job: Job, index, far: int]  ## One search, or one walk from one distance.
 
 const
-  SWEEPS*: array[6, SweepAsked] = [
-    ("shake at torso", Band.Torso, SHAKE, 1.6),
-    ("left to left at torso", Band.Torso, LEFT_TO_LEFT, 0.8),
-    ("right to right at torso", Band.Torso, RIGHT_TO_RIGHT, 0.8),
-    ("left to left over crown", Band.Crown, LEFT_TO_LEFT, 1.0),
-    ("left to right over crown", Band.Crown, LEFT_TO_RIGHT, 1.0),
-    ("left to right at torso", Band.Torso, LEFT_TO_RIGHT, 1.0),
+  SWEEPS*: array[7, SweepAsked] = [
+    ("shake at torso", Band.Torso, SHAKE, 1.6, false),
+    ("left to left at torso", Band.Torso, LEFT_TO_LEFT, 0.8, false),
+    ("right to right at torso", Band.Torso, RIGHT_TO_RIGHT, 0.8, true),
+    ("left to left over crown", Band.Crown, LEFT_TO_LEFT, 1.0, false),
+    ("left to right over crown", Band.Crown, LEFT_TO_RIGHT, 1.0, false),
+    ("left to right at torso", Band.Torso, LEFT_TO_RIGHT, 1.0, false),
+    ("left to right at torso, as far as shake", Band.Torso, LEFT_TO_RIGHT, 1.6, false),
   ]  ## Every sweep laws stand couple for.
+    ##   Right to right is raw, so law of mirror holds engine's own search to that of left
+    ##     to left.  Left to right as far as shake is shake's twin, which law of twins reads.
   WALKS*: array[3, WalkAsked] = [
     ("shake at torso, negative", Band.Torso, SHAKE, 1.6, -STEP),
     ("shake at torso, positive", Band.Torso, SHAKE, 1.6, STEP),
@@ -252,7 +257,8 @@ proc taskText*(task: Task): string =
   of Sweep:
     let
       question = SWEEPS[task.index]
-      sweep = swept(HUMAN, question.band, question.links, most = question.most)
+      sweep = swept(HUMAN, question.band, question.links, most = question.most,
+                    is_raw = question.is_raw)
     $(%Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive)))
   of WalkFrom:
     let
