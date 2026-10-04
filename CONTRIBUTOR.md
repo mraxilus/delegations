@@ -24,7 +24,7 @@ merge, never touch `main`, and never write outside your project.
 
 ## Every delegate begins here
 
-Two reads before any other work, and one list to carry.
+Two reads before any other work, one list to carry, and work to hand off.
 
 - **Issues labelled with your role.** Filter the open issues on
   `contributor/<domain>/<project>`, spelled exactly as your `**Role:**` line. The `**Role:**`
@@ -47,6 +47,11 @@ Two reads before any other work, and one list to carry.
   in a comment answered the issue, close it by hand as well.
 
 `GUIDE.md` holds the rest, under "The queue and the shared allowance".
+
+**Hand work to subagents.** Read-only work that spans many files goes to a subagent by default:
+a search, a review, a reproduction or a measurement. So does each change that is independent of
+the rest of your queue. `GUIDE.md`, Work for subagents, gives the test and the steps. A delegate
+that reads every file itself fills its own context, and does one thing at a time.
 
 ## Carry the unchecked list in the open
 
@@ -197,8 +202,6 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
   intention to a commit. An update to `PROVENANCE.md` and `GLOSSARY.md` travels in its own
   `docs(<project>)` commit, in the same delivery as the change it describes.
 - Never rewrite pushed history. The log is part of the document (Article XI.2).
-- **Give each fully independent change of your queue to a subagent**, and run them at the same
-  time. Follow `GUIDE.md`, Independent changes run in subagents.
 - `nim r koch check` at the repository root passes on the exact commit you are about to push.
   Only then push with `git push -u origin <branch>`, and open a draft pull request from the
   template. The `pre-push` hook refuses a push of a tree that no green run recorded. Never

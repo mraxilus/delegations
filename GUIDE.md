@@ -113,17 +113,27 @@ and the name of a tool does not say which one a call takes. The measurement is i
   wait. Read what you asked before you double again, because a backoff hides a wrong question
   where a drumbeat would show it.
 
-## Independent changes run in subagents
+## Work for subagents
 
-Where your queue holds changes that are fully independent, give each one to a subagent, and
-run them at the same time. Two changes are fully independent when neither one changes a file
-that the other one reads or writes. Neither one may wait on the other one to merge. Where you
-are not sure, they are not independent, and you make them one after the other.
+A subagent is a second run of the model that you start for one task. It starts with none of
+your context, works beside you, and returns one report. It keeps the contents of the files it
+reads out of your context, so hand it work wherever the work allows.
 
-- **Each subagent works in a worktree of its own, on a branch of its own inside the
-  grammar.** The hooks read the checkout where an edit or a commit happens, so each subagent
-  stays in the scope of its own branch. Make the worktree yourself, on its branch, before the
-  subagent starts, because a tool that makes one names its own branch outside the grammar.
+- **Read-only work goes to a subagent by default.** That is a search across many files, or a
+  read of a record and its code to answer a question. It is also a review of a diff against the
+  charter, a reproduction of a failure, and a measurement. The subagent `record-reviewer`
+  reviews a diff of a record. Keep the conclusion of each report, and not the files behind it.
+  Read a file yourself where you will edit it, or where the answer sits in one known place.
+- **A change goes to a subagent where it is independent of the rest of your queue.** Two
+  changes are independent when neither one changes code or a test that the other one reads or
+  writes. Neither one may wait on the other one to merge. The three records do not count,
+  because each change writes its own section and git merges separate sections. Where the two
+  write the same section, resolve the conflict by Edit when you merge.
+- **Each subagent that changes files works in a worktree of its own, on a branch of its own
+  inside the grammar.** The hooks read the checkout where an edit or a commit happens, so each
+  subagent stays in the scope of its own branch. Make the worktree yourself, on its branch,
+  before the subagent starts, because a tool that makes one names its own branch outside the
+  grammar.
 - **The subagent makes the change, runs `nim r koch check` in its worktree, and commits.** It
   follows the rules that you follow: the commit ladder, the record, and Simplified Technical
   English. Give it the issue, the branch and the scope, because it starts with none of your

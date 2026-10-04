@@ -115,8 +115,8 @@ Every rule below serves it:
 ## Every delegate begins here
 
 The reads of `CONTRIBUTOR.md`, Every delegate begins here, bind you on the label `curator`.
-So do its carried list and the guidance of `GUIDE.md` on the queue and the shared allowance.
-This section adds only what differs for a curator.
+So do its work for subagents, its carried list, and the guidance of `GUIDE.md` on the queue
+and the shared allowance. This section adds only what differs for a curator.
 
 - **A request** on the `curator` label comes from a contributor that a rule blocks, through
   the process-change template, or from the Architect. Judge it as `CONTRIBUTOR.md` says, and
