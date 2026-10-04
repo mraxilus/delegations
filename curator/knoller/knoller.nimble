@@ -7,5 +7,6 @@ description = "Fixers of Nim source that read text of one file alone."
 license = "Prosperity-3.0.0"
 srcDir = "src"
 installExt = @["nim"]
+bin = @["knoller"]
 
 requires "nim == 2.2.12"
