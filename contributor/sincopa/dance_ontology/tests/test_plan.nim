@@ -232,7 +232,9 @@ suite "Internal: Planner's cost":
     ## (`plan.Reckoning`).  Held here to plain cost of each stepped pose, every term
     ## reckoned whole: equal to last bit, since recording made either way must be same.
     ##   Red with collarbone's step moving palm alone, with near pairs marked at half their
-    ##     threshold, and with mask or leaps not put back after step, measured 2026-10-04.
+    ##     threshold, with mask or leaps not put back after step, with arm placed one link
+    ##     too late, with waist's ease not reckoned in body's step, and with trunk's pairs
+    ##     left out of body's step, measured 2026-10-04.
     var generator = initRand(20261004)
     const SAME_NAME = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
                         Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
@@ -257,22 +259,31 @@ suite "Internal: Planner's cost":
             for k in 4..<SIZE: weighing.bias[k] = generator.rand(-0.05..0.05)
             let plan = randomPlan(HUMAN, generator)
             var
-              here, there: Reckoning
+              here: Reckoning
               held: Held
+              held_body: HeldBody
             check here.weigh(HUMAN, weighing, plan) == plainCost(weighing, plan)
-            let costs = stepped(here, there, held, HUMAN, weighing, plan, bounds, moving)
+            let costs = stepped(here, held, held_body, HUMAN, weighing, plan, bounds, moving)
             for k in 0..<SIZE:
               if bounds[k][0] == bounds[k][1]: continue
               var stepped_plan = plan
               stepped_plan[k] += 1e-7
               check costs[k] == plainCost(weighing, stepped_plan)
             check here.total(weighing, plan) == plainCost(weighing, plan)
-            # Long step of each arm freedom carries pairs across every threshold, and back.
-            for k in 4..<SIZE:
+            # Long step of each freedom carries pairs across every threshold, and back.
+            for k in 0..<SIZE:
+              if bounds[k][0] == bounds[k][1]: continue
               var far_plan = plan
               far_plan[k] += generator.rand(-0.6..0.6)
-              let moved = moving[(k - 4) div PER_ARM][firstMoved(k)]
-              here.stepArm(held, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
-              check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
-              here.restore(held, k, moved)
+              if k < 4:
+                let moved = moving.bodies[bodyMoving(k)]
+                here.stepBody(held_body, HUMAN, problem, far_plan, wind, k, moved,
+                              weighing.before)
+                check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+                here.restoreBody(held_body, k, moved)
+              else:
+                let moved = moving.arms[(k - 4) div PER_ARM][firstMoved(k)]
+                here.stepArm(held, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
+                check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+                here.restore(held, k, moved)
               check here.total(weighing, plan) == plainCost(weighing, plan)

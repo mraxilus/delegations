@@ -144,8 +144,9 @@ func placeArm(
 ): ArmPlaced =
   ## One arm placed in world, its body standing in `frame`, and what its joints read.
   ##   Where `first` is above nought, turns and joints above that link are `held`'s: arm
-  ##     placed from its girdle (nought), upper arm (one), forearm (two) or palm (three) on.
-  ##     Each is reckoned by same steps from same freedoms, so arm is same to last bit.
+  ##     placed from its girdle (nought), upper arm (one), forearm (two) or palm (three) on,
+  ##     or from none (four) where body alone moved.  Each is reckoned by same steps from
+  ##     same freedoms, so arm is same to last bit; every point is carried into world again.
   let
     neck = halfBreadth(rig, Part.Neck)
     base = 4 + PER_ARM * i
@@ -175,29 +176,29 @@ func placeArm(
     result.turns[2] = times(result.turns[1], aboutRight(plan[base + 5]))
     result.joints[2] = result.joints[1] + column(result.turns[2], 2) * rig.fore
     result.bend = plan[base + 5]
-  result.turns[3] = times(result.turns[2], wristTurn(plan, i))
+  if first <= 3:
+    result.turns[3] = times(result.turns[2], wristTurn(plan, i))
+    result.cone = arccos(clamp(dot(column(result.turns[2], 2), column(result.turns[3], 2)),
+                               -1.0, 1.0))
   let
     (shoulder, elbow, wrist) = (result.joints[0], result.joints[1], result.joints[2])
     (upper, forearm, hand) = (result.turns[1], result.turns[2], result.turns[3])
     grip = wrist + column(hand, 2) * rig.hand
     direction = column(upper, 2)
-  if first <= 0:
-    result.shoulder = frame.world(shoulder)
-    result.capsules[0] = (frame.world(root), frame.world(shoulder), GIRDLE_RADIUS)
-  if first <= 1:
-    result.elbow = frame.world(elbow)
-    result.capsules[1] = (frame.world(shoulder + direction * rig.limb),
-                          frame.world(shoulder + direction * (rig.upper - rig.limb)),
-                          rig.limb)
-  if first <= 2:
-    result.wrist = frame.world(wrist)
-    result.capsules[2] = (frame.world(elbow + column(forearm, 2) * rig.limb),
-                          frame.world(elbow + column(forearm, 2) * (rig.fore - rig.limb)),
-                          rig.limb)
+  result.shoulder = frame.world(shoulder)
+  result.elbow = frame.world(elbow)
+  result.wrist = frame.world(wrist)
   result.grip = frame.world(grip)
-  result.capsules[3] = (frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)),
-                        frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)), rig.hand / 2.0)
-  result.cone = arccos(clamp(dot(column(forearm, 2), column(hand, 2)), -1.0, 1.0))
+  result.capsules = [
+    (frame.world(root), frame.world(shoulder), GIRDLE_RADIUS),
+    (frame.world(shoulder + direction * rig.limb),
+     frame.world(shoulder + direction * (rig.upper - rig.limb)),
+     rig.limb),
+    (frame.world(elbow + column(forearm, 2) * rig.limb),
+     frame.world(elbow + column(forearm, 2) * (rig.fore - rig.limb)), rig.limb),
+    (frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)),
+     frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)), rig.hand / 2.0),
+  ]
 
 func place*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.Two): Placed =
   ## Every capsule and joint reading of couple at this plan and wind.
@@ -443,6 +444,7 @@ type
     balls: seq[Ball]  ## Each capsule's ball.
     gaps: Gaps
     first_arm: int  ## Place of first arm capsule in `capsules`.
+    trunk: seq[Capsule]  ## One trunk's capsules in body's own frame (`rigid.trunkCapsules`).
     eases: array[4, array[6, float]]
     waists: array[2, float]
     margins: array[4, array[3, float]]
@@ -475,6 +477,8 @@ proc reckon(
   r.placed = place(rig, plan, wind, problem.is_away, problem.turner)
   r.capsules = capsulesOf(r.placed)
   r.first_arm = 2 * r.placed.trunks[Body.One].len
+  if r.trunk.len == 0:
+    for capsule in trunkCapsules(rig): r.trunk.add capsule
   r.balls.setLen(r.capsules.len)
   for k, capsule in r.capsules: r.balls[k] = ballOf(capsule)
   let threshold = thresholdOf(problem)
@@ -518,14 +522,28 @@ func firstMoved(freedom: int): int =
   ## upper arm on, elbow forearm on, wrist palm alone.
   [0, 0, 1, 1, 1, 2, 3, 3, 3][(freedom - 4) mod PER_ARM]
 
-func movedPairs(rig: Rig, problem: Problem): array[4, array[4, seq[int]]] =
-  ## Pairs that step of arm `i` moves, where it moves capsules from part `f` on.
-  let first_arm = 2 * trunkCapsules(rig).len
+type Moving = object
+  ## Pairs each step moves, listed once for every step of one solve.
+  ##   Fields are open to `tests/test_plan.nim`, which steps each freedom by them.
+  arms*: array[4, array[4, seq[int]]]  ## By arm, and first link its step moves.
+  bodies*: array[Body, seq[int]]  ## By body whose frame moves.
+
+func movedPairs(rig: Rig, problem: Problem): Moving =
+  ## Pairs that each step moves: of arm `i` from link `f` on, and of every capsule of body.
+  let
+    trunk = trunkCapsules(rig).len
+    first_arm = 2 * trunk
+  func isOf(k: int, who: Body): bool =
+    ## Whether capsule `k` is one of body's own: its trunk, or one of its two arms.
+    k in ord(who) * trunk..<(ord(who) + 1) * trunk or
+      k in first_arm + 8 * ord(who)..<first_arm + 8 * (ord(who) + 1)
   for k, (a, b) in problem.pairs:
     for i in 0..3:
       for f in 0..3:
         let moved = first_arm + 4 * i + f..first_arm + 4 * i + 3
-        if a in moved or b in moved: result[i][f].add k
+        if a in moved or b in moved: result.arms[i][f].add k
+    for who in Body:
+      if a.isOf(who) or b.isOf(who): result.bodies[who].add k
 
 type Held = object  ## What one arm's step re-reckoned away from, to put back.
   arm: ArmPlaced
@@ -599,32 +617,125 @@ proc restore(r: var Reckoning, held: Held, freedom: int, moved: seq[int]) =
   r.margins[i] = held.margin
 
 
+type HeldBody = object  ## What one body's step re-reckoned away from, to put back.
+  arms: array[2, ArmPlaced]
+  trunk: seq[Capsule]
+  balls: seq[Ball]  ## Trunk's, then both arms'.
+  leaps: array[8, array[2, float]]
+  waists: array[2, float]
+  gaps: seq[float]  ## Gap of each moved pair, in order moved.
+  near: seq[uint64]
+
+func bodyMoving(freedom: int): Body =
+  ## Body whose frame freedom moves: one's waist turns lead, apart and other waist follow.
+  if freedom == 2: Body.One else: Body.Two
+
+proc stepBody(
+  r: var Reckoning,
+  held: var HeldBody,
+  rig: Rig,
+  problem: Problem,
+  plan: Plan,
+  wind: float,
+  freedom: int,
+  moved: seq[int],
+  before: seq[Capsule],
+) =
+  ## Re-reckon `r` for `plan`, which differs from pose it holds in one freedom of where
+  ## body stands or which way it faces, keeping in `held` what it held.
+  ##   Body's capsules move together, its arms' joints read same, and other body stands
+  ##     where it stood: every capsule of body is carried into world again, and pairs it is
+  ##     in reckoned again.
+  let
+    who = bodyMoving(freedom)
+    frame = frameOf(plan, who, wind, problem.is_away, problem.turner)
+    trunk = r.trunk.len
+    threshold = thresholdOf(problem)
+  held.trunk.setLen(trunk)
+  held.balls.setLen(trunk + 8)
+  for t in 0..<trunk:
+    let k = ord(who) * trunk + t
+    held.trunk[t] = r.capsules[k]
+    held.balls[t] = r.balls[k]
+    r.capsules[k] = (frame.world(r.trunk[t].a), frame.world(r.trunk[t].z), r.trunk[t].radius)
+    r.placed.trunks[who][t] = r.capsules[k]
+    r.balls[k] = ballOf(r.capsules[k])
+  for side in 0..1:
+    let i = 2 * ord(who) + side
+    held.arms[side] = r.placed.arms[i]
+    r.placed.arms[i] = placeArm(rig, plan, i, frame, 4, held.arms[side])
+    for part in 0..3:
+      let k = r.first_arm + 4 * i + part
+      held.balls[trunk + 4 * side + part] = r.balls[k]
+      r.capsules[k] = r.placed.arms[i].capsules[part]
+      r.balls[k] = ballOf(r.capsules[k])
+      if r.leaps.len > 0:
+        held.leaps[4 * side + part] = r.leaps[k - r.first_arm]
+        r.leaps[k - r.first_arm] = leapsOf(problem, r.capsules[k], before[k])
+  held.waists = r.waists
+  r.waists = waistsOf(rig, plan)
+  held.near.setLen(r.gaps.near.len)
+  for w in 0..<r.gaps.near.len: held.near[w] = r.gaps.near[w]
+  held.gaps.setLen(moved.len)
+  for n, k in moved:
+    held.gaps[n] = r.gaps.values[k]
+    let (a, b) = problem.pairs[k]
+    r.gaps.values[k] = r.gapOf(a, b, threshold)
+    r.gaps.mark(k, threshold)
+
+proc restoreBody(r: var Reckoning, held: HeldBody, freedom: int, moved: seq[int]) =
+  ## Put back pose `stepBody` re-reckoned away from.
+  let
+    who = bodyMoving(freedom)
+    trunk = r.trunk.len
+  for t in 0..<trunk:
+    let k = ord(who) * trunk + t
+    r.capsules[k] = held.trunk[t]
+    r.placed.trunks[who][t] = held.trunk[t]
+    r.balls[k] = held.balls[t]
+  for side in 0..1:
+    let i = 2 * ord(who) + side
+    r.placed.arms[i] = held.arms[side]
+    for part in 0..3:
+      let k = r.first_arm + 4 * i + part
+      r.capsules[k] = held.arms[side].capsules[part]
+      r.balls[k] = held.balls[trunk + 4 * side + part]
+      if r.leaps.len > 0: r.leaps[k - r.first_arm] = held.leaps[4 * side + part]
+  r.waists = held.waists
+  for n, k in moved: r.gaps.values[k] = held.gaps[n]
+  for w in 0..<held.near.len: r.gaps.near[w] = held.near[w]
+
+
 proc weigh(r: var Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
   ## Cost of pose at `plan`, every term reckoned afresh into `r`.
   r.reckon(rig, weighing.problem, plan, weighing.wind, weighing.before)
   r.total(weighing, plan)
 
 proc stepped(
-  here, there: var Reckoning,
+  here: var Reckoning,
   held: var Held,
+  held_body: var HeldBody,
   rig: Rig,
   weighing: Weighing,
   plan: Plan,
   bounds: Bounds,
-  moving: array[4, array[4, seq[int]]],
+  moving: Moving,
 ): Plan =
   ## Cost of pose one forward step along each free freedom from `plan`, which `here` holds;
-  ## nought for freedom held.  Arm freedom re-reckons what it moves in `here` and puts it
-  ## back; body's freedom moves every capsule of its body, and is reckoned afresh in
-  ## `there`.
+  ## nought for freedom held.  Each step re-reckons what it moves in `here`, and puts it
+  ## back: arm freedom its arm from link it moves, body's freedom every capsule of body.
   for k in 0..<SIZE:
     if bounds[k][0] == bounds[k][1]: continue
     var z = plan
     z[k] += 1e-7
     if k < 4:
-      result[k] = there.weigh(rig, weighing, z)
+      let moved = moving.bodies[bodyMoving(k)]
+      here.stepBody(held_body, rig, weighing.problem, z, weighing.wind, k, moved,
+                    weighing.before)
+      result[k] = here.total(weighing, z)
+      here.restoreBody(held_body, k, moved)
       continue
-    let moved = moving[(k - 4) div PER_ARM][firstMoved(k)]
+    let moved = moving.arms[(k - 4) div PER_ARM][firstMoved(k)]
     here.stepArm(held, rig, weighing.problem, z, weighing.wind, k, moved, weighing.before)
     result[k] = here.total(weighing, z)
     here.restore(held, k, moved)
@@ -655,6 +766,7 @@ proc solve*(
   var
     here, there: Reckoning  ## Pose at `x`, and pose last weighed.
     held: Held
+    held_body: HeldBody
   for stage in 0..2:
     let weighing = Weighing(problem: problem, wind: wind, before: before, last: last,
                             bias: bias, weight: [1e3, 1e5, 1e7][stage], holding: holding)
@@ -663,7 +775,7 @@ proc solve*(
     proc gradient(y: Plan, at: float): Plan =
       ## Read gradient of cost by forward difference, `at` being cost at `y`, which `here`
       ## holds.
-      let costs = stepped(here, there, held, rig, weighing, y, bounds, moving)
+      let costs = stepped(here, held, held_body, rig, weighing, y, bounds, moving)
       for k in 0..<SIZE:
         if bounds[k][0] == bounds[k][1]: continue
         result[k] = (costs[k] - at) / 1e-7
