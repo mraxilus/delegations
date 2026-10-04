@@ -745,7 +745,8 @@ suite "Mesh":
       # Vertex lies on plane exactly when its offset from support is normal to normal.
       let (anchor, normal) = (positionAnchor(plane), directionNormal(plane))
       check anchor.isSome and normal.isSome
-      # Disc is spanned over box of its sphere and filled by fragment's own ray:
+      # Disc is spanned over box of its sphere, or of its rim where whole rim stands ahead,
+      #   and filled by fragment's own ray:
       #   `viewBoxOfDisc` and `hitDiscAlong` -- its references -- are what is read here.
       #   Every rim point in front of eye projects inside box, read in box's turned fractions
       #   and clamped to turned view as box is; ray through centre lands at centre's depth;
