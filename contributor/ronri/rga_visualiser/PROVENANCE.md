@@ -3081,7 +3081,7 @@ query, so a run of the query alone returns the composite entries too.
 Verified by a run of the recorded query against the TAP service of SIMBAD, 2026-10-04. It
 returns 11,430 entries. The query applies its own bounds of parallax and position, so the bound
 of 31.53 parsecs removes no entry. Every star of the table is in the result, at the distance
-that the table gives it. Of these stars, 17 carry a new name today, at the same position. Each
+that the table gives it. Of these stars, 17 carry a new SIMBAD name, at the same position. Each
 of the other 178 entries is a composite entry, and the table holds its components.
 
 SIMBAD links 174 of those composite entries to their components. The name of each of the other
