@@ -13,6 +13,7 @@ suite "Rules":
     check Rule.TargetSubject.id == "to-target-subject-first"  # bracket run folds into one
     check Rule.StrictFuncs.id == "strictfuncs"  # case folds
     check Rule.Fence.id == "fence"  # one word stays
+    check Rule.FenceHeld.id == "fence-held"
 
 
   test "every rule has id of its own, so output names one rule":

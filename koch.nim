@@ -441,6 +441,7 @@ proc run(options: Options): int =
     #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
     #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
     #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
+    #   Each fence prints as warning, so lines no fixer reads stay in view; exit code ignores it.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused
@@ -456,13 +457,14 @@ proc run(options: Options): int =
     let
       locked = tree.lockedNimbles
       answers = resolve(options.root, tree, semanticQueries(tree, entries, locked))
-      (written, fixed, refused, left) = fixEntries(
+      (written, fixed, refused, left, held) = fixEntries(
         options.branchOrDefault,
         entries,
         locked,
         tree.contextOf(entries, answers, locked),
       )
     for f in left.sorted: echo f.render
+    for f in held.sorted: echo "warning: " & f.render
     if refused.len > 0:
       refused.report
       echo "Nothing written; fix writes only inside branch scope."
