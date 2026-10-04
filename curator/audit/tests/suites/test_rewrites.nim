@@ -158,6 +158,20 @@ suite "Internal: Rewrites":
     check "p/b.nim" notin plan.edits  # other symbol keeps its spelling
 
 
+  test "new name shadows global or enum member, never field, parameter or local of other scope":
+    for (symbol, refusal) in [
+      (Symbol(kind: "skField", name: "camera.SphereWorld.context"), ""),
+      (Symbol(kind: "skParam", name: "osdirs.walkDir.context"), ""),
+      (Symbol(kind: "skLet", name: "m.run.context"), ""),
+      (Symbol(kind: "skProc", name: "m.context"), "`context` would shadow `m.context`"),
+      (Symbol(kind: "skEnumField", name: "m.Mode.context"),
+        "`context` would shadow `m.Mode.context`"),
+    ]:
+      var nested = answers()
+      nested["p/a.nim"].globals["context"] = @[symbol]
+      check planOf(answers = nested).refusal == refusal  # bare name reaches global and member
+
+
   test "rename to keyword or to implicit `result` is refused, as compiler reads either otherwise":
     for (renamed, refusal) in [
       ("type", "`type` is keyword"),
