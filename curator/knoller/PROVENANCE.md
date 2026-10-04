@@ -606,6 +606,30 @@ that indent on the lines that the hand wrote too.
   hand, so the lines of one expression never part. Each line of it keeps its finding for the hand.
 - Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`.
 
+**The four spaces keep the head of a block apart from its body (STYLE.md §5).** Two spaces would
+put a continuation line of a head on the indent of the body below it. So where the line right
+above a body stands at the indent of the body, every continuation line of that head moves
+(`headLifts`). A chain that opens mid-line inside a call takes the layout of one level of that
+call. Such a head would otherwise keep its last line on the body.
+
+- A head opens its line with a keyword of a block and ends on `:` at its own depth. The keywords
+  are `if`, `elif`, `while`, `for`, `when`, `case`, `of`, `try`, `block` and `except`. A routine
+  signature ends on `=`. Each line before the last ends inside a bracket, or on a binary operator
+  or a comma. The body is the next code line, deeper than the head. `except` is there since its
+  list of types can span lines as a condition does.
+- Every continuation line moves by one step, so the shallowest takes four spaces past the first
+  line of the head. A head whose continuation lines stand at one indent, as every case of the
+  ruling does, takes that indent on each line. A deeper line, as of a nested tuple, keeps its
+  place against the others, so the shape that the hand gave stays.
+- The lift reads the text that the continuation rule leaves, in the same fixer. So each line takes
+  one rewrite, and a source settles in one round.
+- A mid-line chain already at four spaces stays. So does a split call or a signature that closes
+  on its own `):` or `) =` at the indent of the head. A statement with no body under it, as
+  `doAssert a,` with its message, stays too. So does a head that holds a comment line or a token
+  spanning lines.
+- The lift is part of the continuation widener, so it widens a line off held lines and keeps the
+  width guard on a held one. Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`.
+
 **A plain `#` trailing comment that does not fit moves to its own line above, by the ruling of the
 Architect on 2026-10-04.** It takes the indent of its line. The lexer drops a `#` comment, so the
 parse tree stays. A doc `##` and a block comment stay, and so does a comment that would not fit
