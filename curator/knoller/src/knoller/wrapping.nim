@@ -29,6 +29,9 @@
 ##     and argument read flat. Call and signature keep their one level. Fixer re-indents hand's
 ##     lines too; run of lines whose bracket opens past its line, or holding comment line or
 ##     token spanning lines, stays. Operator break follows same rule.
+##   Block head: where line right above body of `if`, `for`, `of` and other heads, or of routine
+##     signature, stands at body's indent, every continuation line of head moves by one step, so
+##     shallowest takes `CONTINUATION_STEP` past head's first line (`headLifts`).
 ##   Trailing separator: list written one item to line ends its last item with separator, where
 ##     it would not fit joined: call, parameters, array, seq, set, table, tuple of several items,
 ##     constructor, import bracket. List that fits joined takes none, since comma marks split
