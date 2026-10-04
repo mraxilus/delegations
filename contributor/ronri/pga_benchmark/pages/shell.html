@@ -6,18 +6,18 @@
 <title>@TITLE@</title>
 <style>
 @font-face { font-family: "Noto Sans"; font-weight: 400;
-  src: url(@EMBED:noto-sans-latin-400-normal.woff2@) format("woff2"); }
+  src: url(@EMBED:NotoSans-Regular.ttf@) format("truetype"); }
 @font-face { font-family: "Noto Sans"; font-weight: 600;
-  src: url(@EMBED:noto-sans-latin-600-normal.woff2@) format("woff2"); }
+  src: url(@EMBED:NotoSans-SemiBold.ttf@) format("truetype"); }
 @font-face { font-family: "Noto Serif"; font-weight: 600;
-  src: url(@EMBED:noto-serif-latin-600-normal.woff2@) format("woff2"); }
+  src: url(@EMBED:NotoSerif-SemiBold.ttf@) format("truetype"); }
 @font-face { font-family: "Commit Mono"; font-weight: 400;
   src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2");
   unicode-range: U+0000-2604, U+2606-10FFFF; }
 @font-face { font-family: "Noto Sans Math"; font-weight: 400;
-  src: url(@EMBED:noto-sans-math-math-400-normal.woff2@) format("woff2"); }
+  src: url(@EMBED:NotoSansMath-Regular.ttf@) format("truetype"); }
 @font-face { font-family: "Noto Sans Symbols 2"; font-weight: 400;
-  src: url(@EMBED:noto-sans-symbols-2-symbols-400-normal.woff2@) format("woff2"); }
+  src: url(@EMBED:NotoSansSymbols2-Regular.ttf@) format("truetype"); }
 
 :root {
   --bg: #f5f7f9; --surface: #ffffff; --ink: #16202c; --ink-2: #465262; --muted: #667384;
@@ -25,9 +25,10 @@
   --code: #eef1f5; --library: #eb6834; --bound: #2a78d6; --reference: #1baf7a;
   --pass: #1f7a4d; --pass-wash: #e3f4ea; --fail: #b3303b; --fail-wash: #fbe9eb;
   --status: #5a4a9c; --status-wash: #ece9f8;
-  --serif: "Noto Serif", "Noto Sans Math", Georgia, serif;
+  --serif: "Noto Serif", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Sans", Georgia, serif;
   --sans: "Noto Sans", "Noto Sans Math", "Noto Sans Symbols 2", system-ui, sans-serif;
-  --mono: "Commit Mono", "Noto Sans Math", "Noto Sans Symbols 2", ui-monospace, monospace;
+  --mono: "Commit Mono", "Noto Sans Math", "Noto Sans Symbols 2", "Noto Sans", ui-monospace,
+    monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
