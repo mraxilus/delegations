@@ -1,0 +1,43 @@
+# Remove `architect` label from issue or pull request that closes, since nothing then waits.
+#   Label marks state, not role (CONTRIBUTOR.md, Boundaries): delegate adds it to item that
+#   waits on Architect, such as pull request green and ready, and removes it once ruling is
+#   posted. Merge or close of item ends wait, and delegate that asked has often ended by then,
+#   so this file removes it. Ledger still names closed item carrying it, so failed run here
+#   shows there next day.
+#   Close alone, never return to draft: decision can wait on draft pull request, and label
+#   removed there would hide that decision from Architect. Delegate that returns ready pull
+#   request to draft removes label itself where nothing else waits.
+#   Label read before removal, so item whose label somebody removed first is no failure.
+#   `permissions` is whole grant: `issues: write` alone, since labels of pull request go
+#   through issues endpoint, which takes either issues or pull requests grant.
+#   Cost: runner seconds on each close of labelled item; skipped run on every other close.
+
+name: architect
+
+on:
+  issues:
+    types: [closed]
+  pull_request:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  unlabel:
+    if: >-
+      contains(github.event.issue.labels.*.name, 'architect') ||
+      contains(github.event.pull_request.labels.*.name, 'architect')
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          labels="$(gh api "repos/$REPO/issues/$NUMBER/labels" --jq '.[].name')"
+          if printf '%s\n' "$labels" | grep -qx architect; then
+            gh api -X DELETE "repos/$REPO/issues/$NUMBER/labels/architect" --silent
+            echo "Removed \`architect\` from #$NUMBER."
+          fi

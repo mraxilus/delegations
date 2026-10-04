@@ -20,7 +20,7 @@ suite "Assets":
   test "asset is stored under its digest, never under its name":
     # Two projects asking for one face share one entry by construction, and moved pin is
     #   different entry rather than stale one.
-    const face = "noto-sans-latin-400-normal.woff2"
+    const face = "NotoSans-Regular.ttf"
     let digest = face.declaredDigest
     check pathOf("/s", face) == "/s" / digest
     check face notin pathOf("/s", face)  # name is nowhere in path
@@ -28,11 +28,11 @@ suite "Assets":
 
 
   test "address carries version, so bytes and version move together or neither":
-    const face = "noto-serif-latin-600-normal.woff2"
+    const face = "commit-mono-latin-700-normal.woff2"
     let address = face.addressOf
     check address.startsWith("https://")
     check address.endsWith(face)
-    check "@fontsource/noto-serif@" in address  # package and its version, in address
+    check "@fontsource/commit-mono@" in address  # package and its version, in address
     check addressOf("not-a-face.woff2").len == 0
 
 
@@ -42,7 +42,7 @@ suite "Assets":
     check "notofonts" in "NotoSans-Regular.ttf".addressOf
     check "notofonts" in "NotoSansMath-Regular.ttf".addressOf
     check "commit-mono" in "CommitMonoV142-400Regular.otf".addressOf  # its author's own
-    check "fontsource" in "noto-sans-latin-400-normal.woff2".addressOf
+    check "fontsource" in "commit-mono-latin-400-normal.woff2".addressOf
 
 
   test "every row is one file, one address and one digest of sixty-four hex digits":
@@ -57,17 +57,17 @@ suite "Assets":
       for c in digest: check c in {'0'..'9', 'a'..'f'}
 
 
-  test "store holds what both projects pinned, including all four they shared":
-    # Rows are union of two tables that agreed. These four are what both tables held, byte
-    #   for byte, which is Article II.9's own test.
+  test "store holds what projects share, once, and what one project alone wants":
+    # Projects wanting one face share its row, so one digest serves each of them, which is
+    #   Article II.9's own test. These five are what every page project draws.
     for file in [
-      "noto-serif-latin-600-normal.woff2", "noto-sans-latin-400-normal.woff2",
-      "noto-sans-latin-600-normal.woff2", "commit-mono-latin-400-normal.woff2",
+      "commit-mono-latin-400-normal.woff2", "NotoSans-Regular.ttf", "NotoSans-SemiBold.ttf",
+      "NotoSansMath-Regular.ttf", "NotoSerif-SemiBold.ttf",
     ]:
       check file.declaredDigest.len == 64
-    # And what only one of them wants, so neither loses face by sharing one table.
-    check "noto-serif-latin-400-italic.woff2".declaredDigest.len == 64  # dance_ontology alone
-    check "noto-sans-math-math-400-normal.woff2".declaredDigest.len == 64  # rga_visualiser alone
+    # And what only one of them wants, so none loses face by sharing one table.
+    check "NotoSerif-Italic.ttf".declaredDigest.len == 64  # dance_ontology alone
+    check "CommitMonoV142-400Regular.otf".declaredDigest.len == 64  # rga_visualiser alone
 
 
   test "each Noto face a page draws is declared whole (Article X.8)":
@@ -79,6 +79,17 @@ suite "Assets":
       "NotoSerif-SemiBold.ttf",
     ]:
       check file.declaredDigest.len == 64
+
+
+  test "no row declares Noto subset, while Commit Mono keeps its own (Article X.8)":
+    # Store declaring no Noto subset is what stops page shipping one: `fetch-assets` refuses
+    #   any file no row declares. Commit Mono is no Noto, and pages draw its Latin subset.
+    for (file, prefix, _) in ASSETS:
+      if file.toLowerAscii.startsWith("noto"):
+        check file.endsWith(".ttf")  # whole TrueType, never `woff2` subset (Article X.8)
+        check "notofonts" in prefix  # Noto's own release, never `@fontsource` (Article X.8)
+    for file in ["commit-mono-latin-400-normal.woff2", "commit-mono-latin-700-normal.woff2"]:
+      check file.declaredDigest.len == 64  # X.8 binds Noto alone (Article X.8)
 
 
   test "asset nobody declared is finding naming what was asked for":
@@ -102,7 +113,7 @@ suite "Assets":
     # Ends in newline, so appending or piping row-wise needs no special case.
     check declaration().endsWith("\n")
     # Proven by asking for one that is there: consumer checks membership without parsing.
-    check "noto-serif-latin-600-normal.woff2 " in declaration()
+    check "NotoSerif-SemiBold.ttf " in declaration()
 
 
   test "no declared row can be read as a path, which both project builds rely on":
