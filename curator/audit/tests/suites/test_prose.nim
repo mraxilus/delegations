@@ -40,8 +40,8 @@ suite "Article VI":
 
   test "VI.5 property: random telegraphic comments pass, one article fails":
     randomize(0)
-    for _ in 1..SAMPLES:  # 300 samples, seeded
-      var words = newSeqWith(rand(1..8), TELEGRAPHIC[rand(TELEGRAPHIC.high)])
+    for _ in 1 .. SAMPLES:  # 300 samples, seeded
+      var words = newSeqWith(rand(1 .. 8), TELEGRAPHIC[rand(TELEGRAPHIC.high)])
       check findArticles(words.join(" ")).len == 0  # no article, no finding
       words.insert(["a", "An", "the."][rand(2)], rand(words.len))
       check findArticles(words.join(" ")).len == 1  # one article, one finding
@@ -79,8 +79,8 @@ suite "Article VI fixes":
   test "VI.5 property: fix deletes each inserted article before noun, and nothing else":
     randomize(0)
     var applied = 0
-    for _ in 1..SAMPLES:  # 300 samples, seeded
-      var words = newSeqWith(rand(1..8), TELEGRAPHIC[rand(TELEGRAPHIC.high)])
+    for _ in 1 .. SAMPLES:  # 300 samples, seeded
+      var words = newSeqWith(rand(1 .. 8), TELEGRAPHIC[rand(TELEGRAPHIC.high)])
       let plain = "# " & words.join(" ") & "\n"
       check fixArticles("a.nim", plain).source == plain  # telegraphic stays
       let at = rand(words.high)

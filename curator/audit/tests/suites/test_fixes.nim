@@ -108,7 +108,7 @@ suite "Fixes":
       "proc f(a: int, b: string): int {.inline, noSideEffect.} = a + b.len\n" &
       "proc g(a: int) = discard\n" &
       "let x = foo(1, 2)\necho x\nlet y = @[\n  1,\n  2,\n]\necho h(q = 1)\nexport x, y\n"
-    check fixed.allIt(it.line in 0..LAYOUT.count('\n'))  # each report names line as given
+    check fixed.allIt(it.line in 0 .. LAYOUT.count('\n'))  # each report names line as given
 
 
   test "layout checks read Nim syntax; import and list checks read `.nim` alone":

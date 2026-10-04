@@ -119,7 +119,7 @@ func blocksOf*(output: string): seq[seq[string]] =
   var
     current: seq[string]
     is_header = true
-  let text = if output.endsWith("\n"): output[0..^2] else: output
+  let text = if output.endsWith("\n"): output[0 ..^ 2] else: output
   for line in text.splitLines:
     if is_header and HEADER_MARKS.anyIt(line.startsWith(it)): continue
     is_header = false
@@ -155,7 +155,7 @@ func includerOf*(tree: Tree, path: string): string =
   ## Read file whose `include` names path, followed up to file nothing includes; path itself
   ##   where nothing includes it.
   result = path
-  for _ in 0..tree.len:
+  for _ in 0 .. tree.len:
     var found = ""
     for e in tree:
       if not e.path.endsWith(".nim"): continue
@@ -279,7 +279,7 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
   # Run entries several at once on C backend, then again on JavaScript where C reported error.
   var k = 0
   while k < entries.len:
-    let batch = entries[k..min(k + PARALLEL, entries.len) - 1]
+    let batch = entries[k .. min(k + PARALLEL, entries.len) - 1]
     var started: seq[Asked]
     for entry in batch: started.add entry.ask(is_js = false)
     var retried: seq[(Entry, seq[Answer], Asked)]

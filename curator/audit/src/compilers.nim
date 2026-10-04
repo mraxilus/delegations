@@ -84,7 +84,7 @@ func pinnedDigest*(published: string): string =
   let candidate = first[0]
   if candidate.len != 64: return ""
   for c in candidate:
-    if c notin {'0'..'9', 'a'..'f'}: return ""
+    if c notin {'0' .. '9', 'a' .. 'f'}: return ""
   candidate
 
 

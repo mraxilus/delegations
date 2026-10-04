@@ -68,7 +68,7 @@ func roleLine*(body: string): string =
       inc passed
       continue
     let open = s.find(COMMENT_OPEN)
-    return (if open < 0: s else: s[0..<open].strip)
+    return (if open < 0: s else: s[0 ..< open].strip)
   ""
 
 

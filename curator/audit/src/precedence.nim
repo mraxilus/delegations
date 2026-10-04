@@ -211,7 +211,7 @@ func commandTail(segment: seq[Element], tokens: openArray[Token]): seq[Element] 
   ## Read expression command call holds after its last head: element after two operands apart
   ##   by space with no operator between, or after operand and prefix operator spaced so.
   var start = 0
-  for j in 1..<segment.len:
+  for j in 1 ..< segment.len:
     let
       before = segment[j - 1]
       e = segment[j]
@@ -223,7 +223,7 @@ func commandTail(segment: seq[Element], tokens: openArray[Token]): seq[Element] 
 
 func excerpt(source: string; tokens: openArray[Token]; first, last: int): string =
   ## Echo tokens `first` to `last` as written, lines joined, cut to `EXCERPT_RUNES`.
-  let text = strutils.splitWhitespace(source[tokens[first].first..<tokens[last].after]).join(" ")
+  let text = strutils.splitWhitespace(source[tokens[first].first ..< tokens[last].after]).join(" ")
   if text.runeLen <= EXCERPT_RUNES: text else: text.runeSubStr(0, EXCERPT_RUNES) & "…"
 
 
@@ -244,11 +244,11 @@ func mixtures(source: string): seq[Mixture] =
       mixture = Mixture(got: excerpt(source, tokens, expression[0].first, expression[^1].last))
       run_first = 0
       is_read = true  # Each run opens on operand and ends on one, or expression is unread.
-    for j in 0..expression.len:
+    for j in 0 .. expression.len:
       let is_end = j == expression.len or
         (expression[j].role == Role.Binary and expression[j].precedence == PRECEDENCE_OR)
       if not is_end: continue
-      let run = expression[run_first..<j]
+      let run = expression[run_first ..< j]
       run_first = j + 1
       if run.len == 0 or run[0].role == Role.Binary or run[^1].role != Role.Operand:
         is_read = false
@@ -283,7 +283,7 @@ func fixMixtures*(path, source: string): Fix =
     var shaped = source
     for (at, text) in planned.sortedByIt(-it[0]): shaped.insert(text, at)
     let
-      lines = tokens[mixture.runs[0][0]].line..tokens[mixture.runs[^1][1]].lastLine(source)
+      lines = tokens[mixture.runs[0][0]].line .. tokens[mixture.runs[^1][1]].lastLine(source)
       before = source.split('\n')
       after = shaped.split('\n')
     if lines.toSeq.anyIt(after[it].isWide and not before[it].isWide): continue

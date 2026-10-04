@@ -51,7 +51,7 @@ suite "Role":
 
 
   test "attribution block is passed only whole, once and in order":
-    let unclosed = CREDIT[0..^2]  # italic never closed
+    let unclosed = CREDIT[0 ..^ 2]  # italic never closed
     for (body, opening) in [
       (CREDIT & "\n**Role:** curator\n", CREDIT),  # credit with no marker
       (CREDIT & "\n" & MARKER & "\n**Role:** curator\n", CREDIT),  # order turned

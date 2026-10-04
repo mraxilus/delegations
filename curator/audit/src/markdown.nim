@@ -20,7 +20,7 @@ func tableRows*(markdown: string): seq[seq[string]] =
   for line in markdown.splitLines:
     let s = line.strip
     if not (s.startsWith("|") and s.endsWith("|")) or s.len < 2: continue
-    let cells = s[1..<s.high].split('|').mapIt(it.strip)
+    let cells = s[1 ..< s.high].split('|').mapIt(it.strip)
     if cells.isSeparatorRow: continue
     result.add cells
 

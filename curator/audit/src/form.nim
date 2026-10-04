@@ -65,11 +65,11 @@ const
     ## Root paths whose width goes unchecked: third-party text kept verbatim.
   TRAILING_WHITESPACE = {' ', '\t', '\r'}
     ## Characters line never ends with (VIII.5); CR among them, so CRLF ending is one.
-  LUT_BLANKS_BY_TIER: array[1..2, int] = [3, 2]
+  LUT_BLANKS_BY_TIER: array[1 .. 2, int] = [3, 2]
     ## Blank lines banner of each tier takes before it (X.2).
   BLANKS_AFTER_BANNER = 1  ## Blank lines either banner takes after it (X.2).
   LONG_QUOTE = "\"\"\""  ## Delimiter of long string, which reads backslash as itself.
-  IDENTIFIER_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
+  IDENTIFIER_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_', '\x80' .. '\xFF'}
     ## Characters whose glue before quote makes string raw (`r"…"`, `fmt"…"`).
 
 
@@ -221,7 +221,7 @@ func tabsInStrings(source: string): seq[int] =
     if t.kind != TokenKind.Text or t.lastLine(source) != t.line: continue
     if source.continuesWith(LONG_QUOTE, t.first): continue
     if t.first > 0 and source[t.first - 1] in IDENTIFIER_CHARS: continue
-    for k in t.first..<t.after:
+    for k in t.first ..< t.after:
       if source[k] == '\t': result.add k
 
 
@@ -231,14 +231,14 @@ func fixTabs(path, source: string): Fix =
     tabs = source.tabsInStrings
     starts = source.lineStarts
   var lines = source.split('\n')
-  for line in 0..<lines.len:
+  for line in 0 ..< lines.len:
     let
       first = starts[line]
       after = first + lines[line].len
       held = tabs.filterIt(it >= first and it < after)
     if held.len == 0: continue
     var shaped = lines[line]
-    for k in held.reversed: shaped = shaped[0..<k - first] & "\\t" & shaped[k - first + 1 .. ^1]
+    for k in held.reversed: shaped = shaped[0 ..< k - first] & "\\t" & shaped[k - first + 1 .. ^1]
     if shaped.isWide and not lines[line].isWide: continue
     lines[line] = shaped
     result.fixed.add finding(path, line + 1, "tab in string (X.1)")
@@ -252,7 +252,7 @@ func fixComments(path, source: string): Fix =
     if gap.spaces == COMMENT_GAP: continue
     let
       line = lines[gap.line]
-      spaced = line[0..<gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
+      spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
     if spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
     result.fixed.add finding(path, gap.line + 1, "trailing comment (X.9)")
@@ -298,15 +298,15 @@ func fixBanners(path, source: string): Fix =
   ## Set each run of blank lines check reports to count X.2 asks, last run first.
   var
     lines = source.split('\n')
-    origin = toSeq(1..lines.len)
+    origin = toSeq(1 .. lines.len)
   let runs = lines.blankRuns
   for run in runs.reversed:
     let
       after = run.first + run.count
-      kept = origin[run.first..<run.first + min(run.count, run.wanted)]
+      kept = origin[run.first ..< run.first + min(run.count, run.wanted)]
       inserted = newSeq[int](run.wanted - kept.len)
-    lines = lines[0..<run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
-    origin = origin[0..<run.first] & kept & inserted & origin[after .. ^1]
+    lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
+    origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in runs: result.fixed.add finding(path, run.banner + 1, "banner spacing (X.2)")
   if runs.len > 0: result.origin = origin

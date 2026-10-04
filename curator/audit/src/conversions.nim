@@ -73,7 +73,7 @@ const
 
 func isTargetName(text: string): bool =
   ## Decide whether name is `to<Target>`: `to`, then capital.
-  text.len > 2 and text.startsWith("to") and text[2] in {'A'..'Z'}
+  text.len > 2 and text.startsWith("to") and text[2] in {'A' .. 'Z'}
 
 
 func isPlain(tokens: openArray[Token]; partners: openArray[int]; a, b: int; source: string): bool =
@@ -83,7 +83,7 @@ func isPlain(tokens: openArray[Token]; partners: openArray[int]; a, b: int; sour
   while k <= b:
     let t = tokens[k]
     if t.first != tokens[k - 1].after: return false
-    if t.kind == TokenKind.Open and t.spelling(source) in ["(", "["] and partners[k] in k..b:
+    if t.kind == TokenKind.Open and t.spelling(source) in ["(", "["] and partners[k] in k .. b:
       k = partners[k] + 1
     elif t.spelling(source) == "." and k + 1 <= b and tokens[k + 1].kind == TokenKind.Word and
         tokens[k + 1].first == t.after:
@@ -97,7 +97,7 @@ func targets(source: string): seq[Target] =
   let
     tokens = source.tokens
     partners = tokens.partners
-  for k in 0..<tokens.len - 1:
+  for k in 0 ..< tokens.len - 1:
     let t = tokens[k]
     if t.kind != TokenKind.Word or not t.spelling(source).isTargetName: continue
     if k > 0 and tokens[k - 1].spelling(source) == "." and tokens[k - 1].after == t.first:
@@ -105,19 +105,19 @@ func targets(source: string): seq[Target] =
     let o = k + 1
     if not tokens.isCallOpen(partners, o, source) or partners[o] <= o + 1: continue
     let c = partners[o]
-    if tokens[c].line != t.line or toSeq(o..c).anyIt(tokens[it].lastLine(source) != t.line):
+    if tokens[c].line != t.line or toSeq(o .. c).anyIt(tokens[it].lastLine(source) != t.line):
       continue
     if not tokens.isPlain(partners, o + 1, c - 1, source): continue
     if c + 1 < tokens.len and tokens[c + 1].first == tokens[c].after and
         tokens[c + 1].kind == TokenKind.Open:
       continue
-    let argument = source[tokens[o + 1].first..<tokens[c - 1].after]
+    let argument = source[tokens[o + 1].first ..< tokens[c - 1].after]
     result.add Target(
       line: t.line,
       first: t.first,
       after: tokens[c].after,
       shaped: argument & "." & t.spelling(source),
-      got: source[t.first..<tokens[c].after],
+      got: source[t.first ..< tokens[c].after],
     )
 
 
@@ -137,7 +137,7 @@ func fixTargets*(path, source: string): Fix =
   ## Write each call check reports subject first; call holding another such call waits for
   ##   next pass, so inner one is written first, and its text carries into outer one.
   result.source = source
-  for pass in 1..PASSES_MAX:
+  for pass in 1 .. PASSES_MAX:
     let found = result.source.targets
     if found.len == 0: break
     var
@@ -145,7 +145,7 @@ func fixTargets*(path, source: string): Fix =
       step: Fix
     for target in found.sortedByIt(-it.first):
       if found.anyIt(it.first > target.first and it.after <= target.after): continue
-      shaped = shaped[0..<target.first] & target.shaped & shaped[target.after .. ^1]
+      shaped = shaped[0 ..< target.first] & target.shaped & shaped[target.after .. ^1]
       step.fixed.add finding(path, target.line + 1, "to<Target> subject first (STYLE.md §5)")
     step.source = shaped
     step.fixed.reverse
@@ -194,14 +194,14 @@ func candidates(source: string): seq[Candidate] =
     partners = tokens.partners
     skipped = tokens.pathTokens(partners, source)
     modules = importedNames(tokens, partners, source)
-  for k in 1..<tokens.len - 1:
+  for k in 1 ..< tokens.len - 1:
     let t = tokens[k]
     if t.kind != TokenKind.Operator or t.spelling(source) != "." or k in skipped: continue
     let name = tokens[k + 1]
     if tokens[k - 1].after != t.first or name.first != t.after: continue
     if name.kind != TokenKind.Word or name.isKeyword(source): continue
     let text = name.spelling(source)
-    if text notin BUILTIN_TYPES and text[0] notin {'A'..'Z'}: continue
+    if text notin BUILTIN_TYPES and text[0] notin {'A' .. 'Z'}: continue
     if k + 2 < tokens.len and tokens[k + 2].first == name.after and
         tokens[k + 2].kind == TokenKind.Open:
       continue
@@ -210,7 +210,7 @@ func candidates(source: string): seq[Candidate] =
       first = receiverOf(tokens, partners, k, source)
     if first < 0 or tokens[first].line != name.line: continue
     if last.kind == TokenKind.Word and
-        (last.spelling(source)[0] in {'A'..'Z'} or last.spelling(source) in modules):
+        (last.spelling(source)[0] in {'A' .. 'Z'} or last.spelling(source) in modules):
       continue
     result.add Candidate(first: first, last: k - 1, dot: k, name: k + 1)
 
@@ -269,7 +269,7 @@ func conversions(source: string, answer: Answer): seq[Conversion] =
       span = tokens[c.name].after - tokens[c.first].first
     var conversion = Conversion(
       line: tokens[c.dot].line,
-      got: source[tokens[c.first].first..<tokens[c.name].after],
+      got: source[tokens[c.first].first ..< tokens[c.name].after],
     )
     if isGroup(tokens, partners, c.first, c.last, source):
       conversion.edits = @[
@@ -319,7 +319,7 @@ func conversionEdits*(
   while true:
     let
       after = source.applied(found.mapIt(it.edits).concat & held.toSeq).split('\n')
-      widened = toSeq(0..<before.len).filterIt(after[it].isWide and not before[it].isWide)
+      widened = toSeq(0 ..< before.len).filterIt(after[it].isWide and not before[it].isWide)
     if widened.len == 0: break
     found = found.filterIt(it.line notin widened)
   result[0] = found.mapIt(it.edits).concat

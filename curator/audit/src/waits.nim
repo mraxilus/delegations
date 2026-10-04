@@ -53,7 +53,7 @@ func identifiers(line: string): seq[string] =
     if line[i] in IDENTIFIER_CHARS:
       let start = i
       while i < line.len and line[i] in IDENTIFIER_CHARS: inc i
-      result.add line[start..<i]
+      result.add line[start ..< i]
     else: inc i
 
 
@@ -73,7 +73,7 @@ func checkWaits*(path, source: string; kind: Kind): seq[Finding] =
   var commented = newSeq[seq[string]](lines.len)
   if not is_nim:
     for c in source.comments(kind.rule.syntax):
-      if c.line in 1..lines.len: commented[c.line - 1].add c.text.identifiers
+      if c.line in 1 .. lines.len: commented[c.line - 1].add c.text.identifiers
   for i, line in lines:
     for identifier in line.identifiers:
       let replacement = identifier.replacementOf(is_nim)
