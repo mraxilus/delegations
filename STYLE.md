@@ -50,7 +50,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
 - Nest a helper used once inside the derivation that owns it. Do not promote it to module
   scope for a reuse that you only expect. The nested helper comes first in the body of the
   routine that owns it, after the doc and before the first stage. One blank line stands on
-  each side of it.
+  each side of it, but a routine on one line, such as a `{.borrow.}` with no body, stacks. It
+  takes no blank line after the head or doc of the routine around it, or after another routine
+  on one line. One blank line still stands between the last of them and a stage or a longer
+  routine.
 - Hand a stored value out with no copy. Return `lent T` from an accessor into storage. Take
   `var T` where the callee reads a large value in place and nothing writes it. Add a comment
   that says `var` is for the copy and not for a write. A `lent` result saves the copy only
