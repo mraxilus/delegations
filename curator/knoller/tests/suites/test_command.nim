@@ -81,6 +81,13 @@ suite "Command line":
     check outcome.code == 1
 
 
+  test "finding left prints at its line in file as given, as each rewrite does":
+    let outcome = outcomeOf([("a.nim", "let a = 1\nlet b = not x == y\n")], [], is_check = true)
+    check outcome.lines.len == 4
+    check outcome.lines[0 .. 1] == @["a.nim: strictfuncs to fix", "a.nim:1: single-bindings to fix"]
+    check outcome.lines[2].startsWith("a.nim:2: not-over-binary left: ")  # fix moves it to 5
+
+
   test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
       fenced = "let a = 1\n#!fix off\nlet b = 1+2\n#!fix on\n"
