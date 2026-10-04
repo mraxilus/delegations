@@ -106,6 +106,8 @@ type
     shoulder*, elbow*, wrist*, grip*: Vector
     capsules*: array[4, Capsule]
     twist*, bend*, cone*, extend*, protract*, elevate*: float
+    turns: array[4, Matrix]  ## Girdle's, upper arm's, forearm's and hand's, in body's frame.
+    joints: array[3, Vector]  ## Shoulder, elbow and wrist, in body's frame.
 
   Placed* = object  ## Whole couple placed.
     arms*: array[4, ArmPlaced]
@@ -137,50 +139,65 @@ func world(frame: Frame, p: Vector): Vector =
   ## Carry point from body's own frame into world.
   frame.origin + frame.right * p.x + frame.fore * p.y + (0.0, 0.0, p.z)
 
-func placeArm(rig: Rig, plan: Plan, i: int, frame: Frame): ArmPlaced =
+func placeArm(
+  rig: Rig, plan: Plan, i: int, frame: Frame, first = 0, held = default(ArmPlaced)
+): ArmPlaced =
   ## One arm placed in world, its body standing in `frame`, and what its joints read.
+  ##   Where `first` is above nought, turns and joints above that link are `held`'s: arm
+  ##     placed from its girdle (nought), upper arm (one), forearm (two) or palm (three) on.
+  ##     Each is reckoned by same steps from same freedoms, so arm is same to last bit.
   let
     neck = halfBreadth(rig, Part.Neck)
     base = 4 + PER_ARM * i
     handedness = side(Arm(i mod 2))
     root: Vector = (handedness * neck, 0.0, rig.top[Part.Torso])
-    reach: Vector = (
+  result = held
+  if first <= 0:
+    let reach: Vector = (
       handedness * (rig.shoulder_out - neck),
       0.0,
       rig.shoulder_up - rig.top[Part.Torso],
     )
-    girdle = times(aboutUp(handedness * plan[base]), aboutFore(-handedness * plan[base + 1]))
-    shoulder = root + apply(girdle, reach)
-    upper = times(
-      girdle,
+    result.turns[0] = times(aboutUp(handedness * plan[base]),
+                            aboutFore(-handedness * plan[base + 1]))
+    result.joints[0] = root + apply(result.turns[0], reach)
+    result.protract = plan[base]
+    result.elevate = plan[base + 1]
+  if first <= 1:
+    result.turns[1] = times(
+      result.turns[0],
       times(turnAbout([plan[base + 2], plan[base + 3], plan[base + 4]]), MATRIX_REST),
     )
-    elbow = shoulder + column(upper, 2) * rig.upper
-    forearm = times(upper, aboutRight(plan[base + 5]))
-    wrist = elbow + column(forearm, 2) * rig.fore
-    hand = times(forearm, wristTurn(plan, i))
+    result.joints[1] = result.joints[0] + column(result.turns[1], 2) * rig.upper
+    result.twist = twistOf(shoulderTurn(plan, i))
+    result.extend = arcsin(clamp(-column(result.turns[1], 2).y, -1.0, 1.0))
+  if first <= 2:
+    result.turns[2] = times(result.turns[1], aboutRight(plan[base + 5]))
+    result.joints[2] = result.joints[1] + column(result.turns[2], 2) * rig.fore
+    result.bend = plan[base + 5]
+  result.turns[3] = times(result.turns[2], wristTurn(plan, i))
+  let
+    (shoulder, elbow, wrist) = (result.joints[0], result.joints[1], result.joints[2])
+    (upper, forearm, hand) = (result.turns[1], result.turns[2], result.turns[3])
     grip = wrist + column(hand, 2) * rig.hand
     direction = column(upper, 2)
-  result.shoulder = frame.world(shoulder)
-  result.elbow = frame.world(elbow)
-  result.wrist = frame.world(wrist)
+  if first <= 0:
+    result.shoulder = frame.world(shoulder)
+    result.capsules[0] = (frame.world(root), frame.world(shoulder), GIRDLE_RADIUS)
+  if first <= 1:
+    result.elbow = frame.world(elbow)
+    result.capsules[1] = (frame.world(shoulder + direction * rig.limb),
+                          frame.world(shoulder + direction * (rig.upper - rig.limb)),
+                          rig.limb)
+  if first <= 2:
+    result.wrist = frame.world(wrist)
+    result.capsules[2] = (frame.world(elbow + column(forearm, 2) * rig.limb),
+                          frame.world(elbow + column(forearm, 2) * (rig.fore - rig.limb)),
+                          rig.limb)
   result.grip = frame.world(grip)
-  result.capsules = [
-    (frame.world(root), frame.world(shoulder), GIRDLE_RADIUS),
-    (frame.world(shoulder + direction * rig.limb),
-     frame.world(shoulder + direction * (rig.upper - rig.limb)),
-     rig.limb),
-    (frame.world(elbow + column(forearm, 2) * rig.limb),
-     frame.world(elbow + column(forearm, 2) * (rig.fore - rig.limb)), rig.limb),
-    (frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)),
-     frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)), rig.hand / 2.0),
-  ]
-  result.twist = twistOf(shoulderTurn(plan, i))
-  result.bend = plan[base + 5]
+  result.capsules[3] = (frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)),
+                        frame.world(wrist + column(hand, 2) * (rig.hand / 2.0)), rig.hand / 2.0)
   result.cone = arccos(clamp(dot(column(forearm, 2), column(hand, 2)), -1.0, 1.0))
-  result.extend = arcsin(clamp(-direction.y, -1.0, 1.0))
-  result.protract = plan[base]
-  result.elevate = plan[base + 1]
 
 func place*(rig: Rig, plan: Plan, wind: float, is_away: bool, turner = Body.Two): Placed =
   ## Every capsule and joint reading of couple at this plan and wind.
@@ -543,7 +560,8 @@ proc stepArm(
   held.ease = r.eases[i]
   held.margin = r.margins[i]
   r.placed.arms[i] = placeArm(
-    rig, plan, i, frameOf(plan, Body(i div 2), wind, problem.is_away, problem.turner)
+    rig, plan, i, frameOf(plan, Body(i div 2), wind, problem.is_away, problem.turner),
+    firstMoved(freedom), held.arm,
   )
   for part in 0..3:
     let k = first_arm + 4 * i + part
