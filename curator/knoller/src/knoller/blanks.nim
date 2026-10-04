@@ -21,7 +21,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
-import ../../knoller/src/knoller
+import ./[reports, tokens, views]
 
 
 type
