@@ -72,16 +72,34 @@ comment at its own indent. A fixer whose rewrite would move a fenced line is ski
 A fence that crosses a bracket, a string or a comment leaves the whole file as written. Verified by
 `suites/test_fences.nim` and `suites/test_chain.nim`.
 
-**Each run warns of each fence, so whoever runs it sees each line that no fixer reads.** A fence
-is the one escape from the rules, and a line it keeps is easy to forget. One warning names the
-first line of each fence and the lines it keeps, markers included. Knoller prints it as
+**Each run warns of each fence, and names each rule that breaks inside it.** A fence is the one
+escape from the rules, and a line it keeps is easy to forget. One warning stands at the first line
+of each fence, and gives the lines it keeps, markers included. It names each rule that breaks
+inside the fence, in the order of `Rule`, with its count and its first line. Knoller prints it as
 `fence-held warning`, and `koch fix` prints it after `warning:`. A warning changes no exit code,
 because the charter grants the fence (Article X.1).
 
+**The warning runs the checks as a dry run, on the source as given.** No mask hides a fenced line,
+so each marker reads as a plain comment, and each line keeps its number. `heldOf` keeps each
+finding whose line falls inside a fence. So a fence counts what its lines report without the fence.
+A rule that a fixer clears and a rule left for the hand count alike, because a check names both. A
+module also takes the idiom checks that the static pass runs, such as `return-result`.
+
+- Rejected: one warning for each break inside a fence. The Architect chose one line for each
+  fence, so a large table in a fence costs one line.
+- Rejected: a dry run of the fixers. It counts only what a fixer clears, so it misses
+  `not-over-binary`, which no fixer reaches.
 - Rejected: a fence as a finding that fails the run. A generated file would then fail every run,
   though its fence is allowed.
-- Cost: a file with many fences prints one line for each of them.
-- Verified by `suites/test_fences.nim` and `suites/test_command.nim`.
+- Cost: a rule that knoller fixes and does not check goes uncounted. Those rules are
+  `trailing-whitespace`, `file-ending`, `tab-in-string`, `entry-block` and `article-in-comment`.
+  The static pass of `audit` holds a check of each of them, and reads no fence.
+- Cost: a file with a fence takes the checks twice, once masked and once as given. A file with no
+  fence takes them once. A delegate measured the cost on 2026-10-04, with a debug build and two
+  runs of each. `knoller --check` on `starfield.nim` of `rga_visualiser` took 11 s, against 4 s
+  before. That file has 22,560 lines, and its fence holds 11,252 calls.
+- Verified by `suites/test_fences.nim`, `suites/test_chain.nim` and `suites/test_command.nim`. In
+  `suites/test_chain.nim`, the lines of a fence report the same rules when no marker fences them.
 
 ## Command line
 

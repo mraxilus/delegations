@@ -1633,16 +1633,18 @@ reads as one that holds a comment, and stays as written.
 - A fence that closes outside the bracket, string or comment it opens in leaves the whole file
   as written. `koch fix` prints it with its line, and `checkFormatting` reports it alone.
 - `koch fix` prints a warning for each fence that it reads, with the lines that the fence keeps.
-  So no held line goes unseen. A warning changes no exit code.
+  The warning names each rule that breaks inside the fence, with its count and its first line, as
+  knoller reads it (`heldOf`). So no held line goes unseen, and none is written. A warning changes
+  no exit code.
 - Rejected: each fixer told of the fence, and each rewrite tested against it. Every fixer would
   carry the fence, and the masking holds it in one place.
 - Cost: a skipped fixer is skipped whole for that file, and not for its one rewrite.
 - Cost: a line that reads exactly `#!fix fenced` would read back as a fenced line, so a file that
   holds one stays as written.
 - Verified by `suites/test_fixes.nim`: fenced rows keep their spaces and their blank line, and
-  the call after the fence is fixed. An open fence runs to the end, and a marker inside a string
-  fences nothing. A fence across a bracket leaves its file, and a fixer that would indent a fence
-  is skipped.
+  the call after the fence is fixed. The warning of that fence names its two breaks of spacing.
+  An open fence runs to the end, and a marker inside a string fences nothing. A fence across a
+  bracket leaves its file, and a fixer that would indent a fence is skipped.
 
 **A nimble file whose copy sits in `atlas.lock` stays as written.** A rewrite would leave the
 copy in the lock stale, and Atlas reads that as a change of package. `koch fix` prints each such
