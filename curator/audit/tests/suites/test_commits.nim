@@ -87,8 +87,8 @@ suite "Article XI":
 
 
   test "XI.4 body is in sentence case, one sentence to line, trailers and code skipped":
-    const TRAILERS = "\n\nCo-Authored-By: Name <a@b.c>\nClaude-Session: https://x.y/z\n"
-    let listed = "Reason sits here.\nMechanism sits here:\n- First item.\n" & TRAILERS
+    const trailers = "\n\nCo-Authored-By: Name <a@b.c>\nClaude-Session: https://x.y/z\n"
+    let listed = "Reason sits here.\nMechanism sits here:\n- First item.\n" & trailers
     check checkBody("s", listed).len == 0
     check "sentence case" in checkBody("s", "reason sits here.")[0].message
     check "runs on" in checkBody("s", "Reason wraps across\nlines.")[0].message

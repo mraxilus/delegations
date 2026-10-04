@@ -151,7 +151,7 @@ func items(s: Scan, o: int): seq[Item] =
   if item.first >= 0: result.add item
 
 
-func holds(s: Scan, item: Item, spellings: openArray[string]): bool =
+func isHolding(s: Scan, item: Item, spellings: openArray[string]): bool =
   ## Decide whether item holds token of spellings outside its nested brackets.
   var k = item.first
   while k <= item.last:
@@ -185,7 +185,7 @@ func groupsOf(s: Scan, items: openArray[Item]): seq[seq[Item]] =
   var group: seq[Item]
   for item in items:
     group.add item
-    let is_typed = s.holds(item, [":", "="])
+    let is_typed = s.isHolding(item, [":", "="])
     if is_typed or (item.separator >= 0 and s.tokens[item.separator].kind == TokenKind.Semicolon):
       if not is_typed: return @[]
       result.add group

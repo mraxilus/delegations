@@ -262,10 +262,11 @@ for slot in 0..<pool.bound:  # Bound, never `HANDLES_MAX`.
    coined stays only where a glossary defines it, as a term or under `## Standards`. Every
    other acronym is spelled out. A path is a name, and follows this article: a directory and a
    file spell their words in full, a test file among them.
-10. A binding inside the block where a module runs as a program is a local of that block, and
-    takes the local case. A global never shares its word with a type, because a reader, or a host
-    that compares names loosely, reads `ALGEBRA` and `Algebra` as one. A qualifier keeps them
-    apart (`ALGEBRA_DEFAULT`).
+10. Where a module runs as a program, its entry block holds no binding. Code that binds goes in
+    a routine (`main`), and the block calls that routine. A binding in that block can reach the
+    whole module, and a routine makes it a local in every language. A global never shares its
+    word with a type, because a reader, or a host that compares names loosely, reads `ALGEBRA`
+    and `Algebra` as one. A qualifier keeps them apart (`ALGEBRA_DEFAULT`).
 11. A member of an enum is `PascalCase`, as its type is.
 12. A type parameter, or any placeholder of a generic or a concept, is one capital letter, the
     initial of what it ranges over. Where nothing constrains it, the letter is `T`.
