@@ -1203,9 +1203,9 @@ engine solves its limits rather than clamps them.
 
 A still whose card fixes no way about is wound either way at every distance, and takes whichever way
 sits easier (`either`). Those are the frames of the standard diagram turned half a turn, which draw
-the same picture turned either way. The card claims a position and not a path. The single hold wound
-the way asked stood at 0.48 m, with the twist of the follow a third of the way into its ease. The
-other way about it stood at 0.36 m, at ease outright.
+the same picture turned either way. The card claims a position and not a path. For the single hold
+at half a turn, `simulation/answers.json` keeps where the couple stand the way asked, and where they
+stand with either way free. The law below prints each distance and its strain.
 
 Verified by `test_rigid.nim`: the free way is never worse than the way asked, and is at ease. Red
 first.
@@ -1926,8 +1926,8 @@ reddens a law.
 - `tools/build.nim modelled`: 7245 s wall on four cores, on 2026-10-03, with the planner. A
   driver that saves each answer asked its 231 questions. 95 percent of the work is in the 32
   planned cards.
-- `tools/build.nim rig`: 2464 s wall on four cores, compile included, on 2026-10-02, with the
-  planner.
+- `tools/build.nim rig`: unmeasured as a whole. It stands every candidate of a still short of
+  ease, and Planned turn gives the time of its slowest stills.
 - `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
   its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
   change to words, compile included.
@@ -2012,8 +2012,9 @@ A rename of case alone keeps the same name in Nim, so the compiler finds no miss
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
 so a change of names alone reads the physics again. On 2026-10-02, on four cores, the answers took
-144 s and the report 421 s. The rig took 2464 s and the whole-cloth turns 1135 s. The modelled
-cards took 7245 s on 2026-10-03, and 95 percent of the work was in the 32 planned cards.
+144 s, the report 421 s and the whole-cloth turns 1135 s. The modelled cards took 7245 s on
+2026-10-03, and 95 percent of the work was in the 32 planned cards. The rig stands every candidate
+of a still short of ease, and its whole time is unmeasured (Figures).
 
 That is the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
 simulation are rare.

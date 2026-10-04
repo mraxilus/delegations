@@ -100,11 +100,11 @@ nim r tools/build.nim verdicts    # rewrite verdicts.md: seconds for words, minu
 Run the laws before `nim r tools/build.nim pages`. A page that draws a model which has stopped
 holding is worse than no page.
 
-The search for where to stand costs the most time. The simulation walks the turn again from many
-distances, two centimetres apart. A card that asks whether a turn is reached stops at the first
-distance that reaches it. So an easy card costs one sweep, and only a card that nothing reaches pays
-for the whole search. A card that no walk reaches is then planned. A same-name swan costs about ten
-minutes on one core.
+The search for where to stand costs time, and a plan costs more. The simulation walks the turn
+again from many distances, two centimetres apart. A card that asks whether a turn is reached stops
+at the first distance that reaches it. So an easy card costs one sweep, and only a card that nothing
+reaches pays for the whole search. A card that no walk reaches is then planned. `PROVENANCE.md`,
+Planned turn and Figures, gives what each planned card costs.
 
 For that reason `modelled`, `rig` and `turns` each have a verb of their own, and their answers are
 committed. So `pages` uses what was last recorded, and does not pay for it again. `modelled` and
