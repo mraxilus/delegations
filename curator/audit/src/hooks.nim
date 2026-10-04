@@ -235,9 +235,9 @@ func outsideComments(text: string): string =
     if open < 0: break
     let close = rest.find("-->", open)
     if close < 0:
-      rest = rest[0..<open]
+      rest = rest[0 ..< open]
       break
-    rest = rest[0..<open] & rest[close + 3 .. ^1]
+    rest = rest[0 ..< open] & rest[close + 3 .. ^1]
   rest
 
 
@@ -288,7 +288,7 @@ func carriedTags(cell: string): seq[int] =
     let
       rest = cell[at + CARRIED_TAG.len .. ^1]
       close = rest.find(')')
-      number = if close > 0: rest[0..<close].strip else: ""
+      number = if close > 0: rest[0 ..< close].strip else: ""
     result.add(if number.len > 0 and number.allCharsInSet(Digits): number.parseInt else: 0)
     at = cell.find(CARRIED_TAG, at + 1)
 
@@ -304,7 +304,7 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
       var close = OPENING_DECISION.len
       while close < s.len and s[close] in Digits: inc close
       result.add Decision(
-        number: s[OPENING_DECISION.len..<close].parseInt,
+        number: s[OPENING_DECISION.len ..< close].parseInt,
         question:
           if s.continuesWith(CLOSING_DECISION, close):
             s[close + CLOSING_DECISION.len .. ^1].strip
@@ -322,7 +322,7 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
       let
         item = s[4 .. ^1]
         colon = item.find(':')
-      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0..<colon].strip)
+      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0 ..< colon].strip)
 
 
 func decisionFindings(d: Decision, at: int): seq[Finding] =
@@ -489,7 +489,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     pos = 0
   for part, label in SIGNOFF_LABELS:
     starts[part] = -1
-    for j in pos..<after.len:
+    for j in pos ..< after.len:
       if after[j].startsWith(label):
         starts[part] = j
         break
@@ -505,7 +505,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     role_text = Part.Role.rest.split(',')[0].strip
     parsed = branch.parseBranch
     state_word = Part.State.rest.split({',', ' '})[0]
-    decisions = decisionsIn(after[starts[Part.Decisions] + 1..<starts[Part.Next]])
+    decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Next]])
   if parsed.isSome and role_text != parsed.get.roleName:
     result.add finding(
       "",
@@ -542,7 +542,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     )
   for i, d in decisions: result.add decisionFindings(d, i)
   result.add rowFindings(
-    after[starts[Part.Table] + 1..<starts[Part.Summary]].join("\n").tableRows,
+    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").tableRows,
     decisions.mapIt(it.number),
   )
   var k = starts[Part.Next] + 1
@@ -571,7 +571,7 @@ func labelDefined(line: string): string =
   let close = s.find(']')
   if close < 2 or not s[close + 1 .. ^1].startsWith(":") or s[close + 2 .. ^1].strip.len == 0:
     return ""
-  s[1..<close].toLowerAscii
+  s[1 ..< close].toLowerAscii
 
 
 func codeSpansOut(line: string): string =
@@ -597,7 +597,7 @@ func codeSpansOut(line: string): string =
       if m == n: close = j
       j += m
     if close < 0:
-      result.add line[i..<i + n]
+      result.add line[i ..< i + n]
       i += n
     else:
       result.add ' '.repeat(close + n - i)
@@ -617,7 +617,7 @@ func linksOut(line: string, labels: openArray[string]): string =
     if close < 0:
       result.add line[i .. ^1]
       break
-    let text = line[i + 1..<close]
+    let text = line[i + 1 ..< close]
     var stop = -1  # Index past link; none where bracket opens no link.
     if close + 1 < line.len and line[close + 1] == '(':
       let paren = line.find(')', close + 2)
@@ -625,7 +625,7 @@ func linksOut(line: string, labels: openArray[string]): string =
     elif close + 1 < line.len and line[close + 1] == '[':
       let shut = line.find(']', close + 2)
       if shut >= 0:
-        let label = line[close + 2..<shut]
+        let label = line[close + 2 ..< shut]
         if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
     elif text.toLowerAscii in labels: stop = close + 1
     if stop < 0:
@@ -660,7 +660,7 @@ func checkNumbersBare*(message: string): seq[Finding] =
         continue
       var j = i + 1
       while j < text.len and text[j] in Digits: inc j
-      let number = text[i..<j]
+      let number = text[i ..< j]
       if number notin seen:
         seen.add number
         result.add finding(

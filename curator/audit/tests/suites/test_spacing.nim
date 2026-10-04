@@ -30,16 +30,21 @@ suite "Spacing":
     check checkSpacing("a.nim", "m∧n")[0].message.endsWith("got `m∧n`.")  # glyph operator
 
 
-  test "range operator takes no space, unless operator or negative number follows it":
-    let breach = "let r = 0 ..< n\nlet s = x[1 .. 2]\nfor i in 0  ..  3: discard\n" &
-      "let c = 'a' .. 'z'\n"
-    check checkSpacing("a.nim", breach).len == 4
-    check checkSpacing("a.nim", breach).allIt(it.message.startsWith("Range operator takes no"))
-    check breach.fixed ==
-      "let r = 0..<n\nlet s = x[1..2]\nfor i in 0..3: discard\nlet c = 'a'..'z'\n"
+  test "range operator takes one space each side, as binary operator does":
+    let breach = "let r = 0..<n\nlet s = x[1..2]\nfor i in 0  ..  3: discard\n" &
+      "let c = 'a'..'z'\nlet t = x[1..^1]\n"
+    check checkSpacing("a.nim", breach).len == 5
+    check checkSpacing("a.nim", breach).allIt(it.message.startsWith("Range operator takes one"))
+    check breach.fixed == "let r = 0 ..< n\nlet s = x[1 .. 2]\nfor i in 0 .. 3: discard\n" &
+      "let c = 'a' .. 'z'\nlet t = x[1 ..^ 1]\n"  # `..^` lexes one operator
     check breach.fixed.isSettled
-    for kept in ["let s = x[1 .. ^1]\n", "let s = a .. -1\n", "echo a ..b\n", "let s = a.. b\n"]:
-      check checkSpacing("a.nim", kept).len == 0  # would merge, or reading moves
+    check "let r = a..<b\n".fixed == "let r = a ..< b\n"
+    check "let s = a..\n  b\n".fixed == "let s = a ..\n  b\n"  # range ending line
+    check "let s = x[1 .. ^ 1]\n".fixed == "let s = x[1 .. ^1]\n"  # `^` after range is prefix
+    for kept in ["let r = 0 ..< n\n", "let s = x[1 .. ^1]\n", "let s = a .. -1\n"]:
+      check kept.isSettled  # spaced range, `^` glued to operand
+    for kept in ["echo a ..b\n", "let s = a.. b\n"]:
+      check checkSpacing("a.nim", kept).len == 0  # asymmetric, as for binary operator
       check kept.fixed == kept
 
 
@@ -114,6 +119,6 @@ suite "Spacing":
 
 
   test "clean source passes through unchanged":
-    let clean = "let x = a + b\nfor i in 0..<n: echo -i\nf(name = 1, b: 2)\n"
+    let clean = "let x = a + b\nfor i in 0 ..< n: echo -i\nf(name = 1, b: 2)\n"
     check clean.isSettled
     check fixSpacing("a.nim", clean).fixed.mapIt(it.line).len == 0

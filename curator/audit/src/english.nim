@@ -140,13 +140,13 @@ func matterOut(markdown: string): string =
   let lines = markdown.splitLines
   if lines.len == 0 or lines[0].strip != "---": return markdown
   var closed = -1
-  for i in 1..lines.high:
+  for i in 1 .. lines.high:
     if lines[i].strip == "---":
       closed = i
       break
   if closed < 0: return markdown
   var kept = lines
-  for i in 0..closed: kept[i] = ""
+  for i in 0 .. closed: kept[i] = ""
   kept.join("\n")
 
 
@@ -208,7 +208,7 @@ func opening(sentence: string): string =
   ## Quote back first words of sentence, with ellipsis where more follow.
   let words = sentence.splitWhitespace
   if words.len <= ECHO_WORDS: return sentence
-  words[0..<ECHO_WORDS].join(" ") & " ..."
+  words[0 ..< ECHO_WORDS].join(" ") & " ..."
 
 
 func tokenised(text: string): string =

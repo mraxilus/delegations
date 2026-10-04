@@ -164,16 +164,16 @@ func applied(path, source: string; rewrites: openArray[Rewrite]; rule: string): 
   ## Replace lines of each rewrite, last first; each new line traces to line it replaced.
   var
     lines = source.split('\n')
-    origin = toSeq(1..lines.len)
+    origin = toSeq(1 .. lines.len)
   for rewrite in rewrites.reversed:
     let
       span = rewrite.last - rewrite.first
-      traced = toSeq(0..<rewrite.lines.len).mapIt(origin[rewrite.first + min(it, span)])
-    lines = lines[0..<rewrite.first] & rewrite.lines & lines[rewrite.last + 1 .. ^1]
-    origin = origin[0..<rewrite.first] & traced & origin[rewrite.last + 1 .. ^1]
+      traced = toSeq(0 ..< rewrite.lines.len).mapIt(origin[rewrite.first + min(it, span)])
+    lines = lines[0 ..< rewrite.first] & rewrite.lines & lines[rewrite.last + 1 .. ^1]
+    origin = origin[0 ..< rewrite.first] & traced & origin[rewrite.last + 1 .. ^1]
   result.source = lines.join("\n")
   for rewrite in rewrites: result.fixed.add finding(path, rewrite.first + 1, rule)
-  if origin != toSeq(1..origin.len): result.origin = origin
+  if origin != toSeq(1 .. origin.len): result.origin = origin
 
 
 
@@ -200,7 +200,7 @@ func separatorOf(groups: openArray[seq[Item]]): string =
 
 func separators(s: Scan): seq[int] =
   ## Find each separator between parameter groups, trailing one included, of wrong kind.
-  for o in 0..<s.tokens.len:
+  for o in 0 ..< s.tokens.len:
     if s.tokens.signatureOf(s.partners, o, s.source) < 0 or s.partners[o] < o: continue
     let groups = s.groupsOf(s.items(o))
     if groups.len == 0: continue
@@ -212,7 +212,7 @@ func separators(s: Scan): seq[int] =
 
 func tupleSeparators(s: Scan): seq[int] =
   ## Find each `;` between fields of tuple type, which takes `,` (STYLE.md §5).
-  for o in 1..<s.tokens.len:
+  for o in 1 ..< s.tokens.len:
     if s.spelling(o) != "[" or s.spelling(o - 1) != "tuple" or s.partners[o] < o: continue
     for item in s.items(o):
       if item.separator >= 0 and s.tokens[item.separator].kind == TokenKind.Semicolon:
@@ -255,7 +255,7 @@ func fixSeparators*(path, source: string): Fix =
 
 func signatureRewrites(s: Scan): seq[Rewrite] =
   ## Lay out each routine signature as X.3 wraps it, one rewrite to each it changes.
-  for o in 0..<s.tokens.len:
+  for o in 0 ..< s.tokens.len:
     let keyword = s.tokens.signatureOf(s.partners, o, s.source)
     if keyword < 0 or keyword == o - 1 or not s.isLineFirst(keyword): continue
     let c = s.partners[o]
@@ -285,10 +285,10 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
     let
       line = s.lines[first_line]
       closing = s.lines[last_line]
-      head = line[0..<s.offset(o) + 1]
+      head = line[0 ..< s.offset(o) + 1]
       tail = closing[s.offset(c) .. ^1]
-      tail_signature = if equals < 0: tail else: closing[s.offset(c)..s.offset(equals)]
-      texts = groups.mapIt(s.source[s.tokens[it[0].first].first..<s.tokens[it[^1].last].after])
+      tail_signature = if equals < 0: tail else: closing[s.offset(c) .. s.offset(equals)]
+      texts = groups.mapIt(s.source[s.tokens[it[0].first].first ..< s.tokens[it[^1].last].after])
       separator = groups.separatorOf
       joined = texts.join(separator & " ")
       margin = ' '.repeat(line.indentOf)
@@ -304,7 +304,7 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
       canonical = if items.len == 1: group_lines else: parameters_line
     elif not group_lines.anyIt(it.isWide): canonical = group_lines
     else: continue
-    if canonical != s.lines[first_line..last_line]:
+    if canonical != s.lines[first_line .. last_line]:
       result.add Rewrite(first: first_line, last: last_line, lines: canonical)
 
 
@@ -334,7 +334,7 @@ func isEligibleCall(s: Scan, o: int): bool =
   ##   or block among arguments, and no block argument after it.
   if not s.tokens.isCallOpen(s.partners, o, s.source) or s.partners[o] < o: return false
   let c = s.partners[o]
-  for k in o + 1..<c:
+  for k in o + 1 ..< c:
     let t = s.tokens[k]
     if t.kind in {TokenKind.Comment, TokenKind.Semicolon} or s.lasts[k] > t.line: return false
     if t.kind == TokenKind.Word and s.spelling(k) in BLOCK_KEYWORDS: return false
@@ -354,7 +354,7 @@ func isFlattenable(s: Scan; a, b: int): bool =
   ## Decide whether tokens `a` to `b` may join on one line: every bracket spanning lines opens
   ##   call wrapping reads, and each line break follows bracket, comma or operator, or precedes
   ##   closing bracket, so joining moves no reading.
-  for k in a..b:
+  for k in a .. b:
     let t = s.tokens[k]
     if t.kind == TokenKind.Comment or s.lasts[k] > t.line: return false
     if t.kind == TokenKind.Open and s.isMultiline(k) and not s.isEligibleCall(k): return false
@@ -375,7 +375,7 @@ func flatten(s: Scan; a, b: int): Flat =
   var
     runes = 0
     previous = -1
-  for k in a..b:
+  for k in a .. b:
     let
       t = s.tokens[k]
       is_trailing = t.kind == TokenKind.Comma and k < b and
@@ -386,7 +386,7 @@ func flatten(s: Scan; a, b: int): Flat =
       continue
     if previous >= 0:
       let gap =
-        if t.line == s.lasts[previous]: s.source[s.tokens[previous].after..<t.first]
+        if t.line == s.lasts[previous]: s.source[s.tokens[previous].after ..< t.first]
         elif s.tokens[previous].kind == TokenKind.Open or t.kind == TokenKind.Close: ""
         else: " "
       result.text.add gap
@@ -403,7 +403,7 @@ func kept(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] 
   ##   `none` where they span one line, or hold call spanning lines, which rule lays out.
   let (first_line, last_line) = (s.tokens[a].line, s.lasts[b])
   if first_line == last_line: return none(seq[string])
-  for k in a..b:
+  for k in a .. b:
     let t = s.tokens[k]
     if t.kind == TokenKind.Comment or (t.kind == TokenKind.Text and s.lasts[k] > t.line):
       return none(seq[string])
@@ -414,20 +414,20 @@ func kept(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] 
       return none(seq[string])
   let shift = lead.len - s.lines[first_line].indentOf
   var shaped = @[lead & s.lines[first_line][s.offset(a) .. ^1]]
-  for line in first_line + 1..last_line:
+  for line in first_line + 1 .. last_line:
     let
       text = s.lines[line]
       stop = if line == last_line: s.tokens[b].after - s.starts[line] else: text.len
       indent = text.indentOf + shift
     if indent < 0: return none(seq[string])
-    shaped.add ' '.repeat(indent) & text[text.indentOf..<stop]
+    shaped.add ' '.repeat(indent) & text[text.indentOf ..< stop]
   shaped[^1].add trail
   some(shaped)
 
 
 func isClosingRun(s: Scan; a, b: int): bool =
   ## Decide whether tokens `a` to `b` are closing brackets, separators and `:` alone.
-  toSeq(a..b).allIt(
+  toSeq(a .. b).allIt(
     s.tokens[it].kind in {TokenKind.Close, TokenKind.Comma, TokenKind.Semicolon} or
       s.spelling(it) == ":",
   )
@@ -520,7 +520,7 @@ func layout(
   else:
     if s.tokens[c + 1].line != s.tokens[c].line: return none(seq[string])
     let
-      gap = s.source[s.tokens[c].after..<s.tokens[c + 1].first]
+      gap = s.source[s.tokens[c].after ..< s.tokens[c + 1].first]
       rest = s.layout(closer & gap, c + 1, b, trail, indent, is_argument)
     if rest.isNone: return none(seq[string])
     lines.add rest.get
@@ -535,7 +535,7 @@ func callRewrites(s: Scan): seq[Rewrite] =
   var
     firsts = newSeqWith(s.lines.len, -1)
     line = 0
-  for k in 0..<s.tokens.len:
+  for k in 0 ..< s.tokens.len:
     if s.isLineFirst(k) and firsts[s.tokens[k].line] < 0: firsts[s.tokens[k].line] = k
   while line < s.lines.len:
     let first = firsts[line]
@@ -558,7 +558,7 @@ func callRewrites(s: Scan): seq[Rewrite] =
     let
       indent = s.lines[line].indentOf
       laid = s.layout(' '.repeat(indent), first, k - 1, "", indent, is_argument = false)
-    if laid.isSome and laid.get != s.lines[line..last_line]:
+    if laid.isSome and laid.get != s.lines[line .. last_line]:
       result.add Rewrite(first: line, last: last_line, lines: laid.get)
       line = last_line + 1
     else: inc line
@@ -579,7 +579,7 @@ func checkCalls*(path, source: string): seq[Finding] =
 func fixCalls*(path, source: string): Fix =
   ## Rewrite each call check reports, pass after pass until none is left.
   result.source = source
-  for pass in 1..PASSES_MAX:
+  for pass in 1 .. PASSES_MAX:
     let rewrites = result.source.scan.callRewrites
     if rewrites.len == 0: break
     result = result.chain(applied(path, result.source, rewrites, "call wrapping (X.3)"))
@@ -603,7 +603,7 @@ func isConstructorOpen(s: Scan, o: int): bool =
 
 func trailingInserts(s: Scan): seq[Insert] =
   ## Find each list written one item to line whose last item lacks trailing separator.
-  for o in 0..<s.tokens.len:
+  for o in 0 ..< s.tokens.len:
     if s.tokens[o].kind != TokenKind.Open or s.partners[o] < o: continue
     let c = s.partners[o]
     if not s.isLineLast(o) or not s.isLineFirst(c): continue
@@ -616,7 +616,7 @@ func trailingInserts(s: Scan): seq[Insert] =
     if not items.allIt(s.isLineFirst(it.first)): continue
     if not items[0 ..< ^1].allIt(s.isLineLast(it.separator)): continue
     let last = items[^1]
-    if toSeq(last.first..last.last).anyIt(
+    if toSeq(last.first .. last.last).anyIt(
       s.spelling(it) in BLOCK_KEYWORDS or (s.spelling(it) == ":" and s.isLineLast(it)),
     ):
       continue
@@ -631,7 +631,7 @@ func trailingInserts(s: Scan): seq[Insert] =
       at = s.tokens[last.last].after
       text = s.lines[line]
       cut = at - s.starts[line]
-    if (text[0..<cut] & separator & text[cut .. ^1]).isWide and not text.isWide: continue
+    if (text[0 ..< cut] & separator & text[cut .. ^1]).isWide and not text.isWide: continue
     result.add Insert(line: line, at: at, separator: separator)
 
 

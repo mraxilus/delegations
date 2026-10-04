@@ -123,7 +123,7 @@ func fenceOf(source: string): Fence =
     fences = newSeqWith(lines.len, -1)  # Fence each line lies in, by count; `-1` outside.
     opened = 0
     is_open = false
-  for i in 0..<count:
+  for i in 0 ..< count:
     if markers[i] == FENCE_OFF and not is_open:
       is_open = true
       inc opened
@@ -137,7 +137,7 @@ func fenceOf(source: string): Fence =
   for k, t in tokens:
     let crossed =
       if partners[k] > k: fences[tokens[partners[k]].line] != fences[t.line]
-      else: toSeq(t.line..t.lastLine(source)).anyIt(fences[it] != fences[t.line])
+      else: toSeq(t.line .. t.lastLine(source)).anyIt(fences[it] != fences[t.line])
     if crossed:
       result.fault = if result.fault < 0: t.line else: min(result.fault, t.line)
       return
@@ -204,7 +204,7 @@ func lockedNimbles*(tree: Tree): seq[string] =
       open = if key < 0: -1 else: e.content.find('"', e.content.find(':', key) + 1)
       close = if open < 0: -1 else: e.content.find('"', open + 1)
     if close < 0: continue
-    result.add e.path[0..<e.path.len - LOCK_FILE.len] & e.content[open + 1..<close]
+    result.add e.path[0 ..< e.path.len - LOCK_FILE.len] & e.content[open + 1 ..< close]
 
 
 func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
@@ -399,7 +399,7 @@ func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context)
   if dead.len > 0:
     let step = fixDeadExports(path, result.source, dead)
     if step.source.fenceShape == shape: result = result.chain(step)
-  for round in 1..ROUNDS_MAX:
+  for round in 1 .. ROUNDS_MAX:
     var step = Fix(source: result.source)
     for fixer in kind.fixersOf:
       let next = fixer(path, step.source)

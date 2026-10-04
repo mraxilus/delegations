@@ -108,7 +108,7 @@ func valuesOf(chain: seq[Piece], tokens: openArray[Token], tail: int, source: st
       if is_inside or tokens[piece.first].first < tail: continue
       var value = Value(
         line: tokens[piece.first].line,
-        text: source[tokens[piece.first].first..<tokens[piece.last].after],
+        text: source[tokens[piece.first].first ..< tokens[piece.last].after],
       )
       let
         previous = if p > 0: chain[p - 1].literal else: -1
@@ -143,8 +143,8 @@ func valuesOf(chain: seq[Piece], tokens: openArray[Token], tail: int, source: st
       if close >= stop: break
       if not is_inside and k >= tail:
         result.add Value(
-          line: source[0..<k].count('\n'),
-          text: source[k..close],
+          line: source[0 ..< k].count('\n'),
+          text: source[k .. close],
           inserts: @[k, close + 1],
         )
       k = close + 1
@@ -158,7 +158,7 @@ func tails(source: string): seq[Value] =
   var seen: seq[int]
   for k, t in tokens:
     if t.kind != TokenKind.Text or k in seen: continue
-    let at = source[t.first..<t.after].rfind(MARKER)
+    let at = source[t.first ..< t.after].rfind(MARKER)
     if at < 0: continue
     let chain = chainFrom(tokens, partners, k, source)
     for piece in chain:
@@ -197,7 +197,7 @@ func fixMessages*(path, source: string): Fix =
       touched.add value.inserts.mapIt(starts.upperBound(it) - 1)
     for (at, line) in zip(values.mapIt(it.inserts).concat, touched.concat).sortedByIt(-it[0]):
       shaped[line].insert($BACKTICK, at - starts[line])
-    let widened = toSeq(0..<lines.len).filterIt(shaped[it].isWide and not lines[it].isWide)
+    let widened = toSeq(0 ..< lines.len).filterIt(shaped[it].isWide and not lines[it].isWide)
     if widened.len == 0: break
     var kept: seq[Value]
     for k, value in values:

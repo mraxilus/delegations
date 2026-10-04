@@ -70,7 +70,7 @@ suite "Article VIII":
   test "VIII.6 record over ceiling asks for prune and Pruned row":
     # Spread body over sections short enough that section ceiling stays quiet.
     var body = ""
-    for i in 0..<RECORD_LINES div SECTION_LINES + 1:
+    for i in 0 ..< RECORD_LINES div SECTION_LINES + 1:
       body.add "\n## Design " & $i & "\n" & "line\n".repeat(SECTION_LINES - 1)
     let
       long = provenanceText("d") & body

@@ -28,7 +28,7 @@ type
     comments: seq[Comment]
 
 
-const IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
+const IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
   ## Characters that may precede quote in Nim generalized raw string literal.
 
 
