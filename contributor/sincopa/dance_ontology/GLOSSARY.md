@@ -116,7 +116,7 @@ _Avoid_: height, tier, zone
 
 **Modifier**:
 What a wound arm ends in: a wrap or a lock.
-_Avoid_: blocker, decoration, variant
+_Avoid_: blocker, decoration, variant, way
 
 **Twist**:
 Stored rotational tension between the pair, which is the rotation of the Follow less the
@@ -145,7 +145,7 @@ _Avoid_: hug, coil, cuddle
 
 **Lock**:
 An arm bent behind its own back when low, or to the shoulder of the same arm when high. A
-low lock is entered only from a low position, for safety.
+low lock is entered only from a frame state held low, for safety.
 _Avoid_: pin, twist, hammerlock
 
 **Open**:
@@ -199,7 +199,11 @@ _Avoid_: cycle, ring, ladder
 **Neutral**:
 The twist where nothing is wound, which is the middle of the chain. The pair stands in a neutral
 twist, as it stands in a cross twist or a diamond twist.
-_Avoid_: open, unwound, rest, zero, twist neutral
+_Avoid_: open, unwound, zero, twist neutral
+
+**Rest**:
+The facing at which a frame hold stands in a neutral twist. Turns are counted from it.
+_Avoid_: origin, zero facing, start facing
 
 **Cross**:
 Half a turn from neutral, where the pair crosses once and the partners face the same way.
@@ -240,11 +244,81 @@ _Avoid_: posture, configuration, arm position
 
 **Strain**:
 How close the worst joint of a pose is to its limit: nought comfortable, one at the edge.
-_Avoid_: stress, effort, discomfort
+_Avoid_: stress, effort, discomfort, spent
 
 **Block**:
-Where a turn stops because no small move holds and no reachable pose does.
-_Avoid_: stuck, limit, failure
+Where a turn stops, because a body or a twist blocks it: no small move holds, and no reachable
+pose does.
+_Avoid_: stuck, limit, failure, ceiling
+
+**Band**:
+The height range where the simulation holds a level. In code the three are `Torso`, `Neck` and
+`Crown`, for low, high and above.
+_Avoid_: level, zone, tier
+
+**Face**:
+The front of a head, from brow to chin, which every arm keeps clear of. A font face, and the
+side in a facing name such as `Face-to-port`, are other senses kept in their own places.
+_Avoid_: visage, mask, countenance
+
+**Sweep**:
+One hold at one level, turned each way until something stops it.
+_Avoid_: scan, ramp, survey
+
+**Walk**:
+The engine carrying the arms through a turn from one distance, one moment at a time.
+_Avoid_: rollout, trial, playback
+
+**Path**:
+A planned turn, with one pose for each moment (`plan.Path`).
+_Avoid_: trajectory, course, itinerary
+
+**Style**:
+One of the sixteen settings that the planner tries for a turn (`plan.Style`).
+_Avoid_: manner, mode, strategy
+
+**Verdict**:
+What the simulation says of a pose or a turn: the report, and the line of the rig viewer.
+_Avoid_: ruling, decision, judgement
+
+**Stamp**:
+The stamp of a recording: the short code of the source that made it. The stamp of the charter
+keeps the meaning that the root glossary gives it.
+_Avoid_: hash, checksum, fingerprint
+
+
+### Review
+
+**Sheet**:
+A table that the Architect gives as a source, such as the `base` sheet of the workbook.
+_Avoid_: tab, worksheet, review sheet
+
+**Cell**:
+A cell of a sheet, or the slot on a page that copies it. The matrix of the Reference says matrix
+cell in full.
+_Avoid_: box, square, field
+
+**Badge**:
+One of the two marks that each cell carries: the ruling of the Architect, and the reading of the
+simulation. The reading is modelled, unconfirmed or not modelled.
+_Avoid_: tag, sticker, stamp
+
+**Kept**:
+The ruling of the Architect that a card is drawn right.
+_Avoid_: accepted, passed, confirmed
+
+**Dropped**:
+The ruling of the Architect that a card is ruled out. It is not the move Drop.
+_Avoid_: drop, struck, discarded
+
+**Mend**:
+The ruling of the Architect that a card shows the right frame state in a wrong drawing, with what
+to change.
+_Avoid_: repair, patch, redo
+
+**Fixture**:
+The record of what a ruled card was drawn as, held as a hash in `design/review-fixtures.json`.
+_Avoid_: pin, snapshot, golden file
 
 
 ### Drawing
@@ -253,3 +327,12 @@ _Avoid_: stuck, limit, failure
 Every frame hold stacked by how much is held, free at the foot and both hands at the head.
 It fixes every axis that the drawings read down.
 _Avoid_: lattice, graph, tree, ladder
+
+**Reach**:
+The drawn line of one connection, in the inks of its two hands.
+_Avoid_: span, arm length
+
+**Route**:
+A drawn connection, laid as a taut string round the bodies from one hand to the other
+(`draw/route.nim`).
+_Avoid_: path, track, wire
