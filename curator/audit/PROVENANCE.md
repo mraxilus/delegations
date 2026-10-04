@@ -1258,7 +1258,8 @@ absent package names itself.
 `KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
 for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
 `libbrotli1` for the audit suite, which reads `woff2` faces, because `curator/audit` carries no
-driver with a `system` verb. `koch list-packages` with no project prints those and every
+driver with a `system` verb. The runner holds it: verified by run 906 of `check`, whose `test`
+job ran that suite and passed. `koch list-packages` with no project prints those and every
 project's, unscoped, so one command answers what a machine needs before any of this runs. To
 name a project keeps the meaning for each job that the runner asks for.
 
@@ -2678,8 +2679,5 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether `koch fix` with no name reads the changed files rather than the changed projects. Every
   verb that takes projects reads projects, so a run can rewrite a file that the branch did not
   touch (Precedence 2).
-- Whether the `test` job of the runner carries `libbrotli1`, which the audit suite loads to read
-  `woff2` faces. The `curl` of Ubuntu depends on it, so it is expected. No run of that job has
-  shown it yet.
 - Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
   Without it, each run fetches 5.7 MB of faces before the suite holds the rows to their bytes.
