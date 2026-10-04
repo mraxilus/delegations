@@ -21,6 +21,10 @@
 ##     declared at site, where every use of it resolves, so rename finds its declaration.
 ##   Entries run several at once, `PARALLEL` at most: each takes its input whole, so reading
 ##     their output in turn lets later ones run meanwhile.
+##   Run reads commands from file and writes answers to file, through shell's redirection.
+##     Pipe holds 64 KiB: run whose answers fill it stops reading commands, so writing every
+##     command first, through pipes, waits forever on entry of many sites. Cost: two temporary
+##     files per run, removed once read.
 ##
 ##   Rejected: compiler as library inside koch, which compiles compiler into every build of koch
 ##     and binds it to one pin, where ronri projects lex glyphs only their commit pin knows.
@@ -36,7 +40,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, osproc, sequtils, streams, strutils, tables]
+import std/[options, os, osproc, sequtils, strutils, tables, tempfiles]
 import ./[compilers, layout, plan, toolchain]
 
 
@@ -68,6 +72,11 @@ type
     defines: seq[string]  ## Options it takes before entry.
     queries: seq[Query]
 
+  Asked = object  ## Define `nimsuggest` run started: process, file of commands, file of answers.
+    process: Process
+    commands: string  ## Path of file process reads commands from.
+    answers: string  ## Path of file process writes answers to.
+
 
 const
   NIMSUGGEST = "nimsuggest"  ## Tool every toolchain ships beside compiler.
@@ -82,6 +91,9 @@ const
   COMMAND_SITE = "def"  ## Command resolving site of entry itself: its definition alone.
   COMMAND_INCLUDED = "dus"
     ## Command resolving site of included file: its definition first, then each use of it.
+  TEMP_PREFIX = "koch_suggest_"  ## Opening of name of each temporary file of run.
+  TEMP_COMMANDS = ".commands"  ## Extension of file run reads commands from.
+  TEMP_ANSWERS = ".answers"  ## Extension of file run writes answers to.
 
 
 func symbolOf*(line: string): Option[Symbol] =
@@ -164,31 +176,42 @@ func directoryOf(path: string): string =
   path.split('/').projectDirectory
 
 
-proc ask(entry: Entry, is_js: bool): Process =
-  ## Start `nimsuggest` on entry and give it every command entry's queries make.
+proc ask(entry: Entry, is_js: bool): Asked =
+  ## Start `nimsuggest` on entry, reading every command entry's queries make from file and
+  ##   writing its answers to file, so neither process waits on pipe other leaves full.
   var arguments = @["--v3", "--stdin"] & entry.defines
   if is_js: arguments.add BACKEND_JS
   arguments.add entry.file
   let tool = if entry.bin.len == 0: findExe(NIMSUGGEST) else: entry.bin / NIMSUGGEST
-  result = startProcess(tool, args = arguments, workingDir = entry.directory, options = {})
-  let input = result.inputStream
+  var commands = ""
   for query in entry.queries:
     let
       file = entry.root / query.path
       command = if file == entry.file: COMMAND_SITE else: COMMAND_INCLUDED
-    input.write "chkFile " & file & "\n"
+    commands.add "chkFile " & file & "\n"
     for (line, column) in query.sites:
-      input.write command & " " & file & ":" & $line & ":" & $column & "\n"
-    for name in query.names: input.write "globalSymbols " & name & "\n"
-  input.write "quit\n"
-  input.close
+      commands.add command & " " & file & ":" & $line & ":" & $column & "\n"
+    for name in query.names: commands.add "globalSymbols " & name & "\n"
+  commands.add "quit\n"
+
+  # Run through shell, which redirects both streams to files.
+  let (written, path) = createTempFile(TEMP_PREFIX, TEMP_COMMANDS)
+  written.write commands
+  written.close
+  result.commands = path
+  result.answers = path.changeFileExt(TEMP_ANSWERS)
+  let line = (@[tool] & arguments).mapIt(it.quoteShell).join(" ") & " < " &
+    result.commands.quoteShell & " > " & result.answers.quoteShell
+  result.process = startProcess(line, workingDir = entry.directory, options = {poEvalCommand})
 
 
-proc answersOf(entry: Entry, process: Process): seq[Answer] =
+proc answersOf(entry: Entry, asked: Asked): seq[Answer] =
   ## Read answers of started run, in order commands went: check, sites, names of each file.
-  let output = process.outputStream.readAll
-  discard process.waitForExit
-  process.close
+  discard asked.process.waitForExit
+  asked.process.close
+  let output = if fileExists(asked.answers): readFile(asked.answers) else: ""
+  removeFile(asked.commands)
+  removeFile(asked.answers)
   let blocks = output.blocksOf
   var at = 0
   for query in entry.queries:
@@ -257,15 +280,15 @@ proc resolve*(root: string, tree: Tree, queries: openArray[Query]): seq[Answer] 
   var k = 0
   while k < entries.len:
     let batch = entries[k..min(k + PARALLEL, entries.len) - 1]
-    var started: seq[Process]
+    var started: seq[Asked]
     for entry in batch: started.add entry.ask(is_js = false)
-    var retried: seq[(Entry, seq[Answer], Process)]
+    var retried: seq[(Entry, seq[Answer], Asked)]
     for i, entry in batch:
       let answers = entry.answersOf(started[i])
       if answers.allIt(it.reason.len == 0): result.add answers
       else: retried.add (entry, answers, entry.ask(is_js = true))
-    for (entry, answers, process) in retried:
-      let again = entry.answersOf(process)
+    for (entry, answers, asked) in retried:
+      let again = entry.answersOf(asked)
       for i, answer in answers:
         result.add(if answer.reason.len == 0 or again[i].reason.len > 0: answer else: again[i])
     k += PARALLEL
