@@ -571,9 +571,15 @@ Software rendering inflates a blur more than the rest, so these are upper bounds
 
 **A speed check holds that cost, and every other check runs without the blur.** `driveBlurCost`
 reads frames paced to the display, as a reader sees them. Its bound, `MILLISECONDS_BLUR_DRAWER`, is
-25 ms, which is 1.5 times the paced reading of 16.7 ms. The harness turns the blur off through the
-page's own pill (`blur.setBlur`), so no other bound carries its cost. The pill check of `rings`
-runs with the blur on, which is the default of the page.
+25 ms, which is 1.5 times the paced reading of 16.7 ms. The runner reads the same, 50.0 ms against
+33.3 ms, on `4c76f0f`. The harness turns the blur off through the page's own pill (`blur.setBlur`),
+so no other bound carries its cost. The pill check of `rings` runs with the blur on, which is the
+default of the page.
+
+**Without the blur, the page's checks run about 7% faster.** Here they take 278.0 and 277.5 s,
+against 286.9 and 308.5 s with the blur on, four checks fewer. The drive step of the runner takes
+619 s, against 656 and 661 s on the two heads before it. Each runner figure is one run, so the
+saving there is likely, and not a bound.
 
 Verified by driven check: every surface computes the radius it declares when the page opens, and
 the pill clears every one. The drawer softens the band behind it from a step of 20.76 luma levels
