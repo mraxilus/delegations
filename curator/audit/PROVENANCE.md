@@ -709,6 +709,21 @@ marker, a second block or any other comment still reads as the opening line.
   `body` hook refused the body with exit 2. After the fix, the same body reports nothing, and the
   finding echoes a wrong role below the block.
 
+**The title of a pull request holds the grammar of a commit subject.** The merge commit takes
+the title as its subject, and `main` takes no rewrite after. So `checkTitle` holds the title to
+what `checkCommits` holds for each commit: the grammar, the scope that the branch requires, and
+`SUBJECT_MAX`. The job passes the title as `ROLE_TITLE`, from the event payload. The `edited`
+event runs the check again after a rename. The Architect ruled this check on 2026-10-04.
+
+- Before this check, the template alone held the title. The title of #463 broke it, and it is
+  the subject of `6d4606a` on `main`.
+- `scopeRequired` in `commits.nim` names the scope for both checks, so the two cannot drift.
+- Cost: the merge adds ` (#N)` to the title, so a subject on `main` can pass `SUBJECT_MAX` by a
+  few runes. `check-commits` skips merge commits, so no check reads that width.
+- Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
+  grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
+  branch, and a width over the limit.
+
 ## Assets
 
 **One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md names
@@ -2082,7 +2097,8 @@ that holds it. The events, each one a verb argument:
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
-  nor the working line. It also refuses a sign-off out of shape.
+  nor the working line. It also refuses a sign-off out of shape, and the end of any turn whose
+  message names `#N` outside a link.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
@@ -2236,6 +2252,24 @@ heading is present, and else the last line.
   delegate that stops behind a working line passes, and only a reader sees it.
 - Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
   by a change of label or draft alone is not asked for a sign-off.
+
+**`stop` names each `#N` of the closing message that stands outside a link and outside code.**
+Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
+Output contract). The Architect ruled this check on 2026-10-04. It reads every turn, and not only
+a turn that pushed or posted, because the rule binds every message. Each number reports once.
+
+- A link is `[text](url)`, `[text][label]`, or `[label]` with a definition in the message. A
+  definition line is a link too. A bracket with no definition is text, as GitHub shows it.
+- Fenced code and code spans are skipped. A code span closes at the next run of backticks of the
+  same length, as CommonMark reads it.
+- A `#` after a word character, `&` or `/` opens no number. So `&#169;` and a fragment of a URL
+  pass.
+- Cost: `owner/repo#12` passes too, though it names an item of another repository bare.
+- Cost: the hook reads the closing message of a turn alone, and no earlier message of the turn.
+- Verified by `suites/test_hooks.nim`: three kinds of link, code, an undefined bracket, a
+  reference, a fragment, and a number named twice.
+- Verified by hand through the hook built from the branch, 2026-10-04. Of three closing messages
+  of the curator, one named `#463` outside a link, and the hook refused that one alone.
 
 ## Watching main
 
