@@ -27,14 +27,14 @@ const FIXTURES = staticRead("review-fixtures.json")
 
 const MODELLED = staticRead("modelled.json")
   ## Which cards body simulation reaches, written by `design/modelled`.
-  ##   Second tag each cell carries.  `kept` is Architect's, by eye on floor;
+  ##   Second badge each cell carries.  `kept` is Architect's, by eye on floor;
   ##     `modelled` is simulation's answer confirmed by Architect against their own body,
   ##     and goal is both at hundred per cent.  Simulation reaching card is not enough:
   ##     Architect, on seeing simulation's stills laid beside reference: many static
   ##     states are wrong; mark everything unmodelled until confirmed.  So card
   ##     simulation reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
   ##     only then *modelled*.
-  ##   Card simulation has not been asked about is absent, and gets no tag: unasked
+  ##   Card simulation has not been asked about is absent, and gets no badge: unasked
   ##     reads as unasked rather than as disagreement.
 
 const LUT_FIXTURE_BY_CARD = block:
@@ -146,10 +146,10 @@ func sheetOf(parts: Parts): string =
   ): string =
     ## Stack several drawings in one cell, one shown at time, with button
     ## apiece.
-    ##   Each step carries simulation's own tag, not cell.  Cell that folds six edges
+    ##   Each step carries simulation's own badge, not cell.  Cell that folds six edges
     ##     together and is marked by worst of them paints five reachable edges
     ##     red for sake of sixth, and reader asking why easy one is refused is
-    ##     reading tag that was never about it.
+    ##     reading badge that was never about it.
     ##   Radio button and sibling rule do switching, so cell needs no script:
     ##     page stays markup browser can draw with nothing running.
     ##   Every step keeps its own note under its own picture, since note is
@@ -164,9 +164,9 @@ func sheetOf(parts: Parts): string =
         (if i == 0: "\" checked>" else: "\">")
       let says = if i >= asks.len or asks[i] notin LUT_MODELLED_BY_CARD: ""
                  elif not LUT_MODELLED_BY_CARD[asks[i]]:
-                   """<em class="tag nomodel">not modelled</em>"""
-                 elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
-                 else: """<em class="tag unsure">unconfirmed</em>"""
+                   """<em class="badge nomodel">not modelled</em>"""
+                 elif id in CONFIRMED: """<em class="badge model">modelled</em>"""
+                 else: """<em class="badge unsure">unconfirmed</em>"""
       frames.add &"""<div>{unpinned(step.svg)}{says}""" &
         &"""<span class="step">{escaped(step.note)}</span></div>"""
       buttons.add &"""<label for="{at}">{escaped(step.pick)}</label>"""
@@ -187,31 +187,31 @@ func sheetOf(parts: Parts): string =
       is_dropped = id in DROPPED
       mark = if is_flawed: " flawed" elif is_kept: " kept"
              elif is_dropped: " dropped" else: ""
-      badge = if is_flawed: """<em class="tag mend">mend</em>"""
-              elif is_kept: """<em class="tag keep">kept</em>"""
-              elif is_dropped: """<em class="tag drop">drop</em>"""
+      badge = if is_flawed: """<em class="badge mend">mend</em>"""
+              elif is_kept: """<em class="badge keep">kept</em>"""
+              elif is_dropped: """<em class="badge drop">drop</em>"""
               else: ""
-      # Simulation's own tag, drawn outlined where Architect's is solid, so ruling by
+      # Simulation's own badge, drawn outlined where Architect's is solid, so ruling by
       # eye and reading by engine are never taken for one another.  It sits in
       # other corner, and outside drawing, so no fixture moves by its being here.
       # Cell folding several pictures together stands for several questions, and
       # is reached only where simulation reaches every one of them.  Card nothing has
-      # been asked about carries no tag at all.
+      # been asked about carries no badge at all.
       put = if asks.len > 0: asks else: @[id]
       known = put.filterIt(it in LUT_MODELLED_BY_CARD)
       is_reached = known.len > 0 and known.allIt(LUT_MODELLED_BY_CARD[it])
       # Cell's own colour says how far it has got: green only where it is kept,
       # wholly reached and confirmed; amber where simulation reaches all or part of it
       # and Architect has not yet confirmed; red where simulation reaches none of it.
-      # Badges keep saying which of two tags each is.
+      # Badges keep saying which is Architect's and which is simulation's.
       stand = if known.len == 0: ""
               elif is_reached and id in CONFIRMED: " met"
               elif is_reached or known.anyIt(LUT_MODELLED_BY_CARD[it]): " part"
               else: " unmet"
       says = if is_switching or known.len == 0: ""
-             elif not is_reached: """<em class="tag nomodel">not modelled</em>"""
-             elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
-             else: """<em class="tag unsure">unconfirmed</em>"""
+             elif not is_reached: """<em class="badge nomodel">not modelled</em>"""
+             elif id in CONFIRMED: """<em class="badge model">modelled</em>"""
+             else: """<em class="badge unsure">unconfirmed</em>"""
     # Questions cell stands for are written on it, so viewer page laying simulation
     # beside each cell can find its still by question and not by cell's name.
     # Verdict was given on pictures, so picture that moved under one carries
@@ -639,25 +639,25 @@ func sheetOf(parts: Parts): string =
   .tally { font: .82rem var(--mono); color: var(--dim); margin: .6rem 0 0; }
   .tally b { color: var(--ink); }
   .pic .art { position: relative; }
-  .tag { position: absolute; top: 0; right: 0; font: 600 .58rem/1 var(--sans);
+  .badge { position: absolute; top: 0; right: 0; font: 600 .58rem/1 var(--sans);
     text-transform: uppercase; letter-spacing: .08em; padding: .2rem .3rem;
     border-radius: 2px; font-style: normal; }
-  .tag.keep { background: var(--keep); color: var(--card); }
-  .tag.drop { background: var(--drop); color: var(--card); }
+  .badge.keep { background: var(--keep); color: var(--card); }
+  .badge.drop { background: var(--drop); color: var(--card); }
   /* Cell is green only where Architect kept it *and* simulation reaches all of it.
      Kept alone coloured nothing: it was page's one colour and said nothing of
-     second tag, so page read finished wherever verdict was given. */
+     second badge, so page read finished wherever ruling was given. */
   .pic.part { border-color: var(--mend); background: var(--mend-wash); }
   .pic.unmet { border-color: var(--drop); background: var(--drop-wash); }
   .pic.kept.met { border-color: var(--keep); background: var(--keep-wash); }
   .pic.dropped { border-color: var(--drop); background: var(--drop-wash); }
   .pic.dropped .art svg { opacity: .38; }
-  .tag.mend { background: var(--mend); color: var(--card); }
-  .tag.model, .tag.nomodel, .tag.unsure { right: auto; left: 0;
+  .badge.mend { background: var(--mend); color: var(--card); }
+  .badge.model, .badge.nomodel, .badge.unsure { right: auto; left: 0;
     background: var(--card); }
-  .tag.unsure { color: var(--mend-ink); border: 1px solid var(--mend); }
-  .tag.model { color: var(--keep); border: 1px solid var(--keep); }
-  .tag.nomodel { color: var(--drop); border: 1px solid var(--drop); }
+  .badge.unsure { color: var(--mend-ink); border: 1px solid var(--mend); }
+  .badge.model { color: var(--keep); border: 1px solid var(--keep); }
+  .badge.nomodel { color: var(--drop); border: 1px solid var(--drop); }
   .pic.flawed { border-color: var(--mend); background: var(--mend-wash); }
   .pic .fix { color: var(--mend-ink); font: .62rem/1.35 var(--sans); }
   .pic { overflow: hidden; }
@@ -682,9 +682,9 @@ func sheetOf(parts: Parts): string =
   <p class="how"><b>How to read it.</b> Section A is the standard diagram. It is a table of
   frames, and it says no level at all. Sections B to D come from another chain. That chain takes a
   pose, a level for each arm, and a twist that is not a count of half turns.</p>
-  <p class="how"><b>Every cell carries two tags.</b> <i>Kept</i> is the ruling of the Architect
+  <p class="how"><b>Every cell carries two badges.</b> <i>Kept</i> is the ruling of the Architect
   on the drawing, by eye on the floor.</p>
-   <p class="how">The other tag is the body simulation's. It reads <i>not modelled</i>
+   <p class="how">The other badge is the body simulation's. It reads <i>not modelled</i>
   where the simulation reaches no pose. It reads <i>unconfirmed</i> where the simulation
   reaches one that the Architect has not yet held against their own body on the viewer. It
   reads <i>modelled</i> once they have. A pose the simulation reaches is a claim, and never a
@@ -695,7 +695,7 @@ func sheetOf(parts: Parts): string =
   # count cannot drift from what is drawn.
   let
     seen = sheet.count("""<figure class="pic""")
-    unsure = sheet.count("""<em class="tag unsure">""")
+    unsure = sheet.count("""<em class="badge unsure">""")
     tally = &"""<b>{KEPT.len}</b> kept &middot; <b>{DROPPED.len}</b> dropped """ &
       &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
       &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &

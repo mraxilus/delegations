@@ -534,7 +534,7 @@ suite "Internal: Each recording is of tree it is kept in":
   ## Verb whose stamp is unchanged records nothing again (`design/stamps`), so recording kept
   ##   with other stamp is of other physics, other questions or other verb.  Page would show it
   ##   as this tree's answer.
-  test "answers the reference page tags carry the stamp the tree gives":
+  test "answers the reference page badges carry the stamp the tree gives":
     check parseFile(KEPT_MODELLED)["stamp"].getStr == modelledStamp()
 
 
