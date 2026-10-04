@@ -1992,7 +1992,9 @@ suite "Internal: Proposal list":
 
 
 suite "Internal: Driver":
-  const driver = staticRead("../tools/build.nim")
+  const
+    driver = staticRead("../tools/build.nim")  ## Dispatcher: header table, usage and packages.
+    verbs = staticRead("../tools/verbs.nim")  ## Program every verb compiling project code runs.
 
   func dispatched(source: string): seq[string] =
     ## Read verbs driver's dispatch answers to: quoted labels of `of` branches after case.
@@ -2020,10 +2022,10 @@ suite "Internal: Driver":
 
   test "drive holds code to pin alone, and verb head alone reads library head":
     let
-      start = driver.find("proc drive() =")
-      body = driver[start..<driver.find("\n\n\n", start)]
+      start = verbs.find("proc drive() =")
+      body = verbs[start..<verbs.find("\n\n\n", start)]
     check "checkoutChecked()" in body and "headChecked" notin body  # drive reads no head
-    check "of \"head\": report(headChecked(commitPga()))" in driver  # head's verdict, exit code
+    check "of \"head\": report(headChecked(commitPga()))" in verbs  # head's verdict, exit code
 
 
   test "dispatch answers to every verb usage and header teach, and no other":
@@ -2035,8 +2037,8 @@ suite "Internal: Driver":
 
   test "drive builds every page once, and renders each page it builds":
     let
-      start = driver.find("proc drive() =")
-      body = driver[start..<driver.find("\n\n\n", start)]
+      start = verbs.find("proc drive() =")
+      body = verbs[start..<verbs.find("\n\n\n", start)]
     check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
     check "pinnedChecked(pin, built)" in body  # digests of that build
     check "renderedChecked(built)" in body  # render of that build
