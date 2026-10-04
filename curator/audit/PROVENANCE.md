@@ -911,7 +911,7 @@ label would show a stale queue.
 - Its grant is `issues: write` and `pull-requests: write`. The reference of the issues endpoint
   says that either grant reaches the labels of a pull request. Yet run 1 of `architect.yml`,
   with `issues: write` alone, failed with exit 1 on the merge of #463. Its log was out of reach
-  through the proxy of the session, so the missing grant is the likeliest cause, and no more.
+  through the proxy, so the missing grant is the likeliest cause, and no more.
   The next labelled pull request to close verifies it.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
