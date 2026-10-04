@@ -79,6 +79,10 @@ const
       "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
       "\"follow's hand held\") & follow),\n  )\n"
     ## Argument hand continued at its own indent, whose lines four spaces in cross `LINE_MAX`.
+  PACKED =
+      "  found.add \"" & "a".repeat(60) & "\" &\n    \"" & "b".repeat(46) & " " &
+      "b".repeat(46) & "\"\n"
+    ## Command argument opening mid-line, continued two spaces in on line of 99 runes.
   NAMES = "  const NAMES =\n    \"" & "a".repeat(45) & "\"&\"" & "b".repeat(45) & "\"\n"
     ## Value after `=`, one line of 99 runes that spacing takes to 101.
   RANGES =
@@ -234,21 +238,21 @@ suite "Repair that widens its line":
     check (STRICT_FUNCS & "\n\n" & VERDICTS).fixedOf.isSettled
 
 
-  test "message ending on its value takes shape, and its continuation four spaces in":
+  test "message ending on its value takes shape; continuation four in, or flat in argument":
     check (HEAD & CAPTION).fixedOf == HEAD & "  for i, line in lines:\n    if is_caption:\n" &
         "      if not line.namesKey(\"captionWindow\"):\n        found.add PATH_DESKTOP_NIM & " &
         "\":\" & $(i + 1) & \": caption must name `captionWindow`; got `\" &\n" &
         "            line.strip & \"`.\"\n"  # first line exactly 100 runes
     check (HEAD & SHOWN).fixedOf == HEAD & "  if found.len > 0:\n    raise newException(\n" &
         "      OSError,\n      \"Shown text belongs in `wording.nim`, named by key; got `\" & " &
-        "$found.len & \"`:\\n  `\" &\n          found.join(\"\\n  \") & \"`.\",\n    )\n"
+        "$found.len & \"`:\\n  `\" &\n      found.join(\"\\n  \") & \"`.\",\n    )\n"
     for source in [CAPTION, SHOWN]: check (HEAD & source).fixedOf.isSettled
 
 
-  test "message shape fitting no call split breaks after operator, four spaces in":
+  test "message shape fitting no call split breaks after operator, flat in its argument":
     check (HEAD & FACES).fixedOf == HEAD & "  if code != 0:\n    raise newException(\n" &
         "      OSError,\n      \"`koch fetch-assets` would not serve every face; got exit `\" & " &
-        "$code & \"` --\\n`\" & written &\n          \"`.\",\n    )\n"
+        "$code & \"` --\\n`\" & written &\n      \"`.\",\n    )\n"
     check (HEAD & FACES).fixedOf.isSettled
 
 
@@ -271,8 +275,12 @@ suite "Repair that widens its line":
 
 
   test "continuation run with line no wrap fits keeps its indent whole, with its findings":
-    check (HEAD & FILTERS).fixedOf == HEAD & FILTERS  # no continuation parts from its run
-    check checkFormatting("a.nim", HEAD & FILTERS, Dialect.Module).mapIt(it.line) == @[8, 9]
+    check (HEAD & PACKED).fixedOf == HEAD & PACKED  # no continuation parts from its run
+    check checkFormatting("a.nim", HEAD & PACKED, Dialect.Module).mapIt(it.line) == @[5]
+
+
+  test "argument continued at its own indent stays, since its first piece opens its line":
+    check (HEAD & FILTERS).isSettled
 
 
   test "value after `=` that breaks after operator sits four spaces past statement, flat":

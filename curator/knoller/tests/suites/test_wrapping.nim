@@ -163,7 +163,7 @@ suite "Wrapping":
     let continued = "  result.add finding(\n    path, 0,\n    \"" & "x".repeat(90) & "\" &\n" &
       "      name,\n  )\n"
     check continued.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(90) &
-        "\" &\n        name,\n  )\n"  # continuation four spaces in (STYLE.md §5)
+        "\" &\n    name,\n  )\n"  # argument opens its line, so continuation stays flat
     let rows = "check foo(bar, @[\n  1, 2,\n  3, 4,\n])\n"
     check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ],\n)\n"
     check rows.fixed.isSettled
@@ -188,7 +188,7 @@ suite "Wrapping":
     let call = "  result.add finding(path, \"" & "x".repeat(60) & "\" & name & \"" &
         "y".repeat(30) & "\")\n"
     check call.fixed == "  result.add finding(\n    path,\n    \"" & "x".repeat(60) &
-        "\" & name &\n        \"" & "y".repeat(30) & "\",\n  )\n"  # argument breaks four in
+        "\" & name &\n    \"" & "y".repeat(30) & "\",\n  )\n"  # argument opens line: flat
     let condition = "  if " & "a".repeat(45) & " and " & "b".repeat(45) & ":\n    discard\n"
     check condition.fixed == "  if " & "a".repeat(45) & " and\n      " & "b".repeat(45) &
         ":\n    discard\n"  # condition four in, body two
@@ -209,7 +209,7 @@ suite "Wrapping":
     for kept in [
       "  let x = " & "a".repeat(45) & " + " & "b".repeat(45) & "  # Why.\n",  # comment
       "  let x = " & "a".repeat(30) & " + " & "b".repeat(48) & " * " & "c".repeat(48) & "\n",
-      "foo(\n  " & "a".repeat(60) & " &\n      " & "b".repeat(60) & ",\n)\n",  # by hand
+      "foo(\n  " & "a".repeat(60) & " &\n  " & "b".repeat(60) & ",\n)\n",  # by hand
       "  let x = " & "a".repeat(45) & " in " & "b".repeat(45) & "\n",  # membership
       "  if a: " & "b".repeat(45) & " + " & "c".repeat(45) & "\n",  # `:` before code
     ]:
@@ -261,6 +261,33 @@ suite "Wrapping":
       check checkContinuations("a.nim", kept).len == 0
       check kept.fixed == kept
     check checkContinuations("a.nim", "foo(\n  name =\n    1,\n)\n").len == 0  # call's own
+
+
+  test "expression whose first piece opens its own line keeps every piece at its indent":
+    let
+      argument = "static:\n  doAssert IS_RIGID or DIMENSIONS >= 3,\n" &
+          "    &\"Conformal Geometric Algebras must have dimensionality of 3 or more \" &\n" &
+          "    &\"(2 Conformal + 1 Euclidean); got `{DIMENSIONS}`.\"\n"
+      bracket = "let p = BasisSigned(\n  basis: b,\n  is_negated: (\n" &
+          "    m_from.is_negated xor\n    n_from.is_negated xor\n    term.is_negated\n  ),\n)\n"
+      binding = "let\n  is_negated = (\n    c_dual.is_negated xor\n" &
+          "    c_complement.is_negated\n  )\n"
+      condition = "if products.len != 0 and cayley[b][0].basis notin products or\n" &
+          "    (as_exclusions and cayley[b][0].basis in products):\n  discard\n"
+    for kept in [argument, bracket, binding, condition]:
+      check checkContinuations("a.nim", kept).len == 0  # shapes of PGA library, as written
+      check kept.fixed == kept
+    let stepped = "let x = (\n  a xor\n      b xor\n      c\n)\n"
+    check checkContinuations("a.nim", stepped).mapIt(it.line) == @[3, 4]
+    check checkContinuations("a.nim", stepped)[0].message.endsWith("got `4`.")
+    check stepped.fixed == "let x = (\n  a xor\n  b xor\n  c\n)\n"  # flat at first piece
+    check "doAssert c,\n  \"a \" &\n      \"b\"\n".fixed == "doAssert c,\n  \"a \" &\n  \"b\"\n"
+    for kept in [
+      "foo(\n  name = a +\n      b,\n)\n",  # named argument opens mid-line
+      "foo(\n  x, a +\n      b,\n)\n",  # after other code
+      "let x = a +\n    b\n",  # after statement head
+    ]:
+      check checkContinuations("a.nim", kept).len == 0  # four spaces past statement line
 
 
   test "call holding comment, long string spanning lines, or block stays":
