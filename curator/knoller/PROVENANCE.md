@@ -117,6 +117,25 @@ where a change is due under `--check`.
   glossary lists the acronym CLI.
 - `outcomeOf` decides what a run writes and prints from text alone, so its suite needs no file.
   Verified by `suites/test_command.nim`. The suite also holds the README to every rule id.
+- A directory that gives no Nim file is a usage error, and its message says why. The directory
+  is outside a git work tree, or git lists no Nim file under it. A silent `0 to fix.` reads as a
+  clean run over files that knoller never read.
+- Each fixer reads the path whole: absolute, with `.` and `..` resolved (`layoutOf`). So the
+  test file, the stub and the umbrella read alike from any directory, and the output prints the
+  path as named.
+- Cost: a directory named `tests` above the repository makes each file below it a test file,
+  from the command line alone. `koch` gives paths from the root of the repository.
+- Each line of output is a line of the file as given. A finding left in the fixed text traces
+  back through the fix, as a rewrite does. A line that the fix inserts has no line as given, so
+  a finding there prints with the path alone.
+- `koch fix` needs no such trace. It prints no check of the fixed text, and each edit before
+  knoller keeps its lines.
+- Verified by `suites/test_command.nim`. One file named from two directories prints the same
+  lines, and a finding left prints at its line as given.
+- Verified by hand, 2026-10-04, with the built binary. `--check` of a directory outside a git
+  work tree, and of one where git lists no Nim file, exited 2 with its reason. On the PGA
+  library, `--check suites.nim` from inside `tests/` and `--check tests/suites.nim` from its
+  parent each gave 73 changes, with the same lines.
 - Verified by hand, 2026-10-04: the built binary fixed a scratch file, and a second run wrote
   nothing. A run without a path, and a run with an unknown option, exited 2.
 
@@ -171,7 +190,19 @@ operator is glued to its operand.
   neither. Asymmetric spacing stays, and its check is silent, because its fix is a choice of
   meaning. So `a ⊖b` stays a command call.
 - A prefix operator stands after anything but an operand, which is where the parser reads a
-  prefix node. A `-` glued before a number would become a literal, so `- 1` stays.
+  prefix node.
+- The fix never splits or merges a token, by the ruling of the Architect. So a prefix operator
+  keeps exactly one space where it and its operand lex as other tokens when glued. `|∙ ⊖m` glued
+  is the one operator `|∙⊖`, `- -x` is `--x`, and `- 1` is the literal `-1`. The check accepts
+  that one space, which the tokeniser demands (X.9).
+- Verified by `suites/test_spacing.nim`: each token of each fixture reads the same before and
+  after the fix. In `suites/test_chain.nim`, the operator tokens of the stacked form read the same
+  after the whole chain.
+- Verified by hand on the PGA library of `replications` at `d9be8ae`, 2026-10-04. The lines of
+  `tests/suites.nim` with `|∙ ⊖` keep their space. With the commit pin of the `ronri` projects,
+  `nim check` passes on 64 of 64 targets, on the library as given and as knoller writes it. The
+  eight test programs, `rga2d` to `rga5d` and `cga3d` to `cga6d`, print the same output on both.
+  `testament all` passes 8 of 8 on both.
 - A gap stays where closing it would merge two tokens: `(` before `.`, `[` before `:`, `.` before
   `)`, and a colon after an operator.
 - `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
@@ -271,6 +302,17 @@ where blank lines stand below it too.
 opener at once, such as a test that opens a suite, or a suite that opens a `when` body. A suite
 or a test after a banner takes the one blank line of the banner. The rule reads files under
 `tests/` alone.
+
+- A test file has a directory `tests` in its path, at any depth. A stub is a `test_*` file
+  directly in that directory. `reports.nim` holds both readings, from the names below the last
+  directory `tests`, so the blank-line rule and the stub rules read one definition.
+- `isTestFile` holds exactly where `/tests/` stands in the path with a `/` before it. `isStub`
+  holds exactly where the parent of a `test_*` file is `tests`. Verified by
+  `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
+  2026-10-04, over each path that git lists in this repository, relative and absolute.
+- Cost: a stub one level down, such as `tests/rga3d/test_rga3d.nim` of the PGA library, is a
+  test file and no stub. So it takes the blank-line rules, and not `stub-keys` or
+  `profiler-import`.
 
 **A nested helper takes one blank line on each side (STYLE.md §1).** A helper is a routine that
 the body of a routine declares at its own level. The rule holds right after the doc of the
@@ -492,5 +534,6 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
 - Install by git URL needs the `?subdir=curator/knoller` form of nimble. It is not verified with
   the nimble that 2.2.12 ships.
 - Some rules read paths in the layout of this repository: `tests/`, a test stub, and the umbrella
-  `<project>/src/<project>.nim`. In another repository they would need to read paths relative to
-  the nearest nimble file.
+  `<project>/src/<project>.nim`. They read the whole path, so the spelling of a path changes
+  nothing. In another repository they would need to read paths relative to the nearest nimble
+  file.

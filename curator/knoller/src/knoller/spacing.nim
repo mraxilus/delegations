@@ -2,7 +2,7 @@
 ##   Spaces are list X.9 gives; every gap list names takes its count:
 ##   - binary operator and `=` take one space on each side; one ending its line takes one before;
 ##   - range operator (`..`, `..<`, `..^`) is binary operator, spaced alike;
-##   - prefix operator is glued to its operand;
+##   - prefix operator is glued to its operand, unless tokeniser demands one space (X.9);
 ##   - comma and semicolon take none before them and one after; colon of type, field or branch
 ##     likewise;
 ##   - bracket holds no space inside it, after opening or before closing;
@@ -22,8 +22,11 @@
 ##     as `1 .. ^1`; there `^` is prefix, glued to operand. Range in prefix place (`a[.. 2]`)
 ##     stays unread.
 ##   Prefix place: operator after anything but operand, which is where parser reads prefix
-##     node; spaces after it go, unless `-` meets number, since `- 1` glued is literal `-1`,
-##     which `-128'i8` shows differs.
+##     node; spaces after it go, unless operator and operand glued lex as other tokens
+##     (`isMerging`). There exactly one space stays, so fix never splits or merges token
+##     (Architect): operand opening with operator character, since `|∙ ⊖m` glued lexes one
+##     operator `|∙⊖`, and `- -x` lexes `--`; and `-` before number, since `- 1` glued is
+##     literal `-1`, which `-128'i8` shows differs.
 ##   Gap is never closed where tokens would merge: `(` before `.` (`(.` opens pragma), `[`
 ##     before `:` (`[:`), `.` before `)` (`.)`), and colon after operator (`*:`, `=:`).
 ##   `=` of definition, default, assignment or named argument: lexer reads `=` as no operator,
@@ -55,6 +58,7 @@ type
     Binary  ## Around binary operator: one space each side.
     Range  ## Around range operator: one space each side, as binary.
     Prefix  ## After prefix operator: none.
+    Apart  ## After prefix operator whose operand glued would merge with it: one.
     Equals  ## Around `=`: one space each side.
     Comma  ## Before comma none, after it one.
     Semicolon  ## Before semicolon none, after it one.
@@ -129,6 +133,17 @@ func isExportMarker(tokens: openArray[Token], k: int, lasts: openArray[int], sou
   let before = tokens[k - 2].spelling(source)
   if before in DECLARATION_KEYWORDS: return true
   before == "," and k >= 3 and tokens.isExportMarker(k - 3, lasts, source)
+
+
+func isMerging(source: string; a, b: Token): bool =
+  ## Decide whether two tokens glued lex as other tokens: one operator, as `|∙` and `⊖` lex
+  ##   `|∙⊖`, or one literal, as `-` and `1` lex `-1`.
+  let
+    pair = @[a.spelling(source), b.spelling(source)]
+    glued = pair.join
+  var lexed: seq[string]
+  for t in glued.tokens: lexed.add t.spelling(glued)
+  lexed != pair
 
 
 func excerpt(source: string; before, after: Token): string =
@@ -223,14 +238,19 @@ func respacings(source: string): seq[Respacing] =
     if text in IGNORED_OPERATORS or (text.len > 1 and text[0] == '.' and text[1] != '.'):
       continue
     if not tokens.isOperandEnd(k - 1, source):
-      # Glue prefix operator to its operand.
+      # Glue prefix operator to its operand; one space stays where glued pair would merge.
       if is_keyword_operator or is_line_end or text in RANGE_OPERATORS: continue
       let next = tokens[k + 1]
       if next.first == t.after or next.isKeyword(source): continue
-      if text == "-" and next.kind == TokenKind.Number: continue
-      spacing.placement = Placement.Prefix
-      spacing.edits = @[Edit(first: t.after, after: next.first, spaces: 0)]
-      spacing.got = source[t.first ..< next.after].runeSubStr(0, 2 * EXCERPT_RUNES)
+      let wanted = if source.isMerging(t, next): 1 else: 0
+      if next.first - t.after == wanted: continue
+      spacing.placement = if wanted == 0: Placement.Prefix else: Placement.Apart
+      spacing.edits = @[Edit(first: t.after, after: next.first, spaces: wanted)]
+      var last = k + 1  # Echo through operand that operator run after gap opens.
+      while tokens[last].kind == TokenKind.Operator and last < lasts.high and
+          tokens[last + 1].line == lasts[last]:
+        inc last
+      spacing.got = source[t.first ..< tokens[last].after].runeSubStr(0, 2 * EXCERPT_RUNES)
       result.add spacing
       continue
     if tokens.isExportMarker(k, lasts, source):
@@ -265,6 +285,8 @@ func checkSpacing*(path, source: string): seq[Report] =
       of Placement.Binary: "Binary operator takes one space on each side (X.9)"
       of Placement.Range: "Range operator takes one space on each side (X.9)"
       of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
+      of Placement.Apart:
+        "Prefix operator takes one space before operand it would merge with (X.9)"
       of Placement.Equals: "`=` takes one space on each side (X.9)"
       of Placement.Comma: "Comma takes no space before it and one after (X.9)"
       of Placement.Semicolon: "Semicolon takes no space before it and one after (X.9)"

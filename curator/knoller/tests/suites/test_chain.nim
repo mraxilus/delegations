@@ -96,6 +96,10 @@ const
       "        (-twist_range.upper, -twist_range.lower)\n"
     ## `if` expression after `=`, one level under its statement, as `rigid.nim` of
     ##   `dance_ontology` writes it.
+  STACKED =
+      "  let\n    distance = (|∙ ⊖(m ∧ n)) div (|∙ (⊖m ∧ ⊖n))\n    negated = - -y\n"
+    ## Prefix operator before operand opening with operator, as line 329 of `suites.nim` of PGA
+    ##   library writes it, and ASCII form; glued, each pair lexes one operator.
 
 
 func fixedOf(source: string): string =
@@ -290,7 +294,8 @@ suite "Repair that widens its line":
 
   test "operator tokens read same before and after, `&` of message shape aside":
     let verdicts = STRICT_FUNCS & "\n\n" & VERDICTS
-    for source in [PICKING, GIF, CAPTION, SHOWN, FACES, AIM, HELD].mapIt(HEAD & it) & verdicts:
+    for source in [PICKING, GIF, CAPTION, SHOWN, FACES, AIM, HELD, STACKED].mapIt(HEAD & it) &
+        verdicts:
       let (before, after) = (source.operatorsOf, source.fixedOf.operatorsOf)
       check after.filterIt(it != "&") == before.filterIt(it != "&")
       check after.countIt(it == "&") - before.countIt(it == "&") in 0 .. 1  # one shape at most
