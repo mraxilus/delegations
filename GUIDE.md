@@ -344,6 +344,12 @@ instead. The line opens `**Working:**`, then names what runs and what wakes you:
 
 The `stop` hook refuses a turn that pushed or posted and closes with neither.
 
+**A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
+the notice that the pull request you marked ready is ready. So is an event that leaves each
+state as it was. Where that turn pushed and posted nothing, and your working line would read as
+before, end the turn with no message. Your last working line still stands, so the Architect
+does not read the same line twice.
+
 The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
 The block says who the delegate is and what it works on, then what happened, then where it
 stands and what waits on the Architect. The next delegate, and the same delegate after a
