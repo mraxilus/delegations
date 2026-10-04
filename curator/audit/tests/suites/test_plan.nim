@@ -3,7 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, sequtils, unittest]
-import ../../src/[plan, projects]
+import ../../src/[plan, projects, toolchain]
 import ./fixtures
 
 
@@ -136,6 +136,19 @@ suite "Plan":
       @[AUDIT_DIRECTORY]  # code of that project
     check testSet(DIRECTORIES, ["koch.nim", CHECKER_DIRECTORY & "/plan.nim"]) ==
       @[AUDIT_DIRECTORY]  # once
+
+
+  test "knoller source selects driver's project, which imports it, and knoller itself":
+    let directories = [ALPHA_DIRECTORY, AUDIT_DIRECTORY, KNOLLER_DIRECTORY]
+    check testSet(directories, [KNOLLER_FILES[0] & "/knoller/tokens.nim"]) ==
+      @[AUDIT_DIRECTORY, KNOLLER_DIRECTORY]  # source both read
+    check testSet(directories, [KNOLLER_FILES[1]]) ==
+      @[AUDIT_DIRECTORY, KNOLLER_DIRECTORY]  # nimble file names pin
+    check testSet(directories, [KNOLLER_DIRECTORY & "/tests/suites/test_tokens.nim"]) ==
+      @[KNOLLER_DIRECTORY]  # knoller's suite alone, which driver never reads
+    check testSet(directories, [KNOLLER_DIRECTORY & "/PROVENANCE.md"]).len == 0  # record
+    check testSet(directories, [KNOLLER_DIRECTORY & "/srcs/x.nim"]) ==
+      @[KNOLLER_DIRECTORY]  # folder sharing prefix is no source
 
 
   test "path inside no project selects nothing by itself":

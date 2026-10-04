@@ -668,17 +668,47 @@ alone, they match no semibold text, so a selected label or a chip at 600 takes i
 the viewer's system. Over 400 to 600, the browser draws them as they are. The cost is regular
 operators beside semibold letters, which the desktop label also draws.
 
-**Every character that the page writes is asked of the faces that it ships**, by
-`driveFacesCovered`. It reads the codepoints from `nimCodepointsShown`, the gathering of `shown`
-that `--drive-faces` reads too. It adds the markup of the page and the strings of its scripts, which
-no catalogue holds. It reads each `@font-face` rule of the shell, and the `cmap` of its file. It
-resolves each stack at each declared weight as CSS matching does, and reports each codepoint that
-falls past the faces the page ships.
+**Each element is held to the faces of the stack that the browser resolves for it**, by
+`driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
+and `font-weight` of each element of the page. It holds the text of that element to that stack, at
+that weight. The value and the placeholder of a field count, and so does the text of `::before` and
+`::after`. A finding names the page, the element, the weight and each codepoint that no face of the
+stack maps.
 
-*Checked.* Verified by a run, 2026-10-03. With the whole faces, and the maths and symbols at 400
-alone, the check fails in all three stacks at 600. It names the operators, the bold operands and the
-chip symbols. With the weight ranges, all three stacks pass at 400 and 600. The other page checks
-pass with the whole faces.
+**Text that a script writes later is held to every stack in use.** That text is not on the page when
+the check runs, and the element that will show it can be absent too. `nimCodepointsShown` gives the
+catalogue, the help, the notation and the units, as `--drive-faces` reads them. The strings of the
+scripts give the rest, and the text on the page now joins them. The check holds each of these
+characters to each stack that an element of the page resolves to. It does this at each weight that
+an element resolves to, and at each weight that a face declares.
+
+So each stack in use must map every character that the page can write. That is why the mono and
+serif stacks name "Noto Sans UI" after their own face. The cost is that a stack for titles alone
+must map the operators too. A checkbox and a file field are not a stack in use, because they show no
+text that the page writes. Both resolve to Arial, and the button of a file field shows the words of
+the browser.
+
+The check reads each `@font-face` rule of the shell, and the `cmap` of its file. It matches the
+weight and the unicode-range of each face as CSS matching does, and tries the families of a stack in
+order. Rejected: the three stacks read from the text of the shell, which pass an element that takes
+a stack of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a
+layout box now. A hidden panel has none, and text that a script writes later has none either.
+
+Cost: an element that a script builds after the check runs counts only through its stack. Where no
+element on the page resolves to that stack at the check, the check does not see it.
+
+*Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153. The page
+stands as it opens, with the drawer and help open. Both checks pass, with `missing none`.
+
+Verified by a break on purpose, the same day and the same way. The rule
+`#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with
+`missing rga_visualiser.html #button-menu span at 400: U+2630`. The three stacks read from the text
+of the shell pass that break.
+
+With the maths and symbols declared at 400 alone, the check fails at 600. It names U+2715 in
+`button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use, it names the
+operators, the bold operands and the chip symbols. Verified by a run, 2026-10-03: the other page
+checks pass with the whole faces.
 
 **The serif ships at 600 alone, because 600 is the weight every title is set at.** A weight that
 nothing ships is a face that the browser of the reader invents (Article X.8). The check reads
@@ -2907,10 +2937,11 @@ leaves the ecliptic.
 of which Mercury's 7° is the largest. Earth in the spanned plane is what the horizon block turns on.
 The place of a body on its ring is the golden angle, and not a date. Neighbour systems lie flat.
 
-**Two catalogues ship, as data alone, and both are generated.** `neighbourhood.nim` is a snapshot
-of the NASA Exoplanet Archive, taken 2026-08-31 from its TAP service (`select hostname, pl_name,
-sy_dist, ra, dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`). It holds 331
-planet hosts out to 31.5 parsecs.
+**Two catalogues ship, as data alone, and this repository keeps both as written.** A tool wrote
+each one once, and that tool stays in the tree that this project came from. No tool here writes
+them again. `neighbourhood.nim` is a snapshot of the NASA Exoplanet Archive, taken 2026-08-31 from
+its TAP service (`select hostname, pl_name, sy_dist, ra, dec, pl_orbsmax from ps where
+sy_dist < 35 and default_flag = 1`). It holds 331 planet hosts out to 31.5 parsecs.
 
 The archive asks for this acknowledgement, word for word:
 
@@ -2919,6 +2950,18 @@ The archive asks for this acknowledgement, word for word:
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. It keeps 11,252 of 11,432.
+
+**A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
+`#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
+bracket. A fence that crosses a bracket makes the fix leave the whole file as written, so each
+fence holds a whole table. Without the fences, the fix wraps each row of `STARS` and `NEIGHBOURS`
+again, which adds lines and no meaning. The type headers stay outside the fences, so the fix
+repairs their layout as it repairs any other line.
+
+Verified by `nim r koch fix --dry-run --branch:main contributor/ronri/rga_visualiser`, 2026-10-04.
+Without the fences, it reports 11,259 findings in `starfield.nim` and 342 in `neighbourhood.nim`.
+With them, it reports 7 and 9, and each one is a trailing comment of a type header. Every other
+file of the project gives the same findings both times.
 
 Each planet host was matched to exactly one star **by sky position alone**, and the worst
 separation is 161 arcseconds. The two worst matches are Barnard's and Kapteyn's stars, which have

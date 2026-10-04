@@ -21,7 +21,8 @@
 {.experimental: "strictFuncs".}
 
 import std/strutils
-import ./[comments, findings, kinds, names]
+import ../../knoller/src/knoller
+import ./[comments, findings, kinds]
 
 
 const

@@ -87,6 +87,7 @@ Every rule below serves it:
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | The checker: every check, tested against its own fixtures | curator |
 | `curator/probe/` | Domain-neutral worked example of the project shape | curator |
+| `curator/knoller/` | Fixers that read one file alone, which the checker imports | curator |
 | `curator/<project>/` | Any other curator project, same shape | curator |
 | `contributor/README.md` | Contributor root index | curator |
 | `contributor/<domain>/README.md` | Domain name and theme | curator |
@@ -154,8 +155,8 @@ and the shared allowance. This section adds only what differs for a curator.
 
 2. **Merge-process change.** Anything that a pull request passes through is the merge
    process. That is the workflows, `koch.nim`, `.gitignore`, `.gitattributes`,
-   `curator/audit/src/`, the branch grammar in `domains.nim`, the stamp, and the matrices
-   that `list-projects` emits.
+   `curator/audit/src/`, `curator/knoller/src/`, the branch grammar in `domains.nim`, the
+   stamp, and the matrices that `list-projects` emits.
 
    Test it on the process itself, in three legs:
 
@@ -211,6 +212,10 @@ and the shared allowance. This section adds only what differs for a curator.
    compiles the modules of that project. `toolchain.nim` fails the audit where any workflow
    disagrees. So bump the pin and every workflow together, with `nim r koch check` on the new
    version.
+
+   `curator/knoller` pins the same version, because the checker imports it by path, and
+   `toolchain.nim` fails the audit where it disagrees. A sibling imported by path is not a
+   package, so it needs no lock. Its pin moves with the pin of `curator/audit`.
 
    `GUIDE.md`, Toolchain, says how koch serves every other pin. What koch does not serve,
    `nim r koch list-packages` prints: the packages of koch itself, and those that each project
@@ -382,13 +387,15 @@ run, except one that duty 3 holds apart.
 project carries a `drive` verb. It then builds the page of that project and drives a real
 browser, exactly as the runner does. A change to `koch.nim`, to `koch.nim.cfg` or to
 `curator/audit/src/` selects `curator/audit` alone, because its suites are what read them.
+A change to the source or the nimble file of `curator/knoller` selects `curator/audit` too.
 So a change to the checker never compiles a contributor project. Budget for the projects your
 branch touches, and for no others.
 
 The checker holds itself to rules of its own, in `checker.nim`, because it checks every
 project and nothing checked it:
 
-- A routine exported and named by no other module and no suite is a finding.
+- A routine exported and named by no other module and no suite is a finding. This holds in
+  `curator/knoller` too, because the checker imports it.
 - A check module without `tests/suites/test_<module>.nim` is a finding.
 - The verbs that koch dispatches, the verbs that its usage text lists, and the rows of the
   table above are one set named three times. Any two that differ are a finding.

@@ -6,10 +6,13 @@
 #   Tarball is linux_x64; other platform with `nim` already on PATH falls through, and one
 #   without it fails loudly at build rather than silently at every hook.
 #   `binaries/` is ignored by git, so built koch never reaches audit or repository.
-#   Binary keeps key beside it: object ids of koch, its flags, audit's nimble file and checker
-#   source at HEAD. Commit, merge or switch of branch that moves one builds again before hook
-#   runs, so no hook runs checker older than checkout holds. Key reads HEAD and never working
-#   tree, so edit in progress builds nothing until committed.
+#   Binary keeps key beside it: object ids of koch, its flags, nimble file and source of audit
+#   and of knoller, which audit imports by path, at HEAD. Commit, merge or switch of branch that
+#   moves one builds again before hook runs, so no hook runs checker older than checkout holds.
+#   Key reads HEAD and never working tree, so edit in progress builds nothing until committed.
+#   Trap: `rev-parse` prints first path HEAD lacks back as given, then stops. Knoller comes
+#     last, its source before its nimble file, so older branch keeps stable key and no path
+#     that exists is dropped from it.
 #   Build writes beside binary, then renames, so no hook runs half-written file. Directory lock
 #   lets one build run while concurrent hook runs binary it finds; lock older than ten minutes
 #   is one that killed build left.
@@ -25,7 +28,8 @@ CACHE="${KOCH_NIM_DIR:-$HOME/.cache/koch/nim}/$PIN"
 export PATH="$CACHE/bin:$PATH"
 BINARY="$ROOT/binaries/koch"
 KEY="$(git -C "$ROOT" rev-parse HEAD:koch.nim HEAD:koch.nim.cfg \
-  HEAD:curator/audit/audit.nimble HEAD:curator/audit/src 2>/dev/null | tr '\n' ' ')"
+  HEAD:curator/audit/audit.nimble HEAD:curator/audit/src \
+  HEAD:curator/knoller/src HEAD:curator/knoller/knoller.nimble 2>/dev/null | tr '\n' ' ')"
 
 if [ "$1" = start ]; then
   if ! command -v nim >/dev/null 2>&1; then
