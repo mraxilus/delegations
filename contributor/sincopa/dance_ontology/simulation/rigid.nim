@@ -344,8 +344,9 @@ const
 const
   TRUNK_BIT = 1'u64  ## Torso, neck and head.
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64]  ## Lead's arms, follow's arms.
-  FACE_BIT = 8'u64  ## Faces, which meet arms alone: trunks keep heads apart, and spheres of
-                   ## couple chest to chest overlap 2 cm, where dancers turn heads aside.
+  FACE_BIT = 8'u64  ## Faces, which meet arms and partner's girdles alone, since own girdles share
+                   ## their group.  Trunks keep heads apart, and two faces of couple chest to chest
+                   ## overlap 2 cm, computed from tape, where dancers turn heads aside.
   EVERY = high(uint64)  ## Meets everything.
 
 func ownGroup(who: Body): cint =

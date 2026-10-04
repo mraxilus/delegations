@@ -247,10 +247,11 @@ func problemOf*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): P
   for i in 0..<result.shapes.len:
     for j in i + 1..<result.shapes.len:
       let (p, q) = (result.shapes[i], result.shapes[j])
-      # Face meets every link of every arm, and nothing else: girdle runs from neck.
+      # Face meets every link of every arm, and partner's girdles: own girdles run from neck,
+      # and share its group.
       if p.arm == -2 or q.arm == -2:
-        let other = (if p.arm == -2: q else: p)
-        if other.arm >= 0 and other.part >= 1: result.pairs.add (i, j)
+        let (face, other) = (if p.arm == -2: (p, q) else: (q, p))
+        if other.arm >= 0 and (other.part >= 1 or other.who != face.who): result.pairs.add (i, j)
         continue
       # Own trunk and own girdles share one group.
       if p.who == q.who and (p.arm < 0 or p.part == 0) and (q.arm < 0 or q.part == 0):

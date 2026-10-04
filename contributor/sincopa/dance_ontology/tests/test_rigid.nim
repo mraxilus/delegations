@@ -928,15 +928,15 @@ proc overlapOf(couple: Couple): tuple[depth: float, pair: string] =
   ## worked out here and not engine's manifolds, and which two.
   ##   Pairs engine never collides are left out: capsules of one body, one arm's
   ##     own links, girdle and upper arm it hangs from, trunk and girdles of one
-  ##     dancer, face and anything but arm's link, and two joined palms.
+  ##     dancer, face and anything but arm's link or partner's girdle, and two joined palms.
 
   proc isSkipped(shape_a, shape_b: Shape): bool =
     ## Decide whether pair of shapes may overlap: one body, one arm's own links, or face and
-    ## anything but arm's link.
+    ## anything but arm's link or girdle.
     let limbs = {Mark.Upper, Mark.Fore, Mark.Palm}
     if shape_a.body == shape_b.body: return true
-    if Mark.Face in {shape_a.mark, shape_b.mark} and shape_a.mark notin limbs and
-       shape_b.mark notin limbs: return true
+    let marks = {shape_a.mark, shape_b.mark}
+    if Mark.Face in marks and Mark.Girdle notin marks and marks * limbs == {}: return true
     if shape_a.who == shape_b.who:
       if shape_a.mark notin limbs and shape_b.mark notin limbs: return true
       if shape_a.arm == shape_b.arm and shape_a.mark in limbs and shape_b.mark in limbs: return true
