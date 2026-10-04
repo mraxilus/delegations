@@ -192,6 +192,10 @@ suite "Internal: Rewrites":
     var unknown = answers()
     unknown["p/b.nim"].symbols.del((3, 7))
     check planOf(answers = unknown).refusal == "`p/b.nim:3` resolves to no symbol"
+    var implicit = answers()
+    implicit["p/a.nim"].symbols[(3, 2)] = Symbol(kind: "skIterator", name: "iterators.items")
+    check planOf(answers = implicit).refusal ==
+      "`p/a.nim:3` resolves to `iterators.items`, which its token does not name"  # `for x in ctx`
     var elsewhere = answers()
     elsewhere["p/a.nim"].symbols[(1, 8)].line = 9  # site uses name declared on other line
     check planOf(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"
