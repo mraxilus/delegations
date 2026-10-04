@@ -1107,8 +1107,8 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs about a second, against seconds to
-  minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
+- Rejected: a scope on the static pass. The static pass costs about four seconds, against seconds
+  to minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
   a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
@@ -2444,10 +2444,11 @@ The machine for these figures is a four-core Intel Xeon 2.10 GHz container, on N
 2026-09-24, timed with `date +%s.%N`. Warm means that koch and the test binaries were already
 compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machine and date.
 
-**The static pass costs about a second.** `nim r koch check-files`, warm: 1.11 s, 1.15 s and 0.98 s
-over three consecutive runs. Before, it took 1.97 s, 1.96 s and 1.82 s. Inside koch, the old
-dead-export rule took 1.1 s of a 2.07 s pass, because it scanned every source once for each
-export.
+**The static pass costs about four seconds.** `nim r koch check-files`, warm, at `de0c189` on
+2026-10-04, on the same machine: a median of 3.80 s over ten consecutive runs, from 3.69 s to
+3.94 s. The dead-export rule became one pass at 2026-09-24. That pass then took 1.11 s, 1.15 s
+and 0.98 s, against 1.97 s, 1.96 s and 1.82 s before. Inside koch, the old dead-export rule took
+1.1 s of a 2.07 s pass, because it scanned every source once for each export.
 
 **A branch that changes the checker costs one project, and not every project.** Warm,
 `nim r koch check` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
