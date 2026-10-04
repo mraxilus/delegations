@@ -1769,6 +1769,44 @@ const
   ##     side by side, 9 to 17 mm past, and other forearm 2 to 3 cm before elbow; A17 and C03,
   ##     1 cm before it.
 
+proc elbowOf(couple: Couple, who: Body, arm: Arm): Vector =
+  ## Elbow in world: where forearm hangs from.
+  asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Fore], engine.initVector(0, 0, 0)))
+
+proc upperOf(couple: Couple, who: Body, arm: Arm): tuple[a, z: Vector] =
+  ## Upper arm's line, shoulder to elbow.
+  (asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Upper], engine.initVector(0, 0, 0))),
+   couple.elbowOf(who, arm))
+
+proc foreOf(couple: Couple, who: Body, arm: Arm): tuple[a, z: Vector] =
+  ## Forearm's line, elbow to wrist.
+  (couple.elbowOf(who, arm),
+   asWorld(engine.pointOf(couple.who[who].arm[arm].link[Limb.Palm], engine.initVector(0, 0, 0))))
+
+proc crossing*(couple: Couple): tuple[is_crossed: bool, whose: Hand] =
+  ## Whether one dancer's own arms cross above elbow, and whose: elbows out of order, or other
+  ## arm against upper arm short of its elbow's end.
+  for who in Body:
+    let axes = axesOf(couple.chestStance(who))
+    if dot(couple.elbowOf(who, Arm.Right) - couple.elbowOf(who, Arm.Left), axes.right) <
+        ELBOWS_APART:
+      return (true, (who, Arm.Right))
+  for who in Body:
+    for arm in Arm:
+      let upper = couple.upperOf(who, arm)
+      for other_who in Body:
+        for other_arm in Arm:
+          if other_who != who or other_arm == arm: continue
+          for line in [couple.upperOf(other_who, other_arm), couple.foreOf(other_who, other_arm)]:
+            let met = closest(upper.a, upper.z, line.a, line.z)
+            if met.gap - 2.0 * couple.rig.limb < ON_UPPER and
+                (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
+              return (true, (who, arm))
+  (false, (Body.One, Arm.Left))
+
+proc crossed*(couple: Couple): bool = couple.crossing.is_crossed
+  ## Whether arms cross above elbow anywhere.
+
 proc gives*(couple: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that
   ## gives, any arm through body or arm, or joined hands that never reached
@@ -1785,6 +1823,7 @@ proc gives*(couple: Couple): Stop =
     if why != Stop.None: return why
   let deep = deepest(couple, -1)
   if deep.depth > THROUGH: return deep.met
+  if couple.crossed: return Stop.Crossed
   let is_facing = couple.band == Band.Crown and couple.up <= FACING
   if couple.height >= 1.0 or is_facing:
     let band = couple.bandNow

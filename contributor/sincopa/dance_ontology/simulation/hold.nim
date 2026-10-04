@@ -22,7 +22,8 @@ type
     Wrist,  ## Hand as far off forearm as it goes.
     Swing,  ## Upper arm too far behind or across body.
     Through,  ## Arm against body.
-    Arms  ## Arm against arm.
+    Arms,  ## Arm against arm.
+    Crossed  ## Dancer's own arms cross above elbow: elbows out of order, or upper arm on arm.
 
 
 func says*(stop: Stop): string =
@@ -36,3 +37,4 @@ func says*(stop: Stop): string =
   of Stop.Swing: "upper arm swings no further behind or across"
   of Stop.Through: "arm meets body"
   of Stop.Arms: "arm meets arm"
+  of Stop.Crossed: "arms cross above elbow"

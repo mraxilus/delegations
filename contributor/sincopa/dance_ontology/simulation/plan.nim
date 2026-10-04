@@ -17,8 +17,8 @@
 import std/[bitops, math]
 
 import ./[body, hold, rig, vector]
-from ./rigid {.all.} import ArmPlacing, faceCapsule, GIRDLE_RADIUS, Matrix, MATRIX_REST, times,
-  transposed, trunkCapsules, turnAbout
+from ./rigid {.all.} import ArmPlacing, ELBOW_END, ELBOWS_APART, faceCapsule, GIRDLE_RADIUS,
+  Matrix, MATRIX_REST, ON_UPPER, times, transposed, trunkCapsules, turnAbout
 
 
 const
@@ -54,8 +54,13 @@ type
     lower*, upper*: float  ## Band joined hands are held to, metres.
     shapes: seq[Shape]
     pairs: seq[(int, int)]
+    crossing: seq[int]  ## Pairs of one dancer's upper arm and their other arm, by place.
 
 const
+  CROSS_ROOM = ON_UPPER + 0.005  ## Metres plan keeps upper arm from another arm, short of its
+                                ## elbow's end: judge's own, and engine's slop under it.
+  ELBOW_ROOM = ELBOWS_APART + 0.01  ## Metres plan keeps right elbow right of left: judge's own,
+                                   ## and room under it.
   ROOMY = 0.04  ## Metres plan would sooner keep from arms and band's edges, where it can.
   FACE_WINDOW = 0.1  ## Of way up within which plan holds hands at torso band: twice judge's
                     ## `rigid.FACING`, so engine following plan has hands down when judged.
@@ -262,6 +267,10 @@ func problemOf*(rig: Rig, links: seq[Link], is_away: bool, turner = Body.Two): P
         if (p.part == 0 and q.part == 1) or (p.part == 1 and q.part == 0): continue
       # Joined palms are one joint apart.
       if p.part == 3 and q.part == 3 and (p.arm, q.arm) in joined: continue
+      # Dancer's own arms cross below elbow alone: upper arm keeps off their other arm.
+      if p.arm >= 0 and q.arm >= 0 and p.arm != q.arm and p.who == q.who and
+          ((p.part == 1 and q.part in 1..2) or (q.part == 1 and p.part in 1..2)):
+        result.crossing.add result.pairs.len
       result.pairs.add (i, j)
 
 
@@ -364,6 +373,21 @@ func crampedOf(problem: Problem, arms: array[4, ArmPlaced], gaps: Gaps): float =
       let z = arms[armIndex(hand.body, hand.arm)].grip.z
       result += max(0.0, problem.lower + ROOMY - z) ^ 2 + max(0.0, z - problem.upper + ROOMY) ^ 2
 
+func onUpper(problem: Problem, arms: array[4, ArmPlaced], k: int): float =
+  ## Weight of pair `k` meeting upper arm: nought within `ELBOW_END` of its elbow, where arms
+  ## cross just before elbow, to one arm's radius further up.
+  let
+    (i, j) = problem.pairs[k]
+    (p, q) = (problem.shapes[i], problem.shapes[j])
+    first = arms[p.arm].capsules[p.part]
+    second = arms[q.arm].capsules[q.part]
+    met = closest(first.a, first.z, second.a, second.z)
+  for (shape, capsule, along) in [(p, first, met.t), (q, second, met.u)]:
+    if shape.part == 1:
+      # Capsule stops its radius short of elbow (`placeArm`).
+      let before = (1.0 - along) * distance(capsule.a, capsule.z) + capsule.radius
+      result = max(result, clamp((before - ELBOW_END) / capsule.radius, 0.0, 1.0))
+
 func violationOf(
   problem: Problem,
   arms: array[4, ArmPlaced],
@@ -383,6 +407,15 @@ func violationOf(
       result += max(0.0, problem.lower - grip.z) ^ 2 + max(0.0, grip.z - problem.upper) ^ 2
   for gap in gaps.nearOnes:
     if gap < problem.style.clearance: result += (problem.style.clearance - gap) ^ 2
+  for k in problem.crossing:
+    if gaps.values[k] < CROSS_ROOM:
+      result += onUpper(problem, arms, k) * (CROSS_ROOM - gaps.values[k]) ^ 2
+  for who in 0..1:
+    let
+      (left, right) = (arms[2 * who], arms[2 * who + 1])
+      across = right.capsules[0].a - left.capsules[0].a
+      apart = dot(right.elbow - left.elbow, across) / sqrt(dot(across, across))
+    result += max(0.0, ELBOW_ROOM - apart) ^ 2
   for terms in margins:
     for term in terms: result += term
   for ends in leaps:
@@ -483,8 +516,8 @@ func gapOf(r: Reckoning, i, j: int, threshold: float): float =
 
 func thresholdOf(problem: Problem): float =
   ## Gap beyond which pair adds to no sum: clearance, and `ROOMY` where cramped is weighed.
-  if problem.style.slack > 0.0: max(problem.style.clearance, ROOMY)
-  else: problem.style.clearance
+  if problem.style.slack > 0.0: max(max(problem.style.clearance, ROOMY), CROSS_ROOM)
+  else: max(problem.style.clearance, CROSS_ROOM)
 
 proc reckon(
   r: var Reckoning, rig: Rig, problem: Problem, plan: Plan, wind: float, before: seq[Capsule]
