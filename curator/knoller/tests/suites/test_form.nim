@@ -80,6 +80,25 @@ suite "Fixes":
     check fixed(tab).source == tab.replace("\t", "\\t")  # escape that fits is written
 
 
+  test "X.1 plain trailing comment widening its line takes own line above, where it fits":
+    let
+      code = "      check camera.placed(framed).pivot =~ camera.pivot"
+      comment = "# Orbit turned; what it turns about did not."
+      wide = code & "  " & comment & "\n"  # 101 runes
+      fix = fixCommentsAbove("a.nim", "x = 1\n" & wide)
+    check fix.source == "x = 1\n      " & comment & "\n" & code & "\n"  # indent of its line
+    check fix.fixed.mapIt(it.line) == @[2] and fix.origin == @[1, 2, 2, 3]  # both trace to it
+    check checkCommentsAbove("a.nim", wide).mapIt(it.rule) == @[Rule.CommentAbove]
+    for kept in [
+      code & "  " & comment.replace("# ", "## ") & "\n",  # doc, which doc position moves
+      code & "  # Fits.\n",  # narrow line
+      code & "  # " & "x".repeat(42) & " " & "y".repeat(51) & "\n",  # comment fits no line
+      "let s = \"\"\"\nx\"\"\" & " & "y".repeat(80) & "  # Inside long string.\n",  # no line above
+    ]:
+      check fixCommentsAbove("a.nim", kept).source == kept
+      check checkCommentsAbove("a.nim", kept).len == 0
+
+
   test "clean source passes through unchanged":
     let clean = "## Do.\n\nlet a = \"x # y\"  # Two.\n# Whole line.\n"
     check fixed(clean).source == clean and fixed(clean).fixed.len == 0  # nothing rewritten

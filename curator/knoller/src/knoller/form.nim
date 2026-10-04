@@ -22,6 +22,10 @@
 ##   Tab and comment fixers are wideners (`reports.nim`): off held line they write gap or
 ##     escape that widens line past `LINE_MAX`, and chain wraps line after; on held line, as in
 ##     their two-argument form, gap or escape that would widen narrow line stays, finding and all.
+##   Plain `#` trailing comment on line wider than `LINE_MAX` moves to own line above, at
+##     indent of its line, where it fits there (`fixCommentsAbove`); lexer drops `#` comment, so
+##     tree stays, and wrapping reads line left behind in next round. Doc `##` and block comment
+##     stay, as does line inside token spanning lines, where line above lies inside that token.
 ##   Tab inside one-line string that is neither raw nor long is written `\t`: escape reads as
 ##     same byte, so string is unchanged.
 ##   No fixer: other tab, since its width is guess, and raw or long string reads `\t` as two
@@ -127,6 +131,53 @@ func checkComments*(path, source: string): seq[Report] =
       Rule.TrailingComment,
       "Trailing comment takes two spaces before its marker (X.9); got `" & $gap.spaces & "`.",
     )
+
+
+func liftedComments(source: string): seq[Gap] =
+  ## Find each plain `#` trailing comment of wide line whose comment fits own line above, at
+  ##   indent of its line; line inside or closing token spanning lines has no line above to take.
+  let lines = source.split('\n')
+  var spanned = newSeq[bool](lines.len)
+  for t in source.tokens:
+    for line in t.line + 1 .. t.lastLine(source): spanned[line] = true
+  for gap in source.gaps:
+    let
+      line = lines[gap.line]
+      comment = line[gap.at .. ^1]
+    if not line.isWide or spanned[gap.line] or comment.startsWith("##") or
+        comment.startsWith("#["):
+      continue
+    if (' '.repeat(line.indentOf) & comment).isWide: continue
+    result.add gap
+
+
+func checkCommentsAbove*(path, source: string): seq[Report] =
+  ## Report plain `#` trailing comment that widens its line past `LINE_MAX` and fits above it.
+  for gap in source.liftedComments:
+    result.add initReport(
+      path,
+      gap.line + 1,
+      Rule.CommentAbove,
+      "Trailing comment widening line past `" & $LINE_MAX & "` takes own line above (X.1); " &
+          "got `" & $source.split('\n')[gap.line].runeLen & "` runes.",
+    )
+
+
+func fixCommentsAbove*(path, source: string): Fix =
+  ## Move each comment check reports to own line above, last first; both lines trace to its line.
+  let found = source.liftedComments
+  var
+    lines = source.split('\n')
+    origin = toSeq(1 .. lines.len)
+  for gap in found.reversed:
+    let
+      line = lines[gap.line]
+      lifted = @[' '.repeat(line.indentOf) & line[gap.at .. ^1], line[0 ..< gap.at - gap.spaces]]
+    lines = lines[0 ..< gap.line] & lifted & lines[gap.line + 1 .. ^1]
+    origin = origin[0 ..< gap.line] & origin[gap.line].repeat(2) & origin[gap.line + 1 .. ^1]
+  result.source = lines.join("\n")
+  for gap in found: result.fixed.add initReport(path, gap.line + 1, Rule.CommentAbove)
+  if found.len > 0: result.origin = origin
 
 
 func fixWhitespace*(path, source: string): Fix =

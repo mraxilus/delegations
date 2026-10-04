@@ -76,6 +76,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
 | `continuation-indent` | A continuation line takes four spaces more than the line it continues. |
 | `trailing-separator` | A list of one item to a line ends in a separator. |
+| `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 
 ## Build and test

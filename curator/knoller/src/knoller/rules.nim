@@ -46,6 +46,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   OperatorWrapping = "operator wrapping"  ## Line fitting nowhere breaks after binary operator.
   ContinuationIndent = "continuation indent"  ## Line after operator takes four spaces more.
   TrailingSeparator = "trailing separator"  ## List of one item to line ends in separator.
+  CommentAbove = "comment above"  ## Trailing comment that does not fit takes own line above.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
 
 

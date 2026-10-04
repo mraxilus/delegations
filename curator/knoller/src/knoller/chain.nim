@@ -20,6 +20,8 @@
 ##     layouts join groups with separator they read, call layout breaks line at operator where
 ##     no call split fits, continuation indent follows lines call layout moves, and trailing
 ##     separator goes only where no layout wrote one.
+##   - comment that does not fit after all: plain `#` trailing comment of wide line moves to
+##     own line above, so next round lays out line it leaves, once no wrap holding it fits.
 ##   Chain is list of steps: fixer guarded on every line, or widener (`reports.nim`), i.e. tab,
 ##     comment, message, condition, spacing, continuation and trailing separator fixers, which
 ##     read held lines.
@@ -70,6 +72,7 @@ func stepsOf(dialect: Dialect): seq[Step] =
     for fixer in IDIOM_FIXERS: result.add guarded(fixer)
   result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
   result.add WRAPPING_STEPS
+  result.add guarded(fixCommentsAbove)
 
 
 func lockedNimbles*(files: openArray[(string, string)]): seq[string] =
@@ -93,7 +96,7 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, I.4 tables, IV.4
   ##   messages, X.4 conditions, STYLE.md §5 `to<Target>` calls, suites and tests, STYLE.md §1
   ##   helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures,
-  ##   calls, operator breaks, continuations and trailing separators.
+  ##   calls, operator breaks, continuations and trailing separators, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
   ##   alone.
@@ -104,7 +107,7 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
     checks = [
       checkComments, checkBanners, checkAlignment, checkMessages, checkMixtures, checkNegations,
       checkTargets, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-      checkSignatures, checkCalls, checkContinuations, checkTrailing,
+      checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
     ]
   for check in checks: result.add check(path, view)
   if dialect == Dialect.Module:
