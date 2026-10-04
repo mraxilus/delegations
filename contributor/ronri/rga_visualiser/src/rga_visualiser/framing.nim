@@ -334,7 +334,7 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     #   direction alone names no roll, and least turn off steep sight leaves view rolled.
     #   Eye and pivot name it, so no pole collapses.
     let length = sqrt(innerOf(toMultivector(facing.get), toMultivector(facing.get)))
-    return stanceFacing(pivot + (-camera.distance/length)*facing.get, pivot)
+    return stanceFacing(pointAlong(pivot, facing.get, -camera.distance/length), pivot)
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
   #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
   #   accounts for offset between them.
