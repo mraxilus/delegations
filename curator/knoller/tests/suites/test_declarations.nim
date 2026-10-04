@@ -5,8 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../../knoller/src/knoller
-import ../../src/[declarations, findings]
+import ../../src/knoller/[declarations, reports]
 
 
 func fixed(source: string): string =
