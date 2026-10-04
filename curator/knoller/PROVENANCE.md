@@ -580,8 +580,10 @@ that indent on the lines that the hand wrote too.
   library does.
 - Rejected: four spaces past the line where the first piece opens. It moved each later piece of
   a bracket or an argument away from the indent of the first.
-- A statement that opens with its expression, such as the value that ends a routine, keeps the
-  four spaces. No bracket or comma sets it apart from the body around it.
+- A bare value that opens its statement line, such as the value that ends a routine, keeps the
+  four spaces. No bracket or comma sets it apart from the body around it. Only an opening bracket
+  or the comma of a list before the first piece makes a chain flat. Verified by
+  `suites/test_wrapping.nim`: such a value written flat takes the four spaces.
 - The operator break reads the same predicate, so a line that knoller breaks takes the indent
   that the check asks. An argument that a call split leaves wide breaks flat.
 - A chain that opens on the line after the `=` of a binding or an assignment counts from the line
