@@ -2,7 +2,7 @@
 ##   Evaluation compiles this against changed library at each algebra its claim names; exit code
 ##     says it ran, and figures it prints are evidence that never gates.
 ##   Built against pin and against changed library, one program gives each pair proposal reports.
-##   Kinds hold 3 to 16 floats, counts that kinds of P02 hold, under natural, 16-byte and 64-byte
+##   Kinds hold 3 to 16 floats, counts that kinds of P04 hold, under natural, 16-byte and 64-byte
 ##     alignment, so cost of each layout reads beside its padding. Kind of 4 floats also takes
 ##     32 bytes, which `alignmentOf` gives that count. Kinds need no library, so both builds print
 ##     same rows, and literal stands where pin lacks `alignmentOf`.

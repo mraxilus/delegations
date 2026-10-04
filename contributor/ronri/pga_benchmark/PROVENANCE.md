@@ -513,6 +513,8 @@ also covers the verdict and evidence of every cause, the rendered width, and run
 `tools/build.nim` dispatches every verb from `case paramStr(1)`, so koch reads the verbs itself.
 The header table of the driver says what each verb does. `sweep` compiles the bench at two to six
 dimensions, rigid metric, and prints the medians of the general measurands. It never runs in CI.
+It records the medians in `baseline/sweep.json`, stamped as `bench` stamps its own, and `drive`
+holds that stamp to the pin.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
 finding. With the fixture path of the suite, it renders so:
@@ -645,8 +647,8 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/02-typed-multivectors/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d and cga5d.
+`proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
+`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations` and `Internal: Cells`. They cover parse, quote and
@@ -934,7 +936,8 @@ under `taken`, and at the pin they are from 2026-10-03 on `linux amd64, 4 cores`
 the machine code of one function. The figures of each proposal before and after its edits are
 in `evaluations/<name>.json`, and its page shows them. Allocation is zero on every measurand in
 every implementation, with the gauge live, as the runtime baselines record. Scaling across
-dimensions is unmeasured at the pin, and `sweep` takes it by hand.
+dimensions is in `baseline/sweep.json`, from `sweep`, by hand: one run of each algebra from rga2d
+to rga6d, 40 rounds over 1024 objects.
 
 **Generated operators write each zero element, and hand-written functions leave theirs to the
 default fill.** A generated operator writes every element as a straight statement, zeros included,
@@ -992,7 +995,10 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   what would say so. A loop whose bound is a variable counts once.
 - 32-bit floats and SIMD forms are unmeasured, and the SSE paths of Terathon were not
   compared.
-- `sweep` is hand-run only, and no sweep has run at the pin.
+- `sweep` is hand-run only, and times one run of each algebra. Two sweeps at the pin on
+  2026-10-04 differ by ×1.05 at the median cell, and by up to ×1.57 in one cell. So one cell of
+  one sweep is weak evidence alone. The growth from 2D to 6D holds better: `wedge_dot` grows ×472
+  in one sweep and ×425 in the other.
 - A change to the bench outside a measurand moves the time of that measurand. Ten alternating
   runs with and without `noinit`, on `linux amd64, 4 cores` on 2026-10-02, keep the median ratio of
   each implementation at ×0.99 to ×1.00. Single measurands move steadily from ×0.80 (`scale`)
@@ -1017,7 +1023,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 - Whether the library takes P05, `multivector-align`. It adds `alignmentOf`, the largest power
   of two that divides the bytes of a count of bases, at most 64. So it pads no count. Each
   multivector takes it of its basis set, `min(64, size)`, one cache line from three dimensions
-  up. The kinds of P02 and P04 take it of their basis set when they land, as the Architect ruled
+  up. The kinds of P04 take it of their basis set when they land, as the Architect ruled
   on 2026-10-04.
 
   On two machines and three instruction sets, a caller that holds multivectors in a `seq` times
