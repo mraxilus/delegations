@@ -1,7 +1,9 @@
 ## Run knoller from shell: `knoller [--check] path...`, fixing each Nim file paths name.
 ##   Path names file, or directory standing for `.nim`, `.nims` and `.nimble` files `git
-##     ls-files` lists under it, sorted; outside git work tree, directory names none. Named file
-##     of other extension is passed over; path naming nothing is usage error.
+##     ls-files` lists under it, sorted. Named file of other extension is passed over; path
+##     naming nothing is usage error, and so is directory naming no Nim file, which says why:
+##     it lies outside git work tree, or git lists no Nim file under it (`listingOf`). Silent
+##     `0 to fix.` would read as clean run over files never read.
 ##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
@@ -134,13 +136,24 @@ func outcomeOf*(
   result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
 
 
-proc listed(directory: string): seq[string] =
-  ## Read Nim files git lists under directory, sorted; none outside git work tree.
-  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
-  if code != 0: return
+func listingOf*(directory, output: string; code: int): tuple[files: seq[string], refusal: string] =
+  ## Read Nim files git lists under directory, sorted, from output and exit code of `git ls-files
+  ##   -z` run there; refusal says why directory names none, and is empty where it names some.
+  if code != 0:
+    result.refusal = "Directory lies outside git work tree, so git lists no file under it; got `" &
+        directory & "`."
+    return
   for name in output.split('\0'):
-    if name.len > 0 and name.dialectOf.isSome: result.add directory / name
-  result.sort
+    if name.len > 0 and name.dialectOf.isSome: result.files.add directory / name
+  result.files.sort
+  if result.files.len == 0:
+    result.refusal = "Directory holds no Nim file that git lists; got `" & directory & "`."
+
+
+proc listed(directory: string): tuple[files: seq[string], refusal: string] =
+  ## Read Nim files git lists under directory, sorted, or why it names none.
+  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
+  listingOf(directory, output, code)
 
 
 proc lockedOf(paths: openArray[string]): seq[string] =
@@ -163,7 +176,13 @@ proc main*(): int =
     return 2
   var paths: seq[string]
   for path in options.get.paths:
-    if dirExists(path): paths.add path.listed
+    if dirExists(path):
+      let (files, refusal) = path.listed
+      if refusal.len > 0:
+        stderr.write refusal & "\n"
+        stderr.write USAGE
+        return 2
+      paths.add files
     elif fileExists(path): paths.add path
     else:
       stderr.write "Path names no file or directory; got `" & path & "`.\n"
