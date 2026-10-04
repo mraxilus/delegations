@@ -57,7 +57,7 @@ func htmlDependencies*(
   for dependent in dependentsOf(proposals, proposal):
     blocks.add named(dependent, basesToward(proposals, dependent, proposal), urls)
   "<dl class=\"depends\"><div><dt>Depends on</dt><dd>" & htmlItems(needs) &
-    "</dd></div><div><dt>Blocks if rejected</dt><dd>" & htmlItems(blocks) & "</dd></div></dl>"
+      "</dd></div><div><dt>Blocks if rejected</dt><dd>" & htmlItems(blocks) & "</dd></div></dl>"
 
 
 func htmlProposal*(
@@ -91,7 +91,7 @@ func htmlProposal*(
       of "tables": $claim{"pairs"}.len & " tables equal pristine ones cell for cell at " & algebras
       of "program": code(claim{"path"}.getStr) & " compiles and runs clean at " & algebras
       of "count": code(claim{"measurand"}.getStr) & " spends " & $claim{"value"}.getInt & " " &
-        claim{"metric"}.getStr & " at " & claim{"algebra"}.getStr
+          claim{"metric"}.getStr & " at " & claim{"algebra"}.getStr
       of "build": "compiling library alone costs at most ×" & claim{"at_most"}.getFloat.fixed &
         " of pristine " & (if claim{"metric"}.getStr == "seconds": "seconds" else: "peak memory") &
         " at " & claim{"algebra"}.getStr
@@ -104,8 +104,8 @@ func htmlProposal*(
       var detail: seq[string]
       for line in claim{"detail"}.getElems: detail.add escapeHtml(line.getStr)
       result.add "<tr><td>" & textClaim(claim) & "</td><td>" &
-        chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") &
-        "</td><td>" & detail.join("<br>") & "</td></tr>"
+          chip(if is_holding: "holds" else: "fails", if is_holding: "pass" else: "fail") &
+          "</td><td>" & detail.join("<br>") & "</td></tr>"
     result.add "</table></div>"
 
   let
@@ -114,41 +114,41 @@ func htmlProposal*(
     standing =
       if proposal.isImplemented: "implemented in " & code(
         proposal.implemented_in[
-          0..<min(7, proposal.implemented_in.len)],
+          0 ..< min(7, proposal.implemented_in.len)],
       )
       elif proposal.isFrozen: "withdrawn"
       else: "proposed"
   let (title, section) = ("h" & $level, "h" & $(level + 1))
   result = "<header><" & title & ">" & escapeHtml(proposal.citation) & ": " &
-    renderInline(proposal.title) & "</" & title & "><p class=\"meta\">" &
-    escapeHtml(proposal.citation) &
-    " " & code(proposal.name) & " · " & standing & " · pga " &
-    code(commit_shown[0..<min(7, commit_shown.len)])
+      renderInline(proposal.title) & "</" & title & "><p class=\"meta\">" &
+      escapeHtml(proposal.citation) &
+      " " & code(proposal.name) & " · " & standing & " · pga " &
+      code(commit_shown[0 ..< min(7, commit_shown.len)])
   if not evaluation.isNil:
     result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) & ", " &
-      escapeHtml(evaluation{"taken", "machine"}.getStr)
+        escapeHtml(evaluation{"taken", "machine"}.getStr)
   result.add links & "</p><div class=\"chips\">" &
-    chipsVerdict(evaluation, baselines, spread) & "</div>" &
-    htmlDependencies(proposals, proposal, urls) & "</header>"
+      chipsVerdict(evaluation, baselines, spread) & "</div>" &
+      htmlDependencies(proposals, proposal, urls) & "</header>"
   result.add "<section class=\"block\"><" & section & ">Claims</" & section & ">" &
-    htmlClaims(evaluation) & "</section>"
+      htmlClaims(evaluation) & "</section>"
   result.add "<section class=\"block prose\">"
   for node in proposal.body:
     let figure = node.figureOf(proposal.directory)
     if figure.isSome and figure.get.path in figures:
       result.add "<figure class=\"figure\"><div class=\"figure-art\">" &
-        figures[figure.get.path] & "</div><figcaption>" & renderInline(figure.get.caption) &
-        "</figcaption></figure>"
+          figures[figure.get.path] & "</div><figcaption>" & renderInline(figure.get.caption) &
+          "</figcaption></figure>"
     else:
       result.add renderBlock(node, level)
   result.add "</section>"
   if proposal.change.edits.len > 0:
     result.add "<section class=\"block\"><" & section & ">What it changes</" & section & ">" &
-      htmlEdits(proposal.change, files) & "</section>"
+        htmlEdits(proposal.change, files) & "</section>"
   if not evaluation.isNil:
     result.add "<section class=\"block\"><" & section & ">What it measured at pin</" & section &
-      "><p class=\"note\">" & textSpread(spread) & "</p>" & tableFunctions(evaluation) &
-      tableNan(evaluation) & tableTimes(evaluation, baselines, spread) & "</section>"
+        "><p class=\"note\">" & textSpread(spread) & "</p>" & tableFunctions(evaluation) &
+        tableNan(evaluation) & tableTimes(evaluation, baselines, spread) & "</section>"
 
 
 func bodyProposal*(
@@ -164,5 +164,14 @@ func bodyProposal*(
 ): string =
   ## Render proposal page body: proposal alone, title at level one.
   "<div class=\"page\">" & htmlProposal(
-    proposal, proposals, evaluation, files, figures, baselines, spread, urls, pin, links,
+    proposal,
+    proposals,
+    evaluation,
+    files,
+    figures,
+    baselines,
+    spread,
+    urls,
+    pin,
+    links,
   ) & "</div>"

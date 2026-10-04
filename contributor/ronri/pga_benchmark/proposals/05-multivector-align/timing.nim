@@ -28,10 +28,10 @@ const
   SEED = 0  ## Seed of sample generator, so every run reads same objects.
 
 
-template timeRounds(label: string; loop: untyped) =
+template timeRounds(label: string, loop: untyped) =
   ## Run loop `ROUNDS` times and print median nanoseconds per object under label.
   var rounds: array[ROUNDS, float]
-  for r in 0..<ROUNDS:
+  for r in 0 ..< ROUNDS:
     let started = getMonoTime()
     loop
     rounds[r] = float((getMonoTime() - started).inNanoseconds) / float(OBJECTS)
@@ -39,13 +39,13 @@ template timeRounds(label: string; loop: untyped) =
   echo label, " ", formatFloat(rounds[ROUNDS div 2], ffDecimal, 3)
 
 
-template timeLibrary(label: string; body: untyped) =
+template timeLibrary(label: string, body: untyped) =
   ## Time one library operation over `seq` of multivectors, slot i paired with (7i + 3).
   block:
-    proc run(pool: seq[Multivector]; results: var seq[Multivector]) {.noinline.} =
+    proc run(pool: seq[Multivector], results: var seq[Multivector]) {.noinline.} =
       ## Time operation in procedure of its own.
       timeRounds("library " & label):
-        for i in 0..<OBJECTS:
+        for i in 0 ..< OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           template m(): untyped {.used.} = pool[i]  # Read by `body`.
           template n(): untyped {.used.} = pool[j]  # Read by binary `body`.
@@ -53,12 +53,12 @@ template timeLibrary(label: string; body: untyped) =
     var
       pool = newSeq[Multivector](OBJECTS)
       results = newSeq[Multivector](OBJECTS)
-    for i in 0..<OBJECTS:
+    for i in 0 ..< OBJECTS:
       for b in Basis: pool[i][b] = gauss()
     run(pool, results)
 
 
-template defineKind(name: untyped; count: static int; alignment: static int) =
+template defineKind(name: untyped, count: static int, alignment: static int) =
   ## Define kind of `count` floats at one of three alignments, with sum and negation.
   ##   Operators return by value and loop each slot, as library writes its own.
   when alignment == 8:
@@ -73,30 +73,30 @@ template defineKind(name: untyped; count: static int; alignment: static int) =
 
   func `+`(a, b: name): name =
     ## Add slot by slot.
-    for k in 0..<count: result.elements[k] = a.elements[k] + b.elements[k]
+    for k in 0 ..< count: result.elements[k] = a.elements[k] + b.elements[k]
 
   func `-`(a: name): name =
     ## Negate slot by slot.
-    for k in 0..<count: result.elements[k] = -a.elements[k]
+    for k in 0 ..< count: result.elements[k] = -a.elements[k]
 
 
-template timeKind(kind: typedesc; label: string) =
+template timeKind(kind: typedesc, label: string) =
   ## Time sum and negation of kind over `seq`, slot i paired with (7i + 3).
   block:
-    proc run(pool: seq[kind]; results: var seq[kind]) {.noinline.} =
+    proc run(pool: seq[kind], results: var seq[kind]) {.noinline.} =
       ## Time both operations in procedure of their own.
       timeRounds("kind " & label & " size " & $sizeof(kind) & " add"):
-        for i in 0..<OBJECTS:
+        for i in 0 ..< OBJECTS:
           let j = (i * 7 + 3) mod OBJECTS
           results[i] = pool[i] + pool[j]
       timeRounds("kind " & label & " size " & $sizeof(kind) & " negate"):
-        for i in 0..<OBJECTS:
+        for i in 0 ..< OBJECTS:
           results[i] = -pool[i]
     var
       pool = newSeq[kind](OBJECTS)
       results = newSeq[kind](OBJECTS)
-    for i in 0..<OBJECTS:
-      for k in 0..<pool[i].elements.len: pool[i].elements[k] = gauss()
+    for i in 0 ..< OBJECTS:
+      for k in 0 ..< pool[i].elements.len: pool[i].elements[k] = gauss()
     run(pool, results)
 
 
@@ -116,8 +116,8 @@ proc main() =
   randomize(SEED)
   timeLibrary("add", m + n)
   timeLibrary("negate", -m)
-  timeLibrary("complement", / m)
-  timeLibrary("dual", ★ m)
+  timeLibrary("complement", /m)
+  timeLibrary("dual", ★m)
   timeLibrary("dot", m ∙ n)
   timeLibrary("wedge", m ∧ n)
   timeLibrary("geometric", m ⟑ n)

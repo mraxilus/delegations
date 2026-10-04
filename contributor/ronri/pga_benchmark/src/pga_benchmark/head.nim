@@ -30,7 +30,7 @@ const SHORT = 7  ## Digits of commit findings name, as `git log --oneline` print
 
 func short(commit: string): string =
   ## Shorten commit for findings.
-  if commit.len > SHORT: commit[0..<SHORT] else: commit
+  if commit.len > SHORT: commit[0 ..< SHORT] else: commit
 
 
 func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =
@@ -41,7 +41,7 @@ func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =
     result.add Finding(
       path: lock,
       message: "Pin lags library head; follow head, re-baseline and re-run every evaluation; " &
-        "got head `" & head.short & "`, pin `" & pin.short & "`.",
+          "got head `" & head.short & "`, pin `" & pin.short & "`.",
     )
 
 
@@ -61,7 +61,7 @@ func checkStamp*(document: JsonNode; pin, path: string): seq[Finding] =
     result.add Finding(
       path: path,
       message: "Measured at another library commit; re-take it at pin `" & pin.short &
-        "`; got `" & taken.short & "`.",
+          "`; got `" & taken.short & "`.",
     )
 
 
@@ -73,7 +73,7 @@ func checkEvaluation*(evaluation: JsonNode; pin, digest, path: string): seq[Find
     result.add Finding(
       path: path,
       message: "Edits changed since evaluation; run `evaluate` again; got digest `" &
-        (if recorded.isNil: "" else: recorded.getStr) & "`.",
+          (if recorded.isNil: "" else: recorded.getStr) & "`.",
     )
 
 
@@ -92,8 +92,8 @@ func checkPublished*(
       result.add Finding(
         path: path,
         message: "Page `" & name & "` changed since it was published; publish " &
-          "`build/" & name & ".html`, then run `published " & name & " <url>`; got `" & digest &
-          "`.",
+            "`build/" & name & ".html`, then run `published " & name & " <url>`; got `" & digest &
+            "`.",
       )
   for name, entry in publications.pairs:
     if name notin built:

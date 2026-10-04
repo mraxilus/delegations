@@ -7,4 +7,6 @@ matrix: "-d:pga.dimensions=5 -d:pga.is_conformal=true"
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 include "suites.nim"

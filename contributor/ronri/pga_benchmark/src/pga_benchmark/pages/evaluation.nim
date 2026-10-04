@@ -96,7 +96,7 @@ func chipsVerdict*(
     if suites_pin{"ok"}.getInt != suites{"ok"}.getInt or
         suites_pin{"failed"}.getInt != suites{"failed"}.getInt:
       result.add " (pin " & $suites_pin{"ok"}.getInt & "/" &
-        $(suites_pin{"ok"}.getInt + suites_pin{"failed"}.getInt) & ")"
+          $(suites_pin{"ok"}.getInt + suites_pin{"failed"}.getInt) & ")"
 
   func nanMoved(measured: JsonNode): (int, int) =
     ## Count measurands whose NaN results evaluation removed, and those it introduced.
@@ -139,14 +139,14 @@ func tableFunctions*(evaluation: JsonNode): string =
     let changed = measured{"functions"}
     if changed.isNil or changed.len == 0: continue
     result.add "<div class=\"table\"><table><caption>" & algebra & ": functions whose counts " &
-      "moved</caption><tr><th>Function</th><th>Multiplies</th><th>Bytes moved</th>" &
-      "<th>Zero fills</th></tr>"
+        "moved</caption><tr><th>Function</th><th>Multiplies</th><th>Bytes moved</th>" &
+        "<th>Zero fills</th></tr>"
     for key, pair in changed.pairs:
       let (before, after) = (pair{"before"}, pair{"after"})
       result.add "<tr><td>" & code(key) & "</td><td>" &
-        transition(before, after, "multiplies") & "</td><td>" &
-        transition(before, after, "bytes_moved") & "</td><td>" &
-        transition(before, after, "fills_zero") & "</td></tr>"
+          transition(before, after, "multiplies") & "</td><td>" &
+          transition(before, after, "bytes_moved") & "</td><td>" &
+          transition(before, after, "fills_zero") & "</td></tr>"
     result.add "</table></div>"
 
 
@@ -156,8 +156,8 @@ func tableTimes*(evaluation: JsonNode, baselines: Table[string, JsonNode], sprea
     let ids = touched(evaluation, baselines, algebra)
     if ids.len == 0: continue
     result.add "<div class=\"table\"><table><caption>" & algebra & ": time of measurands whose " &
-      "function moved, ns</caption><tr><th>Measurand</th><th>Pin</th><th>Changed</th>" &
-      "<th>Ratio</th></tr>"
+        "function moved, ns</caption><tr><th>Measurand</th><th>Pin</th><th>Changed</th>" &
+        "<th>Ratio</th></tr>"
     for id in ids:
       let timing = measured{"times", id}
       if timing.isNil: continue
@@ -165,8 +165,8 @@ func tableTimes*(evaluation: JsonNode, baselines: Table[string, JsonNode], sprea
         ratio = timing[2].getFloat
         side = if ratio < spread.low: "fast" elif ratio > spread.high: "slow" else: "flat"
       result.add "<tr class=\"" & side & "\"><td>" & escapeHtml(id) & "</td><td>" &
-        timing[0].getFloat.fixed(1) & "</td><td>" & timing[1].getFloat.fixed(1) & "</td><td>" &
-        textRatio(ratio) & "</td></tr>"
+          timing[0].getFloat.fixed(1) & "</td><td>" & timing[1].getFloat.fixed(1) & "</td><td>" &
+          textRatio(ratio) & "</td></tr>"
     result.add "</table></div>"
 
 
@@ -176,10 +176,10 @@ func tableNan*(evaluation: JsonNode): string =
     let shares = measured{"nan"}
     if shares.isNil or shares.len == 0: continue
     result.add "<div class=\"table\"><table><caption>" & algebra & ": share of results that " &
-      "are NaN</caption><tr><th>Measurand</th><th>Pin</th><th>Changed</th></tr>"
+        "are NaN</caption><tr><th>Measurand</th><th>Pin</th><th>Changed</th></tr>"
     for id, pair in shares.pairs:
       result.add "<tr><td>" & escapeHtml(id) & "</td><td>" & pair[0].getFloat.fixed(3) &
-        "</td><td>" & pair[1].getFloat.fixed(3) & "</td></tr>"
+          "</td><td>" & pair[1].getFloat.fixed(3) & "</td></tr>"
     result.add "</table></div>"
 
 
@@ -241,13 +241,13 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
           (index + 1 == text.len or text[index + 1] == ' '):
         cut = index
         break
-    var clean = text[0..<cut]
+    var clean = text[0 ..< cut]
     while "{." in clean and ".}" in clean:
       let
         opening = clean.find("{.")
         closing = clean.find(".}", opening)
       if closing < 0: break
-      clean = clean[0..<opening] & clean[closing + 2 .. ^1]
+      clean = clean[0 ..< opening] & clean[closing + 2 .. ^1]
     clean = clean.splitWhitespace.join(" ").replace("( ", "(").replace(" )", ")")
       .replace(";)", ")").replace(",)", ")")
     (clean.strip(chars = {' ', ':'}), last)
@@ -306,10 +306,10 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
     if edit.digest.len > 0:
       let lines = edit.replacement.count('\n')
       result.add "<details class=\"edit\"><summary><span class=\"where\">replaces " &
-        code(edit.path) & " whole, " & $lines & " lines, written against digest " &
-        code(edit.digest) & "</span>" & htmlSignatures("defines", declared(edit.replacement)) &
-        "</summary>" &
-        renderFence(edit.replacement.strip(leading = false).splitLines, "nim", 1) & "</details>"
+          code(edit.path) & " whole, " & $lines & " lines, written against digest " &
+          code(edit.digest) & "</span>" & htmlSignatures("defines", declared(edit.replacement)) &
+          "</summary>" &
+          renderFence(edit.replacement.strip(leading = false).splitLines, "nim", 1) & "</details>"
       continue
     let
       source = files.getOrDefault(edit.path)
@@ -324,19 +324,20 @@ func htmlEdits*(change: Change, files: Table[string, string]): string =
           let inside = enclosing(source, edit.quote, at)
           if inside.isSome: htmlSignatures("inside", [inside.get]) else: ""
     result.add "<details class=\"edit\"><summary><span class=\"where\">" & code(where) &
-      " · replaces " & $count_quote & (if count_quote == 1: " line" else: " lines") & " with " &
-      $count_replacement & "</span>" & context &
-      "</summary><div class=\"pair\"><div><p class=\"label\">at pin</p>" &
-      renderFence(edit.quote.splitLines, "nim", at) & "</div><div><p class=\"label\">" &
-      "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></details>"
+        " · replaces " & $count_quote & (if count_quote == 1: " line" else: " lines") & " with " &
+        $count_replacement & "</span>" & context &
+        "</summary><div class=\"pair\"><div><p class=\"label\">at pin</p>" &
+        renderFence(edit.quote.splitLines, "nim", at) & "</div><div><p class=\"label\">" &
+        "proposed</p>" & renderFence(edit.replacement.splitLines, "nim") & "</div></div></details>"
 
 
 func textSpread*(spread: Spread): string =
   ## State spread, and where it was read from.
   if spread.count == 0:
     "Times outside ×" & spread.low.fixed & " to ×" & spread.high.fixed & " count as moved. " &
-      "That spread is assumed, since too few evaluations here change nothing."
+        "That spread is assumed, since too few evaluations here change nothing."
   else:
     "Times outside ×" & spread.low.fixed & " to ×" & spread.high.fixed & " count as moved. " &
-      "That spread holds 90% of " & $spread.count & " time ratios in evaluations that change no " &
-      "library function."
+        "That spread holds 90% of " & $spread.count &
+        " time ratios in evaluations that change no " &
+        "library function."

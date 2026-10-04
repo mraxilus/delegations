@@ -140,7 +140,7 @@ proc compile(
   run(
     "nim",
     @["c", "--hints:off", FLAGS, "--nimcache:" & cache, "-o:" & binary] &
-      defines(dimensions, is_conformal, nim, pga) & @extra & @[entry],
+        defines(dimensions, is_conformal, nim, pga) & @extra & @[entry],
   )
 
 
@@ -446,7 +446,7 @@ proc checkoutChecked(): seq[Finding] =
     result.add Finding(
       path: LIBRARY,
       message: "Library checkout differs from pin; restore it with `git -C " & CHECKOUT &
-        " checkout -- .`; got `" & edited.strip.splitLines[0] & "`.",
+          " checkout -- .`; got `" & edited.strip.splitLines[0] & "`.",
     )
 
 
@@ -459,7 +459,7 @@ proc facesFromStore(): Table[string, string] =
   ##   it could not serve, and short list would pair wrong bytes with right name.
   let (written, code) = execCmdEx(
     "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
-      FACES.quoteShellCommand,
+        FACES.quoteShellCommand,
   )
   if code != 0:
     raise newException(

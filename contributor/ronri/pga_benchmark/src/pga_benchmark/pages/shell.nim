@@ -54,7 +54,7 @@ const
     ##   Same six as `rga_visualiser` page, from same store.
   SKELETON_HOST* = (
     "<!doctype html><html><head><meta charset=\"utf-8\">" &
-      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>",
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>",
     "</body></html>",
   )
     ## Document skeleton publish host wraps page in: opening, then closing.
@@ -71,7 +71,7 @@ func facesAsked*(shell: string): seq[string] =
   while at >= 0:
     let close = shell.find('@', at + TOKEN_EMBED.len)
     if close < 0: break
-    let face = shell[at + TOKEN_EMBED.len..<close]
+    let face = shell[at + TOKEN_EMBED.len ..< close]
     if face notin result: result.add face
     at = shell.find(TOKEN_EMBED, close + 1)
 
@@ -102,18 +102,18 @@ func htmlMarked*(html: string): string =
       is_boxed = false
     while at < word.len:
       let
-        base = word.runeAt(at).int
+        base = int(word.runeAt(at))
         base_end = at + word.runeLenAt(at)
       var marks_end = base_end
-      while marks_end < word.len and word.runeAt(marks_end).int.isMark:
+      while marks_end < word.len and int(word.runeAt(marks_end)).isMark:
         marks_end += word.runeLenAt(marks_end)
-      if base in BOLD_FIRST..BOLD_LAST and marks_end > base_end:
+      if base in BOLD_FIRST .. BOLD_LAST and marks_end > base_end:
         var
           classes = "mark"
           scan = base_end
           is_under, is_over = false
         while scan < marks_end:
-          let mark = word.runeAt(scan).int
+          let mark = int(word.runeAt(scan))
           if mark in MARKS_UNDER: is_under = true else: is_over = true
           scan += word.runeLenAt(scan)
         if is_under: classes.add " under"

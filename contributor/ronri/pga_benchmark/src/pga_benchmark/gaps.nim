@@ -94,8 +94,8 @@ const CAUSES* = [
     rule: Rule.Checks,
     title: "Error-flag checks survive into release builds.",
     closes_when: "no library function branches on `nimErr_`. The pinned compiler with " &
-      "`--panics:on` already emits none in either implementation. A user of the library must " &
-      "know to pass it.",
+        "`--panics:on` already emits none in either implementation. A user of the library must " &
+        "know to pass it.",
   ),
   Cause(
     id: "D06",
@@ -126,7 +126,7 @@ const CAUSES* = [
     rule: Rule.Cayley,
     title: "The library builds compile-time Cayley tables and drops some, by the audit's reading.",
     closes_when: "the project measures tables built against tables used. Nothing here " &
-      "reads compile time.",
+        "reads compile time.",
   ),
 ]
   ## Cause gaps in identifier order; gaps below them are data, these are their causes.
@@ -243,7 +243,7 @@ func docketOf*(node: JsonNode): Docket =
 func toJson*(l: Docket): JsonNode =
   ## Write docket as document, keys sorted so file moves only where ids do.
   var ids = newJObject()
-  for key in toSeq(l.ids.keys).sorted: ids[key] = %l.ids[key]
+  for key in l.ids.keys.toSeq.sorted: ids[key] = %l.ids[key]
   %*{"schema": SCHEMA, "kind": KIND_DOCKET, "next": l.next, "ids": ids}
 
 
@@ -273,13 +273,13 @@ func isOperator(f: JsonNode): bool =
 func isLight(f: JsonNode): bool =
   ## Decide whether function spends no arithmetic term, i.e. signs and permutations only.
   f{"total", "multiplies"}.getInt == 0 and f{"total", "adds"}.getInt == 0 and
-    f{"total", "subtractions"}.getInt == 0
+      f{"total", "subtractions"}.getInt == 0
 
 
 func named(names: openArray[string], most = 6): string =
   ## Join names, first few spelled and rest counted, so evidence stays one sentence.
   if names.len <= most: return names.join(", ")
-  names[0..<most].join(", ") & ", and " & $(names.len - most) & " more"
+  names[0 ..< most].join(", ") & ", and " & $(names.len - most) & " more"
 
 
 func countFunctions(
@@ -335,8 +335,8 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
       if open.len == 0: "no typed gap spends more than its reference."
       else:
         $open.len & " gaps. The widest is " & worst.key & ", which spends " &
-          $worst.library.multiplies.get & " multiplies against " &
-          $worst.reference.multiplies.get & "."
+            $worst.library.multiplies.get & " multiplies against " &
+            $worst.reference.multiplies.get & "."
   of Rule.Time:
     var is_any_measured = false
     for a in algebras:
@@ -359,8 +359,8 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
       if open.len == 0: "no gap's library median exceeds band."
       else:
         $open.len & " gaps. The worst is " & worst.key & ", at " &
-          formatFloat(worst.library.ns.get, ffDecimal, 1) & " ns against " &
-          formatFloat(worst.reference.ns.get, ffDecimal, 1) & " ns."
+            formatFloat(worst.library.ns.get, ffDecimal, 1) & " ns against " &
+            formatFloat(worst.reference.ns.get, ffDecimal, 1) & " ns."
   of Rule.FillsZero, Rule.Intermediates, Rule.Checks, Rule.Inline:
     let
       metric =
@@ -377,7 +377,7 @@ func decideCause*(cause: Cause, algebras: openArray[Algebra], gaps: openArray[Ga
         $count & " of " & $total & " library operators, for example " & worst & "."
       else:
         $count & " of " & $total & " library functions. The most is " & worst & " with " &
-          $value & "."
+            $value & "."
   of Rule.Nan:
     var
       is_any_measured = false
@@ -466,17 +466,17 @@ func rowsBoundLower*(algebra: Algebra, gaps: openArray[Gap]): seq[string] =
     let function_library = functions.at(measurand{"library"}.getStr)
     if not function_library.isNil:
       spent = $function_library{"total", "multiplies"}.getInt & "/" &
-        $function_library{"movement", "bytes_moved"}.getInt
+          $function_library{"movement", "bytes_moved"}.getInt
     result.add "| `" & spelling & "` | " & shape & " | " &
-      $bound{"multiplies"}.getInt & " | " & $bound{"divides"}.getInt & " | " &
-      $bound{"roots"}.getInt & " | " & $bound{"bytes_moved"}.getInt & " | " & spent & " |"
+        $bound{"multiplies"}.getInt & " | " & $bound{"divides"}.getInt & " | " &
+        $bound{"roots"}.getInt & " | " & $bound{"bytes_moved"}.getInt & " | " & spent & " |"
 
 
 func cellNs(l, r: Option[float]): string =
   ## Render timing cell to one decimal, dash where absent.
   if l.isNone and r.isNone: return "–"
   (if l.isSome: formatFloat(l.get, ffDecimal, 1) else: "–") & "/" &
-    (if r.isSome: formatFloat(r.get, ffDecimal, 1) else: "–")
+      (if r.isSome: formatFloat(r.get, ffDecimal, 1) else: "–")
 
 
 func word(s: Status): string =
@@ -490,12 +490,12 @@ func headerOf(algebra: Algebra): string =
     section_algebra = algebra.measurements_static.at("algebra")
     taken_static = algebra.measurements_static.at("taken")
   result = "This algebra has " & $section_algebra{"dimensions"}.getInt & " dimensions, a " &
-    (if section_algebra{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric and a " &
-    $section_algebra{"sizeof_multivector"}.getInt &
-    "-byte multivector. The inspector took the counts on " & taken_static{"date"}.getStr &
-    ", on " & taken_static{"machine"}.getStr & ", with nim `" & taken_static{"nim"}.getStr &
-    "`, pga `" & taken_static{"pga"}.getStr & "` and flags `" & taken_static{"flags"}.getStr &
-    "`."
+      (if section_algebra{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric and a " &
+      $section_algebra{"sizeof_multivector"}.getInt &
+      "-byte multivector. The inspector took the counts on " & taken_static{"date"}.getStr &
+      ", on " & taken_static{"machine"}.getStr & ", with nim `" & taken_static{"nim"}.getStr &
+      "`, pga `" & taken_static{"pga"}.getStr & "` and flags `" & taken_static{"flags"}.getStr &
+      "`."
   if algebra.measurements_runtime.isNil:
     result.add " Nobody measured the times, because no bench ran."
   else:
@@ -503,12 +503,12 @@ func headerOf(algebra: Algebra): string =
       taken_runtime = algebra.measurements_runtime.at("taken")
       count_runs = taken_runtime{"runs"}.getInt(1)
     result.add " The bench ran " & (if count_runs > 1: $count_runs & " times " else: "") &
-      "on " & taken_runtime{"date"}.getStr & ", on " & taken_runtime{"machine"}.getStr &
-      ", over " & $taken_runtime{"rounds"}.getInt & " rounds of " &
-      $taken_runtime{"objects"}.getInt & " objects" &
-      (if count_runs > 1: " each. Each time is the median of those runs." else: ".") &
-      " The allocation gauge was " &
-      (if taken_runtime{"is_allocation_measured"}.getBool: "live" else: "off") & "."
+        "on " & taken_runtime{"date"}.getStr & ", on " & taken_runtime{"machine"}.getStr &
+        ", over " & $taken_runtime{"rounds"}.getInt & " rounds of " &
+        $taken_runtime{"objects"}.getInt & " objects" &
+        (if count_runs > 1: " each. Each time is the median of those runs." else: ".") &
+        " The allocation gauge was " &
+        (if taken_runtime{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 
 
 func render*(
@@ -536,28 +536,28 @@ func render*(
   lines.add ""
   lines.add wrap(
     "Each operation carries two lower bounds, and the library stands above both. The " &
-    "multivector lower bound is what the algebra demands of any implementation over a " &
-    "dense multivector. It is derived from the axioms, and it is never measured. The type " &
-    "optimised lower bound is the typed reference, which is measured rather than derived. " &
-    "Work that reaches the first bound changes no type, and work that reaches the second " &
-    "changes every one.",
+        "multivector lower bound is what the algebra demands of any implementation over a " &
+        "dense multivector. It is derived from the axioms, and it is never measured. The type " &
+        "optimised lower bound is the typed reference, which is measured rather than derived. " &
+        "Work that reaches the first bound changes no type, and work that reaches the second " &
+        "changes every one.",
   )
   lines.add ""
   lines.add wrap(
     "Each algebra below carries a table of multivector lower bounds. That bound spends no " &
-    "zero fill, no intermediate, no error check and no allocation, and it moves its " &
-    "operands read once plus its result written once. It rests on the operation alone, so " &
-    "one row serves every measurand that spells that operation. The last column is what " &
-    "the library spends there, as multiplies over bytes moved. An operation whose shape " &
-    "carries no rule is absent, rather than present without ground.",
+        "zero fill, no intermediate, no error check and no allocation, and it moves its " &
+        "operands read once plus its result written once. It rests on the operation alone, so " &
+        "one row serves every measurand that spells that operation. The last column is what " &
+        "the library spends there, as multiplies over bytes moved. An operation whose shape " &
+        "carries no rule is absent, rather than present without ground.",
   )
   lines.add ""
   lines.add wrap(
     "A shape of several steps names a chain, which the library composes from several " &
-    "operators. The bound of a chain sums what each step demands, and a step that carries " &
-    "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
-    "minimum, because a special routine can share work between steps. Every other bound in " &
-    "these tables is derived from the axioms alone.",
+        "operators. The bound of a chain sums what each step demands, and a step that carries " &
+        "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
+        "minimum, because a special routine can share work between steps. Every other bound in " &
+        "these tables is derived from the axioms alone.",
   )
   lines.add ""
   lines.add "## Causes"
@@ -565,7 +565,7 @@ func render*(
   for d in decided:
     lines.add wrap(
       "- **" & d.cause.id & ", " & d.status.word & ".** " & d.cause.title & " Evidence: " &
-      d.evidence & " Closes when " & d.cause.closes_when,
+          d.evidence & " Closes when " & d.cause.closes_when,
       indent = "  ",
     )
   for algebra in algebras:
@@ -582,19 +582,19 @@ func render*(
         own.add gap
     lines.add wrap(
       "Gaps: " & $own.len & ". Over " & $counts[Status.Over] & ", met " &
-      $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & ".",
+          $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & ".",
     )
     lines.add ""
     lines.add "| Id | Measurand | Mul | Div | Bytes | Int | Chk | ns | Status |"
     lines.add "|----|-----------|-----|-----|-------|-----|-----|----|--------|"
     for gap in own:
       lines.add "| " & gap.id & " | " & gap.measurand & " | " &
-        cell(gap.library.multiplies, gap.reference.multiplies) & " | " &
-        cell(gap.library.divides, gap.reference.divides) & " | " &
-        cell(gap.library.bytes, gap.reference.bytes) & " | " &
-        cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
-        cell(gap.library.checks, gap.reference.checks) & " | " &
-        cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
+          cell(gap.library.multiplies, gap.reference.multiplies) & " | " &
+          cell(gap.library.divides, gap.reference.divides) & " | " &
+          cell(gap.library.bytes, gap.reference.bytes) & " | " &
+          cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
+          cell(gap.library.checks, gap.reference.checks) & " | " &
+          cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
     let bounds = rowsBoundLower(algebra, own)
     if bounds.len > 0:
       lines.add ""

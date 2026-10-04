@@ -95,7 +95,7 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
       name = newLit(p.id & "  # " & p.cite)
     result.add quote do:
       test `name`:
-        for i in 0..<OBJECTS:
+        for i in 0 ..< OBJECTS:
           let
             j = (i * 7 + 3) mod OBJECTS
             expected = block:
@@ -175,7 +175,7 @@ macro checkFormsDense(measurands: static seq[Measurand]): untyped =
       name = newLit(p.id)
     result.add quote do:
       test `name`:
-        for i in 0..<OBJECTS:
+        for i in 0 ..< OBJECTS:
           let
             j = (i * 7 + 3) mod OBJECTS
             (expected, got) = block:
@@ -193,7 +193,7 @@ fillPools(0)
 
 suite "Internal: Configuration":
   test "stub matrix names algebra umbrella reports":
-    check DIMENSIONS in 2..6  # library's own bound
+    check DIMENSIONS in 2 .. 6  # library's own bound
     when DIMENSIONS == 4 and IS_RIGID:
       check NAME_ALGEBRA == "rga4d"  # 3D Euclidean rigid, default of nim.cfg
     when DIMENSIONS == 5 and IS_CONFORMAL:
@@ -354,9 +354,9 @@ suite "Internal: Measurements":
       check measurement.is_measured  # library implementation always has expression
       check measurement.ns_min <= measurement.ns_median  # minimum bounds median
       check MEASUREMENTS[Implementation.Reference][index].is_measured ==
-        (measurand.reference.len > 0)  # reference implementation present where written
+          (measurand.reference.len > 0)  # reference implementation present where written
       check MEASUREMENTS[Implementation.Dense][index].is_measured ==
-        (measurand.reference.len == 0)  # dense form present on every general measurand
+          (measurand.reference.len == 0)  # dense form present on every general measurand
     check MEASUREMENTS[Implementation.Library].anyIt(it.ns_median > 0.0)  # clock was read
 
 
@@ -506,8 +506,8 @@ suite "Internal: Inspector":
       multivector_mangled = "tyObject_Multivector__h"
       fixture = [
         "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
-          multivector_mangled & "* m_p0, " & multivector_mangled & "* n_p1, " &
-          multivector_mangled & "* Result) {",
+            multivector_mangled & "* m_p0, " & multivector_mangled & "* n_p1, " &
+            multivector_mangled & "* Result) {",
         "\tNF* T1_;",
         "NF T2_;",
         multivector_mangled & " T3_;",
@@ -530,14 +530,14 @@ suite "Internal: Inspector":
         "}",
         "",
         "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vector3__h* a_p0, " &
-          "tyObject_Vector3__h* b_p1) {",
+            "tyObject_Vector3__h* b_p1) {",
         "\tNF result;",
         "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
         "\treturn result;",
         "}",
         "",
         "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
-          multivector_mangled & "* m_p0, " & multivector_mangled & "* Result);",
+            multivector_mangled & "* m_p0, " & multivector_mangled & "* Result);",
       ].join("\n") & "\n"
     let functions = functionsIn(fixture)
     check functions.len == 2  # declaration ending in `;` skipped
@@ -557,12 +557,14 @@ suite "Internal: Inspector":
 
 
   test "definition marked noinline reads as function":
-    let functions = functionsIn([
-      "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void);",
-      "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void) {",
-      "\tT1_ = getMonoTime_u0__stdZmonotimes();",
-      "}",
-    ].join("\n") & "\n")
+    let functions = functionsIn(
+      [
+        "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void);",
+        "N_LIB_PRIVATE N_NOINLINE(void, measure0Library_u0__m)(void) {",
+        "\tT1_ = getMonoTime_u0__stdZmonotimes();",
+        "}",
+      ].join("\n") & "\n",
+    )
     check functions.len == 1  # declaration skipped, definition read
     check functions[0].name == "measure0Library_u0__m" and not functions[0].is_inline  # head
     check "getMonoTime" in functions[0].body  # body runs to its closing brace
@@ -573,7 +575,7 @@ suite "Internal: Inspector":
       multivector_mangled = "tyObject_Multivector__h"
       loop = [
         "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
-          multivector_mangled & "* m_p1, " & multivector_mangled & "* Result) {",
+            multivector_mangled & "* m_p1, " & multivector_mangled & "* Result) {",
         "NI i_1;",
         "NI res_1;",
         "i_1 = ((NI) 0);",
@@ -643,7 +645,7 @@ suite "Internal: Inspector":
       multivector_mangled = "tyObject_Multivector__h"
       divide = [
         "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
-          multivector_mangled & "* m_p0, " & multivector_mangled & "* Result) {",
+            multivector_mangled & "* m_p0, " & multivector_mangled & "* Result) {",
         "NF n_1;",
         "NI i_1;",
         "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
@@ -729,7 +731,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       # Operator carrying scalar overload spells same symbol at same arity, so stems of
       #   parameters are what tells two apart.
       var operands_dense, operands_scalar = 0
-      for i in 0..<int(p.arity):
+      for i in 0 ..< int(p.arity):
         if p.operands[i] == Kind.Scalar: inc operands_scalar else: inc operands_dense
       for f in INSPECTED:
         if f.symbol != head: continue
@@ -803,7 +805,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         checkpoint f.name & " reads clock " & $clocks & " times"
         check clocks == 2  # one timed loop: clock read before and after each round
     let pairs_measured = CATALOGUE.len + CATALOGUE.countIt(it.reference.len > 0) +
-      (if HAS_FORMS_DENSE: CATALOGUE.countIt(it.reference.len == 0) else: 0)
+        (if HAS_FORMS_DENSE: CATALOGUE.countIt(it.reference.len == 0) else: 0)
     checkpoint $functions_timing & " timing functions for " & $pairs_measured & " measured pairs"
     check functions_timing == pairs_measured  # one function per measurand per implementation
 
@@ -894,7 +896,7 @@ suite "Internal: Guard":
       v = compare(before, documentStatic(one(key, node(90, 178, 1, 512))), path)
     check v.findings.len == 1 and v.improvements.len == 0  # one metric grew
     check v.findings[0].render ==
-      path & ":0: Total `multiplies` of `" & key & "` grew; got `90`, baseline `81`."  # IV.4
+        path & ":0: Total `multiplies` of `" & key & "` grew; got `90`, baseline `81`."  # IV.4
 
 
   test "shrunk count is improvement, never finding":
@@ -950,10 +952,10 @@ suite "Internal: Guard":
       gone = compare(baseline, bounded(nil), path)
     check same.findings.len == 0 and same.improvements.len == 0  # derivation unchanged
     check shrunk.findings.len == 1 and shrunk.findings[0].render ==
-      path & ":0: Lower bound `multiplies` of `wedge` moved; got `64`, baseline `81`."  # IV.4
+        path & ":0: Lower bound `multiplies` of `wedge` moved; got `64`, baseline `81`."  # IV.4
     check grown.findings.len == 1 and "got `90`" in grown.findings[0].message  # equality gate
     check gone.findings.len == 1 and
-      gone.findings[0].message == "Lower bound absent now; got `wedge`."  # bound lost
+        gone.findings[0].message == "Lower bound absent now; got `wedge`."  # bound lost
 
 
 
@@ -1038,7 +1040,7 @@ suite "Internal: Gaps":
     check by["wedge"].status == Status.Over and "checks" in by["wedge"].metrics_over  # absolute
     check "multiplies" notin by["wedge"].metrics_over  # no reference, no relative target
     check by["wedge_point_point"].metrics_over ==
-      @["multiplies", "bytes", "fills_zero", "checks", "time"]  # in decided order
+        @["multiplies", "bytes", "fills_zero", "checks", "time"]  # in decided order
     check by["select_part"].status == Status.Met  # nothing spent, nothing exceeded
     check by["transform_point_motor"].metrics_over == @["time"]  # composed expression, timing alone
 
@@ -1078,19 +1080,19 @@ suite "Internal: Gaps":
     check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
     check "`" & key_wedge & "` with 178" in checks.evidence  # most
     check decisionOf(Rule.Inline, algebras_fixture, gaps).evidence ==
-      "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
+        "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
     check decisionOf(Rule.FillsZero, algebras_fixture, gaps).evidence.startsWith(
       "2 of 3")  # ∧ and ~
     check decisionOf(Rule.Terms, algebras_fixture, gaps).evidence == "1 gaps. The widest is " &
-      "rga4d/wedge_point_point, which spends 81 multiplies against 12."  # widest gap named
+        "rga4d/wedge_point_point, which spends 81 multiplies against 12."  # widest gap named
     check decisionOf(Rule.Time, algebras_fixture, gaps).evidence ==
-      "2 gaps. The worst is rga4d/wedge_point_point, at 24.1 ns against 1.3 ns."  # worst ratio
+        "2 gaps. The worst is rga4d/wedge_point_point, at 24.1 ns against 1.3 ns."  # worst ratio
     check decisionOf(Rule.Nan, algebras_fixture, gaps).status == Status.Met  # every share zero
     check decisionOf(Rule.Compound, algebras_fixture, gaps).evidence ==
-      "rga4d/transform_point_motor."  # composed expression named
+        "rga4d/transform_point_motor."  # composed expression named
     check decisionOf(Rule.Missing, algebras_fixture, gaps).status == Status.Met  # nothing missing
     check decisionOf(Rule.Cayley, algebras_fixture, gaps).status ==
-      Status.Unmeasured  # not readable here
+        Status.Unmeasured  # not readable here
 
 
   test "causes count library functions, never reference or dense form":
@@ -1106,9 +1108,9 @@ suite "Internal: Gaps":
     for line in text.splitLines: widest = max(widest, runeLen(line))
     check widest <= WIDTH  # form check reads product
     check "| G002 | wedge_point_point | 81/12 | 0/0 | 512/112 | 0/0 | 178/0 | 24.1/1.3 | over |" in
-      text  # cells read library/reference
+        text  # cells read library/reference
     check "| G004 | transform_point_motor | – | – | – | – | – | 60.0/5.0 | over |" in
-      text  # composed expression has no counts
+        text  # composed expression has no counts
     check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # proposal verdicts
     check "Gaps: 4. Over 3, met 1, unmeasured 0." in text  # summary
     check docket.next == 5  # docket grew with gaps
@@ -1142,9 +1144,9 @@ suite "Internal: Markdown":
 
   test "inline markup renders, and everything else is escaped":
     check renderInline("`a < b` and **b** and _c_") ==
-      "<code>a &lt; b</code> and <strong>b</strong> and <em>c</em>"  # three markers
+        "<code>a &lt; b</code> and <strong>b</strong> and <em>c</em>"  # three markers
     check renderInline("[site](https://x.y/z?a=1&b=2)") ==
-      "<a href=\"https://x.y/z?a=1&amp;b=2\">site</a>"  # link escaped once
+        "<a href=\"https://x.y/z?a=1&amp;b=2\">site</a>"  # link escaped once
     check renderInline("snake_case_name <b>") == "snake_case_name &lt;b&gt;"  # no false italic
 
 
@@ -1164,7 +1166,7 @@ suite "Internal: Changes":
     let (change, findings) = parseChange(
       record,
       "# Sign\n\nWhy.\n\n## Edit `pga/a.nim`\n\n" &
-        "FENCEnim\nlet y = 2\nFENCE\n\nFENCEnim\nlet y = 3\nFENCE\n".replace("FENCE", "```"),
+          "FENCEnim\nlet y = 2\nFENCE\n\nFENCEnim\nlet y = 3\nFENCE\n".replace("FENCE", "```"),
     )
     check findings.len == 0  # well formed
     check change.title == "Sign" and change.why.len == 1  # title and why
@@ -1183,7 +1185,7 @@ suite "Internal: Changes":
     check files["pga/a.nim"] == "let x = 1\nlet y = 3\nlet z = 1\n"  # replaced in place
     let ambiguous = applyChange(files, twice, record)
     check ambiguous.len == 1 and ambiguous[0].render ==
-      record & ":5: Quote must occur once in `pga/a.nim`; got `2`."  # never guess
+        record & ":5: Quote must occur once in `pga/a.nim`; got `2`."  # never guess
     check applyChange(files, nowhere, record).len == 1  # stale quote
 
 
@@ -1210,7 +1212,7 @@ suite "Internal: Notes":
   const
     record = "marginalia/notes.md"
     source = "Notes.\n\n## Odd grade\n\n`pga/a.nim` · decide\n\n" &
-      "FENCEnim\nlet y = 2\nFENCE\n\nSay why.\n"
+        "FENCEnim\nlet y = 2\nFENCE\n\nSay why.\n"
 
 
   test "note reads title, file, status, quote and body":
@@ -1266,7 +1268,7 @@ suite "Internal: Head":
       findings = checkPublished(built, publications, readme, "pages/published.json")
     check findings.len == 2  # marginalia changed, retired page left in publications
     check "`marginalia`" in findings[0].message or
-      "`marginalia`" in findings[1].message  # changed page named
+        "`marginalia`" in findings[1].message  # changed page named
     check checkPublished(built, publications, "Pages: https://x/1.", "p").len == 4  # URLs unnamed
 
 
@@ -1456,7 +1458,7 @@ suite "Internal: Evaluations":
 
   test "compiler success line gives seconds and peak memory":
     let output = "......\nHint: mm: orc\n29867 lines; 0.213s; 38.008MiB peakmem; proj: a.nim; " &
-      "out: a.json [SuccessX]\n"
+        "out: a.json [SuccessX]\n"
     check successOf(output) == (0.213, 38.008)  # both read
     check successOf("Error: type mismatch\n") == (0.0, 0.0)  # failed build reads nothing
 
@@ -1541,7 +1543,7 @@ suite "Internal: Figures":
         "",
       )
     check "<div class=\"figure-art\"><svg id=\"m\"></svg></div><figcaption>Map.</figcaption>" in
-      body  # SVG whole, caption beneath
+        body  # SVG whole, caption beneath
     check "<figure" notin bare and "Map." in bare  # absent file renders as text
 
 
@@ -1567,7 +1569,7 @@ suite "Internal: Figures":
 
 suite "Internal: Edits":
   const source_pin = "func outer*(a: int;\n    b: int): int {.inline.} =\n  ## Doc.\n" &
-    "  for x in 0 ..< a:\n    result += x\n\nimport std/math\n"
+      "  for x in 0 ..< a:\n    result += x\n\nimport std/math\n"
     ## Library file at pin: routine whose signature spans two lines, then top-level import.
 
   func edit(quote, replacement: string; digest = ""): Change =
@@ -1596,10 +1598,10 @@ suite "Internal: Edits":
   test "edit that defines routines lists their signatures, nested ones left out":
     let
       replacement = "func added(x: int): int =\n  func helper(): int = 1\n  x + helper()\n\n" &
-        "test \"adds\":\n  check added(1) == 2\n"
+          "test \"adds\":\n  check added(1) == 2\n"
       html = htmlEdits(edit("import std/math\n", replacement), files)
     check "defines</span><code>func added(x: int): int</code><code>test &quot;adds&quot;</code>" in
-      html  # outer routine and test, body dropped
+        html  # outer routine and test, body dropped
     check "helper" notin html.split("</summary>")[0]  # nested routine stays in body
 
 
@@ -1715,7 +1717,7 @@ suite "Internal: Pages":
     check "<span class=\"word\">(<span class=\"mark over\">𝐜̄</span>∧𝐚)</span>" in marked
       # whole word kept on one line
     check "<span class=\"mark under tall\">𝐆̲</span><span class=\"mark under over\">𝐦̲̅</span>" in
-      marked  # capital is tall, two marks draw two bars
+        marked  # capital is tall, two marks draw two bars
     check "over tall" in htmlMarked("𝐛̄") and "tall" notin htmlMarked("𝐞̄")  # ascender only
     check stripped(marked) == stripped(prose)  # text reader copies is text source holds
     check htmlMarked(kept) == kept  # SVG, script, attribute and Latin letter pass as they are
@@ -1749,7 +1751,7 @@ suite "Internal: Pages":
   test "every stack holds each face of sans stack before any family shell does not ship":
     const shell_html = staticRead("../pages/shell.html")
     var shipped, gaps: seq[string]
-    for rule in shell_html.split("@font-face")[1..^1]:
+    for rule in shell_html.split("@font-face")[1 ..^ 1]:
       let family = rule.split('"')[1]
       if family notin shipped: shipped.add family
     var stacks: seq[seq[string]]  # sans first, then serif and mono
@@ -1762,7 +1764,7 @@ suite "Internal: Pages":
         let bare = family.strip.strip(chars = {'"'})
         if bare notin shipped: break
         stacks[^1].add bare
-    for stack in stacks[1..^1]:
+    for stack in stacks[1 ..^ 1]:
       for family in stacks[0]:
         if family notin stack: gaps.add stack[0] & " stack lacks " & family
     checkpoint "gaps: " & gaps.join(", ")
@@ -1837,7 +1839,7 @@ suite "Internal: Pages":
       let
         at = body.find("<span class=\"n\">" & measurand & "</span>")
         start = body.rfind("<details ", last = at)
-      body[start..body.find('>', start)]
+      body[start .. body.find('>', start)]
 
     let (typed, general) = (tagOf(body, "wedge_point_point"), tagOf(body, "wedge"))
     for select in ["sort", "show", "operation", "operand"]:
@@ -1869,7 +1871,7 @@ suite "Internal: Pages":
     check "data-find=\"wedge_point_point g002 ∧ wedge point point\"" in body  # id, kinds, lower
     check "data-find=\"wedge g001 ∧ wedge\"" in body  # general row: no operand kind
     check "classList.add(\"unfound\")" in source_find and
-      "details.row.unfound { display: none; }" in shell_html  # script marks, shell hides
+        "details.row.unfound { display: none; }" in shell_html  # script marks, shell hides
 
 
   test "typed id splits at longest operand kind, one kind per operand":
@@ -1945,7 +1947,7 @@ suite "Internal: Proposal list":
       root = htmlDependencies(chain, chain[0], urls)
       leaf = htmlDependencies(chain, chain[2], urls)
     check "<dt>Depends on</dt><dd><span><a href=\"https://example.org/p1\">P01</a> Title 1" &
-      "</span></dd>" in body  # base cited, linked and titled
+        "</span></dd>" in body  # base cited, linked and titled
     check "<dt>Blocks if rejected</dt><dd><span>P03 Title 3</span></dd>" in body
       # unpublished one cited, unlinked
     check "<dt>Depends on</dt><dd><span class=\"none\">none</span></dd>" in root  # needs none
@@ -1984,7 +1986,7 @@ suite "Internal: Proposal list":
         "",
       )
     check "5 proposals · 4 undecided · pga <code>bd6b23c</code>" in body  # counts in header
-    for number in 1..5:
+    for number in 1 .. 5:
       check "Title " & $number & "</td>" in body  # every proposal, frozen one too
     check "<span class=\"chip fail\">1 of 2 hold</span>" in body  # one claim fails
     check "<span class=\"chip pass\">implemented</span>" in body  # frozen one stands so
@@ -2005,7 +2007,7 @@ suite "Internal: Proposal list":
       "bd6b23c590d7",
       "",
     )
-    for number in 1..5:
+    for number in 1 .. 5:
       let id = "pick-p" & $number
       check "<input class=\"pick\" type=\"checkbox\" id=\"" & id & "\"><article" in body
         # checkbox stands right before reading it shows
@@ -2103,24 +2105,24 @@ suite "Internal: Driver":
   func dispatched(source: string): seq[string] =
     ## Read verbs driver's dispatch answers to: quoted labels of `of` branches after case.
     let start = source.find("case paramStr(1)")
-    for line in source[start..<source.len].splitLines:
+    for line in source[start ..< source.len].splitLines:
       let s = line.strip
       if s.startsWith("of \""):
-        result.add s[4..<s.find('"', 4)]
+        result.add s[4 ..< s.find('"', 4)]
 
   func taught(source: string): seq[string] =
     ## Read verbs usage string teaches, between its angle brackets, across its literals.
     let
       start = source.find("USAGE =")
-      text = source[start..<source.find("##", start)].multiReplace(("\" &", ""), ("\"", ""))
+      text = source[start ..< source.find("##", start)].multiReplace(("\" &", ""), ("\"", ""))
       joined = text.splitWhitespace.join
-    joined[joined.find('<') + 1..<joined.find('>')].split('|')
+    joined[joined.find('<') + 1 ..< joined.find('>')].split('|')
 
   func tabled(source: string): seq[string] =
     ## Read verbs header table rows, first cell of each row naming one.
     for line in source.splitLines:
       if not line.startsWith("##   | "): continue
-      let cell = line[7..<line.find('|', 7)].strip
+      let cell = line[7 ..< line.find('|', 7)].strip
       if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
 
   func importsOf(source: string): seq[string] =

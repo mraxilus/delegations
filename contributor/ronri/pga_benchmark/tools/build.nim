@@ -73,8 +73,8 @@ const
     ##   Faces come from repository's store.
     ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|evaluate|pages|types|published|drive|head|gaps|show|sweep|" &
-    "system|clean> [name|symbol] [url|algebra|--thorough]\n"
+      "<inspect|bench|baseline|guard|evaluate|pages|types|published|drive|head|gaps|show|sweep|" &
+      "system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures 2D algebras too.
 

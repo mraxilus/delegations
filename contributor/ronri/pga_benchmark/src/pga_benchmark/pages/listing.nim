@@ -43,7 +43,7 @@ func htmlGraph*(proposals: openArray[Proposal]): string =
   let undecided = proposals.filterIt(not it.isFrozen)
   if undecided.len == 0: return ""
   var depths = newSeq[int](undecided.len)
-  for _ in 0..<undecided.len:  # n passes settle any graph without cycles
+  for _ in 0 ..< undecided.len:  # n passes settle any graph without cycles
     for index, proposal in undecided:
       for base in proposal.builds_on:
         for at, other in undecided:
@@ -60,10 +60,10 @@ func htmlGraph*(proposals: openArray[Proposal]): string =
     xs = depths.mapIt(MARGIN_GRAPH + it * (WIDTH_NODE + GAP_COLUMN))
     ys = rows.mapIt(MARGIN_GRAPH + it * (HEIGHT_NODE + GAP_ROW))
   result = "<div class=\"graph\" style=\"width: " & $width & "px; height: " & $height &
-    "px\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" & $width & "\" height=\"" &
-    $height & "\" viewBox=\"0 0 " & $width & " " & $height & "\" aria-hidden=\"true\"><defs>" &
-    "<marker id=\"builds-on\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" " &
-    "markerHeight=\"7\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\"/></marker></defs>"
+      "px\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" & $width & "\" height=\"" &
+      $height & "\" viewBox=\"0 0 " & $width & " " & $height & "\" aria-hidden=\"true\"><defs>" &
+      "<marker id=\"builds-on\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" " &
+      "markerHeight=\"7\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\"/></marker></defs>"
   for index, proposal in undecided:
     for base in proposal.builds_on:
       for at, other in undecided:
@@ -73,15 +73,15 @@ func htmlGraph*(proposals: openArray[Proposal]): string =
           (x_to, y_to) = (xs[at] + WIDTH_NODE + 2, ys[at] + HEIGHT_NODE div 2)
           bend = GAP_COLUMN div 2
         result.add "<path class=\"edge\" marker-end=\"url(#builds-on)\" d=\"M" & $x_from & "," &
-          $y_from & " C" & $(x_from - bend) & "," & $y_from & " " & $(x_to + bend) & "," &
-          $y_to & " " & $x_to & "," & $y_to & "\"/>"
+            $y_from & " C" & $(x_from - bend) & "," & $y_from & " " & $(x_to + bend) & "," &
+            $y_to & " " & $x_to & "," & $y_to & "\"/>"
   result.add "</svg>"
   for index, proposal in undecided:
     result.add "<label class=\"node\" for=\"" & idPick(proposal) & "\" title=\"" &
-      escapeHtml(proposal.citation & ": " & proposal.title.replace("`", "")) &
-      "\" style=\"left: " & $xs[index] & "px; top: " & $ys[index] & "px; width: " & $WIDTH_NODE &
-      "px; height: " & $HEIGHT_NODE & "px\"><b>" & escapeHtml(proposal.citation) & "</b><span>" &
-      renderInline(proposal.title) & "</span></label>"
+        escapeHtml(proposal.citation & ": " & proposal.title.replace("`", "")) &
+        "\" style=\"left: " & $xs[index] & "px; top: " & $ys[index] & "px; width: " & $WIDTH_NODE &
+        "px; height: " & $HEIGHT_NODE & "px\"><b>" & escapeHtml(proposal.citation) & "</b><span>" &
+        renderInline(proposal.title) & "</span></label>"
   result.add "</div>"
 
 
@@ -120,33 +120,33 @@ func bodyListing*(
     undecided = proposals.countIt(not it.isFrozen)
     graph = htmlGraph(proposals)
   result = "<div class=\"page\"><header><h1>Proposals</h1><p class=\"meta\">" &
-    $proposals.len & " proposals · " & $undecided & " undecided · pga " &
-    code(pin[0..<min(7, pin.len)]) & links & "</p><p>Each proposal is one future state of " &
-    "the library, argued and measured at the pin. The Architect decides each one on its own. " &
-    "A proposal needs each proposal that it depends on. A rejected proposal blocks each " &
-    "proposal that depends on it.</p></header><form class=\"picks\">"
+      $proposals.len & " proposals · " & $undecided & " undecided · pga " &
+      code(pin[0 ..< min(7, pin.len)]) & links & "</p><p>Each proposal is one future state of " &
+      "the library, argued and measured at the pin. The Architect decides each one on its own. " &
+      "A proposal needs each proposal that it depends on. A rejected proposal blocks each " &
+      "proposal that depends on it.</p></header><form class=\"picks\">"
   result.add "<section class=\"block\"><h2>Undecided proposals</h2>"
   if graph.len == 0:
     result.add "<p class=\"note\">No proposal waits on a decision.</p>"
   else:
     result.add "<figure class=\"figure\"><div class=\"graph-art\">" & graph &
-      "</div><figcaption>An arrow points from a proposal to one that it builds on. A " &
-      "rejected proposal blocks each proposal whose arrows lead to it. Select a box to read " &
-      "its proposal below.</figcaption></figure>"
+        "</div><figcaption>An arrow points from a proposal to one that it builds on. A " &
+        "rejected proposal blocks each proposal whose arrows lead to it. Select a box to read " &
+        "its proposal below.</figcaption></figure>"
   result.add "</section><section class=\"block\"><h2>Every proposal</h2><div class=\"table\">" &
-    "<table class=\"proposals\"><tr><th>Read</th><th>Proposal</th><th>Standing</th>" &
-    "<th>Claims</th><th>Depends on</th><th>Blocks if rejected</th></tr>"
+      "<table class=\"proposals\"><tr><th>Read</th><th>Proposal</th><th>Standing</th>" &
+      "<th>Claims</th><th>Depends on</th><th>Blocks if rejected</th></tr>"
   for proposal in proposals:
     let evaluation = evaluations.getOrDefault(proposal.name)
     result.add "<tr><td><label class=\"tick\" for=\"" & idPick(proposal) & "\" title=\"Read " &
-      escapeHtml(proposal.citation) & " here\"></label></td><td>" & citeLinked(proposal, urls) &
-      " " & renderInline(proposal.title) & "</td><td>" & chipStanding(proposal) & "</td><td>" &
-      chipClaims(evaluation) & "</td><td>" &
-      htmlCited(dependenciesOf(proposals, proposal)[0], urls) & "</td><td>" &
-      htmlCited(dependentsOf(proposals, proposal), urls) & "</td></tr>"
+        escapeHtml(proposal.citation) & " here\"></label></td><td>" & citeLinked(proposal, urls) &
+        " " & renderInline(proposal.title) & "</td><td>" & chipStanding(proposal) & "</td><td>" &
+        chipClaims(evaluation) & "</td><td>" &
+        htmlCited(dependenciesOf(proposals, proposal)[0], urls) & "</td><td>" &
+        htmlCited(dependentsOf(proposals, proposal), urls) & "</td></tr>"
   result.add "</table></div></section><section class=\"block readings\"><h2>Selected " &
-    "proposals</h2><p class=\"note hint\">Select a proposal in the graph or the table to read " &
-    "it here.</p><p><button class=\"clear\" type=\"reset\">Clear selection</button></p>"
+      "proposals</h2><p class=\"note hint\">Select a proposal in the graph or the table to read " &
+      "it here.</p><p><button class=\"clear\" type=\"reset\">Clear selection</button></p>"
   var rules: seq[string]
   for proposal in proposals:
     let
@@ -169,7 +169,7 @@ func bodyListing*(
         level = 2,
       ) & "</article>"
     rules.add "body:has(#" & id & ":checked) [for=\"" & id & "\"]{--pick-on:1;" &
-      "--pick-ring:var(--status);--pick-fill:var(--status-wash)}"
+        "--pick-ring:var(--status);--pick-fill:var(--status-wash)}"
     rules.add "body:has(#" & id & ":focus-visible) [for=\"" & id & "\"]{outline:2px solid " &
-      "var(--bound);outline-offset:2px}"
+        "var(--bound);outline-offset:2px}"
   result.add "</section></form><style>" & rules.join("") & "</style></div>"

@@ -61,7 +61,7 @@ func pathBetween(heading, opening: string): string =
   ## Read path in backticks after opening; empty when heading does not carry one.
   if not heading.startsWith(opening): return ""
   let close = heading.find('`', opening.len)
-  if close < 0: "" else: heading[opening.len..<close]
+  if close < 0: "" else: heading[opening.len ..< close]
 
 
 func parseChange*(path, source: string): (Change, seq[Finding]) =
@@ -176,4 +176,4 @@ func applyChange*(files: var Table[string, string], change: Change, source: stri
 func lineOf*(text, quote: string): int =
   ## Read line quote opens on, counted from one; zero where quote is absent.
   let at = text.find(quote)
-  if at < 0: 0 else: text[0..<at].count('\n') + 1
+  if at < 0: 0 else: text[0 ..< at].count('\n') + 1

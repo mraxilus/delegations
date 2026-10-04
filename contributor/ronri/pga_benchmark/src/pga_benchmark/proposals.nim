@@ -85,7 +85,7 @@ func figureOf*(node: Block, directory: string): Option[Figure] =
     if part == "..":
       if parts.len > 0: parts.setLen(parts.len - 1)
     elif part.len > 0 and part != ".": parts.add part
-  some(Figure(caption: line[2..<middle], path: parts.join("/"), line: node.line))
+  some(Figure(caption: line[2 ..< middle], path: parts.join("/"), line: node.line))
 
 
 func citation*(proposal: Proposal): string =
@@ -115,8 +115,8 @@ func parseProposal*(
   let
     base = directory.rsplit('/', 1)[^1]
     dash = base.find('-')
-  if dash == WIDTH_NUMBER and base[0..<dash].allCharsInSet(Digits):
-    proposal.number = parseInt(base[0..<dash])
+  if dash == WIDTH_NUMBER and base[0 ..< dash].allCharsInSet(Digits):
+    proposal.number = parseInt(base[0 ..< dash])
     proposal.name = base[dash + 1 .. ^1]
   else:
     proposal.name = base
@@ -141,7 +141,7 @@ func parseProposal*(
         path: directory & "/proposal.md",
         line: 1,
         message: "Title must open with its citation, as `" & proposal.citation & ": `; got `" &
-          heading & "`.",
+            heading & "`.",
       )
     proposal.body = blocks[1 .. ^1]
   if change.len > 0:
@@ -159,7 +159,7 @@ func parseProposal*(
     findings.add Finding(
       path: directory & "/claims.json",
       message: "Builds on must list proposal names, as `[\"cayley-derivation\"]`; got `" &
-        (if bases.isNil: "none" else: $bases) & "`.",
+          (if bases.isNil: "none" else: $bases) & "`.",
     )
   else:
     for base in bases: proposal.builds_on.add base.getStr
@@ -214,12 +214,12 @@ func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
         message: "Proposal number is taken; got `" & proposal.citation & "`.",
       )
     seen.add proposal.number
-  for number in 1..max(seen & @[0]):
+  for number in 1 .. max(seen & @[0]):
     if number notin seen:
       result.add Finding(
         path: "proposals",
         message: "Proposal numbers skip one, so it was freed; got `P" &
-          align($number, WIDTH_NUMBER, '0') & "` missing.",
+            align($number, WIDTH_NUMBER, '0') & "` missing.",
       )
 
 
@@ -283,9 +283,7 @@ func dependentsOf*(proposals: openArray[Proposal], proposal: Proposal): seq[Prop
     if dependenciesOf(proposals, other)[0].anyIt(it.name == proposal.name): result.add other
 
 
-func basesToward*(
-  proposals: openArray[Proposal], proposal, target: Proposal
-): seq[Proposal] =
+func basesToward*(proposals: openArray[Proposal]; proposal, target: Proposal): seq[Proposal] =
   ## List bases `proposal` reaches `target` through, in number order.
   ##   Empty where proposal builds on target directly, since no path needs naming.
   if target.name in proposal.builds_on: return

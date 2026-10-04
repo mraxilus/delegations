@@ -40,31 +40,31 @@ func bodyMarginalia*(
       change = change_evaluated.change
       summary = if change.why.len > 0: renderBlock(change.why[0], 2) else: ""
     result = "<details class=\"card\" id=\"change-" & escapeHtml(change_evaluated.name) &
-      "\"><summary><h3>" & renderInline(change.title) & "</h3><div class=\"chips\">" &
-      chipsVerdict(change_evaluated.evaluation, baselines, spread) & "</div>" & summary &
-      "</summary>"
+        "\"><summary><h3>" & renderInline(change.title) & "</h3><div class=\"chips\">" &
+        chipsVerdict(change_evaluated.evaluation, baselines, spread) & "</div>" & summary &
+        "</summary>"
     if change.why.len > 1: result.add renderBlocks(change.why[1 .. ^1], 2)
     result.add htmlEdits(change, files)
     if not change_evaluated.evaluation.isNil:
       let evaluation = change_evaluated.evaluation
       result.add tableFunctions(evaluation) & tableNan(evaluation) &
-        tableTimes(evaluation, baselines, spread)
+          tableTimes(evaluation, baselines, spread)
     result.add "</details>"
 
   func htmlNote(note: Note): string =
     ## Render one note: title, status, file and line at pin, quoted lines, body.
     let at = note.lineAt(files)
     result = "<article class=\"card note\"><h3>" & renderInline(note.title) &
-      "</h3><p class=\"meta\">" & code(note.path & ":" & $at)
+        "</h3><p class=\"meta\">" & code(note.path & ":" & $at)
     if note.status.len > 0: result.add " " & chip(note.status, "status")
     result.add "</p>" & renderFence(note.quote.splitLines, "nim", at) &
-      renderBlocks(note.body, 2) & "</article>"
+        renderBlocks(note.body, 2) & "</article>"
 
   result = "<div class=\"page\"><header><h1>PGA Marginalia</h1><p class=\"meta\">pga " &
-    code(pin[0..<7]) & " · every change tried at pin, every note located at pin" & links &
-    "</p></header>"
+      code(pin[0 ..< 7]) & " · every change tried at pin, every note located at pin" & links &
+      "</p></header>"
   result.add "<section class=\"block\"><h2>Changes proposed</h2><p class=\"note\">" &
-    textSpread(spread) & "</p>"
+      textSpread(spread) & "</p>"
   for change_evaluated in changes_evaluated: result.add htmlChange(change_evaluated)
   result.add "</section><section class=\"block\"><h2>Notes in the margin</h2>"
   var lead = notes.lead
