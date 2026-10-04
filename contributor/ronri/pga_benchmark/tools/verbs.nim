@@ -25,7 +25,7 @@ import std/[algorithm, json, options, os, osproc, sequtils, strutils, tables, ti
 
 import ../src/pga_benchmark/[changes, gaps, guard, head, inspector, model, notes, proposals]
 from ../src/pga_benchmark/report import combineRuns, IMPLEMENTATIONS
-import ../src/pga_benchmark/pages/[docket, listing, marginalia, shell]
+import ../src/pga_benchmark/pages/[docket, listing, marginalia, render, shell]
 import ../src/pga_benchmark/pages/proposal as page_proposal
 import ../src/pga_benchmark/pages/evaluation as page_evaluation
 from ../src/pga_benchmark/evaluations import
@@ -72,6 +72,9 @@ const
     ## Harness as dispatcher's `types` emits it, run by node.
   BUILD_HOSTED = BUILD / "hosted"
     ## Directory each page lands in as publish host serves it, for harness to render.
+  PATH_FOUND = BUILD / "found.json"  ## What harness found on each page, as data (`render.nim`).
+  PATH_CONTROL = "tests" / "fixtures" / "control_faces.json"
+    ## Fixture control page is built from; under `tests/`, as `render.nim` says why.
   RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
     ## Timed runs of each algebra's bench, alternating algebras, so drift lands on all alike.
@@ -633,23 +636,29 @@ proc pages() =
       " KiB"
 
 
-proc renderedChecked(built: OrderedTable[string, string]): seq[Finding] =
-  ## Render every built page as publish host serves it, and hold each to faces it ships.
-  ##   Harness prints each finding in its own form, `<page>: <element>: …`; its exit names
-  ##   them here as one, since what each says is page's and not file's.
+proc renderedChecked(
+  built: OrderedTable[string, string], faces: Table[string, string]
+): seq[Finding] =
+  ## Render every built page and control as publish host serves them, and judge what harness
+  ##   found: each page held to faces it ships, control to findings it expects (`render.nim`).
   ##   Harness and browser are dispatcher's to ready, before `drive` reaches here.
+  let paragraphs = paragraphsOf(readDocument(PATH_CONTROL))
+  var pages = built
+  pages[CONTROL] = assemble(readFile(PATH_SHELL), "Faces Control", bodyControl(paragraphs), faces)
   createDir BUILD_HOSTED
   var paths: seq[string]
-  for name, page in built.pairs:
+  for name, page in pages.pairs:
     let path = BUILD_HOSTED / name & ".html"
     writeFile(path, hosted(page))
     paths.add path
-  let code = runStatus("node", @[ENTRY_HARNESS] & paths)
+  removeFile PATH_FOUND
+  let code = runStatus("node", @[ENTRY_HARNESS, PATH_FOUND] & paths)
   if code != 0:
-    result.add Finding(
+    return @[Finding(
       path: PATH_HARNESS,
       message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
-    )
+    )]
+  checkRendered(readDocument(PATH_FOUND), expectedOf(paragraphs), CONTROL, BUILD_HOSTED)
 
 
 proc publishedAt(name, url: string) =
@@ -786,7 +795,8 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
 proc drive() =
   ## Inspect, check against baselines, and hold committed list and docket to regeneration.
   ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
-  ##   Render every page, and hold each character beyond ASCII to faces page ships.
+  ##   Render every page, and hold each character beyond ASCII to faces page ships; render
+  ##   control too, and hold it to findings it expects, so blind render is finding.
   let pin = commitPga()
   var findings = checkoutChecked()
   inspect()
@@ -799,9 +809,11 @@ proc drive() =
       path: PATH_DOCKET,
       message: "Docket differs from regeneration; run `gaps`.",
     )
-  let built = pagesBuilt(facesFromStore())
+  let
+    faces = facesFromStore()
+    built = pagesBuilt(faces)
   findings.add pinnedChecked(pin, built)
-  findings.add renderedChecked(built)
+  findings.add renderedChecked(built, faces)
   report(findings)
 
 

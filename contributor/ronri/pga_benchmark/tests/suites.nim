@@ -2080,7 +2080,7 @@ suite "Internal: Driver":
       body = verbs[start..<verbs.find("\n\n\n", start)]
     check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
     check "pinnedChecked(pin, built)" in body  # digests of that build
-    check "renderedChecked(built)" in body  # render of that build
+    check "renderedChecked(built, faces)" in body  # render of that build
     check "(\"nodejs\"," in driver  # node that render runs under, declared
 
 

@@ -32,7 +32,8 @@
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
 ##   |           | measurement, evaluation, file, page and checkout to pin (`head.nim`) |
 ##   |           | then `types`, render every page as host serves it, and fail where    |
-##   |           | face of system draws character beyond ASCII (`tools/drive/`)         |
+##   |           | face of system draws character beyond ASCII, or where control page   |
+##   |           | raises other findings than it expects (`render.nim`)                 |
 ##   | head      | compare pin with library head; finding where library moved since     |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
