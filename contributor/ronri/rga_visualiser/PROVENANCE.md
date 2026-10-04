@@ -186,6 +186,7 @@ and this file does not:
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `blur` | every backdrop blur, what the drawer softens, and what its blur costs |
+| `veil` | the veil of a plane over every spot its pick finds it at |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
@@ -252,8 +253,22 @@ as one of zero, so the fixture drives both.
 
 Every sibling of the canvas is hidden by `opacity` for the capture. The reading is taken again until
 it carries a picture, up to ten times. To hide chrome forces a recomposite that a software
-rasteriser does not finish inside one frame. It costs about 0.49 s for each reading, about 19 times
-in a run.
+rasteriser does not finish inside one frame. It costs about 0.49 s for each reading, and the veil
+check alone takes eight.
+
+**The veil check holds the veil of a plane to the pick of that plane.** `driveVeilCovers` hides
+every object but the ground, and reads spots 15 px apart from four views: low, rolled, steep, and
+from underneath. In each view the eye stands inside the radius of the disc, so only the vanishing
+line can stop the box of the veil. Where the pick of the page finds the plane, the veil must change
+the spot by 8 or more over red, green and blue. A spot counts only where the canvas without the
+plane shows bare backdrop. A world axis in front of the veil hides it with no fault of the veil.
+
+Rejected: spots of one reading compared with each other, as `driveDiscUnderfoot` does, which pass on
+a canvas with no veil. Cost: eight readings, about 6 s of the drive. Verified by a break on purpose,
+2026-10-04, on the page without antialias. With the veil draws skipped, the low view read 4 of
+1878 spots veiled. With the floor of the box halfway between the vanishing line and the centre of
+the disc, it read 1677 of 1878. The steep view passed that break, because the line stands far off
+it.
 
 **Unexplained**: why the runner read blank through `readPixels` and white through the compositor.
 Neither Chromium here reproduces either.
@@ -350,6 +365,30 @@ Three things that the clock does not reach are set on the simulated page:
 - A page function that waits on its own timers runs through `evaluateOver`. The clock moves a fixed
   span that covers its waits, and yields to the page between timers, so each await resolves in
   order.
+
+**The simulated page draws without antialias.** `driveSimulated` sets `should_antialias` to false by
+an init script, before the page loads. `gl.ts` reads that switch before it asks for its context, and
+asks to antialias wherever the switch is absent. So the page of the reader, the real-clock page and
+the host page antialias, and the speed checks time what the reader runs. No verdict on the simulated
+page reads the sample of an edge. `driveAntialias` reads what each context granted: false on the
+simulated page, and true on the real-clock page.
+
+Rejected: antialias off on every driven page, which would time a page that no reader runs. The bench
+of Records and shaders measured the cost at the opening scene on 2026-10-04. Without antialias, GPU
+work for each frame step fell from 18.1 to 10.0 ms, and from 18.0 to 12.1 ms.
+
+**The simulated page is bound by GPU work under SwiftShader, and a frame step costs whole display
+frames.** So a saving shows in the drive only where it takes a step under the next display frame.
+Measured on one delegate on 2026-10-04, under the lock of the gate, in turn, two runs each:
+
+| Build | Browser drive | Simulated page | Real-clock page |
+|-------|---------------|----------------|-----------------|
+| Fan over the box of the sphere, antialias | 323.5 s, 311.7 s | 294.0 s, 282.2 s | 27.0 s, 26.9 s |
+| Quad stopped at the vanishing line | 230.6 s, 232.4 s | 204.2 s, 207.1 s | 23.9 s, 22.5 s |
+
+The first row is `main` at `5b689518`, and the second is this design, with antialias off on the
+simulated page alone. Every check passed in each run. The veil check and the two context checks add
+about 6 s to the second row. The browser drive is `build/drive/main.js` alone, timed from outside.
 
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
@@ -1889,13 +1928,41 @@ and the four guard cuts equal `clipToEyeSide`, and the across equals the join
 `directionNormal(tail ∧ head ∧ eye)`, sign included.
 
 **A fill of a plane, its rim and the sky are one record each.** A `DiscRecord` of 13 floats spans
-the view box of its bounding sphere (`viewBoxOfDisc`), on the static corner buffer of the unit
-circle. Every fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any
-grazing angle and agrees with `picking.rayPlaneHit`.
+one quad over a box on the view (`viewBoxOfDisc`), on the static corners of `discCorners`. Every
+fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any grazing angle
+and agrees with `picking.rayPlaneHit`.
 
 It is not a fan of corners on the plane. A corner of such a fan behind the eye left the clipper a
 sliver. That sliver rasterised to nothing under a grazing camera, and the disc ended at a hard
 chord.
+
+**The box of a veil stops at the vanishing line of its plane.** The view turns about the sight axis
+until the normal of the plane, signed toward the side of the eye, points up. The vanishing line,
+where a sight ray runs along the plane, then runs across the turned view at any roll. Along each
+turned axis the box bounds the sphere of the disc, or takes the whole turned view where that sphere
+holds the eye. Its floor then rises to the vanishing line, and the quad turns back onto the view. No
+ray below the line meets the plane in front of the eye, so the clip removes no pixel of the disc.
+
+Rejected: a box square to the view, which cannot stop at a slanted line. Rejected: a fan of 96
+triangles over the box, which drew the ellipse through its corners. That ellipse ran past the box by
+up to 41% of its half extent, and every fragment there was cast and discarded. Cost: each of the six
+corners of the quad works out the box again, with a turn and a cross product.
+
+Measured on 2026-10-04 under SwiftShader, at 1200 by 900 px with antialias, by a bench that is not
+kept. It sums the `GPUTask` events of a Chromium trace over 100 simulated frame steps. Each change
+has two pairs, before then after, in ms of GPU work for each step:
+
+| View | Quad over the box | Floor at the vanishing line |
+|------|-------------------|-----------------------------|
+| Opening scene | 25.8 to 18.9, 21.5 to 18.1 | 18.9 to 19.8, 19.1 to 19.0 |
+| Level and low over the ground | 24.4 to 20.8, 21.8 to 21.2 | 21.1 to 16.7, 20.4 to 15.9 |
+| Steep over the ground | 36.5 to 26.7, 26.1 to 22.6 | 22.9 to 25.5, 23.0 to 24.0 |
+| Level and low under the ground | 24.8 to 21.0, 23.1 to 21.3 | 21.0 to 18.7, 23.5 to 17.7 |
+
+The same steps with the disc draws skipped read 5.5 to 9.2 ms, which is the spread of the bench. So
+the floor changes the opening scene and the steep view by less than that spread. At the opening
+scene the vanishing line stands near the top of the box, because the box bounds the sphere and not
+the disc. From the opening stance the sphere of the ground spans 50° of height, and its disc 21°.
 
 A `DomeRecord` of 8 floats widens over a static unit sphere, which has no orientation. A
 `RingRecord` of 14 floats is the thirteen of a disc plus a width, and one instance draws the whole
@@ -1935,7 +2002,8 @@ of a selected plane would draw depth-tested behind the fill that it highlights.
 The desktop asks for a framebuffer at `SAMPLES_MULTISAMPLE` 4, and **falls back to none where no
 visual offers it**. `llvmpipe` under `xvfb` refuses the window outright, rather than downgrades
 it. A visualiser that will not start is worse than one whose thinnest lines alias. The browser
-context asks for `antialias: true`.
+context asks for `antialias: true`, except on the simulated page of the driven checks (Clocks of the
+driven checks).
 
 **The flat buffers are the page's own typed arrays, filled in place.** A `seq[float32]` on the JS
 backend is an `Array` of boxed doubles, converted element by element into a staging
@@ -1951,7 +2019,12 @@ hand.
 - the widening reference against the algebra;
 - the near crossing of a line within a pixel of its recorded place, in a close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
-- the box of the disc against the projection of its rim;
+- the static corners of the disc as two triangles that tile its box;
+- the box of the disc against the projection of its rim, read in the turned fractions of the box;
+- the quad of the disc on the side of the vanishing line where rays meet the plane, over seeded
+  views at every attitude and roll;
+- every spot of the disc that the view shows inside that quad, over the same views;
+- under a grazing eye, the quad of the disc as the lower half of the view;
 - the ray of the disc landing inside the rim and missing outside it;
 - a hit under a grazing eye nearer than the near plane;
 - all ninety-six rim segments on the plane at its radius;
@@ -1963,6 +2036,10 @@ disc and dome. The record narrows its arms to float32 there. Verified by driven 
 records of the demo under 64, against a ring count over 120. Both lines cross two rings, 100 and 80
 px out, in opposite pairs, 0.01 and 0.001 units off, along two headings. Assumed: that the figure of
 0.1 ms for the flat buffer holds at current caps, because it was measured at 1,024 objects.
+
+Verified under Xvfb on 2026-10-04: the quad and its floor changed 3 of 15,552,000 storyboard pixels
+against `main`, by 12 or less in any channel. Verified by driven check: the veil of the ground over
+every spot its pick finds it at, from four views.
 
 ## Algebra boundary
 
@@ -3569,5 +3646,13 @@ stands the eye 30.1 units off its centre at any scale. Within a few degrees of t
 still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
 rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
 leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
+
+**The box of a veil bounds the sphere of its disc, and not the disc** (Records and shaders). Where
+the rim stands wholly in front of the eye, its picture along each turned axis has extremes in closed
+form. An experiment bounded the box by them there, and kept the sphere and the vanishing line
+elsewhere.
+At the opening scene it took GPU work for each step from 12.0 to 6.9 ms, and from 10.1 to 6.9 ms.
+One drive with it read 188 s on the simulated page. The choices are to leave it, or to add that
+bound to the reference and both shaders, with a suite test of its own.
 
 [replications]: https://gitlab.com/mraxilus/replications
