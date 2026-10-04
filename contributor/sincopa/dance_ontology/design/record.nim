@@ -1,15 +1,19 @@
-## Record what rig viewer plays and what reference's tags say in one pool: every job of both
-## recordings in one queue, slowest first, each result kept as it comes, so restarted run asks
-## only what has no result yet.
+## Record every kept file of simulation in one pool: rig viewer's stills and sweeps, reference's
+## tags, whole-cloth turns, rig suite's answers and report's readings.  Every job of five
+## recordings is in one queue, slowest first, and each result is kept as it comes, so restarted
+## run asks only what has no result yet.
 ##
 ##   One queue: worker takes next job as it ends last one, so no worker waits while another
 ##     still holds several.  Each verb split its own jobs by worker, `k`, `k + cores` onward,
 ##     and one worker held rig 5.7 h where three ended at 3.1 to 3.8 h; modelled then took 3.0
 ##     h after it.  Estimated 2026-10-03 from job times of one run.
+##   One run asks each question once (`walk.keepAnswers`): report sweeps holds whole-cloth page
+##     sweeps, and rig and modelled stand same stills, so each reads what first job answered.
 ##   Slowest first (`SLOWEST`): last job to start is short, so every worker ends near same
-##     time.  Over 25.0 h of one core, four workers took 6.3 h, where ideal is 6.2 h, measured
-##     2026-10-03.  Order is measured and goes stale as simulation changes; wrong order costs
-##     time and never changes answer.
+##     time.  Order is measured and goes stale as simulation changes; wrong order costs time
+##     and never changes answer.
+##   Idle workers lend their cores (`walk.SPARE`): as queue empties, search of its last jobs
+##     walks distances on cores others left.
 ##   Resumable: each result is written under its recording's stamp as it comes (`build/record/`).
 ##     Restart asks only jobs with no result, and directory goes once its kept file is written.
 ##     Artifact, never committed.  File is renamed into place, so worker stopped mid-write
@@ -20,8 +24,8 @@
 ##     strings read by four threads raced on its counts, and verb died inside engine every
 ##     other run.
 ##
-##   Usage: record [rig | modelled]   writes `design/rig.json` and `design/modelled.json`, or
-##                                    one of them
+##   Usage: record [rig] [modelled] [turns] [answers] [verdicts]   writes kept file of each
+##                                    recording named, or of all five
 
 {.experimental: "strictFuncs".}
 
@@ -45,11 +49,15 @@ type
     ## Answer one job as text: what its result file keeps.
 
 
-const SLOWEST* = ["rig D1", "rig D7", "rig C1", "rig C7", "rig C2", "rig C6"]
-  ## Jobs slowest first, as one run measured them on 2026-10-04, before answers were kept:
-  ##   rig D1 and D7 548 s each, C1 and C7 448 s, C2 and C6 244 s.  Each plans 32 paths on
-  ##   every core (`walk.planAhead`), which modelled's planned questions then find kept.
-  ##   Every other job follows in order of `wanted`, whose turns walk every distance first.
+const SLOWEST* = ["rig D1", "modelled hc_la", "rig C1", "rig C2", "modelled hw_la_0",
+                  "verdicts sweep 0|0|false|0.0|00", "modelled pc_la", "modelled pw_la_0"]
+  ## Jobs slowest first, as one run measured them on 2026-10-04, four at once: rig D1 391 s,
+  ##   modelled hc_la 379 s, rig C1 365 s and C2 227 s, modelled hw_la_0 152 s, report's sweep
+  ##   turning lead 116 s, modelled pc_la 88 s and pw_la_0 76 s.  Each still plans 32 paths on
+  ##   every core (`walk.planAhead`), which modelled's planned questions find kept.  C7 and C6
+  ##   read C1 and C2 reflected (`walk.twinOf`), and D7 reads D1's paths kept, so they follow
+  ##   in order of `wanted`, as every other job does: whole-cloth turns first, which walk
+  ##   every distance.
 
 # Mutable and global: thread takes one argument, so workers read queue and what answers it here.
 var
@@ -85,7 +93,9 @@ proc work(worker: int) {.thread.} =
   {.cast(gcsafe).}:
     while true:
       let k = NEXT.fetchAdd(1)
-      if k >= QUEUE.len: break
+      if k >= QUEUE.len:
+        discard SPARE.fetchAdd(1)
+        break
       let path = pathOf(ROOT, STAMPS, QUEUE[k])
       if fileExists(path): continue
       let text = ASKED(QUEUE[k])
@@ -100,6 +110,7 @@ proc runQueue*(
   for task in tasks: createDir(root / &"{task.recording}-{stamps[task.recording]}")
   (QUEUE, ROOT, STAMPS, ASKED) = (tasks, root, stamps, ask)
   NEXT.store(0)
+  SPARE.store(0)
   var threads = newSeq[Thread[int]](workers)
   for worker in 0..<workers: createThread(threads[worker], work, worker)
   joinThreads(threads)

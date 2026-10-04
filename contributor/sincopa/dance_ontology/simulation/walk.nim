@@ -281,6 +281,44 @@ proc restsOf(rig: Rig, apart: float, is_away: bool): array[Body, float] =
   for who in Body: result[who] = stance[who].facing
 
 
+#[ Every Core ]#
+
+type Batch[A, R] = object  ## Asks answered on every core at once, each answer in its own place.
+  asks: seq[A]
+  answers: seq[R]
+  answer: proc(ask: A): R {.nimcall, gcsafe.}
+  next: Atomic[int]  ## Place in `asks` of next ask to take.
+
+proc answering[A, R](batch: ptr Batch[A, R]) {.thread.} =
+  ## Take asks until none is left, and put each answer in its place.
+  {.cast(gcsafe).}:
+    while true:
+      let k = batch.next.fetchAdd(1)
+      if k >= batch.asks.len: break
+      batch.answers[k] = batch.answer(batch.asks[k])
+
+proc onEveryCore*[A, R](asks: seq[A], answer: proc(ask: A): R {.nimcall, gcsafe.}): seq[R] =
+  ## Answer of each ask, on every core at once, in order of asks.
+  ##   Each ask builds its own world and frees it, so which core answers it and when
+  ##     changes no answer.
+  if asks.len == 1: return @[answer(asks[0])]
+  var batch = Batch[A, R](asks: asks, answer: answer)
+  batch.answers.setLen(asks.len)
+  var threads = newSeq[Thread[ptr Batch[A, R]]](min(asks.len, max(1, countProcessors())))
+  for thread in threads.mitems: createThread(thread, answering[A, R], addr batch)
+  joinThreads(threads)
+  batch.answers
+
+# Mutable and global: workers of one run say they are idle, and every search reads it.
+var SPARE*: Atomic[int]  ## Cores no job of run holds: workers that found queue empty.
+
+proc batchOf*[T](items: seq[T], first: int): seq[T] =
+  ## Items from `first` on that one search asks at once: one, and one more for each spare
+  ## core.  While every core holds job, search walks nothing past distance it stops at; as
+  ## queue empties, its last jobs take cores others leave.
+  items[first ..< min(items.len, first + min(1 + SPARE.load, max(1, countProcessors())))]
+
+
 iterator stands*(rig: Rig): float =
   ## Every distance couple may stand at, from clear of each other outward.
   ##   Only thing fixed about where couple stand is that they are not inside each
@@ -398,6 +436,20 @@ proc walked*(
     raise error
   WALKS.keep(key, (result, most))
 
+type WalkAsk = tuple[rig: Rig, band: Band, links: seq[Link], who: Body, apart, most,
+                      step: float, is_away: bool, head: Body, is_raw: bool]
+  ## One walk, by every argument it is walked with.  Raw walk is engine's own (`walkedOf`).
+
+proc walkedFor(ask: WalkAsk): Walk {.nimcall, gcsafe.} =
+  ## Walk one ask, as `walked` walks it, or as engine walks it where raw.
+  {.cast(gcsafe).}:
+    if ask.is_raw:
+      walkedOf(ask.rig, ask.band, ask.links, ask.who, ask.apart, ask.most, ask.step,
+               ask.is_away, ask.head)
+    else:
+      walked(ask.rig, ask.band, ask.links, ask.who, ask.apart, ask.most, ask.step,
+             ask.is_away, ask.head)
+
 proc stood*(
   rig: Rig,
   band: Band,
@@ -453,6 +505,15 @@ proc standsAt(
   result = Stood(is_holding: is_holding, apart: apart, turns: turns, strain: couple.strainOf)
   couple.free()
 
+type StandAsk = tuple[rig: Rig, band: Band, links: seq[Link], turns: float, is_away: bool,
+                       head: Body, apart: float, who: Body]
+  ## One still stood at one distance, by every argument it is stood with.
+
+proc stoodFor(ask: StandAsk): Stood {.nimcall, gcsafe.} =
+  ## Stand one ask, as `standsAt` stands it.
+  {.cast(gcsafe).}:
+    standsAt(ask.rig, ask.band, ask.links, ask.turns, ask.is_away, ask.head, ask.apart, ask.who)
+
 proc standingOf(
   rig: Rig,
   band: Band,
@@ -482,16 +543,25 @@ proc standingOf(
   ##   Still that fixes no way about (`either`) is wound either way at every
   ##     distance, and way asked keeps tie: card claims position, and couple
   ##     take whichever way there sits easier.
+  ##   Distances and ways are stood on every core at once, batch by batch, and taken in
+  ##     their order (`onEveryCore`).
   result = Stood(is_holding: false, strain: Strain(most: Inf))
-  var tried: seq[Option[float]]
+  var
+    tried: seq[Option[float]]
+    asks: seq[StandAsk]
   for far in stands(rig):
     for way in (if is_either_way: @[turns, -turns] else: @[turns]):
-      let got = standsAt(rig, band, links, way, is_away, head, far, who)
+      asks.add (rig, band, links, way, is_away, head, far, who)
+  var first = 0
+  while first < asks.len:
+    let batch = asks.batchOf(first)
+    for got in onEveryCore(batch, stoodFor):
       tried.add (if got.is_holding: some(got.strain.most) else: none(float))
       if got.is_holding and (not result.is_holding or got.strain.most < result.strain.most):
         result = got
       result.tried = tried
       if result.is_holding and result.strain.most <= 0.0: return
+    first += batch.len
 
 proc standing*(
   rig: Rig,
@@ -545,11 +615,18 @@ proc isReachingOf(
   ##   Sweep is asked for no more than card wants, so distance that gets there is
   ##     not walked further to find out how much further it would go.
   if turns == 0.0: return true
+  ##   Distances are walked on every core at once, batch by batch, and taken in their order.
   let step = (if turns >= 0.0: STEP else: -STEP)
+  var asks: seq[WalkAsk]
   for far in stands(rig):
-    let walk = walked(rig, band, links, who, far, abs(turns), step, is_away, head)
-    if walk.found_rest and not walk.is_stopped:
-      return true
+    asks.add (rig, band, links, who, far, abs(turns), step, is_away, head, false)
+  var first = 0
+  while first < asks.len:
+    let batch = asks.batchOf(first)
+    for walk in onEveryCore(batch, walkedFor):
+      if walk.found_rest and not walk.is_stopped:
+        return true
+    first += batch.len
   false
 
 proc isReaching*(
@@ -615,19 +692,27 @@ proc furthest(
   ##     under arm at.  Couple stand where move is smooth.  Once turn runs free
   ##     search looks `LOOK` further out for that and no further, since walking
   ##     every distance that carries free turn costs fifty walks where one did.
-  ##   Raw search walks engine's own walks (`walkedOf`).
+  ##   Distances are walked on every core at once, batch by batch, and taken in their order:
+  ##     walk past where search stops is walked and not taken.  Raw search walks engine's own
+  ##     walks (`walkedOf`).
   var
     walks: seq[Walk]
     carries: seq[Carry]
     free = Inf  ## First distance turn ran free from.
+    asks: seq[WalkAsk]
   for apart in stands(rig):
-    if apart > free + LOOK + SEEK / 2.0: break
-    let walk = (if is_raw: walkedOf(rig, band, links, who, apart, most, step, is_away, head)
-                else: walked(rig, band, links, who, apart, most, step, is_away, head))
-    if not walk.found_rest: continue
-    walks.add walk
-    carries.add (apart, (if walk.is_stopped: walk.at else: Inf), leapOf(walk))
-    if carries[^1].got == Inf: free = min(free, apart)
+    asks.add (rig, band, links, who, apart, most, step, is_away, head, is_raw)
+  var first = 0
+  block search:
+    while first < asks.len:
+      let batch = asks.batchOf(first)
+      for walk in onEveryCore(batch, walkedFor):
+        if walk.apart > free + LOOK + SEEK / 2.0: break search
+        if not walk.found_rest: continue
+        walks.add walk
+        carries.add (walk.apart, (if walk.is_stopped: walk.at else: Inf), leapOf(walk))
+        if carries[^1].got == Inf: free = min(free, walk.apart)
+      first += batch.len
   if carries.len > 0: result = walks[chosen(carries)]
 
 proc waysOf(
@@ -861,36 +946,25 @@ proc pathsFor(
   if isMirrorSame(links):
     result.add mirrored(planned(rig, links, is_away, -wind, style, turner))
 
-type
-  Asked = tuple[wind: float, style: Style]  ## One path a planned card may ask for.
+type PlanAsk = tuple[rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style,
+                     turner: Body]
+  ## One path planned card may ask for, by every argument `planPath` reads.
 
-  Batch = object  ## Paths one card asks for, planned ahead on every core.
-    rig: Rig
-    links: seq[Link]
-    is_away: bool
-    turner: Body
-    asked: seq[Asked]
-    next: Atomic[int]  ## Place in `asked` of next path to take.
-
-proc planning(batch: ptr Batch) {.thread.} =
-  ## Plan every path of batch that no thread has taken, and keep each.
+proc plannedIfFree(ask: PlanAsk): bool {.nimcall, gcsafe.} =
+  ## Plan and keep path of ask, where no thread has taken it; whether this one planned it.
   ##   Path another thread is planning is passed over, not waited on: card's own fold
   ##     waits for it, and this thread plans another meanwhile.
   {.cast(gcsafe).}:
-    while true:
-      let k = batch.next.fetchAdd(1)
-      if k >= batch.asked.len: break
-      let
-        (wind, style) = batch.asked[k]
-        key = keyOfPlan(batch.rig, batch.links, batch.is_away, wind, style, batch.turner)
-      if not PLANS.claimed(key): continue
-      var path: Path
-      try:
-        path = planPath(batch.rig, batch.links, batch.is_away, wind, style, batch.turner)
-      except CatchableError:
-        PLANS.forget(key)
-        continue
-      PLANS.keep(key, path)
+    let key = keyOfPlan(ask.rig, ask.links, ask.is_away, ask.wind, ask.style, ask.turner)
+    if not PLANS.claimed(key): return false
+    var path: Path
+    try:
+      path = planPath(ask.rig, ask.links, ask.is_away, ask.wind, ask.style, ask.turner)
+    except CatchableError:
+      PLANS.forget(key)
+      return false
+    PLANS.keep(key, path)
+    true
 
 proc planAhead(rig: Rig, links: seq[Link], is_away: bool, winds: seq[float], turner: Body) =
   ## Plan every path that these winds ask in every style, on every core at once, where
@@ -898,14 +972,12 @@ proc planAhead(rig: Rig, links: seq[Link], is_away: bool, winds: seq[float], tur
   ##   Each path is pure function of its arguments, so which thread plans it and when
   ##     changes nothing card reads.
   if not IS_KEEPING: return
-  var batch = Batch(rig: rig, links: links, is_away: is_away, turner: turner)
+  var asks: seq[PlanAsk]
   for wind in winds:
     for style in STYLES:
-      batch.asked.add (wind, style)
-      if isMirrorSame(links): batch.asked.add (-wind, style)
-  var threads = newSeq[Thread[ptr Batch]](min(batch.asked.len, max(1, countProcessors())))
-  for thread in threads.mitems: createThread(thread, planning, addr batch)
-  joinThreads(threads)
+      asks.add (rig, links, is_away, wind, style, turner)
+      if isMirrorSame(links): asks.add (rig, links, is_away, -wind, style, turner)
+  discard onEveryCore(asks, plannedIfFree)
 
 type PlannedStill* = object
   ## Still planned way stands, wound which way, from where, and couple standing there.

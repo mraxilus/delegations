@@ -153,23 +153,36 @@ proc readSweep*(ask: SweepAsk): SweepRead =
     let moment = momentAt(sweep, float(half_turns) / 2.0)
     if moment.isSome: result.glances[i] = glanceOf(ask.band, links, moment.get)
 
-proc readRung*(ask: RungAsk): RungRead =
-  ## Wind cross-name chain to rung and ask whether pose holds there standing, from
-  ## every distance, and read first that holds.
-  let links = @CHAIN
-  for apart in stands(HUMAN):
-    let (is_holding, couple) = stood(HUMAN, ask.band, links, ask.turn, false, Body.Two, apart)
+type RungTry = tuple[band: Band, turn, apart: float]  ## Rung stood from one distance.
+
+proc rungAt(ask: RungTry): RungRead {.nimcall, gcsafe.} =
+  ## Rung as stood from one distance: what report reads of it, where pose holds there.
+  {.cast(gcsafe).}:
+    let
+      links = @CHAIN
+      (is_holding, couple) = stood(HUMAN, ask.band, links, ask.turn, false, Body.Two, ask.apart)
     if is_holding:
       var arms: Arms
       for i in 0..<links.len: arms.add couple.poseOf(i).arms
       result = RungRead(
         found_pose: true,
-        apart: apart,
+        apart: ask.apart,
         strain: tightest(HUMAN, couple.stance, links, arms).strain,
         crossed: crossings(arms).len,
       )
     couple.free()
-    if result.found_pose: return
+
+proc readRung*(ask: RungAsk): RungRead =
+  ## Rung from first distance pose holds at, of every distance couple may stand at.
+  ##   Distances are stood on every core at once, batch by batch, and taken in their order.
+  var tries: seq[RungTry]
+  for apart in stands(HUMAN): tries.add (ask.band, ask.turn, apart)
+  var first = 0
+  while first < tries.len:
+    let batch = tries.batchOf(first)
+    for got in onEveryCore(batch, rungAt):
+      if got.found_pose: return got
+    first += batch.len
 
 
 
