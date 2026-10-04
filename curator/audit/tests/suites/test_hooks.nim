@@ -17,7 +17,7 @@ Done.
 
 **Role:** contributor/ronri/pga_benchmark, `gap-list`
 
-**State:** blocked, at `3f2a9c1`, pushed, #331 draft
+**Context:** This branch adds the gap list. The Architect asked for baselines. #331 was a draft.
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
@@ -27,9 +27,9 @@ Done.
 | 4 | ⏸️ | Names in the tests | #310 | D1 |
 | 5 | ⬜ | cga5d baseline | `tests/` | this delegate |
 
-**Context:** This branch adds the gap list. The Architect asked for baselines. #331 was a draft.
-
 **Summary:** The gap list is done. Row 4 waits on D1.
+
+**State:** blocked, at `3f2a9c1`, pushed, #331 draft
 
 **Decisions:**
 
@@ -53,15 +53,15 @@ Done.
 
 **Role:** contributor/ronri/pga_benchmark, `gap-list`
 
-**State:** done, at `3f2a9c1`, pushed, #331 ready
+**Context:** This branch adds the gap list.
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
 | 1 | ✅ | Gap list reads each baseline | `src/gaps.nim` | `koch check` green |
 
-**Context:** This branch adds the gap list.
-
 **Summary:** The gap list is done.
+
+**State:** done, at `3f2a9c1`, pushed, #331 ready
 
 **Decisions:** None.
 
@@ -208,15 +208,20 @@ suite "Hooks":
 
 
   test "sign-off parts come in order Architect set":
+    # Order is role, context, table, summary, state, decisions, next step (GUIDE.md).
     const context = "**Context:** This branch adds the gap list. The Architect asked for " &
       "baselines. #331 was a draft.\n\n"
-    let context_first = SIGNOFF.replace(context, "").replace("| # |", context & "| # |")
-    check checkSignoff(context_first, BRANCH)
-      .messages.anyIt("lacks `**Context:**` in its order" in it)  # table comes first
+    let table_first = SIGNOFF.replace(context, "").replace("**Summary:**", context & "**Summary:**")
+    check checkSignoff(table_first, BRANCH)
+      .messages.anyIt("| # |" in it and "in its order" in it)  # context comes before table
+    const state = "**State:** blocked, at `3f2a9c1`, pushed, #331 draft\n\n"
+    let state_early = SIGNOFF.replace(state, "").replace("**Context:**", state & "**Context:**")
+    check checkSignoff(state_early, BRANCH)
+      .messages.anyIt("lacks `**State:**` in its order" in it)  # state follows summary
     const summary = "**Summary:** The gap list is done. Row 4 waits on D1.\n\n"
     let summary_last = SIGNOFF.replace(summary, "").replace("**Next", summary & "**Next")
     check checkSignoff(summary_last, BRANCH)
-      .messages.anyIt("lacks `**Decisions:**` in its order" in it)  # decisions follow summary
+      .messages.anyIt("lacks `**State:**` in its order" in it)  # summary comes before state
 
 
   test "sign-off state and decisions label":
