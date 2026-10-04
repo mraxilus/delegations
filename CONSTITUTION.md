@@ -532,6 +532,13 @@ suite "Chapter 2":
    beside it holds an operator that binds tighter, as in `i + 1 ..< n`. Glued, `i + 1..<n` would
    read as if the range starts at 1. It also keeps one where the glued tokens would lex as one
    token, as before the prefix operator of `s[1 .. ^1]`.
+
+   Inside a bracket glued to the operand before it, as an index or a generic is, a symbol
+   operator takes no space (`prev[i-1]`). That holds at every depth inside the bracket, and a
+   range goes tight with its math (`digits[i+1..<n]`). A word operator keeps its spaces, which
+   the tokeniser demands, and so do `=` and `:` as this list gives them. Where the glued tokens
+   would lex as one token, the space stays. An array literal that stands alone keeps the spaces
+   of this list.
 10. A list that the language gives no order of its own is alphabetised, as the imports are.
     That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
     dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
