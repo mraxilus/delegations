@@ -1,6 +1,6 @@
 {
   "status": "proposed",
-  "builds_on": "typed-multivectors",
+  "builds_on": ["typed-multivectors"],
   "claims": [
     {
       "kind": "program",
