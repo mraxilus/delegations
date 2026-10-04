@@ -756,10 +756,11 @@ a copy from two different faces.
   that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
   `compilers.digestOf`, so the parse that `test_compilers.nim` tests also guards the store.
-- Verified by `suites/test_assets.nim`. Verified by hand with `nim r koch fetch-assets`, recorded
-  2026-09-10, machine unrecorded. A cold store fills with three faces in **1.0 s**, two of them
-  shared by two projects. The same call warm takes **0.117 s**, and fetches nothing.
-- Verified by a break of it, on the same date. A face that nobody declares is a finding, which
+- Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
+  fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
+  Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
+  fetches nothing.
+- Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
 - Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a compiler is
