@@ -20,6 +20,9 @@ import ../../src/dance_ontology/frame
 const
   ARRANGED = 1e-6  ## Degrees two arrangements may differ by: arithmetic alone.
   STRAIN_SAME = 1e-9  ## Strain two figures of one pose may differ by, in one recording: none.
+  NOSE = 0.12  ## Metres nose sits ahead of head's axis, by ANSUR II head length 0.20 / 0.19 m.
+  FACE_HALF = 0.07  ## Metres from middle of face to cheek: half breadth across cheekbones, about
+                    ## 0.14 m by ANSUR II.  Estimate and not tape.
   FACE_SLOP = 0.005  ## Metres arm may sit inside face: engine's own linear slop, which it never
                     ## resolves (`test_rigid.SLOP`).
 
@@ -412,6 +415,19 @@ suite "Internal: Simulation against reference":
         check rightward > 0.0
         inc torsos
     check torsos == 2 * stills
+
+
+  test "face's sphere covers face alone, reaching nose and no wider than face":
+    ## Architect, 2026-10-04: smaller face first, sphere covering face alone, so arm may pass
+    ##   close to brow and cheek.  Red with sphere of head's own radius 5 cm ahead, which
+    ##     reached 14 cm ahead of head's axis and 9 cm to either side.
+    let
+      face = faceCapsule(HUMAN)
+      (head_low, head_high, _) = trunkCapsules(HUMAN)[^1]
+      ahead = face.a.y - ((head_low + head_high) * 0.5).y
+    checkpoint &"face reaches `{ahead + face.radius:.3f}` m ahead, `{face.radius:.3f}` m to side"
+    check abs(ahead + face.radius - NOSE) <= FACE_SLOP
+    check face.radius <= FACE_HALF
 
 
   test "every arm keeps clear of every face, in every still and every moment of every sweep":
