@@ -46,7 +46,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sets, strutils, unicode]
-import ./[findings, form, names, tokens]
+import ./[form, reports, tokens, views]
 
 
 type
@@ -255,7 +255,7 @@ func respacings(source: string): seq[Respacing] =
     result.add spacing
 
 
-func checkSpacing*(path, source: string): seq[Finding] =
+func checkSpacing*(path, source: string): seq[Report] =
   ## Report gap inside expression spaced against X.9 where its rewrite moves no reading.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for spacing in source.respacings:
@@ -269,7 +269,12 @@ func checkSpacing*(path, source: string): seq[Finding] =
       of Placement.Semicolon: "Semicolon takes no space before it and one after (X.9)"
       of Placement.Colon: "Colon takes no space before it and one after (X.9)"
       of Placement.Inner: "Bracket holds no space inside it (X.9)"
-    result.add finding(path, spacing.line + 1, message & "; got `" & spacing.got & "`.")
+    result.add initReport(
+      path,
+      spacing.line + 1,
+      Rule.ExpressionSpacing,
+      message & "; got `" & spacing.got & "`.",
+    )
 
 
 func fixSpacing*(path, source: string): Fix =
@@ -301,6 +306,6 @@ func fixSpacing*(path, source: string): Fix =
       done = e.first
     if not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
-      for m in k ..< j: result.fixed.add finding(path, line + 1, "expression spacing (X.9)")
+      for m in k ..< j: result.fixed.add initReport(path, line + 1, Rule.ExpressionSpacing)
     k = j
   result.source = lines.join("\n")

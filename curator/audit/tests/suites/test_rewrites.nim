@@ -5,7 +5,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, strutils, tables, unittest]
-import ../../src/[rewrites, symbols, tokens]
+import ../../../knoller/src/knoller
+import ../../src/[rewrites, symbols]
 
 
 const

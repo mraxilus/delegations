@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[findings, precedence]
+import ../../src/knoller/precedence
 
 
 func fixed(source: string): string =

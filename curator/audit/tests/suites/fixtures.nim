@@ -8,7 +8,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[json, os, osproc, strutils, tempfiles]
-import ../../src/[dependencies, domains, idioms, kinds, layout, markdown, provenance]
+import ../../../knoller/src/knoller
+import ../../src/[dependencies, domains, kinds, layout, markdown, provenance]
 
 
 func entry*(path, content: string): Entry =
