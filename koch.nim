@@ -301,12 +301,11 @@ proc runHook(root, event, input: string): int =
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
-      if not turn.calls.isTurnWriting: return 0
-      let found = checkEndTurn(turn.text, branch)
+      var found = checkNumbersBare(turn.text)
+      if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch)
       if found.len == 0: return 0
-      echo %*{"decision": "block", "reason": "End this turn with sign-off block once done, " &
-        "blocked or waiting, or with working line while work runs (GUIDE.md, Output contract), " &
-        "since it pushed or posted:\n" & found.mapIt(it.message).join("\n")}
+      echo %*{"decision": "block", "reason": "Mend message that ends this turn (GUIDE.md, " &
+        "Output contract):\n" & found.mapIt(it.message).join("\n")}
       0
   of "start":
     var drift: seq[Finding]
