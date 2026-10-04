@@ -496,6 +496,18 @@ statement line is the line where the expression opens. A call and a signature ke
 one level, and an argument on its own line is the line where its expression opens. The fixer sets
 that indent on the lines that the hand wrote too.
 
+- An expression whose first piece opens its own line takes no step, and every line of it takes the
+  indent of that line. The first piece opens its line where an opening bracket or a comma ends the
+  line above. No `=`, `:`, separator, keyword or command head stands before the operator that ends
+  that line (`isOwnLine`). The bracket or the comma already sets the expression apart from a body.
+  So the hand keeps each piece at the indent of the first, as every broken expression of the PGA
+  library does.
+- Rejected: four spaces past the line where the first piece opens. It moved each later piece of
+  a bracket or an argument away from the indent of the first.
+- A statement that opens with its expression, such as the value that ends a routine, keeps the
+  four spaces. No bracket or comma sets it apart from the body around it.
+- The operator break reads the same predicate, so a line that knoller breaks takes the indent
+  that the check asks. An argument that a call split leaves wide breaks flat.
 - A chain that opens on the line after the `=` of a binding or an assignment counts from the line
   of that `=`. So it takes the four spaces too, its first line included, as the Architect chose on
   2026-10-04. Its lines take one indent, and never step in again.
