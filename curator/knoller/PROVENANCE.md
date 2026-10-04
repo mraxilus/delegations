@@ -394,14 +394,14 @@ code before the wideners.
 
 - Every file settles with the chain run at most twice, and no file falls back to every line held.
 - The run leaves no wide line. Two findings of spacing stay on one line of `test_mesh.nim` of
-  `rga_visualiser`, where an `if` expression puts `:` before code. Thirty-one continuations stay
-  two spaces in, each one packed by hand to 100 runes, as `## Wraps` gives.
+  `rga_visualiser`, where an `if` expression puts `:` before code. Sixty-three continuations
+  stay where the hand put them, in runs that hold a line packed to 100 runes, as `## Wraps` gives.
 - The four messages that ended on their value take the shape. The usage error of `command.nim`
   writes its usage apart, so its message ends on its value.
 - Rewrites, with the commit before in brackets:
   - call splits 609 (599), spaces 2,346 (2,311), comment gaps 737 (735);
   - doc positions 55 (54), messages 6 (3), signatures 117 (116);
-  - operator breaks 9, continuations 1,727 and comments moved above 1, all new.
+  - operator breaks 9, continuations 1,696 and comments moved above 1, all new.
 - The parser of the compiler, 2.2.12, reads each changed file to the tree it read before, once
   the rewrites of `## Layout fixes` and `## Content fixes` are normalised. Against the commit
   before, each file reads to the same tree once backticks and the shape of a message are
@@ -436,8 +436,9 @@ sets that indent on the continuations that the hand wrote too.
   between two of them. It also stays where a bracket opened before it closes in its middle, or
   where its last line leaves a bracket open.
 - Cost: a continuation that the hand packed to 100 runes two spaces in crosses `LINE_MAX` four
-  spaces in. No wrap reflows a string across lines, so such a line is held. Its finding stays for
-  the hand.
+  spaces in. No wrap reflows a string across lines, so such a line is held. Its whole run then
+  keeps the indent of the hand, so the continuations of one expression never part. Each line of
+  that run keeps its finding for the hand.
 - Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`.
 
 **A plain `#` trailing comment that does not fit moves to its own line above, by the ruling of the
