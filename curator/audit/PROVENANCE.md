@@ -1859,8 +1859,8 @@ group sorted. The items sort into the slots they held, and a `key: value` item m
 
 **Each space inside an expression takes the count of the list of X.9.** A binary operator and
 `=` take one space on each side, and one that ends its line takes one before it. A comma and a
-colon take none before them and one after. A range operator takes none, and neither does the
-inside of a bracket. A prefix operator is glued to its operand.
+colon take none before them and one after. The inside of a bracket takes none. A prefix
+operator is glued to its operand.
 
 - The lexer reads only whether a space stands on each side of an operator, never how many. A
   space before and none after reads as prefix, so `a -b` is the call `a(-b)`.
@@ -1869,8 +1869,6 @@ inside of a bracket. A prefix operator is glued to its operand.
   meaning. So `a ⊖b` stays a command call.
 - A prefix operator stands after anything but an operand, which is where the parser reads a
   prefix node. A `-` glued before a number would become a literal, so `- 1` stays.
-- A range stays spaced where an operator or a negative number follows it, because `1..^1` and
-  `1..-1` each lex one operator.
 - A gap stays where closing it would merge two tokens: `(` before `.`, `[` before `:`, `.` before
   `)`, and a colon after an operator.
 - `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
@@ -1884,6 +1882,28 @@ inside of a bracket. A prefix operator is glued to its operand.
 - Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
   start of such a line stays.
 - Cost: the spaces that align the columns of a table go, unless a fence holds them.
+
+**A range operator takes one space on each side, as every binary operator does (X.9).** The
+Architect set this rule on 2026-10-04, so that every binary operator spaces alike. It covers `..`,
+`..<` and `..^`, as in `2 .. 6` and `0 ..< n`. A range that ends its line takes one space before
+it. Verified by `suites/test_spacing.nim`.
+
+- A `^` after a range is a prefix operator, so it stays glued to its operand, as in `s[1 .. ^1]`.
+  Verified by `suites/test_spacing.nim`: that line passes, and `s[1 .. ^ 1]` fixes to it.
+- Glued `1..^1` lexes as the one operator `..^`, and not as `..` and a prefix `^`. So the fixer
+  writes `1 ..^ 1`, and never splits the token. Verified by `suites/test_spacing.nim`.
+- `1 ..^ 1` and `1 .. ^1` call one operator. Verified by hand, 2026-10-04: `lib/system/indices.nim`
+  of 2.2.12 defines the template `..^` as `a .. ^b`.
+- Cost: the fixer leaves `1 ..^ 1` where X.9 shows `1 .. ^1`. The split is a choice for the hand.
+- A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
+  `checkSpacing` and `fixSpacing` on that line.
+- No fixer writes a spaced range again. Verified by `suites/test_fixes.nim`: a spaced source goes
+  through every fixer unwritten, and a split call, a joined call and a wrapped signature keep
+  each space.
+- Cost: a glued range stays where its spaces would push a line with a trailing doc past
+  `LINE_MAX`. The doc fixer moves a doc only off a line that is already wide, so neither fixer
+  acts. Move the doc to its next line by hand, then fix. Verified by hand, 2026-10-04, through
+  `fixEntries`.
 
 **Banners take the blank lines of X.2 exactly, and `strictFuncs` after the imports moves.** The
 banner fixer sets each run beside a banner to the count that `checkBanners` reads. The late
