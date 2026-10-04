@@ -1107,9 +1107,9 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs about four seconds, against seconds
-  to minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
-  a second code path and the whole-tree layout and stamp guarantees.
+- Rejected: a scope on the static pass. The static pass costs about four seconds, against
+  seconds to minutes for the suites of one project (Figures). A scope buys nothing measurable
+  there, and costs a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
   point of the rule.
