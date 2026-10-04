@@ -43,6 +43,7 @@ const
     ("curl", "compiler pin nothing on machine serves is downloaded"),
     ("tar", "that download is archive, and unpacking it is what makes it toolchain"),
     ("coreutils", "`sha256sum` checking it against digest published beside it"),
+    ("libbrotli1", "audit suite reads `cmap` of `woff2` face, whose tables are one Brotli stream"),
   ]
     ## System packages koch itself needs, whatever any project declares. Same shape rule asks
     ## of every project, kept by driver that enforces it: declaration is data carrying its
@@ -51,6 +52,8 @@ const
     ##   and `compilers.nim` resolves each pin itself. npm is not here either -- it is needed
     ##   where project carries node manifest, so it belongs to that project rather than to
     ##   koch, and `restoreNode` reports its absence by name.
+    ##   `libbrotli1` serves audit suite rather than koch: `curator/audit` carries no driver to
+    ##   declare it through `system`, and its suite is checker's own.
 
 
 type Target* = object  ## Define one project to run, with toolchain serving its pin.
