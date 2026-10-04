@@ -163,7 +163,7 @@ suite "Wrapping":
     let continued = "  result.add finding(\n    path, 0,\n    \"" & "x".repeat(90) & "\" &\n" &
       "      name,\n  )\n"
     check continued.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(90) &
-      "\" &\n        name,\n  )\n"  # continuation four spaces in (STYLE.md §5)
+        "\" &\n        name,\n  )\n"  # continuation four spaces in (STYLE.md §5)
     let rows = "check foo(bar, @[\n  1, 2,\n  3, 4,\n])\n"
     check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ],\n)\n"
     check rows.fixed.isSettled
@@ -172,40 +172,40 @@ suite "Wrapping":
   test "line no call split fits breaks after operator of lowest precedence, latest that fits":
     let
       sum = "offset_x * bounds.forward.x + offset_y * bounds.forward.y + " &
-        "offset_z * bounds.forward.z"
+          "offset_z * bounds.forward.z"
       statement = "  let depth = " & sum & "\n"  # 101 runes
     check statement.fixed == "  let depth = offset_x * bounds.forward.x + offset_y * " &
-      "bounds.forward.y +\n      offset_z * bounds.forward.z\n"  # `+` before `*`, second `+`
+        "bounds.forward.y +\n      offset_z * bounds.forward.z\n"  # `+` before `*`, second `+`
     check checkCalls("a.nim", statement).mapIt(it.rule) == @[Rule.OperatorWrapping]
     let mixed = "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and " &
-      "c".repeat(30) & "\n"
+        "c".repeat(30) & "\n"
     check mixed.fixed == "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and\n" &
-      "      " & "c".repeat(30) & "\n"  # `and` binds loosest, so breaks first
+        "      " & "c".repeat(30) & "\n"  # `and` binds loosest, so breaks first
     for source in [statement, mixed]: check source.isBrokenAlone
 
 
   test "operator break holds inside split call, under `if`, and on continuation line":
     let call = "  result.add finding(path, \"" & "x".repeat(60) & "\" & name & \"" &
-      "y".repeat(30) & "\")\n"
+        "y".repeat(30) & "\")\n"
     check call.fixed == "  result.add finding(\n    path,\n    \"" & "x".repeat(60) &
-      "\" & name &\n        \"" & "y".repeat(30) & "\",\n  )\n"  # argument breaks four in
+        "\" & name &\n        \"" & "y".repeat(30) & "\",\n  )\n"  # argument breaks four in
     let condition = "  if " & "a".repeat(45) & " and " & "b".repeat(45) & ":\n    discard\n"
     check condition.fixed == "  if " & "a".repeat(45) & " and\n      " & "b".repeat(45) &
-      ":\n    discard\n"  # condition four in, body two
+        ":\n    discard\n"  # condition four in, body two
     let continued = "  let x = first +\n      " & "a".repeat(45) & " + " & "b".repeat(47) & "\n"
     check continued.fixed == "  let x = first +\n      " & "a".repeat(45) & " +\n      " &
-      "b".repeat(47) & "\n"  # continuation line keeps its indent
+        "b".repeat(47) & "\n"  # continuation line keeps its indent
     let ranged = "  let r = " & "a".repeat(44) & " ..^ " & "b".repeat(45) & "\n"
     check ranged.fixed == "  let r = " & "a".repeat(44) & " ..^\n      " & "b".repeat(45) &
-      "\n"  # compound operator stays whole
+        "\n"  # compound operator stays whole
     for source in [call, condition, continued, ranged]: check source.isBrokenAlone
 
 
   test "call split comes before operator break, and line it cannot break stays":
     let split = "  let total = first_value + combine(alpha_argument, beta_argument, " &
-      "gamma_argument, delta_argument_name)\n"  # 103 runes
+        "gamma_argument, delta_argument_name)\n"  # 103 runes
     check split.fixed == "  let total = first_value + combine(\n    alpha_argument,\n" &
-      "    beta_argument,\n    gamma_argument,\n    delta_argument_name,\n  )\n"
+        "    beta_argument,\n    gamma_argument,\n    delta_argument_name,\n  )\n"
     for kept in [
       "  let x = " & "a".repeat(45) & " + " & "b".repeat(45) & "  # Why.\n",  # comment
       "  let x = " & "a".repeat(30) & " + " & "b".repeat(48) & " * " & "c".repeat(48) & "\n",
@@ -232,10 +232,34 @@ suite "Wrapping":
       EXAMPLE_CALL,  # arguments one level in
       "let x = a +\n  # Why.\n  b\n",  # comment line between
       "let x = a +\n  @[\n    1,\n  ]\n",  # last line leaves bracket open
-      "let x =\n  a\n",  # `=` ends no expression
     ]:
       check checkContinuations("a.nim", kept).len == 0
       check kept.fixed == kept
+
+
+  test "value opening after `=` takes four spaces past its statement line, every line alike":
+    let ranges = "const\n  RANGES_NOTO_SANS_MATH =\n    \"20-7e a0 a7 33a 33f \" &\n" &
+        "    \"346 34d 391-3a1 2016 \" &\n    \"2018-2019 201c-201d \"\n"
+    check checkContinuations("a.nim", ranges).mapIt(it.line) == @[3, 4, 5]
+    check ranges.fixed == "const\n  RANGES_NOTO_SANS_MATH =\n      \"20-7e a0 a7 33a 33f \" &\n" &
+        "      \"346 34d 391-3a1 2016 \" &\n      \"2018-2019 201c-201d \"\n"  # flat
+    check ranges.fixed.isSettled
+    let staircase = "let s =\n  \"a \" &\n      \"b \" &\n      \"c\"\n"
+    check staircase.fixed == "let s =\n    \"a \" &\n    \"b \" &\n    \"c\"\n"  # one indent
+    check "result.origin =\n  a +\n    b\n".fixed == "result.origin =\n    a +\n    b\n"
+    check "let x =\n  a\n".fixed == "let x =\n    a\n"  # first line alone, too
+    check "let x =\n  if c: a\n  else: b\n".fixed == "let x =\n    if c: a\n    else: b\n"
+    check "let x =\n  @[\n    1, 2,\n    3, 4,\n  ]\n".fixed ==
+        "let x =\n    @[\n      1, 2,\n      3, 4,\n    ]\n"  # layout of its lines kept
+    for kept in [
+      "proc f() =\n  a\n",  # body of routine
+      "let f = proc () =\n  a\n",  # body of lambda
+      "type\n  T =\n    object\n",  # type
+      "let x =\n    a +\n    # Why.\n    b\n",  # comment line inside value
+    ]:
+      check checkContinuations("a.nim", kept).len == 0
+      check kept.fixed == kept
+    check checkContinuations("a.nim", "foo(\n  name =\n    1,\n)\n").len == 0  # call's own
 
 
   test "call holding comment, long string spanning lines, or block stays":

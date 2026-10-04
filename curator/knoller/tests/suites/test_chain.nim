@@ -30,54 +30,65 @@ const
     ## Atlas lock holding copy of nimble file `alpha.nimble`.
   HEAD = STRICT_FUNCS & "\n\nproc p() =\n"  ## Opening of each case: module pragma and routine.
   PICKING =
-    "  let\n    lateral = tangent_half_view*hypot(clip_x/depth*float(width)/float(height), " &
-        "clip_y/depth)\n"
+      "  let\n    lateral = tangent_half_view*hypot(clip_x/depth*float(width)/float(height), " &
+      "clip_y/depth)\n"
     ## Line of 92 runes that spacing takes to 102.
   GIF =
-    "  let compressed = encodeLempelZivWelch(arena, dictionary, indices.toOpenArray(0, " &
-        "width*height - 1))\n"
+      "  let compressed = encodeLempelZivWelch(arena, dictionary, indices.toOpenArray(0, " &
+      "width*height - 1))\n"
     ## Line of 100 runes that spacing takes to 102.
   VERDICTS =
-    "var\n  READINGS_KEPT*: Readings  ## Readings report renders from.\n" &
-        "  SWEEPS_WANTED: seq[SweepAsk] ## Sweeps render asked for and `READINGS_KEPT` " &
-        "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]\n"
+      "var\n  READINGS_KEPT*: Readings  ## Readings report renders from.\n" &
+      "  SWEEPS_WANTED: seq[SweepAsk] ## Sweeps render asked for and `READINGS_KEPT` " &
+      "lacks, in order asked.\n  RUNGS_WANTED: seq[RungAsk]\n"
     ## Binding whose doc gap of one space takes line of 100 runes to 101.
   CAPTION =
-    "  for i, line in lines:\n    if is_caption:\n" &
-        "      if not line.namesKey(\"captionWindow\"):\n" &
-        "        found.add PATH_DESKTOP_NIM & \":\" & $(i + 1) & \": caption must name " &
-        "`captionWindow`; got \" &\n          line.strip\n"
+      "  for i, line in lines:\n    if is_caption:\n" &
+      "      if not line.namesKey(\"captionWindow\"):\n" &
+      "        found.add PATH_DESKTOP_NIM & \":\" & $(i + 1) & \": caption must name " &
+      "`captionWindow`; got \" &\n          line.strip\n"
     ## Message ending on its value, continued by hand two spaces in.
   SHOWN =
-    "  if found.len > 0:\n    raise newException(\n      OSError,\n" &
-        "      \"Shown text belongs in `wording.nim`, named by key; got \" & $found.len & " &
-        "\":\\n  \" &\n        found.join(\"\\n  \"),\n    )\n"
+      "  if found.len > 0:\n    raise newException(\n      OSError,\n" &
+      "      \"Shown text belongs in `wording.nim`, named by key; got \" & $found.len & " &
+      "\":\\n  \" &\n        found.join(\"\\n  \"),\n    )\n"
     ## Message argument ending on list, continued by hand two spaces in.
   FACES =
-    "  if code != 0:\n    raise newException(OSError,\n" &
-        "      \"`koch fetch-assets` would not serve every face; got exit `\" & $code & " &
-        "\"` --\\n\" & written)\n"
+      "  if code != 0:\n    raise newException(OSError,\n" &
+      "      \"`koch fetch-assets` would not serve every face; got exit `\" & $code & " &
+      "\"` --\\n\" & written)\n"
     ## Message whose shape takes its argument past `LINE_MAX`.
   AIM =
-    "  block:\n    block:\n" &
-        "      check camera.placed(framed).pivot =~ camera.pivot # Orbit turned; what it " &
-        "turns about did not.\n"
+      "  block:\n    block:\n" &
+      "      check camera.placed(framed).pivot =~ camera.pivot # Orbit turned; what it " &
+      "turns about did not.\n"
     ## Assertion whose comment gap of one space takes line of 100 runes to 101.
   HELD =
-    "  let depth = offset_x*bounds.forward.x + offset_y*bounds.forward.y + " &
-        "offset_z*bounds.forward.z\n" &
-        "  if flag: total = offset_x*forward_x + offset_y*forward_y + offset_z*forward_z + " &
-        "offset_w*forward_w\n"
+      "  let depth = offset_x*bounds.forward.x + offset_y*bounds.forward.y + " &
+      "offset_z*bounds.forward.z\n" &
+      "  if flag: total = offset_x*forward_x + offset_y*forward_y + offset_z*forward_z + " &
+      "offset_w*forward_w\n"
     ## Two lines spacing widens: first breaks after `+`; second, `:` before code, breaks nowhere.
   FILTERS =
-    "  tag(\n    \"div\",\n    \"class=\\\"filters\\\"\",\n" &
-        "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
-        "\"connections\") & holds) &\n" &
-        "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
-        "\"lead's hand holds\") & lead) &\n" &
-        "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
-        "\"follow's hand held\") & follow),\n  )\n"
+      "  tag(\n    \"div\",\n    \"class=\\\"filters\\\"\",\n" &
+      "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
+      "\"connections\") & holds) &\n" &
+      "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
+      "\"lead's hand holds\") & lead) &\n" &
+      "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
+      "\"follow's hand held\") & follow),\n  )\n"
     ## Argument hand continued at its own indent, whose lines four spaces in cross `LINE_MAX`.
+  NAMES = "  const NAMES =\n    \"" & "a".repeat(45) & "\"&\"" & "b".repeat(45) & "\"\n"
+    ## Value after `=`, one line of 99 runes that spacing takes to 101.
+  RANGES =
+      "const\n  RANGES_COMMIT_MONO =\n" &
+      "    \"20-7e a0-17f 192 1fa-1ff 218-21b 237 2c6-2c7 2c9 2d8-2dd 300-301 308 30a 326 " &
+      "384-386 \" &\n" &
+      "    \"388-38a 38c 38e-3a1 3a3-3ce 3d5 1e80-1e85 1ef2-1ef3 2010-201e 2020-2022 2026 2030 " &
+      "2032-2033 \" &\n" &
+      "    \"2039-203a 203c 203e 2044 204a 2070 2074-208e 20a3-20a4 20a7 20ac 2105 2113 " &
+      "2116-2117 2122\"\n"
+    ## Value of `assets.nim` of `audit` two spaces in, whose second line is 100 runes.
 
 
 func fixedOf(source: string): string =
@@ -214,6 +225,18 @@ suite "Repair that widens its line":
   test "continuation run with line no wrap fits keeps its indent whole, with its findings":
     check (HEAD & FILTERS).fixedOf == HEAD & FILTERS  # no continuation parts from its run
     check checkFormatting("a.nim", HEAD & FILTERS, Dialect.Module).mapIt(it.line) == @[8, 9]
+
+
+  test "value after `=` that breaks after operator sits four spaces past statement, flat":
+    check (HEAD & NAMES).fixedOf == HEAD & "  const NAMES =\n      \"" & "a".repeat(45) &
+        "\" &\n      \"" & "b".repeat(45) & "\"\n"
+    check (HEAD & NAMES).fixedOf.isSettled
+
+
+  test "value after `=` with line no wrap fits keeps its indent whole, with its findings":
+    let source = STRICT_FUNCS & "\n\n" & RANGES
+    check source.fixedOf == source
+    check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7]
 
 
   test "operator tokens read same before and after, `&` of message shape aside":

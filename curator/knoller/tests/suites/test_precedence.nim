@@ -63,7 +63,7 @@ suite "Article X":
   test "X.4 fix held on no line widens it, and keeps width guard on held line":
     let near = "if " & "x".repeat(77) & " and b or c: discard\n"  # 100 runes; parentheses 102
     check fixMixtures("a.nim", near, Held()).source ==
-      "if (" & "x".repeat(77) & " and b) or c: discard\n"  # no line held: widens
+        "if (" & "x".repeat(77) & " and b) or c: discard\n"  # no line held: widens
     check fixMixtures("a.nim", near, Held(lines: @[1])).source == near  # its line held
 
 

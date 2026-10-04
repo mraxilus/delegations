@@ -76,11 +76,11 @@ suite "Article IV":
     check ending.fixed == "f(\"Bad; got `\" & $count & \"`.\")\n"
     check ending.fixed.isSettled
     check "raise e(\"Exit; got `\" & $code & \"` --\\n\" & written)\n".fixed ==
-      "raise e(\"Exit; got `\" & $code & \"` --\\n`\" & written & \"`.\")\n"  # span closed
+        "raise e(\"Exit; got `\" & $code & \"` --\\n`\" & written & \"`.\")\n"  # span closed
     check "found.add \"Caption; got \" &\n  line.strip\n".fixed ==
-      "found.add \"Caption; got `\" &\n  line.strip & \"`.\"\n"  # value on next line
+        "found.add \"Caption; got `\" &\n  line.strip & \"`.\"\n"  # value on next line
     check "f(\"Rows; got \" & found.join(\", \"))\n".fixed ==
-      "f(\"Rows; got `\" & found.join(\", \") & \"`.\")\n"  # call as value
+        "f(\"Rows; got `\" & found.join(\", \") & \"`.\")\n"  # call as value
 
 
   test "IV.4 value binding looser than `&`, or no literal before it, takes no shape":
