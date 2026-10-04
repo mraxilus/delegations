@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 7111371ea45469d3 |
+| Rules   | a2dba8c2495cd005 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -72,6 +72,17 @@ and their checks.
 comment at its own indent. A fixer whose rewrite would move a fenced line is skipped for that file.
 A fence that crosses a bracket, a string or a comment leaves the whole file as written. Verified by
 `suites/test_fences.nim` and `suites/test_chain.nim`.
+
+**Each run warns of each fence, so whoever runs it sees each line that no fixer reads.** A fence
+is the one escape from the rules, and a line it keeps is easy to forget. One warning names the
+first line of each fence and the lines it keeps, markers included. Knoller prints it as
+`fence-held warning`, and `koch fix` prints it after `warning:`. A warning changes no exit code,
+because the charter grants the fence (Article X.1).
+
+- Rejected: a fence as a finding that fails the run. A generated file would then fail every run,
+  though its fence is allowed.
+- Cost: a file with many fences prints one line for each of them.
+- Verified by `suites/test_fences.nim` and `suites/test_command.nim`.
 
 ## Command line
 

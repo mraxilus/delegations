@@ -412,6 +412,29 @@ Write each decision so that the Architect can decide it from the block alone.
 - **Recommends** names one option, and why, in one sentence.
 - **Delay costs** says what waits while nobody decides.
 
+#### A decision explained
+
+**When the Architect replies `decide` to a sign-off that holds decisions, explain them one at a
+time.** Start with `D1`, and give each decision a message of its own. Wait for its ruling before
+you explain the next one. `decide D2` asks for one decision alone. Where the Architect asks about
+one decision in other words, explain it in the same shape. The block stays short for its three
+readers, and the explanation serves the Architect alone.
+
+Each explanation has five parts, in this order:
+
+1. **Context.** What the thing is, and how it works today, in plain words. A reader who has not
+   seen the code can follow it.
+2. **The problem.** What goes wrong, or what it costs, with the figures.
+3. **What is done already**, where earlier work bears on the decision.
+4. **The options.** For each one, what happens, what it costs and what it risks.
+5. **The recommendation, and why.** Then ask the question again, so that one letter answers it.
+
+Say what a thing does before you give the name of its function or file. Add an aid where it
+helps: a diagram in a code block, a small table, a worked example or a picture. Where nothing
+helps, add none. The ruling goes where the decision says, as for any decision. A message that
+explains a decision pushes and posts nothing, so it takes no sign-off. After the last ruling,
+close each turn as The sign-off says.
+
 #### The table
 
 Rows are numbered from 1 and sorted by state, and a state never returns once the next one

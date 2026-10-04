@@ -20,18 +20,20 @@ knoller [--check] path...
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
   that copy stale.
 - Knoller has no style option. A fence, from a line `#!fix off` to a line `#!fix on`, keeps its
-  lines as written.
+  lines as written. Each run prints a warning for each fence, so you always see the lines that no
+  fixer reads.
 
 Each line of output names a path, a line and a rule id, and the output is sorted in that order:
 
 ```text
 path:line: <rule-id> fixed
 path:line: <rule-id> left: <message>
+path:line: fence-held warning: <message>
 N fixed.
 ```
 
-With `--check`, each `fixed` reads `to fix`. A finding that no fix clears is `left`. The exit
-codes are these:
+With `--check`, each `fixed` reads `to fix`. A finding that no fix clears is `left`. A warning
+changes no exit code. The exit codes are these:
 
 - 0 for a clean run;
 - 1 where a finding is left, or where a change is due under `--check`;
@@ -78,6 +80,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `trailing-separator` | A list of one item to a line ends in a separator. |
 | `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
+| `fence-held` | A fence keeps its lines as written, and each run warns of the lines it keeps. |
 | `unsettled` | A file that the fixers still change after their last round stays as written. |
 
 ## Build and test
