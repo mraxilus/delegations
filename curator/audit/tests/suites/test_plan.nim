@@ -170,7 +170,7 @@ suite "Plan":
     # No project here declares anything, so what comes back is koch's own alone, which
     #   makes this readable without running any project's verb.
     check repositorySystem(".", goodTree(), newSeq[string]()) ==
-      @["coreutils", "curl", "git", "tar"]
+      @["coreutils", "curl", "git", "libbrotli1", "tar"]
     check KOCH_SYSTEM.mapIt(it[0]).deduplicate.len == KOCH_SYSTEM.len  # each package once
     for (package, why) in KOCH_SYSTEM:
       check package.len > 0
