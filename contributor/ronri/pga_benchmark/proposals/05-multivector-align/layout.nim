@@ -17,12 +17,12 @@ import pga/algebra
 const ALIGNMENT = 16  ## Width of one SSE register, which no load then splits across lines.
 
 
-type KindOf[count: static int] = object
-  ## Define kind of `count` floats under proposed rule, as P04's `MultivectorOf` would hold them.
-  when count mod 2 == 0:
-    elements {.align(16).}: array[count, float]
+type KindOf[C: static int] = object
+  ## Define kind of `C` floats under proposed rule, as P04's `MultivectorOf` would hold them.
+  when C mod 2 == 0:
+    elements {.align(16).}: array[C, float]
   else:
-    elements: array[count, float]
+    elements: array[C, float]
 
 
 var MULTIVECTORS_GLOBAL: array[3, Multivector]  ## Global storage, which linker lays out.
