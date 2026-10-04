@@ -69,6 +69,15 @@ const
         "  if flag: total = offset_x*forward_x + offset_y*forward_y + offset_z*forward_z + " &
         "offset_w*forward_w\n"
     ## Two lines spacing widens: first breaks after `+`; second, `:` before code, breaks nowhere.
+  FILTERS =
+    "  tag(\n    \"div\",\n    \"class=\\\"filters\\\"\",\n" &
+        "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
+        "\"connections\") & holds) &\n" &
+        "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
+        "\"lead's hand holds\") & lead) &\n" &
+        "    tag(\"div\", \"class=\\\"question\\\"\", tag(\"span\", \"class=\\\"asks\\\"\", " &
+        "\"follow's hand held\") & follow),\n  )\n"
+    ## Argument the hand continued at its own indent, whose lines four spaces in cross `LINE_MAX`.
 
 
 func fixedOf(source: string): string =
@@ -200,6 +209,11 @@ suite "Repair that widens its line":
         @[6]  # finding stays on held line alone
     check attempted("a.nim", HEAD & HELD, Dialect.Module.stepsOf).attempts == 2  # one holds it
     check formatted("a.nim", fix.source, Dialect.Module).source == fix.source  # settled
+
+
+  test "continuation run with line no wrap fits keeps its indent whole, with its findings":
+    check (HEAD & FILTERS).fixedOf == HEAD & FILTERS  # no continuation parts from its run
+    check checkFormatting("a.nim", HEAD & FILTERS, Dialect.Module).mapIt(it.line) == @[8, 9]
 
 
   test "operator tokens read same before and after, `&` of message shape aside":

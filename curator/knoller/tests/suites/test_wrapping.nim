@@ -223,6 +223,10 @@ suite "Wrapping":
     check checkContinuations("a.nim", hand)[0].message.endsWith("got `2`.")
     check hand.fixed == "let x = a +\n    b\ncheck c ==\n    d +\n    e\n"
     check hand.fixed.isSettled
+    # Last line of 100 runes two spaces in crosses `LINE_MAX` four spaces in.
+    let packed = "let x = a +\n  b +\n  " & "c".repeat(48) & " * " & "d".repeat(47) & "\n"
+    check packed.fixed == packed  # run stays whole where one line would widen
+    check checkContinuations("a.nim", packed).mapIt(it.line) == @[2, 3]  # findings stay
     for kept in [
       "if a and\n    b:\n  discard\n",  # condition four in already
       EXAMPLE_CALL,  # arguments one level in
