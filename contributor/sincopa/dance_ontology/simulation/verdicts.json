@@ -1,5 +1,5 @@
 {
-  "stamp": "44e756017b24b673",
+  "stamp": "b969c85d10cba546",
   "sweeps": {
     "0|0|false|0.0|00": {
       "found_rest": true,
@@ -961,8 +961,8 @@
               }
             ]
           ],
-          "strain": 0.5149018454474035,
-          "hand_height": 1.19907546043396,
+          "strain": 0.5144196327250721,
+          "hand_height": 1.1984456777572632,
           "crossed": 0,
           "over": [
             0,
@@ -1121,7 +1121,7 @@
       "found_rest": true,
       "negative": {
         "is_stopped": true,
-        "at": 1.3600000000000008,
+        "at": 1.3400000000000007,
         "apart": 0.43787780744861193,
         "why": 4,
         "whose": {
@@ -1214,8 +1214,8 @@
               null
             ]
           ],
-          "strain": 0.3148259083834185,
-          "hand_height": 1.2530220746994019,
+          "strain": 0.31354666584841906,
+          "hand_height": 1.2531564235687256,
           "crossed": 0,
           "over": [
             0,
@@ -1245,8 +1245,8 @@
               null
             ]
           ],
-          "strain": 0.4295676108613029,
-          "hand_height": 0.962162435054779,
+          "strain": 0.4286372916264556,
+          "hand_height": 0.9621059894561768,
           "crossed": 0,
           "over": [
             0,
@@ -1272,7 +1272,7 @@
             ]
           ],
           "strain": 0.0,
-          "hand_height": 0.999447762966156,
+          "hand_height": 0.9994485974311829,
           "crossed": 0,
           "over": [
             0,
@@ -1302,8 +1302,8 @@
               null
             ]
           ],
-          "strain": 0.01249056010479166,
-          "hand_height": 1.1816726922988892,
+          "strain": 0.014874031396111875,
+          "hand_height": 1.1797049045562744,
           "crossed": 0,
           "over": [
             0,
@@ -1515,7 +1515,7 @@
             ]
           ],
           "strain": 1.0,
-          "hand_height": 1.2551528215408325,
+          "hand_height": 1.2681854963302612,
           "crossed": 0,
           "over": [
             0,
@@ -1540,8 +1540,8 @@
               null
             ]
           ],
-          "strain": 0.06471866800299642,
-          "hand_height": 1.0064033269882202,
+          "strain": 0.06920663758111267,
+          "hand_height": 1.0069177150726318,
           "crossed": 0,
           "over": [
             0,
@@ -1571,8 +1571,8 @@
               null
             ]
           ],
-          "strain": 0.1392605087649763,
-          "hand_height": 1.0730725526809692,
+          "strain": 0.14676303718780548,
+          "hand_height": 1.0730211734771729,
           "crossed": 0,
           "over": [
             0,
@@ -1602,8 +1602,8 @@
               null
             ]
           ],
-          "strain": 0.08932231312409578,
-          "hand_height": 1.196802020072937,
+          "strain": 0.0907120175375592,
+          "hand_height": 1.1969417333602905,
           "crossed": 0,
           "over": [
             0,
@@ -1633,8 +1633,8 @@
               null
             ]
           ],
-          "strain": 0.7046289332956104,
-          "hand_height": 1.3157023191452026,
+          "strain": 0.7137794524169601,
+          "hand_height": 1.3151930570602417,
           "crossed": 0,
           "over": [
             0,
@@ -3360,7 +3360,7 @@
         "is_stopped": true,
         "at": 0.9000000000000005,
         "apart": 0.3978778074486119,
-        "why": 6,
+        "why": 7,
         "whose": {
           "body": 0,
           "arm": 0
@@ -3477,8 +3477,8 @@
               }
             ]
           ],
-          "strain": 0.5562183858805078,
-          "hand_height": 1.5066357851028442,
+          "strain": 0.5510301715728437,
+          "hand_height": 1.5067123174667358,
           "crossed": 0,
           "over": [
             0,
@@ -3639,7 +3639,7 @@
         "is_stopped": true,
         "at": 1.1000000000000005,
         "apart": 0.8978778074486123,
-        "why": 6,
+        "why": 7,
         "whose": {
           "body": 0,
           "arm": 1
@@ -3647,12 +3647,12 @@
       },
       "positive": {
         "is_stopped": true,
-        "at": 1.1400000000000006,
+        "at": 1.1200000000000006,
         "apart": 0.3778778074486119,
-        "why": 4,
+        "why": 2,
         "whose": {
-          "body": 0,
-          "arm": 1
+          "body": 1,
+          "arm": 0
         }
       },
       "glances": [
@@ -3725,8 +3725,8 @@
               null
             ]
           ],
-          "strain": 0.08778835812282815,
-          "hand_height": 1.3964507579803467,
+          "strain": 0.09386886934136007,
+          "hand_height": 1.398549199104309,
           "crossed": 0,
           "over": [
             0,
@@ -3757,7 +3757,7 @@
             ]
           ],
           "strain": 1.0,
-          "hand_height": 1.3524484634399414,
+          "hand_height": 1.3558909893035889,
           "crossed": 0,
           "over": [
             0,
@@ -3782,8 +3782,8 @@
               null
             ]
           ],
-          "strain": 0.13719737885587924,
-          "hand_height": 1.3989367485046387,
+          "strain": 0.14474308326293828,
+          "hand_height": 1.3989334106445312,
           "crossed": 0,
           "over": [
             0,
@@ -3813,8 +3813,8 @@
               null
             ]
           ],
-          "strain": 0.1772380634275348,
-          "hand_height": 1.5111197233200073,
+          "strain": 0.17739886156871731,
+          "hand_height": 1.5111504793167114,
           "crossed": 0,
           "over": [
             0,
@@ -3844,8 +3844,8 @@
               null
             ]
           ],
-          "strain": 0.8550673287020362,
-          "hand_height": 1.492598295211792,
+          "strain": 0.9363686234690758,
+          "hand_height": 1.4938435554504395,
           "crossed": 0,
           "over": [
             0,
@@ -3926,9 +3926,9 @@
       },
       "positive": {
         "is_stopped": true,
-        "at": 1.640000000000001,
+        "at": 1.620000000000001,
         "apart": 0.3778778074486119,
-        "why": 4,
+        "why": 6,
         "whose": {
           "body": 0,
           "arm": 1
@@ -4036,7 +4036,7 @@
             ]
           ],
           "strain": 1.0,
-          "hand_height": 1.4175902605056763,
+          "hand_height": 1.4158984422683716,
           "crossed": 0,
           "over": [
             0,
@@ -4071,8 +4071,8 @@
               null
             ]
           ],
-          "strain": 0.22491094283575308,
-          "hand_height": 1.4998672008514404,
+          "strain": 0.22345798563569974,
+          "hand_height": 1.4928269386291504,
           "crossed": 0,
           "over": [
             0,
@@ -4107,39 +4107,8 @@
               null
             ]
           ],
-          "strain": 0.2129428262270412,
-          "hand_height": 1.3991749286651611,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              {
-                "aspect": 1,
-                "band": 1,
-                "is_pressing": false,
-                "is_elbow_fore": false
-              }
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.10985703063428587,
-          "hand_height": 1.5009654760360718,
+          "strain": 0.2144114140299318,
+          "hand_height": 1.3998665809631348,
           "crossed": 0,
           "over": [
             0,
@@ -4169,8 +4138,39 @@
               null
             ]
           ],
-          "strain": 0.34811399527008535,
-          "hand_height": 1.509321928024292,
+          "strain": 0.13424829961260842,
+          "hand_height": 1.4999463558197021,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              {
+                "aspect": 0,
+                "band": 1,
+                "is_pressing": false,
+                "is_elbow_fore": false
+              }
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.3582996072221899,
+          "hand_height": 1.5091668367385864,
           "crossed": 0,
           "over": [
             0,
@@ -5007,11 +5007,11 @@
       "found_rest": true,
       "negative": {
         "is_stopped": true,
-        "at": 1.0600000000000005,
-        "apart": 0.3778778074486119,
-        "why": 4,
+        "at": 1.3400000000000007,
+        "apart": 0.43787780744861193,
+        "why": 2,
         "whose": {
-          "body": 0,
+          "body": 1,
           "arm": 0
         }
       },
@@ -5090,14 +5090,14 @@
               null
             ]
           ],
-          "strain": 1.0,
-          "hand_height": 1.529800534248352,
-          "crossed": 4,
+          "strain": 0.5900114921980367,
+          "hand_height": 1.3694583177566528,
+          "crossed": 2,
           "over": [
             0,
-            0,
-            0,
             1,
+            0,
+            0,
             0,
             0,
             0,
@@ -5116,8 +5116,8 @@
               null
             ]
           ],
-          "strain": 0.2689351669848852,
-          "hand_height": 1.7326780557632446,
+          "strain": 0.28588816647270676,
+          "hand_height": 1.7330862283706665,
           "crossed": 0,
           "over": [
             0,
@@ -5277,6 +5277,265 @@
       "positive": {
         "is_stopped": false,
         "at": 0.0,
+        "apart": 0.43787780744861193,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "glances": [
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.29912777413236646,
+          "hand_height": 1.3673430681228638,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "hand_height": 1.7866344451904297,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.2943663413899492,
+          "hand_height": 1.3673659563064575,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.44207997709566227,
+          "hand_height": 1.9012879133224487,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "hand_height": 0.9994597434997559,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "hand_height": 1.7373554706573486,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "hand_height": 1.417432427406311,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.0,
+          "hand_height": 1.7370667457580566,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 1.0,
+          "hand_height": 1.4730684757232666,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "1|2|false|0.0|11": {
+      "found_rest": true,
+      "negative": {
+        "is_stopped": false,
+        "at": 0.0,
+        "apart": 0.4178778074486119,
+        "why": 0,
+        "whose": {
+          "body": 0,
+          "arm": 0
+        }
+      },
+      "positive": {
+        "is_stopped": false,
+        "at": 0.0,
         "apart": 0.35787780744861186,
         "why": 0,
         "whose": {
@@ -5297,8 +5556,112 @@
               null
             ]
           ],
-          "strain": 0.3191638508153126,
-          "hand_height": 1.3671848773956299,
+          "strain": 0.4442448247508257,
+          "hand_height": 1.4266579151153564,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.15805128510656852,
+          "hand_height": 1.73285973072052,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.12256714781498113,
+          "hand_height": 1.3676505088806152,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.11855552818971926,
+          "hand_height": 1.7334963083267212,
+          "crossed": 0,
+          "over": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "is_reached": true,
+          "lies": [
+            [
+              null,
+              null
+            ],
+            [
+              null,
+              null
+            ]
+          ],
+          "strain": 0.06920663758111267,
+          "hand_height": 1.0069177150726318,
           "crossed": 0,
           "over": [
             0,
@@ -5324,7 +5687,7 @@
             ]
           ],
           "strain": 0.0,
-          "hand_height": 1.785987377166748,
+          "hand_height": 1.865569829940796,
           "crossed": 0,
           "over": [
             0,
@@ -5349,34 +5712,8 @@
               null
             ]
           ],
-          "strain": 0.31441585180728493,
-          "hand_height": 1.36762273311615,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.5702751437772233,
-          "hand_height": 1.873821496963501,
+          "strain": 1.0,
+          "hand_height": 1.4710005521774292,
           "crossed": 0,
           "over": [
             0,
@@ -5402,7 +5739,7 @@
             ]
           ],
           "strain": 0.0,
-          "hand_height": 0.999447762966156,
+          "hand_height": 1.8656870126724243,
           "crossed": 0,
           "over": [
             0,
@@ -5427,345 +5764,8 @@
               null
             ]
           ],
-          "strain": 0.0,
-          "hand_height": 1.754374384880066,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.6332670964843883,
-          "hand_height": 1.542100429534912,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.0,
-          "hand_height": 1.7339589595794678,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.6311431325480932,
-          "hand_height": 1.542301893234253,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        }
-      ]
-    },
-    "1|2|false|0.0|11": {
-      "found_rest": true,
-      "negative": {
-        "is_stopped": false,
-        "at": 0.0,
-        "apart": 0.3978778074486119,
-        "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
-      },
-      "positive": {
-        "is_stopped": false,
-        "at": 0.0,
-        "apart": 0.3978778074486119,
-        "why": 0,
-        "whose": {
-          "body": 0,
-          "arm": 0
-        }
-      },
-      "glances": [
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.8859122184022501,
-          "hand_height": 1.3819375038146973,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.16030544471809327,
-          "hand_height": 1.732820749282837,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.697084186325991,
-          "hand_height": 1.3741999864578247,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.13392857765170896,
-          "hand_height": 1.7359565496444702,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.12329745957014882,
-          "hand_height": 0.9987950921058655,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.0,
-          "hand_height": 1.8249101638793945,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.6999565356022506,
-          "hand_height": 1.3786953687667847,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.0,
-          "hand_height": 1.7957210540771484,
-          "crossed": 0,
-          "over": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ]
-        },
-        {
-          "is_reached": true,
-          "lies": [
-            [
-              null,
-              null
-            ],
-            [
-              null,
-              null
-            ]
-          ],
-          "strain": 0.6902081646252656,
-          "hand_height": 1.3782168626785278,
+          "strain": 1.0,
+          "hand_height": 1.4705489873886108,
           "crossed": 0,
           "over": [
             0,

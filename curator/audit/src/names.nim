@@ -156,9 +156,9 @@ const
     ## Keywords that, alone on line, open section and no scope.
   CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
   CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
-  IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
+  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
     ## ASCII characters identifier is built from; raw string prefix is one of them.
-  NAME_CHARS = IDENT_CHARS + {'\x80'..'\xFF'}
+  NAME_CHARS = IDENT_CHARS + {'\x80' .. '\xFF'}
     ## Bytes declared name is built from: Nim reads every non-ASCII byte as letter.
   FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
     ## Pragmas marking routine as binding of library's own name.
@@ -194,13 +194,13 @@ func blanked(source: string, should_keep_comments: bool): string =
     depth = 0
 
   template blank(n: int) =
-    for k in 0..<n:
+    for k in 0 ..< n:
       result[i] = (if source[i] == '\n': '\n' else: ' ')
       inc i
 
   template comment(n: int) =
     if should_keep_comments:
-      for k in 0..<n:
+      for k in 0 ..< n:
         result[i] = source[i]
         inc i
     else: blank(n)
@@ -277,7 +277,7 @@ func identifierAt(text: string, start: int): string =
   while i < text.len and text[i] == ' ': inc i
   var j = i
   while j < text.len and text[j] in NAME_CHARS: inc j
-  text[i..<j]
+  text[i ..< j]
 
 
 func nameOf(piece: string): string =
@@ -303,7 +303,7 @@ func splitTop(text: string, separators: set[char]): seq[string] =
 func topIndex(text: string, mark: char, start = 0): int =
   ## Find first `mark` outside brackets from index on; `-1` where none.
   var depth = 0
-  for k in start..<text.len:
+  for k in start ..< text.len:
     let c = text[k]
     if c in {'(', '[', '{'}: inc depth
     elif c in {')', ']', '}'}: dec depth
@@ -314,7 +314,7 @@ func topIndex(text: string, mark: char, start = 0): int =
 func closing(text: string, open: int): int =
   ## Find bracket closing one opened at index; `-1` where text ends first.
   var depth = 0
-  for k in open..<text.len:
+  for k in open ..< text.len:
     if text[k] in {'(', '[', '{'}: inc depth
     elif text[k] in {')', ']', '}'}:
       dec depth
@@ -325,7 +325,7 @@ func closing(text: string, open: int): int =
 func bindingSide(text: string): string =
   ## Cut binding text at its first `=` outside brackets, so value never reads as name.
   let at = text.topIndex('=')
-  if at < 0: text else: text[0..<at]
+  if at < 0: text else: text[0 ..< at]
 
 
 func isBooleanShown(text: string): bool =
@@ -386,7 +386,7 @@ func readType(text: string, line: int, names: var seq[Declared]): NameKind =
   var k = name.len
   if k < text.len and text[k] == '*': inc k
   if k < text.len and text[k] == '[' and text.closing(k) > k:
-    for p in text[k + 1..<text.closing(k)].placeholderNames:
+    for p in text[k + 1 ..< text.closing(k)].placeholderNames:
       names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
   let
     at = text.topIndex('=')
@@ -501,13 +501,13 @@ func declarations*(source: string): seq[Declared] =
           k += name.len
         if k < text.len and text[k] == '*': inc k
         if k < text.len and text[k] == '[' and text.closing(k) > k:
-          for p in text[k + 1..<text.closing(k)].placeholderNames:
+          for p in text[k + 1 ..< text.closing(k)].placeholderNames:
             result.add Declared(name: p, line: one, kind: NameKind.Placeholder)
           k = text.closing(k) + 1
         while k < text.len and text[k] == ' ': inc k
         var is_writing = false
         if k < text.len and text[k] == '(' and text.closing(k) > k:
-          let signature = text[k + 1..<text.closing(k)]
+          let signature = text[k + 1 ..< text.closing(k)]
           for (p, is_boolean) in signature.parameterNames:
             if word == "template": substituted.add p
             result.add Declared(
@@ -558,7 +558,7 @@ func declarations*(source: string): seq[Declared] =
         # Field side runs to its type; `case` names variant's discriminator.
         let text = if word == "case": rest else: s
         if word notin ["of", "else", "elif", "when"] and text.topIndex(':') > 0:
-          for name in text[0..<text.topIndex(':')].splitTop({','}):
+          for name in text[0 ..< text.topIndex(':')].splitTop({','}):
             if name.nameOf.len > 0:
               result.add Declared(
                 name: name.nameOf,
@@ -604,7 +604,7 @@ func declarations*(source: string): seq[Declared] =
       if word == "for":
         let at = rest.find(" in ")
         if at > 0:
-          for name in rest[0..<at].bindingNames:
+          for name in rest[0 ..< at].bindingNames:
             result.add Declared(
               name: name,
               line: one,
@@ -643,12 +643,12 @@ func wordSpans(name: string): seq[(int, int)] =
     if first < 0:
       first = k
       continue
-    let is_boundary = (c in {'A'..'Z'} and name[k - 1] in {'a'..'z', '0'..'9'}) or
-      (c in {'a'..'z'} and k - first > 1 and name[k - 1] in {'A'..'Z'} and
-        name[k - 2] in {'A'..'Z'})
+    let is_boundary = (c in {'A' .. 'Z'} and name[k - 1] in {'a' .. 'z', '0' .. '9'}) or
+      (c in {'a' .. 'z'} and k - first > 1 and name[k - 1] in {'A' .. 'Z'} and
+        name[k - 2] in {'A' .. 'Z'})
     if not is_boundary: continue
     # Capital before lowercase starts new word: `JSONData` is JSON, Data.
-    let cut = if c in {'a'..'z'}: k - 1 else: k
+    let cut = if c in {'a' .. 'z'}: k - 1 else: k
     result.add (first, cut)
     first = cut
   if first >= 0: result.add (first, name.len)
@@ -656,7 +656,7 @@ func wordSpans(name: string): seq[(int, int)] =
 
 func words*(name: string): seq[string] =
   ## Split name at `_` and at case changes: `lut_grade`, `wedgeAnti`, `JSONData` give words.
-  name.wordSpans.mapIt(name[it[0]..<it[1]])
+  name.wordSpans.mapIt(name[it[0] ..< it[1]])
 
 
 func fullWordOf(word: string, lower_exempt: openArray[string]): string =
@@ -677,8 +677,8 @@ func respelled*(name: string, exempt: openArray[string]): string =
   let lower_exempt = exempt.mapIt(it.toLowerAscii)
   result = name
   for (first, after) in name.wordSpans.reversed:
-    let full = name[first..<after].fullWordOf(lower_exempt)
-    if full.len > 0: result = result[0..<first] & full & result[after .. ^1]
+    let full = name[first ..< after].fullWordOf(lower_exempt)
+    if full.len > 0: result = result[0 ..< first] & full & result[after .. ^1]
 
 
 func abbreviationRenames*(
@@ -703,9 +703,9 @@ func letterCase(r: Rune): LetterCase =
   ##   Latin styles run 52 letters, 26 capitals first; Greek styles run 58, 25 capitals first,
   ##     then nabla, 25 small, partial differential and 6 small variants.
   let c = int(r)
-  if c in 0x1D400..0x1D6A3:
+  if c in 0x1D400 .. 0x1D6A3:
     return (if (c - 0x1D400) mod 52 < 26: LetterCase.Upper else: LetterCase.Lower)
-  if c in 0x1D6A8..0x1D7C9:
+  if c in 0x1D6A8 .. 0x1D7C9:
     let k = (c - 0x1D6A8) mod 58
     if k < 25: return LetterCase.Upper
     if k in [25, 51]: return LetterCase.None
@@ -764,15 +764,15 @@ func acronyms*(name: string): seq[string] =
   if name.isCased(Casing.Screaming) or '_' in name: return
   var run = ""
   let text = name & " "
-  for k in 0..<text.len - 1:
+  for k in 0 ..< text.len - 1:
     let
       c = text[k]
-      opens_word = c in {'A'..'Z'} and text[k + 1] in {'a'..'z'}
-    if (c in {'A'..'Z'} and not opens_word) or (run.len > 0 and c in {'0'..'9'}): run.add c
+      opens_word = c in {'A' .. 'Z'} and text[k + 1] in {'a' .. 'z'}
+    if (c in {'A' .. 'Z'} and not opens_word) or (run.len > 0 and c in {'0' .. '9'}): run.add c
     else:
-      if run.count({'A'..'Z'}) >= 2: result.add run
+      if run.count({'A' .. 'Z'}) >= 2: result.add run
       run = ""
-  if run.count({'A'..'Z'}) >= 2: result.add run
+  if run.count({'A' .. 'Z'}) >= 2: result.add run
 
 
 func glossaryExemptions*(glossary: string): seq[string] =
@@ -787,10 +787,10 @@ func glossaryExemptions*(glossary: string): seq[string] =
         if open < 0: break
         let close = line.find('`', open + 1)
         if close < 0: break
-        for w in line[open + 1..<close].split({' ', ','}):
+        for w in line[open + 1 ..< close].split({' ', ','}):
           if w.len > 0: result.add w
         i = close + 1
-    if line.isTermLine: result.add line[2..<line.len - 3]
+    if line.isTermLine: result.add line[2 ..< line.len - 3]
 
 
 func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[string] =
@@ -798,7 +798,7 @@ func exemptionsOf*(glossaries: openArray[(string, string)], path: string): seq[s
   ##   glossary of path's own project list (`glossaryExemptions`).
   result = JARGON.toSeq
   for (glossary, source) in glossaries:
-    let directory = glossary[0..<glossary.len - ROOT_GLOSSARY.len]
+    let directory = glossary[0 ..< glossary.len - ROOT_GLOSSARY.len]
     if glossary == ROOT_GLOSSARY or path.startsWith(directory):
       result.add source.glossaryExemptions
 
@@ -964,7 +964,7 @@ func blockEntry*(source: string): BlockEntry =
     if t.line <= result.head or t.line >= stop: continue
     if t.kind == TokenKind.Comment and t.first == starts[t.line]: continue
     result.last = max(result.last, t.lastLine(source))
-  for i in result.first..result.last:
+  for i in result.first .. result.last:
     if code[i].strip.len == 0: continue
     result.indent = code[i].indentOf
     break
@@ -973,7 +973,7 @@ func blockEntry*(source: string): BlockEntry =
   for k, t in tokens:
     if t.line < result.first or t.line > result.last: continue
     if t.kind == TokenKind.Open and t.spelling(source) == "{." and partners[k] > k:
-      for m in k + 1..<partners[k]:
+      for m in k + 1 ..< partners[k]:
         let word = tokens[m].spelling(source)
         if tokens[m].kind == TokenKind.Word and word in PRAGMAS_MODULE:
           result.refusal = "`{." & word & ".}` binds at module level alone"
@@ -984,7 +984,7 @@ func blockEntry*(source: string): BlockEntry =
       result.refusal = "export marker of `" & tokens[k - 1].spelling(source) &
         "` stands at module level alone"
       return
-  for i in result.first..result.last:
+  for i in result.first .. result.last:
     if code[i].strip.len == 0: continue
     let
       word = code[i].identifierAt(0)
@@ -1021,15 +1021,15 @@ func fixBlockEntry*(path, source: string): Fix =
     shaped.add line
     result.origin.add 0
 
-  for i in 0..<entry.head: keep(i)
+  for i in 0 ..< entry.head: keep(i)
   insert "proc " & ROUTINE_ENTRY & "() ="
   insert margin & "## TODO: Document."
-  for i in entry.first..entry.last: keep(i)
+  for i in entry.first .. entry.last: keep(i)
   insert ""
   insert ""
   keep(entry.head)
   insert margin & ROUTINE_ENTRY & "()"
-  for i in entry.last + 1..<lines.len: keep(i)
+  for i in entry.last + 1 ..< lines.len: keep(i)
   result.source = shaped.join("\n")
   for (line, _) in entry.bindings: result.fixed.add finding(path, line, "entry block (V.10)")
 
@@ -1041,7 +1041,7 @@ func foreignMark(code: openArray[string], line: int, kind: NameKind): string =
   ##   none; parameter crosses no boundary by name, since foreign call passes arguments by place.
   if kind == NameKind.Parameter: return
   var pushed = ""
-  for i in 0..<line:
+  for i in 0 ..< line:
     let s = code[i].strip
     if s.startsWith("{.push"):
       let marks = s.wordsOf.filterIt(it in MARKS_FOREIGN)
@@ -1080,7 +1080,7 @@ func isMemberSpelled(
   let value = tokens[k + 2]
   if value.kind == TokenKind.Text: return true
   if value.spelling(source) != "(" or partners[k + 2] < 0: return false
-  toSeq(k + 3..<partners[k + 2]).anyIt(tokens[it].kind == TokenKind.Text)
+  toSeq(k + 3 ..< partners[k + 2]).anyIt(tokens[it].kind == TokenKind.Text)
 
 
 func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =

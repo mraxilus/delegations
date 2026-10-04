@@ -14,7 +14,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[math, options, sets, strformat, strutils, tables, wordwrap]
+import std/[json, jsonutils, math, options, sets, strformat, strutils, tables, wordwrap]
 
 import ./[body, hold, readings, rig, rigid, walk, words]
 
@@ -417,18 +417,34 @@ proc lacking*(): int = SWEEPS_WANTED.len + RUNGS_WANTED.len
   ## How many readings last render lacked.
 
 
-proc main() =
-  ## Render report, read only readings it lacks, and keep those it reads.
+proc wanted*(): tuple[sweeps: seq[SweepAsk], rungs: seq[RungAsk]] =
+  ## Every reading report lacks, as kept readings stand: render asks for each one missing.
   READINGS_KEPT = keptReadings()
-  var text = render()
-  if lacking() > 0:
-    echo "reading ", SWEEPS_WANTED.len, " sweeps and ", RUNGS_WANTED.len, " rungs"
-    let got = readAll(SWEEPS_WANTED, RUNGS_WANTED)
+  discard render()
+  (SWEEPS_WANTED, RUNGS_WANTED)
+
+proc sweepText*(ask: SweepAsk): string = $toJson(readSweep(ask))
+  ## Read one sweep report lacks, as text its kept file holds.
+
+proc rungText*(ask: RungAsk): string = $toJson(readRung(ask))
+  ## Read one rung report lacks, as text its kept file holds.
+
+proc assembled*(
+  sweeps: seq[SweepAsk], sweep_texts: seq[string], rungs: seq[RungAsk], rung_texts: seq[string]
+): string =
+  ## Report from kept readings and those just read (`wanted`), as text; readings file is
+  ## written keeping only what report reads.
+  ##   Text is read back to reading it was written from: numbers are written shortest that
+  ##     reads back same, so report is one readings themselves would render.
+  READINGS_KEPT = keptReadings()
+  if sweeps.len + rungs.len > 0:
     READINGS_KEPT.stamp = physics()
-    for i, ask in SWEEPS_WANTED: READINGS_KEPT.sweeps[keyOf(ask)] = got.sweeps[i]
-    for i, ask in RUNGS_WANTED: READINGS_KEPT.rungs[keyOf(ask)] = got.rungs[i]
-    text = render()
-    doAssert lacking() == 0, "Report still lacks readings once all are read."
+    for i, ask in sweeps:
+      READINGS_KEPT.sweeps[keyOf(ask)] = parseJson(sweep_texts[i]).jsonTo(SweepRead)
+    for i, ask in rungs:
+      READINGS_KEPT.rungs[keyOf(ask)] = parseJson(rung_texts[i]).jsonTo(RungRead)
+  result = render()
+  doAssert lacking() == 0, "Report still lacks readings once all are read."
   # Keep only what report reads, so file holds no reading nothing renders.
   var keeping = Readings(stamp: READINGS_KEPT.stamp)
   for key, reading in READINGS_KEPT.sweeps:
@@ -436,9 +452,3 @@ proc main() =
   for key, reading in READINGS_KEPT.rungs:
     if key in KEYS_USED: keeping.rungs[key] = reading
   keep(keeping)
-  writeFile("simulation/verdicts.md", text)
-  echo "wrote simulation/verdicts.md"
-
-
-when isMainModule:
-  main()

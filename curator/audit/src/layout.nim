@@ -79,7 +79,7 @@ func nimblePath*(directory: string): string =
 func directoryOf(path: string): string =
   ## Read directory part of path, empty at root.
   let cut = path.rfind('/')
-  if cut < 0: "" else: path[0..<cut]
+  if cut < 0: "" else: path[0 ..< cut]
 
 
 func projectDirectory*(parts: seq[string]): string =
@@ -137,7 +137,7 @@ func checkPage(path: string, parts: seq[string]): seq[Finding] =
 func checkEntry(e: Entry): seq[Finding] =
   ## Report entry outside layout or of unregistered kind.
   let parts = e.path.split('/')
-  for directory in parts[0..<parts.high]:
+  for directory in parts[0 ..< parts.high]:
     if directory in UNTRACKED_DIRECTORIES:
       result.add finding(
         e.path,

@@ -53,7 +53,7 @@ func checkDuplicates*(documents: openArray[(string, string)]): seq[Finding] =
           path,
           p.line,
           "Paragraph appears twice; write it once and point at it (duty 10); first at `" &
-            first[p.text] & "`; got `" & p.text[0..<min(p.text.len, 60)] & "`.",
+            first[p.text] & "`; got `" & p.text[0 ..< min(p.text.len, 60)] & "`.",
         )
       else:
         first[p.text] = path & ":" & $p.line

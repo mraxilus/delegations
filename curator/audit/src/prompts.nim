@@ -36,13 +36,13 @@ func diaryReference*(line: string): string =
   ## Read first diary reference line carries outside code; empty when none.
   let text = line.withoutSpans
   if text.isDated:
-    for i in 0..text.len - 10:
-      if text[i..<i + 10].isIsoDate: return text[i..<i + 10]
+    for i in 0 .. text.len - 10:
+      if text[i ..< i + 10].isIsoDate: return text[i ..< i + 10]
   for i, c in text:
     if c == '#' and i + 1 < text.len and text[i + 1] in Digits:
       var j = i + 1
       while j < text.len and text[j] in Digits: inc j
-      return text[i..<j]
+      return text[i ..< j]
   let lower = text.toLowerAscii
   for word in DIARY_WORDS:
     var at = lower.find(word & " ")
@@ -53,7 +53,7 @@ func diaryReference*(line: string): string =
       if is_bounded and after < text.len and text[after] in Digits:
         var j = after
         while j < text.len and text[j] in Digits: inc j
-        return text[at..<j]
+        return text[at ..< j]
       at = lower.find(word & " ", at + 1)
   ""
 

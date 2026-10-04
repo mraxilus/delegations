@@ -1,12 +1,12 @@
 {
-  "stamp": "3e02b43a14431362",
+  "stamp": "522845a2897c48f4",
   "sweeps": {
     "shake at torso": {
       "negative": {
         "is_holding": true,
         "apart": 0.43787780744861193,
         "is_stopped": true,
-        "at": 1.3600000000000008,
+        "at": 1.3400000000000007,
         "why": "Wrist"
       },
       "positive": {
@@ -96,6 +96,22 @@
         "at": 0.0,
         "why": "None"
       }
+    },
+    "left to right at torso, as far as shake": {
+      "negative": {
+        "is_holding": true,
+        "apart": 0.35787780744861186,
+        "is_stopped": true,
+        "at": 0.8600000000000004,
+        "why": "Through"
+      },
+      "positive": {
+        "is_holding": true,
+        "apart": 0.43787780744861193,
+        "is_stopped": true,
+        "at": 1.3400000000000007,
+        "why": "Wrist"
+      }
     }
   },
   "walks": {
@@ -104,7 +120,7 @@
         "apart": 0.35787780744861186,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.8600000000000004
+        "at": 0.8200000000000004
       },
       {
         "apart": 0.3778778074486119,
@@ -128,7 +144,7 @@
         "apart": 0.43787780744861193,
         "is_holding": true,
         "is_stopped": true,
-        "at": 1.3600000000000008
+        "at": 1.3400000000000007
       },
       {
         "apart": 0.45787780744861195,
@@ -152,7 +168,7 @@
         "apart": 0.517877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.48000000000000015
+        "at": 0.46000000000000013
       },
       {
         "apart": 0.537877807448612,
@@ -392,13 +408,13 @@
         "apart": 1.3178778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5200000000000001
+        "at": 0.5000000000000001
       },
       {
         "apart": 1.3378778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5000000000000001
+        "at": 0.5200000000000001
       }
     ],
     "shake at torso, positive": [
@@ -460,7 +476,7 @@
         "apart": 0.537877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.7000000000000003
+        "at": 0.7200000000000003
       },
       {
         "apart": 0.557877807448612,
@@ -484,7 +500,7 @@
         "apart": 0.6178778074486121,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.6800000000000003
+        "at": 0.6600000000000003
       },
       {
         "apart": 0.6378778074486121,
@@ -756,7 +772,7 @@
         "apart": 0.517877807448612,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.48000000000000015
+        "at": 0.46000000000000013
       },
       {
         "apart": 0.537877807448612,
@@ -996,13 +1012,13 @@
         "apart": 1.3178778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5200000000000001
+        "at": 0.5000000000000001
       },
       {
         "apart": 1.3378778074486126,
         "is_holding": true,
         "is_stopped": true,
-        "at": 0.5000000000000001
+        "at": 0.5200000000000001
       }
     ]
   },
@@ -1058,12 +1074,12 @@
     },
     "right to left at half": {
       "is_holding": true,
-      "apart": 0.47787780744861197,
+      "apart": 0.45787780744861195,
       "turns": 0.5
     },
     "right to left at half, either way": {
       "is_holding": true,
-      "apart": 0.3978778074486119,
+      "apart": 0.35787780744861186,
       "turns": -0.5
     }
   }

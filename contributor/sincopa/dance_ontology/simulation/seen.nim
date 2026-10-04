@@ -103,16 +103,16 @@ proc stillOf(couple: Couple, at: float): Still =
     result.grips.add (pose.arms[0].grip + pose.arms[1].grip) * 0.5
     result.apart.add pose.apart
 
-proc still*(
+proc stillAsked(
   rig: Rig,
   band: Band,
   links: seq[Link],
   name: string,
   turns: float,
-  is_away = false,
-  head = Body.Two,
-  is_either_way = false,
-  who = Body.Two,
+  is_away: bool,
+  head: Body,
+  is_either_way: bool,
+  who: Body,
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds.
@@ -156,15 +156,15 @@ proc still*(
     result.stills.add stillOf(couple, where.turns)
   couple.free()
 
-proc shown*(
+proc shownAsked(
   rig: Rig,
   band: Band,
   links: seq[Link],
   name: string,
-  who = Body.Two,
-  step = STEP,
-  is_away = false,
-  head = Body.Two,
+  who: Body,
+  step: float,
+  is_away: bool,
+  head: Body,
 ): Shown =
   ## Walk one way from wherever it carries furthest, keeping every moment whole.
   ##   Distance is asked of `walk.swept`, so page shows couple standing exactly
@@ -202,3 +202,44 @@ proc shown*(
     at += step
     result.stills.add stillOf(couple, at)
   couple.free()
+
+
+#[ Kept ]#
+
+# Mutable and global: one run keeps every still it stood, for every thread (`walk.keepAnswers`).
+var STILLS: Store[Shown]  ## Every still asked, by every argument but its name.
+initStore(STILLS)
+
+proc still*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  name: string,
+  turns: float,
+  is_away = false,
+  head = Body.Two,
+  is_either_way = false,
+  who = Body.Two,
+): Shown =
+  ## One still, `who` turning, from distance couple stand for it, or none if no distance
+  ## holds (`stillAsked`).
+  ##   Card that asks what another card asks reads still that one stood, under its own name.
+  ##   Reflected twin is not asked here: page mirrors still its twin keeps (`design/twins`).
+  result = kept(STILLS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way,
+                              $who),
+                stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who))
+  result.hold = name
+
+proc shown*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  name: string,
+  who = Body.Two,
+  step = STEP,
+  is_away = false,
+  head = Body.Two,
+): Shown =
+  ## Walk one way from wherever it carries furthest, keeping every moment whole
+  ## (`shownAsked`).
+  shownAsked(rig, band, links, name, who, step, is_away, head)
