@@ -19,7 +19,8 @@ import ../src/pga_benchmark/[
 ]
 import ../src/pga_benchmark/pages/[docket, evaluation, proposal, search, shell]
 from ../src/pga_benchmark/evaluations import
-  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, successOf, timesOf
+  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
+  timesOf
 
 
 const
@@ -1365,6 +1366,19 @@ suite "Internal: Evaluations":
     check algebrasEvaluated(true) == @["rga4d", "cga5d", "rga3d", "cga4d"]  # thorough adds
 
 
+  test "library read refuses checkout that holds no Nim file":
+    let
+      missing = getTempDir() / "pga_benchmark_library_missing"
+      empty = getTempDir() / "pga_benchmark_library_empty"
+    removeDir missing
+    createDir empty
+    expect IOError:
+      discard readLibrary(missing)  # page would quote no line of library
+    expect IOError:
+      discard readLibrary(empty)  # checkout that failed to restore
+    removeDir empty
+
+
   test "times pair runs by measurand, median of ratios, rounded":
     let
       before = @[run([("a", 10.0, 0.0)]), run([("a", 12.0, 0.0)]), run([("a", 11.0, 0.0)])]
@@ -1591,11 +1605,24 @@ suite "Internal: Pages":
 
   test "shell names faces it embeds, and assembly fills every token":
     let
-      text_shell = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
-      page = assemble(text_shell, "A & B", "<p>body</p>", {"a.woff2": "xyz"}.toTable)
-    check facesAsked(text_shell) == @["a.woff2"]  # one face asked
+      text_shell =
+        "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@) url(@EMBED:b.ttf@)</style>@BODY@"
+      page = assemble(
+        text_shell,
+        "A & B",
+        "<p>body</p>",
+        {"a.woff2": "xyz", "b.ttf": "uvw"}.toTable,
+      )
+    check facesAsked(text_shell) == @["a.woff2", "b.ttf"]  # both faces asked, in order
     check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
-    check "data:font/woff2;base64,eHl6" in page  # bytes inlined
+    check "data:font/woff2;base64,eHl6" in page  # WOFF2 bytes inlined as WOFF2
+    check "data:font/ttf;base64,dXZ3" in page  # TrueType bytes inlined as TrueType
+
+
+  test "every Noto face ships whole, as TrueType of its own release":
+    for face in FACES:
+      if face.toLowerAscii.startsWith("noto"):
+        check face.endsWith(".ttf")  # Article X.8: Noto face whole, never subset
 
 
   test "spread is assumed until quiet evaluations give enough ratios":
@@ -1613,6 +1640,29 @@ suite "Internal: Pages":
       if "grid-template-columns" notin body[^1]: unbounded.add body[^2].strip
     checkpoint "unbounded: " & unbounded.join(", ")
     check unbounded.len == 0  # grid child of auto width widens page at phone width
+
+
+  test "every stack holds each face of sans stack before any family shell does not ship":
+    const shell_html = staticRead("../pages/shell.html")
+    var shipped, gaps: seq[string]
+    for rule in shell_html.split("@font-face")[1..^1]:
+      let family = rule.split('"')[1]
+      if family notin shipped: shipped.add family
+    var stacks: seq[seq[string]]  # sans first, then serif and mono
+    for name in ["sans", "serif", "mono"]:
+      let
+        at = shell_html.find("--" & name & ": ") + name.len + 4
+        families = shell_html[at ..< shell_html.find(';', at)].split(',')
+      stacks.add @[]
+      for family in families:
+        let bare = family.strip.strip(chars = {'"'})
+        if bare notin shipped: break
+        stacks[^1].add bare
+    for stack in stacks[1..^1]:
+      for family in stacks[0]:
+        if family notin stack: gaps.add stack[0] & " stack lacks " & family
+    checkpoint "gaps: " & gaps.join(", ")
+    check gaps.len == 0  # Article X.8: stack falls to face page ships, never to face of system
 
 
   test "docket rows carry identifiers docket file allots":
