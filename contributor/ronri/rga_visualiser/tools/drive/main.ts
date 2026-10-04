@@ -65,7 +65,7 @@ import {
   driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
 } from './scenery';
 import { driveGround } from './ground';
-import { driveBlankRefused } from './canvas';
+import { driveAntialias, driveBlankRefused } from './canvas';
 import { driveFrameWork, driveLoopRuns, watchFrames } from './frame';
 import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
@@ -159,6 +159,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
 
   // Reader every pixel check leans on, checked before any of them lean on it.
   await driveBlankRefused(page);
+  await driveAntialias(page, false);
   await driveKeys(page);
   await driveWheel(page);
   await drivePan(page);
@@ -284,6 +285,8 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await focusCanvas(page);
   // Blur off for every timing below but its own, so no other bound carries its cost.
   await setBlur(page, false);
+  // Multisampled as reader's page is, so every bound below times what reader runs.
+  await driveAntialias(page, true);
 
   await driveFrameWork(page);
   await drivePhaseSums(page);
