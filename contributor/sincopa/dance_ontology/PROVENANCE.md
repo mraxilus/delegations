@@ -601,6 +601,19 @@ counterpart. They are also the distinct single-hand turn positions, both hand-to
 every animated edge of the last two. Each card carries the identifier to quote back, and whatever
 has been ruled on it.
 
+**Each identifier is the letter of its section and two digits, from A01 to G08.** So no identifier
+reads as a decision of a sign-off, which `GUIDE.md` numbers from D1. The Architect ruled this on
+2026-10-04. The questions of sections A, C and D take the same names, because each question is keyed
+by its card. Verified by `suites/test_marks.nim`, which reads each identifier off the written page.
+It failed on 57 of 107 cards, which had one digit.
+
+Rejected: the decisions numbered D01, with the cards left as they were. The Architect chose the
+cards.
+
+A rename of the cards changes no answer of the simulation. After it, each recording was the one
+before to the last bit, apart from its names and its stamp, compared on 2026-10-04. The store of
+answers keys each answer by what it asks, and not by the name of its card (`walk.Store`).
+
 The identifiers that the Architect has kept or dropped are named in the module. What each one was
 drawn as when it was ruled on is held as a hash in `design/review-pins.json`. The build refuses to
 write the page when the drawing of a ruled card has moved.
