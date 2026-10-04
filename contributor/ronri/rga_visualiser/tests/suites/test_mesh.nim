@@ -591,6 +591,139 @@ suite "Mesh":
     check spots_on_disc >= spots_on_disc_least
 
 
+  test "a disc's box reaches its rim's picture and no further, where the whole rim is ahead":
+    # **Where whole rim stands in front of eye, rim's picture bounds disc's.** Disc then
+    #   stands ahead too, and view keeps convex set ahead of eye convex, so rim's extremes
+    #   along each turned axis are disc's. Box past them spans fragments that all discard:
+    #   from opening stance, ground's sphere spans 50 degrees of view's height, its disc 21.
+    #   Held over seeded views of planes in every attitude and roll, eye from grazing plane
+    #   to six radii off it, sight aimed inside rim. Extremes come from walk round rim and
+    #   golden-section search about walk's best step, and never from closed form.
+    const
+      seed_views = 501 ## Seed of generator views are drawn from, local to this test.
+      samples_views = 256 ## Views drawn, each with plane, eye and sight of its own.
+      views_ahead_least = 128 ## Least views whose whole rim stands ahead by `lead_least`.
+      lead_least = 1.0e-3 ## Least lead of rim's nearest point ahead of eye, over rim's depth
+        ## swing either side of its centre's.
+        ##   Nearer, rim's picture runs toward infinity and `float32` closed form loses
+        ##   precision, so box may keep sphere's.
+      steps_rim = 360 ## Steps of walk round rim, before search about best of them.
+      steps_search = 64 ## Golden-section steps about walk's best step; bracket ends under 1e-13.
+      reach_most = 2.0e-3 ## Most box may reach past rim's picture, in turned half extents.
+        ##   Room for margin box may keep against its shaders' `float32` rounding: 0.9 px of
+        ##   900 px tall view, where emulated rounding reached 1e-4.
+      tolerance_side = 1.0e-9 ## Slack on either side, against `float` rounding alone.
+
+    proc searchMost(at: proc (angle: float): float, angle, step: float): float =
+      ## Search `at` for its most within `step` of `angle`, by golden section.
+      ##   Walk's best step lies within one step of extreme, and `at` rises to it and falls.
+      let ratio = 0.5*(sqrt(5.0) - 1.0)
+      var (low, high) = (angle - step, angle + step)
+      for _ in 0 ..< steps_search:
+        let (inner_low, inner_high) = (high - ratio*(high - low), low + ratio*(high - low))
+        if at(inner_low) < at(inner_high): low = inner_low
+        else: high = inner_high
+      at(0.5*(low + high))
+
+    var
+      generator = initRand(seed_views)
+      views_ahead = 0
+    let
+      tangent = tan(0.5*degToRad(45.0))
+      aspect = float(WIDTH_OPENED)/float(HEIGHT_OPENED)
+      step = TAU/float(steps_rim)
+    for _ in 0 ..< samples_views:
+      # Plane through centre near origin, arms square to its normal at radius one to eight.
+      let
+        normal_unit = unitDrawn(generator)
+        along = normalize(cross(normal_unit, unitDrawn(generator))).get
+        radius = generator.rand(1.0 .. 8.0)
+        arm_first = radius*along
+        arm_second = radius*cross(normal_unit, along)
+        centre = Position(
+          x: generator.rand(-5.0 .. 5.0), y: generator.rand(-5.0 .. 5.0),
+          z: generator.rand(-5.0 .. 5.0),
+        )
+        record = DiscRecord(
+          centre_x: float32(centre.x), centre_y: float32(centre.y), centre_z: float32(centre.z),
+          arm_first_x: float32(arm_first.x), arm_first_y: float32(arm_first.y),
+          arm_first_z: float32(arm_first.z), arm_second_x: float32(arm_second.x),
+          arm_second_y: float32(arm_second.y), arm_second_z: float32(arm_second.z),
+          fill_alpha: 1.0,
+        )
+      # Eye over or under disc or past rim, hundredth of radius to six radii off plane, spread
+      #   evenly in scale so lead runs from grazing to wide; sight inside rim, roll at random.
+      let
+        height = pow(10.0, generator.rand(-2.0 .. 0.8))*radius*
+          (if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
+        eye = centre + generator.rand(-1.5 .. 1.5)*arm_first +
+          generator.rand(-1.5 .. 1.5)*arm_second + height*normal_unit
+        aim = centre + generator.rand(-0.7 .. 0.7)*arm_first +
+          generator.rand(-0.7 .. 0.7)*arm_second
+        forward = normalize(aim - eye).get
+        right = normalize(cross(forward, unitDrawn(generator))).get
+        up = cross(right, forward)
+      # Rim as record holds it, about eye; count view where its nearest point leads.
+      let
+        to_centre = Direction(
+          x: float(record.centre_x) - eye.x,
+          y: float(record.centre_y) - eye.y,
+          z: float(record.centre_z) - eye.z,
+        )
+        arms = [
+          Direction(
+            x: float(record.arm_first_x), y: float(record.arm_first_y),
+            z: float(record.arm_first_z),
+          ),
+          Direction(
+            x: float(record.arm_second_x), y: float(record.arm_second_y),
+            z: float(record.arm_second_z),
+          ),
+        ]
+        swing = hypot(dot(arms[0], forward), dot(arms[1], forward))
+      if dot(to_centre, forward) - swing <= lead_least*swing: continue
+      inc views_ahead
+      let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, aspect)
+
+      proc turnedAt(angle: float): array[2, float] =
+        ## Read rim's spot at `angle` in turned fractions `box` is stated in.
+        let
+          on_rim = to_centre + cos(angle)*arms[0] + sin(angle)*arms[1]
+          depth = dot(on_rim, forward)
+          turned = turnedOf(
+            box, (dot(on_rim, right)/(depth*tangent*aspect), dot(on_rim, up)/(depth*tangent)),
+          )
+        [turned[0], turned[1]]
+
+      # Walk round rim, keeping angle of each axis's least and most.
+      var
+        (least, most) = ([Inf, Inf], [-Inf, -Inf])
+        (angle_least, angle_most) = ([0.0, 0.0], [0.0, 0.0])
+      for i in 0 ..< steps_rim:
+        let
+          angle = float(i)*step
+          turned = turnedAt(angle)
+        for axis in 0 .. 1:
+          if turned[axis] < least[axis]: (least[axis], angle_least[axis]) = (turned[axis], angle)
+          if turned[axis] > most[axis]: (most[axis], angle_most[axis]) = (turned[axis], angle)
+
+      # Refine each extreme, clamp it to turned view as box is, and hold box to it.
+      let (corners_least, corners_most) = (
+        [box.corner_min[0], box.corner_min[1]], [box.corner_max[0], box.corner_max[1]],
+      )
+      for axis in 0 .. 1:
+        let
+          along_axis = proc (angle: float): float = turnedAt(angle)[axis]
+          against_axis = proc (angle: float): float = -turnedAt(angle)[axis]
+          shown_least = clamp(-searchMost(against_axis, angle_least[axis], step), -1.0, 1.0)
+          shown_most = clamp(searchMost(along_axis, angle_most[axis], step), -1.0, 1.0)
+        check corners_least[axis] <= shown_least + tolerance_side
+        check corners_most[axis] >= shown_most - tolerance_side
+        check corners_least[axis] >= shown_least - reach_most - tolerance_side
+        check corners_most[axis] <= shown_most + reach_most + tolerance_side
+    check views_ahead >= views_ahead_least
+
+
   test "plane becomes a flat filled disc and a rim, every vertex on it":
     for plane in PLANES:
       MESHES.clearMeshes
