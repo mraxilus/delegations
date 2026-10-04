@@ -4,7 +4,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
+import std/[options, os, strutils, tables, tempfiles, unittest]
 import ../../src/[symbols, toolchain]
 import ./fixtures
 
@@ -14,8 +14,10 @@ const
     ## One answer line of `def`, as `nimsuggest --v3` prints it.
   OUTPUT = "usage: sug|con|def\ntype 'quit' to quit\n\n" & ANSWER & "\n\n\n"
     ## Output of three commands: empty answer, one answer, empty answer.
-  SITES_PIPE = 3000
-    ## Sites asked of one entry: its commands and its answers each pass 64 KiB, pipe's capacity.
+  USES_PIPE = 800
+    ## Uses of one symbol, so answer of `dus` listing them passes 64 KiB, pipe's capacity.
+  NAME_PIPE = 70_000
+    ## Length of name asked, so command asking it passes 64 KiB too.
 
 
 
@@ -99,20 +101,21 @@ suite "Internal: Symbols":
     check d.symbols[(3, 7)] == d.symbols[(2, 6)]  # use and declaration name one symbol
 
 
-  test "entry asked past pipe capacity answers every site, and neither side waits on other":
+  test "run asked past pipe capacity both ways answers every command, neither side waiting":
     let
       root = createTempDir("delegations_", "_symbols")
       nimble = "version = \"0.1.0\"\nsrcDir = \"src\"\nrequires \"nim == " &
         runningCompiler().version & "\"\n"
       tree = @[
         entry("curator/fixture/fixture.nimble", nimble),
-        entry("curator/fixture/src/a.nim", "let x = 1\necho x\n"),
+        entry("curator/fixture/src/c.nim", "include \"d.nim\"\n"),
+        entry("curator/fixture/src/d.nim", "let w = 1\n" & "discard w\n".repeat(USES_PIPE)),
       ]
+      name = 'n'.repeat(NAME_PIPE)
     defer: removeDir(root)
     for e in tree: writeInto(root, e.path, e.content)
-    let
-      sites = newSeqWith(SITES_PIPE, (2, 5))
-      answers = resolve(root, tree, [Query(path: tree[1].path, sites: sites, names: @["x"])])
+    let answers =
+      resolve(root, tree, [Query(path: tree[2].path, sites: @[(2, 8)], names: @[name])])
     check answers.len == 1 and answers[0].reason.len == 0
-    check answers[0].symbols[(2, 5)].kind == "skLet"
-    check answers[0].globals["x"].len == 1  # block after every site, so each answer was read
+    check answers[0].symbols[(2, 8)].kind == "skLet" and answers[0].symbols[(2, 8)].line == 1
+    check answers[0].globals[name].len == 0  # block after long answer, so each answer was read
