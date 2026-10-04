@@ -516,9 +516,10 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`." &
-        (if state_word == "working": " Close turn with line `" & LABEL_WORKING & "` instead."
-         else: ""),
+      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") &
+        (if state_word == "working": ", and turn while work runs closes with line `" &
+           LABEL_WORKING & "`"
+         else: "") & "; got `" & state_word & "`.",
     )
   elif (state_word == BLOCKED) != decisions.anyIt(it.class.startsWith(CLASS_BLOCKS)):
     result.add finding(
