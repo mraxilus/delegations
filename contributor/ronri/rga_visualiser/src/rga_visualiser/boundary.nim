@@ -277,3 +277,10 @@ func pointFrom*(m: Multivector): Position =
   {.cast(noSideEffect).}:
     if IS_COUNTING_POINTS_READ: inc COUNT_POINTS_READ
   read.get
+
+
+func pointAlong*(place: Position; direction: Direction; length: float): Position =
+  ## Place point `length` along `direction` from `place`, i.e. 𝐩 + s𝐝.
+  ##   Unit-weight point plus weightless one, scaled: sum keeps weight one, so read cannot
+  ##   refuse. Each coordinate is one product and one sum, as Euclidean offset would be.
+  pointFrom(add(toMultivector(place), wedge(length, toMultivector(direction))))

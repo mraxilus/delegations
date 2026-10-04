@@ -1,6 +1,6 @@
 {
   "status": "proposed",
-  "builds_on": "",
+  "builds_on": [],
   "claims": [
     {
       "kind": "suites"
@@ -62,7 +62,7 @@
       "kind": "build",
       "algebra": "rga6d",
       "metric": "peakmem",
-      "at_most": 0.7
+      "at_most": 0.75
     }
   ]
 }

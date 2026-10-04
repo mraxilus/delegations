@@ -301,11 +301,11 @@ proc runHook(root, event, input: string): int =
       # Second block after one refusal passes, so blocked turn cannot loop forever.
       if data{"stop_hook_active"}.getBool: return 0
       let turn = readFile(data{"transcript_path"}.getStr).parseTurn
-      if not turn.calls.isTurnWriting: return 0
-      let found = checkSignoff(turn.text, branch)
+      var found = checkNumbersBare(turn.text)
+      if turn.calls.isTurnWriting: found.add checkEndTurn(turn.text, branch)
       if found.len == 0: return 0
-      echo %*{"decision": "block", "reason": "End this turn with sign-off block (GUIDE.md, " &
-        "Output contract), since it pushed or posted:\n" & found.mapIt(it.message).join("\n")}
+      echo %*{"decision": "block", "reason": "Mend message that ends this turn (GUIDE.md, " &
+        "Output contract):\n" & found.mapIt(it.message).join("\n")}
       0
   of "start":
     var drift: seq[Finding]
@@ -403,7 +403,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base}): return options.refused
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))
   of "check-role":
-    # Pull request's own two facts, which runner alone holds: they arrive through environment,
+    # Pull request's own facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.
     if not options.isReadAll({Root, Branch}): return options.refused
     let
@@ -412,6 +412,7 @@ proc run(options: Options): int =
         if named.len == 0: newSeq[string]()
         else: named.parseJson.getElems.mapIt(it.getStr)
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
+    found.add checkTitle(options.branchOrDefault, getEnv("ROLE_TITLE"))
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
     #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,

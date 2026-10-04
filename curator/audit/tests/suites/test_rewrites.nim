@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, strutils, tables, unittest]
-import ../../src/[rewrites, symbols]
+import ../../src/[rewrites, symbols, tokens]
 
 
 const
@@ -102,6 +102,89 @@ suite "Internal: Rewrites":
       "import ./a\nlet ctx = 2\necho f(context = ctx), g(ctx = 1)\n"
 
 
+  test "rename spans each site by its own spelling, which Nim reads as declared name":
+    let
+      declaring = "proc f*(tmp_dir: int): int = tmpDir + 1\n"
+      rename = Rename(
+        path: "p/a.nim",
+        line: 1,
+        column: 8,
+        name: "tmp_dir",
+        renamed: "temporary_directory",
+        rule: "abbreviation (V.6)",
+      )
+      parameter =
+        Symbol(kind: "skParam", name: "a.f.tmp_dir", file: "/r/p/a.nim", line: 1, column: 8)
+    var spelled = initTable[string, Answer]()
+    spelled["p/a.nim"] = Answer(path: "p/a.nim")
+    for site in [(1, 8), (1, 29)]: spelled["p/a.nim"].symbols[site] = parameter
+    spelled["p/a.nim"].globals["temporary_directory"] = @[]
+    let plan = planRename(rename, [("p/a.nim", declaring)], spelled, initTable[string, seq[int]]())
+    check plan.refusal.len == 0
+    check declaring.applied(plan.edits["p/a.nim"]) ==
+      "proc f*(temporary_directory: int): int = temporary_directory + 1\n"  # `tmpDir` whole
+
+
+  test "rename Nim reads as same name skips presence and shadow, since it changes no reading":
+    let
+      declaring = "proc f*(localValue: int): int = localValue\n"
+      other = "let local_value = 2\n"
+      rename = Rename(
+        path: "p/a.nim",
+        line: 1,
+        column: 8,
+        name: "localValue",
+        renamed: "local_value",
+        rule: "parameter case (V.1)",
+      )
+      parameter =
+        Symbol(kind: "skParam", name: "a.f.localValue", file: "/r/p/a.nim", line: 1, column: 8)
+      global = Symbol(kind: "skLet", name: "b.local_value", file: "/r/p/b.nim", line: 1, column: 4)
+    var same = initTable[string, Answer]()
+    same["p/a.nim"] = Answer(path: "p/a.nim")
+    for site in [(1, 8), (1, 32)]: same["p/a.nim"].symbols[site] = parameter
+    same["p/a.nim"].globals["local_value"] = @[global]  # one name to Nim already
+    same["p/b.nim"] = Answer(path: "p/b.nim")
+    same["p/b.nim"].symbols[(1, 4)] = global
+    let plan = planRename(
+      rename,
+      [("p/a.nim", declaring), ("p/b.nim", other)],
+      same,
+      initTable[string, seq[int]](),
+    )
+    check plan.refusal.len == 0  # V.1
+    check declaring.applied(plan.edits["p/a.nim"]) ==
+      "proc f*(local_value: int): int = local_value\n"  # V.1
+    check "p/b.nim" notin plan.edits  # other symbol keeps its spelling
+
+
+  test "new name shadows global or enum member, never field, parameter or local of other scope":
+    for (symbol, refusal) in [
+      (Symbol(kind: "skField", name: "camera.SphereWorld.context"), ""),
+      (Symbol(kind: "skParam", name: "osdirs.walkDir.context"), ""),
+      (Symbol(kind: "skLet", name: "m.run.context"), ""),
+      (Symbol(kind: "skProc", name: "m.context"), "`context` would shadow `m.context`"),
+      (Symbol(kind: "skEnumField", name: "m.Mode.context"),
+        "`context` would shadow `m.Mode.context`"),
+    ]:
+      var nested = answers()
+      nested["p/a.nim"].globals["context"] = @[symbol]
+      check planOf(answers = nested).refusal == refusal  # bare name reaches global and member
+
+
+  test "rename to keyword or to implicit `result` is refused, as compiler reads either otherwise":
+    for (renamed, refusal) in [
+      ("type", "`type` is keyword"),
+      ("t_ype", "`t_ype` is keyword"),
+      ("result", "`result` names implicit result of routine"),
+    ]:
+      var rename = RENAME
+      rename.renamed = renamed
+      let files = [("p/a.nim", DECLARING), ("p/b.nim", USING)]
+      check planRename(rename, files, answers(), initTable[string, seq[int]]()).refusal == refusal
+    check not "Type".isKeyword  # first letter exact, so `Type` is name
+
+
   test "rename is refused whole where any site, or new name, cannot be proved":
     var unresolved = answers()
     unresolved["p/a.nim"].reason = "undeclared identifier"
@@ -109,6 +192,13 @@ suite "Internal: Rewrites":
     var unknown = answers()
     unknown["p/b.nim"].symbols.del((3, 7))
     check planOf(answers = unknown).refusal == "`p/b.nim:3` resolves to no symbol"
+    var implicit = answers()
+    implicit["p/a.nim"].symbols[(3, 2)] = Symbol(kind: "skIterator", name: "iterators.items")
+    check planOf(answers = implicit).refusal ==
+      "`p/a.nim:3` resolves to `iterators.items`, which its token does not name"  # `for x in ctx`
+    check planOf(DECLARING & "let s = &\"{ctx + 1}\"\n").refusal ==
+      "`p/a.nim:4` names `ctx` inside interpolated string"  # strformat reads it, no token stands
+    check planOf(DECLARING & "let s = \"a\" & \"{ctx}\"\n").refusal.len == 0  # plain string
     var elsewhere = answers()
     elsewhere["p/a.nim"].symbols[(1, 8)].line = 9  # site uses name declared on other line
     check planOf(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"

@@ -116,3 +116,21 @@ suite "Role":
     check checkRole("main", "", newSeq[string]()).len == 0
     check checkRole("contributor/nowhere/alpha/work", "", newSeq[string]()).len ==
       0  # domain unregistered
+
+
+  test "title holds grammar, scope and width of commit subject":
+    # Merge commit takes title as subject, and `main` takes no rewrite after (#463).
+    check checkTitle("curator/mend-it", "docs(curator): order the sign-off").len == 0
+    check checkTitle("curator/mend-it", "fix(rga_visualiser): mend it").len == 0  # any scope
+    let charter = checkTitle("curator/mend-it", "Charter: label architect, linked names")
+    check charter.len == 1
+    check charter[0].message.startsWith("Pull request title must match")
+    check checkTitle("curator/mend-it", "docs(curator): order it.").len == 1  # final period
+    check checkTitle("curator/mend-it", "docs(curator): Order it").len == 1  # capital summary
+    let scoped = checkTitle("contributor/ronri/rga_visualiser/x", "feat(pga_benchmark): add it")
+    check scoped.len == 1
+    check scoped[0].message.startsWith("Pull request title scope must be `rga_visualiser`")
+    check checkTitle("curator/audit/x", "feat(curator): add it").len == 1  # project branch
+    let wide = checkTitle("curator/mend-it", "docs(curator): " & "a".repeat(90))
+    check wide.len == 1 and wide[0].message.startsWith("Pull request title exceeds 100")
+    check checkTitle("claude/setup-5uk08q", "Anything at all").len == 0  # scope fails it

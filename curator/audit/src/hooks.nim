@@ -7,19 +7,23 @@
 ##     rewrite of pushed history, and push past pre-push hook, since `koch check` holds what
 ##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
 ##     line, footer, Simplified Technical English counts, issue title and label, and pull
-##     request headings; `stop` refuses end of turn that pushed or posted and lacks sign-off
-##     block; `start` prints role, read order, carried list and drift; `push` and `msg` serve
-##     git hooks.
+##     request headings; `stop` refuses end of turn that pushed or posted and closes with
+##     neither sign-off block nor working line, and end of any turn whose message names `#N`
+##     outside link; `start` prints role, read order, carried list and drift; `push` and `msg`
+##     serve git hooks.
 ##   Pure functions take strings and return findings; procs read transcript JSON, since
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
 ##     carries it as label, since brief carries label of role it starts (COORDINATOR.md).
-##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, state with where
-##     branch stands, table, context, summary, decisions, next step. Each decision block reads
+##   Sign-off follows order Architect set (GUIDE.md, Output contract): role, context, table,
+##     summary, state with where branch stands, decisions, next step. Each decision block reads
 ##     as card, class says what blocks, and each ⚠️ row names role it waits on; coordinator,
 ##     once trialed, lifts each block onto card unchanged. So shape check holds what Architect
 ##     decides on: state word, class and place of each decision, two to four short options, and
 ##     recommendation naming one.
+##   Delegate signs off only when done, blocked or waiting, as Architect set (GUIDE.md, Output
+##     contract). Turn that ends while work runs closes with working line instead, naming what
+##     runs and what wakes delegate, so each state word marks stop and none means work goes on.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `gitCommands` splits on shell operators by text, so `git` inside quoted string is
@@ -38,7 +42,7 @@ import ./[checker, commits, domains, english, findings, markdown, role, scope]
 
 type
   Part {.pure.} = enum  ## Define one part of sign-off block, in order block holds them.
-    Role, State, Table, Context, Summary, Decisions, Next
+    Role, Context, Table, Summary, State, Decisions, Next
 
   Decision = object  ## Define one decision block of sign-off, as its shape check reads it.
     number: int  ## `n` of `**D<n>.**`; zero where not digits.
@@ -80,13 +84,14 @@ const
   SIGNOFF_TABLE* = "| # | State | Item | Where | Evidence, or who acts |"
     ## Header row of its table, exact.
   SIGNOFF_LABELS: array[Part, string] = [
-    "**Role:**", "**State:**", SIGNOFF_TABLE, "**Context:**", "**Summary:**", "**Decisions:**",
+    "**Role:**", "**Context:**", SIGNOFF_TABLE, "**Summary:**", "**State:**", "**Decisions:**",
     "**Next step:**",
   ]
     ## Parts of block, in order each must appear.
   BLOCKED = "blocked"  ## State word of delegate nothing moves for until Architect decides.
-  STATES_SIGNOFF = ["done", "working", "waiting", BLOCKED]
-    ## Words `**State:**` opens with, before where branch stands.
+  STATES_SIGNOFF = ["done", "waiting", BLOCKED]
+    ## Words `**State:**` opens with, before where branch stands; each one is stop.
+  LABEL_WORKING* = "**Working:**"  ## Opening of line closing turn that ends while work runs.
   NONE_DECISION = "None."  ## Text after `**Decisions:**` where block holds no decision.
   CLASS_BLOCKS = "blocks this delegate"  ## Class of decision delegate cannot work around.
   CLASS_BLOCKS_OTHERS = CLASS_BLOCKS & " and "
@@ -467,8 +472,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     if line.strip == SIGNOFF_HEADING: at = i
   if at < 0:
     return @[finding(
-      "", 0, "Turn that pushed or posted must end with `" & SIGNOFF_HEADING &
-        "` block (GUIDE.md, Output contract); got none."
+      "", 0, "Message holds no `" & SIGNOFF_HEADING & "` block (GUIDE.md, Output contract)."
     )]
   let after = lines[at + 1 .. ^1]
   for line in after:
@@ -506,7 +510,9 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`.",
+      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`." &
+        (if state_word == "working": " Close turn with line `" & LABEL_WORKING & "` instead."
+         else: ""),
     )
   elif (state_word == BLOCKED) != decisions.anyIt(it.class.startsWith(CLASS_BLOCKS)):
     result.add finding(
@@ -531,7 +537,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     )
   for i, d in decisions: result.add decisionFindings(d, i)
   result.add rowFindings(
-    after[starts[Part.Table] + 1 ..< starts[Part.Context]].join("\n").tableRows,
+    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").tableRows,
     decisions.mapIt(it.number),
   )
   var k = starts[Part.Next] + 1
@@ -551,6 +557,129 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       if text.startsWith(label): text = text[label.len .. ^1].strip
     prose.add text
   result.add englishFindings("sign-off", prose.join("\n"))
+
+
+func labelDefined(line: string): string =
+  ## Read label that line defines as `[label]: url`, lowercased; empty where it defines none.
+  let s = line.strip(trailing = false)
+  if line.len - s.len > 3 or not s.startsWith("["): return ""
+  let close = s.find(']')
+  if close < 2 or not s[close + 1 .. ^1].startsWith(":") or s[close + 2 .. ^1].strip.len == 0:
+    return ""
+  s[1 ..< close].toLowerAscii
+
+
+func codeSpansOut(line: string): string =
+  ## Blank each code span of line: run of backticks opens it, next run of same length closes
+  ##   it, and run left open stays text, as CommonMark reads it.
+  var i = 0
+  while i < line.len:
+    if line[i] != '`':
+      result.add line[i]
+      inc i
+      continue
+    var n = 0
+    while i + n < line.len and line[i + n] == '`': inc n
+    var
+      j = i + n
+      close = -1
+    while j < line.len and close < 0:
+      if line[j] != '`':
+        inc j
+        continue
+      var m = 0
+      while j + m < line.len and line[j + m] == '`': inc m
+      if m == n: close = j
+      j += m
+    if close < 0:
+      result.add line[i ..< i + n]
+      i += n
+    else:
+      result.add ' '.repeat(close + n - i)
+      i = close + n
+
+
+func linksOut(line: string; labels: openArray[string]): string =
+  ## Blank each link of line: `[text](url)`, and `[text][label]` or `[label]` whose label
+  ##   message defines. Bracket opening no link stays text.
+  var i = 0
+  while i < line.len:
+    if line[i] != '[':
+      result.add line[i]
+      inc i
+      continue
+    let close = line.find(']', i + 1)
+    if close < 0:
+      result.add line[i .. ^1]
+      break
+    let text = line[i + 1 ..< close]
+    var stop = -1  # Index past link; none where bracket opens no link.
+    if close + 1 < line.len and line[close + 1] == '(':
+      let paren = line.find(')', close + 2)
+      if paren >= 0: stop = paren + 1
+    elif close + 1 < line.len and line[close + 1] == '[':
+      let shut = line.find(']', close + 2)
+      if shut >= 0:
+        let label = line[close + 2 ..< shut]
+        if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
+    elif text.toLowerAscii in labels: stop = close + 1
+    if stop < 0:
+      result.add '['
+      inc i
+    else:
+      result.add ' '.repeat(stop - i)
+      i = stop
+
+
+func checkNumbersBare*(message: string): seq[Finding] =
+  ## Report each `#N` of message outside link and outside code (GUIDE.md, Output contract).
+  ##   Definition line `[label]: url` is link too, as is `[label]` it defines. `#` after word
+  ##     character, `&` or `/` opens no number: `&#N;` is character reference, `x#N` fragment
+  ##     or name in other repository. Each number reports once.
+  let lines = message.fencedOut.splitLines
+  var
+    labels: seq[string]
+    seen: seq[string]
+  for line in lines:
+    let label = line.labelDefined
+    if label.len > 0: labels.add label
+  for line in lines:
+    if line.labelDefined.len > 0: continue
+    let text = line.codeSpansOut.linksOut(labels)
+    var i = 0
+    while i < text.len:
+      let is_number = text[i] == '#' and i + 1 < text.len and text[i + 1] in Digits and
+        (i == 0 or text[i - 1] notin IdentChars + {'&', '/'})
+      if not is_number:
+        inc i
+        continue
+      var j = i + 1
+      while j < text.len and text[j] in Digits: inc j
+      let number = text[i ..< j]
+      if number notin seen:
+        seen.add number
+        result.add finding(
+          "",
+          0,
+          "Message names `" & number & "` outside link; name each issue and pull request by " &
+            "short description and its number, as one link (GUIDE.md, Output contract).",
+        )
+      i = j
+
+
+func checkEndTurn*(message, branch: string): seq[Finding] =
+  ## Report end of turn that pushed or posted: sign-off once delegate stops, else working line.
+  ##   Working line is last line holding text, with text after label; reader alone judges
+  ##     whether it names what runs and what wakes delegate.
+  if message.splitLines.anyIt(it.strip == SIGNOFF_HEADING):
+    return checkSignoff(message, branch)
+  let last = message.strip.splitLines[^1].strip
+  if last.startsWith(LABEL_WORKING) and last[LABEL_WORKING.len .. ^1].strip.len > 0: return
+  @[finding(
+    "", 0, "Turn that pushed or posted ends with `" & SIGNOFF_HEADING & "` block once done, " &
+      "blocked or waiting, or with line `" & LABEL_WORKING & "` while work runs (GUIDE.md, " &
+      "Output contract); got neither."
+  )]
 
 
 func markPath*(root, git_directory: string): string =
@@ -622,8 +751,8 @@ func startContext*(branch, contributor, carried_heading: string; drift: seq[Find
   if drift.len > 0:
     lines.add "Base gained charter or checker your branch lacks; merge `origin/main` and " &
       "re-stamp (`check-drift`)."
-  lines.add "Every turn that pushed or posted ends with `" & SIGNOFF_HEADING &
-    "` (GUIDE.md, Output contract)."
+  lines.add "Turn that pushed or posted ends with `" & SIGNOFF_HEADING & "` once done, " &
+    "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   lines.add ""
   lines.add carried_heading
   lines.add contributor.section(carried_heading).strip

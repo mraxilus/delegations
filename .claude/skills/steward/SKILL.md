@@ -20,6 +20,7 @@ a pull request of this repository.
 4. Every comment opens with the role line of your branch and ends with the footer, and the
    `body` hook refuses one that does not. Write Simplified Technical English (`GUIDE.md`).
 5. Never rewrite pushed history, never merge, and never weaken a test to pass (`CLAUDE.md`).
-6. A turn that pushed or posted ends with the sign-off block (`GUIDE.md`, Output contract).
+6. Sign off only when done, blocked or waiting. A turn that pushed or posted while work goes
+   on ends with the working line instead (`GUIDE.md`, Output contract).
 7. Wait by backoff, never by a fixed short interval (`GUIDE.md`, The queue and the shared
    allowance).

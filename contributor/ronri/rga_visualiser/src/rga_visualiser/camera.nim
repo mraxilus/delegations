@@ -472,23 +472,27 @@ func initCameraDefault*(width, height: int): Camera =
   let
     pivot = Position(x: 0, y: 0, z: 1)
     out_to = Direction(x: 10, y: 15, z: 6)
-    least = initCamera(eye = pivot + out_to, pivot = pivot)
+    least = initCamera(eye = pointAlong(pivot, out_to, 1.0), pivot = pivot)
   if width <= 0 or height <= 0: return least
   let
     tangent_across = FRACTION_OPENING*tan(0.5*degToRad(least.degrees_field_of_view))*
       float(width)/float(height)
     reach = RADIUS_OPENING/sin(arctan(tangent_across))
   if reach <= least.distance: return least
-  initCamera(eye = pivot + (reach/least.distance)*out_to, pivot = pivot)
+  initCamera(eye = pointAlong(pivot, out_to, reach/least.distance), pivot = pivot)
 
 
 func rollHeld*(camera: Camera): Option[float] =
   ## Read camera's roll about its sight, against `UP_WORLD`, or none near pole.
   ##   Positive `roll` lowers this reading.
   ##   Read by suite, which holds page's drag in `interaction.turnFollowing` to leaving it.
-  let frame = camera.frame
-  if abs(dot(frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL: return none(float)
-  some(arctan2(dot(frame.axis_right, UP_WORLD), dot(frame.axis_up, UP_WORLD)))
+  let
+    frame = camera.frame
+    up = toMultivector(UP_WORLD)
+  if abs(innerOf(toMultivector(frame.forward), up)) >= COSINE_POLE_ROLL: return none(float)
+  some(arctan2(
+    innerOf(toMultivector(frame.axis_right), up), innerOf(toMultivector(frame.axis_up), up)
+  ))
 
 
 func scaleLocal*(camera: Camera): float =
@@ -643,9 +647,11 @@ func depthAlong*(eye: Position; forward: Direction; place: Position): float =
 func azimuthElevationFor(heading: Direction): (float, float) =
   ## Read orbit angles of unit `heading`: bearing about world up, and rise above horizon.
   ##   Readings alone, for panel; nothing names stance by them.
+  ##   Each component is inner product with world axis, written as algebra's own basis point.
   let
-    elevation = arcsin(clamp(-heading.z, -1.0, 1.0))
-    azimuth = arctan2(-heading.y, -heading.x)
+    sight = toMultivector(heading)
+    elevation = arcsin(clamp(-innerOf(sight, 1.0.e3), -1.0, 1.0))
+    azimuth = arctan2(-innerOf(sight, 1.0.e2), -innerOf(sight, 1.0.e1))
   (azimuth, elevation)
 
 
@@ -899,7 +905,7 @@ func reachAimed*(tween: CameraTween, pivot: Position): float =
   ##   Zero where nothing finite is aimed.
   if tween.goal.isNone or tween.goal.get.sphere.isNone: return 0.0
   let bound = tween.goal.get.sphere.get
-  norm(bound.centre - pivot) + bound.radius
+  distanceBetween(toMultivector(bound.centre), toMultivector(pivot)) + bound.radius
 
 
 func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Position =

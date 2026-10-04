@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c9df6647550e6877 |
+| Rules   | 1b75d18f97abe79e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -469,6 +469,62 @@ ligatures live.
   itself, because Dear ImGui shapes no text, and it declares no CSS.
 - Verified by `suites/test_faces.nim`, each rule by line, and the label beside a heading among them.
 
+## Coverage
+
+**Each character beyond ASCII that the files of a project use has a face that the project
+ships, and `coverage.nim` holds it.** Article X.8 merges faces by codepoint range, then renders
+each codepoint against `.notdef`. A render needs a built page and a browser, and the static pass
+has neither. So this check holds the static half: what the sources write, against what each face
+maps. A character that no face of the project maps falls to a face that the viewer may lack.
+
+- **The faces of a project are the store faces whose file names its files hold.** The store
+  refuses a file that no row declares, so the name is the only way that a project reaches a
+  face. The check takes the union over the project. Rejected: a check for each page or each
+  stack, which repeats the cascade that a render decides.
+- Cost: a character that no stack of its element reaches can still pass. The face that covers it
+  may serve another stack, or the desktop atlas alone. The render of `drive` holds that case
+  (`CONTRIBUTOR.md`, Pages and assets), as the Architect ruled on 2026-10-04.
+- **The check reads every file of the project outside `tests/`, other than its records.** The
+  drivers of the three page projects build pages from Nim, TypeScript, Markdown and JSON, as
+  well as from `pages/` and `mockups/`, read 2026-10-04. The static pass cannot trace which file
+  a build reads. A test fixture holds a character to prove its absence, so the tests stay out.
+- Cost: a character in a file that no page reads is reported too, such as a message that a tool
+  prints.
+- **A character that a comment alone holds is set aside, line by line**, because it never
+  reaches a page. The comments come from `comments.nim`, so the blind spots of that module are
+  the blind spots of this check.
+- **A reference counts as the character that it names.** `&name;` resolves for each name that
+  HTML 4.01 defined, to the codepoint that the WHATWG standard gives, which is what a browser
+  draws. `&lang;` and `&rang;` are the two names where those differ. `&#n;` and `&#xh;` resolve
+  too.
+- A name outside that table is unread rather than reported, because `&` opens no reference in
+  most code here. C and C++ read no reference at all, because `&name;` takes an address there.
+- **A finding names the file, the line, the codepoint and the spelling**, as in
+  ``got `U+21C4` for `&#8644;` ``. A line gets one finding for each codepoint, however often it
+  spells it.
+- **A project that names no store face is skipped.** Nothing tells its page apart from a tool that
+  prints text beyond ASCII. Cost: a page that ships no face at all is unseen here.
+- **The checker's own project is exempt**, as the faces check exempts it, because `assets.nim`
+  names every face as data.
+- Cost: a codepoint that draws nothing, such as `U+FE0F`, is still reported where no face maps
+  it. Verified by a search on 2026-10-04 at `de0c189`, of each file that the check reads. None
+  holds `U+FE0F`, as the character or as a reference.
+- Verified by `suites/test_coverage.nim`: each rule, and the law at every bound of the ranges of
+  Noto Sans.
+
+**The check decides coverage over the whole source before it scans the comments.** The faces
+cover almost every character, and the comment scan is most of the cost. So only a source that
+holds an uncovered character, in a comment or not, has its comments scanned.
+`suites/test_coverage.nim` holds this path to a full reading of every source.
+
+- Measured with the built koch on 2026-10-04, on the machine of Figures. `check-files` over the
+  same tree took a median of 3.70 s from `origin/main` at `de0c189`, and 3.77 s with this check.
+  Each median is of ten runs.
+- Rejected: a comment scan of every source first. Measured the same way, it added about 0.45 s
+  to the median.
+- On 2026-10-04 at `de0c189`, the check reports no finding in any project. `nim r koch
+  check-files` repeats it.
+
 ## Branch scope
 
 **The branch grammar mirrors paths: two, three or four segments, and the scope follows from
@@ -709,6 +765,21 @@ marker, a second block or any other comment still reads as the opening line.
   `body` hook refused the body with exit 2. After the fix, the same body reports nothing, and the
   finding echoes a wrong role below the block.
 
+**The title of a pull request holds the grammar of a commit subject.** The merge commit takes
+the title as its subject, and `main` takes no rewrite after. So `checkTitle` holds the title to
+what `checkCommits` holds for each commit: the grammar, the scope that the branch requires, and
+`SUBJECT_MAX`. The job passes the title as `ROLE_TITLE`, from the event payload. The `edited`
+event runs the check again after a rename. The Architect ruled this check on 2026-10-04.
+
+- Before this check, the template alone held the title. The title of #463 broke it, and it is
+  the subject of `6d4606a` on `main`.
+- `scopeRequired` in `commits.nim` names the scope for both checks, so the two cannot drift.
+- Cost: the merge adds ` (#N)` to the title, so a subject on `main` can pass `SUBJECT_MAX` by a
+  few runes. `check-commits` skips merge commits, so no check reads that width.
+- Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
+  grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
+  branch, and a width over the limit.
+
 ## Assets
 
 **One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md names
@@ -716,11 +787,32 @@ the class: *"binaries are never committed, and neither are fonts, images or any 
 cannot read"*. Each one is recorded with origin, version, licence and checksum. The store is
 that class kept once, rather than once for each project.
 
-Faces are the only rows, and the rows say so by grouping rather than by column. The shape is
-file, address and digest, which is what any such file needs and no more. **An asset that wants
-a field this row lacks is a change, and not something this shape answers.** Such a field is
-unpacking, or a variant set. The header says so, rather than implies that it is settled for all
-time.
+Faces are the only rows, and the rows say so by grouping and by one column. The shape is file,
+address, digest and the codepoints that the file maps. The first three are what any such file
+needs, and the fourth is the face's own. **An asset that wants a field this row lacks is a
+change, and not something this shape answers.** Such a field is unpacking or a variant set, and
+an asset that is no face changes the fourth column too. The header says so, rather than implies
+that the shape is settled for all time.
+
+- **Each face row carries the codepoints that its file maps, as ranges.** The coverage check
+  reads rows and never bytes, because the static pass fetches nothing. `suites/test_assets.nim`
+  reads the `cmap` of each file and holds the row to it. So a new digest with old ranges fails,
+  and the failure prints the ranges to take.
+- Verified by a break, 2026-10-04. One bound of the Noto Sans Math row, one codepoint short,
+  fails that test, which prints the true row beside the stale one.
+- The ranges take the spelling of `fc-query --format='%{charset}'`, so a curator can check a row
+  with a second reader. Fontconfig 2.15.0 printed the same text as the reader of the suite for
+  every file of the store, 2026-10-04. Control characters are left out, because none draws.
+- Faces that map one set share one constant. Upright Noto Sans and Noto Serif map one set at
+  every weight, and the three files of Commit Mono map one set. A face whose bytes move splits
+  from its constant.
+- **The suite reads `woff2` through `libbrotlidec`, which it loads at run.** No Nim import decodes
+  Brotli, and a codec is an external concern (Article II.8). A machine without the library fails
+  that test by name, and every other suite still runs. Rejected: `fc-query` as the reader,
+  which adds fontconfig to every machine and reads its charset rather than the `cmap`.
+- Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
+  of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s.
+  The `test` job of the runner restores no store, so it fetches on each run.
 
 The name is general, and names no class of file. So a second class needs no rename across
 projects that a curator may not edit.
@@ -731,7 +823,7 @@ a second target repeats the pins of the first. Two pins of one file, each in its
 a copy from two different faces.
 
 - **The digest is the curator's, and the choice is the project's.** The store says what bytes
-  `noto-sans-latin-400` is. It never says which faces a target wants, and the targets differ:
+  `NotoSans-Regular.ttf` is. It never says which faces a target wants, and the targets differ:
   one draws maths and symbols, and the other italic serif. What stops being written twice is
   only what is identical, so the autonomy that CONTRIBUTOR.md argues for is untouched.
 - The store is the **only shared build input** of the repository. Compilers are pinned for each
@@ -747,21 +839,25 @@ a copy from two different faces.
   Noto was chosen so that no character of a page falls outside its faces, and a subset undoes
   that. The rows hold each whole face that a page draws, as TrueType, which `@fontsource` does
   not ship. Where two projects pin one file, they pin one digest.
-- The `woff2` subsets of `@fontsource` stay only while a page still asks for one. A Noto subset
-  row leaves once no page names it. Commit Mono is no Noto, and pages keep its subset.
-- Cost: a whole face is 610 to 760 KB of TrueType, where its Latin subset is about 13 KB. A page
+- **The store declares no Noto subset, and `suites/test_assets.nim` holds it so.** Every Noto
+  row is a TrueType file of the Noto release. `koch fetch-assets` refuses a file that no row
+  declares, so no page can ship a Noto subset.
+- **Commit Mono keeps its Latin subset.** Article X.8 binds Noto alone, and Commit Mono is no
+  Noto. Its two `woff2` rows are the only subsets of `@fontsource` in the store.
+- Cost: a whole face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A page
   that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
   `compilers.digestOf`, so the parse that `test_compilers.nim` tests also guards the store.
-- Verified by `suites/test_assets.nim`. Verified by hand with `nim r koch fetch-assets`, recorded
-  2026-09-10, machine unrecorded. A cold store fills with three faces in **1.0 s**, two of them
-  shared by two projects. The same call warm takes **0.117 s**, and fetches nothing.
-- Verified by a break of it, on the same date. A face that nobody declares is a finding, which
+- Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
+  fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
+  Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
+  fetches nothing.
+- Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
-- Cost: the store grows and nothing prunes it. A face is about 30 kB where a compiler is about
-  300 MB. So what is unbounded is the number of pins the repository has ever held, and not the
-  bytes.
+- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a compiler is
+  about 300 MB. So what is unbounded is the number of pins the repository has ever held, and
+  not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
   shared.
@@ -893,10 +989,22 @@ beside the section that each title comes from.
 - Cost: the pattern is `jq` inside shell, as the role-line pattern is, so no suite drives it.
 
 **The ledger names a closed item that still carries the `architect` label.** The label marks a
-state, and not a role. An item carries it while it waits on the Architect, and the coordinator
-removes it once the ruling is posted (`COORDINATOR.md`, The queue). A closed item that still
-carries it is a removal that the coordinator missed, and the next filter on the label shows a
-stale queue.
+state, and not a role. A delegate adds it to its own item that waits on the Architect, and
+removes it once the ruling is posted (`CONTRIBUTOR.md`, Boundaries). `architect.yml` removes it
+from an item that closes, because the delegate that asked has often ended by the merge. So a
+closed item that still carries it marks a failed run of that workflow. The next filter on the
+label would show a stale queue.
+
+- **The workflow fires on a close alone, and never on a return to draft.** A decision can wait
+  on a draft pull request, and a label removed there would hide it from the Architect. Rejected:
+  removal on `converted_to_draft`, which `draft.yml` fires on each push to a ready pull request.
+- The workflow reads the labels before it removes one, so an item whose label somebody removed
+  first is no failure.
+- Its grant is `issues: write` and `pull-requests: write`. The reference of the issues endpoint
+  says that either grant reaches the labels of a pull request. For the token of a run, that is
+  false. Verified by run 1 and run 2 of `architect.yml`, 2026-10-04. Run 1, with
+  `issues: write` alone, failed with exit 1 on the merge of #463. Run 2, with both grants and
+  the same script, removed the label on the merge of #467.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
@@ -1091,9 +1199,9 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs about a second, against seconds to
-  minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
-  a second code path and the whole-tree layout and stamp guarantees.
+- Rejected: a scope on the static pass. The static pass costs about four seconds, against
+  seconds to minutes for the suites of one project (Figures). A scope buys nothing measurable
+  there, and costs a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
   point of the rule.
@@ -1164,10 +1272,14 @@ absent package names itself.
 
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
 `KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
-for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. `koch list-packages`
-with no project prints those and every project's, unscoped, so one command answers what a
-machine needs before any of this runs. To name a project keeps the meaning for each job that
-the runner asks for.
+for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
+`libbrotli1` for the audit suite, which reads `woff2` faces, because `curator/audit` carries no
+driver with a `system` verb. The runner holds it: verified by run 906 of `check`, whose `test`
+job ran that suite and passed.
+
+`koch list-packages` with no project prints those and every project's, unscoped, so one
+command answers what a machine needs before any of this runs. To name a project keeps the
+meaning for each job that the runner asks for.
 
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
 that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent because it
@@ -1428,6 +1540,9 @@ predicate:
   line forms that this charter prescribes.
 - V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
   the fixer share one reading of the words and of the exemptions of the glossaries.
+- V.1 and V.11 have a fixer through the same pass, which reads the case as the check reads it
+  (`## Semantic pass`). V.10 has a fixer that moves the entry block into `proc main`
+  (`## Content fixes`).
 - A name that a template substitutes declares nothing of that name. So `type name = object`
   inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
 - A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
@@ -1535,7 +1650,8 @@ shell among them. The checks still read every kind, and a finding there stays fo
 **The fixers run in one order, and the chain runs again until the source settles.** First come
 the fixers that read more than one file: the renames and conversions of the semantic pass, then
 the dead exports. They run once, on the source as given, and their edits move no line. Form runs
-next, so later fixers read clean line ends and the final gap of each comment.
+next, so later fixers read clean line ends and the final gap of each comment. The entry block
+moves after form, because the move shifts lines and widens none.
 
 The content fixers follow, because each changes the width of its line. The idioms run next,
 because the bindings fixer indents lines, and every later width reads that indent. The
@@ -1924,6 +2040,38 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
 - Verified by `suites/test_form.nim`, `suites/test_prose.nim`, `suites/test_idioms.nim` and
   `suites/test_checker.nim`. The tree holds no finding of these four rules.
 
+**An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
+`proc main` above the block, and the block calls `main()`. The routine takes the doc
+`TODO: Document.` (VI.1), because only a reader can say what it does. The body keeps its lines
+and its indent, since a routine and a block indent a body alike. Each program of the tree of
+`main` writes `proc main` at module level too, read by hand on 2026-10-04.
+
+- The fixer reports one rewrite at each binding that the check names.
+- A comment that opens its line after the body stays below the block. A comment on the guard line
+  and an `else` branch stay with the block.
+- A binding of the block that breaks the case of a local takes that case in the same run
+  (`## Semantic pass`). Otherwise a second run would rename it.
+
+**The move is refused where a routine would read the body otherwise.** The refusal prints with its
+reason, and the finding stays for the hand.
+
+- A guard other than `isMainModule` alone, such as `isMainModule and defined(js)`. A routine at
+  module level compiles where that guard fails.
+- A `{.global.}`, `{.threadvar.}` or foreign pragma in the body, which binds at module level
+  alone.
+- An `import`, `include`, `from`, `export`, `method` or `converter` at any depth of the block, or
+  an export marker.
+- A `quit` with a value at the block's own indent. Its code then belongs in a `main` that returns
+  it, through `quit main()`, and that form is a choice.
+- Two entry blocks in one module, or a module that names `main` already.
+- Rejected: `proc main` inside the block, which V.10 also allows. The block then holds a routine
+  and a call, where each program of the tree holds one call.
+- Cost: a value that the block binds moves from static storage to the stack. A large array there
+  can overflow the stack, and `nim check` never reads that. Inferred from where Nim stores a
+  global and a local, and never measured.
+- Verified by `suites/test_names.nim` and `suites/test_fixes.nim`. The tree proof is in
+  `## Semantic pass`, beside the case rename that runs with it.
+
 **The whole-tree proof of the content fixes: no fix changes what code means.** Verified by hand,
 2026-10-03, with the scratch program of `## Layout fixes`, which now asks the semantic pass too.
 It fixed every Nim file of the tree on branch `main`, with the checkouts of `koch fetch-deps`.
@@ -1959,6 +2107,13 @@ toolchain that serves the pin of the project.
 
 - One `nimsuggest --v3 --stdin` serves each entry: the file itself, or the file that includes it.
   It runs in the project directory, so the `nim.cfg` of the project applies.
+- A run reads its commands from a file and writes its answers to a file, through the
+  redirection of the shell. A pipe holds 64 KiB, and a run whose answers fill it stops reading
+  commands. So a run fed through pipes, all commands first, waits forever on a large entry.
+  Verified by `suites/test_symbols.nim`, which passes 64 KiB each way.
+- `nimsuggest` waits 250 ms between two commands on its input, so each site costs a quarter of a
+  second at least. Measured on this container with 2.2.12, 2026-10-04: 300 sites of one small
+  file took 76 s, with 0.6 s of processor time.
 - Each file is checked first. A file that reports an error on the C backend is asked again on the
   JavaScript backend. A file that fails both stays unresolved, and `koch fix` prints its first
   error.
@@ -1972,6 +2127,15 @@ toolchain that serves the pin of the project.
   `nimsuggest` ships with each toolchain that koch serves, so the pass costs no build.
 - Cost, measured 2026-10-02 on this container: about 2 s for each entry of a curator module. A
   front-end or a suite of `rga_visualiser` takes 5 to 9 s. Only a file with a candidate asks.
+- A site of an included file asks `dus`, whose answer opens on the same definition as `def`.
+  Verified by `suites/test_symbols.nim`, which resolves a use of an included file to its `let`.
+- On the commit pin, `def` in an included file recompiles the file that includes it for each
+  site, and `dus` recompiles only what is dirty. Read in `executeNoHooksV3` of `nimsuggest.nim`
+  at that pin. Measured on this container, 2026-10-04, over 20 sites of the shared suite of
+  `rga_visualiser` at `c5c65db`: `def` took 345 s and `dus` took 50 s.
+- A site of the entry itself keeps `def`, because `dus` lists every use of the symbol. Measured in
+  the same run: `dus` gave 182 use lines beside the 20 definitions. That the list grows long for a
+  common symbol such as `float` is inferred, and an included file pays that output alone.
 - Cost: a file that needs a checkout of `koch fetch-deps`, or a native library, stays unresolved
   without it. A branch of `when` that the defines leave out resolves nothing.
 - Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler.
@@ -1996,35 +2160,109 @@ by word, in its own case. `rewrites.nim` plans the rename from what the pass res
   read a use as a declaration, and a rename there would repeat the real one.
 - A site that resolves to the declaration is renamed, and one that resolves to another symbol
   stays. A site that resolves to nothing refuses the rename.
+- A site whose answer names another identifier refuses the rename too. That answer is a call that
+  the compiler places on the name, such as `items` in `for e in x`, or a converter. Verified by
+  `suites/test_rewrites.nim`, and by hand with the `nimsuggest` of the commit pin, 2026-10-04:
+  `def` at `WINDING` in `for (which_end, side) in WINDING:` of `mesh.nim` at `c5c65db` answers
+  `items`.
+- An old name inside the braces of an interpolated string, `&"…"` or `fmt"…"`, refuses the rename.
+  The module strformat parses it from the text, so no token stands there to resolve. Verified by
+  `suites/test_rewrites.nim`. Verified by hand on `c5c65db`, 2026-10-04: such a name left as
+  written broke `nim check`.
 - A named argument or a constructor field resolves through its callee. It is the declaration where
   it is a parameter or a field of that callee.
 - The new name must not stand in a file that the rename writes. It must not name a global
   declaration of a module compiled with the declaring file, `system` among them.
+- A global there is what a bare name reaches: `module.name`, or an enum member. The pass answers
+  fields, parameters and locals of other scopes too, and none of them can collide. Verified by
+  `suites/test_rewrites.nim`. Verified by hand on `c5c65db`, 2026-10-04: `globalSymbols` answered
+  fields such as `camera.SphereWorld.radius`.
+- Cost: the presence test reads each token of the new name, a field access among them. So a
+  rename that would compile can be refused. Inferred from `sitesOf`, which reads every name token.
 - No edit may land on a fenced line, or widen a line past 100 characters. A rename that reaches a
   file that the run does not fix is refused.
 - A mention of the old name in backticks, in a comment of a file where every use is renamed, is
   renamed too.
-- The planner takes the new name from its caller. So a rename of V.1 reuses it, for the case of a
-  local constant or of another name. Only the rule that chooses the name is new.
+- The planner takes the new name from its caller: the V.6 rule here, and the case rule below.
+- Each edit spans the name token at its site, because Nim reads `tmpDir` as `tmp_dir`. Verified
+  by `suites/test_rewrites.nim`.
+- A new name that is a keyword, or `result`, refuses the rename, because the compiler reads either
+  as something else. Verified by `suites/test_rewrites.nim`.
 - Cost: the scope is the project of the declaring file and the root files.
 - Cost: overloads in one file share the qualified name of a parameter. So a named argument to
   another overload is renamed too, and its build then fails.
 - Verified by `suites/test_rewrites.nim`, `suites/test_names.nim` and `suites/test_fixes.nim`.
 
-**The rename has its proof on commit `c5c65db` of `main`, because the tree of today holds no V.6
-finding.** Verified by hand, 2026-10-03, with a scratch program over `abbreviationRenames`,
-`planRename` and `resolve`. It applied the planned renames alone to a copy of that tree, with the
-checkouts of `koch fetch-deps`.
+**The rename has its proof on commit `c5c65db` of `main`, because the tree at `de0c1899` holds no
+V.6 finding, by `nim r koch check-files`.** Verified by hand, 2026-10-03, with a scratch program
+over `abbreviationRenames`, `planRename` and `resolve`. It applied the planned renames alone to a
+copy of that tree, with the checkouts of `koch fetch-deps`.
 
 - The names check gave 105 renames to plan. The semantic pass read 43 of the files in 155 s.
-- The planner planned 87 and refused 18. The declaring file of 9 compiles on no backend, and the
-  new name of 4 already stands. Another 4 would cross 100 characters. The last one is a use in a
-  tuple binding that the names scanner reads as a declaration.
+- The planner planned 87 and refused 18. Among them, the declaring file of 9 compiles on no
+  backend, and the new name of 4 already stands. Another 4 would cross 100 characters.
+- The names scanner reads a name in the value of a tuple binding as a use, and never as a
+  declaration. Verified by `suites/test_names.nim`.
 - The renames wrote 39 Nim files. The parser of the compiler read each to the same tree as
   before, once the renames map back.
 - `nim check` read each with the same result before and after. It passed 35 on the C backend and
   2 on the JavaScript backend, and 2 failed both times.
 - A second run gave 17 renames to plan, planned none, and so wrote nothing.
+
+**A name in the case of another kind (V.1, V.11) is renamed to the case of its own kind at every
+use.** `names.nim` reads each declaration whose case the names check reports. It spells the name
+word by word in the case of its kind, and the planner of the V.6 rename plans it from the pass. A
+name that also coins an abbreviation takes one rename, which settles both rules.
+
+- A local in capitals reports as `local constant case (V.1)`. Every other kind reports its own
+  rule, such as `field case (V.1)` or `member case (V.11)`.
+- Camel and Pascal keep the later letters of each word, so `parse_JSON` becomes `parseJSON`. A
+  name of capitals alone lowers them, so `DO_THING` becomes `doThing`.
+- A binding of an entry block that moves takes the case of a local, since it is one in `main`.
+- A local binding asks its declaring file alone, because no other module can name it. A file
+  elsewhere that does not compile then refuses nothing, and the pass asks fewer sites.
+- A new name that Nim reads as the old one, such as `local_value` for `localValue`, skips the
+  presence and shadow tests. It changes no reading, so nothing new can collide.
+
+**The case rename is refused before the pass where its meaning would leave the text.** Each
+refusal prints with its reason, and the finding stays for the hand.
+
+- A name that foreign code reads by its spelling is refused. A pragma such as `importc` or
+  `exportc` on its line or on its type marks it. So do a `{.push.}` over it and a type of
+  `JsRoot`. `nim check` never compiles the C or the JavaScript that such a rename would break.
+  Inferred from what `nim check` runs: the front end of the compiler, and no C or JavaScript
+  toolchain.
+- A parameter of a foreign routine is renamed, because a foreign call passes it by place.
+- A member without its own string is refused, because `$` reads its name, and output often
+  shows it.
+- A name that its line declares twice is refused, and so is a new name that reads as a new
+  acronym.
+- Rejected: a rename of a placeholder (V.12). Its letter is the initial of what it ranges over,
+  which is a choice.
+- Cost: a renamed field or type changes what `$`, `%` and `fieldPairs` print of it. Reading holds
+  that. Inferred from how those routines read the names of fields, and never measured.
+- Verified by `suites/test_names.nim`, `suites/test_rewrites.nim` and `suites/test_fixes.nim`.
+
+**The case rename and the entry move have their proof on commit `c5c65db` of `main`.** The tree
+at `de0c1899` holds no finding of either, by `nim r koch check-files`. Verified by hand,
+2026-10-04, with a scratch program over `renamesOf`, `planRename`, `resolve` and `fixBlockEntry`.
+It applied these fixers alone to a copy of that tree, with the checkouts of `koch fetch-deps` and
+the engine of `dance_ontology`. The program stays outside the tree, so its figures stand in the
+pull request, and the record keeps what they show.
+
+- The parser of the compiler read each written file to the same tree as before. That holds once
+  the renames map back and each moved body returns under its block.
+- `nim check` gave each written file the same result before and after, on its own pin.
+- Each refusal named one reason that this section gives, and each entry block moved.
+- A second run refused each rename for the reason of the first, moved no block, and wrote nothing.
+- Cost, measured in that run: the semantic pass spent most of an hour. A site of the shared suite
+  of `rga_visualiser` took about 1.5 s, because `dus` answers it with every use.
+
+**The entry move alone has a second proof, on commit `c4c0d400`, which holds more entry blocks.**
+Verified by hand, 2026-10-04, with the same program and the engine of `dance_ontology`. Each entry
+block moved, and the parser read each written file to the same tree once its body returns under
+its block. `nim check` gave each written file the same result before and after, and a second run
+moved nothing.
 
 ## Fixed waits
 
@@ -2065,14 +2303,15 @@ that holds it. The events, each one a verb argument:
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
-- `stop` refuses the end of a turn that pushed or posted and lacks the sign-off. It also
-  refuses a sign-off out of shape.
+- `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
+  nor the working line. It also refuses a sign-off out of shape, and the end of any turn whose
+  message names `#N` outside a link.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
 **`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
-(`GUIDE.md`, Independent changes run in subagents). The checkout of a write is the one that
+(`GUIDE.md`, Work for subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
 names, else the working directory of the call. A directory outside this repository falls
 back to the primary checkout.
@@ -2162,18 +2401,22 @@ carries the label of the role that it starts, and no item is the work of the coo
 Verified by `suites/test_hooks.nim`.
 
 **The sign-off follows the order that the Architect set, and `stop` holds that order.** The
-Architect reads the block first: who the delegate is and where it stands, then what happened,
-then what waits on them (`GUIDE.md`, The sign-off). Each decision reads as a decision card, and
-its class says what blocks. Each ⚠️ row names the role that it waits on. The coordinator, once
-the Architect trials it, lifts each decision onto a card without a change of words.
-The block carries seven labels in order: `Role`, `State`, the table, `Context`, `Summary`,
-`Decisions` and `Next step`.
+Architect reads the block first: who the delegate is and what it works on, then what happened.
+Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
+a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
+The coordinator, once the Architect trials it, lifts each decision onto a card without a change
+of words.
 
-- The state opens with `done`, `working`, `waiting` or `blocked`. The check reads that word
-  alone, up to the first comma or space. Where the branch stands follows it, and only the
-  `english` check reads it. Verified by hand through the built hook, 2026-10-03: a state line
-  over 25 words gives an `english` finding. The state is `blocked` exactly when a decision
-  blocks this delegate.
+The block carries seven labels in order: `Role`, `Context`, the table, `Summary`, `State`,
+`Decisions` and `Next step`. The Architect set this order on 2026-10-04. The table ends where
+`Summary` starts. Verified by `suites/test_hooks.nim`, which refuses a table before the context
+and a state before the summary.
+
+- The state opens with `done`, `waiting` or `blocked`. The check reads that word alone, up to
+  the first comma or space. Where the branch stands follows it, and only the `english` check
+  reads it. Verified by hand through the built hook, 2026-10-03: a state line over 25 words
+  gives an `english` finding. The state is `blocked` exactly when a decision blocks this
+  delegate.
 - The block holds no brief line, by the choice of the Architect: no delegate starts from a
   brief until the Architect trials the coordinator. No check refuses a line beyond the seven
   labels, so reading holds this rule. Verified by hand through the built hook, 2026-10-03: a
@@ -2197,6 +2440,43 @@ The block carries seven labels in order: `Role`, `State`, the table, `Context`, 
 - Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
   and two for the order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off
   with no decision.
+
+**A delegate signs off only when it stops, and a turn that ends while work goes on closes with
+a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
+the middle of work hides which delegates need the Architect. So each state word is a stop:
+`done`, `waiting` or `blocked`. A turn that pushed or posted closes with the sign-off, or with a
+last line that opens `**Working:**` and holds text. `stop` reads the sign-off in full where its
+heading is present, and else the last line.
+
+- Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
+  that is not last, and the state `working`. Its refusal of `working` points at the line.
+- Rejected, by the choice of the Architect: the hook skips the demand while a background task
+  has not reported. That ties the hook to the form of a task notification, which the harness
+  can change.
+- Rejected, by the same choice: no demand, with the shape read only where a sign-off is
+  present. Then a delegate can stop with no word to the Architect.
+- Cost: the hook reads that the working line holds text, and never whether anything runs. A
+  delegate that stops behind a working line passes, and only a reader sees it.
+- Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
+  by a change of label or draft alone is not asked for a sign-off.
+
+**`stop` names each `#N` of the closing message that stands outside a link and outside code.**
+Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
+Output contract). The Architect ruled this check on 2026-10-04. It reads every turn, and not only
+a turn that pushed or posted, because the rule binds every message. Each number reports once.
+
+- A link is `[text](url)`, `[text][label]`, or `[label]` with a definition in the message. A
+  definition line is a link too. A bracket with no definition is text, as GitHub shows it.
+- Fenced code and code spans are skipped. A code span closes at the next run of backticks of the
+  same length, as CommonMark reads it.
+- A `#` after a word character, `&` or `/` opens no number. So `&#169;` and a fragment of a URL
+  pass.
+- Cost: `owner/repo#12` passes too, though it names an item of another repository bare.
+- Cost: the hook reads the closing message of a turn alone, and no earlier message of the turn.
+- Verified by `suites/test_hooks.nim`: three kinds of link, code, an undefined bracket, a
+  reference, a fragment, and a number named twice.
+- Verified by hand through the hook built from the branch, 2026-10-04. Of three closing messages
+  of the curator, one named `#463` outside a link, and the hook refused that one alone.
 
 ## Watching main
 
@@ -2405,10 +2685,11 @@ The machine for these figures is a four-core Intel Xeon 2.10 GHz container, on N
 2026-09-24, timed with `date +%s.%N`. Warm means that koch and the test binaries were already
 compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machine and date.
 
-**The static pass costs about a second.** `nim r koch check-files`, warm: 1.11 s, 1.15 s and 0.98 s
-over three consecutive runs. Before, it took 1.97 s, 1.96 s and 1.82 s. Inside koch, the old
-dead-export rule took 1.1 s of a 2.07 s pass, because it scanned every source once for each
-export.
+**The static pass costs about four seconds.** `nim r koch check-files`, warm, at `de0c189` on
+2026-10-04, on the same machine: a median of 3.80 s over ten consecutive runs, from 3.69 s to
+3.94 s. The dead-export rule became one pass at 2026-09-24. That pass then took 1.11 s, 1.15 s
+and 0.98 s, against 1.97 s, 1.96 s and 1.82 s before. Inside koch, the old dead-export rule took
+1.1 s of a 2.07 s pass, because it scanned every source once for each export.
 
 **A branch that changes the checker costs one project, and not every project.** Warm,
 `nim r koch check` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
@@ -2562,3 +2843,9 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether `koch fix` with no name reads the changed files rather than the changed projects. Every
   verb that takes projects reads projects, so a run can rewrite a file that the branch did not
   touch (Precedence 2).
+- Whether a rename should read the uses of its declaration through `dus`, as a second answer for
+  each site. The usage list of `WINDING` in `mesh.nim` at `c5c65db` holds the site that `def`
+  answers with `items`. So a rename that an implicit call refuses could be planned, at one more
+  command for each rename.
+- Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
+  Without it, each run fetches 5.7 MB of faces before the suite holds the rows to their bytes.
