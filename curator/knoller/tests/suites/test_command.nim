@@ -120,6 +120,17 @@ suite "Command line":
       check lines == shown(outside[0], outside[1], source)
 
 
+  test "directory names Nim files git lists under it, sorted; one naming none says why":
+    check listingOf("src", "b.nim\0a.md\0a.nim\0", 0) == (@["src/a.nim", "src/b.nim"], "")
+    let outside = listingOf("/q", "fatal: not a git repository\n", 128)
+    check outside.files.len == 0
+    check outside.refusal.startsWith("Directory lies outside git work tree")
+    check outside.refusal.endsWith("got `/q`.")
+    let bare = listingOf("docs", "a.md\0", 0)
+    check bare.files.len == 0
+    check bare.refusal.startsWith("Directory holds no Nim file that git lists")
+
+
   test "locked nimble file and file of no dialect are passed over":
     let outcome = outcomeOf(
       [("p/p.nimble", "version = \"0.1.0\" \n"), ("README.md", "x \n")],
