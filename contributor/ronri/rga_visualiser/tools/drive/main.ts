@@ -67,7 +67,7 @@ import {
 } from './scenery';
 import { driveGround } from './ground';
 import { driveAntialias, driveBlankRefused } from './canvas';
-import { driveFrameWork, driveLoopRuns, watchFrames } from './frame';
+import { driveCopiesStill, driveFrameWork, driveLoopRuns, watchFrames } from './frame';
 import { driveHostSave } from './host';
 import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
@@ -253,6 +253,8 @@ async function driveSimulated(browser: Browser): Promise<void> {
   await driveApplyNamed(page);
   const objects_largest = await objectsLargest(page);
   await loadDemo(page, objects_largest);
+  // First, while demo stands as loaded and every frame holds its scene.
+  await driveCopiesStill(page, objects_largest);
   await driveCulling(page);
   await driveOccluded(page);
   await driveFarSky(page);

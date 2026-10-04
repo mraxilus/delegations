@@ -48,8 +48,17 @@ declare global {
     __held_frame?: number;
     /** Each frame's own clocks and counts, alongside `__work_frame`. */
     __phase_frame?: Phase[];
+    /** How many values page copied while counting stood open; see `driveCopiesStill`. */
+    __copies_counted?: number;
+    /** Whether copy counter counts now. */
+    __is_counting_copies?: boolean;
+    /** JS backend's own copy, held while counting wrapper stands in front of it. */
+    __copy_unwrapped?: CopyNim;
   }
 }
+
+/** Shape of JS backend's deep copy, `nimCopy`: destination, source, type, and copy made. */
+type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown;
 
 /** Stand wrapper in front of page's frame build, collecting what each frame costs.
  *
@@ -172,6 +181,63 @@ export async function driveLoopRuns(page: Page): Promise<void> {
   report(
     'the draw loop keeps building frames', built === FRAMES_LOOP,
     `${built} of ${FRAMES_LOOP} simulated frames built`,
+  );
+}
+
+
+/** How many still frames copies are counted over; more than one, so steady state is read. */
+const FRAMES_COPIES = 3;
+
+/** Count values still frames copy, and assert each frame copies fewer than scene has objects.
+ *
+ *  JS backend deep-copies through `nimCopy`, and copy for each object turns frame linear in
+ *  scene for no drawn change. Bound is object count: any such copy reaches it on its own.
+ *  Count rather than time: count reads same on every machine, and load never moves it.
+ *  Counts outermost call alone, since copy of nested value calls `nimCopy` again for each
+ *  member. Every frame counted must hold its scene, so count is still frame's own.
+ */
+export async function driveCopiesStill(page: Page, objects: number): Promise<void> {
+  const is_wrapped = await page.evaluate(() => {
+    const scope = globalThis as unknown as { nimCopy?: CopyNim };
+    const unwrapped = scope.nimCopy;
+    if (typeof unwrapped !== 'function') return false;
+    window.__copy_unwrapped = unwrapped;
+    window.__copies_counted = 0;
+    window.__is_counting_copies = false;
+    let depth = 0;
+    scope.nimCopy = function (destination: unknown, source: unknown, type: unknown): unknown {
+      if (depth === 0 && window.__is_counting_copies === true) {
+        window.__copies_counted = (window.__copies_counted ?? 0) + 1;
+      }
+      depth += 1;
+      try {
+        return unwrapped(destination, source, type);
+      } finally {
+        depth -= 1;
+      }
+    };
+    return true;
+  });
+
+  const from = await countFrames(page);
+  await page.evaluate(() => { window.__is_counting_copies = true; });
+  await advanceFrames(page, FRAMES_COPIES);
+  const copies = await page.evaluate(() => {
+    window.__is_counting_copies = false;
+    const scope = globalThis as unknown as { nimCopy?: CopyNim };
+    if (window.__copy_unwrapped !== undefined) scope.nimCopy = window.__copy_unwrapped;
+    return window.__copies_counted ?? 0;
+  });
+  const phases = await readPhases(page, from);
+  const held = phases.filter((phase) => phase.is_scene_held).length;
+
+  report(
+    'a still frame under the largest demo copies fewer values than the scene has objects',
+    is_wrapped && phases.length === FRAMES_COPIES && held === FRAMES_COPIES &&
+      copies < objects * FRAMES_COPIES,
+    is_wrapped
+      ? `${copies} copies over ${phases.length} frames, ${held} held, for ${objects} objects`
+      : 'page holds no `nimCopy` to count',
   );
 }
 
