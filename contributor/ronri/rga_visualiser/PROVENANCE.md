@@ -3074,20 +3074,44 @@ The archive asks for this acknowledgement, word for word:
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. On 2026-08-31 the query returned 11,432 entries, and the table keeps
-11,252 of them. Each of the other 180 is a composite entry, for a double or multiple system. The
-table holds the components of each such system as stars of their own. The cut is not in the
-query, so a run of the query alone returns the composite entries too.
+11,240 of them. Each of the other 192 is a composite entry, for a double or multiple system as a
+whole. The tool that wrote the table cut 180 of them, and 12 are cut by hand by its rule. The cut
+is not in the query, so a run of the query alone returns them too.
 
-Verified by a run of the recorded query against the TAP service of SIMBAD, 2026-10-04. It
-returns 11,430 entries. The query applies its own bounds of parallax and position, so the bound
-of 31.53 parsecs removes no entry. Every star of the table is in the result, at the distance
-that the table gives it. Of these stars, 17 carry a new SIMBAD name, at the same position. Each
-of the other 178 entries is a composite entry, and the table holds its components.
+**A composite entry comes out where the main star of its system has an entry of its own.** Kept,
+it is one more point for its system. SIMBAD often gives it a distance from an older measurement.
+Of the 12 cut by hand, 10 stood 0.55 to 6.2 parsecs off their components. `* zet UMa` stood at
+26.31 parsecs, and `* zet01 UMa` and `* zet02 UMa` stand at 24.87 and 24.83. The 12, none of
+which carried a planet, are these:
 
-SIMBAD links 174 of those composite entries to their components. The name of each of the other
-4 is the name of its components without their letter. So the result holds the same 11,252 stars
-as on 2026-08-31, and 2 fewer composite entries. By the same links, 21 composite entries stand
-in the table beside their own components.
+- `* mu. Cyg`, `* zet Aqr`, `* zet UMa`, `2MASS J09153413+0422045`, `BD+32 4747`, `BD+49 2959`
+- `BPM 14175`, `HD 40887`, `NAME BD-21 1074BC`, `Smethells 177`, `StM 162`, `StM 187`
+
+**A composite entry stays where its main star has no entry, because it is the only point for that
+star.** A star has no entry where SIMBAD gives it no parallax of its own. Five such entries stay:
+`* zet Cnc`, `G 123-49`, `HIP 110922`, `LP 532-81` and `RX J0507.2+3731`. The main star of
+`HIP 110922` is the pair `LP 876-26`, brighter by 0.6 in G than its companion. Rejected: a cut of
+these 5 too, which takes their main stars out of the scene. Cost: each stands for its main star
+at the distance of its system, up to 4.5 parsecs from its companion.
+
+The rule is the tool's own. Of the 174 composite entries that it cut and that SIMBAD links to their
+components, the table holds every component of 145. Of the other 29, it holds the main star alone.
+It cut 4 more by name, each the name of its components without their letter. It kept 15 composite
+entries whose only component in the table is a B or a C, by name. One is `HD 142`, with 3 planets.
+
+Four entries that SIMBAD links to a companion in the table are stars, and stay. These are
+`* ksi UMa B`, `BD+16 2708`, `HD 61606` and `HD 222237`. SIMBAD types each one as a star, and the
+table holds no separate A component for any of them.
+
+Verified by a run of the recorded query against the TAP service of SIMBAD, 2026-10-04. Two more
+queries read its links (`h_link`), and the parallax and G magnitude of each component. The query
+returns 11,430 entries, and its own bounds mean that the bound of 31.53 parsecs removes none. Every
+star of the table is in the result at its distance, 17 of them under a new SIMBAD name. Each of the
+other 190 is a composite entry whose main star stands in the table. Of the table, SIMBAD links only
+the 5 and the 4 above to a component that the table holds.
+
+Verified by `suites.nim`: the 12 are out of the table, and the 9 are in it, each beside a
+component that the table holds.
 
 **A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
 `#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
