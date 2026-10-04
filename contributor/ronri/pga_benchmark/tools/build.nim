@@ -101,7 +101,7 @@ proc delegated(): int =
   ## Run verb command line names in `tools/verbs.nim`, with its arguments; exit code of run.
   ##   Compiler is one on PATH, which koch sets to pin, so project code compiles on pin alone.
   var arguments = @["r", "--hints:off", PATH_VERBS]
-  for index in 1..paramCount(): arguments.add paramStr(index)
+  for index in 1 .. paramCount(): arguments.add paramStr(index)
   runStatus("nim", arguments)
 
 
@@ -139,10 +139,10 @@ proc main(): int =
     verb = if paramCount() > 0: paramStr(1) else: ""
     arguments =
       case verb
-      of "show": 2..3
-      of "evaluate": 2..3
-      of "published": 3..3
-      else: 1..1
+      of "show": 2 .. 3
+      of "evaluate": 2 .. 3
+      of "published": 3 .. 3
+      else: 1 .. 1
   if paramCount() notin arguments or
       (verb == "evaluate" and paramCount() == 3 and paramStr(3) != FLAG_THOROUGH):
     stderr.write USAGE

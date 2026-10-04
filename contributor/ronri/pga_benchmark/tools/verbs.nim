@@ -49,7 +49,7 @@ const
   FLAGS = "-d:release"  ## Build flags every measured build carries; documents name them.
   CONFIGS = [("rga4d", 4, false), ("cga5d", 5, true), ("rga3d", 3, false), ("cga4d", 4, true)]
     ## Algebras driven, typed ones first: name, dimensions, conformal.
-  SWEEP = 2..6  ## Dimensions swept, rigid metric, general measurands only.
+  SWEEP = 2 .. 6  ## Dimensions swept, rigid metric, general measurands only.
   USAGE = "Usage: nim r tools/build.nim <verb> [arguments]; this file runs through it alone.\n"
     ## Text printed where verb is unknown here; dispatcher's own usage names every verb.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
@@ -229,7 +229,7 @@ proc bench() =
       ["-d:nimAllocStats"],
     )
   var runs: Table[string, seq[JsonNode]]
-  for index in 1..RUNS_BENCH:
+  for index in 1 .. RUNS_BENCH:
     for (name, _, _) in CONFIGS:
       let output = BUILD / "bench_" & name & "_" & $index & ".json"
       run(BUILD / "bench_" & name, [output])
@@ -316,7 +316,7 @@ proc gaps() =
 
 proc readChanges(findings: var seq[Finding]): seq[(string, Change)] =
   ## Read every change file, in name order; malformed ones add findings.
-  var paths = toSeq(walkFiles(DIRECTORY_CHANGES / "*.md"))
+  var paths = walkFiles(DIRECTORY_CHANGES / "*.md").toSeq
   paths.sort
   for path in paths:
     let (change, why) = parseChange(path, readFile(path))
@@ -853,7 +853,7 @@ func shortened(text, stem, plain: string): string =
     if at < 0:
       result.add text[i .. ^1]
       break
-    result.add text[i..<at]
+    result.add text[i ..< at]
     result.add plain
     var j = at + stem.len + 2
     while j < text.len and (text[j].isAlphaNumeric or text[j] == '_'): inc j
@@ -875,8 +875,8 @@ func unindexed(text: string): string =
     if close < 0:
       result.add text[i .. ^1]
       break
-    result.add text[i..<at]
-    result.add text[at + opening.len..<close]
+    result.add text[i ..< at]
+    result.add text[at + opening.len ..< close]
     i = close + closing.len
 
 
@@ -953,7 +953,7 @@ proc showFunction(symbol, algebra: string) =
         if printed >= LINES_SHOWN:
           echo "     … ", counts.lines - printed, " more lines; whole body is in ", cache
           break
-        echo "     ", (if line.len > WIDTH_SHOWN: line[0..<WIDTH_SHOWN] & " …" else: line)
+        echo "     ", (if line.len > WIDTH_SHOWN: line[0 ..< WIDTH_SHOWN] & " …" else: line)
         inc printed
       echo ""
       echo "   machine code"

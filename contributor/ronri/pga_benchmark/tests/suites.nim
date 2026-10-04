@@ -1689,7 +1689,7 @@ suite "Internal: Pages":
     check document.startsWith("<!doctype html>")  # standards mode, as host serves it
     check "<meta charset=\"utf-8\">" in opening  # page's text read as UTF-8
     check "name=\"viewport\"" in opening  # phone width laid out as on host
-    check document[opening.len..^(closing.len + 1)] == page  # page whole, unchanged
+    check document[opening.len .. ^(closing.len + 1)] == page  # page whole, unchanged
     check opening.endsWith("<body>") and closing.startsWith("</body>")  # page inside body
     for tag in ["<!doctype", "<html", "<head", "<body", "<meta"]:
       check tag notin shell_html.toLowerAscii  # shell holds no skeleton, so none doubles
@@ -2052,13 +2052,13 @@ suite "Internal: Render":
 
 
   test "character found on page reads as finding at its hosted page, ending in codepoint":
-    let findings = checkRendered(
-      foundOf([("docket", "p.note", 0x2603), ("control", "p#han", 0x4E2D),
-        ("control", "p#open", 0x2603)]),
-      expected,
-      "control",
-      "build/hosted",
-    )
+    let
+      characters = [
+        ("docket", "p.note", 0x2603),
+        ("control", "p#han", 0x4E2D),
+        ("control", "p#open", 0x2603),
+      ]
+      findings = checkRendered(foundOf(characters), expected, "control", "build/hosted")
     check findings.mapIt(it.render) == @[
       "build/hosted/docket.html:0: p.note: Character drawn by face of system; got `U+2603`.",
     ]  # one finding, at page, element first, codepoint last
@@ -2067,7 +2067,7 @@ suite "Internal: Render":
   test "control passes on findings it expects, and one absent is blind":
     let both = [("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
     check checkRendered(foundOf(both), expected, "control", "h").len == 0  # sees, so passes
-    let blind = checkRendered(foundOf(both[0..0]), expected, "control", "h")
+    let blind = checkRendered(foundOf(both[0 .. 0]), expected, "control", "h")
     check blind.len == 1 and "Check is blind" in blind[0].message  # absent one is blind
     check blind[0].message.endsWith("got none for `U+2603`.")  # names codepoint it missed
     check checkRendered(newJObject(), expected, "control", "h").len == 2  # never rendered
@@ -2088,9 +2088,10 @@ suite "Internal: Render":
     check none.len == 1 and "proves nothing" in none[0].message  # vacuous control refused
     let refused = %*{"docket": {"characters": [], "faces": [
       {"family": "Noto Sans", "weight": "400", "status": "error"}]}}
-    check checkRendered(refused, expected, "control", "h").mapIt(it.message).anyIt(
-      it == "@font-face Noto Sans 400: Face does not load; got `error`."
-    )  # refused face named with status
+    let
+      messages = checkRendered(refused, expected, "control", "h").mapIt(it.message)
+      refusal = "@font-face Noto Sans 400: Face does not load; got `error`."
+    check refusal in messages  # refused face named with status
 
 
 
@@ -2129,18 +2130,18 @@ suite "Internal: Driver":
       if s.startsWith("#"): continue
       for opener in ["import ", "from "]:
         let at = s.find(opener)
-        if at < 0 or (at > 0 and not s[0..<at].endsWith(": ")): continue
-        result.add s[at + opener.len..^1].split(' ')[0]
+        if at < 0 or (at > 0 and not s[0 ..< at].endsWith(": ")): continue
+        result.add s[at + opener.len .. ^1].split(' ')[0]
 
   func branched(source: string): Table[string, string] =
     ## Read body of each dispatch branch, keyed by verb, up to next branch or `else:`.
     var verb = ""
-    for line in source[source.find("case paramStr(1)")..<source.len].splitLines:
+    for line in source[source.find("case paramStr(1)") ..< source.len].splitLines:
       let s = line.strip
       if s == "else:": break
       if s.startsWith("of \""):
-        verb = s[4..<s.find('"', 4)]
-        result[verb] = s[s.find(':', 4 + verb.len) + 1..^1]
+        verb = s[4 ..< s.find('"', 4)]
+        result[verb] = s[s.find(':', 4 + verb.len) + 1 .. ^1]
       elif verb.len > 0:
         result[verb].add "\n" & s
 
@@ -2148,7 +2149,7 @@ suite "Internal: Driver":
   test "drive holds code to pin alone, and verb head alone reads library head":
     let
       start = verbs.find("proc drive() =")
-      body = verbs[start..<verbs.find("\n\n\n", start)]
+      body = verbs[start ..< verbs.find("\n\n\n", start)]
     check "checkoutChecked()" in body and "headChecked" notin body  # drive reads no head
     check "of \"head\": report(headChecked(commitPga()))" in verbs  # head's verdict, exit code
 
@@ -2169,9 +2170,10 @@ suite "Internal: Driver":
 
 
   test "dispatcher hands on every verb but types and system, and verbs answers each":
-    let
-      branches = branched(driver)
-      handed = toSeq(branches.pairs).filterIt("delegated()" in it[1]).mapIt(it[0])
+    let branches = branched(driver)
+    var handed: seq[string]
+    for verb, body in branches:
+      if "delegated()" in body: handed.add verb
     check handed.sorted == dispatched(verbs).sorted  # each verb handed on is answered there
     check "types" notin handed and "system" notin handed  # neither compiles project code
     check "types()" in branches["drive"] and "browser()" in branches["drive"]  # readied first
@@ -2180,7 +2182,7 @@ suite "Internal: Driver":
   test "drive builds every page once, and renders each page it builds":
     let
       start = verbs.find("proc drive() =")
-      body = verbs[start..<verbs.find("\n\n\n", start)]
+      body = verbs[start ..< verbs.find("\n\n\n", start)]
     check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
     check "pinnedChecked(pin, built)" in body  # digests of that build
     check "renderedChecked(built, faces)" in body  # render of that build
