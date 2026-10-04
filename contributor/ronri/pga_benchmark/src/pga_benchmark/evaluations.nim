@@ -100,8 +100,15 @@ func digestEdits*(changes: openArray[Change], claims: JsonNode, programs: seq[st
 
 proc readLibrary*(directory: string): Table[string, string] =
   ## Read every Nim file under library directory, keyed by relative path with `/`.
+  ##   Checkout holding no Nim file raises, so no page quotes library it could not read.
   for path in walkDirRec(directory, relative = true):
     if path.endsWith(".nim"): result[path.replace('\\', '/')] = readFile(directory / path)
+  if result.len == 0:
+    raise newException(
+      IOError,
+      "Library checkout holds no Nim file; restore it with `nim r koch fetch-deps`; got `" &
+        directory & "`.",
+    )
 
 
 proc prepareCopy(chain: Toolchain, candidate: Candidate): (string, seq[Finding]) =
