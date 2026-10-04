@@ -156,16 +156,9 @@ Whitespace runs collapse, so texts compare stably.
 
 ## Prose
 
-**Articles are the whole rule, as data.** `ARTICLES = ["a", "an", "the"]`. Tokens are
-whitespace-split, punctuation-stripped and lowercased, after the backtick spans are removed.
-
-- Cost: the label `A`, as in "Appendix A", is flagged. So a label goes in backticks, as
-  `prose.nim` writes its own example.
-- Verified by `suites/test_prose.nim`: 300 seeded random telegraphic comments pass, and each one
-  with an inserted article fails. The citation `2.2a`, a URL and an underscored name pass. The
-  corpus is seeded with `randomize(0)`, so the 300 are the same 300 on every run. It is the only
-  sampled corpus in this project, and that seed is why its verdict does not vary (CONTRIBUTOR.md,
-  "Tests are paramount").
+**The prose check reads each comment of each kind, and knoller finds the articles in it.** The
+rule, its data and its fixer are in the record of knoller, under Articles. Verified by
+`suites/test_prose.nim`: a line that holds an article is reported, with the article named.
 
 ## English
 
@@ -261,20 +254,10 @@ line carries one `sha512-` digest of 95 runes, and fits without it, so the unbre
 rule passes it. So the shape holds at any lockfile size, and the width rule needs no exemption
 beside `LICENSE.md`.
 
-**A trailing comment in Nim takes exactly two spaces before its marker (X.9).** The marker is the
-first `#` after the code of a line. The check reads it on the code-only view and on a
-code-and-comments view, which blanks strings alone. So a `#` inside a string or a char never trips
-it. A line with no code, such as a whole comment or a doc line, holds no trailing comment. The
-static pass does not run this check yet, and `## Fixes` says why.
-
-- Cost: only Nim syntax is read. A trailing comment in TypeScript, C, C++, YAML, cfg or shell
-  stays unread until each kind has a scanner.
-- A column of aligned trailing comments is a finding, by the ruling of the Architect. The charter
-  examples that aligned a column now take two spaces. The excerpt of `algebra.nim` in
-  `EXAMPLES.md` keeps its one space, because it is quoted verbatim at its pin.
-- Verified by `suites/test_form.nim`: a gap of one, of none and of five fails, after code and after
-  a string. A `#` in a string, a char, a block comment or a long string passes, and so does a whole
-  comment line. `checkForm` reports no gap yet.
+**The static pass reads no gap of a trailing comment yet.** The check and its fixer are in the
+record of knoller, under Form. Only Nim syntax is read, so a trailing comment in TypeScript, C,
+C++, YAML, cfg or shell stays unread until each kind has a scanner. Verified by
+`suites/test_form.nim`: `checkForm` reports no gap.
 
 ## Layout
 
@@ -1784,121 +1767,13 @@ project, so only a name reaches it.
 
 ## Layout fixes
 
-**Each layout rule that has one right answer has a check and a fixer, from one reading.** The
-checks and fixers of separators, signatures, calls and trailing separators share the reading of
-`wrapping.nim`. Spaces read `spacing.nim`, blank lines `blanks.nim`, and docs and defaults
-`declarations.nim`. A construct that the scanner cannot read with certainty stays as written,
-and its check stays silent.
-
-**Parameters take commas while each type appears once, and semicolons where a group shares a
-type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
-included, in a routine, a routine type and a lambda. The separator after a typed group never
-changes what the compiler reads. A group without a type or a default stays, because a semicolon
-after it ends the group.
-
-**A tuple type takes commas between its fields (STYLE.md §5).** `tuple[a, b: int, c: X]` and its
-form with `;` parse to one tree, so the rewrite moves no reading. A comment after a field stays.
-A `;` in parentheses is a list of statements, and stays.
-
-**Each signature has one layout (X.3).** A signature that fits stands on one line, and a wrapped
-one that would fit is joined. Otherwise its parameters take one line of their own, where that
-line fits. Otherwise one parameter, or one group of a shared type, takes each line. Each layout
-indents one level, and the closing line opens with `)`.
-
-- One parameter alone on its line is a list written one item to a line, so it takes a separator.
-- A signature that holds a comment, or a group that spans lines, stays. So does one that fits
-  where the body after `=` on its line does not, because a moved body and a wrap are two answers.
-
-**A call that fits stays on its line, and one that does not takes one argument to a line (X.3).**
-A wrapped call that would fit is joined, and a split call never puts all its arguments on one
-line of their own. The outermost call that crosses `LINE_MAX` splits first, and each line it
-leaves is read again. An argument splits its own call only where that call is the whole argument.
-An argument that the hand wrapped, and that fits no line, keeps its line breaks and moves with
-its new indent.
-
-- A list that no call opens, and that spans lines, keeps its rows: the fixer never reflows it.
-- A call stays where it holds a comment, a long string that spans lines, or a block. A block is
-  a keyword that opens one, `;`, `do`, or `:` at the end of a line outside a condition.
-- A line break that joining could read again stays, such as one between two operands.
-
-**A list written one item to a line takes a trailing separator (X.3).** That holds for a call,
-parameters, an array, a seq, a set, a table, a tuple of several items, a constructor and an import
-bracket. Parameters take the separator that their groups take. A parenthesis of one item takes
-none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02:
-the compiler accepts the separator in each of these lists, and `;` after the last parameter group.
-
-**Adjacent imports of one directory share one bracket, and a bracket of one module drops it
-(X.5).** The merged statement takes the place of the first, and its items sort as bracket items
-sort. An item keeps `{.all.}`. An import with `except`, `as`, another pragma, a comment or a
-string stays apart, and so does a statement that spans lines. Imports apart across a blank line
-stay too, because where they meet is a choice.
-
-**Each list that the language leaves unordered sorts in dictionary order (X.10).** That covers
-the imports, an `export` list, a pragma list of a declaration and the names after
-`from … import`. Case and `_` are ignored, and a tie falls to the code point, so `Facing` comes
-before `facing`. A pragma list holds its bare pragmas first, then those with an argument, each
-group sorted. The items sort into the slots they held, and a `key: value` item moves whole.
-
-- A pragma statement that opens its line stays, such as `{.push.}`.
-- A list that holds a pragma which code defines stays. The compiler applies macro pragmas in the
-  order written: `semProcAnnotation` takes the first macro, and that macro sees the rest. So a
-  moved pragma of that kind can change the routine it yields.
-- Cost: such a list stays even where its order moves nothing, and reading holds it. A built-in
-  pragma missing from `PRAGMAS_BUILT_IN` reads as one that code defines, with the same cost.
-- The built-in pragmas come from the sets of `compiler/pragmas.nim`.
-- Verified by hand with `koch check-files`, 2026-10-02: the wired import check, now in
-  dictionary order, reports no new finding on the tree.
+**Each layout rule is a check and a fixer of knoller, and its record is there, under Layout
+fixes.** What follows is what `koch fix` showed over the tree.
 
 **Spaces inside an expression take the count of X.9, and the record of knoller holds the rule.**
 No fixer of the chain writes a spaced range again. Verified by `suites/test_fixes.nim`: a spaced
 source goes through every fixer unwritten, and a split call, a joined call and a wrapped
 signature keep each space.
-
-**Banners take the blank lines of X.2 exactly, and `strictFuncs` after the imports moves.** The
-banner fixer sets each run beside a banner to the count that `checkBanners` reads. The late
-`strictFuncs` moves to the place where a missing one goes. The blank lines above it go with it
-where blank lines stand below it too.
-
-**A suite takes three blank lines before it, and a test two (X.2).** A first child follows its
-opener at once, such as a test that opens a suite, or a suite that opens a `when` body. A suite
-or a test after a banner takes the one blank line of the banner. The rule reads files under
-`tests/` alone.
-
-**A nested helper takes one blank line on each side (STYLE.md §1).** A helper is a routine that
-the body of a routine declares at its own level. The rule holds right after the doc of the
-enclosing routine too. A one-line `template` is an alias, and stays. The side that leaves the
-enclosing body is not read, because a sibling of the enclosing routine stands there. No helper
-moves.
-
-- Each run of blank lines goes above a `#` comment on the line before, so the comment stays with
-  what it names. A `##` doc and a banner never move with it.
-- Both rules read the code view, so a `suite` or a `proc` in a fixture string never moves. A run
-  inside a string or a comment that spans lines is never read.
-- Cost: a helper inside a `when`, an `if` or a loop of the body is not read. X.11 asks each
-  helper first in the body.
-
-**A one-line doc of a type, a field, a binding or an enum member stands on its line (STYLE.md
-§5).** It takes two spaces before `##`, where the joined line fits `LINE_MAX`. Otherwise it takes
-the next line, one level in. A trailing doc that widens its line past `LINE_MAX` moves there. A
-doc of two or more lines stays where it is.
-
-- A declaration is a line of code in a `type`, `const`, `let` or `var` section, at any depth. A
-  keyword line that holds one declaration is one too.
-- A line that continues an expression, opens a block, leaves a bracket open or carries a `#`
-  comment is none. The doc of a routine keeps its own place.
-
-**A parameter drops a type that its literal default gives exactly (X.12).** An integer literal
-gives `int`, a float literal `float`, `true` and `false` give `bool`, and a string or a character
-literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `Option[T]`.
-
-- `float = 0`, `cfloat = 0.0`, `HalfTurns = 0` and a named constant stay, because there the
-  literal gives another type, or none.
-- A template and a macro stay, because a parameter of theirs without a type reads otherwise.
-- Cost: a literal with a suffix, such as `0'u8`, and a raw string keep their type, though it is
-  exact.
-
-**No fixer writes a line wider than `LINE_MAX`.** A rewrite that would do so stays, with its
-finding, for the hand.
 
 **Two generated data files of `rga_visualiser` hold most of its call findings.** They are
 `starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They hold
@@ -1949,15 +1824,6 @@ side.
   accepts that, and `--profiler:on` still runs (verified by hand with 2.2.12, 2026-10-02). The
   Architect accepts the duplicate, so that the fixer stays simple and reads no include.
 - Verified by `suites/test_idioms.nim`.
-
-**A `to<Target>` call of a plain argument takes its subject first (STYLE.md §5).** A plain
-argument is a name, with any call, index or field glued after it. A compound argument, a literal,
-a generic call, several arguments and a call across lines stay prefix calls. A call followed by
-a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
-
-- The rewrite reads no symbol. A field named like the routine, such as `to_x`, would capture the
-  method call. The tree holds no such field, and every changed file checks as before.
-- Verified by `suites/test_conversions.nim`.
 
 **Four rules that the static pass already holds gain a fixer.**
 
