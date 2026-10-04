@@ -59,7 +59,7 @@ const
           # C01, C07, D01, D07 are swans, and their straight connection crosses
           # close to hand.  Break there was left off, which drew
           # that connection detached from its hand; it is drawn now, so
-          # they go back to unruled rather than carry verdict given on
+          # they go back to unruled rather than carry ruling given on
           # picture that has since moved.
           "C01", "C02", "C03", "C04", "C05", "C06", "C07",
           "D01", "D02", "D03", "D04", "D05", "D06", "D07",
@@ -214,15 +214,15 @@ func pageOf(parts: Parts): string =
              else: """<em class="badge unsure">unconfirmed</em>"""
     # Questions cell stands for are written on it, so viewer page laying simulation
     # beside each cell can find its still by question and not by cell's name.
-    # Verdict was given on pictures, so picture that moved under one carries
+    # Ruling was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
     # as when it was ruled on, and mend reaching further than it meant to
     # stops here rather than shipping.  Cell holding several drawings is
-    # held to all of them, since verdict on it is verdict on all.
+    # held to all of them, since ruling on it is ruling on all.
     if is_kept or is_dropped:
       doAssert $hash(drawings.join("")) == LUT_FIXTURE_BY_CARD.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
-          "mend is too wide, or that verdict has to go back."
+          "mend is too wide, or that ruling has to go back."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
     (if is_switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{escaped(id)}</code><b>{escaped(label)}</b>""" &
@@ -688,7 +688,7 @@ func pageOf(parts: Parts): string =
   where the simulation reaches no pose. It reads <i>unconfirmed</i> where the simulation
   reaches one that the Architect has not yet held against their own body on the viewer. It
   reads <i>modelled</i> once they have. A pose the simulation reaches is a claim, and never a
-  verdict.</p>
+  ruling.</p>
   """ & body & "</div>"
 
   # Counted off page itself rather than tallied while building it, so
