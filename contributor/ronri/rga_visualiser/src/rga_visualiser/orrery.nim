@@ -19,6 +19,9 @@
 ##   `SOL` is our own, hand-written and modelled same way, at origin rest are measured
 ##   from. Nothing stands at `POSITION_ORRERY`'s coordinate but Sol itself.
 ##   Every moon rings its planet in its real orbit plane; see `normalOfMoon`.
+##     Plane is algebra's construction: each node is meet of two planes, each lean is
+##     motor's turn. Equatorial to ecliptic stays coordinate conversion, as star's place is.
+##     Cost: two meets and three turns of dense multivectors for each moon, once at build.
 ##   Stated simplifications, each one claim short of ephemeris: planets ring Sol in
 ##   ecliptic itself, inclinations dropped (Mercury's 7 degrees largest); where on its
 ##   ring any body stands is spread by rule, not read off date; neighbour systems lie flat.
@@ -53,7 +56,7 @@
 import std/[math, options, strformat]
 
 import pga
-import ./[boundary, camera, euclid, neighbourhood, objects, scene, starfield,
+import ./[boundary, camera, euclid, motors, neighbourhood, objects, scene, starfield,
   tessellate]
 
 
@@ -307,13 +310,32 @@ func toEcliptic(d: Direction): Direction =
   )
 
 
-func turned(first, second: Direction; angle: float): Direction =
-  ## Turn `first` toward `second` by `angle`, both unit and perpendicular.
-  Direction(
-    x: first.x*cos(angle) + second.x*sin(angle),
-    y: first.y*cos(angle) + second.y*sin(angle),
-    z: first.z*cos(angle) + second.z*sin(angle),
-  )
+func planeAbout(normal: Direction): Multivector =
+  ## Build plane through origin at right angles to `normal`, i.e. 𝐨 ∧ (𝐨 ∧ 𝐧)☆.
+  ##   Weight expansion of origin by line along `normal`: plane holding point, square to line.
+  ##   Faces against line (read by probe), so only meet of two such planes is read, never
+  ##     normal of one; flip shared by both operands cancels in meet.
+  1.0.e4 ∧☆ (1.0.e4 ∧ toMultivector(normal))
+
+
+func nodeAscending(normal, pole: Direction): Option[Direction] =
+  ## Report where plane of unit `normal` climbs through plane of unit `pole`, as unit direction.
+  ##   Meet of two planes through origin, i.e. line both hold, read by its attitude.
+  ##   Sense is ascending: going round `normal` as right hand turns, plane crosses other
+  ##     there toward side `pole` points to. Suite pins sense for every moon.
+  ##   None where two planes are one, as they then meet in no line.
+  direction(planeAbout(normal) ∨ planeAbout(pole))
+
+
+func turnedAbout(d, axis: Direction; radians: float): Direction =
+  ## Turn direction `d` about unit `axis` by `radians`, as right hand turns, through motor.
+  ##   Direction lifts to horizon point, which has no place, so line through origin carries
+  ##     it as line through any point along `axis` would.
+  ##   Keeps `d` where turn or read refuses; neither can for unit `axis`, as `turnAbout`
+  ##     refuses only line with no direction, and rigid motion keeps horizon in horizon.
+  let turn = turnAbout(1.0.e4 ∧ toMultivector(axis), radians)
+  if turn.isNone: return d
+  directionHorizon(toMultivector(d).carried(turn.get)).get(d)
 
 
 func normalOfMoon*(moon: SolMoon): Direction =
@@ -321,30 +343,30 @@ func normalOfMoon*(moon: SolMoon): Direction =
   ##   Elements name plane against reference plane whose pole is given: node is where
   ##   orbit climbs through reference plane, measured from where reference plane climbs
   ##   through equator; inclination is how far orbit leans from reference plane about that
-  ##   node. Two rotations, both right-handed about their axes, then whole thing turned
-  ##   into ecliptic frame.
+  ##   node. One meet and two turns, both right-handed about their axes, then whole thing
+  ##   turned into ecliptic frame.
   ##   Reference pole along equator's own z, ecliptic's never, leaves node's origin
   ##   undefined; no moon's is, and guard takes equinox for it.
   ##   Exported so suite pins Luna's lean, Triton's retrograde ring and Uranus's tipped
   ##   family against it.
   let
     pole = directionEquatorial(moon.pole_ascension, moon.pole_declination)
-    across_equator = normalize(cross(Direction(x: 0, y: 0, z: 1), pole))
-    origin_node = across_equator.get(Direction(x: 1, y: 0, z: 0))
-    node = turned(origin_node, cross(pole, origin_node), degToRad(moon.node))
-    normal = turned(pole, cross(node, pole), degToRad(moon.inclination))
+    origin_node =
+      nodeAscending(pole, Direction(x: 0, y: 0, z: 1)).get(Direction(x: 1, y: 0, z: 0))
+    node = turnedAbout(origin_node, pole, degToRad(moon.node))
+    normal = turnedAbout(pole, node, degToRad(moon.inclination))
   toEcliptic(normal)
 
 
 func spanOfNormal(normal: Direction): (Direction, Direction) =
   ## Report two unit directions spanning plane of unit `normal`, node first.
   ##   First lies along plane's ascending node on ecliptic, where plane climbs through
-  ##   ground; second is normal turned onto it, so pair is right-handed about normal.
+  ##   ground; second is first turned quarter turn about normal, so pair is right-handed
+  ##   about normal.
   ##   Plane lying flat has no node, and takes x axis.
-  let
-    node = normalize(cross(Direction(x: 0, y: 0, z: 1), normal))
-    first = node.get(Direction(x: 1, y: 0, z: 0))
-  (first, cross(normal, first))
+  let first =
+    nodeAscending(normal, Direction(x: 0, y: 0, z: 1)).get(Direction(x: 1, y: 0, z: 0))
+  (first, turnedAbout(first, normal, 0.5*PI))
 
 
 
