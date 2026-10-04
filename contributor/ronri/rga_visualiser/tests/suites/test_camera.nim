@@ -14,6 +14,14 @@ func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Pos
   camera.eye + (camera.distance/along)*heading
 
 
+template countLiftsIn(body: untyped): int =
+  ## Run `body`, and report how many motors it lifted into algebra; see `setCountingLifts`.
+  setCountingLifts(true)
+  body
+  setCountingLifts(false)
+  countLifts()
+
+
 suite "Camera":
   test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":
     # Whole claim of stance held as rigid motion: eye and pivot name it, and nothing else.
@@ -68,6 +76,40 @@ suite "Camera":
       check frame.axis_up =~ camera.frame.axis_up
       check frame.forward =~ camera.frame.forward
       check eye + camera.distance*frame.forward =~ camera.pivot
+
+
+  test "a reader handed the camera alone reads its stance once":
+    # Eye and frame are each read off stance through its motor, so each read lifts motor again.
+    #   Extent and transform read both, and far bound reads eye once more; `sight` reads both
+    #   off one lift (PROVENANCE.md, Camera). Counted rather than timed: count never moves
+    #   with load.
+    let
+      camera = cameraAround(PLACES[0], 7.0, Direction(x: 1.0, y: -0.4, z: 0.6))
+      lifts_sight = countLiftsIn:
+        discard camera.sight
+      lifts_extent = countLiftsIn:
+        discard camera.drawExtentFor(900, 50.0)
+      lifts_transform = countLiftsIn:
+        discard camera.initMatrixViewProjection(16.0/9.0, PLACES[1])
+    check lifts_sight == 1
+    check lifts_extent == 1
+    check lifts_transform == 1
+
+
+  test "the readers of a frame handed its eye and frame read the stance no more":
+    # Each front-end reads `sight` once for each frame and hands eye and frame on, so extent,
+    #   frustum, transform, far bound and records' origin lift nothing more. Page's driven
+    #   check counts its whole frame build; desktop's frame is held by this and by reading.
+    let
+      camera = cameraAround(PLACES[2], 11.0, Direction(x: -0.3, y: 1.0, z: 0.5))
+      (eye, frame) = camera.sight
+      lifts = countLiftsIn:
+        let scale = camera.drawExtentFor(eye, frame, 900, 50.0)
+        discard camera.viewBoundsFor(eye, frame, scale, 16.0/9.0, 50.0)
+        discard camera.initMatrixViewProjection(eye, frame, 16.0/9.0, PLACES[3])
+        discard camera.distanceFar(eye, 50.0)
+        discard camera.originHeld(eye, PLACES[3])
+    check lifts == 0
 
 
   test "the camera's depths and held points agree with their classical forms":
@@ -347,15 +389,15 @@ suite "Camera":
     # Bound is quarter of near clip, divided by float32's own step.
     let reach_hold = FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE
     check reach_hold > 1.0e5
-    check camera.originHeld(eye_start) =~ eye_start
+    check camera.originHeld(camera.eye, eye_start) =~ eye_start
     # Travel well inside bound keeps origin exactly where it was.
     camera.travel(0.5*reach_hold, 0.0, 0.0)
-    check camera.originHeld(eye_start) =~ eye_start
+    check camera.originHeld(camera.eye, eye_start) =~ eye_start
     # Travel past it moves origin onto eye, once.
     camera.travel(0.6*reach_hold, 0.0, 0.0)
-    let moved = camera.originHeld(eye_start)
+    let moved = camera.originHeld(camera.eye, eye_start)
     check moved =~ camera.eye
-    check camera.originHeld(moved) =~ moved
+    check camera.originHeld(camera.eye, moved) =~ moved
     # Close work draws bound in with near clip, so origin follows sooner.
     camera.reach_near = 0.002
     check FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE < reach_hold
@@ -365,7 +407,7 @@ suite "Camera":
     let
       camera = cameraAround(Position(x: 1, y: 2, z: 3), 10.0, Direction(x: 12, y: 5, z: 4))
       scale = camera.drawExtentFor(900, 0.0)
-      bounds = camera.viewBoundsFor(scale, 16.0/9.0, 0.0)
+      bounds = camera.viewBoundsFor(camera.eye, camera.frame, scale, 16.0/9.0, 0.0)
     const radius = RADIUS_OBJECT_DEFAULT
     check isPointInView(placeObject(toMultivector(camera.pivot)), radius, bounds)
     check not isPointInView(

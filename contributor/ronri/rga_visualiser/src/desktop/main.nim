@@ -490,13 +490,15 @@ func offerCameraAim(
 
 proc assembleMeshes(
   panel: var Panel; scene: Scene; interaction: Interaction;
-  camera: Camera; now: float; scale: DrawExtent; width, height: int;
+  camera: Camera; eye: Position; frame: FrameCamera; now: float; scale: DrawExtent;
+  width, height: int;
   are_dimmed: array[OBJECTS_MAX, bool] = default(array[OBJECTS_MAX, bool])
 ) =
   ## Refill vertex storage from scene as it stands this frame, recording what it cost.
   ##   `are_dimmed` grays object out rather than skipping it.
   ##     Empty for interactive rendering, filled by storyboard's rolling emphasis alone.
   ##   Assembles alone: where camera should look is `offerCameraAim`'s job.
+  ##   `eye` and `frame` are read off camera's stance once for frame, by `renderFrame`.
   let ticks_start = getMonoTime().ticks
   # Carve where grid assembles pieces before emitting, from frame pair.
   #   Per-frame scratch that arena was waiting for, handed back clean at top of every
@@ -504,7 +506,7 @@ proc assembleMeshes(
   let scratch = ARENA_SWAP_DRAW.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
   let bounds = some(
-    camera.viewBoundsFor(scale, float(width)/float(max(height, 1)), REACH_SCENE)
+    camera.viewBoundsFor(eye, frame, scale, float(width)/float(max(height, 1)), REACH_SCENE)
   )
   # Hold furniture on unchanged frames, by same rule and tuple as browser.
   let settings_furniture = settingsFurnitureFor(
@@ -960,20 +962,28 @@ proc renderFrame(
           scene.geometryOf(handle), scene.anchorOverrideAt(handle),
         )
     REVISION_REACH = some(scene.revision)
+  # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
+  #   Each `eye` or `frame` read lifts motor again; see `camera.drawExtentFor`.
+  var (eye, frame) = camera.sight
   # Read local scale once for this frame, before extent reads clip planes off it.
-  REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.eye, camera.frame.forward)
+  REACH_NEAR = reachNearOf(PLACEMENTS, scene, eye, frame.forward)
   camera.reach_near = REACH_NEAR
   # Decide records' origin after scale, since bound is read off near clip.
-  ORIGIN_RECORDS = camera.originHeld(ORIGIN_RECORDS)
+  ORIGIN_RECORDS = camera.originHeld(eye, ORIGIN_RECORDS)
 
-  let scale = camera.drawExtentFor(int(height), REACH_SCENE)
+  # Derive extent aim reads, and keep motor before aim, so hold it makes is seen below.
+  let
+    scale = camera.drawExtentFor(eye, frame, int(height), REACH_SCENE)
+    motor_offered = camera.motor
   offerCameraAim(
     panel, scene, camera, scale, now, int(width), int(height), interaction.isMovingCamera
   )
+  # Read both again only where aim's hold moved camera, so transforms draw where it stands.
+  if camera.motor != motor_offered: (eye, frame) = camera.sight
   # Run hover and drag reading it before meshes are assembled.
   #   Drag's preview is then this frame's.
   #   Transform they pick against needs only camera, already advanced.
-  let view_projection = camera.initMatrixViewProjection(width / height)
+  let view_projection = camera.initMatrixViewProjection(eye, frame, width / height)
   # Place floating menu here, with this frame's transform and before meshes are assembled.
   #   Delete pressed on it then leaves scene this frame draws.
   layoutSelectionMenu(
@@ -985,12 +995,14 @@ proc renderFrame(
   interaction.pruneFocus(scene)
   interaction.updateDrag(scene, now)
   assembleMeshes(
-    panel, scene, interaction, camera, now, scale, int(width), int(height), are_dimmed
+    panel, scene, interaction, camera, eye, frame, now, scale, int(width), int(height),
+    are_dimmed,
   )
   clearFrame(int(width), int(height))
   # GPU takes transform about records' origin; `view_projection` above stays about world,
   #   for hover, menu and markers, which read world coordinates.
-  let view_projection_drawn = camera.initMatrixViewProjection(width / height, MESHES.origin)
+  let view_projection_drawn =
+    camera.initMatrixViewProjection(eye, frame, width / height, MESHES.origin)
   renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale, width / height)
   renderer.drawMeshes(MESHES, view_projection_drawn, scale, width / height)
 
