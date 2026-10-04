@@ -19,7 +19,8 @@ import ../src/pga_benchmark/[
 ]
 import ../src/pga_benchmark/pages/[docket, evaluation, proposal, search, shell]
 from ../src/pga_benchmark/evaluations import
-  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, successOf, timesOf
+  ENTRY_LIBRARY, algebrasEvaluated, digestEdits, functionsChanged, nanOf, readLibrary, successOf,
+  timesOf
 
 
 const
@@ -1363,6 +1364,19 @@ suite "Internal: Evaluations":
   test "evaluation measures 3D algebras, and all four only when thorough":
     check algebrasEvaluated(false) == @["rga4d", "cga5d"]  # default, 3D Euclidean
     check algebrasEvaluated(true) == @["rga4d", "cga5d", "rga3d", "cga4d"]  # thorough adds
+
+
+  test "library read refuses checkout that holds no Nim file":
+    let
+      missing = getTempDir() / "pga_benchmark_library_missing"
+      empty = getTempDir() / "pga_benchmark_library_empty"
+    removeDir missing
+    createDir empty
+    expect IOError:
+      discard readLibrary(missing)  # page would quote no line of library
+    expect IOError:
+      discard readLibrary(empty)  # checkout that failed to restore
+    removeDir empty
 
 
   test "times pair runs by measurand, median of ratios, rounded":

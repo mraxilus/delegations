@@ -711,6 +711,11 @@ checkout is a finding. The checkout is under `dependencies/`, which git ignores,
 that runs over this project reaches it too. A quote would then match text that the pin does
 not hold.
 
+**A read of the library refuses a checkout that holds no Nim file.** A page quotes each edit
+with its lines and the signatures around it. An empty read would render each edit without them,
+and nothing would fail. The refusal names `nim r koch fetch-deps`, which restores the checkout from
+its lock. Verified by `test_rga4d.nim`, with a missing checkout and an empty one.
+
 **No merge waits on `head`.** Its verdict moves with the library and not with this project.
 So `drive` and the suites read no head, and they give the same verdict on the same code
 (`CONTRIBUTOR.md`, Tests are paramount). The `head` workflow runs the verb daily, and keeps one
