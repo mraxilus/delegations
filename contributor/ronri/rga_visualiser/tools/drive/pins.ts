@@ -27,7 +27,7 @@ import { pixelOf } from './wheel';
 export const MILLISECONDS_PICK_HOVER = 2.6; // Fault: scene copied for each handle.
 export const MILLISECONDS_PICK_HOVER_LOADED = 7.2; // Same pick, at 5,038 objects.
 const MICROSECONDS_ANCHOR = 15; // Fault: extent tuple and object copied for each lookup.
-const MILLISECONDS_MARKER_PAIR = 1.7; // Fault: outline summed sample by sample.
+const MILLISECONDS_MARKER_PAIR = 1.1; // Fault: outline summed sample by sample.
 const MILLISECONDS_GRID_MOVING = 26; // Fault: fade sampled at each boundary.
 const MILLISECONDS_EMITTING_MOVING = 2; // Fault: ribbon expanded on CPU.
 
