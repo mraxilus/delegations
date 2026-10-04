@@ -1574,14 +1574,41 @@ diagnostic.
   `randomize(0)` does, because both fix the sequence.
 - Verified by `suites/test_idioms.nim`, each rule by its breach and by its form.
 
+## Knoller
+
+**The fixers that read the text of one file alone are a project of their own, `curator/knoller`.**
+Each module of audit that needs one imports the umbrella of knoller by a relative path, as
+`koch.nim` imports audit. A sibling imported by its path is not a package, so it needs no lock.
+The record of knoller holds the design of those fixers.
+
+- `findingOf` renders each report of knoller as a finding. A rewrite renders as its rule and the
+  article that `CITATIONS` holds for it, so `koch fix` prints `expression spacing (X.9) fixed` as
+  before. Verified by `suites/test_findings.nim`.
+- `fixes.nim` maps each kind of Nim onto a dialect of knoller, a module, a script or a package.
+- Rejected: knoller copied first and audit switched later. The code would stand twice, and the
+  paragraphs of the records copied word for word would trip the check of copies.
+
+**The checker holds knoller as it holds itself, because koch compiles it.**
+
+- The rebuild key of `.claude/hooks.sh` holds the source and the nimble file of knoller. `git
+  rev-parse` prints the first path that HEAD lacks and then stops. So knoller comes last, its
+  source before its nimble file, and an older branch keeps a stable key. Verified by
+  `suites/test_hooks.nim`: a commit of the source of knoller alone builds the binary again.
+- A change to the source or the nimble file of knoller counts as checker for drift, and selects
+  audit for test as well as knoller. A change to a suite of knoller selects knoller alone.
+  Verified by `suites/test_plan.nim` and `suites/test_base.nim`.
+- Knoller pins the driver version, and `checkKnoller` reports a pin that differs. Verified by
+  `suites/test_toolchain.nim`.
+- The rule on dead exports reads the modules and suites of knoller too. Verified by
+  `suites/test_checker.nim`.
+
 ## Fixes
 
 **`koch fix` rewrites in place each finding that has one mechanical fix, and nothing else.** It is
-built from the checks. Each fixer sits beside its check, in `form.nim`, `prose.nim`,
-`alignment.nim`, `messages.nim`, `precedence.nim`, `conversions.nim`, `names.nim`, `idioms.nim`,
-`checker.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and `wrapping.nim`. It reads the
-same spans, runs, predicates and constants. So each rule is written once (Article II.1), and a
-fixer cannot drift from the check that names its finding.
+built from the checks. Each fixer sits beside its check. A fixer that reads the text of one file
+sits in knoller, and one that reads more sits in `names.nim`, `conversions.nim` or `checker.nim`.
+Each reads the same spans, runs, predicates and constants. So each rule is written once (Article
+II.1), and a fixer cannot drift from the check that names its finding.
 
 Each rewrite prints as `path:line: <rule> fixed`, at the line that the check names, and the run
 ends with the count. With the layout rules below, `koch fix` replaces nimpretty.
@@ -1659,8 +1686,9 @@ because a fixer reports nothing new. So each project clears its findings with
 that reddens a project merges only after that project fixes (CURATOR.md, duty 3), so #380
 queues the wiring.
 
-**`checkFormatting` in `fixes.nim` is the one list of checks that the next pull request wires.**
-That pull request adds one call to its form for the tree in `auditTree`. It drops the lenient
+**`checkFormatting` of knoller is the one list of checks that the next pull request wires.**
+`fixes.nim` reads it by kind. That pull request adds one call to its form for the tree in
+`auditTree`. It drops the lenient
 banner check of `checkForm`, which `checkBanners` replaces. The list on every kind of Nim syntax:
 
 - `checkComments`, the gap before a trailing comment (X.9);
