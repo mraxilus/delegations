@@ -179,7 +179,9 @@ it. Verified by `suites/test_spacing.nim`.
   it. Verified by `suites/test_spacing.nim`. The Architect ruled on 2026-10-04 that a compound
   operator stays whole, because it can carry an optimisation that its parts lack. In 2.2.12 the
   template `..^` of `lib/system/indices.nim` is `a .. ^b`, verified by hand on 2026-10-04.
-- Cost: the fixer leaves `1 ..^ 1` where X.9 shows `1 .. ^1`. The split is a choice for the hand.
+- X.9 shows both forms: `s[1 .. ^1]`, a range and a prefix `^`, and `s[1 ..^ 1]`, the compound
+  operator. The fixer keeps the operator that the source lexes as, so the choice stays with the
+  hand.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
 
