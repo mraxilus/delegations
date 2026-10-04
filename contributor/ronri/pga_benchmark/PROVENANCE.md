@@ -668,12 +668,22 @@ tokens with fallbacks, so it follows the theme of the page and still reads alone
 names no file is a finding of `drive`. Rejected: a figure kept outside the repository, because no
 page is built from it.
 
-**Marks render as the faces allow.** The left complement is written 𝐜̱, with U+0331. Noto Sans
-Math holds each bold maths letter and both macrons, so it draws 𝐜̱, 𝐜̄ and 𝐞̄
-whole. It puts each mark beside the letter, and not under or over it, as the same render
-showed. The Architect ruled on 2026-10-04 to keep the marks as Noto Sans Math places them,
-rather than draw them by markup. In code, ★ comes from the math face as ☆ does, because the mono
-face draws ★ smaller.
+**Bar marks on bold letters are drawn by markup,** as the Architect ruled on 2026-10-04. The
+left complement is written 𝐜̱, with U+0331, and the right one 𝐜̄, with U+0304. Noto Sans Math holds
+each bold maths letter and both marks, but it puts each mark beside the letter. So `htmlMarked`
+boxes each bold letter that carries a bar mark, together with its marks, and the shell draws the
+bar. The bar under stands where the face draws its macron below. The bar over stands 0.054em
+higher than the macron of the face, to clear the bold x-height.
+
+The mark stays in the text and a clip hides it, so copy and search read what the source says.
+Each word that holds such a letter stays on one line, because a box is a place where a line may
+break. Tags, attributes, and the content of `svg`, `script` and `style` pass as they are. The
+figure of P01 draws its one bar in its SVG, as an underline, with the mark at size zero.
+Rejected: the marks as the face places them, since each sits after its letter and meets the next
+sign. Rejected: sans-serif bold letters, which carry all three anchors, since the letters change
+shape and the library code that a page quotes cannot change.
+
+In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
 
 The cause is in the face. In Noto Sans Math 2.539, the 52 letters of the bold block, U+1D400 to
 U+1D433, carry a `center` anchor alone. A mark such as U+0338 uses that anchor. A top or bottom
@@ -682,8 +692,11 @@ italic, sans-serif bold and monospace blocks carry `top`, `center` and `bottom`,
 Latin `c`.
 
 Verified on 2026-10-04 by fontTools, which read the GPOS table of the face in the store.
-HarfBuzz shapes `uni0331` with an offset of 0 after `u1D41C`, and of −373 after `c`. The glyph
-source of release 2.539 gives `cbold-math` the `center` anchor alone. Tag 3.000 holds
+HarfBuzz shapes `uni0331` with an offset of 0 after `u1D41C`, and of −373 after `c`. HarfBuzz
+moves a mark by its own rule only for a face with no GPOS table. With that table removed, it
+puts the same mark at an offset of −437, under the letter.
+
+The glyph source of release 2.539 gives `cbold-math` the `center` anchor alone. Tag 3.000 holds
 sources alone, with no bold letter source, and `notofonts.github.io` publishes 2.539 as its last
 build. So whether a later release mends the anchors is unverified.
 
