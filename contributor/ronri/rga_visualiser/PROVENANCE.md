@@ -185,6 +185,7 @@ and this file does not:
 | `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
+| `blur` | every backdrop blur, what the drawer softens, and what its blur costs |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
@@ -554,6 +555,36 @@ Cost: a row that leaves the window is built again on its return, at about 0.15 m
 the viewport is an estimate until it is scrolled to, which the scroll anchoring of the browser
 absorbs. The spacers are `overflow-anchor: none`, so the anchor is always a row. A jump to an
 estimated offset, with nothing but a spacer in view, adjusts nothing.
+
+**The chrome over the scene is frosted, and the Architect ruled to keep it** (#453). The drawer
+takes `backdrop-filter: blur(16px)`, the brand and toggle pills `blur(10px)`, and the help button
+`blur(9px)`. The blur makes the chrome read as glass over a live view. It is work of the compositor
+over a canvas that changes each frame, so it costs most with the drawer open over the largest
+scene.
+
+**At 5,038 objects with the drawer open, the blur adds one frame of the display.** Paced to the
+display, a frame takes 50.0 ms with the blur and 33.3 ms without it, in each of four rounds.
+Unpaced, under `--disable-gpu-vsync` and `--disable-frame-rate-limit`, the blur adds 8.3, 12.1,
+16.0 and 13.8 ms. With the drawer shut, the pills add 2.2 ms. Each figure is the median of 40
+frames each way, in Chromium with SwiftShader in the Claude Code cloud container, on 2026-10-04.
+Software rendering inflates a blur more than the rest, so these are upper bounds for hardware.
+
+**A speed check holds that cost, and every other check runs without the blur.** `driveBlurCost`
+reads frames paced to the display, as a reader sees them. Its bound, `MILLISECONDS_BLUR_DRAWER`, is
+25 ms, which is 1.5 times the paced reading of 16.7 ms. The runner reads the same, 50.0 ms against
+33.3 ms, on `4c76f0f`. The harness turns the blur off through the page's own pill (`blur.setBlur`),
+so no other bound carries its cost. The pill check of `rings` runs with the blur on, which is the
+default of the page.
+
+**Without the blur, the page's checks run about 7% faster.** Here they take 278.0 and 277.5 s,
+against 286.9 and 308.5 s with the blur on, four checks fewer. The drive step of the runner takes
+619 s, against 656 and 661 s on the two heads before it. Each runner figure is one run, so the
+saving there is likely, and not a bound.
+
+Verified by driven check: every surface computes the radius it declares when the page opens, and
+the pill clears every one. The drawer softens the band behind it from a step of 20.76 luma levels
+to 0.72, read at the 99.9th percentile of steps between neighbours. The band leaves out the brand
+pill and the scale bar, which stand over the drawer and stay sharp.
 
 **A comment may not quote a closing block-comment delimiter.** A comment that does ends itself on
 the spot, and the prose after it parses as CSS. That was enough to swallow 141 of the 150 rules of
@@ -1974,6 +2005,11 @@ a step short of the pivot's orthogonal projection onto it. Depths along the sigh
 the plane through the eye, distances are `distanceBetween`, and sides are `innerOf`. The near clip,
 a pixel's world size and the culling of chords are the picture's.
 
+**Readings and places go the same way.** The roll, the azimuth and the elevation are inner products
+with the world axes, and every distance that the camera acts on is `distanceBetween`. The places
+and frames of the orrery are the algebra's as well (see Demo: the solar neighbourhood). Outside it
+stand only the reading of catalogue angles into a direction, and the picture.
+
 **The tessellation assembles before it emits.** Each loop resolves its places through the algebra
 into a `DrawScratch`, and emits after. For the lattices and the axes the seam is between two procs.
 `placeObject` answers what a drawable is and where, from the multivector alone, so the answer
@@ -2797,18 +2833,40 @@ and a node against the reference plane of the moon. A pole in J2000 right ascens
 declination names that plane. It is the ecliptic for Luna and Nereid, the equator of Uranus for
 its five, and a local Laplace plane for the rest.
 
-**The algebra builds every orbit plane, because construction is its own** (see Algebra boundary).
-`normalOfMoon` meets the reference plane with the equator, and that line is the node of the
-equator. A motor turns it about the pole by the node angle. A second motor turns the pole about
-that line by the inclination. A last turn by the J2000 obliquity of 23.4392911° carries the whole
-into the ecliptic frame. That turn is a change of coordinates, as the place of a star is, so it
-stays in closed form.
+**The algebra builds every place and every frame, because construction is its own** (see Algebra
+boundary). `normalOfMoon` meets the reference plane with the equator, and that line is the node of
+the equator. A motor turns it about the pole by the node angle. A second motor turns the pole about
+that line by the inclination. A last motor turns the whole about the equinox by the J2000
+obliquity of 23.4392911°, into the ecliptic frame. Only the reading of two catalogue angles into a
+direction stays in closed form.
 
-The ring of a moon starts at its ascending node, where its plane meets the ecliptic. Its second
-direction is that node turned a quarter turn about the normal. Each plane of a meet is a weight
-expansion of the origin. Such a plane faces against its line, so only a meet of two is read.
-Rejected: the cross products that built the same frames outside the algebra. Over every moon, the
-normal and both ring directions differ from them by at most 1.0e-15.
+The ring of a moon starts at its ascending node, where its plane meets the ecliptic. A flat ring
+starts at the bearing of its sun: the meet of the ground with the vertical plane through the
+direction of the star. Each body is its node turned by its phase about the normal of its ring,
+then `pointAlong` that direction from its parent. Each plane of a meet is a weight expansion of
+the origin. Such a plane faces against its line, so only a meet of two is read.
+
+**The turns that every star shares are built once, at compile time.** `TURN_ECLIPTIC` and the
+quarter turn about world up are constants, with their antireverses, so a star pays one sandwich
+and one point. A ring is spanned only for a star with a planet. Rejected: the closed forms, the
+cross products and the sums of sines that placed the same objects outside the algebra. Over every
+object of the three sizes, each coefficient matches them within 1.0e-14 of the largest coefficient
+of its object.
+
+**The price is build time on the JS backend, once for each load.** The Architect keeps it, by the
+ruling on #459, so no star leaves the algebra. Each figure is the median of 15 builds of
+`constructOrrery`. They ran in Node 22, and in C with `-d:release`, in the Claude Code cloud
+container on 2026-10-04. Each pair was taken twice:
+
+| Size | JS before | JS after | C before | C after |
+| --- | --- | --- | --- | --- |
+| Nearest | 6.5, 5.5 ms | 7.9, 7.7 ms | 0.10, 0.11 ms | 0.13, 0.12 ms |
+| Neighbourhood | 6.3, 8.3 ms | 14.9, 15.1 ms | 0.14, 0.16 ms | 0.30, 0.30 ms |
+| Catalogue | 21.0, 21.0 ms | 159.8, 143.3 ms | 1.10, 1.13 ms | 2.68, 2.60 ms |
+
+A motor built for each star cost the Catalogue 1,058 ms, because building a motor is most of what
+a turn costs. On JS, a turn built on the spot costs 52.5 µs a call, and a turn by a held
+motor 24.4 µs. A bearing costs 21.3 µs, a point 9.8 µs, and the reading of two angles 0.7 µs.
 
 The pole of Uranus is the spin pole (RA 77.311°, Dec 15.175°), which is the antipode of the IAU
 north. The small inclinations of the elements then read prograde about it, as JPL states them.
@@ -2876,6 +2934,7 @@ stands nine thousand opening radii out, and a frame that held it shows one dot.
   the algebra that builds it;
 - the ring of every moon started at its ascending node and turned about its normal, which a node
   of flipped sign fails for every moon;
+- every body at its phase on its ring against a closed form, which a backward flat ring fails;
 - every neighbour planet at its real axis at the height of its star;
 - every planet without an axis absent, 49 counted from the table;
 - the radius of every body the conversion of its kilometres;
@@ -3524,16 +3583,5 @@ passing proves that the runner carries that library. Assumed: nothing about the 
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
   in it. The near crossing is not the cause (see Records and shaders).
-
-## Open questions
-
-**The `backdrop-filter` of the drawer costs about 12 ms of every frame at the largest scene**, which
-is the whole cost of an open drawer. Over 5,040 objects a frame takes 59 ms with it, 47 ms with it
-forced off, and 47 ms with the drawer closed. A scroll of the list at 300 px a frame holds 62 ms,
-0.8 ms of it in the `ui` phase.
-
-The blur makes the drawer read as glass over a live view, so it is not plainly the wrong trade.
-Software rendering inflates a blur more than the rest, so the share is an upper bound on hardware.
-The choices are to keep it, to drop it, or to drop it only while the frame runs slow.
 
 [replications]: https://gitlab.com/mraxilus/replications
