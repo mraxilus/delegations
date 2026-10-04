@@ -2937,10 +2937,11 @@ leaves the ecliptic.
 of which Mercury's 7° is the largest. Earth in the spanned plane is what the horizon block turns on.
 The place of a body on its ring is the golden angle, and not a date. Neighbour systems lie flat.
 
-**Two catalogues ship, as data alone, and both are generated.** `neighbourhood.nim` is a snapshot
-of the NASA Exoplanet Archive, taken 2026-08-31 from its TAP service (`select hostname, pl_name,
-sy_dist, ra, dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`). It holds 331
-planet hosts out to 31.5 parsecs.
+**Two catalogues ship, as data alone, and this repository keeps both as written.** A tool wrote
+each one once, and that tool stays in the tree that this project came from. No tool here writes
+them again. `neighbourhood.nim` is a snapshot of the NASA Exoplanet Archive, taken 2026-08-31 from
+its TAP service (`select hostname, pl_name, sy_dist, ra, dec, pl_orbsmax from ps where
+sy_dist < 35 and default_flag = 1`). It holds 331 planet hosts out to 31.5 parsecs.
 
 The archive asks for this acknowledgement, word for word:
 
@@ -2949,6 +2950,18 @@ The archive asks for this acknowledgement, word for word:
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. It keeps 11,252 of 11,432.
+
+**A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
+`#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
+bracket. A fence that crosses a bracket makes the fix leave the whole file as written, so each
+fence holds a whole table. Without the fences, the fix wraps each row of `STARS` and `NEIGHBOURS`
+again, which adds lines and no meaning. The type headers stay outside the fences, so the fix
+repairs their layout as it repairs any other line.
+
+Verified by `nim r koch fix --dry-run --branch:main contributor/ronri/rga_visualiser`, 2026-10-04.
+Without the fences, it reports 11,259 findings in `starfield.nim` and 342 in `neighbourhood.nim`.
+With them, it reports 7 and 9, and each one is a trailing comment of a type header. Every other
+file of the project gives the same findings both times.
 
 Each planet host was matched to exactly one star **by sky position alone**, and the worst
 separation is 161 arcseconds. The two worst matches are Barnard's and Kapteyn's stars, which have
