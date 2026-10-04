@@ -730,7 +730,8 @@ func isOpening(s: Scan, k: int): bool =
 
 func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
   ## Re-indent each line continuing expression after operator to `CONTINUATION_STEP` beyond
-  ##   line opening it, one rewrite to each line; one whose indent would widen held line is left.
+  ##   line opening it, one rewrite to each line; run holding line whose indent would widen held
+  ##   line is left whole, so continuations of one expression never part.
   ##   Run of lines is read whole, where no token spans lines, each line but last ends at depth
   ##     first line opens at and closes no bracket opened before it, and last leaves none open.
   var
@@ -763,16 +764,20 @@ func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
       if opened[first - 1] != floor: is_read = false
     if not is_read: continue
 
-    # Set each continuation line to its indent.
+    # Set each continuation line to its indent, or none where held line would widen.
     let wanted = s.lines[t.line].indentOf + CONTINUATION_STEP
+    var shifts: seq[Rewrite]
     for first in run[1 .. ^1]:
       let
         line = s.tokens[first].line
         text = s.lines[line]
         shaped = ' '.repeat(wanted) & text[text.indentOf .. ^1]
-      if shaped == text or (held.isHeld(line + 1) and shaped.isWide and not text.isWide):
-        continue
-      result.add Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.ContinuationIndent)
+      if shaped == text: continue
+      if held.isHeld(line + 1) and shaped.isWide and not text.isWide:
+        shifts.setLen(0)
+        break
+      shifts.add Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.ContinuationIndent)
+    result.add shifts
 
 
 func checkContinuations*(path, source: string): seq[Report] =
