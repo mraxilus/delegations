@@ -2671,6 +2671,12 @@ point outside the bound.
 floats. The 4×4 multiply with two typed arrays allocated for each call was 43% of a 15.4 ms pick
 over 10,000 handles.
 
+**A depth reads as in front down to the camera's own floor.** `isInFront`, and the two tests of a
+pick that share it, take `camera.DISTANCE_LIMIT_NEAR` as the least depth ahead of the eye. No
+separation that the camera holds then reads as behind it. Rejected: a fixed millionth of a unit. A
+pointer pick of a star at least radius stands 2.4e-7 units off it. The ring, the label, the menu and
+every pick then lost the star.
+
 **Handle-liveness guards.** Hovered, dragged, focused and selected handles are plain values
 carried across frames. Any of them can name a removed object the frame after a delete.
 `nimAnchorScreen` reports nothing for a dead handle. `endDrag` on both paths checks `isAlive` on
@@ -2685,7 +2691,9 @@ the source and the destination. A removal of an object clears the highlight on b
 - a point reads as backdrop at 0.8 of its fill depth, and as a handle at 1.25 of it and at 1,000
   units;
 - a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner
-  750 px from the middle.
+  750 px from the middle;
+- a point ahead of the eye reads in front and is picked at each decade from 1e-8 to 1,000 units;
+- a point as far behind the eye reads behind.
 
 Verified by a handle-for-handle map: 4,914 cursor positions across three cameras over the demo of
 1,024 objects. They answered identically before and after the placement and copy changes. Verified
@@ -3371,6 +3379,13 @@ antiscalar is negative. That is the same motion by the shorter arc. A destinatio
 stays next door to a camera short of +π, without being told to. The separation still eases
 geometrically beside it, because it is multiplicative.
 
+**The separation eases from the floor of every separation.** `toward` holds both ends through
+`distanceHeld` before it takes their logarithm, so an ease lands on the separation it was given. A
+pointer pick of a star at least radius asks for 2.4e-7 units. Rejected: a fixed floor of a
+millionth of a unit. The ease then landed at 1e-6 and stood the pivot 7.6e-7 units past the star,
+so each orbit swung the star off the middle. Verified by `suites.nim`: an ease lands on its
+destination's separation at every decade from 1e-9 to 100, and reads their geometric mean halfway.
+
 The separation is the pivot's own depth along the sight, so writing it moves the pivot and leaves
 the eye. A dolly calls `stanceDollied`, which moves the eye and holds the pivot.
 `stanceRepivoted` is the other half. It slides the whole camera between two pivots, which is as far
@@ -3513,6 +3528,12 @@ a place. The camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POIN
 height of the frame. A sixth was too close, and 0.01 was chosen by eye. A point seen at its size,
 and a line, come in no further than the orbit distance.
 
+A star or a planet of the demo carries `RADIUS_OBJECT_LEAST`, so a pick of one comes in to 2.4e-7
+units. The pivot lands on it there, and it reads in front (see Camera aiming and Picking). Far out,
+a double steps by 9.3e-10 at 4.7 million units, which is 0.39% of that separation. An orbit there
+moves the star about 10 px off the middle, against a disc 4.5 px in radius. At 1.66 million units
+it moves up to 4.5 px, and at 0.41 million under 0.5 px.
+
 A plane comes in until the diameter of its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40.
 That is the reach its own centre asks for, and no crossing enters it. It is not the centring rule
 for a plane, which never pulls in.
@@ -3537,6 +3558,8 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 *Checked.* Verified by `suites.nim`:
 
 - a pointer pick lands the object within 0.01 px of the frame's middle, from every angle swept;
+- a pick of a point at least radius lands on its fit, in front and picked, at 1 and 2.36e6 units;
+- its pivot stays on it through an orbit, to 2% of the separation;
 - an orbit of 0.7 by 0.3 then leaves it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
@@ -3574,6 +3597,11 @@ Verified by driven check:
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
 - a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
   28.072° leaves it at 28.072° (`drivePlaneLifted`).
+
+Verified by a Playwright script that is not kept, in Playwright's Chromium under SwiftShader, on
+2026-10-04. A click on HD 222237b in the demo of 5,038 objects settles at 2.413e-7 units, with its
+ring and label at the middle. A mouse drag of 215 px then turns the sight 13.4° about it. The
+figures for the far orbit above come from the same script, at both sizes of the demo.
 
 ## Objects search
 
@@ -3917,6 +3945,8 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
   field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
+- A star picked far out moves a few pixels off the middle as the view orbits. At 4.7 million
+  units a double steps by 0.39% of the 2.4e-7 units that the pick comes in to (see Framing).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point

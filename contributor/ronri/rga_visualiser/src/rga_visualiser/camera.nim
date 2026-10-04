@@ -1507,8 +1507,11 @@ func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStanc
   ##     mid-ease.
   ##   Separation is multiplicative, and linear ease from 12 to 300 covers most visible
   ##   change in first few frames then crawls.
+  ##     Held off zero by `distanceHeld`, floor of every separation, so ease lands on
+  ##     destination's own: pointer pick of star at least radius asks 2.4e-7.
+  ##     Not fixed millionth, which stood pivot 7.6e-7 past that star; suite case trips on it.
   let
-    (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
+    (near, far) = (distanceHeld(from_stance.distance), distanceHeld(to_stance.distance))
     held = toMultivector(from_stance.motor)
     # Motion carrying one stance to other, logged, scaled, and put back on.
     step = wedgeDotAnti(toMultivector(to_stance.motor), reverseAnti(held))
