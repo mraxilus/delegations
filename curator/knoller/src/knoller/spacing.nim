@@ -4,6 +4,11 @@
 ##   - range operator (`..`, `..<`, `..^`) takes none, but one on each side where piece beside it
 ##     holds binary operator binding tighter (`i + 1 ..< n`), or where glued tokens would merge
 ##     (`1 .. ^1`, `0 .. -1`);
+##   - inside bracket `[…]` glued to operand before it (index, type or generic, which tokens
+##     cannot tell apart), symbol binary operator takes none, range and its math among them, at
+##     any depth: `prev[i-1]`, `digits[i+1..<n]`, `a[f(x, y+1)]`; word operator keeps one each
+##     side, which tokeniser demands, and glued tokens that would merge keep one; array literal
+##     standing alone is no such bracket;
 ##   - prefix operator is glued to its operand, unless tokeniser demands one space (X.9);
 ##   - comma and semicolon take none before them and one after; colon of type, field or branch
 ##     likewise;
@@ -68,6 +73,8 @@ type
     Ending  ## Before binary operator ending its line, range among them: one.
     Range  ## Around range operator: none.
     RangeApart  ## Around range whose piece binds tighter, or whose glued tokens merge: one.
+    Selector  ## Around symbol operator inside bracket glued to operand: none.
+    SelectorApart  ## Around such operator whose glued tokens merge: one.
     Prefix  ## After prefix operator: none.
     Apart  ## After prefix operator whose operand glued would merge with it: one.
     Equals  ## Around `=`: one space each side.
@@ -254,8 +261,15 @@ func respacings(source: string): seq[Respacing] =
     tokens = source.tokens
     partners = tokens.partners
     skipped = tokens.pathTokens(partners, source)
-  var lasts = newSeq[int](tokens.len)
-  for k, t in tokens: lasts[k] = t.lastLine(source)
+  var
+    lasts = newSeq[int](tokens.len)
+    selected = newSeq[bool](tokens.len)  # Inside bracket glued to operand before it.
+  for k, t in tokens:
+    lasts[k] = t.lastLine(source)
+    let p = partners[k]
+    if t.spelling(source) != "[" or k == 0 or p < k or tokens[k-1].after != t.first: continue
+    if tokens.isOperandEnd(k - 1, source):
+      for m in k + 1 ..< p: selected[m] = true
   for k, t in tokens:
     if k == 0 or lasts[k - 1] < t.line: continue
     if tokens[k - 1].kind == TokenKind.Comment or t.kind == TokenKind.Comment: continue
@@ -332,7 +346,10 @@ func respacings(source: string): seq[Respacing] =
     if (left == 0) != (right == 0): continue
     var wanted = 1
     spacing.placement = Placement.Binary
-    if is_range:
+    if selected[k] and not is_keyword_operator:
+      if source.isMerging([before, t, next]): spacing.placement = Placement.SelectorApart
+      else: (wanted, spacing.placement) = (0, Placement.Selector)
+    elif is_range:
       if source.isMerging([before, t, next]) or tokens.isRangeApart(partners, k, source):
         spacing.placement = Placement.RangeApart
       else: (wanted, spacing.placement) = (0, Placement.Range)
@@ -354,6 +371,11 @@ func checkSpacing*(path, source: string): seq[Report] =
       of Placement.RangeApart:
         "Range operator takes one space on each side where piece beside it binds tighter, or " &
           "where glued tokens would merge (X.9)"
+      of Placement.Selector:
+        "Symbol operator inside bracket glued to operand takes no space (X.9)"
+      of Placement.SelectorApart:
+        "Symbol operator inside bracket glued to operand keeps one space on each side where " &
+          "glued tokens would merge (X.9)"
       of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
       of Placement.Apart:
         "Prefix operator takes one space before operand it would merge with (X.9)"
