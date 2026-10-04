@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 7053085b2557edcc |
+| Rules   | c9df6647550e6877 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -139,7 +139,7 @@ language is Nim). Verified by `suites/test_layout.nim`.
 
 - Nim: line, doc and nesting block comments, plain, triple and generalized raw strings, char
   literals, and numeric suffix quotes.
-- Cfg: `#`, unless `\#`.
+- Configuration: `#`, unless `\#`.
 - YAML: `#` at line start, or after whitespace, outside quotes.
 - Ignore files: a leading `#` only.
 - TypeScript: `//`, `/* */`, its string forms, and doc stars stripped.
@@ -855,6 +855,12 @@ is the failure it exists to catch.
   window is not. A body that opens `**Role:**` and one that opens
   `Role:` unbolded both pass, while a null body and a missing label are named. A red `ledger`
   beside an open `check` issue opens its own issue.
+- **An issue opened again after the merge passes.** GitHub reads a closing keyword in any
+  sentence, so a body that says it does not close an issue closes it all the same. The delegate
+  who opens that issue again does so on purpose, and `closingIssuesReferences` keeps the link.
+  So the ledger reads the events of each issue that it would name, at the cost of one read each.
+  It passes an issue with a `reopened` event after the merge, and still names one opened again
+  before it. Verified by hand through a stub for `gh` and real `jq` 1.7, 2026-10-03.
 - Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is
   free while the repository is public. A private one pays: 1,909 of 2,000 free minutes were
   measured used while this repository was private.
@@ -1338,33 +1344,102 @@ issue, and the next failure opens a new one. The finding is the output from the 
 ## Names
 
 **Every declared name in Nim is read, and its words are held to the table and the
-glossaries.** A declaration is a binding, a routine, a type, a field or a parameter, read by a
-text scanner after comments and strings are blanked. A word is a run between underscores and
-case changes. The table pairs each coined abbreviation with its one full word, as the English
-check pairs a word with its approved one.
+glossaries.** A declaration is a binding, a routine, a type, a field, a parameter, an enum
+member or a placeholder. A text scanner reads them after comments and strings are blanked. A
+binding comes from `let`, `var`, `const`, `for` or `except … as`. A word is a run between
+underscores and case changes. The table pairs each coined abbreviation with its one full word,
+as the English check pairs a word with its approved one.
 
 An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
 the root or the project glossary lists it, as a symbol under `## Standards` or as a term. The
 jargon list of V.6 passes. Verified by `suites/test_names.nim`.
 
 **A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
-`importjs` or `dynlib` declares a name the library owns, so it is skipped. Its parameters are
-ours, and they are read. The pragma block may stand on its own line after the signature, and
-the scanner joins it. Found when the first run reported every OpenGL and SDL binding of
-`rga_visualiser` under V.3.
+`importjs` or `dynlib` declares a name that the library chose, so it is skipped. By the ruling
+of the Architect, its parameters are ours, and they are read. So `wake: bool` takes a boolean
+prefix like any other parameter. The pragma block may stand on its own line after the
+signature, and the scanner joins it.
+
+**The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
+Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
+SCREAMING. A placeholder in generic brackets, or after `concept`, is one capital letter. Each
+case is a fact about letters, so the check needs no list of words:
+
+- Pascal opens on a capital and holds no underscore. Camel opens on no capital and holds no
+  underscore.
+- Snake holds no capital. SCREAMING holds no lowercase letter.
+- One letter fits by its own case. A capital passes a type, a global and a placeholder. A
+  lowercase letter passes a routine, a local, a parameter and a field.
+
+**A variable in the notation of its source keeps that notation (III.5).** A binding, field or
+parameter whose name holds a non-ASCII letter is notation, such as `𝐦`, `𝐮` or `𝐌`. At any
+scope, notation holds over the case of V.1, so the check does not read its case. At module
+scope, notation holds only for an immutable global. So a mutable global in notation is one
+finding, which cites III.5.
+
+- A type, a routine, an enum member and a placeholder are no variable, so their case is read.
+  `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
+  them by their block, where each style runs its capitals first.
+- An operator is backticked, so it is never read as a name.
+
+**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
+never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
+
+**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
+`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
+brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
+that way.
+
+**One function decides the reach of a binding.** The case of a binding marks its reach, and not
+its mutability (V.1). So `reachOf` reads the blocks that enclose the binding:
+
+- A routine makes it local.
+- The entry block, which is a top-level `when isMainModule:`, makes it an entry binding.
+- A binding that opens its own scope, such as `for` or `except … as`, is local.
+- It is global where every enclosing block opens no scope. Those blocks are a `when` chain, and
+  a bare `let`, `var`, `const` or `type`. Any other block makes it local.
+
+**The entry block holds no binding (V.10).** Where a module runs as a program, code that binds
+goes in `proc main`, and the block calls it. A binding in the entry block reaches the whole
+module, because `when` opens no scope. A routine makes it a true local in every language. The
+Architect rejected the exception that made such a binding a local of its block.
+
+- By the ruling of the Architect, every binding in the entry block outside a routine is a
+  finding, at any depth. The reason is that code that binds moves to `main`.
+- So a `for`, an `except … as`, and a `let` inside a loop of the block are findings too.
+- Each binding there is one finding, and its case is not judged. A block of plain calls
+  passes, and so does a routine inside it.
+
+**A boolean is a proposition or a mode (V.4).** A boolean binding, field or parameter opens
+with `is`, `as`, `should`, `found` or `has`, and a word follows it. A `func` that returns `bool`
+is a predicate, and its name opens with `is`. The Architect ruled on the routines that are no
+predicate:
+
+- A `proc` that returns `bool` reports the success of an action (V.3), so it is unread.
+- A `func` that writes a `var` parameter and returns `bool` is an action too, so it is unread.
+- `contains` keeps its name, because `in` and `notin` call it by that spelling.
 
 - V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
   `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
-  is held as a module-level SCREAMING name that equals a type name without case or
-  underscores.
+  is held as a global SCREAMING name that equals a type name without case or underscores.
 - A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
-  reading. An enum member is unread, and V.1 is unheld here.
-- Rejected: a parser, which costs a dependency and a compiler version; the scanner reads the
-  line forms this charter prescribes.
+  reading.
+- Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
+  line forms that this charter prescribes.
 - V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
   the fixer share one reading of the words and of the exemptions of the glossaries.
-- Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
-  is unread.
+- A name that a template substitutes declares nothing of that name. So `type name = object`
+  inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
+- A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
+  says (`[N: static int]`). The Architect weighed snake case, and kept the text.
+- Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
+  Architect ruled a finding.
+- Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
+  brackets, and a name that `{.inject.}` makes.
+- Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
+  value `true` or `false`. A boolean that a call returns holds by reading.
+- Cost: a Pascal name of capitals alone, such as `ANTI`, reads as an acronym and passes. V.9
+  and reading hold it.
 
 ## Idioms
 
@@ -2016,12 +2091,32 @@ back to the primary checkout.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
-It fetches the release tarball where no `nim` is on `PATH`, and builds koch into `binaries/`. It
-sets `core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
-exists. Every other hook command runs the built koch, and falls back to `nim r`.
+At the start it fetches the release tarball where no `nim` is on `PATH`. It sets
+`core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
+exists. Every hook command runs the koch that it built into `binaries/`, and falls back to
+`nim r`.
 
 The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Verified by hand
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
+
+**The built koch is keyed on its source at HEAD, so no hook runs a checker older than the
+checkout.** The key is the object ids of `koch.nim`, `koch.nim.cfg`, the nimble file of this
+project and `src/` at HEAD, kept in `binaries/koch.key`. A hook whose key differs builds again
+first, so a commit, a merge or a switch of branch reaches the next hook. The key reads HEAD and
+never the working tree, so an edit in progress builds nothing. The build writes beside the
+binary and then renames it. A directory lock lets one build run, while a concurrent hook runs
+the binary that it finds.
+
+- Rejected: a key of file times, which builds again after each edit of the checker in the main
+  checkout. Half-made code then fails that build on every hook.
+- Cost: about five seconds of build where the key moved, and one `git rev-parse` on each hook.
+  A lock older than ten minutes is one that a killed build left, and the next hook removes it.
+- Cost: a binary built from a tree with uncommitted edits keeps them under the key of HEAD. A
+  checker bug that this checkout commits reaches the next hook. Checker work in a worktree
+  leaves the hooks of the main checkout as they were.
+- Verified by `suites/test_hooks.nim`: the real file runs through real git and `sh`, with a stub
+  compiler that names the source it read. By hand on 2026-10-03, a first hook built in 2.3 s,
+  and a second ran in 0.016 s.
 
 **The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
 writes the tree hash it passed on into `koch-check` in the git directory when the working tree
