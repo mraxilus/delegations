@@ -1309,9 +1309,9 @@ Verified by `suites/test_asks.nim`, both red first. A09 is the D05 of the chain,
 Every crossed still lays the connection that its card names over, at the crossing of the lead. That
 crossing is the one nearest the lead along both connections.
 
-The page counts turns clockwise seen from above, and the simulation anticlockwise. Every twist is
-flipped in one place before it is asked (`asked`). The twist is flipped for every card, and not for
-the chains alone. Verified by `suites/test_asks.nim`: one picture is one question whichever section
+The page counts turns clockwise seen from above, and the simulation anticlockwise. `asked` flips
+every twist in one place, before the simulation answers, for every card and not for the chains
+alone. Verified by `suites/test_asks.nim`: one picture is one question whichever section
 draws it, A16 being C05 and A17 C03, red first.
 
 The questions are answered on every core at once. Each worker lists the questions for itself and
@@ -2341,11 +2341,6 @@ urgent.
   hands at the edge of the band, wraps the arms of the follow round the head instead.
 - **The swans are reached, but not at ease.** In the easiest plan that holds, C01 and C07 read 0.68,
   and D01 and D07 0.37 (Planned turn).
-- **With the springs, the planned swans of the same-name chain held on the last bit of one sum.**
-  When the twist was added to the facing of the follow in another order, that facing changed in its
-  last bit. Then D01 and D07 stood no pose in any of the sixteen styles. Measured 2026-10-02 with
-  the engine sprung after the plan. The facing keeps its order, and the engine now stands each
-  planned moment instead (Planned turn).
 - **The swans wrap the connection that the card draws straight.** The card draws the connection over
   at the first crossing as the snake, and the other one straight (`route.straightArm`). Seen from
   above in `design/rig.json`, the connection that C01 draws straight runs 2.61 times its line
