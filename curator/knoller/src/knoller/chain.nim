@@ -1,5 +1,6 @@
-## Fix Nim source by every fixer of knoller, in one order, until it settles; and report each
-##   rule those fixers clear (`checkFormatting`).
+## Fix Nim source by every fixer of knoller, in one order, until it settles; report each rule
+##   those fixers clear (`checkFormatting`); and name what breaks rule inside each fence
+##   (`heldOf`).
 ##   Built from checks (Article II.1): each fixer sits beside its check and reads that check's
 ##     own data, so each rule is written once.
 ##   Fixer runs where its check runs: idiom fixers on module (`.nim`) alone, every other fixer
@@ -41,19 +42,27 @@
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`, `lockedNimbles`) is left to
 ##     caller, which writes none of it and checks none of it: rewrite would leave lock's copy
 ##     stale, and Atlas reads that as change of package.
+##   Fence's warning runs checks as dry run: same checks on source unmasked, where each marker
+##     reads as plain comment and each line keeps its number, so warning counts what same lines
+##     report unfenced. Finding fixer clears and finding left for hand count alike; module adds
+##     idiom checks static pass runs (`checkStrictFuncs` and siblings). Fixer writes no fenced
+##     line still, and warning changes no exit code.
 ##
 ##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
 ##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
 ##     second formatter whose layout rules would drift from checks; AST printer, which loses
 ##     comment placement and every layout hand chose. Each holds rule twice: as check, and as
 ##     layout.
+##   Cost: file with fence takes checks twice, masked and as given; fenced catalogue of many
+##     calls runs near three times as long, measured (`PROVENANCE.md`, Fences). File with no
+##     fence takes them once.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, sequtils, strutils]
 import ./[
   alignment, articles, blanks, declarations, entry, fences, form, idioms, messages, precedence,
-  reports, spacing, targets, wrapping,
+  reports, spacing, targets, views, wrapping,
 ]
 
 
@@ -102,6 +111,18 @@ func lockedNimbles*(files: openArray[(string, string)]): seq[string] =
     result.add path[0 ..< path.len - LOCK_FILE.len] & content[open + 1 ..< close]
 
 
+func checksOf(path, view: string; dialect: Dialect): seq[Report] =
+  ## Run on view each check `checkFormatting` holds that dialect takes; fence is caller's.
+  let checks = [
+    checkComments, checkBanners, checkAlignment, checkMessages, checkMixtures, checkNegations,
+    checkTargets, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
+    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
+  ]
+  for check in checks: result.add check(path, view)
+  if dialect == Dialect.Module:
+    result.add checkImportBrackets(path, view) & checkLists(path, view) & checkProfiler(path, view)
+
+
 func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
@@ -114,17 +135,7 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
   ##   alone.
   let fence = source.fenceOf
   if fence.fault >= 0: return faultOf(path, fence)
-  let
-    view = source.masked(fence)
-    checks = [
-      checkComments, checkBanners, checkAlignment, checkMessages, checkMixtures, checkNegations,
-      checkTargets, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-      checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
-    ]
-  for check in checks: result.add check(path, view)
-  if dialect == Dialect.Module:
-    result.add checkImportBrackets(path, view) & checkLists(path, view) & checkProfiler(path, view)
-  result = result.filterIt(it.line - 1 notin fence.lines)
+  checksOf(path, source.masked(fence), dialect).filterIt(it.line - 1 notin fence.lines)
 
 
 func heldThrough(held: Held; fix, step: Fix): Held =
@@ -209,3 +220,46 @@ func formatted*(path, source: string; dialect: Dialect): Fix =
   ##   fence cannot be read stays as written, and `checkFormatting` reports why; source that does
   ##   not settle stays as written too, and its fix reports why (`Fix.left`).
   formattedBy(path, source, dialect.stepsOf)
+
+
+func heldOf*(path, source: string; dialect: Dialect): seq[Report] =
+  ## Report each run of fenced lines, markers included, as one warning at its first line: each
+  ##   rule broken inside it, in order of `Rule`, with count and first line, so whoever runs fix
+  ##   sees what fence keeps. Fence fix cannot read gives none, since `checkFormatting` reports
+  ##   it alone.
+  ##   Checks read source unmasked, so marker reads as plain comment and each line keeps its
+  ##     number; module reads idiom checks static pass runs too. Source with no fence runs none.
+  let fence = source.fenceOf
+  if fence.fault >= 0 or fence.lines.len == 0: return
+  var found = checksOf(path, source, dialect)
+  if dialect == Dialect.Module:
+    let (lines, code) = (source.splitLines, source.codeOnly.splitLines)
+    found.add checkStrictFuncs(path, lines, code) & checkImports(path, code) &
+      checkBindings(path, code) & checkReturns(path, code) & checkStubKeys(path, source)
+
+  # Count each rule broken inside each run, keep its first line, and name each in `Rule` order.
+  for run in fence.runsOf:
+    var counts, firsts: array[Rule, int]
+    for report in found:
+      if report.line - 1 notin run: continue
+      if counts[report.rule] == 0 or report.line < firsts[report.rule]:
+        firsts[report.rule] = report.line
+      inc counts[report.rule]
+    var breaks: seq[string]
+    for rule in Rule:
+      if counts[rule] == 0: continue
+      let
+        verb = if breaks.len == 0: " breaks " else: " "
+        times = if counts[rule] == 1: "once at line " else: $counts[rule] & " times from line "
+      breaks.add rule.id & verb & times & $firsts[rule]
+    let inside =
+      if breaks.len == 0: "nothing inside breaks a rule"
+      elif breaks.len == 1: "inside them " & breaks[0]
+      else: "inside them " & breaks[0 .. ^2].join(", ") & " and " & breaks[^1]
+    result.add initReport(
+      path,
+      run.a + 1,
+      Rule.FenceHeld,
+      "Fence keeps its lines as written, and " & inside & " (X.1); got lines `" & $(run.a + 1) &
+        "` to `" & $(run.b + 1) & "`.",
+    )

@@ -1,5 +1,6 @@
 ## Replicate chain of `chain.nim` header: every fixer in one order until source settles, checks
-##   of what fixers clear, and nimble files whose copy lock holds.
+##   of what fixers clear, warning naming what breaks inside each fence, and nimble files whose
+##   copy lock holds.
 ##   Fixtures copy those of `curator/audit/tests/suites/test_fixes.nim`, which drives same chain
 ##     through `koch fix`; fix to one is finished only when other is checked.
 ##   Cases of repair that widens its line are lines of tree as they stood before `koch fix` ran:
@@ -8,7 +9,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, strutils, unittest]
+import std/[algorithm, options, sequtils, strutils, unittest]
 import ../../src/knoller/[chain {.all.}, fences, idioms, reports, tokens]
 
 
@@ -156,11 +157,48 @@ suite "Chain":
     check formatted("a.nim", source, Dialect.Module).source == source.replace("1+2", "1 + 2")
 
 
+  test "fence names each rule broken inside, by count and first line, in order of `Rule`":
+    let
+      source = "let a = 1\n" & FENCE_OFF & "\nlet b = 1+2\nlet c = not a == b\nlet d = 3*4\n" &
+        FENCE_ON & "\n"
+      unfenced = source.replace(FENCE_OFF, "# Rows.").replace(FENCE_ON, "# Rows.")
+      held = heldOf("a.nims", source, Dialect.Script)
+    check held.len == 1 and held[0].line == 2 and held[0].rule == Rule.FenceHeld  # at marker
+    check held[0].message == "Fence keeps its lines as written, and inside them " &
+      "not-over-binary breaks once at line 4 and expression-spacing 2 times from line 3 " &
+      "(X.1); got lines `2` to `6`."  # rule left for hand and rule fixer clears alike
+    check checkFormatting("a.nims", unfenced, Dialect.Script).mapIt((it.line, it.rule)).sorted ==
+      @[(3, Rule.ExpressionSpacing), (4, Rule.NotOverBinary), (5, Rule.ExpressionSpacing)]
+      # same lines report same unfenced
+    check formatted("a.nims", source, Dialect.Script).source == source  # fenced lines unwritten
+
+
+  test "each fence gives one line: clean one breaks nothing, and open one runs to last line":
+    let
+      source = "let a = 1+2\n" & FENCE_OFF & "\nlet b = 1+2\n" & FENCE_ON & "\nlet c = 3\n" &
+        FENCE_OFF & "\nlet d = 4\n"
+      held = heldOf("a.nims", source, Dialect.Script)
+    check held.mapIt(it.line) == @[2, 6]  # one for each fence
+    check held[0].message.contains(" expression-spacing breaks once at line 3 (X.1)")  # 1 outside
+    check held[1].message == "Fence keeps its lines as written, and nothing inside breaks a " &
+      "rule (X.1); got lines `6` to `7`."
+    check heldOf("a.nims", "let a = 1+2\n", Dialect.Script).len == 0  # no fence, no line
+
+
+  test "fence of module counts idiom checks too, and script reads none":
+    let source = FENCE_OFF & "\nlet a = 1\nlet b = 2\nproc f(): int =\n  return result\n"
+    check heldOf("a.nim", source, Dialect.Module)[0].message.contains(
+      "inside them return-result breaks once at line 5 and single-bindings once at line 2 (X.1)",
+    )
+    check heldOf("a.nims", source, Dialect.Script)[0].message.contains("nothing inside breaks")
+
+
   test "fence crossing bracket leaves source as written, and is its one finding":
     let crossing = "let a = 1+2\nlet m = f(\n  " & FENCE_OFF & "\n  1,  0,\n)\n" & FENCE_ON & "\n"
     check formatted("a.nims", crossing, Dialect.Script).source == crossing  # nothing written
     check formatted("a.nims", crossing, Dialect.Script).fixed.len == 0
     check checkFormatting("a.nims", crossing, Dialect.Script).mapIt(it.rule) == @[Rule.Fence]
+    check heldOf("a.nims", crossing, Dialect.Script).len == 0  # fault, and no warning
 
 
   test "nimble file whose copy lock holds is named, beside its lock":
