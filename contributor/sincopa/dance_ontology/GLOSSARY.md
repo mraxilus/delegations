@@ -228,7 +228,7 @@ The mark at the centre of a dancer that says which way they face.
 _Avoid_: arrow, nose, pointer, tick
 
 **Rig**:
-Every measurement that the simulation stands on: rounds, heights, arm lengths, joint ranges and
+Every measurement that the simulation stands on: girths, heights, arm lengths, joint ranges and
 hand bands, each one with its source.
 _Avoid_: body model, skeleton, anthropometry
 
@@ -253,7 +253,7 @@ _Avoid_: stuck, limit, failure, ceiling
 
 **Band**:
 The height range where the simulation holds a level. In code the three are `Torso`, `Neck` and
-`Crown`, for low, high and above.
+`Crown`, named for the part of the body at each height, for low, high and above.
 _Avoid_: level, zone, tier
 
 **Face**:
