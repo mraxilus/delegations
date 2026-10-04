@@ -173,7 +173,9 @@ suite "Fixes":
     check plan.written[0].content == source.replace("1+2", "1 + 2")  # rows kept, blank line too
     check checkFormatting(path, plan.written[0].content, Kind.Nim).len == 0
     check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0
-    check plan.held.len == 1 and plan.held[0].message.contains("Fence keeps its lines")  # warns
+    check plan.held.len == 1 and plan.held[0].render == path & ":6: Fence keeps its lines as " &
+      "written, and inside them expression-spacing breaks 2 times from line 7 (X.1); got lines " &
+      "`6` to `10`."  # what breaks inside fence, by rule
     check fixEntries(CURATOR_BRANCH, [entry(path, unfenced)]).held.len == 0  # no fence, no warning
 
 
