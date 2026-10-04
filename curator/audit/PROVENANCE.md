@@ -731,7 +731,7 @@ a second target repeats the pins of the first. Two pins of one file, each in its
 a copy from two different faces.
 
 - **The digest is the curator's, and the choice is the project's.** The store says what bytes
-  `noto-sans-latin-400` is. It never says which faces a target wants, and the targets differ:
+  `NotoSans-Regular.ttf` is. It never says which faces a target wants, and the targets differ:
   one draws maths and symbols, and the other italic serif. What stops being written twice is
   only what is identical, so the autonomy that CONTRIBUTOR.md argues for is untouched.
 - The store is the **only shared build input** of the repository. Compilers are pinned for each
@@ -747,21 +747,25 @@ a copy from two different faces.
   Noto was chosen so that no character of a page falls outside its faces, and a subset undoes
   that. The rows hold each whole face that a page draws, as TrueType, which `@fontsource` does
   not ship. Where two projects pin one file, they pin one digest.
-- The `woff2` subsets of `@fontsource` stay only while a page still asks for one. A Noto subset
-  row leaves once no page names it. Commit Mono is no Noto, and pages keep its subset.
-- Cost: a whole face is 610 to 760 KB of TrueType, where its Latin subset is about 13 KB. A page
+- **The store declares no Noto subset, and `suites/test_assets.nim` holds it so.** Every Noto
+  row is a TrueType file of the Noto release. `koch fetch-assets` refuses a file that no row
+  declares, so no page can ship a Noto subset.
+- **Commit Mono keeps its Latin subset.** Article X.8 binds Noto alone, and Commit Mono is no
+  Noto. Its two `woff2` rows are the only subsets of `@fontsource` in the store.
+- Cost: a whole face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A page
   that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
   `compilers.digestOf`, so the parse that `test_compilers.nim` tests also guards the store.
-- Verified by `suites/test_assets.nim`. Verified by hand with `nim r koch fetch-assets`, recorded
-  2026-09-10, machine unrecorded. A cold store fills with three faces in **1.0 s**, two of them
-  shared by two projects. The same call warm takes **0.117 s**, and fetches nothing.
-- Verified by a break of it, on the same date. A face that nobody declares is a finding, which
+- Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
+  fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
+  Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
+  fetches nothing.
+- Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
-- Cost: the store grows and nothing prunes it. A face is about 30 kB where a compiler is about
-  300 MB. So what is unbounded is the number of pins the repository has ever held, and not the
-  bytes.
+- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a compiler is
+  about 300 MB. So what is unbounded is the number of pins the repository has ever held, and
+  not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
   shared.

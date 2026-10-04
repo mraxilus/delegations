@@ -11,7 +11,7 @@
 ##     as `details`. Docket's search box alone runs script, constant text in `docket.nim`, so
 ##     build stays deterministic and digest of page is digest of what those files say.
 ##
-##   Cost: faces inlined as base64 make each page some hundreds of kilobytes; published page
+##   Cost: whole Noto faces inlined as base64 weigh about 4.4 MB in each page; published page
 ##     may hold sixteen megabytes.
 
 {.experimental: "strictFuncs".}
@@ -27,14 +27,16 @@ const
   TOKEN_EMBED* = "@EMBED:"  ## Opening of token one face replaces, closed by `@`.
   FACES* = [
     "commit-mono-latin-400-normal.woff2",
-    "noto-sans-latin-400-normal.woff2",
-    "noto-sans-latin-600-normal.woff2",
-    "noto-sans-math-math-400-normal.woff2",
-    "noto-sans-symbols-2-symbols-400-normal.woff2",
-    "noto-serif-latin-600-normal.woff2",
+    "NotoSans-Regular.ttf",
+    "NotoSans-SemiBold.ttf",
+    "NotoSansMath-Regular.ttf",
+    "NotoSansSymbols2-Regular.ttf",
+    "NotoSerif-SemiBold.ttf",
   ]
     ## Faces pages draw with: Article X.8's three families, plus maths and symbols.
     ##   Maths and symbols are what notation needs (`𝐆`, `⟑`, `★`).
+    ##   Each Noto face ships whole, as TrueType of its own release, never as subset (X.8).
+    ##     Commit Mono is no Noto, so its Latin subset stays.
     ##   Same six as `rga_visualiser` page, from same store.
 
 
@@ -52,11 +54,22 @@ func facesAsked*(shell: string): seq[string] =
     at = shell.find(TOKEN_EMBED, close + 1)
 
 
+func mediaOf(face: string): string =
+  ## Name media type data URL of `face` declares, read off its extension.
+  ##   Type stated matches `format()` beside it in shell, so two never disagree about one file.
+  if face.endsWith(".ttf"): "font/ttf"
+  elif face.endsWith(".woff2"): "font/woff2"
+  else: raise newException(ValueError, "Face is TrueType or WOFF2; got `" & face & "`.")
+
+
 func assemble*(shell, title, body: string; faces: Table[string, string]): string =
   ## Fill shell: title escaped, body as rendered, each face as base64 data of its bytes.
   result = shell.replace(TOKEN_TITLE, escapeHtml(title)).replace(TOKEN_BODY, body)
   for face, bytes in faces.pairs:
-    result = result.replace(TOKEN_EMBED & face & "@", "data:font/woff2;base64," & encode(bytes))
+    result = result.replace(
+      TOKEN_EMBED & face & "@",
+      "data:" & mediaOf(face) & ";base64," & encode(bytes),
+    )
 
 
 func digestPage*(page: string): string =
