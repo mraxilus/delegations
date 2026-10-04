@@ -36,7 +36,8 @@
 
 import std/[options, sequtils, strutils]
 from std/unicode import runeLen
-import ./[domains, findings, form]
+import ../../knoller/src/knoller
+import ./[domains, findings]
 
 
 type

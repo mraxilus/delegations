@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, names]
 
 
@@ -43,6 +44,8 @@ type Algebra = object
   args*: seq[string]
 """
     ## Declaration of every kind, with words that break V.3, V.6, V.9 and V.10.
+    ##   Copied in `curator/knoller/tests/suites/test_declared.nim`, which knoller reads; fix to one
+    ##     is finished only when other is checked.
   BLOCKS = """
 const TOP = 1
 when defined(js):
@@ -85,12 +88,16 @@ else:
   let SHARED = 1
 """
     ## Entry block binding by `let`, `for` and `except … as`, and routine declared inside it.
+    ##   Copied in `curator/knoller/tests/suites/test_entry.nim`, which knoller reads; fix to one
+    ##     is finished only when other is checked.
   ENTRY_CALLS = """
 when isMainModule:
   doAssert paramCount() == 1, "Usage: marks <dir>; got `" & $paramCount() & "` arguments."
   buildPages(paramStr(1))
 """
     ## Entry block of plain calls, which binds nothing.
+    ##   Copied in `curator/knoller/tests/suites/test_entry.nim`, which knoller reads; fix to one
+    ##     is finished only when other is checked.
   CASES = """
 type
   BasisDigits = distinct string
@@ -176,6 +183,8 @@ template m: untyped = MULTIVECTORS(i)
 type State {.pure.} = enum Code, Str_Raw
 """
     ## Operators, routine without parameters, and enum on one line.
+    ##   Copied in `curator/knoller/tests/suites/test_declared.nim`, which knoller reads; fix to one
+    ##     is finished only when other is checked.
 
 
 func names(source: string): seq[string] =
@@ -200,41 +209,6 @@ func reachIn(source, name: string): Reach =
 
 
 suite "Names":
-  test "comments and strings are blanked, newlines kept":
-    let code = ("let a = \"# not comment\" # comment\nlet b = r\"raw \"\" quote\" #[ block\n" &
-      "]# c").codeOnly
-    check code.splitLines.len == 3
-    check "comment" notin code and "quote" notin code and "block" notin code
-    check "let a =" in code and "let b =" in code and code.splitLines[2].strip == "c"
-
-
-  test "code-and-comments view blanks strings alone, keeping every length":
-    let
-      source = "let a = \"# not comment\" # comment\nlet b = '#' #[ block\n]# c"
-      kept = source.codeAndComments
-    check kept.len == source.len and kept.splitLines.len == 3
-    check "not" notin kept and "'#'" notin kept  # string and char blanked
-    check "# comment" in kept and "#[ block" in kept and kept.splitLines[2] == "]# c"
-    check kept.find('#') == source.find("# comment")  # first `#` left opens comment
-
-
-  test "declarations of every kind are read":
-    let found = SOURCE.names
-    for name in ["Chiral", "T", "base", "dir_hint", "Space", "Base", "Anti", "LUT_GRADE_BY_BASIS",
-                 "lut", "ALGEBRA", "tmp_count", "getGrade", "m", "buf", "text", "i", "err",
-                 "toJSON", "x", "dest", "constructTable", "cayley", "factors", "as_exclusions",
-                 "Algebra", "args"]:
-      check name in found
-    check "ctx" notin found  # comment word
-    let kinds = SOURCE.declarations
-    check kinds.filterIt(it.name == "ALGEBRA")[0].reach == Reach.Global
-    check kinds.filterIt(it.name == "text")[0].reach == Reach.Local
-    check kinds.filterIt(it.name == "buf")[0].kind == NameKind.Parameter
-    check kinds.filterIt(it.name == "args")[0].kind == NameKind.Field
-    check kinds.filterIt(it.name == "Anti")[0].kind == NameKind.Member  # V.11
-    check kinds.filterIt(it.name == "T")[0].kind == NameKind.Placeholder  # V.12
-
-
   test "words split at underscore and case change":
     check "lut_grade_by_basis".words == @["lut", "grade", "by", "basis"]
     check "wedgeAnti".words == @["wedge", "Anti"]
@@ -373,14 +347,6 @@ suite "Names":
     check "Δt".isCased(Casing.Pascal) and not "δt".isCased(Casing.Pascal)  # III.5
 
 
-  test "operator is backticked and never read as name":
-    let found = OPERATORS.names
-    check "∧" notin found and "[]" notin found  # III.5
-    check "m" in found and "n" in found and "b" in found  # parameters of operator are read
-    check "i" notin found  # call in body of routine without parameters is no parameter
-    check "Code" in found and "Str_Raw" in found  # V.11, enum on one line
-
-
   test "casing follows kind and reach":
     check Declared(kind: NameKind.Binding, reach: Reach.Global).casingOf == Casing.Screaming
     check Declared(kind: NameKind.Binding, reach: Reach.Local).casingOf == Casing.Snake
@@ -504,31 +470,6 @@ suite "Names":
       "  let a = 1\n  echo a\n\n\nwhen isMainModule:  # Run.\n  main()\nelse:\n  discard\n"
     const nested = "when isMainModule:\n  let code = run()\n  if code != 0: quit code\n"
     check nested.blockEntry.refusal.len == 0  # V.10, `quit` inside branch moves
-
-
-  test "V.10 entry block stays where routine would read it otherwise, and refusal says why":
-    let refused = [
-      ("when isMainModule:\n  var count {.global.} = 0\n",
-        "`{.global.}` binds at module level alone"),
-      ("when isMainModule:\n  let code = run()\n  quit code\n",
-        "`quit` at block's own indent returns value, which `quit main()` would carry"),
-      (ENTRY_BINDS, "`main` stands in module already"),
-      ("when isMainModule and defined(js):\n  let a = 1\n",
-        "`when isMainModule and defined(js):` guards more than `isMainModule`"),
-      ("when isMainModule:\n  import std/os\n  let a = paramStr(1)\n",
-        "`import` stands at module level alone"),
-      ("when isMainModule:\n  when defined(posix):\n    import std/posix\n  let a = 1\n",
-        "`import` stands at module level alone"),  # at any depth of block
-      ("when isMainModule:\n  proc shown*() = discard\n  let a = 1\n",
-        "export marker of `shown` stands at module level alone"),
-      ("when isMainModule:\n  let a = 1\nwhen isMainModule:\n  echo 2\n",
-        "module holds `2` entry blocks"),
-    ]
-    for (source, refusal) in refused:
-      check source.blockEntry.refusal == refusal  # V.10
-      check fixBlockEntry("a.nim", source).source == source  # V.10, block stays
-    check ENTRY_CALLS.blockEntry.refusal.len == 0  # V.10, block binding nothing moves nothing
-    check fixBlockEntry("a.nim", ENTRY_CALLS).source == ENTRY_CALLS  # V.10
 
 
   test "exemptions are jargon, root glossary and glossary of path's own project":

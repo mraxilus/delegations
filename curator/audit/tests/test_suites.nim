@@ -4,6 +4,8 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestOutputLevel:PRINT_FAILURES $opt
 """
 ## Run every suite under `suites/` as one program, so standard library and `std/unittest`
 ##   compile once rather than once per suite (STYLE.md §6).
+##   Copied as `curator/knoller/tests/test_suites.nim`; fix to one is finished only when other
+##     is checked (Article II.9).
 ##   Suite stays own module, imported rather than included, so private helpers of two suites
 ##     never clash, and each still runs alone: `nim r tests/suites/test_<module>.nim`.
 ##   Import list is read from directory at compile time, never written: suite added is run.

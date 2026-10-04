@@ -109,6 +109,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
     for e in tree:
       if e.path.startsWith(WORKFLOW_DIRECTORY):
         result.add checkDriver(e.path, e.content, driver.get)
+  result.add checkKnoller(KNOLLER_DIRECTORY.nimblePath, tree.pinOf(KNOLLER_DIRECTORY), driver)
 
   # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
   #   readable here.
@@ -122,10 +123,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
     check_paths, check_sources, suite_sources: seq[string]
     koch_source, curator_source: string
   for e in tree:
-    if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
+    if e.path.isExporting:
       check_paths.add e.path
       check_sources.add e.content
-    if e.path.startsWith(SUITE_DIRECTORY): suite_sources.add e.content
+    if e.path.isCalling: suite_sources.add e.content
     if e.path == KOCH_PATH: koch_source = e.content
     if e.path == CURATOR_PATH: curator_source = e.content
   result.add checkDeadExports(check_paths, check_sources, suite_sources)

@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/[blanks, findings]
+import ../../src/knoller/blanks
 
 
 const TEST_PATH = "curator/audit/tests/suites/test_a.nim"

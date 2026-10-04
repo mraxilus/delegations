@@ -1,10 +1,14 @@
 ## Hold `koch fix` to its contract: after fix, checks report none of what it fixed; second fix
 ##   writes nothing; any path outside branch scope refuses every write (CURATOR.md, duty 11);
 ##   kind without style guide passes through unwritten, its findings kept for hand.
+##   `LAYOUT`, `FENCED_ROWS` and `LOCK` are copied in knoller's `tests/suites/test_chain.nim`,
+##     which drives same chain without `koch fix`; fix to one is finished only when other is
+##     checked.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, strutils, tables, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, fixes, form, idioms, kinds, names, symbols]
 import ./fixtures
 
