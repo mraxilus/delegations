@@ -2,8 +2,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[sequtils, strutils, unittest]
+import std/[os, osproc, sequtils, strutils, tempfiles, unittest]
 import ../../src/[findings, hooks]
+import ./fixtures
 
 
 const
@@ -361,3 +362,53 @@ suite "Hooks":
     check turn.calls.len == 1 and turn.calls[0].command == "git push"
     check turn.text.startsWith("Done.")
     check turn.calls.turnWrites
+
+
+  test "hook binary is built again where source at HEAD moves, and only there":
+    # Stub compiler writes binary printing `koch.nim` it read, so output names source of binary
+    #   hook ran; real git and real `sh` run hook file itself (Article IX.5).
+    proc runHook(root, toolchain, event: string): string =
+      ## Run hook file of root for event, with stub compiler of toolchain first on `PATH`.
+      let command = "KOCH_NIM_DIR=" & toolchain.quoteShell & " LOG_BUILDS=" &
+        (toolchain / "builds.log").quoteShell & " CLAUDE_ENV_FILE= sh " &
+        (root / ".claude" / "hooks.sh").quoteShell & " " & event
+      execCmdEx(command).output.strip
+
+    const
+      script_hooks = staticRead("../../../../.claude/hooks.sh")
+      stub_nim = "#!/bin/sh\n" &
+        "echo \"$*\" >> \"$LOG_BUILDS\"\n" &
+        "for a in \"$@\"; do case \"$a\" in -o:*) out=\"${a#-o:}\" ;; esac; done\n" &
+        "[ -n \"${out:-}\" ] || exit 1\n" &
+        "mkdir -p \"$(dirname \"$out\")\"\n" &
+        "printf '#!/bin/sh\\necho \"built from %s\"\\n' \"$(cat koch.nim)\" > \"$out\"\n" &
+        "chmod +x \"$out\"\n"
+    let
+      root = tempRepo()
+      toolchain = createTempDir("delegations_", "_nim")
+    defer: removeDir(root)
+    defer: removeDir(toolchain)
+    toolchain.writeInto("0.0.1/bin/nim", stub_nim)
+    inclFilePermissions(toolchain / "0.0.1" / "bin" / "nim", {fpUserExec})
+    root.writeInto(".claude/hooks.sh", script_hooks)
+    root.writeInto("curator/audit/audit.nimble", "requires \"nim == 0.0.1\"\n")
+    root.writeInto("curator/audit/src/checks.nim", "discard\n")
+    root.writeInto("koch.nim.cfg", "")
+    root.writeInto("koch.nim", "a")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'chore(curator): source a'")
+    check runHook(root, toolchain, "start") == "built from a"  # start builds
+
+    # Commit and switch of branch move source at HEAD; edit in progress does not.
+    root.writeInto("koch.nim", "b")
+    discard root.git("commit -q -am 'chore(curator): source b'")
+    check runHook(root, toolchain, "path") == "built from b"  # commit moved source
+    let builds = readFile(toolchain / "builds.log").countLines
+    check runHook(root, toolchain, "path") == "built from b"
+    check readFile(toolchain / "builds.log").countLines == builds  # same HEAD, no build
+    root.writeInto("koch.nim", "c")
+    check runHook(root, toolchain, "path") == "built from b"  # edit in progress
+    check readFile(toolchain / "builds.log").countLines == builds
+    discard root.git("checkout -q -- koch.nim")
+    discard root.git("checkout -q -b old HEAD~1")
+    check runHook(root, toolchain, "path") == "built from a"  # switch of branch
