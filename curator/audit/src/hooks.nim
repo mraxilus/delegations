@@ -8,8 +8,9 @@
 ##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
 ##     line, footer, Simplified Technical English counts, issue title and label, and pull
 ##     request headings; `stop` refuses end of turn that pushed or posted and closes with
-##     neither sign-off block nor working line; `start` prints role, read order, carried list
-##     and drift; `push` and `msg` serve git hooks.
+##     neither sign-off block nor working line, and end of any turn whose message names `#N`
+##     outside link; `start` prints role, read order, carried list and drift; `push` and `msg`
+##     serve git hooks.
 ##   Pure functions take strings and return findings; procs read transcript JSON, since
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
@@ -556,6 +557,114 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       if text.startsWith(label): text = text[label.len .. ^1].strip
     prose.add text
   result.add englishFindings("sign-off", prose.join("\n"))
+
+
+func labelDefined(line: string): string =
+  ## Read label that line defines as `[label]: url`, lowercased; empty where it defines none.
+  let s = line.strip(trailing = false)
+  if line.len - s.len > 3 or not s.startsWith("["): return ""
+  let close = s.find(']')
+  if close < 2 or not s[close + 1 .. ^1].startsWith(":") or s[close + 2 .. ^1].strip.len == 0:
+    return ""
+  s[1 ..< close].toLowerAscii
+
+
+func codeSpansOut(line: string): string =
+  ## Blank each code span of line: run of backticks opens it, next run of same length closes
+  ##   it, and run left open stays text, as CommonMark reads it.
+  var i = 0
+  while i < line.len:
+    if line[i] != '`':
+      result.add line[i]
+      inc i
+      continue
+    var n = 0
+    while i + n < line.len and line[i + n] == '`': inc n
+    var
+      j = i + n
+      close = -1
+    while j < line.len and close < 0:
+      if line[j] != '`':
+        inc j
+        continue
+      var m = 0
+      while j + m < line.len and line[j + m] == '`': inc m
+      if m == n: close = j
+      j += m
+    if close < 0:
+      result.add line[i ..< i + n]
+      i += n
+    else:
+      result.add ' '.repeat(close + n - i)
+      i = close + n
+
+
+func linksOut(line: string; labels: openArray[string]): string =
+  ## Blank each link of line: `[text](url)`, and `[text][label]` or `[label]` whose label
+  ##   message defines. Bracket opening no link stays text.
+  var i = 0
+  while i < line.len:
+    if line[i] != '[':
+      result.add line[i]
+      inc i
+      continue
+    let close = line.find(']', i + 1)
+    if close < 0:
+      result.add line[i .. ^1]
+      break
+    let text = line[i + 1 ..< close]
+    var stop = -1  # Index past link; none where bracket opens no link.
+    if close + 1 < line.len and line[close + 1] == '(':
+      let paren = line.find(')', close + 2)
+      if paren >= 0: stop = paren + 1
+    elif close + 1 < line.len and line[close + 1] == '[':
+      let shut = line.find(']', close + 2)
+      if shut >= 0:
+        let label = line[close + 2 ..< shut]
+        if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
+    elif text.toLowerAscii in labels: stop = close + 1
+    if stop < 0:
+      result.add '['
+      inc i
+    else:
+      result.add ' '.repeat(stop - i)
+      i = stop
+
+
+func checkNumbersBare*(message: string): seq[Finding] =
+  ## Report each `#N` of message outside link and outside code (GUIDE.md, Output contract).
+  ##   Definition line `[label]: url` is link too, as is `[label]` it defines. `#` after word
+  ##     character, `&` or `/` opens no number: `&#N;` is character reference, `x#N` fragment
+  ##     or name in other repository. Each number reports once.
+  let lines = message.fencedOut.splitLines
+  var
+    labels: seq[string]
+    seen: seq[string]
+  for line in lines:
+    let label = line.labelDefined
+    if label.len > 0: labels.add label
+  for line in lines:
+    if line.labelDefined.len > 0: continue
+    let text = line.codeSpansOut.linksOut(labels)
+    var i = 0
+    while i < text.len:
+      let is_number = text[i] == '#' and i + 1 < text.len and text[i + 1] in Digits and
+        (i == 0 or text[i - 1] notin IdentChars + {'&', '/'})
+      if not is_number:
+        inc i
+        continue
+      var j = i + 1
+      while j < text.len and text[j] in Digits: inc j
+      let number = text[i ..< j]
+      if number notin seen:
+        seen.add number
+        result.add finding(
+          "",
+          0,
+          "Message names `" & number & "` outside link; name each issue and pull request by " &
+            "short description and its number, as one link (GUIDE.md, Output contract).",
+        )
+      i = j
 
 
 func checkEndTurn*(message, branch: string): seq[Finding] =

@@ -6,8 +6,8 @@
 #   has no closing pull request to find; copied label and composed one look alike; pull
 #   request green now and about to move shows nothing yet.
 #   Issue titled as commit is fact GitHub records and never sat on carried list, so it is
-#   ledger read rather than carried line. Pull request title is skipped, since merge commit
-#   takes it as subject and so it takes that shape by rule.
+#   ledger read rather than carried line. Pull request title is skipped: `check-role` holds it
+#   to commit grammar before merge, since merge commit takes it as subject.
 #   Closed item still labelled `architect` is fact GitHub records too: label marks state, not
 #   role (CONTRIBUTOR.md, Boundaries), and `architect.yml` removes it once item closes. So
 #   closed item still carrying it means that run failed.
