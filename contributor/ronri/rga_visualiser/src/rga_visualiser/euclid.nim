@@ -61,34 +61,53 @@ func `==`*(d, e: Direction): bool {.error:
 
 #[ Euclidean Arithmetic ]#
 
-func `+`*(p: Position, d: Direction): Position =
+# Operators write `result` field by field, never as constructor.
+#   JS backend `nimCopy`s constructor assigned to `result`; field writes are plain stores
+#   (read in emitted JS). `framing.reachNearOf` subtracts once per object per frame.
+#   `noinit`, as every path writes every field: C then skips zero fill, and emits stores
+#   constructor did (read in emitted C).
+#   Same float operations in same order, so results stay bit-identical.
+#   Cost: three statements where one constructor named each field.
+func `+`*(p: Position, d: Direction): Position {.noinit.} =
   ## Offset position by direction.
-  Position(x: p.x + d.x, y: p.y + d.y, z: p.z + d.z)
+  result.x = p.x + d.x
+  result.y = p.y + d.y
+  result.z = p.z + d.z
 
 
-func `-`*(p: Position, d: Direction): Position =
+func `-`*(p: Position, d: Direction): Position {.noinit.} =
   ## Offset position against direction.
-  Position(x: p.x - d.x, y: p.y - d.y, z: p.z - d.z)
+  result.x = p.x - d.x
+  result.y = p.y - d.y
+  result.z = p.z - d.z
 
 
-func `-`*(p, q: Position): Direction =
+func `-`*(p, q: Position): Direction {.noinit.} =
   ## Subtract positions to obtain direction separating them.
-  Direction(x: p.x - q.x, y: p.y - q.y, z: p.z - q.z)
+  result.x = p.x - q.x
+  result.y = p.y - q.y
+  result.z = p.z - q.z
 
 
-func `-`*(d: Direction): Direction =
+func `-`*(d: Direction): Direction {.noinit.} =
   ## Reverse direction.
-  Direction(x: -d.x, y: -d.y, z: -d.z)
+  result.x = -d.x
+  result.y = -d.y
+  result.z = -d.z
 
 
-func `+`*(d, e: Direction): Direction =
+func `+`*(d, e: Direction): Direction {.noinit.} =
   ## Add directions, e.g. to compose ray from steps along independent axes.
-  Direction(x: d.x + e.x, y: d.y + e.y, z: d.z + e.z)
+  result.x = d.x + e.x
+  result.y = d.y + e.y
+  result.z = d.z + e.z
 
 
-func `*`*(scale: float, d: Direction): Direction =
+func `*`*(scale: float, d: Direction): Direction {.noinit.} =
   ## Scale direction.
-  Direction(x: scale * d.x, y: scale * d.y, z: scale * d.z)
+  result.x = scale * d.x
+  result.y = scale * d.y
+  result.z = scale * d.z
 
 
 func dot*(d, e: Direction): float = d.x*e.x + d.y*e.y + d.z*e.z
