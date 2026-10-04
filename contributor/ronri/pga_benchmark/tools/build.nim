@@ -17,16 +17,20 @@
 ##   |           | record what each measured as `evaluations/<name>.json`; typed        |
 ##   |           | algebras alone, or all four after `--thorough`                       |
 ##   | pages     | build every page from committed files into `build/<name>.html`       |
+##   | types     | type-check harness `tools/drive/`, and emit it into `build/drive/`;  |
+##   |           | no browser, no page                                                  |
 ##   | published | record URL and digest of page just published, as                     |
 ##   |           | `published docket <url>`, in `pages/published.json`                  |
 ##   | drive     | inspect, guard, hold `gaps.md` to regeneration, and hold every       |
 ##   |           | measurement, evaluation, file, page and checkout to pin (`head.nim`) |
+##   |           | then `types`, render every page as host serves it, and fail where    |
+##   |           | face of system draws character beyond ASCII (`tools/drive/`)         |
 ##   | head      | compare pin with library head; finding where library moved since     |
 ##   | gaps      | regenerate `gaps.md` and docket from committed baselines             |
 ##   | show      | print one function's emitted C, its counts, its movement and its     |
 ##   |           | machine code, as `show ∧` or `show ⟇ cga5d`                          |
 ##   | sweep     | time general measurands at two to six dimensions, rigid; never in CI |
-##   | system    | print system packages build needs, one per line, for caller         |
+##   | system    | print system packages build needs, one per line, for caller          |
 ##   | clean     | remove `build`                                                       |
 ##   |-----------|----------------------------------------------------------------------|
 ##   Exit: 0 done, 1 command failed or finding, 2 usage error.
@@ -36,6 +40,10 @@
 ##   `head` alone reads library head over network, so its verdict moves with library and not
 ##     with this project; `head.yml` runs it daily, and no merge waits on it (CONTRIBUTOR.md).
 ##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
+##   Cost: `types` and `drive` need node and npm, and `drive` needs Chromium, which `browser`
+##     fetches unless `PGA_CHROMIUM` names one. Render reads computed style, not clock.
+##   Cost: `koch check-types` runs `types` on koch's compiler, not pin, and this driver
+##     imports project modules, so they compile on that compiler too; none imports `pga`.
 ##   Cost: `bench` and `evaluate` measurements name machine they were taken on; committing them
 ##     records that run and nothing more, as `PROVENANCE.md` says of every pair.
 
@@ -77,13 +85,15 @@ const
     ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("binutils", "`objdump` disassembles object files `show` reads machine code from"),
     ("coreutils", "`sha256sum` store checks those faces with"),
+    ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
   ]
     ## System packages build needs beyond compiler.
     ##   Compiler is toolchain, pinned in nimble file.
     ##   Library is Atlas checkout, pinned in lock.
     ##   Faces come from repository's store.
+    ##   Type-checker and Playwright are node packages, pinned by `package-lock.json`.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|evaluate|pages|published|drive|head|gaps|show|sweep|" &
+    "<inspect|bench|baseline|guard|evaluate|pages|types|published|drive|head|gaps|show|sweep|" &
     "system|clean> [name|symbol] [url|algebra|--thorough]\n"
     ## Text printed on usage error; trailing words serve `evaluate`, `published` and `show`.
   FLAG_THOROUGH = "--thorough"  ## Flag after `evaluate <name>` that measures 2D algebras too.
@@ -102,6 +112,13 @@ const
     ## Publications: page name to URL and digest at its last publish.
   PATH_README = "README.md"  ## File that must name every published URL.
   PATH_KOCH = ".." / ".." / ".." / "koch.nim"  ## Repository driver, asked for faces.
+  PATH_TSCONFIG = "tsconfig.json"  ## Type-checker configuration of harness.
+  PATH_HARNESS = "tools" / "drive" / "main.ts"  ## Harness source, where its finding points.
+  ENTRY_HARNESS = BUILD / "drive" / "main.js"  ## Harness as `types` emits it, run by node.
+  BUILD_HOSTED = BUILD / "hosted"
+    ## Directory each page lands in as publish host serves it, for harness to render.
+  VARIABLE_CHROMIUM = "PGA_CHROMIUM"
+    ## Environment variable naming Chromium to drive; empty fetches Playwright's own.
   RUNS_EVALUATION = 5  ## Timed runs of each binary per evaluation, alternating.
   RUNS_BENCH = 5
     ## Timed runs of each algebra's bench, alternating algebras, so drift lands on all alike.
@@ -115,12 +132,16 @@ const
 
 #[ Processes ]#
 
+proc runStatus(command: string, arguments: openArray[string]): int =
+  ## Run command with arguments from project directory; exit code.
+  let process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
+  result = process.waitForExit
+  process.close
+
+
 proc run(command: string, arguments: openArray[string]) =
   ## Run command with arguments from project directory; raise on non-zero exit.
-  let
-    process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
-    code = process.waitForExit
-  process.close
+  let code = runStatus(command, arguments)
   if code != 0:
     raise newException(OSError, command & " failed; got exit `" & $code & "`.")
 
@@ -658,6 +679,43 @@ proc pages() =
       " KiB"
 
 
+proc types() =
+  ## Type-check harness, and emit it into `build/drive/`; no browser and no page.
+  run("npx", ["tsc", "--project", PATH_TSCONFIG])
+
+
+proc browser() =
+  ## Fetch Chromium Playwright pins, unless `PGA_CHROMIUM` names browser outright.
+  ##   Pin is version: `package-lock.json` fixes `@playwright/test`, and version fixes browser
+  ##   revision. Playwright publishes no checksum, so bytes arrive on TLS alone.
+  ##   Costs nothing warm: `playwright install` keeps build already at pinned revision.
+  let named = getEnv(VARIABLE_CHROMIUM)
+  if named.len > 0:
+    echo "Kept ", named, ", named by ", VARIABLE_CHROMIUM
+    return
+  run("npx", ["playwright", "install", "chromium"])
+
+
+proc renderedChecked(built: OrderedTable[string, string]): seq[Finding] =
+  ## Render every built page as publish host serves it, and hold each to faces it ships.
+  ##   Harness prints each finding in its own form, `<page>: <element>: …`; its exit names
+  ##   them here as one, since what each says is page's and not file's.
+  types()
+  createDir BUILD_HOSTED
+  var paths: seq[string]
+  for name, page in built.pairs:
+    let path = BUILD_HOSTED / name & ".html"
+    writeFile(path, hosted(page))
+    paths.add path
+  browser()
+  let code = runStatus("node", @[ENTRY_HARNESS] & paths)
+  if code != 0:
+    result.add Finding(
+      path: PATH_HARNESS,
+      message: "Render of pages failed, as harness printed above; got exit `" & $code & "`.",
+    )
+
+
 proc publishedAt(name, url: string) =
   ## Record page just published: its URL, and digest of page as built now.
   let built = pagesBuilt(facesFromStore())
@@ -750,8 +808,9 @@ proc evaluate(which: string, is_thorough: bool) =
   report(findings)
 
 
-proc pinnedChecked(pin: string): seq[Finding] =
+proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Finding] =
   ## Hold everything to pin: stamps, evaluations, changes, proposals, notes, pages and publications.
+  ##   Pages come built, so `drive` builds them once for digests and render alike.
   for (name, _, _) in CONFIGS:
     for kind in ["static", "runtime"]:
       let path = BASELINE / kind & "_" & name & ".json"
@@ -784,13 +843,14 @@ proc pinnedChecked(pin: string): seq[Finding] =
   result.add why
   result.add checkAnchors(notes, files, PATH_NOTES)
   var digests: Table[string, string]
-  for name, page in pagesBuilt(facesFromStore()).pairs: digests[name] = digestPage(page)
+  for name, page in built.pairs: digests[name] = digestPage(page)
   result.add checkPublished(digests, publications(), readFile(PATH_README), PATH_PUBLICATIONS)
 
 
 proc drive() =
   ## Inspect, check against baselines, and hold committed list and docket to regeneration.
   ##   Hold every measurement, evaluation, file, page and checkout to pin; read no head.
+  ##   Render every page, and hold each character beyond ASCII to faces page ships.
   let pin = commitPga()
   var findings = checkoutChecked()
   inspect()
@@ -803,7 +863,9 @@ proc drive() =
       path: PATH_DOCKET,
       message: "Docket differs from regeneration; run `gaps`.",
     )
-  findings.add pinnedChecked(pin)
+  let built = pagesBuilt(facesFromStore())
+  findings.add pinnedChecked(pin, built)
+  findings.add renderedChecked(built)
   report(findings)
 
 
@@ -1000,6 +1062,7 @@ proc main(): int =
     of "guard": guard()
     of "evaluate": evaluate(paramStr(2), paramCount() == 3)
     of "pages": pages()
+    of "types": types()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()
     of "head": report(headChecked(commitPga()))
