@@ -8,6 +8,11 @@
 ##     right after owner's doc too. Side leaving owner's body is not read, since what stands
 ##     there is owner's sibling. Helper never moves (X.11 asks it first; reading holds that).
 ##     One-line `template` is alias, and is left alone.
+##   Routine whose definition stands on one line (`{.borrow.}` with no body, or body on line of
+##     its signature, no doc after it) takes none before it where it follows owner's head,
+##     owner's doc, or another such routine, so borrowed funcs and thin wrappers stack, as X.2
+##     stacks undocumented one-line helpers. One still stands between last of them and stage or
+##     routine of several lines after it.
 ##   Run of blank lines goes above `#` comment on line right before, at same indent, so comment
 ##     stays with what it names; `##` doc and banner never move with it.
 ##   Reads code view (`views.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
@@ -31,6 +36,7 @@ type
     Child  ## Run before first child of its opener.
     Banner  ## Run after banner, before suite or test.
     Helper  ## Run on either side of nested helper.
+    Stacked  ## Run before one-line routine after owner's head, its doc or another such routine.
 
   Run = object  ## Define run of blank lines whose count rule reads otherwise.
     first: int  ## Zero-based line run opens on.
@@ -48,7 +54,7 @@ type
 
 
 const
-  LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1]  ## Blank lines each target takes.
+  LUT_BLANKS_BY_TARGET: array[Target, int] = [3, 2, 0, 1, 1, 0]  ## Blank lines each target takes.
   ROUTINE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
     ## Keywords declaring routine.
 
@@ -153,6 +159,22 @@ func lastOf(v: View, i: int): int =
     inc j
 
 
+func isRoutineHead(v: View, i: int): bool =
+  ## Decide whether code line `i` declares named routine: keyword, space, then name.
+  if not v.isCode(i) or v.inside[i]: return false
+  let
+    word = v.code[i].firstWord
+    after = v.code[i].strip[word.len .. ^1]
+  word in ROUTINE_KEYWORDS and after.startsWith(" ") and after.strip.len > 0 and
+    after.strip[0] != '('
+
+
+func isOneLine(v: View; i, indent: int): bool =
+  ## Decide whether line `i` declares, at indent, routine whose definition stands on that line
+  ##   alone: `{.borrow.}` with no body, or body on line of its signature, no doc after it.
+  v.isRoutineHead(i) and v.code[i].indentOf == indent and v.lastOf(i) == i
+
+
 func runs(path, source: string): seq[Run] =
   ## Find each run of blank lines beside suite, test or nested helper whose count breaks rule.
   let
@@ -170,17 +192,30 @@ func runs(path, source: string): seq[Run] =
       if v.isBanner(upper): target = Target.Banner
       elif v.isOpenerAbove(upper, i): target = Target.Child
       found.add Run(first: first, count: count, target: target, line: i)
-    elif word in ROUTINE_KEYWORDS and v.code[i].indentOf > 0 and v.ownerOf(i) >= 0:
-      after = v.code[i].strip[word.len .. ^1]
-      if not (after.startsWith(" ") and after.strip.len > 0 and after.strip[0] != '('): continue
+    elif v.isRoutineHead(i) and v.code[i].indentOf > 0 and v.ownerOf(i) >= 0:
       let last = v.lastOf(i)
       if word == "template" and last == i: continue
-      let (first, count, upper) = v.runBefore(i)
-      if upper >= 0: found.add Run(first: first, count: count, target: Target.Helper, line: i)
+
+      # One-line routine stacks after owner's head, its doc or another one; others take one.
+      let
+        indent = v.code[i].indentOf
+        is_one_line = last == i
+        (first, count, upper) = v.runBefore(i)
+      if upper >= 0:
+        let
+          is_stacked = is_one_line and (v.isOpenerAbove(upper, i) or v.isOneLine(upper, indent))
+          target = if is_stacked: Target.Stacked else: Target.Helper
+        found.add Run(first: first, count: count, target: target, line: i)
       var next = last + 1
       while next < v.lines.len and not v.isText(next): inc next
-      if next < v.lines.len and v.lines[next].indentOf >= v.code[i].indentOf:
-        found.add Run(first: last + 1, count: next - last - 1, target: Target.Helper, line: i)
+      if next < v.lines.len and v.lines[next].indentOf >= indent:
+        var named = next  # Code line run stands before, past `#` comments at helper's indent.
+        while named < v.lines.len and v.isComment(named) and v.lines[named].indentOf == indent:
+          inc named
+        let
+          is_stacked = is_one_line and named < v.lines.len and v.isOneLine(named, indent)
+          target = if is_stacked: Target.Stacked else: Target.Helper
+        found.add Run(first: last + 1, count: next - last - 1, target: target, line: i)
 
   # Keep runs breaking their count, outside multi-line tokens; two rules on one run must agree.
   for run in found.mitems: run.wanted = LUT_BLANKS_BY_TARGET[run.target]
@@ -204,7 +239,12 @@ func checkBlanks*(path, source: string): seq[Report] =
       of Target.Child: "First child follows its opener at once (X.2)"
       of Target.Banner: "Suite or test after banner takes banner's one blank line (X.2)"
       of Target.Helper: "Nested helper takes one blank line on each side (STYLE.md §1)"
-    let rule = if run.target == Target.Helper: Rule.HelperBlankLines else: Rule.TestBlankLines
+      of Target.Stacked:
+        "One-line routine after owner's head, its doc or another one-line routine takes no " &
+          "blank line before it (STYLE.md §1)"
+    let rule =
+      if run.target in {Target.Helper, Target.Stacked}: Rule.HelperBlankLines
+      else: Rule.TestBlankLines
     result.add initReport(path, run.line + 1, rule, message & "; got `" & $run.count & "`.")
 
 
@@ -223,6 +263,8 @@ func fixBlanks*(path, source: string): Fix =
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in found:
-    let rule = if run.target == Target.Helper: Rule.HelperBlankLines else: Rule.TestBlankLines
+    let rule =
+      if run.target in {Target.Helper, Target.Stacked}: Rule.HelperBlankLines
+      else: Rule.TestBlankLines
     result.fixed.add initReport(path, run.line + 1, rule)
   if found.len > 0: result.origin = origin
