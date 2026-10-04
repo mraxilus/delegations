@@ -363,9 +363,10 @@ type
   DiscRecord* = object ## Define one filled disc exactly as it is uploaded.
     ## Disc-fill vertex shader's input, not vertex.
     ##   Each record is drawn as one instance of static quad, `discCorners`.
-    ##   Shader places quad's corners on box of disc's sphere, turned to plane and stopped
-    ##   at its vanishing line, `viewBoxOfDisc`, and fragment stage casts its own ray at
-    ##   plane, `hitDiscAlong`; both stated in Nim.
+    ##   Shader places quad's corners on box of disc's sphere, tightened to rim's own picture
+    ##   where whole rim stands ahead, turned to plane and stopped at its vanishing line,
+    ##   `viewBoxOfDisc`, and fragment stage casts its own ray at plane, `hitDiscAlong`; both
+    ##   stated in Nim.
     ##   Thirteen floats against fanned vertices, and no per-frame trigonometry on CPU.
     ## Arms arrive already scaled by radius, so record needs no radius.
     centre_x*, centre_y*, centre_z*: float32
@@ -1107,6 +1108,20 @@ func tanBounded(angle: float): float =
   tan(angle)
 
 
+const
+  FACTOR_RIM_AHEAD = 1.001
+    ## Lead centre's depth needs over rim's depth swing for `viewBoxOfDisc` to bound rim.
+    ##   Swing is how far rim's depth runs either side of centre's, so rim's nearest point
+    ##   then leads eye by thousandth of swing.
+    ##   Nearer, rim's picture runs toward infinity, and closed form's `float32` rounding
+    ##   grows as lead shrinks. Measured by `float32` emulation over 1.5 million views: under
+    ##   1e-4 of half extent at thousandth, 2.3e-3 at hundred-thousandth.
+  MARGIN_BOX_RIM = 2.0e-3
+    ## Pad rim's bound keeps past its picture each way, in turned view's half extents.
+    ##   Twenty times worst `float32` rounding measured at `FACTOR_RIM_AHEAD`, and 0.9 px of
+    ##   900 px tall view.
+
+
 func viewBoxOfDisc*(
   record: DiscRecord; eye: Position; axis_right, axis_up, forward: Direction;
   tangent_half_view, aspect: float
@@ -1125,6 +1140,13 @@ func viewBoxOfDisc*(
   ##   half-angle sphere subtends, tangent bounded past quarter turn, over turned view's half
   ##   extent, clamped to it. Whole turned view where eye stands within radius of centre in
   ##   either plane, sphere then holding eye. Empty box where sphere stands behind eye.
+  ##   Box then tightens to rim's own picture where whole rim stands in front of eye, i.e.
+  ##   where centre's depth passes `FACTOR_RIM_AHEAD` times rim's depth swing. Disc then
+  ##   stands ahead too, and its picture is convex hull of rim's, so rim's extremes along
+  ##   each turned axis bound disc: roots of one quadratic, padded by `MARGIN_BOX_RIM`.
+  ##     Sphere's box at opening stance spans 50 degrees of view's height, ground's disc 21.
+  ##     Elsewhere sphere's box stands, since rim reaching behind eye has picture without
+  ##     bound.
   ##   Box's floor then rises to vanishing line. No ray below it meets plane in front of eye,
   ##   so clip is exact; every fragment it removes was cast and discarded.
   ##     Empty box where eye stands in plane, or where whole view looks past line.
@@ -1132,6 +1154,20 @@ func viewBoxOfDisc*(
   ##   and sliver clipper returned rasterised to nothing under grazing camera, so disc
   ##   ended at hard chord under camera standing inside it. Box is filled by fragment
   ##   stage casting its own ray, `hitDiscAlong`, exact at any grazing angle.
+
+  func slopesOnRim(offset, depth: float; arms, swings: (float, float)): (float, float) =
+    ## Find least and most slope, lateral over depth, rim's picture reaches along one axis.
+    ##   Rim stands `offset + arms·(cos, sin)` along axis, and `depth + swings·(cos, sin)` deep.
+    ##   Slope `t` is extreme where its line touches rim, `(offset - t*depth)²` being
+    ##   `|arms - t*swings|²`: `a*t² - 2*b*t + c = 0`.
+    ##   `a` is nearest rim depth times farthest, positive while whole rim stands ahead, so
+    ##   least root takes minus. Discriminant is floored at zero against rounding alone.
+    let
+      a = depth*depth - swings[0]*swings[0] - swings[1]*swings[1]
+      b = offset*depth - arms[0]*swings[0] - arms[1]*swings[1]
+      c = offset*offset - arms[0]*arms[0] - arms[1]*arms[1]
+      root = sqrt(max(b*b - a*c, 0.0))
+    ((b - root)/a, (b + root)/a)
 
   # Turn view so plane's normal, signed toward eye's side of plane, points up on it.
   let
@@ -1194,6 +1230,25 @@ func viewBoxOfDisc*(
     result.corner_max = (
       clamp(tanBounded(bearing_across + spread_across)/extent[0], -1.0, 1.0),
       clamp(tanBounded(bearing_up + spread_up)/extent[1], -1.0, 1.0),
+    )
+
+  # Tighten box to rim's own picture, padded, where whole rim stands in front of eye.
+  let swings = (dot(arm_first, forward), dot(arm_second, forward))
+  if depth > FACTOR_RIM_AHEAD*hypot(swings[0], swings[1]):
+    let
+      (least_across, most_across) = slopesOnRim(
+        across, depth, (dot(arm_first, right_turned), dot(arm_second, right_turned)), swings,
+      )
+      (least_up, most_up) = slopesOnRim(
+        rise, depth, (dot(arm_first, up_turned), dot(arm_second, up_turned)), swings,
+      )
+    result.corner_min = (
+      max(result.corner_min[0], clamp(least_across/extent[0] - MARGIN_BOX_RIM, -1.0, 1.0)),
+      max(result.corner_min[1], clamp(least_up/extent[1] - MARGIN_BOX_RIM, -1.0, 1.0)),
+    )
+    result.corner_max = (
+      min(result.corner_max[0], clamp(most_across/extent[0] + MARGIN_BOX_RIM, -1.0, 1.0)),
+      min(result.corner_max[1], clamp(most_up/extent[1] + MARGIN_BOX_RIM, -1.0, 1.0)),
     )
 
   # Raise floor to vanishing line, or past view where none crosses it.
