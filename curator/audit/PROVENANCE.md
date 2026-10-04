@@ -506,8 +506,8 @@ maps. A character that no face of the project maps falls to a face that the view
 - **The checker's own project is exempt**, as the faces check exempts it, because `assets.nim`
   names every face as data.
 - Cost: a codepoint that draws nothing, such as `U+FE0F`, is still reported where no face maps
-  it. Verified by a search of 362 files on 2026-10-04 at `de0c189`. No file that the check
-  reads holds `U+FE0F`, as the character or as a reference.
+  it. Verified by a search on 2026-10-04 at `de0c189`, of each file that the check reads. None
+  holds `U+FE0F`, as the character or as a reference.
 - Verified by `suites/test_coverage.nim`: each rule, and the law at every bound of the ranges of
   Noto Sans.
 
@@ -795,8 +795,7 @@ that the shape is settled for all time.
   that test by name, and every other suite still runs. Rejected: `fc-query` as the reader,
   which adds fontconfig to every machine and reads its charset rather than the `cmap`.
 - Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
-  of Figures: into an empty store, it fetched 11 files of 5,670,612 bytes in 2.5 s. Warm, it took
-  0.08 s. The `test` job of the runner restores no store, so it
+  of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s. The `test` job of the runner restores no store, so it
   fetches on each run.
 
 The name is general, and names no class of file. So a second class needs no rename across
