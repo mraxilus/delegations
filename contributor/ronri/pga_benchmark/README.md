@@ -15,7 +15,7 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 Three kinds of page answer the question. Each one is built from committed files alone.
 `drive` holds each file to the library at pin, and `head` holds the pin to library head.
 `drive` also renders each page, and fails where a face of the system draws a character beyond
-ASCII.
+ASCII. A control page beside them proves that the render sees.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
@@ -112,9 +112,10 @@ src/pga_benchmark/proposals.nim    proposal directories: record, change, claims
 src/pga_benchmark/evaluations.nim  try change or proposal on copy of library at pin
 src/pga_benchmark/head.nim         hold pin to head, and every file and page to pin
 src/pga_benchmark/pages/           shell assembly, one renderer per page kind, docket's search
-tools/build.nim                    driver verbs
+tools/build.nim                    driver: every verb, standard library alone
+tools/verbs.nim                    each verb that compiles project code, run through the driver
 tools/drive/                       render harness: font stack of each element against faces shipped
-tests/                             suites, and the testament stubs that run them
+tests/                             suites, the testament stubs that run them, and the render control
 ```
 
 ## Status
