@@ -1950,6 +1950,31 @@ suite "Internal: Proposal list":
     check "<div class=\"graph\"" in body  # graph drawn above table
 
 
+  test "list page holds every proposal whole behind its checkbox, none checked at rest":
+    let body = bodyListing(
+      chain,
+      initTable[string, JsonNode](),
+      initTable[string, string](),
+      initTable[string, string](),
+      initTable[string, JsonNode](),
+      Spread(),
+      urls,
+      "bd6b23c590d7",
+      "",
+    )
+    for number in 1..5:
+      let id = "pick-p" & $number
+      check "<input class=\"pick\" type=\"checkbox\" id=\"" & id & "\"><article" in body
+        # checkbox stands right before reading it shows
+      check body.count(" for=\"" & id & "\"") == 2 + (if number == 4: 0 else: 1)
+        # table row, close, and graph box where undecided
+      check "body:has(#" & id & ":checked) [for=\"" & id & "\"]" in body  # labels mark choice
+    check "\" checked" notin body and "checked=" notin body  # page opens with none selected
+    check "<h2>P02: Title 2</h2>" in body and "<h3>Claims</h3>" in body  # nested one level down
+    check "<a href=\"https://example.org/p1\">its own page</a>" in body  # published page linked
+    check "<button class=\"clear\" type=\"reset\">" in body  # one control clears all
+
+
 
 suite "Internal: Driver":
   const driver = staticRead("../tools/build.nim")
