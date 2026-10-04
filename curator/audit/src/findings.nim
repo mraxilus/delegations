@@ -34,7 +34,6 @@ const CITATIONS*: array[Rule, string] = [
   Rule.BannerSpacing: "X.2",
   Rule.EntryBlock: "V.10",
   Rule.ArticleInComment: "VI.5",
-  Rule.TableAlignment: "I.4",
   Rule.MessageValue: "IV.4",
   Rule.AndWithOr: "X.4",
   Rule.NotOverBinary: "X.4",

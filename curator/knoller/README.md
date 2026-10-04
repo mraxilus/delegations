@@ -67,7 +67,6 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `banner-spacing` | The blank lines beside a banner follow its tier. |
 | `entry-block` | An entry block holds no binding, so its body moves into `proc main`. |
 | `article-in-comment` | A comment holds no article. |
-| `table-alignment` | A table column aligns by display width. |
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
