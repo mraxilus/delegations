@@ -147,7 +147,7 @@ suite "Wrapping":
       "    \"message long enough to cross column one hundred\",\n  )\n"
     let own_line = "  result.add finding(\n    path, 0, \"" & "x".repeat(84) & "\",\n  )\n"
     check own_line.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(84) &
-      "\",\n  )\n"  # never all arguments on one line of their own
+      "\",\n  )\n"  # comma after last argument: one argument to line
     for example in [EXAMPLE_CALL, EXAMPLE_DECLARATIVE]: check example.isSettled
 
 
@@ -166,6 +166,20 @@ suite "Wrapping":
     let hugged = "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
       "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
     check hugged.isSettled  # call hand hugs keeps its hug, inner one to line
+
+
+  test "call with no comma after last argument keeps hand's line breaks where each line fits":
+    let shared = "      result[b].add BasisSigned(\n        basis: b_to.basis, is_negated: " &
+      "b_from.is_negated xor term.is_negated xor b_to.is_negated\n      )\n"
+    check shared.isSettled  # `cayleys.nim` of PGA library, arguments on one line of their own
+    let crossing = shared.replace("b_to.is_negated\n", "b_to.is_negated_at_length\n")
+    check crossing.fixed == "      result[b].add BasisSigned(\n        basis: b_to.basis,\n" &
+      "        is_negated: b_from.is_negated xor term.is_negated xor " &
+      "b_to.is_negated_at_length,\n      )\n"  # shared line crosses `LINE_MAX`: one to line
+    check crossing.fixed.isSettled
+    let hand = "foo(alpha_argument_held_at_great_length, beta_argument_held_at_great_length,\n" &
+      "    gamma_argument_held_at_great_length)\n"
+    check hand.isSettled  # break after comma kept, each line fits
 
 
   test "outermost call crossing column splits first, then each line it leaves":
