@@ -121,3 +121,12 @@ such as `got none.`, echoes no value and is no finding.
 - A test that builds the old text in the same form changes with it. A test that asserts the
   text in another form changes by hand, as two tests of `test_record.nim` do.
 - Verified by `suites/test_messages.nim`.
+
+**A condition that mixes `and` with `or` takes parentheses around each `and` (X.4).** The parser
+already groups it so, because `and` binds tighter than `or`. So the parentheses move no reading.
+The check reads an expression on tokens, at one bracket depth, between delimiters. A command call
+holds the expression after its head.
+
+- `not` over a binary expression has a check and no fixer. Nim reads `not a == b` as
+  `(not a) == b`, so the right parentheses depend on intent.
+- Verified by `suites/test_precedence.nim`. The tree holds no finding of either rule.

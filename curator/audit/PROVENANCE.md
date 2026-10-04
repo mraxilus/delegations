@@ -1938,15 +1938,6 @@ rules are the I.4 tables, the IV.4 messages, the X.4 conditions, the profiler im
 `to<Target>` calls. The static pass does not run their checks yet, as with the layout checks. So
 a project clears their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
-**A condition that mixes `and` with `or` takes parentheses around each `and` (X.4).** The parser
-already groups it so, because `and` binds tighter than `or`. So the parentheses move no reading.
-The check reads an expression on tokens, at one bracket depth, between delimiters. A command call
-holds the expression after its head.
-
-- `not` over a binary expression has a check and no fixer. Nim reads `not a == b` as
-  `(not a) == b`, so the right parentheses depend on intent.
-- Verified by `suites/test_precedence.nim`. The tree holds no finding of either rule.
-
 **Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
 §3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is
 `<project>/src/<project>.nim`, and a stub is `tests/test_*.nim`. The fixer joins the form on two
