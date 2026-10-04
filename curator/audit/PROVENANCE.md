@@ -1890,10 +1890,10 @@ it. Verified by `suites/test_spacing.nim`.
 
 - A `^` after a range is a prefix operator, so it stays glued to its operand, as in `s[1 .. ^1]`.
   Verified by `suites/test_spacing.nim`: that line passes, and `s[1 .. ^ 1]` fixes to it.
-- Glued `1..^1` lexes as the one operator `..^`, and not as `..` and a prefix `^`. So the fixer
-  writes `1 ..^ 1`, and never splits the token. Verified by `suites/test_spacing.nim`.
-- `1 ..^ 1` and `1 .. ^1` call one operator. Verified by hand, 2026-10-04: `lib/system/indices.nim`
-  of 2.2.12 defines the template `..^` as `a .. ^b`.
+- Glued `1..^1` lexes as the one operator `..^`, so the fixer writes `1 ..^ 1`, and never splits
+  it. Verified by `suites/test_spacing.nim`. The Architect ruled on 2026-10-04 that a compound
+  operator stays whole, because it can carry an optimisation that its parts lack. In 2.2.12 the
+  template `..^` of `lib/system/indices.nim` is `a .. ^b`, verified by hand on 2026-10-04.
 - Cost: the fixer leaves `1 ..^ 1` where X.9 shows `1 .. ^1`. The split is a choice for the hand.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
