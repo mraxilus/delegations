@@ -30,8 +30,8 @@ suite "Article VIII":
     check found.len == 1 and found[0].line == 14  # line of heading named
     check found[0].message.endsWith("got `## Re-audit, 2026-09-06`.")
     check messages(provenanceText("d") & "\n## Design\n\nDone 2026-09-06.\n").len == 0  # prose
-    check "x 2026-09-06 y".hasIsoDate and not "12026-09-06".hasIsoDate  # bounded by non-digit
-    check not "2026-9-6".hasIsoDate and not "".hasIsoDate
+    check "x 2026-09-06 y".isDated and not "12026-09-06".isDated  # bounded by non-digit
+    check not "2026-9-6".isDated and not "".isDated
 
 
   test "VIII.6 open questions is last section":

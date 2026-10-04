@@ -55,7 +55,8 @@ suite "Article X":
 
   test "X.1 tabs rejected in every kind":
     check messages("a.nim", "\tx\n", Kind.Nim) == @["Line holds tab."]  # no tabs
-    check messages("nim.cfg", "hints:off\t# x\n", Kind.Cfg) == @["Line holds tab."]  # cfg too
+    check messages("nim.cfg", "hints:off\t# x\n", Kind.Configuration) ==
+      @["Line holds tab."]  # cfg too
 
 
   test "X.2 banner spacing":
@@ -67,7 +68,7 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # none after
     check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks exactly one blank line after it."]  # two after
-    check messages("nim.cfg", "#[ Section ]#\n", Kind.Cfg).len == 0  # Nim only
+    check messages("nim.cfg", "#[ Section ]#\n", Kind.Configuration).len == 0  # Nim only
 
 
   test "X.2 banner tiers":
@@ -191,7 +192,8 @@ suite "Fixes":
     check fix.fixed.mapIt(it.line) == @[2, 3, 3, 12, 12]  # banner each run stands beside
     check checkBanners("a.nim", fix.source).len == 0
     check fixed(fix.source).source == fix.source  # idempotent
-    check fixed("x\n#[ A ]#\ny\n", Kind.Cfg).source == "x\n#[ A ]#\ny\n"  # Nim syntax alone
+    let configuration = fixed("x\n#[ A ]#\ny\n", Kind.Configuration).source
+    check configuration == "x\n#[ A ]#\ny\n"  # Nim syntax alone
 
 
   test "X.1 tab in one-line string that is neither raw nor long is written `\\t`, and no other":
@@ -211,7 +213,8 @@ suite "Fixes":
     ]:
       check fixed(kept).source == kept
       check messages("a.nim", kept, Kind.Nim) == @["Line holds tab."]  # finding stays
-    check fixed("let s = \"a\tb\"\n", Kind.Cfg).source == "let s = \"a\tb\"\n"  # Nim alone
+    let configuration = fixed("let s = \"a\tb\"\n", Kind.Configuration).source
+    check configuration == "let s = \"a\tb\"\n"  # Nim alone
 
 
   test "fix never writes line width check reports":
