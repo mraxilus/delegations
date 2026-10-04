@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a2dba8c2495cd005 |
+| Rules   | a72b7a39a1de2b08 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -3105,7 +3105,21 @@ The archive asks for this acknowledgement, word for word:
 > Institute of Technology under contract with NASA under the Exoplanet Exploration Program.
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
-query recorded in the file. It keeps 11,252 of 11,432.
+query recorded in the file. On 2026-08-31 the query returned 11,432 entries, and the table keeps
+11,252 of them. Each of the other 180 is a composite entry, for a double or multiple system. The
+table holds the components of each such system as stars of their own. The cut is not in the
+query, so a run of the query alone returns the composite entries too.
+
+Verified by a run of the recorded query against the TAP service of SIMBAD, 2026-10-04. It
+returns 11,430 entries. The query applies its own bounds of parallax and position, so the bound
+of 31.53 parsecs removes no entry. Every star of the table is in the result, at the distance
+that the table gives it. Of these stars, 17 carry a new SIMBAD name, at the same position. Each
+of the other 178 entries is a composite entry, and the table holds its components.
+
+SIMBAD links 174 of those composite entries to their components. The name of each of the other
+4 is the name of its components without their letter. So the result holds the same 11,252 stars
+as on 2026-08-31, and 2 fewer composite entries. By the same links, 21 composite entries stand
+in the table beside their own components.
 
 **A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
 `#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
@@ -3169,8 +3183,9 @@ stands nine thousand opening radii out, and a frame that held it shows one dot.
 
 Verified by driven check: the demo button stands the camera back past 40 units. The occlusion
 check stands its own camera by the real radius of Jupiter, for a sixty-pixel disc with Io in front
-of it. Assumed: the archive snapshots themselves, and the JPL elements transcribed by hand. **No
-table is checked against its source by any tool.**
+of it. Assumed: the archive snapshots themselves, apart from the count and the distances of the
+stars verified above, and the JPL elements transcribed by hand. **No tool in this repository
+checks a table against its source.**
 
 ## Operation notation
 

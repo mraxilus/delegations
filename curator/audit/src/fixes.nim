@@ -214,10 +214,11 @@ func contextOf*(
 
 func fixSource(
   path, source: string; kind: Kind; fence: Fence; context: Context
-): tuple[source: string, fixed: seq[Finding]] =
+): tuple[source: string, fixed, left: seq[Finding]] =
   ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
   ##   (`formatted`); none of those edits moves line, so every report names line of source as
-  ##   given.
+  ##   given. Source knoller cannot settle keeps those edits alone, with finding left, since
+  ##   rename planned whole reaches other files too.
 
   # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
   var renamed: seq[Edit]
@@ -241,10 +242,11 @@ func fixSource(
       base = step.source.restored(base, fence)
       result.fixed.add step.fixed
 
-  # Run chain of knoller's fixers until source settles.
+  # Run chain of knoller's fixers until source settles; unsettled source keeps edits above.
   let fix = formatted(path, base, kind.dialectOf)
   result.source = fix.source
   result.fixed.add fix.fixed.findingsOf
+  result.left = fix.left.findingsOf
 
 
 func fixEntries*(
@@ -252,8 +254,8 @@ func fixEntries*(
 ): tuple[written: seq[Entry], fixed, refused, left, held: seq[Finding]] =
   ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
   ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
-  ##   for each fence, which keeps its lines as written. `context` carries what tree tells
-  ##   fixers across modules (`contextOf`).
+  ##   for each fence, which keeps its lines as written, naming each rule broken among them
+  ##   (`heldOf`). `context` carries what tree tells fixers across modules (`contextOf`).
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   for e in entries:
     if e.kind.isNone or not e.kind.get.rule.has_guide: continue
@@ -268,7 +270,7 @@ func fixEntries*(
     if fence.fault >= 0:
       result.left.add faultOf(e.path, fence).findingsOf
       continue
-    result.held.add heldOf(e.path, fence).findingsOf
+    result.held.add heldOf(e.path, e.content, e.kind.get.dialectOf).findingsOf
     for plan in context.plans:
       if plan.rename.path != e.path or plan.refusal.len == 0: continue
       result.left.add finding(
@@ -294,6 +296,7 @@ func fixEntries*(
           "got `" & context.answers[e.path].reason & "`.",
       )
     let fix = fixSource(e.path, e.content, e.kind.get, fence, context)
+    result.left.add fix.left
     if fix.source == e.content: continue
     result.written.add Entry(path: e.path, kind: e.kind, content: fix.source)
     result.fixed.add fix.fixed
