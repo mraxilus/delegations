@@ -1,6 +1,6 @@
 {
   "status": "proposed",
-  "builds_on": "",
+  "builds_on": [],
   "claims": [
     {
       "kind": "suites"
