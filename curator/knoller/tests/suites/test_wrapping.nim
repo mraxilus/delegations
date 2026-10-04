@@ -237,7 +237,7 @@ suite "Wrapping":
       check kept.fixed == kept
 
 
-  test "value opening after `=` takes four spaces past its statement line, every line alike":
+  test "chain opening after `=` takes four spaces past its statement line, every line alike":
     let ranges = "const\n  RANGES_NOTO_SANS_MATH =\n    \"20-7e a0 a7 33a 33f \" &\n" &
         "    \"346 34d 391-3a1 2016 \" &\n    \"2018-2019 201c-201d \"\n"
     check checkContinuations("a.nim", ranges).mapIt(it.line) == @[3, 4, 5]
@@ -247,11 +247,12 @@ suite "Wrapping":
     let staircase = "let s =\n  \"a \" &\n      \"b \" &\n      \"c\"\n"
     check staircase.fixed == "let s =\n    \"a \" &\n    \"b \" &\n    \"c\"\n"  # one indent
     check "result.origin =\n  a +\n    b\n".fixed == "result.origin =\n    a +\n    b\n"
-    check "let x =\n  a\n".fixed == "let x =\n    a\n"  # first line alone, too
-    check "let x =\n  if c: a\n  else: b\n".fixed == "let x =\n    if c: a\n    else: b\n"
-    check "let x =\n  @[\n    1, 2,\n    3, 4,\n  ]\n".fixed ==
-        "let x =\n    @[\n      1, 2,\n      3, 4,\n    ]\n"  # layout of its lines kept
     for kept in [
+      "let x =\n  a\n",  # value of one line keeps one level
+      "let x =\n  if c: a\n  else: b\n",  # `if` expression too
+      "let x =\n  @[\n    1, 2,\n    3, 4,\n  ]\n",  # hand-shaped list too
+      "let x =\n  foo(\n    \"" & "a".repeat(50) & "\",\n    \"" & "b".repeat(50) &
+          "\",\n  )\n",  # call split over lines too
       "proc f() =\n  a\n",  # body of routine
       "let f = proc () =\n  a\n",  # body of lambda
       "type\n  T =\n    object\n",  # type

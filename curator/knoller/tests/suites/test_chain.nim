@@ -89,6 +89,12 @@ const
       "    \"2039-203a 203c 203e 2044 204a 2070 2074-208e 20a3-20a4 20a7 20ac 2105 2113 " &
       "2116-2117 2122\"\n"
     ## Value of `assets.nim` of `audit` two spaces in, whose second line is 100 runes.
+  TWIST =
+      "  let\n    (lower, upper) =\n      if arm == Arm.Right:\n" &
+      "        (twist_range.lower, twist_range.upper)\n      else:\n" &
+      "        (-twist_range.upper, -twist_range.lower)\n"
+    ## `if` expression after `=`, one level under its statement, as `rigid.nim` of
+    ##   `dance_ontology` writes it.
 
 
 func fixedOf(source: string): string =
@@ -237,6 +243,11 @@ suite "Repair that widens its line":
     let source = STRICT_FUNCS & "\n\n" & RANGES
     check source.fixedOf == source
     check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7]
+
+
+  test "value after `=` that is no chain keeps one level under its statement":
+    check (HEAD & TWIST).fixedOf == HEAD & TWIST
+    check checkFormatting("a.nim", HEAD & TWIST, Dialect.Module).len == 0
 
 
   test "operator tokens read same before and after, `&` of message shape aside":

@@ -22,10 +22,11 @@
 ##     after its head, or `:` before code other than type of binding, stays.
 ##   Continuation: each line of expression past its statement line takes `CONTINUATION_STEP`
 ##     spaces more than that line, every such line alike (STYLE.md §5). Statement line is line
-##     expression opens on, or, for value opening on line after `=` of binding or assignment,
-##     line of that `=`, so value takes step too, first line included. Call and signature keep
-##     their one level. Fixer re-indents hand's lines too; run of lines whose bracket opens past
-##     its line, or holding comment line or token spanning lines, stays.
+##     expression opens on, or, for chain opening on line after `=` of binding or assignment,
+##     line of that `=`, so chain takes step too, first line included; other value there keeps
+##     one level. Call and signature keep their one level. Fixer re-indents hand's lines too; run
+##     of lines whose bracket opens past its line, or holding comment line or token spanning
+##     lines, stays.
 ##   Trailing separator: list written one item to line ends its last item with separator: call,
 ##     parameters, array, seq, set, table, tuple of several items, constructor, import bracket.
 ##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`,
@@ -743,12 +744,12 @@ func checkCalls*(path, source: string): seq[Report] =
   let s = source.scan
   for rewrite in s.callRewrites:
     let message =
-        if rewrite.rule == Rule.OperatorWrapping:
-          "Line fitting nowhere breaks after its operator of lowest precedence (X.1, STYLE.md " &
-              "§5); got `" & $s.lines[rewrite.first].runeLen & "` runes."
-        else:
-          "Call stays on its line where it fits, else takes one argument to line with trailing " &
-              "comma (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines."
+      if rewrite.rule == Rule.OperatorWrapping:
+        "Line fitting nowhere breaks after its operator of lowest precedence (X.1, STYLE.md " &
+            "§5); got `" & $s.lines[rewrite.first].runeLen & "` runes."
+      else:
+        "Call stays on its line where it fits, else takes one argument to line with trailing " &
+            "comma (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines."
     result.add initReport(path, rewrite.first + 1, rewrite.rule, message)
 
 
@@ -778,9 +779,9 @@ func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
   ##   that line, all alike, one rewrite to each line; expression holding line whose indent
   ##   would widen held line is left whole, so lines of one expression never part.
   ##   Statement line is line expression opens on, or line whose `=` ends it where value opens
-  ##     on next line (`bindingOpened`). Value so opened moves whole, first line included: its
-  ##     run of continuations takes one indent, and value of other shape, such as split call or
-  ##     `if` expression, moves by one step, keeping layout of its lines.
+  ##     on next line (`bindingOpened`) and goes on after operator: such chain takes one indent,
+  ##     first line included. Value of other shape there, such as split call, `if` expression or
+  ##     value of one line, keeps one level under its statement, and stays as written.
   ##   Run of continuations is read whole, where no token spans lines, each line but last ends
   ##     at depth first line opens at and closes no bracket opened before it, and last leaves
   ##     none open. Value is read where no token spans its lines and no comment line stands in it.
@@ -802,28 +803,27 @@ func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
       let next = firsts[t.line + run.len]
       if next < 0 or s.continued(next) < 0: break
       run.add next
-    let statement = s.bindingOpened(k)
-    if run.len == 1 and statement < 0: continue
-    var is_read = true
-    if run.len > 1:
-      let floor = if k == 0: 0 else: opened[k - 1]
-      var after = run[^1]
-      while after < s.tokens.len and s.tokens[after].line == s.tokens[run[^1]].line: inc after
-      is_read = opened[after - 1] <= floor
-      for j in k ..< after:
-        if s.lasts[j] > s.tokens[j].line: is_read = false
-        if j < run[^1] and opened[j] < floor: is_read = false
-      for first in run[1 .. ^1]:
-        if opened[first - 1] != floor: is_read = false
+    if run.len == 1: continue
+    let
+      statement = s.bindingOpened(k)
+      floor = if k == 0: 0 else: opened[k - 1]
+    var after = run[^1]
+    while after < s.tokens.len and s.tokens[after].line == s.tokens[run[^1]].line: inc after
+    var is_read = opened[after - 1] <= floor
+    for j in k ..< after:
+      if s.lasts[j] > s.tokens[j].line: is_read = false
+      if j < run[^1] and opened[j] < floor: is_read = false
+    for first in run[1 .. ^1]:
+      if opened[first - 1] != floor: is_read = false
     if not is_read: continue
 
-    # Plan indent of each line: run alike, or value moved whole.
+    # Plan indent of each line of run: past statement line, or past line `=` ends.
     var planned: seq[(int, int)]  # Line and its indent.
     if statement < 0:
       let wanted = s.lines[t.line].indentOf + CONTINUATION_STEP
       for first in run[1 .. ^1]: planned.add (s.tokens[first].line, wanted)
     else:
-      # Value runs down while code opens line at its own indent or deeper.
+      # Value runs down while code opens line at its own indent or deeper; chain must be all of it.
       let
         wanted = s.lines[statement].indentOf + CONTINUATION_STEP
         base = s.lines[t.line].indentOf
@@ -854,14 +854,9 @@ func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
       while stop < s.tokens.len and s.tokens[stop].line <= last:
         if s.lasts[stop] > s.tokens[stop].line: is_read = false
         inc stop
-      if run.len > 1 and s.tokens[run[^1]].line != last: is_read = false
+      if s.tokens[run[^1]].line != last: is_read = false
       if not is_read: continue
-      if run.len > 1:
-        for first in run: planned.add (s.tokens[first].line, wanted)
-      else:
-        for line in t.line .. last:
-          if s.lines[line].strip.len > 0:
-            planned.add (line, s.lines[line].indentOf + wanted - base)
+      for first in run: planned.add (s.tokens[first].line, wanted)
 
     # Set each line to its indent, or none where held line would widen.
     var shifts: seq[Rewrite]
