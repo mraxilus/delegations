@@ -213,6 +213,12 @@ suite "Chain":
     check heldOf("a.nims", crossing, Dialect.Script).len == 0  # fault, and no warning
 
 
+  test "comment table stays as written: width reader sees depends on font, so reading holds it":
+    let table = "## Map operators.\n##   |-----|------|\n##   |Oper.| Name |\n" &
+      "##   |-----|------|\n##   | ⊖  | anti |\n##   |-----|------|\n\n" & STRICT_FUNCS & "\n"
+    check table.isSettled  # glyph row, padded as hand's font shows it (I.4)
+
+
   test "nimble file whose copy lock holds is named, beside its lock":
     let files = @[
       ("p/alpha/atlas.lock", LOCK),
