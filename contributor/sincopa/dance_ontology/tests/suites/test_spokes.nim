@@ -64,13 +64,13 @@ suite "Internal: The space and the window":
   test "every frame is drawn inside the one space":
     # Space is what lets node travel: coordinate has to mean same
     # place in frame arrived at as it did in frame left behind.
-    let (box_x, box_y, box_width, box_height) = SPOKES_BOX
+    let (bounds_x, bounds_y, bounds_width, bounds_height) = SPOKES_BOUNDS
     for here in FRAMES:
       let (x, y, width, height) = windowOf(here)
-      check x >= box_x
-      check y >= box_y
-      check x + width <= box_x + box_width
-      check y + height <= box_y + box_height
+      check x >= bounds_x
+      check y >= bounds_y
+      check x + width <= bounds_x + bounds_width
+      check y + height <= bounds_y + bounds_height
 
 
   test "a window holds the whole of the frame it is cut for":
@@ -86,7 +86,7 @@ suite "Internal: The space and the window":
 
 
   test "a window is cut to its frame rather than to the widest one":
-    # Every frame in one box would leave frames with ways out one way only
+    # Every frame in one set of bounds would leave frames with ways out one way only
     # mostly empty, which is whole reason window moves at all.
     var sizes: seq[(int, int)] = @[]
     for here in FRAMES:
@@ -96,8 +96,8 @@ suite "Internal: The space and the window":
     check sizes.len > 1
     for here in FRAMES:
       let (_, _, width, height) = windowOf(here)
-      check width <= SPOKES_BOX[2]
-      check height <= SPOKES_BOX[3]
+      check width <= SPOKES_BOUNDS[2]
+      check height <= SPOKES_BOUNDS[3]
 
 
   test "the middle is inside every window, with the drawing around it":
@@ -155,8 +155,8 @@ suite "Internal: The moving":
         (_, _, width, height) = windowOf(here)
       check picture.contains("--w: " & $width & "; --h: " & $height & ";")
       check not picture.contains("--w: " & $width & "px")
-      check picture.contains("--bw: " & $SPOKES_BOX[2] & "; --bh: " &
-        $SPOKES_BOX[3])
+      check picture.contains("--bw: " & $SPOKES_BOUNDS[2] & "; --bh: " &
+        $SPOKES_BOUNDS[3])
     # What is read inside picture stays length: those are its own units,
     # and they scale with it already.
     check renderSpokes(FRAMES[0]).contains("--ox: " & $MIDDLE[0] & "px")

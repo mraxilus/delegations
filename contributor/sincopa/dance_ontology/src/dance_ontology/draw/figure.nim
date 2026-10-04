@@ -22,8 +22,8 @@ import ./[body, geometry, pose, route, style, terms]
 
 
 const
-  WIDE = 160.0  ## Box picture with captions needs.
-  SIZE = 116.0  ## And box it needs without them.
+  WIDE = 160.0  ## Bounds picture with captions needs.
+  SIZE = 116.0  ## And bounds it needs without them.
 
 type Twists* = array[Arm, float]
   ## How far each connection has wound, in turns: what reach swings
@@ -374,7 +374,7 @@ func renderFigure*(
             else: canonicalise(
               spinAbout(spinAbout(rest(), Dancer.Lead, lead_turn), Dancer.Follow, follow_turn),
             )
-    box = if half.isSome: half.get
+    bounds = if half.isSome: half.get
           else: (if has_captions: WIDE else: SIZE) / 2
     bits = partsOf(
       drawn,
@@ -387,7 +387,7 @@ func renderFigure*(
       twist = twist,
       should_clear_marks = should_clear_marks,
     )
-  &"""<svg class="{classes}" {view(box)}>""" & "\n        " &
+  &"""<svg class="{classes}" {view(bounds)}>""" & "\n        " &
     bits.join("\n        ") & "\n      </svg>"
 
 
@@ -580,7 +580,7 @@ func animatedPoses*(
   ##     to be told (rule 28).
   let
     poses = walk.mapIt(settled(it, holds, levels, modifiers))
-    box = if half.isSome: half.get
+    bounds = if half.isSome: half.get
           else: poses.mapIt(extent(it, has_captions = false)).max
     hands = poses.mapIt(handsOf(it))
 
@@ -780,7 +780,7 @@ func animatedPoses*(
       hand(0, 0, is_leading = false, arm = own, is_held = is_held,
            level = (if is_held: levels[by[0]] else: none(Level))),
       hands.mapIt(it[Dancer.Follow][own]))
-  &"""<svg class="{classes}" {view(box)}>""" & "\n        " &
+  &"""<svg class="{classes}" {view(bounds)}>""" & "\n        " &
     bits.join("\n        ") & "\n      </svg>"
 
 

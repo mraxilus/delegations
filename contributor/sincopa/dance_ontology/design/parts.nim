@@ -130,7 +130,7 @@ func slotChart*(arm = Arm.Left): string =
   ##     to be wrong -- and drawn on body turned off vertical, because
   ##     spots are measured off dancer's facing rather than off
   ##     page, and body facing up hides difference (rule 3).
-  # Its own box rather than square every other figure uses: labels
+  # Its own bounds rather than square every other figure uses: labels
   # are wide and body is small, so square would draw it tiny.
   var
     bits = @["""<svg viewBox="-80 -46 160 92" width="248" height="143">"""]
@@ -399,7 +399,7 @@ const
 
 
 func sized(svg, classes: string; half, pixels: float): string =
-  ## Give cell room its row's box needs at its row's own scale.
+  ## Give cell room its row's bounds need at its row's own scale.
   ##   Shared by both turn pages -- it was defined twice, byte for byte,
   ##     inside each builder before pages were read side by side.
   svg.replaceFirst(&"class=\"{classes}\"",
@@ -509,7 +509,7 @@ func placeOf*(pose: Pose): tuple[axis, facing: float] =
 
 func turnGlyph*(label: string, width = 44.0): string =
   ## Draw one edge of cycle: two-headed arrow, since turn reverses.
-  ##   Arrow keeps its length whatever box; `width` is room for
+  ##   Arrow keeps its length whatever bounds; `width` is room for
   ##     label above it, which longer name needs more of.
   let
     middle = width / 2
@@ -537,13 +537,13 @@ func singleTurnParts*(): Parts =
   ##   Rule 15: every position drawn, every edge animated.
   ##   Rule 25: framed on lead, who therefore falls on same spot in
   ##     every cell -- which only reads if cells beside each other hold
-  ##     same box.
-  ##     Row of positions takes one box for whole page, since every
+  ##     same bounds.
+  ##     Row of positions takes one set of bounds for whole page, since every
   ##       position stands same distance apart.  Row of transitions
-  ##       takes one box per manner of turn, because lead who walks
+  ##       takes one set of bounds per manner of turn, because lead who walks
   ##       ring needs room lead who stands still does not, and spending
   ##       that room on every cell of every row would shrink all of them.
-  ##     Each cell is then given what its box needs at scale its own row
+  ##     Each cell is then given what its bounds need at scale its own row
   ##       draws at, so marks stay size they were and it is
   ##       cells that grow.
   var
@@ -566,7 +566,7 @@ func singleTurnParts*(): Parts =
 
   # Whole round, walked in one figure.  Four quarters close it (rule 16), so
   # it needs no return leg: it ends where it set off.
-  #   Its poses are ones four edges already pass through, so it asks box for
+  #   Its poses are ones four edges already pass through, so it asks bounds for
   #     nothing new -- which is measured here rather than assumed.
   var rounds: array[Manner, Walk]
   for manner in Manner:

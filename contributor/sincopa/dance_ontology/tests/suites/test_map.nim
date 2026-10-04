@@ -217,19 +217,19 @@ suite "Internal: The drawing":
       wheres.add some(here)
     for where in wheres:
       let picture = renderMap(where)
-      var boxes: seq[Box] = @[]
+      var plates: seq[Bounds] = @[]
       for chunk in picture.split("<rect class=\""):
         if not (chunk.startsWith("edge-plate") or chunk.startsWith("arc-plate")):
           continue
         let own = chunk[0..<chunk.find("/>")]
-        boxes.add (own.attribute("x"), own.attribute("y"), own.attribute("width"),
+        plates.add (own.attribute("x"), own.attribute("y"), own.attribute("width"),
           own.attribute("height"))
-      check boxes.len == moved div 2 + joined div 2
-      for index, box in boxes:
-        for other in boxes[index + 1 .. ^1]:
-          check not isOverlapping(box, other)
-        for frame in frameBoxes():
-          check not isOverlapping(box, frame)
+      check plates.len == moved div 2 + joined div 2
+      for index, plate in plates:
+        for other in plates[index + 1 .. ^1]:
+          check not isOverlapping(plate, other)
+        for frame in frameBounds():
+          check not isOverlapping(plate, frame)
 
 
   test "a line is named for the move away from where the couple stand":
@@ -299,7 +299,7 @@ suite "Internal: The drawing":
     check renderSpokes(FRAMES[0]).count("class=\"name-plate\"") ==
       spokesOf(FRAMES[0]).len + 1
     for here in FRAMES:
-      let (x, y, width, height) = nameBox(here, centreOf(here)[0], centreOf(here)[1], 74)
+      let (x, y, width, height) = nameBounds(here, centreOf(here)[0], centreOf(here)[1], 74)
       check picture.contains(
         "class=\"name-plate\" x=\"" & $x & "\" y=\"" & $y &
           "\" width=\"" & $width & "\" height=\"" & $height & "\"",

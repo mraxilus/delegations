@@ -94,7 +94,7 @@ func canonicalise*(pose: Pose, amount = 1.0, on = Anchor.Pair): Pose =
   ##     picture says rather than something framing has thrown away.
   ##   `on` says what turning goes round and what is brought to
   ##     middle afterwards.  On pair, couple is centred and any move
-  ##     that shifts their midpoint carries lead across box with it.
+  ##     that shifts their midpoint carries lead across picture's bounds with it.
   ##     On lead, lead never moves at all: follow's orbit leaves
   ##     framing exactly as it found it and needs no second stage, and
   ##     lead's axis turn swings only follow (rule 25).

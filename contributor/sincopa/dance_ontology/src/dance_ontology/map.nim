@@ -68,7 +68,7 @@ const NODE_ORDER* = ["--.", "-r.", "l-.", "-l.", "r-.", "lrL", "lrR", "rl."]
 
 
 type
-  Box* = tuple[x, y, width, height: int]  ## Room something takes up in drawing.
+  Bounds* = tuple[x, y, width, height: int]  ## Room something takes up in drawing.
 
 
 func rowOf(target: Frame): int = target.countHolds
@@ -230,18 +230,18 @@ func waking(is_standing, is_standing_prev, is_moving: bool): string =
   else: " dozing"
 
 
-func isOverlapping*(a, b: Box): bool =
+func isOverlapping*(a, b: Bounds): bool =
   ## Test whether two things in drawing would be drawn over each other.
   a.x < b.x + b.width and b.x < a.x + a.width and a.y < b.y + b.height and b.y < a.y + a.height
 
 
-func labelBox(x, y: int; lines: seq[string]): Box =
+func labelBounds(x, y: int; lines: seq[string]): Bounds =
   ## Get room name takes up, centred on point.
   let (width, height) = plateSpan(lines)
   (x - width div 2, y - height div 2, width, height)
 
 
-func nameBox*(target: Frame; centre_x, centre_y, width: int): Box =
+func nameBounds*(target: Frame; centre_x, centre_y, width: int): Bounds =
   ## Get room frame's name takes up, above frame it names.
   ##   One answer, used both to draw plate that keeps lines off
   ##     words and to keep other names away from them, so two cannot
@@ -252,10 +252,10 @@ func nameBox*(target: Frame; centre_x, centre_y, width: int): Box =
   (centre_x - named div 2, centre_y - height div 2 - NAME_RISE - 11, named, 15)
 
 
-func frameBoxes*(): seq[Box] =
+func frameBounds*(): seq[Bounds] =
   ## Get room every frame on map takes up: its picture, and its name.
-  ##   Two boxes rather than one around both, because frame's name is
-  ##     often much wider than frame and sits only above it.  One box
+  ##   Two bounds rather than one around both, because frame's name is
+  ##     often much wider than frame and sits only above it.  Bounds
   ##     around pair would claim space either side of picture
   ##     that nothing is in, and there is little enough room on this drawing
   ##     as it is.
@@ -265,7 +265,7 @@ func frameBoxes*(): seq[Box] =
       height = frameHeight(NODE_WIDTH)
     result.add (centre_x - NODE_WIDTH div 2 - 8, centre_y - height div 2 - 6,
       NODE_WIDTH + 16, height + 12)
-    result.add nameBox(target, centre_x, centre_y, NODE_WIDTH)
+    result.add nameBounds(target, centre_x, centre_y, NODE_WIDTH)
 
 
 const
@@ -284,17 +284,17 @@ const
 
 
 const
-  LABEL_AIR = 5  ## Daylight between line's cut end and box of name that cut it.
+  LABEL_AIR = 5  ## Daylight between line's cut end and bounds of name that cut it.
   LONG_ENOUGH = 999  ## Dash longer than any line on map, for stretch after gap.
 
 
-func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
-  ## Get where name's box crosses its own line: how far line runs before
+func gapAt(start_x, start_y, end_x, end_y: int; bounds: Bounds): Option[(int, int)] =
+  ## Get where name's bounds cross its own line: how far line runs before
   ## break, and how long break is.
   ##   Nothing, where name sits clear of line -- which is what
   ##     `placeLabel` arranges whenever it can find room -- and typed
   ##     absence rather than zero reader must know to test for.
-  ##   Box is clipped against line rather than measured from its
+  ##   Bounds are clipped against line rather than measured from their
   ##     middle, so break is as wide as name really is at angle
   ##     line really crosses it.  Name met corner-on cuts less than one met
   ##     square, which is what eye expects.
@@ -308,11 +308,11 @@ func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
     lower = 0.0
     upper = 1.0
   for (start, delta, near, far) in [
-      (float(start_x), run, float(box.x), float(box.x + box.width)),
-      (float(start_y), rise, float(box.y), float(box.y + box.height))]:
+      (float(start_x), run, float(bounds.x), float(bounds.x + bounds.width)),
+      (float(start_y), rise, float(bounds.y), float(bounds.y + bounds.height))]:
     if abs(delta) < 1e-9:
       if start < near or start > far:
-        return none((int, int))  # runs parallel to box and outside it
+        return none((int, int))  # runs parallel to bounds and outside it
     else:
       var
         entry = (near - start) / delta
@@ -331,27 +331,27 @@ func gapAt(start_x, start_y, end_x, end_y: int; box: Box): Option[(int, int)] =
   some((int(opens), int(shuts - opens)))
 
 
-func isClear(box: Box, used: seq[Box]): bool =
+func isClear(bounds: Bounds, used: seq[Bounds]): bool =
   ## Test whether something can be drawn here without landing on anything else.
   for other in used:
-    if isOverlapping(box, other):
+    if isOverlapping(bounds, other):
       return false
   true
 
 
-func placeBelow(x, y: int; lines: seq[string]; used: var seq[Box]): (int, int) =
+func placeBelow(x, y: int; lines: seq[string]; used: var seq[Bounds]): (int, int) =
   ## Get where curve's name can sit, sinking it until it is clear.
   for drop in [0, 22, -22, 44, -44, 66, 88]:
-    let box = labelBox(x, y + drop, lines)
-    if box.isClear(used):
-      used.add box
+    let bounds = labelBounds(x, y + drop, lines)
+    if bounds.isClear(used):
+      used.add bounds
       return (x, y + drop)
-  used.add labelBox(x, y, lines)
+  used.add labelBounds(x, y, lines)
   (x, y)
 
 
 func placeLabel(
-  start_x, start_y, end_x, end_y: int; lines: seq[string]; used: var seq[Box]
+  start_x, start_y, end_x, end_y: int; lines: seq[string]; used: var seq[Bounds]
 ): (int, int) =
   ## Get where name can sit near its line without landing on anything else.
   let
@@ -363,21 +363,21 @@ func placeLabel(
       let
         x = start_x + run * along div 100 - rise * aside div length
         y = start_y + rise * along div 100 + run * aside div length
-        box = labelBox(x, y, lines)
-      if box.isClear(used):
-        used.add box
+        bounds = labelBounds(x, y, lines)
+      if bounds.isClear(used):
+        used.add bounds
         return (x, y)
   # Nowhere is clear, so take place it would have had and let it crowd:
   # name in wrong place still says more than no name at all.
   let
     x = start_x + run * LABEL_ALONGS[0] div 100
     y = start_y + rise * LABEL_ALONGS[0] div 100
-  used.add labelBox(x, y, lines)
+  used.add labelBounds(x, y, lines)
   (x, y)
 
 
 func edge(
-  a, b: Frame; side: Side; standing, was, taken: Option[Frame]; used: var seq[Box]
+  a, b: Frame; side: Side; standing, was, taken: Option[Frame]; used: var seq[Bounds]
 ): (string, string) =
   ## Draw pair of moves that join two frames, and name them.
   ##   Ink and name come back apart so that drawing can put
@@ -435,7 +435,7 @@ func edge(
   # pattern, because element cut into pieces is different number of
   # pieces -- and round cap on each side says ending was meant.
   let
-    cut = gapAt(start_x, start_y, end_x, end_y, labelBox(label_x, label_y, naming))
+    cut = gapAt(start_x, start_y, end_x, end_y, labelBounds(label_x, label_y, naming))
     broken = if cut.isNone: ""
              else: "; stroke-dasharray: " & $cut.get[0] & " " & $cut.get[1] &
                " " & $LONG_ENOUGH
@@ -474,7 +474,7 @@ func arcName(a, b: Frame; standing: Option[Frame]): string =
 
 
 func arc(
-  a, b: Frame; name: string; standing, was: Option[Frame]; used: var seq[Box]
+  a, b: Frame; name: string; standing, was: Option[Frame]; used: var seq[Bounds]
 ): (string, string) =
   ## Draw compound move as curve, since no single move joins two frames.
   ##   Ink and name apart, for reason `edge` parts them.
@@ -536,7 +536,7 @@ func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string; ext
   # gets plate of its own as every other name in drawing has: lines leave
   # frame from its middle, so they run out through words above it, and word
   # with line drawn through it is not word.
-  let (name_x, name_y, name_width, name_height) = nameBox(target, centre_x, centre_y, width)
+  let (name_x, name_y, name_width, name_height) = nameBounds(target, centre_x, centre_y, width)
   result.add "<rect class=\"name-plate\" x=\"" & $name_x & "\" y=\"" & $name_y &
     "\" width=\"" & $name_width & "\" height=\"" & $name_height & "\" rx=\"3\"/>"
   result.add text(
@@ -632,7 +632,7 @@ func renderMap*(here: Option[Frame], motion = Motion.Still, taken = none(Frame))
   # each has only one place it can be named, and every name after has to
   # keep clear of ones already put down.
   var
-    used = frameBoxes()
+    used = frameBounds()
     ink, names = ""
     curve_ink, curve_names = ""
     drawn: seq[string] = @[]

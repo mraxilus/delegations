@@ -228,14 +228,14 @@ func naming(x, y: int; lines: seq[string]; colour: string): string =
 #[ Space And Window ]#
 
 func extentOf(here: Frame): (int, int, int, int) =
-  ## Get box one frame's drawing needs, and no more.
+  ## Get bounds one frame's drawing needs, and no more.
   ##   Frame with only collects has nothing below it and frame with only
-  ##     drops has nothing above, so box that holds one frame is not
-  ##     box that holds another.  This is what window is cut to; it is
+  ##     drops has nothing above, so bounds that hold one frame are not
+  ##     bounds that hold another.  This is what window is cut to; it is
   ##     not what frame is drawn in.
   const pad = 14
   # Frame's name is often wider than frame it names, and name is part of
-  # drawing: box measured to pictures alone would cut words off.
+  # drawing: bounds measured to pictures alone would cut words off.
   var
     left = CENTRE_X - max(NODE_WIDTH div 2 + 8, textHalf(here.describe))
     right = CENTRE_X + max(NODE_WIDTH div 2 + 8, textHalf(here.describe))
@@ -258,8 +258,8 @@ func extentOf(here: Frame): (int, int, int, int) =
   (left - pad, top - pad, right - left + 2 * pad, bottom - top + 2 * pad)
 
 
-func spokesBox(): (int, int, int, int) {.compileTime.} =
-  ## Get one space every frame is drawn in: box that holds them all.
+func spokesBounds(): (int, int, int, int) {.compileTime.} =
+  ## Get one space every frame is drawn in: bounds that hold them all.
   ##   Fitting space to each frame would move middle from frame to
   ##     frame, and node travelling in from where it was would be
   ##     travelling in coordinate system that had changed under it.  One
@@ -275,7 +275,7 @@ func spokesBox(): (int, int, int, int) {.compileTime.} =
   (left, top, right - left, bottom - top)
 
 
-const SPOKES_BOX* = spokesBox()
+const SPOKES_BOUNDS* = spokesBounds()
   ## Hold space every frame is drawn in, as `x`, `y`, `width`, `height`.
 
 
@@ -293,7 +293,7 @@ func windowOf*(here: Frame): (int, int, int, int) =
 
 func panOf*(window: (int, int, int, int)): (int, int) =
   ## Get where drawing sits behind window, so window shows that part.
-  (SPOKES_BOX[0] - window[0], SPOKES_BOX[1] - window[1])
+  (SPOKES_BOUNDS[0] - window[0], SPOKES_BOUNDS[1] - window[1])
 
 
 
@@ -321,7 +321,7 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   ##     is why page can replace one with other there and no
   ##     reader can tell.
   let
-    (box_x, box_y, box_width, box_height) = SPOKES_BOX
+    (bounds_x, bounds_y, bounds_width, bounds_height) = SPOKES_BOUNDS
     is_leaving = motion == Motion.Leaving and taken.isSome
     window = windowOf(here)
     (pan_x, pan_y) = panOf(window)
@@ -356,16 +356,16 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   # `--mx`, `--my`, `--ox` and `--oy` stay lengths: they are read inside
   # picture, in its own units, and scale with it already.
   result = "<div class=\"viewport " & phase(motion) & "\" style=\"" &
-    closeStyle() & "; --bw: " & $box_width & "; --bh: " & $box_height &
+    closeStyle() & "; --bw: " & $bounds_width & "; --bh: " & $bounds_height &
     "; --w: " & $window[2] & "; --h: " & $window[3] &
     "; --px: " & $pan_x & "; --py: " & $pan_y &
     "; --to-w: " & $reached[2] & "; --to-h: " & $reached[3] &
     "; --to-px: " & $landing_pan_x & "; --to-py: " & $landing_pan_y &
     "; --mx: " & $shift_x & "px; --my: " & $shift_y &
     "px; --ox: " & $CENTRE_X & "px; --oy: " & $CENTRE_Y & "px\">"
-  result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $box_x & " " &
-    $box_y & " " & $box_width & " " & $box_height & "\" width=\"" & $box_width &
-    "\" height=\"" & $box_height &
+  result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $bounds_x & " " &
+    $bounds_y & " " & $bounds_width & " " & $bounds_height & "\" width=\"" & $bounds_width &
+    "\" height=\"" & $bounds_height &
     "\" class=\"spokes\" role=\"img\">" &
     "<title>" & here.describe & ", and every move away from it</title>"
 

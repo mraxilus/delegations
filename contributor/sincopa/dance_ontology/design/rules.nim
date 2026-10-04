@@ -215,7 +215,7 @@ const RULES* = [
   ##     it anywhere.
   ##   Rule 25 frames picture on lead rather than on pair.
   ##     `canonicalise` turned world about couple's midpoint, so
-  ##       move that shifts that midpoint carried lead across box
+  ##       move that shifts that midpoint carried lead across picture's bounds
   ##       in second stage, and reader had to find them again.
   ##     Turning about lead's own place instead: follow's orbit needs
   ##       no second stage at all, lead's axis turn swings only

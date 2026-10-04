@@ -349,10 +349,10 @@ const BODY = """
       turn of the follow less the turn of the lead. So it is the same for Face-to-face and
       Back-to-back. This picture stands on where each dancer sees the other, and
       <code>rotation.nim</code> reads a facing the same way.</p>
-    <p><b>Known and not mended.</b> A static frame keeps a square box of 120 by 120. A moving
-    frame takes a box fitted to everything it touches, so the moving frames differ in size and
+    <p><b>Known and not mended.</b> A static frame keeps square bounds of 120 by 120. A moving
+    frame takes bounds fitted to everything it touches, so the moving frames differ in size and
     stand at one scale instead. <code>frameHeight</code>, the cells of the matrix and the nodes of
-    the map still assume the old box of 100 by 116.</p>
+    the map still assume the old bounds of 100 by 116.</p>
   </div>
 </section>
 

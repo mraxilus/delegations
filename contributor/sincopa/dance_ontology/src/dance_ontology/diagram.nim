@@ -49,10 +49,10 @@ import ./draw/scene
 const
   WIDTH = 100
   HEIGHT = 116
-    ## Shape of frame picture's box, as everything laid out around one
+    ## Shape of frame picture's bounds, as everything laid out around one
     ## measures it: twenty-five wide to twenty-nine tall.
   VIEW = "-45 -52.2 90 104.4"
-    ## And box itself, in drawing's own units, which are centred on
+    ## And bounds themselves, in drawing's own units, which are centred on
     ## couple's own middle.
     ##   Same twenty-five to twenty-nine, so nothing that places
     ##     picture has to move; sized to what drawing actually reaches,
