@@ -1116,8 +1116,6 @@ suite "Camera Aim":
         Position(x: 698390.5004, y: -953804.3279, z: -2043454.915),
       ]
       middle = ScreenPosition(x: 0.5*float(width_aim), y: 0.5*float(height_aim), depth: 0.0)
-      # Read radius of star's disc in pixels once arrived; see `stanceApproaching`.
-      radius_disc = 0.5*FRACTION_HEIGHT_APPROACH_POINT*float(height_aim)
     for centre in centres:
       for out_to in out_to_aim:
         var camera = cameraAround(centre, 12.0, out_to)
@@ -1147,15 +1145,13 @@ suite "Camera Aim":
           scene, camera, camera.drawExtentFor(height_aim, 0.0), view_projection,
           width_aim, height_aim, middle,
         ) == some(picked.at(0))
-        # Orbit turns about star, so its disc still covers middle of frame.
-        #   Read through transform about eye, as GPU reads records stored about it.
+        # Pivot is star, and orbit turns about it, so it stays there.
+        #   Held to 2% of separation, ten of double's steps at HD 222237: rounding there
+        #   reaches 0.5%, which is 5.4 px of frame on JS backend's own trigonometry.
         var turned = camera
         turned.orbit(0.7, 0.3)
-        let seen = projectToScreen(
-          turned.initMatrixViewProjection(aspect, turned.eye), width_aim, height_aim,
-          ORIGIN + (place - turned.eye),
-        )
-        check hypot(seen.x - middle.x, seen.y - middle.y) < radius_disc
+        check norm(camera.pivot - place) < 0.02*fit
+        check norm(turned.pivot - place) < 0.02*fit
 
 
   test "a depth spanning a fraction of the frame is read off the lens":
