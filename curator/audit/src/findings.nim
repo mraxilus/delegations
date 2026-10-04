@@ -57,6 +57,8 @@ const CITATIONS*: array[Rule, string] = [
   Rule.TupleSeparators: "STYLE.md §5",
   Rule.SignatureWrapping: "X.3",
   Rule.CallWrapping: "X.3",
+  Rule.OperatorWrapping: "STYLE.md §5",
+  Rule.ContinuationIndent: "STYLE.md §5",
   Rule.TrailingSeparator: "X.3",
   Rule.Fence: "X.1",
 ]

@@ -13,19 +13,31 @@
 ##     argument takes own line, indented one level, with trailing comma, and `)` opens line at
 ##     call's indent. Outermost call crossing `LINE_MAX` splits first; each line it leaves is
 ##     read again.
+##   Operator break: line no call split fits, whose hand gave no line breaks, breaks after
+##     binary operator at its own depth (STYLE.md §5). Lowest precedence breaks first, as lexer
+##     reads it (`precedence.nim`), and each line takes latest such operator that fits. Break
+##     adds no parentheses: Nim refuses line opening with binary operator, and after one parser
+##     reads next line on (`optPar`), so tree stays. `in`, `notin`, `is`, `isnot`, `of` and `as`
+##     never break, nor operator glued on either side. Line holding comment, `;`, block keyword
+##     after its head, or `:` before code other than type of binding, stays.
+##   Continuation: line that expression continues after binary operator takes
+##     `CONTINUATION_STEP` spaces more than line opening expression, every such line alike;
+##     call and signature keep their one level (STYLE.md §5). Fixer re-indents hand's
+##     continuation too; run of lines whose bracket opens past its line, or holding comment
+##     line or token spanning lines, stays.
 ##   Trailing separator: list written one item to line ends its last item with separator: call,
 ##     parameters, array, seq, set, table, tuple of several items, constructor, import bracket.
 ##   Checks and fixers share one reading (`separators`, `signatureRewrites`, `callRewrites`,
-##     `trailingInserts`), so each rule is written once (Article II.1).
+##     `continuationShifts`, `trailingInserts`), so each rule is written once (Article II.1).
 ##
 ##   Left as written, check silent: parameter group without type or default, where `;` ends
 ##     group; signature or call holding comment, long string spanning lines, or block (keyword
 ##     opening block, `;` list, `do`, `:` ending line, `:` after call outside condition);
 ##     signature whose group spans lines; signature fitting one line where body after `=` does
 ##     not, since moving body and wrapping are two answers; outermost bracket crossing
-##     `LINE_MAX` that is no call; argument fitting no line that holds no such call and was not
-##     wrapped by hand; line break inside call that follows operand and precedes operand or
-##     operator, whose joining could move reading.
+##     `LINE_MAX` that is no call, and argument fitting no line that holds no such call, where
+##     hand wrapped neither and no operator break fits; line break inside call that follows
+##     operand and precedes operand or operator, whose joining could move reading.
 ##   Bracket spanning lines that no call opens, i.e. hand-shaped array, seq, set or tuple, is
 ##     never reflowed: it moves with its argument, line breaks kept, re-indented. Argument
 ##     wrapped by hand that fits no line keeps its line breaks in same way.
@@ -33,15 +45,17 @@
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); construct it cannot read surely stays as written.
 ##   Cost: fixer never writes line width check reports; rewrite that would, stays to hand.
-##     Trailing separator fixer alone is widener (`reports.nim`): off held line it writes
-##     separator that widens line past `LINE_MAX`, and call layout wraps line after.
+##     Trailing separator and continuation fixers are wideners (`reports.nim`): off held line
+##     each writes rewrite that widens line past `LINE_MAX`, and call layout wraps line after.
+##   Cost: line broken at operator that later fits stays broken, as hand's break does; call
+##     layout joins only calls.
 ##   Hand-shaped call arguments, such as matrix rows, take one argument to line unless fenced
 ##     (`fixes.nim`, X.1): fenced line reads as comment, so call holding it stays as written.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, sequtils, strutils, unicode]
-import ./[form, reports, tokens, views]
+import ./[form, precedence, reports, tokens, views]
 
 
 type
@@ -66,10 +80,15 @@ type
     opens: seq[int]  ## Rune column of each token's start, by index from first token.
     closes: seq[int]  ## Rune column after each token's end, by same index.
 
-  Rewrite = object  ## Define lines to replace, and lines replacing them.
+  Rewrite = object  ## Define lines to replace, lines replacing them, and rule rewrite holds.
     first: int  ## Zero-based first line replaced.
     last: int  ## Zero-based last line replaced.
     lines: seq[string]
+    rule: Rule
+
+  Laid = object  ## Define lines layout writes, and rule they hold: call split or operator break.
+    lines: seq[string]
+    rule: Rule
 
   Insert = object  ## Define separator to insert after list's last item.
     line: int  ## Zero-based line of item's last token.
@@ -91,6 +110,14 @@ const
     ## Keyword operators line may end on, continuing expression on next line.
   TYPE_KEYWORDS = ["static", "tuple"]  ## Keywords whose `[` opens type, never constructor.
   INDENT_STEP = 2  ## Spaces one level of wrapping indents (Article X.1).
+  CONTINUATION_STEP = 4
+    ## Spaces line continuing expression after operator takes beyond line opening it (STYLE.md
+    ##   §5), so continuation reads apart from block body one level in.
+  UNBROKEN_KEYWORDS = ["as", "in", "is", "isnot", "notin", "of"]
+    ## Keyword operators no break follows: membership, type test and conversion read as one.
+  NAMING_KEYWORDS = ["const", "let", "var"]  ## Keywords whose name's `:` types binding.
+  IGNORED_OPERATORS = [".", ":", "::", "="]
+    ## Operator tokens ending line that continue no expression: field, type, assignment.
   PASSES_MAX = 16
     ## Passes call fixer takes at most; one rewrite can let call sharing its line be read.
 
@@ -162,7 +189,7 @@ func isHolding(s: Scan, item: Item, spellings: openArray[string]): bool =
     inc k
 
 
-func applied(path, source: string; rewrites: openArray[Rewrite]; rule: Rule): Fix =
+func applied(path, source: string; rewrites: openArray[Rewrite]): Fix =
   ## Replace lines of each rewrite, last first; each new line traces to line it replaced.
   var
     lines = source.split('\n')
@@ -174,7 +201,7 @@ func applied(path, source: string; rewrites: openArray[Rewrite]; rule: Rule): Fi
     lines = lines[0 ..< rewrite.first] & rewrite.lines & lines[rewrite.last + 1 .. ^1]
     origin = origin[0 ..< rewrite.first] & traced & origin[rewrite.last + 1 .. ^1]
   result.source = lines.join("\n")
-  for rewrite in rewrites: result.fixed.add initReport(path, rewrite.first + 1, rule)
+  for rewrite in rewrites: result.fixed.add initReport(path, rewrite.first + 1, rewrite.rule)
   if origin != toSeq(1 .. origin.len): result.origin = origin
 
 
@@ -309,7 +336,12 @@ func signatureRewrites(s: Scan): seq[Rewrite] =
     elif not group_lines.anyIt(it.isWide): canonical = group_lines
     else: continue
     if canonical != s.lines[first_line .. last_line]:
-      result.add Rewrite(first: first_line, last: last_line, lines: canonical)
+      result.add Rewrite(
+        first: first_line,
+        last: last_line,
+        lines: canonical,
+        rule: Rule.SignatureWrapping,
+      )
 
 
 func checkSignatures*(path, source: string): seq[Report] =
@@ -328,7 +360,7 @@ func checkSignatures*(path, source: string): seq[Report] =
 
 func fixSignatures*(path, source: string): Fix =
   ## Rewrite each signature check reports into its layout.
-  applied(path, source, source.scan.signatureRewrites, Rule.SignatureWrapping)
+  applied(path, source, source.scan.signatureRewrites)
 
 
 
@@ -454,15 +486,99 @@ func isWholeCall(s: Scan; a, b: int): bool =
   true
 
 
+func isContinuing(s: Scan, k: int): bool =
+  ## Decide whether token `k`, ending its line, is binary operator, so next line continues it.
+  let text = s.spelling(k)
+  if k == 0 or not s.tokens.isOperandEnd(k - 1, s.source): return false
+  if s.tokens[k].kind == TokenKind.Word: text in CONTINUING_KEYWORDS
+  else: s.tokens[k].kind == TokenKind.Operator and text notin IGNORED_OPERATORS
+
+
+func continued(s: Scan, k: int): int =
+  ## Read index of operator line-first token `k` continues, on line right above it, comment
+  ##   after operator aside; `-1` where none, where `k` is comment, or where comment line
+  ##   stands between.
+  if k == 0 or not s.isLineFirst(k) or s.tokens[k].kind == TokenKind.Comment: return -1
+  var j = k - 1
+  if s.tokens[j].kind == TokenKind.Comment and j > 0 and s.tokens[j].line == s.lasts[j - 1] and
+      s.lasts[j] == s.tokens[j].line:
+    dec j
+  if s.lasts[j] + 1 != s.tokens[k].line or not s.isContinuing(j): -1 else: j
+
+
+func broken(s: Scan; lead: string; a, b: int; trail: string; indent: int): Option[seq[string]] =
+  ## Break tokens `a` to `b`, which stand on one line, after binary operators of lowest
+  ##   precedence at their depth, each line taking latest one that fits, between lead and
+  ##   trail; `none` where line holds what operator break leaves, or piece fits no line.
+  ##   Continuation lines take `CONTINUATION_STEP` beyond indent, or indent itself where line
+  ##     continues expression already, so every continuation of one expression aligns.
+  if s.tokens[a].line != s.lasts[b]: return none(seq[string])
+  for k in a .. b:
+    let t = s.tokens[k]
+    if t.kind in {TokenKind.Comment, TokenKind.Semicolon}: return none(seq[string])
+    if k > a and t.kind == TokenKind.Word and s.spelling(k) in BLOCK_KEYWORDS:
+      return none(seq[string])
+
+  # Read operators of one depth; `:` before code passes only as type of name it follows.
+  let elements = elementsOf(s.tokens, s.partners, a, b, s.source)
+  var breaks: seq[Element]
+  for e in elements:
+    let k = e.first
+    if s.spelling(k) == ":" and k < b:
+      let is_typing = s.tokens[k - 1].kind == TokenKind.Word and
+          not s.tokens[k - 1].isKeyword(s.source) and
+          (k - 1 == a or (k - 2 == a and s.spelling(a) in NAMING_KEYWORDS))
+      if not is_typing: return none(seq[string])
+    if e.kind != ElementKind.Binary or e.last >= b or s.spelling(k) in UNBROKEN_KEYWORDS: continue
+    if s.tokens[k - 1].after == s.tokens[k].first or s.tokens[k].after == s.tokens[k + 1].first:
+      continue
+    breaks.add e
+  if breaks.len == 0: return none(seq[string])
+  let
+    lowest = breaks.mapIt(it.precedence).min
+    stops = breaks.filterIt(it.precedence == lowest).mapIt(it.first)
+    margin = ' '.repeat(if s.continued(a) >= 0: indent else: indent + CONTINUATION_STEP)
+
+  # Fill each line up to latest operator that fits; rest goes on next line.
+  var
+    lines: seq[string]
+    start = a
+    prefix = lead
+  while true:
+    let whole = prefix & s.source[s.tokens[start].first ..< s.tokens[b].after] & trail
+    if not whole.isWide:
+      lines.add whole
+      return some(lines)
+    var stop = -1
+    for k in stops:
+      if k < start: continue
+      if (prefix & s.source[s.tokens[start].first ..< s.tokens[k].after]).isWide: break
+      stop = k
+    if stop < 0: return none(seq[string])
+    lines.add prefix & s.source[s.tokens[start].first ..< s.tokens[stop].after]
+    (start, prefix) = (stop + 1, margin)
+
+
+func fallback(s: Scan; lead: string; a, b: int; trail: string; indent: int): Option[Laid] =
+  ## Keep line breaks hand gave tokens `a` to `b`, else break their one line after operator.
+  let hand = s.kept(lead, a, b, trail)
+  if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.CallWrapping))
+  let operator = s.broken(lead, a, b, trail, indent)
+  if operator.isNone: none(Laid)
+  else: some(Laid(lines: operator.get, rule: Rule.OperatorWrapping))
+
+
 func layout(
   s: Scan; lead: string; a, b: int; trail: string; indent: int; is_argument: bool
-): Option[seq[string]] =
+): Option[Laid] =
   ## Lay out tokens `a` to `b` between lead and trail as X.3 wraps calls; `none` where rule
   ##   leaves them as written.
   ##   One line where they fit; else outermost call crossing `LINE_MAX` splits, one argument to
-  ##     line, each laid out again; else wrapping hand gave stays, re-indented.
+  ##     line, each laid out again; else wrapping hand gave stays, re-indented; else line
+  ##     breaks after operator, which split that fits no line falls back on too.
   ##   Argument splits its crossing call only where that call is whole argument; expression
-  ##     holding call has no one split, so its hand wrapping stays, or call is left.
+  ##     holding call has no one split, so its hand wrapping stays, or it breaks after
+  ##     operator, or call is left.
   ##   Bracket spanning lines that no call opens is never joined: outermost call spanning lines
   ##     splits around it instead.
   var target = -1
@@ -471,7 +587,7 @@ func layout(
       flat = s.flatten(a, b)
       one = lead & flat.text & trail
       start = lead.runeLen
-    if not one.isWide: return some(@[one])
+    if not one.isWide: return some(Laid(lines: @[one], rule: Rule.CallWrapping))
 
     # Find outermost bracket crossing `LINE_MAX`, else last one before it ending line.
     var
@@ -500,37 +616,43 @@ func layout(
         k = s.partners[k]
       inc k
   if target < 0 or not s.isEligibleCall(target) or not s.isFlattenable(a, target):
-    return s.kept(lead, a, b, trail)
-  if is_argument and not s.isWholeCall(a, b): return s.kept(lead, a, b, trail)
+    return s.fallback(lead, a, b, trail, indent)
+  if is_argument and not s.isWholeCall(a, b): return s.fallback(lead, a, b, trail, indent)
 
   # Split call: head through `(`, one argument to line, `)` opening closing line.
-  let
-    c = s.partners[target]
-    arguments = s.items(target)
-    closer = ' '.repeat(indent) & ")"
-  if arguments.len == 0: return none(seq[string])
-  var lines = @[lead & s.flatten(a, target).text]
-  for item in arguments:
-    let argument = s.layout(
-      ' '.repeat(indent + INDENT_STEP),
-      item.first,
-      item.last,
-      ",",
-      indent + INDENT_STEP,
-      is_argument = true,
-    )
-    if argument.isNone: return none(seq[string])
-    lines.add argument.get
-  if c == b: lines.add closer & trail
-  else:
-    if s.tokens[c + 1].line != s.tokens[c].line: return none(seq[string])
+  block split:
     let
-      gap = s.source[s.tokens[c].after ..< s.tokens[c + 1].first]
-      rest = s.layout(closer & gap, c + 1, b, trail, indent, is_argument)
-    if rest.isNone: return none(seq[string])
-    lines.add rest.get
-  if lines.anyIt(it.isWide): return none(seq[string])
-  some(lines)
+      c = s.partners[target]
+      arguments = s.items(target)
+      closer = ' '.repeat(indent) & ")"
+    if arguments.len == 0: break split
+    var lines = @[lead & s.flatten(a, target).text]
+    for item in arguments:
+      let argument = s.layout(
+        ' '.repeat(indent + INDENT_STEP),
+        item.first,
+        item.last,
+        ",",
+        indent + INDENT_STEP,
+        is_argument = true,
+      )
+      if argument.isNone: break split
+      lines.add argument.get.lines
+    if c == b: lines.add closer & trail
+    else:
+      if s.tokens[c + 1].line != s.tokens[c].line: break split
+      let
+        gap = s.source[s.tokens[c].after ..< s.tokens[c + 1].first]
+        rest = s.layout(closer & gap, c + 1, b, trail, indent, is_argument)
+      if rest.isNone: break split
+      lines.add rest.get.lines
+    if lines.anyIt(it.isWide): break split
+    return some(Laid(lines: lines, rule: Rule.CallWrapping))
+
+  # Break at operator where split fits no line.
+  let operator = s.broken(lead, a, b, trail, indent)
+  if operator.isSome: some(Laid(lines: operator.get, rule: Rule.OperatorWrapping))
+  else: none(Laid)
 
 
 func callRewrites(s: Scan): seq[Rewrite] =
@@ -563,32 +685,113 @@ func callRewrites(s: Scan): seq[Rewrite] =
     let
       indent = s.lines[line].indentOf
       laid = s.layout(' '.repeat(indent), first, k - 1, "", indent, is_argument = false)
-    if laid.isSome and laid.get != s.lines[line .. last_line]:
-      result.add Rewrite(first: line, last: last_line, lines: laid.get)
+    if laid.isSome and laid.get.lines != s.lines[line .. last_line]:
+      result.add Rewrite(first: line, last: last_line, lines: laid.get.lines, rule: laid.get.rule)
       line = last_line + 1
     else: inc line
 
 
 func checkCalls*(path, source: string): seq[Report] =
-  ## Report call laid out against X.3 and STYLE.md §5.
+  ## Report call laid out against X.3 and STYLE.md §5, and line no call split fits that breaks
+  ##   after operator.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for rewrite in source.scan.callRewrites:
-    result.add initReport(
-      path,
-      rewrite.first + 1,
-      Rule.CallWrapping,
-      "Call stays on its line where it fits, else takes one argument to line with trailing " &
-        "comma (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines.",
-    )
+  let s = source.scan
+  for rewrite in s.callRewrites:
+    let message =
+      if rewrite.rule == Rule.OperatorWrapping:
+        "Line fitting nowhere breaks after its operator of lowest precedence (X.1, STYLE.md " &
+            "§5); got `" & $s.lines[rewrite.first].runeLen & "` runes."
+      else:
+        "Call stays on its line where it fits, else takes one argument to line with trailing " &
+            "comma (X.3, STYLE.md §5); got `" & $(rewrite.last - rewrite.first + 1) & "` lines."
+    result.add initReport(path, rewrite.first + 1, rewrite.rule, message)
 
 
 func fixCalls*(path, source: string): Fix =
-  ## Rewrite each call check reports, pass after pass until none is left.
+  ## Rewrite each call check reports, and each operator break, pass after pass until none is
+  ##   left.
   result.source = source
   for pass in 1 .. PASSES_MAX:
     let rewrites = result.source.scan.callRewrites
     if rewrites.len == 0: break
-    result = result.chain(applied(path, result.source, rewrites, Rule.CallWrapping))
+    result = result.chain(applied(path, result.source, rewrites))
+
+
+
+#[ Continuation Indent ]#
+
+func isOpening(s: Scan, k: int): bool =
+  ## Decide whether line-first token `k` opens expression: code token before it, comments
+  ##   aside, ends no line on operator.
+  var j = k - 1
+  while j >= 0 and s.tokens[j].kind == TokenKind.Comment: dec j
+  j < 0 or s.lasts[j] == s.tokens[k].line or not s.isContinuing(j)
+
+
+func continuationShifts(s: Scan, held: Held): seq[Rewrite] =
+  ## Re-indent each line continuing expression after operator to `CONTINUATION_STEP` beyond
+  ##   line opening it, one rewrite to each line; one whose indent would widen held line is left.
+  ##   Run of lines is read whole, where no token spans lines, each line but last ends at depth
+  ##     first line opens at and closes no bracket opened before it, and last leaves none open.
+  var
+    firsts = newSeqWith(s.lines.len, -1)  # Line-first token of each line.
+    opened: seq[int]  # Brackets open after each token.
+    depth = 0
+  for k, t in s.tokens:
+    if s.isLineFirst(k) and firsts[t.line] < 0: firsts[t.line] = k
+    if t.kind == TokenKind.Open: inc depth
+    elif t.kind == TokenKind.Close: depth = max(depth - 1, 0)
+    opened.add depth
+  for k, t in s.tokens:
+    if firsts[t.line] != k or t.kind == TokenKind.Comment or not s.isOpening(k): continue
+
+    # Walk lines while each next one continues; find last token of run.
+    var run = @[k]
+    while t.line + run.len < s.lines.len:
+      let next = firsts[t.line + run.len]
+      if next < 0 or s.continued(next) < 0: break
+      run.add next
+    if run.len == 1: continue
+    let floor = if k == 0: 0 else: opened[k - 1]
+    var after = run[^1]
+    while after < s.tokens.len and s.tokens[after].line == s.tokens[run[^1]].line: inc after
+    var is_read = opened[after - 1] <= floor
+    for j in k ..< after:
+      if s.lasts[j] > s.tokens[j].line: is_read = false
+      if j < run[^1] and opened[j] < floor: is_read = false
+    for first in run[1 .. ^1]:
+      if opened[first - 1] != floor: is_read = false
+    if not is_read: continue
+
+    # Set each continuation line to its indent.
+    let wanted = s.lines[t.line].indentOf + CONTINUATION_STEP
+    for first in run[1 .. ^1]:
+      let
+        line = s.tokens[first].line
+        text = s.lines[line]
+        shaped = ' '.repeat(wanted) & text[text.indentOf .. ^1]
+      if shaped == text or (held.isHeld(line + 1) and shaped.isWide and not text.isWide):
+        continue
+      result.add Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.ContinuationIndent)
+
+
+func checkContinuations*(path, source: string): seq[Report] =
+  ## Report line continuing expression after operator at other indent than STYLE.md §5 gives.
+  let s = source.scan
+  for rewrite in s.continuationShifts(EVERY):
+    let relative = s.lines[rewrite.first].indentOf - rewrite.lines[0].indentOf + CONTINUATION_STEP
+    result.add initReport(
+      path,
+      rewrite.first + 1,
+      Rule.ContinuationIndent,
+      "Line continuing expression after operator takes " & $CONTINUATION_STEP & " spaces more " &
+          "than line opening it (STYLE.md §5); got `" & $relative & "`.",
+    )
+
+
+func fixContinuations(path, source: string; held: Held): Fix =
+  ## Re-indent each line check reports, or that widens line off held lines.
+  applied(path, source, source.scan.continuationShifts(held))
 
 
 
@@ -673,18 +876,21 @@ func fixTrailing*(path, source: string): Fix =
   fixTrailing(path, source, EVERY)
 
 
-const WRAPPING_STEPS*: array[4, Step] = [
+const WRAPPING_STEPS*: array[5, Step] = [
   guarded(fixSeparators),
   guarded(fixSignatures),
   guarded(fixCalls),
+  widening(fixContinuations),
   widening(fixTrailing),
 ]
   ## Wrapping fixers in order they run. Separators come first, since layouts join groups with
-  ##   separator they read; trailing separators come last, adding what neither layout wrote to
-  ##   list left as written.
+  ##   separator they read; continuations come after calls, since hand's line breaks that call
+  ##   layout keeps move with their argument, and same round sets their indent; trailing
+  ##   separators come last, adding what neither layout wrote to list left as written.
 
 
 func fixWrapping*(path, source: string): Fix =
-  ## Rewrite separators, then signatures, then calls, then trailing separators, each line held.
+  ## Rewrite separators, signatures, calls, continuations, then trailing separators, each line
+  ##   held.
   result.source = source
   for step in WRAPPING_STEPS: result = result.chain(step.run(path, result.source, EVERY))

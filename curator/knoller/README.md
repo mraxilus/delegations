@@ -73,6 +73,8 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `tuple-separators` | A tuple type takes commas between its fields. |
 | `signature-wrapping` | A signature wraps its parameters only where it must. |
 | `call-wrapping` | A call takes one argument to a line only where it must. |
+| `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
+| `continuation-indent` | A continuation line takes four spaces more than the line it continues. |
 | `trailing-separator` | A list of one item to a line ends in a separator. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 

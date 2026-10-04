@@ -16,11 +16,13 @@
 ##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
 ##     since doc joined or type dropped changes width wrapping measures;
 ##   - spacing before wrapping, since spaces it adds are width wrapping measures;
-##   - wrapping last, separators before signatures before calls before trailing separators:
-##     layouts join groups with separator they read, and trailing separator goes only where no
-##     layout wrote one.
+##   - wrapping last, separators, signatures, calls, continuations, then trailing separators:
+##     layouts join groups with separator they read, call layout breaks line at operator where
+##     no call split fits, continuation indent follows lines call layout moves, and trailing
+##     separator goes only where no layout wrote one.
 ##   Chain is list of steps: fixer guarded on every line, or widener (`reports.nim`), i.e. tab,
-##     comment, message, condition, spacing and trailing separator fixers, which read held lines.
+##     comment, message, condition, spacing, continuation and trailing separator fixers, which
+##     read held lines.
 ##     Alignment and idiom fixers stay guarded: table column and import bracket have no wrap.
 ##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
 ##     splits can take spacing fixer refused for width, so second round writes it, and
@@ -91,7 +93,7 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, I.4 tables, IV.4
   ##   messages, X.4 conditions, STYLE.md §5 `to<Target>` calls, suites and tests, STYLE.md §1
   ##   helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures,
-  ##   calls and trailing separators.
+  ##   calls, operator breaks, continuations and trailing separators.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
   ##   alone.
@@ -102,7 +104,7 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
     checks = [
       checkComments, checkBanners, checkAlignment, checkMessages, checkMixtures, checkNegations,
       checkTargets, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-      checkSignatures, checkCalls, checkTrailing,
+      checkSignatures, checkCalls, checkContinuations, checkTrailing,
     ]
   for check in checks: result.add check(path, view)
   if dialect == Dialect.Module:

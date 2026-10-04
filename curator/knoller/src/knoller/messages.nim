@@ -113,7 +113,7 @@ func isShapeable(
   ##   so literal appended after it joins concatenation, never value.
   elementsOf(tokens, partners, piece.first, piece.last, source).allIt(
     it.kind in {ElementKind.Operand, ElementKind.Prefix} or
-      (it.kind == ElementKind.Binary and it.precedence > PRECEDENCE_CONCATENATION)
+        (it.kind == ElementKind.Binary and it.precedence > PRECEDENCE_CONCATENATION)
   )
 
 

@@ -43,6 +43,8 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   TupleSeparators = "tuple separators"  ## Tuple type takes commas between fields.
   SignatureWrapping = "signature wrapping"  ## Signature wraps parameters only where it must.
   CallWrapping = "call wrapping"  ## Call takes one argument to line only where it must.
+  OperatorWrapping = "operator wrapping"  ## Line fitting nowhere breaks after binary operator.
+  ContinuationIndent = "continuation indent"  ## Line after operator takes four spaces more.
   TrailingSeparator = "trailing separator"  ## List of one item to line ends in separator.
   Fence = "fence"  ## Fence closes inside bracket, string or comment it opens in.
 

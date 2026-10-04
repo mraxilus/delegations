@@ -12,9 +12,11 @@
 ##     `return`, …), `in` of `for` head, operator binding looser than `or` (arrow, assignment,
 ##     `@`, `?`), and line break that ends statement. Command call (`check a and b or c`) holds
 ##     expression after its head: two operands apart by space, no operator between.
-##   Operator precedence is lexer's (Nim manual, Operators): first character, keyword, and
-##     `=` or arrow ending; only whether operator binds looser than `or`, as `or`, as `and`, or
-##     tighter matters here, so every glyph operator reads tighter.
+##   Operator precedence is lexer's (Nim manual, Operators; `getPrecedence` of
+##     `compiler/lexer.nim`): first character, keyword, and `=` or arrow ending. Glyph opening
+##     operator binds as `+` where lexer files it so (`PLUS_GLYPHS`), else as `*`. Conditions
+##     read only whether operator binds looser than `or`, as `or`, as `and`, or tighter; operator
+##     break of `wrapping.nim` reads every level.
 ##   Checks and fixer share one reading (`mixtures`), so each rule is written once (Article
 ##     II.1). Elements of one depth (`elementsOf`) are exported, since message shape reads
 ##     operators of its value there (`messages.nim`).
@@ -69,6 +71,10 @@ const
   ]
     ## Precedence of symbol operator by its first character (Nim manual, Operators).
   ARROWS = ["->", "~>", "=>"]  ## Endings of arrow-like operator, which binds loosest.
+  PLUS_GLYPHS = ["±", "∨", "∪", "⊔", "⊕", "⊖", "⊞", "⊟"]
+    ## Glyphs lexer files with `+` (`unicodeOprLen`); every other glyph binds as `*`.
+  PRECEDENCE_PLUS = 8  ## Precedence of `+`, and of operator opening with glyph of `PLUS_GLYPHS`.
+  PRECEDENCE_TIMES = 9  ## Precedence of `*`, and of operator opening with any other glyph.
   COMPARING_FIRST = {'<', '>', '!', '=', '~', '?'}
     ## First characters whose operator ending with `=` compares rather than assigns.
   STATEMENT_KEYWORDS = [
@@ -94,7 +100,7 @@ func precedenceOf(t: Token, source: string): int =
   if text.len > 1 and text.endsWith("=") and text[0] notin COMPARING_FIRST: return 1
   for (first, precedence) in LUT_PRECEDENCE_BY_FIRST:
     if text[0] == first: return precedence
-  9  # Glyph operator binds as tight as `*` or `+`, tighter than any comparison.
+  if PLUS_GLYPHS.anyIt(text.startsWith(it)): PRECEDENCE_PLUS else: PRECEDENCE_TIMES
 
 
 func isOperandToken(tokens: openArray[Token], k: int, source: string): bool =
@@ -250,7 +256,7 @@ func mixtures(source: string): seq[Mixture] =
       is_read = true  # Each run opens on operand and ends on one, or expression is unread.
     for j in 0 .. expression.len:
       let is_end = j == expression.len or
-        (expression[j].kind == ElementKind.Binary and expression[j].precedence == PRECEDENCE_OR)
+          (expression[j].kind == ElementKind.Binary and expression[j].precedence == PRECEDENCE_OR)
       if not is_end: continue
       let run = expression[run_first ..< j]
       run_first = j + 1
