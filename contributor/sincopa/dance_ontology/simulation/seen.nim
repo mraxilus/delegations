@@ -113,6 +113,7 @@ proc stillAsked(
   head: Body,
   is_either_way: bool,
   who: Body,
+  over: int,
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds.
@@ -123,7 +124,7 @@ proc stillAsked(
   ##   Still no carried walk holds is stood where planned way stands it nearest to ease,
   ##     of every plan that holds (`walk.plannedStill`), as distance is chosen.
   result = Shown(hold: name, band: band, turns: turns, is_stopped: true, why: Stop.None)
-  let where = standing(rig, band, links, turns, is_away, head, is_either_way, who)
+  let where = standing(rig, band, links, turns, is_away, head, is_either_way, who, over)
   if not where.is_holding:
     let planned = plannedStill(
       rig,
@@ -135,6 +136,7 @@ proc stillAsked(
       is_either_way,
       who,
       should_seek_ease = true,
+      over = over,
     )
     result.is_planned = true
     result.tried = planned.tried
@@ -220,14 +222,17 @@ proc still*(
   head = Body.Two,
   is_either_way = false,
   who = Body.Two,
+  over = -1,
 ): Shown =
   ## One still, `who` turning, from distance couple stand for it, or none if no distance
   ## holds (`stillAsked`).
   ##   Card that asks what another card asks reads still that one stood, under its own name.
   ##   Reflected twin is not asked here: page mirrors still its twin keeps (`design/twins`).
+  ##   Card that draws crossing names lead's arm laid over (`over`), by ordinal; none below nought.
   result = kept(STILLS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way,
-                              $who),
-                stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who))
+                              $who, $over),
+                stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who,
+                           over))
   result.hold = name
 
 proc shown*(

@@ -32,7 +32,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[math, options, os, sequtils, strformat, strutils]
 
 import ../simulation/[body, hold, rig, seen]
-from ../simulation/walk import twinOf
+from ../simulation/walk import mirrored, twinOf
 import ./[asks, stamps]
 
 
@@ -213,7 +213,8 @@ func keeperOf(ask: StillAsk, links: seq[Link], turns: float): string =
     if not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
         other.links == links and other.turns == turns and
         other.isRestAway == ask.isRestAway and other.head == ask.head and
-        other.is_either_way == ask.is_either_way and other.who == ask.who:
+        other.is_either_way == ask.is_either_way and other.who == ask.who and
+        other.over == mirrored(ask.over):
       return other.key
   ask.key
 
@@ -240,6 +241,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
       head = ask.head,
       is_either_way = ask.is_either_way,
       who = ask.who,
+      over = (if twin.is_reflected: mirrored(ask.over) else: ask.over),
     )
     result.note =
       if recording.stills.len > 0:
