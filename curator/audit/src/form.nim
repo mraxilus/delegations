@@ -13,7 +13,7 @@
 ##     pass, exact banner check replacing lenient one (CURATOR.md, duty 3). Fixers run now,
 ##     since they report nothing new.
 ##   Fixer of each check here with one mechanical fix lives in knoller's `form.nim`;
-##     `formFixers` lists those kind rule names.
+##     `formSteps` lists those kind rule names.
 ##
 ##   Cost: two-space indent unverified; indent width depends on syntax and stays with review.
 ##   Cost: wired banner check demands two blank lines of every banner, where X.2 asks three of
@@ -85,13 +85,14 @@ func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
       result.add checkBanner(path, lines, i)
 
 
-func formFixers(rule: KindRule): seq[Fixer] =
+func formSteps(rule: KindRule): seq[Step] =
   ## List form fixers kind rule names, in order they run: Nim syntax takes every fixer of
   ##   knoller's form, i.e. tabs in strings, comments and banners besides line ends and ending.
-  if rule.syntax == Syntax.Nim: @FORM_FIXERS else: @[Fixer(fixWhitespace), fixEnding]
+  if rule.syntax == Syntax.Nim: @FORM_STEPS else: @[guarded(fixWhitespace), guarded(fixEnding)]
 
 
 func fixForm*(path, source: string; rule: KindRule): Fix =
   ## Rewrite source so each form check with one mechanical fix holds; report each rewrite.
+  ##   Every line is held, so no fixer writes line width check reports.
   result.source = source
-  for fixer in rule.formFixers: result = result.chain(fixer(path, result.source))
+  for step in rule.formSteps: result = result.chain(step.run(path, result.source, EVERY))

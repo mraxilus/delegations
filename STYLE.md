@@ -193,6 +193,27 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   )
   ```
 
+- An expression that does not fit breaks after a binary operator, because Nim refuses a line
+  that opens with one. Each line of the expression past its statement line takes four spaces
+  more than that line, and all of them take that one indent. A chain that opens on the line after
+  `=` takes the four spaces too, its first line included. Any other value on its own line after
+  `=` keeps one level, as an `if` expression or a split call does. A call and a signature keep
+  their layout of one level, as above:
+
+  ```nim
+  let depth = offset_x * bounds.forward.x + offset_y * bounds.forward.y +
+      offset_z * bounds.forward.z
+
+  const
+    RANGES_NOTO_SANS_MATH =
+        "20-7e a0 a7 33a 33f " &
+        "346 34d 391-3a1 2016 " &
+        "2018-2019 201c-201d "
+    STEP_TWIST =
+      if DIMENSIONS == 3: STEP_SPATIAL
+      else: STEP_PLANAR
+  ```
+
 - A parameter with a default states its type only where the default does not fix it
   (`as_exclusions = false`, `count: int = SAMPLES`). Only a literal fixes it, `default(T)` and
   `none(T)` among them. A field states its type always. An empty-collection default is

@@ -40,8 +40,9 @@
 ##   Cost: spaces aligning columns of hand-shaped table go; fence keeps them (`fixes.nim`, X.1).
 ##   Cost: fix spaces token lexer read, never splits it, so `1..^1` becomes `1 ..^ 1`, not
 ##     `1 .. ^1` X.9 shows; split is hand's choice.
-##   Cost: fixer never writes line width check reports: spacing that would widen line past
-##     `LINE_MAX` stays, finding and all.
+##   Fixer is widener (`reports.nim`): off held line it writes spacing that widens line past
+##     `LINE_MAX`, and chain wraps line after; on held line, as in its two-argument form,
+##     spacing that would widen narrow line stays, finding and all.
 
 {.experimental: "strictFuncs".}
 
@@ -277,8 +278,8 @@ func checkSpacing*(path, source: string): seq[Report] =
     )
 
 
-func fixSpacing*(path, source: string): Fix =
-  ## Rewrite each gap check reports, unless its line would then be wide.
+func fixSpacing*(path, source: string; held: Held): Fix =
+  ## Rewrite each gap check reports, unless its held line would then be wide.
   ##   Gap two rules read is rewritten once; rules agree on every such gap.
   let
     spacings = source.respacings
@@ -304,8 +305,13 @@ func fixSpacing*(path, source: string): Fix =
       if e.first == done: continue
       shaped = shaped[0 ..< e.first - start] & ' '.repeat(e.spaces) & shaped[e.after - start .. ^1]
       done = e.first
-    if not shaped.isWide or lines[line].isWide:
+    if not held.isHeld(line + 1) or not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
       for m in k ..< j: result.fixed.add initReport(path, line + 1, Rule.ExpressionSpacing)
     k = j
   result.source = lines.join("\n")
+
+
+func fixSpacing*(path, source: string): Fix =
+  ## Rewrite each gap check reports, unless its line would then be wide.
+  fixSpacing(path, source, EVERY)
