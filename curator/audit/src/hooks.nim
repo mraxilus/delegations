@@ -304,7 +304,7 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
       var close = OPENING_DECISION.len
       while close < s.len and s[close] in Digits: inc close
       result.add Decision(
-        number: s[OPENING_DECISION.len ..< close].parseInt,
+        number: s[OPENING_DECISION.len..<close].parseInt,
         question:
           if s.continuesWith(CLOSING_DECISION, close):
             s[close + CLOSING_DECISION.len .. ^1].strip
@@ -322,16 +322,16 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
       let
         item = s[4 .. ^1]
         colon = item.find(':')
-      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0 ..< colon].strip)
+      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0..<colon].strip)
 
 
-func decisionFindings(d: Decision; at: int): seq[Finding] =
+func decisionFindings(d: Decision, at: int): seq[Finding] =
   ## Report decision block out of shape: number, class, place, options, pick and question.
   ##   Class `fact` asks nothing, so it offers no option and picks none; every other class
   ##     asks question with two to four options, and names pick among them.
   let name = "`D" & $d.number & "`"
   if d.number != at + 1:
-    result.add finding("", 0, "Decisions are numbered from D1 in order; got " & name & ".")
+    result.add finding("", 0, "Decisions are numbered from D1 in order; got `" & name & "`.")
   if d.class.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Class:`; got none.")
   if d.where.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Where:`; got none.")
   if d.class.startsWith(CLASS_BLOCKS_OTHERS):
@@ -356,12 +356,14 @@ func decisionFindings(d: Decision; at: int): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Decision of class `fact` offers no option; got `" & $d.options.len & "` in " & name &
-          ".",
+        "Decision of class `fact` offers no option; got `" & $d.options.len & "` in `" & name &
+          "`.",
       )
     if d.recommends.len > 0:
       result.add finding(
-        "", 0, "Decision of class `fact` picks no option; got `" & d.recommends.shortened & "`."
+        "",
+        0,
+        "Decision of class `fact` picks no option; got `" & d.recommends.shortened & "`.",
       )
     return
   if d.options.len < OPTIONS_MIN or d.options.len > OPTIONS_MAX:
@@ -376,8 +378,8 @@ func decisionFindings(d: Decision; at: int): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Option reads `<letter>. <label>: <consequence>`; got `" & o.letter & "` in " & name &
-          ".",
+        "Option reads `<letter>. <label>: <consequence>`; got `" & o.letter & "` in `" & name &
+          "`.",
       )
     elif o.label.splitWhitespace.len > WORDS_OPTION:
       result.add finding(
@@ -390,11 +392,15 @@ func decisionFindings(d: Decision; at: int): seq[Finding] =
     result.add finding("", 0, "Decision " & name & " lacks `Recommends:`; got none.")
   elif pick.len != 1 or pick[0] notin d.options.mapIt(it.letter):
     result.add finding(
-      "", 0, "Recommends names letter of one option of " & name & "; got `" & pick & "`."
+      "",
+      0,
+      "Recommends names letter of one option of " & name & "; got `" & pick & "`.",
     )
   if not d.question.endsWith("?"):
     result.add finding(
-      "", 0, "Question of " & name & " ends with `?`; got `" & d.question.shortened & "`."
+      "",
+      0,
+      "Question of " & name & " ends with `?`; got `" & d.question.shortened & "`.",
     )
 
 
@@ -405,7 +411,7 @@ func decisionNumbers(cell: string): seq[int] =
       result.add word[1 .. ^1].parseInt
 
 
-func rowFindings(rows: seq[seq[string]]; numbers: openArray[int]): seq[Finding] =
+func rowFindings(rows: seq[seq[string]], numbers: openArray[int]): seq[Finding] =
   ## Report rows of sign-off table out of shape: cells, order, evidence, carried tags, who acts.
   ##   ⚠️ row opens last cell with role that acts, or `outside`, so coordinator sees which
   ##     delegate blocks which; ⏸️ row names decision it waits on, so its card carries it.
@@ -499,7 +505,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     role_text = Part.Role.rest.split(',')[0].strip
     parsed = branch.parseBranch
     state_word = Part.State.rest.split({',', ' '})[0]
-    decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Next]])
+    decisions = decisionsIn(after[starts[Part.Decisions] + 1..<starts[Part.Next]])
   if parsed.isSome and role_text != parsed.get.roleName:
     result.add finding(
       "",
@@ -510,16 +516,16 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`." &
-        (if state_word == "working": " Close turn with line `" & LABEL_WORKING & "` instead."
-         else: ""),
+      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") &
+        (if state_word == "working": ", and turn while work runs closes with line `" &
+           LABEL_WORKING & "`"
+         else: "") & "; got `" & state_word & "`.",
     )
   elif (state_word == BLOCKED) != decisions.anyIt(it.class.startsWith(CLASS_BLOCKS)):
     result.add finding(
       "",
       0,
-      "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & state_word &
-        "`.",
+      "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & state_word & "`.",
     )
   if decisions.len == 0 and Part.Decisions.rest != NONE_DECISION:
     result.add finding(
@@ -532,12 +538,11 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened &
-        "`.",
+      "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened & "`.",
     )
   for i, d in decisions: result.add decisionFindings(d, i)
   result.add rowFindings(
-    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").tableRows,
+    after[starts[Part.Table] + 1..<starts[Part.Summary]].join("\n").tableRows,
     decisions.mapIt(it.number),
   )
   var k = starts[Part.Next] + 1
@@ -566,7 +571,7 @@ func labelDefined(line: string): string =
   let close = s.find(']')
   if close < 2 or not s[close + 1 .. ^1].startsWith(":") or s[close + 2 .. ^1].strip.len == 0:
     return ""
-  s[1 ..< close].toLowerAscii
+  s[1..<close].toLowerAscii
 
 
 func codeSpansOut(line: string): string =
@@ -592,14 +597,14 @@ func codeSpansOut(line: string): string =
       if m == n: close = j
       j += m
     if close < 0:
-      result.add line[i ..< i + n]
+      result.add line[i..<i + n]
       i += n
     else:
       result.add ' '.repeat(close + n - i)
       i = close + n
 
 
-func linksOut(line: string; labels: openArray[string]): string =
+func linksOut(line: string, labels: openArray[string]): string =
   ## Blank each link of line: `[text](url)`, and `[text][label]` or `[label]` whose label
   ##   message defines. Bracket opening no link stays text.
   var i = 0
@@ -612,7 +617,7 @@ func linksOut(line: string; labels: openArray[string]): string =
     if close < 0:
       result.add line[i .. ^1]
       break
-    let text = line[i + 1 ..< close]
+    let text = line[i + 1..<close]
     var stop = -1  # Index past link; none where bracket opens no link.
     if close + 1 < line.len and line[close + 1] == '(':
       let paren = line.find(')', close + 2)
@@ -620,7 +625,7 @@ func linksOut(line: string; labels: openArray[string]): string =
     elif close + 1 < line.len and line[close + 1] == '[':
       let shut = line.find(']', close + 2)
       if shut >= 0:
-        let label = line[close + 2 ..< shut]
+        let label = line[close + 2..<shut]
         if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
     elif text.toLowerAscii in labels: stop = close + 1
     if stop < 0:
@@ -655,7 +660,7 @@ func checkNumbersBare*(message: string): seq[Finding] =
         continue
       var j = i + 1
       while j < text.len and text[j] in Digits: inc j
-      let number = text[i ..< j]
+      let number = text[i..<j]
       if number notin seen:
         seen.add number
         result.add finding(

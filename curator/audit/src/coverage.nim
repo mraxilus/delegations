@@ -135,15 +135,15 @@ func charactersIn(text: string, has_references: bool): seq[(int, string)] =
   while i < text.len:
     if text[i].ord > ASCII_MAX:
       let size = text.runeLenAt(i)
-      result.add (text.runeAt(i).int, text[i ..< i + size])
+      result.add (int(text.runeAt(i)), text[i..<i + size])
       i += size
       continue
     if has_references and text[i] == '&':
       let stop = text.find(';', i + 1, last = min(i + REFERENCE_MAX - 1, text.high))
       if stop > i + 1:
-        let codepoint = text[i + 1 ..< stop].referenced
+        let codepoint = text[i + 1..<stop].referenced
         if codepoint.isSome and codepoint.get > ASCII_MAX:
-          result.add (codepoint.get, text[i .. stop])
+          result.add (codepoint.get, text[i..stop])
           i = stop + 1
           continue
     inc i

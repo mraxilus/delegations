@@ -112,7 +112,9 @@ func checkTitle*(branch, title: string): seq[Finding] =
     )
   elif scope.isSome and parsed.get.scope != scope.get:
     result.add finding(
-      "", 0, "Pull request title scope must be `" & scope.get & "`; got `" & title.shortened & "`."
+      "",
+      0,
+      "Pull request title scope must be `" & scope.get & "`; got `" & title.shortened & "`.",
     )
   if title.runeLen > SUBJECT_MAX:
     result.add finding(
