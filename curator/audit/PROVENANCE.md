@@ -1632,6 +1632,8 @@ reads as one that holds a comment, and stays as written.
   Its finding stays for the hand.
 - A fence that closes outside the bracket, string or comment it opens in leaves the whole file
   as written. `koch fix` prints it with its line, and `checkFormatting` reports it alone.
+- `koch fix` prints a warning for each fence that it reads, with the lines that the fence keeps.
+  So no held line goes unseen. A warning changes no exit code.
 - Rejected: each fixer told of the fence, and each rewrite tested against it. Every fixer would
   carry the fence, and the masking holds it in one place.
 - Cost: a skipped fixer is skipped whole for that file, and not for its one rewrite.

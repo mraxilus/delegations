@@ -5,9 +5,12 @@
 ##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
-##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand; then
-##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
-##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error.
+##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand;
+##     `path:line: fence-held warning: <message>` for each fence, so no fenced line goes
+##     unseen; then count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location
+##     is path alone.
+##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
+##     changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
 ##   `outcomeOf` decides what run writes and prints from text alone, so suite drives it with
 ##     no file; `main` reads files, runs git, writes and prints.
@@ -20,7 +23,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils]
-import ./[chain, reports]
+import ./[chain, fences, reports]
 
 
 const
@@ -89,10 +92,12 @@ func outcomeOf*(
 ): Outcome =
   ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
   ##   file `locked` names, or of no dialect, is passed over.
-  var fixed, left: seq[Report]
+  var fixed, left, held: seq[Report]
   for (path, source) in files:
     let dialect = path.dialectOf
     if dialect.isNone or path in locked: continue
+    let fence = source.fenceOf
+    if fence.fault < 0: held.add heldOf(path, fence)
     let fix = formatted(path, source, dialect.get)
     left.add checkFormatting(path, fix.source, dialect.get)
     if fix.source == source: continue
@@ -101,6 +106,7 @@ func outcomeOf*(
   let outcome = if is_check: " to fix" else: " fixed"
   for report in fixed.sorted: result.lines.add report.located & outcome
   for report in left.sorted: result.lines.add report.located & " left: " & report.message
+  for report in held.sorted: result.lines.add report.located & " warning: " & report.message
   result.lines.add $fixed.len & outcome & "."
   result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
 
