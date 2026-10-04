@@ -175,74 +175,9 @@ static pass of `audit` does not run this check yet.
 
 **Each layout rule that has one right answer has a check and a fixer, from one reading.** The
 checks and fixers of separators, signatures, calls and trailing separators share the reading of
-`wrapping.nim`. Spaces read `spacing.nim`, blank lines `blanks.nim`, and docs and defaults
-`declarations.nim`. A construct that the scanner cannot read with certainty stays as written,
-and its check stays silent.
-
-**Each space inside an expression takes the count of the list of X.9.** A binary operator and
-`=` take one space on each side, and one that ends its line takes one before it. A range takes
-none, as below. A comma and a colon take none before them and one after. The inside of a bracket
-takes none. A prefix operator is glued to its operand.
-
-- The lexer reads only whether a space stands on each side of an operator, never how many. A
-  space before and none after reads as prefix, so `a -b` is the call `a(-b)`.
-- So the fixer rewrites the spaces of an operator only where they stand on both sides or on
-  neither. Asymmetric spacing stays, and its check is silent, because its fix is a choice of
-  meaning. So `a ⊖b` stays a command call.
-- A prefix operator stands after anything but an operand, which is where the parser reads a
-  prefix node.
-- The fix never splits or merges a token, by the ruling of the Architect. So a prefix operator
-  keeps exactly one space where it and its operand lex as other tokens when glued. `|∙ ⊖m` glued
-  is the one operator `|∙⊖`, `- -x` is `--x`, and `- 1` is the literal `-1`. The check accepts
-  that one space, which the tokeniser demands (X.9).
-- Verified by `suites/test_spacing.nim`: each token of each fixture reads the same before and
-  after the fix. In `suites/test_chain.nim`, the operator tokens of the stacked form read the same
-  after the whole chain.
-- Verified by hand on the PGA library of `replications` at `d9be8ae`, 2026-10-04. The lines of
-  `tests/suites.nim` with `|∙ ⊖` keep their space. With the commit pin of the `ronri` projects,
-  `nim check` passes on 64 of 64 targets, on the library as given and as knoller writes it. The
-  eight test programs, `rga2d` to `rga5d` and `cga3d` to `cga6d`, print the same output on both.
-  `testament all` passes 8 of 8 on both.
-- A gap stays where closing it would merge two tokens: `(` before `.`, `[` before `:`, `.` before
-  `)`, and a colon after an operator.
-- `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
-  reads as that operator.
-- A semicolon takes no space before it and one after, as a comma does.
-- Never read: `::`, `.` and the operators that start with it, the paths of `import` and
-  `export`, and the export marker.
-- An export marker is a `*` glued after a name that a declaration places. That name opens its
-  line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
-  expression declares nothing, so `PI*(a + b)` multiplies.
-- Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
-  start of such a line stays.
-- Cost: the spaces that align the columns of a table go, unless a fence holds them.
-
-**A range operator takes no space (X.9).** It covers `..`, `..<` and `..^`, as in `2..6` and
-`0..<n`. It keeps one space on each side where a piece beside it binds tighter. Glued, `i + 1..<n`
-would read as if the range starts at 1. It also keeps one where the glued tokens would lex as other
-tokens. Verified by `suites/test_spacing.nim`, with each example of the ruling.
-
-- A range that ends its line takes one space before it, as a binary operator there does.
-- A piece runs from the range, at its depth and on its line, through operands, prefix operators
-  and binary operators that bind tighter. A looser operator (`in`, `==`, `and`), a delimiter, the
-  bracket around it or a command head ends it (`isRangeApart`).
-- Precedence is that of the lexer (`getPrecedence` of `compiler/lexer.nim`, mirrored in
-  `precedence.nim`). `..` binds at 6, `&` at 7, `+` at 8, and `*` and most glyphs at 9.
-- A bracket group is one operand, so the spaces inside it do not count, as in `f(i + 1)..n`.
-- Spacing moves no parse tree, so the rewrite moves no reading. Verified by hand, 2026-10-04,
-  with the parser of the commit pin of the `ronri` projects. `i + 1 ..< n` and `i + 1..<n` read
-  alike, and so do `x in 2 .. 6` and `x in 2..6`. Only a merge, as of `1 .. ^1` into `1..^1`,
-  changes the tree.
-- The merge guard reads a binary operator with both neighbours glued (`isMerging`). So `s[1 .. ^1]`
-  and `0 .. -1` keep their spaces, and `i-1` reads as three tokens.
-- Glued `1..^1` lexes as the one operator `..^`, so the compound `s[1 ..^ 1]` becomes `s[1..^1]`,
-  and the fixer never splits it. A compound operator stays whole, because it can carry an
-  optimisation that its parts lack. The fixer keeps the operator that the source lexes as, so the
-  choice between `s[1 .. ^1]` and `s[1..^1]` stays with the hand.
-- Cost: a piece is read on the line of its range, so an operator of a piece on the line before
-  goes unread.
-- A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
-  `checkSpacing` and `fixSpacing` on that line.
+`wrapping.nim`. Spaces read `spacing.nim`, and `## Spaces` gives them. Blank lines read
+`blanks.nim`, and docs and defaults `declarations.nim`. A construct that the scanner cannot read
+with certainty stays as written, and its check stays silent.
 
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
@@ -359,6 +294,90 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 
 **A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
 which fixers widen, which wraps follow, and what the chain holds where none fits.
+
+## Spaces
+
+**Each space inside an expression takes the count of the list of X.9.** A binary operator and
+`=` take one space on each side, and one that ends its line takes one before it. A range takes
+none, as below. A comma and a colon take none before them and one after. The inside of a bracket
+takes none. A prefix operator is glued to its operand.
+
+- The lexer reads only whether a space stands on each side of an operator, never how many. A
+  space before and none after reads as prefix, so `a -b` is the call `a(-b)`.
+- So the fixer rewrites the spaces of an operator only where they stand on both sides or on
+  neither. Asymmetric spacing stays, and its check is silent, because its fix is a choice of
+  meaning. So `a ⊖b` stays a command call.
+- A prefix operator stands after anything but an operand, which is where the parser reads a
+  prefix node.
+- The fix never splits or merges a token, by the ruling of the Architect. So a prefix operator
+  keeps exactly one space where it and its operand lex as other tokens when glued. `|∙ ⊖m` glued
+  is the one operator `|∙⊖`, `- -x` is `--x`, and `- 1` is the literal `-1`. The check accepts
+  that one space, which the tokeniser demands (X.9).
+- Verified by `suites/test_spacing.nim`: each token of each fixture reads the same before and
+  after the fix. In `suites/test_chain.nim`, the operator tokens of the stacked form read the same
+  after the whole chain.
+- Verified by hand on the PGA library of `replications` at `d9be8ae`, 2026-10-04. The lines of
+  `tests/suites.nim` with `|∙ ⊖` keep their space. With the commit pin of the `ronri` projects,
+  `nim check` passes on 64 of 64 targets, on the library as given and as knoller writes it. The
+  eight test programs, `rga2d` to `rga5d` and `cga3d` to `cga6d`, print the same output on both.
+  `testament all` passes 8 of 8 on both.
+- A gap stays where closing it would merge two tokens: `(` before `.`, `[` before `:`, `.` before
+  `)`, and a colon after an operator.
+- `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
+  reads as that operator.
+- A semicolon takes no space before it and one after, as a comma does.
+- Never read: `::`, `.` and the operators that start with it, the paths of `import` and
+  `export`, and the export marker.
+- An export marker is a `*` glued after a name that a declaration places. That name opens its
+  line, follows a declaration keyword, or follows a comma after a marked name. A name inside an
+  expression declares nothing, so `PI*(a + b)` multiplies.
+- Cost: a name that opens a line of a wrapped expression reads as declared, so `a*(b)` at the
+  start of such a line stays.
+- Cost: the spaces that align the columns of a table go, unless a fence holds them.
+
+**A range operator takes no space (X.9).** It covers `..`, `..<` and `..^`, as in `2..6` and
+`0..<n`. It keeps one space on each side where a piece beside it binds tighter. Glued, `i + 1..<n`
+would read as if the range starts at 1. It also keeps one where the glued tokens would lex as other
+tokens. Verified by `suites/test_spacing.nim`, with each example of the ruling.
+
+- A range that ends its line takes one space before it, as a binary operator there does.
+- A piece runs from the range, at its depth and on its line, through operands, prefix operators
+  and binary operators that bind tighter. A looser operator (`in`, `==`, `and`), a delimiter, the
+  bracket around it or a command head ends it (`isRangeApart`).
+- Precedence is that of the lexer (`getPrecedence` of `compiler/lexer.nim`, mirrored in
+  `precedence.nim`). `..` binds at 6, `&` at 7, `+` at 8, and `*` and most glyphs at 9.
+- A bracket group is one operand, so the spaces inside it do not count, as in `f(i + 1)..n`.
+- Spacing moves no parse tree, so the rewrite moves no reading. Verified by hand, 2026-10-04,
+  with the parser of the commit pin of the `ronri` projects. `i + 1 ..< n` and `i + 1..<n` read
+  alike, and so do `x in 2 .. 6` and `x in 2..6`. Only a merge, as of `1 .. ^1` into `1..^1`,
+  changes the tree.
+- The merge guard reads a binary operator with both neighbours glued (`isMerging`). So `s[1 .. ^1]`
+  and `0 .. -1` keep their spaces, and `i-1` reads as three tokens.
+- Glued `1..^1` lexes as the one operator `..^`, so the compound `s[1 ..^ 1]` becomes `s[1..^1]`,
+  and the fixer never splits it. A compound operator stays whole, because it can carry an
+  optimisation that its parts lack. The fixer keeps the operator that the source lexes as, so the
+  choice between `s[1 .. ^1]` and `s[1..^1]` stays with the hand.
+- Cost: a piece is read on the line of its range, so an operator of a piece on the line before
+  goes unread.
+- A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
+  `checkSpacing` and `fixSpacing` on that line.
+
+**A symbol operator inside a bracket glued to its operand takes no space (X.9).** The bracket is
+`[` with no gap after an operand, at any depth inside it, so `prev[i - 1]` becomes `prev[i-1]`. A
+range there goes tight with its math, as in `digits[i+1..<n]`, since everything inside reads as
+one unit. A word operator keeps its spaces, which the tokeniser demands, and `=` and `:` keep the
+form of X.9. Glued tokens that would merge keep one space on each side, so `s[1 .. ^1]` stays.
+Verified by `suites/test_spacing.nim`, with each example of the ruling.
+
+- An index, a type bracket and a generic bracket read alike, since tokens cannot tell them apart.
+  So `array[N+1, int]` and `range[0..3]` take the form too.
+- An array literal that stands alone, such as `[a + b, c]` or `@[a + b]`, keeps its spaces.
+- A `[` after an export marker, as in `scalar*[I: Basis | Grade]`, follows no operand, so it keeps
+  its spaces.
+- An operator that ends its line inside such a bracket takes one space before it, as elsewhere.
+- Spacing moves no parse tree here too. Verified by hand, 2026-10-04, with the parser of the
+  commit pin of the `ronri` projects: `prev[i - 1]`, `digits[i + 1 ..< n]` and `a[f(x, y + 1)]`
+  read as their tight forms do.
 
 ## Content fixes
 
