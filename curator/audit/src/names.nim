@@ -80,7 +80,8 @@
 
 import std/[algorithm, sequtils, strutils]
 from std/unicode import isLower, isUpper, Rune, runes
-import ./[findings, glossary, tokens]
+import ../../knoller/src/knoller
+import ./[findings, glossary]
 
 
 type

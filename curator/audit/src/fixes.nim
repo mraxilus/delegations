@@ -75,9 +75,10 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils, tables]
+import ../../knoller/src/knoller
 import ./[alignment, blanks, checker, conversions, declarations, findings, form, glossary]
 import ./[idioms, kinds, layout, messages, names, precedence, prose, rewrites, scope, spacing]
-import ./[symbols, tokens, wrapping]
+import ./[symbols, wrapping]
 
 
 const

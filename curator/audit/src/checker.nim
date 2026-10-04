@@ -37,7 +37,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, tables]
-import ./[findings, markdown, tokens, toolchain]
+import ../../knoller/src/knoller
+import ./[findings, markdown, toolchain]
 
 
 const

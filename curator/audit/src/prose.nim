@@ -19,7 +19,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, strutils]
-import ./[comments, findings, kinds, tokens]
+import ../../knoller/src/knoller
+import ./[comments, findings, kinds]
 
 
 const

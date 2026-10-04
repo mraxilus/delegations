@@ -31,7 +31,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, sets, strutils, tables]
-import ./[findings, form, rewrites, spacing, symbols, tokens]
+import ../../knoller/src/knoller
+import ./[findings, form, rewrites, spacing, symbols]
 
 
 type
