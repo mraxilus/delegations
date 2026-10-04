@@ -121,6 +121,20 @@ suite "Spacing":
       check kept.isSettled
 
 
+  test "generic list that routine or type declares keeps its spaces, since it selects nothing":
+    for kept in [
+      "func scalar*[I: Basis | Grade | GradeAnti](t: typedesc[I]): I = I.low\n",  # STYLE.md §1
+      "func pick[I: Basis | Grade](t: typedesc[I]): I = I.low\n",  # private: no export marker
+      "proc `+`*[T: A | B](a, b: T): T = a\n",
+      "type Foo[T: A | B] = object\n",
+      "type\n  Bar[T: A | B] = object\n    x: T\n",  # entry of `type` section
+    ]:
+      check kept.isSettled
+    check "proc f() =\n  x[i - 1] = 5\n".fixed == "proc f() =\n  x[i-1] = 5\n"  # selector still
+    check "func p[T](a: seq[T]): T = a[a.len - 1]\n".fixed ==
+      "func p[T](a: seq[T]): T = a[a.len-1]\n"
+
+
   test "asymmetric spacing stays, since lexer reads it: `a -b` is call of prefix operand":
     for kept in ["echo -b\n", "a- b\n", "echo $x & y\n", "f(x)  -y\n", "a ⊖b\n"]:
       check checkSpacing("a.nim", kept).len == 0  # neither reported
