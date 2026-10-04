@@ -565,9 +565,10 @@ dense form.
 
 **A build claim compiles the library alone**, from an entry that holds `import pga` and nothing
 else. At rga6d the library with P01 peaks at 170.8 MiB against 235.0 MiB at the pin, ×0.73
-(`evaluations/cayley-derivation.json`, 2026-10-03, `linux amd64, 4 cores`). So the claim of P01,
-×0.70 at most, fails at the pin, where P01 saves 64.2 MiB. The pin builds most anti tables with
-`constructAnti`, as P01 does. Which part of the cost the two share is not isolated.
+(`evaluations/cayley-derivation.json`, 2026-10-04, `linux amd64, 4 cores`). The claim of P01
+holds ×0.75 at most, as the Architect ruled on 2026-10-04, so P01 saves 64.2 MiB within its
+claim. The pin builds most anti tables with `constructAnti`, as P01 does, which is why the
+claim is not ×0.70. Which part of the cost the two share is not isolated.
 
 Rejected: the bench entry, which puts the harness in the measured build. With the library
 fixed at `bd6b23c`, one change to `inspector.nim` alone moved the P01 side from 211.7 MiB to
@@ -643,7 +644,9 @@ page is built from it.
 **Marks render as the faces allow.** The left complement is written 𝐜̱, with U+0331. Noto Sans
 Math holds each bold maths letter and both macrons, so it draws 𝐜̱, 𝐜̄ and 𝐞̄
 whole. It puts each mark beside the letter, and not under or over it, as the same render
-showed. In code, ★ comes from the math face as ☆ does, because the mono face draws ★ smaller.
+showed. The Architect ruled on 2026-10-04 to keep the marks as Noto Sans Math places them,
+rather than draw them by markup. In code, ★ comes from the math face as ☆ does, because the mono
+face draws ★ smaller.
 
 **Every edit renders closed**, as the Architect asked. Its summary names the file and line at
 pin, and how many lines the edit replaces. It lists the signatures of the routines, tests and
@@ -866,10 +869,6 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
   times `m + n` at ×0.78 to ×0.84, at no cost in size. A kind that the alignment pads runs ×1.18 to
   ×4.90 slower, so the rule aligns a kind of an even count of floats alone. The figures are in
   `proposals/05-multivector-align/proposal.md`.
-- Whether a marked bold letter, as 𝐜̱, renders by markup, with its mark drawn by CSS. Noto
-  Sans Math draws the mark beside the letter. Faces of the system drew it in place while the
-  pages shipped subsets, and Article X.8 rules those faces out. The pull request that ships the
-  whole faces holds both renders.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
