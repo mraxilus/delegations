@@ -21,7 +21,9 @@
 ##   `otype = '*..'` is SIMBAD's star hierarchy, so brown and white dwarfs are included
 ##   with main-sequence stars: census of neighbourhood, not cut of it.
 ##     Filter is named so it can be re-run.
-## `11252` stars, ordered outward from Sol, of `11252` query returned.
+## `11252` stars, ordered outward from Sol, of `11432` query returned.
+##   Other `180` are composite entries, doubles and multiples whose components stand here.
+##   Cut is tool's, not query's, so query alone returns them too.
 ## This is one layer that says where anything is.
 ##   `neighbourhood.nim` carries its own coordinates and distances; where two disagree
 ##   this one is right.
