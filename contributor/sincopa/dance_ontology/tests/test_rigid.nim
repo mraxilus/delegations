@@ -92,10 +92,10 @@ proc standOf(question: StillAsked): tuple[is_holding: bool, couple: Couple, link
   ## Couple stood live for still, at distance and way about kept answer gives, and hold
   ## stood.
   ##   Simulation answers mirror twin as other twin reflected (`walk.twinOf`), so twin's
-  ##     answer is stood as other twin, which reads same holds, strain and heights.  Twin
+  ##     answer is stood as other twin, which shows same holds, strain and heights.  Twin
   ##     stood raw there may not hold: right to left at half, either way, stood 0.36 apart
-  ##     wound minus half, gave strain 1.01, where left to right wound plus half is at
-  ##     ease, measured 2026-10-04.
+  ##     wound minus half, does not hold and strains 1.01, where left to right wound plus
+  ##     half is at ease, measured 2026-10-04.
   let
     where = answered().stillOf(question.key)
     twin = twinOf(question.links, question.turns, question.is_away)
@@ -418,9 +418,9 @@ suite "Internal: Two dancers in rigid body engine":
     ## Simulation answers hold whose lead's right comes first as its mirror twin reflected
     ## (`walk.twinOf`): way that turns positive is twin's that turns negative, and
     ## distance, turn reached and what stopped it are twin's own, to last bit.
-    ##   Pair is one engine does not mirror exactly: shake walked raw reaches 1.36 turns
-    ##     one way, where left to right reaches 1.34 other way.  So law fails where twin
-    ##     is answered raw, as it was before twins.
+    ##   Pair is one engine does not mirror exactly: in `design/turns.json` of `9bbf656`,
+    ##     shake walked raw reaches 1.36 turns one way, where left to right reaches 1.34
+    ##     other way.  So law fails where twin is answered raw, as it was before twins.
     var pairs = 0
     let given = answered()
     for question in SWEEPS:
