@@ -1,7 +1,9 @@
 ## Enforce spaces inside Nim expressions (Article X.9), and fix them (`koch fix`).
 ##   Spaces are list X.9 gives; every gap list names takes its count:
 ##   - binary operator and `=` take one space on each side; one ending its line takes one before;
-##   - range operator (`..`, `..<`, `..^`) is binary operator, spaced alike;
+##   - range operator (`..`, `..<`, `..^`) takes none, but one on each side where piece beside it
+##     holds binary operator binding tighter (`i + 1 ..< n`), or where glued tokens would merge
+##     (`1 .. ^1`, `0 .. -1`);
 ##   - prefix operator is glued to its operand, unless tokeniser demands one space (X.9);
 ##   - comma and semicolon take none before them and one after; colon of type, field or branch
 ##     likewise;
@@ -17,10 +19,16 @@
 ##     Rule therefore rewrites only spacing whose reading cannot move: spaces on both sides or
 ##     on neither (`a+b`, `a  + b`), and operator ending its line, which lexer marks end and
 ##     never prefix. `a -b`, `a- b` and `a ⊖b` stay, and check reports none of them.
-##   Range spaces as binary operator, so every binary operator reads alike (Architect, X.9).
-##     Glued `1..^1` lexes one operator `..^`, so fix writes `1 ..^ 1`, which `system` defines
-##     as `1 .. ^1`; there `^` is prefix, glued to operand. Range in prefix place (`a[.. 2]`)
-##     stays unread.
+##   Range glued, as Architect ruled for X.9: `2..6`, `0..<n`. Piece beside range runs, at its
+##     depth on its line, through operands, prefix operators and binary operators binding
+##     tighter than range (`precedence.nim`: `..` binds at 6, `+` at 8, glyph at 8 or 9); looser
+##     operator, delimiter, bracket around it or command head ends it (`isRangeApart`). Piece
+##     holding tighter operator keeps spaces, since `i + 1..<n` reads as if range starts at 1;
+##     bracket group is operand, so spaces inside it count not. Spacing moves no parse tree, as
+##     compiler confirms, so rewrite moves no reading.
+##   Merge guard (`isMerging`): range keeps one space each side where operator glued to both
+##     neighbours lexes as other tokens, so `1 .. ^1` and `0 .. -1` stay; compound `1 ..^ 1`
+##     glues to `1..^1`, one operator still. Range in prefix place (`a[.. 2]`) stays unread.
 ##   Prefix place: operator after anything but operand, which is where parser reads prefix
 ##     node; spaces after it go, unless operator and operand glued lex as other tokens
 ##     (`isMerging`). There exactly one space stays, so fix never splits or merges token
@@ -41,8 +49,9 @@
 ##   Cost: name opening continuation line reads as declared, so `a*(b)` opening line stays.
 ##   Cost: asymmetric spacing stays, and reading holds it; its fix is choice of meaning.
 ##   Cost: spaces aligning columns of hand-shaped table go; fence keeps them (`fixes.nim`, X.1).
-##   Cost: fix spaces token lexer read, never splits it, so `1..^1` becomes `1 ..^ 1`, not
-##     `1 .. ^1` X.9 shows; split is hand's choice.
+##   Cost: fix spaces token lexer read, never splits nor merges it, so `1 .. ^1` and `1..^1`
+##     both stay; which one is hand's choice.
+##   Cost: piece is read on range's line alone, so operator of piece on line before is unread.
 ##   Fixer is widener (`reports.nim`): off held line it writes spacing that widens line past
 ##     `LINE_MAX`, and chain wraps line after; on held line, as in its two-argument form,
 ##     spacing that would widen narrow line stays, finding and all.
@@ -50,13 +59,15 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sets, strutils, unicode]
-import ./[form, reports, tokens, views]
+import ./[form, precedence, reports, tokens, views]
 
 
 type
   Placement {.pure.} = enum  ## Define which rule of X.9 gap falls under, which decides its spaces.
     Binary  ## Around binary operator: one space each side.
-    Range  ## Around range operator: one space each side, as binary.
+    Ending  ## Before binary operator ending its line, range among them: one.
+    Range  ## Around range operator: none.
+    RangeApart  ## Around range whose piece binds tighter, or whose glued tokens merge: one.
     Prefix  ## After prefix operator: none.
     Apart  ## After prefix operator whose operand glued would merge with it: one.
     Equals  ## Around `=`: one space each side.
@@ -135,15 +146,16 @@ func isExportMarker(tokens: openArray[Token], k: int, lasts: openArray[int], sou
   before == "," and k >= 3 and tokens.isExportMarker(k - 3, lasts, source)
 
 
-func isMerging(source: string; a, b: Token): bool =
-  ## Decide whether two tokens glued lex as other tokens: one operator, as `|∙` and `⊖` lex
-  ##   `|∙⊖`, or one literal, as `-` and `1` lex `-1`.
-  let
-    pair = @[a.spelling(source), b.spelling(source)]
-    glued = pair.join
+func isMerging(source: string, run: openArray[Token]): bool =
+  ## Decide whether tokens of run glued lex as other tokens: one operator, as `|∙` and `⊖` lex
+  ##   `|∙⊖`, or one literal, as `-` and `1` lex `-1`. Binary operator is read with both its
+  ##   neighbours, so `i-1` stays three tokens.
+  var spellings: seq[string]
+  for t in run: spellings.add t.spelling(source)
+  let glued = spellings.join
   var lexed: seq[string]
   for t in glued.tokens: lexed.add t.spelling(glued)
-  lexed != pair
+  lexed != spellings
 
 
 func excerpt(source: string; before, after: Token): string =
@@ -189,6 +201,51 @@ func gapRespacing(tokens: openArray[Token], k: int, source: string): Respacing =
   result.line = b.line
   result.edits = @[Edit(first: a.after, after: b.first, spaces: wanted)]
   result.got = source.excerpt(a, b)
+
+
+func isRangeApart(
+  tokens: openArray[Token]; partners: openArray[int]; k: int; source: string
+): bool =
+  ## Decide whether piece on either side of range at `k` holds binary operator binding tighter
+  ##   than range. Piece is read on range's line, at its depth: bracket group is operand, and
+  ##   looser operator, delimiter, bracket around it or command head ends it.
+  let line = tokens[k].line
+  var first = k - 1
+  while first >= 0 and tokens[first].line == line:
+    let p = partners[first]
+    if tokens[first].kind == TokenKind.Close and p >= 0 and tokens[p].line == line:
+      first = p - 1
+    elif tokens[first].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
+    else: dec first
+  var last = k + 1
+  while last < tokens.len and tokens[last].line == line:
+    let p = partners[last]
+    if tokens[last].kind == TokenKind.Open and p > last and tokens[p].line == line:
+      last = p + 1
+    elif tokens[last].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
+    else: inc last
+  let elements = elementsOf(tokens, partners, first + 1, last - 1, source)
+  var at = -1
+  for m, e in elements:
+    if e.first == k: at = m
+  if at < 0 or elements[at].kind != ElementKind.Binary: return false
+
+  # Walk out from range each way; first binary operator met inside piece decides.
+  for direction in [-1, 1]:
+    var m = at + direction
+    while m >= 0 and m < elements.len:
+      let
+        e = elements[m]
+        (outer, inner) = if direction < 0: (e, elements[m+1]) else: (elements[m-1], e)
+        is_head = outer.kind == ElementKind.Operand and
+          inner.kind in {ElementKind.Operand, ElementKind.Prefix} and
+          tokens[outer.last].after < tokens[inner.first].first
+      if is_head or e.kind == ElementKind.Delimiter: break
+      if e.kind == ElementKind.Binary:
+        if e.precedence > elements[at].precedence: return true
+        break
+      m += direction
+  false
 
 
 func respacings(source: string): seq[Respacing] =
@@ -242,7 +299,7 @@ func respacings(source: string): seq[Respacing] =
       if is_keyword_operator or is_line_end or text in RANGE_OPERATORS: continue
       let next = tokens[k + 1]
       if next.first == t.after or next.isKeyword(source): continue
-      let wanted = if source.isMerging(t, next): 1 else: 0
+      let wanted = if source.isMerging([t, next]): 1 else: 0
       if next.first - t.after == wanted: continue
       spacing.placement = if wanted == 0: Placement.Prefix else: Placement.Apart
       spacing.edits = @[Edit(first: t.after, after: next.first, spaces: wanted)]
@@ -259,10 +316,12 @@ func respacings(source: string): seq[Respacing] =
                                TokenKind.Character, TokenKind.Quoted}
       if not is_operand_next: continue
 
-    # Space binary operator, range among them, one each side; one ending its line, one before.
-    spacing.placement = if text in RANGE_OPERATORS: Placement.Range else: Placement.Binary
+    # Space binary operator one each side, and glue range unless it stands apart; one ending its
+    #   line takes one before.
+    let is_range = text in RANGE_OPERATORS
     if is_line_end:
       if left == 1: continue
+      spacing.placement = if is_range: Placement.Ending else: Placement.Binary
       spacing.edits = @[Edit(first: before.after, after: t.first, spaces: 1)]
       spacing.got = source.excerpt(before, t)
       result.add spacing
@@ -270,8 +329,15 @@ func respacings(source: string): seq[Respacing] =
     let
       next = tokens[k + 1]
       right = next.first - t.after
-    if (left == 0) != (right == 0) or (left == 1 and right == 1): continue
-    spacing.edits = source.around(tokens, k, 1)
+    if (left == 0) != (right == 0): continue
+    var wanted = 1
+    spacing.placement = Placement.Binary
+    if is_range:
+      if source.isMerging([before, t, next]) or tokens.isRangeApart(partners, k, source):
+        spacing.placement = Placement.RangeApart
+      else: (wanted, spacing.placement) = (0, Placement.Range)
+    if left == wanted and right == wanted: continue
+    spacing.edits = source.around(tokens, k, wanted)
     spacing.got = source.excerpt(before, next)
     result.add spacing
 
@@ -283,7 +349,11 @@ func checkSpacing*(path, source: string): seq[Report] =
     let message =
       case spacing.placement
       of Placement.Binary: "Binary operator takes one space on each side (X.9)"
-      of Placement.Range: "Range operator takes one space on each side (X.9)"
+      of Placement.Ending: "Operator ending its line takes one space before it (X.9)"
+      of Placement.Range: "Range operator takes no space (X.9)"
+      of Placement.RangeApart:
+        "Range operator takes one space on each side where piece beside it binds tighter, or " &
+          "where glued tokens would merge (X.9)"
       of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
       of Placement.Apart:
         "Prefix operator takes one space before operand it would merge with (X.9)"
