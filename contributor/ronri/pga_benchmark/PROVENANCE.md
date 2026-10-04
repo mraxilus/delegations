@@ -645,8 +645,8 @@ each time they build, so the record states no figure of it.
 Alternation does not cancel all drift of a shared machine, so the time of one evaluation is
 weak evidence alone. Counts are exact, and carry the verdicts.
 
-`proposals/02-typed-multivectors/prototype.nim` holds its laws against the change of
-`cayley-derivation` at rga3d, rga4d and cga5d.
+`proposals/04-exact-kinds/prototype.nim` holds its laws against the change of
+`cayley-derivation` at rga3d, rga4d, cga4d and cga5d.
 
 Verified by `test_rga4d.nim` and the other stubs, suites `Internal: Markdown`, `Internal: Changes`,
 `Internal: Proposals`, `Internal: Evaluations` and `Internal: Cells`. They cover parse, quote and
@@ -1017,7 +1017,7 @@ at rga2d. Nine in ten unchanged functions in those runs moved ×0.99 to ×1.02.
 - Whether the library takes P05, `multivector-align`. It adds `alignmentOf`, the largest power
   of two that divides the bytes of a count of bases, at most 64. So it pads no count. Each
   multivector takes it of its basis set, `min(64, size)`, one cache line from three dimensions
-  up. The kinds of P02 and P04 take it of their basis set when they land, as the Architect ruled
+  up. The kinds of P04 take it of their basis set when they land, as the Architect ruled
   on 2026-10-04.
 
   On two machines and three instruction sets, a caller that holds multivectors in a `seq` times
