@@ -2172,12 +2172,16 @@ carries the label of the role that it starts, and no item is the work of the coo
 Verified by `suites/test_hooks.nim`.
 
 **The sign-off follows the order that the Architect set, and `stop` holds that order.** The
-Architect reads the block first: who the delegate is and where it stands, then what happened,
-then what waits on them (`GUIDE.md`, The sign-off). Each decision reads as a decision card, and
-its class says what blocks. Each ⚠️ row names the role that it waits on. The coordinator, once
-the Architect trials it, lifts each decision onto a card without a change of words.
-The block carries seven labels in order: `Role`, `State`, the table, `Context`, `Summary`,
-`Decisions` and `Next step`.
+Architect reads the block first: who the delegate is and what it works on, then what happened.
+Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
+a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
+The coordinator, once the Architect trials it, lifts each decision onto a card without a change
+of words.
+
+The block carries seven labels in order: `Role`, `Context`, the table, `Summary`, `State`,
+`Decisions` and `Next step`. The Architect set this order on 2026-10-04. The table ends where
+`Summary` starts. Verified by `suites/test_hooks.nim`, which refuses a table before the context
+and a state before the summary.
 
 - The state opens with `done`, `working`, `waiting` or `blocked`. The check reads that word
   alone, up to the first comma or space. Where the branch stands follows it, and only the
