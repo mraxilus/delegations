@@ -77,7 +77,7 @@ nim r tools/build.nim gaps          # regenerate gaps.md and the docket from bas
 nim r tools/build.nim evaluate all  # try every change and proposal at pin, into evaluations/
 nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as well
 nim r tools/build.nim pages         # build every page into build/<name>.html
-nim r tools/build.nim sweep         # dense timings at two to six dimensions, never in CI
+nim r tools/build.nim sweep         # timings at two to six dimensions, into baseline/sweep.json
 ```
 
 `drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to the path of a Chromium
