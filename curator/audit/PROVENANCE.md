@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 99ffaa86e52ad01c |
+| Rules   | 72e3cfc6a377411a |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -2324,8 +2324,8 @@ that holds it. The events, each one a verb argument:
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
-  nor the working line. It also refuses a sign-off out of shape, and the end of any turn whose
-  message names `#N` outside a link.
+  nor the working line. It also refuses a sign-off out of shape. At the end of any turn, it
+  refuses `#N` outside a link, and an article or a duty cited with no description.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
@@ -2497,6 +2497,17 @@ a turn that pushed or posted, because the rule binds every message. Each number 
   reference, a fragment, and a number named twice.
 - Verified by hand through the hook built from the branch, 2026-10-04. Of three closing messages
   of the curator, one named `#463` outside a link, and the hook refused that one alone.
+
+**`stop` names each article and duty of the closing message that has no description beside it.**
+A reference is `X.9`, after `Article` or not, or `duty 3`. It passes inside parentheses after a
+word with a letter, on one line, because each example of the rule (`GUIDE.md`, Output contract)
+has that form. So `(X.2, X.9)` after text passes whole, and a line or a bullet that opens with
+`(` fails. It skips code and links as the check of `#N` does, and reports each reference once.
+
+- A reference is a whole token, so `2.2.12`, `D2`, `§5`, `MIX.3` and `IX.2.1` cite none.
+- Cost: a message wrapped by hand that puts the parenthesis at the head of a line fails there.
+- Verified by `suites/test_hooks.nim`, where each passing form stands beside a bare reference.
+  Verified by hand through the hook built from the branch, 2026-10-04.
 
 ## Watching main
 
