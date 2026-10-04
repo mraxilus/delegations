@@ -137,7 +137,8 @@ proc main*(): int =
     if dirExists(path): paths.add path.listed
     elif fileExists(path): paths.add path
     else:
-      stderr.write "Path names no file or directory; got `" & path & "`.\n" & USAGE
+      stderr.write "Path names no file or directory; got `" & path & "`.\n"
+      stderr.write USAGE
       return 2
   paths = paths.deduplicate
   let outcome = outcomeOf(paths.mapIt((it, readFile(it))), paths.lockedOf, options.get.is_check)
