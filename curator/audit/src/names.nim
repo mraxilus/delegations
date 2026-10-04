@@ -157,10 +157,6 @@ const
     ## Keywords that, alone on line, open section and no scope.
   CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
   CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
-  IDENT_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
-    ## ASCII characters identifier is built from; raw string prefix is one of them.
-  NAME_CHARS = IDENT_CHARS + {'\x80' .. '\xFF'}
-    ## Bytes declared name is built from: Nim reads every non-ASCII byte as letter.
   FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
     ## Pragmas marking routine as binding of library's own name.
   CASE_RULES: array[Casing, string] = [
@@ -183,102 +179,6 @@ const
     ## Keywords opening statement module level holds alone, or bringing what routine may not
     ##   hold, as `include` brings exported declarations.
   ROUTINE_ENTRY = "main"  ## Routine entry block calls (V.10).
-
-
-func blanked(source: string, should_keep_comments: bool): string =
-  ## Blank string and char literals, and comments unless kept, keeping every newline and length.
-  ##   Nim forms: `#` to end of line, `#[ ]#` nesting, `"..."` with escapes, `"""..."""`,
-  ##     raw `r"..."` with `""` escape, and `'c'`.
-  result = newString(source.len)
-  var
-    i = 0
-    depth = 0
-
-  template blank(n: int) =
-    for k in 0 ..< n:
-      result[i] = (if source[i] == '\n': '\n' else: ' ')
-      inc i
-
-  template comment(n: int) =
-    if should_keep_comments:
-      for k in 0 ..< n:
-        result[i] = source[i]
-        inc i
-    else: blank(n)
-
-  while i < source.len:
-    let c = source[i]
-    if depth > 0:
-      if c == ']' and i + 1 < source.len and source[i + 1] == '#':
-        dec depth
-        comment(2)
-      elif c == '#' and i + 1 < source.len and source[i + 1] == '[':
-        inc depth
-        comment(2)
-      else: comment(1)
-      continue
-    if c == '#':
-      if i + 1 < source.len and source[i + 1] == '[':
-        inc depth
-        comment(2)
-      else:
-        while i < source.len and source[i] != '\n': comment(1)
-      continue
-    if c == '"':
-      let is_raw = i > 0 and source[i - 1] in IDENT_CHARS
-      if i + 2 < source.len and source[i + 1] == '"' and source[i + 2] == '"':
-        blank(3)
-        while i < source.len:
-          if source[i] == '"' and i + 2 < source.len and source[i + 1] == '"' and
-              source[i + 2] == '"':
-            blank(3)
-            break
-          blank(1)
-      else:
-        blank(1)
-        while i < source.len and source[i] != '\n':
-          if source[i] == '\\' and not is_raw and i + 1 < source.len: blank(2)
-          elif source[i] == '"':
-            if is_raw and i + 1 < source.len and source[i + 1] == '"': blank(2)
-            else:
-              blank(1)
-              break
-          else: blank(1)
-      continue
-    if c == '\'' and i + 2 < source.len and (source[i + 2] == '\'' or source[i + 1] == '\\'):
-      blank(1)
-      while i < source.len and source[i] != '\'' and source[i] != '\n':
-        if source[i] == '\\' and i + 1 < source.len: blank(2) else: blank(1)
-      if i < source.len and source[i] == '\'': blank(1)
-      continue
-    result[i] = c
-    inc i
-
-
-func codeOnly*(source: string): string =
-  ## Blank comments and string and char literals, keeping every newline and length.
-  source.blanked(should_keep_comments = false)
-
-
-func codeAndComments*(source: string): string =
-  ## Blank string and char literals alone, so every `#` left opens, holds or closes comment.
-  source.blanked(should_keep_comments = true)
-
-
-func indentOf*(line: string): int =
-  ## Count leading spaces.
-  for c in line:
-    if c != ' ': return
-    inc result
-
-
-func identifierAt(text: string, start: int): string =
-  ## Read identifier opening at index, after optional spaces; empty where none.
-  var i = start
-  while i < text.len and text[i] == ' ': inc i
-  var j = i
-  while j < text.len and text[j] in NAME_CHARS: inc j
-  text[i ..< j]
 
 
 func nameOf(piece: string): string =
@@ -912,11 +812,6 @@ func cased*(name: string, casing: Casing): string =
       let rest = if is_capitals: part[1 .. ^1].toLowerAscii else: part[1 .. ^1]
       if k == 0 and casing == Casing.Camel: result.add part.toLowerAscii
       else: result.add part[0].toUpperAscii & rest
-
-
-func identity(name: string): string =
-  ## Read name as Nim compares it: first character exact, rest without case and underscores.
-  if name.len == 0: "" else: name[0] & name[1 .. ^1].replace("_", "").toLowerAscii
 
 
 func wordsOf(line: string): seq[string] =

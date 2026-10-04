@@ -14,7 +14,7 @@
 ##     and child stand outside rule, since X.2 gives no count there.
 ##   Per Nim code line: trailing comment takes exactly two spaces before its marker (X.9).
 ##     Marker is first `#` after code, read on code-only view and on code-and-comments view
-##     (`names.nim`), so `#` inside string never trips it. Line holding no code, i.e. whole
+##     (`views.nim`), so `#` inside string never trips it. Line holding no code, i.e. whole
 ##     comment, doc comment, or text inside block comment or long string, holds no trailing
 ##     comment.
 ##   Static pass runs neither X.9 nor exact X.2 yet: `koch fix` lands first, so each project
@@ -52,7 +52,7 @@
 
 import std/[algorithm, sequtils, strutils, unicode]
 import ../../knoller/src/knoller
-import ./[findings, kinds, names]
+import ./[findings, kinds]
 
 
 const

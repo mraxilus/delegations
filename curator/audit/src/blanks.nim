@@ -10,7 +10,7 @@
 ##     One-line `template` is alias, and is left alone.
 ##   Run of blank lines goes above `#` comment on line right before, at same indent, so comment
 ##     stays with what it names; `##` doc and banner never move with it.
-##   Reads code view (`names.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
+##   Reads code view (`views.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
 ##     moves. Run lying inside string or block comment spanning lines is never read.
 ##   Checks and fixer share one reading (`runs`), so each rule is written once (Article II.1).
 ##
@@ -22,7 +22,6 @@
 
 import std/[algorithm, sequtils, strutils]
 import ../../knoller/src/knoller
-import ./[findings, names]
 
 
 type

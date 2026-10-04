@@ -1,7 +1,7 @@
 ## Enforce idioms of source that one line, or one header, shows (STYLE.md §2, §3, §5, §6; Article
 ##   VIII.5, X.5, X.10; CONTRIBUTOR.md, System and TypeScript); and fix each of these that has
 ##   one mechanical fix (`koch fix`).
-##   Nim rules read code-only view (`names.codeOnly`), so string and comment never trip them:
+##   Nim rules read code-only view (`views.codeOnly`), so string and comment never trip them:
 ##   - `{.experimental: "strictFuncs".}` stands in this exact form before first import, in
 ##     every module, suite included (§2).
 ##   - Bracket import is alphabetised, and standard library comes before packages, which

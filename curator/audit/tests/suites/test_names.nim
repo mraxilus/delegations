@@ -200,24 +200,6 @@ func reachIn(source, name: string): Reach =
 
 
 suite "Names":
-  test "comments and strings are blanked, newlines kept":
-    let code = ("let a = \"# not comment\" # comment\nlet b = r\"raw \"\" quote\" #[ block\n" &
-      "]# c").codeOnly
-    check code.splitLines.len == 3
-    check "comment" notin code and "quote" notin code and "block" notin code
-    check "let a =" in code and "let b =" in code and code.splitLines[2].strip == "c"
-
-
-  test "code-and-comments view blanks strings alone, keeping every length":
-    let
-      source = "let a = \"# not comment\" # comment\nlet b = '#' #[ block\n]# c"
-      kept = source.codeAndComments
-    check kept.len == source.len and kept.splitLines.len == 3
-    check "not" notin kept and "'#'" notin kept  # string and char blanked
-    check "# comment" in kept and "#[ block" in kept and kept.splitLines[2] == "]# c"
-    check kept.find('#') == source.find("# comment")  # first `#` left opens comment
-
-
   test "declarations of every kind are read":
     let found = SOURCE.names
     for name in ["Chiral", "T", "base", "dir_hint", "Space", "Base", "Anti", "LUT_GRADE_BY_BASIS",

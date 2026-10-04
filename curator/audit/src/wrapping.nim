@@ -40,7 +40,7 @@
 
 import std/[algorithm, options, sequtils, strutils, unicode]
 import ../../knoller/src/knoller
-import ./[findings, form, names]
+import ./form
 
 
 type
