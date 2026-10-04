@@ -16,8 +16,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, atomics, cpuinfo, json, jsonutils, options, os, sequtils, tables,
-            typedthreads]
+import std/[algorithm, json, jsonutils, options, os, sequtils, tables]
 
 import ./[answers, body, hold, read, rig, rigid, walk]
 
@@ -171,41 +170,6 @@ proc readRung*(ask: RungAsk): RungRead =
       )
     couple.free()
     if result.found_pose: return
-
-
-
-#[ Parallel Reading ]#
-
-# Mutable and global: thread takes one argument, so workers read asks and write readings
-# into slots allotted here before any thread starts.
-var
-  SWEEP_ASKS: seq[SweepAsk]  ## Set before any thread starts, then only read.
-  RUNG_ASKS: seq[RungAsk]
-  SWEEP_READS: seq[SweepRead]  ## Each worker writes its own into place allotted.
-  RUNG_READS: seq[RungRead]
-  ASK_NEXT: Atomic[int]
-
-proc working(id: int) {.thread.} =
-  ## Take asks until none is left.  Rungs first: rung no distance holds walks every one.
-  {.cast(gcsafe).}:
-    while true:
-      let i = ASK_NEXT.fetchAdd(1)
-      if i >= RUNG_ASKS.len + SWEEP_ASKS.len: return
-      if i < RUNG_ASKS.len: RUNG_READS[i] = readRung(RUNG_ASKS[i])
-      else: SWEEP_READS[i - RUNG_ASKS.len] = readSweep(SWEEP_ASKS[i - RUNG_ASKS.len])
-
-proc readAll*(sweeps: seq[SweepAsk], rungs: seq[RungAsk]): tuple[sweeps: seq[SweepRead],
-    rungs: seq[RungRead]] =
-  ## Read every ask, on every core at once, in order asked.
-  SWEEP_ASKS = sweeps
-  RUNG_ASKS = rungs
-  SWEEP_READS = newSeq[SweepRead](sweeps.len)
-  RUNG_READS = newSeq[RungRead](rungs.len)
-  ASK_NEXT.store(0)
-  var workers = newSeq[Thread[int]](max(1, countProcessors()))
-  for worker in 0..<workers.len: createThread(workers[worker], working, worker)
-  joinThreads(workers)
-  (SWEEP_READS, RUNG_READS)
 
 
 

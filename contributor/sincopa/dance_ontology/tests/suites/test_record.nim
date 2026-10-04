@@ -11,7 +11,8 @@ import ../../design/record
 
 
 const
-  STAMPS: array[Recording, string] = ["stamp-of-rig", "stamp-of-modelled"]
+  STAMPS: array[Recording, string] = ["stamp-of-rig", "stamp-of-modelled", "stamp-of-turns",
+                                      "stamp-of-answers", "stamp-of-verdicts"]
     ## Stamp of each recording, as recorder keys its results.
   JOBS_RIG = 6  ## Rig jobs of stub recording.
   JOBS_MODELLED = 4  ## Modelled jobs of stub recording.

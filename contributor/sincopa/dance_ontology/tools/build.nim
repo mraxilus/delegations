@@ -19,8 +19,9 @@
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
-##   | record   | rig and modelled in one queue, slowest job first, each result kept as |
-##   |          | it comes, so run stopped part way goes on where it stopped            |
+##   | record   | every recording below in one queue, slowest job first, each question  |
+##   |          | asked once, each result kept as it comes, so run stopped part way     |
+##   |          | goes on where it stopped                                              |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
@@ -252,7 +253,7 @@ proc turnsJs() =
 
 proc turns() =
   ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/turns.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "turns"])
 
 proc pages() =
   ## Write every page, picture and script under `build/`.
@@ -313,16 +314,18 @@ proc rig() =
 
 
 proc record() =
-  ## Rewrite `design/rig.json` and `design/modelled.json` from one queue (`design/record`).
-  ##   One pool for both, slowest job first: four workers end near same time, where two
-  ##     verbs one after other leave cores idle.  Each result is kept as it comes, so run
-  ##     stopped part way asks only what is left.
+  ## Rewrite every recording from one queue (`design/record`): answers, turns, report, rig
+  ## and modelled.
+  ##   One pool for all, slowest job first: four workers end near same time, where verbs one
+  ##     after other leave cores idle.  One run asks each question once, and every job that
+  ##     asks it again reads answer kept (`walk.keepAnswers`).  Each result is kept as it
+  ##     comes, so run stopped part way asks only what is left.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim"])
 
 
 proc verdicts() =
   ## Rewrite `simulation/verdicts.md` from model; instrument run, not build.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/verdicts.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "verdicts"])
 
 
 proc answers() =
@@ -332,7 +335,7 @@ proc answers() =
   ##     that read them from here would otherwise pay for them on every run.  Run
   ##     whenever any `simulation/*.nim` changes, since law refuses answers whose stamp is
   ##     not that of tree.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/answers.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "answers"])
 
 
 func helpers(): seq[string] =

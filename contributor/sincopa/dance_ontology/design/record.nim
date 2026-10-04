@@ -30,12 +30,13 @@ when compileOption("profiler"): import std/nimprof
 import std/[algorithm, atomics, cpuinfo, json, os, strformat, strutils, tables, times,
             typedthreads]
 
-import ./[modelled, rig]
+import ../simulation/[answers, readings, verdicts, walk]
+import ./[modelled, rig, turns]
 
 
 type
   Recording* {.pure.} = enum  ## Kept file one job belongs to.
-    Rig, Modelled
+    Rig, Modelled, Turns, Answers, Verdicts
 
   Task* = tuple[recording: Recording, index: int]
     ## One job, by its recording and its place in that recording's own list.
@@ -44,12 +45,11 @@ type
     ## Answer one job as text: what its result file keeps.
 
 
-const SLOWEST* = ["rig D1", "rig D7", "rig C1", "rig C7", "rig C2", "rig C6", "modelled pw_fa_5",
-                  "modelled pw_lo_5", "modelled pw_fa_0", "modelled pw_lo_0", "modelled pc_lo",
-                  "modelled pc_fa", "modelled D1", "modelled D7", "rig A11", "rig D3"]
-  ## Jobs slowest first, as one run measured them on 2026-10-03: rig D1 and D7 3.5 h each, C1
-  ## and C7 3.0 h, C2 and C6 0.9 h, every modelled job here 0.8 h, A11 and D3 0.2 h.  Every
-  ## other job took 0.14 h or less.  Each is planned card: carried walk reaches none of them.
+const SLOWEST* = ["rig D1", "rig D7", "rig C1", "rig C7", "rig C2", "rig C6"]
+  ## Jobs slowest first, as one run measured them on 2026-10-04, before answers were kept:
+  ##   rig D1 and D7 548 s each, C1 and C7 448 s, C2 and C6 244 s.  Each plans 32 paths on
+  ##   every core (`walk.planAhead`), which modelled's planned questions then find kept.
+  ##   Every other job follows in order of `wanted`, whose turns walk every distance first.
 
 # Mutable and global: thread takes one argument, so workers read queue and what answers it here.
 var
@@ -97,7 +97,7 @@ proc runQueue*(
 ) =
   ## Ask every job of `tasks` that has no result under `root`, in order given, on `workers`
   ## threads, and keep each result as it comes.
-  for recording in Recording: createDir(root / &"{recording}-{stamps[recording]}")
+  for task in tasks: createDir(root / &"{task.recording}-{stamps[task.recording]}")
   (QUEUE, ROOT, STAMPS, ASKED) = (tasks, root, stamps, ask)
   NEXT.store(0)
   var threads = newSeq[Thread[int]](workers)
@@ -106,27 +106,45 @@ proc runQueue*(
 
 
 
-#[ Both Recordings ]#
+#[ Every Recording ]#
+
+# Mutable and global: report's readings are listed once, by render, before any thread starts.
+var
+  READ_SWEEPS: seq[SweepAsk]  ## Sweeps report lacks, plain values each worker copies.
+  READ_RUNGS: seq[RungAsk]  ## Rungs report lacks; their jobs come first.
 
 proc nameOf(task: Task): string =
   ## Name of one job, as `SLOWEST` names it.
   case task.recording
   of Recording.Rig: "rig " & nameOf(jobs()[task.index])
   of Recording.Modelled: "modelled " & questions()[task.index].key
+  of Recording.Turns:
+    let sweep = sweeps()[task.index]
+    &"turns {sweep.hold} {sweep.word}"
+  of Recording.Answers: &"answers {tasks()[task.index]}"
+  of Recording.Verdicts:
+    if task.index < READ_RUNGS.len: &"verdicts rung {keyOf(READ_RUNGS[task.index])}"
+    else: &"verdicts sweep {keyOf(READ_SWEEPS[task.index - READ_RUNGS.len])}"
 
 proc askedOf(task: Task): string =
   ## Answer one job as its result file keeps it, and say so with its time.
   ##   Rig job keeps its line of what it found first, then its text.
-  let start = epochTime()
-  case task.recording
-  of Recording.Rig:
-    let (note, text) = recorded(jobs()[task.index])
-    result = note & "\n" & text
-    echo &"{nameOf(task)}: {note} ({epochTime() - start:.0f} s)"
-  of Recording.Modelled:
-    let is_modelled = answered(questions()[task.index])
-    result = $is_modelled
-    echo &"{nameOf(task)}: {is_modelled} ({epochTime() - start:.0f} s)"
+  ##   Report's readings are read from lists set before any thread starts, and only read.
+  {.cast(gcsafe).}:
+    let start = epochTime()
+    case task.recording
+    of Recording.Rig:
+      let (note, text) = recorded(jobs()[task.index])
+      result = note & "\n" & text
+      echo &"{nameOf(task)}: {note} ({epochTime() - start:.0f} s)"
+      return
+    of Recording.Modelled: result = $answered(questions()[task.index])
+    of Recording.Turns: result = sweepText(sweeps()[task.index])
+    of Recording.Answers: result = taskText(tasks()[task.index])
+    of Recording.Verdicts:
+      result = (if task.index < READ_RUNGS.len: rungText(READ_RUNGS[task.index])
+                else: sweepText(READ_SWEEPS[task.index - READ_RUNGS.len]))
+    echo &"{nameOf(task)}: {result.len} bytes ({epochTime() - start:.0f} s)"
 
 proc isKept(path, stamp: string): bool =
   ## Whether kept file already carries this stamp, so nothing need be asked again.
@@ -135,43 +153,70 @@ proc isKept(path, stamp: string): bool =
 
 
 when isMainModule:
+  let asked = commandLineParams()
+  var wanted: seq[Recording]
+  for word in asked:
+    var is_known = false
+    for recording in Recording:
+      if word == toLowerAscii($recording):
+        wanted.add recording
+        is_known = true
+    if not is_known:
+      quit("Usage: record [rig] [modelled] [turns] [answers] [verdicts]; got `" &
+           asked.join(" ") & "`.", 2)
+  if wanted.len == 0:
+    # Sweeps of whole-cloth page first: report and rig viewer sweep same holds, and find
+    # them kept.  Report's rungs next, which nothing else asks.  Rig's stills before
+    # modelled's, which ask same stills again.
+    wanted = @[Recording.Turns, Recording.Verdicts, Recording.Rig, Recording.Answers,
+               Recording.Modelled]
+  (READ_SWEEPS, READ_RUNGS) = verdicts.wanted()
   let
-    asked = commandLineParams()
-    wanted = (if asked.len == 0: @[Recording.Rig, Recording.Modelled]
-              elif asked == @["rig"]: @[Recording.Rig]
-              elif asked == @["modelled"]: @[Recording.Modelled]
-              else: quit("Usage: record [rig | modelled]; got `" & asked.join(" ") & "`.", 2))
-    stamps: array[Recording, string] = [rigStamp(), modelledStamp()]
-    counts: array[Recording, int] = [jobs().len, questions().len]
-    kept_paths: array[Recording, string] = [KEPT_RIG, KEPT_MODELLED]
+    stamps: array[Recording, string] = [rigStamp(), modelledStamp(), turnsStamp(),
+                                         answers.stamp(), physics()]
+    counts: array[Recording, int] = [jobs().len, questions().len, sweeps().len, tasks().len,
+                                     READ_RUNGS.len + READ_SWEEPS.len]
     root = "build" / "record"
+  # Turns keep no stamp, so are recorded every time; report renders every time, and reads
+  # only readings it lacks.
+  var is_due: array[Recording, bool]
+  is_due[Recording.Rig] = not isKept(KEPT_RIG, stamps[Recording.Rig])
+  is_due[Recording.Modelled] = not isKept(KEPT_MODELLED, stamps[Recording.Modelled])
+  is_due[Recording.Turns] = true
+  is_due[Recording.Answers] = not isKept(answers.KEPT, stamps[Recording.Answers])
+  is_due[Recording.Verdicts] = true
   var
-    tasks: seq[Task]
+    tasks_all: seq[Task]
     names: seq[string]
   for recording in wanted:
-    if isKept(kept_paths[recording], stamps[recording]):
-      echo &"{kept_paths[recording]} is up to date: {stamps[recording]}"
+    if not is_due[recording]:
+      echo &"{recording} is up to date: {stamps[recording]}"
       continue
     for i in 0..<counts[recording]:
-      tasks.add (recording, i)
+      tasks_all.add (recording, i)
       names.add nameOf((recording, i))
-  echo &"{tasks.len} jobs to ask"
-  runQueue(ordered(tasks, names, SLOWEST), root, stamps, max(1, countProcessors()), askedOf)
+  echo &"{tasks_all.len} jobs to ask"
+  keepAnswers()
+  runQueue(ordered(tasks_all, names, SLOWEST), root, stamps, max(1, countProcessors()), askedOf)
 
   # Assemble each kept file in its recording's own order, then drop its results.
   for recording in wanted:
-    if isKept(kept_paths[recording], stamps[recording]): continue
+    if not is_due[recording]: continue
+    var texts: seq[string]
+    for i in 0..<counts[recording]: texts.add readFile(pathOf(root, stamps, (recording, i)))
     case recording
     of Recording.Rig:
-      var texts: seq[string]
-      for i in 0..<counts[recording]:
-        let saved = readFile(pathOf(root, stamps, (recording, i)))
-        texts.add saved[saved.find('\n') + 1..^1]
-      writeFile(KEPT_RIG, assembled(stamps[recording], texts))
+      var bodies: seq[string]
+      for text in texts: bodies.add text[text.find('\n') + 1..^1]
+      writeFile(KEPT_RIG, assembled(stamps[recording], bodies))
     of Recording.Modelled:
       var told = initOrderedTable[string, bool]()
-      for i, question in questions():
-        told[question.key] = readFile(pathOf(root, stamps, (recording, i))) == "true"
+      for i, question in questions(): told[question.key] = texts[i] == "true"
       writeFile(KEPT_MODELLED, kept(stamps[recording], told))
+    of Recording.Turns: writeFile("design/turns.json", bridged(texts))
+    of Recording.Answers: writeFile(answers.KEPT, answers.assembled(texts))
+    of Recording.Verdicts:
+      writeFile("simulation/verdicts.md", verdicts.assembled(
+        READ_SWEEPS, texts[READ_RUNGS.len..^1], READ_RUNGS, texts[0..<READ_RUNGS.len]))
     removeDir(root / &"{recording}-{stamps[recording]}")
-    echo &"wrote {kept_paths[recording]}"
+    echo &"wrote {recording}"
