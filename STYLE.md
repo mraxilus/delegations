@@ -245,6 +245,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   `x.Grade`), and wherever no argument plainly dominates. Use backticks for an operator
   definition. Use a raw string (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the
   tokeniser demands one.
+- A dotted call that is a whole statement takes the command form where its one argument is a
+  call or a parenthesised expression. So write `result.add BasisSigned(basis: b)` and
+  `x.f (a, b)`, with no double bracket. Inside an expression the call form stays, since the
+  command form can read otherwise there.
 - A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
   Each one stands alone on its line, and is never indented.
 - `nim r koch fix` is the formatter. It applies each fix that a check names, and nothing else,
