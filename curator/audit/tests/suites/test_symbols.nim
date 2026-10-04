@@ -4,7 +4,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, tables, tempfiles, unittest]
+import std/[options, os, sequtils, strutils, tables, tempfiles, unittest]
 import ../../src/[symbols, toolchain]
 import ./fixtures
 
@@ -14,6 +14,8 @@ const
     ## One answer line of `def`, as `nimsuggest --v3` prints it.
   OUTPUT = "usage: sug|con|def\ntype 'quit' to quit\n\n" & ANSWER & "\n\n\n"
     ## Output of three commands: empty answer, one answer, empty answer.
+  SITES_PIPE = 3000
+    ## Sites asked of one entry: its commands and its answers each pass 64 KiB, pipe's capacity.
 
 
 
@@ -95,3 +97,22 @@ suite "Internal: Symbols":
     check d.reason.len == 0
     check d.symbols[(3, 7)].kind == "skLet" and d.symbols[(3, 7)].line == 2
     check d.symbols[(3, 7)] == d.symbols[(2, 6)]  # use and declaration name one symbol
+
+
+  test "entry asked past pipe capacity answers every site, and neither side waits on other":
+    let
+      root = createTempDir("delegations_", "_symbols")
+      nimble = "version = \"0.1.0\"\nsrcDir = \"src\"\nrequires \"nim == " &
+        runningCompiler().version & "\"\n"
+      tree = @[
+        entry("curator/fixture/fixture.nimble", nimble),
+        entry("curator/fixture/src/a.nim", "let x = 1\necho x\n"),
+      ]
+    defer: removeDir(root)
+    for e in tree: writeInto(root, e.path, e.content)
+    let
+      sites = newSeqWith(SITES_PIPE, (2, 5))
+      answers = resolve(root, tree, [Query(path: tree[1].path, sites: sites, names: @["x"])])
+    check answers.len == 1 and answers[0].reason.len == 0
+    check answers[0].symbols[(2, 5)].kind == "skLet"
+    check answers[0].globals["x"].len == 1  # block after every site, so each answer was read
