@@ -231,6 +231,18 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
       else: STEP_PLANAR
   ```
 
+  The four spaces keep the head of a block apart from its body. Where the line right above a body
+  would stand at the indent of the body, every continuation line of the head takes them. They
+  stand past the first line of the head. That holds inside a call too, whose layout of one level
+  would put the line on the body. A head that closes on its own `):` or `) =` already stands
+  apart:
+
+  ```nim
+  if check(a_long_name, first_condition or second_condition or
+      (second_condition and first_condition)):
+    echo a_long_name
+  ```
+
 - A parameter with a default states its type only where the default does not fix it
   (`as_exclusions = false`, `count: int = SAMPLES`). Only a literal fixes it, `default(T)` and
   `none(T)` among them. A field states its type always. An empty-collection default is
