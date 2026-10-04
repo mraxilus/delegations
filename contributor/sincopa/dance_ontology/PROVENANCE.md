@@ -102,8 +102,8 @@ From the simulation:
 
 `Band` has an entry of its own, as the height range where the simulation holds a level. Its members
 are `Torso`, `Neck` and `Crown`, and the pages and this record say low, high and above. Verified by
-a search of the text of every built page on 2026-10-04: torso and neck appear there only as parts
-of a body, or in the words of the sheet.
+a search of the text of every built page on 2026-10-04. There, torso and neck name only parts of a
+body, or quote the sheet.
 
 **The layout block of the review page names only files that exist.** The words of the page still
 say `validator`, where the agreed word is `Reference`. That change reaches the vocabulary of the
