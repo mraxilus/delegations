@@ -6,9 +6,9 @@
 ##   Fix writes only file that changes; `--check` writes none, and reports each change due.
 ##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
 ##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand;
-##     `path:line: fence-held warning: <message>` for each fence, so no fenced line goes
-##     unseen; then count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location
-##     is path alone.
+##     `path:line: fence-held warning: <message>` for each fence, naming each rule broken
+##     inside it with count and first line, so no fenced line goes unseen (`heldOf`); then
+##     count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location is path alone.
 ##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
 ##     changes no exit code, since fence is escape charter grants (Article X.1).
 ##   No style option: rules are constants, and fence is only escape (Article X.1).
@@ -23,7 +23,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils]
-import ./[chain, fences, reports]
+import ./[chain, reports]
 
 
 const
@@ -96,10 +96,9 @@ func outcomeOf*(
   for (path, source) in files:
     let dialect = path.dialectOf
     if dialect.isNone or path in locked: continue
-    let fence = source.fenceOf
-    if fence.fault < 0: held.add heldOf(path, fence)
+    held.add heldOf(path, source, dialect.get)
     let fix = formatted(path, source, dialect.get)
-    left.add checkFormatting(path, fix.source, dialect.get)
+    left.add fix.left & checkFormatting(path, fix.source, dialect.get)
     if fix.source == source: continue
     fixed.add fix.fixed
     if not is_check: result.written.add (path, fix.source)
@@ -143,7 +142,8 @@ proc main*(): int =
     if dirExists(path): paths.add path.listed
     elif fileExists(path): paths.add path
     else:
-      stderr.write "Path names no file or directory; got `" & path & "`.\n" & USAGE
+      stderr.write "Path names no file or directory; got `" & path & "`.\n"
+      stderr.write USAGE
       return 2
   paths = paths.deduplicate
   let outcome = outcomeOf(paths.mapIt((it, readFile(it))), paths.lockedOf, options.get.is_check)

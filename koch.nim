@@ -444,7 +444,8 @@ proc run(options: Options): int =
     #   selects, as every verb taking projects reads them. Dry run writes nothing, prints each
     #   change as `path:line: <rule> to fix`, and exits 1 where any would apply. File fix
     #   leaves as written, i.e. locked nimble file or fence it cannot read, prints with reason.
-    #   Each fence prints as warning, so lines no fixer reads stay in view; exit code ignores it.
+    #   Each fence prints as warning naming each rule broken inside it, so lines no fixer reads
+    #   stay in view; exit code ignores it.
     #   Semantic pass runs first, on files holding candidate text cannot settle (`symbols.nim`).
     if not options.isReadAll({Root, Branch, Base, All, Recent, DryRun}, has_project = true):
       return options.refused

@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[reports, wrapping]
+import ../../src/knoller/[reports, tokens, wrapping]
 
 
 const
@@ -56,6 +56,18 @@ func isSettled(source: string): bool =
   ## Decide whether source reports no wrapping finding and fixes to itself again.
   source.messages.len == 0 and fixWrapping("a.nim", source).source == source and
     fixWrapping("a.nim", source).fixed.len == 0
+
+
+func operatorsOf(source: string): seq[string] =
+  ## Read spelling of each operator token of source, in order.
+  for t in source.tokens:
+    if t.kind == TokenKind.Operator: result.add t.spelling(source)
+
+
+func isBrokenAlone(source: string): bool =
+  ## Decide whether fix breaks lines alone: operator tokens read same in same order, and fixed
+  ##   source settles.
+  source.fixed.operatorsOf == source.operatorsOf and source.fixed.isSettled
 
 
 
@@ -151,10 +163,104 @@ suite "Wrapping":
     let continued = "  result.add finding(\n    path, 0,\n    \"" & "x".repeat(90) & "\" &\n" &
       "      name,\n  )\n"
     check continued.fixed == "  result.add finding(\n    path,\n    0,\n    \"" & "x".repeat(90) &
-      "\" &\n      name,\n  )\n"
+        "\" &\n        name,\n  )\n"  # continuation four spaces in (STYLE.md §5)
     let rows = "check foo(bar, @[\n  1, 2,\n  3, 4,\n])\n"
     check rows.fixed == "check foo(\n  bar,\n  @[\n    1, 2,\n    3, 4,\n  ],\n)\n"
     check rows.fixed.isSettled
+
+
+  test "line no call split fits breaks after operator of lowest precedence, latest that fits":
+    let
+      sum = "offset_x * bounds.forward.x + offset_y * bounds.forward.y + " &
+          "offset_z * bounds.forward.z"
+      statement = "  let depth = " & sum & "\n"  # 101 runes
+    check statement.fixed == "  let depth = offset_x * bounds.forward.x + offset_y * " &
+        "bounds.forward.y +\n      offset_z * bounds.forward.z\n"  # `+` before `*`, second `+`
+    check checkCalls("a.nim", statement).mapIt(it.rule) == @[Rule.OperatorWrapping]
+    let mixed = "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and " &
+        "c".repeat(30) & "\n"
+    check mixed.fixed == "  check " & "a".repeat(40) & " + " & "b".repeat(20) & " and\n" &
+        "      " & "c".repeat(30) & "\n"  # `and` binds loosest, so breaks first
+    for source in [statement, mixed]: check source.isBrokenAlone
+
+
+  test "operator break holds inside split call, under `if`, and on continuation line":
+    let call = "  result.add finding(path, \"" & "x".repeat(60) & "\" & name & \"" &
+        "y".repeat(30) & "\")\n"
+    check call.fixed == "  result.add finding(\n    path,\n    \"" & "x".repeat(60) &
+        "\" & name &\n        \"" & "y".repeat(30) & "\",\n  )\n"  # argument breaks four in
+    let condition = "  if " & "a".repeat(45) & " and " & "b".repeat(45) & ":\n    discard\n"
+    check condition.fixed == "  if " & "a".repeat(45) & " and\n      " & "b".repeat(45) &
+        ":\n    discard\n"  # condition four in, body two
+    let continued = "  let x = first +\n      " & "a".repeat(45) & " + " & "b".repeat(47) & "\n"
+    check continued.fixed == "  let x = first +\n      " & "a".repeat(45) & " +\n      " &
+        "b".repeat(47) & "\n"  # continuation line keeps its indent
+    let ranged = "  let r = " & "a".repeat(44) & " ..^ " & "b".repeat(45) & "\n"
+    check ranged.fixed == "  let r = " & "a".repeat(44) & " ..^\n      " & "b".repeat(45) &
+        "\n"  # compound operator stays whole
+    for source in [call, condition, continued, ranged]: check source.isBrokenAlone
+
+
+  test "call split comes before operator break, and line it cannot break stays":
+    let split = "  let total = first_value + combine(alpha_argument, beta_argument, " &
+        "gamma_argument, delta_argument_name)\n"  # 103 runes
+    check split.fixed == "  let total = first_value + combine(\n    alpha_argument,\n" &
+        "    beta_argument,\n    gamma_argument,\n    delta_argument_name,\n  )\n"
+    for kept in [
+      "  let x = " & "a".repeat(45) & " + " & "b".repeat(45) & "  # Why.\n",  # comment
+      "  let x = " & "a".repeat(30) & " + " & "b".repeat(48) & " * " & "c".repeat(48) & "\n",
+      "foo(\n  " & "a".repeat(60) & " &\n      " & "b".repeat(60) & ",\n)\n",  # by hand
+      "  let x = " & "a".repeat(45) & " in " & "b".repeat(45) & "\n",  # membership
+      "  if a: " & "b".repeat(45) & " + " & "c".repeat(45) & "\n",  # `:` before code
+    ]:
+      check kept.fixed == kept
+      check checkCalls("a.nim", kept).len == 0
+
+
+  test "continuation takes four spaces more than line opening it; call keeps one level":
+    let hand = "let x = a +\n  b\ncheck c ==\n  d +\n  e\n"
+    check checkContinuations("a.nim", hand).mapIt(it.line) == @[2, 4, 5]
+    check checkContinuations("a.nim", hand)[0].message.endsWith("got `2`.")
+    check hand.fixed == "let x = a +\n    b\ncheck c ==\n    d +\n    e\n"
+    check hand.fixed.isSettled
+    # Last line of 100 runes two spaces in crosses `LINE_MAX` four spaces in.
+    let packed = "let x = a +\n  b +\n  " & "c".repeat(48) & " * " & "d".repeat(47) & "\n"
+    check packed.fixed == packed  # run stays whole where one line would widen
+    check checkContinuations("a.nim", packed).mapIt(it.line) == @[2, 3]  # findings stay
+    for kept in [
+      "if a and\n    b:\n  discard\n",  # condition four in already
+      EXAMPLE_CALL,  # arguments one level in
+      "let x = a +\n  # Why.\n  b\n",  # comment line between
+      "let x = a +\n  @[\n    1,\n  ]\n",  # last line leaves bracket open
+    ]:
+      check checkContinuations("a.nim", kept).len == 0
+      check kept.fixed == kept
+
+
+  test "chain opening after `=` takes four spaces past its statement line, every line alike":
+    let ranges = "const\n  RANGES_NOTO_SANS_MATH =\n    \"20-7e a0 a7 33a 33f \" &\n" &
+        "    \"346 34d 391-3a1 2016 \" &\n    \"2018-2019 201c-201d \"\n"
+    check checkContinuations("a.nim", ranges).mapIt(it.line) == @[3, 4, 5]
+    check ranges.fixed == "const\n  RANGES_NOTO_SANS_MATH =\n      \"20-7e a0 a7 33a 33f \" &\n" &
+        "      \"346 34d 391-3a1 2016 \" &\n      \"2018-2019 201c-201d \"\n"  # flat
+    check ranges.fixed.isSettled
+    let staircase = "let s =\n  \"a \" &\n      \"b \" &\n      \"c\"\n"
+    check staircase.fixed == "let s =\n    \"a \" &\n    \"b \" &\n    \"c\"\n"  # one indent
+    check "result.origin =\n  a +\n    b\n".fixed == "result.origin =\n    a +\n    b\n"
+    for kept in [
+      "let x =\n  a\n",  # value of one line keeps one level
+      "let x =\n  if c: a\n  else: b\n",  # `if` expression too
+      "let x =\n  @[\n    1, 2,\n    3, 4,\n  ]\n",  # hand-shaped list too
+      "let x =\n  foo(\n    \"" & "a".repeat(50) & "\",\n    \"" & "b".repeat(50) &
+          "\",\n  )\n",  # call split over lines too
+      "proc f() =\n  a\n",  # body of routine
+      "let f = proc () =\n  a\n",  # body of lambda
+      "type\n  T =\n    object\n",  # type
+      "let x =\n    a +\n    # Why.\n    b\n",  # comment line inside value
+    ]:
+      check checkContinuations("a.nim", kept).len == 0
+      check kept.fixed == kept
+    check checkContinuations("a.nim", "foo(\n  name =\n    1,\n)\n").len == 0  # call's own
 
 
   test "call holding comment, long string spanning lines, or block stays":
@@ -185,6 +291,14 @@ suite "Wrapping":
       "type T = array[\n  3,\n  int\n]\n",
     ]:
       check checkTrailing("a.nim", kept).len == 0  # grouping, flowed list, type bracket
+
+
+  test "trailing separator held on no line widens it, and keeps width guard on held line":
+    # Item line of 100 runes; separator makes 101.
+    let near = "let a = @[\n  1,\n  " & "x".repeat(48) & " + " & "y".repeat(47) & "\n]\n"
+    check fixTrailing("a.nim", near, Held()).source == near.replace("y\n]", "y,\n]")
+    check fixTrailing("a.nim", near, Held(lines: @[3])).source == near  # its line held
+    check near.fixed == near  # two-argument form holds every line
 
 
   test "clean source passes through unchanged":

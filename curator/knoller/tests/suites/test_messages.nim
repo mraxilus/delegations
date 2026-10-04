@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/messages
+import ../../src/knoller/[messages, reports]
 
 
 func fixed(source: string): string =
@@ -70,10 +70,36 @@ suite "Article IV":
       check kept.fixed == kept
 
 
-  test "IV.4 operand ending message, and backtick widening line, stay with finding":
+  test "IV.4 operand ending message takes shape that ends message on its value":
     let ending = "f(\"Bad; got \" & $count)\n"
-    check ending.fixed == ending
     check checkMessages("a.nim", ending).len == 1
+    check ending.fixed == "f(\"Bad; got `\" & $count & \"`.\")\n"
+    check ending.fixed.isSettled
+    check "raise e(\"Exit; got `\" & $code & \"` --\\n\" & written)\n".fixed ==
+        "raise e(\"Exit; got `\" & $code & \"` --\\n`\" & written & \"`.\")\n"  # span closed
+    check "found.add \"Caption; got \" &\n  line.strip\n".fixed ==
+        "found.add \"Caption; got `\" &\n  line.strip & \"`.\"\n"  # value on next line
+    check "f(\"Rows; got \" & found.join(\", \"))\n".fixed ==
+        "f(\"Rows; got `\" & found.join(\", \") & \"`.\")\n"  # call as value
+
+
+  test "IV.4 value binding looser than `&`, or no literal before it, takes no shape":
+    for kept in [
+      "f(\"Bad; got \" & a == b)\n",  # `==` would take appended literal
+      "f(\"Bad; got \" & a .. b)\n",  # range binds looser than `&` too
+      "f(\"Bad; got \" & a & b)\n",  # last value follows operand, not literal
+    ]:
+      check kept.fixed == kept
+      check checkMessages("a.nim", kept).len > 0  # finding stays for hand
+
+
+  test "IV.4 backtick widening line stays with finding":
     let near = "f(&\"" & "x".repeat(80) & "; got {value}.\")\n"  # 100 runes; backticks 102
     check near.fixed == near
     check checkMessages("a.nim", near).len == 1
+
+
+  test "IV.4 fix held on no line widens it, and keeps width guard on held line":
+    let near = "f(&\"" & "x".repeat(80) & "; got {value}.\")\n"  # 100 runes; backticks 102
+    check fixMessages("a.nim", near, Held()).source == near.replace("{value}", "`{value}`")
+    check fixMessages("a.nim", near, Held(lines: @[1])).source == near  # its line held

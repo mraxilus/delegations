@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-10-04 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a2dba8c2495cd005 |
+| Rules   | a72b7a39a1de2b08 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It holds the fixers of `koch fix`
@@ -62,6 +62,7 @@ and their checks.
 - `curator/audit` maps each kind of Nim onto a dialect. It applies the fixers that need more than
   one file, then gives the source to `formatted`.
 - The header of `chain.nim` gives the order of the fixers, and why each one comes where it does.
+- The chain can run all its rounds again, and `## Wraps` gives why.
 - Verified by `suites/test_chain.nim`: a source that breaks each layout rule settles in one run,
   and a second run writes nothing. A script keeps its imports as written.
 
@@ -72,16 +73,34 @@ comment at its own indent. A fixer whose rewrite would move a fenced line is ski
 A fence that crosses a bracket, a string or a comment leaves the whole file as written. Verified by
 `suites/test_fences.nim` and `suites/test_chain.nim`.
 
-**Each run warns of each fence, so whoever runs it sees each line that no fixer reads.** A fence
-is the one escape from the rules, and a line it keeps is easy to forget. One warning names the
-first line of each fence and the lines it keeps, markers included. Knoller prints it as
+**Each run warns of each fence, and names each rule that breaks inside it.** A fence is the one
+escape from the rules, and a line it keeps is easy to forget. One warning stands at the first line
+of each fence, and gives the lines it keeps, markers included. It names each rule that breaks
+inside the fence, in the order of `Rule`, with its count and its first line. Knoller prints it as
 `fence-held warning`, and `koch fix` prints it after `warning:`. A warning changes no exit code,
 because the charter grants the fence (Article X.1).
 
+**The warning runs the checks as a dry run, on the source as given.** No mask hides a fenced line,
+so each marker reads as a plain comment, and each line keeps its number. `heldOf` keeps each
+finding whose line falls inside a fence. So a fence counts what its lines report without the fence.
+A rule that a fixer clears and a rule left for the hand count alike, because a check names both. A
+module also takes the idiom checks that the static pass runs, such as `return-result`.
+
+- Rejected: one warning for each break inside a fence. The Architect chose one line for each
+  fence, so a large table in a fence costs one line.
+- Rejected: a dry run of the fixers. It counts only what a fixer clears, so it misses
+  `not-over-binary`, which no fixer reaches.
 - Rejected: a fence as a finding that fails the run. A generated file would then fail every run,
   though its fence is allowed.
-- Cost: a file with many fences prints one line for each of them.
-- Verified by `suites/test_fences.nim` and `suites/test_command.nim`.
+- Cost: a rule that knoller fixes and does not check goes uncounted. Those rules are
+  `trailing-whitespace`, `file-ending`, `tab-in-string`, `entry-block` and `article-in-comment`.
+  The static pass of `audit` holds a check of each of them, and reads no fence.
+- Cost: a file with a fence takes the checks twice, once masked and once as given. A file with no
+  fence takes them once. A delegate measured the cost on 2026-10-04, with a debug build and two
+  runs of each. `knoller --check` on `starfield.nim` of `rga_visualiser` took 11 s, against 4 s
+  before. That file has 22,560 lines, and its fence holds 11,252 calls.
+- Verified by `suites/test_fences.nim`, `suites/test_chain.nim` and `suites/test_command.nim`. In
+  `suites/test_chain.nim`, the lines of a fence report the same rules when no marker fences them.
 
 ## Command line
 
@@ -178,13 +197,11 @@ it. Verified by `suites/test_spacing.nim`.
   it. Verified by `suites/test_spacing.nim`. The Architect ruled on 2026-10-04 that a compound
   operator stays whole, because it can carry an optimisation that its parts lack. In 2.2.12 the
   template `..^` of `lib/system/indices.nim` is `a .. ^b`, verified by hand on 2026-10-04.
-- Cost: the fixer leaves `1 ..^ 1` where X.9 shows `1 .. ^1`. The split is a choice for the hand.
+- X.9 shows both forms: `s[1 .. ^1]`, a range and a prefix `^`, and `s[1 ..^ 1]`, the compound
+  operator. The fixer keeps the operator that the source lexes as, so the choice stays with the
+  hand.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
-- Cost: a glued range stays where its spaces would push a line with a trailing doc past
-  `LINE_MAX`. The doc fixer moves a doc only off a line that is already wide, so neither fixer
-  acts. Move the doc to its next line by hand, then fix. Verified by hand, 2026-10-04, through
-  `fixEntries`.
 
 **Parameters take commas while each type appears once, and semicolons where a group shares a
 type (STYLE.md §5).** The rule holds on one line and across several, the trailing separator
@@ -288,8 +305,8 @@ literal gives `string` or `char`. `default(T)` gives `T`, and `none(T)` gives `O
 - Cost: a literal with a suffix, such as `0'u8`, and a raw string keep their type, though it is
   exact.
 
-**No fixer writes a line wider than `LINE_MAX`.** A rewrite that would do so stays, with its
-finding, for the hand.
+**A rewrite that widens its line past `LINE_MAX` stays only where a wrap fits.** `## Wraps` gives
+which fixers widen, which wraps follow, and what the chain holds where none fits.
 
 ## Content fixes
 
@@ -313,8 +330,12 @@ concatenation from the literal that holds `; got ` to its end. Each interpolatio
 operand there must stand inside a backtick span, counted from `got`. A tail that ends on a word,
 such as `got none.`, echoes no value and is no finding.
 
-- The fixer puts a backtick on each side of a bare value, inside the literals around it. A value
-  that ends the message has no literal after it, and stays for the hand.
+- The fixer puts a backtick on each side of a bare value, inside the literals around it.
+- A value that ends the message has no literal after it, so the message takes a fixed shape. A
+  backtick goes at the end of the literal before the value, and `& "`."` goes after it. So the
+  message ends on its value, as IV.4 asks.
+- A value whose operator binds as loosely as `&`, or more loosely, keeps its finding, since the
+  appended literal would join that operator. So `"got " & a == b` stays.
 - The rule reads every value of the tail, so a context after the value takes backticks too, as
   `for {manner}` does.
 - A test that builds the old text in the same form changes with it. A test that asserts the
@@ -338,6 +359,120 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
 - The rewrite reads no symbol. A field named like the routine, such as `to_x`, would capture the
   method call. The tree holds no such field, and every changed file checks as before.
 - Verified by `suites/test_targets.nim`.
+
+## Wraps
+
+**A repair that widens its line past `LINE_MAX` stays, and the chain wraps the line.** The
+Architect asked for this on 2026-10-04, with three properties of `koch fix`. It is deterministic,
+a second run writes nothing, and no option sets a style. The tab, comment, message, condition,
+spacing, continuation and trailing separator fixers are wideners. Each one repairs freely off the
+held lines, and keeps the width guard on them.
+
+- The alignment and idiom fixers stay guarded, since a table column and an import bracket have no
+  wrap. The renames and conversions of `curator/audit` stay guarded too.
+- Each widener keeps a form of two arguments that holds every line, so its unit contract stays.
+
+**The wraps follow one fixed order, as the Architect ruled on 2026-10-04.** A line that a repair
+leaves wide takes the first of these that fits:
+
+1. the layout of its signature, or a split of the outermost call that crosses `LINE_MAX`;
+2. the line breaks that the hand gave, kept;
+3. a break after an operator;
+4. a doc moved to its own line, one level in;
+5. the shape of a message that ends on its value (`## Content fixes`);
+6. a plain `#` comment moved to its own line above, at the indent of its line.
+
+Where none fits, the line is held, and its finding stays for the hand.
+
+**The chain runs its rounds again, at most four times, and each time it holds the lines that the
+time before left wide.** The first time holds no line. A line that is still wide once the rounds
+settle, and that is narrow in the source as given, is held the next time. That time starts from
+the source as given again. The fourth time holds every line, which is how the chain ran before the
+wideners.
+
+- A held line never widens again. Each widener keeps its guard there, and no other fixer or wrap
+  writes a wide line. So the held lines grow each time, and an inserted line that is left wide
+  holds every line at once.
+- The held lines are a sorted `seq`, and each fixer is a function under `strictFuncs`. So the
+  output depends on the source alone.
+- A file that still changes after its last round stays as written. Its fix reports the rule
+  `unsettled` in `Fix.left`, so the chain never writes a file half settled. `curator/audit` keeps
+  its semantic edits for such a file, since a rename planned whole reaches other files too.
+- Rejected: a fixer that wraps its own line. `form.nim` and `wrapping.nim` would then import each
+  other, and a later fixer could undo the wrap.
+- Rejected: one pass of wraps at the end. It can leave a wide line, and nothing then holds the
+  repair back.
+- Cost: a line broken at an operator stays broken where it later fits, as a break of the hand does.
+- Verified by `suites/test_chain.nim`. Each case of the tree wraps to its exact output, and a
+  second run writes nothing. A line that no wrap fits keeps its finding, held the second time. A
+  file that never settles stays as written, with its finding.
+
+**The whole-tree proof of the wraps: no fix changes what code means.** Verified by hand,
+2026-10-04, with the scratch programs `prove.nim` and `trees.nim`. They ran `formatted` over every
+Nim file of the tree, in memory. They ran it on the code that this section describes, and on the
+code before the wideners.
+
+- Every file settles with the chain run at most twice, and no file falls back to every line held.
+- The run leaves no wide line. Two findings of spacing stay on one line of `test_mesh.nim` of
+  `rga_visualiser`, where an `if` expression puts `:` before code. Sixty-two lines stay where the
+  hand put them. Each run of them holds a line that its new indent takes past 100 runes, and
+  thirteen lines do so. Four of those thirteen lines are chains of `assets.nim` of `audit`.
+- The four messages that ended on their value take the shape. The usage error of `command.nim`
+  writes its usage apart, so its message ends on its value.
+- Rewrites, with the commit before in brackets:
+  - call splits 620 (610), spaces 2,402 (2,367), comment gaps 745 (743);
+  - doc positions 55 (54), messages 6 (3), signatures 117 (116);
+  - operator breaks 9, continuations 1,718 and comments moved above 1, all new.
+- The parser of the compiler, 2.2.12, reads each changed file to the tree it read before, once
+  the rewrites of `## Layout fixes` and `## Content fixes` are normalised. Against the commit
+  before, each file reads to the same tree once backticks and the shape of a message are
+  normalised.
+- `nim check` reads each changed file with the same result before and after, on its own pin, with
+  the checkouts of each lock. A file that fails both times lacks a native library or a vendored
+  source.
+- A second run writes nothing, and the files in reversed order give the same output.
+
+**The operator break adds no parentheses, by the ruling of the Architect on 2026-10-04.** Nim
+refuses a line that opens with a binary operator. After an operator, the parser reads the next
+line on (`optPar` in `compiler/parser.nim`). So a line breaks after the operator, and the parse
+tree stays.
+
+- The operator of lowest precedence breaks first, as the lexer reads precedence (`getPrecedence`
+  in `compiler/lexer.nim`). A glyph that the lexer files with `+`, such as `⊕`, binds at 8, and
+  every other glyph binds at 9. Each line takes the latest such operator that fits.
+- `in`, `notin`, `is`, `isnot`, `of` and `as` never take a break, and neither does an operator
+  glued on one side.
+- A line that holds a comment, a `;`, a block keyword after its head, or a `:` before code stays.
+  The `:` that types a binding passes, as in `let x: float = a + b`.
+- A call split that fits no line falls back on the operator break.
+- A compound operator stays whole, so `..^` breaks after itself.
+- Verified by `suites/test_wrapping.nim`.
+
+**Each line of an expression past its statement line takes four spaces more than that line (STYLE.md
+§5).** Every such line takes that one indent, by the ruling of the Architect on 2026-10-04. The
+statement line is the line where the expression opens. A call and a signature keep their layout of
+one level, and an argument on its own line is the line where its expression opens. The fixer sets
+that indent on the lines that the hand wrote too.
+
+- A chain that opens on the line after the `=` of a binding or an assignment counts from the line
+  of that `=`. So it takes the four spaces too, its first line included, as the Architect chose on
+  2026-10-04. Its lines take one indent, and never step in again.
+- Any other value on its own line after `=` keeps one level under its statement, by the ruling of
+  the Architect on 2026-10-04. That covers an `if` or `case` expression, a split call, a list that
+  the hand shaped, and a value of one line. The fixer leaves such a value as written.
+- The `=` of a routine, a lambda, a `type` entry or a named argument opens no such chain.
+- A run of lines stays as written where a token spans lines, or where a comment line stands
+  between two of them. It also stays where a bracket opened before it closes in its middle, or
+  where its last line leaves a bracket open.
+- Cost: a line that the hand packed to 100 runes crosses `LINE_MAX` at its new indent. No wrap
+  reflows a string across lines, so such a line is held. Its whole run then keeps the indent of the
+  hand, so the lines of one expression never part. Each line of it keeps its finding for the hand.
+- Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`.
+
+**A plain `#` trailing comment that does not fit moves to its own line above, by the ruling of the
+Architect on 2026-10-04.** It takes the indent of its line. The lexer drops a `#` comment, so the
+parse tree stays. A doc `##` and a block comment stay, and so does a comment that would not fit
+above. Verified by `suites/test_form.nim` and `suites/test_chain.nim`.
 
 ## Articles
 
