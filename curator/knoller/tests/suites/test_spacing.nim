@@ -90,6 +90,37 @@ suite "Spacing":
       check kept.fixed == kept
 
 
+  test "symbol operator inside bracket glued to operand takes no space, range and math alike":
+    for (breach, mended) in [
+      ("let a = prev[i - 1]\n", "let a = prev[i-1]\n"),
+      ("curr.add(prev[i] & prev[i - 1].map(f))\n", "curr.add(prev[i] & prev[i-1].map(f))\n"),
+      ("let a = cayley[dimension - 1]\n", "let a = cayley[dimension-1]\n"),
+      ("let a = MULTIVECTORS[Basis(i - 1)]\n", "let a = MULTIVECTORS[Basis(i-1)]\n"),  # call inside
+      ("let b = a[f(x, y + 1)]\n", "let b = a[f(x, y+1)]\n"),  # comma keeps its space
+      ("type T = array[N + 1, int]\n", "type T = array[N+1, int]\n"),  # type bracket alike
+      ("let a = s[1  ..^  1]\n", "let a = s[1..^1]\n"),
+    ]:
+      check checkSpacing("a.nim", breach).len == 1
+      check breach.fixed == mended
+      check mended.isSettled  # second run writes nothing
+    let ranged = "let a = digits[i + 1 ..< n]\n"
+    check checkSpacing("a.nim", ranged).len == 2  # `+` and range, math included
+    check ranged.fixed == "let a = digits[i+1..<n]\n"
+    check ranged.fixed.isSettled
+    check checkSpacing("a.nim", "let a = prev[i - 1]\n")[0].message.startsWith(
+      "Symbol operator inside bracket glued to operand takes no space",
+    )
+    for kept in [
+      "let a = [a + b, c]\n",  # array literal stands alone
+      "let a = f([a + b], @[c - d])\n",
+      "let a = x[i div 2]\n",  # word operator keeps spaces tokeniser demands
+      "let a = x[f(n = 1)]\n",  # `=` of named argument as X.9 gives
+      "let a = s[1 .. ^1]\n",  # glued, `..^` would lex one operator
+      "let a = x[0 .. -1]\n",  # glued, `..-` would lex one operator
+    ]:
+      check kept.isSettled
+
+
   test "asymmetric spacing stays, since lexer reads it: `a -b` is call of prefix operand":
     for kept in ["echo -b\n", "a- b\n", "echo $x & y\n", "f(x)  -y\n", "a ⊖b\n"]:
       check checkSpacing("a.nim", kept).len == 0  # neither reported
