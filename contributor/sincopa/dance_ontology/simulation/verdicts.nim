@@ -91,7 +91,7 @@ func restName(is_away: bool): string =
 # through many routines, so each would carry them otherwise.
 var
   READINGS_KEPT*: Readings  ## Readings report renders from.
-  SWEEPS_WANTED: seq[SweepAsk] ## Sweeps render asked for and `READINGS_KEPT` lacks, in order asked.
+  SWEEPS_WANTED: seq[SweepAsk]  ## Sweeps render asked for and `READINGS_KEPT` lacks, in order.
   RUNGS_WANTED: seq[RungAsk]
   KEYS_USED: HashSet[string]  ## Keys render read, so file keeps nothing no render reads.
 
