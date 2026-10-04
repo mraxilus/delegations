@@ -2963,7 +2963,7 @@ class is added, rather than from load, so the two stack.
 
 *Checked.* Assumed: that one duration suits every transition, because nobody has asked otherwise.
 
-## Camera aiming and framing
+## Camera aiming
 
 **The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds.
 Rejected: four turntable numbers, which carry no roll and stand a rolled view upright.
@@ -3008,9 +3008,11 @@ Pan, wheel, pinch and typed view fields call `halt`, which marks the ease done w
 of those sets the pivot itself, and a pivot still arriving would slide the camera off it. Undo and
 redo call `adoptNext`; see Undo/redo.
 
-**Framing** (`framing.nim`). On a new pick **the orbit pivot comes to the middle of what was
-picked**, by `objects.centroidFolded`. It runs over the same objects that the bound is over, with
-each yielded **once** by `watched`. A middle is a tally where a bound is a set.
+## Framing
+
+**On a new pick, the orbit pivot comes to the middle of what was picked** (`framing.nim`), by
+`objects.centroidFolded`. It runs over the same objects that the bound is over, with each yielded
+**once** by `watched`. A middle is a tally where a bound is a set.
 
 The camera then moves by the **least zoom and orbit** on top of that which puts every selected
 object in view. In view means the centred box that `camera.reachCentred` shapes. That is
@@ -3032,7 +3034,7 @@ Rejected: the rim held to the box, which throws the camera from 19 to 29.9 on th
 
 **The frame rule is a floor.** `stanceFor` pulls the eye back by the least step that carries it out
 to the fitting reach, and never in. A reader who stands further out keeps their own framing. A
-finite pick still changes neither azimuth nor elevation.
+finite pick changes neither azimuth nor elevation, except a plane picked alone from a level view.
 
 `camera.stepOutTo` solves `|v + r·u| = reach` for `r`, which is one quadratic. The positive root is
 always the answer where the offset falls short. The term under the root is `along² − outside`, and
@@ -3045,6 +3047,21 @@ goes to the centroid, and the separation gives up exactly what the rule asks for
 
 `SLACK_FRAMED` 1e-9 is the one tolerance. A `>=` against a reach that `stepOutTo` lands on exactly
 reports its own answer unframed, one ulp short of it.
+
+**A plane picked alone from a level view lifts the view off it**, by the ruling of #454. Seen along
+its own face, a plane draws as a sliver, and centring a sliver shows nothing of it.
+`stanceLifted` turns the stance about its pivot by the least turn that puts the sight
+`ANGLE_PLANE_LEAST`, 10°, off the plane. The eye keeps its side of the plane, and a sight in the
+plane takes the side that world up leans to. The pivot, the separation and the level direction of
+the sight stay, and the horizon stays level. That direction is the meet of the plane with the plane
+that holds the sight and the normal.
+
+This is the bound that a star gets: a star off screen turns the view, by the least turn. A sight
+already 10° or more off the plane turns nothing, and no other pick turns. The lift applies once, as
+the pick lands. A goal that the tween already holds is the reader's own framing since, and the lift
+keeps it. Rejected: a bound by the crossing of the frame, which brings the eye in to about 15 units
+and still draws a sliver. Rejected also: a turn to face every picked plane, which swings the view
+by up to 90°.
 
 **The floor holds while the reader flies.** Where the reader moves the camera and breaks the rule,
 `holdFramed` backs the eye out along its own sight. It uses the closed form that `stanceFor` pulls
@@ -3141,6 +3158,10 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 - a still camera that a resize leaves out of frame eases back, though it holds its goal;
 - a stance that history restores stays while framed, and eases back where it is not;
 - a horizon point is bound to the screen, a horizon line to crossing it, a horizon plane not at all.
+- a plane picked alone from a level view lifts the sight to 10° off it, on the side of the eye;
+- so does a plane seen from below, a sight in the plane, and an upright plane;
+- the pivot, the separation, the level direction and a level horizon stay through that lift;
+- a sight already 28° off the plane turns nothing, and a point picked turns nothing.
 
 Verified by driven check:
 
@@ -3153,7 +3174,9 @@ Verified by driven check:
 - a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
 - a finger adds a second point and turns as the ease is armed, with the pivot 1.500 short; it ends
   0.0000 from their middle;
-- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
+- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
+- a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
+  28.072° leaves it at 28.072° (`drivePlaneLifted`).
 
 ## Objects search
 
@@ -3512,12 +3535,5 @@ forced off, and 47 ms with the drawer closed. A scroll of the list at 300 px a f
 The blur makes the drawer read as glass over a live view, so it is not plainly the wrong trade.
 Software rendering inflates a blur more than the rest, so the share is an upper bound on hardware.
 The choices are to keep it, to drop it, or to drop it only while the frame runs slow.
-
-**A plane the sight nearly lies in is framed by its whole disc, and gains nothing by it.** The bound
-over anything finite is one sphere, which a plane widens by its whole 8-unit disc. The rule then
-stands the eye 30.1 units off its centre at any scale. Within a few degrees of the plane the disc
-still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
-rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
-leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
 
 [replications]: https://gitlab.com/mraxilus/replications
