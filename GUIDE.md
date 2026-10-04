@@ -113,17 +113,27 @@ and the name of a tool does not say which one a call takes. The measurement is i
   wait. Read what you asked before you double again, because a backoff hides a wrong question
   where a drumbeat would show it.
 
-## Independent changes run in subagents
+## Work for subagents
 
-Where your queue holds changes that are fully independent, give each one to a subagent, and
-run them at the same time. Two changes are fully independent when neither one changes a file
-that the other one reads or writes. Neither one may wait on the other one to merge. Where you
-are not sure, they are not independent, and you make them one after the other.
+A subagent is a second run of the model that you start for one task. It starts with none of
+your context, works beside you, and returns one report. It keeps the contents of the files it
+reads out of your context, so hand it work wherever the work allows.
 
-- **Each subagent works in a worktree of its own, on a branch of its own inside the
-  grammar.** The hooks read the checkout where an edit or a commit happens, so each subagent
-  stays in the scope of its own branch. Make the worktree yourself, on its branch, before the
-  subagent starts, because a tool that makes one names its own branch outside the grammar.
+- **Read-only work goes to a subagent by default.** That is a search across many files, or a
+  read of a record and its code to answer a question. It is also a review of a diff against the
+  charter, a reproduction of a failure, and a measurement. The subagent `record-reviewer`
+  reviews a diff of a record. Keep the conclusion of each report, and not the files behind it.
+  Read a file yourself where you will edit it, or where the answer sits in one known place.
+- **A change goes to a subagent where it is independent of the rest of your queue.** Two
+  changes are independent when neither one changes code or a test that the other one reads or
+  writes. Neither one may wait on the other one to merge. The three records do not count,
+  because each change writes its own section and git merges separate sections. Where the two
+  write the same section, resolve the conflict by Edit when you merge.
+- **Each subagent that changes files works in a worktree of its own, on a branch of its own
+  inside the grammar.** The hooks read the checkout where an edit or a commit happens, so each
+  subagent stays in the scope of its own branch. Make the worktree yourself, on its branch,
+  before the subagent starts, because a tool that makes one names its own branch outside the
+  grammar.
 - **The subagent makes the change, runs `nim r koch check` in its worktree, and commits.** It
   follows the rules that you follow: the commit ladder, the record, and Simplified Technical
   English. Give it the issue, the branch and the scope, because it starts with none of your
@@ -287,9 +297,13 @@ build.
 The same URL belongs in both places. The pull request is the record, and the message is what
 gets read first.
 
-**Name each issue and pull request by what it is or does**, in plain words, and never by its
-number alone. The number goes in a link. A reader who did not watch has no context for a bare
-number.
+**Name each issue and pull request by a short description and its number, as one link**, such
+as `[the ledger fix (#456)](https://github.com/mraxilus/delegations/pull/456)`. A bare number
+gives a reader who did not watch no context, and a name alone gives no way to open the item.
+This holds for every mention in a message, the sign-off included. A row of the sign-off names
+its item already, so its `Where` cell may hold the number alone, still as a link. A reference
+link keeps a line short: write `[#456]`, and give its address once, on a line of its own above
+the sign-off.
 
 **Show the change in that same message.** Give a screenshot where it is visual, and a worked
 example where it is not. Where there is nothing to show, give one sentence that says why.
@@ -309,27 +323,39 @@ you do it.
 
 ### The sign-off
 
-A message that ends a turn which pushed or posted, and the message of a handover, closes with
-one block, `## Sign-off`. Nothing follows it.
+**Sign off only when you stop**: when nothing is left, or when nothing moves until someone
+else acts. The message that ends that turn, and the message of a handover, closes with one
+block, `## Sign-off`. Nothing follows it.
 
-It serves three readers. The Architect reads it first, and set the order of its parts. The
-block says who the delegate is and where it stands, then what happened, then what waits on the
-Architect. The next delegate, and the same delegate after a compaction, read the same block.
-Its parts come in this order:
+**A turn that ends while your work goes on does not sign off.** A run or a subagent that has
+not reported is such work. Where that turn pushed or posted, its message closes with one line
+instead. The line opens `**Working:**`, then names what runs and what wakes you:
+
+```md
+**Working:** run 890 of `check` on `55e6ffd`, whose result wakes this delegate.
+```
+
+The `stop` hook refuses a turn that pushed or posted and closes with neither.
+
+The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
+The block says who the delegate is and what it works on, then what happened, then where it
+stands and what waits on the Architect. The next delegate, and the same delegate after a
+compaction, read the same block. Its parts come in this order:
 
 1. **Role.** The role string, then the branch.
-2. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
+2. **Context.** At most three sentences in the third person. They say what the branch is for,
+   and what the Architect asked last.
+3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
+4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
+   by number, and decisions as `D1`.
+5. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
    pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
    `red` or `pending`. The word is one of these:
    - `blocked`: nothing moves until the Architect decides.
    - `waiting`: nothing moves until another delegate or an outside party acts.
-   - `working`: this delegate has work it can do now.
    - `done`: nothing is left.
-3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
-4. **Context.** At most three sentences in the third person. They say what the branch is for,
-   and what the Architect asked last.
-5. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
-   by number, and decisions as `D1`.
+
+   Each word is a stop. Work that goes on takes the working line, and no sign-off.
 6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
    `**Decisions:** None.` where there is none.
 7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
@@ -340,14 +366,17 @@ Its parts come in this order:
 Write each decision so that the Architect can decide it from the block alone.
 
 ```md
+[#310]: https://github.com/mraxilus/delegations/issues/310
+[#331]: https://github.com/mraxilus/delegations/pull/331
+
 **D1.** Keep the names `rga4d` and `cga5d` in the tests?
 - Class: blocks this delegate
-- Where: #310
+- Where: [names in the tests (#310)][#310]
 - Options:
   - a. Keep: the tests stay as they are, and the root glossary gains two names.
   - b. Rename: twelve suites change, and the gap list waits one turn.
 - Recommends: a, because both names are the names of the authority.
-- Delay costs: #331 stays a draft.
+- Delay costs: [the gap list (#331)][#331] stays a draft.
 ```
 
 - **The question** is one sentence that ends with `?`, verb first where it can be.
@@ -357,7 +386,8 @@ Write each decision so that the Architect can decide it from the block alone.
   - `has a workaround: <the workaround>`
   - `fact`, for something the Architect must know and need not decide
 - **Where** is the issue or pull request where the ruling goes. Open one first where none
-  exists, because a ruling in chat alone is lost.
+  exists, because a ruling in chat alone is lost. Label it `architect` (`CONTRIBUTOR.md`,
+  Boundaries).
 - **Options** are two to four. A label is at most three words. Each consequence is one sentence
   that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
   has no options, no recommendation and no delay cost.
@@ -385,44 +415,48 @@ rules of this guide over every sentence. The `Stop` hook holds the shape under C
 where it holds this repository alone, and reading holds it elsewhere.
 
 ```md
+[#310]: https://github.com/mraxilus/delegations/issues/310
+[#331]: https://github.com/mraxilus/delegations/pull/331
+[#332]: https://github.com/mraxilus/delegations/issues/332
+
 ## Sign-off
 
 **Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
-
-**State:** blocked, at `3f2a9c1`, pushed, #331 draft, run 412 green
-
-| # | State | Item | Where | Evidence, or who acts |
-| --- | --- | --- | --- | --- |
-| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
-| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 3 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
-| 4 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
-| 5 | ⏸️ | Names in the tests (carried 2) | #310 | D1 |
-| 6 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate |
 
 **Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
 the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
 of each algebra.
 
+| # | State | Item | Where | Evidence, or who acts |
+| --- | --- | --- | --- | --- |
+| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | [#331] | |
+| 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
+| 3 | ✅ | A worked example shows the gap rows (carried 5) | [#331], Verification | command, output |
+| 4 | ⚠️ | `koch drive` red in rga_visualiser | [#332] | contributor/ronri/rga_visualiser, fix |
+| 5 | ⏸️ | Names in the tests (carried 2) | [#310] | D1 |
+| 6 | ⬜ | cga5d baseline measurement, then the pull request marks ready | `tests/` | this delegate |
+
 **Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
 belongs to rga_visualiser and blocks nothing here.
+
+**State:** blocked, at `3f2a9c1`, pushed, [the gap list (#331)][#331] draft, run 412 green
 
 **Decisions:**
 
 **D1.** Keep the names `rga4d` and `cga5d` in the tests?
 - Class: blocks this delegate
-- Where: #310
+- Where: [names in the tests (#310)][#310]
 - Options:
   - a. Keep: the tests stay as they are, and the root glossary gains two names.
   - b. Rename: twelve suites change, and the gap list waits one turn.
 - Recommends: a, because both names are the names of the authority.
-- Delay costs: #331 stays a draft.
+- Delay costs: [the gap list (#331)][#331] stays a draft.
 
 **D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
 - Class: fact
-- Where: #331
+- Where: [the gap list (#331)][#331]
 
-**Next step:** Architect: rule on D1 in #310, the issue on the names in the tests.
+**Next step:** Architect: rule on D1 in [names in the tests (#310)][#310].
 ```
 
 ## Provenance guide

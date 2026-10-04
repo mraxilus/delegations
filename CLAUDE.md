@@ -20,5 +20,6 @@ A model writes every line here, under the direction of the Architect. Before any
    `CONTRIBUTOR.md`, Boundaries, gives the rule.
 8. A record describes what is, and never narrates what happened. The reason a design is as
    it is belongs in the record. A list of events does not.
-9. A turn that pushed or posted ends with the sign-off block that `GUIDE.md`, Output
-   contract, gives.
+9. Sign off only when you are done, blocked or waiting, with the block that `GUIDE.md`,
+   Output contract, gives. A turn that pushed or posted while work goes on ends with the
+   working line that the same section gives.
