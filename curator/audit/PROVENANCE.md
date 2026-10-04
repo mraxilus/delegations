@@ -2319,7 +2319,7 @@ that holds it. The events, each one a verb argument:
 - `edit` runs the static checks after a write, and returns the findings of that file as
   context.
 - `bash` refuses a commit or a push on `main` or outside the grammar, and a rewrite of pushed
-  history.
+  history. It holds a post made through `gh api` as `body` holds the post of a tool.
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
@@ -2418,6 +2418,30 @@ update ends no turn with a sign-off.
   holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
   built hook, 2026-10-03: a valid sign-off sent only as a reply leaves the turn blocked, with
   `got none`. The same block as text passes.
+
+**`bash` holds a post made through `gh api` as `body` holds the post of a tool.** A delegate
+posts through `gh api` in Bash as well as through the GitHub tools, and one rule binds both.
+The hook reads the endpoint, the method, and the fields `body`, `title` and `labels[]` of each
+`gh api` command. It maps each write to the tool whose rules it shares, so `checkBody`
+applies unchanged. A write with no body is no post, as it is for a tool. `stop` counts a post
+through `gh api` as it counts the call of a tool.
+
+- The hook runs before the command, so the body must be readable before the post lands. It is
+  inline text, a file that `-F body=@PATH` names, or the JSON of `--input`. A body from a shell
+  variable or stdin is refused, and the finding asks for a literal path.
+- Cost: a post of a body that the same command writes, as by a heredoc, is refused. The file
+  does not exist yet, so the finding asks for it in an earlier call. That post takes two calls.
+- The words split as the shell splits them. Quotes are honoured, and the text of a heredoc is
+  skipped. A file resolves against the directory of the call, moved by each `cd` before it.
+- An edit of a review comment takes the rules of a reply, because both are review comments.
+- The role line reads the branch of the primary checkout, as `body` does, and not the checkout
+  of the call. A subagent never posts, so each post speaks for the delegate.
+- Cost: a mutation through `gh api graphql` reads as no post, so reading holds its body.
+- Cost: `stop` reads no file, so an `--input` file counts as a body where its JSON holds none.
+- Verified by `suites/test_hooks.nim`: each endpoint of the map, each source of a body, and each
+  body that the hook cannot read. Real files are read, refused and mended.
+- Verified by hand through koch built from the branch, 2026-10-04. A body file with a sentence
+  of 27 words is refused, and the mended file passes.
 
 **`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
 sign-off row or a decision class may name the coordinator as the role that acts. A hook
