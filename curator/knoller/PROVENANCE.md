@@ -401,7 +401,7 @@ code before the wideners.
 - Rewrites, with the commit before in brackets:
   - call splits 609 (599), spaces 2,346 (2,311), comment gaps 737 (735);
   - doc positions 55 (54), messages 6 (3), signatures 117 (116);
-  - operator breaks 9, continuations 1,717 and comments moved above 1, all new.
+  - operator breaks 9, continuations 1,727 and comments moved above 1, all new.
 - The parser of the compiler, 2.2.12, reads each changed file to the tree it read before, once
   the rewrites of `## Layout fixes` and `## Content fixes` are normalised. Against the commit
   before, each file reads to the same tree once backticks and the shape of a message are
