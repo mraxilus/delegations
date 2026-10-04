@@ -1591,11 +1591,24 @@ suite "Internal: Pages":
 
   test "shell names faces it embeds, and assembly fills every token":
     let
-      text_shell = "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@)</style>@BODY@"
-      page = assemble(text_shell, "A & B", "<p>body</p>", {"a.woff2": "xyz"}.toTable)
-    check facesAsked(text_shell) == @["a.woff2"]  # one face asked
+      text_shell =
+        "<title>@TITLE@</title><style>src: url(@EMBED:a.woff2@) url(@EMBED:b.ttf@)</style>@BODY@"
+      page = assemble(
+        text_shell,
+        "A & B",
+        "<p>body</p>",
+        {"a.woff2": "xyz", "b.ttf": "uvw"}.toTable,
+      )
+    check facesAsked(text_shell) == @["a.woff2", "b.ttf"]  # both faces asked, in order
     check "@" notin page and "A &amp; B" in page and "<p>body</p>" in page  # filled
-    check "data:font/woff2;base64,eHl6" in page  # bytes inlined
+    check "data:font/woff2;base64,eHl6" in page  # WOFF2 bytes inlined as WOFF2
+    check "data:font/ttf;base64,dXZ3" in page  # TrueType bytes inlined as TrueType
+
+
+  test "every Noto face ships whole, as TrueType of its own release":
+    for face in FACES:
+      if face.toLowerAscii.startsWith("noto"):
+        check face.endsWith(".ttf")  # Article X.8: Noto face whole, never subset
 
 
   test "spread is assumed until quiet evaluations give enough ratios":
