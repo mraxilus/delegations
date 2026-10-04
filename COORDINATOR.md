@@ -207,9 +207,10 @@ the label shows the whole queue, on GitHub and to the next coordinator.
 The `architect` label is the one label that comes off. A role label names whose work an item
 is, so it stays. The `architect` label names a state, so it lasts only while the state lasts.
 
-You alone add the label and remove it. Add it when an item enters the queue. Remove it when the
-ruling is posted, or when the item no longer waits on the Architect. The ledger reports each
-closed issue or pull request that still carries it.
+Each delegate adds the label to its own item when the item enters the queue (`CONTRIBUTOR.md`,
+Boundaries). `architect.yml` removes it from an item that closes. Add it yourself where a
+delegate missed it. Remove it when the ruling is posted, or when the item no longer waits on the
+Architect. The ledger reports each closed issue or pull request that still carries it.
 
 An item enters the queue from any of these:
 
@@ -250,8 +251,9 @@ Its parts come in one order, and a part with nothing in it says `None.`:
      cost. Where your view differs, the context gives it too, under your name.
    - Only where the conversation offers no card, write the same as a numbered list.
 3. **Delegates.** A table, one row for each delegate that is not done: `Delegate`, `State`,
-   `Pull request and run`, `Waits on`, `Report`. Sort it `blocked`, `waiting`, `working`. The
-   `Report` cell links the full sign-off on GitHub.
+   `Pull request and run`, `Waits on`, `Report`. Sort it `blocked`, `waiting`, then
+   `working`, the state of a delegate whose last message closes with the working line. The
+   `Report` cell links the full sign-off on GitHub, or that line where no sign-off exists.
 4. **Done.** Each ✅ row since the last digest, under its role string, with its evidence as the
    delegate wrote it. A delegate that is now `done` is one line here, with its report link.
 5. **Facts.** Each decision of class `fact`, word for word, with its role string.
@@ -303,5 +305,5 @@ that write to GitHub at once, and name the number in your memory. Read GitHub by
 Your message to the Architect is the digest, and not a sign-off. Its last part lists each
 post that you made on GitHub, so the Architect sees every write that you made in their name.
 
-In each message and on each card, name an issue or a pull request by what it is or does, in
-plain words. Never give its number alone. The number goes in a link.
+Name each issue and pull request by a short description and its number, as one link. That holds
+in each message and on each card (`GUIDE.md`, Output contract).
