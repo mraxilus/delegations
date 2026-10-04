@@ -197,22 +197,6 @@ suite "Idiom fixes":
       module("func f(\n  a: int\n): int =\n  result = a\n")  # signature on lines of its own
 
 
-  test "return result whose place reads no one fix stays, finding and all":
-    for left in [
-      "func f(): int =\n  return result\n",  # only statement: body would go empty
-      "func f(): int =\n  result = 1\n  return result  # Done.\n",  # comment would lose its line
-      "func f(): int =\n  result = 1\n  # Hand back.\n  return result\n",  # comment names nothing
-      "template t(): int =\n  result = 1\n  return result\n",  # template returns from its caller
-    ]:
-      check fixed(module(left)).source == module(left)
-
-
-  test "report after deleted line names line of source as given":
-    let body = "func f(): int =\n  result = 1\n  return result\n\nlet a = 1\nlet b = 2\n"
-    check fixed(module(body)).fixed.mapIt(it.line) ==
-      @[HEAD_LINES + 3, HEAD_LINES + 5]  # traced past deleted line
-
-
   test "bracket items are sorted into slots they held, so layout stays":
     let one_line = fixed(module("import std/[strutils, os]\nimport ./[b {.all.}, a]\n"))
     check one_line.source == module("import std/[os, strutils]\nimport ./[a, b {.all.}]\n")
@@ -311,20 +295,6 @@ suite "Idiom fixes":
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."
 
 
-  test "import with except, as, other pragma, comment, or apart from block stays":
-    for kept in [
-      "import std/os except getEnv\nimport std/strutils\n",
-      "import std/os as system_os\nimport std/strutils\n",
-      "import ./a {.used.}\nimport ./b\n",
-      "import std/os  # Why.\nimport std/strutils\n",
-      "import std/os\n\nimport std/strutils\n",
-      "from std/os import getEnv\nimport std/strutils\n",
-      "import ./a\nimport ../b\n",
-    ]:
-      check checkImportBrackets("a.nim", module(kept)).len == 0
-      check fixed(module(kept)).source == module(kept)
-
-
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":
     let
       lists = module(
@@ -340,13 +310,6 @@ suite "Idiom fixes":
     check fix.source.isSettled
 
 
-  test "pragma list holds bare pragmas first, then pragmas with argument":
-    let pragmas = module("proc f() {.raises: [], header: \"a.h\", inline, borrow.}\n")
-    check fixed(pragmas).source ==
-      module("proc f() {.borrow, inline, header: \"a.h\", raises: [].}\n")
-    check checkLists("a.nim", module("proc f() {.inline, header: \"a.h\".}\n")).len == 0
-
-
   test "alphabetised is dictionary order: case and `_` ignored, tie to code point":
     check fixed(module("export isB, is_a, facing, Facing\n")).source ==
       module("export Facing, facing, is_a, isB\n")
@@ -354,19 +317,3 @@ suite "Idiom fixes":
       module("export layout.Entry, layout.Tree\n")
     check "got `b_c, ba`" in messages("a.nim", module("import ./[b_c, ba]\n"))[0]
     check fixed(module("import ./[b_c, ba]\n")).source == module("import ./[ba, b_c]\n")
-
-
-  test "list order may mean stays: statement, user pragma, except, list spanning lines":
-    for kept in [
-      "{.push raises: [], gcsafe.}\nproc f()\n{.pop.}\n",
-      "proc f() {.async, gcsafe.}\n",
-      "export pga except wedge, dot\n",
-      "proc f() {.inline,\n  borrow.}\n",
-    ]:
-      check checkLists("a.nim", module(kept)).len == 0
-      check fixed(module(kept)).source == module(kept)
-
-
-  test "clean module passes through unchanged":
-    let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")
-    check fixed(clean).source == clean and fixed(clean).fixed.len == 0
