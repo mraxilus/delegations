@@ -67,17 +67,18 @@ suite "Command line":
     check outcome.code == 1
 
 
-  test "each fence prints as warning, clean or not, and changes no exit code":
+  test "each fence prints as warning naming what breaks inside it, and changes no exit code":
     let
       fenced = "let a = 1\n#!fix off\nlet b = 1+2\n#!fix on\n"
       outcome = outcomeOf([("a.nims", fenced)], [], is_check = true)
     check outcome.lines == @[
-      "a.nims:2: fence-held warning: Fence keeps its lines as written, so no fixer reads them " &
-        "(X.1); got lines `2` to `4`.",
+      "a.nims:2: fence-held warning: Fence keeps its lines as written, and inside them " &
+        "expression-spacing breaks once at line 3 (X.1); got lines `2` to `4`.",
       "0 to fix.",
     ]
-    check outcome.code == 0  # warning alone fails nothing
-    check outcomeOf([("a.nims", fenced)], [], is_check = false).written.len == 0
+    check outcome.code == 0  # break inside fence alone fails nothing
+    let written = outcomeOf([("a.nims", fenced)], [], is_check = false)
+    check written.written.len == 0 and written.code == 0  # nothing written
 
 
   test "locked nimble file and file of no dialect are passed over":
