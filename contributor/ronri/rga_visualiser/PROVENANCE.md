@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 7053085b2557edcc |
+| Rules   | 6d66292a627b7509 |
 | Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -2797,9 +2797,18 @@ and a node against the reference plane of the moon. A pole in J2000 right ascens
 declination names that plane. It is the ecliptic for Luna and Nereid, the equator of Uranus for
 its five, and a local Laplace plane for the rest.
 
-`normalOfMoon` turns the node of the equator about the pole by the node angle. It then turns the
-pole about that line by the inclination. It then turns the whole into the ecliptic frame by the
-J2000 obliquity of 23.4392911°.
+**The algebra builds every orbit plane, because construction is its own** (see Algebra boundary).
+`normalOfMoon` meets the reference plane with the equator, and that line is the node of the
+equator. A motor turns it about the pole by the node angle. A second motor turns the pole about
+that line by the inclination. A last turn by the J2000 obliquity of 23.4392911° carries the whole
+into the ecliptic frame. That turn is a change of coordinates, as the place of a star is, so it
+stays in closed form.
+
+The ring of a moon starts at its ascending node, where its plane meets the ecliptic. Its second
+direction is that node turned a quarter turn about the normal. Each plane of a meet is a weight
+expansion of the origin. Such a plane faces against its line, so only a meet of two is read.
+Rejected: the cross products that built the same frames outside the algebra. Over every moon, the
+normal and both ring directions differ from them by at most 1.0e-15.
 
 The pole of Uranus is the spin pole (RA 77.311°, Dec 15.175°), which is the antipode of the IAU
 north. The small inclinations of the elements then read prograde about it, as JPL states them.
@@ -2863,6 +2872,10 @@ stands nine thousand opening radii out, and a frame that held it shows one dot.
 - every object against the role table, with four distinct body inks;
 - every planet at its real axis with z exactly 0;
 - every moon at its real axis perpendicular to `normalOfMoon`, with the leans quoted above pinned;
+- the lean and the node of every moon read back off its normal, by vector arithmetic apart from
+  the algebra that builds it;
+- the ring of every moon started at its ascending node and turned about its normal, which a node
+  of flipped sign fails for every moon;
 - every neighbour planet at its real axis at the height of its star;
 - every planet without an axis absent, 49 counted from the table;
 - the radius of every body the conversion of its kilometres;
@@ -3506,10 +3519,5 @@ stands the eye 30.1 units off its centre at any scale. Within a few degrees of t
 still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
 rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
 leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
-
-**Two sites may still do geometry in vector arithmetic.** `tessellate.placeChord` tests each chord
-against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
-cross products. The first only clips, so it may be the picture's; the second is construction, which
-the algebra owns. The choices are to move them into the algebra, or to leave them.
 
 [replications]: https://gitlab.com/mraxilus/replications

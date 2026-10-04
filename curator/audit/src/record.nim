@@ -48,7 +48,7 @@ const
   PRUNED* = "Pruned"  ## Optional header row naming commit before last prune, 7 to 40 hex digits.
 
 
-func hasIsoDate*(s: string): bool =
+func isDated*(s: string): bool =
   ## Decide whether `s` holds `YYYY-MM-DD` anywhere, digits bounded by non-digits.
   for i in 0..s.len - 10:
     if s[i..<i + 10].isIsoDate and (i == 0 or s[i - 1] notin Digits) and
@@ -77,7 +77,7 @@ func checkHeadings(path, source: string): seq[Finding] =
   for i, line in lines:
     if line.startsWith("#"):
       let text = line.headingText
-      if line.hasIsoDate:
+      if line.isDated:
         result.add finding(
           path,
           i + 1,

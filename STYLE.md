@@ -11,9 +11,11 @@ wins. `EXAMPLES.md` holds longer worked examples, which both documents point int
 Map the callable ladder of the constitution onto `func → proc → iterator → template → macro`,
 and its binding ladder onto `const → let → var`. Escalate only on need.
 
-- `when isMainModule:` is the block that V.10 names, so its bindings are locals. Nim compares
-  an identifier by its first letter exactly, and the rest without case or underscore. So
-  `ALGEBRA` and `Algebra` are one name, and V.10 keeps them apart with a qualifier.
+- `when isMainModule:` is the entry block that V.10 names. `when` opens no scope, so the block
+  holds no binding. Code that binds goes in `proc main`, and the block calls it, as
+  `quit main()` or `main()`. Nim compares an identifier by its first letter exactly, and the
+  rest without case or underscore. So `ALGEBRA` and `Algebra` are one name, and V.10 keeps them
+  apart with a qualifier.
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
   `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
@@ -76,9 +78,9 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   borrow family once, through a documented template:
 
   ```nim
-  template borrowOperationsGrade(T: typedesc) =
-    func `+`*(g, h: T): T {.borrow.}
-    func `==`*(g, h: T): bool {.borrow.}
+  template borrowOperationsGrade(t: typedesc) =
+    func `+`*(g, h: t): t {.borrow.}
+    func `==`*(g, h: t): bool {.borrow.}
   borrowOperationsGrade(Grade)
   borrowOperationsGrade(GradeAnti)
   ```

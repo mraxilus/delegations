@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 7053085b2557edcc |
+| Rules   | 6d66292a627b7509 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -139,7 +139,7 @@ language is Nim). Verified by `suites/test_layout.nim`.
 
 - Nim: line, doc and nesting block comments, plain, triple and generalized raw strings, char
   literals, and numeric suffix quotes.
-- Cfg: `#`, unless `\#`.
+- Configuration: `#`, unless `\#`.
 - YAML: `#` at line start, or after whitespace, outside quotes.
 - Ignore files: a leading `#` only.
 - TypeScript: `//`, `/* */`, its string forms, and doc stars stripped.
@@ -731,7 +731,7 @@ a second target repeats the pins of the first. Two pins of one file, each in its
 a copy from two different faces.
 
 - **The digest is the curator's, and the choice is the project's.** The store says what bytes
-  `noto-sans-latin-400` is. It never says which faces a target wants, and the targets differ:
+  `NotoSans-Regular.ttf` is. It never says which faces a target wants, and the targets differ:
   one draws maths and symbols, and the other italic serif. What stops being written twice is
   only what is identical, so the autonomy that CONTRIBUTOR.md argues for is untouched.
 - The store is the **only shared build input** of the repository. Compilers are pinned for each
@@ -747,21 +747,25 @@ a copy from two different faces.
   Noto was chosen so that no character of a page falls outside its faces, and a subset undoes
   that. The rows hold each whole face that a page draws, as TrueType, which `@fontsource` does
   not ship. Where two projects pin one file, they pin one digest.
-- The `woff2` subsets of `@fontsource` stay only while a page still asks for one. A Noto subset
-  row leaves once no page names it. Commit Mono is no Noto, and pages keep its subset.
-- Cost: a whole face is 610 to 760 KB of TrueType, where its Latin subset is about 13 KB. A page
+- **The store declares no Noto subset, and `suites/test_assets.nim` holds it so.** Every Noto
+  row is a TrueType file of the Noto release. `koch fetch-assets` refuses a file that no row
+  declares, so no page can ship a Noto subset.
+- **Commit Mono keeps its Latin subset.** Article X.8 binds Noto alone, and Commit Mono is no
+  Noto. Its two `woff2` rows are the only subsets of `@fontsource` in the store.
+- Cost: a whole face is 610 to 780 KB of TrueType, where its Latin subset is about 13 KB. A page
   that inlines it as base64 carries about a third more again.
 - One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
   `compilers.digestOf`, so the parse that `test_compilers.nim` tests also guards the store.
-- Verified by `suites/test_assets.nim`. Verified by hand with `nim r koch fetch-assets`, recorded
-  2026-09-10, machine unrecorded. A cold store fills with three faces in **1.0 s**, two of them
-  shared by two projects. The same call warm takes **0.117 s**, and fetches nothing.
-- Verified by a break of it, on the same date. A face that nobody declares is a finding, which
+- Verified by `suites/test_assets.nim`. Verified by hand with the built `binaries/koch
+  fetch-assets` on 2026-10-04, in the cloud container of Claude Code, into an empty store.
+  Three whole faces, 2.0 MB, fill it in **1.5 s**. The same call warm takes **0.002 s**, and
+  fetches nothing.
+- Verified by a break of it, on 2026-09-10. A face that nobody declares is a finding, which
   names the table to add a row to. Alter one declared digest in its last character, and the
   fetch refuses the bytes and **leaves the store empty** rather than keeps them.
-- Cost: the store grows and nothing prunes it. A face is about 30 kB where a compiler is about
-  300 MB. So what is unbounded is the number of pins the repository has ever held, and not the
-  bytes.
+- Cost: the store grows and nothing prunes it. A face is less than 1 MB, where a compiler is
+  about 300 MB. So what is unbounded is the number of pins the repository has ever held, and
+  not the bytes.
 - Cost: an upstream that moves bytes under one address fails every project at once, rather
   than one. That is the same failure that a digest exists to make loud, and it is louder
   shared.
@@ -855,6 +859,12 @@ is the failure it exists to catch.
   window is not. A body that opens `**Role:**` and one that opens
   `Role:` unbolded both pass, while a null body and a missing label are named. A red `ledger`
   beside an open `check` issue opens its own issue.
+- **An issue opened again after the merge passes.** GitHub reads a closing keyword in any
+  sentence, so a body that says it does not close an issue closes it all the same. The delegate
+  who opens that issue again does so on purpose, and `closingIssuesReferences` keeps the link.
+  So the ledger reads the events of each issue that it would name, at the cost of one read each.
+  It passes an issue with a `reopened` event after the merge, and still names one opened again
+  before it. Verified by hand through a stub for `gh` and real `jq` 1.7, 2026-10-03.
 - Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is
   free while the repository is public. A private one pays: 1,909 of 2,000 free minutes were
   measured used while this repository was private.
@@ -887,10 +897,22 @@ beside the section that each title comes from.
 - Cost: the pattern is `jq` inside shell, as the role-line pattern is, so no suite drives it.
 
 **The ledger names a closed item that still carries the `architect` label.** The label marks a
-state, and not a role. An item carries it while it waits on the Architect, and the coordinator
-removes it once the ruling is posted (`COORDINATOR.md`, The queue). A closed item that still
-carries it is a removal that the coordinator missed, and the next filter on the label shows a
-stale queue.
+state, and not a role. A delegate adds it to its own item that waits on the Architect, and
+removes it once the ruling is posted (`CONTRIBUTOR.md`, Boundaries). `architect.yml` removes it
+from an item that closes, because the delegate that asked has often ended by the merge. So a
+closed item that still carries it marks a failed run of that workflow. The next filter on the
+label would show a stale queue.
+
+- **The workflow fires on a close alone, and never on a return to draft.** A decision can wait
+  on a draft pull request, and a label removed there would hide it from the Architect. Rejected:
+  removal on `converted_to_draft`, which `draft.yml` fires on each push to a ready pull request.
+- The workflow reads the labels before it removes one, so an item whose label somebody removed
+  first is no failure.
+- Its grant is `issues: write` and `pull-requests: write`. The reference of the issues endpoint
+  says that either grant reaches the labels of a pull request. For the token of a run, that is
+  false. Verified by run 1 and run 2 of `architect.yml`, 2026-10-04. Run 1, with
+  `issues: write` alone, failed with exit 1 on the merge of #463. Run 2, with both grants and
+  the same script, removed the label on the merge of #467.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
@@ -1338,33 +1360,102 @@ issue, and the next failure opens a new one. The finding is the output from the 
 ## Names
 
 **Every declared name in Nim is read, and its words are held to the table and the
-glossaries.** A declaration is a binding, a routine, a type, a field or a parameter, read by a
-text scanner after comments and strings are blanked. A word is a run between underscores and
-case changes. The table pairs each coined abbreviation with its one full word, as the English
-check pairs a word with its approved one.
+glossaries.** A declaration is a binding, a routine, a type, a field, a parameter, an enum
+member or a placeholder. A text scanner reads them after comments and strings are blanked. A
+binding comes from `let`, `var`, `const`, `for` or `except … as`. A word is a run between
+underscores and case changes. The table pairs each coined abbreviation with its one full word,
+as the English check pairs a word with its approved one.
 
 An acronym is a run of two or more capitals inside a camel or Pascal name. It passes only where
 the root or the project glossary lists it, as a symbol under `## Standards` or as a term. The
 jargon list of V.6 passes. Verified by `suites/test_names.nim`.
 
 **A foreign binding keeps the library's name.** A routine carrying `importc`, `importcpp`,
-`importjs` or `dynlib` declares a name the library owns, so it is skipped. Its parameters are
-ours, and they are read. The pragma block may stand on its own line after the signature, and
-the scanner joins it. Found when the first run reported every OpenGL and SDL binding of
-`rga_visualiser` under V.3.
+`importjs` or `dynlib` declares a name that the library chose, so it is skipped. By the ruling
+of the Architect, its parameters are ours, and they are read. So `wake: bool` takes a boolean
+prefix like any other parameter. The pragma block may stand on its own line after the
+signature, and the scanner joins it.
+
+**The case of a name follows its kind (V.1, V.11, V.12).** A type and an enum member are
+Pascal, and a routine is camel. A local, a parameter and a field are snake, and a global is
+SCREAMING. A placeholder in generic brackets, or after `concept`, is one capital letter. Each
+case is a fact about letters, so the check needs no list of words:
+
+- Pascal opens on a capital and holds no underscore. Camel opens on no capital and holds no
+  underscore.
+- Snake holds no capital. SCREAMING holds no lowercase letter.
+- One letter fits by its own case. A capital passes a type, a global and a placeholder. A
+  lowercase letter passes a routine, a local, a parameter and a field.
+
+**A variable in the notation of its source keeps that notation (III.5).** A binding, field or
+parameter whose name holds a non-ASCII letter is notation, such as `𝐦`, `𝐮` or `𝐌`. At any
+scope, notation holds over the case of V.1, so the check does not read its case. At module
+scope, notation holds only for an immutable global. So a mutable global in notation is one
+finding, which cites III.5.
+
+- A type, a routine, an enum member and a placeholder are no variable, so their case is read.
+  `std/unicode` gives no case to the mathematical alphanumeric letters. So `letterCase` reads
+  them by their block, where each style runs its capitals first.
+- An operator is backticked, so it is never read as a name.
+
+**A one-letter capital local is a finding, by the ruling of the Architect.** Plain ASCII is
+never notation. So `N` or `M` as a local, a parameter or a field takes the snake case of V.1.
+
+**A parameter that holds a type is a parameter, by the ruling of the Architect.** So
+`t: typedesc` takes the snake case of V.1. The one capital of V.12 is for a placeholder in
+brackets, as `scalar*[I: Basis](t: typedesc[I])` shows. `STYLE.md` spells its borrow template
+that way.
+
+**One function decides the reach of a binding.** The case of a binding marks its reach, and not
+its mutability (V.1). So `reachOf` reads the blocks that enclose the binding:
+
+- A routine makes it local.
+- The entry block, which is a top-level `when isMainModule:`, makes it an entry binding.
+- A binding that opens its own scope, such as `for` or `except … as`, is local.
+- It is global where every enclosing block opens no scope. Those blocks are a `when` chain, and
+  a bare `let`, `var`, `const` or `type`. Any other block makes it local.
+
+**The entry block holds no binding (V.10).** Where a module runs as a program, code that binds
+goes in `proc main`, and the block calls it. A binding in the entry block reaches the whole
+module, because `when` opens no scope. A routine makes it a true local in every language. The
+Architect rejected the exception that made such a binding a local of its block.
+
+- By the ruling of the Architect, every binding in the entry block outside a routine is a
+  finding, at any depth. The reason is that code that binds moves to `main`.
+- So a `for`, an `except … as`, and a `let` inside a loop of the block are findings too.
+- Each binding there is one finding, and its case is not judged. A block of plain calls
+  passes, and so does a routine inside it.
+
+**A boolean is a proposition or a mode (V.4).** A boolean binding, field or parameter opens
+with `is`, `as`, `should`, `found` or `has`, and a word follows it. A `func` that returns `bool`
+is a predicate, and its name opens with `is`. The Architect ruled on the routines that are no
+predicate:
+
+- A `proc` that returns `bool` reports the success of an action (V.3), so it is unread.
+- A `func` that writes a `var` parameter and returns `bool` is an action too, so it is unread.
+- `contains` keeps its name, because `in` and `notin` call it by that spelling.
 
 - V.3 is held as the first word of a routine of two words or more: never `get`, `compute` or
   `new`. V.5 is held as `_by_` once in a name that opens with `lut` and has more words. V.10
-  is held as a module-level SCREAMING name that equals a type name without case or
-  underscores.
+  is held as a global SCREAMING name that equals a type name without case or underscores.
 - A SCREAMING name is all capitals, so its acronyms cannot be told from words and hold by
-  reading. An enum member is unread, and V.1 is unheld here.
-- Rejected: a parser, which costs a dependency and a compiler version; the scanner reads the
-  line forms this charter prescribes.
+  reading.
+- Rejected: a parser, which costs a dependency and a compiler version. The scanner reads the
+  line forms that this charter prescribes.
 - V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
   the fixer share one reading of the words and of the exemptions of the glossaries.
-- Cost: a declaration shape outside those forms, such as a tuple type outside a `type` block,
-  is unread.
+- A name that a template substitutes declares nothing of that name. So `type name = object`
+  inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
+- A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
+  says (`[N: static int]`). The Architect weighed snake case, and kept the text.
+- Rejected: a capital letter that passes every kind. It would pass `N` as a local, which the
+  Architect ruled a finding.
+- Cost: a declaration shape outside those forms is unread. Examples are a tuple type in
+  brackets, and a name that `{.inject.}` makes.
+- Cost: a boolean is read only where its declaration shows it, by the type `bool` or by the
+  value `true` or `false`. A boolean that a call returns holds by reading.
+- Cost: a Pascal name of capitals alone, such as `ANTI`, reads as an acronym and passes. V.9
+  and reading hold it.
 
 ## Idioms
 
@@ -1990,14 +2081,14 @@ that holds it. The events, each one a verb argument:
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
-- `stop` refuses the end of a turn that pushed or posted and lacks the sign-off. It also
-  refuses a sign-off out of shape.
+- `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
+  nor the working line. It also refuses a sign-off out of shape.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
 **`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
-(`GUIDE.md`, Independent changes run in subagents). The checkout of a write is the one that
+(`GUIDE.md`, Work for subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
 names, else the working directory of the call. A directory outside this repository falls
 back to the primary checkout.
@@ -2016,12 +2107,32 @@ back to the primary checkout.
 
 **`hooks.sh` is the one shell file Claude Code runs, and it exists because no Nim can run
 before it.** It reads the pin from the nimble file of this project, so the pin is stated once.
-It fetches the release tarball where no `nim` is on `PATH`, and builds koch into `binaries/`. It
-sets `core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
-exists. Every other hook command runs the built koch, and falls back to `nim r`.
+At the start it fetches the release tarball where no `nim` is on `PATH`. It sets
+`core.hooksPath` to `.githooks`, and writes PATH to `CLAUDE_ENV_FILE` where that variable
+exists. Every hook command runs the koch that it built into `binaries/`, and falls back to
+`nim r`.
 
 The tarball is linux_x64, which is what the cloud runner of Claude Code uses. Verified by hand
 on 2026-10-01, by a fake input to each event, before any delegate ran under the settings file.
+
+**The built koch is keyed on its source at HEAD, so no hook runs a checker older than the
+checkout.** The key is the object ids of `koch.nim`, `koch.nim.cfg`, the nimble file of this
+project and `src/` at HEAD, kept in `binaries/koch.key`. A hook whose key differs builds again
+first, so a commit, a merge or a switch of branch reaches the next hook. The key reads HEAD and
+never the working tree, so an edit in progress builds nothing. The build writes beside the
+binary and then renames it. A directory lock lets one build run, while a concurrent hook runs
+the binary that it finds.
+
+- Rejected: a key of file times, which builds again after each edit of the checker in the main
+  checkout. Half-made code then fails that build on every hook.
+- Cost: about five seconds of build where the key moved, and one `git rev-parse` on each hook.
+  A lock older than ten minutes is one that a killed build left, and the next hook removes it.
+- Cost: a binary built from a tree with uncommitted edits keeps them under the key of HEAD. A
+  checker bug that this checkout commits reaches the next hook. Checker work in a worktree
+  leaves the hooks of the main checkout as they were.
+- Verified by `suites/test_hooks.nim`: the real file runs through real git and `sh`, with a stub
+  compiler that names the source it read. By hand on 2026-10-03, a first hook built in 2.3 s,
+  and a second ran in 0.016 s.
 
 **The git hooks hold the push and the commit from any tool in the checkout.** `koch check`
 writes the tree hash it passed on into `koch-check` in the git directory when the working tree
@@ -2067,18 +2178,22 @@ carries the label of the role that it starts, and no item is the work of the coo
 Verified by `suites/test_hooks.nim`.
 
 **The sign-off follows the order that the Architect set, and `stop` holds that order.** The
-Architect reads the block first: who the delegate is and where it stands, then what happened,
-then what waits on them (`GUIDE.md`, The sign-off). Each decision reads as a decision card, and
-its class says what blocks. Each ⚠️ row names the role that it waits on. The coordinator, once
-the Architect trials it, lifts each decision onto a card without a change of words.
-The block carries seven labels in order: `Role`, `State`, the table, `Context`, `Summary`,
-`Decisions` and `Next step`.
+Architect reads the block first: who the delegate is and what it works on, then what happened.
+Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
+a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
+The coordinator, once the Architect trials it, lifts each decision onto a card without a change
+of words.
 
-- The state opens with `done`, `working`, `waiting` or `blocked`. The check reads that word
-  alone, up to the first comma or space. Where the branch stands follows it, and only the
-  `english` check reads it. Verified by hand through the built hook, 2026-10-03: a state line
-  over 25 words gives an `english` finding. The state is `blocked` exactly when a decision
-  blocks this delegate.
+The block carries seven labels in order: `Role`, `Context`, the table, `Summary`, `State`,
+`Decisions` and `Next step`. The Architect set this order on 2026-10-04. The table ends where
+`Summary` starts. Verified by `suites/test_hooks.nim`, which refuses a table before the context
+and a state before the summary.
+
+- The state opens with `done`, `waiting` or `blocked`. The check reads that word alone, up to
+  the first comma or space. Where the branch stands follows it, and only the `english` check
+  reads it. Verified by hand through the built hook, 2026-10-03: a state line over 25 words
+  gives an `english` finding. The state is `blocked` exactly when a decision blocks this
+  delegate.
 - The block holds no brief line, by the choice of the Architect: no delegate starts from a
   brief until the Architect trials the coordinator. No check refuses a line beyond the seven
   labels, so reading holds this rule. Verified by hand through the built hook, 2026-10-03: a
@@ -2102,6 +2217,25 @@ The block carries seven labels in order: `Role`, `State`, the table, `Context`, 
 - Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
   and two for the order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off
   with no decision.
+
+**A delegate signs off only when it stops, and a turn that ends while work goes on closes with
+a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
+the middle of work hides which delegates need the Architect. So each state word is a stop:
+`done`, `waiting` or `blocked`. A turn that pushed or posted closes with the sign-off, or with a
+last line that opens `**Working:**` and holds text. `stop` reads the sign-off in full where its
+heading is present, and else the last line.
+
+- Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
+  that is not last, and the state `working`. Its refusal of `working` points at the line.
+- Rejected, by the choice of the Architect: the hook skips the demand while a background task
+  has not reported. That ties the hook to the form of a task notification, which the harness
+  can change.
+- Rejected, by the same choice: no demand, with the shape read only where a sign-off is
+  present. Then a delegate can stop with no word to the Architect.
+- Cost: the hook reads that the working line holds text, and never whether anything runs. A
+  delegate that stops behind a working line passes, and only a reader sees it.
+- Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
+  by a change of label or draft alone is not asked for a sign-off.
 
 ## Watching main
 

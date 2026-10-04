@@ -9,7 +9,11 @@
 #   ledger read rather than carried line. Pull request title is skipped, since merge commit
 #   takes it as subject and so it takes that shape by rule.
 #   Closed item still labelled `architect` is fact GitHub records too: label marks state, not
-#   role (COORDINATOR.md, queue section), and coordinator removes it once ruling is posted.
+#   role (CONTRIBUTOR.md, Boundaries), and `architect.yml` removes it once item closes. So
+#   closed item still carrying it means that run failed.
+#   Issue opened again after merge is no `Closes #N` that never fired: keyword fired, and
+#   delegate undid it on purpose. GitHub reads keyword in any sentence, `does not close #N`
+#   among them. Cost: one read of events for each issue ledger would name.
 #
 #   Daily rather than weekly: pull request ready and red for week is failure this exists to
 #   catch.
@@ -96,6 +100,11 @@ jobs:
               *" $issue "*) ;;
               *) continue ;;
             esac
+            # Opened again after merge: keyword fired, and somebody undid it on purpose.
+            reopened="$(gh api --paginate "repos/$REPO/issues/$issue/events" \
+              --jq ".[] | select(.event == \"reopened\" and .created_at > \"$merged_at\")
+                    | .created_at")"
+            [ -z "$reopened" ] || continue
             found="$found- Issue #$issue is open though pull request #$pr merged naming it"
             found="$found -- base was \`$base\`"$'\n'
           done <<< "$linked"
@@ -143,9 +152,10 @@ jobs:
           [ -z "$unlabelled_prs" ] || found="$found$unlabelled_prs"$'\n'
 
           # Queue label left behind. `architect` marks state, not role, so it comes off once
-          #   ruling is posted; closed item still carrying it means coordinator missed removal,
-          #   and next filter on label shows stale queue. Pull requests are read in every state,
-          #   then filtered, so closed and merged both count.
+          #   ruling is posted, and `architect.yml` takes it off item that closes. Closed item
+          #   still carrying it means that run failed, and next filter on label shows stale
+          #   queue. Pull requests are read in every state, then filtered, so closed and merged
+          #   both count.
           stale_issues="$(gh issue list --repo "$REPO" --state closed --label architect \
             --limit 100 --json number \
             --jq '.[] | "- Issue #\(.number) is closed and still carries `architect`"')"

@@ -109,11 +109,11 @@ func shorthandFamilies*(value: string): string =
   if not value.anyIt(it.isDigit) and "var(" notin value: return ""
   var
     rest: seq[string]
-    dropping = true
+    is_dropping = true
   for token in value.splitWhitespace:
-    if dropping and (token.toLowerAscii in SHAPES or token.anyIt(it.isDigit)):
+    if is_dropping and (token.toLowerAscii in SHAPES or token.anyIt(it.isDigit)):
       continue
-    dropping = false
+    is_dropping = false
     rest.add token
   rest.join(" ")
 
@@ -141,7 +141,7 @@ func joinedLiterals(content: string): string =
           opener = candidate
           break
       if opener.len == 0: break
-      lines[i] = tail[0 ..< tail.len - closer.len] & head[opener.len .. ^1]
+      lines[i] = tail[0..<tail.len - closer.len] & head[opener.len .. ^1]
       lines[j] = ""
       inc j
     i = j
@@ -304,14 +304,14 @@ func checkFaces*(path, content: string): seq[Finding] =
 
   # Commit Mono's ligatures are functional and live in `calt` alone, so naming face without
   #   enabling feature ships face half used.
-  var names_mono = false
+  var has_mono = false
   for (_, value) in stacks:
-    if MONO in value.resolved(properties): names_mono = true
-  if names_mono:
-    var enables = false
+    if MONO in value.resolved(properties): has_mono = true
+  if has_mono:
+    var is_enabled = false
     for property in LIGATURES:
-      if property in content: enables = true
-    if not enables:
+      if property in content: is_enabled = true
+    if not is_enabled:
       result.add finding(
         path,
         0,
