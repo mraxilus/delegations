@@ -87,6 +87,7 @@ Every rule below serves it:
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | The checker: every check, tested against its own fixtures | curator |
 | `curator/probe/` | Domain-neutral worked example of the project shape | curator |
+| `curator/knoller/` | Fixers that read one file alone, which the checker imports | curator |
 | `curator/<project>/` | Any other curator project, same shape | curator |
 | `contributor/README.md` | Contributor root index | curator |
 | `contributor/<domain>/README.md` | Domain name and theme | curator |
