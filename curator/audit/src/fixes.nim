@@ -1,8 +1,9 @@
 ## Fix source in place where check names one mechanical fix (`koch fix`), inside branch scope.
 ##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim`,
-##     `prose.nim`, `alignment.nim`, `messages.nim`, `precedence.nim`, `conversions.nim`,
-##     `idioms.nim`, `checker.nim`, `blanks.nim`, `declarations.nim`, `spacing.nim` and
-##     `wrapping.nim`, and reads that check's own data, so each rule is written once. This
+##     `names.nim`, `prose.nim`, `alignment.nim`, `messages.nim`, `precedence.nim`,
+##     `conversions.nim`, `idioms.nim`, `checker.nim`, `blanks.nim`, `declarations.nim`,
+##     `spacing.nim` and `wrapping.nim`, and reads that check's own data, so each rule is
+##     written once. This
 ##     module selects files, runs on each file fixers its kind's checks name, and refuses any
 ##     write outside scope.
 ##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
@@ -13,6 +14,8 @@
 ##     other fixer on every Nim kind. Order keeps each fixer from undoing one before it:
 ##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
 ##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
+##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
+##     none, so every later fixer reads body where it stands;
 ##   - content next (articles in comments, I.4 tables, backticks of IV.4 messages, parentheses
 ##     of X.4 conditions, `to<Target>` subject first), since each changes width of its line;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
@@ -25,9 +28,11 @@
 ##     layouts join groups with separator they read, and trailing separator goes only where no
 ##     layout wrote one.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
-##     from what `contextOf` reads: rename of abbreviation (V.6) across files, planned whole or
-##     refused whole (`names.nim`, `rewrites.nim`), and type conversion `x.T` (`conversions.nim`),
-##     each from semantic pass (`symbols.nim`); then dead export of checker (`checker.nim`),
+##     from what `contextOf` reads: rename of abbreviation (V.6), and to case of name's kind
+##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
+##     one rename where both rules ask at one name; and type conversion `x.T`
+##     (`conversions.nim`), each from semantic pass (`symbols.nim`); then dead export of checker
+##     (`checker.nim`),
 ##     whose `*` goes where its own module calls it. Fix of named files reads tree whole, and
 ##     rename writing file it leaves out is refused. File holding candidate that compiles on no
 ##     backend is left to hand, with its error.
@@ -181,6 +186,7 @@ func faultOf(path: string, fence: Fence): seq[Finding] =
 func fixersOf(kind: Kind): seq[Fixer] =
   ## List fixers kind's checks name, in order header gives.
   result = kind.rule.formFixers
+  result.add fixBlockEntry
   result.add @[Fixer(fixArticles), fixAlignment, fixMessages, fixMixtures, fixTargets]
   if kind == Kind.Nim: result.add IDIOM_FIXERS
   result.add @[Fixer(fixBlanks), fixDocs, fixDefaults, fixSpacing]
@@ -260,18 +266,23 @@ func isNimKind(e: Entry): bool =
   e.kind.isSome and e.kind.get.rule.has_guide
 
 
-func scopeOf(tree: Tree, path: string): seq[(string, string)] =
-  ## Read Nim files rename of name declared in path may reach: path's own project, and root
-  ##   files, which import across projects (`koch.nim`).
-  let directory = path.split('/').projectDirectory
+func scopeOf(tree: Tree, rename: Rename): seq[(string, string)] =
+  ## Read Nim files rename may reach: declaring file alone for local binding, which no other
+  ##   module names; else its project, and root files, which import across projects (`koch.nim`).
+  let directory = rename.path.split('/').projectDirectory
   for e in tree:
-    if e.isNimKind and (e.path.split('/').projectDirectory == directory or '/' notin e.path):
+    if not e.isNimKind: continue
+    if rename.is_local and e.path != rename.path: continue
+    if e.path.split('/').projectDirectory == directory or '/' notin e.path:
       result.add (e.path, e.content)
 
 
-func renamesOf(tree: Tree, entries: openArray[Entry], locked: openArray[string]): seq[Rename] =
-  ## Read rename of each declaration in entries coining abbreviation (V.6), as names check
-  ##   reads it, with words glossaries admit.
+func renamesOf(
+  tree: Tree, entries: openArray[Entry], locked: openArray[string]
+): seq[(Rename, string)] =
+  ## Read rename of each declaration in entries, as names check reads it with words glossaries
+  ##   admit, and refusal known before semantic pass: coined abbreviation (V.6), and case of
+  ##   name's kind (V.1, V.11), which spells abbreviation out too and takes its place.
   let directories = tree.projectDirectories
   var glossaries: seq[(string, string)]
   for e in tree:
@@ -279,9 +290,12 @@ func renamesOf(tree: Tree, entries: openArray[Entry], locked: openArray[string])
       glossaries.add (e.path, e.content)
   for e in entries:
     if not e.isNimKind or e.path in locked: continue
-    let exempt = glossaries.exemptionsOf(e.path)
+    let
+      exempt = glossaries.exemptionsOf(e.path)
+      recased = renamesCase(e.content, exempt)
     for (line, column, name, renamed) in abbreviationRenames(e.content, exempt):
-      result.add Rename(
+      if recased.anyIt(it.line == line and it.column == column): continue
+      let rename = Rename(
         path: e.path,
         line: line,
         column: column,
@@ -289,19 +303,32 @@ func renamesOf(tree: Tree, entries: openArray[Entry], locked: openArray[string])
         renamed: renamed,
         rule: "abbreviation (V.6)",
       )
+      result.add (rename, "")
+    for r in recased:
+      let rename = Rename(
+        path: e.path,
+        line: r.line,
+        column: r.column,
+        name: r.name,
+        renamed: r.renamed,
+        rule: r.rule,
+        is_local: r.is_local,
+      )
+      result.add (rename, r.refusal)
 
 
 func semanticQueries*(
   tree: Tree, entries: openArray[Entry], locked: openArray[string] = []
 ): seq[Query] =
   ## Build what fixers of entries ask semantic pass: each type conversion candidate (STYLE.md
-  ##   §5), and every site of each name rename of abbreviation (V.6) would write, across its
-  ##   scope. File fix leaves as written asks nothing; one query holds all one file is asked.
+  ##   §5), and every site of each name rename of abbreviation (V.6) or case (V.1, V.11) would
+  ##   write, across its scope. File fix leaves as written, and rename refused already, ask
+  ##   nothing; one query holds all one file is asked.
   var asked: seq[Query]
   for e in entries:
     if e.isNimKind and e.path notin locked: asked.add conversionQuery(e.path, e.content)
-  for rename in renamesOf(tree, entries, locked):
-    asked.add rename.queriesOf(tree.scopeOf(rename.path))
+  for (rename, refusal) in renamesOf(tree, entries, locked):
+    if refusal.len == 0: asked.add rename.queriesOf(tree.scopeOf(rename))
   for query in asked:
     if query.sites.len == 0 and query.names.len == 0: continue
     var k = result.mapIt(it.path).find(query.path)
@@ -322,7 +349,8 @@ func contextOf*(
 ): Context =
   ## Read what tree and semantic pass tell fixers: dead exports of checker, as static pass reads
   ##   them from its modules, `koch.nim` and its suites; answer of each file asked; and rename
-  ##   of each abbreviation in entries, refused where it would write file entries leave out.
+  ##   of each abbreviation and case in entries, refused where it would write file entries
+  ##   leave out.
   var paths, sources, suites: seq[string]
   for e in tree:
     if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
@@ -332,8 +360,11 @@ func contextOf*(
   result.dead = deadExports(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
-  for rename in renamesOf(tree, entries, locked):
-    let scope = tree.scopeOf(rename.path)
+  for (rename, refusal) in renamesOf(tree, entries, locked):
+    if refusal.len > 0:
+      result.plans.add Plan(rename: rename, refusal: refusal)
+      continue
+    let scope = tree.scopeOf(rename)
     var fenced = initTable[string, seq[int]]()
     for (path, source) in scope: fenced[path] = source.fenceOf.lines
     var plan = planRename(rename, scope, result.answers, fenced)
@@ -407,6 +438,14 @@ func fixEntries*(
         plan.rename.rule.capitalizeAscii & " stays for hand, since rename to `" &
           plan.rename.renamed & "` is refused: " & plan.refusal & "; got `" & plan.rename.name &
           "`.",
+      )
+    let entry = e.content.blockEntry
+    if entry.refusal.len > 0:
+      result.left.add finding(
+        e.path,
+        entry.bindings[0][0],
+        "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+          entry.refusal & "; got `" & entry.bindings[0][1] & "`.",
       )
     if e.path in context.answers and context.answers[e.path].reason.len > 0:
       result.left.add finding(

@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, strutils, tables, unittest]
-import ../../src/[findings, fixes, form, idioms, kinds, symbols]
+import ../../src/[findings, fixes, form, idioms, kinds, names, symbols]
 import ./fixtures
 
 
@@ -198,7 +198,7 @@ suite "Fixes":
   test "semantic pass settles conversion first; file compiling nowhere is left with its error":
     let
       path = "curator/audit/src/a.nim"
-      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet y = x.float\n"
+      module = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet Y = x.float\n"
       queries = semanticQueries(@[entry(path, module)], [entry(path, module)])
     check queries.len == 1 and queries[0].sites == @[(5, 10), (5, 8)]
     var answer = Answer(path: path)
@@ -220,29 +220,140 @@ suite "Fixes":
   test "abbreviation renames at every use across files, or is refused whole where fix reaches not":
     let
       head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
-      a = entry("curator/audit/src/a.nim", head & "let ctx* = 1\n")
-      b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet y = ctx\n")
+      a = entry("curator/audit/src/a.nim", head & "let CTX* = 1\n")
+      b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet Y = CTX\n")
       tree = @[a, b]
       queries = semanticQueries(tree, tree)
     check queries.len == 2
-    check queries[0].sites == @[(5, 4)] and queries[0].names == @["context"]
+    check queries[0].sites == @[(5, 4)] and queries[0].names == @["CONTEXT"]
     check queries[1].sites == @[(7, 8)]
     let declared =
-      Symbol(kind: "skLet", name: "a.ctx", file: "/r/curator/audit/src/a.nim", line: 5, column: 4)
+      Symbol(kind: "skLet", name: "a.CTX", file: "/r/curator/audit/src/a.nim", line: 5, column: 4)
     var answers = @[Answer(path: a.path), Answer(path: b.path)]
     answers[0].symbols[(5, 4)] = declared
-    answers[0].globals["context"] = @[]
+    answers[0].globals["CONTEXT"] = @[]
     answers[1].symbols[(7, 8)] = declared
     let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
     check plan.written.len == 2
-    check plan.written[0].content == head & "let context* = 1\n"
-    check plan.written[1].content == head & "import ./a\n\nlet y = context\n"
+    check plan.written[0].content == head & "let CONTEXT* = 1\n"
+    check plan.written[1].content == head & "import ./a\n\nlet Y = CONTEXT\n"
     check plan.fixed.filterIt(it.message == "abbreviation (V.6)").len == 2
     let alone = fixEntries(CURATOR_BRANCH, [a], context = tree.contextOf([a], answers))
     check alone.written.len == 0  # rename would write `b.nim`, which fix leaves alone
     check "refused: it would write `" & b.path & "`, which this fix leaves alone" in
       alone.left[0].message
-    check alone.left[0].message.endsWith("; got `ctx`.")
+    check alone.left[0].message.endsWith("; got `CTX`.")
+
+
+  test "entry block moves into `proc main` through fix, or stays for hand with its reason":
+    let
+      path = "curator/audit/src/a.nim"
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n" & PROFILER_IMPORT & "\n\n"
+      plan = fixEntries(
+        CURATOR_BRANCH,
+        [entry(path, head & "when isMainModule:\n  let count = 1\n  echo count\n")],
+      )
+    check plan.written.mapIt(it.content) == @[
+      head & "proc main() =\n  ## TODO: Document.\n  let count = 1\n  echo count\n\n\n" &
+        "when isMainModule:\n  main()\n",
+    ]  # V.10
+    check plan.fixed.mapIt((it.line, it.message)) == @[(8, "entry block (V.10)")]
+    check fixEntries(CURATOR_BRANCH, plan.written).written.len == 0  # second fix writes nothing
+    let held = fixEntries(
+      CURATOR_BRANCH,
+      [entry(path, head & "when isMainModule:\n  var count {.global.} = 0\n")],
+    )
+    check held.written.len == 0
+    check held.left.mapIt((it.line, it.message)) == @[
+      (8, "Entry block (V.10) stays for hand, since move into `proc main` is refused: " &
+        "`{.global.}` binds at module level alone; got `count`."),
+    ]  # V.10
+
+
+  test "case renames at every use across files, and entry block moves into `proc main`, in one run":
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      a = entry("curator/audit/src/a.nim", head & "proc Run_all*(): int = 1\nconst COUNT* = 2\n")
+      b = entry(
+        "curator/audit/src/b.nim",
+        head & PROFILER_IMPORT & "\n\nimport ./a\n\nwhen isMainModule:\n" &
+          "  let COUNT = Run_all()\n  echo COUNT\n",
+      )
+      tree = @[a, b]
+      queries = semanticQueries(tree, tree)
+    check queries.mapIt((it.path, it.sites, it.names)) == @[
+      (a.path, @[(5, 5)], @["runAll"]),  # local `COUNT` of `b.nim` asks no other file
+      (b.path, @[(10, 14), (10, 6), (11, 7)], @["count"]),
+    ]
+    let
+      routine =
+        Symbol(kind: "skProc", name: "a.Run_all", file: "/r/" & a.path, line: 5, column: 5)
+      binding = Symbol(kind: "skLet", name: "b.COUNT", file: "/r/" & b.path, line: 10, column: 6)
+    var answers = @[Answer(path: a.path), Answer(path: b.path)]
+    answers[0].symbols[(5, 5)] = routine
+    answers[0].globals["runAll"] = @[]
+    answers[1].symbols[(10, 14)] = routine
+    for site in [(10, 6), (11, 7)]: answers[1].symbols[site] = binding
+    answers[1].globals["count"] = @[]
+    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    check plan.written.mapIt(it.content) == @[
+      head & "proc runAll*(): int = 1\nconst COUNT* = 2\n",
+      head & PROFILER_IMPORT & "\n\nimport ./a\n\nproc main() =\n  ## TODO: Document.\n" &
+        "  let count = runAll()\n  echo count\n\n\nwhen isMainModule:\n  main()\n",
+    ]  # V.1, V.10
+    check plan.fixed.mapIt((it.path, it.line, it.message)) == @[
+      (a.path, 5, "routine case (V.1)"),
+      (b.path, 10, "routine case (V.1)"),
+      (b.path, 10, "local constant case (V.1)"),
+      (b.path, 11, "local constant case (V.1)"),
+      (b.path, 10, "entry block (V.10)"),
+    ]  # each report at line of source as given
+    check plan.left.len == 0
+    let again = plan.written
+    check again.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.10: none left
+    check semanticQueries(again, again).len == 0  # no rename left for second run to ask
+    check fixEntries(CURATOR_BRANCH, again, context = again.contextOf(again)).written.len == 0
+
+
+  test "global breaking case and coining abbreviation takes one rename that settles both rules":
+    let
+      head = "## Do.\n\n" & STRICT_FUNCS & "\n\n"
+      a = entry("curator/audit/src/a.nim", head & "let tmp_dir* = \"a\"\n")
+      b = entry("curator/audit/src/b.nim", head & "import ./a\n\nlet PATH_HOME = tmp_dir\n")
+      tree = @[a, b]
+    check semanticQueries(tree, tree).mapIt((it.path, it.sites, it.names)) == @[
+      (a.path, @[(5, 4)], @["TEMPORARY_DIRECTORY"]),
+      (b.path, @[(7, 16)], newSeq[string]()),
+    ]  # one rename asked, never V.6 spelling `temporary_directory` beside it
+    let declared =
+      Symbol(kind: "skLet", name: "a.tmp_dir", file: "/r/" & a.path, line: 5, column: 4)
+    var answers = @[Answer(path: a.path), Answer(path: b.path)]
+    answers[0].symbols[(5, 4)] = declared
+    answers[0].globals["TEMPORARY_DIRECTORY"] = @[]
+    answers[1].symbols[(7, 16)] = declared
+    let plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree, answers))
+    check plan.written.mapIt(it.content) == @[
+      head & "let TEMPORARY_DIRECTORY* = \"a\"\n",
+      head & "import ./a\n\nlet PATH_HOME = TEMPORARY_DIRECTORY\n",
+    ]  # V.1, V.6
+    check plan.fixed.mapIt(it.message) ==
+      @["abbreviation (V.6) and global case (V.1)", "abbreviation (V.6) and global case (V.1)"]
+    check plan.written.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.6
+
+
+  test "rename fix cannot prove stays for hand with its reason, and asks semantic pass nothing":
+    let
+      path = "curator/audit/src/a.nim"
+      source = "## Do.\n\n" & STRICT_FUNCS & "\n\ntype Def {.importc: \"b3Def\".} = object\n" &
+        "  enableSleep {.importc.}: bool\n"
+      tree = @[entry(path, source)]
+      plan = fixEntries(CURATOR_BRANCH, tree, context = tree.contextOf(tree))
+    check semanticQueries(tree, tree).len == 0  # refused already, so nothing asked
+    check plan.written.len == 0
+    check plan.left.mapIt((it.line, it.message)) == @[
+      (6, "Field case (V.1) stays for hand, since rename to `enable_sleep` is refused: " &
+        "foreign code reads name through `importc`; got `enableSleep`."),
+    ]  # V.1
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":

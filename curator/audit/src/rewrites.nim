@@ -8,19 +8,27 @@
 ##     name check's scanner may read use as declaration, and rename of it would repeat other;
 ##   - every name token of scope that Nim reads as old name must resolve, in file that
 ##     compiles: one resolving to declaration is renamed, one resolving to other symbol stays,
-##     and one resolving to nothing refuses rename, since it cannot be proved either way.
+##     and one resolving to nothing refuses rename, since it cannot be proved either way. Edit
+##     spans token as spelled there, since Nim reads `tmpDir` as `tmp_dir`. Answer naming
+##     other identifier than token refuses too: it is call compiler placed on name, as `items`
+##     on `x` of `for e in x`, so what token names stays unknown. Old name inside braces of
+##     interpolated string (`&"…{x}…"`, `fmt"…"`) refuses, since strformat parses it from text
+##     and no token stands there to resolve or rename.
 ##     Named argument and field of constructor (`f(name = v)`, `T(name: v)`), which semantic
 ##     pass resolves to nothing, resolve through callee: they are declaration where it is
 ##     parameter or field of that callee, in file declaring callee;
 ##   - new name must stand nowhere in files rename writes, and name no global declaration of
 ##     any module compiled with declaring file, `system` among them: it would collide there, or
-##     shadow it;
+##     shadow it. Global there is what bare name reaches, `module.name` or enum member; field,
+##     parameter and local of other scope, which `globalSymbols` answers too, never collide.
+##     New name Nim reads as old one (`localValue` to `local_value`) skips both tests: it
+##     changes no reading, so nothing new can collide;
+##   - new name is no keyword, and not `result`, which compiler declares in routine;
 ##   - no edit lands on fenced line (X.1), and none widens line past `LINE_MAX`.
 ##   Mention of old name in backticks, in comment of file where rename takes every use, is
 ##     renamed too, so comment still names what code does.
 ##   Refusal names its reason, and rule's finding stays for hand. Rule choosing new name is
-##     caller's: V.6 abbreviation now (`names.nim`); V.1 case of local constant and of other
-##     names takes same planner.
+##     caller's (`names.nim`): V.6 abbreviation, and V.1 and V.11 case of each kind.
 ##
 ##   Cost: scope is caller's: project of declaring file and root files that import across
 ##     projects (`koch.nim`). Use in other project's file is not read, and none exists today.
@@ -49,12 +57,21 @@ type
     name*: string  ## Name as declared.
     renamed*: string  ## Name rule gives.
     rule*: string  ## Rule report names, e.g. `abbreviation (V.6)`.
+    is_local*: bool  ## Binding no other module can name, so scope is declaring file alone.
 
   Plan* = object  ## Define rename planned, or refused with reason.
     rename*: Rename
     edits*: Table[string, seq[Edit]]  ## Edits of each file rename writes.
     lines*: seq[(string, int)]  ## Path and one-based line of each edit, for reports.
     refusal*: string  ## Why rename is refused; empty where planned.
+
+
+const
+  NAME_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
+    ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
+  RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
+  KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
+  INTERPOLATORS = ["&", "fmt"]  ## Prefixes of string strformat interpolates (`&"…{x}…"`).
 
 
 func applied*(source: string, edits: openArray[Edit]): string =
@@ -68,6 +85,41 @@ func applied*(source: string, edits: openArray[Edit]): string =
 func isIdentical(a, b: Symbol): bool =
   ## Decide whether two answers name one symbol: one definition site.
   a.file == b.file and a.line == b.line and a.column == b.column
+
+
+func interpolatedLines(source, name: string): seq[int] =
+  ## Read zero-based line of each interpolated string naming `name` inside its braces, i.e.
+  ##   `&"…{x}…"` or `fmt"…{x}…"`: strformat parses it from text, so no name token stands there.
+  let tokens = source.tokens
+  for k, t in tokens:
+    if t.kind != TokenKind.Text or k == 0 or tokens[k - 1].after != t.first: continue
+    if tokens[k - 1].spelling(source) notin INTERPOLATORS: continue
+    var
+      depth = 0
+      word = ""
+      is_named = false
+    for c in t.spelling(source) & " ":
+      if c == '{': inc depth
+      elif c == '}' and depth > 0: dec depth
+      if depth > 0 and c in NAME_CHARS:
+        word.add c
+        continue
+      is_named = is_named or word.isSameName(name)
+      word = ""
+    if is_named: result.add t.line
+
+
+func isReached(symbol: Symbol): bool =
+  ## Decide whether bare name reaches symbol from module importing its own: global, i.e.
+  ##   `module.name`, or enum member; field, parameter and local nest one name deeper.
+  symbol.kind == KIND_MEMBER or symbol.name.count('.') == 1
+
+
+func nameAfter(source: string, first: int): int =
+  ## Read byte offset after name token opening at offset; its spelling may differ from declared
+  ##   name's in case and underscores, which Nim ignores past first character.
+  result = first
+  while result < source.len and source[result] in NAME_CHARS: inc result
 
 
 func sitesOf(source, name: string): seq[(int, int)] =
@@ -136,6 +188,9 @@ func planRename*(
     return
 
   result.rename = rename
+  if rename.renamed.isKeyword: refuse "`" & rename.renamed & "` is keyword"
+  if rename.renamed.isSameName(RESULT_NAME):
+    refuse "`" & rename.renamed & "` names implicit result of routine"
   if rename.path notin answers or answers[rename.path].reason.len > 0:
     refuse "declaring file does not compile on its pin"
   let declaring = answers[rename.path]
@@ -143,15 +198,22 @@ func planRename*(
     refuse "declaration resolves to no symbol"
   let
     declared = declaring.symbols[(rename.line, rename.column)]
-    shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(not it.isIdentical(declared))
+    shadowed = declaring.globals.getOrDefault(rename.renamed).filterIt(
+      it.isReached and not it.isIdentical(declared),
+    )
+    is_respelled = rename.name.isSameName(rename.renamed)
   if not declared.file.endsWith("/" & rename.path) or declared.line != rename.line or
       declared.column != rename.column:
     refuse "`" & rename.path & ":" & $rename.line & "` names symbol declared elsewhere"
-  if shadowed.len > 0:
+  if shadowed.len > 0 and not is_respelled:
     refuse "`" & rename.renamed & "` would shadow `" & shadowed[0].name & "`"
 
   # Classify each site of old name; any site unresolved refuses rename whole.
   for (path, source) in files:
+    let interpolated = source.interpolatedLines(rename.name)
+    if interpolated.len > 0:
+      refuse "`" & path & ":" & $(interpolated[0] + 1) & "` names `" & rename.name &
+        "` inside interpolated string"
     let sites = source.sitesOf(rename.name)
     if sites.len == 0: continue
     if path notin answers or answers[path].reason.len > 0:
@@ -162,7 +224,12 @@ func planRename*(
       is_every = true
     for site in sites:
       var symbol: Symbol
-      if site in answers[path].symbols: symbol = answers[path].symbols[site]
+      if site in answers[path].symbols:
+        # Answer naming other identifier is call compiler placed on name: `items` of `for`.
+        symbol = answers[path].symbols[site]
+        if not symbol.name.split('.')[^1].isSameName(rename.name):
+          refuse "`" & path & ":" & $site[0] & "` resolves to `" & symbol.name &
+            "`, which its token does not name"
       else:
         # Named argument or field resolves through its callee: parameter of that routine, or
         #   field of that type, in file declaring it.
@@ -178,10 +245,10 @@ func planRename*(
         is_every = false
         continue
       let first = starts[site[0] - 1] + site[1]
-      edits.add Edit(first: first, after: first + rename.name.len, text: rename.renamed)
+      edits.add Edit(first: first, after: source.nameAfter(first), text: rename.renamed)
       result.lines.add (path, site[0])
     if edits.len == 0: continue
-    if source.sitesOf(rename.renamed).len > 0:
+    if not is_respelled and source.sitesOf(rename.renamed).len > 0:
       refuse "`" & rename.renamed & "` already stands in `" & path & "`"
 
     # Rename mention in backticks of comment where every use is renamed.

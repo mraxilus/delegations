@@ -1539,6 +1539,9 @@ predicate:
   line forms that this charter prescribes.
 - V.6 has a fixer, which renames through the semantic pass (`## Semantic pass`). The check and
   the fixer share one reading of the words and of the exemptions of the glossaries.
+- V.1 and V.11 have a fixer through the same pass, which reads the case as the check reads it
+  (`## Semantic pass`). V.10 has a fixer that moves the entry block into `proc main`
+  (`## Content fixes`).
 - A name that a template substitutes declares nothing of that name. So `type name = object`
   inside `template defineKind(name: untyped)` is no type, and its fields are read as before.
 - A `static` parameter of a generic is a placeholder, so it takes one capital letter, as V.12
@@ -1646,7 +1649,8 @@ shell among them. The checks still read every kind, and a finding there stays fo
 **The fixers run in one order, and the chain runs again until the source settles.** First come
 the fixers that read more than one file: the renames and conversions of the semantic pass, then
 the dead exports. They run once, on the source as given, and their edits move no line. Form runs
-next, so later fixers read clean line ends and the final gap of each comment.
+next, so later fixers read clean line ends and the final gap of each comment. The entry block
+moves after form, because the move shifts lines and widens none.
 
 The content fixers follow, because each changes the width of its line. The idioms run next,
 because the bindings fixer indents lines, and every later width reads that indent. The
@@ -2035,6 +2039,38 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
 - Verified by `suites/test_form.nim`, `suites/test_prose.nim`, `suites/test_idioms.nim` and
   `suites/test_checker.nim`. The tree holds no finding of these four rules.
 
+**An entry block that binds moves into `proc main` (V.10).** The fixer puts the body in
+`proc main` above the block, and the block calls `main()`. The routine takes the doc
+`TODO: Document.` (VI.1), because only a reader can say what it does. The body keeps its lines
+and its indent, since a routine and a block indent a body alike. Each program of the tree of
+`main` writes `proc main` at module level too, read by hand on 2026-10-04.
+
+- The fixer reports one rewrite at each binding that the check names.
+- A comment that opens its line after the body stays below the block. A comment on the guard line
+  and an `else` branch stay with the block.
+- A binding of the block that breaks the case of a local takes that case in the same run
+  (`## Semantic pass`). Otherwise a second run would rename it.
+
+**The move is refused where a routine would read the body otherwise.** The refusal prints with its
+reason, and the finding stays for the hand.
+
+- A guard other than `isMainModule` alone, such as `isMainModule and defined(js)`. A routine at
+  module level compiles where that guard fails.
+- A `{.global.}`, `{.threadvar.}` or foreign pragma in the body, which binds at module level
+  alone.
+- An `import`, `include`, `from`, `export`, `method` or `converter` at any depth of the block, or
+  an export marker.
+- A `quit` with a value at the block's own indent. Its code then belongs in a `main` that returns
+  it, through `quit main()`, and that form is a choice.
+- Two entry blocks in one module, or a module that names `main` already.
+- Rejected: `proc main` inside the block, which V.10 also allows. The block then holds a routine
+  and a call, where each program of the tree holds one call.
+- Cost: a value that the block binds moves from static storage to the stack. A large array there
+  can overflow the stack, and `nim check` never reads that. Inferred from where Nim stores a
+  global and a local, and never measured.
+- Verified by `suites/test_names.nim` and `suites/test_fixes.nim`. The tree proof is in
+  `## Semantic pass`, beside the case rename that runs with it.
+
 **The whole-tree proof of the content fixes: no fix changes what code means.** Verified by hand,
 2026-10-03, with the scratch program of `## Layout fixes`, which now asks the semantic pass too.
 It fixed every Nim file of the tree on branch `main`, with the checkouts of `koch fetch-deps`.
@@ -2070,6 +2106,13 @@ toolchain that serves the pin of the project.
 
 - One `nimsuggest --v3 --stdin` serves each entry: the file itself, or the file that includes it.
   It runs in the project directory, so the `nim.cfg` of the project applies.
+- A run reads its commands from a file and writes its answers to a file, through the
+  redirection of the shell. A pipe holds 64 KiB, and a run whose answers fill it stops reading
+  commands. So a run fed through pipes, all commands first, waits forever on a large entry.
+  Verified by `suites/test_symbols.nim`, which passes 64 KiB each way.
+- `nimsuggest` waits 250 ms between two commands on its input, so each site costs a quarter of a
+  second at least. Measured on this container with 2.2.12, 2026-10-04: 300 sites of one small
+  file took 76 s, with 0.6 s of processor time.
 - Each file is checked first. A file that reports an error on the C backend is asked again on the
   JavaScript backend. A file that fails both stays unresolved, and `koch fix` prints its first
   error.
@@ -2083,6 +2126,15 @@ toolchain that serves the pin of the project.
   `nimsuggest` ships with each toolchain that koch serves, so the pass costs no build.
 - Cost, measured 2026-10-02 on this container: about 2 s for each entry of a curator module. A
   front-end or a suite of `rga_visualiser` takes 5 to 9 s. Only a file with a candidate asks.
+- A site of an included file asks `dus`, whose answer opens on the same definition as `def`.
+  Verified by `suites/test_symbols.nim`, which resolves a use of an included file to its `let`.
+- On the commit pin, `def` in an included file recompiles the file that includes it for each
+  site, and `dus` recompiles only what is dirty. Read in `executeNoHooksV3` of `nimsuggest.nim`
+  at that pin. Measured on this container, 2026-10-04, over 20 sites of the shared suite of
+  `rga_visualiser` at `c5c65db`: `def` took 345 s and `dus` took 50 s.
+- A site of the entry itself keeps `def`, because `dus` lists every use of the symbol. Measured in
+  the same run: `dus` gave 182 use lines beside the 20 definitions. That the list grows long for a
+  common symbol such as `float` is inferred, and an included file pays that output alone.
 - Cost: a file that needs a checkout of `koch fetch-deps`, or a native library, stays unresolved
   without it. A branch of `when` that the defines leave out resolves nothing.
 - Verified by `suites/test_symbols.nim`, against the `nimsuggest` of the running compiler.
@@ -2107,35 +2159,109 @@ by word, in its own case. `rewrites.nim` plans the rename from what the pass res
   read a use as a declaration, and a rename there would repeat the real one.
 - A site that resolves to the declaration is renamed, and one that resolves to another symbol
   stays. A site that resolves to nothing refuses the rename.
+- A site whose answer names another identifier refuses the rename too. That answer is a call that
+  the compiler places on the name, such as `items` in `for e in x`, or a converter. Verified by
+  `suites/test_rewrites.nim`, and by hand with the `nimsuggest` of the commit pin, 2026-10-04:
+  `def` at `WINDING` in `for (which_end, side) in WINDING:` of `mesh.nim` at `c5c65db` answers
+  `items`.
+- An old name inside the braces of an interpolated string, `&"…"` or `fmt"…"`, refuses the rename.
+  The module strformat parses it from the text, so no token stands there to resolve. Verified by
+  `suites/test_rewrites.nim`. Verified by hand on `c5c65db`, 2026-10-04: such a name left as
+  written broke `nim check`.
 - A named argument or a constructor field resolves through its callee. It is the declaration where
   it is a parameter or a field of that callee.
 - The new name must not stand in a file that the rename writes. It must not name a global
   declaration of a module compiled with the declaring file, `system` among them.
+- A global there is what a bare name reaches: `module.name`, or an enum member. The pass answers
+  fields, parameters and locals of other scopes too, and none of them can collide. Verified by
+  `suites/test_rewrites.nim`. Verified by hand on `c5c65db`, 2026-10-04: `globalSymbols` answered
+  fields such as `camera.SphereWorld.radius`.
+- Cost: the presence test reads each token of the new name, a field access among them. So a
+  rename that would compile can be refused. Inferred from `sitesOf`, which reads every name token.
 - No edit may land on a fenced line, or widen a line past 100 characters. A rename that reaches a
   file that the run does not fix is refused.
 - A mention of the old name in backticks, in a comment of a file where every use is renamed, is
   renamed too.
-- The planner takes the new name from its caller. So a rename of V.1 reuses it, for the case of a
-  local constant or of another name. Only the rule that chooses the name is new.
+- The planner takes the new name from its caller: the V.6 rule here, and the case rule below.
+- Each edit spans the name token at its site, because Nim reads `tmpDir` as `tmp_dir`. Verified
+  by `suites/test_rewrites.nim`.
+- A new name that is a keyword, or `result`, refuses the rename, because the compiler reads either
+  as something else. Verified by `suites/test_rewrites.nim`.
 - Cost: the scope is the project of the declaring file and the root files.
 - Cost: overloads in one file share the qualified name of a parameter. So a named argument to
   another overload is renamed too, and its build then fails.
 - Verified by `suites/test_rewrites.nim`, `suites/test_names.nim` and `suites/test_fixes.nim`.
 
-**The rename has its proof on commit `c5c65db` of `main`, because the tree of today holds no V.6
-finding.** Verified by hand, 2026-10-03, with a scratch program over `abbreviationRenames`,
-`planRename` and `resolve`. It applied the planned renames alone to a copy of that tree, with the
-checkouts of `koch fetch-deps`.
+**The rename has its proof on commit `c5c65db` of `main`, because the tree at `de0c1899` holds no
+V.6 finding, by `nim r koch check-files`.** Verified by hand, 2026-10-03, with a scratch program
+over `abbreviationRenames`, `planRename` and `resolve`. It applied the planned renames alone to a
+copy of that tree, with the checkouts of `koch fetch-deps`.
 
 - The names check gave 105 renames to plan. The semantic pass read 43 of the files in 155 s.
-- The planner planned 87 and refused 18. The declaring file of 9 compiles on no backend, and the
-  new name of 4 already stands. Another 4 would cross 100 characters. The last one is a use in a
-  tuple binding that the names scanner reads as a declaration.
+- The planner planned 87 and refused 18. Among them, the declaring file of 9 compiles on no
+  backend, and the new name of 4 already stands. Another 4 would cross 100 characters.
+- The names scanner reads a name in the value of a tuple binding as a use, and never as a
+  declaration. Verified by `suites/test_names.nim`.
 - The renames wrote 39 Nim files. The parser of the compiler read each to the same tree as
   before, once the renames map back.
 - `nim check` read each with the same result before and after. It passed 35 on the C backend and
   2 on the JavaScript backend, and 2 failed both times.
 - A second run gave 17 renames to plan, planned none, and so wrote nothing.
+
+**A name in the case of another kind (V.1, V.11) is renamed to the case of its own kind at every
+use.** `names.nim` reads each declaration whose case the names check reports. It spells the name
+word by word in the case of its kind, and the planner of the V.6 rename plans it from the pass. A
+name that also coins an abbreviation takes one rename, which settles both rules.
+
+- A local in capitals reports as `local constant case (V.1)`. Every other kind reports its own
+  rule, such as `field case (V.1)` or `member case (V.11)`.
+- Camel and Pascal keep the later letters of each word, so `parse_JSON` becomes `parseJSON`. A
+  name of capitals alone lowers them, so `DO_THING` becomes `doThing`.
+- A binding of an entry block that moves takes the case of a local, since it is one in `main`.
+- A local binding asks its declaring file alone, because no other module can name it. A file
+  elsewhere that does not compile then refuses nothing, and the pass asks fewer sites.
+- A new name that Nim reads as the old one, such as `local_value` for `localValue`, skips the
+  presence and shadow tests. It changes no reading, so nothing new can collide.
+
+**The case rename is refused before the pass where its meaning would leave the text.** Each
+refusal prints with its reason, and the finding stays for the hand.
+
+- A name that foreign code reads by its spelling is refused. A pragma such as `importc` or
+  `exportc` on its line or on its type marks it. So do a `{.push.}` over it and a type of
+  `JsRoot`. `nim check` never compiles the C or the JavaScript that such a rename would break.
+  Inferred from what `nim check` runs: the front end of the compiler, and no C or JavaScript
+  toolchain.
+- A parameter of a foreign routine is renamed, because a foreign call passes it by place.
+- A member without its own string is refused, because `$` reads its name, and output often
+  shows it.
+- A name that its line declares twice is refused, and so is a new name that reads as a new
+  acronym.
+- Rejected: a rename of a placeholder (V.12). Its letter is the initial of what it ranges over,
+  which is a choice.
+- Cost: a renamed field or type changes what `$`, `%` and `fieldPairs` print of it. Reading holds
+  that. Inferred from how those routines read the names of fields, and never measured.
+- Verified by `suites/test_names.nim`, `suites/test_rewrites.nim` and `suites/test_fixes.nim`.
+
+**The case rename and the entry move have their proof on commit `c5c65db` of `main`.** The tree
+at `de0c1899` holds no finding of either, by `nim r koch check-files`. Verified by hand,
+2026-10-04, with a scratch program over `renamesOf`, `planRename`, `resolve` and `fixBlockEntry`.
+It applied these fixers alone to a copy of that tree, with the checkouts of `koch fetch-deps` and
+the engine of `dance_ontology`. The program stays outside the tree, so its figures stand in the
+pull request, and the record keeps what they show.
+
+- The parser of the compiler read each written file to the same tree as before. That holds once
+  the renames map back and each moved body returns under its block.
+- `nim check` gave each written file the same result before and after, on its own pin.
+- Each refusal named one reason that this section gives, and each entry block moved.
+- A second run refused each rename for the reason of the first, moved no block, and wrote nothing.
+- Cost, measured in that run: the semantic pass spent most of an hour. A site of the shared suite
+  of `rga_visualiser` took about 1.5 s, because `dus` answers it with every use.
+
+**The entry move alone has a second proof, on commit `c4c0d400`, which holds more entry blocks.**
+Verified by hand, 2026-10-04, with the same program and the engine of `dance_ontology`. Each entry
+block moved, and the parser read each written file to the same tree once its body returns under
+its block. `nim check` gave each written file the same result before and after, and a second run
+moved nothing.
 
 ## Fixed waits
 
@@ -2716,5 +2842,9 @@ pull requests sat on both sides, so the subject of a call does not say which met
 - Whether `koch fix` with no name reads the changed files rather than the changed projects. Every
   verb that takes projects reads projects, so a run can rewrite a file that the branch did not
   touch (Precedence 2).
+- Whether a rename should read the uses of its declaration through `dus`, as a second answer for
+  each site. The usage list of `WINDING` in `mesh.nim` at `c5c65db` holds the site that `def`
+  answers with `items`. So a rename that an implicit call refuses could be planned, at one more
+  command for each rename.
 - Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
   Without it, each run fetches 5.7 MB of faces before the suite holds the rows to their bytes.

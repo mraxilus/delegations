@@ -41,6 +41,28 @@
 ##   V.6 has fixer (`koch fix`): `abbreviationRenames` reads each declaration coining
 ##     abbreviation and its full spelling, case kept, as check reads it, and rename planner of
 ##     `rewrites.nim` renames it at every use through semantic pass, or refuses with reason.
+##   V.1 and V.11 have fixer: `renamesCase` reads each declaration whose case check reports, and
+##     spells it in case of its kind word by word (`cased`), abbreviation spelled out too; same
+##     planner renames it. Binding of entry block that moves takes case of local it becomes.
+##     Fix refuses before planner where meaning would leave text: name foreign code reads by
+##     spelling (`MARKS_FOREIGN` on its line, on its type, or `{.push.}` over it), member
+##     without own string, whose `$` reads its name, name line declares twice, and new name
+##     reading as new acronym. Parameter of foreign routine is renamed: call passes it by place.
+##   V.10 has fixer: `fixBlockEntry` moves body of entry block into `proc main` above it, doc
+##     `TODO: Document.` (VI.1), and leaves block calling `main()`; body keeps lines and indent.
+##     `blockEntry` refuses block routine would read otherwise: guard beyond `isMainModule`,
+##     which would compile body where guard fails; `{.global.}`, `{.threadvar.}` or foreign
+##     pragma; statement or export marker module level holds alone, at any depth; `quit` with
+##     value at block's own indent, whose code `quit main()` would carry; and `main` named
+##     already.
+##
+##   Rejected: `proc main` inside block, which V.10 allows; STYLE.md §1 and every program of
+##     tree put it at module level, and block then holds one call.
+##   Rejected: placeholder rename (V.12), since initial of what it ranges over is choice.
+##   Cost: field and type renamed change what `$`, `%` and `fieldPairs` print of them; member
+##     is refused for that reason, since its `$` is commonly output. Reading holds rest.
+##   Cost: value bound in moved block lives on stack, not in static storage; large array
+##     there can overflow stack, which `nim check` never reads.
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
@@ -91,6 +113,25 @@ type
     is_entry: bool  ## Top-level `when isMainModule:`, where module runs as program.
     substituted: seq[string]  ## Parameters of template, which its body names in place of argument.
 
+  RenameCase* = object
+    ## Define rename case of declaration's kind asks (V.1, V.11), or why fix leaves it to hand.
+    line*: int  ## One-based line of declared name.
+    column*: int  ## Zero-based byte column of declared name.
+    name*: string  ## Name as declared.
+    renamed*: string  ## Name in case of its kind, each coined abbreviation spelled out (V.6).
+    rule*: string  ## Rule report names, e.g. `local constant case (V.1)`.
+    refusal*: string  ## Why fix leaves rename to hand before semantic pass reads it; empty if none.
+    is_local*: bool  ## Binding no other module can name: local, or binding of entry block.
+
+  BlockEntry* = object
+    ## Define entry block of module, bindings it holds, and why fix cannot move its body (V.10).
+    head: int  ## Zero-based line of `when isMainModule:`; `-1` where none is read.
+    first: int  ## Zero-based first line of body, leading blank lines left out.
+    last: int  ## Zero-based last line of body; comment opening line below it stays below block.
+    indent: int  ## Indent of body's first line of code.
+    bindings*: seq[(int, string)]  ## One-based line and name of each binding block holds.
+    refusal*: string  ## Why fix leaves block to hand; empty where body moves into `proc main`.
+
 
 const
   ABBREVIATIONS* = [
@@ -126,6 +167,21 @@ const
     "is one capital letter",
   ]
     ## Predicate of each casing, as finding states it.
+  MAIN_GUARD* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
+  MARKS_FOREIGN = [
+    "dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp", "importjs",
+    "importobjc", "JsRoot",
+  ]
+    ## Words marking name foreign code reads by its spelling: pragma, or root of JavaScript object.
+  PRAGMAS_MODULE = [
+    "dynlib", "exportc", "exportcpp", "extern", "global", "header", "importc", "importcpp",
+    "importjs", "importobjc", "threadvar",
+  ]
+    ## Pragmas binding name at module level alone, or across foreign boundary, never in routine.
+  KEYWORDS_MODULE = ["converter", "export", "from", "import", "include", "method"]
+    ## Keywords opening statement module level holds alone, or bringing what routine may not
+    ##   hold, as `include` brings exported declarations.
+  ROUTINE_ENTRY = "main"  ## Routine entry block calls (V.10).
 
 
 func blanked(source: string, should_keep_comments: bool): string =
@@ -695,6 +751,14 @@ func casingOf*(d: Declared): Casing =
   of NameKind.Binding: (if d.reach == Reach.Global: Casing.Screaming else: Casing.Snake)
 
 
+func isMiscased(d: Declared): bool =
+  ## Decide whether name breaks case of its kind, as `checkNames` reads it (V.1, V.11, V.12);
+  ##   binding of entry block and variable in source's notation carry no case to read.
+  if d.kind == NameKind.Binding and d.reach == Reach.Entry: return false
+  if d.kind in VARIABLE_KINDS and d.name.isNotation: return false
+  not d.name.isCased(d.casingOf)
+
+
 func acronyms*(name: string): seq[string] =
   ## Read runs of two or more capitals, digits attached, inside camel or Pascal name.
   if name.isCased(Casing.Screaming) or '_' in name: return
@@ -812,7 +876,7 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] 
         d.line,
         "Notation holds over case only for immutable global (III.5); got `" & d.name & "`.",
       )
-    elif not is_notation and not d.name.isCased(casing):
+    elif d.isMiscased:
       let
         rule = if d.kind == NameKind.Member: "V.11" elif casing == Casing.Letter: "V.12" else: "V.1"
         subject = if d.kind == NameKind.Binding: $d.reach else: $d.kind
@@ -828,3 +892,265 @@ func checkNames*(path, source: string; exempt: openArray[string]): seq[Finding] 
         d.line,
         "Global never shares its word with type (V.10); got `" & d.name & "`.",
       )
+
+
+func cased*(name: string, casing: Casing): string =
+  ## Spell name in casing, word by word (V.1, V.11): `localValue` gives `local_value`,
+  ##   `Construct_table` gives `constructTable`, `base` gives `Base`.
+  ##   Camel and Pascal keep later letters of each word, so `parse_JSON` gives `parseJSON`,
+  ##     unless name is capitals alone; `Letter` keeps name, since placeholder's initial is choice.
+  let
+    parts = name.words
+    is_capitals = name.isCased(Casing.Screaming)
+  case casing
+  of Casing.Snake: result = parts.mapIt(it.toLowerAscii).join("_")
+  of Casing.Screaming: result = parts.mapIt(it.toUpperAscii).join("_")
+  of Casing.Letter: result = name
+  of Casing.Camel, Casing.Pascal:
+    for k, part in parts:
+      let rest = if is_capitals: part[1 .. ^1].toLowerAscii else: part[1 .. ^1]
+      if k == 0 and casing == Casing.Camel: result.add part.toLowerAscii
+      else: result.add part[0].toUpperAscii & rest
+
+
+func identity(name: string): string =
+  ## Read name as Nim compares it: first character exact, rest without case and underscores.
+  if name.len == 0: "" else: name[0] & name[1 .. ^1].replace("_", "").toLowerAscii
+
+
+func wordsOf(line: string): seq[string] =
+  ## Read identifiers of one line of code view.
+  var word = ""
+  for c in line & " ":
+    if c in NAME_CHARS: word.add c
+    elif word.len > 0:
+      result.add word
+      word = ""
+
+
+func blockEntry*(source: string): BlockEntry =
+  ## Read entry block of module, each binding it holds, and why fix cannot move its body into
+  ##   `proc main` (V.10): more than one block, guard beyond `isMainModule`, pragma or statement
+  ##   no routine holds, export marker, `quit` with value at block's own indent, or `main` taken.
+  ##   Block binding nothing reads no refusal, since nothing moves.
+  result.head = -1
+  for d in source.declarations:
+    if d.kind == NameKind.Binding and d.reach == Reach.Entry: result.bindings.add (d.line, d.name)
+  if result.bindings.len == 0: return
+  let
+    lines = source.split('\n')
+    code = source.codeOnly.split('\n')
+    tokens = source.tokens
+    partners = tokens.partners
+    starts = source.lineStarts
+  var heads: seq[int]
+  for i, line in code:
+    if line.indentOf == 0 and line.identifierAt(0) == "when" and "isMainModule" in line:
+      heads.add i
+  if heads.len != 1:
+    result.refusal = "module holds `" & $heads.len & "` entry blocks"
+    return
+  result.head = heads[0]
+  if code[result.head].strip != MAIN_GUARD:
+    result.refusal = "`" & code[result.head].strip & "` guards more than `isMainModule`"
+    return
+
+  # Body runs to first line of code at indent 0; comment opening its line there stays below.
+  var stop = result.head + 1
+  while stop < code.len and (code[stop].strip.len == 0 or code[stop].indentOf > 0): inc stop
+  result.first = result.head + 1
+  while lines[result.first].strip.len == 0: inc result.first
+  for t in tokens:
+    if t.line <= result.head or t.line >= stop: continue
+    if t.kind == TokenKind.Comment and t.first == starts[t.line]: continue
+    result.last = max(result.last, t.lastLine(source))
+  for i in result.first..result.last:
+    if code[i].strip.len == 0: continue
+    result.indent = code[i].indentOf
+    break
+
+  # Refuse what routine cannot hold, or would read otherwise than block.
+  for k, t in tokens:
+    if t.line < result.first or t.line > result.last: continue
+    if t.kind == TokenKind.Open and t.spelling(source) == "{." and partners[k] > k:
+      for m in k + 1..<partners[k]:
+        let word = tokens[m].spelling(source)
+        if tokens[m].kind == TokenKind.Word and word in PRAGMAS_MODULE:
+          result.refusal = "`{." & word & ".}` binds at module level alone"
+          return
+    let is_marker = t.kind == TokenKind.Operator and t.spelling(source) == "*" and k > 0 and
+      tokens[k - 1].kind == TokenKind.Word and tokens[k - 1].after == t.first
+    if is_marker:
+      result.refusal = "export marker of `" & tokens[k - 1].spelling(source) &
+        "` stands at module level alone"
+      return
+  for i in result.first..result.last:
+    if code[i].strip.len == 0: continue
+    let
+      word = code[i].identifierAt(0)
+      rest = code[i].strip[word.len .. ^1].strip
+    if word in KEYWORDS_MODULE:
+      result.refusal = "`" & word & "` stands at module level alone"
+      return
+    if code[i].indentOf == result.indent and word == "quit" and rest notin ["", "()"]:
+      result.refusal = "`quit` at block's own indent returns value, which `quit main()` would carry"
+      return
+  for t in tokens:
+    if t.kind == TokenKind.Word and t.spelling(source).identity == ROUTINE_ENTRY:
+      result.refusal = "`" & t.spelling(source) & "` stands in module already"
+      return
+
+
+func fixBlockEntry*(path, source: string): Fix =
+  ## Move body of entry block into `proc main` above block, documented `TODO: Document.` (VI.1),
+  ##   and leave block calling `main()` (V.10). Block whose move `blockEntry` refuses stays.
+  ##   Body keeps its lines and indent, since block and routine indent body alike.
+  let entry = source.blockEntry
+  result.source = source
+  if entry.bindings.len == 0 or entry.refusal.len > 0: return
+  let
+    lines = source.split('\n')
+    margin = ' '.repeat(entry.indent)
+  var shaped: seq[string]
+
+  template keep(i: int) =
+    shaped.add lines[i]
+    result.origin.add i + 1
+
+  template insert(line: string) =
+    shaped.add line
+    result.origin.add 0
+
+  for i in 0..<entry.head: keep(i)
+  insert "proc " & ROUTINE_ENTRY & "() ="
+  insert margin & "## TODO: Document."
+  for i in entry.first..entry.last: keep(i)
+  insert ""
+  insert ""
+  keep(entry.head)
+  insert margin & ROUTINE_ENTRY & "()"
+  for i in entry.last + 1..<lines.len: keep(i)
+  result.source = shaped.join("\n")
+  for (line, _) in entry.bindings: result.fixed.add finding(path, line, "entry block (V.10)")
+
+
+func foreignMark(code: openArray[string], line: int, kind: NameKind): string =
+  ## Read word marking name declared at zero-based line as one foreign code reads by spelling
+  ##   (`MARKS_FOREIGN`): on its signature or line, on each line enclosing field or member, or on
+  ##   `{.push.}` over it, which stands over foreign bindings alone (STYLE.md §2). Empty where
+  ##   none; parameter crosses no boundary by name, since foreign call passes arguments by place.
+  if kind == NameKind.Parameter: return
+  var pushed = ""
+  for i in 0..<line:
+    let s = code[i].strip
+    if s.startsWith("{.push"):
+      let marks = s.wordsOf.filterIt(it in MARKS_FOREIGN)
+      pushed = if marks.len > 0: marks[0] else: "push"
+    elif s.startsWith("{.pop"): pushed = ""
+  if pushed.len > 0: return pushed
+
+  # Read declaring lines: signature runs to its closing parenthesis, pragma line after it.
+  var
+    read = @[line]
+    text = code[line]
+  while text.count('(') > text.count(')') and read[^1] + 1 < code.len:
+    read.add read[^1] + 1
+    text.add code[read[^1]]
+  if kind == NameKind.Routine and read[^1] + 1 < code.len and
+      code[read[^1] + 1].strip.startsWith("{."):
+    read.add read[^1] + 1
+  if kind in {NameKind.Field, NameKind.Member}:
+    var indent = code[line].indentOf
+    for i in countdown(line - 1, 0):
+      if code[i].strip.len == 0 or code[i].indentOf >= indent: continue
+      read.add i
+      indent = code[i].indentOf
+      if indent == 0: break
+  for i in read:
+    for word in code[i].wordsOf:
+      if word in MARKS_FOREIGN: return word
+
+
+func isMemberSpelled(
+  tokens: openArray[Token], partners: openArray[int], k: int, source: string
+): bool =
+  ## Decide whether enum member at token `k` carries its own string, so `$` reads no name of it:
+  ##   `A = "a"` or `A = (0, "a")`.
+  if k + 2 >= tokens.len or tokens[k + 1].spelling(source) != "=": return false
+  let value = tokens[k + 2]
+  if value.kind == TokenKind.Text: return true
+  if value.spelling(source) != "(" or partners[k + 2] < 0: return false
+  toSeq(k + 3..<partners[k + 2]).anyIt(tokens[it].kind == TokenKind.Text)
+
+
+func renamesCase*(source: string, exempt: openArray[string]): seq[RenameCase] =
+  ## Read rename each declaration needs to take case of its kind, as `checkNames` reports case
+  ##   (V.1, V.11), each coined abbreviation spelled out too (V.6). Binding of entry block that
+  ##   fix moves into `proc main` takes case of local, as it reads there.
+  ##   Rename fix leaves to hand carries refusal: name foreign code reads, member `$` reads, name
+  ##     line declares twice, or new name that reads otherwise than rule asks.
+  ##   Placeholder (V.12) has none: its letter is initial of what it ranges over, which is choice.
+  let
+    tokens = source.tokens
+    partners = tokens.partners
+    starts = source.lineStarts
+    code = source.codeOnly.split('\n')
+    entry = source.blockEntry
+    declared = source.declarations
+    lower_exempt = exempt.mapIt(it.toLowerAscii)
+  for d in declared:
+    var subject = d
+    if d.kind == NameKind.Binding and d.reach == Reach.Entry:
+      if entry.refusal.len > 0: continue
+      subject.reach = Reach.Local
+    let casing = subject.casingOf
+    if casing == Casing.Letter or not subject.isMiscased: continue
+
+    # Name rule: member, local constant, i.e. local in capitals, or kind as finding names it.
+    let
+      respelled = d.name.respelled(exempt)
+      renamed = respelled.cased(casing)
+      rule_case =
+        if d.kind == NameKind.Member: "member case (V.11)"
+        elif d.kind == NameKind.Binding and subject.reach == Reach.Local and
+            d.name.isCased(Casing.Screaming):
+          "local constant case (V.1)"
+        elif d.kind == NameKind.Binding: ($subject.reach).toLowerAscii & " case (V.1)"
+        else: ($d.kind).toLowerAscii & " case (V.1)"
+    var rename = RenameCase(
+      line: d.line,
+      name: d.name,
+      renamed: renamed,
+      rule: if respelled == d.name: rule_case else: "abbreviation (V.6) and " & rule_case,
+      is_local: d.kind == NameKind.Binding and subject.reach == Reach.Local,
+    )
+
+    # Find declared name's token from declaration's first line on, where multi-line signature
+    #   places parameter below.
+    var k = 0
+    while k < tokens.len and (tokens[k].line < d.line - 1 or tokens[k].kind != TokenKind.Word or
+        tokens[k].spelling(source) != d.name):
+      inc k
+    if k == tokens.len: continue
+    rename.line = tokens[k].line + 1
+    rename.column = tokens[k].first - starts[tokens[k].line]
+
+    # Refuse rename that no planner can prove keeps meaning.
+    let
+      mark = code.foreignMark(tokens[k].line, d.kind)
+      acronyms = renamed.acronyms.filterIt(
+        it notin d.name.acronyms and it.toLowerAscii notin lower_exempt,
+      )
+    if declared.countIt(it.line == d.line and it.name == d.name) > 1:
+      rename.refusal = "line declares `" & d.name & "` twice"
+    elif d.name.isNotation: rename.refusal = "`" & d.name & "` holds letter outside ASCII"
+    elif mark.len > 0: rename.refusal = "foreign code reads name through `" & mark & "`"
+    elif d.kind == NameKind.Member and not tokens.isMemberSpelled(partners, k, source):
+      rename.refusal = "`$` of member reads its name"
+    elif not renamed.isCased(casing):
+      rename.refusal = "`" & renamed & "` " & CASE_RULES[casing].replace("is ", "is no ")
+    elif acronyms.len > 0:
+      rename.refusal = "`" & renamed & "` reads `" & acronyms[0] & "` as acronym (V.9)"
+    elif d.reach == Reach.Entry and renamed.identity == ROUTINE_ENTRY:
+      rename.refusal = "`" & renamed & "` names routine of entry block (V.10)"
+    result.add rename

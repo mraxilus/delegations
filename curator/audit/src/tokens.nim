@@ -262,6 +262,11 @@ func isKeyword*(t: Token, source: string): bool =
   t.kind == TokenKind.Word and t.spelling(source) in KEYWORDS
 
 
+func isKeyword*(name: string): bool =
+  ## Decide whether name reads as keyword: Nim compares rest of it without case and underscores.
+  name.len > 0 and name[0] & name[1 .. ^1].replace("_", "").toLowerAscii in KEYWORDS
+
+
 func isOperandEnd*(tokens: openArray[Token], k: int, source: string): bool =
   ## Decide whether token `k` ends operand, so operator after it stands in binary place.
   ##   Keyword ends none but `nil`, or one after `.` that names field, as `x.type`.
