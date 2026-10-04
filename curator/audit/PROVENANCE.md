@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c9df6647550e6877 |
+| Rules   | 6d66292a627b7509 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -897,10 +897,20 @@ beside the section that each title comes from.
 - Cost: the pattern is `jq` inside shell, as the role-line pattern is, so no suite drives it.
 
 **The ledger names a closed item that still carries the `architect` label.** The label marks a
-state, and not a role. An item carries it while it waits on the Architect, and the coordinator
-removes it once the ruling is posted (`COORDINATOR.md`, The queue). A closed item that still
-carries it is a removal that the coordinator missed, and the next filter on the label shows a
-stale queue.
+state, and not a role. A delegate adds it to its own item that waits on the Architect, and
+removes it once the ruling is posted (`CONTRIBUTOR.md`, Boundaries). `architect.yml` removes it
+from an item that closes, because the delegate that asked has often ended by the merge. So a
+closed item that still carries it marks a failed run of that workflow. The next filter on the
+label would show a stale queue.
+
+- **The workflow fires on a close alone, and never on a return to draft.** A decision can wait
+  on a draft pull request, and a label removed there would hide it from the Architect. Rejected:
+  removal on `converted_to_draft`, which `draft.yml` fires on each push to a ready pull request.
+- The workflow reads the labels before it removes one, so an item whose label somebody removed
+  first is no failure.
+- Its grant is `issues: write` alone. The labels of a pull request go through the issues
+  endpoint, which takes either the issues grant or the pull requests grant. That is inferred
+  from the reference of the endpoint, and the first labelled pull request to merge verifies it.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
@@ -2069,14 +2079,14 @@ that holds it. The events, each one a verb argument:
 - `body` refuses a post that lacks the role line or the footer, or breaks the three English
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
-- `stop` refuses the end of a turn that pushed or posted and lacks the sign-off. It also
-  refuses a sign-off out of shape.
+- `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
+  nor the working line. It also refuses a sign-off out of shape.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
 **`path`, `edit` and `bash` read the checkout that the call acts in, and never the primary
 checkout alone.** A subagent works in a worktree of its own, on a branch of its own
-(`GUIDE.md`, Independent changes run in subagents). The checkout of a write is the one that
+(`GUIDE.md`, Work for subagents). The checkout of a write is the one that
 holds the file. The checkout of a git command is the one that its `-C` or a `cd` before it
 names, else the working directory of the call. A directory outside this repository falls
 back to the primary checkout.
@@ -2166,18 +2176,22 @@ carries the label of the role that it starts, and no item is the work of the coo
 Verified by `suites/test_hooks.nim`.
 
 **The sign-off follows the order that the Architect set, and `stop` holds that order.** The
-Architect reads the block first: who the delegate is and where it stands, then what happened,
-then what waits on them (`GUIDE.md`, The sign-off). Each decision reads as a decision card, and
-its class says what blocks. Each ⚠️ row names the role that it waits on. The coordinator, once
-the Architect trials it, lifts each decision onto a card without a change of words.
-The block carries seven labels in order: `Role`, `State`, the table, `Context`, `Summary`,
-`Decisions` and `Next step`.
+Architect reads the block first: who the delegate is and what it works on, then what happened.
+Where it stands and what waits on them come last (`GUIDE.md`, The sign-off). Each decision reads as
+a decision card, and its class says what blocks. Each ⚠️ row names the role that it waits on.
+The coordinator, once the Architect trials it, lifts each decision onto a card without a change
+of words.
 
-- The state opens with `done`, `working`, `waiting` or `blocked`. The check reads that word
-  alone, up to the first comma or space. Where the branch stands follows it, and only the
-  `english` check reads it. Verified by hand through the built hook, 2026-10-03: a state line
-  over 25 words gives an `english` finding. The state is `blocked` exactly when a decision
-  blocks this delegate.
+The block carries seven labels in order: `Role`, `Context`, the table, `Summary`, `State`,
+`Decisions` and `Next step`. The Architect set this order on 2026-10-04. The table ends where
+`Summary` starts. Verified by `suites/test_hooks.nim`, which refuses a table before the context
+and a state before the summary.
+
+- The state opens with `done`, `waiting` or `blocked`. The check reads that word alone, up to
+  the first comma or space. Where the branch stands follows it, and only the `english` check
+  reads it. Verified by hand through the built hook, 2026-10-03: a state line over 25 words
+  gives an `english` finding. The state is `blocked` exactly when a decision blocks this
+  delegate.
 - The block holds no brief line, by the choice of the Architect: no delegate starts from a
   brief until the Architect trials the coordinator. No check refuses a line beyond the seven
   labels, so reading holds this rule. Verified by hand through the built hook, 2026-10-03: a
@@ -2201,6 +2215,25 @@ The block carries seven labels in order: `Role`, `State`, the table, `Context`, 
 - Verified by `suites/test_hooks.nim`: one assertion for each rule above that a check holds,
   and two for the order. The fixtures are the example in `GUIDE.md`, cut short, and a sign-off
   with no decision.
+
+**A delegate signs off only when it stops, and a turn that ends while work goes on closes with
+a working line.** The Architect set this rule on 2026-10-04. A sign-off marks a stop, so one in
+the middle of work hides which delegates need the Architect. So each state word is a stop:
+`done`, `waiting` or `blocked`. A turn that pushed or posted closes with the sign-off, or with a
+last line that opens `**Working:**` and holds text. `stop` reads the sign-off in full where its
+heading is present, and else the last line.
+
+- Verified by `suites/test_hooks.nim`. It refuses a working line with no text, a working line
+  that is not last, and the state `working`. Its refusal of `working` points at the line.
+- Rejected, by the choice of the Architect: the hook skips the demand while a background task
+  has not reported. That ties the hook to the form of a task notification, which the harness
+  can change.
+- Rejected, by the same choice: no demand, with the shape read only where a sign-off is
+  present. Then a delegate can stop with no word to the Architect.
+- Cost: the hook reads that the working line holds text, and never whether anything runs. A
+  delegate that stops behind a working line passes, and only a reader sees it.
+- Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
+  by a change of label or draft alone is not asked for a sign-off.
 
 ## Watching main
 

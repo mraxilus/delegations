@@ -75,6 +75,7 @@ Every rule below serves it:
 | `.github/workflows/draft.yml` | Ready pull request goes back to draft on a push | curator |
 | `.github/workflows/posts.yml` | One comment on a post that lands with no role line | curator |
 | `.github/workflows/head.yml` | Daily `head` of each project, into one issue for each | curator |
+| `.github/workflows/architect.yml` | Label `architect` off an item that closes | curator |
 | `.claude/settings.json`, `.claude/hooks.sh` | Hooks and permission rules | curator |
 | `.claude/skills/`, `.claude/agents/` | The `steward` skill and the `record-reviewer` | curator |
 | `.githooks/` | `pre-push` and `commit-msg`, reached through `core.hooksPath` | curator |
@@ -114,17 +115,18 @@ Every rule below serves it:
 ## Every delegate begins here
 
 The reads of `CONTRIBUTOR.md`, Every delegate begins here, bind you on the label `curator`.
-So do its carried list and the guidance of `GUIDE.md` on the queue and the shared allowance.
-This section adds only what differs for a curator.
+So do its work for subagents, its carried list, and the guidance of `GUIDE.md` on the queue
+and the shared allowance. This section adds only what differs for a curator.
 
 - **A request** on the `curator` label comes from a contributor that a rule blocks, through
   the process-change template, or from the Architect. Judge it as `CONTRIBUTOR.md` says, and
   report the same to the Architect, who decides.
 - **Work handed to a project.** Where your answer hands work to a project, add the label of
-  that project beside `curator` first. Labels are added and never removed.
+  that project beside `curator` first. Role labels are added and never removed. The label
+  `architect` marks a state instead, and comes off as `CONTRIBUTOR.md`, Boundaries, says.
 - **An issue you would decline** stays open, with your reasoning on it, because to decline
-  is the Architect's act and not yours. Close only work of your own queue that you no longer
-  intend to do.
+  is the Architect's act and not yours. Label it `architect`, because it now waits on the
+  Architect. Close only work of your own queue that you no longer intend to do.
 - **An answered issue that you close by hand** also says where the result differs from what
   was asked.
 - **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
