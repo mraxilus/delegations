@@ -454,6 +454,36 @@ holds the expression after its head.
   `(not a) == b`, so the right parentheses depend on intent.
 - Verified by `suites/test_precedence.nim`. The tree holds no finding of either rule.
 
+**Parentheses that group what the parser groups anyway go, in three kinds alone (X.4).** The
+Architect chose the kinds. Parentheses go around a prefix term that stands as one side of a binary
+operator: `(|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))` becomes `|∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)`. They go
+around one plain operand after a prefix operator, as `■(𝐧)` becomes `■𝐧`. They go around one plain
+operand as one side of a binary operator, as `2'u^(DIMENSIONS)` becomes `2'u^DIMENSIONS`.
+Verified by `suites/test_parentheses.nim` and `suites/test_chain.nim`.
+
+- A plain operand is a name or a literal, with any call, index or field glued after it. A prefix
+  term is one or more symbol prefix operators, then one operand. The elements read as
+  `precedence.nim` reads them, on the line of the group and inside the bracket around it.
+- A prefix operator binds tighter than any binary one, so `|∙ x + y` reads as `(|∙ x) + y`. So
+  the parse tree changes only by the `nkPar` around one node. Verified by hand, 2026-10-04, with
+  the parser of the commit pin of the `ronri` projects, on the PGA library as `koch fix` writes it.
+- A group around a binary expression stays, whatever its precedence, as the Architect ruled. So
+  `1'u shl (i-1)`, `(2'u^DIMENSIONS) - 1` and the parentheses of X.4 around `and` stay.
+- A group with a suffix glued after it stays, since `■𝐧.x` reads as `■(𝐧.x)`. So do a tuple, a
+  call, a signature and the argument of the command form, which hold a separator or glue to
+  their callee.
+- A group whose removal would glue two tokens into one stays, by the merge guard of
+  `spacing.nim`. That covers `\(/𝐮)`, `^(|𝐦)`, `/(∙𝐦)`, `☆( ⊟ m)` and `-(1)`, which would lex
+  as the literal `-1`.
+- The guard reads the gaps as they stand. So where spacing sets a space beside a glued group,
+  the next round removes it: `back*(-heading)` becomes `back * -heading`, with the same tree.
+  Verified by hand, 2026-10-04, with `knoller --check` on `rga_visualiser`.
+- A prefix term after a command head stays, since `check |∙ x` reads `|∙` as a binary operator.
+- Cost: `not` and the other keyword prefix operators are not read. X.4 holds `not` apart, and
+  `not(a)` glued would lex as one name.
+- The chain runs the rule before spacing, so `|∘ (` glues as `|∘(` in the same round.
+
+
 **A `to<Target>` call of a plain argument takes its subject first (STYLE.md §5).** A plain
 argument is a name, with any call, index or field glued after it. A compound argument, a literal,
 a generic call, several arguments and a call across lines stay prefix calls. A call followed by
