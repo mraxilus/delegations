@@ -389,6 +389,31 @@ suite "Internal: Simulation against reference":
     check girdles == 4 * stills
 
 
+  test "each still page shows lists its torso's left capsule first":
+    ## Torso is two capsules side by side, left first (`rigid.trunkCapsules`), so laws read
+    ##   chest's right off them.  Twin card's still is mirrored (`design/twins`).
+    ##   Red with mirror that left torso's capsules in place, read 2026-10-04: every twin card
+    ##     listed right one first, so face law put face behind head.
+    var (stills, torsos) = (0, 0)
+    for key, still in recorded:
+      if not still.hasKey("at") or still["at"].len == 0: continue
+      inc stills
+      let (tags, row, look) = (still["tag"], still["points"][0], still["faces"][0])
+      for who in 0..1:
+        var trunk: seq[int]
+        for i in 0..<tags.len:
+          if tags[i][0].getInt == who and tags[i][2].getInt == ord(Mark.Trunk): trunk.add i
+        let
+          (left, right) = (capsuleAt(row, trunk[0]), capsuleAt(row, trunk[1]))
+          (fore_x, fore_y) = (look[4 * who + 2].getFloat, look[4 * who + 3].getFloat)
+          across = (right.a + right.z - left.a - left.z) * 0.5
+          rightward = across.x * fore_y - across.y * fore_x
+        checkpoint &"`{key}` torso of `{who}` lists left capsule `{rightward:.3f}` left of right"
+        check rightward > 0.0
+        inc torsos
+    check torsos == 2 * stills
+
+
   test "every arm keeps clear of every face, in every still and every moment of every sweep":
     ## Each dancer keeps each arm clear of every face, own and partner's (#375).  Each still
     ##   is read as page shows it, so twin card is read as still it mirrors.
