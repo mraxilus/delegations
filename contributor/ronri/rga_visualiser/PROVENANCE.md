@@ -388,14 +388,20 @@ up to its pins, on 2026-09-30. Runner readings are from one CI run of this chang
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
 The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the repair. On the new
-figure that is 1.8 ms at least, over the bound. The moving grid fault reads over its bound by 0.1 ms
-only. A check with no fault reading pins a budget rather than a repair.
+figure that is 1.8 ms at least, over the bound. The readings of the marker pin come from a pulse
+call that left out the swell, and so shaped the outline a second time. The pin now shapes it once
+for each pair, and that figure is unmeasured over the runs that set the bound. The moving grid fault
+reads over its bound by 0.1 ms only. A check with no fault reading pins a budget rather than a
+repair.
 
 **A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
 every machine, so load never moves it. The marker suite counts the points that each marker reads
 out of the algebra (Selection and markers). `driveGround` counts the lines that the records of the
-lattice lie on (Geometry and drawing). Each bound stays at 1.5 times, so a slowdown that no count
-names still fails. Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
+lattice lie on (Geometry and drawing). `driveMarkerShapedOnce` counts the outlines that the overlay
+shapes for each marker it draws (Marker pulse).
+
+Each bound stays at 1.5 times beside its count, so a slowdown that no count names still fails.
+Rejected: bounds at 3 times beside the counts, which pass such a slowdown.
 
 The slowest delegate reads 1.7 to 4.3 times the runner, by a factor that changes with the check. The
 hover pick reads 17 times, because its runner reading is one 100 µs tick of the clock of the page. A
@@ -471,10 +477,11 @@ TypeScript owns WebGL, DOM and pointer events alone. Each script argues for itse
 the phrase `not Nim because`, which `justification.nim` demands of a gated kind.
 
 **The declarations of the bridge are derived, and never kept beside it.** `tools/build.nim declare`
-reads the `{.exportc.}` signatures of the bridge itself, and writes `build/bridge.d.ts`. A
-hand-written copy of those signatures would be a second home for each one. `types` is `declare` and
-both type-checker configurations, and it stops there. `web` and `drive` both call it. Verified by a
-break on purpose: to rename `nimSceneHandles` alone fails `types`.
+reads the `{.exportc.}` signatures of the bridge itself, and writes `build/bridge.d.ts` with every
+parameter required (Marker pulse). A hand-written copy of those signatures would be a second home
+for each one. `types` is `declare` and both type-checker configurations, and it stops there. `web`
+and `drive` both call it. Verified by a break on purpose: to rename `nimSceneHandles` alone fails
+`types`.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`**,
 as CONTRIBUTOR.md requires. Indexing therefore reports absence. The flat buffers of the bridge are
@@ -2325,11 +2332,31 @@ ran 156 px/s along a rail against 348 round a circle. A gap longer than `SECONDS
 The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag band
 swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
+**The pulse and the label of a selected marker read the outline that the marker call shaped.** In
+each frame the page asks the bridge three times for each selected object: `nimSelectionMarker`,
+then `nimSelectionPulse`, then `nimSelectionLabelAt`. The marker call shapes the outline into
+`BOX_MARKER`, and `MARKER_SHAPED` keeps it beside every input that shaped it. Those inputs are the
+handle, the view size, the progress, the touch flag, the swell, the travel and the overlay
+settings. The pulse reads that entry where every input matches, and the label where the handle and
+the view size match. A miss shapes the outline again and drops the entry, so the label then shapes
+it a third time.
+
+**A call from the page passes every argument, because a Nim default never reaches it.** Nim fills
+in a default at the call site of a Nim caller alone. A JS call that leaves an argument out passes
+`undefined`, and `undefined` matches no stored value. So `tools/build.nim declare` makes each
+parameter of an export required in `build/bridge.d.ts`, a parameter with a Nim default included. A
+call that leaves an argument out then fails `types`, with `TS2554`.
+
 *Checked.* Verified by `suites.nim`: the head sitting its carried travel at 45 placements.
 
 Verified on the shipped browser: the advance of the comet at 62.4 to 63.3 px/s across four orbit
 rates. The residual at faster rates is **not explained** to the standard that the medians are. A
 tenth of frames step 236 to 388 px/s at laps and clip transitions.
+
+Verified by driven check: `driveMarkerShapedOnce` selects a point, a line and a plane in turn.
+Each reads 3 shapes for 3 markers drawn over three frames. With the swell left out of the pulse
+call, each read 9 for 3. Verified by a break on purpose, 2026-10-04: the pulse call without its
+swell fails `types`.
 
 ## Picking
 

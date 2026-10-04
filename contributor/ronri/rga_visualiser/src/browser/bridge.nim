@@ -340,6 +340,9 @@ var
     ## synchronous pass, and marker call always shapes fresh and overwrites this.
     ##   Key carries every non-scene input, so pulse asked at other settings shapes for
     ##   itself.
+    ##   Page passes every input: Nim default never reaches JS call, and `undefined` matches
+    ##   no stored value. Derived declarations make each parameter required; see
+    ##   `tools/build.nim`'s `declarationOf`.
   INTERACTION_PAGE = Interaction(is_enabled: true) ## Picking and drag, always live here.
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick] ## Pick made by pointer since camera was last offered.
@@ -2204,8 +2207,8 @@ proc nimSelectionPulse(
   ##   "whatever is left".
   ##     Marker is still shaped once: that call leaves result in `MARKER_SHAPED`, and
   ##     this reuses it wherever every input matches.
-  ##   Takes same `progress` and `is_touch` marker was asked for, so pulse lies on outline
-  ##   actually drawn; swollen marker's pulse swells with it.
+  ##   Takes same `progress`, `is_touch` and `swell` marker was asked for, so pulse lies on
+  ##   outline actually drawn; swollen marker's pulse swells with it.
   ##   Empty for anything with no orientation: point, horizon plane, dead handle, no
   ##   shape; see `marker.markerFor`.
   ##   Clock is advanced whether or not run came out.
@@ -2247,6 +2250,13 @@ proc nimSelectionPulse(
     result.add(cfloat(marker.counts_pulse[run]))
     for i in 0 ..< marker.counts_pulse[run]:
       result.add([cfloat(marker.pulses[run][i].x), cfloat(marker.pulses[run][i].y)])
+
+
+proc nimSetCountingShaped(is_counting: bool) {.exportc.} = setCountingShaped(is_counting)
+  ## Open or close tally of markers shaped, for driven checks; see `marker.setCountingShaped`.
+
+proc nimCountShaped(): cint {.exportc.} = cint(countShaped())
+  ## Report how many markers were shaped since tally last opened; see `marker.countShaped`.
 
 
 

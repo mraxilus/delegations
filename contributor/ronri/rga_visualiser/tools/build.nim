@@ -290,16 +290,17 @@ func declarationOf(signature: string): string =
         if fragment.strip.len > 0: waiting.add fragment.strip
         continue
       waiting.add fragment[0 ..< stated_at].strip
-      # Default value belongs to declaration, never to type; parameter carrying one is
-      #   optional on page, which is what `?` says.
+      # Default value belongs to declaration, never to type, and never reaches page.
+      #   Nim applies it to Nim caller alone: JS call omitting argument passes `undefined`,
+      #   which proc then compares and computes with. So every parameter is required on
+      #   page, and omission fails type check rather than at run time; see
+      #   `bridge.MARKER_SHAPED`.
       let
         stated = fragment[stated_at + 1 .. ^1]
         defaulted = stated.find('=')
-        is_optional = defaulted >= 0
-        rendered_type =
-          (if is_optional: stated[0 ..< defaulted] else: stated).typeScriptOf
+        rendered_type = (if defaulted >= 0: stated[0 ..< defaulted] else: stated).typeScriptOf
       for name in waiting:
-        rendered.add name & (if is_optional: "?: " else: ": ") & rendered_type
+        rendered.add name & ": " & rendered_type
       waiting.setLen 0
 
   let

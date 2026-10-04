@@ -115,11 +115,14 @@ function recycleOverlay() {
 // back to outline's own width and stroke carries one width for its whole length --
 // marker.ribbonAlong shapes that outline, this only fills what it is handed. Only caller
 // passing time gets one -- hover and focus wear same marker standing still.
+// Asked with every input marker call was asked with, `swell` included: bridge reuses marker's
+// outline only where all match, and omitted argument reaches it as `undefined`, which matches
+// nothing. Miss shapes outline again, and drops it before label reads it.
 function appendMarkerPulse(
-  handle: number, alpha: number, progress: number, is_touch: boolean,
+  handle: number, alpha: number, progress: number, is_touch: boolean, swell: number,
 ) {
   const flat = nimSelectionPulse(handle, canvas.clientWidth, canvas.clientHeight, progress,
-    is_touch === true);
+    is_touch === true, swell);
   if (flat.length === 0) return;
   const fill = 'rgba(255,255,255,' + alpha + ')';
   let at = 1;
@@ -263,7 +266,7 @@ function refreshOverlay(cursor: PointLocal | null) {
   for (const handle of handles_selection) {
     if (handle === nimHoldHandle()) continue; // Its own swollen marker is drawn below.
     appendMarker(handle, ALPHA_MARKER_SELECTED, w, h, 1);
-    appendMarkerPulse(handle, ALPHA_MARKER_SELECTED, 1, false);
+    appendMarkerPulse(handle, ALPHA_MARKER_SELECTED, 1, false, 0);
     appendLabel(handle);
   }
 
