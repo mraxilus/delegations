@@ -567,6 +567,17 @@ implements stays, with status `implemented` and the library commit, and a withdr
 too. `drive` applies neither at pin, and each page keeps its last evaluation. So a
 citation still leads to what was proposed and measured.
 
+**The Architect reads each proposal, and implements it in the library over time,** as the
+Architect ruled on 2026-10-04. So no sign-off asks whether the library takes a proposal, and each
+one stays `proposed` until the library or the Architect settles it. The Architect states each
+rejection, and that proposal is then withdrawn. The Architect may never state an adoption, since
+a try to implement can lead elsewhere. So a new commit of the library is where an adoption
+shows.
+
+The daily `head` workflow opens an issue for this project when the head moves past the pin. This
+project then checks each proposal against that head, and updates it, or sets `implemented` with
+that commit.
+
 A program claim names its program relative to its proposal, so a new directory name moves no
 digest.
 
