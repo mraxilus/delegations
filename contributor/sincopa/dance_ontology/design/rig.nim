@@ -3,10 +3,11 @@
 ##   Run at build time, natively: engine is C, page is script in browser, so every
 ##     figure page draws is found here and played there.  Same arrangement
 ##     `design/turns` uses.
-##   Written beside source rather than under `build/`, and run by its own verb, as
+##   Written beside source rather than under `build/`, and recorded by verb of its own, as
 ##     `design/modelled.json` is: recording costs eight stance searches, and every
 ##     `pages` run would pay for it.  `rig_page` folds it into page, which is
-##     published as single document and so may leave nothing to fetch.
+##     published as single document and so may leave nothing to fetch.  Its jobs share one
+##     queue with modelled's (`design/record`).
 ##   What is constant through sweep is written once -- radius and owner of each
 ##     capsule, and each joint's two ends -- and only what moves is written per
 ##     moment.  Straight transcription ran to four megabytes; this is fifth of
@@ -19,14 +20,12 @@
 ##   Recording is kept with stamp of physics, jobs and this verb (`design/stamps`), and verb
 ##     whose stamp is unchanged records nothing again.  Page leaves stamp out, so page changes
 ##     only where recording does.
-##
-##   Usage: rig          writes design/rig.json
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[cpuinfo, json, math, options, os, sequtils, strformat, strutils, typedthreads]
+import std/[math, options, os, sequtils, strformat, strutils]
 
 import ../simulation/[body, hold, rig, seen]
 import ./[asks, stamps]
@@ -199,11 +198,6 @@ func nameOf*(job: Job): string =
   if job.is_still: job.ask.key
   else: &"{SHOWN[job.cut].name}, {BANDS[ord(SHOWN[job.cut].band)]}"
 
-# Mutable and global: thread takes one argument, so workers write into slots allotted here.
-var
-  RECORDING_TEXTS: seq[string]  ## Each recording's text, written by whichever worker did it.
-  NOTES: seq[string]  ## And one line saying what it found.
-
 proc recorded*(job: Job): tuple[note, text: string] =
   ## Record one job: line saying what it found, and its text as page reads it.
   if job.is_still:
@@ -237,18 +231,6 @@ proc recorded*(job: Job): tuple[note, text: string] =
     result.text = bodyOfSweep(recording)
 
 
-proc work(slice: tuple[first, every: int]) {.thread.} =
-  ## Record every `every`th job from `first` on.  Each worker lists jobs for
-  ## itself, as `design/modelled` does: one list read by four threads raced on
-  ## its strings' counts.
-  {.cast(gcsafe).}:
-    let all = jobs()
-    var i = slice.first
-    while i < all.len:
-      (NOTES[i], RECORDING_TEXTS[i]) = recorded(all[i])
-      i += slice.every
-
-
 proc rigStamp*(): string =
   ## Stamp recording carries: physics, this verb, and every job.
   ##   Sweep job names only its place in `SHOWN`, and `SHOWN` is in this verb's source.
@@ -273,28 +255,3 @@ func assembled*(stamp: string, texts: seq[string]): string =
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
   head.add "\"stills\":[\n" & stills.join(",\n") & "]"
   "{" & head.join(",\n") & "}\n"
-
-
-proc main() =
-  ## Record every sweep and still viewer draws, unless recording carries tree's stamp.
-  let stamp = rigStamp()
-  if fileExists(KEPT_RIG) and readFile(KEPT_RIG).parseJson{"stamp"}.getStr == stamp:
-    echo "design/rig.json is up to date: ", stamp
-    return
-  # Recorded on every core at once: sweeps and stills each build their own
-  # worlds and share nothing but their two slots.
-  let count = jobs().len
-  RECORDING_TEXTS = newSeq[string](count)
-  NOTES = newSeq[string](count)
-  let cores = max(1, countProcessors())
-  var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for worker in 0..<cores:
-    createThread(workers[worker], work, (worker, cores))
-  joinThreads(workers)
-  for note in NOTES: echo note
-  writeFile(KEPT_RIG, assembled(stamp, RECORDING_TEXTS))
-  echo "wrote design/rig.json"
-
-
-when isMainModule:
-  main()

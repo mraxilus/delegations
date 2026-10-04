@@ -19,6 +19,8 @@
 ##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
+##   | record   | rig and modelled in one queue, slowest job first, each result kept as |
+##   |          | it comes, so run stopped part way goes on where it stopped            |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
 ##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
@@ -58,7 +60,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|modelled|rig|turns|verdicts|answers|engine|shot|system|clean>\n"
+    "<pages|assets|pins|modelled|rig|record|turns|verdicts|answers|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -297,7 +299,7 @@ proc modelled() =
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
   ##   Verb asks nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/modelled.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "modelled"])
 
 
 proc rig() =
@@ -307,7 +309,15 @@ proc rig() =
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.
   ##   Verb records nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/rig.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim", "rig"])
+
+
+proc record() =
+  ## Rewrite `design/rig.json` and `design/modelled.json` from one queue (`design/record`).
+  ##   One pool for both, slowest job first: four workers end near same time, where two
+  ##     verbs one after other leave cores idle.  Each result is kept as it comes, so run
+  ##     stopped part way asks only what is left.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/record.nim"])
 
 
 proc verdicts() =
@@ -378,6 +388,7 @@ proc main(): int =
     of "pins": pins()
     of "modelled": modelled()
     of "rig": rig()
+    of "record": record()
     of "turns": turns()
     of "verdicts": verdicts()
     of "answers": answers()

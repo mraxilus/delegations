@@ -18,13 +18,14 @@
 ##   Card simulation has not been asked about is absent, and gets no tag: unasked reads as
 ##     unasked rather than as disagreement.
 ##   Answers are kept with stamp of physics, questions and this verb (`design/stamps`), and
-##     verb whose stamp is unchanged asks nothing again.
+##     verb whose stamp is unchanged asks nothing again.  Its questions share one queue with
+##     rig's jobs (`design/record`).
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[cpuinfo, json, os, sequtils, strformat, tables, typedthreads]
+import std/[json, os, sequtils, strformat, tables]
 
 import ../simulation/[body, hold, rig, walk]
 import ./[asks, parts, stamps]
@@ -136,8 +137,6 @@ func questions*(): seq[Question] =
         result.add moving(&"{key}w_{tag}_{i}", links, is_away, manner, sense * far)
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
-var TOLD: seq[bool]  ## Each worker writes its own questions' answers here.
-
 proc answered*(question: Question): bool =
   ## Whether simulation models one card: carried walk first, since it answers most cards in
   ## seconds, and planned way only where it stops, since that pays minutes per card.
@@ -181,38 +180,6 @@ proc answered*(question: Question): bool =
     )
 
 
-proc work(slice: tuple[first, every: int]) {.thread.} =
-  ## Answer every `every`th question from `first` on: worlds are engine's own
-  ## and independent, so workers share nothing but `TOLD`.
-  ##   Each worker lists questions for itself: list holds strings and
-  ##     sequences, whose counts one list read by four threads raced on, and
-  ##     verb died of illegal instruction inside engine every other run.
-  {.cast(gcsafe).}:
-    let asked = questions()
-    var i = slice.first
-    while i < asked.len:
-      TOLD[i] = answered(asked[i])
-      i += slice.every
-
-
-proc answers(): OrderedTable[string, bool] =
-  ## Every card's answer, keyed as page keys its own pictures.
-  ##   Asked on every core at once: each question builds its own worlds, and
-  ##     answering all of them one after another cost fifteen minutes where
-  ##     four cores cost four minutes.  Order of answers is page's own, whatever
-  ##     order they were found in.
-  let asked = questions()
-  TOLD = newSeq[bool](asked.len)
-  let cores = max(1, countProcessors())
-  var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for worker in 0..<cores:
-    createThread(workers[worker], work, (worker, cores))
-  joinThreads(workers)
-  result = initOrderedTable[string, bool]()
-  for i, question in asked:
-    result[question.key] = TOLD[i]
-
-
 proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($it))
   ## Stamp answers carry: physics, this verb, and every question.
 
@@ -223,17 +190,3 @@ func kept*(stamp: string, told: OrderedTable[string, bool]): string =
   for id, is_modelled in told:
     said[id] = %is_modelled
   pretty(%*{"stamp": stamp, "answers": said}) & "\n"
-
-
-proc main() =
-  ## Record what simulation answers of every card, unless recording carries tree's stamp.
-  let stamp = modelledStamp()
-  if fileExists(KEPT_MODELLED) and parseFile(KEPT_MODELLED){"stamp"}.getStr == stamp:
-    echo "design/modelled.json is up to date: ", stamp
-    return
-  writeFile(KEPT_MODELLED, kept(stamp, answers()))
-  echo "wrote design/modelled.json: ", questions().len, " answers"
-
-
-when isMainModule:
-  main()

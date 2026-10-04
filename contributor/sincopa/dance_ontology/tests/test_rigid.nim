@@ -644,7 +644,7 @@ proc going(id: int) {.thread.} =
   ## Take walks until none is left.
   ##   Holds are constants, so each worker reads its own copy; each walk builds
   ##     its own world; only numbers come back.  List of strings and sequences
-  ##     read by four threads is what `design/modelled.nim` records dying of.
+  ##     read by four threads is what `design/record.nim` records dying of.
   {.cast(gcsafe).}:
     while true:
       let i = GO_NEXT.fetchAdd(1)
