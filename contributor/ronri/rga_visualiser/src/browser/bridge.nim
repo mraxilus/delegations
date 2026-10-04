@@ -2249,6 +2249,13 @@ proc nimSelectionPulse(
       result.add([cfloat(marker.pulses[run][i].x), cfloat(marker.pulses[run][i].y)])
 
 
+proc nimSetCountingShaped(is_counting: bool) {.exportc.} = setCountingShaped(is_counting)
+  ## Open or close tally of markers shaped, for driven checks; see `marker.setCountingShaped`.
+
+proc nimCountShaped(): cint {.exportc.} = cint(countShaped())
+  ## Report how many markers were shaped since tally last opened; see `marker.countShaped`.
+
+
 
 #[ Objects Search ]#
 

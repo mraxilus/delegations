@@ -51,6 +51,7 @@ import {
   driveTickCadence, driveTickWrites,
 } from './objects';
 import { driveComet } from './comet';
+import { driveMarkerShapedOnce } from './marker';
 import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { driveHeapUnit, drivePhaseSums, driveTree } from './diagnostics';
@@ -203,6 +204,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   //   character page writes has glyph there.
   await driveFacesCovered(page);
   await driveShadedFromAbove(page);
+  await driveMarkerShapedOnce(page);
   await driveComet(page);
   await driveGround(page);
   await driveLoopRuns(page);
