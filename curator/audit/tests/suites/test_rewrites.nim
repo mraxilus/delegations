@@ -196,6 +196,9 @@ suite "Internal: Rewrites":
     implicit["p/a.nim"].symbols[(3, 2)] = Symbol(kind: "skIterator", name: "iterators.items")
     check planOf(answers = implicit).refusal ==
       "`p/a.nim:3` resolves to `iterators.items`, which its token does not name"  # `for x in ctx`
+    check planOf(DECLARING & "let s = &\"{ctx + 1}\"\n").refusal ==
+      "`p/a.nim:4` names `ctx` inside interpolated string"  # strformat reads it, no token stands
+    check planOf(DECLARING & "let s = \"a\" & \"{ctx}\"\n").refusal.len == 0  # plain string
     var elsewhere = answers()
     elsewhere["p/a.nim"].symbols[(1, 8)].line = 9  # site uses name declared on other line
     check planOf(answers = elsewhere).refusal == "`p/a.nim:1` names symbol declared elsewhere"
