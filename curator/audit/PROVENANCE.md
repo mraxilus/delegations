@@ -469,6 +469,61 @@ ligatures live.
   itself, because Dear ImGui shapes no text, and it declares no CSS.
 - Verified by `suites/test_faces.nim`, each rule by line, and the label beside a heading among them.
 
+## Coverage
+
+**Each character beyond ASCII that the files of a project use has a face that the project
+ships, and `coverage.nim` holds it.** Article X.8 merges faces by codepoint range, then renders
+each codepoint against `.notdef`. A render needs a built page and a browser, and the static pass
+has neither. So this check holds the static half: what the sources write, against what each face
+maps. A character that no face of the project maps falls to a face that the viewer may lack.
+
+- **The faces of a project are the store faces whose file names its files hold.** The store
+  refuses a file that no row declares, so the name is the only way that a project reaches a
+  face. The check takes the union over the project. Rejected: a check for each page or each
+  stack, which repeats the cascade that a render decides.
+- Cost: a character that no stack of its element reaches can still pass. The face that covers it
+  may serve another stack, or the desktop atlas alone.
+- **The check reads every file of the project outside `tests/`, other than its records.** The
+  drivers of the three page projects build pages from Nim, TypeScript, Markdown and JSON, as
+  well as from `pages/` and `mockups/`, read 2026-10-04. The static pass cannot trace which file
+  a build reads. A test fixture holds a character to prove its absence, so the tests stay out.
+- Cost: a character in a file that no page reads is reported too, such as a message that a tool
+  prints.
+- **A character that a comment alone holds is set aside, line by line**, because it never
+  reaches a page. The comments come from `comments.nim`, so the blind spots of that module are
+  the blind spots of this check.
+- **A reference counts as the character that it names.** `&name;` resolves for each name that
+  HTML 4.01 defined, to the codepoint that the WHATWG standard gives, which is what a browser
+  draws. `&lang;` and `&rang;` are the two names where those differ. `&#n;` and `&#xh;` resolve
+  too.
+- A name outside that table is unread rather than reported, because `&` opens no reference in
+  most code here. C and C++ read no reference at all, because `&name;` takes an address there.
+- **A finding names the file, the line, the codepoint and the spelling**, as in
+  ``got `U+21C4` for `&#8644;` ``. A line gets one finding for each codepoint, however often it
+  spells it.
+- **A project that names no store face is skipped.** Nothing tells its page apart from a tool that
+  prints text beyond ASCII. Cost: a page that ships no face at all is unseen here.
+- **The checker's own project is exempt**, as the faces check exempts it, because `assets.nim`
+  names every face as data.
+- Cost: a codepoint that draws nothing, such as `U+FE0F`, is still reported where no face maps
+  it. Verified by a search on 2026-10-04 at `de0c189`, of each file that the check reads. None
+  holds `U+FE0F`, as the character or as a reference.
+- Verified by `suites/test_coverage.nim`: each rule, and the law at every bound of the ranges of
+  Noto Sans.
+
+**The check decides coverage over the whole source before it scans the comments.** The faces
+cover almost every character, and the comment scan is most of the cost. So only a source that
+holds an uncovered character, in a comment or not, has its comments scanned.
+`suites/test_coverage.nim` holds this path to a full reading of every source.
+
+- Measured with the built koch on 2026-10-04, on the machine of Figures. `check-files` over the
+  same tree took a median of 3.70 s from `origin/main` at `de0c189`, and 3.77 s with this check.
+  Each median is of ten runs.
+- Rejected: a comment scan of every source first. Measured the same way, it added about 0.45 s
+  to the median.
+- On 2026-10-04 at `de0c189`, the check reports no finding in any project. `nim r koch
+  check-files` repeats it.
+
 ## Branch scope
 
 **The branch grammar mirrors paths: two, three or four segments, and the scope follows from
@@ -709,6 +764,21 @@ marker, a second block or any other comment still reads as the opening line.
   `body` hook refused the body with exit 2. After the fix, the same body reports nothing, and the
   finding echoes a wrong role below the block.
 
+**The title of a pull request holds the grammar of a commit subject.** The merge commit takes
+the title as its subject, and `main` takes no rewrite after. So `checkTitle` holds the title to
+what `checkCommits` holds for each commit: the grammar, the scope that the branch requires, and
+`SUBJECT_MAX`. The job passes the title as `ROLE_TITLE`, from the event payload. The `edited`
+event runs the check again after a rename. The Architect ruled this check on 2026-10-04.
+
+- Before this check, the template alone held the title. The title of #463 broke it, and it is
+  the subject of `6d4606a` on `main`.
+- `scopeRequired` in `commits.nim` names the scope for both checks, so the two cannot drift.
+- Cost: the merge adds ` (#N)` to the title, so a subject on `main` can pass `SUBJECT_MAX` by a
+  few runes. `check-commits` skips merge commits, so no check reads that width.
+- Verified by `suites/test_role.nim`. Titles in form pass, and so does a branch outside the
+  grammar. The title of #463 fails, as do a final period, a capital summary, a scope off its
+  branch, and a width over the limit.
+
 ## Assets
 
 **One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md names
@@ -716,11 +786,32 @@ the class: *"binaries are never committed, and neither are fonts, images or any 
 cannot read"*. Each one is recorded with origin, version, licence and checksum. The store is
 that class kept once, rather than once for each project.
 
-Faces are the only rows, and the rows say so by grouping rather than by column. The shape is
-file, address and digest, which is what any such file needs and no more. **An asset that wants
-a field this row lacks is a change, and not something this shape answers.** Such a field is
-unpacking, or a variant set. The header says so, rather than implies that it is settled for all
-time.
+Faces are the only rows, and the rows say so by grouping and by one column. The shape is file,
+address, digest and the codepoints that the file maps. The first three are what any such file
+needs, and the fourth is the face's own. **An asset that wants a field this row lacks is a
+change, and not something this shape answers.** Such a field is unpacking or a variant set, and
+an asset that is no face changes the fourth column too. The header says so, rather than implies
+that the shape is settled for all time.
+
+- **Each face row carries the codepoints that its file maps, as ranges.** The coverage check
+  reads rows and never bytes, because the static pass fetches nothing. `suites/test_assets.nim`
+  reads the `cmap` of each file and holds the row to it. So a new digest with old ranges fails,
+  and the failure prints the ranges to take.
+- Verified by a break, 2026-10-04. One bound of the Noto Sans Math row, one codepoint short,
+  fails that test, which prints the true row beside the stale one.
+- The ranges take the spelling of `fc-query --format='%{charset}'`, so a curator can check a row
+  with a second reader. Fontconfig 2.15.0 printed the same text as the reader of the suite for
+  every file of the store, 2026-10-04. Control characters are left out, because none draws.
+- Faces that map one set share one constant. Upright Noto Sans and Noto Serif map one set at
+  every weight, and the three files of Commit Mono map one set. A face whose bytes move splits
+  from its constant.
+- **The suite reads `woff2` through `libbrotlidec`, which it loads at run.** No Nim import decodes
+  Brotli, and a codec is an external concern (Article II.8). A machine without the library fails
+  that test by name, and every other suite still runs. Rejected: `fc-query` as the reader,
+  which adds fontconfig to every machine and reads its charset rather than the `cmap`.
+- Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
+  of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s.
+  The `test` job of the runner restores no store, so it fetches on each run.
 
 The name is general, and names no class of file. So a second class needs no rename across
 projects that a curator may not edit.
@@ -1107,9 +1198,9 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs about a second, against seconds to
-  minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
-  a second code path and the whole-tree layout and stamp guarantees.
+- Rejected: a scope on the static pass. The static pass costs about four seconds, against
+  seconds to minutes for the suites of one project (Figures). A scope buys nothing measurable
+  there, and costs a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
   point of the rule.
@@ -1180,10 +1271,14 @@ absent package names itself.
 
 **Koch declares its own system packages, as the rule it enforces asks of every project.**
 `KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. It holds git and curl, `tar`
-for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. `koch list-packages`
-with no project prints those and every project's, unscoped, so one command answers what a
-machine needs before any of this runs. To name a project keeps the meaning for each job that
-the runner asks for.
+for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
+`libbrotli1` for the audit suite, which reads `woff2` faces, because `curator/audit` carries no
+driver with a `system` verb. The runner holds it: verified by run 906 of `check`, whose `test`
+job ran that suite and passed.
+
+`koch list-packages` with no project prints those and every project's, unscoped, so one
+command answers what a machine needs before any of this runs. To name a project keeps the
+meaning for each job that the runner asks for.
 
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
 that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent because it
@@ -2208,7 +2303,8 @@ that holds it. The events, each one a verb argument:
   counts. It also refuses an issue titled as a commit, or one with no role label or with the
   label `coordinator`. It refuses a pull request body that leaves the template unfilled.
 - `stop` refuses the end of a turn that pushed or posted and closes with neither the sign-off
-  nor the working line. It also refuses a sign-off out of shape.
+  nor the working line. It also refuses a sign-off out of shape, and the end of any turn whose
+  message names `#N` outside a link.
 - `start` prints the role, the read order, the carried list and the drift state, at the start
   and after each compaction.
 
@@ -2362,6 +2458,24 @@ heading is present, and else the last line.
   delegate that stops behind a working line passes, and only a reader sees it.
 - Cost: `stop` reads a turn that pushed or posted, and no other. A turn that reaches its stop
   by a change of label or draft alone is not asked for a sign-off.
+
+**`stop` names each `#N` of the closing message that stands outside a link and outside code.**
+Each issue and pull request goes by a short description and its number, as one link (`GUIDE.md`,
+Output contract). The Architect ruled this check on 2026-10-04. It reads every turn, and not only
+a turn that pushed or posted, because the rule binds every message. Each number reports once.
+
+- A link is `[text](url)`, `[text][label]`, or `[label]` with a definition in the message. A
+  definition line is a link too. A bracket with no definition is text, as GitHub shows it.
+- Fenced code and code spans are skipped. A code span closes at the next run of backticks of the
+  same length, as CommonMark reads it.
+- A `#` after a word character, `&` or `/` opens no number. So `&#169;` and a fragment of a URL
+  pass.
+- Cost: `owner/repo#12` passes too, though it names an item of another repository bare.
+- Cost: the hook reads the closing message of a turn alone, and no earlier message of the turn.
+- Verified by `suites/test_hooks.nim`: three kinds of link, code, an undefined bracket, a
+  reference, a fragment, and a number named twice.
+- Verified by hand through the hook built from the branch, 2026-10-04. Of three closing messages
+  of the curator, one named `#463` outside a link, and the hook refused that one alone.
 
 ## Watching main
 
@@ -2570,10 +2684,11 @@ The machine for these figures is a four-core Intel Xeon 2.10 GHz container, on N
 2026-09-24, timed with `date +%s.%N`. Warm means that koch and the test binaries were already
 compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machine and date.
 
-**The static pass costs about a second.** `nim r koch check-files`, warm: 1.11 s, 1.15 s and 0.98 s
-over three consecutive runs. Before, it took 1.97 s, 1.96 s and 1.82 s. Inside koch, the old
-dead-export rule took 1.1 s of a 2.07 s pass, because it scanned every source once for each
-export.
+**The static pass costs about four seconds.** `nim r koch check-files`, warm, at `de0c189` on
+2026-10-04, on the same machine: a median of 3.80 s over ten consecutive runs, from 3.69 s to
+3.94 s. The dead-export rule became one pass at 2026-09-24. That pass then took 1.11 s, 1.15 s
+and 0.98 s, against 1.97 s, 1.96 s and 1.82 s before. Inside koch, the old dead-export rule took
+1.1 s of a 2.07 s pass, because it scanned every source once for each export.
 
 **A branch that changes the checker costs one project, and not every project.** Warm,
 `nim r koch check` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
@@ -2731,3 +2846,5 @@ pull requests sat on both sides, so the subject of a call does not say which met
   each site. The usage list of `WINDING` in `mesh.nim` at `c5c65db` holds the site that `def`
   answers with `items`. So a rename that an implicit call refuses could be planned, at one more
   command for each rename.
+- Whether the `test` job of `curator/audit` should restore the store, as the `drive` job does.
+  Without it, each run fetches 5.7 MB of faces before the suite holds the rows to their bytes.

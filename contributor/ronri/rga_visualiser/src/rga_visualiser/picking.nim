@@ -795,7 +795,8 @@ proc anchorZoomAt*(
     filling =
       if shaped != some(Kind.Point): radius
       else:
-        depthFilling(radius, scale, width, height)*norm(scale.eye - found.get)/
+        depthFilling(radius, scale, width, height)*
+          distanceBetween(toMultivector(scale.eye), toMultivector(found.get))/
           depthAlong(scale.eye, scale.forward, found.get)
   some(AnchorZoom(
     at: found.get,
