@@ -26,6 +26,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.
   NotOverBinary = "not over binary"  ## `not` over binary expression takes parentheses.
   TargetSubject = "to<Target> subject first"  ## `to<Target>` call takes its subject first.
+  DottedCommand = "dotted command"  ## Dotted call statement of one call argument drops `(`.
   ReturnResult = "return result"  ## Routine never ends on `return result`.
   BracketImport = "bracket import"  ## Bracket import is alphabetised.
   ImportRank = "import rank"  ## Standard library, then packages, then local modules.

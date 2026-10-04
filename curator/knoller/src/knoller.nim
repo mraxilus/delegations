@@ -13,13 +13,13 @@
 when compileOption("profiler"): import std/nimprof
 
 import ./knoller/[
-  alignment, articles, blanks, chain, command, declarations, declared, entry, fences, form, idioms,
-  messages, precedence, reports, rules, spacing, targets, tokens, views, wrapping,
+  alignment, articles, blanks, chain, command, commands, declarations, declared, entry, fences,
+  form, idioms, messages, precedence, reports, rules, spacing, targets, tokens, views, wrapping,
 ]
 
 export
-  alignment, articles, blanks, chain, declarations, declared, entry, fences, form, idioms, messages,
-  precedence, reports, rules, spacing, targets, tokens, views, wrapping
+  alignment, articles, blanks, chain, commands, declarations, declared, entry, fences, form, idioms,
+  messages, precedence, reports, rules, spacing, targets, tokens, views, wrapping
 
 
 when isMainModule:

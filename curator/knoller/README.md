@@ -72,6 +72,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
+| `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |
 | `bracket-import` | A bracket import is in alphabetical order. |
 | `import-rank` | The standard library comes first, then packages, then local modules. |
