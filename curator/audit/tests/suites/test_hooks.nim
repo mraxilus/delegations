@@ -186,7 +186,7 @@ suite "Hooks":
   test "sign-off shape":
     check checkSignoff(SIGNOFF, BRANCH).len == 0
     check checkSignoff(PLAIN, BRANCH).len == 0  # no decision
-    check checkSignoff("Done.\n", BRANCH).messages[0].contains("must end with")
+    check checkSignoff("Done.\n", BRANCH).messages[0].contains("holds no")
     check checkSignoff(SIGNOFF & "\n## After\n", BRANCH)
       .messages.anyIt("Nothing follows sign-off" in it)  # heading rule, not Next step rule
     check checkSignoff(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH)
@@ -234,14 +234,30 @@ suite "Hooks":
       .len == 0  # word ends at space too
     let unblocked = SIGNOFF.replace("- Class: blocks this delegate", "- Class: has a workaround: x")
     check checkSignoff(unblocked, BRANCH).messages.anyIt("exactly when" in it)  # blocked, no block
-    check checkSignoff(unblocked.replace("**State:** blocked", "**State:** working"), BRANCH)
+    check checkSignoff(unblocked.replace("**State:** blocked", "**State:** waiting"), BRANCH)
       .len == 0
-    check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** working"), BRANCH)
+    check checkSignoff(SIGNOFF.replace("**State:** blocked", "**State:** waiting"), BRANCH)
       .messages.anyIt("exactly when" in it)  # block, not blocked
     check checkSignoff(PLAIN.replace("**Decisions:** None.", "**Decisions:**"), BRANCH)
       .messages.anyIt("writes `**Decisions:** None.`" in it)
     check checkSignoff(SIGNOFF.replace("**Decisions:**\n", "**Decisions:** Two.\n"), BRANCH)
       .messages.anyIt("stands alone" in it)
+
+
+  test "turn ends with sign-off once delegate stops, else with working line":
+    # Sign-off only when done, blocked or waiting; working line while work runs (GUIDE.md).
+    const working = "Pushed.\n\n**Working:** run 890 of `check`, whose result wakes me.\n"
+    check checkEndTurn(SIGNOFF, BRANCH).len == 0
+    check checkEndTurn(working, BRANCH).len == 0
+    check checkEndTurn("Pushed.\n", BRANCH).messages.anyIt("got neither" in it)
+    check checkEndTurn("Pushed.\n\n**Working:**\n", BRANCH)
+      .messages.anyIt("got neither" in it)  # names nothing
+    check checkEndTurn(working & "\nMore.\n", BRANCH)
+      .messages.anyIt("got neither" in it)  # working line is last
+    check checkEndTurn(SIGNOFF.replace("**Summary:**", "**Gist:**"), BRANCH)
+      .messages.anyIt("lacks `**Summary:**`" in it)  # sign-off read in full
+    check checkEndTurn(PLAIN.replace("**State:** done", "**State:** working"), BRANCH)
+      .messages.anyIt("got `working`" in it and "**Working:**" in it)  # no state for work
 
 
   test "sign-off decision is card coordinator lifts unchanged":
@@ -347,7 +363,7 @@ suite "Hooks":
   test "start context and turn writes":
     let text = startContext(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
-    check "1. one" in text and "## Sign-off" in text
+    check "1. one" in text and "## Sign-off" in text and "**Working:**" in text
     check "outside grammar" in startContext("claude/x", "", "## List", @[])
     check "re-stamp" in startContext("curator/x", "", "## List", @[finding("", 0, "d")])
     check isTurnWriting([Call(name: "Bash", command: "git push -u origin x")])

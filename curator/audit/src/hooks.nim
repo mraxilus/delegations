@@ -7,9 +7,9 @@
 ##     rewrite of pushed history, and push past pre-push hook, since `koch check` holds what
 ##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
 ##     line, footer, Simplified Technical English counts, issue title and label, and pull
-##     request headings; `stop` refuses end of turn that pushed or posted and lacks sign-off
-##     block; `start` prints role, read order, carried list and drift; `push` and `msg` serve
-##     git hooks.
+##     request headings; `stop` refuses end of turn that pushed or posted and closes with
+##     neither sign-off block nor working line; `start` prints role, read order, carried list
+##     and drift; `push` and `msg` serve git hooks.
 ##   Pure functions take strings and return findings; procs read transcript JSON, since
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
@@ -20,6 +20,9 @@
 ##     once trialed, lifts each block onto card unchanged. So shape check holds what Architect
 ##     decides on: state word, class and place of each decision, two to four short options, and
 ##     recommendation naming one.
+##   Delegate signs off only when done, blocked or waiting, as Architect set (GUIDE.md, Output
+##     contract). Turn that ends while work runs closes with working line instead, naming what
+##     runs and what wakes delegate, so each state word marks stop and none means work goes on.
 ##
 ##   Cost: hook reaches Claude Code session holding one repository alone, so CI stays gate.
 ##   Cost: `gitCommands` splits on shell operators by text, so `git` inside quoted string is
@@ -85,8 +88,9 @@ const
   ]
     ## Parts of block, in order each must appear.
   BLOCKED = "blocked"  ## State word of delegate nothing moves for until Architect decides.
-  STATES_SIGNOFF = ["done", "working", "waiting", BLOCKED]
-    ## Words `**State:**` opens with, before where branch stands.
+  STATES_SIGNOFF = ["done", "waiting", BLOCKED]
+    ## Words `**State:**` opens with, before where branch stands; each one is stop.
+  LABEL_WORKING* = "**Working:**"  ## Opening of line closing turn that ends while work runs.
   NONE_DECISION = "None."  ## Text after `**Decisions:**` where block holds no decision.
   CLASS_BLOCKS = "blocks this delegate"  ## Class of decision delegate cannot work around.
   CLASS_BLOCKS_OTHERS = CLASS_BLOCKS & " and "
@@ -467,8 +471,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     if line.strip == SIGNOFF_HEADING: at = i
   if at < 0:
     return @[finding(
-      "", 0, "Turn that pushed or posted must end with `" & SIGNOFF_HEADING &
-        "` block (GUIDE.md, Output contract); got none."
+      "", 0, "Message holds no `" & SIGNOFF_HEADING & "` block (GUIDE.md, Output contract)."
     )]
   let after = lines[at + 1 .. ^1]
   for line in after:
@@ -506,7 +509,9 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`.",
+      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`." &
+        (if state_word == "working": " Close turn with line `" & LABEL_WORKING & "` instead."
+         else: ""),
     )
   elif (state_word == BLOCKED) != decisions.anyIt(it.class.startsWith(CLASS_BLOCKS)):
     result.add finding(
@@ -551,6 +556,21 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       if text.startsWith(label): text = text[label.len .. ^1].strip
     prose.add text
   result.add englishFindings("sign-off", prose.join("\n"))
+
+
+func checkEndTurn*(message, branch: string): seq[Finding] =
+  ## Report end of turn that pushed or posted: sign-off once delegate stops, else working line.
+  ##   Working line is last line holding text, with text after label; reader alone judges
+  ##     whether it names what runs and what wakes delegate.
+  if message.splitLines.anyIt(it.strip == SIGNOFF_HEADING):
+    return checkSignoff(message, branch)
+  let last = message.strip.splitLines[^1].strip
+  if last.startsWith(LABEL_WORKING) and last[LABEL_WORKING.len .. ^1].strip.len > 0: return
+  @[finding(
+    "", 0, "Turn that pushed or posted ends with `" & SIGNOFF_HEADING & "` block once done, " &
+      "blocked or waiting, or with line `" & LABEL_WORKING & "` while work runs (GUIDE.md, " &
+      "Output contract); got neither."
+  )]
 
 
 func markPath*(root, git_directory: string): string =
@@ -622,8 +642,8 @@ func startContext*(branch, contributor, carried_heading: string; drift: seq[Find
   if drift.len > 0:
     lines.add "Base gained charter or checker your branch lacks; merge `origin/main` and " &
       "re-stamp (`check-drift`)."
-  lines.add "Every turn that pushed or posted ends with `" & SIGNOFF_HEADING &
-    "` (GUIDE.md, Output contract)."
+  lines.add "Turn that pushed or posted ends with `" & SIGNOFF_HEADING & "` once done, " &
+    "blocked or waiting, else with line `" & LABEL_WORKING & "` (GUIDE.md, Output contract)."
   lines.add ""
   lines.add carried_heading
   lines.add contributor.section(carried_heading).strip
