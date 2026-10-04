@@ -1,11 +1,30 @@
 ## Hold spaces inside expressions to X.9 list: each breach whose rewrite moves no reading is
 ##   reported and fixed; asymmetric spacing, which lexer reads, is neither; fix changes nothing
-##   else, and nothing second time.
+##   else, and nothing second time; fix never splits or merges token (Architect).
 
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/[reports, spacing]
+import ../../src/knoller/[reports, spacing, tokens]
+
+
+const
+  STACKED =
+    "let d = (|∙ ⊖(m ∧ n)) div (|∙ (⊖m ∧ ⊖n))\nlet x = - -y\nlet z = -  -y + (+ -1)\n"
+    ## Prefix operator before operand opening with operator character, which glued would merge:
+    ##   glyph form of `suites.nim` of PGA library, and ASCII form.
+  FIXTURES = [
+    "let x = a+b*c  -  d\nlet t = a  and  b\n",
+    "let r = 0..<n\nlet s = x[1..2]\nfor i in 0  ..  3: discard\nlet t = x[1..^1]\n",
+    "let s = x[1 .. ^ 1]\nlet x = - y\nf(@ [1], ^ 2)\nlet y = - 1\n",
+    "f(a,b ,c,  d)\nproc f(x:int, y :string) = discard\nlet t = {\"a\":1}\n",
+    "func f(a, b: int;c: string ; d: char): int = a\n",
+    "f( a, b )\nlet s = @[ 1 ]\nproc g() {. inline .}\nlet u = ( |∙ x)\n",
+    "f(a=1, b  =  2)\nproc g(a=1)= discard\nx=1\nlet y  =2\nx=-1\n",
+    "let z = PI*(a + b)\nf(c, d*[1])\n",
+    STACKED,
+  ]
+    ## Breaches suite fixes, one of each rule, stacked prefix operators among them.
 
 
 func fixed(source: string): string =
@@ -17,6 +36,11 @@ func isSettled(source: string): bool =
   ## Decide whether source reports no spacing finding and fixes to itself again.
   checkSpacing("a.nim", source).len == 0 and fixSpacing("a.nim", source).source == source and
     fixSpacing("a.nim", source).fixed.len == 0
+
+
+func spellings(source: string): seq[string] =
+  ## Read spelling of each token of source, in order, operator tokens among them.
+  source.tokens.mapIt(it.spelling(source))
 
 
 
@@ -62,6 +86,24 @@ suite "Spacing":
   test "prefix operator is glued to its operand, but minus before number stays":
     check "let x = - y\nf(@ [1], ^ 2)\n".fixed == "let x = -y\nf(@[1], ^2)\n"
     check checkSpacing("a.nim", "let x = - 1\n").len == 0  # glued would be literal `-1`
+
+
+  test "prefix operator before operator keeps one space, since glued pair lexes one operator":
+    check STACKED.fixed ==
+      "let d = (|∙ ⊖(m ∧ n)) div (|∙(⊖m ∧ ⊖n))\nlet x = - -y\nlet z = - -y + (+ -1)\n"
+    check STACKED.fixed.isSettled  # spaced form passes check
+    for kept in ["let d = (|∙ ⊖(m ∧ n))\n", "let x = - -y\n", "let x = + -1\n", "f($ -x)\n"]:
+      check kept.isSettled  # `|∙⊖`, `--`, `+-` and `$-` would each lex as one operator
+    let found = checkSpacing("a.nim", "let x = -  -y\n")
+    check found.len == 1
+    check found[0].message.startsWith("Prefix operator takes one space before operand it would")
+    check found[0].message.endsWith("got `-  -y`.")
+
+
+  test "fix reads every token as written, operator tokens among them, so splits and merges none":
+    for source in FIXTURES:
+      check source.fixed.spellings == source.spellings
+      check source.fixed.isSettled
 
 
   test "comma and colon take no space before them and one after":
