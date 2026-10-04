@@ -105,6 +105,10 @@ type
     rewrite: Rewrite
     step: int  ## `CONTINUATION_STEP` past statement line, or none past line first piece opens.
 
+  Lift = object  ## Define continuation line of block head to re-indent, and indent of head.
+    rewrite: Rewrite
+    base: int  ## Indent of first line of head.
+
 
 const
   BLOCK_KEYWORDS = [
@@ -127,6 +131,12 @@ const
   UNBROKEN_KEYWORDS = ["as", "in", "is", "isnot", "notin", "of"]
     ## Keyword operators no break follows: membership, type test and conversion read as one.
   NAMING_KEYWORDS = ["const", "let", "var"]  ## Keywords whose name's `:` types binding.
+  HEAD_KEYWORDS = [
+    "block", "case", "elif", "except", "for", "if", "of", "try", "when", "while",
+  ]
+    ## Keywords opening block head whose `:` ending line opens body on next line.
+  SIGNATURE_KEYWORDS = ["converter", "func", "iterator", "macro", "method", "proc", "template"]
+    ## Keywords opening routine signature whose `=` ending line opens body on next line.
   IGNORED_OPERATORS = [".", ":", "::", "="]
     ## Operator tokens ending line that continue no expression: field, type, assignment.
   PASSES_MAX = 16
@@ -979,11 +989,101 @@ func continuationShifts(s: Scan, held: Held): seq[Shift] =
     result.add shifts
 
 
+func headLifts(s: Scan, held: Held): seq[Lift] =
+  ## Re-indent continuation lines of each block head whose line right above its body stands at
+  ##   body's indent, so head reads apart from body (STYLE.md §5). Every such line moves by one
+  ##   step, so shallowest takes `CONTINUATION_STEP` past head's first line and hand's shape of
+  ##   rest stays; head whose line would widen held line is left whole.
+  ##   Head opens line with `HEAD_KEYWORDS`, ending on `:`, or `SIGNATURE_KEYWORDS`, ending on
+  ##     `=`, at depth it opens at; each line before ends inside bracket, or on binary operator or
+  ##     comma. Body is next code line, deeper than head. Head holding comment line or token
+  ##     spanning lines stays.
+  var firsts = newSeqWith(s.lines.len, -1)  # Line-first token of each line.
+  for k in 0 ..< s.tokens.len:
+    if s.isLineFirst(k) and firsts[s.tokens[k].line] < 0: firsts[s.tokens[k].line] = k
+  for k, t in s.tokens:
+    if firsts[t.line] != k: continue
+    let
+      word = s.spelling(k)
+      is_signature = word in SIGNATURE_KEYWORDS
+    if word notin HEAD_KEYWORDS and not is_signature: continue
+
+    # Walk head to its line-ending `:` or `=` at depth it opens at; anything else ends no head.
+    var
+      depth = 0
+      m = k
+      last = -1  # Last line of head.
+    while m < s.tokens.len:
+      let tm = s.tokens[m]
+      if tm.kind == TokenKind.Comment:
+        inc m
+        continue
+      if s.lasts[m] > tm.line: break
+      if tm.kind == TokenKind.Open: inc depth
+      elif tm.kind == TokenKind.Close: dec depth
+      if depth < 0: break
+      if s.isLineLast(m) and depth == 0:
+        let text = s.spelling(m)
+        if (is_signature and text == "=") or (not is_signature and text == ":"):
+          last = tm.line
+          break
+        if tm.kind != TokenKind.Comma and not s.isContinuing(m): break
+      inc m
+    if last <= t.line: continue
+
+    # Body: next code line, deeper than head; head's last line at its indent lifts.
+    var body = last + 1
+    while body < s.lines.len and
+        (firsts[body] < 0 or s.tokens[firsts[body]].kind == TokenKind.Comment):
+      if firsts[body] < 0 and s.lines[body].strip.len > 0: break
+      inc body
+    if body >= s.lines.len or firsts[body] < 0: continue
+    let (base, deep) = (s.lines[t.line].indentOf, s.lines[body].indentOf)
+    if deep <= base or s.lines[last].indentOf != deep: continue
+    var shallowest = high(int)
+    for line in t.line + 1 .. last:
+      if firsts[line] < 0 or s.tokens[firsts[line]].kind == TokenKind.Comment:
+        shallowest = -1
+        break
+      shallowest = min(shallowest, s.lines[line].indentOf)
+    let step = base + CONTINUATION_STEP - shallowest
+    if shallowest < 0 or step <= 0: continue
+
+    # Move each line by one step, or none where held line would widen.
+    var lifts: seq[Lift]
+    for line in t.line + 1 .. last:
+      let
+        text = s.lines[line]
+        shaped = ' '.repeat(text.indentOf + step) & text[text.indentOf .. ^1]
+        rewrite = Rewrite(first: line, last: line, lines: @[shaped], rule: Rule.ContinuationIndent)
+      if held.isHeld(line + 1) and shaped.isWide and not text.isWide:
+        lifts.setLen(0)
+        break
+      lifts.add Lift(rewrite: rewrite, base: base)
+    result.add lifts
+
+
 func checkContinuations*(path, source: string): seq[Report] =
   ## Report line of expression past its statement line at other indent than STYLE.md §5 gives,
-  ##   one whose indent would widen it among them, so finding stays where fixer holds line.
-  let s = source.scan
-  for shift in s.continuationShifts(Held()):
+  ##   one whose indent would widen it among them, so finding stays where fixer holds line; and
+  ##   line of block head that continuations leave at body's indent (`headLifts`).
+  let
+    s = source.scan
+    shifts = s.continuationShifts(Held())
+    moved = applied(path, source, shifts.mapIt(it.rewrite)).source.scan
+    reported = shifts.mapIt(it.rewrite.first)
+  for lift in moved.headLifts(Held()):
+    let line = lift.rewrite.first
+    if line in reported: continue
+    result.add initReport(
+      path,
+      line + 1,
+      Rule.ContinuationIndent,
+      "Line of block head right above its body takes " & $CONTINUATION_STEP & " spaces more " &
+          "than head's first line, so it stands apart from body (STYLE.md §5); got `" &
+          $(s.lines[line].indentOf - lift.base) & "`.",
+    )
+  for shift in shifts:
     let
       line = shift.rewrite.first
       relative = s.lines[line].indentOf - shift.rewrite.lines[0].indentOf + shift.step
@@ -998,8 +1098,13 @@ func checkContinuations*(path, source: string): seq[Report] =
 
 
 func fixContinuations(path, source: string; held: Held): Fix =
-  ## Re-indent each line check reports, but held line its indent would widen.
-  applied(path, source, source.scan.continuationShifts(held).mapIt(it.rewrite))
+  ## Re-indent each line check reports, but held line its indent would widen: continuations
+  ##   first, then block heads of text they leave, so head reads indent continuation gave it.
+  ##   Each rewrite keeps its line, so held lines keep their numbers between both stages.
+  result = applied(path, source, source.scan.continuationShifts(held).mapIt(it.rewrite))
+  result = result.chain(applied(path, result.source, result.source.scan.headLifts(held).mapIt(
+    it.rewrite
+  )))
 
 
 
