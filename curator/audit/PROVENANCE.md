@@ -1672,8 +1672,9 @@ wrapping measures.
 Wrapping runs separators, then signatures, then calls, then trailing separators. A layout joins
 groups with the separator it reads, and a trailing separator goes only where no layout wrote one.
 
-- A second round catches what a first round enabled, such as an operator that spacing refused
-  for width before a call split its line. `ROUNDS_MAX` is three, and the tree settles in two.
+- A second round catches what a first round enabled, such as a doc that a widened gap pushed
+  past `LINE_MAX`. `ROUNDS_MAX` is three, and the tree settles in two. Knoller runs the rounds
+  again where a line stays wide, and holds each line that no wrap fits (`## Wraps` of its record).
 - Verified by `suites/test_fixes.nim`: one source that breaks each layout rule settles in one
   run. Every check then reports none of it, and a second run writes nothing.
 
@@ -1746,8 +1747,8 @@ from the line that opens its block, on the code view.
 
 **A finding with more than one reasonable fix has no fixer.** A tab outside a one-line plain
 string has no fixer, because its width is a guess. A lone CR is a line break or a stray byte. A
-reflow, a wrap or a rename each fixes a long line that holds no call. An empty file has no fixer
-either.
+reflow, a wrap or a rename each fixes a long line that holds no call and no operator to break
+after. An empty file has no fixer either.
 
 - An import ranked low across lines that are not imports has no fixer, because where it lands is a
   choice.
@@ -1758,9 +1759,9 @@ either.
   `{.used.}`, the reach of `{.push.}`, a seed and a missing stub header. It also covers debug
   output, a path of one machine and the flags of TypeScript.
 
-**A fixer never writes a line that the width check reports.** Where a fix would widen a line past
-`LINE_MAX`, the fixer leaves that line, and its finding stays for the hand. A gap of one space on a
-line of 100 characters is the case that occurs.
+**A fix that widens a line past `LINE_MAX` stays only where a wrap fits.** The record of knoller
+gives the wideners, the order of the wraps, and the lines that its chain holds (`## Wraps`). Each
+fixer of audit keeps the width guard, so a rename or a conversion that would widen a line stays.
 
 **The verb refuses every write outside the scope of the branch.** Each path that a fix would write
 goes through `checkScope` of `scope.nim`, for the branch that `--branch`, `BRANCH` or git names. One
@@ -1824,7 +1825,7 @@ every Nim file of the tree in memory, on branch `main`, so scope refused nothing
 - Lines added and removed: `rga_visualiser` 98,540 and 27,048, `dance_ontology` 3,315 and 2,246,
   `pga_benchmark` 965 and 841.
 - The static pass reported 0 findings before and after. The layout checks reported 18,709
-  findings before and 35 after, each one a line that the width guard keeps.
+  findings before and 35 after.
 - A second fix wrote nothing.
 - The parser of the compiler read 131 changed files to the same tree as before. It read the
   other 42 to the same tree once order and dropped types are normalised. That covers merged
@@ -1912,8 +1913,7 @@ It fixed every Nim file of the tree on branch `main`, with the checkouts of `koc
 - Lines added and removed: `rga_visualiser` 99,020 and 27,522, `dance_ontology` 3,431 and
   2,362, `pga_benchmark` 1,013 and 878.
 - Findings before and after: tables 100 and 18, messages 72 and 3, profiler imports 11 and 0,
-  `to<Target>` 538 and 0, conversions 20 and 0. A table that stays would cross 100 runes, and a
-  message that stays ends on its value.
+  `to<Target>` 538 and 0, conversions 20 and 0. A table that stays would cross 100 runes.
 - The static pass reported 0 findings before and after. A second fix wrote nothing.
 - The semantic pass resolved 34 sites, in four of the files, in 8 s.
 - The parser of the compiler read 107 changed files to the same tree as before. It read the
