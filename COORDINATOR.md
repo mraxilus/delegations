@@ -304,5 +304,5 @@ that write to GitHub at once, and name the number in your memory. Read GitHub by
 Your message to the Architect is the digest, and not a sign-off. Its last part lists each
 post that you made on GitHub, so the Architect sees every write that you made in their name.
 
-In each message and on each card, name an issue or a pull request by what it is or does, in
-plain words. Never give its number alone. The number goes in a link.
+Name each issue and pull request by a short description and its number, as one link. That holds
+in each message and on each card (`GUIDE.md`, Output contract).

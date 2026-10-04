@@ -87,8 +87,8 @@ contract, The sign-off). Each item is a row there, in the state it is in, tagged
 - An item that does not apply is **a line in the pull request body under Record**, with its
   reason. Never drop it, and never tick it.
 - A done row **names what discharged it** in its last cell, such as
-  `#140 opened draft, run 238 green`. A bare tick is a claim that carries no evidence (Article
-  VIII.1).
+  `[#140] opened draft, run 238 green`, where `[#140]` is a link (`GUIDE.md`, Output contract).
+  A bare tick is a claim that carries no evidence (Article VIII.1).
 - **A row may wait at handover.** A ⏸️ row whose last cell names its decision, such as `D1`, is
   complete and correct. A list that has to come out all ticked is a list that will.
 

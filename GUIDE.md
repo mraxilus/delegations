@@ -297,9 +297,13 @@ build.
 The same URL belongs in both places. The pull request is the record, and the message is what
 gets read first.
 
-**Name each issue and pull request by what it is or does**, in plain words, and never by its
-number alone. The number goes in a link. A reader who did not watch has no context for a bare
-number.
+**Name each issue and pull request by a short description and its number, as one link**, such
+as `[the ledger fix (#456)](https://github.com/mraxilus/delegations/pull/456)`. A bare number
+gives a reader who did not watch no context, and a name alone gives no way to open the item.
+This holds for every mention in a message, the sign-off included. A row of the sign-off names
+its item already, so its `Where` cell may hold the number alone, still as a link. A reference
+link keeps a line short: write `[#456]`, and give its address once, on a line of its own above
+the sign-off.
 
 **Show the change in that same message.** Give a screenshot where it is visual, and a worked
 example where it is not. Where there is nothing to show, give one sentence that says why.
@@ -350,14 +354,17 @@ Its parts come in this order:
 Write each decision so that the Architect can decide it from the block alone.
 
 ```md
+[#310]: https://github.com/mraxilus/delegations/issues/310
+[#331]: https://github.com/mraxilus/delegations/pull/331
+
 **D1.** Keep the names `rga4d` and `cga5d` in the tests?
 - Class: blocks this delegate
-- Where: #310
+- Where: [names in the tests (#310)][#310]
 - Options:
   - a. Keep: the tests stay as they are, and the root glossary gains two names.
   - b. Rename: twelve suites change, and the gap list waits one turn.
 - Recommends: a, because both names are the names of the authority.
-- Delay costs: #331 stays a draft.
+- Delay costs: [the gap list (#331)][#331] stays a draft.
 ```
 
 - **The question** is one sentence that ends with `?`, verb first where it can be.
@@ -396,20 +403,24 @@ rules of this guide over every sentence. The `Stop` hook holds the shape under C
 where it holds this repository alone, and reading holds it elsewhere.
 
 ```md
+[#310]: https://github.com/mraxilus/delegations/issues/310
+[#331]: https://github.com/mraxilus/delegations/pull/331
+[#332]: https://github.com/mraxilus/delegations/issues/332
+
 ## Sign-off
 
 **Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
 
-**State:** blocked, at `3f2a9c1`, pushed, #331 draft, run 412 green
+**State:** blocked, at `3f2a9c1`, pushed, [the gap list (#331)][#331] draft, run 412 green
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
-| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | #331 | |
+| 1 | ☑️ | Draft since it opened, another commit intended (carried 3) | [#331] | |
 | 2 | ✅ | The gap list reads the baseline of each algebra | `src/gaps.nim` | `koch check` green |
-| 3 | ✅ | Worked example shows the new gap rows (carried 5) | #331, Verification | command, output |
-| 4 | ⚠️ | `koch drive` red in rga_visualiser | #332 | contributor/ronri/rga_visualiser, fix |
-| 5 | ⏸️ | Names in the tests (carried 2) | #310 | D1 |
-| 6 | ⬜ | cga5d baseline measurement, then #331 marks ready | `tests/` | this delegate |
+| 3 | ✅ | A worked example shows the gap rows (carried 5) | [#331], Verification | command, output |
+| 4 | ⚠️ | `koch drive` red in rga_visualiser | [#332] | contributor/ronri/rga_visualiser, fix |
+| 5 | ⏸️ | Names in the tests (carried 2) | [#310] | D1 |
+| 6 | ⬜ | cga5d baseline measurement, then the pull request marks ready | `tests/` | this delegate |
 
 **Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
 the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
@@ -422,18 +433,18 @@ belongs to rga_visualiser and blocks nothing here.
 
 **D1.** Keep the names `rga4d` and `cga5d` in the tests?
 - Class: blocks this delegate
-- Where: #310
+- Where: [names in the tests (#310)][#310]
 - Options:
   - a. Keep: the tests stay as they are, and the root glossary gains two names.
   - b. Rename: twelve suites change, and the gap list waits one turn.
 - Recommends: a, because both names are the names of the authority.
-- Delay costs: #331 stays a draft.
+- Delay costs: [the gap list (#331)][#331] stays a draft.
 
 **D2.** The cga5d baseline needs 16 GB, and the runner has 7 GB.
 - Class: fact
-- Where: #331
+- Where: [the gap list (#331)][#331]
 
-**Next step:** Architect: rule on D1 in #310, the issue on the names in the tests.
+**Next step:** Architect: rule on D1 in [names in the tests (#310)][#310].
 ```
 
 ## Provenance guide
