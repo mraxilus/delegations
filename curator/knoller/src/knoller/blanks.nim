@@ -10,7 +10,7 @@
 ##     One-line `template` is alias, and is left alone.
 ##   Run of blank lines goes above `#` comment on line right before, at same indent, so comment
 ##     stays with what it names; `##` doc and banner never move with it.
-##   Reads code view (`names.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
+##   Reads code view (`views.codeOnly`), so `suite`, `test` or `proc` inside fixture string never
 ##     moves. Run lying inside string or block comment spanning lines is never read.
 ##   Checks and fixer share one reading (`runs`), so each rule is written once (Article II.1).
 ##
@@ -21,7 +21,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils]
-import ./[findings, names, tokens]
+import ./[reports, tokens, views]
 
 
 type
@@ -192,7 +192,7 @@ func runs(path, source: string): seq[Run] =
     result.add run
 
 
-func checkBlanks*(path, source: string): seq[Finding] =
+func checkBlanks*(path, source: string): seq[Report] =
   ## Report blank lines beside suite, test or nested helper other than rule asks (X.2, STYLE.md
   ##   §1).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
@@ -204,7 +204,8 @@ func checkBlanks*(path, source: string): seq[Finding] =
       of Target.Child: "First child follows its opener at once (X.2)"
       of Target.Banner: "Suite or test after banner takes banner's one blank line (X.2)"
       of Target.Helper: "Nested helper takes one blank line on each side (STYLE.md §1)"
-    result.add finding(path, run.line + 1, message & "; got `" & $run.count & "`.")
+    let rule = if run.target == Target.Helper: Rule.HelperBlankLines else: Rule.TestBlankLines
+    result.add initReport(path, run.line + 1, rule, message & "; got `" & $run.count & "`.")
 
 
 func fixBlanks*(path, source: string): Fix =
@@ -222,8 +223,6 @@ func fixBlanks*(path, source: string): Fix =
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in found:
-    let rule =
-      if run.target == Target.Helper: "helper blank lines (STYLE.md §1)"
-      else: "test blank lines (X.2)"
-    result.fixed.add finding(path, run.line + 1, rule)
+    let rule = if run.target == Target.Helper: Rule.HelperBlankLines else: Rule.TestBlankLines
+    result.fixed.add initReport(path, run.line + 1, rule)
   if found.len > 0: result.origin = origin

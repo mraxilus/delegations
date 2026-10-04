@@ -66,11 +66,19 @@ import {
   driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
 } from './scenery';
 import { driveGround } from './ground';
-import { driveBlankRefused } from './canvas';
+import { driveAntialias, driveBlankRefused } from './canvas';
 import { driveFrameWork, driveLoopRuns, watchFrames } from './frame';
 import { driveHostSave } from './host';
+import { driveVeilCovers } from './veil';
 import { driveViewSection } from './view';
 import { advance, hastenTransitions, simulateClock, waitUntil } from './clock';
+
+declare global {
+  interface Window {
+    /** Whether page's context multisamples; see `src/browser/gl.ts`. */
+    should_antialias?: boolean;
+  }
+}
 
 /** Simulated span tree stands open for before curve and rows are read: five of its ticks. */
 const MILLISECONDS_TREE_TICKS = 1000;
@@ -138,6 +146,10 @@ async function driveSimulated(browser: Browser): Promise<void> {
   page.on('pageerror', (error) => errors_page.push(error.message));
 
   await simulateClock(page);
+  // Draw without multisampling, set before page's script asks for its context: no verdict here
+  //   reads edge's sample, so its GPU work buys nothing; `PROVENANCE.md` gives measured pair.
+  //   Reader's page and real-clock page below keep it, and `driveAntialias` reads both.
+  await page.addInitScript(() => { window.should_antialias = false; });
   await page.goto(`file://${PATH_PAGE}`);
   await waitScene(page);
   // Two fingers go through Chrome's own protocol, and so does style engine's timeline, so
@@ -159,6 +171,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
 
   // Reader every pixel check leans on, checked before any of them lean on it.
   await driveBlankRefused(page);
+  await driveAntialias(page, false);
   await driveKeys(page);
   await driveWheel(page);
   await drivePan(page);
@@ -205,6 +218,7 @@ async function driveSimulated(browser: Browser): Promise<void> {
   //   character page writes has glyph there.
   await driveFacesCovered(page);
   await driveShadedFromAbove(page);
+  await driveVeilCovers(page);
   await driveMarkerShapedOnce(page);
   await driveComet(page);
   await driveGround(page);
@@ -285,6 +299,8 @@ async function driveMeasured(browser: Browser): Promise<void> {
   await focusCanvas(page);
   // Blur off for every timing below but its own, so no other bound carries its cost.
   await setBlur(page, false);
+  // Multisampled as reader's page is, so every bound below times what reader runs.
+  await driveAntialias(page, true);
 
   await driveFrameWork(page);
   await drivePhaseSums(page);

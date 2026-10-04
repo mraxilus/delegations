@@ -13,6 +13,9 @@ suite "Base":
     check "koch.nim".isGoverning
     check "koch.nim.cfg".isGoverning
     check (CHECKER_DIRECTORY & "/layout.nim").isGoverning
+    check (KNOLLER_FILES[0] & "/knoller/tokens.nim").isGoverning  # checker imports it by path
+    check (KNOLLER_FILES[1]).isGoverning  # its nimble file
+    check not "curator/knoller/tests/suites/test_tokens.nim".isGoverning  # its suites do not
     # Project's own code, records and suites do not.
     check not "contributor/ronri/alpha/src/alpha.nim".isGoverning
     check not "contributor/ronri/alpha/PROVENANCE.md".isGoverning

@@ -186,6 +186,7 @@ and this file does not:
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 | `host`, `shade` | save through the artifact host, every point shaded from world-up |
 | `blur` | every backdrop blur, what the drawer softens, and what its blur costs |
+| `veil` | the veil of a plane over every spot its pick finds it at |
 | `clock` | simulated time that correctness checks run on |
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
@@ -252,8 +253,22 @@ as one of zero, so the fixture drives both.
 
 Every sibling of the canvas is hidden by `opacity` for the capture. The reading is taken again until
 it carries a picture, up to ten times. To hide chrome forces a recomposite that a software
-rasteriser does not finish inside one frame. It costs about 0.49 s for each reading, about 19 times
-in a run.
+rasteriser does not finish inside one frame. It costs about 0.49 s for each reading, and the veil
+check alone takes eight.
+
+**The veil check holds the veil of a plane to the pick of that plane.** `driveVeilCovers` hides
+every object but the ground, and reads spots 15 px apart from four views: low, rolled, steep, and
+from underneath. In each view the eye stands inside the radius of the disc, so only the vanishing
+line can stop the box of the veil. Where the pick of the page finds the plane, the veil must change
+the spot by 8 or more over red, green and blue. A spot counts only where the canvas without the
+plane shows bare backdrop. A world axis in front of the veil hides it with no fault of the veil.
+
+Rejected: spots of one reading compared with each other, as `driveDiscUnderfoot` does, which pass on
+a canvas with no veil. Cost: eight readings, about 6 s of the drive. Verified by a break on purpose,
+2026-10-04, on the page without antialias. With the veil draws skipped, the low view read 4 of
+1878 spots veiled. With the floor of the box halfway between the vanishing line and the centre of
+the disc, it read 1677 of 1878. The steep view passed that break, because the line stands far off
+it.
 
 **Unexplained**: why the runner read blank through `readPixels` and white through the compositor.
 Neither Chromium here reproduces either.
@@ -350,6 +365,30 @@ Three things that the clock does not reach are set on the simulated page:
 - A page function that waits on its own timers runs through `evaluateOver`. The clock moves a fixed
   span that covers its waits, and yields to the page between timers, so each await resolves in
   order.
+
+**The simulated page draws without antialias.** `driveSimulated` sets `should_antialias` to false by
+an init script, before the page loads. `gl.ts` reads that switch before it asks for its context, and
+asks to antialias wherever the switch is absent. So the page of the reader, the real-clock page and
+the host page antialias, and the speed checks time what the reader runs. No verdict on the simulated
+page reads the sample of an edge. `driveAntialias` reads what each context granted: false on the
+simulated page, and true on the real-clock page.
+
+Rejected: antialias off on every driven page, which would time a page that no reader runs. The bench
+of Records and shaders measured the cost at the opening scene on 2026-10-04. Without antialias, GPU
+work for each frame step fell from 18.1 to 10.0 ms, and from 18.0 to 12.1 ms.
+
+**The simulated page is bound by GPU work under SwiftShader, and a frame step costs whole display
+frames.** So a saving shows in the drive only where it takes a step under the next display frame.
+Measured on one delegate on 2026-10-04, under the lock of the gate, in turn, two runs each:
+
+| Build | Browser drive | Simulated page | Real-clock page |
+|-------|---------------|----------------|-----------------|
+| Fan over the box of the sphere, antialias | 323.5 s, 311.7 s | 294.0 s, 282.2 s | 27.0 s, 26.9 s |
+| Quad stopped at the vanishing line | 230.6 s, 232.4 s | 204.2 s, 207.1 s | 23.9 s, 22.5 s |
+
+The first row is `main` at `5b689518`, and the second is this design, with antialias off on the
+simulated page alone. Every check passed in each run. The veil check and the two context checks add
+about 6 s to the second row. The browser drive is `build/drive/main.js` alone, timed from outside.
 
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
@@ -668,17 +707,47 @@ alone, they match no semibold text, so a selected label or a chip at 600 takes i
 the viewer's system. Over 400 to 600, the browser draws them as they are. The cost is regular
 operators beside semibold letters, which the desktop label also draws.
 
-**Every character that the page writes is asked of the faces that it ships**, by
-`driveFacesCovered`. It reads the codepoints from `nimCodepointsShown`, the gathering of `shown`
-that `--drive-faces` reads too. It adds the markup of the page and the strings of its scripts, which
-no catalogue holds. It reads each `@font-face` rule of the shell, and the `cmap` of its file. It
-resolves each stack at each declared weight as CSS matching does, and reports each codepoint that
-falls past the faces the page ships.
+**Each element is held to the faces of the stack that the browser resolves for it**, by
+`driveFacesCovered` (`CONTRIBUTOR.md`, Pages and assets). The check reads the computed `font-family`
+and `font-weight` of each element of the page. It holds the text of that element to that stack, at
+that weight. The value and the placeholder of a field count, and so does the text of `::before` and
+`::after`. A finding names the page, the element, the weight and each codepoint that no face of the
+stack maps.
 
-*Checked.* Verified by a run, 2026-10-03. With the whole faces, and the maths and symbols at 400
-alone, the check fails in all three stacks at 600. It names the operators, the bold operands and the
-chip symbols. With the weight ranges, all three stacks pass at 400 and 600. The other page checks
-pass with the whole faces.
+**Text that a script writes later is held to every stack in use.** That text is not on the page when
+the check runs, and the element that will show it can be absent too. `nimCodepointsShown` gives the
+catalogue, the help, the notation and the units, as `--drive-faces` reads them. The strings of the
+scripts give the rest, and the text on the page now joins them. The check holds each of these
+characters to each stack that an element of the page resolves to. It does this at each weight that
+an element resolves to, and at each weight that a face declares.
+
+So each stack in use must map every character that the page can write. That is why the mono and
+serif stacks name "Noto Sans UI" after their own face. The cost is that a stack for titles alone
+must map the operators too. A checkbox and a file field are not a stack in use, because they show no
+text that the page writes. Both resolve to Arial, and the button of a file field shows the words of
+the browser.
+
+The check reads each `@font-face` rule of the shell, and the `cmap` of its file. It matches the
+weight and the unicode-range of each face as CSS matching does, and tries the families of a stack in
+order. Rejected: the three stacks read from the text of the shell, which pass an element that takes
+a stack of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a
+layout box now. A hidden panel has none, and text that a script writes later has none either.
+
+Cost: an element that a script builds after the check runs counts only through its stack. Where no
+element on the page resolves to that stack at the check, the check does not see it.
+
+*Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153. The page
+stands as it opens, with the drawer and help open. Both checks pass, with `missing none`.
+
+Verified by a break on purpose, the same day and the same way. The rule
+`#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with
+`missing rga_visualiser.html #button-menu span at 400: U+2630`. The three stacks read from the text
+of the shell pass that break.
+
+With the maths and symbols declared at 400 alone, the check fails at 600. It names U+2715 in
+`button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use, it names the
+operators, the bold operands and the chip symbols. Verified by a run, 2026-10-03: the other page
+checks pass with the whole faces.
 
 **The serif ships at 600 alone, because 600 is the weight every title is set at.** A weight that
 nothing ships is a face that the browser of the reader invents (Article X.8). The check reads
@@ -1896,13 +1965,41 @@ and the four guard cuts equal `clipToEyeSide`, and the across equals the join
 `directionNormal(tail ∧ head ∧ eye)`, sign included.
 
 **A fill of a plane, its rim and the sky are one record each.** A `DiscRecord` of 13 floats spans
-the view box of its bounding sphere (`viewBoxOfDisc`), on the static corner buffer of the unit
-circle. Every fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any
-grazing angle and agrees with `picking.rayPlaneHit`.
+one quad over a box on the view (`viewBoxOfDisc`), on the static corners of `discCorners`. Every
+fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any grazing angle
+and agrees with `picking.rayPlaneHit`.
 
 It is not a fan of corners on the plane. A corner of such a fan behind the eye left the clipper a
 sliver. That sliver rasterised to nothing under a grazing camera, and the disc ended at a hard
 chord.
+
+**The box of a veil stops at the vanishing line of its plane.** The view turns about the sight axis
+until the normal of the plane, signed toward the side of the eye, points up. The vanishing line,
+where a sight ray runs along the plane, then runs across the turned view at any roll. Along each
+turned axis the box bounds the sphere of the disc, or takes the whole turned view where that sphere
+holds the eye. Its floor then rises to the vanishing line, and the quad turns back onto the view. No
+ray below the line meets the plane in front of the eye, so the clip removes no pixel of the disc.
+
+Rejected: a box square to the view, which cannot stop at a slanted line. Rejected: a fan of 96
+triangles over the box, which drew the ellipse through its corners. That ellipse ran past the box by
+up to 41% of its half extent, and every fragment there was cast and discarded. Cost: each of the six
+corners of the quad works out the box again, with a turn and a cross product.
+
+Measured on 2026-10-04 under SwiftShader, at 1200 by 900 px with antialias, by a bench that is not
+kept. It sums the `GPUTask` events of a Chromium trace over 100 simulated frame steps. Each change
+has two pairs, before then after, in ms of GPU work for each step:
+
+| View | Quad over the box | Floor at the vanishing line |
+|------|-------------------|-----------------------------|
+| Opening scene | 25.8 to 18.9, 21.5 to 18.1 | 18.9 to 19.8, 19.1 to 19.0 |
+| Level and low over the ground | 24.4 to 20.8, 21.8 to 21.2 | 21.1 to 16.7, 20.4 to 15.9 |
+| Steep over the ground | 36.5 to 26.7, 26.1 to 22.6 | 22.9 to 25.5, 23.0 to 24.0 |
+| Level and low under the ground | 24.8 to 21.0, 23.1 to 21.3 | 21.0 to 18.7, 23.5 to 17.7 |
+
+The same steps with the disc draws skipped read 5.5 to 9.2 ms, which is the spread of the bench. So
+the floor changes the opening scene and the steep view by less than that spread. At the opening
+scene the vanishing line stands near the top of the box, because the box bounds the sphere and not
+the disc. From the opening stance the sphere of the ground spans 50° of height, and its disc 21°.
 
 A `DomeRecord` of 8 floats widens over a static unit sphere, which has no orientation. A
 `RingRecord` of 14 floats is the thirteen of a disc plus a width, and one instance draws the whole
@@ -1942,7 +2039,8 @@ of a selected plane would draw depth-tested behind the fill that it highlights.
 The desktop asks for a framebuffer at `SAMPLES_MULTISAMPLE` 4, and **falls back to none where no
 visual offers it**. `llvmpipe` under `xvfb` refuses the window outright, rather than downgrades
 it. A visualiser that will not start is worse than one whose thinnest lines alias. The browser
-context asks for `antialias: true`.
+context asks for `antialias: true`, except on the simulated page of the driven checks (Clocks of the
+driven checks).
 
 **The flat buffers are the page's own typed arrays, filled in place.** A `seq[float32]` on the JS
 backend is an `Array` of boxed doubles, converted element by element into a staging
@@ -1958,7 +2056,12 @@ hand.
 - the widening reference against the algebra;
 - the near crossing of a line within a pixel of its recorded place, in a close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
-- the box of the disc against the projection of its rim;
+- the static corners of the disc as two triangles that tile its box;
+- the box of the disc against the projection of its rim, read in the turned fractions of the box;
+- the quad of the disc on the side of the vanishing line where rays meet the plane, over seeded
+  views at every attitude and roll;
+- every spot of the disc that the view shows inside that quad, over the same views;
+- under a grazing eye, the quad of the disc as the lower half of the view;
 - the ray of the disc landing inside the rim and missing outside it;
 - a hit under a grazing eye nearer than the near plane;
 - all ninety-six rim segments on the plane at its radius;
@@ -1970,6 +2073,10 @@ disc and dome. The record narrows its arms to float32 there. Verified by driven 
 records of the demo under 64, against a ring count over 120. Both lines cross two rings, 100 and 80
 px out, in opposite pairs, 0.01 and 0.001 units off, along two headings. Assumed: that the figure of
 0.1 ms for the flat buffer holds at current caps, because it was measured at 1,024 objects.
+
+Verified under Xvfb on 2026-10-04: the quad and its floor changed 3 of 15,552,000 storyboard pixels
+against `main`, by 12 or less in any channel. Verified by driven check: the veil of the ground over
+every spot its pick finds it at, from four views.
 
 ## Algebra boundary
 
@@ -2907,10 +3014,11 @@ leaves the ecliptic.
 of which Mercury's 7° is the largest. Earth in the spanned plane is what the horizon block turns on.
 The place of a body on its ring is the golden angle, and not a date. Neighbour systems lie flat.
 
-**Two catalogues ship, as data alone, and both are generated.** `neighbourhood.nim` is a snapshot
-of the NASA Exoplanet Archive, taken 2026-08-31 from its TAP service (`select hostname, pl_name,
-sy_dist, ra, dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`). It holds 331
-planet hosts out to 31.5 parsecs.
+**Two catalogues ship, as data alone, and this repository keeps both as written.** A tool wrote
+each one once, and that tool stays in the tree that this project came from. No tool here writes
+them again. `neighbourhood.nim` is a snapshot of the NASA Exoplanet Archive, taken 2026-08-31 from
+its TAP service (`select hostname, pl_name, sy_dist, ra, dec, pl_orbsmax from ps where
+sy_dist < 35 and default_flag = 1`). It holds 331 planet hosts out to 31.5 parsecs.
 
 The archive asks for this acknowledgement, word for word:
 
@@ -2919,6 +3027,18 @@ The archive asks for this acknowledgement, word for word:
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. It keeps 11,252 of 11,432.
+
+**A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
+`#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
+bracket. A fence that crosses a bracket makes the fix leave the whole file as written, so each
+fence holds a whole table. Without the fences, the fix wraps each row of `STARS` and `NEIGHBOURS`
+again, which adds lines and no meaning. The type headers stay outside the fences, so the fix
+repairs their layout as it repairs any other line.
+
+Verified by `nim r koch fix --dry-run --branch:main contributor/ronri/rga_visualiser`, 2026-10-04.
+Without the fences, it reports 11,259 findings in `starfield.nim` and 342 in `neighbourhood.nim`.
+With them, it reports 7 and 9, and each one is a trailing comment of a type header. Every other
+file of the project gives the same findings both times.
 
 Each planet host was matched to exactly one star **by sky position alone**, and the worst
 separation is 161 arcseconds. The two worst matches are Barnard's and Kapteyn's stars, which have
@@ -3610,5 +3730,14 @@ passing proves that the runner carries that library. Assumed: nothing about the 
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
   in it. The near crossing is not the cause (see Records and shaders).
+
+## Open questions
+
+**The box of a veil bounds the sphere of its disc, and not the disc** (Records and shaders). Where
+the rim stands wholly in front of the eye, its picture along each turned axis has extremes in closed
+form. An experiment bounded the box by them there, and kept the sphere and the vanishing line
+elsewhere. At the opening scene it took GPU work for each step from 12.0 to 6.9 ms, and from 10.1 to
+6.9 ms. One drive with it read 188 s on the simulated page. The choices are to leave it, or to add
+that bound to the reference and both shaders, with a suite test of its own.
 
 [replications]: https://gitlab.com/mraxilus/replications

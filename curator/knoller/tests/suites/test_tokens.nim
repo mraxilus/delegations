@@ -4,7 +4,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, unittest]
-import ../../src/tokens
+import ../../src/knoller/tokens
 
 
 const SAMPLE =

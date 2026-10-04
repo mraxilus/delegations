@@ -362,16 +362,23 @@ type
 
   DiscRecord* = object ## Define one filled disc exactly as it is uploaded.
     ## Disc-fill vertex shader's input, not vertex.
-    ##   Each record is drawn as one instance of static fan of
-    ##   `3 * SEGMENTS_CIRCLE_HORIZON` unit-circle corners.
-    ##   Shader places every corner on view box of disc's sphere, `viewBoxOfDisc`, and
-    ##   fragment stage casts its own ray at plane, `hitDiscAlong`; both stated in Nim.
+    ##   Each record is drawn as one instance of static quad, `discCorners`.
+    ##   Shader places quad's corners on box of disc's sphere, turned to plane and stopped
+    ##   at its vanishing line, `viewBoxOfDisc`, and fragment stage casts its own ray at
+    ##   plane, `hitDiscAlong`; both stated in Nim.
     ##   Thirteen floats against fanned vertices, and no per-frame trigonometry on CPU.
     ## Arms arrive already scaled by radius, so record needs no radius.
     centre_x*, centre_y*, centre_z*: float32
     arm_first_x*, arm_first_y*, arm_first_z*: float32
     arm_second_x*, arm_second_y*, arm_second_z*: float32
     fill_red*, fill_green*, fill_blue*, fill_alpha*: float32
+
+  DiscBox* = object ## Define box disc's veil spans, on view turned to its plane.
+    ## Disc-fill vertex shader's own reckoning, stated in Nim; see `viewBoxOfDisc`.
+    corner_min*, corner_max*: (float, float)
+      ## Opposite corners, in fractions of turned view's own half extents, across and up.
+    step_across*, step_up*: (float, float)
+      ## View fractions one turned fraction across, or up, moves by; they place box on view.
 
   DomeRecord* = object ## Define one whole-sky sphere exactly as it is uploaded.
     ## Dome vertex shader's input, not vertex.
@@ -1103,72 +1110,117 @@ func tanBounded(angle: float): float =
 func viewBoxOfDisc*(
   record: DiscRecord; eye: Position; axis_right, axis_up, forward: Direction;
   tangent_half_view, aspect: float
-): tuple[corner_min, corner_max: (float, float)] =
-  ## Bound disc's picture on view, in view fractions -1 .. 1 across and up.
+): DiscBox =
+  ## Bound disc's picture on view turned to its plane, and stop it at plane's vanishing line.
   ##   Reference disc vertex shaders are held to, beside `expandRibbon`.
   ##     Change to it, GLSL in `renderer.nim` or WebGL source in `gl.ts` is not
   ##     finished until other two are checked.
-  ##   Box of disc's bounding sphere, radius being arm's length. Each axis is bounded by
-  ##   sphere's limb in that axis's plane with sight axis: centre's bearing plus and minus
-  ##   half-angle sphere subtends, tangent bounded past quarter turn, over view's own
-  ##   tangent, clamped to view. Whole view where eye stands within radius of centre in
+  ##   View is turned about sight axis until plane's normal, as view sees it, points up.
+  ##     Vanishing line, where sight ray runs along plane, then runs across turned view, and
+  ##     every ray meeting plane in front of eye stands above it. Unturned where normal lies
+  ##     along sight, since line then stands nowhere on view.
+  ##     Turned view's half extents bound view's own, so `-1 .. 1` each way holds whole view.
+  ##   Box of disc's bounding sphere, radius being arm's length. Each turned axis is bounded
+  ##   by sphere's limb in that axis's plane with sight axis: centre's bearing plus and minus
+  ##   half-angle sphere subtends, tangent bounded past quarter turn, over turned view's half
+  ##   extent, clamped to it. Whole turned view where eye stands within radius of centre in
   ##   either plane, sphere then holding eye. Empty box where sphere stands behind eye.
+  ##   Box's floor then rises to vanishing line. No ray below it meets plane in front of eye,
+  ##   so clip is exact; every fragment it removes was cast and discarded.
+  ##     Empty box where eye stands in plane, or where whole view looks past line.
   ##   Not fan of corners on plane itself: corner behind eye left triangle for clipper,
   ##   and sliver clipper returned rasterised to nothing under grazing camera, so disc
   ##   ended at hard chord under camera standing inside it. Box is filled by fragment
   ##   stage casting its own ray, `hitDiscAlong`, exact at any grazing angle.
+
+  # Turn view so plane's normal, signed toward eye's side of plane, points up on it.
   let
+    arm_first = Direction(
+      x: float(record.arm_first_x),
+      y: float(record.arm_first_y),
+      z: float(record.arm_first_z),
+    )
+    arm_second = Direction(
+      x: float(record.arm_second_x),
+      y: float(record.arm_second_y),
+      z: float(record.arm_second_z),
+    )
     to_centre = Direction(
       x: float(record.centre_x) - eye.x,
       y: float(record.centre_y) - eye.y,
       z: float(record.centre_z) - eye.z,
     )
-    radius = norm(Direction(
-      x: float(record.arm_first_x),
-      y: float(record.arm_first_y),
-      z: float(record.arm_first_z),
-    ))
-    across = dot(to_centre, axis_right)
-    up = dot(to_centre, axis_up)
-    depth = dot(to_centre, forward)
-    reach_across = hypot(across, depth)
-    reach_up = hypot(up, depth)
-  if min(reach_across, reach_up) <= radius:
-    return (corner_min: (-1.0, -1.0), corner_max: (1.0, 1.0))
-  let
-    bearing_across = arctan2(across, depth)
-    spread_across = arcsin(radius/reach_across)
-    bearing_up = arctan2(up, depth)
-    spread_up = arcsin(radius/reach_up)
+    normal = cross(arm_first, arm_second)
+    radius = norm(arm_first)
+    distance = dot(to_centre, normal)
+    side = (if distance > 0.0: 1.0 elif distance < 0.0: -1.0 else: 0.0)
+    lateral = (side*dot(normal, axis_right), side*dot(normal, axis_up))
+    reach_lateral = hypot(lateral[0], lateral[1])
+    turn_up =
+      if reach_lateral > 0.0: (lateral[0]/reach_lateral, lateral[1]/reach_lateral)
+      else: (0.0, 1.0)
+    turn_across = (turn_up[1], -turn_up[0])
     wide = tangent_half_view*aspect
     tall = tangent_half_view
-  (
-    corner_min: (
-      clamp(tanBounded(bearing_across - spread_across)/wide, -1.0, 1.0),
-      clamp(tanBounded(bearing_up - spread_up)/tall, -1.0, 1.0),
-    ),
-    corner_max: (
-      clamp(tanBounded(bearing_across + spread_across)/wide, -1.0, 1.0),
-      clamp(tanBounded(bearing_up + spread_up)/tall, -1.0, 1.0),
-    ),
-  )
+    extent = (
+      abs(turn_across[0])*wide + abs(turn_across[1])*tall,
+      abs(turn_up[0])*wide + abs(turn_up[1])*tall,
+    )
+  result.step_across = (turn_across[0]*extent[0]/wide, turn_across[1]*extent[0]/tall)
+  result.step_up = (turn_up[0]*extent[1]/wide, turn_up[1]*extent[1]/tall)
 
-
-func expandDiscCorner*(
-  box: tuple[corner_min, corner_max: (float, float)]; cos_angle, sin_angle: float
-): (float, float) =
-  ## Place one static corner on box `viewBoxOfDisc` gave, in view fractions.
-  ##   Ellipse through box's corners: box's middle plus corner scaled by root two of its
-  ##   half extents, so fan of unit-circle corners covers whole box; centre corner
-  ##   `(0, 0)` lands on middle.
+  # Bound sphere's picture along each turned axis.
   let
-    middle = (
-      0.5*(box.corner_min[0] + box.corner_max[0]), 0.5*(box.corner_min[1] + box.corner_max[1]),
+    right_turned = turn_across[0]*axis_right + turn_across[1]*axis_up
+    up_turned = turn_up[0]*axis_right + turn_up[1]*axis_up
+    across = dot(to_centre, right_turned)
+    rise = dot(to_centre, up_turned)
+    depth = dot(to_centre, forward)
+    reach_across = hypot(across, depth)
+    reach_up = hypot(rise, depth)
+  if min(reach_across, reach_up) <= radius:
+    result.corner_min = (-1.0, -1.0)
+    result.corner_max = (1.0, 1.0)
+  else:
+    let
+      bearing_across = arctan2(across, depth)
+      spread_across = arcsin(radius/reach_across)
+      bearing_up = arctan2(rise, depth)
+      spread_up = arcsin(radius/reach_up)
+    result.corner_min = (
+      clamp(tanBounded(bearing_across - spread_across)/extent[0], -1.0, 1.0),
+      clamp(tanBounded(bearing_up - spread_up)/extent[1], -1.0, 1.0),
     )
-    half = (
-      0.5*(box.corner_max[0] - box.corner_min[0]), 0.5*(box.corner_max[1] - box.corner_min[1]),
+    result.corner_max = (
+      clamp(tanBounded(bearing_across + spread_across)/extent[0], -1.0, 1.0),
+      clamp(tanBounded(bearing_up + spread_up)/extent[1], -1.0, 1.0),
     )
-  (middle[0] + sqrt(2.0)*cos_angle*half[0], middle[1] + sqrt(2.0)*sin_angle*half[1])
+
+  # Raise floor to vanishing line, or past view where none crosses it.
+  #   Two either way is past view; bound keeps shaders' `float` finite at near-zero reach.
+  let
+    facing = side*dot(normal, forward)
+    line_vanishing =
+      if reach_lateral > 0.0: clamp(-facing/(reach_lateral*extent[1]), -2.0, 2.0)
+      elif facing > 0.0: -2.0
+      else: 2.0
+  result.corner_min[1] = min(max(result.corner_min[1], line_vanishing), result.corner_max[1])
+
+
+func expandDiscCorner*(box: DiscBox; corner_across, corner_up: float): (float, float) =
+  ## Place one static corner on box `viewBoxOfDisc` gave, in view fractions.
+  ##   Box's middle plus corner, -1 or 1 each way, scaled by box's half extents, then turned
+  ##   back by box's steps: quad of `discCorners` covers box exactly, and nothing past it.
+  let turned = (
+    0.5*(box.corner_min[0] + box.corner_max[0]) +
+      0.5*corner_across*(box.corner_max[0] - box.corner_min[0]),
+    0.5*(box.corner_min[1] + box.corner_max[1]) +
+      0.5*corner_up*(box.corner_max[1] - box.corner_min[1]),
+  )
+  (
+    turned[0]*box.step_across[0] + turned[1]*box.step_up[0],
+    turned[0]*box.step_across[1] + turned[1]*box.step_up[1],
+  )
 
 
 func rayThroughView*(
@@ -1246,22 +1298,21 @@ func expandDomeVertex*(record: DomeRecord, unit: Direction): Vertex =
   )
 
 
-proc discCorners*(): seq[float32] =
-  ## Emit disc fan's static corner buffer.
-  ##   `(cos, sin)` per corner, three corners per rim segment, wound centre, this
-  ##   segment's boundary, next one's.
-  ##   Centre corner is `(0, 0)`, which `expandDiscCorner` lands on box's middle.
+const COUNT_CORNERS_DISC* = 6
+  ## Count corners disc quad is drawn from: two triangles over its box.
+  ##   Triangles rather than strip: disc and dome share one instanced veil draw, which
+  ##   draws triangles.
+
+
+func discCorners*(): seq[float32] =
+  ## Emit disc quad's static corner buffer: `(across, up)` in -1 .. 1, two triangles.
+  ##   `expandDiscCorner` lands each on corner of box `viewBoxOfDisc` gave, so quad is box.
   ##   One source for both front-ends: desktop uploads from Nim and browser through
   ##   `nimDiscCorners`, so neither carries hand-copied table.
-  result = newSeq[float32](2*3*SEGMENTS_CIRCLE_HORIZON)
-  for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
-    let at = 6*i
-    result[at + 0] = 0.0
-    result[at + 1] = 0.0
-    result[at + 2] = float32(UNIT_CIRCLE_RIM[i].cos_angle)
-    result[at + 3] = float32(UNIT_CIRCLE_RIM[i].sin_angle)
-    result[at + 4] = float32(UNIT_CIRCLE_RIM[i + 1].cos_angle)
-    result[at + 5] = float32(UNIT_CIRCLE_RIM[i + 1].sin_angle)
+  @[
+    -1.0'f32, -1.0'f32, 1.0'f32, -1.0'f32, 1.0'f32, 1.0'f32,
+    -1.0'f32, -1.0'f32, 1.0'f32, 1.0'f32, -1.0'f32, 1.0'f32,
+  ]
 
 
 const COUNT_CORNERS_POINT* = 4
@@ -1359,7 +1410,7 @@ func addDisc*(
   radius: float; tint: Rgba
 ) =
   ## Append flat, uniformly translucent disc record filling circle `addRing` outlines.
-  ##   For disc-fill vertex shader to fan out.
+  ##   For disc-fill vertex shader to span over its box.
   ##   Flat rather than faded toward rim, since rim marks boundary.
   ##     Tilt still reads through foreshortened ellipse, and low constant alpha keeps
   ##     whatever sits behind legible.
