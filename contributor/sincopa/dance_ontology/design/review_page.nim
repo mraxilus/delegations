@@ -189,7 +189,7 @@ func pageOf(parts: Parts): string =
              elif is_dropped: " dropped" else: ""
       badge = if is_flawed: """<em class="badge mend">mend</em>"""
               elif is_kept: """<em class="badge keep">kept</em>"""
-              elif is_dropped: """<em class="badge drop">drop</em>"""
+              elif is_dropped: """<em class="badge dropped">dropped</em>"""
               else: ""
       # Simulation's own badge, drawn outlined where Architect's is solid, so ruling by
       # eye and reading by engine are never taken for one another.  It sits in
@@ -643,7 +643,7 @@ func pageOf(parts: Parts): string =
     text-transform: uppercase; letter-spacing: .08em; padding: .2rem .3rem;
     border-radius: 2px; font-style: normal; }
   .badge.keep { background: var(--keep); color: var(--card); }
-  .badge.drop { background: var(--drop); color: var(--card); }
+  .badge.dropped { background: var(--drop); color: var(--card); }
   /* Cell is green only where Architect kept it *and* simulation reaches all of it.
      Kept alone coloured nothing: it was page's one colour and said nothing of
      second badge, so page read finished wherever ruling was given. */
