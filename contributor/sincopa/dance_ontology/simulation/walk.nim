@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options]
+import std/[atomics, cpuinfo, locks, math, options, sets, strutils, tables, typedthreads]
 import ./[body, hold, limb, plan, rig, rigid, vector]
 
 
@@ -81,6 +81,106 @@ type
     tried*: seq[Option[float]]  ## Strain of each distance and way tried, in order: none gave.
 
 
+#[ Kept Answers ]#
+
+type Store[T] = object
+  ## Answers of one routine by every argument it was asked with, shared by every thread:
+  ## each is answered once, and thread asking what another is answering waits for it.
+  ##   Routine answers from its arguments alone, so answer kept is answer it gives again,
+  ##     to last bit: run that keeps them writes same bytes as one that does not.
+  lock: Lock
+  cond: Cond
+  done: Table[string, T]
+  busy: HashSet[string]
+
+proc answered[T](store: var Store[T], key: string, got: var T): bool =
+  ## Whether `key` is answered, `got` then holding answer; else caller now answers it, and
+  ## keeps answer with `keep`.  Waits while another thread answers it.
+  withLock store.lock:
+    while true:
+      if key in store.done:
+        got = store.done[key]
+        return true
+      if key notin store.busy:
+        store.busy.incl key
+        return false
+      wait(store.cond, store.lock)
+
+proc claimed[T](store: var Store[T], key: string): bool =
+  ## Whether `key` was neither answered nor being answered, and caller now answers it.
+  withLock store.lock:
+    if key in store.done or key in store.busy: return false
+    store.busy.incl key
+  true
+
+proc keep[T](store: var Store[T], key: string, answer: T) =
+  ## Keep answer of `key`, and wake every thread waiting on it.
+  withLock store.lock:
+    store.done[key] = answer
+    store.busy.excl key
+  broadcast(store.cond)
+
+proc forget[T](store: var Store[T], key: string) =
+  ## Give up `key` unanswered, so thread waiting on it answers it itself.
+  withLock store.lock: store.busy.excl key
+  broadcast(store.cond)
+
+template kept(store: var Store, key: string, answer: untyped): untyped =
+  ## Answer of `key` from `store`, or `answer` worked out once and kept there; plain
+  ## `answer` where answers are not kept.
+  var got: typeof(answer)
+  if not IS_KEEPING:
+    got = answer
+  elif not store.answered(key, got):
+    try:
+      got = answer
+    except CatchableError as error:
+      store.forget(key)
+      raise error
+    store.keep(key, got)
+  got
+
+func bits(value: float): string = toHex(cast[uint64](value))
+  ## Float as its bits: key that tells every two values apart, nought from minus nought too.
+
+func keyOf(rig: Rig, links: seq[Link], parts: varargs[string]): string =
+  ## Key of one question: rig, hold and every other argument, each as its own text.
+  result = $rig
+  for link in links: result.add "|" & $link
+  for part in parts: result.add "|" & part
+
+# Mutable and global: one run keeps every answer for every thread, set before any starts.
+var
+  IS_KEEPING = false  ## Whether answers are kept: off unless run asks, so laws ask afresh.
+  PLANS: Store[Path]  ## Every path planned, by `keyOfPlan`.
+  SWEEPS: Store[Swept]  ## Every sweep.
+  WALKS: Store[tuple[walk: Walk, most: float]]  ## Every walk from one distance, as far as asked.
+  STANDS: Store[Stood]  ## Every distance search of still.
+  REACHES: Store[bool]  ## Every carried reach.
+  PLANNED_HOLDS: Store[bool]  ## Every planned still, as `isPlannedHolding` answers it.
+  PLANNED_REACHES: Store[bool]  ## Every planned reach.
+initLock(PLANS.lock)
+initCond(PLANS.cond)
+initLock(SWEEPS.lock)
+initCond(SWEEPS.cond)
+initLock(WALKS.lock)
+initCond(WALKS.cond)
+initLock(STANDS.lock)
+initCond(STANDS.cond)
+initLock(REACHES.lock)
+initCond(REACHES.cond)
+initLock(PLANNED_HOLDS.lock)
+initCond(PLANNED_HOLDS.cond)
+initLock(PLANNED_REACHES.lock)
+initCond(PLANNED_REACHES.cond)
+
+proc keepAnswers*() =
+  ## Keep every answer of this run, for every thread: call before any thread starts.
+  ##   Recording asks one question in many jobs: 384 planned paths, of which 132 differ, and
+  ##     95 stills that rig and modelled both ask, field for field (2026-10-04).
+  IS_KEEPING = true
+
+
 iterator stands*(rig: Rig): float =
   ## Every distance couple may stand at, from clear of each other outward.
   ##   Only thing fixed about where couple stand is that they are not inside each
@@ -116,7 +216,7 @@ proc momentOf(couple: Couple, at: float): tuple[moment: Moment, why: Stop, which
         result.which = i
         result.whose = couple.links[i].ends[end_index]
 
-proc walked*(
+proc walkedOf(
   rig: Rig;
   band: Band;
   links: seq[Link];
@@ -147,6 +247,51 @@ proc walked*(
       break
     result.moments.add now.moment
   couple.free()
+
+func cut(walk: Walk, most: float): Walk =
+  ## Walk as `walkedOf` gives it to `most`, from one it gave to `most` or further from same
+  ##   distance: each step is taken where same step was, and `most` only ends loop.
+  ##   Moment keeps turn it was reached at, so loop reads same sums walk did.
+  result = Walk(found_rest: walk.found_rest, apart: walk.apart)
+  result.moments.add walk.moments[0]
+  var k = 0
+  while abs(result.moments[^1].at) < abs(most):
+    inc k
+    if k == walk.moments.len:
+      result.is_stopped = true
+      result.at = walk.at
+      result.why = walk.why
+      result.which = walk.which
+      result.whose = walk.whose
+      break
+    result.moments.add walk.moments[k]
+
+proc walked*(
+  rig: Rig;
+  band: Band;
+  links: seq[Link];
+  who: Body;
+  apart, most, step: float;
+  is_away: bool;
+  head: Body;
+): Walk =
+  ## Turn one way from one standing distance until something gives, or until `most` is
+  ## reached (`walkedOf`).
+  ##   Kept walk as far or further from same distance gives this one cut short (`cut`):
+  ##     sweep walks every distance to `MOST`, and reach asks each again to its own turn.
+  if not IS_KEEPING:
+    return walkedOf(rig, band, links, who, apart, most, step, is_away, head)
+  let key = keyOf(rig, links, $band, $who, bits(apart), bits(step), $is_away, $head)
+  var got: tuple[walk: Walk, most: float]
+  if WALKS.answered(key, got):
+    if got.walk.is_stopped or abs(got.most) >= abs(most): return cut(got.walk, most)
+    return walkedOf(rig, band, links, who, apart, most, step, is_away, head)
+  try:
+    result = walkedOf(rig, band, links, who, apart, most, step, is_away, head)
+  except CatchableError as error:
+    WALKS.forget(key)
+    raise error
+  WALKS.keep(key, (result, most))
 
 proc stood*(
   rig: Rig,
@@ -203,15 +348,15 @@ proc standsAt(
   result = Stood(is_holding: is_holding, apart: apart, turns: turns, strain: couple.strainOf)
   couple.free()
 
-proc standing*(
+proc standingOf(
   rig: Rig,
   band: Band,
   links: seq[Link],
   turns: float,
-  is_away = false,
-  head = Body.Two,
-  is_either_way = false,
-  who = Body.Two,
+  is_away: bool,
+  head: Body,
+  is_either_way: bool,
+  who: Body,
 ): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
@@ -243,6 +388,21 @@ proc standing*(
       result.tried = tried
       if result.is_holding and result.strain.most <= 0.0: return
 
+proc standing*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away = false,
+  head = Body.Two,
+  is_either_way = false,
+  who = Body.Two,
+): Stood =
+  ## Where couple stand for this still: distance whose pose holds nearest to ease, of
+  ## every distance couple may stand at (`standingOf`).
+  kept(STANDS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who),
+       standingOf(rig, band, links, turns, is_away, head, is_either_way, who))
+
 proc isHoldingAt*(
   rig: Rig,
   band: Band,
@@ -260,14 +420,8 @@ proc isHoldingAt*(
     return standsAt(rig, band, links, turns, is_away, head, apart, who).is_holding
   standing(rig, band, links, turns, is_away, head, is_either_way, who).is_holding
 
-proc isReaching*(
-  rig: Rig,
-  band: Band,
-  links: seq[Link],
-  turns: float,
-  is_away = false,
-  who = Body.Two,
-  head = Body.Two,
+proc isReachingOf(
+  rig: Rig, band: Band, links: seq[Link], turns: float, is_away: bool, who, head: Body
 ): bool =
   ## Whether couple carry this hold that far from any distance they may stand at.
   ##   Card asks whether couple can do this, and couple choose where to stand for
@@ -283,6 +437,20 @@ proc isReaching*(
     if walk.found_rest and not walk.is_stopped:
       return true
   false
+
+proc isReaching*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  turns: float,
+  is_away = false,
+  who = Body.Two,
+  head = Body.Two,
+): bool =
+  ## Whether couple carry this hold that far from any distance they may stand at
+  ## (`isReachingOf`).
+  kept(REACHES, keyOf(rig, links, $band, bits(turns), $is_away, $who, $head),
+       isReachingOf(rig, band, links, turns, is_away, who, head))
 
 func leapOf*(walk: Walk): float =
   ## Furthest any point of any held arm moves between two moments of walk.
@@ -342,16 +510,14 @@ proc furthest(
     if carries[^1].got == Inf: free = min(free, apart)
   if carries.len > 0: result = walks[chosen(carries)]
 
-proc swept*(
+proc sweptOf(
   rig: Rig,
   band: Band,
   links: seq[Link],
-  who = Body.Two,
-  most = MOST,
-  step = STEP,
-  apart = 0.0,
-  is_away = false,
-  head = Body.Two,
+  who: Body,
+  most, step, apart: float,
+  is_away: bool,
+  head: Body,
 ): Swept =
   ## Sweep both ways, each from wherever that way carries furthest.
   ##   `who` turns; `head` is whose crown joined hands are carried over.  Callers
@@ -371,6 +537,24 @@ proc swept*(
                   else: result.negative.apart)
   if not result.found_rest:
     result = Swept(apart: result.apart)
+
+
+
+proc swept*(
+  rig: Rig,
+  band: Band,
+  links: seq[Link],
+  who = Body.Two,
+  most = MOST,
+  step = STEP,
+  apart = 0.0,
+  is_away = false,
+  head = Body.Two,
+): Swept =
+  ## Sweep both ways, each from wherever that way carries furthest (`sweptOf`).
+  kept(SWEEPS, keyOf(rig, links, $band, $who, bits(most), bits(step), bits(apart), $is_away,
+                     $head),
+       sweptOf(rig, band, links, who, most, step, apart, is_away, head))
 
 
 
@@ -501,14 +685,74 @@ proc followed*(
   couple.free()
   said
 
+func keyOfPlan(rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style,
+               turner: Body): string =
+  ## Key of one path: every argument `planPath` reads, style field by field.
+  keyOf(rig, links, $is_away, bits(wind), $turner, bits(style.gather), bits(style.leap),
+        bits(style.stay), $style.seed, bits(style.margin), bits(style.room),
+        bits(style.clearance), bits(style.slack))
+
+proc planned(
+  rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
+): Path =
+  ## Path `planPath` plans for these arguments, planned once in run whichever job asks it.
+  kept(PLANS, keyOfPlan(rig, links, is_away, wind, style, turner),
+       planPath(rig, links, is_away, wind, style, turner))
+
 proc pathsFor(
   rig: Rig, links: seq[Link], is_away: bool, wind: float, style: Style, turner: Body
 ): seq[Path] =
   ## Way this style plans wind, and where hold is its own mirror image, same style's plan
   ## of other way seen in mirror: rig is same either side, planner's starts are not.
-  result.add planPath(rig, links, is_away, wind, style, turner)
+  result.add planned(rig, links, is_away, wind, style, turner)
   if isMirrorSame(links):
-    result.add mirrored(planPath(rig, links, is_away, -wind, style, turner))
+    result.add mirrored(planned(rig, links, is_away, -wind, style, turner))
+
+type
+  Asked = tuple[wind: float, style: Style]  ## One path a planned card may ask for.
+
+  Batch = object  ## Paths one card asks for, planned ahead on every core.
+    rig: Rig
+    links: seq[Link]
+    is_away: bool
+    turner: Body
+    asked: seq[Asked]
+    next: Atomic[int]  ## Place in `asked` of next path to take.
+
+proc planning(batch: ptr Batch) {.thread.} =
+  ## Plan every path of batch that no thread has taken, and keep each.
+  ##   Path another thread is planning is passed over, not waited on: card's own fold
+  ##     waits for it, and this thread plans another meanwhile.
+  {.cast(gcsafe).}:
+    while true:
+      let k = batch.next.fetchAdd(1)
+      if k >= batch.asked.len: break
+      let
+        (wind, style) = batch.asked[k]
+        key = keyOfPlan(batch.rig, batch.links, batch.is_away, wind, style, batch.turner)
+      if not PLANS.claimed(key): continue
+      var path: Path
+      try:
+        path = planPath(batch.rig, batch.links, batch.is_away, wind, style, batch.turner)
+      except CatchableError:
+        PLANS.forget(key)
+        continue
+      PLANS.keep(key, path)
+
+proc planAhead(rig: Rig, links: seq[Link], is_away: bool, winds: seq[float], turner: Body) =
+  ## Plan every path that these winds ask in every style, on every core at once, where
+  ## answers are kept; card then folds them in its own order, as one thread would.
+  ##   Each path is pure function of its arguments, so which thread plans it and when
+  ##     changes nothing card reads.
+  if not IS_KEEPING: return
+  var batch = Batch(rig: rig, links: links, is_away: is_away, turner: turner)
+  for wind in winds:
+    for style in STYLES:
+      batch.asked.add (wind, style)
+      if isMirrorSame(links): batch.asked.add (-wind, style)
+  var threads = newSeq[Thread[ptr Batch]](min(batch.asked.len, max(1, countProcessors())))
+  for thread in threads.mitems: createThread(thread, planning, addr batch)
+  joinThreads(threads)
 
 type PlannedStill* = object
   ## Still planned way stands, wound which way, from where, and couple standing there.
@@ -536,7 +780,9 @@ proc plannedStill*(
   ##     `standing` keeps distance: first that held stood C6 with follow's waist at its
   ##     end, strain 1.00, where other path of same style held at 0.19, 2026-10-03.
   ##   Plan at ease ends search, since nothing betters it; earlier plan keeps tie.
-  for way in (if is_either_way: @[turns, -turns] else: @[turns]):
+  let ways = (if is_either_way: @[turns, -turns] else: @[turns])
+  planAhead(rig, links, is_away, ways, who)
+  for way in ways:
     for style in STYLES:
       for path in pathsFor(rig, links, is_away, way, style, who):
         if not path.is_reached:
@@ -571,16 +817,22 @@ proc isPlannedHolding*(
   who = Body.Two,
 ): bool =
   ## Whether some planned way of winding to this facing holds, and stands there.
-  let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
-  if found.is_holding: found.couple.free()
-  found.is_holding
+  proc asked(): bool =
+    let found = plannedStill(rig, band, links, turns, is_away, head, is_either_way, who)
+    if found.is_holding: found.couple.free()
+    found.is_holding
+  kept(PLANNED_HOLDS,
+       keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who), asked())
 
 proc isPlannedReaching*(
   rig: Rig; band: Band; links: seq[Link]; turns: float; is_away: bool; who, head: Body
 ): bool =
   ## Whether some planned way carries couple this far, `who` turning.
-  for style in STYLES:
-    for path in pathsFor(rig, links, is_away, turns, style, who):
-      if replayed(rig, band, links, is_away, head, path, should_stand = false).is_holding:
-        return true
-  false
+  proc asked(): bool =
+    planAhead(rig, links, is_away, @[turns], who)
+    for style in STYLES:
+      for path in pathsFor(rig, links, is_away, turns, style, who):
+        if replayed(rig, band, links, is_away, head, path, should_stand = false).is_holding:
+          return true
+    false
+  kept(PLANNED_REACHES, keyOf(rig, links, $band, bits(turns), $is_away, $who, $head), asked())
