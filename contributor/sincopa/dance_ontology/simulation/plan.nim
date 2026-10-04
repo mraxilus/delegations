@@ -471,13 +471,22 @@ proc reckon(
   r.margins = marginsOf(rig, problem, r.placed)
   r.leaps = leapsOf(problem, r.capsules, before, r.first_arm)
 
-func total(
-  r: Reckoning, problem: Problem, plan, last, bias: Plan, weight, holding: float
-): float =
+type Weighing = object
+  ## What one stage of `solve` weighs every pose by, beyond pose itself.
+  ##   Fields are open to `tests/test_plan.nim`, which weighs plain cost by them.
+  problem*: Problem
+  wind*: float
+  before*: seq[Capsule]  ## Last moment's capsules, or none.
+  last*, bias*: Plan
+  weight*, holding*: float  ## On violation, and on staying near `last`.
+
+func total(r: Reckoning, weighing: Weighing, plan: Plan): float =
   ## Weigh pose: comfort, weighted violation, stay near last, bias, slack and gather.
+  let problem = weighing.problem
   result = comfortOf(r.eases, r.waists) +
-           weight * violationOf(problem, r.placed.arms, r.gaps, r.margins, r.leaps)
-  for k in 0..<SIZE: result += holding * (plan[k] - last[k]) ^ 2 + bias[k] * plan[k]
+           weighing.weight * violationOf(problem, r.placed.arms, r.gaps, r.margins, r.leaps)
+  for k in 0..<SIZE:
+    result += weighing.holding * (plan[k] - weighing.last[k]) ^ 2 + weighing.bias[k] * plan[k]
   if problem.style.slack > 0.0:
     result += problem.style.slack * crampedOf(problem, r.placed.arms, r.gaps)
   if problem.style.gather > 0.0 and problem.links.len == 2:
@@ -572,6 +581,37 @@ proc restore(r: var Reckoning, held: Held, freedom: int, moved: seq[int]) =
   r.margins[i] = held.margin
 
 
+proc weigh(r: var Reckoning, rig: Rig, weighing: Weighing, plan: Plan): float =
+  ## Cost of pose at `plan`, every term reckoned afresh into `r`.
+  r.reckon(rig, weighing.problem, plan, weighing.wind, weighing.before)
+  r.total(weighing, plan)
+
+proc stepped(
+  here, there: var Reckoning,
+  held: var Held,
+  rig: Rig,
+  weighing: Weighing,
+  plan: Plan,
+  bounds: Bounds,
+  moving: array[4, array[4, seq[int]]],
+): Plan =
+  ## Cost of pose one forward step along each free freedom from `plan`, which `here` holds;
+  ## nought for freedom held.  Arm freedom re-reckons what it moves in `here` and puts it
+  ## back; body's freedom moves every capsule of its body, and is reckoned afresh in
+  ## `there`.
+  for k in 0..<SIZE:
+    if bounds[k][0] == bounds[k][1]: continue
+    var z = plan
+    z[k] += 1e-7
+    if k < 4:
+      result[k] = there.weigh(rig, weighing, z)
+      continue
+    let moved = moving[(k - 4) div PER_ARM][firstMoved(k)]
+    here.stepArm(held, rig, weighing.problem, z, weighing.wind, k, moved, weighing.before)
+    result[k] = here.total(weighing, z)
+    here.restore(held, k, moved)
+
+
 type Solved* = object  ## One moment planned.
   plan*: Plan
   broken*: float  ## Violation left: nought kept everything.
@@ -598,25 +638,17 @@ proc solve*(
     here, there: Reckoning  ## Pose at `x`, and pose last weighed.
     held: Held
   for stage in 0..2:
-    let weight = [1e3, 1e5, 1e7][stage]
-    proc cost(r: var Reckoning, y: Plan): float =
+    let weighing = Weighing(problem: problem, wind: wind, before: before, last: last,
+                            bias: bias, weight: [1e3, 1e5, 1e7][stage], holding: holding)
+    proc cost(r: var Reckoning, y: Plan): float = r.weigh(rig, weighing, y)
       ## Weigh pose `y`, every term reckoned afresh into `r`.
-      r.reckon(rig, problem, y, wind, before)
-      r.total(problem, y, last, bias, weight, holding)
     proc gradient(y: Plan, at: float): Plan =
       ## Read gradient of cost by forward difference, `at` being cost at `y`, which `here`
-      ## holds: arm freedom re-reckons only what it moves, and body's every term.
+      ## holds.
+      let costs = stepped(here, there, held, rig, weighing, y, bounds, moving)
       for k in 0..<SIZE:
         if bounds[k][0] == bounds[k][1]: continue
-        var z = y
-        z[k] += 1e-7
-        if k < 4:
-          result[k] = (cost(there, z) - at) / 1e-7
-          continue
-        let moved = moving[(k - 4) div PER_ARM][firstMoved(k)]
-        here.stepArm(held, rig, problem, z, wind, k, moved, before)
-        result[k] = (here.total(problem, z, last, bias, weight, holding) - at) / 1e-7
-        here.restore(held, k, moved)
+        result[k] = (costs[k] - at) / 1e-7
     const memory = 8
     var
       steps: seq[Plan]
