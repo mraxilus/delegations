@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/spacing
+import ../../src/knoller/[reports, spacing]
 
 
 func fixed(source: string): string =
@@ -116,6 +116,16 @@ suite "Spacing":
     let line = "let a = " & "x".repeat(89) & "+y\n"  # 99 runes; spaced, 101
     check checkSpacing("a.nim", line).len == 1
     check line.fixed == line
+
+
+  test "fix held on no line widens it, and keeps width guard on held line":
+    let
+      line = "let a = " & "x".repeat(89) & "+y\n"  # 99 runes; spaced, 101
+      spaced = "let a = " & "x".repeat(89) & " + y\n"
+    check fixSpacing("a.nim", line, Held()).source == spaced  # no line held: widens
+    check fixSpacing("a.nim", line, Held(lines: @[2])).source == spaced  # other line held
+    check fixSpacing("a.nim", line, Held(lines: @[1])).source == line  # its line held
+    check fixSpacing("a.nim", line, EVERY).source == line  # every line held, as two arguments
 
 
   test "clean source passes through unchanged":

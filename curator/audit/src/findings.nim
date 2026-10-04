@@ -57,9 +57,13 @@ const CITATIONS*: array[Rule, string] = [
   Rule.TupleSeparators: "STYLE.md §5",
   Rule.SignatureWrapping: "X.3",
   Rule.CallWrapping: "X.3",
+  Rule.OperatorWrapping: "STYLE.md §5",
+  Rule.ContinuationIndent: "STYLE.md §5",
   Rule.TrailingSeparator: "X.3",
+  Rule.CommentAbove: "X.1",
   Rule.Fence: "X.1",
   Rule.FenceHeld: "X.1",
+  Rule.Unsettled: "STYLE.md §5",
 ]
   ## Article each rule of knoller holds, as its report cites it.
 
