@@ -898,15 +898,21 @@ Hands are offered three bands: torso 1.00 to 1.35 m, neck 1.40 to 1.50, and crow
 crown starts one radius of a limb over the head, so a hand carried there clears it by construction.
 
 **Each head carries a face, and every arm keeps clear of every face (#375).** The face is a sphere
-of the radius of the head, 5 cm ahead of the centre of the head (`rigid.faceCapsule`). Its front
-reaches 14 cm ahead of the axis of the head, where the head reaches 9 cm. By the head length of
-ANSUR II, 0.20 and 0.19 m, the nose sits about 12 cm ahead. So an arm on the sphere stands about 2
-cm off the nose. Assumed: the size and the place of the sphere, which are estimates and not tape.
+of 6 cm radius, half the length of a face from brow to chin (`rigid.faceCapsule`). Its centre sits
+6 cm ahead of the axis of the head, and 4 cm under the centre of the head, midway from brow to chin.
+So its front reaches 12 cm ahead of the axis, where the nose sits by the head length of ANSUR II,
+0.20 and 0.19 m. It is 12 cm across, about as wide as a face. The head is its own capsule, so an
+arm that is clear of both is clear of the face. Assumed: the size and the place of the sphere, which
+are estimates and not tape.
 
-Beside the head the sphere stands 1.3 cm out of the head, and over the crown 0.8 cm. So an arm that
-passes over the crown or behind the head meets almost nothing new. Rejected: no face, under which a
-raised forearm lies across its own face. Verified by `suites/test_asks.nim`: no arm sits more than 5
-mm inside a face at any recorded moment of any still or sweep. That is the slop of the engine.
+The sphere covers the face alone, as the Architect asked on 2026-10-04. Rejected: a sphere of the
+radius of the head, 5 cm ahead of the centre of the head. Its front reached 2 cm past the nose, and
+beside the head it stood 1.3 cm out of the head. Rejected: no face, under which a raised forearm
+lies across its own face.
+
+Verified by `suites/test_asks.nim`: no arm sits more than 5 mm inside a face at any recorded moment
+of any still or sweep. That is the slop of the engine. A second law holds the sphere to the face:
+its front reaches the nose, and it is no wider than a face.
 
 Rejected: to import anything from `src/`, because a shorthand cannot check itself, and the
 simulation is what a shorthand is for. Verified by `suites/test_limb.nim`: the tape and the forward
@@ -987,6 +993,32 @@ share its group, so they pass it. The trunks keep two heads apart. Chest to ches
 overlap by 2 cm, computed from the tape, where dancers turn their heads aside. The face sits on the
 chest and weighs nothing, because the head carries its weight. So an arm deeper than `THROUGH` in a
 face is a stop, as in a body.
+
+**Each dancer's own arms cross below the elbow, and their elbows keep their order.** A dancer
+crosses their arms at the hands or the forearms, up to just before the elbow. Their elbows rarely if
+ever cross over. The Architect said so on 2026-10-04, and ruled the same day that the rule binds the
+two arms of one dancer alone. Partners are free of it: a crossed half turn lays the forearm of the
+lead on the upper arm of the follow.
+
+So the judge of a still stops two poses (`Stop.Crossed`). In the first, the right elbow of a dancer
+passes more than 2 cm to the left of their left elbow, along the right of their chest
+(`ELBOWS_APART`). In the second, one arm of a dancer lies on the upper arm of their other arm, more
+than one radius of an arm before its elbow (`ON_UPPER`, `ELBOW_END`).
+
+Measured 2026-10-04. Without the rule, D02 passes the elbows of the follow by 37 mm. It also lays
+the upper arms of the follow on each other, 9 cm before the elbow. The crossed half turn stands the
+elbows of the follow side by side, 9 to 17 mm past each other. It lays the other forearm 2 to 3 cm
+before the elbow, and A17 and C03 lay it 1 cm before.
+
+Rejected: elbows kept in order with no slip, since the crossed half turn passes them by up to 17 mm.
+Rejected: 9 cm of each upper arm kept clear before the elbow, under which C03 and C05 stood the other
+connection over. Rejected: the rule on the arms of both partners, which the Architect ruled out.
+
+The judge of a sweep does not read the rule, until the Architect rules whether it binds a turn in
+motion (D5 on #375). The plan keeps it on every path that it plans (Planned turn).
+
+Verified by `suites/test_asks.nim`: in every moment of every still, the arms of each dancer cross
+below the elbow alone. The law reads the recorded capsules, and not the judge.
 
 The manifolds are read into the room that the engine says a body needs (`touchRoom`). Rejected: a
 fixed room for eight, which drops unseen the deepest contact of a forearm that touches nine things.
@@ -1309,6 +1341,24 @@ Verified by `suites/test_asks.nim`, both red first. A09 is the D05 of the chain,
 Every crossed still lays the connection that its card names over, at the crossing of the lead. That
 crossing is the one nearest the lead along both connections.
 
+**A still that answers a crossed card lays the connection that the card names over.** The search
+for a still keeps only a pose that crosses the arms of the lead as the card draws them
+(`walk.standsAt`, `walk.plannedStill`). Each card names the arm of the lead on top in `asks`
+(`over`), and a card that draws no crossing names none. A reflected twin names the other arm. The
+search reads the crossing as the law reads it (`read.crossings`). So a pose that crosses nothing, or
+crosses the other way, is another position than the card draws, and does not answer it.
+
+A wound frame of two connections names its arm by its wind, as the chain does (`route.overArm`).
+So A16 and A17 name what C05 and C03 name, and each pair is one question. A frame that names its
+own connection over winds whichever way puts it over, so its wind names that same arm.
+
+Measured 2026-10-04, under the smaller face. Nearest to ease, C03 and C05 stand 0.44 m apart at a
+strain of 0.036, and cross nothing. Crossed as their cards draw them, they stand 0.36 m apart at a
+strain of 0.064. Rejected: the easiest pose, whatever it crosses, which showed C03 and C05 with no
+crossing. Verified by `suites/test_asks.nim`: the law of the crossed still above fails on C03 and
+C05 where the search keeps any pose. It fails on A16 and A17 where they name no arm, and so does
+the law that one picture is one question.
+
 The page counts turns clockwise seen from above, and the simulation anticlockwise. `asked` flips
 every twist in one place, before the simulation answers, for every card and not for the chains
 alone. Verified by `suites/test_asks.nim`: one picture is one question whichever section
@@ -1462,6 +1512,14 @@ six degrees inside its end (`margin`). The joined hands stay 30 mm inside their 
 Each face is a capsule of the plan too. The arms and the girdles of the partner keep clear of it,
 as in the engine. Verified by `test_plan.nim`: the plan pairs each face with every capsule that the
 face of the engine meets.
+
+The plan keeps the elbow rule of the judge too (Rigid body engine). It adds a cost where the upper
+arm of a dancer comes within 1 cm of their other arm, short of the end of its elbow (`CROSS_ROOM`).
+That cost grows over one radius of an arm from the end of the elbow, so an arm that lies just before
+the elbow costs nothing. It adds a cost where the elbows of a dancer come within 1 cm of the order
+that the judge holds (`ELBOW_ROOM`). The room under each limit of the judge is the slop of the
+engine. Verified by `test_plan.nim`: the cost of each step that the planner keeps is the plain cost,
+to the last bit, with these terms in it.
 
 The plan is geometry alone. It uses the capsules, the ranges and the bands of the engine and the
 judge. So the engine meets nothing that the plan did not keep clear. No point of an arm moves more
@@ -1878,7 +1936,8 @@ answer, the twin card keeps it itself, and names itself. A02, A04 and A06 do so,
 The page builder flips each point of that still across the line of the couple (`design/twins`). It
 names the capsules of each arm as those of the other arm, so the page paints them in the colour of
 the other arm. The readings of each arm move to the place of the other arm, and the twist and its
-two ends turn the other way. The Architect chose this on 2026-10-04. Rejected: a still reflected by
+two ends turn the other way. The two capsules of each torso trade places, so the left one stays
+first (`rigid.trunkCapsules`). The Architect chose this on 2026-10-04. Rejected: a still reflected by
 the simulation and kept in the recording, which kept 41 stills that a mirror gives.
 
 Verified on 2026-10-04 by a probe outside the tree, against the recording of `6cfc7bc1`. Each of the
@@ -1888,6 +1947,10 @@ of the capsules, of the joined hands and of the strains tried differs. Verified 
 itself. Each girdle stands on the side that its arm names, in every still that the page shows. Each
 of those laws failed on a break made on purpose: arms not recoloured, points not flipped, and a twin
 card that named another card.
+
+Without the trade of the torso, the right of each chest on a twin card points to its left. A law
+that reads the face from the chest then finds it behind the head. Verified by
+`suites/test_asks.nim`: each still that the page shows lists the left capsule of its torso first.
 
 The engine is not mirror exact, so a reflected twin shows other figures than the engine gives it.
 Against the recordings of `9bbf656`, which reflect nothing, these are the largest changes, compared
