@@ -56,17 +56,17 @@ wait until the new sheet arrives. Nothing should be written about a file that th
 seen. The review page waits on the same sheet, and the ledger waits on the reconciliation of the
 drawing rules.
 
-**The Architect ruled each contradiction of the vocabulary on 2026-10-04.** A contradiction is a
-word that meets an agreed entry, or that carries more than one meaning. The rulings are word for
-word in [the comment on #226][rulings], and `GLOSSARY.md` holds what they gave. By them, sweep,
-rest and verdict each have an entry, with the other words that they ruled on.
+**`GLOSSARY.md` holds the vocabulary as the Architect ruled it.** A contradiction is a word that
+meets an agreed entry, or that carries more than one meaning. The rulings of each contradiction, of
+2026-10-04, are word for word in [the comment on #226][rulings]. By them, sweep, rest and verdict
+each have an entry, with the other words that they ruled on.
 
 [rulings]: https://github.com/mraxilus/delegations/issues/226#issuecomment-5982118469
 
 Stance, moment and room are the method of the simulation rather than dance, and earn no entry.
 Neither does the `(led)` mark of the simulation, nor its point where the hands meet, because `Grip`
-names the manner of holding instead. In the code, that point and the joint that holds it take other
-names in the work of the true hand (#440).
+names the manner of holding instead. The code still calls that point `grip`, and the joint that
+holds it `GRIP`. The work of the true hand (#440) renames them.
 
 **`Block` describes the code.** The term says that a turn stops where a body or a twist blocks it,
 where "no small move holds, and no reachable pose does". In the engine a small move is the engine
@@ -101,7 +101,9 @@ From the simulation:
   agreed term of the same spelling.
 
 `Band` has an entry of its own, as the height range where the simulation holds a level. Its members
-are `Torso`, `Neck` and `Crown`, and the pages and this record say low, high and above.
+are `Torso`, `Neck` and `Crown`, and the pages and this record say low, high and above. Verified by
+a search of the text of every built page on 2026-10-04: torso and neck appear there only as parts
+of a body, or in the words of the sheet.
 
 **The layout block of the review page names only files that exist.** The words of the page still
 say `validator`, where the agreed word is `Reference`. That change reaches the vocabulary of the
@@ -1170,7 +1172,8 @@ held to the `Crown` band from a quarter turn away, and blended between (`up`, `b
 `height`).
 
 The Architect ruled on A09. That is the same-name chain wound half a turn from its Face-to-back rest
-to face to face, with the hands still over the heads. It was modelled but unnatural. Facing, relaxed
+to face to face, with the hands still over the heads. The Architect rules it modelled but
+unnatural. Facing, relaxed
 hands are at mid torso. Face-to-back or Back-to-back are where they have to be above.
 Facing, the arms naturally come down, and the swan may be reached only so, with one connection
 straightening out as the arms come down.
@@ -2379,10 +2382,10 @@ so a change of names alone computes the physics again. That is a full recording,
 That is the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
 simulation are rare.
 
-The rename of `Stop.Reach` to `Stop.Span` is one. After it, each kept file held its answers to the
-last bit. Only its stamp and the words that the rulings changed moved. The rig recording labels its
-sweeps low and high where it said torso and neck. Compared with jq 1.7 and GNU diff 3.10 on
-2026-10-04.
+A rename alone keeps every kept answer to the last bit, and moves only the stamps and the words.
+Verified for the rename of `Stop.Reach` to `Stop.Span`, with jq 1.7 and GNU diff 3.10, on
+2026-10-04. There, the rig recording labels its sweeps low and high, and every other figure is the
+same.
 
 ## Toolchain
 
