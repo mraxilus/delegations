@@ -64,7 +64,12 @@ meet, because `Grip` names the manner of holding instead.
 reachable pose does". In the engine a small move is the engine carrying the arms on for one moment,
 and what stops it is one named thing. That thing is decided once in `rigid.stoppedBy`, and read by
 every sweep, still and page alike (Article II.1). Verified by `test_rigid.nim`: the turn that a
-couple are said to reach is the turn that some distance carries, and every stop carries its name.
+couple are said to reach is the turn that some distance carries. Every walk that stops names what
+stopped it, as kept and as walked again live.
+
+`seen.still` marks a still that holds at no distance and in no plan as stopped, and names no stop.
+The rig page then says that no pose holds at any distance (`design/rig.nim`). No law stands such a
+still, because the simulation models every card that the reference draws (`suites/test_asks.nim`).
 
 **The model names all sixteen facings, from the side each dancer turns to the other.**
 `rotation.Facing` holds sixteen states, and `facing` reads one off where each dancer sees the
@@ -1201,6 +1206,14 @@ collarbone (`strainOf`, `Strain`). It is nought outside every ease, one at some 
 it. A stop with no ease costs nothing to lean on, and counts only past half a degree (`SLACK`). The
 engine solves its limits rather than clamps them.
 
+The report and the whole-cloth sweeps read strain off a pose alone, from the joints of the held
+arms. `read.tightest` names the joint nearest its edge, and that joint gives the strain.
+
+Verified by `test_read.nim`, over the couples that it settles and one single hold at rest. Every
+joint of every held arm has at least the margin of the joint that `tightest` names. The law failed
+on two breaks made on purpose. One left an end of each connection unread, and one read the twist of
+a left arm against the range of a right arm.
+
 A still whose card fixes no way about is wound either way at every distance, and takes whichever way
 sits easier (`either`). Those are the frames of the standard diagram turned half a turn, which draw
 the same picture turned either way. The card claims a position and not a path. For the single hold
@@ -1857,7 +1870,7 @@ engine. `test_said.nim` compiles to JavaScript. `test_suites.nim` imports every 
 `doAssert` survives it.
 
 **`test_read.nim` settles its thirty couples on every core at once.** Each worker builds and settles
-its own couple, and gives back the arm poses alone. The law reads them on one thread. Its run took
+its own couple, and gives back the arm poses alone. The laws read them on one thread. Its run took
 8.1 s with the couples settled one after another, and takes 2.3 s, on four cores on 2026-09-26. It
 prints the same lines. It failed on three breaks made on purpose: the reader of the arm over turned
 round, one connection given back twice, and no couple settled.
@@ -1903,9 +1916,15 @@ body give values to `simulation/rig.nim`, and no suite mirrors a chapter of them
 `suites/test_workbook.nim` mirror the base sheet, which is an authority, and keep its names.
 
 **The review page counts the laws of every suite, joined or not.** It reads every `t*.nim` under
-`tests/`, so a suite that moves into a folder is still counted. Verified by
-`suites/test_review.nim`, which counts the laws of each stub and of the suites it imports, and reads
-the page against them.
+`tests/`, so a suite that moves into a folder is still counted. It counts each line that opens a
+law. So every law takes its name as a literal, because a name given at run time hides how many laws
+its line makes. Verified by `suites/test_review.nim`, which counts the laws of each stub and of the
+suites it imports by the same rule. It refuses a law named at run time, and reads the page against
+the count.
+
+`suites/test_marks.nim` holds each page of the workbench in a law of its own, named by the page. A
+law there reads those names off the file and holds them to `PAGES`, so a new page cannot go
+unbuilt. It failed when the law of one page was taken out.
 
 Test binaries inherit the working directory of testament. So `build/review`, `build/design` and
 the `tests/` of the review page's count resolve only from the project directory. The runner of
