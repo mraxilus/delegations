@@ -9,7 +9,8 @@ import ../../design/[asks, modelled, parts, rig_page, twins]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
 import ../../simulation/[body, hold, limb, read, rig, vector, words]
 from ../../simulation/plan import isMirrorSame
-from ../../simulation/rigid import faceCapsule, Mark, restStance, trunkCapsules
+from ../../simulation/rigid import ELBOW_END, ELBOWS_APART, faceCapsule, Mark, ON_UPPER,
+  restStance, trunkCapsules
 from ../../simulation/walk import stands, STYLES, twinOf
 import ../../src/dance_ontology/rotation
 from ../../src/dance_ontology/draw/pose import relative
@@ -113,6 +114,39 @@ func faceGapOf(recording, frame: JsonNode): float =
         closest(limb.a, limb.z, centre, centre).gap - radii[i].getFloat - face.radius,
       )
 
+
+func isCrossed(recording, frame: JsonNode): bool =
+  ## Whether one dancer's own arms cross above elbow at one recorded moment, as `rigid.crossed`
+  ## judges it: elbows out of order, or other arm on upper arm short of its elbow's end.
+  ##   Each capsule of arm stops its radius short of both joints (`plan.placeArm`), and torso is
+  ##     two capsules side by side, left first (`rigid.trunkCapsules`), so they give chest's right.
+  let (tags, radii) = (recording["tag"], recording["radii"])
+  var
+    lines: seq[tuple[who, side, mark: int, a, z: Vector]]
+    trunks: array[2, seq[int]]
+  for i in 0..<tags.len:
+    let
+      (who, side, mark) = (tags[i][0].getInt, tags[i][1].getInt, tags[i][2].getInt)
+      (a, z) = capsuleAt(frame, i)
+    if mark == ord(Mark.Trunk): trunks[who].add i
+    elif mark in [ord(Mark.Upper), ord(Mark.Fore)]:
+      let along = unit(z - a) * radii[i].getFloat
+      lines.add (who, side, mark, a - along, z + along)
+  for who in 0..1:
+    let rightward = unit(capsuleAt(frame, trunks[who][1]).a - capsuleAt(frame, trunks[who][0]).a)
+    var elbows: array[2, Vector]
+    for line in lines:
+      if line.who == who and line.mark == ord(Mark.Upper): elbows[line.side] = line.z
+    if dot(elbows[1] - elbows[0], rightward) < ELBOWS_APART: return true
+  for upper in lines:
+    if upper.mark != ord(Mark.Upper): continue
+    for other in lines:
+      if other.who != upper.who or other.side == upper.side: continue
+      let met = closest(upper.a, upper.z, other.a, other.z)
+      if met.gap - 2.0 * HUMAN.limb < ON_UPPER and
+          (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
+        return true
+  false
 
 
 suite "Internal: What each card asks of simulation":
@@ -454,6 +488,23 @@ suite "Internal: Simulation against reference":
       &"`{deepest}` m: " & inside[0..<min(inside.len, 12)].join(" ")
     check moments >= stillAsks().len
     check inside.len == 0
+
+
+  test "every still crosses arms below elbow alone, in every moment":
+    ## Each dancer's own arms cross at hands or forearms, and never above elbow (Architect,
+    ##   2026-10-04), as judge reads it (`rigid.crossed`).  Each still is read as page shows it.
+    ##   Red with no rule, read 2026-10-04: at D02 and D06 follow's elbows swap, and follow's
+    ##     upper arms lie on each other 9 cm before elbow.
+    var
+      crossed: seq[string]
+      moments = 0
+    for key, still in recorded:
+      for frame in still["points"].getElems:
+        inc moments
+        if isCrossed(still, frame): crossed.add key
+    checkpoint &"`{crossed.len}` of `{moments}` moments cross above elbow: " & crossed.join(" ")
+    check moments > 0
+    check crossed.len == 0
 
 
   test "simulation models every card reference draws":
