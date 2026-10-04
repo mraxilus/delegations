@@ -909,10 +909,10 @@ label would show a stale queue.
 - The workflow reads the labels before it removes one, so an item whose label somebody removed
   first is no failure.
 - Its grant is `issues: write` and `pull-requests: write`. The reference of the issues endpoint
-  says that either grant reaches the labels of a pull request. Yet run 1 of `architect.yml`,
-  with `issues: write` alone, failed with exit 1 on the merge of #463. Its log was out of reach
-  through the proxy, so the missing grant is the likeliest cause, and no more.
-  The next labelled pull request to close verifies it.
+  says that either grant reaches the labels of a pull request. For the token of a run, that is
+  false. Verified by run 1 and run 2 of `architect.yml`, 2026-10-04. Run 1, with
+  `issues: write` alone, failed with exit 1 on the merge of #463. Run 2, with both grants and
+  the same script, removed the label on the merge of #467.
 
 - Pull requests are read in every state and then filtered, so a closed one and a merged one
   both count.
