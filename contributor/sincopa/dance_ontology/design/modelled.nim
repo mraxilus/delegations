@@ -138,7 +138,7 @@ func questions*(): seq[Question] =
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var TOLD: seq[bool]  ## Each worker writes its own questions' answers here.
 
-proc answered(question: Question): bool =
+proc answered*(question: Question): bool =
   ## Whether simulation models one card: carried walk first, since it answers most cards in
   ## seconds, and planned way only where it stops, since that pays minutes per card.
   if question.is_still:
@@ -217,7 +217,7 @@ proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($
   ## Stamp answers carry: physics, this verb, and every question.
 
 
-func kept(stamp: string, told: OrderedTable[string, bool]): string =
+func kept*(stamp: string, told: OrderedTable[string, bool]): string =
   ## Recording as file keeps it: stamp, then each card's answer in page's order.
   var said = newJObject()
   for id, is_modelled in told:

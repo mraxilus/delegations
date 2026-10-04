@@ -194,12 +194,17 @@ func jobs*(): seq[Job] =
   for i in 0..<SHOWN.len: result.add Job(cut: i, is_still: false)
   for ask in stillAsks(): result.add Job(ask: ask, is_still: true)
 
+func nameOf*(job: Job): string =
+  ## Name of one job: still by its card's key, sweep by its hold and band.
+  if job.is_still: job.ask.key
+  else: &"{SHOWN[job.cut].name}, {BANDS[ord(SHOWN[job.cut].band)]}"
+
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
   RECORDING_TEXTS: seq[string]  ## Each recording's text, written by whichever worker did it.
   NOTES: seq[string]  ## And one line saying what it found.
 
-proc recorded(job: Job): tuple[note, text: string] =
+proc recorded*(job: Job): tuple[note, text: string] =
   ## Record one job: line saying what it found, and its text as page reads it.
   if job.is_still:
     let
@@ -250,7 +255,7 @@ proc rigStamp*(): string =
   stampOf(currentSourcePath(), jobs().mapIt($it))
 
 
-func assembled(stamp: string, texts: seq[string]): string =
+func assembled*(stamp: string, texts: seq[string]): string =
   ## Whole recording as file keeps it: stamp, rig's measures, then each job's text.
   # Every still card, wound to its facing from distance that sits easiest.
   #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
