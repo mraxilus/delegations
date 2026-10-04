@@ -33,39 +33,80 @@ func titleOf(page: string): string =
   let shuts = page.find("</title>", opens)
   page[opens + "<title>".len..<shuts].split(" \u2014 ")[^1]
 
+func pageIndex(name: string): int =
+  ## Index of page `name` in `PAGES`, which builds it.
+  for i in 0..<PAGES.len:
+    if PAGES[i].name == name: return i
+  raiseAssert "No page of workbench by that name; got `" & name & "`."
+
+template holdPage(name: string) =
+  ## Build page `name` of `PAGES`, write it, and hold what it wrote to every gate.
+  ##   Template, not routine, so each `check` fails law that holds it.
+  createDir(OUT)
+  buildPage(pageIndex(name), OUT)
+  let written = readFile(OUT / name)
+  check written.len > 0  # written and read back (IX.5)
+  # Every page workbench writes is exploration, so every one carries mockup form and
+  # none carries plain one: reader tells stood-behind page from mock-up before opening
+  # either.  Asserted against constant, so title cannot drift while test still passes.
+  check "<title>" & MOCKUP & " — " in written
+  check "<title>" & WORK & " — " notin written
+  # Every published title reads in title case, so published set is one consistent
+  # form.  Nothing checked it until viewer page shipped with sentence for title
+  # while every page beside it was cased.
+  check isTitleCased(titleOf(written))
+  # Rule 26 ranks move's stages, and markup can only rank them through
+  # `keyTimes`: without it browser spreads frames evenly, so turn, settle and
+  # reset all read at one speed.  Every animated element carries its own
+  # clock, on every page, or none of that ranking survives being written out.
+  check written.count("<animate") == written.count("keyTimes=")
+  # Prose on every page follows Simplified Technical English (Article VI.8), and two of
+  # its rules can be counted: sentence's words and paragraph's sentences.  Read here
+  # because page's prose is written by hand, so nothing else can hold it.  Failure names
+  # sentence to split, since rule is about that sentence and not about page.
+  for said in written.longSentences:
+    checkpoint "sentence over " & $WORDS & " words: " & said
+    fail()
+  for said in written.longParagraphs:
+    checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+    fail()
+
 
 
 suite "Internal: Mark workbench":
-  createDir(OUT)
-  for i in 0..<PAGES.len:
-    test PAGES[i].name:
-      buildPage(i, OUT)
-      let written = readFile(OUT / PAGES[i].name)
-      check written.len > 0  # written and read back (IX.5)
-      # Every page workbench writes is exploration, so every one carries mockup form and
-      # none carries plain one: reader tells stood-behind page from mock-up before opening
-      # either.  Asserted against constant, so title cannot drift while test still passes.
-      check "<title>" & MOCKUP & " — " in written
-      check "<title>" & WORK & " — " notin written
-      # Every published title reads in title case, so published set is one consistent
-      # form.  Nothing checked it until viewer page shipped with sentence for title
-      # while every page beside it was cased.
-      check isTitleCased(titleOf(written))
-      # Rule 26 ranks move's stages, and markup can only rank them through
-      # `keyTimes`: without it browser spreads frames evenly, so turn, settle and
-      # reset all read at one speed.  Every animated element carries its own
-      # clock, on every page, or none of that ranking survives being written out.
-      check written.count("<animate") == written.count("keyTimes=")
-      # Prose on every page follows Simplified Technical English (Article VI.8), and two of
-      # its rules can be counted: sentence's words and paragraph's sentences.  Read here
-      # because page's prose is written by hand, so nothing else can hold it.  Failure names
-      # sentence to split, since rule is about that sentence and not about page.
-      for said in written.longSentences:
-        checkpoint "sentence over " & $WORDS & " words: " & said
-        fail()
-      for said in written.longParagraphs:
-        checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
-        fail()
+  test "frames.html":
+    holdPage("frames.html")
+
+
+  test "signs.html":
+    holdPage("signs.html")
+
+
+  test "turns-single.html":
+    holdPage("turns-single.html")
+
+
+  test "turns-hands.html":
+    holdPage("turns-hands.html")
+
+
+  test "review.html":
+    holdPage("review.html")
+
+
+  test "every page the workbench writes has a law of its own":
+    ## Each law above names its page by literal, so review page's count reads it
+    ##   (`tools/review.nim`), where one law named at run time hid one law for each page.
+    ##   Laws are read off this file, as that count reads them, and held to `PAGES`, so
+    ##   page added there cannot go unbuilt here.
+    var held: seq[string]
+    for line in readFile(currentSourcePath()).splitLines:
+      let opening = line.strip
+      if opening.startsWith("holdPage(\"") and opening.endsWith("\")"):
+        held.add opening["holdPage(\"".len..<opening.len - "\")".len]
+    var pages: seq[string]
+    for page in PAGES: pages.add page.name
+    check held == pages
 
 
 
