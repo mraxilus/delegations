@@ -3,9 +3,9 @@
 {.experimental: "strictFuncs".}
 
 import ./fixtures
-# Opened with `{.all.}`, so suite reads moon's frame directly: `spanOfNormal` decides where on
-#   its ring every moon stands, and `toEcliptic` with `directionEquatorial` turn its elements
-#   into frame its normal is read in.
+# Opened with `{.all.}`, so suite reads moon's frame directly: `nodeOfRing` and `ringed` decide
+#   where on its ring every moon stands, and `toEcliptic` with `directionEquatorial` turn its
+#   elements into frame its normal is read in.
 import ../../src/rga_visualiser/orrery {.all.}
 
 
@@ -369,14 +369,16 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check leaning >= leaning_least
 
     test "every moon's ring starts at its ascending node on the ecliptic, turning about its normal":
-      # Every moon's phase is measured from first of its ring's two directions, so either one
-      #   flipped would stand moon across its planet, which test of plane alone never sees.
-      #   First lies in ecliptic and in orbit plane; second completes frame right-handed
-      #   about normal, so ring climbs out of ecliptic as it leaves its node.
+      # Every moon's phase is measured from its ring's node, so node flipped, or ring turned
+      #   backward, would stand moon across its planet, which test of plane alone never sees.
+      #   Node lies in ecliptic and in orbit plane; ring quarter turn on from it, as
+      #   `ringed` places it, completes frame right-handed about normal, so ring climbs out
+      #   of ecliptic as it leaves its node.
       for moon in MOONS:
         let
           normal = normalOfMoon(moon)
-          (node, second) = spanOfNormal(normal)
+          node = nodeOfRing(normal)
+          second = ringed(POSITION_ORRERY, node, normal, 1.0, 0.5*PI) - POSITION_ORRERY
         check abs(normal.z) < 1.0
         check norm(node) =~ 1.0
         check norm(second) =~ 1.0
