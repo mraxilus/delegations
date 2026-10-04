@@ -1706,7 +1706,8 @@ banner check of `checkForm`, which `checkBanners` replaces. The list on every ki
 - `checkAlignment`, the columns of a comment table (I.4);
 - `checkMessages`, the backticks around a value that a message echoes (IV.4);
 - `checkMixtures` and `checkNegations`, the parentheses of a condition (X.4);
-- `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5).
+- `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5);
+- `checkCommands`, the command form of a dotted call statement (STYLE.md §5).
 
 On `.nim` alone, as the idiom checks read it, the list adds `checkImportBrackets` (X.5),
 `checkLists` (X.10) and `checkProfiler` (STYLE.md §3). The move of a late `strictFuncs` needs no
