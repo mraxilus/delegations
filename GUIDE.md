@@ -327,23 +327,23 @@ A message that ends a turn which pushed or posted, and the message of a handover
 one block, `## Sign-off`. Nothing follows it.
 
 It serves three readers. The Architect reads it first, and set the order of its parts. The
-block says who the delegate is and where it stands, then what happened, then what waits on the
-Architect. The next delegate, and the same delegate after a compaction, read the same block.
-Its parts come in this order:
+block says who the delegate is and what it works on, then what happened, then where it stands
+and what waits on the Architect. The next delegate, and the same delegate after a compaction,
+read the same block. Its parts come in this order:
 
 1. **Role.** The role string, then the branch.
-2. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
+2. **Context.** At most three sentences in the third person. They say what the branch is for,
+   and what the Architect asked last.
+3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
+4. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
+   by number, and decisions as `D1`.
+5. **State.** One word, then the short head of the branch, `pushed` or `not pushed`. Then the
    pull request, `draft` or `ready` or `no pull request`, and the run on that head, `green`,
    `red` or `pending`. The word is one of these:
    - `blocked`: nothing moves until the Architect decides.
    - `waiting`: nothing moves until another delegate or an outside party acts.
    - `working`: this delegate has work it can do now.
    - `done`: nothing is left.
-3. **The table.** Columns `#`, `State`, `Item`, `Where` and `Evidence, or who acts`, as below.
-4. **Context.** At most three sentences in the third person. They say what the branch is for,
-   and what the Architect asked last.
-5. **Summary.** At most three sentences: what happened, and what is needed. It may name rows
-   by number, and decisions as `D1`.
 6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
    `**Decisions:** None.` where there is none.
 7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
@@ -411,7 +411,9 @@ where it holds this repository alone, and reading holds it elsewhere.
 
 **Role:** contributor/ronri/pga_benchmark, `contributor/ronri/pga_benchmark/gap-list`
 
-**State:** blocked, at `3f2a9c1`, pushed, [the gap list (#331)][#331] draft, run 412 green
+**Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
+the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
+of each algebra.
 
 | # | State | Item | Where | Evidence, or who acts |
 | --- | --- | --- | --- | --- |
@@ -422,12 +424,10 @@ where it holds this repository alone, and reading holds it elsewhere.
 | 5 | ⏸️ | Names in the tests (carried 2) | [#310] | D1 |
 | 6 | ⬜ | cga5d baseline measurement, then the pull request marks ready | `tests/` | this delegate |
 
-**Context:** This branch adds the gap list to `pga_benchmark`, the table that holds `pga` to
-the figures of Lengyel's book. The Architect asked for the list to read the measured baseline
-of each algebra.
-
 **Summary:** The gap list is done and green, and its pull request waits only on D1. Row 4
 belongs to rga_visualiser and blocks nothing here.
+
+**State:** blocked, at `3f2a9c1`, pushed, [the gap list (#331)][#331] draft, run 412 green
 
 **Decisions:**
 
