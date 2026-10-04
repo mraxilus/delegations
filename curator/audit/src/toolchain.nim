@@ -46,7 +46,8 @@ const
   VERSION_KEY* = "NIM_VERSION:"  ## Key workflow states driver version under.
   HASH_KEY = "git hash:"  ## Line `nim --version` reports its commit under.
   VERSION_CHARS = Digits + {'.'}  ## Characters version string is built from.
-  COMMIT_CHARS = {'0'..'9', 'a'..'f'}  ## Characters commit pin is built from; lowercase hex only.
+  COMMIT_CHARS = {'0' .. '9', 'a' .. 'f'}
+    ## Characters commit pin is built from; lowercase hex only.
   COMMIT_LEN* = 40  ## Length of full git commit, which is what pin carries.
 
 type Compiler* = object  ## Define what `nim --version` says about compiler on PATH.

@@ -67,7 +67,7 @@ type
 
 
 const
-  NAME_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_', '\x80'..'\xFF'}
+  NAME_CHARS = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_', '\x80' .. '\xFF'}
     ## Bytes name token is built from: Nim reads every non-ASCII byte as letter.
   RESULT_NAME = "result"  ## Name compiler declares in each routine returning value.
   KIND_MEMBER = "skEnumField"  ## Kind of enum member, which bare name reaches unless enum is pure.
@@ -79,7 +79,7 @@ func applied*(source: string, edits: openArray[Edit]): string =
   ##   rank order.
   result = source
   for edit in edits.sortedByIt((-it.first, -(it.after - it.first), -it.rank)):
-    result = result[0..<edit.first] & edit.text & result[edit.after .. ^1]
+    result = result[0 ..< edit.first] & edit.text & result[edit.after .. ^1]
 
 
 func isIdentical(a, b: Symbol): bool =
@@ -269,7 +269,7 @@ func planRename*(
       let line = starts.upperBound(edit.first) - 1
       if line in fenced.getOrDefault(path):
         refuse "`" & path & ":" & $(line + 1) & "` is fenced (X.1)"
-    for i in 0..<min(before.len, after.len):
+    for i in 0 ..< min(before.len, after.len):
       if after[i].isWide and not before[i].isWide:
         refuse "`" & path & ":" & $(i + 1) & "` would cross " & $LINE_MAX & " characters"
     result.edits[path] = edits

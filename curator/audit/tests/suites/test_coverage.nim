@@ -26,7 +26,7 @@ func rangesOf(file: string): seq[Slice[int]] =
 func codepointOf(f: Finding): int =
   ## Read codepoint finding names, from its `U+` notation.
   let at = f.message.find("`U+")
-  f.message[at + 3..<f.message.find('`', at + 1)].parseHexInt
+  f.message[at + 3 ..< f.message.find('`', at + 1)].parseHexInt
 
 
 func codepointsReported(tree: Tree): seq[int] =
@@ -142,7 +142,7 @@ suite "Coverage":
     var samples, expected: seq[int]
     for bounds in held:
       for codepoint in [bounds.a - 1, bounds.a, bounds.b, bounds.b + 1]:
-        if codepoint <= 0x7F or codepoint in 0xD800..0xDFFF or codepoint in samples: continue
+        if codepoint <= 0x7F or codepoint in 0xD800 .. 0xDFFF or codepoint in samples: continue
         samples.add codepoint
         if not held.anyIt(codepoint in it): expected.add codepoint
     check samples.len >= SAMPLES_FLOOR  # guard kept most bounds

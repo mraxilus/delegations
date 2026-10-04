@@ -16,7 +16,7 @@ suite "Article VIII":
     check stamp(["a", "b"]) != stamp(["b", "a"])  # order matters
     check stamp(["ab", ""]) != stamp(["a", "b"])  # boundary matters
     check stamp(["x\r\ny"]) == stamp(["x\ny"])  # CRLF checkout stamps same
-    check stamp(["x\r\ny"]).allCharsInSet({'0'..'9', 'a'..'f'})  # lowercase
+    check stamp(["x\r\ny"]).allCharsInSet({'0' .. '9', 'a' .. 'f'})  # lowercase
 
 
   test "VIII.6 header fields parse from first table":

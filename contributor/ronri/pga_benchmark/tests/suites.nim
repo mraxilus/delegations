@@ -1695,6 +1695,34 @@ suite "Internal: Pages":
       check tag notin shell_html.toLowerAscii  # shell holds no skeleton, so none doubles
 
 
+  test "bold letter with bar mark is boxed with its mark, and tags, SVG and script pass as are":
+
+    func stripped(html: string): string =
+      ## Drop tags, leaving text reader copies.
+      var is_tag = false
+      for c in html:
+        if c == '<': is_tag = true
+        elif c == '>': is_tag = false
+        elif not is_tag: result.add c
+
+    const shell_html = staticRead("../pages/shell.html")
+    let
+      prose = "<p>Below, 𝐜̱ is left, (𝐜̄∧𝐚) right, and 𝐆̲𝐦̲̅ both.</p>"
+      marked = htmlMarked(prose)
+      kept = "<svg><text>𝐜̱</text></svg><script>let a = \"𝐜̱\"</script><p title=\"𝐜̱\">c̄</p>"
+    check "<span class=\"word\"><span class=\"mark under\">𝐜̱</span></span>" in marked
+      # bar under, mark kept in box
+    check "<span class=\"word\">(<span class=\"mark over\">𝐜̄</span>∧𝐚)</span>" in marked
+      # whole word kept on one line
+    check "<span class=\"mark under tall\">𝐆̲</span><span class=\"mark under over\">𝐦̲̅</span>" in
+      marked  # capital is tall, two marks draw two bars
+    check "over tall" in htmlMarked("𝐛̄") and "tall" notin htmlMarked("𝐞̄")  # ascender only
+    check stripped(marked) == stripped(prose)  # text reader copies is text source holds
+    check htmlMarked(kept) == kept  # SVG, script, attribute and Latin letter pass as they are
+    for rule in [".mark.under::after", ".mark.over::before", ".mark.over.tall::before", ".word"]:
+      check rule in shell_html  # shell draws each box marking makes
+
+
   test "every Noto face ships whole, as TrueType of its own release":
     for face in FACES:
       if face.toLowerAscii.startsWith("noto"):

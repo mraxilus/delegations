@@ -217,6 +217,19 @@ figure.figure { margin: 0; display: grid; gap: 6px; grid-template-columns: minma
 .figure-art svg { display: block; width: 100%; min-width: 640px; max-width: 880px;
   height: auto; }
 figure.figure figcaption { color: var(--muted); font-size: 0.86rem; }
+/* Bar marks on bold maths letters, boxed by `htmlMarked`: Noto Sans Math gives those letters no
+   anchor, so bar is drawn here and clip hides mark font leaves beside letter. At line height 1
+   in Noto Sans, box top stands 0.888em over baseline. Bar under spans 0.084em to 0.155em under
+   baseline, as macron below of font does. Bar over spans 0.66em to 0.731em, 0.054em over macron
+   of font, so it clears bold x-height of 0.549em at reading size; tall letters reach 0.76em. */
+.word { white-space: nowrap; }
+.mark { position: relative; display: inline-block; font-family: var(--sans); line-height: 1;
+  clip-path: inset(-1em 0.03em -1em -1em); }
+.mark::before, .mark::after { position: absolute; left: 18%; right: 18%; height: 0.071em;
+  background: currentColor; }
+.mark.under::after { content: ""; top: 0.972em; }
+.mark.over::before { content: ""; top: 0.157em; }
+.mark.over.tall::before { top: -0.053em; }
 .depends { display: grid; gap: 4px; margin: 0; grid-template-columns: minmax(0, 1fr);
   font-size: 0.9rem; }
 .depends div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 10px;
