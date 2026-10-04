@@ -337,6 +337,13 @@ suite "Repair that widens its line":
     check head.fixedOf.isSettled
 
 
+  test "needless parentheses go, and spacing glues prefix operator they leave, in one round":
+    let distances = HEAD & "  let distance_b = (|∙ ⊖(𝐦 ∧ 𝐧)) + (|∘ (𝐦 ∧ ⊖𝐧))\n"
+    check distances.fixedOf == HEAD & "  let distance_b = |∙ ⊖(𝐦 ∧ 𝐧) + |∘(𝐦 ∧ ⊖𝐧)\n"
+    check attempted("a.nim", distances, Dialect.Module.stepsOf).attempts == 1
+    check distances.fixedOf.isSettled
+
+
   test "value after `=` that is no chain keeps one level under its statement":
     check (HEAD & TWIST).fixedOf == HEAD & TWIST
     check checkFormatting("a.nim", HEAD & TWIST, Dialect.Module).len == 0
