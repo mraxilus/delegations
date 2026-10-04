@@ -68,7 +68,8 @@ The role line and the label are not on it. The `body` hook reads every post befo
    not (Every delegate begins here).
 3. **Back to draft before you push to a ready pull request** (Before you open a pull
    request). The `draft` workflow returns a ready pull request to draft on a push. What stays
-   yours is the intent before the push, and to mark it ready again after.
+   yours is the intent before the push, and to mark it ready again after. The return to draft
+   also takes `architect` off, unless a decision still waits on the item (Boundaries).
 4. **The URL of a published page in the message** (`GUIDE.md`, Output contract). The `body`
    hook holds the pull request half.
 5. **Change ends by showing itself**: a picture, a worked example, or one line on why neither
