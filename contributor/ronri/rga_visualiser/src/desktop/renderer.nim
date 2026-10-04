@@ -324,6 +324,18 @@ void main() {
     corner_max = clamp(vec2(tanBounded(bearing_across + spread_across),
       tanBounded(bearing_up + spread_up))/extent, -1.0, 1.0);
   }
+  vec2 swings = vec2(dot(in_arm_first, forward), dot(in_arm_second, forward));
+  if (depth > 1.001*length(swings)) {
+    vec2 arms_across = vec2(dot(in_arm_first, right_turned), dot(in_arm_second, right_turned));
+    vec2 arms_up = vec2(dot(in_arm_first, up_turned), dot(in_arm_second, up_turned));
+    float a = depth*depth - dot(swings, swings);
+    vec2 b = vec2(across*depth - dot(arms_across, swings), rise*depth - dot(arms_up, swings));
+    vec2 c = vec2(across*across - dot(arms_across, arms_across),
+      rise*rise - dot(arms_up, arms_up));
+    vec2 root = sqrt(max(b*b - a*c, 0.0));
+    corner_min = max(corner_min, clamp((b - root)/a/extent - 0.002, -1.0, 1.0));
+    corner_max = min(corner_max, clamp((b + root)/a/extent + 0.002, -1.0, 1.0));
+  }
   float facing = side*dot(normal, forward);
   float line_vanishing = reach_lateral > 0.0
     ? clamp(-facing/(reach_lateral*extent.y), -2.0, 2.0) : (facing > 0.0 ? -2.0 : 2.0);
@@ -338,12 +350,14 @@ void main() {
   vertex_arm_first = in_arm_first;
   vertex_arm_second = in_arm_second;
 }
-""" ## Span one disc record over its sphere's box, turned and stopped at plane's vanishing line.
+""" ## Span one disc record over its sphere's box, tightened to rim's, stopped at vanishing line.
   ##   Sibling copy of `mesh.viewBoxOfDisc` and `mesh.expandDiscCorner`, and of WebGL
   ##   source in `gl.ts`; change to any one is not finished until other two are checked.
   ##   View turns until plane's normal, signed toward eye's side, points up; each turned axis
   ##   is bounded by sphere's limb in that axis's plane with sight axis; whole turned view
-  ##   where sphere holds eye; floor rises to vanishing line, below which no ray meets plane
+  ##   where sphere holds eye; box tightens to rim's own picture where centre's depth passes
+  ##   1.001 times rim's depth swing, `mesh.FACTOR_RIM_AHEAD`, padded by 0.002,
+  ##   `mesh.MARGIN_BOX_RIM`; floor rises to vanishing line, below which no ray meets plane
   ##   in front of eye; corner is box's middle plus corner scaled by half extents, turned
   ##   back, so quad is box. Clip depth is centre's logarithmic one, for fragment stage to
   ##   overwrite.

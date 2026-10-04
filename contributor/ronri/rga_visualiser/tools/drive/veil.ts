@@ -5,7 +5,8 @@
 //   pixels, and every other check passes with veil draws skipped outright.
 //   Read from views where box stopped at wrong line would cut plane: level and low, so
 //   plane runs up toward its vanishing line; same rolled, so that line crosses view aslant;
-//   steep, so line stands far off view; and from underneath, so plane lies on other side.
+//   steep, so line stands far off view and box is rim's own picture; and from underneath,
+//   so plane lies on other side.
 
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
@@ -44,7 +45,8 @@ interface View {
 /** Views each reading is taken from, about ground, whose normal is world up.
  *
  *  Eye stands inside disc's radius of its centre in all four, so box of its sphere is whole
- *  view, and only vanishing line can stop it.
+ *  view. Level, rolled and from underneath, rim reaches behind eye, and only vanishing line
+ *  can stop box; steep, whole rim stands ahead, and box tightens to rim's own picture.
  */
 const VIEWS: View[] = [
   { name: 'level and low', eye: [4, 0, 1], pivot: [-6, 0, 1], roll: 0 },
