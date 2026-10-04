@@ -166,6 +166,32 @@ suite "Internal: Planner and engine are one rig":
     check worst < MIRRORED
 
 
+  test "plan keeps each face from every capsule engine's face meets":
+    ## Engine's face meets every link of every arm and partner's girdles, and nothing of its own
+    ## trunk and girdles, which share its group (`rigid.FACE_BIT`, `rigid.ownGroup`).  Plan
+    ## keeping less stands engine against what plan never kept clear.
+    ##   Red with partner's girdles left out of plan, found 2026-10-04 by reading both filters.
+    let
+      placed = place(HUMAN, default(Plan), 0.0, false)
+      capsules = capsulesOf(placed)
+      first_arm = 2 * trunkCapsules(HUMAN).len
+      per_arm = placed.arms[0].capsules.len
+      first_face = capsules.len - placed.faces.len
+    for who in Body:
+      let face = first_face + ord(who)
+      var expected, paired: seq[int]
+      for k in first_arm..<first_face:
+        let
+          i = (k - first_arm) div per_arm
+          (owner, part) = ((if i < 2: Body.One else: Body.Two), (k - first_arm) mod per_arm)
+        if part >= 1 or owner != who: expected.add k
+      for (a, b) in pairsOf(problemOf(HUMAN, HAND_TO_HAND, false)):
+        if a == face: paired.add b
+        elif b == face: paired.add a
+      check paired.len == expected.len
+      for k in expected: check k in paired
+
+
 
 suite "Internal: Planned turn":
   let path = planPath(HUMAN, HAND_TO_HAND, false, CROSS, STYLES[0])
