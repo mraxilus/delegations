@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, strutils, tables, unittest]
-import ../../src/[findings, fixes, form, idioms, kinds, symbols]
+import ../../src/[findings, fixes, form, idioms, kinds, names, symbols]
 import ./fixtures
 
 
@@ -310,6 +310,8 @@ suite "Fixes":
     ]  # each report at line of source as given
     check plan.left.len == 0
     let again = plan.written
+    check again.mapIt(checkNames(it.path, it.content, []).len) == @[0, 0]  # V.1, V.10: none left
+    check semanticQueries(again, again).len == 0  # no rename left for second run to ask
     check fixEntries(CURATOR_BRANCH, again, context = again.contextOf(again)).written.len == 0
 
 
