@@ -898,12 +898,14 @@ Hands are offered three bands: torso 1.00 to 1.35 m, neck 1.40 to 1.50, and crow
 crown starts one radius of a limb over the head, so a hand carried there clears it by construction.
 
 **Each head carries a face, and every arm keeps clear of every face (#375).** The face is a sphere
-of 6 cm radius, half the length of a face from brow to chin (`rigid.faceCapsule`). Its centre sits
-6 cm ahead of the axis of the head, and 4 cm under the centre of the head, midway from brow to chin.
-So its front reaches 12 cm ahead of the axis, where the nose sits by the head length of ANSUR II,
-0.20 and 0.19 m. It is 12 cm across, about as wide as a face. The head is its own capsule, so an
-arm that is clear of both is clear of the face. Assumed: the size and the place of the sphere, which
-are estimates and not tape.
+of 6 cm radius, half the length of a face from brow to chin (`rigid.faceCapsule`). Its centre sits 6
+cm ahead of the axis of the head. It sits 4 cm under the centre of the head, midway from brow to
+chin. So its front reaches 12 cm ahead of the axis, where the nose sits by the head length of ANSUR
+II, 0.20 and 0.19 m.
+
+The sphere is 12 cm across, about as wide as a face. The head is its own capsule, so an arm that is
+clear of both is clear of the face. Assumed: the size and the place of the sphere, which are
+estimates and not tape.
 
 The sphere covers the face alone, as the Architect asked on 2026-10-04. Rejected: a sphere of the
 radius of the head, 5 cm ahead of the centre of the head. Its front reached 2 cm past the nose, and
@@ -1001,9 +1003,9 @@ two arms of one dancer alone. Partners are free of it: a crossed half turn lays 
 lead on the upper arm of the follow.
 
 So the judge of a still stops two poses (`Stop.Crossed`). In the first, the right elbow of a dancer
-passes more than 2 cm to the left of their left elbow, along the right of their chest
-(`ELBOWS_APART`). In the second, one arm of a dancer lies on the upper arm of their other arm, more
-than one radius of an arm before its elbow (`ON_UPPER`, `ELBOW_END`).
+passes more than 2 cm to the left of the left elbow (`ELBOWS_APART`). The judge reads left and right
+across the chest of that dancer. In the second, one arm of a dancer lies on their other upper arm
+(`ON_UPPER`). It lies there more than one radius of an arm before the elbow (`ELBOW_END`).
 
 Measured 2026-10-04. Without the rule, D02 passes the elbows of the follow by 37 mm. It also lays
 the upper arms of the follow on each other, 9 cm before the elbow. The crossed half turn stands the
@@ -1011,8 +1013,9 @@ elbows of the follow side by side, 9 to 17 mm past each other. It lays the other
 before the elbow, and A17 and C03 lay it 1 cm before.
 
 Rejected: elbows kept in order with no slip, since the crossed half turn passes them by up to 17 mm.
-Rejected: 9 cm of each upper arm kept clear before the elbow, under which C03 and C05 stood the other
-connection over. Rejected: the rule on the arms of both partners, which the Architect ruled out.
+Rejected: 9 cm of each upper arm kept clear before the elbow, under which C03 and C05 stood the
+other connection over. Rejected: the rule on the arms of both partners, which the Architect ruled
+out.
 
 The judge of a sweep does not read the rule, until the Architect rules whether it binds a turn in
 motion (D5 on #375). The plan keeps it on every path that it plans (Planned turn).
@@ -1514,12 +1517,13 @@ as in the engine. Verified by `test_plan.nim`: the plan pairs each face with eve
 face of the engine meets.
 
 The plan keeps the elbow rule of the judge too (Rigid body engine). It adds a cost where the upper
-arm of a dancer comes within 1 cm of their other arm, short of the end of its elbow (`CROSS_ROOM`).
-That cost grows over one radius of an arm from the end of the elbow, so an arm that lies just before
-the elbow costs nothing. It adds a cost where the elbows of a dancer come within 1 cm of the order
-that the judge holds (`ELBOW_ROOM`). The room under each limit of the judge is the slop of the
-engine. Verified by `test_plan.nim`: the cost of each step that the planner keeps is the plain cost,
-to the last bit, with these terms in it.
+arm of a dancer comes within 1 cm of their other arm (`CROSS_ROOM`). The cost is nought at the end
+of the elbow, and it grows over one radius of an arm. So an arm that lies just before the elbow
+costs nothing. It adds a cost where the elbows of a dancer come within 1 cm of the order that the
+judge holds (`ELBOW_ROOM`).
+
+The room under each limit of the judge is the slop of the engine. Verified by `test_plan.nim`: the
+cost of each step that the planner keeps is the plain cost, to the last bit, with these terms in it.
 
 The plan is geometry alone. It uses the capsules, the ranges and the bands of the engine and the
 judge. So the engine meets nothing that the plan did not keep clear. No point of an arm moves more
@@ -1937,8 +1941,8 @@ The page builder flips each point of that still across the line of the couple (`
 names the capsules of each arm as those of the other arm, so the page paints them in the colour of
 the other arm. The readings of each arm move to the place of the other arm, and the twist and its
 two ends turn the other way. The two capsules of each torso trade places, so the left one stays
-first (`rigid.trunkCapsules`). The Architect chose this on 2026-10-04. Rejected: a still reflected by
-the simulation and kept in the recording, which kept 41 stills that a mirror gives.
+first (`rigid.trunkCapsules`). The Architect chose this on 2026-10-04. Rejected: a still reflected
+by the simulation and kept in the recording, which kept 41 stills that a mirror gives.
 
 Verified on 2026-10-04 by a probe outside the tree, against the recording of `6cfc7bc1`. Each of the
 41 twin cards shows the still that the simulation reflected there, field for field. Only the order
