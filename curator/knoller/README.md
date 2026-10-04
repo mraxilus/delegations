@@ -82,7 +82,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `stub-keys` | A test stub leaves out `-r`, `batchable` and `joinable`. |
 | `unordered-list` | A list that the language leaves unordered is in alphabetical order. |
 | `test-blank-lines` | The blank lines beside a suite or a test follow its tier. |
-| `helper-blank-lines` | A nested helper takes one blank line on each side. |
+| `helper-blank-lines` | A nested helper takes one blank line each side; one-line routines stack. |
 | `doc-position` | A doc stands where the shape of its declaration puts it. |
 | `literal-default` | A parameter with a literal default states no type. |
 | `expression-spacing` | A space stands only where the expression rule puts it. |

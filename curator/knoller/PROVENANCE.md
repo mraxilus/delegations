@@ -265,6 +265,14 @@ enclosing routine too. A one-line `template` is an alias, and stays. The side th
 enclosing body is not read, because a sibling of the enclosing routine stands there. No helper
 moves.
 
+- A routine on one line takes no blank line after the head or doc of the enclosing routine, or
+  after another such routine. That is a `{.borrow.}` with no body, or a body
+  on the line of its signature, with no doc after it. Borrowed funcs and thin wrappers then read
+  as one group, as X.2 stacks undocumented one-line helpers. Verified by `suites/test_blanks.nim`:
+  the template of borrowed funcs of the PGA library stays as written.
+- One blank line still stands between the last of them and a stage or a routine of several
+  lines. A routine with a doc on its next line counts as several lines. So it keeps one on each
+  side, as documented definitions do in X.2.
 - Each run of blank lines goes above a `#` comment on the line before, so the comment stays with
   what it names. A `##` doc and a banner never move with it.
 - Both rules read the code view, so a `suite` or a `proc` in a fixture string never moves. A run
