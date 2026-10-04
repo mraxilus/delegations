@@ -396,15 +396,15 @@ code before the wideners.
 
 - Every file settles with the chain run at most twice, and no file falls back to every line held.
 - The run leaves no wide line. Two findings of spacing stay on one line of `test_mesh.nim` of
-  `rga_visualiser`, where an `if` expression puts `:` before code. Sixty-six lines stay where the
-  hand put them. Each run or value of them holds a line that its new indent takes past 100 runes,
-  and fourteen lines do so. Four of those fourteen lines are values of `assets.nim` of `audit`.
+  `rga_visualiser`, where an `if` expression puts `:` before code. Sixty-two lines stay where the
+  hand put them. Each run of them holds a line that its new indent takes past 100 runes, and
+  thirteen lines do so. Four of those thirteen lines are chains of `assets.nim` of `audit`.
 - The four messages that ended on their value take the shape. The usage error of `command.nim`
   writes its usage apart, so its message ends on its value.
 - Rewrites, with the commit before in brackets:
-  - call splits 622 (610), spaces 2,402 (2,367), comment gaps 745 (743);
+  - call splits 620 (610), spaces 2,402 (2,367), comment gaps 745 (743);
   - doc positions 55 (54), messages 6 (3), signatures 117 (116);
-  - operator breaks 11, continuations 2,278 and comments moved above 1, all new.
+  - operator breaks 9, continuations 1,718 and comments moved above 1, all new.
 - The parser of the compiler, 2.2.12, reads each changed file to the tree it read before, once
   the rewrites of `## Layout fixes` and `## Content fixes` are normalised. Against the commit
   before, each file reads to the same tree once backticks and the shape of a message are
@@ -436,19 +436,19 @@ statement line is the line where the expression opens. A call and a signature ke
 one level, and an argument on its own line is the line where its expression opens. The fixer sets
 that indent on the lines that the hand wrote too.
 
-- A value that opens on the line after the `=` of a binding or an assignment counts from the line
+- A chain that opens on the line after the `=` of a binding or an assignment counts from the line
   of that `=`. So it takes the four spaces too, its first line included, as the Architect chose on
-  2026-10-04. A run of continuations there takes one indent, and never steps in again.
-- A value of another shape, such as an `if` expression or a split call, moves by one step. Its
-  lines keep their layout, so its branches stay aligned.
-- The `=` of a routine, a lambda, a `type` entry or a named argument opens no such value.
+  2026-10-04. Its lines take one indent, and never step in again.
+- Any other value on its own line after `=` keeps one level under its statement, by the ruling of
+  the Architect on 2026-10-04. That covers an `if` or `case` expression, a split call, a list that
+  the hand shaped, and a value of one line. The fixer leaves such a value as written.
+- The `=` of a routine, a lambda, a `type` entry or a named argument opens no such chain.
 - A run of lines stays as written where a token spans lines, or where a comment line stands
   between two of them. It also stays where a bracket opened before it closes in its middle, or
   where its last line leaves a bracket open.
 - Cost: a line that the hand packed to 100 runes crosses `LINE_MAX` at its new indent. No wrap
-  reflows a string across lines, so such a line is held. Its whole run, or its whole value, then
-  keeps the indent of the hand, so the lines of one expression never part. Each line of it keeps
-  its finding for the hand.
+  reflows a string across lines, so such a line is held. Its whole run then keeps the indent of the
+  hand, so the lines of one expression never part. Each line of it keeps its finding for the hand.
 - Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`.
 
 **A plain `#` trailing comment that does not fit moves to its own line above, by the ruling of the
