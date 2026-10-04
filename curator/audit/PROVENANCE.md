@@ -471,19 +471,19 @@ ligatures live.
 
 ## Coverage
 
-**Each character beyond ASCII that the page sources of a project use has a face that the project
+**Each character beyond ASCII that the files of a project use has a face that the project
 ships, and `coverage.nim` holds it.** Article X.8 merges faces by codepoint range, then renders
 each codepoint against `.notdef`. A render needs a built page and a browser, and the static pass
 has neither. So this check holds the static half: what the sources write, against what each face
 maps. A character that no face of the project maps falls to a face that the viewer may lack.
 
-- **The faces of a project are the store faces that its page sources name by file.** The store
+- **The faces of a project are the store faces whose file names its files hold.** The store
   refuses a file that no row declares, so the name is the only way that a project reaches a
   face. The check takes the union over the project. Rejected: a check for each page or each
   stack, which repeats the cascade that a render decides.
 - Cost: a character that no stack of its element reaches can still pass. The face that covers it
   may serve another stack, or the desktop atlas alone.
-- **A page source is every file of the project outside `tests/`, other than its records.** The
+- **The check reads every file of the project outside `tests/`, other than its records.** The
   drivers of the three page projects build pages from Nim, TypeScript, Markdown and JSON, as
   well as from `pages/` and `mockups/`, read 2026-10-04. The static pass cannot trace which file
   a build reads. A test fixture holds a character to prove its absence, so the tests stay out.
@@ -506,7 +506,8 @@ maps. A character that no face of the project maps falls to a face that the view
 - **The checker's own project is exempt**, as the faces check exempts it, because `assets.nim`
   names every face as data.
 - Cost: a codepoint that draws nothing, such as `U+FE0F`, is still reported where no face maps
-  it. No page source holds one today.
+  it. Verified by a search of 362 files on 2026-10-04 at `de0c189`. No file that the check
+  reads holds `U+FE0F`, as the character or as a reference.
 - Verified by `suites/test_coverage.nim`: each rule, and the law at every bound of the ranges of
   Noto Sans.
 
@@ -518,7 +519,8 @@ holds an uncovered character, in a comment or not, has its comments scanned.
 - Measured with the built koch on 2026-10-04, on the machine of Figures. `check-files` over the
   same tree took a median of 3.70 s from `origin/main` at `de0c189`, and 3.77 s with this check.
   Each median is of ten runs.
-- Rejected: a comment scan of every source first, which added about 0.45 s to the same pass.
+- Rejected: a comment scan of every source first. Measured the same way, it added about 0.45 s
+  to the median.
 - On 2026-10-04 at `de0c189`, the check reports no finding in any project. `nim r koch
   check-files` repeats it.
 
@@ -792,8 +794,9 @@ that the shape is settled for all time.
   Brotli, and a codec is an external concern (Article II.8). A machine without the library fails
   that test by name, and every other suite still runs. Rejected: `fc-query` as the reader,
   which adds fontconfig to every machine and reads its charset rather than the `cmap`.
-- Cost: the test fetches each face that the store lacks. Into an empty store, it took 2.5 s and
-  5.7 MB on 2026-10-04, and 0.08 s warm. The `test` job of the runner restores no store, so it
+- Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
+  of Figures: into an empty store, it fetched 11 files of 5,670,612 bytes in 2.5 s. Warm, it took
+  0.08 s. The `test` job of the runner restores no store, so it
   fetches on each run.
 
 The name is general, and names no class of file. So a second class needs no rename across
