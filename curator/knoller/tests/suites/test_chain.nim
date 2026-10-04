@@ -295,6 +295,14 @@ suite "Repair that widens its line":
     check checkFormatting("a.nim", source, Dialect.Module).mapIt(it.line) == @[5, 6, 7]
 
 
+  test "dotted call statement drops its double bracket, and call layout keeps its lines":
+    let hugged = HEAD & "  result[a][b].add(BasisSigned(\n    basis: term.basis,\n" &
+      "    is_negated: dual_signed.is_negated xor term.is_negated,\n  ))\n"
+    check hugged.fixedOf == HEAD & "  result[a][b].add BasisSigned(\n    basis: term.basis,\n" &
+      "    is_negated: dual_signed.is_negated xor term.is_negated,\n  )\n"
+    check hugged.fixedOf.isSettled
+
+
   test "value after `=` that is no chain keeps one level under its statement":
     check (HEAD & TWIST).fixedOf == HEAD & TWIST
     check checkFormatting("a.nim", HEAD & TWIST, Dialect.Module).len == 0
