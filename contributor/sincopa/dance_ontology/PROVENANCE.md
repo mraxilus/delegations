@@ -1348,14 +1348,18 @@ No test compares the kept readings with the physics. So the report is current as
 and stale until it is run again. It is run again in the same delivery as any change to the model.
 A law holds the report to the readings that it renders from (Kept answers).
 
-**Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
-`read.crossings` counts where two connections cross in plan, by a segment intersection. Two poses
-differing by less than the precision of a float have read as four crossings, and as one. That
-happens when a crossing sits at a vertex of both polylines.
+**The crossing reader gives one answer at a knife edge.** `read.crossings` counts where two
+connections cross in plan. Two segments cross where each has the ends of the other on opposite sides
+of its line. A point within `ON_LINE` of a line counts as on its positive side.
 
-The verdicts tables and the diamond law read it on poses well away from that edge. To loosen its
-tolerance six orders of magnitude changed no count on any kept chain card. A law that samples arms
-laid along each other on purpose is owed, and the fold rule is repository issue 88.
+So a vertex that two segments share counts for one of them alone. An arm laid along the other
+crosses it once, where it leaves to the far side. Rejected: an intersection read from the two lines
+alone, which counts a crossing at a vertex of both connections four times.
+
+Verified by `test_read.nim`, test "crossing reader gives one answer at knife edge". A crossing at a
+vertex of both connections reads as one crossing, and so does an arm laid along the other. Each
+reads the same in every one of `TRIALS_JITTER` seeded trials, with each point moved up to 1e-13 m in
+plan.
 
 ## The swan
 
@@ -2090,7 +2094,6 @@ urgent.
   straightens over at 0.28, and 220 mm as the follow's arm turns over at 1.18. Weightless links with
   springs this weak do that at no cost. The corpus of the leap law does not include that sweep,
   and says so.
-- **The crossing reader at a knife edge**, with arms laid along each other, repository issue 88.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.
