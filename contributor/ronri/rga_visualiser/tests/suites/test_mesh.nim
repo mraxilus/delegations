@@ -418,9 +418,16 @@ suite "Mesh":
       record, eye, rayThroughView(0.0, 0.5, right, up, forward, tangent, 1.0)
     ).isNone
     check hitDiscAlong(record, eye, forward).isNone
-    # Sphere holds eye, so box is whole view.
-    let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
-    check box.corner_min == (-1.0, -1.0) and box.corner_max == (1.0, 1.0)
+    # Sphere holds eye, so box is whole view up to plane's vanishing line, which level sight
+    #   puts across view's middle: quad is lower half, and not one row of sky over it.
+    let
+      box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
+      corner_one = expandDiscCorner(box, -1.0, -1.0)
+      corner_two = expandDiscCorner(box, 1.0, 1.0)
+    check isNear(min(corner_one[0], corner_two[0]), -1.0) and
+      isNear(max(corner_one[0], corner_two[0]), 1.0)
+    check isNear(min(corner_one[1], corner_two[1]), -1.0) and
+      isNear(max(corner_one[1], corner_two[1]), 0.0)
     # From ten units above, disc of radius one subtends 5.74 degrees each way: box is its
     #   tangent over view's, aspect widening across; rim is hit just inside and missed just
     #   outside, at depth ten.
@@ -437,10 +444,14 @@ suite "Mesh":
     let inside = hitDiscAlong(small, above, Direction(x: 0.099, y: 0.0, z: -1.0))
     check inside.isSome and isNear(inside.get, 10.0)
     check hitDiscAlong(small, above, Direction(x: 0.101, y: 0.0, z: -1.0)).isNone
-    # Corner lands on box's middle at `(0, 0)` and root two out at rim corner.
-    let corner = expandDiscCorner(box_small, 1.0, 0.0)
-    check isNear(corner[0], sqrt(2.0)*box_small.corner_max[0]) and isNear(corner[1], 0.0)
-    check expandDiscCorner(box_small, 0.0, 0.0) == (0.0, 0.0)
+    # Quad's corners land on box's own corners, and nothing of it past them.
+    let
+      corner_least = expandDiscCorner(box_small, -1.0, -1.0)
+      corner_most = expandDiscCorner(box_small, 1.0, 1.0)
+    check isNear(corner_least[0], box_small.corner_min[0]) and
+      isNear(corner_least[1], box_small.corner_min[1])
+    check isNear(corner_most[0], box_small.corner_max[0]) and
+      isNear(corner_most[1], box_small.corner_max[1])
     # Disc behind eye: box is empty.
     let box_behind = viewBoxOfDisc(
       small, Position(x: 0.0, y: 0.0, z: -10.0), right_down, up_down, forward_down, 0.5, 2.0
@@ -448,7 +459,137 @@ suite "Mesh":
     check box_behind.corner_min == box_behind.corner_max
 
 
+  test "a disc's box stops at its plane's vanishing line, and holds every spot of it shown":
+    # **No ray past vanishing line meets plane in front of eye**, so clip there is exact.
+    #   Quad reaching past line spans fragments that all discard; one stopping short of it
+    #   cuts disc. Both held over seeded views of planes in every attitude, eye mostly within
+    #   one radius of plane on either side, sight aimed near disc, roll drawn at random.
+    #   Every corner `expandDiscCorner` places stands on plane's side of its vanishing line,
+    #   and every spot of grid whose ray `hitDiscAlong` lands on disc lies inside that quad.
+    const
+      seed_views = 474 ## Seed of generator views are drawn from, local to this test.
+      samples_views = 256 ## Views drawn, each with plane, eye and sight of its own.
+      spots_side = 25 ## Spots along each side of view, at centres of equal cells.
+      views_crossed_least = 64 ## Least views whose vanishing line crosses view itself.
+      spots_on_disc_least = 20_000 ## Least spots landing on disc, over every view.
+      tolerance_side = 1.0e-9 ## Slack on either test, against `float` rounding alone.
+
+    proc unitDrawn(generator: var Rand): Direction =
+      ## Draw direction uniformly over sphere, by rejection from cube.
+      while true:
+        let candidate = Direction(
+          x: generator.rand(-1.0 .. 1.0), y: generator.rand(-1.0 .. 1.0),
+          z: generator.rand(-1.0 .. 1.0),
+        )
+        let length = norm(candidate)
+        if length > 0.1 and length <= 1.0: return (1.0/length)*candidate
+
+    func turnOf(a, b, c: (float, float)): float =
+      ## Measure twice signed area of triangle `a b c`, positive counter-clockwise.
+      (b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])
+
+    func leanOf(
+      spot: (float, float); right, up, forward, normal: Direction; tangent, aspect, side: float
+    ): float =
+      ## Measure how far ray through `spot` leans to plane's side of its vanishing line.
+      ##   Per unit ray and unit normal, so one tolerance serves every view.
+      let ray = rayThroughView(spot[0], spot[1], right, up, forward, tangent, aspect)
+      side*dot(ray, normal)/(norm(ray)*norm(normal))
+
+    var
+      generator = initRand(seed_views)
+      views_crossed = 0
+      spots_on_disc = 0
+    let
+      tangent = tan(0.5*degToRad(45.0))
+      aspect = float(WIDTH_OPENED)/float(HEIGHT_OPENED)
+    for _ in 0 ..< samples_views:
+      # Plane through centre near origin, arms square to its normal at radius one to eight.
+      let
+        normal_unit = unitDrawn(generator)
+        along = normalize(cross(normal_unit, unitDrawn(generator))).get
+        radius = generator.rand(1.0 .. 8.0)
+        arm_first = radius*along
+        arm_second = radius*cross(normal_unit, along)
+        centre = Position(
+          x: generator.rand(-5.0 .. 5.0), y: generator.rand(-5.0 .. 5.0),
+          z: generator.rand(-5.0 .. 5.0),
+        )
+        record = DiscRecord(
+          centre_x: float32(centre.x), centre_y: float32(centre.y), centre_z: float32(centre.z),
+          arm_first_x: float32(arm_first.x), arm_first_y: float32(arm_first.y),
+          arm_first_z: float32(arm_first.z), arm_second_x: float32(arm_second.x),
+          arm_second_y: float32(arm_second.y), arm_second_z: float32(arm_second.z),
+          fill_alpha: 1.0,
+        )
+      # Eye over or under plane, low in half of views, so vanishing line runs through view.
+      let
+        height = (if generator.rand(1.0) < 0.5: generator.rand(0.001 .. 0.5)
+          else: generator.rand(0.5 .. 3.0))*radius*(if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
+        offset_across = generator.rand(-1.5 .. 1.5)*radius
+        offset_along = generator.rand(-1.5 .. 1.5)*radius
+        eye = centre + offset_across*along + offset_along*cross(normal_unit, along) +
+          height*normal_unit
+        aim = centre + generator.rand(-1.2 .. 1.2)*arm_first +
+          generator.rand(-1.2 .. 1.2)*arm_second + (0.3*radius)*unitDrawn(generator)
+        forward = normalize(aim - eye).get
+        right = normalize(cross(forward, unitDrawn(generator))).get
+        up = cross(right, forward)
+      # Plane's side of its vanishing line: rays meeting plane in front of eye.
+      let
+        normal = Direction(
+          x: float(record.arm_first_y)*float(record.arm_second_z) -
+            float(record.arm_first_z)*float(record.arm_second_y),
+          y: float(record.arm_first_z)*float(record.arm_second_x) -
+            float(record.arm_first_x)*float(record.arm_second_z),
+          z: float(record.arm_first_x)*float(record.arm_second_y) -
+            float(record.arm_first_y)*float(record.arm_second_x),
+        )
+        to_centre = Direction(
+          x: float(record.centre_x) - eye.x,
+          y: float(record.centre_y) - eye.y,
+          z: float(record.centre_z) - eye.z,
+        )
+        side = (if dot(to_centre, normal) < 0.0: -1.0 else: 1.0)
+      var signs: set[bool]
+      for corner in [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]:
+        signs.incl leanOf(corner, right, up, forward, normal, tangent, aspect, side) > 0.0
+      if signs == {false, true}: inc views_crossed
+      let
+        box = viewBoxOfDisc(record, eye, right, up, forward, tangent, aspect)
+        quad = [
+          expandDiscCorner(box, -1.0, -1.0), expandDiscCorner(box, 1.0, -1.0),
+          expandDiscCorner(box, 1.0, 1.0), expandDiscCorner(box, -1.0, 1.0),
+        ]
+        area = 0.5*(turnOf(quad[0], quad[1], quad[2]) + turnOf(quad[0], quad[2], quad[3]))
+      if area > 0.0:
+        for corner in quad:
+          check leanOf(corner, right, up, forward, normal, tangent, aspect, side) >=
+            -tolerance_side
+      for i in 0 ..< spots_side:
+        for j in 0 ..< spots_side:
+          let
+            spot = (-1.0 + (2.0*float(i) + 1.0)/float(spots_side),
+              -1.0 + (2.0*float(j) + 1.0)/float(spots_side))
+            ray = rayThroughView(spot[0], spot[1], right, up, forward, tangent, aspect)
+          if hitDiscAlong(record, eye, ray).isNone: continue
+          inc spots_on_disc
+          check area > 0.0
+          for k in 0 ..< 4:
+            check turnOf(quad[k], quad[(k + 1) mod 4], spot) >= -tolerance_side
+    check views_crossed >= views_crossed_least
+    check spots_on_disc >= spots_on_disc_least
+
+
   test "plane becomes a flat filled disc and a rim, every vertex on it":
+    func turnedOf(box: DiscBox, spot: (float, float)): (float, float) =
+      ## Read view fraction `spot` in turned fractions `box` is stated in, undoing its steps.
+      let determinant = box.step_across[0]*box.step_up[1] - box.step_up[0]*box.step_across[1]
+      (
+        (spot[0]*box.step_up[1] - spot[1]*box.step_up[0])/determinant,
+        (box.step_across[0]*spot[1] - box.step_across[1]*spot[0])/determinant,
+      )
+
     for plane in PLANES:
       MESHES.clearMeshes
       check MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, scale_test) == Outcome.Finite
@@ -469,10 +610,11 @@ suite "Mesh":
       # Vertex lies on plane exactly when its offset from support is normal to normal.
       let (anchor, normal) = (positionAnchor(plane), directionNormal(plane))
       check anchor.isSome and normal.isSome
-      # Disc is spanned over view box of its sphere and filled by fragment's own ray:
+      # Disc is spanned over box of its sphere and filled by fragment's own ray:
       #   `viewBoxOfDisc` and `hitDiscAlong` -- its references -- are what is read here.
-      #   Every rim point in front of eye projects inside box, clamped to view as box is;
-      #   ray through centre lands at centre's depth; alpha is veil's, flat.
+      #   Every rim point in front of eye projects inside box, read in box's turned fractions
+      #   and clamped to turned view as box is; ray through centre lands at centre's depth;
+      #   alpha is veil's, flat.
       let
         record = MESHES.discs.records[0]
         (eye, right, up, forward) =
@@ -494,8 +636,11 @@ suite "Mesh":
           depth = dot(on_rim, forward)
         if depth <= scale_test.depthNear: continue
         let
-          across = clamp(dot(on_rim, right)/(depth*tangent), -1.0, 1.0)
-          rise = clamp(dot(on_rim, up)/(depth*tangent), -1.0, 1.0)
+          turned = turnedOf(
+            box, (dot(on_rim, right)/(depth*tangent), dot(on_rim, up)/(depth*tangent)),
+          )
+          across = clamp(turned[0], -1.0, 1.0)
+          rise = clamp(turned[1], -1.0, 1.0)
         check across >= box.corner_min[0] - 1.0e-9 and across <= box.corner_max[0] + 1.0e-9
         check rise >= box.corner_min[1] - 1.0e-9 and rise <= box.corner_max[1] + 1.0e-9
       let
@@ -591,6 +736,33 @@ suite "Mesh":
       check isNear(float(record.tail_alpha), Ink.Olive.colour.alpha)
       check isNear(float(record.head_alpha), Ink.Olive.colour.alpha)
       check record.tail_red == record.head_red and record.tail_blue == record.head_blue
+
+
+  test "the disc's static corners are two triangles that tile its box, wound alike":
+    # Quad is box itself once `expandDiscCorner` places it: table leaving gap drops part of
+    #   disc, and one overlapping draws veil twice over.
+    #   Every corner is corner of box; two triangles, each turning counter-clockwise, hold
+    #   area of whole box between them and all four of its corners.
+    let corners = discCorners()
+    check len(corners) == 2*COUNT_CORNERS_DISC
+    var
+      area = 0.0
+      seen: HashSet[(float, float)]
+    for triangle in 0 ..< COUNT_CORNERS_DISC div 3:
+      let at = 6*triangle
+      var places: array[3, (float, float)]
+      for corner in 0 ..< 3:
+        places[corner] = (float(corners[at + 2*corner]), float(corners[at + 2*corner + 1]))
+        check abs(places[corner][0]) == 1.0 and abs(places[corner][1]) == 1.0
+        seen.incl places[corner]
+      let turn = 0.5*(
+        (places[1][0] - places[0][0])*(places[2][1] - places[0][1]) -
+        (places[1][1] - places[0][1])*(places[2][0] - places[0][0])
+      )
+      check turn > 0.0
+      area += turn
+    check isNear(area, 4.0)
+    check len(seen) == 4
 
 
   test "the disc is stepped in arithmetic, and lands where the algebra says":

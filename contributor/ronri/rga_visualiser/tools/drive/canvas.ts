@@ -191,3 +191,23 @@ export async function driveBlankRefused(page: Page): Promise<void> {
     refused.every((one) => one.endsWith('refused')), refused.join('; '),
   );
 }
+
+
+/** Assert page's drawing context multisamples, or does not, as clock it runs on asks.
+ *
+ *  Simulated page draws without, by switch harness sets before page loads, since its verdicts
+ *  read no edge's sample. Real-clock page draws as reader's does, so its speed checks time
+ *  what reader runs. Read from context itself, which reports what it granted and not what was
+ *  asked.
+ */
+export async function driveAntialias(page: Page, is_wanted: boolean): Promise<void> {
+  const granted = await page.evaluate(() => {
+    const canvas = document.getElementById('gl') as HTMLCanvasElement | null;
+    return canvas?.getContext('webgl')?.getContextAttributes()?.antialias ?? null;
+  });
+  report(
+    is_wanted ? "the page on the real clock antialiases, as the reader's page does" :
+      'the simulated page draws without antialias',
+    granted === is_wanted, `context reports antialias ${String(granted)}`,
+  );
+}
