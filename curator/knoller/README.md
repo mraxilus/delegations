@@ -70,6 +70,7 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `message-value` | A message echoes its value in backticks. |
 | `and-with-or` | A condition that mixes `and` with `or` puts each `and` in parentheses. |
 | `not-over-binary` | A `not` over a binary expression takes parentheses. No fix reaches it. |
+| `needless-parentheses` | Parentheses that the parser groups anyway go, around one operand alone. |
 | `to-target-subject-first` | A `to<Target>` call takes its plain subject first. |
 | `dotted-command` | A dotted call statement of one call or group argument takes command form. |
 | `return-result` | A routine never ends on `return result`. |

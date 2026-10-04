@@ -37,6 +37,7 @@ const CITATIONS*: array[Rule, string] = [
   Rule.MessageValue: "IV.4",
   Rule.AndWithOr: "X.4",
   Rule.NotOverBinary: "X.4",
+  Rule.NeedlessParentheses: "X.4",
   Rule.TargetSubject: "STYLE.md §5",
   Rule.DottedCommand: "STYLE.md §5",
   Rule.ReturnResult: "STYLE.md §5",

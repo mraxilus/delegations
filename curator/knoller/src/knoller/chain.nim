@@ -10,8 +10,9 @@
 ##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
 ##     none, so every later fixer reads body where it stands;
 ##   - content next (articles in comments, backticks of IV.4 messages, parentheses of X.4
-##     conditions, `to<Target>` subject first, command form of dotted call statement),
-##     since each changes width of its line;
+##     conditions, `to<Target>` subject first, command form of dotted call statement, needless
+##     parentheses gone), since each changes width of its line; parentheses go before spacing,
+##     which glues prefix operator they leave in same round;
 ##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
 ##     profiler import, unordered lists), since bindings indent lines and every later width
 ##     reads that indent;
@@ -64,8 +65,8 @@
 
 import std/[algorithm, options, sequtils, strutils]
 import ./[
-  articles, blanks, commands, declarations, entry, fences, form, idioms, messages, precedence,
-  reports, spacing, targets, views, wrapping,
+  articles, blanks, commands, declarations, entry, fences, form, idioms, messages, parentheses,
+  precedence, reports, spacing, targets, views, wrapping,
 ]
 
 
@@ -90,7 +91,7 @@ func stepsOf(dialect: Dialect): seq[Step] =
   result = @FORM_STEPS
   result.add @[
     guarded(fixBlockEntry), guarded(fixArticles), widening(fixMessages),
-    widening(fixMixtures), guarded(fixTargets), guarded(fixCommands),
+    widening(fixMixtures), guarded(fixTargets), guarded(fixCommands), guarded(fixParentheses),
   ]
   if dialect == Dialect.Module:
     for fixer in IDIOM_FIXERS: result.add guarded(fixer)
@@ -117,9 +118,10 @@ func lockedNimbles*(files: openArray[(string, string)]): seq[string] =
 func checksOf(path, view: string; dialect: Dialect): seq[Report] =
   ## Run on view each check `checkFormatting` holds that dialect takes; fence is caller's.
   let checks = [
-    checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkTargets,
-    checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-    checkSignatures, checkCalls, checkContinuations, checkTrailing, checkCommentsAbove,
+    checkComments, checkBanners, checkMessages, checkMixtures, checkNegations, checkParentheses,
+    checkTargets, checkCommands, checkBlanks, checkDocs, checkDefaults, checkSpacing,
+    checkSeparators, checkSignatures, checkCalls, checkContinuations, checkTrailing,
+    checkCommentsAbove,
   ]
   for check in checks: result.add check(path, view)
   if dialect == Dialect.Module:
@@ -130,10 +132,10 @@ func checkFormatting*(path, source: string; dialect: Dialect): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   In every dialect: X.9 trailing comments and spaces, X.2 banners, IV.4 messages, X.4
-  ##   conditions, STYLE.md §5 `to<Target>` calls and dotted call statements,
-  ##   suites and tests, STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and STYLE.md
-  ##   §5 separators, signatures, calls, operator breaks, continuations and trailing separators,
-  ##   and X.1 comments above.
+  ##   conditions and needless parentheses, STYLE.md §5 `to<Target>` calls and dotted call
+  ##   statements, suites and tests, STYLE.md §1 helpers, doc position, X.12 defaults, and X.3 and
+  ##   STYLE.md §5 separators, signatures, calls, operator breaks, continuations and trailing
+  ##   separators, and X.1 comments above.
   ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
   ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
   ##   alone.

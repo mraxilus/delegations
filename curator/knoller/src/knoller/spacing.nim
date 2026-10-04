@@ -158,7 +158,7 @@ func isExportMarker(tokens: openArray[Token], k: int, lasts: openArray[int], sou
   before == "," and k >= 3 and tokens.isExportMarker(k - 3, lasts, source)
 
 
-func isMerging(source: string, run: openArray[Token]): bool =
+func isMerging*(source: string, run: openArray[Token]): bool =
   ## Decide whether tokens of run glued lex as other tokens: one operator, as `|∙` and `⊖` lex
   ##   `|∙⊖`, or one literal, as `-` and `1` lex `-1`. Binary operator is read with both its
   ##   neighbours, so `i-1` stays three tokens.

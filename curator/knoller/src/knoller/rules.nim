@@ -24,6 +24,7 @@ type Rule* {.pure.} = enum  ## Define one rule knoller fixes or reports, in orde
   MessageValue = "message value"  ## Message echoes its value in backticks.
   AndWithOr = "and with or"  ## Condition mixing `and` with `or` parenthesises each `and`.
   NotOverBinary = "not over binary"  ## `not` over binary expression takes parentheses.
+  NeedlessParentheses = "needless parentheses"  ## Parentheses parser groups anyway go.
   TargetSubject = "to<Target> subject first"  ## `to<Target>` call takes its subject first.
   DottedCommand = "dotted command"  ## Dotted call statement of one call argument drops `(`.
   ReturnResult = "return result"  ## Routine never ends on `return result`.
