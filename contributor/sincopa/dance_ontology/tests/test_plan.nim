@@ -19,7 +19,8 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[math, random, unittest]
 
-import ../simulation/[body, hold, limb, plan, rig, rigid, vector, walk]
+import ../simulation/[body, hold, limb, rig, rigid, vector, walk]
+import ../simulation/plan {.all.}
 import ./fixtures
 
 
@@ -60,6 +61,22 @@ func pointsOf(pose: ArmPose): array[4, Vector] =
 
 func reflected(point: Vector): Vector = (-point.x, point.y, point.z)
   ## Point seen in mirror across couple's line.
+
+proc plainCost(weighing: Weighing, plan: Plan): float =
+  ## Cost of pose as planner weighed it before it kept any term: every term reckoned whole
+  ## from points, every pair's gap measured.
+  let
+    problem = weighing.problem
+    placed = place(HUMAN, plan, weighing.wind, problem.is_away, problem.turner)
+  result = comfort(HUMAN, placed, plan) +
+           weighing.weight * violation(HUMAN, problem, placed, weighing.before)
+  for k in 0..<SIZE:
+    result += weighing.holding * (plan[k] - weighing.last[k]) ^ 2 + weighing.bias[k] * plan[k]
+  if problem.style.slack > 0.0: result += problem.style.slack * cramped(HUMAN, problem, placed)
+  if problem.style.gather > 0.0 and problem.links.len == 2:
+    let (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
+    result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].grip,
+                                              placed.arms[armIndex(two.body, two.arm)].grip) ^ 2
 
 
 
@@ -206,3 +223,56 @@ suite "Internal: Planned turn":
     checkpoint "stopped by " & $followed.why & " at " & $followed.at
     check followed.is_holding
     check followed.at =~ CROSS
+
+
+suite "Internal: Planner's cost":
+  test "cost of each freedom's step, from terms planner keeps, is plain cost to last bit":
+    ## Planner weighs step of arm freedom from terms it keeps, re-reckoning only what arm
+    ## moves, and leaves unreckoned pair whose balls keep it past every threshold
+    ## (`plan.Reckoning`).  Held here to plain cost of each stepped pose, every term
+    ## reckoned whole: equal to last bit, since recording made either way must be same.
+    ##   Red with collarbone's step moving palm alone, with near pairs marked at half their
+    ##     threshold, and with mask or leaps not put back after step, measured 2026-10-04.
+    var generator = initRand(20261004)
+    const SAME_NAME = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
+                        Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
+    for links in [HAND_TO_HAND, SAME_NAME, @[HAND_TO_HAND[0]]]:
+      for is_away in [false, true]:
+        for style in [STYLES[0], STYLES[13]]:
+          var problem = problemOf(HUMAN, links, is_away)
+          problem.style = style
+          (problem.lower, problem.upper) = bandAt(HUMAN, 0.3, 1.0, is_away, style.room)
+          let
+            bounds = boundsOf(HUMAN, style.margin)
+            moving = movedPairs(HUMAN, problem)
+          for sample in 0..<SAMPLES div 8:
+            let wind = generator.rand(-1.0..1.0)
+            var weighing = Weighing(problem: problem, wind: wind,
+                                    last: randomPlan(HUMAN, generator),
+                                    weight: [1e3, 1e5, 1e7][sample mod 3],
+                                    holding: style.stay)
+            if sample mod 2 == 1:
+              weighing.before = capsulesOf(place(HUMAN, randomPlan(HUMAN, generator), wind,
+                                                 is_away))
+            for k in 4..<SIZE: weighing.bias[k] = generator.rand(-0.05..0.05)
+            let plan = randomPlan(HUMAN, generator)
+            var
+              here, there: Reckoning
+              held: Held
+            check here.weigh(HUMAN, weighing, plan) == plainCost(weighing, plan)
+            let costs = stepped(here, there, held, HUMAN, weighing, plan, bounds, moving)
+            for k in 0..<SIZE:
+              if bounds[k][0] == bounds[k][1]: continue
+              var stepped_plan = plan
+              stepped_plan[k] += 1e-7
+              check costs[k] == plainCost(weighing, stepped_plan)
+            check here.total(weighing, plan) == plainCost(weighing, plan)
+            # Long step of each arm freedom carries pairs across every threshold, and back.
+            for k in 4..<SIZE:
+              var far_plan = plan
+              far_plan[k] += generator.rand(-0.6..0.6)
+              let moved = moving[(k - 4) div PER_ARM][firstMoved(k)]
+              here.stepArm(held, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
+              check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
+              here.restore(held, k, moved)
+              check here.total(weighing, plan) == plainCost(weighing, plan)
