@@ -142,7 +142,7 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
     )
 
 
-func checkKnoller*(path: string, pin, driver: Option[string]): seq[Finding] =
+func checkKnoller*(path: string; pin, driver: Option[string]): seq[Finding] =
   ## Report knoller pinning other than driver version; absent pin is `layout.nim`'s to report.
   if pin.isNone or driver.isNone or pin == driver: return
   result.add finding(
