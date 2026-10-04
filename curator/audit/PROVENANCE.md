@@ -1804,9 +1804,9 @@ project, so only a name reaches it.
 fixes.** What follows is what `koch fix` showed over the tree.
 
 **Spaces inside an expression take the count of X.9, and the record of knoller holds the rule.**
-No fixer of the chain writes a spaced range again. Verified by `suites/test_fixes.nim`: a spaced
-source goes through every fixer unwritten, and a split call, a joined call and a wrapped
-signature keep each space.
+No fixer of the chain writes a range out of the form of X.9. Verified by `suites/test_fixes.nim`: a
+source in that form goes through every fixer unwritten. A split call, a joined call and a wrapped
+signature keep each range.
 
 **Two generated data files of `rga_visualiser` hold most of its call findings.** They are
 `starfield.nim` and `neighbourhood.nim`, contributor code that a generator writes. They hold
