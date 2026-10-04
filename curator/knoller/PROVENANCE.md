@@ -198,12 +198,15 @@ indents one level, and the closing line opens with `)`.
 - A signature that holds a comment, or a group that spans lines, stays. So does one that fits
   where the body after `=` on its line does not, because a moved body and a wrap are two answers.
 
-**A call that fits stays on its line, and one that does not takes one argument to a line (X.3).**
-A wrapped call that would fit is joined, and a split call never puts all its arguments on one
-line of their own. The outermost call that crosses `LINE_MAX` splits first, and each line it
-leaves is read again. An argument splits its own call only where that call is the whole argument.
-An argument that the hand wrapped, and that fits no line, keeps its line breaks and moves with
-its new indent.
+**A call that fits stays on its line, and one that does not keeps the line breaks of the hand
+while each line fits (X.3).** A wrapped call that would fit is joined. Otherwise the line breaks
+that the hand gave it stay, its arguments on one line of their own among them (`handLines`). Only
+where a line would cross `LINE_MAX` does it take one argument to a line, with a trailing comma.
+The outermost call that crosses `LINE_MAX` splits first, and each line it leaves is read again.
+An argument splits its own call only where that call is the whole argument.
+
+- An argument that the hand wrapped, and that fits no line, keeps its line breaks and moves with
+  its new indent.
 
 - A call that spans lines, with a comma after its last argument on a line before its `)`, is
   never joined (`isTrailed`). That comma marks the split that the hand wants. So such a call
@@ -215,6 +218,10 @@ its new indent.
   and a list that no call opens is never joined.
 - A call that the hand hugs around a split call keeps the hug (`isHug`), as `x.add(Y(` with
   its `))`. The inner call takes the layout of its own, in place.
+- The line breaks of the hand stay only where that call is the one bracket that spans lines.
+  Cost: a call that holds another call spanning lines, and does not fit, splits one argument to
+  a line. Each argument is then laid out again. Verified by
+  `suites/test_wrapping.nim`: the call of `cayleys.nim` of the PGA library stays as written.
 - A list that no call opens, and that spans lines, keeps its rows: the fixer never reflows it.
 - A call stays where it holds a comment, a long string that spans lines, or a block. A block is
   a keyword that opens one, `;`, `do`, or `:` at the end of a line outside a condition.
