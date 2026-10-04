@@ -404,7 +404,7 @@ proc run(options: Options): int =
     if not options.isReadAll({Root, Base}): return options.refused
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))
   of "check-role":
-    # Pull request's own two facts, which runner alone holds: they arrive through environment,
+    # Pull request's own facts, which runner alone holds: they arrive through environment,
     #   never interpolated into script, as branch and event kind already do.
     if not options.isReadAll({Root, Branch}): return options.refused
     let
@@ -413,6 +413,7 @@ proc run(options: Options): int =
         if named.len == 0: newSeq[string]()
         else: named.parseJson.getElems.mapIt(it.getStr)
     found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
+    found.add checkTitle(options.branchOrDefault, getEnv("ROLE_TITLE"))
   of "hook":
     # Event name arrives as argument; facts arrive on stdin in event's own protocol, and
     #   answer leaves in that protocol too: exit 2 with stderr refuses tool before it runs,

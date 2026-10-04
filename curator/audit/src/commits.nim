@@ -84,15 +84,17 @@ func parseSubject*(subject: string): Option[Subject] =
   some(Subject(kind: kind, scope: scope, summary: summary))
 
 
+func scopeRequired*(branch: string): Option[string] =
+  ## Name scope every commit of branch carries: its project on project branch, none on curator
+  ##   root branch, whose rules propagation carries each project's scope.
+  let parsed = branch.parseBranch
+  if parsed.isSome and parsed.get.role != Role.Curator: some(parsed.get.scope)
+  else: none(string)
+
+
 func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
   ## Report subjects outside grammar and, on project branch, scopes not its project.
-  let
-    parsed_branch = branch.parseBranch
-    expected =
-      if parsed_branch.isSome and parsed_branch.get.role != Role.Curator:
-        some(parsed_branch.get.scope)
-      else:
-        none(string)
+  let expected = branch.scopeRequired
   # Regression rule: `test` of same scope is commit immediately before `fix` it covers.
   for i in countdown(subjects.high, 0):
     let parsed = subjects[i].parseSubject
