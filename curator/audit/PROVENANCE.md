@@ -482,7 +482,8 @@ maps. A character that no face of the project maps falls to a face that the view
   face. The check takes the union over the project. Rejected: a check for each page or each
   stack, which repeats the cascade that a render decides.
 - Cost: a character that no stack of its element reaches can still pass. The face that covers it
-  may serve another stack, or the desktop atlas alone.
+  may serve another stack, or the desktop atlas alone. The render of `drive` holds that case
+  (`CONTRIBUTOR.md`, Pages and assets), as the Architect ruled on 2026-10-04.
 - **The check reads every file of the project outside `tests/`, other than its records.** The
   drivers of the three page projects build pages from Nim, TypeScript, Markdown and JSON, as
   well as from `pages/` and `mockups/`, read 2026-10-04. The static pass cannot trace which file
