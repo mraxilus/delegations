@@ -1045,7 +1045,7 @@ suite "Internal: Every still stands at ease":
 
 
   test "free couple wound half a turn hang their arms by their sides":
-    ## Same, wound to A2: follow's arms come along with turn and hang again once
+    ## Same, wound to A02: follow's arms come along with turn and hang again once
     ## it stops.  Before this, shoulder's spring at one hertz held hanging arm
     ## with two newton metres per radian, and follow's arms lagged slow half
     ## turn by twenty five and forty nine degrees, then crept back through
@@ -1100,7 +1100,7 @@ suite "Internal: Every still stands at ease":
 
 
   test "hands are up only while couple are not face to face, whole turns and all":
-    ## Architect, on A9, wound half turn from pillion rest to face to face with
+    ## Architect, on A09, wound half turn from pillion rest to face to face with
     ## hands still over heads: modelled but unnatural.  Relaxed position facing
     ## is hands at mid torso; pillion or back to back they have to be above;
     ## facing, arms naturally come down.  Whole turns fold away: couple wound
@@ -1138,7 +1138,7 @@ suite "Internal: Every still stands at ease":
   test "facing couple rest their joined hands at mid torso":
     ## Same ruling, on couple as they stand: cross-name chain at its face to
     ## face rest, and same-name chain wound half turn from pillion rest to face
-    ## to face (A9), hold with every joined hand in torso band.  Before, A9
+    ## to face (A09), hold with every joined hand in torso band.  Before, A09
     ## stood at 0.60 m with every hand over crown.
     for name in ["cross-name at +0.0", "same-name at half"]:
       let

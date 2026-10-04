@@ -61,7 +61,7 @@ const
   LEFT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
     ## Single hold, left to left.
   RIGHT_TO_LEFT* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
-    ## Single hold, right to left: standard diagram's A4 wound half.
+    ## Single hold, right to left: standard diagram's A04 wound half.
   LEFT_TO_RIGHT* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
     ## Single hold, left to right.
   RIGHT_TO_RIGHT* = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
