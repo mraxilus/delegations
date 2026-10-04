@@ -488,6 +488,9 @@ suite "Chapter 2":
    line. One item to a line takes a trailing separator. A declarative call names its
    arguments, and so do a code-generating call and a constructor. A positional call stays
    positional.
+
+   A call written one argument to a line, with a separator after its last argument, stays so
+   where it would fit. That separator is the mark of the split that the hand wants.
 4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
    loop for each axis of the data, and make a condition inside it a guard where it can be.
    Past four levels, split the routine or say why in a comment. Sixty lines is a review

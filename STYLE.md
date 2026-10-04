@@ -185,8 +185,10 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   ```
 
 - A call that does not fit on its line puts one argument on each line, with a trailing comma.
-  It never wraps its arguments onto one line of their own. A generator call and a constructor
-  name their arguments, and a positional call stays positional:
+  It never wraps its arguments onto one line of their own. A call written one argument to a line,
+  with a comma after its last argument, stays so even where it fits. That comma marks the split
+  that the hand wants. A generator call and a constructor name their arguments, and a positional
+  call stays positional:
 
   ```nim
   CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(
