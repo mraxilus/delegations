@@ -1,0 +1,152 @@
+## Run knoller from shell: `knoller [--check] path...`, fixing each Nim file paths name.
+##   Path names file, or directory standing for `.nim`, `.nims` and `.nimble` files `git
+##     ls-files` lists under it, sorted; outside git work tree, directory names none. Named file
+##     of other extension is passed over; path naming nothing is usage error.
+##   Nimble file whose copy `atlas.lock` beside it holds is passed over (`lockedNimbles`).
+##   Fix writes only file that changes; `--check` writes none, and reports each change due.
+##   Output, sorted by path, line, then rule id: `path:line: <rule-id> fixed`, or `to fix`
+##     with `--check`; `path:line: <rule-id> left: <message>` for finding left for hand;
+##     `path:line: fence-held warning: <message>` for each fence, so no fenced line goes
+##     unseen; then count, `N fixed.` or `N to fix.`. Line `0` is whole file, so its location
+##     is path alone.
+##   Exit: 0 clean; 1 finding left, or change due under `--check`; 2 usage error. Warning
+##     changes no exit code, since fence is escape charter grants (Article X.1).
+##   No style option: rules are constants, and fence is only escape (Article X.1).
+##   `outcomeOf` decides what run writes and prints from text alone, so suite drives it with
+##     no file; `main` reads files, runs git, writes and prints.
+##
+##   Cost: rule id is stable name for tool reading output, so caller citing article maps it
+##     (`curator/audit` holds `CITATIONS`).
+##   Cost: directory is read through git, so file git ignores, or does not list yet, is unread
+##     there; named file is read whatever git says.
+
+{.experimental: "strictFuncs".}
+
+import std/[algorithm, options, os, osproc, parseopt, sequtils, strutils]
+import ./[chain, fences, reports]
+
+
+const
+  USAGE = """
+Usage: knoller [--check] path...
+
+Fix each Nim file path names; directory stands for Nim files git lists under it.
+
+Options:
+  --check  write nothing; report each change due, and exit 1 where any
+"""
+    ## Text printed on usage error.
+  EXTENSIONS: array[Dialect, string] = [".nim", ".nims", ".nimble"]
+    ## Extension of file of each dialect.
+
+
+type
+  Options* = object  ## Define parsed command line.
+    is_check*: bool  ## Report changes due and write none.
+    paths*: seq[string]  ## Paths named, files or directories, in order given.
+
+  Outcome* = object  ## Define what one run writes and prints, and its exit code.
+    written*: seq[(string, string)]  ## Path and new text of each file that changes.
+    lines*: seq[string]  ## Lines printed, in order.
+    code*: int  ## Exit code: 0 clean, 1 finding left or change due under `--check`.
+
+
+proc parseOptions*(arguments: openArray[string]): Option[Options] =
+  ## Parse command line; `none` on unknown option, option value, or no path.
+  var
+    options = Options()
+    parser = initOptParser(@arguments)
+  for kind, key, value in parser.getopt():
+    case kind
+    of cmdArgument: options.paths.add key
+    of cmdLongOption, cmdShortOption:
+      if key != "check" or value.len > 0: return none(Options)
+      options.is_check = true
+    of cmdEnd: break
+  if options.paths.len == 0: none(Options) else: some(options)
+
+
+func dialectOf*(path: string): Option[Dialect] =
+  ## Read dialect of file by its extension; `none` for file of no Nim dialect.
+  for dialect in Dialect:
+    if path.endsWith(EXTENSIONS[dialect]): return some(dialect)
+  none(Dialect)
+
+
+func located(report: Report): string =
+  ## Render location and rule of report: `path:line: <rule-id>`, line `0` left out.
+  let location = if report.line == 0: report.path else: report.path & ":" & $report.line
+  location & ": " & report.rule.id
+
+
+func `<`(a, b: Report): bool =
+  ## Order reports by path, then line, then rule id, then message, so output is stable.
+  if a.path != b.path: return a.path < b.path
+  if a.line != b.line: return a.line < b.line
+  if a.rule != b.rule: return a.rule.id < b.rule.id
+  a.message < b.message
+
+
+func outcomeOf*(
+  files: openArray[(string, string)], locked: openArray[string], is_check: bool
+): Outcome =
+  ## Fix each file of Nim dialect, as path and text, and decide what run writes and prints;
+  ##   file `locked` names, or of no dialect, is passed over.
+  var fixed, left, held: seq[Report]
+  for (path, source) in files:
+    let dialect = path.dialectOf
+    if dialect.isNone or path in locked: continue
+    let fence = source.fenceOf
+    if fence.fault < 0: held.add heldOf(path, fence)
+    let fix = formatted(path, source, dialect.get)
+    left.add checkFormatting(path, fix.source, dialect.get)
+    if fix.source == source: continue
+    fixed.add fix.fixed
+    if not is_check: result.written.add (path, fix.source)
+  let outcome = if is_check: " to fix" else: " fixed"
+  for report in fixed.sorted: result.lines.add report.located & outcome
+  for report in left.sorted: result.lines.add report.located & " left: " & report.message
+  for report in held.sorted: result.lines.add report.located & " warning: " & report.message
+  result.lines.add $fixed.len & outcome & "."
+  result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
+
+
+proc listed(directory: string): seq[string] =
+  ## Read Nim files git lists under directory, sorted; none outside git work tree.
+  let (output, code) = execCmdEx("git -C " & directory.quoteShell & " ls-files -z")
+  if code != 0: return
+  for name in output.split('\0'):
+    if name.len > 0 and name.dialectOf.isSome: result.add directory / name
+  result.sort
+
+
+proc lockedOf(paths: openArray[string]): seq[string] =
+  ## Read each nimble file of paths whose copy `atlas.lock` beside it holds.
+  var locks: seq[(string, string)]
+  for path in paths:
+    if path.dialectOf != some(Dialect.Package): continue
+    let
+      directory = path.parentDir
+      lock = if directory.len == 0: LOCK_FILE else: directory & "/" & LOCK_FILE
+    if fileExists(lock): locks.add (lock, readFile(lock))
+  lockedNimbles(locks)
+
+
+proc main*(): int =
+  ## Fix files command line names; print outcome; return exit code.
+  let options = parseOptions(commandLineParams())
+  if options.isNone:
+    stderr.write USAGE
+    return 2
+  var paths: seq[string]
+  for path in options.get.paths:
+    if dirExists(path): paths.add path.listed
+    elif fileExists(path): paths.add path
+    else:
+      stderr.write "Path names no file or directory; got `" & path & "`.\n" & USAGE
+      return 2
+  paths = paths.deduplicate
+  let outcome = outcomeOf(paths.mapIt((it, readFile(it))), paths.lockedOf, options.get.is_check)
+  for (path, text) in outcome.written: writeFile(path, text)
+  for line in outcome.lines: echo line
+  outcome.code

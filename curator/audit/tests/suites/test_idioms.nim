@@ -4,6 +4,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, idioms]
 
 
@@ -139,7 +140,7 @@ suite "Idioms":
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
       stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
     check stub.source == header & "\n" & PROFILER_IMPORT & "\n\ninclude \"suites.nim\"\n"
-    check stub.fixed.mapIt(it.message) == @["profiler import (STYLE.md §3)"]
+    check stub.fixed.mapIt(it.rule) == @[Rule.ProfilerImport]
     check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
 
 
@@ -176,7 +177,7 @@ suite "Idiom fixes":
     let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
     check fix.source == module("func f(): int =\n  if true:\n    return  # Early.\n  1\n")
     check fix.fixed.mapIt(it.line) == @[HEAD_LINES + 3]  # line check names
-    check fix.fixed[0].message == "return result (STYLE.md §5)"  # rule named
+    check fix.fixed[0].rule == Rule.ReturnResult  # rule named
     check fix.source.isSettled  # check reports none, and second fix changes nothing
     let followed = fixed(module("proc f(): int =\n  return result\n  echo 1\n"))
     check followed.source == module("proc f(): int =\n  return\n  echo 1\n")  # exit before more
@@ -194,22 +195,6 @@ suite "Idiom fixes":
     let wrapped = "func f(\n  a: int\n): int =\n  result = a\n  return result\n"
     check fixed(module(wrapped)).source ==
       module("func f(\n  a: int\n): int =\n  result = a\n")  # signature on lines of its own
-
-
-  test "return result whose place reads no one fix stays, finding and all":
-    for left in [
-      "func f(): int =\n  return result\n",  # only statement: body would go empty
-      "func f(): int =\n  result = 1\n  return result  # Done.\n",  # comment would lose its line
-      "func f(): int =\n  result = 1\n  # Hand back.\n  return result\n",  # comment names nothing
-      "template t(): int =\n  result = 1\n  return result\n",  # template returns from its caller
-    ]:
-      check fixed(module(left)).source == module(left)
-
-
-  test "report after deleted line names line of source as given":
-    let body = "func f(): int =\n  result = 1\n  return result\n\nlet a = 1\nlet b = 2\n"
-    check fixed(module(body)).fixed.mapIt(it.line) ==
-      @[HEAD_LINES + 3, HEAD_LINES + 5]  # traced past deleted line
 
 
   test "bracket items are sorted into slots they held, so layout stays":
@@ -230,7 +215,7 @@ suite "Idiom fixes":
   test "adjacent import lines are ordered by rank, and rank split by other lines stays":
     let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
     check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
-    check fix.fixed.mapIt(it.message) == @["import rank (X.5)", "import rank (X.5)"]
+    check fix.fixed.mapIt(it.rule) == @[Rule.ImportRank, Rule.ImportRank]
     check fix.source.isSettled
     let apart = module("import ./a\n\nimport std/os\n")
     check fixed(apart).source == apart  # where it lands is choice: left to hand
@@ -241,7 +226,7 @@ suite "Idiom fixes":
     check consts.source ==
       module("const\n  A = 1  # One.\n  B = 2\n    ## Doc of B.\n\nlet c = 3\n")
     check consts.fixed.mapIt(it.line) == @[HEAD_LINES + 1]  # one report per run
-    check consts.fixed[0].message == "single bindings (X.5)"
+    check consts.fixed[0].rule == Rule.SingleBindings
     check consts.source.isSettled
     let wrapped = fixed(module("proc f() =\n  let a = 1\n  let b = g(\n    2,\n  )\n  echo a\n"))
     check wrapped.source ==
@@ -301,27 +286,13 @@ suite "Idiom fixes":
       "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
     ]
     check fix.source == module("import std/[algorithm, os, strutils]\nimport ./[a {.all.}, b]\n")
-    check fix.fixed.filterIt(it.message.startsWith("import brackets")).mapIt(it.line) ==
+    check fix.fixed.filterIt(it.rule == Rule.ImportBrackets).mapIt(it.line) ==
       @[HEAD_LINES + 1, HEAD_LINES + 3]  # one report to merge, at first statement
     check fix.source.isSettled
     check checkImportBrackets("a.nim", fix.source).len == 0
     check fixed(module("import std/[math]\n")).source == module("import std/math\n")
     check checkImportBrackets("a.nim", module("import std/[math]\n"))[0].message ==
       "Bracket of one module drops its bracket (STYLE.md §5); got `std/[math]`."
-
-
-  test "import with except, as, other pragma, comment, or apart from block stays":
-    for kept in [
-      "import std/os except getEnv\nimport std/strutils\n",
-      "import std/os as system_os\nimport std/strutils\n",
-      "import ./a {.used.}\nimport ./b\n",
-      "import std/os  # Why.\nimport std/strutils\n",
-      "import std/os\n\nimport std/strutils\n",
-      "from std/os import getEnv\nimport std/strutils\n",
-      "import ./a\nimport ../b\n",
-    ]:
-      check checkImportBrackets("a.nim", module(kept)).len == 0
-      check fixed(module(kept)).source == module(kept)
 
 
   test "pragma list of declaration, export list and names after `from … import` are alphabetised":
@@ -339,13 +310,6 @@ suite "Idiom fixes":
     check fix.source.isSettled
 
 
-  test "pragma list holds bare pragmas first, then pragmas with argument":
-    let pragmas = module("proc f() {.raises: [], header: \"a.h\", inline, borrow.}\n")
-    check fixed(pragmas).source ==
-      module("proc f() {.borrow, inline, header: \"a.h\", raises: [].}\n")
-    check checkLists("a.nim", module("proc f() {.inline, header: \"a.h\".}\n")).len == 0
-
-
   test "alphabetised is dictionary order: case and `_` ignored, tie to code point":
     check fixed(module("export isB, is_a, facing, Facing\n")).source ==
       module("export Facing, facing, is_a, isB\n")
@@ -353,19 +317,3 @@ suite "Idiom fixes":
       module("export layout.Entry, layout.Tree\n")
     check "got `b_c, ba`" in messages("a.nim", module("import ./[b_c, ba]\n"))[0]
     check fixed(module("import ./[b_c, ba]\n")).source == module("import ./[ba, b_c]\n")
-
-
-  test "list order may mean stays: statement, user pragma, except, list spanning lines":
-    for kept in [
-      "{.push raises: [], gcsafe.}\nproc f()\n{.pop.}\n",
-      "proc f() {.async, gcsafe.}\n",
-      "export pga except wedge, dot\n",
-      "proc f() {.inline,\n  borrow.}\n",
-    ]:
-      check checkLists("a.nim", module(kept)).len == 0
-      check fixed(module(kept)).source == module(kept)
-
-
-  test "clean module passes through unchanged":
-    let clean = module("import std/[os, strutils]\nimport ./[a, b]\n\nlet\n  c = 1\n  d = 2\n")
-    check fixed(clean).source == clean and fixed(clean).fixed.len == 0

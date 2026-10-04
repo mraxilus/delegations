@@ -9,7 +9,9 @@
 ##     project and changes no behaviour, so it compiles nothing while static pass still
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
-##     check sources are that project's code and select it as any code does. Nothing selects
+##     check sources are that project's code and select it as any code does. Change to
+##     sources or nimble file of knoller selects driver's project too, since its modules import
+##     knoller by path; knoller's own code selects knoller as any code does. Nothing selects
 ##     every project: push run on `main` plans against push's own base and weekly run
 ##     against its window, so each compiles what changed and nothing else (CURATOR.md duty
 ##     11). Contributor suite is contributor's to run, and static pass reads every project
@@ -25,7 +27,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, os, strutils, tables]
+import std/[algorithm, json, options, os, sequtils, strutils, tables]
 import ./[checker, compilers, dependencies, findings, layout, projects, toolchain, tree]
 
 
@@ -37,6 +39,8 @@ const
   CHECKER_DIRECTORY* = DRIVER_DIRECTORY & "/src"
     ## Check sources driving every project; same folder as driver project, by coincidence
     ## of koch compiling exactly what it drives.
+  KNOLLER_FILES* = [KNOLLER_DIRECTORY & "/src", KNOLLER_DIRECTORY & "/knoller.nimble"]
+    ## Sources and nimble file of package driver imports by path; folder covers what it holds.
 
 
 type Job* = object  ## Define one project to compile, with compiler it pins.
@@ -49,9 +53,15 @@ func kind*(job: Job): string =
   if job.pin.isCommit: "commit" else: "version"
 
 
+func isKnoller(path: string): bool =
+  ## Decide whether path is source or nimble file of knoller, which driver imports by path.
+  KNOLLER_FILES.anyIt(path == it or path.startsWith(it & "/"))
+
+
 func isChecker*(path: string): bool =
-  ## Decide whether path drives how every project is checked.
-  path in CHECKER_FILES or path.startsWith(CHECKER_DIRECTORY & "/")
+  ## Decide whether path drives how every project is checked: root files, check sources, and
+  ##   knoller, which check sources import.
+  path in CHECKER_FILES or path.startsWith(CHECKER_DIRECTORY & "/") or path.isKnoller
 
 
 func isCode(directory, path: string): bool =
@@ -64,10 +74,11 @@ func isCode(directory, path: string): bool =
 
 func testSet*(directories, paths: openArray[string]): seq[string] =
   ## Select projects one change asks to compile, sorted: each whose code changed, and
-  ##   driver's project when driver's root files did, since its suites read them.
+  ##   driver's project when driver's root files or knoller did, since its suites read them.
   for directory in directories:
     for path in paths:
-      if isCode(directory, path) or (directory == DRIVER_DIRECTORY and path in CHECKER_FILES):
+      let is_driving = path in CHECKER_FILES or path.isKnoller
+      if isCode(directory, path) or (directory == DRIVER_DIRECTORY and is_driving):
         result.add directory
         break
   result.sort

@@ -1,52 +1,21 @@
 ## Fix source in place where check names one mechanical fix (`koch fix`), inside branch scope.
-##   Built from checks (Article II.1): each fixer sits beside its check, in `form.nim`,
-##     `names.nim`, `prose.nim`, `alignment.nim`, `messages.nim`, `precedence.nim`,
-##     `conversions.nim`, `idioms.nim`, `checker.nim`, `blanks.nim`, `declarations.nim`,
-##     `spacing.nim` and `wrapping.nim`, and reads that check's own data, so each rule is
-##     written once. This
-##     module selects files, runs on each file fixers its kind's checks name, and refuses any
-##     write outside scope.
+##   Fixers reading text of one file alone are knoller's (`curator/knoller`), which runs them in
+##     one chain until source settles (`formatted`); this module selects files, applies fixers
+##     that need more than one file's text, hands rest to knoller, and refuses any write outside
+##     scope.
 ##   Fix writes kind whose language has style guide alone (`KindRule.has_guide`): fixer
 ##     applies guide, and STYLE.md is guide of Nim alone, so Nim, NimScript and nimble are
 ##     written and every other kind passes through. Checks read every kind still; finding in
-##     Markdown, TypeScript, YAML or shell stays for hand.
-##   Inside that reach, fixer runs where its check runs: idiom fixers on `.nim` alone, every
-##     other fixer on every Nim kind. Order keeps each fixer from undoing one before it:
-##   - form first (whitespace, ending, tab in string, trailing comment, banner), so later
-##     fixers read clean line ends and final comment gaps, which wrapping counts in width;
-##   - entry block next, whose body moves into `proc main` (V.10): it moves lines and widens
-##     none, so every later fixer reads body where it stands;
-##   - content next (articles in comments, I.4 tables, backticks of IV.4 messages, parentheses
-##     of X.4 conditions, `to<Target>` subject first), since each changes width of its line;
-##   - idioms next (return, stub keys, import order, import brackets, bindings, `strictFuncs`,
-##     profiler import, unordered lists), since bindings indent lines and every later width
-##     reads that indent;
-##   - blank lines beside suites, tests and helpers, then doc position and literal defaults,
-##     since doc joined or type dropped changes width wrapping measures;
-##   - spacing before wrapping, since spaces it adds are width wrapping measures;
-##   - wrapping last, separators before signatures before calls before trailing separators:
-##     layouts join groups with separator they read, and trailing separator goes only where no
-##     layout wrote one.
+##     Markdown, TypeScript, YAML or shell stays for hand. Each kind of Nim is dialect of
+##     knoller: `.nim` module, `.nims` script, `.nimble` package.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
 ##     from what `contextOf` reads: rename of abbreviation (V.6), and to case of name's kind
 ##     (V.1, V.11), across files, planned whole or refused whole (`names.nim`, `rewrites.nim`),
 ##     one rename where both rules ask at one name; and type conversion `x.T`
 ##     (`conversions.nim`), each from semantic pass (`symbols.nim`); then dead export of checker
-##     (`checker.nim`),
-##     whose `*` goes where its own module calls it. Fix of named files reads tree whole, and
-##     rename writing file it leaves out is refused. File holding candidate that compiles on no
-##     backend is left to hand, with its error.
-##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
-##     splits can take spacing fixer refused for width, so second round writes it, and
-##     `koch fix` run twice writes nothing second time.
-##   Fence (Article X.1): line `#!fix off` opens fence, line `#!fix on` closes it, each marker
-##     alone on its line as comment; fence left open runs to end of file. Fixers never write
-##     lines of fence, markers included, and layout checks report nothing there. Each fenced
-##     line reads as whole-line comment `FENCED` at its own indent while fixers run, so call,
-##     signature or list holding fence reads as holding comment, and stays as written.
-##     Fixer whose rewrite would move, re-indent, split or merge fenced lines is skipped for
-##     that file, and its finding stays for hand. Fence crossing bracket, or string or comment
-##     spanning lines, leaves whole file as written, with finding naming line.
+##     (`checker.nim`), whose `*` goes where its own module calls it. Fix of named files reads
+##     tree whole, and rename writing file it leaves out is refused. File holding candidate
+##     that compiles on no backend is left to hand, with its error.
 ##   Nimble file whose copy `atlas.lock` holds (`nimbleFile`) is never written, and layout
 ##     checks read none of it: rewrite would leave lock's copy stale, and Atlas reads that as
 ##     change of package.
@@ -60,42 +29,18 @@
 ##   Named path is file git lists, or directory holding such files; name matching nothing is
 ##     finding, so typo never passes as fix of nothing.
 ##
-##   Rejected: nimpretty, which sets one space before trailing comment where X.9 asks two,
-##     and `;` between parameters where STYLE.md §5 asks `,`; fork of nimpretty's layouter,
-##     second formatter whose layout rules would drift from checks; AST printer, which loses
-##     comment placement and every layout hand chose. Each holds rule twice: as check, and as
-##     layout.
-##   Rejected: fixer told of fence, i.e. each rewrite tested against fenced lines. Every fixer
-##     would carry fence; masking holds it in one place, at cost of skipping fixer whole.
 ##   Cost: fix reaches only what checks name; layout no check reads stays with reading.
 ##   Cost: `main` passes scope as merge target, so fix there writes wherever it finds rewrite.
-##   Cost: line reading exactly `FENCED` outside fence would be restored as fenced line, so
-##     file holding one is left as written, like fence crossing bracket.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, sets, strutils, tables]
-import ./[alignment, blanks, checker, conversions, declarations, findings, form, glossary]
-import ./[idioms, kinds, layout, messages, names, precedence, prose, rewrites, scope, spacing]
-import ./[symbols, tokens, wrapping]
+import ../../knoller/src/knoller
+import ./[checker, conversions, findings, glossary, kinds, layout, names, rewrites, scope, symbols]
 
-
-const
-  ROUNDS_MAX = 3
-    ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
-  FENCE_OFF* = "#!fix off"  ## Marker line opening fence (Article X.1).
-  FENCE_ON* = "#!fix on"  ## Marker line closing fence.
-  FENCED = "#!fix fenced"
-    ## Text each fenced line reads as while fixers run: whole-line comment, which no fixer writes.
-  LOCK_FILE = "atlas.lock"  ## Lock holding copy of project's nimble file.
-  NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
 
 type
-  Fence = object  ## Define lines fence leaves alone, and line where fence cannot be read, if any.
-    lines: seq[int]  ## Zero-based fenced lines, markers included, in order.
-    fault: int
-      ## Zero-based line fence crosses bracket or token at, or reads `FENCED`; `-1` if none.
 
   Context* = object
     ## Define what whole tree and semantic pass tell fixer of one file that its text cannot:
@@ -105,132 +50,24 @@ type
     plans: seq[Plan]  ## Rename of each declaration coining abbreviation, planned or refused.
 
 
-func fenceOf(source: string): Fence =
-  ## Read fenced lines of Nim source, and first line where fence cannot be read.
-  ##   Marker is comment token opening its line, so marker inside string or block comment is none.
-  result.fault = -1
-  let
-    tokens = source.tokens
-    partners = tokens.partners
-    lines = source.split('\n')
-    count = if source.endsWith("\n"): lines.len - 1 else: lines.len
-  var markers = newSeq[string](lines.len)
-  for k, t in tokens:
-    if t.kind != TokenKind.Comment: continue
-    if k == 0 or tokens[k - 1].lastLine(source) < t.line:
-      markers[t.line] = t.spelling(source).strip
-  var
-    fences = newSeqWith(lines.len, -1)  # Fence each line lies in, by count; `-1` outside.
-    opened = 0
-    is_open = false
-  for i in 0 ..< count:
-    if markers[i] == FENCE_OFF and not is_open:
-      is_open = true
-      inc opened
-    if is_open: fences[i] = opened
-    if markers[i] == FENCE_ON: is_open = false
-    if fences[i] >= 0: result.lines.add i
-    if lines[i].strip == FENCED and result.fault < 0: result.fault = i
-  if result.lines.len == 0: return
-
-  # Bracket pair whose ends lie in two places, or token whose lines do, crosses fence.
-  for k, t in tokens:
-    let crossed =
-      if partners[k] > k: fences[tokens[partners[k]].line] != fences[t.line]
-      else: toSeq(t.line .. t.lastLine(source)).anyIt(fences[it] != fences[t.line])
-    if crossed:
-      result.fault = if result.fault < 0: t.line else: min(result.fault, t.line)
-      return
-
-
-func masked(source: string, fence: Fence): string =
-  ## Read each fenced line as `FENCED` at its own indent; blank line at none.
-  var lines = source.split('\n')
-  for i in fence.lines:
-    lines[i] = (if lines[i].strip.len == 0: "" else: ' '.repeat(lines[i].indentOf)) & FENCED
-  lines.join("\n")
-
-
-func fenceShape(source: string): seq[(int, bool)] =
-  ## Read indent of each `FENCED` line, and whether one stands right above it.
-  let lines = source.split('\n')
-  for i, line in lines:
-    if line.strip != FENCED: continue
-    result.add (line.indentOf, i > 0 and lines[i - 1].strip == FENCED)
-
-
-func restored(fixed, source: string; fence: Fence): string =
-  ## Write each fenced line back, in order, in place of `FENCED` line standing for it.
-  let original = source.split('\n')
-  var
-    lines = fixed.split('\n')
-    k = 0
-  for line in lines.mitems:
-    if line.strip != FENCED: continue
-    line = original[fence.lines[k]]
-    inc k
-  lines.join("\n")
-
-
-func faultOf(path: string, fence: Fence): seq[Finding] =
-  ## Report fence fix cannot read, which leaves file as written.
-  if fence.fault < 0: return
-  result.add finding(
-    path,
-    fence.fault + 1,
-    "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
-      "written (X.1); got `" & FENCE_OFF & "` and `" & FENCE_ON & "` either side.",
-  )
-
-
-func fixersOf(kind: Kind): seq[Fixer] =
-  ## List fixers kind's checks name, in order header gives.
-  result = kind.rule.formFixers
-  result.add fixBlockEntry
-  result.add @[Fixer(fixArticles), fixAlignment, fixMessages, fixMixtures, fixTargets]
-  if kind == Kind.Nim: result.add IDIOM_FIXERS
-  result.add @[Fixer(fixBlanks), fixDocs, fixDefaults, fixSpacing]
-  result.add WRAPPING_FIXERS
+func dialectOf(kind: Kind): Dialect =
+  ## Read dialect of knoller kind of Nim source is: module, script or package.
+  case kind
+  of Kind.NimScript: Dialect.Script
+  of Kind.Nimble: Dialect.Package
+  else: Dialect.Module
 
 
 func lockedNimbles*(tree: Tree): seq[string] =
   ## Read path of each nimble file whose copy `atlas.lock` beside it holds.
-  for e in tree:
-    if not e.path.endsWith("/" & LOCK_FILE) and e.path != LOCK_FILE: continue
-    let at = e.content.find(NIMBLE_KEY)
-    if at < 0: continue
-    let
-      key = e.content.find("\"filename\"", at)
-      open = if key < 0: -1 else: e.content.find('"', e.content.find(':', key) + 1)
-      close = if open < 0: -1 else: e.content.find('"', open + 1)
-    if close < 0: continue
-    result.add e.path[0 ..< e.path.len - LOCK_FILE.len] & e.content[open + 1 ..< close]
+  lockedNimbles(tree.mapIt((it.path, it.content)))
 
 
-func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
-  ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
-  ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
-  ##   On every Nim kind: X.9 trailing comments and spaces, X.2 banners, I.4 tables, IV.4
-  ##   messages, X.4 conditions, STYLE.md §5 `to<Target>` calls, suites and tests, STYLE.md §1
-  ##   helpers, doc position, X.12 defaults, and X.3 and STYLE.md §5 separators, signatures,
-  ##   calls and trailing separators.
-  ##   On `.nim` alone, as idiom checks read it: X.5 import brackets, X.10 lists and STYLE.md
-  ##   §3 profiler import. Fenced lines are read by none, and fence fix cannot read is reported
-  ##   alone.
+func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
+  ## Report each rule `koch fix` clears in full in source of Nim syntax, as knoller reads its
+  ##   dialect (`checkFormatting` there); other kind is read by none.
   if kind.rule.syntax != Syntax.Nim: return
-  let fence = source.fenceOf
-  if fence.fault >= 0: return faultOf(path, fence)
-  let
-    view = source.masked(fence)
-    checks = [
-      checkComments, checkBanners, checkAlignment, checkMessages, checkMixtures, checkNegations,
-      checkTargets, checkBlanks, checkDocs, checkDefaults, checkSpacing, checkSeparators,
-      checkSignatures, checkCalls, checkTrailing,
-    ]
-  for check in checks: result.add check(path, view)
-  if kind == Kind.Nim:
-    result.add checkImportBrackets(path, view) & checkLists(path, view) & checkProfiler(path, view)
-  result = result.filterIt(it.line - 1 notin fence.lines)
+  checkFormatting(path, source, kind.dialectOf)
 
 
 func checkFormatting*(tree: Tree): seq[Finding] =
@@ -239,7 +76,7 @@ func checkFormatting*(tree: Tree): seq[Finding] =
   let locked = tree.lockedNimbles
   for e in tree:
     if e.kind.isNone or e.path in locked: continue
-    result.add checkFormatting(e.path, e.content, e.kind.get)
+    result.add checkFormatting(e.path, e.content, e.kind.get).findingsOf
 
 
 func entriesNamed*(
@@ -353,10 +190,10 @@ func contextOf*(
   ##   leave out.
   var paths, sources, suites: seq[string]
   for e in tree:
-    if e.path.startsWith(CHECK_DIRECTORY) or e.path == KOCH_PATH:
+    if e.path.isExporting:
       paths.add e.path
       sources.add e.content
-    if e.path.startsWith(SUITE_DIRECTORY): suites.add e.content
+    if e.path.isCalling: suites.add e.content
   result.dead = deadExports(paths, sources, suites).deduplicate
   for answer in answers: result.answers[answer.path] = answer
   let named = entries.mapIt(it.path)
@@ -375,10 +212,12 @@ func contextOf*(
     result.plans.add plan
 
 
-func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context): Fix =
-  ## Run on source each fixer its kind's checks name, in order header gives, until source
-  ##   settles; fenced lines read as `FENCED`, and fixer that would move them is skipped.
-  ##   Fixers that semantic pass and tree inform run first, once, on source as given.
+func fixSource(
+  path, source: string; kind: Kind; fence: Fence; context: Context
+): tuple[source: string, fixed: seq[Finding]] =
+  ## Write edits semantic pass and tree settle, off fenced lines, then fix rest by knoller
+  ##   (`formatted`); none of those edits moves line, so every report names line of source as
+  ##   given.
 
   # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
   var renamed: seq[Edit]
@@ -393,29 +232,28 @@ func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context)
       conversionEdits(path, source, context.answers[path], fence.lines, renamed)
     base = source.applied(renamed & edits)
     result.fixed.add reports
-  let shape = base.masked(fence).fenceShape
-  result.source = base.masked(fence)
+
+  # Drop `*` of dead export, fenced lines read as `FENCED`; fix moving them is skipped.
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
-    let step = fixDeadExports(path, result.source, dead)
-    if step.source.fenceShape == shape: result = result.chain(step)
-  for round in 1 .. ROUNDS_MAX:
-    var step = Fix(source: result.source)
-    for fixer in kind.fixersOf:
-      let next = fixer(path, step.source)
-      if next.source.fenceShape != shape: continue
-      step = step.chain(next)
-    if step.source == result.source: break
-    result = result.chain(step)
-  result.source = result.source.restored(source, fence)
+    let step = fixDeadExports(path, base.masked(fence), dead)
+    if step.source.fenceShape == base.masked(fence).fenceShape:
+      base = step.source.restored(base, fence)
+      result.fixed.add step.fixed
+
+  # Run chain of knoller's fixers until source settles.
+  let fix = formatted(path, base, kind.dialectOf)
+  result.source = fix.source
+  result.fixed.add fix.fixed.findingsOf
 
 
 func fixEntries*(
   branch: string, entries: openArray[Entry], locked: openArray[string] = [], context = Context()
-): tuple[written: seq[Entry], fixed, refused, left: seq[Finding]] =
-  ## Fix each entry: entries to write, one report per rewrite, scope findings, and files left
-  ##   as written with reason: nimble file `locked` names, fence fix cannot read. `context`
-  ##   carries what tree tells fixers across modules (`contextOf`).
+): tuple[written: seq[Entry], fixed, refused, left, held: seq[Finding]] =
+  ## Fix each entry: entries to write, one report per rewrite, scope findings, files left as
+  ##   written with reason (nimble file `locked` names, fence fix cannot read), and one warning
+  ##   for each fence, which keeps its lines as written. `context` carries what tree tells
+  ##   fixers across modules (`contextOf`).
   ##   Where any path to write lies outside branch scope, nothing is written or reported fixed.
   for e in entries:
     if e.kind.isNone or not e.kind.get.rule.has_guide: continue
@@ -428,8 +266,9 @@ func fixEntries*(
       continue
     let fence = e.content.fenceOf
     if fence.fault >= 0:
-      result.left.add faultOf(e.path, fence)
+      result.left.add faultOf(e.path, fence).findingsOf
       continue
+    result.held.add heldOf(e.path, fence).findingsOf
     for plan in context.plans:
       if plan.rename.path != e.path or plan.refusal.len == 0: continue
       result.left.add finding(

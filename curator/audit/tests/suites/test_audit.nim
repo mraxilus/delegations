@@ -3,7 +3,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, sequtils, strutils, unittest]
-import ../../src/[audit, idioms, provenance]
+import ../../../knoller/src/knoller
+import ../../src/[audit, provenance]
 import ./fixtures
 
 

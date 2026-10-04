@@ -330,11 +330,13 @@ you do it.
 
 ### The sign-off
 
-**Sign off only when you stop**: when nothing is left, or when nothing moves until someone
-else acts. The message that ends that turn, and the message of a handover, closes with one
-block, `## Sign-off`. Nothing follows it.
+**Sign off when you stop, and when a pull request goes ready.** You stop when nothing is left,
+or when nothing moves until someone else acts. A pull request that you mark ready waits on the
+Architect, so that turn signs off as `waiting`, even while other work goes on. Each run and
+subagent that has not reported is then a row of the table. The message that ends that turn, and
+the message of a handover, closes with one block, `## Sign-off`. Nothing follows it.
 
-**A turn that ends while your work goes on does not sign off.** A run or a subagent that has
+**Any other turn that ends while your work goes on does not sign off.** A run or a subagent that has
 not reported is such work. Where that turn pushed or posted, its message closes with one line
 instead. The line opens `**Working:**`, then names what runs and what wakes you:
 
@@ -343,6 +345,13 @@ instead. The line opens `**Working:**`, then names what runs and what wakes you:
 ```
 
 The `stop` hook refuses a turn that pushed or posted and closes with neither.
+
+**A wake that changes nothing needs no message.** The echo of your own act is such a wake, as
+the notice that the pull request you marked ready is ready. So is an event that leaves each
+state as it was. Where that turn pushed and posted nothing, and your working line would read as
+before, end the turn with no message. Where the harness asks for a message, write `No change.`
+and nothing else. Your last working line still stands, so the Architect does not read the same
+line twice.
 
 The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
 The block says who the delegate is and what it works on, then what happened, then where it
@@ -362,7 +371,8 @@ compaction, read the same block. Its parts come in this order:
    - `waiting`: nothing moves until another delegate or an outside party acts.
    - `done`: nothing is left.
 
-   Each word is a stop. Work that goes on takes the working line, and no sign-off.
+   Each word is a stop, or a pull request gone ready. Other work that goes on takes the
+   working line, and no sign-off.
 6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
    `**Decisions:** None.` where there is none.
 7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role
@@ -393,13 +403,37 @@ Write each decision so that the Architect can decide it from the block alone.
   - `has a workaround: <the workaround>`
   - `fact`, for something the Architect must know and need not decide
 - **Where** is the issue or pull request where the ruling goes. Open one first where none
-  exists, because a ruling in chat alone is lost. Label it `architect` (`CONTRIBUTOR.md`,
-  Boundaries).
+  exists, because a ruling in chat alone is lost. Label it `architect` the moment a decision
+  waits there (`CONTRIBUTOR.md`, Boundaries). Post the ruling there, and take `architect` off in
+  the same step, unless another decision still waits there.
 - **Options** are two to four. A label is at most three words. Each consequence is one sentence
   that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
   has no options, no recommendation and no delay cost.
 - **Recommends** names one option, and why, in one sentence.
 - **Delay costs** says what waits while nobody decides.
+
+#### A decision explained
+
+**When the Architect replies `decide` to a sign-off that holds decisions, explain them one at a
+time.** Start with `D1`, and give each decision a message of its own. Wait for its ruling before
+you explain the next one. `decide D2` asks for one decision alone. Where the Architect asks about
+one decision in other words, explain it in the same shape. The block stays short for its three
+readers, and the explanation serves the Architect alone.
+
+Each explanation has five parts, in this order:
+
+1. **Context.** What the thing is, and how it works today, in plain words. A reader who has not
+   seen the code can follow it.
+2. **The problem.** What goes wrong, or what it costs, with the figures.
+3. **What is done already**, where earlier work bears on the decision.
+4. **The options.** For each one, what happens, what it costs and what it risks.
+5. **The recommendation, and why.** Then ask the question again, so that one letter answers it.
+
+Say what a thing does before you give the name of its function or file. Add an aid where it
+helps: a diagram in a code block, a small table, a worked example or a picture. Where nothing
+helps, add none. The ruling goes where the decision says, as for any decision. A message that
+explains a decision pushes and posts nothing, so it takes no sign-off. After the last ruling,
+close each turn as The sign-off says.
 
 #### The table
 

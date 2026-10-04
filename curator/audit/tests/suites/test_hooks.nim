@@ -74,6 +74,11 @@ func messages(found: seq[Finding]): seq[string] =
   found.mapIt(it.message)
 
 
+func citedBare(message: string): seq[string] =
+  ## Read reference each finding of `checkReferencesBare` names, in order.
+  checkReferencesBare(message).mapIt(it.message.split('`')[1])
+
+
 
 suite "Hooks":
   test "role string grammar":
@@ -273,6 +278,32 @@ suite "Hooks":
     check checkNumbersBare("#463 then #463 again, and #7\n").len == 2  # each number once
 
 
+  test "message cites each charter reference by short description, never bare":
+    # Short description and its reference, as `names read head first (V.2)` (GUIDE.md, Output
+    #   contract). Each passing form stands beside bare `V.2`, so stub reporting nothing fails it
+    #   as stub reporting every reference does.
+    check checkReferencesBare("X.9 says so.\n").messages == @[
+      "Message cites `X.9` with no description; cite each article and duty by short " &
+        "description and its reference, as `expression spacing (X.9)` (GUIDE.md, Output contract).",
+    ]
+    check citedBare("It holds under V.2 here.\n") == @["V.2"]
+    check citedBare("Then duty 3 waits.\n") == @["duty 3"]
+    check citedBare("(X.9) opens the line.\n") == @["X.9"]
+    check citedBare("- (X.9) opens a bullet.\n") == @["X.9"]
+    check citedBare("Spacing (X.9 stays open.\n") == @["X.9"]  # no closing parenthesis
+    check citedBare("Expression spacing (X.9) holds, and V.2 alone.\n") == @["V.2"]
+    check citedBare("No evidence (Article VIII.1) holds, and V.2 alone.\n") == @["V.2"]
+    check citedBare("Both hold here (X.2, X.9), and V.2 alone.\n") == @["V.2"]  # one parenthesis
+    check citedBare("A check that reddens a project (duty 3), and V.2 alone.\n") == @["V.2"]
+    check citedBare("See `X.9`, and V.2 alone.\n") == @["V.2"]  # code span
+    check citedBare("```\nX.9 and duty 3\n```\nV.2 alone.\n") == @["V.2"]  # fenced code
+    check citedBare("[X.9](https://x/9) and [IV.4], and V.2 alone.\n\n[IV.4]: https://x/4\n") ==
+      @["V.2"]  # inline link, and shortcut link message defines
+    check citedBare("Nim 2.2.12, D1, D2, §5, MIX.3, IX.2.1 and a/V.2, and V.2 alone.\n") ==
+      @["V.2"]  # version, decision, section, longer token
+    check citedBare("X.9 then X.9 again, Duty 3 and duty 3.\n") == @["X.9", "Duty 3"]  # once
+
+
   test "sign-off decision is card coordinator lifts unchanged":
     check checkSignoff(SIGNOFF.replace("**D2.**", "**D3.**"), BRANCH)
       .messages.anyIt("numbered from D1" in it)
@@ -373,6 +404,117 @@ suite "Hooks":
     check commandDirectory("ls && git status", "/work") == "/work"
 
 
+  test "gh api write reads as tool whose rules it shares":
+    # Each endpoint of map, with method; owner and repo as placeholder or variable pass too.
+    const writes = [
+      ("repos/o/r/issues/7/comments", "POST", "add_issue_comment"),
+      ("repos/o/r/issues -f title=T", "POST", "issue_write"),
+      ("-X PATCH repos/o/r/issues/7", "PATCH", "issue_write"),
+      ("--method patch /repos/{owner}/{repo}/issues/comments/9", "PATCH", "update_issue_comment"),
+      ("repos/$REPO/pulls -f head=h -f base=main", "POST", "create_pull_request"),
+      ("-XPATCH repos/o/r/pulls/7", "PATCH", "update_pull_request"),
+      ("repos/o/r/pulls/7/reviews -f event=COMMENT", "POST", "pull_request_review_write"),
+      ("repos/o/r/pulls/7/comments", "POST", "add_comment_to_pending_review"),
+      ("repos/o/r/pulls/7/comments/9/replies", "POST", "add_reply_to_pull_request_comment"),
+      ("--method=PATCH repos/o/r/pulls/comments/9", "PATCH", "add_reply_to_pull_request_comment"),
+    ]
+    for (arguments, action, tool) in writes:
+      let read = requests("gh api " & arguments & " -F body=@x.md", "/w")
+      check read.len == 1 and read[0].action == action and read[0].tool == "mcp__github__" & tool
+      check read[0].isPost and read[0].path == "/w/x.md" and read[0].is_create == (action == "POST")
+    const issue = "gh api repos/o/r/issues -f title='A claim' -f 'labels[]=curator' -f body=x " &
+      "-f labels[]=architect"
+    check requests(issue, "")[0].title == "A claim"
+    check requests(issue, "")[0].labels == @["curator", "architect"]
+
+
+  test "gh api body reads whole, from text, file or input":
+    const post = "gh api repos/o/r/issues/7/comments "
+    let quoted = requests(post & "-f body='One claim.\n\nTwo.' | cat", "")
+    check quoted.len == 1 and quoted[0].body == "One claim.\n\nTwo."  # quotes span newline
+    check requests(post & "-f \"body=Say \\\"so\\\" now.\"", "")[0].body == "Say \"so\" now."
+    let code = requests(post & "-f body='Run `koch check`; $5.'", "")[0]
+    check code.body == "Run `koch check`; $5." and code.expansion.len == 0  # single quotes
+    check requests(post & "-f body=\"$(cat x.md)\"", "")[0]
+      .expansion == "body=$(cat x.md)"  # shell expands it after hook reads
+    check requests(post & "-f body=@x.md", "/w")[0].body == "@x.md"  # `-f` reads no file
+    let input = requests("gh api -X PATCH repos/o/r/issues/7 --input body.json", "/w")[0]
+    check input.path == "/w/body.json" and input.is_input and input.isPost
+    check requests("gh api repos/o/r/issues --input=/t/i.json", "/w")[0].path == "/t/i.json"
+    let heredoc = "cat > x.md <<'EOF'\nIt doesn't.\n" & post & "-f body=x\nEOF\n" & post &
+      "-F body=@x.md"
+    check requests(heredoc, "/w").mapIt(it.path) == @["/w/x.md"]  # heredoc text is no command
+
+
+  test "gh api write with no body, read, or other endpoint is no post":
+    let labels = requests("gh api repos/o/r/issues/7/labels -f 'labels[]=curator'", "")[0]
+    check labels.action == "POST" and labels.tool == "" and not labels.isPost
+    let draft = requests("gh api -X PATCH repos/o/r/pulls/7 -F draft=true", "")[0]
+    check draft.tool == "mcp__github__update_pull_request" and not draft.isPost  # no body
+    let read = requests("gh api repos/o/r/issues/7/comments --jq '.[].body'", "")[0]
+    check read.action == "GET" and read.tool == "" and not read.isPost
+    let ready = requests("gh api -X POST ccr/ready_for_review -f repo=o/r -F pull_number=7", "")[0]
+    check ready.tool == "" and not ready.isPost
+
+
+  test "gh api file resolves against directory command acts in":
+    const post = "gh api repos/o/r/issues/7/comments -F body=@y.md"
+    check requests("cd x && " & post, "/w")[0].path == "/w/x/y.md"
+    check requests("cd /a; cd b\n" & post, "/w")[0].path == "/a/b/y.md"
+    check requests(post & " && cd z", "/w")[0].path == "/w/y.md"  # later `cd` moves nothing
+    check requests("cd \"$W\" && " & post, "/w")[0].path == "/w/$W/y.md"
+
+
+  test "gh api body hook cannot read is refused with its mend":
+    # Hook runs before command: shell variable, stdin and file command writes are unread.
+    const post = "gh api repos/o/r/issues/7/comments "
+    check checkPosts(BRANCH, post & "-F body=@$DIR/x.md", "/w").messages == @[
+      "Hook reads `gh api` post before command runs, so body from shell variable or stdin is " &
+        "unread; name file by literal path; got `/w/$DIR/x.md`.",
+    ]
+    check checkPosts(BRANCH, post & "-F body=@`pwd`/x.md", "/w")
+      .messages.anyIt("literal path" in it)  # backtick
+    check checkPosts(BRANCH, post & "-F body=@- <<'EOF'\nText.\nEOF", "/w")
+      .messages.anyIt("literal path; got `-`" in it)  # stdin
+    check checkPosts(BRANCH, "cd \"$W\" && " & post & "-F body=@x.md", "/w")
+      .messages.anyIt("literal path" in it)  # directory unknown
+    check checkPosts(BRANCH, post & "--input -", "/w").messages.anyIt("literal path" in it)
+    check checkPosts(BRANCH, post & "-f body=\"$(cat x.md)\"", "/w")
+      .messages.anyIt("before shell expands it" in it)
+    let directory = createTempDir("delegations_", "_posts")
+    defer: removeDir(directory)
+    let missing = directory / "absent.md"
+    check checkPosts(BRANCH, post & "-F body=@" & missing, "/w").messages == @[
+      "Hook reads `gh api` post before command runs, so it cannot read file command itself " &
+        "writes; write file in earlier call; got missing `" & missing & "`.",
+    ]
+    check checkPosts(BRANCH, "gh api repos/o/r/issues/7/labels -f 'labels[]=$L'", "/w").len == 0
+
+
+  test "gh api body is held as tool's body, read from file it names":
+    # Real files, read as `bash` hook reads them before command runs (Article IX.5).
+    const foot = "\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_\n"
+    let directory = createTempDir("delegations_", "_posts")
+    defer: removeDir(directory)
+    directory.writeInto("long.md", ROLE & "\n\n" & "word ".repeat(26) & "end.\n" & foot)
+    directory.writeInto("short.md", ROLE & "\n\nOne short claim.\n" & foot)
+    const post = "gh api repos/o/r/issues/7/comments -F body=@"
+    check checkPosts(BRANCH, post & "long.md", directory).messages.anyIt("25 words" in it)
+    check checkPosts(BRANCH, post & "short.md", directory).len == 0
+    check checkPosts(BRANCH, "cd " & directory & " && " & post & "long.md", "/").len > 0
+    check checkPosts(BRANCH, "gh api repos/o/r/issues/7/comments -f body='Hello.'", directory)
+      .messages.anyIt("must open with" in it)  # inline body
+    directory.writeInto("issue.json", """{"title": "fix(x): do", "labels": ["bug"], "body": "x"}""")
+    let issue = checkPosts(BRANCH, "gh api repos/o/r/issues --input issue.json", directory).messages
+    check issue.anyIt("claim" in it) and issue.anyIt("role label" in it)
+    directory.writeInto("labels.json", "{\"labels\": [\"curator\"]}")
+    check checkPosts(BRANCH, "gh api -X PATCH repos/o/r/issues/7 --input labels.json", directory)
+      .len == 0  # no body, so no post
+    directory.writeInto("broken.json", "{")
+    check checkPosts(BRANCH, "gh api -X PATCH repos/o/r/issues/7 --input broken.json", directory)
+      .messages.anyIt("JSON object" in it)
+
+
   test "start context and turn writes":
     let text = startContext(BRANCH, "## List\n\n1. one\n\n## Next\n", "## List", @[])
     check "Role: contributor/ronri/pga_benchmark" in text and "CONTRIBUTOR.md" in text
@@ -383,6 +525,9 @@ suite "Hooks":
     check isTurnWriting([Call(name: "mcp__github__issue_write", has_body: true)])
     check not isTurnWriting([Call(name: "mcp__github__update_pull_request")])  # draft toggle
     check not isTurnWriting([Call(name: "Bash", command: "git status"), Call(name: "Read")])
+    const issue = "gh api repos/o/r/issues/7/"
+    check isTurnWriting([Call(name: "Bash", command: issue & "comments -F body=@x.md")])  # post
+    check not isTurnWriting([Call(name: "Bash", command: issue & "labels -f 'labels[]=curator'")])
 
 
   test "transcript parse finds calls since last message of person":
@@ -448,3 +593,14 @@ suite "Hooks":
     discard root.git("checkout -q -- koch.nim")
     discard root.git("checkout -q -b old HEAD~1")
     check runHook(root, toolchain, "path") == "built from a"  # switch of branch
+
+    # Knoller, which checker imports by path, moves key as checker source does. Source alone,
+    #   without nimble file, holds order of key's paths too (`hooks.sh`, Trap).
+    discard root.git("checkout -q -")
+    check runHook(root, toolchain, "path") == "built from b"
+    let built = readFile(toolchain / "builds.log").countLines
+    root.writeInto("curator/knoller/src/knoller.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'chore(curator): source of knoller'")
+    check runHook(root, toolchain, "path") == "built from b"
+    check readFile(toolchain / "builds.log").countLines == built + 1  # knoller source moved key
