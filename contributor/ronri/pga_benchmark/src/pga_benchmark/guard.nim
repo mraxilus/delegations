@@ -105,12 +105,12 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
         result.findings.add Finding(
           path: path,
           message: "Total `" & metric & "` of `" & key & "` grew; got `" & $now &
-            "`, baseline `" & $was & "`.",
+              "`, baseline `" & $was & "`.",
         )
       elif now < was:
         result.improvements.add(
           "Total `" & metric & "` of `" & key & "` shrank; got `" & $now & "`, baseline `" &
-            $was & "`.",
+              $was & "`.",
         )
   # Bounds are derived, so they never drift: any move means derivation itself changed.
   let
@@ -135,5 +135,5 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
           result.findings.add Finding(
             path: path,
             message: "Lower bound `" & metric & "` of `" & id & "` moved; got `" & $value_now &
-              "`, baseline `" & $value_was & "`.",
+                "`, baseline `" & $value_was & "`.",
           )

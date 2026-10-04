@@ -63,7 +63,7 @@ func bodyControl*(paragraphs: openArray[ParagraphControl]): string =
       if paragraph.stack.len == 0: ""
       else: " style=\"font-family: " & escapeHtml(paragraph.stack) & "\""
     result.add "<p id=\"" & escapeHtml(paragraph.id) & "\"" & style & ">" &
-      escapeHtml(paragraph.text) & "</p>"
+        escapeHtml(paragraph.text) & "</p>"
 
 
 func expectedOf*(paragraphs: openArray[ParagraphControl]): seq[FindingExpected] =
@@ -71,8 +71,8 @@ func expectedOf*(paragraphs: openArray[ParagraphControl]): seq[FindingExpected] 
   for paragraph in paragraphs:
     if not paragraph.is_drawn_by_system: continue
     for rune in paragraph.text.runes:
-      let expected = (element: "p#" & paragraph.id, codepoint: rune.int)
-      if rune.int > ASCII_MAX and expected notin result: result.add expected
+      let expected = (element: "p#" & paragraph.id, codepoint: int(rune))
+      if int(rune) > ASCII_MAX and expected notin result: result.add expected
 
 
 
@@ -92,7 +92,7 @@ func checkRendered*(
       result.add Finding(
         path: path,
         message: "@font-face " & face{"family"}.getStr & " " & face{"weight"}.getStr &
-          ": Face does not load; got `" & face{"status"}.getStr & "`.",
+            ": Face does not load; got `" & face{"status"}.getStr & "`.",
       )
     for character in document{"characters"}.getElems:
       let pair = (element: character{"element"}.getStr, codepoint: character{"codepoint"}.getInt)
@@ -102,7 +102,7 @@ func checkRendered*(
       result.add Finding(
         path: path,
         message: pair.element & ": Character drawn by face of system; got `" &
-          codepointText(pair.codepoint) & "`.",
+            codepointText(pair.codepoint) & "`.",
       )
   let path_control = directory / control & ".html"
   if expected.len == 0:
@@ -115,5 +115,5 @@ func checkRendered*(
     result.add Finding(
       path: path_control,
       message: pair.element & ": Check is blind, since control raised no finding here; got " &
-        "none for `" & codepointText(pair.codepoint) & "`.",
+          "none for `" & codepointText(pair.codepoint) & "`.",
     )
