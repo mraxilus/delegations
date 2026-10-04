@@ -205,6 +205,16 @@ leaves is read again. An argument splits its own call only where that call is th
 An argument that the hand wrapped, and that fits no line, keeps its line breaks and moves with
 its new indent.
 
+- A call that spans lines, with a comma after its last argument on a line before its `)`, is
+  never joined (`isTrailed`). That comma marks the split that the hand wants. So such a call
+  keeps one argument to a line, even where it fits. A call that knoller splits keeps its
+  split on the next run, since the split writes that comma. Verified by
+  `suites/test_wrapping.nim`: the `newEnum` call of `algebra.nim` of the PGA library stays.
+- The rule reads each bracket that call wrapping joins: a call `f(…)`, a method call `x.f(…)`,
+  a generic call `f[T](…)` and an object constructor `T(…)`. A signature keeps its own layout,
+  and a list that no call opens is never joined.
+- A call that the hand hugs around a split call keeps the hug (`isHug`), as `x.add(Y(` with
+  its `))`. The inner call takes the layout of its own, in place.
 - A list that no call opens, and that spans lines, keeps its rows: the fixer never reflows it.
 - A call stays where it holds a comment, a long string that spans lines, or a block. A block is
   a keyword that opens one, `;`, `do`, or `:` at the end of a line outside a condition.
