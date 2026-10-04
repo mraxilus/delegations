@@ -263,12 +263,29 @@ line can stop the box of the veil. Where the pick of the page finds the plane, t
 the spot by 8 or more over red, green and blue. A spot counts only where the canvas without the
 plane shows bare backdrop. A world axis in front of the veil hides it with no fault of the veil.
 
-Rejected: spots of one reading compared with each other, as `driveDiscUnderfoot` does, which pass on
-a canvas with no veil. Cost: eight readings, about 6 s of the drive. Verified by a break on purpose,
-2026-10-04, on the page without antialias. With the veil draws skipped, the low view read 4 of
-1878 spots veiled. With the floor of the box halfway between the vanishing line and the centre of
-the disc, it read 1677 of 1878. The steep view passed that break, because the line stands far off
-it.
+Rejected: spots of one reading compared with each other, which pass on a canvas with no veil. Cost:
+eight readings, about 6 s of the drive. Verified by a break on purpose, 2026-10-04, on the page
+without antialias. With the veil draws skipped, the low view read 4 of 1878 spots veiled. With the
+floor of the box halfway between the vanishing line and the centre of the disc, it read 1677 of
+1878. The steep view passed that break, because the line stands far off it.
+
+**The disc check holds the disc of the ecliptic under a camera that stands inside it.**
+`driveDiscUnderfoot` puts the eye 1.5 units off Sol over the largest demo, 0.3 rad up and then
+0.0003 rad up. It reads one spot past Sol and three under the camera, with the ecliptic shown and
+again with it hidden. Each spot under the camera must read within 3 of the spot past Sol in
+luminance, so that the disc ends at no chord. Each spot must also change by `LIFT_LEAST` or more
+against the canvas without the plane, which holds that the disc is drawn at all. Every other object
+stays shown, because the spots stand clear of the dots and the axes of the demo.
+
+The veil check reads no eye that grazes a plane, and no depth range as wide as that of the demo.
+Rejected: the spots of one reading alone, which agree with each other where no disc is drawn. Cost:
+two more readings. Timed alone on this machine, 2026-10-04, the check took 3.1 s and 5.0 s. The
+spots of one reading alone took 2.5 s and 3.1 s. Verified by a break on purpose, the same day, with
+the disc draws skipped in `gl.ts`: each spot moved by 0, and both claims failed.
+
+The spots of one reading alone passed that break, at a luminance of 36.1 for every spot. That is
+the dome of the horizon plane of the demo, which the disc blends over. On the page as it is, the
+disc moves each spot by 23.
 
 **Unexplained**: why the runner read blank through `readPixels` and white through the compositor.
 Neither Chromium here reproduces either.
