@@ -526,7 +526,8 @@ suite "Chapter 2":
    - two spaces before the marker of a trailing comment, a citation among them.
 
    No space stands inside a bracket, or after a prefix operator, which is glued to its operand
-   (`s[1 .. ^1]`).
+   (`s[1 .. ^1]`). A compound operator stays whole (`s[1 ..^ 1]`), since it can carry an
+   optimisation that its parts lack.
 10. A list that the language gives no order of its own is alphabetised, as the imports are.
     That covers exports, pragmas and attributes, and a list of flags. Alphabetical order is
     dictionary order: case and `_` are ignored, and a tie falls to the code point. Pragmas sort
