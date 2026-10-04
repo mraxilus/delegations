@@ -193,6 +193,15 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   )
   ```
 
+- An expression that does not fit breaks after a binary operator, because Nim refuses a line
+  that opens with one. Each line that continues the expression takes four spaces more than the
+  line that opens it. A call and a signature keep their layout of one level, as above:
+
+  ```nim
+  let depth = offset_x * bounds.forward.x + offset_y * bounds.forward.y +
+      offset_z * bounds.forward.z
+  ```
+
 - A parameter with a default states its type only where the default does not fix it
   (`as_exclusions = false`, `count: int = SAMPLES`). Only a literal fixes it, `default(T)` and
   `none(T)` among them. A field states its type always. An empty-collection default is
