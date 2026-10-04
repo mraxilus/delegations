@@ -68,7 +68,7 @@ const
           "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24",
           "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32",
           "F01", "F02"]
-    ## Ids Architect has confirmed accurate.  Added as they are ruled on.
+    ## Ids Architect has kept: drawn right.  Added as they are ruled on.
   DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
   CONFIRMED: seq[string] = @[]
     ## Ids whose simulation still Architect has confirmed against their own body, on
