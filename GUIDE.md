@@ -323,13 +323,24 @@ you do it.
 
 ### The sign-off
 
-A message that ends a turn which pushed or posted, and the message of a handover, closes with
-one block, `## Sign-off`. Nothing follows it.
+**Sign off only when you stop**: when nothing is left, or when nothing moves until someone
+else acts. The message that ends that turn, and the message of a handover, closes with one
+block, `## Sign-off`. Nothing follows it.
 
-It serves three readers. The Architect reads it first, and set the order of its parts. The
-block says who the delegate is and what it works on, then what happened, then where it stands
-and what waits on the Architect. The next delegate, and the same delegate after a compaction,
-read the same block. Its parts come in this order:
+**A turn that ends while your work goes on does not sign off.** A run or a subagent that has
+not reported is such work. Where that turn pushed or posted, its message closes with one line
+instead. The line opens `**Working:**`, then names what runs and what wakes you:
+
+```md
+**Working:** run 890 of `check` on `55e6ffd`, whose result wakes this delegate.
+```
+
+The `stop` hook refuses a turn that pushed or posted and closes with neither.
+
+The sign-off serves three readers. The Architect reads it first, and set the order of its parts.
+The block says who the delegate is and what it works on, then what happened, then where it
+stands and what waits on the Architect. The next delegate, and the same delegate after a
+compaction, read the same block. Its parts come in this order:
 
 1. **Role.** The role string, then the branch.
 2. **Context.** At most three sentences in the third person. They say what the branch is for,
@@ -342,8 +353,9 @@ read the same block. Its parts come in this order:
    `red` or `pending`. The word is one of these:
    - `blocked`: nothing moves until the Architect decides.
    - `waiting`: nothing moves until another delegate or an outside party acts.
-   - `working`: this delegate has work it can do now.
    - `done`: nothing is left.
+
+   Each word is a stop. Work that goes on takes the working line, and no sign-off.
 6. **Decisions.** Each question for the Architect, as a block numbered from `D1`. Write
    `**Decisions:** None.` where there is none.
 7. **Next step.** One sentence, the actor first: `Architect`, `this delegate`, or a role

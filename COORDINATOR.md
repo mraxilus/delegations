@@ -251,8 +251,9 @@ Its parts come in one order, and a part with nothing in it says `None.`:
      cost. Where your view differs, the context gives it too, under your name.
    - Only where the conversation offers no card, write the same as a numbered list.
 3. **Delegates.** A table, one row for each delegate that is not done: `Delegate`, `State`,
-   `Pull request and run`, `Waits on`, `Report`. Sort it `blocked`, `waiting`, `working`. The
-   `Report` cell links the full sign-off on GitHub.
+   `Pull request and run`, `Waits on`, `Report`. Sort it `blocked`, `waiting`, then
+   `working`, the state of a delegate whose last message closes with the working line. The
+   `Report` cell links the full sign-off on GitHub, or that line where no sign-off exists.
 4. **Done.** Each ✅ row since the last digest, under its role string, with its evidence as the
    delegate wrote it. A delegate that is now `done` is one line here, with its report link.
 5. **Facts.** Each decision of class `fact`, word for word, with its role string.

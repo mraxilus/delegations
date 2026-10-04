@@ -79,10 +79,9 @@ The role line and the label are not on it. The `body` hook reads every post befo
 
 The list is a view of those sections. Where the list and a section disagree, the section wins.
 
-Post it **at the start**, with what applies and what does not. After that it lives in the
-Sign-off of every turn that pushed or posted, and of the handover (`GUIDE.md`, Output
-contract, The sign-off). Each item is a row there, in the state it is in, tagged
-`(carried N)`.
+Post it **at the start**, with what applies and what does not. After that it lives in each
+sign-off, and in the sign-off of the handover (`GUIDE.md`, Output contract, The sign-off).
+Each item is a row there, in the state it is in, tagged `(carried N)`.
 
 - An item that does not apply is **a line in the pull request body under Record**, with its
   reason. Never drop it, and never tick it.
