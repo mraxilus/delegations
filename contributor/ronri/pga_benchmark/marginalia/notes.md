@@ -19,8 +19,8 @@ type
 A point carries all 2^D slots, and each product reads every slot. Of the measurands with a
 typed reference, most spend more multiplies than the reference, and this is why.
 
-Grade restriction lives in the emission, and the tables stay whole. Proposal P02,
-`typed-multivectors`, explores concrete k-vector types that name their slots.
+Grade restriction lives in the emission, and the tables stay whole. Proposal P04,
+`exact-kinds`, explores concrete kinds that hold only the bases a product reaches.
 
 ## What an out-of-range grade does
 
@@ -68,8 +68,8 @@ func `|∙`*(m: Multivector): Multivector {.inline.} =
 For those operations, the result alone puts them above the byte bound.
 
 An emitter that returns `float`, for a table whose products all land in one slot, closes that.
-Proposal P02, `typed-multivectors`, returns the smallest kind that holds the result, which here
-is one slot.
+Proposal P04, `exact-kinds`, returns the kind of exactly the bases that the result reaches,
+which here is one slot.
 
 ## What the flat norms compute
 
@@ -240,8 +240,8 @@ func norm*(m: Multivector): Multivector {.inline.} = |m
 ```
 
 The book writes ‖𝐦‖ = s𝟏 + t𝟙, and a `Multivector` result mirrors that exactly. The cost is
-movement: `|` fills and writes all 2^D slots to hand back two. Proposal P02,
-`typed-multivectors`, gives this result the kind that holds the scalar and the antiscalar.
+movement: `|` fills and writes all 2^D slots to hand back two. Proposal P04, `exact-kinds`,
+leaves the norm out, since the norm takes a root of a squared norm.
 
 ## Support is three dense products
 

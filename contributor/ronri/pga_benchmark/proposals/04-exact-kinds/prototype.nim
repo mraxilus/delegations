@@ -1,8 +1,8 @@
 ## Prototype kinds of exact bases over library's derived tables (`exact-kinds`).
 ##   Evaluation compiles this against changed library at each algebra its claim names, and exit code
 ##     is verdict: every law below holds, or program stops on assertion.
-##   One generic object holds coefficients of any set of bases, densely, in basis order. Kinds
-##     of P02 are its aliases, one per grade and per parity, plus whole algebra. Product returns
+##   One generic object holds coefficients of any set of bases, densely, in basis order. Named
+##     kinds are its aliases, one per grade and per parity, plus whole algebra. Product returns
 ##     kind of exactly bases its table reaches, so dot of whole multivectors is one slot, and
 ##     bulk of bivector is part of its grade.
 ##
@@ -50,7 +50,7 @@ func literal(listed: set[Basis]): NimNode {.compileTime.} =
 
 
 macro defineKinds(): untyped =
-  ## Name kinds of P02 as aliases of exact kinds: grades, parities, and whole algebra.
+  ## Name kinds as aliases of exact kinds: grades, parities, and whole algebra.
   result = newStmtList()
   var named: seq[(string, set[Basis])]
   for grade in Grade.low .. Grade.high:

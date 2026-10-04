@@ -1,5 +1,9 @@
 # P02: Generate concrete k-vector types for any dimension
 
+**Withdrawn.** P04, `exact-kinds`, holds this proposal whole and replaces its return rule, as
+the Architect ruled on 2026-10-04. This page stays with its last evaluation, so a citation of
+P02 still leads to what was proposed and measured.
+
 One macro call generates a concrete object type for each grade and for both parities, from
 `DIMENSIONS` alone. Each type stores only its own bases, densely. Products are generic over the
 closed set of these types, and return the smallest type that holds what the product can reach.

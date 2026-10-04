@@ -2235,6 +2235,45 @@ The horizon shapes, the lattice lines and the axes stay in the algebra. The dens
 16 coefficients stays, because a change to its storage would change the thing that is measured. On
 JS it is a 128-byte `Float64Array` that V8 allocates outside its heap, a microsecond each.
 
+**The picture writes each value in place, one field at a time.** The six operators of `euclid.nim`
+that return a `Position` or a `Direction` set `x`, `y` and `z` in turn. `addRing` and `addDisc`
+write each field of their record into its slot, as `addMarker` writes its vertex. The JavaScript
+backend copies an object constructor through `nimCopy` wherever it assigns one to `result` or to a
+slot. A field write is a plain store. Each write does the operations of the constructor, in its
+order, so each result is the same to the bit.
+
+The copy matters most in `framing.reachNearOf`, which subtracts two positions for each object in
+each frame, held or not. On the C backend `noinit` skips the zero fill of each operator, so it emits
+the stores that the constructor did. Cost: one statement for each field, where one constructor named
+them all. `fade` and `addRibbon` keep their constructors, because their copies read 1.7% and 0.3% of
+a moving frame at 5,038 objects.
+
+Measured on 2026-10-04 on one delegate, under the lock of the gate, by a harness that is not kept.
+It drives the page at 1200 by 900 px under SwiftShader, with antialias, and with the blur off. It
+times 6 s of frames for each scene, then profiles 6 s more through the DevTools protocol of
+Chromium. An orbit turns the camera 0.004 radians in each frame. Each pair is `c4e7e1fd`, then
+this design, run in turn, in ms of the frame callback:
+
+| Scene | Median | Slowest tenth |
+|-------|--------|---------------|
+| Opening scene, still | 0.9 to 0.7, 0.8 to 0.7, 0.7 to 0.8 | 1.3 to 1.1, 1.2 to 1.0, 1.1 to 1.1 |
+| Opening scene, orbit | 0.9 to 0.9, 0.8 to 0.8, 0.8 to 0.9 | 1.5 to 1.3, 1.3 to 1.3, 1.3 to 1.3 |
+| 5,038 objects, still | 1.7 to 1.0, 1.6 to 1.0, 1.5 to 1.0 | 2.4 to 1.4, 2.4 to 1.3, 2.3 to 1.5 |
+| 5,038 objects, orbit | 2.6 to 2.2, 2.5 to 1.6, 2.3 to 1.8 | 3.9 to 2.9, 3.8 to 2.6, 3.1 to 2.7 |
+
+At the opening scene the two builds overlap, because it holds five objects. At 5,038 objects the
+profile puts `nimCopy` at 39% of the JavaScript of a still frame on `c4e7e1fd`, and at 10% in place.
+The subtraction of `reachNearOf` alone is 31.5% of it. A moving frame reads 34% and 10%. With the
+operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.7% of a moving
+frame.
+
+**A count holds the design, as it holds a fault close to its speed bound** (Clocks of the driven
+checks). A count reads the same on every machine, and load never moves it. No speed check times a
+still frame at 5,038 objects. `driveCopiesStill` counts the outermost `nimCopy` calls over 3 held
+frames of the largest demo, and fails at one copy for each object. It reads 15,598 copies on
+`c4e7e1fd`, and 481 in place. Rejected: a reading of the emitted JavaScript for the six operators
+alone, which passes a copy for each object at any other site.
+
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A motor's sum of blades made 23 arrays, and a write makes
 one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
@@ -2280,6 +2319,11 @@ both backends. Verified in Chromium at 390 by 844 on 2026-09-25 against the vect
 interleaved pairs, each the best of seven runs. A finger's turn takes 223 to 251 µs in free aim and
 247 to 283 in orbit, against 144 to 158 and 113 to 122. A turn and a frame build take 0.93 to 0.94
 ms, against 0.86 to 0.94.
+
+Verified by driven check: a still frame under the largest demo copies fewer values than the scene
+has objects. Verified by a read of the emitted code on 2026-10-04. No `nimCopy` stands in the six
+operators, `addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three
+field stores with no fill.
 
 ## Motors
 

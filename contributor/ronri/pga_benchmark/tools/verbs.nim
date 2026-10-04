@@ -39,6 +39,7 @@ const
   BASELINE = "baseline"  ## Directory committed documents live in.
   PATH_GAPS = "gaps.md"  ## Rendered list, committed.
   PATH_DOCKET = BASELINE / "docket.json"  ## Identifier docket, committed.
+  PATH_SWEEP = BASELINE / "sweep.json"  ## Medians of last sweep, committed and stamped with pin.
   PATH_LOCK = "atlas.lock"  ## Lock naming library commit.
   ENTRY_BENCH = "src/pga_benchmark/bench.nim"
     ## Entry reaching every measurand; its cache is what inspect reads.
@@ -760,6 +761,7 @@ proc pinnedChecked(pin: string, built: OrderedTable[string, string]): seq[Findin
     for kind in ["static", "runtime"]:
       let path = BASELINE / kind & "_" & name & ".json"
       if fileExists(path): result.add checkStamp(readDocument(path), pin, path)
+  if fileExists(PATH_SWEEP): result.add checkStamp(readDocument(PATH_SWEEP), pin, PATH_SWEEP)
   let
     changes = readChanges(result)
     proposals = readProposals(result)
@@ -818,19 +820,32 @@ proc drive() =
 
 
 proc sweep() =
-  ## Time general measurands at every swept dimension, rigid metric, and print medians.
+  ## Time general measurands at every swept dimension, rigid metric, print medians, and record
+  ##   them in `PATH_SWEEP`, one run of each algebra, stamped as bench stamps its own.
   let
     nim = commitNim()
     pga = commitPga()
   createDir BUILD
-  var documents: seq[JsonNode]
+  var
+    documents: seq[JsonNode]
+    swept = newJObject()
   for dimensions in SWEEP:
     let
       name = "sweep_" & $dimensions & "d"
       binary = BUILD / name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
-    documents.add readDocument(binary & ".json")
+    let document = readDocument(binary & ".json")
+    documents.add document
+    var medians = newJObject()
+    for id, measured in document{"measurands"}.pairs:
+      let library = measured{"library"}
+      if not library.isNil and library.kind == JObject: medians[id] = library{"ns_median"}
+    swept[$dimensions & "d"] = medians
+  let recorded = %*{"schema": 1, "kind": "sweep", "taken": documents[0]{"taken"}, "runs": 1,
+      "dimensions": swept}
+  writeFile(PATH_SWEEP, pretty(recorded) & "\n")
+  echo "Recorded ", PATH_SWEEP
   var header = "measurand".alignLeft(26)
   for dimensions in SWEEP: header.add ($dimensions & "d").align(10)
   echo header
