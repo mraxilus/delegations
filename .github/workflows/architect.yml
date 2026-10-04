@@ -10,8 +10,8 @@
 #   Label read before removal, so item whose label somebody removed first is no failure.
 #   `permissions` is whole grant: `issues: write` for issue, `pull-requests: write` for pull
 #   request. Reference of issues endpoint takes either grant, yet run 1, on close of #463 with
-#   `issues: write` alone, failed with exit 1 at its call; log was out of reach, so cause is
-#   inferred, and next labelled pull request to close verifies it.
+#   `issues: write` alone, failed with exit 1; run 2, on close of #467 with both, removed label
+#   with same script, so pull request needs its own grant.
 #   Cost: runner seconds on each close of labelled item; skipped run on every other close.
 
 name: architect
