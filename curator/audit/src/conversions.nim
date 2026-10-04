@@ -32,7 +32,7 @@
 
 import std/[algorithm, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
-import ./[findings, rewrites, spacing, symbols]
+import ./[findings, rewrites, symbols]
 
 
 type
