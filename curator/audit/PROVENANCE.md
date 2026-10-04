@@ -1703,7 +1703,6 @@ banner check of `checkForm`, which `checkBanners` replaces. The list on every ki
 - `checkDefaults`, a type that a literal default gives (X.12);
 - `checkSpacing`, the spaces inside an expression (X.9);
 - `checkSeparators`, `checkSignatures`, `checkCalls` and `checkTrailing` (X.3, STYLE.md §5);
-- `checkAlignment`, the columns of a comment table (I.4);
 - `checkMessages`, the backticks around a value that a message echoes (IV.4);
 - `checkMixtures` and `checkNegations`, the parentheses of a condition (X.4);
 - `checkTargets`, the subject of a `to<Target>` call (STYLE.md §5);
@@ -1843,9 +1842,9 @@ every Nim file of the tree in memory, on branch `main`, so scope refused nothing
 ## Content fixes
 
 **Each content rule that has one right answer has a check and a fixer, from one reading.** The
-rules are the I.4 tables, the IV.4 messages, the X.4 conditions, the profiler import and the
-`to<Target>` calls. The static pass does not run their checks yet, as with the layout checks. So
-a project clears their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
+rules are the IV.4 messages, the X.4 conditions, the profiler import and the `to<Target>` calls.
+The static pass does not run their checks yet, as with the layout checks. So a project clears
+their findings with `koch fix` on its own branch (CURATOR.md, duty 3).
 
 **Every entry module, library umbrella and test stub imports the profiler on one line (STYLE.md
 §3).** An entry module holds a `when isMainModule:` block in its code. The umbrella is
