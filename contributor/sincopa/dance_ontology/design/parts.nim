@@ -82,22 +82,22 @@ const ORIENTATIONS*: array[Facing, tuple[name: string, lead_turn, follow_turn: f
 const HOLD*: Holds = [some Arm.Left, none Arm]  ## Workhorse hold: lead's Left to follow's left.
 
 const SETTLINGS* = [
-  (level: none Level, way: none Way, follow_turn: 0.0,
-   caption: "no way said<br>— it stays at its side"),
-  (level: some Level.Low, way: some Way.Lock, follow_turn: 0.0,
+  (level: none Level, modifier: none Modifier, follow_turn: 0.0,
+   caption: "no modifier said<br>— it stays at its side"),
+  (level: some Level.Low, modifier: some Modifier.Lock, follow_turn: 0.0,
    caption: "<em>low</em> lock<br>Face-to-face"),
-  (level: some Level.High, way: some Way.Lock, follow_turn: 0.0,
+  (level: some Level.High, modifier: some Modifier.Lock, follow_turn: 0.0,
    caption: "<em>high</em> lock<br>Face-to-face"),
-  (level: some Level.Low, way: some Way.Wrap, follow_turn: 180.0,
+  (level: some Level.Low, modifier: some Modifier.Wrap, follow_turn: 180.0,
    caption: "<em>low</em> wrap<br>" & Facing.FaceToBack.name),
-  (level: some Level.High, way: some Way.Wrap, follow_turn: 180.0,
+  (level: some Level.High, modifier: some Modifier.Wrap, follow_turn: 180.0,
    caption: "<em>high</em> wrap<br>" & Facing.FaceToBack.name),
 ]  ## Each settling drawn in orientation that admits it, because most do
   ## not: lock or wrap only exists where line really goes round.
 
 const GRID_STATES* = [
-  (level: Level.High, way: Way.Wrap), (level: Level.Low, way: Way.Wrap),
-  (level: Level.Low, way: Way.Lock), (level: Level.High, way: Way.Lock),
+  (level: Level.High, modifier: Modifier.Wrap), (level: Level.Low, modifier: Modifier.Wrap),
+  (level: Level.Low, modifier: Modifier.Lock), (level: Level.High, modifier: Modifier.Lock),
 ]  ## Grid rule 7 implies: which states exist in which orientation.
 
 const GRID_TURNS* = [0.0, 90.0, 180.0, 270.0]
@@ -112,9 +112,9 @@ func said*(level: Option[Level], arm = Arm.Left): Levels =
   ## Say one arm's level, or nothing at all where nothing was said.
   result[arm] = level
 
-func said*(way: Option[Way], arm = Arm.Left): Ways =
-  ## Say one arm's way, or nothing at all where nothing was said.
-  result[arm] = way
+func said*(modifier: Option[Modifier], arm = Arm.Left): Modifiers =
+  ## Say one arm's modifier, or nothing at all where nothing was said.
+  result[arm] = modifier
 
 
 func replaceFirst*(text, pattern, by: string): string =
@@ -141,7 +141,7 @@ func slotChart*(arm = Arm.Left): string =
   bits.add chevron((0.0, 0.0), CHART_FACING)
   var lands: seq[tuple[arm: Arm, slot: Slot]]
   for settling in SETTLINGS:
-    let landed = slotOf(arm, settling.level, settling.way)
+    let landed = slotOf(arm, settling.level, settling.modifier)
     if landed notin lands:
       lands.add landed
   for place in Arm:
@@ -243,11 +243,11 @@ func frameParts*(): Parts =
       "f",
       HOLD,
       said(settling.level),
-      ways = said(settling.way),
+      modifiers = said(settling.modifier),
       follow_turn = settling.follow_turn,
       has_captions = false,
     )
-    let landed = slotOf(Arm.Left, settling.level, settling.way)
+    let landed = slotOf(Arm.Left, settling.level, settling.modifier)
     if landed notin reached:
       reached.add landed
   # Left hand reaches four of six; other two belong to Right.
@@ -259,15 +259,15 @@ func frameParts*(): Parts =
     "High and low wrap collide; got one drawing for both."
 
   # Routing each hold decides, on one orientation that admits all three.
-  for (name, level, way) in [("route_wrap", Level.Low, Way.Wrap),
-                             ("route_low", Level.Low, Way.Lock),
-                             ("route_high", Level.High, Way.Lock)]:
-    let turn = if way == Way.Wrap: 180.0 else: 0.0
+  for (name, level, modifier) in [("route_wrap", Level.Low, Modifier.Wrap),
+                                  ("route_low", Level.Low, Modifier.Lock),
+                                  ("route_high", Level.High, Modifier.Lock)]:
+    let turn = if modifier == Modifier.Wrap: 180.0 else: 0.0
     result[name] = renderFigure(
       "f",
       HOLD,
       said(some level),
-      ways = said(some way),
+      modifiers = said(some modifier),
       follow_turn = turn,
       has_captions = false,
     )
@@ -283,14 +283,14 @@ func frameParts*(): Parts =
   for state in GRID_STATES:
     for turn in GRID_TURNS:
       let
-        key = &"grid_{word(state.level)}_{word(state.way)}_{int(turn)}"
+        key = &"grid_{word(state.level)}_{word(state.modifier)}_{int(turn)}"
         pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
-      if isDanceable(pose, HOLD, said(some state.level), said(some state.way)):
+      if isDanceable(pose, HOLD, said(some state.level), said(some state.modifier)):
         result[key] = renderFigure(
           "tiny",
           HOLD,
           said(some state.level),
-          ways = said(some state.way),
+          modifiers = said(some state.modifier),
           follow_turn = turn,
           has_captions = false,
         )
@@ -306,7 +306,7 @@ func frameParts*(): Parts =
     "f",
     HOLD,
     said(some Level.Above),
-    ways = said(some Way.Wrap),
+    modifiers = said(some Modifier.Wrap),
     has_captions = false,
   )
   doAssert result["above_plain"] == result["above_asked"],
@@ -760,7 +760,7 @@ func phaseOf*(holds: Holds): float =
   ##     crossed pair Face-to-back, and those are
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
-    let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
+    let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Modifiers))
     if abs(windOf(put, holds, Arm.Left).spread) < 1e-6:
       return phase
   raise newException(Defect, &"A hold runs parallel at neither phase; got `{holds}`.")
@@ -838,7 +838,7 @@ func handPose*(wind = 0.0): Pose =
 func pairAt*(holds: Holds; wind, phase: float): array[Arm, seq[Point]] =
   ## Two reaches position draws, made as drawing makes them.
   let
-    put = settled(posedAt(wind, phase), holds, ABOVE_BOTH, default(Ways))
+    put = settled(posedAt(wind, phase), holds, ABOVE_BOTH, default(Modifiers))
     hands = handsOf(put)
   for arm in Arm:
     result[arm] = wound(
@@ -869,7 +869,7 @@ func windSense*(manner: Manner): float =
   for put in turnWalk(handPose(), description.who, description.about, HALF / 2,
                       on = Anchor.Lead).poses:
     let spread = windOf(
-      settled(put, HAND_TO_HAND, ABOVE_BOTH, default(Ways)),
+      settled(put, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers)),
       HAND_TO_HAND,
       Arm.Left,
     ).spread

@@ -342,14 +342,14 @@ func frontOf*(hand: Point, body: Body): Option[float] =
   some(if offset > 0: -1.0 else: 1.0)
 
 
-func wayFor*(ends: Ends, level: Option[Level], way: Option[Way]):
+func wayFor*(ends: Ends, level: Option[Level], modifier: Option[Modifier]):
     Option[WayRound] =
   ## Get which way round both bodies this hold says its line goes.
   ##   Not what is shortest -- what dance says: both wraps come round
   ##     front, both locks round back (rules 4 to 6).  Hold that has
-  ##     named no level or no way has no opinion, and `routed` takes
+  ##     named no level or no modifier has no opinion, and `routed` takes
   ##     short way.
-  let sends = roundOf(level, way)
+  let sends = roundOf(level, modifier)
   if sends.isNone:
     return none(WayRound)
   let sides = (a: frontOf(ends.a, ends.body_a), b: frontOf(ends.b, ends.body_b))
@@ -390,10 +390,10 @@ func wrapArc*(ends: Ends, way: WayRound): Option[tuple[a, b: float]] =
   none(tuple[a, b: float])
 
 
-func isWrappingEnough*(ends: Ends, level: Option[Level], way: Option[Way]): bool =
+func isWrappingEnough*(ends: Ends, level: Option[Level], modifier: Option[Modifier]): bool =
   ## Test whether this hold's line really does go round body far enough to
   ## be lock or wrap it claims to be (rule 7).
-  let asked = wayFor(ends, level, way)
+  let asked = wayFor(ends, level, modifier)
   if asked.isNone:
     return false
   let arcs = wrapArc(ends, asked.get)

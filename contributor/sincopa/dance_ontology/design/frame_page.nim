@@ -142,7 +142,7 @@ const BODY = """
         <br>the four a Left hand uses, in its ink</figcaption></figure>
       <figure><table class="slots">
         <tr><th></th><th>Left hand</th><th>Right hand</th><th>the line goes</th></tr>
-        <tr><td>no level, or no way said</td><td>left · side</td><td>right · side</td>
+        <tr><td>no level, or no modifier said</td><td>left · side</td><td>right · side</td>
         <td>the short way</td></tr>
         <tr><td><em>high</em> wrap</td><td>right · front</td><td>left · front</td>
         <td>round the front</td></tr>
@@ -389,13 +389,13 @@ func render*(parts: Parts): string =
     turned.add turnedFacing(0.0, turn).get.name
   var grid = """<table class="grid"><tr><th></th>"""
   for state in GRID_STATES:
-    grid.add &"<th><em>{word(state.level)}</em> {word(state.way)}</th>"
+    grid.add &"<th><em>{word(state.level)}</em> {word(state.modifier)}</th>"
   grid.add "</tr>"
   for i, turn in GRID_TURNS:
     # Facing's name capitalises lead's side alone, so header keeps its case.
     grid.add &"<tr><th style=\"text-transform: none\">{turned[i]}</th>"
     for state in GRID_STATES:
-      let cell = parts[&"grid_{word(state.level)}_{word(state.way)}_{int(turn)}"]
+      let cell = parts[&"grid_{word(state.level)}_{word(state.modifier)}_{int(turn)}"]
       grid.add "<td>" & (if cell.len > 0: cell else: "&mdash;") & "</td>"
     grid.add "</tr>"
   grid.add "</table>"

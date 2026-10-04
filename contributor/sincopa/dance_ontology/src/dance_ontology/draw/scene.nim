@@ -5,9 +5,9 @@
 ##     their types -- and drawing says `Arm` for either, told apart by
 ##     which dancer is holding it.  Translating is whole of this module.
 ##   It reaches model through `../frame` and **never** through
-##     `../rotation`, which is not oversight: rotation names `Dancer`,
-##     `Level` and `Way` of its own, and its `Way` is clockwise against
-##     anticlockwise where drawing's is lock against wrap.  Module that
+##     `../rotation`, which is not oversight: rotation names `Dancer` and
+##     `Level` of its own, and its `Way` is clockwise against anticlockwise
+##     where drawing's `Modifier` is lock against wrap.  Module that
 ##     imported both would have to say which it meant at every use, and would
 ##     eventually say wrong one.  So this takes plain `facing: bool` and
 ##     lets `diagram` do arithmetic that needs rotation's words.

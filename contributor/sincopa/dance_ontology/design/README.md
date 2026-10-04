@@ -331,8 +331,8 @@ simulation reports a hand across the front of its own body as a wrap.
 > generated two hand combinations for up to 1 modifier per lead/follow (maximum 2 total across all 4
 > hands); permutations with 2 modifiers for a single person are excluded, until deemed necessary
 
-Nothing checks it. The drawing holds one level and one way for each connection, and not for each
-arm.
+Nothing checks it. The drawing holds one level and one modifier for each connection, and not
+for each arm.
 
 ### Rule 40
 

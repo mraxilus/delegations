@@ -11,8 +11,9 @@
 ##       to see what dance says.  Accepted -- alternative is same
 ##       fact written twice, which is how two of these rules were broken.
 ##   These names deliberately overlap `dance_ontology/rotation`'s, and do not
-##     mean same things: `Way` is lock against wrap here and clockwise
-##     against anticlockwise there.  No module may import both -- see
+##     mean same things: both name `Dancer` and `Level`.  `Modifier` is lock
+##     against wrap here, and `rotation.Way` is clockwise against anticlockwise,
+##     so `Way` names one thing in project.  No module may import both -- see
 ##     `draw/scene`, which is only place two vocabularies meet and
 ##     keeps them apart by touching only one of them.
 
@@ -32,7 +33,7 @@ type
     Low,  ## Below shoulder, about torso.
     High,  ## Above shoulder, about neck.
     Above  ## Above head.
-  Way* {.pure.} = enum  ## Name what held arm does at its level.
+  Modifier* {.pure.} = enum  ## Name what held arm does at its level.
     Lock,  ## Arm bent behind back (low), or bent to shoulder of
           ## same arm (high) -- round back either way (rule 37).
     Wrap  ## Arm crossed round front of body, under (low) or
@@ -53,29 +54,29 @@ type
   Holds* = array[Arm, Option[Arm]]
     ## What each lead hand holds: follow's own side, where one is held.
   Levels* = array[Arm, Option[Level]]  ## Level of each held connection, where one has been said.
-  Ways* = array[Arm, Option[Way]]
+  Modifiers* = array[Arm, Option[Modifier]]
     ## Whether each connection locks or wraps, where that has been said.
 
 
-func settleOf*(level: Option[Level], way: Option[Way]): Option[Settle] =
+func settleOf*(level: Option[Level], modifier: Option[Modifier]): Option[Settle] =
   ## Get what this hold does to its hand and its line, where rules 4 to 6
   ## say anything.
   ##   Rules 4 and 5 name *other* hand; rule 6 names current one.
   ##   Hold that names no level, or level without lock or wrap, has no
   ##     settle: there is no knowing which spot it means (rule 2's reading).
   ##   `above` never locks or wraps (rule 8), so it has no settle either.
-  if level.isNone or way.isNone:
+  if level.isNone or modifier.isNone:
     return none(Settle)
   let settled: Option[Settle] =
     case level.get
     of Level.Low:
-      case way.get
-      of Way.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
-      of Way.Lock: some (Whose.Other, Slot.Back, Sends.BackWay)  # rule 5
+      case modifier.get
+      of Modifier.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
+      of Modifier.Lock: some (Whose.Other, Slot.Back, Sends.BackWay)  # rule 5
     of Level.High:
-      case way.get
-      of Way.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
-      of Way.Lock: some (Whose.Own, Slot.Back, Sends.BackWay)  # rule 6
+      case modifier.get
+      of Modifier.Wrap: some (Whose.Other, Slot.Front, Sends.FrontWay)  # rule 4
+      of Modifier.Lock: some (Whose.Own, Slot.Back, Sends.BackWay)  # rule 6
     of Level.Above:
       none(Settle)  # rule 8
   settled
@@ -101,11 +102,11 @@ func word*(level: Level): string =
   of Level.High: "high"
   of Level.Above: "above"
 
-func word*(way: Way): string =
-  ## Write way as rules and pages say it.
-  case way
-  of Way.Lock: "lock"
-  of Way.Wrap: "wrap"
+func word*(modifier: Modifier): string =
+  ## Write modifier as rules and pages say it.
+  case modifier
+  of Modifier.Lock: "lock"
+  of Modifier.Wrap: "wrap"
 
 func word*(slot: Slot): string =
   ## Write slot as pages say it.

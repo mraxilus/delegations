@@ -443,14 +443,14 @@ const RULES* = [
   ##     than patched: saying it needs other arm in picture, and
   ##     decision about rule 22's scope.
   ##   Rule 39 makes modifiers per-arm for either dancer, up to one
-  ##     each.  Drawing model holds level and way per *connection*
+  ##     each.  Drawing model holds level and modifier per *connection*
   ##     and settles only follow, which covers sheet's validated
   ##     rows but not its enumeration; widening it is restructure, noted
   ##     in `PROVENANCE.md`'s open questions rather than done quietly here.
   ##   Rule 40 is sheet's one filled rotation row, and simulation asks it
   ##     independently (`simulation/verdicts.md`): from Left to left held low,
-  ##     jointed-arm simulation reads lock way as row does -- hand led
-  ##     behind back, whole turn reached -- and blocks wrap way
+  ##     jointed-arm simulation reads lock as row does -- hand led
+  ##     behind back, whole turn reached -- and blocks wrap
   ##     at three tenths of turn, at lead's shoulder twist, short of
   ##     row's half.  One place row and simulation differ, recorded;
   ##     neither was told other's answer.
@@ -463,9 +463,9 @@ const RULES* = [
   ##     mock-up, trusted by nobody, so drawing is left as it is.
 
 
-const FROM_ABOVE*: array[2, tuple[level: Option[Level], way: Option[Way]]] = [
-  (some Level.High, some Way.Wrap),
-  (none Level, none Way),
+const FROM_ABOVE*: array[2, tuple[level: Option[Level], modifier: Option[Modifier]]] = [
+  (some Level.High, some Modifier.Wrap),
+  (none Level, none Modifier),
 ]  ## Only transitions out of `above`, per rule 8: upper wrap, or back
   ## to default.
   ##   *Upper wrap* is read as high wrap; that reading is
