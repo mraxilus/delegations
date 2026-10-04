@@ -134,4 +134,3 @@ suite "Role":
     let wide = checkTitle("curator/mend-it", "docs(curator): " & "a".repeat(90))
     check wide.len == 1 and wide[0].message.startsWith("Pull request title exceeds 100")
     check checkTitle("claude/setup-5uk08q", "Anything at all").len == 0  # scope fails it
-
