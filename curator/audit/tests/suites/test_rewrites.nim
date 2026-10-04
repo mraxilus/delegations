@@ -102,6 +102,29 @@ suite "Internal: Rewrites":
       "import ./a\nlet ctx = 2\necho f(context = ctx), g(ctx = 1)\n"
 
 
+  test "rename spans each site by its own spelling, which Nim reads as declared name":
+    let
+      declaring = "proc f*(tmp_dir: int): int = tmpDir + 1\n"
+      rename = Rename(
+        path: "p/a.nim",
+        line: 1,
+        column: 8,
+        name: "tmp_dir",
+        renamed: "temporary_directory",
+        rule: "abbreviation (V.6)",
+      )
+      parameter =
+        Symbol(kind: "skParam", name: "a.f.tmp_dir", file: "/r/p/a.nim", line: 1, column: 8)
+    var spelled = initTable[string, Answer]()
+    spelled["p/a.nim"] = Answer(path: "p/a.nim")
+    for site in [(1, 8), (1, 29)]: spelled["p/a.nim"].symbols[site] = parameter
+    spelled["p/a.nim"].globals["temporary_directory"] = @[]
+    let plan = planRename(rename, [("p/a.nim", declaring)], spelled, initTable[string, seq[int]]())
+    check plan.refusal.len == 0
+    check declaring.applied(plan.edits["p/a.nim"]) ==
+      "proc f*(temporary_directory: int): int = temporary_directory + 1\n"  # `tmpDir` whole
+
+
   test "rename is refused whole where any site, or new name, cannot be proved":
     var unresolved = answers()
     unresolved["p/a.nim"].reason = "undeclared identifier"
