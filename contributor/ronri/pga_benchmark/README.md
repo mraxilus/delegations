@@ -23,10 +23,10 @@ ASCII. A control page beside them proves that the render sees.
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
 | [Proposals][proposals] | list | every proposal, graph of what each blocks, each read in place |
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
-| [P02 Typed multivectors][typed-multivectors] | proposal | concrete k-vector types, any dimension |
+| [P02 Typed multivectors][typed-multivectors] | withdrawn | k-vector types, folded into P04 |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
 | [P04 Exact kinds][exact-kinds] | proposal | product returns exactly bases it reaches |
-| [P05 Multivector align][multivector-align] | proposal | multivector aligned to one register |
+| [P05 Multivector align][multivector-align] | proposal | multivector aligned to one cache line |
 
 A **monitoring** page shows the library as it is. A **proposal** page shows a future state of
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the

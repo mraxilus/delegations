@@ -7,9 +7,9 @@ that count alone. It is the largest power of two that divides their bytes, and a
 pads no count. A multivector holds 2^D floats, so it aligns to `min(64, size)`, and from three
 dimensions up it fills whole lines.
 
-This proposal applies at pin and builds on no other. The kinds of P02 and P04 hold any count of
-floats. Each kind takes `alignmentOf` of the size of its basis set when it lands, as the
-Architect ruled on 2026-10-04. Their timings below are the evidence for that rule.
+This proposal applies at pin and builds on no other. The kinds of P04 hold any count of floats. Each
+kind takes `alignmentOf` of the size of its basis set when it lands, as the Architect ruled on
+2026-10-04. Their timings below are the evidence for that rule.
 
 ## What it is
 
@@ -109,9 +109,9 @@ rga4d and cga4d under AVX2, nor on `m + n` and `-m` under AVX-512. An AVX build 
 than SSE2 at each operation: `m ⟑ n` at cga5d takes 259 ns with SSE2 and 346 ns with AVX2 at
 pin.
 
-## Kinds of P02 and P04
+## Kinds of P04
 
-A kind of P02 or P04 holds the count of floats of its bases. So at rga3d a vector holds 3, and
+A kind of P04 holds the count of floats of its bases. So at rga3d a vector holds 3, and
 at cga5d a vector holds 5. The same runs time kinds that hold each count, since they read no
 library. Each kind has its own sum and negation, which return by value, as the library writes
 its operators. On Cascade Lake, the median of 60 runs, time of each alignment over the natural
@@ -173,8 +173,8 @@ that, and padding costs more than the line.
 - Cascade Lake does not time the kind of 4 floats at 32 bytes. Under AVX2 its sum ranged ×0.86
   to ×1.47 over 20 executions on Emerald Rapids.
 - At pin, `align` of an expression of a generic parameter stops the compiler. So the generic
-  kind of P04 chooses among 8, 16, 32 and 64 through `when`. The macro of P02 knows each count
-  when it runs, and writes the number.
+  kind of P04 chooses among 8, 16, 32 and 64 through `when`. The macro that names its kinds
+  knows each count when it runs, and writes the number.
 - `timing.nim` exits zero when it runs. Its figures never guard.
 
 ## Alternatives weighed

@@ -1,6 +1,6 @@
 {
   "status": "proposed",
-  "builds_on": ["typed-multivectors"],
+  "builds_on": ["cayley-derivation"],
   "claims": [
     {
       "kind": "program",

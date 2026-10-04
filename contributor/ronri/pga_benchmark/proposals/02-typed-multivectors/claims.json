@@ -1,5 +1,5 @@
 {
-  "status": "proposed",
+  "status": "withdrawn",
   "builds_on": ["cayley-derivation"],
   "claims": [
     {

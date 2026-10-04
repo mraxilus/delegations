@@ -4,7 +4,7 @@
 ##   `alignmentOf` gives alignment of any count of floats from count alone: largest power of two
 ##     dividing their bytes, at most one line, so it pads no count. Multivector holds 2^D floats,
 ##     so it aligns to `min(64, size)` and starts on cache line in every storage caller holds.
-##   Kinds of P02 and P04 take `alignmentOf` of size of their basis set when they land, as Architect
+##   Kinds of P04 take `alignmentOf` of size of their basis set when they land, as Architect
 ##     ruled on 2026-10-04; laws here hold function at each count they reach.
 
 {.experimental: "strictFuncs".}
@@ -21,7 +21,7 @@ const
   SIZE = sizeof(float) * COUNT_BASES  ## Bytes of 2^D floats, multivector unpadded.
   ALIGNMENT = min(LINE, SIZE)  ## Alignment proposed: one line, or own size where smaller.
   ALIGNMENTS_KIND = [(3, 8), (4, 32), (5, 8), (6, 16), (8, 64), (10, 16), (16, 64)]
-    ## Count of floats of each kind P02 and P04 reach, from rga3d to cga5d, and its alignment.
+    ## Count of floats of each kind P04 reaches, from rga3d to cga5d, and its alignment.
 
 
 var MULTIVECTORS_GLOBAL: array[3, Multivector]  ## Global storage, which linker lays out.
