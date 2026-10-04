@@ -25,7 +25,6 @@
 
 import std/[sequtils, strutils, unicode]
 import ../../knoller/src/knoller
-import ./form
 
 
 type

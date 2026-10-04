@@ -5,6 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, sequtils, strutils, tables, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, fixes, form, idioms, kinds, names, symbols]
 import ./fixtures
 

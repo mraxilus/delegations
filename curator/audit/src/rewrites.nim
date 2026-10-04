@@ -41,7 +41,7 @@
 
 import std/[algorithm, sequtils, strutils, tables]
 import ../../knoller/src/knoller
-import ./[form, symbols]
+import ./symbols
 
 
 type
