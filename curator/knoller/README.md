@@ -14,7 +14,11 @@ knoller [--check] path...
 ```
 
 - A path names a file or a directory. A directory stands for the `.nim`, `.nims` and `.nimble`
-  files that `git ls-files` lists under it. Outside a git work tree, a directory names no file.
+  files that `git ls-files` lists under it.
+- A directory that gives no Nim file is a usage error. Its message says why: the directory is
+  outside a git work tree, or git lists no Nim file under it.
+- Knoller reads each path whole, from the directory where you run it. So a test file, a stub and
+  an umbrella get the same rules from any directory. The output prints each path as you name it.
 - Knoller writes only the files that change. With `--check`, it writes no file and reports each
   change that is due.
 - Knoller passes over a nimble file whose copy `atlas.lock` holds, because a rewrite would leave
@@ -33,6 +37,10 @@ N fixed.
 ```
 
 With `--check`, each `fixed` reads `to fix`. A finding that no fix clears is `left`.
+
+Each line number is a line of the file as given, for a finding left too. A line that the fix
+inserts has no such number. So a finding there prints with the path alone, as a finding of the
+whole file does, and its message gives its text.
 
 The message of a warning names each rule that breaks inside the fence, in the order of the table
 under Rules. It gives the count and the first line of each, as in `inside them expression-spacing
