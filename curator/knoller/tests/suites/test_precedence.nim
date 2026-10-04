@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/precedence
+import ../../src/knoller/[precedence, reports]
 
 
 func fixed(source: string): string =
@@ -58,6 +58,13 @@ suite "Article X":
     let near = "if " & "x".repeat(77) & " and b or c: discard\n"  # 100 runes; parentheses 102
     check near.fixed == near
     check checkMixtures("a.nim", near).len == 1  # finding stays for hand
+
+
+  test "X.4 fix held on no line widens it, and keeps width guard on held line":
+    let near = "if " & "x".repeat(77) & " and b or c: discard\n"  # 100 runes; parentheses 102
+    check fixMixtures("a.nim", near, Held()).source ==
+        "if (" & "x".repeat(77) & " and b) or c: discard\n"  # no line held: widens
+    check fixMixtures("a.nim", near, Held(lines: @[1])).source == near  # its line held
 
 
   test "X.4 `not` over binary expression is reported, since Nim reads `(not a) == b`":

@@ -82,9 +82,13 @@ Each rule id is stable, so a tool can read the output. `koch` cites the article 
 | `tuple-separators` | A tuple type takes commas between its fields. |
 | `signature-wrapping` | A signature wraps its parameters only where it must. |
 | `call-wrapping` | A call takes one argument to a line only where it must. |
+| `operator-wrapping` | A line that fits nowhere else breaks after a binary operator. |
+| `continuation-indent` | Each line past its statement line takes four spaces more than it. |
 | `trailing-separator` | A list of one item to a line ends in a separator. |
+| `comment-above` | A trailing comment that does not fit moves to its own line above. |
 | `fence` | A fence closes inside the bracket, string or comment it opens in. No fix reaches it. |
 | `fence-held` | A fence keeps its lines as written, and each run names what breaks inside it. |
+| `unsettled` | A file that the fixers still change after their last round stays as written. |
 
 ## Build and test
 

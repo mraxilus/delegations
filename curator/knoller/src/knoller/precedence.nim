@@ -12,16 +12,20 @@
 ##     `return`, …), `in` of `for` head, operator binding looser than `or` (arrow, assignment,
 ##     `@`, `?`), and line break that ends statement. Command call (`check a and b or c`) holds
 ##     expression after its head: two operands apart by space, no operator between.
-##   Operator precedence is lexer's (Nim manual, Operators): first character, keyword, and
-##     `=` or arrow ending; only whether operator binds looser than `or`, as `or`, as `and`, or
-##     tighter matters here, so every glyph operator reads tighter.
+##   Operator precedence is lexer's (Nim manual, Operators; `getPrecedence` of
+##     `compiler/lexer.nim`): first character, keyword, and `=` or arrow ending. Glyph opening
+##     operator binds as `+` where lexer files it so (`PLUS_GLYPHS`), else as `*`. Conditions
+##     read only whether operator binds looser than `or`, as `or`, as `and`, or tighter; operator
+##     break of `wrapping.nim` reads every level.
 ##   Checks and fixer share one reading (`mixtures`), so each rule is written once (Article
-##     II.1).
+##     II.1). Elements of one depth (`elementsOf`) are exported, since message shape reads
+##     operators of its value there (`messages.nim`).
 ##
 ##   Cost: scanner, never parser; command call nested inside operand (`a and f b or c`) reads
 ##     from its last head, so such expression may stay unreported.
-##   Cost: fixer never writes line width check reports; parentheses that would widen line
-##     past `LINE_MAX` stay to hand, finding and all.
+##   Fixer is widener (`reports.nim`): off held lines it writes parentheses that widen line
+##     past `LINE_MAX`, and chain wraps line after; on held line, as in its two-argument form,
+##     parentheses that would widen narrow line stay to hand, finding and all.
 
 {.experimental: "strictFuncs".}
 
@@ -30,17 +34,17 @@ import ./[form, reports, tokens]
 
 
 type
-  Role {.pure.} = enum  ## Define what one element of expression is to its neighbours.
+  ElementKind* {.pure.} = enum  ## Define what one element of expression is to its neighbours.
     Operand  ## Name, literal or bracket group, with call, index and field glued after it.
     Binary  ## Operator between two operands.
     Prefix  ## Operator before its operand.
     Delimiter  ## Token ending expression: separator, `:`, `=`, statement keyword.
 
-  Element = object  ## Define one element of expression: tokens it spans, role, precedence.
-    first: int  ## Index of first token.
-    last: int  ## Index of last token; closing bracket where element ends in one.
-    role: Role
-    precedence: int  ## Precedence of operator; `-1` for any other role.
+  Element* = object  ## Define one element of expression: tokens it spans, kind, precedence.
+    first*: int  ## Index of first token.
+    last*: int  ## Index of last token; closing bracket where element ends in one.
+    kind*: ElementKind
+    precedence*: int  ## Precedence of operator; `-1` for any other kind.
 
   Mixture = object  ## Define runs of `and` that one expression mixing `and` with `or` holds.
     runs: seq[(int, int)]  ## First and last token of each run to parenthesise.
@@ -67,6 +71,10 @@ const
   ]
     ## Precedence of symbol operator by its first character (Nim manual, Operators).
   ARROWS = ["->", "~>", "=>"]  ## Endings of arrow-like operator, which binds loosest.
+  PLUS_GLYPHS = ["±", "∨", "∪", "⊔", "⊕", "⊖", "⊞", "⊟"]
+    ## Glyphs lexer files with `+` (`unicodeOprLen`); every other glyph binds as `*`.
+  PRECEDENCE_PLUS = 8  ## Precedence of `+`, and of operator opening with glyph of `PLUS_GLYPHS`.
+  PRECEDENCE_TIMES = 9  ## Precedence of `*`, and of operator opening with any other glyph.
   COMPARING_FIRST = {'<', '>', '!', '=', '~', '?'}
     ## First characters whose operator ending with `=` compares rather than assigns.
   STATEMENT_KEYWORDS = [
@@ -92,7 +100,7 @@ func precedenceOf(t: Token, source: string): int =
   if text.len > 1 and text.endsWith("=") and text[0] notin COMPARING_FIRST: return 1
   for (first, precedence) in LUT_PRECEDENCE_BY_FIRST:
     if text[0] == first: return precedence
-  9  # Glyph operator binds as tight as `*` or `+`, tighter than any comparison.
+  if PLUS_GLYPHS.anyIt(text.startsWith(it)): PRECEDENCE_PLUS else: PRECEDENCE_TIMES
 
 
 func isOperandToken(tokens: openArray[Token], k: int, source: string): bool =
@@ -108,7 +116,7 @@ func isOperandToken(tokens: openArray[Token], k: int, source: string): bool =
   else: false
 
 
-func elementsOf(
+func elementsOf*(
   tokens: openArray[Token]; partners: openArray[int]; first, last: int; source: string
 ): seq[Element] =
   ## Read tokens `first` to `last` of one bracket depth as elements; bracket group, and `.`
@@ -119,19 +127,19 @@ func elementsOf(
     if t.kind == TokenKind.Comment:
       inc k
       continue
-    var e = Element(first: k, last: k, role: Role.Delimiter, precedence: -1)
+    var e = Element(first: k, last: k, kind: ElementKind.Delimiter, precedence: -1)
     let
-      previous = if result.len > 0: result[^1] else: Element(role: Role.Delimiter)
-      is_after_operand = previous.role == Role.Operand
+      previous = if result.len > 0: result[^1] else: Element(kind: ElementKind.Delimiter)
+      is_after_operand = previous.kind == ElementKind.Operand
     if t.kind == TokenKind.Open:
       e.last = if partners[k] > k and partners[k] <= last: partners[k] else: last
       let is_glued = is_after_operand and tokens[previous.last].after == t.first
-      if t.spelling(source) notin ["(", "[", "{"]: e.role = Role.Delimiter
+      if t.spelling(source) notin ["(", "[", "{"]: e.kind = ElementKind.Delimiter
       elif is_glued:
         result[^1].last = e.last
         k = e.last + 1
         continue
-      else: e.role = Role.Operand
+      else: e.kind = ElementKind.Operand
     elif t.spelling(source) == "." and is_after_operand and k < last and
         tokens[previous.last].after == t.first and tokens[k + 1].first == t.after and
         tokens[k + 1].kind in {TokenKind.Word, TokenKind.Quoted}:
@@ -140,9 +148,9 @@ func elementsOf(
       k += 2
       continue
     elif tokens.isOperandToken(k, source):
-      e.role = Role.Operand
+      e.kind = ElementKind.Operand
     elif t.kind == TokenKind.Word and t.spelling(source) == "not":
-      e.role = Role.Prefix
+      e.kind = ElementKind.Prefix
     elif t.kind in {TokenKind.Operator, TokenKind.Word} and t.precedenceOf(source) >= 0:
       let
         text = t.spelling(source)
@@ -150,13 +158,13 @@ func elementsOf(
         is_glued_after = k < last and tokens[k + 1].first == t.after
         is_prefix = not is_after_operand or (is_spaced_before and is_glued_after and
           t.kind == TokenKind.Operator and text != ".")
-      if text in [":", "="]: e.role = Role.Delimiter
-      elif is_prefix and t.kind == TokenKind.Operator: e.role = Role.Prefix
-      elif is_prefix: e.role = Role.Delimiter
+      if text in [":", "="]: e.kind = ElementKind.Delimiter
+      elif is_prefix and t.kind == TokenKind.Operator: e.kind = ElementKind.Prefix
+      elif is_prefix: e.kind = ElementKind.Delimiter
       else:
-        e.role = Role.Binary
+        e.kind = ElementKind.Binary
         e.precedence = t.precedenceOf(source)
-        if e.precedence < PRECEDENCE_OR: e.role = Role.Delimiter
+        if e.precedence < PRECEDENCE_OR: e.kind = ElementKind.Delimiter
     result.add e
     k = e.last + 1
 
@@ -191,10 +199,11 @@ func segmentsOf(
       is_loop_in = is_for_head and t.kind == TokenKind.Word and text == "in"
     if text == "for": is_for_head = true
     if is_loop_in or text == ":": is_for_head = false
-    if e.role == Role.Delimiter or is_keyword or is_branch or is_loop_in or is_breaking:
+    if e.kind == ElementKind.Delimiter or is_keyword or is_branch or is_loop_in or is_breaking:
       if segment.len > 0: result.add segment
       segment = @[]
-      if not (e.role == Role.Delimiter or is_keyword or is_branch or is_loop_in): segment.add e
+      if not (e.kind == ElementKind.Delimiter or is_keyword or is_branch or is_loop_in):
+        segment.add e
     else: segment.add e
   if segment.len > 0: result.add segment
 
@@ -216,7 +225,8 @@ func commandTail(segment: seq[Element], tokens: openArray[Token]): seq[Element] 
       before = segment[j - 1]
       e = segment[j]
       is_spaced = tokens[before.last].after < tokens[e.first].first
-    if before.role == Role.Operand and e.role in {Role.Operand, Role.Prefix} and is_spaced:
+    if before.kind == ElementKind.Operand and
+        e.kind in {ElementKind.Operand, ElementKind.Prefix} and is_spaced:
       start = j
   segment[start .. ^1]
 
@@ -237,8 +247,8 @@ func mixtures(source: string): seq[Mixture] =
     let expression = segment.commandTail(tokens)
     if expression.len == 0: continue
     let
-      is_or = expression.anyIt(it.role == Role.Binary and it.precedence == PRECEDENCE_OR)
-      is_and = expression.anyIt(it.role == Role.Binary and it.precedence == PRECEDENCE_AND)
+      is_or = expression.anyIt(it.kind == ElementKind.Binary and it.precedence == PRECEDENCE_OR)
+      is_and = expression.anyIt(it.kind == ElementKind.Binary and it.precedence == PRECEDENCE_AND)
     if not (is_or and is_and): continue
     var
       mixture = Mixture(got: excerpt(source, tokens, expression[0].first, expression[^1].last))
@@ -246,14 +256,14 @@ func mixtures(source: string): seq[Mixture] =
       is_read = true  # Each run opens on operand and ends on one, or expression is unread.
     for j in 0 .. expression.len:
       let is_end = j == expression.len or
-        (expression[j].role == Role.Binary and expression[j].precedence == PRECEDENCE_OR)
+          (expression[j].kind == ElementKind.Binary and expression[j].precedence == PRECEDENCE_OR)
       if not is_end: continue
       let run = expression[run_first ..< j]
       run_first = j + 1
-      if run.len == 0 or run[0].role == Role.Binary or run[^1].role != Role.Operand:
+      if run.len == 0 or run[0].kind == ElementKind.Binary or run[^1].kind != ElementKind.Operand:
         is_read = false
         break
-      if run.anyIt(it.role == Role.Binary and it.precedence == PRECEDENCE_AND):
+      if run.anyIt(it.kind == ElementKind.Binary and it.precedence == PRECEDENCE_AND):
         mixture.runs.add (run[0].first, run[^1].last)
     if is_read: result.add mixture
 
@@ -271,9 +281,9 @@ func checkMixtures*(path, source: string): seq[Report] =
     )
 
 
-func fixMixtures*(path, source: string): Fix =
-  ## Parenthesise each run of `and` check reports, as parser groups it, unless line would be
-  ##   wide; expression whose parentheses cannot all fit stays whole.
+func fixMixtures*(path, source: string; held: Held): Fix =
+  ## Parenthesise each run of `and` check reports, as parser groups it, unless held line would
+  ##   be wide; expression whose parentheses cannot all fit stays whole.
   let tokens = source.tokens
   var inserts: seq[(int, string)]
   for mixture in source.mixtures:
@@ -287,11 +297,17 @@ func fixMixtures*(path, source: string): Fix =
       lines = tokens[mixture.runs[0][0]].line .. tokens[mixture.runs[^1][1]].lastLine(source)
       before = source.split('\n')
       after = shaped.split('\n')
-    if lines.toSeq.anyIt(after[it].isWide and not before[it].isWide): continue
+    if lines.toSeq.anyIt(held.isHeld(it + 1) and after[it].isWide and not before[it].isWide):
+      continue
     inserts.add planned
     result.fixed.add initReport(path, tokens[mixture.runs[0][0]].line + 1, Rule.AndWithOr)
   result.source = source
   for (at, text) in inserts.sortedByIt(-it[0]): result.source.insert(text, at)
+
+
+func fixMixtures*(path, source: string): Fix =
+  ## Parenthesise each run of `and` check reports, unless line would be wide.
+  fixMixtures(path, source, EVERY)
 
 
 func negations(source: string): seq[Negation] =
@@ -302,12 +318,12 @@ func negations(source: string): seq[Negation] =
   if tokens.len == 0: return
   for segment in segmentsOf(tokens, partners, 0, tokens.high, source):
     for j, e in segment:
-      if e.role != Role.Prefix or tokens[e.first].spelling(source) != "not": continue
+      if e.kind != ElementKind.Prefix or tokens[e.first].spelling(source) != "not": continue
       var operand = j + 1
-      while operand < segment.len and segment[operand].role == Role.Prefix: inc operand
-      if operand + 1 >= segment.len or segment[operand].role != Role.Operand: continue
+      while operand < segment.len and segment[operand].kind == ElementKind.Prefix: inc operand
+      if operand + 1 >= segment.len or segment[operand].kind != ElementKind.Operand: continue
       let after = segment[operand + 1]
-      if after.role != Role.Binary or after.precedence < PRECEDENCE_COMPARISON: continue
+      if after.kind != ElementKind.Binary or after.precedence < PRECEDENCE_COMPARISON: continue
       if tokens[after.first].spelling(source) == ".": continue
       let stop = if operand + 2 < segment.len: segment[operand + 2].last else: after.last
       result.add Negation(line: tokens[e.first].line, got: excerpt(source, tokens, e.first, stop))
