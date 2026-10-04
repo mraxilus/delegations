@@ -1100,6 +1100,64 @@ suite "Camera Aim":
     check placement_behind.isNone
 
 
+  test "a pointer pick of a star at least radius lands on it in front, near and far out":
+    # Catalogue's stars and planets are drawn at `RADIUS_OBJECT_LEAST`, so pick comes in
+    #   until disc spans `FRACTION_HEIGHT_APPROACH_POINT` of height: 2.4e-7 units off it.
+    #   Separation must land there and pivot on star, which must read in front: ring, label,
+    #   menu and every pick read that, and orbit turns about pivot.
+    #   Swept beside origin and at HD 222237, 2.36 million units out, where double steps by
+    #   about 5e-10 and records' origin follows eye.
+    const
+      duration = 0.35
+      aspect = float(width_aim)/float(height_aim)
+    let
+      centres = [
+        Position(x: 1.0, y: 0.0, z: 0.0),
+        Position(x: 698390.5004, y: -953804.3279, z: -2043454.915),
+      ]
+      middle = ScreenPosition(x: 0.5*float(width_aim), y: 0.5*float(height_aim), depth: 0.0)
+      # Read radius of star's disc in pixels once arrived; see `stanceApproaching`.
+      radius_disc = 0.5*FRACTION_HEIGHT_APPROACH_POINT*float(height_aim)
+    for centre in centres:
+      for out_to in out_to_aim:
+        var camera = cameraAround(centre, 12.0, out_to)
+        let
+          eye = camera.eye
+          axes = camera.frame
+          place = eye + 40.0*axes.forward + 4.0*axes.axis_right - 2.0*axes.axis_up
+        var (scene, picked) = sceneOf(toMultivector(place))
+        scene.setRadius(picked.at(0), RADIUS_OBJECT_LEAST)
+        var
+          tween: CameraTween
+          pointer = some(PointerPick(handle: picked.at(0)))
+        tween.offerAim(
+          camera, scene, picked, none(Preview), camera.drawExtentFor(height_aim, 0.0),
+          width_aim, height_aim, 0.0, duration, pointer,
+        )
+        for step in 1 .. 5:
+          tween.advance(camera, duration*float(step)/5.0, easeOutCubic)
+        check tween.is_arrived
+        # Separation lands on fit, read relatively: `=~` floors its tolerance at one unit.
+        let fit = depthSpanning(2.0*RADIUS_OBJECT_LEAST, FRACTION_HEIGHT_APPROACH_POINT, camera)
+        check abs(camera.distance/fit - 1.0) < 1.0e-6
+        # Star reads in front, and stands under middle pixel for hover and pick.
+        let view_projection = camera.initMatrixViewProjection(aspect)
+        check projectToScreen(view_projection, width_aim, height_aim, place).isInFront
+        check pickNearest(
+          scene, camera, camera.drawExtentFor(height_aim, 0.0), view_projection,
+          width_aim, height_aim, middle,
+        ) == some(picked.at(0))
+        # Orbit turns about star, so its disc still covers middle of frame.
+        #   Read through transform about eye, as GPU reads records stored about it.
+        var turned = camera
+        turned.orbit(0.7, 0.3)
+        let seen = projectToScreen(
+          turned.initMatrixViewProjection(aspect, turned.eye), width_aim, height_aim,
+          ORIGIN + (place - turned.eye),
+        )
+        check hypot(seen.x - middle.x, seen.y - middle.y) < radius_disc
+
+
   test "a depth spanning a fraction of the frame is read off the lens":
     # Two units across at half of 45-degree frame: 2/(2*0.5*tan 22.5) = 4.83.
     let camera = stanceAim(Direction(x: 1, y: 0, z: 0))
@@ -1430,6 +1488,21 @@ suite "Camera Aim":
     check not (camera.distance =~ 10.0 + 30.0*easeOutCubic(0.4)) # Not linear reading.
     tween.advance(camera, duration, easeOutCubic)
     check camera.distance =~ 40.0
+
+
+  test "a tween lands on its destination's separation at every decade down to the floor":
+    # Separation eases through its logarithm, so it is held off zero first, and at
+    #   `DISTANCE_LIMIT_NEAR` as every separation is: pointer pick of star at least radius
+    #   asks 2.4e-7. Read relatively, since `=~` floors its tolerance at one unit.
+    let from_stance = stanceAround(ORIGIN, 19.0, Direction(x: 10, y: 15, z: 6))
+    for power in -9 .. 2:
+      var to_stance = from_stance
+      to_stance.distance = pow(10.0, float(power))
+      let
+        landed = toward(from_stance, to_stance, 1.0)
+        halfway = toward(from_stance, to_stance, 0.5)
+      check abs(landed.distance/to_stance.distance - 1.0) < 1.0e-9
+      check abs(halfway.distance/sqrt(19.0*to_stance.distance) - 1.0) < 1.0e-9
 
 
   test "repivoting mid-flight continues from where the camera reached":

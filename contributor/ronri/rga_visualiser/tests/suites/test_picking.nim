@@ -245,6 +245,27 @@ suite "Picking":
     ) == some(0)
 
 
+  test "a point ahead of the eye reads in front, and is picked, at every separation held":
+    # Ring, label, menu and every pick read `isInFront`, so its floor is camera's own,
+    #   `DISTANCE_LIMIT_NEAR`: pointer pick of star at least radius stands 2.4e-7 off it.
+    #   Point as far behind eye reads behind at every one of them.
+    for power in -8 .. 3:
+      let depth = pow(10.0, float(power))
+      var scene = initScene()
+      scene.addObject(toMultivector(ORIGIN), "p", Ink.Rose)
+      scene.setRadius(0, RADIUS_OBJECT_LEAST)
+      let
+        camera = cameraFacingOrigin(depth)
+        view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+        behind = Position(x: 2.0*depth, y: 0.0, z: 0.0)
+      check projectToScreen(view_projection, width_pick, height_pick, ORIGIN).isInFront
+      check not projectToScreen(view_projection, width_pick, height_pick, behind).isInFront
+      check pickNearest(
+        scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
+        width_pick, height_pick, centre
+      ) == some(0)
+
+
   test "cursor far from every object picks nothing":
     var scene = initScene()
     scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
