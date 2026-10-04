@@ -14,6 +14,8 @@ hand-rolled typed reference spends, derived from Lengyel's own forms.
 
 Three kinds of page answer the question. Each one is built from committed files alone.
 `drive` holds each file to the library at pin, and `head` holds the pin to library head.
+`drive` also renders each page, and fails where a face of the system draws a character beyond
+ASCII.
 
 | Page | Kind | What it shows |
 |------|------|---------------|
@@ -65,6 +67,7 @@ one issue open until the pin follows. To follow head:
 ```sh
 nim r koch check                                # repository root: every check a pull request runs
 nim r koch test contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
+nim r tools/build.nim types         # type-check the render harness, with no browser
 nim r tools/build.nim drive         # project directory: every check CI runs, all at pin
 nim r tools/build.nim head          # compare pin with library head, as the daily workflow does
 nim r tools/build.nim bench         # five alternating runs into baseline/runtime_<algebra>.json
@@ -76,6 +79,10 @@ nim r tools/build.nim evaluate all --thorough  # the same, at rga3d and cga4d as
 nim r tools/build.nim pages         # build every page into build/<name>.html
 nim r tools/build.nim sweep         # dense timings at two to six dimensions, never in CI
 ```
+
+`drive` fetches the Chromium that Playwright pins. Set `PGA_CHROMIUM` to the path of a Chromium
+executable, and `drive` uses that one instead. `types` and `drive` need node and npm on `PATH`,
+and `nim r tools/build.nim system` names every system package.
 
 The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
 once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
@@ -106,6 +113,7 @@ src/pga_benchmark/evaluations.nim  try change or proposal on copy of library at 
 src/pga_benchmark/head.nim         hold pin to head, and every file and page to pin
 src/pga_benchmark/pages/           shell assembly, one renderer per page kind, docket's search
 tools/build.nim                    driver verbs
+tools/drive/                       render harness: font stack of each element against faces shipped
 tests/                             suites, and the testament stubs that run them
 ```
 

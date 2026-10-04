@@ -510,12 +510,9 @@ also covers the verdict and evidence of every cause, the rendered width, and run
 
 ## Driver
 
-`tools/build.nim` carries `inspect`, `bench`, `baseline`, `guard`, `evaluate`, `pages`,
-`published`, `drive`, `gaps`, `show`, `sweep`, `system` and `clean`, dispatched from
-`case paramStr(1)`, so koch reads the verbs itself. `system` prints `git`, `curl` and
-`coreutils`: git reads the library head, and the other two serve `koch fetch-assets`, which
-fetches and checks the faces. `sweep` compiles the bench at two to six dimensions, rigid
-metric, and prints the medians of the general measurands. It never runs in CI.
+`tools/build.nim` dispatches every verb from `case paramStr(1)`, so koch reads the verbs itself.
+The header table of the driver says what each verb does. `sweep` compiles the bench at two to six
+dimensions, rigid metric, and prints the medians of the general measurands. It never runs in CI.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Guard`. A grown total is one
 finding. With the fixture path of the suite, it renders so:
@@ -527,6 +524,18 @@ baseline `81`.
 
 Verified by `test_rga4d.nim` and the other stubs, suite `Internal: Driver`: the dispatch, the usage
 string and the header table name the same verbs.
+
+`system` prints the packages of `SYSTEM`, and each one carries its reason there. Git reads the
+library head, and `curl` and `coreutils` serve `koch fetch-assets`, which fetches and checks the
+faces. `binutils` gives `show` its `objdump`. `nodejs` runs the type checker of `types` and the
+render harness of `drive`.
+
+**`koch check-types` compiles this driver on the compiler of koch, and not on the pin.** Koch
+runs `types` for each project that carries `package.json` beside its lock. The driver imports
+modules of this project for its other verbs, so that compiler compiles them too. No module that
+the driver imports reaches `pga`, so the job needs no checkout of the library. Verified by hand on
+2026-10-04: the driver compiles on Nim 2.2.12, which builds koch in CI. Cost: a module that needs
+the pin fails `check-types` before any type check runs.
 
 ## Changes, proposals and evaluations
 
@@ -652,10 +661,48 @@ page is 4.3 to 5.2 MiB, against 0.9 to 1.8 MiB with the subsets, by `ls -l build
 **Each stack holds every face of the sans stack before any family of the system.** So a
 character that the first faces of a stack lack falls to a face that the page ships. Noto Sans
 draws `ₙ`, `ₖ` and `ᵀ` in code, which no face of the mono stack holds, at a width that is not
-one column. Verified by `test_rga4d.nim`, which reads the stacks of the shell. A render in
-Chromium 141 on 2026-10-04 asked DevTools, through `CSS.getPlatformFontsForNode`, which fonts
-drew each text element of each page. With the subsets, faces of the system drew 106 glyphs on
-two pages, and with the whole faces and closed stacks they drew none.
+one column. Verified by `test_rga4d.nim`, which reads the stacks of the shell, and by `drive`,
+which renders every page (below).
+
+**`drive` renders every page, and fails where a face of the system draws a character beyond
+ASCII** (`CONTRIBUTOR.md`, Pages and assets). The driver builds the pages once, for the digests
+and for the render. It wraps each page in the skeleton that the publish host adds, and writes it
+to `build/hosted/`. The harness in `tools/drive/` loads each one in Chromium through Playwright,
+and opens every `details`. It reads each string that the page draws, with the font stack, weight
+and case transform of its element. That covers text nodes, SVG text, placeholders, and the
+strings of `content` on `::before`, `::after` and `::marker`.
+
+The harness resolves each character beyond ASCII down its stack, against the `@font-face` rules
+and the `cmap` of each face. The faces come out of the page itself, as the `data:` sources of
+its rules, so the check reads the bytes that a viewer receives. A family that the page does not
+ship ends the search, because a face of the viewer would draw the character there. A face that
+the browser does not load is a finding too. A finding names the page, the element and the
+codepoint:
+
+```text
+probe: p#han: Character drawn by face of system; got `U+4E2D`.
+```
+
+Rejected: `CSS.getPlatformFontsForNode`, the other method that the rule admits. It reports only
+text that has a layout box, so each tab, filter and closed row would need a drive of its own. In
+Chromium 141 on 2026-10-04, it returned no font for an element with `display: none`.
+
+Before it reads, the harness shows every element through one `display: revert` rule. Chromium
+styles a hidden element on demand, one at a time, and the docket hides 28 540 of its 31 355
+elements. The read of the docket took 65 s that way, and 1.4 to 1.7 s with the rule over three
+reads. `display` sets no property of a font, and the 2 623 strings that the docket draws read
+identical both ways. The figures are from Chromium 141 on 2026-10-04, on `linux amd64, 4 cores`.
+
+Costs: the harness reads one viewport, the default of Playwright. So a string or a stack that
+`@media` adds at another width is unread. It resolves each character alone, and a browser picks
+a face for each cluster. So a combining mark can draw from a face that the harness does not name.
+The render takes 7.2 s of a `drive` of 163 s, on the same machine and date.
+
+Verified by driven check on 2026-10-04, in Chromium 141 that `PGA_CHROMIUM` named, and not in the
+revision that the lock pins. Every page held no finding. A probe page held two findings:
+`U+4E2D` under the stack of the page, and `U+2603` under `"Noto Sans", sans-serif`. `U+2603` under
+the stack of the page held none, because Noto Sans Symbols 2 maps it. Suite `Internal: Pages` of
+`test_rga4d.nim` holds the skeleton, and suite `Internal: Driver` holds one build for both uses.
 
 The one script is the search box of the docket. It is Nim, `pages/find.nim`, which the driver
 compiles to JavaScript under the flags of every build. The compiler is pinned, so the script
@@ -802,6 +849,18 @@ characters that no Nim release lexes. One cached build therefore serves both pro
 writes `"objects": {}` for a repository without a nimble file, so the resolved commit is
 patched into `atlas.lock` by hand. The stored copies in the lock of the nimble file and of
 `nim.cfg` are kept byte-identical to the committed files, which the static pass checks.
+
+**Node tools are pinned by `package-lock.json`, and their checkout is not committed.**
+`package.json` and `package-lock.json` are committed with the versions that `rga_visualiser` pins,
+and `node_modules/` is ignored. `typescript` 7.0.2 type-checks the harness, and
+`@playwright/test` 1.63.0 drives Chromium. Both are Microsoft's, under Apache-2.0. `@types/node`
+22.20.2 is DefinitelyTyped's, under MIT, and types the Node surface that the harness reaches. Each
+licence is read off the package rather than assumed.
+
+**Chromium is the build that Playwright pins, or the one that `PGA_CHROMIUM` names.** The lock
+fixes `@playwright/test`, and that version fixes the revision of the browser. `drive` fetches it
+with `npx playwright install chromium`, and keeps the one that `PGA_CHROMIUM` names instead.
+Playwright publishes no checksum, so the pin is a version and not a digest.
 
 **The Terathon Math Library was read, and not used.** The C++ library of Eric Lengyel at
 [terathon] is MIT licensed, copyright (c) 1999-2024 Eric Lengyel. `TSRigid3D.h`,
