@@ -386,6 +386,63 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         check dot(cross(node, second), normal) =~ 1.0
         check second.z > 0.0
 
+    test "every body stands at its phase on its ring, turned from its ring's node":
+      # Ring law read straight: offset from parent is radius along node turned by phase about
+      #   ring's normal, as right hand turns. Node of flat ring is outward bearing of its sun,
+      #   or x axis for Sol; node of moon's ring is where ring climbs through ecliptic.
+      #   Built here by cosine, sine and cross product, apart from algebra that places
+      #   bodies, so neither phase nor sense of any ring moves unseen.
+      #   Tolerance is relative to radius, plus rounding of sum at sun's own distance, which
+      #   reaches about 1e9 units for farthest star placed.
+      let scale = scales_held[^1]
+      var scene = initScene()
+      constructOrrery(scene, scale)
+      let
+        placed = placesOf(scene)
+        up = Direction(x: 0, y: 0, z: 1)
+      var
+        worst = 0.0
+        worst_name = ""
+        checked = 0
+
+      proc hold(name: string; centre: Position; node, normal: Direction; radius, angle: float) =
+        ## Compare body `name` with closed form of its ring, and keep worst share of tolerance.
+        let
+          wanted = centre + radius*(cos(angle)*node + sin(angle)*cross(normal, node))
+          tolerance = 1.0e-12*radius + 1.0e-15*norm(centre - POSITION_ORRERY)
+          share = norm(placed[name] - wanted)/tolerance
+        if share > worst:
+          worst = share
+          worst_name = name
+        inc checked
+
+      for index, body in SOL:
+        if body.role != Role.Planet: continue
+        hold(body.name, placed[SOL[0].name], Direction(x: 1, y: 0, z: 0), up, body.distance,
+          SYSTEM_SOL.spin + 2.4*float(index))
+      for index, moon in MOONS:
+        let normal = normalOfMoon(moon)
+        hold(moon.name, placed[SOL[moon.parent].name], normalize(cross(up, normal)).get, normal,
+          moon.kilometres_orbit/KILOMETRES_PER_ASTRONOMICAL_UNIT,
+          SYSTEM_SOL.spin + 2.4*float(index))
+      for star in STARS:
+        if star.name notin placed or placedOf(star) == 0: continue
+        let
+          sun = placed[star.name]
+          outward = sun - POSITION_ORRERY
+          node = normalize(Direction(x: outward.x, y: outward.y, z: 0)).get
+        var which_placed = 0
+        for which in 0 ..< star.planets:
+          let planet = PLANETS[star.first + which]
+          if planet.axis_semi_major <= 0.0: continue
+          hold(planet.name, sun, node, up, planet.axis_semi_major,
+            angleRing(systemAt(star).spin, which_placed, placedOf(star)))
+          inc which_placed
+      checkpoint(&"{scale}: {checked} bodies on their rings; worst is `{worst_name}`, at " &
+        &"{worst:.3f} of its tolerance")
+      check checked > SOL.len - 1 + MOONS.len
+      check worst <= 1.0
+
     test "every neighbour planet rings its star at its real axis, and one without is left out":
       # Archive stores missing semi-major axis as zero; such planet is left out rather
       #   than placed by order among siblings, since distance is whole of claim. Counted
