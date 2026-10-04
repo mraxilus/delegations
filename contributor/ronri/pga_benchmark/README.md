@@ -19,7 +19,7 @@ Three kinds of page answer the question. Each one is built from committed files 
 |------|------|---------------|
 | [Gap docket][docket] | monitoring | every measurand at pin against both lower bounds |
 | [Marginalia][marginalia] | monitoring | library at pin: changes tried, and notes in its margin |
-| [Proposals][proposals] | list | every proposal, and graph of what each undecided one blocks |
+| [Proposals][proposals] | list | every proposal, graph of what each blocks, each read in place |
 | [P01 Cayley derivation][cayley-derivation] | proposal | every Cayley table derived from three |
 | [P02 Typed multivectors][typed-multivectors] | proposal | concrete k-vector types, any dimension |
 | [P03 Partner sign][partner-sign] | proposal | sign of partner folded into its first table |
@@ -30,7 +30,7 @@ A **monitoring** page shows the library as it is. A **proposal** page shows a fu
 the library, argued in its `proposal.md` and checked by its evaluation. Each proposal has the
 same shape, so the next exploration starts from the same frame. Each proposal page states what
 the proposal depends on, and what its rejection blocks. The **list** page names every proposal,
-and draws the undecided ones as a graph.
+draws the undecided ones as a graph, and shows each selected proposal in place.
 
 ## What pages are built from
 
