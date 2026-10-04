@@ -161,10 +161,12 @@ From the simulation:
 say `validator` and `primitives`, where the agreed words are `Reference` and `Move`. That is a sweep
 of the vocabulary of the whole page, and it waits.
 
-**No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm `lead`
-and `follow`, and `simulation/verdicts.md` heads its tables the same way. Both files are written by
-their own verbs. Verified by `suites/test_glossary.nim`, which reads `simulation`, `design` and
-`app`.
+**No string that writes a recorded sweep names a dancer with a gendered word.**
+`design/turns.json` keys each arm `lead` and `follow`, and `simulation/verdicts.md` heads its tables
+the same way. Their own verbs write both files. Verified by `suites/test_glossary.nim`, which reads
+each string literal of the `.nim` files under `simulation`, `design` and `app`. It reads neither
+recorded file. Verified by hand with GNU grep 3.11, 2026-10-04: neither file holds a word that the
+glossary rejects for a dancer.
 
 **One translation table, so the report and the page cannot disagree.** `simulation/words.nim` holds
 the table, and both read it (Article II.1). Rejected: a copy in each, which keeps the translation
@@ -910,9 +912,10 @@ material, ball, hinge, weld and distance joints, contact manifolds, step, world 
 velocity. To import it builds the archive first, at compile time, so a suite that drives the engine
 drives its build too (Article IX.6).
 
-Verified by `test_engine.nim`, which holds it to two laws and no more. A body falls half g t
-squared, which catches a struct laid out wrong where linking would not. Two limb-thick capsules
-started inside one another part to at least two radii.
+Verified by `test_engine.nim`, which holds it to what the rig needs of it and no more. A body falls
+half g t squared, which catches a struct laid out wrong where linking would not. Two limb-thick
+capsules started inside one another part to at least two radii. Its law on the contacts of a body
+touched by many things is below.
 
 **The engine stands Y up and this project stands Z up**, and the binding deliberately does not
 translate. Whatever calls it says which way is up, and `simulation/rigid.nim` is the one place that
@@ -2111,8 +2114,8 @@ urgent.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **Two one-moment flips in the cross-name crown turn.** They are 370 mm as the lead's arm
   straightens over at 0.28, and 220 mm as the follow's arm turns over at 1.18. Weightless links with
-  springs this weak do that at no cost. The corpus of the leap law does not include that sweep,
-  and says so.
+  springs this weak do that at no cost. The corpus of the leap law in `test_rigid.nim` leaves that
+  sweep out, so no law holds it to the bound of a leap.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.

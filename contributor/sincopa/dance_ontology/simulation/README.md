@@ -77,7 +77,7 @@ readings.nim what the report reads off the simulation, as plain numbers, on ever
 verdicts.nim the simulation run as an instrument against the ontology's sheet
 verdicts.json the readings it renders from, kept with a stamp of the physics
 verdicts.md  what it said, translated once and generated, not edited
-../tests/test_rigid.nim  the rig held to tape, geometry and the Architect's floor
+../tests/test_rigid.nim  the rig held to tape, geometry and the crown rows of the Architect's floor
 ../tests/suites/test_limb.nim  the tape's numbers and one arm's kinematics
 ../tests/test_read.nim   crossings read off the drawn arms, not assumed
 ../tests/test_plan.nim   the plan held to the engine: one place for each body,
