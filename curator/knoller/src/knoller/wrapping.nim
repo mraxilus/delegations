@@ -667,14 +667,40 @@ func isHug(s: Scan, o: int): bool =
     s.isMultiline(inner) and s.isEligibleCall(inner) and s.isWholeCall(first, last)
 
 
+func handLines(s: Scan; lead: string; a, b: int; trail: string): Option[seq[string]] =
+  ## Keep line breaks hand gave call of tokens `a` to `b`, each line moved as indent of its first
+  ##   moves; `none` where they span one line, hold comment or token spanning lines, hold bracket
+  ##   spanning lines other than one call, or where line would cross `LINE_MAX`.
+  let (first_line, last_line) = (s.tokens[a].line, s.lasts[b])
+  if first_line == last_line: return none(seq[string])
+  var spanning: seq[int]
+  for k in a..b:
+    let t = s.tokens[k]
+    if t.kind == TokenKind.Comment or s.lasts[k] > t.line: return none(seq[string])
+    if t.kind == TokenKind.Open and s.isMultiline(k): spanning.add k
+  if spanning.len != 1 or not s.isEligibleCall(spanning[0]): return none(seq[string])
+  let shift = lead.indentOf - s.lines[first_line].indentOf
+  var shaped = @[lead & s.lines[first_line][s.offset(a)..^1]]
+  for line in first_line + 1 .. last_line:
+    let
+      text = s.lines[line]
+      stop = if line == last_line: s.tokens[b].after - s.starts[line] else: text.len
+      indent = text.indentOf + shift
+    if indent < 0: return none(seq[string])
+    shaped.add ' '.repeat(indent) & text[text.indentOf ..< stop]
+  shaped[^1].add trail
+  if shaped.anyIt(it.isWide): none(seq[string]) else: some(shaped)
+
+
 func layout(
   s: Scan; lead: string; a, b: int; trail: string; indent: int; is_argument: bool
 ): Option[Laid] =
   ## Lay out tokens `a` to `b` between lead and trail as X.3 wraps calls; `none` where rule
   ##   leaves them as written.
-  ##   One line where they fit; else outermost call crossing `LINE_MAX` splits, one argument to
-  ##     line, each laid out again; else wrapping hand gave stays, re-indented; else line
-  ##     breaks after operator, which split that fits no line falls back on too.
+  ##   One line where they fit; else line breaks hand gave call stay, where each line fits and
+  ##     only that call spans lines (`handLines`); else outermost call crossing `LINE_MAX` splits,
+  ##     one argument to line, each laid out again; else wrapping hand gave stays, re-indented;
+  ##     else line breaks after operator, which split that fits no line falls back on too.
   ##   Call spanning lines with comma after its last argument is never joined (`isTrailed`):
   ##     outermost call spanning lines splits instead, and call hand hugs around it keeps its hug
   ##     (`isHug`), so `x.add(Y(` … `))` keeps `))`.
@@ -694,6 +720,8 @@ func layout(
       one = lead & flat.text & trail
       start = lead.runeLen
     if not one.isWide: return some(Laid(lines: @[one], rule: Rule.CallWrapping))
+    let hand = s.handLines(lead, a, b, trail)
+    if hand.isSome: return some(Laid(lines: hand.get, rule: Rule.CallWrapping))
 
     # Find outermost bracket crossing `LINE_MAX`, else last one before it ending line.
     var
