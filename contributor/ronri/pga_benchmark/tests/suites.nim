@@ -1680,6 +1680,21 @@ suite "Internal: Pages":
     check "data:font/ttf;base64,dXZ3" in page  # TrueType bytes inlined as TrueType
 
 
+  test "page renders inside skeleton publish host serves, and carries none of its own":
+    const shell_html = staticRead("../pages/shell.html")
+    let
+      page = "<title>T</title><p>∧</p>"
+      document = hosted(page)
+      (opening, closing) = SKELETON_HOST
+    check document.startsWith("<!doctype html>")  # standards mode, as host serves it
+    check "<meta charset=\"utf-8\">" in opening  # page's text read as UTF-8
+    check "name=\"viewport\"" in opening  # phone width laid out as on host
+    check document[opening.len..^(closing.len + 1)] == page  # page whole, unchanged
+    check opening.endsWith("<body>") and closing.startsWith("</body>")  # page inside body
+    for tag in ["<!doctype", "<html", "<head", "<body", "<meta"]:
+      check tag notin shell_html.toLowerAscii  # shell holds no skeleton, so none doubles
+
+
   test "every Noto face ships whole, as TrueType of its own release":
     for face in FACES:
       if face.toLowerAscii.startsWith("noto"):
@@ -2015,6 +2030,17 @@ suite "Internal: Driver":
     check dispatched(driver).sorted == taught(driver).sorted  # usage string
     check dispatched(driver).sorted == tabled(driver).sorted  # header table
     check "inspect" in dispatched(driver) and "bench" in dispatched(driver)  # README's verbs
+    check "types" in dispatched(driver)  # what `koch check-types` runs over `package.json`
+
+
+  test "drive builds every page once, and renders each page it builds":
+    let
+      start = driver.find("proc drive() =")
+      body = driver[start..<driver.find("\n\n\n", start)]
+    check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
+    check "pinnedChecked(pin, built)" in body  # digests of that build
+    check "renderedChecked(built)" in body  # render of that build
+    check "(\"nodejs\"," in driver  # node that render runs under, declared
 
 
   test "header table names files verbs write":
