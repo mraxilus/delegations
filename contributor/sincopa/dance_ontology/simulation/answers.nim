@@ -27,7 +27,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[algorithm, atomics, cpuinfo, json, os, strutils, tables, typedthreads]
+import std/[algorithm, json, os, strutils, tables]
 
 import ./[body, hold, rig, walk]
 
@@ -69,8 +69,10 @@ const
 
 
 type
-  SweepAsked* = tuple[key: string, band: Band, links: seq[Link], most: float]
-    ## Hold swept both ways, each from distance that carries it furthest.
+  SweepAsked* = tuple[key: string, band: Band, links: seq[Link], most: float, is_raw: bool]
+    ## Hold swept both ways, each from distance that carries it furthest.  Raw sweep is
+    ## engine's own, where simulation answers mirror twin as other twin reflected
+    ## (`walk.swept`).
   WalkAsked* = tuple[key: string, band: Band, links: seq[Link], most, step: float]
     ## Hold walked one way from every distance, to hold search to argument maximum.
   ReachAsked* = tuple[key: string, band: Band, links: seq[Link], turns: float, is_away: bool]
@@ -106,18 +108,21 @@ type
     reaches*: OrderedTable[string, bool]
     stills*: OrderedTable[string, Stand]
 
-  Job = enum Sweep, WalkFrom, Reach, Still
-  Task = tuple[job: Job, index, far: int]  ## One search, or one walk from one distance.
+  Job* = enum Sweep, WalkFrom, Reach, Still
+  Task* = tuple[job: Job, index, far: int]  ## One search, or one walk from one distance.
 
 const
-  SWEEPS*: array[6, SweepAsked] = [
-    ("shake at torso", Band.Torso, SHAKE, 1.6),
-    ("left to left at torso", Band.Torso, LEFT_TO_LEFT, 0.8),
-    ("right to right at torso", Band.Torso, RIGHT_TO_RIGHT, 0.8),
-    ("left to left over crown", Band.Crown, LEFT_TO_LEFT, 1.0),
-    ("left to right over crown", Band.Crown, LEFT_TO_RIGHT, 1.0),
-    ("left to right at torso", Band.Torso, LEFT_TO_RIGHT, 1.0),
+  SWEEPS*: array[7, SweepAsked] = [
+    ("shake at torso", Band.Torso, SHAKE, 1.6, false),
+    ("left to left at torso", Band.Torso, LEFT_TO_LEFT, 0.8, false),
+    ("right to right at torso", Band.Torso, RIGHT_TO_RIGHT, 0.8, true),
+    ("left to left over crown", Band.Crown, LEFT_TO_LEFT, 1.0, false),
+    ("left to right over crown", Band.Crown, LEFT_TO_RIGHT, 1.0, false),
+    ("left to right at torso", Band.Torso, LEFT_TO_RIGHT, 1.0, false),
+    ("left to right at torso, as far as shake", Band.Torso, LEFT_TO_RIGHT, 1.6, false),
   ]  ## Every sweep laws stand couple for.
+    ##   Right to right is raw, so law of mirror holds engine's own search to that of left
+    ##     to left.  Left to right as far as shake is shake's twin, which law of twins reads.
   WALKS*: array[3, WalkAsked] = [
     ("shake at torso, negative", Band.Torso, SHAKE, 1.6, -STEP),
     ("shake at torso, positive", Band.Torso, SHAKE, 1.6, STEP),
@@ -229,107 +234,87 @@ func wayOf(walk: Walk): Way =
   )
 
 
-# Mutable and global: thread takes one argument, so workers read tasks and write answers
-# into slots allotted here before any thread starts.
-var
-  TASKS: seq[Task]  ## Every task, longest first, set before any thread starts.
-  TASK_NEXT: Atomic[int]  ## Next task not yet taken.
-  FARS: seq[float]  ## Every distance couple may stand at.
-  SWEPTS: array[SWEEPS.len, Ways]
-  WALKEDS: array[WALKS.len, seq[Walked]]
-  REACHED: array[REACHES.len, bool]
-  STOODS: array[STILLS.len, Stand]
+proc farsOf(): seq[float] =
+  ## Every distance couple may stand at.
+  for far in stands(HUMAN): result.add far
 
-proc working(id: int) {.thread.} =
-  ## Take tasks until none is left, and put each answer where it belongs.
-  ##   Questions are constants, so each worker reads its own copy of every hold and
-  ##     no list is shared between threads.  Each walk and search builds its own
-  ##     world and frees it.  Answers are plain numbers, each written to place
-  ##     allotted before any thread starts.
-  {.cast(gcsafe).}:
-    while true:
-      let i = TASK_NEXT.fetchAdd(1)
-      if i >= TASKS.len: return
-      let task = TASKS[i]
-      case task.job
-      of Sweep:
-        let
-          question = SWEEPS[task.index]
-          sweep = swept(HUMAN, question.band, question.links, most = question.most)
-        SWEPTS[task.index] = Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive))
-      of WalkFrom:
-        let
-          question = WALKS[task.index]
-          walk = walked(
-            HUMAN,
-            question.band,
-            question.links,
-            Body.Two,
-            FARS[task.far],
-            question.most,
-            question.step,
-            false,
-            Body.Two,
-          )
-        WALKEDS[task.index][task.far] = Walked(
-          apart: FARS[task.far],
-          is_holding: walk.found_rest,
-          is_stopped: walk.is_stopped,
-          at: walk.at,
-        )
-      of Reach:
-        let question = REACHES[task.index]
-        REACHED[task.index] = isReaching(
-          HUMAN,
-          question.band,
-          question.links,
-          question.turns,
-          question.is_away,
-        )
-      of Still:
-        let
-          question = STILLS[task.index]
-          got = standing(
-            HUMAN,
-            Band.Crown,
-            question.links,
-            question.turns,
-            question.is_away,
-            Body.Two,
-            question.is_either_way,
-          )
-        STOODS[task.index] = Stand(is_holding: got.is_holding, apart: got.apart, turns: got.turns)
-
-proc answer*(): Answers =
-  ## Answer every question, on every core at once.
-  ##   Searches are taken first and single walks last, so walks fill cores that
-  ##     searches leave idle at end.  `reaches` of hold no distance carries walks
-  ##     every distance, so it is taken first of all.
-  for far in stands(HUMAN): FARS.add far
-  for i in 0..<REACHES.len: TASKS.add (Reach, i, 0)
-  for i in 0..<SWEEPS.len: TASKS.add (Sweep, i, 0)
-  for i in 0..<STILLS.len: TASKS.add (Still, i, 0)
+proc tasks*(): seq[Task] =
+  ## Every task, in order asked: searches first and single walks last, so walks fill cores
+  ## that searches leave idle at end.  `reaches` of hold no distance carries walks every
+  ## distance, so it is taken first of all.
+  for i in 0..<REACHES.len: result.add (Reach, i, 0)
+  for i in 0..<SWEEPS.len: result.add (Sweep, i, 0)
+  for i in 0..<STILLS.len: result.add (Still, i, 0)
+  let count = farsOf().len
   for i in 0..<WALKS.len:
-    WALKEDS[i] = newSeq[Walked](FARS.len)
-    for k in 0..<FARS.len: TASKS.add (WalkFrom, i, k)
-  TASK_NEXT.store(0)
-  let cores = max(1, countProcessors())
-  var workers = newSeq[Thread[int]](cores)
-  for worker in 0..<cores: createThread(workers[worker], working, worker)
-  joinThreads(workers)
-  result.stamp = stamp()
-  for i, question in SWEEPS: result.sweeps[question.key] = SWEPTS[i]
-  for i, question in WALKS: result.walks[question.key] = WALKEDS[i]
-  for i, question in REACHES: result.reaches[question.key] = REACHED[i]
-  for i, question in STILLS: result.stills[question.key] = STOODS[i]
+    for k in 0..<count: result.add (WalkFrom, i, k)
 
+proc taskText*(task: Task): string =
+  ## Answer one task, as text its file keeps.
+  ##   Questions are constants, so each worker reads its own copy of every hold, and each
+  ##     walk and search builds its own world and frees it.
+  case task.job
+  of Sweep:
+    let
+      question = SWEEPS[task.index]
+      sweep = swept(HUMAN, question.band, question.links, most = question.most,
+                    is_raw = question.is_raw)
+    $(%Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive)))
+  of WalkFrom:
+    let
+      question = WALKS[task.index]
+      apart = farsOf()[task.far]
+      walk = walked(
+        HUMAN,
+        question.band,
+        question.links,
+        Body.Two,
+        apart,
+        question.most,
+        question.step,
+        false,
+        Body.Two,
+      )
+    $(%Walked(apart: apart, is_holding: walk.found_rest, is_stopped: walk.is_stopped,
+              at: walk.at))
+  of Reach:
+    let question = REACHES[task.index]
+    $(%isReaching(HUMAN, question.band, question.links, question.turns, question.is_away))
+  of Still:
+    let
+      question = STILLS[task.index]
+      got = standing(
+        HUMAN,
+        Band.Crown,
+        question.links,
+        question.turns,
+        question.is_away,
+        Body.Two,
+        question.is_either_way,
+      )
+    $(%Stand(is_holding: got.is_holding, apart: got.apart, turns: got.turns))
 
-proc main() =
-  ## Write every answer that laws ask of simulation.
-  let got = answer()
-  writeFile(KEPT, pretty(%got) & "\n")
-  echo "wrote ", KEPT
-
-
-when isMainModule:
-  main()
+proc assembled*(texts: seq[string]): string =
+  ## Whole kept file from each task's text, in order of `tasks`.
+  ##   Text is read back to answer it was written from: numbers are written shortest that
+  ##     reads back same, so file is one that answers themselves would make.
+  var
+    swepts: array[SWEEPS.len, Ways]
+    walkeds: array[WALKS.len, seq[Walked]]
+    reached: array[REACHES.len, bool]
+    stoods: array[STILLS.len, Stand]
+  let count = farsOf().len
+  for i in 0..<WALKS.len: walkeds[i] = newSeq[Walked](count)
+  for i, task in tasks():
+    let node = parseJson(texts[i])
+    case task.job
+    of Sweep: swepts[task.index] = node.to(Ways)
+    of WalkFrom: walkeds[task.index][task.far] = node.to(Walked)
+    of Reach: reached[task.index] = node.getBool
+    of Still: stoods[task.index] = node.to(Stand)
+  var got = Answers(stamp: stamp())
+  for i, question in SWEEPS: got.sweeps[question.key] = swepts[i]
+  for i, question in WALKS: got.walks[question.key] = walkeds[i]
+  for i, question in REACHES: got.reaches[question.key] = reached[i]
+  for i, question in STILLS: got.stills[question.key] = stoods[i]
+  pretty(%got) & "\n"

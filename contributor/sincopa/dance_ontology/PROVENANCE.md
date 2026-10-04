@@ -1317,6 +1317,9 @@ simulation for it. That cell is the drawing, the badges and the caption, cut fro
 so what is compared is what was ruled on. It is one list of entries, walked by two buttons or the
 arrow keys. The drawing of the reference sits next to the joint readouts on the stage.
 
+A reflected twin card is the still that its mirror twin keeps, mirrored, as `design/rig_page`
+folds it in (Mirror twins).
+
 It is orthographic on purpose, so the outline of a capsule is exactly a stadium. Order is the
 painter's, by depth. Each capsule is cut into pieces no longer than 40 mm, and each piece is ordered
 by the depth of its own middle (`drawOrder`, `DAB`). Rejected: a whole capsule ordered by its nearer
@@ -1488,14 +1491,48 @@ plan betters. `design/rig.json` keeps the strain of each plan that it tried, and
 that gave (`tried`). The viewer shows the still alone, and not its strain. `design/modelled` asks
 only whether a plan holds, so it stops at the first (`isPlannedHolding`).
 
-Cost: a still short of ease stands every candidate. On four cores, four stills at once, C1 and C7
-take 3.0 h each, D1 and D7 3.5 h, and C2 and C6 0.9 h. A change to `simulation/` costs about
-6.3 h of recording. Measured 2026-10-03.
+Cost: a still short of ease stands every candidate. In the full recording of `f39968a8` on four
+cores, with four jobs at once, D1 took 383 s, C1 358 s and C2 225 s. With the plain cost on
+2026-10-03, they took 12,688 s, 10,856 s and 3,152 s. C7 and C6 take the stills of C1 and C2,
+reflected (Mirror twins). D7 rests face to back, and took 29 s, because it plans the 32 paths of D1,
+which the run keeps (Kept answers). Measured 2026-10-04.
 
 Rejected: the first plan that holds. It stood C6 with the waist of the follow at its end, strain
 1.00, where another path of the same style held at 0.19. Measured 2026-10-03. Verified by
 `suites/test_asks.nim`: each still stands at the least strain of all that it tried, and a still
 short of ease tried every candidate.
+
+**The planner weighs a step of one freedom by what that step moves, and the cost is the same to the
+last bit.** The solver finds its gradient by a step of each free freedom in turn, 39 of them. In one
+plan of D3, its gradients were 99% of its 543,619 weighings, measured 2026-10-04. A step of an arm
+freedom moves that arm alone, from the first link that the freedom moves. A step of how far apart
+the couple stand, or of either waist, moves one body and no other.
+
+So the planner keeps every term of the pose (`Reckoning`). A step places again only what it moves.
+It reckons again only the pairs and joints that the moved capsules are in. Each sum then runs over
+the kept terms in the order of the plain cost.
+
+The planner does not reckon a pair whose two balls keep it further apart than every threshold,
+because no sum adds it. A mask of the pairs near enough to add lets each sum skip the rest, in the
+same order.
+
+Verified by `test_plan.nim`, suite "Internal: Planner's cost". At 96 seeded poses, each step and a
+long step of each freedom and back cost the plain cost to the last bit. Each of seven breaks made on
+purpose failed it.
+
+The paths of D3 and A11, in six styles and both mirror paths, are those of the plain cost, to the
+bit. No law holds them. Verified on 2026-10-04 by a probe outside the tree, which prints every bit
+of each planned path. It ran on the tree before this planner and on the tree with it. At `4e54fceb`,
+which holds this planner, every kept file was the bytes of those of `9bbf656`, apart from its stamp,
+verified 2026-10-04.
+
+The first plan of D3 took 10.73 s, and takes 0.87 s, measured 2026-10-04. In a run of four planned
+stills at once, rig D1 took 12,688 s with the plain cost on 2026-10-03. With this one, it took 544 s
+on 2026-10-04.
+
+Rejected: a gradient from the derivative of each term. Its speed is unmeasured. It is not the
+difference that the solver finds now, so every plan would move, and the Architect would judge every
+card again.
 
 **The gap to a palm is read from the nearest point of each segment.** The planner holds each palm
 as a point with a radius, as the engine does. `vector.closest` read the gap from the start of the
@@ -1766,13 +1803,106 @@ lose them.
 draws a card differently on each machine, and X.8 forbids that. Verified by hand in Chromium 1194,
 2026-09-10: none of 97 measured labels sits outside its viewBox.
 
+## Mirror twins
+
+**Two mirror twins are one question, and the simulation answers it once.** Two frame holds are
+mirror twins where each is the other seen in a mirror: each hand on the other arm, at opposite
+turns. Of two mirror twins, the simulation answers the one whose first connection is on the left arm
+of the lead. It reflects that answer for the other, the reflected twin (`walk.twinOf`). Of a frame
+hold that is its own mirror, it answers the way that turns positive, and reflects it for the other
+way.
+
+The Architect chose this on 2026-10-04, so that a recording walks one twin of each pair. The rig
+suite asks one reflected twin raw, R-r at the torso, so that a law holds the engine to its mirror
+(below).
+
+A real couple holds on its left side as it holds on its right. So a hold that is proven for one
+mirror twin holds for the other, as the Architect ruled on 2026-10-04. Where the engine stands a
+reflected twin raw with other figures, the difference comes from the engine, and not from the
+couple.
+
+A frame hold that rests face to back has no twin. Its rest turns the follow half a turn one way
+(`rigid.restStance`). So the mirror image of that rest is the rest turned the other way, which is
+another rest. The same-name chain at minus half a turn unwinds to face to face. At plus half a turn,
+it winds a whole turn. So the simulation answers each way of such a frame hold on its own.
+
+Rejected: a twin for a frame hold that rests face to back too. The same-name chain at minus half a
+turn then takes the answer of the plus half, reflected, which holds from no distance. Asked on its
+own, it holds 0.76 m apart. Measured 2026-10-04.
+
+The simulation reflects each answer that a law or the report reads: a sweep, a walk, and the search
+of a still (`walk.twinOf`). The reflection flips every point across the line of the couple. Each arm
+takes the points of the other arm, and each twist turns the other way. That is because the rig
+states the ends of the left arm mirrored. The simulation reflects a facing about the way that its
+body faces at rest, so a wound turn keeps its laps.
+
+**The rig page shows each reflected twin as the still that its mirror twin keeps, mirrored, and each
+arm recoloured.** The rig recording keeps each answered still once. A twin card keeps no still of
+its own. It names the card that keeps the still that it mirrors (`mirror`). Where no card asks that
+answer, the twin card keeps it itself, and names itself. A2, A4 and A6 do so, counted 2026-10-04.
+
+The page builder flips each point of that still across the line of the couple (`design/twins`). It
+names the capsules of each arm as those of the other arm, so the page paints them in the colour of
+the other arm. The readings of each arm move to the place of the other arm, and the twist and its
+two ends turn the other way. The Architect chose this on 2026-10-04. Rejected: a still reflected by
+the simulation and kept in the recording, which kept 41 stills that a mirror gives.
+
+Verified on 2026-10-04 by a probe outside the tree, against the recording of `6cfc7bc1`. Each of the
+41 twin cards shows the still that the simulation reflected there, field for field. Only the order
+of the capsules, of the joined hands and of the strains tried differs. Verified by
+`suites/test_asks.nim`: each twin card names the card that keeps its answer, and the mirror undoes
+itself. Each girdle stands on the side that its arm names, in every still that the page shows. Each
+of those laws failed on a break made on purpose: arms not recoloured, points not flipped, and a twin
+card that named another card.
+
+The engine is not mirror exact, so a reflected twin shows other figures than the engine gives it.
+Against the recordings of `9bbf656`, which reflect nothing, these are the largest changes, compared
+2026-10-04:
+
+- Over the crown, L-r.R-l stopped at minus 1.06 turns, and now stops at minus 1.34, as at plus 1.34.
+- At the neck, at plus one turn, R-r showed the arm of the follow in a lock, and now in a wrap.
+- Over the crown, at plus one turn, R-l and R-r now strain to the end of a joint. They showed 0.63
+  and 0.70.
+- In the rig, the still `st_fo_3_1` stands 0.36 m apart, where it stood 0.60 m apart.
+
+Other changes are smaller. In `design/turns.json` of `9bbf656`, shake at the torso reaches 1.36
+turns one way, and left to right reaches 1.34 turns the other way. In `design/rig.json` there, C5
+stands at ease, where C3 has a strain of 0.0019. In every recording now, a reflected twin is the
+exact reflection of the twin that it mirrors. Of the 95 stills of the rig, 41 are reflected twins,
+and 11 rest face to back, counted by `walk.twinOf` on 2026-10-04.
+
+Verified on 2026-10-04 against the recordings of `9bbf656`: every answer that the simulation
+computes is the same, to the last bit. Those are 54 stills of the rig, all 231 modelled tags, and
+every way of a sweep that it walks. C6 and C7 are the same there too, because the engine stood C1
+and C2 mirror exact.
+
+The rig suite asks R-r at the torso raw, so its search and its walks are those of the engine
+(`answers.SWEEPS`). So `test_rigid.nim` holds the engine to its mirror: each way of R-r stands
+within one step of the search grid of L-l. It reaches the turn of L-l within one step, and it stops
+for the same reason.
+
+A second law holds the kept sweep of shake, a reflected twin, to that of its mirror twin, ways
+swapped, to the last bit. That twin is left to right as far as shake. The engine does not mirror
+that pair exactly, so the law fails where shake is answered raw.
+
+Every law that stands a still stands each reflected twin as the twin that it reflects (`standOf`),
+which is what the simulation answers. With each reflected twin stood raw, the law of a still that
+fixes no way about fails. Every other law of the rig suite passes, measured 2026-10-04. Right to
+left at half, either way, stood raw 0.36 m apart and wound minus half a turn, does not hold. Its
+strain is 1.01, where at ease is 0.1 or less. Left to right, wound plus half a turn there, is at
+ease.
+
+In the recordings of `9bbf656`, its own search stood right to left at half, either way, 0.40 m
+apart.
+
 ## Kept answers
 
 **The rig suite reads where the couple stand, and searches for nothing.** Each sweep, still and
 `reaches` that a law asks is a search over every distance the couple may stand at. Its answer
-changes only when the simulation changes. So `simulation/answers.nim` answers each search once, on
-every core, and writes `simulation/answers.json`, and `nim r tools/build.nim answers` runs it. The
-questions live in `simulation/answers.nim` too, so what is asked and what is answered are one list.
+changes only when the simulation changes. So the recorder answers each search once, as a job of its
+queue (`design/record.nim`), and writes `simulation/answers.json`. `nim r tools/build.nim answers`
+runs it. The questions live in `simulation/answers.nim`, so what is asked and what is answered are
+one list.
 
 **Every pose and walk that a law holds is still made live.** Only where to stand is kept. A law
 walks or stands the couple at the kept distance, with the code of the tree, and checks what the
@@ -1798,15 +1928,17 @@ and the suite runs the one that koch pins. A stamp with the version would agree 
 where the two differ. Answers from Nim 2.2.4 walked the same under 2.2.12, number for number, on
 2026-09-24.
 
-**The live walks run on every core at once.** They are the twelve ways of six sweeps and two drawn
-walks. Each worker reads the holds as constants and gives back numbers alone (`Went`). A list of
-strings and sequences read by four threads is what `design/modelled.nim` records dying of. Every
-line the suite prints is the same as when they ran one after another. That run took 38.7 s, and
-this one takes 28.6 s.
+**The live walks run on every core at once.** They are the fourteen ways of seven sweeps and two
+drawn walks. The suite walks each way of a raw sweep raw, as its search walked it. Each worker reads
+the holds as constants and gives back numbers alone (`Went`). A list of strings and sequences read
+by four threads is what `design/modelled.nim` records dying of.
 
-Cost: a change to any `simulation/*.nim`, words included, asks for the answers again. That took 140
-s on four cores, compile included, on 2026-09-24. A digest of every file is one rule. A list of the
-files that move the answers would be a second thing to keep true.
+When they were the twelve ways of six sweeps, every line the suite printed was the same as when they
+ran one after another. That took 38.7 s, where every core at once took 28.6 s, on 2026-09-24.
+
+Cost: a change to any `simulation/*.nim`, words included, asks for the answers again. The full
+recording asks them with every other kept file, and Figures gives its time. A digest of every file
+is one rule. A list of the files that move the answers would be a second thing to keep true.
 
 A change to comments alone gives the same answers and a new stamp. Two comments in
 `simulation/verdicts.nim` and `simulation/words.nim` changed, and every answer came back the same
@@ -1819,10 +1951,10 @@ each sweep and each rung that the report asks for into plain numbers. It keeps t
 say words or ask the questions of the laws (`LEAVING`). The report renders its words from the
 readings, and it asks for a reading by rendering. So the list of what it asks is written once.
 
-A change to words alone renders the report again in 1.4 s, compile included. A change to the physics
-reads every sweep again, on every core. That took 409 s on four cores, where one core took 1973 to
-2059 s, on 2026-09-26. Each worker writes plain values into a place allotted before any thread
-starts, as `answers` does.
+A change to words alone renders the report again in 1.4 s, compile included. After a change to the
+physics, the recorder takes a new reading of each sweep and rung that the report lacks. Each one is
+a job (`design/record.nim`). Each job gives its reading as text, and the report reads each text back
+to the reading that it was written from.
 
 Verified by `suites/test_words.nim`: the report is what its kept readings render. The law failed on
 three breaks made on purpose. One changed a word of the renderer, one deleted a reading, and one
@@ -1859,6 +1991,94 @@ page could show the answers of other physics as those of this tree. Verified by
 `simulation/vector.nim`, and a comment in its verb. Both failed when one question was asked over
 another crown, and the law of the page failed when the page kept the stamp. A comment in
 `simulation/words.nim` failed none of the three.
+
+**Five recordings come from one queue, slowest job first, and a stopped run goes on where it stopped
+(#447).** `design/record.nim` puts every job of these five recordings in one queue:
+
+- the stills and sweeps of the rig viewer
+- the modelled tags of the reference
+- the whole-cloth turns
+- the answers of the rig suite
+- the readings of the report.
+
+Each worker takes the next job as it ends one. The jobs measured slowest start first (`SLOWEST`), so
+the four workers end near the same time. Each result is kept under the stamp of its recording as it
+comes, in `build/record/`. A run that stops then asks only the jobs with no result. Each kept file
+is assembled in the order of its recording.
+
+Rejected: each verb splits its own jobs by worker. Two slow jobs can then fall to one worker, while
+the others stand idle. On 2026-10-03, the time of each job gave that split 8.7 h, where one queue
+took 6.3 h.
+
+The order is measured, and it goes stale as the simulation changes. A wrong order costs time, and
+never changes an answer. A file renamed into place leaves no result where a worker stops mid-write.
+That is intended, because no law stops a worker mid-write.
+
+Verified by `suites/test_record.nim`, on stub jobs. A run in two parts asks each job once, and keeps
+the bytes of a run in one. The slowest jobs go first, in their order. Each law failed on a break
+made on purpose.
+
+Every kept file is the same bytes from run to run, and with either width of batch, apart from its
+stamp. Verified 2026-10-04 by three full runs from no kept file.
+
+**One run asks each question once, and every job that asks it again takes the answer.** The jobs of
+the five recordings ask the same questions. Rig and modelled stand the same stills, field for
+field. The report sweeps the 18 frame holds that the whole-cloth page sweeps, and the rig viewer
+sweeps 8 of them. D1 and D7 plan the same 32 paths.
+
+So one run keeps each answer by every argument of its question, for every thread
+(`walk.keepAnswers`). These are the answers that it keeps:
+
+- each path planned
+- each sweep, and each walk from one distance
+- each search of distances for a still, and each still itself (`seen.still`)
+- each reach
+- each answer of whether a planned still holds, and each planned reach.
+
+A job that asks what another job is answering waits for it (`Store`).
+
+Each routine answers from its arguments alone, so the answer kept is the answer that the routine
+gives again, to the last bit. A float in a key is its bits, so nought and minus nought are two keys.
+The recorder keeps answers. Every law asks afresh, so no law reads an answer that another law made.
+
+**A walk to a lesser turn is the first part of a walk to a greater one.** `walked` turns one step at
+a time from one distance, and `most` only ends its loop. So a walk kept to 2.5 turns gives a walk to
+any lesser turn, cut where that walk would end (`cut`). A walk that stopped gives every walk from
+that distance. A sweep walks every distance to 2.5 turns. A reach and the walks of the kept answers
+then ask each distance again, to their own turn.
+
+Verified on 2026-10-04: 36 of 36 walks cut short were the walk asked afresh, at three distances,
+both ways and six turns.
+
+**A planned card plans its paths on every core, and folds them in its own order.** `walk.planAhead`
+plans every path that the card may try, on every core, before the card tries them. The card then
+folds them as one thread would, so the earlier plan keeps a tie. Each thread passes over a path that
+another thread is planning, and the fold waits for it. Rig D1 and D7 ask the same 32 paths, so the
+threads of both plan them together.
+
+**A search walks its distances on the cores that no job holds.** A search of distances walks the
+next distance only when the last one did not give its answer. It walks a batch of distances at once,
+each on its own thread (`walk.onEveryCore`), and takes their answers in their order. So its answer
+is the answer of one thread, to the last bit. A batch is one distance, and one more for each worker
+that found the queue empty (`walk.SPARE`). The searches that do this are these:
+
+- `walk.furthest`, the walk of a sweep from where it carries furthest
+- `walk.standingOf`, the search of distances for a still
+- `walk.isReachingOf`, the reach
+- `readings.readRung`, the rungs of the report.
+
+While every worker has a job, no core walks a distance past the answer. As the queue empties, the
+last jobs take the cores that the other workers leave.
+
+Cost: growing batches made a recording 31 s slower here, 4%, in one run of each from no kept file
+on 2026-10-04. Growing batches took 14 min 26 s and 3,224 s of the four cores, at 93% busy. Batches
+as wide as the machine took 13 min 55 s and 3,298 s, at 99% busy. A worker that waits on the answer
+of another job leaves its core idle, and no batch counts that core.
+
+Rejected: a batch as wide as the machine, for its 74 s more of the four cores. While every worker
+has a job, it walks distances past an answer, and growing batches do not. It also runs the square
+of the cores in walks at once, as `walk.planAhead` does in both designs. What that costs is
+unmeasured. The Architect chose growing batches on 2026-10-04.
 
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
@@ -1945,14 +2165,13 @@ reddens a law.
   503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
 - The whole of `nim r koch check`, with the kept answers, the joined suites and
   `tests/test_plan.nim`: 102 s and 86 s. Those are two runs on four cores, on 2026-10-03.
-- `tools/build.nim modelled`: 7245 s wall on four cores, on 2026-10-03, with the planner. A
-  driver that saves each answer asked its 231 questions. 95 percent of the work is in the 32
-  planned cards.
-- `tools/build.nim rig`: unmeasured as a whole. It stands every candidate of a still short of
-  ease, and Planned turn gives the time of its slowest stills.
-- `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
-  its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
-  change to words, compile included.
+- `tools/build.nim record`, all five recordings from one queue, with no result kept: 14 min 26 s
+  wall on four cores. That spent 3,224 s of the four cores, compile apart, at `f39968a8` on
+  2026-10-04. Rig and modelled alone took 6.3 h on 2026-10-03, with each still planned by the plain
+  cost.
+
+- `tools/build.nim verdicts`, with its readings kept: 1.4 s after a change to words, compile
+  included, on 2026-09-26.
 - `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, same day.
 - `tools/build.nim engine`: 24 s cold, and at once where the archive stands.
 - `grep -c nimCopy` on the emitted `wholecloth_turns.js` gives 13, all of them the runtime's own,
@@ -2033,10 +2252,8 @@ some fields in constructors. It sees no local inside the `suite` and `test` temp
 A rename of case alone keeps the same name in Nim, so the compiler finds no missed use.
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
-so a change of names alone reads the physics again. On 2026-10-02, on four cores, the answers took
-144 s, the report 421 s and the whole-cloth turns 1135 s. The modelled cards took 7245 s on
-2026-10-03, and 95 percent of the work was in the 32 planned cards. The rig stands every candidate
-of a still short of ease, and its whole time is unmeasured (Figures).
+so a change of names alone computes the physics again. That is a full recording, which took 14 min
+26 s on four cores on 2026-10-04 (Figures).
 
 That is the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
 simulation are rare.

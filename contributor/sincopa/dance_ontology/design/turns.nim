@@ -31,9 +31,10 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import std/[json, math, options, strutils]
+import std/[json, math, strutils]
 
 import ../simulation/[body, hold, limb, read, rig, vector, walk, words]
+import ./stamps
 
 
 const
@@ -150,9 +151,28 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
     " (" & $(sweep.negative.moments.len + sweep.positive.moments.len) & " moments)"
 
 
-proc bridge(): JsonNode =
-  ## Record every sweep whole-cloth page plays, with sizes of rig it draws them at.
-  result = %*{
+type Sweep* = tuple[hold, word: string, band: Band]  ## One sweep of whole-cloth page.
+
+func sweeps*(): seq[Sweep] =
+  ## Every sweep page plays, in order its file keeps them: each hold at each band.
+  for hold in HOLDS:
+    for (word, band) in BANDS: result.add (hold, word, band)
+
+proc turnsStamp*(): string =
+  ## Stamp of what sweeps are recorded from: what their results are kept under while recorded.
+  var names: seq[string]
+  for sweep in sweeps(): names.add $sweep
+  stampOf(currentSourcePath(), names)
+
+proc sweepText*(sweep: Sweep): string =
+  ## One sweep as its file keeps it, as text.
+  $sweepJson(sweep.hold, sweep.word, sweep.band)
+
+proc bridged*(texts: seq[string]): string =
+  ## Whole file from each sweep's text, in order of `sweeps`.
+  ##   Text is read back to node it was written from: numbers are written shortest that
+  ##     reads back same, so file is one that node itself would make.
+  var node = %*{
     "step": STEP,
     "most": MOST,
     "rig": {
@@ -168,11 +188,6 @@ proc bridge(): JsonNode =
             "head": int(round(HUMAN.top[Part.Head] * 1000.0)),
             "shoulder": int(round(HUMAN.shoulder_up * 1000.0))}},
     "sweeps": {}}
-  for hold in HOLDS:
-    for (word, band) in BANDS:
-      result["sweeps"][hold & "|" & word] = sweepJson(hold, word, band)
-
-
-when isMainModule:
-  writeFile("design/turns.json", pretty(bridge()) & "\n")
-  echo "wrote design/turns.json"
+  for i, sweep in sweeps():
+    node["sweeps"][sweep.hold & "|" & sweep.word] = parseJson(texts[i])
+  pretty(node) & "\n"
