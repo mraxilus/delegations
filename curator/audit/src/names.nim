@@ -48,21 +48,12 @@
 ##     spelling (`MARKS_FOREIGN` on its line, on its type, or `{.push.}` over it), member
 ##     without own string, whose `$` reads its name, name line declares twice, and new name
 ##     reading as new acronym. Parameter of foreign routine is renamed: call passes it by place.
-##   V.10 has fixer: `fixBlockEntry` moves body of entry block into `proc main` above it, doc
-##     `TODO: Document.` (VI.1), and leaves block calling `main()`; body keeps lines and indent.
-##     `blockEntry` refuses block routine would read otherwise: guard beyond `isMainModule`,
-##     which would compile body where guard fails; `{.global.}`, `{.threadvar.}` or foreign
-##     pragma; statement or export marker module level holds alone, at any depth; `quit` with
-##     value at block's own indent, whose code `quit main()` would carry; and `main` named
-##     already.
+##   V.10 has fixer in knoller (`entry.nim`), and declarations are read by its scanner
+##     (`declared.nim`); this module judges what scanner reads.
 ##
-##   Rejected: `proc main` inside block, which V.10 allows; STYLE.md §1 and every program of
-##     tree put it at module level, and block then holds one call.
 ##   Rejected: placeholder rename (V.12), since initial of what it ranges over is choice.
 ##   Cost: field and type renamed change what `$`, `%` and `fieldPairs` print of them; member
 ##     is refused for that reason, since its `$` is commonly output. Reading holds rest.
-##   Cost: value bound in moved block lives on stack, not in static storage; large array
-##     there can overflow stack, which `nim check` never reads.
 ##
 ##   Cost: text scanner, never parser. Comments and strings are blanked first; multi-line
 ##     signature is joined to its closing parenthesis; object variant branch is read as fields
@@ -85,13 +76,7 @@ import ./[findings, glossary]
 
 
 type
-  NameKind* {.pure.} = enum  ## Define what declaration introduces name.
-    Binding, Routine, Type, Field, Parameter, Member, Placeholder
 
-  Reach* {.pure.} = enum  ## Define how far binding reaches, which fixes its case (V.1, V.10).
-    Local  ## Inside routine or block opening scope; every name not binding.
-    Global  ## At module level, under blocks opening no scope.
-    Entry  ## Inside entry block, i.e. top-level `when isMainModule:`, outside routine.
 
   Casing* {.pure.} = enum  ## Define case one kind of name takes (V.1, V.11, V.12).
     Pascal, Camel, Snake, Screaming, Letter
@@ -99,20 +84,7 @@ type
   LetterCase {.pure.} = enum  ## Define case of one letter; digit and symbol carry none.
     None, Lower, Upper
 
-  Declared* = object  ## Define one declared name with its place.
-    name*: string
-    line*: int
-    kind*: NameKind
-    reach*: Reach  ## Binding's reach; `Local` for every other kind.
-    is_mutable*: bool  ## Binding by `var`, which notation never excuses (III.5).
-    is_boolean*: bool  ## Shows `bool` by type or literal value, or `func` returns it (V.4).
 
-  Opener = object  ## Define block enclosing line, by its opening line.
-    indent: int
-    head: string  ## First word of opening line.
-    is_scope_free: bool  ## Block opens no scope: `when` chain, or bare section keyword.
-    is_entry: bool  ## Top-level `when isMainModule:`, where module runs as program.
-    substituted: seq[string]  ## Parameters of template, which its body names in place of argument.
 
   RenameCase* = object
     ## Define rename case of declaration's kind asks (V.1, V.11), or why fix leaves it to hand.
@@ -124,14 +96,6 @@ type
     refusal*: string  ## Why fix leaves rename to hand before semantic pass reads it; empty if none.
     is_local*: bool  ## Binding no other module can name: local, or binding of entry block.
 
-  BlockEntry* = object
-    ## Define entry block of module, bindings it holds, and why fix cannot move its body (V.10).
-    head: int  ## Zero-based line of `when isMainModule:`; `-1` where none is read.
-    first: int  ## Zero-based first line of body, leading blank lines left out.
-    last: int  ## Zero-based last line of body; comment opening line below it stays below block.
-    indent: int  ## Indent of body's first line of code.
-    bindings*: seq[(int, string)]  ## One-based line and name of each binding block holds.
-    refusal*: string  ## Why fix leaves block to hand; empty where body moves into `proc main`.
 
 
 const
@@ -150,387 +114,16 @@ const
     ## Kinds naming variable, which source's notation may name at any scope (III.5).
   HOST_PREDICATES = ["contains"]
     ## Predicates host calls by spelling: `in` and `notin` call `contains`.
-  ROUTINE_KEYWORDS = ["proc", "func", "iterator", "template", "macro", "converter", "method"]
-    ## Keywords opening routine declaration.
-  BINDING_KEYWORDS = ["let", "var", "const"]  ## Keywords opening binding, single or section.
-  SECTION_KEYWORDS = ["let", "var", "const", "type"]
-    ## Keywords that, alone on line, open section and no scope.
-  CHAIN_WORDS = ["when", "elif", "else"]  ## Words opening branch of `when` chain.
-  CONCEPT_MODIFIERS = ["var", "ref", "ptr", "type"]  ## Words standing before concept placeholder.
-  FOREIGN_PRAGMAS = ["importc", "importcpp", "importjs", "dynlib"]
-    ## Pragmas marking routine as binding of library's own name.
   CASE_RULES: array[Casing, string] = [
     "is `PascalCase`", "is `lowerCamelCase`", "is `snake_case`", "is `SCREAMING_SNAKE_CASE`",
     "is one capital letter",
   ]
     ## Predicate of each casing, as finding states it.
-  MAIN_GUARD* = "when isMainModule:"  ## Block that makes module entry of program (STYLE.md §1).
   MARKS_FOREIGN = [
     "dynlib", "exportc", "exportcpp", "extern", "header", "importc", "importcpp", "importjs",
     "importobjc", "JsRoot",
   ]
     ## Words marking name foreign code reads by its spelling: pragma, or root of JavaScript object.
-  PRAGMAS_MODULE = [
-    "dynlib", "exportc", "exportcpp", "extern", "global", "header", "importc", "importcpp",
-    "importjs", "importobjc", "threadvar",
-  ]
-    ## Pragmas binding name at module level alone, or across foreign boundary, never in routine.
-  KEYWORDS_MODULE = ["converter", "export", "from", "import", "include", "method"]
-    ## Keywords opening statement module level holds alone, or bringing what routine may not
-    ##   hold, as `include` brings exported declarations.
-  ROUTINE_ENTRY = "main"  ## Routine entry block calls (V.10).
-
-
-func nameOf(piece: string): string =
-  ## Read declared name from `name`, `name*`, `name: T`, `name = v`, `name {.pragma.}`.
-  piece.strip.identifierAt(0)
-
-
-func splitTop(text: string, separators: set[char]): seq[string] =
-  ## Split text at separators outside brackets, so `array[2, int]` stays one piece.
-  var
-    depth = 0
-    piece = ""
-  for c in text:
-    if c in {'(', '[', '{'}: inc depth
-    elif c in {')', ']', '}'}: dec depth
-    if depth == 0 and c in separators:
-      result.add piece
-      piece = ""
-    else: piece.add c
-  result.add piece
-
-
-func topIndex(text: string, mark: char, start = 0): int =
-  ## Find first `mark` outside brackets from index on; `-1` where none.
-  var depth = 0
-  for k in start ..< text.len:
-    let c = text[k]
-    if c in {'(', '[', '{'}: inc depth
-    elif c in {')', ']', '}'}: dec depth
-    elif c == mark and depth == 0: return k
-  -1
-
-
-func closing(text: string, open: int): int =
-  ## Find bracket closing one opened at index; `-1` where text ends first.
-  var depth = 0
-  for k in open ..< text.len:
-    if text[k] in {'(', '[', '{'}: inc depth
-    elif text[k] in {')', ']', '}'}:
-      dec depth
-      if depth == 0: return k
-  -1
-
-
-func bindingSide(text: string): string =
-  ## Cut binding text at its first `=` outside brackets, so value never reads as name.
-  let at = text.topIndex('=')
-  if at < 0: text else: text[0 ..< at]
-
-
-func isBooleanShown(text: string): bool =
-  ## Decide whether declaration shows boolean: type `bool`, or value literal `true` or `false`.
-  let
-    at = text.topIndex('=')
-    side = text.bindingSide
-    colon = side.topIndex(':')
-    value = if at < 0: "" else: text[at + 1 .. ^1].strip
-  (colon >= 0 and side[colon + 1 .. ^1].strip == "bool") or value in ["true", "false"]
-
-
-func bindingNames(text: string): seq[string] =
-  ## Read names text binds: `a`, `a, b: T`, `(a, b) = v`, `a {.used.} = v`.
-  for piece in text.bindingSide.strip(chars = {' ', '(', ')'}).splitTop({','}):
-    let name = piece.strip(chars = {' ', '(', ')'}).nameOf
-    if name.len > 0 and name != "_": result.add name
-
-
-func parameterNames(signature: string): seq[(string, bool)] =
-  ## Read parameters of text between parentheses, each with whether it shows boolean.
-  ##   `x, y: T; z = false` gives `x`, `y` and `z`, which is boolean; group shares its type.
-  let pieces = signature.splitTop({',', ';'})
-  var group: seq[string]
-  for k, piece in pieces:
-    let name = piece.nameOf
-    if name.len > 0 and name != "_" and name != "var": group.add name
-    if ':' in piece or '=' in piece or k == pieces.high:
-      let is_boolean = piece.isBooleanShown
-      for member in group: result.add (member, is_boolean)
-      group = @[]
-
-
-func isWriting(signature: string): bool =
-  ## Decide whether text between parentheses takes `var` parameter, which routine writes.
-  for piece in signature.splitTop({',', ';'}):
-    let at = piece.topIndex(':')
-    if at >= 0 and piece[at + 1 .. ^1].identifierAt(0) == "var": return true
-  false
-
-
-func placeholderNames(text: string): seq[string] =
-  ## Read placeholders of generic brackets or concept: `T`, `A, B: X`, `var C`, `N: static int`.
-  for piece in text.splitTop({',', ';'}):
-    var words = piece.strip.splitWhitespace
-    while words.len > 1 and words[0] in CONCEPT_MODIFIERS: words.delete(0)
-    if words.len == 0: continue
-    let name = words.join(" ").nameOf
-    if name.len > 0: result.add name
-
-
-func readType(text: string, line: int, names: var seq[Declared]): NameKind =
-  ## Read type's name and placeholders, and enum's members on its line; give kind lines below
-  ##   declare: `Member` under enum, `Field` under object or alias, `Placeholder` under concept.
-  let name = text.identifierAt(0)
-  if name.len == 0: return NameKind.Field
-  names.add Declared(name: name, line: line, kind: NameKind.Type)
-  var k = name.len
-  if k < text.len and text[k] == '*': inc k
-  if k < text.len and text[k] == '[' and text.closing(k) > k:
-    for p in text[k + 1 ..< text.closing(k)].placeholderNames:
-      names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
-  let
-    at = text.topIndex('=')
-    value = if at < 0: "" else: text[at + 1 .. ^1].strip
-    head = value.identifierAt(0)
-  if head == "enum":
-    for m in value[head.len .. ^1].splitTop({','}):
-      if m.nameOf.len > 0: names.add Declared(name: m.nameOf, line: line, kind: NameKind.Member)
-    return NameKind.Member
-  if head == "concept":
-    for p in value[head.len .. ^1].placeholderNames:
-      names.add Declared(name: p, line: line, kind: NameKind.Placeholder)
-    return NameKind.Placeholder
-  NameKind.Field
-
-
-func isOpening(lines: openArray[string], i: int): bool =
-  ## Decide whether next non-blank line sits deeper than line `i`, i.e. line opens block.
-  var k = i + 1
-  while k < lines.len and lines[k].strip.len == 0: inc k
-  k < lines.len and lines[k].indentOf > lines[i].indentOf
-
-
-func isSubstituted(openers: openArray[Opener], name: string): bool =
-  ## Decide whether enclosing template substitutes name, so declaration there declares argument.
-  openers.anyIt(name in it.substituted)
-
-
-func reachOf(openers: openArray[Opener], is_scoped = false): Reach =
-  ## Decide reach of binding under enclosing blocks, outermost first (V.1, V.10).
-  ##   Routine makes local, entry block makes entry, and so does binding opening own scope
-  ##     there (`for`, `except … as`). Global needs every enclosing block to open no scope.
-  if openers.anyIt(it.head in ROUTINE_KEYWORDS): return Reach.Local
-  if openers.anyIt(it.is_entry): return Reach.Entry
-  if is_scoped or not openers.allIt(it.is_scope_free): return Reach.Local
-  Reach.Global
-
-
-func declarations*(source: string): seq[Declared] =
-  ## Read every declared name of Nim source with its line, kind and reach.
-  let lines = source.codeOnly.splitLines
-  var
-    openers: seq[Opener]
-    section_indent = -1
-    section_child = -1
-    is_section_mutable = false
-    type_indent = -1
-    object_indent = -1
-    enum_indent = -1
-    i = 0
-  while i < lines.len:
-    let
-      line = lines[i]
-      s = line.strip
-      indent = line.indentOf
-      one = i + 1
-    if s.len == 0:
-      inc i
-      continue
-
-    # Close blocks line leaves; branch of `when` chain keeps chain's freedom from scope.
-    var closed = Opener(indent: -1)
-    while openers.len > 0 and openers[^1].indent >= indent:
-      let top = openers.pop
-      if top.indent == indent: closed = top
-    if section_indent >= 0 and indent <= section_indent:
-      section_indent = -1
-      section_child = -1
-    if type_indent >= 0 and indent <= type_indent: type_indent = -1
-    if object_indent >= 0 and indent <= object_indent: object_indent = -1
-    if enum_indent >= 0 and indent <= enum_indent: enum_indent = -1
-    let
-      word = s.identifierAt(0)
-      rest = s[word.len .. ^1]
-      is_chain = word in ["elif", "else"] and closed.indent == indent and
-        closed.is_scope_free and closed.head in CHAIN_WORDS
-      opener = Opener(
-        indent: indent,
-        head: word,
-        is_scope_free: word == "when" or is_chain or (s == word and word in SECTION_KEYWORDS),
-        is_entry: indent == 0 and word == "when" and "isMainModule" in s,
-      )
-      is_opening = lines.isOpening(i)
-    var
-      next = i + 1
-      substituted: seq[string]
-
-    block reading:
-      if word in ROUTINE_KEYWORDS and rest.len > 0 and rest[0] == ' ':
-        # Signature runs to matching parenthesis, across lines; pragmas follow it on same line.
-        var
-          text = s
-          j = i
-        while text.count('(') > text.count(')') and j + 1 < lines.len:
-          inc j
-          text.add lines[j]
-        # Pragma block may open on its own line after balanced signature.
-        if j + 1 < lines.len and lines[j + 1].strip.startsWith("{."):
-          inc j
-          text.add lines[j]
-        next = j + 1
-
-        # Walk name, placeholders, parameters, then return type; backticked name is operator.
-        var k = word.len
-        while k < text.len and text[k] == ' ': inc k
-        var name = ""
-        if k < text.len and text[k] == '`':
-          let close = text.find('`', k + 1)
-          k = (if close < 0: text.len else: close + 1)
-        else:
-          name = text.identifierAt(k)
-          k += name.len
-        if k < text.len and text[k] == '*': inc k
-        if k < text.len and text[k] == '[' and text.closing(k) > k:
-          for p in text[k + 1 ..< text.closing(k)].placeholderNames:
-            result.add Declared(name: p, line: one, kind: NameKind.Placeholder)
-          k = text.closing(k) + 1
-        while k < text.len and text[k] == ' ': inc k
-        var is_writing = false
-        if k < text.len and text[k] == '(' and text.closing(k) > k:
-          let signature = text[k + 1 ..< text.closing(k)]
-          for (p, is_boolean) in signature.parameterNames:
-            if word == "template": substituted.add p
-            result.add Declared(
-              name: p,
-              line: one,
-              kind: NameKind.Parameter,
-              is_boolean: is_boolean,
-            )
-          is_writing = signature.isWriting
-          k = text.closing(k) + 1
-
-        # Predicate is `func` returning `bool` that writes no `var` parameter; else action.
-        let
-          tail = text[min(k, text.len) .. ^1].strip
-          is_predicate = word == "func" and not is_writing and tail.startsWith(":") and
-            tail.identifierAt(1) == "bool"
-          is_foreign = FOREIGN_PRAGMAS.anyIt(it in text)
-        if name.len > 0 and not is_foreign:
-          result.add Declared(
-            name: name,
-            line: one,
-            kind: NameKind.Routine,
-            is_boolean: is_predicate,
-          )
-        break reading
-
-      if word == "type" and rest.strip.len == 0:
-        type_indent = indent
-        break reading
-      if word == "type" or (type_indent >= 0 and indent == type_indent + 2):
-        if "=" in s:
-          var read: seq[Declared]
-          let below = (if word == "type": rest.strip else: s).readType(one, read)
-          result.add read.filterIt(
-            not (it.kind == NameKind.Type and openers.isSubstituted(it.name)),
-          )
-          if below == NameKind.Member: enum_indent = indent
-          elif below == NameKind.Field: object_indent = indent
-        break reading
-
-      if enum_indent >= 0 and indent > enum_indent:
-        for m in s.splitTop({','}):
-          if m.nameOf.len > 0:
-            result.add Declared(name: m.nameOf, line: one, kind: NameKind.Member)
-        break reading
-
-      if object_indent >= 0 and indent > object_indent:
-        # Field side runs to its type; `case` names variant's discriminator.
-        let text = if word == "case": rest else: s
-        if word notin ["of", "else", "elif", "when"] and text.topIndex(':') > 0:
-          for name in text[0 ..< text.topIndex(':')].splitTop({','}):
-            if name.nameOf.len > 0:
-              result.add Declared(
-                name: name.nameOf,
-                line: one,
-                kind: NameKind.Field,
-                is_boolean: text.isBooleanShown,
-              )
-        break reading
-
-      if word in BINDING_KEYWORDS:
-        if rest.strip.len == 0:
-          section_indent = indent
-          is_section_mutable = word == "var"
-        else:
-          for name in rest.bindingNames:
-            if openers.isSubstituted(name): continue
-            result.add Declared(
-              name: name,
-              line: one,
-              kind: NameKind.Binding,
-              reach: openers.reachOf,
-              is_mutable: word == "var",
-              is_boolean: rest.isBooleanShown,
-            )
-        break reading
-
-      if section_indent >= 0 and indent > section_indent:
-        # First line under keyword fixes child indent; deeper line continues value above it.
-        if section_child < 0: section_child = indent
-        if indent == section_child and (s.topIndex(':') > 0 or s.topIndex('=') > 0):
-          for name in s.bindingNames:
-            if openers.isSubstituted(name): continue
-            result.add Declared(
-              name: name,
-              line: one,
-              kind: NameKind.Binding,
-              reach: openers.reachOf,
-              is_mutable: is_section_mutable,
-              is_boolean: s.isBooleanShown,
-            )
-        break reading
-
-      if word == "for":
-        let at = rest.find(" in ")
-        if at > 0:
-          for name in rest[0 ..< at].bindingNames:
-            result.add Declared(
-              name: name,
-              line: one,
-              kind: NameKind.Binding,
-              reach: openers.reachOf(is_scoped = true),
-            )
-        break reading
-
-      if word == "except":
-        let at = rest.find(" as ")
-        if at >= 0:
-          let name = rest[at + 4 .. ^1].strip(chars = {' ', ':'}).nameOf
-          if name.len > 0:
-            result.add Declared(
-              name: name,
-              line: one,
-              kind: NameKind.Binding,
-              reach: openers.reachOf(is_scoped = true),
-            )
-
-    if is_opening:
-      var held = opener
-      held.substituted = substituted
-      openers.add held
-    i = next
 
 
 func wordSpans(name: string): seq[(int, int)] =
@@ -822,112 +415,6 @@ func wordsOf(line: string): seq[string] =
     elif word.len > 0:
       result.add word
       word = ""
-
-
-func blockEntry*(source: string): BlockEntry =
-  ## Read entry block of module, each binding it holds, and why fix cannot move its body into
-  ##   `proc main` (V.10): more than one block, guard beyond `isMainModule`, pragma or statement
-  ##   no routine holds, export marker, `quit` with value at block's own indent, or `main` taken.
-  ##   Block binding nothing reads no refusal, since nothing moves.
-  result.head = -1
-  for d in source.declarations:
-    if d.kind == NameKind.Binding and d.reach == Reach.Entry: result.bindings.add (d.line, d.name)
-  if result.bindings.len == 0: return
-  let
-    lines = source.split('\n')
-    code = source.codeOnly.split('\n')
-    tokens = source.tokens
-    partners = tokens.partners
-    starts = source.lineStarts
-  var heads: seq[int]
-  for i, line in code:
-    if line.indentOf == 0 and line.identifierAt(0) == "when" and "isMainModule" in line:
-      heads.add i
-  if heads.len != 1:
-    result.refusal = "module holds `" & $heads.len & "` entry blocks"
-    return
-  result.head = heads[0]
-  if code[result.head].strip != MAIN_GUARD:
-    result.refusal = "`" & code[result.head].strip & "` guards more than `isMainModule`"
-    return
-
-  # Body runs to first line of code at indent 0; comment opening its line there stays below.
-  var stop = result.head + 1
-  while stop < code.len and (code[stop].strip.len == 0 or code[stop].indentOf > 0): inc stop
-  result.first = result.head + 1
-  while lines[result.first].strip.len == 0: inc result.first
-  for t in tokens:
-    if t.line <= result.head or t.line >= stop: continue
-    if t.kind == TokenKind.Comment and t.first == starts[t.line]: continue
-    result.last = max(result.last, t.lastLine(source))
-  for i in result.first .. result.last:
-    if code[i].strip.len == 0: continue
-    result.indent = code[i].indentOf
-    break
-
-  # Refuse what routine cannot hold, or would read otherwise than block.
-  for k, t in tokens:
-    if t.line < result.first or t.line > result.last: continue
-    if t.kind == TokenKind.Open and t.spelling(source) == "{." and partners[k] > k:
-      for m in k + 1 ..< partners[k]:
-        let word = tokens[m].spelling(source)
-        if tokens[m].kind == TokenKind.Word and word in PRAGMAS_MODULE:
-          result.refusal = "`{." & word & ".}` binds at module level alone"
-          return
-    let is_marker = t.kind == TokenKind.Operator and t.spelling(source) == "*" and k > 0 and
-      tokens[k - 1].kind == TokenKind.Word and tokens[k - 1].after == t.first
-    if is_marker:
-      result.refusal = "export marker of `" & tokens[k - 1].spelling(source) &
-        "` stands at module level alone"
-      return
-  for i in result.first .. result.last:
-    if code[i].strip.len == 0: continue
-    let
-      word = code[i].identifierAt(0)
-      rest = code[i].strip[word.len .. ^1].strip
-    if word in KEYWORDS_MODULE:
-      result.refusal = "`" & word & "` stands at module level alone"
-      return
-    if code[i].indentOf == result.indent and word == "quit" and rest notin ["", "()"]:
-      result.refusal = "`quit` at block's own indent returns value, which `quit main()` would carry"
-      return
-  for t in tokens:
-    if t.kind == TokenKind.Word and t.spelling(source).identity == ROUTINE_ENTRY:
-      result.refusal = "`" & t.spelling(source) & "` stands in module already"
-      return
-
-
-func fixBlockEntry*(path, source: string): Fix =
-  ## Move body of entry block into `proc main` above block, documented `TODO: Document.` (VI.1),
-  ##   and leave block calling `main()` (V.10). Block whose move `blockEntry` refuses stays.
-  ##   Body keeps its lines and indent, since block and routine indent body alike.
-  let entry = source.blockEntry
-  result.source = source
-  if entry.bindings.len == 0 or entry.refusal.len > 0: return
-  let
-    lines = source.split('\n')
-    margin = ' '.repeat(entry.indent)
-  var shaped: seq[string]
-
-  template keep(i: int) =
-    shaped.add lines[i]
-    result.origin.add i + 1
-
-  template insert(line: string) =
-    shaped.add line
-    result.origin.add 0
-
-  for i in 0 ..< entry.head: keep(i)
-  insert "proc " & ROUTINE_ENTRY & "() ="
-  insert margin & "## TODO: Document."
-  for i in entry.first .. entry.last: keep(i)
-  insert ""
-  insert ""
-  keep(entry.head)
-  insert margin & ROUTINE_ENTRY & "()"
-  for i in entry.last + 1 ..< lines.len: keep(i)
-  result.source = shaped.join("\n")
-  for (line, _) in entry.bindings: result.fixed.add initReport(path, line, Rule.EntryBlock)
 
 
 func foreignMark(code: openArray[string], line: int, kind: NameKind): string =

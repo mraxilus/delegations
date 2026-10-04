@@ -87,7 +87,7 @@
 
 import std/[algorithm, sequtils, strutils]
 import ../../knoller/src/knoller
-import ./[findings, names]
+import ./findings
 
 
 type
