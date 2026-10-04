@@ -232,6 +232,14 @@ bracket. Parameters take the separator that their groups take. A parenthesis of 
 none, because `(a,)` is a tuple and `(a)` is a grouping. Verified by hand with 2.2.12, 2026-10-02:
 the compiler accepts the separator in each of these lists, and `;` after the last parameter group.
 
+- The separator stands only where the list would not fit joined onto the line where it opens
+  (`isFittingJoined`). A list that fits joined takes none: a call joins under the call layout,
+  and any other list keeps the rows of the hand. So the separator stays the one mark of a split
+  that the hand wants. A list that gains it stays split on the next run.
+- A list whose items share a line takes none, since there the separator would read as that mark.
+- Verified by `suites/test_wrapping.nim` and `suites/test_chain.nim`. The blocks of `cayleys.nim`
+  of the PGA library at lines 271, 338 and 604 gain their separator and keep their lines.
+
 **Adjacent imports of one directory share one bracket, and a bracket of one module drops it
 (X.5).** The merged statement takes the place of the first, and its items sort as bracket items
 sort. An item keeps `{.all.}`. An import with `except`, `as`, another pragma, a comment or a
