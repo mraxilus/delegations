@@ -180,9 +180,9 @@ checks and fixers of separators, signatures, calls and trailing separators share
 and its check stays silent.
 
 **Each space inside an expression takes the count of the list of X.9.** A binary operator and
-`=` take one space on each side, and one that ends its line takes one before it. A comma and a
-colon take none before them and one after. The inside of a bracket takes none. A prefix
-operator is glued to its operand.
+`=` take one space on each side, and one that ends its line takes one before it. A range takes
+none, as below. A comma and a colon take none before them and one after. The inside of a bracket
+takes none. A prefix operator is glued to its operand.
 
 - The lexer reads only whether a space stands on each side of an operator, never how many. A
   space before and none after reads as prefix, so `a -b` is the call `a(-b)`.
@@ -217,20 +217,30 @@ operator is glued to its operand.
   start of such a line stays.
 - Cost: the spaces that align the columns of a table go, unless a fence holds them.
 
-**A range operator takes one space on each side, as every binary operator does (X.9).** The
-Architect set this rule on 2026-10-04, so that every binary operator spaces alike. It covers `..`,
-`..<` and `..^`, as in `2 .. 6` and `0 ..< n`. A range that ends its line takes one space before
-it. Verified by `suites/test_spacing.nim`.
+**A range operator takes no space (X.9).** It covers `..`, `..<` and `..^`, as in `2..6` and
+`0..<n`. It keeps one space on each side where a piece beside it binds tighter. Glued, `i + 1..<n`
+would read as if the range starts at 1. It also keeps one where the glued tokens would lex as other
+tokens. Verified by `suites/test_spacing.nim`, with each example of the ruling.
 
-- A `^` after a range is a prefix operator, so it stays glued to its operand, as in `s[1 .. ^1]`.
-  Verified by `suites/test_spacing.nim`: that line passes, and `s[1 .. ^ 1]` fixes to it.
-- Glued `1..^1` lexes as the one operator `..^`, so the fixer writes `1 ..^ 1`, and never splits
-  it. Verified by `suites/test_spacing.nim`. The Architect ruled on 2026-10-04 that a compound
-  operator stays whole, because it can carry an optimisation that its parts lack. In 2.2.12 the
-  template `..^` of `lib/system/indices.nim` is `a .. ^b`, verified by hand on 2026-10-04.
-- X.9 shows both forms: `s[1 .. ^1]`, a range and a prefix `^`, and `s[1 ..^ 1]`, the compound
-  operator. The fixer keeps the operator that the source lexes as, so the choice stays with the
-  hand.
+- A range that ends its line takes one space before it, as a binary operator there does.
+- A piece runs from the range, at its depth and on its line, through operands, prefix operators
+  and binary operators that bind tighter. A looser operator (`in`, `==`, `and`), a delimiter, the
+  bracket around it or a command head ends it (`isRangeApart`).
+- Precedence is that of the lexer (`getPrecedence` of `compiler/lexer.nim`, mirrored in
+  `precedence.nim`). `..` binds at 6, `&` at 7, `+` at 8, and `*` and most glyphs at 9.
+- A bracket group is one operand, so the spaces inside it do not count, as in `f(i + 1)..n`.
+- Spacing moves no parse tree, so the rewrite moves no reading. Verified by hand, 2026-10-04,
+  with the parser of the commit pin of the `ronri` projects. `i + 1 ..< n` and `i + 1..<n` read
+  alike, and so do `x in 2 .. 6` and `x in 2..6`. Only a merge, as of `1 .. ^1` into `1..^1`,
+  changes the tree.
+- The merge guard reads a binary operator with both neighbours glued (`isMerging`). So `s[1 .. ^1]`
+  and `0 .. -1` keep their spaces, and `i-1` reads as three tokens.
+- Glued `1..^1` lexes as the one operator `..^`, so the compound `s[1 ..^ 1]` becomes `s[1..^1]`,
+  and the fixer never splits it. A compound operator stays whole, because it can carry an
+  optimisation that its parts lack. The fixer keeps the operator that the source lexes as, so the
+  choice between `s[1 .. ^1]` and `s[1..^1]` stays with the hand.
+- Cost: a piece is read on the line of its range, so an operator of a piece on the line before
+  goes unread.
 - A range in prefix place, such as `a[.. 2]`, stays unread. Verified by hand, 2026-10-04, with
   `checkSpacing` and `fixSpacing` on that line.
 
