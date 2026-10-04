@@ -201,8 +201,8 @@ operator is glued to its operand.
 - Verified by hand on the PGA library of `replications` at `d9be8ae`, 2026-10-04. The lines of
   `tests/suites.nim` with `|∙ ⊖` keep their space. With the commit pin of the `ronri` projects,
   `nim check` passes on 64 of 64 targets, on the library as given and as knoller writes it. The
-  four rigid test programs are among them. The eight test programs print the same output on
-  both.
+  eight test programs, `rga2d` to `rga5d` and `cga3d` to `cga6d`, print the same output on both.
+  `testament all` passes 8 of 8 on both.
 - A gap stays where closing it would merge two tokens: `(` before `.`, `[` before `:`, `.` before
   `)`, and a colon after an operator.
 - `=` glued to an operator character lexes as another operator, such as `=-`, which the rule
@@ -310,7 +310,7 @@ or a test after a banner takes the one blank line of the banner. The rule reads 
   holds exactly where the parent of a `test_*` file is `tests`. Verified by
   `suites/test_blanks.nim`, which holds both readings to a table of paths. Verified by hand,
   2026-10-04, over each path that git lists in this repository, relative and absolute.
-- Cost: a stub one level down, such as `tests/rigid/test_rigid.nim` of the PGA library, is a
+- Cost: a stub one level down, such as `tests/rga3d/test_rga3d.nim` of the PGA library, is a
   test file and no stub. So it takes the blank-line rules, and not `stub-keys` or
   `profiler-import`.
 
