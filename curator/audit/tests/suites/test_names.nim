@@ -517,6 +517,8 @@ suite "Names":
         "`when isMainModule and defined(js):` guards more than `isMainModule`"),
       ("when isMainModule:\n  import std/os\n  let a = paramStr(1)\n",
         "`import` stands at module level alone"),
+      ("when isMainModule:\n  when defined(posix):\n    import std/posix\n  let a = 1\n",
+        "`import` stands at module level alone"),  # at any depth of block
       ("when isMainModule:\n  proc shown*() = discard\n  let a = 1\n",
         "export marker of `shown` stands at module level alone"),
       ("when isMainModule:\n  let a = 1\nwhen isMainModule:\n  echo 2\n",
