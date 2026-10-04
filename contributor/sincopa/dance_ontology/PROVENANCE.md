@@ -897,6 +897,18 @@ rotation of the forearm can turn the plane it bends in.
 Hands are offered three bands: torso 1.00 to 1.35 m, neck 1.40 to 1.50, and crown 1.735 to 2.00. The
 crown starts one radius of a limb over the head, so a hand carried there clears it by construction.
 
+**Each head carries a face, and every arm keeps clear of every face (#375).** The face is a sphere
+of the radius of the head, 5 cm ahead of the centre of the head (`rigid.faceCapsule`). Its front
+reaches 14 cm ahead of the axis of the head, where the head reaches 9 cm. By the head length of
+ANSUR II, 0.20 and 0.19 m, the nose sits about 12 cm ahead. So an arm on the sphere stands about 2
+cm off the nose. Assumed: the size and the place of the sphere, which are estimates and not tape.
+
+Beside the head the sphere stands 1.3 cm out of the head, and over the crown 0.8 cm. So an arm that
+passes over the crown or behind the head meets almost nothing new. Rejected: no face. A raised
+forearm then lay across its own face, at 313 of 652 recorded moments on 2026-10-03. Verified by
+`suites/test_asks.nim`: no arm is in a face, deeper than the slop of the engine, at any recorded
+moment of any still or sweep.
+
 Rejected: to import anything from `src/`, because a shorthand cannot check itself, and the
 simulation is what a shorthand is for. Verified by `suites/test_limb.nim`: the tape and the forward
 kinematics of one arm over seeded random arms, and the contact test against a sampled truth.
@@ -970,6 +982,11 @@ then gives at the hands, in life as here. At fifteen it fixed one law and cost e
 
 An arm deeper than a centimetre (`THROUGH`) in a body or in another arm is a stop. That is read off
 the manifolds of the engine every moment.
+
+The face meets the arms of both dancers and nothing else (`FACE_BIT`). The trunks keep two heads
+apart, and the faces of a couple chest to chest overlap by 2 cm, where dancers turn their heads
+aside. The face sits on the chest and weighs nothing, because the head carries its weight. So an arm
+deeper than `THROUGH` in a face is a stop, as in a body.
 
 The manifolds are read into the room that the engine says a body needs (`touchRoom`). Rejected: a
 fixed room for eight, which drops unseen the deepest contact of a forearm that touches nine things.
@@ -1440,7 +1457,8 @@ between the bodies.
 `simulation/plan.nim` plans the arms of both dancers a fiftieth of a turn at a time (`STRIDE`). At
 each moment it takes the pose nearest to ease, close to the last pose, that keeps four things. The
 hands stay joined. Every capsule stays 20 mm clear of every other (`clearance`). Every joint stays
-six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band (`room`).
+six degrees inside its end (`margin`). The joined hands stay 30 mm inside their band (`room`). Each
+face is a capsule of the plan too, and only the arms keep clear of it.
 
 The plan is geometry alone. It uses the capsules, the ranges and the bands of the engine and the
 judge. So the engine meets nothing that the plan did not keep clear. No point of an arm moves more
