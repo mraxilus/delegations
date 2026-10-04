@@ -716,18 +716,35 @@ that weight. The value and the placeholder of a field count, and so does the tex
 `::after`. A finding names the page, the element, the weight and each codepoint that no face of the
 stack maps.
 
-**Text that a script writes later is held to every stack in use.** That text is not on the page when
-the check runs, and the element that will show it can be absent too. `nimCodepointsShown` gives the
-catalogue, the help, the notation and the units, as `--drive-faces` reads them. The strings of the
-scripts give the rest, and the text on the page now joins them. The check holds each of these
-characters to each stack that an element of the page resolves to. It does this at each weight that
-an element resolves to, and at each weight that a face declares.
+**Text that a script writes later is held to every stack in use, and to every stack a rule
+declares.** That text is not on the page when the check runs, and the element that will show it can
+be absent too. `nimCodepointsShown` gives the catalogue, the help, the notation and the units, as
+`--drive-faces` reads them. The strings of the scripts give the rest, and the text on the page now
+joins them. The check holds each of these characters to each stack that an element of the page
+resolves to.
 
-So each stack in use must map every character that the page can write. That is why the mono and
-serif stacks name "Noto Sans UI" after their own face. The cost is that a stack for titles alone
-must map the operators too. A checkbox and a file field are not a stack in use, because they show no
-text that the page writes. Both resolve to Arial, and the button of a file field shows the words of
-the browser.
+It also holds them to each stack that a rule of the stylesheets of the page declares. An element
+that a script builds later takes its stack from a rule that stands now. The check does this at each
+weight that an element resolves to, that a rule declares, and that a face declares. A finding for a
+stack that no element resolves to names the rule by its selector, as `rule .later-panel`.
+
+**The check reads the declared stacks through the CSSOM, and the browser resolves each one.** It
+walks every rule of every sheet, into `@media`, `@supports`, `@layer`, nested rules and imported
+sheets. A rule counts whether or not it matches now. The declarations of each rule go on a probe
+under a hidden holder, so the browser itself resolves `var()` and the `font` shorthand. It resolves
+them against the document as it stands, and again under the custom properties of each rule that
+declares some. An element that a script builds later can stand under such a rule.
+
+The check leaves out two kinds of declaration. An `@font-face` rule names a face, and not a stack.
+A family of `inherit` or `unset` declares no stack of its own, because the element takes the stack
+of its parent. Rejected: `var()` read from the custom properties of the root, which misses a value
+that a rule under `@media` declares.
+
+So each stack in use, and each stack that a rule declares, must map every character that the page
+can write. That is why the mono and serif stacks name "Noto Sans UI" after their own face. The cost
+is that a stack for titles alone must map the operators too. A checkbox and a file field are not a
+stack in use, because they show no text that the page writes. Both resolve to Arial, and the button
+of a file field shows the words of the browser.
 
 The check reads each `@font-face` rule of the shell, and the `cmap` of its file. It matches the
 weight and the unicode-range of each face as CSS matching does, and tries the families of a stack in
@@ -735,16 +752,31 @@ order. Rejected: the three stacks read from the text of the shell, which pass an
 a stack of its own. Rejected: `CSS.getPlatformFontsForNode`, which answers only for text that has a
 layout box now. A hidden panel has none, and text that a script writes later has none either.
 
-Cost: an element that a script builds after the check runs counts only through its stack. Where no
-element on the page resolves to that stack at the check, the check does not see it.
+Cost: a stack that no rule of the page declares counts only where an element resolves to it at the
+check. Such a stack is the browser's own for a form control, or a family that a script sets on an
+element. A bare button resolves to Arial, and a bare text area to monospace. Verified by a run,
+2026-10-04, in Chrome for Testing 153. Each button and field that a script builds matches a rule
+that declares a stack, and no script sets a family. Verified by a read of `src/browser` and the
+shell, the same day.
 
 *Checked.* Verified by a run of the check alone, 2026-10-04, in Chrome for Testing 153. The page
-stands as it opens, with the drawer and help open. Both checks pass, with `missing none`.
+stands as it opens, with the drawer and help open. Both checks pass, with `missing none`. The stacks
+that the rules declare are the stacks in use.
 
 Verified by a break on purpose, the same day and the same way. The rule
 `#button-menu span { font-family: "Commit Mono UI", monospace; }` fails with
 `missing rga_visualiser.html #button-menu span at 400: U+2630`. The three stacks read from the text
 of the shell pass that break.
+
+Verified by a second break, the same day and the same way. The rule
+`.later-panel { font-family: "Commit Mono UI", monospace; }` matches no element at the check. It
+fails with `missing rga_visualiser.html rule .later-panel at 400:` and each codepoint that Commit
+Mono does not map, U+2630 among them. It fails the same way at 600 and at 700. A check that holds
+only the stacks in use passes that break.
+
+Verified by a third break, the same day and the same way. A rule for `.later-panel` sets
+`font: 600 12px var(--later)` inside `@media (max-width: 10px)`. Inside `@media print`, `:root`
+declares `--later` as the same stack. The check fails it with the same finding.
 
 With the maths and symbols declared at 400 alone, the check fails at 600. It names U+2715 in
 `button#selection-menu-close` and U+25B6 in `#drawer span.chev`. In every stack in use, it names the
