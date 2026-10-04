@@ -791,7 +791,7 @@ func checkContinuations*(path, source: string): seq[Report] =
 
 
 func fixContinuations(path, source: string; held: Held): Fix =
-  ## Re-indent each line check reports, or that widens line off held lines.
+  ## Re-indent each line check reports, but held line its indent would widen.
   applied(path, source, source.scan.continuationShifts(held))
 
 

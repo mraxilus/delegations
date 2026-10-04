@@ -20,15 +20,15 @@
 ##     layouts join groups with separator they read, call layout breaks line at operator where
 ##     no call split fits, continuation indent follows lines call layout moves, and trailing
 ##     separator goes only where no layout wrote one.
-##   - comment that does not fit after all: plain `#` trailing comment of wide line moves to
-##     own line above, so next round lays out line it leaves, once no wrap holding it fits.
+##   - comment last: plain `#` trailing comment of line still wide moves to own line above,
+##     since no wrap reads line holding comment; next round lays out line it leaves.
 ##   Chain is list of steps: fixer guarded on every line, or widener (`reports.nim`), i.e. tab,
 ##     comment, message, condition, spacing, continuation and trailing separator fixers, which
 ##     read held lines.
 ##     Alignment and idiom fixers stay guarded: table column and import bracket have no wrap.
-##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
-##     splits can take spacing fixer refused for width, so second round writes it, and
-##     `koch fix` run twice writes nothing second time.
+##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: round can enable
+##     fixer that ran before it, as gap widened past `LINE_MAX` moves doc to next line, so
+##     second round writes it, and `koch fix` run twice writes nothing second time.
 ##   Rounds run inside attempts, at most `ATTEMPTS_MAX`. First attempt holds no line, so each
 ##     widener repairs freely and wrapping breaks line after. Line still wide once rounds settle,
 ##     narrow in source as given, is held in next attempt, which runs from source as given
@@ -62,7 +62,7 @@ const
     ## Rounds of whole chain at most; tree settles in two (`curator/audit/PROVENANCE.md`, Fixes).
   ATTEMPTS_MAX = 4
     ## Attempts of rounds at most, last holding every line; tree settles in two
-    ##   (`PROVENANCE.md`, Chain).
+    ##   (`PROVENANCE.md`, Wraps).
   LOCK_FILE* = "atlas.lock"  ## Lock holding copy of project's nimble file.
   NIMBLE_KEY = "\"nimbleFile\""  ## Key of lock's copy of nimble file, whose `filename` names it.
 
