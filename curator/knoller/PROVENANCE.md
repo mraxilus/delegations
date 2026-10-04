@@ -207,7 +207,6 @@ An argument splits its own call only where that call is the whole argument.
 
 - An argument that the hand wrapped, and that fits no line, keeps its line breaks and moves with
   its new indent.
-
 - A call that spans lines, with a comma after its last argument on a line before its `)`, is
   never joined (`isTrailed`). That comma marks the split that the hand wants. So such a call
   keeps one argument to a line, even where it fits. A call that knoller splits keeps its
@@ -455,6 +454,26 @@ a bracket stays too, because `y.toX(z)` and `y.toX[T]` read otherwise.
 - The rewrite reads no symbol. A field named like the routine, such as `to_x`, would capture the
   method call. The tree holds no such field, and every changed file checks as before.
 - Verified by `suites/test_targets.nim`.
+
+**A dotted call statement takes the command form where its one argument is a call or a
+parenthesised expression (STYLE.md §5).** So `x.f(Y(…))` becomes `x.f Y(…)`, and `x.f((a, b))`
+becomes `x.f (a, b)`, and the double bracket goes. The rule reads method call syntax alone, with
+the receiver chain glued from the start of the statement, as `result[a][b].add(`. The one argument
+stands glued inside both brackets, with no comma after it. A call that spans lines keeps its inner
+layout, and its `))` becomes `)`.
+
+- Only a whole statement is read. It opens its line after a statement that ended, a block `:` or
+  the `=` of a routine head, and its `)` ends its line. Inside an expression the command form can
+  read otherwise: `x.f(g(a)) + 1` would become `x.f(g(a) + 1)`. So a binding, an assignment, a
+  `discard` and a continuation stay.
+- A plain call `f(g(x))` stays, and so do a call of two arguments and a comma after the argument.
+  An argument of another shape stays too, such as `g(a) + 1`, `g(a).h` or `@[a]`.
+- The parse tree changes in one node kind alone: the parser reads `nkCommand` where it read
+  `nkCall`, with the same callee and argument. Verified by hand, 2026-10-04, with the parser of the
+  commit pin of the `ronri` projects, on each shape of `suites/test_commands.nim`.
+- The rewrite never widens a line: `(` becomes a space, and its `)` goes. The chain runs it before
+  the call layout, so the layout reads the command form. Verified by `suites/test_commands.nim` and
+  `suites/test_chain.nim`.
 
 ## Wraps
 
