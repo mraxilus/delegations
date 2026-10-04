@@ -26,9 +26,9 @@ const canvas = elementById<HTMLCanvasElement>('gl');
 //   afterwards. `captureFrameIfAsked` reads buffer from inside frame that drew it
 //   instead, which costs nothing and is what image export uses.
 // Multisample unless told before page loaded not to, which only driven checks' harness does.
-//   Its simulated page reads no edge's sample, and multisampling cost about 10 ms of GPU work
-//   per frame there under SwiftShader. Reader's page never carries switch, so it always asks
-//   to multisample, as desktop does.
+//   Its simulated page reads no edge's sample, and multisampling is GPU work no verdict there
+//   reads; measured pair is in `PROVENANCE.md`, under clocks of driven checks. Reader's page never
+//   carries switch, so it always asks to multisample, as desktop does.
 const OPTIONS_CONTEXT: WebGLContextAttributes = {
   antialias: window.should_antialias ?? true, alpha: false,
 };

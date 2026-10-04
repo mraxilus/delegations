@@ -146,8 +146,8 @@ async function driveSimulated(browser: Browser): Promise<void> {
 
   await simulateClock(page);
   // Draw without multisampling, set before page's script asks for its context: no verdict here
-  //   reads edge's sample, and multisampling cost about 10 ms of GPU work per frame. Reader's
-  //   page and real-clock page below keep it, and `driveAntialias` reads both.
+  //   reads edge's sample, so its GPU work buys nothing; `PROVENANCE.md` gives measured pair.
+  //   Reader's page and real-clock page below keep it, and `driveAntialias` reads both.
   await page.addInitScript(() => { window.should_antialias = false; });
   await page.goto(`file://${PATH_PAGE}`);
   await waitScene(page);
