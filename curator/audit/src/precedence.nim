@@ -259,14 +259,15 @@ func mixtures(source: string): seq[Mixture] =
     if is_read: result.add mixture
 
 
-func checkMixtures*(path, source: string): seq[Finding] =
+func checkMixtures*(path, source: string): seq[Report] =
   ## Report expression mixing `and` with `or` without parentheses around each `and` (X.4).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let tokens = source.tokens
   for mixture in source.mixtures:
-    result.add finding(
+    result.add initReport(
       path,
       tokens[mixture.runs[0][0]].line + 1,
+      Rule.AndWithOr,
       "Condition mixing `and` with `or` parenthesises each `and` (X.4); got `" & mixture.got & "`.",
     )
 
@@ -289,7 +290,7 @@ func fixMixtures*(path, source: string): Fix =
       after = shaped.split('\n')
     if lines.toSeq.anyIt(after[it].isWide and not before[it].isWide): continue
     inserts.add planned
-    result.fixed.add finding(path, tokens[mixture.runs[0][0]].line + 1, "and with or (X.4)")
+    result.fixed.add initReport(path, tokens[mixture.runs[0][0]].line + 1, Rule.AndWithOr)
   result.source = source
   for (at, text) in inserts.sortedByIt(-it[0]): result.source.insert(text, at)
 
@@ -313,13 +314,14 @@ func negations(source: string): seq[Negation] =
       result.add Negation(line: tokens[e.first].line, got: excerpt(source, tokens, e.first, stop))
 
 
-func checkNegations*(path, source: string): seq[Finding] =
+func checkNegations*(path, source: string): seq[Report] =
   ## Report `not` over binary expression without parentheses (X.4); reading holds fix.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for negation in source.negations:
-    result.add finding(
+    result.add initReport(
       path,
       negation.line + 1,
+      Rule.NotOverBinary,
       "`not` over binary expression takes parentheses, since Nim reads `not a == b` as " &
         "`(not a) == b` (X.4); got `" & negation.got & "`.",
     )

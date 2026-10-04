@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[random, sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[kinds, prose]
 
 
@@ -57,7 +58,7 @@ suite "Article VI fixes":
     check fix.source == "## Read file, then row.\nlet x = 1  # Hold index (end).\n" &
       "#[ Skip the\n   header. ]#\n"  # article at line end stays
     check fix.fixed.mapIt(it.line) == @[1, 2]  # one report per line
-    check fix.fixed[0].message == "article in comment (VI.5)"
+    check fix.fixed[0].rule == Rule.ArticleInComment
     check checkProse("a.nim", fix.source, Syntax.Nim).mapIt(it.line) == @[3]  # left one alone
     check fixArticles("a.nim", fix.source).fixed.len == 0  # second fix writes nothing
 

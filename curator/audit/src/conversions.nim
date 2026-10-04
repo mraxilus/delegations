@@ -122,13 +122,14 @@ func targets(source: string): seq[Target] =
     )
 
 
-func checkTargets*(path, source: string): seq[Finding] =
+func checkTargets*(path, source: string): seq[Report] =
   ## Report `to<Target>` prefix call whose plain subject could come first (STYLE.md §5).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for target in source.targets:
-    result.add finding(
+    result.add initReport(
       path,
       target.line + 1,
+      Rule.TargetSubject,
       "`to<Target>` takes its plain subject first, as `b.toDigits` (STYLE.md §5); got `" &
         target.got & "`.",
     )
@@ -147,7 +148,7 @@ func fixTargets*(path, source: string): Fix =
     for target in found.sortedByIt(-it.first):
       if found.anyIt(it.first > target.first and it.after <= target.after): continue
       shaped = shaped[0 ..< target.first] & target.shaped & shaped[target.after .. ^1]
-      step.fixed.add finding(path, target.line + 1, "to<Target> subject first (STYLE.md §5)")
+      step.fixed.add initReport(path, target.line + 1, Rule.TargetSubject)
     step.source = shaped
     step.fixed.reverse
     result = result.chain(step)

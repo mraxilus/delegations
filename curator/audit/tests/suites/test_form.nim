@@ -3,6 +3,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, form, kinds]
 
 
@@ -154,7 +155,7 @@ suite "Fixes":
     let fix = fixed("a = 1 \nb = 2\r\nc = 3\t\n  # Keep  this.\nd = \" \"\n")
     check fix.source == "a = 1\nb = 2\nc = 3\n  # Keep  this.\nd = \" \"\n"  # those three alone
     check fix.fixed.mapIt(it.line) == @[1, 2, 3]  # one report per line
-    check fix.fixed[0].message == "trailing whitespace (VIII.5)"  # rule named
+    check fix.fixed[0].rule == Rule.TrailingWhitespace  # rule named
     check checkForm("a.nim", fix.source, Kind.Nim.rule).len == 0  # check reports none
     check fixed(fix.source).source == fix.source and fixed(fix.source).fixed.len == 0  # idempotent
 
@@ -201,7 +202,7 @@ suite "Fixes":
       plain = "let s = \"a\tb\"\nlet c = &\"x\t{y}\"\n"
       fix = fixed(plain)
     check fix.source == "let s = \"a\\tb\"\nlet c = &\"x\\t{y}\"\n"  # escape reads same byte
-    check fix.fixed.mapIt(it.message) == @["tab in string (X.1)", "tab in string (X.1)"]
+    check fix.fixed.mapIt(it.rule) == @[Rule.TabInString, Rule.TabInString]
     check messages("a.nim", fix.source, Kind.Nim).len == 0  # check reports none after fix
     check fixed(fix.source).fixed.len == 0  # second fix writes nothing
     for kept in [

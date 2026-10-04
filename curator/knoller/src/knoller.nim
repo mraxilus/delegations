@@ -10,6 +10,6 @@
 
 when compileOption("profiler"): import std/nimprof
 
-import ./knoller/tokens
+import ./knoller/[reports, rules, tokens]
 
-export tokens
+export reports, rules, tokens

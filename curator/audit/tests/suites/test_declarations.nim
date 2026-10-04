@@ -5,6 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[declarations, findings]
 
 
@@ -31,7 +32,7 @@ suite "Declarations":
       "    B = 2  ## Second.\n\n  Obj* = object  ## Holder.\n    x*: int  ## Count.\n\n" &
       "const\n  N* = 3  ## Size.\nlet m = 1  ## Mass.\n"
     check breach.fixed.isSettled
-    check fixDocs("a.nim", breach).fixed[0].message == "doc position (STYLE.md §5)"
+    check fixDocs("a.nim", breach).fixed[0].rule == Rule.DocPosition
 
 
   test "doc that cannot join takes next line, one level in; trailing doc too wide moves there":
@@ -66,7 +67,7 @@ suite "Declarations":
     check breach.fixed == "proc f(now = 0.0, on = false, s = \"a\", c = 'x', n = -1) = discard\n" &
       "proc g(a = default(Foo), b = none(int), p, q = 0x1F) = discard\n"
     check breach.fixed.isSettled
-    check fixDefaults("a.nim", breach).fixed[0].message == "literal default (X.12)"
+    check fixDefaults("a.nim", breach).fixed[0].rule == Rule.LiteralDefault
 
 
   test "default of other type, named constant, template, macro and field stay":

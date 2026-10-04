@@ -4,6 +4,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
+import ../../../knoller/src/knoller
 import ../../src/[findings, idioms]
 
 
@@ -139,7 +140,7 @@ suite "Idioms":
         "{.warning[UnusedImport]: off.}\n\n" & STRICT_FUNCS & "\n"
       stub = fixIdioms("tests/test_x.nim", header & "include \"suites.nim\"\n")
     check stub.source == header & "\n" & PROFILER_IMPORT & "\n\ninclude \"suites.nim\"\n"
-    check stub.fixed.mapIt(it.message) == @["profiler import (STYLE.md §3)"]
+    check stub.fixed.mapIt(it.rule) == @[Rule.ProfilerImport]
     check fixIdioms("tests/test_x.nim", stub.source).fixed.len == 0  # second fix writes nothing
 
 
@@ -176,7 +177,7 @@ suite "Idiom fixes":
     let fix = fixed(module("func f(): int =\n  if true:\n    return result  # Early.\n  1\n"))
     check fix.source == module("func f(): int =\n  if true:\n    return  # Early.\n  1\n")
     check fix.fixed.mapIt(it.line) == @[HEAD_LINES + 3]  # line check names
-    check fix.fixed[0].message == "return result (STYLE.md §5)"  # rule named
+    check fix.fixed[0].rule == Rule.ReturnResult  # rule named
     check fix.source.isSettled  # check reports none, and second fix changes nothing
     let followed = fixed(module("proc f(): int =\n  return result\n  echo 1\n"))
     check followed.source == module("proc f(): int =\n  return\n  echo 1\n")  # exit before more
@@ -230,7 +231,7 @@ suite "Idiom fixes":
   test "adjacent import lines are ordered by rank, and rank split by other lines stays":
     let fix = fixed(module("import ./a\nimport pkg/x\nimport std/os\n"))
     check fix.source == module("import std/os\nimport pkg/x\nimport ./a\n")
-    check fix.fixed.mapIt(it.message) == @["import rank (X.5)", "import rank (X.5)"]
+    check fix.fixed.mapIt(it.rule) == @[Rule.ImportRank, Rule.ImportRank]
     check fix.source.isSettled
     let apart = module("import ./a\n\nimport std/os\n")
     check fixed(apart).source == apart  # where it lands is choice: left to hand
@@ -241,7 +242,7 @@ suite "Idiom fixes":
     check consts.source ==
       module("const\n  A = 1  # One.\n  B = 2\n    ## Doc of B.\n\nlet c = 3\n")
     check consts.fixed.mapIt(it.line) == @[HEAD_LINES + 1]  # one report per run
-    check consts.fixed[0].message == "single bindings (X.5)"
+    check consts.fixed[0].rule == Rule.SingleBindings
     check consts.source.isSettled
     let wrapped = fixed(module("proc f() =\n  let a = 1\n  let b = g(\n    2,\n  )\n  echo a\n"))
     check wrapped.source ==
@@ -301,7 +302,7 @@ suite "Idiom fixes":
       "Imports of one directory share one bracket (X.5); got `./` in `2` statements.",
     ]
     check fix.source == module("import std/[algorithm, os, strutils]\nimport ./[a {.all.}, b]\n")
-    check fix.fixed.filterIt(it.message.startsWith("import brackets")).mapIt(it.line) ==
+    check fix.fixed.filterIt(it.rule == Rule.ImportBrackets).mapIt(it.line) ==
       @[HEAD_LINES + 1, HEAD_LINES + 3]  # one report to merge, at first statement
     check fix.source.isSettled
     check checkImportBrackets("a.nim", fix.source).len == 0

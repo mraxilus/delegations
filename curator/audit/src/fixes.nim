@@ -173,12 +173,13 @@ func restored(fixed, source: string; fence: Fence): string =
   lines.join("\n")
 
 
-func faultOf(path: string, fence: Fence): seq[Finding] =
+func faultOf(path: string, fence: Fence): seq[Report] =
   ## Report fence fix cannot read, which leaves file as written.
   if fence.fault < 0: return
-  result.add finding(
+  result.add initReport(
     path,
     fence.fault + 1,
+    Rule.Fence,
     "Fence closes outside bracket, string or comment it opens in, so fix leaves file as " &
       "written (X.1); got `" & FENCE_OFF & "` and `" & FENCE_ON & "` either side.",
   )
@@ -208,7 +209,7 @@ func lockedNimbles*(tree: Tree): seq[string] =
     result.add e.path[0 ..< e.path.len - LOCK_FILE.len] & e.content[open + 1 ..< close]
 
 
-func checkFormatting*(path, source: string; kind: Kind): seq[Finding] =
+func checkFormatting*(path, source: string; kind: Kind): seq[Report] =
   ## Report each rule `koch fix` clears in full that static pass leaves out until projects fix,
   ##   and X.4 `not` over binary expression, which waits with them and has no fixer.
   ##   On every Nim kind: X.9 trailing comments and spaces, X.2 banners, I.4 tables, IV.4
@@ -240,7 +241,7 @@ func checkFormatting*(tree: Tree): seq[Finding] =
   let locked = tree.lockedNimbles
   for e in tree:
     if e.kind.isNone or e.path in locked: continue
-    result.add checkFormatting(e.path, e.content, e.kind.get)
+    result.add checkFormatting(e.path, e.content, e.kind.get).findingsOf
 
 
 func entriesNamed*(
@@ -376,10 +377,13 @@ func contextOf*(
     result.plans.add plan
 
 
-func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context): Fix =
+func fixSource(
+  path, source: string; kind: Kind; fence: Fence; context: Context
+): tuple[source: string, fixed: seq[Finding]] =
   ## Run on source each fixer its kind's checks name, in order header gives, until source
   ##   settles; fenced lines read as `FENCED`, and fixer that would move them is skipped.
-  ##   Fixers that semantic pass and tree inform run first, once, on source as given.
+  ##   Fixers that semantic pass and tree inform run first, once, on source as given; none
+  ##   moves line, so their reports name lines of source as given, as chain's reports do.
 
   # Write edits semantic pass settles, off fenced lines; no line moves, so fence holds.
   var renamed: seq[Edit]
@@ -395,20 +399,25 @@ func fixSource(path, source: string; kind: Kind; fence: Fence; context: Context)
     base = source.applied(renamed & edits)
     result.fixed.add reports
   let shape = base.masked(fence).fenceShape
-  result.source = base.masked(fence)
+  var fixed = Fix(source: base.masked(fence))
   let dead = context.dead.filterIt(it[0] == path).mapIt(it[1])
   if dead.len > 0:
-    let step = fixDeadExports(path, result.source, dead)
-    if step.source.fenceShape == shape: result = result.chain(step)
+    let step = fixDeadExports(path, fixed.source, dead)
+    if step.source.fenceShape == shape:
+      fixed.source = step.source
+      result.fixed.add step.fixed
+
+  # Run chain of knoller's fixers until source settles.
   for round in 1 .. ROUNDS_MAX:
-    var step = Fix(source: result.source)
+    var step = Fix(source: fixed.source)
     for fixer in kind.fixersOf:
       let next = fixer(path, step.source)
       if next.source.fenceShape != shape: continue
       step = step.chain(next)
-    if step.source == result.source: break
-    result = result.chain(step)
-  result.source = result.source.restored(source, fence)
+    if step.source == fixed.source: break
+    fixed = fixed.chain(step)
+  result.source = fixed.source.restored(source, fence)
+  result.fixed.add fixed.fixed.findingsOf
 
 
 func fixEntries*(
@@ -429,7 +438,7 @@ func fixEntries*(
       continue
     let fence = e.content.fenceOf
     if fence.fault >= 0:
-      result.left.add faultOf(e.path, fence)
+      result.left.add faultOf(e.path, fence).findingsOf
       continue
     for plan in context.plans:
       if plan.rename.path != e.path or plan.refusal.len == 0: continue

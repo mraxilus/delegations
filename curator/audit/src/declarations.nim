@@ -167,7 +167,7 @@ func docMoves(source: string): seq[DocMove] =
       )
 
 
-func checkDocs*(path, source: string): seq[Finding] =
+func checkDocs*(path, source: string): seq[Report] =
   ## Report one-line doc of type, field, binding or enum member out of its position.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for move in source.docMoves:
@@ -181,7 +181,7 @@ func checkDocs*(path, source: string): seq[Finding] =
           "on declaration's line."
       of Shape.Indent: "Doc on next line stands one level in (STYLE.md §5); got indent `" &
         $source.split('\n')[move.line + 1].indentOf & "`."
-    result.add finding(path, move.line + 1, message)
+    result.add initReport(path, move.line + 1, Rule.DocPosition, message)
 
 
 func fixDocs*(path, source: string): Fix =
@@ -195,7 +195,7 @@ func fixDocs*(path, source: string): Fix =
     lines = lines[0 ..< move.line] & move.lines & lines[move.last + 1 .. ^1]
     origin = origin[0 ..< move.line] & traced & origin[move.last + 1 .. ^1]
   result.source = lines.join("\n")
-  for move in moves: result.fixed.add finding(path, move.line + 1, "doc position (STYLE.md §5)")
+  for move in moves: result.fixed.add initReport(path, move.line + 1, Rule.DocPosition)
   if moves.len > 0: result.origin = origin
 
 
@@ -268,13 +268,14 @@ func defaults(source: string): seq[Default] =
       )
 
 
-func checkDefaults*(path, source: string): seq[Finding] =
+func checkDefaults*(path, source: string): seq[Report] =
   ## Report parameter stating type its literal default gives exactly (X.12).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for d in source.defaults:
-    result.add finding(
+    result.add initReport(
       path,
       d.line + 1,
+      Rule.LiteralDefault,
       "Parameter states its type only where default does not fix it (X.12); got `" & d.got & "`.",
     )
 
@@ -285,4 +286,4 @@ func fixDefaults*(path, source: string): Fix =
   result.source = source
   for d in found.reversed:
     result.source = result.source[0 ..< d.first] & " " & result.source[d.after .. ^1]
-  for d in found: result.fixed.add finding(path, d.line + 1, "literal default (X.12)")
+  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.LiteralDefault)

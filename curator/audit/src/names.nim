@@ -1032,7 +1032,7 @@ func fixBlockEntry*(path, source: string): Fix =
   insert margin & ROUTINE_ENTRY & "()"
   for i in entry.last + 1 ..< lines.len: keep(i)
   result.source = shaped.join("\n")
-  for (line, _) in entry.bindings: result.fixed.add finding(path, line, "entry block (V.10)")
+  for (line, _) in entry.bindings: result.fixed.add initReport(path, line, Rule.EntryBlock)
 
 
 func foreignMark(code: openArray[string], line: int, kind: NameKind): string =

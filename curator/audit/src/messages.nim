@@ -167,13 +167,14 @@ func tails(source: string): seq[Value] =
     result.add valuesOf(chain, tokens, t.first + at + MARKER.len, source)
 
 
-func checkMessages*(path, source: string): seq[Finding] =
+func checkMessages*(path, source: string): seq[Report] =
   ## Report value message echoes after `got` without backticks around it (IV.4).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for value in source.tails:
-    result.add finding(
+    result.add initReport(
       path,
       value.line + 1,
+      Rule.MessageValue,
       "Message ends echoing value in backticks, as ``…; got `{value}`.`` (IV.4); got `" &
         value.text & "`.",
     )
@@ -205,4 +206,4 @@ func fixMessages*(path, source: string): Fix =
       if not touched[k].anyIt(it in widened): kept.add value
     values = kept
   result.source = shaped.join("\n")
-  for value in values: result.fixed.add finding(path, value.line + 1, "message value (IV.4)")
+  for value in values: result.fixed.add initReport(path, value.line + 1, Rule.MessageValue)

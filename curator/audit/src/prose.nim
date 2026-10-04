@@ -119,4 +119,4 @@ func fixArticles*(path, source: string): Fix =
     let line = source[0 ..< first].count('\n') + 1
     if line notin reported:
       reported.add line
-      result.fixed.add finding(path, line, "article in comment (VI.5)")
+      result.fixed.add initReport(path, line, Rule.ArticleInComment)

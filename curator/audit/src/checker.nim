@@ -145,7 +145,9 @@ func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] 
     )
 
 
-func fixDeadExports*(path, source: string; dead: openArray[string]): Fix =
+func fixDeadExports*(
+  path, source: string; dead: openArray[string]
+): tuple[source: string, fixed: seq[Finding]] =
   ## Drop `*` of each routine `dead` names that its own module calls; leave one nothing calls.
   ##   Call is name read as code token beyond its declarations, so comment and string count
   ##   none; to delete routine nothing calls is choice, and its finding stays for hand.

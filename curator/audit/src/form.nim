@@ -157,14 +157,15 @@ func gaps(source: string): seq[Gap] =
     result.add Gap(line: i, at: at, spaces: spaces)
 
 
-func checkComments*(path, source: string): seq[Finding] =
+func checkComments*(path, source: string): seq[Report] =
   ## Report trailing comment without exactly two spaces before its marker (X.9).
   ##   Named by its suite alone until `checkForm` calls it; header says why.
   for gap in source.gaps:
     if gap.spaces == COMMENT_GAP: continue
-    result.add finding(
+    result.add initReport(
       path,
       gap.line + 1,
+      Rule.TrailingComment,
       "Trailing comment takes two spaces before its marker (X.9); got `" & $gap.spaces & "`.",
     )
 
@@ -203,7 +204,7 @@ func fixWhitespace(path, source: string): Fix =
   for i, line in lines.mpairs:
     if not line.isEndedInWhitespace: continue
     line = line.strip(leading = false, chars = TRAILING_WHITESPACE)
-    result.fixed.add finding(path, i + 1, "trailing whitespace (VIII.5)")
+    result.fixed.add initReport(path, i + 1, Rule.TrailingWhitespace)
   result.source = lines.join("\n")
 
 
@@ -212,7 +213,7 @@ func fixEnding(path, source: string): Fix =
   result.source = source
   if source.len == 0 or (source.endsWith("\n") and not source.endsWith("\n\n")): return
   result.source = source.strip(leading = false, chars = {'\n'}) & "\n"
-  result.fixed.add finding(path, 0, "file ending (VIII.5)")
+  result.fixed.add initReport(path, 0, Rule.FileEnding)
 
 
 func tabsInStrings(source: string): seq[int] =
@@ -242,7 +243,7 @@ func fixTabs(path, source: string): Fix =
     for k in held.reversed: shaped = shaped[0 ..< k - first] & "\\t" & shaped[k - first + 1 .. ^1]
     if shaped.isWide and not lines[line].isWide: continue
     lines[line] = shaped
-    result.fixed.add finding(path, line + 1, "tab in string (X.1)")
+    result.fixed.add initReport(path, line + 1, Rule.TabInString)
   result.source = lines.join("\n")
 
 
@@ -256,7 +257,7 @@ func fixComments(path, source: string): Fix =
       spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
     if spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
-    result.fixed.add finding(path, gap.line + 1, "trailing comment (X.9)")
+    result.fixed.add initReport(path, gap.line + 1, Rule.TrailingComment)
   result.source = lines.join("\n")
 
 
@@ -282,7 +283,7 @@ func blankRuns(lines: seq[string]): seq[BlankRun] =
     above = i
 
 
-func checkBanners*(path, source: string): seq[Finding] =
+func checkBanners*(path, source: string): seq[Report] =
   ## Report blank lines beside banner other than X.2 asks: three before first tier, two before
   ##   second, one after either.
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
@@ -292,7 +293,12 @@ func checkBanners*(path, source: string): seq[Finding] =
       if not run.is_before: "Banner takes one blank line after it (X.2)"
       elif run.tier == 1: "First-tier banner takes three blank lines before it (X.2)"
       else: "Second-tier banner takes two blank lines before it (X.2)"
-    result.add finding(path, run.banner + 1, message & "; got `" & $run.count & "`.")
+    result.add initReport(
+      path,
+      run.banner + 1,
+      Rule.BannerSpacing,
+      message & "; got `" & $run.count & "`.",
+    )
 
 
 func fixBanners(path, source: string): Fix =
@@ -309,7 +315,7 @@ func fixBanners(path, source: string): Fix =
     lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
-  for run in runs: result.fixed.add finding(path, run.banner + 1, "banner spacing (X.2)")
+  for run in runs: result.fixed.add initReport(path, run.banner + 1, Rule.BannerSpacing)
   if runs.len > 0: result.origin = origin
 
 

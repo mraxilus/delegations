@@ -193,7 +193,7 @@ func runs(path, source: string): seq[Run] =
     result.add run
 
 
-func checkBlanks*(path, source: string): seq[Finding] =
+func checkBlanks*(path, source: string): seq[Report] =
   ## Report blank lines beside suite, test or nested helper other than rule asks (X.2, STYLE.md
   ##   §1).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
@@ -205,7 +205,8 @@ func checkBlanks*(path, source: string): seq[Finding] =
       of Target.Child: "First child follows its opener at once (X.2)"
       of Target.Banner: "Suite or test after banner takes banner's one blank line (X.2)"
       of Target.Helper: "Nested helper takes one blank line on each side (STYLE.md §1)"
-    result.add finding(path, run.line + 1, message & "; got `" & $run.count & "`.")
+    let rule = if run.target == Target.Helper: Rule.HelperBlankLines else: Rule.TestBlankLines
+    result.add initReport(path, run.line + 1, rule, message & "; got `" & $run.count & "`.")
 
 
 func fixBlanks*(path, source: string): Fix =
@@ -223,8 +224,6 @@ func fixBlanks*(path, source: string): Fix =
     origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in found:
-    let rule =
-      if run.target == Target.Helper: "helper blank lines (STYLE.md §1)"
-      else: "test blank lines (X.2)"
-    result.fixed.add finding(path, run.line + 1, rule)
+    let rule = if run.target == Target.Helper: Rule.HelperBlankLines else: Rule.TestBlankLines
+    result.fixed.add initReport(path, run.line + 1, rule)
   if found.len > 0: result.origin = origin

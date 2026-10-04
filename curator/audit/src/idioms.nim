@@ -521,7 +521,7 @@ func fixReturnResult(path, source: string): Fix =
       let at = code[i].find(RETURN_RESULT)
       shaped.add line[0 ..< at] & "return" & line[at + RETURN_RESULT.len .. ^1]
       result.origin.add i + 1
-    result.fixed.add finding(path, i + 1, "return result (STYLE.md §5)")
+    result.fixed.add initReport(path, i + 1, Rule.ReturnResult)
   result.source = shaped.join("\n")
   if result.origin.len == lines.len: result.origin.setLen(0)
 
@@ -563,7 +563,7 @@ func fixImports(path, source: string): Fix =
     if sorted_lines.countIt(it.isWide) > lines[span.first .. span.last].countIt(it.isWide):
       continue
     for k, line in sorted_lines: lines[span.first + k] = line
-    result.fixed.add finding(path, span.first + 1, "bracket import (X.5)")
+    result.fixed.add initReport(path, span.first + 1, Rule.BracketImport)
 
   # Reorder each block of adjacent import statements by rank, stable within rank.
   let spans = code.importSpans
@@ -581,7 +581,7 @@ func fixImports(path, source: string): Fix =
       for span in block_spans:
         let r = span.target.importRank
         if r < rank:
-          result.fixed.add finding(path, span.first + 1, "import rank (X.5)")
+          result.fixed.add initReport(path, span.first + 1, Rule.ImportRank)
         rank = max(rank, r)
       for span in ranked: reordered.add lines[span.first .. span.last]
       for k, line in reordered: lines[spans[i].first + k] = line
@@ -648,7 +648,7 @@ func consolidations(lines, code: seq[string]): seq[Consolidation] =
   result = result.filterIt(not it.statement.isWide)
 
 
-func checkImportBrackets*(path, source: string): seq[Finding] =
+func checkImportBrackets*(path, source: string): seq[Report] =
   ## Report adjacent imports of one directory standing apart, and bracket of one module (X.5,
   ##   STYLE.md §5).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
@@ -659,7 +659,7 @@ func checkImportBrackets*(path, source: string): seq[Finding] =
           $c.lines.len & "` statements."
       else: "Bracket of one module drops its bracket (STYLE.md §5); got `" & c.prefix & "[" &
         c.items[0] & "]`."
-    result.add finding(path, c.lines[0] + 1, message)
+    result.add initReport(path, c.lines[0] + 1, Rule.ImportBrackets, message)
 
 
 func fixConsolidations(path, source: string): Fix =
@@ -673,7 +673,7 @@ func fixConsolidations(path, source: string): Fix =
     dropped: seq[int]
   for c in found:
     dropped.add c.lines[1 .. ^1]
-    result.fixed.add finding(path, c.lines[0] + 1, "import brackets (X.5)")
+    result.fixed.add initReport(path, c.lines[0] + 1, Rule.ImportBrackets)
   for i, line in lines:
     if i in dropped: continue
     var statement = line
@@ -742,7 +742,7 @@ func fixBindings(path, source: string): Fix =
     if is_long_string or is_widened: continue
     result.source = (lines[0 ..< run.first] & shaped & lines[last + 1 .. ^1]).join("\n")
     origin = origin[0 ..< run.first] & @[0] & origin[run.first .. ^1]  # Keyword line inserted.
-    result.fixed.insert(finding(path, run.first + 1, "single bindings (X.5)"), 0)
+    result.fixed.insert(initReport(path, run.first + 1, Rule.SingleBindings), 0)
   if result.fixed.len > 0: result.origin = origin
 
 
@@ -786,7 +786,7 @@ func fixStrictFuncs(path, source: string): Fix =
   if at >= 0 or cut == lines.len: inserted.add ""
   result.source = (lines[0 ..< cut] & inserted & lines[cut .. ^1]).join("\n")
   result.origin = origin[0 ..< cut] & inserted.mapIt(0) & origin[cut .. ^1]
-  result.fixed.add finding(path, reported, "strictFuncs (STYLE.md §2)")
+  result.fixed.add initReport(path, reported, Rule.StrictFuncs)
 
 
 func isUmbrella(path: string): bool =
@@ -823,21 +823,23 @@ func profilerOf(path, source: string): Profiler =
     else: is_opening = false
 
 
-func checkProfiler*(path, source: string): seq[Finding] =
+func checkProfiler*(path, source: string): seq[Report] =
   ## Report profiler import on two lines, and entry module, umbrella or stub lacking it (STYLE.md
   ##   §3).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   let profiler = profilerOf(path, source)
   for i in profiler.pairs:
-    result.add finding(
+    result.add initReport(
       path,
       i + 1,
+      Rule.ProfilerImport,
       "Profiler import stands on one line, `" & PROFILER_IMPORT & "` (STYLE.md §3); got `2` lines.",
     )
   if profiler.is_entry and not profiler.is_present:
-    result.add finding(
+    result.add initReport(
       path,
       0,
+      Rule.ProfilerImport,
       "Entry module, library umbrella and test stub import profiler right after pragmas " &
         "(STYLE.md §3); got none.",
     )
@@ -864,8 +866,8 @@ func fixProfiler(path, source: string): Fix =
         shaped.add ""
         result.origin.add 0
   result.source = shaped.join("\n")
-  for i in profiler.pairs: result.fixed.add finding(path, i + 1, "profiler import (STYLE.md §3)")
-  if not profiler.is_present: result.fixed.add finding(path, 0, "profiler import (STYLE.md §3)")
+  for i in profiler.pairs: result.fixed.add initReport(path, i + 1, Rule.ProfilerImport)
+  if not profiler.is_present: result.fixed.add initReport(path, 0, Rule.ProfilerImport)
 
 
 func fixStubKeys(path, source: string): Fix =
@@ -886,7 +888,7 @@ func fixStubKeys(path, source: string): Fix =
     result.origin.add i + 1
   result.source = shaped.join("\n")
   if dropped.len == 0: result.origin.setLen(0)
-  for stub in found: result.fixed.add finding(path, stub.line + 1, "stub keys (STYLE.md §6)")
+  for stub in found: result.fixed.add initReport(path, stub.line + 1, Rule.StubKeys)
 
 
 func disorders(source: string): seq[Disorder] =
@@ -954,14 +956,15 @@ func disorders(source: string): seq[Disorder] =
     )
 
 
-func checkLists*(path, source: string): seq[Finding] =
+func checkLists*(path, source: string): seq[Report] =
   ## Report pragma list of declaration, `export` list or names of `from … import` out of
   ##   dictionary order, bare pragmas first (X.10).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
   for d in source.disorders:
-    result.add finding(
+    result.add initReport(
       path,
       d.line + 1,
+      Rule.UnorderedList,
       "List language leaves unordered is alphabetised, bare pragmas first (X.10); got `" &
         d.got & "`.",
     )
@@ -973,7 +976,7 @@ func fixLists(path, source: string): Fix =
   result.source = source
   for d in found.reversed:
     result.source = result.source[0 ..< d.first] & d.sorted & result.source[d.after .. ^1]
-  for d in found: result.fixed.add finding(path, d.line + 1, "unordered list (X.10)")
+  for d in found: result.fixed.add initReport(path, d.line + 1, Rule.UnorderedList)
 
 
 const IDIOM_FIXERS*: array[8, Fixer] = [
