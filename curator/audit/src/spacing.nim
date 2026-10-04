@@ -1,7 +1,7 @@
 ## Enforce spaces inside Nim expressions (Article X.9), and fix them (`koch fix`).
 ##   Spaces are list X.9 gives; every gap list names takes its count:
 ##   - binary operator and `=` take one space on each side; one ending its line takes one before;
-##   - range operator (`..`, `..<`, `..^`) takes none on either side;
+##   - range operator (`..`, `..<`, `..^`) is binary operator, spaced alike;
 ##   - prefix operator is glued to its operand;
 ##   - comma and semicolon take none before them and one after; colon of type, field or branch
 ##     likewise;
@@ -17,8 +17,10 @@
 ##     Rule therefore rewrites only spacing whose reading cannot move: spaces on both sides or
 ##     on neither (`a+b`, `a  + b`), and operator ending its line, which lexer marks end and
 ##     never prefix. `a -b`, `a- b` and `a ⊖b` stay, and check reports none of them.
-##   Range glues where both sides hold space or neither does. It stays spaced where operator
-##     or negative number follows it, since glued `1..^1` and `1..-1` lex one operator.
+##   Range spaces as binary operator, so every binary operator reads alike (Architect, X.9).
+##     Glued `1..^1` lexes one operator `..^`, so fix writes `1 ..^ 1`, which `system` defines
+##     as `1 .. ^1`; there `^` is prefix, glued to operand. Range in prefix place (`a[.. 2]`)
+##     stays unread.
 ##   Prefix place: operator after anything but operand, which is where parser reads prefix
 ##     node; spaces after it go, unless `-` meets number, since `- 1` glued is literal `-1`,
 ##     which `-128'i8` shows differs.
@@ -36,6 +38,8 @@
 ##   Cost: name opening continuation line reads as declared, so `a*(b)` opening line stays.
 ##   Cost: asymmetric spacing stays, and reading holds it; its fix is choice of meaning.
 ##   Cost: spaces aligning columns of hand-shaped table go; fence keeps them (`fixes.nim`, X.1).
+##   Cost: fix spaces token lexer read, never splits it, so `1..^1` becomes `1 ..^ 1`, not
+##     `1 .. ^1` X.9 shows; split is hand's choice.
 ##   Cost: fixer never writes line width check reports: spacing that would widen line past
 ##     `LINE_MAX` stays, finding and all.
 
@@ -48,7 +52,7 @@ import ./[findings, form, names, tokens]
 type
   Placement {.pure.} = enum  ## Define which rule of X.9 gap falls under, which decides its spaces.
     Binary  ## Around binary operator: one space each side.
-    Range  ## Around range operator: none.
+    Range  ## Around range operator: one space each side, as binary.
     Prefix  ## After prefix operator: none.
     Equals  ## Around `=`: one space each side.
     Comma  ## Before comma none, after it one.
@@ -73,7 +77,7 @@ const
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keywords lexer reads as binary operators (`isOperator`); `not` and `as` stand otherwise.
-  RANGE_OPERATORS = ["..", "..<", "..^"]  ## Range operators, glued on both sides.
+  RANGE_OPERATORS = ["..", "..<", "..^"]  ## Range operators, spaced as binary.
   IGNORED_OPERATORS = ["::", ":", "."]
     ## Operator tokens of type, field and access, never spaced as operators.
   STATEMENT_KEYWORDS = ["export", "from", "import", "include"]
@@ -234,10 +238,10 @@ func respacings(source: string): seq[Respacing] =
                                TokenKind.Character, TokenKind.Quoted}
       if not is_operand_next: continue
 
-    # Glue range operator, where operator or negative number after it would not merge.
+    # Space binary operator, range among them, one each side; one ending its line, one before.
+    spacing.placement = if text in RANGE_OPERATORS: Placement.Range else: Placement.Binary
     if is_line_end:
-      if left == 1 or text in RANGE_OPERATORS: continue
-      spacing.placement = Placement.Binary
+      if left == 1: continue
       spacing.edits = @[Edit(first: before.after, after: t.first, spaces: 1)]
       spacing.got = source.excerpt(before, t)
       result.add spacing
@@ -245,18 +249,8 @@ func respacings(source: string): seq[Respacing] =
     let
       next = tokens[k + 1]
       right = next.first - t.after
-      is_merging = next.kind == TokenKind.Operator or
-        (next.kind == TokenKind.Number and source[next.first] == '-')
-    if (left == 0) != (right == 0): continue
-    if text in RANGE_OPERATORS and not is_merging:
-      if left == 0: continue
-      spacing.placement = Placement.Range
-      spacing.edits = source.around(tokens, k, 0)
-    else:
-      # Space binary operator one each side.
-      if left == 1 and right == 1: continue
-      spacing.placement = Placement.Binary
-      spacing.edits = source.around(tokens, k, 1)
+    if (left == 0) != (right == 0) or (left == 1 and right == 1): continue
+    spacing.edits = source.around(tokens, k, 1)
     spacing.got = source.excerpt(before, next)
     result.add spacing
 
@@ -268,7 +262,7 @@ func checkSpacing*(path, source: string): seq[Finding] =
     let message =
       case spacing.placement
       of Placement.Binary: "Binary operator takes one space on each side (X.9)"
-      of Placement.Range: "Range operator takes no space on either side (X.9)"
+      of Placement.Range: "Range operator takes one space on each side (X.9)"
       of Placement.Prefix: "Prefix operator is glued to its operand (X.9)"
       of Placement.Equals: "`=` takes one space on each side (X.9)"
       of Placement.Comma: "Comma takes no space before it and one after (X.9)"
