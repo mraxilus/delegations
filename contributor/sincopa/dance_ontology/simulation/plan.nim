@@ -119,7 +119,7 @@ func facingOf*(plan: Plan, who: Body, wind: float, is_away: bool, turner = Body.
   ##   Turner turns on own spot and partner stays where they stand, as card draws it: lead
   ##     who turns quarter has follow at side, and follow who turns quarter is still ahead.
   ##   Wind is added second, in one order for both: swan's planned still holds or not on
-  ##     last bit of this sum.  Added last, D1 and D7 stood no pose.
+  ##     last bit of this sum.  Added last, D01 and D07 stood no pose.
   let turned = (if who == turner: 2.0 * PI * wind else: 0.0)
   if who == Body.One: PI / 2.0 + turned + plan[2]
   else: -PI / 2.0 + turned + (if is_away: PI else: 0.0) + plan[3]

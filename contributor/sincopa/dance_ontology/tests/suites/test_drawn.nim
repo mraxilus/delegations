@@ -16,7 +16,7 @@ suite "Internal: Capsule on canvas":
     ## of no length with round caps is drawn as disc by one browser and as
     ## nothing by another: on Architect's phone every hand vanished, forearms
     ## ending 118 mm short of grip they were joined at, measured 2026-09-18 on
-    ## A7.  Disc is drawn by every browser.
+    ## A07.  Disc is drawn by every browser.
     let palm: Spot = (0.039, 0.211, 0.995)
     check drawnAs(palm, palm) == Drawn.Disc
     check drawnAs(palm, (0.108, 0.244, 1.020)) == Drawn.Stroke
@@ -26,7 +26,7 @@ suite "Internal: Capsule on canvas":
     ## Architect, on viewer from near overhead: z ordering is messed up at some
     ## angles.  Whole capsule was ordered by depth of its nearer end, so upper
     ## arm hanging from shoulder above torso's top was painted over torso all
-    ## way down, and its lower half showed through torso's silhouette (A5).
+    ## way down, and its lower half showed through torso's silhouette (A05).
     ## Painted in pieces, each by its own depth, arm's lower pieces go under
     ## torso's top and its shoulder end stays over it.
     let

@@ -80,12 +80,12 @@ suite "Internal: What each card asks of simulation":
 
   test "one picture is one question, whichever section draws it":
     ## Standard diagram's A16 is hand to hand wound half turn clockwise, which
-    ## is chain's C5, and A17 is C3.  Asked with opposite signs, simulation stood A16 in
-    ## C3's pose and A17 in C5's, mirror of what each card draws.
-    ##   Crossed pair is chain's own: A9, left to left over right to right Face-to-face, is
-    ##     D5, and A11, right over left, is D3.  Red with crossed pair's half turn asked one
-    ##     way, or either way: A11 stood A9's crossing, measured 2026-10-02.
-    for (frame, chain) in [("A16", "C5"), ("A17", "C3"), ("A9", "D5"), ("A11", "D3")]:
+    ## is chain's C05, and A17 is C03.  Asked with opposite signs, simulation stood A16 in
+    ## C03's pose and A17 in C05's, mirror of what each card draws.
+    ##   Crossed pair is chain's own: A09, left to left over right to right Face-to-face, is
+    ##     D05, and A11, right over left, is D03.  Red with crossed pair's half turn asked one
+    ##     way, or either way: A11 stood A09's crossing, measured 2026-10-02.
+    for (frame, chain) in [("A16", "C05"), ("A17", "C03"), ("A09", "D05"), ("A11", "D03")]:
       checkpoint frame & " against " & chain
       let (frame_ask, chain_ask) = (ask_by_key[frame], ask_by_key[chain])
       check frame_ask.links == chain_ask.links
@@ -96,10 +96,10 @@ suite "Internal: What each card asks of simulation":
 
 
   test "page counts clockwise seen from above, and simulation anticlockwise":
-    ## Chain's C5 is wound half turn clockwise, and simulation turns anticlockwise for
-    ## positive turns, so C5 is asked negative.
-    check ask_by_key["C5"].turns == -0.5
-    check ask_by_key["C3"].turns == 0.5
+    ## Chain's C05 is wound half turn clockwise, and simulation turns anticlockwise for
+    ## positive turns, so C05 is asked negative.
+    check ask_by_key["C05"].turns == -0.5
+    check ask_by_key["C03"].turns == 0.5
     check wayOf(HalfTurns(1)) == Way.Clockwise
 
 
@@ -231,17 +231,17 @@ suite "Internal: Simulation against reference":
   test "every crossed still lays connection its card names over at lead's crossing":
     ## Card is named for lead's arm on top where lead's two arms cross (`route.overArm`):
     ##   crossing nearest lead along both connections.  Frame names its own (`Frame.over`).
-    ##   Red with A11 asked A9's way about, measured 2026-10-02: left over right, where card
+    ##   Red with A11 asked A09's way about, measured 2026-10-02: left over right, where card
     ##     draws right over left.
     var named: seq[(string, Arm)]
     for i, target in FRAMES:
       if target.over.isSome:
-        let key = &"A{i * 2 + 1}"
+        let key = &"A{i * 2 + 1:02}"
         if ask_by_key[key].turns != 0.0:
           named.add (key, (if target.over.get == Side.Left: Arm.Left else: Arm.Right))
     for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
       for i, wind in STEPS:
-        if wind != 0.0: named.add (tag & $(i + 1), armOf(overArm(wind)))
+        if wind != 0.0: named.add (&"{tag}{i + 1:02}", armOf(overArm(wind)))
     check named.len == 14
     for (key, arm) in named:
       let
@@ -260,7 +260,7 @@ suite "Internal: Simulation against reference":
     ## Carried walk tries every distance, and planner every style and way, and each keeps pose
     ##   nearest to ease that holds (`walk.standing`, `walk.plannedStill`).  Search
     ##   ends early only at pose at ease, which nothing betters.
-    ##   Red with first plan that held kept, measured 2026-10-03: C6 stood follow's waist at its
+    ##   Red with first plan that held kept, measured 2026-10-03: C06 stood follow's waist at its
     ##     end, strain 1.00, where other path of same style held at 0.19.
     var distances = 0
     for _ in stands(HUMAN): inc distances
