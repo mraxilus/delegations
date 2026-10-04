@@ -266,7 +266,10 @@ proc runHook(root, event, input: string): int =
         command = data{"tool_input", "command"}.getStr
         checkout = checkoutAt(root, commandDirectory(command, directory))
         is_pushed = gitFields(checkout, ["branch", "-r", "--contains", "HEAD"]).len > 0
-      refuse(checkBash(checkout.branchOf, command, is_pushed), 2)
+      # Post through `gh api` speaks for delegate, so role line reads root's branch, as `body` does.
+      var found = checkBash(checkout.branchOf, command, is_pushed)
+      found.add checkPosts(branch, command, directory)
+      refuse(found, 2)
     of "body":
       if not isPost(tool, data{"tool_input", "body"} != nil): return 0
       let labels = data{"tool_input", "labels"}.getElems.mapIt(it.getStr)
