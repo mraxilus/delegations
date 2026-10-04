@@ -154,7 +154,7 @@ const
     ##     through two-and-a-half turns either way (`simulation/verdicts.md`).  Two
     ##     connections above are another matter -- simulation finds parallel pair
     ##     free one way and blocked at whole turn other way, crossed pair at
-    ##     three quarters -- and rule 13's swan is their asserted ceiling, so
+    ##     three quarters -- and rule 13's swan is their asserted block, so
     ##     flag stays flag.
 
 
@@ -225,7 +225,7 @@ func armCapacity*(blocker: Option[Blocker], level: Level): HalfTurns =
   ##     Arm has to cross torso to wrap low, and it runs out of length before
   ##       hold does; carried behind back, or up at shoulder or neck, it has
   ##       further to go.
-  ##   This is second of two ceilings, and reason there are two: first is
+  ##   This is second of two blocks, and reason there are two: first is
   ##     property of what joins couple, this one of what arm is doing.
   ##     Which of them binds is what tells wrap from lock -- see `blocker`.
   ##   Arm above head is on axis couple turns about, so it has nothing to
@@ -368,12 +368,12 @@ func stored*(state: FrameState, motion: Turn): HalfTurns =
 
 func isHolding*(state: FrameState, twist: HalfTurns): bool =
   ## Test whether frame state can stand at given twist.
-  ##   Two ceilings, and frame state has to be under both: what joins couple can
+  ##   Two blocks, and frame state has to be under both: what joins couple can
   ##     only give away so much turn, and arm can only carry so much wherever
   ##     it has wound up.
   ##     One definition, so that everything that refuses turn refuses it for
   ##       same reason.
-  ##   On hold that has been measured neither ceiling is slack: arm's is what
+  ##   On hold that has been measured neither block is slack: arm's is what
   ##     makes full turn into lock rather than wrap, and hold's is what
   ##     refuses one-and-a-half.
   abs(twist) <= state.capacity and abs(twist) <= state.armsCapacity(twist)
@@ -444,7 +444,7 @@ func frameStates*(): seq[FrameState] =
 
 
 func refusal*(state: FrameState, twist: HalfTurns): Option[Refusal] =
-  ## Say which ceiling refuses twist, if either does.
+  ## Say which block refuses twist, if either does.
   ##
   ## Hold is named first where both would refuse, because it is one that
   ## dancer can do something about: letting hand go changes hold, and

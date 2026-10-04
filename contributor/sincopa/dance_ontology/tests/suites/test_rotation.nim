@@ -117,13 +117,13 @@ suite "Internal: What the arm can carry":
     let low = fromKey("l-.").get.rest
     for way in [1, -1]:
       check low.turn(rotates(Dancer.Follow, 3 * way)).isNone
-      # Past hold's ceiling, which is one that binds there: arm is
+      # Past hold's block, which is one that binds there: arm is
       # lock by then, and lock is roomier of two.
       check 3 > low.capacity
       check armCapacity(blocker(3 * way), Level.Low) == CAPACITY_ARM
 
 
-  test "a frame state stands only where both ceilings allow it":
+  test "a frame state stands only where both blocks allow it":
     for target in FRAMES:
       for level in Level:
         var state = target.rest
@@ -242,7 +242,7 @@ suite "Internal: What there is":
           check taken.get == offer.to
 
 
-  test "a refusal names the ceiling that refuses, and the hold comes first":
+  test "a refusal names the block that refuses, and the hold comes first":
     for stood in frameStates():
       for offer in turnsOf(stood):
         if offer.refused.isNone:
@@ -266,7 +266,7 @@ suite "Internal: What there is":
       if offer.refused == some(Refusal.Arm):
         inc arm_first
     check arm_first == 0
-    # Because arm's ceiling is not refusal here -- it is what makes full
+    # Because arm's block is not refusal here -- it is what makes full
     # turn into lock.  What refuses is hold, at one-and-a-half.
     for offer in turnsOf(low):
       if abs(offer.to.twist) == 3:

@@ -164,12 +164,12 @@ const RULES* = [
   ##     said -- lines crossing, with over-under break naming which is
   ##     on top -- and never by which side of body line hugs.
   ##   Rules 15 and 16 turn work into one mock-up per kind of turn, and
-  ##     rule 16 takes ceiling off high single hand.
+  ##     rule 16 takes block off high single hand.
   ##     Hold that turns for ever has no wound-out end, so how far it has
   ##       wound is not part of its state; only orientation is, which is
   ##       why single hand has exactly four positions and no more.
   ##     That retires rule 14's pigtail for single hands: it was invented to
-  ##       tell one wind from its mirror, and with no ceiling there is
+  ##       tell one wind from its mirror, and with no block there is
   ##       nothing left for it to tell apart.  Crossing convention
   ##       stands for pairs, where geometry makes crossing itself.
   ##   Rule 17 moves assumption from `high` to `above`, and says why:

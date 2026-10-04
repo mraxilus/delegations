@@ -177,8 +177,8 @@ const BODY = """
   turn of the other dancer, and the difference belongs to the move. The compound turn lands
   somewhere of its own, and it is an orbit walked while the walker turns the other way. The frame
   page says the same.</p>
-  <p><b>What is not drawn here:</b> any limit. No refusal appears, because above has no ceiling.
-    Ceilings and refusals come back with the first level that locks or wraps.</p>
+  <p><b>What is not drawn here:</b> any limit. No refusal appears, because above has no block.
+    Blocks and refusals come back with the first level that locks or wraps.</p>
 </div>
 
 <div class="foot">

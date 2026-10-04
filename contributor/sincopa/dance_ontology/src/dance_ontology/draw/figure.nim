@@ -31,7 +31,7 @@ type Twists* = array[Arm, float]
   ## whole draws diamond, one and one-half draws swan.
   ##   It once carried two more channels -- pigtail at lone reach's
   ##     middle and braid across pair -- which retired rotation page
-  ##     owned.  Rule 16 took pigtail away, having no ceiling left for
+  ##     owned.  Rule 16 took pigtail away, having no block left for
   ##     it to mark, and rule 28's measured winding replaced braid with
   ##     geometry.  Neither has had caller since.
 
