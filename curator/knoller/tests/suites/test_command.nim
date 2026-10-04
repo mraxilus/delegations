@@ -3,7 +3,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, strutils, unittest]
+import std/[options, os, sequtils, strutils, unittest]
 import ../../src/knoller/[chain, command, rules]
 
 
@@ -13,6 +13,20 @@ const
   CLEAN = "{.experimental: \"strictFuncs\".}\n\nlet x = a + b  # c\n"  ## Nim source fix leaves.
   README = currentSourcePath().parentDir.parentDir.parentDir / "README.md"
     ## Record listing every rule id output cites.
+  SUITES =
+    "{.experimental: \"strictFuncs\".}\n\nimport std/unittest\nsuite \"A\":\n  test \"a\":\n" &
+      "    check true\n  test \"b\":\n    check true\n"
+    ## Suites of test file, each run of blank lines short.
+  STUB = "discard \"\"\"\naction: run\ncmd: \"nim c -r $file\"\n\"\"\"\ninclude \"suites.nim\"\n"
+    ## Testament stub whose `cmd` holds `-r`.
+  UMBRELLA = "{.experimental: \"strictFuncs\".}\n\nimport ./p/a\n"
+    ## Library umbrella lacking profiler import.
+
+
+func shown(path, directory, source: string): seq[string] =
+  ## Print check of one file path names from directory, path read as `<path>`.
+  let outcome = outcomeOf([(path, source)], [], is_check = true, directory)
+  outcome.lines.mapIt(it.replace(path, "<path>"))
 
 
 
@@ -79,6 +93,24 @@ suite "Command line":
     check outcome.code == 0  # break inside fence alone fails nothing
     let written = outcomeOf([("a.nims", fenced)], [], is_check = false)
     check written.written.len == 0 and written.code == 0  # nothing written
+
+
+  test "path reads whole from directory it is named from, `.` and `..` resolved":
+    check layoutOf("suites.nim", "/p/tests") == "/p/tests/suites.nim"
+    check layoutOf("tests/suites.nim", "/p") == "/p/tests/suites.nim"
+    check layoutOf("../tests/./a.nim", "/p/src") == "/p/tests/a.nim"
+    check layoutOf("/q/a.nim", "/p") == "/q/a.nim"  # absolute path stays
+
+
+  test "same file reports alike however path names it: test file, stub and umbrella":
+    for (source, rule, inside, outside) in [
+      (SUITES, "test-blank-lines", ("suites.nim", "/p/tests"), ("tests/suites.nim", "/p")),
+      (STUB, "stub-keys", ("test_p.nim", "/p/tests"), ("p/tests/test_p.nim", "/")),
+      (UMBRELLA, "profiler-import", ("p.nim", "/p/src"), ("../p/src/p.nim", "/p/tests")),
+    ]:
+      let lines = shown(inside[0], inside[1], source)
+      check lines.anyIt(rule in it)  # rule reads path whole, from inside its directory too
+      check lines == shown(outside[0], outside[1], source)
 
 
   test "locked nimble file and file of no dialect are passed over":
