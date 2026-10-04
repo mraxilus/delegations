@@ -1,5 +1,5 @@
 ## Record every kept file of simulation in one pool: rig viewer's stills and sweeps, reference's
-## tags, whole-cloth turns, rig suite's answers and report's readings.  Every job of five
+## badges, whole-cloth turns, rig suite's answers and report's readings.  Every job of five
 ## recordings is in one queue, slowest first, and each result is kept as it comes, so restarted
 ## run asks only what has no result yet.
 ##

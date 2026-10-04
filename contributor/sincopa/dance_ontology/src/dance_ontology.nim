@@ -1,8 +1,8 @@
 ## Model frames couple can hold in partner dance and moves between them.
 ##
-## Ontology has one state, `Frame`, and one relation, primitive transition
-## between two frames.
-##   Everything else is derived from those: names, routes, audit of workbook
+## Ontology has one state, `Frame`, and one relation, move between two
+## frames.
+##   Everything else is derived from those: names, transitions, audit of workbook
 ##     from which model came, and unfinished rotation axis.
 ##
 ## Notation gate was evaluated and closed: partner dance has no canonical
@@ -34,7 +34,7 @@
 
 when compileOption("profiler"): import std/nimprof
 
-## Draw rotation axis as one line, with couple's postures along it.
+## Draw rotation axis as one line, with couple's frame states along it.
 import ./dance_ontology/axle
 ## Draw one frame from above, for every place that shows one.
 import ./dance_ontology/diagram
@@ -48,7 +48,7 @@ import ./dance_ontology/motion
 import ./dance_ontology/rotation
 ## Draw only where couple are and where they can go next.
 import ./dance_ontology/spokes
-## Relation: primitives, compounds, moves between frames, and routes.
+## Relation: moves, compound moves, and transitions between frames.
 import ./dance_ontology/transition
 ## `base` sheet held as data, and its audit against derived model.
 import ./dance_ontology/workbook

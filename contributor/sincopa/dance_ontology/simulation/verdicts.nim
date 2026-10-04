@@ -140,7 +140,7 @@ proc rigTable(): string =
     &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
   result.add &"| shoulders | {HUMAN.shoulder_out} m out, {HUMAN.shoulder_up} m up |\n"
   result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, wrist to grip {HUMAN.hand}: " &
-    &"reach {turns(reach(HUMAN))} m; limb radius {HUMAN.limb} |\n"
+    &"span {turns(span(HUMAN))} m; limb radius {HUMAN.limb} |\n"
   let
     behind = int(round(HUMAN.range[Dof.Extend].upper * 180.0 / PI))
     twist_in = int(round(-HUMAN.range[Dof.Twist].lower * 180.0 / PI))
@@ -390,7 +390,7 @@ proc report(): string =
   result.add "\n"
   result.add prose(
     "Read with the model's limits in mind: the shoulder girdle is rigid, so " &
-      "a reach a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
+      "a span a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
       "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
       "stand for each turn wherever it carries furthest, never inside each other.  A " &
       "*blocks* is therefore a little early, and a *holds* says the pose exists without " &

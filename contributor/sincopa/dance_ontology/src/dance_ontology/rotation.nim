@@ -7,7 +7,7 @@
 ##     them is filled in.
 ##   Kept separate so that nothing uncertain leaks into `frame.nim` or
 ##     `transition.nim`.
-##     Cost of separation: turned couple is `Posture`, not `Frame`, so every
+##     Cost of separation: turned couple is `FrameState`, not `Frame`, so every
 ##       consumer of turning joins two models at seam `rest` marks.
 ##       Accepted -- certain half stays checkable against workbook while
 ##       this half is still being measured.
@@ -81,7 +81,7 @@ type
     side*: Side  ## Lead hand that rests.
     where*: BodySite  ## Place it rests on.
 
-  Posture* = object  ## Hold frame together with rotation stored in it.
+  FrameState* = object  ## Hold frame together with rotation stored in it.
     frame*: Frame
     level*: array[Side, Level]  ## Height each arm is carried at.
     contact*: Option[Contact]  ## Hand resting on follow's body, which stops turn.
@@ -107,10 +107,10 @@ type
     Hold,  ## What joins couple cannot give that much turn away.
     Arm  ## Arm cannot carry that much, wherever it has wound up.
 
-  Offer* = object  ## Hold one turn out of posture, taken or refused.
+  Offer* = object  ## Hold one turn out of frame state, taken or refused.
     who*: Dancer  ## Dancer who turns; other holds their facing.
     amount*: HalfTurns  ## Half turns, positive to that dancer's right.
-    to*: Posture  ## Where it lands, or would land if it could.
+    to*: FrameState  ## Where it lands, or would land if it could.
     refused*: Option[Refusal]  ## Why it cannot be taken, where it cannot.
 
 
@@ -154,7 +154,7 @@ const
     ##     through two-and-a-half turns either way (`simulation/verdicts.md`).  Two
     ##     connections above are another matter -- simulation finds parallel pair
     ##     free one way and blocked at whole turn other way, crossed pair at
-    ##     three quarters -- and rule 13's swan is their asserted ceiling, so
+    ##     three quarters -- and rule 13's swan is their asserted block, so
     ##     flag stays flag.
 
 
@@ -225,7 +225,7 @@ func armCapacity*(blocker: Option[Blocker], level: Level): HalfTurns =
   ##     Arm has to cross torso to wrap low, and it runs out of length before
   ##       hold does; carried behind back, or up at shoulder or neck, it has
   ##       further to go.
-  ##   This is second of two ceilings, and reason there are two: first is
+  ##   This is second of two blocks, and reason there are two: first is
   ##     property of what joins couple, this one of what arm is doing.
   ##     Which of them binds is what tells wrap from lock -- see `blocker`.
   ##   Arm above head is on axis couple turns about, so it has nothing to
@@ -241,8 +241,8 @@ func armCapacity*(blocker: Option[Blocker], level: Level): HalfTurns =
     CAPACITY_ARM
 
 
-func capacity*(posture: Posture): HalfTurns =
-  ## Get how much twist posture can store before couple must change it.
+func capacity*(state: FrameState): HalfTurns =
+  ## Get how much twist frame state can store before couple must change it.
   ##
   ## Hand on follow's body gives no turn away: it is already around them.
   ## This is what closed position is, and it is why follow's turn out of it
@@ -250,9 +250,9 @@ func capacity*(posture: Posture): HalfTurns =
   ## connection is roomiest, because both dancers can share turn between
   ## their two arms.  Pair binds at half that, which is why wrap is led from
   ## two hands and lock from one.
-  if posture.contact.isSome:
+  if state.contact.isSome:
     return CAPACITY_CONTACT
-  case posture.frame.countHolds
+  case state.frame.countHolds
   of 0: UNBOUNDED_TURNS  # Nothing joins bodies, so nothing limits turn.
   of 1: CAPACITY_SINGLE
   else: CAPACITY_PAIR
@@ -290,8 +290,8 @@ func blockerOf*(twist: HalfTurns, level: Level): Option[Blocker] =
   if level == Level.Above: none(Blocker) else: blocker(twist)
 
 
-func armsCapacity*(posture: Posture, twist: HalfTurns): HalfTurns =
-  ## Get how much twist arms of posture carry between them.
+func armsCapacity*(state: FrameState, twist: HalfTurns): HalfTurns =
+  ## Get how much twist arms of frame state carry between them.
   ##   Tightest arm binds.
   ##     Couple is held together by all of its connections at once, so first
   ##       arm to run out is one that stops turn -- and only arms that are
@@ -299,12 +299,12 @@ func armsCapacity*(posture: Posture, twist: HalfTurns): HalfTurns =
   ##       nothing to run out of.
   ##   With no arm holding at all there is nothing to run out: two people who
   ##     are not touching can each face wherever they like.
-  if posture.frame.countHolds == 0:
+  if state.frame.countHolds == 0:
     return UNBOUNDED_TURNS
   result = UNBOUNDED_TURNS
   for side in Side:
-    if posture.frame.hold[side].isSome:
-      result = min(result, armCapacity(blockerOf(twist, posture.level[side]), posture.level[side]))
+    if state.frame.hold[side].isSome:
+      result = min(result, armCapacity(blockerOf(twist, state.level[side]), state.level[side]))
 
 
 func around*(blocker: Blocker, level: Level): Option[BodySite] =
@@ -335,15 +335,15 @@ func around*(blocker: Blocker, level: Level): Option[BodySite] =
 
 #[ Turning ]#
 
-func rest*(target: Frame): Posture =
-  ## Get posture of frame that has not turned, which is where hand-to-hand
+func rest*(target: Frame): FrameState =
+  ## Get frame state of frame that has not turned, which is where hand-to-hand
   ## ontology lives.
-  Posture(frame: target, level: [Level.Low, Level.Low], contact: none(Contact), twist: 0)
+  FrameState(frame: target, level: [Level.Low, Level.Low], contact: none(Contact), twist: 0)
 
 
-func rests*(posture: Posture, side: Side, where: BodySite): Posture =
+func rests*(state: FrameState, side: Side, where: BodySite): FrameState =
   ## Rest one lead hand on follow's body, which takes turn away.
-  result = posture
+  result = state
   result.contact = some(Contact(side: side, where: where))
 
 
@@ -357,44 +357,44 @@ func together*(amount: HalfTurns): Turn =
   Turn(turns: [amount, amount])
 
 
-func stored*(posture: Posture, motion: Turn): HalfTurns =
+func stored*(state: FrameState, motion: Turn): HalfTurns =
   ## Get twist that turn would leave stored, whether or not it can be.
   ##
   ## Turn is taken as one motion rather than as one dancer after other,
   ## because couple does not pass through state where only one of them has
   ## moved.
-  posture.twist + motion.turns[Dancer.Follow] - motion.turns[Dancer.Lead]
+  state.twist + motion.turns[Dancer.Follow] - motion.turns[Dancer.Lead]
 
 
-func isHolding*(posture: Posture, twist: HalfTurns): bool =
-  ## Test whether posture can stand at given twist.
-  ##   Two ceilings, and posture has to be under both: what joins couple can
+func isHolding*(state: FrameState, twist: HalfTurns): bool =
+  ## Test whether frame state can stand at given twist.
+  ##   Two blocks, and frame state has to be under both: what joins couple can
   ##     only give away so much turn, and arm can only carry so much wherever
   ##     it has wound up.
   ##     One definition, so that everything that refuses turn refuses it for
   ##       same reason.
-  ##   On hold that has been measured neither ceiling is slack: arm's is what
+  ##   On hold that has been measured neither block is slack: arm's is what
   ##     makes full turn into lock rather than wrap, and hold's is what
   ##     refuses one-and-a-half.
-  abs(twist) <= posture.capacity and abs(twist) <= posture.armsCapacity(twist)
+  abs(twist) <= state.capacity and abs(twist) <= state.armsCapacity(twist)
 
 
-func turn*(posture: Posture, motion: Turn): Option[Posture] =
+func turn*(state: FrameState, motion: Turn): Option[FrameState] =
   ## Turn couple, refusing turn that arms cannot hold.
   ##
-  ## Refusal is what matters: turn beyond posture's capacity is not turn
+  ## Refusal is what matters: turn beyond frame state's capacity is not turn
   ## couple can do, it is turn plus change of frame, and change of frame has
   ## to be led.
-  let reached = posture.stored(motion)
-  if not posture.isHolding(reached):
-    return none(Posture)
-  var turned = posture
+  let reached = state.stored(motion)
+  if not state.isHolding(reached):
+    return none(FrameState)
+  var turned = state
   turned.twist = reached
   some(turned)
 
 
 
-#[ Posture Inventory ]#
+#[ Frame State Inventory ]#
 
 const
   MOST_TURN* = 3
@@ -405,33 +405,33 @@ const
   TURN_WAYS* = [1, -1]  ## To turning dancer's right, then to their left.
 
 
-func normalised*(posture: Posture): Posture =
+func normalised*(state: FrameState): FrameState =
   ## Put arms that are not holding back down.
   ##
-  ## Height of free arm cannot stop turn, so two postures differing only in
-  ## where free hand is carried are one posture.  Enumerating without this
+  ## Height of free arm cannot stop turn, so two frame states differing only in
+  ## where free hand is carried are one frame state.  Enumerating without this
   ## would count each of them twice and claim more states than there are.
-  result = posture
+  result = state
   for side in Side:
-    if posture.frame.hold[side].isNone:
+    if state.frame.hold[side].isNone:
       result.level[side] = Level.Low
 
 
-func postures*(): seq[Posture] =
-  ## Get every posture that model derives: frame, heights it is held at, and
+func frameStates*(): seq[FrameState] =
+  ## Get every frame state that model derives: frame, heights it is held at, and
   ## every twist those two can stand at.
   ##
   ## Hand-to-hand half has `FRAMES`; this is its opposite number, and
   ## rotation views are built on it as frame views are built on that.  Hand
   ## resting on body is left out: it gives whole turn away, so it adds no
-  ## posture that turning can reach.
+  ## frame state that turning can reach.
   # One loop for each axis of data: frame, left level, right level, twist.
   # Split would hide its shape.
   for target in FRAMES:
     for left in Level:
       for right in Level:
         let held = normalised(
-          Posture(frame: target, level: [left, right], contact: none(Contact), twist: 0),
+          FrameState(frame: target, level: [left, right], contact: none(Contact), twist: 0),
         )
         if held.level != [left, right]:
           continue
@@ -443,22 +443,22 @@ func postures*(): seq[Posture] =
           result.add stood
 
 
-func refusal*(posture: Posture, twist: HalfTurns): Option[Refusal] =
-  ## Say which ceiling refuses twist, if either does.
+func refusal*(state: FrameState, twist: HalfTurns): Option[Refusal] =
+  ## Say which block refuses twist, if either does.
   ##
   ## Hold is named first where both would refuse, because it is one that
   ## dancer can do something about: letting hand go changes hold, and
   ## nothing changes how far arm reaches.
-  if abs(twist) > posture.capacity:
+  if abs(twist) > state.capacity:
     some(Refusal.Hold)
-  elif abs(twist) > posture.armsCapacity(twist):
+  elif abs(twist) > state.armsCapacity(twist):
     some(Refusal.Arm)
   else:
     none(Refusal)
 
 
-func turnsOf*(posture: Posture): seq[Offer] =
-  ## Get every turn out of posture, refused ones included.
+func turnsOf*(state: FrameState): seq[Offer] =
+  ## Get every turn out of frame state, refused ones included.
   ##   Every turn workbook has sheet for: either dancer, either way, by half,
   ##     whole or one-and-a-half.
   ##     Twelve of them, which is twelve sheets -- and half of them land where
@@ -479,10 +479,10 @@ func turnsOf*(posture: Posture): seq[Offer] =
         let
           amount = size * way
           motion = rotates(who, amount)
-          reached = posture.stored(motion)
-        var landing = posture
+          reached = state.stored(motion)
+        var landing = state
         landing.twist = reached
-        result.add Offer(who: who, amount: amount, to: landing, refused: posture.refusal(reached))
+        result.add Offer(who: who, amount: amount, to: landing, refused: state.refusal(reached))
 
 
 
@@ -518,7 +518,7 @@ func turnName*(amount: HalfTurns): string =
 func aboutName*(about: About): string =
   ## Name what dancer turns around, as vocabulary names it.
   ##   No page speaks these words yet; design workbench words its own
-  ##     captions.  Kept for page that stands postures in links, which this
+  ##     captions.  Kept for page that stands frame states in links, which this
   ##     module exists ahead of.
   case about
   of About.Axis: "on axis"
@@ -529,55 +529,55 @@ func levelName*(level: Level): string = ($level).toLowerAscii
   ## Name height arm is carried at.
 
 
-func armName*(posture: Posture): string =
+func armName*(state: FrameState): string =
   ## Name what arms are doing, where they are doing anything.
   ##
   ## Height comes first because it is what decides how far arm can go: low
   ## wrap and high wrap are one blocker at two heights, and it is height that
   ## says which of them runs out first.
-  let what = blockerOf(posture.twist, posture.level[Side.Left])
+  let what = blockerOf(state.twist, state.level[Side.Left])
   if what.isNone:
     return ""
   var heights: seq[string] = @[]
   for side in Side:
-    if posture.frame.hold[side].isSome and
-        levelName(posture.level[side]) notin heights:
-      heights.add levelName(posture.level[side])
+    if state.frame.hold[side].isSome and
+        levelName(state.level[side]) notin heights:
+      heights.add levelName(state.level[side])
   (if heights.len == 1: heights[0] & " " else: "") &
     ($what.get).toLowerAscii
 
 
-func describe*(posture: Posture): string =
-  ## Name posture: frame it is held in, and what turning has done to it.
-  if posture.twist == 0:
-    return posture.frame.describe
-  result = posture.frame.describe & ", " & turnName(posture.twist)
-  let arms = posture.armName
+func describe*(state: FrameState): string =
+  ## Name frame state: frame it is held in, and what turning has done to it.
+  if state.twist == 0:
+    return state.frame.describe
+  result = state.frame.describe & ", " & turnName(state.twist)
+  let arms = state.armName
   if arms.len > 0:
     result.add ", " & arms
 
 
-func key*(posture: Posture): string =
-  ## Form identifier for posture, for page to name one by.
-  result = posture.frame.key & ":"
+func key*(state: FrameState): string =
+  ## Form identifier for frame state, for page to name one by.
+  result = state.frame.key & ":"
   for side in Side:
-    result.add(if posture.level[side] == Level.High: "H" else: "L")
-  result.add ":" & $posture.twist
+    result.add(if state.level[side] == Level.High: "H" else: "L")
+  result.add ":" & $state.twist
 
 
-func fromPostureKey*(key: string): Option[Posture] =
-  ## Decode posture identifier, rejecting anything model does not derive.
+func fromFrameStateKey*(key: string): Option[FrameState] =
+  ## Decode frame state identifier, rejecting anything model does not derive.
   ##
-  ## Rejecting will be what matters, as it is for frame: posture that model
+  ## Rejecting will be what matters, as it is for frame: frame state that model
   ## does not stand at could not then be arrived at by asking for it in link.
-  ## No page decodes posture key yet -- this is `key`'s inverse, written with
+  ## No page decodes frame state key yet -- this is `key`'s inverse, written with
   ## it so two cannot drift before they are needed.
   let parts = key.split(':')
   if parts.len != 3 or parts[1].len != 2:
-    return none(Posture)
+    return none(FrameState)
   let target = fromKey(parts[0])
   if target.isNone:
-    return none(Posture)
+    return none(FrameState)
   var stood = target.get.rest
   for index, side in [Side.Left, Side.Right]:
     stood.level[side] = if parts[1][index] == 'H': Level.High else: Level.Low
@@ -585,9 +585,9 @@ func fromPostureKey*(key: string): Option[Posture] =
   try:
     twist = parseInt(parts[2])
   except ValueError:
-    return none(Posture)
+    return none(FrameState)
   stood = normalised(stood)
   if not stood.isHolding(twist):
-    return none(Posture)
+    return none(FrameState)
   stood.twist = twist
   some(stood)

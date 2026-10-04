@@ -36,7 +36,7 @@ type
     arm: int  ## Arm index nought to three, -1 for trunk, -2 for face.
     part: int  ## Nought girdle, one upper, two fore, three palm; -1 trunk or face.
 
-  Style* = object  ## How couple go about turn: one way among several planner tries.
+  Style* = object  ## How couple go about turn: one setting among several planner tries.
     gather*: float  ## Newtons per metre, as weight, drawing two joined pairs to one point.
     leap*: float  ## Metres any point of arm may move between two moments.
     stay*: float  ## Weight holding each moment near last one.

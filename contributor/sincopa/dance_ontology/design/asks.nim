@@ -95,7 +95,7 @@ func turnerOf*(manner: Manner, amount: float): tuple[who: Body, turns: float] =
   ##     changes and centre dancer's does: physically, dancer at centre turns other way
   ##     about.  Architect's reading.  Simulation turns that dancer, and connection goes
   ##     round them and over their crown.  Card draws same: orbit lands on picture partner's
-  ##     axis turn reaches (`parts.FAMILY_OF`).
+  ##     axis turn reaches (`parts.LUT_ROUND_BY_MANNER`).
   let walker = bodyOf(MANNERS[manner].who)
   if MANNERS[manner].about == About.Axis: (walker, asked(amount))
   else: (otherThan(walker), asked(-amount))

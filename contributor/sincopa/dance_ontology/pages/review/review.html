@@ -314,7 +314,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
   </div>
   <p class="lede">This project rebuilt your <code>base</code> sheet from first principles, and
   then checked the sheet against it. The hand-to-hand half of your sheet is complete and correct:
-  every cell names the right primitive, and no move is missing.</p>
+  every cell names the right move, and no move is missing.</p>
   <div class="rule"></div>
   {{stats}}
 </header>
@@ -369,7 +369,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     {{map}}
   </div>
   <p>One line stands for two moves, because every move reverses, so twenty moves are ten lines.
-  The dashed curves are the compounds, drawn apart from the lines because they are not moves. A
+  The dashed curves are the compound moves, drawn apart from the lines because each is two moves. A
   <code>place</code> is the two ways in and out of <em class="term">free</em> taken together. A
   <code>cut</code> is the two ways in and out of a single hold.</p>
   <p>The picture also shows that the ontology has no dead end and no island. Every frame reaches
@@ -378,23 +378,23 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
 
 <section>
   <div>
-    <p class="eyebrow">The verdict</p>
+    <p class="eyebrow">The answer</p>
     <h2>Every cell you filled in is the right one</h2>
   </div>
   <p>{{checkable}} of your {{cells}} cells hold between two hand-to-hand frames. All
-  {{checkable}} name what the model derives on its own: {{primitive_cells}} of them a primitive,
-  and {{compound_cells}} of them one of the two compounds. Together they are <em>every</em> move
-  between the {{named}} states they name. Nothing is missing, and nothing is spare.</p>
+  {{checkable}} name what the model derives on its own: {{move_cells}} of them a move, and
+  {{compound_cells}} of them one of the two compound moves. Together they are <em>every</em>
+  move between the {{named}} states they name. Nothing is missing, and nothing is spare.</p>
   <div class="scroll">
     {{matrix}}
   </div>
   <p class="dim" style="font-size: .85rem">Rows are the frame danced from, and columns the frame
   danced to. {{legend}}. An outlined cell is a move that the model derives and your sheet has no
   row for, and every one of them touches <em class="term">free</em>. A faded cell is a
-  compound.</p>
+  compound move.</p>
 
-  <h3>{{primitive_count}} primitives, not six</h3>
-  {{primitives}}
+  <h3>{{helper_count}} moves, not six</h3>
+  {{helpers}}
   <p>Your vocabulary marks two of its six helpers with an asterisk, and gives each the same
   shape. A <em class="term">place*</em> is a collect and then a drop, and a
   <em class="term">cut*</em> is a drop and then a collect. Both keep contact through a trace, the
@@ -406,9 +406,9 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
   <code>base</code> sheet calls a <code>slide</code>, slides a hand along the partner. The space
   between the two hands of the follow is empty air, so no trace can run there. A trace returns
   with the body vocabulary, below.
-  The two primitives that are left are the two that change what is held.</p>
+  The two that are left are the moves, which change what is held.</p>
 
-  <h3>{{compound_count}} compounds worth naming</h3>
+  <h3>{{compound_count}} compound moves worth naming</h3>
   {{compounds}}
   <p>The two differ in one thing, which is whether the other arm stands in the way. A
   <code>place</code> has a clear path, so the hands overlap on the way past and the couple never
@@ -441,7 +441,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       <p>It matters more now that a <code>place</code> is two moves rather than one. Every hand-off
       in your sheet is a drop and then a collect, which is all four <em class="term">pass</em>
       cells. The frame between the two is <em class="term">free</em>. So the sheet names four
-      routes through a state that it does not hold.</p>
+      transitions through a state that it does not hold.</p>
       <p class="do"><b>Do:</b> add one row and one column. Four collects out,
       four drops in, and the graph closes.</p>
     </div>
@@ -449,7 +449,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <div class="finding defer">
       <div class="head">
         <h3>2. <em class="term">closed</em> and <em class="term">half-closed</em> are not
-        hand positions</h3>
+        hand-to-hand frame states</h3>
         <span class="chip">{{deferred}} cells depend on it</span>
       </div>
       <p>These two are the only states in your sheet that are not hand-to-hand,
@@ -482,10 +482,10 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       <p><em class="term">Left-to-left around Right-to-right</em> also sits in the same variant
       list as <em class="term">&hellip; over &hellip;</em>. <strong>Over</strong> is part of the
       state, which is the arm on top. <strong>Around</strong> is a wrap, which is a modifier that
-      rotation produces. While the two stay in one list, the position list grows every time an arm
-      does something.</p>
-      <p class="do"><b>Do:</b> one word per primitive, and move
-      <em class="term">around</em> out of the position variants and into the
+      rotation produces. While the two stay in one list, the list of frame states grows every time
+      an arm does something.</p>
+      <p class="do"><b>Do:</b> one word per move, and move
+      <em class="term">around</em> out of the variants of a frame state and into the
       modifiers.</p>
     </div>
 
@@ -505,15 +505,15 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       <blockquote>Unsure if it is correct to either separate or combine these
       positions? I'm leaning heavily towards them being the same thing. Perhaps I
       need a clearer definition of what a frame position is.</blockquote>
-      <p class="answer">One position, two states. Keep both readings.</p>
-      <p>A <strong>frame position</strong> is which hands hold what, such as
+      <p class="answer">One frame hold, two states. Keep both readings.</p>
+      <p>A <strong>frame hold</strong> is which hands hold what, such as
       <em class="term">Left-to-left and Right-to-right</em>. It is what you call out on the floor.
-      A <strong>frame</strong> is a position and the arm order together, and it is what the state
+      A <strong>frame</strong> is a frame hold and the arm order together, and it is what the state
       machine moves between.</p>
       <p>The test is whether a dancer passes between the two for free, and they cannot. A move from
       over-Left to over-Right takes a <code>cut</code>. Merge them, and the machine offers a move
-      that the arms forbid. Name them apart everywhere, and you report a new position every time an
-      arm changes height. In the code that costs one function: <code>describe</code> gives the
+      that the arms forbid. Name them apart everywhere, and you report a new frame state every time
+      an arm changes height. In the code that costs one function: <code>describe</code> gives the
       state, and <code>position</code> gives the class.</p>
     </div>
 
@@ -651,9 +651,9 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
   <div class="build">
     <div>
       <h3>One state, one relation</h3>
-      <p>A move exists between two frames exactly where one primitive is the difference between
-      them. The names, the routes, the app and the audit all derive from that, so no table of moves
-      is kept by hand.</p>
+      <p>A move exists between two frames exactly where one connection is the difference between
+      them. The names, the transitions, the app and the audit all derive from that, so no table
+      of moves is kept by hand.</p>
     </div>
     <div>
       <h3>A validator, not a toy</h3>
@@ -665,13 +665,13 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <div>
       <h3>Laws, not examples</h3>
       <p>{{laws}} tests run over all {{pairs}} ordered pairs of frames. They hold
-      reversibility, mirror symmetry, one law for each primitive, and full connectivity. They
+      reversibility, mirror symmetry, one law for each move, and full connectivity. They
       check every cell of your sheet against the model.</p>
     </div>
   </div>
   <pre>sincopa/dance_ontology/
   src/dance_ontology/frame.nim       frames, their laws, their names, reflection
-  src/dance_ontology/transition.nim  the two primitives and the routes between frames
+  src/dance_ontology/transition.nim  the two moves and the transitions between frames
   src/dance_ontology/diagram.nim     one drawing of a frame, for everything that shows one
   src/dance_ontology/workbook.nim    your base sheet as data, and the audit against it
   src/dance_ontology/rotation.nim    twist, capacity, wraps and locks, provisional

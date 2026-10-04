@@ -32,7 +32,7 @@ answers:
 | the lead has the follow at left, the follow has the lead behind | Port-to-back |
 | the lead has the follow at left, the follow has the lead at left | Port-to-port |
 
-Read with the model's limits in mind: the shoulder girdle is rigid, so a reach a dancer gets by
+Read with the model's limits in mind: the shoulder girdle is rigid, so a span a dancer gets by
 rolling a shoulder forward is refused here; the trunk twists at the waist and does not bend; a torso
 is a stadium of its round; and the couple stand for each turn wherever it carries furthest, never
 inside each other.  A *blocks* is therefore a little early, and a *holds* says the pose exists
@@ -49,7 +49,7 @@ to what a dancer will do without pain.
 | neck round | 0.37 m, radius 0.059, to 1.5 m |
 | head round | 0.56 m, radius 0.089, to 1.69 m |
 | shoulders | 0.18 m out, 1.4 m up |
-| arm | upper 0.31, forearm 0.25, wrist to grip 0.08: reach 0.64 m; limb radius 0.045 |
+| arm | upper 0.31, forearm 0.25, wrist to grip 0.08: span 0.64 m; limb radius 0.045 |
 | shoulder | 45 degrees behind the frontal plane; across, trunk stops it; twist 90 in to 105 out |
 | elbow | 0 to 140 degrees |
 | wrist | a 60 degree cone |

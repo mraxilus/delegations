@@ -18,10 +18,10 @@
 ##       nothing to say.
 ##   `Tempo` is what drawing tells page: when mark moves, and when drawing
 ##     has finished saying what it has to say.  Page needs that to know when
-##     state may move, and stylesheet needs same numbers to run animation.
-##     Cost of writing times onto drawing as custom properties: stylesheet
+##     state may move, and style sheet needs same numbers to run animation.
+##     Cost of writing times onto drawing as custom properties: style sheet
 ##       cannot be read alone -- its numbers arrive with markup.  Accepted --
-##       written once onto drawing, page and stylesheet cannot drift from
+##       written once onto drawing, page and style sheet cannot drift from
 ##       each other.
 ##   Whole of move is told in one drawing.  Page replaces drawing exactly
 ##     once, at end, at one instant when what is on screen and what would
@@ -50,7 +50,7 @@ type
 
 
 func phase*(motion: Motion): string =
-  ## Name phase for stylesheet, which is what selects animation.
+  ## Name phase for style sheet, which is what selects animation.
   case motion
   of Motion.Still: "still"
   of Motion.Leaving: "leaving"
@@ -69,7 +69,7 @@ func moveTime*(tempo: Tempo): int = tempo.leaveTime + tempo.grown
 
 
 func leadOnTime*(tempo: Tempo): int = tempo.moveTime
-  ## Get when second move of compound may start.
+  ## Get when second move of compound move may start.
   ##   Not before first has finished being told.  Lead thinks of two as one
   ##     thing, but ontology knows frame between them is real, and drawing
   ##     that began unsaying it before it had finished saying it would be
@@ -77,7 +77,7 @@ func leadOnTime*(tempo: Tempo): int = tempo.moveTime
 
 
 func passStyle*(tempo: Tempo): string =
-  ## Write shared times onto drawing, for stylesheet to spend.
+  ## Write shared times onto drawing, for style sheet to spend.
   "--pass-at: " & $tempo.pass_at & "ms; --pass: " & $tempo.pass & "ms"
 
 

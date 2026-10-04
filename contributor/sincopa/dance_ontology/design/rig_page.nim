@@ -4,10 +4,10 @@
 ##     `design/wholecloth` folds its three: sweeps and stills recorded by
 ##     `design/rig`, and viewer compiled from `design/rig_view` by `nim js`.
 ##     Page is published as single file, so nothing may be left to fetch.
-##   Page is laid out as reference page is, section by section and cell by
-##     cell, with simulation's own still of each cell drawn beside reference's drawing
-##     of it.  Architect: lay reference and simulation side by side so each cell can be
-##     compared with what it looks like in model.  Cells are cut from built
+##   Page is laid out as reference page is, section by section and card by
+##     card, with simulation's own still of each card drawn beside reference's drawing
+##     of it.  Architect: lay reference and simulation side by side so each card can be
+##     compared with what it looks like in model.  Cards are cut from built
 ##     reference page itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
 ##   Faces are inlined by `design/faces`, which also turns Commit Mono's
@@ -43,16 +43,16 @@ const HEAD_BODY = """
       brighter side of a torso or a head shows which way that dancer faces. The shape
       cannot show it, because a torso is the same front and back, and a head is a
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
-    <p class="lede">Below the stage, each still cell of the reference page appears in
-      that page's order, with the simulation's still beside the drawing. For each cell the
-      simulation turns the dancer that the cell turns, lifts the joined hands over that
+    <p class="lede">Below the stage, each still card of the reference page appears in
+      that page's order, with the simulation's still beside the drawing. For each card the
+      simulation turns the dancer that the card turns, lifts the joined hands over that
       dancer's crown, and then lets the pose settle. An orbit is the dancer at the centre
       turning the other way, so the hands go over their crown. Where that does not hold, it
       plans every arm through the turn, and the engine stands each moment of the plan. A wound still
       keeps the distance where the pose carries the least strain, and a planned still keeps
-      the distance of its plan. Click a cell to put
+      the distance of its plan. Click a card to put
       it on the stage, and the arrow buttons or the
-      arrow keys step from one cell to the next. One list holds the stills first and
+      arrow keys step from one card to the next. One list holds the stills first and
       the sweeps after them.</p>
   </header>
 
@@ -73,14 +73,14 @@ const HEAD_BODY = """
       <div class="ref" id="ref"></div>
       <div class="reads" id="reads"></div>
       <p class="note">A joint within five degrees of either end of its range reads
-        <span class="spent-key">spent</span>. Every range here is the rig's own value
+        <span class="strained-key">strained</span>. Every range here is the rig's own value
         for that arm. A shoulder's twist is mirrored between left and right, so its two
         ends belong to the arm and not to this table.</p>
     </aside>
   </div>
 """
 
-const SHEET = """<style>
+const STYLE_SHEET = """<style>
 .rigview { max-width: 76rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 .rigview header { max-width: 44rem; margin-bottom: 1.5rem; }
 .rigview h1 { font-size: 1.6rem; line-height: 1.2; font-weight: 600; margin: 0.2rem 0 0.6rem; }
@@ -133,14 +133,14 @@ const SHEET = """<style>
   transform: translateX(-50%); }
 .dof em { font-style: normal; text-align: right; color: var(--ink); }
 .dof u { text-decoration: none; color: var(--faint); font-size: 0.9em; }
-.dof.spent { color: var(--right); }
-.dof.spent em { color: var(--right); font-weight: 700; }
-.dof.spent .track b { background: var(--right); width: 0.3rem; }
-.spent-key { color: var(--right); font-weight: 700; }
+.dof.strained { color: var(--right); }
+.dof.strained em { color: var(--right); font-weight: 700; }
+.dof.strained .track b { background: var(--right); width: 0.3rem; }
+.strained-key { color: var(--right); font-weight: 700; }
 .note { font: 0.68rem/1.5 var(--sans); color: var(--faint);
   margin: 0.9rem 0 0; }
-.cells { margin-top: 2rem; }
-.cells .lede { font: 0.88rem/1.5 var(--sans); }
+.cards { margin-top: 2rem; }
+.cards .lede { font: 0.88rem/1.5 var(--sans); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem;
   align-items: start; }
 .pair .simulation { min-width: 0; }
@@ -160,7 +160,7 @@ const TITLE* = "The Rig, Drawn from the Engine"
 
 
 type
-  Cell = object  ## One still cell of reference page, as built page holds it.
+  Card = object  ## One still card of reference page, as built page holds it.
     id: string
     asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
     classes: string  ## Its own classes, carrying kept and modelled.
@@ -186,9 +186,9 @@ func attribute(tag, name: string): string =
   if start < 0: "" else: tag[start..<stop]
 
 
-func cellsOf(html: string): Table[string, seq[Cell]] =
-  ## Every still cell of reference page, by section letter, in page's order.
-  ##   Cells are cut from built page, since drawing there is what was ruled on.
+func cardsOf(html: string): Table[string, seq[Card]] =
+  ## Every still card of reference page, by section letter, in page's order.
+  ##   Cards are cut from built page, since drawing there is what was ruled on.
   var
     section = ""
     at = 0
@@ -202,42 +202,42 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
       at = heading_start + 4
       continue
     let shut = html.find("</figure>", figure_start)
-    doAssert shut > figure_start, "A cell on reference page never closes."
+    doAssert shut > figure_start, "A card on reference page never closes."
     let whole = html[figure_start..<shut + "</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
     let
       tag_end = whole.find('>')
       opening = whole[0..tag_end]
-    var cell = Cell(classes: attribute(opening, "class"))
+    var card = Card(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
-    if asks.len > 0: cell.asks = asks.split(' ')
+    if asks.len > 0: card.asks = asks.split(' ')
     let (id_start, id_stop) = between(whole, "<code>", "</code>", 0)
-    doAssert id_start > 0, "A cell on reference page carries no identifier."
-    cell.id = whole[id_start..<id_stop]
+    doAssert id_start > 0, "A card on reference page carries no identifier."
+    card.id = whole[id_start..<id_stop]
     let art = whole.find("<div class=\"art")
-    doAssert art >= 0, &"A cell carries no drawing; got `{cell.id}`."
+    doAssert art >= 0, &"A card carries no drawing; got `{card.id}`."
     let
       art_open = whole.find('>', art) + 1
       art_shut = whole.find("</div>", art_open)
-    cell.art = whole[art_open..<art_shut]
+    card.art = whole[art_open..<art_shut]
     let (caption_start, caption_stop) = between(whole, "<figcaption>", "</figcaption>", 0)
-    cell.caption = "<figcaption>" & whole[caption_start..<caption_stop] & "</figcaption>"
-    result.mgetOrPut(section, @[]).add cell
+    card.caption = "<figcaption>" & whole[caption_start..<caption_stop] & "</figcaption>"
+    result.mgetOrPut(section, @[]).add card
 
-func sheetOf(html: string): string =
-  ## Reference page's own style, so its cells look here as they do there.
+func styleSheetOf(html: string): string =
+  ## Reference page's own style, so its cards look here as they do there.
   var at = 0
   while true:
     let (start, stop) = between(html, "<style>", "</style>", at)
-    doAssert start >= 0, "Reference page carries no style block for its cells."
-    let sheet = html[start..<stop]
-    if ".pic {" in sheet: return "<style>" & sheet & "</style>"
+    doAssert start >= 0, "Reference page carries no style block for its cards."
+    let style = html[start..<stop]
+    if ".pic {" in style: return "<style>" & style & "</style>"
     at = stop
 
 
-proc cellsBody(review: string, data: JsonNode): string =
-  ## Lay every still cell out as reference page does, simulation's still beside it.
+proc cardsBody(review: string, data: JsonNode): string =
+  ## Lay every still card out as reference page does, simulation's still beside it.
   var
     entry_of: Table[string, int]
     held: Table[string, string]
@@ -248,7 +248,7 @@ proc cellsBody(review: string, data: JsonNode): string =
     held[key] = (if still.hasKey("at") and still["at"].len > 0:
                    &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
-  let cells = cellsOf(review)
+  let cards = cardsOf(review)
   # Each heading is read off reference page, which names each chain's rest
   # through model, so two pages cannot name one section two ways.
   var titles: seq[tuple[letter, title: string]]
@@ -260,25 +260,25 @@ proc cellsBody(review: string, data: JsonNode): string =
     if opens < 0:
       quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
     titles.add (letter, review[start..<review.find("</h2>", start)])
-  result.add """<section class="cells"><p class="lede">Every cell here comes from the
+  result.add """<section class="cards"><p class="lede">Every card here comes from the
     reference page, with the same badges, and the simulation's still stands beside it. Where
-    one cell asks more than one question, the badge shows the first. The picker above
-    reaches every cell.</p>"""
+    one card asks more than one question, the badge shows the first. The picker above
+    reaches every card.</p>"""
   for (letter, title) in titles:
     result.add &"<h2>{letter} &middot; {title}</h2><div class=\"grid wide\">"
-    for cell in cells.getOrDefault(letter):
+    for card in cards.getOrDefault(letter):
       var entries: seq[string]
-      for key in cell.asks:
+      for key in card.asks:
         if key in entry_of: entries.add $entry_of[key]
-      result.add &"""<figure class="{cell.classes}" data-id="{cell.id}" """ &
+      result.add &"""<figure class="{card.classes}" data-id="{card.id}" """ &
         &"""data-entries="{entries.join(" ")}"><div class="pair">""" &
-        &"""<div class="art">{cell.art}</div><div class="simulation">"""
+        &"""<div class="art">{card.art}</div><div class="simulation">"""
       if entries.len > 0:
         result.add &"""<canvas class="thumb" data-entry="{entries[0]}"></canvas>""" &
-          &"""<p class="held">{escaped(held[cell.asks[0]])}</p>"""
+          &"""<p class="held">{escaped(held[card.asks[0]])}</p>"""
       else:
         result.add """<p class="held">not asked of simulation</p>"""
-      result.add &"""</div></div>{cell.caption}</figure>"""
+      result.add &"""</div></div>{card.caption}</figure>"""
     result.add "</div>"
   result.add "</section></main>"
 
@@ -309,8 +309,8 @@ proc main() =
     shown = folded(parseFile(data))
     html = document(
       TITLE,
-      sheetOf(review_html) & SHEET & HEAD_BODY &
-      cellsBody(review_html, shown) &
+      styleSheetOf(review_html) & STYLE_SHEET & HEAD_BODY &
+      cardsBody(review_html, shown) &
       "<script>var RIG = " & $shown & ";</script>\n" &
       "<script>" & readFile(view) & "</script>\n",
     )

@@ -214,7 +214,9 @@ proc checkRules*() =
   # Split would hide its shape.
   for named_move in MOVES:
     let
-      poses = cycle(named_move.apply).poses.mapIt(settled(it, HOLD, default(Levels), default(Ways)))
+      poses = cycle(named_move.apply).poses.mapIt(
+        settled(it, HOLD, default(Levels), default(Modifiers)),
+      )
       hands = poses.mapIt(handsOf(it))
     var frames: seq[route.Ends]
     for i, pose_hands in hands:
@@ -258,15 +260,15 @@ proc checkRules*() =
 
   # RULE 2.  `"the hands can only move from their positions at the side of`
   # `the body only if a level is specified"`, and level alone is not enough:
-  # way has to be said too, or there is no knowing which side it went to.
-  for (level, way, is_moving) in [
-      (none Level, none Way, false), (some Level.Low, none Way, false),
-      (none Level, some Way.Wrap, false),
-      (some Level.Low, some Way.Lock, true)]:
-    let put = handsOf(settled(rest(), HOLD, said(level), said(way)))[Dancer.Lead][Arm.Left]
+  # modifier has to be said too, or there is no knowing which side it went to.
+  for (level, modifier, is_moving) in [
+      (none Level, none Modifier, false), (some Level.Low, none Modifier, false),
+      (none Level, some Modifier.Wrap, false),
+      (some Level.Low, some Modifier.Lock, true)]:
+    let put = handsOf(settled(rest(), HOLD, said(level), said(modifier)))[Dancer.Lead][Arm.Left]
     doAssert (put != handsOf(rest())[Dancer.Lead][Arm.Left]) == is_moving,
-      &"A hand moved on half a say; got level `{level}`, way `{way}`."
-  told.add "a hand moves only when a level *and* a way are named"
+      &"A hand moved on half a say; got level `{level}`, modifier `{modifier}`."
+  told.add "a hand moves only when a level *and* a modifier are named"
 
   # RULE 3.  `"the slots are relative to the front facing side of the`
   # `lead/follow, not from the diagram itself."`  Six spots: default, and one
@@ -290,12 +292,12 @@ proc checkRules*() =
       canonicalise(spinAbout(rest(), Dancer.Follow, turn)),
       HOLD,
       said(some Level.Low),
-      said(some Way.Lock),
+      said(some Modifier.Lock),
     )
     for who in Dancer:
       let
         got = handBearing(0.0, Arm.Left, pose.wind[who][Arm.Left])
-        landed = slotOf(Arm.Left, some Level.Low, some Way.Lock)
+        landed = slotOf(Arm.Left, some Level.Low, some Modifier.Lock)
       doAssert abs(wrap180(got - slotBearing(landed.arm, landed.slot))) <
         1e-9, &"A spot is page-relative; got `{got}` at turn `{turn}` for `{who}`."
   told.add &"six spots, {decimal(apart, 0)} degrees apart at the closest, " &
@@ -307,43 +309,44 @@ proc checkRules*() =
   # to back of current hand.  Table here is rules
   # transcribed, held against settle table that drawing derives from.
   const landings = [
-    (level: Level.High, way: Way.Wrap, whose: Whose.Other, spot: Slot.Front,
+    (level: Level.High, modifier: Modifier.Wrap, whose: Whose.Other, spot: Slot.Front,
      sends: Sends.FrontWay),
-    (level: Level.Low, way: Way.Wrap, whose: Whose.Other, spot: Slot.Front,
+    (level: Level.Low, modifier: Modifier.Wrap, whose: Whose.Other, spot: Slot.Front,
      sends: Sends.FrontWay),
-    (level: Level.Low, way: Way.Lock, whose: Whose.Other, spot: Slot.Back,
+    (level: Level.Low, modifier: Modifier.Lock, whose: Whose.Other, spot: Slot.Back,
      sends: Sends.BackWay),
-    (level: Level.High, way: Way.Lock, whose: Whose.Own, spot: Slot.Back,
+    (level: Level.High, modifier: Modifier.Lock, whose: Whose.Own, spot: Slot.Back,
      sends: Sends.BackWay),
   ]
   for landing in landings:
     for arm in Arm:
       let lands = if landing.whose == Whose.Own: arm else: other(arm)
-      doAssert slotOf(arm, some landing.level, some landing.way) == (lands, landing.spot),
-        &"A settle lands wrong; got `{slotOf(arm, some landing.level, some landing.way)}`."
-    doAssert roundOf(some landing.level, some landing.way) == some landing.sends,
+      doAssert slotOf(arm, some landing.level, some landing.modifier) == (lands, landing.spot),
+        &"A settle lands wrong; got `{slotOf(arm, some landing.level, some landing.modifier)}`."
+    doAssert roundOf(some landing.level, some landing.modifier) == some landing.sends,
       &"A hold sends its line the wrong way; got " &
-        &"`{roundOf(some landing.level, some landing.way)}` for `{landing.level}` `{landing.way}`."
+        &"`{roundOf(some landing.level, some landing.modifier)}` for " &
+        &"`{landing.level}` `{landing.modifier}`."
     # And drawn route really does set off that way, at both ends.
     let
-      turn = if landing.way == Way.Wrap: 180.0 else: 0.0
+      turn = if landing.modifier == Modifier.Wrap: 180.0 else: 0.0
       pose = settled(
         canonicalise(spinAbout(rest(), Dancer.Follow, turn)),
         HOLD,
         said(some landing.level),
-        said(some landing.way),
+        said(some landing.modifier),
       )
       hands = handsOf(pose)
       ends: route.Ends = (hands[Dancer.Lead][Arm.Left], hands[Dancer.Follow][Arm.Left],
         (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
         (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-      asked = wayFor(ends, some landing.level, some landing.way)
+      asked = wayFor(ends, some landing.level, some landing.modifier)
       towards = if landing.sends == Sends.FrontWay: 1.0 else: -1.0
     doAssert asked == some (towards * frontOf(ends.a, ends.body_a).get,
                             towards * frontOf(ends.b, ends.body_b).get),
-      &"The asked way is not the rule's way for {landing.level} {landing.way}."
+      &"The asked way is not the rule's way for {landing.level} {landing.modifier}."
     doAssert routed(ends, asked).get.way == asked.get,
-      &"The drawn route disobeys its way for {landing.level} {landing.way}."
+      &"The drawn route disobeys its way for {landing.level} {landing.modifier}."
   told.add "both wraps land in front and go round the front; both locks " &
     "land behind and go round the back"
 
@@ -356,17 +359,17 @@ proc checkRules*() =
     for turn in [0.0, 90.0, 180.0, 270.0]:
       let
         pose = canonicalise(spinAbout(rest(), Dancer.Follow, turn))
-        hands = handsOf(settled(pose, HOLD, said(some landing.level), said(some landing.way)))
+        hands = handsOf(settled(pose, HOLD, said(some landing.level), said(some landing.modifier)))
         ends: route.Ends = (hands[Dancer.Lead][Arm.Left], hands[Dancer.Follow][Arm.Left],
           (pose.place[Dancer.Lead], pose.facing[Dancer.Lead]),
           (pose.place[Dancer.Follow], pose.facing[Dancer.Follow]))
-        asked = wayFor(ends, some landing.level, some landing.way)
+        asked = wayFor(ends, some landing.level, some landing.modifier)
         arcs = if asked.isSome: wrapArc(ends, asked.get)
                else: none(tuple[a, b: float])
-        is_legal = isDanceable(pose, HOLD, said(some landing.level), said(some landing.way))
+        is_legal = isDanceable(pose, HOLD, said(some landing.level), said(some landing.modifier))
       doAssert is_legal == (arcs.isSome and
                       max(arcs.get.a, arcs.get.b) >= float(WRAP_MIN)),
-        &"Danceable and the measured arc disagree for {landing.level} {landing.way}."
+        &"Danceable and the measured arc disagree for {landing.level} {landing.modifier}."
       if arcs.isSome:
         arc_seen.incl max(arcs.get.a, arcs.get.b)
   # Arcs are quantised, and threshold sits in gap below one half.
@@ -382,11 +385,11 @@ proc checkRules*() =
   # RULE 8.  `"above has no locks/wraps and can only transition to upper wrap`
   # `or back to default (physical restrictions)."`  `upper wrap` is read as
   # high wrap; that reading is implementer's and not rule's.
-  for way in [some Way.Lock, some Way.Wrap, none(Way)]:
-    doAssert slotOf(Arm.Left, some Level.Above, way) == (Arm.Left, Slot.Default),
-      &"Above settled away from home; got way `{way}`."
-    doAssert roundOf(some Level.Above, way).isNone,
-      &"Above sent its line round; got way `{way}`."
+  for modifier in [some Modifier.Lock, some Modifier.Wrap, none(Modifier)]:
+    doAssert slotOf(Arm.Left, some Level.Above, modifier) == (Arm.Left, Slot.Default),
+      &"Above settled away from home; got modifier `{modifier}`."
+    doAssert roundOf(some Level.Above, modifier).isNone,
+      &"Above sent its line round; got modifier `{modifier}`."
   # "leads only to" half rests on `FROM_ABOVE`, which is ledger data
   # nothing loads yet -- see TODO in `rules.nim`.  One doAssert used to
   # compare it to its own spelled-out copy here, which checked nothing;
@@ -430,11 +433,11 @@ proc checkSingleTurns*(built: Parts) =
     if "url(#h" in figure:
       inc hatched
   doAssert hatched > 0, "No above hatch drawn anywhere; the level is unsaid."
-  for way in [none(Way), some Way.Lock, some Way.Wrap]:
-    doAssert roundOf(some Level.Above, way).isNone,
-      &"Above sent its line round; got way `{way}`."
-    doAssert slotOf(Arm.Left, some Level.Above, way) == (Arm.Left, Slot.Default),
-      &"Above settled off its own side; got way `{way}`."
+  for modifier in [none(Modifier), some Modifier.Lock, some Modifier.Wrap]:
+    doAssert roundOf(some Level.Above, modifier).isNone,
+      &"Above sent its line round; got modifier `{modifier}`."
+    doAssert slotOf(Arm.Left, some Level.Above, modifier) == (Arm.Left, Slot.Default),
+      &"Above settled off its own side; got modifier `{modifier}`."
   told.add &"every turn is held above, hatched on {hatched} figures: the " &
     "one level that cannot lock or wrap whichever way the couple turns"
 
@@ -486,11 +489,11 @@ proc checkSingleTurns*(built: Parts) =
   for manner in Manner:
     let walked = roundOfManner(manner)
     # Table's claim about this manner holds: it shares its round with
-    # every manner of its family, and with no other.
+    # every manner of its round, and with no other.
     for mate in Manner:
       let is_sharing = roundOfManner(mate) == walked
-      doAssert is_sharing == (FAMILY_OF[mate] == FAMILY_OF[manner]),
-        &"A manner left its family; got `{manner}` against `{mate}`."
+      doAssert is_sharing == (LUT_ROUND_BY_MANNER[mate] == LUT_ROUND_BY_MANNER[manner]),
+        &"A manner left its round; got `{manner}` against `{mate}`."
     if walked notin rounds:
       rounds.add walked
   doAssert rounds.len == 2,
@@ -772,7 +775,7 @@ proc checkSingleTurns*(built: Parts) =
               quarterPose(manner, quarter),
               single.holds,
               levelsFor(single.holds),
-              default(Ways),
+              default(Modifiers),
             )
             hands = handsOf(put)
             (a, b) = (hands[Dancer.Lead][arm], hands[Dancer.Follow][single.holds[arm].get])
@@ -1032,7 +1035,7 @@ proc checkHandTurns*(built: Parts) =
     drawn.add built[&"hh_{i}"]
     # Pose each position stands in really is wound that far: measured as
     # angle each held hand makes with pair's own axis.
-    let put = settled(handPose(position.wind), HAND_TO_HAND, ABOVE_BOTH, default(Ways))
+    let put = settled(handPose(position.wind), HAND_TO_HAND, ABOVE_BOTH, default(Modifiers))
     for arm in Arm:
       let turned_by = windOf(put, HAND_TO_HAND, arm).spread / 360
       doAssert abs(wrap180(360 * (turned_by - position.wind))) < 1e-6,
@@ -1067,7 +1070,7 @@ proc checkHandTurns*(built: Parts) =
     if meetings.len != 2:
       continue
     let
-      put = settled(handPose(position.wind), HAND_TO_HAND, ABOVE_BOTH, default(Ways))
+      put = settled(handPose(position.wind), HAND_TO_HAND, ABOVE_BOTH, default(Modifiers))
       is_by_lead = distance(meetings[0], put.place[Dancer.Lead]) <
                 distance(meetings[1], put.place[Dancer.Lead])
       is_by_follow = distance(meetings[0], put.place[Dancer.Follow]) <
@@ -1208,7 +1211,12 @@ proc checkHandTurns*(built: Parts) =
     # are only backstops -- what was actually wrong with swan was that
     # it was drawn with straight bits, which is checked below.
     let
-      put = settled(posedAt(position.wind, HAND_PHASE), HAND_TO_HAND, ABOVE_BOTH, default(Ways))
+      put = settled(
+        posedAt(position.wind, HAND_PHASE),
+        HAND_TO_HAND,
+        ABOVE_BOTH,
+        default(Modifiers),
+      )
       apart = distance(put.place[Dancer.Lead], put.place[Dancer.Follow])
     doAssert bowed[snake] > DIAMOND_ROOM / 2,
       &"A swan's snake does not go round anything; got " &
@@ -1311,7 +1319,11 @@ proc checkHandTurns*(built: Parts) =
       for arm in Arm:
         let spun = continuous(
           walk.poses.mapIt(
-            windOf(settled(it, HAND_TO_HAND, ABOVE_BOTH, default(Ways)), HAND_TO_HAND, arm).spread,
+            windOf(
+              settled(it, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers)),
+              HAND_TO_HAND,
+              arm,
+            ).spread,
           ),
         )
         for k in 0..<spun.high:
@@ -1334,7 +1346,7 @@ proc checkHandTurns*(built: Parts) =
         turned(handPose(), description.who, description.about, HALF),
         on = Anchor.Lead,
       )
-      put = settled(landed, HAND_TO_HAND, ABOVE_BOTH, default(Ways))
+      put = settled(landed, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers))
       spun = windOf(put, HAND_TO_HAND, Arm.Left).spread
     # Half turn of wind, whichever way round it went.
     doAssert abs(abs(wrap180(spun)) - HALF) < 1e-6,
@@ -1403,7 +1415,7 @@ proc checkHandTurns*(built: Parts) =
           HALF * windSense(manner),
           on = Anchor.Lead,
         )
-        put = walk.poses.mapIt(settled(it, HAND_TO_HAND, ABOVE_BOTH, default(Ways)))
+        put = walk.poses.mapIt(settled(it, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers)))
       var shades: array[Arm, array[2, seq[seq[tuple[opens, shuts: float]]]]]
       for arm in Arm:
         for k, shade in [DEEP[arm], INK[HAND_TO_HAND[arm].get]]:
@@ -1552,7 +1564,7 @@ proc checkHandTurns*(built: Parts) =
           HALF * windSense(manner),
           on = Anchor.Lead,
         )
-        put = walk.poses.mapIt(settled(it, HAND_TO_HAND, ABOVE_BOTH, default(Ways)))
+        put = walk.poses.mapIt(settled(it, HAND_TO_HAND, ABOVE_BOTH, default(Modifiers)))
       for arm in Arm:
         let
           seen = continuous(put.mapIt(windOf(it, HAND_TO_HAND, arm).spread))

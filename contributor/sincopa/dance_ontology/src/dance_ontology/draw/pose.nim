@@ -94,7 +94,7 @@ func canonicalise*(pose: Pose, amount = 1.0, on = Anchor.Pair): Pose =
   ##     picture says rather than something framing has thrown away.
   ##   `on` says what turning goes round and what is brought to
   ##     middle afterwards.  On pair, couple is centred and any move
-  ##     that shifts their midpoint carries lead across box with it.
+  ##     that shifts their midpoint carries lead across picture's bounds with it.
   ##     On lead, lead never moves at all: follow's orbit leaves
   ##     framing exactly as it found it and needs no second stage, and
   ##     lead's axis turn swings only follow (rule 25).
@@ -126,7 +126,7 @@ func orbit*(pose: Pose, who: Dancer, degrees: float, is_locked = true): Pose =
   ##     facing away they stay facing away.
   ##   Without it they keep their own bearing and arrive facing way they
   ##     set off, which is orbit and counter-turn danced together --
-  ##     compound, and different move landing in different place.
+  ##     compound turn, and different move landing in different place.
   let pivot = pose.place[if who == Dancer.Lead: Dancer.Follow else: Dancer.Lead]
   result = pose
   result.place[who] = turn(pose.place[who], pivot, degrees)
@@ -239,7 +239,7 @@ func turned*(base: Pose, who: Dancer, about: About, degrees: float): Pose =
   ##         turn of orbit would not be half turn of anything -- which is
   ##         correction rule 32 makes to rule 20.
   ##     Keeping bearing is still move; it is orbit and
-  ##       counter-turn danced together, and is named as compound it is
+  ##       counter-turn danced together, and is named as compound turn it is
   ##       wherever it is still wanted.
   case about
   of About.Axis: spinAbout(base, who, degrees)

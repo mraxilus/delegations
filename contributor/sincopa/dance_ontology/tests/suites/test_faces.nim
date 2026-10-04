@@ -1,11 +1,11 @@
-## Hold faces every page ships to what they claim, and every sheet to faces it names.
+## Hold faces every page ships to what they claim, and every style sheet to faces it names.
 ##
 ##   Faces themselves are fetched, so nothing here reaches network or reads one:
 ##     laws are about which faces are named, and about where they land in page.
 ##   Two tables name same faces from opposite ends -- one pins bytes, other names
 ##     family each answers to -- and pair that drifts is fault neither file shows
 ##     on its own, so it is checked here.
-##   Sheets are read as text, rule by rule, and never rendered.  Cost: which face draws
+##   Style sheets are read as text, rule by rule, and never rendered.  Cost: which face draws
 ##     each codepoint is beyond them, so coverage is verified by hand and recorded with its
 ##     tool and date (`PROVENANCE.md`, Faces).
 
@@ -24,7 +24,8 @@ const
     ## Headless page, of shape review page and mark pages carry.
   STORE = "../../../curator/audit/src/assets.nim"
     ## Repository's declaration of every file fetched at build time, from project directory.
-  PATH_APP = "pages" / "app" / "index.html"  ## Shell of Reference, whose sheet sits in its head.
+  PATH_APP = "pages" / "app" / "index.html"
+    ## Shell of Reference, whose style sheet sits in its head.
   PATH_REVIEW = "pages" / "review" / "review.html"  ## Shell of review page.
   PATH_WHOLECLOTH = "mockups" / "wholecloth.html"  ## Whole-cloth proposal, drawn by hand.
 
@@ -57,25 +58,25 @@ func stylesOf(markup: string): string =
     result = result[0..<opens] & result[shuts + 2 .. ^1]
 
 
-func declarationsOf(sheet, selector: string): seq[string] =
+func declarationsOf(style_sheet, selector: string): seq[string] =
   ## Read every declaration of every rule whose selector list holds `selector` as written.
   ##   At-rule's block holds braces of its own, so reader steps into it and reads its rules.
   var
     start = 0
     at = 0
-  while at < sheet.len:
-    if sheet[at] == '}':
+  while at < style_sheet.len:
+    if style_sheet[at] == '}':
       start = at + 1
-    elif sheet[at] == '{':
+    elif style_sheet[at] == '{':
       let
-        shuts = sheet.find('}', at + 1)
-        nested = sheet.find('{', at + 1)
+        shuts = style_sheet.find('}', at + 1)
+        nested = style_sheet.find('{', at + 1)
       if nested >= 0 and nested < shuts:
         start = at + 1
       else:
-        for written in sheet[start..<at].split(','):
+        for written in style_sheet[start..<at].split(','):
           if written.strip == selector:
-            result.add sheet[at + 1..<shuts].split(';')
+            result.add style_sheet[at + 1..<shuts].split(';')
         start = shuts + 1
         at = shuts
     inc at
@@ -87,12 +88,12 @@ func familiesOf(stack: string): seq[string] =
     if family.strip.len > 0: result.add family.strip.strip(chars = {'"', '\''})
 
 
-func stackOf(sheet, selector: string): seq[string] =
+func stackOf(style_sheet, selector: string): seq[string] =
   ## Read families, in order, that last face declaration of `selector` names.
   ##   One custom property is resolved, as audit's faces check resolves one; shorthand
   ##     `font` gives its families after size, so stack starts at its first family.
   var value = ""
-  for declaration in declarationsOf(sheet, selector):
+  for declaration in declarationsOf(style_sheet, selector):
     let parts = declaration.split(':', maxsplit = 1)
     if parts.len == 2 and parts[0].strip in ["font-family", "font"]:
       value = parts[1].strip
@@ -100,8 +101,10 @@ func stackOf(sheet, selector: string): seq[string] =
   if resolves >= 0:
     let
       property = value[resolves + 4..<value.find(')', resolves)]
-      defined = sheet.find(property & ":")
-    value = if defined < 0: "" else: sheet[defined + property.len + 1..<sheet.find(';', defined)]
+      defined = style_sheet.find(property & ":")
+    value =
+      if defined < 0: ""
+      else: style_sheet[defined + property.len + 1..<style_sheet.find(';', defined)]
   elif value.find('"') > 0:
     value = value[value.find('"') .. ^1]
   familiesOf(value)
@@ -204,9 +207,9 @@ suite "Internal: Faces":
 
   test "every heading takes serif face":
     ## X.8 gives headings and titles to Noto Serif, and record says pages follow it.  Heading
-    ## rules of Reference and of shared sheet of workbench named no face, so every heading
+    ## rules of Reference and of shared style sheet of workbench named no face, so every heading
     ## took body's Noto Sans (repository issue 391).
-    for (sheet, selectors) in [
+    for (style_sheet, selectors) in [
       (page.STYLE.stylesOf, @["h1", "h2", "h3"]),
       (readFile(PATH_APP).stylesOf, @["h1", "h2", "h3", "h4"]),
       (readFile(PATH_REVIEW).stylesOf, @["h1", "h2", "h3"]),
@@ -214,7 +217,7 @@ suite "Internal: Faces":
     ]:
       for selector in selectors:
         checkpoint(selector)
-        let families = stackOf(sheet, selector)
+        let families = stackOf(style_sheet, selector)
         check families.len > 0 and families[0] == "Noto Serif"
 
 
@@ -223,7 +226,7 @@ suite "Internal: Faces":
     ##   fontconfig 2.15.0 on 2026-10-02 from files of store's digests.  So pages drew
     ##   five arrows from whatever face their reader's machine had (repository issue 391).
     ##   Noto Sans Math draws all five, and Commit Mono draws `✓`, which other three lack.
-    for (sheet, selectors) in [
+    for (style_sheet, selectors) in [
       (page.STYLE.stylesOf, @["body", "h1", "code"]),
       (readFile(PATH_APP).stylesOf, @["body", "h1"]),
       (readFile(PATH_REVIEW).stylesOf, @["body", "h1", "code"]),
@@ -231,7 +234,7 @@ suite "Internal: Faces":
     ]:
       for selector in selectors:
         checkpoint(selector)
-        let families = stackOf(sheet, selector)
+        let families = stackOf(style_sheet, selector)
         check families.len >= 3 and families[1] == "Noto Sans Math"
         if families.len >= 3 and families[0] != "Commit Mono":
           check families[2] == "Commit Mono"

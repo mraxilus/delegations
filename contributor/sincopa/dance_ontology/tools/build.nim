@@ -13,7 +13,7 @@
 ##   |          | pictures, build five mark pages, fold recorded turns into whole-cloth |
 ##   |          | page, build rig viewer                                                |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
-##   | pins     | rewrite design/review-pins.json from page just built: run when        |
+##   | fixtures | rewrite design/review-fixtures.json from page just built: run when    |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
 ##   |          | reaches, stamped, and only where stamp changed                        |
@@ -61,7 +61,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|modelled|rig|record|turns|verdicts|answers|engine|shot|system|clean>\n"
+    "<pages|assets|fixtures|modelled|rig|record|turns|verdicts|answers|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -87,7 +87,7 @@ const
     ##   helper is one person runs by hand.  Naming them in `SYSTEM` anyway keeps one
     ##   spelling of what each needs (Article II.1), and `shot` prints them where it builds,
     ##   so person running it is told what to install while runner installs no browser it
-    ##   never starts.  `pages`, `pins`, `verdicts` and `clean` need Nim alone.
+    ##   never starts.  `pages`, `fixtures`, `verdicts` and `clean` need Nim alone.
   SOURCES = [
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
@@ -282,21 +282,21 @@ proc pages() =
   dress()
 
 
-proc pins() =
-  ## Write what every ruled card is drawn as now into `design/review-pins.json`.
-  ##   Second step on purpose.  Verdict and pin are added together or not at
+proc fixtures() =
+  ## Write what every ruled card is drawn as now into `design/review-fixtures.json`.
+  ##   Second step on purpose.  Ruling and fixture are added together or not at
   ##     all: running this to quiet check that says ruled card moved would
   ##     hand approval to picture nobody approved.
   let page = BUILD / "design" / "review.html"
   if not fileExists(page):
     quit("No review page to read; run `pages` first.", 1)
-  writeFile("design/review-pins.json", pinsIn(readFile(page)))
-  echo "wrote design/review-pins.json"
+  writeFile("design/review-fixtures.json", fixturesIn(readFile(page)))
+  echo "wrote design/review-fixtures.json"
 
 
 proc modelled() =
   ## Rewrite `design/modelled.json`: which cards simulation reaches.
-  ##   Second step, as `pins` is, and for like reason: tag saying model agrees
+  ##   Second step, as `fixtures` is, and for like reason: badge saying model agrees
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
   ##   Verb asks nothing again where its stamp is unchanged (`design/stamps`).
@@ -388,7 +388,7 @@ proc main(): int =
     case paramStr(1)
     of "pages": pages()
     of "assets": assets()
-    of "pins": pins()
+    of "fixtures": fixtures()
     of "modelled": modelled()
     of "rig": rig()
     of "record": record()

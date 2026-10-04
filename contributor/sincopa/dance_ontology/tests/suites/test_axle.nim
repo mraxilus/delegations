@@ -16,7 +16,7 @@ import ../../src/dance_ontology
 suite "Internal: The axle":
   test "the axle is one line: a twist's place is affine in the twist":
     # Placed by twist itself rather than by index, so distance
-    # between two postures on drawing is size of turn between
+    # between two frame states on drawing is size of turn between
     # them, wherever it is taken.
     let
       stood = FRAMES[1].rest
@@ -34,7 +34,7 @@ suite "Internal: The axle":
       check step == gap
 
 
-  test "the couple stand on one posture, and a refusal is drawn refused":
+  test "the couple stand on one frame state, and a refusal is drawn refused":
     # Header's claim: drawing can show turn and refuse it in
     # same breath, so refused arcs are present and marked.
     let drawn = renderAxle(FRAMES[1].rest)

@@ -44,16 +44,16 @@ suite "Internal: The picture":
   test "every frame is drawn in the one space, whatever it holds":
     # Coordinate has to mean same place in every frame, because views
     # put frames side by side and read one against another.
-    var boxes: seq[string] = @[]
+    var spaces: seq[string] = @[]
     for target in FRAMES:
       let
         picture = renderFrame(target)
         start = picture.find("viewBox=\"")
       check start >= 0
-      let box = picture[start..picture.find('"', start + 9)]
-      if box notin boxes:
-        boxes.add box
-    check boxes.len == 1
+      let space = picture[start..picture.find('"', start + 9)]
+      if space notin spaces:
+        spaces.add space
+    check spaces.len == 1
 
 
   test "a picture names the frame it draws, for a reader who cannot see it":

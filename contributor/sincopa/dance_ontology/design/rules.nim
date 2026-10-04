@@ -164,12 +164,12 @@ const RULES* = [
   ##     said -- lines crossing, with over-under break naming which is
   ##     on top -- and never by which side of body line hugs.
   ##   Rules 15 and 16 turn work into one mock-up per kind of turn, and
-  ##     rule 16 takes ceiling off high single hand.
+  ##     rule 16 takes block off high single hand.
   ##     Hold that turns for ever has no wound-out end, so how far it has
   ##       wound is not part of its state; only orientation is, which is
   ##       why single hand has exactly four positions and no more.
   ##     That retires rule 14's pigtail for single hands: it was invented to
-  ##       tell one wind from its mirror, and with no ceiling there is
+  ##       tell one wind from its mirror, and with no block there is
   ##       nothing left for it to tell apart.  Crossing convention
   ##       stands for pairs, where geometry makes crossing itself.
   ##   Rule 17 moves assumption from `high` to `above`, and says why:
@@ -215,7 +215,7 @@ const RULES* = [
   ##     it anywhere.
   ##   Rule 25 frames picture on lead rather than on pair.
   ##     `canonicalise` turned world about couple's midpoint, so
-  ##       move that shifts that midpoint carried lead across box
+  ##       move that shifts that midpoint carried lead across picture's bounds
   ##       in second stage, and reader had to find them again.
   ##     Turning about lead's own place instead: follow's orbit needs
   ##       no second stage at all, lead's axis turn swings only
@@ -361,7 +361,7 @@ const RULES* = [
   ##       it off and rule 32 turns it back on.  What rule 20 objected to --
   ##       *"combining orbit and axis turns"* -- is same arithmetic seen
   ##       from other side, and it is bearing-keeping walk that is
-  ##       compound now: orbit with counter-turn danced into it.
+  ##       compound turn now: orbit with counter-turn danced into it.
   ##     Consequence runs through everything.  Orbit lands where
   ##       *other* dancer's axis turn lands, so four manners walk **two**
   ##       rounds of positions rather than three, each round reached by one
@@ -370,8 +370,8 @@ const RULES* = [
   ##       path can say it.
   ##     And on frame page two collapse figures swap over.  It is
   ##       orbit that now lands on matching axis turn, and
-  ##       bearing-keeping compound that lands somewhere of its own --
-  ##       one picture either dancer's compound reaches, since only
+  ##       bearing-keeping compound turn that lands somewhere of its own --
+  ##       one picture either dancer's compound turn reaches, since only
   ##       pair's axis has swung.
   ##   Rule 33 tightens swan and fixes mark that would not hold still.
   ##     Swan's snake took whole of straight connection's swing
@@ -443,14 +443,14 @@ const RULES* = [
   ##     than patched: saying it needs other arm in picture, and
   ##     decision about rule 22's scope.
   ##   Rule 39 makes modifiers per-arm for either dancer, up to one
-  ##     each.  Drawing model holds level and way per *connection*
+  ##     each.  Drawing model holds level and modifier per *connection*
   ##     and settles only follow, which covers sheet's validated
   ##     rows but not its enumeration; widening it is restructure, noted
   ##     in `PROVENANCE.md`'s open questions rather than done quietly here.
   ##   Rule 40 is sheet's one filled rotation row, and simulation asks it
   ##     independently (`simulation/verdicts.md`): from Left to left held low,
-  ##     jointed-arm simulation reads lock way as row does -- hand led
-  ##     behind back, whole turn reached -- and blocks wrap way
+  ##     jointed-arm simulation reads lock as row does -- hand led
+  ##     behind back, whole turn reached -- and blocks wrap
   ##     at three tenths of turn, at lead's shoulder twist, short of
   ##     row's half.  One place row and simulation differ, recorded;
   ##     neither was told other's answer.
@@ -463,9 +463,9 @@ const RULES* = [
   ##     mock-up, trusted by nobody, so drawing is left as it is.
 
 
-const FROM_ABOVE*: array[2, tuple[level: Option[Level], way: Option[Way]]] = [
-  (some Level.High, some Way.Wrap),
-  (none Level, none Way),
+const FROM_ABOVE*: array[2, tuple[level: Option[Level], modifier: Option[Modifier]]] = [
+  (some Level.High, some Modifier.Wrap),
+  (none Level, none Modifier),
 ]  ## Only transitions out of `above`, per rule 8: upper wrap, or back
   ## to default.
   ##   *Upper wrap* is read as high wrap; that reading is

@@ -1,19 +1,19 @@
-## Derive every change of frame from primitive transition helpers.
+## Derive every change of frame from moves, helpers that change one connection.
 ##
 ## Ontology names six helpers, and marks two of them with asterisk.
 ##   `place*` is "collect then drop" and `cut*` is "drop then collect", each
 ##     keeping contact through trace.  Asterisks are right, so neither is
-##     primitive here.
+##     move here.
 ##   Of remaining four, `flick` is `drop` led with momentum and changes no
 ##     frame, and `trace` slides hand along partner's body, which needs place
 ##     on body to slide to and so waits for rotation axis.
-##   That leaves two primitives, `collect` and `drop`, and one relation: two
+##   That leaves two moves, `collect` and `drop`, and one relation: two
 ##     frames are one move apart exactly when one connection separates them.
 ##
-## `place` and `cut` are kept as *compounds*.
+## `place` and `cut` are kept as *compound moves*.
 ##   Because lead thinks of each as one move even though arms do two, and
 ##     because workbook writes them in single cells.
-##   Cost of keeping compounds beside primitives: compound is not `Move`, so
+##   Cost of keeping compound moves beside moves: compound move is not `Move`, so
 ##     consumers carry second reading -- `compoundWay`, `compoundName`,
 ##     `compoundPhrase` beside `moves`, `label`, `phrase`.  Accepted --
 ##     dropping either register would misname something vocabulary or arms
@@ -21,15 +21,15 @@
 ##
 ## Nothing here is table of moves.
 ##   Move exists between two frames exactly when difference between them is
-##     one primitive, so transition relation is *classified* rather than
+##     one connection, so transition relation is *classified* rather than
 ##     listed, and matrix in workbook becomes something to check against
 ##     rather than source of truth.
 ##   Cost of classifying instead of listing: every "what moves exist" question
 ##     is scan over `FRAMES` rather than lookup.  Accepted -- written table
 ##     could silently disagree with physics it claims to record.
 ##
-## Every primitive is reversible: `collect` undoes `drop`, and `pass` and `cut`
-## undo themselves.
+## Every move and compound move is reversible: `collect` undoes `drop`, and `pass`
+## and `cut` undo themselves.
 ##   Relation is therefore symmetric, which is strongest law module offers
 ##     for testing.
 
@@ -44,16 +44,16 @@ import ./frame
 #[ Concepts ]#
 
 type
-  Helper* {.pure.} = enum  ## Name primitive way one frame becomes another.
+  Helper* {.pure.} = enum  ## Name move: way one connection of frame changes.
     Collect,  ## Form connection with free hand.
     Drop  ## Break connection, releasing hand.
 
-  Compound* {.pure.} = enum  ## Name pair of primitives dance calls one move.
+  Compound* {.pure.} = enum  ## Name compound move: pair of moves lead leads as one.
     Place,  ## Hand one connection over to other lead hand.
     Cut  ## Re-route arm around arm in its way.
 
-  Move* = object  ## Hold one primitive change of frame.
-    helper*: Helper  ## Primitive that carries change.
+  Move* = object  ## Hold one move: change of one connection of frame.
+    helper*: Helper  ## Helper that carries change.
     side*: Side  ## Lead hand that acts: receiver for pass, arm that ends on
                     ## top for cut.
     to*: Frame  ## Frame couple arrives in.
@@ -62,19 +62,19 @@ type
 const HELPER_CHANGES*: array[Helper, string] = [
   Helper.Collect: "a free hand takes a hand",
   Helper.Drop: "a held hand is released",
-]  ## Say what each primitive changes about frame.
+]  ## Say what each move changes about frame.
 
 
 const HELPER_SYNONYMS*: array[Helper, string] = [
   Helper.Collect: "",
   Helper.Drop: "flick when led with momentum",
-]  ## Give workbook's other word for primitive, where it has one.
+]  ## Give workbook's other word for move, where it has one.
 
 
 const HELPER_MARKS*: array[Helper, char] = [
   Helper.Collect: 'c',
   Helper.Drop: 'd',
-]  ## Abbreviate each primitive to one letter printed cell has room for.
+]  ## Abbreviate each move to one letter printed cell has room for.
   ##
   ## For `doc/review.html`, which is document and sets its matrix as table.
   ## App draws its own matrix and points move instead, because drawing has
@@ -84,13 +84,13 @@ const HELPER_MARKS*: array[Helper, char] = [
 const COMPOUND_CHANGES*: array[Compound, string] = [
   Compound.Place: "one hand of the follow changes which lead hand holds it",
   Compound.Cut: "the arms exchange which one lies on top",
-]  ## Say what each compound changes about frame.
+]  ## Say what each compound move changes about frame.
 
 
 const COMPOUND_ORDERS*: array[Compound, string] = [
   Compound.Place: "collect, then drop",
   Compound.Cut: "drop, then collect",
-]  ## Give order workbook writes each compound in.
+]  ## Give order workbook writes each compound move in.
 
 
 const COMPOUND_OBSTRUCTED*: array[Compound, bool] = [
@@ -102,17 +102,17 @@ const COMPOUND_OBSTRUCTED*: array[Compound, bool] = [
 const COMPOUND_MARKS*: array[Compound, char] = [
   Compound.Place: 'p',
   Compound.Cut: 'x',
-]  ## Abbreviate each compound for printed matrix cell, as `HELPER_MARKS` does.
+]  ## Abbreviate each compound move for printed matrix cell, as `HELPER_MARKS` does.
   ##
   ## `cut` takes letter it does because `collect` has one it would want.
 
 
 func name*(helper: Helper): string = ($helper).toLowerAscii
-  ## Name primitive as ontology writes it.
+  ## Name move as ontology writes it.
 
 
 func manner*(helper: Helper): string =
-  ## Name primitive together with workbook's other word for it.
+  ## Name move together with workbook's other word for it.
   if HELPER_SYNONYMS[helper].len == 0:
     helper.name
   else:
@@ -120,7 +120,7 @@ func manner*(helper: Helper): string =
 
 
 func inverse*(helper: Helper): Helper =
-  ## Get primitive that undoes this one.
+  ## Get move that undoes this one.
   case helper
   of Helper.Collect: Helper.Drop
   of Helper.Drop: Helper.Collect
@@ -130,7 +130,7 @@ func inverse*(helper: Helper): Helper =
 #[ Classification ]#
 
 func classify*(a, b: Frame): Option[Helper] =
-  ## Get primitive taking one frame to another, where single one does.
+  ## Get move taking one frame to another, where single one does.
   if a == b or not a.isValid or not b.isValid:
     return none(Helper)
   let
@@ -154,8 +154,8 @@ func classify*(a, b: Frame): Option[Helper] =
 
 
 func compound*(a, b: Frame): Option[Compound] =
-  ## Get compound joining two frames, where ontology names one.
-  ##   Both are two primitives with name.
+  ## Get compound move joining two frames, where ontology names one.
+  ##   Both are two moves with name.
   ##     `place` hands one connection to lead's other hand; `cut` hands one
   ##       arm over other.
   ##   `place` is routed through free frame, letting go and taking again,
@@ -183,7 +183,7 @@ func compound*(a, b: Frame): Option[Compound] =
 
 func actingSide*(a, b: Frame): Side =
   ## Get lead hand that carries change of frame.
-  ##   Frames alone decide it; caller used to pass primitive too, and it was
+  ##   Frames alone decide it; caller used to pass move too, and it was
   ##     never read.
   if a.hold[Side.Left] != b.hold[Side.Left]: Side.Left else: Side.Right
 
@@ -192,7 +192,7 @@ func actingSide*(a, b: Frame): Side =
 #[ Moves ]#
 
 func compare(a, b: Move): int =
-  ## Order moves by primitive, then by acting hand, for stable display.
+  ## Order moves by helper, then by acting hand, for stable display.
   if a.helper != b.helper:
     return cmp(ord(a.helper), ord(b.helper))
   if a.side != b.side:
@@ -201,7 +201,7 @@ func compare(a, b: Move): int =
 
 
 func moves*(source: Frame): seq[Move] =
-  ## Get every frame one primitive away, with primitive that reaches it.
+  ## Get every frame one move away, with move that reaches it.
   ##
   ## This is whole answer to "what can we do from here": frame absent from
   ## result is not reachable without intermediate frame.
@@ -231,7 +231,7 @@ func phrase*(source: Frame, move: Move): string =
 
 
 func compoundSide*(source, destination: Frame): Option[Side] =
-  ## Get hand of lead that moves when compound is led.
+  ## Get hand of lead that moves when compound move is led.
   ##
   ## For `cut` it is arm that ends up on top, because that is one that let go
   ## and came back over other.  For `place` it is hand that ends up holding,
@@ -246,7 +246,7 @@ func compoundSide*(source, destination: Frame): Option[Side] =
 
 
 func compoundName*(source, destination: Frame): string =
-  ## Name compound and hand of follow it moves, as `label` names move.
+  ## Name compound move and hand of follow it moves, as `label` names move.
   let
     named = compound(source, destination)
     side = compoundSide(source, destination)
@@ -256,7 +256,7 @@ func compoundName*(source, destination: Frame): string =
 
 
 func compoundWay*(source, destination: Frame): seq[Move] =
-  ## Get two moves compound is led as, in order lead leads them.
+  ## Get two moves compound move is led as, in order lead leads them.
   ##
   ## Not `route`, which takes any shortest path and takes first one it finds.
   ## `cut` has two of those -- either arm can let go and come back over other
@@ -286,7 +286,7 @@ func compoundWay*(source, destination: Frame): seq[Move] =
 
 
 func compoundPhrase*(source, destination: Frame): string =
-  ## Say compound as teacher would call it, with every hand named.
+  ## Say compound move as teacher would call it, with every hand named.
   let named = compound(source, destination)
   if named.isNone:
     return ""
@@ -338,9 +338,9 @@ func label*(source: Frame, move: Move): seq[string] =
 #[ Routes ]#
 
 func route*(source, destination: Frame): seq[Move] =
-  ## Get shortest sequence of primitives joining two frames, if one exists.
+  ## Get shortest sequence of moves joining two frames, if one exists.
   ##
-  ## Workbook records compound cells such as `place, collect`; route of
+  ## Workbook records cells of two helpers, such as `place, collect`; transition of
   ## length greater than one is same thing, derived instead of written down.
   if source == destination or source.frameIndex.isNone or
       destination.frameIndex.isNone:

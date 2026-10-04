@@ -4,7 +4,7 @@
 ##   Outline holds exactly one full turn and rows pack up from foot,
 ##     so how far turn goes is how full sign is.
 ##     Cost of fixed height: sign for more than full turn needs
-##       ending mark rather than taller box; candidates are drawn on
+##       ending mark rather than taller gauge; candidates are drawn on
 ##       page and none is chosen yet.
 ##   Column is one of lead's arms, pip's shape says whose quarter it
 ##     is, its fill says that arm's level, and dashed outline says turn
@@ -172,8 +172,8 @@ func signBody(
   pip_about: seq[About];
   ending: Option[Ending];
   is_packed = true;
-): tuple[markup: string, box: tuple[left, top, right, bottom: float]] =
-  ## Draw sign at given place, returning markup and box it fills.
+): tuple[markup: string, bounds: tuple[left, top, right, bottom: float]] =
+  ## Draw sign at given place, returning markup and bounds it fills.
   ##   `slots` reads downwards, one entry per quarter turn, follow's
   ##     first, so mixed sign has one picture rather than two.
   ##   Stack packs up from foot: outline holds full turn, so
@@ -210,7 +210,7 @@ func signBody(
       &""" stroke-linejoin="round" stroke-linecap="round"{dash}"""
     outline =
       if over > 0:
-        # No lid, and sides run on past where one would be: box that
+        # No lid, and sides run on past where one would be: gauge that
         # never closes is count that never finishes.
         let tips: seq[Point] = @[(leftAt(y_top - over), y_top - over),
                                  (leftAt(y_top - over) + SIGN_BODY,
@@ -291,7 +291,7 @@ func sign*(
         # Pip cut by missing lid repeats whoever top quarter is.
         @[slots[0]] & slots
       else: slots
-    (markup, box) = signBody(
+    (markup, bounds) = signBody(
       rows,
       lean,
       arms,
@@ -302,9 +302,9 @@ func sign*(
       ending = ending,
       is_packed = is_packed,
     )
-    view_width = box.right - box.left + 2 * PAD
-    view_height = box.bottom - box.top + 2 * PAD
-  &"""<svg viewBox="{numeral(box.left - PAD)} {numeral(box.top - PAD)}""" &
+    view_width = bounds.right - bounds.left + 2 * PAD
+    view_height = bounds.bottom - bounds.top + 2 * PAD
+  &"""<svg viewBox="{numeral(bounds.left - PAD)} {numeral(bounds.top - PAD)}""" &
     &""" {numeral(view_width)} {numeral(view_height)}"""" &
     &""" width="{numeral(view_width * scale)}" height="{numeral(view_height * scale)}">""" &
     &"\n        {markup}\n      </svg>"

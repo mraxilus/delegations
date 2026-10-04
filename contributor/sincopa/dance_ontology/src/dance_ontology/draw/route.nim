@@ -108,7 +108,7 @@ const
 
 ## Both knobs above move where two reaches cross, and pair of them is
 ##   chosen for that rather than for width alone.
-##   Belief that they could not, which stood while whole family was ruled
+##   Belief that they could not, which stood while whole set was ruled
 ##     out untried, came of comparing two reaches at same point along
 ##     each.  They cross where they hold same *place*, at their own
 ##     points, and their chords differ: follow's two hands sit up to 20
@@ -342,14 +342,14 @@ func frontOf*(hand: Point, body: Body): Option[float] =
   some(if offset > 0: -1.0 else: 1.0)
 
 
-func wayFor*(ends: Ends, level: Option[Level], way: Option[Way]):
+func wayFor*(ends: Ends, level: Option[Level], modifier: Option[Modifier]):
     Option[WayRound] =
   ## Get which way round both bodies this hold says its line goes.
   ##   Not what is shortest -- what dance says: both wraps come round
   ##     front, both locks round back (rules 4 to 6).  Hold that has
-  ##     named no level or no way has no opinion, and `routed` takes
+  ##     named no level or no modifier has no opinion, and `routed` takes
   ##     short way.
-  let sends = roundOf(level, way)
+  let sends = roundOf(level, modifier)
   if sends.isNone:
     return none(WayRound)
   let sides = (a: frontOf(ends.a, ends.body_a), b: frontOf(ends.b, ends.body_b))
@@ -390,10 +390,10 @@ func wrapArc*(ends: Ends, way: WayRound): Option[tuple[a, b: float]] =
   none(tuple[a, b: float])
 
 
-func isWrappingEnough*(ends: Ends, level: Option[Level], way: Option[Way]): bool =
+func isWrappingEnough*(ends: Ends, level: Option[Level], modifier: Option[Modifier]): bool =
   ## Test whether this hold's line really does go round body far enough to
   ## be lock or wrap it claims to be (rule 7).
-  let asked = wayFor(ends, level, way)
+  let asked = wayFor(ends, level, modifier)
   if asked.isNone:
     return false
   let arcs = wrapArc(ends, asked.get)
@@ -818,13 +818,13 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
   ##     hug against that hand.  Line then runs dead straight to its far
   ##     end and bends only there, which reads as kink beside hand
   ##     however few degrees each corner turns (rule 24, and `crestOf`
-  ##     measures it).  B04 and B23 of review sheet were drawn that way.
+  ##     measures it).  B04 and B23 of review page were drawn that way.
   ##     Cost of weighing always: three band relaxations per settled
   ##       reach where one sometimes did.  Accepted -- shape is what
   ##       page is for, and it buys curve over kink.
   ##     Margin can be slight: on those two, bow wins by hundredth of
   ##       unit of line.  Preference is real but thin, and it is review
-  ##       sheet's pins that keep flip from passing unseen.
+  ##       page's fixtures that keep flip from passing unseen.
   result = letGo(a, b, marks, SIDES[0])
   var least = readingCost(result)
   for side in SIDES[1 .. ^1]:

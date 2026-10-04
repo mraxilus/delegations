@@ -17,7 +17,7 @@ suite "Internal: The relation":
       check classify(target, target).isNone
 
 
-  test "every primitive reverses, so the relation is symmetric":
+  test "every move reverses, so the relation is symmetric":
     for source in FRAMES:
       for destination in FRAMES:
         let
@@ -46,7 +46,7 @@ suite "Internal: The relation":
 
 
 
-suite "Internal: The primitives":
+suite "Internal: Collect and drop":
   test "collect and drop change the number of connections by one":
     for source in FRAMES:
       for destination in FRAMES:
@@ -86,8 +86,8 @@ suite "Internal: The primitives":
 
 
 
-suite "Internal: The compounds":
-  test "a compound is exactly two primitives, and no primitive is one":
+suite "Internal: The compound moves":
+  test "a compound move is exactly two moves, and no move is one":
     for source in FRAMES:
       for destination in FRAMES:
         let named = compound(source, destination)
@@ -98,7 +98,7 @@ suite "Internal: The compounds":
         check compoundPhrase(source, destination).len > 0
 
 
-  test "every compound reverses, and undoes itself":
+  test "every compound move reverses, and undoes itself":
     for source in FRAMES:
       for destination in FRAMES:
         check compound(source, destination) == compound(destination, source)
@@ -146,7 +146,7 @@ suite "Internal: The compounds":
 
 
 suite "Internal: Moves":
-  test "the offered moves are exactly the frames one primitive away":
+  test "the offered moves are exactly the frames one move away":
     for source in FRAMES:
       var offered: seq[Frame] = @[]
       for move in moves(source):
@@ -168,8 +168,8 @@ suite "Internal: Moves":
 
 
 
-suite "Internal: The way a compound is led":
-  test "it is two primitives, and they land where the compound says":
+suite "Internal: The way a compound move is led":
+  test "it is two moves, and they land where the compound move says":
     for source in FRAMES:
       for destination in FRAMES:
         let way = compoundWay(source, destination)
@@ -208,7 +208,7 @@ suite "Internal: The way a compound is led":
           check said.contains("from " & leadName(other(side)) & " into " & leadName(side))
 
 
-  test "the two arms of a compound are always the two different arms":
+  test "the two arms of a compound move are always the two different arms":
     for source in FRAMES:
       for destination in FRAMES:
         if compound(source, destination).isNone:
@@ -238,7 +238,7 @@ suite "Internal: Routes":
 
 
   test "every step of a route is a move the frame it leaves is offering":
-    # Stronger than chain above, which only checks primitive.  Step
+    # Stronger than chain above, which only checks helper.  Step
     # also names hand of lead that acts, and anything reading route
     # back to dancer -- as page does, step by step -- is naming that
     # hand.  Step whose side disagreed with offered move would be
@@ -288,7 +288,7 @@ suite "Internal: Routes":
     check longest == 4
 
 
-  test "a route is one move long exactly where a primitive exists":
+  test "a route is one move long exactly where a single move exists":
     for source in FRAMES:
       for destination in FRAMES:
         if source == destination:
@@ -318,7 +318,7 @@ suite "Internal: The vocabulary":
       changes.add COMPOUND_CHANGES[named]
 
 
-  test "a primitive with another word says so, and one without does not":
+  test "a move with another word says so, and one without does not":
     check HELPER_SYNONYMS[Helper.Drop].len > 0
     check Helper.Drop.manner.contains("flick")  # vocabulary: drop led with momentum
     check HELPER_SYNONYMS[Helper.Collect].len == 0
