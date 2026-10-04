@@ -10,7 +10,7 @@ import ../src/probe
 
 iterator enumerateSteps(): Step =
   ## Yield every step of ring, i.e. `MODULUS` steps, exhaustive.
-  for n in 0..<MODULUS: yield Step(n)
+  for n in 0 ..< MODULUS: yield Step(n)
 
 
 
@@ -35,7 +35,7 @@ suite "Ring":
   test "positions stay inside ring":
     for a in enumerateSteps():
       for b in enumerateSteps():  # `MODULUS`² pairs
-        check (a ⊕ b).position in 0..<MODULUS  # never reaches `MODULUS`
+        check (a ⊕ b).position in 0 ..< MODULUS  # never reaches `MODULUS`
     check $Step(MODULUS - 1) == $(MODULUS - 1)  # renders position
 
 

@@ -78,7 +78,7 @@ proc cmapOf(bytes: string): string =
 
   func base128(bytes: string, at: var int): int =
     ## Read `UIntBase128` at offset, seven bits to byte while high bit is set, and step past it.
-    for _ in 1..5:
+    for _ in 1 .. 5:
       let byte = bytes[at].ord
       inc at
       result = (result shl 7) or (byte and 0x7F)
@@ -87,11 +87,11 @@ proc cmapOf(bytes: string): string =
 
   # Table directory of OpenType and TrueType names offset and length of each table.
   if not bytes.startsWith(SIGNATURE_WOFF2):
-    for i in 0..<bytes.uint16At(4):
+    for i in 0 ..< bytes.uint16At(4):
       let record = 12 + 16 * i
-      if bytes[record..<record + 4] == "cmap":
+      if bytes[record ..< record + 4] == "cmap":
         let at = bytes.uint32At(record + 8)
-        return bytes[at..<at + bytes.uint32At(record + 12)]
+        return bytes[at ..< at + bytes.uint32At(record + 12)]
     raise newException(ValueError, "Face holds no `cmap` table; got none.")
 
   # `woff2` directory gives length each table takes in stream: transformed length where table
@@ -99,14 +99,14 @@ proc cmapOf(bytes: string): string =
   var
     at = 48
     tables: seq[tuple[is_cmap: bool, length: int]]
-  for _ in 0..<bytes.uint16At(12):
+  for _ in 0 ..< bytes.uint16At(12):
     let
       flags = bytes[at].ord
       known = flags and 0x3F
     inc at
     var tag = ""
     if known == FLAG_ARBITRARY:
-      tag = bytes[at..<at + 4]
+      tag = bytes[at ..< at + 4]
       at += 4
     let
       version = flags shr 6
@@ -117,10 +117,10 @@ proc cmapOf(bytes: string): string =
     tables.add (known == FLAG_CMAP or tag == "cmap", stored)
 
   # Decode stream whole, since tables standing before `cmap` fix where it starts.
-  let stream = bytes[at..<at + bytes.uint32At(20)].decodeBrotli(tables.mapIt(it.length).sum)
+  let stream = bytes[at ..< at + bytes.uint32At(20)].decodeBrotli(tables.mapIt(it.length).sum)
   var offset = 0
   for table in tables:
-    if table.is_cmap: return stream[offset..<offset + table.length]
+    if table.is_cmap: return stream[offset ..< offset + table.length]
     offset += table.length
   raise newException(ValueError, "Face holds no `cmap` table; got none.")
 
@@ -132,7 +132,7 @@ func codepointsOf(cmap: string): seq[int] =
   ##   store uses; other format raises rather than read short.
   ##   Control characters are left out, since none draws (`assets.nim` header).
   var held = newSeq[bool](CODEPOINT_COUNT)
-  for i in 0..<cmap.uint16At(2):
+  for i in 0 ..< cmap.uint16At(2):
     let
       record = 4 + 8 * i
       (platform, encoding) = (cmap.uint16At(record), cmap.uint16At(record + 2))
@@ -148,12 +148,12 @@ func codepointsOf(cmap: string): seq[int] =
         starts = ends + 2 * count + 2
         deltas = starts + 2 * count
         offsets = deltas + 2 * count
-      for segment in 0..<count:
+      for segment in 0 ..< count:
         let
           start = cmap.uint16At(starts + 2 * segment)
           delta = cmap.uint16At(deltas + 2 * segment)
           offset = cmap.uint16At(offsets + 2 * segment)
-        for codepoint in start..cmap.uint16At(ends + 2 * segment):
+        for codepoint in start .. cmap.uint16At(ends + 2 * segment):
           var glyph = (codepoint + delta) and 0xFFFF
           if offset != 0:
             glyph = cmap.uint16At(offsets + 2 * segment + offset + 2 * (codepoint - start))
@@ -161,12 +161,12 @@ func codepointsOf(cmap: string): seq[int] =
           if glyph != 0: held[codepoint] = true
     of 12:
       # Groups: run of codepoints onto run of glyphs.
-      for group in 0..<cmap.uint32At(at + 12):
+      for group in 0 ..< cmap.uint32At(at + 12):
         let
           entry = at + 16 + 12 * group
           start = cmap.uint32At(entry)
           glyph = cmap.uint32At(entry + 8)
-        for codepoint in start..cmap.uint32At(entry + 4):
+        for codepoint in start .. cmap.uint32At(entry + 4):
           if glyph + codepoint - start != 0: held[codepoint] = true
     else:
       raise newException(
@@ -174,7 +174,7 @@ func codepointsOf(cmap: string): seq[int] =
         "Face maps Unicode through `cmap` format suite does not read; got `" &
           $cmap.uint16At(at) & "`.",
       )
-  for codepoint in CONTROL_MAX + 1..<CODEPOINT_COUNT:
+  for codepoint in CONTROL_MAX + 1 ..< CODEPOINT_COUNT:
     if held[codepoint]: result.add codepoint
 
 
@@ -182,7 +182,7 @@ func toSlices(codepoints: seq[int]): seq[Slice[int]] =
   ## Merge sorted codepoints into runs, one slice each.
   for codepoint in codepoints:
     if result.len > 0 and result[^1].b + 1 == codepoint: result[^1].b = codepoint
-    else: result.add codepoint..codepoint
+    else: result.add codepoint .. codepoint
 
 
 func toText(ranges: seq[Slice[int]]): string =
@@ -247,7 +247,7 @@ suite "Assets":
       check prefix.startsWith("https://")
       check prefix.endsWith("/")  # prefix is directory; file is appended to it
       check digest.len == 64
-      for c in digest: check c in {'0'..'9', 'a'..'f'}
+      for c in digest: check c in {'0' .. '9', 'a' .. 'f'}
 
 
   test "store holds what projects share, once, and what one project alone wants":
@@ -334,10 +334,10 @@ suite "Assets":
 
 
   test "ranges read as row spells them, sorted and apart, and render back to same text":
-    check "20-7e a0 2190-2195".toRanges == @[0x20..0x7E, 0xA0..0xA0, 0x2190..0x2195]
+    check "20-7e a0 2190-2195".toRanges == @[0x20 .. 0x7E, 0xA0 .. 0xA0, 0x2190 .. 0x2195]
     for (_, _, _, ranges) in ASSETS:
       let read = ranges.toRanges
       check read.toText == ranges  # one spelling for each set
       check read[0].a > CONTROL_MAX  # no control character (`assets.nim` header)
-      for i in 1..<read.len:
+      for i in 1 ..< read.len:
         check read[i - 1].b + 1 < read[i].a  # sorted, and runs merged

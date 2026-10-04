@@ -89,12 +89,12 @@ func padded(text: string, width: int): string =
 func rowOf(line, kept: string): (string, seq[string]) =
   ## Read prefix and cells of comment line that is table row; empty prefix where it is none.
   let marker = kept.find('#')
-  if marker < 0 or kept[0..<marker].strip.len > 0: return
+  if marker < 0 or kept[0 ..< marker].strip.len > 0: return
   let open = line.find('|', marker)
-  if open < 0 or line[marker..<open].strip(chars = {'#', ' '}).len > 0: return
+  if open < 0 or line[marker ..< open].strip(chars = {'#', ' '}).len > 0: return
   let text = line.strip(leading = false)
   if text.len <= open + 1 or not text.endsWith("|"): return
-  (line[0..<open], text[open + 1..<text.high].split('|'))
+  (line[0 ..< open], text[open + 1 ..< text.high].split('|'))
 
 
 func isSeparator(cells: seq[string]): bool =
@@ -143,14 +143,14 @@ func alignments(source: string): seq[Alignment] =
 
     # Widen column only where text, leading spaces kept, does not fit.
     table.widths = separators[0].cells.mapIt(it.len)
-    for c in 0..<count:
+    for c in 0 ..< count:
       var needed = 0
       for row in table.rows:
         if row.is_separator: continue
         needed = max(needed, row.cells[c].strip(leading = false).displayWidth)
       if needed > table.widths[c]: table.widths[c] = needed + 1
     table.shaped = table.rows.mapIt(it.shapedRow(prefix, table.widths))
-    if toSeq(0..<table.rows.len).anyIt(table.shaped[it] != lines[table.rows[it].line]):
+    if toSeq(0 ..< table.rows.len).anyIt(table.shaped[it] != lines[table.rows[it].line]):
       result.add table
 
 

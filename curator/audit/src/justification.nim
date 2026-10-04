@@ -33,7 +33,7 @@ func header*(found: seq[Comment]): string =
   ## Join text of comment block opening file, i.e. run from first comment until gap.
   if found.len == 0: return ""
   var texts = @[found[0].text]
-  for i in 1..<found.len:
+  for i in 1 ..< found.len:
     if found[i].line - found[i - 1].line > GAP_MAX: break
     texts.add found[i].text
   texts.join(" ")

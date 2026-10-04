@@ -16,8 +16,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, atomics, cpuinfo, json, jsonutils, options, os, sequtils, tables,
-            typedthreads]
+import std/[algorithm, json, jsonutils, options, os, sequtils, tables]
 
 import ./[answers, body, hold, read, rig, rigid, walk]
 
@@ -154,58 +153,36 @@ proc readSweep*(ask: SweepAsk): SweepRead =
     let moment = momentAt(sweep, float(half_turns) / 2.0)
     if moment.isSome: result.glances[i] = glanceOf(ask.band, links, moment.get)
 
-proc readRung*(ask: RungAsk): RungRead =
-  ## Wind cross-name chain to rung and ask whether pose holds there standing, from
-  ## every distance, and read first that holds.
-  let links = @CHAIN
-  for apart in stands(HUMAN):
-    let (is_holding, couple) = stood(HUMAN, ask.band, links, ask.turn, false, Body.Two, apart)
+type RungTry = tuple[band: Band, turn, apart: float]  ## Rung stood from one distance.
+
+proc rungAt(ask: RungTry): RungRead {.nimcall, gcsafe.} =
+  ## Rung as stood from one distance: what report reads of it, where pose holds there.
+  {.cast(gcsafe).}:
+    let
+      links = @CHAIN
+      (is_holding, couple) = stood(HUMAN, ask.band, links, ask.turn, false, Body.Two, ask.apart)
     if is_holding:
       var arms: Arms
       for i in 0..<links.len: arms.add couple.poseOf(i).arms
       result = RungRead(
         found_pose: true,
-        apart: apart,
+        apart: ask.apart,
         strain: tightest(HUMAN, couple.stance, links, arms).strain,
         crossed: crossings(arms).len,
       )
     couple.free()
-    if result.found_pose: return
 
-
-
-#[ Parallel Reading ]#
-
-# Mutable and global: thread takes one argument, so workers read asks and write readings
-# into slots allotted here before any thread starts.
-var
-  SWEEP_ASKS: seq[SweepAsk]  ## Set before any thread starts, then only read.
-  RUNG_ASKS: seq[RungAsk]
-  SWEEP_READS: seq[SweepRead]  ## Each worker writes its own into place allotted.
-  RUNG_READS: seq[RungRead]
-  ASK_NEXT: Atomic[int]
-
-proc working(id: int) {.thread.} =
-  ## Take asks until none is left.  Rungs first: rung no distance holds walks every one.
-  {.cast(gcsafe).}:
-    while true:
-      let i = ASK_NEXT.fetchAdd(1)
-      if i >= RUNG_ASKS.len + SWEEP_ASKS.len: return
-      if i < RUNG_ASKS.len: RUNG_READS[i] = readRung(RUNG_ASKS[i])
-      else: SWEEP_READS[i - RUNG_ASKS.len] = readSweep(SWEEP_ASKS[i - RUNG_ASKS.len])
-
-proc readAll*(sweeps: seq[SweepAsk], rungs: seq[RungAsk]): tuple[sweeps: seq[SweepRead],
-    rungs: seq[RungRead]] =
-  ## Read every ask, on every core at once, in order asked.
-  SWEEP_ASKS = sweeps
-  RUNG_ASKS = rungs
-  SWEEP_READS = newSeq[SweepRead](sweeps.len)
-  RUNG_READS = newSeq[RungRead](rungs.len)
-  ASK_NEXT.store(0)
-  var workers = newSeq[Thread[int]](max(1, countProcessors()))
-  for worker in 0..<workers.len: createThread(workers[worker], working, worker)
-  joinThreads(workers)
-  (SWEEP_READS, RUNG_READS)
+proc readRung*(ask: RungAsk): RungRead =
+  ## Rung from first distance pose holds at, of every distance couple may stand at.
+  ##   Distances are stood on every core at once, batch by batch, and taken in their order.
+  var tries: seq[RungTry]
+  for apart in stands(HUMAN): tries.add (ask.band, ask.turn, apart)
+  var first = 0
+  while first < tries.len:
+    let batch = tries.batchOf(first)
+    for got in onEveryCore(batch, rungAt):
+      if got.found_pose: return got
+    first += batch.len
 
 
 

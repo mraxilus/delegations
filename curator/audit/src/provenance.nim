@@ -72,10 +72,10 @@ func withRulesRow*(source, stamp_new: string): string =
   for line in source.splitLines(keepEol = true):
     let s = line.strip
     if not is_done and s.len >= 2 and s.startsWith("|") and s.endsWith("|"):
-      let cells = s[1..<s.high].split('|')
+      let cells = s[1 ..< s.high].split('|')
       if cells.len == 2 and cells[0].strip == "Rules":
         let mid = line.find('|', line.find('|') + 1)
-        result.add line[0..mid] & " " & stamp_new & " " & line[line.rfind('|') .. ^1]
+        result.add line[0 .. mid] & " " & stamp_new & " " & line[line.rfind('|') .. ^1]
         is_done = true
         continue
     result.add line
@@ -84,7 +84,7 @@ func withRulesRow*(source, stamp_new: string): string =
 func isIsoDate*(s: string): bool =
   ## Decide whether `s` is `YYYY-MM-DD`.
   s.len == 10 and s[4] == '-' and s[7] == '-' and
-    (s[0..3] & s[5..6] & s[8..9]).allCharsInSet(Digits)
+    (s[0 .. 3] & s[5 .. 6] & s[8 .. 9]).allCharsInSet(Digits)
 
 
 func citations*(source: string): seq[string] =
@@ -98,7 +98,7 @@ func citations*(source: string): seq[string] =
       open = at + CITATION.len
       close = source.find('`', open)
     if close < 0: break
-    let name = source[open..<close]
+    let name = source[open ..< close]
     if name.endsWith(NIM_EXT): result.add name
     i = close + 1
 

@@ -25,11 +25,11 @@ suite "Duty 10":
     check found.len == 1
     check found[0].path == "b.md" and found[0].line == 3
     check "first at `a.md:1`" in found[0].message
-    check found[0].message.endsWith("got `" & LONG[0..<60] & "`.")
+    check found[0].message.endsWith("got `" & LONG[0 ..< 60] & "`.")
     check checkDuplicates([("a.md", LONG & "\n\n" & LONG & "\n")]).len == 1  # within one file
 
 
   test "short paragraph and reworded one pass":
-    let short = LONG.split(' ')[0..<PARAGRAPH_WORDS - 1].join(" ")
+    let short = LONG.split(' ')[0 ..< PARAGRAPH_WORDS - 1].join(" ")
     check checkDuplicates([("a.md", short & "\n"), ("b.md", short & "\n")]).len == 0
     check checkDuplicates([("a.md", LONG & "\n"), ("b.md", LONG & " more\n")]).len == 0

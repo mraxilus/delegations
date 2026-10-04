@@ -13,8 +13,10 @@
 ##   Faces are inlined by `design/faces`, which also turns Commit Mono's
 ##     ligatures on at root.  Article X.8: presentation target ships faces it
 ##     draws with, never naming one reader may lack.
-##   Recording's stamp is left out (`unstamped`): it says what physics gave recording, and
+##   Recording's stamp is left out (`folded`): it says what physics gave recording, and
 ##     page that carried it would change on every change to physics, where page shows none.
+##   Reflected twin card is folded in as still it names, mirrored and its arms recoloured
+##     (`design/twins`), so viewer draws every card from same fields.
 ##
 ##   Usage: rig_page <dir>   reads design/rig.json, <dir>/rig_view.js and
 ##                           <dir>/review.html, writes <dir>/rig.html
@@ -25,7 +27,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[json, os, strformat, strutils, tables]
 
-import ./[faces, page]
+import ./[faces, page, twins]
 
 
 const HEAD_BODY = """
@@ -281,11 +283,12 @@ proc cellsBody(review: string, data: JsonNode): string =
   result.add "</section></main>"
 
 
-func unstamped*(text: string): string =
-  ## Recording as page folds it in: its first field, stamp, left out.
-  const first = "{\"stamp\":"
-  if not text.startsWith(first): return text
-  "{" & text[text.find('\n') + 1 .. ^1]
+func folded*(recording: JsonNode): JsonNode =
+  ## Recording as page folds it in: stamp left out, and each twin card as still it names,
+  ## mirrored.
+  result = recording.copy
+  if result.hasKey("stamp"): result.delete("stamp")
+  result["stills"] = %stillsShown(recording)
 
 
 proc main() =
@@ -303,12 +306,12 @@ proc main() =
     quit(&"Viewer page has no reference to lay beside; run `pages` first: got `{review}`.", 1)
   let
     review_html = readFile(review)
-    data_text = readFile(data).strip().unstamped
+    shown = folded(parseFile(data))
     html = document(
       TITLE,
       sheetOf(review_html) & SHEET & HEAD_BODY &
-      cellsBody(review_html, parseJson(data_text)) &
-      "<script>var RIG = " & data_text & ";</script>\n" &
+      cellsBody(review_html, shown) &
+      "<script>var RIG = " & $shown & ";</script>\n" &
       "<script>" & readFile(view) & "</script>\n",
     )
   writeFile(directory / "rig.html", withFaces(html))

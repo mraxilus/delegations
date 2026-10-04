@@ -62,7 +62,7 @@ func viewOf(source: string): View =
   )
   result.inside = newSeq[bool](result.lines.len)
   for t in source.tokens:
-    for line in t.line + 1..t.lastLine(source): result.inside[line] = true
+    for line in t.line + 1 .. t.lastLine(source): result.inside[line] = true
 
 
 func isText(v: View, i: int): bool =
@@ -93,8 +93,8 @@ func firstWord(code: string): string =
   ## Read leading identifier of code line.
   let s = code.strip
   var k = 0
-  while k < s.len and s[k] in {'a'..'z', 'A'..'Z', '0'..'9', '_'}: inc k
-  s[0..<k]
+  while k < s.len and s[k] in {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}: inc k
+  s[0 ..< k]
 
 
 func runBefore(v: View, i: int): tuple[first, count, upper: int] =
@@ -159,7 +159,7 @@ func runs(path, source: string): seq[Run] =
     v = source.viewOf
     is_test_file = "/tests/" in "/" & path
   var found: seq[Run]
-  for i in 0..<v.lines.len:
+  for i in 0 ..< v.lines.len:
     if not v.isCode(i) or v.inside[i]: continue
     let word = v.code[i].firstWord
     var after = v.lines[i].strip[word.len .. ^1].strip(trailing = false)
@@ -186,7 +186,7 @@ func runs(path, source: string): seq[Run] =
   for run in found.mitems: run.wanted = LUT_BLANKS_BY_TARGET[run.target]
   for run in found:
     if run.count == run.wanted: continue
-    if toSeq(run.first..<run.first + run.count).anyIt(v.inside[it]): continue
+    if toSeq(run.first ..< run.first + run.count).anyIt(v.inside[it]): continue
     if found.anyIt(it.first == run.first and it.wanted != run.wanted): continue
     if result.anyIt(it.first == run.first): continue
     result.add run
@@ -212,14 +212,14 @@ func fixBlanks*(path, source: string): Fix =
   let found = runs(path, source)
   var
     lines = source.split('\n')
-    origin = toSeq(1..lines.len)
+    origin = toSeq(1 .. lines.len)
   for run in found.sortedByIt(-it.first):
     let
       after = run.first + run.count
-      kept = origin[run.first..<run.first + min(run.count, run.wanted)]
+      kept = origin[run.first ..< run.first + min(run.count, run.wanted)]
       inserted = newSeq[int](run.wanted - kept.len)
-    lines = lines[0..<run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
-    origin = origin[0..<run.first] & kept & inserted & origin[after .. ^1]
+    lines = lines[0 ..< run.first] & newSeq[string](run.wanted) & lines[after .. ^1]
+    origin = origin[0 ..< run.first] & kept & inserted & origin[after .. ^1]
   result.source = lines.join("\n")
   for run in found:
     let rule =

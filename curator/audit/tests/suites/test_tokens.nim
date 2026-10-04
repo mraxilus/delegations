@@ -34,10 +34,10 @@ suite "Tokens":
     let found = SAMPLE.tokens
     var covered = newSeq[bool](SAMPLE.len)
     for t in found:
-      for k in t.first..<t.after: covered[k] = true
+      for k in t.first ..< t.after: covered[k] = true
     for k, c in SAMPLE:
       check covered[k] or c in {' ', '\n'}  # whitespace alone lies between tokens
-    for k in 1..<found.len: check found[k - 1].after <= found[k].first  # no overlap
+    for k in 1 ..< found.len: check found[k - 1].after <= found[k].first  # no overlap
 
 
   test "string, character and comment forms read whole, as lexer reads them":

@@ -73,6 +73,11 @@ _Avoid_: reversed, apart, turned away, back to front
 One specific unique instance of a frame hold and a frame position, grip aside.
 _Avoid_: posture, configuration, instance
 
+**Mirror twin**:
+A frame hold that is another seen in a mirror. Each connection is on the other arm, and the
+twist turns the other way.
+_Avoid_: mirror pair, counterpart, opposite hold
+
 **Grip**:
 The manner in which the Lead holds the hand of the Follow, such as a palm grip or a finger
 grip. It is part of a frame position, but no frame state depends on it. Two frames that

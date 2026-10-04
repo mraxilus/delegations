@@ -28,10 +28,10 @@ when compileOption("profiler"): import std/nimprof
 const MODULUS* {.define: "probe.modulus".} = 4  ## Ring size; validated statically below.
 
 static:
-  doAssert MODULUS in 2..16, "Modulus should be in range 2..16; got `" & $MODULUS & "`."
+  doAssert MODULUS in 2 .. 16, "Modulus should be in range 2..16; got `" & $MODULUS & "`."
 
 
-type Step* = distinct range[0..MODULUS - 1]  ## Define position on ring of `MODULUS` steps.
+type Step* = distinct range[0 .. MODULUS - 1]  ## Define position on ring of `MODULUS` steps.
 
 
 const 𝟎* = Step(0)
