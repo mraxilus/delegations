@@ -11,10 +11,10 @@
 when compileOption("profiler"): import std/nimprof
 
 import ./knoller/[
-  alignment, articles, blanks, declarations, declared, entry, form, idioms, messages, precedence,
-  reports, rules, spacing, targets, tokens, views, wrapping,
+  alignment, articles, blanks, chain, declarations, declared, entry, fences, form, idioms, messages,
+  precedence, reports, rules, spacing, targets, tokens, views, wrapping,
 ]
 
 export
-  alignment, articles, blanks, declarations, declared, entry, form, idioms, messages, precedence,
-  reports, rules, spacing, targets, tokens, views, wrapping
+  alignment, articles, blanks, chain, declarations, declared, entry, fences, form, idioms, messages,
+  precedence, reports, rules, spacing, targets, tokens, views, wrapping

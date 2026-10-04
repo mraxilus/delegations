@@ -85,7 +85,7 @@ func checkForm*(path, source: string; rule: KindRule): seq[Finding] =
       result.add checkBanner(path, lines, i)
 
 
-func formFixers*(rule: KindRule): seq[Fixer] =
+func formFixers(rule: KindRule): seq[Fixer] =
   ## List form fixers kind rule names, in order they run: Nim syntax takes every fixer of
   ##   knoller's form, i.e. tabs in strings, comments and banners besides line ends and ending.
   if rule.syntax == Syntax.Nim: @FORM_FIXERS else: @[Fixer(fixWhitespace), fixEnding]
