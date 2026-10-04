@@ -44,7 +44,7 @@ suite "Blanks":
       ("tests/test_a.nim", true, true),
       ("/p/tests/test_a.nim", true, true),  # absolute, as command line reads it
       ("tests/suites/test_a.nim", true, false),  # suite module of one stub
-      ("tests/rigid/test_rigid.nim", true, false),  # one level down, as PGA library keeps it
+      ("tests/rga3d/test_rga3d.nim", true, false),  # one level down, as PGA library keeps it
       ("tests/suites.nim", true, false),
       ("src/tests.nim", false, false),
       ("tests", false, false),  # file named `tests`
