@@ -357,7 +357,8 @@ Write each decision so that the Architect can decide it from the block alone.
   - `has a workaround: <the workaround>`
   - `fact`, for something the Architect must know and need not decide
 - **Where** is the issue or pull request where the ruling goes. Open one first where none
-  exists, because a ruling in chat alone is lost.
+  exists, because a ruling in chat alone is lost. Label it `architect` (`CONTRIBUTOR.md`,
+  Boundaries).
 - **Options** are two to four. A label is at most three words. Each consequence is one sentence
   that says what happens. Where no option fits, the last one is `Other: say which`. A `fact`
   has no options, no recommendation and no delay cost.

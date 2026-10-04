@@ -207,9 +207,10 @@ the label shows the whole queue, on GitHub and to the next coordinator.
 The `architect` label is the one label that comes off. A role label names whose work an item
 is, so it stays. The `architect` label names a state, so it lasts only while the state lasts.
 
-You alone add the label and remove it. Add it when an item enters the queue. Remove it when the
-ruling is posted, or when the item no longer waits on the Architect. The ledger reports each
-closed issue or pull request that still carries it.
+Each delegate adds the label to its own item when the item enters the queue (`CONTRIBUTOR.md`,
+Boundaries). `architect.yml` removes it from an item that closes. Add it yourself where a
+delegate missed it. Remove it when the ruling is posted, or when the item no longer waits on the
+Architect. The ledger reports each closed issue or pull request that still carries it.
 
 An item enters the queue from any of these:
 

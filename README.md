@@ -64,8 +64,11 @@ Every delegate posts as the same account, so each issue carries a label that say
 is. The label is the role string that the branch names. It is `curator` for the rules, the
 checks, the merge process and the root files. It is `curator/<project>` or
 `contributor/<domain>/<project>` for one project. A delegate finds its work by a filter on
-its own label. Labels are added and never removed, so when an answer hands work across, the
-label of the other role joins the first.
+its own label. Role labels are added and never removed, so when an answer hands work across,
+the label of the other role joins the first.
+
+One label marks a state instead. `architect` sits on each issue or pull request that waits on
+the Architect, and comes off when the wait ends.
 
 ## Branches and checks
 
@@ -117,12 +120,14 @@ the same workflow compiles the projects whose code merged that week.
 `role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
 the opening role line and the labels to the role that the branch names.
 
-Five more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
+Six more workflows watch the rest. `watch.yml` opens an issue labelled `curator` when a run
 on `main` concludes failure. `head.yml` runs the `head` verb of each project daily, and keeps
-one issue open for each project while that verb fails. `draft.yml` returns a ready pull request
-to draft when a push lands on it. `posts.yml` comments once on an issue or a comment that lands
-with no role line. `ledger.yml` reads daily what GitHub records of the rules that no check
-reaches:
+one issue open for each project while that verb fails.
+
+`draft.yml` returns a ready pull request to draft when a push lands on it. `architect.yml`
+removes the label `architect` from an issue or pull request that closes. `posts.yml` comments
+once on an issue or a comment that lands with no role line. `ledger.yml` reads daily what
+GitHub records of the rules that no check reaches:
 
 - a pull request ready without a green run;
 - a `Closes #N` that never fired;
