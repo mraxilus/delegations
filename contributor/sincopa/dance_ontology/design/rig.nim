@@ -63,13 +63,14 @@ const SHOWN: seq[Cut] = @[
    false, Band.Torso),
   ("Chain, same name", @[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
    true, Band.Torso)]
-  ## Eight sweeps worth watching: four holds over crown, where whole reference is
-  ## drawn, and two chains at each lower band, where floor and engine still argue.
+  ## Eight sweeps worth watching: four holds above, where whole reference is drawn,
+  ## and two chains at each lower level, where floor and engine still argue.
 
 const
   PLACE = 4  ## Decimal places kept.  Tenth of millimetre on lengths, and finer
             ## than any reading on angles; more is noise from solver's own jitter.
-  BANDS = ["torso", "neck", "above"]
+  BANDS = ["low", "high", "above"]
+    ## Level each band holds, as pages and record say it: viewer and its picker show these.
 
 
 func figure(value: float): string =
