@@ -379,16 +379,9 @@ work for each frame step fell from 18.1 to 10.0 ms, and from 18.0 to 12.1 ms.
 
 **The simulated page is bound by GPU work under SwiftShader, and a frame step costs whole display
 frames.** So a saving shows in the drive only where it takes a step under the next display frame.
-Measured on one delegate on 2026-10-04, under the lock of the gate, in turn, two runs each:
-
-| Build | Browser drive | Simulated page | Real-clock page |
-|-------|---------------|----------------|-----------------|
-| Fan over the box of the sphere, antialias | 323.5 s, 311.7 s | 294.0 s, 282.2 s | 27.0 s, 26.9 s |
-| Quad stopped at the vanishing line | 230.6 s, 232.4 s | 204.2 s, 207.1 s | 23.9 s, 22.5 s |
-
-The first row is `main` at `5b689518`, and the second is this design, with antialias off on the
-simulated page alone. Every check passed in each run. The veil check and the two context checks add
-about 6 s to the second row. The browser drive is `build/drive/main.js` alone, timed from outside.
+Records and shaders gives the current time of the browser drive and of each page. Its table of
+those times has rows for `eecc2b5c` and the box of the rim. Each build there ran twice, in turn,
+under the lock of the gate on one delegate.
 
 **Speed checks, and checks of the timing readouts of the page, run on a second page, on the real
 clock.** On the simulated clock every timing row reads zero, and arithmetic over zeros passes. So
@@ -406,11 +399,16 @@ waits.
 So `driveHeapUnit` reads that row on the second page too.
 
 **A speed bound is 1.5 times the slowest reading on a delegate, rounded up to two figures.**
-Runners and delegates meet it, and each fault that a bound pins reads over it. Delegate readings are
-from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to 2026-09-30, alone and in the
-gate. The anchor and the marker take a new figure, so theirs are from 11 runs of the measured page
-up to its pins, on 2026-09-30. Runner readings are from one CI run of this change. A fault reads as
-`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then.
+Runners and delegates meet it, and each fault that a bound pins reads over it. A fault reads as
+`pins.ts` recorded it on a delegate on 2026-09-07, under the figure that the check took then. The
+fault of the frame after an edit reads as Scene storage gives it, from 2026-10-04.
+
+Delegate readings are from 20 or 21 runs of the drive on one delegate, from 2026-09-28 to
+2026-09-30, alone and in the gate. The anchor takes a new figure, so its readings are from 11 runs
+of the measured page up to its pins, on 2026-09-30. The marker readings are from 11 such runs on
+2026-10-04, with each outline shaped once for each pair (Marker pulse). Runner readings are from one
+CI run of the change that set each bound. The runner reading of the marker is from the drive job on
+`d305c68c`.
 
 | Check | Bound | Runner | Delegates | Fault |
 |-------|-------|--------|-----------|-------|
@@ -419,19 +417,22 @@ up to its pins, on 2026-09-30. Runner readings are from one CI run of this chang
 | Moving frame, median | 3 ms | 0.8 | 0.7 to 2.0 | |
 | Hover pick | 2.6 ms | 0.1 | 0.2 to 1.7 | 7.1 |
 | Anchor lookup | 15 µs | 5.0 | 7.0 to 10.0 | 280 |
-| Marker and its pulse, worst kind | 1.7 ms | 0.60 | 0.68 to 1.12 | 3.2 |
+| Marker and its pulse, worst kind | 1.1 ms | 0.38 | 0.34 to 0.70 | 3.2 |
 | Moving grid, median | 26 ms | 4.3 | 6.3 to 17.1 | 26.1 |
 | CPU emit, median | 2 ms | 0.3 | 0.3 to 1.3 | 6.3 |
 | Edit past the timeline capacity, at 5,038 | 9.6 ms | 1.7 | 1.7 to 6.4 | |
-| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | |
+| Frame after an edit, at 5,038 | 15 ms | 2.5 | 3.1 to 9.5 | 30.3 to 33.1 |
 | Hover pick, at 5,038 | 7.2 ms | 1.9 | 1.2 to 4.8 | |
 
-The marker fault read 3.2 ms against 1.2 ms repaired, so it costs 2.7 times the repair. On the new
-figure that is 1.8 ms at least, over the bound. The readings of the marker pin come from a pulse
-call that left out the swell, and so shaped the outline a second time. The pin now shapes it once
-for each pair, and that figure is unmeasured over the runs that set the bound. The moving grid fault
-reads over its bound by 0.1 ms only. A check with no fault reading pins a budget rather than a
-repair.
+The marker fault read 3.2 ms against 1.2 ms repaired, both with each outline shaped twice, so it
+costs 2.7 times the repair. Assumed: the ratio holds where the check shapes each outline once. The
+fault then reads 0.91 ms at least on a delegate, and 1.0 ms on the runner, both under the bound.
+So the bound holds that fault only where the repair reads 0.42 ms or more, which is 9 of the 11
+delegate runs. The count of points in the marker suite holds it on every run (Selection and
+markers).
+
+The moving grid fault reads over its bound by 0.1 ms only. A check with no fault reading pins a
+budget rather than a repair.
 
 **A fault that reads close to its speed bound is pinned by a count too.** A count reads the same on
 every machine, so load never moves it. The marker suite counts the points that each marker reads
@@ -455,19 +456,20 @@ time. After an untimed batch, the median of 15 batches of 200 read 6.0 to 7.0 µ
 collection or a preemption then spoils one batch, and not the figure.
 
 The marker takes the same figure. Its worst mean of 30 pairs read 0.46 to 1.67 ms over 4 pages. Its
-worst median of 9 batches of 5 read 0.48 to 0.62 ms.
+worst median of 9 batches of 5 read 0.48 to 0.62 ms. Both shaped each outline twice.
 
 **Sustained load moves a median too.** With three of four cores kept busy, 10 runs of the measured
-page read the anchor at 7.0 to 14.5 µs. The marker read 0.74 to 2.1 ms, over its bound in 4 of
-the 10, and every other speed check stayed inside its bound. The gate runs projects one at a time,
-so no gate run puts that load beside the drive. A delegate that shares its cores with other tenants
-can still.
+page read the anchor at 7.0 to 14.5 µs, on 2026-09-30. Every speed check stayed inside its bound
+but the marker, which shaped each outline twice then. Ten such runs up to the pins on 2026-10-04
+read the marker at 0.34 to 0.78 ms, inside its bound. The gate runs projects one at a time, so no
+gate run puts that load beside the drive. A delegate that shares its cores with other tenants can
+still.
 
 **A delegate can read a speed check over its bound with no fault present.** On 2026-10-01, nine
 measured pages on a fresh delegate read the marker at 0.72 to 2.64 ms and the grid at 6.4 to 22.3.
-Six pages ran the read tally of `boundary`, and three ran the build without it, over the same
-range. The 2.64 ms was the first page after a build. The counts hold each fault whatever the clock
-reads.
+The marker check then shaped each outline twice, against a bound of 1.7 ms. Six pages ran the read
+tally of `boundary`, and three ran the build without it, over the same range. The 2.64 ms was the
+first page after a build. The counts hold each fault whatever the clock reads.
 
 **The rendering step of the browser runs on real frames, so each simulated frame waits for one.**
 Resize, scroll, media-query and resize-observer events fire in that step, whatever the clock says.
@@ -1069,8 +1071,11 @@ index that a caller holds. Here **a handle number stays valid until its object i
 **`Scene.bound` is the highest handle that was ever occupied**, and every walk of a frame runs
 to it rather than to capacity. It only rises, so a walk to it is safe. Three walks run to
 capacity for good reason: the free list and the two object-pool strips, whose subject is how
-much room is left. The doc comment of `bound` names those three. A walk to capacity over five
-live objects costs 13.3 ms a frame on the JS backend.
+much room is left. The doc comment of `bound` names those three.
+
+A walk to capacity over the five objects of the opening scene costs less than the 0.1 ms that the
+clock of the page resolves. With every walk run to capacity, the still frame read a median of 0.6 to
+0.7 ms, as the build that walks to `bound` does. So no speed check can hold that fault.
 
 **`Scene.revision` counts the edits, and every writer sits inside `scene.nim`.** There is no
 geometry accessor that returns a `var`, which would be the hole through which a caller could
@@ -1084,8 +1089,9 @@ A placement cache keyed on it then drew six objects of the previous demo over th
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each
 handle at the edit that last changed it, and `restoreFrom` stamps every live handle of the
 snapshot. The placement cache of the browser re-places only the handles that carry a stamp later
-than the revision it last filled at. To re-place the whole scene for each edit costs a 42 ms
-frame at 5,038 objects. A restore still re-places everything.
+than the revision it last filled at. To re-place the whole scene for each edit costs a frame of
+30.3 to 33.1 ms at 5,038 objects. The frame after an edit that re-places one handle reads 2.8 to
+4.9 ms. A restore still re-places everything.
 
 **The record of the creation order is explicit** (`orders`, `count_created`, `handlesCreated`),
 and nothing infers it. Handle order stops being creation order as soon as anything is removed.
@@ -1095,9 +1101,12 @@ A sort by `born` was rejected, because it fails on three counts that all occur. 
 added in one frame share a clock reading. The `born` of a replayed object is stamped into the
 future. The `born` of a reused handle is stale until something overwrites it.
 
-`handlesCreated` is a heap sort. As an insertion sort at 5,038 objects it ran 12.7 million
-comparisons for each call. The panel of the desktop caches its answer against `scene.revision`.
-A sort in every frame was 98% of the CPU frame of the desktop at 5,038.
+`handlesCreated` is a heap sort. At 5,038 objects an insertion sort makes 12,688,203 comparisons
+where handle order is the reverse of creation order, and the heap sort makes 104,039. A scene takes
+that order where every handle is freed in rising order and then filled again. On the demo as it
+loads, handle order is creation order, and the two sorts make 5,037 and 113,106 comparisons. The
+panel of the desktop caches its answer against `scene.revision`. A sort in every frame was 98% of
+the CPU frame of the desktop at 5,038.
 
 **`LABEL_MAX` counts bytes, so a label is cut on a character boundary and says that it was cut.**
 `format.appendChars` copies a UTF-8 sequence only where all of it fits, and `scene.toChars`
@@ -1116,7 +1125,10 @@ so the loops that run for each frame use the accessors that take a handle instea
 - a label cut never splits a character, at any buffer size.
 
 Verified by driven check: undo while the frame is held redraws the current scene, and not the
-previous one. The figures 13.3 ms, 42 ms and 12.7 million are unmeasured since a fix.
+previous one. Verified by measurement on one delegate on 2026-10-04, under the lock of the gate, by
+builds and a counter that are not kept. A build that brings back the walk to capacity, and one that
+re-places every handle for each edit, each drove the measured page 3 times. The build without
+either fault drove it 11 times. A count over the largest demo on the C backend gave the comparisons.
 
 ## Memory and allocation
 
