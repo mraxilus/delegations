@@ -488,7 +488,7 @@ suite "Internal: Two dancers in rigid body engine":
     ##   is real.
     ##   And no held arm is carried to its swing's end on way there.  Architect,
     ##   watching viewer at 0.68 of cross-name turn: "no-one would let their arm
-    ##   wrap behind their head like this".  Her arm sat at forty five degrees
+    ##   wrap behind their head like this".  Held arm sat at forty five degrees
     ##   behind frontal plane, swing's end, for six arm-moments of that sweep and
     ##   in its ease for fifty five, where going over top costs nothing: engine's
     ##   limits are walls and nothing preferred middle of range.
