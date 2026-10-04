@@ -119,6 +119,26 @@ suite "Mesh":
       midpoint(corners[1], corners[2]),
     )
 
+
+  proc unitDrawn(generator: var Rand): Direction =
+    ## Draw direction uniformly over sphere, by rejection from cube.
+    while true:
+      let candidate = Direction(
+        x: generator.rand(-1.0 .. 1.0), y: generator.rand(-1.0 .. 1.0),
+        z: generator.rand(-1.0 .. 1.0),
+      )
+      let length = norm(candidate)
+      if length > 0.1 and length <= 1.0: return (1.0/length)*candidate
+
+
+  func turnedOf(box: DiscBox, spot: (float, float)): (float, float) =
+    ## Read view fraction `spot` in turned fractions `box` is stated in, undoing its steps.
+    let determinant = box.step_across[0]*box.step_up[1] - box.step_up[0]*box.step_across[1]
+    (
+      (spot[0]*box.step_up[1] - spot[1]*box.step_up[0])/determinant,
+      (box.step_across[0]*spot[1] - box.step_across[1]*spot[0])/determinant,
+    )
+
   setup:
     MESHES.clearMeshes
 
@@ -474,16 +494,6 @@ suite "Mesh":
       spots_on_disc_least = 20_000 ## Least spots landing on disc, over every view.
       tolerance_side = 1.0e-9 ## Slack on either test, against `float` rounding alone.
 
-    proc unitDrawn(generator: var Rand): Direction =
-      ## Draw direction uniformly over sphere, by rejection from cube.
-      while true:
-        let candidate = Direction(
-          x: generator.rand(-1.0 .. 1.0), y: generator.rand(-1.0 .. 1.0),
-          z: generator.rand(-1.0 .. 1.0),
-        )
-        let length = norm(candidate)
-        if length > 0.1 and length <= 1.0: return (1.0/length)*candidate
-
     func turnOf(a, b, c: (float, float)): float =
       ## Measure twice signed area of triangle `a b c`, positive counter-clockwise.
       (b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])
@@ -582,14 +592,6 @@ suite "Mesh":
 
 
   test "plane becomes a flat filled disc and a rim, every vertex on it":
-    func turnedOf(box: DiscBox, spot: (float, float)): (float, float) =
-      ## Read view fraction `spot` in turned fractions `box` is stated in, undoing its steps.
-      let determinant = box.step_across[0]*box.step_up[1] - box.step_up[0]*box.step_across[1]
-      (
-        (spot[0]*box.step_up[1] - spot[1]*box.step_up[0])/determinant,
-        (box.step_across[0]*spot[1] - box.step_across[1]*spot[0])/determinant,
-      )
-
     for plane in PLANES:
       MESHES.clearMeshes
       check MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, scale_test) == Outcome.Finite
