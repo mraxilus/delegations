@@ -260,6 +260,19 @@ suite "Hooks":
       .messages.anyIt("got `working`" in it and "**Working:**" in it)  # no state for work
 
 
+  test "message names issue and pull request by link, never by bare number":
+    # Short description and number, as one link (GUIDE.md, Output contract).
+    const linked = "[the ledger fix (#456)](https://x/456), [#457] and " &
+      "[the fixers (#441)][#441].\n\n[#457]: https://x/457\n[#441]: https://x/441\n"
+    check checkNumbersBare(linked).len == 0
+    check checkNumbersBare("Merged #463.\n").messages.anyIt("`#463` outside link" in it)
+    check checkNumbersBare("See `#463` and\n```\n#464\n```\n").len == 0  # code
+    check checkNumbersBare("``run `#463` here``\n").len == 0  # span of two backticks
+    check checkNumbersBare("Undefined [#465] stays bare.\n").len == 1  # no definition
+    check checkNumbersBare("&#169; and x/y#12 and a#3\n").len == 0  # reference, fragment
+    check checkNumbersBare("#463 then #463 again, and #7\n").len == 2  # each number once
+
+
   test "sign-off decision is card coordinator lifts unchanged":
     check checkSignoff(SIGNOFF.replace("**D2.**", "**D3.**"), BRANCH)
       .messages.anyIt("numbered from D1" in it)

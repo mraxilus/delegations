@@ -90,9 +90,10 @@ proc settling(id: int) {.thread.} =
       couple.free()
 
 proc settleAll() =
-  ## Settle both holds at every band and turn, on every core at once.
+  ## Settle both holds at every band and turn, on every core at once, once for every law.
   ##   Thirty couples settled one after another cost 8.1 s of suite's run, measured
   ##     2026-09-26 on four cores.
+  if SETTLES.len > 0: return
   for pair in 0..<PAIRS.len:
     for band in Band:
       for turn in TURNS: SETTLES.add (pair, band, turn)
@@ -190,13 +191,50 @@ suite "Internal: Two hands":
   test "tightest joint is one nearest its edge, and strain is one there":
     ## Read off same poses: whichever joint `tightest` names, no other joint of
     ## any held arm has less margin, and joint at its edge reads strain of one.
+    ##   Poses are couples crossing law settles, and one single hold settled at rest.
+    ##   Every joint's margin is worked out here, left arm's twist read negated against
+    ##     rig's own range where reader mirrors range instead: same margin, other road.
+    ##   Law is argument minimum itself, so reader that leaves out one end of each
+    ##     connection, or reads left arm's twist unmirrored, fails here.
+
+    func marginsOf(
+      stance: array[Body, Stance], links: seq[Link], arms: Arms, tight: Tight
+    ): tuple[least, named: float] =
+      ## Least margin of any joint of any held arm, and margin of joint `tight` names.
+      result = (Inf, NaN)
+      for i in 0..<links.len:
+        for k in 0..1:
+          let
+            hand = links[i].ends[k]
+            arm_joints = joints(stance[hand.body], hand.arm, arms[i][k])
+          for dof in Dof:
+            let
+              measured = arm_joints.reading(dof)
+              value = (if dof == Dof.Twist and hand.arm == Arm.Left: -measured else: measured)
+              joint_margin = margin(HUMAN.range[dof], value)
+            result.least = min(result.least, joint_margin)
+            if dof == tight.dof and hand == tight.whose: result.named = joint_margin
+
+    settleAll()
     let links = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)])]
     var couple = build(HUMAN, restStance(HUMAN, APART), Band.Torso, links)
     couple.settle()
-    var arms: Arms = @[couple.poseOf(0).arms]
-    let tight = tightest(HUMAN, couple.stance, links, arms)
-    check tight.room < Inf
-    check tight.strain >= 0.0 and tight.strain <= 1.0
+    var poses = @[(stance: couple.stance, links: links, arms: @[couple.poseOf(0).arms])]
+    couple.free()
+    for i, task in SETTLES:
+      # Stance each couple was built at, which settling keeps.
+      poses.add (
+        stance: turned(restStance(HUMAN, APART, PAIRS[task.pair][1]), Body.Two, task.turn),
+        links: @(PAIRS[task.pair][0]),
+        arms: @[SETTLED_ARMS[i][0], SETTLED_ARMS[i][1]],
+      )
+    for (stance, pose_links, arms) in poses:
+      let
+        tight = tightest(HUMAN, stance, pose_links, arms)
+        (least, named) = marginsOf(stance, pose_links, arms, tight)
+      check tight.room < Inf
+      check tight.strain >= 0.0 and tight.strain <= 1.0
+      check named =~ tight.room
+      check least =~ tight.room
     check strain(Tight(room: 0.0)) =~ 1.0
     check strain(Tight(room: 1.0)) =~ 0.0
-    couple.free()

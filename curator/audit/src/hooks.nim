@@ -8,8 +8,9 @@
 ##     curator branch leaves to contributor (duty 3); `body` holds post before it lands to role
 ##     line, footer, Simplified Technical English counts, issue title and label, and pull
 ##     request headings; `stop` refuses end of turn that pushed or posted and closes with
-##     neither sign-off block nor working line; `start` prints role, read order, carried list
-##     and drift; `push` and `msg` serve git hooks.
+##     neither sign-off block nor working line, and end of any turn whose message names `#N`
+##     outside link; `start` prints role, read order, carried list and drift; `push` and `msg`
+##     serve git hooks.
 ##   Pure functions take strings and return findings; procs read transcript JSON, since
 ##     `parseJson` is effectful.
 ##   `coordinator` is role string with no branch: it opens issues and comments, and no item
@@ -303,7 +304,7 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
       var close = OPENING_DECISION.len
       while close < s.len and s[close] in Digits: inc close
       result.add Decision(
-        number: s[OPENING_DECISION.len ..< close].parseInt,
+        number: s[OPENING_DECISION.len..<close].parseInt,
         question:
           if s.continuesWith(CLOSING_DECISION, close):
             s[close + CLOSING_DECISION.len .. ^1].strip
@@ -321,16 +322,16 @@ func decisionsIn(lines: openArray[string]): seq[Decision] =
       let
         item = s[4 .. ^1]
         colon = item.find(':')
-      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0 ..< colon].strip)
+      result[^1].options.add (letter: s[2], label: if colon < 0: "" else: item[0..<colon].strip)
 
 
-func decisionFindings(d: Decision; at: int): seq[Finding] =
+func decisionFindings(d: Decision, at: int): seq[Finding] =
   ## Report decision block out of shape: number, class, place, options, pick and question.
   ##   Class `fact` asks nothing, so it offers no option and picks none; every other class
   ##     asks question with two to four options, and names pick among them.
   let name = "`D" & $d.number & "`"
   if d.number != at + 1:
-    result.add finding("", 0, "Decisions are numbered from D1 in order; got " & name & ".")
+    result.add finding("", 0, "Decisions are numbered from D1 in order; got `" & name & "`.")
   if d.class.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Class:`; got none.")
   if d.where.len == 0: result.add finding("", 0, "Decision " & name & " lacks `Where:`; got none.")
   if d.class.startsWith(CLASS_BLOCKS_OTHERS):
@@ -355,12 +356,14 @@ func decisionFindings(d: Decision; at: int): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Decision of class `fact` offers no option; got `" & $d.options.len & "` in " & name &
-          ".",
+        "Decision of class `fact` offers no option; got `" & $d.options.len & "` in `" & name &
+          "`.",
       )
     if d.recommends.len > 0:
       result.add finding(
-        "", 0, "Decision of class `fact` picks no option; got `" & d.recommends.shortened & "`."
+        "",
+        0,
+        "Decision of class `fact` picks no option; got `" & d.recommends.shortened & "`.",
       )
     return
   if d.options.len < OPTIONS_MIN or d.options.len > OPTIONS_MAX:
@@ -375,8 +378,8 @@ func decisionFindings(d: Decision; at: int): seq[Finding] =
       result.add finding(
         "",
         0,
-        "Option reads `<letter>. <label>: <consequence>`; got `" & o.letter & "` in " & name &
-          ".",
+        "Option reads `<letter>. <label>: <consequence>`; got `" & o.letter & "` in `" & name &
+          "`.",
       )
     elif o.label.splitWhitespace.len > WORDS_OPTION:
       result.add finding(
@@ -389,11 +392,15 @@ func decisionFindings(d: Decision; at: int): seq[Finding] =
     result.add finding("", 0, "Decision " & name & " lacks `Recommends:`; got none.")
   elif pick.len != 1 or pick[0] notin d.options.mapIt(it.letter):
     result.add finding(
-      "", 0, "Recommends names letter of one option of " & name & "; got `" & pick & "`."
+      "",
+      0,
+      "Recommends names letter of one option of " & name & "; got `" & pick & "`.",
     )
   if not d.question.endsWith("?"):
     result.add finding(
-      "", 0, "Question of " & name & " ends with `?`; got `" & d.question.shortened & "`."
+      "",
+      0,
+      "Question of " & name & " ends with `?`; got `" & d.question.shortened & "`.",
     )
 
 
@@ -404,7 +411,7 @@ func decisionNumbers(cell: string): seq[int] =
       result.add word[1 .. ^1].parseInt
 
 
-func rowFindings(rows: seq[seq[string]]; numbers: openArray[int]): seq[Finding] =
+func rowFindings(rows: seq[seq[string]], numbers: openArray[int]): seq[Finding] =
   ## Report rows of sign-off table out of shape: cells, order, evidence, carried tags, who acts.
   ##   ⚠️ row opens last cell with role that acts, or `outside`, so coordinator sees which
   ##     delegate blocks which; ⏸️ row names decision it waits on, so its card carries it.
@@ -498,7 +505,7 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     role_text = Part.Role.rest.split(',')[0].strip
     parsed = branch.parseBranch
     state_word = Part.State.rest.split({',', ' '})[0]
-    decisions = decisionsIn(after[starts[Part.Decisions] + 1 ..< starts[Part.Next]])
+    decisions = decisionsIn(after[starts[Part.Decisions] + 1..<starts[Part.Next]])
   if parsed.isSome and role_text != parsed.get.roleName:
     result.add finding(
       "",
@@ -509,16 +516,16 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") & "; got `" & state_word & "`." &
-        (if state_word == "working": " Close turn with line `" & LABEL_WORKING & "` instead."
-         else: ""),
+      "Sign-off state is one of " & STATES_SIGNOFF.join(", ") &
+        (if state_word == "working": ", and turn while work runs closes with line `" &
+           LABEL_WORKING & "`"
+         else: "") & "; got `" & state_word & "`.",
     )
   elif (state_word == BLOCKED) != decisions.anyIt(it.class.startsWith(CLASS_BLOCKS)):
     result.add finding(
       "",
       0,
-      "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & state_word &
-        "`.",
+      "Sign-off state is `" & BLOCKED & "` exactly when decision blocks; got `" & state_word & "`.",
     )
   if decisions.len == 0 and Part.Decisions.rest != NONE_DECISION:
     result.add finding(
@@ -531,12 +538,11 @@ func checkSignoff*(message, branch: string): seq[Finding] =
     result.add finding(
       "",
       0,
-      "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened &
-        "`.",
+      "Decisions label stands alone over its blocks; got `" & Part.Decisions.rest.shortened & "`.",
     )
   for i, d in decisions: result.add decisionFindings(d, i)
   result.add rowFindings(
-    after[starts[Part.Table] + 1 ..< starts[Part.Summary]].join("\n").tableRows,
+    after[starts[Part.Table] + 1..<starts[Part.Summary]].join("\n").tableRows,
     decisions.mapIt(it.number),
   )
   var k = starts[Part.Next] + 1
@@ -556,6 +562,114 @@ func checkSignoff*(message, branch: string): seq[Finding] =
       if text.startsWith(label): text = text[label.len .. ^1].strip
     prose.add text
   result.add englishFindings("sign-off", prose.join("\n"))
+
+
+func labelDefined(line: string): string =
+  ## Read label that line defines as `[label]: url`, lowercased; empty where it defines none.
+  let s = line.strip(trailing = false)
+  if line.len - s.len > 3 or not s.startsWith("["): return ""
+  let close = s.find(']')
+  if close < 2 or not s[close + 1 .. ^1].startsWith(":") or s[close + 2 .. ^1].strip.len == 0:
+    return ""
+  s[1..<close].toLowerAscii
+
+
+func codeSpansOut(line: string): string =
+  ## Blank each code span of line: run of backticks opens it, next run of same length closes
+  ##   it, and run left open stays text, as CommonMark reads it.
+  var i = 0
+  while i < line.len:
+    if line[i] != '`':
+      result.add line[i]
+      inc i
+      continue
+    var n = 0
+    while i + n < line.len and line[i + n] == '`': inc n
+    var
+      j = i + n
+      close = -1
+    while j < line.len and close < 0:
+      if line[j] != '`':
+        inc j
+        continue
+      var m = 0
+      while j + m < line.len and line[j + m] == '`': inc m
+      if m == n: close = j
+      j += m
+    if close < 0:
+      result.add line[i..<i + n]
+      i += n
+    else:
+      result.add ' '.repeat(close + n - i)
+      i = close + n
+
+
+func linksOut(line: string, labels: openArray[string]): string =
+  ## Blank each link of line: `[text](url)`, and `[text][label]` or `[label]` whose label
+  ##   message defines. Bracket opening no link stays text.
+  var i = 0
+  while i < line.len:
+    if line[i] != '[':
+      result.add line[i]
+      inc i
+      continue
+    let close = line.find(']', i + 1)
+    if close < 0:
+      result.add line[i .. ^1]
+      break
+    let text = line[i + 1..<close]
+    var stop = -1  # Index past link; none where bracket opens no link.
+    if close + 1 < line.len and line[close + 1] == '(':
+      let paren = line.find(')', close + 2)
+      if paren >= 0: stop = paren + 1
+    elif close + 1 < line.len and line[close + 1] == '[':
+      let shut = line.find(']', close + 2)
+      if shut >= 0:
+        let label = line[close + 2..<shut]
+        if (if label.len == 0: text else: label).toLowerAscii in labels: stop = shut + 1
+    elif text.toLowerAscii in labels: stop = close + 1
+    if stop < 0:
+      result.add '['
+      inc i
+    else:
+      result.add ' '.repeat(stop - i)
+      i = stop
+
+
+func checkNumbersBare*(message: string): seq[Finding] =
+  ## Report each `#N` of message outside link and outside code (GUIDE.md, Output contract).
+  ##   Definition line `[label]: url` is link too, as is `[label]` it defines. `#` after word
+  ##     character, `&` or `/` opens no number: `&#N;` is character reference, `x#N` fragment
+  ##     or name in other repository. Each number reports once.
+  let lines = message.fencedOut.splitLines
+  var
+    labels: seq[string]
+    seen: seq[string]
+  for line in lines:
+    let label = line.labelDefined
+    if label.len > 0: labels.add label
+  for line in lines:
+    if line.labelDefined.len > 0: continue
+    let text = line.codeSpansOut.linksOut(labels)
+    var i = 0
+    while i < text.len:
+      let is_number = text[i] == '#' and i + 1 < text.len and text[i + 1] in Digits and
+        (i == 0 or text[i - 1] notin IdentChars + {'&', '/'})
+      if not is_number:
+        inc i
+        continue
+      var j = i + 1
+      while j < text.len and text[j] in Digits: inc j
+      let number = text[i..<j]
+      if number notin seen:
+        seen.add number
+        result.add finding(
+          "",
+          0,
+          "Message names `" & number & "` outside link; name each issue and pull request by " &
+            "short description and its number, as one link (GUIDE.md, Output contract).",
+        )
+      i = j
 
 
 func checkEndTurn*(message, branch: string): seq[Finding] =

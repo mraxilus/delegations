@@ -305,5 +305,6 @@ that write to GitHub at once, and name the number in your memory. Read GitHub by
 Your message to the Architect is the digest, and not a sign-off. Its last part lists each
 post that you made on GitHub, so the Architect sees every write that you made in their name.
 
-Name each issue and pull request by a short description and its number, as one link. That holds
-in each message and on each card (`GUIDE.md`, Output contract).
+Name each issue and pull request by a short description and its number, as one link. Cite each
+article and duty by a short description and its reference too. That holds in each message and
+on each card (`GUIDE.md`, Output contract).

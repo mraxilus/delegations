@@ -1,10 +1,14 @@
-## Hold pull request's opening role line and its labels to role its branch names.
+## Hold pull request's opening role line and its labels to role its branch names, and its title
+##   to commit grammar.
 ##   Role line says who speaks; label says whose work it is. On pull request both are branch's
 ##     own role, since branch grammar names role and delegate on it writes under that role. So
 ##     one string, derived by `parseBranch`, answers for both, and check is equality rather
 ##     than presence.
-##   Inputs arrive through environment: branch and body from event payload, label names from
-##     API, since payload carries none on event that opens pull request.
+##   Inputs arrive through environment: branch, title and body from event payload, label names
+##     from API, since payload carries none on event that opens pull request.
+##   Title holds grammar, scope and width of commit subject (`checkCommits`), since merge commit
+##     takes title as its subject and `main` takes no rewrite after (pull request template).
+##     `edited` event runs check again on rename.
 ##   Role line may stand below attribution block that harness writes first and requires:
 ##     marker comment `ccr-projects-attribution`, rendering as nothing, then italic credit
 ##     line naming who asked. Block is passed only whole, once and in order.
@@ -28,7 +32,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils, unicode]
-import ./[domains, findings]
+import ./[commits, domains, findings]
 
 
 const
@@ -91,3 +95,30 @@ func checkRole*(branch, body: string; labels: openArray[string]): seq[Finding] =
         "Pull request must carry label `" & expected & "`, copied from branch grammar; got `" &
           labels.join(", ") & "`."
     result.add finding("", 0, message)
+
+
+func checkTitle*(branch, title: string): seq[Finding] =
+  ## Report pull request title outside commit grammar, or with scope its branch does not carry.
+  if branch.parseBranch.isNone: return
+  let
+    parsed = title.parseSubject
+    scope = branch.scopeRequired
+  if parsed.isNone:
+    result.add finding(
+      "",
+      0,
+      "Pull request title must match `type(scope): lowercase summary` without final period, " &
+        "since merge commit takes it as subject; got `" & title.shortened & "`.",
+    )
+  elif scope.isSome and parsed.get.scope != scope.get:
+    result.add finding(
+      "",
+      0,
+      "Pull request title scope must be `" & scope.get & "`; got `" & title.shortened & "`.",
+    )
+  if title.runeLen > SUBJECT_MAX:
+    result.add finding(
+      "",
+      0,
+      "Pull request title exceeds " & $SUBJECT_MAX & " characters; got `" & $title.runeLen & "`.",
+    )

@@ -344,6 +344,19 @@ that `assets.nim` does not declare is a process-change issue for the curator, wh
 A presentation target ships the faces that Article X.8 names, inlined, and the store serves
 them. Each Noto face ships whole, as the TrueType file of its own release, and never as a subset.
 
+**A page proves its faces in `drive`.** A project that builds pages has a `drive` verb, and it
+renders each page that the project builds. It fails where a face of the system draws a
+character beyond ASCII, and the finding names the page, the element and the codepoint. Either
+of two methods meets this rule:
+
+- Ask the browser which fonts drew each character of each text element. The DevTools protocol
+  answers through `CSS.getPlatformFontsForNode`.
+- Resolve the font stack of each element against the `cmap` of each face that the page ships.
+  A character that no face of that stack maps is a finding.
+
+The audit reads what each face of a project maps, across the whole project. Only a render
+follows the cascade of each element, so `drive` holds what the audit cannot.
+
 ## Tests are paramount
 
 - Article IX applies in full. Where an authority exists, the suites are named after its

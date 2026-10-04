@@ -81,8 +81,8 @@ each job carries the name of the koch verb that it runs:
   It also reads glossary shape, the prompts, and the Simplified Technical English of the
   root documents and of every project record. It holds the root documents and every Markdown
   file under `curator/` to the words that the glossary gives for people. It reads copied
-  paragraphs, shipped faces, the compiler pin of each project, and each lock against its
-  nimble file.
+  paragraphs, shipped faces and the characters that they cover, the compiler pin of each
+  project, and each lock against its nimble file.
 
   In Nim it reads the words of each declared name, and the idioms that `STYLE.md` sets. It
   reads fixed waits in drive code, and the flags of each `tsconfig.json`. In each workflow it

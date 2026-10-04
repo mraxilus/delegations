@@ -305,6 +305,13 @@ its item already, so its `Where` cell may hold the number alone, still as a link
 link keeps a line short: write `[#456]`, and give its address once, on a line of its own above
 the sign-off.
 
+**Cite each article and duty by a short description and its reference**, such as
+`names read head first (V.2)` or `a check that reddens a project (duty 3)`. The Architect does
+not hold the charter by number, so a reference alone sends the reader to look it up. A duty
+takes its own heading in `CURATOR.md` as its description. This holds in each message and each
+post, the sign-off included. A section names itself already, as `CONTRIBUTOR.md, Boundaries`
+does. A record and the code keep the reference alone, because their reader has the charter open.
+
 **Show the change in that same message.** Give a screenshot where it is visual, and a worked
 example where it is not. Where there is nothing to show, give one sentence that says why.
 GitHub takes no image from an API, so this message is the only channel that a picture has.

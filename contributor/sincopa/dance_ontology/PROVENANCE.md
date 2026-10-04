@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 6d66292a627b7509 |
+| Rules   | 48edef82056d9788 |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -64,7 +64,12 @@ meet, because `Grip` names the manner of holding instead.
 reachable pose does". In the engine a small move is the engine carrying the arms on for one moment,
 and what stops it is one named thing. That thing is decided once in `rigid.stoppedBy`, and read by
 every sweep, still and page alike (Article II.1). Verified by `test_rigid.nim`: the turn that a
-couple are said to reach is the turn that some distance carries, and every stop carries its name.
+couple are said to reach is the turn that some distance carries. Every walk that stops names what
+stopped it, as kept and as walked again live.
+
+`seen.still` marks a still that holds at no distance and in no plan as stopped, and names no stop.
+The rig page then says that no pose holds at any distance (`design/rig.nim`). No law stands such a
+still, because the simulation models every card that the reference draws (`suites/test_asks.nim`).
 
 **The model names all sixteen facings, from the side each dancer turns to the other.**
 `rotation.Facing` holds sixteen states, and `facing` reads one off where each dancer sees the
@@ -156,10 +161,12 @@ From the simulation:
 say `validator` and `primitives`, where the agreed words are `Reference` and `Move`. That is a sweep
 of the vocabulary of the whole page, and it waits.
 
-**No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm `lead`
-and `follow`, and `simulation/verdicts.md` heads its tables the same way. Both files are written by
-their own verbs. Verified by `suites/test_glossary.nim`, which reads `simulation`, `design` and
-`app`.
+**No string that writes a recorded sweep names a dancer with a gendered word.**
+`design/turns.json` keys each arm `lead` and `follow`, and `simulation/verdicts.md` heads its tables
+the same way. Their own verbs write both files. Verified by `suites/test_glossary.nim`, which reads
+each string literal of the `.nim` files under `simulation`, `design` and `app`. It reads neither
+recorded file. Verified by hand with GNU grep 3.11, 2026-10-04: neither file holds a word that the
+glossary rejects for a dancer.
 
 **One translation table, so the report and the page cannot disagree.** `simulation/words.nim` holds
 the table, and both read it (Article II.1). Rejected: a copy in each, which keeps the translation
@@ -905,9 +912,10 @@ material, ball, hinge, weld and distance joints, contact manifolds, step, world 
 velocity. To import it builds the archive first, at compile time, so a suite that drives the engine
 drives its build too (Article IX.6).
 
-Verified by `test_engine.nim`, which holds it to two laws and no more. A body falls half g t
-squared, which catches a struct laid out wrong where linking would not. Two limb-thick capsules
-started inside one another part to at least two radii.
+Verified by `test_engine.nim`, which holds it to what the rig needs of it and no more. A body falls
+half g t squared, which catches a struct laid out wrong where linking would not. Two limb-thick
+capsules started inside one another part to at least two radii. Its law on the contacts of a body
+touched by many things is below.
 
 **The engine stands Y up and this project stands Z up**, and the binding deliberately does not
 translate. Whatever calls it says which way is up, and `simulation/rigid.nim` is the one place that
@@ -1201,11 +1209,19 @@ collarbone (`strainOf`, `Strain`). It is nought outside every ease, one at some 
 it. A stop with no ease costs nothing to lean on, and counts only past half a degree (`SLACK`). The
 engine solves its limits rather than clamps them.
 
+The report and the whole-cloth sweeps read strain off a pose alone, from the joints of the held
+arms. `read.tightest` names the joint nearest its edge, and that joint gives the strain.
+
+Verified by `test_read.nim`, over the couples that it settles and one single hold at rest. Every
+joint of every held arm has at least the margin of the joint that `tightest` names. The law failed
+on two breaks made on purpose. One left an end of each connection unread, and one read the twist of
+a left arm against the range of a right arm.
+
 A still whose card fixes no way about is wound either way at every distance, and takes whichever way
 sits easier (`either`). Those are the frames of the standard diagram turned half a turn, which draw
-the same picture turned either way. The card claims a position and not a path. The single hold wound
-the way asked stood at 0.48 m, with the twist of the follow a third of the way into its ease. The
-other way about it stood at 0.36 m, at ease outright.
+the same picture turned either way. The card claims a position and not a path. For the single hold
+at half a turn, `simulation/answers.json` keeps where the couple stand the way asked, and where they
+stand with either way free. The law below prints each distance and its strain.
 
 Verified by `test_rigid.nim`: the free way is never worse than the way asked, and is at ease. Red
 first.
@@ -1327,17 +1343,16 @@ across each piece and never along it. The first two and the last were red first.
 
 **Against the floor, which is the Architect's.** The floor says that everything gets a whole turn
 before it blocks, except a low wrap, which gets half. Nothing is tuned to it. Every change is argued
-from the rig or from a ruling of the Architect. `simulation/verdicts.md` prints what came out beside
-each claim, so a mend and a regression are both seen.
+from the rig or from a ruling of the Architect.
 
-Standing for the turn met seven of the eight single-hand claims of the floor, where standing at rest
-met none. That is the strongest evidence so far that the floor was right and the model wrong, rather
-than the other way about.
+`simulation/verdicts.md`, section The floor's claim, prints each claim of the floor beside the
+answer of the simulation and what stops it. So a mend and a regression are both seen. A recording
+can move any row, so this record cites the report and does not restate it. Where a row disagrees
+with the floor, the ruling is the Architect's.
 
-With bodies solid the crown is free both ways. Both low lock ways, and the cross-name high lock, go
-past the whole turn of the floor by the wrist of the follow. The wraps stop between half and a whole
-turn, by the twist of the follow or the wrist of the lead. Each disagreement is printed, and is the
-Architect's to rule on.
+Over the crown, nothing stops either single hold within a whole turn, either way. Those are the
+crown rows of the floor. Verified by `test_rigid.nim`, test "over crown nothing stops single hold
+turning". No law holds the rows at the low and neck bands, which the report prints alone.
 
 **Verdicts are an instrument run, assumed current.** `simulation/verdicts.nim` asks the simulation
 what the sheet asks. It writes `simulation/verdicts.md` in the words of the sheet, through one
@@ -1348,14 +1363,18 @@ No test compares the kept readings with the physics. So the report is current as
 and stale until it is run again. It is run again in the same delivery as any change to the model.
 A law holds the report to the readings that it renders from (Kept answers).
 
-**Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
-`read.crossings` counts where two connections cross in plan, by a segment intersection. Two poses
-differing by less than the precision of a float have read as four crossings, and as one. That
-happens when a crossing sits at a vertex of both polylines.
+**The crossing reader gives one answer at a knife edge.** `read.crossings` counts where two
+connections cross in plan. Two segments cross where each has the ends of the other on opposite sides
+of its line. A point within `ON_LINE` of a line counts as on its positive side.
 
-The verdicts tables and the diamond law read it on poses well away from that edge. To loosen its
-tolerance six orders of magnitude changed no count on any kept chain card. A law that samples arms
-laid along each other on purpose is owed, and the fold rule is repository issue 88.
+So a vertex that two segments share counts for one of them alone. An arm laid along the other
+crosses it once, where it leaves to the far side. Rejected: an intersection read from the two lines
+alone, which counts a crossing at a vertex of both connections four times.
+
+Verified by `test_read.nim`, test "crossing reader gives one answer at knife edge". A crossing at a
+vertex of both connections reads as one crossing, and so does an arm laid along the other. Each
+reads the same in every one of `TRIALS_JITTER` seeded trials, with each point moved up to 1e-13 m in
+plan.
 
 ## The swan
 
@@ -1854,7 +1873,7 @@ engine. `test_said.nim` compiles to JavaScript. `test_suites.nim` imports every 
 `doAssert` survives it.
 
 **`test_read.nim` settles its thirty couples on every core at once.** Each worker builds and settles
-its own couple, and gives back the arm poses alone. The law reads them on one thread. Its run took
+its own couple, and gives back the arm poses alone. The laws read them on one thread. Its run took
 8.1 s with the couples settled one after another, and takes 2.3 s, on four cores on 2026-09-26. It
 prints the same lines. It failed on three breaks made on purpose: the reader of the arm over turned
 round, one connection given back twice, and no couple settled.
@@ -1900,9 +1919,15 @@ body give values to `simulation/rig.nim`, and no suite mirrors a chapter of them
 `suites/test_workbook.nim` mirror the base sheet, which is an authority, and keep its names.
 
 **The review page counts the laws of every suite, joined or not.** It reads every `t*.nim` under
-`tests/`, so a suite that moves into a folder is still counted. Verified by
-`suites/test_review.nim`, which counts the laws of each stub and of the suites it imports, and reads
-the page against them.
+`tests/`, so a suite that moves into a folder is still counted. It counts each line that opens a
+law. So every law takes its name as a literal, because a name given at run time hides how many laws
+its line makes. Verified by `suites/test_review.nim`, which counts the laws of each stub and of the
+suites it imports by the same rule. It refuses a law named at run time, and reads the page against
+the count.
+
+`suites/test_marks.nim` holds each page of the workbench in a law of its own, named by the page. A
+law there reads those names off the file and holds them to `PAGES`, so a new page cannot go
+unbuilt. It failed when the law of one page was taken out.
 
 Test binaries inherit the working directory of testament. So `build/review`, `build/design` and
 the `tests/` of the review page's count resolve only from the project directory. The runner of
@@ -1923,8 +1948,8 @@ reddens a law.
 - `tools/build.nim modelled`: 7245 s wall on four cores, on 2026-10-03, with the planner. A
   driver that saves each answer asked its 231 questions. 95 percent of the work is in the 32
   planned cards.
-- `tools/build.nim rig`: 2464 s wall on four cores, compile included, on 2026-10-02, with the
-  planner.
+- `tools/build.nim rig`: unmeasured as a whole. It stands every candidate of a still short of
+  ease, and Planned turn gives the time of its slowest stills.
 - `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
   its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
   change to words, compile included.
@@ -2009,8 +2034,9 @@ A rename of case alone keeps the same name in Nim, so the compiler finds no miss
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
 so a change of names alone reads the physics again. On 2026-10-02, on four cores, the answers took
-144 s and the report 421 s. The rig took 2464 s and the whole-cloth turns 1135 s. The modelled
-cards took 7245 s on 2026-10-03, and 95 percent of the work was in the 32 planned cards.
+144 s, the report 421 s and the whole-cloth turns 1135 s. The modelled cards took 7245 s on
+2026-10-03, and 95 percent of the work was in the 32 planned cards. The rig stands every candidate
+of a still short of ease, and its whole time is unmeasured (Figures).
 
 That is the cost of a stamp that reads text and not the program, and it is accepted. Renames of the
 simulation are rare.
@@ -2081,16 +2107,15 @@ urgent.
 - **Every still awaits the confirmation of the Architect against their own body.** They have said
   that many are wrong, and will say what is wrong with each, cell by cell on the viewer. The tags
   read *unconfirmed* until then.
-- **The floor at the low and neck bands.** The wraps stop between half and a whole turn, where the
-  floor says half or whole. The twist of the follow or the wrist of the lead stops them. The low
-  locks go past the whole turn of the floor. Whether a hammerlock goes a whole turn, and what moves
-  in the body when it does, is the Architect's.
+- **The floor at the low and neck bands.** `simulation/verdicts.md` prints each claim of the floor
+  there beside the answer of the simulation and what stops it (Against the floor). Where the two
+  disagree, the ruling is the Architect's. So is whether a hammerlock goes a whole turn, and what
+  moves in the body when it does.
 - **The radius of the girdle, 60 mm, is an estimate and not tape.**
 - **Two one-moment flips in the cross-name crown turn.** They are 370 mm as the lead's arm
   straightens over at 0.28, and 220 mm as the follow's arm turns over at 1.18. Weightless links with
-  springs this weak do that at no cost. The corpus of the leap law does not include that sweep,
-  and says so.
-- **The crossing reader at a knife edge**, with arms laid along each other, repository issue 88.
+  springs this weak do that at no cost. The corpus of the leap law in `test_rigid.nim` leaves that
+  sweep out, so no law holds it to the bound of a leap.
 
 **Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
 workbench draws the current reading meanwhile.
