@@ -2019,6 +2019,28 @@ suite "Internal: Driver":
       let cell = line[7..<line.find('|', 7)].strip
       if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
 
+  func importsOf(source: string): seq[string] =
+    ## Read path each `import` or `from` statement of source names first, as written.
+    for line in source.splitLines:
+      let s = line.strip
+      if s.startsWith("#"): continue
+      for opener in ["import ", "from "]:
+        let at = s.find(opener)
+        if at < 0 or (at > 0 and not s[0..<at].endsWith(": ")): continue
+        result.add s[at + opener.len..^1].split(' ')[0]
+
+  func branched(source: string): Table[string, string] =
+    ## Read body of each dispatch branch, keyed by verb, up to next branch or `else:`.
+    var verb = ""
+    for line in source[source.find("case paramStr(1)")..<source.len].splitLines:
+      let s = line.strip
+      if s == "else:": break
+      if s.startsWith("of \""):
+        verb = s[4..<s.find('"', 4)]
+        result[verb] = s[s.find(':', 4 + verb.len) + 1..^1]
+      elif verb.len > 0:
+        result[verb].add "\n" & s
+
 
   test "drive holds code to pin alone, and verb head alone reads library head":
     let
@@ -2033,6 +2055,23 @@ suite "Internal: Driver":
     check dispatched(driver).sorted == tabled(driver).sorted  # header table
     check "inspect" in dispatched(driver) and "bench" in dispatched(driver)  # README's verbs
     check "types" in dispatched(driver)  # what `koch check-types` runs over `package.json`
+
+
+  test "dispatcher imports standard library alone, so type check compiles no project code":
+    let imports = importsOf(driver)
+    check imports.len > 0  # reader finds dispatcher's imports
+    for path in imports:
+      check path.startsWith("std/")  # CONTRIBUTOR.md, TypeScript and Node
+    check importsOf(verbs).anyIt(it.startsWith("../src/"))  # reader sees project import
+
+
+  test "dispatcher hands on every verb but types and system, and verbs answers each":
+    let
+      branches = branched(driver)
+      handed = toSeq(branches.pairs).filterIt("delegated()" in it[1]).mapIt(it[0])
+    check handed.sorted == dispatched(verbs).sorted  # each verb handed on is answered there
+    check "types" notin handed and "system" notin handed  # neither compiles project code
+    check "types()" in branches["drive"] and "browser()" in branches["drive"]  # readied first
 
 
   test "drive builds every page once, and renders each page it builds":
