@@ -740,7 +740,7 @@ may open with a whole paragraph, and the finding is read in a log.
 
 **The coordinator holds no branch, so `check-role` never reads it.** It opens issues and
 comments, and no pull request. Its role string is `coordinator`, which `isRoleString` in the
-`body` hook accepts (section Hooks).
+`body` hook accepts (section Hooks on messages).
 
 **The role line may stand below the attribution block of a harness.** A harness that starts a
 delegate in a thread writes two lines above each pull request body that it opens, and it
@@ -2309,7 +2309,7 @@ rest by reading.
 - Cost: a drive outside `tests/` and `tools/` is unseen. So is a window built from a page
   timer, and a fixed wait of a language other than Nim and Playwright.
 
-## Hooks
+## Hooks on tool calls
 
 **Each hook of `.claude/settings.json` calls `koch hook <event>` and holds no rule of its own.**
 The rule stays in the audit, once, and the hook reads the fact of its event and names the check
@@ -2399,19 +2399,25 @@ commit before the new one, and `check-commits` reads the true order in CI.
 - Rejected: a hook per rule, which puts the rule in two places. Rejected: `nim r` on every
   hook, which recompiles on each source change and costs seconds; the built binary costs
   milliseconds, and `nim r` stays as the fallback.
-- The `stop` hook passes once `stop_hook_active` is set, so a blocked turn cannot loop. It
-  counts a GitHub write as a post only where the call carried a body, as the `body` hook
-  does. So a label or a draft update ends no turn with a sign-off.
-- Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
-  only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
-  holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
-  built hook, 2026-10-03: a valid sign-off sent only as a reply leaves the turn blocked, with
-  `got none`. The same block as text passes.
 - Each hook command names the script through `CLAUDE_PROJECT_DIR`, never by a relative path.
   A hook runs in the working directory of the Bash tool, which moves with each `cd`. A
   relative path then fails to open, and every hooked tool is refused.
 - The shape rules of the sign-off, the body and the bash refusals are pure functions.
   Verified by `suites/test_hooks.nim`.
+
+## Hooks on messages
+
+**`body` and `stop` hold what a delegate writes for a person: each post, and the message that
+ends a turn.** Section Hooks on tool calls gives the mechanism that both share. The `stop` hook
+passes once `stop_hook_active` is set, so a blocked turn cannot loop. It counts a GitHub write
+as a post only where the call carried a body, as the `body` hook does. So a label or a draft
+update ends no turn with a sign-off.
+
+- Cost: in a project thread, the Architect reads a reply, which is a tool call. `stop` reads
+  only the text of the turn, so it holds the shape of a sign-off in that text alone. Reading
+  holds the shape of the reply, as it does outside Claude Code. Verified by hand through the
+  built hook, 2026-10-03: a valid sign-off sent only as a reply leaves the turn blocked, with
+  `got none`. The same block as text passes.
 
 **`coordinator` is a role string that no branch names.** `isRoleString` accepts it, so a
 sign-off row or a decision class may name the coordinator as the role that acts. A hook
