@@ -1259,9 +1259,11 @@ absent package names itself.
 for the tarball that `fetchRelease` unpacks, and `coreutils` for `sha256sum`. It also holds
 `libbrotli1` for the audit suite, which reads `woff2` faces, because `curator/audit` carries no
 driver with a `system` verb. The runner holds it: verified by run 906 of `check`, whose `test`
-job ran that suite and passed. `koch list-packages` with no project prints those and every
-project's, unscoped, so one command answers what a machine needs before any of this runs. To
-name a project keeps the meaning for each job that the runner asks for.
+job ran that suite and passed.
+
+`koch list-packages` with no project prints those and every project's, unscoped, so one
+command answers what a machine needs before any of this runs. To name a project keeps the
+meaning for each job that the runner asks for.
 
 Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
 that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent because it
