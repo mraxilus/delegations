@@ -795,8 +795,8 @@ that the shape is settled for all time.
   that test by name, and every other suite still runs. Rejected: `fc-query` as the reader,
   which adds fontconfig to every machine and reads its charset rather than the `cmap`.
 - Cost: the test fetches each face that the store lacks. Measured on 2026-10-04 on the machine
-  of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s. The `test` job of the runner restores no store, so it
-  fetches on each run.
+  of Figures: into an empty store, it fetched 5,670,612 bytes in 2.5 s. Warm, it took 0.08 s.
+  The `test` job of the runner restores no store, so it fetches on each run.
 
 The name is general, and names no class of file. So a second class needs no rename across
 projects that a curator may not edit.
