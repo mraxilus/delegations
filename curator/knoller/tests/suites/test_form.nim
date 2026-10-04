@@ -7,9 +7,9 @@ import ../../src/knoller/[form, reports]
 
 
 func fixed(source: string): Fix =
-  ## Fix form of Nim source, as `koch fix` does.
+  ## Fix form of Nim source, as `koch fix` does, each line held.
   result.source = source
-  for fixer in FORM_FIXERS: result = result.chain(fixer("a.nim", result.source))
+  for step in FORM_STEPS: result = result.chain(step.run("a.nim", result.source, EVERY))
 
 
 func gapMessage(spaces: int): string =
@@ -62,6 +62,22 @@ suite "Fixes":
     let near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
     check fixed(near).source == near  # left to hand
     check gapMessages(near) == @[gapMessage(1)]  # finding stays
+
+
+  test "fix held on no line widens it, and keeps width guard on held line":
+    let
+      near = "x".repeat(LINE_MAX - 4) & " # c\n"  # 100 runes; two-space gap makes 101
+      spaced = "x".repeat(LINE_MAX - 4) & "  # c\n"
+      tab = "let s = \"" & "x".repeat(LINE_MAX - 12) & "\t\"\n"  # 99 runes; escaped, 100
+      wide_tab = "let s = \"" & "x".repeat(LINE_MAX - 11) & "\t\"\n"  # 100 runes; escaped, 101
+    check fixComments("a.nim", near, Held()).source == spaced  # no line held: widens
+    check fixComments("a.nim", near, Held(lines: @[1])).source == near  # its line held
+    check fixComments("a.nim", near, EVERY).source == near  # every line held
+    var step = Fix(source: wide_tab)
+    for each in FORM_STEPS: step = step.chain(each.run("a.nim", step.source, Held()))
+    check step.source == wide_tab.replace("\t", "\\t")  # tab escape widens off held lines
+    check fixed(wide_tab).source == wide_tab  # and stays where every line is held
+    check fixed(tab).source == tab.replace("\t", "\\t")  # escape that fits is written
 
 
   test "clean source passes through unchanged":

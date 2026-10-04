@@ -33,6 +33,8 @@
 ##
 ##   Cost: scanner, never parser (`tokens.nim`); construct it cannot read surely stays as written.
 ##   Cost: fixer never writes line width check reports; rewrite that would, stays to hand.
+##     Trailing separator fixer alone is widener (`reports.nim`): off held line it writes
+##     separator that widens line past `LINE_MAX`, and call layout wraps line after.
 ##   Hand-shaped call arguments, such as matrix rows, take one argument to line unless fenced
 ##     (`fixes.nim`, X.1): fenced line reads as comment, so call holding it stays as written.
 
@@ -605,8 +607,9 @@ func isConstructorOpen(s: Scan, o: int): bool =
   text != "(" or s.tokens.signatureOf(s.partners, o, s.source) < 0
 
 
-func trailingInserts(s: Scan): seq[Insert] =
-  ## Find each list written one item to line whose last item lacks trailing separator.
+func trailingInserts(s: Scan, held: Held): seq[Insert] =
+  ## Find each list written one item to line whose last item lacks trailing separator; one
+  ##   whose separator would widen held line is left.
   for o in 0 ..< s.tokens.len:
     if s.tokens[o].kind != TokenKind.Open or s.partners[o] < o: continue
     let c = s.partners[o]
@@ -635,14 +638,16 @@ func trailingInserts(s: Scan): seq[Insert] =
       at = s.tokens[last.last].after
       text = s.lines[line]
       cut = at - s.starts[line]
-    if (text[0 ..< cut] & separator & text[cut .. ^1]).isWide and not text.isWide: continue
+    if held.isHeld(line + 1) and (text[0 ..< cut] & separator & text[cut .. ^1]).isWide and
+        not text.isWide:
+      continue
     result.add Insert(line: line, at: at, separator: separator)
 
 
 func checkTrailing*(path, source: string): seq[Report] =
   ## Report list written one item to line without trailing separator (X.3).
   ##   Named by its suite and `fixes.nim` alone until static pass calls it (`fixes.nim`).
-  for insert in source.scan.trailingInserts:
+  for insert in source.scan.trailingInserts(EVERY):
     result.add initReport(
       path,
       insert.line + 1,
@@ -652,23 +657,34 @@ func checkTrailing*(path, source: string): seq[Report] =
     )
 
 
-func fixTrailing*(path, source: string): Fix =
-  ## Insert each trailing separator check reports, last first, so earlier offsets hold.
+func fixTrailing*(path, source: string; held: Held): Fix =
+  ## Insert each trailing separator check reports, or that widens line off held lines, last
+  ##   first, so earlier offsets hold.
   result.source = source
-  let inserts = source.scan.trailingInserts
+  let inserts = source.scan.trailingInserts(held)
   for insert in inserts.reversed:
     result.source.insert(insert.separator, insert.at)
   for insert in inserts:
     result.fixed.add initReport(path, insert.line + 1, Rule.TrailingSeparator)
 
 
-const WRAPPING_FIXERS*: array[4, Fixer] = [fixSeparators, fixSignatures, fixCalls, fixTrailing]
+func fixTrailing*(path, source: string): Fix =
+  ## Insert each trailing separator check reports, last first, so earlier offsets hold.
+  fixTrailing(path, source, EVERY)
+
+
+const WRAPPING_STEPS*: array[4, Step] = [
+  guarded(fixSeparators),
+  guarded(fixSignatures),
+  guarded(fixCalls),
+  widening(fixTrailing),
+]
   ## Wrapping fixers in order they run. Separators come first, since layouts join groups with
   ##   separator they read; trailing separators come last, adding what neither layout wrote to
   ##   list left as written.
 
 
 func fixWrapping*(path, source: string): Fix =
-  ## Rewrite separators, then signatures, then calls, then trailing separators.
+  ## Rewrite separators, then signatures, then calls, then trailing separators, each line held.
   result.source = source
-  for fixer in WRAPPING_FIXERS: result = result.chain(fixer(path, result.source))
+  for step in WRAPPING_STEPS: result = result.chain(step.run(path, result.source, EVERY))

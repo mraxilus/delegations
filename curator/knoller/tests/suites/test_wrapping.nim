@@ -187,6 +187,14 @@ suite "Wrapping":
       check checkTrailing("a.nim", kept).len == 0  # grouping, flowed list, type bracket
 
 
+  test "trailing separator held on no line widens it, and keeps width guard on held line":
+    # Item line of 100 runes; separator makes 101.
+    let near = "let a = @[\n  1,\n  " & "x".repeat(48) & " + " & "y".repeat(47) & "\n]\n"
+    check fixTrailing("a.nim", near, Held()).source == near.replace("y\n]", "y,\n]")
+    check fixTrailing("a.nim", near, Held(lines: @[3])).source == near  # its line held
+    check near.fixed == near  # two-argument form holds every line
+
+
   test "clean source passes through unchanged":
     let clean = "proc f(a: int, b: string): int =\n  foo(a, b)\n\nlet x = @[\n  1,\n  2,\n]\n"
     check clean.isSettled

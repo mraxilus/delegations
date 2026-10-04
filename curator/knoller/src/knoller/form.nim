@@ -18,8 +18,10 @@
 ##   Fixers share each check's own predicate, so each rule is written once (Article II.1):
 ##     trailing whitespace is cut, CR of CRLF ending among it; ending becomes exactly one
 ##     newline; gap before trailing comment becomes two spaces; run of blank lines beside
-##     banner takes count exact X.2 check reads. Fixer never writes line width check reports,
-##     so gap it would widen past `LINE_MAX` stays, finding and all.
+##     banner takes count exact X.2 check reads.
+##   Tab and comment fixers are wideners (`reports.nim`): off held line they write gap or
+##     escape that widens line past `LINE_MAX`, and chain wraps line after; on held line, as in
+##     their two-argument form, gap or escape that would widen narrow line stays, finding and all.
 ##   Tab inside one-line string that is neither raw nor long is written `\t`: escape reads as
 ##     same byte, so string is unchanged.
 ##   No fixer: other tab, since its width is guess, and raw or long string reads `\t` as two
@@ -156,8 +158,8 @@ func tabsInStrings(source: string): seq[int] =
       if source[k] == '\t': result.add k
 
 
-func fixTabs(path, source: string): Fix =
-  ## Write each tab `tabsInStrings` finds as `\t`, last first, unless its line would be wide.
+func fixTabs(path, source: string; held: Held): Fix =
+  ## Write each tab `tabsInStrings` finds as `\t`, last first, unless held line would be wide.
   let
     tabs = source.tabsInStrings
     starts = source.lineStarts
@@ -166,25 +168,25 @@ func fixTabs(path, source: string): Fix =
     let
       first = starts[line]
       after = first + lines[line].len
-      held = tabs.filterIt(it >= first and it < after)
-    if held.len == 0: continue
+      found = tabs.filterIt(it >= first and it < after)
+    if found.len == 0: continue
     var shaped = lines[line]
-    for k in held.reversed: shaped = shaped[0 ..< k - first] & "\\t" & shaped[k - first + 1 .. ^1]
-    if shaped.isWide and not lines[line].isWide: continue
+    for k in found.reversed: shaped = shaped[0 ..< k - first] & "\\t" & shaped[k - first + 1 .. ^1]
+    if held.isHeld(line + 1) and shaped.isWide and not lines[line].isWide: continue
     lines[line] = shaped
     result.fixed.add initReport(path, line + 1, Rule.TabInString)
   result.source = lines.join("\n")
 
 
-func fixComments(path, source: string): Fix =
-  ## Set two spaces before each trailing comment's marker, unless line would then be wide.
+func fixComments*(path, source: string; held: Held): Fix =
+  ## Set two spaces before each trailing comment's marker, unless held line would then be wide.
   var lines = source.split('\n')
   for gap in source.gaps:
     if gap.spaces == COMMENT_GAP: continue
     let
       line = lines[gap.line]
       spaced = line[0 ..< gap.at - gap.spaces] & ' '.repeat(COMMENT_GAP) & line[gap.at .. ^1]
-    if spaced.isWide and not line.isWide: continue
+    if held.isHeld(gap.line + 1) and spaced.isWide and not line.isWide: continue
     lines[gap.line] = spaced
     result.fixed.add initReport(path, gap.line + 1, Rule.TrailingComment)
   result.source = lines.join("\n")
@@ -248,6 +250,12 @@ func fixBanners(path, source: string): Fix =
   if runs.len > 0: result.origin = origin
 
 
-const FORM_FIXERS*: array[5, Fixer] = [fixWhitespace, fixEnding, fixTabs, fixComments, fixBanners]
+const FORM_STEPS*: array[5, Step] = [
+  guarded(fixWhitespace),
+  guarded(fixEnding),
+  widening(fixTabs),
+  widening(fixComments),
+  guarded(fixBanners),
+]
   ## Form fixers of Nim source in order they run: line ends and ending first, so later fixers
   ##   read clean line ends, which tab, comment and banner fixers each read.

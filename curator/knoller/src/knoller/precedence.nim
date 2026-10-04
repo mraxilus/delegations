@@ -20,8 +20,9 @@
 ##
 ##   Cost: scanner, never parser; command call nested inside operand (`a and f b or c`) reads
 ##     from its last head, so such expression may stay unreported.
-##   Cost: fixer never writes line width check reports; parentheses that would widen line
-##     past `LINE_MAX` stay to hand, finding and all.
+##   Fixer is widener (`reports.nim`): off held lines it writes parentheses that widen line
+##     past `LINE_MAX`, and chain wraps line after; on held line, as in its two-argument form,
+##     parentheses that would widen narrow line stay to hand, finding and all.
 
 {.experimental: "strictFuncs".}
 
@@ -271,9 +272,9 @@ func checkMixtures*(path, source: string): seq[Report] =
     )
 
 
-func fixMixtures*(path, source: string): Fix =
-  ## Parenthesise each run of `and` check reports, as parser groups it, unless line would be
-  ##   wide; expression whose parentheses cannot all fit stays whole.
+func fixMixtures*(path, source: string; held: Held): Fix =
+  ## Parenthesise each run of `and` check reports, as parser groups it, unless held line would
+  ##   be wide; expression whose parentheses cannot all fit stays whole.
   let tokens = source.tokens
   var inserts: seq[(int, string)]
   for mixture in source.mixtures:
@@ -287,11 +288,17 @@ func fixMixtures*(path, source: string): Fix =
       lines = tokens[mixture.runs[0][0]].line .. tokens[mixture.runs[^1][1]].lastLine(source)
       before = source.split('\n')
       after = shaped.split('\n')
-    if lines.toSeq.anyIt(after[it].isWide and not before[it].isWide): continue
+    if lines.toSeq.anyIt(held.isHeld(it + 1) and after[it].isWide and not before[it].isWide):
+      continue
     inserts.add planned
     result.fixed.add initReport(path, tokens[mixture.runs[0][0]].line + 1, Rule.AndWithOr)
   result.source = source
   for (at, text) in inserts.sortedByIt(-it[0]): result.source.insert(text, at)
+
+
+func fixMixtures*(path, source: string): Fix =
+  ## Parenthesise each run of `and` check reports, unless line would be wide.
+  fixMixtures(path, source, EVERY)
 
 
 func negations(source: string): seq[Negation] =

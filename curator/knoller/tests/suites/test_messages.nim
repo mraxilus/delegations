@@ -5,7 +5,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[sequtils, strutils, unittest]
-import ../../src/knoller/messages
+import ../../src/knoller/[messages, reports]
 
 
 func fixed(source: string): string =
@@ -77,3 +77,9 @@ suite "Article IV":
     let near = "f(&\"" & "x".repeat(80) & "; got {value}.\")\n"  # 100 runes; backticks 102
     check near.fixed == near
     check checkMessages("a.nim", near).len == 1
+
+
+  test "IV.4 fix held on no line widens it, and keeps width guard on held line":
+    let near = "f(&\"" & "x".repeat(80) & "; got {value}.\")\n"  # 100 runes; backticks 102
+    check fixMessages("a.nim", near, Held()).source == near.replace("{value}", "`{value}`")
+    check fixMessages("a.nim", near, Held(lines: @[1])).source == near  # its line held

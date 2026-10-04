@@ -14,8 +14,10 @@
 ##     text of message changes with it where it builds that text same way.
 ##   Checks and fixer share one reading (`tails`), so each rule is written once (Article II.1).
 ##
-##   No fixer: operand ending concatenation, since no literal after it takes backtick; value
-##     whose backtick would widen line past `LINE_MAX`. Each stays, finding and all.
+##   Fixer is widener (`reports.nim`): off held line it writes backtick that widens line past
+##     `LINE_MAX`, and chain wraps line after; on held line, as in its two-argument form, value
+##     whose backtick would widen narrow line stays, finding and all.
+##   No fixer: operand ending concatenation, since no literal after it takes backtick.
 ##   Cost: scanner, never parser; format through `%` (`"$1" % [x]`) is unread.
 
 {.experimental: "strictFuncs".}
@@ -179,9 +181,9 @@ func checkMessages*(path, source: string): seq[Report] =
     )
 
 
-func fixMessages*(path, source: string): Fix =
-  ## Insert backticks each bare value lacks; value whose backtick would widen line it lands on
-  ##   stays whole, with every other value of that line.
+func fixMessages*(path, source: string; held: Held): Fix =
+  ## Insert backticks each bare value lacks; value whose backtick would widen held line it lands
+  ##   on stays whole, with every other value of that line.
   var values = source.tails.filterIt(it.inserts.len > 0)
   result.source = source
   if values.len == 0: return
@@ -198,7 +200,9 @@ func fixMessages*(path, source: string): Fix =
       touched.add value.inserts.mapIt(starts.upperBound(it) - 1)
     for (at, line) in zip(values.mapIt(it.inserts).concat, touched.concat).sortedByIt(-it[0]):
       shaped[line].insert($BACKTICK, at - starts[line])
-    let widened = toSeq(0 ..< lines.len).filterIt(shaped[it].isWide and not lines[it].isWide)
+    let widened = toSeq(0 ..< lines.len).filterIt(
+      held.isHeld(it + 1) and shaped[it].isWide and not lines[it].isWide
+    )
     if widened.len == 0: break
     var kept: seq[Value]
     for k, value in values:
@@ -206,3 +210,8 @@ func fixMessages*(path, source: string): Fix =
     values = kept
   result.source = shaped.join("\n")
   for value in values: result.fixed.add initReport(path, value.line + 1, Rule.MessageValue)
+
+
+func fixMessages*(path, source: string): Fix =
+  ## Insert backticks each bare value lacks, unless line they land on would be wide.
+  fixMessages(path, source, EVERY)

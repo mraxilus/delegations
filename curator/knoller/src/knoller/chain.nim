@@ -19,6 +19,9 @@
 ##   - wrapping last, separators before signatures before calls before trailing separators:
 ##     layouts join groups with separator they read, and trailing separator goes only where no
 ##     layout wrote one.
+##   Chain is list of steps: fixer guarded on every line, or widener (`reports.nim`), i.e. tab,
+##     comment, message, condition, spacing and trailing separator fixers, which read held lines.
+##     Alignment and idiom fixers stay guarded: table column and import bracket have no wrap.
 ##   Chain runs again until it changes nothing, at most `ROUNDS_MAX` times: line wrapping
 ##     splits can take spacing fixer refused for width, so second round writes it, and
 ##     `koch fix` run twice writes nothing second time.
@@ -54,14 +57,17 @@ type Dialect* {.pure.} = enum  ## Define which Nim source file holds, which deci
   Package  ## `.nimble`.
 
 
-func fixersOf(dialect: Dialect): seq[Fixer] =
-  ## List fixers dialect takes, in order header gives.
-  result = @FORM_FIXERS
-  result.add fixBlockEntry
-  result.add @[Fixer(fixArticles), fixAlignment, fixMessages, fixMixtures, fixTargets]
-  if dialect == Dialect.Module: result.add IDIOM_FIXERS
-  result.add @[Fixer(fixBlanks), fixDocs, fixDefaults, fixSpacing]
-  result.add WRAPPING_FIXERS
+func stepsOf(dialect: Dialect): seq[Step] =
+  ## List steps dialect takes, in order header gives.
+  result = @FORM_STEPS
+  result.add @[
+    guarded(fixBlockEntry), guarded(fixArticles), guarded(fixAlignment), widening(fixMessages),
+    widening(fixMixtures), guarded(fixTargets),
+  ]
+  if dialect == Dialect.Module:
+    for fixer in IDIOM_FIXERS: result.add guarded(fixer)
+  result.add @[guarded(fixBlanks), guarded(fixDocs), guarded(fixDefaults), widening(fixSpacing)]
+  result.add WRAPPING_STEPS
 
 
 func lockedNimbles*(files: openArray[(string, string)]): seq[string] =
@@ -114,8 +120,8 @@ func formatted*(path, source: string; dialect: Dialect): Fix =
   let shape = result.source.fenceShape
   for round in 1 .. ROUNDS_MAX:
     var step = Fix(source: result.source)
-    for fixer in dialect.fixersOf:
-      let next = fixer(path, step.source)
+    for each in dialect.stepsOf:
+      let next = each.run(path, step.source, EVERY)
       if next.source.fenceShape != shape: continue
       step = step.chain(next)
     if step.source == result.source: break
