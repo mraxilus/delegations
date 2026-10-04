@@ -362,9 +362,8 @@ type
 
   DiscRecord* = object ## Define one filled disc exactly as it is uploaded.
     ## Disc-fill vertex shader's input, not vertex.
-    ##   Each record is drawn as one instance of static fan of
-    ##   `3 * SEGMENTS_CIRCLE_HORIZON` unit-circle corners.
-    ##   Shader places every corner on view box of disc's sphere, `viewBoxOfDisc`, and
+    ##   Each record is drawn as one instance of static quad, `discCorners`.
+    ##   Shader places quad's corners on view box of disc's sphere, `viewBoxOfDisc`, and
     ##   fragment stage casts its own ray at plane, `hitDiscAlong`; both stated in Nim.
     ##   Thirteen floats against fanned vertices, and no per-frame trigonometry on CPU.
     ## Arms arrive already scaled by radius, so record needs no radius.
@@ -1155,12 +1154,11 @@ func viewBoxOfDisc*(
 
 
 func expandDiscCorner*(
-  box: tuple[corner_min, corner_max: (float, float)]; cos_angle, sin_angle: float
+  box: tuple[corner_min, corner_max: (float, float)]; corner_across, corner_up: float
 ): (float, float) =
   ## Place one static corner on box `viewBoxOfDisc` gave, in view fractions.
-  ##   Ellipse through box's corners: box's middle plus corner scaled by root two of its
-  ##   half extents, so fan of unit-circle corners covers whole box; centre corner
-  ##   `(0, 0)` lands on middle.
+  ##   Box's middle plus corner, -1 or 1 each way, scaled by box's half extents: quad of
+  ##   `discCorners` covers box exactly, and rasterises nothing past it.
   let
     middle = (
       0.5*(box.corner_min[0] + box.corner_max[0]), 0.5*(box.corner_min[1] + box.corner_max[1]),
@@ -1168,7 +1166,7 @@ func expandDiscCorner*(
     half = (
       0.5*(box.corner_max[0] - box.corner_min[0]), 0.5*(box.corner_max[1] - box.corner_min[1]),
     )
-  (middle[0] + sqrt(2.0)*cos_angle*half[0], middle[1] + sqrt(2.0)*sin_angle*half[1])
+  (middle[0] + corner_across*half[0], middle[1] + corner_up*half[1])
 
 
 func rayThroughView*(
@@ -1246,22 +1244,21 @@ func expandDomeVertex*(record: DomeRecord, unit: Direction): Vertex =
   )
 
 
-proc discCorners*(): seq[float32] =
-  ## Emit disc fan's static corner buffer.
-  ##   `(cos, sin)` per corner, three corners per rim segment, wound centre, this
-  ##   segment's boundary, next one's.
-  ##   Centre corner is `(0, 0)`, which `expandDiscCorner` lands on box's middle.
+const COUNT_CORNERS_DISC* = 6
+  ## Count corners disc quad is drawn from: two triangles over its box.
+  ##   Triangles rather than strip: disc and dome share one instanced veil draw, which
+  ##   draws triangles.
+
+
+func discCorners*(): seq[float32] =
+  ## Emit disc quad's static corner buffer: `(across, up)` in -1 .. 1, two triangles.
+  ##   `expandDiscCorner` lands each on corner of box `viewBoxOfDisc` gave, so quad is box.
   ##   One source for both front-ends: desktop uploads from Nim and browser through
   ##   `nimDiscCorners`, so neither carries hand-copied table.
-  result = newSeq[float32](2*3*SEGMENTS_CIRCLE_HORIZON)
-  for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
-    let at = 6*i
-    result[at + 0] = 0.0
-    result[at + 1] = 0.0
-    result[at + 2] = float32(UNIT_CIRCLE_RIM[i].cos_angle)
-    result[at + 3] = float32(UNIT_CIRCLE_RIM[i].sin_angle)
-    result[at + 4] = float32(UNIT_CIRCLE_RIM[i + 1].cos_angle)
-    result[at + 5] = float32(UNIT_CIRCLE_RIM[i + 1].sin_angle)
+  @[
+    -1.0'f32, -1.0'f32, 1.0'f32, -1.0'f32, 1.0'f32, 1.0'f32,
+    -1.0'f32, -1.0'f32, 1.0'f32, 1.0'f32, -1.0'f32, 1.0'f32,
+  ]
 
 
 const COUNT_CORNERS_POINT* = 4
@@ -1359,7 +1356,7 @@ func addDisc*(
   radius: float; tint: Rgba
 ) =
   ## Append flat, uniformly translucent disc record filling circle `addRing` outlines.
-  ##   For disc-fill vertex shader to fan out.
+  ##   For disc-fill vertex shader to span over its box.
   ##   Flat rather than faded toward rim, since rim marks boundary.
   ##     Tilt still reads through foreshortened ellipse, and low constant alpha keeps
   ##     whatever sits behind legible.

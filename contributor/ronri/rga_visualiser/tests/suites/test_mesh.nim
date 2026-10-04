@@ -437,10 +437,14 @@ suite "Mesh":
     let inside = hitDiscAlong(small, above, Direction(x: 0.099, y: 0.0, z: -1.0))
     check inside.isSome and isNear(inside.get, 10.0)
     check hitDiscAlong(small, above, Direction(x: 0.101, y: 0.0, z: -1.0)).isNone
-    # Corner lands on box's middle at `(0, 0)` and root two out at rim corner.
-    let corner = expandDiscCorner(box_small, 1.0, 0.0)
-    check isNear(corner[0], sqrt(2.0)*box_small.corner_max[0]) and isNear(corner[1], 0.0)
-    check expandDiscCorner(box_small, 0.0, 0.0) == (0.0, 0.0)
+    # Quad's corners land on box's own corners, and nothing of it past them.
+    let
+      corner_least = expandDiscCorner(box_small, -1.0, -1.0)
+      corner_most = expandDiscCorner(box_small, 1.0, 1.0)
+    check isNear(corner_least[0], box_small.corner_min[0]) and
+      isNear(corner_least[1], box_small.corner_min[1])
+    check isNear(corner_most[0], box_small.corner_max[0]) and
+      isNear(corner_most[1], box_small.corner_max[1])
     # Disc behind eye: box is empty.
     let box_behind = viewBoxOfDisc(
       small, Position(x: 0.0, y: 0.0, z: -10.0), right_down, up_down, forward_down, 0.5, 2.0
@@ -591,6 +595,33 @@ suite "Mesh":
       check isNear(float(record.tail_alpha), Ink.Olive.colour.alpha)
       check isNear(float(record.head_alpha), Ink.Olive.colour.alpha)
       check record.tail_red == record.head_red and record.tail_blue == record.head_blue
+
+
+  test "the disc's static corners are two triangles that tile its box, wound alike":
+    # Quad is box itself once `expandDiscCorner` places it: table leaving gap drops part of
+    #   disc, and one overlapping draws veil twice over.
+    #   Every corner is corner of box; two triangles, each turning counter-clockwise, hold
+    #   area of whole box between them and all four of its corners.
+    let corners = discCorners()
+    check len(corners) == 2*COUNT_CORNERS_DISC
+    var
+      area = 0.0
+      seen: HashSet[(float, float)]
+    for triangle in 0 ..< COUNT_CORNERS_DISC div 3:
+      let at = 6*triangle
+      var places: array[3, (float, float)]
+      for corner in 0 ..< 3:
+        places[corner] = (float(corners[at + 2*corner]), float(corners[at + 2*corner + 1]))
+        check abs(places[corner][0]) == 1.0 and abs(places[corner][1]) == 1.0
+        seen.incl places[corner]
+      let turn = 0.5*(
+        (places[1][0] - places[0][0])*(places[2][1] - places[0][1]) -
+        (places[1][1] - places[0][1])*(places[2][0] - places[0][0])
+      )
+      check turn > 0.0
+      area += turn
+    check isNear(area, 4.0)
+    check len(seen) == 4
 
 
   test "the disc is stepped in arithmetic, and lands where the algebra says":

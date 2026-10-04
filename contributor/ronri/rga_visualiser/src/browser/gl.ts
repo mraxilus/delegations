@@ -372,9 +372,9 @@ gl.bufferData(gl.ARRAY_BUFFER,
 //   checked.
 //   Each axis is bounded by sphere's limb in that axis's plane with sight axis, centre's
 //   bearing plus and minus half-angle sphere subtends, tangent bounded past quarter turn;
-//   whole view where sphere holds eye. Corner is box's middle plus corner scaled by root
-//   two of half extents, so fan covers box. Depth is fragment's own; without
-//   `EXT_frag_depth` disc rests at its centre's logarithmic depth.
+//   whole view where sphere holds eye. Corner is box's middle plus corner scaled by half
+//   extents, so quad is box. Depth is fragment's own; without `EXT_frag_depth` disc rests
+//   at its centre's logarithmic depth.
 //   Not fan of corners on plane itself: corner behind eye left sliver for clipper that
 //   rasterised to nothing under grazing camera, and disc ended at hard chord.
 const SOURCE_VERTEX_DISC = `
@@ -423,7 +423,7 @@ const SOURCE_VERTEX_DISC = `
       corner_max = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
         tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
     }
-    vView = 0.5*(corner_min + corner_max) + 1.41421356*aCorner*0.5*(corner_max - corner_min);
+    vView = 0.5*(corner_min + corner_max) + aCorner*0.5*(corner_max - corner_min);
     float centre_depth = clamp(log2(max(depth, uDepthNear)/uDepthNear)*uDepthLog - 1.0,
       -1.0, 1.0);
     gl_Position = vec4(vView, centre_depth, 1.0);
@@ -650,7 +650,7 @@ const uniform_disc_tangent = gl.getUniformLocation(program_disc, 'uTangentHalfVi
 const uniform_disc_aspect = gl.getUniformLocation(program_disc, 'uAspect');
 const uniform_dome_depth_near = gl.getUniformLocation(program_dome, 'uDepthNear');
 const uniform_dome_depth_log = gl.getUniformLocation(program_dome, 'uDepthLog');
-// Hold static corner geometry both veil shaders fan records over.
+// Hold static corner geometry both veil shaders span records over.
 //   Read from mesh.nim's own generators rather than hand-copied table that could drift
 //   from references.
 const CORNERS_DISC = new Float32Array(nimDiscCorners());

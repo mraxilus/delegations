@@ -133,7 +133,7 @@ type
       ## One record per rim, where ribbon records per segment were most of all ribbon
       ## traffic; figures in `PROVENANCE.md`.
     disc_records: FlatBuffer ## Thirteen floats per disc, `mesh.DiscRecord`'s field order.
-      ## For instanced fan draw.
+      ## For instanced quad draw.
     dome_records: FlatBuffer ## Eight floats per dome, `mesh.DomeRecord`'s field order.
       ## For instanced sphere draw.
     veil_runs: FlatBuffer ## Translucent pass's draw order, three floats per run.
@@ -1133,9 +1133,9 @@ proc nimRampTree(): seq[float32] {.exportc.} =
 
 
 proc nimDiscCorners(): seq[float32] {.exportc.} =
-  ## Report disc fan's static corner buffer, uploaded once at start-up.
+  ## Report disc quad's static corner buffer, uploaded once at start-up.
   ##   `mesh.discCorners`, one source desktop uploads from too, so browser carries no
-  ##   table drifting from `mesh.expandDiscVertex`.
+  ##   table drifting from `mesh.expandDiscCorner`.
   discCorners()
 
 

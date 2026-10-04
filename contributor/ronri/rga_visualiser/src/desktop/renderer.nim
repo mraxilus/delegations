@@ -316,7 +316,7 @@ void main() {
     corner_max = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
       tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
   }
-  vertex_view = 0.5*(corner_min + corner_max) + 1.41421356*in_corner*0.5*(corner_max - corner_min);
+  vertex_view = 0.5*(corner_min + corner_max) + in_corner*0.5*(corner_max - corner_min);
   float centre_depth = clamp(log2(max(depth, depth_near)/depth_near)*depth_log - 1.0,
     -1.0, 1.0);
   gl_Position = vec4(vertex_view, centre_depth, 1.0);
@@ -329,9 +329,9 @@ void main() {
   ##   Sibling copy of `mesh.viewBoxOfDisc` and `mesh.expandDiscCorner`, and of WebGL
   ##   source in `gl.ts`; change to any one is not finished until other two are checked.
   ##   Each axis is bounded by sphere's limb in that axis's plane with sight axis; whole
-  ##   view where sphere holds eye; corner is box's middle plus corner scaled by root two
-  ##   of half extents. Clip depth is centre's logarithmic one, for fragment stage to
-  ##   overwrite.
+  ##   view where sphere holds eye; corner is box's middle plus corner scaled by half
+  ##   extents, so quad is box. Clip depth is centre's logarithmic one, for fragment stage
+  ##   to overwrite.
 
 
 const SOURCE_FRAGMENT_DISC = """
@@ -486,9 +486,6 @@ void main() {
 
 
 const
-  COUNT_CORNERS_DISC = 3*SEGMENTS_CIRCLE_HORIZON
-    ## Count corners disc fan's static buffer holds.
-    ##   `mesh.discCorners` emits exactly this many `(cos, sin)` pairs.
   COUNT_CORNERS_DOME = 6*LATITUDES_HORIZON*LONGITUDES_HORIZON
     ## Count corners dome's static buffer holds.
     ##   `mesh.domeCorners` emits exactly this many unit directions.
