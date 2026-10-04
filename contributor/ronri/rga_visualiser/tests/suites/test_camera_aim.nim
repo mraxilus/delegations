@@ -1571,3 +1571,72 @@ suite "Camera Aim":
     tween.advance(camera, 1.0 + 0.35, easeOutCubic)
     check camera.pivot =~ arrival
     check not (camera.pivot =~ pivot_panned)
+
+
+  test "a plane picked alone from a level view lifts the view to ten degrees off it":
+    # Ruling of #454: sliver centred shows nothing, so pick of plane turns view, by least
+    #   turn. Level direction of sight, pivot, separation and level horizon all survive.
+    let
+      normal = Direction(x: 0, y: 0, z: 1)
+      sine = sin(ANGLE_PLANE_LEAST)
+      camera = initCamera(Position(x: 30, y: 22.5, z: 0.9), ORIGIN)
+      lifted = camera.placed(camera.stanceOf.stanceLifted(camera, normal))
+    check abs(lifted.frame.forward.z + sine) < 1.0e-9
+    check lifted.eye.z > 0.0
+    check lifted.pivot =~ camera.pivot
+    check abs(lifted.distance - camera.distance) < 1.0e-9
+    check lifted.azimuth =~ camera.azimuth
+    check abs(lifted.rollHeld.get) < 1.0e-9
+    # From below, view goes ten degrees under plane, rather than over it.
+    let
+      below = initCamera(Position(x: 30, y: 22.5, z: -0.9), ORIGIN)
+      lowered = below.placed(below.stanceOf.stanceLifted(below, normal))
+    check abs(lowered.frame.forward.z - sine) < 1.0e-9
+    check lowered.eye.z < 0.0
+    # Sight lying in plane takes side world up leans to.
+    let
+      level = initCamera(Position(x: 30, y: 22.5, z: 0.0), ORIGIN)
+      raised = level.placed(level.stanceOf.stanceLifted(level, normal))
+    check raised.eye.z > 0.0
+    check abs(raised.frame.forward.z + sine) < 1.0e-9
+    # Upright plane lifts eye off its own face, on side eye stood.
+    let
+      wall = Direction(x: 1, y: 0, z: 0)
+      beside = initCamera(Position(x: 0.5, y: 20.0, z: 3.0), ORIGIN)
+      turned = beside.placed(beside.stanceOf.stanceLifted(beside, wall))
+    check abs(abs(turned.frame.forward.x) - sine) < 1.0e-9
+    check turned.eye.x > 0.0
+    # Sight already ten degrees or more off plane turns nothing.
+    let
+      steep = initCamera(Position(x: 24, y: 18, z: 16), ORIGIN)
+      kept = steep.placed(steep.stanceOf.stanceLifted(steep, normal))
+    check kept.eye =~ steep.eye
+    check kept.frame.forward =~ steep.frame.forward
+
+
+  test "a plane picked through the standing offer lifts the view, and a point turns nothing":
+    # Wiring: lift is offer's, on pick of plane alone, and on no other pick.
+    let ground = toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
+      toMultivector(Position(x: 0.0, y: 1.0, z: 0.0))
+    var
+      (scene, picked) = sceneOf(ground)
+      camera = initCamera(Position(x: 30, y: 22.5, z: 0.9), ORIGIN)
+      tween: CameraTween
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(height_aim, 0.0), width_aim,
+      height_aim, 0.0, 0.35,
+    )
+    tween.advance(camera, 0.35, easeOutCubic)
+    check abs(camera.frame.forward.z + sin(ANGLE_PLANE_LEAST)) < 1.0e-6
+    check camera.eye.z > 0.0
+    var
+      (scene_point, picked_point) = sceneOf(toMultivector(ORIGIN))
+      camera_point = initCamera(Position(x: 30, y: 22.5, z: 0.9), ORIGIN)
+      tween_point: CameraTween
+    let elevation_start = camera_point.elevation
+    tween_point.offerAim(
+      camera_point, scene_point, picked_point, none(Preview),
+      camera_point.drawExtentFor(height_aim, 0.0), width_aim, height_aim, 0.0, 0.35,
+    )
+    tween_point.advance(camera_point, 0.35, easeOutCubic)
+    check camera_point.elevation =~ elevation_start

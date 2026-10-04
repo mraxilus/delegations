@@ -207,6 +207,26 @@ suite "Internal: The rests and the chains, named by model":
     )
 
 
+  test "the review page names every card by its section's letter and two digits":
+    ## Card is named A01 to G08, so no card reads as decision `D1` of sign-off (Architect,
+    ##   2026-10-04).  Red with cards named A1 to G8, read 2026-10-04: 57 of 107 had one digit.
+    let page = readFile(OUT / "review.html")
+    var
+      names: seq[string]
+      at = page.find("<figcaption><code>")
+    while at >= 0:
+      let
+        first = at + "<figcaption><code>".len
+        last = page.find("</code>", first)
+      names.add page[first ..< last]
+      at = page.find("<figcaption><code>", last)
+    check names.len > 0
+    for name in names:
+      if not (name.len == 3 and name[0] in {'A' .. 'G'} and name[1 .. 2].allCharsInSet(Digits)):
+        checkpoint "card named `" & name & "`"
+        fail()
+
+
   test "the hand-to-hand page names each facing its chain stands at":
     let page = readFile(OUT / "turns-hands.html")
     check page.contains(

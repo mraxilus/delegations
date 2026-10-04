@@ -64,7 +64,7 @@ func drawOrder*(
   ## first, by depth of each piece's middle, equal depths in engine's order.
   ##   Whole capsule by depth of its nearer end painted upper arm hanging from
   ##     shoulder above torso's top over torso all way down, lower half showing
-  ##     through torso's silhouette from near overhead (A5).  Piece by its own
+  ##     through torso's silhouette from near overhead (A05).  Piece by its own
   ##     depth goes under torso's top where it is below it.  Two capsules
   ##     through one another can still come out wrong way round within one
   ##     piece, and bodies are filtered not to.

@@ -61,7 +61,7 @@ async function ruledAt(page: Page, distance: number): Promise<Ruled> {
     const canvas = document.getElementById('gl') as HTMLCanvasElement | null;
     if (canvas === null) return { distance: given.distance, count: 0, records: 0, lines: 0 };
     const data = nimBuildFrame(
-      canvas.width / canvas.height, performance.now() / 1000, canvas.height, false, true,
+      canvas.width / canvas.height, performance.now() / 1000, canvas.height, false, true, false,
     );
     const floats = data.furniture_ribbon_vertices;
     const at = (index: number): number => floats[index] ?? 0;

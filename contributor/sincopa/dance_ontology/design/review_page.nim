@@ -50,24 +50,24 @@ const LUT_MODELLED_BY_CARD = block:
   said
 
 const
-  KEPT = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+  KEPT = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10",
           "A11", "A12", "A13", "A14", "A15", "A16", "A17",
-          "B1", "B2", "B3", "B4", "B5", "B6", "B7",
-          "B8", "B9", "B10", "B11", "B12", "B13", "B14",
+          "B01", "B02", "B03", "B04", "B05", "B06", "B07",
+          "B08", "B09", "B10", "B11", "B12", "B13", "B14",
           "B15", "B16", "B17", "B18", "B19", "B20", "B21",
           "B22", "B23", "B24", "B25", "B26", "B27", "B28",
-          # C1, C7, D1, D7 are swans, and their straight connection crosses
+          # C01, C07, D01, D07 are swans, and their straight connection crosses
           # close to hand.  Break there was left off, which drew
           # that connection detached from its hand; it is drawn now, so
           # they go back to unruled rather than carry verdict given on
           # picture that has since moved.
-          "C1", "C2", "C3", "C4", "C5", "C6", "C7",
-          "D1", "D2", "D3", "D4", "D5", "D6", "D7",
-          "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8",
-          "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16",
+          "C01", "C02", "C03", "C04", "C05", "C06", "C07",
+          "D01", "D02", "D03", "D04", "D05", "D06", "D07",
+          "E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08",
+          "E09", "E10", "E11", "E12", "E13", "E14", "E15", "E16",
           "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24",
           "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32",
-          "F1", "F2"]
+          "F01", "F02"]
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
   DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
   CONFIRMED: seq[string] = @[]
@@ -263,7 +263,7 @@ func sheetOf(parts: Parts): string =
   model knows.</p>
   <p class="how"><b>Each frame counts from its own rest.</b> Rest is the facing where the
   connections of that hold run parallel and cross nothing. A same-name pair rests
-  <b>{same_name_rest}</b> rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A9
+  <b>{same_name_rest}</b> rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A09
   and A11 read <i>half a turn
   from {same_name_rest}</i>. A card names a way round only where the other way
   round draws a different picture, which is A16 and A17 alone.</p>
@@ -308,7 +308,7 @@ func sheetOf(parts: Parts): string =
     for twist in [0, 1]:
       let way = if twist == 1 and isTurnShown(target): "clockwise" else: ""
       body.add card(
-        &"A{i * 2 + twist + 1}",
+        &"A{i * 2 + twist + 1:02}",
         describe(target),
         facingNote(target, twist, way),
         renderFrame(target, HalfTurns(twist)),
@@ -322,7 +322,9 @@ func sheetOf(parts: Parts): string =
     if widdershins == renderFrame(target, HalfTurns(1)):
       continue
     inc also
-    body.add card(&"A{also}", describe(target), facingNote(target, 1, "anticlockwise"), widdershins)
+    body.add card(
+      &"A{also:02}", describe(target), facingNote(target, 1, "anticlockwise"), widdershins
+    )
   body.add "</div></section>"
 
   # `B`. Single-hand turns: what animated page walks through.
@@ -349,7 +351,7 @@ func sheetOf(parts: Parts): string =
         let svg = stills[key]
         if svg notin seen:
           inc b_count
-          seen[svg] = &"B{b_count}"
+          seen[svg] = &"B{b_count:02}"
           order.add svg
         whose.mgetOrPut(svg, @[]).add said(MANNERS[manner].tag, quarter)
         asked.mgetOrPut(svg, @[]).add &"st_{MANNERS[manner].tag}_{connection}_{quarter}"
@@ -399,7 +401,7 @@ func sheetOf(parts: Parts): string =
   the two chains stand against each other.</p><div class="grid wide">"""
   for i, position in CHAIN:
     body.add card(
-      &"C{i + 1}",
+      &"C{i + 1:02}",
       position.name,
       windNote(position.note, position.wind),
       renderFigure(
@@ -431,7 +433,7 @@ func sheetOf(parts: Parts): string =
   chain.</p><div class="grid wide">"""
   for i, position in dual_chain:
     body.add card(
-      &"D{i + 1}",
+      &"D{i + 1:02}",
       position.name,
       windNote(position.note, position.wind, zero = "this hold's own parallel state"),
       renderFigure(
@@ -475,7 +477,7 @@ func sheetOf(parts: Parts): string =
       if &"rd_{tag}_{connection}" in stills:
         inc e_count
         body.add card(
-          &"E{e_count}",
+          &"E{e_count:02}",
           said,
           "the whole round, four quarters in one",
           stills[&"rd_{tag}_{connection}"],
@@ -494,7 +496,7 @@ func sheetOf(parts: Parts): string =
           stills[key])
       if steps.len > 0:
         inc e_count
-        body.add card(&"E{e_count}", said, "one quarter at a time", steps, asks = asks_e)
+        body.add card(&"E{e_count:02}", said, "one quarter at a time", steps, asks = asks_e)
     body.add "</div>"
   body.add "</section>"
 
@@ -525,7 +527,7 @@ func sheetOf(parts: Parts): string =
     if &"hc_{tag}" in chains:
       inc f_count
       body.add card(
-        &"F{f_count}",
+        &"F{f_count:02}",
         said,
         &"the whole chain, {CHAIN.len - 1} halves out and back",
         chains[&"hc_{tag}"],
@@ -541,7 +543,7 @@ func sheetOf(parts: Parts): string =
       steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, chains[key])
     if steps.len > 0:
       inc f_count
-      body.add card(&"F{f_count}", said, "one edge at a time", steps, asks = asks_f)
+      body.add card(&"F{f_count:02}", said, "one edge at a time", steps, asks = asks_f)
   body.add "</div></section>"
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
@@ -561,7 +563,7 @@ func sheetOf(parts: Parts): string =
     if &"pc_{tag}" in chains:
       inc g_count
       body.add card(
-        &"G{g_count}",
+        &"G{g_count:02}",
         said,
         &"the whole chain, {dual_chain.len - 1} halves out and back",
         chains[&"pc_{tag}"],
@@ -578,7 +580,7 @@ func sheetOf(parts: Parts): string =
                  dual_chain[i].name & " to " & dual_chain[i + 1].name, chains[key])
     if steps.len > 0:
       inc g_count
-      body.add card(&"G{g_count}", said, "one edge at a time", steps, asks = asks_g)
+      body.add card(&"G{g_count:02}", said, "one edge at a time", steps, asks = asks_g)
   body.add "</div></section>"
 
   const switching = block:

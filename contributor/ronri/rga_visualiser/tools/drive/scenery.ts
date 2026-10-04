@@ -158,7 +158,9 @@ export async function driveSceneryBound(page: Page): Promise<void> {
     for (let i = 0; i < 9; i += 1) {
       // Turned outright, not by drag's rule; see `drivePinGrid`.
       nimCameraOrbit(0.005, 0);
-      const data = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
+      const data = nimBuildFrame(
+        aspect, performance.now() / 1000, canvas.height, true, true, false,
+      );
       milliseconds.push(data.ms_grid);
       segments = data.count_grid_segments;
     }
@@ -278,7 +280,7 @@ export async function driveHold(page: Page): Promise<void> {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
     const once = (): FrameData =>
-      nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
+      nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, false);
     nimCameraOrbit(0.05, 0);
     const first = once();
     const second = once();
@@ -301,9 +303,11 @@ export async function driveHold(page: Page): Promise<void> {
   const rebuilt = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
-    nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
+    nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, false);
     nimCameraOrbit(0.3, 0);
-    const after = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
+    const after = nimBuildFrame(
+      aspect, performance.now() / 1000, canvas.height, true, true, false,
+    );
     return { is_held: after.is_furniture_held, floats: after.furniture_ribbon_vertices.length };
   });
   report(

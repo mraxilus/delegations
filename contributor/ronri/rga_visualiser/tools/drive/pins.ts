@@ -109,7 +109,7 @@ export async function drivePinMarker(page: Page): Promise<void> {
       const started = performance.now();
       for (let i = 0; i < given.pairs; i += 1) {
         nimSelectionMarker(handle, canvas.clientWidth, canvas.clientHeight, 1, false, 0);
-        nimSelectionPulse(handle, canvas.clientWidth, canvas.clientHeight, 1, false);
+        nimSelectionPulse(handle, canvas.clientWidth, canvas.clientHeight, 1, false, 0);
       }
       return (performance.now() - started) / given.pairs;
     };
@@ -152,7 +152,9 @@ export async function drivePinGrid(page: Page): Promise<void> {
       // Turned outright, not by drag's rule: this wants view moved, and that rule
       //   looks rather than orbits wherever nothing is picked.
       nimCameraOrbit(0.005, 0);
-      const data = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
+      const data = nimBuildFrame(
+        aspect, performance.now() / 1000, canvas.height, true, true, false,
+      );
       grid.push(data.ms_grid);
       emitting.push(data.ms_emitting);
     }

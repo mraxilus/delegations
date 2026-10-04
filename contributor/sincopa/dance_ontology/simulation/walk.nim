@@ -800,7 +800,7 @@ proc swept*(
 
 const
   STEER* = 30.0  ## Hertz every joint is sprung toward plan at: what dancer's muscles hold.
-    ##   Measured on D7, 2026-10-01: at fifteen engine gave by twist at 1.47 of turn; at
+    ##   Measured on D07, 2026-10-01: at fifteen engine gave by twist at 1.47 of turn; at
     ##     twenty five, thirty and forty it stood, strain 0.33 to 0.34.
   STEPS_STAND = 2  ## Engine steps each planned moment is stood for before it is judged:
                   ## enough for engine to find every contact pose has (`replay`).
@@ -878,7 +878,7 @@ proc replay*(
   ## Engine stood at every moment of plan in turn and judged there, then left to stand at
   ## its end where `should_stand`; couple as left.
   ##   Each moment is stood afresh from plan, so what engine judges is plan itself and not
-  ##     drift of engine's springs: sprung after plan instead, D1 and D7 held or not on last
+  ##     drift of engine's springs: sprung after plan instead, D01 and D07 held or not on last
   ##     bit of one sum, and lead's turn of same-name chain to its swan gave at 0.46 to 1.11
   ##     of turn in every style that reached it.
   var base = restStance(rig, path.plans[0][0], is_away)
@@ -1002,7 +1002,7 @@ proc plannedStill*(
   ## styles and ways in fixed order; caller frees couple of one that holds.
   ##   First that holds answers whether any does (`isPlannedHolding`).  Where
   ##     `should_seek_ease`, every plan is tried and one nearest to ease is kept, as
-  ##     `standing` keeps distance: first that held stood C6 with follow's waist at its
+  ##     `standing` keeps distance: first that held stood C06 with follow's waist at its
   ##     end, strain 1.00, where other path of same style held at 0.19, 2026-10-03.
   ##   Plan at ease ends search, since nothing betters it; earlier plan keeps tie.
   let ways = (if is_either_way: @[turns, -turns] else: @[turns])
