@@ -93,7 +93,7 @@ func wedge*(d, f: Dipole): Antiscalar {.inline.} =
   ## Join dipoles in antiscalar measuring their crossing, i.e. 𝐝 ∧ 𝐟; 6 mul, 5 add.
   Antiscalar(
     -(d.g.x * f.p.x) - d.g.y * f.p.y - d.g.w * f.p.w - d.p.x * f.g.x - d.p.y * f.g.y -
-        d.p.w * f.g.w,
+    d.p.w * f.g.w,
   )
 
 func wedgeAnti*(c, o: Circle): Dipole {.inline.} =

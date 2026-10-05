@@ -43,7 +43,7 @@ func htmlGraph*(proposals: openArray[Proposal]): string =
   let undecided = proposals.filterIt(not it.isFrozen)
   if undecided.len == 0: return ""
   var depths = newSeq[int](undecided.len)
-  for _ in 0 ..< undecided.len:  # n passes settle any graph without cycles
+  for _ in 0..<undecided.len:  # n passes settle any graph without cycles
     for index, proposal in undecided:
       for base in proposal.builds_on:
         for at, other in undecided:
@@ -121,7 +121,7 @@ func bodyListing*(
     graph = htmlGraph(proposals)
   result = "<div class=\"page\"><header><h1>Proposals</h1><p class=\"meta\">" &
       $proposals.len & " proposals · " & $undecided & " undecided · pga " &
-      code(pin[0 ..< min(7, pin.len)]) & links & "</p><p>Each proposal is one future state of " &
+      code(pin[0..<min(7, pin.len)]) & links & "</p><p>Each proposal is one future state of " &
       "the library, argued and measured at the pin. The Architect decides each one on its own. " &
       "A proposal needs each proposal that it depends on. A rejected proposal blocks each " &
       "proposal that depends on it.</p></header><form class=\"picks\">"

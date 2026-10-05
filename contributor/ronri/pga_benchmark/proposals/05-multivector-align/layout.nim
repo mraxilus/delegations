@@ -30,7 +30,7 @@ var MULTIVECTORS_GLOBAL: array[3, Multivector]  ## Global storage, which linker 
 proc main() =
   ## Check alignment of every count, then size, alignment and address of multivector in each
   ##   storage caller holds.
-  for count in 1 .. 64:
+  for count in 1..64:
     let
       size = sizeof(float) * count
       alignment = alignmentOf(count)

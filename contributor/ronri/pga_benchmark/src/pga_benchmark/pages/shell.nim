@@ -54,7 +54,7 @@ const
     ##   Same six as `rga_visualiser` page, from same store.
   SKELETON_HOST* = (
     "<!doctype html><html><head><meta charset=\"utf-8\">" &
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>",
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>",
     "</body></html>",
   )
     ## Document skeleton publish host wraps page in: opening, then closing.
@@ -71,7 +71,7 @@ func facesAsked*(shell: string): seq[string] =
   while at >= 0:
     let close = shell.find('@', at + TOKEN_EMBED.len)
     if close < 0: break
-    let face = shell[at + TOKEN_EMBED.len ..< close]
+    let face = shell[at+TOKEN_EMBED.len..<close]
     if face notin result: result.add face
     at = shell.find(TOKEN_EMBED, close + 1)
 
@@ -107,7 +107,7 @@ func htmlMarked*(html: string): string =
       var marks_end = base_end
       while marks_end < word.len and int(word.runeAt(marks_end)).isMark:
         marks_end += word.runeLenAt(marks_end)
-      if base in BOLD_FIRST .. BOLD_LAST and marks_end > base_end:
+      if base in BOLD_FIRST..BOLD_LAST and marks_end > base_end:
         var
           classes = "mark"
           scan = base_end
@@ -120,10 +120,10 @@ func htmlMarked*(html: string): string =
         if is_over: classes.add " over"
         if base < BOLD_LOWER or char(ord('a') + base - BOLD_LOWER) in LETTERS_TALL:
           classes.add " tall"
-        result.add "<span class=\"" & classes & "\">" & word[at ..< marks_end] & "</span>"
+        result.add "<span class=\"" & classes & "\">" & word[at..<marks_end] & "</span>"
         is_boxed = true
       else:
-        result.add word[at ..< marks_end]
+        result.add word[at..<marks_end]
       at = marks_end
     if is_boxed: result = "<span class=\"word\">" & result & "</span>"
 
@@ -137,7 +137,7 @@ func htmlMarked*(html: string): string =
         continue
       var word_end = at
       while word_end < text.len and text[word_end] notin Whitespace: inc word_end
-      result.add wordMarked(text[at ..< word_end])
+      result.add wordMarked(text[at..<word_end])
       at = word_end
 
   var at = 0
@@ -146,19 +146,19 @@ func htmlMarked*(html: string): string =
     if open < 0:
       result.add textMarked(html[at .. ^1])
       break
-    result.add textMarked(html[at ..< open])
+    result.add textMarked(html[at..<open])
     let close = html.find('>', open)
     if close < 0:
       result.add html[open .. ^1]
       break
-    result.add html[open .. close]
+    result.add html[open..close]
     at = close + 1
     for element in ELEMENTS_KEPT:
       if html.continuesWith("<" & element, open) and
-          html[open + element.len + 1] in Whitespace + {'>'}:
+          html[open+element.len+1] in Whitespace + {'>'}:
         let ending = html.find("</" & element, at)
         if ending >= 0:
-          result.add html[at ..< ending]
+          result.add html[at..<ending]
           at = ending
         break
 
@@ -214,7 +214,7 @@ func timedAt*(taken: JsonNode): string =
   ## Render commit figures were timed at, where their stamp moved since (`head.nim`); empty
   ##   where they were timed at commit stamp names.
   let commit = if taken.isNil: "" else: taken{"timed_at"}.getStr
-  if commit.len == 0: "" else: " at pga " & code(commit[0 ..< min(7, commit.len)])
+  if commit.len == 0: "" else: " at pga " & code(commit[0..<min(7, commit.len)])
 
 
 func chip*(text, kind: string): string =

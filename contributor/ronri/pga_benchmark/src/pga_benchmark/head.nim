@@ -39,7 +39,7 @@ const SHORT = 7  ## Digits of commit findings name, as `git log --oneline` print
 
 func short(commit: string): string =
   ## Shorten commit for findings.
-  if commit.len > SHORT: commit[0 ..< SHORT] else: commit
+  if commit.len > SHORT: commit[0..<SHORT] else: commit
 
 
 func checkHead*(pin, tree_pin, head, tree_head, lock: string): seq[Finding] =

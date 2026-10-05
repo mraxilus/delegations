@@ -50,7 +50,7 @@ const
   FLAGS = "-d:release"  ## Build flags every measured build carries; documents name them.
   CONFIGS = [("rga4d", 4, false), ("cga5d", 5, true), ("rga3d", 3, false), ("cga4d", 4, true)]
     ## Algebras driven, typed ones first: name, dimensions, conformal.
-  SWEEP = 2 .. 6  ## Dimensions swept, rigid metric, general measurands only.
+  SWEEP = 2..6  ## Dimensions swept, rigid metric, general measurands only.
   USAGE = "Usage: nim r tools/build.nim <verb> [arguments]; this file runs through it alone.\n"
     ## Text printed where verb is unknown here; dispatcher's own usage names every verb.
   CHECKOUT = "dependencies" / "replications.mraxilus.gitlab.com"
@@ -141,7 +141,7 @@ proc compile(
   run(
     "nim",
     @["c", "--hints:off", FLAGS, "--nimcache:" & cache, "-o:" & binary] &
-        defines(dimensions, is_conformal, nim, pga) & @extra & @[entry],
+    defines(dimensions, is_conformal, nim, pga) & @extra & @[entry],
   )
 
 
@@ -232,7 +232,7 @@ proc bench() =
       ["-d:nimAllocStats"],
     )
   var runs: Table[string, seq[JsonNode]]
-  for index in 1 .. RUNS_BENCH:
+  for index in 1..RUNS_BENCH:
     for (name, _, _) in CONFIGS:
       let output = BUILD / "bench_" & name & "_" & $index & ".json"
       run(BUILD / "bench_" & name, [output])
@@ -466,7 +466,7 @@ proc facesFromStore(): Table[string, string] =
   ##   it could not serve, and short list would pair wrong bytes with right name.
   let (written, code) = execCmdEx(
     "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
-        FACES.quoteShellCommand,
+    FACES.quoteShellCommand,
   )
   if code != 0:
     raise newException(
@@ -758,8 +758,10 @@ proc evaluate(which: string, is_thorough: bool) =
     tried_before = readEvaluations()
     selected = case which
       of "all": candidates
-      of "stale": candidates.filterIt(it.name notin tried_before or checkEvaluation(
-        tried_before[it.name], pin, digestEdits(it.changes, it.claims, it.programs), "").len > 0)
+      of "stale": candidates.filterIt(
+        it.name notin tried_before or checkEvaluation(
+          tried_before[it.name], pin, digestEdits(it.changes, it.claims, it.programs), "").len > 0,
+      )
       else: candidates.filterIt(it.name == which)
   if selected.len == 0 and which == "stale":
     echo "Every evaluation is current."
@@ -835,7 +837,7 @@ proc carry() =
   if fileExists(PATH_SWEEP):
     var digests = newJObject()
     for dimensions in SWEEP:
-      digests[$dimensions & "d"] = digestOfBuild(
+      digests[$dimensions&"d"] = digestOfBuild(
         "sweep_" & $dimensions & "d",
         dimensions,
         false,
@@ -946,7 +948,7 @@ proc sweep() =
       binary = BUILD / name
     removeDir BUILD / "cache_" & name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
-    digests[$dimensions & "d"] = %digestCache(BUILD / "cache_" & name, pga)
+    digests[$dimensions&"d"] = %digestCache(BUILD / "cache_" & name, pga)
     run(binary, [binary & ".json"])
     let document = readDocument(binary & ".json")
     documents.add document
@@ -954,7 +956,7 @@ proc sweep() =
     for id, measured in document{"measurands"}.pairs:
       let library = measured{"library"}
       if not library.isNil and library.kind == JObject: medians[id] = library{"ns_median"}
-    swept[$dimensions & "d"] = medians
+    swept[$dimensions&"d"] = medians
   let recorded = %*{"schema": 1, "kind": "sweep", "taken": documents[0]{"taken"}, "runs": 1,
       "dimensions": swept, "digest_c": digests}
   writeFile(PATH_SWEEP, pretty(recorded) & "\n")
@@ -981,7 +983,7 @@ func shortened(text, stem, plain: string): string =
     if at < 0:
       result.add text[i .. ^1]
       break
-    result.add text[i ..< at]
+    result.add text[i..<at]
     result.add plain
     var j = at + stem.len + 2
     while j < text.len and (text[j].isAlphaNumeric or text[j] == '_'): inc j
@@ -1003,8 +1005,8 @@ func unindexed(text: string): string =
     if close < 0:
       result.add text[i .. ^1]
       break
-    result.add text[i ..< at]
-    result.add text[at + opening.len ..< close]
+    result.add text[i..<at]
+    result.add text[at+opening.len..<close]
     i = close + closing.len
 
 
@@ -1081,7 +1083,7 @@ proc showFunction(symbol, algebra: string) =
         if printed >= LINES_SHOWN:
           echo "     … ", counts.lines - printed, " more lines; whole body is in ", cache
           break
-        echo "     ", (if line.len > WIDTH_SHOWN: line[0 ..< WIDTH_SHOWN] & " …" else: line)
+        echo "     ", (if line.len > WIDTH_SHOWN: line[0..<WIDTH_SHOWN] & " …" else: line)
         inc printed
       echo ""
       echo "   machine code"

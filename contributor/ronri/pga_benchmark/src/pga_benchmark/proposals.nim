@@ -81,11 +81,11 @@ func figureOf*(node: Block, directory: string): Option[Figure] =
     middle = line.find("](")
   if not line.startsWith("![") or not line.endsWith(")") or middle < 0: return none(Figure)
   var parts: seq[string]
-  for part in (directory & "/" & line[middle + 2 .. ^2]).split('/'):
+  for part in (directory & "/" & line[middle+2 .. ^2]).split('/'):
     if part == "..":
       if parts.len > 0: parts.setLen(parts.len - 1)
     elif part.len > 0 and part != ".": parts.add part
-  some(Figure(caption: line[2 ..< middle], path: parts.join("/"), line: node.line))
+  some(Figure(caption: line[2..<middle], path: parts.join("/"), line: node.line))
 
 
 func citation*(proposal: Proposal): string =
@@ -115,9 +115,9 @@ func parseProposal*(
   let
     base = directory.rsplit('/', 1)[^1]
     dash = base.find('-')
-  if dash == WIDTH_NUMBER and base[0 ..< dash].allCharsInSet(Digits):
-    proposal.number = parseInt(base[0 ..< dash])
-    proposal.name = base[dash + 1 .. ^1]
+  if dash == WIDTH_NUMBER and base[0..<dash].allCharsInSet(Digits):
+    proposal.number = parseInt(base[0..<dash])
+    proposal.name = base[dash+1 .. ^1]
   else:
     proposal.name = base
     findings.add Finding(
@@ -134,7 +134,7 @@ func parseProposal*(
   else:
     let heading = blocks[0].lines[0]
     if heading.startsWith(proposal.citation & ": "):
-      proposal.title = heading[proposal.citation.len + 2 .. ^1]
+      proposal.title = heading[proposal.citation.len+2 .. ^1]
     else:
       proposal.title = heading
       findings.add Finding(
@@ -214,7 +214,7 @@ func checkNumbers*(proposals: openArray[Proposal]): seq[Finding] =
         message: "Proposal number is taken; got `" & proposal.citation & "`.",
       )
     seen.add proposal.number
-  for number in 1 .. max(seen & @[0]):
+  for number in 1..max(seen & @[0]):
     if number notin seen:
       result.add Finding(
         path: "proposals",

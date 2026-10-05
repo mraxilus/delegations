@@ -95,7 +95,7 @@ proc emitTestsReference(measurands: seq[Measurand], section: string): NimNode {.
       name = newLit(p.id & "  # " & p.cite)
     result.add quote do:
       test `name`:
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let
             j = (i * 7 + 3) mod OBJECTS
             expected = block:
@@ -175,7 +175,7 @@ macro checkFormsDense(measurands: static seq[Measurand]): untyped =
       name = newLit(p.id)
     result.add quote do:
       test `name`:
-        for i in 0 ..< OBJECTS:
+        for i in 0..<OBJECTS:
           let
             j = (i * 7 + 3) mod OBJECTS
             (expected, got) = block:
@@ -193,7 +193,7 @@ fillPools(0)
 
 suite "Internal: Configuration":
   test "stub matrix names algebra umbrella reports":
-    check DIMENSIONS in 2 .. 6  # library's own bound
+    check DIMENSIONS in 2..6  # library's own bound
     when DIMENSIONS == 4 and IS_RIGID:
       check NAME_ALGEBRA == "rga4d"  # 3D Euclidean rigid, default of nim.cfg
     when DIMENSIONS == 5 and IS_CONFORMAL:
@@ -506,8 +506,8 @@ suite "Internal: Inspector":
       multivector_mangled = "tyObject_Multivector__h"
       fixture = [
         "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" &
-            multivector_mangled & "* m_p0, " & multivector_mangled & "* n_p1, " &
-            multivector_mangled & "* Result) {",
+        multivector_mangled & "* m_p0, " & multivector_mangled & "* n_p1, " &
+        multivector_mangled & "* Result) {",
         "\tNF* T1_;",
         "NF T2_;",
         multivector_mangled & " T3_;",
@@ -530,14 +530,14 @@ suite "Internal: Inspector":
         "}",
         "",
         "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vector3__h* a_p0, " &
-            "tyObject_Vector3__h* b_p1) {",
+        "tyObject_Vector3__h* b_p1) {",
         "\tNF result;",
         "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
         "\treturn result;",
         "}",
         "",
         "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" &
-            multivector_mangled & "* m_p0, " & multivector_mangled & "* Result);",
+        multivector_mangled & "* m_p0, " & multivector_mangled & "* Result);",
       ].join("\n") & "\n"
     let functions = functionsIn(fixture)
     check functions.len == 2  # declaration ending in `;` skipped
@@ -575,7 +575,7 @@ suite "Internal: Inspector":
       multivector_mangled = "tyObject_Multivector__h"
       loop = [
         "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " &
-            multivector_mangled & "* m_p1, " & multivector_mangled & "* Result) {",
+        multivector_mangled & "* m_p1, " & multivector_mangled & "* Result) {",
         "NI i_1;",
         "NI res_1;",
         "i_1 = ((NI) 0);",
@@ -645,7 +645,7 @@ suite "Internal: Inspector":
       multivector_mangled = "tyObject_Multivector__h"
       divide = [
         "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" &
-            multivector_mangled & "* m_p0, " & multivector_mangled & "* Result) {",
+        multivector_mangled & "* m_p0, " & multivector_mangled & "* Result) {",
         "NF n_1;",
         "NI i_1;",
         "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
@@ -731,7 +731,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       # Operator carrying scalar overload spells same symbol at same arity, so stems of
       #   parameters are what tells two apart.
       var operands_dense, operands_scalar = 0
-      for i in 0 ..< int(p.arity):
+      for i in 0..<int(p.arity):
         if p.operands[i] == Kind.Scalar: inc operands_scalar else: inc operands_dense
       for f in INSPECTED:
         if f.symbol != head: continue
@@ -820,7 +820,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for index, line in lines:
         if "referenceZ" notin line: continue
         inc calls
-        if index > 0 and lines[index - 1].startsWith("nimZeroMem") and line.startsWith("T"):
+        if index > 0 and lines[index-1].startsWith("nimZeroMem") and line.startsWith("T"):
           inc filled
     check calls > 0  # loops that call reference are read
     check filled == 0  # no reference result passes through zero-filled temporary
@@ -1182,7 +1182,7 @@ suite "Internal: Changes":
     let (change, findings) = parseChange(
       record,
       "# Sign\n\nWhy.\n\n## Edit `pga/a.nim`\n\n" &
-          "FENCEnim\nlet y = 2\nFENCE\n\nFENCEnim\nlet y = 3\nFENCE\n".replace("FENCE", "```"),
+      "FENCEnim\nlet y = 2\nFENCE\n\nFENCEnim\nlet y = 3\nFENCE\n".replace("FENCE", "```"),
     )
     check findings.len == 0  # well formed
     check change.title == "Sign" and change.why.len == 1  # title and why
@@ -1756,7 +1756,7 @@ suite "Internal: Pages":
     check document.startsWith("<!doctype html>")  # standards mode, as host serves it
     check "<meta charset=\"utf-8\">" in opening  # page's text read as UTF-8
     check "name=\"viewport\"" in opening  # phone width laid out as on host
-    check document[opening.len .. ^(closing.len + 1)] == page  # page whole, unchanged
+    check document[opening.len .. ^(closing.len+1)] == page  # page whole, unchanged
     check opening.endsWith("<body>") and closing.startsWith("</body>")  # page inside body
     for tag in ["<!doctype", "<html", "<head", "<body", "<meta"]:
       check tag notin shell_html.toLowerAscii  # shell holds no skeleton, so none doubles
@@ -1816,20 +1816,20 @@ suite "Internal: Pages":
   test "every stack holds each face of sans stack before any family shell does not ship":
     const shell_html = staticRead("../pages/shell.html")
     var shipped, gaps: seq[string]
-    for rule in shell_html.split("@font-face")[1 ..^ 1]:
+    for rule in shell_html.split("@font-face")[1..^1]:
       let family = rule.split('"')[1]
       if family notin shipped: shipped.add family
     var stacks: seq[seq[string]]  # sans first, then serif and mono
     for name in ["sans", "serif", "mono"]:
       let
         at = shell_html.find("--" & name & ": ") + name.len + 4
-        families = shell_html[at ..< shell_html.find(';', at)].split(',')
+        families = shell_html[at..<shell_html.find(';', at)].split(',')
       stacks.add @[]
       for family in families:
         let bare = family.strip.strip(chars = {'"'})
         if bare notin shipped: break
         stacks[^1].add bare
-    for stack in stacks[1 ..^ 1]:
+    for stack in stacks[1..^1]:
       for family in stacks[0]:
         if family notin stack: gaps.add stack[0] & " stack lacks " & family
     checkpoint "gaps: " & gaps.join(", ")
@@ -1904,7 +1904,7 @@ suite "Internal: Pages":
       let
         at = body.find("<span class=\"n\">" & measurand & "</span>")
         start = body.rfind("<details ", last = at)
-      body[start .. body.find('>', start)]
+      body[start..body.find('>', start)]
 
     let (typed, general) = (tagOf(body, "wedge_point_point"), tagOf(body, "wedge"))
     for select in ["sort", "show", "operation", "operand"]:
@@ -2051,7 +2051,7 @@ suite "Internal: Proposal list":
         "",
       )
     check "5 proposals · 4 undecided · pga <code>bd6b23c</code>" in body  # counts in header
-    for number in 1 .. 5:
+    for number in 1..5:
       check "Title " & $number & "</td>" in body  # every proposal, frozen one too
     check "<span class=\"chip fail\">1 of 2 hold</span>" in body  # one claim fails
     check "<span class=\"chip pass\">implemented</span>" in body  # frozen one stands so
@@ -2072,7 +2072,7 @@ suite "Internal: Proposal list":
       "bd6b23c590d7",
       "",
     )
-    for number in 1 .. 5:
+    for number in 1..5:
       let id = "pick-p" & $number
       check "<input class=\"pick\" type=\"checkbox\" id=\"" & id & "\"><article" in body
         # checkbox stands right before reading it shows
@@ -2134,7 +2134,7 @@ suite "Internal: Render":
   test "control passes on findings it expects, and one absent is blind":
     let both = [("control", "p#han", 0x4E2D), ("control", "p#open", 0x2603)]
     check checkRendered(foundOf(both), expected, "control", "h").len == 0  # sees, so passes
-    let blind = checkRendered(foundOf(both[0 .. 0]), expected, "control", "h")
+    let blind = checkRendered(foundOf(both[0..0]), expected, "control", "h")
     check blind.len == 1 and "Check is blind" in blind[0].message  # absent one is blind
     check blind[0].message.endsWith("got none for `U+2603`.")  # names codepoint it missed
     check checkRendered(newJObject(), expected, "control", "h").len == 2  # never rendered
@@ -2170,24 +2170,24 @@ suite "Internal: Driver":
   func dispatched(source: string): seq[string] =
     ## Read verbs driver's dispatch answers to: quoted labels of `of` branches after case.
     let start = source.find("case paramStr(1)")
-    for line in source[start ..< source.len].splitLines:
+    for line in source[start..<source.len].splitLines:
       let s = line.strip
       if s.startsWith("of \""):
-        result.add s[4 ..< s.find('"', 4)]
+        result.add s[4..<s.find('"', 4)]
 
   func taught(source: string): seq[string] =
     ## Read verbs usage string teaches, between its angle brackets, across its literals.
     let
       start = source.find("USAGE =")
-      text = source[start ..< source.find("##", start)].multiReplace(("\" &", ""), ("\"", ""))
+      text = source[start..<source.find("##", start)].multiReplace(("\" &", ""), ("\"", ""))
       joined = text.splitWhitespace.join
-    joined[joined.find('<') + 1 ..< joined.find('>')].split('|')
+    joined[joined.find('<')+1..<joined.find('>')].split('|')
 
   func tabled(source: string): seq[string] =
     ## Read verbs header table rows, first cell of each row naming one.
     for line in source.splitLines:
       if not line.startsWith("##   | "): continue
-      let cell = line[7 ..< line.find('|', 7)].strip
+      let cell = line[7..<line.find('|', 7)].strip
       if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
 
   func importsOf(source: string): seq[string] =
@@ -2197,18 +2197,18 @@ suite "Internal: Driver":
       if s.startsWith("#"): continue
       for opener in ["import ", "from "]:
         let at = s.find(opener)
-        if at < 0 or (at > 0 and not s[0 ..< at].endsWith(": ")): continue
-        result.add s[at + opener.len .. ^1].split(' ')[0]
+        if at < 0 or (at > 0 and not s[0..<at].endsWith(": ")): continue
+        result.add s[at+opener.len .. ^1].split(' ')[0]
 
   func branched(source: string): Table[string, string] =
     ## Read body of each dispatch branch, keyed by verb, up to next branch or `else:`.
     var verb = ""
-    for line in source[source.find("case paramStr(1)") ..< source.len].splitLines:
+    for line in source[source.find("case paramStr(1)")..<source.len].splitLines:
       let s = line.strip
       if s == "else:": break
       if s.startsWith("of \""):
-        verb = s[4 ..< s.find('"', 4)]
-        result[verb] = s[s.find(':', 4 + verb.len) + 1 .. ^1]
+        verb = s[4..<s.find('"', 4)]
+        result[verb] = s[s.find(':', 4+verb.len)+1 .. ^1]
       elif verb.len > 0:
         result[verb].add "\n" & s
 
@@ -2216,7 +2216,7 @@ suite "Internal: Driver":
   test "drive holds code to pin alone, and verb head alone reads library head":
     let
       start = verbs.find("proc drive() =")
-      body = verbs[start ..< verbs.find("\n\n\n", start)]
+      body = verbs[start..<verbs.find("\n\n\n", start)]
     check "checkoutChecked()" in body and "headChecked" notin body  # drive reads no head
     check "of \"head\": report(headChecked(commitPga()))" in verbs  # head's verdict, exit code
 
@@ -2249,7 +2249,7 @@ suite "Internal: Driver":
   test "drive builds every page once, and renders each page it builds":
     let
       start = verbs.find("proc drive() =")
-      body = verbs[start ..< verbs.find("\n\n\n", start)]
+      body = verbs[start..<verbs.find("\n\n\n", start)]
     check body.count("pagesBuilt(") == 1  # one build serves digests and render alike
     check "pinnedChecked(pin, built)" in body  # digests of that build
     check "renderedChecked(built, faces)" in body  # render of that build
