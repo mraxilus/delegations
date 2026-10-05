@@ -456,6 +456,8 @@ func overrideAbout(held: Option[Position]; anchor, centre: Position): Option[Pos
   ## Read anchor override held about `anchor` as it stands about `centre`.
   ##   Hint for picture, where plane's disc centres, so offset by Euclidean sum, as disc is
   ##   drawn; exact where anchor is `centre`.
+  ##   Per-frame reader checks `held` before calling: most objects hold none, and anchor read
+  ##   for each was measurable share of desktop's frame.
   if held.isNone: return
   some(held.get + (anchor - centre))
 
@@ -904,6 +906,7 @@ func born*(one: Object): float = one.scene.borns[one.handle]
 func anchorOverride*(one: Object): Option[Position] =
   ## Read where object's circle should centre about world origin, if construction fixed that.
   ##   See `creationAnchor`.
+  if one.scene.anchor_overrides[one.handle].isNone: return
   overrideAbout(one.scene.anchor_overrides[one.handle], one.scene.anchors[one.handle], ORIGIN_WORLD)
 
 
@@ -1052,6 +1055,7 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
   ## Read where object's circle should centre about world origin, by handle; see `inkAt`.
   ##   Held about object's anchor and offset here, three sums for object carrying one.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
+  if scene.anchor_overrides[handle].isNone: return
   overrideAbout(scene.anchor_overrides[handle], scene.anchors[handle], ORIGIN_WORLD)
 
 
