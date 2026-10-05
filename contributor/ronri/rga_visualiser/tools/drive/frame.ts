@@ -48,8 +48,21 @@ declare global {
     __held_frame?: number;
     /** Each frame's own clocks and counts, alongside `__work_frame`. */
     __phase_frame?: Phase[];
+    /** Motors each frame lifted, while counting wrapper stands in front of frame build. */
+    __lifts_frame?: number[];
+    /** Page's own frame build, held while counting wrapper stands in front of it. */
+    __build_unwrapped?: typeof nimBuildFrame;
+    /** How many values page copied while counting stood open; see `driveCopiesStill`. */
+    __copies_counted?: number;
+    /** Whether copy counter counts now. */
+    __is_counting_copies?: boolean;
+    /** JS backend's own copy, held while counting wrapper stands in front of it. */
+    __copy_unwrapped?: CopyNim;
   }
 }
+
+/** Shape of JS backend's deep copy, `nimCopy`: destination, source, type, and copy made. */
+type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown;
 
 /** Stand wrapper in front of page's frame build, collecting what each frame costs.
  *
@@ -172,6 +185,125 @@ export async function driveLoopRuns(page: Page): Promise<void> {
   report(
     'the draw loop keeps building frames', built === FRAMES_LOOP,
     `${built} of ${FRAMES_LOOP} simulated frames built`,
+  );
+}
+
+
+/** Frames each state is counted over; more than one, so steady state is what is read. */
+const FRAMES_LIFTS = 3;
+
+/** Assert each frame page builds reads camera's stance once, still and while camera moves.
+ *
+ *  Eye and frame are each read off stance through camera's motor, so each read lifts motor
+ *  again and lifts counted are reads. Counted at page's own frame build, wrapped as
+ *  `watchFrames` wraps it, so frames counted are frames page's loop built. Nothing is
+ *  selected, so aim reads nothing of its own; drag is real one, from empty sky.
+ *  Clears Nim's selection alone, as `driveGround` does, and leaves page's own snapshot of it:
+ *  checks after this one read that snapshot.
+ *  Count rather than time: count reads same on every machine, and load never moves it.
+ */
+export async function driveStanceReadOnce(page: Page, width: number): Promise<void> {
+  await page.evaluate(() => nimSelectClear());
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  await page.evaluate(() => {
+    const scope = globalThis as unknown as { nimBuildFrame: typeof nimBuildFrame };
+    const unwrapped = scope.nimBuildFrame;
+    window.__build_unwrapped = unwrapped;
+    window.__lifts_frame = [];
+    scope.nimBuildFrame = function (
+      ...given: Parameters<typeof nimBuildFrame>
+    ): FrameData {
+      nimSetCountingLifts(true);
+      const data = unwrapped(...given);
+      window.__lifts_frame?.push(nimCountLifts());
+      nimSetCountingLifts(false);
+      return data;
+    };
+  });
+  await advanceFrames(page, FRAMES_LIFTS);
+  const still = await page.evaluate(() => window.__lifts_frame?.splice(0) ?? []);
+
+  // One frame drawn after each move, so each counted frame follows turn of its own.
+  const before = await page.evaluate(() => nimCameraAzimuth());
+  await page.mouse.move(width / 2, 60);
+  await page.mouse.down();
+  for (let i = 1; i <= FRAMES_LIFTS; i += 1) {
+    await page.mouse.move(width / 2 + 40 * i, 60, { steps: 2 });
+    await advanceFrames(page, 1);
+  }
+  const moving = await page.evaluate(() => window.__lifts_frame?.splice(0) ?? []);
+  await page.mouse.up();
+  const after = await page.evaluate(() => nimCameraAzimuth());
+
+  await page.evaluate(() => {
+    const scope = globalThis as unknown as { nimBuildFrame: typeof nimBuildFrame };
+    if (window.__build_unwrapped !== undefined) scope.nimBuildFrame = window.__build_unwrapped;
+  });
+  const isOnce = (lifts: number[]): boolean =>
+    lifts.length >= FRAMES_LIFTS && lifts.every((one) => one === 1);
+  report(
+    "a frame reads the camera's stance once, still and while the camera moves",
+    isOnce(still) && isOnce(moving) && Math.abs(after - before) > 1e-6,
+    `lifts per frame still [${still.join(', ')}], moving [${moving.join(', ')}]; ` +
+      `azimuth ${before.toFixed(3)} -> ${after.toFixed(3)}`,
+  );
+}
+
+
+/** How many still frames copies are counted over; more than one, so steady state is read. */
+const FRAMES_COPIES = 3;
+
+/** Count values still frames copy, and assert each frame copies fewer than scene has objects.
+ *
+ *  JS backend deep-copies through `nimCopy`, and copy for each object turns frame linear in
+ *  scene for no drawn change. Bound is object count: any such copy reaches it on its own.
+ *  Count rather than time: count reads same on every machine, and load never moves it.
+ *  Counts outermost call alone, since copy of nested value calls `nimCopy` again for each
+ *  member. Every frame counted must hold its scene, so count is still frame's own.
+ */
+export async function driveCopiesStill(page: Page, objects: number): Promise<void> {
+  const is_wrapped = await page.evaluate(() => {
+    const scope = globalThis as unknown as { nimCopy?: CopyNim };
+    const unwrapped = scope.nimCopy;
+    if (typeof unwrapped !== 'function') return false;
+    window.__copy_unwrapped = unwrapped;
+    window.__copies_counted = 0;
+    window.__is_counting_copies = false;
+    let depth = 0;
+    scope.nimCopy = function (destination: unknown, source: unknown, type: unknown): unknown {
+      if (depth === 0 && window.__is_counting_copies === true) {
+        window.__copies_counted = (window.__copies_counted ?? 0) + 1;
+      }
+      depth += 1;
+      try {
+        return unwrapped(destination, source, type);
+      } finally {
+        depth -= 1;
+      }
+    };
+    return true;
+  });
+
+  const from = await countFrames(page);
+  await page.evaluate(() => { window.__is_counting_copies = true; });
+  await advanceFrames(page, FRAMES_COPIES);
+  const copies = await page.evaluate(() => {
+    window.__is_counting_copies = false;
+    const scope = globalThis as unknown as { nimCopy?: CopyNim };
+    if (window.__copy_unwrapped !== undefined) scope.nimCopy = window.__copy_unwrapped;
+    return window.__copies_counted ?? 0;
+  });
+  const phases = await readPhases(page, from);
+  const held = phases.filter((phase) => phase.is_scene_held).length;
+
+  report(
+    'a still frame under the largest demo copies fewer values than the scene has objects',
+    is_wrapped && phases.length === FRAMES_COPIES && held === FRAMES_COPIES &&
+      copies < objects * FRAMES_COPIES,
+    is_wrapped
+      ? `${copies} copies over ${phases.length} frames, ${held} held, for ${objects} objects`
+      : 'page holds no `nimCopy` to count',
   );
 }
 

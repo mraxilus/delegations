@@ -27,6 +27,11 @@
 ##   Perspective divide, depth range and clip volume belong to graphics pipeline rather
 ##   than to geometry, so they are written out directly.
 ## Every verb composes motion directly, `orbit` included, so roll reader sets survives.
+## Readers of frame take eye and frame caller read once (`sight`), and never read them again.
+##   Each read of `eye` or `frame` lifts motor and carries reference stance through it.
+##   Cost: eye and frame handed in must be camera's as it stands. Front-end reads again only
+##   where something moved camera since, as `framing.offerAim`'s holds can.
+##   Forms taking camera alone stay for readers outside frame, and read stance once.
 ##
 ## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
@@ -510,6 +515,11 @@ func scaleLocal*(camera: Camera): float =
 
 
 func distanceFar*(camera: Camera, reach_scene: float): float =
+  ## Read far bound off camera alone, reading its eye once; see form taking eye.
+  camera.distanceFar(camera.eye, reach_scene)
+
+
+func distanceFar*(camera: Camera, eye: Position, reach_scene: float): float =
   ## Read far bound depth's logarithm spans and horizon stands within; see `distanceNear`
   ##   for why derived. Nothing clips at it: see `initMatrixProjection`.
   ##   Twenty orbit distances, or eye's distance to origin plus scene's reach where that
@@ -518,10 +528,9 @@ func distanceFar*(camera: Camera, reach_scene: float): float =
   ##     own reach included: `framing.reachOf`, zero for empty scene.
   ##     Caller's rather than camera's: every path replacing camera value dropped field
   ##     stamped on it, and far clip then cut scene away.
+  ##   `eye` is camera's own, read once for frame by caller; see `drawExtentFor`.
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
-  let
-    eye = camera.eye
-    away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
+  let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
   max(camera.scaleLocal*FACTOR_CLIP_FAR, away + reach_scene*MARGIN_REACH_FAR)
 
 
@@ -1019,8 +1028,9 @@ func flyAhead*(camera: var Camera, step: float) =
   camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
 
 
-func originHeld*(camera: Camera, origin: Position): Position =
+func originHeld*(camera: Camera; eye, origin: Position): Position =
   ## Say where records are stored from, given where they were stored from last.
+  ##   `eye` is camera's own, read once for frame by caller; see `drawExtentFor`.
   ##   Eye, held where it stands until travel spends float32's precision about it.
   ##     Eye rather than pivot: free flight turns about eye, so pivot swings through whole
   ##     arc while eye stands, and what reader is about to reach stands near eye.
@@ -1031,9 +1041,7 @@ func originHeld*(camera: Camera, origin: Position): Position =
   ##   thousand units at opening stance, and less as close work draws near clip in.
   ##   One origin for both mesh sets, since one transform draws them; see
   ##   `initMatrixViewProjection`.
-  let
-    eye = camera.eye
-    reach = norm(eye - origin)
+  let reach = norm(eye - origin)
   if reach*STEP_SINGLE <= FRACTION_ORIGIN_HOLD*camera.distanceNear: origin else: eye
 
 
@@ -1104,19 +1112,28 @@ func rulerFor*(camera: Camera, scale: DrawExtent): tuple[span, pixels: float] =
 
 
 func drawExtentFor*(camera: Camera; height_pixels: int; reach_scene: float): DrawExtent =
+  ## Derive draw scale from camera alone, off one read of its stance; see form taking eye.
+  let (eye, frame) = camera.sight
+  camera.drawExtentFor(eye, frame, height_pixels, reach_scene)
+
+
+func drawExtentFor*(
+  camera: Camera, eye: Position, frame: FrameCamera, height_pixels: int, reach_scene: float
+): DrawExtent =
   ## Derive this frame's draw scale from camera.
   ##   How far geometry reaches, where from, and everything ribbon needs to hold constant
   ##   width on screen.
   ##   One constructor: literal copies in each front-end drifted.
   ##     Here rather than `tessellate` because it reads `Camera`, and `camera` imports
   ##     `tessellate`.
+  ##   `eye` and `frame` are read off camera's stance once by caller (`sight`), and handed to
+  ##   every reader of its frame.
+  ##     Each read of either lifts motor and carries reference stance through it again;
+  ##     figures in PROVENANCE.md, Camera.
   ##   `height_pixels` is framebuffer's, not window's: ribbon's width is measured in
   ##   pixels actually drawn.
   ##   `reach_scene` is scene's, and only far bound reads it; see `distanceFar`.
-  let
-    eye = camera.eye
-    frame = camera.frame
-    far = camera.distanceFar(reach_scene)
+  let far = camera.distanceFar(eye, reach_scene)
   # Derive four multivector twins through `algebraFilled`.
   #   One derivation point shared with every hand-built extent.
   algebraFilled(DrawExtent(
@@ -1136,23 +1153,24 @@ func drawExtentFor*(camera: Camera; height_pixels: int; reach_scene: float): Dra
   ))
 
 
-func viewBoundsFor*(camera: Camera; scale: DrawExtent; aspect, reach_scene: float): ViewBounds =
+func viewBoundsFor*(
+  camera: Camera; eye: Position; frame: FrameCamera; scale: DrawExtent; aspect, reach_scene: float
+): ViewBounds =
   ## Derive frustum points are culled against, once per frame; see `tessellate.isPointInView`.
   ##   Margin is least on-screen radius and one pixel more, as tangent per unit of depth,
   ##   so smallest disc straddling edge is still emitted whatever GPU does with centre
   ##   just outside; point's own radius is added per point by `isPointInView`.
+  ##   `eye` and `frame` are read off camera's stance once for frame by caller; see
+  ##   `drawExtentFor`.
   ##   `aspect` is framebuffer's width over height, which `drawExtentFor` never needs.
-  let
-    eye = camera.eye
-    frame = camera.frame
-    margin = (0.5*float(DIAMETER_POINT_LEAST) + 1.0)*scale.scale.radiansPerPixel
+  let margin = (0.5*float(DIAMETER_POINT_LEAST) + 1.0)*scale.scale.radiansPerPixel
   ViewBounds(
     eye: eye,
     forward: frame.forward,
     right: frame.axis_right,
     up: frame.axis_up,
     depth_near: camera.distanceNear*(1.0 - TOLERANCE_CULL_CLIP),
-    depth_far: camera.distanceFar(reach_scene)*(1.0 + TOLERANCE_CULL_CLIP),
+    depth_far: camera.distanceFar(eye, reach_scene)*(1.0 + TOLERANCE_CULL_CLIP),
     bound_width: scale.tangentHalfView*aspect + margin,
     bound_height: scale.tangentHalfView + margin,
   )
@@ -1161,16 +1179,29 @@ func viewBoundsFor*(camera: Camera; scale: DrawExtent; aspect, reach_scene: floa
 func initMatrixViewProjection*(
   camera: Camera, aspect: float, origin: Position = Position(x: 0, y: 0, z: 0)
 ): Matrix4 =
+  ## Compose whole transform from camera alone, off one read of its stance; see form taking eye.
+  let (eye, frame) = camera.sight
+  camera.initMatrixViewProjection(eye, frame, aspect, origin)
+
+
+func initMatrixViewProjection*(
+  camera: Camera,
+  eye: Position,
+  frame: FrameCamera,
+  aspect: float,
+  origin: Position = Position(x: 0, y: 0, z: 0),
+): Matrix4 =
   ## Compose whole transform from world space to clip space.
+  ##   `eye` and `frame` are read off camera's stance once for frame by caller; see
+  ##   `drawExtentFor`.
   ##   `origin` is point coordinates handed to transform are measured from: world origin
   ##   for picking and markers, which read world coordinates; frame's own origin,
   ##   `mesh.MeshSet.origin`, for GPU, whose records are stored about it. Same transform
   ##   either way, translated: only translation column moves, by eye's offset from origin.
   ##     Point stored as float32 million units from world origin carries tenth of unit;
   ##     stored about pivot it carries what pivot's own close-up needs.
-  let eye = camera.eye
   initMatrixProjection(camera.degrees_field_of_view, aspect, camera.distanceNear) *
-    initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), camera.frame)
+    initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), frame)
 
 
 
@@ -1507,8 +1538,11 @@ func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStanc
   ##     mid-ease.
   ##   Separation is multiplicative, and linear ease from 12 to 300 covers most visible
   ##   change in first few frames then crawls.
+  ##     Held off zero by `distanceHeld`, floor of every separation, so ease lands on
+  ##     destination's own: pointer pick of star at least radius asks 2.4e-7.
+  ##     Not fixed millionth, which stood pivot 7.6e-7 past that star; suite case trips on it.
   let
-    (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
+    (near, far) = (distanceHeld(from_stance.distance), distanceHeld(to_stance.distance))
     held = toMultivector(from_stance.motor)
     # Motion carrying one stance to other, logged, scaled, and put back on.
     step = wedgeDotAnti(toMultivector(to_stance.motor), reverseAnti(held))

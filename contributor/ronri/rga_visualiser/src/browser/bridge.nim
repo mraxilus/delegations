@@ -1211,8 +1211,11 @@ proc ensureViewOverlay(width, height: int) =
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
-    SCALE_OVERLAY = CAMERA_PAGE.drawExtentFor(height, REACH_SCENE)
-    VIEW_PROJECTION_OVERLAY = CAMERA_PAGE.initMatrixViewProjection(float(width)/float(height))
+    # Read eye and frame once for both; see `camera.drawExtentFor`.
+    let (eye, frame) = CAMERA_PAGE.sight
+    SCALE_OVERLAY = CAMERA_PAGE.drawExtentFor(eye, frame, height, REACH_SCENE)
+    VIEW_PROJECTION_OVERLAY =
+      CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(width)/float(height))
 
 
 
@@ -1447,6 +1450,12 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
 
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA_PAGE.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
+
+proc nimSetCountingLifts(is_counting: bool) {.exportc.} = setCountingLifts(is_counting)
+  ## Open or close tally of motor lifts, for driven checks; see `boundary.setCountingLifts`.
+
+proc nimCountLifts(): cint {.exportc.} = cint(countLifts())
+  ## Report how many motors were lifted since tally last opened; see `boundary.countLifts`.
 
 
 
@@ -2466,23 +2475,33 @@ proc nimBuildFrame(
   #   device-pixel-ratio multiple.
   # Place first, so scene's reach is this frame's before extent reads far clip.
   ensurePlacement()
+  # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
+  #   Each `eye` or `frame` read lifts motor again; see `camera.drawExtentFor`.
+  #   Unpacked and handed on with no copy, and motor kept below is one copy of eight floats
+  #   (read in emitted JS).
+  var (eye, frame) = CAMERA_PAGE.sight
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
-  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, CAMERA_PAGE.eye, CAMERA_PAGE.frame.forward)
+  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE_PAGE, eye, frame.forward)
   CAMERA_PAGE.reach_near = REACH_NEAR
   # Decide records' origin after scale, since bound is read off near clip.
   #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
-  ORIGIN_RECORDS = CAMERA_PAGE.originHeld(ORIGIN_RECORDS)
-  let scale = CAMERA_PAGE.drawExtentFor(int(height_pixels), REACH_SCENE)
+  ORIGIN_RECORDS = CAMERA_PAGE.originHeld(eye, ORIGIN_RECORDS)
+  let scale = CAMERA_PAGE.drawExtentFor(eye, frame, int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA_PAGE.viewBoundsFor(scale, float(aspect), REACH_SCENE)
+  let bounds = CAMERA_PAGE.viewBoundsFor(eye, frame, scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
-  let preview = staged()
+  #   Motor is kept first, so hold that aim makes is seen below.
+  let
+    preview = staged()
+    motor_offered = CAMERA_PAGE.motor
   TWEEN_CAMERA.offerAim(
     CAMERA_PAGE, SCENE_PAGE, SELECTION_PAGE, preview, scale,
     int(float(aspect)*float(height_pixels)), int(height_pixels), float(now), ANIMATION_SECONDS,
     POINTER_PICK, INTERACTION_PAGE.isMovingCamera,
   )
+  # Read both again only where aim's hold moved camera, so transform draws where it stands.
+  if CAMERA_PAGE.motor != motor_offered: (eye, frame) = CAMERA_PAGE.sight
 
   # Hold furniture where settings match last frame's.
   #   Everything `drawExtentFor` reads, and two toggles: frame whose settings match is
@@ -2668,7 +2687,8 @@ proc nimBuildFrame(
     COUNTS_SCENE = cost
 
   # About records' own origin; overlay's matrix stays about world, for picking.
-  let flat_view = CAMERA_PAGE.initMatrixViewProjection(float(aspect), MESHES.origin).flattened
+  let flat_view =
+    CAMERA_PAGE.initMatrixViewProjection(eye, frame, float(aspect), MESHES.origin).flattened
   for index in 0 .. 15: FLAT_VIEW[index] = flat_view[index]
 
   # Flatten into locals rather than in constructor.

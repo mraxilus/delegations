@@ -1076,22 +1076,24 @@ func addRing*(
   let
     arm_first = radius*axis_first
     arm_second = radius*axis_second
-  meshes.rings.records[meshes.rings.count] = RingRecord(
-    centre_x: float32(centre.x - meshes.origin.x),
-    centre_y: float32(centre.y - meshes.origin.y),
-    centre_z: float32(centre.z - meshes.origin.z),
-    arm_first_x: float32(arm_first.x),
-    arm_first_y: float32(arm_first.y),
-    arm_first_z: float32(arm_first.z),
-    arm_second_x: float32(arm_second.x),
-    arm_second_y: float32(arm_second.y),
-    arm_second_z: float32(arm_second.z),
-    red: float32(tint.red),
-    green: float32(tint.green),
-    blue: float32(tint.blue),
-    alpha: float32(tint.alpha),
-    width: float32(width),
-  )
+  # Write fields in place.
+  #   `RingRecord` constructor assigned to slot is deep copy per plane per frame on JS backend
+  #   (read in emitted JS). Every field written, so slot keeps nothing of record before.
+  template record: untyped = meshes.rings.records[meshes.rings.count]
+  record.centre_x = float32(centre.x - meshes.origin.x)
+  record.centre_y = float32(centre.y - meshes.origin.y)
+  record.centre_z = float32(centre.z - meshes.origin.z)
+  record.arm_first_x = float32(arm_first.x)
+  record.arm_first_y = float32(arm_first.y)
+  record.arm_first_z = float32(arm_first.z)
+  record.arm_second_x = float32(arm_second.x)
+  record.arm_second_y = float32(arm_second.y)
+  record.arm_second_z = float32(arm_second.z)
+  record.red = float32(tint.red)
+  record.green = float32(tint.green)
+  record.blue = float32(tint.blue)
+  record.alpha = float32(tint.alpha)
+  record.width = float32(width)
   inc meshes.rings.count
 
 
@@ -1477,21 +1479,23 @@ func addDisc*(
   let
     arm_first = radius*axis_first
     arm_second = radius*axis_second
-  meshes.discs.records[count] = DiscRecord(
-    centre_x: float32(center.x - meshes.origin.x),
-    centre_y: float32(center.y - meshes.origin.y),
-    centre_z: float32(center.z - meshes.origin.z),
-    arm_first_x: float32(arm_first.x),
-    arm_first_y: float32(arm_first.y),
-    arm_first_z: float32(arm_first.z),
-    arm_second_x: float32(arm_second.x),
-    arm_second_y: float32(arm_second.y),
-    arm_second_z: float32(arm_second.z),
-    fill_red: tint.red,
-    fill_green: tint.green,
-    fill_blue: tint.blue,
-    fill_alpha: tint.alpha,
-  )
+  # Write fields in place.
+  #   `DiscRecord` constructor assigned to slot is deep copy per plane per frame on JS backend
+  #   (read in emitted JS). Every field written, so slot keeps nothing of record before.
+  template record: untyped = meshes.discs.records[count]
+  record.centre_x = float32(center.x - meshes.origin.x)
+  record.centre_y = float32(center.y - meshes.origin.y)
+  record.centre_z = float32(center.z - meshes.origin.z)
+  record.arm_first_x = float32(arm_first.x)
+  record.arm_first_y = float32(arm_first.y)
+  record.arm_first_z = float32(arm_first.z)
+  record.arm_second_x = float32(arm_second.x)
+  record.arm_second_y = float32(arm_second.y)
+  record.arm_second_z = float32(arm_second.z)
+  record.fill_red = tint.red
+  record.fill_green = tint.green
+  record.fill_blue = tint.blue
+  record.fill_alpha = tint.alpha
   meshes.discs.count = count + 1
 
 

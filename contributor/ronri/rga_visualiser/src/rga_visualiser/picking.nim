@@ -206,7 +206,7 @@ func pixelsFromCursor*(
   let clip_w = float(view_projection.at(3, 0))*position.x +
     float(view_projection.at(3, 1))*position.y +
     float(view_projection.at(3, 2))*position.z + float(view_projection.at(3, 3))
-  if clip_w <= 1.0e-6: return Inf # Behind eye; `isInFront`'s test.
+  if clip_w <= DISTANCE_LIMIT_NEAR: return Inf  # Behind eye; `isInFront`'s test.
   let
     clip_x = float(view_projection.at(0, 0))*position.x +
       float(view_projection.at(0, 1))*position.y +
@@ -219,9 +219,12 @@ func pixelsFromCursor*(
   hypot(cursor.x - x, cursor.y - y)
 
 
-func isInFront*(screen: ScreenPosition): bool = screen.depth > 1.0e-6
+func isInFront*(screen: ScreenPosition): bool = screen.depth > DISTANCE_LIMIT_NEAR
   ## Report whether projected position stands in front of eye.
   ##   Where perspective divide and every pixel distance from it are meaningful.
+  ##   Floor is camera's own, `DISTANCE_LIMIT_NEAR`: no separation camera holds reads behind.
+  ##     Not fixed millionth: pointer pick of star at least radius stands 2.4e-7 off it,
+  ##     and ring, label and pick all lost that star; suite case trips on it.
 
 
 
@@ -521,7 +524,7 @@ proc pickWalk(
       # Read depth off projection, and drawn radius off depth.
       #   Neither builds anything per point; see `depthAlongSight`.
       let depth = depthAlongSight(view_projection, place.at)
-      if depth <= 1.0e-6: continue # Behind eye; `isInFront`'s test.
+      if depth <= DISTANCE_LIMIT_NEAR: continue  # Behind eye; `isInFront`'s test.
       let
         distance = pixelsFromCursor(view_projection, width, height, place.at, cursor)
         radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)

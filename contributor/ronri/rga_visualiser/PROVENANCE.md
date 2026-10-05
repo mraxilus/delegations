@@ -1558,6 +1558,13 @@ which is once for each frame rather than once for each object. `picking.pickWalk
 and the frame before its walk, and `drawExtentFor` hands every reader one extent. It is the trade
 that `mesh.directionAcross` already makes.
 
+**Each frame reads the eye and frame once, and hands both to every reader.** Each front-end reads
+`sight` after the ease moves the camera. It hands that eye and frame to the near reach, the origin
+of the records, the extent, the frustum and the transform. Each read of `eye` or `frame` lifts the
+motor and carries the reference stance through it again. A hold of the aim can move the camera, so a
+front-end reads again only where the motor moved. Rejected: the first read for the transform too,
+which then draws where the camera stood before the hold.
+
 **The view holds are keyed on what the camera holds, and never on what it reads out.**
 `SettingsFurniture` and the browser's `SettingsOverlay` both take the motor and the depth. Those are
 the stance itself, so two frames that agree on them agree on the eye, every axis, the pivot and both
@@ -1656,7 +1663,9 @@ speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interac
   slide, and a weightless one refused;
 - every seed object stands inside the opening frame, on six frames from upright phones to wide
   desktops. A frame wider than tall keeps 19 units;
-- the far bound reaches the scene's reach that its caller passes, however close the orbit is.
+- the far bound reaches the scene's reach that its caller passes, however close the orbit is;
+- the extent and the transform, given the camera alone, each lift its motor once;
+- the readers of a frame, given its eye and frame, lift the motor no more.
 
 Verified by driven checks:
 
@@ -1664,9 +1673,19 @@ Verified by driven checks:
 - the disc of the ecliptic reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up;
 - an anchor lookup takes 3.750 µs, against 488.250 µs keyed on the read-out pivot and angles;
 - the view section shows sixteen coefficients, and a typed one settles on a unit motor;
-- it reads speed with nothing selected, and distance with a selection.
+- it reads speed with nothing selected, and distance with a selection;
+- each frame build of the page lifts the motor once, still and while a drag orbits, where
+  `4a478976` lifts it 11 times.
 
-Assumed: that no reader wants a ceiling on the separation.
+Verified by a probe in Chromium under SwiftShader on 2026-10-04, on an Intel Xeon at 2.10 GHz. It
+times batches of frame builds with the loop of the page stopped, in five interleaved pairs against
+`4a478976`. At the opening scene a still frame takes 0.11 to 0.13 ms against 0.26 to 0.31 ms. An
+orbiting frame takes 0.24 to 0.27 ms against 0.41 to 0.45 ms. At 5,038 objects they take 0.85 to
+0.90 and 1.62 to 1.76 ms, against 0.98 to 1.09 and 1.82 to 2.18 ms. Over 80 frames, the records
+and the transform that each frame hands the GPU match in both builds, bit for bit.
+
+Assumed: that no reader wants a ceiling on the separation. Assumed: that the desktop hands its five
+readers one read of the stance, which no check counts. Its frame time is unmeasured.
 
 ## Zoom
 
@@ -2216,6 +2235,45 @@ The horizon shapes, the lattice lines and the axes stay in the algebra. The dens
 16 coefficients stays, because a change to its storage would change the thing that is measured. On
 JS it is a 128-byte `Float64Array` that V8 allocates outside its heap, a microsecond each.
 
+**The picture writes each value in place, one field at a time.** The six operators of `euclid.nim`
+that return a `Position` or a `Direction` set `x`, `y` and `z` in turn. `addRing` and `addDisc`
+write each field of their record into its slot, as `addMarker` writes its vertex. The JavaScript
+backend copies an object constructor through `nimCopy` wherever it assigns one to `result` or to a
+slot. A field write is a plain store. Each write does the operations of the constructor, in its
+order, so each result is the same to the bit.
+
+The copy matters most in `framing.reachNearOf`, which subtracts two positions for each object in
+each frame, held or not. On the C backend `noinit` skips the zero fill of each operator, so it emits
+the stores that the constructor did. Cost: one statement for each field, where one constructor named
+them all. `fade` and `addRibbon` keep their constructors, because their copies read 1.7% and 0.3% of
+a moving frame at 5,038 objects.
+
+Measured on 2026-10-04 on one delegate, under the lock of the gate, by a harness that is not kept.
+It drives the page at 1200 by 900 px under SwiftShader, with antialias, and with the blur off. It
+times 6 s of frames for each scene, then profiles 6 s more through the DevTools protocol of
+Chromium. An orbit turns the camera 0.004 radians in each frame. Each pair is `c4e7e1fd`, then
+this design, run in turn, in ms of the frame callback:
+
+| Scene | Median | Slowest tenth |
+|-------|--------|---------------|
+| Opening scene, still | 0.9 to 0.7, 0.8 to 0.7, 0.7 to 0.8 | 1.3 to 1.1, 1.2 to 1.0, 1.1 to 1.1 |
+| Opening scene, orbit | 0.9 to 0.9, 0.8 to 0.8, 0.8 to 0.9 | 1.5 to 1.3, 1.3 to 1.3, 1.3 to 1.3 |
+| 5,038 objects, still | 1.7 to 1.0, 1.6 to 1.0, 1.5 to 1.0 | 2.4 to 1.4, 2.4 to 1.3, 2.3 to 1.5 |
+| 5,038 objects, orbit | 2.6 to 2.2, 2.5 to 1.6, 2.3 to 1.8 | 3.9 to 2.9, 3.8 to 2.6, 3.1 to 2.7 |
+
+At the opening scene the two builds overlap, because it holds five objects. At 5,038 objects the
+profile puts `nimCopy` at 39% of the JavaScript of a still frame on `c4e7e1fd`, and at 10% in place.
+The subtraction of `reachNearOf` alone is 31.5% of it. A moving frame reads 34% and 10%. With the
+operators alone in place, the copies of `addRing` and `addDisc` read 2.6% and 2.7% of a moving
+frame.
+
+**A count holds the design, as it holds a fault close to its speed bound** (Clocks of the driven
+checks). A count reads the same on every machine, and load never moves it. No speed check times a
+still frame at 5,038 objects. `driveCopiesStill` counts the outermost `nimCopy` calls over 3 held
+frames of the largest demo, and fails at one copy for each object. It reads 15,598 copies on
+`c4e7e1fd`, and 481 in place. Rejected: a reading of the emitted JavaScript for the six operators
+alone, which passes a copy for each object at any other site.
+
 **A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
 and the crossing is the coefficient table. A motor's sum of blades made 23 arrays, and a write makes
 one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
@@ -2249,6 +2307,9 @@ in the emitted JS. The tally is a write that `strictFuncs` counts as an effect, 
 `func` that reads a point a `proc` too. Rejected: a build flag, since an instrument is gated on its
 reader (STYLE.md).
 
+**`toMultivector` tallies each lift of a motor the same way.** `setCountingLifts` opens that tally,
+for the suite and for the driven check of the page, which reaches it through the bridge (Camera).
+
 **There is no debug layer, and nobody is to reintroduce it without an instruction.** A switch that
 drew every multivector a frame computed, as what it is, never helped to resolve anything.
 
@@ -2258,6 +2319,11 @@ both backends. Verified in Chromium at 390 by 844 on 2026-09-25 against the vect
 interleaved pairs, each the best of seven runs. A finger's turn takes 223 to 251 µs in free aim and
 247 to 283 in orbit, against 144 to 158 and 113 to 122. A turn and a frame build take 0.93 to 0.94
 ms, against 0.86 to 0.94.
+
+Verified by driven check: a still frame under the largest demo copies fewer values than the scene
+has objects. Verified by a read of the emitted code on 2026-10-04. No `nimCopy` stands in the six
+operators, `addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three
+field stores with no fill.
 
 ## Motors
 
@@ -2627,6 +2693,12 @@ point outside the bound.
 floats. The 4×4 multiply with two typed arrays allocated for each call was 43% of a 15.4 ms pick
 over 10,000 handles.
 
+**A depth reads as in front down to the camera's own floor.** `isInFront`, and the two tests of a
+pick that share it, take `camera.DISTANCE_LIMIT_NEAR` as the least depth ahead of the eye. No
+separation that the camera holds then reads as behind it. Rejected: a fixed millionth of a unit. A
+pointer pick of a star at least radius stands 2.4e-7 units off it. The ring, the label, the menu and
+every pick then lost the star.
+
 **Handle-liveness guards.** Hovered, dragged, focused and selected handles are plain values
 carried across frames. Any of them can name a removed object the frame after a delete.
 `nimAnchorScreen` reports nothing for a dead handle. `endDrag` on both paths checks `isAlive` on
@@ -2641,7 +2713,9 @@ the source and the destination. A removal of an object clears the highlight on b
 - a point reads as backdrop at 0.8 of its fill depth, and as a handle at 1.25 of it and at 1,000
   units;
 - a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner
-  750 px from the middle.
+  750 px from the middle;
+- a point ahead of the eye reads in front and is picked at each decade from 1e-8 to 1,000 units;
+- a point as far behind the eye reads behind.
 
 Verified by a handle-for-handle map: 4,914 cursor positions across three cameras over the demo of
 1,024 objects. They answered identically before and after the placement and copy changes. Verified
@@ -3327,6 +3401,13 @@ antiscalar is negative. That is the same motion by the shorter arc. A destinatio
 stays next door to a camera short of +π, without being told to. The separation still eases
 geometrically beside it, because it is multiplicative.
 
+**The separation eases from the floor of every separation.** `toward` holds both ends through
+`distanceHeld` before it takes their logarithm, so an ease lands on the separation it was given. A
+pointer pick of a star at least radius asks for 2.4e-7 units. Rejected: a fixed floor of a
+millionth of a unit. The ease then landed at 1e-6 and stood the pivot 7.6e-7 units past the star,
+so each orbit swung the star off the middle. Verified by `suites.nim`: an ease lands on its
+destination's separation at every decade from 1e-9 to 100, and reads their geometric mean halfway.
+
 The separation is the pivot's own depth along the sight, so writing it moves the pivot and leaves
 the eye. A dolly calls `stanceDollied`, which moves the eye and holds the pivot.
 `stanceRepivoted` is the other half. It slides the whole camera between two pivots, which is as far
@@ -3469,6 +3550,12 @@ a place. The camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POIN
 height of the frame. A sixth was too close, and 0.01 was chosen by eye. A point seen at its size,
 and a line, come in no further than the orbit distance.
 
+A star or a planet of the demo carries `RADIUS_OBJECT_LEAST`, so a pick of one comes in to 2.4e-7
+units. The pivot lands on it there, and it reads in front (see Camera aiming and Picking). Far out,
+a double steps by 9.3e-10 at 4.7 million units, which is 0.39% of that separation. An orbit there
+moves the star about 10 px off the middle, against a disc 4.5 px in radius. At 1.66 million units
+it moves up to 4.5 px, and at 0.41 million under 0.5 px.
+
 A plane comes in until the diameter of its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40.
 That is the reach its own centre asks for, and no crossing enters it. It is not the centring rule
 for a plane, which never pulls in.
@@ -3493,6 +3580,8 @@ left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 *Checked.* Verified by `suites.nim`:
 
 - a pointer pick lands the object within 0.01 px of the frame's middle, from every angle swept;
+- a pick of a point at least radius lands on its fit, in front and picked, at 1 and 2.36e6 units;
+- its pivot stays on it through an orbit, to 2% of the separation;
 - an orbit of 0.7 by 0.3 then leaves it there;
 - the arrival distance equals the fit, and the reach to the object equals it too;
 - a near point and a line keep the orbit distance, and one behind the reader is refused;
@@ -3530,6 +3619,11 @@ Verified by driven check:
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60;
 - a pick of the ground plane from 1.375° above lifts the elevation to 10.000°, and a pick from
   28.072° leaves it at 28.072° (`drivePlaneLifted`).
+
+Verified by a Playwright script that is not kept, in Playwright's Chromium under SwiftShader, on
+2026-10-04. A click on HD 222237b in the demo of 5,038 objects settles at 2.413e-7 units, with its
+ring and label at the middle. A mouse drag of 215 px then turns the sight 13.4° about it. The
+figures for the far orbit above come from the same script, at both sizes of the demo.
 
 ## Objects search
 
@@ -3873,6 +3967,8 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - A page whose WebGL lacks `EXT_frag_depth` keeps linear depth. It keeps the fault of the far
   field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated simplifications.
+- A star picked far out moves a few pixels off the middle as the view orbits. At 4.7 million
+  units a double steps by 0.39% of the 2.4e-7 units that the pick comes in to (see Framing).
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
