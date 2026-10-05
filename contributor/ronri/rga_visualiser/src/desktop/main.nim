@@ -1710,8 +1710,9 @@ proc driveSearch(window: Window, panel: var Panel, scene: Scene, count_drawn: in
 
 const
   PLACE_EDIT_DRIVEN = Position(x: 698390.5003793767, y: -953804.3278982069, z: -2043454.9154813075)
-    ## Place `--drive-edit` edits: HD 222237 b's in demo, where `float32` steps eighth of unit.
-  RADIUS_EDIT_DRIVEN = 4.2635e-5  ## Radius it carries: earth's, which `float32` rounds too.
+    ## Place `--drive-edit` edits: two million units out, as demo's HD 222237 b stands.
+    ##   `float32` steps eighth of unit there.
+  RADIUS_EDIT_DRIVEN = 4.2635e-5  ## Radius it carries, as demo's earth does; `float32` rounds it.
   LABEL_EDIT_DRIVEN = "far"  ## Label it carries, for verdict to find it by.
 
 

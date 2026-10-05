@@ -25,8 +25,8 @@
 ##   all four buries 3D view.
 ## Coefficients and radius are staged as doubles, through Dear ImGui's double widget.
 ##   Edit opened and saved unchanged writes back every bit (`--drive-edit`).
-##     Never through 32-bit floats: HD 222237 b stands two million units out, where
-##     `float32` steps eighth of unit, so unchanged save through them would move it.
+##     Never through 32-bit floats: two million units out, as demo's HD 222237 b stands,
+##     `float32` steps eighth of unit, so unchanged save through them would move object.
 ##   Drag never rounds to four digits shown, which would move it hundreds of units.
 ## Multivectors are printed by `scene.formatMultivector` rather than library's `$`.
 ##   `$` returns fresh heap `string` once per visible item per frame.

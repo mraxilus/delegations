@@ -400,9 +400,10 @@ const OPERATIONS_SLIDING = {
   Operation.Wedge, Operation.WedgeAnti, Operation.WedgeDotAnti,
 }
   ## Name operations that commute with slide: run about any origin, then slid back, each gives
-  ##   what it gives about Sol, so `applyOperation` runs each about point near its operands.
+  ##   what it gives about world origin, so `applyOperation` runs each about point near its
+  ##   operands.
   ##   Other twelve read origin itself (support, bulk, weight dot, complements, central
-  ##   projection), and run about Sol, which is origin they mean.
+  ##   projection), and run about world origin, which is origin they mean.
   ##   Suite holds set to exactly operations that commute; reached there through `{.all.}`.
 
 
@@ -444,13 +445,13 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   ##   Operation that commutes with slide (`OPERATIONS_SLIDING`) runs about point near its
   ##   operands, then slides back through library's own motor.
   ##     Join of two points metre apart one unit out then holds both to micrometres.
-  ##     Never about Sol: its moment, `p × q`, cancels to about 1e-5 of itself there, and
-  ##     both points stand hundreds of kilometres off it.
+  ##     Never about world origin: one unit out its moment, `p × q`, cancels there to about
+  ##     1e-5 of itself, and both points stand hundreds of kilometres off it.
   ##     Slide back adds `t × d` to small moment, cancelling nothing: rounding is `ε` of
   ##     distance slid.
   ##   Origin is point operand's own place, first operand's first: cancellation is about
-  ##   point joined. Else first finite operand's anchor, its support. Else Sol, where no
-  ##   operand stands anywhere finite.
+  ##   point joined. Else first finite operand's anchor, its support. Else world origin,
+  ##   where no operand stands anywhere finite.
   ##   Each slide keeps only grades its multivector occupies; see `slid`.
   ##   Result within rounding of zero, judged against operands that made it, is zero:
   ##   point lying on line joins with it to nothing, never to rounding.
@@ -487,7 +488,7 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
     for b in Basis:
       if occupied[int(b.grade)]: result[b] = moved[b]
 
-  # Slide operands to origin chosen, or leave them about Sol.
+  # Slide operands to origin chosen, or leave them about world origin.
   let origin =
     if operation in OPERATIONS_SLIDING: originLocal(m, n)
     else: none(Position)
@@ -515,7 +516,7 @@ func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
       operated(operation, m_local.scaleFree, n_local.scaleFree).isRoundingOf(scale_origin)
   if is_rounding: return Multivector()
 
-  # Slide result back about Sol.
+  # Slide result back to world origin.
   if origin.isSome:
     let back = motorSliding(subtract(origin.get.toMultivector, 1.0.e4))
     result = slid(result, back, ~∘back)

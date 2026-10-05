@@ -7,9 +7,9 @@ import ./fixtures
 
 const
   PLACE_EARTH = Position(x: 0.2512598425822558, y: 0.9679196720314863, z: 0.0)
-    ## Hold place one unit out, where demo stands earth.
+    ## Hold place one unit out from world origin, as demo's earth stands.
   PLACE_NEAR_ORIGIN = Position(x: 2.0e-6, y: -1.0e-6, z: 3.0e-6)
-    ## Hold place few hundred kilometres from Sol's centre, where coordinates keep metre.
+    ## Hold place few hundred kilometres from world origin, where coordinates keep metre.
   TOLERANCE_HOLD_METRE = 1.0e-3
     ## Bound, in metres, how far metre-scale construction stands off what built it.
     ##   Joined about its own point, then slid back, rounding is `ε` of distance slid:
@@ -218,7 +218,7 @@ suite "Objects":
   test "a join of two points a metre apart is a line, one unit out as near the origin":
     # Join's coefficients stand near 1e-12 one unit out, under library's absolute tolerance.
     #   Classification reads object against its own scale, so line it is reads as line.
-    #   One unit out is where demo stands earth; second base stands near Sol.
+    #   First base stands one unit out, as demo's earth does; second near world origin.
     let
       metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
       along = Direction(x: 1.0 / 3.0, y: 2.0 / 3.0, z: 2.0 / 3.0)
@@ -231,8 +231,9 @@ suite "Objects":
 
 
   test "a line a metre long holds both its points, one unit out as near the origin, as placed":
-    # Join is catalogue's own, as reader builds it. About Sol its moment would cancel to
-    #   about 1e-5 of itself one unit out, and points would stand hundreds of kilometres off.
+    # Join is catalogue's own, as reader builds it. About world origin its moment would
+    #   cancel to about 1e-5 of itself one unit out, and points would stand hundreds of
+    #   kilometres off.
     let metre = 1.0 / (1000.0 * KILOMETRES_PER_ASTRONOMICAL_UNIT)
     for base in [PLACE_EARTH, PLACE_NEAR_ORIGIN]:
       for along in ALONGS_METRE:

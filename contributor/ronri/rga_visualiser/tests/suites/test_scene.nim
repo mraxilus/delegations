@@ -135,10 +135,11 @@ suite "Scene":
     # Coincident pair joins to exact zero. Point met on line joins with it to rounding of
     #   zero, never exact zero: classification reads object at its own scale, so rounding
     #   standing alone would read as plane. Operation answers zero for it instead.
-    #   Far out is HD 222237 b's place, where point met stands up to 2e-8 off line it was
-    #   met on: rounding of where it stood, which judgement about that point scales by.
-    #   Line, plane and meet are catalogue's own there, as reader builds them: library's
-    #   join about Sol cancels line's moment, and point met stands up to 7e-4 off it.
+    #   Far out is two million units from world origin, as demo's HD 222237 b stands. Point
+    #   met there stands up to 2e-8 off line it was met on: rounding of where it stood,
+    #   which judgement about that point scales by. Line, plane and meet are catalogue's
+    #   own there, as reader builds them: library's join about world origin cancels line's
+    #   moment, and point met stands up to 7e-4 off it.
     const rounded_floor = SAMPLES div 2
       ## Bound below how many joins carry rounding rather than exact zero.
       ##   Law is about rounding; exact zeros alone would hold it vacuously.
@@ -171,7 +172,7 @@ suite "Scene":
   test "the catalogue's joins, meets and projections give what the library gives, near and far":
     # Read at scale of result, i.e. scale-free copies compared: rounding of product stands
     #   against its operands' scales, never against its smallest coefficient.
-    #   Far out is HD 222237 b's place, two million units off Sol.
+    #   Far out is two million units from world origin, as demo's HD 222237 b stands.
     for offset in [
       Direction(x: 0.0, y: 0.0, z: 0.0),
       Direction(x: 698390.5, y: -953804.3, z: -2043454.9),
@@ -200,7 +201,7 @@ suite "Scene":
 
 
   test "the catalogue runs about a local origin exactly the operations that commute with a slide":
-    # Run about Sol, and about origin slid away then slid back: commuting operation gives
+    # Run about world origin, and about origin slid away then slid back: commuting operation gives
     #   same result either way, to billionth of operands' and result's scale. Every operation
     #   outside set differs for some pair, so set is no wider and no narrower than library
     #   allows. Never scale-free: scalar's copy is its sign, which slide keeps.
