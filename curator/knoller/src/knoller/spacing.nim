@@ -4,6 +4,9 @@
 ##   - range operator (`..`, `..<`, `..^`) takes none, but one on each side where piece beside it
 ##     holds binary operator binding tighter (`i + 1 ..< n`), or where glued tokens would merge
 ##     (`1 .. ^1`, `0 .. -1`);
+##   - power operator `^` takes none, since spaced it reads as operator on bits, but one on each
+##     side where glued tokens would merge (`a ^ -b`); nothing but prefix operator binds tighter,
+##     so its pieces never keep it apart;
 ##   - inside bracket `[…]` glued to operand before it (index, type or generic, which tokens
 ##     cannot tell apart), symbol binary operator takes none, range and its math among them, at
 ##     any depth: `prev[i-1]`, `digits[i+1..<n]`, `a[f(x, y+1)]`; word operator keeps one each
@@ -74,6 +77,8 @@ type
     Ending  ## Before binary operator ending its line, range among them: one.
     Range  ## Around range operator: none.
     RangeApart  ## Around range whose piece binds tighter, or whose glued tokens merge: one.
+    Power  ## Around power operator `^`: none.
+    PowerApart  ## Around power operator whose glued tokens merge: one.
     Selector  ## Around symbol operator inside bracket glued to operand: none.
     SelectorApart  ## Around such operator whose glued tokens merge: one.
     Prefix  ## After prefix operator: none.
@@ -101,7 +106,8 @@ const
     "and", "div", "in", "is", "isnot", "mod", "notin", "of", "or", "shl", "shr", "xor",
   ]
     ## Keywords lexer reads as binary operators (`isOperator`); `not` and `as` stand otherwise.
-  RANGE_OPERATORS = ["..", "..<", "..^"]  ## Range operators, spaced as binary.
+  RANGE_OPERATORS = ["..", "..<", "..^"]  ## Range operators, glued unless apart (X.9).
+  POWER_OPERATOR = "^"  ## Power operator, glued unless tokens merge (X.9); never `^=` or `..^`.
   IGNORED_OPERATORS = ["::", ":", "."]
     ## Operator tokens of type, field and access, never spaced as operators.
   STATEMENT_KEYWORDS = ["export", "from", "import", "include"]
@@ -365,12 +371,12 @@ func respacings(source: string): seq[Respacing] =
                                TokenKind.Character, TokenKind.Quoted}
       if not is_operand_next: continue
 
-    # Space binary operator one each side, and glue range unless it stands apart; one ending its
-    #   line takes one before.
-    let is_range = text in RANGE_OPERATORS
+    # Space binary operator one each side, and glue range unless it stands apart, and power unless
+    #   glued tokens merge; one ending its line takes one before.
+    let (is_range, is_power) = (text in RANGE_OPERATORS, text == POWER_OPERATOR)
     if is_line_end:
       if left == 1: continue
-      spacing.placement = if is_range: Placement.Ending else: Placement.Binary
+      spacing.placement = if is_range or is_power: Placement.Ending else: Placement.Binary
       spacing.edits = @[Edit(first: before.after, after: t.first, spaces: 1)]
       spacing.got = source.excerpt(before, t)
       result.add spacing
@@ -388,6 +394,9 @@ func respacings(source: string): seq[Respacing] =
       if source.isMerging([before, t, next]) or tokens.isRangeApart(partners, k, source):
         spacing.placement = Placement.RangeApart
       else: (wanted, spacing.placement) = (0, Placement.Range)
+    elif is_power:
+      if source.isMerging([before, t, next]): spacing.placement = Placement.PowerApart
+      else: (wanted, spacing.placement) = (0, Placement.Power)
     if left == wanted and right == wanted: continue
     spacing.edits = source.around(tokens, k, wanted)
     spacing.got = source.excerpt(before, next)
@@ -406,6 +415,10 @@ func checkSpacing*(path, source: string): seq[Report] =
       of Placement.RangeApart:
         "Range operator takes one space on each side where piece beside it binds tighter, or " &
           "where glued tokens would merge (X.9)"
+      of Placement.Power:
+        "Power operator takes no space, since spaced it reads as operator on bits (X.9)"
+      of Placement.PowerApart:
+        "Power operator takes one space on each side where glued tokens would merge (X.9)"
       of Placement.Selector:
         "Symbol operator inside bracket glued to operand takes no space (X.9)"
       of Placement.SelectorApart:
