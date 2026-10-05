@@ -6,7 +6,8 @@
 ##     where that tree differs, each joins in source order where set so far still proves, so
 ##     answer is largest set one pass in source order finds, same on every run.
 ##   Source parser cannot read answers none, so every group stays.
-##   Compiler is caller's: `koch fix` passes pin of each project, command line `--nim`.
+##   Compiler is caller's: `koch fix` passes pin of each project; command line takes `--nim`,
+##     else pin of nearest nimble file above each file, else `nim` on PATH (`command.nim`).
 ##     Prover of each pin (`pinProvers`) resolves compiler serving it through one `Toolchains`
 ##     where first source asks, so pin no source asks about is never fetched.
 ##   One run of compiler answers every source asked at once, in private temporary directory
@@ -23,7 +24,8 @@
 ##   Cost: wrong compiler can prove what right one refuses. Glyph operators of commit pin of
 ##     `ronri` projects lex as names under 2.2.12, so 2.2.12 keeps `☆(m) ∧ n`, since `☆(m)`
 ##     reads as call there, but proves `(■m).x + y`, which commit pin reads as `■(m.x) + y`.
-##     So `koch fix` passes pin of each project, and command line on `ronri` code needs `--nim`.
+##     So `koch fix` passes pin of each project, and command line reads pin of nearest nimble
+##     file, so `ronri` code takes its commit pin with no option.
 
 {.experimental: "strictFuncs".}
 
@@ -150,7 +152,7 @@ proc compilerProver*(nim: string): Prover =
     provingOf(output, sources.len)
 
 
-func failureProver(failure: string): Prover =
+func failureProver*(failure: string): Prover =
   ## Build prover answering none for each source, with failure, as compiler that cannot run.
   result = proc (sources: seq[string]): Proving =
     Proving(answers: newSeq[seq[int]](sources.len), failure: failure)
