@@ -44,7 +44,7 @@ export euclid, objects
 #[ Type Definitions ]#
 
 type
-  Motor* = object ## Define rigid motion by its eight coefficients of even grade.
+  Motor* = object  ## Define rigid motion by its eight coefficients of even grade.
     ## Turn about line and slide along that same line, held as one value; see `motors.nim`
     ## for algebra that builds and composes one.
     ## Eight named floats rather than `Multivector` field.
@@ -60,8 +60,7 @@ type
       ## Hold line direction, which is half that turns (`E41`, `E42`, `E43`).
     slide_x*, slide_y*, slide_z*: float
       ## Hold line moment, which is half that slides (`E23`, `E31`, `E12`).
-    scalar*: float
-      ## Hold dual part that pitch of screw writes (`S`).
+    scalar*: float  ## Hold dual part that pitch of screw writes (`S`).
     antiscalar*: float = 1.0
       ## Hold weight, which is 1 where motion is none (`E1234`).
       ## Default of 1 rather than 0, so zeroed `Camera` carries motion that moves nothing.
@@ -78,15 +77,13 @@ var
     ##   reader, never on build flag (Art. VII.4). Closed, each read pays one load and one
     ##   branch (read in emitted JS).
     ##   Suite opens it through `countPointsRead`; no front-end does.
-  COUNT_POINTS_READ = 0
-    ## Count points read since `countPointsRead` opened gate.
+  COUNT_POINTS_READ = 0  ## Count points read since `countPointsRead` opened gate.
   IS_COUNTING_LIFTS = false
     ## Say whether anyone reads how many motors `toMultivector` lifts into algebra.
     ##   Instrument, gated on its reader as `IS_COUNTING_POINTS_READ` is, at same closed cost.
     ##   Suite opens it, and so does page's driven check through bridge's `nimSetCountingLifts`;
     ##   desktop never does.
-  COUNT_LIFTS = 0
-    ## Count motors lifted since `setCountingLifts` last opened gate.
+  COUNT_LIFTS = 0  ## Count motors lifted since `setCountingLifts` last opened gate.
 
 
 template countPointsRead*(body: untyped): int =
@@ -156,9 +153,9 @@ func motorSliding*(offset: Multivector): Multivector =
   ##   Moment alone, at half offset negated, beside unit weight. Such bivector antisquares
   ##   to zero, so its exponential stops at two terms, and this *is* that motor rather than
   ##   bivector to raise: see `motors.exp`.
-  result[Basis.E23] = -0.5*offset[Basis.E1]
-  result[Basis.E31] = -0.5*offset[Basis.E2]
-  result[Basis.E12] = -0.5*offset[Basis.E3]
+  result[Basis.E23] = -0.5 * offset[Basis.E1]
+  result[Basis.E31] = -0.5 * offset[Basis.E2]
+  result[Basis.E12] = -0.5 * offset[Basis.E3]
   result[Basis.E1234] = 1.0
 
 
@@ -166,9 +163,14 @@ func motorOf*(m: Multivector): Motor =
   ## Read rigid motion back out of multivector, dropping every odd-grade coefficient.
   ##   Caller hands motor; odd grades are zero in one, so dropping them loses nothing.
   Motor(
-    turn_x: m[Basis.E41], turn_y: m[Basis.E42], turn_z: m[Basis.E43],
-    slide_x: m[Basis.E23], slide_y: m[Basis.E31], slide_z: m[Basis.E12],
-    scalar: m[Basis.scalar], antiscalar: m[Basis.E1234],
+    turn_x: m[Basis.E41],
+    turn_y: m[Basis.E42],
+    turn_z: m[Basis.E43],
+    slide_x: m[Basis.E23],
+    slide_y: m[Basis.E31],
+    slide_z: m[Basis.E12],
+    scalar: m[Basis.scalar],
+    antiscalar: m[Basis.E1234],
   )
 
 
@@ -181,13 +183,13 @@ func position*(m: Multivector): Option[Position] =
   ##   Divides by signed weight rather than weight norm, so antipodal points stay distinct.
   let weight = m[Basis.E4]
   if abs(weight) <= TOLERANCE_ABS: return
-  some(Position(x: m[Basis.E1]/weight, y: m[Basis.E2]/weight, z: m[Basis.E3]/weight))
+  some(Position(x: m[Basis.E1] / weight, y: m[Basis.E2] / weight, z: m[Basis.E3] / weight))
 
 
 func positionSupport*(m: Multivector): Option[Position] =
   ## Read point of object nearest origin, i.e. orthogonal projection of origin onto object.
   ##   None where object passes through origin, as support then vanishes.
-  position(∩ m)
+  position(∩m)
 
 
 func positionAnchor*(m: Multivector): Option[Position] =
@@ -203,7 +205,7 @@ func positionAnchor*(m: Multivector): Option[Position] =
 func direction*(m: Multivector): Option[Direction] =
   ## Read unit direction line extends along.
   ##   None where line lies in horizon, as its attitude then vanishes.
-  let attitude = ⊖ m
+  let attitude = ⊖m
   normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]))
 
 
@@ -252,22 +254,22 @@ func spanPerpendicular*(anchor: Position, normal: Direction): Option[(Direction,
   ]
   let alignments = [abs(normal.x), abs(normal.y), abs(normal.z)]
   var index_least = 0
-  for i in 1 .. 2:
+  for i in 1..2:
     if alignments[i] < alignments[index_least]: index_least = i
   let axis_world = axes_world[index_least]
 
   # Span plane through anchor holding both helper axis and normal.
   #   Its own normal is perpendicular to both, so it lies inside plane `normal` spans.
   let
-    point_anchor = toMultivector(anchor)
-    point_normal = toMultivector(normal)
-    plane_first = point_anchor ∧ toMultivector(axis_world) ∧ point_normal
+    point_anchor = anchor.toMultivector
+    point_normal = normal.toMultivector
+    plane_first = point_anchor ∧ axis_world.toMultivector ∧ point_normal
     axis_first = directionNormal(plane_first)
   if axis_first.isNone: return
 
   # Repeat against first axis, to obtain second axis perpendicular to it inside plane.
   let
-    plane_second = point_anchor ∧ toMultivector(axis_first.get) ∧ point_normal
+    plane_second = point_anchor ∧ axis_first.get.toMultivector ∧ point_normal
     axis_second = directionNormal(plane_second)
   if axis_second.isNone: return
 
@@ -302,8 +304,8 @@ func pointFrom*(m: Multivector): Position =
   read.get
 
 
-func pointAlong*(place: Position; direction: Direction; length: float): Position =
+func pointAlong*(place: Position, direction: Direction, length: float): Position =
   ## Place point `length` along `direction` from `place`, i.e. 𝐩 + s𝐝.
   ##   Unit-weight point plus weightless one, scaled: sum keeps weight one, so read cannot
   ##   refuse. Each coordinate is one product and one sum, as Euclidean offset would be.
-  pointFrom(add(toMultivector(place), wedge(length, toMultivector(direction))))
+  pointFrom(add(place.toMultivector, wedge(length, direction.toMultivector)))

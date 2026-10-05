@@ -30,13 +30,13 @@ import ./[boundary, scene, tessellate]
 
 #[ Type Definitions ]#
 
-type Step* = object ## Define one scripted construction step.
-  stem*: string ## File name stem frame after this step is written under.
-  label*: string ## Name derived object carries in scene.
-  operation*: Operation ## Operation applied to operands below.
-  index_first*: int ## Scene index of left operand.
-  index_second*: int ## Scene index of right operand; ignored where operation is unary.
-  ink*: Ink ## Palette slot derived object is drawn with.
+type Step* = object  ## Define one scripted construction step.
+  stem*: string  ## File name stem frame after this step is written under.
+  label*: string  ## Name derived object carries in scene.
+  operation*: Operation  ## Operation applied to operands below.
+  index_first*: int  ## Scene index of left operand.
+  index_second*: int  ## Scene index of right operand; ignored where operation is unary.
+  ink*: Ink  ## Palette slot derived object is drawn with.
 
 
 
@@ -71,7 +71,7 @@ const STEPS*: array[11, Step] = [
     operation: Operation.Wedge, index_first: 0, index_second: 4, ink: Ink.Copper),
   Step(stem: "11_attitude_plane_horizon", label: "Ph = att(a ∧ ground)",
     operation: Operation.Attitude, index_first: 14, index_second: 0, ink: Ink.Cobalt),
-] ## Script of every step, in order.
+]  ## Script of every step, in order.
   ##   Line from two points, plane from that line, then meet, measure and project.
   ##   Closes with attitude taken down to line, then plane, in horizon.
 
@@ -89,30 +89,30 @@ const
     ##   categorical run has left.
 
 
-proc constructSeeds*(scene: var Scene, now: float = 0.0) =
+proc constructSeeds*(scene: var Scene, now = 0.0) =
   ## Place three points and ground plane every later step derives from.
   ##   `now` is forwarded to `addObject` untouched, so seeds animate in as any object does.
   let
-    point_a = toMultivector(Position(x: 3.0, y: -2.0, z: 2.5))
-    point_b = toMultivector(Position(x: -2.5, y: 2.0, z: 5.5))
-    point_c = toMultivector(Position(x: 1.0, y: 4.0, z: 3.0))
-    point_origin = toMultivector(Position(x: 0, y: 0, z: 0))
-    point_x = toMultivector(Position(x: 1, y: 0, z: 0))
-    point_y = toMultivector(Position(x: 0, y: 1, z: 0))
+    point_a = Position(x: 3.0, y: -2.0, z: 2.5).toMultivector
+    point_b = Position(x: -2.5, y: 2.0, z: 5.5).toMultivector
+    point_c = Position(x: 1.0, y: 4.0, z: 3.0).toMultivector
+    point_origin = Position(x: 0, y: 0, z: 0).toMultivector
+    point_x = Position(x: 1, y: 0, z: 0).toMultivector
+    point_y = Position(x: 0, y: 1, z: 0).toMultivector
     ground = point_origin ∧ point_x ∧ point_y
     # Centre ground's circle on three points that built it.
     #   `creationAnchor` does same for every later plane; plane built from three points at
     #   once goes through no single `Operation`.
     #   Each point unitized so sum's weight is three and position is centroid.
-    anchor_ground = position(
-      add(add(unitize(point_origin), unitize(point_x)), unitize(point_y))
-    )
+    anchor_ground = position(add(add(unitize(point_origin), unitize(point_x)), unitize(point_y)))
   # Give each seed own hue, skipping two reserved ones, so nothing collides.
   var index_ink = 0
+
   proc inkNext(): Ink =
     while inkCycled(index_ink) in [INK_SEED_GROUND, INK_SEED_ORIGIN]: inc index_ink
     result = inkCycled(index_ink)
     inc index_ink
+
   scene.addObject(point_a, "a", inkNext(), now)
   scene.addObject(point_b, "b", inkNext(), now)
   scene.addObject(point_c, "c", inkNext(), now)
@@ -120,13 +120,13 @@ proc constructSeeds*(scene: var Scene, now: float = 0.0) =
   scene.addObject(ground, "ground", INK_SEED_GROUND, now, anchor_ground)
 
 
-func applyStep*(scene: var Scene, step: Step, now: float = 0.0): Multivector {.discardable.} =
+func applyStep*(scene: var Scene, step: Step, now = 0.0): Multivector {.discardable.} =
   ## Apply one step, appending its result exactly as GUI's apply button would.
   ##   Reports derived geometry directly: caller naming what step produced cannot assume
   ##   it landed in last handle of dense array.
   doAssert scene.isAlive(step.index_first) and scene.isAlive(step.index_second),
     &"Storyboard step must name operands scene has built; got `{step.index_first}` and " &
-      &"`{step.index_second}`."
+    &"`{step.index_second}`."
   let
     operand_first = scene[step.index_first].geometry
     operand_second = scene[step.index_second].geometry

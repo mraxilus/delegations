@@ -17,8 +17,7 @@
 
 #[ Binding Configuration ]#
 
-const HEADER = "<SDL3/SDL.h>"
-  ## Name header every declaration below imports through.
+const HEADER = "<SDL3/SDL.h>"  ## Name header every declaration below imports through.
 
 # Link SDL3 here rather than in project config.
 #   Every binary importing this module then links it without extra flags.
@@ -29,10 +28,10 @@ const HEADER = "<SDL3/SDL.h>"
 #[ Type Definitions ]#
 
 type
-  Window* = pointer ## Refer to opaque `SDL_Window`.
-  GlContext* = pointer ## Refer to opaque `SDL_GLContext`.
+  Window* = pointer  ## Refer to opaque `SDL_Window`.
+  GlContext* = pointer  ## Refer to opaque `SDL_GLContext`.
 
-  EventKind* {.pure.} = enum ## Define event kinds visualiser reacts to.
+  EventKind* {.pure.} = enum  ## Define event kinds visualiser reacts to.
     Quit = 0x100,
     WindowResized = 0x206,
     WindowFocusLost = 0x20f,
@@ -49,7 +48,7 @@ type
     MouseButtonUp = 0x402,
     MouseWheel = 0x403,
 
-  Scancode* {.pure.} = enum ## Define physical keys visualiser reacts to.
+  Scancode* {.pure.} = enum  ## Define physical keys visualiser reacts to.
     ## USB HID usage IDs, which is what SDL scancode is.
     ##   Every one is checked against header's macro at compile time by `CHECKS_MIRROR`.
     A = 4,
@@ -94,40 +93,40 @@ type
       ##   Modifier bitmask cannot serve: what is wanted is shift's own press and release,
       ##   not its state at some other key's event.
 
-  MouseButton* {.pure.} = enum ## Define mouse buttons visualiser reacts to.
+  MouseButton* {.pure.} = enum  ## Define mouse buttons visualiser reacts to.
     Left = 1,
     Middle = 2,
     Right = 3,
 
-  KeyboardEvent* {.importc: "SDL_KeyboardEvent", header: HEADER, bycopy.} = object
-    scancode* {.importc.}: uint32 ## Physical key, independent of layout.
-    keycode* {.importc: "key".}: uint32 ## Key as layout names it.
+  KeyboardEvent* {.bycopy, header: HEADER, importc: "SDL_KeyboardEvent".} = object
+    scancode* {.importc.}: uint32  ## Physical key, independent of layout.
+    keycode* {.importc: "key".}: uint32  ## Key as layout names it.
       ## Read for `/` alone, which reaches objects search: it names character printed,
       ## as page's `e.key` does. Every key view binds is read by scancode instead.
       ## Dear ImGui's SDL3 backend reads it, so synthesised event leaving it zero is one
       ## Dear ImGui does not recognise; `--drive-keys` must fill it to prove anything.
-    is_down* {.importc: "down".}: bool ## Whether key is pressed rather than released.
-    modifiers* {.importc: "mod".}: uint16 ## Modifier keys held as this one went down.
+    is_down* {.importc: "down".}: bool  ## Whether key is pressed rather than released.
+    modifiers* {.importc: "mod".}: uint16  ## Modifier keys held as this one went down.
 
-  MouseMotionEvent* {.importc: "SDL_MouseMotionEvent", header: HEADER, bycopy.} = object
-    x* {.importc.}: cfloat ## Position in window, in pixels, from top-left.
-    y* {.importc.}: cfloat ## Position in window, in pixels, from top-left.
-    xrel* {.importc.}: cfloat ## Motion since previous event, in pixels.
-    yrel* {.importc.}: cfloat ## Motion since previous event, in pixels.
+  MouseMotionEvent* {.bycopy, header: HEADER, importc: "SDL_MouseMotionEvent".} = object
+    x* {.importc.}: cfloat  ## Position in window, in pixels, from top-left.
+    y* {.importc.}: cfloat  ## Position in window, in pixels, from top-left.
+    xrel* {.importc.}: cfloat  ## Motion since previous event, in pixels.
+    yrel* {.importc.}: cfloat  ## Motion since previous event, in pixels.
 
-  TextInputEvent* {.importc: "SDL_TextInputEvent", header: HEADER, bycopy.} = object
-    window_id* {.importc: "windowID".}: uint32 ## Window typed into.
+  TextInputEvent* {.bycopy, header: HEADER, importc: "SDL_TextInputEvent".} = object
+    window_id* {.importc: "windowID".}: uint32  ## Window typed into.
       ## Dear ImGui's SDL3 backend drops event naming no window of its own.
-    text* {.importc.}: cstring ## Characters typed, in UTF-8.
+    text* {.importc.}: cstring  ## Characters typed, in UTF-8.
 
-  MouseButtonEvent* {.importc: "SDL_MouseButtonEvent", header: HEADER, bycopy.} = object
-    button* {.importc.}: uint8 ## Which button changed state.
+  MouseButtonEvent* {.bycopy, header: HEADER, importc: "SDL_MouseButtonEvent".} = object
+    button* {.importc.}: uint8  ## Which button changed state.
 
-  MouseWheelEvent* {.importc: "SDL_MouseWheelEvent", header: HEADER, bycopy.} = object
-    y* {.importc.}: cfloat ## Scroll amount, positive away from user.
+  MouseWheelEvent* {.bycopy, header: HEADER, importc: "SDL_MouseWheelEvent".} = object
+    y* {.importc.}: cfloat  ## Scroll amount, positive away from user.
 
-  Event* {.importc: "SDL_Event", header: HEADER, union, bycopy.} = object
-    kind* {.importc: "type".}: uint32 ## Discriminates union; compare against `EventKind`.
+  Event* {.bycopy, union, header: HEADER, importc: "SDL_Event".} = object
+    kind* {.importc: "type".}: uint32  ## Discriminates union; compare against `EventKind`.
     key* {.importc.}: KeyboardEvent
     text* {.importc.}: TextInputEvent
     motion* {.importc.}: MouseMotionEvent
@@ -136,19 +135,14 @@ type
 
 
 const
-  MODIFIER_CONTROL* = 0x00C0'u16
-    ## Test key event's modifiers for either control key.
-  MODIFIER_SHIFT* = 0x0003'u16
-    ## Test key event's modifiers for either shift key.
+  MODIFIER_CONTROL* = 0x00C0'u16  ## Test key event's modifiers for either control key.
+  MODIFIER_SHIFT* = 0x0003'u16  ## Test key event's modifiers for either shift key.
   MODIFIER_COMMAND* = 0x0C00'u16
     ## Test key event's modifiers for either command key.
     ##   What reader on macOS presses where everyone else presses control.
-  INIT_VIDEO* = 0x20'u32
-    ## Ask `init` for video and event subsystems.
-  WINDOW_OPENGL* = 0x02'u64
-    ## Ask `createWindow` for window OpenGL context can be bound to.
-  WINDOW_RESIZABLE* = 0x20'u64
-    ## Ask `createWindow` for window user may resize.
+  INIT_VIDEO* = 0x20'u32  ## Ask `init` for video and event subsystems.
+  WINDOW_OPENGL* = 0x02'u64  ## Ask `createWindow` for window OpenGL context can be bound to.
+  WINDOW_RESIZABLE* = 0x20'u64  ## Ask `createWindow` for window user may resize.
   WINDOW_HIDDEN* = 0x08'u64
     ## Ask `createWindow` for window never mapped, as headless render needs no view.
   GL_CONTEXT_MAJOR_VERSION* = 17'u32
@@ -158,8 +152,7 @@ const
   GL_DEPTH_SIZE* = 6'u32
   GL_MULTISAMPLEBUFFERS* = 13'u32
     ## Ask `glSetAttribute` for multisampled framebuffer at all: 1 for yes, 0 for none.
-  GL_MULTISAMPLESAMPLES* = 14'u32
-    ## Ask for this many samples per pixel in it.
+  GL_MULTISAMPLESAMPLES* = 14'u32  ## Ask for this many samples per pixel in it.
   GL_CONTEXT_PROFILE_CORE* = 0x0001'i32
 
 
@@ -170,13 +163,13 @@ const
 # Mark every binding `sideEffect`.
 #   Compiler assumes imported body is pure, so `func` calling one would compile; marked,
 #   only `proc` may reach effects, which is what makes `func` mean anything here.
-proc init*(flags: uint32): bool {.importc: "SDL_Init", header: HEADER, discardable, sideEffect.}
+proc init*(flags: uint32): bool {.discardable, sideEffect, header: HEADER, importc: "SDL_Init".}
   ## Start SDL subsystems named by `flags`, reporting success.
 
-proc quit*() {.importc: "SDL_Quit", header: HEADER, sideEffect.}
+proc quit*() {.sideEffect, header: HEADER, importc: "SDL_Quit".}
   ## Shut every SDL subsystem down.
 
-proc getError*(): cstring {.importc: "SDL_GetError", header: HEADER, sideEffect.}
+proc getError*(): cstring {.sideEffect, header: HEADER, importc: "SDL_GetError".}
   ## Read message of last SDL failure.
 
 proc setHint*(name, value: cstring): bool
@@ -187,7 +180,7 @@ proc createWindow*(title: cstring; width, height: cint; flags: uint64): Window
   {.importc: "SDL_CreateWindow", header: HEADER, sideEffect.}
   ## Open window titled `title` at given size with `flags`.
 
-proc destroyWindow*(window: Window) {.importc: "SDL_DestroyWindow", header: HEADER, sideEffect.}
+proc destroyWindow*(window: Window) {.sideEffect, header: HEADER, importc: "SDL_DestroyWindow".}
   ## Close window.
 
 proc getWindowSizeInPixels*(window: Window; width, height: ptr cint): bool
@@ -218,16 +211,16 @@ proc glSwapWindow*(window: Window): bool
   {.importc: "SDL_GL_SwapWindow", header: HEADER, discardable, sideEffect.}
   ## Present back buffer.
 
-proc getModState*(): uint16 {.importc: "SDL_GetModState", header: HEADER, sideEffect.}
+proc getModState*(): uint16 {.sideEffect, header: HEADER, importc: "SDL_GetModState".}
   ## Read which modifier keys are held right now, testable against `MODIFIER_` masks.
   ##   Mouse-button event carries no modifiers, so shift-clicking has to ask.
 
-proc setModState*(modifiers: uint16) {.importc: "SDL_SetModState", header: HEADER, sideEffect.}
+proc setModState*(modifiers: uint16) {.sideEffect, header: HEADER, importc: "SDL_SetModState".}
   ## Say which modifiers are held, for scripted gesture with no real keyboard behind it.
   ##   `SDL_PushEvent` only enqueues, never touching state `getModState` reads.
   ##   See desktop entry's `driveSelect`, only caller.
 
-proc pollEvent*(event: ptr Event): bool {.importc: "SDL_PollEvent", header: HEADER, sideEffect.}
+proc pollEvent*(event: ptr Event): bool {.sideEffect, header: HEADER, importc: "SDL_PollEvent".}
   ## Take next queued event into `event`, reporting whether there was one.
 
 proc pushEvent*(event: ptr Event): bool
@@ -297,7 +290,7 @@ const LUT_SYMBOL_BY_MIRROR = [
   (int(GL_MULTISAMPLEBUFFERS), "SDL_GL_MULTISAMPLEBUFFERS"),
   (int(GL_MULTISAMPLESAMPLES), "SDL_GL_MULTISAMPLESAMPLES"),
   (int(GL_CONTEXT_PROFILE_CORE), "SDL_GL_CONTEXT_PROFILE_CORE"),
-] ## Pair every mirrored value with header's name for it.
+]  ## Pair every mirrored value with header's name for it.
 
 
 const CHECKS_MIRROR = block:
@@ -309,7 +302,7 @@ const CHECKS_MIRROR = block:
   var text = "#include " & HEADER & "\n"
   for (mirrored, symbol) in LUT_SYMBOL_BY_MIRROR:
     text &= "static_assert((long long)(" & symbol & ") == " & $mirrored &
-      ", \"SDL3 binding is stale: " & symbol & " was renumbered.\");\n"
+        ", \"SDL3 binding is stale: " & symbol & " was renumbered.\");\n"
   text
 
 {.emit: CHECKS_MIRROR.}

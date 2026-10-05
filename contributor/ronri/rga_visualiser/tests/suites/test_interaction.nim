@@ -5,6 +5,7 @@
 import ./fixtures
 
 
+
 suite "Interaction":
   test "drag operation maps to the catalogue entry it names":
     check DragOperation.Join.toOperation == Operation.Wedge
@@ -95,8 +96,12 @@ suite "Interaction":
       var over = Interaction(is_enabled: true)
       over.updateCursor(400.0, 300.0)
       over.updateHover(
-        floor, close, close.drawExtentFor(600, 0.0), close.initMatrixViewProjection(800.0/600.0),
-        800, 600,
+        floor,
+        close,
+        close.drawExtentFor(600, 0.0),
+        close.initMatrixViewProjection(800.0 / 600.0),
+        800,
+        600,
       )
       check over.index_hover == some(0)
       check over.is_hover_backdrop == is_backdrop
@@ -121,7 +126,7 @@ suite "Interaction":
     let outcome = interaction.endDrag(scene, 10.5)
     check outcome.index_clicked == some(0)
     check outcome.index_created.isNone
-    check scene.len == 2 # Nothing built; click picks, it does not construct.
+    check scene.len == 2  # Nothing built; click picks, it does not construct.
 
 
   test "a press that moves past the click slop is a drag, however briefly it lasted":
@@ -133,7 +138,7 @@ suite "Interaction":
     interaction.index_hover = some(0)
     interaction.beginPress(now = 10.0)
     check interaction.beginDrag(arming = MenuArming.OnDwell, now = 10.0)
-    interaction.updateCursor(200.0 + 2.0*PIXELS_CLICK_SLOP, 200.0)
+    interaction.updateCursor(200.0 + 2.0 * PIXELS_CLICK_SLOP, 200.0)
     # Back where it started: reading is latched, so pointer that swung out and.
     #   returned is still drag rather than click that happened to end where it began.
     interaction.updateCursor(200.0, 200.0)
@@ -161,7 +166,7 @@ suite "Interaction":
       check interaction.isClick(10.0 + held)
     let outcome = interaction.endDrag(scene, 10.0 + 60.0)
     check outcome.index_clicked == some(0)
-    check scene.len == 2 # Still selection, not construction.
+    check scene.len == 2  # Still selection, not construction.
 
 
   test "a right press that never opened a wheel reports a click":
@@ -194,7 +199,7 @@ suite "Interaction":
     check interaction.beginDrag(arming = MenuArming.Always, now = 10.0)
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, now = 10.0)
-    check interaction.menu.isSome # Armed `Always`, and now over another object.
+    check interaction.menu.isSome  # Armed `Always`, and now over another object.
     check interaction.endDrag(scene, 10.5).index_clicked.isNone
 
 
@@ -231,13 +236,13 @@ suite "Interaction":
     let centre = interaction.menu.get
 
     # Still inside radius: ordinary overshoot past wedge keeps its menu.
-    interaction.updateCursor(centre.x + 0.5*PIXELS_MENU_DISENGAGE, centre.y)
+    interaction.updateCursor(centre.x + 0.5 * PIXELS_MENU_DISENGAGE, centre.y)
     interaction.updateDrag(scene, now = 0.0)
     check interaction.menu.isSome
 
     # Past it: menu goes, and does not come back while cursor is still over that.
     #   same object -- otherwise disengaging would do nothing but move menu.
-    interaction.updateCursor(centre.x + 2.0*PIXELS_MENU_DISENGAGE, centre.y)
+    interaction.updateCursor(centre.x + 2.0 * PIXELS_MENU_DISENGAGE, centre.y)
     interaction.updateDrag(scene, now = 0.0)
     check interaction.menu.isNone
     interaction.updateDrag(scene, now = 0.0)
@@ -264,7 +269,7 @@ suite "Interaction":
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, now = 0.0)
     let centre = interaction.menu.get
-    interaction.updateCursor(centre.x + 2.0*PIXELS_MENU_DISENGAGE, centre.y)
+    interaction.updateCursor(centre.x + 2.0 * PIXELS_MENU_DISENGAGE, centre.y)
     interaction.updateDrag(scene, now = 0.0)
     check interaction.menu.isNone
     # Off it entirely, then back: hold at arm's length is released by leaving.
@@ -282,7 +287,7 @@ suite "Interaction":
     scene.addObject(POINTS[0], "a", Ink.Rose)
     scene.addObject(POINTS[1], "b", Ink.Rose)
     let ink_first = scene.inkNext
-    check scene.inkNext == ink_first # Peeking never walks cycle.
+    check scene.inkNext == ink_first  # Peeking never walks cycle.
 
     # Release back on its own source builds nothing, and still steps.
     var interaction = Interaction(is_enabled: true)
@@ -290,7 +295,7 @@ suite "Interaction":
     interaction.index_hover = some(0)
     interaction.beginPress(now = 0.0)
     check interaction.beginDrag(arming = MenuArming.Never, now = 0.0)
-    interaction.updateCursor(200.0 + 2.0*PIXELS_CLICK_SLOP, 200.0)
+    interaction.updateCursor(200.0 + 2.0 * PIXELS_CLICK_SLOP, 200.0)
     let refused = interaction.endDrag(scene, 0.0)
     check refused.index_created.isNone
     check scene.inkNext != ink_first
@@ -391,8 +396,8 @@ suite "Interaction":
     scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
-    discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0) # index_source = 0.
-    scene.removeObject(0) # Source vanishes mid-drag -- e.g. removed by another input path.
+    discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)  # index_source = 0.
+    scene.removeObject(0)  # Source vanishes mid-drag -- e.g. removed by another input path.
     interaction.index_hover = some(1)
     let outcome = interaction.endDrag(scene)
     check "no longer exists" in outcome.message
@@ -407,9 +412,9 @@ suite "Interaction":
     scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
-    discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0) # index_source = 0.
+    discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)  # index_source = 0.
     scene.removeObject(1)
-    interaction.index_hover = some(1) # Still reports now-dead handle as hovered.
+    interaction.index_hover = some(1)  # Still reports now-dead handle as hovered.
     let outcome = interaction.endDrag(scene)
     check "no longer exists" in outcome.message
     check outcome.index_created.isNone
@@ -517,11 +522,11 @@ suite "Interaction":
     let centre = ScreenPosition(x: 400.0, y: 300.0, depth: 0.0)
     check choiceAt(centre, centre).isNone
     check choiceAt(
-      centre, ScreenPosition(x: 400.0, y: 300.0 - 0.9*PIXELS_MENU_DEADZONE, depth: 0.0)
+      centre, ScreenPosition(x: 400.0, y: 300.0 - 0.9 * PIXELS_MENU_DEADZONE, depth: 0.0)
     ).isNone
     # Overshooting wedge still picks it, so fast throw is not punished.
     check choiceAt(
-      centre, ScreenPosition(x: 400.0, y: 300.0 - 8.0*PIXELS_MENU_REACH, depth: 0.0)
+      centre, ScreenPosition(x: 400.0, y: 300.0 - 8.0 * PIXELS_MENU_REACH, depth: 0.0)
     ) == some(DragChoice.Join)
 
 
@@ -579,7 +584,7 @@ suite "Interaction":
     interaction.aimAt(scene, DragChoice.Project)
     check interaction.choosing == some(DragChoice.Project)
     check interaction.preview.get.geometry =~
-      projectOrthogonal(GENERAL_FIRST[0], GENERAL_SECOND[0])
+        projectOrthogonal(GENERAL_FIRST[0], GENERAL_SECOND[0])
     interaction.aimAt(scene, DragChoice.Join)
     check interaction.preview.get.geometry =~ (GENERAL_FIRST[0] ∧ GENERAL_SECOND[0])
     # And each of those is exactly what letting go there commits: one rule, drawn and then.
@@ -619,15 +624,15 @@ suite "Interaction":
 
     for (choice, effect) in [
       (DragChoice.Join, ReleaseEffect.Builds),
-      (DragChoice.Meet, ReleaseEffect.Refused), # Two points meet in nothing drawable.
+      (DragChoice.Meet, ReleaseEffect.Refused),  # Two points meet in nothing drawable.
       (DragChoice.Project, ReleaseEffect.Builds),
-      (DragChoice.More, ReleaseEffect.Builds), # Builds nothing itself; picker will.
+      (DragChoice.More, ReleaseEffect.Builds),  # Builds nothing itself; picker will.
     ]:
       let at = anchorOf(centre, choice)
       interaction.updateCursor(at.x, at.y)
       interaction.updateDrag(scene, 0.0)
       check isOffered(choice, GENERAL_FIRST[0], GENERAL_SECOND[0]) ==
-        (effect == ReleaseEffect.Builds)
+          (effect == ReleaseEffect.Builds)
       check interaction.effectOf == effect
       check interaction.inkOfDrag(scene.inkNext) ==
         (case effect
@@ -636,7 +641,7 @@ suite "Interaction":
          of ReleaseEffect.Builds: scene.inkNext)
       # `More` builds nothing itself, so it previews nothing while still promising its hue.
       check interaction.preview.isSome ==
-        (effect == ReleaseEffect.Builds and choice != DragChoice.More)
+          (effect == ReleaseEffect.Builds and choice != DragChoice.More)
 
 
   test "with no wheel open the preview is still the plain-release answer":
@@ -663,8 +668,8 @@ suite "Interaction":
     #   here, against disc of radius 8, and jump lands at moment reader is
     #   watching hardest.
     var scene = initScene()
-    scene.addObject(GENERAL_FIRST[1], "L", Ink.Rose) # Line ...
-    scene.addObject(GENERAL_SECOND[0], "p", Ink.Rose) # ... joined with point gives plane.
+    scene.addObject(GENERAL_FIRST[1], "L", Ink.Rose)  # Line ...
+    scene.addObject(GENERAL_SECOND[0], "p", Ink.Rose)  # ... joined with point gives plane.
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -728,7 +733,7 @@ suite "Interaction":
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 1000.0)
     check interaction.menu.isNone
-    interaction.updateDrag(scene, 1000.0 + 0.99*SECONDS_DWELL_MENU)
+    interaction.updateDrag(scene, 1000.0 + 0.99 * SECONDS_DWELL_MENU)
     check interaction.menu.isNone
     interaction.updateDrag(scene, 1000.0 + SECONDS_DWELL_MENU)
     check interaction.menu.isSome
@@ -749,7 +754,7 @@ suite "Interaction":
     never.index_hover = some(1)
     never.updateDrag(scene, 1000.0)
     check never.menu.isNone
-    never.updateDrag(scene, 1000.0 + 10.0*SECONDS_DWELL_MENU)
+    never.updateDrag(scene, 1000.0 + 10.0 * SECONDS_DWELL_MENU)
     check never.menu.isNone
 
 
@@ -797,11 +802,11 @@ suite "Interaction":
     interaction.updateDrag(scene, now = 0.0)
     interaction.updateDrag(scene, now = SECONDS_DWELL_MENU + 0.1)
     check interaction.menu.isSome
-    interaction.updateCursor(400.0 + PIXELS_MENU_REACH, 200.0) # Into east wedge...
+    interaction.updateCursor(400.0 + PIXELS_MENU_REACH, 200.0)  # Into east wedge...
     interaction.updateDrag(scene, now = SECONDS_DWELL_MENU + 0.2)
-    interaction.updateCursor(400.0, 200.0) # ...and back to centre.
+    interaction.updateCursor(400.0, 200.0)  # ...and back to centre.
     interaction.updateDrag(scene, now = SECONDS_DWELL_MENU + 0.3)
-    check interaction.proposal.isNone # No preview: band already says this lift cancels.
+    check interaction.proposal.isNone  # No preview: band already says this lift cancels.
     let outcome = interaction.endDrag(scene, SECONDS_DWELL_MENU + 0.4)
     check outcome.index_created.isNone
     check scene.len == 2
@@ -869,19 +874,28 @@ suite "Interaction":
     # Veil run never straddles mark: disc laid on each side of it lands in two.
     #   runs of one record, and only second is overlay's.
     meshes.addDisc(
-      ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
-      1.0, Ink.Olive.colour,
+      ORIGIN,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      1.0,
+      Ink.Olive.colour,
     )
     check meshes.veils.count == 1
     clearMeshes(meshes)
     meshes.addDisc(
-      ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
-      1.0, Ink.Olive.colour,
+      ORIGIN,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      1.0,
+      Ink.Olive.colour,
     )
     markOverlay(meshes)
     meshes.addDisc(
-      ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
-      1.0, Ink.Jade.colour,
+      ORIGIN,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      1.0,
+      Ink.Jade.colour,
     )
     check meshes.veils.count == 2
     check meshes.veils.index_overlay == some(1)
@@ -923,17 +937,17 @@ suite "Interaction":
 
   test "stepping walks live handles in both directions and wraps at both ends":
     var scene = initScene()
-    for i in 0 ..< 4: scene.addObject(GENERAL_POINTS[i], "p", Ink.Rose)
-    check scene.handleStepped(none(int), 1) == some(0) # Nothing focused starts at first.
-    check scene.handleStepped(none(int), -1) == some(3) # ...and backwards, at last.
+    for i in 0..<4: scene.addObject(GENERAL_POINTS[i], "p", Ink.Rose)
+    check scene.handleStepped(none(int), 1) == some(0)  # Nothing focused starts at first.
+    check scene.handleStepped(none(int), -1) == some(3)  # ...and backwards, at last.
     check scene.handleStepped(some(0), 1) == some(1)
-    check scene.handleStepped(some(3), 1) == some(0) # Wraps rather than stopping dead: key
-    check scene.handleStepped(some(0), -1) == some(3) #   that quietly stops working is worse.
+    check scene.handleStepped(some(3), 1) == some(0)  # Wraps rather than stopping dead: key
+    check scene.handleStepped(some(0), -1) == some(3)  #   that quietly stops working is worse.
 
 
   test "stepping skips handles whose objects have gone":
     var scene = initScene()
-    for i in 0 ..< 4: scene.addObject(GENERAL_POINTS[i], "p", Ink.Rose)
+    for i in 0..<4: scene.addObject(GENERAL_POINTS[i], "p", Ink.Rose)
     scene.removeObject(1)
     scene.removeObject(2)
     # Handles are sparse -- free list reuses holes in any order -- so this cannot be.
@@ -985,7 +999,7 @@ suite "Interaction":
     # Eye rose over it, by exactly rate asked for.
     check risen.elevation > opening.elevation
     check arccos(clamp(dot(risen.frame.forward, opening.frame.forward), -1.0, 1.0)) =~
-      RISE_SECOND
+        RISE_SECOND
     # Space mirrors W, so either hand reaches it.
     var mirrored = opening
     interaction.releaseKey(Key.W)
@@ -1007,7 +1021,7 @@ suite "Interaction":
     check swung.pivot =~ opening.pivot
     check swung.distance =~ opening.distance
     check arccos(clamp(dot(swung.frame.forward, opening.frame.forward), -1.0, 1.0)) =~
-      TURN_SECOND
+        TURN_SECOND
 
 
   test "a left drag looks with nothing picked, and orbits with something picked":
@@ -1047,11 +1061,11 @@ suite "Interaction":
       for (turn, rise) in loop:
         if picked: once.orbit(turn, rise) else: once.look(turn, rise)
       check once.rollHeld.isSome
-      let enclosed = 0.3*0.3*cos(stance.elevation)
-      check abs(once.rollHeld.get - enclosed) < 0.02*enclosed
+      let enclosed = 0.3 * 0.3 * cos(stance.elevation)
+      check abs(once.rollHeld.get - enclosed) < 0.02 * enclosed
       # Four of them leave four times as much: 0.324 radians, 18.6 degrees of tilt.
       var carried = stance
-      for round in 1 .. 4:
+      for round in 1..4:
         for (turn, rise) in loop:
           if picked: carried.orbit(turn, rise) else: carried.look(turn, rise)
       check abs(carried.rollHeld.get - 0.3242) < 1.0e-3
@@ -1067,9 +1081,9 @@ suite "Interaction":
         var opening = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
         opening.roll(set_roll)
         var held = opening
-        for round in 1 .. 4:
-          for corner in 0 ..< 4:
-            held.turnFollowing(corners[corner], corners[(corner + 1) mod 4], wide, tall,
+        for round in 1..4:
+          for corner in 0..<4:
+            held.turnFollowing(corners[corner], corners[(corner+1) mod 4], wide, tall,
               has_selection = picked)
         check held.rollHeld.get =~ opening.rollHeld.get
         check held.eye =~ opening.eye
@@ -1082,7 +1096,7 @@ suite "Interaction":
     #   what stood at one depth in front of pivot kept up. Point held on sphere about
     #   pivot is carried from pixel finger left to pixel it reached instead.
     const (wide, tall) = (390, 844)
-    proc heldUnder(camera: Camera; at: ScreenPosition; radius: float): Position =
+    proc heldUnder(camera: Camera, at: ScreenPosition, radius: float): Position =
       # Place point finger holds under pixel.
       pointHeld(camera.eye, camera.pivot, camera.headingThrough(camera.frame, wide, tall, at),
         radius)
@@ -1103,12 +1117,12 @@ suite "Interaction":
             var
               carried = opening
               at = start
-            for step in 1 .. steps:
+            for step in 1..steps:
               let
-                reached = float(step)/float(steps)
+                reached = float(step) / float(steps)
                 next = ScreenPosition(
-                  x: start.x + reached*(finish.x - start.x),
-                  y: start.y + reached*(finish.y - start.y),
+                  x: start.x + reached * (finish.x - start.x),
+                  y: start.y + reached * (finish.y - start.y),
                 )
               carried.turnFollowing(at, next, wide, tall, has_selection = true,
                 reach_selection = reach_selection)
@@ -1130,10 +1144,12 @@ suite "Interaction":
       opened = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
       least = opened.radiusHeld(wide, tall, 0.0)
       rim = projectToScreen(
-        opened.initMatrixViewProjection(float(wide)/float(tall)), wide, tall,
-        opened.pivot + least*opened.frame.axis_right,
+        opened.initMatrixViewProjection(float(wide) / float(tall)),
+        wide,
+        tall,
+        opened.pivot + least * opened.frame.axis_right,
       )
-    check abs((rim.x - float(wide)/2.0) - float(wide)/3.0) < 1.0
+    check abs((rim.x - float(wide) / 2.0) - float(wide) / 3.0) < 1.0
     check opened.radiusHeld(wide, tall, 100.0) < opened.distance
     # Finger off sphere still turns view, with pivot standing.
     var outside = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
@@ -1147,10 +1163,10 @@ suite "Interaction":
     # Rate turned sight by angle screen does not show: 3.6 times as far as finger on 1200
     #   by 900 page. Carrying sky under one pixel to other keeps it under finger instead.
     const (wide, tall) = (390, 844)
-    proc seenThrough(camera: Camera; at: ScreenPosition): Direction =
+    proc seenThrough(camera: Camera, at: ScreenPosition): Direction =
       # Read unit sight through pixel.
       let heading = camera.headingThrough(camera.frame, wide, tall, at)
-      (1.0/norm(heading))*heading
+      (1.0 / norm(heading)) * heading
     var rolled = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     rolled.roll(0.5)
     let steep = cameraAround(ORIGIN, 19.0, Direction(x: 12, y: 21, z: -20))
@@ -1165,12 +1181,12 @@ suite "Interaction":
           var
             carried = opening
             at = start
-          for step in 1 .. steps:
+          for step in 1..steps:
             let
-              reached = float(step)/float(steps)
+              reached = float(step) / float(steps)
               next = ScreenPosition(
-                x: start.x + reached*(finish.x - start.x),
-                y: start.y + reached*(finish.y - start.y),
+                x: start.x + reached * (finish.x - start.x),
+                y: start.y + reached * (finish.y - start.y),
               )
             carried.turnFollowing(at, next, wide, tall, has_selection = false)
             at = next
@@ -1191,15 +1207,15 @@ suite "Interaction":
     const (wide, tall) = (390, 844)
     proc dragged(camera: Camera; is_picked: bool; across, down: float): Camera =
       # Drag finger from middle of canvas by these pixels, in one step.
-      let middle = ScreenPosition(x: float(wide)/2.0, y: float(tall)/2.0)
+      let middle = ScreenPosition(x: float(wide) / 2.0, y: float(tall) / 2.0)
       result = camera
       result.turnFollowing(middle, ScreenPosition(x: middle.x + across, y: middle.y + down),
         wide, tall, has_selection = is_picked)
     proc sweptBy(camera: Camera; across, down: float): (float, float) =
       # Read how far orbit's drag carries near side, between eye and pivot, across screen.
       let
-        near_side = camera.eye + 0.4*camera.distance*camera.frame.forward
-        aspect = float(wide)/float(tall)
+        near_side = camera.eye + 0.4 * camera.distance * camera.frame.forward
+        aspect = float(wide) / float(tall)
         was = projectToScreen(camera.initMatrixViewProjection(aspect), wide, tall, near_side)
         swung = camera.dragged(true, across, down)
         now_at = projectToScreen(swung.initMatrixViewProjection(aspect), wide, tall, near_side)
@@ -1208,7 +1224,7 @@ suite "Interaction":
     # Orbit climbs past straight down in drags down from middle, and near side follows
     #   finger on both sides.
     var over = opening
-    for step in 1 .. 4: over = over.dragged(true, 0.0, 80.0)
+    for step in 1..4: over = over.dragged(true, 0.0, 80.0)
     check dot(over.frame.axis_up, UP_WORLD) < 0.0
     check over.frame.axis_right =~ opening.frame.axis_right
     check over.pivot =~ opening.pivot
@@ -1217,7 +1233,7 @@ suite "Interaction":
       check camera.sweptBy(0.0, 20.0)[1] > 0.0
     # Look passes under its feet same way: three drags up nearly whole canvas.
     var under = opening
-    for step in 1 .. 3:
+    for step in 1..3:
       under.turnFollowing(ScreenPosition(x: 195.0, y: 800.0), ScreenPosition(x: 195.0, y: 44.0),
         wide, tall, has_selection = false)
     check dot(under.frame.axis_up, UP_WORLD) < 0.0
@@ -1245,13 +1261,11 @@ suite "Interaction":
     #   fingers.
     const (wide, tall) = (1200, 900)
     var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-    let above = camera.pivot + 3.0*camera.frame.axis_up
+    let above = camera.pivot + 3.0 * camera.frame.axis_up
     proc seenAt(c: Camera): float =
-      projectToScreen(
-        c.initMatrixViewProjection(float(wide)/float(tall)), wide, tall, above
-      ).x
+      projectToScreen(c.initMatrixViewProjection(float(wide) / float(tall)), wide, tall, above).x
     let before = seenAt(camera)
-    check before =~ float(wide)/2.0 # Straight above middle, so any swing is roll's.
+    check before =~ float(wide) / 2.0  # Straight above middle, so any swing is roll's.
     camera.roll(0.2)
     # Point above middle swings left, which reads anticlockwise: positive roll is
     #   anticlockwise, and pointer negates its clockwise screen angle to match.
@@ -1271,12 +1285,12 @@ suite "Interaction":
     interaction.holdKey(Key.W)
     interaction.holdKey(Key.Space)
     interaction.driveHeld(camera, 0.1, has_selection = true)
-    check camera.elevation =~ elevation + 2.0*0.1*RISE_SECOND
+    check camera.elevation =~ elevation + 2.0 * 0.1 * RISE_SECOND
     check camera.pivot =~ pivot
 
     interaction.releaseKey(Key.Space)
     interaction.driveHeld(camera, 0.1, has_selection = true)
-    check camera.elevation =~ elevation + 3.0*0.1*RISE_SECOND # W still rises alone.
+    check camera.elevation =~ elevation + 3.0 * 0.1 * RISE_SECOND  # W still rises alone.
     check camera.pivot =~ pivot
 
 
@@ -1303,7 +1317,7 @@ suite "Interaction":
     #   camera set off from.
     check camera.distance =~ 20.0 - norm(step)
     check camera.pivot =~ cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16)).pivot
-    check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
+    check camera.distanceNear =~ camera.distance * FACTOR_CLIP_NEAR
 
     # Strafe carries pivot along instead: what stands ahead keeps its depth.
     var strafed = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
@@ -1325,6 +1339,7 @@ suite "Interaction":
     check dot(lifted.eye - eye_lifted, axes_lifted.axis_up) =~ norm(lifted.eye - eye_lifted)
     check abs(dot(lifted.eye - eye_lifted, UP_WORLD)) < norm(lifted.eye - eye_lifted)
 
+
   test "flight climbs toward its cap, and the pointer's depth sets that cap":
     # Two halves of one hold cover more ground than first half twice over, because speed
     #   is still climbing. What reads as spaceship rather than as constant rate.
@@ -1339,7 +1354,7 @@ suite "Interaction":
     interaction.driveHeld(camera, 0.5, has_selection = false)
     let second = norm(camera.eye - eye_middle)
     check second > first
-    check first + second =~ distanceTravelled(0.0, 1.0, FACTOR_SPEED_LOCAL*20.0)
+    check first + second =~ distanceTravelled(0.0, 1.0, FACTOR_SPEED_LOCAL * 20.0)
 
     # Pointer over something near caps speed low, which is what close work needs.
     var near_work = Interaction(is_enabled: true, depth_pointer: some(0.002))
@@ -1347,13 +1362,12 @@ suite "Interaction":
     var close = cameraAround(ORIGIN, 0.002, Direction(x: 1, y: 0, z: 0))
     let eye_close = close.eye
     near_work.driveHeld(close, 1.0, has_selection = false)
-    check norm(close.eye - eye_close) =~ distanceTravelled(
-      0.0, 1.0, FACTOR_SPEED_LOCAL*0.002
-    )
+    check norm(close.eye - eye_close) =~ distanceTravelled(0.0, 1.0, FACTOR_SPEED_LOCAL * 0.002)
 
     # Letting go forgets speed reached, so flight taken up again starts from rest.
     near_work.releaseKey(Key.W)
     check near_work.seconds_travelling =~ 0.0
+
 
   test "roll reaches the camera in either state, and free turning in one":
     # `camera.orbit` composes motion now and carries roll through, so roll is granted
@@ -1390,6 +1404,7 @@ suite "Interaction":
     # Both swing sight same way, so one key reads same in either state.
     check dot(turning.frame.forward, orbiting.frame.forward) > 0.0
 
+
   test "how far a hold travels depends on how long it was held":
     # Whole point of driving movement per frame: rate stated per second, multiplied.
     #   by frame's own elapsed time, so fast machine and slow one agree.
@@ -1400,7 +1415,7 @@ suite "Interaction":
       twice = cameraAround(ORIGIN, 20.0, Direction(x: 10, y: 0, z: 3))
     interaction.driveHeld(once, 0.5, has_selection = true)
     interaction.driveHeld(twice, 1.0, has_selection = true)
-    check norm(twice.pivot - ORIGIN) =~ 2.0*norm(once.pivot - ORIGIN)
+    check norm(twice.pivot - ORIGIN) =~ 2.0 * norm(once.pivot - ORIGIN)
 
     # Dolly is one that compounds rather than adding, so it takes rate to.
     #   power of elapsed seconds: two half-seconds must equal one whole one.
@@ -1413,7 +1428,7 @@ suite "Interaction":
     interaction.driveHeld(halves, 0.5, has_selection = true)
     interaction.driveHeld(whole, 1.0, has_selection = true)
     check halves.distance =~ whole.distance
-    check whole.distance =~ 20.0*FACTOR_DOLLY_SECOND
+    check whole.distance =~ 20.0 * FACTOR_DOLLY_SECOND
 
 
   test "shift makes every movement key faster, and changes none of them":
@@ -1430,7 +1445,7 @@ suite "Interaction":
       upright = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4)).frame.forward
       risen = arccos(clamp(dot(plain.frame.forward, upright), -1.0, 1.0))
       risen_fast = arccos(clamp(dot(hastened.frame.forward, upright), -1.0, 1.0))
-    check risen_fast =~ FACTOR_HASTE*risen
+    check risen_fast =~ FACTOR_HASTE * risen
     # Same direction, not different binding -- which is what shift+arrow used to mean.
     check hastened.elevation > plain.elevation
 
@@ -1449,7 +1464,7 @@ suite "Interaction":
       forward_start = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4)).frame.forward
       swung = arccos(clamp(dot(turned.frame.forward, forward_start), -1.0, 1.0))
       swung_fast = arccos(clamp(dot(turned_fast.frame.forward, forward_start), -1.0, 1.0))
-    check swung_fast =~ FACTOR_HASTE*swung
+    check swung_fast =~ FACTOR_HASTE * swung
 
 
   test "letting go of everything at once stops the camera, however it lost the release":
@@ -1481,9 +1496,7 @@ suite "Interaction":
     camera.travel(3.0, 2.0, 1.0)
     camera.orbit(0.5, 0.2)
     camera.degrees_field_of_view = 70.0
-    discard interaction.applyAction(
-      camera, scene, KeyAction.ViewHome, WIDTH_OPENED, HEIGHT_OPENED
-    )
+    discard interaction.applyAction(camera, scene, KeyAction.ViewHome, WIDTH_OPENED, HEIGHT_OPENED)
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
@@ -1515,9 +1528,7 @@ suite "Interaction":
     check interaction.applyAction(
       camera, scene, KeyAction.SelectFocused, WIDTH_OPENED, HEIGHT_OPENED
     ).isNone
-    discard interaction.applyAction(
-      camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED
-    )
+    discard interaction.applyAction(camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED)
     check interaction.index_focus == some(0)
     check interaction.applyAction(
       camera, scene, KeyAction.SelectFocused, WIDTH_OPENED, HEIGHT_OPENED
@@ -1530,9 +1541,7 @@ suite "Interaction":
     var
       interaction = Interaction(is_enabled: true)
       camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-    discard interaction.applyAction(
-      camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED
-    )
+    discard interaction.applyAction(camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED)
     check interaction.index_focus == some(0)
     scene.removeObject(0)
     interaction.pruneFocus(scene)
@@ -1545,23 +1554,28 @@ suite "Interaction":
     #   still. Neither gesture is pointing at anything.
     var scene = initScene()
     let pivot = Position(x: 0, y: 0, z: 0)
-    scene.addObject(toMultivector(pivot), "p", Ink.Rose)
+    scene.addObject(pivot.toMultivector, "p", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
       camera = cameraAround(pivot, 10.0, Direction(x: 1, y: 0, z: 0))
-    let view_projection = camera.initMatrixViewProjection(800.0/600.0)
+    let view_projection = camera.initMatrixViewProjection(800.0 / 600.0)
     proc hovering(interaction: var Interaction): Option[int] =
       interaction.updateHover(
-        scene, camera, camera.drawExtentFor(600, 0.0), view_projection, 800, 600,
+        scene,
+        camera,
+        camera.drawExtentFor(600, 0.0),
+        view_projection,
+        800,
+        600,
       )
       interaction.index_hover
-    interaction.updateCursor(400.0, 300.0) # Straight at object.
+    interaction.updateCursor(400.0, 300.0)  # Straight at object.
     check interaction.hovering == some(0)
 
     interaction.is_dragging_camera = true
     check interaction.hovering.isNone
     interaction.is_dragging_camera = false
-    check interaction.hovering == some(0) # And back frame gesture ends.
+    check interaction.hovering == some(0)  # And back frame gesture ends.
 
     interaction.holdKey(Key.W)
     check interaction.hovering.isNone
@@ -1583,19 +1597,21 @@ suite "Interaction":
     #   cursor every frame, so focus stored there would be gone before it was drawn.
     var scene = initScene()
     let pivot = Position(x: 0, y: 0, z: 0)
-    scene.addObject(toMultivector(pivot), "p", Ink.Rose)
+    scene.addObject(pivot.toMultivector, "p", Ink.Rose)
     scene.addObject(GENERAL_POINTS[5], "far", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
       camera = cameraAround(pivot, 10.0, Direction(x: 1, y: 0, z: 0))
-    discard interaction.applyAction(
-      camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED
-    )
+    discard interaction.applyAction(camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED)
     check interaction.index_focus == some(0)
-    interaction.updateCursor(799.0, 1.0) # Corner, away from everything.
+    interaction.updateCursor(799.0, 1.0)  # Corner, away from everything.
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600, 0.0),
-      camera.initMatrixViewProjection(800.0/600.0), 800, 600,
+      scene,
+      camera,
+      camera.drawExtentFor(600, 0.0),
+      camera.initMatrixViewProjection(800.0 / 600.0),
+      800,
+      600,
     )
     check interaction.index_hover != interaction.index_focus
     check interaction.index_focus == some(0)
@@ -1615,17 +1631,17 @@ suite "Interaction":
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
     interaction.index_hover = some(1)
-    for step in 1 .. 20:
+    for step in 1..20:
       # Three times dwell, and never still for two frames together.
-      interaction.updateCursor(100.0 + 2.0*PIXELS_TAP_SLOP*float(step), 100.0)
-      interaction.updateDrag(scene, 0.15*SECONDS_DWELL_MENU*float(step))
+      interaction.updateCursor(100.0 + 2.0 * PIXELS_TAP_SLOP * float(step), 100.0)
+      interaction.updateDrag(scene, 0.15 * SECONDS_DWELL_MENU * float(step))
       check interaction.menu.isNone
     # Stop moving, and same drag opens it dwell later -- clock is restarted, not.
     #   disabled, so gesture reader actually wanted still works.
     #   Dwell past last movement with room to spare: what is being checked here is
     #   that clock restarts rather than stops, not where its own boundary lies, and
     #   two tests below pin that boundary exactly.
-    interaction.updateDrag(scene, 0.15*SECONDS_DWELL_MENU*20.0 + 1.5*SECONDS_DWELL_MENU)
+    interaction.updateDrag(scene, 0.15 * SECONDS_DWELL_MENU * 20.0 + 1.5 * SECONDS_DWELL_MENU)
     check interaction.menu.isSome
 
 
@@ -1641,9 +1657,9 @@ suite "Interaction":
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
     interaction.index_hover = some(1)
-    for step in 1 .. 4:
-      interaction.updateCursor(100.0 + 0.2*PIXELS_TAP_SLOP*float(step), 100.0)
-      interaction.updateDrag(scene, 0.2*SECONDS_DWELL_MENU*float(step))
+    for step in 1..4:
+      interaction.updateCursor(100.0 + 0.2 * PIXELS_TAP_SLOP * float(step), 100.0)
+      interaction.updateDrag(scene, 0.2 * SECONDS_DWELL_MENU * float(step))
     interaction.updateDrag(scene, SECONDS_DWELL_MENU)
     check interaction.menu.isSome
 
@@ -1656,13 +1672,13 @@ suite "Interaction":
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 1000.0)
     interaction.index_hover = some(1)
-    interaction.updateDrag(scene, 1000.0 + 0.9*SECONDS_DWELL_MENU)
+    interaction.updateDrag(scene, 1000.0 + 0.9 * SECONDS_DWELL_MENU)
     check interaction.menu.isNone
-    interaction.index_hover = none(int) # Slipped off pivot.
-    interaction.updateDrag(scene, 1000.0 + 0.95*SECONDS_DWELL_MENU)
+    interaction.index_hover = none(int)  # Slipped off pivot.
+    interaction.updateDrag(scene, 1000.0 + 0.95 * SECONDS_DWELL_MENU)
     check interaction.preview.isNone
-    interaction.index_hover = some(1) # And back on, with dwell owed in full again.
-    interaction.updateDrag(scene, 1000.0 + 1.5*SECONDS_DWELL_MENU)
+    interaction.index_hover = some(1)  # And back on, with dwell owed in full again.
+    interaction.updateDrag(scene, 1000.0 + 1.5 * SECONDS_DWELL_MENU)
     check interaction.menu.isNone
 
 
@@ -1692,8 +1708,12 @@ suite "Interaction":
     let camera = cameraAround(PLACES[0], 10.0, Direction(x: 1, y: 0, z: 0))
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600, 0.0),
-      camera.initMatrixViewProjection(800.0/600.0), 800, 600,
+      scene,
+      camera,
+      camera.drawExtentFor(600, 0.0),
+      camera.initMatrixViewProjection(800.0 / 600.0),
+      800,
+      600,
     )
     check interaction.index_hover.isNone
 
@@ -1701,13 +1721,17 @@ suite "Interaction":
   test "enabled interaction hovers the object under the cursor":
     var scene = initScene()
     let pivot = Position(x: 0, y: 0, z: 0)
-    scene.addObject(toMultivector(pivot), "p", Ink.Rose)
+    scene.addObject(pivot.toMultivector, "p", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     let camera = cameraAround(pivot, 10.0, Direction(x: 1, y: 0, z: 0))
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600, 0.0),
-      camera.initMatrixViewProjection(800.0/600.0), 800, 600,
+      scene,
+      camera,
+      camera.drawExtentFor(600, 0.0),
+      camera.initMatrixViewProjection(800.0 / 600.0),
+      800,
+      600,
     )
     check interaction.index_hover == some(0)
 
@@ -1734,23 +1758,21 @@ suite "Interaction":
     # Linear, not eased: half wait is half fill. This is property that makes.
     #   marker clock reader can judge remaining time from, and it is what
     #   `easeOutCubic` here would break -- see `progressHold`'s own doc comment.
-    check progressHold(interaction, filling + 0.5*SECONDS_LONG_PRESS) =~ 0.5
-    check progressHold(interaction, filling + 0.25*SECONDS_LONG_PRESS) =~ 0.25
+    check progressHold(interaction, filling + 0.5 * SECONDS_LONG_PRESS) =~ 0.5
+    check progressHold(interaction, filling + 0.25 * SECONDS_LONG_PRESS) =~ 0.25
     # Nothing fills while marker is still getting out of way.
-    check progressHold(interaction, 1000.0 + 0.5*SECONDS_SWELL_GROW) == 0.0
+    check progressHold(interaction, 1000.0 + 0.5 * SECONDS_SWELL_GROW) == 0.0
     var previous = 0.0
-    for step in 0 .. 20:
-      let progress = progressHold(
-        interaction, filling + float(step)/20.0*SECONDS_LONG_PRESS
-      )
+    for step in 0..20:
+      let progress = progressHold(interaction, filling + float(step) / 20.0 * SECONDS_LONG_PRESS)
       check progress >= previous
       previous = progress
     # Clamped below, so clock that steps backward cannot un-fill marker, and above, so.
     #   frame arriving late still draws whole one rather than overshooting past it.
     check progressHold(interaction, 900.0) == 0.0
-    check progressHold(interaction, filling + 10.0*SECONDS_LONG_PRESS) == 1.0
+    check progressHold(interaction, filling + 10.0 * SECONDS_LONG_PRESS) == 1.0
     # Maturity lands exactly where fill completes, never frame either side of it.
-    check not isHoldMature(interaction, filling + 0.999*SECONDS_LONG_PRESS)
+    check not isHoldMature(interaction, filling + 0.999 * SECONDS_LONG_PRESS)
     check isHoldMature(interaction, filling + SECONDS_LONG_PRESS)
 
 
@@ -1764,12 +1786,12 @@ suite "Interaction":
     check swellHold(interaction, 1000.0 + SECONDS_SWELL_GROW) =~ 1.0
     # Fully out before fill starts, so marker fills at size it will fill at.
     check swellHold(interaction, 1000.0 + SECONDS_SWELL_GROW) >=
-      swellHold(interaction, 1000.0 + 0.5*SECONDS_SWELL_GROW)
+        swellHold(interaction, 1000.0 + 0.5 * SECONDS_SWELL_GROW)
 
     # Check swell stays out for whole fill, past maturity, and while finger stays down.
     #   Unreleased hold never settles, however long it is held.
     const matured = 1000.0 + SECONDS_SWELL_GROW + SECONDS_LONG_PRESS
-    for now in [matured - 0.5*SECONDS_LONG_PRESS, matured, matured + 60.0]:
+    for now in [matured - 0.5 * SECONDS_LONG_PRESS, matured, matured + 60.0]:
       check swellHold(interaction, now) =~ 1.0
       check not isHoldSpent(interaction, now)
 
@@ -1777,14 +1799,14 @@ suite "Interaction":
     interaction.releaseHold(matured + 5.0)
     check swellHold(interaction, matured + 5.0) =~ 1.0
     check swellHold(interaction, matured + 5.0 + SECONDS_SWELL_SHRINK) =~ 0.0
-    check not isHoldSpent(interaction, matured + 5.0 + 0.5*SECONDS_SWELL_SHRINK)
+    check not isHoldSpent(interaction, matured + 5.0 + 0.5 * SECONDS_SWELL_SHRINK)
     # Frame past shrink rather than exactly on it: subtracting two large timestamps.
     #   does not land on boundary exactly, and no caller asks at exact instant --
     #   they ask once frame. What matters is that it is not spent early and is spent.
-    check isHoldSpent(interaction, matured + 5.0 + 1.1*SECONDS_SWELL_SHRINK)
+    check isHoldSpent(interaction, matured + 5.0 + 1.1 * SECONDS_SWELL_SHRINK)
     # Second lift is not second settle: first one owns clock.
     interaction.releaseHold(matured + 900.0)
-    check isHoldSpent(interaction, matured + 5.0 + 1.1*SECONDS_SWELL_SHRINK)
+    check isHoldSpent(interaction, matured + 5.0 + 1.1 * SECONDS_SWELL_SHRINK)
 
 
   test "a matured hold is taken once, and never again however long it is held":
@@ -1803,8 +1825,8 @@ suite "Interaction":
       check takeHold(interaction, now).isNone
     # ...nor across release and its whole settle, which is exactly where it fired.
     interaction.releaseHold(matured + 5.0)
-    for now in [matured + 5.0, matured + 5.0 + 0.5*SECONDS_SWELL_SHRINK,
-                matured + 5.0 + 2.0*SECONDS_SWELL_SHRINK]:
+    for now in [matured + 5.0, matured + 5.0 + 0.5 * SECONDS_SWELL_SHRINK,
+                matured + 5.0 + 2.0 * SECONDS_SWELL_SHRINK]:
       check takeHold(interaction, now).isNone
     # Taking it does not end it: swell still has settle to run out.
     check swellHold(interaction, matured + 5.0) =~ 1.0
@@ -1816,9 +1838,7 @@ suite "Interaction":
     #   caller asks at instant anyway -- they ask once frame.
     interaction.beginHold(7, 2000.0)
     check takeHold(interaction, 2000.0).isNone
-    check takeHold(
-      interaction, 2000.0 + SECONDS_SWELL_GROW + 1.01*SECONDS_LONG_PRESS
-    ) == some(7)
+    check takeHold(interaction, 2000.0 + SECONDS_SWELL_GROW + 1.01 * SECONDS_LONG_PRESS) == some(7)
 
 
   test "a cancelled hold snaps away rather than settling":
@@ -1842,4 +1862,4 @@ suite "Interaction":
     check interaction.speedFlying(camera) =~ speedTravelling(SECONDS_SPEED_RISE, cap)
     # Shift is one multiplier on every rate, speed included.
     interaction.keys_held = {Key.W, Key.Shift}
-    check interaction.speedFlying(camera) =~ FACTOR_HASTE*speedTravelling(SECONDS_SPEED_RISE, cap)
+    check interaction.speedFlying(camera) =~ FACTOR_HASTE * speedTravelling(SECONDS_SPEED_RISE, cap)

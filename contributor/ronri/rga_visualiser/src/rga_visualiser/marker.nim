@@ -114,7 +114,7 @@ const
     ## Bound how many segments line's rails come to.
     ##   One each side, each cut into two halves `tessellate.addLine` draws line as.
     ## Place point's ring this far from point, in pixels.
-  OFFSET_MARKER_RAIL* = 0.5*float(WIDTH_LINE_OBJECT) + GAP_MARKER
+  OFFSET_MARKER_RAIL* = 0.5 * float(WIDTH_LINE_OBJECT) + GAP_MARKER
     ## Place each of line's rails this far from line, in pixels.
     ##   Exactly, everywhere along it, at every orientation and distance, since offset is
     ##   applied in screen space rather than as world step. See `markerRails`.
@@ -164,7 +164,7 @@ const
     ## Round pulse's head with this many points between its two sides.
     ##   Head is one end that is edge, and flat cut at `WIDTH_MARKER_COMET` reads as run
     ##   chopped. Tail needs none: it ends at outline's own width.
-  POINTS_MARKER_PULSE* = 2*SEGMENTS_MARKER_PULSE + SEGMENTS_MARKER_CAP
+  POINTS_MARKER_PULSE* = 2 * SEGMENTS_MARKER_PULSE + SEGMENTS_MARKER_CAP
     ## Bound points in one run's finished outline: both sides of spine, plus head's cap.
   SEGMENTS_MARKER_OUTLINE* = SEGMENTS_MARKER_LOOP
     ## Bound segments of any outline pulse may be laid along.
@@ -197,7 +197,7 @@ const
     ##   Sixty is speed lap was chosen at over 300 px specimens.
     ##     Slow enough to read as circulation rather than spinner; *direction* is whole
     ##     message.
-  ANGLE_MARKER_BANDS_OPEN* = 0.5*PI
+  ANGLE_MARKER_BANDS_OPEN* = 0.5 * PI
     ## Start horizon line's bands this far off it, in radians, at zero progress.
     ##   Quarter turn is pole of sphere line's great circle runs around, reliably outside
     ##   any field of view.
@@ -230,31 +230,31 @@ static:
 #[ Type Definitions ]#
 
 type
-  MarkerKind* {.pure.} = enum ## Define which outline marker is drawn as.
-    Ring, ## Circle in screen space, for point.
-    Rails, ## Pair of world-space lines flanking line, converging as it does.
-    Loop, ## Polyline lying on plane in world space, projected, for plane.
-    Bands, ## Pair of circles on sky flanking horizon line's great circle.
-    Frame, ## Boundary around whole viewport, for whole sky horizon plane is.
+  MarkerKind* {.pure.} = enum  ## Define which outline marker is drawn as.
+    Ring,  ## Circle in screen space, for point.
+    Rails,  ## Pair of world-space lines flanking line, converging as it does.
+    Loop,  ## Polyline lying on plane in world space, projected, for plane.
+    Bands,  ## Pair of circles on sky flanking horizon line's great circle.
+    Frame,  ## Boundary around whole viewport, for whole sky horizon plane is.
       ## Circle while it expands, viewport's rectangle once it arrives.
 
-  Marker* = object ## Define one object's marker, ready to draw on foreground layer.
-    anchors_pulse*: array[RUNS_MARKER_PULSE, ScreenPosition] ## Where each run below
+  Marker* = object  ## Define one object's marker, ready to draw on foreground layer.
+    anchors_pulse*: array[RUNS_MARKER_PULSE, ScreenPosition]  ## Where each run below
       ## measured its travel from, in screen space.
       ## Reported as `lap` is: fact about marker only shaping knew, and one deciding
       ## whether comet holds still under moving camera.
       ##   Unasserted from outside is how sliding comet shipped twice.
-    lap*: float ## Distance pulse travels before it is back where it began, in pixels.
+    lap*: float  ## Distance pulse travels before it is back where it began, in pixels.
       ## 0 where nothing pulses.
       ## Not length of outline: rail's drawn length is viewport-clip artefact, and line's
       ## two rails are clipped hundreds to one apart.
       ##   This is stretch both lap against, shorter one, which lets
       ##   `selection.PulseClock` reduce travel it cannot measure itself.
-    count_run_pulse*: int ## Runs used of `pulses` below; 0 where nothing pulses.
-    counts_pulse*: array[RUNS_MARKER_PULSE, int] ## Outline points used of each run.
-    has_label*: bool ## Whether `label_at` holds place for object's name.
+    count_run_pulse*: int  ## Runs used of `pulses` below; 0 where nothing pulses.
+    counts_pulse*: array[RUNS_MARKER_PULSE, int]  ## Outline points used of each run.
+    has_label*: bool  ## Whether `label_at` holds place for object's name.
       ## False where outline has no top to sit above: rails with both supports cut away.
-    label_at*: ScreenPosition ## Where name label is centred, in screen space.
+    label_at*: ScreenPosition  ## Where name label is centred, in screen space.
       ## `GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` above outline's top at object's own
       ## place: ring's top, loop's true top on disc's column, bands' leftmost point, which
       ## is where band leaves view through its left edge. Frame is whole view, so its label
@@ -264,19 +264,19 @@ type
       ## `is_label_beside`.
       ## Decided here with rest of marker so both front-ends agree by construction; each
       ## centres its own text on it.
-    is_label_beside*: bool ## Whether `label_at` is anchor on outline, label pushed off it.
+    is_label_beside*: bool  ## Whether `label_at` is anchor on outline, label pushed off it.
       ## Rails: `label_at` lies on line at its support, clamped into view, and front-end
       ## sets centre `clearanceBeside` along `label_away_x`/`label_away_y`, measured with
       ## its own text box. Bands and frame: `label_at` lies `MARGIN_LABEL_HORIZON` in from
       ## view's left edge, pushed rightward same way, so text starts clear of edge whatever
       ## its width. False elsewhere: `label_at` is centre itself.
-    label_away_x*, label_away_y*: float ## Unit direction label is pushed along, on screen.
+    label_away_x*, label_away_y*: float  ## Unit direction label is pushed along, on screen.
       ## Line's own left, from its direction as projected: side fixed by geometry, not by
       ## screen, which is what makes it continuous through every turn; see
       ## `placeLabelBesideLine`. Bands and frame: screen's right, off view's left edge.
     pulses*: array[
       RUNS_MARKER_PULSE, array[POINTS_MARKER_PULSE, ScreenPosition]
-    ] ## Short runs travelling along marker's outline, in screen space.
+    ]  ## Short runs travelling along marker's outline, in screen space.
       ## Render paths *fill* them over outline.
       ## Which way they travel is object's orientation: what plane's normal shaft used
       ## to say, said only about object asked about.
@@ -287,59 +287,57 @@ type
       ## Points rather than index span into outline, because `Rails` is segments while
       ## `Loop`, `Bands` and `Frame` are polylines.
       ## Common to every kind: what pulses varies, that marker may pulse does not.
-    case kind*: MarkerKind
+    case kind * : MarkerKind
     of MarkerKind.Ring:
-      centre*: ScreenPosition ## Where point itself projects.
-      radius*: float ## Ring radius, in pixels.
-      fraction*: float ## How much of circle to stroke, clockwise from twelve, in 0 .. 1.
+      centre*: ScreenPosition  ## Where point itself projects.
+      radius*: float  ## Ring radius, in pixels.
+      fraction*: float  ## How much of circle to stroke, clockwise from twelve, in 0 .. 1.
         ## Whole ring at 1; less only while hold is filling it.
         ## Clockwise from top because that is how every other progress dial is drawn.
     of MarkerKind.Rails:
-      count_segment*: int ## Segments used of `segments` below.
+      count_segment*: int  ## Segments used of `segments` below.
       segments*: array[SEGMENTS_MARKER_RAILS, array[2, ScreenPosition]]
         ## Hold endpoints of each drawn piece.
         ##   One rail each side, each in up to two halves line itself is drawn as.
         ##   Fewer where half was clipped away.
     of MarkerKind.Loop:
-      count_point*: int ## Points used of `points` below.
-      is_closed*: bool ## Whether last point joins back to first.
+      count_point*: int  ## Points used of `points` below.
+      is_closed*: bool  ## Whether last point joins back to first.
         ## False where part of circle fell behind eye and was cut away; closed loop drawn
         ## through cut would run straight across view.
       points*: array[SEGMENTS_MARKER_LOOP, ScreenPosition]
         ## Hold circle's points, in order around plane, already projected.
     of MarkerKind.Bands:
-      counts_band*: array[2, int] ## Points used of each band below.
-      are_closed_band*: array[2, bool] ## Whether each band joins back to own first point.
+      counts_band*: array[2, int]  ## Points used of each band below.
+      are_closed_band*: array[2, bool]  ## Whether each band joins back to own first point.
         ## False where eye or edge of view cut it into arc: `Loop`'s rule, one cut further.
       points_band*: array[2, array[POINTS_MARKER_BAND, ScreenPosition]]
         ## Hold each band's points, in order around sky, projected.
         ##   Only stretch inside viewport.
     of MarkerKind.Frame:
-      count_frame*: int ## Points used of `points_frame` below.
+      count_frame*: int  ## Points used of `points_frame` below.
       points_frame*: array[
-        SEGMENTS_MARKER_FRAME + CORNERS_MARKER_FRAME, ScreenPosition
-      ] ## Boundary's points, in order around centre of view.
+        SEGMENTS_MARKER_FRAME+CORNERS_MARKER_FRAME, ScreenPosition
+      ]  ## Boundary's points, in order around centre of view.
         ## Screen space throughout: sky has no place in scene to surround, so marker
         ## surrounds view. Always closed.
 
-  PulseTrack* = object ## Define where pulse's travel is measured from along outline.
+  PulseTrack* = object  ## Define where pulse's travel is measured from along outline.
     ## Also how far it may run either way before it laps.
     ## `origin` names view-independent feature of object (line's support, circle's angle
     ## zero) rather than whichever point was emitted first.
     ##   Outline's first point is cut: rail's is where it crosses window edge, cut ring's
     ##   wherever eye plane sliced it.
     ##   Measuring from cut lets camera decide where comet is, fault this type removes.
-    origin*: int ## Index of point travel is measured from.
-    behind*: float ## Outline available before that point, in pixels.
-    ahead*: float ## Outline available after it, in pixels.
+    origin*: int  ## Index of point travel is measured from.
+    behind*: float  ## Outline available before that point, in pixels.
+    ahead*: float  ## Outline available after it, in pixels.
 
 
 
 #[ Orientation Pulse ]#
 
-func lengthOfOutline*(
-  points: openArray[ScreenPosition], count: int, is_closed: bool
-): float =
+func lengthOfOutline*(points: openArray[ScreenPosition], count: int, is_closed: bool): float =
   ## Measure outline right round, in screen pixels.
   ##   Primitive `trackAlong` is built from, and what caller needs for how far pulse may
   ##   run before it laps.
@@ -347,8 +345,8 @@ func lengthOfOutline*(
   ##   caller's to say, or line's two rails would keep own clocks.
   if count < 2: return
   let last = if is_closed: count else: count - 1
-  for i in 0 ..< last:
-    let after = points[(i + 1) mod count]
+  for i in 0..<last:
+    let after = points[(i+1) mod count]
     result += hypot(after.x - points[i].x, after.y - points[i].y)
 
 
@@ -357,7 +355,7 @@ func lap*(track: PulseTrack): float = track.behind + track.ahead
 
 
 func trackAlong*(
-  points: openArray[ScreenPosition], count: int, is_closed: bool, origin: int = 0
+  points: openArray[ScreenPosition], count: int, is_closed: bool, origin = 0
 ): PulseTrack =
   ## Measure outline either side of point travel is anchored at, in screen pixels.
   ##   Closed outline laps on itself, so all of it lies `ahead` and origin decides only
@@ -368,11 +366,11 @@ func trackAlong*(
     result.ahead = lengthOfOutline(points, count, true)
     return
   for i in 0 ..< count - 1:
-    let step = hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y)
+    let step = hypot(points[i+1].x - points[i].x, points[i+1].y - points[i].y)
     if i < origin: result.behind += step else: result.ahead += step
 
 
-func originAfterCut*(count_ring, start, count_emitted: int; count_before: int = 0): int =
+func originAfterCut*(count_ring, start, count_emitted: int; count_before = 0): int =
   ## Say where ring's angle-zero point sits in arc that survived cut.
   ##   Cut ring is emitted from `start`, first point whose predecessor was cut, so
   ##   emitted index zero is wherever eye sliced it: camera's answer.
@@ -419,13 +417,15 @@ func travelAdvanced*(travelled, lap, seconds: float): float =
   ##   Unchanged for outline of no length. `selection.PulseClock` owns travel this
   ##   returns.
   if lap <= 0.0: return travelled
-  let carried = travelled + seconds*SPEED_MARKER_PULSE
-  carried - floor(carried/lap)*lap
+  let carried = travelled + seconds * SPEED_MARKER_PULSE
+  carried - floor(carried / lap) * lap
 
 
 func ribbonAlong(
-  spine: openArray[ScreenPosition]; count: int; width_head, width_tail: float;
-  outline: var openArray[ScreenPosition]
+  spine: openArray[ScreenPosition];
+  count: int;
+  width_head, width_tail: float;
+  outline: var openArray[ScreenPosition];
 ): int =
   ## Wrap `count` points of run's spine in one closed outline; report points filled.
   ##   Tapers from `width_head` at `spine[0]` to `width_tail` at last point.
@@ -435,36 +435,36 @@ func ribbonAlong(
   ##   comet rather than front half of one.
   ##   Each point's normal comes from own neighbours on spine, not second sample guessed
   ##   step away, which at either end falls off run.
-  if count < 2 or outline.len < 2*count + SEGMENTS_MARKER_CAP: return
+  if count < 2 or outline.len < 2 * count + SEGMENTS_MARKER_CAP: return
   var
     normal_x = 0.0
     normal_y = 0.0
-  for i in 0 ..< count:
+  for i in 0..<count:
     let
-      before = spine[max(0, i - 1)]
-      after = spine[min(count - 1, i + 1)]
+      before = spine[max(0, i-1)]
+      after = spine[min(count-1, i+1)]
       offset_x = after.x - before.x
       offset_y = after.y - before.y
       span = hypot(offset_x, offset_y)
     if span > 0.0:
-      normal_x = -offset_y/span
-      normal_y = offset_x/span
+      normal_x = -offset_y / span
+      normal_y = offset_x / span
     let
-      falling = pow(1.0 - float(i)/float(count - 1), FALLOFF_MARKER_COMET)
-      half = 0.5*(width_tail + (width_head - width_tail)*falling)
+      falling = pow(1.0 - float(i) / float(count - 1), FALLOFF_MARKER_COMET)
+      half = 0.5 * (width_tail + (width_head - width_tail) * falling)
     # Fill both sides at once, far one from back.
     #   Outline then closes as one loop rather than crossing itself at tail.
     outline[i] = ScreenPosition(
-      x: spine[i].x + normal_x*half,
-      y: spine[i].y + normal_y*half,
+      x: spine[i].x + normal_x * half,
+      y: spine[i].y + normal_y * half,
       depth: spine[i].depth,
     )
-    outline[2*count - 1 - i] = ScreenPosition(
-      x: spine[i].x - normal_x*half,
-      y: spine[i].y - normal_y*half,
+    outline[2*count-1-i] = ScreenPosition(
+      x: spine[i].x - normal_x * half,
+      y: spine[i].y - normal_y * half,
       depth: spine[i].depth,
     )
-  result = 2*count
+  result = 2 * count
 
   # Round head, sweeping from far side through straight ahead to near one.
   let
@@ -475,29 +475,33 @@ func ribbonAlong(
     forward_x = 0.0
     forward_y = 0.0
   if ahead > 0.0:
-    forward_x = offset_x/ahead
-    forward_y = offset_y/ahead
-  let half_head = 0.5*width_head
+    forward_x = offset_x / ahead
+    forward_y = offset_y / ahead
+  let half_head = 0.5 * width_head
   # Recover head normal from outline's first point rather than variable kept across walk.
   let
-    head_x = (outline[0].x - spine[0].x)/half_head
-    head_y = (outline[0].y - spine[0].y)/half_head
-  for j in 1 .. SEGMENTS_MARKER_CAP:
+    head_x = (outline[0].x - spine[0].x) / half_head
+    head_y = (outline[0].y - spine[0].y) / half_head
+  for j in 1..SEGMENTS_MARKER_CAP:
     let
-      turn = PI*float(j)/float(SEGMENTS_MARKER_CAP + 1)
-      swing_x = -head_x*cos(turn) + forward_x*sin(turn)
-      swing_y = -head_y*cos(turn) + forward_y*sin(turn)
+      turn = PI * float(j) / float(SEGMENTS_MARKER_CAP + 1)
+      swing_x = -head_x * cos(turn) + forward_x * sin(turn)
+      swing_y = -head_y * cos(turn) + forward_y * sin(turn)
     outline[result] = ScreenPosition(
-      x: spine[0].x + swing_x*half_head,
-      y: spine[0].y + swing_y*half_head,
+      x: spine[0].x + swing_x * half_head,
+      y: spine[0].y + swing_y * half_head,
       depth: spine[0].depth,
     )
     inc result
 
 
 func samplePulse(
-  points: openArray[ScreenPosition], count: int, is_closed: bool, track: PulseTrack,
-  travelled: float, run: var array[SEGMENTS_MARKER_PULSE, ScreenPosition]
+  points: openArray[ScreenPosition],
+  count: int,
+  is_closed: bool,
+  track: PulseTrack,
+  travelled: float,
+  run: var array[SEGMENTS_MARKER_PULSE, ScreenPosition],
 ): int =
   ## Lay pulse along `count` points of outline; report how many of `run` were used.
   ##   `travelled` pixels from `track`'s anchor.
@@ -519,11 +523,11 @@ func samplePulse(
   if count < 2 or count > SEGMENTS_MARKER_OUTLINE: return
 
   # Tabulate where each segment starts, measured along outline, whole length last.
-  var starts: array[SEGMENTS_MARKER_OUTLINE + 1, float]
+  var starts: array[SEGMENTS_MARKER_OUTLINE+1, float]
   let last = if is_closed: count else: count - 1
-  for i in 0 ..< last:
-    let after = points[(i + 1) mod count]
-    starts[i + 1] = starts[i] + hypot(after.x - points[i].x, after.y - points[i].y)
+  for i in 0..<last:
+    let after = points[(i+1) mod count]
+    starts[i+1] = starts[i] + hypot(after.x - points[i].x, after.y - points[i].y)
   let total = starts[last]
   if total <= 0.0: return
 
@@ -532,31 +536,35 @@ func samplePulse(
   let window = track.lap
   if window <= 0.0 or track.origin < 0 or track.origin >= count: return
   let
-    reach = min(LENGTH_MARKER_COMET, FRACTION_MARKER_PULSE*window)
+    reach = min(LENGTH_MARKER_COMET, FRACTION_MARKER_PULSE * window)
     begin = starts[track.origin] - track.behind
     carried = travelled + track.behind
-    head = begin + (carried - floor(carried/window)*window)
-  for i in 0 ..< SEGMENTS_MARKER_PULSE:
-    var along = head - reach*(float(i)/float(SEGMENTS_MARKER_PULSE - 1))
-    if is_closed: along = along - floor(along/total)*total
+    head = begin + (carried - floor(carried / window) * window)
+  for i in 0..<SEGMENTS_MARKER_PULSE:
+    var along = head - reach * (float(i) / float(SEGMENTS_MARKER_PULSE - 1))
+    if is_closed: along = along - floor(along / total) * total
     # Stop at first sample off run: `along` only decreases.
     elif along < begin or along > total: break
     var segment = last - 1
-    for j in 0 ..< last:
-      if along < starts[j + 1]:
+    for j in 0..<last:
+      if along < starts[j+1]:
         segment = j
         break
-    let width = starts[segment + 1] - starts[segment]
+    let width = starts[segment+1] - starts[segment]
     run[result] = points[segment].towards(
-      points[(segment + 1) mod count], (if width > 0.0: (along - starts[segment])/width else: 0.0)
+      points[(segment+1) mod count], (if width > 0.0: (along - starts[segment]) / width else: 0.0)
     )
     inc result
-  if result < 2: result = 0 # Too little left of it to read as anything.
+  if result < 2: result = 0  # Too little left of it to read as anything.
 
 
 func addPulse(
-  marker: var Marker, points: openArray[ScreenPosition], count: int, is_closed: bool,
-  track: PulseTrack, travelled: float
+  marker: var Marker,
+  points: openArray[ScreenPosition],
+  count: int,
+  is_closed: bool,
+  track: PulseTrack,
+  travelled: float,
 ) =
   ## Add one run of pulse to `marker`, taken along `count` points of one outline.
   ##   Silently adds nothing where run came out too short or marker holds every run it
@@ -566,7 +574,10 @@ func addPulse(
   let sampled = samplePulse(points, count, is_closed, track, travelled, spine)
   if sampled == 0: return
   let used = ribbonAlong(
-    spine, sampled, float(WIDTH_MARKER_COMET), float(WIDTH_MARKER),
+    spine,
+    sampled,
+    float(WIDTH_MARKER_COMET),
+    float(WIDTH_MARKER),
     marker.pulses[marker.count_run_pulse],
   )
   if used == 0: return
@@ -578,9 +589,7 @@ func addPulse(
 
 #[ Drag Comet ]#
 
-func cometFor*(
-  tail, head: ScreenPosition
-): Option[array[POINTS_MARKER_PULSE, ScreenPosition]] =
+func cometFor*(tail, head: ScreenPosition): Option[array[POINTS_MARKER_PULSE, ScreenPosition]] =
   ## Kind head of drag band running `tail` -> `head` as closed outline, in pixels.
   ##   Render path fills it over band.
   ##   Drag is not symmetric: `a ∨ b` and `b ∨ a` differ, and bare line draws
@@ -597,11 +606,11 @@ func cometFor*(
   # Light all of band shorter than comet, rather than reaching past its source.
   let reach = min(LENGTH_MARKER_COMET, length)
   var spine: array[SEGMENTS_MARKER_PULSE, ScreenPosition]
-  for i in 0 ..< SEGMENTS_MARKER_PULSE:
-    let back = reach*float(i)/float(SEGMENTS_MARKER_PULSE - 1)
+  for i in 0..<SEGMENTS_MARKER_PULSE:
+    let back = reach * float(i) / float(SEGMENTS_MARKER_PULSE - 1)
     spine[i] = ScreenPosition(
-      x: head.x - offset_x/length*back,
-      y: head.y - offset_y/length*back,
+      x: head.x - offset_x / length * back,
+      y: head.y - offset_y / length * back,
       depth: head.depth,
     )
   var outline: array[POINTS_MARKER_PULSE, ScreenPosition]
@@ -622,16 +631,20 @@ func clearanceTouch*(swell: float, is_touch: bool): float =
   ##     Half sine over fill had marker back to true size exactly as selection landed.
   ##   Zero for mouse: cursor hides nothing.
   if not is_touch: return 0.0
-  CLEARANCE_MARKER_TOUCH*clamp(swell, 0.0, 1.0)
+  CLEARANCE_MARKER_TOUCH * clamp(swell, 0.0, 1.0)
 
 
 
 #[ Point And Line ]#
 
-func placeLabelAbove(marker: var Marker, x, top: float) =
+func placeLabelAbove(marker: var Marker; x, top: float) =
   ## Place name label centred `GAP_MARKER` and half its height above outline's top at `x`.
   marker.has_label = true
-  marker.label_at = ScreenPosition(x: x, y: top - GAP_MARKER - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0)
+  marker.label_at = ScreenPosition(
+    x: x,
+    y: top - GAP_MARKER - 0.5 * HEIGHT_MARKER_LABEL,
+    depth: 1.0,
+  )
 
 
 func clearanceBeside*(away_x, away_y, half_width: float): float =
@@ -639,8 +652,8 @@ func clearanceBeside*(away_x, away_y, half_width: float): float =
   ##   Rail, gap, then label's own box's half-extent in that direction: wide name beside
   ##   steep line clears it, where fixed lift put letters across it.
   ##   `half_width` is front-end's measured text, half; height is nominal one shared.
-  OFFSET_MARKER_RAIL + GAP_MARKER + abs(away_x)*half_width +
-    abs(away_y)*0.5*HEIGHT_MARKER_LABEL
+  OFFSET_MARKER_RAIL + GAP_MARKER + abs(away_x) * half_width +
+      abs(away_y) * 0.5 * HEIGHT_MARKER_LABEL
 
 
 func labelInView*(x, y, half_width, width, height: float): (float, float) =
@@ -652,11 +665,11 @@ func labelInView*(x, y, half_width, width, height: float): (float, float) =
   ##   Every placement lands label where geometry puts it, and geometry alone can put it
   ##   past edge: bands' label is centred on view's left edge itself.
   let
-    half_height = 0.5*HEIGHT_MARKER_LABEL
+    half_height = 0.5 * HEIGHT_MARKER_LABEL
     (min_x, max_x) = (MARGIN_LABEL_EDGE + half_width, width - MARGIN_LABEL_EDGE - half_width)
     (min_y, max_y) = (MARGIN_LABEL_EDGE + half_height, height - MARGIN_LABEL_EDGE - half_height)
-    held_x = if min_x > max_x: 0.5*width else: clamp(x, min_x, max_x)
-    held_y = if min_y > max_y: 0.5*height else: clamp(y, min_y, max_y)
+    held_x = if min_x > max_x: 0.5 * width else: clamp(x, min_x, max_x)
+    held_y = if min_y > max_y: 0.5 * height else: clamp(y, min_y, max_y)
   (held_x, held_y)
 
 
@@ -673,7 +686,7 @@ func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, 
     if rate == 0.0:
       if room < 0.0: return
       continue
-    let f = room/rate
+    let f = room / rate
     if rate < 0.0:
       if f > fraction_leave: return
       if f > fraction_enter: fraction_enter = f
@@ -684,8 +697,12 @@ func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, 
 
 
 func placeLabelBesideLine(
-  marker: var Marker; anchor: Position; axis: Direction; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int
+  marker: var Marker;
+  anchor: Position;
+  axis: Direction;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
 ) =
   ## Place line's label on line at its support, clamped into view, pushed to line's left.
   ##   Left of line's *own* direction, as projected: choice of side on unoriented line
@@ -700,10 +717,10 @@ func placeLabelBesideLine(
   ##   and overlapped steep line; upward side sliding through line overlapped at vertical;
   ##   visible midpoint followed viewport rather than line; text along line flipped.
   let
-    anchor_point = toMultivector(anchor)
-    axis_point = toMultivector(axis)
+    anchor_point = anchor.toMultivector
+    axis_point = axis.toMultivector
   var
-    ends: array[2, Option[(ScreenPosition, ScreenPosition)]] ## (tail, head) per half.
+    ends: array[2, Option[(ScreenPosition, ScreenPosition)]]  ## (tail, head) per half.
   for index_half, reach in [-scale.radiusHorizon, scale.radiusHorizon]:
     let clipped = clipToEyeSide(
       anchor, pointFrom(add(scale.eye_point, wedge(reach, axis_point))), scale.plane_near
@@ -722,35 +739,32 @@ func placeLabelBesideLine(
   else: (a, b, at_support) = (ends[0].get[1], ends[0].get[0], ends[0].get[0])
   let
     (offset_x, offset_y) = (b.x - a.x, b.y - a.y)
-    length = sqrt(offset_x*offset_x + offset_y*offset_y)
+    length = sqrt(offset_x * offset_x + offset_y * offset_y)
   if length < 1.0e-6: return
   let clipped = clipToView(a, b, width, height)
   if clipped.isNone: return
   let
     (f0, f1) = clipped.get
-    inset = min(MARGIN_LABEL_VIEW/length, 0.5*(f1 - f0))
-    f_support = ((at_support.x - a.x)*offset_x + (at_support.y - a.y)*offset_y)/(length*length)
+    inset = min(MARGIN_LABEL_VIEW / length, 0.5 * (f1 - f0))
+    f_support = ((at_support.x - a.x) * offset_x + (at_support.y - a.y) * offset_y) /
+        (length * length)
     f = clamp(f_support, f0 + inset, f1 - inset)
   marker.has_label = true
   marker.is_label_beside = true
-  marker.label_at = ScreenPosition(x: a.x + f*offset_x, y: a.y + f*offset_y, depth: 1.0)
-  (marker.label_away_x, marker.label_away_y) = (offset_y/length, -offset_x/length)
+  marker.label_at = ScreenPosition(x: a.x + f * offset_x, y: a.y + f * offset_y, depth: 1.0)
+  (marker.label_away_x, marker.label_away_y) = (offset_y / length, -offset_x / length)
 
 
-func placeLabelAboveTopmost(
-  marker: var Marker, points: openArray[ScreenPosition], count: int
-) =
+func placeLabelAboveTopmost(marker: var Marker, points: openArray[ScreenPosition], count: int) =
   ## Place name label centred above highest of `count` outline points, keeping any higher one.
   ##   Called once per run, so bands' two runs settle on higher of their two tops.
-  for i in 0 ..< count:
+  for i in 0..<count:
     if not marker.has_label or
-        points[i].y < marker.label_at.y + GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL:
+        points[i].y < marker.label_at.y + GAP_MARKER + 0.5 * HEIGHT_MARKER_LABEL:
       marker.placeLabelAbove(points[i].x, points[i].y)
 
 
-func placeLabelAboveLeftmost(
-  marker: var Marker, points: openArray[ScreenPosition], count: int
-) =
+func placeLabelAboveLeftmost(marker: var Marker, points: openArray[ScreenPosition], count: int) =
   ## Place name label centred above leftmost of `count` outline points, keeping any further left.
   ##   Called once per run, so bands' two runs settle on further left of their two ends.
   ##   Run leaving view through its left edge ends exactly on that edge (`placeCrossing`),
@@ -759,16 +773,15 @@ func placeLabelAboveLeftmost(
   ##   edge, one above other, and label stands above upper.
   ##   Not highest point: on level horizon two side crossings stand within pixel in height,
   ##   and highest hopped between edges frame to frame.
-  for i in 0 ..< count:
-    let top = marker.label_at.y + GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL
+  for i in 0..<count:
+    let top = marker.label_at.y + GAP_MARKER + 0.5 * HEIGHT_MARKER_LABEL
     if not marker.has_label or points[i].x < marker.label_at.x - PIXELS_TIE_LEFTMOST or
         (abs(points[i].x - marker.label_at.x) <= PIXELS_TIE_LEFTMOST and points[i].y < top):
       marker.placeLabelAbove(points[i].x, points[i].y)
 
 
 func topmostOnCircle*(
-  centre: Position; arm_first, arm_second: Direction; view_projection: Matrix4;
-  width, height: int
+  centre: Position; arm_first, arm_second: Direction; view_projection: Matrix4; width, height: int
 ): Option[ScreenPosition] =
   ## Solve highest screen point of world circle `centre + cos·arm_first + sin·arm_second`.
   ##   Closed form, so label above plane's circle glides as camera orbits.
@@ -782,24 +795,29 @@ func topmostOnCircle*(
   ##   flip matters, see `markerLoop`.
   ##   None where circle is degenerate on screen (`√(Q²+R²)` vanishing) or neither
   ##   candidate is in front of eye; caller falls back to sampled top.
+
   template rowDot(row: int, d: Direction): float =
-    float(view_projection.at(row, 0))*d.x + float(view_projection.at(row, 1))*d.y +
-      float(view_projection.at(row, 2))*d.z
+    float(view_projection.at(row, 0)) * d.x + float(view_projection.at(row, 1)) * d.y +
+        float(view_projection.at(row, 2)) * d.z
+
   template rowAt(row: int, p: Position): float =
-    float(view_projection.at(row, 0))*p.x + float(view_projection.at(row, 1))*p.y +
-      float(view_projection.at(row, 2))*p.z + float(view_projection.at(row, 3))
+    float(view_projection.at(row, 0)) * p.x + float(view_projection.at(row, 1)) * p.y +
+        float(view_projection.at(row, 2)) * p.z + float(view_projection.at(row, 3))
+
   let
     (a, b, c) = (rowDot(1, arm_first), rowDot(1, arm_second), rowAt(1, centre))
     (d, e, f) = (rowDot(3, arm_first), rowDot(3, arm_second), rowAt(3, centre))
-    (p, q, r) = (b*d - a*e, c*d - a*f, b*f - c*e)
-    reach = sqrt(q*q + r*r)
+    (p, q, r) = (b * d - a * e, c * d - a * f, b * f - c * e)
+    reach = sqrt(q * q + r * r)
   if reach < 1.0e-12: return
   let
     phase = arctan2(q, r)
-    spread = arccos(clamp(-p/reach, -1.0, 1.0))
+    spread = arccos(clamp(-p / reach, -1.0, 1.0))
   for angle in [phase + spread, phase - spread]:
     let at = projectToScreen(
-      view_projection, width, height,
+      view_projection,
+      width,
+      height,
       onCircleAt(centre, arm_first, arm_second, cos(angle), sin(angle)),
     )
     if not at.isInFront: continue
@@ -807,8 +825,13 @@ func topmostOnCircle*(
 
 
 func markerRing(
-  geometry: Multivector; radius: float; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; progress, clearance: float; marker: var Marker
+  geometry: Multivector;
+  radius: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  progress, clearance: float;
+  marker: var Marker;
 ): bool =
   ## Build point's ring, about wherever that point is drawn and just outside its disc.
   ##   Fills caller's `marker` and reports whether one was shaped; see `markerFor`.
@@ -832,7 +855,7 @@ func markerRing(
   true
 
 
-func offsetMarkerRail(anchor: Position, scale: DrawExtent, clearance: float = 0.0): float =
+func offsetMarkerRail(anchor: Position, scale: DrawExtent, clearance = 0.0): float =
   ## Size how far to each side of line its rails stand, in world units.
   ##   *World* offset, so rails are lines genuinely parallel to one they flank, sharing
   ##   its vanishing points, each one straight line.
@@ -841,7 +864,7 @@ func offsetMarkerRail(anchor: Position, scale: DrawExtent, clearance: float = 0.
   ##   Reads as `OFFSET_MARKER_RAIL` pixels at support and less further off; caller does
   ##   not take figure as final, see `apartWidest`.
   ##   `clearance` widens pair by that many further pixels, for touch hold.
-  (OFFSET_MARKER_RAIL + clearance)*worldPerPixelAt(anchor, scale)
+  (OFFSET_MARKER_RAIL + clearance) * worldPerPixelAt(anchor, scale)
 
 
 func directionAcross(geometry: Multivector, eye: Position): Option[Direction] =
@@ -852,7 +875,7 @@ func directionAcross(geometry: Multivector, eye: Position): Option[Direction] =
   ##   straddle plane line's projection is, symmetric from any angle.
   ##     Cost is step tilting hair out of plane perspective divides by, under pixel.
   ##   None where eye lies on line itself, edge-on with no side to flank.
-  directionNormal(geometry ∧ toMultivector(eye))
+  directionNormal(geometry ∧ eye.toMultivector)
 
 
 func awayFromScreen*(point, first, second: ScreenPosition): float =
@@ -865,7 +888,7 @@ func awayFromScreen*(point, first, second: ScreenPosition): float =
     (offset_x, offset_y) = (second.x - first.x, second.y - first.y)
     length = hypot(offset_x, offset_y)
   if length <= 0.0: return hypot(point.x - first.x, point.y - first.y)
-  abs((point.x - first.x)*offset_y - (point.y - first.y)*offset_x)/length
+  abs((point.x - first.x) * offset_y - (point.y - first.y) * offset_x) / length
 
 
 func fractionLeavingView*(tail, head: ScreenPosition; width, height: int): float =
@@ -879,9 +902,11 @@ func fractionLeavingView*(tail, head: ScreenPosition; width, height: int): float
   ##   Zero where segment heads away from viewport it already left.
   result = 1.0
   let (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
+
   # Bound parameter at each edge only where segment crosses it *outward*.
   template limit(rate, room: float) =
-    if rate > 0.0: result = min(result, room/rate)
+    if rate > 0.0: result = min(result, room / rate)
+
   limit(-offset_x, tail.x)
   limit(offset_x, float(width) - tail.x)
   limit(-offset_y, tail.y)
@@ -895,15 +920,20 @@ func isWithinView*(point: ScreenPosition; width, height: int): bool =
   ##   negative divide, and where it lands says nothing about where it would be seen.
   ##   Bounds closed, matching `fractionLeavingView`.
   point.isInFront and
-    point.x >= 0.0 and point.x <= float(width) and
-    point.y >= 0.0 and point.y <= float(height)
+      point.x >= 0.0 and point.x <= float(width) and
+      point.y >= 0.0 and point.y <= float(height)
 
 
 func railsAt(
-  anchor: Position; axis, across: Direction; offset: float; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int;
-  progress: float; marker: var Marker;
-  walks: var array[2, array[3, Option[ScreenPosition]]]
+  anchor: Position;
+  axis, across: Direction;
+  offset: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  progress: float;
+  marker: var Marker;
+  walks: var array[2, array[3, Option[ScreenPosition]]];
 ) =
   ## Lay both rails out at one world offset.
   ##   Drawn screen segments, and walk each rail is read along for its pulse.
@@ -915,14 +945,15 @@ func railsAt(
   walks = default(array[2, array[3, Option[ScreenPosition]]])
   # Hoist rail frame: anchor point, across arm and axis arm as multivectors, once per call.
   let
-    anchor_point = toMultivector(anchor)
-    across_point = toMultivector(across)
-    axis_point = toMultivector(axis)
+    anchor_point = anchor.toMultivector
+    across_point = across.toMultivector
+    axis_point = axis.toMultivector
   for index_side, side in [offset, -offset]:
     let rail_base = pointFrom(add(anchor_point, wedge(side, across_point)))
     for index_half, reach in [scale.radiusHorizon, -scale.radiusHorizon]:
       let clipped = clipToEyeSide(
-        rail_base, pointFrom(add(scale.eye_point, wedge(reach, axis_point))),
+        rail_base,
+        pointFrom(add(scale.eye_point, wedge(reach, axis_point))),
         scale.plane_near,
       )
       if clipped.isNone: continue
@@ -932,12 +963,12 @@ func railsAt(
         head = projectToScreen(view_projection, width, height, position_head)
       if not (tail.isInFront and head.isInFront): continue
       let drawn =
-        [tail, tail.towards(head, progress*fractionLeavingView(tail, head, width, height))]
+        [tail, tail.towards(head, progress * fractionLeavingView(tail, head, width, height))]
       marker.segments[marker.count_segment] = drawn
       inc marker.count_segment
       # Order along line: `-axis` end, support, then `+axis` end.
-      walks[index_side][1] = some(drawn[0]) # Same point for either half.
-      walks[index_side][if index_half == 0: 2 else: 0] = some(drawn[1])
+      walks[index_side][1] = some(drawn[0])  # Same point for either half.
+      walks[index_side][if index_half==0: 2 else: 0] = some(drawn[1])
 
 
 func apartWidest(walks: array[2, array[3, Option[ScreenPosition]]]): float =
@@ -951,24 +982,33 @@ func apartWidest(walks: array[2, array[3, Option[ScreenPosition]]]): float =
   var
     points: array[2, array[3, ScreenPosition]]
     counts: array[2, int]
-  for side in 0 .. 1:
+  for side in 0..1:
     for at in walks[side]:
       if at.isNone: continue
       points[side][counts[side]] = at.get
       inc counts[side]
   if counts[0] < 2 or counts[1] < 2: return
-  for side in 0 .. 1:
+  for side in 0..1:
     let other = 1 - side
-    for i in 0 ..< counts[side]:
-      result = max(result, awayFromScreen(
-        points[side][i], points[other][0], points[other][counts[other] - 1],
-      ))
+    for i in 0..<counts[side]:
+      result = max(
+        result,
+        awayFromScreen(
+          points[side][i],
+          points[other][0],
+          points[other][counts[other]-1],
+        ),
+      )
 
 
 func markerRails(
-  geometry: Multivector; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; progress, clearance: float;
-  travel: Option[float]; marker: var Marker
+  geometry: Multivector;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  progress, clearance: float;
+  travel: Option[float];
+  marker: var Marker;
 ): bool =
   ## Build line's pair of rails: two straight screen lines flanking it.
   ##   Hold `OFFSET_MARKER_RAIL` pixels of clear space and close only on vanishing point
@@ -1002,17 +1042,26 @@ func markerRails(
   marker = Marker(kind: MarkerKind.Rails)
   var
     walks: array[2, array[3, Option[ScreenPosition]]]
-    rails: array[2, array[3, ScreenPosition]] ## Each side compacted to what survived.
-    counts: array[2, int] ## How many of each side's three points that was.
-    origins: array[2, int] ## Where support landed in each, for pulse to measure on.
-    tracks: array[2, PulseTrack] ## Each side's reach either way from that support.
+    rails: array[2, array[3, ScreenPosition]]  ## Each side compacted to what survived.
+    counts: array[2, int]  ## How many of each side's three points that was.
+    origins: array[2, int]  ## Where support landed in each, for pulse to measure on.
+    tracks: array[2, PulseTrack]  ## Each side's reach either way from that support.
   let offset_stated = offsetMarkerRail(anchor.get, scale, clearance)
   # Settle against finished rail, then draw at progress asked for.
   #   Settling against partial rail made gap widen as hold filled, pair breathing
   #   sideways.
   railsAt(
-    anchor.get, axis.get, across.get, offset_stated, scale,
-    view_projection, width, height, 1.0, marker, walks,
+    anchor.get,
+    axis.get,
+    across.get,
+    offset_stated,
+    scale,
+    view_projection,
+    width,
+    height,
+    1.0,
+    marker,
+    walks,
   )
   if marker.count_segment == 0: return
 
@@ -1022,26 +1071,44 @@ func markerRails(
   #   ceiling on *widest* reading is itself guarantee of visibility.
   #   Settled over passes because narrowing moves where rail leaves viewport; see
   #   `PASSES_MARKER_RAIL`.
-  let ceiling = 2.0*(OFFSET_MARKER_RAIL + clearance)
+  let ceiling = 2.0 * (OFFSET_MARKER_RAIL + clearance)
   var offset = offset_stated
-  for _ in 0 ..< PASSES_MARKER_RAIL:
+  for _ in 0..<PASSES_MARKER_RAIL:
     let widest = apartWidest(walks)
     if widest <= ceiling: break
-    offset = offset*ceiling/widest
+    offset = offset * ceiling / widest
     railsAt(
-      anchor.get, axis.get, across.get, offset, scale,
-      view_projection, width, height, 1.0, marker, walks,
+      anchor.get,
+      axis.get,
+      across.get,
+      offset,
+      scale,
+      view_projection,
+      width,
+      height,
+      1.0,
+      marker,
+      walks,
     )
     if marker.count_segment == 0: return
 
   if progress < 1.0:
     railsAt(
-      anchor.get, axis.get, across.get, offset, scale,
-      view_projection, width, height, progress, marker, walks,
+      anchor.get,
+      axis.get,
+      across.get,
+      offset,
+      scale,
+      view_projection,
+      width,
+      height,
+      progress,
+      marker,
+      walks,
     )
     if marker.count_segment == 0: return
 
-  for index_side in 0 .. 1:
+  for index_side in 0..1:
     let (end_before, support, end_after) =
       (walks[index_side][0], walks[index_side][1], walks[index_side][2])
     # Walk rail as one path ordered along line, from `-axis` end through support to `+axis`.
@@ -1059,24 +1126,25 @@ func markerRails(
       )
 
   # Label beside line on its own left, anchored at support clamped into view.
-  marker.placeLabelBesideLine(
-    anchor.get, axis.get, scale, view_projection, width, height
-  )
+  marker.placeLabelBesideLine(anchor.get, axis.get, scale, view_projection, width, height)
 
   if travel.isSome:
     # Lap both rails against one shared reach either way; see `shared`.
     var (behind, ahead) = (Inf, Inf)
-    for index_side in 0 .. 1:
+    for index_side in 0..1:
       if counts[index_side] < 2: continue
       behind = min(behind, tracks[index_side].behind)
       ahead = min(ahead, tracks[index_side].ahead)
     if behind < Inf and ahead < Inf:
       marker.lap = behind + ahead
-      for index_side in 0 .. 1:
+      for index_side in 0..1:
         if counts[index_side] < 2: continue
         marker.addPulse(
-          rails[index_side], counts[index_side], is_closed = false,
-          tracks[index_side].shared(behind, ahead), travel.get,
+          rails[index_side],
+          counts[index_side],
+          is_closed = false,
+          tracks[index_side].shared(behind, ahead),
+          travel.get,
         )
   true
 
@@ -1085,8 +1153,7 @@ func markerRails(
 #[ Plane ]#
 
 func radiusMarkerLoop*(
-  centre: Position, scale: DrawExtent, placement: Camera, height: int,
-  clearance: float = 0.0
+  centre: Position, scale: DrawExtent, placement: Camera, height: int, clearance = 0.0
 ): float =
   ## Size plane's marker circle so gap reads as `GAP_MARKER` pixels at disc's depth.
   ##   Circle lies on plane, so clearance is world distance worth one pixel count at one
@@ -1095,7 +1162,7 @@ func radiusMarkerLoop*(
   ##     and read as floating.
   ##   `clearance` widens gap through same conversion, so swollen circle still lies on
   ##   plane.
-  EXTENT_PLANE_F + (GAP_MARKER + clearance)*worldPerPixelAt(centre, scale)
+  EXTENT_PLANE_F + (GAP_MARKER + clearance) * worldPerPixelAt(centre, scale)
 
 
 let
@@ -1117,19 +1184,28 @@ proc positionsMarkerLoop*(
   #   Arithmetic, as disc rim it is concentric with; suite holds this equal to
   #   multivector sums it replaced.
   let
-    arm_first = radius*axes.axis_first
-    arm_second = radius*axes.axis_second
-  for i in 0 ..< SEGMENTS_MARKER_LOOP:
+    arm_first = radius * axes.axis_first
+    arm_second = radius * axes.axis_second
+  for i in 0..<SEGMENTS_MARKER_LOOP:
     result[i] = onCircleAt(
-      centre, arm_first, arm_second,
-      UNIT_RING_LOOP[i].cos_angle, UNIT_RING_LOOP[i].sin_angle,
+      centre,
+      arm_first,
+      arm_second,
+      UNIT_RING_LOOP[i].cos_angle,
+      UNIT_RING_LOOP[i].sin_angle,
     )
 
 
 proc markerLoop(
-  geometry: Multivector; anchor_override: Option[Position]; scale: DrawExtent;
-  placement: Camera; view_projection: Matrix4; width, height: int;
-  progress, clearance: float; travel: Option[float]; marker: var Marker
+  geometry: Multivector;
+  anchor_override: Option[Position];
+  scale: DrawExtent;
+  placement: Camera;
+  view_projection: Matrix4;
+  width, height: int;
+  progress, clearance: float;
+  travel: Option[float];
+  marker: var Marker;
 ): bool =
   ## Build plane's marker circle, concentric with disc actually drawn.
   ##   Reads `anchor_override` as `tessellate.addPlane` does, so marker is concentric
@@ -1150,13 +1226,13 @@ proc markerLoop(
   if anchor.isNone or axes.isNone: return
 
   let
-    radius_loop = progress*radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
+    radius_loop = progress * radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
     positions = positionsMarkerLoop(anchor.get, axes.get, radius_loop)
   var
     ring: array[SEGMENTS_MARKER_LOOP, ScreenPosition]
     are_in_front: array[SEGMENTS_MARKER_LOOP, bool]
     count_in_front = 0
-  for i in 0 ..< SEGMENTS_MARKER_LOOP:
+  for i in 0..<SEGMENTS_MARKER_LOOP:
     ring[i] = projectToScreen(view_projection, width, height, positions[i])
     are_in_front[i] = ring[i].isInFront
     if are_in_front[i]: inc count_in_front
@@ -1171,12 +1247,12 @@ proc markerLoop(
   #   across view.
   var start = 0
   if not marker.is_closed:
-    for i in 0 ..< SEGMENTS_MARKER_LOOP:
+    for i in 0..<SEGMENTS_MARKER_LOOP:
       let before = (i + SEGMENTS_MARKER_LOOP - 1) mod SEGMENTS_MARKER_LOOP
       if are_in_front[i] and not are_in_front[before]:
         start = i
         break
-  for step in 0 ..< SEGMENTS_MARKER_LOOP:
+  for step in 0..<SEGMENTS_MARKER_LOOP:
     let i = (start + step) mod SEGMENTS_MARKER_LOOP
     if not are_in_front[i]: break
     marker.points[marker.count_point] = ring[i]
@@ -1187,8 +1263,12 @@ proc markerLoop(
   #   Sampled top only where true top is cut away.
   let
     top = topmostOnCircle(
-      anchor.get, radius_loop*axes.get.axis_first, radius_loop*axes.get.axis_second,
-      view_projection, width, height,
+      anchor.get,
+      radius_loop * axes.get.axis_first,
+      radius_loop * axes.get.axis_second,
+      view_projection,
+      width,
+      height,
     )
     centre = projectToScreen(view_projection, width, height, anchor.get)
   if top.isSome and centre.isInFront: marker.placeLabelAbove(centre.x, top.get.y)
@@ -1196,13 +1276,13 @@ proc markerLoop(
   if travel.isSome:
     # Anchor at circle's angle zero, walked back through cut; see `originAfterCut`.
     let track = trackAlong(
-      marker.points, marker.count_point, marker.is_closed,
+      marker.points,
+      marker.count_point,
+      marker.is_closed,
       originAfterCut(SEGMENTS_MARKER_LOOP, start, marker.count_point),
     )
     marker.lap = track.lap
-    marker.addPulse(
-      marker.points, marker.count_point, marker.is_closed, track, travel.get
-    )
+    marker.addPulse(marker.points, marker.count_point, marker.is_closed, track, travel.get)
   true
 
 
@@ -1216,13 +1296,11 @@ func angleMarkerBands*(scale: DrawExtent; progress, clearance: float): float =
   ##     Two kinds of line wear same marker; only arrival differs.
   ##   Angle rather than screen offset because horizon geometry is placed by direction:
   ##   `radiansPerPixel` converts pixel gap, holding under any camera.
-  let angle_closed = (OFFSET_MARKER_RAIL + clearance)*radiansPerPixel(scale)
-  angle_closed + (1.0 - clamp(progress, 0.0, 1.0))*(ANGLE_MARKER_BANDS_OPEN - angle_closed)
+  let angle_closed = (OFFSET_MARKER_RAIL + clearance) * radiansPerPixel(scale)
+  angle_closed + (1.0 - clamp(progress, 0.0, 1.0)) * (ANGLE_MARKER_BANDS_OPEN - angle_closed)
 
 
-func runShownLongest*(
-  ring: openArray[ScreenPosition], are_shown: openArray[bool]
-): (int, int) =
+func runShownLongest*(ring: openArray[ScreenPosition], are_shown: openArray[bool]): (int, int) =
   ## Find longest unbroken stretch of sampled ring that is shown.
   ##   As index it starts at and how many samples it runs for.
   ##   Cyclic, so stretch straddling sample zero counts as one.
@@ -1241,17 +1319,17 @@ func runShownLongest*(
   var
     found_stretch = false
     length_best = 0.0
-  for start in 0 ..< count:
+  for start in 0..<count:
     # Find each stretch once, from sample whose predecessor was cut.
-    if not are_shown[start] or are_shown[(start + count - 1) mod count]: continue
+    if not are_shown[start] or are_shown[(start+count-1) mod count]: continue
     var
       length = 0.0
       taken = 0
-    while taken < count and are_shown[(start + taken) mod count]:
+    while taken < count and are_shown[(start+taken) mod count]:
       if taken > 0:
         let
-          at = ring[(start + taken) mod count]
-          before = ring[(start + taken - 1) mod count]
+          at = ring[(start+taken) mod count]
+          before = ring[(start+taken-1) mod count]
         length += hypot(at.x - before.x, at.y - before.y)
       inc taken
     if not found_stretch or length > length_best:
@@ -1261,8 +1339,13 @@ func runShownLongest*(
 
 
 proc markerBands(
-  geometry: Multivector; scale: DrawExtent; view_projection: Matrix4; width, height: int;
-  progress, clearance: float; travel: Option[float]; marker: var Marker
+  geometry: Multivector;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  progress, clearance: float;
+  travel: Option[float];
+  marker: var Marker;
 ): bool =
   ## Build horizon line's pair of bands: two circles on sky, one each side of great circle.
   ##   Each band is *small* circle of same sphere, centre stepped along great circle's
@@ -1283,29 +1366,34 @@ proc markerBands(
   let
     (axis_first, axis_second) = axes.get
     angle = angleMarkerBands(scale, progress, clearance)
-    radius = scale.radiusHorizon*cos(angle)
-    offset = scale.radiusHorizon*sin(angle)
+    radius = scale.radiusHorizon * cos(angle)
+    offset = scale.radiusHorizon * sin(angle)
 
   marker = Marker(kind: MarkerKind.Bands)
   # Place each band's centre through algebra, eye stepped along normal, and ring off table.
   #   Two rings of multivector sums per frame was cost before.
   let
-    normal_point = toMultivector(normal.get)
-    arm_first = radius*axis_first
-    arm_second = radius*axis_second
-  for side in 0 .. 1:
+    normal_point = normal.get.toMultivector
+    arm_first = radius * axis_first
+    arm_second = radius * axis_second
+  for side in 0..1:
     let centre = pointFrom(add(
       scale.eye_point, wedge((if side == 0: offset else: -offset), normal_point)
     ))
     var
       ring: array[SEGMENTS_MARKER_BANDS, ScreenPosition]
       are_shown: array[SEGMENTS_MARKER_BANDS, bool]
-    for i in 0 ..< SEGMENTS_MARKER_BANDS:
+    for i in 0..<SEGMENTS_MARKER_BANDS:
       ring[i] = projectToScreen(
-        view_projection, width, height,
+        view_projection,
+        width,
+        height,
         onCircleAt(
-          centre, arm_first, arm_second,
-          UNIT_RING_BANDS[i].cos_angle, UNIT_RING_BANDS[i].sin_angle,
+          centre,
+          arm_first,
+          arm_second,
+          UNIT_RING_BANDS[i].cos_angle,
+          UNIT_RING_BANDS[i].sin_angle,
         ),
       )
       are_shown[i] = ring[i].isWithinView(width, height)
@@ -1325,7 +1413,7 @@ proc markerBands(
     if not marker.are_closed_band[side]:
       placeCrossing(start, (start + SEGMENTS_MARKER_BANDS - 1) mod SEGMENTS_MARKER_BANDS)
     let count_before = marker.counts_band[side]
-    for step in 0 ..< count_shown:
+    for step in 0..<count_shown:
       let i = (start + step) mod SEGMENTS_MARKER_BANDS
       marker.points_band[side][marker.counts_band[side]] = ring[i]
       inc marker.counts_band[side]
@@ -1338,16 +1426,21 @@ proc markerBands(
       # Anchor each band at own angle zero, fixed from geometry alone.
       #   Bands stay in step through cut; lap against first band that produced one.
       let track = trackAlong(
-        marker.points_band[side], marker.counts_band[side], marker.are_closed_band[side],
+        marker.points_band[side],
+        marker.counts_band[side],
+        marker.are_closed_band[side],
         originAfterCut(SEGMENTS_MARKER_BANDS, start, count_shown, count_before),
       )
       if marker.lap <= 0.0: marker.lap = track.lap
       marker.addPulse(
-        marker.points_band[side], marker.counts_band[side],
-        marker.are_closed_band[side], track, travel.get,
+        marker.points_band[side],
+        marker.counts_band[side],
+        marker.are_closed_band[side],
+        track,
+        travel.get,
       )
   if marker.counts_band[0] == 0 and marker.counts_band[1] == 0: return
-  for side in 0 .. 1:
+  for side in 0..1:
     marker.placeLabelAboveLeftmost(marker.points_band[side], marker.counts_band[side])
   # Pushed off its band and `MARGIN_LABEL_HORIZON` in from edge, by rule rails' label is
   #   pushed off its rail; see `is_label_beside`. Not centred on crossing itself, which
@@ -1365,9 +1458,9 @@ func radiusToEdge(half_width, half_height, angle: float): float =
   ##   Ray straight along axis never reaches pair parallel to it, so that term is dropped
   ##   rather than divided by zero.
   let (across, down) = (abs(cos(angle)), abs(sin(angle)))
-  if across <= 0.0: return half_height/down
-  if down <= 0.0: return half_width/across
-  min(half_width/across, half_height/down)
+  if across <= 0.0: return half_height / down
+  if down <= 0.0: return half_width / across
+  min(half_width / across, half_height / down)
 
 
 func markerFrame(width, height: int; progress, clearance: float; marker: var Marker): bool =
@@ -1387,29 +1480,31 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
   ##   None only for viewport too small to hold inset.
   let
     inset = GAP_MARKER - clearance
-    (centre_x, centre_y) = (0.5*float(width), 0.5*float(height))
+    (centre_x, centre_y) = (0.5 * float(width), 0.5 * float(height))
     (half_width, half_height) = (centre_x - inset, centre_y - inset)
   if half_width <= 0.0 or half_height <= 0.0: return
   let
-    reach = clamp(progress, 0.0, 1.0)*hypot(half_width, half_height)
+    reach = clamp(progress, 0.0, 1.0) * hypot(half_width, half_height)
     turn_corner = arctan2(half_height, half_width)
     # Ascending; corners are only directions even sampling cannot be trusted to land on.
     turns_corner = [
-      turn_corner, PI - turn_corner, PI + turn_corner, 2.0*PI - turn_corner
+      turn_corner, PI - turn_corner, PI + turn_corner, 2.0 * PI - turn_corner
     ]
   marker = Marker(kind: MarkerKind.Frame)
+
   template emit(angle: float) =
     let radius = min(reach, radiusToEdge(half_width, half_height, angle))
     marker.points_frame[marker.count_frame] = ScreenPosition(
-      x: centre_x + radius*cos(angle),
-      y: centre_y + radius*sin(angle),
+      x: centre_x + radius * cos(angle),
+      y: centre_y + radius * sin(angle),
       depth: 1.0,
     )
     inc marker.count_frame
+
   # Merge two ascending runs of angles into one, so boundary strokes as simple closed outline.
   var next_corner = 0
-  for step in 0 ..< SEGMENTS_MARKER_FRAME:
-    let angle = (2.0*PI*float(step))/float(SEGMENTS_MARKER_FRAME)
+  for step in 0..<SEGMENTS_MARKER_FRAME:
+    let angle = (2.0 * PI * float(step)) / float(SEGMENTS_MARKER_FRAME)
     while next_corner < CORNERS_MARKER_FRAME and turns_corner[next_corner] <= angle:
       # Skip corner landing exactly on step, which step itself emits.
       if turns_corner[next_corner] < angle: emit(turns_corner[next_corner])
@@ -1428,7 +1523,7 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
   (marker.label_away_x, marker.label_away_y) = (1.0, 0.0)
   marker.label_at = ScreenPosition(
     x: inset + MARGIN_LABEL_HORIZON,
-    y: float(height) - MARGIN_LABEL_FOOT - MARGIN_LABEL_HORIZON - 0.5*HEIGHT_MARKER_LABEL,
+    y: float(height) - MARGIN_LABEL_FOOT - MARGIN_LABEL_HORIZON - 0.5 * HEIGHT_MARKER_LABEL,
     depth: 1.0,
   )
   true
@@ -1444,8 +1539,7 @@ var
     ##   gated on its reader, never on build flag (Art. VII.4). Closed, each shaping pays one
     ##   load and one branch.
     ##   Driven check opens it through bridge's `nimSetCountingShaped`; desktop never does.
-  COUNT_SHAPED = 0
-    ## Count markers shaped since `setCountingShaped` last opened gate.
+  COUNT_SHAPED = 0  ## Count markers shaped since `setCountingShaped` last opened gate.
 
 
 proc setCountingShaped*(is_counting: bool) =
@@ -1464,10 +1558,18 @@ proc countShaped*(): int = COUNT_SHAPED
 #[ Marker Dispatch ]#
 
 proc markerFor*(
-  geometry: Multivector; anchor_override: Option[Position]; radius: float;
-  scale: DrawExtent; placement: Camera; view_projection: Matrix4; width, height: int;
-  marker: var Marker; progress: float = 1.0;
-  is_touch: bool = false; travel: Option[float] = none(float); swell: float = 0.0
+  geometry: Multivector;
+  anchor_override: Option[Position];
+  radius: float;
+  scale: DrawExtent;
+  placement: Camera;
+  view_projection: Matrix4;
+  width, height: int;
+  marker: var Marker;
+  progress = 1.0;
+  is_touch = false;
+  travel = none(float);
+  swell = 0.0;
 ): bool =
   ## Kind marker for one object, dispatching on its grade and whether it lies in horizon.
   ##   Fills caller's `marker` and reports whether one was shaped, not `Option[Marker]`.
@@ -1500,24 +1602,45 @@ proc markerFor*(
   # Ring horizon point about fixed star `anchorFor` places, so it needs no branch.
   #   Two below are drawn as great circle and whole sky with no anchor.
   of Kind.Point:
-    markerRing(
-      geometry, radius, scale, view_projection, width, height, progress, clearance, marker
-    )
+    markerRing(geometry, radius, scale, view_projection, width, height, progress, clearance, marker)
   of Kind.Line:
     if is_horizon:
       markerBands(
-        geometry, scale, view_projection, width, height, progress, clearance, travel,
+        geometry,
+        scale,
+        view_projection,
+        width,
+        height,
+        progress,
+        clearance,
+        travel,
         marker,
       )
     else:
       markerRails(
-        geometry, scale, view_projection, width, height, progress, clearance, travel,
+        geometry,
+        scale,
+        view_projection,
+        width,
+        height,
+        progress,
+        clearance,
+        travel,
         marker,
       )
   of Kind.Plane:
     if is_horizon: markerFrame(width, height, progress, clearance, marker)
     else:
       markerLoop(
-        geometry, anchor_override, scale, placement, view_projection, width, height,
-        progress, clearance, travel, marker,
+        geometry,
+        anchor_override,
+        scale,
+        placement,
+        view_projection,
+        width,
+        height,
+        progress,
+        clearance,
+        travel,
+        marker,
       )

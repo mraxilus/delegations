@@ -29,7 +29,7 @@ export
   motors, neighbourhood, objects, orrery, picking, scene, selection, shown, starfield,
   storyboard, tessellate, wording
 when not defined(js):
-  export endians, arena, gif, image
+  export arena, endians, gif, image
 
 randomize(0)
 
@@ -51,30 +51,30 @@ const
 let ORIGIN* = Position(x: 0, y: 0, z: 0)
 
 
-func stanceAround*(pivot: Position; distance: float; out_to: Direction): CameraStance =
+func stanceAround*(pivot: Position, distance: float, out_to: Direction): CameraStance =
   ## Build stance facing `pivot` from `distance` away, along `out_to` from pivot to eye.
   ##   What case names: where view looks, how far off, and from which side. Level, as
   ##   `camera.stanceFacing` is; `out_to` need not be unit.
-  stanceFacing(pivot + (distance/norm(out_to))*out_to, pivot)
+  stanceFacing(pivot + (distance / norm(out_to)) * out_to, pivot)
 
 
 proc randomOutTo*(): Direction =
   ## Draw direction from pivot out to eye, from every side, never too short to name one.
   while result.norm < 0.1:
-    result = Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
+    result = Direction(x: rand(-1.0..1.0), y: rand(-1.0..1.0), z: rand(-1.0..1.0))
 
 
-func cameraAround*(pivot: Position; distance: float; out_to: Direction): Camera =
+func cameraAround*(pivot: Position, distance: float, out_to: Direction): Camera =
   ## Build camera at `stanceAround`, through 45 degree lens.
-  initCamera(eye = pivot + (distance/norm(out_to))*out_to, pivot = pivot)
+  initCamera(eye = pivot + (distance / norm(out_to)) * out_to, pivot = pivot)
 
 
 proc randomPosition*(): Position =
   ## Draw position from cube reaching `EXTENT_SAMPLE` out from origin along every axis.
   Position(
-    x: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),
-    y: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),
-    z: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),
+    x: rand(-EXTENT_SAMPLE..EXTENT_SAMPLE),
+    y: rand(-EXTENT_SAMPLE..EXTENT_SAMPLE),
+    z: rand(-EXTENT_SAMPLE..EXTENT_SAMPLE),
   )
 
 var
@@ -82,10 +82,10 @@ var
   POINTS*: array[SAMPLES, Multivector]
   LINES*: array[SAMPLES, Multivector]
   PLANES*: array[SAMPLES, Multivector]
-for i in 0 ..< SAMPLES:
+for i in 0..<SAMPLES:
   PLACES[i] = randomPosition()
-  POINTS[i] = toMultivector(PLACES[i])
-for i in 0 ..< SAMPLES:
+  POINTS[i] = PLACES[i].toMultivector
+for i in 0..<SAMPLES:
   let (j, k) = ((i + 1) mod SAMPLES, (i + 2) mod SAMPLES)
   LINES[i] = POINTS[i] ∧ POINTS[j]
   PLANES[i] = POINTS[i] ∧ POINTS[j] ∧ POINTS[k]
@@ -100,13 +100,13 @@ func generalPlace*(index: int): Position =
   ##   Read off moment curve (t, t², t³), where that is theorem rather than hope:
   ##   4x4 matrix of (1, t, t², t³) over four distinct parameters is Vandermonde and
   ##   so never singular. Scaled to extent rest of suite works at.
-  let t = -1.1 + 0.2*float(index)
-  Position(x: 4.0*t, y: 4.0*t*t, z: 4.0*t*t*t)
+  let t = -1.1 + 0.2 * float(index)
+  Position(x: 4.0 * t, y: 4.0 * t * t, z: 4.0 * t * t * t)
 
 var
   GENERAL_POINTS*: array[COUNT_GENERAL, Multivector]
-  GENERAL_FIRST*: array[3, Multivector] ## Point, line, plane, in grade order.
-  GENERAL_SECOND*: array[3, Multivector] ## Second such triple, sharing no point with
+  GENERAL_FIRST*: array[3, Multivector]  ## Point, line, plane, in grade order.
+  GENERAL_SECOND*: array[3, Multivector]  ## Second such triple, sharing no point with
     ## first -- so test walking every ordered pair of shapes crosses two *different*
     ## objects even on diagonal.
     ##   Kept separate from `POINTS`/`LINES`/`PLANES` above, which are random and whose
@@ -115,8 +115,8 @@ var
     ## proposal table did exactly that -- crossed point with line running through it,
     ## and read zeros that came from fixture rather than from algebra. Two
     ## families in general position are what make zero here mean something.
-for i in 0 ..< COUNT_GENERAL:
-  GENERAL_POINTS[i] = toMultivector(generalPlace(i))
+for i in 0..<COUNT_GENERAL:
+  GENERAL_POINTS[i] = generalPlace(i).toMultivector
 GENERAL_FIRST = [
   GENERAL_POINTS[0],
   GENERAL_POINTS[1] ∧ GENERAL_POINTS[2],
@@ -157,8 +157,8 @@ func `=~`*(a, b: CameraStance): bool =
   ##   Pivot is read off sight, so stance slid onto pivot it stands at moves by rounding.
   let (m, n) = (a.motor, b.motor)
   m.turn_x =~ n.turn_x and m.turn_y =~ n.turn_y and m.turn_z =~ n.turn_z and
-    m.slide_x =~ n.slide_x and m.slide_y =~ n.slide_y and m.slide_z =~ n.slide_z and
-    m.scalar =~ n.scalar and m.antiscalar =~ n.antiscalar and a.distance =~ b.distance
+      m.slide_x =~ n.slide_x and m.slide_y =~ n.slide_y and m.slide_z =~ n.slide_z and
+      m.scalar =~ n.scalar and m.antiscalar =~ n.antiscalar and a.distance =~ b.distance
 
 
 func isNear*(a, b: float): bool =
@@ -179,8 +179,8 @@ func toPosition*(vertex: Vertex): Position =
 func transform*(matrix: Matrix4, p: Position, weight: float): array[4, float] =
   ## Apply transform to homogeneous point, so matrices can be checked by what they do.
   let coordinates = [p.x, p.y, p.z, weight]
-  for row in 0 .. 3:
-    for column in 0 .. 3:
+  for row in 0..3:
+    for column in 0..3:
       result[row] += float(matrix.at(row, column)) * coordinates[column]
 
 
@@ -192,4 +192,4 @@ proc formatMultivectorString*(m: Multivector): string =
     cursor = 0
   formatMultivector(m, buffer, cursor)
   finishChars(buffer, cursor)
-  toText(buffer)
+  buffer.toText

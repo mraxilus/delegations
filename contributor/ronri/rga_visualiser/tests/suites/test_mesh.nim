@@ -5,29 +5,33 @@
 import ./fixtures
 
 
+
 suite "Mesh":
   const
-    vertices_ribbon = 6 ## Vertices one ribbon is wound from: two triangles over four.
+    vertices_ribbon = 6  ## Vertices one ribbon is wound from: two triangles over four.
       ## corners.
       ##   Stated here rather than imported so that change to how `addSegment` winds quad has to be
       ##   noticed here too.
-    height_scale_test = 900 ## Framebuffer height `SCALE_TEST` measures its widths in.
+    height_scale_test = 900  ## Framebuffer height `SCALE_TEST` measures its widths in.
 
   let scale_test = block:
     let eye = Position(x: 5, y: -3, z: 7)
     # Looking back at origin, which is where every fixture below is built around; screen
     #   axes about that sight axis as camera's frame lays them, right level and up over it.
     let
-      forward = direction(toMultivector(eye) ∧ toMultivector(ORIGIN)).get
+      forward = direction(eye.toMultivector ∧ ORIGIN.toMultivector).get
       level = cross(forward, Direction(x: 0, y: 0, z: 1))
-      right = (1.0/norm(level))*level
+      right = (1.0 / norm(level)) * level
     # `algebraFilled`, as every hand-built extent must be, or multivector twins.
     #   tessellation reads are zero and it silently draws nothing.
     algebraFilled(DrawExtent(scale: DrawScale(
       extent_furniture: 30.0,
-      eye: eye, radius_horizon: 50.0,
-      forward: forward, axis_right: right, axis_up: cross(right, forward),
-      tangent_half_view: tan(0.5*degToRad(45.0)),
+      eye: eye,
+      radius_horizon: 50.0,
+      forward: forward,
+      axis_right: right,
+      axis_up: cross(right, forward),
+      tangent_half_view: tan(0.5 * degToRad(45.0)),
       height_pixels: height_scale_test,
       depth_near: 0.1,
     )))
@@ -41,6 +45,7 @@ suite "Mesh":
     ##   `isNear`'s tolerance is calibrated for coordinates near same scale every
     ##   other geometry test in this suite uses, not for additional rounding much
     ##   larger radius would carry through unrelated to anything this suite tests here.
+
 
   test "an object's drawn centre is its own anchor, and only a plane's disc moves":
     # One reader everything that has to meet object on screen goes through:
@@ -65,17 +70,17 @@ suite "Mesh":
     ##   Refusal is six coincident vertices, for segment wholly behind eye or one eye
     ##   stands on.
     corners[0].x != corners[1].x or corners[0].y != corners[1].y or
-      corners[0].z != corners[1].z
+        corners[0].z != corners[1].z
 
-  proc isInsideGuard(place: Position; scale: DrawExtent = scale_test): bool =
+  proc isInsideGuard(place: Position, scale: DrawExtent = scale_test): bool =
     ## Say whether `place` stands inside guard pyramid ribbons are cut to.
     ##   See `mesh.FACTOR_GUARD`; four planes through eye, kept side positive.
     let
-      slope = FACTOR_GUARD*scale.tangentHalfView
+      slope = FACTOR_GUARD * scale.tangentHalfView
       offset = place - scale.eye
     for normal in [
-      slope*scale.forward + -scale.axisRight, slope*scale.forward + scale.axisRight,
-      slope*scale.forward + -scale.axisUp, slope*scale.forward + scale.axisUp,
+      slope * scale.forward + -scale.axisRight, slope * scale.forward + scale.axisRight,
+      slope * scale.forward + -scale.axisUp, slope * scale.forward + scale.axisUp,
     ]:
       if dot(offset, normal) < 0.0: return false
     true
@@ -84,13 +89,15 @@ suite "Mesh":
     ## Recover segment `segment`-th piece of `index`-th ring was built around.
     ##   By `ribbonEnds`'s own midpoint argument, through `expandRingVertex`, reference of
     ##   shader that widens it, so what is read back is what is drawn.
+
     proc midpoint(a, b: Vertex): Position =
       Position(
-        x: 0.5*(float(a.x) + float(b.x)),
-        y: 0.5*(float(a.y) + float(b.y)),
-        z: 0.5*(float(a.z) + float(b.z)),
+        x: 0.5 * (float(a.x) + float(b.x)),
+        y: 0.5 * (float(a.y) + float(b.y)),
+        z: 0.5 * (float(a.z) + float(b.z)),
       )
-    let corners = expandRingVertex(meshes.rings.records[index], segment, toScale(scale_test))
+
+    let corners = expandRingVertex(meshes.rings.records[index], segment, scale_test.toScale)
     (
       midpoint(corners[0], corners[5]),
       midpoint(corners[1], corners[2]),
@@ -105,15 +112,17 @@ suite "Mesh":
     ##   is endpoint again.
     ##   Also property being asserted whenever this is used to check where line was
     ##   drawn: ribbon not centred on its own line would fail every one of those checks.
+
     proc midpoint(a, b: Vertex): Position =
       Position(
-        x: 0.5*(float(a.x) + float(b.x)),
-        y: 0.5*(float(a.y) + float(b.y)),
-        z: 0.5*(float(a.z) + float(b.z)),
+        x: 0.5 * (float(a.x) + float(b.x)),
+        y: 0.5 * (float(a.y) + float(b.y)),
+        z: 0.5 * (float(a.z) + float(b.z)),
       )
+
     # Read through `expandRibbon`, reference of shader that does widening.
     #   What is read back is then clipped ends, as expanded storage holds them.
-    let corners = expandRibbon(meshes.ribbons.records[index], toScale(scale))
+    let corners = expandRibbon(meshes.ribbons.records[index], scale.toScale)
     (
       midpoint(corners[0], corners[5]),
       midpoint(corners[1], corners[2]),
@@ -124,30 +133,35 @@ suite "Mesh":
     ## Draw direction uniformly over sphere, by rejection from cube.
     while true:
       let candidate = Direction(
-        x: generator.rand(-1.0 .. 1.0), y: generator.rand(-1.0 .. 1.0),
-        z: generator.rand(-1.0 .. 1.0),
+        x: generator.rand(-1.0..1.0),
+        y: generator.rand(-1.0..1.0),
+        z: generator.rand(-1.0..1.0),
       )
       let length = norm(candidate)
-      if length > 0.1 and length <= 1.0: return (1.0/length)*candidate
+      if length > 0.1 and length <= 1.0: return (1.0 / length) * candidate
 
 
   func turnedOf(box: DiscBox, spot: (float, float)): (float, float) =
     ## Read view fraction `spot` in turned fractions `box` is stated in, undoing its steps.
-    let determinant = box.step_across[0]*box.step_up[1] - box.step_up[0]*box.step_across[1]
+    let determinant = box.step_across[0] * box.step_up[1] - box.step_up[0] * box.step_across[1]
     (
-      (spot[0]*box.step_up[1] - spot[1]*box.step_up[0])/determinant,
-      (box.step_across[0]*spot[1] - box.step_across[1]*spot[0])/determinant,
+      (spot[0] * box.step_up[1] - spot[1] * box.step_up[0]) / determinant,
+      (box.step_across[0] * spot[1] - box.step_across[1] * spot[0]) / determinant,
     )
 
   setup:
     MESHES.clearMeshes
 
+
   test "clearing drops every vertex and every record":
     MESHES.addMarker(ORIGIN, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
     MESHES.addSegment(ORIGIN, PLACES[0], Ink.Jade.colour, WIDTH_LINE_OBJECT)
     MESHES.addDisc(
-      ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
-      1.0, Ink.Olive.colour,
+      ORIGIN,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      1.0,
+      Ink.Olive.colour,
     )
     MESHES.addDome(ORIGIN, 5.0, Ink.Cobalt.colour)
     MESHES.clearMeshes
@@ -156,6 +170,7 @@ suite "Mesh":
     check MESHES.discs.count == 0
     check MESHES.domes.count == 0
     check MESHES.veils.count == 0
+
 
   test "every record is stored about the origin its frame was cleared with":
     # Five writers, one rule: subtract `origin` at float32 write, so what camera looks at.
@@ -172,13 +187,20 @@ suite "Mesh":
     check float(ribbon.tail_x) == 0.25 and float(ribbon.head_x) == 1.25
     check float(ribbon.tail_z) == -0.125 and float(ribbon.head_z) == -0.125
     MESHES.addDisc(
-      at, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0), 1.0,
+      at,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      1.0,
       Ink.Rose.colour,
     )
     check float(MESHES.discs.records[0].centre_y) == 0.5
     MESHES.addRing(
-      at, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0), 1.0,
-      Ink.Rose.colour, 1.0,
+      at,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      1.0,
+      Ink.Rose.colour,
+      1.0,
     )
     check float(MESHES.rings.records[0].centre_z) == -0.125
     MESHES.addDome(at, 5.0, Ink.Rose.colour)
@@ -189,11 +211,11 @@ suite "Mesh":
 
 
   test "point becomes one marker where it stands":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       MESHES.clearMeshes
       check MESHES.addObject(SCRATCH, POINTS[i], Ink.Rose.colour, scale_test) == Outcome.Finite
       check MESHES.points.count_vertices == 1
-      check 6*MESHES.ribbons.count == 0
+      check 6 * MESHES.ribbons.count == 0
       check isNear(MESHES.points.vertices[0].toPosition, PLACES[i])
 
 
@@ -201,7 +223,7 @@ suite "Mesh":
     for line in LINES:
       MESHES.clearMeshes
       check MESHES.addObject(SCRATCH, line, Ink.Jade.colour, scale_test) == Outcome.Finite
-      check 6*MESHES.ribbons.count == 2*vertices_ribbon
+      check 6 * MESHES.ribbons.count == 2 * vertices_ribbon
       # No point marker: line's own segment already passes through its support, so.
       #   marking that point again would only add stray dot segment does not need.
       check MESHES.points.count_vertices == 0
@@ -219,8 +241,8 @@ suite "Mesh":
       #   depth is meaningless behind eye (see `addSegment`). So what is asserted is
       #   direction each half runs in, plus that its end stands in front.
       for (head, vanishing) in [
-        (head_first, scale_test.eye + scale_test.radiusHorizon*axis.get),
-        (head_second, scale_test.eye - scale_test.radiusHorizon*axis.get),
+        (head_first, scale_test.eye + scale_test.radiusHorizon * axis.get),
+        (head_second, scale_test.eye - scale_test.radiusHorizon * axis.get),
       ]:
         let
           toward = normalize(head - anchor.get)
@@ -234,7 +256,7 @@ suite "Mesh":
         check abs(toward.get.z - reach.get.z) < 1.0e-4
         check dot(head - scale_test.eye, scale_test.forward) >= scale_test.depthNear - 1e-6
         # And it is either vanishing point itself or short of it, never past.
-        check norm(head - anchor.get) <= norm(vanishing - anchor.get)*(1.0 + 1e-5)
+        check norm(head - anchor.get) <= norm(vanishing - anchor.get) * (1.0 + 1e-5)
 
 
   test "a drawn line projects onto the true line, however far its ends leave it":
@@ -249,22 +271,22 @@ suite "Mesh":
       radius = radiusHorizonFor(camera.distanceFar(0.0))
     proc screen(p: Position): (float, float) =
       let v = p - eye
-      (dot(v, frame_camera.axis_right)/dot(v, frame_camera.forward),
-       dot(v, frame_camera.axis_up)/dot(v, frame_camera.forward))
+      (dot(v, frame_camera.axis_right) / dot(v, frame_camera.forward),
+       dot(v, frame_camera.axis_up) / dot(v, frame_camera.forward))
     for line in LINES:
       let (anchor, axis) = (positionAnchor(line).get, direction(line).get)
       let
         (ax, ay) = screen(anchor)
-        (bx, by) = screen(anchor + 5.0*axis) # Second point on TRUE line.
+        (bx, by) = screen(anchor + 5.0 * axis)  # Second point on TRUE line.
         length = hypot(bx - ax, by - ay)
-        (ux, uy) = ((bx - ax)/length, (by - ay)/length)
+        (ux, uy) = ((bx - ax) / length, (by - ay) / length)
       for reach in [radius, -radius]:
-        let far_end = eye + reach*axis
+        let far_end = eye + reach * axis
         # Reject any end that falls behind eye, where projection is meaningless.
         if dot(far_end - eye, frame_camera.forward) <= camera.distanceNear: continue
         let (fx, fy) = screen(far_end)
         # Perpendicular screen distance of drawn end from true line's own ray.
-        check abs((fx - ax)*uy - (fy - ay)*ux) < 1e-9
+        check abs((fx - ax) * uy - (fy - ay) * ux) < 1e-9
 
 
   test "a line's near crossing holds its place with the camera close on the line":
@@ -278,8 +300,7 @@ suite "Mesh":
     #   Holds reference alone; shaders carry same arithmetic and are read by driven check
     #   `driveLineCrossing`.
     const
-      reach_vanishing = 530_000.0
-        ## Reach orrery draws line to, its farthest star's own distance.
+      reach_vanishing = 530_000.0  ## Reach orrery draws line to, its farthest star's own distance.
       distance_close = 1.0e-7
         ## Orbit distance of close-up on moon, well over `camera.DISTANCE_LIMIT_NEAR`.
     let
@@ -289,21 +310,24 @@ suite "Mesh":
       along = Direction(x: 0.6, y: 0.8, z: 0.0)
       # Line runs through what camera looks at, and its anchor is unit out along it,
       #   which is where support point lands in orrery.
-      through = eye_close + distance_close*forward_close
+      through = eye_close + distance_close * forward_close
       scale_close = algebraFilled(DrawExtent(scale: DrawScale(
         extent_furniture: 30.0,
-        eye: eye_close, radius_horizon: reach_vanishing,
+        eye: eye_close,
+        radius_horizon: reach_vanishing,
         forward: forward_close,
-        tangent_half_view: tan(0.5*degToRad(45.0)),
+        tangent_half_view: tan(0.5 * degToRad(45.0)),
         height_pixels: height_scale_test,
-        depth_near: distance_close*FACTOR_CLIP_NEAR,
+        depth_near: distance_close * FACTOR_CLIP_NEAR,
       )))
     MESHES.clearMeshes
     MESHES.addSegment(
-      through + 1.0*along, eye_close - reach_vanishing*along, Ink.Jade.colour,
+      through + 1.0 * along,
+      eye_close - reach_vanishing * along,
+      Ink.Jade.colour,
       WIDTH_LINE_OBJECT,
     )
-    let corners = expandRibbon(MESHES.ribbons.records[0], toScale(scale_close))
+    let corners = expandRibbon(MESHES.ribbons.records[0], scale_close.toScale)
     check isRibbonDrawn(corners)
     # Crossing as record itself stores its ends, stepped from end it stands nearer:
     #   what is under test is which end is stepped from, not what float32 storage kept.
@@ -315,11 +339,11 @@ suite "Mesh":
         x: float(record.head_x), y: float(record.head_y), z: float(record.head_z))
       depth_tail = dot(stored_tail - eye_close, forward_close)
       depth_head = dot(stored_head - eye_close, forward_close)
-      toward_head = (scale_close.depthNear - depth_tail)/(depth_head - depth_tail)
-      crossing = stored_tail + toward_head*(stored_head - stored_tail)
+      toward_head = (scale_close.depthNear - depth_tail) / (depth_head - depth_tail)
+      crossing = stored_tail + toward_head * (stored_head - stored_tail)
       (_, far_drawn) = ribbonEnds(MESHES, 0, scale_close)
     # Within one pixel of where it stands, measured at plane it lands on.
-    check norm(far_drawn - crossing) <= worldPerPixelAt(far_drawn, toScale(scale_close))
+    check norm(far_drawn - crossing) <= worldPerPixelAt(far_drawn, scale_close.toScale)
 
 
   test "a ribbon is cut to the guard pyramid just where the algebra's planes cut it":
@@ -329,40 +353,43 @@ suite "Mesh":
     #   is held here to meet of segment with plane, `clipToEyeSide` chained over near plane
     #   and four guard planes. 400 segments, long enough to leave pyramid on every side.
     let
-      scale = toScale(scale_test)
-      slope = FACTOR_GUARD*scale.tangentHalfView
-      eye = toMultivector(scale.eye)
+      scale = scale_test.toScale
+      slope = FACTOR_GUARD * scale.tangentHalfView
+      eye = scale.eye.toMultivector
       planes = [
         planeThrough(
-          add(eye, wedge(scale.depthNear, toMultivector(scale.forward))),
-          toMultivector(scale.forward),
+          add(eye, wedge(scale.depthNear, scale.forward.toMultivector)),
+          scale.forward.toMultivector,
         ),
-        planeThrough(eye, toMultivector(slope*scale.forward + -scale.axis_right)),
-        planeThrough(eye, toMultivector(slope*scale.forward + scale.axis_right)),
-        planeThrough(eye, toMultivector(slope*scale.forward + -scale.axis_up)),
-        planeThrough(eye, toMultivector(slope*scale.forward + scale.axis_up)),
+        planeThrough(eye, toMultivector(slope * scale.forward + -scale.axis_right)),
+        planeThrough(eye, toMultivector(slope * scale.forward + scale.axis_right)),
+        planeThrough(eye, toMultivector(slope * scale.forward + -scale.axis_up)),
+        planeThrough(eye, toMultivector(slope * scale.forward + scale.axis_up)),
       ]
     var seed = 29.0
     proc pseudo(): float =
-      seed = (seed*97.31 + 33.77) mod 41.0
-      (seed - 20.5)/20.5
+      seed = (seed * 97.31 + 33.77) mod 41.0
+      (seed - 20.5) / 20.5
     const (count_trials, count_each_least) = (400, 20)
       ## Segments drawn, and least of them that must reach each case: cut and gone.
       ##   400 seeded segments within 40 units of eye reach both cases dozens of times.
     var (count_cut, count_gone) = (0, 0)
-    for trial in 0 ..< count_trials:
+    for trial in 0..<count_trials:
       MESHES.clearMeshes
       MESHES.addSegment(
-        scale.eye + Direction(x: 40.0*pseudo(), y: 40.0*pseudo(), z: 40.0*pseudo()),
-        scale.eye + Direction(x: 40.0*pseudo(), y: 40.0*pseudo(), z: 40.0*pseudo()),
-        Ink.Jade.colour, WIDTH_LINE_OBJECT,
+        scale.eye + Direction(x: 40.0 * pseudo(), y: 40.0 * pseudo(), z: 40.0 * pseudo()),
+        scale.eye + Direction(x: 40.0 * pseudo(), y: 40.0 * pseudo(), z: 40.0 * pseudo()),
+        Ink.Jade.colour,
+        WIDTH_LINE_OBJECT,
       )
       # Ends as record stores them, so both sides start from same float32 places.
       let record = MESHES.ribbons.records[0]
-      var kept = some((
-        Position(x: float(record.tail_x), y: float(record.tail_y), z: float(record.tail_z)),
-        Position(x: float(record.head_x), y: float(record.head_y), z: float(record.head_z)),
-      ))
+      var kept = some(
+        (
+          Position(x: float(record.tail_x), y: float(record.tail_y), z: float(record.tail_z)),
+          Position(x: float(record.head_x), y: float(record.head_y), z: float(record.head_z)),
+        ),
+      )
       let whole = kept.get
       for plane in planes:
         if kept.isNone: break
@@ -376,7 +403,7 @@ suite "Mesh":
       let (tail_drawn, head_drawn) = ribbonEnds(MESHES, 0)
       if norm(kept.get[0] - whole[0]) + norm(kept.get[1] - whole[1]) > 0.0: inc count_cut
       for (drawn, wanted) in [(tail_drawn, kept.get[0]), (head_drawn, kept.get[1])]:
-        check norm(drawn - wanted) <= TOLERANCE_SINGLE*max(1.0, norm(wanted - scale.eye))
+        check norm(drawn - wanted) <= TOLERANCE_SINGLE * max(1.0, norm(wanted - scale.eye))
     # Sample reaches each case it claims to.
     check count_cut > count_each_least
     check count_gone > count_each_least
@@ -389,7 +416,7 @@ suite "Mesh":
     #   agree geometrically unless segment's own far end is deliberately built to
     #   land on same point horizon marker would.
     for line in LINES:
-      let attitude = ⊖ line
+      let attitude = ⊖line
       MESHES.clearMeshes
       discard MESHES.addObject(SCRATCH, attitude, Ink.Cobalt.colour, scale_test)
       let star = MESHES.points.vertices[0].toPosition
@@ -431,8 +458,8 @@ suite "Mesh":
       down = rayThroughView(0.0, -0.5, right, up, forward, tangent, 1.0)
       hit = hitDiscAlong(record, eye, down)
     check hit.isSome
-    check isNear(hit.get, height/(0.5*tangent))
-    check hit.get < 0.13*FACTOR_CLIP_NEAR
+    check isNear(hit.get, height / (0.5 * tangent))
+    check hit.get < 0.13 * FACTOR_CLIP_NEAR
     # Ray half way up meets plane behind eye; ray along sight axis runs along plane.
     check hitDiscAlong(
       record, eye, rayThroughView(0.0, 0.5, right, up, forward, tangent, 1.0)
@@ -445,9 +472,9 @@ suite "Mesh":
       corner_one = expandDiscCorner(box, -1.0, -1.0)
       corner_two = expandDiscCorner(box, 1.0, 1.0)
     check isNear(min(corner_one[0], corner_two[0]), -1.0) and
-      isNear(max(corner_one[0], corner_two[0]), 1.0)
+        isNear(max(corner_one[0], corner_two[0]), 1.0)
     check isNear(min(corner_one[1], corner_two[1]), -1.0) and
-      isNear(max(corner_one[1], corner_two[1]), 0.0)
+        isNear(max(corner_one[1], corner_two[1]), 0.0)
     # From ten units above, disc of radius one subtends 5.74 degrees each way: box is its
     #   tangent over view's, aspect widening across; rim is hit just inside and missed just
     #   outside, at depth ten.
@@ -458,9 +485,12 @@ suite "Mesh":
         (Direction(x: 1, y: 0, z: 0), Direction(x: 0, y: 1, z: 0), Direction(x: 0, y: 0, z: -1))
       box_small = viewBoxOfDisc(small, above, right_down, up_down, forward_down, 0.5, 2.0)
       limb = tan(arcsin(0.1))
-    check isNear(box_small.corner_max[0], limb/(0.5*2.0)) and
-      isNear(box_small.corner_min[0], -limb/(0.5*2.0))
-    check isNear(box_small.corner_max[1], limb/0.5) and isNear(box_small.corner_min[1], -limb/0.5)
+    check isNear(box_small.corner_max[0], limb / (0.5 * 2.0)) and
+        isNear(box_small.corner_min[0], -limb / (0.5 * 2.0))
+    check isNear(box_small.corner_max[1], limb / 0.5) and isNear(
+      box_small.corner_min[1],
+      -limb / 0.5,
+    )
     let inside = hitDiscAlong(small, above, Direction(x: 0.099, y: 0.0, z: -1.0))
     check inside.isSome and isNear(inside.get, 10.0)
     check hitDiscAlong(small, above, Direction(x: 0.101, y: 0.0, z: -1.0)).isNone
@@ -469,9 +499,9 @@ suite "Mesh":
       corner_least = expandDiscCorner(box_small, -1.0, -1.0)
       corner_most = expandDiscCorner(box_small, 1.0, 1.0)
     check isNear(corner_least[0], box_small.corner_min[0]) and
-      isNear(corner_least[1], box_small.corner_min[1])
+        isNear(corner_least[1], box_small.corner_min[1])
     check isNear(corner_most[0], box_small.corner_max[0]) and
-      isNear(corner_most[1], box_small.corner_max[1])
+        isNear(corner_most[1], box_small.corner_max[1])
     # Disc behind eye: box is empty.
     let box_behind = viewBoxOfDisc(
       small, Position(x: 0.0, y: 0.0, z: -10.0), right_down, up_down, forward_down, 0.5, 2.0
@@ -487,16 +517,16 @@ suite "Mesh":
     #   Every corner `expandDiscCorner` places stands on plane's side of its vanishing line,
     #   and every spot of grid whose ray `hitDiscAlong` lands on disc lies inside that quad.
     const
-      seed_views = 474 ## Seed of generator views are drawn from, local to this test.
-      samples_views = 256 ## Views drawn, each with plane, eye and sight of its own.
-      spots_side = 25 ## Spots along each side of view, at centres of equal cells.
-      views_crossed_least = 64 ## Least views whose vanishing line crosses view itself.
-      spots_on_disc_least = 20_000 ## Least spots landing on disc, over every view.
-      tolerance_side = 1.0e-9 ## Slack on either test, against `float` rounding alone.
+      seed_views = 474  ## Seed of generator views are drawn from, local to this test.
+      samples_views = 256  ## Views drawn, each with plane, eye and sight of its own.
+      spots_side = 25  ## Spots along each side of view, at centres of equal cells.
+      views_crossed_least = 64  ## Least views whose vanishing line crosses view itself.
+      spots_on_disc_least = 20_000  ## Least spots landing on disc, over every view.
+      tolerance_side = 1.0e-9  ## Slack on either test, against `float` rounding alone.
 
     func turnOf(a, b, c: (float, float)): float =
       ## Measure twice signed area of triangle `a b c`, positive counter-clockwise.
-      (b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])
+      (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
 
     func leanOf(
       spot: (float, float); right, up, forward, normal: Direction; tangent, aspect, side: float
@@ -504,56 +534,62 @@ suite "Mesh":
       ## Measure how far ray through `spot` leans to plane's side of its vanishing line.
       ##   Per unit ray and unit normal, so one tolerance serves every view.
       let ray = rayThroughView(spot[0], spot[1], right, up, forward, tangent, aspect)
-      side*dot(ray, normal)/(norm(ray)*norm(normal))
+      side * dot(ray, normal) / (norm(ray) * norm(normal))
 
     var
       generator = initRand(seed_views)
       views_crossed = 0
       spots_on_disc = 0
     let
-      tangent = tan(0.5*degToRad(45.0))
-      aspect = float(WIDTH_OPENED)/float(HEIGHT_OPENED)
-    for _ in 0 ..< samples_views:
+      tangent = tan(0.5 * degToRad(45.0))
+      aspect = float(WIDTH_OPENED) / float(HEIGHT_OPENED)
+    for _ in 0..<samples_views:
       # Plane through centre near origin, arms square to its normal at radius one to eight.
       let
         normal_unit = unitDrawn(generator)
         along = normalize(cross(normal_unit, unitDrawn(generator))).get
-        radius = generator.rand(1.0 .. 8.0)
-        arm_first = radius*along
-        arm_second = radius*cross(normal_unit, along)
+        radius = generator.rand(1.0..8.0)
+        arm_first = radius * along
+        arm_second = radius * cross(normal_unit, along)
         centre = Position(
-          x: generator.rand(-5.0 .. 5.0), y: generator.rand(-5.0 .. 5.0),
-          z: generator.rand(-5.0 .. 5.0),
+          x: generator.rand(-5.0..5.0),
+          y: generator.rand(-5.0..5.0),
+          z: generator.rand(-5.0..5.0),
         )
         record = DiscRecord(
-          centre_x: float32(centre.x), centre_y: float32(centre.y), centre_z: float32(centre.z),
-          arm_first_x: float32(arm_first.x), arm_first_y: float32(arm_first.y),
-          arm_first_z: float32(arm_first.z), arm_second_x: float32(arm_second.x),
-          arm_second_y: float32(arm_second.y), arm_second_z: float32(arm_second.z),
+          centre_x: float32(centre.x),
+          centre_y: float32(centre.y),
+          centre_z: float32(centre.z),
+          arm_first_x: float32(arm_first.x),
+          arm_first_y: float32(arm_first.y),
+          arm_first_z: float32(arm_first.z),
+          arm_second_x: float32(arm_second.x),
+          arm_second_y: float32(arm_second.y),
+          arm_second_z: float32(arm_second.z),
           fill_alpha: 1.0,
         )
       # Eye over or under plane, low in half of views, so vanishing line runs through view.
       let
-        height = (if generator.rand(1.0) < 0.5: generator.rand(0.001 .. 0.5)
-          else: generator.rand(0.5 .. 3.0))*radius*(if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
-        offset_across = generator.rand(-1.5 .. 1.5)*radius
-        offset_along = generator.rand(-1.5 .. 1.5)*radius
-        eye = centre + offset_across*along + offset_along*cross(normal_unit, along) +
-          height*normal_unit
-        aim = centre + generator.rand(-1.2 .. 1.2)*arm_first +
-          generator.rand(-1.2 .. 1.2)*arm_second + (0.3*radius)*unitDrawn(generator)
+        height = (if generator.rand(1.0) < 0.5: generator.rand(0.001..0.5)
+          else: generator.rand(0.5..3.0)) * radius * (if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
+        offset_across = generator.rand(-1.5..1.5) * radius
+        offset_along = generator.rand(-1.5..1.5) * radius
+        eye = centre + offset_across * along + offset_along * cross(normal_unit, along) +
+            height * normal_unit
+        aim = centre + generator.rand(-1.2..1.2) * arm_first +
+            generator.rand(-1.2..1.2) * arm_second + (0.3 * radius) * unitDrawn(generator)
         forward = normalize(aim - eye).get
         right = normalize(cross(forward, unitDrawn(generator))).get
         up = cross(right, forward)
       # Plane's side of its vanishing line: rays meeting plane in front of eye.
       let
         normal = Direction(
-          x: float(record.arm_first_y)*float(record.arm_second_z) -
-            float(record.arm_first_z)*float(record.arm_second_y),
-          y: float(record.arm_first_z)*float(record.arm_second_x) -
-            float(record.arm_first_x)*float(record.arm_second_z),
-          z: float(record.arm_first_x)*float(record.arm_second_y) -
-            float(record.arm_first_y)*float(record.arm_second_x),
+          x: float(record.arm_first_y) * float(record.arm_second_z) -
+              float(record.arm_first_z) * float(record.arm_second_y),
+          y: float(record.arm_first_z) * float(record.arm_second_x) -
+              float(record.arm_first_x) * float(record.arm_second_z),
+          z: float(record.arm_first_x) * float(record.arm_second_y) -
+              float(record.arm_first_y) * float(record.arm_second_x),
         )
         to_centre = Direction(
           x: float(record.centre_x) - eye.x,
@@ -571,22 +607,22 @@ suite "Mesh":
           expandDiscCorner(box, -1.0, -1.0), expandDiscCorner(box, 1.0, -1.0),
           expandDiscCorner(box, 1.0, 1.0), expandDiscCorner(box, -1.0, 1.0),
         ]
-        area = 0.5*(turnOf(quad[0], quad[1], quad[2]) + turnOf(quad[0], quad[2], quad[3]))
+        area = 0.5 * (turnOf(quad[0], quad[1], quad[2]) + turnOf(quad[0], quad[2], quad[3]))
       if area > 0.0:
         for corner in quad:
           check leanOf(corner, right, up, forward, normal, tangent, aspect, side) >=
-            -tolerance_side
-      for i in 0 ..< spots_side:
-        for j in 0 ..< spots_side:
+              -tolerance_side
+      for i in 0..<spots_side:
+        for j in 0..<spots_side:
           let
-            spot = (-1.0 + (2.0*float(i) + 1.0)/float(spots_side),
-              -1.0 + (2.0*float(j) + 1.0)/float(spots_side))
+            spot = (-1.0 + (2.0 * float(i) + 1.0) / float(spots_side),
+              -1.0 + (2.0 * float(j) + 1.0) / float(spots_side))
             ray = rayThroughView(spot[0], spot[1], right, up, forward, tangent, aspect)
           if hitDiscAlong(record, eye, ray).isNone: continue
           inc spots_on_disc
           check area > 0.0
-          for k in 0 ..< 4:
-            check turnOf(quad[k], quad[(k + 1) mod 4], spot) >= -tolerance_side
+          for k in 0..<4:
+            check turnOf(quad[k], quad[(k+1) mod 4], spot) >= -tolerance_side
     check views_crossed >= views_crossed_least
     check spots_on_disc >= spots_on_disc_least
 
@@ -600,66 +636,72 @@ suite "Mesh":
     #   to six radii off it, sight aimed inside rim. Extremes come from walk round rim and
     #   golden-section search about walk's best step, and never from closed form.
     const
-      seed_views = 501 ## Seed of generator views are drawn from, local to this test.
-      samples_views = 256 ## Views drawn, each with plane, eye and sight of its own.
-      views_ahead_least = 128 ## Least views whose whole rim stands ahead by `lead_least`.
-      lead_least = 1.0e-3 ## Least lead of rim's nearest point ahead of eye, over rim's depth
+      seed_views = 501  ## Seed of generator views are drawn from, local to this test.
+      samples_views = 256  ## Views drawn, each with plane, eye and sight of its own.
+      views_ahead_least = 128  ## Least views whose whole rim stands ahead by `lead_least`.
+      lead_least = 1.0e-3  ## Least lead of rim's nearest point ahead of eye, over rim's depth
         ## swing either side of its centre's.
         ##   Nearer, rim's picture runs toward infinity and `float32` closed form loses
         ##   precision, so box may keep sphere's.
-      steps_rim = 360 ## Steps of walk round rim, before search about best of them.
-      steps_search = 64 ## Golden-section steps about walk's best step; bracket ends under 1e-13.
-      reach_most = 2.0e-3 ## Most box may reach past rim's picture, in turned half extents.
+      steps_rim = 360  ## Steps of walk round rim, before search about best of them.
+      steps_search = 64  ## Golden-section steps about walk's best step; bracket ends under 1e-13.
+      reach_most = 2.0e-3  ## Most box may reach past rim's picture, in turned half extents.
         ##   Room for margin box may keep against its shaders' `float32` rounding: 0.9 px of
         ##   900 px tall view, where emulated rounding reached 1e-4.
-      tolerance_side = 1.0e-9 ## Slack on either side, against `float` rounding alone.
+      tolerance_side = 1.0e-9  ## Slack on either side, against `float` rounding alone.
 
-    proc searchMost(at: proc (angle: float): float, angle, step: float): float =
+    proc searchMost(at: proc (angle: float): float; angle, step: float): float =
       ## Search `at` for its most within `step` of `angle`, by golden section.
       ##   Walk's best step lies within one step of extreme, and `at` rises to it and falls.
-      let ratio = 0.5*(sqrt(5.0) - 1.0)
+      let ratio = 0.5 * (sqrt(5.0) - 1.0)
       var (low, high) = (angle - step, angle + step)
-      for _ in 0 ..< steps_search:
-        let (inner_low, inner_high) = (high - ratio*(high - low), low + ratio*(high - low))
+      for _ in 0..<steps_search:
+        let (inner_low, inner_high) = (high - ratio * (high - low), low + ratio * (high - low))
         if at(inner_low) < at(inner_high): low = inner_low
         else: high = inner_high
-      at(0.5*(low + high))
+      at(0.5 * (low + high))
 
     var
       generator = initRand(seed_views)
       views_ahead = 0
     let
-      tangent = tan(0.5*degToRad(45.0))
-      aspect = float(WIDTH_OPENED)/float(HEIGHT_OPENED)
-      step = TAU/float(steps_rim)
-    for _ in 0 ..< samples_views:
+      tangent = tan(0.5 * degToRad(45.0))
+      aspect = float(WIDTH_OPENED) / float(HEIGHT_OPENED)
+      step = TAU / float(steps_rim)
+    for _ in 0..<samples_views:
       # Plane through centre near origin, arms square to its normal at radius one to eight.
       let
         normal_unit = unitDrawn(generator)
         along = normalize(cross(normal_unit, unitDrawn(generator))).get
-        radius = generator.rand(1.0 .. 8.0)
-        arm_first = radius*along
-        arm_second = radius*cross(normal_unit, along)
+        radius = generator.rand(1.0..8.0)
+        arm_first = radius * along
+        arm_second = radius * cross(normal_unit, along)
         centre = Position(
-          x: generator.rand(-5.0 .. 5.0), y: generator.rand(-5.0 .. 5.0),
-          z: generator.rand(-5.0 .. 5.0),
+          x: generator.rand(-5.0..5.0),
+          y: generator.rand(-5.0..5.0),
+          z: generator.rand(-5.0..5.0),
         )
         record = DiscRecord(
-          centre_x: float32(centre.x), centre_y: float32(centre.y), centre_z: float32(centre.z),
-          arm_first_x: float32(arm_first.x), arm_first_y: float32(arm_first.y),
-          arm_first_z: float32(arm_first.z), arm_second_x: float32(arm_second.x),
-          arm_second_y: float32(arm_second.y), arm_second_z: float32(arm_second.z),
+          centre_x: float32(centre.x),
+          centre_y: float32(centre.y),
+          centre_z: float32(centre.z),
+          arm_first_x: float32(arm_first.x),
+          arm_first_y: float32(arm_first.y),
+          arm_first_z: float32(arm_first.z),
+          arm_second_x: float32(arm_second.x),
+          arm_second_y: float32(arm_second.y),
+          arm_second_z: float32(arm_second.z),
           fill_alpha: 1.0,
         )
       # Eye over or under disc or past rim, hundredth of radius to six radii off plane, spread
       #   evenly in scale so lead runs from grazing to wide; sight inside rim, roll at random.
       let
-        height = pow(10.0, generator.rand(-2.0 .. 0.8))*radius*
-          (if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
-        eye = centre + generator.rand(-1.5 .. 1.5)*arm_first +
-          generator.rand(-1.5 .. 1.5)*arm_second + height*normal_unit
-        aim = centre + generator.rand(-0.7 .. 0.7)*arm_first +
-          generator.rand(-0.7 .. 0.7)*arm_second
+        height = pow(10.0, generator.rand(-2.0..0.8)) * radius *
+            (if generator.rand(1.0) < 0.5: -1.0 else: 1.0)
+        eye = centre + generator.rand(-1.5..1.5) * arm_first +
+            generator.rand(-1.5..1.5) * arm_second + height * normal_unit
+        aim = centre + generator.rand(-0.7..0.7) * arm_first +
+            generator.rand(-0.7..0.7) * arm_second
         forward = normalize(aim - eye).get
         right = normalize(cross(forward, unitDrawn(generator))).get
         up = cross(right, forward)
@@ -672,26 +714,29 @@ suite "Mesh":
         )
         arms = [
           Direction(
-            x: float(record.arm_first_x), y: float(record.arm_first_y),
+            x: float(record.arm_first_x),
+            y: float(record.arm_first_y),
             z: float(record.arm_first_z),
           ),
           Direction(
-            x: float(record.arm_second_x), y: float(record.arm_second_y),
+            x: float(record.arm_second_x),
+            y: float(record.arm_second_y),
             z: float(record.arm_second_z),
           ),
         ]
         swing = hypot(dot(arms[0], forward), dot(arms[1], forward))
-      if dot(to_centre, forward) - swing <= lead_least*swing: continue
+      if dot(to_centre, forward) - swing <= lead_least * swing: continue
       inc views_ahead
       let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, aspect)
 
       proc turnedAt(angle: float): array[2, float] =
         ## Read rim's spot at `angle` in turned fractions `box` is stated in.
         let
-          on_rim = to_centre + cos(angle)*arms[0] + sin(angle)*arms[1]
+          on_rim = to_centre + cos(angle) * arms[0] + sin(angle) * arms[1]
           depth = dot(on_rim, forward)
           turned = turnedOf(
-            box, (dot(on_rim, right)/(depth*tangent*aspect), dot(on_rim, up)/(depth*tangent)),
+            box,
+            (dot(on_rim, right) / (depth * tangent * aspect), dot(on_rim, up) / (depth * tangent)),
           )
         [turned[0], turned[1]]
 
@@ -699,11 +744,11 @@ suite "Mesh":
       var
         (least, most) = ([Inf, Inf], [-Inf, -Inf])
         (angle_least, angle_most) = ([0.0, 0.0], [0.0, 0.0])
-      for i in 0 ..< steps_rim:
+      for i in 0..<steps_rim:
         let
-          angle = float(i)*step
+          angle = float(i) * step
           turned = turnedAt(angle)
-        for axis in 0 .. 1:
+        for axis in 0..1:
           if turned[axis] < least[axis]: (least[axis], angle_least[axis]) = (turned[axis], angle)
           if turned[axis] > most[axis]: (most[axis], angle_most[axis]) = (turned[axis], angle)
 
@@ -711,7 +756,7 @@ suite "Mesh":
       let (corners_least, corners_most) = (
         [box.corner_min[0], box.corner_min[1]], [box.corner_max[0], box.corner_max[1]],
       )
-      for axis in 0 .. 1:
+      for axis in 0..1:
         let
           along_axis = proc (angle: float): float = turnedAt(angle)[axis]
           against_axis = proc (angle: float): float = -turnedAt(angle)[axis]
@@ -758,22 +803,23 @@ suite "Mesh":
         tangent = scale_test.tangentHalfView
         box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
       check isNear(float(record.fill_alpha), ALPHA_VEIL)
-      for i in 0 .. SEGMENTS_CIRCLE_HORIZON:
+      for i in 0..SEGMENTS_CIRCLE_HORIZON:
         let
           (cos_angle, sin_angle) = (UNIT_CIRCLE_RIM[i].cos_angle, UNIT_CIRCLE_RIM[i].sin_angle)
           on_rim = Direction(
-            x: float(record.centre_x) + cos_angle*float(record.arm_first_x) +
-              sin_angle*float(record.arm_second_x) - eye.x,
-            y: float(record.centre_y) + cos_angle*float(record.arm_first_y) +
-              sin_angle*float(record.arm_second_y) - eye.y,
-            z: float(record.centre_z) + cos_angle*float(record.arm_first_z) +
-              sin_angle*float(record.arm_second_z) - eye.z,
+            x: float(record.centre_x) + cos_angle * float(record.arm_first_x) +
+                sin_angle * float(record.arm_second_x) - eye.x,
+            y: float(record.centre_y) + cos_angle * float(record.arm_first_y) +
+                sin_angle * float(record.arm_second_y) - eye.y,
+            z: float(record.centre_z) + cos_angle * float(record.arm_first_z) +
+                sin_angle * float(record.arm_second_z) - eye.z,
           )
           depth = dot(on_rim, forward)
         if depth <= scale_test.depthNear: continue
         let
           turned = turnedOf(
-            box, (dot(on_rim, right)/(depth*tangent), dot(on_rim, up)/(depth*tangent)),
+            box,
+            (dot(on_rim, right) / (depth * tangent), dot(on_rim, up) / (depth * tangent)),
           )
           across = clamp(turned[0], -1.0, 1.0)
           rise = clamp(turned[1], -1.0, 1.0)
@@ -783,13 +829,18 @@ suite "Mesh":
         to_centre = anchor.get - eye
         depth_centre = dot(to_centre, forward)
       let ray = rayThroughView(
-        dot(to_centre, right)/(depth_centre*tangent), dot(to_centre, up)/(depth_centre*tangent),
-        right, up, forward, tangent, 1.0,
+        dot(to_centre, right) / (depth_centre * tangent),
+        dot(to_centre, up) / (depth_centre * tangent),
+        right,
+        up,
+        forward,
+        tangent,
+        1.0,
       )
       # Record's floats are narrowed, and ray grazing plane multiplies that into depth,
       #   so plane met under six degrees is left to its box check alone.
       if depth_centre > scale_test.depthNear and
-          abs(dot(ray, normal.get)) > 0.1*norm(ray)*norm(normal.get):
+          abs(dot(ray, normal.get)) > 0.1 * norm(ray) * norm(normal.get):
         let hit = hitDiscAlong(record, eye, ray)
         check hit.isSome and isNear(hit.get, depth_centre)
       # Rim is drawn as line is, so its own *corners* stand half line width off.
@@ -801,7 +852,7 @@ suite "Mesh":
       #   fourteen floats provably same circle ninety-six ribbons drew.
       #   Segment is read off record itself (`ribbonOfRing`), which guard never touches;
       #   drawn piece of it, where guard keeps any, through `ringEnds`.
-      for i in 0 ..< segments_ring:
+      for i in 0..<segments_ring:
         let
           piece = ribbonOfRing(MESHES.rings.records[0], i)
           tail = Position(x: float(piece.tail_x), y: float(piece.tail_y), z: float(piece.tail_z))
@@ -809,7 +860,7 @@ suite "Mesh":
         for place in [tail, head]:
           check isNear(dot(place - anchor.get, normal.get), 0)
           check isNear(norm(place - anchor.get), EXTENT_PLANE_F)
-        let corners = expandRingVertex(MESHES.rings.records[0], i, toScale(scale_test))
+        let corners = expandRingVertex(MESHES.rings.records[0], i, scale_test.toScale)
         # Segment drawn as nothing stands wholly behind near plane or outside guard.
         if not isRibbonDrawn(corners):
           check max(dot(tail - scale_test.eye, scale_test.forward),
@@ -822,9 +873,9 @@ suite "Mesh":
           check isNear(dot(place - anchor.get, normal.get), 0)
         # And every corner stays within that half width of plane, so bulge is.
         #   fraction of pixel on screen rather than anything reader could see.
-        let bound = 0.5*float(WIDTH_LINE_OBJECT)*
-          max(worldPerPixelAt(tail, scale_test), worldPerPixelAt(head, scale_test))
-        for j in 0 ..< vertices_ribbon:
+        let bound = 0.5 * float(WIDTH_LINE_OBJECT) *
+            max(worldPerPixelAt(tail, scale_test), worldPerPixelAt(head, scale_test))
+        for j in 0..<vertices_ribbon:
           check isNear(float(corners[j].alpha), Ink.Olive.colour.alpha)
           check abs(dot(corners[j].toPosition - anchor.get, normal.get)) <= bound + 1e-5
 
@@ -840,32 +891,36 @@ suite "Mesh":
     const winding = [(0.0, -1.0), (1.0, -1.0), (1.0, 1.0), (0.0, -1.0), (1.0, 1.0),
       (0.0, 1.0)]
     let corners = ringCorners()
-    check len(corners) == 6*6*SEGMENTS_CIRCLE_HORIZON
-    for segment in 0 ..< SEGMENTS_CIRCLE_HORIZON:
-      for corner in 0 ..< 6:
-        let at = 6*(6*segment + corner)
-        check isNear(float(corners[at + 0]), UNIT_CIRCLE_RIM[segment].cos_angle)
-        check isNear(float(corners[at + 1]), UNIT_CIRCLE_RIM[segment].sin_angle)
-        check isNear(float(corners[at + 2]), UNIT_CIRCLE_RIM[segment + 1].cos_angle)
-        check isNear(float(corners[at + 3]), UNIT_CIRCLE_RIM[segment + 1].sin_angle)
-        check float(corners[at + 4]) == winding[corner][0]
-        check float(corners[at + 5]) == winding[corner][1]
+    check len(corners) == 6 * 6 * SEGMENTS_CIRCLE_HORIZON
+    for segment in 0..<SEGMENTS_CIRCLE_HORIZON:
+      for corner in 0..<6:
+        let at = 6 * (6 * segment + corner)
+        check isNear(float(corners[at+0]), UNIT_CIRCLE_RIM[segment].cos_angle)
+        check isNear(float(corners[at+1]), UNIT_CIRCLE_RIM[segment].sin_angle)
+        check isNear(float(corners[at+2]), UNIT_CIRCLE_RIM[segment+1].cos_angle)
+        check isNear(float(corners[at+3]), UNIT_CIRCLE_RIM[segment+1].sin_angle)
+        check float(corners[at+4]) == winding[corner][0]
+        check float(corners[at+5]) == winding[corner][1]
     # And ends those angles name are very ends `ribbonOfRing` derives, which is.
     #   join between this table and reference shaders expand: place ring
     #   whose arms are world's own axes and check every segment against it.
     MESHES.clearMeshes
     MESHES.addRing(
-      ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
-      2.0, Ink.Olive.colour, float(WIDTH_LINE_OBJECT),
+      ORIGIN,
+      Direction(x: 1.0, y: 0.0, z: 0.0),
+      Direction(x: 0.0, y: 1.0, z: 0.0),
+      2.0,
+      Ink.Olive.colour,
+      float(WIDTH_LINE_OBJECT),
     )
-    for segment in 0 ..< SEGMENTS_CIRCLE_HORIZON:
+    for segment in 0..<SEGMENTS_CIRCLE_HORIZON:
       let
-        at = 6*6*segment
+        at = 6 * 6 * segment
         record = ribbonOfRing(MESHES.rings.records[0], segment)
-      check isNear(float(record.tail_x), 2.0*float(corners[at + 0]))
-      check isNear(float(record.tail_y), 2.0*float(corners[at + 1]))
-      check isNear(float(record.head_x), 2.0*float(corners[at + 2]))
-      check isNear(float(record.head_y), 2.0*float(corners[at + 3]))
+      check isNear(float(record.tail_x), 2.0 * float(corners[at+0]))
+      check isNear(float(record.tail_y), 2.0 * float(corners[at+1]))
+      check isNear(float(record.head_x), 2.0 * float(corners[at+2]))
+      check isNear(float(record.head_y), 2.0 * float(corners[at+3]))
       # Ring's tint and width reach both ends of every segment, flat: it is what lets.
       #   shaders drop ribbon's two-end blend and read one `fill`.
       check isNear(float(record.width), float(WIDTH_LINE_OBJECT))
@@ -880,20 +935,20 @@ suite "Mesh":
     #   Every corner is corner of box; two triangles, each turning counter-clockwise, hold
     #   area of whole box between them and all four of its corners.
     let corners = discCorners()
-    check len(corners) == 2*COUNT_CORNERS_DISC
+    check len(corners) == 2 * COUNT_CORNERS_DISC
     var
       area = 0.0
       seen: HashSet[(float, float)]
     for triangle in 0 ..< COUNT_CORNERS_DISC div 3:
-      let at = 6*triangle
+      let at = 6 * triangle
       var places: array[3, (float, float)]
-      for corner in 0 ..< 3:
-        places[corner] = (float(corners[at + 2*corner]), float(corners[at + 2*corner + 1]))
+      for corner in 0..<3:
+        places[corner] = (float(corners[at+2*corner]), float(corners[at+2*corner+1]))
         check abs(places[corner][0]) == 1.0 and abs(places[corner][1]) == 1.0
         seen.incl places[corner]
-      let turn = 0.5*(
-        (places[1][0] - places[0][0])*(places[2][1] - places[0][1]) -
-        (places[1][1] - places[0][1])*(places[2][0] - places[0][0])
+      let turn = 0.5 * (
+        (places[1][0] - places[0][0]) * (places[2][1] - places[0][1]) -
+        (places[1][1] - places[0][1]) * (places[2][0] - places[0][0])
       )
       check turn > 0.0
       area += turn
@@ -914,12 +969,12 @@ suite "Mesh":
         axes = frame(plane)
       check anchor.isSome and axes.isSome
       let
-        centre_point = toMultivector(anchor.get)
+        centre_point = anchor.get.toMultivector
         radius = EXTENT_PLANE_F
-        arm_first = radius*axes.get.axis_first
-        arm_second = radius*axes.get.axis_second
-        arm_first_point = wedge(radius, toMultivector(axes.get.axis_first))
-        arm_second_point = wedge(radius, toMultivector(axes.get.axis_second))
+        arm_first = radius * axes.get.axis_first
+        arm_second = radius * axes.get.axis_second
+        arm_first_point = wedge(radius, axes.get.axis_first.toMultivector)
+        arm_second_point = wedge(radius, axes.get.axis_second.toMultivector)
       # Record's own rim beside plain stepping: arms `hitDiscAlong` reads are what both
       #   disc fragment shaders bound by, so record's narrowed floats too must land on
       #   multivector sums, corner for corner, and ray from ten radii above cast at point
@@ -932,48 +987,52 @@ suite "Mesh":
         record = MESHES.discs.records[0]
         normal = directionNormal(plane)
       check normal.isSome
-      let above = anchor.get + 10.0*radius*normal.get
-      for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
+      let above = anchor.get + 10.0 * radius * normal.get
+      for i in 0..<SEGMENTS_CIRCLE_HORIZON:
         let
-          angle = (2.0*PI * float(i)) / float(SEGMENTS_CIRCLE_HORIZON)
+          angle = (2.0 * PI * float(i)) / float(SEGMENTS_CIRCLE_HORIZON)
           stepped = onCircle(anchor.get, arm_first, arm_second, angle)
-          assembled = pointFrom(add(centre_point, add(
-            wedge(cos(angle), arm_first_point), wedge(sin(angle), arm_second_point),
-          )))
+          assembled = pointFrom(add(
+            centre_point,
+            add(
+              wedge(cos(angle), arm_first_point),
+              wedge(sin(angle), arm_second_point),
+            ),
+          ))
           on_record = Position(
-            x: float(record.centre_x) + cos(angle)*float(record.arm_first_x) +
-              sin(angle)*float(record.arm_second_x),
-            y: float(record.centre_y) + cos(angle)*float(record.arm_first_y) +
-              sin(angle)*float(record.arm_second_y),
-            z: float(record.centre_z) + cos(angle)*float(record.arm_first_z) +
-              sin(angle)*float(record.arm_second_z),
+            x: float(record.centre_x) + cos(angle) * float(record.arm_first_x) +
+                sin(angle) * float(record.arm_second_x),
+            y: float(record.centre_y) + cos(angle) * float(record.arm_first_y) +
+                sin(angle) * float(record.arm_second_y),
+            z: float(record.centre_z) + cos(angle) * float(record.arm_first_z) +
+                sin(angle) * float(record.arm_second_z),
           )
           spoke = assembled - anchor.get
-          inside = hitDiscAlong(record, above, (anchor.get + 0.999*spoke) - above)
+          inside = hitDiscAlong(record, above, (anchor.get + 0.999 * spoke) - above)
         check stepped =~ assembled
         check isNear(on_record, assembled)
         check inside.isSome and isNear(inside.get, 1.0)
-        check hitDiscAlong(record, above, (anchor.get + 1.001*spoke) - above).isNone
+        check hitDiscAlong(record, above, (anchor.get + 1.001 * spoke) - above).isNone
 
 
   test "horizon point becomes a star fixed at eye plus its own direction":
     for line in LINES:
       MESHES.clearMeshes
-      let attitude = ⊖ line
+      let attitude = ⊖line
       check MESHES.addObject(SCRATCH, attitude, Ink.Cobalt.colour, scale_test) == Outcome.Horizon
       check MESHES.points.count_vertices == 1
       let
         heading = directionHorizon(attitude)
         star = MESHES.points.vertices[0].toPosition
       check heading.isSome
-      check isNear(star, scale_test.eye + scale_test.radiusHorizon*heading.get)
+      check isNear(star, scale_test.eye + scale_test.radiusHorizon * heading.get)
 
 
   test "horizon line becomes a great circle around eye, perpendicular to its normal":
     var count_showable = 0
     for plane in PLANES:
       MESHES.clearMeshes
-      let attitude = ⊖ plane
+      let attitude = ⊖plane
       check MESHES.addObject(SCRATCH, attitude, Ink.Jade.colour, scale_test) == Outcome.Horizon
       # One record for whole circle now, drawn or not: segment wholly behind.
       #   camera is *shader's* to reject, and `expandRingVertex` -- its reference --
@@ -1000,7 +1059,7 @@ suite "Mesh":
       # Whether any end stands in front and inside guard pyramid, which is where ring
       #   must show; past guard, drawing is cut (`mesh.FACTOR_GUARD`) off screen.
       var is_showable = false
-      for i in 0 ..< segments_ring:
+      for i in 0..<segments_ring:
         let piece = ribbonOfRing(MESHES.rings.records[0], i)
         for place in [
           Position(x: float(piece.tail_x), y: float(piece.tail_y), z: float(piece.tail_z)),
@@ -1013,7 +1072,7 @@ suite "Mesh":
           if dot(offset, scale_test.forward) > scale_test.depthNear and isInsideGuard(place):
             is_showable = true
         # Skip what shader will not draw; coincident corners are its refusal.
-        let corners = expandRingVertex(MESHES.rings.records[0], i, toScale(scale_test))
+        let corners = expandRingVertex(MESHES.rings.records[0], i, scale_test.toScale)
         if not isRibbonDrawn(corners): continue
         count_drawn += 1
         let (tail, head) = ringEnds(MESHES, 0, i)
@@ -1024,7 +1083,7 @@ suite "Mesh":
           check isNear(dot(offset, normal_from_plane.get), 0)
           # And out at circle's own radius, unless clip pulled it in along that.
           #   chord -- never past it.
-          check norm(offset) <= scale_test.radiusHorizon*(1.0 + 1e-5)
+          check norm(offset) <= scale_test.radiusHorizon * (1.0 + 1e-5)
           if isNear(norm(offset), scale_test.radiusHorizon): inc count_at_radius
       # Half-behind claim, held rather than assumed: some of ring is drawn wherever some
       #   stands in view, and well under all of it.
@@ -1048,13 +1107,13 @@ suite "Mesh":
     let
       volume_first = POINTS[10] ∧ PLANES[0]
       volume_second = POINTS[20] ∧ PLANES[7]
-      attitude_first = ⊖ volume_first
-      attitude_second = ⊖ volume_second
+      attitude_first = ⊖volume_first
+      attitude_second = ⊖volume_second
     check kindOf(attitude_first) == some(Kind.Plane) and isHorizon(attitude_first)
     check kindOf(attitude_second) == some(Kind.Plane) and isHorizon(attitude_second)
 
     check MESHES.addObject(SCRATCH, attitude_first, Ink.Cobalt.colour, scale_test) ==
-      Outcome.Horizon
+        Outcome.Horizon
     # One dome record in one veil run: sphere itself is static geometry shader.
     #   widens, and `expandDomeVertex` -- its reference -- is what its corners are read
     #   through.
@@ -1063,18 +1122,18 @@ suite "Mesh":
     let
       record_first = MESHES.domes.records[0]
       corners_dome = domeCorners()
-    for i in 0 ..< 6*LATITUDES_HORIZON*LONGITUDES_HORIZON:
+    for i in 0 ..< 6 * LATITUDES_HORIZON * LONGITUDES_HORIZON:
       let unit = Direction(
         x: float(corners_dome[3*i]),
-        y: float(corners_dome[3*i + 1]),
-        z: float(corners_dome[3*i + 2]),
+        y: float(corners_dome[3*i+1]),
+        z: float(corners_dome[3*i+2]),
       )
       let offset = expandDomeVertex(record_first, unit).toPosition - scale_test.eye
       check isNear(norm(offset), scale_test.radiusHorizon)
 
     MESHES.clearMeshes
     check MESHES.addObject(SCRATCH, attitude_second, Ink.Cobalt.colour, scale_test) ==
-      Outcome.Horizon
+        Outcome.Horizon
     check MESHES.domes.count == 1
     # Same dome, field for field, regardless of which unrelated volume produced it.
     let record_second = MESHES.domes.records[0]
@@ -1101,13 +1160,13 @@ suite "Mesh":
     #   is actually emitted rather than against arithmetic that could drift from it.
     MESHES.clearMeshes
     var built = 0
-    for i in 0 ..< OBJECTS_MAX:
+    for i in 0..<OBJECTS_MAX:
       let
-        angle = 0.7*float(i)
+        angle = 0.7 * float(i)
         plane =
-          toMultivector(Position(x: 6.0*cos(angle), y: 6.0*sin(angle), z: 0.15*float(i))) ∧
-          toMultivector(Position(x: 6.0*cos(angle + 0.4), y: 1.0, z: 2.0 + 0.1*float(i))) ∧
-          toMultivector(Position(x: 1.0, y: 6.0*sin(angle + 0.9), z: -1.0))
+            Position(x: 6.0 * cos(angle), y: 6.0 * sin(angle), z: 0.15 * float(i)).toMultivector ∧
+            Position(x: 6.0 * cos(angle + 0.4), y: 1.0, z: 2.0 + 0.1 * float(i)).toMultivector ∧
+            Position(x: 1.0, y: 6.0 * sin(angle + 0.9), z: -1.0).toMultivector
       if MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, scale_test) == Outcome.Finite:
         inc built
     check built == OBJECTS_MAX
@@ -1127,9 +1186,9 @@ suite "Mesh":
       eye: eye, radius_horizon: extent,
       # Looking little ahead and down, which every ground fixture below lies under.
       forward: direction(
-        toMultivector(eye) ∧ toMultivector(Position(x: eye.x + 1.0, y: eye.y, z: 0.0))
+        eye.toMultivector ∧ Position(x: eye.x + 1.0, y: eye.y, z: 0.0).toMultivector,
       ).get,
-      tangent_half_view: tan(0.5*degToRad(45.0)),
+      tangent_half_view: tan(0.5 * degToRad(45.0)),
       height_pixels: height_scale_test,
       depth_near: 0.1,
     )))
@@ -1147,12 +1206,12 @@ suite "Mesh":
     MESHES.clearMeshes
     MESHES.addAxes(SCRATCH, scale_fog.extentFurniture, scale_fog)
     MESHES.addLattice(SCRATCH, scale_fog.extentFurniture, scale_fog, groundPlane())
-    check 6*MESHES.ribbons.count > 0
+    check 6 * MESHES.ribbons.count > 0
     let fog = fogFurnitureFor(scale_fog.extentFurniture)
-    for i in 0 ..< MESHES.ribbons.count:
+    for i in 0..<MESHES.ribbons.count:
       # Expanded through reference of shader that now does widening, with.
       #   slack of one unit for half-width it steps each corner off by.
-      let corners = expandRibbon(MESHES.ribbons.records[i], toScale(scale_fog))
+      let corners = expandRibbon(MESHES.ribbons.records[i], scale_fog.toScale)
       if not isRibbonDrawn(corners): continue
       for vertex in corners:
         check norm(vertex.toPosition - scale_fog.eye) <= fog.radius_gone + 1.0
@@ -1165,10 +1224,10 @@ suite "Mesh":
     let scale_afar = scaleFurnitureAt(Position(x: 1000, y: -700, z: 6), 300.0)
     MESHES.clearMeshes
     MESHES.addLattice(SCRATCH, scale_afar.extentFurniture, scale_afar, groundPlane())
-    check 6*MESHES.ribbons.count > 0
+    check 6 * MESHES.ribbons.count > 0
     let fog = fogFurnitureFor(scale_afar.extentFurniture)
-    for i in 0 ..< MESHES.ribbons.count:
-      let corners = expandRibbon(MESHES.ribbons.records[i], toScale(scale_afar))
+    for i in 0..<MESHES.ribbons.count:
+      let corners = expandRibbon(MESHES.ribbons.records[i], scale_afar.toScale)
       if not isRibbonDrawn(corners): continue
       for vertex in corners:
         check norm(vertex.toPosition - scale_afar.eye) <= fog.radius_gone + 1.0
@@ -1187,11 +1246,11 @@ suite "Mesh":
       alpha_near_min = 1.0
       alpha_far_max = 0.0
       count_near = 0
-    for i in 0 ..< MESHES.ribbons.count:
+    for i in 0..<MESHES.ribbons.count:
       let record = MESHES.ribbons.records[i]
       check record.fog > 0.5
-      check isNear(float(record.tail_alpha), Ink.Grid.colour.alpha*ALPHA_GRID)
-      check isNear(float(record.head_alpha), Ink.Grid.colour.alpha*ALPHA_GRID)
+      check isNear(float(record.tail_alpha), Ink.Grid.colour.alpha * ALPHA_GRID)
+      check isNear(float(record.head_alpha), Ink.Grid.colour.alpha * ALPHA_GRID)
       # Sampled *along* each record rather than at its corners alone: line is one.
       #   record spanning its whole chord now, and fade is fragment's, evaluated
       #   at every point of it -- so claim is checked where fragments are.
@@ -1207,12 +1266,12 @@ suite "Mesh":
           z: float(record.head_z),
         )
         count_samples = 32
-      for step in 0 .. count_samples:
+      for step in 0..count_samples:
         let
-          t = float(step)/float(count_samples)
-          at = tail + t*(head - tail)
+          t = float(step) / float(count_samples)
+          at = tail + t * (head - tail)
           radius = norm(at - scale_fog.eye)
-          alpha_drawn = float(record.tail_alpha)*alphaGridFade(
+          alpha_drawn = float(record.tail_alpha) * alphaGridFade(
             radius,
             fog.radius_full,
             fog.radius_gone,
@@ -1223,7 +1282,7 @@ suite "Mesh":
         if radius >= fog.radius_gone - TOLERANCE_TEST:
           alpha_far_max = max(alpha_far_max, alpha_drawn)
     check count_near > 0
-    check isNear(alpha_near_min, Ink.Grid.colour.alpha*ALPHA_GRID)
+    check isNear(alpha_near_min, Ink.Grid.colour.alpha * ALPHA_GRID)
     check alpha_far_max <= TOLERANCE_SINGLE
 
 
@@ -1242,9 +1301,9 @@ suite "Mesh":
     var seed = 1.0
     proc pseudo(): float =
       # Deterministic scatter, so failure names same triple on every run.
-      seed = (seed*97.31 + 33.77) mod 41.0
+      seed = (seed * 97.31 + 33.77) mod 41.0
       seed - 20.5
-    for trial in 0 ..< 200:
+    for trial in 0..<200:
       let
         tail = Position(x: pseudo(), y: pseudo(), z: pseudo())
         head = Position(x: pseudo(), y: pseudo(), z: pseudo())
@@ -1255,9 +1314,7 @@ suite "Mesh":
         #   geometry's; what it is held against is join it replaced -- one plane
         #   through segment and eye, read for its normal. Sign included: two
         #   agree exactly, or picture has quietly started flanking lines wrong way.
-        algebraic = directionNormal(
-          toMultivector(tail) ∧ toMultivector(head) ∧ toMultivector(eye)
-        )
+        algebraic = directionNormal(tail.toMultivector ∧ head.toMultivector ∧ eye.toMultivector)
       check algebraic.isSome == computed.isSome
       if algebraic.isSome:
         check computed.get =~ algebraic.get
@@ -1283,22 +1340,22 @@ suite "Mesh":
       let
         scale_above = scaleFurnitureAt(Position(x: 0, y: 0, z: height), extent)
         fog = fogFurnitureFor(extent)
-        radius = sqrt(fog.radius_gone*fog.radius_gone - height*height)
+        radius = sqrt(fog.radius_gone * fog.radius_gone - height * height)
         # Lines each way from eye, in each of two families, skipping one.
         #   through origin that coincides with world axis.
-        lines = 4*int(floor(radius/SIZE_CELL_GRID))
+        lines = 4 * int(floor(radius / SIZE_CELL_GRID))
       MESHES.clearMeshes
       MESHES.addLattice(SCRATCH, extent, scale_above, groundPlane())
       # One record per lattice line, since fog fade moved to fragment shader.
       check MESHES.ribbons.count == lines
-      for i in 0 ..< MESHES.ribbons.count:
-        let corners = expandRibbon(MESHES.ribbons.records[i], toScale(scale_above))
+      for i in 0..<MESHES.ribbons.count:
+        let corners = expandRibbon(MESHES.ribbons.records[i], scale_above.toScale)
         if not isRibbonDrawn(corners): continue
         for vertex in corners:
           let
             at = vertex.toPosition
-            off_x = abs(at.x - SIZE_CELL_GRID*round(at.x/SIZE_CELL_GRID))
-            off_y = abs(at.y - SIZE_CELL_GRID*round(at.y/SIZE_CELL_GRID))
+            off_x = abs(at.x - SIZE_CELL_GRID * round(at.x / SIZE_CELL_GRID))
+            off_y = abs(at.y - SIZE_CELL_GRID * round(at.y / SIZE_CELL_GRID))
           check min(off_x, off_y) <= 1.0
 
 
@@ -1314,11 +1371,11 @@ suite "Mesh":
     check isNear(alphaGridFade(0.0, fog.radius_full, fog.radius_gone), 1.0)
     check isNear(alphaGridFade(fog.radius_full, fog.radius_full, fog.radius_gone), 1.0)
     check isNear(alphaGridFade(fog.radius_gone, fog.radius_full, fog.radius_gone), 0.0)
-    check isNear(alphaGridFade(2.0*fog.radius_gone, fog.radius_full, fog.radius_gone), 0.0)
+    check isNear(alphaGridFade(2.0 * fog.radius_gone, fog.radius_full, fog.radius_gone), 0.0)
     var previous = 1.0
-    for step in 0 .. 100:
+    for step in 0..100:
       let at = fog.radius_full +
-        (fog.radius_gone - fog.radius_full)*float(step)/100.0
+          (fog.radius_gone - fog.radius_full) * float(step) / 100.0
       let fade = alphaGridFade(at, fog.radius_full, fog.radius_gone)
       check fade <= previous + TOLERANCE_SINGLE
       previous = fade
@@ -1334,7 +1391,7 @@ suite "Mesh":
       let scale_afar = scaleFurnitureAt(Position(x: 0, y: 0, z: height), extent)
       MESHES.clearMeshes
       MESHES.addLattice(SCRATCH, extent, scale_afar, groundPlane())
-      check MESHES.ribbons.count <= 2*LINES_GRID_MAX
+      check MESHES.ribbons.count <= 2 * LINES_GRID_MAX
       check MESHES.ribbons.count > 0
 
 
@@ -1344,23 +1401,23 @@ suite "Mesh":
     #   that there was nothing drawn at all -- black void, axes included. Bound now
     #   steps *cell*, which lays same count of lines across reach camera
     #   actually has.
-    check fogFurnitureFor(1.0e9).radius_gone =~ FRACTION_GRID_FADE_END*1.0e9
+    check fogFurnitureFor(1.0e9).radius_gone =~ FRACTION_GRID_FADE_END * 1.0e9
     check fogFurnitureFor(1.0e9).radius_full < fogFurnitureFor(1.0e9).radius_gone
 
     # Cell holds at its fixed size right up to reach it can cover, and steps only.
     #   past it -- reader working at any ordinary distance never meets step.
-    let radius_fixed = float(CELLS_GRID_HALF_MAX)*SIZE_CELL_GRID
+    let radius_fixed = float(CELLS_GRID_HALF_MAX) * SIZE_CELL_GRID
     check sizeCellGridFor(0.0) =~ SIZE_CELL_GRID
     check sizeCellGridFor(radius_fixed) =~ SIZE_CELL_GRID
-    check sizeCellGridFor(1.5*radius_fixed) =~ 10.0*SIZE_CELL_GRID
-    check sizeCellGridFor(15.0*radius_fixed) =~ 100.0*SIZE_CELL_GRID
+    check sizeCellGridFor(1.5 * radius_fixed) =~ 10.0 * SIZE_CELL_GRID
+    check sizeCellGridFor(15.0 * radius_fixed) =~ 100.0 * SIZE_CELL_GRID
     # By decades, so every line of coarser lattice is line of finer one and.
     #   step coarsens what is drawn without moving anything reader was measuring against.
     for radius in [2.0e3, 5.0e4, 3.0e6, 1.0e9]:
-      let decades = log10(sizeCellGridFor(radius)/SIZE_CELL_GRID)
+      let decades = log10(sizeCellGridFor(radius) / SIZE_CELL_GRID)
       check decades =~ round(decades)
       # And never more lines than bound, however far out camera has gone.
-      check radius/sizeCellGridFor(radius) <= float(CELLS_GRID_HALF_MAX)
+      check radius / sizeCellGridFor(radius) <= float(CELLS_GRID_HALF_MAX)
 
     # Ground is still drawn where it used to be gone entirely, and still within budget.
     for (extent, height) in [(1.0e4, 5.0e2), (1.0e6, 5.0e4), (1.0e9, 5.0e7)]:
@@ -1373,20 +1430,20 @@ suite "Mesh":
       #   world's rather than one dragged along under camera.
       let
         fog = fogFurnitureFor(extent)
-        size_cell = sizeCellGridFor(sqrt(fog.radius_gone*fog.radius_gone - height*height))
-      for i in 0 ..< MESHES.ribbons.count:
-        let corners = expandRibbon(MESHES.ribbons.records[i], toScale(scale_afar))
+        size_cell = sizeCellGridFor(sqrt(fog.radius_gone * fog.radius_gone - height * height))
+      for i in 0..<MESHES.ribbons.count:
+        let corners = expandRibbon(MESHES.ribbons.records[i], scale_afar.toScale)
         if not isRibbonDrawn(corners): continue
         for vertex in corners:
           let
             at = vertex.toPosition
-            off_x = abs(at.x - size_cell*round(at.x/size_cell))
-            off_y = abs(at.y - size_cell*round(at.y/size_cell))
+            off_x = abs(at.x - size_cell * round(at.x / size_cell))
+            off_y = abs(at.y - size_cell * round(at.y / size_cell))
           # Within fiftieth of cell rather than exactly on it: line is drawn as.
           #   ribbon, so its vertices stand half its own screen width either side of
           #   lattice line, which in world units grows with distance it is drawn at.
           #   Measured at 0.005 of cell across all three reaches.
-          check min(off_x, off_y) <= 0.02*size_cell
+          check min(off_x, off_y) <= 0.02 * size_cell
 
 
   test "a picked plane is ruled on itself, in its own frame, and nothing else is":
@@ -1395,8 +1452,8 @@ suite "Mesh":
     let
       normal = normalize(Direction(x: 1.0, y: 2.0, z: 2.0)).get
       through = Position(x: 2.0, y: -1.0, z: 3.0)
-      plane = planeThrough(toMultivector(through), toMultivector(normal))
-      scale_near = scaleFurnitureAt(through + 3.0*normal, 300.0)
+      plane = planeThrough(through.toMultivector, normal.toMultivector)
+      scale_near = scaleFurnitureAt(through + 3.0 * normal, 300.0)
     MESHES.clearMeshes
     MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, plane)
     check MESHES.ribbons.count > 0
@@ -1404,19 +1461,19 @@ suite "Mesh":
       anchor = positionAnchor(plane).get
       axes = frame(plane).get
       fog = fogFurnitureFor(scale_near.extentFurniture)
-      height = abs(depthAgainst(plane, toMultivector(scale_near.eye)))
-      size_cell = sizeCellGridFor(sqrt(fog.radius_gone*fog.radius_gone - height*height))
-    for i in 0 ..< MESHES.ribbons.count:
+      height = abs(depthAgainst(plane, scale_near.eye.toMultivector))
+      size_cell = sizeCellGridFor(sqrt(fog.radius_gone * fog.radius_gone - height * height))
+    for i in 0..<MESHES.ribbons.count:
       let record = MESHES.ribbons.records[i]
       for at in [
         Position(x: record.tail_x, y: record.tail_y, z: record.tail_z),
         Position(x: record.head_x, y: record.head_y, z: record.head_z),
       ]:
-        check abs(depthAgainst(plane, toMultivector(at))) < 1.0e-3
+        check abs(depthAgainst(plane, at.toMultivector)) < 1.0e-3
         # One of two plane coordinates sits on multiple of cell: line's own step.
         let
-          first = dot(at - anchor, axes.axis_first)/size_cell
-          second = dot(at - anchor, axes.axis_second)/size_cell
+          first = dot(at - anchor, axes.axis_first) / size_cell
+          second = dot(at - anchor, axes.axis_second) / size_cell
         check min(abs(first - round(first)), abs(second - round(second))) < 1.0e-3
     # Plane in horizon has no finite point to rule about.
     MESHES.clearMeshes
@@ -1426,8 +1483,8 @@ suite "Mesh":
     var
       scene = initScene()
       picked: Selection
-    picked.toggle(scene.addObject(toMultivector(through), "p", Ink.Rose))
-    picked.toggle(scene.addObject(plane, "shown", Ink.Rose))
+    picked.toggle scene.addObject(through.toMultivector, "p", Ink.Rose)
+    picked.toggle scene.addObject(plane, "shown", Ink.Rose)
     let hidden = scene.addObject(groundPlane(), "hidden", Ink.Rose)
     scene.setVisible(hidden, false)
     picked.toggle(hidden)
@@ -1450,9 +1507,9 @@ suite "Mesh":
     check norm(scale_afar.eye - ORIGIN) > fog.radius_gone
     MESHES.clearMeshes
     MESHES.addAxes(SCRATCH, scale_afar.extentFurniture, scale_afar)
-    check 6*MESHES.ribbons.count > 0
-    for i in 0 ..< MESHES.ribbons.count:
-      let corners = expandRibbon(MESHES.ribbons.records[i], toScale(scale_afar))
+    check 6 * MESHES.ribbons.count > 0
+    for i in 0..<MESHES.ribbons.count:
+      let corners = expandRibbon(MESHES.ribbons.records[i], scale_afar.toScale)
       if not isRibbonDrawn(corners): continue
       for vertex in corners:
         let at = vertex.toPosition
@@ -1463,23 +1520,23 @@ suite "Mesh":
 
 
   test "radiusHorizonFor scales with the camera's own far clip distance":
-    check radiusHorizonFor(400.0) =~ 400.0*FRACTION_HORIZON
+    check radiusHorizonFor(400.0) =~ 400.0 * FRACTION_HORIZON
 
 
   test "extentFurnitureFor scales with the camera's own far clip distance":
-    check extentFurnitureFor(400.0) =~ 400.0*FRACTION_FURNITURE
+    check extentFurnitureFor(400.0) =~ 400.0 * FRACTION_FURNITURE
 
 
   test "muted colour blends toward its own luminance and cuts opacity by its fixed fraction":
     for ink in Ink:
       let
         base = ink.colour
-        luminance = 0.299'f32*base.red + 0.587'f32*base.green + 0.114'f32*base.blue
+        luminance = 0.299'f32 * base.red + 0.587'f32 * base.green + 0.114'f32 * base.blue
         dimmed = muted(base)
-      check isNear(dimmed.red, base.red + (luminance - base.red)*MUTE_DESATURATION)
-      check isNear(dimmed.green, base.green + (luminance - base.green)*MUTE_DESATURATION)
-      check isNear(dimmed.blue, base.blue + (luminance - base.blue)*MUTE_DESATURATION)
-      check isNear(dimmed.alpha, base.alpha*FRACTION_DIMMED_ALPHA)
+      check isNear(dimmed.red, base.red + (luminance - base.red) * MUTE_DESATURATION)
+      check isNear(dimmed.green, base.green + (luminance - base.green) * MUTE_DESATURATION)
+      check isNear(dimmed.blue, base.blue + (luminance - base.blue) * MUTE_DESATURATION)
+      check isNear(dimmed.alpha, base.alpha * FRACTION_DIMMED_ALPHA)
 
 
   test "the categorical run is contiguous, so a picker can walk it as one block":
@@ -1489,13 +1546,13 @@ suite "Mesh":
     check COUNT_INK_CATEGORICAL == 5
     check inkCategorical(0) == INK_CATEGORICAL_FIRST
     check inkCategorical(COUNT_INK_CATEGORICAL - 1) == Ink.high
-    for index in 0 ..< COUNT_INK_CATEGORICAL:
+    for index in 0..<COUNT_INK_CATEGORICAL:
       check categoricalIndex(inkCategorical(index)) == index
 
 
   test "a colour picker offers every categorical slot and no structural one":
     var offered: seq[string]
-    for index in 0 ..< COUNT_INK_CATEGORICAL: offered.add($inkCategorical(index))
+    for index in 0..<COUNT_INK_CATEGORICAL: offered.add($inkCategorical(index))
     check offered == @["Rose", "Copper", "Olive", "Jade", "Cobalt"]
     # `Invalid` is structural precisely so it can never be offered: status colour.
     #   caller could also pick for ordinary object would say nothing.
@@ -1507,7 +1564,7 @@ suite "Mesh":
 
   test "inkCycled stays inside the run a picker offers, and wraps within it":
     # Nothing may cycle to colour user could not have chosen themselves.
-    for index in 0 ..< 3*COUNT_INK_CATEGORICAL:
+    for index in 0 ..< 3 * COUNT_INK_CATEGORICAL:
       check categoricalIndex(inkCycled(index)) >= 0
       check categoricalIndex(inkCycled(index)) < COUNT_INK_CATEGORICAL
     check inkCycled(0) == INK_CATEGORICAL_FIRST

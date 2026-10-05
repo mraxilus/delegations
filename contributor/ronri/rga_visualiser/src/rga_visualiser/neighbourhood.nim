@@ -16,17 +16,18 @@
 {.experimental: "strictFuncs".}
 
 type
-  Neighbour* = object ## Define one real star known to carry planets.
-    name*: string ## What archive calls it.
-    parsecs*: float ## How far it stands from Sol.
-    ascension*: float ## Its right ascension, in degrees.
-    declination*: float ## Its declination, in degrees.
-    planets*: int ## How many entries of `PLANETS` are its own.
-    first*: int ## Where those entries begin.
+  Neighbour* = object  ## Define one real star known to carry planets.
+    name*: string  ## What archive calls it.
+    parsecs*: float  ## How far it stands from Sol.
+    ascension*: float  ## Its right ascension, in degrees.
+    declination*: float  ## Its declination, in degrees.
+    planets*: int  ## How many entries of `PLANETS` are its own.
+    first*: int  ## Where those entries begin.
 
-  NeighbourPlanet* = object ## Define one real planet.
-    name*: string ## What archive calls it.
-    axis_semi_major*: float ## Its semi-major axis in astronomical units; `0.0` where none is known.
+  NeighbourPlanet* = object  ## Define one real planet.
+    name*: string  ## What archive calls it.
+    axis_semi_major*: float
+      ## Its semi-major axis in astronomical units; `0.0` where none is known.
 
 
 #!fix off

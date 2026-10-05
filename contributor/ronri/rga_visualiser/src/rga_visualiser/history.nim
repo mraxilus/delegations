@@ -61,21 +61,21 @@ static:
 #[ Type Definitions ]#
 
 type
-  Step* = object ## Define one committed edit: scene it produced, and where camera stood.
+  Step* = object  ## Define one committed edit: scene it produced, and where camera stood.
     scene*: Scene
-    stance*: CameraStance ## Where view stood as *this* step's edit was made.
+    stance*: CameraStance  ## Where view stood as *this* step's edit was made.
       ## Stance to restore in either direction across this step, not on arriving at its
       ## scene. First entry's is never restored: no edit leads into it.
 
-  History* = object ## Define fixed-capacity timeline of steps, with cursor onto live one.
+  History* = object  ## Define fixed-capacity timeline of steps, with cursor onto live one.
     ## Array is ring: `count` and `cursor` are timeline positions, `first` says which handle
     ## holds oldest, and `handleOf` alone relates them.
     ##   Dropping oldest step moves one integer; see `record`.
-    entries: array[CAPACITY_HISTORY, Step] ## Snapshot per committed edit, in ring order.
+    entries: array[CAPACITY_HISTORY, Step]  ## Snapshot per committed edit, in ring order.
       ## Reach one through `handleOf`, never by indexing directly.
-    first: int    ## Array handle holding oldest step, timeline position 0.
-    count: int    ## Valid timeline entries so far, <= CAPACITY_HISTORY.
-    cursor: int   ## Timeline position of entry equal to live scene right now.
+    first: int  ## Array handle holding oldest step, timeline position 0.
+    count: int  ## Valid timeline entries so far, <= CAPACITY_HISTORY.
+    cursor: int  ## Timeline position of entry equal to live scene right now.
 
 
 

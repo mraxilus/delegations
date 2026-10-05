@@ -52,14 +52,12 @@ const
   INSET_MENU_POINTER = 8.0'f32
     ## Set how far menu's corner stands from pointer that opened it, in pixels.
     ##   Context menu's own convention: beside pointer, not under it.
-  PATH_MAX* = 256
-    ## Bound length of export path user may type.
+  PATH_MAX* = 256  ## Bound length of export path user may type.
   WIDTH_PANEL* = 440.0'f32
     ## Set width panels open at, in pixels.
     ##   Wide enough that six coefficient cells share one line, close to browser drawer's.
     ##   Opening editor must not resize window, so this holds whether or not one is open.
-  SPEED_DRAG* = 0.01'f32
-    ## Set how fast coefficient moves per pixel dragged.
+  SPEED_DRAG* = 0.01'f32  ## Set how fast coefficient moves per pixel dragged.
   WIDTH_OBJECT_LINE = WIDTH_KIND_WORD + WIDTH_MULTIVECTOR
     ## Bound one item's shape-and-coefficient line in bytes, redrawn every frame.
     ##   Sized from what two printers filling it declare: shape word then whole
@@ -118,8 +116,7 @@ const
     ## Reserve room to right of field for its label, which Dear ImGui draws there.
   SPACING_SEGMENT = 8.0'f32
     ## Separate segments of segmented control, matching gap `sameLine` leaves.
-  WIDTH_OVERLAY_TEXT = 48
-    ## Bound length of bar or graph's overlay text, redrawn every frame.
+  WIDTH_OVERLAY_TEXT = 48  ## Bound length of bar or graph's overlay text, redrawn every frame.
   SIZES_POOL_CELL = [14.0'f32, 10.0'f32, 6.0'f32, 4.0'f32, 3.0'f32, 2.0'f32]
     ## Offer sides one object-pool cell may take, in pixels, largest first.
     ##   Chosen against capacity, not fixed: largest cell wraps off bottom of panel at
@@ -135,42 +132,41 @@ const
   CHANNELS_POOL_CELL = 3
     ## Count floats one pool cell contributes to `gui.poolBar`'s buffer.
     ##   Red, green, blue, no alpha, since every cell is opaque.
-  INK_POOL_FREE = Ink.Grid
-    ## Draw free object-pool handle in palette's recessive furniture colour.
+  INK_POOL_FREE = Ink.Grid  ## Draw free object-pool handle in palette's recessive furniture colour.
 
 
 
 #[ Type Definitions ]#
 
 type
-  EditSession* = object ## Define what open edit is staging, before any of it reaches scene.
+  EditSession* = object  ## Define what open edit is staging, before any of it reaches scene.
     ## One session at time, in one of two modes; see `handle`.
-    handle*: Option[int] ## Object being edited; none while composing brand-new object.
-    coefficients*: array[Basis, cfloat] ## Staged multivector, one per basis element.
+    handle*: Option[int]  ## Object being edited; none while composing brand-new object.
+    coefficients*: array[Basis, cfloat]  ## Staged multivector, one per basis element.
       ## Drawn every frame as muted preview.
       ## `cfloat` because that is what drag widget writes.
-    label*: array[LABEL_MAX, char] ## Staged label.
+    label*: array[LABEL_MAX, char]  ## Staged label.
       ## Staged because `gui.inputText` writes straight through pointer, and scene's
       ## buffer must not change before save.
-    index_ink*: cint ## Staged palette handle.
-    radius*: cfloat ## Staged drawn radius, in world units; see `scene.radiusAt`.
+    index_ink*: cint  ## Staged palette handle.
+    radius*: cfloat  ## Staged drawn radius, in world units; see `scene.radiusAt`.
 
-  ObjectRow* = object ## Define what one object row has resolved about itself.
+  ObjectRow* = object  ## Define what one object row has resolved about itself.
     ## Computed once at top of `layoutObject` and handed to each part of row, so three agree.
-    handle*: Option[int] ## Object backing row; none for composing row.
-    is_open*: bool ## Whether this row's edit session is one open.
-    is_visible*: bool ## Whether object is shown in 3D view.
-    tint*: Rgba ## Colour row's name draws in.
+    handle*: Option[int]  ## Object backing row; none for composing row.
+    is_open*: bool  ## Whether this row's edit session is one open.
+    is_visible*: bool  ## Whether object is shown in 3D view.
+    tint*: Rgba  ## Colour row's name draws in.
       ## Staged where session is open, so recolouring previews itself.
 
-  Panel* = object ## Define GUI's state between frames.
-    is_help_open*: bool ## Whether help panel is showing.
+  Panel* = object  ## Define GUI's state between frames.
+    is_help_open*: bool  ## Whether help panel is showing.
       ## Closed at startup: reference that opens itself is one returning user closes every
       ## session.
-    session*: Option[EditSession] ## Edit in progress, if any.
+    session*: Option[EditSession]  ## Edit in progress, if any.
       ## Its staged multivector is what `main.assembleMeshes` draws as preview, read
       ## later in same frame.
-    preview*: Option[Preview] ## What open apply control would build.
+    preview*: Option[Preview]  ## What open apply control would build.
       ## Previewed while reader is choosing, as drag's rubber-band does.
       ## Written by whichever apply control is on screen, cleared at top of every frame by
       ## `layoutPanel`.
@@ -178,23 +174,23 @@ type
       ## Loses to `session` where both stand: session is being typed into.
       ## Its `Preview.operands` has camera frame result beside its objects; see
       ## `framing.watched`.
-    selection*: Selection ## Objects picked right now, in pick order.
+    selection*: Selection  ## Objects picked right now, in pick order.
       ## Each marked by `main.drawSelectionMarker`.
       ## Picked through row's checkbox (toggles) or name (picks alone), replaced by every
       ## construction path.
       ## Cleared by successful undo or redo, since restored snapshot's handle numbers may
       ## not match.
-    tween_camera*: CameraTween ## Carries camera toward whatever is being built or edited.
+    tween_camera*: CameraTween  ## Carries camera toward whatever is being built or edited.
       ## See `camera.CameraTween`; advanced once per frame by `main.renderFrame`.
-    search*: array[LABEL_MAX, char] ## What reader typed into objects search.
+    search*: array[LABEL_MAX, char]  ## What reader typed into objects search.
       ## Buffer `gui.inputSearch` writes straight through, read to its terminator.
-    is_search_focus_wanted*: bool ## Whether `/` asked for objects search since last layout.
+    is_search_focus_wanted*: bool  ## Whether `/` asked for objects search since last layout.
       ## Set by key handler, consumed by `layoutObjects`, which opens section and hands
       ## field keyboard.
-    handles_shown*: array[OBJECTS_MAX, int] ## Handles search leaves listed, oldest first.
+    handles_shown*: array[OBJECTS_MAX, int]  ## Handles search leaves listed, oldest first.
       ## As `scene.handlesMatching` fills them; valid to `count_shown`.
-    count_shown*: int ## How many of `handles_shown` are filled.
-    count_matched*: int ## How many of `handles_shown` search matches, rather than keeps.
+    count_shown*: int  ## How many of `handles_shown` are filled.
+    count_matched*: int  ## How many of `handles_shown` search matches, rather than keeps.
       ## Zero while picks still stand is what list's note answers.
     stamp_shown*: Option[tuple[
       revision: int, search: array[LABEL_MAX, char], kept: Option[int],
@@ -204,82 +200,82 @@ type
       ## while searching, selection's revision.
       ## None before first layout. Filtered again only when one of four moves, never per
       ## frame: sorting and matching per frame is most of desktop's frame at capacity.
-    index_operand_first*: cint ## Object picked as left operand.
-    index_operand_second*: cint ## Object picked as right operand.
-    revision_selection_synced*: int ## `selection.revision` apply controls were defaulted
+    index_operand_first*: cint  ## Object picked as left operand.
+    index_operand_second*: cint  ## Object picked as right operand.
+    revision_selection_synced*: int  ## `selection.revision` apply controls were defaulted
       ## against.
       ## `layoutApply` re-derives arity and operands only when selection changes.
       ##   Panel redraws every frame, and unconditional resync would fight reader's later
       ##   manual pick.
-    operations*: OperationMemory ## Which operation each arity's picker opens on.
+    operations*: OperationMemory  ## Which operation each arity's picker opens on.
       ## Carried from last apply.
-    index_operation*: cint ## Operation picked from catalogue.
-    index_arity*: cint ## Arity filter operation picker offers.
+    index_operation*: cint  ## Operation picked from catalogue.
+    index_arity*: cint  ## Arity filter operation picker offers.
       ## 0 unary, 1 binary, matching `Arity`'s ordinals.
       ## Filters list rather than greying second operand.
-    pointer_pick*: Option[PointerPick] ## Pick made by pointer since camera was last offered.
+    pointer_pick*: Option[PointerPick]  ## Pick made by pointer since camera was last offered.
       ## Consumed by `framing.offerAim` next frame: object stays under pointer as camera
       ## comes in.
-    is_menu_selection_shown*: bool ## Whether floating selection menu is on screen.
+    is_menu_selection_shown*: bool  ## Whether floating selection menu is on screen.
       ## See `layoutSelectionMenu`.
       ## Not derived from selection being non-empty.
       ##   Every construction leaves result selected, and menu over each new object would
       ##   sit in way of next drag.
       ## Raised by gestures that pick, lowered by ones that build, as browser's
       ## `refreshSelectionMenu`/`adoptConstructionSelection` pair does.
-    is_menu_selection_picking*: bool ## Whether that menu's operation picker is revealed.
+    is_menu_selection_picking*: bool  ## Whether that menu's operation picker is revealed.
       ## Its `apply` button opens it before committing.
-    position_menu_selection*: array[2, cfloat] ## Where that menu sits, in window pixels.
+    position_menu_selection*: array[2, cfloat]  ## Where that menu sits, in window pixels.
       ## Kept between frames.
       ##   Object it follows can pass behind camera, and menu that vanished for those
       ##   frames would be worse than one staying put.
-    corner_menu_pointer*: Option[array[2, cfloat]] ## Where pointer that opened menu asked
+    corner_menu_pointer*: Option[array[2, cfloat]]  ## Where pointer that opened menu asked
       ## its top-left corner to stand, until first layout turns it into offset below.
-    offset_menu_selection*: Option[array[2, cfloat]] ## Where menu's corner stands from
+    offset_menu_selection*: Option[array[2, cfloat]]  ## Where menu's corner stands from
       ## object's anchor while pointer placed it; none where it sits above object.
       ## Offset rather than fixed spot, so orbiting carries menu with object.
-    index_operation_menu*: cint ## Operation picked in that menu.
+    index_operation_menu*: cint  ## Operation picked in that menu.
       ## Own reading: section's list is indexed per arity reader chose there, menu's is
       ## always arity selection implies.
-    is_grid_shown*: bool ## Whether each picked plane is ruled with lattice.
-    is_axes_shown*: bool ## Whether world axes are drawn.
-    is_export_requested*: bool ## Whether frame should be written out after drawing.
-    is_undo_requested*, is_redo_requested*: bool ## Whether key asked to step timeline.
+    is_grid_shown*: bool  ## Whether each picked plane is ruled with lattice.
+    is_axes_shown*: bool  ## Whether world axes are drawn.
+    is_export_requested*: bool  ## Whether frame should be written out after drawing.
+    is_undo_requested*, is_redo_requested*: bool  ## Whether key asked to step timeline.
       ## Set by key handler and consumed right after layout.
       ##   `handleEvent` has no `History`, and routing button and key through one call
       ##   stops them drifting.
-    is_vsync_enabled*: bool ## Whether swap waits for display refresh before returning.
-    microseconds_tessellate*: float ## Cost of rebuilding vertex storage, last frame.
-    count_vertices*: int ## Vertices assembled, last frame.
-    path_export*: array[PATH_MAX, char] ## Where exported frame is written.
-    path_scene*: array[PATH_MAX, char] ## Where scene is saved to and loaded from.
-    message*: array[MESSAGE_MAX, char] ## Outcome of last action taken.
+    is_vsync_enabled*: bool  ## Whether swap waits for display refresh before returning.
+    microseconds_tessellate*: float  ## Cost of rebuilding vertex storage, last frame.
+    count_vertices*: int  ## Vertices assembled, last frame.
+    path_export*: array[PATH_MAX, char]  ## Where exported frame is written.
+    path_scene*: array[PATH_MAX, char]  ## Where scene is saved to and loaded from.
+    message*: array[MESSAGE_MAX, char]  ## Outcome of last action taken.
       ## Empty where action had nothing to report, which is said by saying nothing.
-    said_message*: float ## Clock reading `message` was set at.
+    said_message*: float  ## Clock reading `message` was set at.
       ## Outcome stands `SECONDS_MESSAGE`, fades over `SECONDS_MESSAGE_FADE`, and is gone.
       ##   Sentence is about action reader just took, and line pinned to panel's foot
       ##   outlived its own occasion by whole session. Page has always shown its own as
       ##   toast; this is that, in window.
-    is_menu_top_forced*: bool ## Whether to open top menu with no click, for scripted run.
+    is_menu_top_forced*: bool  ## Whether to open top menu with no click, for scripted run.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; see `main.--drive-menu`.
-    count_demo_offered*: int ## Sizes menu's demo group offered, last time it was drawn.
+    count_demo_offered*: int  ## Sizes menu's demo group offered, last time it was drawn.
       ## Zero until menu has been opened once. Read by scripted run's verdict, which is
       ## only way headless run can say menu came up with its groups in it.
-    room_under_sections*: cfloat ## Height window had left once every section had drawn.
+    room_under_sections*: cfloat  ## Height window had left once every section had drawn.
       ## Negative means what follows sections is off window's bottom and reader has to
       ## scroll window to reach it.
       ##   Written each frame by `layoutPanel`, read by scripted run's verdict: only way
       ##   headless run can say list long enough to bury rest of panel did not.
-    milliseconds_history*: array[FRAMES_HISTORY, cfloat] ## Ring buffer of recent frame
+    milliseconds_history*: array[FRAMES_HISTORY, cfloat]  ## Ring buffer of recent frame
       ## times.
       ## Oldest to newest by `index_history`; nothing outside panel reads it.
-    index_history*: int ## Next handle in `milliseconds_history` fresh reading overwrites.
-    bytes_arena_permanent_used*: int ## Snapshot of permanent arena's `used`.
-    bytes_arena_permanent_capacity*: int ## Snapshot of permanent arena's `capacity`.
-    bytes_arena_frame_peak*: int ## Snapshot of frame arena's `peakUsed`.
-    bytes_arena_frame_capacity*: int ## Snapshot of frame arena's `capacity`.
-    bytes_memory_total*: int ## Sum of every fixed reservation this binary makes.
+    index_history*: int  ## Next handle in `milliseconds_history` fresh reading overwrites.
+    bytes_arena_permanent_used*: int  ## Snapshot of permanent arena's `used`.
+    bytes_arena_permanent_capacity*: int  ## Snapshot of permanent arena's `capacity`.
+    bytes_arena_frame_peak*: int  ## Snapshot of frame arena's `peakUsed`.
+    bytes_arena_frame_capacity*: int  ## Snapshot of frame arena's `capacity`.
+    bytes_memory_total*: int  ## Sum of every fixed reservation this binary makes.
       ## Computed where every piece is visible, since `panel` cannot see arenas' backing
       ## storage.
 
@@ -323,9 +319,11 @@ func showSelectionMenuAt*(panel: var Panel, pointer: ScreenPosition) =
   ## Bring floating selection menu up beside `pointer`, as context menu does.
   ##   Menu then keeps its offset from object as camera moves; see `layoutSelectionMenu`.
   panel.showSelectionMenu()
-  panel.corner_menu_pointer = some([
-    cfloat(pointer.x) + INSET_MENU_POINTER, cfloat(pointer.y) + INSET_MENU_POINTER,
-  ])
+  panel.corner_menu_pointer = some(
+    [
+      cfloat(pointer.x) + INSET_MENU_POINTER, cfloat(pointer.y) + INSET_MENU_POINTER,
+    ],
+  )
 
 
 func hideSelectionMenu*(panel: var Panel) =
@@ -370,7 +368,7 @@ proc widthPushField() =
   gui.widthPush(gui.contentWidth() - WIDTH_LABEL_FIELD)
 
 
-func visibilityLabel(is_visible: bool, hide, show: Wording): cstring =
+func visibilityLabel(is_visible: bool; hide, show: Wording): cstring =
   ## Report word button flipping visibility wears, from pair of keys caller names.
   ##   Takes its pair rather than fixing one: object row and menu over selection each name
   ##   their own button, and both flip same way. Conditional itself is written once.
@@ -403,7 +401,7 @@ proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
   # Read width once, before anything is placed.
   #   `contentWidth` reports what is left on current line.
   let width_content = gui.contentWidth()
-  for g in Grade.low .. Grade.high:
+  for g in Grade.low..Grade.high:
     var count_grade = 0
     for b in Basis:
       if b.grade == g: inc count_grade
@@ -414,17 +412,13 @@ proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
         column = placed mod COEFFICIENTS_PER_ROW
         count_line = min(COEFFICIENTS_PER_ROW, count_grade - (placed - column))
         width_cell =
-          (width_content - float32(count_line - 1)*SPACING_SEGMENT)/float32(count_line)
+          (width_content - float32(count_line - 1) * SPACING_SEGMENT) / float32(count_line)
       if column > 0: gui.sameLine()
       gui.groupBegin()
       gui.widthPush(width_cell)
       # Let name recede and number read, as browser's `--ink-faint` label does.
-      gui.textTinted(
-        cstring(LUT_NAME_BY_BASIS[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
-      )
-      if gui.dragFloat(
-        cstring("##" & LUT_NAME_BY_BASIS[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0
-      ):
+      gui.textTinted(cstring(LUT_NAME_BY_BASIS[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
+      if gui.dragFloat(cstring("##" & LUT_NAME_BY_BASIS[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0):
         result = some(b)
       gui.widthPop()
       gui.groupEnd()
@@ -439,7 +433,7 @@ func beginSession(panel: var Panel, scene: var Scene, handle: Option[int]) =
   ##   `layoutObjects`.
   var session = EditSession(handle: handle)
   if handle.isSome:
-    session.stage(scene.geometryOf(handle.get))
+    session.stage scene.geometryOf(handle.get)
     session.label = scene.labelAt(handle.get)
     session.index_ink = cint(scene.inkAt(handle.get))
     session.radius = cfloat(scene.radiusAt(handle.get))
@@ -455,7 +449,7 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   ##   Everything writes into session, never scene; nothing lands until save.
   widthPushField()
   fieldLabel(wordingText(NameRowLabel))
-  discard gui.inputText("##label", toCstring(panel.session.get.label), cint(LABEL_MAX))
+  discard gui.inputText("##label", panel.session.get.label.toCstring, cint(LABEL_MAX))
   # Offer categorical run alone.
   #   Structural handles belong to furniture, and combo counts positions within run.
   #   Names come from shared table at its offset, since run is contiguous; see
@@ -463,22 +457,25 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   var index_categorical = cint(categoricalIndex(Ink(panel.session.get.index_ink)))
   fieldLabel(wordingText(NameRowInk))
   if gui.combo(
-    "##colour", addr index_categorical,
-    addr LUT_NAME_BY_INK[INK_CATEGORICAL_FIRST], cint(COUNT_INK_CATEGORICAL),
+    "##colour",
+    addr index_categorical,
+    addr LUT_NAME_BY_INK[INK_CATEGORICAL_FIRST],
+    cint(COUNT_INK_CATEGORICAL),
   ):
     panel.session.get.index_ink = cint(ord(inkCategorical(int(index_categorical))))
   # Size reads for point alone; line and plane take theirs from camera and horizon.
   #   Bounded below at what editor accepts, since model refuses zero outright.
   fieldLabel(wordingText(NameRowSize))
   discard gui.dragFloat(
-    "##size", addr panel.session.get.radius, SPEED_DRAG, cfloat(RADIUS_OBJECT_LEAST),
+    "##size",
+    addr panel.session.get.radius,
+    SPEED_DRAG,
+    cfloat(RADIUS_OBJECT_LEAST),
     cfloat(RADIUS_OBJECT_MOST),
   )
-  gui.tooltip(wordingText(TipRowRadius))
+  gui.tooltip wordingText(TipRowRadius)
   gui.widthPop()
-  gui.textTinted(
-    wordingText(NameRowCoefficients), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
-  )
+  gui.textTinted(wordingText(NameRowCoefficients), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
   gui.sameLine()
   gui.helpMarker(
     if is_pending: wordingText(NoteCoefficientsNew)
@@ -494,17 +491,17 @@ proc layoutObjectName(panel: var Panel, scene: var Scene, row: ObjectRow) =
   ##   Name picks that one alone: browser gets single-select from canvas click, which
   ##   this build has no equivalent of.
   var is_selected = (not row.isPending) and row.handle.get in panel.selection
-  gui.disabledPush(row.isPending) # Nothing to select until it exists.
+  gui.disabledPush(row.isPending)  # Nothing to select until it exists.
   if gui.checkbox("", addr is_selected):
     panel.selection.toggle(row.handle.get)
-    panel.showSelectionMenu() # Picking from list is picking.
+    panel.showSelectionMenu()  # Picking from list is picking.
   gui.disabledPop()
-  gui.tooltip(wordingText(TipRowSelect))
+  gui.tooltip wordingText(TipRowSelect)
   gui.sameLine()
 
   let label_shown =
-    if row.is_open: toCstring(panel.session.get.label)
-    else: toCstring(scene.labelAt(row.handle.get))
+    if row.is_open: panel.session.get.label.toCstring
+    else: scene.labelAt(row.handle.get).toCstring
   gui.textColorPush(row.tint.red, row.tint.green, row.tint.blue)
   if gui.selectable(label_shown, is_selected, WIDTH_OBJECT_LABEL) and not row.isPending:
     if is_selected and panel.selection.len == 1: panel.selection.clear()
@@ -514,8 +511,12 @@ proc layoutObjectName(panel: var Panel, scene: var Scene, row: ObjectRow) =
 
 
 proc layoutObjectButtons(
-  panel: var Panel, scene: var Scene, camera: Camera, history: var History,
-  row: ObjectRow, now: float
+  panel: var Panel,
+  scene: var Scene,
+  camera: Camera,
+  history: var History,
+  row: ObjectRow,
+  now: float,
 ): bool =
   ## Lay out row's actions; report whether user asked for object to go.
   ##   Longer than sixty-line default: run's whole width has to be measured before any of
@@ -534,10 +535,8 @@ proc layoutObjectButtons(
       (
         if row.isPending or row.is_open: 0.0'f32
         else:
-          gui.buttonSmallWidth(
-            visibilityLabel(row.is_visible, NameRowHide, NameRowShow)
-          ) +
-          gui.buttonSmallWidth(wordingText(NameRowRemove)) + 2.0'f32*SPACING_SEGMENT
+          gui.buttonSmallWidth(visibilityLabel(row.is_visible, NameRowHide, NameRowShow)) +
+              gui.buttonSmallWidth(wordingText(NameRowRemove)) + 2.0'f32 * SPACING_SEGMENT
       )
   gui.alignRight(width_buttons)
   if gui.buttonSmall(label_commit):
@@ -549,17 +548,20 @@ proc layoutObjectButtons(
         geometry = session.geometry
       if row.isPending:
         let handle_added = scene.addObject(
-          geometry, toText(session.label), Ink(session.index_ink), now,
+          geometry,
+          session.label.toText,
+          Ink(session.index_ink),
+          now,
           radius = float(session.radius),
         )
         panel.selection.selectOnly(handle_added)
-        panel.say(addedMessage(toText(session.label)), now)
+        panel.say(addedMessage(session.label.toText), now)
       else:
         scene.setGeometryAt(row.handle.get, geometry)
         scene.labelAt(row.handle.get) = session.label
         scene.setInk(row.handle.get, Ink(session.index_ink))
         scene.setRadius(row.handle.get, float(session.radius))
-        panel.say(savedMessage(toText(session.label)), now)
+        panel.say(savedMessage(session.label.toText), now)
       history.record(scene, camera)
       panel.session = none(EditSession)
   gui.tooltip(if row.is_open: wordingText(TipRowCommit) else: wordingText(TipRowEdit))
@@ -582,10 +584,10 @@ proc layoutObjectButtons(
     if gui.buttonSmall(visibilityLabel(row.is_visible, NameRowHide, NameRowShow)):
       scene.setVisible(row.handle.get, not row.is_visible)
       history.record(scene, camera)
-    gui.tooltip(wordingText(TipRowVisible))
+    gui.tooltip wordingText(TipRowVisible)
     gui.sameLine()
     result = gui.buttonSmall(wordingText(NameRowRemove))
-    gui.tooltip(wordingText(TipRowRemove))
+    gui.tooltip wordingText(TipRowRemove)
 
 
 proc layoutObjectDescription(panel: Panel, scene: var Scene, row: ObjectRow) =
@@ -610,8 +612,12 @@ proc layoutObjectDescription(panel: Panel, scene: var Scene, row: ObjectRow) =
 
 
 proc layoutObject(
-  panel: var Panel, scene: var Scene, camera: Camera, history: var History,
-  handle: Option[int], now: float
+  panel: var Panel,
+  scene: var Scene,
+  camera: Camera,
+  history: var History,
+  handle: Option[int],
+  now: float,
 ): bool =
   ## Lay out one item's controls; report whether user asked for it to be removed.
   ##   None `handle` lays out composing row: same shape, values from session, no buttons
@@ -625,7 +631,7 @@ proc layoutObject(
 
   let row = block:
     let is_open = is_pending or
-      (panel.session.isSome and panel.session.get.handle == handle)
+        (panel.session.isSome and panel.session.get.handle == handle)
     # Bind ink first: `colour` lends, and C++ backend cannot lend from converted temporary.
     let ink = if is_open: Ink(panel.session.get.index_ink) else: scene.inkAt(handle.get)
     ObjectRow(
@@ -662,10 +668,10 @@ proc refreshShown(panel: var Panel, scene: Scene) =
     )
   if panel.stamp_shown == some(stamp): return
   var
-    handles_kept: array[OBJECTS_MAX + 1, int]
+    handles_kept: array[OBJECTS_MAX+1, int]
     count_kept = 0
   if is_searching:
-    for position in 0 ..< panel.selection.len:
+    for position in 0..<panel.selection.len:
       handles_kept[count_kept] = panel.selection.at(position)
       inc count_kept
   if kept.isSome:
@@ -693,17 +699,17 @@ proc layoutSearch(panel: var Panel, scene: var Scene) =
     width_rest =
       if isSearching(panel.search):
         gui.textWidth(text_widest) + gui.buttonSmallWidth(wordingText(NameListSelect)) +
-          2.0'f32*SPACING_SEGMENT
+            2.0'f32 * SPACING_SEGMENT
       else: 0.0'f32
   if panel.is_search_focus_wanted:
     gui.focusNext()
     panel.is_search_focus_wanted = false
   gui.widthPush(gui.contentWidth() - width_rest)
   discard gui.inputSearch(
-    "##search", wordingText(NameListSearch), toCstring(panel.search), cint(LABEL_MAX)
+    "##search", wordingText(NameListSearch), panel.search.toCstring, cint(LABEL_MAX)
   )
   gui.widthPop()
-  gui.tooltip(wordingText(TipListSearch))
+  gui.tooltip wordingText(TipListSearch)
   panel.refreshShown(scene)
   if not isSearching(panel.search): return
 
@@ -718,17 +724,16 @@ proc layoutSearch(panel: var Panel, scene: var Scene) =
     # Rows in order shown, newest first, after picks already made, so operands reader picked.
     #   stay first.
     var picked: array[OBJECTS_MAX, int]
-    for position in 0 ..< panel.count_shown:
-      picked[position] = panel.handles_shown[panel.count_shown - 1 - position]
-    panel.selection.addAll(picked.toOpenArray(0, panel.count_shown - 1))
-    panel.showSelectionMenu() # Picking from list is picking.
+    for position in 0..<panel.count_shown:
+      picked[position] = panel.handles_shown[panel.count_shown-1-position]
+    panel.selection.addAll picked.toOpenArray(0, panel.count_shown - 1)
+    panel.showSelectionMenu()  # Picking from list is picking.
   gui.disabledPop()
-  gui.tooltip(wordingText(TipListSelect))
+  gui.tooltip wordingText(TipListSelect)
 
 
 proc layoutObjects*(
-  panel: var Panel, scene: var Scene, camera: Camera, history: var History,
-  now: float
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
 ) =
   ## Lay out every item search leaves or keeps, plus row being composed if there is one.
   ##   At most one removal per frame, since click lands on one button.
@@ -748,8 +753,8 @@ proc layoutObjects*(
   let is_composing =
     panel.session.isSome and panel.session.get.handle.isNone
   if scene.len == 0 and not is_composing:
-    gui.text(wordingText(NoteListEmpty))
-    panel.is_search_focus_wanted = false # Nothing to search.
+    gui.text wordingText(NoteListEmpty)
+    panel.is_search_focus_wanted = false  # Nothing to search.
     return
   layoutSearch(panel, scene)
 
@@ -773,7 +778,7 @@ proc layoutObjects*(
   # Note heads list where nothing matched, above any picks kept, so kept rows never read as.
   #   matches.
   if panel.count_matched == 0 and not is_composing:
-    gui.textWrapped(wordingText(NoteListUnmatched))
+    gui.textWrapped wordingText(NoteListUnmatched)
 
   # Order newest first, as browser lists them.
   #   Filtered once per edit or keystroke, never per frame: sorting per frame is most of
@@ -786,7 +791,7 @@ proc layoutObjects*(
   gui.childEnd()
   if handle_removed.isSome:
     # Read label out before removal takes it, so sentence can still name what went.
-    let label_removed = toText(scene.labelAt(handle_removed.get))
+    let label_removed = scene.labelAt(handle_removed.get).toText
     scene.removeObject(handle_removed.get)
     panel.say(removedMessage(label_removed), now)
     panel.selection.pruneDead(scene)
@@ -800,7 +805,7 @@ proc layoutObjects*(
 #[ Construct Panel ]#
 
 func offerOperationsOfArity*(
-  arity: Arity
+  arity: Arity,
 ): (array[COUNT_OPERATION, cstring], array[COUNT_OPERATION, Operation], int) =
   ## List catalogue's operations of one arity.
   ##   With notation each is offered under and operation each offered position names.
@@ -817,9 +822,7 @@ func offerOperationsOfArity*(
     inc result[2]
 
 
-func adoptSelectionAsOperands(
-  panel: var Panel, handles: openArray[int], count: int
-) =
+func adoptSelectionAsOperands(panel: var Panel, handles: openArray[int], count: int) =
   ## Fill arity and operand pickers in from whatever is selected in 3D view.
   ##   How many are picked names arity, pick order names m and n.
   ##   Only when selection itself changes (see `revision_selection_synced`), so later
@@ -830,7 +833,7 @@ func adoptSelectionAsOperands(
 
   func positionOf(handles: openArray[int]; count, handle: int): Option[cint] =
     ## Translate handle back to operand combo's dense position.
-    for position in 0 ..< count:
+    for position in 0..<count:
       if handles[position] == handle: return some(cint(position))
 
   let arity_implied = cint(ord(panel.selection.impliedArity))
@@ -861,15 +864,20 @@ func openSelectionMenuPicker*(panel: var Panel) =
   panel.is_menu_selection_picking = true
   # Open on head of list unless remembered operation is in it: list is per arity.
   panel.index_operation_menu = 0
-  for index in 0 ..< count_offered:
+  for index in 0..<count_offered:
     if operations[index] == wanted:
       panel.index_operation_menu = cint(index)
       break
 
 
 func applyPickedOperation(
-  panel: var Panel; scene: var Scene; camera: Camera; history: var History;
-  operation: Operation; first, second: int; now: float
+  panel: var Panel;
+  scene: var Scene;
+  camera: Camera;
+  history: var History;
+  operation: Operation;
+  first, second: int;
+  now: float;
 ) =
   ## Derive fresh object from picked operation and operands, and say what it gave.
   ##   Leaves result solely selected, which carries camera to it through
@@ -882,21 +890,18 @@ func applyPickedOperation(
     operand_second = scene[second].geometry
     derived = applyOperation(operation, operand_first, operand_second)
     anchor = creationAnchor(operation, operand_first, operand_second, derived)
-    name_first = toText(scene.labelAt(first))
-    name_second = toText(scene.labelAt(second))
+    name_first = scene.labelAt(first).toText
+    name_second = scene.labelAt(second).toText
     label = notationSubstituted(operation, name_first, name_second)
   panel.operations.remember(operation)
-  panel.selection.selectOnly(
-    scene.addObject(derived, label, scene.takeInk(), now, anchor)
-  )
+  panel.selection.selectOnly scene.addObject(derived, label, scene.takeInk(), now, anchor)
   history.record(scene, camera)
 
   panel.say(derivedMessage(label, kindText(derived)), now)
 
 
 proc layoutApply*(
-  panel: var Panel, scene: var Scene, camera: Camera, history: var History,
-  now: float
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
 ) =
   ## Lay out controls that derive fresh object by applying library operation to operands.
   ##   Longer than sixty-line default: one run of controls over one set of offer lists
@@ -913,7 +918,7 @@ proc layoutApply*(
     handles: array[OBJECTS_MAX, int]
     count = 0
   for handle, _ in scene.pairs:
-    names[count] = toCstring(scene.labelAt(handle))
+    names[count] = scene.labelAt(handle).toCstring
     handles[count] = handle
     inc count
 
@@ -929,7 +934,7 @@ proc layoutApply*(
   let lut_name_by_arity =
     [Arity.One: wordingText(NameApplyUnary), Arity.Two: wordingText(NameApplyBinary)]
   fieldLabel(wordingText(NameApplyArity))
-  let width_segment = (gui.contentWidth() - SPACING_SEGMENT)/2.0'f32
+  let width_segment = (gui.contentWidth() - SPACING_SEGMENT) / 2.0'f32
   for arity in Arity:
     if arity != Arity.low: gui.sameLine()
     if gui.buttonToggle(
@@ -942,11 +947,11 @@ proc layoutApply*(
       let
         (_, offered, count) = offerOperationsOfArity(arity)
         wanted = panel.operations.lastOf(arity)
-      for position in 0 ..< count:
+      for position in 0..<count:
         if offered[position] == wanted:
           panel.index_operation = cint(position)
           break
-  gui.tooltip(wordingText(TipApplyArity))
+  gui.tooltip wordingText(TipApplyArity)
 
   widthPushField()
 
@@ -954,29 +959,30 @@ proc layoutApply*(
   panel.index_operation = cint(index_offered)
   fieldLabel(wordingText(NameApplyOperation))
   discard gui.combo(
-    "##operation", addr panel.index_operation, addr notations[0], cint(count_offered),
+    "##operation",
+    addr panel.index_operation,
+    addr notations[0],
+    cint(count_offered),
   )
-  gui.tooltip(wordingText(TipApplyOperation))
+  gui.tooltip wordingText(TipApplyOperation)
   let
-    operation = operations[clamp(int(panel.index_operation), 0, count_offered - 1)]
+    operation = operations[clamp(int(panel.index_operation), 0, count_offered-1)]
     is_binary = arity_wanted == Arity.Two
 
   fieldLabel(wordingText(NameApplyFirst))
-  discard gui.combo("##operand_m", addr panel.index_operand_first,
-    addr names[0], cint(count))
-  gui.tooltip(wordingText(TipApplyFirst))
+  discard gui.combo("##operand_m", addr panel.index_operand_first, addr names[0], cint(count))
+  gui.tooltip wordingText(TipApplyFirst)
   if is_binary:
     fieldLabel(wordingText(NameApplySecond))
-    discard gui.combo("##operand_n", addr panel.index_operand_second,
-      addr names[0], cint(count))
-    gui.tooltip(wordingText(TipApplySecond))
+    discard gui.combo("##operand_n", addr panel.index_operand_second, addr names[0], cint(count))
+    gui.tooltip wordingText(TipApplySecond)
   gui.widthPop()
 
   let
-    first = handles[clamp(int(panel.index_operand_first), 0, count - 1)]
+    first = handles[clamp(int(panel.index_operand_first), 0, count-1)]
     second =
-      if is_binary: handles[clamp(int(panel.index_operand_second), 0, count - 1)]
-      else: first # Unary ignores second; naming first keeps stale picker reading out.
+      if is_binary: handles[clamp(int(panel.index_operand_second), 0, count-1)]
+      else: first  # Unary ignores second; naming first keeps stale picker reading out.
   # Preview what `apply` would build, from very three readings button passes on.
   #   Preview then cannot name different construction from commit
   #   (`applyPickedOperation`).
@@ -986,7 +992,7 @@ proc layoutApply*(
   gui.disabledPush(scene.isFull)
   if gui.buttonWide(wordingText(NameApplyAct), gui.contentWidth()):
     applyPickedOperation(panel, scene, camera, history, operation, first, second, now)
-    panel.hideSelectionMenu() # Built something; see `showSelectionMenu`.
+    panel.hideSelectionMenu()  # Built something; see `showSelectionMenu`.
   gui.disabledPop()
 
 
@@ -1004,11 +1010,11 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   ##   World furniture toggles live in `layoutTopBar`, flipped constantly while orbiting.
   if not gui.header(wordingText(NameHeadView), is_open_first = false): return
   gui.textTinted(wordingText(NameViewMotor), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
-  gui.tooltip(wordingText(TipViewMotor))
+  gui.tooltip wordingText(TipViewMotor)
   # Changed coefficient alone is written into live motor: fields hold `cfloat`, and
   #   writing all sixteen back would round fifteen nobody touched.
   var
-    typed = toMultivector(camera.motor)
+    typed = camera.motor.toMultivector
     staged: array[Basis, cfloat]
   for b in Basis: staged[b] = cfloat(typed[b])
   let changed = layoutCoefficientGrid(staged)
@@ -1022,30 +1028,30 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   widthPushField()
   var line: array[WIDTH_READING, char]
   fieldLabel(wordingText(NameViewAzimuth))
-  gui.text(buildChars(line, appendDegrees(line, cursor, camera.azimuth)))
-  gui.tooltip(wordingText(TipViewAzimuth))
+  gui.text buildChars(line, appendDegrees(line, cursor, camera.azimuth))
+  gui.tooltip wordingText(TipViewAzimuth)
   fieldLabel(wordingText(NameViewElevation))
-  gui.text(buildChars(line, appendDegrees(line, cursor, camera.elevation)))
-  gui.tooltip(wordingText(TipViewElevation))
+  gui.text buildChars(line, appendDegrees(line, cursor, camera.elevation))
+  gui.tooltip wordingText(TipViewElevation)
   if panel.selection.len > 0:
     var distance = cfloat(camera.distance)
     fieldLabel(wordingText(NameViewDistance))
     # Leave unbounded at widget, floored by `distanceHeld` on way in.
     #   No ceiling on orbit distance, and one value it may not take is stated in `camera`.
     if gui.dragFloat("##distance", addr distance, 0.05, 0.0, 0.0):
-      camera.dollyTo(float(distance))
+      camera.dollyTo float(distance)
       panel.tween_camera.halt()
-    gui.tooltip(wordingText(TipViewDistance))
+    gui.tooltip wordingText(TipViewDistance)
   else:
     fieldLabel(wordingText(NameViewSpeed))
-    gui.text(buildChars(line, appendSpeedLight(line, cursor, speed/SPEED_LIGHT)))
-    gui.tooltip(wordingText(TipViewSpeed))
+    gui.text buildChars(line, appendSpeedLight(line, cursor, speed / SPEED_LIGHT))
+    gui.tooltip wordingText(TipViewSpeed)
 
   var field_of_view = cfloat(camera.degrees_field_of_view)
   fieldLabel(wordingText(NameViewLens))
   if gui.dragFloat("##field_of_view", addr field_of_view, 0.2, 10.0, 120.0):
     camera.degrees_field_of_view = float(field_of_view)
-  gui.tooltip(wordingText(TipViewLens))
+  gui.tooltip wordingText(TipViewLens)
   gui.widthPop()
 
 
@@ -1055,30 +1061,37 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
 proc layoutDiagnosticsFrameTime(panel: var Panel) =
   ## Lay out "frame time" section.
   ##   Rolling frame-time plot, vsync toggle, current rate, tessellation cost.
-  gui.separatorText(wordingText(NameDiagnosticsFrame))
+  gui.separatorText wordingText(NameDiagnosticsFrame)
   # Floor range at least workable rate, so smooth run does not zoom in on noise.
-  var highest = float32(1000.0/RATE_FRAME_LEAST)
+  var highest = float32(1000.0 / RATE_FRAME_LEAST)
   for value in panel.milliseconds_history:
     if value > highest: highest = value
   var overlay: array[WIDTH_OVERLAY_TEXT, char]
   let text_now = buildChars(overlay):
-    appendFixed(overlay, cursor, 1000.0/max(float(gui.framerate()), 1.0), 2)
+    appendFixed(overlay, cursor, 1000.0 / max(float(gui.framerate()), 1.0), 2)
     appendChars(overlay, cursor, " ms now")
   # Pass full panel width rather than leave 0.
   #   Dear ImGui reads zero width as default item width, two thirds of window.
   gui.plotLines(
-    "##frame_time", addr panel.milliseconds_history[0], cint(FRAMES_HISTORY),
-    cint(panel.index_history), text_now, 0.0, highest, gui.contentWidth(), 60.0,
+    "##frame_time",
+    addr panel.milliseconds_history[0],
+    cint(FRAMES_HISTORY),
+    cint(panel.index_history),
+    text_now,
+    0.0,
+    highest,
+    gui.contentWidth(),
+    60.0,
   )
-  gui.tooltip(wordingText(TipDiagnosticsFrames))
+  gui.tooltip wordingText(TipDiagnosticsFrames)
 
   discard gui.checkbox(wordingText(NameDiagnosticsVsync), addr panel.is_vsync_enabled)
-  gui.tooltip(wordingText(TipDiagnosticsVsync))
+  gui.tooltip wordingText(TipDiagnosticsVsync)
   var line: array[WIDTH_OBJECT_LINE, char]
   let text_rate = buildChars(line):
     appendInt(line, cursor, int(gui.framerate()))
     appendChars(line, cursor, " fps, ")
-    appendFixed(line, cursor, 1000.0/max(gui.framerate(), 1.0), 2)
+    appendFixed(line, cursor, 1000.0 / max(gui.framerate(), 1.0), 2)
     appendChars(line, cursor, " ms/frame")
   gui.monoPush()
   gui.text(text_rate)
@@ -1096,11 +1109,11 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
 
 proc layoutDiagnosticsMemory(panel: Panel) =
   ## Lay out "memory" section: permanent and per-frame arena usage bars.
-  gui.separatorText(wordingText(NameDiagnosticsMemory))
+  gui.separatorText wordingText(NameDiagnosticsMemory)
   block:
     let
-      mib_used = float(panel.bytes_arena_permanent_used) / (1024.0*1024.0)
-      mib_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0*1024.0)
+      mib_used = float(panel.bytes_arena_permanent_used) / (1024.0 * 1024.0)
+      mib_capacity = float(panel.bytes_arena_permanent_capacity) / (1024.0 * 1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
       appendFixed(text, cursor, mib_used, 1)
@@ -1111,15 +1124,23 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       wordingText(NameDiagnosticsPermanent), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     gui.progressBar(
-      cfloat(mib_used / max(mib_capacity, 1.0)), overlay_text, gui.contentWidth(), 0.0,
-      0.298, 0.482, 0.929, 0.15, 0.15, 0.18,
+      cfloat(mib_used / max(mib_capacity, 1.0)),
+      overlay_text,
+      gui.contentWidth(),
+      0.0,
+      0.298,
+      0.482,
+      0.929,
+      0.15,
+      0.15,
+      0.18,
     )
-    gui.tooltip(wordingText(TipDiagnosticsPermanent))
+    gui.tooltip wordingText(TipDiagnosticsPermanent)
 
   block:
     let
       kib_peak = float(panel.bytes_arena_frame_peak) / 1024.0
-      mib_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0*1024.0)
+      mib_capacity = float(panel.bytes_arena_frame_capacity) / (1024.0 * 1024.0)
     var text: array[WIDTH_OVERLAY_TEXT, char]
     let overlay_text = buildChars(text):
       appendChars(text, cursor, "peak ")
@@ -1131,13 +1152,21 @@ proc layoutDiagnosticsMemory(panel: Panel) =
       wordingText(NameDiagnosticsFrameArena), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
     )
     let fraction =
-      float(panel.bytes_arena_frame_peak) /
-      max(float(panel.bytes_arena_frame_capacity), 1.0)
+        float(panel.bytes_arena_frame_peak) /
+        max(float(panel.bytes_arena_frame_capacity), 1.0)
     gui.progressBar(
-      cfloat(fraction), overlay_text, gui.contentWidth(), 0.0,
-      0.561, 0.737, 0.353, 0.15, 0.15, 0.18,
+      cfloat(fraction),
+      overlay_text,
+      gui.contentWidth(),
+      0.0,
+      0.561,
+      0.737,
+      0.353,
+      0.15,
+      0.15,
+      0.18,
     )
-    gui.tooltip(wordingText(TipDiagnosticsFrame))
+    gui.tooltip wordingText(TipDiagnosticsFrame)
 
 
 func sizePoolCell(width: cfloat): cfloat =
@@ -1146,25 +1175,25 @@ func sizePoolCell(width: cfloat): cfloat =
   ##   where none does; every handle keeps cell either way.
   for side in SIZES_POOL_CELL:
     let
-      columns = max(1, int(width/(side + SPACING_POOL_CELL)))
+      columns = max(1, int(width / (side + SPACING_POOL_CELL)))
       rows = (OBJECTS_MAX + columns - 1) div columns
-    if float32(rows)*(side + SPACING_POOL_CELL) <= HEIGHT_POOL_MAX: return side
-  SIZES_POOL_CELL[len(SIZES_POOL_CELL) - 1]
+    if float32(rows) * (side + SPACING_POOL_CELL) <= HEIGHT_POOL_MAX: return side
+  SIZES_POOL_CELL[len(SIZES_POOL_CELL)-1]
 
 
 proc layoutDiagnosticsObjectPool(scene: Scene) =
   ## Lay out "object pool" section: live/free handle strip and byte accounting.
-  gui.separatorText(wordingText(NameDiagnosticsPool))
+  gui.separatorText wordingText(NameDiagnosticsPool)
   # Colour occupied cell with its object's ink, so strip reads as scene.
   #   Which handle object sits in, and how `inkCycled` has spread palette.
-  var cells: array[OBJECTS_MAX * CHANNELS_POOL_CELL, cfloat]
-  for handle in 0 ..< OBJECTS_MAX:
+  var cells: array[OBJECTS_MAX*CHANNELS_POOL_CELL, cfloat]
+  for handle in 0..<OBJECTS_MAX:
     let colour = if scene.isAlive(handle): scene.inkAt(handle).colour else: INK_POOL_FREE.colour
-    cells[handle*CHANNELS_POOL_CELL + 0] = cfloat(colour.red)
-    cells[handle*CHANNELS_POOL_CELL + 1] = cfloat(colour.green)
-    cells[handle*CHANNELS_POOL_CELL + 2] = cfloat(colour.blue)
+    cells[handle*CHANNELS_POOL_CELL+0] = cfloat(colour.red)
+    cells[handle*CHANNELS_POOL_CELL+1] = cfloat(colour.green)
+    cells[handle*CHANNELS_POOL_CELL+2] = cfloat(colour.blue)
   gui.poolBar(addr cells[0], cint(OBJECTS_MAX), sizePoolCell(gui.contentWidth()))
-  gui.tooltip(wordingText(TipDiagnosticsPool))
+  gui.tooltip wordingText(TipDiagnosticsPool)
   var summary: array[WIDTH_OBJECT_LINE, char]
   let text_summary = buildChars(summary):
     appendInt(summary, cursor, scene.len)
@@ -1196,15 +1225,15 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
   gui.text(text_handle)
   gui.monoPop()
   gui.groupEnd()
-  gui.tooltip(wordingText(TipDiagnosticsScene))
+  gui.tooltip wordingText(TipDiagnosticsScene)
 
 
 proc layoutDiagnosticsTotal(panel: Panel) =
   ## Lay out "total" section: every fixed reservation this binary makes, added up.
-  gui.separatorText(wordingText(NameDiagnosticsTotal))
+  gui.separatorText wordingText(NameDiagnosticsTotal)
   var total: array[WIDTH_OVERLAY_TEXT, char]
   let text_total = buildChars(total):
-    appendFixed(total, cursor, float(panel.bytes_memory_total) / (1024.0*1024.0), 1)
+    appendFixed(total, cursor, float(panel.bytes_memory_total) / (1024.0 * 1024.0), 1)
     appendChars(total, cursor, " MiB")
   gui.monoPush()
   gui.text(text_total)
@@ -1213,12 +1242,12 @@ proc layoutDiagnosticsTotal(panel: Panel) =
   #   Depth is read from `CAPACITY_HISTORY` and tooltip is still `cstring` pointing at
   #   static text.
   const tooltip_total =
-    "Every fixed reservation this binary makes for itself, added up: both arenas at " &
-    "their full capacity (committed whether or not they're ever filled), the object " &
-    "pool above, the undo timeline -- which is " & $CAPACITY_HISTORY & " more whole " &
-    "copies of that pool, and the largest single entry here -- tessellation storage, " &
-    "and the panel's own state. Excludes whatever Dear ImGui, SDL, or the graphics " &
-    "driver allocate on their own account, which this process cannot see or account for."
+      "Every fixed reservation this binary makes for itself, added up: both arenas at " &
+      "their full capacity (committed whether or not they're ever filled), the object " &
+      "pool above, the undo timeline -- which is " & $CAPACITY_HISTORY & " more whole " &
+      "copies of that pool, and the largest single entry here -- tessellation storage, " &
+      "and the panel's own state. Excludes whatever Dear ImGui, SDL, or the graphics " &
+      "driver allocate on their own account, which this process cannot see or account for."
   gui.tooltip(tooltip_total)
 
 
@@ -1227,11 +1256,11 @@ proc layoutDiagnostics*(panel: var Panel, scene: Scene) =
   ##   Closed by default, since nothing here is needed to use visualiser, only to
   ##   understand what using it costs.
   if not gui.header(wordingText(NameHeadDiagnostics), is_open_first = false): return
-  gui.text(wordingText(NoteDiagnostics))
+  gui.text wordingText(NoteDiagnostics)
   gui.sameLine()
   gui.helpMarker(
     "Nothing on this panel changes what you can do here; it exists so a slow frame or " &
-    "a full object pool shows itself directly instead of just feeling wrong."
+    "a full object pool shows itself directly instead of just feeling wrong.",
   )
 
   layoutDiagnosticsFrameTime(panel)
@@ -1244,8 +1273,7 @@ proc layoutDiagnostics*(panel: var Panel, scene: Scene) =
 #[ History Stepping ]#
 
 func stepHistory*(
-  panel: var Panel, scene: var Scene, camera: var Camera, history: var History,
-  is_undo: bool
+  panel: var Panel, scene: var Scene, camera: var Camera, history: var History, is_undo: bool
 ): bool =
   ## Step timeline one way, putting view back where restored edit was made.
   ##   Drops whatever open edit was staged against.
@@ -1281,8 +1309,7 @@ const
     ## Pad widest notation offered by this much, for combo's frame and arrow.
 
 proc layoutSelectionMenuApply(
-  panel: var Panel, scene: var Scene, camera: Camera, history: var History,
-  now: float
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
 ) =
   ## Lay out menu's `apply` button and operation picker it reveals beside it.
   ##   One button in both roles: first press opens picker, second commits what it shows.
@@ -1303,12 +1330,10 @@ proc layoutSelectionMenuApply(
         index = clamp(int(panel.index_operation_menu), 0, count_offered - 1)
         first = panel.selection.at(0)
         second = if count >= 2: panel.selection.at(1) else: first
-      applyPickedOperation(
-        panel, scene, camera, history, operations[index], first, second, now
-      )
+      applyPickedOperation(panel, scene, camera, history, operations[index], first, second, now)
       panel.hideSelectionMenu()
   gui.disabledPop()
-  gui.tooltip(wordingText(TipPickApply))
+  gui.tooltip wordingText(TipPickApply)
   if not panel.is_menu_selection_picking: return
 
   # Preview whatever picker shows, from same two handles and index button commits with.
@@ -1324,25 +1349,31 @@ proc layoutSelectionMenuApply(
     panel.preview = scene.previewApplying(operations[index], first, second)
 
   var width_picker = 0.0'f32
-  for index in 0 ..< count_offered:
+  for index in 0..<count_offered:
     width_picker = max(width_picker, gui.textWidth(notations[index]))
   gui.sameLine()
   gui.widthPush(width_picker + PADDING_MENU_PICKER)
   discard gui.combo(
-    "##operation_menu", addr panel.index_operation_menu,
-    addr notations[0], cint(count_offered),
+    "##operation_menu",
+    addr panel.index_operation_menu,
+    addr notations[0],
+    cint(count_offered),
   )
   gui.widthPop()
-  gui.tooltip(wordingText(TipPickOperation))
+  gui.tooltip wordingText(TipPickOperation)
   gui.sameLine()
   if gui.buttonSmall(wordingText(NamePickBack)):
     panel.is_menu_selection_picking = false
-  gui.tooltip(wordingText(TipPickBack))
+  gui.tooltip wordingText(TipPickBack)
 
 
 proc layoutSelectionMenu*(
-  panel: var Panel, scene: var Scene, camera: Camera, history: var History,
-  anchor: Option[tuple[x, y: cfloat]], now: float
+  panel: var Panel,
+  scene: var Scene,
+  camera: Camera,
+  history: var History,
+  anchor: Option[tuple[x, y: cfloat]],
+  now: float,
 ) =
   ## Lay out floating menu over whatever is picked: apply, edit, hide, delete, close.
   ##   Follows most recently picked object rather than middle of them all, which would
@@ -1375,19 +1406,22 @@ proc layoutSelectionMenu*(
     is_by_pointer = panel.offset_menu_selection.isSome or panel.corner_menu_pointer.isSome
     (pivot_x, pivot_y) = if is_by_pointer: (0.0'f32, 0.0'f32) else: (0.5'f32, 1.0'f32)
     count = panel.selection.len
-  var is_line_started = false # Whether anything is on row yet; first button placed then
+  var is_line_started = false  # Whether anything is on row yet; first button placed then
     # does not ask for `sameLine` with nothing to continue.
   if gui.windowBeginPinned(
     "##selection_menu",
     clamp(
       panel.position_menu_selection[0],
-      MARGIN_MENU_SELECTION, gui.viewportWidth() - MARGIN_MENU_SELECTION,
+      MARGIN_MENU_SELECTION,
+      gui.viewportWidth() - MARGIN_MENU_SELECTION,
     ),
     clamp(
       panel.position_menu_selection[1],
-      MARGIN_MENU_SELECTION, gui.viewportHeight() - MARGIN_MENU_SELECTION,
+      MARGIN_MENU_SELECTION,
+      gui.viewportHeight() - MARGIN_MENU_SELECTION,
     ),
-    pivot_x, pivot_y,
+    pivot_x,
+    pivot_y,
   ):
     if count <= 2:
       layoutSelectionMenuApply(panel, scene, camera, history, now)
@@ -1401,41 +1435,41 @@ proc layoutSelectionMenu*(
         is_line_started = true
         if gui.buttonSmall(wordingText(NamePickEdit)):
           beginSession(panel, scene, some(panel.selection.at(0)))
-          panel.hideSelectionMenu() # Panel owns it now; pick itself stays.
-        gui.tooltip(wordingText(TipPickEdit))
+          panel.hideSelectionMenu()  # Panel owns it now; pick itself stays.
+        gui.tooltip wordingText(TipPickEdit)
 
       let is_all_hidden = panel.selection.isAllHidden(scene)
       if is_line_started: gui.sameLine()
       is_line_started = true
       if gui.buttonSmall(visibilityLabel(not is_all_hidden, NamePickHide, NamePickShow)):
-        for position in 0 ..< count:
+        for position in 0..<count:
           scene.setVisible(panel.selection.at(position), is_all_hidden)
         history.record(scene, camera)
         panel.say(visibilityMessage(count, is_all_hidden), now)
-      gui.tooltip(wordingText(TipPickVisible))
+      gui.tooltip wordingText(TipPickVisible)
 
       gui.sameLine()
       if gui.buttonSmall(wordingText(NamePickDelete)):
         # Read handles out before removing any; removal prunes selection this loop walks.
         var handles: array[OBJECTS_MAX, int]
-        for position in 0 ..< count: handles[position] = panel.selection.at(position)
+        for position in 0..<count: handles[position] = panel.selection.at(position)
         # Drop open session against one of these, which has nothing left to commit against.
         #   Same guard `layoutObjects` keeps.
         if panel.session.isSome and panel.session.get.handle.isSome and
             panel.session.get.handle.get in panel.selection:
           panel.session = none(EditSession)
-        for position in 0 ..< count: scene.removeObject(handles[position])
+        for position in 0..<count: scene.removeObject(handles[position])
         panel.selection.clear()
         history.record(scene, camera)
         panel.say(deletedMessage(count), now)
         panel.hideSelectionMenu()
-      gui.tooltip(wordingText(TipPickDelete))
+      gui.tooltip wordingText(TipPickDelete)
 
     gui.sameLine()
     if gui.buttonSmall(wordingText(NamePickClose)):
       panel.selection.clear()
       panel.hideSelectionMenu()
-    gui.tooltip(wordingText(TipPickClose))
+    gui.tooltip wordingText(TipPickClose)
   gui.windowEnd()
 
 
@@ -1443,8 +1477,7 @@ proc layoutSelectionMenu*(
 #[ Help ]#
 
 const
-  MARGIN_HELP = 16.0'f32
-    ## Hold help affordance this far off bottom-right corner, in pixels.
+  MARGIN_HELP = 16.0'f32  ## Hold help affordance this far off bottom-right corner, in pixels.
   GAP_HELP_COLUMN = 18.0'f32
     ## Separate entry's action from its outcome by at least this much.
     ##   Columns then read as columns.
@@ -1458,9 +1491,7 @@ func helpActionOf(entry: HelpEntry): string =
   "  " & entry.action & (if entry.is_touch: "  (touch)" else: "")
 
 
-proc layoutHelpTab(
-  path: HelpPath, offset_outcome, width_rows, height_available: cfloat
-) =
+proc layoutHelpTab(path: HelpPath; offset_outcome, width_rows, height_available: cfloat) =
   ## Lay out one help tab: its description, then its rows in region sized to them.
   ##   `offset_outcome` is where outcome column starts, measured by `layoutHelp` from
   ##   widest action over whole table, so every tab's column stands at one place.
@@ -1479,20 +1510,18 @@ proc layoutHelpTab(
       gui.textTinted(cstring(helpActionOf(entry)), 0.74, 0.95, 0.94)
       gui.monoPop()
       gui.sameLineAt(offset_outcome)
-      gui.text(cstring(entry.outcome))
+      gui.text cstring(entry.outcome)
   gui.childEnd()
 
 
-proc layoutHelp*(panel: var Panel, path_forced: Option[HelpPath] = none(HelpPath)) =
+proc layoutHelp*(panel: var Panel, path_forced = none(HelpPath)) =
   ## Lay out help affordance: `?` pinned to bottom-right corner, and panel it opens.
   ##   In corner rather than inside panel window: reachable when panel is thing reader
   ##   does not understand, and browser puts it in same corner; both read `help.nim`.
   ##   `path_forced` opens one tab whatever reader last chose.
   ##     Only `--drive-help` passes it: headless run cannot click tab strip.
   let (width, height) = (gui.viewportWidth(), gui.viewportHeight())
-  if gui.windowBeginPinned(
-    "##help_open", width - MARGIN_HELP, height - MARGIN_HELP, 1.0, 1.0
-  ):
+  if gui.windowBeginPinned("##help_open", width - MARGIN_HELP, height - MARGIN_HELP, 1.0, 1.0):
     if gui.button(wordingText(NameChipHelp)): panel.is_help_open = not panel.is_help_open
   gui.windowEnd()
 
@@ -1539,11 +1568,11 @@ proc layoutMessage*(panel: Panel, now: float) =
   if faded <= 0.0: return
   # Alpha pushed before window opens, so ground and border fade with letters standing on
   #   them; pushed after, it would leave box behind once sentence had gone.
-  gui.alphaPush(cfloat(faded))
-  if gui.windowBeginPinned("##message", 0.5*gui.viewportWidth(), MARGIN_MESSAGE, 0.5, 0.0):
+  gui.alphaPush cfloat(faded)
+  if gui.windowBeginPinned("##message", 0.5 * gui.viewportWidth(), MARGIN_MESSAGE, 0.5, 0.0):
     # Mono role: outcome carries notation and object names, as page's own toast does.
     gui.monoPush()
-    gui.text(toCstring(panel.message))
+    gui.text(panel.message.toCstring)
     gui.monoPop()
   gui.windowEnd()
   gui.alphaPop()
@@ -1572,35 +1601,35 @@ proc layoutMenu(
 
   gui.widthPush(WIDTH_MENU_FIELD)
   fieldLabel(wordingText(NameMenuSceneFile))
-  discard gui.inputText("##scene_file", toCstring(panel.path_scene), cint(PATH_MAX))
-  gui.tooltip(wordingText(TipMenuSceneFile))
+  discard gui.inputText("##scene_file", panel.path_scene.toCstring, cint(PATH_MAX))
+  gui.tooltip wordingText(TipMenuSceneFile)
   fieldLabel(wordingText(NameMenuImageFile))
-  discard gui.inputText("##path_export", toCstring(panel.path_export), cint(PATH_MAX))
-  gui.tooltip(wordingText(TipMenuImageFile))
+  discard gui.inputText("##path_export", panel.path_export.toCstring, cint(PATH_MAX))
+  gui.tooltip wordingText(TipMenuImageFile)
   gui.widthPop()
 
-  gui.separatorText(wordingText(NameMenuSave))
+  gui.separatorText wordingText(NameMenuSave)
   # Two buttons wear one word, so each takes id of its own key rather than of its label.
-  gui.idPush(cint(ord(NameMenuSaveScene)))
+  gui.idPush cint(ord(NameMenuSaveScene))
   if gui.button(wordingText(NameMenuSaveScene)):
-    panel.say(saveScene(scene, toText(panel.path_scene)), now)
-  gui.tooltip(wordingText(TipMenuSaveScene))
+    panel.say(saveScene(scene, panel.path_scene.toText), now)
+  gui.tooltip wordingText(TipMenuSaveScene)
   gui.idPop()
   gui.sameLine()
   if gui.button(wordingText(NameMenuSaveImage)): panel.is_export_requested = true
-  gui.tooltip(wordingText(TipMenuSaveImage))
+  gui.tooltip wordingText(TipMenuSaveImage)
 
-  gui.separatorText(wordingText(NameMenuLoad))
-  gui.idPush(cint(ord(NameMenuLoadScene)))
+  gui.separatorText wordingText(NameMenuLoad)
+  gui.idPush cint(ord(NameMenuLoadScene))
   if gui.button(wordingText(NameMenuLoadScene)):
     # Pass this frame's clock, so file arrives as replay; see `scene.bornReplaying`.
-    panel.say(loadScene(scene, toText(panel.path_scene), now), now)
+    panel.say(loadScene(scene, panel.path_scene.toText, now), now)
     # Drop open session: loaded scene's handles are not ones it was opened against.
     panel.session = none(EditSession)
-  gui.tooltip(wordingText(TipMenuLoadScene))
+  gui.tooltip wordingText(TipMenuLoadScene)
   gui.idPop()
 
-  gui.separatorText(wordingText(NameMenuDemo))
+  gui.separatorText wordingText(NameMenuDemo)
   panel.count_demo_offered = 0
   for scale in ScaleOrrery:
     if scale != ScaleOrrery.low: gui.sameLine()
@@ -1610,9 +1639,7 @@ proc layoutMenu(
     inc panel.count_demo_offered
     if gui.button(label):
       # Frame for window as it stands, which is what browser passes its canvas size for.
-      showOrrery(
-        scene, camera, int(gui.viewportWidth()), int(gui.viewportHeight()), scale, now
-      )
+      showOrrery(scene, camera, int(gui.viewportWidth()), int(gui.viewportHeight()), scale, now)
       # Reset around replaced scene exactly as `bridge.nimLoadDemo` does.
       panel.selection.clear()
       history.initHistory(scene, camera)
@@ -1622,7 +1649,7 @@ proc layoutMenu(
     #   Sentence carries size only this loop knows, so `wording` composes it from parts it
     #   holds rather than storing one row per size.
     let told = demoWording(objectsOf(scale), scale == SCALE_ORRERY_DEFAULT)
-    gui.tooltip(cstring(told))
+    gui.tooltip cstring(told)
 
   gui.menuEnd()
 
@@ -1653,7 +1680,7 @@ proc layoutChipRow*(
   if gui.button(wordingText(NameChipAdd)):
     beginSession(panel, scene, none(int))
   gui.disabledPop()
-  gui.tooltip(wordingText(TipChipAdd))
+  gui.tooltip wordingText(TipChipAdd)
   gui.sameLine()
   # Step scene-content edits only; see `history.nim`.
   #   Orbit is not step, though each step restores view it was made from.
@@ -1664,14 +1691,14 @@ proc layoutChipRow*(
     if not stepHistory(panel, scene, camera, history, is_undo = true):
       panel.say(stepMessage(is_undo = true), now)
   gui.disabledPop()
-  gui.tooltip(wordingText(TipChipUndo))
+  gui.tooltip wordingText(TipChipUndo)
   gui.sameLine()
   gui.disabledPush(not history.isRedoable)
   if gui.button(wordingText(NameChipRedo)):
     if not stepHistory(panel, scene, camera, history, is_undo = false):
       panel.say(stepMessage(is_undo = false), now)
   gui.disabledPop()
-  gui.tooltip(wordingText(TipChipRedo))
+  gui.tooltip wordingText(TipChipRedo)
   gui.sameLineGap(GAP_CHIP_GROUP)
 
   # Flip furniture: axes, grid -- browser's `.toggles`, in pill its own segment wears.
@@ -1679,11 +1706,11 @@ proc layoutChipRow*(
   #   ways; `buttonToggle` is already this project's answer for `arity` (see `layoutApply`).
   if gui.buttonToggle(wordingText(NameChipAxes), panel.is_axes_shown, WIDTH_TOGGLE_CHIP):
     panel.is_axes_shown = not panel.is_axes_shown
-  gui.tooltip(wordingText(TipChipAxes))
+  gui.tooltip wordingText(TipChipAxes)
   gui.sameLine()
   if gui.buttonToggle(wordingText(NameChipGrid), panel.is_grid_shown, WIDTH_TOGGLE_CHIP):
     panel.is_grid_shown = not panel.is_grid_shown
-  gui.tooltip(wordingText(TipChipGrid))
+  gui.tooltip wordingText(TipChipGrid)
 
   # Everything reached for rarely is behind menu, as browser's `.top-menu` has it.
   gui.sameLineGap(GAP_CHIP_GROUP)
@@ -1695,8 +1722,7 @@ proc layoutChipRow*(
 #[ Whole Panel ]#
 
 proc layoutPanel*(
-  panel: var Panel; scene: var Scene; camera: var Camera; history: var History;
-  speed, now: float
+  panel: var Panel; scene: var Scene; camera: var Camera; history: var History; speed, now: float
 ) =
   ## Lay out every panel inside one window.
   ##   `now` is this frame's clock reading, passed to whichever construct control adds

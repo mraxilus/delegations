@@ -140,48 +140,48 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   # Objects list around its rows: search over it, and what search leaves.
   TipListSearch:
     "Show only the objects whose label or kind holds every word typed here, and those " &
-    "selected; press / to come here from anywhere.",
+        "selected; press / to come here from anywhere.",
   TipListSelect: "Add every object the search shows to the selection, after those picked.",
 
   # Apply section: operation over one or two operands.
   TipApplyArity: "Whether to list operations reading one operand or two.",
   TipApplyOperation:
     "Library operation to apply below; its own notation names m and n, the operands picked " &
-    "next.",
+        "next.",
   TipApplyFirst: "First operand -- `m` in the notation above -- every operation reads.",
   TipApplySecond: "Second operand -- `n` above -- this operation combines with `m`.",
 
   # View section: where camera stands and what it sees.
   TipViewMotor:
     "Where the camera stands and faces, as one rigid motion; a typed value settles on the " &
-    "motion it names.",
+        "motion it names.",
   TipViewAzimuth: "Which way the camera faces round world up, read off its motor.",
   TipViewElevation: "How far the camera looks above or below level, read off its motor.",
   TipViewDistance:
     "How far the camera stands from the middle of the selection; it stays far enough out to " &
-    "fit it.",
+        "fit it.",
   TipViewSpeed: "How fast the camera flies right now, as a multiple of the speed of light.",
   TipViewLens: "Lens angle; smaller looks through a telephoto, larger through a wide angle.",
 
   # Diagnostics: what this frame cost and what storage it stands in.
   TipDiagnosticsFrames:
     "Milliseconds per drawn frame, oldest at the left and most recent at the right. An fps " &
-    "average can hide an occasional slow frame; a spike here cannot hide.",
+        "average can hide an occasional slow frame; a spike here cannot hide.",
   TipDiagnosticsVsync:
     "Uncheck to see this build's own uncapped cost rather than the display's own refresh " &
-    "rate; the reading below settles over about a second after any change.",
+        "rate; the reading below settles over about a second after any change.",
   TipDiagnosticsPermanent:
     "Never freed until the process exits: the pixel-export buffer, sized for the largest " &
-    "frame this build allows, and every frame of a storyboard's own GIF.",
+        "frame this build allows, and every frame of a storyboard's own GIF.",
   TipDiagnosticsFrame:
     "Reset after every PNG or GIF frame it backs, so it reads empty almost any time you " &
-    "would look here; the bar instead holds the largest single expansion it has served.",
+        "would look here; the bar instead holds the largest single expansion it has served.",
   TipDiagnosticsPool:
     "One cell per object handle, in the colour of whatever object holds it; dark means it's " &
-    "free and will be handed to the next one you add, most recently freed first.",
+        "free and will be handed to the next one you add, most recently freed first.",
   TipDiagnosticsScene:
     "Scene is one fixed block sized for every handle up front, not allocated one object at a " &
-    "time: `allocated` is that whole block, `used` is however much of it carries an object.",
+        "time: `allocated` is that whole block, `used` is however much of it carries an object.",
 
   # Menu that opens over whatever is picked.
   TipPickApply:
@@ -204,7 +204,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   # Row of constant controls, floating over scene.
   TipChipAdd:
     "Compose a new object in the Objects list below; nothing joins the scene until you save " &
-    "it. Greyed out while another edit is open, so starting this cannot discard it.",
+        "it. Greyed out while another edit is open, so starting this cannot discard it.",
   TipChipUndo:
     "Step back through scene-content edits, view and all; an orbit on its own is not a step.",
   TipChipRedo: "Step forward again; a fresh edit discards whatever was ahead.",
@@ -301,17 +301,17 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   # Window said more than page here: both draw graded grid, so both may say so.
   NoteCoefficientsNew:
     "The 16 numbers of the new multivector, in the library's basis order, stacked one row " &
-    "per grade. A live preview draws as soon as any goes non-zero; nothing joins the scene " &
-    "until you save.",
+        "per grade. A live preview draws as soon as any goes non-zero; nothing joins the scene " &
+        "until you save.",
   NoteCoefficientsEdit:
     "The 16 numbers of this object's own multivector, in the library's basis order, " &
-    "stacked one row per grade. The object itself only moves when you save.",
+        "stacked one row per grade. The object itself only moves when you save.",
   NoteDiagnostics: "Live cost of this build, updated every frame.",
   # Sentence rather than fragment: it stands in its own line under link, not after it.
   NoteSaveByHold: "Or press and hold the image to save it.",
   NoteSaveBlocked:
     "If nothing arrives, this frame is blocking it -- open this page in its own browser " &
-    "tab and save from there.",
+        "tab and save from there.",
   NameSaveDismiss: "dismiss",
 
   # Help: one tab per way of working, named as reader would say what they are doing.
@@ -327,7 +327,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   #   Drag's line goes on to teach wheel's words, through `wheelWordsTaught`.
   NoteTabDrag:
     "Drag one object onto another to build a new one. Some pairs open a wheel of choices, " &
-    "which name themselves in notation.",
+        "which name themselves in notation.",
   NoteTabSelect: "Say which objects to work on. Whatever is selected wears a white outline.",
   NoteTabMenu: "The small menu that appears beside whatever you just selected.",
   NoteTabPanel: "The panel and the buttons above it.",
@@ -335,7 +335,7 @@ const LUT_TEXT_BY_WORDING: array[Wording, cstring] = [
   NoteTabKeys: "Keyboard shortcuts. The 3D view needs focus first — press tab until it has it.",
   NoteTabOperations:
     "Every operation the apply section and the selection menu offer, and what each is " &
-    "called.",
+        "called.",
 
   # Help rows: what reader does, and what happens. Cells, not sentences: read across row.
   #   Row naming button or key composes it through `withButton` and `keysNamed`, so cell
@@ -424,9 +424,9 @@ func demoWording*(objects: int, is_default: bool): string =
   ##   Composed rather than stored, since sentence carries number only caller knows. Parts are
   ##   here so wording stays in one file; caller supplies figure alone.
   "Load the orrery at " & $objects & " objects: the real solar neighbourhood to scale, one " &
-    "unit one astronomical unit, Sol at the origin, every drawable kind present. The same " &
-    "arrangement at every size, reaching further into the star catalogue as it grows." &
-    (if is_default: " The size everything opens on." else: "")
+      "unit one astronomical unit, Sol at the origin, every drawable kind present. The same " &
+      "arrangement at every size, reaching further into the star catalogue as it grows." &
+      (if is_default: " The size everything opens on." else: "")
 
 
 const NAME_AUTHORITY* = "Projective Geometric Algebra Illuminated"
@@ -507,7 +507,7 @@ func wheelWordsTaught*(taught: openArray[tuple[notation, word: string]]): string
   ##   Sentence of its own, which `help` sets after `NoteTabDrag`.
   var said: seq[string]
   for (notation, word) in taught: said.add(notation & " is " & word)
-  said[0 ..< said.len - 1].join(", ") & " and " & said[^1] & "."
+  said[0..<said.len-1].join(", ") & " and " & said[^1] & "."
 
 
 
@@ -520,7 +520,7 @@ func objectsCounted*(count: int): string =
   if count == 1: "1 object" else: $count & " objects"
 
 
-func appendShownCounted*(storage: var openArray[char], cursor: var int, shown, total: int) =
+func appendShownCounted*(storage: var openArray[char]; cursor: var int; shown, total: int) =
   ## Write how many objects search leaves listed, of how many scene holds: `12 of 5038 shown`.
   ##   Straight into `storage`, since window redraws it every frame; page reads same through
   ##   bridge, so glue between two counts is written once.
@@ -590,7 +590,7 @@ func stepMessage*(is_undo: bool): string =
 func orreryMessage*(count, capacity: int): string =
   ## Report demo scene replacing whatever stood before it.
   "Loaded the orrery: " & objectsCounted(count) & ", " & $(capacity - count) &
-    " handles free."
+      " handles free."
 
 
 func appendDegrees*(storage: var openArray[char], cursor: var int, radians: float) =

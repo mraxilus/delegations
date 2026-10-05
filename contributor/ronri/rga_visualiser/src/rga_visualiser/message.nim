@@ -43,4 +43,4 @@ func messageFade*(age: float): float =
   ##   reach drawing.
   if age <= SECONDS_MESSAGE: 1.0
   elif age >= SECONDS_MESSAGE + SECONDS_MESSAGE_FADE: 0.0
-  else: 1.0 - (age - SECONDS_MESSAGE)/SECONDS_MESSAGE_FADE
+  else: 1.0 - (age - SECONDS_MESSAGE) / SECONDS_MESSAGE_FADE

@@ -30,8 +30,7 @@
 import std/[math, options, strformat]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ./projections
-import ./[boundary, camera, format, picking, scene, tessellate, wording]
+import ./[boundary, camera, format, picking, projections, scene, tessellate, wording]
 
 
 
@@ -137,8 +136,7 @@ const
     ## Size one wedge's short axis, in pixels.
     ##   Past WCAG 2.5.8's 24-pixel pivot on short axis, which binds.
     ##   Long axis comes from label, measured by render path drawing it.
-  PADDING_MENU_WEDGE* = 22.0
-    ## Pad wedge's label, so short name still reads as button.
+  PADDING_MENU_WEDGE* = 22.0  ## Pad wedge's label, so short name still reads as button.
   ROUNDING_MENU_WEDGE* = 8.0
     ## Round wedge's corners by this radius.
     ##   Selection menu's own button radius: this menu and that one are same control in two
@@ -162,34 +160,34 @@ const
 #[ Type Definitions ]#
 
 type
-  DragOperation* {.pure.} = enum ## Define operation released drag may apply.
-    Join, ## Wedge: object through both operands.
-    Meet, ## Antiwedge: where two operands cross.
-    Project, ## Orthogonal projection of object dragged from onto one dragged to.
+  DragOperation* {.pure.} = enum  ## Define operation released drag may apply.
+    Join,  ## Wedge: object through both operands.
+    Meet,  ## Antiwedge: where two operands cross.
+    Project,  ## Orthogonal projection of object dragged from onto one dragged to.
 
-  DragChoice* {.pure.} = enum ## Define everything released drag may resolve to.
+  DragChoice* {.pure.} = enum  ## Define everything released drag may resolve to.
     ## Three operations plus way out to rest of catalogue.
     ##   Separate from `DragOperation` because `More` applies nothing itself: hands both
     ##   operands to apply section.
     Join, Meet, Project, More
 
-  MenuArming* {.pure.} = enum ## Define how drag in progress may come to open its menu.
+  MenuArming* {.pure.} = enum  ## Define how drag in progress may come to open its menu.
     ## What pointer chose at press, held for drag's whole life.
     ##   Three states rather than "forced" flag: mouse's left button takes pair's answer
     ##   and is never interrupted by menu, right button asks; only finger, with no second
     ##   button, waits.
-    Never, ## Take proposal on release; no menu, however long drag stands still.
-    OnDwell, ## Open after `SECONDS_DWELL_MENU` of standing still over pivot.
+    Never,  ## Take proposal on release; no menu, however long drag stands still.
+    OnDwell,  ## Open after `SECONDS_DWELL_MENU` of standing still over pivot.
       ## Wheel invites itself under finger pausing to aim, which also covers it.
       ##   Until first entered it may not veto release; see `endDrag`.
-    Always ## Open moment drag arrives over pivot.
+    Always  ## Open moment drag arrives over pivot.
 
-  Compass* {.pure.} = enum ## Define where choice sits in menu, always.
+  Compass* {.pure.} = enum  ## Define where choice sits in menu, always.
     ## Fixed position per choice; unoffered ones are gaps, never packed out.
     ##   Menu whose objects move is one nobody learns to reach without reading.
     North, East, South, West
 
-  Key* {.pure.} = enum ## Define key 3D view itself reacts to, in neither backend's naming.
+  Key* {.pure.} = enum  ## Define key 3D view itself reacts to, in neither backend's naming.
     ## Both render paths name physical key (SDL scancode, DOM `KeyboardEvent.code`).
     ##   Each translates into this and asks `motionFor` or `actionFor`, as each translates
     ##   its mouse-button numbering into `PointerButton`.
@@ -202,7 +200,7 @@ type
     Left, Right, Up, Down, BracketLeft, BracketRight, Minus, Plus, Enter, Home, Shift,
     Space, Control
 
-  Motion* {.pure.} = enum ## Define way view keeps moving while key is held.
+  Motion* {.pure.} = enum  ## Define way view keeps moving while key is held.
     ## Separate from `KeyAction`: motion is applied every frame its key is down, by
     ## `driveHeld`; action happens once, at press.
     Forward, Back, Left, Right, Down, Up,
@@ -210,30 +208,30 @@ type
     OrbitLeft, OrbitRight, OrbitUp, OrbitDown,
     DollyIn, DollyOut
 
-  KeyAction* {.pure.} = enum ## Define what one press of key does to view.
+  KeyAction* {.pure.} = enum  ## Define what one press of key does to view.
     FocusPrevious, FocusNext,
-    SelectFocused, ## Alone, or added to selection where shift is held.
-    FrameSelection, ## Bring selection into view, through framing rule.
-    ViewHome ## Return camera to placement both builds open at.
+    SelectFocused,  ## Alone, or added to selection where shift is held.
+    FrameSelection,  ## Bring selection into view, through framing rule.
+    ViewHome  ## Return camera to placement both builds open at.
 
-  Hold* = object ## Define press that selects its object once it has lasted long enough.
-    handle*: int ## Object pressed, whose marker fills as press matures.
-    started*: float ## When press landed, on clock every caller passes as `now`.
-    is_taken*: bool ## Whether this hold's maturity has been acted on.
+  Hold* = object  ## Define press that selects its object once it has lasted long enough.
+    handle*: int  ## Object pressed, whose marker fills as press matures.
+    started*: float  ## When press landed, on clock every caller passes as `now`.
+    is_taken*: bool  ## Whether this hold's maturity has been acted on.
       ## One-shot lives here because hold outlives its release.
       ##   Flag release handler resets goes stale while hold settles, maturity test stays
       ##   true, and selection fires second time and undoes itself.
-    released*: Option[float] ## When finger lifted, if it has.
+    released*: Option[float]  ## When finger lifted, if it has.
       ## Marker stays swollen while finger is down, and settles only once this says it may.
       ##   Swell as function of fill was back to true size exactly when selection landed.
 
-  Interaction* = object ## Define cursor, drag and press state held between frames.
-    is_enabled*: bool ## Whether picking and overlay run at all; off during storyboard capture.
-    cursor*: ScreenPosition ## Last known cursor position, in window pixels.
-    index_hover*: Option[int] ## Object nearest cursor this frame, regardless of dragging.
-    is_hover_backdrop*: bool ## Whether hovered object is backdrop: horizon plane, or
+  Interaction* = object  ## Define cursor, drag and press state held between frames.
+    is_enabled*: bool  ## Whether picking and overlay run at all; off during storyboard capture.
+    cursor*: ScreenPosition  ## Last known cursor position, in window pixels.
+    index_hover*: Option[int]  ## Object nearest cursor this frame, regardless of dragging.
+    is_hover_backdrop*: bool  ## Whether hovered object is backdrop: horizon plane, or
       ## finite plane whose disc fills view; see `picking.isBackdropUnder`.
-    count_hover_rivals*: int ## How many objects of hovered object's rank were in reach.
+    count_hover_rivals*: int  ## How many objects of hovered object's rank were in reach.
       ## `picking.PickReport.count_rivals`; one where hover is unambiguous, zero where
       ## nothing is hovered. Touch reads it through `isConstructibleByTouch`.
       ## Whole sky, which every ray meets, so true wherever nothing else is under cursor
@@ -242,110 +240,110 @@ type
       ## refuse it without being handed scene.
       ## Refusing keeps camera working: press on empty space becomes orbit because
       ## `beginDrag` fails when nothing is hovered, and sky is hovered everywhere.
-    index_focus*: Option[int] ## Object keyboard stands on.
+    index_focus*: Option[int]  ## Object keyboard stands on.
       ## Drawn with hover's marker, so reader without pointer sees where they are.
       ## Separate from `index_hover`: `updateHover` recomputes hover every frame, so focus
       ## stored there would be erased before drawn once.
-    is_dragging*: bool ## Whether construction drag is in progress.
+    is_dragging*: bool  ## Whether construction drag is in progress.
       ## Not `Option[DragOperation]`: what drag applies is decided at release, so field
       ## holding operation could only hold placeholder, sentinel smuggled into value's range.
-    index_source*: int ## Object drag started from; meaningful only while `is_dragging`.
-    index_destination*: Option[int] ## Object drag points at, latched moment its menu opens.
+    index_source*: int  ## Object drag started from; meaningful only while `is_dragging`.
+    index_destination*: Option[int]  ## Object drag points at, latched moment its menu opens.
       ## Readers ask `destinationOf` instead.
-    pressed*: ScreenPosition ## Where last pointer press landed, whatever it became.
-    started*: float ## When that press landed, on clock every caller passes as `now`.
+    pressed*: ScreenPosition  ## Where last pointer press landed, whatever it became.
+    started*: float  ## When that press landed, on clock every caller passes as `now`.
       ## Read only through `isClick`.
-    is_press_still*: bool ## Whether last press has stayed inside `PIXELS_CLICK_SLOP` of
+    is_press_still*: bool  ## Whether last press has stayed inside `PIXELS_CLICK_SLOP` of
       ## where it landed.
       ## Latched rather than recomputed: pointer that swung out and came back was still
       ## dragged.
       ## Stated as still so default is false: press that never went through `beginPress`
       ## is never mistaken for click.
-    hold*: Option[Hold] ## Press maturing into selection, if one is in progress.
-    is_over_target*: bool ## Whether drag points at object that is not its source.
+    hold*: Option[Hold]  ## Press maturing into selection, if one is in progress.
+    is_over_target*: bool  ## Whether drag points at object that is not its source.
       ## Distinct from `proposal` being none, which it also is over pair making nothing.
       ##   Those two want opposite feedback, neutral versus warning.
-    proposal*: Option[DragChoice] ## What release right now would commit.
+    proposal*: Option[DragChoice]  ## What release right now would commit.
       ## Wedge cursor stands in while menu is open, `proposalFor`'s answer where none is.
       ##   Resolved in order `endDrag` resolves it, so preview and commit cannot come apart.
       ## None where release commits nothing: over no pivot, or at centre of menu that may
       ## veto.
       ##   Unentered dwell wheel may not, so pair's answer stands; see `endDrag`.
-    preview*: Option[Preview] ## What proposal would make, for each render path to preview.
+    preview*: Option[Preview]  ## What proposal would make, for each render path to preview.
       ## `scene.Preview`, same construction both apply pickers offer.
       ## None over nothing, over own source, over pair making nothing (only warning before
       ## refused release), and over `More`, which builds nothing itself.
-    arming*: MenuArming ## How this drag may open its menu, as pointer chose at press.
-    entered*: float ## When cursor last settled over pivot, for dwell to run from.
+    arming*: MenuArming  ## How this drag may open its menu, as pointer chose at press.
+    entered*: float  ## When cursor last settled over pivot, for dwell to run from.
       ## Restarted when hovered object changes and when cursor moves away from `settled`.
-    settled*: ScreenPosition ## Where cursor was when `entered` was last restarted.
-    menu*: Option[ScreenPosition] ## Where choice menu is open, if it is.
-    is_menu_entered*: bool ## Whether cursor has stood in any wedge of open menu since it
+    settled*: ScreenPosition  ## Where cursor was when `entered` was last restarted.
+    menu*: Option[ScreenPosition]  ## Where choice menu is open, if it is.
+    is_menu_entered*: bool  ## Whether cursor has stood in any wedge of open menu since it
       ## opened, offered or not.
       ## Separates "lifted at centre without engaging wheel" from "walked into wedge and
       ## came back to cancel".
       ##   First may not veto dwell wheel's release, second always does; see `endDrag`.
       ## Reset each time menu opens.
-    is_dragging_camera*: bool ## Whether pointer gesture is moving camera right now.
+    is_dragging_camera*: bool  ## Whether pointer gesture is moving camera right now.
       ## Orbit or pan drag, or two fingers on canvas.
       ##   Each render path owns its drag state and says so here.
       ## Distinct from `is_dragging`, construction drag that keeps hovering.
-    depth_pointer*: Option[float] ## Depth of what pointer is over, from eye along sight.
+    depth_pointer*: Option[float]  ## Depth of what pointer is over, from eye along sight.
       ## Local scale free flight caps its speed by; see `camera.capTravelling`.
       ##   None where pointer is over nothing, which leaves fixed ceiling alone.
       ## Stamped in `updateHover`, where scene is in hand, and stamped while travel key is
       ## held as well as while camera stands, so cap follows pointer through flight.
-    depth_pan*: float ## Depth right drag holds under pointer, from eye along sight.
+    depth_pan*: float  ## Depth right drag holds under pointer, from eye along sight.
       ## Taken when drag begins, by `grabPan`: hover is off while camera moves, so
       ## `depth_pointer` is gone by second step.
-    point_pan*: Option[Position] ## Point right drag with selection holds under pointer.
+    point_pan*: Option[Position]  ## Point right drag with selection holds under pointer.
       ## Taken when drag begins, by `grabPan`, on sphere left drag's orbit holds.
       ##   Kept, not asked again at each step: zoom resizes that sphere, so point asked
       ##   again is other point, and zoom would turn on how many steps pointer sent.
       ## None in free flight.
-    seconds_travelling*: float ## How long current travel hold has lasted, in seconds.
+    seconds_travelling*: float  ## How long current travel hold has lasted, in seconds.
       ## Speed climbs with this, and resets to zero on frame no travel key is held; see
       ## `driveHeld`.
       ##   Held here rather than per key, so releasing W and pressing S keeps speed up:
       ##   what reader means by turning round mid-flight.
-    keys_held*: set[Key] ## Physical keys down right now, which `driveHeld` moves camera by
+    keys_held*: set[Key]  ## Physical keys down right now, which `driveHeld` moves camera by
       ## once per frame.
       ## Set so two keys held together compose without enumerating pairs.
       ## Emptied by `releaseKeysAll` whenever view stops receiving key releases.
       ##   Key left here moves camera forever.
-    index_disengaged*: Option[int] ## Pivot menu was let go of, while cursor is still over
+    index_disengaged*: Option[int]  ## Pivot menu was let go of, while cursor is still over
       ## it.
       ## Without it wheel re-opens on same object next frame, since `MenuArming.Always` is
       ## due every frame over pivot.
       ## Cleared moment hover reports anything else.
 
-  PointerButton* {.pure.} = enum ## Define physical mouse button, however numbered.
+  PointerButton* {.pure.} = enum  ## Define physical mouse button, however numbered.
     ## SDL counts 1/2/3 and DOM 0/1/2 for left/middle/right.
     ##   Each render path translates into this and asks `armingOf`, so which button does what
     ##   is stated once.
     Left, Middle, Right
 
-  ReleaseEffect* {.pure.} = enum ## Define what letting go right now would do.
+  ReleaseEffect* {.pure.} = enum  ## Define what letting go right now would do.
     ## Three outcomes, not two.
     ##   Release that quietly does nothing and one that refuses want opposite feedback, and
     ##   once menu is open both are reachable over same pair.
-    Nothing, ## End gesture and build nothing, with nothing to warn about.
+    Nothing,  ## End gesture and build nothing, with nothing to warn about.
       ## Over empty space, over drag's own source, or back at open menu's centre.
-    Refused, ## Reach pair that makes nothing drawable, and say so.
-    Builds, ## Add object; or, for `More`, hand pair to apply picker.
+    Refused,  ## Reach pair that makes nothing drawable, and say so.
+    Builds,  ## Add object; or, for `More`, hand pair to apply picker.
       ## Picker takes very hue wheel has been showing.
 
-  DragOutcome* = object ## Define everything released drag did, for caller to act on.
-    message*: string ## What to say happened, whether or not anything was built.
-    index_created*: Option[int] ## Object added, where one was.
+  DragOutcome* = object  ## Define everything released drag did, for caller to act on.
+    message*: string  ## What to say happened, whether or not anything was built.
+    index_created*: Option[int]  ## Object added, where one was.
       ## None for refusal, for release choosing nothing, and for `More`.
-    choice*: Option[DragChoice] ## What release resolved to.
+    choice*: Option[DragChoice]  ## What release resolved to.
       ## So caller recognises `More`, otherwise indistinguishable from refusal.
-    operands*: Option[tuple[source, destination: int]] ## Two objects, where both were alive
+    operands*: Option[tuple[source, destination: int]]  ## Two objects, where both were alive
       ## and distinct.
       ## What `More` hands to apply section; drag's state is cleared by time caller reads
       ## this.
-    index_clicked*: Option[int] ## Object press that never became drag came down on, for
+    index_clicked*: Option[int]  ## Object press that never became drag came down on, for
       ## caller to select.
       ## None for every actual drag.
 
@@ -509,7 +507,7 @@ func labelOf*(choice: DragChoice): string =
   ##   `proc` for reason `scene.notationSymbolic` is one: table it reads is `let`.
   case choice
   of DragChoice.Join, DragChoice.Meet, DragChoice.Project:
-    notationSymbolic(toOperation(toDrag(choice).get))
+    notationSymbolic(choice.toDrag.get.toOperation)
   of DragChoice.More: "…"
 
 
@@ -560,7 +558,7 @@ func choiceAt*(centre, cursor: ScreenPosition): Option[DragChoice] =
   let
     offset_x = cursor.x - centre.x
     offset_y = cursor.y - centre.y
-  if offset_x*offset_x + offset_y*offset_y < PIXELS_MENU_DEADZONE*PIXELS_MENU_DEADZONE:
+  if offset_x * offset_x + offset_y * offset_y < PIXELS_MENU_DEADZONE * PIXELS_MENU_DEADZONE:
     return none(DragChoice)
   let compass =
     if abs(offset_x) > abs(offset_y): (if offset_x > 0.0: Compass.East else: Compass.West)
@@ -577,7 +575,7 @@ func resultOf*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
   ##     scalar or antiscalar, and pair lying on each other giving zero.
   ##     `objects.kindOf` reads `grade`, which already tolerances near-zero away, so line of
   ##     negligible magnitude reports no shape.
-  let drag = toDrag(choice)
+  let drag = choice.toDrag
   if drag.isNone: return
   let derived = applyOperation(drag.get.toOperation, m, n)
   if kindOf(derived).isNone: return
@@ -661,7 +659,7 @@ func updateCursor*(interaction: var Interaction; x, y: float) =
     let
       offset_x = interaction.cursor.x - interaction.pressed.x
       offset_y = interaction.cursor.y - interaction.pressed.y
-    if offset_x*offset_x + offset_y*offset_y > PIXELS_CLICK_SLOP*PIXELS_CLICK_SLOP:
+    if offset_x * offset_x + offset_y * offset_y > PIXELS_CLICK_SLOP * PIXELS_CLICK_SLOP:
       interaction.is_press_still = false
 
 
@@ -686,8 +684,13 @@ func isTravelling*(interaction: Interaction): bool =
 
 
 proc updateHover*(
-  interaction: var Interaction; scene: Scene; camera: Camera; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; placed: openArray[Placement] = []
+  interaction: var Interaction;
+  scene: Scene;
+  camera: Camera;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  placed: openArray[Placement] = [];
 ) =
   ## Recompute object nearest cursor, so overlay and drag-start agree on what stands under it.
   ##   Nothing is hovered while camera is moving.
@@ -702,14 +705,27 @@ proc updateHover*(
   let is_standing = not interaction.isMovingCamera
   if interaction.is_enabled and (is_standing or interaction.isTravelling):
     let report = pickAt(
-      scene, camera, scale, view_projection, width, height, interaction.cursor, placed,
+      scene,
+      camera,
+      scale,
+      view_projection,
+      width,
+      height,
+      interaction.cursor,
+      placed,
     )
     interaction.index_hover = if is_standing: report.handle else: none(int)
     interaction.count_hover_rivals = if is_standing: report.count_rivals else: 0
     interaction.depth_pointer = none(float)
     if report.handle.isSome:
       let found = positionUnderPointerOn(
-        scene, report.handle.get, camera, scale, width, height, interaction.cursor,
+        scene,
+        report.handle.get,
+        camera,
+        scale,
+        width,
+        height,
+        interaction.cursor,
       )
       # Depth along sight, not distance: speed curve travels forward, and that is what
       #   forward has to cross.
@@ -721,17 +737,23 @@ proc updateHover*(
     interaction.depth_pointer = none(float)
   # Note backdrop here, where scene is in hand; see `is_hover_backdrop`.
   interaction.is_hover_backdrop =
-    interaction.index_hover.isSome and
-    isBackdropUnder(scene, interaction.index_hover.get, scale, width, height)
+      interaction.index_hover.isSome and
+      isBackdropUnder(scene, interaction.index_hover.get, scale, width, height)
 
 
 
 #[ Keyboard ]#
 
 proc dollyAt*(
-  camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; cursor: ScreenPosition;
-  has_selection: bool; placed: openArray[Placement] = []
+  camera: var Camera;
+  scene: Scene;
+  factor: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  cursor: ScreenPosition;
+  has_selection: bool;
+  placed: openArray[Placement] = [];
 ) =
   ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
   ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
@@ -745,7 +767,14 @@ proc dollyAt*(
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
   let anchor = anchorZoomAt(
-    scene, camera, scale, view_projection, width, height, cursor, placed,
+    scene,
+    camera,
+    scale,
+    view_projection,
+    width,
+    height,
+    cursor,
+    placed,
   )
   if not has_selection:
     if anchor.isSome:
@@ -762,12 +791,10 @@ proc dollyAt*(
     #   scales with it exactly as `dolly` scales it.
     let heading = headingThrough(camera, camera.frame, width, height, cursor)
     # Length of heading is bulk norm of weightless point it lifts to.
-    let reach = ( |∙ toMultivector(heading))[Basis.scalar]
+    let reach = (|∙heading.toMultivector)[Basis.scalar]
     if reach <= 0.0: return
-    let settled = distanceHeld(camera.distance*factor)
-    camera.travelAlong(
-      (camera.distance - settled)/reach, heading
-    )
+    let settled = distanceHeld(camera.distance * factor)
+    camera.travelAlong((camera.distance - settled) / reach, heading)
     camera.repivotToDepth(settled)
     return
   if anchor.isNone:
@@ -776,11 +803,9 @@ proc dollyAt*(
   # Stop at anchor's floor, as free flight does; see `camera.travelToward`.
   #   `dollyToward` scales eye's reach to anchor by factor, so floor bounds that factor.
   #   Floor never pushes eye out: eye already nearer stays, and only zooms out.
-  let reach = distanceBetween(toMultivector(camera.eye), toMultivector(anchor.get.at))
+  let reach = distanceBetween(camera.eye.toMultivector, anchor.get.at.toMultivector)
   if anchor.get.is_standing and reach > 0.0:
-    camera.dollyToward(
-      max(factor, min(anchor.get.floor_reach, reach)/reach), anchor.get.at
-    )
+    camera.dollyToward(max(factor, min(anchor.get.floor_reach, reach) / reach), anchor.get.at)
   else:
     camera.dollyToward(factor, anchor.get.at)
   if anchor.get.is_standing:
@@ -792,24 +817,43 @@ proc dollyAt*(
 
 
 proc dollyAtCentre*(
-  camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; has_selection: bool;
-  placed: openArray[Placement] = []
+  camera: var Camera;
+  scene: Scene;
+  factor: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  has_selection: bool;
+  placed: openArray[Placement] = [];
 ) =
   ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
   ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
   ##   view twice beside pan that carries same midpoint; middle of frame it is, aimed
   ##   through `dollyAt` so pivot still lands on point or line there.
   dollyAt(
-    camera, scene, factor, scale, view_projection, width, height,
-    ScreenPosition(x: float(width)/2.0, y: float(height)/2.0), has_selection, placed,
+    camera,
+    scene,
+    factor,
+    scale,
+    view_projection,
+    width,
+    height,
+    ScreenPosition(x: float(width) / 2.0, y: float(height) / 2.0),
+    has_selection,
+    placed,
   )
 
 
 proc dollyAtCursor*(
-  interaction: Interaction; camera: var Camera; scene: Scene; factor: float;
-  scale: DrawExtent; view_projection: Matrix4; width, height: int; has_selection: bool;
-  placed: openArray[Placement] = []
+  interaction: Interaction;
+  camera: var Camera;
+  scene: Scene;
+  factor: float;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  has_selection: bool;
+  placed: openArray[Placement] = [];
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends and pinch zoom same way.
@@ -823,8 +867,11 @@ proc dollyAtCursor*(
 
 
 func turnFollowing*(
-  camera: var Camera; before, after: ScreenPosition; width, height: int;
-  has_selection: bool; reach_selection = 0.0
+  camera: var Camera;
+  before, after: ScreenPosition;
+  width, height: int;
+  has_selection: bool;
+  reach_selection = 0.0;
 ) =
   ## Turn camera by left drag, finger's or either mouse's, from pixel it left to pixel it
   ## reached.
@@ -848,17 +895,21 @@ func turnFollowing*(
     return
   let
     radius = camera.radiusHeld(width, height, reach_selection)
-    pivot = eye + camera.distance*frame.forward
+    pivot = eye + camera.distance * frame.forward
   camera.orbitCarrying(
     held = pointHeld(eye, pivot, left, radius) - pivot,
     under = pointHeld(eye, pivot, reached, radius) - pivot,
-    frame = frame, pivot = pivot,
+    frame = frame,
+    pivot = pivot,
   )
 
 
 func grabPan*(
-  interaction: var Interaction; camera: Camera; width, height: int; has_selection: bool;
-  reach_selection = 0.0
+  interaction: var Interaction;
+  camera: Camera;
+  width, height: int;
+  has_selection: bool;
+  reach_selection = 0.0;
 ) =
   ## Take what right drag holds, as it begins, under pointer where press came down.
   ##   Free flight holds depth: what pointer is over, or pivot's over nothing. Pivot's depth
@@ -869,14 +920,19 @@ func grabPan*(
   if not has_selection: return
   let (eye, frame) = camera.sight
   interaction.point_pan = some(pointHeld(
-    eye, camera.pivot, camera.headingThrough(frame, width, height, interaction.cursor),
+    eye,
+    camera.pivot,
+    camera.headingThrough(frame, width, height, interaction.cursor),
     camera.radiusHeld(width, height, reach_selection),
   ))
 
 
 func stretchAcross(
-  camera: var Camera; before, after: ScreenPosition; width, height: int;
-  point_held: Option[Position]; reach_selection: float
+  camera: var Camera;
+  before, after: ScreenPosition;
+  width, height: int;
+  point_held: Option[Position];
+  reach_selection: float;
 ) =
   ## Move camera by right drag with selection: across turns, and up and down zooms.
   ##   Across turns as left drag along pivot's row turns, for same travel; see
@@ -897,37 +953,46 @@ func stretchAcross(
   ##   fingers pinch as they move.
   let
     (eye, frame) = camera.sight
-    aspect = float(width)/float(height)
+    aspect = float(width) / float(height)
     held = point_held.get(pointHeld(
-      eye, eye + camera.distance*frame.forward,
+      eye,
+      eye + camera.distance * frame.forward,
       camera.headingThrough(frame, width, height, before),
       camera.radiusHeld(width, height, reach_selection),
     ))
     seen = projectToScreen(camera.initMatrixViewProjection(aspect), width, height, held)
-    row = 0.5*float(height)
+    row = 0.5 * float(height)
     side = if before.y <= row: 1.0 else: -1.0
-    least = FRACTION_STRETCH_LEAST*float(height)
+    least = FRACTION_STRETCH_LEAST * float(height)
   if not seen.isInFront: return
   if after.x != before.x:
     camera.turnFollowing(
-      ScreenPosition(x: before.x, y: row), ScreenPosition(x: after.x, y: row),
-      width, height, has_selection = true, reach_selection,
+      ScreenPosition(x: before.x, y: row),
+      ScreenPosition(x: after.x, y: row),
+      width,
+      height,
+      has_selection = true,
+      reach_selection,
     )
   let
     (eye_turned, frame_turned) = camera.sight
     turned = projectToScreen(camera.initMatrixViewProjection(aspect), width, height, held)
     depth = depthAlong(eye_turned, frame_turned.forward, held)
-    ratio = max(side*(row - before.y), least)/max(side*(row - after.y), least)
+    ratio = max(side * (row - before.y), least) / max(side * (row - after.y), least)
   if not turned.isInFront or depth <= 0.0 or ratio == 1.0: return
   # Eye comes in by what leaves held depth at `ratio` of itself, so held height scales by
   #   its inverse; pivot's separation gives up same length.
-  camera.dolly((camera.distance - depth*(1.0 - ratio))/camera.distance)
+  camera.dolly((camera.distance - depth * (1.0 - ratio)) / camera.distance)
 
 
 func panAcross*(
-  camera: var Camera; before, after: ScreenPosition; width, height: int;
-  has_selection: bool; depth_held: float; point_held = none(Position);
-  reach_selection = 0.0
+  camera: var Camera;
+  before, after: ScreenPosition;
+  width, height: int;
+  has_selection: bool;
+  depth_held: float;
+  point_held = none(Position);
+  reach_selection = 0.0;
 ) =
   ## Move camera by right drag, in whichever way its state reads.
   ##   Free flight strafes along camera's own across and up, so point at `depth_held` under
@@ -948,8 +1013,8 @@ func panAcross*(
     across = after.x - before.x
     up = after.y - before.y
     per_pixel =
-      2.0*depth_held*tan(0.5*degToRad(camera.degrees_field_of_view))/float(height)
-  camera.travel(0.0, -per_pixel*across, per_pixel*up)
+      2.0 * depth_held * tan(0.5 * degToRad(camera.degrees_field_of_view)) / float(height)
+  camera.travel(0.0, -per_pixel * across, per_pixel * up)
 
 
 func holdKey*(interaction: var Interaction, key: Key) =
@@ -1015,13 +1080,14 @@ func driveHeld*(
   if interaction.keys_held.len == 0: return
   let
     haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
-    turn = TURN_SECOND*haste*seconds
-    rise = RISE_SECOND*haste*seconds
-    spin = ROLL_SECOND*haste*seconds
-    dolly = pow(FACTOR_DOLLY_SECOND, haste*seconds)
+    turn = TURN_SECOND * haste * seconds
+    rise = RISE_SECOND * haste * seconds
+    spin = ROLL_SECOND * haste * seconds
+    dolly = pow(FACTOR_DOLLY_SECOND, haste * seconds)
     # One step for this frame, integrated across hold's own two ages.
     step = distanceTravelled(
-      age_before, interaction.seconds_travelling,
+      age_before,
+      interaction.seconds_travelling,
       capTravelling(interaction.depth_pointer, camera.distance, haste),
     )
   for key in interaction.keys_held:
@@ -1051,13 +1117,16 @@ func driveHeld*(
       if has_selection: camera.orbit(0.0, rise) else: camera.look(0.0, rise)
     of Motion.OrbitDown:
       if has_selection: camera.orbit(0.0, -rise) else: camera.look(0.0, -rise)
-    of Motion.DollyIn: camera.dolly(1.0/dolly)
+    of Motion.DollyIn: camera.dolly(1.0 / dolly)
     of Motion.DollyOut: camera.dolly(dolly)
 
 
 func applyAction*(
-  interaction: var Interaction; camera: var Camera; scene: Scene; action: KeyAction;
-  width, height: int
+  interaction: var Interaction;
+  camera: var Camera;
+  scene: Scene;
+  action: KeyAction;
+  width, height: int;
 ): Option[int] =
   ## Carry out one keyboard action, and report which object caller should select.
   ##   `width` x `height` is frame drawn now, which `ViewHome` fits opening to.
@@ -1075,9 +1144,7 @@ func applyAction*(
   of KeyAction.FocusPrevious: interaction.index_focus = scene.handleStepped(
     interaction.index_focus, -1
   )
-  of KeyAction.FocusNext: interaction.index_focus = scene.handleStepped(
-    interaction.index_focus, 1
-  )
+  of KeyAction.FocusNext: interaction.index_focus = scene.handleStepped(interaction.index_focus, 1)
   of KeyAction.SelectFocused:
     if interaction.index_focus.isSome and scene.isAlive(interaction.index_focus.get):
       return interaction.index_focus
@@ -1104,7 +1171,7 @@ func pruneFocus*(interaction: var Interaction, scene: Scene) =
 func beginHold*(interaction: var Interaction, handle: int, now: float) =
   ## Start press on `handle` that selects it once it has lasted long enough.
   interaction.hold = some(
-    Hold(handle: handle, started: now, is_taken: false, released: none(float))
+    Hold(handle: handle, started: now, is_taken: false, released: none(float)),
   )
 
 
@@ -1135,7 +1202,7 @@ func progressHold*(interaction: Interaction, now: float): float =
   ##   before filling; see `swellHold`.
   if interaction.hold.isNone: return 0.0
   let elapsed = now - interaction.hold.get.started - SECONDS_SWELL_GROW
-  max(0.0, min(1.0, elapsed/SECONDS_LONG_PRESS))
+  max(0.0, min(1.0, elapsed / SECONDS_LONG_PRESS))
 
 
 func swellHold*(interaction: Interaction, now: float): float =
@@ -1158,9 +1225,9 @@ func swellHold*(interaction: Interaction, now: float): float =
   if interaction.hold.isNone: return 0.0
   let hold = interaction.hold.get
   if hold.released.isSome:
-    let settling = (now - hold.released.get)/SECONDS_SWELL_SHRINK
+    let settling = (now - hold.released.get) / SECONDS_SWELL_SHRINK
     return 1.0 - easeOutCubic(clamp(settling, 0.0, 1.0))
-  easeOutCubic(clamp((now - hold.started)/SECONDS_SWELL_GROW, 0.0, 1.0))
+  easeOutCubic(clamp((now - hold.started) / SECONDS_SWELL_GROW, 0.0, 1.0))
 
 
 func isHoldSpent*(interaction: Interaction, now: float): bool =
@@ -1173,7 +1240,7 @@ func isHoldSpent*(interaction: Interaction, now: float): bool =
   ##     would: subtracting two large timestamps loses precision, so elapsed time measures
   ##     hair under duration itself.
   interaction.hold.isSome and interaction.hold.get.released.isSome and
-    swellHold(interaction, now) <= 0.0
+      swellHold(interaction, now) <= 0.0
 
 
 func isHoldMature*(interaction: Interaction, now: float): bool =
@@ -1247,7 +1314,7 @@ func isConstructibleByTouch*(interaction: Interaction): bool =
   ##   Asked by `beginDrag` at slop and by browser at press, so both agree; see
   ##   browser scripts's `is_touch_press_constructing`.
   interaction.index_hover.isSome and not interaction.is_hover_backdrop and
-    interaction.count_hover_rivals <= 1
+      interaction.count_hover_rivals <= 1
 
 
 func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): bool =
@@ -1271,7 +1338,7 @@ func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): b
   interaction.settled = interaction.cursor
   interaction.menu = none(ScreenPosition)
   interaction.is_menu_entered = false
-  interaction.index_disengaged = none(int) # Fresh drag holds nothing at arm's length.
+  interaction.index_disengaged = none(int)  # Fresh drag holds nothing at arm's length.
   interaction.is_over_target = false
   interaction.proposal = none(DragChoice)
   interaction.preview = none(Preview)
@@ -1283,15 +1350,13 @@ func cancelDrag*(interaction: var Interaction) =
   interaction.is_dragging = false
   interaction.menu = none(ScreenPosition)
   interaction.is_menu_entered = false
-  interaction.index_disengaged = none(int) # Or next drag opens no menu over that object.
+  interaction.index_disengaged = none(int)  # Or next drag opens no menu over that object.
   interaction.is_over_target = false
   interaction.proposal = none(DragChoice)
   interaction.preview = none(Preview)
 
 
-func updateDrag*(
-  interaction: var Interaction, scene: Scene, now: float
-) =
+func updateDrag*(interaction: var Interaction, scene: Scene, now: float) =
   ## Recompute what drag in progress would make and whether its menu should be open.
   ##   For frame about to draw.
   ##   Called after `updateHover`, which decides where drag points.
@@ -1314,8 +1379,8 @@ func updateDrag*(
     let
       offset_x_menu = interaction.cursor.x - interaction.menu.get.x
       offset_y_menu = interaction.cursor.y - interaction.menu.get.y
-    if offset_x_menu*offset_x_menu + offset_y_menu*offset_y_menu >
-        PIXELS_MENU_DISENGAGE*PIXELS_MENU_DISENGAGE:
+    if offset_x_menu * offset_x_menu + offset_y_menu * offset_y_menu >
+        PIXELS_MENU_DISENGAGE * PIXELS_MENU_DISENGAGE:
       interaction.menu = none(ScreenPosition)
       interaction.index_disengaged = interaction.index_destination
       interaction.entered = now
@@ -1331,8 +1396,8 @@ func updateDrag*(
 
   let over = destinationOf(interaction)
   interaction.is_over_target =
-    over.isSome and over.get != interaction.index_source and
-    scene.isAlive(over.get) and scene.isAlive(interaction.index_source)
+      over.isSome and over.get != interaction.index_source and
+      scene.isAlive(over.get) and scene.isAlive(interaction.index_source)
   if not interaction.is_over_target:
     # Restart dwell wherever drag next arrives, having left pivot.
     interaction.proposal = none(DragChoice)
@@ -1347,7 +1412,7 @@ func updateDrag*(
   let
     offset_x = interaction.cursor.x - interaction.settled.x
     offset_y = interaction.cursor.y - interaction.settled.y
-  if offset_x*offset_x + offset_y*offset_y > PIXELS_TAP_SLOP*PIXELS_TAP_SLOP:
+  if offset_x * offset_x + offset_y * offset_y > PIXELS_TAP_SLOP * PIXELS_TAP_SLOP:
     interaction.entered = now
     interaction.settled = interaction.cursor
 
@@ -1379,13 +1444,11 @@ func updateDrag*(
   # Preview through `scene.previewApplying`, same call both apply pickers offer from.
   #   Gesture's preview and picker's preview are one thing, anchor included; `More` previews
   #   nothing.
-  let drag = if interaction.proposal.isSome: toDrag(interaction.proposal.get)
+  let drag = if interaction.proposal.isSome: interaction.proposal.get.toDrag
     else: none(DragOperation)
   interaction.preview =
     if drag.isSome:
-      scene.previewApplying(
-        drag.get.toOperation, interaction.index_source, over.get
-      )
+      scene.previewApplying(drag.get.toOperation, interaction.index_source, over.get)
     else: none(Preview)
 
 
@@ -1408,8 +1471,8 @@ func commitChoice*(
     return DragOutcome(message: "Source or destination no longer exists; nothing done.")
 
   let
-    label_source = toText(scene.labelAt(interaction.index_source))
-    label_destination = toText(scene.labelAt(over.get))
+    label_source = scene.labelAt(interaction.index_source).toText
+    label_destination = scene.labelAt(over.get).toText
     m = scene.geometryOf(interaction.index_source)
     n = scene.geometryOf(over.get)
     operands = some((source: interaction.index_source, destination: over.get))
@@ -1423,7 +1486,7 @@ func commitChoice*(
   # Name through catalogue's notation, as panel's apply button names same pair.
   #   Drag and panel apply then produce byte-identical labels.
   let
-    operation = toDrag(choice).get.toOperation
+    operation = choice.toDrag.get.toOperation
     label = notationSubstituted(operation, label_source, label_destination)
     derived = resultOf(choice, m, n)
   if derived.isNone:
@@ -1455,9 +1518,7 @@ func commitChoice*(
   )
 
 
-func endDrag*(
-  interaction: var Interaction, scene: var Scene, now: float = 0.0
-): DragOutcome =
+func endDrag*(interaction: var Interaction, scene: var Scene, now = 0.0): DragOutcome =
   ## End drag in progress, applying whatever release resolved to.
   ##   One release rule: release commits whatever is under cursor.
   ##     With menu open, wedge cursor stands in, nothing at centre, unless menu is dwell
@@ -1493,7 +1554,7 @@ func endDrag*(
       if scene.isAlive(interaction.index_source):
         DragOutcome(index_clicked: some(interaction.index_source))
       else:
-        DragOutcome() # Removed under press; nothing to select and nothing to say.
+        DragOutcome()  # Removed under press; nothing to select and nothing to say.
 
   if interaction.menu.isSome:
     let choice = interaction.choosing
@@ -1519,16 +1580,13 @@ func endDrag*(
   if not (scene.isAlive(interaction.index_source) and scene.isAlive(over.get)):
     return DragOutcome(message: "Source or destination no longer exists; nothing done.")
 
-  let proposal = proposalFor(
-    scene.geometryOf(interaction.index_source), scene.geometryOf(over.get)
-  )
+  let proposal = proposalFor(scene.geometryOf(interaction.index_source), scene.geometryOf(over.get))
   if proposal.isNone:
     let
-      label_source = toText(scene.labelAt(interaction.index_source))
-      label_destination = toText(scene.labelAt(over.get))
+      label_source = scene.labelAt(interaction.index_source).toText
+      label_destination = scene.labelAt(over.get).toText
     return DragOutcome(
-      message: &"{label_source} and {label_destination} make nothing drawable; " &
-        "nothing added.",
+      message: &"{label_source} and {label_destination} make nothing drawable; " & "nothing added.",
       operands: some((source: interaction.index_source, destination: over.get)),
     )
   commitChoice(interaction, scene, proposal.get, now)

@@ -6,6 +6,7 @@ import ./fixtures
 import ../../tools/catalogue
 
 
+
 suite "Wording":
   test "every key carries text, and no two prose keys carry the same text":
     # Empty entry would draw empty tooltip, which reads as broken rather than as silent.
@@ -72,7 +73,7 @@ suite "Wording":
     #   side knew more, fuller sentence won.
     # Window worded radius tersely; page's prose won.
     check $wordingText(TipRowRadius) ==
-      "Radius the point is drawn at, in world units; it shrinks with distance."
+        "Radius the point is drawn at, in world units; it shrinks with distance."
     # Page named picking alone; window said why view rings what is picked.
     check "rings each one" in $wordingText(TipRowSelect)
 
@@ -114,23 +115,23 @@ suite "Wording":
     var
       line: array[32, char]
       cursor = 0
-    appendDegrees(line, cursor, PI/3.0)
+    appendDegrees(line, cursor, PI / 3.0)
     finishChars(line, cursor)
-    check toText(line) == "60°"
+    check line.toText == "60°"
     cursor = 0
     appendSpeedLight(line, cursor, 3712.84)
     finishChars(line, cursor)
-    check toText(line) == "3713 c"
+    check line.toText == "3713 c"
     cursor = 0
     appendSpeedLight(line, cursor, 0.0)
     finishChars(line, cursor)
-    check toText(line) == "0 c"
+    check line.toText == "0 c"
     # Scale bar's claim, singular at one.
     for (span, text) in [(1.0, "1 unit"), (2.0, "2 units"), (500.0, "500 units")]:
       cursor = 0
       appendRuler(line, cursor, span)
       finishChars(line, cursor)
-      check toText(line) == text
+      check line.toText == text
 
 
   test "a search says how many objects it shows, of how many the scene holds":
@@ -141,15 +142,15 @@ suite "Wording":
       cursor = 0
     appendShownCounted(line, cursor, 12, 5038)
     finishChars(line, cursor)
-    check toText(line) == "12 of 5038 shown"
+    check line.toText == "12 of 5038 shown"
 
 
   test "every codepoint the build writes is gathered once, in order, with printable ASCII":
     # Both front-ends ask their faces for this gathering, so codepoint missing here is
     #   asked of no face at all.
     let codepoints = codepointsShown()
-    for i in 1 ..< codepoints.len: check codepoints[i - 1] < codepoints[i]
-    for codepoint in 0x20 .. 0x7E: check codepoint in codepoints
+    for i in 1..<codepoints.len: check codepoints[i-1] < codepoints[i]
+    for codepoint in 0x20..0x7E: check codepoint in codepoints
     for accent in [0x2CD, 0x2F7]: check accent in codepoints  # Left complement, antireverse.
 
 

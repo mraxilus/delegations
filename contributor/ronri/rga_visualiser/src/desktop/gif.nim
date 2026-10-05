@@ -37,8 +37,7 @@ import ./arena
 #[ Encoder Configuration ]#
 
 const
-  CHANNELS = 3
-    ## Fix channel count; frames arrive as same tightly packed RGB triples PNG takes.
+  CHANNELS = 3  ## Fix channel count; frames arrive as same tightly packed RGB triples PNG takes.
   LEVELS_PER_CHANNEL {.define: "visualiser.gif_levels_per_channel".} = 6
     ## Set how many evenly spaced samples each channel is quantized to.
   BITS_CODE = 8
@@ -46,18 +45,17 @@ const
     ##   Global colour table is then simplest legal size, 256, regardless of how few
     ##   entries colour cube fills.
   COUNT_TABLE = 1 shl BITS_CODE
-  COUNT_PALETTE = LEVELS_PER_CHANNEL*LEVELS_PER_CHANNEL*LEVELS_PER_CHANNEL
+  COUNT_PALETTE = LEVELS_PER_CHANNEL * LEVELS_PER_CHANNEL * LEVELS_PER_CHANNEL
   CODE_CLEAR = COUNT_TABLE
   CODE_END = CODE_CLEAR + 1
-  CODE_MAX = 4096
-    ## Bound LZW dictionary size to what 12-bit code can name, as GIF's spec fixes.
+  CODE_MAX = 4096  ## Bound LZW dictionary size to what 12-bit code can name, as GIF's spec fixes.
   CAPACITY_DICTIONARY = 8192
     ## Set fixed hash table's handle count.
     ##   Power of two, comfortably above `CODE_MAX`, so linear probing stays cheap at load
     ##   factor that ever occurs.
 
 static:
-  doAssert LEVELS_PER_CHANNEL in 2 .. 6,
+  doAssert LEVELS_PER_CHANNEL in 2..6,
     &"Colour cube needs 2 to 6 levels per channel to fit 256 entries; got " &
     &"`{LEVELS_PER_CHANNEL}`."
   doAssert COUNT_PALETTE <= COUNT_TABLE,
@@ -72,7 +70,7 @@ static:
 #[ Type Definitions ]#
 
 type
-  DictionaryLempelZivWelch = object ## Define map from (prefix code, next byte) to code.
+  DictionaryLempelZivWelch = object  ## Define map from (prefix code, next byte) to code.
     ## Fixed open-addressed table rather than heap-backed `Table`.
     ##   Capacity is `CODE_MAX` at format's limit, known at compile time, so nothing grows.
     keys_prefix: array[CAPACITY_DICTIONARY, int]
@@ -80,7 +78,7 @@ type
     values: array[CAPACITY_DICTIONARY, int]
     are_used: array[CAPACITY_DICTIONARY, bool]
 
-  BitWriter = object ## Define packer of variable-width codes into caller-owned storage.
+  BitWriter = object  ## Define packer of variable-width codes into caller-owned storage.
     ## Least significant bit first, tracking only how much is in use.
     buffer: ptr UncheckedArray[uint8]
     capacity: int
@@ -101,7 +99,7 @@ func levelToByte(level: int): uint8 =
 
 func byteToLevel(value: uint8): int =
   ## Snap channel sample to nearest of `LEVELS_PER_CHANNEL` evenly spaced levels.
-  (int(value)*(LEVELS_PER_CHANNEL - 1) + 127) div 255
+  (int(value) * (LEVELS_PER_CHANNEL - 1) + 127) div 255
 
 
 func paletteIndex*(red, green, blue: uint8): uint8 =
@@ -109,8 +107,8 @@ func paletteIndex*(red, green, blue: uint8): uint8 =
   ##   Exported so test can compute same index written frame quantized to, independent
   ##   of decoding LZW stream.
   uint8(
-    (byteToLevel(red)*LEVELS_PER_CHANNEL + byteToLevel(green))*LEVELS_PER_CHANNEL +
-      byteToLevel(blue)
+    (byteToLevel(red) * LEVELS_PER_CHANNEL + byteToLevel(green)) * LEVELS_PER_CHANNEL +
+    byteToLevel(blue),
   )
 
 
@@ -118,14 +116,14 @@ func globalColorTable(): array[COUNT_TABLE*3, uint8] =
   ## Build one colour cube every frame is quantized against.
   ##   Entries beyond cube's `COUNT_PALETTE` stay black, and quantization never produces
   ##   their index.
-  for index in 0 ..< COUNT_PALETTE:
+  for index in 0..<COUNT_PALETTE:
     let
       level_blue = index mod LEVELS_PER_CHANNEL
       level_green = (index div LEVELS_PER_CHANNEL) mod LEVELS_PER_CHANNEL
-      level_red = index div (LEVELS_PER_CHANNEL*LEVELS_PER_CHANNEL)
+      level_red = index div (LEVELS_PER_CHANNEL * LEVELS_PER_CHANNEL)
     result[index*3] = levelToByte(level_red)
-    result[index*3 + 1] = levelToByte(level_green)
-    result[index*3 + 2] = levelToByte(level_blue)
+    result[index*3+1] = levelToByte(level_green)
+    result[index*3+2] = levelToByte(level_blue)
 
 
 
@@ -135,13 +133,13 @@ func hashKey(prefix: int, value: uint8): int =
   ## Spread (prefix, value) pairs over table.
   ##   Multiplier is Knuth's constant for multiplicative hashing, folded through `uint64`
   ##   so it never overflows.
-  let combined = uint64(prefix)*2654435761'u64 xor uint64(value)
+  let combined = uint64(prefix) * 2654435761'u64 xor uint64(value)
   int(combined and uint64(CAPACITY_DICTIONARY - 1))
 
 
 func clear(dictionary: var DictionaryLempelZivWelch) =
   ## Empty every handle, in place; table itself is never reallocated.
-  for i in 0 ..< CAPACITY_DICTIONARY: dictionary.are_used[i] = false
+  for i in 0..<CAPACITY_DICTIONARY: dictionary.are_used[i] = false
 
 
 func find(dictionary: DictionaryLempelZivWelch, prefix: int, value: uint8): Option[int] =
@@ -200,7 +198,7 @@ proc encodeLempelZivWelch(
   ##   Output is reserved at double input plus slack: LZW never expands data this
   ##   repetitive by more than occasional wider code.
   dictionary.clear()
-  let capacity_output = 2*len(indices) + 256
+  let capacity_output = 2 * len(indices) + 256
   var
     writer = BitWriter(buffer: push[uint8](arena, capacity_output), capacity: capacity_output)
     next_code = CODE_END + 1
@@ -252,46 +250,58 @@ proc writeSubBlocks(file: File, data: openArray[uint8]) =
   var offset = 0
   while offset < len(data):
     let count = min(255, len(data) - offset)
-    file.write(char(count))
+    file.write char(count)
     discard file.writeBytes(data, offset, count)
     offset += count
-  file.write(char(0))
+  file.write char(0)
 
 
 proc writeFrame(
-  file: File; arena: var Arena; dictionary: var DictionaryLempelZivWelch;
-  width, height: int; row_bottom_up: openArray[uint8]; centiseconds_delay: int
+  file: File;
+  arena: var Arena;
+  dictionary: var DictionaryLempelZivWelch;
+  width, height: int;
+  row_bottom_up: openArray[uint8];
+  centiseconds_delay: int;
 ) =
   ## Write one frame's Graphic Control Extension and Image Descriptor.
   ##   Every scratch buffer comes from `arena`; caller resets it once this returns.
-  let delay = toLittleEndian16(uint16(centiseconds_delay))
+  let delay = uint16(centiseconds_delay).toLittleEndian16
   discard file.writeBytes([0x21'u8, 0xF9, 0x04, 0x00, delay[0], delay[1], 0x00, 0x00], 0, 8)
 
-  let (w, h) = (toLittleEndian16(uint16(width)), toLittleEndian16(uint16(height)))
+  let (w, h) = (uint16(width).toLittleEndian16, uint16(height).toLittleEndian16)
   discard file.writeBytes([0x2C'u8, 0, 0, 0, 0, w[0], w[1], h[0], h[1], 0x00], 0, 10)
 
   # Quantize while flipping, so no separate right-side-up copy of frame exists.
-  let indices = push[uint8](arena, width*height)
-  for row in 0 ..< height:
+  let indices = push[uint8](arena, width * height)
+  for row in 0..<height:
     let
-      source = (height - 1 - row)*width*CHANNELS
-      destination = row*width
-    for column in 0 ..< width:
-      let at = source + column*CHANNELS
-      indices[destination + column] =
-        paletteIndex(row_bottom_up[at], row_bottom_up[at + 1], row_bottom_up[at + 2])
+      source = (height - 1 - row) * width * CHANNELS
+      destination = row * width
+    for column in 0..<width:
+      let at = source + column * CHANNELS
+      indices[destination+column] =
+        paletteIndex(row_bottom_up[at], row_bottom_up[at+1], row_bottom_up[at+2])
 
-  let compressed = encodeLempelZivWelch(arena, dictionary, indices.toOpenArray(0, width*height - 1))
-  file.write(char(BITS_CODE))
-  file.writeSubBlocks(compressed.buffer.toOpenArray(0, compressed.count - 1))
+  let compressed = encodeLempelZivWelch(
+    arena,
+    dictionary,
+    indices.toOpenArray(0, width * height - 1),
+  )
+  file.write char(BITS_CODE)
+  file.writeSubBlocks compressed.buffer.toOpenArray(0, compressed.count - 1)
 
 
 
 #[ Animation Encoding ]#
 
 proc writeGif*(
-  arena: var Arena; path: string; width, height: int;
-  frames_bottom_up: openArray[uint8]; count_frames: int; centiseconds_delay: int
+  arena: var Arena;
+  path: string;
+  width, height: int;
+  frames_bottom_up: openArray[uint8];
+  count_frames: int;
+  centiseconds_delay: int;
 ) =
   ## Write `count_frames` frames as one looping animated GIF, flipping rows to read top-down.
   ##   `frames_bottom_up` holds every frame back to back, each same tightly packed RGB
@@ -302,15 +312,15 @@ proc writeGif*(
   doAssert count_frames > 0, "Animated GIF needs at least one frame."
   doAssert centiseconds_delay > 0,
     &"Hold time must be positive; got `{centiseconds_delay}` centiseconds."
-  let frame_size = width*height*CHANNELS
-  doAssert len(frames_bottom_up) >= count_frames*frame_size,
+  let frame_size = width * height * CHANNELS
+  doAssert len(frames_bottom_up) >= count_frames * frame_size,
     &"Frames hold {len(frames_bottom_up)} bytes, short of {count_frames*frame_size}."
 
   let file = open(path, fmWrite)
   defer: file.close
 
   discard file.writeChars("GIF89a", 0, 6)
-  let (w, h) = (toLittleEndian16(uint16(width)), toLittleEndian16(uint16(height)))
+  let (w, h) = (uint16(width).toLittleEndian16, uint16(height).toLittleEndian16)
   discard file.writeBytes([w[0], w[1], h[0], h[1], 0xF7'u8, 0, 0], 0, 7)
   let table = globalColorTable()
   discard file.writeBytes(table, 0, len(table))
@@ -319,12 +329,15 @@ proc writeGif*(
   discard file.writeChars("!\xFF\x0BNETSCAPE2.0\x03\x01\x00\x00\x00", 0, 19)
 
   var dictionary: DictionaryLempelZivWelch
-  for index in 0 ..< count_frames:
+  for index in 0..<count_frames:
     file.writeFrame(
-      arena, dictionary, width, height,
-      frames_bottom_up.toOpenArray(index*frame_size, (index + 1)*frame_size - 1),
+      arena,
+      dictionary,
+      width,
+      height,
+      frames_bottom_up.toOpenArray(index * frame_size, (index + 1) * frame_size - 1),
       centiseconds_delay,
     )
     arena.reset()
 
-  file.write(char(0x3B)) # Trailer.
+  file.write char(0x3B)  # Trailer.

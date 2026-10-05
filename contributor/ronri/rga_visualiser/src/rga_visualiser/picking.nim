@@ -77,7 +77,7 @@ const
 #[ In-View Configuration ]#
 
 const
-  INSET_POINT_SHOWN* = 0.5*float(DIAMETER_POINT_LEAST)
+  INSET_POINT_SHOWN* = 0.5 * float(DIAMETER_POINT_LEAST)
     ## Shrink centred box by this many pixels when asking whether *point* is in view.
     ##   Smallest drawn dot then fits inside rather than only its middle.
     ##   Least radius rather than point's own: disc filling half of frame is shown once its
@@ -87,7 +87,7 @@ const
     ##     breathing with gesture would re-frame view mid-hold.
     ##   Nothing equivalent for line, which has only to cross; `INSET_RIM_SHOWN` is plane's.
 
-  INSET_RIM_SHOWN* = 0.5*float(WIDTH_LINE_OBJECT)
+  INSET_RIM_SHOWN* = 0.5 * float(WIDTH_LINE_OBJECT)
     ## Shrink *frame* by this many pixels when asking whether *plane* is in view.
     ##   Rim resting on edge then has whole stroke drawn rather than half clipped.
     ##   Half of what `mesh.addRing` strokes rim at, same relationship `INSET_POINT_SHOWN`
@@ -98,13 +98,13 @@ const
 #[ Type Definitions ]#
 
 type
-  ScreenPosition* = object ## Define projected position, in window pixels, y downward.
-    x*, y*: float ## Pixel coordinates.
-    depth*: float ## View-space depth; positive and smaller is nearer eye.
+  ScreenPosition* = object  ## Define projected position, in window pixels, y downward.
+    x*, y*: float  ## Pixel coordinates.
+    depth*: float  ## View-space depth; positive and smaller is nearer eye.
 
-  PickReport* = object ## Define what one pick found under cursor.
-    handle*: Option[int] ## Nearest object of winning rank; none where nothing is in reach.
-    count_rivals*: int ## How many objects of winner's rank or better stood within
+  PickReport* = object  ## Define what one pick found under cursor.
+    handle*: Option[int]  ## Nearest object of winning rank; none where nothing is in reach.
+    count_rivals*: int  ## How many objects of winner's rank or better stood within
       ## `RADIUS_CROWD_TOUCH`, winner included; zero where nothing was picked.
       ## One where pick is unambiguous. Touch has no hover ring to say which of several
       ## finger is over, so its drag refuses to start above one; see
@@ -113,28 +113,28 @@ type
       ## meant it; plane under picked point is not, since rank already decides.
       ## Point hidden behind drawn disc is not either; see `pickAt`.
 
-  Hider = object ## Define one drawn disc cursor lies inside, as seen on screen.
-    depth: float ## Along sight axis, from eye.
-    x, y, radius: float ## Centre and radius in pixels.
+  Hider = object  ## Define one drawn disc cursor lies inside, as seen on screen.
+    depth: float  ## Along sight axis, from eye.
+    x, y, radius: float  ## Centre and radius in pixels.
 
-  Hiders = object ## Define drawn discs under cursor, in fixed storage.
+  Hiders = object  ## Define drawn discs under cursor, in fixed storage.
     ##   Fixed array rather than sequence: pick runs per pointer event, and sequence per
     ##   event was allocation per event.
     discs: array[HIDERS_MAX, Hider]
     count: int
 
-  PickWalk = object ## Define what one walk of scene under cursor found.
-    report: PickReport ## Winner and its rivals, less whatever `hiders` given hid.
-    depth_best: float ## Winner's depth along sight axis; `Inf` where nothing won.
-    hiders: Hiders ## Drawn discs cursor lay inside, gathered as walk went.
+  PickWalk = object  ## Define what one walk of scene under cursor found.
+    report: PickReport  ## Winner and its rivals, less whatever `hiders` given hid.
+    depth_best: float  ## Winner's depth along sight axis; `Inf` where nothing won.
+    hiders: Hiders  ## Drawn discs cursor lay inside, gathered as walk went.
 
-  AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
-    at*: Position ## World point that keeps its pixel through zoom.
-    floor_reach*: float ## How near wheel may come to `at`, in either state.
+  AnchorZoom* = object  ## Define what zoom holds still, and whether it stands somewhere.
+    at*: Position  ## World point that keeps its pixel through zoom.
+    floor_reach*: float  ## How near wheel may come to `at`, in either state.
       ## Point's is reach at which its depth fills frame (`depthFilling`): nearer shows
       ## nothing more of it. Other object's is its drawn radius, so wheel stops at surface rather
       ## than carrying eye through it; see `camera.travelToward`.
-    is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
+    is_standing*: bool  ## Whether `at` is where point or line stands, not crossing of ray.
       ## What stands somewhere is what reader looks at, so turntable's pivot follows its
       ## depth (`camera.repivotToDepth`). Plane is crossing, met where ray happens to fall:
       ## its depth under cursor is not its depth at middle of frame, and pivot lifted to it
@@ -149,9 +149,9 @@ func towards*(start, finish: ScreenPosition; fraction: float): ScreenPosition =
   ##     for animation has to land exactly on segment it drew before animation existed.
   if fraction >= 1.0: return finish
   ScreenPosition(
-    x: start.x + fraction*(finish.x - start.x),
-    y: start.y + fraction*(finish.y - start.y),
-    depth: start.depth + fraction*(finish.depth - start.depth),
+    x: start.x + fraction * (finish.x - start.x),
+    y: start.y + fraction * (finish.y - start.y),
+    depth: start.depth + fraction * (finish.depth - start.depth),
   )
 
 
@@ -170,26 +170,26 @@ func projectToScreen*(
     x = position.x
     y = position.y
     z = position.z
-    clip_x = float(view_projection.at(0, 0))*x + float(view_projection.at(0, 1))*y +
-      float(view_projection.at(0, 2))*z + float(view_projection.at(0, 3))
-    clip_y = float(view_projection.at(1, 0))*x + float(view_projection.at(1, 1))*y +
-      float(view_projection.at(1, 2))*z + float(view_projection.at(1, 3))
-    clip_w = float(view_projection.at(3, 0))*x + float(view_projection.at(3, 1))*y +
-      float(view_projection.at(3, 2))*z + float(view_projection.at(3, 3))
+    clip_x = float(view_projection.at(0, 0)) * x + float(view_projection.at(0, 1)) * y +
+        float(view_projection.at(0, 2)) * z + float(view_projection.at(0, 3))
+    clip_y = float(view_projection.at(1, 0)) * x + float(view_projection.at(1, 1)) * y +
+        float(view_projection.at(1, 2)) * z + float(view_projection.at(1, 3))
+    clip_w = float(view_projection.at(3, 0)) * x + float(view_projection.at(3, 1)) * y +
+        float(view_projection.at(3, 2)) * z + float(view_projection.at(3, 3))
   ScreenPosition(
-    x: ((clip_x/clip_w)*0.5 + 0.5) * float(width),
-    y: (1.0 - ((clip_y/clip_w)*0.5 + 0.5)) * float(height),
+    x: ((clip_x / clip_w) * 0.5 + 0.5) * float(width),
+    y: (1.0 - ((clip_y / clip_w) * 0.5 + 0.5)) * float(height),
     depth: clip_w,
   )
 
 
-func depthAlongSight*(view_projection: Matrix4; position: Position): float =
+func depthAlongSight*(view_projection: Matrix4, position: Position): float =
   ## Report how far `position` stands along sight axis, from eye; negative behind it.
   ##   Projection's own homogeneous weight, what perspective divides by, so same reading
   ##   `worldPerPixelAt` takes off eye and forward, without building offset per point.
   ##   Held equal to that dot product by suite case.
-  float(view_projection.at(3, 0))*position.x + float(view_projection.at(3, 1))*position.y +
-    float(view_projection.at(3, 2))*position.z + float(view_projection.at(3, 3))
+  float(view_projection.at(3, 0)) * position.x + float(view_projection.at(3, 1)) * position.y +
+      float(view_projection.at(3, 2)) * position.z + float(view_projection.at(3, 3))
 
 
 func pixelsFromCursor*(
@@ -203,19 +203,19 @@ func pixelsFromCursor*(
   ##   `Inf` rather than `Option[float]` for same reason.
   ##     Option is object too, and no real pixel distance is infinite, so sentinel cannot
   ##     collide with answer.
-  let clip_w = float(view_projection.at(3, 0))*position.x +
-    float(view_projection.at(3, 1))*position.y +
-    float(view_projection.at(3, 2))*position.z + float(view_projection.at(3, 3))
+  let clip_w = float(view_projection.at(3, 0)) * position.x +
+      float(view_projection.at(3, 1)) * position.y +
+      float(view_projection.at(3, 2)) * position.z + float(view_projection.at(3, 3))
   if clip_w <= DISTANCE_LIMIT_NEAR: return Inf  # Behind eye; `isInFront`'s test.
   let
-    clip_x = float(view_projection.at(0, 0))*position.x +
-      float(view_projection.at(0, 1))*position.y +
-      float(view_projection.at(0, 2))*position.z + float(view_projection.at(0, 3))
-    clip_y = float(view_projection.at(1, 0))*position.x +
-      float(view_projection.at(1, 1))*position.y +
-      float(view_projection.at(1, 2))*position.z + float(view_projection.at(1, 3))
-    x = ((clip_x/clip_w)*0.5 + 0.5) * float(width)
-    y = (1.0 - ((clip_y/clip_w)*0.5 + 0.5)) * float(height)
+    clip_x = float(view_projection.at(0, 0)) * position.x +
+        float(view_projection.at(0, 1)) * position.y +
+        float(view_projection.at(0, 2)) * position.z + float(view_projection.at(0, 3))
+    clip_y = float(view_projection.at(1, 0)) * position.x +
+        float(view_projection.at(1, 1)) * position.y +
+        float(view_projection.at(1, 2)) * position.z + float(view_projection.at(1, 3))
+    x = ((clip_x / clip_w) * 0.5 + 0.5) * float(width)
+    y = (1.0 - ((clip_y / clip_w) * 0.5 + 0.5)) * float(height)
   hypot(cursor.x - x, cursor.y - y)
 
 
@@ -230,9 +230,7 @@ func isInFront*(screen: ScreenPosition): bool = screen.depth > DISTANCE_LIMIT_NE
 
 #[ Segment Test ]#
 
-func clipToEyeSide*(
-  tail, head: Position; plane_near: Multivector
-): Option[(Position, Position)] =
+func clipToEyeSide*(tail, head: Position; plane_near: Multivector): Option[(Position, Position)] =
   ## Clip segment `tail`-`head` to near side of `plane_near`.
   ##   Camera's near plane, `DrawExtent.plane_near`: same clip GPU performs when drawing.
   ##   Needed since screen-space hit test divides by each endpoint's depth, which
@@ -246,14 +244,12 @@ func clipToEyeSide*(
   ##   eye plane wraps to opposite side of screen.
   ##   None where whole segment lies behind plane.
   let
-    depth_tail = depthAgainst(plane_near, toMultivector(tail))
-    depth_head = depthAgainst(plane_near, toMultivector(head))
+    depth_tail = depthAgainst(plane_near, tail.toMultivector)
+    depth_head = depthAgainst(plane_near, head.toMultivector)
   if depth_tail <= 0.0 and depth_head <= 0.0: return
   if depth_tail > 0.0 and depth_head > 0.0: return some((tail, head))
-  let crossing = position(wedgeAnti(
-    wedge(toMultivector(tail), toMultivector(head)), plane_near
-  ))
-  if crossing.isNone: return # Unreachable with straddling signs; stated for reader.
+  let crossing = position(wedgeAnti(wedge(tail.toMultivector, head.toMultivector), plane_near))
+  if crossing.isNone: return  # Unreachable with straddling signs; stated for reader.
   if depth_tail > 0.0: some((tail, crossing.get)) else: some((crossing.get, head))
 
 
@@ -261,11 +257,15 @@ func distanceToSegment(point, tail, head: ScreenPosition): float =
   ## Measure pixel distance from `point` to nearest point of segment `tail`-`head`.
   let
     (offset_x, offset_y) = (head.x - tail.x, head.y - tail.y)
-    length_squared = offset_x*offset_x + offset_y*offset_y
+    length_squared = offset_x * offset_x + offset_y * offset_y
   if length_squared <= 1.0e-9: return hypot(point.x - tail.x, point.y - tail.y)
   let t =
-    clamp(((point.x - tail.x)*offset_x + (point.y - tail.y)*offset_y) / length_squared, 0.0, 1.0)
-  hypot(point.x - (tail.x + t*offset_x), point.y - (tail.y + t*offset_y))
+    clamp(
+      ((point.x - tail.x) * offset_x + (point.y - tail.y) * offset_y) / length_squared,
+      0.0,
+      1.0,
+    )
+  hypot(point.x - (tail.x + t * offset_x), point.y - (tail.y + t * offset_y))
 
 
 
@@ -282,9 +282,9 @@ func headingThrough*(
   let
     half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
     half_width = half_height * (float(width) / float(height))
-    ndc_x = (cursor.x / float(width))*2.0 - 1.0
-    ndc_y = 1.0 - (cursor.y / float(height))*2.0
-  (ndc_x*half_width)*frame.axis_right + (ndc_y*half_height)*frame.axis_up + frame.forward
+    ndc_x = (cursor.x / float(width)) * 2.0 - 1.0
+    ndc_y = 1.0 - (cursor.y / float(height)) * 2.0
+  (ndc_x * half_width) * frame.axis_right + (ndc_y * half_height) * frame.axis_up + frame.forward
 
 
 func castRay*(
@@ -294,7 +294,7 @@ func castRay*(
   ##   Takes eye and frame precomputed.
   ##     One cursor tests against every object with same ray, and recomputing per object
   ##     repeats two joins and antiduals up to `OBJECTS_MAX` times.
-  toMultivector(eye) ∧ toMultivector(headingThrough(camera, frame, width, height, cursor))
+  eye.toMultivector ∧ headingThrough(camera, frame, width, height, cursor).toMultivector
 
 
 func positionOnLineNearest*(
@@ -314,11 +314,11 @@ func positionOnLineNearest*(
   ##     Held equal to classical two-dot closed form in suite over scatter of line/ray
   ##     pairs.
   let
-    line = wedge(toMultivector(anchor), toMultivector(axis))
-    ray = wedge(toMultivector(ray_from), toMultivector(ray_along))
+    line = wedge(anchor.toMultivector, axis.toMultivector)
+    ray = wedge(ray_from.toMultivector, ray_along.toMultivector)
     normal_common = directionNormalHorizon(wedge(attitude(line), attitude(ray)))
   if normal_common.isNone: return
-  position(wedgeAnti(line, wedge(ray, toMultivector(normal_common.get))))
+  position(wedgeAnti(line, wedge(ray, normal_common.get.toMultivector)))
 
 
 func positionOnObjectUnder(
@@ -350,13 +350,17 @@ func positionOnObjectUnder(
         found = positionOnLineNearest(anchor.get, axis.get, ray_from.get, heading.get)
   of Kind.Plane: found = position(ray ∨ geometry)
   if found.isNone: return
-  if depthAgainst(plane_eye, toMultivector(found.get)) <= 1.0e-6: return
+  if depthAgainst(plane_eye, found.get.toMultivector) <= 1.0e-6: return
   found
 
 
 func isBeyondDisc(
-  view_projection: Matrix4; width, height: int; tangent_half_view: float;
-  centre: Position; radius: float; cursor: ScreenPosition
+  view_projection: Matrix4;
+  width, height: int;
+  tangent_half_view: float;
+  centre: Position;
+  radius: float;
+  cursor: ScreenPosition;
 ): bool =
   ## Report whether cursor lies outside every pixel disc of `radius` about `centre` could cover.
   ##   Broad phase only, so plane's meet may be skipped: what it lets through, algebra
@@ -367,22 +371,25 @@ func isBeyondDisc(
   ##     Never true with eye inside that sphere. Loose off-axis, which broad phase may be.
   ##     Checked numerically off screen as well as on; see `PROVENANCE.md`.
   ##   Without it every plane's meet ran per hover, for cursor nowhere near most discs.
-  let depth = float(view_projection.at(3, 0))*centre.x +
-    float(view_projection.at(3, 1))*centre.y +
-    float(view_projection.at(3, 2))*centre.z + float(view_projection.at(3, 3))
+  let depth = float(view_projection.at(3, 0)) * centre.x +
+      float(view_projection.at(3, 1)) * centre.y +
+      float(view_projection.at(3, 2)) * centre.z + float(view_projection.at(3, 3))
   if depth <= radius: return false
   let
-    clip_x = float(view_projection.at(0, 0))*centre.x +
-      float(view_projection.at(0, 1))*centre.y +
-      float(view_projection.at(0, 2))*centre.z + float(view_projection.at(0, 3))
-    clip_y = float(view_projection.at(1, 0))*centre.x +
-      float(view_projection.at(1, 1))*centre.y +
-      float(view_projection.at(1, 2))*centre.z + float(view_projection.at(1, 3))
-    x = ((clip_x/depth)*0.5 + 0.5)*float(width)
-    y = (1.0 - ((clip_y/depth)*0.5 + 0.5))*float(height)
-    lateral = tangent_half_view*hypot(clip_x/depth*float(width)/float(height), clip_y/depth)
-    focal = float(height)/(2.0*tangent_half_view)
-    bound = focal*radius*(1.0 + lateral)/(depth - radius)
+    clip_x = float(view_projection.at(0, 0)) * centre.x +
+        float(view_projection.at(0, 1)) * centre.y +
+        float(view_projection.at(0, 2)) * centre.z + float(view_projection.at(0, 3))
+    clip_y = float(view_projection.at(1, 0)) * centre.x +
+        float(view_projection.at(1, 1)) * centre.y +
+        float(view_projection.at(1, 2)) * centre.z + float(view_projection.at(1, 3))
+    x = ((clip_x / depth) * 0.5 + 0.5) * float(width)
+    y = (1.0 - ((clip_y / depth) * 0.5 + 0.5)) * float(height)
+    lateral = tangent_half_view * hypot(
+      clip_x / depth * float(width) / float(height),
+      clip_y / depth,
+    )
+    focal = float(height) / (2.0 * tangent_half_view)
+    bound = focal * radius * (1.0 + lateral) / (depth - radius)
   hypot(cursor.x - x, cursor.y - y) > bound
 
 
@@ -405,13 +412,13 @@ func rayPlaneHit(
     met = wedgeAnti(ray, plane)
     where = position(met)
   if where.isNone: return
-  let hit = toMultivector(where.get)
+  let hit = where.get.toMultivector
 
   let distance = depthAgainst(plane_eye, hit)
   if distance <= 1.0e-6: return
 
   # Bound circularly, matching `mesh.addRing`: hit test agrees with what is drawn.
-  if distanceBetween(hit, toMultivector(anchor)) > extent: return
+  if distanceBetween(hit, anchor.toMultivector) > extent: return
   some(distance)
 
 
@@ -421,7 +428,7 @@ func rayPlaneHit(
 func widest(hiders: Hiders): float =
   ## Measure widest disc under cursor, in pixels; 0 where there is none.
   result = 0.0
-  for i in 0 ..< hiders.count: result = max(result, hiders.discs[i].radius)
+  for i in 0..<hiders.count: result = max(result, hiders.discs[i].radius)
 
 
 func coverOf(hiders: Hiders, depth: float, at: ScreenPosition): float =
@@ -431,7 +438,7 @@ func coverOf(hiders: Hiders, depth: float, at: ScreenPosition): float =
   ##   For rival counting: point behind fingertip-wide cover is not what finger could
   ##   have meant; see `pickAt`.
   result = 0.0
-  for i in 0 ..< hiders.count:
+  for i in 0..<hiders.count:
     let disc = hiders.discs[i]
     if disc.depth < depth and hypot(at.x - disc.x, at.y - disc.y) <= disc.radius:
       result = max(result, disc.radius)
@@ -445,9 +452,15 @@ func add(hiders: var Hiders, hider: Hider) =
 
 
 proc pickWalk(
-  scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placement];
-  hiders_known: Hiders; is_points_only: bool
+  scene: Scene;
+  camera: Camera;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  cursor: ScreenPosition;
+  placed: openArray[Placement];
+  hiders_known: Hiders;
+  is_points_only: bool;
 ): PickWalk =
   ## Walk every visible object once, ranking what stands within reach of cursor.
   ##   `pickAt`'s one pass; see it for rule. Points `hiders_known` hide are passed over,
@@ -471,7 +484,7 @@ proc pickWalk(
     distance_best = Inf
     depth_best = Inf
     hiders: Hiders
-    counts_crowd: array[5, int] # Per rank, within `RADIUS_CROWD_TOUCH`.
+    counts_crowd: array[5, int]  # Per rank, within `RADIUS_CROWD_TOUCH`.
 
   template crowd(priority: int) = inc counts_crowd[priority]
 
@@ -480,7 +493,8 @@ proc pickWalk(
   #   wins; among rest, nearest cursor in pixels. Reach in pixels is for imprecision
   #   where nothing is under pointer.
   var is_under_best = false
-  template consider(priority: int, distance, depth: float, is_under: bool) =
+
+  template consider(priority: int; distance, depth: float; is_under: bool) =
     let is_better =
       if priority != priority_best: priority < priority_best
       elif is_under != is_under_best: is_under
@@ -492,16 +506,17 @@ proc pickWalk(
       depth_best = depth
       is_under_best = is_under
       handle_best = some(handle)
+
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
   let is_placement_held = placed.len >= OBJECTS_MAX
-  var placement_here: Placement # Filled per handle only where caller brought none.
+  var placement_here: Placement  # Filled per handle only where caller brought none.
 
   # Walk by handle to `bound`, not to capacity.
   #   Runs per pointer move, and pool walked to capacity tests every empty handle to rank
   #   few live ones.
   #   `placed` stays indexed by handle and sized to capacity: handle is address.
   #   By-handle readers, never `pairs`, which copies whole scene per live handle on JS backend.
-  for handle in 0 ..< scene.bound:
+  for handle in 0..<scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     if not is_placement_held:
       placement_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
@@ -545,7 +560,8 @@ proc pickWalk(
       #   One part of point's anchor depending on eye, so not in placement. Matches
       #   `tessellate.anchorFor`.
       let star = position(add(
-        scale.eye_point, wedge(scale.radiusHorizon, toMultivector(place.toward)),
+        scale.eye_point,
+        wedge(scale.radiusHorizon, place.toward.toMultivector),
       ))
       if star.isNone: continue
       let distance = pixelsFromCursor(view_projection, width, height, star.get, cursor)
@@ -564,22 +580,22 @@ proc pickWalk(
       #   Stepped off same fixed table: which plane arms span is placement's answer, ring
       #   itself is arithmetic. Sums per candidate per pointer move were price of drift.
       let
-        arm_first = scale.radiusHorizon*place.axes.axis_first
-        arm_second = scale.radiusHorizon*place.axes.axis_second
+        arm_first = scale.radiusHorizon * place.axes.axis_first
+        arm_second = scale.radiusHorizon * place.axes.axis_second
       var
         distance_nearest = Inf
         previous = none(ScreenPosition)
-      for i in 0 .. SEGMENTS_CIRCLE_HORIZON:
+      for i in 0..SEGMENTS_CIRCLE_HORIZON:
         let
           entry = UNIT_CIRCLE_RIM[i mod SEGMENTS_CIRCLE_HORIZON]
           here = projectToScreen(
-            view_projection, width, height,
+            view_projection,
+            width,
+            height,
             onCircleAt(scale.eye, arm_first, arm_second, entry.cos_angle, entry.sin_angle),
           )
         if here.isInFront and previous.isSome:
-          distance_nearest = min(
-            distance_nearest, distanceToSegment(cursor, previous.get, here)
-          )
+          distance_nearest = min(distance_nearest, distanceToSegment(cursor, previous.get, here))
         previous = if here.isInFront: some(here) else: none(ScreenPosition)
       if distance_nearest <= RADIUS_PICK_LINE: consider(2, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(2)
@@ -592,7 +608,7 @@ proc pickWalk(
       for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
         let clipped = clipToEyeSide(
           place.at,
-          pointFrom(add(scale.eye_point, wedge(reach, toMultivector(place.toward)))),
+          pointFrom(add(scale.eye_point, wedge(reach, place.toward.toMultivector))),
           scale.plane_near,
         )
         if clipped.isNone: continue
@@ -611,7 +627,12 @@ proc pickWalk(
       #   Frame guard is kind's to say: `placeObject` reaches `PlaneOn` only with anchor
       #   and frame in hand, anchor carrying override where disc is actually centred.
       if isBeyondDisc(
-        view_projection, width, height, scale.tangentHalfView, place.at, EXTENT_PLANE_F,
+        view_projection,
+        width,
+        height,
+        scale.tangentHalfView,
+        place.at,
+        EXTENT_PLANE_F,
         cursor,
       ): continue
       let hit = rayPlaneHit(ray, scale.plane_eye, geometry, place.at, EXTENT_PLANE_F)
@@ -631,16 +652,22 @@ proc pickWalk(
   # Sum crowd of winner's rank and every better one; nothing picked, nothing counted.
   var count_rivals = 0
   if handle_best.isSome:
-    for priority in 0 .. priority_best: count_rivals += counts_crowd[priority]
+    for priority in 0..priority_best: count_rivals += counts_crowd[priority]
   PickWalk(
     report: PickReport(handle: handle_best, count_rivals: count_rivals),
-    depth_best: depth_best, hiders: hiders,
+    depth_best: depth_best,
+    hiders: hiders,
   )
 
 
 proc pickAt*(
-  scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
+  scene: Scene;
+  camera: Camera;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  cursor: ScreenPosition;
+  placed: openArray[Placement] = [];
 ): PickReport =
   ## Find visible object nearest cursor and count its rivals.
   ##   Prefers points over lines over planes; see `PickReport`.
@@ -676,28 +703,47 @@ proc pickAt*(
   ##     case is one walk; candidate list per walk was allocation per pointer event, and
   ##     star field puts dozens within reach.
   let first = pickWalk(
-    scene, camera, scale, view_projection, width, height, cursor, placed,
-    hiders_known = Hiders(), is_points_only = false,
+    scene,
+    camera,
+    scale,
+    view_projection,
+    width,
+    height,
+    cursor,
+    placed,
+    hiders_known = Hiders(),
+    is_points_only = false,
   )
   if first.hiders.widest < RADIUS_PICK_POINT: return first.report
   pickWalk(
-    scene, camera, scale, view_projection, width, height, cursor, placed,
-    hiders_known = first.hiders, is_points_only = true,
+    scene,
+    camera,
+    scale,
+    view_projection,
+    width,
+    height,
+    cursor,
+    placed,
+    hiders_known = first.hiders,
+    is_points_only = true,
   ).report
 
 
 proc pickNearest*(
-  scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
+  scene: Scene;
+  camera: Camera;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  cursor: ScreenPosition;
+  placed: openArray[Placement] = [];
 ): Option[int] =
   ## Find visible object nearest cursor, preferring points over lines over planes.
   ##   `pickAt`'s handle alone, for caller with no use for rival count.
   pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).handle
 
 
-func isCoveringView*(
-  centre: Position, radius: float, scale: DrawExtent, width, height: int
-): bool =
+func isCoveringView*(centre: Position; radius: float; scale: DrawExtent; width, height: int): bool =
   ## Report whether disc of `radius` about `centre` reaches every corner of frame.
   ##   Cursor over such disc has no empty glass beside it to press instead, so it is
   ##   treated as backdrop; see `isBackdropUnder`. Plane's disc or point's sphere alike.
@@ -707,8 +753,8 @@ func isCoveringView*(
   ##   could not be moved off it.
   ##   Measured about middle, so disc whose own centre stands well off screen is judged
   ##   by reach it has rather than by where it sits.
-  radius/worldPerPixelAt(centre, scale.scale) >=
-    0.5*hypot(float(width), float(height))*(1.0 - SLACK_COVERED)
+  radius / worldPerPixelAt(centre, scale.scale) >=
+      0.5 * hypot(float(width), float(height)) * (1.0 - SLACK_COVERED)
 
 
 func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float =
@@ -717,13 +763,11 @@ func depthFilling*(radius: float; scale: DrawExtent; width, height: int): float 
   ##   Where zoom toward point stops: nearer shows nothing more of it, and there it is
   ##   backdrop, so every press moves view. See `framing.holdFilled`.
   ##   One pixel spans `2*depth*tan(half field)/height`, and half diagonal reaches corner.
-  radius*float(max(scale.heightPixels, 1))/
-    (scale.tangentHalfView*hypot(float(width), float(height)))
+  radius * float(max(scale.heightPixels, 1)) /
+      (scale.tangentHalfView * hypot(float(width), float(height)))
 
 
-func isBackdropUnder*(
-  scene: Scene, handle: int, scale: DrawExtent, width, height: int
-): bool =
+func isBackdropUnder*(scene: Scene; handle: int; scale: DrawExtent; width, height: int): bool =
   ## Report whether hovered object is backdrop: horizon plane, or plane or point filling view.
   ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
@@ -745,12 +789,16 @@ func isBackdropUnder*(
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
   ## Report whether anchor's depth is within `FACTOR_ANCHOR_DEPTH` of orbit distance.
   let depth = depthAlong(scale.eye, scale.forward, anchor)
-  depth >= camera.distance/FACTOR_ANCHOR_DEPTH and depth <= camera.distance*FACTOR_ANCHOR_DEPTH
+  depth >= camera.distance / FACTOR_ANCHOR_DEPTH and depth <= camera.distance * FACTOR_ANCHOR_DEPTH
 
 
 func positionUnderPointerOn*(
-  scene: Scene; handle: int; camera: Camera; scale: DrawExtent; width, height: int;
-  cursor: ScreenPosition
+  scene: Scene;
+  handle: int;
+  camera: Camera;
+  scale: DrawExtent;
+  width, height: int;
+  cursor: ScreenPosition;
 ): Option[Position] =
   ## Solve where one object stands under `cursor`.
   ##   Point at its place, line at its point nearest sight ray, plane where ray crosses it.
@@ -764,8 +812,13 @@ func positionUnderPointerOn*(
 
 
 proc anchorZoomAt*(
-  scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
+  scene: Scene;
+  camera: Camera;
+  scale: DrawExtent;
+  view_projection: Matrix4;
+  width, height: int;
+  cursor: ScreenPosition;
+  placed: openArray[Placement] = [];
 ): Option[AnchorZoom] =
   ## Solve which object cursor is over, and where on that object cursor stands.
   ##   Object alone. World has no ground, and level through pivot names no place reader
@@ -782,11 +835,24 @@ proc anchorZoomAt*(
   #   Wheel handler holds overlay cache's extent for exactly this camera, and deriving
   #   fresh one ran `algebraFilled` and joins per wheel notch.
   let handle = pickNearest(
-    scene, camera, scale, view_projection, width, height, cursor, placed,
+    scene,
+    camera,
+    scale,
+    view_projection,
+    width,
+    height,
+    cursor,
+    placed,
   )
   if handle.isNone: return
   let found = positionUnderPointerOn(
-    scene, handle.get, camera, scale, width, height, cursor,
+    scene,
+    handle.get,
+    camera,
+    scale,
+    width,
+    height,
+    cursor,
   )
   if found.isNone or not isAnchorNear(found.get, camera, scale): return
   let
@@ -798,9 +864,9 @@ proc anchorZoomAt*(
     filling =
       if shaped != some(Kind.Point): radius
       else:
-        depthFilling(radius, scale, width, height)*
-          distanceBetween(toMultivector(scale.eye), toMultivector(found.get))/
-          depthAlong(scale.eye, scale.forward, found.get)
+        depthFilling(radius, scale, width, height) *
+            distanceBetween(scale.eye.toMultivector, found.get.toMultivector) /
+            depthAlong(scale.eye, scale.forward, found.get)
   some(AnchorZoom(
     at: found.get,
     floor_reach: max(radius, filling),
@@ -818,7 +884,7 @@ func marginCentred(width, height: int; inset: float): (float, float) =
   ##   Box itself is `camera.reachCentred`'s to shape, so pixel test here and cone
   ##   `camera.distanceFitting` solves cannot disagree about in view.
   let (reach_across, reach_down) = reachCentred(width, height, inset)
-  (0.5*(float(width) - reach_across), 0.5*(float(height) - reach_down))
+  (0.5 * (float(width) - reach_across), 0.5 * (float(height) - reach_down))
 
 
 func isWithinCentre(screen: ScreenPosition; width, height: int; inset: float): bool =
@@ -826,7 +892,7 @@ func isWithinCentre(screen: ScreenPosition; width, height: int; inset: float): b
   if not screen.isInFront: return false
   let (margin_x, margin_y) = marginCentred(width, height, inset)
   screen.x >= margin_x and screen.x <= float(width) - margin_x and
-    screen.y >= margin_y and screen.y <= float(height) - margin_y
+      screen.y >= margin_y and screen.y <= float(height) - margin_y
 
 
 func isWithinFrame(screen: ScreenPosition; width, height: int; inset: float): bool =
@@ -836,7 +902,7 @@ func isWithinFrame(screen: ScreenPosition; width, height: int; inset: float): bo
   ##   What makes plane thing being looked at is its centre, held to `isWithinCentre`.
   if not screen.isInFront: return false
   screen.x >= inset and screen.x <= float(width) - inset and
-    screen.y >= inset and screen.y <= float(height) - inset
+      screen.y >= inset and screen.y <= float(height) - inset
 
 
 func isCrossingCentre(tail, head: ScreenPosition; width, height: int): bool =
@@ -859,7 +925,7 @@ func isCrossingCentre(tail, head: ScreenPosition; width, height: int): bool =
     if rate == 0.0:
       if room < 0.0: return false
       continue
-    let crossing = room/rate
+    let crossing = room / rate
     if rate < 0.0:
       if crossing > enter: enter = crossing
     elif crossing < leave:
@@ -869,22 +935,26 @@ func isCrossingCentre(tail, head: ScreenPosition; width, height: int): bool =
 
 
 func isRingCrossingCentre(
-  centre: Position; axis_first, axis_second: Direction; radius: float;
-  view_projection: Matrix4; width, height: int
+  centre: Position;
+  axis_first, axis_second: Direction;
+  radius: float;
+  view_projection: Matrix4;
+  width, height: int;
 ): bool =
   ## Report whether world circle, sampled as project draws one, crosses centred box.
   let
-    centre_point = toMultivector(centre)
-    arm_first = wedge(radius, toMultivector(axis_first))
-    arm_second = wedge(radius, toMultivector(axis_second))
+    centre_point = centre.toMultivector
+    arm_first = wedge(radius, axis_first.toMultivector)
+    arm_second = wedge(radius, axis_second.toMultivector)
   var previous = none(ScreenPosition)
-  for i in 0 .. SEGMENTS_CIRCLE_HORIZON:
+  for i in 0..SEGMENTS_CIRCLE_HORIZON:
     let turn =
-      (2.0*PI*float(i mod SEGMENTS_CIRCLE_HORIZON))/float(SEGMENTS_CIRCLE_HORIZON)
+      (2.0 * PI * float(i mod SEGMENTS_CIRCLE_HORIZON)) / float(SEGMENTS_CIRCLE_HORIZON)
     let here = projectToScreen(
-      view_projection, width, height,
-      pointFrom(add(centre_point,
-        add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))),
+      view_projection,
+      width,
+      height,
+      pointFrom(add(centre_point, add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))),
     )
     if here.isInFront and previous.isSome and
         isCrossingCentre(previous.get, here, width, height):
@@ -894,8 +964,11 @@ func isRingCrossingCentre(
 
 
 func isRingWithinFrame(
-  centre: Position; axis_first, axis_second: Direction; radius: float;
-  view_projection: Matrix4; width, height: int
+  centre: Position;
+  axis_first, axis_second: Direction;
+  radius: float;
+  view_projection: Matrix4;
+  width, height: int;
 ): bool =
   ## Report whether every point of world circle, sampled as project draws one, is on screen.
   ##   Rim alone answers for disc it bounds: disc is flat and frame convex, so rim wholly
@@ -903,16 +976,19 @@ func isRingWithinFrame(
   ##   False moment any sample falls behind eye: disc reaching past eye has no screen
   ##   extent to fit at any distance without first turning to face it.
   let
-    centre_point = toMultivector(centre)
-    arm_first = wedge(radius, toMultivector(axis_first))
-    arm_second = wedge(radius, toMultivector(axis_second))
-  for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
+    centre_point = centre.toMultivector
+    arm_first = wedge(radius, axis_first.toMultivector)
+    arm_second = wedge(radius, axis_second.toMultivector)
+  for i in 0..<SEGMENTS_CIRCLE_HORIZON:
     let
-      turn = (2.0*PI*float(i))/float(SEGMENTS_CIRCLE_HORIZON)
+      turn = (2.0 * PI * float(i)) / float(SEGMENTS_CIRCLE_HORIZON)
       here = projectToScreen(
-        view_projection, width, height,
-        pointFrom(add(centre_point,
-          add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))),
+        view_projection,
+        width,
+        height,
+        pointFrom(
+          add(centre_point, add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second))),
+        ),
       )
     if not isWithinFrame(here, width, height, INSET_RIM_SHOWN): return false
   true
@@ -928,8 +1004,13 @@ func isLineShownCentrally(
     let axes = spanPerpendicular(ORIGIN_WORLD, normal.get)
     if axes.isNone: return false
     return isRingCrossingCentre(
-      scale.eye, axes.get[0], axes.get[1], scale.radiusHorizon,
-      view_projection, width, height,
+      scale.eye,
+      axes.get[0],
+      axes.get[1],
+      scale.radiusHorizon,
+      view_projection,
+      width,
+      height,
     )
 
   # Test both halves `tessellate.addLine` draws, clipped to eye side as `pickNearest` clips.
@@ -939,7 +1020,7 @@ func isLineShownCentrally(
   for reach in [scale.radiusHorizon, -scale.radiusHorizon]:
     let clipped = clipToEyeSide(
       anchor.get,
-      pointFrom(add(scale.eye_point, wedge(reach, toMultivector(axis.get)))),
+      pointFrom(add(scale.eye_point, wedge(reach, axis.get.toMultivector))),
       scale.plane_near,
     )
     if clipped.isNone: continue
@@ -952,8 +1033,7 @@ func isLineShownCentrally(
 
 
 func isPlaneShownCentrally(
-  m: Multivector; anchor_override: Option[Position];
-  view_projection: Matrix4; width, height: int
+  m: Multivector; anchor_override: Option[Position]; view_projection: Matrix4; width, height: int
 ): bool =
   ## Report whether grade-3 object is in view: disc centred in centred box, rim on screen.
   ##   Two bounds, because disc has middle and extent answering different questions.
@@ -976,14 +1056,18 @@ func isPlaneShownCentrally(
   ):
     return false
   isRingWithinFrame(
-    anchor.get, axes.get.axis_first, axes.get.axis_second, EXTENT_PLANE_F,
-    view_projection, width, height,
+    anchor.get,
+    axes.get.axis_first,
+    axes.get.axis_second,
+    EXTENT_PLANE_F,
+    view_projection,
+    width,
+    height,
   )
 
 
 func isShownCentrally*(
-  m: Multivector; camera: Camera; width, height: int;
-  anchor_override: Option[Position] = none(Position)
+  m: Multivector; camera: Camera; width, height: int; anchor_override = none(Position)
 ): bool =
   ## Report whether `m` is in view, in sense camera framing selection has to satisfy:
   ##
@@ -1009,13 +1093,15 @@ func isShownCentrally*(
   # Outside any scene, so scene's reach is empty scene's: zero.
   let
     scale = camera.drawExtentFor(height, 0.0)
-    view_projection = camera.initMatrixViewProjection(float(width)/float(height))
+    view_projection = camera.initMatrixViewProjection(float(width) / float(height))
   case shape_m.get
   of Kind.Point:
     let anchor = anchorFor(m, scale)
     anchor.isSome and isWithinCentre(
       projectToScreen(view_projection, width, height, anchor.get),
-      width, height, INSET_POINT_SHOWN,
+      width,
+      height,
+      INSET_POINT_SHOWN,
     )
   of Kind.Line: isLineShownCentrally(m, scale, view_projection, width, height)
   of Kind.Plane:

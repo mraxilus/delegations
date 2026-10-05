@@ -45,13 +45,13 @@
 {.experimental: "strictFuncs".}
 
 type
-  Star* = object ## Define one real star in neighbourhood.
-    name*: string ## What SIMBAD calls it.
-    parsecs*: float ## How far it stands from Sol.
-    ascension*: float ## Its right ascension, in degrees.
-    declination*: float ## Its declination, in degrees.
-    planets*: int ## How many entries of `neighbourhood.PLANETS` are its own; `0` for most.
-    first*: int ## Where those entries begin, meaningless where `planets` is zero.
+  Star* = object  ## Define one real star in neighbourhood.
+    name*: string  ## What SIMBAD calls it.
+    parsecs*: float  ## How far it stands from Sol.
+    ascension*: float  ## Its right ascension, in degrees.
+    declination*: float  ## Its declination, in degrees.
+    planets*: int  ## How many entries of `neighbourhood.PLANETS` are its own; `0` for most.
+    first*: int  ## Where those entries begin, meaningless where `planets` is zero.
 
 
 #!fix off

@@ -69,22 +69,22 @@ const
     ##     keyboard rows onto tabs whose work they do overflowed `camera` and `select`.
 
 type
-  HelpPath* {.pure.} = enum ## Define which way of working entries belong to.
+  HelpPath* {.pure.} = enum  ## Define which way of working entries belong to.
     ## What reader is in middle of when opening help.
     ##   Ordered as reader meets them: drag is what visualiser is for, keys are accelerator.
-    Drag, ## Building one object out of two by dragging between them.
-    Select, ## Saying which objects to work on.
-    Menu, ## What menu beside selection offers.
-    Panel, ## Panel and buttons above it.
-    Camera, ## Moving view.
-    Keys, ## Keyboard.
-    Operations, ## What every operation in catalogue is called.
+    Drag,  ## Building one object out of two by dragging between them.
+    Select,  ## Saying which objects to work on.
+    Menu,  ## What menu beside selection offers.
+    Panel,  ## Panel and buttons above it.
+    Camera,  ## Moving view.
+    Keys,  ## Keyboard.
+    Operations,  ## What every operation in catalogue is called.
 
-  HelpEntry* = object ## Define one thing reader can do and what it does.
-    path*: HelpPath ## Way of working it belongs to, and so tab it appears under.
-    action*: string ## What reader does.
-    outcome*: string ## What happens when they do it.
-    is_touch*: bool ## Whether this is touch way rather than pointer way.
+  HelpEntry* = object  ## Define one thing reader can do and what it does.
+    path*: HelpPath  ## Way of working it belongs to, and so tab it appears under.
+    action*: string  ## What reader does.
+    outcome*: string  ## What happens when they do it.
+    is_touch*: bool  ## Whether this is touch way rather than pointer way.
       ## Both always listed: laptop with touchscreen is one device, and hiding either
       ## behind guess about hardware leaves reader believing gesture does not exist.
 
@@ -108,7 +108,7 @@ func wheelPairs(): seq[tuple[notation, word: string]] =
   ##   `More` is left out -- its wedge is bare ellipsis, which needs no decoding, and row
   ##   in this tab already says what it hands over.
   for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
-    result.add((labelOf(choice), wordOf(choice)))
+    result.add (labelOf(choice), wordOf(choice))
 
 
 func descriptionOf*(path: HelpPath): string =
@@ -151,9 +151,9 @@ const HELP_ENTRIES* = block:
   ##   Every cell is `wording`'s key, or composed by `wording`'s func from one; row whose
   ##   action names button or key composes it, so button's name is `interaction`'s alone.
   var
-    lut: array[42 + COUNT_OPERATION, HelpEntry]
+    lut: array[42+COUNT_OPERATION, HelpEntry]
     count = 0
-  proc add(path: HelpPath; action: string; outcome: Wording; is_touch = false) =
+  proc add(path: HelpPath, action: string, outcome: Wording, is_touch = false) =
     lut[count] = HelpEntry(
       path: path,
       action: action,
@@ -192,9 +192,7 @@ const HELP_ENTRIES* = block:
       if isMenuRevealedOn(button): HelpSameAndMenu else: HelpSelectJustOne,
     )
   add(HelpPath.Select, HelpHoldShiftClick, HelpAddOrDrop)
-  add(
-    HelpPath.Select, withButton(nameOf(PointerButton.Right), HelpClickSelected), HelpMenuBack
-  )
+  add(HelpPath.Select, withButton(nameOf(PointerButton.Right), HelpClickSelected), HelpMenuBack)
   add(HelpPath.Select, HelpClickEmpty, HelpClearOrSky)
   add(HelpPath.Select, HelpPressHold, HelpSelectFills, is_touch = true)
   add(HelpPath.Select, HelpTapAnother, HelpAddToSelection, is_touch = true)
@@ -215,20 +213,21 @@ const HELP_ENTRIES* = block:
   add(HelpPath.Panel, sectionNamed(NameHeadObjects), HelpEveryObject)
   add(
     HelpPath.Panel,
-    namesJoined([
-      pathNamed([NameMenuSave, NameMenuSaveScene]), pathNamed([NameMenuLoad, NameMenuLoadScene]),
-    ]),
+    namesJoined(
+      [
+        pathNamed([NameMenuSave, NameMenuSaveScene]), pathNamed([NameMenuLoad, NameMenuLoadScene]),
+      ],
+    ),
     HelpWriteRead,
   )
   add(
     HelpPath.Panel,
-    namesJoined([$wordingText(NameChipAxes), $wordingText(NameChipGrid)]), HelpFurniture,
+    namesJoined([$wordingText(NameChipAxes), $wordingText(NameChipGrid)]),
+    HelpFurniture,
   )
 
   add(HelpPath.Camera, HelpDragEmpty, HelpOrbit)
-  add(
-    HelpPath.Camera, withButton(nameOf(PointerButton.Right), HelpDragEmpty), HelpSlideSideways
-  )
+  add(HelpPath.Camera, withButton(nameOf(PointerButton.Right), HelpDragEmpty), HelpSlideSideways)
   add(HelpPath.Camera, HelpWheel, HelpMoveToward)
   # Say `empty space or a crowd`, not just `with one finger`: finger starting on *lone*.
   #   object builds; over several it moves, and zooming in separates them.
@@ -249,9 +248,7 @@ const HELP_ENTRIES* = block:
     HelpTravel,
   )
   add(HelpPath.Keys, namesJoined([nameOf(Key.Q), nameOf(Key.E)]), HelpRoll)
-  add(
-    HelpPath.Keys, namesJoined([nameOf(Key.Space), nameOf(Key.Control)]), HelpRaiseLower
-  )
+  add(HelpPath.Keys, namesJoined([nameOf(Key.Space), nameOf(Key.Control)]), HelpRaiseLower)
   add(
     HelpPath.Keys,
     namesJoined([nameOf(Key.Left), nameOf(Key.Right), nameOf(Key.Up), nameOf(Key.Down)]),
@@ -260,7 +257,8 @@ const HELP_ENTRIES* = block:
   add(HelpPath.Keys, namesJoined([nameOf(Key.Minus), nameOf(Key.Plus)]), HelpFurtherCloser)
   add(HelpPath.Keys, nameOf(Key.F), HelpBackIntoView)
   add(
-    HelpPath.Keys, namesJoined([nameOf(Key.BracketLeft), nameOf(Key.BracketRight)]),
+    HelpPath.Keys,
+    namesJoined([nameOf(Key.BracketLeft), nameOf(Key.BracketRight)]),
     HelpHighlightPrevNext,
   )
   add(HelpPath.Keys, nameOf(Key.Enter), HelpSelectHighlighted)
@@ -296,7 +294,7 @@ static:
     if path_last != some(entry.path):
       doAssert entry.path notin seen,
         &"Entries of one help path must be written together, or it renders as two tabs; " &
-          &"got `{entry.path}` again."
+        &"got `{entry.path}` again."
       seen.incl(entry.path)
       path_last = some(entry.path)
   for path in HelpPath:
@@ -309,4 +307,4 @@ static:
       else: ENTRIES_MAX_PATH
     doAssert countOf(path) <= entries_max,
       &"Help path `{titleOf(path)}` must fit a phone, split it or raise its own bound " &
-        &"deliberately; got `{countOf(path)}` over `{entries_max}`."
+      &"deliberately; got `{countOf(path)}` over `{entries_max}`."

@@ -40,16 +40,16 @@ import std/strformat
 #[ Type Definitions ]#
 
 type
-  Arena* = object ## Define fixed block of bytes and how much of it is in use.
+  Arena* = object  ## Define fixed block of bytes and how much of it is in use.
     buffer: ptr UncheckedArray[byte]
     capacity: int
     used: int
-    peak_used: int ## Highest `used` has ever reached; never falls back on `reset`.
+    peak_used: int  ## Highest `used` has ever reached; never falls back on `reset`.
       ## Lets live display show what arena's activity looks like.
       ##   `used` alone reads near zero wherever sampled, since carving and reset both
       ##   happen within one frame.
 
-  ArenaSwap* = object ## Define two frame arenas and which of them this frame is writing.
+  ArenaSwap* = object  ## Define two frame arenas and which of them this frame is writing.
     ## Two-frame lifetime.
     ##   What frame carves stays readable through next frame as `previous`, reclaimed only
     ##   when its block comes round again.
@@ -59,7 +59,7 @@ type
     ## arena holding nothing.
     ##   Reclaiming on way in leaves block written last frame intact until needed again.
     arenas: array[2, Arena]
-    index_current: int ## Which of `arenas` this frame carves from; other is last frame's.
+    index_current: int  ## Which of `arenas` this frame carves from; other is last frame's.
 
 
 
@@ -122,7 +122,7 @@ func swap*(pair: var ArenaSwap) =
 func current*(pair: var ArenaSwap): var Arena = pair.arenas[pair.index_current]
   ## Reach arena this frame carves from.
 
-func previous*(pair: var ArenaSwap): var Arena = pair.arenas[1 - pair.index_current]
+func previous*(pair: var ArenaSwap): var Arena = pair.arenas[1-pair.index_current]
   ## Reach arena previous frame carved from, still holding what it wrote.
   ##   Read-only in spirit: carving from it takes memory this frame's `swap` is about to
   ##   reclaim, and nothing stops that; discipline is caller's.

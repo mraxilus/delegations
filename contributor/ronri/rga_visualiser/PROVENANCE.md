@@ -534,12 +534,18 @@ computed by `src/browser/bridge.nim`, compiled from the same modules that the de
 TypeScript owns WebGL, DOM and pointer events alone. Each script argues for itself in its header, on
 the phrase `not Nim because`, which `justification.nim` demands of a gated kind.
 
-**The declarations of the bridge are derived, and never kept beside it.** `tools/build.nim declare`
-reads the `{.exportc.}` signatures of the bridge itself, and writes `build/bridge.d.ts` with every
-parameter required (Marker pulse). A hand-written copy of those signatures would be a second home
-for each one. `types` is `declare` and both type-checker configurations, and it stops there. `web`
-and `drive` both call it. Verified by a break on purpose: to rename `nimSceneHandles` alone fails
-`types`.
+**The declarations of the bridge are derived, and never kept beside it.**
+`tools/declarations.nim` reads the `{.exportc.}` signatures of the bridge itself, and
+`tools/build.nim declare` writes them to `build/bridge.d.ts`, with every parameter required (Marker
+pulse). A hand-written copy of those signatures would be a second home for each one. `types` is
+`declare` and both type-checker configurations, and it stops there. `web` and `drive` both call it.
+Verified by a break on purpose: to rename `nimSceneHandles` alone fails `types`.
+
+**A parameter with a literal default takes its type from the literal.** Such a parameter states no
+type (Article X.12), as `is_tally_skipped = false` shows. A parameter that the reading cannot type
+leaves no declaration, so each call to that export fails `types`. A declaration one parameter short
+would let the page leave that argument out, and pass `undefined`. Verified by `suites.nim`: every
+parameter reaching its declaration, one whose literal fixes its type included.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`**,
 as CONTRIBUTOR.md requires. Indexing therefore reports absence. The flat buffers of the bridge are
@@ -1011,8 +1017,8 @@ against one run. Repository issue 79 weighs that against the rest of the job.
 carries neither checkout and with no SDL3 anywhere on the machine. A second run kept the prefix and
 rebuilt nothing. `--drive-keys`, run three times, read azimuth 1.0094, elevation 0.5045 and distance
 18.5660 each time. Verified by a break on purpose: with the drag verdict inverted, the run reports
-`FAIL  a drag from one object onto another opens its choice menu`, and the verb answers
-`Driven runs failed; got 1 -- drive-drag`, with exit 1.
+`FAIL  a drag from one object onto another opens its choice menu`, and the verb names
+`drive-drag`, with exit 1.
 
 Verified by a run, 2026-10-02: before the mono merge, `--drive-faces` reports `FAIL every codepoint
 the Mono face sets has a glyph` with `missing U+02CD, U+02F7`. After it, all four roles pass.
@@ -3247,14 +3253,15 @@ component that the table holds.
 **A fence keeps `koch fix` out of each table of the two catalogues (Article X.1).** A line
 `#!fix off` stands before each `const` table, and a line `#!fix on` stands after its closing
 bracket. A fence that crosses a bracket makes the fix leave the whole file as written, so each
-fence holds a whole table. Without the fences, the fix wraps each row of `STARS` and `NEIGHBOURS`
-again, which adds lines and no meaning. The type headers stay outside the fences, so the fix
-repairs their layout as it repairs any other line.
+fence holds a whole table. So each table stays as its tool wrote it, whatever rule the fix gains.
+The type headers stay outside the fences, so the fix repairs their layout as it repairs any other
+line.
 
-Verified by `nim r koch fix --dry-run --branch:main contributor/ronri/rga_visualiser`, 2026-10-04.
-Without the fences, it reports 11,259 findings in `starfield.nim` and 342 in `neighbourhood.nim`.
-With them, it reports 7 and 9, and each one is a trailing comment of a type header. Every other
-file of the project gives the same findings both times.
+Verified by `nim r koch fix --dry-run contributor/ronri/rga_visualiser`, 2026-10-05, under the
+rules of `8548c96d`. It prints `0 to fix.` for the project. Each fence prints a warning that names
+what breaks inside it: nothing in `starfield.nim`, and one trailing comment in each table of
+`neighbourhood.nim`. With the fences taken out, a dry run of the two files reports those two
+trailing comments and nothing else.
 
 Each planet host was matched to exactly one star **by sky position alone**, and the worst
 separation is 161 arcseconds. The two worst matches are Barnard's and Kapteyn's stars, which have

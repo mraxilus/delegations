@@ -32,15 +32,15 @@ import pga/algebra
 #[ Type Definitions ]#
 
 type
-  Position* = object ## Define Euclidean position, in world units.
+  Position* = object  ## Define Euclidean position, in world units.
     x*, y*, z*: float
 
-  Direction* = object ## Define Euclidean direction, in world units.
+  Direction* = object  ## Define Euclidean direction, in world units.
     x*, y*, z*: float
 
-  FramePlane* = object ## Define orthonormal pair of directions spanning plane.
+  FramePlane* = object  ## Define orthonormal pair of directions spanning plane.
     axis_first*, axis_second*: Direction
-    normal*: Direction ## Unit direction perpendicular to plane; same as `directionNormal(m)`.
+    normal*: Direction  ## Unit direction perpendicular to plane; same as `directionNormal(m)`.
 
   RingAngle* = tuple[cos_angle, sin_angle: float]
     ## Define one entry of fixed ring of angles: cosine and sine caller weights two arms by.
@@ -110,7 +110,7 @@ func `*`*(scale: float, d: Direction): Direction {.noinit.} =
   result.z = scale * d.z
 
 
-func dot*(d, e: Direction): float = d.x*e.x + d.y*e.y + d.z*e.z
+func dot*(d, e: Direction): float = d.x * e.x + d.y * e.y + d.z * e.z
   ## Get inner product of directions.
 
 
@@ -122,9 +122,9 @@ func cross*(d, e: Direction): Direction =
   ##     Suite holds it equal to join it replaced, `directionNormal(tail ∧ head ∧ eye)`,
   ##     sign included.
   Direction(
-    x: d.y*e.z - d.z*e.y,
-    y: d.z*e.x - d.x*e.z,
-    z: d.x*e.y - d.y*e.x,
+    x: d.y * e.z - d.z * e.y,
+    y: d.z * e.x - d.x * e.z,
+    z: d.x * e.y - d.y * e.x,
   )
 
 
@@ -137,7 +137,7 @@ func normalize*(d: Direction): Option[Direction] =
   ##   None where direction has no magnitude, as it names no direction at all.
   let magnitude = d.norm
   if magnitude <= TOLERANCE_ABS: return
-  some(Direction(x: d.x/magnitude, y: d.y/magnitude, z: d.z/magnitude))
+  some(Direction(x: d.x / magnitude, y: d.y / magnitude, z: d.z / magnitude))
 
 
 func unitRing*[N: static int](segments: int): array[N, RingAngle] =
@@ -151,8 +151,8 @@ func unitRing*[N: static int](segments: int): array[N, RingAngle] =
   ##   Called at start-up rather than at compile time.
   ##     Compile-time `cos` need not agree with each backend's own in last bit, and suites
   ##     hold these points equal to multivector sums they replaced.
-  for i in 0 ..< N:
-    let angle = (2.0*PI*float(i))/float(segments)
+  for i in 0..<N:
+    let angle = (2.0 * PI * float(i)) / float(segments)
     result[i] = (cos_angle: cos(angle), sin_angle: sin(angle))
 
 
@@ -164,9 +164,9 @@ func onCircleAt*(
   ##   Trig-free core of `onCircle`, for callers walking fixed ring of angles (rim table,
   ##   shader's static corner buffer), paying each angle's trigonometry once.
   Position(
-    x: centre.x + cos_angle*arm_first.x + sin_angle*arm_second.x,
-    y: centre.y + cos_angle*arm_first.y + sin_angle*arm_second.y,
-    z: centre.z + cos_angle*arm_first.z + sin_angle*arm_second.z,
+    x: centre.x + cos_angle * arm_first.x + sin_angle * arm_second.x,
+    y: centre.y + cos_angle * arm_first.y + sin_angle * arm_second.y,
+    z: centre.z + cos_angle * arm_first.z + sin_angle * arm_second.z,
   )
 
 

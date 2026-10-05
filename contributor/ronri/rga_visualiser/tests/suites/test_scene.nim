@@ -5,6 +5,7 @@
 import ./fixtures
 
 
+
 suite "Scene":
   test "the startup scene gives every seed point a colour of its own":
     # Four points wearing one hue say they are one kind of thing, which is opposite of.
@@ -13,20 +14,20 @@ suite "Scene":
     var scene = initScene()
     constructSeeds(scene)
     var inks: seq[Ink]
-    for handle in 0 ..< scene.len:
-      case toText(scene.labelAt(handle))
+    for handle in 0..<scene.len:
+      case scene.labelAt(handle).toText
       of "ground": check scene.inkAt(handle) == INK_SEED_GROUND
       of "o": check scene.inkAt(handle) == INK_SEED_ORIGIN
       else: inks.add(scene.inkAt(handle))
     check inks.len == 3
-    for i in 0 ..< inks.len:
+    for i in 0..<inks.len:
       check inks[i] notin [INK_SEED_GROUND, INK_SEED_ORIGIN]
       for j in i + 1 ..< inks.len: check inks[i] != inks[j]
 
 
   test "objects are held in order added":
     var scene = initScene()
-    for i in 0 ..< 5:
+    for i in 0..<5:
       scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     check scene.len == 5
     var count_seen = 0
@@ -39,7 +40,7 @@ suite "Scene":
 
   test "removeObject drops one handle without moving any other object":
     var scene = initScene()
-    for i in 0 ..< 5:
+    for i in 0..<5:
       scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeObject(2)
     check scene.len == 4
@@ -51,7 +52,7 @@ suite "Scene":
 
   test "freed handle is reused by the next addObject, most recently freed first":
     var scene = initScene()
-    for i in 0 ..< 5:
+    for i in 0..<5:
       scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeObject(2)
     scene.removeObject(0)
@@ -61,7 +62,7 @@ suite "Scene":
 
   test "scene drains to empty regardless of removal order":
     var scene = initScene()
-    for i in 0 ..< 5:
+    for i in 0..<5:
       scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     for handle in [2, 0, 4, 1, 3]:
       scene.removeObject(handle)
@@ -81,7 +82,7 @@ suite "Scene":
 
   test "scene fills to capacity and reports it":
     var scene = initScene()
-    for i in 0 ..< OBJECTS_MAX:
+    for i in 0..<OBJECTS_MAX:
       check not scene.isFull
       scene.addObject(POINTS[i mod SAMPLES], "p", Ink.Rose)
     check scene.isFull
@@ -96,7 +97,7 @@ suite "Scene":
     for operation in Operation:
       if LUT_ARITY_BY_OPERATION[operation] != Arity.One: continue
       inc passed
-      for i in 0 ..< SAMPLES:
+      for i in 0..<SAMPLES:
         let (m, n, o) = (POINTS[i], LINES[i], PLANES[i])
         check applyOperation(operation, m, n) =~ applyOperation(operation, m, o)
     check passed >= operations_unary_floor
@@ -113,12 +114,12 @@ suite "Scene":
 
 
   test "join and meet recover the geometry they are named for":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         j = (i + 1) mod SAMPLES
         line = applyOperation(Operation.Wedge, POINTS[i], POINTS[j])
-        plane = applyOperation(Operation.Wedge, line, POINTS[(i + 2) mod SAMPLES])
-        crossed = applyOperation(Operation.WedgeAnti, plane, PLANES[(i + 7) mod SAMPLES])
+        plane = applyOperation(Operation.Wedge, line, POINTS[(i+2) mod SAMPLES])
+        crossed = applyOperation(Operation.WedgeAnti, plane, PLANES[(i+7) mod SAMPLES])
       check kindOf(line) == some(Kind.Line)
       check kindOf(plane) == some(Kind.Plane)
       check kindOf(crossed) == some(Kind.Line)
@@ -133,7 +134,7 @@ suite "Scene":
     #   straight off that Multivector, never consulting `EXTENT_PLANE_F` or anything
     #   drawn. Crossing plane three disc-radii out from its own drawn centre, well
     #   outside circle `mesh.addPlane` actually fills, exercises that directly.
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         plane = PLANES[i]
         anchor = positionAnchor(plane)
@@ -141,9 +142,9 @@ suite "Scene":
       check anchor.isSome
       check axes.isSome
       let
-        far_on_plane = anchor.get + (3.0*EXTENT_PLANE_F)*axes.get.axis_first
+        far_on_plane = anchor.get + (3.0 * EXTENT_PLANE_F) * axes.get.axis_first
         off_plane = toMultivector(far_on_plane + axes.get.normal)
-        line = toMultivector(far_on_plane) ∧ off_plane
+        line = far_on_plane.toMultivector ∧ off_plane
         crossing = applyOperation(Operation.WedgeAnti, line, plane)
       check kindOf(crossing) == some(Kind.Point)
       let place = position(crossing)
@@ -152,23 +153,23 @@ suite "Scene":
 
 
   test "orthogonal projection lands on the object projected onto":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       # Point must not be one of three that built plane, or it lies on it already.
       let
         plane = PLANES[i]
-        point = POINTS[(i + 9) mod SAMPLES]
+        point = POINTS[(i+9) mod SAMPLES]
         projected = applyOperation(Operation.ProjectOrthogonal, point, plane)
       check kindOf(projected) == some(Kind.Point)
       let place = position(projected)
       check place.isSome
-      check toMultivector(place.get) ∧ plane =~ 0
+      check place.get.toMultivector ∧ plane =~ 0
 
 
   test "creation anchor for a plane wedged from a line and a point sits at their midpoint":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         line = LINES[i]
-        point = POINTS[(i + 5) mod SAMPLES]
+        point = POINTS[(i+5) mod SAMPLES]
         plane = applyOperation(Operation.Wedge, line, point)
         anchor = creationAnchor(Operation.Wedge, line, point, plane)
         anchor_swapped = creationAnchor(Operation.Wedge, point, line, plane)
@@ -181,10 +182,10 @@ suite "Scene":
 
 
   test "creation anchor for a perpendicular plane sits where its line pierces it":
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       let
         point = POINTS[i]
-        line = LINES[(i + 11) mod SAMPLES]
+        line = LINES[(i+11) mod SAMPLES]
         plane = applyOperation(Operation.ExpandWeight, point, line)
         anchor = creationAnchor(Operation.ExpandWeight, point, line, plane)
         anchor_swapped = creationAnchor(Operation.ExpandWeight, line, point, plane)
@@ -242,13 +243,13 @@ suite "Scene":
     check notationSubstituted(Operation.Wedge, "−a", "b") == "(−a) ∧ b"
     # Projection binds `𝐧` twice, once by meet and once by star.
     check notationSubstituted(Operation.ProjectCentral, "p ∧ q", "a ∨ b") ==
-      "a ∨ b ∨ (p ∧ q ∧ (a ∨ b)★)"
+        "a ∨ b ∨ (p ∧ q ∧ (a ∨ b)★)"
     check notationSubstituted(Operation.ProjectOrthogonal, "p", "G") == "G ∨ (p ∧ G☆)"
     # Postfix name is atomic, and name already wrapped is not wrapped again.
     check notationSubstituted(Operation.Wedge, "L⊖", "p") == "L⊖ ∧ p"
     check notationSubstituted(Operation.WedgeAnti, "(a ∧ b)", "c") == "(a ∧ b) ∨ c"
     check notationSubstituted(Operation.WedgeAnti, "(a ∧ b) ∧ (c ∧ d)", "e") ==
-      "((a ∧ b) ∧ (c ∧ d)) ∨ e"
+        "((a ∧ b) ∧ (c ∧ d)) ∨ e"
     # Name with spaces but no operator is atomic: reader's own label stays bare.
     check notationSubstituted(Operation.Wedge, "my point", "q") == "my point ∧ q"
 
@@ -256,10 +257,10 @@ suite "Scene":
   test "labels truncate and stay terminated":
     var storage: Label
     toChars("short", storage)
-    check toText(storage) == "short"
-    toChars('x'.repeat(LABEL_MAX*2), storage)
-    check len(toText(storage)) <= LABEL_MAX - 1
-    check toText(storage).endsWith("…") # Says it was shortened rather than reading whole.
+    check storage.toText == "short"
+    toChars('x'.repeat(LABEL_MAX * 2), storage)
+    check len(storage.toText) <= LABEL_MAX - 1
+    check storage.toText.endsWith("…")  # Says it was shortened rather than reading whole.
 
 
   test "a truncated label never splits a character, whatever the buffer lands on":
@@ -269,12 +270,12 @@ suite "Scene":
     #   decode -- which is how it was found, in screenshot of objects list.
     #   Every offset is walked, so whichever byte of operator cut lands on is
     #   covered rather than whichever one this test's own text happens to produce.
-    for pad in 0 .. 6:
+    for pad in 0..6:
       var storage: Label
       let text = 'x'.repeat(pad) & "∧∨⊖".repeat(LABEL_MAX)
       toChars(text, storage)
-      let kept = toText(storage)
-      check kept.validateUtf8 == -1 # -1 is "valid throughout"; any other value is index.
+      let kept = storage.toText
+      check kept.validateUtf8 == -1  # -1 is "valid throughout"; any other value is index.
       check kept.endsWith("…")
       check len(kept) <= LABEL_MAX - 1
 
@@ -282,7 +283,7 @@ suite "Scene":
     var storage: Label
     let exact = "∧".repeat((LABEL_MAX - 1) div 3)
     toChars(exact, storage)
-    check toText(storage) == exact
+    check storage.toText == exact
 
 
   # Every magnitude two front-ends show has to read same in both, and values.
@@ -296,18 +297,20 @@ suite "Scene":
     10.125, 12345.0, 0.125, 1.0005, 9999.6, -10.125, 2.5, 0.5, 1.5, 1012.5,
   ]
 
+
   test "magnitudes read the same whichever backend formats them":
     # Pinned as text rather than against reference backend supplies, because that is.
     #   exactly what differs. These are what C's own `%.4g` writes, verified against it.
-    check formatMagnitude(10.125) == "10.12"   # Tie, rounds to even.
+    check formatMagnitude(10.125) == "10.12"  # Tie, rounds to even.
     check formatMagnitude(-10.125) == "-10.12"
     check formatMagnitude(12345.0) == "1.234e+04"
     check formatMagnitude(0.125) == "0.125"
     check formatMagnitude(2.5) == "2.5"
-    check formatMagnitude(1012.5) == "1012"    # Tie at fourth digit, rounds to even.
-    check formatMagnitude(9999.6) == "1e+04"   # Rounding carries into another digit.
+    check formatMagnitude(1012.5) == "1012"  # Tie at fourth digit, rounds to even.
+    check formatMagnitude(9999.6) == "1e+04"  # Rounding carries into another digit.
     check formatMagnitude(0.0) == "0"
-    check formatMagnitude(-0.0) == "0"         # Sign on nothing reads as bug.
+    check formatMagnitude(-0.0) == "0"  # Sign on nothing reads as bug.
+
 
   test "magnitudesAgree: the browser's own formatter answers what C's does":
     # One rule, two mechanisms: desktop reaches C's `%.4g` through `snprintf`, which.
@@ -322,7 +325,7 @@ suite "Scene":
           storage: array[64, char]
           cursor = 0
         appendMagnitude(storage, cursor, value)
-        check formatMagnitude(value) == toText(storage)
+        check formatMagnitude(value) == storage.toText
 
 
   test "multivectors print every term they carry, and nothing else":
@@ -330,22 +333,22 @@ suite "Scene":
     #   coefficient keeps only digits it actually carries. Basis elements are named
     #   as library's own `$` names them, which is what keeps two GUIs 1-1.
     check formatMultivectorString(initElement(Basis.scalar, 0.0)) == "0 𝟏"
-    check formatMultivectorString(toMultivector(Position(x: 2, y: 0, z: -3))) ==
-      "2 𝐞₁ - 3 𝐞₃ + 1 𝐞₄"
-    check formatMultivectorString(toMultivector(Position(x: 3.5, y: 0, z: 0))) ==
-      "3.5 𝐞₁ + 1 𝐞₄"
+    check formatMultivectorString(Position(x: 2, y: 0, z: -3).toMultivector) ==
+        "2 𝐞₁ - 3 𝐞₃ + 1 𝐞₄"
+    check formatMultivectorString(Position(x: 3.5, y: 0, z: 0).toMultivector) ==
+        "3.5 𝐞₁ + 1 𝐞₄"
     check formatMultivectorString(initElement(Basis.scalar, 0.00012345)) == "0.0001234 𝟏"
     # Match every basis name against what library writes for that element on its own.
     #   Never trusted to table transcribed by hand.
     for b in Basis:
       let named = ($initElement(b, 1.0)).strip()
       check LUT_NAME_BY_BASIS[b] == named
-    for i in 0 ..< SAMPLES:
+    for i in 0..<SAMPLES:
       check kindText(POINTS[i]) == "point"
       check kindText(LINES[i]) == "line"
       check kindText(PLANES[i]) == "plane"
       # Attitude of line is its direction, which is point lying in horizon.
-      check kindText(⊖ LINES[i]) == "horizon point"
+      check kindText(⊖LINES[i]) == "horizon point"
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
@@ -355,7 +358,7 @@ suite "Scene":
     #   `born`-sorted list could not answer: two objects added in one frame share reading,
     #   and replayed object's own born is stamped into future.
     var scene = initScene()
-    for i in 0 ..< 6:
+    for i in 0..<6:
       discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeObject(4)
     scene.removeObject(1)
@@ -369,12 +372,12 @@ suite "Scene":
     let count = scene.handlesCreated(handles)
     check count == scene.len
     var labels: seq[string]
-    for position in 0 ..< count:
-      labels.add(toText(scene.labelAt(handles[position])))
+    for position in 0..<count:
+      labels.add(scene.labelAt(handles[position]).toText)
     check labels == @["p0", "p2", "p3", "p5", "seventh", "eighth"]
     # Which is ordinals in order, and every one of them distinct.
-    for position in 1 ..< count:
-      check scene.orderOf(handles[position]) > scene.orderOf(handles[position - 1])
+    for position in 1..<count:
+      check scene.orderOf(handles[position]) > scene.orderOf(handles[position-1])
 
     # Empty scene fills nothing rather than reporting handle that is not there.
     let empty = initScene()
@@ -386,7 +389,7 @@ suite "Scene":
     #   refilled throughout, so ordinals sit nowhere near their handles.
     var scene = initScene()
     let count_wanted = min(OBJECTS_MAX, 300)
-    for i in 0 ..< count_wanted:
+    for i in 0..<count_wanted:
       discard scene.addObject(POINTS[i mod SAMPLES], "p", Ink.Rose)
     var rng = initRand(7)
     for _ in 0 ..< count_wanted div 2:
@@ -397,8 +400,8 @@ suite "Scene":
     var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
     check count == scene.len
-    for position in 1 ..< count:
-      check scene.orderOf(handles[position]) > scene.orderOf(handles[position - 1])
+    for position in 1..<count:
+      check scene.orderOf(handles[position]) > scene.orderOf(handles[position-1])
 
 
   test "a search finds each word in label or kind word, whatever its case":
@@ -409,7 +412,7 @@ suite "Scene":
       jupiter = scene.addObject(POINTS[0], "Jupiter", Ink.Rose)
       moon = scene.addObject(POINTS[1], "Io", Ink.Rose)
       axis = scene.addObject(LINES[0], "m1", Ink.Rose)
-      far = scene.addObject(⊖ LINES[1], "m12", Ink.Rose) # Horizon point.
+      far = scene.addObject(⊖LINES[1], "m12", Ink.Rose)  # Horizon point.
       wall = scene.addObject(PLANES[0], "wall", Ink.Rose)
     check scene.isMatchingSearch(jupiter, "jup")
     check scene.isMatchingSearch(jupiter, "PITER")
@@ -443,7 +446,7 @@ suite "Scene":
     # Handle order parts from creation order once anything is removed, and list reads in.
     #   creation order; selection and row being edited stay under reader searching past them.
     var scene = initScene()
-    for i in 0 ..< 6:
+    for i in 0..<6:
       let parity = if i mod 2 == 0: "even" else: "odd"
       discard scene.addObject(POINTS[i], parity & $i, inkCycled(i))
     scene.removeObject(2)
@@ -451,7 +454,7 @@ suite "Scene":
     var handles: array[OBJECTS_MAX, int]
     proc labelled(scene: var Scene, handles: openArray[int], count: int): seq[string] =
       ## Read labels of first `count` handles filled, in order filled.
-      for position in 0 ..< count: result.add(toText(scene.labelAt(handles[position])))
+      for position in 0..<count: result.add(scene.labelAt(handles[position]).toText)
     var counts = scene.handlesMatching("EVEN", handles, [])
     check scene.labelled(handles, counts.count_shown) == @["even0", "even4", "even6"]
     check counts.count_matched == 3
@@ -459,25 +462,25 @@ suite "Scene":
     #   row that matches anyway is counted once, as match.
     counts = scene.handlesMatching("even", handles, [5, 1, 4, 1])
     check scene.labelled(handles, counts.count_shown) ==
-      @["even0", "odd1", "even4", "odd5", "even6"]
+        @["even0", "odd1", "even4", "odd5", "even6"]
     check counts.count_matched == 3
     # Nothing matched, and kept rows still stand: count matched is what says so.
     counts = scene.handlesMatching("nothing here", handles, [3])
     check scene.labelled(handles, counts.count_shown) == @["odd3"]
     check counts.count_matched == 0
     check scene.handlesMatching("", handles, []) ==
-      (count_shown: scene.len, count_matched: scene.len)
+        (count_shown: scene.len, count_matched: scene.len)
     check scene.handlesMatching("nothing here", handles, []) ==
-      (count_shown: 0, count_matched: 0)
+        (count_shown: 0, count_matched: 0)
 
 
   test "revisionPlacingAt stamps the handle an edit touched, and every handle after a restore":
     # Front-end re-places only handles stamped past what it holds, so stamp must move for.
     #   exactly handles whose placing inputs did.
     var scene = initScene()
-    for i in 0 ..< 4: discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
+    for i in 0..<4: discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     let revision_built = scene.revision
-    for handle in 0 ..< 4: check scene.revisionPlacingAt(handle) <= revision_built
+    for handle in 0..<4: check scene.revisionPlacingAt(handle) <= revision_built
     scene.setGeometryAt(2, POINTS[5])
     check scene.revisionPlacingAt(2) == scene.revision
     for handle in [0, 1, 3]: check scene.revisionPlacingAt(handle) < scene.revision
@@ -487,10 +490,10 @@ suite "Scene":
     for handle in [0, 1, 3]: check scene.revisionPlacingAt(handle) < scene.revision
     # Restore may change any handle, so every live one is stamped at new revision.
     var snapshot = initScene()
-    for i in 0 ..< 3: discard snapshot.addObject(POINTS[i + 5], "s" & $i, inkCycled(i))
+    for i in 0..<3: discard snapshot.addObject(POINTS[i+5], "s" & $i, inkCycled(i))
     scene.restoreFrom(snapshot)
     check scene.len == 3
-    for handle in 0 ..< 3: check scene.revisionPlacingAt(handle) == scene.revision
+    for handle in 0..<3: check scene.revisionPlacingAt(handle) == scene.revision
 
 
   test "restoreFrom lands on a revision no earlier state carried":
@@ -507,7 +510,7 @@ suite "Scene":
     check scene.revision > revision_edit
     # And from snapshot ahead of live scene, past that snapshot's own.
     var ahead = snapshot
-    for i in 0 ..< 5: discard ahead.addObject(POINTS[i], "x" & $i, Ink.Rose)
+    for i in 0..<5: discard ahead.addObject(POINTS[i], "x" & $i, Ink.Rose)
     scene.restoreFrom(ahead)
     check scene.len == 6
     check scene.revision > ahead.revision
@@ -525,14 +528,18 @@ suite "Scene":
     ##   Two fields version boundaries have ever changed and kept; radius defaults, since
     ##   most cases care about palette alone.
     ObjectSaved(
-      ink_ordinal: ordinal, is_visible: true, label: "x", geometry: POINTS[0], radius: radius,
+      ink_ordinal: ordinal,
+      is_visible: true,
+      label: "x",
+      geometry: POINTS[0],
+      radius: radius,
     )
 
 
   test "an object already at this version is carried up unchanged":
     # Chain has to be no-op on file this build wrote, or every save/load round.
     #   trip quietly rewrites something.
-    for ordinal in ord(Ink.low) .. ord(Ink.high):
+    for ordinal in ord(Ink.low)..ord(Ink.high):
       let carried = objectUpgraded(savedWith(ordinal), VERSION_SCENE)
       check carried.isSome
       check carried.get.ink_ordinal == ordinal
@@ -559,7 +566,7 @@ suite "Scene":
       check carried.get.radius == RADIUS_OBJECT_DEFAULT
       check carried.get.ink_ordinal == ord(Ink.Rose)
     # Same for every older version: radius joins chain at its boundary, once.
-    for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_RADIUS:
+    for version in VERSION_SCENE_LEAST..<VERSION_SCENE_RADIUS:
       check not isCarryingRadius(version)
       # First hue in each version's own palette; see `ordinal_ink_rose_v5`.
       let ordinal = if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1 else: ordinal_ink_rose_v5
@@ -570,9 +577,9 @@ suite "Scene":
   test "only versions 5 and 6 carry a shines byte, and this build writes none":
     # Byte is skipped on reading and nothing is carried from it, so whole of what.
     #   version pair means is which offsets bytes after it parse from; see `sceneFileOf`.
-    for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_SHINE:
+    for version in VERSION_SCENE_LEAST..<VERSION_SCENE_SHINE:
       check not isCarryingShine(version)
-    for version in VERSION_SCENE_SHINE .. VERSION_SCENE_SHINE_LAST:
+    for version in VERSION_SCENE_SHINE..VERSION_SCENE_SHINE_LAST:
       check isCarryingShine(version)
       check objectUpgraded(savedWith(ordinal_ink_rose_v5), version).isSome
     check not isCarryingShine(VERSION_SCENE)
@@ -582,7 +589,7 @@ suite "Scene":
   test "a version-5 hue past the retired debug slot moves one down, and the slot is refused":
     # Version 6 dropped structural `Algebra` from palette; ordinals past it shift, ones.
     #   before it stand, and byte naming slot no build ever assigned is corrupt.
-    for ordinal in 0 ..< ordinal_ink_algebra_v5:
+    for ordinal in 0..<ordinal_ink_algebra_v5:
       check objectUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal
     check objectUpgraded(savedWith(ordinal_ink_algebra_v5), 5'u8).isNone
     for ordinal in ordinal_ink_algebra_v5 + 1 .. ord(Ink.high) + 1:
@@ -617,19 +624,19 @@ suite "Scene":
   test "a version-1 object is carried onto today's palette, hue by hue":
     # Version 1 had no `Invalid` and three more hues, so every ordinal it could hold is.
     #   walked here rather than only two ends.
-    for ordinal in 0 ..< ORDINAL_INK_CATEGORICAL_V1:
+    for ordinal in 0..<ORDINAL_INK_CATEGORICAL_V1:
       # Structural slots are unmoved to this day.
       let carried = objectUpgraded(savedWith(ordinal), 1'u8)
       check carried.isSome
       check carried.get.ink_ordinal == ordinal
-    for step in 0 ..< 8:
+    for step in 0..<8:
       # Its eight hues all land on hue -- never on `Invalid`, never off end.
       let carried = objectUpgraded(savedWith(ORDINAL_INK_CATEGORICAL_V1 + step), 1'u8)
       check carried.isSome
       let ink = Ink(carried.get.ink_ordinal)
       check ink == inkCycled(step)
       check ink != Ink.Invalid
-      check ink in inkCategorical(0) .. inkCategorical(COUNT_INK_CATEGORICAL - 1)
+      check ink in inkCategorical(0)..inkCategorical(COUNT_INK_CATEGORICAL - 1)
     # Deliberately *not* pinned to fixed shift from version 1's own start. Structural.
     #   slot reserved since -- `Invalid`, then `Algebra` -- moves every hue along by one
     #   more while leaving fold correct, so such assertion fails on legitimate
@@ -649,7 +656,7 @@ suite "Scene":
     #   forgets to check `isSceneVersionReadable` still cannot get half-upgraded object.
     check objectUpgraded(savedWith(ord(Ink.Rose)), 0'u8).isNone
     check objectUpgraded(savedWith(ord(Ink.Rose)), VERSION_SCENE + 1'u8).isNone
-    for version in VERSION_SCENE_LEAST .. VERSION_SCENE:
+    for version in VERSION_SCENE_LEAST..VERSION_SCENE:
       check isSceneVersionReadable(version)
       # First hue in each version's own palette; see `ordinal_ink_rose_v5`.
       let ordinal =
@@ -663,14 +670,14 @@ suite "Scene":
     const clock = 12.5
     # Handful of objects get full beat: legible, and short enough to still overlap.
     check bornReplaying(0, 4, clock) =~ clock
-    for index in 1 ..< 4:
-      check bornReplaying(index, 4, clock) =~ clock + float(index)*SECONDS_REPLAY_STEP
+    for index in 1..<4:
+      check bornReplaying(index, 4, clock) =~ clock + float(index) * SECONDS_REPLAY_STEP
     # Single object arriving alone has nothing to stagger against.
     check bornReplaying(0, 1, clock) =~ clock
     # However many arrive, last of them lands within cap -- and in order.
-    for count in 1 .. OBJECTS_MAX:
+    for count in 1..OBJECTS_MAX:
       var previous = low(float)
-      for index in 0 ..< count:
+      for index in 0..<count:
         let born = bornReplaying(index, count, clock)
         check born > previous
         check born >= clock
@@ -685,7 +692,7 @@ suite "Scene":
     #   handed to reader as construction it is. Handle order is scrambled first, so
     #   this pins that restamp follows creation order rather than arena's layout.
     var scene = initScene()
-    for i in 0 ..< 5:
+    for i in 0..<5:
       discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i), 99.0)
     scene.removeObject(1)
     let handle_late = scene.addObject(POINTS[5], "late", Ink.Rose, 99.0)
@@ -697,12 +704,12 @@ suite "Scene":
     let count = scene.handlesCreated(handles)
     check count == 5
     check scene.bornAt(handles[0]) =~ clock
-    for position in 1 ..< count:
-      check scene.bornAt(handles[position]) > scene.bornAt(handles[position - 1])
-    check toText(scene.labelAt(handles[count - 1])) == "late"
-    check scene.bornAt(handles[count - 1]) - clock <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
+    for position in 1..<count:
+      check scene.bornAt(handles[position]) > scene.bornAt(handles[position-1])
+    check scene.labelAt(handles[count-1]).toText == "late"
+    check scene.bornAt(handles[count-1]) - clock <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
     # Same beat file of this size would arrive on -- one rule, not two.
-    for position in 0 ..< count:
+    for position in 0..<count:
       check scene.bornAt(handles[position]) =~ bornReplaying(position, count, clock)
 
     # Empty scene has nothing to restamp and must not fall over reaching for handle zero.
@@ -718,14 +725,14 @@ suite "Scene":
     const clock = 4.0
     var placed = initScene()
     constructSeeds(placed, clock)
-    for handle in 0 ..< placed.len:
-      check placed.bornAt(handle) == clock # Untouched by constructor itself.
+    for handle in 0..<placed.len:
+      check placed.bornAt(handle) == clock  # Untouched by constructor itself.
 
     var opened = initScene()
     constructSeeds(opened, clock)
     opened.replayFrom(clock)
     check opened.len >= 2
-    for handle in 1 ..< opened.len:
+    for handle in 1..<opened.len:
       check opened.bornAt(handle) > opened.bornAt(handle - 1)
     # Still on screen quickly: opening scene reader waits through is worse opening.
     #   scene than one that simply appeared.
@@ -754,7 +761,7 @@ suite "Scene":
       discard original.addObject(POINTS[0], "a", Ink.Rose)
       discard original.addObject(POINTS[1], "bb", Ink.Jade, radius = 0.6)
       let handle_doomed = original.addObject(POINTS[2], "doomed", Ink.Olive)
-      original.removeObject(handle_doomed) # leaves hole fresh load must not reproduce
+      original.removeObject(handle_doomed)  # leaves hole fresh load must not reproduce
       let handle_last = original.addObject(POINTS[3], "d", Ink.Cobalt)
       original.setVisible(handle_last, false)
 
@@ -763,26 +770,26 @@ suite "Scene":
       defer: removeFile(path)
 
       var loaded = initScene()
-      discard loaded.addObject(POINTS[9], "stale", Ink.Cobalt) # load must replace, not merge
+      discard loaded.addObject(POINTS[9], "stale", Ink.Cobalt)  # load must replace, not merge
       check loadScene(loaded, path).contains("Loaded 3")
       check loaded.len == 3
 
       # Freed handle 2 is compacted away: loaded objects land at handles 0, 1, 2 in save order.
       check loaded[0].geometry =~ POINTS[0]
-      check toText(loaded[0].label) == "a"
+      check loaded[0].label.toText == "a"
       check loaded[0].ink == Ink.Rose
       check loaded[0].isVisible
-      check loaded[0].born == 0.0 # dawn of time, not mid-appear-in-animation
+      check loaded[0].born == 0.0  # dawn of time, not mid-appear-in-animation
       check loaded[0].radius == RADIUS_OBJECT_DEFAULT
 
       check loaded[1].geometry =~ POINTS[1]
-      check toText(loaded[1].label) == "bb"
+      check loaded[1].label.toText == "bb"
       check loaded[1].ink == Ink.Jade
       check loaded[1].isVisible
       check loaded[1].radius == 0.6
 
       check loaded[2].geometry =~ POINTS[3]
-      check toText(loaded[2].label) == "d"
+      check loaded[2].label.toText == "d"
       check loaded[2].ink == Ink.Cobalt
       check not loaded[2].isVisible
 
@@ -796,26 +803,26 @@ suite "Scene":
       var
         scene = initScene()
         geometry: Multivector
-      geometry[Basis.low] = 2.0 # 0x4000000000000000, whose bytes are unambiguous either way
+      geometry[Basis.low] = 2.0  # 0x4000000000000000, whose bytes are unambiguous either way
       discard scene.addObject(geometry, "e", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_endian.rgascene"
       check saveScene(scene, path).contains("Saved 1")
       defer: removeFile(path)
 
       let bytes = readFile(path)
-      check bytes[0 ..< len(MAGIC_SCENE)] == MAGIC_SCENE
+      check bytes[0..<len(MAGIC_SCENE)] == MAGIC_SCENE
       check uint8(bytes[len(MAGIC_SCENE)]) == VERSION_SCENE
 
       # Object count, four bytes straight after magic, version and basis count.
       let start_count = len(MAGIC_SCENE) + 2
       check uint8(bytes[start_count]) == 1'u8
-      for offset in 1 .. 3: check uint8(bytes[start_count + offset]) == 0'u8
+      for offset in 1..3: check uint8(bytes[start_count+offset]) == 0'u8
 
       # First coefficient, past count and this object's ink, visibility, label length and.
       #   one byte of label itself.
       let start_first = start_count + 4 + 3 + 1
-      check uint8(bytes[start_first + 6]) == 0x00'u8
-      check uint8(bytes[start_first + 7]) == 0x40'u8 # High byte last: little-endian.
+      check uint8(bytes[start_first+6]) == 0x00'u8
+      check uint8(bytes[start_first+7]) == 0x40'u8  # High byte last: little-endian.
 
 
     test "empty scene round-trips":
@@ -840,14 +847,14 @@ suite "Scene":
 
       check loadScene(scene, path).contains("not a scene file")
       check scene.len == 1
-      check toText(scene[0].label) == "keep"
+      check scene[0].label.toText == "keep"
 
 
     test "loading a file saved under a different PGA dimension is rejected":
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_wrongbasis.rgascene"
-      writeFile(path, "RGAS" & char(2) & char(99)) # no build here carries 99 basis terms
+      writeFile(path, "RGAS" & char(2) & char(99))  # no build here carries 99 basis terms
       defer: removeFile(path)
 
       check loadScene(scene, path).contains("different PGA dimension")
@@ -878,7 +885,7 @@ suite "Scene":
         # Radius only from version that carries one; older bytes stop at geometry.
         if isCarryingRadius(version):
           var
-            radius = 2.0*RADIUS_OBJECT_DEFAULT
+            radius = 2.0 * RADIUS_OBJECT_DEFAULT
             bytes = newString(8)
           littleEndian64(addr bytes[0], addr radius)
           result &= bytes
@@ -897,9 +904,9 @@ suite "Scene":
       let path = getTempDir() / "visualiser_suite_scene_v1.rgascene"
       writeFile(path, sceneFileOf(1'u8, @[
         (4, true, "grid-hued", POINTS[0]),  # Structural slot, unmoved between palettes.
-        (7, true, "was rose", POINTS[1]),   # First categorical hue of old palette.
+        (7, true, "was rose", POINTS[1]),  # First categorical hue of old palette.
         (11, false, "was cobalt", POINTS[2]),
-        (13, true, "was magenta", POINTS[3]), # Retired; folds onto hue that survives.
+        (13, true, "was magenta", POINTS[3]),  # Retired; folds onto hue that survives.
       ]))
       defer: removeFile(path)
 
@@ -910,9 +917,9 @@ suite "Scene":
       check scene[2].ink == Ink.Cobalt
       check scene[3].ink == inkCycled(13 - ORDINAL_INK_CATEGORICAL_V1)
       # Everything but colour of retired hue comes back exactly.
-      for handle in 0 ..< 4:
+      for handle in 0..<4:
         check scene[handle].geometry =~ POINTS[handle]
-      check toText(scene[1].label) == "was rose"
+      check scene[1].label.toText == "was rose"
       check scene[1].isVisible
       check not scene[2].isVisible
 
@@ -924,11 +931,17 @@ suite "Scene":
       #   takes them down.
       var scene = initScene()
       let path = getTempDir() / "visualiser_suite_scene_v2.rgascene"
-      writeFile(path, sceneFileOf(2'u8, @[
-        (ord(Ink.Grid), true, "structural", POINTS[0]),
-        (ord(Ink.Rose) + 1, true, "first hue", POINTS[1]),
-        (ord(Ink.Cobalt) + 1, false, "last hue", POINTS[2]),
-      ]))
+      writeFile(
+        path,
+        sceneFileOf(
+          2'u8,
+          @[
+            (ord(Ink.Grid), true, "structural", POINTS[0]),
+            (ord(Ink.Rose) + 1, true, "first hue", POINTS[1]),
+            (ord(Ink.Cobalt) + 1, false, "last hue", POINTS[2]),
+          ],
+        ),
+      )
       defer: removeFile(path)
 
       check loadScene(scene, path).contains("Loaded 3")
@@ -944,47 +957,71 @@ suite "Scene":
       #   rest of file from wrong offset.
       var scene = initScene()
       let path = getTempDir() / "visualiser_suite_scene_v3.rgascene"
-      writeFile(path, sceneFileOf(3'u8, @[
-        (ord(Ink.Rose), true, "first", POINTS[0]),
-        (ord(Ink.Cobalt), false, "second", POINTS[1]),
-      ]))
+      writeFile(
+        path,
+        sceneFileOf(
+          3'u8,
+          @[
+            (ord(Ink.Rose), true, "first", POINTS[0]),
+            (ord(Ink.Cobalt), false, "second", POINTS[1]),
+          ],
+        ),
+      )
       defer: removeFile(path)
 
       check loadScene(scene, path).contains("Loaded 2")
       check scene[0].radius == RADIUS_OBJECT_DEFAULT
       check scene[1].radius == RADIUS_OBJECT_DEFAULT
       check scene[1].geometry =~ POINTS[1]
-      check toText(scene[1].label) == "second"
+      check scene[1].label.toText == "second"
       check not scene[1].isVisible
       # And today's file carries radius through, wherever writer put it.
       let path_now = getTempDir() / "visualiser_suite_scene_v4.rgascene"
-      writeFile(path_now, sceneFileOf(VERSION_SCENE, @[
-        (ord(Ink.Rose), true, "sized", POINTS[0]),
-      ]))
+      writeFile(
+        path_now,
+        sceneFileOf(
+          VERSION_SCENE,
+          @[
+            (ord(Ink.Rose), true, "sized", POINTS[0]),
+          ],
+        ),
+      )
       defer: removeFile(path_now)
       check loadScene(scene, path_now).contains("Loaded 1")
-      check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
+      check scene[0].radius == 2.0 * RADIUS_OBJECT_DEFAULT
       # Version-4 file stops at radius, and bytes parse from right offset.
       let path_four = getTempDir() / "visualiser_suite_scene_v4_only.rgascene"
-      writeFile(path_four, sceneFileOf(4'u8, @[
-        (ord(Ink.Rose), true, "sized", POINTS[0]),
-        (ord(Ink.Cobalt), false, "second", POINTS[1]),
-      ]))
+      writeFile(
+        path_four,
+        sceneFileOf(
+          4'u8,
+          @[
+            (ord(Ink.Rose), true, "sized", POINTS[0]),
+            (ord(Ink.Cobalt), false, "second", POINTS[1]),
+          ],
+        ),
+      )
       defer: removeFile(path_four)
       check loadScene(scene, path_four).contains("Loaded 2")
-      check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
+      check scene[0].radius == 2.0 * RADIUS_OBJECT_DEFAULT
       check not scene[1].isVisible
       # Version-6 file carries shines byte after radius: skipped, and every object after it
       #   still parses from right offset, which is whole of what reading it costs.
       let path_six = getTempDir() / "visualiser_suite_scene_v6_shine.rgascene"
-      writeFile(path_six, sceneFileOf(VERSION_SCENE_SHINE_LAST, @[
-        (ord(Ink.Rose), true, "shone", POINTS[0]),
-        (ord(Ink.Cobalt), false, "second", POINTS[1]),
-      ]))
+      writeFile(
+        path_six,
+        sceneFileOf(
+          VERSION_SCENE_SHINE_LAST,
+          @[
+            (ord(Ink.Rose), true, "shone", POINTS[0]),
+            (ord(Ink.Cobalt), false, "second", POINTS[1]),
+          ],
+        ),
+      )
       defer: removeFile(path_six)
       check loadScene(scene, path_six).contains("Loaded 2")
-      check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
-      check toText(scene[1].label) == "second"
+      check scene[0].radius == 2.0 * RADIUS_OBJECT_DEFAULT
+      check scene[1].label.toText == "second"
       check scene[1].geometry =~ POINTS[1]
       check not scene[1].isVisible
 
@@ -995,15 +1032,21 @@ suite "Scene":
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_ahead.rgascene"
-      writeFile(path, sceneFileOf(VERSION_SCENE + 1'u8, @[
-        (ord(Ink.Rose), true, "future", POINTS[1]),
-      ]))
+      writeFile(
+        path,
+        sceneFileOf(
+          VERSION_SCENE + 1'u8,
+          @[
+            (ord(Ink.Rose), true, "future", POINTS[1]),
+          ],
+        ),
+      )
       defer: removeFile(path)
 
       check loadScene(scene, path).contains("version this build cannot read")
       check scene.len == 1
-      check toText(scene[0].label) == "keep"
-      check not isSceneVersionReadable(0'u8) # Version byte of zero was never written either.
+      check scene[0].label.toText == "keep"
+      check not isSceneVersionReadable(0'u8)  # Version byte of zero was never written either.
 
 
     test "a saved scene keeps creation order however its handles were reused":
@@ -1011,10 +1054,10 @@ suite "Scene":
       #   handle, so handle order and creation order disagree -- and it is creation order
       #   replay has to walk, or file plays back construction that never happened.
       var original = initScene()
-      for i in 0 ..< 4:
+      for i in 0..<4:
         discard original.addObject(POINTS[i], "p" & $i, inkCycled(i))
       original.removeObject(1)
-      discard original.addObject(POINTS[4], "late", Ink.Rose) # reuses handle 1
+      discard original.addObject(POINTS[4], "late", Ink.Rose)  # reuses handle 1
       check original.len == 4
 
       let path = getTempDir() / "visualiser_suite_scene_order.rgascene"
@@ -1023,17 +1066,17 @@ suite "Scene":
 
       var loaded = initScene()
       check loadScene(loaded, path).contains("Loaded 4")
-      check toText(loaded[0].label) == "p0"
-      check toText(loaded[1].label) == "p2"
-      check toText(loaded[2].label) == "p3"
-      check toText(loaded[3].label) == "late"
+      check loaded[0].label.toText == "p0"
+      check loaded[1].label.toText == "p2"
+      check loaded[2].label.toText == "p3"
+      check loaded[3].label.toText == "late"
       # And order survives second trip, since loading rebuilds ordinals from.
       #   file's own sequence rather than from wherever handles landed.
       check saveScene(loaded, path).contains("Saved 4")
       var again = initScene()
       check loadScene(again, path).contains("Loaded 4")
-      for handle in 0 ..< 4:
-        check toText(again[handle].label) == toText(loaded[handle].label)
+      for handle in 0..<4:
+        check again[handle].label.toText == loaded[handle].label.toText
 
 
     test "a loaded scene arrives one object at a time, replaying its construction":
@@ -1043,7 +1086,7 @@ suite "Scene":
       #   scene it came from: whole point is that replay is reconstructed from
       #   sequence rather than from clock reading nobody saved.
       var original = initScene()
-      for i in 0 ..< 5:
+      for i in 0..<5:
         discard original.addObject(POINTS[i], "p" & $i, inkCycled(i))
       let path = getTempDir() / "visualiser_suite_scene_replay.rgascene"
       check saveScene(original, path).contains("Saved 5")
@@ -1053,10 +1096,10 @@ suite "Scene":
       var loaded = initScene()
       check loadScene(loaded, path, clock).contains("Loaded 5")
       check loaded[0].born =~ clock
-      for handle in 1 ..< 5:
-        check loaded[handle].born > loaded[handle - 1].born
+      for handle in 1..<5:
+        check loaded[handle].born > loaded[handle-1].born
         # Still growing in as next one lands, rather than queue of separate pop-ins.
-        check loaded[handle].born - loaded[handle - 1].born < ANIMATION_SECONDS
+        check loaded[handle].born - loaded[handle-1].born < ANIMATION_SECONDS
       check loaded[4].born - loaded[0].born <= SECONDS_REPLAY_WHOLE
 
       # No clock, no replay: caller with nothing to animate for gets grown scene.

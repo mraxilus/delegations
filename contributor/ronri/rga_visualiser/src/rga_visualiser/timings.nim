@@ -18,7 +18,7 @@
 {.experimental: "strictFuncs".}
 
 when defined(js):
-  proc nowMilliseconds*(): float {.importjs: "performance.now()", sideEffect.}
+  proc nowMilliseconds*(): float {.sideEffect, importjs: "performance.now()".}
     ## Read page's monotonic clock, in milliseconds.
 else:
   import std/monotimes
@@ -32,19 +32,19 @@ const
     ## Hold least workable frame rate, per second, as Architect sets it (repository issue 346).
     ##   Floor rather than goal: goal is as fast as machine allows, and nothing is held to it.
     ##   Scripted run steps its clock at it, and both frame-time plots floor their range at it.
-  RATE_FRAME_FAST* = 2.0*RATE_FRAME_LEAST
+  RATE_FRAME_FAST* = 2.0 * RATE_FRAME_LEAST
     ## Name frame twice as fast as floor, fastest mark exceedance curve draws.
     ##   Nothing is held to it; frame under it wears fast band.
   SECONDS_HISTORY = 4.0
     ## Span each front-end's frame-time plot holds, long enough to see stutter land and scroll off.
-  FRAMES_HISTORY* = int(SECONDS_HISTORY*RATE_FRAME_LEAST)
+  FRAMES_HISTORY* = int(SECONDS_HISTORY * RATE_FRAME_LEAST)
     ## Bound how many recent frame times each front-end's plot keeps: `SECONDS_HISTORY` at floor.
     ##   Machine faster than floor fills it in less time.
   SECONDS_EXCEEDANCE = 17.0
     ## Span page's exceedance curve summarises.
     ##   Long enough to hold stall, short enough that one ages out again rather than flattening
     ##   curve for minute.
-  FRAMES_EXCEEDANCE* = int(SECONDS_EXCEEDANCE*RATE_FRAME_LEAST)
+  FRAMES_EXCEEDANCE* = int(SECONDS_EXCEEDANCE * RATE_FRAME_LEAST)
     ## Bound how many recent frames exceedance curve summarises: `SECONDS_EXCEEDANCE` at floor.
 
 
@@ -52,16 +52,16 @@ const
 #[ Type Definitions ]#
 
 type
-  Side* {.pure.} = enum ## Define which side of boundary stretch of work sat on.
-    Placing, ## Working out where geometry is: algebra, and little that rides along.
-    Emitting ## Turning places into vertices: `mesh`, which cannot reach algebra.
+  Side* {.pure.} = enum  ## Define which side of boundary stretch of work sat on.
+    Placing,  ## Working out where geometry is: algebra, and little that rides along.
+    Emitting  ## Turning places into vertices: `mesh`, which cannot reach algebra.
 
   FrameRecord* = object
     ## Define what frame measured that *next* frame reports.
     ##   Only for work outside frame's own build.
     ##   On browser, hover picking runs from event handlers, so no bracket inside
     ##   `nimBuildFrame` sees it; measured where it happens.
-    ms_hover_pick*: float ## What picking under cursor cost since last frame.
+    ms_hover_pick*: float  ## What picking under cursor cost since last frame.
 
 
 
@@ -76,8 +76,7 @@ var
 
   RECORDS_FRAME: array[2, FrameRecord]
     ## Hold this frame's record and last frame's, turned over per frame.
-  INDEX_RECORD_CURRENT = 0
-    ## Point at record this frame writes.
+  INDEX_RECORD_CURRENT = 0  ## Point at record this frame writes.
 
 proc openFrameTimings*() =
   ## Begin frame: forget both sides' totals, and turn record pair over.
@@ -126,6 +125,6 @@ proc spentOn*(side: Side): float = SPENT_SIDE[side]
 proc recordThisFrame*(): var FrameRecord = RECORDS_FRAME[INDEX_RECORD_CURRENT]
   ## Reach record this frame is writing.
 
-proc recordLastFrame*(): FrameRecord = RECORDS_FRAME[1 - INDEX_RECORD_CURRENT]
+proc recordLastFrame*(): FrameRecord = RECORDS_FRAME[1-INDEX_RECORD_CURRENT]
   ## Read what previous frame measured.
   ##   Anything happening between frames is reported from here.

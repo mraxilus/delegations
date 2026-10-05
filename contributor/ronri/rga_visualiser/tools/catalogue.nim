@@ -16,10 +16,8 @@ import std/[strutils, tables]
 #[ Catalogue Configuration ]#
 
 const
-  OPENING_KEYS = "type Wording* = enum"
-    ## Line opening enum whose values are keys.
-  OPENING_WORDS = "const LUT_TEXT_BY_WORDING"
-    ## Line opening table whose rows are words.
+  OPENING_KEYS = "type Wording* = enum"  ## Line opening enum whose values are keys.
+  OPENING_WORDS = "const LUT_TEXT_BY_WORDING"  ## Line opening table whose rows are words.
 
 
 
@@ -36,7 +34,7 @@ func blockAfter(source, opening: string): seq[string] =
       at = i
       break
   if at < 0: raise newException(ValueError, "Source holds no `" & opening & "`.")
-  for line in lines[at + 1 .. ^1]:
+  for line in lines[at+1 .. ^1]:
     if line.len > 0 and line[0] notin Whitespace: break
     result.add line
 

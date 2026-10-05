@@ -23,8 +23,7 @@
 import std/[math, options]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
-import ./projections
-import ./[boundary, mesh, timings]
+import ./[boundary, mesh, projections, timings]
 
 export mesh
 
@@ -33,30 +32,30 @@ export mesh
 #[ Type Definitions ]#
 
 type
-  DrawExtent* = object ## Define frame's camera in both languages at once.
+  DrawExtent* = object  ## Define frame's camera in both languages at once.
     ## Euclidean half is `mesh.DrawScale`, carried whole so caller holding extent still
     ## says `scale.eye`.
     ## Four multivector twins beside it are algebra's reading of same camera.
     ##   Derived once per frame in `camera.drawExtentFor`, so nothing downstream rebuilds
     ##   `toMultivector(eye)` per segment.
-    scale*: DrawScale ## Everything picture is measured against; see `mesh.DrawScale`.
-    eye_point*: Multivector ## Eye as unit-weight point.
-    forward_point*: Multivector ## Sight direction as horizon point.
-    plane_eye*: Multivector ## Unitized plane through eye perpendicular to sight.
+    scale*: DrawScale  ## Everything picture is measured against; see `mesh.DrawScale`.
+    eye_point*: Multivector  ## Eye as unit-weight point.
+    forward_point*: Multivector  ## Sight direction as horizon point.
+    plane_eye*: Multivector  ## Unitized plane through eye perpendicular to sight.
       ## `depthAgainst` it is view depth, sign "in front".
-    plane_near*: Multivector ## Same plane pushed `depth_near` forward.
+    plane_near*: Multivector  ## Same plane pushed `depth_near` forward.
       ## Near clip as algebra states it, for `clipToEyeSide`'s meet.
 
-  Case* {.pure.} = enum ## Define which drawable algebra found, and its placement.
-    Nothing ## No drawable geometry at all; nothing is emitted.
-    PointAt ## Point standing somewhere in finite world.
-    PointToward ## Horizon point: direction, drawn as star on sky.
-    LineThrough ## Line through support, running along attitude.
-    LineAcross ## Horizon line: pencil of directions its two axes span.
-    PlaneOn ## Plane anchored somewhere, disc spanned by two arms.
-    PlaneEverywhere ## Horizon plane: whole sky, carrying no orientation.
+  Case* {.pure.} = enum  ## Define which drawable algebra found, and its placement.
+    Nothing  ## No drawable geometry at all; nothing is emitted.
+    PointAt  ## Point standing somewhere in finite world.
+    PointToward  ## Horizon point: direction, drawn as star on sky.
+    LineThrough  ## Line through support, running along attitude.
+    LineAcross  ## Horizon line: pencil of directions its two axes span.
+    PlaneOn  ## Plane anchored somewhere, disc spanned by two arms.
+    PlaneEverywhere  ## Horizon plane: whole sky, carrying no orientation.
 
-  Placement* = object ## Define everything *algebra* says about one object, and nothing else.
+  Placement* = object  ## Define everything *algebra* says about one object, and nothing else.
     ## Camera is not in it, and that is whole point.
     ##   Every reader here (`position`, `positionAnchor`, `direction`, `directionHorizon`,
     ##   `frame`, `spanPerpendicular`) is pure function of multivector, so this stays true
@@ -69,24 +68,24 @@ type
     ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
     kind*: Case
-    at*: Position ## Where it stands: point's place, line's support, plane's disc centre.
+    at*: Position  ## Where it stands: point's place, line's support, plane's disc centre.
       ## Meaningless for two horizon kinds and `Nothing`.
-    toward*: Direction ## Direction it names: horizon point's heading, line's attitude.
+    toward*: Direction  ## Direction it names: horizon point's heading, line's attitude.
       ## Meaningless for either plane kind and `Nothing`.
-    axes*: FramePlane ## Two arms disc or great circle is spanned by, and their normal.
+    axes*: FramePlane  ## Two arms disc or great circle is spanned by, and their normal.
       ## Carried by `PlaneOn` and `LineAcross` only.
 
-  ViewBounds* = object ## Define frustum points are tested against before emitting.
+  ViewBounds* = object  ## Define frustum points are tested against before emitting.
     ## Everything `isPointInView` reads, derived once per frame by `camera.viewBoundsFor`.
     ##   Scalars and directions alone, so test allocates nothing per point (Art. VII.1).
-    eye*: Position ## Where depth is measured from.
-    forward*: Direction ## Sight axis, depth is measured along.
-    right*: Direction ## View's +x, unit.
-    up*: Direction ## View's +y, unit.
-    depth_near*: float ## Nearest depth drawn; nearer is clipped by GPU as well.
-    depth_far*: float ## Furthest depth drawn; further is clipped by GPU as well.
-    bound_width*: float ## Half-width of view per unit of depth, sprite margin included.
-    bound_height*: float ## Half-height of view per unit of depth, sprite margin included.
+    eye*: Position  ## Where depth is measured from.
+    forward*: Direction  ## Sight axis, depth is measured along.
+    right*: Direction  ## View's +x, unit.
+    up*: Direction  ## View's +y, unit.
+    depth_near*: float  ## Nearest depth drawn; nearer is clipped by GPU as well.
+    depth_far*: float  ## Furthest depth drawn; further is clipped by GPU as well.
+    bound_width*: float  ## Half-width of view per unit of depth, sprite margin included.
+    bound_height*: float  ## Half-height of view per unit of depth, sprite margin included.
 
 
 # Read through to Euclidean half, so caller writes `scale.eye`, not `scale.scale.eye`.
@@ -134,8 +133,8 @@ func algebraFilled*(scale: DrawExtent): DrawExtent =
   ##     Otherwise twins are zero multivectors and everything algebraic downstream silently
   ##     draws nothing; suite's fixtures once built extents fieldwise and lost lattice.
   result = scale
-  result.eye_point = toMultivector(scale.eye)
-  result.forward_point = toMultivector(scale.forward)
+  result.eye_point = scale.eye.toMultivector
+  result.forward_point = scale.forward.toMultivector
   result.plane_eye = planeThrough(result.eye_point, result.forward_point)
   result.plane_near = planeThrough(
     add(result.eye_point, wedge(scale.depthNear, result.forward_point)),
@@ -162,9 +161,7 @@ func anchorFor*(m: Multivector, scale: DrawExtent): Option[Position] =
     if place.isSome: return place
     let heading = directionHorizon(m)
     if heading.isNone: return
-    position(add(
-      scale.eye_point, wedge(scale.radiusHorizon, toMultivector(heading.get))
-    ))
+    position(add(scale.eye_point, wedge(scale.radiusHorizon, heading.get.toMultivector)))
   of Kind.Line, Kind.Plane:
     positionAnchor(m)
 
@@ -188,8 +185,11 @@ func anchorFor*(
 #[ Great Circle ]#
 
 func addGreatCircle(
-  meshes: var MeshSet; center: Position; axis_first, axis_second: Direction;
-  radius: float; tint: Rgba
+  meshes: var MeshSet;
+  center: Position;
+  axis_first, axis_second: Direction;
+  radius: float;
+  tint: Rgba;
 ) =
   ## Append closed ring of segments around `center` at `radius`, in plane two axes span.
   ##   Great circle horizon line traces across sky, standing for pencil of directions it
@@ -205,8 +205,12 @@ func addGreatCircle(
 #[ World Furniture ]#
 
 func placeChord(
-  scratch: var DrawScratch; count_assembled: var int; centre, axis_point: Multivector;
-  span: float; tint: Rgba; scale: DrawExtent
+  scratch: var DrawScratch;
+  count_assembled: var int;
+  centre, axis_point: Multivector;
+  span: float;
+  tint: Rgba;
+  scale: DrawExtent;
 ) =
   ## Resolve one furniture line into `scratch.ribbons` as single piece.
   ##   Runs `span` either side of `centre` along `axis_point`, at full tint: fog fade runs
@@ -259,19 +263,19 @@ func placeAxes(scratch: var DrawScratch, extent: float, scale: DrawExtent): int 
     #   Chord half-length stays scalar solve, since sphere has no representative in rigid
     #   algebra: one documented exception.
     let
-      axis_line = wedge(toMultivector(ORIGIN_WORLD), toMultivector(axis))
+      axis_line = wedge(ORIGIN_WORLD.toMultivector, axis.toMultivector)
       foot_raw = projectOrthogonal(scale.eye_point, axis_line)
       foot = position(foot_raw)
     if foot.isNone: continue
     let
       separation = distanceBetween(unitize(foot_raw), scale.eye_point)
-      half_squared = fog.radius_gone*fog.radius_gone - separation*separation
+      half_squared = fog.radius_gone * fog.radius_gone - separation * separation
     if half_squared <= 0.0: continue
     let
       half = sqrt(half_squared)
       tint = ink.colour
       foot_point = unitize(foot_raw)
-      axis_point = toMultivector(axis)
+      axis_point = axis.toMultivector
     # Place one piece for whole chord: fade and across both run in shaders.
     #   See `mesh.expandRibbon` and `mesh.alphaGridFade`.
     scratch.placeChord(count_assembled, foot_point, axis_point, half, tint, scale)
@@ -279,16 +283,15 @@ func placeAxes(scratch: var DrawScratch, extent: float, scale: DrawExtent): int 
   count_assembled
 
 
-proc addAxes*(
-  meshes: var MeshSet, scratch: var DrawScratch, extent: float, scale: DrawExtent
-) =
+proc addAxes*(meshes: var MeshSet, scratch: var DrawScratch, extent: float, scale: DrawExtent) =
   ## Append world axes; `placeAxes` says what each is and how far it runs.
   ##   Two calls, for reason `addGridFamily` gives.
   var count_assembled = 0
   timed(Side.Placing): count_assembled = placeAxes(scratch, extent, scale)
   timed(Side.Emitting):
     meshes.addRibbonPieces(
-      scratch.ribbons.toOpenArray(0, count_assembled - 1), WIDTH_LINE_FURNITURE,
+      scratch.ribbons.toOpenArray(0, count_assembled - 1),
+      WIDTH_LINE_FURNITURE,
       is_fogged = true,
     )
 
@@ -302,14 +305,18 @@ func radiusOnPlaneFor*(extent: float, scale: DrawExtent, plane: Multivector): Op
   let
     fog = fogFurnitureFor(extent)
     height = abs(depthAgainst(plane, scale.eye_point))
-    radius_squared = fog.radius_gone*fog.radius_gone - height*height
+    radius_squared = fog.radius_gone * fog.radius_gone - height * height
   if radius_squared <= 0.0: return
   some(sqrt(radius_squared))
 
 
 func placeGridFamily(
-  scratch: var DrawScratch; scale: DrawExtent; tint: Rgba;
-  radius_ground, size_cell: float; along, across: Direction; origin: Position
+  scratch: var DrawScratch;
+  scale: DrawExtent;
+  tint: Rgba;
+  radius_ground, size_cell: float;
+  along, across: Direction;
+  origin: Position;
 ): int =
   ## Resolve one family of lattice lines into `scratch`, one piece per line; report count.
   ##   Every line runs along `along`, stepped by `size_cell` along `across`, within
@@ -327,29 +334,28 @@ func placeGridFamily(
   #   Depth against plane through origin perpendicular to each: algebra's statement of
   #   coordinate. One plane per family per frame.
   let
-    origin_point = toMultivector(origin)
-    along_point = toMultivector(along)
-    across_point = toMultivector(across)
+    origin_point = origin.toMultivector
+    along_point = along.toMultivector
+    across_point = across.toMultivector
     centre_across = depthAgainst(planeThrough(origin_point, across_point), scale.eye_point)
     centre_along = depthAgainst(planeThrough(origin_point, along_point), scale.eye_point)
-    first = int(ceil((centre_across - radius_ground)/size_cell))
-    last = int(floor((centre_across + radius_ground)/size_cell))
+    first = int(ceil((centre_across - radius_ground) / size_cell))
+    last = int(floor((centre_across + radius_ground) / size_cell))
     # Line through origin lies on world axis where origin is world's and `along` is axis.
     #   It would fight that axis for depth, or hide its colour under grid grey.
     is_on_axis = norm(origin - ORIGIN_WORLD) <= TOLERANCE_ABS and
-      max(abs(along.x), max(abs(along.y), abs(along.z))) >= 1.0 - TOLERANCE_ABS
+        max(abs(along.x), max(abs(along.y), abs(along.z))) >= 1.0 - TOLERANCE_ABS
   var count_assembled = 0
-  for i in first .. last:
+  for i in first..last:
     if i == 0 and is_on_axis: continue
     let
-      offset = float(i)*size_cell
-      reach_squared = radius_ground*radius_ground -
-        (offset - centre_across)*(offset - centre_across)
+      offset = float(i) * size_cell
+      reach_squared = radius_ground * radius_ground -
+          (offset - centre_across) * (offset - centre_across)
     if reach_squared <= 0.0: continue
     let
       reach = sqrt(reach_squared)
-      base = add(origin_point,
-        add(wedge(offset, across_point), wedge(centre_along, along_point)))
+      base = add(origin_point, add(wedge(offset, across_point), wedge(centre_along, along_point)))
     # Assemble, not draw; see `placeChord`, which stops silently at scratch's end.
     #   `mesh.LINES_GRID_MAX` sizes it from bound `CELLS_GRID_HALF_MAX` puts on
     #   `first .. last`, so full buffer means bound was raised and this was not.
@@ -359,9 +365,13 @@ func placeGridFamily(
 
 
 proc addGridFamily*(
-  meshes: var MeshSet; scratch: var DrawScratch; scale: DrawExtent; tint: Rgba;
-  radius_ground, size_cell: float; along, across: Direction;
-  origin: Position = ORIGIN_WORLD
+  meshes: var MeshSet;
+  scratch: var DrawScratch;
+  scale: DrawExtent;
+  tint: Rgba;
+  radius_ground, size_cell: float;
+  along, across: Direction;
+  origin: Position = ORIGIN_WORLD;
 ) =
   ## Append one family of lattice lines; `placeGridFamily` says what family is.
   ##   Seam, as two calls.
@@ -371,11 +381,19 @@ proc addGridFamily*(
   var count_assembled = 0
   timed(Side.Placing):
     count_assembled = placeGridFamily(
-      scratch, scale, tint, radius_ground, size_cell, along, across, origin,
+      scratch,
+      scale,
+      tint,
+      radius_ground,
+      size_cell,
+      along,
+      across,
+      origin,
     )
   timed(Side.Emitting):
     meshes.addRibbonPieces(
-      scratch.ribbons.toOpenArray(0, count_assembled - 1), WIDTH_LINE_FURNITURE,
+      scratch.ribbons.toOpenArray(0, count_assembled - 1),
+      WIDTH_LINE_FURNITURE,
       is_fogged = true,
     )
 
@@ -410,18 +428,30 @@ proc addLattice*(
   if axes.isNone or anchor.isNone or reach.isNone: return
   let
     base = Ink.Grid.colour
-    tint = base.fade(base.alpha*ALPHA_GRID)
+    tint = base.fade(base.alpha * ALPHA_GRID)
     radius = reach.get
     size_cell = sizeCellGridFor(radius)
     (first, second) = (axes.get.axis_first, axes.get.axis_second)
   # Lay one family at time through one scratch.
   #   Buffer is sized for larger family rather than both.
   meshes.addGridFamily(
-    scratch, scale, tint, radius, size_cell, along = first, across = second,
+    scratch,
+    scale,
+    tint,
+    radius,
+    size_cell,
+    along = first,
+    across = second,
     origin = anchor.get,
   )
   meshes.addGridFamily(
-    scratch, scale, tint, radius, size_cell, along = second, across = first,
+    scratch,
+    scale,
+    tint,
+    radius,
+    size_cell,
+    along = second,
+    across = first,
     origin = anchor.get,
   )
 
@@ -429,9 +459,7 @@ proc addLattice*(
 
 #[ Object Tessellation ]#
 
-proc placeObject*(
-  geometry: Multivector, anchor_override: Option[Position] = none(Position)
-): Placement =
+proc placeObject*(geometry: Multivector, anchor_override = none(Position)): Placement =
   ## Ask algebra what object is and where: whole placing side of cut, none of emitting.
   ##   Split from `addObject` so caller may keep answer.
   ##     Nothing here reads camera, so answer changes only when object does. See `Placement`.
@@ -461,11 +489,14 @@ proc placeObject*(
         #   rather than when placed.
         let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
         if spanned.isSome:
-          return Placement(kind: Case.LineAcross, axes: FramePlane(
-            axis_first: spanned.get[0],
-            axis_second: spanned.get[1],
-            normal: normal.get,
-          ))
+          return Placement(
+            kind: Case.LineAcross,
+            axes: FramePlane(
+              axis_first: spanned.get[0],
+              axis_second: spanned.get[1],
+              normal: normal.get,
+            ),
+          )
     of Kind.Plane:
       let
         anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
@@ -499,20 +530,25 @@ func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool 
     offset_z = placed.toward.z
   else:
     return true
-  let depth = offset_x*bounds.forward.x + offset_y*bounds.forward.y + offset_z*bounds.forward.z
+  let depth = offset_x * bounds.forward.x + offset_y * bounds.forward.y +
+      offset_z * bounds.forward.z
   if depth <= 0.0: return false
   if placed.kind == Case.PointAt and
       (depth < bounds.depth_near or depth > bounds.depth_far):
     return false
-  let across = offset_x*bounds.right.x + offset_y*bounds.right.y + offset_z*bounds.right.z
-  if abs(across) > depth*bounds.bound_width + radius: return false
-  let above = offset_x*bounds.up.x + offset_y*bounds.up.y + offset_z*bounds.up.z
-  abs(above) <= depth*bounds.bound_height + radius
+  let across = offset_x * bounds.right.x + offset_y * bounds.right.y + offset_z * bounds.right.z
+  if abs(across) > depth * bounds.bound_width + radius: return false
+  let above = offset_x * bounds.up.x + offset_y * bounds.up.y + offset_z * bounds.up.z
+  abs(above) <= depth * bounds.bound_height + radius
 
 
 proc emitObject*(
-  meshes: var MeshSet, placed: var Placement, tint: Rgba, scale: DrawExtent,
-  progress: float = 1.0, radius: float = RADIUS_OBJECT_DEFAULT
+  meshes: var MeshSet,
+  placed: var Placement,
+  tint: Rgba,
+  scale: DrawExtent,
+  progress = 1.0,
+  radius: float = RADIUS_OBJECT_DEFAULT,
 ): Outcome =
   ## Turn one placed object into this frame's records, at this frame's camera.
   ##   Other half of `placeObject`: takes no multivector, so what object *is* was settled
@@ -539,7 +575,7 @@ proc emitObject*(
 
   of Case.PointAt:
     timed(Side.Emitting):
-      meshes.addMarker(placed.at, radius, tint, tint.alpha*progress)
+      meshes.addMarker(placed.at, radius, tint, tint.alpha * progress)
     Outcome.Finite
 
   of Case.PointToward:
@@ -548,9 +584,9 @@ proc emitObject*(
     var star = ORIGIN_WORLD
     timed(Side.Placing):
       star = pointFrom(add(scale.eye_point,
-        wedge(progress*scale.radiusHorizon, toMultivector(placed.toward))))
+        wedge(progress * scale.radiusHorizon, placed.toward.toMultivector)))
     timed(Side.Emitting):
-      meshes.addMarker(star, radius, tint, tint.alpha*progress)
+      meshes.addMarker(star, radius, tint, tint.alpha * progress)
     Outcome.Horizon
 
   of Case.LineThrough:
@@ -566,11 +602,11 @@ proc emitObject*(
     var far_ahead, far_behind = ORIGIN_WORLD
     timed(Side.Placing):
       let
-        reach = progress*scale.radiusHorizon
-        axis_point = toMultivector(placed.toward)
+        reach = progress * scale.radiusHorizon
+        axis_point = placed.toward.toMultivector
       far_ahead = pointFrom(add(scale.eye_point, wedge(reach, axis_point)))
       far_behind = pointFrom(add(scale.eye_point, wedge(-reach, axis_point)))
-    let tint_progress = tint.fade(tint.alpha*progress)
+    let tint_progress = tint.fade(tint.alpha * progress)
     timed(Side.Emitting):
       meshes.addSegment(placed.at, far_ahead, tint_progress, WIDTH_LINE_OBJECT)
       meshes.addSegment(placed.at, far_behind, tint_progress, WIDTH_LINE_OBJECT)
@@ -580,8 +616,11 @@ proc emitObject*(
     # Trace pencil of directions across sky as great circle around eye.
     timed(Side.Emitting):
       meshes.addGreatCircle(
-        scale.eye, placed.axes.axis_first, placed.axes.axis_second,
-        progress*scale.radiusHorizon, tint.fade(tint.alpha*progress),
+        scale.eye,
+        placed.axes.axis_first,
+        placed.axes.axis_second,
+        progress * scale.radiusHorizon,
+        tint.fade(tint.alpha * progress),
       )
     Outcome.Horizon
 
@@ -590,15 +629,22 @@ proc emitObject*(
     #   Fill is one disc record and rim one ring record, both fanned out by own vertex
     #   shaders.
     let
-      extent = progress*EXTENT_PLANE_F
-      tint_progress = tint.fade(tint.alpha*progress)
+      extent = progress * EXTENT_PLANE_F
+      tint_progress = tint.fade(tint.alpha * progress)
     timed(Side.Emitting):
       meshes.addDisc(
-        placed.at, placed.axes.axis_first, placed.axes.axis_second, extent,
-        tint.fade(ALPHA_VEIL*progress),
+        placed.at,
+        placed.axes.axis_first,
+        placed.axes.axis_second,
+        extent,
+        tint.fade(ALPHA_VEIL * progress),
       )
       meshes.addRing(
-        placed.at, placed.axes.axis_first, placed.axes.axis_second, extent, tint_progress,
+        placed.at,
+        placed.axes.axis_first,
+        placed.axes.axis_second,
+        extent,
+        tint_progress,
         WIDTH_LINE_OBJECT,
       )
     Outcome.Finite
@@ -607,16 +653,23 @@ proc emitObject*(
     # Emit one dome record vertex shader widens over static unit sphere; see `mesh.addDome`.
     timed(Side.Emitting):
       meshes.addDome(
-        scale.eye, progress*scale.radiusHorizon, tint.fade(ALPHA_VEIL_SKY*progress),
+        scale.eye,
+        progress * scale.radiusHorizon,
+        tint.fade(ALPHA_VEIL_SKY * progress),
       )
     Outcome.Horizon
 
 
 proc addObject*(
-  meshes: var MeshSet, scratch: var DrawScratch, geometry: Multivector, tint: Rgba,
-  scale: DrawExtent, progress: float = 1.0,
-  anchor_override: Option[Position] = none(Position),
-  bounds: Option[ViewBounds] = none(ViewBounds), radius: float = RADIUS_OBJECT_DEFAULT
+  meshes: var MeshSet,
+  scratch: var DrawScratch,
+  geometry: Multivector,
+  tint: Rgba,
+  scale: DrawExtent,
+  progress = 1.0,
+  anchor_override = none(Position),
+  bounds = none(ViewBounds),
+  radius: float = RADIUS_OBJECT_DEFAULT,
 ): Outcome =
   ## Append object, dispatching on geometry its grade stands for.
   ##   Place then emit in one call, for every caller with nothing to gain by keeping

@@ -9,13 +9,15 @@ import ./fixtures
 import ../../src/rga_visualiser/picking {.all.}
 
 
+
 suite "Picking":
   const (width_pick, height_pick) = (800, 600)
-  let centre = ScreenPosition(x: float(width_pick)/2.0, y: float(height_pick)/2.0, depth: 0.0)
+  let centre = ScreenPosition(x: float(width_pick) / 2.0, y: float(height_pick) / 2.0, depth: 0.0)
 
   proc cameraFacingOrigin(distance = 10.0): Camera =
     ## Build camera looking at world origin, so pivot is known to project to screen centre.
     cameraAround(Position(x: 0, y: 0, z: 0), distance, Direction(x: 1, y: 0, z: 0))
+
 
   test "a zoom anchors on what is under the cursor only near the depth being looked at":
     # Camera tilted down at origin from ten units.
@@ -23,21 +25,34 @@ suite "Picking":
     #   passed over, and nothing else answers: world has no ground to fall back on.
     let
       camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 10, y: 0, z: 3))
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       scale = camera.drawExtentFor(height_pick, 0.0)
       eye = camera.eye
     var near = initScene()
-    near.addObject(toMultivector(Position(x: -0.5*eye.x, y: 0, z: -0.5*eye.z)), "p", Ink.Rose)
+    near.addObject(Position(x: -0.5 * eye.x, y: 0, z: -0.5 * eye.z).toMultivector, "p", Ink.Rose)
     let anchor_near = anchorZoomAt(
-      near, camera, scale, view_projection, width_pick, height_pick, centre,
+      near,
+      camera,
+      scale,
+      view_projection,
+      width_pick,
+      height_pick,
+      centre,
     )
-    check anchor_near.isSome and abs(anchor_near.get.at.z + 0.5*eye.z) < 1.0e-6
+    check anchor_near.isSome and abs(anchor_near.get.at.z + 0.5 * eye.z) < 1.0e-6
     var far = initScene()
-    far.addObject(toMultivector(Position(x: -7.0*eye.x, y: 0, z: -7.0*eye.z)), "p", Ink.Rose)
+    far.addObject(Position(x: -7.0 * eye.x, y: 0, z: -7.0 * eye.z).toMultivector, "p", Ink.Rose)
     let anchor_far = anchorZoomAt(
-      far, camera, scale, view_projection, width_pick, height_pick, centre,
+      far,
+      camera,
+      scale,
+      view_projection,
+      width_pick,
+      height_pick,
+      centre,
     )
     check anchor_far.isNone
+
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":
     # Pick radius follows drawn disc: Sol seen from two of its own radii away spans about.
@@ -50,14 +65,14 @@ suite "Picking":
       var scene = initScene()
       constructOrrery(scene, ScaleOrrery.Nearest)
       var handle_sol = -1
-      for handle in 0 ..< scene.bound:
-        if scene.isAlive(handle) and toText(scene.labelAt(handle)) == "sol": handle_sol = handle
+      for handle in 0..<scene.bound:
+        if scene.isAlive(handle) and scene.labelAt(handle).toText == "sol": handle_sol = handle
       check handle_sol >= 0
       let
         camera = cameraAround(
-          ORIGIN, 2.0*scene.radiusAt(handle_sol), Direction(x: 12, y: 15, z: 8)
+          ORIGIN, 2.0 * scene.radiusAt(handle_sol), Direction(x: 12, y: 15, z: 8)
         )
-        view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+        view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
         scale = camera.drawExtentFor(height_pick, 0.0)
         pixels_sol =
           radiusPixelsAt(scene.radiusAt(handle_sol), Position(x: 0, y: 0, z: 0), scale.scale)
@@ -77,13 +92,14 @@ suite "Picking":
         scene, camera, scale, view_projection, width_pick, height_pick, outside
       ) != some(handle_sol)
 
+
   test "a point behind a wider disc is not picked through it, and one in front is":
     # Disc hides what is behind it: star whose centre is nearer cursor than planet's.
     #   won on distance although planet's disc covered it, and tap meant for planet
     #   selected star through it. Moon in front of same disc is still picked.
     let
       camera = cameraAround(Position(x: 0, y: 0, z: 0), 2.0, Direction(x: 9, y: 0, z: 5))
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       scale = camera.drawExtentFor(height_pick, 0.0)
       frame_camera = camera.frame
       planet = Position(x: 0, y: 0, z: 0)
@@ -93,45 +109,42 @@ suite "Picking":
     #   carries its rounding.
     for probe in [planet, Position(x: 1.5, y: -0.7, z: 0.4), Position(x: -3, y: 2, z: 1)]:
       let depth = dot(probe - scale.eye, scale.forward)
-      check abs(depthAlongSight(view_projection, probe) - depth) < TOLERANCE_SINGLE*depth
+      check abs(depthAlongSight(view_projection, probe) - depth) < TOLERANCE_SINGLE * depth
       let pixels = radiusPixelsAt(0.3, probe, scale.scale)
       check abs(
-        radiusPixelsAtDepth(0.3, depthAlongSight(view_projection, probe), scale.scale) -
-        pixels
-      ) < TOLERANCE_SINGLE*pixels
+        radiusPixelsAtDepth(0.3, depthAlongSight(view_projection, probe), scale.scale) - pixels,
+      ) < TOLERANCE_SINGLE * pixels
     # Star five units past planet, offset so it projects forty pixels off its centre.
     #   inside disc; moon half unit before it, offset same way.
     let
-      behind = planet + 5.0*frame_camera.forward
-      star = behind + 40.0*worldPerPixelAt(behind, scale.scale)*frame_camera.axis_right
-      before = planet - 0.5*frame_camera.forward
-      moon = before + 40.0*worldPerPixelAt(before, scale.scale)*frame_camera.axis_right
+      behind = planet + 5.0 * frame_camera.forward
+      star = behind + 40.0 * worldPerPixelAt(behind, scale.scale) * frame_camera.axis_right
+      before = planet - 0.5 * frame_camera.forward
+      moon = before + 40.0 * worldPerPixelAt(before, scale.scale) * frame_camera.axis_right
     var hidden = initScene()
-    hidden.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    hidden.addObject(toMultivector(star), "star", Ink.Rose, radius = 0.001)
+    hidden.addObject(planet.toMultivector, "planet", Ink.Cobalt, radius = 0.3)
+    hidden.addObject(star.toMultivector, "star", Ink.Rose, radius = 0.001)
     let on_star = projectToScreen(view_projection, width_pick, height_pick, star)
     check abs(on_star.x - centre.x - 40.0) < 1.0
     let report_hidden = pickAt(
       hidden, camera, scale, view_projection, width_pick, height_pick, on_star
     )
     check report_hidden.handle == some(0)
-    check report_hidden.count_rivals == 1 # Hidden star is no rival either.
+    check report_hidden.count_rivals == 1  # Hidden star is no rival either.
     var shown = initScene()
-    shown.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    shown.addObject(toMultivector(moon), "moon", Ink.Rose, radius = 0.02)
+    shown.addObject(planet.toMultivector, "planet", Ink.Cobalt, radius = 0.3)
+    shown.addObject(moon.toMultivector, "moon", Ink.Rose, radius = 0.02)
     let
       on_moon = projectToScreen(view_projection, width_pick, height_pick, moon)
-      report_shown = pickAt(
-        shown, camera, scale, view_projection, width_pick, height_pick, on_moon
-      )
+      report_shown = pickAt(shown, camera, scale, view_projection, width_pick, height_pick, on_moon)
     check report_shown.handle == some(1)
-    check report_shown.count_rivals == 2 # Planet under moon is still rival to it.
+    check report_shown.count_rivals == 2  # Planet under moon is still rival to it.
     # Star straight behind moon, on same ray from eye: moon hides it from pick, and.
     #   being narrower than fingertip, not from crowd.
     let eye = camera.eye
     var lunar = initScene()
-    lunar.addObject(toMultivector(moon), "moon", Ink.Rose, radius = 0.02)
-    lunar.addObject(toMultivector(eye + 3.0*(moon - eye)), "star", Ink.Jade, radius = 0.001)
+    lunar.addObject(moon.toMultivector, "moon", Ink.Rose, radius = 0.02)
+    lunar.addObject(toMultivector(eye + 3.0 * (moon - eye)), "star", Ink.Jade, radius = 0.001)
     check radiusPixelsAt(0.02, moon, scale.scale) < RADIUS_PICK_POINT
     let report_lunar = pickAt(
       lunar, camera, scale, view_projection, width_pick, height_pick, on_moon
@@ -140,10 +153,10 @@ suite "Picking":
     check report_lunar.count_rivals == 2
     # Cursor on disc near its rim, star's centre past rim within pixel reach: planet.
     #   Star used to win on distance to its own centre. Cursor off disc: star.
-    let near_rim = behind + 130.0*worldPerPixelAt(behind, scale.scale)*frame_camera.axis_right
+    let near_rim = behind + 130.0 * worldPerPixelAt(behind, scale.scale) * frame_camera.axis_right
     var rim = initScene()
-    rim.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    rim.addObject(toMultivector(near_rim), "star", Ink.Rose, radius = 0.001)
+    rim.addObject(planet.toMultivector, "planet", Ink.Cobalt, radius = 0.3)
+    rim.addObject(near_rim.toMultivector, "star", Ink.Rose, radius = 0.001)
     let pixels_planet = radiusPixelsAt(0.3, planet, scale.scale)
     check pixels_planet > 100.0 and pixels_planet < 125.0
     let on_disc = ScreenPosition(x: centre.x + pixels_planet - 5.0, y: centre.y, depth: 0.0)
@@ -155,15 +168,16 @@ suite "Picking":
       rim, camera, scale, view_projection, width_pick, height_pick, off_disc
     ) == some(1)
     # Star past disc's edge is picked as ever: nothing covers it there.
-    let far = behind + 160.0*worldPerPixelAt(behind, scale.scale)*frame_camera.axis_right
+    let far = behind + 160.0 * worldPerPixelAt(behind, scale.scale) * frame_camera.axis_right
     var clear = initScene()
-    clear.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    clear.addObject(toMultivector(far), "star", Ink.Rose, radius = 0.001)
+    clear.addObject(planet.toMultivector, "planet", Ink.Cobalt, radius = 0.3)
+    clear.addObject(far.toMultivector, "star", Ink.Rose, radius = 0.001)
     let on_far = projectToScreen(view_projection, width_pick, height_pick, far)
     check on_far.x - centre.x > radiusPixelsAt(0.3, planet, scale.scale)
     check pickNearest(
       clear, camera, scale, view_projection, width_pick, height_pick, on_far
     ) == some(1)
+
 
   test "a pick counts its rivals: two points in reach are two, a point over a plane is one":
     # What touch refuses to drag from; see `interaction.isConstructibleByTouch`.
@@ -171,10 +185,10 @@ suite "Picking":
     #   Tilted, so ground plane is seen face on rather than edge on.
     let
       camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 9, y: 0, z: 5))
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       scale = camera.drawExtentFor(height_pick, 0.0)
     var alone = initScene()
-    alone.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    alone.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
     alone.addObject(groundPlane(), "ground", Ink.Grid)
     let report_alone = pickAt(
       alone, camera, scale, view_projection, width_pick, height_pick, centre
@@ -185,22 +199,20 @@ suite "Picking":
     #   front is what is picked. Dot narrower than fingertip hides other from pick, not
     #   from crowd; see pick's hiding rule. Star field's crowds are exactly such dots.
     var crowd = initScene()
-    crowd.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
-    crowd.addObject(toMultivector(Position(x: 0.05, y: 0, z: 0.05)), "q", Ink.Jade)
+    crowd.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
+    crowd.addObject(Position(x: 0.05, y: 0, z: 0.05).toMultivector, "q", Ink.Jade)
     crowd.addObject(groundPlane(), "ground", Ink.Grid)
     check radiusPixelsAt(RADIUS_OBJECT_DEFAULT, Position(x: 0, y: 0, z: 0), scale.scale) <
-      RADIUS_PICK_POINT
+        RADIUS_PICK_POINT
     let report_crowd = pickAt(
       crowd, camera, scale, view_projection, width_pick, height_pick, centre
     )
-    check report_crowd.handle == some(1) # Nearer eye, cursor inside its dot.
+    check report_crowd.handle == some(1)  # Nearer eye, cursor inside its dot.
     check report_crowd.count_rivals == 2
     # Far from both, plane alone answers, as its own single candidate.
     let
       corner = ScreenPosition(x: centre.x + 300.0, y: centre.y + 200.0, depth: 0.0)
-      report_plane = pickAt(
-        crowd, camera, scale, view_projection, width_pick, height_pick, corner
-      )
+      report_plane = pickAt(crowd, camera, scale, view_projection, width_pick, height_pick, corner)
     check report_plane.handle == some(2)
     check report_plane.count_rivals == 1
     # Crowd reaches past pick.
@@ -211,18 +223,16 @@ suite "Picking":
       right = camera.frame.axis_right
     for (pixels, rivals) in [(50.0, 2), (100.0, 1)]:
       var apart = initScene()
-      apart.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
-      apart.addObject(toMultivector(Position(x: 0, y: 0, z: 0) + (pixels*per_pixel)*right),
+      apart.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
+      apart.addObject(toMultivector(Position(x: 0, y: 0, z: 0) + (pixels * per_pixel) * right),
         "q", Ink.Jade)
-      let report = pickAt(
-        apart, camera, scale, view_projection, width_pick, height_pick, centre
-      )
+      let report = pickAt(apart, camera, scale, view_projection, width_pick, height_pick, centre)
       check report.handle == some(0)
       check report.count_rivals == rivals
     # Point beside picked line is rival too: finger may have meant it.
     var mixed = initScene()
     mixed.addObject(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
-    mixed.addObject(toMultivector(Position(x: 0, y: 0, z: 0) + (50.0*per_pixel)*right),
+    mixed.addObject(toMultivector(Position(x: 0, y: 0, z: 0) + (50.0 * per_pixel) * right),
       "q", Ink.Jade)
     let report_mixed = pickAt(
       mixed, camera, scale, view_projection, width_pick, height_pick, centre
@@ -233,12 +243,13 @@ suite "Picking":
       crowd, camera, scale, view_projection, width_pick, height_pick, centre
     ) == report_crowd.handle
 
+
   test "point at pivot is picked at screen centre":
     var scene = initScene()
-    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -249,15 +260,15 @@ suite "Picking":
     # Ring, label, menu and every pick read `isInFront`, so its floor is camera's own,
     #   `DISTANCE_LIMIT_NEAR`: pointer pick of star at least radius stands 2.4e-7 off it.
     #   Point as far behind eye reads behind at every one of them.
-    for power in -8 .. 3:
+    for power in -8..3:
       let depth = pow(10.0, float(power))
       var scene = initScene()
-      scene.addObject(toMultivector(ORIGIN), "p", Ink.Rose)
+      scene.addObject(ORIGIN.toMultivector, "p", Ink.Rose)
       scene.setRadius(0, RADIUS_OBJECT_LEAST)
       let
         camera = cameraFacingOrigin(depth)
-        view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
-        behind = Position(x: 2.0*depth, y: 0.0, z: 0.0)
+        view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
+        behind = Position(x: 2.0 * depth, y: 0.0, z: 0.0)
       check projectToScreen(view_projection, width_pick, height_pick, ORIGIN).isInFront
       check not projectToScreen(view_projection, width_pick, height_pick, behind).isInFront
       check pickNearest(
@@ -268,10 +279,10 @@ suite "Picking":
 
   test "cursor far from every object picks nothing":
     var scene = initScene()
-    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       corner = ScreenPosition(x: 5.0, y: 5.0, depth: 0.0)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
@@ -281,11 +292,11 @@ suite "Picking":
 
   test "hidden object is never picked":
     var scene = initScene()
-    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
     scene.setVisible(0, false)
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -295,11 +306,11 @@ suite "Picking":
   test "line through pivot is picked at screen centre":
     var scene = initScene()
     let axis_z =
-      toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
+      Position(x: 0, y: 0, z: -1).toMultivector ∧ Position(x: 0, y: 0, z: 1).toMultivector
     scene.addObject(axis_z, "axis_z", Ink.Jade)
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -316,14 +327,14 @@ suite "Picking":
     #   before anything could be ranked.
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       frame_camera = camera.frame
     # Running away from eye but tilted off sight line, so line is streak.
     #   rather than dot and its vanishing point stands clear of screen's middle.
-    let heading = normalize(frame_camera.forward + 0.3*Direction(x: 0, y: 0, z: 1))
+    let heading = normalize(frame_camera.forward + 0.3 * Direction(x: 0, y: 0, z: 1))
     check heading.isSome
     let
-      line = toMultivector(ORIGIN_WORLD) ∧ toMultivector(ORIGIN_WORLD + heading.get)
+      line = ORIGIN_WORLD.toMultivector ∧ toMultivector(ORIGIN_WORLD + heading.get)
       star = attitude(line)
     check isHorizon(star)
 
@@ -356,10 +367,10 @@ suite "Picking":
 
   test "point pick radius tolerates cursor imprecision, not unlimited slack":
     var scene = initScene()
-    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     # Point itself projects exactly to centre; offsetting cursor instead of.
     #   point is what actually exercises radius bound.
     let
@@ -378,11 +389,11 @@ suite "Picking":
   test "line pick radius tolerates cursor imprecision, not unlimited slack":
     var scene = initScene()
     let axis_z =
-      toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
+      Position(x: 0, y: 0, z: -1).toMultivector ∧ Position(x: 0, y: 0, z: 1).toMultivector
     scene.addObject(axis_z, "axis_z", Ink.Jade)
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       near = ScreenPosition(x: centre.x + RADIUS_PICK_LINE - 1.0, y: centre.y, depth: 0.0)
       far = ScreenPosition(x: centre.x + RADIUS_PICK_LINE + 1.0, y: centre.y, depth: 0.0)
     check pickNearest(
@@ -398,12 +409,12 @@ suite "Picking":
   test "point wins a tie over a line through it":
     var scene = initScene()
     let axis_z =
-      toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
-    scene.addObject(axis_z, "axis_z", Ink.Jade) # Index 0: line, passes straight through origin.
-    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose) # Index 1: point.
+      Position(x: 0, y: 0, z: -1).toMultivector ∧ Position(x: 0, y: 0, z: 1).toMultivector
+    scene.addObject(axis_z, "axis_z", Ink.Jade)  # Index 0: line, passes straight through origin.
+    scene.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)  # Index 1: point.
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -413,17 +424,17 @@ suite "Picking":
   test "line wins a tie over a plane behind it":
     var scene = initScene()
     let facing = (
-      toMultivector(Position(x: 0, y: -3, z: -3)) ∧
-      toMultivector(Position(x: 0, y: 3, z: -3)) ∧
-      toMultivector(Position(x: 0, y: 0, z: 3))
+      Position(x: 0, y: -3, z: -3).toMultivector ∧
+      Position(x: 0, y: 3, z: -3).toMultivector ∧
+      Position(x: 0, y: 0, z: 3).toMultivector
     )
     let axis_z =
-      toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
-    scene.addObject(facing, "facing", Ink.Olive) # Index 0: plane, spans view straight on.
-    scene.addObject(axis_z, "axis_z", Ink.Jade) # Index 1: line, passes straight through origin.
+      Position(x: 0, y: 0, z: -1).toMultivector ∧ Position(x: 0, y: 0, z: 1).toMultivector
+    scene.addObject(facing, "facing", Ink.Olive)  # Index 0: plane, spans view straight on.
+    scene.addObject(axis_z, "axis_z", Ink.Jade)  # Index 1: line, passes straight through origin.
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -433,15 +444,15 @@ suite "Picking":
   test "point wins a tie over a plane behind it":
     var scene = initScene()
     let facing = (
-      toMultivector(Position(x: 0, y: -3, z: -3)) ∧
-      toMultivector(Position(x: 0, y: 3, z: -3)) ∧
-      toMultivector(Position(x: 0, y: 0, z: 3))
+      Position(x: 0, y: -3, z: -3).toMultivector ∧
+      Position(x: 0, y: 3, z: -3).toMultivector ∧
+      Position(x: 0, y: 0, z: 3).toMultivector
     )
-    scene.addObject(facing, "facing", Ink.Olive) # Index 0: plane, spans view straight on.
-    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose) # Index 1: point.
+    scene.addObject(facing, "facing", Ink.Olive)  # Index 0: plane, spans view straight on.
+    scene.addObject(Position(x: 0, y: 0, z: 0).toMultivector, "p", Ink.Rose)  # Index 1: point.
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -456,14 +467,14 @@ suite "Picking":
     #   lands on support point well within it.
     var scene = initScene()
     let facing = (
-      toMultivector(Position(x: 0, y: -3, z: -3)) ∧
-      toMultivector(Position(x: 0, y: 3, z: -3)) ∧
-      toMultivector(Position(x: 0, y: 0, z: 3))
+      Position(x: 0, y: -3, z: -3).toMultivector ∧
+      Position(x: 0, y: 3, z: -3).toMultivector ∧
+      Position(x: 0, y: 0, z: 3).toMultivector
     )
     scene.addObject(facing, "facing", Ink.Olive)
     let
       camera = cameraFacingOrigin(distance = 30.0)
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre
@@ -489,25 +500,37 @@ suite "Picking":
     ]:
       let
         camera = cameraAround(ORIGIN, 30.0, out_to)
-        view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+        view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
         tangent = camera.drawExtentFor(height_pick, 0.0).tangent_half_view
-      for i in 0 ..< 24:
-        for j in 0 .. 12:
+      for i in 0..<24:
+        for j in 0..12:
           let
-            (theta, phi) = (float(i)*TAU/24.0, float(j)*PI/12.0)
+            (theta, phi) = (float(i) * TAU / 24.0, float(j) * PI / 12.0)
             on_sphere = Position(
-              x: centre.x + EXTENT_PLANE_F*sin(phi)*cos(theta),
-              y: centre.y + EXTENT_PLANE_F*sin(phi)*sin(theta),
-              z: centre.z + EXTENT_PLANE_F*cos(phi),
+              x: centre.x + EXTENT_PLANE_F * sin(phi) * cos(theta),
+              y: centre.y + EXTENT_PLANE_F * sin(phi) * sin(theta),
+              z: centre.z + EXTENT_PLANE_F * cos(phi),
             )
             cursor = projectToScreen(view_projection, width_pick, height_pick, on_sphere)
           check not isBeyondDisc(
-            view_projection, width_pick, height_pick, tangent, centre, EXTENT_PLANE_F, cursor,
+            view_projection,
+            width_pick,
+            height_pick,
+            tangent,
+            centre,
+            EXTENT_PLANE_F,
+            cursor,
           )
       # And phase is not inert: window's corner is well clear of disc this far off.
       let corner = ScreenPosition(x: 0.0, y: 0.0, depth: 0.0)
       check isBeyondDisc(
-        view_projection, width_pick, height_pick, tangent, centre, EXTENT_PLANE_F, corner,
+        view_projection,
+        width_pick,
+        height_pick,
+        tangent,
+        centre,
+        EXTENT_PLANE_F,
+        corner,
       )
 
 
@@ -529,17 +552,22 @@ suite "Picking":
       # Three points spanning x = 0. Ordered by `facing`, so two runs differ in.
       #   nothing but orientation of very same plane.
       let corners = [
-        toMultivector(Position(x: 0, y: -3*facing, z: -3)),
-        toMultivector(Position(x: 0, y: 3*facing, z: -3)),
-        toMultivector(Position(x: 0, y: 0, z: 3)),
+        Position(x: 0, y: -3 * facing, z: -3).toMultivector,
+        Position(x: 0, y: 3 * facing, z: -3).toMultivector,
+        Position(x: 0, y: 0, z: 3).toMultivector,
       ]
       scene.addObject(corners[0] ∧ corners[1] ∧ corners[2], "spanning", Ink.Olive)
       let
         camera = cameraFacingOrigin()
-        view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+        view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
       check pickNearest(
-        scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
-        width_pick, height_pick, centre,
+        scene,
+        camera,
+        camera.drawExtentFor(height_pick, 0.0),
+        view_projection,
+        width_pick,
+        height_pick,
+        centre,
       ) == some(0)
 
 
@@ -548,20 +576,20 @@ suite "Picking":
     #   nearer eye (distance 4) than one at x=3 (distance 7).
     var scene = initScene()
     let far_plane = (
-      toMultivector(Position(x: 3, y: -3, z: -3)) ∧
-      toMultivector(Position(x: 3, y: 3, z: -3)) ∧
-      toMultivector(Position(x: 3, y: 0, z: 3))
+      Position(x: 3, y: -3, z: -3).toMultivector ∧
+      Position(x: 3, y: 3, z: -3).toMultivector ∧
+      Position(x: 3, y: 0, z: 3).toMultivector
     )
     let near_plane = (
-      toMultivector(Position(x: 6, y: -3, z: -3)) ∧
-      toMultivector(Position(x: 6, y: 3, z: -3)) ∧
-      toMultivector(Position(x: 6, y: 0, z: 3))
+      Position(x: 6, y: -3, z: -3).toMultivector ∧
+      Position(x: 6, y: 3, z: -3).toMultivector ∧
+      Position(x: 6, y: 0, z: 3).toMultivector
     )
-    scene.addObject(far_plane, "far", Ink.Olive) # Index 0.
-    scene.addObject(near_plane, "near", Ink.Cobalt) # Index 1.
+    scene.addObject(far_plane, "far", Ink.Olive)  # Index 0.
+    scene.addObject(near_plane, "near", Ink.Cobalt)  # Index 1.
     let
       camera = cameraFacingOrigin()
-      view_projection = camera.initMatrixViewProjection(width_pick/height_pick)
+      view_projection = camera.initMatrixViewProjection(width_pick / height_pick)
     check pickNearest(
       scene, camera, camera.drawExtentFor(height_pick, 0.0), view_projection,
       width_pick, height_pick, centre

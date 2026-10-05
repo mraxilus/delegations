@@ -99,8 +99,7 @@
 
 {.experimental: "strictFuncs".}
 
-when compileOption("profiler"):
-  import std/nimprof
+when compileOption("profiler"): import std/nimprof
 
 import std/[algorithm, math, monotimes, options, os, parseopt, strformat, strutils]
 
@@ -161,16 +160,11 @@ const
     ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
   ENV_FONT* = "RGA_FONT"
     ## Environment name carrying interface face's location, where machine keeps its own.
-  ENV_FONT_MATH* = "RGA_FONT_MATH"
-    ## Environment name carrying operator face's location.
-  ENV_FONT_SYMBOL* = "RGA_FONT_SYMBOL"
-    ## Environment name carrying symbol face's location.
-  ENV_FONT_LABEL* = "RGA_FONT_LABEL"
-    ## Environment name carrying label face's location.
-  ENV_FONT_TITLE* = "RGA_FONT_TITLE"
-    ## Environment name carrying title face's location.
-  ENV_FONT_MONO* = "RGA_FONT_MONO"
-    ## Environment name carrying mono face's location.
+  ENV_FONT_MATH* = "RGA_FONT_MATH"  ## Environment name carrying operator face's location.
+  ENV_FONT_SYMBOL* = "RGA_FONT_SYMBOL"  ## Environment name carrying symbol face's location.
+  ENV_FONT_LABEL* = "RGA_FONT_LABEL"  ## Environment name carrying label face's location.
+  ENV_FONT_TITLE* = "RGA_FONT_TITLE"  ## Environment name carrying title face's location.
+  ENV_FONT_MONO* = "RGA_FONT_MONO"  ## Environment name carrying mono face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
@@ -178,17 +172,13 @@ const
   FACTOR_DOLLY = 1.12
     ## Set how much one wheel notch scales orbit distance.
     ##   Notch is aimed at cursor (`interaction.dollyAtCursor`).
-  FRAMES_SETTLE = 2
-    ## Draw this many frames before capturing, so widget layout has settled.
+  FRAMES_SETTLE = 2  ## Draw this many frames before capturing, so widget layout has settled.
   INK_PREVIEW = Ink.Guide
     ## Tint add panel's uncommitted multivector in this palette handle, muted.
     ##   Reuses `Ink.Guide`'s "construction helper" role; mirrors `browser_bridge.INK_PREVIEW`.
-  FRAMES_GIF_GROW = 6
-    ## Set how many sub-frames sweep each storyboard step's appear animation.
-  FRAMES_GIF_HOLD = 4
-    ## Set how many repeated frames hold on step's settled result.
-  CENTISECONDS_GIF_DELAY = 8
-    ## Set hold time per GIF frame, in hundredths of second.
+  FRAMES_GIF_GROW = 6  ## Set how many sub-frames sweep each storyboard step's appear animation.
+  FRAMES_GIF_HOLD = 4  ## Set how many repeated frames hold on step's settled result.
+  CENTISECONDS_GIF_DELAY = 8  ## Set hold time per GIF frame, in hundredths of second.
   STRIDE_GIF = 2
     ## Keep every this-many-th pixel in both directions.
     ##   Storyboard's GIF then stays short preview.
@@ -197,16 +187,16 @@ const
   WIDTH_EXPORT_MAX* {.define: "visualiser.width_export_max".} = 3840
     ## Bound largest window pixel readback or PNG export is ever asked to cover.
   HEIGHT_EXPORT_MAX* {.define: "visualiser.height_export_max".} = 2160
-  CAPACITY_ARENA_PERMANENT* {.define: "visualiser.capacity_arena_permanent".} = 160*1024*1024
+  CAPACITY_ARENA_PERMANENT* {.define: "visualiser.capacity_arena_permanent".} = 160 * 1024 * 1024
     ## Set permanent arena's size.
     ##   Pixel readback buffer and every storyboard GIF frame live here for whole process.
     ##   Sized for `STRIDE_GIF`'s downsample plus `WIDTH_EXPORT_MAX`x`HEIGHT_EXPORT_MAX`
     ##   readback, with headroom; GIF storage scales with `STEPS`.
-  CAPACITY_ARENA_FRAME* {.define: "visualiser.capacity_arena_frame".} = 64*1024*1024
+  CAPACITY_ARENA_FRAME* {.define: "visualiser.capacity_arena_frame".} = 64 * 1024 * 1024
     ## Set frame arena's size.
     ##   PNG's filtered scanlines or one GIF frame's quantized indices and LZW output,
     ##   reclaimed once that unit of work is written out.
-  CAPACITY_ARENA_SWAP* {.define: "visualiser.capacity_arena_swap".} = 256*1024
+  CAPACITY_ARENA_SWAP* {.define: "visualiser.capacity_arena_swap".} = 256 * 1024
     ## Set each half of frame swap pair.
     ##   Two blocks: pair's promise is that last frame's bytes are still there to read.
     ##   Sized from loops that carve it: largest is lattice's, bounded by
@@ -218,7 +208,7 @@ const
     ##   and ease settle before verdict reads camera.
     ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
     ##   set of nineteen checks runs in about twenty seconds under software GL.
-  SECONDS_FRAME_DRIVEN* = 1.0/RATE_FRAME_LEAST
+  SECONDS_FRAME_DRIVEN* = 1.0 / RATE_FRAME_LEAST
     ## Advance scripted run's clock by this much for each frame drawn, whatever machine takes.
     ##   One frame at `timings.RATE_FRAME_LEAST`, so scripted run shows what reader at that
     ##   floor sees.
@@ -229,9 +219,9 @@ const
     ## Bound how many per-frame timings `--timings` can record.
     ##   Independent of arenas, since benchmark run is not interactive draw loop.
   BYTES_MEMORY_TOTAL* =
-    CAPACITY_ARENA_PERMANENT + CAPACITY_ARENA_FRAME + 2*CAPACITY_ARENA_SWAP +
-    2*sizeof(MeshSet) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
-    FRAMES_TIMING_MAX*sizeof(float32) + OBJECTS_MAX*sizeof(Placement)
+      CAPACITY_ARENA_PERMANENT + CAPACITY_ARENA_FRAME + 2 * CAPACITY_ARENA_SWAP +
+      2 * sizeof(MeshSet) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
+      FRAMES_TIMING_MAX * sizeof(float32) + OBJECTS_MAX * sizeof(Placement)
     ## Sum every fixed-size reservation this binary makes.
     ##   Both arenas at full capacity, committed in data segment regardless of use; both
     ##   mesh sets; object pool; undo timeline, `history.CAPACITY_HISTORY` whole copies of
@@ -250,20 +240,20 @@ static:
 
 # Hold vertex storage at module scope, far too large for stack frame.
 var
-  MESHES: MeshSet ## Every scene object, excluding world furniture below.
-  MARKS_PICKED: array[OBJECTS_MAX, bool] ## Mark each picked handle while meshes assemble.
+  MESHES: MeshSet  ## Every scene object, excluding world furniture below.
+  MARKS_PICKED: array[OBJECTS_MAX, bool]  ## Mark each picked handle while meshes assemble.
     ## Set and cleared around loops of `assembleMeshes`; see `selection.markOnto`.
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture)
     ## Hold what `MESHES_FURNITURE` stands for, or none before first frame.
     ##   Still camera then keeps grid it has rather than rebuilding it every frame.
-  MESHES_FURNITURE: MeshSet ## Lattices and world axes alone, drawn in own pass first.
+  MESHES_FURNITURE: MeshSet  ## Lattices and world axes alone, drawn in own pass first.
     ## Every object's translucent veil then blends over reference marks.
     ## Thinner width (`mesh.WIDTH_LINE_FURNITURE`) is geometry, not draw setting; this
     ## ordering needs pass.
-  CLOCK_PULSE: PulseClock ## Each selected object's orientation-pulse phase, held across
+  CLOCK_PULSE: PulseClock  ## Each selected object's orientation-pulse phase, held across
     ## frames.
     ## Module scope as `HISTORY_DESKTOP` is: too large for stack, outlives frames.
-  HISTORY_DESKTOP: History ## Undo/redo timeline of scene-content edits.
+  HISTORY_DESKTOP: History  ## Undo/redo timeline of scene-content edits.
     ## Too large for stack (`history.CAPACITY_HISTORY * sizeof(Scene)`).
     ## Zeroed placeholder until `main` seeds it via `initHistory` once startup scene is
     ## built.
@@ -283,7 +273,7 @@ var
   ARENA_SWAP_DRAW = initArenaSwap(BUFFER_ARENA_SWAP_FIRST, BUFFER_ARENA_SWAP_SECOND)
 
 # Carve pixel readback every export reuses, once, from permanent arena.
-var PIXELS_READBACK = push[uint8](ARENA_PERMANENT, WIDTH_EXPORT_MAX*HEIGHT_EXPORT_MAX*3)
+var PIXELS_READBACK = push[uint8](ARENA_PERMANENT, WIDTH_EXPORT_MAX * HEIGHT_EXPORT_MAX * 3)
 
 # Carve every GIF frame storyboard run collects, once, from permanent arena.
 #   Back to back, before `writeGif` reads them all at end.
@@ -292,7 +282,7 @@ const
   HEIGHT_GIF_MAX = PIXELS_HEIGHT div STRIDE_GIF
   COUNT_GIF_FRAMES_MAX = (len(STEPS) + 1) * (FRAMES_GIF_GROW + FRAMES_GIF_HOLD)
 var GIF_FRAMES =
-  push[uint8](ARENA_PERMANENT, COUNT_GIF_FRAMES_MAX*WIDTH_GIF_MAX*HEIGHT_GIF_MAX*3)
+  push[uint8](ARENA_PERMANENT, COUNT_GIF_FRAMES_MAX * WIDTH_GIF_MAX * HEIGHT_GIF_MAX * 3)
 
 # Hold timing buffer at module scope as `MESHES` is.
 #   Too large for stack, touched only by `--timings` run.
@@ -322,49 +312,49 @@ var
 #[ Command Line ]#
 
 type
-  Options = object ## Define what command line asked of this run.
-    path_screenshot: string ## Where one-shot export is written; empty for none.
-    path_storyboard: string ## Directory scripted construction is written to; empty for none.
-    path_load_scene: string ## Scene file to open instead of built-in demo; empty for none.
-    count_frames: int ## Frames to draw before quitting; 0 to run until closed.
-    is_hidden: bool ## Whether window is left unmapped.
-    is_timed: bool ## Whether to record and report per-frame timing statistics.
-    is_novsync: bool ## Whether to disable vsync from startup, for uncapped timing runs.
-    is_filled: bool ## Whether to top scene up to capacity with synthetic objects.
+  Options = object  ## Define what command line asked of this run.
+    path_screenshot: string  ## Where one-shot export is written; empty for none.
+    path_storyboard: string  ## Directory scripted construction is written to; empty for none.
+    path_load_scene: string  ## Scene file to open instead of built-in demo; empty for none.
+    count_frames: int  ## Frames to draw before quitting; 0 to run until closed.
+    is_hidden: bool  ## Whether window is left unmapped.
+    is_timed: bool  ## Whether to record and report per-frame timing statistics.
+    is_novsync: bool  ## Whether to disable vsync from startup, for uncapped timing runs.
+    is_filled: bool  ## Whether to top scene up to capacity with synthetic objects.
       ## For timing heaviest tessellation and draw load.
-    scale_demo: Option[ScaleOrrery] ## Which size of orrery preset to open on, if any.
+    scale_demo: Option[ScaleOrrery]  ## Which size of orrery preset to open on, if any.
       ## Instead of storyboard's seeds, through same `orrery.showOrrery` browser's demo
       ## buttons load.
       ## `Option`, not `bool` and size: "no demo" and "demo at default size" differ, and
       ## sentinel size would put absence inside value's range.
-    is_tabs_listed: bool ## Whether to print help's tab names and quit, drawing nothing.
+    is_tabs_listed: bool  ## Whether to print help's tab names and quit, drawing nothing.
       ## Build driver reads them, so list of tabs has one home; see `help.HelpPath`.
-    is_drag_driven: bool ## Whether to script construction drag through event queue.
+    is_drag_driven: bool  ## Whether to script construction drag through event queue.
       ## Headless run then shows drag mid-gesture; see `driveDrag`.
-    is_key_driven: bool ## Whether to script run of view keys through event queue.
+    is_key_driven: bool  ## Whether to script run of view keys through event queue.
       ## Headless run then shows they reach view; see `driveKeys`.
-    is_select_driven: bool ## Whether to script clicks picking one, two and three objects.
+    is_select_driven: bool  ## Whether to script clicks picking one, two and three objects.
       ## Headless run then shows floating selection menu at each; see `driveSelect`.
-    is_undo_driven: bool ## Whether to script construction, orbit away and undo.
+    is_undo_driven: bool  ## Whether to script construction, orbit away and undo.
       ## Headless run then shows where undo leaves view; see `driveUndo`.
-    is_sky_driven: bool ## Whether to script drag and click on bare sky.
+    is_sky_driven: bool  ## Whether to script drag and click on bare sky.
       ## Headless run then shows press on it still reaches camera; see `driveSky`.
-    is_search_driven: bool ## Whether to script `/` and typed label.
+    is_search_driven: bool  ## Whether to script `/` and typed label.
       ## Headless run then shows search reaches objects list; see `driveSearch`.
-    is_menu_driven: bool ## Whether to open top menu at startup, with no click.
+    is_menu_driven: bool  ## Whether to open top menu at startup, with no click.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; verdict then reads what menu laid out.
-    is_faces_driven: bool ## Whether to ask each role's face for every codepoint build writes.
+    is_faces_driven: bool  ## Whether to ask each role's face for every codepoint build writes.
       ## Headless run then shows no text drawn falls to `.notdef`; see `shown`.
-    path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
+    path_help_driven: Option[HelpPath]  ## Which help tab to open at startup, if any.
       ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
-  KeyStep = object ## Define one frame of scripted keyboard run; see `KEYS_DRIVEN`.
+  KeyStep = object  ## Define one frame of scripted keyboard run; see `KEYS_DRIVEN`.
     ## Frame carrying no key is point of `Option`.
     ##   Held key moves camera on frames between press and release, and script sending
     ##   event every frame could never leave it held.
-    pressed: Option[tuple[scancode: Scancode; keycode: uint32]]
-    is_down: bool ## Whether this step presses key or lets go of it.
+    pressed: Option[tuple[scancode: Scancode, keycode: uint32]]
+    is_down: bool  ## Whether this step presses key or lets go of it.
 
 
 func demoScaleOf(value: string): Option[ScaleOrrery] =
@@ -374,7 +364,7 @@ func demoScaleOf(value: string): Option[ScaleOrrery] =
     if $objectsOf(scale) == value: return some(scale)
 
 
-proc applyOption(options: var Options, key, value: string) =
+proc applyOption(options: var Options; key, value: string) =
   ## Apply one named command-line option, rejecting anything unrecognised.
   case key
   of "screenshot": options.path_screenshot = value
@@ -392,7 +382,7 @@ proc applyOption(options: var Options, key, value: string) =
     for scale in ScaleOrrery: counts.add($objectsOf(scale))
     doAssert options.scale_demo.isSome,
       "Demo size must be one of " & counts.join(", ") &
-        &", or `--demo` alone for the default; got `{value}`."
+      &", or `--demo` alone for the default; got `{value}`."
   of "help-tabs": options.is_tabs_listed = true
   of "drive-drag": options.is_drag_driven = true
   of "drive-keys": options.is_key_driven = true
@@ -419,8 +409,8 @@ proc applyOption(options: var Options, key, value: string) =
 func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
-    options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
-    options.is_menu_driven or options.is_faces_driven or options.path_help_driven.isSome
+      options.is_undo_driven or options.is_sky_driven or options.is_search_driven or
+      options.is_menu_driven or options.is_faces_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -473,8 +463,13 @@ proc secondsNow(): float =
 
 
 func offerCameraAim(
-  panel: var Panel; scene: Scene; camera: var Camera; scale: DrawExtent; now: float;
-  width, height: int; is_moving_camera: bool
+  panel: var Panel;
+  scene: Scene;
+  camera: var Camera;
+  scale: DrawExtent;
+  now: float;
+  width, height: int;
+  is_moving_camera: bool;
 ) =
   ## Offer camera whatever is being worked on to frame, from one rule.
   ##   Rule is `framing.offerAim`, shared with browser.
@@ -483,16 +478,31 @@ func offerCameraAim(
   ##   knowing about camera.
   ##   Pointer pick recorded since last frame goes with it, and is spent here.
   panel.tween_camera.offerAim(
-    camera, scene, panel.selection, panel.staged, scale, width, height, now,
-    ANIMATION_SECONDS, panel.pointer_pick, is_moving_camera,
+    camera,
+    scene,
+    panel.selection,
+    panel.staged,
+    scale,
+    width,
+    height,
+    now,
+    ANIMATION_SECONDS,
+    panel.pointer_pick,
+    is_moving_camera,
   )
 
 
 proc assembleMeshes(
-  panel: var Panel; scene: Scene; interaction: Interaction;
-  camera: Camera; eye: Position; frame: FrameCamera; now: float; scale: DrawExtent;
+  panel: var Panel;
+  scene: Scene;
+  interaction: Interaction;
+  camera: Camera;
+  eye: Position;
+  frame: FrameCamera;
+  now: float;
+  scale: DrawExtent;
   width, height: int;
-  are_dimmed: array[OBJECTS_MAX, bool] = default(array[OBJECTS_MAX, bool])
+  are_dimmed = default(array[OBJECTS_MAX, bool]);
 ) =
   ## Refill vertex storage from scene as it stands this frame, recording what it cost.
   ##   `are_dimmed` grays object out rather than skipping it.
@@ -506,11 +516,16 @@ proc assembleMeshes(
   let scratch = ARENA_SWAP_DRAW.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
   let bounds = some(
-    camera.viewBoundsFor(eye, frame, scale, float(width)/float(max(height, 1)), REACH_SCENE)
+    camera.viewBoundsFor(eye, frame, scale, float(width) / float(max(height, 1)), REACH_SCENE),
   )
   # Hold furniture on unchanged frames, by same rule and tuple as browser.
   let settings_furniture = settingsFurnitureFor(
-    camera, height, REACH_SCENE, panel.is_axes_shown, panel.is_grid_shown, scene.revision,
+    camera,
+    height,
+    REACH_SCENE,
+    panel.is_axes_shown,
+    panel.is_grid_shown,
+    scene.revision,
     panel.selection.revision,
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
@@ -521,7 +536,7 @@ proc assembleMeshes(
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes(ORIGIN_RECORDS) # About held origin; see `ORIGIN_RECORDS`.
+  MESHES.clearMeshes(ORIGIN_RECORDS)  # About held origin; see `ORIGIN_RECORDS`.
   # Mark picks once and read mark per handle below; see `selection.markOnto`.
   panel.selection.markOnto(MARKS_PICKED)
   defer: panel.selection.markOnto(MARKS_PICKED, is_marked = false)
@@ -543,7 +558,13 @@ proc assembleMeshes(
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
-      scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
+      scratch[0],
+      one.geometry,
+      tint,
+      scale,
+      progress,
+      one.anchorOverride,
+      bounds = bounds,
       radius = one.radius,
     )
 
@@ -556,8 +577,12 @@ proc assembleMeshes(
   let staged = panel.staged
   if staged.isSome:
     discard MESHES.addObject(
-      scratch[0], staged.get.geometry, muted(INK_PREVIEW.colour), scale,
-      anchor_override = staged.get.anchor, radius = staged.get.radius,
+      scratch[0],
+      staged.get.geometry,
+      muted(INK_PREVIEW.colour),
+      scale,
+      anchor_override = staged.get.anchor,
+      radius = staged.get.radius,
     )
 
   # Emit what drag in progress would build, in same preview ink.
@@ -565,7 +590,10 @@ proc assembleMeshes(
   #   Centred on anchor commit stores, so previewed plane stays where previewed.
   if interaction.preview.isSome:
     discard MESHES.addObject(
-      scratch[0], interaction.preview.get.geometry, muted(INK_PREVIEW.colour), scale,
+      scratch[0],
+      interaction.preview.get.geometry,
+      muted(INK_PREVIEW.colour),
+      scale,
       anchor_override = interaction.preview.get.anchor,
     )
 
@@ -575,7 +603,7 @@ proc assembleMeshes(
   #   Horizon plane selected comes through here too, costing its dome first-in-bucket
   #   place above; sky drawn over one plane while selected is point of this pass.
   MESHES.markOverlay
-  for position in 0 ..< panel.selection.len:
+  for position in 0..<panel.selection.len:
     let handle = panel.selection.at(position)
     if not scene.isAlive(handle) or not scene[handle].isVisible: continue
     let
@@ -583,7 +611,13 @@ proc assembleMeshes(
       progress = animationProgress(now, one.born)
       tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
-      scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
+      scratch[0],
+      one.geometry,
+      tint,
+      scale,
+      progress,
+      one.anchorOverride,
+      bounds = bounds,
       radius = one.radius,
     )
 
@@ -591,10 +625,11 @@ proc assembleMeshes(
   # Count per record what its shader emits: vertices drawn, not floats carried.
   #   Six per ribbon, whole fan per disc, sphere per dome.
   panel.count_vertices =
-    MESHES.points.count_vertices + MESHES_FURNITURE.points.count_vertices +
-    6*(MESHES.ribbons.count + MESHES_FURNITURE.ribbons.count) +
-    3*SEGMENTS_CIRCLE_HORIZON*(MESHES.discs.count + MESHES_FURNITURE.discs.count) +
-    6*LATITUDES_HORIZON*LONGITUDES_HORIZON*(MESHES.domes.count + MESHES_FURNITURE.domes.count)
+      MESHES.points.count_vertices + MESHES_FURNITURE.points.count_vertices +
+      6 * (MESHES.ribbons.count + MESHES_FURNITURE.ribbons.count) +
+      3 * SEGMENTS_CIRCLE_HORIZON * (MESHES.discs.count + MESHES_FURNITURE.discs.count) +
+      6 * LATITUDES_HORIZON * LONGITUDES_HORIZON *
+      (MESHES.domes.count + MESHES_FURNITURE.domes.count)
 
 
 proc drawMarkerPulse(marker: Marker, tint: Rgba, alpha: float32) =
@@ -603,13 +638,17 @@ proc drawMarkerPulse(marker: Marker, tint: Rgba, alpha: float32) =
   ##   itself, tapering back to outline's width so only its head is edge.
   ##   Kind of what pulses is `marker.nim`'s business; every run arrives closed and in
   ##   screen space.
-  for run in 0 ..< marker.count_run_pulse:
+  for run in 0..<marker.count_run_pulse:
     var points: array[2*POINTS_MARKER_PULSE, cfloat]
-    for i in 0 ..< marker.counts_pulse[run]:
+    for i in 0..<marker.counts_pulse[run]:
       points[2*i] = cfloat(marker.pulses[run][i].x)
-      points[2*i + 1] = cfloat(marker.pulses[run][i].y)
+      points[2*i+1] = cfloat(marker.pulses[run][i].y)
     gui.overlayRibbon(
-      addr points[0], cint(marker.counts_pulse[run]), tint.red, tint.green, tint.blue,
+      addr points[0],
+      cint(marker.counts_pulse[run]),
+      tint.red,
+      tint.green,
+      tint.blue,
       alpha,
     )
 
@@ -622,55 +661,93 @@ proc drawMarker(marker: Marker, tint: Rgba, alpha: float32) =
   case marker.kind
   of MarkerKind.Ring:
     gui.overlayArc(
-      cfloat(marker.centre.x), cfloat(marker.centre.y), cfloat(marker.radius),
-      cfloat(marker.fraction), tint.red, tint.green, tint.blue, alpha, WIDTH_MARKER,
+      cfloat(marker.centre.x),
+      cfloat(marker.centre.y),
+      cfloat(marker.radius),
+      cfloat(marker.fraction),
+      tint.red,
+      tint.green,
+      tint.blue,
+      alpha,
+      WIDTH_MARKER,
     )
   of MarkerKind.Rails:
-    for i in 0 ..< marker.count_segment:
+    for i in 0..<marker.count_segment:
       let piece = marker.segments[i]
       gui.overlayLine(
-        cfloat(piece[0].x), cfloat(piece[0].y), cfloat(piece[1].x), cfloat(piece[1].y),
-        tint.red, tint.green, tint.blue, alpha, WIDTH_MARKER,
+        cfloat(piece[0].x),
+        cfloat(piece[0].y),
+        cfloat(piece[1].x),
+        cfloat(piece[1].y),
+        tint.red,
+        tint.green,
+        tint.blue,
+        alpha,
+        WIDTH_MARKER,
       )
   of MarkerKind.Loop:
     # Flatten to x/y pairs shim's path call takes.
     #   Stack storage, bound is compile-time.
     var points: array[2*SEGMENTS_MARKER_LOOP, cfloat]
-    for i in 0 ..< marker.count_point:
+    for i in 0..<marker.count_point:
       points[2*i] = cfloat(marker.points[i].x)
-      points[2*i + 1] = cfloat(marker.points[i].y)
+      points[2*i+1] = cfloat(marker.points[i].y)
     gui.overlayPolyline(
-      addr points[0], cint(marker.count_point), tint.red, tint.green, tint.blue, alpha,
-      WIDTH_MARKER, cint(ord(marker.is_closed)),
+      addr points[0],
+      cint(marker.count_point),
+      tint.red,
+      tint.green,
+      tint.blue,
+      alpha,
+      WIDTH_MARKER,
+      cint(ord(marker.is_closed)),
     )
   of MarkerKind.Bands:
     # Stroke two independent runs.
     #   Each band is cut by eye on its own, so one may be closed ring while other is arc.
-    for side in 0 .. 1:
+    for side in 0..1:
       if marker.counts_band[side] == 0: continue
       var points: array[2*SEGMENTS_MARKER_BANDS, cfloat]
-      for i in 0 ..< marker.counts_band[side]:
+      for i in 0..<marker.counts_band[side]:
         points[2*i] = cfloat(marker.points_band[side][i].x)
-        points[2*i + 1] = cfloat(marker.points_band[side][i].y)
+        points[2*i+1] = cfloat(marker.points_band[side][i].y)
       gui.overlayPolyline(
-        addr points[0], cint(marker.counts_band[side]), tint.red, tint.green, tint.blue,
-        alpha, WIDTH_MARKER, cint(ord(marker.are_closed_band[side])),
+        addr points[0],
+        cint(marker.counts_band[side]),
+        tint.red,
+        tint.green,
+        tint.blue,
+        alpha,
+        WIDTH_MARKER,
+        cint(ord(marker.are_closed_band[side])),
       )
   of MarkerKind.Frame:
     # Close unconditionally: built in screen space, no eye to cut it.
-    var points: array[2*(SEGMENTS_MARKER_FRAME + CORNERS_MARKER_FRAME), cfloat]
-    for i in 0 ..< marker.count_frame:
+    var points: array[2*(SEGMENTS_MARKER_FRAME+CORNERS_MARKER_FRAME), cfloat]
+    for i in 0..<marker.count_frame:
       points[2*i] = cfloat(marker.points_frame[i].x)
-      points[2*i + 1] = cfloat(marker.points_frame[i].y)
+      points[2*i+1] = cfloat(marker.points_frame[i].y)
     gui.overlayPolyline(
-      addr points[0], cint(marker.count_frame), tint.red, tint.green, tint.blue, alpha,
-      WIDTH_MARKER, 1,
+      addr points[0],
+      cint(marker.count_frame),
+      tint.red,
+      tint.green,
+      tint.blue,
+      alpha,
+      WIDTH_MARKER,
+      1,
     )
 
 
 proc drawSelectionMarker(
-  scene: Scene; selection: Selection; clock: var PulseClock; camera: Camera;
-  view_projection: Matrix4; width, height: int; scale: DrawExtent; seconds_step: float
+  scene: Scene;
+  selection: Selection;
+  clock: var PulseClock;
+  camera: Camera;
+  view_projection: Matrix4;
+  width, height: int;
+  scale: DrawExtent;
+  seconds_step: float;
 ): int {.discardable.} =
   ## Draw one marker per selected object onto foreground layer; report how many were drawn.
   ##   Shaped by `marker.markerFor` and tinted `Ink.Outline`.
@@ -680,7 +757,7 @@ proc drawSelectionMarker(
   ##   Unconditional, unlike hover/drag: storyboard step uses this marker to show what it
   ##   built, with interaction disabled.
   let tint = Ink.Outline.colour
-  for position in 0 ..< selection.len:
+  for position in 0..<selection.len:
     let handle = selection.at(position)
     if not (scene.isAlive(handle) and scene[handle].isVisible): continue
     let one = scene[handle]
@@ -688,8 +765,16 @@ proc drawSelectionMarker(
     #   Places orientation pulse; hover and focus pass none, so motion means selected.
     var marker: Marker
     if not markerFor(
-      one.geometry, one.anchorOverride, one.radius, scale, camera, view_projection, width,
-      height, marker, travel = some(clock.travelAt(handle)),
+      one.geometry,
+      one.anchorOverride,
+      one.radius,
+      scale,
+      camera,
+      view_projection,
+      width,
+      height,
+      marker,
+      travel = some(clock.travelAt(handle)),
     ): continue
     # Advance against lap this marker came out with.
     #   Orbiting then changes where comet wraps and never how fast it travels; see
@@ -703,16 +788,23 @@ proc drawSelectionMarker(
       # Push line's label off its anchor by its own measured box; see `is_label_beside`.
       #   Then hold every label wholly inside window; see `labelInView`.
       var at = marker.label_at
-      let half_width = 0.5*float(gui.labelWidth(toCstring(one.label)))
+      let half_width = 0.5 * float(gui.labelWidth(one.label.toCstring))
       if marker.is_label_beside:
         let clearance = clearanceBeside(marker.label_away_x, marker.label_away_y, half_width)
-        at.x += clearance*marker.label_away_x
-        at.y += clearance*marker.label_away_y
+        at.x += clearance * marker.label_away_x
+        at.y += clearance * marker.label_away_y
       let held = labelInView(at.x, at.y, half_width, float(width), float(height))
       gui.overlayLabel(
-        cfloat(held[0]), cfloat(held[1]),
-        fill.red, fill.green, fill.blue, halo.red, halo.green, halo.blue,
-        ALPHA_MARKER_LABEL_HALO, toCstring(one.label),
+        cfloat(held[0]),
+        cfloat(held[1]),
+        fill.red,
+        fill.green,
+        fill.blue,
+        halo.red,
+        halo.green,
+        halo.blue,
+        ALPHA_MARKER_LABEL_HALO,
+        one.label.toCstring,
       )
     result.inc
 
@@ -747,13 +839,20 @@ proc drawChoiceMenu(interaction: Interaction, scene: Scene) =
     over = destinationOf(interaction)
     highlighted = interaction.choosing
     is_pair_live =
-      over.isSome and over.get != interaction.index_source and
-      scene.isAlive(over.get) and scene.isAlive(interaction.index_source)
+        over.isSome and over.get != interaction.index_source and
+        scene.isAlive(over.get) and scene.isAlive(interaction.index_source)
 
   let dot = Ink.Outline.colour
   gui.overlayCircle(
-    cfloat(centre.x), cfloat(centre.y), RADIUS_MENU_CENTRE,
-    dot.red, dot.green, dot.blue, 0.7, WIDTH_MARKER, is_over_windows = 1,
+    cfloat(centre.x),
+    cfloat(centre.y),
+    RADIUS_MENU_CENTRE,
+    dot.red,
+    dot.green,
+    dot.blue,
+    0.7,
+    WIDTH_MARKER,
+    is_over_windows = 1,
   )
   for choice in DragChoice:
     let
@@ -772,14 +871,25 @@ proc drawChoiceMenu(interaction: Interaction, scene: Scene) =
     #   border for accent, so highlight survives reader who cannot tell hues apart.
     let edge = if is_chosen: TONE_WEDGE_CHOSEN else: TONE_WEDGE_BORDER
     gui.overlayChip(
-      cfloat(at.x), cfloat(at.y), width + 2.0*WIDTH_MENU_WEDGE_BORDER,
-      HEIGHT_MENU_WEDGE + 2.0*WIDTH_MENU_WEDGE_BORDER,
-      edge.red, edge.green, edge.blue, alpha,
+      cfloat(at.x),
+      cfloat(at.y),
+      width + 2.0 * WIDTH_MENU_WEDGE_BORDER,
+      HEIGHT_MENU_WEDGE + 2.0 * WIDTH_MENU_WEDGE_BORDER,
+      edge.red,
+      edge.green,
+      edge.blue,
+      alpha,
       ROUNDING_MENU_WEDGE + WIDTH_MENU_WEDGE_BORDER,
     )
     gui.overlayChip(
-      cfloat(at.x), cfloat(at.y), width, HEIGHT_MENU_WEDGE,
-      TONE_WEDGE_SURFACE.red, TONE_WEDGE_SURFACE.green, TONE_WEDGE_SURFACE.blue, alpha,
+      cfloat(at.x),
+      cfloat(at.y),
+      width,
+      HEIGHT_MENU_WEDGE,
+      TONE_WEDGE_SURFACE.red,
+      TONE_WEDGE_SURFACE.green,
+      TONE_WEDGE_SURFACE.blue,
+      alpha,
       ROUNDING_MENU_WEDGE,
     )
     let ink_label = if is_chosen: TONE_WEDGE_LABEL_CHOSEN else: TONE_WEDGE_LABEL
@@ -796,13 +906,12 @@ const
   TONE_RULER_LABEL = (red: 0.545'f32, green: 0.588'f32, blue: 0.639'f32)
   MARGIN_RULER = 14.0'f32
     ## Stand bar this far in from view's left and bottom edges, in pixels, as page does.
-  HEIGHT_RULER_BAR = 5.0'f32
-    ## Rise bar's end ticks this far, in pixels.
+  HEIGHT_RULER_BAR = 5.0'f32  ## Rise bar's end ticks this far, in pixels.
   HEIGHT_RULER_LABEL = 14.0'f32
     ## Leave this much of corner for bar's label under it, in pixels, gap included.
 
 
-proc drawRuler(camera: Camera; scale: DrawExtent; height: int) =
+proc drawRuler(camera: Camera, scale: DrawExtent, height: int) =
   ## Draw scale bar in view's lower left corner: length of world at its true screen length.
   ##   Same span and label page shows, both read from `camera.rulerFor`, so two front-ends
   ##   claim one length for one view. Nothing where nothing is measured.
@@ -813,24 +922,41 @@ proc drawRuler(camera: Camera; scale: DrawExtent; height: int) =
   let
     x_start = MARGIN_RULER
     x_end = MARGIN_RULER + cfloat(pixels)
-    y_label = cfloat(height) - MARGIN_RULER - 0.5*HEIGHT_RULER_LABEL
+    y_label = cfloat(height) - MARGIN_RULER - 0.5 * HEIGHT_RULER_LABEL
     y_bar = cfloat(height) - MARGIN_RULER - HEIGHT_RULER_LABEL
     ink = TONE_RULER_BAR
   gui.overlayLine(x_start, y_bar, x_end, y_bar, ink.red, ink.green, ink.blue, 1.0, 1.0)
   for x in [x_start, x_end]:
     gui.overlayLine(
-      x, y_bar, x, y_bar - HEIGHT_RULER_BAR, ink.red, ink.green, ink.blue, 1.0, 1.0,
+      x,
+      y_bar,
+      x,
+      y_bar - HEIGHT_RULER_BAR,
+      ink.red,
+      ink.green,
+      ink.blue,
+      1.0,
+      1.0,
     )
   var line: array[32, char]
   gui.overlayText(
-    0.5*(x_start + x_end), y_label, TONE_RULER_LABEL.red, TONE_RULER_LABEL.green,
-    TONE_RULER_LABEL.blue, 1.0, buildChars(line, appendRuler(line, cursor, span)),
+    0.5 * (x_start + x_end),
+    y_label,
+    TONE_RULER_LABEL.red,
+    TONE_RULER_LABEL.green,
+    TONE_RULER_LABEL.blue,
+    1.0,
+    buildChars(line, appendRuler(line, cursor, span)),
   )
 
 
 proc drawInteractionOverlay(
-  interaction: Interaction; scene: Scene; camera: Camera; view_projection: Matrix4;
-  width, height: int; scale: DrawExtent
+  interaction: Interaction;
+  scene: Scene;
+  camera: Camera;
+  view_projection: Matrix4;
+  width, height: int;
+  scale: DrawExtent;
 ) =
   ## Draw drag's rubber-band and hover's marker onto foreground layer.
   ##   Off entirely during storyboard capture, where interaction is never enabled.
@@ -845,8 +971,15 @@ proc drawInteractionOverlay(
     let one = scene[index.get]
     var marker: Marker
     if markerFor(
-      one.geometry, one.anchorOverride, one.radius, scale, camera, view_projection, width,
-      height, marker,
+      one.geometry,
+      one.anchorOverride,
+      one.radius,
+      scale,
+      camera,
+      view_projection,
+      width,
+      height,
+      marker,
     ):
       drawMarker(marker, Ink.Outline.colour, ALPHA_MARKER_HOVER)
 
@@ -862,9 +995,15 @@ proc drawInteractionOverlay(
         # Tint by what releasing would do, same rule browser's rubber-band answers from.
         let tint = interaction.inkOfDrag(scene.inkNext).colour
         gui.overlayLine(
-          cfloat(screen.x), cfloat(screen.y),
-          cfloat(interaction.cursor.x), cfloat(interaction.cursor.y),
-          tint.red, tint.green, tint.blue, 0.85, WIDTH_MARKER,
+          cfloat(screen.x),
+          cfloat(screen.y),
+          cfloat(interaction.cursor.x),
+          cfloat(interaction.cursor.y),
+          tint.red,
+          tint.green,
+          tint.blue,
+          0.85,
+          WIDTH_MARKER,
         )
         # Draw which way round pair is taken, at end where answer lands.
         #   None while cursor rests on own source.
@@ -873,17 +1012,21 @@ proc drawInteractionOverlay(
           var points: array[2*POINTS_MARKER_PULSE, cfloat]
           for i, point in comet.get:
             points[2*i] = cfloat(point.x)
-            points[2*i + 1] = cfloat(point.y)
+            points[2*i+1] = cfloat(point.y)
           gui.overlayRibbon(
-            addr points[0], POINTS_MARKER_PULSE, tint.red, tint.green, tint.blue, 0.85,
+            addr points[0],
+            POINTS_MARKER_PULSE,
+            tint.red,
+            tint.green,
+            tint.blue,
+            0.85,
           )
   if interaction.menu.isSome:
     drawChoiceMenu(interaction, scene)
 
 
 func anchorOfSelection(
-  panel: Panel; scene: Scene; view_projection: Matrix4; width, height: int;
-  scale: DrawExtent
+  panel: Panel; scene: Scene; view_projection: Matrix4; width, height: int; scale: DrawExtent
 ): Option[tuple[x, y: cfloat]] =
   ## Say where most recently picked object sits on screen, for selection menu to follow.
   ##   Most recent rather than middle of them all, which would jump as membership changes.
@@ -898,7 +1041,7 @@ func anchorOfSelection(
   let handle = panel.selection.at(panel.selection.len - 1)
   if not scene.isAlive(handle): return none(tuple[x, y: cfloat])
   if scene[handle].geometry.isHorizonPlane:
-    return some((x: cfloat(0.5*float(width)), y: cfloat(0.5*float(height))))
+    return some((x: cfloat(0.5 * float(width)), y: cfloat(0.5 * float(height))))
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
   if anchor.isNone: return none(tuple[x, y: cfloat])
   let screen = projectToScreen(view_projection, width, height, anchor.get)
@@ -907,10 +1050,15 @@ func anchorOfSelection(
 
 
 proc renderFrame(
-  window: Window, renderer: Renderer,
-  panel: var Panel, scene: var Scene, camera: var Camera, interaction: var Interaction,
-  now: float, are_dimmed: array[OBJECTS_MAX, bool] = default(array[OBJECTS_MAX, bool]),
-  path_help: Option[HelpPath] = none(HelpPath)
+  window: Window,
+  renderer: Renderer,
+  panel: var Panel,
+  scene: var Scene,
+  camera: var Camera,
+  interaction: var Interaction,
+  now: float,
+  are_dimmed = default(array[OBJECTS_MAX, bool]),
+  path_help = none(HelpPath),
 ): (int, int) =
   ## Lay panels out, draw scene and interaction overlay, and report framebuffer size.
   ##   Panels run first, so edit made this frame reaches meshes assembled below.
@@ -956,10 +1104,11 @@ proc renderFrame(
   # Measure scene's reach on edit, so far clip follows; see `camera.distanceFar`.
   if REVISION_REACH != some(scene.revision):
     REACH_SCENE = reachOf(scene)
-    for handle in 0 ..< scene.bound:
+    for handle in 0..<scene.bound:
       if scene.isAlive(handle):
         PLACEMENTS[handle] = placeObject(
-          scene.geometryOf(handle), scene.anchorOverrideAt(handle),
+          scene.geometryOf(handle),
+          scene.anchorOverrideAt(handle),
         )
     REVISION_REACH = some(scene.revision)
   # Read eye and frame once for frame, after ease moved camera, and hand both to every reader.
@@ -987,7 +1136,10 @@ proc renderFrame(
   # Place floating menu here, with this frame's transform and before meshes are assembled.
   #   Delete pressed on it then leaves scene this frame draws.
   layoutSelectionMenu(
-    panel, scene, camera, HISTORY_DESKTOP,
+    panel,
+    scene,
+    camera,
+    HISTORY_DESKTOP,
     anchorOfSelection(panel, scene, view_projection, int(width), int(height), scale),
     now,
   )
@@ -995,7 +1147,16 @@ proc renderFrame(
   interaction.pruneFocus(scene)
   interaction.updateDrag(scene, now)
   assembleMeshes(
-    panel, scene, interaction, camera, eye, frame, now, scale, int(width), int(height),
+    panel,
+    scene,
+    interaction,
+    camera,
+    eye,
+    frame,
+    now,
+    scale,
+    int(width),
+    int(height),
     are_dimmed,
   )
   clearFrame(int(width), int(height))
@@ -1011,8 +1172,15 @@ proc renderFrame(
   let seconds_step = CLOCK_PULSE.secondsStep(now)
   CLOCK_PULSE.tick(now)
   drawSelectionMarker(
-    scene, panel.selection, CLOCK_PULSE, camera, view_projection, int(width), int(height),
-    scale, seconds_step,
+    scene,
+    panel.selection,
+    CLOCK_PULSE,
+    camera,
+    view_projection,
+    int(width),
+    int(height),
+    scale,
+    seconds_step,
   )
   drawInteractionOverlay(
     interaction, scene, camera, view_projection, int(width), int(height), scale
@@ -1033,7 +1201,7 @@ proc exportFrame(path: string; width, height: int): string =
   doAssert width <= WIDTH_EXPORT_MAX and height <= HEIGHT_EXPORT_MAX,
     &"Window must fit the {WIDTH_EXPORT_MAX}x{HEIGHT_EXPORT_MAX} export bound, raise " &
     &"`--define:visualiser.width_export_max` or `...height_export_max`; got `{width}x{height}`."
-  let count = width*height*3
+  let count = width * height * 3
   capturePixels(width, height, PIXELS_READBACK.toOpenArray(0, count - 1))
   writePng(ARENA_FRAME, path, width, height, PIXELS_READBACK.toOpenArray(0, count - 1))
   ARENA_FRAME.reset()
@@ -1047,13 +1215,13 @@ func downsampleInto(
   ##   GIF frame stays small without box filter costing time on diagnostic capture.
   let width_small = width div stride
   for row in 0 ..< height div stride:
-    for column in 0 ..< width_small:
+    for column in 0..<width_small:
       let
-        source = (row*stride*width + column*stride)*3
-        destination_at = (row*width_small + column)*3
+        source = (row * stride * width + column * stride) * 3
+        destination_at = (row * width_small + column) * 3
       destination[destination_at] = pixels[source]
-      destination[destination_at + 1] = pixels[source + 1]
-      destination[destination_at + 2] = pixels[source + 2]
+      destination[destination_at+1] = pixels[source+1]
+      destination[destination_at+2] = pixels[source+2]
 
 
 
@@ -1115,9 +1283,14 @@ func isMenuRevealedFor(button: uint8): bool =
 
 proc handleEvent(
   event: Event;
-  camera: var Camera; panel: var Panel; scene: var Scene; interaction: var Interaction;
-  is_dragging_orbit, is_dragging_pan, is_running: var bool; button_dragging: var Option[uint8];
-  now: float; width_frame, height_frame: int;
+  camera: var Camera;
+  panel: var Panel;
+  scene: var Scene;
+  interaction: var Interaction;
+  is_dragging_orbit, is_dragging_pan, is_running: var bool;
+  button_dragging: var Option[uint8];
+  now: float;
+  width_frame, height_frame: int;
 ) =
   ## Fold one SDL3 event into camera placement, drag state, panel state or run state.
   ##   Mouse is ignored while GUI wants it, so dragging widget never turns view.
@@ -1214,7 +1387,10 @@ proc handleEvent(
       is_dragging_pan = true
       # Hover reads what press came down on now, and goes off once camera moves.
       interaction.grabPan(
-        camera, width_frame, height_frame, panel.selection.len > 0,
+        camera,
+        width_frame,
+        height_frame,
+        panel.selection.len > 0,
         panel.tween_camera.reachAimed(camera.pivot),
       )
   of uint32(EventKind.MouseButtonUp):
@@ -1277,14 +1453,18 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
     if gui.wantsMouse(): return
-    panel.tween_camera.halt() # Zoom lands pivot on what cursor is over; see `halt`.
+    panel.tween_camera.halt()  # Zoom lands pivot on what cursor is over; see `halt`.
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     interaction.dollyAtCursor(
-      camera, scene, pow(FACTOR_DOLLY, -float(event.wheel.y)),
+      camera,
+      scene,
+      pow(FACTOR_DOLLY, -float(event.wheel.y)),
       camera.drawExtentFor(height_frame, REACH_SCENE),
-      camera.initMatrixViewProjection(float(width_frame)/float(height_frame)),
-      width_frame, height_frame, panel.selection.len > 0,
+      camera.initMatrixViewProjection(float(width_frame) / float(height_frame)),
+      width_frame,
+      height_frame,
+      panel.selection.len > 0,
     )
   of uint32(EventKind.MouseMotion):
     interaction.updateCursor(float(event.motion.x), float(event.motion.y))
@@ -1301,11 +1481,13 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        width_frame, height_frame, panel.selection.len > 0,
+        width_frame,
+        height_frame,
+        panel.selection.len > 0,
         panel.tween_camera.reachAimed(camera.pivot),
       )
     if is_dragging_pan:
-      panel.tween_camera.halt() # Pan places pivot itself; see `halt`.
+      panel.tween_camera.halt()  # Pan places pivot itself; see `halt`.
       # Pass where pointer was and is, rather than how far it moved.
       #   Pan carries point it grabbed between both ends of step; see
       #   `interaction.panAcross`.
@@ -1315,8 +1497,12 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        width_frame, height_frame, panel.selection.len > 0, interaction.depth_pan,
-        interaction.point_pan, panel.tween_camera.reachAimed(camera.pivot),
+        width_frame,
+        height_frame,
+        panel.selection.len > 0,
+        interaction.depth_pan,
+        interaction.point_pan,
+        panel.tween_camera.reachAimed(camera.pivot),
       )
   else: discard
 
@@ -1335,26 +1521,31 @@ proc reportTimings(milliseconds: var openArray[float32]) =
   let mean = total / float(count)
 
   var variance = 0.0
-  for value in milliseconds: variance += (float(value) - mean)*(float(value) - mean)
+  for value in milliseconds: variance += (float(value) - mean) * (float(value) - mean)
   let deviation = sqrt(variance / float(count))
 
   sort(milliseconds)
+
   template atPercentile(fraction: float): float32 =
-    milliseconds[min(count - 1, int(fraction * float(count)))]
+    milliseconds[min(count-1, int(fraction*float(count)))]
+
   let (p50, p90, p95, p99) =
     (atPercentile(0.50), atPercentile(0.90), atPercentile(0.95), atPercentile(0.99))
 
   echo &"Frame time over {count} frames, milliseconds (fps in parentheses):"
   echo &"  mean {mean:.3f} ({1000.0/mean:.1f})  stddev {deviation:.3f}"
   echo &"  min {milliseconds[0]:.3f}  p50 {p50:.3f} ({1000.0/float(p50):.1f})  " &
-    &"p90 {p90:.3f} ({1000.0/float(p90):.1f})"
+      &"p90 {p90:.3f} ({1000.0/float(p90):.1f})"
   echo &"  p95 {p95:.3f} ({1000.0/float(p95):.1f})  p99 {p99:.3f} ({1000.0/float(p99):.1f})  " &
-    &"max {milliseconds[^1]:.3f} ({1000.0/float(milliseconds[^1]):.1f})"
+      &"max {milliseconds[^1]:.3f} ({1000.0/float(milliseconds[^1]):.1f})"
 
 
 proc driveDrag(
-  scene: Scene; interaction: Interaction; camera: Camera;
-  width, height, count_drawn: int; scale: DrawExtent
+  scene: Scene;
+  interaction: Interaction;
+  camera: Camera;
+  width, height, count_drawn: int;
+  scale: DrawExtent;
 ) =
   ## Script right-button construction drag from first object onto second and out onto `more…`.
   ##   One step per frame, so headless run shows choice menu open and where its way out
@@ -1391,7 +1582,7 @@ proc driveDrag(
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
   if anchor.isNone: return
   let screen = projectToScreen(
-    camera.initMatrixViewProjection(width/height), width, height, anchor.get
+    camera.initMatrixViewProjection(width / height), width, height, anchor.get
   )
   if not screen.isInFront: return
 
@@ -1427,7 +1618,7 @@ const KEYS_DRIVEN = [
   stepKey(Scancode.BracketRight, uint32(ord(']')), is_down = false),
   stepKey(Scancode.BracketRight, uint32(ord(']'))),
   stepKey(Scancode.BracketRight, uint32(ord(']')), is_down = false),
-  stepKey(Scancode.Return, 13'u32), # Return is ASCII carriage return.
+  stepKey(Scancode.Return, 13'u32),  # Return is ASCII carriage return.
   stepKey(Scancode.Return, 13'u32, is_down = false),
   # Hold W four frames and let go.
   #   Middle frames prove movement runs while key is down, release proves key-up wiring
@@ -1435,7 +1626,7 @@ const KEYS_DRIVEN = [
   stepKey(Scancode.W, uint32(ord('w'))),
   stepHold(), stepHold(), stepHold(),
   stepKey(Scancode.W, uint32(ord('w')), is_down = false),
-  stepHold(), # Nothing held: pivot must stand still across this frame.
+  stepHold(),  # Nothing held: pivot must stand still across this frame.
   # Hold shift and W together, which must cover `FACTOR_HASTE` times ground.
   stepKey(Scancode.ShiftLeft, KEYCODE_SHIFT),
   stepKey(Scancode.W, uint32(ord('w'))),
@@ -1447,8 +1638,8 @@ const KEYS_DRIVEN = [
   stepKey(Scancode.Right, KEYCODE_RIGHT, is_down = false),
   stepKey(Scancode.Equals, uint32(ord('='))), stepHold(),
   stepKey(Scancode.Equals, uint32(ord('=')), is_down = false),
-  stepKey(Scancode.Tab, 9'u32), # Tab is ASCII horizontal tab.
-] ## Script one keyboard step per frame for `--drive-keys`.
+  stepKey(Scancode.Tab, 9'u32),  # Tab is ASCII horizontal tab.
+]  ## Script one keyboard step per frame for `--drive-keys`.
   ##   Walk focus, select, hold movement key, hold it hastened, orbit and dolly.
   ##   Touches every kind of binding, so one run says whether Dear ImGui's navigation has
   ##   swallowed lot.
@@ -1460,9 +1651,9 @@ const KEYS_DRIVEN = [
 proc driveKeys(count_drawn: int) =
   ## Push one scripted keyboard step per frame onto SDL's queue, for `--drive-keys`.
   ##   Posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
-  const frame_first = 3 # Past startup, so first frame's layout has settled.
+  const frame_first = 3  # Past startup, so first frame's layout has settled.
   let step = count_drawn - frame_first
-  if step notin 0 ..< len(KEYS_DRIVEN): return
+  if step notin 0..<len(KEYS_DRIVEN): return
   let scripted = KEYS_DRIVEN[step]
   if scripted.pressed.isNone: return
   var event = Event(kind: uint32(if scripted.is_down: EventKind.KeyDown else: EventKind.KeyUp))
@@ -1488,11 +1679,11 @@ proc driveSearch(window: Window, panel: var Panel, scene: Scene, count_drawn: in
   ##   Typed as text event, which is what Dear ImGui reads into focused field, stamped with
   ##   this window, since its backend drops event naming none of its own.
   ##   Frame between `/` and text lets field take keyboard `/` handed it.
-  const frame_first = 3 # Past startup, so first frame's layout has settled.
+  const frame_first = 3  # Past startup, so first frame's layout has settled.
   if count_drawn == frame_first - 1:
     var handles: array[OBJECTS_MAX, int]
-    for position in 0 ..< scene.handlesCreated(handles):
-      if TEXT_SEARCH_DRIVEN notin toLowerAscii(toText(scene[handles[position]].label)):
+    for position in 0..<scene.handlesCreated(handles):
+      if TEXT_SEARCH_DRIVEN notin scene[handles[position]].label.toText.toLowerAscii:
         panel.selection.selectOnly(handles[position])
         return
   var event: Event
@@ -1511,9 +1702,7 @@ proc driveSearch(window: Window, panel: var Panel, scene: Scene, count_drawn: in
   sdl3.pushEvent(addr event)
 
 
-proc driveSelect(
-  scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent
-) =
+proc driveSelect(scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent) =
   ## Script click, then two shift-clicks, on first three objects, then drag off menu's object.
   ##   Headless run then shows floating selection menu at each size and proves it does not
   ##   swallow next drag; for `--drive-select`.
@@ -1529,13 +1718,13 @@ proc driveSelect(
   ##   `getModState` reads.
   ##   Shares `driveDrag`'s warning: look at capture; do not byte-compare.
   const
-    frame_first = 2 # Past startup, so first frame's layout has settled.
-    steps_click = 6 # Three clicks, each frame to reach and frame to press.
+    frame_first = 2  # Past startup, so first frame's layout has settled.
+    steps_click = 6  # Three clicks, each frame to reach and frame to press.
     lut_handle_by_step = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
       ## Name which object each step aims at.
       ##   Three clicks on 0, 1 and 2, then drag from 2 (one menu follows) onto 0.
   let step = count_drawn - frame_first
-  if step notin 0 ..< len(lut_handle_by_step): return
+  if step notin 0..<len(lut_handle_by_step): return
   let
     handle = lut_handle_by_step[step]
     is_acting = (step mod 2) == 1
@@ -1543,7 +1732,7 @@ proc driveSelect(
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
   if anchor.isNone: return
   let screen = projectToScreen(
-    camera.initMatrixViewProjection(width/height), width, height, anchor.get
+    camera.initMatrixViewProjection(width / height), width, height, anchor.get
   )
   if not screen.isInFront: return
 
@@ -1569,27 +1758,25 @@ proc driveSelect(
   #   Drag's two halves are frames apart, so cursor really travels between them.
   if step < steps_click:
     var release = Event(kind: uint32(EventKind.MouseButtonUp))
-    release.button.button = event.button.button # Button that pressed is one that lifts.
+    release.button.button = event.button.button  # Button that pressed is one that lifts.
     sdl3.pushEvent(addr release)
 
 
 const KEYS_UNDO_DRIVEN = [
-  (Scancode.Right, uint32(1073741903), 0'u16, true), # SDLK_RIGHT, no modifier: orbit.
+  (Scancode.Right, uint32(1073741903), 0'u16, true),  # SDLK_RIGHT, no modifier: orbit.
   (Scancode.Right, uint32(1073741903), 0'u16, false),
-  (Scancode.Up, uint32(1073741906), 0'u16, true), # SDLK_UP: rise.
+  (Scancode.Up, uint32(1073741906), 0'u16, true),  # SDLK_UP: rise.
   (Scancode.Up, uint32(1073741906), 0'u16, false),
-  (Scancode.Z, uint32(ord('z')), MODIFIER_CONTROL, true), # Undo under test.
+  (Scancode.Z, uint32(ord('z')), MODIFIER_CONTROL, true),  # Undo under test.
   (Scancode.Z, uint32(ord('z')), MODIFIER_CONTROL, false),
-] ## Script keys `--drive-undo` sends after construction lands.
+]  ## Script keys `--drive-undo` sends after construction lands.
   ##   Orbit and rise, held frame each, far enough that view left there cannot be mistaken
   ##   for one construction was made from, then undo.
   ##   Scancode, keycode, modifiers, down or up.
   ##   Every press is paired with release: arrow left down orbits every frame, so undo
   ##   restores view and still-held key takes it away again.
 
-proc driveUndo(
-  scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent
-) =
+proc driveUndo(scene: Scene; camera: Camera; width, height, count_drawn: int; scale: DrawExtent) =
   ## Script construction drag onto second object, orbit well away, then undo, one step per frame.
   ##   For `--drive-undo`.
   ##   Point is view: undo puts camera back where construction was made from, and only way
@@ -1599,8 +1786,8 @@ proc driveUndo(
   ##   Posted to SDL's queue, split across frames, for reasons `driveDrag` and
   ##   `driveSelect` give; same warning about byte-comparing.
   const
-    frame_first = 2 # Past startup, so first frame's layout has settled.
-    steps_drag = 4 # Reach source, press, reach target, release.
+    frame_first = 2  # Past startup, so first frame's layout has settled.
+    steps_drag = 4  # Reach source, press, reach target, release.
     lut_handle_by_step = [0, 0, 1, 1]
   let step = count_drawn - frame_first
   if step < 0: return
@@ -1611,7 +1798,7 @@ proc driveUndo(
     let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
     if anchor.isNone: return
     let screen = projectToScreen(
-      camera.initMatrixViewProjection(width/height), width, height, anchor.get
+      camera.initMatrixViewProjection(width / height), width, height, anchor.get
     )
     if not screen.isInFront: return
     if (step mod 2) == 0:
@@ -1636,7 +1823,7 @@ proc driveUndo(
   #   Construction is then committed and its camera aim armed before orbit that overrides
   #   it starts.
   let index = step - steps_drag - 1
-  if index notin 0 ..< len(KEYS_UNDO_DRIVEN): return
+  if index notin 0..<len(KEYS_UNDO_DRIVEN): return
   let (scancode, keycode, modifiers, is_down) = KEYS_UNDO_DRIVEN[index]
   var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scancode)
@@ -1662,9 +1849,7 @@ proc positionOverSky(
       if handle.isSome and scene.geometryOf(handle.get).isHorizonPlane: return some(at)
 
 
-proc driveSky(
-  scene: var Scene; camera: Camera; width, height, count_drawn: int; now: float
-) =
+proc driveSky(scene: var Scene; camera: Camera; width, height, count_drawn: int; now: float) =
   ## Script left drag across bare sky, then plain click on it, one step per frame.
   ##   For `--drive-sky`.
   ##   Guards one regression pickable horizon plane could cause.
@@ -1675,32 +1860,34 @@ proc driveSky(
   ##   Posted to SDL's queue, for reason `driveDrag` gives.
   const
     frame_first = 2
-    steps_drag = 5 # Reach, press, three frames of travel; release follows.
+    steps_drag = 5  # Reach, press, three frames of travel; release follows.
   # Build own precondition here.
   #   No sky in opening scene, so scan would find nothing and drive would silently do
   #   nothing.
   if count_drawn == frame_first - 1:
     var found_sky = false
-    for handle in 0 ..< scene.bound:
+    for handle in 0..<scene.bound:
       if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: found_sky = true
     if not found_sky:
       discard scene.addObject(
-        toMultivector(Direction(x: 1, y: 0, z: 0)) ∧
-          toMultivector(Direction(x: 0, y: 1, z: 0)) ∧
-          toMultivector(Direction(x: 0, y: 0, z: 1)),
-        "sky", Ink.Cobalt, now,
+        Direction(x: 1, y: 0, z: 0).toMultivector ∧
+        Direction(x: 0, y: 1, z: 0).toMultivector ∧
+        Direction(x: 0, y: 0, z: 1).toMultivector,
+        "sky",
+        Ink.Cobalt,
+        now,
       )
     return
   let step = count_drawn - frame_first
   if step notin 0 .. steps_drag + 3: return
   let over_sky = positionOverSky(
-    scene, camera, camera.initMatrixViewProjection(width/height), width, height
+    scene, camera, camera.initMatrixViewProjection(width / height), width, height
   )
   if over_sky.isNone: return
 
   var event: Event
   case step
-  of 0, steps_drag + 1: # Reach sky, for drag and then again for click.
+  of 0, steps_drag + 1:  # Reach sky, for drag and then again for click.
     event = Event(kind: uint32(EventKind.MouseMotion))
     event.motion.x = cfloat(over_sky.get.x)
     event.motion.y = cfloat(over_sky.get.y)
@@ -1710,18 +1897,22 @@ proc driveSky(
   of steps_drag, steps_drag + 3:
     event = Event(kind: uint32(EventKind.MouseButtonUp))
     event.button.button = uint8(MouseButton.Left)
-  else: # Travel, which orbit reads as turning view.
+  else:  # Travel, which orbit reads as turning view.
     event = Event(kind: uint32(EventKind.MouseMotion))
-    event.motion.x = cfloat(over_sky.get.x + float(40*step))
+    event.motion.x = cfloat(over_sky.get.x + float(40 * step))
     event.motion.y = cfloat(over_sky.get.y)
     event.motion.xrel = cfloat(40)
   sdl3.pushEvent(addr event)
 
 
 proc verdictDriven(
-  options: Options; scene: Scene; camera, camera_opened, camera_before_slide: Camera;
-  interaction: Interaction; panel: Panel; count_settled: int;
-  found_dragging, found_menu_open: bool
+  options: Options;
+  scene: Scene;
+  camera, camera_opened, camera_before_slide: Camera;
+  interaction: Interaction;
+  panel: Panel;
+  count_settled: int;
+  found_dragging, found_menu_open: bool;
 ): int =
   ## Judge what `--drive-*` run reached, and report every check pass or fail.
   ##   Answers with number that failed, for caller to exit on.
@@ -1731,6 +1922,7 @@ proc verdictDriven(
   ##   Each verdict belongs to one drive and is asked only where that drive ran.
   ##     What is checked comes from each drive's doc comment.
   var count_failed = 0
+
   proc report(name: string, is_passing: bool, detail: string) =
     if not is_passing: inc count_failed
     echo (if is_passing: "  ok   " else: " FAIL  ") & name & " -- " & detail
@@ -1752,13 +1944,13 @@ proc verdictDriven(
     var
       handles: array[OBJECTS_MAX, int]
       labelled = 0
-    for position in 0 ..< scene.handlesCreated(handles):
-      if TEXT_SEARCH_DRIVEN in toLowerAscii(toText(scene[handles[position]].label)):
+    for position in 0..<scene.handlesCreated(handles):
+      if TEXT_SEARCH_DRIVEN in scene[handles[position]].label.toText.toLowerAscii:
         inc labelled
     let
-      typed = toText(panel.search)
+      typed = panel.search.toText
       is_pick_listed = panel.selection.len == 1 and
-        panel.selection.at(0) in panel.handles_shown.toOpenArray(0, panel.count_shown - 1)
+          panel.selection.at(0) in panel.handles_shown.toOpenArray(0, panel.count_shown - 1)
     report(
       "pressing / and typing narrows the objects list to the objects that answer it",
       typed == TEXT_SEARCH_DRIVEN and labelled >= 1 and panel.count_matched == labelled,
@@ -1814,7 +2006,8 @@ proc verdictDriven(
       let named = if missing.len == 0: "none" else: missing.join(", ")
       report(
         &"every codepoint the {role} face sets has a glyph, and none draws as .notdef",
-        missing.len == 0, &"{codepoints.len} codepoints asked, missing {named}",
+        missing.len == 0,
+        &"{codepoints.len} codepoints asked, missing {named}",
       )
 
   # Three roles, three faces, and every run says so.
@@ -1835,11 +2028,11 @@ proc verdictDriven(
     #   Through queue and past Dear ImGui's navigation.
     report(
       "the scripted keys reached the view", interaction.index_focus.isSome and
-        len(panel.selection) >= 1 and
-        abs(camera.azimuth - camera_opened.azimuth) > 1.0e-6 and
-        abs(camera.distance - camera_opened.distance) > 1.0e-6,
+          len(panel.selection) >= 1 and
+          abs(camera.azimuth - camera_opened.azimuth) > 1.0e-6 and
+          abs(camera.distance - camera_opened.distance) > 1.0e-6,
       &"focus {interaction.index_focus}, selected {len(panel.selection)}, " &
-        &"azimuth {camera.azimuth:.4f}, distance {camera.distance:.4f}",
+      &"azimuth {camera.azimuth:.4f}, distance {camera.distance:.4f}",
     )
     # Where pick put pivot is read off ease's own destination, not where slide started.
     #   First held key can land while ease still carries, and ease then finishes carrying
@@ -1852,14 +2045,15 @@ proc verdictDriven(
       #   pass on camera that had lost other.
       #   Orbit after pick must not move pivot off what was picked at all.
       abs(camera.azimuth - camera_before_slide.azimuth) > 1.0e-6 and
-        abs(camera.elevation - camera_before_slide.elevation) > 1.0e-6 and
-        norm(camera.pivot - pivot_picked) < 1.0e-6,
+      abs(camera.elevation - camera_before_slide.elevation) > 1.0e-6 and
+      norm(camera.pivot - pivot_picked) < 1.0e-6,
       &"azimuth {camera_before_slide.azimuth:.4f} -> {camera.azimuth:.4f}, " &
       &"elevation {camera_before_slide.elevation:.4f} -> {camera.elevation:.4f}, " &
       &"pivot {norm(camera.pivot - pivot_picked):.6f} from where pick put it",
     )
     report(
-      "every scripted key was let go of again", interaction.keys_held.len == 0,
+      "every scripted key was let go of again",
+      interaction.keys_held.len == 0,
       &"{interaction.keys_held.len} still held",
     )
   if options.is_sky_driven:
@@ -1870,11 +2064,13 @@ proc verdictDriven(
       &"azimuth {camera_opened.azimuth:.4f} -> {camera.azimuth:.4f}",
     )
     report(
-      "a drag across bare sky builds nothing", len(scene) == count_settled,
+      "a drag across bare sky builds nothing",
+      len(scene) == count_settled,
       &"{len(scene)} objects, settled at {count_settled}",
     )
     report(
-      "a click on bare sky selects it", len(panel.selection) == 1,
+      "a click on bare sky selects it",
+      len(panel.selection) == 1,
       &"{len(panel.selection)} selected",
     )
   if options.is_undo_driven:
@@ -1882,7 +2078,8 @@ proc verdictDriven(
     #   Camera back where construction was made from, through key wiring, panel and tween
     #   it has to survive.
     report(
-      "undo took the construction back", len(scene) == count_settled,
+      "undo took the construction back",
+      len(scene) == count_settled,
       &"{len(scene)} objects, settled at {count_settled}",
     )
     report(
@@ -1894,11 +2091,13 @@ proc verdictDriven(
     # Check menu at one, two and three objects, then drag off object it sits over.
     #   Menu swallowing its next press would break that drag.
     report(
-      "clicking objects selects them", len(panel.selection) >= 1,
+      "clicking objects selects them",
+      len(panel.selection) >= 1,
       &"{len(panel.selection)} selected",
     )
     report(
-      "the menu did not swallow the drag after it", found_dragging,
+      "the menu did not swallow the drag after it",
+      found_dragging,
       &"a drag began after the clicks: {found_dragging}",
     )
   if options.is_drag_driven:
@@ -1913,15 +2112,19 @@ proc verdictDriven(
       "the help tab asked for opened, with rows in it",
       panel.is_help_open and countOf(options.path_help_driven.get) > 0,
       &"open {panel.is_help_open}, " &
-        &"{countOf(options.path_help_driven.get)} rows in " &
-        &"`{titleOf(options.path_help_driven.get)}`",
+      &"{countOf(options.path_help_driven.get)} rows in " &
+      &"`{titleOf(options.path_help_driven.get)}`",
     )
   count_failed
 
 
 proc runInteractive(
-  window: Window, renderer: Renderer, options: Options,
-  panel: var Panel, scene: var Scene, camera: var Camera,
+  window: Window,
+  renderer: Renderer,
+  options: Options,
+  panel: var Panel,
+  scene: var Scene,
+  camera: var Camera,
 ) =
   ## Draw frames, folding input in, until user or command line asks to stop.
   ##   Exceeds sixty-line default: sequential per-frame state machine threading dozen
@@ -1934,7 +2137,7 @@ proc runInteractive(
     is_running = true
     is_dragging_orbit = false
     is_dragging_pan = false
-    is_vsync_active = panel.is_vsync_enabled # Matches swap interval already set.
+    is_vsync_active = panel.is_vsync_enabled  # Matches swap interval already set.
     count_drawn = 0
     ticks_previous_frame = getMonoTime().ticks
     total_tessellate_microseconds = 0.0
@@ -1983,7 +2186,7 @@ proc runInteractive(
     # Take one reading per frame, shared by every drag completing this frame and by render.
     #   Both then agree on "now". Scripted run reads its own clock; see `SECONDS_FRAME_DRIVEN`.
     let now =
-      if options.isDriven: float(count_drawn)*SECONDS_FRAME_DRIVEN
+      if options.isDriven: float(count_drawn) * SECONDS_FRAME_DRIVEN
       else: secondsNow()
 
     # Measure against previous iteration's start.
@@ -1996,14 +2199,14 @@ proc runInteractive(
       let delta_milliseconds = float32(ticks_frame_start - ticks_previous_frame) / 1_000_000.0
       # Restate same measurement in units held key's rates are stated in.
       #   Zero on first frame.
-      seconds_frame = float(delta_milliseconds)/1000.0
+      seconds_frame = float(delta_milliseconds) / 1000.0
       panel.milliseconds_history[panel.index_history] = cfloat(delta_milliseconds)
       panel.index_history = (panel.index_history + 1) mod FRAMES_HISTORY
       if options.is_timed:
         doAssert count_drawn - 1 < FRAMES_TIMING_MAX,
           &"Timing run must stay within its {FRAMES_TIMING_MAX}-frame bound, raise " &
           &"`--define:visualiser.frames_timing_max` or shorten `--frames`; got `{count_drawn}`."
-        TIMINGS_FRAME_MILLISECONDS[count_drawn - 1] = delta_milliseconds
+        TIMINGS_FRAME_MILLISECONDS[count_drawn-1] = delta_milliseconds
       # Held key moves by scripted clock's step, as everything else in scripted run does.
       if options.isDriven: seconds_frame = SECONDS_FRAME_DRIVEN
     ticks_previous_frame = ticks_frame_start
@@ -2016,7 +2219,12 @@ proc runInteractive(
       let scale_driven = camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE)
       if options.is_drag_driven:
         driveDrag(
-          scene, interaction, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn,
+          scene,
+          interaction,
+          camera,
+          PIXELS_WIDTH,
+          PIXELS_HEIGHT,
+          count_drawn,
           scale_driven,
         )
       elif options.is_select_driven:
@@ -2028,9 +2236,18 @@ proc runInteractive(
     while sdl3.pollEvent(addr event):
       gui.processEvent(addr event)
       handleEvent(
-        event, camera, panel, scene, interaction,
-        is_dragging_orbit, is_dragging_pan, is_running, button_dragging, now,
-        width_frame, height_frame,
+        event,
+        camera,
+        panel,
+        scene,
+        interaction,
+        is_dragging_orbit,
+        is_dragging_pan,
+        is_running,
+        button_dragging,
+        now,
+        width_frame,
+        height_frame,
       )
 
     # Clear camera-drag flag here only, so release taking early return cannot leave it set.
@@ -2050,7 +2267,13 @@ proc runInteractive(
 
     let (width, height) =
       renderFrame(
-        window, renderer, panel, scene, camera, interaction, now,
+        window,
+        renderer,
+        panel,
+        scene,
+        camera,
+        interaction,
+        now,
         path_help = options.path_help_driven,
       )
     if options.isDriven:
@@ -2081,7 +2304,7 @@ proc runInteractive(
 
     if panel.is_export_requested:
       panel.is_export_requested = false
-      let report = exportFrame(toText(panel.path_export), width, height)
+      let report = exportFrame(panel.path_export.toText, width, height)
       panel.say(report, now)
       echo report
 
@@ -2093,15 +2316,23 @@ proc runInteractive(
     # Report what scripted keys reached.
     #   "Dear ImGui swallowed them" is then reading rather than suspicion.
     echo &"Keys: focus {interaction.index_focus}, selected {len(panel.selection)}, " &
-      &"azimuth {camera.azimuth:.4f}, elevation {camera.elevation:.4f}, " &
-      &"distance {camera.distance:.4f}, " &
-      &"pivot ({camera.pivot.x:.3f}, {camera.pivot.y:.3f}, {camera.pivot.z:.3f}), " &
-      &"held {len(interaction.keys_held)}; " &
-      &"gui.wantsKeys {gui.wantsKeys()}, nav enabled {gui.isNavEnabled()}."
+        &"azimuth {camera.azimuth:.4f}, elevation {camera.elevation:.4f}, " &
+        &"distance {camera.distance:.4f}, " &
+        &"pivot ({camera.pivot.x:.3f}, {camera.pivot.y:.3f}, {camera.pivot.z:.3f}), " &
+        &"held {len(interaction.keys_held)}; " &
+        &"gui.wantsKeys {gui.wantsKeys()}, nav enabled {gui.isNavEnabled()}."
   if options.isDriven:
     let count_failed = verdictDriven(
-      options, scene, camera, camera_opened, camera_before_slide, interaction, panel,
-      count_settled, found_dragging, found_menu_open,
+      options,
+      scene,
+      camera,
+      camera_opened,
+      camera_before_slide,
+      interaction,
+      panel,
+      count_settled,
+      found_dragging,
+      found_menu_open,
     )
     if count_failed > 0:
       echo &"\n{count_failed} driven check(s) failed."
@@ -2110,13 +2341,17 @@ proc runInteractive(
   if options.is_timed and count_drawn > 1:
     reportTimings(TIMINGS_FRAME_MILLISECONDS.toOpenArray(0, count_drawn - 2))
     echo &"  tessellate mean {total_tessellate_microseconds/float(count_drawn):.1f}us, " &
-      &"{total_vertices div count_drawn} vertices/frame " &
-      &"(both this run's own CPU-side cost, not the rasterizer's)."
+        &"{total_vertices div count_drawn} vertices/frame " &
+        &"(both this run's own CPU-side cost, not the rasterizer's)."
 
 
 proc runStoryboard(
-  window: Window, renderer: Renderer, directory: string,
-  panel: var Panel, scene: var Scene, camera: var Camera,
+  window: Window,
+  renderer: Renderer,
+  directory: string,
+  panel: var Panel,
+  scene: var Scene,
+  camera: var Camera,
 ) =
   ## Apply each scripted step in turn, writing one settled frame after each, plus one GIF.
   ##   GIF sweeps through every step's appear-in animation.
@@ -2125,11 +2360,11 @@ proc runStoryboard(
   ##   Exceeds sixty-line default for same reason `runInteractive` does.
   createDir(directory)
   var
-    interaction_disabled = Interaction() # is_enabled defaults false; no picking, no overlay.
+    interaction_disabled = Interaction()  # is_enabled defaults false; no picking, no overlay.
     dims_gif = (0, 0)
     count_frames_gif = 0
     clock = 0.0
-    are_dimmed: array[OBJECTS_MAX, bool] ## Every handle starts un-dimmed.
+    are_dimmed: array[OBJECTS_MAX, bool]  ## Every handle starts un-dimmed.
       ## Right for seeds-only frame captured below.
 
   template renderAt(now: float): (int, int) =
@@ -2147,16 +2382,22 @@ proc runStoryboard(
       let (width, height) = renderAt(now)
       doAssert width == PIXELS_WIDTH and height == PIXELS_HEIGHT,
         "Storyboard capture assumes a " & $PIXELS_WIDTH & "x" & $PIXELS_HEIGHT &
-          " framebuffer; got `" & $width & "x" & $height & "`."
+        " framebuffer; got `" & $width & "x" & $height & "`."
       dims_gif = (width div STRIDE_GIF, height div STRIDE_GIF)
       doAssert count_frames_gif < COUNT_GIF_FRAMES_MAX,
         &"Storyboard must fit the {COUNT_GIF_FRAMES_MAX} GIF frames reserved; got " &
-          &"`{count_frames_gif}`."
-      capturePixels(width, height, PIXELS_READBACK.toOpenArray(0, width*height*3 - 1))
-      let frame_size = dims_gif[0]*dims_gif[1]*3
+        &"`{count_frames_gif}`."
+      capturePixels(width, height, PIXELS_READBACK.toOpenArray(0, width * height * 3 - 1))
+      let frame_size = dims_gif[0] * dims_gif[1] * 3
       downsampleInto(
-        GIF_FRAMES.toOpenArray(count_frames_gif*frame_size, (count_frames_gif + 1)*frame_size - 1),
-        PIXELS_READBACK.toOpenArray(0, width*height*3 - 1), width, height, STRIDE_GIF,
+        GIF_FRAMES.toOpenArray(
+          count_frames_gif * frame_size,
+          (count_frames_gif + 1) * frame_size - 1,
+        ),
+        PIXELS_READBACK.toOpenArray(0, width * height * 3 - 1),
+        width,
+        height,
+        STRIDE_GIF,
       )
       inc count_frames_gif
 
@@ -2167,18 +2408,18 @@ proc runStoryboard(
     ##   Template rather than nested proc: scene and panel arrive by `var`, which closure
     ##   may not capture.
     block:
-      let now_settled = clock + 2.0*ANIMATION_SECONDS
-      for sub in 0 ..< FRAMES_GIF_GROW:
-        captureGif(clock + ANIMATION_SECONDS*(float(sub) / float(FRAMES_GIF_GROW - 1)))
-      for _ in 1 .. FRAMES_GIF_HOLD:
+      let now_settled = clock + 2.0 * ANIMATION_SECONDS
+      for sub in 0..<FRAMES_GIF_GROW:
+        captureGif(clock + ANIMATION_SECONDS * (float(sub) / float(FRAMES_GIF_GROW - 1)))
+      for _ in 1..FRAMES_GIF_HOLD:
         captureGif(now_settled)
 
       var (width, height) = (0, 0)
-      for _ in 1 .. FRAMES_SETTLE: (width, height) = renderAt(now_settled)
+      for _ in 1..FRAMES_SETTLE: (width, height) = renderAt(now_settled)
       echo exportFrame(directory / (stem & ".png"), width, height)
       sdl3.glSwapWindow(window)
 
-  scene.restoreFrom(initScene())
+  scene.restoreFrom initScene()
   constructSeeds(scene, clock)
   let count_seeds = scene.len
   panel.say("Seeds placed.", clock)
@@ -2199,7 +2440,7 @@ proc runStoryboard(
 
     var are_operative: array[OBJECTS_MAX, bool]
     are_operative[step.index_first] = true
-    are_operative[count_seeds + index] = true
+    are_operative[count_seeds+index] = true
     if LUT_ARITY_BY_OPERATION[step.operation] == Arity.Two:
       are_operative[step.index_second] = true
     for handle, _ in scene.pairs:
@@ -2213,14 +2454,12 @@ proc runStoryboard(
     #   Representative point for line's great circle, since aiming along normal puts ring
     #   at frame's edge; plane at horizon needs no aiming; lens stays default.
     camera = camera.placed(stanceFacing(
-      camera.pivot + (-camera.distance)*heading_default, camera.pivot
+      camera.pivot + -camera.distance * heading_default, camera.pivot
     ))
     # Settle instantly, not eased: captured frame must never show half-finished pan.
     #   Same `framing` rule interactive path uses.
     if isHorizon(derived):
-      panel.tween_camera.offerAimAt(
-        camera, derived, PIXELS_WIDTH, PIXELS_HEIGHT, 0.0, 0.0
-      )
+      panel.tween_camera.offerAimAt(camera, derived, PIXELS_WIDTH, PIXELS_HEIGHT, 0.0, 0.0)
       panel.tween_camera.settle(camera)
 
     panel.say(derivedMessage(step.label, kindText(derived)), clock)
@@ -2229,11 +2468,15 @@ proc runStoryboard(
 
   let
     path_gif = directory / "storyboard.gif"
-    frame_size_gif = dims_gif[0]*dims_gif[1]*3
+    frame_size_gif = dims_gif[0] * dims_gif[1] * 3
   writeGif(
-    ARENA_FRAME, path_gif, dims_gif[0], dims_gif[1],
-    GIF_FRAMES.toOpenArray(0, count_frames_gif*frame_size_gif - 1),
-    count_frames_gif, CENTISECONDS_GIF_DELAY,
+    ARENA_FRAME,
+    path_gif,
+    dims_gif[0],
+    dims_gif[1],
+    GIF_FRAMES.toOpenArray(0, count_frames_gif * frame_size_gif - 1),
+    count_frames_gif,
+    CENTISECONDS_GIF_DELAY,
   )
   ARENA_FRAME.reset()
   echo &"Wrote {count_frames_gif} frames to `{path_gif}`."
@@ -2251,16 +2494,14 @@ func fillSceneForBenchmark(scene: var Scene, now: float) =
   while not scene.isFull:
     let angle = float(index) * 0.7
     points[index] = toMultivector(
-      Position(x: 6.0*cos(angle), y: 6.0*sin(angle), z: -3.0 + 0.15*float(index))
+      Position(x: 6.0 * cos(angle), y: 6.0 * sin(angle), z: -3.0 + 0.15 * float(index)),
     )
     let ink = inkCycled(index)
     case index mod 3
     of 0: scene.addObject(points[index], &"fill{index}", ink, now)
-    of 1: scene.addObject(points[index] ∧ points[index - 1], &"fill{index}", ink, now)
+    of 1: scene.addObject(points[index] ∧ points[index-1], &"fill{index}", ink, now)
     else:
-      scene.addObject(
-        points[index] ∧ points[index - 1] ∧ points[index - 2], &"fill{index}", ink, now
-      )
+      scene.addObject(points[index] ∧ points[index-1] ∧ points[index-2], &"fill{index}", ink, now)
     inc index
 
 
@@ -2321,9 +2562,16 @@ proc main() =
   #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
   #   pointer here outlives string behind it.
   doAssert gui.init(
-    window, context, path_font.cstring, path_font_math.cstring, path_font_symbol.cstring,
-    SIZE_FONT, path_font_label.cstring, cfloat(HEIGHT_MARKER_LABEL), path_font_title.cstring,
-    path_font_mono.cstring,
+    window,
+    context,
+    cstring(path_font),
+    cstring(path_font_math),
+    cstring(path_font_symbol),
+    SIZE_FONT,
+    cstring(path_font_label),
+    cfloat(HEIGHT_MARKER_LABEL),
+    cstring(path_font_title),
+    cstring(path_font_mono),
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
   # Second line only where there was file to load: absent one is already reported by
@@ -2351,7 +2599,7 @@ proc main() =
   let now_startup = if options.isDriven: 0.0 else: secondsNow()
   doAssert not (options.scale_demo.isSome and len(options.path_load_scene) > 0),
     &"`--demo` and `--load-scene` each replace the opening scene, ask for one; got " &
-      &"`{options.scale_demo}` with `{options.path_load_scene}`."
+    &"`{options.scale_demo}` with `{options.path_load_scene}`."
   if options.scale_demo.isSome:
     # Frame for window this run opens at; reader who resizes reframes by looking.
     showOrrery(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, options.scale_demo.get, now_startup)
