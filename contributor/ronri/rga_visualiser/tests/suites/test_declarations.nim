@@ -13,13 +13,13 @@ suite "Declarations":
     #   `is_tally_skipped = false` on `nimBuildFrame`. Reading took type from colon alone and
     #   dropped that parameter, so page's sixth argument failed `types` with `TS2554`.
     check declarationOf("proc nimBuildFrame(handle: cint; is_tally_skipped = false)") ==
-      "declare function nimBuildFrame(handle: number, is_tally_skipped: boolean): void;"
+        "declare function nimBuildFrame(handle: number, is_tally_skipped: boolean): void;"
     check declarationOf("""func nimSized(count = 3, scale = 1.5, label = "a"): cint""") ==
-      "declare function nimSized(count: number, scale: number, label: string): number;"
+        "declare function nimSized(count: number, scale: number, label: string): number;"
     check declarationOf("proc nimShared(is_shown, is_held = false)") ==
-      "declare function nimShared(is_shown: boolean, is_held: boolean): void;"
+        "declare function nimShared(is_shown: boolean, is_held: boolean): void;"
     check declarationOf("proc nimTyped(count: cint = 2)") ==
-      "declare function nimTyped(count: number): void;"
+        "declare function nimTyped(count: number): void;"
 
 
   test "a parameter whose type cannot be read leaves no declaration, never one short":
