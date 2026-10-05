@@ -903,6 +903,30 @@ suite "Scene":
     check VERSION_SCENE > VERSION_SCENE_SHINE_LAST
 
 
+  test "an object of a version before 8 is anchored at world origin, whatever parser passed":
+    # Versions 1 to 7 wrote coefficients about world origin and no anchor, so chain fills
+    #   origin over whatever reader had in field: object then stands where it was saved,
+    #   to bit. From version 8 on, anchor is file's own, and one no build could write is
+    #   refused, as radius is.
+    for version in VERSION_SCENE_LEAST..<VERSION_SCENE_ANCHOR:
+      check not isCarryingAnchor(version)
+      let ordinal = if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1 else: ordinal_ink_rose_v5
+      for stale in [PLACE_FAR, Position(x: NaN, y: 0.0, z: Inf)]:
+        var saved = savedWith(ordinal)
+        saved.anchor = stale
+        let carried = objectUpgraded(saved, version)
+        check carried.isSome
+        check carried.get.anchor =~ ORIGIN_WORLD
+        for b in Basis: check carried.get.geometry[b] == POINTS[0][b]
+    check isCarryingAnchor(VERSION_SCENE)
+    var saved = savedWith(ord(Ink.Rose))
+    saved.anchor = PLACE_FAR
+    check objectUpgraded(saved, VERSION_SCENE).get.anchor.z == PLACE_FAR.z
+    for unwritable in [NaN, Inf, NegInf]:
+      saved.anchor = Position(x: 0.0, y: unwritable, z: 0.0)
+      check objectUpgraded(saved, VERSION_SCENE).isNone
+
+
   test "a version-5 hue past the retired debug slot moves one down, and the slot is refused":
     # Version 6 dropped structural `Algebra` from palette; ordinals past it shift, ones.
     #   before it stand, and byte naming slot no build ever assigned is corrupt.
@@ -1155,6 +1179,62 @@ suite "Scene":
       check loaded.len == 0
 
 
+    test "save then load keeps each object's anchor and coefficients about it, bit for bit":
+      # File holds what storage holds, so pair metre apart beside HD 222237 b reloads
+      #   metre apart, and its join holds both. Written about world origin it reloads as one
+      #   point. Object anchored at world origin, and override held about its anchor, ride
+      #   along as they stand.
+      var original = initScene()
+      let
+        (first, second) = addPairFar(original)
+        line = original.addObject(
+          applyOperation(Operation.Wedge, original.anchoredAt(first), original.anchoredAt(second)),
+          "p ∧ q",
+          Ink.Olive,
+        )
+      discard original.addObject(POINTS[0], "near", Ink.Cobalt)
+      let path = getTempDir() / "visualiser_suite_scene_anchored.rgascene"
+      check saveScene(original, path).contains("Saved 4")
+      defer: removeFile(path)
+
+      var loaded = initScene()
+      check loadScene(loaded, path).contains("Loaded 4")
+      for handle in [first, second, line, 3]:
+        let (wrote, read) = (original.anchoredAt(handle), loaded.anchoredAt(handle))
+        check read.anchor.x == wrote.anchor.x
+        check read.anchor.y == wrote.anchor.y
+        check read.anchor.z == wrote.anchor.z
+        for b in Basis:
+          check read.local[b] == wrote.local[b]
+          check loaded.geometryOf(handle)[b] == original.geometryOf(handle)[b]
+      let (first_star, second_star) =
+        (loaded.geometryAbout(first, PLACE_FAR), loaded.geometryAbout(second, PLACE_FAR))
+      check abs(distanceBetween(first_star, second_star) - METRE) <= 1.0e-9 * METRE
+      let about_star = unitize(loaded.geometryAbout(line, PLACE_FAR))
+      for point in [first_star, second_star]:
+        check normWeight(about_star ∧ point)[Basis.scalarAnti] <= TOLERANCE_HOLD_METRE * METRE
+
+
+    test "each object's anchor follows its radius, as three little-endian floats":
+      # Bytes themselves, as for every other field: browser's packer writes same offsets.
+      var scene = initScene()
+      discard scene.addObject(
+        Anchored(anchor: Position(x: 2.0, y: -2.0, z: 4.0), local: POINTS[0]), "e", Ink.Rose
+      )
+      let path = getTempDir() / "visualiser_suite_scene_anchor_bytes.rgascene"
+      check saveScene(scene, path).contains("Saved 1")
+      defer: removeFile(path)
+      let
+        bytes = readFile(path)
+        start_anchor = len(MAGIC_SCENE) + 2 + 4 + 3 + 1 + (ord(Basis.high) + 1) * 8 + 8
+      check bytes.len == start_anchor + 3 * 8
+      # 2.0 is 0x4000000000000000, -2.0 0xC000000000000000, 4.0 0x4010000000000000.
+      for (index, high) in [(0, 0x40'u8), (1, 0xC0'u8), (2, 0x40'u8)]:
+        for offset in 0..5: check uint8(bytes[start_anchor+8*index+offset]) == 0x00'u8
+        check uint8(bytes[start_anchor+8*index+7]) == high
+      check uint8(bytes[start_anchor+8*2+6]) == 0x10'u8
+
+
     test "loading a foreign file leaves scene untouched and reports why":
       var scene = initScene()
       discard scene.addObject(POINTS[0], "keep", Ink.Rose)
@@ -1208,6 +1288,14 @@ suite "Scene":
           result &= bytes
         # Shine byte only from version that carries one, set so reader can tell.
         if isCarryingShine(version): result &= char(1)
+        # Anchor only from version that carries one: world origin, as older files mean.
+        if isCarryingAnchor(version):
+          for coordinate in [0.0, 0.0, 0.0]:
+            var
+              value = coordinate
+              bytes = newString(8)
+            littleEndian64(addr bytes[0], addr value)
+            result &= bytes
 
 
     test "a scene file from before the palette changed is read, not refused":
@@ -1364,6 +1452,33 @@ suite "Scene":
       check scene.len == 1
       check scene[0].label.toText == "keep"
       check not isSceneVersionReadable(0'u8)  # Version byte of zero was never written either.
+
+
+    test "a file of each version before 8 loads every object about world origin, as written":
+      # Versions 1 to 7 wrote coefficients about world origin: each object loads anchored
+      #   there, and reads them back about it to bit, as builds before anchors read them.
+      #   Structural slot 4 stands unmoved in every palette ever written.
+      for version in VERSION_SCENE_LEAST..<VERSION_SCENE_ANCHOR:
+        var scene = initScene()
+        let path = getTempDir() / &"visualiser_suite_scene_world_v{version}.rgascene"
+        writeFile(
+          path,
+          sceneFileOf(
+            version,
+            @[
+              (4, true, "point", POINTS[0]),
+              (4, true, "line", LINES[1]),
+              (4, true, "plane", PLANES[2]),
+            ],
+          ),
+        )
+        defer: removeFile(path)
+        check loadScene(scene, path).contains("Loaded 3")
+        for (handle, written) in [(0, POINTS[0]), (1, LINES[1]), (2, PLANES[2])]:
+          check scene.anchoredAt(handle).anchor =~ ORIGIN_WORLD
+          for b in Basis:
+            check scene.anchoredAt(handle).local[b] == written[b]
+            check scene.geometryOf(handle)[b] == written[b]
 
 
     test "a saved scene keeps creation order however its handles were reused":

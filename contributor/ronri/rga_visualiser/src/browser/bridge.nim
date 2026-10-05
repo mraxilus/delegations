@@ -708,11 +708,26 @@ proc nimObjectKindWord(handle: cint): cstring {.exportc.} =
 
 
 proc nimObjectCoefficients(handle: cint): seq[float] {.exportc.} =
-  ## Report all sixteen basis coefficients of object's multivector, in library's `Basis` order.
+  ## Report all sixteen basis coefficients of object about world origin, in `Basis` order.
   ##   Same order `scene.saveScene`/`loadScene` and `panel.layoutCoefficients` use.
+  ##   What panel shows and edits; file holds `nimObjectLocal` beside `nimObjectAnchor`.
   let geometry = SCENE_PAGE.geometryOf(int(handle))
   result = newSeq[float](ord(Basis.high) + 1)
   for b in Basis: result[ord(b)] = geometry[b]
+
+
+proc nimObjectLocal(handle: cint): seq[float] {.exportc.} =
+  ## Report all sixteen basis coefficients of object about its anchor, as scene stores them.
+  ##   What packer writes, so far object reloads to precision it holds about its anchor.
+  let local = SCENE_PAGE.anchoredAt(int(handle)).local
+  result = newSeq[float](ord(Basis.high) + 1)
+  for b in Basis: result[ord(b)] = local[b]
+
+
+proc nimObjectAnchor(handle: cint): seq[float] {.exportc.} =
+  ## Report place object is stored about, as x, y and z, exactly as scene holds it.
+  let anchor = SCENE_PAGE.anchoredAt(int(handle)).anchor
+  @[anchor.x, anchor.y, anchor.z]
 
 
 proc nimFormatNumber(value: float): cstring {.exportc.} =
@@ -2399,6 +2414,11 @@ proc nimSceneHasShine(version: cint): bool {.exportc.} =
   ##   Parser skips it; see `scene.isCarryingShine`.
   version >= 0 and version <= int(high(uint8)) and isCarryingShine(uint8(version))
 
+proc nimSceneHasAnchor(version: cint): bool {.exportc.} =
+  ## Report whether file of this version carries anchor after each object's radius.
+  ##   Parser asks this rather than compare against literal; see `scene.isCarryingAnchor`.
+  version >= 0 and version <= int(high(uint8)) and isCarryingAnchor(uint8(version))
+
 
 proc nimSceneClear() {.exportc.} =
   ## Discard live scene and start fresh empty one.
@@ -2414,6 +2434,7 @@ proc nimSceneAddRaw(
   label: cstring,
   coefficients: seq[float],
   radius: cfloat,
+  anchor: seq[float],
   count_total: cint,
   now: cfloat,
 ): cint {.exportc.} =
@@ -2425,10 +2446,13 @@ proc nimSceneAddRaw(
   ##     `SLOT_NONE` where no version could have written object: corrupt or foreign file.
   ##   `radius` is whatever parser read, or anything at all where version wrote none:
   ##   upgrade chain fills it there.
+  ##   `coefficients` stand about `anchor`, x, y and z, which parser read where version
+  ##   wrote one; anything at all where it wrote none, and upgrade chain fills it there.
   ##   `count_total` is file's whole object count and `now` this frame's clock, so arrival
   ##   is staggered by `scene.bornReplaying`, same rule desktop stamps with.
   var geometry: Multivector
   for b in Basis: geometry[b] = coefficients[ord(b)]
+  if anchor.len != 3: return SLOT_NONE
   let carried = objectUpgraded(
     ObjectSaved(
       ink_ordinal: int(ink_ordinal),
@@ -2436,6 +2460,7 @@ proc nimSceneAddRaw(
       label: $label,
       geometry: geometry,
       radius: float(radius),
+      anchor: Position(x: anchor[0], y: anchor[1], z: anchor[2]),
     ),
     uint8(version),
   )
@@ -2445,7 +2470,7 @@ proc nimSceneAddRaw(
   let
     born = bornReplaying(SCENE_PAGE.len, int(count_total), float(now))
     handle = SCENE_PAGE.addObject(
-      carried.get.geometry,
+      Anchored(anchor: carried.get.anchor, local: carried.get.geometry),
       carried.get.label,
       Ink(carried.get.ink_ordinal),
       born,

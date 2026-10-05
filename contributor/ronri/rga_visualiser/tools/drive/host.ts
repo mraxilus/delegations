@@ -8,6 +8,8 @@
 
 import type { Browser } from '@playwright/test';
 import { simulateClock, waitUntil } from './clock';
+import { loadDemo, objectsDefault } from './demo';
+import { watchFrames } from './frame';
 import { report } from './report';
 
 /** One save host was handed: name page asked for, and bytes. */
@@ -82,13 +84,21 @@ export async function driveHostSave(
     () => (window as unknown as { host_stand_in: HostStandIn }).host_stand_in.saves);
   const labels = () => page.evaluate(
     () => nimSceneHandlesCreated().map((handle) => nimObjectLabel(handle)));
+  // Each object as scene stores it: anchor, then coefficients about it, in creation order.
+  const stored = () => page.evaluate(() => nimSceneHandlesCreated().map(
+    (handle) => [...nimObjectAnchor(handle), ...nimObjectLocal(handle)]));
   const toastSays = () => page.evaluate(() => ({
     text: document.getElementById('toast')?.textContent ?? '',
     is_link: document.querySelector('#toast a') !== null,
   }));
 
   // Scene: extension host refuses, so page hands it zip holding scene file unchanged.
+  //   Demo's, whose neighbour systems are each stored about own sun, millions of units out.
+  //   Frames watched first, as on every page that loads it: load waits until frame holds it.
+  await watchFrames(page);
+  await loadDemo(page, await objectsDefault(page));
   const labels_saved = await labels();
+  const stored_saved = await stored();
   await page.evaluate(() => document.getElementById('button-save-scene')?.click());
   await waitUntil(
     page,
@@ -121,6 +131,21 @@ export async function driveHostSave(
     labels_loaded.length > 0 && labels_loaded.join('|') === labels_saved.join('|'),
     `${labels_loaded.length} of ${labels_saved.length} objects back; says ` +
       `"${(await toastSays()).text}"`,
+  );
+  // File holds what scene stores, so far object reloads to precision it holds there.
+  const stored_loaded = await stored();
+  let differing = 0;
+  let anchored_away = 0;
+  for (const [index, wrote] of stored_saved.entries()) {
+    const read = stored_loaded[index] ?? [];
+    if (wrote.some((value, at) => !Object.is(value, read[at]))) differing += 1;
+    if (wrote.slice(0, 3).some((value) => value !== 0)) anchored_away += 1;
+  }
+  report(
+    'and each object comes back at its own anchor, its coefficients about it bit for bit',
+    stored_loaded.length === stored_saved.length && differing === 0 && anchored_away > 0,
+    `${differing} of ${stored_saved.length} objects differ; ${anchored_away} anchored away ` +
+      'from world origin',
   );
 
   // Image: extension host takes, so PNG goes as itself.

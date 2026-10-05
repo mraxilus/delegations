@@ -192,8 +192,9 @@ type
     ink_ordinal*: int  ## Palette slot, as writing version's `Ink` numbered it.
     is_visible*: bool  ## Whether object was hidden when saved.
     label*: string  ## Display label, decoded from file's UTF-8 bytes.
-    geometry*: Multivector  ## Object itself, one coefficient per basis term.
+    geometry*: Multivector  ## Object about `anchor`, one coefficient per basis term.
     radius*: float  ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
+    anchor*: Position  ## Place `geometry` stands about; world origin before version 8.
 
   OperationMemory* = object  ## Define memory of operation last applied, one per arity.
     ## Picker opens on what reader last reached for.
@@ -1319,10 +1320,14 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   |          |   or metric and cannot be read here.                         |
 ##   | 4        | Object count, little-endian `uint32`.                          |
 ##   | per object | Ink (1), visibility (1), label length (1) then that many     |
-##   |          |   bytes, one little-endian `float` per basis term, radius as |
-##   |          |   one more little-endian `float`.                            |
+##   |          |   bytes, one little-endian `float` per basis term about      |
+##   |          |   object's anchor, radius as one more little-endian `float`, |
+##   |          |   then anchor's x, y and z as three more.                    |
 ##   |----------|--------------------------------------------------------------|
 ##
+## Each object is written as stored: coefficients about its anchor, and anchor exactly.
+##   Pair metre apart far out then reloads metre apart; written about Sol it reloads as one
+##   point. Version 8 added anchor.
 ## Only live objects are written, in order created, whole of what version 3 added.
 ##   Handle numbers mean nothing once reloaded; sequence carries ordering, so no ordinal is
 ##   written beside each object.
@@ -1335,7 +1340,9 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   |---------|-------------------------------------------------------------------|
 ##   | Version | Read as                                                           |
 ##   |---------|-------------------------------------------------------------------|
-##   | 7       | Exactly.                                                          |
+##   | 8       | Exactly.                                                          |
+##   | 7       | Exactly, with every object anchored at world origin, which its    |
+##   |         |   coefficients stand about; see `upgradedFrom7`.                  |
 ##   | 6       | Exactly, except one byte follows each object's radius, saying     |
 ##   |         |   whether it shone; read and dropped; see `upgradedFrom6`.        |
 ##   | 5       | As 6, and palette had one more structural slot, `Algebra`, at     |
@@ -1361,7 +1368,7 @@ func removeObject*(scene: var Scene, handle: int) =
 
 const
   MAGIC_SCENE* = "RGAS"  ## Open every `.rgascene` file with these four bytes.
-  VERSION_SCENE* = 7'u8
+  VERSION_SCENE* = 8'u8
     ## Stamp format version this build writes.
     ##   Every version down to `VERSION_SCENE_LEAST` is still read; see table above.
     ##   Version 2 moved every stored ink ordinal, when `Ink` gained reserved `Invalid`
@@ -1372,11 +1379,15 @@ const
     ##   Version 4 appended one float64 radius to each object, after its geometry.
     ##   Version 5 appended one shines byte to each object, after its radius.
     ##   Version 7 dropped it: nothing shines, every point is shaded from world's up.
+    ##   Version 8 appended each object's anchor after its radius, and wrote coefficients
+    ##   about it.
   VERSION_SCENE_RADIUS* = 4'u8
     ## Record first version whose objects carry radius; see `isCarryingRadius`.
   VERSION_SCENE_SHINE* = 5'u8
   VERSION_SCENE_SHINE_LAST* = 6'u8
     ## Record first and last version whose objects carry shines byte; see `isCarryingShine`.
+  VERSION_SCENE_ANCHOR* = 8'u8
+    ## Record first version whose objects carry anchor; see `isCarryingAnchor`.
   VERSION_SCENE_LEAST* = 1'u8
     ## Bound oldest format version this build still reads.
     ##   One, and it stays one: version floor that rises throws reader's work away.
@@ -1436,6 +1447,11 @@ func isCarryingShine*(version: uint8): bool =
   ##   Reader skips it: no build reads it into anything since version 7.
   ##   Asked as `isCarryingRadius` is; see `nimSceneHasShine`.
   version >= VERSION_SCENE_SHINE and version <= VERSION_SCENE_SHINE_LAST
+
+
+func isCarryingAnchor*(version: uint8): bool = version >= VERSION_SCENE_ANCHOR
+  ## Report whether file of this version carries anchor after each object's radius.
+  ##   Asked as `isCarryingRadius` is; see `nimSceneHasAnchor`.
 
 
 const ORDINAL_INK_ALGEBRA_V5 = 7
@@ -1505,6 +1521,15 @@ func upgradedFrom6(saved: ObjectSaved): Option[ObjectSaved] = some(saved)
   ##   carries nothing from it.
 
 
+func upgradedFrom7(saved: ObjectSaved): Option[ObjectSaved] =
+  ## Carry one object from what version 7 meant to what version 8 means.
+  ##   Version 7 wrote no anchor, and every coefficient about world origin, where Sol stands.
+  ##     Reader fills world origin, so object stands where it was saved, to bit.
+  var carried = saved
+  carried.anchor = ORIGIN_WORLD
+  some(carried)
+
+
 func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
   ## Carry object read from file of `version` up to shape this build works in.
   ##   One boundary at time; none where no version could have written it.
@@ -1522,6 +1547,7 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
       of 4'u8: carried.upgradedFrom4
       of 5'u8: carried.upgradedFrom5
       of 6'u8: carried.upgradedFrom6
+      of 7'u8: carried.upgradedFrom7
       else: none(ObjectSaved)  # Unreachable: `isSceneVersionReadable` bounds walk above.
     if stepped.isNone: return none(ObjectSaved)
     carried = stepped.get
@@ -1529,6 +1555,10 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
   # Refuse radius no build could have written, as palette slot is refused above.
   #   Zero or negative would draw nothing and trip `addObject`; NaN compares false to both.
   if not (carried.radius > 0.0): return none(ObjectSaved)
+  # Refuse anchor no build could have written: place every coefficient is slid by.
+  #   Infinite or NaN would slide object to NaN, which draws nothing and frames nothing.
+  for coordinate in [carried.anchor.x, carried.anchor.y, carried.anchor.z]:
+    if coordinate.classify in {fcInf, fcNan, fcNegInf}: return none(ObjectSaved)
   some(carried)
 
 
@@ -1619,16 +1649,20 @@ when not defined(js):
     var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
     for position in 0..<count:
-      let one = scene[handles[position]]
+      let
+        handle = handles[position]
+        one = scene[handle]
       file.write char(ord(one.ink))
       file.write char(ord(one.isVisible))
       let
         text = one.label.toText
-        geometry = one.geometry
+        anchored = scene.anchoredAt(handle)
       file.write char(len(text))
       discard file.writeChars(text, 0, len(text))
-      for b in Basis: file.writeLittle(geometry[b])
+      for b in Basis: file.writeLittle(anchored.local[b])
       file.writeLittle(one.radius)
+      for coordinate in [anchored.anchor.x, anchored.anchor.y, anchored.anchor.z]:
+        file.writeLittle(coordinate)
 
     &"Saved {scene.len} object(s) to `{path}`."
 
@@ -1700,6 +1734,13 @@ when not defined(js):
         if file.readChars(shine_byte) != 1:
           return &"`{path}` is truncated partway through object {index}'s shine."
 
+      # Read anchor only where file has one; earlier versions take it from upgrade.
+      var anchor = ORIGIN_WORLD
+      if isCarryingAnchor(version):
+        let is_read =
+          file.readLittle(anchor.x) and file.readLittle(anchor.y) and file.readLittle(anchor.z)
+        if not is_read: return &"`{path}` is truncated partway through object {index}'s anchor."
+
       # Read at file's version, then carry up to this build's.
       #   Every field below means what `VERSION_SCENE` says.
       let carried = objectUpgraded(
@@ -1709,15 +1750,16 @@ when not defined(js):
           label: label,
           geometry: geometry,
           radius: radius,
+          anchor: anchor,
         ),
         version,
       )
       if carried.isNone:
-        return &"`{path}` names an unknown palette slot or radius for object {index}."
+        return &"`{path}` names an unknown palette slot, radius or anchor for object {index}."
 
       # Add in file order, so staging scene's ordinals come out as file's sequence.
       let handle = staging.addObject(
-        carried.get.geometry,
+        Anchored(anchor: carried.get.anchor, local: carried.get.geometry),
         carried.get.label,
         Ink(carried.get.ink_ordinal),
         bornReplaying(index, int(count), now),

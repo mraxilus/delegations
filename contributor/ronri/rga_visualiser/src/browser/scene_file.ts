@@ -7,8 +7,8 @@
 /* ---------------------------------------------------------------------- */
 /* Scene save/load: pack and parse exact `.rgascene` binary format         */
 /* `scene.nim`'s own doc comment documents (magic/version/basis-count/     */
-/* object-count/per-object ink+visible+label+16 float64+radius), so build    */
-/* saves loads on desktop build and vice versa. Packing lives             */
+/* object-count/per-object ink+visible+label+16 float64+radius+anchor),    */
+/* so build saves loads on desktop build and vice versa. Packing lives     */
 /* here rather than in Nim, since `DataView` already does exactly this     */
 /* natively -- see `bridge.nim`'s own doc comment.                */
 /* ---------------------------------------------------------------------- */
@@ -28,16 +28,22 @@ function saveScene() {
   //   wrong offset. Measured: `a ⊖ b` came back on desktop as `a` and replacement
   //   glyph.
   const encoder = new TextEncoder();
+  // Coefficients about each object's anchor, beside anchor itself, as scene stores them:
+  //   object far out reloads to precision it holds there, where coefficients about world
+  //   origin would round pair metre apart into one point.
   const objects = handles.map((handle) => ({
     ink: nimObjectInk(handle),
     visible: nimObjectVisible(handle),
     label: encoder.encode(nimObjectLabel(handle)),
-    coefficients: nimObjectCoefficients(handle),
+    coefficients: nimObjectLocal(handle),
     radius: nimObjectRadius(handle),
+    anchor: nimObjectAnchor(handle),
   }));
 
   let size = 4 + 1 + 1 + 4;
-  for (const object of objects) size += 1 + 1 + 1 + object.label.length + count_basis * 8 + 8;
+  for (const object of objects) {
+    size += 1 + 1 + 1 + object.label.length + count_basis * 8 + 8 + COUNT_ANCHOR * 8;
+  }
 
   const buffer = new ArrayBuffer(size);
   const view = new DataView(buffer);
@@ -64,6 +70,10 @@ function saveScene() {
       offset += 8;
     }
     view.setFloat64(offset, object.radius, true); offset += 8;
+    for (let i = 0; i < COUNT_ANCHOR; i++) {
+      view.setFloat64(offset, object.anchor[i] ?? 0, true);
+      offset += 8;
+    }
   }
 
   deliverFile(
@@ -72,6 +82,9 @@ function saveScene() {
     'A scene file holding ' + objects.length + ' object(s)',
   );
 }
+
+// Coordinates anchor is written as, x then y then z, each one little-endian float64.
+const COUNT_ANCHOR = 3;
 
 function loadSceneFile(file: File) {
   const reader = new FileReader();
@@ -212,7 +225,19 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
       }
       offset += 1;
     }
-    parsed.push({ ink, visible, label, coefficients, radius });
+    // Anchor only where file's version wrote one, coefficients standing about it; older
+    //   file's objects take world origin from upgrade chain, so value passed is moot.
+    const anchor = [0, 0, 0];
+    if (nimSceneHasAnchor(version)) {
+      if (offset + COUNT_ANCHOR * 8 > buffer.byteLength) {
+        throw new Error('File is truncated partway through object ' + i + '’s anchor.');
+      }
+      for (let k = 0; k < COUNT_ANCHOR; k++) {
+        anchor[k] = view.getFloat64(offset, true);
+        offset += 8;
+      }
+    }
+    parsed.push({ ink, visible, label, coefficients, radius, anchor });
   }
 
   nimSceneClear();
@@ -226,9 +251,11 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
   for (const object of parsed) {
     const handle = nimSceneAddRaw(
       version, object.ink, object.visible, object.label, object.coefficients, object.radius,
-      count_object, arrived,
+      object.anchor, count_object, arrived,
     );
-    if (handle < 0) throw new Error('File names an unknown palette slot or radius for an object.');
+    if (handle < 0) {
+      throw new Error('File names an unknown palette slot, radius or anchor for an object.');
+    }
   }
   return 'Loaded ' + count_object + ' object(s) from scene file.';
 }
