@@ -9,7 +9,7 @@
 
 import std/[options, sequtils, strutils, tables, unittest]
 import ../../../knoller/src/knoller
-import ../../src/[findings, fixes, form, idioms, kinds, names, symbols]
+import ../../src/[findings, fixes, form, idioms, kinds, names, symbols, tree]
 import ./fixtures
 
 
@@ -38,6 +38,27 @@ const
     "{\n  \"items\": {},\n  \"nimbleFile\": {\n    \"filename\": \"alpha.nimble\",\n" &
     "    \"content\": []\n  }\n}\n"
     ## Atlas lock holding copy of nimble file `alpha.nimble`.
+  ASKS_MAX = 8  ## Rounds of asking parser at most, as `fixes.nim` takes.
+
+
+proc everyFix(
+  branch: string,
+  tree: Tree,
+  entries: openArray[Entry],
+  locked: openArray[string],
+  context: Context,
+  provers: ProverOf,
+): tuple[fix: Fixed, failures: seq[string]] =
+  ## Fix every entry again each round of asking, as loop of `provenFix` did before it fixed
+  ##   entries that asked alone: reference that optimised loop is held equal to (Article IX.2).
+  var known = context
+  result.fix = fixEntries(branch, entries, locked, known)
+  for ask in 1..ASKS_MAX:
+    if result.fix.asked.len == 0: break
+    for failure in known.answered(tree, result.fix.asked, provers):
+      let line = Rule.NeedlessParentheses.id & ": " & failure
+      if line notin result.failures: result.failures.add line
+    result.fix = fixEntries(branch, entries, locked, known)
 
 
 
@@ -456,3 +477,56 @@ suite "Fixes":
     check checkFormatting(tree).len == 0  # silent on it
     check checkFormatting(@[nimble]).len == 1  # read where no lock holds its copy
     check fixEntries(CONTRIBUTOR_BRANCH, [nimble]).written.len == 1
+
+
+  test "fix of entries that asked alone gives same fix as fix of every entry, each round":
+    # Entries under two pins, some asking parser over two rounds, one asking through its fence
+    #   alone, and some asking nothing; perf commit `4250066` made loop fix askers alone.
+    let
+      other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
+      fenced = "## Do.\n\n" & STRICT_FUNCS & "\n\n#!fix off\nlet b = @(x) + 1\n#!fix on\n"
+      tree = goodTree().with(
+        entry("curator/beta/beta.nimble", NIMBLE_TEXT.replace(PIN, COMMIT)),
+        entry(AUDIT_DIRECTORY & "/src/a.nim", GROUPED),
+        entry(AUDIT_DIRECTORY & "/src/b.nim", DIRTY),
+        entry("curator/beta/src/c.nim", other & "let t = a+b\n"),
+        entry("curator/beta/src/d.nim", fenced),
+        entry("curator/beta/src/e.nim", "## Do.\n\n" & STRICT_FUNCS & "\n\nlet z = 1\n"),
+        entry("curator/beta/README.md", "# Beta\n"),
+      )
+      entries = tree[^6 .. ^1]
+      asking = entries.filterIt(fixEntries(CURATOR_BRANCH, [it]).asked.len > 0)
+    check asking.mapIt(it.path) == @[
+      AUDIT_DIRECTORY & "/src/a.nim", "curator/beta/src/c.nim", "curator/beta/src/d.nim",
+    ]  # some entries ask, and some do not
+    var calls = 0
+    let
+      stubbed = proc (sources: seq[string]): Proving =
+        Proving(answers: sources.mapIt(
+          it.candidatesOf.filterIt(it.got notin ["(x[0])", "(y[0])"]).mapIt(it.opening[0]),
+        ))
+      counted = proc (pin: string): Prover =
+        result = proc (sources: seq[string]): Proving =
+          inc calls
+          stubbed(sources)
+      broken = proc (pin: string): Prover =
+        result = proc (sources: seq[string]): Proving =
+          Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler failed; got `x`.")
+      commit_broken = proc (pin: string): Prover =
+        if pin == COMMIT: broken(pin) else: counted(pin)
+    for provers in [counted, broken, commit_broken]:
+      let
+        proven = provenFix(CURATOR_BRANCH, tree, entries, [], tree.contextOf, provers)
+        reference = everyFix(CURATOR_BRANCH, tree, entries, [], tree.contextOf, provers)
+      check proven.fix.written.mapIt((it.path, it.content)) ==
+          reference.fix.written.mapIt((it.path, it.content))
+      for (fast, every) in [
+        (proven.fix.fixed, reference.fix.fixed),
+        (proven.fix.refused, reference.fix.refused),
+        (proven.fix.left, reference.fix.left),
+        (proven.fix.held, reference.fix.held),
+      ]:
+        check fast.mapIt(it.render) == every.mapIt(it.render)
+      check proven.fix.asked == reference.fix.asked
+      check proven.failures == reference.failures
+    check calls >= 4  # askers asked again in second round, under both loops
