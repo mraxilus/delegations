@@ -22,11 +22,19 @@ const PLACE_FAR = Position(x: 1.7e6, y: -1.2e6, z: 0.6e6)
   ## Place pivot two million units out, among demo's far stars.
 
 
-func cameraFarAt(separation: float): Camera =
-  ## Build camera `separation` from pivot at `PLACE_FAR`, view origin moved as frame moves it.
+const PLACES_FAR = [
+  Position(x: 0.3e6, y: 0.26e6, z: -0.1e6),
+  PLACE_FAR,
+  Position(x: -3.8e6, y: 2.6e6, z: 1.0e6),
+]
+  ## Sample far pivots: 0.41 million units out, two million, and 4.7 million, demo's farthest.
+
+
+func cameraFarAt(place: Position, separation: float): Camera =
+  ## Build camera `separation` from pivot at `place`, view origin moved as frame moves it.
   ##   Built at 19 units, where world's doubles hold stance, then dollied in about view
   ##   origin: far pivot named alone by world points carries their step.
-  result = cameraAround(PLACE_FAR, 19.0, Direction(x: 3, y: -2, z: 1))
+  result = cameraAround(place, 19.0, Direction(x: 3, y: -2, z: 1))
   discard result.moveOriginView
   result.dollyTo(separation)
   discard result.moveOriginView
@@ -200,15 +208,22 @@ suite "Camera":
     check rolled.pivot =~ pivot
 
 
-  test "an orbit a metre wide two million units out keeps its pivot to a micrometre":
-    # World's doubles step by 17 to 35 m two million units out, so orbit 150 m wide about
-    #   far object broke on that step, and one metre wide could not be named at all.
+  test "an orbit a metre wide far from the world origin keeps its pivot to a micrometre":
+    # As found (repository issue 535), two million units out: orbit asked 1.0 m held 149.6 m,
+    #   and its pivot drifted up to 872.86 m over 2,000 steps.
+    #   World's doubles step by 17 to 35 m there, so orbit 150 m wide about far object broke
+    #   on that step, and one metre wide could not be named at all.
     #   Stance is held about view origin, moved after each step as each frame moves it, so
-    #   every motion composes near eye. Metre and 150 m, floor orbit had before.
+    #   every motion composes near eye. Metre and 150 m, floor orbit had before, at each of
+    #   `PLACES_FAR`: domain is any pivot far from world origin, out to demo's farthest.
     const (steps, turn) = (2000, 0.004)
-    for separation in [METRE, 150.0 * METRE]:
+    for (place, separation) in [
+        (PLACES_FAR[0], METRE), (PLACES_FAR[1], METRE), (PLACES_FAR[2], METRE),
+        (PLACES_FAR[0], 150.0 * METRE), (PLACES_FAR[1], 150.0 * METRE),
+        (PLACES_FAR[2], 150.0 * METRE),
+    ]:
       var
-        stepped = cameraFarAt(separation)
+        stepped = cameraFarAt(place, separation)
         once = stepped
       let (origin_start, pivot_start, eye_start) = (stepped.originView, stepped.pivot, stepped.eye)
       for _ in 1..steps:
@@ -235,7 +250,7 @@ suite "Camera":
     const
       moves = 10_000
       step = 0.3 * METRE
-    var camera = cameraFarAt(METRE)
+    var camera = cameraFarAt(PLACE_FAR, METRE)
     let
       (origin_start, eye_start, world_start) = (camera.originView, camera.eye, camera.eyeWorld)
       forward = camera.frame.forward
@@ -266,7 +281,7 @@ suite "Camera":
       reach = 6.5e6
       step_sixteen_bit = 2.0 / 65535.0
       radius = 0.5 * METRE
-    var camera = cameraFarAt(19.0)
+    var camera = cameraFarAt(PLACE_FAR, 19.0)
     let filling = depthFilling(radius, camera.drawExtentFor(tall, reach), wide, tall)
     check filling > DISTANCE_LIMIT_NEAR
     camera.dollyTo(filling)

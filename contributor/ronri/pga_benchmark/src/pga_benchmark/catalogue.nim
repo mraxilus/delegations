@@ -24,7 +24,7 @@ import ./[bound, kinds]
 
 
 type
-  Arity* = range[1 .. 2]  ## Define operand count of measurand.
+  Arity* = range[1..2]  ## Define operand count of measurand.
   Measurand* = object  ## Define one catalogued operation under measurement.
     id*: string  ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
     symbol*: string  ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.

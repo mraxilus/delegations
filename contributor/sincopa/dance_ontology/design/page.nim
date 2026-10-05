@@ -162,7 +162,7 @@ func document*(title, page_body: string): string =
   ##     it carries name of work as well as name of page.
   ##   Every page this wraps is exploration, so all five take mockup form.
   &"<meta charset=\"utf-8\">\n<title>{MOCKUP} — {title}</title>\n" &
-    &"{STYLE}{page_body}"
+      &"{STYLE}{page_body}"
 
 
 func filled*(template_body: string, fills: openArray[tuple[marker, value: string]]): string =
@@ -200,10 +200,10 @@ func swatch*(kind: Swatch): string =
       fill = fillOf(level, arm, is_leading)
     if is_leading:
       bits.add &"""<rect x="1" y="2" width="12" height="12" rx="1.5"""" &
-        &""" fill="{fill}" stroke="{ink}" stroke-width="1.5"{faint}/>"""
+          &""" fill="{fill}" stroke="{ink}" stroke-width="1.5"{faint}/>"""
     else:
       bits.add &"""<circle cx="28" cy="8" r="6" fill="{fill}"""" &
-        &""" stroke="{ink}" stroke-width="1.5"{faint}/>"""
+          &""" stroke="{ink}" stroke-width="1.5"{faint}/>"""
     if kind == Swatch.High:
       bits.add &"""<circle cx="{numeral(centre_x)}" cy="8" r="2.7" fill="{ink}"/>"""
   bits.join("") & "</svg>"

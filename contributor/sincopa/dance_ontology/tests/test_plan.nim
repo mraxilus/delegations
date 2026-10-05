@@ -19,8 +19,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[math, random, unittest]
 
-import ../simulation/[body, hold, limb, rig, rigid, vector, walk]
-import ../simulation/plan {.all.}
+import ../simulation/[body, hold, limb, plan {.all.}, rig, rigid, vector, walk]
 import ./fixtures
 
 
@@ -46,10 +45,10 @@ func randomPlan(rig: Rig, generator: var Rand): Plan =
   for i in 0..3:
     let base = 4 + PER_ARM * i
     result[base] = generator.rand(rig.collar[Collar.Fore].lower..rig.collar[Collar.Fore].upper)
-    result[base + 1] = generator.rand(rig.collar[Collar.Up].lower..rig.collar[Collar.Up].upper)
-    for k in 2..4: result[base + k] = generator.rand(-1.5..1.5)
-    result[base + 5] = generator.rand(rig.range[Dof.Bend].lower..rig.range[Dof.Bend].upper)
-    for k in 6..8: result[base + k] = generator.rand(-0.8..0.8)
+    result[base+1] = generator.rand(rig.collar[Collar.Up].lower..rig.collar[Collar.Up].upper)
+    for k in 2..4: result[base+k] = generator.rand(-1.5..1.5)
+    result[base+5] = generator.rand(rig.range[Dof.Bend].lower..rig.range[Dof.Bend].upper)
+    for k in 6..8: result[base+k] = generator.rand(-0.8..0.8)
 
 func pointsOf(placed: ArmPlaced): array[4, Vector] =
   ## Read four points of arm planner placed, shoulder to grip.
@@ -69,14 +68,14 @@ proc plainCost(weighing: Weighing, plan: Plan): float =
     problem = weighing.problem
     placed = place(HUMAN, plan, weighing.wind, problem.is_away, problem.turner)
   result = comfort(HUMAN, placed, plan) +
-           weighing.weight * violation(HUMAN, problem, placed, weighing.before)
+      weighing.weight * violation(HUMAN, problem, placed, weighing.before)
   for k in 0..<SIZE:
-    result += weighing.holding * (plan[k] - weighing.last[k]) ^ 2 + weighing.bias[k] * plan[k]
+    result += weighing.holding * (plan[k] - weighing.last[k])^2 + weighing.bias[k] * plan[k]
   if problem.style.slack > 0.0: result += problem.style.slack * cramped(HUMAN, problem, placed)
   if problem.style.gather > 0.0 and problem.links.len == 2:
     let (one, two) = (problem.links[0].ends[0], problem.links[1].ends[0])
     result += problem.style.gather * distance(placed.arms[armIndex(one.body, one.arm)].grip,
-                                              placed.arms[armIndex(two.body, two.arm)].grip) ^ 2
+                                              placed.arms[armIndex(two.body, two.arm)].grip)^2
 
 
 
@@ -225,7 +224,7 @@ suite "Internal: Planned turn":
         check gap > path.problem.style.clearance - JOINED
       if moment > 0:
         # Arms only, as planner holds them: trunks and faces are carried by turn itself.
-        for k in 2 * trunkCapsules(HUMAN).len..<capsules.len - placed.faces.len:
+        for k in 2 * trunkCapsules(HUMAN).len ..< capsules.len - placed.faces.len:
           check distance(capsules[k].a, before[k].a) < path.problem.style.leap + JOINED
           check distance(capsules[k].z, before[k].z) < path.problem.style.leap + JOINED
       before = capsules
@@ -251,6 +250,7 @@ suite "Internal: Planned turn":
     check followed.at =~ CROSS
 
 
+
 suite "Internal: Planner's cost":
   test "cost of each freedom's step, from terms planner keeps, is plain cost to last bit":
     ## Planner weighs step of arm freedom from terms it keeps, re-reckoning only what arm
@@ -273,7 +273,7 @@ suite "Internal: Planner's cost":
           let
             bounds = boundsOf(HUMAN, style.margin)
             moving = movedPairs(HUMAN, problem)
-          for sample in 0..<SAMPLES div 8:
+          for sample in 0 ..< SAMPLES div 8:
             let wind = generator.rand(-1.0..1.0)
             var weighing = Weighing(problem: problem, wind: wind,
                                     last: randomPlan(HUMAN, generator),
@@ -303,12 +303,11 @@ suite "Internal: Planner's cost":
               far_plan[k] += generator.rand(-0.6..0.6)
               if k < 4:
                 let moved = moving.bodies[bodyMoving(k)]
-                here.stepBody(held_body, HUMAN, problem, far_plan, wind, k, moved,
-                              weighing.before)
+                here.stepBody(held_body, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
                 check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
                 here.restoreBody(held_body, k, moved)
               else:
-                let moved = moving.arms[(k - 4) div PER_ARM][firstMoved(k)]
+                let moved = moving.arms[(k-4) div PER_ARM][firstMoved(k)]
                 here.stepArm(held, HUMAN, problem, far_plan, wind, k, moved, weighing.before)
                 check here.total(weighing, far_plan) == plainCost(weighing, far_plan)
                 here.restore(held, k, moved)

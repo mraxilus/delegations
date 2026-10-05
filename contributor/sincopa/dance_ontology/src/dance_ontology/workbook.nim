@@ -238,8 +238,8 @@ func auditStates(): seq[Finding] =
       kind: FindingKind.StateDeferred,
       subject: name,
       detail: "rests the lead's right hand on the follow rather than in their " &
-        "hand, so it waits for the rotation axis; " & $touched &
-        " of the sheet's " & $CELLS.len & " cells touch it",
+          "hand, so it waits for the rotation axis; " & $touched &
+          " of the sheet's " & $CELLS.len & " cells touch it",
     )
 
 
@@ -252,7 +252,7 @@ func auditFrames(): seq[Finding] =
       kind: FindingKind.FrameAbsent,
       subject: target.describe,
       detail: "the model derives " & $moves(target).len &
-        " moves from it, and the sheet has no row for it",
+          " moves from it, and the sheet has no row for it",
     )
 
 
@@ -272,7 +272,7 @@ func auditCells(): seq[Finding] =
         kind: FindingKind.EdgeCompound,
         subject: subject,
         detail: "cell names " & $words.len & " helpers; the model derives a transition of " &
-          $route(source, destination).len & " moves, so this is a transition, not a move",
+            $route(source, destination).len & " moves, so this is a transition, not a move",
       )
       continue
     let
@@ -289,7 +289,7 @@ func auditCells(): seq[Finding] =
         kind: FindingKind.HelperDiffers,
         subject: subject,
         detail: "cell says '" & cell.text & "'; the model derives " &
-          (if derived_compound.isSome: $derived_compound.get else: "no compound move"),
+            (if derived_compound.isSome: $derived_compound.get else: "no compound move"),
       )
       continue
     if helper.isNone:
@@ -297,7 +297,7 @@ func auditCells(): seq[Finding] =
         kind: FindingKind.EdgeUnsupported,
         subject: subject,
         detail: "no move and no compound move joins these frames; the shortest " &
-          "transition is " & $route(source, destination).len & " moves",
+            "transition is " & $route(source, destination).len & " moves",
       )
       continue
     if named_helper.isNone or named_helper.get != helper.get:
@@ -341,7 +341,7 @@ func auditEdges(): seq[Finding] =
           kind: FindingKind.ReverseAbsent,
           subject: subject,
           detail: "the sheet fills the opposite cell with '" & reversed.get &
-            "'; every move reverses, so this one is " & derived,
+              "'; every move reverses, so this one is " & derived,
         )
       else:
         result.add Finding(

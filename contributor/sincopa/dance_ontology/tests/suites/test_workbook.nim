@@ -44,7 +44,7 @@ suite "the base sheet":
       check cell.destination in WORKBOOK_STATES
       check cell.source != cell.destination
       check cellText(cell.source, cell.destination) == some(cell.text)
-      for other in CELLS[index + 1 .. ^1]:
+      for other in CELLS[index+1 .. ^1]:
         check not (other.source == cell.source and
           other.destination == cell.destination)
 

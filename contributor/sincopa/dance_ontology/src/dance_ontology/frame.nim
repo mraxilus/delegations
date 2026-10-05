@@ -103,7 +103,7 @@ func other*(side: Side): Side =
 func isOverlapping*(frame: Frame): bool =
   ## Test whether both forearms cross midline and so lie on top of each other.
   frame.hold[Side.Left] == some(crossedSite(Side.Left)) and
-    frame.hold[Side.Right] == some(crossedSite(Side.Right))
+      frame.hold[Side.Right] == some(crossedSite(Side.Right))
 
 
 
@@ -312,7 +312,7 @@ func describe*(frame: Frame): string =
       first = if frame.over.isSome: frame.over.get else: Side.Left
       joiner = if frame.over.isSome: " over " else: " and "
     describeConnection(first, frame.hold[first].get) & joiner &
-      describeConnection(other(first), frame.hold[other(first)].get)
+        describeConnection(other(first), frame.hold[other(first)].get)
 
 
 func brief*(frame: Frame): string =
@@ -341,7 +341,7 @@ func brief*(frame: Frame): string =
       first = if frame.over.isSome: frame.over.get else: Side.Left
       joiner = if frame.over.isSome: " over " else: " and "
     briefName(first) & "-to-" & briefName(frame.hold[first].get) & joiner &
-      briefName(other(first)) & "-to-" & briefName(frame.hold[other(first)].get)
+        briefName(other(first)) & "-to-" & briefName(frame.hold[other(first)].get)
 
 
 func position*(frame: Frame): string =

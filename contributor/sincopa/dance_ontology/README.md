@@ -64,12 +64,14 @@ nim r koch check                                   # root: every check a pull re
 nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
 nim r tools/build.nim assets                           # faces every page ships, into build/fonts
 nim r tools/build.nim pages                            # every page, picture and script, into build/
+nim r tools/build.nim drive                            # every page rendered, and every face proven
 nim r tools/build.nim verdicts                         # rewrite simulation/verdicts.md
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
 The first two run from the repository root, and the rest from this directory. This needs
-git, and the compiler that this project pins in `dance_ontology.nimble`.
+git, and the compiler that this project pins in `dance_ontology.nimble`. `drive` also needs node,
+with the tools of `package-lock.json` installed by `npm ci`.
 
 Hand-written pages are committed files. The shells and the prose of the review page live
 under `pages/`, and the one hand-drawn proposal under `mockups/`. `tools/build.nim pages`
@@ -134,16 +136,17 @@ pages/                             hand-written pages this project stands behind
 mockups/                           wholecloth.html, hand-drawn proposal to react to
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
-tools/build.nim                    this project's verbs: pages, assets, fixtures,
-                                   modelled, rig, turns, verdicts, answers, engine,
-                                   shot, system, clean
+tools/build.nim                    this project's verbs: pages, assets, types, drive,
+                                   fixtures, confirmed, modelled, rig, record, turns,
+                                   verdicts, answers, engine, shot, system, clean
+tools/drive/                       harness `drive` renders every page with, in TypeScript
 tests/                             the simulation's laws (test_rigid, test_read), the engine's
                                    (test_engine) and the planner's (test_plan); test_said, in
                                    JavaScript; test_suites, which runs
                                    every other suite as one binary from suites/: the laws
                                    over every pair of frames, the tape's (test_limb), the
                                    workbench's gates (test_marks) and the review page
-                                   rendered whole (test_review)
+                                   rendered whole (test_review); drive/, fixtures `drive` reads
 build/                             every page, picture and script; ignored by git
 ```
 

@@ -20,12 +20,14 @@ change calls it `TOLERANCE_REL`.
 ## Edit `pga/algebra.nim`
 
 ```nim
-template `in`(c: char; b: BasisDigits): bool = c in string(b)
+template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in cayleys.nim.
+template `in`(c: char, b: BasisDigits): bool = c in string(b)
 
 ```
 
 ```nim
-template `in`(c: char; b: BasisDigits): bool = c in string(b)
+template `[]`(b: BasisDigits, i: int): char {.used.} = string(b)[i]  # Used in cayleys.nim.
+template `in`(c: char, b: BasisDigits): bool = c in string(b)
 func `$`*(g: Grade): string {.borrow.}
   ## Print grade as its integer, so failing checks read as numbers.
 func `$`*(g: GradeAnti): string {.borrow.}

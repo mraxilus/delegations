@@ -162,7 +162,7 @@ func rowsOf(sheet: Sheet, ids: JsonNode): seq[Row] =
     ## Split typed measurand's id into operation and operand kinds, as catalogue joins them.
     ##   One kind per operand, last first, longest kind where two end id alike.
     result[0] = id
-    for _ in 1 .. count_operands:
+    for _ in 1..count_operands:
       var kind = ""
       for candidate in KINDS:
         if result[0].endsWith("_" & candidate) and candidate.len > kind.len: kind = candidate
@@ -722,7 +722,7 @@ func bodyDocket*(
       ##   Label off every fourth octave is minor, which narrow screen hides.
       let step = if axis.exponent_high - axis.exponent_low > 6: 2 else: 1
       result = "<span class=\"scale" & name_class & "\">"
-      for exponent in axis.exponent_low .. axis.exponent_high:
+      for exponent in axis.exponent_low..axis.exponent_high:
         if exponent mod step != 0: continue
         let label =
           case exponent
@@ -762,8 +762,8 @@ func bodyDocket*(
 
   result = "<div class=\"page\" style=\"--origin:" & axis.positionOf(1.0).fixed & "%;--octaves:" &
       $(axis.exponent_high - axis.exponent_low) & "\"><header><h1>PGA Gap Docket</h1>" &
-      "<p class=\"meta\">pga " & code(pin[0 ..< 7]) & " · time " & escapeHtml(text_dates) &
-      ", " & escapeHtml(taken{"machine"}.getStr) &
+      "<p class=\"meta\">pga " & code(pin[0..<7]) & " · time " & escapeHtml(text_dates) &
+      measuredAt(taken) & ", " & escapeHtml(taken{"machine"}.getStr) &
       (if count_runs > 1: ", median of " & $count_runs & " runs" else: "") &
       " · counts read from emitted C, exact" & links & "</p><label class=\"toggle\"><input " &
       "type=\"checkbox\" id=\"typed\"> typed measurands</label></header><nav class=\"tabs\" " &
@@ -787,11 +787,11 @@ func bodyDocket*(
       rows = every[index]
       keys = rows.mapIt(keysOf(it))
     var order: array[SORTS.len, Table[string, int]]
-    for index_sort in 0 ..< SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
+    for index_sort in 0..<SORTS.len: order[index_sort] = ranks(rows, keys.mapIt(it[index_sort]))
     result.add "<section class=\"algebra algebra-" & sheet.name & "\"><div class=\"rows\">"
     for row in rows:
       var ranks_row: array[SORTS.len, int]
-      for index_sort in 0 ..< SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
+      for index_sort in 0..<SORTS.len: ranks_row[index_sort] = order[index_sort][row.id]
       result.add htmlRow(row, axis, ranks_row)
     result.add "</div></section>"
   result.add htmlProposals(sheets, overlays) & METHOD & "</div>"

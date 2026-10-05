@@ -34,13 +34,13 @@ func alignmentOf*(count: int): int =
 
 ```nim
 type
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
     elements: array[Basis, float]
 ```
 
 ```nim
 type
-  Multivector* = object ## Define generalised multivector for n-dimensional PGA.
+  Multivector* = object  ## Define generalised multivector for n-dimensional PGA.
     elements {.align(alignmentOf(ord(Basis.high) + 1)).}: array[Basis, float]
       ## Align by size of basis set, so multivector starts on cache line and touches fewest lines.
 ```

@@ -61,7 +61,7 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     var note = Note(title: heading.lines[0], line: heading.line)
     let has_file = i < blocks.len and blocks[i].kind == KindBlock.Paragraph and
         blocks[i].lines[0].startsWith("`")
-    if not has_file or i + 1 >= blocks.len or blocks[i + 1].kind != KindBlock.Fence:
+    if not has_file or i + 1 >= blocks.len or blocks[i+1].kind != KindBlock.Fence:
       findings.add Finding(
         path: path,
         line: heading.line,
@@ -73,10 +73,10 @@ func parseNotes*(path, source: string): (Notes, seq[Finding]) =
     let
       first = blocks[i].lines.join(" ")
       close = first.find('`', 1)
-    note.path = if close > 1: first[1 ..< close] else: ""
+    note.path = if close > 1: first[1..<close] else: ""
     let joined = first.find(STATUS_JOIN)
-    if joined >= 0: note.status = first[joined + STATUS_JOIN.len .. ^1].strip
-    note.quote = blocks[i + 1].lines.join("\n")
+    if joined >= 0: note.status = first[joined+STATUS_JOIN.len .. ^1].strip
+    note.quote = blocks[i+1].lines.join("\n")
     i += 2
     while i < blocks.len and not (blocks[i].kind == KindBlock.Heading and blocks[i].level == 2):
       note.body.add blocks[i]

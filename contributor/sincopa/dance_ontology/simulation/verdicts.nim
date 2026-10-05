@@ -115,7 +115,7 @@ proc rungOf(band: Band, turn: float): RungRead =
   if key in READINGS_KEPT.rungs: return READINGS_KEPT.rungs[key]
   if ask notin RUNGS_WANTED: RUNGS_WANTED.add ask
 
-func glanceAt(sweep: SweepRead, at: float): Glance = sweep.glances[int(round(at * 2.0)) + 4]
+func glanceAt(sweep: SweepRead, at: float): Glance = sweep.glances[int(round(at*2.0))+4]
   ## Moment report reads at `at` turns, which is half turn from -2 to 2.
 
 
@@ -127,20 +127,20 @@ proc rigTable(): string =
   result.add "## The rig\n\n"
   result.add prose(
     "Every measurement is a mixed-sex midpoint of ANSUR II medians; the " &
-      "joints are the AAOS ranges held to what a dancer will do without pain.",
+    "joints are the AAOS ranges held to what a dancer will do without pain.",
   )
   result.add "| measure | value |\n|---|---|\n"
   result.add &"| torso round | {HUMAN.round[Part.Torso]} m, an ellipse " &
-    &"{turns(2 * halfBreadth(HUMAN, Part.Torso))} across and " &
-    &"{turns(2 * halfDepth(HUMAN, Part.Torso))} deep, hip {HUMAN.hip} to " &
-    &"{HUMAN.top[Part.Torso]} m |\n"
+      &"{turns(2 * halfBreadth(HUMAN, Part.Torso))} across and " &
+      &"{turns(2 * halfDepth(HUMAN, Part.Torso))} deep, hip {HUMAN.hip} to " &
+      &"{HUMAN.top[Part.Torso]} m |\n"
   result.add &"| neck round | {HUMAN.round[Part.Neck]} m, radius " &
-    &"{formatFloat(halfBreadth(HUMAN, Part.Neck), ffDecimal, 3)}, to {HUMAN.top[Part.Neck]} m |\n"
+      &"{formatFloat(halfBreadth(HUMAN, Part.Neck), ffDecimal, 3)}, to {HUMAN.top[Part.Neck]} m |\n"
   result.add &"| head round | {HUMAN.round[Part.Head]} m, radius " &
-    &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
+      &"{formatFloat(halfBreadth(HUMAN, Part.Head), ffDecimal, 3)}, to {HUMAN.top[Part.Head]} m |\n"
   result.add &"| shoulders | {HUMAN.shoulder_out} m out, {HUMAN.shoulder_up} m up |\n"
   result.add &"| arm | upper {HUMAN.upper}, forearm {HUMAN.fore}, wrist to grip {HUMAN.hand}: " &
-    &"span {turns(span(HUMAN))} m; limb radius {HUMAN.limb} |\n"
+      &"span {turns(span(HUMAN))} m; limb radius {HUMAN.limb} |\n"
   let
     behind = int(round(HUMAN.range[Dof.Extend].upper * 180.0 / PI))
     twist_in = int(round(-HUMAN.range[Dof.Twist].lower * 180.0 / PI))
@@ -149,13 +149,13 @@ proc rigTable(): string =
     wrist = int(round(HUMAN.range[Dof.Wrist].upper * 180.0 / PI))
     waist = int(round(HUMAN.waist.upper * 180.0 / PI))
   result.add &"| shoulder | {behind} degrees behind the frontal plane; across, trunk stops " &
-    &"it; twist {twist_in} in to {twist_out} out |\n"
+      &"it; twist {twist_in} in to {twist_out} out |\n"
   result.add &"| elbow | 0 to {bend} degrees |\n"
   result.add &"| wrist | a {wrist} degree cone |\n"
   result.add &"| waist | {waist} degrees each way, sprung to square |\n"
   result.add &"| hands | low {HUMAN.band[Band.Torso].lower}-{HUMAN.band[Band.Torso].upper}, " &
-    &"high {HUMAN.band[Band.Neck].lower}-{HUMAN.band[Band.Neck].upper}, " &
-    &"above {HUMAN.band[Band.Crown].lower}-{HUMAN.band[Band.Crown].upper} m |\n"
+      &"high {HUMAN.band[Band.Neck].lower}-{HUMAN.band[Band.Neck].upper}, " &
+      &"above {HUMAN.band[Band.Crown].lower}-{HUMAN.band[Band.Crown].upper} m |\n"
   result.add "| stance | chosen for each turn, from clear of each other outward |\n\n"
 
 
@@ -164,8 +164,8 @@ proc singleHolds(): string =
   result.add "## One hand held, the follow turned\n\n"
   result.add prose(
     &"Counted from {restName(false)}, in turns, anticlockwise seen from above " &
-      "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
-      "into the last stretch before a joint's edge the worst joint is (1 is the edge).",
+    "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
+    "into the last stretch before a joint's edge the worst joint is (1 is the edge).",
   )
   for (lead_arm, follow_arm, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
                        (Arm.Left, Arm.Right, "L-r"), (Arm.Right, Arm.Left, "R-l")]:
@@ -178,15 +178,15 @@ proc singleHolds(): string =
         continue
       result.add blocks(sweep)
       result.add "| turn | follow's arm | lead's arm | strain | hands at |\n" &
-        "|---|---|---|---|---|\n"
+          "|---|---|---|---|---|\n"
       for i, half_turns in HALVES:
         let glance = sweep.glances[i]
         if not glance.is_reached:
           result.add &"| {half(half_turns)} | blocked | | | |\n"
           continue
         result.add &"| {half(half_turns)} | {said(glance.lies[0][Body.Two], band)} | " &
-          &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} | " &
-          &"{turns(glance.hand_height)} m |\n"
+            &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} | " &
+            &"{turns(glance.hand_height)} m |\n"
       result.add "\n"
 
 
@@ -198,7 +198,7 @@ proc floorClaim(): string =
     "the lock way is negative and the wrap way positive; for L-r the wrap way is negative " &
     "and the lock way positive.")
   result.add "| hold | level | way | floor says | simulation says | the simulation names |\n" &
-    "|---|---|---|---|---|---|\n"
+      "|---|---|---|---|---|---|\n"
   for (lead_arm, follow_arm, name, lock_sign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
                                  (Arm.Left, Arm.Right, "L-r", 1.0)]:
     for (word, band) in BANDS:
@@ -233,7 +233,7 @@ proc pairHolds(): string =
         continue
       result.add blocks(sweep)
       result.add "| turn | follow's first arm | follow's second arm | crossings | strain |\n" &
-        "|---|---|---|---|---|\n"
+          "|---|---|---|---|---|\n"
       for i, half_turns in HALVES:
         let glance = sweep.glances[i]
         if not glance.is_reached:
@@ -242,10 +242,10 @@ proc pairHolds(): string =
         var cross = ""
         for crossing in 0..<min(glance.crossed, glance.over.len):
           cross.add (if cross.len > 0: ", " else: "") &
-            (if glance.over[crossing] == 0: "first over" else: "second over")
+              (if glance.over[crossing] == 0: "first over" else: "second over")
         if cross.len == 0: cross = "none"
         result.add &"| {half(half_turns)} | {said(glance.lies[0][Body.Two], band)} | " &
-          &"{said(glance.lies[1][Body.Two], band)} | {cross} | {strainWord(glance.strain)} |\n"
+            &"{said(glance.lies[1][Body.Two], band)} | {cross} | {strainWord(glance.strain)} |\n"
       result.add "\n"
 
 
@@ -254,13 +254,13 @@ proc chain(): string =
   result.add "## The chain, asked still\n\n"
   result.add prose(
     "L-r.R-l wound to each rung and asked whether pose holds there standing " &
-      "still -- not whether the arms carry to it at the pace of the turn, which the sweeps " &
-      "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
-      "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
-      "Asked from every distance the couple may stand at, and shown from first that holds.",
+    "still -- not whether the arms carry to it at the pace of the turn, which the sweeps " &
+    "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
+    "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
+    "Asked from every distance the couple may stand at, and shown from first that holds.",
   )
   result.add "| level | rung | facing | holds | strain | crossings | standing |\n" &
-    "|---|---|---|---|---|---|---|\n"
+      "|---|---|---|---|---|---|---|\n"
   for (word, band) in BANDS:
     for (turn, rung) in RUNGS:
       # Read off stance rung winds couple to, whether pose holds there or not.
@@ -269,7 +269,7 @@ proc chain(): string =
         rung_read = rungOf(band, turn)
       if rung_read.found_pose:
         result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | yes | " &
-          &"{strainWord(rung_read.strain)} | {rung_read.crossed} | {turns(rung_read.apart)} m |\n"
+            &"{strainWord(rung_read.strain)} | {rung_read.crossed} | {turns(rung_read.apart)} m |\n"
       else:
         result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | no | | | no pose holds |\n"
   result.add "\n"
@@ -281,14 +281,14 @@ proc drawnRow(drawn: string, links: seq[Link], who: Body, turn: float, band: Ban
   if not glance.is_reached:
     return &"| {drawn} | {turns(turn)} | blocked before it | | | |\n"
   &"| {drawn} | {turns(turn)} | yes | {said(glance.lies[0][Body.Two], band)} | " &
-    &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} |\n"
+      &"{said(glance.lies[0][Body.One], band)} | {strainWord(glance.strain)} |\n"
 
 
 proc drawnStates(): string =
   ## Tabulate every state whole-cloth page draws.
   result.add "## The states the whole-cloth page draws\n\n"
   result.add "| drawn as | turned | holds | follow's arm | lead's arm | strain |\n" &
-    "|---|---|---|---|---|---|\n"
+      "|---|---|---|---|---|---|\n"
   result.add drawnRow("Left to left, open", oneLink(Arm.Left, Arm.Left), Body.Two, 0.0, Band.Torso)
   result.add drawnRow(
     "Left to right-wrap-low @ 1/2",
@@ -347,22 +347,22 @@ proc standing(): string =
   result.add "## Standing closer, and further\n\n"
   result.add prose(
     "L-l low, turning the follow, at three stances told rather than chosen: " &
-      "what the block does when the couple are made to step in or out.  The row above them is " &
-      "where they stand when left to choose.",
+    "what the block does when the couple are made to step in or out.  The row above them is " &
+    "where they stand when left to choose.",
   )
   result.add "| apart | lock way | wrap way |\n|---|---|---|\n"
   let
     links = oneLink(Arm.Left, Arm.Left)
     chosen = sweepOf(Band.Torso, links)
   result.add &"| chosen | {blockLine(chosen.negative, \"-\")} | " &
-    &"{blockLine(chosen.positive, \"+\")} |\n"
+      &"{blockLine(chosen.positive, \"+\")} |\n"
   for apart in [0.36, 0.50, 0.70]:
     let sweep = sweepOf(Band.Torso, links, apart = apart)
     if not sweep.found_rest:
       result.add &"| {apart} m | no rest | |\n"
       continue
     result.add &"| {apart} m | {blockLine(sweep.negative, \"-\", should_say_apart = false)} | " &
-      &"{blockLine(sweep.positive, \"+\", should_say_apart = false)} |\n"
+        &"{blockLine(sweep.positive, \"+\", should_say_apart = false)} |\n"
   result.add "\n"
 
 
@@ -371,9 +371,9 @@ proc report(): string =
   result.add "# What the simulation says\n\n"
   result.add prose(
     "Generated by `nim r tools/build.nim verdicts` from " &
-      "`simulation/verdicts.nim`; do not edit by hand.  The simulation answers in its own " &
-      "physical words, and `simulation/words.nim` translates once.  The whole-cloth page " &
-      "reads that same table, so the page and this report cannot give one pose two answers:",
+    "`simulation/verdicts.nim`; do not edit by hand.  The simulation answers in its own " &
+    "physical words, and `simulation/words.nim` translates once.  The whole-cloth page " &
+    "reads that same table, so the page and this report cannot give one pose two answers:",
   )
   result.add "| the simulation says | the sheet says |\n|---|---|\n"
   result.add "| the arm out in front, on neither face of its own body | open |\n"
@@ -386,15 +386,15 @@ proc report(): string =
   result.add "| the elbow in front of the body, on an arm behind the back | elbow forward |\n"
   for (seen, name) in FACINGS:
     result.add &"| the lead has the follow {SEEN[seen[0]]}, the follow has the lead " &
-      &"{SEEN[seen[1]]} | {name} |\n"
+        &"{SEEN[seen[1]]} | {name} |\n"
   result.add "\n"
   result.add prose(
     "Read with the model's limits in mind: the shoulder girdle is rigid, so " &
-      "a span a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
-      "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
-      "stand for each turn wherever it carries furthest, never inside each other.  A " &
-      "*blocks* is therefore a little early, and a *holds* says the pose exists without " &
-      "any of that help.",
+    "a span a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
+    "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
+    "stand for each turn wherever it carries furthest, never inside each other.  A " &
+    "*blocks* is therefore a little early, and a *holds* says the pose exists without " &
+    "any of that help.",
   )
   result.add rigTable()
   result.add singleHolds()
@@ -423,10 +423,10 @@ proc wanted*(): tuple[sweeps: seq[SweepAsk], rungs: seq[RungAsk]] =
   discard render()
   (SWEEPS_WANTED, RUNGS_WANTED)
 
-proc sweepText*(ask: SweepAsk): string = $toJson(readSweep(ask))
+proc sweepText*(ask: SweepAsk): string = $readSweep(ask).toJson
   ## Read one sweep report lacks, as text its kept file holds.
 
-proc rungText*(ask: RungAsk): string = $toJson(readRung(ask))
+proc rungText*(ask: RungAsk): string = $readRung(ask).toJson
   ## Read one rung report lacks, as text its kept file holds.
 
 proc assembled*(

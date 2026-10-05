@@ -71,17 +71,17 @@ func stripSuffix(name: string): string =
   if stop < 0: return name
   var i = stop - 1
   while i >= 0 and name[i] in Digits: dec i
-  if i >= 1 and name[i] in {'u', 'c'} and name[i - 1] == '_': name[0 ..< i - 1]
-  else: name[0 ..< stop]
+  if i >= 1 and name[i] in {'u', 'c'} and name[i-1] == '_': name[0..<i-1]
+  else: name[0..<stop]
 
 
 func decode(head: string): string =
   ## Decode encoded head: `X<hex>` bytes and special words become characters.
   var i = 0
   while i < head.len:
-    if head[i] == 'X' and i + 2 < head.len and head[i + 1] in HexDigits and
-        head[i + 2] in HexDigits:
-      result.add char(parseHexInt(head[i + 1 .. i + 2]))
+    if head[i] == 'X' and i + 2 < head.len and head[i+1] in HexDigits and
+        head[i+2] in HexDigits:
+      result.add char(parseHexInt(head[i+1..i+2]))
       i += 3
       continue
     var is_special = false
@@ -100,7 +100,7 @@ func demangle*(name: string): string =
   ## Read symbol out of mangled function name.
   ##   Head ending in `_` was encoded and is decoded; plain head is identifier as written.
   let head = name.stripSuffix
-  if head.len > 0 and head[^1] == '_': decode(head[0 ..< head.high])
+  if head.len > 0 and head[^1] == '_': decode(head[0..<head.high])
   else: head
 
 
@@ -114,7 +114,7 @@ func stemOf(parameter: string): string =
       let start = prefix.len
       var stop = start
       while stop < text.len and text[stop] notin {'_', '*', ' '}: inc stop
-      return text[start ..< stop]
+      return text[start..<stop]
   if text == "NF" or text.startsWith("NF "): return "float"
   if text == "NI" or text.startsWith("NI "): return "int"
   if text == "NIM_BOOL" or text.startsWith("NIM_BOOL "): return "bool"
@@ -124,7 +124,7 @@ func stemOf(parameter: string): string =
 func moduleOf(name: string): string =
   ## Read module suffix after last `__`; empty where name carries none.
   let at = name.rfind("__")
-  if at < 0: "" else: name[at + 2 ..< name.len]
+  if at < 0: "" else: name[at+2..<name.len]
 
 
 func overloadOf*(name: string): int =
@@ -135,8 +135,8 @@ func overloadOf*(name: string): int =
   if stop < 0: return -1
   var i = stop - 1
   while i >= 0 and name[i] in Digits: dec i
-  if i >= 1 and i < stop - 1 and name[i] == 'u' and name[i - 1] == '_':
-    parseInt(name[i + 1 ..< stop])
+  if i >= 1 and i < stop - 1 and name[i] == 'u' and name[i-1] == '_':
+    parseInt(name[i+1..<stop])
   else: -1
 
 
@@ -153,7 +153,7 @@ func functionsIn*(source: string): seq[FunctionC] =
     let
       line_end = source.find('\n', position)
       stop = if line_end < 0: source.len else: line_end
-      line = source[position ..< stop]
+      line = source[position..<stop]
     position = stop + 1
     let
       is_inline = line.startsWith("static N_INLINE(")
@@ -166,15 +166,15 @@ func functionsIn*(source: string): seq[FunctionC] =
       name_stop = line.find(')', comma)
     if comma < 0 or name_stop < 0: continue
     let
-      name = line[comma + 1 ..< name_stop].strip
-      returns = line[parenthesis_open + 1 ..< comma].stemOf
+      name = line[comma+1..<name_stop].strip
+      returns = line[parenthesis_open+1..<comma].stemOf
       parameters_start = line.find('(', name_stop)
       parameters_stop = line.rfind(')')
     if parameters_start < 0 or parameters_stop <= parameters_start: continue
     var
       parameters: seq[string]
       stem_result = returns
-    for parameter in line[parameters_start + 1 ..< parameters_stop].split(','):
+    for parameter in line[parameters_start+1..<parameters_stop].split(','):
       let stem = parameter.stemOf
       if stem.len == 0: continue
       if parameter.strip.endsWith(" Result"): stem_result = stem
@@ -194,7 +194,7 @@ func functionsIn*(source: string): seq[FunctionC] =
       parameters: parameters,
       stem_result: stem_result,
       is_inline: is_inline,
-      body: source[position ..< i],
+      body: source[position..<i],
     )
     position = i
 
@@ -210,7 +210,7 @@ func sitesPlain(body: string): seq[string] =
       continue
     var stop = i
     while stop < body.len and body[stop] in IdentChars: inc stop
-    let name = body[i ..< stop]
+    let name = body[i..<stop]
     i = stop
     if stop < body.len and body[stop] == '(' and "__" in name and not name.startsWith(ACCESSOR):
       result.add name
@@ -239,7 +239,7 @@ func startOf(context, counter: string): int =
   let digits_start = at + counter.len + " = ((NI) ".len
   var stop = digits_start
   while stop < context.len and context[stop] in Digits: inc stop
-  if stop == digits_start: 0 else: parseInt(context[digits_start ..< stop])
+  if stop == digits_start: 0 else: parseInt(context[digits_start..<stop])
 
 
 func tripsOf(inner, context: string): int =
@@ -250,7 +250,7 @@ func tripsOf(inner, context: string): int =
   let start = at + OPENING_BOUND.len
   var i = start
   while i < inner.len and inner[i] in IdentChars: inc i
-  let counter = inner[start ..< i]
+  let counter = inner[start..<i]
   if counter.len == 0: return 1
   let is_inclusive = inner.continuesWith(" <= ", i)
   if not is_inclusive and not inner.continuesWith(" < ", i): return 1
@@ -260,7 +260,7 @@ func tripsOf(inner, context: string): int =
   var stop = i
   while stop < inner.len and inner[stop] in Digits: inc stop
   if stop == i: return 1
-  let bound = parseInt(inner[i ..< stop]) + (if is_inclusive: 1 else: 0)
+  let bound = parseInt(inner[i..<stop]) + (if is_inclusive: 1 else: 0)
   max(1, bound - startOf(context, counter))
 
 
@@ -322,9 +322,9 @@ func weighted(body, context: string): Counts =
   while true:
     let at = body.find(OPENING_LOOP, position)
     if at < 0:
-      outside.add body[position ..< body.len]
+      outside.add body[position..<body.len]
       break
-    outside.add body[position ..< at]
+    outside.add body[position..<at]
     var
       i = at + OPENING_LOOP.len
       depth = 1
@@ -333,8 +333,8 @@ func weighted(body, context: string): Counts =
       elif body[i] == '}': dec depth
       inc i
     let
-      inner = body[at + OPENING_LOOP.len ..< max(at + OPENING_LOOP.len, i - 1)]
-      before = context & body[0 ..< at]
+      inner = body[at+OPENING_LOOP.len..<max(at+OPENING_LOOP.len, i-1)]
+      before = context & body[0..<at]
     result = result + weighted(inner, before) * tripsOf(inner, before)
     position = i
   result = result + plain(outside)
@@ -349,9 +349,9 @@ func sitesWeighted(body, context: string): seq[string] =
   while true:
     let at = body.find(OPENING_LOOP, position)
     if at < 0:
-      outside.add body[position ..< body.len]
+      outside.add body[position..<body.len]
       break
-    outside.add body[position ..< at]
+    outside.add body[position..<at]
     var
       i = at + OPENING_LOOP.len
       depth = 1
@@ -360,10 +360,10 @@ func sitesWeighted(body, context: string): seq[string] =
       elif body[i] == '}': dec depth
       inc i
     let
-      inner = body[at + OPENING_LOOP.len ..< max(at + OPENING_LOOP.len, i - 1)]
-      before = context & body[0 ..< at]
+      inner = body[at+OPENING_LOOP.len..<max(at+OPENING_LOOP.len, i-1)]
+      before = context & body[0..<at]
       sites = sitesWeighted(inner, before)
-    for _ in 1 .. tripsOf(inner, before): result.add sites
+    for _ in 1..tripsOf(inner, before): result.add sites
     position = i
   result.add sitesPlain(outside)
 

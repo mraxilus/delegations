@@ -368,6 +368,10 @@ follows the cascade of each element, so `drive` holds what the audit cannot.
   names its reason (Article IX.9) is a gap made visible, and not that. The
   `check-commits` job enforces it: the commit immediately before every `fix` is a `test` of the
   same scope. One test answers one fix, with nothing between them, or the `fix` is a finding.
+- **A regression test holds the case and its domain.** It quotes the mistake as it was found, and
+  names where it was found. It also covers the domain of the mistake, as the rule on laws below
+  asks. The case alone proves one input, and the domain alone does not prove that the case is
+  fixed.
 - **A change that needs no new test is not a `fix`.** It is a `refactor`, a `chore` or a
   `docs`, and to say so is honest rather than evasive.
 - Test laws, and not examples. Enumerate a small domain exhaustively, and sample a large one

@@ -35,7 +35,7 @@ func cells*[T](table: T): JsonNode =
     when table[a] is array:
       for b in Basis:
         let terms = cellOf(table[a][b])
-        if terms.len > 0: result[$a & "," & $b] = terms
+        if terms.len > 0: result[$a&"," & $b] = terms
     else:
       let terms = cellOf(table[a])
       if terms.len > 0: result[$a] = terms

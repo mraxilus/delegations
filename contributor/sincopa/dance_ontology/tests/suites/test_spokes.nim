@@ -276,7 +276,7 @@ suite "Internal: The drawing":
         let
           is_drawn = picture.contains("data-frame=\"" & target.key & "\"")
           is_reachable = target == here or classify(here, target).isSome or
-            compound(here, target).isSome
+              compound(here, target).isSome
         check is_drawn == is_reachable
 
 

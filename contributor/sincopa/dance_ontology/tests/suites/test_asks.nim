@@ -33,7 +33,6 @@ func arranged(stance: array[Body, Stance]): tuple[axis, facing: float] =
   ## above: what `pose.relative` reads off drawing, read off simulation's stance.
   ##   Simulation counts anticlockwise from its x and drawing clockwise from up page, which
   ##     is simulation's y.
-
   func page(radians: float): float = 90.0 - radians * 180.0 / PI
 
   let
@@ -58,10 +57,10 @@ func armOf(still: JsonNode, who: Body, arm: Arm): ArmPose =
   for i, tag in tags:
     let part = tag[2].getInt
     if tag[0].getInt == ord(who) and tag[1].getInt == ord(arm) and part in 1..3:
-      capsules[part] = ((points[6 * i].getFloat, points[6 * i + 1].getFloat,
-                         points[6 * i + 2].getFloat),
-                        (points[6 * i + 3].getFloat, points[6 * i + 4].getFloat,
-                         points[6 * i + 5].getFloat), radii[i].getFloat)
+      capsules[part] = ((points[6*i].getFloat, points[6*i+1].getFloat,
+                         points[6*i+2].getFloat),
+                        (points[6*i+3].getFloat, points[6*i+4].getFloat,
+                         points[6*i+5].getFloat), radii[i].getFloat)
   let
     (upper, fore, palm) = (capsules[1], capsules[2], capsules[3])
     upward = unit(upper.z - upper.a)
@@ -79,8 +78,8 @@ func armsOf(still: JsonNode, links: seq[Link]): Arms =
 
 func capsuleAt(frame: JsonNode, i: int): tuple[a, z: Vector] =
   ## Two ends of `i`th capsule of one recorded moment.
-  ((frame[6 * i].getFloat, frame[6 * i + 1].getFloat, frame[6 * i + 2].getFloat),
-   (frame[6 * i + 3].getFloat, frame[6 * i + 4].getFloat, frame[6 * i + 5].getFloat))
+  ((frame[6*i].getFloat, frame[6*i+1].getFloat, frame[6*i+2].getFloat),
+   (frame[6*i+3].getFloat, frame[6*i+4].getFloat, frame[6*i+5].getFloat))
 
 func faceGapOf(recording, frame: JsonNode): float =
   ## Nearest any arm of either dancer comes to either face at one recorded moment, past both
@@ -103,7 +102,7 @@ func faceGapOf(recording, frame: JsonNode): float =
       forward = cross(upward, rightward)
       head = capsuleAt(frame, trunk[^1])
     faces.add (head.a + head.z) * 0.5 + rightward * offset.x + forward * offset.y +
-              upward * offset.z
+        upward * offset.z
   result = Inf
   for i in 0..<tags.len:
     if tags[i][2].getInt notin [ord(Mark.Upper), ord(Mark.Fore), ord(Mark.Palm)]: continue
@@ -147,6 +146,7 @@ func isCrossed(recording, frame: JsonNode): bool =
           (1.0 - met.t) * distance(upper.a, upper.z) > ELBOW_END:
         return true
   false
+
 
 
 suite "Internal: What each card asks of simulation":
@@ -375,13 +375,13 @@ suite "Internal: Simulation against reference":
     var marks, dofs: seq[string]
     for name in kept["marks"]: marks.add name.getStr
     for name in kept["dofs"]: dofs.add name.getStr
-    func isAnswerTo(other, ask: StillAsk, links: seq[Link], turns: float): bool =
+    func isAnswerTo(other, ask: StillAsk; links: seq[Link]; turns: float): bool =
       ## Whether `other` asks question that answers twin `ask`, unreflected.
       not twinOf(other.links, other.turns, other.isRestAway).is_reflected and
-        other.links == links and other.turns == turns and
-        other.isRestAway == ask.isRestAway and other.head == ask.head and
-        other.is_either_way == ask.is_either_way and other.who == ask.who and
-        other.over == mirrored(ask.over)
+          other.links == links and other.turns == turns and
+          other.isRestAway == ask.isRestAway and other.head == ask.head and
+          other.is_either_way == ask.is_either_way and other.who == ask.who and
+          other.over == mirrored(ask.over)
     var twins, keeping = 0
     for still in kept["stills"]:
       let
@@ -423,10 +423,10 @@ suite "Internal: Simulation against reference":
         if tags[i][2].getInt != ord(Mark.Girdle): continue
         let
           (who, side) = (tags[i][0].getInt, tags[i][1].getInt)
-          (at_x, at_y) = (look[4 * who].getFloat, look[4 * who + 1].getFloat)
-          (fore_x, fore_y) = (look[4 * who + 2].getFloat, look[4 * who + 3].getFloat)
-          middle_x = (row[6 * i].getFloat + row[6 * i + 3].getFloat) / 2.0
-          middle_y = (row[6 * i + 1].getFloat + row[6 * i + 4].getFloat) / 2.0
+          (at_x, at_y) = (look[4*who].getFloat, look[4*who+1].getFloat)
+          (fore_x, fore_y) = (look[4*who+2].getFloat, look[4*who+3].getFloat)
+          middle_x = (row[6*i].getFloat + row[6*i+3].getFloat) / 2.0
+          middle_y = (row[6*i+1].getFloat + row[6*i+4].getFloat) / 2.0
           rightward = (middle_x - at_x) * fore_y - (middle_y - at_y) * fore_x
         checkpoint &"`{key}` girdle of `{who}` `{side}` stands `{rightward:.3f}` rightward"
         check (rightward > 0.0) == (side == ord(Arm.Right))
@@ -450,7 +450,7 @@ suite "Internal: Simulation against reference":
           if tags[i][0].getInt == who and tags[i][2].getInt == ord(Mark.Trunk): trunk.add i
         let
           (left, right) = (capsuleAt(row, trunk[0]), capsuleAt(row, trunk[1]))
-          (fore_x, fore_y) = (look[4 * who + 2].getFloat, look[4 * who + 3].getFloat)
+          (fore_x, fore_y) = (look[4*who+2].getFloat, look[4*who+3].getFloat)
           across = (right.a + right.z - left.a - left.z) * 0.5
           rightward = across.x * fore_y - across.y * fore_x
         checkpoint &"`{key}` torso of `{who}` lists left capsule `{rightward:.3f}` left of right"
@@ -493,7 +493,7 @@ suite "Internal: Simulation against reference":
         deepest = min(deepest, gap)
         if gap < -FACE_SLOP: inside.add &"{name}@{moment}"
     checkpoint &"`{inside.len}` of `{moments}` moments hold arm inside face, deepest at " &
-      &"`{deepest}` m: " & inside[0..<min(inside.len, 12)].join(" ")
+        &"`{deepest}` m: " & inside[0..<min(inside.len, 12)].join(" ")
     check moments >= stillAsks().len
     check inside.len == 0
 

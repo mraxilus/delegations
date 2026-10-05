@@ -65,7 +65,7 @@ func textNumbered(line: string): int =
   ## Read offset of text after `1. ` marker; zero when line opens no numbered item.
   var i = 0
   while i < line.len and line[i].isDigit: inc i
-  if i > 0 and i + 1 < line.len and line[i] == '.' and line[i + 1] == ' ': i + 2 else: 0
+  if i > 0 and i + 1 < line.len and line[i] == '.' and line[i+1] == ' ': i + 2 else: 0
 
 
 func parseBlocks*(source: string): seq[Block] =
@@ -110,7 +110,7 @@ func parseBlocks*(source: string): seq[Block] =
       result.add Block(
         kind: KindBlock.Heading,
         level: level,
-        lines: @[line[level + 1 .. ^1].strip],
+        lines: @[line[level+1 .. ^1].strip],
         line: i + 1,
       )
       inc i
@@ -186,30 +186,30 @@ func renderInline*(text: string): string =
     # Render code span verbatim, escaped, up to matching backtick run.
     if c == '`':
       var run = 0
-      while i + run < text.len and text[i + run] == '`': inc run
+      while i + run < text.len and text[i+run] == '`': inc run
       let close = text.find(repeat('`', run), i + run)
       if close > 0:
-        result.add "<code>" & escapeHtml(text[i + run ..< close].strip) & "</code>"
+        result.add "<code>" & escapeHtml(text[i+run..<close].strip) & "</code>"
         i = close + run
         continue
-      result.add escapeHtml(text[i ..< i + run])
+      result.add escapeHtml(text[i..<i+run])
       i += run
       continue
 
     # Render bold between double stars.
-    if c == '*' and i + 1 < text.len and text[i + 1] == '*':
+    if c == '*' and i + 1 < text.len and text[i+1] == '*':
       let close = text.find("**", i + 2)
       if close > i + 2:
-        result.add "<strong>" & renderInline(text[i + 2 ..< close]) & "</strong>"
+        result.add "<strong>" & renderInline(text[i+2..<close]) & "</strong>"
         i = close + 2
         continue
 
     # Render italic between single stars or underscores at word edges.
-    if (c == '*' or c == '_') and i + 1 < text.len and text[i + 1] != ' ' and
-        (i == 0 or text[i - 1] in {' ', '(', '['}):
+    if (c == '*' or c == '_') and i + 1 < text.len and text[i+1] != ' ' and
+        (i == 0 or text[i-1] in {' ', '(', '['}):
       let close = text.find(c, i + 1)
-      if close > i + 1 and (close + 1 == text.len or text[close + 1] notin Letters + Digits):
-        result.add "<em>" & renderInline(text[i + 1 ..< close]) & "</em>"
+      if close > i + 1 and (close + 1 == text.len or text[close+1] notin Letters + Digits):
+        result.add "<em>" & renderInline(text[i+1..<close]) & "</em>"
         i = close + 1
         continue
 
@@ -219,9 +219,9 @@ func renderInline*(text: string): string =
       if close > i:
         let finish = text.find(')', close + 2)
         if finish > close:
-          let address = text[close + 2 ..< finish]
+          let address = text[close+2..<finish]
           result.add "<a href=\"" & escapeHtml(address) & "\">" &
-              renderInline(text[i + 1 ..< close]) & "</a>"
+              renderInline(text[i+1..<close]) & "</a>"
           i = finish + 1
           continue
 

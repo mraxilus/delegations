@@ -64,7 +64,7 @@ func between(s, opening, closing: string): string =
     after = start + opening.len
     stop = s.find(closing, after)
   if stop < 0: return ""
-  s[after ..< stop]
+  s[after..<stop]
 
 
 iterator admitted(source: string, is_conformal: bool): string =
@@ -111,6 +111,6 @@ func aliasesIn*(source: string, is_conformal: bool): seq[string] =
     if not line.startsWith("func "): continue
     let stop = line.find('*')
     if stop < 5: continue
-    let name = line[5 ..< stop]
+    let name = line[5..<stop]
     if name.len == 0 or name[0] == '`': continue
     if name notin result: result.add name

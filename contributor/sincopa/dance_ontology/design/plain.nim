@@ -31,7 +31,7 @@ func cut(markup, opens, shuts: string): string =
     if a < 0: return
     let b = result.find(shuts, a)
     if b < 0: return
-    result = result[0..<a] & " " & result[b + shuts.len .. ^1]
+    result = result[0..<a] & " " & result[b+shuts.len .. ^1]
 
 
 func plain(markup: string): string =
@@ -83,7 +83,7 @@ func prose*(markup: string): seq[string] =
       # Element of another kind whose name starts same way, such as `path` or `line`.  Step
       #   over its opening tag alone: closing tag reader would find is next paragraph's, so
       #   jumping there skipped every paragraph that stands behind drawing (`test_plain.nim`).
-      if body[opens + 1 + kind.len] notin {' ', '>'}:
+      if body[opens+1+kind.len] notin {' ', '>'}:
         at = opens + 1
         continue
       let
@@ -91,7 +91,7 @@ func prose*(markup: string): seq[string] =
         shuts = body.find("</" & kind & ">", head)
       if head < 0 or shuts < 0: break
       at = shuts + 1
-      let said = body[head + 1..<shuts].plain.splitWhitespace.join(" ")
+      let said = body[head+1..<shuts].plain.splitWhitespace.join(" ")
       if said.len > 0: result.add said
 
 
@@ -132,14 +132,14 @@ func isClosing(word: string): bool =
   var i = word.high
   while i >= 0 and word[i] in {'"', '*', '_', '\''}: dec i
   if i < 1 or word[i] notin {'.', '!', '?'}: return false
-  word[i - 1] in Letters + Digits or word[i - 1] in {')', ']', '"', '%', '*', '_'}
+  word[i-1] in Letters + Digits or word[i-1] in {')', ']', '"', '%', '*', '_'}
 
 func markerLength(line: string): int =
   ## Length of list marker line opens with; nought where it opens none.
   if line.len > 1 and line[0] in {'-', '*', '+'} and line[1] == ' ': return 2
   var i = 0
   while i < line.len and line[i] in Digits: inc i
-  if i > 0 and i + 1 < line.len and line[i] in {'.', ')'} and line[i + 1] == ' ': return i + 2
+  if i > 0 and i + 1 < line.len and line[i] in {'.', ')'} and line[i+1] == ' ': return i + 2
   0
 
 func gathered(fragments: openArray[string]): string =
@@ -175,8 +175,8 @@ func markdownProse*(document: string): seq[string] =
     if is_fence: is_fenced = not is_fenced
     let
       is_prose = not is_fence and not is_fenced and line.len > 0 and
-                not line.startsWith("|") and not line.startsWith("#") and
-                not line.startsWith("---") and not line.startsWith(">")
+          not line.startsWith("|") and not line.startsWith("#") and
+          not line.startsWith("---") and not line.startsWith(">")
       marker = (if is_prose: line.markerLength else: 0)
     if carried.len > 0 and (not is_prose or marker > 0):
       result.add carried.gathered

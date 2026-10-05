@@ -116,7 +116,7 @@ func htmlProposal*(
     standing =
       if proposal.isImplemented: "implemented in " & code(
         proposal.implemented_in[
-          0 ..< min(7, proposal.implemented_in.len)],
+          0..<min(7, proposal.implemented_in.len)],
       )
       elif proposal.isFrozen: "withdrawn"
       else: "proposed"
@@ -125,10 +125,10 @@ func htmlProposal*(
       renderInline(proposal.title) & "</" & title & "><p class=\"meta\">" &
       escapeHtml(proposal.citation) &
       " " & code(proposal.name) & " · " & standing & " · pga " &
-      code(commit_shown[0 ..< min(7, commit_shown.len)])
+      code(commit_shown[0..<min(7, commit_shown.len)])
   if not evaluation.isNil:
-    result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) & ", " &
-        escapeHtml(evaluation{"taken", "machine"}.getStr)
+    result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) &
+        measuredAt(evaluation{"taken"}) & ", " & escapeHtml(evaluation{"taken", "machine"}.getStr)
   result.add links & "</p><div class=\"chips\">" &
       chipsVerdict(evaluation, baselines, spread) & "</div>" &
       htmlDependencies(proposals, proposal, urls) & "</header>"

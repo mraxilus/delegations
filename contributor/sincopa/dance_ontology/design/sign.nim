@@ -125,7 +125,7 @@ func pip*(
       &"""<path d="{path}" {style}/>"""
     else:
       &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}"""" &
-        &""" r="{numeral(PIP / 2 * inset)}" {style}/>"""
+          &""" r="{numeral(PIP / 2 * inset)}" {style}/>"""
 
   var bits: seq[string]
   if about.isNone:
@@ -141,7 +141,7 @@ func pip*(
                else: ""
     bits.add shape(1.0,
       &"""fill="none" stroke="{ink}" stroke-width="1.4"""" &
-        &""" stroke-linejoin="round"{dash}""")
+      &""" stroke-linejoin="round"{dash}""")
   if level == some(Level.High):
     bits.add &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y)}" r="2.5" fill="{ink}"/>"""
   bits.join("")
@@ -156,11 +156,11 @@ func marker*(kind: Row; corner_x, corner_y, side_x, side_y: float; arm: Arm): st
   if kind == Row.Ellipsis:  # and so on, across
     for offset in [-3.7, 0.0, 3.7]:
       result.add &"""<circle cx="{numeral(centre_x + offset)}" cy="{numeral(centre_y)}" r="1.7"""" &
-        &""" fill="{ink}"/>"""
+          &""" fill="{ink}"/>"""
   else:
     for offset in [-3.1, 3.1]:
       result.add &"""<circle cx="{numeral(centre_x)}" cy="{numeral(centre_y + offset)}" r="1.9"""" &
-        &""" fill="{ink}"/>"""
+          &""" fill="{ink}"/>"""
 
 
 func signBody(
@@ -207,7 +207,7 @@ func signBody(
              &""" stroke-dasharray="{dashes(perimeter, 20)}""""
            else: ""
     style = """fill="none" stroke="var(--ink)" stroke-width="2"""" &
-      &""" stroke-linejoin="round" stroke-linecap="round"{dash}"""
+        &""" stroke-linejoin="round" stroke-linecap="round"{dash}"""
     outline =
       if over > 0:
         # No lid, and sides run on past where one would be: gauge that
@@ -227,16 +227,16 @@ func signBody(
       (bottom_left_x, bottom_left_y) = foot[0]
       reach = 15.0
     bits.add &"""<path d="M{numeral(top_left_x - 2)} {numeral(top_left_y + 5)}""" &
-      &""" C{numeral(top_left_x - reach)} {numeral(top_left_y + 6)}""" &
-      &""" {numeral(bottom_left_x - reach)} {numeral(bottom_left_y - 6)}""" &
-      &""" {numeral(bottom_left_x - 3)}""" &
-      &""" {numeral(bottom_left_y - 5)}" fill="none" stroke="var(--ink)"""" &
-      """ stroke-width="1.6" stroke-linecap="round"/>"""
+        &""" C{numeral(top_left_x - reach)} {numeral(top_left_y + 6)}""" &
+        &""" {numeral(bottom_left_x - reach)} {numeral(bottom_left_y - 6)}""" &
+        &""" {numeral(bottom_left_x - 3)}""" &
+        &""" {numeral(bottom_left_y - 5)}" fill="none" stroke="var(--ink)"""" &
+        """ stroke-width="1.6" stroke-linecap="round"/>"""
     bits.add &"""<path d="M{numeral(bottom_left_x - 8)} {numeral(bottom_left_y - 8.5)}""" &
-      &""" L{numeral(bottom_left_x - 3)} {numeral(bottom_left_y - 5)}""" &
-      &""" L{numeral(bottom_left_x - 8.5)} {numeral(bottom_left_y - 2.5)}" fill="none"""" &
-      """ stroke="var(--ink)" stroke-width="1.6"""" &
-      """ stroke-linecap="round" stroke-linejoin="round"/>"""
+        &""" L{numeral(bottom_left_x - 3)} {numeral(bottom_left_y - 5)}""" &
+        &""" L{numeral(bottom_left_x - 8.5)} {numeral(bottom_left_y - 2.5)}" fill="none"""" &
+        """ stroke="var(--ink)" stroke-width="1.6"""" &
+        """ stroke-linecap="round" stroke-linejoin="round"/>"""
 
   let
     total = slots.len
@@ -305,6 +305,6 @@ func sign*(
     view_width = bounds.right - bounds.left + 2 * PAD
     view_height = bounds.bottom - bounds.top + 2 * PAD
   &"""<svg viewBox="{numeral(bounds.left - PAD)} {numeral(bounds.top - PAD)}""" &
-    &""" {numeral(view_width)} {numeral(view_height)}"""" &
-    &""" width="{numeral(view_width * scale)}" height="{numeral(view_height * scale)}">""" &
-    &"\n        {markup}\n      </svg>"
+      &""" {numeral(view_width)} {numeral(view_height)}"""" &
+      &""" width="{numeral(view_width * scale)}" height="{numeral(view_height * scale)}">""" &
+      &"\n        {markup}\n      </svg>"

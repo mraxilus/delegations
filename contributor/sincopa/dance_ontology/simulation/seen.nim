@@ -206,6 +206,7 @@ proc shownAsked(
   couple.free()
 
 
+
 #[ Kept ]#
 
 # Mutable and global: one run keeps every still it stood, for every thread (`walk.keepAnswers`).
@@ -229,10 +230,11 @@ proc still*(
   ##   Card that asks what another card asks reads still that one stood, under its own name.
   ##   Reflected twin is not asked here: page mirrors still its twin keeps (`design/twins`).
   ##   Card that draws crossing names lead's arm laid over (`over`), by ordinal; none below nought.
-  result = kept(STILLS, keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way,
-                              $who, $over),
-                stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who,
-                           over))
+  result = kept(
+    STILLS,
+    keyOf(rig, links, $band, bits(turns), $is_away, $head, $is_either_way, $who, $over),
+    stillAsked(rig, band, links, name, turns, is_away, head, is_either_way, who, over),
+  )
   result.hold = name
 
 proc shown*(
