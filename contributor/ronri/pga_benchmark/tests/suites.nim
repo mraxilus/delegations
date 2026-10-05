@@ -283,7 +283,7 @@ suite "Internal: Catalogue":
 
   test "templates name every symbol library spells over another":
     for (symbol, target) in TEMPLATES:
-      let line = "template `" & symbol & "`*(m: Multivector): Multivector = " & target & " m"
+      let line = "template `" & symbol & "`*(m: Multivector): Multivector = " & target & "m"
       check line in SOURCE_OPERATORS  # one-line template, target's function is what C holds
 
 
