@@ -2352,6 +2352,20 @@ has objects. Verified by a read of the emitted code on 2026-10-04. No `nimCopy` 
 operators, `addRing` or `addDisc` on the JavaScript backend. On the C backend each operator is three
 field stores with no fill.
 
+## Origins
+
+**Three origins, as a GPU pipeline has three spaces.** The world origin is world space: the scene
+stores each object about it, and stores nothing else. The view origin is view space: a frame is
+drawn about it, near the camera, through `originHeld`. The model origin is model space: an
+operation holds its operands about it, at a point of one of them, through `originModel`.
+
+**Only the world origin is stored.** A GPU stores a vertex in model space and derives the others.
+This scene stores in world space, and derives the view and model spaces inside the calculation
+that uses each. Rounding grows with the distance from the origin a number is held about. So each
+calculation is held about the origin nearest what it serves: a frame about the camera, an operation
+about its operands. Storage keeps its step far out, which Classification at any scale counts as a
+cost.
+
 ## Classification at any scale
 
 **An object is judged against its own scale, and never against an absolute tolerance.** One world

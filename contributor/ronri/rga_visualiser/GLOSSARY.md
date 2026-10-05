@@ -44,6 +44,23 @@ of comparing contents. A restore issues a fresh revision rather than reusing the
 restores.
 _Avoid_: version, generation, dirty flag, epoch
 
+### Origins
+
+**World origin**:
+The point the scene is stored about, where the axes cross. Every coordinate that the panel shows
+or takes, and every saved file, is relative to it.
+_Avoid_: reference origin, global origin, scene origin, absolute origin
+
+**View origin**:
+The point near the camera that a frame is drawn about. It follows the camera, and nothing stores
+it.
+_Avoid_: camera origin, precision origin, floating origin, records origin, centre
+
+**Model origin**:
+The point an operation holds its operands about while it builds its result: a point of one of
+its operands. Nothing stores it.
+_Avoid_: operation origin, local origin, home, anchor
+
 ### Drawing
 
 **Veil**:
