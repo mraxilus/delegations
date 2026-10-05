@@ -544,9 +544,11 @@ suite "Chapter 2":
    read as if the range starts at 1. It also keeps one where the glued tokens would lex as one
    token, as before the prefix operator of `s[1 .. ^1]`.
 
-   The power operator `^` takes no space (`-1^(k)`, `2'u^DIMENSIONS`), since with spaces it reads
-   like an operator on bits. Only a prefix operator binds tighter, so no piece beside it keeps it
-   apart. It keeps one space on each side where the glued tokens would lex as one (`a ^ -b`).
+   The power operator `^` takes no space (`-1^k`, `2'u^DIMENSIONS`), since with spaces it reads like
+   an operator on bits. Only a prefix operator binds tighter, so no piece beside it keeps it apart.
+   An exponent that holds math keeps its parentheses (`-1^(int(b.grade) * int(b.gradeAnti))`).
+   Where the glued tokens would lex as one, the exponent takes parentheses instead of spaces
+   (`a^(-b)`).
 
    Inside a bracket glued to the operand before it, as an index or a generic argument is, a symbol
    operator takes no space (`prev[i-1]`). That holds at every depth inside the bracket, and a
