@@ -11,10 +11,10 @@
 ##     directory of larger repository, and commit elsewhere in it changes nothing measured.
 ##   Checks are pure over values tool side reads (commits, trees, documents, digests), so
 ##     tests feed them; reading repository and network stays in driver.
-##   Carry: timed record names digest of C its timed builds emitted (`digest_c`). Where pin
+##   Restamp: timed record names digest of C its timed builds emitted (`digest_c`). Where pin
 ##     moves and same builds emit same C at new pin, record moves its stamp to pin and keeps its
 ##     times, since same C makes same machine code on same compiler and flags; it names commit
-##     it was timed at (`timed_at`). Record taken at pin before digests existed takes digest of
+##     it was timed at (`measured_at`). Record taken at pin before digests existed takes digest of
 ##     its builds there (Architect, 2026-10-05).
 ##     Rejected: timing again at each cosmetic head, which records drift of host alone.
 ##     Cost: digest taken at record's own pin after its timing names C of that later build;
@@ -87,7 +87,7 @@ func checkEvaluation*(evaluation: JsonNode; pin, digest, path: string): seq[Find
 
 
 
-#[ Carry ]#
+#[ Restamp ]#
 
 func digestSources*(sources: openArray[(string, string)], pin: string): string =
   ## Digest C of one build: every file by name, in name order, with pin's commit left out.
@@ -101,9 +101,9 @@ func digestSources*(sources: openArray[(string, string)], pin: string): string =
   digestOf(text)
 
 
-func checkCarry*(recorded, digests: JsonNode; taken, pin, path, again: string): seq[Finding] =
+func checkRestamp*(recorded, digests: JsonNode; taken, pin, path, again: string): seq[Finding] =
   ## Hold timed figures to C they were timed on: none where they may stand at pin.
-  ##   Figures taken at pin stand without digest, and carry records digest given.
+  ##   Figures taken at pin stand without digest, and restamp records digest given.
   ##   `taken` is commit figures stand at, empty where they no longer stand anywhere.
   ##   `again` names verb that takes figures again.
   if recorded.isNil:
@@ -120,9 +120,9 @@ func checkCarry*(recorded, digests: JsonNode; taken, pin, path, again: string): 
     )
 
 
-func isCarried*(evaluation: JsonNode; pin, digest: string): bool =
+func isRestamped*(evaluation: JsonNode; pin, digest: string): bool =
   ## Tell whether evaluation stands at pin on its edits, with digest of C at every algebra, so
-  ##   carry has nothing to move; carry cut short then resumes where it stopped.
+  ##   restamp has nothing to move; restamp cut short then resumes where it stopped.
   if checkEvaluation(evaluation, pin, digest, "").len > 0: return false
   let algebras = evaluation{"algebras"}
   if algebras.isNil or algebras.len == 0: return false
@@ -131,21 +131,21 @@ func isCarried*(evaluation: JsonNode; pin, digest: string): bool =
   true
 
 
-func stampCarried*(taken: JsonNode, pin: string): JsonNode =
+func stampMoved*(taken: JsonNode, pin: string): JsonNode =
   ## Copy stamp moved to pin, naming commit figures were timed at where it moves.
-  ##   Earlier `timed_at` stays, since figures were timed there and nowhere since.
+  ##   Earlier `measured_at` stays, since figures were measured there and nowhere since.
   result = taken.copy
   let commit = result{"pga"}.getStr
   if commit != pin:
-    if not result.hasKey("timed_at"): result["timed_at"] = %commit
+    if not result.hasKey("measured_at"): result["measured_at"] = %commit
     result["pga"] = %pin
 
 
-func carried*(document, digests: JsonNode; pin: string): JsonNode =
+func restamped*(document, digests: JsonNode; pin: string): JsonNode =
   ## Copy timed record standing at pin: its digests, and its stamp moved to pin.
   result = document.copy
   result["digest_c"] = digests
-  result["taken"] = stampCarried(document{"taken"}, pin)
+  result["taken"] = stampMoved(document{"taken"}, pin)
 
 
 

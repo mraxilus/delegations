@@ -128,7 +128,7 @@ func htmlProposal*(
       code(commit_shown[0..<min(7, commit_shown.len)])
   if not evaluation.isNil:
     result.add " · tried " & escapeHtml(evaluation{"taken", "date"}.getStr) &
-        timedAt(evaluation{"taken"}) & ", " & escapeHtml(evaluation{"taken", "machine"}.getStr)
+        measuredAt(evaluation{"taken"}) & ", " & escapeHtml(evaluation{"taken", "machine"}.getStr)
   result.add links & "</p><div class=\"chips\">" &
       chipsVerdict(evaluation, baselines, spread) & "</div>" &
       htmlDependencies(proposals, proposal, urls) & "</header>"

@@ -17,7 +17,7 @@
     "objects": 1024,
     "is_allocation_measured": true,
     "runs": 5,
-    "timed_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
+    "measured_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "measurands": {
     "wedge": {

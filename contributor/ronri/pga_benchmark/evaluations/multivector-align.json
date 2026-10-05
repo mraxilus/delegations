@@ -11,7 +11,7 @@
     "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
     "flags": "-d:release",
     "runs": 5,
-    "timed_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
+    "measured_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "pin_suites": {
     "rga4d": {

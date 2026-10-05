@@ -1116,20 +1116,20 @@ suite "Internal: Gaps":
     check docket.next == 5  # docket grew with gaps
 
 
-  test "carried runtime names commit bench ran at":
-    var carried_runtime = documentRuntimeFixture()
-    carried_runtime["taken"]["timed_at"] = %"d9be8ae"
+  test "restamped runtime names commit bench ran at":
+    var restamped_runtime = documentRuntimeFixture()
+    restamped_runtime["taken"]["measured_at"] = %"d9be8ae"
     let
       algebras_carried = @[Algebra(
         name: "rga4d",
         measurements_static: documentStaticFixture(),
-        measurements_runtime: carried_runtime,
+        measurements_runtime: restamped_runtime,
       )]
       (text, _) = generate(algebras_carried, docketOf(nil))
       (text_timed, _) = generate(algebras_fixture, docketOf(nil))
     check "It ran at pga `d9be8ae`, which emits the same C as the pin." in
         text.splitWhitespace.join(" ")  # header names commit timed at
-    check "emits the same C" notin text_timed  # timed at stamp says nothing more
+    check "emits the same C" notin text_timed  # measured at stamp says nothing more
 
 
   test "wrap breaks at spaces within width and indents continuation":
@@ -1298,43 +1298,43 @@ suite "Internal: Head":
         digestSources(@[("a.nim.c", "z")], pin)  # one byte of C moved
 
 
-  test "carry moves stamp only where builds emit C figures were timed on":
+  test "restamp moves stamp only where builds emit C figures were timed on":
     const old = "0bc4655"
     let
       digests = %*{"plain": "d1", "alloc": "d2"}
       timed = %*{"taken": {"pga": old, "date": "2026-10-03"}, "digest_c": digests}
-      moved = carried(timed, digests, pin)
-    check checkCarry(digests, digests, old, pin, "r.json", "run `bench`").len == 0  # same C
-    check checkCarry(digests, %*{"plain": "d1", "alloc": "d3"}, old, pin, "r.json",
+      moved = restamped(timed, digests, pin)
+    check checkRestamp(digests, digests, old, pin, "r.json", "run `bench`").len == 0  # same C
+    check checkRestamp(digests, %*{"plain": "d1", "alloc": "d3"}, old, pin, "r.json",
       "run `bench`").len == 1  # one build moved
-    check checkCarry(nil, digests, pin, pin, "r.json", "run `bench`").len == 0  # at pin, first
-    check checkCarry(nil, digests, old, pin, "r.json", "run `bench`").len == 1  # away, none
-    check checkCarry(nil, digests, "", pin, "r.json", "run `bench`").len == 1  # edits moved
+    check checkRestamp(nil, digests, pin, pin, "r.json", "run `bench`").len == 0  # at pin, first
+    check checkRestamp(nil, digests, old, pin, "r.json", "run `bench`").len == 1  # away, none
+    check checkRestamp(nil, digests, "", pin, "r.json", "run `bench`").len == 1  # edits moved
     check moved{"taken", "pga"}.getStr == pin  # stamp at pin
-    check moved{"taken", "timed_at"}.getStr == old  # names commit timed at
+    check moved{"taken", "measured_at"}.getStr == old  # names commit timed at
     check moved{"taken", "date"}.getStr == "2026-10-03"  # date of timing kept
-    check carried(moved, digests, "ffff"){"taken", "timed_at"}.getStr == old  # first stays
-    check not carried(%*{"taken": {"pga": pin}}, digests, pin)["taken"].hasKey(
-      "timed_at")  # backfill at own pin
-    check stampCarried(%*{"pga": old}, pin)["pga"].getStr == pin  # stamp alone
+    check restamped(moved, digests, "ffff"){"taken", "measured_at"}.getStr == old  # first stays
+    check not restamped(%*{"taken": {"pga": pin}}, digests, pin)["taken"].hasKey(
+      "measured_at")  # backfill at own pin
+    check stampMoved(%*{"pga": old}, pin)["pga"].getStr == pin  # stamp alone
 
 
-  test "evaluation at pin with digest at every algebra leaves carry nothing to move":
+  test "evaluation at pin with digest at every algebra leaves restamp nothing to move":
     let
       done = %*{"taken": {"pga": pin}, "edits_digest": "d1",
         "algebras": {"rga4d": {"digest_c": {"pristine": "a", "changed": "b"}}}}
       bare = %*{"taken": {"pga": pin}, "edits_digest": "d1", "algebras": {"rga4d": {}}}
-    check done.isCarried(pin, "d1")  # nothing to move
-    check not bare.isCarried(pin, "d1")  # digest to take
-    check not done.isCarried(pin, "d2")  # edits moved
-    check not done.isCarried("ffff", "d1")  # pin moved
+    check done.isRestamped(pin, "d1")  # nothing to move
+    check not bare.isRestamped(pin, "d1")  # digest to take
+    check not done.isRestamped(pin, "d2")  # edits moved
+    check not done.isRestamped("ffff", "d1")  # pin moved
 
 
-  test "carried figures name commit they were timed at":
-    check timedAt(%*{"pga": pin}) == ""  # timed at stamp
-    check timedAt(%*{"pga": pin, "timed_at": "0bc4655aa"}) ==
-        " at pga <code>0bc4655</code>"  # carried
-    check timedAt(nil) == ""  # no stamp
+  test "restamped figures name commit they were measured at":
+    check measuredAt(%*{"pga": pin}) == ""  # measured at stamp
+    check measuredAt(%*{"pga": pin, "measured_at": "0bc4655aa"}) ==
+        " at pga <code>0bc4655</code>"  # restamped
+    check measuredAt(nil) == ""  # no stamp
 
 
 

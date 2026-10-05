@@ -719,16 +719,16 @@ proc tried(
   for candidate in selected:
     echo "Trying ", candidate.name
     let
-      carried = before.getOrDefault(candidate.name)
+      earlier = before.getOrDefault(candidate.name)
       (document, why) = runEvaluation(
         chain,
         candidate,
-        algebras.filterIt(carried.isNil or carried{"algebras"}.hasKey(it.name)),
+        algebras.filterIt(earlier.isNil or earlier{"algebras"}.hasKey(it.name)),
         baselines,
         pristine,
         suites_pin,
-        if carried.isNil: taken else: stampCarried(carried{"taken"}, chain.pga),
-        carried,
+        if earlier.isNil: taken else: stampMoved(earlier{"taken"}, chain.pga),
+        earlier,
       )
     removeDir chain.work / candidate.name
     if document.isNil:
@@ -776,8 +776,8 @@ proc evaluate(which: string, is_thorough: bool) =
   report(findings)
 
 
-proc carry() =
-  ## Carry every timed record to pin where its builds emit C it was timed on (`head.nim`).
+proc restamp() =
+  ## Restamp every timed record to pin where its builds emit C it was timed on (`head.nim`).
   ##   Runtime baselines and sweep compile to C alone. Evaluations are tried again with times
   ##     kept, so every other figure of theirs is taken at pin. Record whose C differs, or
   ##     that names no digest away from pin, is finding, and its verb takes it again.
@@ -788,11 +788,11 @@ proc carry() =
     pin = commitPga()
   var findings: seq[Finding]
 
-  proc carriedTo(path: string, digests: JsonNode, again: string, findings: var seq[Finding]) =
-    ## Carry one record to pin, or find why it cannot move.
+  proc restampTo(path: string, digests: JsonNode, again: string, findings: var seq[Finding]) =
+    ## Restamp one record to pin, or find why it cannot move.
     let
       document = readDocument(path)
-      why = checkCarry(
+      why = checkRestamp(
         document{"digest_c"},
         digests,
         document{"taken", "pga"}.getStr,
@@ -802,10 +802,10 @@ proc carry() =
       )
     findings.add why
     if why.len > 0: return
-    let moved = carried(document, digests, pin)
+    let moved = restamped(document, digests, pin)
     if moved != document:
       writeFile(path, pretty(moved) & "\n")
-      echo "Carried ", path
+      echo "Restamped ", path
 
   proc digestOfBuild(
     name: string, dimensions: int, is_conformal: bool, extra: openArray[string]
@@ -833,7 +833,7 @@ proc carry() =
       "plain": digestOfBuild(name, dimensions, is_conformal, []),
       "alloc": digestOfBuild("alloc_" & name, dimensions, is_conformal, ["-d:nimAllocStats"]),
     }
-    carriedTo(path, digests, "run `bench`", findings)
+    restampTo(path, digests, "run `bench`", findings)
   if fileExists(PATH_SWEEP):
     var digests = newJObject()
     for dimensions in SWEEP:
@@ -843,7 +843,7 @@ proc carry() =
         false,
         [],
       )
-    carriedTo(PATH_SWEEP, digests, "run `sweep`", findings)
+    restampTo(PATH_SWEEP, digests, "run `sweep`", findings)
   let
     changes = readChanges(findings)
     proposals = readProposals(findings)
@@ -854,7 +854,7 @@ proc carry() =
     for name in document{"algebras"}.keys:
       if name notin names_algebra: names_algebra.add name
   tried(
-    candidates.filterIt(it.name in before and not before[it.name].isCarried(
+    candidates.filterIt(it.name in before and not before[it.name].isRestamped(
       pin,
       digestEdits(it.changes, it.claims, it.programs),
     )),
@@ -1126,7 +1126,7 @@ proc main(): int =
     of "baseline": baseline()
     of "guard": guard()
     of "evaluate": evaluate(paramStr(2), paramCount() == 3)
-    of "carry": carry()
+    of "restamp": restamp()
     of "pages": pages()
     of "published": publishedAt(paramStr(2), paramStr(3))
     of "drive": drive()

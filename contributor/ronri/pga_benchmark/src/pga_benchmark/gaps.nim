@@ -507,8 +507,8 @@ func headerOf(algebra: Algebra): string =
         ", over " & $taken_runtime{"rounds"}.getInt & " rounds of " &
         $taken_runtime{"objects"}.getInt & " objects" &
         (if count_runs > 1: " each. Each time is the median of those runs." else: ".") &
-        (if taken_runtime.hasKey("timed_at"): " It ran at pga `" &
-          taken_runtime{"timed_at"}.getStr & "`, which emits the same C as the pin." else: "") &
+        (if taken_runtime.hasKey("measured_at"): " It ran at pga `" &
+          taken_runtime{"measured_at"}.getStr & "`, which emits the same C as the pin." else: "") &
         " The allocation gauge was " &
         (if taken_runtime{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 

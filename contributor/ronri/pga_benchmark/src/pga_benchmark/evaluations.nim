@@ -11,7 +11,7 @@
 ##       and build of library alone costs no more than stated share of pristine build.
 ##   Result is one document in `evaluations/`, taken at pin and naming digest of edits it tried,
 ##     so `drive` refuses evaluation of another commit or of edits since changed (`head.nim`).
-##   Each algebra names digest of C its two timed builds emitted. Carried evaluation takes
+##   Each algebra names digest of C its two timed builds emitted. Restamped evaluation takes
 ##     every figure again but times, which it keeps where both builds emit same C (`head.nim`).
 ##   Working copy keeps checkout's directory name, since function keys and module tails are
 ##     read from path and must match baseline's.
@@ -501,10 +501,10 @@ proc runEvaluation*(
   baselines: Table[string, JsonNode];
   pristine: Table[string, string];
   suites_pin, taken: JsonNode;
-  carried: JsonNode = nil;
+  earlier: JsonNode = nil;
 ): (JsonNode, seq[Finding]) =
   ## Try candidate on every algebra; evaluation document and findings that stopped it.
-  ##   With `carried`, earlier evaluation of candidate: keep its times where both timed builds
+  ##   With `earlier`, earlier evaluation of candidate: keep its times where both timed builds
   ##     emit C they were timed on, and find where they do not; time nothing.
   ##   Work directory starts empty, so digest reads C of this build alone.
   let directory = chain.work / candidate.name
@@ -555,16 +555,16 @@ proc runEvaluation*(
       "changed": digestCache(directory / "cache_timed_" & algebra.name, chain.pga),
     }
     var times, nan: JsonNode
-    if carried.isNil:
+    if earlier.isNil:
       (times, nan) = timed(chain, pristine[algebra.name], binary, directory)
     else:
       let
-        before = carried{"algebras", algebra.name}
-        is_current = carried{"edits_digest"}.getStr == evaluation["edits_digest"].getStr
-        why = checkCarry(
+        before = earlier{"algebras", algebra.name}
+        is_current = earlier{"edits_digest"}.getStr == evaluation["edits_digest"].getStr
+        why = checkRestamp(
           if before.isNil: nil else: before{"digest_c"},
           digests,
-          if is_current: carried{"taken", "pga"}.getStr else: "",
+          if is_current: earlier{"taken", "pga"}.getStr else: "",
           chain.pga,
           candidate.path,
           "run `evaluate " & candidate.name & "`",
