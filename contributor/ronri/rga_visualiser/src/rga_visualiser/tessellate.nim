@@ -64,12 +64,10 @@ type
   Placement* = object  ## Define everything *algebra* says about one object, and nothing else.
     ## Camera is not in it, and that is whole point.
     ##   Every reader here (`position`, `positionAnchor`, `direction`, `directionHorizon`,
-    ##   `frame`, `spanPerpendicular`) is pure function of multivector, so this stays true
-    ##   while camera orbits.
-    ##   Caller that can say when object last changed places it once and emits every
-    ##   frame; `bridge` is that caller.
-    ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
-    ##     objects nobody touched.
+    ##   `frame`, `spanPerpendicular`) is pure function of multivector, so one answer serves
+    ##   every reader of its frame at that frame's camera.
+    ##   Each frame places every object once, and its walks read that answer: reach, cull,
+    ##   emission, pick. Nothing placed is kept for frame after.
     ## Flat rather than variant object.
     ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
@@ -498,14 +496,14 @@ proc addLattice*(
 
 proc placeInto*(placed: var Placement, geometry: Multivector, anchor_override: Option[Position]) =
   ## Ask algebra what object is and where, into `placed`: whole placing side, none of emitting.
-  ##   Split from `addObject` so caller may keep answer.
-  ##     Nothing here reads camera, so answer changes only when object does. See `Placement`.
+  ##   Split from `addObject` so frame places once and reads answer in each walk.
+  ##     Nothing here reads camera; see `Placement`.
   ##   `anchor_override` centres plane's disc there instead of on support; ignored for
   ##   point or line.
   ##   Plane whose support or frame algebra cannot give lands on `PlaneEverywhere`, what
   ##   infinite plane is: sky.
-  ##   Written field by field, never assigned whole: caller places whole scene into its slots,
-  ##   and `Placement` or `Option` built and assigned is copy on JS backend (read in emitted JS).
+  ##   Written field by field, never assigned whole: frame places every object, and
+  ##   `Placement` or `Option` built and assigned is copy on JS backend (read in emitted JS).
   ##     Coordinates go one by one (`euclid.setTo`), so `placed` shares no storage with any
   ##     input. Fields `kind` leaves meaningless keep whatever they held.
   timed(Side.Placing):
@@ -622,13 +620,13 @@ proc emitObject*(
   ##     on-screen size, so star reads as dot whatever its object says.
   ##   `placed` is `var` because nothing here writes it (Art. VII.1).
   ##     Under JS backend value parameter is deep-copied at every call, and caller
-  ##     emitting thousand held placements per frame would copy thousand nested objects.
+  ##     emitting thousand placements per frame would copy thousand nested objects.
   ##     Invisible to allocation grep because parameter looks like read.
   ##     Nothing here assigns to it, and nothing may.
   ##   Two steps are still charged to placing side, deliberately.
   ##     Horizon marker's stand-off and line's two vanishing points are multivector
-  ##     arithmetic about where eye is: placing work that depends on camera and cannot be
-  ##     cached. Cut is by *kind of work*, not by which proc it sits in.
+  ##     arithmetic about where eye is: placing work that depends on camera. Cut is by
+  ##     *kind of work*, not by which proc it sits in.
   ##   Placement is world's; its place is read about view origin as it enters frame, once.
   case placed.kind
   of Case.Nothing:
@@ -736,10 +734,10 @@ proc addObject*(
   radius: float = RADIUS_OBJECT_DEFAULT,
 ): Outcome =
   ## Append object, dispatching on geometry its grade stands for.
-  ##   Place then emit in one call, for every caller with nothing to gain by keeping
-  ##   placement: desktop path, storyboard, suite.
-  ##     Caller drawing same unchanged object frame after frame holds `Placement` and calls
-  ##     `emitObject`; see `placeObject`.
+  ##   Place then emit in one call, for caller with no other reader of placement: preview,
+  ##   storyboard, suite.
+  ##     Frame that placed its scene already reads those placements and calls `emitObject`;
+  ##     see `placeObject`.
   ##   Empty where multivector carries no drawable geometry.
   ##   `progress` defaults to fully appeared, for caller with nothing to animate against.
   ##   `anchor_override` centres plane's disc there instead of support; ignored otherwise.

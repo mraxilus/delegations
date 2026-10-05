@@ -42,11 +42,11 @@ export async function loadDemo(page: Page, objects: number): Promise<void> {
   await page.click('#button-menu'); // Shut popover again, as reader would.
   await waitUntil(page, (given) => nimSceneCount() === given, objects);
   await settleCamera(page);
-  // Simulated page: wait until frame holds its scene, which is to say nothing grows in any
-  //   longer, before anything reads canvas. Load staggers births, so fixed span would be guess.
+  // Simulated page: wait until frame says every object has grown in, before anything reads
+  //   canvas. Load staggers births, so fixed span would be guess.
   //   Real page is read by speed checks alone, which time calls rather than read pixels.
   if (isSimulated(page)) {
-    await waitUntil(page, () => (window.__phase_frame ?? []).at(-1)?.is_scene_held ?? false, null);
+    await waitUntil(page, () => (window.__phase_frame ?? []).at(-1)?.is_grown ?? false, null);
   }
 }
 

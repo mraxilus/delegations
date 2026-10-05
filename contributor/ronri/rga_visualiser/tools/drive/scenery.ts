@@ -6,7 +6,7 @@
 //   of, frame by frame, and each part must carry count it is time for.
 
 import type { Page } from '@playwright/test';
-import { advance, advanceFrames } from './clock';
+import { advanceFrames } from './clock';
 import { settleCamera } from './camera';
 import { settleBranch } from './diagnostics';
 import { FRAMES_PHASES_LEAST, countFrames, readPhases, type Phase } from './frame';
@@ -179,10 +179,9 @@ export async function driveSceneryBound(page: Page): Promise<void> {
 
 /** Drive real drag, and assert what frame costs while camera moves.
  *
- *  Moving camera rebuilds picked plane's lattice every frame, and per-segment churn once put
- *  that rebuild at three times still frame's whole build. Drag is real one, from empty sky,
- *  so frames sampled are frames hand would feel; plane is picked so there is lattice to
- *  rebuild, and drag then orbits it.
+ *  Every frame builds picked plane's lattice, and per-segment churn once put that build at
+ *  three times rest of frame. Drag is real one, from empty sky, so frames sampled are frames
+ *  hand would feel; plane is picked so there is lattice to build, and drag then orbits it.
  */
 export async function driveMoving(page: Page, width: number): Promise<void> {
   await pickPlane(page);
@@ -208,8 +207,7 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
     return { n: sorted.length, median: at(0.5), p90: at(0.9) };
   }, from);
 
-  const phases = (await readPhases(page, from)).filter((one) => one.furniture > 0.05);
-  reportSceneryAccounts(phases);
+  reportSceneryAccounts(await readPhases(page, from));
   report(
     'the camera was really moved for the moving-frame sample',
     moving !== null, `${moving === null ? 0 : moving.n} frames sampled mid-drag`,
@@ -248,7 +246,7 @@ function reportSceneryAccounts(phases: Phase[]): void {
   report(
     'the scenery is accounted for by the grid and the axes it is drawn from',
     drawn.length > 3 && sane.length >= drawn.length - MISSES_ACCOUNT_MAX,
-    `${sane.length} of ${drawn.length} rebuilt frames account ` +
+    `${sane.length} of ${drawn.length} frames account ` +
       `(floor ${drawn.length - MISSES_ACCOUNT_MAX}), ` +
       `${phases.length - drawn.length} laid no segment` +
       (worst === undefined ? '' :
@@ -258,61 +256,42 @@ function reportSceneryAccounts(phases: Phase[]): void {
   );
 }
 
-/** Assert still camera holds its scenery rather than rebuilding it. */
-export async function driveHold(page: Page): Promise<void> {
+/** Assert scenery is built on every frame, still camera or moved.
+ *
+ *  Still frame does same work as moving one; see `PROVENANCE.md`, Render paths. Two builds
+ *  in row at still camera must each carry whole scenery, alike: frame that kept last frame's
+ *  instead would send none.
+ */
+export async function driveSceneryEvery(page: Page): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
-  const from = await countFrames(page);
-  // Simulated span: share of frames that held over span of page's own time is measurement
-  //   here, not race waiting to be won.
-  await advance(page, 1500);
-  const still = await readPhases(page, from);
-  const held = still.filter((one) => one.is_held).length;
-  report(
-    'a still camera holds its scenery rather than rebuilding it',
-    still.length > 10 && held > 0.8 * still.length,
-    `${held} of ${still.length} frames held`,
-  );
-
-  // Stated directly too, since share of frames could be right by accident: move camera, so
-  //   next call must build, and one after it must hold.
   const twice = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
-    const once = (): FrameData =>
-      nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, false);
+    const once = (): number =>
+      nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, false)
+        .furniture_ribbon_vertices.length;
     nimCameraOrbit(0.05, 0);
     const first = once();
-    const second = once();
-    return {
-      first: { is_held: first.is_furniture_held, floats: first.furniture_ribbon_vertices.length },
-      second: {
-        is_held: second.is_furniture_held, floats: second.furniture_ribbon_vertices.length,
-      },
-    };
+    return { first, second: once() };
   });
   report(
-    'a still camera builds its scenery once and holds it',
-    twice.first.floats > 0 && !twice.first.is_held &&
-      twice.second.is_held && twice.second.floats === 0,
-    `first ${twice.first.floats} floats (held ${twice.first.is_held}), ` +
-      `second ${twice.second.floats} (held ${twice.second.is_held})`,
+    'a still camera builds its scenery on every frame, the same each time',
+    twice.first > 0 && twice.second === twice.first,
+    `first ${twice.first} floats, second ${twice.second}`,
   );
 
-  // Camera that has moved rebuilds them, or view would keep scenery it has left.
+  // Camera that has moved builds them too, or view would keep scenery it has left.
   const rebuilt = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
     nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, false);
     nimCameraOrbit(0.3, 0);
-    const after = nimBuildFrame(
+    return nimBuildFrame(
       aspect, performance.now() / 1000, canvas.height, true, true, false,
-    );
-    return { is_held: after.is_furniture_held, floats: after.furniture_ribbon_vertices.length };
+    ).furniture_ribbon_vertices.length;
   });
   report(
-    'and a camera that has moved builds them again',
-    !rebuilt.is_held && rebuilt.floats > 0,
-    `held ${rebuilt.is_held}, ${rebuilt.floats} floats`,
+    'and a camera that has moved builds them again', rebuilt > 0, `${rebuilt} floats`,
   );
 }

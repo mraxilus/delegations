@@ -36,7 +36,7 @@ sparkline.title = nimWording(Wording.TipDiagnosticsFrames);
 const context_pool = grid_pool === null ? null : grid_pool.getContext('2d');
 // Scene revision grid was last drawn at; -1 until it has been drawn once. Grid
 //   is picture of which handles are occupied and in what ink, so it changes exactly when
-//   scene does -- see `scene.revision`, same counter frame hold reads. Its own
+//   scene does -- see `scene.revision`. Its own
 //   geometry joins key because canvas cleared by resize has to be redrawn whatever
 //   scene did, and because section opens onto canvas that had no size at all.
 let revision_pool_last = -1;
@@ -85,7 +85,7 @@ const size_pool = sizeObserved(grid_pool, () => {
 //     Single frame's reading flickers too fast to read, and median is what reader means
 //     by "how long does this step take".
 const PHASES_DIAGNOSTIC: Array<[string, string]> = [
-  ['build', 'diagnostic-build'], ['camera', 'diagnostic-camera'],
+  ['build', 'diagnostic-build'], ['camera', 'diagnostic-camera'], ['place', 'diagnostic-place'],
   ['furniture', 'diagnostic-furniture'],
   ['grid', 'diagnostic-grid'], ['axes', 'diagnostic-axes'], ['scene', 'diagnostic-scene'],
   ['points', 'diagnostic-points'], ['lines', 'diagnostic-lines'], ['planes', 'diagnostic-planes'],
@@ -410,8 +410,8 @@ function recordFrameTime(delta_milliseconds: number) {
   recordExceedance(delta_milliseconds);
   index_history_frame = (index_history_frame + 1) % FRAMES_HISTORY;
   // Clear slot phases are about to write into, up front.
-  //   Phase that does not run this frame (UI block, held furniture build) then reads as
-  //   absent rather than as whatever it cost one ring ago.
+  //   Phase that does not run this frame (UI block) then reads as absent rather than as
+  //   whatever it cost one ring ago.
   for (const [name] of PHASES_DIAGNOSTIC) writtenOf(name)[index_history_frame] = 0;
 }
 
@@ -1059,9 +1059,8 @@ function refreshDiagnostics() {
   //   writes is inside it, and with drawer closed whole refresh was still running
   //   five times second: measured on 1,024-object demo at 2.8 ms typical and 5.7 ms
   //   worst, landing on one frame in twelve. On frame that otherwise costs about
-  //   millisecond -- which is what scene hold made still case -- that is not
-  //   overhead, it is stutter reader can see, and it was largest single source of
-  //   frame-time variance left in build.
+  //   millisecond -- opening scene's -- that is not overhead, it is stutter reader can see,
+  //   and it was largest single source of frame-time variance left in build.
   //   Two canvases could not skip themselves either: each fell back to 300-pixel
   //   width where its own was zero, so canvas nobody could see was drawn at made-up
   //   size. That fallback is for canvas that has not been laid out yet, not for one
@@ -1197,7 +1196,7 @@ function refreshDiagnostics() {
 //   **Drawn when scene changes and at no other time.** At capacity of 1,024 walk
 //   that fills that buffer is about millisecond, and this refresh runs five times second
 //   for picture that moves when object is added or removed. Scene's own revision is
-//   exactly that question, and it is same counter frame hold is keyed on.
+//   exactly that question.
 //   canvas's own geometry is part of key as well, because resize clears what was drawn
 //   and because section opens onto canvas that had no size until it did.
 // Report whether grid's picture is behind:

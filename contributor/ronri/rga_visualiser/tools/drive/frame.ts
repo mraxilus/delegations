@@ -14,6 +14,7 @@ import { report, reportWithin } from './report';
 /** One frame's clocks and counts, as harness's own wrapper caught them. */
 export interface Phase {
   build: number;
+  place: number;
   furniture: number;
   scene: number;
   flatten: number;
@@ -35,8 +36,7 @@ export interface Phase {
   records_ribbon: number;
   records_ring: number;
   records_disc: number;
-  is_held: boolean;
-  is_scene_held: boolean;
+  is_grown: boolean;
   wall: number;
 }
 
@@ -44,8 +44,6 @@ declare global {
   interface Window {
     /** How long each frame's build took, in milliseconds, oldest first. */
     __work_frame?: number[];
-    /** How many of those frames reused furniture held from frame before. */
-    __held_frame?: number;
     /** Each frame's own clocks and counts, alongside `__work_frame`. */
     __phase_frame?: Phase[];
     /** Motors each frame lifted, while counting wrapper stands in front of frame build. */
@@ -54,6 +52,8 @@ declare global {
     __build_unwrapped?: typeof nimBuildFrame;
     /** How many values page copied while counting stood open; see `driveCopiesStill`. */
     __copies_counted?: number;
+    /** How many of those reference library's own functions made, counted apart. */
+    __copies_library?: number;
     /** Whether copy counter counts now. */
     __is_counting_copies?: boolean;
     /** JS backend's own copy, held while counting wrapper stands in front of it. */
@@ -72,7 +72,6 @@ type CopyNim = (destination: unknown, source: unknown, type: unknown) => unknown
 export async function watchFrames(page: Page): Promise<void> {
   await page.evaluate(() => {
     window.__work_frame = [];
-    window.__held_frame = 0;
     window.__phase_frame = [];
     const scope = globalThis as unknown as { nimBuildFrame: typeof nimBuildFrame };
     const built = scope.nimBuildFrame;
@@ -83,9 +82,8 @@ export async function watchFrames(page: Page): Promise<void> {
       const data = built(...given);
       const wall = performance.now() - started;
       window.__work_frame?.push(wall);
-      if (data.is_furniture_held) window.__held_frame = (window.__held_frame ?? 0) + 1;
       window.__phase_frame?.push({
-        build: data.ms_build, furniture: data.ms_furniture,
+        build: data.ms_build, place: data.ms_place, furniture: data.ms_furniture,
         scene: data.ms_scene, flatten: data.ms_flatten,
         grid: data.ms_grid, axes: data.ms_axes, segments: data.count_grid_segments,
         points: data.ms_points, lines: data.ms_lines, planes: data.ms_planes,
@@ -98,7 +96,7 @@ export async function watchFrames(page: Page): Promise<void> {
         records_ribbon: data.ribbon_vertices.length / 16,
         records_ring: data.ring_records.length / 14,
         records_disc: data.disc_records.length / 13,
-        is_held: data.is_furniture_held, is_scene_held: data.is_scene_held, wall,
+        is_grown: data.is_grown, wall,
       });
       return data;
     };
@@ -111,7 +109,6 @@ export interface Work {
   median: number;
   p90: number;
   max: number;
-  held: number;
 }
 
 /** Read frames collected since this index, or since watching began. */
@@ -123,7 +120,7 @@ export async function readWork(page: Page, from = 0): Promise<Work | null> {
       sorted[Math.min(sorted.length - 1, Math.floor(share * sorted.length))] ?? 0;
     return {
       n: sorted.length, median: at(0.5), p90: at(0.9),
-      max: sorted[sorted.length - 1] ?? 0, held: window.__held_frame ?? 0,
+      max: sorted[sorted.length - 1] ?? 0,
     };
   }, from);
 }
@@ -254,26 +251,38 @@ export async function driveStanceReadOnce(page: Page, width: number): Promise<vo
 /** How many still frames copies are counted over; more than one, so steady state is read. */
 const FRAMES_COPIES = 3;
 
+/** Mark of reference library's own functions in compiled names: its directory, as JS backend
+ *  mangles it into each function it compiles from there.
+ */
+const MARK_LIBRARY = 'projective95geometric95algebra95illuminatedZpga';
+
 /** Count values still frames copy, and assert each frame copies fewer than scene has objects.
  *
  *  JS backend deep-copies through `nimCopy`, and copy for each object turns frame linear in
  *  scene for no drawn change. Bound is object count: any such copy reaches it on its own.
  *  Count rather than time: count reads same on every machine, and load never moves it.
  *  Counts outermost call alone, since copy of nested value calls `nimCopy` again for each
- *  member. Every frame counted must hold its scene, so count is still frame's own.
+ *  member. Every frame places, builds and flattens whole scene, so count is all of frame's.
+ *  Copies reference library's own functions make are counted apart and reported, not bound:
+ *  every frame runs library for whole scene, and what it costs is library's to answer for;
+ *  see `PROVENANCE.md`, Render paths. Copy's maker is function calling it, read off stack.
  */
 export async function driveCopiesStill(page: Page, objects: number): Promise<void> {
-  const is_wrapped = await page.evaluate(() => {
+  const is_wrapped = await page.evaluate((mark) => {
     const scope = globalThis as unknown as { nimCopy?: CopyNim };
     const unwrapped = scope.nimCopy;
     if (typeof unwrapped !== 'function') return false;
     window.__copy_unwrapped = unwrapped;
     window.__copies_counted = 0;
+    window.__copies_library = 0;
     window.__is_counting_copies = false;
     let depth = 0;
     scope.nimCopy = function (destination: unknown, source: unknown, type: unknown): unknown {
       if (depth === 0 && window.__is_counting_copies === true) {
-        window.__copies_counted = (window.__copies_counted ?? 0) + 1;
+        // Line 0 names error, line 1 this wrapper, line 2 function asking for copy.
+        const maker = (new Error().stack ?? '').split('\n')[2] ?? '';
+        if (maker.includes(mark)) window.__copies_library = (window.__copies_library ?? 0) + 1;
+        else window.__copies_counted = (window.__copies_counted ?? 0) + 1;
       }
       depth += 1;
       try {
@@ -283,7 +292,7 @@ export async function driveCopiesStill(page: Page, objects: number): Promise<voi
       }
     };
     return true;
-  });
+  }, MARK_LIBRARY);
 
   const from = await countFrames(page);
   await page.evaluate(() => { window.__is_counting_copies = true; });
@@ -292,17 +301,16 @@ export async function driveCopiesStill(page: Page, objects: number): Promise<voi
     window.__is_counting_copies = false;
     const scope = globalThis as unknown as { nimCopy?: CopyNim };
     if (window.__copy_unwrapped !== undefined) scope.nimCopy = window.__copy_unwrapped;
-    return window.__copies_counted ?? 0;
+    return { project: window.__copies_counted ?? 0, library: window.__copies_library ?? 0 };
   });
   const phases = await readPhases(page, from);
-  const held = phases.filter((phase) => phase.is_scene_held).length;
 
   report(
     'a still frame under the largest demo copies fewer values than the scene has objects',
-    is_wrapped && phases.length === FRAMES_COPIES && held === FRAMES_COPIES &&
-      copies < objects * FRAMES_COPIES,
+    is_wrapped && phases.length === FRAMES_COPIES && copies.project < objects * FRAMES_COPIES,
     is_wrapped
-      ? `${copies} copies over ${phases.length} frames, ${held} held, for ${objects} objects`
+      ? `${copies.project} copies over ${phases.length} frames, for ${objects} objects; ` +
+        `library's own ${copies.library}, apart`
       : 'page holds no `nimCopy` to count',
   );
 }

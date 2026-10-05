@@ -6,7 +6,7 @@
 //   reading, and far below fault it catches; see `pins`.
 
 import type { Page } from '@playwright/test';
-import { MILLISECONDS_FRAME, advance, evaluateOver, waitUntil } from './clock';
+import { advance, waitUntil } from './clock';
 import { settleCamera } from './camera';
 import { FRAMES_PHASES_HEAVY_LEAST, readPhases, waitFrames } from './frame';
 import { report } from './report';
@@ -46,10 +46,11 @@ export async function driveTimelineCost(page: Page, objects: number): Promise<vo
   );
 }
 
-/** Assert frame after edit re-places handle it touched, not whole scene.
+/** Assert frame after edit is built inside its bound, placing every object as any frame does.
  *
- *  Placement cache refilled every live handle on any change of revision, so frame after one
- *  add re-ran whole placing side.
+ *  Every frame places whole scene through algebra; see `PROVENANCE.md`, Render paths. So frame
+ *  after edit costs what any frame costs, and bound is that frame's: placing, scenery, scene
+ *  and flatten at this size. Slip into work per object that grows with scene shows here.
  */
 export async function drivePlacingCost(page: Page, objects: number): Promise<void> {
   const median = await page.evaluate(() => {
@@ -72,52 +73,41 @@ export async function drivePlacingCost(page: Page, objects: number): Promise<voi
     return times[3] ?? -1;
   });
   report(
-    'the frame after an edit re-places one handle, not every handle',
-    median < MILLISECONDS_FRAME_PLACING,
+    'the frame after an edit places every object inside its bound',
+    median >= 0 && median < MILLISECONDS_FRAME_PLACING,
     `${median.toFixed(1)} ms over ${objects} objects, wanted under ${MILLISECONDS_FRAME_PLACING}`,
   );
 }
 
-/** Assert undo made while frame is held is drawn.
+/** Assert undo is drawn by frame after it.
  *
- *  Restored snapshot carried its own revision, and bump after it landed on revision of very
- *  edit being undone, so hold kept last frame's meshes: undone object stayed on screen until
- *  camera moved. Hold is engaged first, on purpose -- fault only shows once it has.
+ *  Restored snapshot carried its own revision once, and bump after it landed on revision of
+ *  very edit being undone; anything keyed on revision then read undone scene as unchanged.
+ *  Frame after undo must draw scene undo restored.
  */
 export async function driveUndoDrawn(page: Page): Promise<void> {
-  // Span covers every sleep loop below may take; it stops at first held frame.
-  const undone = await evaluateOver(page, 60 * 50 + 2 * MILLISECONDS_FRAME, async () => {
+  const undone = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
-    const build = (): FrameData =>
-      nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, true);
-    const sleep = (milliseconds: number): Promise<void> =>
-      new Promise((done) => setTimeout(done, milliseconds));
-    const stateOf = (data: FrameData): { vertices: number; is_held: boolean } =>
-      ({ vertices: data.point_vertices.length / 11, is_held: data.is_scene_held });
+    const vertices = (): number =>
+      nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, true)
+        .point_vertices.length / 8;
 
     const model = nimObjectCoefficients(nimSceneHandles()[0] ?? 0);
-    const before = stateOf(build());
+    const before = vertices();
     nimAddObject(
       model, 'undone', nimDefaultInk(), nimDefaultRadius(), performance.now() / 1000,
     );
     nimSelectClear();
-    let is_held = false;
-    for (let i = 0; i < 60 && !is_held; i += 1) {
-      await sleep(50);
-      is_held = build().is_scene_held;
-    }
-    const added = stateOf(build());
+    const added = vertices();
     nimUndo();
-    const after = stateOf(build());
-    return { is_held, before, added, after };
+    const after = vertices();
+    return { before, added, after };
   });
   report(
-    'an undo made while the frame is held is drawn',
-    undone.is_held && undone.added.vertices > undone.before.vertices &&
-      undone.after.vertices === undone.before.vertices && !undone.after.is_held,
-    `held ${undone.is_held}; ${undone.before.vertices} vertices, ` +
-      `${undone.added.vertices} after the add, ${undone.after.vertices} after the undo`,
+    'an undo is drawn by the frame after it',
+    undone.added > undone.before && undone.after === undone.before,
+    `${undone.before} vertices, ${undone.added} after the add, ${undone.after} after the undo`,
   );
 }
 
@@ -170,8 +160,8 @@ const MILLISECONDS_ORBIT_FULL = 800;
 /** Drive gesture on full scene, then orbit, and assert refusal and records crossing wire.
  *
  *  On simulated clock: refusal and record counts are what gesture and scene decide, so they
- *  are same on every machine. Orbit is there because still camera over still scene is held
- *  frame, which crosses no records at all.
+ *  are same on every machine. Orbit is there so records are read off frames reader moves
+ *  through.
  */
 export async function driveFullRefused(page: Page, errors: string[]): Promise<void> {
   await fillScene(page);
@@ -229,9 +219,7 @@ export async function driveLoadedAccounting(page: Page): Promise<void> {
   // Window accounting reads starts only now: fill is many committed edits back to back, which
   //   is not ordinary picture this measures.
   await page.evaluate(() => { window.__phase_frame = []; });
-  // Orbit, because still camera over still scene is held frame: hold skips tessellation,
-  //   flatten and uploads together where nothing has moved, so idle window records frames whose
-  //   scene phase is legitimately zero and there is nothing to divide.
+  // Orbit, so frames read are frames reader moves through full scene.
   await page.evaluate(() => document.getElementById('gl')?.focus());
   await page.keyboard.down('ArrowRight');
   try {

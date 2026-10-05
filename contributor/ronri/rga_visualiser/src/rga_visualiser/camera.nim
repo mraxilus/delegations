@@ -237,9 +237,7 @@ type
       ## Scale frustum and furniture take, in place of separation from pivot; see
       ## `scaleLocal`.
       ##   Zero where nothing is drawn ahead, which hands scale back to separation.
-      ##   Stamped by whoever owns scene, once for each frame rather than for each overlay
-      ##   call: it reads every placement, and
-      ##   `ensureViewOverlay` runs many times over one frame.
+      ##   Stamped by whoever owns scene, once for each frame, from that frame's placements.
       ##   Depth along sight rather than distance, and never behind eye: what reader turned
       ##   away from is not drawn, and scale read off it would follow that.
 
@@ -247,31 +245,6 @@ type
     axis_right*: Direction  ## Unit direction of view's +x.
     axis_up*: Direction  ## Unit direction of view's +y.
     forward*: Direction  ## Unit direction eye looks along.
-
-  SettingsFurniture* = tuple
-    ## Define everything picked planes' lattices and world axes are built from.
-    ##   `drawExtentFor` derives every field furniture reads from exactly these, so two
-    ##   frames agreeing here draw same furniture, vertex for vertex: what lets front-end
-    ##   keep last frame's meshes.
-    ##     Field added to `Camera` that `drawExtentFor` reads must be added here too, or
-    ##     frame holds furniture no longer matching view.
-    ##   Here rather than in each front-end: two private copies would be drift sibling rule
-    ##   warns about.
-    ##   Keyed on what camera *holds*, and never on what it reads out.
-    ##     Motor and depth are stance itself, so two frames agreeing on them agree on eye,
-    ##     every axis, pivot and both angles, which is stronger than keying on those.
-    ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
-    ##     hold exists to save less work than that; see `drivePinAnchor`.
-    ##     View origin beside motor, since motor is held about it: three coordinates, since
-    ##     `Position` refuses exact comparison and this one must be exact.
-    ##   Lattice lies on planes picked, so what scene holds and what is picked key it too:
-    ##   two revision counters, which move on every edit and every pick.
-    origin_x, origin_y, origin_z: float
-    motor: Motor
-    distance, degrees_field_of_view, reach_near, reach_scene: float
-    height_pixels: int
-    is_axes_shown, is_grid_shown: bool
-    revision_scene, revision_selection: int
 
   SphereWorld* = object  ## Define bound of world points by centre and radius.
     ## What selection means to camera framing it: everything finite it was asked to show
@@ -518,9 +491,8 @@ func scaleLocal*(camera: Camera): float =
   ##     Separation alone kept scale of stance reader set off from: near clip is one
   ##     four-hundredth of it, and camera flying from opening stance at planet met that
   ##     plane long before planet.
-  ##     Never pointer's own depth, which `capTravelling` reads: `SettingsFurniture`
-  ##     compares exactly, so pointer figure would rebuild grid at every pointer move, and
-  ##     would move `depthLogScale` while camera stood still.
+  ##     Never pointer's own depth, which `capTravelling` reads: pointer figure would move
+  ##     grid and `depthLogScale` at every pointer move while camera stood still.
   ##   Held off zero, since every reader divides or scales by it.
   if camera.reach_near > 0.0: camera.reach_near else: max(camera.distance, DISTANCE_LIMIT_NEAR)
 
@@ -1147,23 +1119,6 @@ func pivotWorld*(camera: Camera): Position = camera.pivot.toWorld(camera.origin_
 
 #[ Camera Frame ]#
 
-func settingsFurnitureFor*(
-  camera: Camera;
-  height_pixels: int;
-  reach_scene: float;
-  is_axes_shown, is_grid_shown: bool;
-  revision_scene, revision_selection: int;
-): SettingsFurniture =
-  ## Read furniture's inputs off this camera and frame, for hold comparison.
-  ##   Compared exactly by callers: question is whether anything moved at all.
-  ##   Every field is plain read, so key costs nothing to build.
-  (
-    camera.origin_view.x, camera.origin_view.y, camera.origin_view.z, camera.motor,
-    camera.distance, camera.degrees_field_of_view, camera.reach_near, reach_scene,
-    height_pixels, is_axes_shown, is_grid_shown, revision_scene, revision_selection,
-  )
-
-
 func rulerFor*(camera: Camera, scale: DrawExtent): tuple[span, pixels: float] =
   ## Choose scale bar for this frame: world length it claims, and pixels it is drawn over.
   ##   Measured at depth of `scaleLocal`, what frustum and furniture take their scale from:
@@ -1220,6 +1175,14 @@ func drawExtentFor*(
       depth_log: scaleLogOver(far, camera.distanceNear),
     ),
   ))
+
+
+func atHeight*(scale: DrawExtent, height_pixels: int): DrawExtent =
+  ## Read same extent at another pixel height: overlay's, at CSS height, off frame's.
+  ##   Height is only field `drawExtentFor` takes from viewport, so rest is camera's and
+  ##   stands as derived; four algebra twins are not derived again.
+  result = scale
+  result.scale.height_pixels = height_pixels
 
 
 func viewBoundsFor*(
@@ -1632,7 +1595,7 @@ func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStanc
 func `==`*(a, b: CameraStance): bool =
   ## Compare two stances exactly, for caller asking whether camera would move at all.
   ##   Motor and its origin are stored state, so two stances agreeing here agree on eye,
-  ##   every axis, pivot and both angles; same key `SettingsFurniture` holds.
+  ##   every axis, pivot and both angles.
   ##   Two about different origins compare unequal, as rounding would make them anyway.
   a.origin.x == b.origin.x and a.origin.y == b.origin.y and a.origin.z == b.origin.z and
       a.motor == b.motor and a.distance == b.distance

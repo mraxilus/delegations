@@ -725,9 +725,11 @@ func revision*(scene: Scene): int = scene.count_edits
   ## Report how many times scene's drawn content has changed.
   ##   Named apart from field, as `len` and `bound` are: reader named for field it reads
   ##   recurses under this module's scoping.
-  ##   For holding last frame's meshes and placements, nothing else.
-  ##     Front-end compares against what it saw last frame, equality only, and rebuilds
-  ##     where it differs.
+  ##   For reader holding something derived from scene between frames, nothing else.
+  ##     Object-pool strip and objects list's text, and placements edit between two frames
+  ##     moves past; see `bridge.placeEdited`. Frame itself places and builds whole scene.
+  ##     Reader compares against what it saw, equality only, and derives again where it
+  ##     differs.
   ##     Not version number user sees, not saved.
   ##   Everything changing what is drawn bumps it, and ways to do that are closed.
   ##     Geometry through `setGeometryAt`, ink through `setInk`, visibility through
@@ -736,8 +738,8 @@ func revision*(scene: Scene): int = scene.count_edits
   ##     Label is not among them: labels are never tessellated.
   ##   Never assign whole scene over live one; go through `restoreFrom`.
   ##     Assignment restores snapshot's own revision, and bump after it lands on number
-  ##     already seen, i.e. edit being undone; reader holding meshes on that number draws
-  ##     undone object until camera moves.
+  ##     already seen, i.e. edit being undone; reader keyed on that number reads undone
+  ##     scene as current.
 
 func markEdited*(scene: var Scene) =
   ## Say that scene's drawn content just changed; see `revision`.
@@ -751,8 +753,8 @@ func restoreFrom*(scene: var Scene, snapshot: Scene) =
   ## Replace scene's whole content with snapshot, at revision no earlier state carried.
   ##   Every whole-scene replacement, i.e. undo, redo, clear, load, comes through here.
   ##     Revision only ever rises and no two states front-end has drawn share one.
-  ##   Every live handle is stamped as re-placed, since any of them may differ from what
-  ##   cache holds.
+  ##   Every live handle is stamped as re-placed, since any of them may differ from
+  ##   placements standing for revision before.
   let revision_live = scene.count_edits
   scene = snapshot
   scene.count_edits = max(revision_live, snapshot.count_edits) + 1
@@ -762,10 +764,9 @@ func restoreFrom*(scene: var Scene, snapshot: Scene) =
 
 func revisionPlacingAt*(scene: Scene, handle: int): int =
   ## Report revision at which handle's placing inputs last changed.
-  ##   Front-end caching `tessellate.placeObject`'s answer per handle re-places only handles
-  ##   stamped past what it holds: one handle per edit, every handle after `restoreFrom`.
-  ##   Re-placing whole scene per edit is whole frame at capacity; figures in
-  ##   `PROVENANCE.md`.
+  ##   Reader between two frames re-places only handles stamped past frame's placements: one
+  ##   handle per edit, every handle after `restoreFrom`; see `bridge.placeEdited`.
+  ##   Frame build itself places every handle.
   scene.revisions_placing[handle]
 
 
