@@ -32,6 +32,8 @@ const
     "let m = matrix(\n  #!fix off\n  1,  0,\n\n  0,  1,\n  #!fix on\n)\n" &
     "let n = matrix(1+2)\n"
     ## Nim source whose hand-shaped rows fence keeps, and whose call after fence fix reaches.
+  GROUPED = "## Do.\n\n" & STRICT_FUNCS & "\n\nlet s = @(x) + @(x[0])\n"
+    ## Nim source holding group parser proves needless, and group it refuses.
   LOCK =
     "{\n  \"items\": {},\n  \"nimbleFile\": {\n    \"filename\": \"alpha.nimble\",\n" &
     "    \"content\": []\n  }\n}\n"
@@ -60,7 +62,7 @@ suite "Fixes":
   test "after fix, form and idiom checks report nothing, and second fix writes nothing":
     let
       path = "curator/audit/src/a.nim"
-      (written, fixed, refused, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
+      (written, fixed, refused, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, DIRTY)])
     check refused.len == 0 and written.len == 1
     let source = written[0].content
     check checkForm(path, source, Kind.Nim.rule).len == 0  # form checks report none
@@ -103,7 +105,7 @@ suite "Fixes":
     for rule in ["(X.2)", "(X.9)", "(STYLE.md §5)", "Signature", "Call", "trailing separator",
                  "share one bracket", "alphabetised", "`=` takes"]:
       check found.anyIt(rule in it.message)  # each rule reported
-    let (written, fixed, refused, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
+    let (written, fixed, refused, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, LAYOUT)])
     check refused.len == 0 and written.len == 1
     check checkFormatting(path, written[0].content, Kind.Nim).len == 0  # all cleared
     check checkForm(path, written[0].content, Kind.Nim.rule).len == 0  # nothing new
@@ -140,7 +142,7 @@ suite "Fixes":
     let spaced = ranged.replace("0..<n", "0 ..< n").replace("1..^2", "1 ..^ 2")
       .replace("'a'..'z'", "'a' .. 'z'")
     check fixEntries(CURATOR_BRANCH, [entry(path, spaced)]).written[0].content == ranged
-    let (written, fixed, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, wide)])
+    let (written, fixed, _, _, _, _) = fixEntries(CURATOR_BRANCH, [entry(path, wide)])
     check written[0].content == head & "let x = foo(\n  s[0..<n],\n  t[1 .. ^1],\n  " &
       "a".repeat(40) & ",\n  " & "b".repeat(26) & ",\n)\nf(s[0..<n], t[1 .. ^1])\n" &
       "proc h(\n  " & "a".repeat(20) & ": range[0..9], " & "b".repeat(24) &
@@ -390,6 +392,58 @@ suite "Fixes":
       (6, "Field case (V.1) stays for hand, since rename to `enable_sleep` is refused: " &
         "foreign code reads name through `importc`; got `enableSleep`."),
     ]  # V.1
+
+
+  test "needless parentheses go where parser of project's pin proves it, one run for each pin":
+    var pins: seq[string]
+    let
+      other = GROUPED.replace("@(x) + @(x[0])", "@(y) + @(y[0])")
+      tree = goodTree().with(
+        entry("curator/beta/beta.nimble", NIMBLE_TEXT.replace(PIN, COMMIT)),
+        entry(AUDIT_DIRECTORY & "/src/a.nim", GROUPED),
+        entry(AUDIT_DIRECTORY & "/src/b.nim", other),
+        entry("curator/beta/src/a.nim", GROUPED),
+      )
+      entries = tree[^3 .. ^1]
+      stub = proc (pin: string): Prover =
+        pins.add pin
+        result = proc (sources: seq[string]): Proving =
+          Proving(answers: sources.mapIt(it.candidatesOf.filterIt(it.got notin
+            ["(x[0])", "(y[0])"]).mapIt(it.opening[0])))
+    let unanswered = fixEntries(CURATOR_BRANCH, entries)
+    check unanswered.written.len == 0  # nothing proven, nothing written
+    check unanswered.asked.mapIt(it[0]) == entries.mapIt(it.path)  # each source asks
+    let (fix, failures) = provenFix(CURATOR_BRANCH, tree, entries, [], tree.contextOf, stub)
+    check failures.len == 0
+    check pins[0 .. 1] == @[PIN, COMMIT]  # first round: one run for each pin, project's own
+    check fix.written.mapIt(it.content) == @[
+      GROUPED.replace("@(x) +", "@x +"), other.replace("@(y) +", "@y +"),
+      GROUPED.replace("@(x) +", "@x +"),
+    ]  # group parser refuses stays
+    check fix.fixed.filterIt("needless parentheses" in it.message).len == 3
+    check fix.asked.len == 0
+    let again = provenFix(CURATOR_BRANCH, tree, fix.written, [], tree.contextOf, stub)
+    check again.fix.written.len == 0  # second fix writes nothing
+
+
+  test "where no compiler serves pin, nothing goes, and one warning says why":
+    let
+      tree = goodTree().with(entry("tools/a.nim", GROUPED))
+      broken = proc (pin: string): Prover =
+        result = proc (sources: seq[string]): Proving =
+          Proving(answers: newSeq[seq[int]](sources.len), failure: "Compiler failed; got `x`.")
+    let (fix, failures) = provenFix(CURATOR_BRANCH, tree, [tree[^1]], [], tree.contextOf, broken)
+    check fix.written.len == 0 and fix.fixed.len == 0
+    check failures == @["needless-parentheses: Compiler failed; got `x`."]  # driver pin asked
+    let unpinned = goodTree().without(AUDIT_DIRECTORY & "/audit.nimble").with(
+      entry("koch2.nim", GROUPED),
+    )
+    let alone = provenFix(CURATOR_BRANCH, unpinned, [unpinned[^1]], [], unpinned.contextOf, broken)
+    check alone.fix.written.len == 0
+    check alone.failures == @[
+      "needless-parentheses: Parser proved no removal, since project pins no compiler; got " &
+        "`koch2.nim`.",
+    ]
 
 
   test "nimble file whose copy `atlas.lock` holds is never written, and read by no layout check":
