@@ -425,12 +425,13 @@ proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
       inc placed
 
 
-func beginSession(panel: var Panel, scene: var Scene, handle: Option[int]) =
+func beginSession*(panel: var Panel, scene: var Scene, handle: Option[int]) =
   ## Open edit session against `handle`, or composing one where handle is none.
   ##   Composing session starts on same auto-label and cycled ink every other construction
   ##   path assigns, both editable before object exists.
   ##   Does not aim camera: session's staged geometry is offered to tween every frame by
   ##   `layoutObjects`.
+  ##   Row's edit button opens session through here, and so does `main.driveEdit`.
   var session = EditSession(handle: handle)
   if handle.isSome:
     session.stage scene.geometryOf(handle.get)
@@ -442,6 +443,36 @@ func beginSession(panel: var Panel, scene: var Scene, handle: Option[int]) =
     session.index_ink = cint(scene.inkNext)
     session.radius = cfloat(RADIUS_OBJECT_DEFAULT)
   panel.session = some(session)
+
+
+proc saveSession*(
+  panel: var Panel, scene: var Scene, camera: Camera, history: var History, now: float
+) =
+  ## Commit open session to scene: add object it composes, or write edited one back.
+  ##   Records one step of history, and closes session.
+  ##   Row's save button saves through here, and so does `main.driveEdit`, so driven run
+  ##   saves as reader does.
+  let
+    session = panel.session.get
+    geometry = session.geometry
+  if session.handle.isNone:
+    let handle_added = scene.addObject(
+      geometry,
+      session.label.toText,
+      Ink(session.index_ink),
+      now,
+      radius = float(session.radius),
+    )
+    panel.selection.selectOnly(handle_added)
+    panel.say(addedMessage(session.label.toText), now)
+  else:
+    scene.setGeometryAt(session.handle.get, geometry)
+    scene.labelAt(session.handle.get) = session.label
+    scene.setInk(session.handle.get, Ink(session.index_ink))
+    scene.setRadius(session.handle.get, float(session.radius))
+    panel.say(savedMessage(session.label.toText), now)
+  history.record(scene, camera)
+  panel.session = none(EditSession)
 
 
 proc layoutSessionFields(panel: var Panel, is_pending: bool) =
@@ -540,30 +571,8 @@ proc layoutObjectButtons(
       )
   gui.alignRight(width_buttons)
   if gui.buttonSmall(label_commit):
-    if not row.is_open:
-      beginSession(panel, scene, row.handle)
-    else:
-      let
-        session = panel.session.get
-        geometry = session.geometry
-      if row.isPending:
-        let handle_added = scene.addObject(
-          geometry,
-          session.label.toText,
-          Ink(session.index_ink),
-          now,
-          radius = float(session.radius),
-        )
-        panel.selection.selectOnly(handle_added)
-        panel.say(addedMessage(session.label.toText), now)
-      else:
-        scene.setGeometryAt(row.handle.get, geometry)
-        scene.labelAt(row.handle.get) = session.label
-        scene.setInk(row.handle.get, Ink(session.index_ink))
-        scene.setRadius(row.handle.get, float(session.radius))
-        panel.say(savedMessage(session.label.toText), now)
-      history.record(scene, camera)
-      panel.session = none(EditSession)
+    if not row.is_open: beginSession(panel, scene, row.handle)
+    else: saveSession(panel, scene, camera, history, now)
   gui.tooltip(if row.is_open: wordingText(TipRowCommit) else: wordingText(TipRowEdit))
 
   if row.is_open:
