@@ -71,6 +71,11 @@ type
     code*: int  ## Exit code: 0 clean, 1 finding left or change due under `--check`.
     asked*: seq[string]  ## Source chain asked parser about and no answer holds yet.
 
+  Part = object  ## Define what fix of one file gives, before `joined` sorts it into outcome.
+    written: seq[(string, string)]  ## Path and new text, where file changes.
+    fixed, left, held: seq[Report]  ## Rewrite, finding left and fence warning, unsorted.
+    asked: seq[string]  ## Source chain asked parser about and no answer holds yet.
+
 
 proc parseOptions*(arguments: openArray[string]): Option[Options] =
   ## Parse command line; `none` on unknown option, value where none belongs, `--nim` without
@@ -124,6 +129,43 @@ func `<`(a, b: Report): bool =
   a.message < b.message
 
 
+func partOf(path, source: string; is_check: bool; directory: string; proofs: Proofs): Part =
+  ## Fix one file of Nim dialect, as `outcomeOf` does: what file writes and reports, and what it
+  ##   asks parser.
+  let
+    dialect = path.dialectOf.get
+    layout = path.layoutOf(directory)
+  result.held = heldOf(layout, source, dialect, proofs).shownAs(path)
+  if source.fenceOf.lines.len > 0: result.asked.add source.questionsOf(proofs)
+  let fix = formatted(layout, source, dialect, proofs)
+  result.asked.add fix.asked
+  var after = checkFormatting(layout, fix.source, dialect, proofs)
+  for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
+  result.left = shownAs(fix.left & after, path)
+  if fix.source == source: return
+  result.fixed = fix.fixed.shownAs(path)
+  if not is_check: result.written.add (path, fix.source)
+
+
+func joined(parts: openArray[Part]; is_check: bool; failure: string): Outcome =
+  ## Sort reports of each file's part into lines printed, and decide exit code.
+  var fixed, left, held: seq[Report]
+  for part in parts:
+    result.written.add part.written
+    result.asked.add part.asked
+    fixed.add part.fixed
+    left.add part.left
+    held.add part.held
+  let outcome = if is_check: " to fix" else: " fixed"
+  for report in fixed.sorted: result.lines.add report.located & outcome
+  for report in left.sorted: result.lines.add report.located & " left: " & report.message
+  for report in held.sorted: result.lines.add report.located & " warning: " & report.message
+  if failure.len > 0: result.lines.add Rule.NeedlessParentheses.id & " warning: " & failure
+  result.lines.add $fixed.len & outcome & "."
+  result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
+  result.asked = result.asked.deduplicate
+
+
 func outcomeOf*(
   files: openArray[(string, string)];
   locked: openArray[string];
@@ -137,29 +179,11 @@ func outcomeOf*(
   ##   directory it is named from (`layoutOf`). Parentheses go where `proofs` prove them, and
   ##   each source no answer reaches is in `Outcome.asked`, source as given too where fence
   ##   holds lines, since fence's warning reads it. Failure of prover prints as warning.
-  var fixed, left, held: seq[Report]
+  var parts: seq[Part]
   for (path, source) in files:
-    let dialect = path.dialectOf
-    if dialect.isNone or path in locked: continue
-    let layout = path.layoutOf(directory)
-    held.add heldOf(layout, source, dialect.get, proofs).shownAs(path)
-    if source.fenceOf.lines.len > 0: result.asked.add source.questionsOf(proofs)
-    let fix = formatted(layout, source, dialect.get, proofs)
-    result.asked.add fix.asked
-    var after = checkFormatting(layout, fix.source, dialect.get, proofs)
-    for report in after.mitems: report.line = fix.traced(report.line)  # Line as given.
-    left.add shownAs(fix.left & after, path)
-    if fix.source == source: continue
-    fixed.add fix.fixed.shownAs(path)
-    if not is_check: result.written.add (path, fix.source)
-  let outcome = if is_check: " to fix" else: " fixed"
-  for report in fixed.sorted: result.lines.add report.located & outcome
-  for report in left.sorted: result.lines.add report.located & " left: " & report.message
-  for report in held.sorted: result.lines.add report.located & " warning: " & report.message
-  if failure.len > 0: result.lines.add Rule.NeedlessParentheses.id & " warning: " & failure
-  result.lines.add $fixed.len & outcome & "."
-  result.code = if left.len > 0 or (is_check and fixed.len > 0): 1 else: 0
-  result.asked = result.asked.deduplicate
+    if path.dialectOf.isNone or path in locked: continue
+    parts.add partOf(path, source, is_check, directory, proofs)
+  parts.joined(is_check, failure)
 
 
 proc provenOutcome*(
@@ -169,18 +193,24 @@ proc provenOutcome*(
   directory: string;
   prover: Prover,
 ): Outcome =
-  ## Fix files as `outcomeOf` does, ask prover what chain asked, and fix again, at most
-  ##   `ASKS_MAX` times; prover that fails is asked no more, and its failure prints as warning.
+  ## Fix files as `outcomeOf` does, ask prover what chain asked, and fix again each file that
+  ##   asked, at most `ASKS_MAX` times; prover that fails is asked no more, and its failure
+  ##   prints as warning. File that asked nothing read only sources answered, and answer once
+  ##   held never changes, so fixing it again would give same part.
+  let read = files.filterIt(it[0].dialectOf.isSome and it[0] notin locked)
   var
     proofs = Proofs()
     failure = ""
-  result = outcomeOf(files, locked, is_check, directory, proofs)
+    parts = read.mapIt(partOf(it[0], it[1], is_check, directory, proofs))
   for ask in 1 .. ASKS_MAX:
-    if result.asked.len == 0: break
+    let asked = parts.mapIt(it.asked).concat.deduplicate
+    if asked.len == 0: break
     if failure.len > 0:
-      for source in result.asked: proofs.answers[source] = @[]
-    else: failure = proofs.answered(result.asked, prover)
-    result = outcomeOf(files, locked, is_check, directory, proofs, failure)
+      for source in asked: proofs.answers[source] = @[]
+    else: failure = proofs.answered(asked, prover)
+    for k, (path, source) in read:
+      if parts[k].asked.len > 0: parts[k] = partOf(path, source, is_check, directory, proofs)
+  parts.joined(is_check, failure)
 
 
 func listingOf*(directory, output: string; code: int): tuple[files: seq[string], refusal: string] =
