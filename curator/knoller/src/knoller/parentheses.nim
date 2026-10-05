@@ -14,6 +14,8 @@
 ##     `spacing.nim`), as `^(|𝐦)` and `-(1)`; tuple, call, signature and argument of command
 ##     form (`x.f (a, b)`), which hold separator or glue to callee; prefix term after command
 ##     head, since `check |∙ x` reads `|∙` as binary operator.
+##   Group after power operator `^` reads glued, since spacing glues `^` (X.9), so `a ^ (-b)`
+##     keeps exponent spacing wraps (`a^(-b)`), and both rules agree.
 ##   Rewrite moves no reading: parser keeps parentheses around one node as `nkPar` of it alone,
 ##     and prefix node binds its operand alone. Removal never widens line. Chain runs it before
 ##     spacing, which glues `|∘ (` as `|∘(` in same round.
@@ -107,8 +109,10 @@ func groups(source: string): seq[Group] =
     if not (is_term_side or (is_plain and (is_symbol_prefix or is_side))): continue
 
     # Removal leaves gap before `(` and after `)`; where either is none, tokens must not merge.
-    if o > 0 and tokens[o - 1].after == t.first and tokens[o - 1].line == t.line and
-        source.isMerging([tokens[o - 1], tokens[o + 1]]):
+    #   Power operator before group counts glued, since spacing glues it (X.9).
+    let is_power = before == ElementKind.Binary and tokens[o - 1].spelling(source) == "^"
+    if o > 0 and (tokens[o - 1].after == t.first or is_power) and
+        tokens[o - 1].line == t.line and source.isMerging([tokens[o - 1], tokens[o + 1]]):
       continue
     if c < tokens.high and tokens[c + 1].first == tokens[c].after and
         source.isMerging([tokens[c - 1], tokens[c + 1]]):

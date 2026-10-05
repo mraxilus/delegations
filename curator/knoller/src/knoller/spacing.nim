@@ -67,7 +67,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sets, strutils, unicode]
+import std/[algorithm, sequtils, sets, strutils, unicode]
 import ./[form, precedence, reports, tokens, views]
 
 
@@ -78,7 +78,7 @@ type
     Range  ## Around range operator: none.
     RangeApart  ## Around range whose piece binds tighter, or whose glued tokens merge: one.
     Power  ## Around power operator `^`: none.
-    PowerApart  ## Around power operator whose glued tokens merge: one.
+    PowerWrapped  ## Around power operator whose exponent glued would merge: none, exponent wrapped.
     Selector  ## Around symbol operator inside bracket glued to operand: none.
     SelectorApart  ## Around such operator whose glued tokens merge: one.
     Prefix  ## After prefix operator: none.
@@ -89,10 +89,11 @@ type
     Colon  ## Before colon none, after it one.
     Inner  ## Inside bracket: none.
 
-  Edit = object  ## Define one gap of source to rewrite: byte span and spaces it takes.
-    first: int  ## Byte offset gap opens at.
-    after: int  ## Byte offset after gap.
-    spaces: int  ## Spaces gap takes.
+  Edit = object  ## Define one span of source to rewrite: gap and spaces it takes, or token wrapped.
+    first: int  ## Byte offset span opens at.
+    after: int  ## Byte offset after span.
+    spaces: int  ## Spaces span takes.
+    text: string  ## Text after spaces: bracket of wrapped exponent, with its token; else empty.
 
   Respacing = object  ## Define one breach of rule: line, gaps to rewrite, excerpt to echo.
     placement: Placement
@@ -251,12 +252,12 @@ func isDeclaredList(tokens: openArray[Token], k: int, source: string): bool =
   false
 
 
-func isRangeApart(
+func lineElements(
   tokens: openArray[Token]; partners: openArray[int]; k: int; source: string
-): bool =
-  ## Decide whether piece on either side of range at `k` holds binary operator binding tighter
-  ##   than range. Piece is read on range's line, at its depth: bracket group is operand, and
-  ##   looser operator, delimiter, bracket around it or command head ends it.
+): (seq[Element], int) =
+  ## Read elements around token `k` on its line, at its depth, with index of element opening at
+  ##   `k`, `-1` where none: bracket group of line is passed whole, and comment or bracket opening
+  ##   or closing elsewhere ends reading.
   let line = tokens[k].line
   var first = k - 1
   while first >= 0 and tokens[first].line == line:
@@ -273,9 +274,16 @@ func isRangeApart(
     elif tokens[last].kind in {TokenKind.Open, TokenKind.Close, TokenKind.Comment}: break
     else: inc last
   let elements = elementsOf(tokens, partners, first + 1, last - 1, source)
-  var at = -1
-  for m, e in elements:
-    if e.first == k: at = m
+  (elements, elements.mapIt(it.first).find(k))
+
+
+func isRangeApart(
+  tokens: openArray[Token]; partners: openArray[int]; k: int; source: string
+): bool =
+  ## Decide whether piece on either side of range at `k` holds binary operator binding tighter
+  ##   than range. Piece is read on range's line, at its depth: bracket group is operand, and
+  ##   looser operator, delimiter, bracket around it or command head ends it.
+  let (elements, at) = tokens.lineElements(partners, k, source)
   if at < 0 or elements[at].kind != ElementKind.Binary: return false
 
   # Walk out from range each way; first binary operator met inside piece decides.
@@ -294,6 +302,22 @@ func isRangeApart(
         break
       m += direction
   false
+
+
+func exponentLast(
+  tokens: openArray[Token]; partners: openArray[int]; k: int; source: string
+): int =
+  ## Read last token of exponent of power operator at `k`: prefix operators, then one operand
+  ##   with call, index or field glued after it, on line of `k`; `-1` where exponent reads
+  ##   otherwise, or runs past line.
+  let (elements, at) = tokens.lineElements(partners, k, source)
+  if at < 0 or elements[at].kind != ElementKind.Binary: return -1
+  var m = at + 1
+  while m < elements.len and elements[m].kind == ElementKind.Prefix: inc m
+  if m >= elements.len or elements[m].kind != ElementKind.Operand: return -1
+  let last = elements[m].last
+  if tokens[last].kind == TokenKind.Open: -1 else: last
+
 
 
 func respacings(source: string): seq[Respacing] =
@@ -395,8 +419,22 @@ func respacings(source: string): seq[Respacing] =
         spacing.placement = Placement.RangeApart
       else: (wanted, spacing.placement) = (0, Placement.Range)
     elif is_power:
-      if source.isMerging([before, t, next]): spacing.placement = Placement.PowerApart
-      else: (wanted, spacing.placement) = (0, Placement.Power)
+      (wanted, spacing.placement) = (0, Placement.Power)
+      if source.isMerging([before, t]): continue
+      if source.isMerging([t, next]):
+        # Exponent glued would merge with `^`: wrap it whole, never space it.
+        let last = tokens.exponentLast(partners, k, source)
+        if last < 0: continue
+        spacing.placement = Placement.PowerWrapped
+        let closing = tokens[last].spelling(source) & ")"
+        spacing.edits = @[
+          Edit(first: before.after, after: t.first),
+          Edit(first: t.after, after: next.first, text: "("),
+          Edit(first: tokens[last].first, after: tokens[last].after, text: closing),
+        ]
+        spacing.got = source.excerpt(before, next)
+        result.add spacing
+        continue
     if left == wanted and right == wanted: continue
     spacing.edits = source.around(tokens, k, wanted)
     spacing.got = source.excerpt(before, next)
@@ -417,8 +455,9 @@ func checkSpacing*(path, source: string): seq[Report] =
           "where glued tokens would merge (X.9)"
       of Placement.Power:
         "Power operator takes no space, since spaced it reads as operator on bits (X.9)"
-      of Placement.PowerApart:
-        "Power operator takes one space on each side where glued tokens would merge (X.9)"
+      of Placement.PowerWrapped:
+        "Power operator takes no space, and exponent that would merge with it takes " &
+          "parentheses (X.9)"
       of Placement.Selector:
         "Symbol operator inside bracket glued to operand takes no space (X.9)"
       of Placement.SelectorApart:
@@ -465,7 +504,8 @@ func fixSpacing*(path, source: string; held: Held): Fix =
       done = -1
     for e in edits.sortedByIt(-it.first):
       if e.first == done: continue
-      shaped = shaped[0 ..< e.first - start] & ' '.repeat(e.spaces) & shaped[e.after - start .. ^1]
+      shaped = shaped[0 ..< e.first - start] & ' '.repeat(e.spaces) & e.text &
+        shaped[e.after - start .. ^1]
       done = e.first
     if not held.isHeld(line + 1) or not shaped.isWide or lines[line].isWide:
       lines[line] = shaped
