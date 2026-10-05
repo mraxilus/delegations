@@ -496,6 +496,61 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check worst <= 1.0
 
 
+    test "every object of a system is stored about its sun, and reads about Sol as built there":
+      # Sun, planets and plane are built about origin and anchored at sun's place, exact,
+      #   so planet keeps its axis to its own scale however far its star stands. Star with no
+      #   planet is anchored at itself, and Sol's objects at world origin, where Sol stands.
+      #   About Sol, each reads where its system's place puts it, to one rounding there:
+      #   sun at its place, planet on ring about it, plane's circle centred on sun.
+      let scale = scales_held[^1]
+      var scene = initScene()
+      constructOrrery(scene, scale)
+      var handle_of: Table[string, int]
+      for handle in 0..<scene.bound:
+        if scene.isAlive(handle): handle_of[scene.labelAt(handle).toText] = handle
+      var checked = 0
+      for star in STARS:
+        if star.name notin handle_of: continue
+        let
+          system = systemAt(star)
+          anchor = sunOf(system)
+          sun = scene.anchoredAt(handle_of[star.name])
+          off = 1.0e-15 * norm(anchor - POSITION_ORRERY)
+        check sun.anchor.x == anchor.x
+        check sun.anchor.y == anchor.y
+        check sun.anchor.z == anchor.z
+        for b in Basis: check sun.local[b] == ORIGIN_WORLD.toMultivector[b]
+        check norm(position(scene.geometryOf(handle_of[star.name])).get - anchor) <= off
+        inc checked
+        if placedOf(star) == 0: continue
+        let (along, _) = spanOf(system)
+        var which_placed = 0
+        for which in 0..<star.planets:
+          let planet = PLANETS[star.first+which]
+          if planet.axis_semi_major <= 0.0: continue
+          let
+            stored = scene.anchoredAt(handle_of[planet.name])
+            angle = angleRing(system.spin, which_placed, placedOf(star))
+          inc which_placed
+          check stored.anchor.x == anchor.x and stored.anchor.y == anchor.y
+          check stored.anchor.z == anchor.z
+          check abs(norm(position(stored.local).get - ORIGIN_WORLD) - planet.axis_semi_major) <=
+              1.0e-12 * planet.axis_semi_major
+          check norm(position(scene.geometryOf(handle_of[planet.name])).get -
+              ringed(anchor, along, UP_WORLD, planet.axis_semi_major, angle)) <=
+              1.0e-12 * planet.axis_semi_major + off
+        if placedOf(star) < 2: continue
+        let
+          name_plane = "ecliptic " & star.name
+          plane = handle_of[name_plane]
+        check scene.anchoredAt(plane).anchor.x == anchor.x
+        check scene.anchorOverrideAt(plane).get =~ anchor
+      for body in SOL:
+        check scene.anchoredAt(handle_of[body.name]).anchor =~ ORIGIN_WORLD
+      checkpoint(&"{scale}: {checked} stars stored about themselves")
+      check checked > (objectsOf(scale) - OBJECTS_FIXED_ORRERY) div 2
+
+
     test "every neighbour planet rings its star at its real axis, and one without is left out":
       # Archive stores missing semi-major axis as zero; such planet is left out rather
       #   than placed by order among siblings, since distance is whole of claim. Counted

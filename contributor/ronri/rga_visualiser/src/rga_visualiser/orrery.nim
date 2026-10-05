@@ -19,6 +19,11 @@
 ##   `SOL` is our own, hand-written and modelled same way, at origin rest are measured
 ##   from. Nothing stands at `POSITION_ORRERY`'s coordinate but Sol itself.
 ##   Every moon rings its planet in its real orbit plane; see `normalOfMoon`.
+## Each system is stored about its own sun, as anchor of every object it holds.
+##   Sun, planets, moons and plane are built about origin, then anchored at sun's place: star
+##   millions of units out keeps its planets to their own scale, never to that distance's.
+##   Star with no planet is anchored at itself. Sol's anchor is world origin, so its objects
+##   stand about Sol as built; four in horizon are anchored there too.
 ## Every place and every frame is algebra's construction, since where thing stands is its.
 ##   Node is meet of two planes, bearing is meet of ground with vertical plane, each lean
 ##   and each phase is motor's turn, and each body is point plus weightless direction.
@@ -502,20 +507,19 @@ func addHorizon(
   scene.addObject(geometry, label, LUT_INK_BY_ROLE[Role.Derived], now)
 
 
-func addPlane(
-  scene: var Scene, geometry: Multivector, label: string, now: float, anchor: Position
-) =
+func addPlane(scene: var Scene, plane: Anchored, label: string, now: float, centre: Position) =
   ## Add derived plane, refusing anything that is not one.
+  ##   `centre` is where its circle centres, about its anchor.
   ##   Plane is joined from sun and two directions its planets ring along, never from
   ##   three of its points: join of three points millions of units out sums products of
   ##   their coordinates and cancels to noise, one part in ten of plane's own normal,
   ##   where point and two directions is same plane with nothing to cancel.
   ##   Guard stays: directions that fail to span leave multivector of no clean grade,
   ##   which `objects.kindOf` reports as nothing to draw.
-  doAssert kindOf(geometry) == some(Kind.Plane),
+  doAssert kindOf(plane.local) == some(Kind.Plane),
     &"Orrery must derive `{label}` from a point and two directions spanning a plane; got " &
-    &"`{kindOf(geometry)}`."
-  scene.addObject(geometry, label, LUT_INK_BY_ROLE[Role.Derived], now, some(anchor))
+    &"`{kindOf(plane.local)}`."
+  scene.addObject(plane, label, LUT_INK_BY_ROLE[Role.Derived], now, some(centre))
 
 
 func objectsOf*(star: Star): int =
@@ -611,8 +615,11 @@ func constructSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Mul
   ## Build modelled solar system, handing back three objects horizon block takes attitudes of.
   ##   Planets ring Sol at their own real semi-major axes rather than one shared radius,
   ##   whole reason this is not generic template.
+  ##   Built about origin and anchored at Sol's place, as every system is; that place is
+  ##   world origin, so three handed back stand about it too.
   let
-    place_sol = sunOf(SYSTEM_SOL)
+    anchor_sol = sunOf(SYSTEM_SOL)
+    place_sol = ORIGIN_WORLD
     (along, across) = spanOf(SYSTEM_SOL)
     sol = place_sol.toMultivector
   var
@@ -631,7 +638,7 @@ func constructSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Mul
     places[index] = place
     placed[index] = place.toMultivector
     scene.addObject(
-      placed[index],
+      Anchored(anchor: anchor_sol, local: placed[index]),
       body.name,
       LUT_INK_BY_ROLE[body.role],
       now,
@@ -649,7 +656,7 @@ func constructSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Mul
         SYSTEM_SOL.spin + 2.4 * float(index))
     placement_moons[index] = place.toMultivector
     scene.addObject(
-      placement_moons[index],
+      Anchored(anchor: anchor_sol, local: placement_moons[index]),
       moon.name,
       LUT_INK_BY_ROLE[Role.Moon],
       now,
@@ -662,9 +669,10 @@ func constructSol(scene: var Scene; now: float; ecliptic, orbit, tether: var Mul
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
   #   makes horizon plane constructible.
   tether = placed[INDEX_SOL_EARTH] ∧ placement_moons[INDEX_MOON_LUNA]
-  scene.addObject(orbit, "sol ∧ earth", LUT_INK_BY_ROLE[Role.Derived], now)
-  scene.addObject(tether, "earth ∧ luna", LUT_INK_BY_ROLE[Role.Derived], now)
-  addPlane(scene, ecliptic, "ecliptic sol", now, place_sol)
+  let ink = LUT_INK_BY_ROLE[Role.Derived]
+  scene.addObject(Anchored(anchor: anchor_sol, local: orbit), "sol ∧ earth", ink, now)
+  scene.addObject(Anchored(anchor: anchor_sol, local: tether), "earth ∧ luna", ink, now)
+  addPlane(scene, Anchored(anchor: anchor_sol, local: ecliptic), "ecliptic sol", now, place_sol)
 
 
 func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now = 0.0) =
@@ -687,6 +695,7 @@ func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAUL
   # Place every other star where it really stands, with planets archive records.
   #   Nothing invented: star earns ecliptic with two placed planets, and great majority
   #   are single point.
+  #   Each built about origin and anchored at its sun; see module header.
   #   Walk outward until scene holds what size asks for, less horizon block added after.
   #   System too large for room left is passed over, not stopped on: `break` reached
   #   pivot only where counts summed exactly.
@@ -696,12 +705,12 @@ func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAUL
     if scene.len + objectsOf(star) > objectsOf(scale) - COUNT_OBJECT_HORIZON: continue
     let
       system = systemAt(star)
-      place_sun = sunOf(system)
-      sun = place_sun.toMultivector
+      anchor_sun = sunOf(system)
+      sun = ORIGIN_WORLD.toMultivector
       count_placed = placedOf(star)
     # No radius on record for any star or planet but our own; see `mesh.RADIUS_OBJECT_LEAST`.
     scene.addObject(
-      sun,
+      Anchored(anchor: anchor_sun, local: sun),
       star.name,
       LUT_INK_BY_ROLE[Role.Sun],
       now,
@@ -719,11 +728,11 @@ func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAUL
     for which in 0..<star.planets:
       let planet = PLANETS[star.first+which]
       if planet.axis_semi_major > 0.0:
-        let place = ringed(place_sun, along, UP_WORLD, planet.axis_semi_major,
+        let place = ringed(ORIGIN_WORLD, along, UP_WORLD, planet.axis_semi_major,
           angleRing(system.spin, which_placed, count_placed))
         inc which_placed
         scene.addObject(
-          place.toMultivector,
+          Anchored(anchor: anchor_sun, local: place.toMultivector),
           planet.name,
           LUT_INK_BY_ROLE[Role.Planet],
           now,
@@ -732,8 +741,10 @@ func constructOrrery*(scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAUL
 
     # Span plane from ring's own directions; star with single placed planet gets none.
     if count_placed >= 2:
-      addPlane(scene, sun ∧ along.toMultivector ∧ across.toMultivector,
-        "ecliptic " & star.name, now, place_sun)
+      let ecliptic = Anchored(
+        anchor: anchor_sun, local: sun ∧ along.toMultivector ∧ across.toMultivector
+      )
+      addPlane(scene, ecliptic, "ecliptic " & star.name, now, ORIGIN_WORLD)
 
   # Close in horizon, every one attitude of one of Sol's objects.
   #   Attitude drops one grade and lands in horizon: line gives point there, plane gives
