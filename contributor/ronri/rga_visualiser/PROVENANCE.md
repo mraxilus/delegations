@@ -2419,6 +2419,15 @@ two vanishing points of a line. The cut that the panel reports is by kind of wor
 proc. `tessellate` takes its scratch as a parameter. The desktop hands it swap arena memory, and
 the browser hands it a fixed buffer.
 
+**A timed stretch is charged at its end, so nothing leaves it early.** `timed` reads the clock on
+entry, and again as its last statement. A stretch that leaves before that read is never charged,
+and its side reads low. So `timed` refuses at build time a `return`, and a `break` or `continue`
+that no loop or block inside catches. `placeInto` leaves each answer by a labelled block inside its
+stretch.
+
+Rejected: a `try`/`finally` bracket, which charges any exit. It puts a `try` around the placing of
+every object, and the guard emits no code. The cost of that `try` is not measured.
+
 **`pointFrom` tallies each read while a reader counts them.** `countPointsRead` opens the gate
 `IS_COUNTING_POINTS_READ`, and only the suite opens it. Closed, a read costs one load and one branch
 in the emitted JS. The tally is a write that `strictFuncs` counts as an effect, so a
@@ -2438,6 +2447,9 @@ both backends. Verified in Chromium at 390 by 844 on 2026-09-25 against the vect
 interleaved pairs, each the best of seven runs. A finger's turn takes 223 to 251 µs in free aim and
 247 to 283 in orbit, against 144 to 158 and 113 to 122. A turn and a frame build take 0.93 to 0.94
 ms, against 0.86 to 0.94.
+
+Verified by `suites.nim`: placing charges the placing side on each of its seven exits, and a
+stretch that leaves early fails to build.
 
 Verified by driven check: a still frame under the largest demo copies fewer values than the scene
 has objects. Verified by a read of the emitted code on 2026-10-04. No `nimCopy` stands in the six
