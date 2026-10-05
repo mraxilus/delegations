@@ -37,6 +37,38 @@ const MODELLED = staticRead("modelled.json")
   ##   Card simulation has not been asked about is absent, and gets no badge: unasked
   ##     reads as unasked rather than as disagreement.
 
+const CONFIRMED_FIXTURES = staticRead("confirmed-fixtures.json")
+  ## What every confirmed card's still was when Architect confirmed it.
+
+const RIG_RECORDING = staticRead("rig.json")
+  ## Stills of rig viewer, which Architect confirms against their own body.
+
+const LUT_STILL_BY_ASK = block:
+  ## Fixture of each still rig recording keeps, by question; reflected twin by still it
+  ## mirrors, since viewer shows that one.
+  var
+    held: Table[string, string]
+    mirrors: seq[(string, string)]
+  for still in RIG_RECORDING.parseJson["stills"]:
+    let key = still["key"].getStr
+    # Twin card that no other card answers keeps its own still, and names itself.
+    if still.hasKey("mirror") and still["mirror"].getStr != key:
+      mirrors.add (key, still["mirror"].getStr)
+    else: held[key] = $hash($still["points"])
+  for (key, kept) in mirrors: held[key] = held.getOrDefault(kept, "none")
+  held
+
+const LUT_STILLS_BY_CARD = block:
+  ## Fixture of every confirmed card, as `confirmed-fixtures.json` holds it.
+  var held: Table[string, string]
+  for pair in CONFIRMED_FIXTURES.parseJson.pairs:
+    held[pair.key] = pair.val.getStr
+  held
+
+func stillsOf(asks: seq[string]): string =
+  ## Fixture of stills card stands for, one per question, in card's order.
+  asks.mapIt(LUT_STILL_BY_ASK.getOrDefault(it, "none")).join(" ")
+
 const LUT_FIXTURE_BY_CARD = block:
   var held: Table[string, string]
   for pair in FIXTURES.parseJson.pairs:
@@ -70,11 +102,13 @@ const
           "F01", "F02"]
     ## Ids Architect has kept: drawn right.  Added as they are ruled on.
   DROPPED: seq[string] = @[]  ## Ids Architect has ruled out.
-  CONFIRMED: seq[string] = @[]
+  CONFIRMED*: seq[string] = @[]
     ## Ids whose simulation still Architect has confirmed against their own body, on
-    ## viewer page that lays each beside its cell.  Added as they are confirmed,
-    ## none yet.  Confirmation is of one still; when simulation's still of confirmed
-    ## cell moves, its name comes out of here until it is confirmed again.
+    ## viewer page that lays each beside its cell.  Added as they are confirmed.
+    ##   Confirmation is of one still, so each confirmed card is held to its still
+    ##     (`confirmed-fixtures.json`), as each ruled card is held to its drawing.  When
+    ##     still moves, build stops, and name comes out of here until it is confirmed
+    ##     again.
   FLAWED = initTable[string, string]()
     ## Frame state is right, drawing is not: kept, with what to mend.
 
@@ -124,6 +158,9 @@ proc checkReview*() =
   for id in DROPPED:
     doAssert id in LUT_FIXTURE_BY_CARD,
       &"A dropped card carries no fixture; run `tools/build.nim fixtures`: got `{id}`."
+  for id in CONFIRMED:
+    doAssert id in LUT_STILLS_BY_CARD,
+      &"A confirmed card carries no fixture; run `tools/build.nim confirmed`: got `{id}`."
 
 
 func reviewParts*(single, hand: Parts): Parts =
@@ -223,6 +260,12 @@ func pageOf(parts: Parts): string =
       doAssert $hash(drawings.join("")) == LUT_FIXTURE_BY_CARD.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that ruling has to go back."
+    # Confirmation was given on still, so still that moved under one carries confirmation
+    # it was never given.
+    if id in CONFIRMED:
+      doAssert stillsOf(put) == LUT_STILLS_BY_CARD.getOrDefault(id),
+        &"A confirmed card now shows another still: `{id}`.  Its confirmation goes " &
+          "back until the Architect confirms it again."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
     (if is_switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{escaped(id)}</code><b>{escaped(label)}</b>""" &
@@ -734,6 +777,24 @@ func drawingOf(html, id: string): string =
     result.add html[starts..shuts + "</svg>".len - 1]
     at = shuts + 1
 
+
+func asksOf(html, id: string): seq[string] =
+  ## Questions this card stands for, read off built page, as viewer reads them.
+  let names = html.find(&"<code>{id}</code>")
+  doAssert names > 0, &"A confirmed card is not on the page: got `{id}`."
+  const opening = "data-asks=\""
+  let starts = html.rfind(opening, last = names)
+  doAssert starts >= 0, &"A confirmed card names no question: got `{id}`."
+  let stops = html.find('"', starts + opening.len)
+  html[starts + opening.len..<stops].split(' ')
+
+func confirmedIn*(html: string): string =
+  ## Read back which still every confirmed card stands for, as `confirmed-fixtures.json`
+  ## holds it.
+  var held = newJObject()
+  for id in CONFIRMED:
+    held[id] = %stillsOf(asksOf(html, id))
+  held.pretty & "\n"
 
 func fixturesIn*(html: string): string =
   ## Read back what every card on this page is drawn as, as `review-fixtures.json`
