@@ -370,10 +370,13 @@ func stanceApproaching*(
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
+  ##     Ahead is judged against object's own reach from eye: depth no more than
+  ##     `TOLERANCE_ABS` of it stands in eye's plane. Never against fixed millionth,
+  ##     which object picked from hundredth of millionth off stands well under.
   let
     (eye, frame) = camera.sight
     reach_now = distanceBetween(centre.toMultivector, eye.toMultivector)
-  if depthAlong(eye, frame.forward, centre) <= 1.0e-6: return
+  if depthAlong(eye, frame.forward, centre) <= TOLERANCE_ABS * reach_now: return
   var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:
