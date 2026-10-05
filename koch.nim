@@ -32,8 +32,8 @@
 ##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
 ##     and weekly run do same against their own base, so nothing compiles every project
 ##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `check` does locally:
-##     `compilers.nim` serves each changed project's pin from PATH, cache or fetch, so which
-##     compiler PATH holds decides nothing.
+##     `compilers.nim` of knoller serves each changed project's pin from PATH, cache or fetch, so
+##     which compiler PATH holds decides nothing.
 ##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,

@@ -15,7 +15,7 @@
 
 import std/[dynlib, math, os, sequtils, strutils, unittest]
 import ../../src/assets
-from ../../src/compilers import CACHE_DIRECTORY
+from ../../../knoller/src/knoller import CACHE_DIRECTORY
 
 
 type DecodeBrotli = proc (

@@ -41,7 +41,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, os, osproc, sequtils, strutils, tables, tempfiles]
-import ./[compilers, layout, plan, toolchain]
+import ../../knoller/src/knoller
+import ./[layout, plan, toolchain]
 
 
 type

@@ -12,7 +12,7 @@
 ##     chain asks (`Fix.asked`), `provenFix` runs compiler of each pin asked once on all its
 ##     sources (`answered`), holds answers by path in `Context`, and fixes again each entry
 ##     that asked, at most `ASKS_MAX` times. Pin is that of project holding file, driver's for
-##     root file, served as `compilers.resolve` serves it, so `ronri` projects read with commit
+##     root file, served as `resolve` of knoller serves it, so `ronri` projects read with commit
 ##     pin, whose glyphs 2.2.12 lexes as names. Pin nothing serves proves nothing, and run
 ##     prints why.
 ##   Fixer whose rule needs more than text of one file runs first, once, on source as given,
@@ -44,8 +44,8 @@
 import std/[options, os, sequtils, sets, strutils, tables]
 import ../../knoller/src/knoller
 import ./[
-  checker, compilers, conversions, findings, glossary, kinds, layout, names, plan, rewrites, scope,
-  symbols, toolchain,
+  checker, conversions, findings, glossary, kinds, layout, names, plan, rewrites, scope, symbols,
+  toolchain,
 ]
 
 

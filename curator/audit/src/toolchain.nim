@@ -12,9 +12,6 @@
 ##     `layout.nim` demands agreement between `DOMAINS` and README tables.
 ##   `curator/knoller` pins driver version too: audit imports it by path, so koch compiles it.
 ##     Sibling imported by path is no package, so it carries no lock.
-##   Running compiler is one testament will invoke, so version comes from `nim --version`
-##     rather than from `NimVersion` koch was built with; prebuilt `./koch` and newer `nim`
-##     on PATH would otherwise disagree silently.
 ##
 ##   Pin is exact version, or exact commit of compiler itself where project follows
 ##     dependency onto `devel` and no release carries what it needs. Commit records what was
@@ -27,20 +24,20 @@
 ##     separate `.nim-version` file, second place version lives beside nimble file naming
 ##     one already; dated nightly, cheap to install and retained only for window, so old
 ##     pin stops installing and record stops being reproducible.
-##   This module states what pin is and demands agreement; obtaining compiler serving one is
-##     `compilers.nim`, since reading rule and fetching toolchain are separate jobs.
+##   This module holds policy of this repository alone. Reading pin, and obtaining compiler
+##     serving one, are knoller's (`pins.nim`, `compilers.nim`), which audit imports, since
+##     reading rule and fetching toolchain are separate jobs and knoller's command needs both.
 ##   Cost: bumping pin is deliberate act per project, so four projects can sit on four
 ##     compilers; koch obtains each, so no curator installs four by hand.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, osproc, strutils]
-import ./[dependencies, findings]
+import std/[options, strutils]
+import ../../knoller/src/knoller
+import ./findings
 
 
 const
-  NIM* = "nim"  ## Requirement name pin carries.
-  EXACT* = "=="  ## Operator pin must use; ranges are rejected.
   DRIVER_DIRECTORY* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
   KNOLLER_DIRECTORY* = "curator/knoller"
@@ -48,45 +45,6 @@ const
   WORKFLOW_PATH* = ".github/workflows/check.yml"
     ## Driver's own workflow, which must name driver version; others must agree where they do.
   VERSION_KEY* = "NIM_VERSION:"  ## Key workflow states driver version under.
-  HASH_KEY = "git hash:"  ## Line `nim --version` reports its commit under.
-  VERSION_CHARS = Digits + {'.'}  ## Characters version string is built from.
-  COMMIT_CHARS = {'0' .. '9', 'a' .. 'f'}
-    ## Characters commit pin is built from; lowercase hex only.
-  COMMIT_LEN* = 40  ## Length of full git commit, which is what pin carries.
-
-type Compiler* = object  ## Define what `nim --version` says about compiler on PATH.
-  version*: string  ## Dotted release version it names.
-  commit*: string  ## Git hash it reports; empty when it reports none.
-
-
-func isVersion*(s: string): bool =
-  ## Decide whether `s` is dotted version, i.e. digit runs separated by single dots.
-  if s.len == 0 or not s.allCharsInSet(VERSION_CHARS): return false
-  for part in s.split('.'):
-    if part.len == 0: return false
-  true
-
-
-func isCommit*(s: string): bool =
-  ## Decide whether `s` is full lowercase git commit.
-  s.len == COMMIT_LEN and s.allCharsInSet(COMMIT_CHARS)
-
-
-func isPin*(s: string): bool =
-  ## Decide whether `s` names compiler exactly, as commit or as version.
-  ##   Commit is tested first: forty digits would satisfy both, and absurd version loses.
-  s.isCommit or s.isVersion
-
-
-func nimPin*(nimble: string): Option[string] =
-  ## Read exact Nim version pinned by nimble text; `none` when absent or inexact.
-  for requirement in nimble.requireLiterals:
-    if requirement.packageName.toLowerAscii != NIM: continue
-    let rest = requirement[requirement.packageName.len .. ^1].strip
-    if not rest.startsWith(EXACT): return none(string)
-    let pin = rest[EXACT.len .. ^1].strip
-    return if pin.isPin: some(pin) else: none(string)
-  none(string)
 
 
 func checkPin*(path, nimble: string): seq[Finding] =
@@ -151,32 +109,3 @@ func checkKnoller*(path: string; pin, driver: Option[string]): seq[Finding] =
     "Project driver imports by path pins driver version `" & driver.get & "`, since koch " &
       "compiles it; got `" & pin.get & "`.",
   )
-
-
-func isServedBy*(pin: string, compiler: Compiler): bool =
-  ## Decide whether compiler is one pin names, by commit or by version.
-  pin == (if pin.isCommit: compiler.commit else: compiler.version)
-
-
-proc compilerAt*(nim_path: string): Compiler =
-  ## Read version and commit compiler at path reports; empty record when it will not run.
-  ##   Commit comes from `git hash:` line, which release tarballs carry as well as builds
-  ##   made from source, so commit pin is checkable either way.
-  let (output, code) = execCmdEx(nim_path.quoteShell & " --version")
-  if code != 0: return
-  let lines = output.splitLines
-  for word in lines[0].splitWhitespace:
-    if word.isVersion:
-      result.version = word
-      break
-  for line in lines:
-    let s = line.strip
-    if not s.startsWith(HASH_KEY): continue
-    let hash = s[HASH_KEY.len .. ^1].strip
-    if hash.isCommit: result.commit = hash
-    break
-
-
-proc runningCompiler*(): Compiler =
-  ## Read compiler on PATH, i.e. one koch itself was invoked through.
-  compilerAt("nim")

@@ -28,6 +28,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, sequtils, strutils, tables]
+import ../../knoller/src/knoller
 import ./[checker, compilers, dependencies, findings, layout, projects, toolchain, tree]
 
 
