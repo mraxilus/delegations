@@ -90,6 +90,32 @@ suite "Spacing":
       check kept.fixed == kept
 
 
+  test "power operator takes no space, since with spaces it reads like operator on bits":
+    for (breach, mended) in [
+      ("let p = -1 ^ (k)\n", "let p = -1^(k)\n"),
+      ("let p = a + b ^ 2\n", "let p = a + b^2\n"),  # no exception for math in piece
+      ("let p = (a + b) ^ 2\n", "let p = (a + b)^2\n"),
+      ("let m = 2'u ^ DIMENSIONS\n", "let m = 2'u^DIMENSIONS\n"),
+    ]:
+      check checkSpacing("a.nim", breach).len == 1
+      check breach.fixed == mended
+      check mended.isSettled  # second run writes nothing
+    check checkSpacing("a.nim", "let p = b ^ 2\n")[0].message.startsWith(
+      "Power operator takes no space",
+    )
+    for kept in [
+      "let p = a ^ -b\n",  # glued, `^-` would lex one operator
+      "let p = x ^ ~y\n",
+      "x ^= 2\n",  # assignment, no power operator
+      "let l = s[^1]\n",  # prefix `^` of backwards index
+      "let r = s[1 .. ^1]\n",
+      "let p = float(-1^(int(b.grade) * int(b.gradeAnti)))\n",  # `suites.nim` of PGA library
+    ]:
+      check kept.isSettled
+    check "let p = a ^\n  b\n".fixed == "let p = a ^\n  b\n"  # ending line: one space before
+    check "let p = a^\n  b\n".fixed == "let p = a ^\n  b\n"
+
+
   test "symbol operator inside bracket glued to operand takes no space, range and math alike":
     for (breach, mended) in [
       ("let a = prev[i - 1]\n", "let a = prev[i-1]\n"),
