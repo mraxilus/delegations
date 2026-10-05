@@ -773,6 +773,29 @@ when not defined(js):
 
 
 
+#[ Derivation Tally ]#
+
+var
+  IS_COUNTING_DERIVATIONS = false
+    ## Say whether anyone reads how many geometries `deriveGeometryAt` derives.
+    ##   Mutable global because it is instrument, gated on its reader as
+    ##   `boundary.IS_COUNTING_POINTS_READ` is, at same closed cost.
+    ##   Suite opens it through `countDerivations`; no front-end does.
+  COUNT_DERIVATIONS = 0  ## Count geometries derived since `countDerivations` opened gate.
+
+
+template countDerivations*(body: untyped): int =
+  ## Run `body`, and report how many geometries about world origin it derived.
+  ##   Pins what restore slides where clock cannot: count reads same on every machine.
+  ##   Never nest two: inner would zero outer's count.
+  COUNT_DERIVATIONS = 0
+  IS_COUNTING_DERIVATIONS = true
+  body
+  IS_COUNTING_DERIVATIONS = false
+  COUNT_DERIVATIONS
+
+
+
 #[ Scene Editing ]#
 
 func initScene*(): Scene =
@@ -824,18 +847,70 @@ func markEdited*(scene: var Scene) =
   inc scene.stored.count_edits
 
 
-func restoreFrom*(scene: var Scene, snapshot: Scene) =
-  ## Replace scene's whole content with snapshot, at revision no earlier state carried.
+func writeStorage*(scene: Scene, destination: var SceneStored) = destination = scene.stored
+  ## Write everything scene stores, without geometry it derives, into step of timeline.
+  ##   Writer rather than `lent` reader: JS backend builds empty `SceneStored` for any such
+  ##   result before it hands back field, thousands of arrays for each call (read in emitted
+  ##   JS).
+  ##     Writer makes one copy and builds nothing.
+
+
+func deriveGeometryAt(scene: var Scene, handle: int) =
+  ## Derive object's geometry about world origin from its anchor and local coefficients.
+  ##   One statement of cache's rule, for every writer of either.
+  ##   Tallied while suite counts; see `countDerivations`.
+  scene.geometries[handle] =
+    slid(scene.stored.locals[handle], scene.stored.anchors[handle] - ORIGIN_WORLD)
+  # Cast covers tally alone: instrument's own state, which no caller reads as result.
+  {.cast(noSideEffect).}:
+    if IS_COUNTING_DERIVATIONS: inc COUNT_DERIVATIONS
+
+
+func restoreFrom*(scene: var Scene, snapshot: SceneStored) =
+  ## Replace scene's whole content with what snapshot stores, at revision no earlier state had.
   ##   Every whole-scene replacement, i.e. undo, redo, clear, load, comes through here.
   ##     Revision only ever rises and no two states front-end has drawn share one.
   ##   Every live handle is stamped as re-placed, since any of them may differ from what
-  ##   cache holds.
-  let revision_live = scene.stored.count_edits
-  scene = snapshot
-  scene.stored.count_edits = max(revision_live, snapshot.stored.count_edits) + 1
+  ##   front-end's placements hold.
+  ##   Geometry about world origin is derived again only for handle whose anchor or local
+  ##   coefficients differ from scene replaced; every other keeps cache entry it holds.
+  ##     That entry is what same storage derives, since every writer of storage derives:
+  ##     restore across step that changed one object slides one object.
+  ##     Walks to higher of two bounds: handle above snapshot's stores nothing there, and
+  ##     its cache follows storage back to nothing.
+  ##     Compared by value, so zero of either sign reads as same coefficient.
+  ##   Cost: one comparison of anchor and coefficients per handle to that bound, beside
+  ##   copy of storage step holds.
+  let
+    revision_live = scene.stored.count_edits
+    reach = max(scene.stored.handle_live_last, snapshot.handle_live_last)
+
+  # Derive geometry where storage moves; keep it where storage stands.
+  for handle in 0..<reach:
+    var is_same =
+        scene.stored.anchors[handle].x == snapshot.anchors[handle].x and
+        scene.stored.anchors[handle].y == snapshot.anchors[handle].y and
+        scene.stored.anchors[handle].z == snapshot.anchors[handle].z
+    for b in Basis:
+      if not is_same: break
+      is_same = scene.stored.locals[handle][b] == snapshot.locals[handle][b]
+    if is_same: continue
+    scene.stored.anchors[handle] = snapshot.anchors[handle]
+    scene.stored.locals[handle] = snapshot.locals[handle]
+    scene.deriveGeometryAt(handle)
+
+  # Adopt rest of storage at revision past both.
+  scene.stored = snapshot
+  scene.stored.count_edits = max(revision_live, snapshot.count_edits) + 1
   for handle in 0..<scene.bound:
     if scene.stored.are_alive[handle]:
       scene.stored.revisions_placing[handle] = scene.stored.count_edits
+
+
+func restoreFrom*(scene: var Scene, snapshot: Scene) =
+  ## Replace scene's whole content with whole snapshot; see sibling taking `SceneStored`.
+  ##   For caller holding whole scene, e.g. `initScene()` on clear: its storage is read alone.
+  scene.restoreFrom(snapshot.stored)
 
 
 func revisionPlacingAt*(scene: Scene, handle: int): int =
@@ -951,13 +1026,6 @@ func geometryAbout*(scene: Scene, handle: int, centre: Position): Multivector =
   slid(scene.stored.locals[handle], scene.stored.anchors[handle] - centre)
 
 
-func deriveGeometryAt(scene: var Scene, handle: int) =
-  ## Derive object's geometry about world origin from its anchor and local coefficients.
-  ##   One statement of cache's rule, for every writer of either.
-  scene.geometries[handle] =
-    slid(scene.stored.locals[handle], scene.stored.anchors[handle] - ORIGIN_WORLD)
-
-
 func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
   ## Write object's geometry about world origin, by handle: only way its geometry changes.
   ##   Setter rather than `var Multivector`, for reason `geometryOf` gives and second.
@@ -1028,6 +1096,20 @@ func orderOf*(scene: Scene, handle: int): uint32 =
   ##   objects, and edit after undo truncates future that held any ordinal it reuses.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   scene.stored.orders[handle]
+
+
+func isAlive*(stored: SceneStored, handle: int): bool =
+  ## Report whether handle holds live object in what scene stores; sibling of `Scene`'s.
+  ##   Test written out in each rather than forwarded: one on `Scene` runs per handle per
+  ##   frame, where second call costs.
+  handle >= 0 and handle < OBJECTS_MAX and stored.are_alive[handle]
+
+
+func orderOf*(stored: SceneStored, handle: int): uint32 =
+  ## Read where object stands in creation order in what scene stores; sibling of `Scene`'s.
+  ##   For step of undo timeline, which holds storage alone; see `selection.keepNaming`.
+  doAssert stored.isAlive(handle), &"Object handle must be alive; got `{handle}`."
+  stored.orders[handle]
 
 
 func siftDown(scene: Scene; handles: var array[OBJECTS_MAX, int]; root, count: int) =

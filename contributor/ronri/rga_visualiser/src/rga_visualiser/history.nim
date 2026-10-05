@@ -1,13 +1,16 @@
 ## Undo and redo over scene-content edits, as one timeline ring plus cursor.
 ##
-## `Scene` and `Camera` are plain fixed-size value types, so recording step is value copy,
-## not diff or inverse-operation log.
+## `SceneStored` and `Camera` are plain fixed-size value types, so recording step is value
+## copy, not diff or inverse-operation log.
+##   Step holds what scene stores, never geometry scene derives from it: restore derives
+##   again for each object step changed, and copies nothing else of cache.
+##     Cost: one comparison per handle on each step, beside copy of storage.
 ##   One ring holding whole timeline plus one cursor does both jobs.
 ##     Entry at cursor always equals live state.
 ##     Undo and redo move cursor and copy entry back out.
 ##     Fresh edit truncates redo-able future before appending.
 ##   `handleOf` is only place timeline position becomes array index.
-##   Cost: `CAPACITY_HISTORY` whole scenes of fixed reservation; see that constant.
+##   Cost: `CAPACITY_HISTORY` stores of whole scene as fixed reservation; see that constant.
 ## Camera's stance rides along, never moves timeline by itself.
 ##   Each step records where camera stood when its edit was made, so undoing construction
 ##   puts view back where it was made from.
@@ -42,8 +45,8 @@ import ./[camera, scene, selection]
 
 const CAPACITY_HISTORY* {.define: "visualiser.history_capacity".} = 32
   ## Fix how many steps of timeline are retained.
-  ##   Costs `CAPACITY_HISTORY * sizeof(Step)` of fixed reservation, and `Step` is whole
-  ##   `Scene`, so this scales with `scene.OBJECTS_MAX`: not cheap.
+  ##   Costs `CAPACITY_HISTORY * sizeof(Step)` of fixed reservation, and `Step` holds what
+  ##   whole scene stores, so this scales with `scene.OBJECTS_MAX`: not cheap.
   ##     Largest reservation binary makes, counted by `main.BYTES_MEMORY_TOTAL`;
   ##     figures in `PROVENANCE.md`.
   ##   Kept at 32: depth costs nothing per edit (see `record`), so what remains is flat
@@ -62,7 +65,7 @@ static:
 
 type
   Step* = object  ## Define one committed edit: scene it produced, and where camera stood.
-    scene*: Scene
+    scene*: SceneStored  ## What scene stores, without geometry it derives; see `restoreFrom`.
     stance*: CameraStance  ## Where view stood as *this* step's edit was made.
       ## Stance to restore in either direction across this step, not on arriving at its
       ## scene. First entry's is never restored: no edit leads into it.
@@ -99,7 +102,7 @@ func initHistory*(history: var History, scene: Scene, camera: Camera) =
   ##     Returning `History` deep-copies every retained scene on JS backend, and `Step`
   ##     literal copies scene twice; caller owning storage is Art. IV.6.
   ##   `camera` completes entry rather than being read back; see `Step.stance`.
-  history.entries[0].scene = scene
+  scene.writeStorage(history.entries[0].scene)
   history.entries[0].stance = camera.stanceOf
   history.first = 0
   history.count = 1
@@ -118,7 +121,7 @@ func record*(history: var History, scene: Scene, camera: Camera) =
     history.cursor = CAPACITY_HISTORY - 1
   # Copy scene once, field by field; see `initHistory`.
   let handle = history.handleOf(history.cursor)
-  history.entries[handle].scene = scene
+  scene.writeStorage(history.entries[handle].scene)
   history.entries[handle].stance = camera.stanceOf
   history.count = history.cursor + 1
 

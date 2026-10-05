@@ -185,9 +185,10 @@ func pruneDead*(selection: var Selection, scene: Scene) =
   inc selection.count_changes
 
 
-func keepNaming*(selection: var Selection; before, after: Scene) =
+func keepNaming*(selection: var Selection, before: SceneStored, after: Scene) =
   ## Drop every pick `after` holds as other object than `before` did, or not at all.
-  ##   For step across undo timeline, from scene `before` to restored `after`.
+  ##   For step across undo timeline, from scene `before`, as step stores it, to restored
+  ##   `after`.
   ##   Handle alone does not say: freed handle is refilled by next add, so step across
   ##   remove and add hands one handle two objects. Creation ordinal does, since no two
   ##   objects along one timeline share one.

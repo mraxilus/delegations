@@ -284,3 +284,59 @@ suite "History":
     check history.redo(scene, camera)
     check scene.anchoredAt(handle).anchor =~ ORIGIN_WORLD
     for b in Basis: check scene.anchoredAt(handle).local[b] == POINTS[1][b]
+
+
+  test "an undo and a redo derive geometry for each object the step changed, and no other":
+    # Step holds what scene stores, never cache, so restore derives geometry about world
+    #   origin only where anchor or coefficients differ, and keeps every other entry.
+    #   Count, never time: edit of one far object and add of one object each derive one,
+    #   either way; removal changes no storage, and derives none.
+    #   Every object then reads about world origin bit for bit as it read in that state.
+    var
+      scene = initScene()
+      camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+      history: History
+    let far = Position(x: 698390.5003793767, y: -953804.3278982069, z: -2043454.9154813075)
+    for i in 0..<4: scene.addObject(Anchored(anchor: far, local: POINTS[i]), "far", Ink.Rose)
+    scene.addObject(LINES[0], "near", Ink.Cobalt)
+    history.initHistory(scene, camera)
+
+    proc geometriesOf(scene: Scene): seq[(bool, Multivector)] =
+      ## Read each handle to bound: whether it lives, and its geometry where it does.
+      for handle in 0..<scene.bound:
+        result.add(
+          if scene.isAlive(handle): (true, scene.geometryOf(handle))
+          else: (false, Multivector())
+        )
+
+    proc checkReads(scene: Scene, wanted: seq[(bool, Multivector)]) =
+      ## Check scene reads each handle as `wanted` holds it, coefficient for coefficient.
+      check scene.bound >= wanted.len
+      for handle in 0..<scene.bound:
+        let (is_alive, geometry) =
+          if handle < wanted.len: wanted[handle] else: (false, Multivector())
+        check scene.isAlive(handle) == is_alive
+        if not is_alive: continue
+        for b in Basis: check scene.geometryOf(handle)[b] == geometry[b]
+
+    var states = @[geometriesOf(scene)]
+    scene.setGeometryAt(2, POINTS[9])
+    history.record(scene, camera)
+    states.add geometriesOf(scene)
+    scene.addObject(Anchored(anchor: far, local: POINTS[5]), "added", Ink.Jade)
+    history.record(scene, camera)
+    states.add geometriesOf(scene)
+    scene.removeObject(1)
+    history.record(scene, camera)
+    states.add geometriesOf(scene)
+    const derived_by_step = [1, 1, 0]  # Edit, add, removal.
+    for step in countdown(derived_by_step.high, 0):
+      let derived = countDerivations:
+        check history.undo(scene, camera)
+      check derived == derived_by_step[step]
+      checkReads(scene, states[step])
+    for step in 0..derived_by_step.high:
+      let derived = countDerivations:
+        check history.redo(scene, camera)
+      check derived == derived_by_step[step]
+      checkReads(scene, states[step+1])
