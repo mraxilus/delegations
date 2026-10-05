@@ -28,6 +28,21 @@ func typeScriptOf(nim_type: string): string =
   else: nim_type.strip
 
 
+func typeOfLiteral(literal: string): string =
+  ## Read Nim type that literal default fixes (Article X.12); empty where it fixes none.
+  ##   Named constant fixes none, so its parameter states type and never reaches here.
+  ##   `none(T)` reads empty too: no `Option` crosses bridge.
+  let bare = literal.strip
+  if bare in ["false", "true"]: return "bool"
+  if bare.startsWith('"'): return "string"
+  if bare.startsWith("default(") and bare.endsWith(")"): return bare["default(".len .. ^2]
+  let unsigned = bare.strip(trailing = false, chars = {'+', '-'})
+  if unsigned.len == 0 or unsigned[0] notin Digits: return ""
+  if unsigned.allCharsInSet(Digits + {'_'}): return "int"
+  if unsigned.allCharsInSet(Digits + {'+', '-', '.', 'E', '_', 'e'}): return "float"
+  ""
+
+
 func signatureAt*(lines: openArray[string], index: int): string =
   ## Join declaration ending at `index`, i.e. walk back to its `proc` or `func` keyword.
   ##   Signatures wrap across lines, so line carrying pragma is rarely whole declaration.
@@ -56,23 +71,32 @@ func declarationOf*(signature: string): string =
   var rendered, waiting: seq[string]
   for group in signature[opened+1..<closed].split(';'):
     for fragment in group.split(','):
-      let stated_at = fragment.find(':')
-      if stated_at < 0:
+      let
+        stated_at = fragment.find(':')
+        defaulted_at = fragment.find('=')
+        is_untyped = defaulted_at >= 0 and (stated_at < 0 or defaulted_at < stated_at)
+      if stated_at < 0 and not is_untyped:
         if fragment.strip.len > 0: waiting.add fragment.strip
         continue
-      waiting.add fragment[0..<stated_at].strip
       # Default value belongs to declaration, never to type, and never reaches page.
       #   Nim applies it to Nim caller alone: JS call omitting argument passes `undefined`,
       #   which proc then compares and computes with. So every parameter is required on
       #   page, and omission fails type check rather than at run time; see
       #   `bridge.MARKER_SHAPED`.
-      let
-        stated = fragment[stated_at+1 .. ^1]
-        defaulted = stated.find('=')
-        rendered_type = (if defaulted >= 0: stated[0..<defaulted] else: stated).typeScriptOf
+      #   Literal default states no type, since it fixes one (Article X.12), so type is read
+      #   from literal.
+      let nim_type =
+        if is_untyped: fragment[defaulted_at+1 .. ^1].typeOfLiteral
+        elif defaulted_at > stated_at: fragment[stated_at+1..<defaulted_at]
+        else: fragment[stated_at+1 .. ^1]
+      if nim_type.strip.len == 0: return ""
+      waiting.add fragment[0..<(if is_untyped: defaulted_at else: stated_at)].strip
       for name in waiting:
-        rendered.add name & ": " & rendered_type
+        rendered.add name & ": " & nim_type.typeScriptOf
       waiting.setLen 0
+  # Name left without type: declaration short of it lets page omit that argument, and
+  #   `undefined` then passes type check. Absent declaration fails at each call instead.
+  if waiting.len > 0: return ""
 
   let
     tail = signature[closed+1 .. ^1].strip
