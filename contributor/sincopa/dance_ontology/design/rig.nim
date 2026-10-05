@@ -77,7 +77,7 @@ func figure(value: float): string =
   ## Shortest text that still says figure to `PLACE`, with no trailing nought.
   ##   Nought is written `0` rather than `0.0000`: file holds tens of thousands
   ##     of them and page reads both same way.
-  if value == 0.0 or abs(value) < 0.5 / (10.0 ^ PLACE):
+  if value == 0.0 or abs(value) < 0.5 / (10.0^PLACE):
     return "0"
   result = formatFloat(value, ffDecimal, PLACE)
   result = result.strip(leading = false, chars = {'0'})
@@ -230,7 +230,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
     if keeper != ask.key:
       result.note = &"{ask.key}: mirror of {keeper}"
       result.text = &"{{\"key\":\"{ask.key}\",\n\"hold\":\"{ask.key}\",\n" &
-        &"\"band\":\"{BANDS[ord(Band.Crown)]}\",\n\"mirror\":\"{keeper}\"}}"
+          &"\"band\":\"{BANDS[ord(Band.Crown)]}\",\n\"mirror\":\"{keeper}\"}}"
       return
     let recording = still(
       HUMAN,
@@ -247,7 +247,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
     result.note =
       if recording.stills.len > 0:
         &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}, " &
-          &"strain {recording.strain:.2f} of {recording.tried.len} tried"
+            &"strain {recording.strain:.2f} of {recording.tried.len} tried"
       else: &"{ask.key}: {twin.turns:+.2f} turns, no pose holds"
     if twin.is_reflected: result.note &= ", kept to mirror"
     result.text = bodyOfSweep(recording, ask.key, (if twin.is_reflected: ask.key else: ""))
@@ -258,7 +258,7 @@ proc recorded*(job: Job): tuple[note, text: string] =
       links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
     let recording = shown(HUMAN, cut.band, links, cut.name, is_away = cut.is_away)
     result.note = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
-               &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
+        &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
     result.text = bodyOfSweep(recording)
 
 

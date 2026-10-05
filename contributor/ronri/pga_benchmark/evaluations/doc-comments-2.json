@@ -3,14 +3,15 @@
   "kind": "evaluation",
   "name": "doc-comments-2",
   "path": "changes/doc-comments-2.md",
-  "edits_digest": "87e4bb9522b8ddab",
+  "edits_digest": "b845b16a972a1ba7",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf",
+    "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "measured_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "pin_suites": {
     "rga4d": {
@@ -1320,7 +1321,11 @@
           0.9905
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "93479de26e6466d0"
+      }
     },
     "cga5d": {
       "suites": {
@@ -2833,7 +2838,11 @@
           0.9371
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "775837b2df01d657"
+      }
     },
     "rga3d": {
       "suites": {
@@ -4005,7 +4014,11 @@
           0.9718
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "c8cdb443d7f60fee"
+      }
     },
     "cga4d": {
       "suites": {
@@ -5428,7 +5441,11 @@
           1.1171
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "e38fb59c2feb92e2"
+      }
     }
   },
   "claims": []

@@ -3,14 +3,15 @@
   "kind": "evaluation",
   "name": "signed-sqrt",
   "path": "changes/signed-sqrt.md",
-  "edits_digest": "3598620bff9b9675",
+  "edits_digest": "f6e0b8744cb010ed",
   "taken": {
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf",
+    "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "measured_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "pin_suites": {
     "rga4d": {
@@ -1498,7 +1499,11 @@
           1.0647
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "f9435a07714e404f"
+      }
     },
     "cga5d": {
       "suites": {
@@ -3286,6 +3291,10 @@
           0.5029296875,
           0.0
         ]
+      },
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "3cd3d0645fcf0dae"
       }
     },
     "rga3d": {
@@ -4636,7 +4645,11 @@
           0.9954
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "9ed78774ce1585eb"
+      }
     },
     "cga4d": {
       "suites": {
@@ -6334,6 +6347,10 @@
           0.525390625,
           0.0
         ]
+      },
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "3a9f63c6f9ea86a6"
       }
     }
   },

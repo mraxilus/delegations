@@ -83,7 +83,7 @@ func quartersTo*(stance: array[Body, Stance], who: Body): Option[int] =
   ##   None between quarters: body there sees other at no one side.
   let
     here = stance[who]
-    there = stance[if who == Body.One: Body.Two else: Body.One]
+    there = stance[if who==Body.One: Body.Two else: Body.One]
     bearing = arctan2(there.centre.y - here.centre.y, there.centre.x - here.centre.x)
     quarters = floorMod(here.facing - bearing, 2.0 * PI) / (PI / 2.0)
   if abs(quarters - round(quarters)) < 1e-6: some(int(round(quarters)) mod 4)

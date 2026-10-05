@@ -119,12 +119,12 @@ type
 func closeStyle*(): string =
   ## Write this drawing's own times onto it, beside ones every drawing has.
   passStyle(CLOSE_TEMPO) & "; --fold-spread: " & $FOLD_SPREAD &
-    "ms; --fold-lag: " & $FOLD_LAG & "ms; --fold-leaf: " & $FOLD_LEAF &
-    "ms; --fold-branch: " & $FOLD_BRANCH & "ms; --shrink-at: " & $SHRINK_AT &
-    "ms; --shrink: " & $SHRINK_TIME & "ms; --centre-at: " & $CENTRE_AT &
-    "ms; --centre: " & $CENTRE_TIME & "ms; --grow-delay: " & $GROW_DELAY &
-    "ms; --grow-spread: " & $GROW_SPREAD & "ms; --leaf-delay: " & $LEAF_DELAY &
-    "ms; --grow: " & $GROW_TIME & "ms" &
+      "ms; --fold-lag: " & $FOLD_LAG & "ms; --fold-leaf: " & $FOLD_LEAF &
+      "ms; --fold-branch: " & $FOLD_BRANCH & "ms; --shrink-at: " & $SHRINK_AT &
+      "ms; --shrink: " & $SHRINK_TIME & "ms; --centre-at: " & $CENTRE_AT &
+      "ms; --centre: " & $CENTRE_TIME & "ms; --grow-delay: " & $GROW_DELAY &
+      "ms; --grow-spread: " & $GROW_SPREAD & "ms; --leaf-delay: " & $LEAF_DELAY &
+      "ms; --grow: " & $GROW_TIME & "ms" &
     # Drawing is laid out in numbers rather than lengths so that
     # style sheet can divide room it has by them; these are what it
     # multiplies them back up by, and how far down it may go.
@@ -356,18 +356,18 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   # `--mx`, `--my`, `--ox` and `--oy` stay lengths: they are read inside
   # picture, in its own units, and scale with it already.
   result = "<div class=\"viewport " & phase(motion) & "\" style=\"" &
-    closeStyle() & "; --bw: " & $bounds_width & "; --bh: " & $bounds_height &
-    "; --w: " & $window[2] & "; --h: " & $window[3] &
-    "; --px: " & $pan_x & "; --py: " & $pan_y &
-    "; --to-w: " & $reached[2] & "; --to-h: " & $reached[3] &
-    "; --to-px: " & $landing_pan_x & "; --to-py: " & $landing_pan_y &
-    "; --mx: " & $shift_x & "px; --my: " & $shift_y &
-    "px; --ox: " & $CENTRE_X & "px; --oy: " & $CENTRE_Y & "px\">"
+      closeStyle() & "; --bw: " & $bounds_width & "; --bh: " & $bounds_height &
+      "; --w: " & $window[2] & "; --h: " & $window[3] &
+      "; --px: " & $pan_x & "; --py: " & $pan_y &
+      "; --to-w: " & $reached[2] & "; --to-h: " & $reached[3] &
+      "; --to-px: " & $landing_pan_x & "; --to-py: " & $landing_pan_y &
+      "; --mx: " & $shift_x & "px; --my: " & $shift_y &
+      "px; --ox: " & $CENTRE_X & "px; --oy: " & $CENTRE_Y & "px\">"
   result.add "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" & $bounds_x & " " &
-    $bounds_y & " " & $bounds_width & " " & $bounds_height & "\" width=\"" & $bounds_width &
-    "\" height=\"" & $bounds_height &
-    "\" class=\"spokes\" role=\"img\">" &
-    "<title>" & here.describe & ", and every move away from it</title>"
+      $bounds_y & " " & $bounds_width & " " & $bounds_height & "\" width=\"" & $bounds_width &
+      "\" height=\"" & $bounds_height &
+      "\" class=\"spokes\" role=\"img\">" &
+      "<title>" & here.describe & ", and every move away from it</title>"
 
   # Each way out in turn: its branch from middle, then frame and
   # name it carries.
@@ -383,8 +383,8 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
         if ways.len < 2: "0"
         else: formatFloat(spoke.turn / (ways.len - 1), ffDecimal, 3)
     result.add "<g class=\"" & spokeClass(spoke, motion, taken) &
-      "\" style=\"--turn: " & share & "; --lx: " & $x & "px; --ly: " & $y &
-      "px\">"
+        "\" style=\"--turn: " & share & "; --lx: " & $x & "px; --ly: " & $y &
+        "px\">"
     # Branch grows out of middle and leaf out of its own place, so each
     # carries point it moves about rather than borrowing drawing's.
     result.add "<g class=\"branch\">"
@@ -393,15 +393,15 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
       # coming back, and from halfway out in arm that acts going.
       let (halfway_x, halfway_y) = ((CENTRE_X + x) div 2, (CENTRE_Y + y) div 2)
       result.add "<line class=\"spoke-line\" x1=\"" & $CENTRE_X & "\" y1=\"" &
-        $CENTRE_Y & "\" x2=\"" & $halfway_x & "\" y2=\"" & $halfway_y & "\" style=\"stroke: " &
-        armColour(spoke.back.get) & "\"/>"
+          $CENTRE_Y & "\" x2=\"" & $halfway_x & "\" y2=\"" & $halfway_y & "\" style=\"stroke: " &
+          armColour(spoke.back.get) & "\"/>"
       result.add "<line class=\"spoke-line\" x1=\"" & $halfway_x & "\" y1=\"" & $halfway_y &
-        "\" x2=\"" & $x & "\" y2=\"" & $y & "\" style=\"stroke: " & colour &
-        "\"/>"
+          "\" x2=\"" & $x & "\" y2=\"" & $y & "\" style=\"stroke: " & colour &
+          "\"/>"
     else:
       result.add "<line class=\"spoke-line\" x1=\"" & $CENTRE_X & "\" y1=\"" &
-        $CENTRE_Y & "\" x2=\"" & $x & "\" y2=\"" & $y & "\" style=\"stroke: " &
-        colour & "\"/>"
+          $CENTRE_Y & "\" x2=\"" & $x & "\" y2=\"" & $y & "\" style=\"stroke: " &
+          colour & "\"/>"
     result.add "</g>"
     result.add "<g class=\"leaf\">"
     result.add "<g class=\"bud\">" & nodeAt(spoke.to, x, y, NODE_WIDTH,
@@ -413,6 +413,6 @@ func renderSpokes*(here: Frame, motion = Motion.Still, taken = none(Frame)): str
   # Frame held, and then mark on it: mark is drawn last so that it
   # reads over whatever it is marking, and can leave without taking it along.
   result.add "<g class=\"core\">" &
-    nodeAt(here, CENTRE_X, CENTRE_Y, NODE_WIDTH, "held") & "</g>"
+      nodeAt(here, CENTRE_X, CENTRE_Y, NODE_WIDTH, "held") & "</g>"
   result.add markAt(CENTRE_X, CENTRE_Y, NODE_WIDTH)
   result.add "</svg></div>"

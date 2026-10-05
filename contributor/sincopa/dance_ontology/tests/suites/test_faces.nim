@@ -5,9 +5,9 @@
 ##   Two tables name same faces from opposite ends -- one pins bytes, other names
 ##     family each answers to -- and pair that drifts is fault neither file shows
 ##     on its own, so it is checked here.
-##   Style sheets are read as text, rule by rule, and never rendered.  Cost: which face draws
-##     each codepoint is beyond them, so coverage is verified by hand and recorded with its
-##     tool and date (`PROVENANCE.md`, Faces).
+##   Style sheets are read as text, rule by rule, and never rendered.  Which face draws each
+##     codepoint is beyond them, so `drive` holds coverage, by rendering every page
+##     (`design/render.nim`).
 
 {.experimental: "strictFuncs".}
 
@@ -18,7 +18,7 @@ import ../../design/[faces, page, parts]
 
 const
   DOCUMENT = "<!doctype html>\n<html>\n<head>\n<title>T</title>\n" &
-    "<style>p{}</style>\n</head>\n<body>x</body>\n</html>"
+      "<style>p{}</style>\n</head>\n<body>x</body>\n</html>"
     ## Whole page, of shape `pages/app/index.html` carries.
   FRAGMENT = "<title>T</title>\n<style>p{}</style>\n<main>x</main>"
     ## Headless page, of shape review page and mark pages carry.
@@ -48,14 +48,14 @@ func stylesOf(markup: string): string =
       head = markup.find('>', opens)
       shuts = markup.find("</style>", head)
     if head < 0 or shuts < 0: break
-    result.add markup[head + 1..<shuts] & "\n"
+    result.add markup[head+1..<shuts] & "\n"
     at = shuts
   while true:
     let opens = result.find("/*")
     if opens < 0: return
     let shuts = result.find("*/", opens + 2)
     if shuts < 0: return result[0..<opens]
-    result = result[0..<opens] & result[shuts + 2 .. ^1]
+    result = result[0..<opens] & result[shuts+2 .. ^1]
 
 
 func declarationsOf(style_sheet, selector: string): seq[string] =
@@ -76,7 +76,7 @@ func declarationsOf(style_sheet, selector: string): seq[string] =
       else:
         for written in style_sheet[start..<at].split(','):
           if written.strip == selector:
-            result.add style_sheet[at + 1..<shuts].split(';')
+            result.add style_sheet[at+1..<shuts].split(';')
         start = shuts + 1
         at = shuts
     inc at
@@ -100,11 +100,11 @@ func stackOf(style_sheet, selector: string): seq[string] =
   let resolves = value.find("var(--")
   if resolves >= 0:
     let
-      property = value[resolves + 4..<value.find(')', resolves)]
+      property = value[resolves+4..<value.find(')', resolves)]
       defined = style_sheet.find(property & ":")
     value =
       if defined < 0: ""
-      else: style_sheet[defined + property.len + 1..<style_sheet.find(';', defined)]
+      else: style_sheet[defined+property.len+1..<style_sheet.find(';', defined)]
   elif value.find('"') > 0:
     value = value[value.find('"') .. ^1]
   familiesOf(value)

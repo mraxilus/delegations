@@ -155,7 +155,7 @@ proc readSweep*(ask: SweepAsk): SweepRead =
 
 type RungTry = tuple[band: Band, turn, apart: float]  ## Rung stood from one distance.
 
-proc rungAt(ask: RungTry): RungRead {.nimcall, gcsafe.} =
+proc rungAt(ask: RungTry): RungRead {.gcsafe, nimcall.} =
   ## Rung as stood from one distance: what report reads of it, where pose holds there.
   {.cast(gcsafe).}:
     let

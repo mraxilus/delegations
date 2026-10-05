@@ -46,10 +46,10 @@ func traded(rows: JsonNode, pairs: openArray[(int, int)]): JsonNode =
       for (a, b) in pairs:
         if source == a: source = b
         elif source == b: source = a
-      moment.add row[6 * source + k mod 6]
+      moment.add row[6*source+k mod 6]
     result.add moment
 
-func mirrored*(kept: JsonNode, key: string, marks, dofs: seq[string]): JsonNode =
+func mirrored*(kept: JsonNode; key: string; marks, dofs: seq[string]): JsonNode =
   ## Still `kept` seen in mirror across couple's line, under card `key`, each arm recoloured.
   ##   `marks` and `dofs` are recording's own names, so mirror reads which capsule is arm's
   ##     and which reading is twist from recording itself.
@@ -108,7 +108,7 @@ func mirrored*(kept: JsonNode, key: string, marks, dofs: seq[string]): JsonNode 
     var moment = newJArray()
     for i in 0..<arms.len:
       for dof in 0..<dofs.len:
-        let figure = row[image[i] * dofs.len + dof]
+        let figure = row[image[i]*dofs.len+dof]
         moment.add (if dof == twist: negated(figure) else: figure)
     angles.add moment
   result["angles"] = angles

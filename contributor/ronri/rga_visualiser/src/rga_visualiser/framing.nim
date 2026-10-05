@@ -53,6 +53,7 @@ const
     ##   Chosen by eye: sixth of frame was too close, object filling view with nothing
     ##   about it, and twentieth still too close; hundredth is disc rather than dot, with
     ##   its neighbourhood in frame.
+    ##   Also floor every other pick of dot eases out to; see `stanceFitted`.
   FRACTION_HEIGHT_APPROACH_PLANE* = 0.40
     ## Fix how much of frame's height picked plane's disc spans once pick has come in.
     ##   Disc's major axis, whatever its tilt. Chosen by eye beside point's: plane that
@@ -465,6 +466,39 @@ func stanceLifted*(stance: CameraStance, camera: Camera, normal: Direction): Cam
   )
 
 
+func stanceFitted*(
+  stance: CameraStance, camera: Camera, scene: Scene, picked: Selection, scale: DrawExtent
+): CameraStance =
+  ## Carry `stance` back out to fit of point picked alone where it lands nearer: ruling of #535.
+  ##   Selection never starts nearer than its fit. Far star picked from list then draws as
+  ##   disc spanning `FRACTION_HEIGHT_APPROACH_POINT` of frame, and not as sphere at whatever
+  ##   separation wheel over empty sky left.
+  ##   Fit is depth pointer pick of dot comes in to (`stanceApproaching`): own reach where
+  ##   that is nearer, as neither moves eye further off than object already stands.
+  ##   Only point read as floor dot has fit. Point seen at its size is reader's working
+  ##   scale, kept as pointer pick keeps it.
+  ##     Read by reach from eye, not depth along sight as pointer pick reads it: pick from
+  ##     list may stand behind eye or off screen, where depth names nothing.
+  ##   Floor, not fit: stance standing further out keeps reader's own scale, as frame rule does.
+  ##   Pivot stands on point after `stanceFor`, so separation is reach to it, and dolly
+  ##   holding pivot carries eye back along sight.
+  if picked.len != 1: return stance
+  let handle = picked.at(0)
+  if not scene.isAlive(handle): return stance
+  let m = scene.geometryOf(handle)
+  if kindOf(m) != some(Kind.Point) or isHorizon(m): return stance
+  let centre = anchorFor(m, scale)
+  if centre.isNone: return stance
+  let
+    radius = scene.radiusAt(handle)
+    reach = distanceBetween(centre.get.toMultivector, camera.eye.toMultivector)
+  if radius >= 0.5 * float(DIAMETER_POINT_LEAST) * reach * radiansPerPixel(scale.scale):
+    return stance
+  let fit = min(reach, depthSpanning(2.0 * radius, FRACTION_HEIGHT_APPROACH_POINT, camera))
+  if stance.distance >= fit: return stance
+  camera.stanceDollied(stance, fit)
+
+
 
 #[ Standing Offer ]#
 
@@ -517,6 +551,7 @@ func offerAim*(
   ##     Where selection is exactly that object and nothing is staged, destination centres
   ##     it and comes in to it (`stanceApproaching`); group and horizon shape frame as
   ##     ever, since group has to fit, which one object's reach cannot promise.
+  ##   Every other pick of dot alone lands no nearer than its fit (`stanceFitted`).
   # Take caller's extent, not second derivation.
   #   Building another here ran `algebraFilled` and `camera.frame`'s joins twice per frame.
   let
@@ -562,8 +597,13 @@ func offerAim*(
       destination = stanceApproaching(
         shaped.get, scene.radiusAt(pick.get.handle), centre.get, camera, scale
       )
+  # Frame what pointer pick did not place, and hold dot picked alone off its fit as it lands.
+  #   Ruling of #535. Pointer pick's own approach already ends there. Goal already held is
+  #   reader's own framing since, kept as lift below keeps it.
   if destination.isNone:
     destination = some(stanceFor(aim.get, camera, width, height))
+    if is_new_goal and staged.isNone:
+      destination = some(destination.get.stanceFitted(camera, scene, picked, scale))
   # Lift view off plane picked alone from level view, once, as pick lands (#454).
   #   Plane is only finite pick that turns: sliver centred shows nothing of it. Goal already
   #   held is reader's own framing since, kept as every other pick keeps it.

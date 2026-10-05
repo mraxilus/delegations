@@ -127,7 +127,7 @@ func orbit*(pose: Pose, who: Dancer, degrees: float, is_locked = true): Pose =
   ##   Without it they keep their own bearing and arrive facing way they
   ##     set off, which is orbit and counter-turn danced together --
   ##     compound turn, and different move landing in different place.
-  let pivot = pose.place[if who == Dancer.Lead: Dancer.Follow else: Dancer.Lead]
+  let pivot = pose.place[if who==Dancer.Lead: Dancer.Follow else: Dancer.Lead]
   result = pose
   result.place[who] = turn(pose.place[who], pivot, degrees)
   result.facing[who] = pose.facing[who] + (if is_locked: degrees else: 0.0)

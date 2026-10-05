@@ -32,7 +32,7 @@ suite "Internal: The rig":
       let
         a = halfBreadth(HUMAN, part)
         b = halfDepth(HUMAN, part)
-        h = ((a - b) / (a + b)) ^ 2
+        h = ((a - b) / (a + b))^2
         round = PI * (a + b) * (1.0 + 3.0 * h / (10.0 + sqrt(4.0 - 3.0 * h)))
       check abs(round - HUMAN.round[part]) < 1e-3
     check halfBreadth(HUMAN, Part.Neck) =~ HUMAN.round[Part.Neck] / (2.0 * PI)
@@ -73,7 +73,7 @@ suite "Internal: The rig":
       left_shoulder_two = shoulder(HUMAN, stance[Body.Two], LEFT)
     check left_shoulder_one.x =~ -HUMAN.shoulder_out and left_shoulder_one.y =~ 0.0
     check left_shoulder_two.x =~ HUMAN.shoulder_out and
-      left_shoulder_two.y =~ APART
+        left_shoulder_two.y =~ APART
     check left_shoulder_one.z =~ HUMAN.shoulder_up
 
 
@@ -103,9 +103,9 @@ suite "Internal: One arm, forward and back":
             random.rand(-1.0..1.0),
           ),
         )
-        chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0..2.0 * PI))
+        chain = posed(HUMAN, shoulder_point, grip, hand_direction, random.rand(0.0 .. 2.0 * PI))
       if chain.stretch <= HUMAN.upper + HUMAN.fore and
-         chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
+          chain.stretch >= abs(HUMAN.upper - HUMAN.fore):
         inc reached
         check distance(chain.pose.shoulder, chain.pose.elbow) =~ HUMAN.upper
         check distance(chain.pose.elbow, chain.pose.wrist) =~ HUMAN.fore
@@ -171,9 +171,9 @@ suite "Internal: One arm, forward and back":
         placed(HUMAN, stance, LEFT, upper_direction, -0.5, 1.4, 0.4, 0.3),
       )
     check right_arm_angles.twist =~ left_arm_angles.twist and
-      right_arm_angles.across =~ left_arm_angles.across
+        right_arm_angles.across =~ left_arm_angles.across
     check right_arm_angles.extend =~ left_arm_angles.extend and
-      right_arm_angles.bend =~ left_arm_angles.bend
+        right_arm_angles.bend =~ left_arm_angles.bend
 
 
   test "a range's margin is an ease in, nought at the edge, negative past it":

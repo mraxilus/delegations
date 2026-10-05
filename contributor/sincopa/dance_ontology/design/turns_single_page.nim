@@ -34,8 +34,8 @@ func plates(parts: Parts, manner: Manner): string =
   for connection, single in SINGLES:
     result.add &"""<div class="plate"><h3>{single.name}</h3>"""
     result.add """<p>Every frame state this manner reaches, a quarter turn """ &
-      """apart. The fourth quarter comes back to the first, so the round """ &
-      """closes and nothing is refused.</p>"""
+        """apart. The fourth quarter comes back to the first, so the round """ &
+        """closes and nothing is refused.</p>"""
     result.add """<div class="row mid">"""
     for quarter in 0..<QUARTERS_ROUND:
       if quarter > 0:
@@ -43,13 +43,13 @@ func plates(parts: Parts, manner: Manner): string =
       let caption =
         if quarter == 0: "<b>none</b><br>the app's frame"
         else: &"<b>{QUARTER_NAMES[quarter]}</b> turn<br>" &
-          facingOf(quarterPose(manner, quarter)).get.name
+            facingOf(quarterPose(manner, quarter)).get.name
       result.add figure(parts[&"st_{tag}_{connection}_{quarter}"], caption)
     result.add parts["g_quarter"]
     result.add figure(parts[&"st_{tag}_{connection}_0"], "<b>none</b><br>round again")
     result.add "</div>"
     result.add """<p>And every transition between them. Each one rocks """ &
-      """between its two frame states, so the turn reads both ways:</p>"""
+        """between its two frame states, so the turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
     for quarter in 0..<QUARTERS_ROUND:
       let
@@ -61,7 +61,7 @@ func plates(parts: Parts, manner: Manner): string =
         still = parts[&"tr_{tag}_{connection}_{quarter}_{to}_still"]
         caption = &"{QUARTER_NAMES[quarter]} &rarr; {QUARTER_NAMES[to]}"
       result.add &"<figure>{moving}{still}" &
-        &"<figcaption>{caption}</figcaption></figure>"
+          &"<figcaption>{caption}</figcaption></figure>"
     result.add "</div></div>"
 
 

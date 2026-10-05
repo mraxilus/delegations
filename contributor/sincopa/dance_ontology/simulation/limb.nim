@@ -103,7 +103,7 @@ func posedOn*(
     )
     return
   let elbow_point = circle.shoulder + circle.axis * circle.along +
-    circle.down * (circle.radius * cosine_swivel) + circle.side * (circle.radius * sine_swivel)
+      circle.down * (circle.radius * cosine_swivel) + circle.side * (circle.radius * sine_swivel)
   result.pose = ArmPose(
     shoulder: circle.shoulder,
     elbow: elbow_point,

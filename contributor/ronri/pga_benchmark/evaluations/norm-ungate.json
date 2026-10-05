@@ -8,9 +8,10 @@
     "date": "2026-10-04",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf",
+    "pga": "edb0c9d3a247185874b8825c9da4b120317b00cf",
     "flags": "-d:release",
-    "runs": 5
+    "runs": 5,
+    "measured_at": "d9be8aefc193f6ee0a7a3fead25cd4fe1d8f09cf"
   },
   "pin_suites": {
     "rga4d": {
@@ -1320,7 +1321,11 @@
           0.9845
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "2d5cd4e2a678c120",
+        "changed": "5de80f70fd8bfd6f"
+      }
     },
     "cga5d": {
       "suites": {
@@ -2833,7 +2838,11 @@
           1.082
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "8fd6361dd9dd1a4d",
+        "changed": "67758eeea240f23a"
+      }
     },
     "rga3d": {
       "suites": {
@@ -4005,7 +4014,11 @@
           0.9769
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "0471853b9be85fbf",
+        "changed": "1193df98f6f60db4"
+      }
     },
     "cga4d": {
       "suites": {
@@ -5428,7 +5441,11 @@
           0.9125
         ]
       },
-      "nan": {}
+      "nan": {},
+      "digest_c": {
+        "pristine": "d014b02752c7a84c",
+        "changed": "0f6edb623a4ae32a"
+      }
     }
   },
   "claims": []

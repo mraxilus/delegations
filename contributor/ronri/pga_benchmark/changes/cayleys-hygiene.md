@@ -31,19 +31,19 @@ constructors can call.
 ```nim
 
 func constructProductInterior(
-  dual: Cayley1D;
+  dual: Cayley1D, exterior: Cayley2D, chirality: Chirality
 ```
 
 ```nim
 
 func constructProductInteriorFromDual(
-  dual: Cayley1D;
+  dual: Cayley1D, exterior: Cayley2D, chirality: Chirality
 ```
 
 ## Edit `pga/cayleys.nim`
 
 ```nim
-func reverse(b: Basis; spatiality: Spatiality): BasisSigned {.compileTime.} =
+func reverse(b: Basis, spatiality: Spatiality): BasisSigned {.compileTime.} =
   ## Get specific reverse of basis.
   let
     grade = case spatiality
@@ -59,7 +59,7 @@ func reverseParity(grade: int): bool {.compileTime, inline.} =
   ((grade * (grade - 1) div 2) and 1) == 1
 
 
-func reverse(b: Basis; spatiality: Spatiality): BasisSigned {.compileTime.} =
+func reverse(b: Basis, spatiality: Spatiality): BasisSigned {.compileTime.} =
   ## Get specific reverse of basis.
   let grade = case spatiality
     of Spatiality.Base: int(b.grade)

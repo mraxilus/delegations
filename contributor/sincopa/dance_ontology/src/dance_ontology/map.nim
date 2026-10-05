@@ -138,7 +138,7 @@ func armColour*(side: Side): string =
   ##   Asked of shared palette rather than kept here.  This module and
   ##     `spokes` each had their own copy, and copies had already drifted
   ##     from frame pictures' by whole hue.
-  DEEP[if side == Side.Left: Arm.Left else: Arm.Right]
+  DEEP[if side==Side.Left: Arm.Left else: Arm.Right]
 
 
 func followColour*(site: Site): string =
@@ -146,7 +146,7 @@ func followColour*(site: Site): string =
   ##   Plain shade, which is theirs wherever two dancers are told
   ##     apart -- same ink that hand's own mark carries in every frame
   ##     picture on page.
-  INK[if site == Site.LeftHand: Arm.Left else: Arm.Right]
+  INK[if site==Site.LeftHand: Arm.Left else: Arm.Right]
 
 
 func labelled*(line: string): string =
@@ -185,8 +185,8 @@ func text(x, y: int; body, style: string; classes = "map-label"): string =
   ##     curve's, frame's -- so hands are inked one way in all of
   ##     them and no caller has to remember to ask.
   "<text class=\"" & classes & "\" x=\"" & $x & "\" y=\"" & $y &
-    "\" text-anchor=\"middle\" style=\"" & style & "\">" & labelled(body) &
-    "</text>"
+      "\" text-anchor=\"middle\" style=\"" & style & "\">" & labelled(body) &
+      "</text>"
 
 
 func widest*(lines: seq[string]): int =
@@ -212,8 +212,8 @@ func stack*(x, y: int; lines: seq[string]; style, plate_class: string): string =
     (width, height) = plateSpan(lines)
     top = y - height div 2
   result = "<rect class=\"" & plate_class & "\" x=\"" & $(x - width div 2) &
-    "\" y=\"" & $top & "\" width=\"" & $width & "\" height=\"" & $height &
-    "\" rx=\"3\"/>"
+      "\" y=\"" & $top & "\" width=\"" & $width & "\" height=\"" & $height &
+      "\" rx=\"3\"/>"
   for index, line in lines:
     result.add text(x, top + LINE_HEIGHT * (index + 1) - 1, line, style)
 
@@ -401,9 +401,9 @@ func edge(
     is_lit_prev = was == some(a) or was == some(b)
     # Line mark is travelling along, while it is travelling along it.
     is_taken = (was == some(a) and taken == some(b)) or
-      (was == some(b) and taken == some(a))
+        (was == some(b) and taken == some(a))
     marks = (if is_lit: " lit" else: "") & (if is_taken: " taking" else: "") &
-      waking(is_lit, is_lit_prev, was.isSome)
+        waking(is_lit, is_lit_prev, was.isSome)
   # Two ends, asked for two different reasons, and since tower was turned up
   # right way they are no longer same end: what line is *called* is
   # read from frame holding less, and where name is *written* is
@@ -438,14 +438,14 @@ func edge(
     cut = gapAt(start_x, start_y, end_x, end_y, labelBounds(label_x, label_y, naming))
     broken = if cut.isNone: ""
              else: "; stroke-dasharray: " & $cut.get[0] & " " & $cut.get[1] &
-               " " & $LONG_ENOUGH
+                 " " & $LONG_ENOUGH
   # Line and name of line are one thing, and dim or come forward as
   # one: name without its line to belong to says nothing.  So two are put
   # in two groups wearing same marks rather than in one group.
   let ink = "<g class=\"way" & marks & "\">" &
-    "<line class=\"edge\" x1=\"" & $start_x & "\" y1=\"" & $start_y &
-    "\" x2=\"" & $end_x & "\" y2=\"" & $end_y & "\" style=\"stroke: " &
-    armColour(side) & "; stroke-linecap: round" & broken & "\"/></g>"
+      "<line class=\"edge\" x1=\"" & $start_x & "\" y1=\"" & $start_y &
+      "\" x2=\"" & $end_x & "\" y2=\"" & $end_y & "\" style=\"stroke: " &
+      armColour(side) & "; stroke-linecap: round" & broken & "\"/></g>"
   (ink, "<g class=\"way naming" & marks & "\">" &
     stack(label_x, label_y, naming, LABEL_FONT & "; fill: " & armColour(side),
       "edge-plate") & "</g>")
@@ -504,14 +504,14 @@ func arc(
     if side.isSome: armColour(side.get) else: COLOUR_DIM
 
   var curve = "<g class=\"join" & lit & "\">" &
-    "<path class=\"arc\" d=\"M" & $start_x & " " & $start_y &
-    "Q" & $first_control_x & " " & $first_control_y &
-    " " & $halfway_x & " " & $halfway_y & "\" style=\"stroke: " & ink(compoundSide(b, a)) &
-    "\"/>" &
-    "<path class=\"arc\" d=\"M" & $halfway_x & " " & $halfway_y &
-    "Q" & $second_control_x & " " & $second_control_y &
-    " " & $end_x & " " & $end_y & "\" style=\"stroke: " & ink(compoundSide(a, b)) &
-    "\"/>"
+      "<path class=\"arc\" d=\"M" & $start_x & " " & $start_y &
+      "Q" & $first_control_x & " " & $first_control_y &
+      " " & $halfway_x & " " & $halfway_y & "\" style=\"stroke: " & ink(compoundSide(b, a)) &
+      "\"/>" &
+      "<path class=\"arc\" d=\"M" & $halfway_x & " " & $halfway_y &
+      "Q" & $second_control_x & " " & $second_control_y &
+      " " & $end_x & " " & $end_y & "\" style=\"stroke: " & ink(compoundSide(a, b)) &
+      "\"/>"
   curve.add "</g>"
   # Curve is at its lowest halfway along, which is half dip below row.
   let (label_x, label_y) = placeBelow(middle_x, max(start_y, end_y) + dip div 2 + 4, @[name], used)
@@ -527,10 +527,10 @@ func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string; ext
   ##     looks like even though they disagree about everything else.
   let height = frameHeight(width)
   result = "<g class=\"node " & classes & "\" data-frame=\"" & target.key &
-    "\"" & extra & ">"
+      "\"" & extra & ">"
   result.add "<rect class=\"node-plate\" x=\"" & $(centre_x - width div 2 - 8) &
-    "\" y=\"" & $(centre_y - height div 2 - 6) & "\" width=\"" & $(width + 16) &
-    "\" height=\"" & $(height + 12) & "\" rx=\"8\"/>"
+      "\" y=\"" & $(centre_y - height div 2 - 6) & "\" width=\"" & $(width + 16) &
+      "\" height=\"" & $(height + 12) & "\" rx=\"8\"/>"
   result.add renderFramePlaced(target, centre_x - width div 2, centre_y - height div 2, width)
   # Name goes above picture, leaving space below for curves, and
   # gets plate of its own as every other name in drawing has: lines leave
@@ -538,7 +538,7 @@ func nodeAt*(target: Frame; centre_x, centre_y, width: int; classes: string; ext
   # with line drawn through it is not word.
   let (name_x, name_y, name_width, name_height) = nameBounds(target, centre_x, centre_y, width)
   result.add "<rect class=\"name-plate\" x=\"" & $name_x & "\" y=\"" & $name_y &
-    "\" width=\"" & $name_width & "\" height=\"" & $name_height & "\" rx=\"3\"/>"
+      "\" width=\"" & $name_width & "\" height=\"" & $name_height & "\" rx=\"3\"/>"
   result.add text(
     centre_x,
     centre_y - height div 2 - NAME_RISE,
@@ -569,8 +569,8 @@ func markAt*(centre_x, centre_y, width: int; extra = ""): string =
   ##     twice.
   let height = frameHeight(width)
   "<rect class=\"mark\" x=\"" & $(centre_x - width div 2 - 8) & "\" y=\"" &
-    $(centre_y - height div 2 - 6) & "\" width=\"" & $(width + 16) & "\" height=\"" &
-    $(height + 12) & "\" rx=\"8\"" & extra & "/>"
+      $(centre_y - height div 2 - 6) & "\" width=\"" & $(width + 16) & "\" height=\"" &
+      $(height + 12) & "\" rx=\"8\"" & extra & "/>"
 
 
 func node(target: Frame; standing, was: Option[Frame]): string =
@@ -617,11 +617,11 @@ func renderMap*(here: Option[Frame], motion = Motion.Still, taken = none(Frame))
     standing = if is_leaving: taken else: here
     was = if is_leaving: here else: none(Frame)
   result = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " &
-    $MAP_WIDTH & " " & $MAP_HEIGHT & "\" class=\"map" &
-    (if is_leaving: " leaving" else: "") &
-    (if here.isNone: " unread" else: "") & "\" style=\"" &
-    passStyle(WIDE_TEMPO) & "\" role=\"img\">" &
-    "<title>Every frame, and every move between them</title>"
+      $MAP_WIDTH & " " & $MAP_HEIGHT & "\" class=\"map" &
+      (if is_leaving: " leaving" else: "") &
+      (if here.isNone: " unread" else: "") & "\" style=\"" &
+      passStyle(WIDE_TEMPO) & "\" role=\"img\">" &
+      "<title>Every frame, and every move between them</title>"
 
   # Every line goes down before any word does.  Name carries plate to keep
   # drawing out from under it, and plate can only hide what is already
