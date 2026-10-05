@@ -395,34 +395,57 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
 
 func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
   ## Apply operation to operands, ignoring `n` where operation is unary.
-  case operation
-  of Operation.Attitude: attitude(m)
-  of Operation.Support: support(m)
-  of Operation.SupportAnti: supportAnti(m)
-  of Operation.Bulk: bulk(m)
-  of Operation.Weight: weight(m)
-  of Operation.Unitize: unitize(m)
-  of Operation.ComplementLeft: complementLeft(m)
-  of Operation.ComplementRight: complementRight(m)
-  of Operation.DualBulk: dualBulk(m)
-  of Operation.DualWeight: dualWeight(m)
-  of Operation.Reverse: reverse(m)
-  of Operation.ReverseAnti: reverseAnti(m)
-  of Operation.Negate: negate(m)
-  of Operation.Add: add(m, n)
-  of Operation.Subtract: subtract(m, n)
-  of Operation.Wedge: wedge(m, n)
-  of Operation.WedgeAnti: wedgeAnti(m, n)
-  of Operation.WedgeDot: wedgeDot(m, n)
-  of Operation.WedgeDotAnti: wedgeDotAnti(m, n)
-  of Operation.Dot: dot(m, n)
-  of Operation.DotAnti: dotAnti(m, n)
-  of Operation.ExpandBulk: expandBulk(m, n)
-  of Operation.ExpandWeight: expandWeight(m, n)
-  of Operation.ContractBulk: contractBulk(m, n)
-  of Operation.ContractWeight: contractWeight(m, n)
-  of Operation.ProjectCentral: projectCentral(m, n)
-  of Operation.ProjectOrthogonal: projectOrthogonal(m, n)
+  ##   Result within rounding of zero, judged against operands that made it, is zero:
+  ##   point lying on line joins with it to nothing, never to rounding.
+  ##     `objects.kindOf` reads object at its own scale, so rounding left standing reads
+  ##     as plane, and every path building from catalogue builds through here.
+  ##   Sum is judged against its larger operand, as it rounds to that.
+  ##   Every other operation is homogeneous in each operand, so it runs again on
+  ##   `scaleFree` copies: positive multiple of result, rounding at `TOLERANCE_ROUNDING`
+  ##   of one whatever degree operation has in each operand.
+  ##     Cost: second run of operation, once for each preview and each build.
+
+  func applied(operation: Operation; m, n: Multivector): Multivector =
+    ## Apply catalogue's operation as library names it.
+    case operation
+    of Operation.Attitude: attitude(m)
+    of Operation.Support: support(m)
+    of Operation.SupportAnti: supportAnti(m)
+    of Operation.Bulk: bulk(m)
+    of Operation.Weight: weight(m)
+    of Operation.Unitize: unitize(m)
+    of Operation.ComplementLeft: complementLeft(m)
+    of Operation.ComplementRight: complementRight(m)
+    of Operation.DualBulk: dualBulk(m)
+    of Operation.DualWeight: dualWeight(m)
+    of Operation.Reverse: reverse(m)
+    of Operation.ReverseAnti: reverseAnti(m)
+    of Operation.Negate: negate(m)
+    of Operation.Add: add(m, n)
+    of Operation.Subtract: subtract(m, n)
+    of Operation.Wedge: wedge(m, n)
+    of Operation.WedgeAnti: wedgeAnti(m, n)
+    of Operation.WedgeDot: wedgeDot(m, n)
+    of Operation.WedgeDotAnti: wedgeDotAnti(m, n)
+    of Operation.Dot: dot(m, n)
+    of Operation.DotAnti: dotAnti(m, n)
+    of Operation.ExpandBulk: expandBulk(m, n)
+    of Operation.ExpandWeight: expandWeight(m, n)
+    of Operation.ContractBulk: contractBulk(m, n)
+    of Operation.ContractWeight: contractWeight(m, n)
+    of Operation.ProjectCentral: projectCentral(m, n)
+    of Operation.ProjectOrthogonal: projectOrthogonal(m, n)
+
+  # Apply to operands as given.
+  result = applied(operation, m, n)
+
+  # Answer zero where that is rounding of zero.
+  let is_rounding =
+    case operation
+    of Operation.Add, Operation.Subtract:
+      result.isRoundingOf max(m.coefficientLargest, n.coefficientLargest)
+    else: applied(operation, m.scaleFree, n.scaleFree).isRoundingOf(1.0)
+  if is_rounding: result = Multivector()
 
 
 func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[Position] =

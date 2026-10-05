@@ -8,12 +8,18 @@
 ##   `boundary.nim`'s job alone. See `euclid.nim` header for which side owns what.
 ## Every sign and argument order is pinned by suite case against classical closed form.
 ##   Classical form lives in test, algebra lives here.
+## Size is judged against object's own scale, never against absolute tolerance.
+##   Library's `TOLERANCE_ABS` (1e-9) is absolute, and join of points metre apart one unit
+##   out carries coefficients near 1e-12, under it.
+##   Kind reads scale-free copy, and horizon weighs weight against bulk.
+##   Cost: rounding of zero standing alone reads as object too; `isRoundingOf` judges it
+##   against factors that made it, where caller holds them.
 ##
 ## Shared by desktop (`main.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strformat]
+import std/[math, options, strformat]
 
 import pga
 
@@ -36,12 +42,54 @@ type
 
 
 
+#[ Scale ]#
+
+const TOLERANCE_ROUNDING* = 2.0.pow(float(2 * DIMENSIONS - 52))
+  ## Bound rounding one product of two multivectors leaves, against its factors' scales.
+  ##   Each coefficient sums `2^DIMENSIONS` terms, each at most factors' largest
+  ##   coefficients multiplied, and each step of sum loses `ε` of it: `2^(2·DIMENSIONS)·ε`,
+  ##   `ε` being `2^-52`, spacing of doubles at one.
+  ##   Sits between rounding and metre: point met on line joins with it to 2e-16 of
+  ##   factors, and join of points metre apart thirty units out stands 1.5e-13 of them.
+  ##     Measured; see `PROVENANCE.md`, Geometry and drawing.
+
+
+func coefficientLargest*(m: Multivector): float =
+  ## Read magnitude of largest coefficient, scale `m` carries whatever object it names.
+  for b in Basis: result = max(result, abs(m[b]))
+
+
+func scaleFree*(m: Multivector): Multivector =
+  ## Scale `m` so its largest coefficient has magnitude one, naming same object.
+  ##   Every object is homogeneous: positive multiple of it names it.
+  ##   Zero where `m` is, and where its largest is subnormal, whose reciprocal overflows.
+  let largest = m.coefficientLargest
+  if largest.classify in {fcZero, fcSubnormal}: return
+  (1.0 / largest) * m
+
+
+func isRoundingOf*(m: Multivector, scale: float): bool =
+  ## Report whether `m` is rounding of zero, for product whose factors' scales multiply to `scale`.
+  ##   Scale of factor is its `coefficientLargest`.
+  ##   For caller that built `m` on spot and holds what built it: only it knows `scale`.
+  m.coefficientLargest <= TOLERANCE_ROUNDING * scale
+
+
+
 #[ Kind Classification ]#
 
 func kindOf*(m: Multivector): Option[Kind] =
   ## Name geometry multivector stands for.
-  ##   None for mixed grade, and for scalar and antiscalar, which draw nothing.
-  let grade = m.grade
+  ##   None for mixed grade, and for zero, scalar and antiscalar, which draw nothing.
+  ##   Grade is read off `scaleFree` copy, so library's tolerance stands relative to
+  ##   largest coefficient: coefficient under billionth of it reads as zero, at any scale.
+  ##     Never off `m` alone, whose coefficients library judges against absolute 1e-9.
+  ##   Copy is skipped where largest coefficient is at least one and library reads one
+  ##   grade off `m`: copy's threshold then stands at or above library's, so it keeps
+  ##   subset of what library keeps, largest among them, and reads same grade.
+  ##     Every unit-weight point takes that path; copy cost 5 µs for each on JS backend.
+  var grade = if m.coefficientLargest >= 1.0: m.grade else: none(Grade)
+  if grade.isNone: grade = m.scaleFree.grade
   if grade.isNone: return
   case int(grade.get)
   of 1: some(Kind.Point)
@@ -50,8 +98,12 @@ func kindOf*(m: Multivector): Option[Kind] =
   else: none[Kind]()
 
 
-func isHorizon*(m: Multivector): bool = abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS
+func isHorizon*(m: Multivector): bool =
   ## Report whether object lies wholly in horizon, i.e. whether its weight vanishes.
+  ##   Weight is judged against bulk, so object reads as horizon where it stands more
+  ##   than billion units out, i.e. `‖𝐦‖∘ ≤ 1e-9 ‖𝐦‖∙`, whatever its own scale.
+  ##     Zero reads as horizon: it has no weight.
+  abs((|∘m)[Basis.scalarAnti]) <= TOLERANCE_ABS * abs((|∙m)[Basis.scalar])
 
 
 func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)

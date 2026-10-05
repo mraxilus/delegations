@@ -317,8 +317,9 @@ func nodeAscending(normal, pole: Direction): Option[Direction] =
   ##   Meet of two planes through origin, i.e. line both hold, read by its attitude.
   ##   Sense is ascending: going round `normal` as right hand turns, plane crosses other
   ##     there toward side `pole` points to. Suite pins sense for every moon.
-  ##   None where two planes are one, as they then meet in no line.
-  direction(planeAbout(normal) ∨ planeAbout(pole))
+  ##   None where two planes are one, as they then meet in no line: judged against scale
+  ##   one, as both normals are unit.
+  direction(planeAbout(normal) ∨ planeAbout(pole), scale = 1.0)
 
 
 func turnedAbout(d, axis: Direction; radians: float): Direction =
@@ -369,7 +370,7 @@ func bearingOf*(toward: Direction): Option[Direction] =
   ##     `toward` by inner product, since meet's own runs with order of operands.
   ##   None where `toward` stands straight up or down, or is no direction: it leans nowhere.
   ##   Exported for `showOrrery`'s camera, and for suite.
-  let level = direction((AXIS_UP ∧ toward.toMultivector) ∨ PLANE_GROUND)
+  let level = direction((AXIS_UP ∧ toward.toMultivector) ∨ PLANE_GROUND, scale = norm(toward))
   if level.isNone: return
   if innerOf(level.get.toMultivector, toward.toMultivector) < 0.0: some(-level.get)
   else: level

@@ -308,7 +308,7 @@ func positionOnLineNearest*(
   ##   Algebra's answer, in three moves.
   ##     Join of two lines' attitudes is horizon line through both directions, whose
   ##     normal is their common perpendicular: `directionNormalHorizon`'s reading,
-  ##     vanishing where lines run parallel.
+  ##     vanishing where lines run parallel, judged against lengths of both directions.
   ##     Plane `ray ∧ commonPerpendicular` contains ray and segment realising nearest
   ##     approach, so its meet with line is that approach's foot.
   ##     Held equal to classical two-dot closed form in suite over scatter of line/ray
@@ -316,9 +316,18 @@ func positionOnLineNearest*(
   let
     line = wedge(anchor.toMultivector, axis.toMultivector)
     ray = wedge(ray_from.toMultivector, ray_along.toMultivector)
-    normal_common = directionNormalHorizon(wedge(attitude(line), attitude(ray)))
+    normal_common = directionNormalHorizon(
+      wedge(attitude(line), attitude(ray)), scale = norm(axis) * norm(ray_along)
+    )
   if normal_common.isNone: return
   position(wedgeAnti(line, wedge(ray, normal_common.get.toMultivector)))
+
+
+func scaleCrossing(ray, plane: Multivector): float =
+  ## Read scale ray's meet with plane is judged against: their weights' norms multiplied.
+  ##   Meet's weight is that scale times cosine between ray and plane's normal, so ray
+  ##   grazing plane, or lying in it, reads none rather than rounding's place.
+  normWeight(ray)[Basis.scalarAnti] * normWeight(plane)[Basis.scalarAnti]
 
 
 func positionOnObjectUnder(
@@ -348,7 +357,7 @@ func positionOnObjectUnder(
       let ray_from = positionSupport(ray)
       if ray_from.isSome:
         found = positionOnLineNearest(anchor.get, axis.get, ray_from.get, heading.get)
-  of Kind.Plane: found = position(ray ∨ geometry)
+  of Kind.Plane: found = position(ray ∨ geometry, scale = scaleCrossing(ray, geometry))
   if found.isNone: return
   if depthAgainst(plane_eye, found.get.toMultivector) <= 1.0e-6: return
   found
@@ -410,7 +419,7 @@ func rayPlaneHit(
   ##     weight one.
   let
     met = wedgeAnti(ray, plane)
-    where = position(met)
+    where = position(met, scale = scaleCrossing(ray, plane))
   if where.isNone: return
   let hit = where.get.toMultivector
 
