@@ -30,8 +30,8 @@ knoller [--check] [--nim:path] path...
      file, written `requires "nim == <pin>"` or `requires "nim#<commit>"`;
   3. else `nim` on `PATH`.
 - So the `ronri` projects take their commit pin with no option. That matters, because 2.2.12 lexes
-  their glyph operators as names. `koch fix` passes the pin of each project too. For a file at the root, koch takes the pin of
-  `curator/audit`, and knoller takes `nim` on `PATH`.
+  their glyph operators as names. `koch fix` passes the pin of each project too. For a file at
+  the root, koch takes the pin of `curator/audit`, and knoller takes `nim` on `PATH`.
 - Knoller takes the compiler of a pin from `PATH` where that one serves it, else from
   `~/.cache/knoller/nim/<pin>/`. Else it fetches a release, or builds a commit, into that cache.
   `$KNOLLER_NIM_DIR` moves the cache, for koch too. The first run on a new pin pays the fetch, in

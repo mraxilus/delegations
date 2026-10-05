@@ -48,8 +48,8 @@
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
 ##     resolves toolchains by pin. Different trust and different key, so knoller's `compilers.nim`
 ##     keeps it rather than this pretending one shape serves both.
-##   Cost: store grows and nothing prunes it. Face is under 1 MB where compiler is 140 MB to 2.4 GB, so
-##     what is unbounded here is number of pins repository has ever held, not bytes.
+##   Cost: store grows and nothing prunes it. Face is under 1 MB where compiler is 140 MB to
+##     2.4 GB, so what is unbounded here is number of pins repository has ever held, not bytes.
 ##   Cost: upstream that moves bytes under one address fails every project at once rather
 ##     than one. That is same failure one digest exists to make loud, and it is louder shared.
 
