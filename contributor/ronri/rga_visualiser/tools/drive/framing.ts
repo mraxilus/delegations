@@ -554,6 +554,8 @@ const STEPS_ORBIT_FAR = 6;
  *  frame and press on it turns view. Left drag across `PIXELS_ORBIT_FAR` px orbits it, and
  *  point stands within `PIXELS_MIDDLE_FAR` px of middle before and after: camera's stance,
  *  records and transform are held about view origin, near eye.
+ *  As found (repository issue 535): point 4.72 million units out, 320 m away, stood 403.310 px
+ *  off middle, and 180 px of drag turned view 0.000 rad.
  *  Geometry rather than time: pixels off middle read same on every machine.
  */
 export async function driveFarOrbit(page: Page): Promise<void> {
